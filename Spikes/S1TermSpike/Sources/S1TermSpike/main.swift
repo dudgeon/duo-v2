@@ -18,6 +18,12 @@ struct Opts {
     var resize: (Int, Int)?
     var hide = false
     var metal = false
+    var cwd: String?
+    /// "seconds:keys" pairs separated by "|"; keys use \r, \e, \t, {down}, {up}, {shift-enter}.
+    var keys: [(Double, String)] = []
+    var dumps: [Double] = []
+    /// Host this many terminals in one window; only the first is visible (S2).
+    var count = 1
 }
 
 nonisolated(unsafe) var o = Opts()
@@ -35,6 +41,14 @@ while let a = it.next() {
         let p = it.next()!.split(separator: "x").map { Int($0)! }; o.resize = (p[0], p[1])
     case "--hide": o.hide = (it.next() ?? "on") == "on"
     case "--metal": o.metal = (it.next() ?? "on") == "on"
+    case "--cwd": o.cwd = it.next()
+    case "--keys":
+        o.keys = it.next()!.split(separator: "|").map { pair in
+            let parts = pair.split(separator: ":", maxSplits: 1)
+            return (Double(parts[0])!, String(parts[1]))
+        }
+    case "--count": o.count = Int(it.next()!)!
+    case "--dump-at": o.dumps = it.next()!.split(separator: ",").map { Double($0)! }
     default: break
     }
 }
@@ -55,6 +69,7 @@ func childEnvironment() -> [String] {
 final class Delegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewDelegate {
     var window: NSWindow!
     var term: LocalProcessTerminalView!
+    var extras: [LocalProcessTerminalView] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.appearance = NSAppearance(named: .aqua)
@@ -75,7 +90,7 @@ final class Delegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewD
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
 
-        let cwd = FileManager.default.temporaryDirectory.appending(path: "s1-spike").path
+        let cwd = o.cwd ?? FileManager.default.temporaryDirectory.appending(path: "s1-spike").path
         try? FileManager.default.createDirectory(atPath: cwd, withIntermediateDirectories: true)
         let exe = o.cmd.hasPrefix("/") ? o.cmd : "/usr/bin/env"
         let args = o.cmd.hasPrefix("/") ? o.args : [o.cmd] + o.args
@@ -83,6 +98,31 @@ final class Delegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewD
         print("started \(o.cmd) pid=\(term.process.shellPid) in \(cwd) grid=\(o.cols)x\(o.rows)")
         report(childPid: term.process.shellPid)
 
+        for (t, keys) in o.keys {
+            DispatchQueue.main.asyncAfter(deadline: .now() + t) {
+                self.term.send(txt: Self.decode(keys))
+                print(String(format: "t=%.0fs sent %@", t, keys))
+            }
+        }
+        for t in o.dumps {
+            DispatchQueue.main.asyncAfter(deadline: .now() + t) { self.dump(label: String(format: "t=%.0fs", t)) }
+        }
+        for n in 1..<o.count {
+            let extra = LocalProcessTerminalView(frame: NSRect(origin: .zero, size: size))
+            extra.font = font
+            extra.nativeBackgroundColor = term.nativeBackgroundColor
+            extra.nativeForegroundColor = term.nativeForegroundColor
+            extra.isHidden = true
+            window.contentView?.addSubview(extra)
+            let dir = (o.cwd ?? cwd) + "-\(n)"
+            try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+            extra.startProcess(executable: exe, args: args, environment: childEnvironment(), execName: nil, currentDirectory: dir)
+            extras.append(extra)
+            for (t, keys) in o.keys {
+                DispatchQueue.main.asyncAfter(deadline: .now() + t) { extra.send(txt: Self.decode(keys)) }
+            }
+        }
+        print("hosting \(o.count) terminals, \(o.count - 1) hidden")
         if let (c, r) = o.resize {
             DispatchQueue.main.asyncAfter(deadline: .now() + o.after / 2) {
                 self.window.setContentSize(CGSize(width: cell.width * CGFloat(c) + 4, height: cell.height * CGFloat(r) + 4))
@@ -126,8 +166,28 @@ final class Delegate: NSObject, NSApplicationDelegate, LocalProcessTerminalViewD
             print("---- end ----")
 
             self.term.process.terminate()
+            for e in self.extras { e.process.terminate() }
             exit(0)
         }
+    }
+
+    static func decode(_ keys: String) -> String {
+        keys.replacingOccurrences(of: "{down}", with: "\u{1B}[B")
+            .replacingOccurrences(of: "{up}", with: "\u{1B}[A")
+            .replacingOccurrences(of: "{shift-enter}", with: "\u{1B}\r")
+            .replacingOccurrences(of: "\\r", with: "\r")
+            .replacingOccurrences(of: "\\e", with: "\u{1B}")
+            .replacingOccurrences(of: "\\t", with: "\t")
+    }
+
+    func dump(label: String) {
+        term.selectAll()
+        let text = term.getSelection() ?? ""
+        term.selectNone()
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+        let last = lines.lastIndex { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? 0
+        print("---- \(label) ----")
+        for (i, line) in lines[...last].enumerated() { print(String(format: "%02d|", i) + line) }
     }
 
     func report(childPid: pid_t) {
