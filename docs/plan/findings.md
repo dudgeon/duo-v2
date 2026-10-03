@@ -184,6 +184,14 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-27 · Phase E3: session titles from the transcript (2026-10-03)
+
+- **Beacons say whether a name is stable.** `nameSource: user` marks a `/rename` or Desktop title (stable); `derived` names (`home-38`, `repos-f7`) change per process. Duo uses the beacon name only when it is `user`.
+- **Otherwise LR-6's ladder over the transcript:** `custom-title` → `ai-title` → `summary` → slash command (`<command-name>`) → first real prompt with harness tags stripped (meta records and tool results skipped) → short id. Claude writes `ai-title` records within the first turn ("Color preference question" for the S9-style test). Reads are the first 64 KB plus the last 256 KB, cached by size and mtime.
+- **A session with no transcript is "New session"**: it was started and never used (F-25), so a short id would be the only alternative.
+- Verified live: Home reads "Color preference question" across relaunches; the unused checkout-redesign session reads "New session". Review image: `docs/plan/review/phase-e/live-titles.png`. 84 checks pass.
+- **The no-window launch (F-26) didn't recur** in six instrumented launches. Scripted runs now trace `init`, `didFinishLaunching`, `configure` and the window list at +3 s to stderr, so the next occurrence shows which step was missing.
+
 ## F-26 · Phase E2: hooks give the question, the answer and the review state (2026-10-03)
 
 Every Claude session Duo starts or resumes gets `--settings <events>/<id>.settings.json`. Its hooks (SessionStart, UserPromptSubmit, PermissionRequest, PostToolUse, Notification, Stop, SessionEnd) append `{"at":…,"e":<payload>}` lines to `~/Library/Application Support/Duo/events/<id>.jsonl`. They print nothing, so they can't answer a prompt. Verified end to end on Haiku (DL-33) through `scripts/run-live.sh`, with the screen locked:

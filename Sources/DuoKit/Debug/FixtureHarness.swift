@@ -75,6 +75,7 @@ public enum FixtureHarness {
     }
 
     public static func configure(_ window: NSWindow, model: AppModel, options: LaunchOptions) {
+        if options.capturing { FileHandle.standardError.write(Data("trace configure\n".utf8)) }
         window.isRestorable = false
         window.tabbingMode = .disallowed
         guard options.state != nil || options.capturing else { return }

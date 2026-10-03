@@ -7,6 +7,8 @@ public struct Beacon: Sendable, Equatable, Decodable {
     public var sessionId: String
     public var cwd: String
     public var name: String?
+    /// `user` when named with /rename (stable); `derived` names change per process (F-26).
+    public var nameSource: String?
     public var status: String          // busy | idle | waiting
     public var waitingFor: String?     // "input needed" | "permission prompt"
     public var statusUpdatedAt: Double?
@@ -14,9 +16,10 @@ public struct Beacon: Sendable, Equatable, Decodable {
     public var kind: String?
 
     public init(pid: Int32, sessionId: String, cwd: String, name: String?, status: String, waitingFor: String?,
-                statusUpdatedAt: Double?, entrypoint: String?, kind: String?) {
+                statusUpdatedAt: Double?, entrypoint: String?, kind: String?, nameSource: String? = nil) {
         self.pid = pid; self.sessionId = sessionId; self.cwd = cwd; self.name = name; self.status = status
         self.waitingFor = waitingFor; self.statusUpdatedAt = statusUpdatedAt; self.entrypoint = entrypoint; self.kind = kind
+        self.nameSource = nameSource
     }
 
     /// Reads every beacon whose process is still alive.

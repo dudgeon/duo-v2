@@ -34,6 +34,19 @@ struct DuoApp: App {
             model.terminalsMode = .demo(root: root)
         }
         self.model = model
+        // Launch trace for scripted runs: one launch in a few opens no window (F-26).
+        if options.capturing {
+            func trace(_ m: String) { FileHandle.standardError.write(Data("trace \(String(format: "%.2f", ProcessInfo.processInfo.systemUptime)) \(m)\n".utf8)) }
+            trace("init")
+            NotificationCenter.default.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main) { _ in
+                MainActor.assumeIsolated {
+                    trace("didFinishLaunching windows=\(NSApp.windows.count)")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        trace("+3s windows=\(NSApp.windows.map { "\($0.className) visible=\($0.isVisible) \($0.frame)" })")
+                    }
+                }
+            }
+        }
         // End sessions cleanly on quit. Hiding or collapsing never does this (LR-13).
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { model.terminals.terminateAll() }

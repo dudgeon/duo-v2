@@ -152,7 +152,7 @@ func repoFixture() throws -> Fixture {
     check(SessionIndex.load(project: lw) == SessionIndex(), "missing index reads as empty")
     let live = Beacon(pid: 1, sessionId: "cccc-live", cwd: proj.appending(path: "docs").path, name: "PRD v2 edits",
                       status: "waiting", waitingFor: "input needed", statusUpdatedAt: Date().timeIntervalSince1970 * 1000 - 240_000,
-                      entrypoint: "cli", kind: nil)
+                      entrypoint: "cli", kind: nil, nameSource: "user")
     let (snap, folders) = LiveSnapshot.build(.init(root: lw), beacons: [live])
     let ss = snap.sessions(inProject: "checkout-redesign")
     check(ss.map(\.sessionId) == ["aaaa-filed", "cccc-live"], "filed sessions plus live ones attributed by cwd; archived hidden")
@@ -160,7 +160,7 @@ func repoFixture() throws -> Fixture {
     check(snap.projects.first { $0.name == "checkout-redesign" }?.health == "At risk"
           && snap.projects.first { $0.name == "checkout-redesign" }?.topic == "Payments", "project from PROJECT.md: health, topic")
     check(snap.projects.first { $0.isHome == true }?.name == "home" && folders["home"] != nil, "Home from HOME.md")
-    check(snap.groups.first?.sessions == ["Session aaaa-fil", "PRD v2 edits"], "groups resolve ids to names")
+    check(snap.groups.first?.sessions == ["New session", "PRD v2 edits"], "groups resolve ids to names; never-used session is New session")
     check(snap.counts.needsYou == 1 && snap.counts.idle == 1, "counts")
     try? FileManager.default.removeItem(at: lw)
 
@@ -206,6 +206,24 @@ func repoFixture() throws -> Fixture {
     fire(#"{"hook_event_name":"PermissionRequest","tool_name":"Bash","tool_input":{"command":"git push"}}"#)
     check(HookEvents.summarize(HookEvents.read("s1", in: ev))?.question == "Allow `git push`?", "permission prompt names the command")
     try? FileManager.default.removeItem(at: ev)
+
+    print("titles")
+    func rec(_ json: String) -> [String: Any] { try! JSONSerialization.jsonObject(with: Data(json.utf8)) as! [String: Any] }
+    let prompt = rec(#"{"type":"user","message":{"role":"user","content":"<system-reminder>ignore me</system-reminder>  Draft the   refunds FAQ for support"}}"#)
+    let meta = rec(#"{"type":"user","isMeta":true,"message":{"content":"Caveat: local commands"}}"#)
+    let slash = rec(#"{"type":"user","message":{"content":"<command-name>/review</command-name><command-args></command-args>"}}"#)
+    let ai = rec(#"{"type":"ai-title","aiTitle":"Refunds FAQ draft"}"#)
+    let custom = rec(#"{"type":"custom-title","customTitle":"FAQ v2"}"#)
+    check(SessionTitles.title(head: [meta, prompt], tail: []) == "Draft the refunds FAQ for support", "first prompt, wrapper tags stripped, meta skipped")
+    check(SessionTitles.title(head: [slash, prompt], tail: []) == "/review", "slash command beats the prompt")
+    check(SessionTitles.title(head: [prompt, ai], tail: []) == "Refunds FAQ draft", "AI title beats the prompt")
+    check(SessionTitles.title(head: [prompt, ai], tail: [custom]) == "FAQ v2", "custom title beats all")
+    check(SessionTitles.clean(String(repeating: "word ", count: 30))?.hasSuffix("word…") == true, "long prompts shorten on a word")
+    let tdir = FileManager.default.temporaryDirectory.appending(path: "duo-t-\(UUID().uuidString).jsonl")
+    let big = String(repeating: #"{"type":"assistant","message":{"content":"x"}}"# + "\n", count: 9000)
+    try (#"{"type":"user","message":{"content":"Plan the launch"}}"# + "\n" + big + #"{"type":"ai-title","aiTitle":"Launch plan"}"# + "\n").write(to: tdir, atomically: true, encoding: .utf8)
+    check(SessionTitles.title(transcript: tdir) == "Launch plan", "bounded head + tail read finds a late AI title")
+    try? FileManager.default.removeItem(at: tdir)
 
     print("launch options")
     let o = LaunchOptions(arguments: ["Duo", "--state", "flow-zoom-3", "--capture", "/tmp/x.png", "--left", "collapsed"])

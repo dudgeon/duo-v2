@@ -58,7 +58,7 @@ public enum LiveSnapshot {
                 let live = beacon.map { Attention.live(beacon: $0, hooks: hooks, seenAt: ctx.seen[id]) }
                 let since = live?.since ?? created.map { $0.timeIntervalSince1970 * 1000 }
                 sessions.append(Fixture.Session(
-                    name: beacon?.name ?? "Session \(id.prefix(8))",
+                    name: title(id: id, folder: f.folder, beacon: beacon),
                     project: name,
                     state: live?.state ?? .idle,
                     wait: live?.state == .readyForReview ? nil : Attention.waitText(since: since, now: ctx.now),
@@ -97,6 +97,15 @@ public enum LiveSnapshot {
             projectFiles: files
         )
         return (fixture, folders)
+    }
+
+    /// LR-6: a name the user gave wins; then the transcript's ladder. A session with no
+    /// transcript was never used, so it is a new session; Claude's derived names are unstable
+    /// across processes (F-26) and aren't used.
+    static func title(id: String, folder: URL, beacon: Beacon?) -> String {
+        if let b = beacon, b.nameSource == "user", let n = b.name, !n.isEmpty { return n }
+        guard let t = ClaudeStorage.transcript(sessionId: id, cwd: beacon?.cwd ?? folder.path) else { return "New session" }
+        return SessionTitles.title(transcript: t) ?? "Session \(id.prefix(8))"
     }
 
     /// Markdown and text files near the top of a project, for the file tree (fixture-shaped).

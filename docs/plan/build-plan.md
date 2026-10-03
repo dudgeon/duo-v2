@@ -128,7 +128,7 @@ Shared by everything after it, including both PRDs.
 | Needs | S9, S10, Phase D. |
 | Exit | Delete the cache → identical UI (DL-1). Fixture mode still reproduces every screenshot. |
 | Gates | ⛔ design: folder moved/missing banner (LR-23); first run, no projects, no Home, nothing-needs-you empty states (§8, §13). ❓ how Home is marked (§11). ❓ G3 (vocabulary). |
-| Status | **E1 built (F-25):** discovery, HOME.md (DL-42), `.duo/sessions.json`, beacon attention, live snapshot with 2 s refresh, `--workspace`, `+ New session`, resume-or-restart, never-two-writers by beacon pid. **E2 built (F-26):** per-session hooks, the verbatim question and options on cards, ready-for-review from `Stop`, the seen mark in `Duo/state.json`. **Next (E3):** session titles from transcripts when Claude hasn't named one (LR-6); the rebuildable cache and registry; file watching in place of polling. |
+| Status | **E1 built (F-25):** discovery, HOME.md (DL-42), `.duo/sessions.json`, beacon attention, live snapshot with 2 s refresh, `--workspace`, `+ New session`, resume-or-restart, never-two-writers by beacon pid. **E2 built (F-26):** per-session hooks, the verbatim question and options on cards, ready-for-review from `Stop`, the seen mark in `Duo/state.json`. **E3 built (F-27):** titles by LR-6's ladder. **Next (E4):** the registry in Application Support (projectId → path + bookmark, remembered Home, archive map); the rebuildable cache for Claude-derived facts (titles, digests) with the delete-the-cache exit test (DL-1); file watching (FSEvents) in place of the 2 s poll; task ↔ session links from task frontmatter (DL-13); excluding running sessions from the resumable count (C-16). |
 
 ### Phase F — The CLI · slices 6–7
 
