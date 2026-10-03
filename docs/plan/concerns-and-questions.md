@@ -38,6 +38,6 @@ Status: **open** (needs Geoff or a spike) · **defaulted** (Claude chose a defau
 | C-8 | **Legacy global instructions leak into v2 sessions** (Q-5). | Medium | Detection in v1. |
 | C-9 | **Cards without replies may feel unfinished** (DL-29). The action column shows the question but you must open the session to answer. | Low | `Open project` lands on the session's console with the prompt visible, so answering is one click plus a key. Revisit with S12. |
 | C-10 | **System toolbar is 40 pt on macOS 27**, not the targets' 38. | Low | Handoff §0.4: the system wins; content captures compare below it. |
-| C-11 | **The slice-1 prototype has a quick-reply switch** (`showsQuickReplies`, `--quick-replies`), which DL-29 makes moot. | Low | Remove when Phase A resumes. |
+| C-11 | ~~The slice-1 prototype has a quick-reply switch, which DL-29 makes moot.~~ Removed 2026-10-03. | — | Closed. |
 | C-12 | **WKWebView editor vs the native bar** (Geoff's criteria: native menus, spellcheck, dictation, Writing Tools, native selection and find, byte-faithful saves). | Medium | S4 decides; native TextKit 2 editor stays the tracked successor. |
 | C-13 | **Core ML embedding inside Claude's sandbox is unproven** (SRCH Q2). | Medium (v1.1) | S14 before Phase M; CPU-only and precompiled fallbacks. |

@@ -63,12 +63,12 @@ Outcome decides Phase L's distribution path (Developer ID DMG vs clone-and-build
 
 Each phase: what it builds, what it needs first, exit check, gates.
 
-### Phase A — Foundations · handoff slice 1 · *prototype exists*
+### Phase A — Foundations · handoff slice 1 · *done 2026-10-03*
 
 | | |
 |---|---|
 | Builds | Swift package (`DuoKit` + `Duo` app + `DuoChecks`), `scripts/bundle.sh`, tokens codegen from `tokens.json`, type styles, `StateGlyph`, window + compact toolbar with per-altitude contents, a three-pane split per altitude (token-coloured 1 pt dividers, collapsible left pane, both altitudes kept alive), fixture model + loader, launch flags for each §0.2 state, content and window capture, `scripts/check-ui.sh`, `scripts/pixels.py`. Reference PNGs (done). |
-| Exit | Every state launches from one flag; `check-ui.sh` captures and compares all six; pane edges and colours exact; toolbar contents and order match. Left-pane collapse verified (in progress when paused). |
+| Exit | Every state launches from one flag; `check-ui.sh` captures and compares all six; pane edges and colours exact; toolbar contents and order match; left-pane collapse verified at both altitudes (F-5, F-9). Review images: `docs/plan/review/phase-a/`. |
 | Gates | ❓ G1 (toolchain/distribution), gate zero. |
 
 ### Phase B — Static UI from the fixture · slices 2–3
