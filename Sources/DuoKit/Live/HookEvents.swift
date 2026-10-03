@@ -157,6 +157,8 @@ extension Attention {
 /// Duo's own small state file (Q-13): seen marks now; the registry later (Phase E).
 public struct DuoState: Codable, Sendable, Equatable {
     public var seen: [String: Double] = [:]
+    /// The Home folder Duo chose (DL-42), so a second HOME.md never silently takes over.
+    public var home: String?
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {
         (try? Data(contentsOf: url)).flatMap { try? JSONDecoder().decode(DuoState.self, from: $0) } ?? DuoState()

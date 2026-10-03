@@ -91,6 +91,7 @@ public final class AppModel {
     @ObservationIgnored private var refreshing = false
     /// Duo's "seen" marks (handoff §10): looking at a session clears ready-for-review.
     @ObservationIgnored public var seen: [String: Double] = [:]
+    @ObservationIgnored public var rememberedHome: String?
 
     public var visibleTerminal: TerminalSession? { visibleSessionId.flatMap { terminals.existing($0) } }
 
@@ -106,7 +107,9 @@ public final class AppModel {
     public func startLive(root: URL) {
         liveRoot = root
         terminalsMode = .live
-        seen = DuoState.load().seen
+        let state = DuoState.load()
+        seen = state.seen
+        rememberedHome = state.home
         fixture = LiveSnapshot.empty()  // never show the design fixture while the first scan runs
         refreshLive()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
@@ -123,7 +126,7 @@ public final class AppModel {
             seen[id] = Date().timeIntervalSince1970
             DuoState.update { $0.seen[id] = seen[id] }
         }
-        let ctx = LiveSnapshot.Context(root: root, events: DuoPaths.events, seen: seen)
+        let ctx = LiveSnapshot.Context(root: root, rememberedHome: rememberedHome, events: DuoPaths.events, seen: seen)
         Task.detached(priority: .utility) { [weak self] in
             let beacons = Beacon.readAll()
             let (snapshot, folders) = LiveSnapshot.build(ctx, beacons: beacons)
@@ -140,6 +143,11 @@ public final class AppModel {
             merged.sessions.append(s)
         }
         liveFolders = folders
+        if let home = snapshot.home, let folder = folders[home.name]?.path, folder != rememberedHome {
+            // First choice, or the remembered one is gone: remember what is in use now (DL-42).
+            rememberedHome = folder
+            DuoState.update { $0.home = folder }
+        }
         let mine = Set(terminals.all.compactMap { t -> Int32? in t.view.process?.shellPid })
         liveElsewhere = Set(beacons.filter { !mine.contains($0.pid) }.map(\.sessionId))
         if merged != fixture { fixture = merged }

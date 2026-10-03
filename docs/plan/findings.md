@@ -192,6 +192,7 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - **Cost of a refresh:** 2.5 ms for the 7-project demo workspace, 4–5 ms for `~/repos` and `~`, warm (first scan 8–28 ms); reading beacons 0.2 ms. The 2 s poll is cheap; file watching moves down the list.
 - **Resumable count:** idle sessions with a live process are no longer counted in `n idle` / `n idle, resumable` (C-16).
 - No trust dialog for a new session in `.build/ws/payments/checkout-redesign`: trust follows the enclosing git repo here (S1 saw it per folder outside a repo).
+- **Home is remembered (DL-42):** the chosen Home folder is stored in `Duo/state.json`. Verified live: after a run chose `.build/ws/home`, adding a newer `zz-other/HOME.md` didn't move Home. The notice naming competing Homes, with "Use this one", isn't designed (§13) and isn't built.
 - 85 checks pass.
 
 ## F-27 · Phase E3: session titles from the transcript (2026-10-03)
