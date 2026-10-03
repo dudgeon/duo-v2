@@ -26,7 +26,9 @@ struct DuoApp: App {
         let model = AppModel(fixture: fixture)
         options.state?.apply(to: model)
         if options.collapseLeft { model.leftCollapsed = true }
-        if let t = options.terminals, t.hasPrefix("demo") {
+        if let ws = options.workspace {
+            model.startLive(root: URL(fileURLWithPath: (ws as NSString).expandingTildeInPath))
+        } else if let t = options.terminals, t.hasPrefix("demo") {
             let root = t.split(separator: ":", maxSplits: 1).dropFirst().first.map(String.init)
                 ?? FileManager.default.currentDirectoryPath + "/.build/demo"
             model.terminalsMode = .demo(root: root)

@@ -11,7 +11,7 @@ struct HomePane: View {
 
     var body: some View {
         let home = model.fixture.home
-        let tabs = home.map { model.fixture.liveSessions(inProject: $0.name) } ?? []
+        let tabs = home.map { model.tabSessions(inProject: $0.name) } ?? []
         VStack(spacing: 0) {
             HStack(spacing: DuoSpace.gapRowItems) {
                 Text("★ \(home?.name ?? "home")")
@@ -29,7 +29,7 @@ struct HomePane: View {
 
             HStack(spacing: 16) {
                 ForEach(tabs) { s in
-                    let active = s.name == model.homeTab
+                    let active = s.tabKey == model.homeTab
                     HStack(spacing: DuoSpace.gapGlyphToLabel) {
                         StateGlyph(s.state, on: .console(active: active))
                         Text(s.name)
@@ -38,7 +38,7 @@ struct HomePane: View {
                             .lineLimit(1)
                     }
                     .contentShape(Rectangle())
-                    .onActivate { model.homeTab = s.name }
+                    .onActivate { model.homeTab = s.tabKey }
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                 }
@@ -349,7 +349,7 @@ struct HomePointerCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .bordered(DuoSpace.pointerCardPadding, color: DuoColor.controlEdge, dashed: true)
         .contentShape(Rectangle())
-        .onActivate { model.homeTab = session.name; model.focusHomeRequest += 1 }
+        .onActivate { model.homeTab = session.tabKey; model.focusHomeRequest += 1 }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(session.name), needs you, waiting in the Home terminal")
     }

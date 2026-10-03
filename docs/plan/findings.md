@@ -184,6 +184,19 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-25 · Phase E: live workspace on real folders (2026-10-03)
+
+`Duo --workspace <root>` builds the same snapshot the fixture provides from real sources and refreshes it every 2 s: `PROJECT.md`/`HOME.md` frontmatter (goal, health slug, next), topic from the parent folder, each project's `.duo/sessions.json`, and beacons. Verified on `.build/ws` (`scripts/make-demo-workspace.py`):
+
+- **Projects, topics, health and next** render on the map from frontmatter alone. Review image: `docs/plan/review/phase-e/live-home.png`.
+- **`+ New session`** mints an id, writes it to the project's index first (atomic, byte-equal writes skipped), then starts `claude --session-id <id>` in the folder. The session appears under the name Claude gives it (the beacon's `name`, e.g. `checkout-redesign-ba…`). Review image: `live-new-session.png`.
+- **Sessions started outside Duo** appear in the project whose folder contains their `cwd` (resolved paths), without being written to the index.
+- **A session that was never used can't be resumed.** Claude writes the transcript on the first message, so `--resume <id>` fails with "No conversation found with session ID". Duo now resumes only when `ClaudeStorage.transcript(sessionId:cwd:)` finds the file, and otherwise starts fresh with the same `--session-id`. Seen with the Home session after a relaunch; fixed and re-verified (the TUI starts in `~/…/.build/ws/home`).
+- **Claude reports `idle` for a session sitting at its prompt.** The tab strips filtered on live states, so an open session lost its tab. Tabs now show live sessions plus any session Duo holds a terminal for (C-16).
+- **Captures with the screen locked:** computer-use and `screencapture -l` both fail while the session is locked and the display asleep. Duo's frame-view fallback draws the panes but not the terminals' layers (blank white). `--then …,dump` with `open --stderr` reads the terminal text instead.
+- **No orphans:** quitting through Apple Events leaves no `claude --session-id` / `--resume` processes.
+- **Fixture mode is unchanged:** 0 differing pixels in all six states against HEAD before these changes. 58 checks pass (index round trip, byte-equal skip, snapshot attribution by cwd, archived sessions hidden, groups by id, counts).
+
 ## F-24 · Spike S10: the storage encoder calibrates against this machine (2026-10-03)
 
 `ClaudeStorage.encode` (non-alphanumerics → `-`; over 200 characters → first 200 + `-` + base-36 `|Java hashCode|`) matches **13 of 13** folders in `~/.claude/projects`, with 0 collisions and 0 mismatches. It runs as a check (`DuoChecks`, 34 checks now) and is the self-calibration CONS §6.3 requires before any physical operation. No path here exceeds 200 characters, so the hash branch rests on the path-binding research's reproduction until a long-path session exists.

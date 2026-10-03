@@ -12,6 +12,18 @@ public enum ClaudeStorage {
     public static var projects: URL { root.appending(path: "projects") }
     public static var sessions: URL { root.appending(path: "sessions") }
 
+    /// A session's transcript, if Claude has written one. Claude writes it on the first message,
+    /// so a session that was started and never used has none and can't be resumed (F-25).
+    /// Looks in the cwd's folder first, then every project folder (the session may have moved).
+    public static func transcript(sessionId: String, cwd: String) -> URL? {
+        let fm = FileManager.default
+        let name = sessionId + ".jsonl"
+        let direct = projects.appending(path: encode(URL(fileURLWithPath: cwd).resolvingSymlinksInPath().path)).appending(path: name)
+        if fm.fileExists(atPath: direct.path) { return direct }
+        let dirs = (try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil)) ?? []
+        return dirs.map { $0.appending(path: name) }.first { fm.fileExists(atPath: $0.path) }
+    }
+
     /// The folder name Claude Code stores a working directory's sessions under: every character
     /// outside [A-Za-z0-9] becomes "-"; over 200 characters, the first 200 plus "-" and a base-36
     /// hash of the unsanitized path (Java's String.hashCode, absolute value).

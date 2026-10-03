@@ -128,6 +128,7 @@ Shared by everything after it, including both PRDs.
 | Needs | S9, S10, Phase D. |
 | Exit | Delete the cache → identical UI (DL-1). Fixture mode still reproduces every screenshot. |
 | Gates | ⛔ design: folder moved/missing banner (LR-23); first run, no projects, no Home, nothing-needs-you empty states (§8, §13). ❓ how Home is marked (§11). ❓ G3 (vocabulary). |
+| Status | **E1 built (F-25):** discovery, HOME.md (DL-42), `.duo/sessions.json`, beacon attention, live snapshot with 2 s refresh, `--workspace`, `+ New session`, resume-or-restart, never-two-writers by beacon pid. **Next (E2):** hooks via per-session `--settings` (needs-you edges, the verbatim question for cards, `Stop` for ready-for-review) and the seen mark (C-16); session titles from transcripts when Claude hasn't named one (LR-6); the rebuildable cache and registry; file watching in place of polling. |
 
 ### Phase F — The CLI · slices 6–7
 

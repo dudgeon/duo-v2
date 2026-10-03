@@ -31,7 +31,7 @@ struct ProjectSidebarPane: View {
                     }
                     HStack(spacing: DuoSpace.gapButtonToButton) {
                         Button("Resume a session") {}.buttonStyle(.duo)
-                        Button("+ New session") {}.buttonStyle(.duo)
+                        Button("+ New session") { model.newSession() }.buttonStyle(.duo)
                     }
                     .padding(.horizontal, DuoSpace.panePadding)
                     .padding(.vertical, 14)
@@ -268,11 +268,11 @@ struct ConsolePane: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        let tabs = model.currentProject.map { model.fixture.liveSessions(inProject: $0.name) } ?? []
+        let tabs = model.currentProject.map { model.tabSessions(inProject: $0.name) } ?? []
         VStack(spacing: 0) {
             HStack(spacing: 18) {
                 ForEach(tabs) { s in
-                    let active = s.name == model.consoleTab
+                    let active = s.tabKey == model.consoleTab
                     HStack(spacing: DuoSpace.gapGlyphToLabel) {
                         StateGlyph(s.state, on: .console(active: active))
                         Text(s.name)
@@ -281,11 +281,13 @@ struct ConsolePane: View {
                             .lineLimit(1)
                     }
                     .contentShape(Rectangle())
-                    .onActivate { model.openConsoleTab(s.name) }
+                    .onActivate { model.openConsoleTab(s.tabKey) }
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                 }
-                Text("+").duoText(.mono).foregroundStyle(DuoColor.consoleText2).accessibilityLabel("New session")
+                Text("+").duoText(.mono).foregroundStyle(DuoColor.consoleText2)
+                    .onActivate { model.newSession() }
+                    .accessibilityLabel("New session")
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, DuoSpace.panePadding)

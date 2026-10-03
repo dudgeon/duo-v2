@@ -24,7 +24,11 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var summary: String?
         public var forkOf: String?
         public var document: String?
+        /// The Claude Code session id, for live sessions (Phase E). Fixture sessions have none.
+        public var sessionId: String?
         public var id: String { "\(project)/\(name)" }
+        /// What console tabs and terminals are keyed by: the session id when there is one.
+        public var tabKey: String { sessionId ?? name }
     }
 
     public struct Group: Codable, Sendable, Equatable {

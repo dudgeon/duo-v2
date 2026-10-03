@@ -56,6 +56,7 @@ public enum FixtureHarness {
         case "home": model.goHome()
         case "zoom-out": model.zoomOut()
         case "focus-tile": model.moveTileFocus(dx: 0, dy: 0)
+        case "new": model.newSession()
         case "dump":
             for t in model.terminals.all.sorted(by: { $0.key < $1.key }) {
                 t.view.selectAll()

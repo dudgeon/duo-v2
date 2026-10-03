@@ -15,6 +15,8 @@ public enum TerminalsMode: Sendable, Equatable {
     case off
     /// Real `claude` sessions in scratch folders under `root`, one per fixture project.
     case demo(root: String)
+    /// Real projects and sessions (Phase E): terminals resume sessions by id (DL-14).
+    case live
 }
 
 /// Window-level UI state. One instance per window; views read it from the environment.
@@ -36,7 +38,7 @@ public final class AppModel {
     // Inside a project
     public var selectedSidebarItem: String?     // group name or Session.id
     public var expandedGroups: Set<String> = []
-    public var consoleTab: String?              // Session.name
+    public var consoleTab: String?              // Session.tabKey (id when live, else name)
     public var rightTab: String?                // "Project", a group name, or a document path
     public var selectedFile: String?            // path relative to the project
 
@@ -51,12 +53,95 @@ public final class AppModel {
     public var terminalsMode: TerminalsMode = .off
     @ObservationIgnored public let terminals = TerminalStore()
 
-    /// The terminal for a session, created on first use; nil when terminals are off.
-    public func terminal(project: String, session: String) -> TerminalSession? {
-        guard case .demo(let root) = terminalsMode else { return nil }
-        let key = "\(project)/\(session)"
-        return terminals.session(key, command: .newClaude(sessionID: UUID().uuidString.lowercased(), prompt: nil),
-                                 cwd: (root as NSString).appendingPathComponent(project))
+    /// The terminal for a session, created on first use; nil when terminals are off, or when the
+    /// session is running somewhere else (never two writers, LR-8).
+    public func terminal(project: String, session key: String) -> TerminalSession? {
+        switch terminalsMode {
+        case .off:
+            return nil
+        case .demo(let root):
+            return terminals.session("\(project)/\(key)", command: .newClaude(sessionID: UUID().uuidString.lowercased(), prompt: nil),
+                                     cwd: (root as NSString).appendingPathComponent(project))
+        case .live:
+            if let mine = terminals.existing(key) { return mine }
+            guard let s = fixture.sessions(inProject: project).first(where: { $0.tabKey == key }),
+                  let id = s.sessionId, let folder = liveFolders[project] else { return nil }
+            if liveElsewhere.contains(id) { return nil }  // shown as running elsewhere
+            let resumable = ClaudeStorage.transcript(sessionId: id, cwd: folder.path) != nil
+            return terminals.session(key, command: resumable ? .resumeClaude(sessionID: id) : .newClaude(sessionID: id, prompt: nil),
+                                     cwd: folder.path)
+        }
+    }
+
+    /// A pane's session tabs: live sessions, plus any Duo holds a terminal for. A Claude process
+    /// sitting at its prompt reports `idle`, but it is open, so it keeps its tab (findings F-25).
+    public func tabSessions(inProject project: String) -> [Fixture.Session] {
+        fixture.sessions(inProject: project).filter {
+            [.needsYou, .readyForReview, .working].contains($0.state) || terminals.existing($0.tabKey) != nil
+        }
+    }
+
+    // MARK: - Live workspace (Phase E)
+
+    @ObservationIgnored public var liveRoot: URL?
+    @ObservationIgnored public var liveFolders: [String: URL] = [:]
+    /// Live sessions whose process Duo doesn't own (Terminal, the Desktop app, another Duo).
+    public var liveElsewhere: Set<String> = []
+    @ObservationIgnored private var refreshTimer: Timer?
+
+    /// Switches to real projects under `root`, refreshing every 2 s from disk and beacons.
+    public func startLive(root: URL) {
+        liveRoot = root
+        terminalsMode = .live
+        refreshLive()
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refreshLive() }
+        }
+    }
+
+    public func refreshLive() {
+        guard let root = liveRoot else { return }
+        let beacons = Beacon.readAll()
+        let (snapshot, folders) = LiveSnapshot.build(.init(root: root), beacons: beacons)
+        // Sessions Duo started but Claude hasn't written a beacon for yet keep their tab.
+        var merged = snapshot
+        for s in fixture.sessions where s.sessionId != nil && terminals.existing(s.tabKey) != nil
+            && !merged.sessions.contains(where: { $0.sessionId == s.sessionId }) {
+            merged.sessions.append(s)
+        }
+        liveFolders = folders
+        let mine = Set(terminals.all.compactMap { t -> Int32? in t.view.process?.shellPid })
+        liveElsewhere = Set(beacons.filter { !mine.contains($0.pid) }.map(\.sessionId))
+        if merged != fixture { fixture = merged }
+        // Home is always on (brief: the director agent); its empty state isn't designed (§13), so
+        // live mode starts one Home session when there is none (concerns C-15).
+        if let home = fixture.home {
+            let homeSessions = fixture.sessions(inProject: home.name)
+            if homeSessions.isEmpty { newSession(in: home.name) }
+            if homeTab == nil || !fixture.sessions(inProject: home.name).contains(where: { $0.tabKey == homeTab }) {
+                homeTab = fixture.sessions(inProject: home.name).first?.tabKey
+            }
+        }
+    }
+
+    /// `+ New session` (handoff §6.2): a new Claude Code session in the current project's folder,
+    /// with a Duo-minted id recorded in the project's session index first (CONS FR-7.7.7).
+    public func newSession() {
+        guard let project = currentProject?.name else { return }
+        newSession(in: project)
+        consoleTab = fixture.sessions.last?.tabKey
+    }
+
+    public func newSession(in project: String) {
+        guard terminalsMode == .live, let folder = liveFolders[project] else { return }
+        let id = UUID().uuidString.lowercased()
+        var index = SessionIndex.load(project: folder)
+        index.sessions.append(.init(sessionId: id))
+        try? index.save(project: folder)
+        _ = terminals.session(id, command: .newClaude(sessionID: id, prompt: nil), cwd: folder.path)
+        fixture.sessions.append(Fixture.Session(name: "New session", project: project, state: .working, wait: "now",
+                                                question: nil, options: nil, summary: nil, forkOf: nil, document: nil,
+                                                sessionId: id))
     }
 
     public init(fixture: Fixture) {
@@ -85,7 +170,7 @@ public final class AppModel {
             ?? SidebarRow.mostUrgent(live)
         altitude = .project(name)
         peekOpen = false
-        consoleTab = target?.name
+        consoleTab = target?.tabKey
         if let target { lastVisitedSession = target.id }
         if let target, let group = fixture.groups.first(where: { g in g.project == name && g.sessions.contains(target.name) }) {
             selectedSidebarItem = group.name
@@ -113,7 +198,7 @@ public final class AppModel {
     /// `⇧⌘H`: All projects with the Home terminal focused.
     public func goHome() {
         zoomOut()
-        if let s = fixture.needsYou.first(where: { $0.project == fixture.home?.name }) { homeTab = s.name }
+        if let s = fixture.needsYou.first(where: { $0.project == fixture.home?.name }) { homeTab = s.tabKey }
         focusHomeRequest += 1
     }
 
@@ -125,10 +210,10 @@ public final class AppModel {
 
     /// Opens or focuses a session's console tab inside the current project. Liveness is
     /// re-checked here once sessions are real (LR-8).
-    public func openConsoleTab(_ sessionName: String) {
+    public func openConsoleTab(_ key: String) {
         guard let project = currentProject?.name,
-              let s = fixture.sessions(inProject: project).first(where: { $0.name == sessionName }) else { return }
-        consoleTab = s.name
+              let s = fixture.sessions(inProject: project).first(where: { $0.tabKey == key || $0.name == key }) else { return }
+        consoleTab = s.tabKey
         lastVisitedSession = s.id
     }
 

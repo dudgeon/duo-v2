@@ -21,4 +21,4 @@ Read `README.md` first for build commands and layout.
 
 ## Running the app from a Claude session
 
-`scripts/check-ui.sh` and `build/Duo.app/Contents/MacOS/Duo --state … --capture …` open a window briefly and quit. Captures need no permissions; `--capture-window` uses Screen Recording if granted, otherwise draws the frame view.
+`scripts/check-ui.sh` and `build/Duo.app/Contents/MacOS/Duo --state … --capture …` open a window briefly and quit. Captures need no permissions; `--capture-window` uses Screen Recording if granted, otherwise draws the frame view (terminals then show as blank panes: their text is in the layer, F-25). With the screen locked, computer-use can't capture either; add `dump` to `--then` and pass `open --stderr <file>` to read each terminal's text. `--workspace <root>` runs on real folders and starts real Claude sessions (Home starts one on launch); quit with `osascript -e 'tell application id "com.dudgeon.duo" to quit'` so terminals are cleaned up, never `pkill`.
