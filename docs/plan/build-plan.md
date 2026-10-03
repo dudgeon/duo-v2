@@ -102,7 +102,7 @@ Each is a throwaway target or branch with pass/fail written before it starts. Ne
 | S10 | **Encoder passed (F-24); relocation and retention still to test.** *Changed:* shared `~/.claude` mechanics (DL-14): full path encoder incl. >200-char rule and self-calibration, `--session-id`, `--resume <id>` from any cwd, the `relocated` record, retention read | E, J |
 | S11 | *New:* fork lineage detection for threads (§11) | G |
 | S12 | *New:* an answer channel for a waiting interactive session (§12 Q1 option C; Agent View's inline reply) | H |
-| S8 | *Changed:* CLI transport from a sandboxed session (DL-15): loopback TCP + token, name TBD (DL-16) | F |
+| S8 | *Changed:* CLI transport from a sandboxed session (DL-15). **Passed (F-29):** Unix socket + token with a per-session `allowUnixSockets` grant (DL-43); `scripts/check-sandbox.sh` reproduces it under Seatbelt | F |
 | S13 | *New (SRCH P0):* Core ML conversion of `bge-small-en-v1.5`, reproducible, checksummed; ranking parity with the POC's golden set (SRCH Q3) | M |
 | S14 | *New (SRCH P0):* Core ML query embedding inside Claude Code's sandbox with no writes outside allowed paths; CPU-only and precompiled-model fallbacks (SRCH Q2). Includes whether model compilation works without Xcode (`MLModel.compileModel` at runtime vs `coremlc`) | M |
 | S15 | *New (SRCH P0):* indexing throughput on the slowest supported Apple silicon; corpus size on the reference machine (SRCH NFR-1, NFR-3) | M |
@@ -135,7 +135,8 @@ Shared by everything after it, including both PRDs.
 | | |
 |---|---|
 | Builds | Two parts with one name (DL-16) and one command table generating help and docs (LR-52): **app commands** over loopback TCP + per-launch token (list needs-you, open project, open/resume session, group/ungroup, open file, session note/next, orientation reads LR-53); **read-only commands** that work with the app closed and inside Claude's sandbox: `search` and `similar` (SRCH L10, FR-7.7), later inventory reads. Installed for Duo terminals and plain Terminal, coexisting with legacy `duo` (DL-15, DL-16). `doctor`. Consent for irreversible actions (LR-57). Detect legacy Duo's global skill/hooks/`CLAUDE.md` block and warn (DL-16). Claude-facing guidance (skill) that prefers Duo search over grep for cross-project questions (SRCH FR-7.7.6). |
-| Needs | S8; S14 for the search half. |
+| Needs | S8 (passed, F-29); S14 for the search half. |
+| Status | **F1 built (F-29):** `duo2` with `help`, `doctor`, `ping`, `needs-you`, `projects`, `open`; socket server; PATH and environment in Duo terminals; per-session sandbox grant and allow rule. **Next:** `--append-system-prompt` telling sessions about `duo2` (DL-15); session note/next (LR-5), group/ungroup, open file; generated docs from the command table; legacy detection (DL-39). |
 | Gates | ❓ CLI name (DL-16). ❓ neutralise legacy global instructions (DL-16). |
 
 ### Phase G — Groups and threads · slice 7

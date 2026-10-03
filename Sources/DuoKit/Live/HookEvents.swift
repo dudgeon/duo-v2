@@ -1,3 +1,4 @@
+import DuoControl
 import Foundation
 
 /// Where Duo keeps its own state: `~/Library/Application Support/Duo/` (Q-13 default).
@@ -23,13 +24,21 @@ public enum HookEvents {
     /// Writes (or rewrites) the session's settings file and returns its path.
     public static func settingsFile(for sessionId: String, in dir: URL = DuoPaths.events) throws -> URL {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let log = file(for: sessionId, in: dir).path.replacingOccurrences(of: "'", with: "'\\''")
+        let folder = dir.path.replacingOccurrences(of: "'", with: "'\\''")
         // One printf per event, so an event is (nearly always) one write; the reader skips any
         // line that doesn't parse. `tr` folds pretty-printed payloads onto one line (newlines
-        // inside JSON strings are already escaped).
-        let command = #"p=$(tr -d '\n'); printf '{"at":%s,"e":%s}\n' "$(date +%s)" "$p" >> '"# + log + "'"
+        // inside JSON strings are already escaped). Events go to the file of the payload's
+        // session_id: `/clear` and `/resume` change the session inside one process (F-29).
+        let command = #"p=$(tr -d '\n'); i=$(printf %s "$p" | sed -n 's/^{ *"session_id" *: *"\([0-9A-Za-z-]*\)".*/\1/p'); "#
+            + #"printf '{"at":%s,"e":%s}\n' "$(date +%s)" "$p" >> '"# + folder + #"'/"${i:-"# + sessionId + #"}.jsonl""#
         let hook: [String: Any] = ["hooks": [["type": "command", "command": command]]]
-        let settings: [String: Any] = ["hooks": Dictionary(uniqueKeysWithValues: names.map { ($0, [hook]) })]
+        var settings: [String: Any] = ["hooks": Dictionary(uniqueKeysWithValues: names.map { ($0, [hook]) })]
+        // Lets duo2 reach Duo from inside Claude's sandbox: this one socket only (DL-43, F-29).
+        // A no-op when the user's sandbox is off.
+        settings["sandbox"] = ["network": ["allowUnixSockets": [ControlEndpoint.defaultSocket]]]
+        // Duo's own CLI reads and navigates; it needs no approval. Irreversible commands, when
+        // they exist, ask for consent in the app (LR-57).
+        settings["permissions"] = ["allow": ["Bash(duo2:*)"]]
         let url = dir.appending(path: "\(sessionId).settings.json")
         let data = try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
         if (try? Data(contentsOf: url)) != data { try data.write(to: url, options: .atomic) }

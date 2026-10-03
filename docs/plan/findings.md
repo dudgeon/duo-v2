@@ -184,6 +184,25 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-29 · Spike S8: duo2 reaches Duo from inside Claude's sandbox (2026-10-03)
+
+**Passes, with a different transport than DL-15 assumed.** Tested with sandboxed headless Haiku sessions (`sandbox.enabled: true`) and then reproduced without tokens under Seatbelt (`scripts/check-sandbox.sh`, Geoff's suggestion):
+
+| Sandbox setting | Loopback TCP | Unix socket | Write to `$HOME` |
+|---|---|---|---|
+| default | blocked (EPERM) | blocked (EPERM) | blocked |
+| `network.allowLocalBinding: true` | works | blocked | blocked |
+| `network.allowedDomains: [localhost]` | blocked | — | — |
+| `excludedCommands: [duo2]` + allow rule | blocked | — | — |
+| `network.allowUnixSockets: [<socket>]` | — | **works for that path only** | blocked |
+
+- **Claude's macOS profile** (from the binary's template) is deny-by-default and turns each allowed socket into `(allow network-outbound (remote unix-socket (subpath "<path>")))`; `allowUnixSockets` is honoured from managed, `--settings` and user settings, not project settings, so Duo's per-session file can grant it. Decision: DL-43.
+- **Claude Code withholds its "device tools"** in a session whose sandbox allows any Unix socket or local binding (its own refusal strings say so). Duo's allowance therefore costs Duo-started sessions those tools when the user's sandbox is on (C-17).
+- **`duo2`** (Foundation-only, in `Duo.app/Contents/Helpers`, on PATH in Duo terminals with `DUO_SOCKET`/`DUO_TOKEN`): `help`, `doctor`, `ping`, `needs-you`, `projects`, `open`, from one command table (LR-52). Wrong token refused; bad command exits 64; app unreachable exits 69 with a pointer to `doctor`. From a Duo terminal, Haiku ran `duo2 projects` with no approval prompt (`Bash(duo2:*)` is allowed per session) and got the live project list.
+- **`/clear` (and `/resume`) change the session inside one process.** Duo kept the tab keyed to the old id and wrote the new session's hook events into the old file. Now hook events go to the file of the payload's `session_id` (first key only, so text in tool input can't redirect them), and each refresh re-keys a terminal whose process reports a new id, filing it in the same project with `provenance: continued-from:<old id>`. Verified live: `/clear` then a prompt gave a tab titled "Say hello", re-keyed and filed.
+- **No-window launches (F-26) recurred twice** with the trace showing `didFinishLaunching windows=0` and none at +3 s. `.defaultLaunchBehavior(.presented)` and `.restorationBehavior(.disabled)` didn't stop it. A watchdog now activates the app and asks SwiftUI to reopen when no window is visible 0.5 s after launch; not yet seen firing (11 launches since, all with a window). The capture path's `exit()` now ends sessions and removes the endpoint first.
+- 89 checks pass; `scripts/check-sandbox.sh` passes.
+
 ## F-28 · Disk reads can block: refresh off the main thread, stay out of protected folders (2026-10-03)
 
 - **Reads in `~/Desktop`, `~/Documents` and `~/Downloads` block** until the macOS privacy prompt is answered. With the screen locked, `ls ~/Documents` from a Claude session hung until a 5 s alarm killed it, and a snapshot scan rooted at `~` never returned. `Pictures`, `Movies`, `Music` and `repos` answered at once.

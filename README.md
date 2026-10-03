@@ -50,6 +50,12 @@ Visual comparison against the design targets, writing `build/ui/<state>-compare.
 scripts/check-ui.sh
 ```
 
+Inside Claude's sandbox, `duo2` must reach the app through one allowed socket. This runs it under macOS Seatbelt the way Claude Code does, with no tokens spent:
+
+```bash
+scripts/check-sandbox.sh
+```
+
 Design reference PNGs need Google Chrome to re-render ([ADR-0002](docs/adr/0002-visual-target-harness.md)).
 
 ## Where things are
@@ -58,6 +64,8 @@ Design reference PNGs need Google Chrome to re-render ([ADR-0002](docs/adr/0002-
 |---|---|
 | `Sources/DuoKit/` | Views, model, design tokens, fixture harness |
 | `Sources/Duo/` | The app entry point |
+| `Sources/DuoControl/` | The app ↔ `duo2` protocol (Foundation only) |
+| `Sources/duo2/` | The `duo2` command line, bundled in `Duo.app/Contents/Helpers` |
 | `Sources/DuoChecks/` | Logic checks (`swift run DuoChecks`) |
 | `scripts/` | Bundle, token generation, UI comparison, pixel sampling |
 | `docs/design/build-handoff/` | The design target: screens, tokens, fixture, comparison tools |

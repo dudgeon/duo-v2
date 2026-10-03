@@ -42,6 +42,9 @@ public enum FixtureHarness {
         height: DuoMetric.designWindow.height - designContentTop
     )
 
+    /// Cleanup the app registers for the capture path's direct exit.
+    nonisolated(unsafe) public static var beforeExit: (@MainActor () -> Void)?
+
     /// Runs one scripted action (`--then`), as a click or chord would.
     static func perform(_ action: String, on model: AppModel) {
         let parts = action.split(separator: ":", maxSplits: 1).map(String.init)
@@ -116,6 +119,7 @@ public enum FixtureHarness {
                 failed = true
             }
             fflush(stdout)
+            beforeExit?()  // exit() skips willTerminate: end sessions, remove the endpoint
             exit(failed ? 1 : 0)
         }
     }

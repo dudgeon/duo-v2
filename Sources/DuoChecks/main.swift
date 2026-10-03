@@ -1,3 +1,4 @@
+import DuoControl
 import DuoKit
 import Foundation
 
@@ -173,6 +174,8 @@ func repoFixture() throws -> Fixture {
     let sj = try JSONSerialization.jsonObject(with: Data(contentsOf: settings)) as? [String: Any]
     let stopCmd = (((sj?["hooks"] as? [String: Any])?["Stop"] as? [[String: Any]])?.first?["hooks"] as? [[String: Any]])?.first?["command"] as? String
     check(stopCmd != nil, "settings file has a Stop hook command")
+    let allowed = ((sj?["sandbox"] as? [String: Any])?["network"] as? [String: Any])?["allowUnixSockets"] as? [String]
+    check(allowed == [ControlEndpoint.defaultSocket], "settings allow exactly Duo's socket in the sandbox (DL-43)")
     // Run the real hook command the way Claude does: payload on stdin, pretty-printed.
     func fire(_ payload: String) {
         let p = Process(); p.executableURL = URL(fileURLWithPath: "/bin/sh"); p.arguments = ["-c", stopCmd!]
@@ -208,6 +211,14 @@ func repoFixture() throws -> Fixture {
     check(asked.state == .needsYou && asked.question == "Should I also update the FAQ?", "turn ending in a question: needs you, last paragraph")
     fire(#"{"hook_event_name":"PermissionRequest","tool_name":"Bash","tool_input":{"command":"git push"}}"#)
     check(HookEvents.summarize(HookEvents.read("s1", in: ev))?.question == "Allow `git push`?", "permission prompt names the command")
+    fire(#"{"session_id":"s2-cleared","hook_event_name":"UserPromptSubmit","tool_input":{"note":"{\"session_id\": \"decoy\"}"}}"#)
+    check(HookEvents.read("s2-cleared", in: ev).count == 1 && HookEvents.read("decoy", in: ev).isEmpty,
+          "events follow the payload's session_id (/clear), first key only")
+    let store = TerminalStore()
+    _ = store.session("old-id", command: .shell, cwd: NSTemporaryDirectory())
+    store.rekey("old-id", to: "new-id")
+    check(store.existing("old-id") == nil && store.existing("new-id")?.key == "new-id", "terminal re-keys to the new session id")
+    store.terminateAll()
     try? FileManager.default.removeItem(at: ev)
 
     print("titles")

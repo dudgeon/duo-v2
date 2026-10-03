@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import SwiftTerm
 import SwiftUI
 
@@ -43,6 +44,11 @@ public enum TerminalCommand: Sendable, Equatable {
 
 /// The environment for every child process.
 public enum ChildEnvironment {
+    /// Set once at launch, before any terminal starts.
+    nonisolated(unsafe) public static var control: ControlEndpoint?
+    /// The folder holding `duo2` (`Duo.app/Contents/Helpers`).
+    nonisolated(unsafe) public static var cliDirectory: String?
+
     /// Drops what a parent Claude Code session leaks into Duo's environment when Duo was launched
     /// from one (CLAUDECODE, CLAUDE_CODE_SESSION_ID, messaging socket and token, …; findings
     /// F-17): a child inheriting CLAUDE_CODE_SESSION_ID would write into the parent's session.
@@ -56,6 +62,13 @@ public enum ChildEnvironment {
         env["LANG"] = env["LANG"] ?? "en_US.UTF-8"
         env.removeValue(forKey: "TERM_PROGRAM")
         if let sessionID { env["DUO_SESSION_ID"] = sessionID }  // LR-20
+        // duo2 and how to reach the app (DL-15): on PATH and in the environment, never installed
+        // globally (LR-55).
+        if let c = control {
+            env[ControlEndpoint.socketVariable] = c.socket
+            env[ControlEndpoint.tokenVariable] = c.token
+        }
+        if let bin = cliDirectory { env["PATH"] = bin + ":" + (env["PATH"] ?? "/usr/bin:/bin") }
         return env.map { "\($0.key)=\($0.value)" }
     }
 }
@@ -63,7 +76,7 @@ public enum ChildEnvironment {
 /// One terminal: a view and the process it hosts.
 @MainActor
 public final class TerminalSession {
-    public let key: String
+    public internal(set) var key: String
     public let command: TerminalCommand
     public let cwd: String
     public let view: GuardedTerminalView
@@ -166,6 +179,14 @@ public final class TerminalStore {
     public var all: [TerminalSession] { Array(sessions.values) }
 
     public func terminateAll() { sessions.values.forEach { $0.terminate() } }
+
+    /// The process now hosts another session (`/clear`, `/resume` in the TUI): same terminal,
+    /// new key (F-29).
+    public func rekey(_ old: String, to new: String) {
+        guard old != new, let s = sessions.removeValue(forKey: old) else { return }
+        s.key = new
+        sessions[new] = s
+    }
 }
 
 /// Shows one session's terminal in a pane. The same view moves between slots (Home pane,

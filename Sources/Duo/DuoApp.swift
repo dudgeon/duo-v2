@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import DuoKit
 import SwiftUI
 
@@ -24,6 +25,14 @@ struct DuoApp: App {
             exit(66)
         }
         let model = AppModel(fixture: fixture)
+        // duo2's endpoint (DL-15). Terminals start after the window appears, by which time the
+        // listener is ready; the environment is read when each process starts.
+        let helpers = Bundle.main.bundleURL.appending(path: "Contents/Helpers")
+        if FileManager.default.isExecutableFile(atPath: helpers.appending(path: "duo2").path) {
+            ChildEnvironment.cliDirectory = helpers.path
+        }
+        let server = ControlServer { model.handle($0) }
+        try? server.start { ChildEnvironment.control = $0 }
         options.state?.apply(to: model)
         if options.collapseLeft { model.leftCollapsed = true }
         if let ws = options.workspace {
@@ -47,9 +56,22 @@ struct DuoApp: App {
                 }
             }
         }
+        // Window watchdog (F-29): the first launch of a freshly signed build sometimes finishes
+        // with no window. Activate, then reopen the way a Dock click does.
+        NotificationCenter.default.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main) { _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                MainActor.assumeIsolated {
+                    guard !NSApp.windows.contains(where: { $0.isVisible }) else { return }
+                    FileHandle.standardError.write(Data("trace watchdog: no window, reopening\n".utf8))
+                    NSApp.activate()
+                    _ = NSApp.delegate?.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: false)
+                }
+            }
+        }
+        FixtureHarness.beforeExit = { model.terminals.terminateAll(); server.stop() }
         // End sessions cleanly on quit. Hiding or collapsing never does this (LR-13).
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { model.terminals.terminateAll() }
+            MainActor.assumeIsolated { model.terminals.terminateAll(); server.stop() }
         }
     }
 
@@ -65,6 +87,10 @@ struct DuoApp: App {
                     FixtureHarness.configure(window, model: model, options: options)
                 })
         }
+        // Always open the main window at launch, never restore a closed one: one launch in a few
+        // came up with no window at all (F-26, F-29).
+        .defaultLaunchBehavior(.presented)
+        .restorationBehavior(.disabled)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .defaultSize(width: DuoMetric.designWindow.width, height: DuoMetric.designWindow.height)
         .windowResizability(.contentMinSize)

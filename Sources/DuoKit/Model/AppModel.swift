@@ -143,6 +143,7 @@ public final class AppModel {
             merged.sessions.append(s)
         }
         liveFolders = folders
+        followSessionChanges(beacons)
         if let home = snapshot.home, let folder = folders[home.name]?.path, folder != rememberedHome {
             // First choice, or the remembered one is gone: remember what is in use now (DL-42).
             rememberedHome = folder
@@ -159,6 +160,24 @@ public final class AppModel {
             if homeTab == nil || !fixture.sessions(inProject: home.name).contains(where: { $0.tabKey == homeTab }) {
                 homeTab = fixture.sessions(inProject: home.name).first?.tabKey
             }
+        }
+    }
+
+    /// `/clear` or `/resume` inside a Duo terminal starts or opens another session in the same
+    /// process. File the new id where the old one was, and move the tab with it (F-29).
+    private func followSessionChanges(_ beacons: [Beacon]) {
+        for t in terminals.all {
+            guard let pid = t.view.process?.shellPid, let b = beacons.first(where: { $0.pid == pid }),
+                  b.sessionId != t.key, let old = fixture.sessions.first(where: { $0.tabKey == t.key }),
+                  let folder = liveFolders[old.project] else { continue }
+            var index = SessionIndex.load(project: folder)
+            if !index.sessions.contains(where: { $0.sessionId == b.sessionId }) {
+                index.sessions.append(.init(sessionId: b.sessionId, provenance: "continued-from:\(t.key)"))
+                try? index.save(project: folder)
+            }
+            if consoleTab == t.key { consoleTab = b.sessionId }
+            if homeTab == t.key { homeTab = b.sessionId }
+            terminals.rekey(t.key, to: b.sessionId)
         }
     }
 

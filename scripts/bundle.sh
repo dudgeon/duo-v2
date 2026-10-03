@@ -9,6 +9,7 @@ config="${1:-debug}"
 cd "$root"
 
 swift build -c "$config" --product Duo 2>&1 | grep -vE "ld: warning: search path" || true
+swift build -c "$config" --product duo2 2>&1 | grep -vE "ld: warning: search path" || true
 bin="$(swift build -c "$config" --show-bin-path)/Duo"
 [ -x "$bin" ] || { echo "Build failed: no $bin" >&2; exit 1; }
 
@@ -16,6 +17,10 @@ app="$root/build/Duo.app"
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin" "$app/Contents/MacOS/Duo"
+# duo2 lives in its own folder so terminals can put it on PATH without exposing Duo itself.
+mkdir -p "$app/Contents/Helpers"
+cp "$(dirname "$bin")/duo2" "$app/Contents/Helpers/duo2"
+codesign --force --sign - "$app/Contents/Helpers/duo2" >/dev/null 2>&1 || true
 cp "$root/docs/design/build-handoff/fixture.json" "$app/Contents/Resources/fixture.json"
 version="$(git -C "$root" describe --tags --always --dirty 2>/dev/null || echo dev)"
 cat > "$app/Contents/Info.plist" <<PLIST
