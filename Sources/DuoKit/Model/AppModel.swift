@@ -33,6 +33,12 @@ public final class AppModel {
     public var selectedFile: String?            // path relative to the project
 
     public var peekOpen = false
+    /// The selected card in the peek, by Session.id.
+    public var peekSelection: String?
+    /// The session last opened inside a project; selected again on zooming out (flow-zoom-4).
+    public var lastVisitedSession: String?
+    /// Asks the Home terminal to take keyboard focus (consumed by the Home pane).
+    public var focusHomeRequest = 0
 
     public init(fixture: Fixture) {
         self.fixture = fixture
@@ -48,6 +54,91 @@ public final class AppModel {
     public var currentProject: Fixture.Project? {
         guard case .project(let name) = altitude else { return nil }
         return fixture.projects.first { $0.name == name }
+    }
+
+    // MARK: - Navigation (handoff §6.1, §6.2)
+
+    /// Zooms into a project. With no session given, the console opens on the session that needs
+    /// you (or the most recent live one) and the right pane on the document it is editing [P].
+    public func open(project name: String, session sessionName: String? = nil, document: String? = nil) {
+        let live = fixture.liveSessions(inProject: name)
+        let target = sessionName.flatMap { n in fixture.sessions(inProject: name).first { $0.name == n } }
+            ?? SidebarRow.mostUrgent(live)
+        altitude = .project(name)
+        peekOpen = false
+        consoleTab = target?.name
+        if let target { lastVisitedSession = target.id }
+        if let target, let group = fixture.groups.first(where: { g in g.project == name && g.sessions.contains(target.name) }) {
+            selectedSidebarItem = group.name
+            expandedGroups.insert(group.name)
+        } else {
+            selectedSidebarItem = target?.id
+        }
+        if let doc = document ?? target?.document {
+            rightTab = doc
+            selectedFile = doc
+        } else {
+            rightTab = "Project"
+            selectedFile = nil
+        }
+    }
+
+    /// Back to All projects; the session last opened is the selected row (flow-zoom-4).
+    public func zoomOut() {
+        altitude = .allProjects
+        peekOpen = false
+        if let last = lastVisitedSession { selectedActionSession = last }
+        focusedTile = nil
+    }
+
+    /// `⇧⌘H`: All projects with the Home terminal focused.
+    public func goHome() {
+        zoomOut()
+        if let s = fixture.needsYou.first(where: { $0.project == fixture.home?.name }) { homeTab = s.name }
+        focusHomeRequest += 1
+    }
+
+    /// `⌘↩` in the peek: jump into the selected card's project, on that session.
+    public func jumpToPeekSelection() {
+        guard let id = peekSelection, let s = needsYouElsewhere.first(where: { $0.id == id }) else { return }
+        if s.project == fixture.home?.name { goHome() } else { open(project: s.project, session: s.name) }
+    }
+
+    /// Opens or focuses a session's console tab inside the current project. Liveness is
+    /// re-checked here once sessions are real (LR-8).
+    public func openConsoleTab(_ sessionName: String) {
+        guard let project = currentProject?.name,
+              let s = fixture.sessions(inProject: project).first(where: { $0.name == sessionName }) else { return }
+        consoleTab = s.name
+        lastVisitedSession = s.id
+    }
+
+    public func togglePeek() {
+        peekOpen.toggle()
+        if peekOpen { peekSelection = needsYouElsewhere.first?.id }
+    }
+
+    /// `↑` / `↓` in the peek.
+    public func movePeekSelection(by delta: Int) {
+        let ids = needsYouElsewhere.map(\.id)
+        guard !ids.isEmpty else { return }
+        let i = peekSelection.flatMap { ids.firstIndex(of: $0) } ?? 0
+        peekSelection = ids[max(0, min(ids.count - 1, i + delta))]
+    }
+
+    /// Arrow keys between tiles on the map: columns are topics, rows are tiles.
+    public func moveTileFocus(dx: Int, dy: Int) {
+        let columns = fixture.topics.map { fixture.projects(inTopic: $0).map(\.name) }
+        guard let current = focusedTile,
+              let c = columns.firstIndex(where: { $0.contains(current) }),
+              let r = columns[c].firstIndex(of: current) else {
+            focusedTile = columns.first?.first
+            return
+        }
+        let nc = max(0, min(columns.count - 1, c + dx))
+        guard !columns[nc].isEmpty else { return }
+        let nr = dx != 0 ? min(r, columns[nc].count - 1) : max(0, min(columns[nc].count - 1, r + dy))
+        focusedTile = columns[nc][nr]
     }
 
     /// Sessions needing you outside the current project: the toolbar chip's count (handoff §3.1).

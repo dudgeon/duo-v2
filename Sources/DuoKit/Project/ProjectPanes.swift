@@ -70,6 +70,11 @@ struct SidebarRowView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: DuoSpace.gapRowItems) {
                     Chevron(direction: expanded ? .down : .right).frame(width: 10)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            if expanded { model.expandedGroups.remove(row.name) } else { model.expandedGroups.insert(row.name) }
+                        }
+                        .accessibilityLabel(expanded ? "Collapse" : "Expand")
                     StateGlyph(row.state)
                     Text(row.name).duoText(.bodyEmphasis).lineLimit(1)
                     CountPill(text: "group · \(count)", emphasised: true)
@@ -83,7 +88,7 @@ struct SidebarRowView: View {
                 }
                 .padding(.horizontal, DuoSpace.selectionInset)
                 .contentShape(Rectangle())
-                .onTapGesture { model.selectedSidebarItem = row.name }
+                .onTapGesture { model.selectedSidebarItem = row.name; model.rightTab = row.name }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("\(row.name), group of \(count), \(row.state.spokenName)")
                 .accessibilityAddTraits(selected ? .isSelected : [])
@@ -106,6 +111,7 @@ struct SidebarRowView: View {
 
 /// A thread or session row, 26 high: chevron (threads) or a 10 pt spacer, glyph, name, pill, wait.
 struct SidebarLeafRow: View {
+    @Environment(AppModel.self) private var model
     let row: SidebarRow
     let nested: Bool
 
@@ -126,6 +132,7 @@ struct SidebarLeafRow: View {
         .padding(.trailing, DuoSpace.panePadding)
         .frame(height: DuoMetric.rowSession)
         .contentShape(Rectangle())
+        .onTapGesture { model.openConsoleTab(row.name) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(row.name), \(row.state.spokenName)\(row.wait.map { ", waiting \($0)" } ?? "")")
     }
@@ -271,6 +278,8 @@ struct ConsolePane: View {
                             .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2)
                             .lineLimit(1)
                     }
+                    .contentShape(Rectangle())
+                    .onTapGesture { model.openConsoleTab(s.name) }
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                 }

@@ -80,7 +80,7 @@ Each phase: what it builds, what it needs first, exit check, gates.
 | Exit | `overview`, `flow-zoom-1`, `project`, `flow-zoom-2`, `flow-zoom-4` meet §0.3, ignoring the targets' reply buttons (DL-29), the document body (placeholder until Phase I) and the mono font difference (F-12, Q-14). Review images: `docs/plan/review/phase-b/`. |
 | Gates | ⛔ design: Project tab and group page (stub tabs, §3.5). ❓ `Open project` vs `Jump into project` (§12). |
 
-### Phase C — Navigation · slice 4
+### Phase C — Navigation · slice 4 · *built 2026-10-03; exit pending Geoff's chord review (Q-8) and the undesigned ⌘K palette, resume list and idle tier*
 
 | | |
 |---|---|

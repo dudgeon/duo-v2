@@ -7,6 +7,10 @@ import Foundation
 ///   Duo --capture-window out.png               capture the whole window with screencapture(1)
 ///   Duo --fixture path/to/fixture.json         use another fixture file
 ///   Duo --left collapsed                       start with the left pane collapsed
+///   Duo --gallery on                           the component gallery instead of the window
+///   Duo --then open:checkout-redesign,peek     run actions after launch, before capturing
+///                                              (open:<project>, open:<project>/<session>,
+///                                              peek, down, up, jump, home, zoom-out, focus-tile)
 ///
 /// Every flag takes a value. AppKit reads arguments as `-key value` pairs; a valueless flag
 /// swallows the next one, and a path left over is treated as a file to open, which stops the
@@ -17,6 +21,8 @@ public struct LaunchOptions: Sendable {
     public var capturePath: String?
     public var captureWindowPath: String?
     public var collapseLeft = false
+    public var thenActions: [String] = []
+    public var gallery = false
 
     public var capturing: Bool { capturePath != nil || captureWindowPath != nil }
 
@@ -35,6 +41,8 @@ public struct LaunchOptions: Sendable {
             case "--capture": capturePath = it.next()
             case "--capture-window": captureWindowPath = it.next()
             case "--left": collapseLeft = it.next() == "collapsed"
+            case "--gallery": gallery = it.next() == "on"
+            case "--then": thenActions = (it.next() ?? "").split(separator: ",").map(String.init)
             default: break  // AppKit passes its own flags (-NSDocumentRevisionsDebugMode etc.)
             }
         }

@@ -31,16 +31,19 @@ struct DuoApp: App {
 
     var body: some Scene {
         Window("Duo", id: "main") {
-            RootView()
+            Group {
+                if options.gallery { GalleryView() } else { RootView() }
+            }
                 .environment(model)
                 .frame(minWidth: DuoMetric.minimumWindow.width,
                        minHeight: DuoMetric.minimumWindow.height - DuoMetric.toolbarHeight)
                 .background(WindowConfigurator { window in
-                    FixtureHarness.configure(window, options: options)
+                    FixtureHarness.configure(window, model: model, options: options)
                 })
         }
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .defaultSize(width: DuoMetric.designWindow.width, height: DuoMetric.designWindow.height)
         .windowResizability(.contentMinSize)
+        .commands { DuoCommands(model: model) }
     }
 }

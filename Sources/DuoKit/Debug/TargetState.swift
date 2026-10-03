@@ -23,6 +23,7 @@ public enum TargetState: String, CaseIterable, Sendable {
         case .flowZoom3:
             insideCheckout(model)
             model.peekOpen = true
+            model.peekSelection = model.needsYouElsewhere.first?.id
         case .flowZoom4:
             model.fixture = Self.afterCopyReviewAnswered(model.fixture)
             allProjects(model, selected: "checkout-redesign/PRD v2 edits")

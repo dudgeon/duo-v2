@@ -83,6 +83,23 @@ struct ProjectMapPane: View {
                 .padding(DuoSpace.panePadding)
             }
             .scrollIndicators(.automatic)
+            // Arrow keys move between tiles, Enter opens the focused one (handoff §6.3).
+            .focusable()
+            .focusEffectDisabled()
+            .onMoveCommand { direction in
+                switch direction {
+                case .left: model.moveTileFocus(dx: -1, dy: 0)
+                case .right: model.moveTileFocus(dx: 1, dy: 0)
+                case .up: model.moveTileFocus(dx: 0, dy: -1)
+                case .down: model.moveTileFocus(dx: 0, dy: 1)
+                @unknown default: break
+                }
+            }
+            .onKeyPress(.return) {
+                guard let tile = model.focusedTile else { return .ignored }
+                model.open(project: tile)
+                return .handled
+            }
 
             DuoColor.rule.frame(height: 1)
             HStack(spacing: DuoSpace.gapRowItems) {
@@ -136,6 +153,8 @@ struct ProjectTile: View {
                 ForEach(Array(sessions.enumerated()), id: \.element.id) { i, s in
                     TileSessionRow(session: s, selected: model.selectedActionSession == s.id)
                         .padding(.top, i == 0 ? 6 : 0)
+                        .contentShape(Rectangle())
+                        .onTapGesture { model.open(project: project.name, session: s.name) }
                 }
             }
         }
@@ -150,8 +169,11 @@ struct ProjectTile: View {
             }
         }
         .contentShape(Rectangle())
+        .onTapGesture { model.open(project: project.name) }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(tileLabel(sessions))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { model.open(project: project.name) }
     }
 
     private func tileLabel(_ sessions: [Fixture.Session]) -> String {
@@ -281,7 +303,7 @@ struct NeedsYouCard: View {
                     .modifier(QuestionBox(boxed: selected))
             }
             HStack(spacing: DuoSpace.gapButtonToButton) {
-                Button("Open project") {}.buttonStyle(.duo)
+                Button("Open project") { model.open(project: session.project, session: session.name) }.buttonStyle(.duo)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -322,7 +344,7 @@ struct HomePointerCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .bordered(DuoSpace.pointerCardPadding, color: DuoColor.controlEdge, dashed: true)
         .contentShape(Rectangle())
-        .onTapGesture { model.homeTab = session.name }
+        .onTapGesture { model.homeTab = session.name; model.focusHomeRequest += 1 }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(session.name), needs you, waiting in the Home terminal")
     }
@@ -330,6 +352,7 @@ struct HomePointerCard: View {
 
 /// A session with a deliverable to review (handoff §3.2).
 struct ReviewCard: View {
+    @Environment(AppModel.self) private var model
     let session: Fixture.Session
 
     var body: some View {
@@ -340,7 +363,8 @@ struct ReviewCard: View {
                 Text(summary).duoText(.body).fixedSize(horizontal: false, vertical: true)
             }
             HStack(spacing: DuoSpace.gapButtonToButton) {
-                Button("Review") {}.buttonStyle(.duo)
+                Button("Review") { model.open(project: session.project, session: session.name, document: session.document) }
+                    .buttonStyle(.duo)
             }
             .padding(.top, 6)
         }

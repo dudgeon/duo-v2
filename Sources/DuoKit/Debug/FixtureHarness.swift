@@ -42,7 +42,25 @@ public enum FixtureHarness {
         height: DuoMetric.designWindow.height - designContentTop
     )
 
-    public static func configure(_ window: NSWindow, options: LaunchOptions) {
+    /// Runs one scripted action (`--then`), as a click or chord would.
+    static func perform(_ action: String, on model: AppModel) {
+        let parts = action.split(separator: ":", maxSplits: 1).map(String.init)
+        switch parts[0] {
+        case "open":
+            let target = parts.count > 1 ? parts[1].split(separator: "/", maxSplits: 1).map(String.init) : []
+            if let project = target.first { model.open(project: project, session: target.count > 1 ? target[1] : nil) }
+        case "peek": model.togglePeek()
+        case "down": model.movePeekSelection(by: 1)
+        case "up": model.movePeekSelection(by: -1)
+        case "jump": model.jumpToPeekSelection()
+        case "home": model.goHome()
+        case "zoom-out": model.zoomOut()
+        case "focus-tile": model.moveTileFocus(dx: 0, dy: 0)
+        default: FileHandle.standardError.write(Data("Unknown action '\(action)'\n".utf8))
+        }
+    }
+
+    public static func configure(_ window: NSWindow, model: AppModel, options: LaunchOptions) {
         window.isRestorable = false
         window.tabbingMode = .disallowed
         guard options.state != nil || options.capturing else { return }
@@ -60,9 +78,14 @@ public enum FixtureHarness {
                              y: max(screen.minY, screen.maxY - height))
         window.setFrame(CGRect(origin: origin, size: CGSize(width: contentSize.width, height: height)), display: true)
 
+        // Scripted actions, one every 0.6 s, so each change renders before the next.
+        for (i, action) in options.thenActions.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6 * Double(i + 1)) { perform(action, on: model) }
+        }
+
         guard options.capturing else { return }
         // Give SwiftUI and the split view a moment to settle at the new size.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5 + 0.6 * Double(options.thenActions.count)) {
             var failed = false
             do {
                 if let path = options.capturePath {

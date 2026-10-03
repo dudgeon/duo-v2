@@ -4,6 +4,7 @@ import SwiftUI
 /// pane (and later its terminals). Only the active altitude is visible and hit-testable.
 public struct RootView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init() {}
 
@@ -18,6 +19,8 @@ public struct RootView: View {
                 .allowsHitTesting(!model.altitude.isAllProjects)
                 .accessibilityHidden(model.altitude.isAllProjects)
         }
+        // Altitude change: cross-fade, 150 ms, ease-out; none with Reduce Motion (handoff §9).
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: model.altitude)
         .background(DuoColor.pane)
         .toolbar { DuoToolbar() }
         .toolbar(removing: .title)

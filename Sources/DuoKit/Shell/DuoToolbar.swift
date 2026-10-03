@@ -86,8 +86,7 @@ struct ProjectBreadcrumb: View {
     var body: some View {
         HStack(spacing: DuoSpace.gapToolbarProject) {
             Button {
-                model.altitude = .allProjects
-                model.peekOpen = false
+                model.zoomOut()
             } label: {
                 Text("All projects")
                     .duoText(.body)
@@ -116,7 +115,7 @@ struct NeedsYouChip: View {
         if count > 0 {
             let open = model.peekOpen
             Button {
-                model.peekOpen.toggle()
+                model.togglePeek()
             } label: {
                 HStack(spacing: DuoSpace.gapGlyphToLabel) {
                     Circle()
@@ -137,6 +136,9 @@ struct NeedsYouChip: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .popover(isPresented: Binding(get: { model.peekOpen }, set: { model.peekOpen = $0 }), arrowEdge: .bottom) {
+                PeekView().environment(model)
+            }
             .accessibilityLabel("\(count) sessions need you in other projects")
         }
     }

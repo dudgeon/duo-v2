@@ -13,7 +13,8 @@ public enum WindowCapture {
         guard let rep = view.bitmapImageRepForCachingDisplay(in: rect) else { throw CaptureError("Could not allocate a bitmap") }
         view.cacheDisplay(in: rect, to: rep)
         guard let srgb = rep.converting(to: .sRGB, renderingIntent: .default) else { throw CaptureError("Could not convert to sRGB") }
-        let scaled = try resample(srgb, width: Int(rect.width * 2), height: Int(rect.height * 2))
+        let scaled = try resample(srgb, width: Int(rect.width * 2), height: Int(rect.height * 2), force: true)
+        try compositePopovers(of: window, onto: scaled, contentRect: rect)
         guard let png = scaled.representation(using: .png, properties: [:]) else { throw CaptureError("PNG encoding failed") }
         try png.write(to: url)
     }
@@ -43,8 +44,30 @@ public enum WindowCapture {
         FileHandle.standardError.write(Data("note: no Screen Recording permission; drew the frame view instead\n".utf8))
     }
 
-    private static func resample(_ rep: NSBitmapImageRep, width: Int, height: Int) throws -> NSBitmapImageRep {
-        if rep.pixelsWide == width && rep.pixelsHigh == height { return rep }
+    /// Popovers (the peek) are separate windows; draw any that are showing over the capture at
+    /// their on-screen position, so flow-zoom-3 can be compared.
+    private static func compositePopovers(of window: NSWindow, onto rep: NSBitmapImageRep, contentRect: NSRect) throws {
+        let content = window.convertToScreen(window.convertFromBacking(window.convertToBacking(window.contentLayoutRect)))
+        for w in NSApp.windows where w !== window && w.isVisible && String(describing: type(of: w)).contains("Popover") {
+            guard let frameView = w.contentView?.superview ?? w.contentView,
+                  let pop = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds) else { continue }
+            frameView.cacheDisplay(in: frameView.bounds, to: pop)
+                let origin = NSPoint(x: w.frame.minX - content.minX, y: w.frame.minY - content.minY)
+            NSGraphicsContext.saveGraphicsState()
+            guard let context = NSGraphicsContext(bitmapImageRep: rep) else { throw CaptureError("Cannot draw into the capture bitmap") }
+            NSGraphicsContext.current = context
+            // The bitmap is 2x; its point size is the content size.
+            let scale = CGFloat(rep.pixelsWide) / contentRect.width
+            NSGraphicsContext.current?.cgContext.scaleBy(x: scale, y: scale)
+            pop.draw(in: NSRect(origin: origin, size: w.frame.size))
+            NSGraphicsContext.restoreGraphicsState()
+        }
+    }
+
+    /// Redraws into a standard RGBA bitmap at the given size. `force` redraws even at the same
+    /// size, so the result is a format AppKit can draw into (a converted rep may not be).
+    private static func resample(_ rep: NSBitmapImageRep, width: Int, height: Int, force: Bool = false) throws -> NSBitmapImageRep {
+        if !force, rep.pixelsWide == width && rep.pixelsHigh == height { return rep }
         guard let out = NSBitmapImageRep(
             bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height, bitsPerSample: 8,
             samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
