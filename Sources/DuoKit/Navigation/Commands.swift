@@ -1,23 +1,24 @@
 import SwiftUI
 
 /// Every Duo chord in one table (LR-60). Menus are generated from it, so a chord is changed in
-/// exactly one place. Proposed chords are marked; the map is locked after Geoff reviews it
-/// (concerns Q-8). All carry ⌘ so they can't collide with keys typed into Claude Code's TUI
+/// exactly one place. The map is locked (DL-34); changing a chord needs a decision-log entry. All carry ⌘ so they can't collide with keys typed into Claude Code's TUI
 /// (handoff §6.3), and none is on LR-60's avoid list (⌘\, ⌘⌥L, ⌘⌥;, ⌘⌥').
 public enum DuoCommand: String, CaseIterable, Sendable {
-    case jump               // ⌘K: the jump palette (not designed; handoff §13)
-    case allProjects        // proposed: ⌘↑, "up a level", as in Finder
+    case jump               // ⌘K: project, group and session picker (DL-38; not designed yet)
+    case search             // ⇧⌘F: search everything (DL-38; v1.1)
+    case allProjects        // ⌘↑, "up a level", as in Finder
     case goHome             // ⇧⌘H (handoff proposal)
-    case togglePeek         // proposed: ⇧⌘P
+    case togglePeek         // ⇧⌘P
     case jumpToPeekSelection // ⌘↩ (handoff proposal), while the peek is open
     case toggleSidebar      // ⌃⌘S, the macOS standard
-    case toggleRightPane    // proposed: ⌥⌘0, as Xcode's inspector
-    case nextPane           // proposed: ⌥⌘→
-    case previousPane       // proposed: ⌥⌘←
+    case toggleRightPane    // ⌥⌘0, as Xcode's inspector
+    case nextPane           // ⌥⌘→
+    case previousPane       // ⌥⌘←
 
     public var title: String {
         switch self {
         case .jump: "Jump to…"
+        case .search: "Search Everything…"
         case .allProjects: "All Projects"
         case .goHome: "Home"
         case .togglePeek: "Needs You Elsewhere"
@@ -32,6 +33,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     public var shortcut: KeyboardShortcut {
         switch self {
         case .jump: KeyboardShortcut("k", modifiers: .command)
+        case .search: KeyboardShortcut("f", modifiers: [.command, .shift])
         case .allProjects: KeyboardShortcut(.upArrow, modifiers: .command)
         case .goHome: KeyboardShortcut("h", modifiers: [.command, .shift])
         case .togglePeek: KeyboardShortcut("p", modifiers: [.command, .shift])
@@ -43,19 +45,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         }
     }
 
-    /// Whether the chord came from the design handoff or is Claude's proposal awaiting review.
-    public var isProposal: Bool {
-        switch self {
-        case .goHome, .jumpToPeekSelection, .jump: false
-        case .toggleSidebar: false
-        default: true
-        }
-    }
-
     @MainActor
     public func isEnabled(in model: AppModel) -> Bool {
         switch self {
-        case .jump, .toggleRightPane, .nextPane, .previousPane: false  // not built yet
+        case .jump, .search, .toggleRightPane, .nextPane, .previousPane: false  // not built yet
         case .allProjects: !model.altitude.isAllProjects
         case .togglePeek: !model.altitude.isAllProjects && !model.needsYouElsewhere.isEmpty
         case .jumpToPeekSelection: model.peekOpen
@@ -71,7 +64,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .togglePeek: model.togglePeek()
         case .jumpToPeekSelection: model.jumpToPeekSelection()
         case .toggleSidebar: model.leftCollapsed.toggle()
-        case .jump, .toggleRightPane, .nextPane, .previousPane: break
+        case .jump, .search, .toggleRightPane, .nextPane, .previousPane: break
         }
     }
 }
@@ -89,6 +82,7 @@ public struct DuoCommands: Commands {
         }
         CommandMenu("Go") {
             item(.jump)
+            item(.search)
             Divider()
             item(.allProjects)
             item(.goHome)
