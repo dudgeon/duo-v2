@@ -184,6 +184,14 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-32 · Spike S10, second half: `/cd` relocation and retention (2026-10-03)
+
+- **`/cd` from a Duo terminal works** (interactive only): "Moved to …/onboarding-v3". Claude **moves the whole transcript** to the new folder's project directory (nothing left in the old one) and appends `{"type":"relocated","relocatedCwd":"<new folder>"}`; later records carry the new `cwd`, earlier ones keep the old.
+- **Duo follows it:** each refresh works out where every filed session actually lives (the live beacon's cwd, else the directory its transcript is filed under), lists it there, and moves its index entry to the new project's `.duo/sessions.json` with `provenance: relocated-from:<old project>`. Verified live: the session moved from checkout-redesign's index to onboarding-v3's and shows under onboarding-v3. Pointers move; no transcript is rewritten (DL-41 R1).
+- **The encoder's self-calibration broke on the relocated transcript:** its first `cwd` is the old folder but it lives under the new one's directory. Calibration now reads the last `relocatedCwd` (head and tail, 64 KB each) before falling back to the first `cwd`. 13/13 again plus the relocated file.
+- **Retention:** `cleanupPeriodDays` is unset here (30-day default); 45 transcripts, the oldest 7.5 days. Any Claude process's sweep deletes old transcripts, Duo's included, so Duo can't fix this with its per-session settings. Logged as Q-18 with options; nothing built.
+- 94 checks pass.
+
 ## F-31 · Spike S11: fork lineage comes from shared message ids (2026-10-03)
 
 **Passes.** Haiku sessions in `.build/s11`: A, then B = `--resume A --fork-session`, then C = a fork of B.

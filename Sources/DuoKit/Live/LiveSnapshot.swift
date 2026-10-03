@@ -21,7 +21,14 @@ public enum LiveSnapshot {
         }
     }
 
-    public static func build(_ ctx: Context, beacons: [Beacon] = Beacon.readAll()) -> (Fixture, folders: [String: URL]) {
+    /// A filed session that now lives in another project (`/cd`, F-32): its index entry moves.
+    public struct Move: Sendable, Equatable {
+        public var sessionId: String
+        public var from: URL
+        public var to: URL
+    }
+
+    public static func build(_ ctx: Context, beacons: [Beacon] = Beacon.readAll()) -> (Fixture, folders: [String: URL], moves: [Move]) {
         let found = ProjectDiscovery.scan(root: ctx.root)
         let (home, _) = ProjectDiscovery.chooseHome(found, remembered: ctx.rememberedHome)
         // Other HOME.md folders appear as normal projects (DL-42).
@@ -39,6 +46,27 @@ public enum LiveSnapshot {
         var folders: [String: URL] = [:]
         var claimed = Set<String>()
 
+        // Where each filed session actually is (F-32): a live session's cwd, else the project
+        // whose folder its transcript is filed under. `/cd` moves both.
+        let byPath = projects.map { (path: resolve($0.folder.path), found: $0) }
+        func owner(ofPath p: String) -> ProjectDiscovery.Found? {
+            byPath.filter { p == $0.path || p.hasPrefix($0.path + "/") }.max { $0.path.count < $1.path.count }?.found
+        }
+        let byEncoded = Dictionary(byPath.map { (ClaudeStorage.encode($0.path), $0.found) }, uniquingKeysWith: { a, _ in a })
+        var actual: [String: ProjectDiscovery.Found] = [:]   // session id → project
+        var moves: [Move] = []
+        for f in projects {
+            for e in SessionIndex.load(project: f.folder).sessions where e.archived != true {
+                let live = beacons.first { $0.sessionId == e.sessionId }.flatMap { owner(ofPath: resolve($0.cwd)) }
+                let filed = live == nil
+                    ? ClaudeStorage.transcript(sessionId: e.sessionId, cwd: f.folder.path).flatMap { byEncoded[$0.deletingLastPathComponent().lastPathComponent] }
+                    : nil
+                let here = live ?? filed ?? f
+                actual[e.sessionId] = here
+                if here.folder != f.folder { moves.append(Move(sessionId: e.sessionId, from: f.folder, to: here.folder)) }
+            }
+        }
+
         for f in projects {
             let name = f.project.name
             folders[name] = f.folder
@@ -46,7 +74,8 @@ public enum LiveSnapshot {
             let folderPath = resolve(f.folder.path)
             // Sessions filed in the index, plus live sessions running in the folder (started
             // outside Duo: attributed by cwd, CONS FR-7.2.5).
-            var ids = index.sessions.filter { $0.archived != true }.map(\.sessionId)
+            var ids = index.sessions.filter { $0.archived != true && actual[$0.sessionId]?.folder ?? f.folder == f.folder }.map(\.sessionId)
+            for m in moves where m.to == f.folder && !ids.contains(m.sessionId) { ids.append(m.sessionId) }
             for b in beacons where resolve(b.cwd) == folderPath || resolve(b.cwd).hasPrefix(folderPath + "/") {
                 if !ids.contains(b.sessionId) { ids.append(b.sessionId) }
             }
@@ -100,7 +129,7 @@ public enum LiveSnapshot {
             focusDocument: .init(project: "", path: "", sections: [], addedByClaude: []),
             projectFiles: files
         )
-        return (fixture, folders)
+        return (fixture, folders, moves)
     }
 
     /// LR-6: a name the user gave wins; then the transcript's ladder. A session with no

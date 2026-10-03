@@ -76,14 +76,26 @@ public enum ClaudeStorage {
         return c
     }
 
-    /// The first `cwd` field in a transcript, reading at most its first 64 KB (LR-9: never slurp).
+    /// The folder a transcript is filed under: the last `relocated` record's `relocatedCwd` if
+    /// there is one (`/cd` moves the file, F-32), else the first `cwd`. Reads at most the first
+    /// and last 64 KB (LR-9: never slurp).
     static func firstCwd(_ url: URL) -> String? {
         guard let h = try? FileHandle(forReadingFrom: url) else { return nil }
         defer { try? h.close() }
-        guard let data = try? h.read(upToCount: 64 * 1024), let text = String(data: data, encoding: .utf8) else { return nil }
-        for line in text.split(separator: "\n") where line.contains("\"cwd\"") {
-            if let obj = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
-               let cwd = obj["cwd"] as? String { return cwd }
+        let head = (try? h.read(upToCount: 64 * 1024)) ?? Data()
+        let size = (try? h.seekToEnd()) ?? 0
+        var tail = Data()
+        if size > 64 * 1024 {
+            try? h.seek(toOffset: max(64 * 1024, size - 64 * 1024))
+            tail = (try? h.readToEnd()) ?? Data()
+        }
+        func lines(_ d: Data) -> [Substring] { (String(data: d, encoding: .utf8) ?? "").split(separator: "\n") }
+        func object(_ line: Substring) -> [String: Any]? { try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any] }
+        for line in (lines(head) + lines(tail)).reversed() where line.contains("\"relocated\"") {
+            if let o = object(line), o["type"] as? String == "relocated", let to = o["relocatedCwd"] as? String { return to }
+        }
+        for line in lines(head) where line.contains("\"cwd\"") {
+            if let cwd = object(line)?["cwd"] as? String { return cwd }
         }
         return nil
     }

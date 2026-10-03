@@ -129,7 +129,19 @@ public final class AppModel {
         let ctx = LiveSnapshot.Context(root: root, rememberedHome: rememberedHome, events: DuoPaths.events, seen: seen)
         Task.detached(priority: .utility) { [weak self] in
             let beacons = Beacon.readAll()
-            let (snapshot, folders) = LiveSnapshot.build(ctx, beacons: beacons)
+            let (snapshot, folders, moves) = LiveSnapshot.build(ctx, beacons: beacons)
+            // Follow `/cd`: move the index entry to the project the session now lives in (F-32).
+            for m in moves {
+                var from = SessionIndex.load(project: m.from), to = SessionIndex.load(project: m.to)
+                guard let i = from.sessions.firstIndex(where: { $0.sessionId == m.sessionId }) else { continue }
+                var entry = from.sessions.remove(at: i)
+                if !to.sessions.contains(where: { $0.sessionId == m.sessionId }) {
+                    entry.provenance = "relocated-from:\(m.from.lastPathComponent)"
+                    to.sessions.append(entry)
+                    try? to.save(project: m.to)
+                }
+                try? from.save(project: m.from)
+            }
             await self?.apply(snapshot, folders: folders, beacons: beacons)
         }
     }

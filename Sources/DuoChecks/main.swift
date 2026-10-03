@@ -154,7 +154,7 @@ func repoFixture() throws -> Fixture {
     let live = Beacon(pid: 1, sessionId: "cccc-live", cwd: proj.appending(path: "docs").path, name: "PRD v2 edits",
                       status: "waiting", waitingFor: "input needed", statusUpdatedAt: Date().timeIntervalSince1970 * 1000 - 240_000,
                       entrypoint: "cli", kind: nil, nameSource: "user")
-    let (snap, folders) = LiveSnapshot.build(.init(root: lw), beacons: [live])
+    let (snap, folders, _) = LiveSnapshot.build(.init(root: lw), beacons: [live])
     let ss = snap.sessions(inProject: "checkout-redesign")
     check(ss.map(\.sessionId) == ["aaaa-filed", "cccc-live"], "filed sessions plus live ones attributed by cwd; archived hidden")
     check(ss.last?.name == "PRD v2 edits" && ss.last?.state == .needsYou && ss.last?.wait == "4m", "beacon gives name, state, wait")
@@ -166,6 +166,16 @@ func repoFixture() throws -> Fixture {
     let quiet = Beacon(pid: 1, sessionId: "aaaa-filed", cwd: proj.path, name: nil, status: "idle", waitingFor: nil,
                        statusUpdatedAt: nil, entrypoint: "cli", kind: nil)
     check(LiveSnapshot.build(.init(root: lw), beacons: [live, quiet]).0.counts.idle == 0, "a running, quiet session isn't counted as resumable")
+    // `/cd`: a filed session running in another project's folder is listed there and moves (F-32).
+    let other = lw.appending(path: "growth/onboarding")
+    try FileManager.default.createDirectory(at: other, withIntermediateDirectories: true)
+    try "---\ngoal: x\n---\n".write(to: other.appending(path: "PROJECT.md"), atomically: true, encoding: .utf8)
+    let moved = Beacon(pid: 1, sessionId: "aaaa-filed", cwd: other.path, name: nil, status: "idle", waitingFor: nil,
+                       statusUpdatedAt: nil, entrypoint: "cli", kind: nil)
+    let (snap2, _, moves) = LiveSnapshot.build(.init(root: lw), beacons: [moved])
+    check(snap2.sessions.first { $0.sessionId == "aaaa-filed" }?.project == "onboarding"
+          && moves.map(\.sessionId) == ["aaaa-filed"] && moves.first?.to.lastPathComponent == "onboarding",
+          "a session moved with /cd is listed in its new project, and its entry moves")
     try? FileManager.default.removeItem(at: lw)
 
     print("hooks")
@@ -247,7 +257,7 @@ func repoFixture() throws -> Fixture {
         var times: [Double] = []
         for _ in 0..<5 {
             let t0 = Date()
-            let (snap, _) = LiveSnapshot.build(.init(root: root, events: DuoPaths.events), beacons: beacons)
+            let (snap, _, _) = LiveSnapshot.build(.init(root: root, events: DuoPaths.events), beacons: beacons)
             times.append(Date().timeIntervalSince(t0) * 1000)
             if times.count == 1 { print("bench: \(snap.projects.count) projects, \(snap.sessions.count) sessions, \(beacons.count) beacons") }
         }
