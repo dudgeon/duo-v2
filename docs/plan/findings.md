@@ -88,3 +88,21 @@ Machine: macOS 27.0 (26A428), Apple silicon, Command Line Tools only (Swift 6.4,
 
 - **Observed:** `--then` runs actions after launch (open, peek, down, jump, home, zoom-out, focus-tile). Starting from `overview`, the captures after focus-tile, open checkout-redesign, and open + peek are pixel-identical (0 differing pixels, `scripts/samepng.py`) to the `flow-zoom-1`, `project` and `flow-zoom-3` captures made from fixture states. Jump from the peek, then zoom out, selects the session last visited in both the map and the action column (flow-zoom-4's behaviour).
 - **How:** 15 navigation checks in `DuoChecks` (29 in total) plus the scripted captures.
+
+## F-17 · Spike S1: SwiftTerm runs Claude Code's TUI; automated half passes (2026-10-03)
+
+Branch `spike/s1-swiftterm`, `Spikes/S1TermSpike`. SwiftTerm `main` at `6a955b0` (2.0 line), `claude` 2.1.288, `TERM=xterm-256color`, `COLORTERM=truecolor`, no `TERM_PROGRAM`.
+
+| Check | Result |
+|---|---|
+| P1 Builds as a SwiftPM dependency with the Command Line Tools only | **Pass.** Fetches and compiles (with `swift-png`, `h`, `swift-argument-parser` as transitive dependencies). |
+| P2 The TUI renders | **Pass on content.** Claude Code's folder-trust dialog appears laid out at 100×32: box rule, wrapped prose, `❯` marker, footer. Verified through SwiftTerm's text (`selectAll` + `getSelection`); pixels not yet seen (see below). |
+| P3 Resize while running | **Pass.** 100×32 → 60×20: SwiftTerm reports the new grid, Claude redraws at 60 columns, no crash. |
+| P4 Idle CPU | **Pass.** Host app 0.0% CPU, 77 MB RSS with one terminal; `claude` 0.0–0.6% CPU, 192 MB. |
+| P5 Hidden view keeps the process | **Pass.** Hidden for half the run, process alive, screen intact when shown. |
+| P6 Environment scrub | **Pass, and necessary.** Launched from a Claude session, the parent passes about 27 `CLAUDE*` variables, including `CLAUDE_CODE_SESSION_ID` and a messaging socket and token. Dropping `CLAUDECODE` and every `CLAUDE_*` except `CLAUDE_CONFIG_DIR` leaves the child with none. |
+
+Not yet done, and why:
+- **Pixels.** SwiftTerm draws through a frame driver into its layer; `cacheDisplay`, `CALayer.render(in:)` and calling `draw(_:)` all produce a fully transparent image. Seeing terminal pixels needs `screencapture` with the Screen Recording permission, or a person. Terminal content is exempt from comparison (handoff §0.4), so the comparison loop is unaffected; Duo's own captures will show terminals as blank.
+- **The interactive half of S1:** typing, Shift+Enter, mouse selection and copy, a permission prompt, AskUserQuestion, `/tui fullscreen`, and `TERM_PROGRAM` variants for the kitty keyboard protocol. These need someone at the keyboard, and answering prompts makes model calls.
+- **S2 (six streaming sessions):** needs six sessions producing output, which costs tokens.
