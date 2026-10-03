@@ -151,6 +151,9 @@ public final class AppModel {
         }
         let mine = Set(terminals.all.compactMap { t -> Int32? in t.view.process?.shellPid })
         liveElsewhere = Set(beacons.filter { !mine.contains($0.pid) }.map(\.sessionId))
+        // One row per session id, whatever the sources disagree on (seen once, F-29).
+        var ids = Set<String>()
+        merged.sessions = merged.sessions.filter { s in s.sessionId.map { ids.insert($0).inserted } ?? true }
         if merged != fixture { fixture = merged }
         // Home is always on (brief: the director agent); its empty state isn't designed (§13), so
         // live mode starts one Home session when there is none (concerns C-15).
@@ -179,6 +182,20 @@ public final class AppModel {
             if homeTab == t.key { homeTab = b.sessionId }
             terminals.rekey(t.key, to: b.sessionId)
         }
+    }
+
+    /// LR-5: agent self-narration, stored Duo-side in the project's index and shown verbatim.
+    func setNarration(_ id: String, kind: String, text: String) -> Bool {
+        guard let s = fixture.sessions.first(where: { $0.sessionId == id }), let folder = liveFolders[s.project] else { return false }
+        var index = SessionIndex.load(project: folder)
+        if !index.sessions.contains(where: { $0.sessionId == id }) {
+            index.sessions.append(.init(sessionId: id, provenance: "attributed-by-cwd"))  // it spoke to Duo: file it
+        }
+        guard let i = index.sessions.firstIndex(where: { $0.sessionId == id }) else { return false }
+        if kind == "note" { index.sessions[i].note = text } else { index.sessions[i].next = text }
+        try? index.save(project: folder)
+        refreshLive()
+        return true
     }
 
     /// `+ New session` (handoff §6.2): a new Claude Code session in the current project's folder,

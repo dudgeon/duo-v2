@@ -37,7 +37,9 @@ case "doctor":
 default:
     guard let (endpoint, _) = ControlEndpoint.discover() else { fail("Duo isn't running. Run `duo2 doctor`.", code: 69) }
     let request = ControlRequest(token: endpoint.token, command: command.name, args: Array(args.dropFirst()),
-                                 session: env["DUO_SESSION_ID"], cwd: FileManager.default.currentDirectoryPath)
+                                 // Claude's own id is current after /clear; Duo's may be stale (F-29).
+                                 session: env["CLAUDE_CODE_SESSION_ID"] ?? env["DUO_SESSION_ID"],
+                                 cwd: FileManager.default.currentDirectoryPath)
     do {
         let r = try ControlClient.send(request, socket: endpoint.socket)
         if r.ok { print(r.output, terminator: r.output.hasSuffix("\n") ? "" : "\n") } else { fail(r.output) }

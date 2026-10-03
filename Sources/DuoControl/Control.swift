@@ -87,9 +87,21 @@ public struct ControlCommand: Sendable {
         .init(name: "needs-you", usage: "duo2 needs-you", summary: "List sessions waiting for you, with their questions.", needsApp: true),
         .init(name: "projects", usage: "duo2 projects", summary: "List projects with their goal, health and next step.", needsApp: true),
         .init(name: "open", usage: "duo2 open <project> [session]", summary: "Open a project in Duo, optionally on one of its sessions.", needsApp: true),
+        .init(name: "status", usage: "duo2 status", summary: "What Duo is showing: the view, the open project and session, and counts.", needsApp: true),
+        .init(name: "session", usage: "duo2 session note|next <text>", summary: "Tell the user, in one line, what this session is doing (note) or needs next (next).", needsApp: true),
         .init(name: "doctor", usage: "duo2 doctor", summary: "Explain how this terminal finds Duo, and whether it can reach it.", needsApp: false),
         .init(name: "help", usage: "duo2 help", summary: "Show this list.", needsApp: false),
     ]
+
+    /// What Duo tells each session it starts (`--append-system-prompt`, DL-15): generated from
+    /// this table, so it never drifts from the CLI.
+    public static func sessionGuidance() -> String {
+        "You are running inside Duo, a Mac app that organizes the user's Claude Code sessions into projects. "
+            + "The `duo2` command talks to Duo; it is already on PATH and needs no approval:\n"
+            + all.filter { $0.name != "help" }.map { "- `\($0.usage)`: \($0.summary)" }.joined(separator: "\n")
+            + "\nWhen you start substantial work, run `duo2 session note \"<one line>\"` so the user sees what you're doing; "
+            + "when you hand back to the user, `duo2 session next \"<one line>\"`. Keep both short and plain."
+    }
 
     public static func help() -> String {
         let width = all.map(\.usage.count).max() ?? 0

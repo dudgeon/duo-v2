@@ -52,6 +52,7 @@ public enum HookEvents {
         public var question: String?
         public var options: [String]?
         public var command: String?
+        public var filePath: String?
         public var lastMessage: String?
     }
 
@@ -80,6 +81,7 @@ public enum HookEvents {
                      question: q?["question"] as? String,
                      options: (q?["options"] as? [[String: Any]])?.compactMap { $0["label"] as? String },
                      command: input?["command"] as? String,
+                     filePath: (input?["file_path"] ?? input?["notebook_path"]) as? String,
                      lastMessage: e["last_assistant_message"] as? String)
     }
 
@@ -105,7 +107,8 @@ public enum HookEvents {
                 if e.toolName == "AskUserQuestion" {
                     pending = Summary(kind: .pending, at: e.at, reason: .question, question: e.question, options: e.options)
                 } else {
-                    let what = e.command.map { "`\($0)`" } ?? e.toolName ?? "a tool"
+                    let file = e.filePath.map { ($0 as NSString).lastPathComponent }
+                    let what = e.command.map { "`\($0)`" } ?? [e.toolName, file.map { "to \($0)" }].compactMap { $0 }.joined(separator: " ").nonEmpty ?? "a tool"
                     pending = Summary(kind: .pending, at: e.at, reason: .permission, question: "Allow \(what)?")
                 }
             case "PostToolUse", "SessionStart", "SessionEnd":
@@ -182,4 +185,8 @@ public struct DuoState: Codable, Sendable, Equatable {
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? data.write(to: url, options: .atomic)
     }
+}
+
+private extension String {
+    var nonEmpty: String? { isEmpty ? nil : self }
 }

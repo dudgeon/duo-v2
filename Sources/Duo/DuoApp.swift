@@ -5,6 +5,7 @@ import SwiftUI
 
 @main
 struct DuoApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     // A plain `let`: the Command Line Tools lack the SwiftUI macro plugin behind @State, and the
     // model is an @Observable class that lives as long as the app.
     private let model: AppModel
@@ -56,17 +57,12 @@ struct DuoApp: App {
                 }
             }
         }
-        // Window watchdog (F-29): the first launch of a freshly signed build sometimes finishes
-        // with no window. Activate, then reopen the way a Dock click does.
+        // The main window is made in AppKit, once, at launch (F-29): SwiftUI's Window scene
+        // sometimes finished launching with no window, and reopening didn't bring one back.
+        let mainWindow = MainWindow(model: model, options: options)
+        AppDelegate.reopen = { mainWindow.show() }
         NotificationCenter.default.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main) { _ in
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                MainActor.assumeIsolated {
-                    guard !NSApp.windows.contains(where: { $0.isVisible }) else { return }
-                    FileHandle.standardError.write(Data("trace watchdog: no window, reopening\n".utf8))
-                    NSApp.activate()
-                    _ = NSApp.delegate?.applicationShouldHandleReopen?(NSApp, hasVisibleWindows: false)
-                }
-            }
+            MainActor.assumeIsolated { mainWindow.show() }
         }
         FixtureHarness.beforeExit = { model.terminals.terminateAll(); server.stop() }
         // End sessions cleanly on quit. Hiding or collapsing never does this (LR-13).
@@ -76,24 +72,60 @@ struct DuoApp: App {
     }
 
     var body: some Scene {
-        Window("Duo", id: "main") {
-            Group {
-                if options.gallery { GalleryView() } else { RootView() }
-            }
-                .environment(model)
-                .frame(minWidth: DuoMetric.minimumWindow.width,
-                       minHeight: DuoMetric.minimumWindow.height - DuoMetric.toolbarHeight)
-                .background(WindowConfigurator { window in
-                    FixtureHarness.configure(window, model: model, options: options)
-                })
+        // The window itself is AppKit (MainWindow); this scene carries the menus.
+        Settings { EmptyView() }
+            .commands { DuoCommands(model: model) }
+    }
+}
+
+/// Dock click or `open` with no window visible: show the main window again.
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    nonisolated(unsafe) static var reopen: (@MainActor () -> Void)?
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { MainActor.assumeIsolated { Self.reopen?() } }
+        return true
+    }
+}
+
+/// The one Duo window: SwiftUI content in an AppKit window, toolbar bridged from `.toolbar`.
+@MainActor
+final class MainWindow {
+    private let model: AppModel
+    private let options: LaunchOptions
+    private var window: NSWindow?
+
+    init(model: AppModel, options: LaunchOptions) {
+        self.model = model
+        self.options = options
+    }
+
+    func show() {
+        if let window { window.makeKeyAndOrderFront(nil); return }
+        let content = Group {
+            if options.gallery { AnyView(GalleryView()) } else { AnyView(RootView()) }
         }
-        // Always open the main window at launch, never restore a closed one: one launch in a few
-        // came up with no window at all (F-26, F-29).
-        .defaultLaunchBehavior(.presented)
-        .restorationBehavior(.disabled)
-        .windowToolbarStyle(.unifiedCompact(showsTitle: false))
-        .defaultSize(width: DuoMetric.designWindow.width, height: DuoMetric.designWindow.height)
-        .windowResizability(.contentMinSize)
-        .commands { DuoCommands(model: model) }
+        .environment(model)
+        .frame(minWidth: DuoMetric.minimumWindow.width,
+               minHeight: DuoMetric.minimumWindow.height - DuoMetric.toolbarHeight)
+        let host = NSHostingController(rootView: content)
+        host.sceneBridgingOptions = [.toolbars]
+        // Lay out at the design size from the first pass: the split view keeps proportions on
+        // resize, so a first layout at SwiftUI's ideal size would skew the pane widths.
+        host.sizingOptions = []
+        host.view.frame = NSRect(origin: .zero, size: DuoMetric.designWindow)
+        let w = NSWindow(contentViewController: host)
+        w.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]  // as SwiftUI's windows
+        w.toolbarStyle = .unifiedCompact
+        w.titleVisibility = .hidden
+        w.title = "Duo"
+        w.isReleasedWhenClosed = false
+        w.setContentSize(DuoMetric.designWindow)  // full-size content: the whole window, as SwiftUI's defaultSize
+        w.center()
+        w.setFrameAutosaveName("main")
+        window = w
+        FixtureHarness.configure(w, model: model, options: options)
+        w.makeKeyAndOrderFront(nil)
+        NSApp.activate()
     }
 }

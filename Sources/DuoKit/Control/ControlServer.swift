@@ -113,6 +113,24 @@ extension AppModel {
             guard fixture.projects.contains(where: { $0.name == name }) else { return .init(ok: false, output: "no project '\(name)'") }
             open(project: name, session: req.args.dropFirst().first)
             return .init(ok: true, output: "Opened \(name).")
+        case "status":
+            let view: String
+            switch altitude {
+            case .allProjects: view = "All projects" + (homeTab.flatMap { k in fixture.sessions.first { $0.tabKey == k } }.map { ", Home on \($0.name)" } ?? "")
+            case .project(let p): view = "Project \(p)" + (consoleTab.flatMap { k in fixture.sessions.first { $0.tabKey == k } }.map { ", console on \($0.name)" } ?? "")
+            }
+            let c = fixture.counts
+            return .init(ok: true, output: "\(view)\n\(c.needsYou) need you · \(c.readyForReview) to review · \(c.working) working · \(c.idle) idle")
+        case "session":
+            guard req.args.count >= 2, ["note", "next"].contains(req.args[0]) else {
+                return .init(ok: false, output: "usage: duo2 session note|next <text>")
+            }
+            guard let id = req.session else { return .init(ok: false, output: "not run from a Claude session (no session id)") }
+            let text = req.args.dropFirst().joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+            guard setNarration(id, kind: req.args[0], text: text) else {
+                return .init(ok: false, output: "Duo doesn't know session \(id.prefix(8)) yet")
+            }
+            return .init(ok: true, output: "Noted.")
         default:
             return .init(ok: false, output: "unknown command '\(req.command)'")
         }

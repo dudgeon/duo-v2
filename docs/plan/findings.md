@@ -184,6 +184,18 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-30 · The main window is AppKit now; duo2 talks back (2026-10-03)
+
+- **No-window launches, cause narrowed:** with traces, the bad launches show `didFinishLaunching windows=0` and nothing at +3 s, so SwiftUI never made the `Window` scene's window. `.defaultLaunchBehavior(.presented)` and `.restorationBehavior(.disabled)` didn't help, and the watchdog's reopen (activate, then `applicationShouldHandleReopen`) fired and still produced no window. Re-bundling before each launch didn't reproduce it on demand (0 of 5).
+- **Fix: Duo makes its one window in AppKit** at `didFinishLaunching`: an `NSWindow` hosting `RootView` in an `NSHostingController` with `sceneBridgingOptions = [.toolbars]` (the SwiftUI `.toolbar` still builds the toolbar), `.fullSizeContentView`, unified compact toolbar, and an app delegate for Dock reopen. The SwiftUI app keeps a `Settings` scene only to carry the menus (`DuoCommands`; the Go and View menus are present).
+- **The hosting view must be laid out at the design size first** (`sizingOptions = []`, frame set before it joins the window). Otherwise the split view's first layout happens at SwiftUI's ideal size and keeps those proportions on resize: Home measured 382.5 pt wide instead of 340. With that, all six fixture captures are **0 pixels different** from the SwiftUI-window build.
+- **`duo2 status`** (LR-53 orientation) and **`duo2 session note|next`** (LR-5): narration is stored in the project's `.duo/sessions.json` and shown as the card summary when the hooks give none. `duo2` identifies its session by `CLAUDE_CODE_SESSION_ID`, which Claude sets for its Bash children and which stays correct after `/clear`; `DUO_SESSION_ID` is the fallback.
+- **Session guidance** goes to every session Duo starts through `--append-system-prompt`, generated from the command table. Haiku given a file-writing task didn't narrate; untested on the default model yet.
+- **Permission cards name the file** for Write/Edit (`Allow Write to refunds-note.md?`), not just the tool.
+- **A duplicated session row appeared once** in a dump (`home/Color preference question` twice) and didn't reproduce with ids printed. Applying a snapshot now keeps one row per session id.
+- **Not checked yet:** pressing menu items. With the screen locked, macOS refuses Accessibility actions, so the menus could be listed but not pressed.
+- 91 checks pass; `scripts/check-sandbox.sh` passes.
+
 ## F-29 · Spike S8: duo2 reaches Duo from inside Claude's sandbox (2026-10-03)
 
 **Passes, with a different transport than DL-15 assumed.** Tested with sandboxed headless Haiku sessions (`sandbox.enabled: true`) and then reproduced without tokens under Seatbelt (`scripts/check-sandbox.sh`, Geoff's suggestion):

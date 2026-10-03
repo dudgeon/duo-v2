@@ -53,7 +53,8 @@ public enum LiveSnapshot {
             for id in ids where !claimed.contains(id) {
                 claimed.insert(id)
                 let beacon = beacons.first { $0.sessionId == id }
-                let created = index.sessions.first { $0.sessionId == id }?.createdAt
+                let entry = index.sessions.first { $0.sessionId == id }
+                let created = entry?.createdAt
                 let hooks = ctx.events.flatMap { HookEvents.summarize(HookEvents.read(id, in: $0)) }
                 let live = beacon.map { Attention.live(beacon: $0, hooks: hooks, seenAt: ctx.seen[id]) }
                 let since = live?.since ?? created.map { $0.timeIntervalSince1970 * 1000 }
@@ -62,7 +63,9 @@ public enum LiveSnapshot {
                     project: name,
                     state: live?.state ?? .idle,
                     wait: live?.state == .readyForReview ? nil : Attention.waitText(since: since, now: ctx.now),
-                    question: live?.question, options: live?.options, summary: live?.summary, forkOf: nil, document: nil,
+                    question: live?.question, options: live?.options,
+                    summary: live?.summary ?? entry?.note.map { e in entry?.next.map { "\(e) · Next: \($0)" } ?? e },
+                    forkOf: nil, document: nil,
                     sessionId: id
                 ))
             }
