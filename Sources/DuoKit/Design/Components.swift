@@ -145,3 +145,14 @@ struct FlexShrinkRow: Layout {
         }
     }
 }
+
+extension View {
+    /// A tap that VoiceOver, Full Keyboard Access and automation can also trigger: `onTapGesture`
+    /// alone isn't reachable through accessibility (findings F-21; handoff §10).
+    func onActivate(_ action: @escaping () -> Void) -> some View {
+        self
+            .onTapGesture(perform: action)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction(.default, action)
+    }
+}

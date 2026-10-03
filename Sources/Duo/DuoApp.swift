@@ -26,7 +26,16 @@ struct DuoApp: App {
         let model = AppModel(fixture: fixture)
         options.state?.apply(to: model)
         if options.collapseLeft { model.leftCollapsed = true }
+        if let t = options.terminals, t.hasPrefix("demo") {
+            let root = t.split(separator: ":", maxSplits: 1).dropFirst().first.map(String.init)
+                ?? FileManager.default.currentDirectoryPath + "/.build/demo"
+            model.terminalsMode = .demo(root: root)
+        }
         self.model = model
+        // End sessions cleanly on quit. Hiding or collapsing never does this (LR-13).
+        NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { model.terminals.terminateAll() }
+        }
     }
 
     var body: some Scene {

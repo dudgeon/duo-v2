@@ -56,6 +56,14 @@ public enum FixtureHarness {
         case "home": model.goHome()
         case "zoom-out": model.zoomOut()
         case "focus-tile": model.moveTileFocus(dx: 0, dy: 0)
+        case "dump":
+            for t in model.terminals.all.sorted(by: { $0.key < $1.key }) {
+                t.view.selectAll()
+                let text = (t.view.getSelection() ?? "").split(separator: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+                t.view.selectNone()
+                FileHandle.standardError.write(Data("---- \(t.key) frame=\(t.view.frame.size) window=\(t.view.window != nil) ----\n\(text.prefix(12).joined(separator: "\n"))\n".utf8))
+            }
+        case let a where a.hasPrefix("wait"): break
         default: FileHandle.standardError.write(Data("Unknown action '\(action)'\n".utf8))
         }
     }

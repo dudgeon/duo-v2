@@ -9,6 +9,14 @@ public enum Altitude: Equatable, Sendable {
     public var isAllProjects: Bool { self == .allProjects }
 }
 
+/// Whether panes host real terminals. Fixture captures keep them off: terminal content is
+/// exempt from comparison (handoff §0.4) and isn't capturable without Screen Recording (F-17).
+public enum TerminalsMode: Sendable, Equatable {
+    case off
+    /// Real `claude` sessions in scratch folders under `root`, one per fixture project.
+    case demo(root: String)
+}
+
 /// Window-level UI state. One instance per window; views read it from the environment.
 @MainActor
 @Observable
@@ -39,6 +47,17 @@ public final class AppModel {
     public var lastVisitedSession: String?
     /// Asks the Home terminal to take keyboard focus (consumed by the Home pane).
     public var focusHomeRequest = 0
+
+    public var terminalsMode: TerminalsMode = .off
+    @ObservationIgnored public let terminals = TerminalStore()
+
+    /// The terminal for a session, created on first use; nil when terminals are off.
+    public func terminal(project: String, session: String) -> TerminalSession? {
+        guard case .demo(let root) = terminalsMode else { return nil }
+        let key = "\(project)/\(session)"
+        return terminals.session(key, command: .newClaude(sessionID: UUID().uuidString.lowercased(), prompt: nil),
+                                 cwd: (root as NSString).appendingPathComponent(project))
+    }
 
     public init(fixture: Fixture) {
         self.fixture = fixture

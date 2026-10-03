@@ -71,7 +71,7 @@ struct SidebarRowView: View {
                 HStack(spacing: DuoSpace.gapRowItems) {
                     Chevron(direction: expanded ? .down : .right).frame(width: 10)
                         .contentShape(Rectangle())
-                        .onTapGesture {
+                        .onActivate {
                             if expanded { model.expandedGroups.remove(row.name) } else { model.expandedGroups.insert(row.name) }
                         }
                         .accessibilityLabel(expanded ? "Collapse" : "Expand")
@@ -88,7 +88,7 @@ struct SidebarRowView: View {
                 }
                 .padding(.horizontal, DuoSpace.selectionInset)
                 .contentShape(Rectangle())
-                .onTapGesture { model.selectedSidebarItem = row.name; model.rightTab = row.name }
+                .onActivate { model.selectedSidebarItem = row.name; model.rightTab = row.name }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("\(row.name), group of \(count), \(row.state.spokenName)")
                 .accessibilityAddTraits(selected ? .isSelected : [])
@@ -132,7 +132,7 @@ struct SidebarLeafRow: View {
         .padding(.trailing, DuoSpace.panePadding)
         .frame(height: DuoMetric.rowSession)
         .contentShape(Rectangle())
-        .onTapGesture { model.openConsoleTab(row.name) }
+        .onActivate { model.openConsoleTab(row.name) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(row.name), \(row.state.spokenName)\(row.wait.map { ", waiting \($0)" } ?? "")")
     }
@@ -251,7 +251,9 @@ struct FileRow: View {
             }
             .padding(.horizontal, DuoSpace.selectionInset)
             .contentShape(Rectangle())
-            .onTapGesture { if node.children == nil { model.selectedFile = node.path; model.rightTab = node.path } }
+            .onActivate { if node.children == nil { model.selectedFile = node.path; model.rightTab = node.path } }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(selected ? .isSelected : [])
             if let children = node.children {
                 ForEach(children) { c in FileRow(node: c, depth: depth + 1) }
             }
@@ -279,7 +281,7 @@ struct ConsolePane: View {
                             .lineLimit(1)
                     }
                     .contentShape(Rectangle())
-                    .onTapGesture { model.openConsoleTab(s.name) }
+                    .onActivate { model.openConsoleTab(s.name) }
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                 }
@@ -289,7 +291,12 @@ struct ConsolePane: View {
             .padding(.horizontal, DuoSpace.panePadding)
             .frame(height: DuoMetric.tabStripHeight)
             ConsoleRule()
-            Color.clear  // terminal (Phase D)
+            if let project = model.currentProject, let tab = model.consoleTab,
+               let t = model.terminal(project: project.name, session: tab) {
+                TerminalSlot(session: t)
+            } else {
+                Color.clear
+            }
         }
         .background(DuoColor.console)
     }
@@ -311,7 +318,7 @@ struct RightPane: View {
                         .foregroundStyle(active ? DuoColor.text : DuoColor.text2)
                         .lineLimit(1)
                         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
-                        .onTapGesture { model.rightTab = tab.id }
+                        .onActivate { model.rightTab = tab.id }
                 }
                 Spacer(minLength: 0)
             }

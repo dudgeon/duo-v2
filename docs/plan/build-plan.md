@@ -109,7 +109,7 @@ Each is a throwaway target or branch with pass/fail written before it starts. Ne
 | S4–S6 | CM6 live preview on a 1.2 MB file; external-edit merge; `swift-markdown-engine` hedge | I |
 | S7 | WKWebView: local-only default + allow list (DL-3); inspector on an allowed site | K |
 
-### Phase D — Terminals · slice 5
+### Phase D — Terminals · slice 5 · *core built 2026-10-03 (F-22); open: shell tabs and auto-promote (DL-8), ANSI palette and empty console (design), ⌘W close*
 
 | | |
 |---|---|

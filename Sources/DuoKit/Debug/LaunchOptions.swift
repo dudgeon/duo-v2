@@ -7,6 +7,7 @@ import Foundation
 ///   Duo --capture-window out.png               capture the whole window with screencapture(1)
 ///   Duo --fixture path/to/fixture.json         use another fixture file
 ///   Duo --left collapsed                       start with the left pane collapsed
+///   Duo --terminals demo                       real claude terminals in scratch folders (.build/demo)
 ///   Duo --gallery on                           the component gallery instead of the window
 ///   Duo --then open:checkout-redesign,peek     run actions after launch, before capturing
 ///                                              (open:<project>, open:<project>/<session>,
@@ -23,6 +24,8 @@ public struct LaunchOptions: Sendable {
     public var collapseLeft = false
     public var thenActions: [String] = []
     public var gallery = false
+    /// `--terminals demo[:<root>]`: real claude sessions in scratch folders.
+    public var terminals: String?
 
     public var capturing: Bool { capturePath != nil || captureWindowPath != nil }
 
@@ -41,6 +44,7 @@ public struct LaunchOptions: Sendable {
             case "--capture": capturePath = it.next()
             case "--capture-window": captureWindowPath = it.next()
             case "--left": collapseLeft = it.next() == "collapsed"
+            case "--terminals": terminals = it.next()
             case "--gallery": gallery = it.next() == "on"
             case "--then": thenActions = (it.next() ?? "").split(separator: ",").map(String.init)
             default: break  // AppKit passes its own flags (-NSDocumentRevisionsDebugMode etc.)

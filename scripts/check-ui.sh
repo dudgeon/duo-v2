@@ -10,7 +10,6 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 [ -n "${NO_BUILD:-}" ] || scripts/bundle.sh >/dev/null
-app="$root/build/Duo.app/Contents/MacOS/Duo"
 out="$root/build/ui"
 mkdir -p "$out"
 states=("$@")
@@ -20,7 +19,9 @@ extra=()
 # Run the app with a watchdog: a launch that never captures (findings F-8) fails instead of hanging.
 capture() {
   local s="$1" i
-  "$app" --state "$s" --capture "$out/$s.png" ${extra[@]+"${extra[@]}"} >/dev/null 2>"$out/$s.log" &
+  # Launched through LaunchServices: once the bundle has been opened with `open`, executing its
+  # binary directly can leave the app without a window (findings F-19).
+  open -W -n --stdout /dev/null --stderr "$out/$s.log" "$root/build/Duo.app" --args --state "$s" --capture "$out/$s.png" ${extra[@]+"${extra[@]}"} &
   local pid=$!
   for ((i = 0; i < 120; i++)); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done
   if kill -0 "$pid" 2>/dev/null; then

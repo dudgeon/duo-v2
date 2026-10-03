@@ -131,3 +131,28 @@ Same setup as F-17, using Haiku (DL-33). Input is sent by the spike's `--keys` (
 The SwiftTerm risk behind C-2 (75–82% of a core on 1.x) doesn't reproduce on the 2.0 line: hidden terminals cost almost nothing, and the host stays near the plan's 15% bar at its worst moment. The `claude` processes dominate memory (about 350 MB each), as the stack research predicted; that cost is Claude Code's under any host.
 
 **Side effects to clean up later:** the test sessions exist in `~/.claude/projects` under `.build/s2*` paths, and their folders are marked trusted in `~/.claude.json`. Harmless; `claude purge` on those paths removes them.
+
+## F-19 · Once the bundle is opened with `open`, executing its binary directly may show no window (2026-10-03)
+
+- **Observed:** after launching `build/Duo.app` once with `open -n`, every direct `build/Duo.app/Contents/MacOS/Duo …` launch sat idle in its run loop with no window (the F-8 symptom with valid flags), and kept doing so for the same bundle. `open -n … --args …` launches of the same build captured normally. Not fully explained; LaunchServices registration is the likely trigger.
+- **Changed:** `scripts/check-ui.sh` launches through `open -W -n --stderr <log> … --args …`. Run Duo through `open` everywhere scripted.
+
+## F-20 · SwiftTerm terminals attached to a slot need an explicit repaint (2026-10-03)
+
+- **Observed:** a terminal created when its pane becomes visible (the console after zooming in) showed only a cursor while its buffer held Claude Code's full welcome screen (confirmed by dumping its text). SwiftTerm's Core Graphics renderer draws from a snapshot; `needsDisplay` alone repaints the old one, and the internal invalidation runs only on resize or selection changes.
+- **Changed:** `TerminalSlot` calls `GuardedTerminalView.repaint()` (select-all then select-none, which invalidates without resizing the PTY) when it attaches a view. Verified on screen through computer-use.
+
+## F-21 · `onTapGesture` isn't reachable through accessibility (2026-10-03)
+
+- **Observed:** computer-use's accessibility press on the console tabs did nothing; it worked on the project tiles, which had `accessibilityAction`. VoiceOver and Full Keyboard Access have the same gap (handoff §10 requires every action without a pointer).
+- **Changed:** `onActivate { }` pairs the tap with a default accessibility action and the button trait; every tappable row, card, tab and file uses it. Home's session tabs became switchable at the same time.
+
+## F-22 · Phase D: real Claude Code sessions in Duo's panes (2026-10-03)
+
+Verified with `--terminals demo` (real `claude` sessions in scratch folders under `.build/demo`) and computer-use screenshots (`docs/plan/review/phase-d/`):
+- The Home pane runs Claude Code at the design's "thin" width (about 42 columns); the console runs it at about 87. Background and foreground come from the `console` tokens.
+- Every session starts with a Duo-minted `--session-id` (DL-14), a scrubbed environment and `DUO_SESSION_ID` (LR-20), in its project's folder. The `claude` binary is found without the GUI `PATH` (LR-19).
+- Switching console tabs starts the second session on first use and shows the first one unchanged on return. Zooming out and back, and collapsing and expanding the left pane, leave every session's process running: identical PIDs before and after (LR-13). The 8×1 floor is enforced in the view (LR-14).
+- Keyboard input reaches the focused terminal: `/help` brings up Claude Code's slash-command menu.
+- Quitting ends the sessions (a terminate pass on quit, and the PTY closing); no orphaned `claude` processes remain.
+- Fixture captures are unchanged: 0 differing pixels against the Phase C captures, since terminals are off in fixture mode.

@@ -37,6 +37,8 @@ struct HomePane: View {
                             .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2)
                             .lineLimit(1)
                     }
+                    .contentShape(Rectangle())
+                    .onActivate { model.homeTab = s.name }
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                 }
@@ -46,8 +48,11 @@ struct HomePane: View {
             .frame(height: DuoMetric.homeSessionTabsHeight)
             ConsoleRule()
 
-            // Terminal placeholder (Phase D).
-            Color.clear
+            if let home, let tab = model.homeTab, let t = model.terminal(project: home.name, session: tab) {
+                TerminalSlot(session: t)
+            } else {
+                Color.clear
+            }
         }
         .background(DuoColor.console)
     }
@@ -154,7 +159,7 @@ struct ProjectTile: View {
                     TileSessionRow(session: s, selected: model.selectedActionSession == s.id)
                         .padding(.top, i == 0 ? 6 : 0)
                         .contentShape(Rectangle())
-                        .onTapGesture { model.open(project: project.name, session: s.name) }
+                        .onActivate { model.open(project: project.name, session: s.name) }
                 }
             }
         }
@@ -169,7 +174,7 @@ struct ProjectTile: View {
             }
         }
         .contentShape(Rectangle())
-        .onTapGesture { model.open(project: project.name) }
+        .onActivate { model.open(project: project.name) }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(tileLabel(sessions))
         .accessibilityAddTraits(.isButton)
@@ -311,7 +316,7 @@ struct NeedsYouCard: View {
                   color: selected ? DuoColor.text : DuoColor.rule,
                   width: selected ? DuoMetric.borderEmphasis : DuoMetric.borderHairline)
         .contentShape(Rectangle())
-        .onTapGesture { model.selectedActionSession = session.id }
+        .onActivate { model.selectedActionSession = session.id }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(session.name), needs you, waiting \(session.wait ?? ""), \(session.project)")
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -344,7 +349,7 @@ struct HomePointerCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .bordered(DuoSpace.pointerCardPadding, color: DuoColor.controlEdge, dashed: true)
         .contentShape(Rectangle())
-        .onTapGesture { model.homeTab = session.name; model.focusHomeRequest += 1 }
+        .onActivate { model.homeTab = session.name; model.focusHomeRequest += 1 }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(session.name), needs you, waiting in the Home terminal")
     }
