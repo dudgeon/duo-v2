@@ -35,14 +35,39 @@ find_chrome() {
 
 # chrome_run <args...>: one headless run on a throwaway profile, so it never attaches to a Chrome
 # the user already has open.
+#
+# Some Chrome builds (seen with 154 on macOS 27) write the screenshot or dump the DOM and then never
+# exit. So the browser runs in the background and is stopped as soon as its output is complete:
+# the --screenshot file exists and has stopped growing, or the dumped DOM has reached </html>.
+# CHROME_TIMEOUT (seconds, default 60) bounds the wait.
 chrome_run() {
-  local profile rc=0
+  local profile out shot="" a pid i last=-1 size rc=0
+  for a in "$@"; do case "$a" in --screenshot=*) shot="${a#--screenshot=}" ;; esac; done
   profile="$(mktemp -d "${TMPDIR:-/tmp}/duo-shoot.XXXXXX")"
+  out="$profile.out"
   "$CHROME_BIN" --headless=new --user-data-dir="$profile" \
     --no-first-run --no-default-browser-check --hide-scrollbars \
     --allow-file-access-from-files --virtual-time-budget=5000 \
-    ${CHROME_FLAGS:-} "$@" 2>/dev/null || rc=$?
-  rm -rf "$profile"
+    ${CHROME_FLAGS:-} "$@" >"$out" 2>/dev/null &
+  pid=$!
+  for ((i = 0; i < ${CHROME_TIMEOUT:-60} * 4; i++)); do
+    kill -0 "$pid" 2>/dev/null || break
+    if [ -n "$shot" ] && [ -s "$shot" ]; then
+      size="$(wc -c <"$shot")"
+      [ "$size" = "$last" ] && break
+      last="$size"
+    elif [ -z "$shot" ] && grep -q '</html>' "$out" 2>/dev/null; then
+      break
+    fi
+    sleep 0.25
+  done
+  if kill -0 "$pid" 2>/dev/null; then
+    kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null || true
+  else
+    wait "$pid" 2>/dev/null || rc=$?
+  fi
+  cat "$out"
+  rm -rf "$profile" "$out"
   return $rc
 }
 
