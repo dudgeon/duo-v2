@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round 1 · App Shell</title>
+<style>
+/* Shared lo-fi wireframe styles */
+:root {
+  --bg: #f4f4f2;
+  --paper: #ffffff;
+  --ink: #1f1f1f;
+  --ink-2: #555;
+  --ink-3: #8a8a8a;
+  --line: #d6d6d2;
+  --line-2: #e8e8e4;
+  --fill: #f0f0ed;
+  --fill-2: #e4e4e0;
+  --term: #1e1f22;
+  --term-ink: #d7d7d2;
+  --term-dim: #8b8d91;
+  --accent: #e8590c;      /* "needs you" — the only color */
+  --accent-soft: #fff0e6;
+  --sel: #e9eef7;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 13px/1.45 var(--sans); }
+
+/* page chrome */
+.page { max-width: 1320px; margin: 0 auto; padding: 24px 16px 80px; }
+.page h1 { font-size: 20px; margin: 0 0 4px; }
+.page .sub { color: var(--ink-2); margin: 0 0 18px; max-width: 900px; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; position: sticky; top: 0; background: var(--bg); padding: 8px 0; z-index: 5; }
+.tabs button { font: 600 13px var(--sans); border: 1px solid var(--line); background: var(--paper); padding: 7px 12px; border-radius: 6px; cursor: pointer; color: var(--ink-2); }
+.tabs button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.tabs .hint { margin-left: auto; color: var(--ink-3); align-self: center; font-size: 12px; }
+.opt { display: none; }
+.opt.on { display: block; }
+.opt h2 { font-size: 17px; margin: 0 0 2px; }
+.opt .tag { color: var(--ink-2); margin: 0 0 12px; }
+
+/* window frame */
+.win { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 0 rgba(0,0,0,.03), 0 8px 24px rgba(0,0,0,.06); height: 700px; display: flex; flex-direction: column; }
+.titlebar { height: 34px; flex: none; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--fill); }
+.lights { display: flex; gap: 6px; }
+.lights i { width: 11px; height: 11px; border-radius: 50%; background: var(--fill-2); border: 1px solid var(--line); display: block; }
+.titlebar .ttl { color: var(--ink-3); font-size: 12px; margin-left: 8px; }
+.body { flex: 1; min-height: 0; display: flex; }
+.col { min-width: 0; display: flex; flex-direction: column; }
+.col + .col { border-left: 1px solid var(--line); }
+.scroll { overflow: auto; min-height: 0; flex: 1; }
+
+/* sidebar-ish lists */
+.sect { padding: 10px 12px 4px; font: 600 10.5px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); display: flex; align-items: center; justify-content: space-between; }
+.sect .plus { font-size: 14px; color: var(--ink-2); letter-spacing: 0; }
+.row { display: flex; align-items: center; gap: 7px; padding: 4px 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
+.row .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.row .meta { color: var(--ink-3); font-size: 11.5px; display: flex; gap: 5px; align-items: center; }
+.row.sel { background: var(--sel); }
+.row.dim { color: var(--ink-3); }
+.ind1 { padding-left: 26px; }
+.ind2 { padding-left: 40px; }
+.ind3 { padding-left: 54px; }
+.caret { color: var(--ink-3); width: 10px; display: inline-block; }
+.search { margin: 10px 12px 4px; border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; color: var(--ink-3); display: flex; justify-content: space-between; }
+.kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; background: var(--paper); }
+
+/* session state glyphs */
+.st { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; border: 1.5px solid var(--ink-3); }
+.st.need { background: var(--accent); border-color: var(--accent); }
+.st.run { border-color: var(--ink-2); background: conic-gradient(var(--ink-2) 0 50%, transparent 50% 100%); }
+.st.done { border-color: var(--ink-2); background: var(--ink-2); width: 7px; height: 7px; }
+.st.idle { border-color: var(--ink-3); }
+.cnt { font: 600 11px var(--sans); padding: 0 5px; border-radius: 8px; background: var(--fill-2); color: var(--ink-2); }
+.cnt.need { background: var(--accent); color: #fff; }
+
+/* chips, buttons */
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; border: 1px solid var(--line); border-radius: 10px; padding: 0 7px; color: var(--ink-2); background: var(--paper); white-space: nowrap; }
+.chip.task { border-style: dashed; }
+.btn { display: inline-flex; align-items: center; gap: 5px; font: 600 12px var(--sans); border: 1px solid var(--line); border-radius: 6px; padding: 4px 9px; background: var(--paper); color: var(--ink); white-space: nowrap; }
+.btn.pri { background: var(--ink); color: #fff; border-color: var(--ink); }
+.btn.ghost { border-style: dashed; color: var(--ink-2); }
+.path { font: 11px var(--mono); color: var(--ink-3); }
+.check { width: 11px; height: 11px; border: 1.5px solid var(--ink-3); border-radius: 3px; display: inline-block; flex: none; }
+.check.on { background: var(--ink-3); }
+
+/* terminal */
+.termtabs { display: flex; background: var(--fill); border-bottom: 1px solid var(--line); flex: none; overflow: hidden; }
+.termtabs .t { padding: 7px 12px; border-right: 1px solid var(--line); display: flex; gap: 6px; align-items: center; white-space: nowrap; color: var(--ink-2); font-size: 12px; }
+.termtabs .t.on { background: var(--term); color: var(--term-ink); }
+.termtabs .t .x { color: var(--ink-3); }
+.term { background: var(--term); color: var(--term-ink); font: 12px/1.6 var(--mono); padding: 12px 14px; flex: 1; min-height: 0; overflow: hidden; }
+.term .d { color: var(--term-dim); }
+.term .a { color: #ffb37a; }
+.term .k { color: #9ecbff; }
+.term .box { border: 1px solid #3a3c40; border-radius: 6px; padding: 6px 10px; margin-top: 10px; }
+.term .cur { display: inline-block; width: 7px; height: 14px; background: var(--term-ink); vertical-align: -2px; }
+.termhead { background: #26282c; color: var(--term-dim); font: 11px var(--mono); padding: 5px 14px; display: flex; gap: 14px; flex: none; border-bottom: 1px solid #33353a; }
+.termhead b { color: var(--term-ink); font-weight: 500; }
+
+/* cards */
+.card { border: 1px solid var(--line); border-radius: 8px; background: var(--paper); padding: 8px 10px; margin: 0 0 8px; }
+.card .top { display: flex; gap: 6px; align-items: center; font-size: 11.5px; color: var(--ink-2); }
+.card .ttl { font-weight: 600; margin: 3px 0 2px; }
+.card .q { color: var(--ink-2); font-size: 12px; }
+.card.need { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.card.sel { outline: 2px solid var(--ink); }
+
+/* notes under each option */
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 16px; }
+.note { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.note h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-2); }
+.note ul { margin: 0; padding-left: 18px; }
+.note li { margin: 3px 0; }
+.callout { background: var(--accent-soft); border: 1px solid #f6c9a8; border-radius: 8px; padding: 12px 14px; margin-top: 16px; }
+.callout h4 { margin: 0 0 6px; }
+
+@media (max-width: 900px) {
+  .win { height: auto; }
+  .body { flex-direction: column; }
+  .col + .col { border-left: 0; border-top: 1px solid var(--line); }
+}
+
+</style>
+<style>
+  .w-a .side { width: 250px; flex: none; background: var(--fill); }
+  .w-a .main { flex: 1; }
+  .w-a .ctx { width: 290px; flex: none; }
+  .w-b .rail, .w-d .rail { width: 52px; flex: none; background: var(--fill); align-items: center; padding-top: 10px; gap: 14px; }
+  .rail .ico { width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--line); background: var(--paper); display: grid; place-items: center; font-size: 13px; color: var(--ink-2); position: relative; }
+  .rail .ico.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .rail .ico .cnt { position: absolute; top: -6px; right: -8px; }
+  .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; }
+  .board.narrow { grid-template-columns: repeat(2, 1fr); }
+  .lane h5 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); display: flex; gap: 6px; align-items: center; }
+  .toolbar { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); flex: none; }
+  .toolbar .sp { flex: 1; }
+  .ptabs { display: flex; background: var(--fill); border-bottom: 1px solid var(--line); flex: none; }
+  .ptabs .p { padding: 8px 14px; border-right: 1px solid var(--line); display: flex; gap: 7px; align-items: center; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
+  .ptabs .p.on { background: var(--paper); color: var(--ink); font-weight: 600; margin-bottom: -1px; border-bottom: 1px solid var(--paper); }
+  .ptabs .p.add { color: var(--ink-3); }
+  .phead { padding: 12px 14px 10px; border-bottom: 1px solid var(--line); }
+  .phead .nm { font-size: 15px; font-weight: 700; }
+  .phead .goal { color: var(--ink-2); font-size: 12px; margin-top: 4px; }
+  .trow { padding: 7px 14px; border-bottom: 1px solid var(--line-2); }
+  .trow .l1 { display: flex; gap: 8px; align-items: center; }
+  .trow .l2 { display: flex; gap: 5px; flex-wrap: wrap; margin: 5px 0 0 19px; }
+  .trow.sel { background: var(--sel); }
+  .inset { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .palette { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.08); overflow: hidden; }
+  .palette .in { padding: 10px 12px; border-bottom: 1px solid var(--line); color: var(--ink-3); }
+  .qrow { display: flex; gap: 8px; align-items: center; padding: 7px 12px; border-bottom: 1px solid var(--line-2); }
+  .qrow .grow { flex: 1; min-width: 0; }
+  .qrow .sm { color: var(--ink-3); font-size: 11.5px; }
+  .qrow.sel { background: var(--sel); }
+  .strip { display: flex; gap: 6px; padding: 7px 10px; border-top: 1px solid var(--line); background: var(--fill); flex: none; overflow: hidden; }
+  @media (max-width: 900px) { .inset { grid-template-columns: 1fr; } .board { grid-template-columns: 1fr 1fr; } .w-a .side, .w-a .ctx { width: auto; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Round 1: App shell</h1>
+  <p class="sub">Four ways to arrange the main window. They're deliberately rough: the question is <b>what's the primary surface</b> and <b>how you get to work</b> (projects, tasks, sessions, the home agent). One color only: <span style="color:var(--accent);font-weight:700">orange = needs you</span>. Sessions are marked ● needs input · ◐ running · ■ done/unreviewed · ○ idle.</p>
+
+  <div class="tabs" id="tabs">
+    <button data-k="a" class="on">A · Tree + Terminal</button>
+    <button data-k="b">B · Fleet Board</button>
+    <button data-k="c">C · Project Rooms</button>
+    <button data-k="d">D · Director Console</button>
+    <span class="hint">keys 1–4</span>
+  </div>
+
+  <!-- ================= A ================= -->
+  <section class="opt on" id="opt-a">
+    <h2>A · Tree + Terminal <span class="chip">IDE-like</span></h2>
+    <p class="tag">A persistent sidebar holds everything (topics → projects → tasks and sessions). The terminal is the center. A context panel on the right shows the current project's tasks and linked sessions.</p>
+    <div class="win w-a">
+      <div class="titlebar"><div class="lights"><i></i><i></i><i></i></div><span class="ttl">checkout-redesign — PRD v2</span></div>
+      <div class="body">
+        <div class="col side">
+          <div class="search">Find project, task, session… <span class="kbd">⌘K</span></div>
+          <div class="row" style="margin-top:6px"><span>★</span><span class="grow"><b>Home</b></span><span class="meta"><span class="cnt need">2</span></span></div>
+          <div class="sect">Needs you <span class="cnt need">3</span></div>
+          <div class="row"><span class="st need"></span><span class="grow">checkout-redesign · PRD v2</span><span class="meta">4m</span></div>
+          <div class="row"><span class="st need"></span><span class="grow">onboarding-v3 · copy review</span><span class="meta">12m</span></div>
+          <div class="row"><span class="st need"></span><span class="grow">Home · morning triage</span><span class="meta">1h</span></div>
+          <div class="sect">Projects <span class="plus">＋</span></div>
+          <div class="scroll">
+            <div class="row"><span class="caret">▾</span><span class="grow" style="color:var(--ink-2)">Payments</span></div>
+            <div class="row ind1 sel"><span class="caret">▾</span><span class="grow"><b>checkout-redesign</b></span><span class="meta"><span class="st need"></span><span class="st run"></span></span></div>
+            <div class="row ind2 dim">Tasks</div>
+            <div class="row ind3"><span class="check"></span><span class="grow">Draft PRD v2</span><span class="meta">2</span></div>
+            <div class="row ind3"><span class="check"></span><span class="grow">Competitive teardown</span><span class="meta">1</span></div>
+            <div class="row ind3 dim"><span class="check on"></span><span class="grow">Kickoff deck</span></div>
+            <div class="row ind2 dim">Sessions</div>
+            <div class="row ind3"><span class="st need"></span><span class="grow">PRD v2 edits</span></div>
+            <div class="row ind3"><span class="st run"></span><span class="grow">Teardown research</span></div>
+            <div class="row ind3"><span class="st idle"></span><span class="grow">Kickoff deck draft</span></div>
+            <div class="row ind1"><span class="caret">▸</span><span class="grow">refunds-api-spec</span><span class="meta"><span class="st run"></span></span></div>
+            <div class="row ind1"><span class="caret">▸</span><span class="grow">fraud-rules-review</span></div>
+            <div class="row"><span class="caret">▾</span><span class="grow" style="color:var(--ink-2)">Growth</span></div>
+            <div class="row ind1"><span class="caret">▸</span><span class="grow">onboarding-v3</span><span class="meta"><span class="st need"></span></span></div>
+            <div class="row ind1"><span class="caret">▸</span><span class="grow">pricing-experiment-q4</span><span class="meta"><span class="st done"></span></span></div>
+            <div class="row"><span class="caret">▸</span><span class="grow" style="color:var(--ink-2)">Platform</span><span class="meta">3</span></div>
+            <div class="row dim"><span class="caret">▸</span><span class="grow">Unfiled folders</span><span class="meta">2</span></div>
+          </div>
+        </div>
+        <div class="col main">
+          <div class="termtabs">
+            <div class="t on"><span class="st need"></span>checkout · PRD v2 edits <span class="x">×</span></div>
+            <div class="t"><span class="st run"></span>checkout · Teardown</div>
+            <div class="t"><span class="st need"></span>onboarding · copy</div>
+            <div class="t"><span class="st run"></span>★ Home</div>
+            <div class="t">＋</div>
+          </div>
+          <div class="term">
+            <div class="d">~/work/payments/checkout-redesign</div>
+            <div>&gt; Fold the findings from the three interviews in research/ into the PRD</div>
+            <div><span class="k">⏺</span> Read(research/interview-01-maria.md)</div>
+            <div><span class="k">⏺</span> Read(research/interview-02-dev.md)</div>
+            <div><span class="k">⏺</span> Read(research/interview-03-ops.md)</div>
+            <div><span class="k">⏺</span> Update(docs/prd-v2.md)</div>
+            <div class="d">&nbsp;&nbsp;⎿ Added "What we heard" section, revised 3 requirements</div>
+            <br>
+            <div><span class="k">⏺</span> Two interviewees flagged that saved cards are the main</div>
+            <div>&nbsp;&nbsp;reason they abandon guest checkout. That conflicts with</div>
+            <div>&nbsp;&nbsp;non-goal #2. <span class="a">Should I move saved cards into scope,</span></div>
+            <div class="a">&nbsp;&nbsp;or keep it out and record it as an open question?</div>
+            <div class="box">&gt; <span class="cur"></span></div>
+          </div>
+        </div>
+        <div class="col ctx">
+          <div class="phead">
+            <div class="nm">checkout-redesign</div>
+            <div class="path">~/work/payments/checkout-redesign · ⎇ main</div>
+            <div class="goal">Goal: cut guest-checkout abandonment 15% by Q1.</div>
+          </div>
+          <div class="sect">Tasks <span class="plus">＋</span></div>
+          <div class="trow sel"><div class="l1"><span class="check"></span><b>Draft PRD v2</b></div><div class="l2"><span class="chip"><span class="st need"></span>PRD v2 edits</span><span class="chip"><span class="st idle"></span>Interview synth</span></div></div>
+          <div class="trow"><div class="l1"><span class="check"></span>Competitive teardown</div><div class="l2"><span class="chip"><span class="st run"></span>Teardown research</span></div></div>
+          <div class="trow"><div class="l1"><span class="check"></span>Align w/ risk team</div><div class="l2"><span class="chip task">no session yet</span></div></div>
+          <div class="sect">Recent sessions</div>
+          <div class="row"><span class="st need"></span><span class="grow">PRD v2 edits</span><span class="meta">4m</span></div>
+          <div class="row"><span class="st run"></span><span class="grow">Teardown research</span><span class="meta">now</span></div>
+          <div class="row"><span class="st idle"></span><span class="grow">Interview synth</span><span class="meta">2d</span></div>
+          <div class="row"><span class="st idle"></span><span class="grow">Kickoff deck draft</span><span class="meta">6d</span></div>
+          <div style="padding:12px;display:flex;gap:6px"><span class="btn pri">↻ Resume latest</span><span class="btn ghost">New session…</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><h4>Strengths</h4><ul><li>Everything is visible at once. Easy to learn for anyone who has used VS Code or Finder.</li><li>The sidebar shows the actual folder structure, so the app and the filesystem never disagree.</li><li>"Needs you" sits right above the tree.</li></ul></div>
+      <div class="note"><h4>Weaknesses</h4><ul><li>The tree gets deep and noisy once you have 15+ projects.</li><li>Terminal tabs can come from different projects, so context gets muddy.</li><li>With 6+ sessions running, attention is just a short list, not a real view.</li></ul></div>
+      <div class="note"><h4>How it nudges habits</h4><ul><li>Projects are always visible. "＋" creates a real folder.</li><li>"Resume latest" is the main action, and "New session" is the secondary one.</li><li>"Unfiled folders" shows sessions started outside a project, so you can file them.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- ================= B ================= -->
+  <section class="opt" id="opt-b">
+    <h2>B · Fleet Board <span class="chip">attention-first</span></h2>
+    <p class="tag">The home screen is a board of every live session, grouped by state. Clicking a card opens its terminal in a drawer. Projects are a secondary view. This option is built around running 6+ sessions.</p>
+    <div class="win w-b">
+      <div class="titlebar"><div class="lights"><i></i><i></i><i></i></div><span class="ttl">Board</span></div>
+      <div class="body">
+        <div class="col rail">
+          <div class="ico">★<span class="cnt need">2</span></div>
+          <div class="ico on">▦</div>
+          <div class="ico">▤</div>
+          <div class="ico">⌕</div>
+        </div>
+        <div class="col" style="flex:1">
+          <div class="toolbar"><span class="btn">All projects ▾</span><span class="btn">Group: state ▾</span><span class="sp"></span><span class="btn ghost">＋ New work…</span></div>
+          <div class="scroll"><div class="board narrow">
+            <div class="lane"><h5><span class="st need"></span>Needs you · 3</h5>
+              <div class="card need sel"><div class="top">checkout-redesign</div><div class="ttl">PRD v2 edits</div><div class="q">"Should I move saved cards into scope…?"</div><div style="margin-top:6px;display:flex;gap:4px"><span class="chip task">Draft PRD v2</span><span class="path" style="margin-left:auto">4m</span></div></div>
+              <div class="card need"><div class="top">onboarding-v3</div><div class="ttl">Copy review pass 2</div><div class="q">"Approve these 6 string changes?"</div></div>
+              <div class="card need"><div class="top">★ Home</div><div class="ttl">Morning triage</div><div class="q">"5 new asks — route 3 to projects?"</div></div>
+            </div>
+            <div class="lane"><h5><span class="st run"></span>Running · 4</h5>
+              <div class="card"><div class="top">checkout-redesign</div><div class="ttl">Teardown research</div><div class="q">Reading stripe.com/docs/checkout…</div></div>
+              <div class="card"><div class="top">refunds-api-spec</div><div class="ttl">Edge-case matrix</div><div class="q">Writing tables in spec.md</div></div>
+              <div class="card"><div class="top">fraud-rules-review</div><div class="ttl">Rule audit</div></div>
+              <div class="card"><div class="top">★ Home</div><div class="ttl">Weekly status draft</div></div>
+            </div>
+            <div class="lane"><h5><span class="st done"></span>Done · unreviewed · 2</h5>
+              <div class="card"><div class="top">pricing-experiment-q4</div><div class="ttl">Results readout</div><div class="q">Wrote readout.md (1.2k words)</div></div>
+              <div class="card"><div class="top">onboarding-v3</div><div class="ttl">Funnel SQL</div></div>
+            </div>
+            <div class="lane"><h5><span class="st idle"></span>Idle · resumable · 14</h5>
+              <div class="card" style="opacity:.7"><div class="top">checkout-redesign</div><div class="ttl">Interview synth</div><div class="q">2d ago</div></div>
+              <div class="card" style="opacity:.7"><div class="top">api-deprecations</div><div class="ttl">Comms plan</div><div class="q">5d ago</div></div>
+              <div class="path" style="padding:4px">+ 12 more</div>
+            </div>
+          </div></div>
+        </div>
+        <div class="col" style="width:52%;flex:none;box-shadow:-8px 0 24px rgba(0,0,0,.08)">
+          <div class="termhead"><b>checkout-redesign</b><span>PRD v2 edits</span><span>task: Draft PRD v2</span><span style="margin-left:auto">⤢ ✕</span></div>
+          <div class="term">
+            <div><span class="k">⏺</span> Update(docs/prd-v2.md)</div>
+            <div class="d">&nbsp;&nbsp;⎿ Added "What we heard" section, revised 3 requirements</div><br>
+            <div><span class="k">⏺</span> Two interviewees flagged that saved cards are the main</div>
+            <div>&nbsp;&nbsp;reason they abandon guest checkout. That conflicts with</div>
+            <div>&nbsp;&nbsp;non-goal #2. <span class="a">Should I move saved cards into scope,</span></div>
+            <div class="a">&nbsp;&nbsp;or keep it out and record it as an open question?</div>
+            <div class="box">&gt; <span class="cur"></span></div>
+            <div class="d" style="margin-top:10px">⏎ send · ⌥↓ next needing you · esc close</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><h4>Strengths</h4><ul><li>Built for 6+ sessions: you see at a glance what's blocked on you.</li><li>"⌥↓ next needing you" lets you work through the queue like an inbox.</li><li>"Idle · resumable" is a column of its own, so resuming feels like the normal thing to do.</li></ul></div>
+      <div class="note"><h4>Weaknesses</h4><ul><li>The project and task structure is hidden behind the ▤ icon, and tasks become chips on cards.</li><li>Starting from a session encourages creating more sessions, not working inside a project.</li><li>Feels like a dashboard rather than a terminal.</li></ul></div>
+      <div class="note"><h4>How it nudges habits</h4><ul><li>"＋ New work…" asks: which project? which task? new or resume? (a flow to wireframe later).</li><li>Once 3+ sessions are idle in one project, the column could suggest closing some.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- ================= C ================= -->
+  <section class="opt" id="opt-c">
+    <h2>C · Project Rooms <span class="chip">project-first</span></h2>
+    <p class="tag">Each open project is a top-level tab, a "room" with its own tasks and session tabs. Home is a room too, pinned first. You get to projects through ⌘O. The tab strip shows attention across all of them.</p>
+    <div class="win">
+      <div class="titlebar"><div class="lights"><i></i><i></i><i></i></div></div>
+      <div class="ptabs">
+        <div class="p">★ Home <span class="cnt need">1</span></div>
+        <div class="p on">checkout-redesign <span class="cnt need">1</span><span class="st run"></span></div>
+        <div class="p">onboarding-v3 <span class="cnt need">1</span></div>
+        <div class="p">refunds-api-spec <span class="st run"></span></div>
+        <div class="p add">＋ Open project <span class="kbd">⌘O</span></div>
+      </div>
+      <div class="body">
+        <div class="col" style="width:320px;flex:none">
+          <div class="phead">
+            <div class="path">Payments /</div>
+            <div class="nm">checkout-redesign</div>
+            <div class="goal">Cut guest-checkout abandonment 15% by Q1.</div>
+            <div style="margin-top:8px;display:flex;gap:6px"><span class="chip">⎇ github</span><span class="chip">PROJECT.md</span><span class="chip">6 tasks</span></div>
+          </div>
+          <div class="sect">Tasks <span class="plus">＋</span></div>
+          <div class="scroll">
+            <div class="trow sel"><div class="l1"><span class="check"></span><b>Draft PRD v2</b></div><div class="l2"><span class="chip"><span class="st need"></span>PRD v2 edits</span><span class="chip"><span class="st idle"></span>Interview synth</span><span class="chip task">＋ link</span></div></div>
+            <div class="trow"><div class="l1"><span class="check"></span>Competitive teardown</div><div class="l2"><span class="chip"><span class="st run"></span>Teardown research</span></div></div>
+            <div class="trow"><div class="l1"><span class="check"></span>Align w/ risk team</div><div class="l2"><span class="btn ghost" style="font-size:11px;padding:1px 7px">▶ Start session for this task</span></div></div>
+            <div class="trow"><div class="l1"><span class="check"></span>Exec review deck</div></div>
+            <div class="trow" style="color:var(--ink-3)"><div class="l1"><span class="check on"></span>Kickoff deck</div></div>
+            <div class="sect" style="margin-top:6px">Unlinked sessions</div>
+            <div class="row"><span class="st idle"></span><span class="grow">quick q about tax rules</span><span class="meta">3d</span></div>
+          </div>
+        </div>
+        <div class="col" style="flex:1">
+          <div class="termtabs">
+            <div class="t on"><span class="st need"></span>PRD v2 edits</div>
+            <div class="t"><span class="st run"></span>Teardown research</div>
+            <div class="t">＋ <span class="d" style="color:var(--ink-3)">resume ▾</span></div>
+          </div>
+          <div class="term">
+            <div class="d">~/work/payments/checkout-redesign</div>
+            <div><span class="k">⏺</span> Update(docs/prd-v2.md)</div>
+            <div class="d">&nbsp;&nbsp;⎿ Added "What we heard" section, revised 3 requirements</div><br>
+            <div><span class="k">⏺</span> Two interviewees flagged that saved cards are the main</div>
+            <div>&nbsp;&nbsp;reason they abandon guest checkout. That conflicts with</div>
+            <div>&nbsp;&nbsp;non-goal #2. <span class="a">Should I move saved cards into scope,</span></div>
+            <div class="a">&nbsp;&nbsp;or keep it out and record it as an open question?</div>
+            <div class="box">&gt; <span class="cur"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="inset">
+      <div class="palette">
+        <div class="in">⌘O &nbsp;Open project… <span class="cur" style="background:var(--ink-3);width:1px"></span></div>
+        <div class="sect">Starred</div>
+        <div class="qrow sel"><span>★</span><div class="grow">Home</div><span class="sm">~/work/home</span></div>
+        <div class="sect">Recent</div>
+        <div class="qrow"><span class="st need"></span><div class="grow">onboarding-v3 <span class="sm">· Growth</span></div><span class="sm">12m</span></div>
+        <div class="qrow"><span class="st idle"></span><div class="grow">fraud-rules-review <span class="sm">· Payments</span></div><span class="sm">3d</span></div>
+        <div class="sect">Browse by topic</div>
+        <div class="qrow"><div class="grow">Payments <span class="sm">3</span> · Growth <span class="sm">2</span> · Platform <span class="sm">3</span></div></div>
+        <div class="qrow" style="border-top:1px solid var(--line)"><b>＋ New project folder…</b><span class="sm" style="margin-left:auto">⌘⇧N</span></div>
+      </div>
+      <div class="note"><h4>Why rooms</h4><ul><li><b>One room = one Claude Code project = one folder.</b> It matches Claude Code exactly, so it's always obvious which folder a session lives in.</li><li>Tasks are listed first and sessions hang off them. Unlinked sessions are shown, but separately.</li><li>The ⌘O picker puts "New project folder" next to existing projects, so you can find an existing one or make a new one in the same place.</li></ul></div>
+    </div>
+    <div class="notes">
+      <div class="note"><h4>Strengths</h4><ul><li>Most closely matches Claude Code's model.</li><li>Shows tasks and sessions many-to-many directly: a task can have several session chips, and a session can appear under several tasks.</li><li>Each room has room for a goal, a status, and later a file tree.</li></ul></div>
+      <div class="note"><h4>Weaknesses</h4><ul><li>The overview of sessions needing you is only badges on tabs, so it's weak at 6+ sessions unless we add a global queue.</li><li>Topics barely appear (breadcrumb and picker only). That's fine if we keep topics light.</li></ul></div>
+      <div class="note"><h4>Variants to consider</h4><ul><li>C + B: make the Home room <i>be</i> the fleet board.</li><li>Use a left rail for rooms instead of top tabs, so 10+ projects fit.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- ================= D ================= -->
+  <section class="opt" id="opt-d">
+    <h2>D · Director Console <span class="chip">home-agent-first</span></h2>
+    <p class="tag">The Home agent is always docked on the left as your chief of staff. It triages, dispatches and reports. On the right are a queue of sessions across all projects and whichever session you're focused on. You can reach projects by asking Home, or through the rail.</p>
+    <div class="win w-d">
+      <div class="titlebar"><div class="lights"><i></i><i></i><i></i></div><span class="ttl">Director</span></div>
+      <div class="body">
+        <div class="col rail">
+          <div class="ico on">★</div>
+          <div class="ico">▤</div>
+          <div class="ico">⌕</div>
+        </div>
+        <div class="col" style="width:38%;flex:none">
+          <div class="termhead"><b>★ Home</b><span>~/work/home</span><span style="margin-left:auto">inbox 5</span></div>
+          <div class="term">
+            <div>&gt; morning</div>
+            <div><span class="k">⏺</span> Overnight: 5 new asks (Slack 3, email 2).</div>
+            <div>&nbsp;&nbsp;Routed:</div>
+            <div class="d">&nbsp;&nbsp;• "refund SLA question" → refunds-api-spec</div>
+            <div class="d">&nbsp;&nbsp;&nbsp;&nbsp;created task "Answer SLA q", started session</div>
+            <div class="d">&nbsp;&nbsp;• "Q4 pricing numbers?" → pricing-experiment-q4</div>
+            <div class="d">&nbsp;&nbsp;&nbsp;&nbsp;resumed "Results readout"</div>
+            <div>&nbsp;&nbsp;<span class="a">Need you on 2:</span></div>
+            <div>&nbsp;&nbsp;• Legal wants a call re: saved cards. No project</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;fits. <span class="a">New project, or file under checkout?</span></div>
+            <div>&nbsp;&nbsp;• 1:1 notes w/ Dana: add to personal ops?</div>
+            <div class="box">&gt; file it under checkout, add a task<span class="cur"></span></div>
+          </div>
+        </div>
+        <div class="col" style="flex:1">
+          <div class="sect" style="padding-top:8px">Queue · across projects</div>
+          <div class="qrow sel"><span class="st need"></span><div class="grow"><b>PRD v2 edits</b> <span class="sm">· checkout-redesign</span></div><span class="sm">4m</span></div>
+          <div class="qrow"><span class="st need"></span><div class="grow">Copy review pass 2 <span class="sm">· onboarding-v3</span></div><span class="sm">12m</span></div>
+          <div class="qrow"><span class="st done"></span><div class="grow">Results readout <span class="sm">· pricing-q4 · dispatched by Home</span></div><span class="sm">now</span></div>
+          <div class="qrow"><span class="st run"></span><div class="grow">Answer SLA q <span class="sm">· refunds-api-spec · dispatched by Home</span></div></div>
+          <div class="qrow"><span class="st run"></span><div class="grow">Teardown research <span class="sm">· checkout-redesign</span></div></div>
+          <div class="termhead" style="margin-top:6px"><b>checkout-redesign</b><span>PRD v2 edits</span><span>task: Draft PRD v2</span><span style="margin-left:auto">↗ open room</span></div>
+          <div class="term">
+            <div><span class="k">⏺</span> Two interviewees flagged that saved cards are the main</div>
+            <div>&nbsp;&nbsp;reason they abandon guest checkout. That conflicts with</div>
+            <div>&nbsp;&nbsp;non-goal #2. <span class="a">Should I move saved cards into scope,</span></div>
+            <div class="a">&nbsp;&nbsp;or keep it out and record it as an open question?</div>
+            <div class="box">&gt; <span class="cur"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><h4>Strengths</h4><ul><li>Treats the home-agent pattern you described as the main way of working.</li><li>Organizing is done for you: Home creates tasks, picks projects, and resumes sessions instead of starting new ones.</li><li>The queue tags work "dispatched by Home", which makes delegation visible.</li></ul></div>
+      <div class="note"><h4>Weaknesses</h4><ul><li>Opinionated. Users who don't want a director get a wasted pane (it could collapse).</li><li>Needs Home to be able to create tasks and start or resume sessions in other folders, through a CLI or MCP tools the app provides.</li><li>Two terminals side by side are dense.</li></ul></div>
+      <div class="note"><h4>Open question</h4><ul><li>Is Home a <i>normal project</i> (just starred, with a CLAUDE.md that tells it about the other projects) or a <i>special kind of project</i> with app-provided tools? A or C could also host it as a starred project.</li></ul></div>
+    </div>
+  </section>
+
+  <div class="callout">
+    <h4>React to these</h4>
+    <ol style="margin:0;padding-left:18px">
+      <li>Which <b>primary surface</b> feels right: tree (A), board (B), rooms (C) or director (D)? Mixing them is fine, e.g. "C, but Home is B".</li>
+      <li>Should the <b>attention queue</b> be global (always visible) or shown when you ask for it?</li>
+      <li>Should <b>terminal tabs</b> stay inside one project (C) or mix projects (A/B/D)?</li>
+      <li>Is the Home agent a <b>starred normal project</b> or a <b>distinct mode</b>?</li>
+    </ol>
+  </div>
+</div>
+<script>
+  const tabs = document.querySelectorAll('#tabs button');
+  function show(k) {
+    tabs.forEach(b => b.classList.toggle('on', b.dataset.k === k));
+    document.querySelectorAll('.opt').forEach(s => s.classList.toggle('on', s.id === 'opt-' + k));
+    try { history.replaceState(null, '', '#' + k); } catch (e) {}
+  }
+  tabs.forEach(b => b.onclick = () => show(b.dataset.k));
+  document.addEventListener('keydown', e => { const k = { '1':'a','2':'b','3':'c','4':'d' }[e.key]; if (k) show(k); });
+  if (location.hash) show(location.hash.slice(1));
+</script>
+</body>
+</html>
