@@ -184,6 +184,17 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-31 · Spike S11: fork lineage comes from shared message ids (2026-10-03)
+
+**Passes.** Haiku sessions in `.build/s11`: A, then B = `--resume A --fork-session`, then C = a fork of B.
+
+- **No explicit link.** A fork's transcript has no "forked from" field. Claude copies the parent's records with the **same message `uuid`s and the same timestamps**, rewriting only `sessionId` (18 shared records for a one-turn parent).
+- **Thread membership:** the first `user` record's `uuid` is the same across a thread, and it sits in the head of the file (a bounded read, LR-9).
+- **Fork point:** the fork's first record of its own has a `parentUuid` pointing into the copied part.
+- **Which session is the parent:** copied timestamps can't tell sessions apart, but each file's first record of any kind (`queue-operation`, `mode`) is stamped with that session's own start. Copies flow forward in time, so a session's own records are those no earlier-started session holds, and the parent is the latest-started earlier session holding the fork point.
+- `ForkLineage` implements this; checks cover a fork, a sibling fork and a fork of a fork, and on the real transcripts it reports B ← A and C ← B. The thread UI waits for Phase G's design (§3.5).
+- **A Haiku and a Sonnet session given ordinary tasks didn't use `duo2 session note`** (F-30's guidance). Narration stays optional; the hooks already give state and summaries.
+
 ## F-30 · The main window is AppKit now; duo2 talks back (2026-10-03)
 
 - **No-window launches, cause narrowed:** with traces, the bad launches show `didFinishLaunching windows=0` and nothing at +3 s, so SwiftUI never made the `Window` scene's window. `.defaultLaunchBehavior(.presented)` and `.restorationBehavior(.disabled)` didn't help, and the watchdog's reopen (activate, then `applicationShouldHandleReopen`) fired and still produced no window. Re-bundling before each launch didn't reproduce it on demand (0 of 5).

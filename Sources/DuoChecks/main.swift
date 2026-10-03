@@ -255,6 +255,37 @@ func repoFixture() throws -> Fixture {
         print("bench: build ms \(times.map { String(format: "%.1f", $0) }), beacons ms \(String(format: "%.1f", tb))")
     }
 
+    print("fork lineage")
+    func msg(_ uuid: String, _ parent: String?, _ ts: String, _ type: String = "user") -> [String: Any] {
+        var d: [String: Any] = ["uuid": uuid, "timestamp": ts, "type": type]
+        if let parent { d["parentUuid"] = parent }
+        return d
+    }
+    // A: u1 → a1 → u2 → a2. B forks A after a1. C forks A after a2. D forks B.
+    // Each file starts with a queue record stamped at the session's own start (as Claude writes).
+    func start(_ ts: String) -> [String: Any] { ["type": "queue-operation", "timestamp": ts] }
+    let msgsA = [msg("u1", nil, "t01"), msg("a1", "u1", "t02", "assistant"), msg("u2", "a1", "t03"), msg("a2", "u2", "t04", "assistant")]
+    let A = [start("t00")] + msgsA
+    let B = [start("t05")] + Array(msgsA.prefix(2)) + [msg("b1", "a1", "t05"), msg("b2", "b1", "t06", "assistant")]
+    let C = [start("t07")] + msgsA + [msg("c1", "a2", "t07")]
+    let D = [start("t08")] + Array(B.dropFirst()) + [msg("d1", "b2", "t08")]
+    let recs = ["A": A, "B": B, "C": C, "D": D]
+    let infos = recs.map { ForkLineage.info(sessionId: $0.key, records: $0.value) }
+    check(Set(infos.map(\.root)) == ["u1"], "a thread shares its first user uuid")
+    let parents = ForkLineage.parents(infos, records: recs)
+    check(parents == ["B": "A", "C": "A", "D": "B"], "parents from fork points, including a fork of a fork")
+
+    if let dir = ProcessInfo.processInfo.environment["DUO_LINEAGE"] {
+        let files = (try? FileManager.default.contentsOfDirectory(at: URL(fileURLWithPath: dir), includingPropertiesForKeys: nil)) ?? []
+        var recs: [String: [[String: Any]]] = [:]
+        for f in files where f.pathExtension == "jsonl" {
+            recs[String(f.deletingPathExtension().lastPathComponent.prefix(8))] = (try? String(contentsOf: f, encoding: .utf8))?
+                .split(separator: "\n").compactMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) as? [String: Any] } ?? []
+        }
+        let infos = recs.map { ForkLineage.info(sessionId: $0.key, records: $0.value) }
+        print("lineage: roots \(Set(infos.compactMap(\.root)).count), parents \(ForkLineage.parents(infos, records: recs))")
+    }
+
     print("launch options")
     let o = LaunchOptions(arguments: ["Duo", "--state", "flow-zoom-3", "--capture", "/tmp/x.png", "--left", "collapsed"])
     check(o.state == .flowZoom3 && o.capturePath == "/tmp/x.png" && o.collapseLeft && o.capturing, "flags parse")

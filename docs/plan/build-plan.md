@@ -100,7 +100,7 @@ Each is a throwaway target or branch with pass/fail written before it starts. Ne
 | S3 | libghostty-spm soak, only if S1/S2 fail | D |
 | S9 | **Passed (F-23).** Hooks + `claude agents --json` + `~/.claude/sessions/<pid>.json` beacons → the five states; actionable `Notification` types only (LR-2) | E |
 | S10 | **Encoder passed (F-24); relocation and retention still to test.** *Changed:* shared `~/.claude` mechanics (DL-14): full path encoder incl. >200-char rule and self-calibration, `--session-id`, `--resume <id>` from any cwd, the `relocated` record, retention read | E, J |
-| S11 | *New:* fork lineage detection for threads (§11) | G |
+| S11 | *New:* fork lineage detection for threads (§11). **Passed (F-31):** shared message uuids, fork point by `parentUuid`, parent by file start time; `ForkLineage` | G |
 | S12 | *New:* an answer channel for a waiting interactive session (§12 Q1 option C; Agent View's inline reply) | H |
 | S8 | *Changed:* CLI transport from a sandboxed session (DL-15). **Passed (F-29):** Unix socket + token with a per-session `allowUnixSockets` grant (DL-43); `scripts/check-sandbox.sh` reproduces it under Seatbelt | F |
 | S13 | *New (SRCH P0):* Core ML conversion of `bge-small-en-v1.5`, reproducible, checksummed; ranking parity with the POC's golden set (SRCH Q3) | M |
