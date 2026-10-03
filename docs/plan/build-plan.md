@@ -71,13 +71,13 @@ Each phase: what it builds, what it needs first, exit check, gates.
 | Exit | Every state launches from one flag; `check-ui.sh` captures and compares all six; pane edges and colours exact; toolbar contents and order match; left-pane collapse verified at both altitudes (F-5, F-9). Review images: `docs/plan/review/phase-a/`. |
 | Gates | ❓ G1 (toolchain/distribution), gate zero. |
 
-### Phase B — Static UI from the fixture · slices 2–3
+### Phase B — Static UI from the fixture · slices 2–3 · *done 2026-10-03, except the `look` gallery (moved to Phase C)*
 
 | | |
 |---|---|
 | Builds | **All projects:** map (topic columns, tiles, focus outline, `+ New project` as an inert tile), idle footer, action column (needs-you cards, Home pointer card, review cards; no quick-reply buttons per DL-29, ignored when comparing), Home pane chrome (header, session tabs) over a placeholder. **Inside a project:** session list (state sections; group / thread / session rows; pills; selection shape), Resume / New buttons, file tree rooted on a real folder, console tab strip over a placeholder, right-pane tabs with a plain text view and the "added by Claude" block. `look.html` as a debug component gallery. |
 | Needs | Phase A. |
-| Exit | `overview`, `flow-zoom-1`, `project`, `flow-zoom-2`, `flow-zoom-4` meet §0.3, ignoring the targets' reply buttons (DL-29). |
+| Exit | `overview`, `flow-zoom-1`, `project`, `flow-zoom-2`, `flow-zoom-4` meet §0.3, ignoring the targets' reply buttons (DL-29), the document body (placeholder until Phase I) and the mono font difference (F-12, Q-14). Review images: `docs/plan/review/phase-b/`. |
 | Gates | ⛔ design: Project tab and group page (stub tabs, §3.5). ❓ `Open project` vs `Jump into project` (§12). |
 
 ### Phase C — Navigation · slice 4

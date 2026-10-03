@@ -62,10 +62,10 @@ Machine: macOS 27.0 (26A428), Apple silicon, Command Line Tools only (Swift 6.4,
 - **Observed:** extra leading computed from AppKit font metrics (`lineSpacing` plus padding) made each line about 0.8 pt taller than the targets' CSS `line-height`, compounding down every card. With `.lineHeight(.exact(points:))` the line boxes match exactly, but CoreText puts all the extra leading below the glyphs while CSS splits it, so text sat high: 2 pt at 13/20 and mono 12/19, 1 pt at 11/16.
 - **Changed:** `duoText` uses `.lineHeight(.exact(points: lineHeight))` plus `.offset(y: ⌊extraLeading / 2⌋)`. Ink boxes for section labels, card names, tile rows, buttons and console text now match the targets to 0 pt vertically (`scripts/ink.py`).
 
-## F-12 · Chrome draws SF Mono's space narrower than CoreText (2026-10-03)
+## F-12 · The reference PNGs draw mono text in Menlo, not SF Mono (2026-10-03; corrected)
 
-- **Observed:** mono strings without spaces match exactly (`~/work/home`); each space adds about 1.5–1.75 pt in the build (CoreText gives the space SF Mono's full 7.42 pt advance at 12 pt). The second Home tab starts 2 pt to the right of the target's.
-- **Changed:** nothing. It's a browser-versus-AppKit letter-shape difference that §0.3 expects; tab starts stay within the 2 pt tolerance. Revisit only if longer mono strings drift visibly.
+- **Observed:** mono strings in the build are about 2.7% wider than the targets. First read as narrower spaces in Chrome; measuring a space-free path settled it. The target's `~/work/payments/checkout-redesign` (mono 11) is 217.5 pt wide: Menlo gives 218.5, SF Mono (`monospacedSystemFont`, `.AppleSystemUIFontMonospaced`) gives 224.4. The targets' stack is `ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace`. Headless Chrome doesn't support `ui-monospace`, and SF Mono isn't installed under the other two names (it ships as the system font `SFNSMono`), so Chrome fell back to Menlo.
+- **Changed:** nothing in the build. Handoff §4.2 and Geoff ("system faces") specify SF Mono, so the build keeps it; mono strings run a little wider than the references, and tabs to the right of a long mono label start a little later. Logged as Q-14 in case Geoff's canvas review showed Menlo and he prefers it.
 
 ## F-13 · SwiftUI avoids one-word last lines; CSS doesn't (2026-10-03)
 
