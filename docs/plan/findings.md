@@ -156,3 +156,34 @@ Verified with `--terminals demo` (real `claude` sessions in scratch folders unde
 - Keyboard input reaches the focused terminal: `/help` brings up Claude Code's slash-command menu.
 - Quitting ends the sessions (a terminate pass on quit, and the PTY closing); no orphaned `claude` processes remain.
 - Fixture captures are unchanged: 0 differing pixels against the Phase C captures, since terminals are off in fixture mode.
+
+## F-23 · Spike S9: where the attention state comes from (2026-10-03)
+
+One Haiku session asked an AskUserQuestion and waited, with every hook logged through a per-session `--settings` file (no global settings touched, LR-55).
+
+**`claude agents --json` and the beacons (`~/.claude/sessions/<pid>.json`) agree**, and need no setup:
+- Every live session on the machine: `pid`, `cwd`, `kind`, `sessionId`, `name`, `status`.
+- `status` is `busy`, `idle`, or `waiting`; while waiting, `waitingFor: "input needed"` (the research also lists "permission prompt"). The beacon adds `statusUpdatedAt` (the wait time), `entrypoint` (`cli`, `claude-desktop`), `nameSource`, `version`, and a `messagingSocketPath`.
+- Sessions Duo didn't start appear too (Terminal, the Desktop app): the "live elsewhere" signal LR-8 needs.
+
+**Hooks**, in order for one AskUserQuestion turn:
+
+| Event | When | Useful fields |
+|---|---|---|
+| `SessionStart` | launch | `source: startup`, `model` |
+| `UserPromptSubmit` | prompt sent | `prompt`, `prompt_id` |
+| `PreToolUse` | tool about to run | `tool_name: AskUserQuestion`, `tool_input` |
+| `PermissionRequest` | the TUI shows the question | `tool_input.questions[]`: `question`, `header`, `options[{label, description}]`, `multiSelect` |
+| `Notification` | 6 s later | `notification_type: permission_prompt`, `message: "Claude needs your permission"` |
+| `PostToolUse` | answered | `tool_response`, `duration_ms` |
+| `Stop` | turn ends | `last_assistant_message` |
+| `SessionEnd` | exit | `reason` |
+
+**Consequences for Phase E:**
+- Needs-you comes from the beacon's `status: waiting` (authoritative, readable as a file) with `PermissionRequest` as the instant edge. That payload already holds the **verbatim question and options** for the action-column card, with no transcript parsing.
+- A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
+- Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
+
+## F-24 · Spike S10: the storage encoder calibrates against this machine (2026-10-03)
+
+`ClaudeStorage.encode` (non-alphanumerics → `-`; over 200 characters → first 200 + `-` + base-36 `|Java hashCode|`) matches **13 of 13** folders in `~/.claude/projects`, with 0 collisions and 0 mismatches. It runs as a check (`DuoChecks`, 34 checks now) and is the self-calibration CONS §6.3 requires before any physical operation. No path here exceeds 200 characters, so the hash branch rests on the path-binding research's reproduction until a long-path session exists.

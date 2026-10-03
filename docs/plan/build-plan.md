@@ -98,8 +98,8 @@ Each is a throwaway target or branch with pass/fail written before it starts. Ne
 | S1 | **Passed (F-17, F-18).** SwiftTerm soak with the real `claude` TUI; `TERM_PROGRAM` variants; 8×1 resize floor (LR-14); env scrub of `CLAUDE_CODE_*` / `CLAUDECODE` (CONS §5.6) | D |
 | S2 | **Passed (F-18).** Six-session CPU/RSS load (Instruments needs Xcode; otherwise `ps`/`top` sampling) | D |
 | S3 | libghostty-spm soak, only if S1/S2 fail | D |
-| S9 | Hooks + `claude agents --json` + `~/.claude/sessions/<pid>.json` beacons → the five states; actionable `Notification` types only (LR-2) | E |
-| S10 | *Changed:* shared `~/.claude` mechanics (DL-14): full path encoder incl. >200-char rule and self-calibration, `--session-id`, `--resume <id>` from any cwd, the `relocated` record, retention read | E, J |
+| S9 | **Passed (F-23).** Hooks + `claude agents --json` + `~/.claude/sessions/<pid>.json` beacons → the five states; actionable `Notification` types only (LR-2) | E |
+| S10 | **Encoder passed (F-24); relocation and retention still to test.** *Changed:* shared `~/.claude` mechanics (DL-14): full path encoder incl. >200-char rule and self-calibration, `--session-id`, `--resume <id>` from any cwd, the `relocated` record, retention read | E, J |
 | S11 | *New:* fork lineage detection for threads (§11) | G |
 | S12 | *New:* an answer channel for a waiting interactive session (§12 Q1 option C; Agent View's inline reply) | H |
 | S8 | *Changed:* CLI transport from a sandboxed session (DL-15): loopback TCP + token, name TBD (DL-16) | F |
