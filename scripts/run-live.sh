@@ -1,0 +1,18 @@
+#!/bin/zsh
+# Runs Duo once against a workspace with scripted actions, waits for the capture, then quits.
+# Never hangs: gives up after $DUO_TIMEOUT seconds (default 90) and quits the app.
+#   scripts/run-live.sh <workspace> <capture.png> <then-actions> [stderr-file]
+# Set DUO_MODEL to run sessions on another model (e.g. claude-haiku-4-5-20251001, DL-33).
+set -u
+ws=$1 png=$2 then=$3 err=${4:-/dev/null}
+rm -f "$png"
+envargs=()
+[[ -n ${DUO_MODEL:-} ]] && envargs=(--env "ANTHROPIC_MODEL=$DUO_MODEL")
+open -n $envargs --stderr "$err" build/Duo.app --args --workspace "$ws" --capture-window "$png" --then "$then"
+for i in {1..${DUO_TIMEOUT:-90}}; do
+  [[ -f $png ]] && break
+  sleep 1
+done
+sleep 2
+if pgrep -xq Duo; then osascript -e 'tell application id "com.dudgeon.duo" to quit' >/dev/null 2>&1; sleep 2; fi
+[[ -f $png ]] && echo "captured $png" || { echo "no capture after ${DUO_TIMEOUT:-90}s"; exit 1; }

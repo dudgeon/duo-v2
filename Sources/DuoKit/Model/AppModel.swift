@@ -88,11 +88,24 @@ public final class AppModel {
     /// Live sessions whose process Duo doesn't own (Terminal, the Desktop app, another Duo).
     public var liveElsewhere: Set<String> = []
     @ObservationIgnored private var refreshTimer: Timer?
+    /// Duo's "seen" marks (handoff §10): looking at a session clears ready-for-review.
+    @ObservationIgnored public var seen: [String: Double] = [:]
+
+    public var visibleTerminal: TerminalSession? { visibleSessionId.flatMap { terminals.existing($0) } }
+
+    /// The session whose terminal is on screen now.
+    var visibleSessionId: String? {
+        switch altitude {
+        case .allProjects: return homeTab
+        case .project: return consoleTab
+        }
+    }
 
     /// Switches to real projects under `root`, refreshing every 2 s from disk and beacons.
     public func startLive(root: URL) {
         liveRoot = root
         terminalsMode = .live
+        seen = DuoState.load().seen
         refreshLive()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.refreshLive() }
@@ -102,7 +115,11 @@ public final class AppModel {
     public func refreshLive() {
         guard let root = liveRoot else { return }
         let beacons = Beacon.readAll()
-        let (snapshot, folders) = LiveSnapshot.build(.init(root: root), beacons: beacons)
+        if let id = visibleSessionId, fixture.sessions.contains(where: { $0.sessionId == id && $0.state == .readyForReview }) {
+            seen[id] = Date().timeIntervalSince1970
+            DuoState.update { $0.seen[id] = seen[id] }
+        }
+        let (snapshot, folders) = LiveSnapshot.build(.init(root: root, events: DuoPaths.events, seen: seen), beacons: beacons)
         // Sessions Duo started but Claude hasn't written a beacon for yet keep their tab.
         var merged = snapshot
         for s in fixture.sessions where s.sessionId != nil && terminals.existing(s.tabKey) != nil

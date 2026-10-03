@@ -164,6 +164,49 @@ func repoFixture() throws -> Fixture {
     check(snap.counts.needsYou == 1 && snap.counts.idle == 1, "counts")
     try? FileManager.default.removeItem(at: lw)
 
+    print("hooks")
+    let ev = FileManager.default.temporaryDirectory.appending(path: "duo-ev-\(UUID().uuidString)")
+    let settings = try HookEvents.settingsFile(for: "s1", in: ev)
+    let sj = try JSONSerialization.jsonObject(with: Data(contentsOf: settings)) as? [String: Any]
+    let stopCmd = (((sj?["hooks"] as? [String: Any])?["Stop"] as? [[String: Any]])?.first?["hooks"] as? [[String: Any]])?.first?["command"] as? String
+    check(stopCmd != nil, "settings file has a Stop hook command")
+    // Run the real hook command the way Claude does: payload on stdin, pretty-printed.
+    func fire(_ payload: String) {
+        let p = Process(); p.executableURL = URL(fileURLWithPath: "/bin/sh"); p.arguments = ["-c", stopCmd!]
+        let pin = Pipe(); p.standardInput = pin; let out = Pipe(); p.standardOutput = out
+        try? p.run(); pin.fileHandleForWriting.write(Data(payload.utf8)); try? pin.fileHandleForWriting.close(); p.waitUntilExit()
+        check(out.fileHandleForReading.readDataToEndOfFile().isEmpty, "hook prints nothing (never answers a prompt)")
+    }
+    fire("{\n  \"hook_event_name\": \"UserPromptSubmit\", \"prompt\": \"hi\"\n}")
+    fire(#"{"hook_event_name":"PermissionRequest","tool_name":"AskUserQuestion","tool_input":{"questions":[{"question":"Move saved cards into scope?","options":[{"label":"Yes"},{"label":"No"}]}]}}"#)
+    var events = HookEvents.read("s1", in: ev)
+    check(events.count == 2 && events[0].name == "UserPromptSubmit", "events append one per line, pretty payloads folded")
+    var sum = HookEvents.summarize(events)
+    check(sum?.kind == .pending && sum?.question == "Move saved cards into scope?" && sum?.options == ["Yes", "No"], "pending AskUserQuestion carries the verbatim question")
+    fire(#"{"hook_event_name":"PostToolUse","tool_name":"AskUserQuestion"}"#)
+    fire(###"{"hook_event_name":"Stop","last_assistant_message":"## Drafted the PRD section\nDetails…"}"###)
+    events = HookEvents.read("s1", in: ev)
+    sum = HookEvents.summarize(events)
+    check(sum?.kind == .stopped && sum?.reason == .blocked, "answered, then the turn ended")
+    func b(_ status: String, _ w: String? = nil) -> Beacon {
+        Beacon(pid: 1, sessionId: "s1", cwd: "/", name: nil, status: status, waitingFor: w, statusUpdatedAt: 1000, entrypoint: nil, kind: nil)
+    }
+    fire(#"{"hook_event_name":"SessionStart","source":"resume"}"#)
+    check(HookEvents.summarize(HookEvents.read("s1", in: ev))?.kind == .stopped, "resuming keeps the finished turn")
+    let r = Attention.live(beacon: b("idle"), hooks: sum, seenAt: nil)
+    check(r.state == .readyForReview && r.summary == "Drafted the PRD section", "finished turn: ready for review, headline as summary")
+    check(Attention.live(beacon: b("idle"), hooks: sum, seenAt: sum!.at + 1).state == .idle, "seen after the turn: idle")
+    check(HookEvents.headline("You prefer **red**.") == "You prefer red.", "summary drops bold markers")
+    check(Attention.live(beacon: b("busy"), hooks: sum, seenAt: nil).state == .working, "busy beats hooks")
+    check(Attention.live(beacon: b("waiting", "permission prompt"), hooks: nil, seenAt: nil).question == "Waiting for permission", "waiting without hooks: generic line")
+    fire(#"{"hook_event_name":"UserPromptSubmit","prompt":"next"}"#)
+    fire(#"{"hook_event_name":"Stop","last_assistant_message":"Done.\n\nShould I also update the FAQ?"}"#)
+    let asked = Attention.live(beacon: b("idle"), hooks: HookEvents.summarize(HookEvents.read("s1", in: ev)), seenAt: nil)
+    check(asked.state == .needsYou && asked.question == "Should I also update the FAQ?", "turn ending in a question: needs you, last paragraph")
+    fire(#"{"hook_event_name":"PermissionRequest","tool_name":"Bash","tool_input":{"command":"git push"}}"#)
+    check(HookEvents.summarize(HookEvents.read("s1", in: ev))?.question == "Allow `git push`?", "permission prompt names the command")
+    try? FileManager.default.removeItem(at: ev)
+
     print("launch options")
     let o = LaunchOptions(arguments: ["Duo", "--state", "flow-zoom-3", "--capture", "/tmp/x.png", "--left", "collapsed"])
     check(o.state == .flowZoom3 && o.capturePath == "/tmp/x.png" && o.collapseLeft && o.capturing, "flags parse")

@@ -8,10 +8,16 @@ public enum LiveSnapshot {
         public var root: URL
         public var rememberedHome: String?
         public var now = Date()
+        /// Hook events for sessions Duo started; nil reads none.
+        public var events: URL?
+        /// Duo's "seen" marks, epoch seconds by session id.
+        public var seen: [String: Double]
 
-        public init(root: URL, rememberedHome: String? = nil) {
+        public init(root: URL, rememberedHome: String? = nil, events: URL? = nil, seen: [String: Double] = [:]) {
             self.root = root
             self.rememberedHome = rememberedHome
+            self.events = events
+            self.seen = seen
         }
     }
 
@@ -47,15 +53,16 @@ public enum LiveSnapshot {
             for id in ids where !claimed.contains(id) {
                 claimed.insert(id)
                 let beacon = beacons.first { $0.sessionId == id }
-                let (state, _) = beacon.map { Attention.state(for: $0) } ?? (.idle, nil)
                 let created = index.sessions.first { $0.sessionId == id }?.createdAt
+                let hooks = ctx.events.flatMap { HookEvents.summarize(HookEvents.read(id, in: $0)) }
+                let live = beacon.map { Attention.live(beacon: $0, hooks: hooks, seenAt: ctx.seen[id]) }
+                let since = live?.since ?? created.map { $0.timeIntervalSince1970 * 1000 }
                 sessions.append(Fixture.Session(
                     name: beacon?.name ?? "Session \(id.prefix(8))",
                     project: name,
-                    state: state,
-                    wait: beacon.flatMap { Attention.waitText(since: $0.statusUpdatedAt, now: ctx.now) }
-                        ?? created.flatMap { Attention.waitText(since: $0.timeIntervalSince1970 * 1000, now: ctx.now) },
-                    question: nil, options: nil, summary: nil, forkOf: nil, document: nil,
+                    state: live?.state ?? .idle,
+                    wait: live?.state == .readyForReview ? nil : Attention.waitText(since: since, now: ctx.now),
+                    question: live?.question, options: live?.options, summary: live?.summary, forkOf: nil, document: nil,
                     sessionId: id
                 ))
             }

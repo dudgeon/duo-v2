@@ -184,6 +184,18 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-26 · Phase E2: hooks give the question, the answer and the review state (2026-10-03)
+
+Every Claude session Duo starts or resumes gets `--settings <events>/<id>.settings.json`. Its hooks (SessionStart, UserPromptSubmit, PermissionRequest, PostToolUse, Notification, Stop, SessionEnd) append `{"at":…,"e":<payload>}` lines to `~/Library/Application Support/Duo/events/<id>.jsonl`. They print nothing, so they can't answer a prompt. Verified end to end on Haiku (DL-33) through `scripts/run-live.sh`, with the screen locked:
+
+- **Needs you, with the verbatim question:** after an AskUserQuestion, the session read `needsYou`, question "Which color do you prefer?", options Red/Blue, within one 2 s refresh. The action column shows the card and the toolbar shows `1 need you`. Review image: `docs/plan/review/phase-e/live-needs-you.png` (Home sessions use the designed "Waiting in the Home terminal" card).
+- **Ready for review:** after answering and moving to another project, the session read `readyForReview`, with the reply's first line as the summary (markdown bold stripped).
+- **Seen mark:** looking at the session (its tab on screen during a refresh) writes `seen[id]` to `Duo/state.json`, and the next refresh shows it idle. Writes happen only when there is something to clear.
+- **Resume keeps the finished turn.** The resumed process fires `SessionStart` (`source: resume`); the first version treated that as a new turn and lost "ready for review". Now only `UserPromptSubmit` clears it.
+- **Claude's session names aren't stable:** the beacon `name` was `home-38`, then `home-0e`, `home-55`, `home-ea` across relaunches of the same session. Titles need the transcript (LR-6's title ladder) before they appear in the UI as names people will recognise.
+- **A launch with no window (once):** one launch ran the live refresh with no window at all, so the scripted capture never fired and `open -W` waited forever. It didn't reproduce in five later launches. Like F-19, not explained; `scripts/run-live.sh` bounds every run and quits through Apple Events.
+- 78 checks pass, including the real hook command run through `sh` with pretty-printed payloads.
+
 ## F-25 · Phase E: live workspace on real folders (2026-10-03)
 
 `Duo --workspace <root>` builds the same snapshot the fixture provides from real sources and refreshes it every 2 s: `PROJECT.md`/`HOME.md` frontmatter (goal, health slug, next), topic from the parent folder, each project's `.duo/sessions.json`, and beacons. Verified on `.build/ws` (`scripts/make-demo-workspace.py`):

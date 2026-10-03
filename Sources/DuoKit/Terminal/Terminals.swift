@@ -87,19 +87,24 @@ public final class TerminalSession {
         switch command {
         case .newClaude(let id, let prompt):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
-            var args = ["--session-id", id]
+            var args = ["--session-id", id] + Self.hookArgs(id)
             if let prompt { args.append(prompt) }
             view.startProcess(executable: claude, args: args, environment: ChildEnvironment.make(sessionID: id),
                               execName: nil, currentDirectory: cwd)
         case .resumeClaude(let id):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
-            view.startProcess(executable: claude, args: ["--resume", id], environment: ChildEnvironment.make(sessionID: id),
+            view.startProcess(executable: claude, args: ["--resume", id] + Self.hookArgs(id), environment: ChildEnvironment.make(sessionID: id),
                               execName: nil, currentDirectory: cwd)
         case .shell:
             let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
             view.startProcess(executable: shell, args: ["-l"], environment: ChildEnvironment.make(sessionID: nil),
                               execName: "-" + (shell as NSString).lastPathComponent, currentDirectory: cwd)
         }
+    }
+
+    /// Per-session hooks (F-23); none if the settings file can't be written.
+    private static func hookArgs(_ id: String) -> [String] {
+        (try? HookEvents.settingsFile(for: id)).map { ["--settings", $0.path] } ?? []
     }
 
     private func showMissingClaude() {
