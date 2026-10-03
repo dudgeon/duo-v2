@@ -1,6 +1,6 @@
 # Duo v2 — Stack recommendation
 
-Status: proposed · 2026-10-03 · **Amended by `decisions.md` (DL-3, DL-8, DL-14, DL-15); where they differ, the decision log wins.** · Inputs: `docs/research/stack-terminal-and-claude-hosting.md`, `docs/research/stack-editor-and-webview.md`, `docs/research/claude-code-session-path-binding.md`, and Geoff's answers (below).
+Status: proposed · 2026-10-03 · **Amended by `decisions.md` (DL-3, DL-8, DL-14, DL-15, DL-29, DL-30); where they differ, the decision log wins. Build findings: `../plan/findings.md`.** · Inputs: `docs/research/stack-terminal-and-claude-hosting.md`, `docs/research/stack-editor-and-webview.md`, `docs/research/claude-code-session-path-binding.md`, and Geoff's answers (below).
 
 ## Constraints from Geoff
 
@@ -17,7 +17,7 @@ Status: proposed · 2026-10-03 · **Amended by `decisions.md` (DL-3, DL-8, DL-14
 | # | Area | Decision | Fallback |
 |---|---|---|---|
 | 1 | Language / UI | **Swift 6, SwiftUI app with AppKit where SwiftUI is weak** (terminal, web views, split-view resizing, menus, text finder). | — |
-| 2 | Project format | **Xcode project generated from `project.yml` with XcodeGen**; Swift packages for each subsystem. No hand-edited `.pbxproj`. | Tuist |
+| 2 | Project format | **Decided (DL-30, ADR-0001): a Swift package built with the Command Line Tools; no Xcode required.** Superseded proposal: Xcode project generated from `project.yml` with XcodeGen. | — |
 | 3 | Terminal emulator | **SwiftTerm** (MIT, Metal renderer, DEC 2026 sync output, OSC 8/52, SGR mouse, bracketed paste after Sept 2026 — pin a commit on the 2.0 line), wrapped behind a `TerminalHost` protocol. | **libghostty** via `Lakr233/libghostty-spm` behind the same protocol |
 | 4 | Claude Code hosting | **Spawn the user's own `claude` in a PTY per session** (`forkpty`), always with `--session-id <duo-uuid>`; reopen with `--resume <uuid>`. Never `-c`, never the picker. | Headless `stream-json` for a later native "review pane", not for v1 |
 | 5 | Session state | **Hooks + `claude agents --json`.** Per-session hooks injected with `--settings` post events to Duo's local HTTP endpoint; `claude agents --json` polled as the authoritative state (busy/waiting/idle, `waitingFor`). | Parse terminal output (avoid) |

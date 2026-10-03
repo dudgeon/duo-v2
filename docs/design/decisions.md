@@ -41,3 +41,22 @@ Context: `docs/design/legacy-requirements.md` §4 open questions, plus three con
   - Q8: document "open one level per topic as a vault" to avoid nested vaults.
   - Q9: read TaskNotes' `scheduled` and `priority` keys; never write them.
   - Q10 is a test, not a decision: run the spec's §4.7 check in a live Obsidian before locking the schema.
+
+## 2026-10-03 — Design handoff and build plan
+
+Context: `docs/design/build-handoff/README.md` §14 (proposed by the design session) and `docs/plan/build-plan.md` §5. Geoff: "log all as decided, but still review designs progressively with me as you build."
+
+| # | Topic | Decision | Consequences |
+|---|---|---|---|
+| DL-21 | Altitudes | Two: **All projects** and **inside a project**, one window, zoom between them. | |
+| DL-22 | All projects layout | Home terminal (left) · project map by topic (middle) · action column for needs-you and ready-for-review (right). | Replaces the "three attention columns" default as the layout; the three buckets remain (needs you and review in the action column, live sessions in tiles, idle as the footer tier). |
+| DL-23 | Inside a project | Left pane is sessions by state over a file tree rooted in the project folder. Console in the middle. Right pane tabs: Project, group pages, documents. | Amends brief §5 ("left = projects and tasks"). |
+| DL-24 | Threads and groups | Forks fold into one thread row. Related threads are grouped by hand or by a CLI verb. Groups are Duo-owned facts. A group shows the state of its most urgent session. | |
+| DL-25 | Tasks in the UI | Parked. Nothing in navigation depends on a task. | File format per DL-6 and DL-13 stands. |
+| DL-26 | Look | Two-tone: light chrome, dark console. System faces. One accent, for needs-you. The design screens are the literal build target; only system-drawn chrome is exempt. | Geoff reviews designs progressively as each slice is built: every slice ends with comparison images for his review. |
+| DL-27 | Console | Claude Code's TUI, unmodified. Duo draws nothing inside the terminal. | |
+| DL-28 | Peek | A popover from the toolbar needs-you chip, listing what needs you elsewhere, with a way to jump into that project or go Home. | |
+| DL-29 | Answering a waiting session from the chrome | **Backlogged; not in v1.** Peek and action-column cards show the question and a way into the session; no reply controls. | Handoff §12 Q1 stays open. LR-15 stands unchanged. The quick-reply buttons are not built (not even behind a switch); the cards in the targets are compared with those buttons ignored. |
+| DL-30 | Toolchain | **Xcode-free as policy.** Everything builds with the Command Line Tools (`git clone && scripts/bundle.sh`). Xcode may be installed for profiling, but nothing may require it. | Replaces stack #2 (XcodeGen). No SwiftUI macro plugins (`@State`, previews), no XCTest/Swift Testing (checks run as an executable), no asset catalogs (tokens are generated Swift). Matches the delivery pattern proven on the work Mac (SRCH §4). |
+| DL-31 | Work-Mac test (gate zero) | **Later, once there's something usable** (after Phases B–C). | The top risk stays open until then; logged in `docs/plan/concerns-and-questions.md`. |
+| DL-32 | Scope ownership | Geoff delegates v1 scoping: Claude decides what is in v1 versus later, and logs concerns and open questions continuously in `docs/plan/concerns-and-questions.md` for pre-build refinement. | The build plan carries a v1 scope and a backlog; Geoff reviews them rather than deciding each item. |
