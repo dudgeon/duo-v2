@@ -184,6 +184,16 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-33 · Spike S7: WKWebView local-only by default, with an allow list (2026-10-03)
+
+**Passes** (`Spikes/S7WebView`, a throwaway package; `swift run` in that folder).
+
+- **Two layers, both needed.** The navigation delegate refuses top-level loads to non-local hosts (and allows allow-listed ones); a `WKContentRuleList` blocks **subresources**, which the delegate never sees. With the rules, a local page's `<img src="https://example.com/…">` never produced a request (no resource-timing entry); without them it did.
+- **Content-blocker rules:** block `^https?://`, then one `ignore-previous-rules` per local host. Regex disjunctions (`a|b`) are rejected ("Disjunctions are not supported yet"), and `unless-domain` keys on the *page's* domain, so it would let a local page pull anything. Allow-listed hosts are more `ignore-previous-rules` entries; the list is recompiled when it changes.
+- **`isInspectable = true`** sets (the inspector itself needs Safari's Develop menu; not checked headless).
+- **WebKit refuses some ports** ("Not allowed to use restricted network port"), and port 0 is one of them: the spike first read the listener's port before it was ready. Duo's local servers must use a known-good port and wait for ready.
+- A width check on the blocked image passed with and without the rules, so it proved nothing; resource timing is the reliable test.
+
 ## F-32 · Spike S10, second half: `/cd` relocation and retention (2026-10-03)
 
 - **`/cd` from a Duo terminal works** (interactive only): "Moved to …/onboarding-v3". Claude **moves the whole transcript** to the new folder's project directory (nothing left in the old one) and appends `{"type":"relocated","relocatedCwd":"<new folder>"}`; later records carry the new `cwd`, earlier ones keep the old.

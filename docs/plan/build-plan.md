@@ -107,7 +107,7 @@ Each is a throwaway target or branch with pass/fail written before it starts. Ne
 | S14 | *New (SRCH P0):* Core ML query embedding inside Claude Code's sandbox with no writes outside allowed paths; CPU-only and precompiled-model fallbacks (SRCH Q2). Includes whether model compilation works without Xcode (`MLModel.compileModel` at runtime vs `coremlc`) | M |
 | S15 | *New (SRCH P0):* indexing throughput on the slowest supported Apple silicon; corpus size on the reference machine (SRCH NFR-1, NFR-3) | M |
 | S4–S6 | CM6 live preview on a 1.2 MB file; external-edit merge; `swift-markdown-engine` hedge | I |
-| S7 | WKWebView: local-only default + allow list (DL-3); inspector on an allowed site | K |
+| S7 | WKWebView: local-only default + allow list (DL-3); inspector on an allowed site. **Passed (F-33):** navigation policy + content rule list; `Spikes/S7WebView` | K |
 
 ### Phase D — Terminals · slice 5 · *core built 2026-10-03 (F-22); open: shell tabs and auto-promote (DL-8), ANSI palette and empty console (design), ⌘W close*
 
