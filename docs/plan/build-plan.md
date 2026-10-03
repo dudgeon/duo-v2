@@ -95,8 +95,8 @@ Each is a throwaway target or branch with pass/fail written before it starts. Ne
 
 | # | Spike | Unblocks |
 |---|---|---|
-| S1 | SwiftTerm soak with the real `claude` TUI; `TERM_PROGRAM` variants; 8×1 resize floor (LR-14); env scrub of `CLAUDE_CODE_*` / `CLAUDECODE` (CONS §5.6) | D |
-| S2 | Six-session CPU/RSS load (Instruments needs Xcode; otherwise `ps`/`top` sampling) | D |
+| S1 | **Passed (F-17, F-18).** SwiftTerm soak with the real `claude` TUI; `TERM_PROGRAM` variants; 8×1 resize floor (LR-14); env scrub of `CLAUDE_CODE_*` / `CLAUDECODE` (CONS §5.6) | D |
+| S2 | **Passed (F-18).** Six-session CPU/RSS load (Instruments needs Xcode; otherwise `ps`/`top` sampling) | D |
 | S3 | libghostty-spm soak, only if S1/S2 fail | D |
 | S9 | Hooks + `claude agents --json` + `~/.claude/sessions/<pid>.json` beacons → the five states; actionable `Notification` types only (LR-2) | E |
 | S10 | *Changed:* shared `~/.claude` mechanics (DL-14): full path encoder incl. >200-char rule and self-calibration, `--session-id`, `--resume <id>` from any cwd, the `relocated` record, retention read | E, J |

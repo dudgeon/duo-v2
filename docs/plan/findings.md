@@ -106,3 +106,28 @@ Not yet done, and why:
 - **Pixels.** SwiftTerm draws through a frame driver into its layer; `cacheDisplay`, `CALayer.render(in:)` and calling `draw(_:)` all produce a fully transparent image. Seeing terminal pixels needs `screencapture` with the Screen Recording permission, or a person. Terminal content is exempt from comparison (handoff §0.4), so the comparison loop is unaffected; Duo's own captures will show terminals as blank.
 - **The interactive half of S1:** typing, Shift+Enter, mouse selection and copy, a permission prompt, AskUserQuestion, `/tui fullscreen`, and `TERM_PROGRAM` variants for the kitty keyboard protocol. These need someone at the keyboard, and answering prompts makes model calls.
 - **S2 (six streaming sessions):** needs six sessions producing output, which costs tokens.
+
+## F-18 · Spikes S1 (interactive) and S2 (six streaming sessions) pass (2026-10-03)
+
+Same setup as F-17, using Haiku (DL-33). Input is sent by the spike's `--keys` (a harness simulating a person; LR-15 governs Duo, not the harness). Sessions ran in throwaway folders under `.build/s2/` in this repo.
+
+**S1, interactive half: pass.**
+- **Folder trust is per folder and not inherited**: a subfolder of a trusted repo still gets Claude's trust dialog. Down + Enter accepts it. Duo's create-project and first-session flows will meet this dialog in every new folder.
+- **The whole TUI renders**: the welcome banner (block-character logo, model and plan line), notices, the input box with rules, the mode line ("⏸ manual mode on · ? for shortcuts").
+- **Streaming**: an 80-line answer streams and scrolls correctly.
+- **AskUserQuestion** renders as Claude Code's own picker (☐ header, `❯ 1. Yes` with descriptions, "Type something.", "Chat about this", key hints).
+- **Tool use and permission**: "Create hello.txt" shows `⏺ Write(hello.txt)` and its result; Enter accepted, and the file exists on disk.
+- **Shift+Enter** sent as `ESC CR` gives a two-line input (`first line` / `second line`) without submitting, and Claude shows its "ctrl+g to edit in Vim" hint. LR-16's one remap works.
+
+**S2: pass.** Six terminals in one window, five hidden, each running `claude --model haiku` on a 1,500-word story:
+
+| | Peak | Typical while streaming | After streams end |
+|---|---|---|---|
+| Host app CPU (one core = 100%) | 11.3% | 3–8% | 0.1–0.6% |
+| Host app memory | 100 MB | 100 MB | 91 MB |
+| Six `claude` processes, CPU (sum) | 177% (startup) | 30–40% | 8–12% |
+| Six `claude` processes, memory (sum) | 2.4 GB | 2.1–2.4 GB | 2.1 GB |
+
+The SwiftTerm risk behind C-2 (75–82% of a core on 1.x) doesn't reproduce on the 2.0 line: hidden terminals cost almost nothing, and the host stays near the plan's 15% bar at its worst moment. The `claude` processes dominate memory (about 350 MB each), as the stack research predicted; that cost is Claude Code's under any host.
+
+**Side effects to clean up later:** the test sessions exist in `~/.claude/projects` under `.build/s2*` paths, and their folders are marked trusted in `~/.claude.json`. Harmless; `claude purge` on those paths removes them.
