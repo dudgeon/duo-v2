@@ -6,7 +6,8 @@
 #   <screen>          a target in ../screens without .html: overview, project, flow-zoom-3, ...
 #   <app-screenshot>  the app window at the design size (1440x900 pt), any pixel density
 #   --content-only    the screenshot has no toolbar (a view snapshot, not a window capture);
-#                     it is compared against the target below the 38 pt toolbar
+#                     it is compared against the target below the toolbar, which is 38 pt plus
+#                     its 1 pt bottom border (CSS content-box): content starts at 39
 #
 # Output: one PNG with three panels: TARGET | BUILD | DIFFERENCE.
 # In DIFFERENCE, black means identical. Bright edges are things in the wrong place or the wrong colour.
@@ -22,7 +23,7 @@ out=""; top=0
 shift 2
 for a in "$@"; do
   case "$a" in
-    --content-only) top=38 ;;
+    --content-only) top=39 ;;
     *) out="$a" ;;
   esac
 done

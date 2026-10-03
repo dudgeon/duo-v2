@@ -80,6 +80,12 @@ public struct Fixture: Codable, Sendable, Equatable {
         sessions.filter { $0.project == project }
     }
 
+    /// Live sessions in a project (needs you, ready for review, working), in source order.
+    /// Tiles keep this order as states change (flow-zoom-4), so rows don't jump around.
+    public func liveSessions(inProject project: String) -> [Session] {
+        sessions.filter { $0.project == project && [.needsYou, .readyForReview, .working].contains($0.state) }
+    }
+
     /// Sessions needing you, longest wait first (handoff §2.2).
     public var needsYou: [Session] {
         sessions.filter { $0.state == .needsYou }.sorted { WaitTime($0.wait) > WaitTime($1.wait) }

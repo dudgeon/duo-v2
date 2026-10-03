@@ -1,0 +1,352 @@
+import SwiftUI
+
+// All projects (handoff §3.2). Targets: screens/overview.html, flow-zoom-1.html, flow-zoom-4.html.
+
+// MARK: - Home pane
+
+/// The Home terminal pane: header, one tab per live Home session, then the terminal. The body is
+/// Claude Code's own TUI (handoff §0.4), so it stays empty until terminals exist (Phase D).
+struct HomePane: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let home = model.fixture.home
+        let tabs = home.map { model.fixture.liveSessions(inProject: $0.name) } ?? []
+        VStack(spacing: 0) {
+            HStack(spacing: DuoSpace.gapRowItems) {
+                Text("★ \(home?.name ?? "home")")
+                    .duoText(.bodyEmphasis)
+                    .foregroundStyle(DuoColor.consoleText)
+                Spacer(minLength: 8)
+                Text(home?.path ?? "")
+                    .duoText(.mono)
+                    .foregroundStyle(DuoColor.consoleText2)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, DuoSpace.panePadding)
+            .frame(height: DuoMetric.tabStripHeight)
+            ConsoleRule()
+
+            HStack(spacing: 16) {
+                ForEach(tabs) { s in
+                    let active = s.name == model.homeTab
+                    HStack(spacing: DuoSpace.gapGlyphToLabel) {
+                        StateGlyph(s.state, on: .console(active: active))
+                        Text(s.name)
+                            .duoText(active ? .monoActiveTab : .mono)
+                            .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2)
+                            .lineLimit(1)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, DuoSpace.panePadding)
+            .frame(height: DuoMetric.homeSessionTabsHeight)
+            ConsoleRule()
+
+            // Terminal placeholder (Phase D).
+            Color.clear
+        }
+        .background(DuoColor.console)
+    }
+}
+
+struct ConsoleRule: View {
+    var body: some View { DuoColor.consoleRule.frame(height: 1) }
+}
+
+// MARK: - Project map
+
+struct ProjectMapPane: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let f = model.fixture
+        VStack(spacing: 0) {
+            ScrollView {
+                HStack(alignment: .top, spacing: DuoSpace.gapMapColumns) {
+                    ForEach(Array(f.topics.enumerated()), id: \.element) { i, topic in
+                        VStack(alignment: .leading, spacing: DuoSpace.gapTileToTile) {
+                            SectionLabel(text: topic)
+                            ForEach(f.projects(inTopic: topic)) { p in
+                                ProjectTile(project: p)
+                            }
+                            if i == f.topics.count - 1 {
+                                NewProjectTile()
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                    }
+                }
+                .padding(DuoSpace.panePadding)
+            }
+            .scrollIndicators(.automatic)
+
+            DuoColor.rule.frame(height: 1)
+            HStack(spacing: DuoSpace.gapRowItems) {
+                StateGlyph(.idle)
+                Text("\(f.counts.idle) idle, resumable").duoText(.body)
+                Chevron()
+            }
+            .foregroundStyle(DuoColor.text2)
+            .padding(.horizontal, DuoSpace.panePadding)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: DuoMetric.overviewFooterHeight)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(f.counts.idle) idle sessions, resumable")
+        }
+        .foregroundStyle(DuoColor.text)
+        .background(DuoColor.pane)
+    }
+}
+
+/// A project tile (handoff §5 `ProjectTile`): name, goal, health · next, then its live sessions.
+struct ProjectTile: View {
+    @Environment(AppModel.self) private var model
+    let project: Fixture.Project
+
+    var body: some View {
+        let focused = model.focusedTile == project.name
+        let sessions = model.fixture.liveSessions(inProject: project.name)
+        VStack(alignment: .leading, spacing: DuoSpace.gapTileRows) {
+            // flow-zoom-1 wraps both the name and the hint when the hint is shown, as CSS flex
+            // shrinks them (the target wins over handoff §8's truncation proposal).
+            FlexShrinkRow {
+                Text(project.name).duoText(.bodyEmphasis)
+                if focused {
+                    // Non-breaking space: SwiftUI avoids a one-word last line ("Enter" / "to open");
+                    // the target breaks "Enter to" / "open" (findings F-13).
+                    Text("Enter\u{00A0}to open").duoText(.body).foregroundStyle(DuoColor.text2)
+                }
+            }
+            Text(project.goal).duoText(.body).fixedSize(horizontal: false, vertical: true)
+            Text([project.health, project.next].compactMap { $0 }.joined(separator: " · "))
+                .duoText(.body)
+                .foregroundStyle(DuoColor.text2)
+                .fixedSize(horizontal: false, vertical: true)
+            if sessions.isEmpty {
+                Text("Nothing running")
+                    .duoText(.body)
+                    .foregroundStyle(DuoColor.text2)
+                    .frame(height: DuoMetric.rowTileSession)
+                    .padding(.top, 6)
+            } else {
+                ForEach(Array(sessions.enumerated()), id: \.element.id) { i, s in
+                    TileSessionRow(session: s, selected: model.selectedActionSession == s.id)
+                        .padding(.top, i == 0 ? 6 : 0)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .bordered(DuoSpace.cardPadding, color: focused ? DuoColor.text : DuoColor.rule)
+        .overlay {
+            if focused {
+                // The target's `box-shadow: 0 0 0 1px` ring outside the border: a 2 pt outline.
+                RoundedRectangle(cornerRadius: DuoMetric.radiusCard + 1)
+                    .strokeBorder(DuoColor.text, lineWidth: 1)
+                    .padding(-1)
+            }
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(tileLabel(sessions))
+    }
+
+    private func tileLabel(_ sessions: [Fixture.Session]) -> String {
+        var parts = [project.name]
+        if let h = project.health { parts.append(h.lowercased()) }
+        for state in [SessionState.needsYou, .readyForReview, .working] {
+            let n = sessions.filter { $0.state == state }.count
+            if n > 0 { parts.append("\(n) \(state.spokenName)") }
+        }
+        return parts.joined(separator: ", ")
+    }
+}
+
+/// A 24-high session row inside a tile: glyph, name, wait time (no time for ready for review).
+struct TileSessionRow: View {
+    let session: Fixture.Session
+    var selected = false
+
+    var body: some View {
+        HStack(spacing: DuoSpace.gapRowItems) {
+            StateGlyph(session.state)
+            Text(session.name)
+                .duoText(.body, weight: selected ? .semibold : nil)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            if session.state != .readyForReview { WaitLabel(text: session.wait) }
+        }
+        .frame(height: DuoMetric.rowTileSession)
+        .padding(.horizontal, selected ? 6 : 0)
+        .background {
+            if selected { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected) }
+        }
+        .padding(.horizontal, selected ? -6 : 0)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(session.name), \(session.state.spokenName)\(session.wait.map { ", waiting \($0)" } ?? "")")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+/// `+ New project`: dashed, 38 high. The create-project flow is not designed (handoff §13).
+struct NewProjectTile: View {
+    var body: some View {
+        Text("+ New project")
+            .duoText(.body)
+            .foregroundStyle(DuoColor.text2)
+            .frame(maxWidth: .infinity)
+            // 38 pt plus its 1 pt border on each side: CSS content-box (findings F-10).
+            .frame(height: DuoMetric.newProjectTileHeight + 2 * DuoMetric.borderHairline)
+            .overlay(
+                RoundedRectangle(cornerRadius: DuoMetric.radiusCard)
+                    .strokeBorder(DuoColor.controlEdge, style: StrokeStyle(lineWidth: 1, dash: DuoMetric.dashPattern))
+            )
+            .accessibilityAddTraits(.isButton)
+    }
+}
+
+// MARK: - Action column
+
+struct ActionColumnPane: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let f = model.fixture
+        let needsYou = f.needsYou
+        let reviews = f.sessions.filter { $0.state == .readyForReview }
+        ScrollView {
+            VStack(alignment: .leading, spacing: DuoSpace.gapCardToCard) {
+                if !needsYou.isEmpty {
+                    SectionLabel(text: "Needs you", count: needsYou.count, needsYou: true)
+                    ForEach(needsYou) { s in
+                        if s.project == f.home?.name {
+                            HomePointerCard(session: s)
+                        } else {
+                            NeedsYouCard(session: s, selected: model.selectedActionSession == s.id)
+                        }
+                    }
+                }
+                if !reviews.isEmpty {
+                    SectionLabel(text: "Ready for review", count: reviews.count)
+                        .padding(.top, needsYou.isEmpty ? 0 : 6)
+                    ForEach(reviews) { s in ReviewCard(session: s) }
+                }
+            }
+            .padding(DuoSpace.panePadding)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .foregroundStyle(DuoColor.text)
+        .background(DuoColor.pane)
+    }
+}
+
+/// Glyph, name (semibold), optional suffix, wait time right-aligned.
+struct CardHeader: View {
+    let session: Fixture.Session
+    var suffix: String?
+    var showsWait = true
+
+    var body: some View {
+        HStack(spacing: DuoSpace.gapRowItems) {
+            StateGlyph(session.state)
+            Text(session.name).duoText(.bodyEmphasis).lineLimit(1)
+            if let suffix { Text(suffix).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize() }
+            Spacer(minLength: 8)
+            if showsWait { WaitLabel(text: session.wait) }
+        }
+    }
+}
+
+/// A session needing you (handoff §5 `ActionCard`). The question is shown verbatim. No reply
+/// buttons: DL-29.
+struct NeedsYouCard: View {
+    @Environment(AppModel.self) private var model
+    let session: Fixture.Session
+    var selected = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DuoSpace.gapCardContent) {
+            VStack(alignment: .leading, spacing: 0) {
+                CardHeader(session: session)
+                Text(session.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+            }
+            if let q = session.question {
+                Text(q)
+                    .duoText(.body)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .modifier(QuestionBox(boxed: selected))
+            }
+            HStack(spacing: DuoSpace.gapButtonToButton) {
+                Button("Open project") {}.buttonStyle(.duo)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .bordered(DuoSpace.cardPadding,
+                  color: selected ? DuoColor.text : DuoColor.rule,
+                  width: selected ? DuoMetric.borderEmphasis : DuoMetric.borderHairline)
+        .contentShape(Rectangle())
+        .onTapGesture { model.selectedActionSession = session.id }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(session.name), needs you, waiting \(session.wait ?? ""), \(session.project)")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+/// On the selected card the question sits in a 1.5 pt `needsYou` box (handoff §3.2).
+struct QuestionBox: ViewModifier {
+    let boxed: Bool
+
+    func body(content: Content) -> some View {
+        if boxed {
+            content.bordered(DuoSpace.questionBoxPadding, color: DuoColor.needsYou, width: DuoMetric.borderEmphasis)
+        } else {
+            content
+        }
+    }
+}
+
+/// A Home session needing you is a pointer, not a card: the Home terminal is already on screen.
+struct HomePointerCard: View {
+    @Environment(AppModel.self) private var model
+    let session: Fixture.Session
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            CardHeader(session: session, suffix: session.project)
+            Text("← Waiting in the Home terminal").duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .bordered(DuoSpace.pointerCardPadding, color: DuoColor.controlEdge, dashed: true)
+        .contentShape(Rectangle())
+        .onTapGesture { model.homeTab = session.name }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(session.name), needs you, waiting in the Home terminal")
+    }
+}
+
+/// A session with a deliverable to review (handoff §3.2).
+struct ReviewCard: View {
+    let session: Fixture.Session
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DuoSpace.gapTileRows) {
+            CardHeader(session: session, showsWait: false)
+            Text(session.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+            if let summary = session.summary {
+                Text(summary).duoText(.body).fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: DuoSpace.gapButtonToButton) {
+                Button("Review") {}.buttonStyle(.duo)
+            }
+            .padding(.top, 6)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .bordered(DuoSpace.cardPadding)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(session.name), ready for review, \(session.project)")
+    }
+}

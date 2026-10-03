@@ -21,13 +21,20 @@ public struct DuoTextSpec: Sendable {
             : .systemFont(ofSize: size, weight: weight.nsWeight)
     }
 
-    /// The height AppKit gives one line of this font with no extra leading.
+    /// The height AppKit gives one line of this font with no extra leading. Not rounded: the
+    /// extra leading must make the line pitch exactly `lineHeight`, as CSS does.
     public var naturalLineHeight: CGFloat {
         let f = nsFont
-        return ceil(f.ascender - f.descender + f.leading)
+        return f.ascender - f.descender + f.leading
     }
 
     public var extraLeading: CGFloat { max(0, lineHeight - naturalLineHeight) }
+
+    /// CoreText's exact line height puts all the extra leading below the glyphs; CSS splits it
+    /// above and below. Shifting the text down by half of it, rounded down to the pixel grid,
+    /// puts glyphs where the targets draw them (findings F-11: measured 2 pt at 13/20 and mono
+    /// 12/19, 1 pt at 11/16).
+    public var baselineShift: CGFloat { (extraLeading / 2).rounded(.down) }
 }
 
 extension Font.Weight {
@@ -52,11 +59,15 @@ struct DuoTextModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .font(.system(size: spec.size, weight: weight ?? spec.weight, design: spec.mono ? .monospaced : .default))
+            .font(spec.mono
+                  ? Font(NSFont.monospacedSystemFont(ofSize: spec.size, weight: (weight ?? spec.weight).nsWeight))
+                  : .system(size: spec.size, weight: weight ?? spec.weight))
             .tracking(spec.tracking)
             .textCase(spec.uppercase ? .uppercase : nil)
-            .lineSpacing(spec.extraLeading)
-            .padding(.vertical, spec.extraLeading / 2)
+            // Exact line boxes, as CSS line-height draws them (findings F-11). Deriving extra
+            // leading from AppKit's font metrics ran about 0.8 pt per line long in SwiftUI.
+            .lineHeight(.exact(points: spec.lineHeight))
+            .offset(y: spec.baselineShift)
     }
 }
 

@@ -32,10 +32,14 @@ public struct WindowConfigurator: NSViewRepresentable {
 /// Sets the window up for fixture mode and, when asked, captures it and quits.
 @MainActor
 public enum FixtureHarness {
-    /// Content area under the toolbar at the design size: 1440 × (900 − 38).
+    /// Where the panes start in the targets: the 38 pt toolbar plus its 1 pt bottom border, which
+    /// CSS adds on top of the height (findings F-10).
+    public static let designContentTop = DuoMetric.toolbarHeight + DuoMetric.borderHairline
+
+    /// Content area under the toolbar at the design size: 1440 × (900 − 39).
     public static let contentSize = CGSize(
         width: DuoMetric.designWindow.width,
-        height: DuoMetric.designWindow.height - DuoMetric.toolbarHeight
+        height: DuoMetric.designWindow.height - designContentTop
     )
 
     public static func configure(_ window: NSWindow, options: LaunchOptions) {
