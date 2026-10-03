@@ -53,6 +53,7 @@ Single persona: a heavy Claude Code user on one machine who has been working for
 | S-RENAMED | `~/Desktop/foo-test` was renamed to `~/projects/foo` months ago. Bucket `-Users-me-Desktop-foo-test` still holds 30 sessions. | User sees the bucket flagged "folder missing", assigns it to project `foo`, every session resumes from `~/projects/foo`. |
 | S-SCATTER | Project `foo` has sessions in the root bucket, in `foo/packages/api`, and in two worktrees. | All four buckets roll up under `foo` (one project, one root). Sessions keep their original cwd for resume. User groups eleven of them into task group "auth refactor". |
 | S-TRASH | 60 one-prompt sessions in `~`, `~/Downloads`, and `/tmp/x`. | Sorted by size and age, bulk-selected, archived or deleted in one confirmed action. |
+| S-JUNK | The `$HOME` bucket holds 83 sessions. Most are unrelated one-offs, but nine of them were a thesis-formatting effort that edited files under `~/Documents/thesis`, and six were an unfinished CLI tool that lives nowhere yet. | The junk-drawer view shows per-session evidence (files touched, dates, branch, lineage). The user filters to the nine thesis sessions, sees that their touched files share `~/Documents/thesis`, and migrates them to the existing project rooted there. The user selects the six CLI sessions, creates a new project folder for them, and optionally moves the scattered files they produced into it. Sessions move one at a time; the bucket is never moved wholesale. Everything left is triaged with one decision each: archive, delete, or leave. |
 | S-MOVE | User wants `~/Desktop/foo-test` (still exists) moved to `~/projects/foo`. | Duo offers the move, previews every file operation, executes folder + transcripts + settings in tandem, verifies, and offers undo. |
 | S-LIVE | A terminal outside Duo currently runs `claude` in a bucket the user is curating. | The live session is marked, and any physical operation on it is refused until it ends. Pointer attribution still works. |
 | S-COLLIDE | `~/work/my-project` and `~/work/my_project` both exist. Both encode to the same bucket. | Duo detects two distinct recorded cwds in one bucket, attributes each session by its own cwd, and warns before any physical operation touches the bucket. |
@@ -70,6 +71,7 @@ Single persona: a heavy Claude Code user on one machine who has been working for
 | L1 | Scope of "consolidate" | Re-home session logs; archive or delete dead sessions; **and** offer folder moves, performed by Duo so that folders and logs move in tandem and connections are never broken. |
 | L2 | Shape of a project | **One root directory per project**, with named **task groups** inside it. Worktrees and subdirectories belong to the enclosing project. |
 | L3 | How groupings are proposed | **Manual curation only.** Rich sort and filter; no automatic proposals. |
+| L3a | Amendment proposed 2026-10-03 for the junk-drawer case (§ 7.10), pending owner confirmation | Duo may compute and display **deterministic evidence** per session (files it edited, their common ancestor directory, date clusters, branch, fork and continuation lineage, tags) and let the user filter and group by it. This is path and timestamp arithmetic, not a similarity judgment, and it never pre-selects or recommends a grouping. Without it, splitting an 83-session `$HOME` bucket by hand is impractical. |
 | L4 | Safety posture | Owner asked for a research-backed recommendation, with two hard constraints: never duplicate session logs in ways that create new problems, and prioritize clustering related sessions while preserving resumability. Answered by R1 below and § 6. |
 
 ### Recommended by author, pending owner confirmation
@@ -175,6 +177,7 @@ What a pointer alone does **not** give, and when relocation is therefore applied
 - **An orphaned bucket** (S-RENAMED after the fact: the cwd no longer exists): relocation into the project root's bucket is the default when the user assigns the bucket, because the old bucket can never be a working directory again. The user can decline and keep a pointer only.
 - **Native `/resume` parity for a bucket that stays where it is** (S-SCATTER subdirectories, scratch folders the user keeps): offered as an **alias**, by adding the bucket to the project root's `.session-aliases` (§ 7.4.7), which moves nothing. Explicit relocation remains available for users who want one bucket.
 - **Protection from the retention sweep**: archive by move (R4).
+- **A junk-drawer bucket** (S-JUNK: `$HOME`, `~/Desktop`, `~/Downloads`, `/tmp`, or any directory that can never be a project root): sessions are relocated **individually** into the destination project's bucket when assigned. Pointer-only would work for resume, but the junk drawer stays in daily use, so leaving the session there keeps it in the wrong picker forever, and aliasing is unusable because it would pull the whole drawer into the project. Per-session relocation is the only operation that splits a bucket.
 
 Resume for a pointer-only session runs from the session's own recorded or relocated cwd when it exists, else from the project root (§ 7.7).
 
@@ -242,6 +245,7 @@ Numbering is stable; downstream plans should reference these ids. "Must" is requ
 - **FR-7.2.5** When a Duo-created project's root encloses a session's resolved root (same root, a subdirectory, or a worktree of it), the session must be displayed under that project with provenance `inferred-from-cwd` and a `subPath` or `worktree` badge, without being removed from Unsorted until the user confirms. Confirmation may be bulk ("accept all 34 inferred").
 - **FR-7.2.6** Sessions Duo itself starts inside a project are attributed at creation (`created-by-duo`) and never enter Unsorted.
 - **FR-7.2.7** Unsorted must surface a count in the primary navigation so new strays are noticed (goal 6).
+- **FR-7.2.8** A configurable list of **non-project directories** (default: `$HOME`, `/`, `/tmp`, `~/Desktop`, `~/Downloads`, `~/Documents`) can never be a project root. Buckets for these directories are **junk drawers**: their sessions are always Unsorted until triaged, they are never offered Create-project-from-bucket, bucket-level alias or relocation, or folder move, and they get the split flow in § 7.10 instead. Subdirectories of a non-project directory (for example `~/Documents/thesis`) are ordinary candidates.
 
 ### 7.3 Curation surface (manual)
 
@@ -285,7 +289,7 @@ Numbering is stable; downstream plans should reference these ids. "Must" is requ
 ### 7.7 Resume behavior
 
 - **FR-7.7.1** Resuming a session from Duo runs `claude --resume <id>` with the child environment scrubbed of `CLAUDE_CODE_*` and `CLAUDECODE` variables.
-- **FR-7.7.2** Working directory for the resume, in order: the session's latest recorded cwd if it exists on disk and is inside the project root; else the session's first recorded cwd if it exists and is inside the project root; else the project root. The chosen directory and the reason are shown in the terminal header. (v1 always used the recorded cwd and failed when it was gone, ENH-232.)
+- **FR-7.7.2** Working directory for the resume, in order: the transcript's `relocatedCwd` if present and existing on disk; else the session's latest recorded cwd if it exists on disk and is inside the project root; else the session's first recorded cwd if it exists and is inside the project root; else the project root. The chosen directory and the reason are shown in the terminal header. (v1 always used the recorded cwd and failed when it was gone, ENH-232.)
 - **FR-7.7.3** On a CLI older than 2.1.223, resume must run from a directory whose bucket holds the transcript (the recorded cwd); if that directory is gone, Duo offers Relocate (which is the only way to make the session resumable on that CLI) and shows an upgrade nudge.
 - **FR-7.7.4** Resuming a live session focuses the owning Duo tab if there is one; if a process outside Duo holds it, Duo offers `--fork-session` with an explanation, as v1 did, and never starts a second writer on the same transcript.
 - **FR-7.7.5** Resuming an archived session restores it first (FR-7.6.1), then resumes.
@@ -302,6 +306,37 @@ Numbering is stable; downstream plans should reference these ids. "Must" is requ
 
 - **FR-7.9.1** Every read in § 7.1 and every action in § 7.3.5 is available on Duo's socket CLI (`duo sessions list|show`, `duo projects …`, `duo migrate plan|apply|verify|undo`, `duo archive`, `duo delete`), with JSON output, so a Claude session running inside Duo can propose a consolidation plan and hand it to the user for approval in the curation surface. The CLI enforces the same invariants and never bypasses confirmation for physical operations.
 - **FR-7.9.2** A Duo skill may teach Claude to read the inventory and draft a plan in prose plus a plan JSON. The skill must not instruct Claude to run file operations under `~/.claude/projects` directly.
+
+### 7.10 Splitting a junk-drawer bucket (S-JUNK)
+
+The junk drawer is the hardest case because the bucket is correct for most of its sessions and wrong for the clusters inside it, and because the clusters may have no home directory yet. Everything here operates on a **selection of sessions**, never on the bucket.
+
+**Evidence (requires L3a)**
+
+- **FR-7.10.1** Opening a junk-drawer bucket shows a per-session table with evidence columns in addition to § 7.3.1: **files edited** (count and the common ancestor directory), **date cluster**, **lineage** (forked-from, continued-in, continued-from), **tag** records, branch, first prompt, and the resolved **candidate home** (FR-7.10.3).
+- **FR-7.10.2 Files edited** are extracted deterministically from the transcript: `file-history-snapshot` and `file-history-delta` records (`trackingPath`, `realParentDir`), `tool_use` inputs of the file-editing tools (`file_path`, `notebook_path`, `path`), and `toolUseResult.filePath`. Read-only tool calls and shell commands are excluded (too noisy to be evidence). Extraction is a streaming full-file parse run on demand for the opened bucket only, bounded by a per-file size cap with a "partial" marker beyond it, cached in memory keyed by file mtime and size, and never persisted (§ D9).
+- **FR-7.10.3 Candidate home** of a session is the deepest directory that contains every file it edited, computed after discarding paths under the bucket's own directory root, system and temp directories, and `~/.claude`. If that directory is inside an existing project root, the project is named. If no files were edited, the column is empty. This is shown as a fact per session; Duo never pre-selects sessions or proposes a group.
+- **FR-7.10.4 Date clusters** group sessions by activity gaps: sessions whose active intervals are within a configurable gap (default 48 hours) of each other form one cluster, labeled by date range. Deterministic and explained in a tooltip.
+- **FR-7.10.5** Facets and filters over all of the above: by candidate home, by date cluster, by lineage chain, by tag, by edited-path prefix (typed), by text in first prompt and titles. Filters compose. The selection follows the filter, so "all sessions whose candidate home is `~/Documents/thesis`" is two clicks, and the user still confirms the selection by eye before acting.
+
+**Destinations for a selection**
+
+- **FR-7.10.6 Existing project.** Assign the selection to a project and optional task group. Because the source is a junk drawer, each session is also relocated (§ 7.4.2 and § 7.4.3) into the bucket of the project root, with `relocatedCwd` set to the project root. The user may choose a subdirectory of the root instead (for example the candidate home when it is inside the project), in which case `relocatedCwd` is that subdirectory and the session shows a `subPath` badge. A "pointer only, leave the file" override exists but is not the default here.
+- **FR-7.10.7 Existing folder that is not yet a project.** When the candidate home or a user-picked directory exists on disk but has no project, the dialog offers **Create project from this folder** inline (root pre-filled, name editable) and continues as FR-7.10.6.
+- **FR-7.10.8 New project folder.** When the cluster has no home, the dialog offers **Create a new project folder**: name; parent directory defaulting to a configurable projects root (default `~/projects`, created on first use after confirmation); options to `git init`, to seed a `CLAUDE.md` from a template, and to create `.claude/`. Duo creates the directory, registers the project, and relocates the selection into its bucket as in FR-7.10.6. The destination must not already exist or must be an empty directory.
+- **FR-7.10.9 Task group on the way in.** Every destination dialog has an optional task-group field with inline creation, so a cluster lands as a named body of work rather than as loose sessions.
+- **FR-7.10.10 Settings carry-over.** The dialog offers to copy `allowedTools`, `mcpServers`, and `enabledMcpjsonServers` from the junk drawer's `~/.claude.json` project entry into the destination root's entry, defaulting to off. Trust (`hasTrustDialogAccepted`) is never copied; the first resume in a new folder goes through Claude's own trust prompt.
+
+**Moving the work product (optional, per path)**
+
+- **FR-7.10.11** After a destination is chosen, if the selection's edited files lie outside every project root, Duo lists them grouped by their common ancestors and offers to **move** chosen paths into the destination root, preserving relative structure below the chosen ancestor. Each path is a checkbox, default unchecked. Refused: paths inside another project's root, inside a git repository other than the destination (the user is pointed at Folder move § 7.5 for whole repos), inside system or application-support directories, or currently open in any Duo tab or held by any process. Moves are journaled and undoable with the session relocations in the same journal.
+- **FR-7.10.12** Moving files does not modify transcripts (§ 6.6). Duo records the path mapping in the session ref, shows it in the session detail, and on the next resume of an affected session passes a short note through `--append-system-prompt` listing the old and new locations, so the model learns where its files went. The note is omitted once the user clears it or after the first resume completes.
+
+**The remainder**
+
+- **FR-7.10.13** After each split, the junk-drawer view shows what remains and offers per-session or bulk **Archive**, **Delete**, or **Leave** (a registry triage state meaning "noise, let retention handle it"). Leave removes the session from Unsorted without moving it and is reversible. Sessions marked Leave are excluded from the retention banner's counts.
+- **FR-7.10.14** A junk drawer's live sessions (a terminal is open in `$HOME` right now) are shown but cannot be relocated until they end; they can be pointer-assigned.
+- **FR-7.10.15** Lineage integrity: when a session is relocated, sessions linked to it by fork or continuation are highlighted in the selection dialog so the user can take the chain together. Duo never auto-includes them.
 
 ---
 
@@ -325,8 +360,16 @@ Registry at `~/.claude/duo/registry.json`, written atomically, schema-versioned,
       "projectId": "prj_01…", "taskGroupId": "tg_01…",
       "provenance": "manual",           // manual | inferred-from-cwd | created-by-duo
       "attributedAt": "…", "note": "",
-      "archive": null                    // or { "bucket": "-Users-me-Desktop-foo-test", "archivedAt": "…" }
+      "triage": null,                    // null | "leave"  (junk-drawer noise, FR-7.10.13)
+      "archive": null,                   // or { "bucket": "-Users-me-Desktop-foo-test", "archivedAt": "…" }
+      "movedPaths": [],                  // [{ "from": "~/notes/cli.md", "to": "~/projects/cli/notes/cli.md", "at": "…" }] (FR-7.10.12)
+      "resumeNotePending": false
     }
+  },
+  "settings": {
+    "projectsRoot": "/Users/me/projects",
+    "nonProjectDirectories": ["~", "/", "/tmp", "~/Desktop", "~/Downloads", "~/Documents"],
+    "dateClusterGapHours": 48
   }
 }
 ```
@@ -375,6 +418,8 @@ Nothing is written inside project folders. The in-folder `.claude/settings.local
 | Q1 | ~~Does interactive `--resume <id>` from another directory relocate the transcript?~~ **Closed 2026-10-03:** no. The resume path loads `relocatedCwd` into memory and never calls the relocation routine; only `/cd` and worktree enter/exit move files. | — | — |
 | Q2 | Which version introduced `--resume <transcript path>`, and which introduced the `relocated` record (presumably with `/cd` in 2.1.169)? | Sets the floor for FR-7.6.1 restore-and-resume, the S-OLDCLI fallback, and the FR-7.4.8 gate. | Changelog bisect; FR-7.4.8's binary probe covers the record regardless. |
 | Q3 | ~~Does resume itself filter by recorded cwd?~~ **Closed 2026-10-03:** no. The cwd filter is picker-only and triggers only on same-slug collisions; the id resolver never inspects cwd except to validate over-200-character sibling buckets. | — | — |
+| Q10 | Does the owner accept L3a (deterministic evidence facets) for the junk-drawer case? | Without it § 7.10 degrades to a sortable list of 83 first prompts. | Owner review; the facets are additive and can be hidden behind a toggle if preferred. |
+| Q11 | Should the `--append-system-prompt` note about moved files (FR-7.10.12) be used more broadly, for example after any folder move, to tell the model its paths changed? | Same mechanism, wider benefit; also a wider surface for confusing the model. | Ship for junk-drawer file moves first; measure. |
 | Q9 | How stable is `.session-aliases`? It is undocumented, read by the picker, and in the sweep's reserved set. | FR-7.4.7 writes it. If a release changes its format or stops reading it, aliases silently stop working (no data loss). | Treat as best-effort; the inventory verifies each alias line still resolves and reports dead ones; probe the binary for the filename as FR-7.4.8 does for `relocatedCwd`. |
 | Q4 | Should prompt history (`history.jsonl`) follow a folder move by default? | Privacy (plaintext prompts) versus continuity of up-arrow history. | Owner call; default proposed: yes, with opt-out in the plan. |
 | Q5 | Auto memory per bucket: leave, or offer a merge into the project root's `memory/`? | Memory fragmentation is the same chaos one level down (issue #34437). | Follow-on PRD; in this one, surface the fact in the bucket detail. |
@@ -406,9 +451,9 @@ Duo reads `claude --version` once per binary change. A CLI newer than the tested
 | Phase | Delivers | Exit criterion |
 |---|---|---|
 | P0 Inventory | § 7.1, § 7.8 detection only, retention banner (FR-7.6.3), beacon-based liveness. Read-only. | Reference machine's 41 buckets inventoried with zero crashes; every collision and orphan on it correctly flagged. |
-| P1 Curate | Registry (§ 8), projects and task groups (§ 7.2), curation surface (§ 7.3) minus physical actions, pointer re-home, resume rules (§ 7.7), Unsorted inbox, socket CLI reads. | S-RENAMED and S-SCATTER walk end to end; every re-homed session resumes from its project. |
-| P2 Retire | Archive by move and restore (FR-7.6.1), delete (FR-7.6.2), migrator core with journal, undo, interrupted-migration repair (FR-7.8.4). | S-TRASH and S-RETAIN walk; kill-during-archive test leaves a repairable journal. |
-| P3 Move | Folder move with tandem relocation (§ 7.5), rewrite table and fixtures (FR-7.4.3), encoder self-calibration, collision-aware partial moves (FR-7.8.2), `git worktree repair`. | S-MOVE, S-LIVE refusal, S-COLLIDE partial move pass; undo restores byte-identical state. |
+| P1 Curate | Registry (§ 8), projects and task groups (§ 7.2), junk-drawer detection (FR-7.2.8), curation surface (§ 7.3) minus physical actions, pointer re-home, resume rules (§ 7.7), Unsorted inbox, socket CLI reads, junk-drawer evidence table and facets (FR-7.10.1 to 7.10.5), new-project-folder creation (FR-7.10.8) with pointer assignment. | S-RENAMED and S-SCATTER walk end to end; every re-homed session resumes from its project; S-JUNK walks with pointers only. |
+| P2 Retire and relocate | Migrator core with journal, undo, interrupted-migration repair (FR-7.8.4); per-session relocation with the `relocated` record (§ 7.4); archive by move and restore (FR-7.6.1); delete (FR-7.6.2); Leave triage (FR-7.10.13); junk-drawer split with relocation (FR-7.10.6 to 7.10.10). | S-TRASH, S-RETAIN and S-JUNK walk end to end; kill-during-archive test leaves a repairable journal; a relocated junk-drawer session appears in the project root's native picker and no longer in `$HOME`'s. |
+| P3 Move | Folder move with tandem relocation (§ 7.5), encoder self-calibration, collision-aware partial moves (FR-7.8.2), `git worktree repair`, work-product moves for junk-drawer clusters (FR-7.10.11 and 7.10.12). | S-MOVE, S-LIVE refusal, S-COLLIDE partial move pass; undo restores byte-identical state. |
 | P4 Advanced | Explicit Relocate (§ 7.4), duplicate repair UI (FR-7.8.1), agent-facing plan hand-off (§ 7.9), caution mode. | A Claude session inside Duo drafts a plan that the user approves and the migrator applies. |
 
 ---
@@ -422,6 +467,8 @@ Duo reads `claude --version` once per binary change. A CLI newer than the tested
 - **Crash injection.** Kill the migrator after each step of a folder move; on relaunch the journal is detected and either completion or reversal yields a consistent state with uniqueness intact.
 - **Uniqueness fuzz.** Random sequences of relocate, archive, restore, and folder move across randomly colliding paths never produce a duplicate id under `projects/`.
 - **Liveness.** With a `claude` process running in a bucket, every physical action on that bucket is refused and pointer actions succeed.
+- **Junk-drawer evidence.** Fixtures with known edited-file sets assert the extraction in FR-7.10.2 (including snapshot records, each editing tool, and a truncated oversize file marked partial), the candidate-home computation (FR-7.10.3) across nested, disjoint, and system-path cases, and date clustering (FR-7.10.4) at the gap boundary. A synthetic 83-session `$HOME` bucket must render its evidence table within 3 s.
+- **Junk-drawer split.** Relocating a selection out of a bucket leaves every unselected session untouched byte for byte, leaves the bucket's `memory/` and `.session-aliases` in place, and the relocated sessions list under the destination in the real CLI's picker. New-project creation refuses a non-empty destination. Work-product moves refuse paths inside other project roots and foreign git repositories, and undo restores both files and transcripts.
 - **Resume matrix.** For CLI versions 2.1.150, 2.1.223, 2.1.239, and current: resume by id from project root, from original cwd, with original cwd deleted, and after relocate, with the expected outcome per § 11. Model calls in this matrix run only in an opt-in CI lane.
 - **Performance.** Inventory of a synthetic 2,000-session, 1 GB corpus within NFR-1.
 
