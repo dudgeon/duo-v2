@@ -36,10 +36,18 @@ public enum ProjectDiscovery {
                                                                        options: [.skipsHiddenFiles]) else { return }
         for child in children.sorted(by: { $0.path < $1.path })
         where (try? child.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
-            && !["node_modules", ".build", "build", "Library"].contains(child.lastPathComponent) {
+            && !["node_modules", ".build", "build", "Library"].contains(child.lastPathComponent)
+            && !protected.contains(child.standardizedFileURL.path) {
             walk(child, root: root, depth: depth - 1, into: &found)
         }
     }
+
+    /// Folders macOS guards with a privacy prompt (F-28). A workspace inside one is fine (the
+    /// root is never skipped); a broader root doesn't wander into them and trigger prompts.
+    static let protected: Set<String> = {
+        let home = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
+        return Set(["Desktop", "Documents", "Downloads", "Pictures", "Movies", "Music", "Library"].map { "\(home)/\($0)" })
+    }()
 
     static func project(from fm: Frontmatter, folder: URL, root: URL, isHome: Bool) -> Fixture.Project {
         let parent = folder.deletingLastPathComponent()

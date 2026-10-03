@@ -36,7 +36,7 @@ struct DuoApp: App {
         self.model = model
         // Launch trace for scripted runs: one launch in a few opens no window (F-26).
         if options.capturing {
-            func trace(_ m: String) { FileHandle.standardError.write(Data("trace \(String(format: "%.2f", ProcessInfo.processInfo.systemUptime)) \(m)\n".utf8)) }
+            let trace: @Sendable (String) -> Void = { m in FileHandle.standardError.write(Data("trace \(String(format: "%.2f", ProcessInfo.processInfo.systemUptime)) \(m)\n".utf8)) }
             trace("init")
             NotificationCenter.default.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main) { _ in
                 MainActor.assumeIsolated {

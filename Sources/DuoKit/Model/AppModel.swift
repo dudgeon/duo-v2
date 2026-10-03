@@ -88,6 +88,7 @@ public final class AppModel {
     /// Live sessions whose process Duo doesn't own (Terminal, the Desktop app, another Duo).
     public var liveElsewhere: Set<String> = []
     @ObservationIgnored private var refreshTimer: Timer?
+    @ObservationIgnored private var refreshing = false
     /// Duo's "seen" marks (handoff §10): looking at a session clears ready-for-review.
     @ObservationIgnored public var seen: [String: Double] = [:]
 
@@ -106,20 +107,32 @@ public final class AppModel {
         liveRoot = root
         terminalsMode = .live
         seen = DuoState.load().seen
+        fixture = LiveSnapshot.empty()  // never show the design fixture while the first scan runs
         refreshLive()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.refreshLive() }
         }
     }
 
+    /// Rebuilds the snapshot off the main thread, one refresh at a time: disk reads can block
+    /// (a privacy prompt for ~/Documents, a slow network volume) and must never freeze the UI (F-28).
     public func refreshLive() {
-        guard let root = liveRoot else { return }
-        let beacons = Beacon.readAll()
+        guard let root = liveRoot, !refreshing else { return }
+        refreshing = true
         if let id = visibleSessionId, fixture.sessions.contains(where: { $0.sessionId == id && $0.state == .readyForReview }) {
             seen[id] = Date().timeIntervalSince1970
             DuoState.update { $0.seen[id] = seen[id] }
         }
-        let (snapshot, folders) = LiveSnapshot.build(.init(root: root, events: DuoPaths.events, seen: seen), beacons: beacons)
+        let ctx = LiveSnapshot.Context(root: root, events: DuoPaths.events, seen: seen)
+        Task.detached(priority: .utility) { [weak self] in
+            let beacons = Beacon.readAll()
+            let (snapshot, folders) = LiveSnapshot.build(ctx, beacons: beacons)
+            await self?.apply(snapshot, folders: folders, beacons: beacons)
+        }
+    }
+
+    private func apply(_ snapshot: Fixture, folders: [String: URL], beacons: [Beacon]) {
+        refreshing = false
         // Sessions Duo started but Claude hasn't written a beacon for yet keep their tab.
         var merged = snapshot
         for s in fixture.sessions where s.sessionId != nil && terminals.existing(s.tabKey) != nil

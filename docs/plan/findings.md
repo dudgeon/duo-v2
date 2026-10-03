@@ -184,6 +184,16 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-28 · Disk reads can block: refresh off the main thread, stay out of protected folders (2026-10-03)
+
+- **Reads in `~/Desktop`, `~/Documents` and `~/Downloads` block** until the macOS privacy prompt is answered. With the screen locked, `ls ~/Documents` from a Claude session hung until a 5 s alarm killed it, and a snapshot scan rooted at `~` never returned. `Pictures`, `Movies`, `Music` and `repos` answered at once.
+- **The refresh ran on the main thread**, so a workspace in `~/Documents` (a common place for a PM's work) could freeze Duo on its first scan. It now builds the snapshot in a detached task, one at a time, and applies it on the main actor. Live mode starts from an empty snapshot, never the design fixture.
+- **Discovery skips those protected folders** (and `Library`, `Pictures`, `Movies`, `Music`) when it meets them below the root. A workspace inside one is unaffected; the root itself is never skipped. A scan of `~` now takes 4 ms.
+- **Cost of a refresh:** 2.5 ms for the 7-project demo workspace, 4–5 ms for `~/repos` and `~`, warm (first scan 8–28 ms); reading beacons 0.2 ms. The 2 s poll is cheap; file watching moves down the list.
+- **Resumable count:** idle sessions with a live process are no longer counted in `n idle` / `n idle, resumable` (C-16).
+- No trust dialog for a new session in `.build/ws/payments/checkout-redesign`: trust follows the enclosing git repo here (S1 saw it per folder outside a repo).
+- 85 checks pass.
+
 ## F-27 · Phase E3: session titles from the transcript (2026-10-03)
 
 - **Beacons say whether a name is stable.** `nameSource: user` marks a `/rename` or Desktop title (stable); `derived` names (`home-38`, `repos-f7`) change per process. Duo uses the beacon name only when it is `user`.

@@ -162,6 +162,9 @@ func repoFixture() throws -> Fixture {
     check(snap.projects.first { $0.isHome == true }?.name == "home" && folders["home"] != nil, "Home from HOME.md")
     check(snap.groups.first?.sessions == ["New session", "PRD v2 edits"], "groups resolve ids to names; never-used session is New session")
     check(snap.counts.needsYou == 1 && snap.counts.idle == 1, "counts")
+    let quiet = Beacon(pid: 1, sessionId: "aaaa-filed", cwd: proj.path, name: nil, status: "idle", waitingFor: nil,
+                       statusUpdatedAt: nil, entrypoint: "cli", kind: nil)
+    check(LiveSnapshot.build(.init(root: lw), beacons: [live, quiet]).0.counts.idle == 0, "a running, quiet session isn't counted as resumable")
     try? FileManager.default.removeItem(at: lw)
 
     print("hooks")
@@ -224,6 +227,20 @@ func repoFixture() throws -> Fixture {
     try (#"{"type":"user","message":{"content":"Plan the launch"}}"# + "\n" + big + #"{"type":"ai-title","aiTitle":"Launch plan"}"# + "\n").write(to: tdir, atomically: true, encoding: .utf8)
     check(SessionTitles.title(transcript: tdir) == "Launch plan", "bounded head + tail read finds a late AI title")
     try? FileManager.default.removeItem(at: tdir)
+
+    if let bench = ProcessInfo.processInfo.environment["DUO_BENCH"] {
+        let root = URL(fileURLWithPath: bench)
+        let beacons = Beacon.readAll()
+        var times: [Double] = []
+        for _ in 0..<5 {
+            let t0 = Date()
+            let (snap, _) = LiveSnapshot.build(.init(root: root, events: DuoPaths.events), beacons: beacons)
+            times.append(Date().timeIntervalSince(t0) * 1000)
+            if times.count == 1 { print("bench: \(snap.projects.count) projects, \(snap.sessions.count) sessions, \(beacons.count) beacons") }
+        }
+        let t0 = Date(); _ = Beacon.readAll(); let tb = Date().timeIntervalSince(t0) * 1000
+        print("bench: build ms \(times.map { String(format: "%.1f", $0) }), beacons ms \(String(format: "%.1f", tb))")
+    }
 
     print("launch options")
     let o = LaunchOptions(arguments: ["Duo", "--state", "flow-zoom-3", "--capture", "/tmp/x.png", "--left", "collapsed"])

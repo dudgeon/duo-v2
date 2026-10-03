@@ -91,7 +91,8 @@ public enum LiveSnapshot {
             counts: .init(needsYou: live.filter { $0.state == .needsYou }.count,
                           readyForReview: live.filter { $0.state == .readyForReview }.count,
                           working: live.filter { $0.state == .working }.count,
-                          idle: sessions.filter { $0.state == .idle }.count),
+                          // Resumable means not running: an open, quiet session isn't counted (C-16).
+                          idle: sessions.filter { s in s.state == .idle && !beacons.contains { $0.sessionId == s.sessionId } }.count),
             homeInbox: [],
             focusDocument: .init(project: "", path: "", sections: [], addedByClaude: []),
             projectFiles: files
@@ -106,6 +107,14 @@ public enum LiveSnapshot {
         if let b = beacon, b.nameSource == "user", let n = b.name, !n.isEmpty { return n }
         guard let t = ClaudeStorage.transcript(sessionId: id, cwd: beacon?.cwd ?? folder.path) else { return "New session" }
         return SessionTitles.title(transcript: t) ?? "Session \(id.prefix(8))"
+    }
+
+    /// Nothing found yet: the state before the first scan completes.
+    public static func empty() -> Fixture {
+        Fixture(now: ISO8601DateFormatter().string(from: Date()), user: NSFullUserName(), topics: [], projects: [],
+                sessions: [], otherIdleSessions: 0, groups: [],
+                counts: .init(needsYou: 0, readyForReview: 0, working: 0, idle: 0), homeInbox: [],
+                focusDocument: .init(project: "", path: "", sections: [], addedByClaude: []), projectFiles: [:])
     }
 
     /// Markdown and text files near the top of a project, for the file tree (fixture-shaped).
