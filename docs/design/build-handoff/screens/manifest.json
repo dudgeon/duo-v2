@@ -1,0 +1,79 @@
+{
+  "$note": "Every design file in this folder. kind=target: build to match. kind=wireframe: structure only.",
+  "canvas": "https://claude.ai/artifact/Hip1Qk4vRHq2kWwXWnigic",
+  "snapshot": "2026-10-03",
+  "screens": [
+    {
+      "file": "screens/overview.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "All projects (the zoomed-out altitude)",
+      "canvasBoard": "Dir-TwoTone-Overview.dc.html"
+    },
+    {
+      "file": "screens/project.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Inside a project",
+      "canvasBoard": "Dir-TwoTone-Project.dc.html"
+    },
+    {
+      "file": "screens/look.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 520,
+      "shows": "The look: type, colour, glyphs, pieces",
+      "canvasBoard": "Look-System.dc.html"
+    },
+    {
+      "file": "screens/flow-zoom-1.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Zoom flow 1 of 4: All projects, a project tile focused",
+      "canvasBoard": "Flow-Zoom-1.dc.html"
+    },
+    {
+      "file": "screens/flow-zoom-2.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Zoom flow 2 of 4: inside the project",
+      "canvasBoard": "Flow-Zoom-2.dc.html"
+    },
+    {
+      "file": "screens/flow-zoom-3.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Zoom flow 3 of 4: peek popover open",
+      "canvasBoard": "Flow-Zoom-3.dc.html"
+    },
+    {
+      "file": "screens/flow-zoom-4.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Zoom flow 4 of 4: back at All projects, which has moved on",
+      "canvasBoard": "Flow-Zoom-4.dc.html"
+    },
+    {
+      "file": "screens/wireframes/group-page.html",
+      "kind": "wireframe",
+      "width": 1168,
+      "height": 920,
+      "shows": "Inside a project with a group selected: the group page in the right pane",
+      "canvasBoard": "IA-Project2.dc.html"
+    },
+    {
+      "file": "screens/wireframes/grouping.html",
+      "kind": "wireframe",
+      "width": 1272,
+      "height": 640,
+      "shows": "How a group gets made: by hand, or by a session with the CLI verb",
+      "canvasBoard": "IA-Grouping.dc.html"
+    }
+  ]
+}

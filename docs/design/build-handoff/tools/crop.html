@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>crop</title></head>
+<body>
+<!-- Used by lib.sh: crops a PNG to w x h pixels from its top-left corner and prints it as base64. -->
+<canvas id="c"></canvas>
+<pre id="o"></pre>
+<script>
+const q = new URLSearchParams(location.search);
+const c = document.getElementById('c'), o = document.getElementById('o');
+const img = new Image();
+img.onload = () => {
+  c.width = +q.get('w'); c.height = +q.get('h');
+  c.getContext('2d').drawImage(img, 0, 0);
+  try {
+    const b64 = c.toDataURL('image/png').split(',')[1];
+    o.textContent = '\n-----BEGIN PNG-----\n' + b64.replace(/(.{76})/g, '$1\n') + '\n-----END PNG-----\n';
+  } catch (e) { o.textContent = 'CROP FAILED: ' + e; }
+};
+img.onerror = () => { o.textContent = 'CROP FAILED: could not load image'; };
+img.src = q.get('src');
+</script>
+</body></html>

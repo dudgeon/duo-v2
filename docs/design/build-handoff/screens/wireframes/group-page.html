@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1168">
+<meta name="design-size" content="1168x920">
+<meta name="design-kind" content="wireframe">
+<title>Duo · A: Inside a project, with files, threads and groups</title>
+<!--
+Inside a project with a group selected: the group page in the right pane.
+WIREFRAME, STRUCTURE ONLY. NOT a visual target. Exported unchanged from the design canvas
+(board "A · Inside a project: files, threads, groups", canvas snapshot 2026-10-03). It shows what a surface contains and in what order.
+Take colours, type, sizes and chrome from the target screens in the parent folder, not from here.
+Superseded details in this wireframe: the "All projects" row and the needs-you chip at the top of the left pane
+(both moved to the toolbar), the reply buttons drawn inside the console (the console is Claude Code's own
+terminal; Duo draws nothing in it), the wireframe typeface and the text-character glyphs.
+-->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</head>
+<body>
+<div style="width: 1168px; height: 920px; box-sizing: border-box; padding: 64px; display: flex; flex-direction: column; gap: 28px; background: #F3F4F6; color: #1F2328; font-family: 'IBM Plex Sans', system-ui, sans-serif">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 28px; line-height: 34px; font-weight: 600">A · Inside a project: files, threads and groups</div>
+<div style="font-size: 15px; line-height: 22px; color: #4A525B">Sessions above, files below. A fork family folds into a thread. Related threads are grouped by hand.</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="position: relative; width: 1040px; height: 640px; box-sizing: border-box; border: 1.5px solid #8B939C; border-radius: 8px; background: #FFFFFF; display: flex; flex-direction: column; overflow: hidden; font-size: 11px; line-height: 16px; white-space: nowrap">
+<div style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 12px; border-bottom: 1px solid #C9CDD3; flex: none"><span style="color: #5B636D">All projects</span><span style="color: #5B636D">▸</span><span style="font-weight: 600">checkout-redesign</span><span style="margin-left: auto; color: #5B636D">⌘K · Jump to a project, group or session</span></div>
+<div style="display: flex; flex: 1; min-height: 0">
+
+<div style="width: 290px; flex: none; box-sizing: border-box; border-right: 1px solid #C9CDD3; display: flex; flex-direction: column; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-bottom: 1px solid #C9CDD3; flex: none"><span style="color: #5B636D">← All projects</span><span style="margin-left: auto; padding: 1px 6px; border: 1.5px solid #C2410C; border-radius: 4px; color: #C2410C; font-weight: 600">● 2 need you</span></div>
+<div style="padding: 8px 12px 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #C2410C">NEEDS YOU · 1</div>
+<div style="display: flex; align-items: center; gap: 6px; height: 22px; padding: 0 12px; background: #E9ECEF"><span style="color: #5B636D">▾</span><span style="color: #C2410C">●</span><span style="font-weight: 600">PRD v2</span><span style="padding: 0 5px; border: 1px solid #8B939C; border-radius: 8px; font-size: 10px; line-height: 14px; background: #FFFFFF">group · 3</span><span style="margin-left: auto; color: #5B636D">4m</span></div>
+<div style="display: flex; flex-direction: column; margin-left: 16px; border-left: 1.5px solid #8B939C">
+<div style="display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 12px 0 9px"><span style="color: #5B636D">▸</span><span style="color: #C2410C">●</span><span>PRD v2 edits</span><span style="padding: 0 5px; border: 1px solid #C9CDD3; border-radius: 8px; font-size: 10px; line-height: 14px">thread · 2</span><span style="margin-left: auto; color: #5B636D">4m</span></div>
+<div style="display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 12px 0 9px"><span style="width: 8px"></span><span style="color: #5B636D">–</span><span>quick q about tax rules</span><span style="margin-left: auto; color: #5B636D">3d</span></div>
+</div>
+<div style="padding: 8px 12px 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">WORKING · 1</div>
+<div style="display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 12px"><span style="width: 8px"></span><span>○</span><span>Teardown research</span><span style="margin-left: auto; color: #5B636D">6m</span></div>
+<div style="display: flex; gap: 6px; padding: 12px"><button type="button" style="font: inherit; padding: 3px 8px; border: 1px solid #8B939C; border-radius: 4px; background: #FFFFFF; color: #1F2328">Resume a session</button><button type="button" style="font: inherit; padding: 3px 8px; border: 1px solid #8B939C; border-radius: 4px; background: #FFFFFF; color: #1F2328">+ New session</button></div>
+<div style="margin-top: auto; display: flex; flex-direction: column; border-top: 2px solid #8B939C; padding-bottom: 10px">
+<div style="padding: 8px 12px 0; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">FILES</div>
+<div style="padding: 0 12px 4px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; color: #5B636D">~/work/payments/checkout-redesign</div>
+<div style="display: flex; align-items: center; height: 20px; padding: 0 12px; font-family: 'IBM Plex Mono', ui-monospace, monospace">PROJECT.md</div>
+<div style="display: flex; align-items: center; height: 20px; padding: 0 12px; font-family: 'IBM Plex Mono', ui-monospace, monospace">▾ docs/</div>
+<div style="display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 12px 0 28px; font-family: 'IBM Plex Mono', ui-monospace, monospace"><span>prd-v2.md</span><span style="margin-left: auto; color: #5B636D; font-family: 'IBM Plex Sans', system-ui, sans-serif">edited by Claude</span></div>
+</div>
+</div>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: #F3F4F6; font-family: 'IBM Plex Mono', ui-monospace, monospace">
+<div style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 12px; border-bottom: 1px solid #C9CDD3; flex: none"><span style="color: #C2410C">●</span><span style="font-weight: 500">PRD v2 edits</span><span style="margin-left: 10px; color: #5B636D">○ Teardown research</span><span style="color: #5B636D">+</span></div>
+<div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 14px 12px">
+<div style="height: 6px; width: 62%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 84%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 48%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 76%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 58%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 70%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="margin-top: auto; padding: 8px 10px; border: 1.5px solid #C2410C; border-radius: 6px; background: #FFFFFF; white-space: normal">Move saved cards into scope, or keep it out and log an open question?</div>
+<div style="display: flex; gap: 6px; font-family: 'IBM Plex Sans', system-ui, sans-serif"><button type="button" style="font: inherit; padding: 3px 8px; border: 1px solid #8B939C; border-radius: 4px; background: #FFFFFF; color: #1F2328">Move into scope</button><button type="button" style="font: inherit; padding: 3px 8px; border: 1px solid #8B939C; border-radius: 4px; background: #FFFFFF; color: #1F2328">Log open question</button><button type="button" style="font: inherit; padding: 3px 8px; border: 1px solid #8B939C; border-radius: 4px; background: #FFFFFF; color: #1F2328">Reply…</button></div>
+</div>
+</div>
+
+<div style="width: 300px; flex: none; box-sizing: border-box; border-left: 1px solid #C9CDD3; display: flex; flex-direction: column; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 12px; height: 28px; padding: 0 12px; border-bottom: 1px solid #C9CDD3; flex: none"><span style="color: #5B636D">Project</span><span style="font-weight: 600">PRD v2</span><span style="color: #5B636D">prd-v2.md</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 10px 12px 2px; white-space: normal"><span style="font-size: 12px; font-weight: 600">PRD v2</span><span style="color: #5B636D">Group · 3 sessions</span></div>
+<div style="padding: 8px 12px 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">SESSIONS, OLDEST FIRST</div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 4px 12px 6px"><div style="display: flex; align-items: center; gap: 6px"><span style="color: #5B636D">–</span><span>quick q about tax rules</span><span style="margin-left: auto; color: #5B636D">idle 3d</span></div><div style="height: 6px; width: 64%; margin-left: 14px; border-radius: 3px; background: #D5D9DE"></div><div style="padding-left: 14px; font-size: 10px; color: #5B636D">Summary of the session</div></div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 4px 12px 6px"><div style="display: flex; align-items: center; gap: 6px"><span style="color: #5B636D">–</span><span>Interview synth</span><span style="margin-left: auto; color: #5B636D">idle 2d</span></div><div style="height: 6px; width: 86%; margin-left: 14px; border-radius: 3px; background: #D5D9DE"></div><div style="padding-left: 14px; font-size: 10px; color: #5B636D">Summary of the session</div></div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 4px 12px 6px 30px"><div style="display: flex; align-items: center; gap: 6px"><span style="color: #5B636D">↳</span><span style="color: #C2410C">●</span><span style="font-weight: 600">PRD v2 edits</span><span style="margin-left: auto; color: #5B636D">needs you 4m</span></div><div style="height: 6px; width: 72%; margin-left: 28px; border-radius: 3px; background: #D5D9DE"></div><div style="padding-left: 28px; font-size: 10px; color: #5B636D">Fork of Interview synth</div></div>
+<div style="display: flex; gap: 6px; padding: 6px 12px"><button type="button" style="font: inherit; padding: 3px 8px; border: 1px solid #8B939C; border-radius: 4px; background: #FFFFFF; color: #1F2328">Resume PRD v2 edits</button><button type="button" style="font: inherit; padding: 3px 8px; border: 1px solid #8B939C; border-radius: 4px; background: #FFFFFF; color: #1F2328">+ New session here</button></div>
+<div style="padding: 8px 12px 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">DOCUMENTS</div>
+<div style="display: flex; align-items: center; height: 20px; padding: 0 12px; font-family: 'IBM Plex Mono', ui-monospace, monospace">docs/prd-v2.md</div>
+<div style="margin: 12px 12px 0; padding: 8px 10px; border: 1px dashed #8B939C; border-radius: 6px; white-space: normal; color: #5B636D"><span style="font-size: 10px; font-weight: 600; letter-spacing: 0.06em">TASKS · TBD</span><br>Reserved. Shows tasks from the project's files when they mention these sessions.</div>
+</div>
+
+</div>
+</div>
+<div style="font-size: 13px; line-height: 19px; color: #4A525B; max-width: 1040px">A group is one row in the state of its most urgent session, so the list stays sorted by what needs you. Opening it lists its sessions with their fork lineage. Tasks are parked: one reserved slot on this page, and nothing else depends on them.</div>
+</div>
+</div>
+</body>
+</html>

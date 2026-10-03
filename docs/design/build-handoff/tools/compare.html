@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Duo · target vs build</title>
+<!--
+Three panels: the design target, a screenshot of the app, and their difference.
+Opened by compare.sh, or by hand:
+  compare.html?ref=<target png>&shot=<app screenshot png>&w=1440&h=900&top=0&name=overview
+top=38 compares below the toolbar, for screenshots that do not include it.
+-->
+<style>
+body{margin:0;background:#1b1d21;color:#e6e8eb;font:13px/20px -apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+.row{display:flex;gap:20px;padding:0}
+.col{display:flex;flex-direction:column}
+.label{height:56px;box-sizing:border-box;padding:18px 0 0 12px;font-weight:600;white-space:nowrap}
+.label span{font-weight:400;color:#9aa1ab;margin-left:8px}
+.panel{position:relative;overflow:hidden;background:#000}
+.panel img{position:absolute;left:0;display:block}
+.diff img + img{mix-blend-mode:difference}
+</style>
+</head>
+<body>
+<div class="row" id="row"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const w = +q.get('w') || 1440, h = +q.get('h') || 900, skip = +q.get('top') || 0;  // 'top' itself is a reserved window property
+const ref = q.get('ref'), shot = q.get('shot'), name = q.get('name') || '';
+const src = p => p && !/^(file|https?):/.test(p) && p[0] === '/' ? 'file://' + p : p;
+function img(path, isRef) {
+  const i = document.createElement('img');
+  i.src = src(path);
+  i.style.width = w + 'px';
+  // The target is always the full window. A content-only build screenshot starts below the toolbar.
+  if (isRef) { i.style.height = h + 'px'; i.style.top = -skip + 'px'; }
+  else { i.style.height = (h - skip) + 'px'; i.style.top = '0'; }
+  return i;
+}
+function panel(title, note, kids, cls) {
+  const col = document.createElement('div'); col.className = 'col';
+  const l = document.createElement('div'); l.className = 'label'; l.textContent = title;
+  const s = document.createElement('span'); s.textContent = note; l.appendChild(s);
+  const p = document.createElement('div'); p.className = 'panel ' + (cls || '');
+  p.style.width = w + 'px'; p.style.height = (h - skip) + 'px';
+  kids.forEach(k => p.appendChild(k));
+  col.appendChild(l); col.appendChild(p); return col;
+}
+const row = document.getElementById('row');
+row.appendChild(panel('TARGET', name + (skip ? ' · below the toolbar' : ''), [img(ref, true)]));
+row.appendChild(panel('BUILD', 'the app', [img(shot, false)]));
+row.appendChild(panel('DIFFERENCE', 'black = identical', [img(ref, true), img(shot, false)], 'diff'));
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440">
+<meta name="design-size" content="1440x520">
+<meta name="design-kind" content="target">
+<title>Duo · The look, written down</title>
+<!--
+The look: type, colour, glyphs, pieces.
+DESIGN TARGET. This file is the approved design, exported unchanged from the design canvas
+(board "The look, written down", canvas snapshot 2026-10-03). Build the native window so that it matches this
+picture; README.md says how to compare and which parts are exempt.
+It is a picture written in HTML: match what it draws, do not port its markup.
+Exempt from matching (see README "What is not a target"): the drawn traffic lights and toolbar material,
+everything inside a dark pane below its tab strip (that is Claude Code's own terminal output),
+grey placeholder bars, and the document's typography.
+Open on a Mac so the system faces resolve.
+-->
+<style>
+body{margin:0}
+button{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;cursor:default}
+</style>
+</head>
+<body>
+<div style="width: 1440px; height: 520px; box-sizing: border-box; display: grid; grid-template-columns: 1.2fr 1.3fr 0.8fr 1.2fr; gap: 48px; padding: 48px 56px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px">
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 22px; line-height: 28px; font-weight: 600">The look, written down</div>
+<div style="color: #5B636D">Two-tone. The chrome is the wireframes as they were: white panes, hairline rules, one orange for what needs you. Anything that is terminal output sits on a dark console.</div>
+<div style="display: flex; flex-direction: column; margin-top: 8px"><span style="font-size: 16px; font-weight: 600">SF Pro</span><span style="color: #5B636D">UI 13 / 20 · labels 11 caps, +0.06em</span></div>
+<div style="display: flex; flex-direction: column"><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 15px">SF Mono</span><span style="color: #5B636D">Console and paths 12 / 19</span></div>
+<div style="display: flex; flex-direction: column; margin-top: 8px"><span style="font-weight: 600">macOS, native</span><span style="color: #5B636D">Unified compact toolbar, 38 high, traffic lights inset. Sidebar selection inset, 6 radius. Controls 6 radius. Peeks are popovers, routing is a sheet. System faces throughout. The console is Claude Code running in a terminal view; Duo draws nothing inside it.</span></div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 14px; align-content: start">
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #F3F4F6; border: 1px solid #8B939C"></span><span>Ground</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#F3F4F6</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #FFFFFF; border: 1px solid #8B939C"></span><span>Pane</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#FFFFFF</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #E9ECEF; border: 1px solid #8B939C"></span><span>Selected</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#E9ECEF</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #C9CDD3"></span><span>Rule</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#C9CDD3</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #8B939C"></span><span>Control edge</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#8B939C</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #1F2328"></span><span>Text</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#1F2328</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #5B636D"></span><span>Text 2</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#5B636D</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #C2410C"></span><span>Needs you</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#C2410C</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #15171B"></span><span>Console</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#15171B</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #2B2F36"></span><span>Console rule</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#2B2F36</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #E6E8EB; border: 1px solid #8B939C"></span><span>Console text</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#E6E8EB</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #9AA1AB"></span><span>Console text 2</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#9AA1AB</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="height: 32px; margin-bottom: 4px; border-radius: 4px; background: #F97316"></span><span>Needs you, console</span><span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">#F97316</span></div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">SESSION STATE</div>
+<div style="display: flex; align-items: center; gap: 10px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg>Needs you</div>
+<div style="display: flex; align-items: center; gap: 10px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M5 0 10 5 5 10 0 5z" fill="#1F2328"></path></svg>Ready for review</div>
+<div style="display: flex; align-items: center; gap: 10px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Working</div>
+<div style="display: flex; align-items: center; gap: 10px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg>Idle</div>
+<div style="display: flex; align-items: center; gap: 10px; color: #5B636D"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M1.5 5.4 4 7.8 8.5 2.4" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>Resolved</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">PIECES</div>
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><button type="button">Resume a session</button><button type="button">Reply…</button><span style="display: flex; align-items: center; gap: 6px; padding: 0 8px; border: 1.5px solid #C2410C; border-radius: 4px; font-size: 12px; font-weight: 600; color: #C2410C"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg>2 need you</span><span style="padding: 0 7px; border: 1px solid #8B939C; border-radius: 9px; font-size: 11px; line-height: 16px; background: #FFFFFF">group · 3</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF">
+<div style="display: flex; align-items: center; gap: 8px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span style="font-weight: 600">Copy review pass 2</span><span style="margin-left: auto; color: #5B636D">12m</span></div>
+<div style="padding: 8px 10px; border: 1.5px solid #C2410C; border-radius: 6px">Approve these 6 string changes?</div>
+<div style="display: flex; gap: 6px"><button type="button">Approve</button><button type="button">Reply…</button></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; border-radius: 6px; background: #15171B; color: #E6E8EB; font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 19px">
+<div style="color: #9AA1AB">routed → refunds-api-spec, session started</div>
+<div>5 new asks — route 3 to projects?</div>
+<div style="display: flex; flex-direction: column"><span>❯ 1. Yes, route 3</span><span style="padding-left: 15px; color: #9AA1AB">2. No</span></div>
+</div>
+</div>
+
+</div>
+</body>
+</html>
