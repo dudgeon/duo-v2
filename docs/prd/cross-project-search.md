@@ -2,7 +2,8 @@
 
 > **Status:** Draft v0.1, 2026-10-03. Standalone requirements document, written to be lifted into the broader Duo v2 product plan.
 > **Owner decisions:** eighteen answers locked through AskUserQuestion on 2026-10-03 (§ 4, L1–L18). Items the owner wasn't asked about are listed as open questions (§ 10). This document does not choose them.
-> **Evidence base:** two proofs of concept by the owner, both shown to work on a company-managed Mac: [`dudgeon/smol-sim-search`](https://github.com/dudgeon/smol-sim-search) (offline local embeddings for Claude Code) and [`dudgeon/mini-meeting-minutes`](https://github.com/dudgeon/mini-meeting-minutes) (vendored on-device Core ML models delivered through a git clone). The scope and the vocabulary of projects, sessions, the registry, and the Unsorted inbox come from [`legacy-session-consolidation.md`](legacy-session-consolidation.md) (the "consolidation PRD").
+> **Evidence base:** two proofs of concept by the owner, both shown to work on a company-managed Mac: [`dudgeon/smol-sim-search`](https://github.com/dudgeon/smol-sim-search) (offline local embeddings for Claude Code) and [`dudgeon/mini-meeting-minutes`](https://github.com/dudgeon/mini-meeting-minutes) (vendored on-device Core ML models delivered through a git clone). The scope and the vocabulary of projects, sessions, the registry, and the Unfiled inbox come from [`legacy-session-consolidation.md`](legacy-session-consolidation.md) (the "consolidation PRD").
+> **Place in the v2 plan (added 2026-10-03):** `docs/plan/build-plan.md` Phase M. **v1.1** ships P1 (files across all projects, hybrid retrieval, the read-only search CLI, coverage, a basic UI); **v1.2** ships P2–P3. P0's gates are spikes S13–S15, run before Phase M. Duo's build is Xcode-free and delivered by `git clone` plus a local build (DL-30), which is the pattern L9 asks search to follow; whether Duo runs on the work Mac (Q1) is tested after the first usable build (DL-31). The read-only search CLI is the read-only half of Duo's CLI (DL-15, DL-16). Vocabulary: sessions not in a project are called **Unfiled**, matching the consolidation PRD and the approved designs (this draft said "Unsorted").
 > **Altitude:** this PRD says *what* search must do and the constraints it must respect. It deliberately does not specify Duo v2's form factor, delivery mechanism, UI layout, storage engine, or command syntax. Those follow from decisions made elsewhere in the Duo v2 plan.
 
 ---
@@ -29,7 +30,7 @@ Duo v2 needs one search, used by both the person and Claude, that covers everyth
 
 ### Goals
 
-1. **One query, everything Duo knows.** Search covers all four sources (§ 7.1) across every project in the registry, plus Unsorted sessions, in one ranked result set.
+1. **One query, everything Duo knows.** Search covers all four sources (§ 7.1) across every project in the registry, plus Unfiled sessions, in one ranked result set.
 2. **Meaning and exact text.** Paraphrases match, and so do exact identifiers, names, and error strings (L4).
 3. **Equal for people and Claude.** The person gets a search UI. Claude gets a CLI that returns the same results as structured data. Neither is a second-class port of the other (L3).
 4. **Always current, never in the way.** Indexing happens in the background, is throttled, and is honest about what isn't covered yet (L8).
@@ -58,7 +59,7 @@ The persona is the consolidation PRD's: a heavy Claude Code user, increasingly a
 | S-PARAPHRASE | The person searches "customers charged twice". The notes say "duplicate billing". | The notes are found. |
 | S-EXACT | The person pastes `ERR_SESSION_7F3` or a function name. | Every exact occurrence ranks at the top, across projects. |
 | S-AGENT | Claude, sandboxed, is asked to "use what we learned in the onboarding project". | Claude runs the search CLI, gets ranked paths and line ranges as structured data, reads only those, and answers without grepping other folders or loading them into context. |
-| S-UNSORTED | A useful session lives in the `$HOME` junk drawer and was never assigned. | It shows up in results labelled Unsorted. From the result, the person can resume it or, in the curation view, assign it (L14). |
+| S-UNSORTED | A useful session lives in the `$HOME` junk drawer and was never assigned. | It shows up in results labelled Unfiled. From the result, the person can resume it or, in the curation view, assign it (L14). |
 | S-SIMILAR | The person finds one relevant session and asks for "more like this". | Related files and sessions from every project, ranked. |
 | S-COLD | First launch after the feature ships, with months of backlog. | Search works immediately on whatever is indexed so far, most recent content first, and says plainly what isn't covered yet. The Mac stays usable. |
 | S-SECRET | A transcript contains an API key that was pasted into a prompt. | The key never appears in a stored snippet or in a result, and a search for it doesn't surface it as readable text. |
@@ -73,11 +74,11 @@ The persona is the consolidation PRD's: a heavy Claude Code user, increasingly a
 
 | # | Decision | Outcome |
 |---|---|---|
-| L1 | What is searched | **Project files, session transcripts, Unsorted (junk-drawer) sessions, and Claude's memory plus `CLAUDE.md` files.** All four in the first complete release. |
-| L2 | What "scoped projects" means | **Every project in Duo's registry**, plus Unsorted sessions. Search spans all of them by default, and the user narrows from there. |
+| L1 | What is searched | **Project files, session transcripts, Unfiled (junk-drawer) sessions, and Claude's memory plus `CLAUDE.md` files.** All four in the first complete release. |
+| L2 | What "scoped projects" means | **Every project in Duo's registry**, plus Unfiled sessions. Search spans all of them by default, and the user narrows from there. |
 | L3 | Who searches | **People and Claude, equally.** A human UI and an agent CLI are both required. |
 | L4 | Retrieval | **Hybrid:** semantic (embeddings) and lexical (exact or keyword) combined into one ranking. |
-| L5 | Index location | **Central and Duo-owned**, outside project folders. This is consistent with consolidation PRD R3: nothing is written inside project folders. |
+| L5 | Index location | **Central and Duo-owned**, outside project folders. The index is a cache and lives with Duo's machine-local state; project folders carry only the project files the consolidation PRD and `docs/design/decisions.md` (DL-1, DL-13) define. |
 | L6 | Inference engine | **On-device Core ML** (the mini-meeting-minutes pattern), not the POC's ONNX Runtime on CPU. |
 | L7 | What gets indexed from transcripts | **Whatever is simplest.** Interpreted as conversation text only: user prompts, assistant prose, and session titles and summaries. No tool calls, tool output, or thinking. |
 | L8 | When indexing happens | **In the background, throttled**, with an initial backfill. Search works on a partial index and reports what's missing. |
@@ -132,9 +133,9 @@ Numbering is stable. "Must" is required for the first shippable increment, "shou
 
 - **FR-7.1.1** Search must cover every project in the registry (L2). Projects added, removed, or re-rooted in the registry must enter, leave, or move within search scope without a manual step.
 - **FR-7.1.2** **Files:** the POC's formats at a minimum: Markdown, plain text, source code, CSV/TSV and JSON/JSONL (one record per item), and PDF. Binary files, `.git`, dependency and virtualenv folders, and very large files are skipped, and `.gitignore` rules apply, as in the POC.
-- **FR-7.1.3** **Sessions:** every transcript the consolidation inventory knows about, whether attributed to a project, Unsorted, or archived (L1, L17). Sidechain and subagent transcripts are not indexed separately.
+- **FR-7.1.3** **Sessions:** every transcript the consolidation inventory knows about, whether attributed to a project, Unfiled, or archived (L1, L17). Sidechain and subagent transcripts are not indexed separately.
 - **FR-7.1.4** **Memory and instructions:** each bucket's auto memory, attributed to a project through the bucket's resolved root, and the `CLAUDE.md` files within project roots.
-- **FR-7.1.5** Unsorted sessions must be searchable and labelled as Unsorted in results (S-UNSORTED).
+- **FR-7.1.5** Unfiled sessions must be searchable and labelled as Unfiled in results (S-UNSORTED).
 - **FR-7.1.6** A project whose root is missing (*detached* in the consolidation PRD) keeps its indexed content, shown with that status, until the project is removed.
 - **FR-7.1.7** Users must be able to exclude paths (per project and globally) from indexing.
 
@@ -165,7 +166,7 @@ Numbering is stable. "Must" is required for the first shippable increment, "shou
 - **FR-7.4.3** Results from the current project (when there is one) get a modest boost. They must not crowd out strong matches from other projects (L18).
 - **FR-7.4.4** Results are grouped by item by default (one entry per file or session, with its best-matching passage), with a way to expand to every matching passage.
 - **FR-7.4.5** Identical content in several places (a file copied into two projects) is shown once, noting where else it appears.
-- **FR-7.4.6** Filters: project (including Unsorted), source type, date range, and include-archived (default off). Filters work the same in the UI and the CLI.
+- **FR-7.4.6** Filters: project (including Unfiled), source type, date range, and include-archived (default off). Filters work the same in the UI and the CLI.
 - **FR-7.4.7** Similarity scores are relative (see the POC's notes on interpreting scores). Ranking must not depend on a fixed absolute relevance cutoff. The UI must not present a raw score as a percentage of relevance.
 
 ### 7.5 Human search experience
@@ -258,7 +259,7 @@ Targets are set against the consolidation PRD's reference machine (41 buckets, 8
 | Q6 | What's in the default secret deny-list and redaction patterns? | L15. | Start from common secret-scanner rule sets, and test on the reference machine's transcripts. |
 | Q7 | Should record files (CSV/JSONL) offer column selection, as the POC's CLI does? | Embedding every column adds noise. | Default to all text columns, and revisit if results are noisy. |
 | Q8 | Should sessions removed by the retention sweep stay findable as snippets? | L17 says no. Listed here only so the trade-off is on record. | Closed unless the owner reopens it. |
-| Q9 | Should consolidation L3 be formally amended (L14) in that document? | Keeps the two PRDs consistent. | Add L3b to the consolidation PRD when this one is accepted. |
+| Q9 | ~~Should consolidation L3 be formally amended (L14) in that document?~~ **Closed 2026-10-03:** added to the consolidation PRD as L3b. | — | — |
 
 ---
 
@@ -268,10 +269,10 @@ Targets are set against the consolidation PRD's reference machine (41 buckets, 8
 |---|---|---|
 | **P0 Gates** | Core ML conversion of bge-small with parity results. Throughput on the slowest supported Apple silicon. Query embedding inside Claude Code's sandbox (Q2). A corpus-size estimate from the reference machine. A Duo v2 viability check on the work Mac (Q1). | Every gate passes, or the PRD is revised: for example, CPU-only compute for the CLI, or keeping ONNX for queries if Core ML can't meet FR-7.7.2. |
 | **P1 Files + agent** | Central index (§ 8), the file source across all registry projects, hybrid retrieval, the read-only CLI, Claude guidance, coverage reporting, and a basic search UI. | S-RECALL (files only), S-PARAPHRASE, S-EXACT, S-AGENT, and S-NOAPP pass. |
-| **P2 Sessions + memory** | Session, memory, and instructions sources. Unsorted and archived handling. Facets. Open and resume actions. Secret redaction across all sources. | S-RECALL (full), S-UNSORTED, S-SECRET, S-ARCHIVED, and S-COLD pass on the reference machine. |
+| **P2 Sessions + memory** | Session, memory, and instructions sources. Unfiled and archived handling. Facets. Open and resume actions. Secret redaction across all sources. | S-RECALL (full), S-UNSORTED, S-SECRET, S-ARCHIVED, and S-COLD pass on the reference machine. |
 | **P3 Replace + extend** | Find similar, send to Claude, curation-view integration (L14), replacement of vault search and the title filter (§ 7.10). | S-SIMILAR passes. The old search surfaces are removed with migration notes. |
 
-**Dependencies:** consolidation P0 (inventory) for session discovery, liveness, and the retention sweep. Consolidation P1 (registry) for projects, attribution, Unsorted, and the read-only transcript viewer.
+**Dependencies:** consolidation P0 (inventory) for session discovery, liveness, and the retention sweep. Consolidation P1 (registry) for projects, attribution, Unfiled, and the read-only transcript viewer.
 
 ---
 
@@ -303,7 +304,7 @@ Targets are set against the consolidation PRD's reference machine (41 buckets, 8
 
 ## Appendix A — Glossary
 
-Terms from the consolidation PRD (project, registry, bucket, session, Unsorted, junk drawer, archive, sweep) keep their meanings. New terms: **source**, **item**, **chunk**, **locator**, **attribution**, **coverage** (§ 6); **hybrid retrieval**: semantic and lexical retrieval merged into one ranking.
+Terms from the consolidation PRD (project, registry, bucket, session, Unfiled, junk drawer, archive, sweep) keep their meanings. New terms: **source**, **item**, **chunk**, **locator**, **attribution**, **coverage** (§ 6); **hybrid retrieval**: semantic and lexical retrieval merged into one ranking.
 
 ## Appendix B — References
 
