@@ -66,3 +66,45 @@ extension AppModel {
         p.replacingOccurrences(of: FileManager.default.homeDirectoryForCurrentUser.path, with: "~")
     }
 }
+
+extension AppModel {
+    /// Delete Session… (Geoff, 2026-10-04): the session and its local logs, gone for good, after the
+    /// user confirms in Duo. Refused while it runs anywhere.
+    public func deleteSession(_ key: String, done: (@MainActor (Result<String, Error>) -> Void)? = nil) {
+        guard let s = fixture.sessions.first(where: { $0.tabKey == key || $0.sessionId == key }), let id = s.sessionId else {
+            done?(.failure(Migrator.Refusal("no session '\(key)'"))); return
+        }
+        let m = Migrator()
+        let plan: Migrator.Journal
+        do {
+            plan = try m.planDelete(id, live: Set(Beacon.readAll().map(\.sessionId)).union(terminals.existing(key).map { $0.exited ? [] : [id] } ?? []),
+                                    extra: [SessionArchive.copyURL(id), SessionArchive.sidecarURL(id)])
+        } catch { done?(.failure(error)); return }
+        let bytes = ByteCountFormatter.string(fromByteCount: Int64(plan.steps.compactMap(\.bytesBefore).reduce(0, +)), countStyle: .file)
+        let list = plan.steps.prefix(8).map { "• " + Self.short($0.from) }.joined(separator: "\n") + (plan.steps.count > 8 ? "\n• and \(plan.steps.count - 8) more" : "")
+        confirm(title: "Delete “\(s.name)” for good?",
+                detail: "This deletes the session and its local logs (\(plan.steps.count) item(s), \(bytes)), including Duo's archived copy. It can't be undone or resumed.\n\n\(list)",
+                button: "Delete") { [weak self] ok in
+            guard let self else { return }
+            guard ok else { done?(.failure(Migrator.Refusal("Not deleted: the user clicked Cancel in Duo. Nothing changed."))); return }
+            do {
+                try m.apply(plan, live: Set(Beacon.readAll().map(\.sessionId)))
+                SessionArchive.forget(id)
+                // Duo's filing: out of every project's index and group.
+                for folder in self.liveFolders.values {
+                    var index = SessionIndex.load(project: folder)
+                    let before = index
+                    index.sessions.removeAll { $0.sessionId == id }
+                    for i in index.groups.indices { index.groups[i].sessions.removeAll { $0 == id } }
+                    index.groups.removeAll { $0.sessions.isEmpty }
+                    if index != before { try? index.save(project: folder) }
+                }
+                self.terminals.close(key)
+                if self.consoleTab == key { self.consoleTab = nil }
+                if self.homeTab == key { self.homeTab = nil }
+                self.refreshLive()
+                done?(.success("Deleted \(s.name) and its local logs (\(bytes))."))
+            } catch { done?(.failure(error)) }
+        }
+    }
+}

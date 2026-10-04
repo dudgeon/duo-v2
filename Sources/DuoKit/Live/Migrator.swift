@@ -26,11 +26,11 @@ public struct Migrator: Sendable {
 
     // MARK: Journal
 
-    public enum Kind: String, Codable, Sendable { case relocate, folderMove = "folder-move" }
+    public enum Kind: String, Codable, Sendable { case relocate, folderMove = "folder-move", delete }
     public enum State: String, Codable, Sendable { case planned, applying, committed, reverting, reverted, failed }
 
     public struct Step: Codable, Sendable, Equatable {
-        public enum Op: String, Codable, Sendable { case renameDir = "rename-dir", move, appendRelocated = "append-relocated" }
+        public enum Op: String, Codable, Sendable { case renameDir = "rename-dir", move, appendRelocated = "append-relocated", delete }
         public var n: Int
         public var op: Op
         public var from: String
@@ -179,6 +179,37 @@ public struct Migrator: Sendable {
                        summary: "Move \(folder) to \(dest) with its sessions", mapping: ["from": folder, "to": dest], steps: steps, warnings: warnings)
     }
 
+    /// Delete a session completely (FR-7.6.2; Geoff, 2026-10-04): its transcript, sidecar folder and
+    /// siblings, and Claude's per-session folders (file history, environment, tasks, debug, todos).
+    /// Never `~/.claude.json`, `history.jsonl` or memory. The journal keeps the list, not the content.
+    /// `extra`: paths outside Claude's folder that also go (Duo's archive copy).
+    public func planDelete(_ id: String, live: Set<String> = [], extra: [URL] = []) throws -> Journal {
+        if live.contains(id) { throw Refusal("\(id.prefix(8)) is running; end it before deleting it") }
+        let fm = FileManager.default
+        var paths: [URL] = bucket(holding: id).map { files(of: id, in: $0) } ?? []
+        for dir in ["file-history", "session-env", "tasks", "debug", "todos"] {
+            let d = claudeDir.appending(path: dir)
+            for u in (try? fm.contentsOfDirectory(at: d, includingPropertiesForKeys: nil)) ?? [] where u.lastPathComponent.hasPrefix(id) { paths.append(u) }
+        }
+        paths += extra.filter { fm.fileExists(atPath: $0.path) }
+        guard !paths.isEmpty else { throw Refusal("nothing of \(id.prefix(8)) is on disk") }
+        let steps = paths.enumerated().map { i, u in
+            Step(n: i + 1, op: .delete, from: u.path, to: "", sessionId: id, bytesBefore: Int(Self.size(u)))
+        }
+        return Journal(id: Self.newID(), kind: .delete, state: .planned, created: Date(),
+                       summary: "Delete \(id.prefix(8)) and its local logs", mapping: ["session": id], steps: steps)
+    }
+
+    /// Bytes under a file or folder.
+    static func size(_ u: URL) -> Int64 {
+        let fm = FileManager.default
+        var isDir: ObjCBool = false
+        guard fm.fileExists(atPath: u.path, isDirectory: &isDir) else { return 0 }
+        if !isDir.boolValue { return Int64((try? fm.attributesOfItem(atPath: u.path)[.size] as? NSNumber)??.int64Value ?? 0) }
+        return (fm.enumerator(at: u, includingPropertiesForKeys: [.fileSizeKey])?.allObjects as? [URL] ?? [])
+            .reduce(0) { $0 + Int64((try? $1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
+    }
+
     // MARK: Applying
 
     /// Writes the journal, applies each step, verifies, commits. On failure, reverses what was done.
@@ -202,8 +233,9 @@ public struct Migrator: Sendable {
             return j
         } catch {
             j.error = "\(error)"
+            j.state = .failed
             try? save(j)
-            try? undo(j)
+            if j.kind != .delete { try? undo(j) }
             throw error
         }
     }
@@ -222,6 +254,9 @@ public struct Migrator: Sendable {
             try fm.createDirectory(at: URL(fileURLWithPath: s.to).deletingLastPathComponent(), withIntermediateDirectories: true)
             guard !fm.fileExists(atPath: s.to) else { throw Refusal("\(s.to) appeared during the move; stopped") }
             try fm.moveItem(atPath: s.from, toPath: s.to)   // same volume: a rename, atomic per file (§6.3 2)
+        case .delete:
+            // Permanent, by the user's explicit choice; the journal keeps what went.
+            if fm.fileExists(atPath: s.from) { try fm.removeItem(atPath: s.from) }
         case .appendRelocated:
             let u = URL(fileURLWithPath: s.from)
             let before = try Data(contentsOf: u)
@@ -242,6 +277,10 @@ public struct Migrator: Sendable {
 
     /// §6.3 8: every moved transcript parses, its old bytes are intact, the record is last, ids are unique.
     func verify(_ j: Journal) throws {
+        if j.kind == .delete {
+            if let left = j.steps.first(where: { FileManager.default.fileExists(atPath: $0.from) }) { throw Refusal("\(left.from) is still there") }
+            return
+        }
         for s in j.steps where s.op == .appendRelocated {
             let d = try Data(contentsOf: URL(fileURLWithPath: s.to))
             let lines = d.split(separator: UInt8(ascii: "\n"))
@@ -266,9 +305,11 @@ public struct Migrator: Sendable {
         var j = plan
         j.state = .reverting
         try save(j)
+        if j.kind == .delete { throw Refusal("a delete can't be undone: its files are gone (the journal lists them)") }
         for i in j.steps.indices.reversed() where j.steps[i].done {
             let s = j.steps[i]
             switch s.op {
+            case .delete: continue
             case .appendRelocated:
                 let u = URL(fileURLWithPath: s.to)
                 let d = try Data(contentsOf: u)

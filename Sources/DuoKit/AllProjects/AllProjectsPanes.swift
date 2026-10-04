@@ -108,7 +108,7 @@ struct ProjectMapPane: View {
                     ForEach(Array(f.topics.enumerated()), id: \.element) { i, topic in
                         VStack(alignment: .leading, spacing: DuoSpace.gapTileToTile) {
                             SectionLabel(text: topic)
-                            ForEach(f.projects(inTopic: topic)) { p in
+                            ForEach(model.mapProjects(inTopic: topic)) { p in
                                 ProjectTile(project: p)
                             }
                             if i == f.topics.count - 1 {
@@ -119,6 +119,7 @@ struct ProjectMapPane: View {
                     }
                 }
                 .padding(DuoSpace.panePadding)
+                ArchivedRollup()
             }
             .scrollIndicators(.automatic)
             // Arrow keys move between tiles, Enter opens the focused one (handoff §6.3).
@@ -467,6 +468,8 @@ struct SessionOrganizeMenu: ViewModifier {
                             Button(p.isFolderOnly ? "\(p.name) (folder)" : p.name) { model.moveSessions([id], to: p.name) }
                         }
                     }
+                    Divider()
+                    Button("Delete Session…") { model.deleteSession(sessionKey) }
                 }
                 .modifier(Lifted(active: model.dragging == payload))
                 .onDrag({  // action: session move
@@ -500,6 +503,9 @@ struct ProjectOrganizeMenu: ViewModifier {
                             Button(p.isFolderOnly ? "\(p.name) (folder)" : p.name) { model.mergeProject(project.name, into: p.name) }
                         }
                     }
+                    Divider()
+                    // Filing (ENH-6): the tile moves to the Archived rollup; nothing else changes.
+                    Button("Archive Project") { model.setArchived(project.name, true) }
                 }
                 .modifier(Lifted(active: model.dragging == payload))
                 .modifier(DropTarget(name: project.name))

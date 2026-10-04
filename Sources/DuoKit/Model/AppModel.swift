@@ -57,6 +57,11 @@ public final class AppModel {
     public var fixtureIdle: [IdleRow]?
     /// Fixture mode: sessions shown as having a terminal open (ENH-7).
     public var fixtureActive: Set<String>?
+    /// Fixture mode: archived projects by name (ENH-6).
+    public var fixtureArchived: Set<String>?
+    /// Archived projects' folders (ENH-6), and whether the rollup is open.
+    public var archivedProjectPaths: [String] = DuoState.load().archivedProjects
+    public var archivedOpen = false
     public var fixtureIdleBuckets: [(label: String, rows: [IdleRow])]?
     /// Fixture mode: a console tab whose session has ended, and the bar's text (console-ended).
     public var fixtureEnded: (key: String, message: String)?
@@ -470,7 +475,7 @@ public final class AppModel {
 
     /// Arrow keys between tiles on the map: columns are topics, rows are tiles.
     public func moveTileFocus(dx: Int, dy: Int) {
-        let columns = fixture.topics.map { fixture.projects(inTopic: $0).map(\.name) }
+        let columns = fixture.topics.map { mapProjects(inTopic: $0).map(\.name) }
         guard let current = focusedTile,
               let c = columns.firstIndex(where: { $0.contains(current) }),
               let r = columns[c].firstIndex(of: current) else {

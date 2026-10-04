@@ -184,6 +184,23 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-61 · Geoff's home-view round: open a project by click, archive a project, active tint, delete a session (2026-10-04)
+
+- **ENH-5:** a single click on a tile already opened its project, confirmed with a synthesised mouse event in a scripted run. A card's project name in the action column now opens the project too.
+- **ENH-7 (active = a terminal open in Duo):** such sessions now appear on their tile even at the prompt (tiles listed only needs-you, review and working), and are tinted with a new provisional `activeTint` token there and in the project's session list. The selected row's grey fill wins over the tint.
+- **ENH-6 (archiving is filing, Geoff):**
+  - Archived projects are stored by folder path in Duo's state and move from their topic column into an Archived rollup at the end of the map.
+  - Counts, search and sessions are unchanged.
+  - Tile right-click › Archive Project, rollup row › Unarchive Project, `duo2 project archive|unarchive`. Undoable. `duo2 projects` marks them.
+  - Checked live on two fixture folders, then undone.
+- **Delete Session… (Geoff):**
+  - A journaled `delete` in the migrator removes the transcript, its sidecar and siblings, Claude's per-session `file-history`, `session-env`, `tasks`, `debug` and `todos` entries, and Duo's archived copy; the session also leaves every Duo index and group.
+  - Never `~/.claude.json`, `history.jsonl` or memory.
+  - Refused while the session runs. The user confirms in a sheet listing the paths and bytes. It can't be undone; the journal lists what went.
+  - Session right-click › Delete Session…, `duo2 session delete`.
+  - 3 checks on a fake config. Nothing real was deleted.
+- **Design brief:** DB-33 (active look), DB-34 (Archived rollup), DB-35 (revert on the highlight), DB-36 (delete confirmation at scale).
+
 ## F-60 · Revert Claude's changes (ENH-4); clicking a session resumes it (2026-10-04)
 
 - **Revert:**

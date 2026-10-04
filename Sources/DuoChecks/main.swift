@@ -590,6 +590,18 @@ func repoFixture() throws -> Fixture {
         try fm.createDirectory(at: claude.appending(path: "projects/-wrong-name"), withIntermediateDirectories: true)
         try fm.copyItem(at: s1, to: claude.appending(path: "projects/-wrong-name/x.jsonl"))
         check(m.calibrationProblem() != nil && (try? m.apply(try m.planRelocate("s2", to: b))) == nil, "a folder name Duo can't reproduce stops every physical operation (§6.3 5)")
+        // Delete (FR-7.6.2): the transcript, sidecar, and Claude's per-session folders; never memory or history.
+        try fm.removeItem(at: claude.appending(path: "projects/-wrong-name"))
+        let gone = try session("s9", cwd: b)
+        let fh = claude.appending(path: "file-history/s9"); try fm.createDirectory(at: fh, withIntermediateDirectories: true)
+        let env = claude.appending(path: "session-env/s9"); try fm.createDirectory(at: env, withIntermediateDirectories: true)
+        try "keep".write(to: claude.appending(path: "history.jsonl"), atomically: true, encoding: .utf8)
+        check((try? m.planDelete("s9", live: ["s9"])) == nil, "a running session can't be deleted")
+        let del = try m.apply(try m.planDelete("s9"))
+        check(del.state == .committed && !fm.fileExists(atPath: gone.path) && !fm.fileExists(atPath: fh.path) && !fm.fileExists(atPath: env.path)
+              && !fm.fileExists(atPath: gone.deletingLastPathComponent().appending(path: "s9").path) && fm.fileExists(atPath: claude.appending(path: "history.jsonl").path),
+              "delete removes the transcript, sidecar, file history and environment; history.jsonl stays")
+        check((try? m.undo(del)) == nil && del.steps.count == 4, "a delete can't be undone, and its journal lists what went")
         try? fm.removeItem(at: root)
     }
 

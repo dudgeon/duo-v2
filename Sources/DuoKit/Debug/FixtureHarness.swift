@@ -183,6 +183,7 @@ public enum FixtureHarness {
             model.setSearchKind(parts.count > 1 ? SearchItem.Kind(rawValue: parts[1]) : nil)
         case "search-close": model.closeSearch()
         case "shell": model.newShell()
+        case "archived": model.archivedOpen.toggle()
         case "click":   // click:<x> <y>: a real mouse click at that point of the window, from its top left
             if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
                 let xy = parts[1].split(separator: " ").compactMap { Double($0) }

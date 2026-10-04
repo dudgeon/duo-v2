@@ -34,12 +34,13 @@ public enum ActionID: String, CaseIterable, Sendable {
     case viewSidebar = "view sidebar", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
+    case projectArchive = "project archive", projectUnarchive = "project unarchive"
     case inventory, evidence, migrations, migratePlan = "migrate plan", migrateApply = "migrate apply", migrateUndo = "migrate undo"
     // Sessions
     case sessions, sessionShow = "session show", sessionNew = "session new", sessionOpen = "session open"
     case sessionClose = "session close", sessionMove = "session move"
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
-    case shellNew = "shell new", sessionFork = "session fork", idle
+    case shellNew = "shell new", sessionFork = "session fork", idle, sessionDelete = "session delete"
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
     case files, fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
@@ -124,6 +125,9 @@ extension DuoAction {
         .init(.projectShow, .projects, "<project>", "A project's folder, project file, goal, health, next step and sessions."),
         .init(.projectMake, .projects, "<folder name>", "Make a folder with sessions a documented project: writes a starter PROJECT.md and opens it. Undo with `duo2 undo`.",
               ui: ["Make a Project"]),
+        .init(.projectArchive, .projects, "<project>", "File a project away: its tile moves into the map's Archived rollup. Sessions, counts and search are unchanged. Undo with `duo2 undo`.",
+              ui: ["Archive Project", "archived rollup"]),
+        .init(.projectUnarchive, .projects, "<project>", "Bring an archived project back to its topic column.", ui: ["Unarchive Project"]),
         .init(.inventory, .projects, "", "Claude's session storage, read only: each folder's sessions, size, missing folders, collisions, duplicate ids, and what Claude's cleanup takes within 7 days (CONS FR-7.1).", timeout: 180),
         .init(.evidence, .projects, "<project|folder>", "For a catch-all folder, read only: the files each session edited, its candidate home, and date clusters (CONS FR-7.10).", timeout: 300),
         .init(.migrations, .projects, "", "Storage migrations Duo planned or ran, newest first, with their state (CONS §6.3)."),
@@ -148,6 +152,8 @@ extension DuoAction {
         .init(.sessionCarryOn, .sessions, "<id>", "Start a new session carrying on from an archived one."),
         .init(.sessionFork, .sessions, "<id>", "Carry a session on as a fork: a new session with the same history (the original is left alone).",
               ui: ["Resume as a Fork"]),
+        .init(.sessionDelete, .sessions, "<id>", "Delete a session and its local logs for good (transcript, file history, environment; Duo's archived copy). The user confirms in Duo; never for a running session.",
+              ui: ["Delete Session…"], timeout: 600),
         .init(.idle, .sessions, "", "Idle, resumable sessions, newest first, grouped by when (the map footer's list).", ui: ["idle footer"]),
         .init(.shellNew, .sessions, "", "Open a plain shell in the console (DL-8); typing `claude` in it makes it a session.", ui: ["New Shell"]),
         // Groups (DL-24): related threads, grouped by hand; Duo-owned facts in the project's .duo/sessions.json.

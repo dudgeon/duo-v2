@@ -96,7 +96,7 @@ extension AppModel {
         case .projects:
             let ps = fixture.projects
             let lines = ps.map { p in
-                (p.isHome == true ? "★ " : "") + p.name + (p.isFolderOnly ? " (folder, no project file)" : "") + (p.goal.isEmpty ? "" : " — \(p.goal)")
+                (p.isHome == true ? "★ " : "") + p.name + (p.isFolderOnly ? " (folder, no project file)" : "") + (isArchived(p.name) ? " [archived]" : "") + (p.goal.isEmpty ? "" : " — \(p.goal)")
                     + ([p.health, p.next].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ").nonEmptyOrNil.map { " (\($0))" } ?? "")
             }
             done(.ok(lines.joined(separator: "\n"), ps.map(projectJSON)))
@@ -155,6 +155,12 @@ extension AppModel {
             guard terminals.existing(s.tabKey) != nil else { return done(.fail("\(s.name) isn't running in Duo")) }
             closeSession(s.tabKey)
             done(.ok("Closed \(s.name). It stays listed and resumable."))
+        case .projectArchive, .projectUnarchive:
+            guard let name = inv[0], let p = project(named: name) else { return done(.fail(inv[0].map { "no project '\($0)'" } ?? "usage: \(id.action.usage)")) }
+            let on = id == .projectArchive
+            guard isArchived(p.name) != on else { return done(.ok("\(p.name) is already \(on ? "archived" : "in its column").")) }
+            setArchived(p.name, on)
+            done(.ok(on ? "Archived \(p.name): it's in the Archived rollup under the map. Undo: duo2 undo" : "\(p.name) is back in its column."))
         case .docRevert:
             guard editor.url != nil else { return done(.fail("no document is open in Duo")) }
             let finish: @MainActor (Int) -> Void = { n in done(n > 0 ? .ok("Reverted \(n) of Claude's change(s).") : .fail("no change of Claude's there to revert")) }
@@ -181,6 +187,11 @@ extension AppModel {
                 let transcripts = ClaudeStorage.history().filter { ids.contains($0.id) || $0.cwd == cwd }
                 let evidence = transcripts.map { Inventory.evidence($0.transcript, cwd: $0.cwd) }
                 await MainActor.run { self.evidenceReply(name, evidence, titles, done) }
+            }
+        case .sessionDelete:
+            guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)")) }
+            deleteSession(s.tabKey) { r in
+                switch r { case .success(let m): done(.ok(m)); case .failure(let e): done(.fail("\(e)")) }
             }
         case .idle:
             let b = idleGroups()

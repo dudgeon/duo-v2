@@ -35,6 +35,8 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 projects` | Projects and folders with sessions, with goal, health and next step. | — |
 | `duo2 project show <project>` | A project's folder, project file, goal, health, next step and sessions. | — |
 | `duo2 project make <folder name>` | Make a folder with sessions a documented project: writes a starter PROJECT.md and opens it. Undo with `duo2 undo`. | Make a Project |
+| `duo2 project archive <project>` | File a project away: its tile moves into the map's Archived rollup. Sessions, counts and search are unchanged. Undo with `duo2 undo`. | Archive Project, archived rollup |
+| `duo2 project unarchive <project>` | Bring an archived project back to its topic column. | Unarchive Project |
 | `duo2 inventory` | Claude's session storage, read only: each folder's sessions, size, missing folders, collisions, duplicate ids, and what Claude's cleanup takes within 7 days (CONS FR-7.1). | — |
 | `duo2 evidence <project\|folder>` | For a catch-all folder, read only: the files each session edited, its candidate home, and date clusters (CONS FR-7.10). | — |
 | `duo2 migrations` | Storage migrations Duo planned or ran, newest first, with their state (CONS §6.3). | — |
@@ -57,6 +59,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 session next <text>` | Tell the user what this session needs next (one line). | — |
 | `duo2 session carry-on <id>` | Start a new session carrying on from an archived one. | — |
 | `duo2 session fork <id>` | Carry a session on as a fork: a new session with the same history (the original is left alone). | Resume as a Fork |
+| `duo2 session delete <id>` | Delete a session and its local logs for good (transcript, file history, environment; Duo's archived copy). The user confirms in Duo; never for a running session. | Delete Session… |
 | `duo2 idle` | Idle, resumable sessions, newest first, grouped by when (the map footer's list). | idle footer |
 | `duo2 shell new` | Open a plain shell in the console (DL-8); typing `claude` in it makes it a session. | New Shell |
 | `duo2 groups [--project <p>]` | Groups and their sessions, with each group's most urgent state. | — |

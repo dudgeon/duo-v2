@@ -42,6 +42,16 @@ public enum SessionArchive {
         return n == 0 ? nil : "\(n)/\(bytes)/\(Int(newest))"
     }
 
+    /// Forgets a deleted session: its copy, sidecar and manifest entry (FR-7.6.2 via Duo's delete).
+    public static func forget(_ id: String) {
+        try? FileManager.default.removeItem(at: copyURL(id))
+        try? FileManager.default.removeItem(at: sidecarURL(id))
+        var m = manifest()
+        guard m.sessions.removeValue(forKey: id) != nil, let data = try? JSONEncoder().encode(m) else { return }
+        try? data.write(to: manifestURL, options: .atomic)
+        chmod(manifestURL.path, 0o600)
+    }
+
     public static func manifest() -> Manifest {
         (try? Data(contentsOf: manifestURL)).flatMap { try? JSONDecoder().decode(Manifest.self, from: $0) } ?? Manifest()
     }

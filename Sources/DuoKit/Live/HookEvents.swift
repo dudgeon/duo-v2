@@ -183,6 +183,9 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var gitignore: [String: String] = [:]
     /// Folders made projects outside the workspace root (DL-63): discovery includes them.
     public var projects: [String] = []
+    /// Projects and folders filed away (ENH-6): out of the map's columns, into its Archived rollup.
+    /// Filing only: counts, search and sessions are unchanged. By folder path.
+    public var archivedProjects: [String] = []
 
     public init() {}
     public init(from decoder: Decoder) throws {
@@ -191,6 +194,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         home = try c.decodeIfPresent(String.self, forKey: .home)
         gitignore = try c.decodeIfPresent([String: String].self, forKey: .gitignore) ?? [:]
         projects = try c.decodeIfPresent([String].self, forKey: .projects) ?? []
+        archivedProjects = try c.decodeIfPresent([String].self, forKey: .archivedProjects) ?? []
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {
