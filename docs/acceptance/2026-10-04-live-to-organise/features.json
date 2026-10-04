@@ -1927,6 +1927,195 @@
     "human": [],
     "at": "2026-10-04"
    }
+  },
+  {
+   "id": "s1-idle-list",
+   "group": "Surfaces slice 1",
+   "title": "The idle list from the map's footer",
+   "what": "`N idle, resumable ›` opens every idle session, newest first, grouped by week then month (DB-1).",
+   "steps": [
+    "At All projects, click `idle, resumable` under the map.",
+    "↓ a few times, Return.",
+    "Open it again, type a letter, then ⌘↩; open it again and press Esc."
+   ],
+   "expect": "A popover above the footer with an arrow; group/Unfiled/archived pills; Return opens the project with that session; ⌘↩ opens the project only; letters jump to a title; Esc closes. `Older? Search ⇧⌘A` opens search.",
+   "ref": "DB-1, F-58",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Compared with idle-list and idle-many (layout, pills, columns, key rows match).",
+     "Live: 41 idle rows on the fixtures; `duo2 idle` prints the same buckets."
+    ],
+    "didnt": [
+     "Didn't press the keys in the live list (they're a key monitor; checked by code path, not by a real keypress)."
+    ],
+    "human": [
+     "Try the keys and type-to-select."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "s1-console-empty",
+   "group": "Surfaces slice 1",
+   "title": "A console with nothing running says so",
+   "what": "No session open: Resume ‹last› or Start Claude here (DB-3).",
+   "steps": [
+    "Open `reading` (nothing running)."
+   ],
+   "expect": "Top left of the dark pane: `No session open in reading`, a line, then `Resume ‹last session›` and `Start Claude here`. Return presses Resume.",
+   "ref": "DB-3, F-58",
+   "setup": [
+    "open reading"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: opening reading showed `No session open in reading`.",
+     "Compared with console-none and home-none."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "s1-console-ended",
+   "group": "Surfaces slice 1",
+   "title": "An ended session keeps its output, with a bar",
+   "what": "When Claude exits, its output stays and a bar offers Resume and Close Tab (DB-3).",
+   "steps": [
+    "In a session, type `/exit` and Return."
+   ],
+   "expect": "`‹session› ended at 10:42.` with Resume and Close Tab under the last output; Resume continues in the same tab.",
+   "ref": "DB-3, F-58",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Compared with console-ended (bar, buttons, idle dash on the tab).",
+     "A shell exiting with an error showed the bar (`exit 3`)."
+    ],
+    "didnt": [
+     "Didn't /exit a Claude session live."
+    ],
+    "human": [
+     "Type /exit in a session and press Resume."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "s1-shells",
+   "group": "Surfaces slice 1",
+   "title": "Plain shells in the console",
+   "what": "⇧⌘T or `+ ⌄` › New Shell opens a shell tab with a prompt mark, titled by what it runs (DB-4, DL-8).",
+   "steps": [
+    "In checkout: ⇧⌘T.",
+    "Run `sleep 5` and watch the tab's title.",
+    "Run `exit 3`; open another and type `exit`."
+   ],
+   "expect": "The tab reads `zsh`, then `sleep 5`, then `zsh` again. `exit 3` keeps the tab with `The shell exited with an error (exit 3).` · New Shell · Close Tab; plain `exit` closes the tab.",
+   "ref": "DB-4, F-58",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: the title went zsh → sleep 8 → zsh; `exit 3` kept the tab with the bar.",
+     "Compared with shell-tab."
+    ],
+    "didnt": [],
+    "human": [
+     "Try the chevron menu and ⌘T."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "s1-promote",
+   "group": "Surfaces slice 1",
+   "title": "Typing `claude` in a shell makes it a session",
+   "what": "The tab becomes that session's tab in place, and the session joins the list (DL-8).",
+   "steps": [
+    "In a shell tab in checkout, type `claude` and Return."
+   ],
+   "expect": "The prompt mark becomes a state glyph, the title becomes the session's, and it appears on the left; VoiceOver says \"Now a Claude session\".",
+   "ref": "DL-8, F-58",
+   "setup": [
+    "open checkout",
+    "shell new"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live in checkout: the shell's tab became session 8dc3e307's tab; Duo counts it as its own (not \"open elsewhere\")."
+    ],
+    "didnt": [
+     "In an untrusted folder Claude shows its trust prompt first and no beacon exists until it's answered, so promotion waits for that."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "s1-fork",
+   "group": "Surfaces slice 1",
+   "title": "Resume as a Fork",
+   "what": "A new session with the same history; the original is left alone (DB-3; also search's menu and `duo2 session fork`).",
+   "steps": [
+    "`duo2 session fork 64c84fc2` (Interview synthesis notes), or Tab › Resume as a fork in search."
+   ],
+   "expect": "A new tab opens with the earlier conversation; the original stays as it was; it folds under the original as a thread.",
+   "ref": "DB-3, F-57, F-58",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: the fork opened with the original's history; after one Haiku message its transcript was written under Duo's chosen id."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "s1-palette",
+   "group": "Surfaces slice 1",
+   "title": "Terminal colours",
+   "what": "The designed palette, cursor (steady block) and selection (DB-2).",
+   "steps": [
+    "In a shell: `ls -G`, `git diff` in a repo, select some text.",
+    "Turn on Increase Contrast (Accessibility › Display) and look again."
+   ],
+   "expect": "Muted, readable colours, no orange; a steady block cursor; a grey-blue selection; brighter colours with Increase Contrast.",
+   "ref": "DB-2, F-58",
+   "setup": [
+    "open checkout",
+    "shell new"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Palette, cursor and selection are applied to every terminal and re-applied when Increase Contrast changes."
+    ],
+    "didnt": [
+     "Can't see terminal pixels in captures (F-25)."
+    ],
+    "human": [
+     "Look at the colours yourself."
+    ],
+    "at": "2026-10-04"
+   }
   }
  ],
  "decisions": [
@@ -2166,6 +2355,154 @@
      "id": "close",
      "label": "Esc always closes search",
      "desc": "Simpler; leaving Find similar needs a click."
+    }
+   ]
+  },
+  {
+   "id": "s1-idle-elsewhere",
+   "ref": "DB-1 · LR-8 · F-58",
+   "title": "Idle list: show sessions that are open in Terminal?",
+   "context": [
+    "The footer `14 idle, resumable ›` now opens a list of every idle session, newest first, grouped by when (built from the design's slice 1).",
+    "A session open in another app (Terminal, the Desktop app) can't be resumed in Duo: Duo never starts a second copy (LR-8). The design lists it anyway, greyed, with `open in Terminal` where the age goes, so you can find it; Return opens its project, where the console explains."
+   ],
+   "options": [
+    {
+     "id": "yes",
+     "label": "List them, marked",
+     "recommended": true,
+     "desc": "Built. Findable; Return explains rather than resumes.",
+     "mockup": "<div class=\"mk\"><div class=\"mk-modal\" style=\"width:380px\"><div class=\"mk-sec\">IDLE, RESUMABLE · 14</div><div class=\"mk-sec\">THIS WEEK · 3</div><div class=\"mk-row\" style=\"display:flex;justify-content:space-between;\"><span>– Error catalogue</span><span class=\"m\">refunds-api-spec &nbsp; 1d</span></div><div class=\"mk-row\" style=\"display:flex;justify-content:space-between;color:#5B636D\"><span>– Refund policy rewrite</span><span class=\"m\">refunds-api-spec &nbsp; open in Terminal</span></div><div class=\"mk-row\" style=\"display:flex;justify-content:space-between;\"><span>– Interview synth</span><span class=\"m\">checkout-redesign &nbsp; 2d</span></div></div></div>"
+    },
+    {
+     "id": "no",
+     "label": "Leave them out",
+     "desc": "Only what Duo can resume right now.",
+     "mockup": "<div class=\"mk\"><div class=\"mk-modal\" style=\"width:380px\"><div class=\"mk-sec\">IDLE, RESUMABLE · 14</div><div class=\"mk-sec\">THIS WEEK · 3</div><div class=\"mk-row\" style=\"display:flex;justify-content:space-between;\"><span>– Error catalogue</span><span class=\"m\">refunds-api-spec &nbsp; 1d</span></div><div class=\"mk-row\" style=\"display:flex;justify-content:space-between;\"><span>– Interview synth</span><span class=\"m\">checkout-redesign &nbsp; 2d</span></div></div></div>"
+    }
+   ]
+  },
+  {
+   "id": "s1-palette",
+   "ref": "DB-2 · F-58",
+   "title": "Terminal colours: muted, or louder diffs?",
+   "context": [
+    "Duo's terminals now use a designed 16-colour palette (shells and anything using indexed colours; Claude Code draws its own colours in its default theme). There's no orange, so nothing reads as \"needs you\".",
+    "Red and green are mid-saturation: clear, not neon. Increase Contrast swaps in a brighter set."
+   ],
+   "options": [
+    {
+     "id": "muted",
+     "label": "Muted (as built)",
+     "recommended": true,
+     "desc": "Calm; every text colour is 4.5:1 or better on the console.",
+     "mockup": "<div class=\"mk\"><div style=\"background:#15171B;color:#E6E8EB;border-radius:8px;padding:12px 14px;font:13px -apple-system,sans-serif;width:360px\"><div><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#2B2F36;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#E27A85;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#8CC08A;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#D6C26B;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#7FA8E6;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#C792D8;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#74C2C9;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#C9CDD3;margin-right:3px\"></span></div><div style=\"font:12px ui-monospace,Menlo,monospace;margin-top:8px\"><div style=\"color:#E27A85\">- keep saved cards out of scope</div><div style=\"color:#8CC08A\">+ move saved cards into scope</div></div></div></div>"
+    },
+    {
+     "id": "loud",
+     "label": "Louder diffs",
+     "desc": "Brighter red and green; more like a default terminal.",
+     "mockup": "<div class=\"mk\"><div style=\"background:#15171B;color:#E6E8EB;border-radius:8px;padding:12px 14px;font:13px -apple-system,sans-serif;width:360px\"><div><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#2B2F36;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#FF5C6C;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#4FD16A;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#F2D23C;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#4E9BFF;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#D36BFF;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#3DD6E0;margin-right:3px\"></span><span style=\"display:inline-block;width:18px;height:18px;border-radius:3px;background:#E6E8EB;margin-right:3px\"></span></div><div style=\"font:12px ui-monospace,Menlo,monospace;margin-top:8px\"><div style=\"color:#FF5C6C\">- keep saved cards out of scope</div><div style=\"color:#4FD16A\">+ move saved cards into scope</div></div></div></div>"
+    }
+   ]
+  },
+  {
+   "id": "s1-elsewhere",
+   "ref": "DB-3 · LR-8 · F-58",
+   "title": "A session open somewhere else: offer to end it there?",
+   "context": [
+    "When you open a session that's running in another app, the console says so instead of starting a second copy.",
+    "The design explains and offers **Resume as a Fork**: a new session with the same history (built; `claude --resume … --fork-session`, checked live). It never ends the other process, since that could lose a turn in flight."
+   ],
+   "options": [
+    {
+     "id": "fork",
+     "label": "Explain, offer a fork",
+     "recommended": true,
+     "desc": "Built. Nothing in the other app is touched.",
+     "mockup": "<div class=\"mk\"><div style=\"background:#15171B;color:#E6E8EB;border-radius:8px;padding:12px 14px;font:13px -apple-system,sans-serif;width:360px\"><div style=\"font-weight:600\">PRD v2 edits is open in Terminal</div><div style=\"color:#9AA1AB;margin-top:4px\">It has been running there since 9:12, so Duo won't start a second copy of it. Finish there and look again, or carry on here as a fork.</div><div><span style=\"display:inline-block;border:1px solid #9AA1AB;border-radius:6px;padding:2px 9px;font-size:12px;margin:8px 6px 0 0;color:#E6E8EB\">Look Again</span><span style=\"display:inline-block;border:1px solid #9AA1AB;border-radius:6px;padding:2px 9px;font-size:12px;margin:8px 6px 0 0;color:#E6E8EB\">Resume as a Fork</span></div></div></div>"
+    },
+    {
+     "id": "end",
+     "label": "Also offer to end it",
+     "desc": "A third button that stops the other copy and resumes here.",
+     "mockup": "<div class=\"mk\"><div style=\"background:#15171B;color:#E6E8EB;border-radius:8px;padding:12px 14px;font:13px -apple-system,sans-serif;width:360px\"><div style=\"font-weight:600\">PRD v2 edits is open in Terminal</div><div style=\"color:#9AA1AB;margin-top:4px\">It has been running there since 9:12. End it there to resume it here, or carry on as a fork.</div><div><span style=\"display:inline-block;border:1px solid #9AA1AB;border-radius:6px;padding:2px 9px;font-size:12px;margin:8px 6px 0 0;color:#E6E8EB\">Look Again</span><span style=\"display:inline-block;border:1px solid #9AA1AB;border-radius:6px;padding:2px 9px;font-size:12px;margin:8px 6px 0 0;color:#E6E8EB\">Resume as a Fork</span><span style=\"display:inline-block;border:1px solid #9AA1AB;border-radius:6px;padding:2px 9px;font-size:12px;margin:8px 6px 0 0;color:#E6E8EB\">End There and Resume…</span></div></div></div>"
+    }
+   ]
+  },
+  {
+   "id": "s1-chords",
+   "ref": "DB-4 · DL-34 · F-58",
+   "title": "⌘T for a new Claude session, ⇧⌘T for a new shell?",
+   "context": [
+    "The console's `+` still starts a Claude session; a chevron beside it now offers both. Both chords were free and are built; DL-34 needs your sign-off for each.",
+    "They also appear in File (`New Claude Session ⌘T`, `New Shell ⇧⌘T`) above New Markdown File ⌘N."
+   ],
+   "options": [
+    {
+     "id": "t-st",
+     "label": "⌘T session, ⇧⌘T shell",
+     "recommended": true,
+     "desc": "Built. Like a browser's new tab.",
+     "mockup": "<div class=\"mk\"><div class=\"mk-menu\"><div class=\"mk-item\"><span>New Claude Session</span><span class=\"k\">⌘T</span></div><div class=\"mk-item\"><span>New Shell</span><span class=\"k\">⇧⌘T</span></div></div></div>"
+    },
+    {
+     "id": "swap",
+     "label": "⌘T shell, ⇧⌘T session",
+     "desc": "Terminal.app habit: ⌘T opens a shell.",
+     "mockup": "<div class=\"mk\"><div class=\"mk-menu\"><div class=\"mk-item\"><span>New Claude Session</span><span class=\"k\">⇧⌘T</span></div><div class=\"mk-item\"><span>New Shell</span><span class=\"k\">⌘T</span></div></div></div>"
+    },
+    {
+     "id": "none",
+     "label": "No chords",
+     "desc": "The chevron menu and File menu only.",
+     "mockup": "<div class=\"mk\"><div class=\"mk-menu\"><div class=\"mk-item\"><span>New Claude Session</span><span class=\"k\"></span></div><div class=\"mk-item\"><span>New Shell</span><span class=\"k\"></span></div></div></div>"
+    }
+   ]
+  },
+  {
+   "id": "s1-shell-exit",
+   "ref": "DB-4 · F-58",
+   "title": "A shell that exits cleanly: close its tab?",
+   "context": [
+    "Typing `exit` in a shell tab (status 0) closes the tab (built). A shell that fails keeps its tab with a bar: `The shell exited with an error (exit 1).` · New Shell · Close Tab."
+   ],
+   "options": [
+    {
+     "id": "close",
+     "label": "Close it",
+     "recommended": true,
+     "desc": "Built. Like Terminal's default.",
+     "mockup": "<div class=\"mk\"><div style=\"background:#15171B;color:#E6E8EB;border-radius:8px;padding:12px 14px;font:13px -apple-system,sans-serif;width:360px;width:420px;font:12px ui-monospace,Menlo,monospace\"><span style=\"color:#F97316\">●</span> PRD v2 edits &nbsp; ○ Teardown research &nbsp; <b>&gt;_ zsh</b> &nbsp; <span style=\"color:#9AA1AB\">&gt;_ ./export-funnel.sh</span> &nbsp; + ⌄</div></div>"
+    },
+    {
+     "id": "keep",
+     "label": "Keep it with the bar",
+     "desc": "Every exit leaves the tab and output until you close it.",
+     "mockup": "<div class=\"mk\"><div style=\"background:#15171B;color:#E6E8EB;border-radius:8px;padding:12px 14px;font:13px -apple-system,sans-serif;width:360px\"><div style=\"font-weight:600\"></div><div style=\"color:#9AA1AB;margin-top:4px\">The shell exited (exit 0).</div><div><span style=\"display:inline-block;border:1px solid #9AA1AB;border-radius:6px;padding:2px 9px;font-size:12px;margin:8px 6px 0 0;color:#E6E8EB\">New Shell</span><span style=\"display:inline-block;border:1px solid #9AA1AB;border-radius:6px;padding:2px 9px;font-size:12px;margin:8px 6px 0 0;color:#E6E8EB\">Close Tab</span></div></div></div>"
+    }
+   ]
+  },
+  {
+   "id": "s1-shell-glyph",
+   "ref": "DB-4 · F-58",
+   "title": "Shell tabs carry a prompt mark",
+   "context": [
+    "Session tabs show their state glyph. Shell tabs now show a small prompt mark (`>_`), so tabs stay aligned and a shell is never mistaken for a session. Typing `claude` in a shell turns the tab into a session tab in place: the mark becomes a state glyph (built and checked live)."
+   ],
+   "options": [
+    {
+     "id": "mark",
+     "label": "Prompt mark",
+     "recommended": true,
+     "desc": "Built.",
+     "mockup": "<div class=\"mk\"><div style=\"background:#15171B;color:#E6E8EB;border-radius:8px;padding:12px 14px;font:13px -apple-system,sans-serif;width:360px;width:420px;font:12px ui-monospace,Menlo,monospace\"><span style=\"color:#F97316\">●</span> PRD v2 edits &nbsp; ○ Teardown research &nbsp; <b>&gt;_ zsh</b> &nbsp; <span style=\"color:#9AA1AB\">&gt;_ ./export-funnel.sh</span> &nbsp; + ⌄</div></div>"
+    },
+    {
+     "id": "none",
+     "label": "No mark",
+     "desc": "Shell tabs are just their title.",
+     "mockup": "<div class=\"mk\"><div style=\"background:#15171B;color:#E6E8EB;border-radius:8px;padding:12px 14px;font:13px -apple-system,sans-serif;width:360px;width:420px;font:12px ui-monospace,Menlo,monospace\"><span style=\"color:#F97316\">●</span> PRD v2 edits &nbsp; ○ Teardown research &nbsp; <b>zsh</b> &nbsp; <span style=\"color:#9AA1AB\">./export-funnel.sh</span> &nbsp; + ⌄</div></div>"
     }
    ]
   }
