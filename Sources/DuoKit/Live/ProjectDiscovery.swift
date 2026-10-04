@@ -91,7 +91,7 @@ public enum ProjectDiscovery {
         }
         let parent = outer.deletingLastPathComponent()
         if let root, outer.path.hasPrefix(root.standardizedFileURL.path + "/") {
-            return parent.path == root.standardizedFileURL.path ? "" : parent.lastPathComponent.capitalized
+            return parent.path == root.standardizedFileURL.path ? "" : parent.lastPathComponent
         }
         let home = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
         if outer.path == home { return "~" }

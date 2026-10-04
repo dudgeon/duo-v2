@@ -126,9 +126,9 @@ func repoFixture() throws -> Fixture {
     try write("node_modules/x/PROJECT.md", "---\n---\n")
     let found = ProjectDiscovery.scan(root: ws)
     check(Set(found.map(\.project.name)) == ["checkout-redesign", "inner", "onboarding-v3", "home", "old-home"], "finds projects, nested ones and homes; skips node_modules")
-    check(found.first { $0.project.name == "inner" }?.project.topic == "Payments", "a project inside a project sits beside it, in its topic (DL-89)")
+    check(found.first { $0.project.name == "inner" }?.project.topic == "payments", "a project inside a project sits beside it, in its topic (DL-89)")
     let checkout = found.first { $0.project.name == "checkout-redesign" }?.project
-    check(checkout?.topic == "Payments" && checkout?.health == "On track" && checkout?.next == "Exec review Oct 14", "topic from parent folder, health label, next")
+    check(checkout?.topic == "payments" && checkout?.health == "On track" && checkout?.next == "Exec review Oct 14", "topic from parent folder, health label, next")
     let homes = ProjectDiscovery.chooseHome(found, remembered: ws.appending(path: "home").path)
     check(homes.home?.project.name == "home" && homes.contested, "two HOME.md: the remembered one wins, flagged as contested (DL-42)")
     try? FileManager.default.removeItem(at: ws)
@@ -166,10 +166,10 @@ func repoFixture() throws -> Fixture {
         check(byId("h-home") == "work" && byId("h-scratch") == "scratch" && byId("h-checkout") == "checkout",
               "Home holds only its own folder's sessions; a folder inside it is listed as a folder; deepest project wins")
         check(byId("h-repo") == "repo" && byId("h-loose") == "loose", "outside Home: a PROJECT.md above the cwd makes a project; other folders listed (DL-82)")
-        check(hs.projects.first { $0.name == "checkout" }?.topic == "" && hs.projects.first { $0.name == "refunds" }?.topic == "Payments"
+        check(hs.projects.first { $0.name == "checkout" }?.topic == "" && hs.projects.first { $0.name == "refunds" }?.topic == "payments"
               && hs.projects.first { $0.name == "scratch" }?.topic == "", "in Home: unlabelled when directly in it, else the folder it sits in (DL-83)")
         check(hs.projects.first { $0.name == "repo" }?.topic == outsideLabel && outsideLabel.hasSuffix("/outside"), "outside Home: grouped by parent folder path")
-        check(hs.topics == ["", "Payments", outsideLabel], "columns: Home's root projects, Home's topics, then outside folders")
+        check(hs.topics == ["", "payments", outsideLabel], "columns: Home's root projects, Home's topics, then outside folders")
         var none = c
         none.root = nil
         let (ns, _, _) = LiveSnapshot.build(none, beacons: [])
@@ -222,7 +222,7 @@ func repoFixture() throws -> Fixture {
     check(ss.map(\.sessionId) == ["aaaa-filed", "cccc-live"], "filed sessions plus live ones attributed by cwd; archived hidden")
     check(ss.last?.name == "PRD v2 edits" && ss.last?.state == .needsYou && ss.last?.wait == "4m", "beacon gives name, state, wait")
     check(snap.projects.first { $0.name == "checkout-redesign" }?.health == "At risk"
-          && snap.projects.first { $0.name == "checkout-redesign" }?.topic == "Payments", "project from PROJECT.md: health, topic")
+          && snap.projects.first { $0.name == "checkout-redesign" }?.topic == "payments", "project from PROJECT.md: health, topic")
     check(snap.projects.first { $0.isHome == true }?.name == "home" && folders["home"] != nil, "Home from HOME.md")
     check(snap.groups.first?.sessions.last == "PRD v2 edits" && snap.groups.first?.sessions.first?.hasPrefix("Session ") == true,
           "groups resolve ids to names; a never-used session shows its start time (DL-90)")

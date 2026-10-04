@@ -99,6 +99,14 @@ struct ProjectBreadcrumb: View {
                 .font(.system(size: 9, weight: .semibold))
                 .foregroundStyle(DuoColor.text2)
                 .accessibilityHidden(true)
+            // The folder the project sits in, when it has one (DL-92): All projects › payments › checkout.
+            if let topic = model.currentProject?.topic, !topic.isEmpty, model.currentProject?.isHome != true {
+                Text(topic).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(DuoColor.text2)
+                    .accessibilityHidden(true)
+            }
             Text(model.currentProject?.name ?? "").duoText(.bodyEmphasis).foregroundStyle(DuoColor.text)
             NeedsYouChip()
                 .padding(.leading, 8)

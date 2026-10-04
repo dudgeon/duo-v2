@@ -184,7 +184,15 @@ struct MapColumn: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: DuoSpace.gapTileToTile) {
-            SectionLabel(text: topic.isEmpty ? " " : topic)
+            // Columns read as folders (DL-92): a folder mark and a trailing slash.
+            HStack(spacing: 5) {
+                if !topic.isEmpty {
+                    Image(systemName: "folder").font(.system(size: 9, weight: .semibold)).foregroundStyle(DuoColor.text2)
+                        .accessibilityHidden(true)
+                }
+                SectionLabel(text: topic.isEmpty ? " " : "\(topic) /")
+            }
+            .accessibilityLabel(topic.isEmpty ? "" : "Folder \(topic)")
             ForEach(model.mapProjects(inTopic: topic)) { p in
                 ProjectTile(project: p)
             }
