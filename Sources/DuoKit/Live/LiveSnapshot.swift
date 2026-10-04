@@ -35,6 +35,34 @@ public enum LiveSnapshot {
         public var to: URL
     }
 
+    /// A group's sessions as threads: each fork family (linked by `forkOf`) is one thread, parent first.
+    public static func threads(_ names: [String], in sessions: [Fixture.Session]) -> [[String]] {
+        var left = names
+        var out: [[String]] = []
+        while let first = left.first {
+            var family = [first]
+            var grew = true
+            while grew {
+                grew = false
+                for n in left where !family.contains(n) {
+                    let s = sessions.first { $0.name == n }
+                    if family.contains(where: { f in s?.forkOf == f || sessions.first { $0.name == f }?.forkOf == n }) { family.append(n); grew = true }
+                }
+            }
+            // Parent first, then the sessions forked from it, breadth first.
+            func parent(_ n: String) -> String? { sessions.first { $0.name == n }?.forkOf }
+            var ordered = family.filter { parent($0).map { !family.contains($0) } ?? true }
+            var i = 0
+            while i < ordered.count {
+                ordered += family.filter { parent($0) == ordered[i] && !ordered.contains($0) }
+                i += 1
+            }
+            out.append(ordered + family.filter { !ordered.contains($0) })
+            left.removeAll { family.contains($0) }
+        }
+        return out
+    }
+
     public static func build(_ ctx: Context, beacons: [Beacon] = Beacon.readAll()) -> (Fixture, folders: [String: URL], moves: [Move]) {
         let found = ProjectDiscovery.scan(root: ctx.root) + ctx.extraProjects.compactMap { ProjectDiscovery.found(at: $0, root: ctx.root) }
         let (home, _) = ProjectDiscovery.chooseHome(found, remembered: ctx.rememberedHome)
@@ -161,6 +189,25 @@ public enum LiveSnapshot {
             for id in ids where !claimed.contains(id) {
                 claimed.insert(id)
                 sessions.append(makeSession(id, project: name, folder: url, entry: nil))
+            }
+        }
+
+        // Threads (DL-24): a fork folds under the session it came from; a group lists its threads.
+        if ctx.includeHistory || ctx.historyOverride != nil {
+            let transcripts = Dictionary(history.map { ($0.id, $0.transcript) }, uniquingKeysWith: { a, _ in a })
+            for project in Set(sessions.map(\.project)) {
+                let members = sessions.filter { $0.project == project }.compactMap { s in s.sessionId.flatMap { id in transcripts[id].map { (id: id, transcript: $0) } } }
+                guard members.count > 1 else { continue }
+                for (child, parent) in ThreadCache.shared.parents(members) {
+                    guard let ci = sessions.firstIndex(where: { $0.sessionId == child }),
+                          let pname = sessions.first(where: { $0.sessionId == parent && $0.project == project })?.name else { continue }
+                    sessions[ci].forkOf = pname
+                }
+            }
+            groups = groups.map { g in
+                var g = g
+                g.threads = Self.threads(g.sessions, in: sessions.filter { $0.project == g.project })
+                return g
             }
         }
 

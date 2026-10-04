@@ -478,6 +478,31 @@ func repoFixture() throws -> Fixture {
     unsetenv("DUO_ARCHIVE_ROOT")
     try? FileManager.default.removeItem(at: ar)
 
+    print("threads and groups (DL-24, Phase G)")
+    do {
+        check(LiveSnapshot.threads(["PRD v2 edits", "quick q about tax rules", "Interview synth"], in: f.sessions)
+              == [["Interview synth", "PRD v2 edits"], ["quick q about tax rules"]], "a group's threads: fork families, parent first")
+        let dir = FileManager.default.temporaryDirectory.appending(path: "duo-threads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        func write(_ name: String, _ lines: [String]) -> URL {
+            let u = dir.appending(path: name + ".jsonl"); try? (lines.joined(separator: "\n") + "\n").write(to: u, atomically: true, encoding: .utf8); return u
+        }
+        func rec(_ type: String, _ uuid: String, _ parent: String?, _ t: String) -> String {
+            #"{"type":"\#(type)","uuid":"\#(uuid)","parentUuid":\#(parent.map { "\"\($0)\"" } ?? "null"),"timestamp":"\#(t)"}"#
+        }
+        let parent = write("p", [#"{"type":"mode","timestamp":"2026-10-04T10:00:00Z"}"#, rec("user", "u1", nil, "2026-10-04T10:00:01Z"),
+                                 rec("assistant", "u2", "u1", "2026-10-04T10:00:02Z"), rec("user", "u3", "u2", "2026-10-04T10:00:03Z")])
+        let fork = write("f", [#"{"type":"mode","timestamp":"2026-10-04T11:00:00Z"}"#, rec("user", "u1", nil, "2026-10-04T10:00:01Z"),
+                               rec("assistant", "u2", "u1", "2026-10-04T10:00:02Z"), rec("user", "u9", "u2", "2026-10-04T11:00:05Z")])
+        let other = write("o", [rec("user", "x1", nil, "2026-10-04T09:00:00Z")])
+        let cache = ThreadCache()
+        let pairs: [(id: String, transcript: URL)] = [("p", parent), ("f", fork), ("o", other)]
+        check(cache.parents(pairs) == ["f": "p"], "a fork's parent from shared uuids and its fork point (S11)")
+        let h = try FileHandle(forWritingTo: fork); try h.seekToEnd(); try h.write(contentsOf: Data((rec("assistant", "u10", "u9", "2026-10-04T11:00:06Z") + "\n").utf8)); try h.close()
+        check(cache.parents(pairs) == ["f": "p"], "a growing transcript is read on from where it stopped")
+        try? FileManager.default.removeItem(at: dir)
+    }
+
     print("search modal (DL-76, DL-79, DL-80)")
     do {
         func hit(_ path: String, _ kind: String, _ start: Int, archived: Bool = false) -> SearchHit {

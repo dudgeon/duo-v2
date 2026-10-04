@@ -38,6 +38,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sessions, sessionShow = "session show", sessionNew = "session new", sessionOpen = "session open"
     case sessionClose = "session close", sessionMove = "session move"
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
+    case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
     case files, fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
     case fileRename = "file rename", fileDuplicate = "file duplicate", fileMove = "file move", fileTrash = "file trash"
@@ -136,6 +137,13 @@ extension DuoAction {
         .init(.sessionNote, .sessions, "<text>", "Tell the user what this session is doing (one line, shown in Duo).", everyday: true),
         .init(.sessionNext, .sessions, "<text>", "Tell the user what this session needs next (one line).", everyday: true),
         .init(.sessionCarryOn, .sessions, "<id>", "Start a new session carrying on from an archived one."),
+        // Groups (DL-24): related threads, grouped by hand; Duo-owned facts in the project's .duo/sessions.json.
+        .init(.groups, .sessions, "[--project <p>]", "Groups and their sessions, with each group's most urgent state."),
+        .init(.groupNew, .sessions, "<name> <session>…", "Group sessions of one project under a name."),
+        .init(.groupAdd, .sessions, "<group> <session>…", "Add sessions to a group."),
+        .init(.groupRemove, .sessions, "<group> <session>…", "Take sessions out of a group (an empty group goes away)."),
+        .init(.groupRename, .sessions, "<group> <new name>", "Rename a group."),
+        .init(.groupDelete, .sessions, "<group>", "Ungroup: the group goes, its sessions stay."),
 
         // Files (paths are relative to the project, or absolute)
         .init(.files, .files, "[folder] [--project <p>]", "The project's files and folders."),

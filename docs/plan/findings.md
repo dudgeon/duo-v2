@@ -184,6 +184,26 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-57 · Groups and threads in the live workspace; duo2 changes undo one at a time (2026-10-04)
+
+- **Threads (DL-24, S11):**
+  - Live sessions now carry `forkOf`, so the sidebar folds a fork under its parent, and a group lists its threads parent first.
+  - `ThreadCache` reads each transcript's head once (the first user message's uuid and its start).
+  - Only sessions sharing a head are read in full, and incrementally: a growing transcript is read from where the last read stopped. The 2 s refresh never re-reads a long transcript.
+  - Checked with a synthetic parent and fork, before and after the fork grows.
+- **Groups by CLI:**
+  - New verbs: `duo2 groups`, `group new|add|remove|rename|delete`.
+  - Groups are stored in the project's `.duo/sessions.json` by session id, so renaming a session doesn't break its group.
+  - A session belongs to one group. An emptied group goes away.
+  - A group's sessions share a project.
+  - The verbs read the file, not the last snapshot, and the sidebar updates at once.
+  - Grouping by hand in the UI waits for its design (DB-18).
+- **Undo bug, found by the group tests:**
+  - With `groupsByEvent`, the first undo registered from a duo2 command opened an automatic group. That group closes only at the next user event; with the screen locked there was none.
+  - Every later change joined it, so `duo2 undo` reverted them all at once. This hit moves and merges too.
+  - `registerUndo` now makes each change its own group, with automatic grouping off while it registers.
+  - Checked: three group changes undid one at a time.
+
 ## F-56 · Search M-UI built to search-handoff's screens (2026-10-04)
 
 - **Built:**

@@ -182,7 +182,15 @@ extension AppModel {
     /// Edit › Undo, through the main window's undo manager.
     func registerUndo(_ name: String, _ undo: @escaping @MainActor (AppModel) -> Void) {
         guard let manager = NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager else { return }
+        // Each change is its own undo step. Left to group by event, a change made from duo2 opens a
+        // group that only closes at the next user event, so several duo2 changes undid as one (F-57).
+        // At level 0 beginUndoGrouping would first open the automatic group, which then stays open.
+        let byEvent = manager.groupsByEvent
+        if manager.groupingLevel == 0 { manager.groupsByEvent = false }
+        manager.beginUndoGrouping()
         manager.registerUndo(withTarget: self) { model in MainActor.assumeIsolated { undo(model) } }
         manager.setActionName(name)
+        manager.endUndoGrouping()
+        manager.groupsByEvent = byEvent
     }
 }

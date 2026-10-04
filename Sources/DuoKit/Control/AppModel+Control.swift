@@ -155,6 +155,8 @@ extension AppModel {
             guard terminals.existing(s.tabKey) != nil else { return done(.fail("\(s.name) isn't running in Duo")) }
             closeSession(s.tabKey)
             done(.ok("Closed \(s.name). It stays listed and resumable."))
+        case .groups, .groupNew, .groupAdd, .groupRemove, .groupRename, .groupDelete:
+            groupVerb(id, inv, req, done)
         case .sessionMove:
             guard let k = inv[0], let s = findSession(k, in: nil), let sid = s.sessionId, let to = inv.flags["to"] ?? inv[1], let dst = project(named: to) else {
                 return done(.fail("usage: \(id.action.usage)"))

@@ -147,6 +147,7 @@ Shared by everything after it, including both PRDs.
 | Builds | Thread folding from fork lineage; groups by hand and by CLI verb; stored in `.duo/sessions.json`; group page tab. |
 | Needs | S11, Phase F. |
 | Gates | ⛔ design: grouping and the group page in the final look (§3.5). |
+| Status | **Logic and CLI built 2026-10-04 (F-57):** live fork threads, `duo2 groups` and `group new/add/remove/rename/delete`, undoable. Grouping by hand and the group page wait for DB-17/18. |
 
 ### Phase H — Replying from the chrome · slice 8 · *backlogged to v1.2 (DL-29)*
 

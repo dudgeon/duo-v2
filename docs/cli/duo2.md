@@ -50,6 +50,12 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 session note <text>` | Tell the user what this session is doing (one line, shown in Duo). | — |
 | `duo2 session next <text>` | Tell the user what this session needs next (one line). | — |
 | `duo2 session carry-on <id>` | Start a new session carrying on from an archived one. | — |
+| `duo2 groups [--project <p>]` | Groups and their sessions, with each group's most urgent state. | — |
+| `duo2 group new <name> <session>…` | Group sessions of one project under a name. | — |
+| `duo2 group add <group> <session>…` | Add sessions to a group. | — |
+| `duo2 group remove <group> <session>…` | Take sessions out of a group (an empty group goes away). | — |
+| `duo2 group rename <group> <new name>` | Rename a group. | — |
+| `duo2 group delete <group>` | Ungroup: the group goes, its sessions stay. | — |
 
 ## Files
 
