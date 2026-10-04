@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Every Duo chord in one table (LR-60). Menus are generated from it, so a chord is changed in
@@ -14,6 +15,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case toggleRightPane    // ⌥⌘0, as Xcode's inspector
     case nextPane           // ⌥⌘→
     case previousPane       // ⌥⌘←
+    case closeSession       // ⌘W closes the session tab, never the window (LR-60, LR-13)
+    case closeWindow        // ⇧⌘W, as in browsers once ⌘W closes tabs
 
     public var title: String {
         switch self {
@@ -27,6 +30,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .toggleRightPane: "Toggle Right Pane"
         case .nextPane: "Next Pane"
         case .previousPane: "Previous Pane"
+        case .closeSession: "Close Session"
+        case .closeWindow: "Close Window"
         }
     }
 
@@ -42,6 +47,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .toggleRightPane: KeyboardShortcut("0", modifiers: [.command, .option])
         case .nextPane: KeyboardShortcut(.rightArrow, modifiers: [.command, .option])
         case .previousPane: KeyboardShortcut(.leftArrow, modifiers: [.command, .option])
+        case .closeSession: KeyboardShortcut("w", modifiers: .command)
+        case .closeWindow: KeyboardShortcut("w", modifiers: [.command, .shift])
         }
     }
 
@@ -52,7 +59,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .allProjects: !model.altitude.isAllProjects
         case .togglePeek: !model.altitude.isAllProjects && !model.needsYouElsewhere.isEmpty
         case .jumpToPeekSelection: model.peekOpen
-        case .goHome, .toggleSidebar: true
+        case .goHome, .toggleSidebar, .closeWindow: true
+        case .closeSession: model.visibleTerminal != nil
         }
     }
 
@@ -64,6 +72,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .togglePeek: model.togglePeek()
         case .jumpToPeekSelection: model.jumpToPeekSelection()
         case .toggleSidebar: model.leftCollapsed.toggle()
+        case .closeSession: model.closeVisibleSession()
+        case .closeWindow: NSApp.keyWindow?.performClose(nil)
         case .jump, .search, .toggleRightPane, .nextPane, .previousPane: break
         }
     }
@@ -76,6 +86,10 @@ public struct DuoCommands: Commands {
     public init(model: AppModel) { self.model = model }
 
     public var body: some Commands {
+        CommandGroup(replacing: .saveItem) {
+            item(.closeSession)
+            item(.closeWindow)
+        }
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)
             item(.toggleRightPane)

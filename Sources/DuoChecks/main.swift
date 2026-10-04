@@ -357,8 +357,17 @@ func repoFixture() throws -> Fixture {
         var q = SearchQuery(text: "exponential backoff"); q.exactOnly = true
         let ex = try reader.search(q, embedder: nil)
         check(!ex.isEmpty && ex.allSatisfy { $0.matched.contains("exact") }, "exact-only mode returns literal matches only")
+        var sim = SearchQuery(text: ""); sim.similarTo = proj.appending(path: "notes/moon-notes.md").resolvingSymlinksInPath().path
+        let similar = try reader.search(sim, embedder: nil)
+        check(similar.first?.path.hasSuffix("tides-moved.md") == true && !similar.contains { $0.path.hasSuffix("moon-notes.md") },
+              "find similar: the copied article's source comes first, the item itself is left out")
+        // Same passage in two files: shown once, with the other place listed (FR-7.4.5).
+        try FileManager.default.copyItem(at: proj.appending(path: "docs/sourdough.md"), to: proj.appending(path: "notes/sourdough-copy.md"))
+        _ = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
+        let dup = try reader.search(SearchQuery(text: "feeding a sourdough starter with flour and water"), embedder: queryEmbedder)
+        check(dup.filter { $0.path.contains("sourdough") }.count == 1 && dup.first?.alsoIn.count == 1, "identical content shown once, other place listed")
         let cov = try reader.coverage()
-        check(cov.first?.complete == true && cov.first?.known == stats.files, "coverage reported")
+        check(cov.first?.complete == true && (cov.first?.known ?? 0) >= stats.files, "coverage reported")
         // Sessions (SRCH L7, FR-7.1.3-5, L17): conversation text only, by turn, attributed by cwd.
         let claudeProjects = scratch.appending(path: "claude-projects")
         let bucket = claudeProjects.appending(path: "-work-fx")

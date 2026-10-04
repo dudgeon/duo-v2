@@ -166,6 +166,9 @@ public struct SearchQuery: Sendable {
     public var exactOnly = false                // FR-7.4.2
     public var limit = 10
     public var passagesPerItem = 1              // FR-7.4.4: grouped by item by default
+    /// Find similar (FR-7.6.4): an item's stored path ("…/file.md", or a session's transcript);
+    /// its passages' mean vector is the query, and the item itself is left out.
+    public var similarTo: String?
     public init(text: String) { self.text = text }
 }
 
@@ -179,6 +182,8 @@ public struct SearchHit: Sendable, Codable, Equatable {
     public var endLine: Int
     public var score: Double
     public var matched: [String]                // "meaning", "words", "exact"
+    /// The same passage elsewhere (FR-7.4.5): shown once, with the other places listed.
+    public var alsoIn: [String] = []
     public var snippet: String
 }
 
@@ -206,16 +211,22 @@ extension SearchIndex {
         var lexical: [Int: Int] = [:]
         var exact = Set<Int>()
 
-        if !q.exactOnly, let embedder {
+        var excluded: Set<String> = []
+        if let target = q.similarTo {
+            guard let (qv, stored, own) = try meanVector(of: target) else { throw SearchError("not in the index: \(target)") }
+            excluded.insert(stored)
+            // The item itself would be the best match and set the margin; leave its passages out first.
+            for (rank, chunk) in try semanticChunks(qv, limit: 200, excluding: own).enumerated() where semantic[chunk] == nil { semantic[chunk] = rank }
+        } else if !q.exactOnly, let embedder {
             let qv = try embedder.embedQuery(q.text)
             for (rank, chunk) in try semanticChunks(qv, limit: 200).enumerated() where semantic[chunk] == nil { semantic[chunk] = rank }
         }
-        if let fts = Self.ftsQuery(q.text, exact: q.exactOnly || literal != nil) {
+        if q.similarTo == nil, let fts = Self.ftsQuery(q.text, exact: q.exactOnly || literal != nil) {
             let s = try db.prepare("SELECT rowid FROM chunks_fts WHERE chunks_fts MATCH ? ORDER BY bm25(chunks_fts) LIMIT 200").bind([fts])
             var rank = 0
             while try s.step() { lexical[s.int(0)] = rank; rank += 1 }
         }
-        if let lit = literal ?? (q.exactOnly ? q.text : nil) {
+        if q.similarTo == nil, let lit = literal ?? (q.exactOnly ? q.text : nil) {
             // Exact matches among the candidates, plus a direct scan for strings FTS can't tokenise.
             let s = try db.prepare("SELECT id FROM chunks WHERE instr(lower(text), lower(?)) > 0 LIMIT 500").bind([lit])
             while try s.step() { exact.insert(s.int(0)) }
@@ -231,8 +242,9 @@ extension SearchIndex {
         // Load candidates' items, apply filters and the boost, group by item.
         var hits: [SearchHit] = []
         let s = try db.prepare("""
-            SELECT c.id, c.start, c.end, c.text, i.project, i.kind, i.path, i.title FROM chunks c JOIN items i ON i.id = c.item WHERE c.id = ?
+            SELECT c.id, c.start, c.end, c.text, i.project, i.kind, i.path, i.title, c.content FROM chunks c JOIN items i ON i.id = c.item WHERE c.id = ?
             """)
+        var contentOf: [Int: Int] = [:]
         for (chunk, base) in fused {
             s.bind([chunk])
             guard try s.step() else { continue }
@@ -249,6 +261,8 @@ extension SearchIndex {
             let text = s.string(3) ?? ""
             // Sessions and memory are stored as "session:<transcript>"; their locator is the turn.
             let stored = s.string(6) ?? ""
+            if excluded.contains(stored) { continue }
+            contentOf[chunk] = s.int(8)
             let path = kind == "file" ? stored : String(stored.drop { $0 != ":" }.dropFirst())
             let locator = kind == "session" ? "turn \(s.int(1))" : s.int(1) == s.int(2) ? "L\(s.int(1))" : "L\(s.int(1))-\(s.int(2))"
             hits.append(SearchHit(project: project, kind: kind, path: path, title: s.string(7) ?? "",
@@ -257,9 +271,21 @@ extension SearchIndex {
                                   snippet: Self.snippet(text, around: literal ?? q.text)))
         }
         hits.sort { $0.score > $1.score }
+        // Identical passages (same content hash) in several items: keep the best, list the rest.
+        var firstForContent: [String: Int] = [:]   // snippet+locator key → index in `deduped`
+        var deduped: [SearchHit] = []
+        for h in hits {
+            let key = Self.hash(h.snippet)
+            if let i = firstForContent[key], deduped[i].path != h.path {
+                if !deduped[i].alsoIn.contains(h.path) { deduped[i].alsoIn.append(h.path) }
+                continue
+            }
+            firstForContent[key] = deduped.count
+            deduped.append(h)
+        }
         var perItem: [String: Int] = [:]
         var out: [SearchHit] = []
-        for h in hits {
+        for h in deduped {
             let n = perItem[h.path, default: 0]
             guard n < q.passagesPerItem else { continue }
             perItem[h.path] = n + 1
@@ -275,14 +301,32 @@ extension SearchIndex {
     /// absolute cutoff (FR-7.4.7). Keeps weak "nearest" passages out of small corpora.
     static let semanticMargin: Float = 0.12
 
+    /// The normalised mean of an item's passage vectors, and the item's stored path.
+    func meanVector(of target: String) throws -> ([Float], String, Set<Int>)? {
+        let s = try db.prepare("""
+            SELECT i.path, v.vector, v.id FROM items i JOIN chunks c ON c.item = i.id JOIN content v ON v.id = c.content
+            WHERE i.path = ? OR i.path = 'session:' || ? OR i.path LIKE '%' || ?
+            """).bind([target, target, target])
+        var sum: [Float] = [], stored = "", own = Set<Int>()
+        while try s.step() {
+            stored = s.string(0) ?? ""
+            own.insert(s.int(2))
+            let v = Self.vector(s.blob(1), dim: ModelIdentity.current.dimensions)
+            sum = sum.isEmpty ? v : zip(sum, v).map(+)
+        }
+        guard !sum.isEmpty else { return nil }
+        let norm = sqrt(sum.reduce(0) { $0 + $1 * $1 })
+        return (sum.map { $0 / max(norm, 1e-9) }, stored, own)
+    }
+
     /// Chunks whose content vectors are nearest the query (cosine; vectors are normalised).
-    func semanticChunks(_ qv: [Float], limit: Int) throws -> [Int] {
+    func semanticChunks(_ qv: [Float], limit: Int, excluding: Set<Int> = []) throws -> [Int] {
         let dim = qv.count
         var scored: [(Int, Float)] = []
         let s = try db.prepare("SELECT id, vector FROM content")
         while try s.step() {
             let d = s.blob(1)
-            guard d.count == dim * 4 else { continue }
+            guard d.count == dim * 4, !excluding.contains(s.int(0)) else { continue }
             var dot: Float = 0
             d.withUnsafeBytes { raw in
                 qv.withUnsafeBufferPointer { q in vDSP_dotpr(q.baseAddress!, 1, raw.bindMemory(to: Float.self).baseAddress!, 1, &dot, vDSP_Length(dim)) }

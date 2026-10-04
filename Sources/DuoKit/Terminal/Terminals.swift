@@ -177,6 +177,11 @@ public final class TerminalStore {
     }
 
     public func existing(_ key: String) -> TerminalSession? { sessions[key] }
+
+    /// Ends one session's process and forgets its terminal (explicit close only, LR-13).
+    public func close(_ key: String) {
+        sessions.removeValue(forKey: key)?.terminate()
+    }
     public var all: [TerminalSession] { Array(sessions.values) }
 
     public func terminateAll() { sessions.values.forEach { $0.terminate() } }

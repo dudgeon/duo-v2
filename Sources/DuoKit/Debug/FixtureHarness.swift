@@ -60,6 +60,7 @@ public enum FixtureHarness {
         case "zoom-out": model.zoomOut()
         case "focus-tile": model.moveTileFocus(dx: 0, dy: 0)
         case "new": model.newSession()
+        case "close": model.closeVisibleSession()
         case "type": model.visibleTerminal?.view.send(txt: parts.count > 1 ? parts[1] : "")
         case "enter": model.visibleTerminal?.view.send(txt: "\r")
         case "dump":

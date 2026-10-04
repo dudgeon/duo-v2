@@ -193,6 +193,9 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - `duo2 search --kind session|memory|file` filters by source (FR-7.4.6); session results give the transcript path and the turn.
 - Live on this Mac: 42 sessions, 10 memory notes and 20 files → 702 passages, 686 unique (embedded once). 118 checks pass, including: thinking, tool calls and tool output never reach the index; a session outside every project is Unfiled; a deleted transcript leaves.
 - **Chord change:** search is `⇧⌘A`, like Chrome's tab search (DL-46).
+- **Find similar (FR-7.6.4):** `duo2 search --similar <path>` uses the mean of the item's passage vectors and leaves the item out. The item's own passages must be dropped *before* the relative margin is applied, or the item (cosine ≈ 1) sets a margin nothing else meets; the first version returned nothing.
+- **Duplicates (FR-7.4.5):** identical passages in several files show once, with `also in:` the other paths.
+- **⌘W closes the session tab** (ends its process; the session stays filed and resumable) and **⇧⌘W closes the window**, since the window is AppKit now and ⌘W would otherwise close it (LR-60). Verified live: the closed session's terminal and process are gone, its index entry stays. 120 checks pass.
 
 ## F-37 · Legacy Duo detection and a reversible disable (DL-39) (2026-10-03)
 

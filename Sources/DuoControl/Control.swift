@@ -89,7 +89,7 @@ public struct ControlCommand: Sendable {
         .init(name: "open", usage: "duo2 open <project> [session]", summary: "Open a project in Duo, optionally on one of its sessions.", needsApp: true),
         .init(name: "status", usage: "duo2 status", summary: "What Duo is showing: the view, the open project and session, and counts.", needsApp: true),
         .init(name: "session", usage: "duo2 session note|next <text>", summary: "Tell the user, in one line, what this session is doing (note) or needs next (next).", needsApp: true),
-        .init(name: "search", usage: "duo2 search <query> [-k N] [--project P] [--kind file|session|memory] [--exact] [--json]",
+        .init(name: "search", usage: "duo2 search <query> | --similar <path> [-k N] [--project P] [--kind file|session|memory] [--exact] [--json]",
               summary: "Search every project by meaning and by words. Works without the app; read-only.", needsApp: false),
         .init(name: "search-status", usage: "duo2 search-status [--json]", summary: "How much of each project the search index covers.", needsApp: false),
         .init(name: "legacy", usage: "duo2 legacy [disable --yes | restore <backup>]",

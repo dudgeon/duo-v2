@@ -197,6 +197,17 @@ public final class AppModel {
         }
     }
 
+    /// ⌘W: ends the visible session's process. The session stays filed and resumable; its tab
+    /// goes unless the session is still in a live state, and the next tab is selected.
+    public func closeVisibleSession() {
+        guard let key = visibleSessionId, terminals.existing(key) != nil else { return }
+        let project: String? = altitude.isAllProjects ? fixture.home?.name : currentProject?.name
+        terminals.close(key)
+        let next = project.map { tabSessions(inProject: $0).first { $0.tabKey != key }?.tabKey } ?? nil
+        if altitude.isAllProjects { homeTab = next } else { consoleTab = next }
+        fixture = fixture  // republish: tabs depend on which terminals exist
+    }
+
     /// LR-5: agent self-narration, stored Duo-side in the project's index and shown verbatim.
     func setNarration(_ id: String, kind: String, text: String) -> Bool {
         guard let s = fixture.sessions.first(where: { $0.sessionId == id }), let folder = liveFolders[s.project] else { return false }

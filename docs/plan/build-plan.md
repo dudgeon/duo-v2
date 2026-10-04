@@ -113,6 +113,7 @@ Each is a throwaway target or branch with pass/fail written before it starts. Ne
 
 | | |
 |---|---|
+| Status, later | ⌘W closes a session tab, ⇧⌘W the window (F-38). |
 | Builds | `TerminalHost` + SwiftTerm. Resolve the user's `claude` (LR-19). Spawn with Duo-minted `--session-id`, `DUO_SESSION_ID` (LR-20), scrubbed env. Console and Home tabs host real terminals; hidden tabs keep their PTY and stop drawing (LR-13); 8×1 floor (LR-14); paste/drop rules (LR-15); Shift+Enter only (LR-16); missing-cwd fallback (LR-18). Plain shell tabs that auto-promote via a Duo-only `claude` wrapper on `PATH` (DL-8). |
 | Needs | S1, S2. |
 | Exit | Six live sessions, five hidden, within S2's budget; dark panes still meet §0.3 down to their tab strips. |
