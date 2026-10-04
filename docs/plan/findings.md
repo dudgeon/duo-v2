@@ -198,6 +198,7 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
   - The acceptance-walk skill now forbids unattended full-screen control and anything that prompts.
   - Duo's own questions (the .gitignore offer, install consent, move/merge confirmations, error notes) were app-modal alerts. `runModal` holds the main queue, so while one waited unanswered, duo2, the edit hook and refresh all stalled. They are now sheets on the window (`DuoAlert`): the question waits, and the app keeps working. Checked: `duo2 ping` and `duo2 projects` answered with the .gitignore sheet up.
 - **Also learned:**
+  - Audit at 10:30 (the tccd log, and on-screen windows by owner): Duo raised no privacy prompt after the 09:25 build. `scripts/check-sandbox.sh` still quit Duo through AppleScript; it now quits by SIGTERM. A keychain prompt at 10:17 came from `codesign` with the Developer ID key in a parallel signing session, not from Duo or the walk. That session moved its signing to its own keychain, so it no longer prompts.
   - Computer control keeps Escape for itself and can't send ⌘Q, so Escape and ⌘Q behaviour stay on Geoff's list.
   - Background `app_key` Return reaches a Duo terminal, which is enough to run Claude turns unattended.
 

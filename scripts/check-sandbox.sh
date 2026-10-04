@@ -16,6 +16,7 @@ work=$(mktemp -d)
 pgrep -xq Duo && { echo "quit Duo first"; exit 2; }
 open -n build/Duo.app --args --state overview
 for i in {1..20}; do [[ -S $sock ]] && break; sleep 0.5; done
+duo_pid=$(pgrep -nx Duo)
 sleep 0.5
 
 profile() {  # $1 = extra rules
@@ -43,7 +44,8 @@ out=$(run "$allow" "$duo2" needs-you); [[ $out == *"needs you"* || $out == *" / 
 out=$(run "$allow" /usr/bin/touch "$HOME/duo-seatbelt-probe"); [[ -e $HOME/duo-seatbelt-probe ]] && { echo "✘ write outside the folder succeeded"; rm -f "$HOME/duo-seatbelt-probe"; fail=1; } || echo "✔ writes outside the working folder stay blocked"
 out=$(run "$allow" /usr/bin/nc -z -w 2 127.0.0.1 22); [[ $? -ne 0 ]] && echo "✔ loopback TCP stays blocked" || { echo "✘ loopback TCP reachable"; fail=1; }
 
-osascript -e 'tell application id "com.dudgeon.duo" to quit' >/dev/null 2>&1
+# Quit by SIGTERM (Duo quits as with ⌘Q), never AppleScript: it can raise an Automation prompt (F-54).
+[[ -n $duo_pid ]] && kill -TERM "$duo_pid" 2>/dev/null
 sleep 1
 
 # Search (SRCH FR-7.7.2-3): read-only, no app, no network, writes nothing, Claude's default sandbox.
