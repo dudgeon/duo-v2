@@ -2245,6 +2245,117 @@
     ],
     "at": "2026-10-04"
    }
+  },
+  {
+   "id": "home-click-project",
+   "group": "Home view round",
+   "title": "Click a project to open it",
+   "what": "One click on a tile, or on a card's project name, opens the project (ENH-5).",
+   "steps": [
+    "At All projects, click a tile (not a session row).",
+    "Click the project name under a needs-you card."
+   ],
+   "expect": "The project opens.",
+   "ref": "ENH-5, F-61",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "A synthesised click on the onboarding tile opened onboarding."
+    ],
+    "didnt": [],
+    "human": [
+     "Try both with the mouse."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "home-active-tint",
+   "group": "Home view round",
+   "title": "Sessions open in Duo are tinted",
+   "what": "A session with a terminal open in Duo shows on its tile and is tinted there and in the project's list (ENH-7; provisional look).",
+   "steps": [
+    "Open checkout and resume a session; go back to All projects.",
+    "Inside checkout, look at the session list."
+   ],
+   "expect": "The session is listed on checkout's tile with a light blue tint (grey if it's the selected row); in the project's list its row is tinted.",
+   "ref": "ENH-7, F-61",
+   "setup": [
+    "open checkout",
+    "session-running checkout",
+    "go all"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Live: the resumed session appeared on checkout's tile."
+    ],
+    "didnt": [
+     "The captured row was the selected one (grey), so the tint wasn't in the picture."
+    ],
+    "human": [
+     "Say whether the tint is enough until a design (DB-33)."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "home-archive",
+   "group": "Home view round",
+   "title": "Archive a project",
+   "what": "Filing only: the tile moves into an Archived rollup at the bottom of the map; counts, search and sessions are unchanged (ENH-6).",
+   "steps": [
+    "Right-click the scratch tile › Archive Project.",
+    "Scroll to the bottom of the map; open `Archived · 1`.",
+    "Right-click it › Unarchive Project (or ⌘Z)."
+   ],
+   "expect": "scratch leaves Elsewhere and appears under Archived; clicking it opens it; Unarchive puts it back.",
+   "ref": "ENH-6, F-61",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: archived scratch and side-project (`duo2 project archive`), the map lost both tiles, `duo2 projects` marked them; `duo2 undo` twice put them back."
+    ],
+    "didnt": [],
+    "human": [
+     "Judge the rollup's place and look (DB-34)."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "home-delete",
+   "group": "Home view round",
+   "title": "Delete a session for good",
+   "what": "Right-click a session › Delete Session… removes it and its local logs after you confirm (never while it runs).",
+   "steps": [
+    "Only on a fixture session you don't need: right-click `Draft a post about pricing` in scratch › Delete Session…",
+    "Read the sheet, then Delete or Cancel."
+   ],
+   "expect": "The sheet lists every path and the total size; Delete removes them and the session leaves Duo; Cancel changes nothing.",
+   "ref": "F-61",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "3 checks on a fake Claude config: transcript, sidecar, file history and environment go; history.jsonl stays; running sessions refused; no undo."
+    ],
+    "didnt": [
+     "Didn't delete anything real."
+    ],
+    "human": [
+     "Try it on a fixture session if you want to see the sheet."
+    ],
+    "at": "2026-10-04"
+   }
   }
  ],
  "decisions": [
