@@ -171,6 +171,16 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var seen: [String: Double] = [:]
     /// The Home folder Duo chose (DL-42), so a second HOME.md never silently takes over.
     public var home: String?
+    /// Answers to the .gitignore offer, by repository root (DL-50).
+    public var gitignore: [String: String] = [:]
+
+    public init() {}
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        seen = try c.decodeIfPresent([String: Double].self, forKey: .seen) ?? [:]
+        home = try c.decodeIfPresent(String.self, forKey: .home)
+        gitignore = try c.decodeIfPresent([String: String].self, forKey: .gitignore) ?? [:]
+    }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {
         (try? Data(contentsOf: url)).flatMap { try? JSONDecoder().decode(DuoState.self, from: $0) } ?? DuoState()

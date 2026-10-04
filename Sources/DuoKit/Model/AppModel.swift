@@ -103,6 +103,8 @@ public final class AppModel {
     @ObservationIgnored private var refreshTimer: Timer?
     @ObservationIgnored private var refreshing = false
     @ObservationIgnored private var lastArchive = Date.distantPast
+    /// False for scripted captures: nothing may block on a prompt.
+    @ObservationIgnored public var interactivePrompts = true
     /// Duo's "seen" marks (handoff §10): looking at a session clears ready-for-review.
     @ObservationIgnored public var seen: [String: Double] = [:]
     @ObservationIgnored public var rememberedHome: String?
@@ -183,6 +185,7 @@ public final class AppModel {
         merged.sessions = merged.sessions.filter { s in s.sessionId.map { ids.insert($0).inserted } ?? true }
         if merged != fixture { fixture = merged }
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
+        GitIgnoreOffer.consider(folders, interactive: interactivePrompts)
         // Home is always on (brief: the director agent); its empty state isn't designed (§13), so
         // live mode starts one Home session when there is none (concerns C-15).
         if let home = fixture.home {

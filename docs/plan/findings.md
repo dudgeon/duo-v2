@@ -184,6 +184,13 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-42 · Remote decisions built: sidecars, purged sessions in search, the .gitignore offer (2026-10-03)
+
+- **Sidecars (DL-48):** the archive copies a session's sidecar folder (tool outputs, subagent transcripts) when its fingerprint (files, bytes, newest change) moves, and restores it with the transcript.
+- **Purged sessions in search (DL-49):** sessions whose transcript Claude removed but Duo archived are indexed from the archive copy and marked `archived` (CLI: "(archived by Duo)", JSON `archived: true`). Index schema 2 adds the column (added in place). SRCH Q8/L17 need updating to match.
+- **`.gitignore` offer (DL-50):** once per launch per project, off the main thread, Duo asks git itself (`git check-ignore`) whether `.duo/` is ignored, so ignored parents and nested rules count (the demo workspace inside this repo's ignored `.build/` was correctly not offered). If not, a standard macOS alert asks once; the answer is remembered per repository in `Duo/state.json`. Scripted captures never show it; `DUO_GITIGNORE_ANSWER` answers it in tests. Verified live with a scratch repo: `.duo/` appended, git ignores it, the answer stored. The alert itself is unseen until the screen is unlocked, and is a system alert pending a design (§13 notices).
+- 126 checks pass.
+
 ## F-41 · Retention: archive and keep-alive (DL-44, DL-47) (2026-10-03)
 
 - **What Claude Code's cleanup checks** (its own code, 2.1.289): every swept file is deleted when `stat.mtime < now − cleanupPeriodDays` (`if(!(w.mtime<r))return s.filesRetainedFresh++`); session folders are judged by their modification time too. Timestamps inside the transcript don't matter. The period comes from settings (managed policy, then user), default 30; 0 turns cleanup off. A scratch-config test was inconclusive (unauthenticated, Claude exited before sweeping), so this rests on the code.

@@ -398,6 +398,15 @@ func repoFixture() throws -> Fixture {
         check(try reader.search(uq, embedder: queryEmbedder).first?.project == SearchIndex.unfiled, "a session outside every project is Unfiled")
         try FileManager.default.removeItem(at: bucket.appending(path: "22222222-bbbb.jsonl"))
         let swept: IndexStats = try blocking { try await index.indexSessions(projects: ["fx": proj], claudeProjects: claudeProjects, embedder: indexer) }
+        // DL-49: a purged session kept by Duo's archive stays findable, marked archived.
+        let archivedCopy = scratch.appending(path: "archive/33333333-cccc.jsonl")
+        try FileManager.default.createDirectory(at: archivedCopy.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try #"{"type":"user","cwd":"\#(proj.path)","message":{"content":"Draft the lighthouse keeper rota for winter"}}"#.write(to: archivedCopy, atomically: true, encoding: .utf8)
+        _ = try blocking { try await index.indexSessions(projects: ["fx": proj], claudeProjects: claudeProjects, embedder: indexer,
+                                                         archived: [(id: "33333333-cccc", copy: archivedCopy, cwd: proj.path)]) }
+        var aq = SearchQuery(text: "lighthouse keeper rota"); aq.kinds = ["session"]
+        let ah = try reader.search(aq, embedder: queryEmbedder).first
+        check(ah?.archived == true && ah?.project == "fx", "a purged session is found from Duo's archive, marked archived (DL-49)")
         let afterSweep = try reader.search(uq, embedder: nil)
         check(swept.removed == 1 && afterSweep.allSatisfy { $0.project != SearchIndex.unfiled }, "a deleted transcript leaves the index (L17)")
         unsetenv("DUO_SEARCH_ROOT")
@@ -444,6 +453,8 @@ func repoFixture() throws -> Fixture {
     check(refreshed == 4 && abs(oldMod.timeIntervalSince(keepNow.addingTimeInterval(-15 * 86_400))) < 2 && keepNow.timeIntervalSince(freshMod) < 60,
           "keep-alive moves a quiet session to half the period ago (with its sidecars), leaves fresh ones alone")
     check(SessionArchive.carryOnPrompt("s-old")?.contains(SessionArchive.copyURL("s-old").path) == true, "carry-on prompt points at the archived transcript")
+    check(FileManager.default.fileExists(atPath: SessionArchive.sidecarURL("s-old").appending(path: "tool-results/r1.txt").path),
+          "the sidecar folder is archived too (DL-48)")
     unsetenv("DUO_ARCHIVE_ROOT")
     try? FileManager.default.removeItem(at: ar)
 

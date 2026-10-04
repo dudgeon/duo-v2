@@ -26,6 +26,7 @@ struct DuoApp: App {
             exit(66)
         }
         let model = AppModel(fixture: fixture)
+        model.interactivePrompts = !options.capturing
         // duo2's endpoint (DL-15). Terminals start after the window appears, by which time the
         // listener is ready; the environment is read when each process starts.
         let helpers = Bundle.main.bundleURL.appending(path: "Contents/Helpers")

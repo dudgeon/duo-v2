@@ -58,7 +58,8 @@ public final class SearchService {
             }
             let claude = (ProcessInfo.processInfo.environment["CLAUDE_CONFIG_DIR"].map { URL(fileURLWithPath: $0) }
                 ?? FileManager.default.homeDirectoryForCurrentUser.appending(path: ".claude")).appending(path: "projects")
-            out["sessions"] = try await index.indexSessions(projects: projects, claudeProjects: claude, embedder: embedder) {
+            out["sessions"] = try await index.indexSessions(projects: projects, claudeProjects: claude, embedder: embedder,
+                                                            archived: SessionArchive.purged()) {
                 try? await Task.sleep(for: .milliseconds(ProcessInfo.processInfo.isLowPowerModeEnabled ? 500 : 15))
             }
             try index.vacuumContent()

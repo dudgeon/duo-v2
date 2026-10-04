@@ -14,6 +14,8 @@ public enum SessionArchive {
         public var size: Int
         public var modified: Double
         public var archived: Double
+        /// The sidecar folder's fingerprint when last copied (DL-48): file count, bytes, newest change.
+        public var sidecar: String?
     }
 
     public struct Manifest: Codable, Sendable, Equatable {
@@ -27,6 +29,18 @@ public enum SessionArchive {
     }
     static var manifestURL: URL { root.appending(path: "manifest.json") }
     public static func copyURL(_ id: String) -> URL { root.appending(path: "\(id).jsonl") }
+    public static func sidecarURL(_ id: String) -> URL { root.appending(path: id) }
+
+    /// File count, total bytes and newest modification in a session's sidecar folder.
+    static func fingerprint(_ dir: URL) -> String? {
+        guard let walker = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey]) else { return nil }
+        var n = 0, bytes = 0, newest = 0.0
+        for case let u as URL in walker {
+            guard let v = try? u.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey]), let size = v.fileSize else { continue }
+            n += 1; bytes += size; newest = max(newest, v.contentModificationDate?.timeIntervalSince1970 ?? 0)
+        }
+        return n == 0 ? nil : "\(n)/\(bytes)/\(Int(newest))"
+    }
 
     public static func manifest() -> Manifest {
         (try? Data(contentsOf: manifestURL)).flatMap { try? JSONDecoder().decode(Manifest.self, from: $0) } ?? Manifest()
@@ -42,7 +56,17 @@ public enum SessionArchive {
         for (id, url) in sessions {
             guard let v = try? url.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey]),
                   let size = v.fileSize, let mod = v.contentModificationDate?.timeIntervalSince1970 else { continue }
-            if let e = m.sessions[id], e.size == size, e.modified == mod, fm.fileExists(atPath: copyURL(id).path) { continue }
+            // Sidecars (tool outputs, subagent transcripts) beside the transcript (DL-48).
+            let sidecar = url.deletingPathExtension()
+            let print = fingerprint(sidecar)
+            if let e = m.sessions[id], e.size == size, e.modified == mod, e.sidecar == print, fm.fileExists(atPath: copyURL(id).path) { continue }
+            if let print, m.sessions[id]?.sidecar != print {
+                let tmpDir = root.appending(path: ".\(id).sidecar.tmp")
+                try? fm.removeItem(at: tmpDir)
+                try fm.copyItem(at: sidecar, to: tmpDir)
+                try? fm.removeItem(at: sidecarURL(id))
+                try fm.moveItem(at: tmpDir, to: sidecarURL(id))
+            }
             let tmp = root.appending(path: ".\(id).tmp")
             try? fm.removeItem(at: tmp)
             try fm.copyItem(at: url, to: tmp)
@@ -51,7 +75,7 @@ public enum SessionArchive {
             chmod(copyURL(id).path, 0o600)
             let read = ClaudeStorage.filedCwd(url)
             m.sessions[id] = Entry(sessionId: id, cwd: read ?? url.deletingLastPathComponent().path, title: SessionTitles.title(transcript: url),
-                                   size: size, modified: mod, archived: Date().timeIntervalSince1970)
+                                   size: size, modified: mod, archived: Date().timeIntervalSince1970, sidecar: print)
             copied += 1
         }
         if copied > 0 {
@@ -72,7 +96,20 @@ public enum SessionArchive {
         if FileManager.default.fileExists(atPath: dest.path) { return dest }
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         try FileManager.default.copyItem(at: copyURL(id), to: dest)
+        let side = dir.appending(path: id)
+        if FileManager.default.fileExists(atPath: sidecarURL(id).path), !FileManager.default.fileExists(atPath: side.path) {
+            try FileManager.default.copyItem(at: sidecarURL(id), to: side)
+        }
         return dest
+    }
+
+    /// Archived sessions whose transcript Claude no longer has: search indexes these copies (DL-49).
+    public static func purged() -> [(id: String, copy: URL, cwd: String)] {
+        manifest().sessions.values.compactMap { e in
+            guard ClaudeStorage.transcript(sessionId: e.sessionId, cwd: e.cwd) == nil,
+                  FileManager.default.fileExists(atPath: copyURL(e.sessionId).path) else { return nil }
+            return (e.sessionId, copyURL(e.sessionId), e.cwd)
+        }
     }
 
     // MARK: Keep-alive (DL-47)

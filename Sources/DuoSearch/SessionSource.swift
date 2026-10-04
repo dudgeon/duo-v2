@@ -104,6 +104,7 @@ extension SearchIndex {
     /// project whose folder holds its cwd, else "Unfiled" (FR-7.1.5). Transcripts the retention
     /// sweep removed leave the index (L17). Changed transcripts are re-read whole (FR-7.2.4).
     public func indexSessions(projects: [String: URL], claudeProjects: URL, embedder: Embedder,
+                              archived: [(id: String, copy: URL, cwd: String)] = [],
                               pause: () async -> Void = {}) async throws -> IndexStats {
         var stats = IndexStats()
         let roots = projects.map { (name: $0.key, path: $0.value.resolvingSymlinksInPath().path) }
@@ -118,7 +119,7 @@ extension SearchIndex {
         var known: [String: (id: Int, modified: Double, size: Int, project: String)] = [:]
         let q = try db.prepare("SELECT id, path, modified, size, project FROM items WHERE kind IN ('session', 'memory')")
         while try q.step() { known[q.string(1) ?? ""] = (q.int(0), q.double(2), q.int(3), q.string(4) ?? "") }
-        let present = Set(transcripts.map { "session:" + $0.path } + memory.map { "memory:" + $0.path })
+        let present = Set(transcripts.map { "session:" + $0.path } + memory.map { "memory:" + $0.path } + archived.map { "session:" + $0.copy.path })
         let gone = known.filter { !present.contains($0.key) }
         if !gone.isEmpty {
             try db.transaction { for (_, v) in gone { try db.prepare("DELETE FROM items WHERE id = ?").run([v.id]) } }
@@ -139,6 +140,22 @@ extension SearchIndex {
             try store(key: key, kind: "session", project: owner(cwd), title: title ?? t.sessionId, modified: mod, size: t.size,
                       chunks: chunks, replacing: known[key]?.id, embedder: embedder, stats: &stats)
             await pause()
+        }
+        // Sessions Claude's cleanup removed but Duo kept (DL-49): indexed from the archive, marked.
+        for a in archived {
+            let key = "session:" + a.copy.path
+            let v = try? a.copy.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey])
+            let mod = v?.contentModificationDate?.timeIntervalSince1970 ?? 0
+            if let k = known[key], k.modified == mod, k.size == (v?.fileSize ?? 0) { continue }
+            let (turns, title, _) = SessionSource.read(a.copy.path)
+            guard !turns.isEmpty else { continue }
+            let chunks = turns.flatMap { turn -> [Chunk] in
+                Chunker.chunks(path: "turn.txt", text: Secrets.redact(turn.text), tokenizer: embedder.tokenizer)
+                    .map { Chunk(text: $0.text, startLine: turn.index, endLine: turn.index) }
+            }
+            try store(key: key, kind: "session", project: owner(a.cwd), title: title ?? a.id, modified: mod, size: v?.fileSize ?? 0,
+                      chunks: chunks, replacing: known[key]?.id, embedder: embedder, stats: &stats)
+            try db.prepare("UPDATE items SET archived = 1 WHERE path = ?").run([key])
         }
         for m in memory {
             let key = "memory:" + m.path

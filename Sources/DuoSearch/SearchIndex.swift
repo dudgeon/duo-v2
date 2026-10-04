@@ -38,6 +38,8 @@ public final class SearchIndex: @unchecked Sendable {
             CREATE TRIGGER IF NOT EXISTS chunks_ad AFTER DELETE ON chunks BEGIN INSERT INTO chunks_fts(chunks_fts, rowid, text) VALUES ('delete', old.id, old.text); END;
             CREATE TABLE IF NOT EXISTS coverage(project TEXT PRIMARY KEY, known INTEGER, indexed INTEGER, updated REAL);
             """)
+            // Schema 2: items kept only in Duo's archive (DL-49).
+            try? db.exec("ALTER TABLE items ADD COLUMN archived INTEGER NOT NULL DEFAULT 0")
             try ensureModel()
         }
     }
@@ -182,9 +184,11 @@ public struct SearchHit: Sendable, Codable, Equatable {
     public var endLine: Int
     public var score: Double
     public var matched: [String]                // "meaning", "words", "exact"
+    public var snippet: String
     /// The same passage elsewhere (FR-7.4.5): shown once, with the other places listed.
     public var alsoIn: [String] = []
-    public var snippet: String
+    /// Only in Duo's archive: Claude's cleanup removed the original (DL-49).
+    public var archived = false
 }
 
 public struct Coverage: Sendable, Codable, Equatable {
@@ -242,7 +246,7 @@ extension SearchIndex {
         // Load candidates' items, apply filters and the boost, group by item.
         var hits: [SearchHit] = []
         let s = try db.prepare("""
-            SELECT c.id, c.start, c.end, c.text, i.project, i.kind, i.path, i.title, c.content FROM chunks c JOIN items i ON i.id = c.item WHERE c.id = ?
+            SELECT c.id, c.start, c.end, c.text, i.project, i.kind, i.path, i.title, c.content, i.archived FROM chunks c JOIN items i ON i.id = c.item WHERE c.id = ?
             """)
         var contentOf: [Int: Int] = [:]
         for (chunk, base) in fused {
@@ -268,7 +272,7 @@ extension SearchIndex {
             hits.append(SearchHit(project: project, kind: kind, path: path, title: s.string(7) ?? "",
                                   locator: locator,
                                   startLine: s.int(1), endLine: s.int(2), score: score, matched: matched,
-                                  snippet: Self.snippet(text, around: literal ?? q.text)))
+                                  snippet: Self.snippet(text, around: literal ?? q.text), alsoIn: [], archived: s.int(9) != 0))
         }
         hits.sort { $0.score > $1.score }
         // Identical passages (same content hash) in several items: keep the best, list the rest.

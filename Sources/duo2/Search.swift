@@ -50,12 +50,12 @@ func runSearch(_ name: String, _ argv: [String]) -> Int32 {
         let hits = try index.search(q, embedder: embedder)
         if json {
             emit(["query": q.text, "coverage": coverageLine, "complete": missing.isEmpty,
-                  "results": hits.map { ["project": $0.project, "kind": $0.kind, "path": $0.path, "also_in": $0.alsoIn, "title": $0.title, "lines": [$0.startLine, $0.endLine],
+                  "results": hits.map { ["project": $0.project, "kind": $0.kind, "path": $0.path, "also_in": $0.alsoIn, "archived": $0.archived, "title": $0.title, "lines": [$0.startLine, $0.endLine],
                                          "locator": $0.locator, "matched": $0.matched, "score": (round($0.score * 1e4) / 1e4), "snippet": $0.snippet] as [String: Any] }])
         } else {
             if hits.isEmpty { print("No results.") }
             for (n, h) in hits.enumerated() {
-                let label = h.kind == "file" ? "\(h.title):\(h.locator)" : "\(h.kind) “\(h.title)”, \(h.locator)"
+                let label = (h.kind == "file" ? "\(h.title):\(h.locator)" : "\(h.kind) “\(h.title)”, \(h.locator)") + (h.archived ? " (archived by Duo)" : "")
                 print("\(n + 1). \(h.project) · \(label)  (\(h.matched.joined(separator: ", ")))")
                 print("   \(h.path)")
                 if !h.alsoIn.isEmpty { print("   also in: \(h.alsoIn.joined(separator: ", "))") }
