@@ -12,6 +12,12 @@ public enum LiveSnapshot {
         public var events: URL?
         /// Duo's "seen" marks, epoch seconds by session id.
         public var seen: [String: Double]
+        /// Read Claude's whole session history from disk (off in checks, which use their own files).
+        public var includeHistory = true
+        /// Projects made outside the workspace root (DL-63).
+        public var extraProjects: [URL] = []
+        /// Checks supply their own history.
+        public var historyOverride: [(id: String, transcript: URL, cwd: String)]?
 
         public init(root: URL, rememberedHome: String? = nil, events: URL? = nil, seen: [String: Double] = [:]) {
             self.root = root
@@ -29,7 +35,7 @@ public enum LiveSnapshot {
     }
 
     public static func build(_ ctx: Context, beacons: [Beacon] = Beacon.readAll()) -> (Fixture, folders: [String: URL], moves: [Move]) {
-        let found = ProjectDiscovery.scan(root: ctx.root)
+        let found = ProjectDiscovery.scan(root: ctx.root) + ctx.extraProjects.compactMap { ProjectDiscovery.found(at: $0, root: ctx.root) }
         let (home, _) = ProjectDiscovery.chooseHome(found, remembered: ctx.rememberedHome)
         // Other HOME.md folders appear as normal projects (DL-42).
         let projects: [ProjectDiscovery.Found] = found.map { f in
@@ -61,10 +67,33 @@ public enum LiveSnapshot {
                 let filed = live == nil
                     ? ClaudeStorage.transcript(sessionId: e.sessionId, cwd: f.folder.path).flatMap { byEncoded[$0.deletingLastPathComponent().lastPathComponent] }
                     : nil
-                let here = live ?? filed ?? f
+                // A session the user moved stays where they filed it (DL-64), whatever its cwd.
+                let here = e.provenance.hasPrefix("moved-by-user") ? f : (live ?? filed ?? f)
                 actual[e.sessionId] = here
                 if here.folder != f.folder { moves.append(Move(sessionId: e.sessionId, from: f.folder, to: here.folder)) }
             }
+        }
+
+        // Every session filed anywhere, and where: cwd-based attribution never steals them.
+        var filedIn: [String: String] = [:]   // id → resolved folder path
+        for (id, f) in actual { filedIn[id] = resolve(f.folder.path) }
+        let history = ctx.historyOverride ?? (ctx.includeHistory ? ClaudeStorage.history() : [])
+
+        func makeSession(_ id: String, project name: String, folder: URL, entry: SessionIndex.Entry?) -> Fixture.Session {
+            let beacon = beacons.first { $0.sessionId == id }
+            let hooks = ctx.events.flatMap { HookEvents.summarize(HookEvents.read(id, in: $0)) }
+            let live = beacon.map { Attention.live(beacon: $0, hooks: hooks, seenAt: ctx.seen[id]) }
+            let mtime = history.first { $0.id == id }.flatMap { try? $0.transcript.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate }
+            let since = live?.since ?? (entry?.createdAt ?? mtime).map { $0.timeIntervalSince1970 * 1000 }
+            return Fixture.Session(
+                name: title(id: id, folder: folder, beacon: beacon),
+                project: name,
+                state: live?.state ?? .idle,
+                wait: live?.state == .readyForReview ? nil : Attention.waitText(since: since, now: ctx.now),
+                question: live?.question, options: live?.options,
+                summary: live?.summary ?? entry?.note.map { e in entry?.next.map { "\(e) · Next: \($0)" } ?? e },
+                forkOf: nil, document: nil,
+                sessionId: id)
         }
 
         for f in projects {
@@ -76,27 +105,18 @@ public enum LiveSnapshot {
             // outside Duo: attributed by cwd, CONS FR-7.2.5).
             var ids = index.sessions.filter { $0.archived != true && actual[$0.sessionId]?.folder ?? f.folder == f.folder }.map(\.sessionId)
             for m in moves where m.to == f.folder && !ids.contains(m.sessionId) { ids.append(m.sessionId) }
-            for b in beacons where resolve(b.cwd) == folderPath || resolve(b.cwd).hasPrefix(folderPath + "/") {
+            func inside(_ cwd: String) -> Bool { let c = resolve(cwd); return c == folderPath || c.hasPrefix(folderPath + "/") }
+            func filedElsewhere(_ id: String) -> Bool { filedIn[id].map { $0 != folderPath } ?? false }
+            for b in beacons where inside(b.cwd) && !filedElsewhere(b.sessionId) {
                 if !ids.contains(b.sessionId) { ids.append(b.sessionId) }
+            }
+            // Every past session in the folder (DL-59), newest first, not only those Duo filed.
+            for h in history.sorted(by: { $0.transcript.path > $1.transcript.path }) where inside(h.cwd) && !filedElsewhere(h.id) {
+                if !ids.contains(h.id) { ids.append(h.id) }
             }
             for id in ids where !claimed.contains(id) {
                 claimed.insert(id)
-                let beacon = beacons.first { $0.sessionId == id }
-                let entry = index.sessions.first { $0.sessionId == id }
-                let created = entry?.createdAt
-                let hooks = ctx.events.flatMap { HookEvents.summarize(HookEvents.read(id, in: $0)) }
-                let live = beacon.map { Attention.live(beacon: $0, hooks: hooks, seenAt: ctx.seen[id]) }
-                let since = live?.since ?? created.map { $0.timeIntervalSince1970 * 1000 }
-                sessions.append(Fixture.Session(
-                    name: title(id: id, folder: f.folder, beacon: beacon),
-                    project: name,
-                    state: live?.state ?? .idle,
-                    wait: live?.state == .readyForReview ? nil : Attention.waitText(since: since, now: ctx.now),
-                    question: live?.question, options: live?.options,
-                    summary: live?.summary ?? entry?.note.map { e in entry?.next.map { "\(e) · Next: \($0)" } ?? e },
-                    forkOf: nil, document: nil,
-                    sessionId: id
-                ))
+                sessions.append(makeSession(id, project: name, folder: f.folder, entry: index.sessions.first { $0.sessionId == id }))
             }
             for g in index.groups {
                 let names = g.sessions.compactMap { id in sessions.first { $0.sessionId == id }?.name }
@@ -105,8 +125,39 @@ public enum LiveSnapshot {
             files[name] = topLevelFiles(f.folder)
         }
 
+        // Folders with Claude sessions that aren't projects (DL-63): shown in their own place,
+        // marked, so they can stay as they are, become projects, or merge into one.
+        var folderProjects: [Fixture.Project] = []
+        let rootPath = resolve(ctx.root.path)
+        var byFolder: [String: [String]] = [:]
+        for h in history where !claimed.contains(h.id) && filedIn[h.id] == nil { byFolder[resolve(h.cwd), default: []].append(h.id) }
+        for b in beacons where !claimed.contains(b.sessionId) && filedIn[b.sessionId] == nil {
+            if !(byFolder[resolve(b.cwd)] ?? []).contains(b.sessionId) { byFolder[resolve(b.cwd), default: []].append(b.sessionId) }
+        }
+        let homePath = resolve(FileManager.default.homeDirectoryForCurrentUser.path)
+        for (path, ids) in byFolder.sorted(by: { $0.key < $1.key }) {
+            let url = URL(fileURLWithPath: path)
+            guard FileManager.default.fileExists(atPath: path) else { continue }  // folder deleted: archive only
+            var name = url.lastPathComponent
+            if projects.contains(where: { $0.project.name == name }) || folderProjects.contains(where: { $0.name == name }) {
+                name = "\(url.deletingLastPathComponent().lastPathComponent)/\(name)"
+            }
+            let underRoot = path.hasPrefix(rootPath + "/")
+            let parent = url.deletingLastPathComponent().path
+            let topic = underRoot && parent != rootPath ? url.deletingLastPathComponent().lastPathComponent.capitalized : "Elsewhere"
+            folderProjects.append(Fixture.Project(name: name, topic: topic, path: path.replacingOccurrences(of: homePath, with: "~"),
+                                                  isHome: nil, goal: "", health: nil, next: nil, kind: "folder",
+                                                  hasClaudeMD: FileManager.default.fileExists(atPath: url.appending(path: "CLAUDE.md").path)))
+            folders[name] = url
+            for id in ids where !claimed.contains(id) {
+                claimed.insert(id)
+                sessions.append(makeSession(id, project: name, folder: url, entry: nil))
+            }
+        }
+
         var topics: [String] = []
         for p in projects { if let t = p.project.topic, !topics.contains(t) { topics.append(t) } }
+        for p in folderProjects { if let t = p.topic, !topics.contains(t) { topics.append(t) } }
         let live = sessions.filter { [.needsYou, .readyForReview, .working].contains($0.state) }
         let fixture = Fixture(
             now: ISO8601DateFormatter().string(from: ctx.now),
@@ -116,7 +167,7 @@ public enum LiveSnapshot {
                 var p = p
                 if let h = home, p.name == h.project.name { p.isHome = true; p.topic = nil }
                 return p
-            },
+            } + folderProjects,
             sessions: sessions,
             otherIdleSessions: 0,
             groups: groups,

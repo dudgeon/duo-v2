@@ -155,7 +155,7 @@ func repoFixture() throws -> Fixture {
     let live = Beacon(pid: 1, sessionId: "cccc-live", cwd: proj.appending(path: "docs").path, name: "PRD v2 edits",
                       status: "waiting", waitingFor: "input needed", statusUpdatedAt: Date().timeIntervalSince1970 * 1000 - 240_000,
                       entrypoint: "cli", kind: nil, nameSource: "user")
-    let (snap, folders, _) = LiveSnapshot.build(.init(root: lw), beacons: [live])
+    let (snap, folders, _) = LiveSnapshot.build(noHistory(lw), beacons: [live])
     let ss = snap.sessions(inProject: "checkout-redesign")
     check(ss.map(\.sessionId) == ["aaaa-filed", "cccc-live"], "filed sessions plus live ones attributed by cwd; archived hidden")
     check(ss.last?.name == "PRD v2 edits" && ss.last?.state == .needsYou && ss.last?.wait == "4m", "beacon gives name, state, wait")
@@ -166,17 +166,37 @@ func repoFixture() throws -> Fixture {
     check(snap.counts.needsYou == 1 && snap.counts.idle == 1, "counts")
     let quiet = Beacon(pid: 1, sessionId: "aaaa-filed", cwd: proj.path, name: nil, status: "idle", waitingFor: nil,
                        statusUpdatedAt: nil, entrypoint: "cli", kind: nil)
-    check(LiveSnapshot.build(.init(root: lw), beacons: [live, quiet]).0.counts.idle == 0, "a running, quiet session isn't counted as resumable")
+    check(LiveSnapshot.build(noHistory(lw), beacons: [live, quiet]).0.counts.idle == 0, "a running, quiet session isn't counted as resumable")
     // `/cd`: a filed session running in another project's folder is listed there and moves (F-32).
     let other = lw.appending(path: "growth/onboarding")
     try FileManager.default.createDirectory(at: other, withIntermediateDirectories: true)
     try "---\ngoal: x\n---\n".write(to: other.appending(path: "PROJECT.md"), atomically: true, encoding: .utf8)
     let moved = Beacon(pid: 1, sessionId: "aaaa-filed", cwd: other.path, name: nil, status: "idle", waitingFor: nil,
                        statusUpdatedAt: nil, entrypoint: "cli", kind: nil)
-    let (snap2, _, moves) = LiveSnapshot.build(.init(root: lw), beacons: [moved])
+    let (snap2, _, moves) = LiveSnapshot.build(noHistory(lw), beacons: [moved])
     check(snap2.sessions.first { $0.sessionId == "aaaa-filed" }?.project == "onboarding"
           && moves.map(\.sessionId) == ["aaaa-filed"] && moves.first?.to.lastPathComponent == "onboarding",
           "a session moved with /cd is listed in its new project, and its entry moves")
+    // DL-59, DL-63, DL-64: history in place, folder projects, sticky user moves.
+    let scratchFolder = lw.appending(path: "scratch")
+    try FileManager.default.createDirectory(at: scratchFolder, withIntermediateDirectories: true)
+    try "# notes".write(to: scratchFolder.appending(path: "CLAUDE.md"), atomically: true, encoding: .utf8)
+    let fakeT = lw.appending(path: "fake.jsonl")
+    try "{}".write(to: fakeT, atomically: true, encoding: .utf8)
+    var hctx = noHistory(lw)
+    hctx.historyOverride = [(id: "hist-in-project", transcript: fakeT, cwd: proj.path),
+                            (id: "hist-orphan", transcript: fakeT, cwd: scratchFolder.path)]
+    let (hs, hfolders, _) = LiveSnapshot.build(hctx, beacons: [])
+    check(hs.sessions.first { $0.sessionId == "hist-in-project" }?.project == "checkout-redesign", "a past session in a project's folder is listed there (DL-59)")
+    let orphanProject = hs.projects.first { $0.name == "scratch" }
+    check(orphanProject?.isFolderOnly == true && orphanProject?.hasClaudeMD == true && hfolders["scratch"] != nil
+          && hs.sessions.first { $0.sessionId == "hist-orphan" }?.project == "scratch", "a session from a non-project folder makes a folder entry, CLAUDE.md noted (DL-63)")
+    var moveIdx = SessionIndex.load(project: proj)
+    moveIdx.sessions.append(.init(sessionId: "hist-orphan", provenance: "moved-by-user:scratch"))
+    try moveIdx.save(project: proj)
+    let (ms, _, mmoves) = LiveSnapshot.build(hctx, beacons: [])
+    check(ms.sessions.first { $0.sessionId == "hist-orphan" }?.project == "checkout-redesign" && !mmoves.contains { $0.sessionId == "hist-orphan" }
+          && !ms.projects.contains { $0.name == "scratch" }, "a session the user moved stays where it was filed (DL-64)")
     try? FileManager.default.removeItem(at: lw)
 
     print("hooks")
@@ -501,4 +521,11 @@ extension URL {
         try? FileManager.default.createDirectory(at: deletingLastPathComponent(), withIntermediateDirectories: true)
         return self
     }
+}
+
+/// A snapshot context that ignores this Mac's real Claude history.
+func noHistory(_ root: URL) -> LiveSnapshot.Context {
+    var c = LiveSnapshot.Context(root: root)
+    c.includeHistory = false
+    return c
 }

@@ -143,12 +143,26 @@ struct ProjectTile: View {
                     Text("Enter\u{00A0}to open").duoText(.body).foregroundStyle(DuoColor.text2)
                 }
             }
-            Text(project.goal).duoText(.body).fixedSize(horizontal: false, vertical: true)
-            Text([project.health, project.next].compactMap { $0 }.joined(separator: " · "))
-                .duoText(.body)
-                .foregroundStyle(DuoColor.text2)
-                .fixedSize(horizontal: false, vertical: true)
-            if sessions.isEmpty {
+            if project.isFolderOnly {
+                // A folder with Claude sessions but no PROJECT.md (DL-63).
+                Text(project.path).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.middle)
+                Text(project.hasClaudeMD == true ? "Has CLAUDE.md · no project file" : "No project file")
+                    .duoText(.body).foregroundStyle(DuoColor.text2)
+            } else {
+                Text(project.goal).duoText(.body).fixedSize(horizontal: false, vertical: true)
+                Text([project.health, project.next].compactMap { $0 }.joined(separator: " · "))
+                    .duoText(.body)
+                    .foregroundStyle(DuoColor.text2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if sessions.isEmpty, project.isFolderOnly {
+                let n = model.fixture.sessions(inProject: project.name).count
+                Text("\(n) past session\(n == 1 ? "" : "s")")
+                    .duoText(.body)
+                    .foregroundStyle(DuoColor.text2)
+                    .frame(height: DuoMetric.rowTileSession)
+                    .padding(.top, 6)
+            } else if sessions.isEmpty {
                 Text("Nothing running")
                     .duoText(.body)
                     .foregroundStyle(DuoColor.text2)
@@ -160,6 +174,7 @@ struct ProjectTile: View {
                         .padding(.top, i == 0 ? 6 : 0)
                         .contentShape(Rectangle())
                         .onActivate { model.open(project: project.name, session: s.name) }
+                        .modifier(SessionOrganizeMenu(sessionKey: s.tabKey))
                 }
             }
         }
@@ -175,6 +190,7 @@ struct ProjectTile: View {
         }
         .contentShape(Rectangle())
         .onActivate { model.open(project: project.name) }
+        .modifier(ProjectOrganizeMenu(project: project))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(tileLabel(sessions))
         .accessibilityAddTraits(.isButton)
@@ -377,5 +393,74 @@ struct ReviewCard: View {
         .bordered(DuoSpace.cardPadding)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(session.name), ready for review, \(session.project)")
+    }
+}
+
+
+// MARK: - Organising (DL-63–DL-66), live mode only
+
+/// Right-click a session: move it to a project. It can be dragged onto a project tile too.
+struct SessionOrganizeMenu: ViewModifier {
+    @Environment(AppModel.self) private var model
+    let sessionKey: String
+
+    func body(content: Content) -> some View {
+        if model.terminalsMode == .live, let s = model.fixture.sessions.first(where: { $0.tabKey == sessionKey }), let id = s.sessionId {
+            content
+                .contextMenu {
+                    Menu("Move to Project") {
+                        ForEach(model.moveTargets(excluding: s.project)) { p in
+                            Button(p.isFolderOnly ? "\(p.name) (folder)" : p.name) { model.moveSessions([id], to: p.name) }
+                        }
+                    }
+                }
+                .onDrag { NSItemProvider(object: AppModel.dragPayload(session: id) as NSString) }
+        } else {
+            content
+        }
+    }
+}
+
+/// Right-click a project or folder: merge it into another, or make a folder a project. Tiles
+/// can be dragged onto each other, and take dropped sessions and projects (with a confirmation).
+struct ProjectOrganizeMenu: ViewModifier {
+    @Environment(AppModel.self) private var model
+    let project: Fixture.Project
+
+    func body(content: Content) -> some View {
+        if model.terminalsMode == .live, project.isHome != true {
+            content
+                .contextMenu {
+                    if project.isFolderOnly {
+                        Button("Make a Project") { model.makeProject(project.name) }
+                    }
+                    Menu(project.isFolderOnly ? "Merge Sessions Into" : "Merge Into") {
+                        ForEach(model.moveTargets(excluding: project.name)) { p in
+                            Button(p.isFolderOnly ? "\(p.name) (folder)" : p.name) { model.mergeProject(project.name, into: p.name) }
+                        }
+                    }
+                }
+                .onDrag { NSItemProvider(object: AppModel.dragPayload(project: project.name) as NSString) }
+                .onDrop(of: [.plainText, .utf8PlainText], isTargeted: nil) { providers in
+                    guard let item = providers.first else { return false }
+                    _ = item.loadObject(ofClass: NSString.self) { obj, _ in
+                        guard let payload = obj as? String else { return }
+                        DispatchQueue.main.async { MainActor.assumeIsolated { model.handleDrop(payload, onto: project.name) } }
+                    }
+                    return true
+                }
+        } else if model.terminalsMode == .live {
+            // Home takes drops (sessions move into Home) but isn't merged away.
+            content.onDrop(of: [.plainText, .utf8PlainText], isTargeted: nil) { providers in
+                guard let item = providers.first else { return false }
+                _ = item.loadObject(ofClass: NSString.self) { obj, _ in
+                    guard let payload = obj as? String else { return }
+                    DispatchQueue.main.async { MainActor.assumeIsolated { model.handleDrop(payload, onto: project.name) } }
+                }
+                return true
+            }
+        } else {
+            content
+        }
     }
 }

@@ -7,6 +7,7 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
         case group(threads: [SidebarRow], sessionCount: Int)
         /// A fork family folded into one row; `count` is its sessions (shown when ≥ 2).
         case thread(count: Int)
+        case older(rows: [SidebarRow])
         case session
     }
 
@@ -15,6 +16,9 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
     public var state: SessionState
     public var wait: String?
     public var kind: Kind
+
+    /// The session a row stands for (its id when live, else its name): rows are keyed by identity.
+    public var sessionKey: String { id.components(separatedBy: "/thread/").last ?? name }
 
     /// Builds the rows for one project's sessions, most urgent first within each state.
     public static func rows(for project: String, in fixture: Fixture) -> [SidebarRow] {
@@ -46,7 +50,17 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
             seen.formUnion(family.map(\.tabKey))
             if let row = threadRow(family) { rows.append(row) }
         }
-        return rows.sorted(by: urgency)
+        var sorted = rows.sorted(by: urgency)
+        // DL-59: every past session is listed; beyond the five most recent idle ones they fold
+        // under "Older · N" so the list stays short.
+        let idle = sorted.filter { $0.state == .idle }
+        if idle.count > 7 {
+            let older = Array(idle.dropFirst(5))
+            let olderIDs = Set(older.map(\.id))
+            sorted.removeAll { olderIDs.contains($0.id) }
+            sorted.append(SidebarRow(id: "\(project)/older", name: "Older", state: .idle, wait: nil, kind: .older(rows: older)))
+        }
+        return sorted
     }
 
     static func mostUrgent(_ sessions: [Fixture.Session]) -> Fixture.Session? {

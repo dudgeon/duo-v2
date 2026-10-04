@@ -49,6 +49,15 @@ public enum ProjectDiscovery {
         return Set(["Desktop", "Documents", "Downloads", "Pictures", "Movies", "Music", "Library"].map { "\(home)/\($0)" })
     }()
 
+    /// A single folder made a project outside the root (DL-63): found if it has PROJECT.md.
+    public static func found(at folder: URL, root: URL) -> Found? {
+        let file = folder.appending(path: "PROJECT.md")
+        guard FileManager.default.fileExists(atPath: file.path) else { return nil }
+        var p = project(from: Frontmatter.parse((try? String(contentsOf: file, encoding: .utf8)) ?? ""), folder: folder, root: root, isHome: false)
+        if !folder.path.hasPrefix(root.path + "/") { p.topic = "Elsewhere" }
+        return Found(project: p, folder: folder, isHomeCandidate: false)
+    }
+
     static func project(from fm: Frontmatter, folder: URL, root: URL, isHome: Bool) -> Fixture.Project {
         let parent = folder.deletingLastPathComponent()
         let topic: String? = isHome || parent.standardizedFileURL == root.standardizedFileURL

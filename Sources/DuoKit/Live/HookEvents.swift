@@ -173,6 +173,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var home: String?
     /// Answers to the .gitignore offer, by repository root (DL-50).
     public var gitignore: [String: String] = [:]
+    /// Folders made projects outside the workspace root (DL-63): discovery includes them.
+    public var projects: [String] = []
 
     public init() {}
     public init(from decoder: Decoder) throws {
@@ -180,6 +182,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         seen = try c.decodeIfPresent([String: Double].self, forKey: .seen) ?? [:]
         home = try c.decodeIfPresent(String.self, forKey: .home)
         gitignore = try c.decodeIfPresent([String: String].self, forKey: .gitignore) ?? [:]
+        projects = try c.decodeIfPresent([String].self, forKey: .projects) ?? []
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {

@@ -84,9 +84,16 @@ public final class AppModel {
             if liveElsewhere.contains(id) { return nil }  // shown as running elsewhere
             // A transcript Claude's cleanup removed comes back from Duo's archive first (DL-44).
             if ClaudeStorage.transcript(sessionId: id, cwd: folder.path) == nil { _ = try? SessionArchive.restore(id) }
-            let resumable = ClaudeStorage.transcript(sessionId: id, cwd: folder.path) != nil
-            return terminals.session(key, command: resumable ? .resumeClaude(sessionID: id) : .newClaude(sessionID: id, prompt: nil),
-                                     cwd: folder.path)
+            let transcript = ClaudeStorage.transcript(sessionId: id, cwd: folder.path)
+            // A session moved here from another folder (DL-64) resumes where it was, then /cd moves
+            // it (and its transcript) to this folder, as Claude does itself. /cd to the folder it's
+            // already in moves nothing (F-45), hence starting in the old one.
+            let filed = transcript.flatMap(ClaudeStorage.filedCwd).map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path }
+            let movedHere = filed.map { $0 != folder.resolvingSymlinksInPath().path && FileManager.default.fileExists(atPath: $0) } ?? false
+            let t = terminals.session(key, command: transcript != nil ? .resumeClaude(sessionID: id) : .newClaude(sessionID: id, prompt: nil),
+                                      cwd: movedHere ? filed! : folder.path)
+            if movedHere { relocate(t, to: folder) }
+            return t
         }
     }
 
@@ -112,6 +119,8 @@ public final class AppModel {
     /// Duo's "seen" marks (handoff §10): looking at a session clears ready-for-review.
     @ObservationIgnored public var seen: [String: Double] = [:]
     @ObservationIgnored public var rememberedHome: String?
+    /// Projects outside the workspace root (DL-63), from Duo's state.
+    @ObservationIgnored public var extraProjects: [URL] = []
 
     public var visibleTerminal: TerminalSession? { visibleSessionId.flatMap { terminals.existing($0) } }
 
@@ -130,6 +139,7 @@ public final class AppModel {
         let state = DuoState.load()
         seen = state.seen
         rememberedHome = state.home
+        extraProjects = state.projects.map { URL(fileURLWithPath: $0) }
         fixture = LiveSnapshot.empty()  // never show the design fixture while the first scan runs
         refreshLive()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
@@ -146,7 +156,8 @@ public final class AppModel {
             seen[id] = Date().timeIntervalSince1970
             DuoState.update { $0.seen[id] = seen[id] }
         }
-        let ctx = LiveSnapshot.Context(root: root, rememberedHome: rememberedHome, events: DuoPaths.events, seen: seen)
+        var ctx = LiveSnapshot.Context(root: root, rememberedHome: rememberedHome, events: DuoPaths.events, seen: seen)
+        ctx.extraProjects = extraProjects
         Task.detached(priority: .utility) { [weak self] in
             let beacons = Beacon.readAll()
             let (snapshot, folders, moves) = LiveSnapshot.build(ctx, beacons: beacons)
@@ -220,6 +231,29 @@ public final class AppModel {
             }
             // DL-47: keep listed sessions out of Claude's cleanup as well as archiving them.
             if let days = SessionArchive.cleanupPeriodDays() { SessionArchive.keepAlive(found.map(\.transcript), periodDays: days) }
+        }
+    }
+
+    /// Types `/cd <folder>` into a resumed session once Claude reports its prompt idle (its beacon,
+    /// F-23). A trust dialog comes before the session starts, so it can't receive the keystrokes.
+    /// Gives up after 20 s: the session still works, just stays filed under its old folder in Claude.
+    func relocate(_ t: TerminalSession, to folder: URL, tries: Int = 0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, !t.exited, let pid = t.view.process?.shellPid else { return }
+                let ready = Beacon.readAll().contains { $0.pid == pid && $0.status == "idle" }
+                if ready {
+                    // Text and Return as separate keystrokes: sent in one burst, Claude Code treats
+                    // it as a paste and the Return doesn't submit (F-45).
+                    t.view.send(txt: "/cd \(folder.path)")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { t.view.send(txt: "\r") }
+                    FileHandle.standardError.write(Data("relocate: sent /cd \(folder.path)\n".utf8))
+                } else if tries < 40 {
+                    self.relocate(t, to: folder, tries: tries + 1)
+                } else {
+                    FileHandle.standardError.write(Data("relocate: prompt not ready; skipped\n".utf8))
+                }
+            }
         }
     }
 

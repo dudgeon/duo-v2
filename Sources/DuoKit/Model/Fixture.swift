@@ -11,7 +11,12 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var goal: String
         public var health: String?
         public var next: String?
+        /// "folder": a folder with Claude sessions but no PROJECT.md (DL-63); nil for projects.
+        public var kind: String?
+        /// The folder has a CLAUDE.md: it was set up with intent, a likely project (DL-63).
+        public var hasClaudeMD: Bool?
         public var id: String { name }
+        public var isFolderOnly: Bool { kind == "folder" }
     }
 
     public struct Session: Codable, Sendable, Equatable, Identifiable {

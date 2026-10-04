@@ -81,6 +81,36 @@ public enum ClaudeStorage {
     /// and last 64 KB (LR-9: never slurp).
     public static func filedCwd(_ url: URL) -> String? { firstCwd(url) }
 
+    private final class CwdCache: @unchecked Sendable {
+        let lock = NSLock()
+        var entries: [String: (mtime: Date, cwd: String?)] = [:]
+    }
+    private static let cwdCache = CwdCache()
+
+    /// Every top-level transcript on this Mac with the folder it belongs to (after any /cd),
+    /// cached by modification time so the 2 s refresh rereads only what changed.
+    public static func history() -> [(id: String, transcript: URL, cwd: String)] {
+        let fm = FileManager.default
+        guard let dirs = try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil) else { return [] }
+        var out: [(String, URL, String)] = []
+        for d in dirs {
+            let files = (try? fm.contentsOfDirectory(at: d, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+            for f in files where f.pathExtension == "jsonl" {
+                let mtime = (try? f.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+                cwdCache.lock.lock()
+                let hit = cwdCache.entries[f.path]
+                cwdCache.lock.unlock()
+                let cwd: String?
+                if let hit, hit.mtime == mtime { cwd = hit.cwd } else {
+                    cwd = firstCwd(f)
+                    cwdCache.lock.lock(); cwdCache.entries[f.path] = (mtime, cwd); cwdCache.lock.unlock()
+                }
+                if let cwd { out.append((f.deletingPathExtension().lastPathComponent, f, cwd)) }
+            }
+        }
+        return out
+    }
+
     static func firstCwd(_ url: URL) -> String? {
         guard let h = try? FileHandle(forReadingFrom: url) else { return nil }
         defer { try? h.close() }

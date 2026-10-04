@@ -184,6 +184,17 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-45 · Organising sessions and projects (DL-63–DL-66) (2026-10-03)
+
+- **Claude's whole history is read** (`ClaudeStorage.history()`: every top-level transcript with the folder it belongs to after any `/cd`, cached by modification time). Each project lists every past session in its folder (DL-59), not only those Duo filed; beyond the five most recent idle ones they fold under **Older · N**.
+- **Folders with sessions but no PROJECT.md** become map entries (DL-63): on this Mac `~` (4 sessions), `~/repos` (4), `count-fidget`, `pm-harness` (has CLAUDE.md), `thinking-about-risk`, `duo-v2` (has CLAUDE.md), all under **Elsewhere**. Their tiles show the path, "No project file" or "Has CLAUDE.md · no project file", and the count of past sessions. They get no file tree: `~` would mean walking Documents and Desktop (privacy prompts, F-28).
+- **Right-click**: sessions (left pane and tiles) → Move to Project ▸; folders → Make a Project, Merge Sessions Into ▸; projects → Merge Into ▸. **Drag** a session or a tile onto a tile to move or merge. Every one asks first with a sheet listing exactly what moves (DL-66), then can be undone (Edit › Undo restores every index touched, byte for byte; Make a Project's undo moves the new PROJECT.md to the Trash and forgets the registry entry).
+- **Moves stick** (DL-64): an entry with `provenance: moved-by-user:<from>` stays in the project it was filed in; cwd-based attribution and history never take it back.
+- **`--resume <id>` works from any folder** (Haiku remembered a word across folders), but in headless mode the transcript stays where it was. **Relocation on resume:** Duo starts the moved session in its *old* folder and, when Claude's beacon reports the prompt idle, sends `/cd <project folder>`. Two traps found live: `/cd` to the folder the session is already in moves nothing, and text plus Return sent in one burst is taken as a paste (the Return doesn't submit), so Return goes separately. A trust dialog can't receive the keystrokes: the beacon only appears once the session is running. Verified: the transcript moved to checkout-redesign's folder, "Moved to …".
+- **Sidebar rows activate by session identity** (they used the name, wrong when two share one).
+- Verified live with an auto-confirm switch (`DUO_AUTOCONFIRM`, checks only): move, merge and make-a-project, each undone exactly. 129 checks pass (history in place, folder entries with CLAUDE.md, sticky moves). Fixture captures unchanged except the DL-59 button region.
+- **Not seen with a real right-click or drag yet:** Geoff to try. The New project button stays inert until the PROJECT.md template (G-1).
+
 ## F-44 · File verbs, document tabs, the Project tab, and a save race (2026-10-03)
 
 Built from Geoff's requests (DL-59–DL-62). Live mode; fixture mode attaches none of it.

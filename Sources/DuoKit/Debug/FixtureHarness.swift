@@ -67,6 +67,19 @@ public enum FixtureHarness {
             if parts.count > 1 { let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init); if kv.count == 2 { model.commitRename(kv[0], to: kv[1]) } }
         case "dup": if parts.count > 1 { model.duplicate(parts[1]) }
         case "trash": if parts.count > 1 { model.moveToTrash(parts[1]) }
+        case "projects":
+            for p in model.fixture.projects {
+                FileHandle.standardError.write(Data("project: \(p.name) [\(p.topic ?? "-")] \(p.isFolderOnly ? "folder" : "project")\(p.hasClaudeMD == true ? " +CLAUDE.md" : "") sessions=\(model.fixture.sessions(inProject: p.name).count) \(p.path)\n".utf8))
+            }
+        case "move":   // move:<session id prefix>=<project>
+            if parts.count > 1 {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                if kv.count == 2, let id = model.fixture.sessions.first(where: { $0.sessionId?.hasPrefix(kv[0]) == true })?.sessionId { model.moveSessions([id], to: kv[1]) }
+            }
+        case "merge":  // merge:<source>=<target>
+            if parts.count > 1 { let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init); if kv.count == 2 { model.mergeProject(kv[0], into: kv[1]) } }
+        case "makeproject": if parts.count > 1 { model.makeProject(parts[1]) }
+        case "undo": NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager?.undo()
         case "tabs":
             FileHandle.standardError.write(Data("tabs: \(model.openDocuments) right=\(model.rightTab ?? "-") renaming=\(model.renamingPath ?? "-") editor=\(model.editorIfLoaded?.url?.lastPathComponent ?? "-")\ntree: \(model.currentProject.flatMap { model.fixture.projectFiles[$0.name] } ?? [])\n".utf8))
         case "resume":

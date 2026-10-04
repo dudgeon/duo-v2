@@ -63,6 +63,21 @@ struct SidebarRowView: View {
 
     var body: some View {
         switch row.kind {
+        case .older(let rows):
+            let expanded = model.expandedGroups.contains(row.id)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: DuoSpace.gapRowItems) {
+                    Chevron(direction: expanded ? .down : .right).frame(width: 10)
+                    Text("Older · \(rows.count)").duoText(.body).foregroundStyle(DuoColor.text2)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 8 + DuoSpace.selectionInset)
+                .frame(height: DuoMetric.rowGroup)
+                .contentShape(Rectangle())
+                .onActivate { if expanded { model.expandedGroups.remove(row.id) } else { model.expandedGroups.insert(row.id) } }
+                .accessibilityLabel(expanded ? "Hide older sessions" : "Show \(rows.count) older sessions")
+                if expanded { ForEach(rows) { r in SidebarLeafRow(row: r, nested: false) } }
+            }
         case .group(let threads, let count):
             let expanded = model.expandedGroups.contains(row.name)
             let selected = model.selectedSidebarItem == row.name
@@ -131,7 +146,8 @@ struct SidebarLeafRow: View {
         .padding(.trailing, DuoSpace.panePadding)
         .frame(height: DuoMetric.rowSession)
         .contentShape(Rectangle())
-        .onActivate { model.openConsoleTab(row.name) }
+        .onActivate { model.openConsoleTab(row.sessionKey) }
+        .modifier(SessionOrganizeMenu(sessionKey: row.sessionKey))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(row.name), \(row.state.spokenName)\(row.wait.map { ", waiting \($0)" } ?? "")")
     }
