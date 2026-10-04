@@ -128,6 +128,20 @@ public enum DuoMetric {
     public static let actionMenuRadius: CGFloat = 10.0
     public static let actionMenuAnchorFromRowRight: CGFloat = 8.0
     public static let actionMenuAnchorFromRowTop: CGFloat = 30.0
+    public static let idlePopoverWidth: CGFloat = 460.0
+    public static let idlePopoverPadding = EdgeInsets(top: 12.0, leading: 8.0, bottom: 12.0, trailing: 8.0)
+    public static let idleRowHeight: CGFloat = 26.0
+    public static let idleRowRadius: CGFloat = 6.0
+    public static let idleProjectColumnMax: CGFloat = 150.0
+    public static let idleAgeColumn: CGFloat = 30.0
+    public static let consoleMessagePadding: CGFloat = 24.0
+    public static let consoleMessagePaddingHome = EdgeInsets(top: 20.0, leading: 16.0, bottom: 20.0, trailing: 16.0)
+    public static let consoleMessageMaxTextWidth: CGFloat = 440.0
+    public static let consoleMessageGap: CGFloat = 6.0
+    public static let consoleMessageButtonsTop: CGFloat = 8.0
+    public static let consoleBarHeight: CGFloat = 40.0
+    public static let consoleBarPadding: CGFloat = 16.0
+    public static let consoleTabTitleMax: Int = 24
     public static let designWindow = CGSize(width: 1440.0, height: 900.0)
     public static let minimumWindow = CGSize(width: 1280.0, height: 800.0)
 }
@@ -154,6 +168,16 @@ public enum DuoSpace {
     public static let gapToolbarOverview: CGFloat = 16.0
     public static let gapToolbarProject: CGFloat = 8.0
     public static let gapPaneTabs: CGFloat = 18.0
+}
+
+/// The terminal's colours (surfaces-handoff DB-2): the 16 ANSI colours, an Increase Contrast set,
+/// cursor and selection. Contrast is against `console`.
+public enum DuoTerminalPalette {
+    public static let ansi: [NSColor] = [.duoFixed(0x2B2F36), .duoFixed(0xE27A85), .duoFixed(0x8CC08A), .duoFixed(0xD6C26B), .duoFixed(0x7FA8E6), .duoFixed(0xC792D8), .duoFixed(0x74C2C9), .duoFixed(0xC9CDD3), .duoFixed(0x7D8590), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xFFFFFF)]
+    public static let ansiIncreaseContrast: [NSColor] = [.duoFixed(0x4A4F57), .duoFixed(0xF09AA3), .duoFixed(0xA9D7A6), .duoFixed(0xE8D98E), .duoFixed(0xA4C3F3), .duoFixed(0xDAB1E7), .duoFixed(0x9BDBE0), .duoFixed(0xE6E8EB), .duoFixed(0x9AA1AB), .duoFixed(0xF8BDC3), .duoFixed(0xC6E6C3), .duoFixed(0xF2E5B4), .duoFixed(0xC3D8F8), .duoFixed(0xE8CDF0), .duoFixed(0xBEE9EC), .duoFixed(0xFFFFFF)]
+    public static let cursor = NSColor.duoFixed(0xE6E8EB)
+    public static let textUnderCursor = NSColor.duoFixed(0x15171B)
+    public static let selection = NSColor.duoFixed(0x3A4250)
 }
 
 /// Type styles (handoff §4.2).

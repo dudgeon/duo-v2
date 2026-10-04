@@ -413,7 +413,8 @@ extension AppModel {
         case .fork:
             closeSearch()
             if let id = item.sessionId, let project = item.project ?? fixture.home?.name {
-                _ = newSession(in: project, prompt: nil, provenance: "forked-from-search:\(id)")
+                open(project: project)
+                resumeAsFork(id, in: project)   // --resume <id> --fork-session (DB-3)
             }
         case .goToProject:
             closeSearch()

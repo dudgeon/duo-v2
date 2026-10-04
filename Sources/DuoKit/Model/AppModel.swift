@@ -46,6 +46,22 @@ public final class AppModel {
     public var readOnlySession: ReadOnlySession?
     /// Fixture mode's stand-in document: the section a search result landed on (search-open-file).
     public var searchLanding: SearchLanding?
+    /// Fixture mode: the console message a target shows (DB-3).
+    public var fixtureConsole: ConsoleEmpty?
+    /// Bumped when a terminal's process ends by itself, so the console shows its bar (DB-3).
+    public var endedRevision = 0
+    /// The idle list (DB-1): open, and which row is selected.
+    public var idleOpen = false
+    public var idleSelection = 0
+    /// Fixture mode: the rows the idle-list targets show.
+    public var fixtureIdle: [IdleRow]?
+    public var fixtureIdleBuckets: [(label: String, rows: [IdleRow])]?
+    /// Fixture mode: a console tab whose session has ended, and the bar's text (console-ended).
+    public var fixtureEnded: (key: String, message: String)?
+    /// Plain shells open in each project's console, by key, in the order opened (DB-4).
+    public var shellTabs: [String: [String]] = [:]
+    /// What each shell is running, for its tab's title.
+    public var shellTitles: [String: String] = [:]
     public var selectedFile: String?            // path relative to the project
     /// Open document tabs by project (DL-60): switching to Project no longer closes them.
     public var openDocumentsByProject: [String: [String]] = [:]
@@ -123,7 +139,7 @@ public final class AppModel {
     /// sitting at its prompt reports `idle`, but it is open, so it keeps its tab (findings F-25).
     public func tabSessions(inProject project: String) -> [Fixture.Session] {
         fixture.sessions(inProject: project).filter {
-            [.needsYou, .readyForReview, .working].contains($0.state) || terminals.existing($0.tabKey) != nil
+            [.needsYou, .readyForReview, .working].contains($0.state) || terminals.existing($0.tabKey) != nil || fixtureEnded?.key == $0.tabKey
         }
     }
 
@@ -211,6 +227,7 @@ public final class AppModel {
         }
         liveFolders = folders
         followSessionChanges(beacons)
+        followShells(beacons)
         SearchService.shared.update(projects: folders, fileProjects: Set(merged.projects.filter { !$0.isFolderOnly }.map(\.name)))
         if let home = snapshot.home, let folder = folders[home.name]?.path, folder != rememberedHome {
             // First choice, or the remembered one is gone: remember what is in use now (DL-42).
@@ -218,7 +235,8 @@ public final class AppModel {
             DuoState.update { $0.home = folder }
         }
         let mine = Set(terminals.all.compactMap { t -> Int32? in t.view.process?.shellPid })
-        liveElsewhere = Set(beacons.filter { !mine.contains($0.pid) }.map(\.sessionId))
+        // A Claude started by typing `claude` in a Duo shell is a child of that shell: still Duo's (DB-4).
+        liveElsewhere = Set(beacons.filter { b in !mine.contains(b.pid) && !mine.contains { AppOwning.descends(b.pid, from: $0) } }.map(\.sessionId))
         // One row per session id, whatever the sources disagree on (seen once, F-29).
         var ids = Set<String>()
         merged.sessions = merged.sessions.filter { s in s.sessionId.map { ids.insert($0).inserted } ?? true }
@@ -285,7 +303,7 @@ public final class AppModel {
     /// process. File the new id where the old one was, and move the tab with it (F-29).
     private func followSessionChanges(_ beacons: [Beacon]) {
         for t in terminals.all {
-            guard let pid = t.view.process?.shellPid, let b = beacons.first(where: { $0.pid == pid }),
+            guard let pid = t.view.process?.shellPid, let b = beacons.first(where: { $0.pid == pid || AppOwning.descends($0.pid, from: pid) }),
                   b.sessionId != t.key, let old = fixture.sessions.first(where: { $0.tabKey == t.key }),
                   let folder = liveFolders[old.project] else { continue }
             var index = SessionIndex.load(project: folder)
@@ -303,6 +321,7 @@ public final class AppModel {
     /// goes unless the session is still in a live state, and the next tab is selected.
     public func closeVisibleSession() {
         guard let key = visibleSessionId, terminals.existing(key) != nil else { return }
+        if isShell(key) { closeShell(key); return }
         let project: String? = altitude.isAllProjects ? fixture.home?.name : currentProject?.name
         terminals.close(key)
         let next = project.map { tabSessions(inProject: $0).first { $0.tabKey != key }?.tabKey } ?? nil
@@ -357,6 +376,7 @@ public final class AppModel {
 
     public init(fixture: Fixture) {
         self.fixture = fixture
+        terminals.onEnded = { [weak self] t in self?.endedRevision += 1; self?.shellEnded(t) }
     }
 
     public var leftCollapsed: Bool {
@@ -426,6 +446,7 @@ public final class AppModel {
     /// Opens or focuses a session's console tab inside the current project. Liveness is
     /// re-checked here once sessions are real (LR-8).
     public func openConsoleTab(_ key: String) {
+        if isShell(key), shells(inProject: currentProject?.name ?? "").contains(key) { consoleTab = key; return }
         guard let project = currentProject?.name,
               let s = fixture.sessions(inProject: project).first(where: { $0.tabKey == key || $0.name == key }) else { return }
         consoleTab = s.tabKey

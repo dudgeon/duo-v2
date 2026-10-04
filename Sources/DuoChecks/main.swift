@@ -503,6 +503,19 @@ func repoFixture() throws -> Fixture {
         try? FileManager.default.removeItem(at: dir)
     }
 
+    print("surfaces slice 1 (DB-1 to DB-4)")
+    do {
+        // Saturday 3 Oct 2026, 12:00: this week began Sunday 27 Sep (or Monday 28, by locale).
+        let now = ISO8601DateFormatter().date(from: "2026-10-03T12:00:00Z")!
+        func r(_ n: String, _ days: Int) -> IdleRow { IdleRow(id: n, name: n, project: "p", age: "\(days)d", seconds: days * 86_400) }
+        let b = AppModel.idleBuckets([r("a", 1), r("b", 9), r("c", 40)], now: now)
+        check(b.map(\.label) == ["This week", "Last week", "Earlier"] && b.map { $0.rows.count } == [1, 1, 1], "idle list: this week, last week, then a short tail as Earlier")
+        let many = (0..<40).map { r("s\($0)", 15 + $0 * 3) }
+        check(AppModel.idleBuckets(many, now: now).dropFirst(0).contains { $0.label == "August" }, "a long tail is grouped by month")
+        check(ForegroundCommand.arguments(getpid()).first?.hasSuffix("DuoChecks") == true, "a process's argv, for a shell tab's title (DB-4)")
+        check(DuoTerminalPalette.ansi.count == 16 && DuoTerminalPalette.ansiIncreaseContrast.count == 16, "the terminal palette has 16 colours and an Increase Contrast set (DB-2)")
+    }
+
     print("search modal (DL-76, DL-79, DL-80)")
     do {
         func hit(_ path: String, _ kind: String, _ start: Int, archived: Bool = false) -> SearchHit {

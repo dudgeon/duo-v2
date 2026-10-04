@@ -43,13 +43,16 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 |---|---|---|
 | `duo2 sessions [--project <p>]` | Sessions with id, state, title and project. | — |
 | `duo2 session show <id>` | A session's title, project, state, note, next step, transcript path and recent turns. | — |
-| `duo2 session new [--project <p>] [--prompt <text>]` | Start a Claude session in a project (the current one by default). | + New session, New Session, console + |
+| `duo2 session new [--project <p>] [--prompt <text>]` | Start a Claude session in a project (the current one by default). | + New session, New Session, console +, New Claude Session, Start Claude here, Start Claude in Home, Start in |
 | `duo2 session open <id>` | Show a session's terminal, resuming it if needed. | session row, console tab, Home tab, Resume |
 | `duo2 session close [id]` | End a session's process and close its tab (it stays listed and resumable). | Close Tab |
 | `duo2 session move <id> --to <project>` | File a session in another project; it moves there on its next resume. The user confirms in Duo. | Move to Project, drag a session onto a tile |
 | `duo2 session note <text>` | Tell the user what this session is doing (one line, shown in Duo). | — |
 | `duo2 session next <text>` | Tell the user what this session needs next (one line). | — |
 | `duo2 session carry-on <id>` | Start a new session carrying on from an archived one. | — |
+| `duo2 session fork <id>` | Carry a session on as a fork: a new session with the same history (the original is left alone). | Resume as a Fork |
+| `duo2 idle` | Idle, resumable sessions, newest first, grouped by when (the map footer's list). | idle footer |
+| `duo2 shell new` | Open a plain shell in the console (DL-8); typing `claude` in it makes it a session. | New Shell |
 | `duo2 groups [--project <p>]` | Groups and their sessions, with each group's most urgent state. | — |
 | `duo2 group new <name> <session>…` | Group sessions of one project under a name. | — |
 | `duo2 group add <group> <session>…` | Add sessions to a group. | — |
@@ -144,9 +147,12 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Close Window | window management |
 | Format | a menu, not an action |
 | Go | a menu, not an action |
+| Locate Folder… | not built: waits on its design (DB-8) |
+| Look Again | re-reads what Duo already refreshes every 2 s; the CLI always reads fresh state |
 | Next Pane | not built yet |
 | No templates yet: add .md files to a templates folder | a disabled hint |
 | Not Now | the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later |
+| Open Settings… | not built: Settings waits on its design (DB-10) |
 | Previous Pane | not built yet |
 | Resume a session | the debug gallery only (DL-59 removed it from the app) |
 | Save to Recreate | writes the user's own text back after the file was removed on disk; Claude can do the same with `duo2 doc edit` (content) once the user asks |

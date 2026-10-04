@@ -473,5 +473,235 @@
       "search.archivedExample (used only on the sheet)",
       "matchedWords (which words the snippets show in semibold)"
     ]
+  },
+  "surfaces": {
+    "$note": "Sample data the surfaces screens add to the fixture's world. Not a schema. Grows with each slice.",
+    "$additions": [
+      "Twelve named idle sessions (the fixture said only '12 more idle')",
+      "idleMany: a larger set for the long list",
+      "consoleStates and shells: what the DB-3 and DB-4 screens show",
+      "api-deprecations gains two files and two idle sessions"
+    ],
+    "idleSessions": {
+      "$surface": "DB-1",
+      "count": 14,
+      "buckets": [
+        {
+          "label": "This week",
+          "sessions": [
+            {
+              "name": "Error catalogue",
+              "project": "refunds-api-spec",
+              "age": "1d"
+            },
+            {
+              "name": "Interview synth",
+              "project": "checkout-redesign",
+              "age": "2d",
+              "group": "PRD v2"
+            },
+            {
+              "name": "quick q about tax rules",
+              "project": "checkout-redesign",
+              "age": "3d",
+              "group": "PRD v2"
+            },
+            {
+              "name": "Monday triage",
+              "project": "home",
+              "age": "3d"
+            },
+            {
+              "name": "SLA wording",
+              "project": "refunds-api-spec",
+              "age": "4d"
+            }
+          ]
+        },
+        {
+          "label": "Last week",
+          "sessions": [
+            {
+              "name": "Copy review pass 1",
+              "project": "onboarding-v3",
+              "age": "5d"
+            },
+            {
+              "name": "Variant sizing",
+              "project": "pricing-experiment-q4",
+              "age": "6d"
+            },
+            {
+              "name": "Velocity rules notes",
+              "project": "fraud-rules-review",
+              "age": "7d"
+            },
+            {
+              "name": "Activation metric check",
+              "project": "onboarding-v3",
+              "age": "8d"
+            },
+            {
+              "name": "Readout outline",
+              "project": "pricing-experiment-q4",
+              "age": "9d"
+            }
+          ]
+        },
+        {
+          "label": "Earlier",
+          "sessions": [
+            {
+              "name": "v1 sunset comms",
+              "project": "api-deprecations",
+              "age": "12d"
+            },
+            {
+              "name": "Customer list pull",
+              "project": "api-deprecations",
+              "age": "2w"
+            },
+            {
+              "name": "quick q about card vaulting",
+              "project": null,
+              "unfiled": true,
+              "age": "3w"
+            },
+            {
+              "name": "Kickoff deck notes",
+              "project": "checkout-redesign",
+              "age": "4mo",
+              "archived": true
+            }
+          ]
+        }
+      ]
+    },
+    "idleMany": {
+      "$surface": "DB-1",
+      "count": 312,
+      "firstBuckets": [
+        {
+          "label": "This week",
+          "count": 9
+        },
+        {
+          "label": "Last week",
+          "count": 14
+        }
+      ],
+      "laterBuckets": "by month: September, August, …",
+      "awkwardRows": [
+        {
+          "name": "Synthesis of the eleven customer interviews about guest checkout and saved cards, second pass",
+          "project": "checkout-redesign",
+          "age": "1d",
+          "why": "a title too long for its row"
+        },
+        {
+          "name": "Refund policy rewrite",
+          "project": "refunds-api-spec",
+          "openIn": "Terminal",
+          "why": "live outside Duo, so not resumable (LR-8)"
+        },
+        {
+          "name": "scratch notes on webhooks",
+          "project": null,
+          "unfiled": true,
+          "age": "3d",
+          "why": "from a folder that is not a project"
+        }
+      ],
+      "otherRows": [
+        "Deprecation FAQ draft · api-deprecations · 4d",
+        "Chargeback rule 14 review · fraud-rules-review · 9d",
+        "Friday triage · home · 9d"
+      ]
+    },
+    "consoleStates": {
+      "$surface": "DB-3",
+      "none": {
+        "project": "api-deprecations",
+        "lastSession": "v1 sunset comms",
+        "files": [
+          "PROJECT.md",
+          "comms/v1-sunset.md"
+        ],
+        "path": "~/work/platform/api-deprecations",
+        "needYouElsewhere": 3
+      },
+      "ended": {
+        "project": "checkout-redesign",
+        "session": "Teardown research",
+        "at": "10:42",
+        "crashVariant": "exit 1"
+      },
+      "elsewhere": {
+        "session": "PRD v2 edits",
+        "app": "Terminal",
+        "since": "9:12"
+      },
+      "folderMissing": {
+        "path": "~/work/payments/refunds-api-spec",
+        "nearest": "~/work/payments"
+      },
+      "homeNone": {
+        "counts": {
+          "needsYou": 2,
+          "readyForReview": 2,
+          "working": 3,
+          "idle": 16
+        },
+        "why": "Morning triage and Weekly status draft are closed, so they count as idle and the Home pointer card is gone"
+      }
+    },
+    "shells": {
+      "$surface": "DB-4",
+      "project": "checkout-redesign",
+      "tabs": [
+        {
+          "kind": "session",
+          "name": "PRD v2 edits",
+          "state": "needsYou"
+        },
+        {
+          "kind": "session",
+          "name": "Teardown research",
+          "state": "working"
+        },
+        {
+          "kind": "shell",
+          "name": "zsh",
+          "selected": true
+        },
+        {
+          "kind": "shell",
+          "name": "./export-funnel.sh",
+          "running": true
+        }
+      ],
+      "transcript": [
+        "git status",
+        "ls"
+      ],
+      "untrackedFile": "docs/teardown-notes.md",
+      "promoted": {
+        "before": "claude",
+        "after": "New session"
+      },
+      "failed": {
+        "name": "./export-funnel.sh",
+        "exit": 1
+      },
+      "narrow": {
+        "window": "1280x800",
+        "visible": [
+          "PRD v2 edits",
+          "Teardown research",
+          "zsh"
+        ],
+        "hidden": 2
+      }
+    }
   }
 }

@@ -155,6 +155,21 @@ extension AppModel {
             guard terminals.existing(s.tabKey) != nil else { return done(.fail("\(s.name) isn't running in Duo")) }
             closeSession(s.tabKey)
             done(.ok("Closed \(s.name). It stays listed and resumable."))
+        case .idle:
+            let b = idleGroups()
+            let text = b.isEmpty ? "Nothing idle." : b.map { bucket in
+                "\(bucket.label) · \(bucket.rows.count)\n" + bucket.rows.map { r in
+                    "  \(r.id.prefix(8))  \(r.name)  \(r.unfiled ? "Unfiled" : r.project ?? "")  \(r.openIn.map { "open in \($0)" } ?? r.age)"
+                }.joined(separator: "\n")
+            }.joined(separator: "\n")
+            done(.ok(text, b.map { ["label": $0.label, "sessions": $0.rows.map { ["id": $0.id, "title": $0.name, "project": $0.project ?? "", "age": $0.age] }] as [String: Any] }))
+        case .sessionFork:
+            guard let k = inv[0], let s = findSession(k, in: nil), let sid = s.sessionId else { return done(.fail("usage: \(id.action.usage)")) }
+            open(project: s.project)
+            resumeAsFork(sid, in: s.project)
+            done(.ok("Forked \(s.name) in \(s.project) as a new session with the same history."))
+        case .shellNew:
+            newShell(); done(.ok("Opened a shell in \(currentProject?.name ?? fixture.home?.name ?? "the console")."))
         case .groups, .groupNew, .groupAdd, .groupRemove, .groupRename, .groupDelete:
             groupVerb(id, inv, req, done)
         case .sessionMove:

@@ -243,13 +243,17 @@ enum PopUp {
         var run: () -> Void = {}
         @objc func fire() { run() }
     }
-    static func show(_ entries: [(String, () -> Void)?]) {
+    /// `keys`: the chords to show beside each entry, in order (the menu shows them; Commands owns them).
+    static func show(_ entries: [(String, () -> Void)?], keys: [(String, NSEvent.ModifierFlags)] = []) {
         let menu = NSMenu()
+        var n = 0
         for e in entries {
             guard let (title, run) = e else { menu.addItem(.separator()); continue }
-            let i = Item(title: title, action: #selector(Item.fire), keyEquivalent: "")
+            let i = Item(title: title, action: #selector(Item.fire), keyEquivalent: keys.indices.contains(n) ? keys[n].0 : "")
+            if keys.indices.contains(n) { i.keyEquivalentModifierMask = keys[n].1 }
             i.run = run; i.target = i
             menu.addItem(i)
+            n += 1
         }
         menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
     }

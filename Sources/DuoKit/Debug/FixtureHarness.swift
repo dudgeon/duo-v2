@@ -181,6 +181,15 @@ public enum FixtureHarness {
         case "search-kind":   // search-kind:file|session|memory|any (the Kind pop-up)
             model.setSearchKind(parts.count > 1 ? SearchItem.Kind(rawValue: parts[1]) : nil)
         case "search-close": model.closeSearch()
+        case "shell": model.newShell()
+        case "fork":   // fork:<session id prefix>: Resume as a Fork (DB-3)
+            if parts.count > 1, let s = model.fixture.sessions.first(where: { $0.sessionId?.hasPrefix(parts[1]) == true }), let id = s.sessionId {
+                model.open(project: s.project); model.resumeAsFork(id, in: s.project)
+            }
+        case "idle": model.toggleIdleList()
+        case "console-state":
+            let p = model.currentProject?.name ?? "-"
+            FileHandle.standardError.write(Data("console-state: project=\(p) tab=\(model.consoleTab ?? "-") shells=\(model.shells(inProject: p).map { model.consoleTitle($0) }) ended=\(model.consoleTab.flatMap { model.terminals.existing($0)?.ended.map { "exit \($0.status ?? -1)" } } ?? "-") empty=\(model.consoleEmpty(project: p).map { $0.title } ?? "-") idleRows=\(model.idleRows().count)\n".utf8))
         case "similar-file": if parts.count > 1 { model.findSimilar(file: parts[1]) }   // the tree's Find Similar
         case "search-archived": model.setIncludeArchived(true)
         case "search-turns":

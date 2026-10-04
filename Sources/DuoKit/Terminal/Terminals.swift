@@ -9,7 +9,20 @@ import SwiftUI
 
 /// Finds the user's `claude` without trusting the GUI PATH (LR-19).
 public enum ClaudeLocator {
+    /// The last answer: the console asks on every draw, and the PATH lookup starts a login shell.
+    nonisolated(unsafe) private static var cached: String??
+
+    /// Look again next time (DB-3's Look Again).
+    public static func forget() { cached = nil }
+
     public static func resolve() -> String? {
+        if let c = cached { return c }
+        let found = lookUp()
+        cached = .some(found)
+        return found
+    }
+
+    private static func lookUp() -> String? {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         let candidates = [
             "\(home)/.local/bin/claude", "\(home)/.claude/local/claude",
@@ -38,6 +51,8 @@ public enum TerminalCommand: Sendable, Equatable {
     case newClaude(sessionID: String, prompt: String?)
     /// Reopen a session by id. Never `-c` or the picker (DL-14).
     case resumeClaude(sessionID: String)
+    /// A new session with the same history: `--resume <from> --fork-session`, under a Duo-minted id.
+    case forkClaude(from: String, sessionID: String)
     /// A plain shell (DL-8). Auto-promotion of `claude` typed in it comes later.
     case shell
 }
@@ -88,11 +103,28 @@ public final class TerminalSession {
         self.cwd = cwd
         self.view = GuardedTerminalView(frame: NSRect(x: 0, y: 0, width: 640, height: 400))
         view.font = .monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)
-        // Terminal background and foreground from the tokens (handoff §4.1). The ANSI palette is
-        // SwiftTerm's default until one is designed (handoff §13).
+        // Terminal background and foreground from the tokens (handoff §4.1); the palette, cursor
+        // and selection from surfaces-handoff DB-2.
         view.nativeBackgroundColor = DuoNSColor.console
         view.nativeForegroundColor = DuoNSColor.consoleText
+        Self.applyPalette(view)
+        view.processDelegate = ProcessWatcher.shared
+        ProcessWatcher.shared.sessions[ObjectIdentifier(view)] = self
         start()
+        // A steady block, no blink (DB-2): DECSCUSR 2, as a program would ask for it.
+        view.feed(text: "\u{1b}[2 q")
+    }
+
+    /// The DB-2 palette, or its Increase Contrast set when that accessibility setting is on.
+    static func applyPalette(_ view: TerminalView) {
+        let set = NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast ? DuoTerminalPalette.ansiIncreaseContrast : DuoTerminalPalette.ansi
+        view.installColors(set.map { c in
+            let s = c.usingColorSpace(.sRGB) ?? c
+            return SwiftTerm.Color(red: UInt16(s.redComponent * 65535), green: UInt16(s.greenComponent * 65535), blue: UInt16(s.blueComponent * 65535))
+        })
+        view.caretColor = DuoTerminalPalette.cursor
+        view.caretTextColor = DuoTerminalPalette.textUnderCursor
+        view.selectedTextBackgroundColor = DuoTerminalPalette.selection
     }
 
     private func start() {
@@ -108,6 +140,10 @@ public final class TerminalSession {
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
             view.startProcess(executable: claude, args: ["--resume", id] + Self.hookArgs(id), environment: ChildEnvironment.make(sessionID: id),
                               execName: nil, currentDirectory: cwd)
+        case .forkClaude(let from, let id):
+            guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
+            view.startProcess(executable: claude, args: ["--resume", from, "--fork-session", "--session-id", id] + Self.hookArgs(id),
+                              environment: ChildEnvironment.make(sessionID: id), execName: nil, currentDirectory: cwd)
         case .shell:
             let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
             view.startProcess(executable: shell, args: ["-l"], environment: ChildEnvironment.make(sessionID: nil),
@@ -124,9 +160,24 @@ public final class TerminalSession {
         return settings + ["--append-system-prompt", DuoAction.primer()]
     }
 
+    /// The console says so in Duo's own type (DB-3) instead of printing into the terminal.
     private func showMissingClaude() {
         exited = true
-        view.feed(text: "Claude Code isn't installed, or Duo couldn't find it.\r\nInstall it, then start a new session.\r\n")
+        missingClaude = true
+    }
+
+    /// Claude Code wasn't found when this terminal started.
+    public private(set) var missingClaude = false
+    /// When the process ended by itself, and its exit status (DB-3's bar). Not set by `terminate()`.
+    public private(set) var ended: (at: Date, status: Int32?)?
+    /// Told when the process ends by itself, so the console can show its bar.
+    var onEnded: (@MainActor (TerminalSession) -> Void)?
+
+    fileprivate func processEnded(_ status: Int32?) {
+        guard !exited else { return }
+        exited = true
+        ended = (Date(), status)
+        onEnded?(self)
     }
 
     /// Ends the process. Only on explicit close (⌘W) or quit; never on hide (LR-13).
@@ -134,6 +185,21 @@ public final class TerminalSession {
         view.process?.terminate()
         exited = true
     }
+}
+
+/// Hears SwiftTerm's process events for every terminal (a weak delegate, so one shared owner).
+@MainActor
+final class ProcessWatcher: NSObject, LocalProcessTerminalViewDelegate {
+    static let shared = ProcessWatcher()
+    var sessions: [ObjectIdentifier: TerminalSession] = [:]
+
+    nonisolated func processTerminated(source: TerminalView, exitCode: Int32?) {
+        let id = ObjectIdentifier(source)
+        DispatchQueue.main.async { MainActor.assumeIsolated { self.sessions[id]?.processEnded(exitCode) } }
+    }
+    nonisolated func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {}
+    nonisolated func setTerminalTitle(source: LocalProcessTerminalView, title: String) {}
+    nonisolated func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {}
 }
 
 /// SwiftTerm's view, with LR-14's floor: never shrink the terminal below 8 columns by 1 row,
@@ -170,20 +236,33 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
 public final class TerminalStore {
     private var sessions: [String: TerminalSession] = [:]
 
-    public init() {}
+    public init() {
+        // Increase Contrast switched on or off: every open terminal takes the matching palette (DB-2).
+        NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
+                                                          object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.all.forEach { TerminalSession.applyPalette($0.view) } }
+        }
+    }
 
     public func session(_ key: String, command: @autoclosure () -> TerminalCommand, cwd: @autoclosure () -> String) -> TerminalSession {
         if let s = sessions[key] { return s }
         let s = TerminalSession(key: key, command: command(), cwd: cwd())
+        s.onEnded = { [weak self] t in self?.onEnded?(t) }
         sessions[key] = s
         return s
     }
 
     public func existing(_ key: String) -> TerminalSession? { sessions[key] }
 
+    /// Any terminal's process ended by itself (DB-3).
+    public var onEnded: (@MainActor (TerminalSession) -> Void)?
+
+    /// Forgets an ended terminal without ending anything, so the next open starts it afresh.
+    public func forget(_ key: String) { sessions.removeValue(forKey: key) }
+
     /// Ends one session's process and forgets its terminal (explicit close only, LR-13).
     public func close(_ key: String) {
-        sessions.removeValue(forKey: key)?.terminate()
+        if let s = sessions.removeValue(forKey: key) { ProcessWatcher.shared.sessions[ObjectIdentifier(s.view)] = nil; s.terminate() }
     }
     public var all: [TerminalSession] { Array(sessions.values) }
 

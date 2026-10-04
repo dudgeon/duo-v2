@@ -21,6 +21,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case italic             // ⌘I, likewise
     case closeSession       // ⌘W closes the focused tab (document or session), never the window (LR-60, LR-13)
     case closeWindow        // ⇧⌘W, as in browsers once ⌘W closes tabs
+    case newClaudeSession   // ⌘T: a new Claude session in this console (surfaces-handoff DB-4; Q-26)
+    case newShell           // ⇧⌘T: a plain shell in this console (DL-8, DB-4; Q-26)
     case sendSelection      // ⌘D: Send Selection to Claude, legacy's chord (Q-22, DL-79); search's Send to Claude too
 
     public var title: String {
@@ -42,6 +44,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeSession: "Close Tab"
         case .closeWindow: "Close Window"
         case .sendSelection: "Send Selection to Claude"
+        case .newClaudeSession: "New Claude Session"
+        case .newShell: "New Shell"
         }
     }
 
@@ -64,6 +68,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeSession: KeyboardShortcut("w", modifiers: .command)
         case .closeWindow: KeyboardShortcut("w", modifiers: [.command, .shift])
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
+        case .newClaudeSession: KeyboardShortcut("t", modifiers: .command)
+        case .newShell: KeyboardShortcut("t", modifiers: [.command, .shift])
         }
     }
 
@@ -81,6 +87,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .save: model.terminalsMode == .live && model.editor.url != nil
         case .bold, .italic: model.webFocus == .editor
         case .sendSelection: model.canSendSelection
+        case .newClaudeSession, .newShell: model.terminalsMode == .live
         }
     }
 
@@ -102,6 +109,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .italic: model.editor.run("duo.exec('italic'); return 1") { _ in }
         case .closeWindow: NSApp.keyWindow?.performClose(nil)
         case .sendSelection: model.sendSelection()
+        case .newClaudeSession: model.newSession()
+        case .newShell: model.newShell()
         case .search: model.openSearch()
         case .toggleRightPane, .nextPane, .previousPane: break
         }
@@ -116,6 +125,9 @@ public struct DuoCommands: Commands {
 
     public var body: some Commands {
         CommandGroup(replacing: .newItem) {
+            item(.newClaudeSession)
+            item(.newShell)
+            Divider()
             item(.newMarkdown)
             item(.newFolder)
         }

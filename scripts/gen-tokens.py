@@ -108,6 +108,23 @@ for group, prefix in [("searchModal", "searchModal"), ("searchRow", "searchRow")
             else:
                 for kk, vv in v.items():
                     w(f"    public static let {name}{kk[0].upper() + kk[1:]}: CGFloat = {num(vv)}")
+# Surfaces slice 1 (surfaces-handoff): the idle list, console messages and bar.
+ip = s["idlePopover"]
+w(f"    public static let idlePopoverWidth: CGFloat = {num(ip['width'])}")
+w(f"    public static let idlePopoverPadding = EdgeInsets(top: {num(ip['padding']['top'])}, leading: {num(ip['padding']['horizontal'])}, bottom: {num(ip['padding']['bottom'])}, trailing: {num(ip['padding']['horizontal'])})")
+w(f"    public static let idleRowHeight: CGFloat = {num(ip['rowHeight'])}")
+w(f"    public static let idleRowRadius: CGFloat = {num(ip['rowRadius'])}")
+w(f"    public static let idleProjectColumnMax: CGFloat = {num(ip['projectColumnMax'])}")
+w(f"    public static let idleAgeColumn: CGFloat = {num(ip['ageColumn'])}")
+cm = s["consoleMessage"]
+w(f"    public static let consoleMessagePadding: CGFloat = {num(cm['padding'])}")
+w(f"    public static let consoleMessagePaddingHome = EdgeInsets(top: {num(cm['paddingInHomePane']['vertical'])}, leading: {num(cm['paddingInHomePane']['horizontal'])}, bottom: {num(cm['paddingInHomePane']['vertical'])}, trailing: {num(cm['paddingInHomePane']['horizontal'])})")
+w(f"    public static let consoleMessageMaxTextWidth: CGFloat = {num(cm['maxTextWidth'])}")
+w(f"    public static let consoleMessageGap: CGFloat = {num(cm['gap'])}")
+w(f"    public static let consoleMessageButtonsTop: CGFloat = {num(cm['buttonsTop'])}")
+w(f"    public static let consoleBarHeight: CGFloat = {num(s['consoleBar']['height'])}")
+w(f"    public static let consoleBarPadding: CGFloat = {num(s['consoleBar']['paddingHorizontal'])}")
+w(f"    public static let consoleTabTitleMax: Int = {int(s['consoleTabOverflow']['titleMaxCharacters'])}")
 w(f"    public static let designWindow = CGSize(width: {num(s['designWindow']['width'])}, height: {num(s['designWindow']['height'])})")
 w(f"    public static let minimumWindow = CGSize(width: {num(s['minimumWindow']['width'])}, height: {num(s['minimumWindow']['height'])})")
 w("}")
@@ -126,6 +143,19 @@ for k in ["cardPadding", "pointerCardPadding", "questionBoxPadding", "buttonPadd
     w(f"    public static let {k} = EdgeInsets(top: {num(top)}, leading: {num(h)}, bottom: {num(bottom)}, trailing: {num(h)})")
 for k, v in sp["gap"].items():
     w(f"    public static let gap{k[0].upper() + k[1:]}: CGFloat = {num(v)}")
+w("}")
+w("")
+w("/// The terminal's colours (surfaces-handoff DB-2): the 16 ANSI colours, an Increase Contrast set,")
+w("/// cursor and selection. Contrast is against `console`.")
+w("public enum DuoTerminalPalette {")
+tp = t["terminal"]
+order = ["black", "red", "green", "yellow", "blue", "magenta", "cyan", "white",
+         "brightBlack", "brightRed", "brightGreen", "brightYellow", "brightBlue", "brightMagenta", "brightCyan", "brightWhite"]
+w("    public static let ansi: [NSColor] = [" + ", ".join(f".duoFixed({hex6(tp['ansi'][k]['value'])})" for k in order) + "]")
+w("    public static let ansiIncreaseContrast: [NSColor] = [" + ", ".join(f".duoFixed({hex6(tp['ansiIncreaseContrast'][k]['value'])})" for k in order) + "]")
+w(f"    public static let cursor = NSColor.duoFixed({hex6(tp['cursor']['value'])})")
+w(f"    public static let textUnderCursor = NSColor.duoFixed({hex6(tp['cursor']['textUnderCursor'])})")
+w(f"    public static let selection = NSColor.duoFixed({hex6(tp['selection']['value'])})")
 w("}")
 w("")
 w("/// Type styles (handoff §4.2).")

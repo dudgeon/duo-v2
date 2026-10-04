@@ -42,14 +42,47 @@ struct HomePane: View {
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                 }
+                // Home's shells (DB-4), after its sessions.
+                ForEach(home.map { model.shells(inProject: $0.name) } ?? [], id: \.self) { key in
+                    let active = key == model.homeTab
+                    HStack(spacing: DuoSpace.gapGlyphToLabel) {
+                        ShellPromptMark(active: active).frame(width: 11, height: 9)
+                        Text(model.consoleTitle(key)).duoText(active ? .monoActiveTab : .mono)
+                            .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2).lineLimit(1)
+                    }
+                    .contentShape(Rectangle())
+                    .onActivate { model.homeTab = key }  // action: session open
+                    .accessibilityLabel("\(model.consoleTitle(key)), shell")
+                }
+                // With no tabs, a way to start one (home-none).
+                if tabs.isEmpty && (home.map { model.shells(inProject: $0.name).isEmpty } ?? true) {
+                    HStack(spacing: 5) {
+                        Text("+").duoText(.mono).foregroundStyle(DuoColor.consoleText2)
+                            .onActivate { if let h = home?.name { model.homeTab = model.newSession(in: h) } }  // action: session new
+                            .accessibilityLabel("New Claude session")
+                        Chevron(direction: .down, color: DuoColor.consoleText2).frame(width: 8, height: 6).scaleEffect(0.8)
+                            .frame(height: 16).contentShape(Rectangle())
+                            .onActivate {  // action: session new
+                                PopUp.show([("New Claude Session", { if let h = home?.name { model.homeTab = model.newSession(in: h) } }),
+                                            ("New Shell", { model.newShell() })], keys: [("t", [.command]), ("t", [.command, .shift])])
+                            }
+                            .accessibilityLabel("New session or shell")
+                    }
+                }
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, DuoSpace.panePadding)
             .frame(height: DuoMetric.homeSessionTabsHeight)
             ConsoleRule()
 
-            if let home, let tab = model.homeTab, let t = model.terminal(project: home.name, session: tab) {
+            let _ = model.endedRevision
+            if let home, let tab = model.homeTab, model.fixtureConsole != .homeNone,
+               let t = model.terminal(project: home.name, session: tab), !t.missingClaude {
                 TerminalSlot(session: t)
+                if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
+            } else if model.fixtureConsole == .homeNone || (model.terminalsMode == .live && home != nil) {
+                // Duo starts a Home session at launch (DL-54); this shows once the last one is closed.
+                ConsoleMessage(state: ClaudeLocator.resolve() == nil && model.terminalsMode == .live ? .notFound : .homeNone, inHome: true)
             } else {
                 Color.clear
             }
@@ -107,20 +140,23 @@ struct ProjectMapPane: View {
             }
 
             DuoColor.rule.frame(height: 1)
-            HStack(spacing: DuoSpace.gapRowItems) {
-                StateGlyph(.idle)
-                Text("\(f.counts.idle) idle, resumable").duoText(.body)
-                Chevron()
-            }
-            .foregroundStyle(DuoColor.text2)
-            .padding(.horizontal, DuoSpace.panePadding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: DuoMetric.overviewFooterHeight)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(f.counts.idle) idle sessions, resumable")
+            IdleFooter()
         }
         .foregroundStyle(DuoColor.text)
         .background(DuoColor.pane)
+        // The idle list (DB-1): above the footer's left end, 16 in, arrow down at it.
+        .overlay(alignment: .bottomLeading) {
+            if model.idleOpen {
+                GeometryReader { box in
+                    // The whole popover stays within the map's height less 32 (DB-1): the list part gets
+                    // what the heading, key rows and padding (about 110) and the footer leave.
+                    IdleListPopover(maxHeight: max(120, box.size.height - DuoMetric.overviewFooterHeight - 7 - 32 - 110))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                        .padding(.leading, 16)
+                        .padding(.bottom, DuoMetric.overviewFooterHeight + DuoMetric.borderHairline + 6)
+                }
+            }
+        }
     }
 }
 

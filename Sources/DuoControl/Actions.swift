@@ -38,6 +38,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sessions, sessionShow = "session show", sessionNew = "session new", sessionOpen = "session open"
     case sessionClose = "session close", sessionMove = "session move"
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
+    case shellNew = "shell new", sessionFork = "session fork", idle
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
     case files, fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
@@ -129,7 +130,7 @@ extension DuoAction {
         .init(.sessions, .sessions, "[--project <p>]", "Sessions with id, state, title and project.", everyday: true),
         .init(.sessionShow, .sessions, "<id>", "A session's title, project, state, note, next step, transcript path and recent turns.", everyday: true),
         .init(.sessionNew, .sessions, "[--project <p>] [--prompt <text>]", "Start a Claude session in a project (the current one by default).",
-              ui: ["+ New session", "New Session", "console +"]),
+              ui: ["+ New session", "New Session", "console +", "New Claude Session", "Start Claude here", "Start Claude in Home", "Start in"]),
         .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab", "Resume"]),
         .init(.sessionClose, .sessions, "[id]", "End a session's process and close its tab (it stays listed and resumable).", ui: ["Close Tab"]),
         .init(.sessionMove, .sessions, "<id> --to <project>", "File a session in another project; it moves there on its next resume. The user confirms in Duo.",
@@ -137,6 +138,10 @@ extension DuoAction {
         .init(.sessionNote, .sessions, "<text>", "Tell the user what this session is doing (one line, shown in Duo).", everyday: true),
         .init(.sessionNext, .sessions, "<text>", "Tell the user what this session needs next (one line).", everyday: true),
         .init(.sessionCarryOn, .sessions, "<id>", "Start a new session carrying on from an archived one."),
+        .init(.sessionFork, .sessions, "<id>", "Carry a session on as a fork: a new session with the same history (the original is left alone).",
+              ui: ["Resume as a Fork"]),
+        .init(.idle, .sessions, "", "Idle, resumable sessions, newest first, grouped by when (the map footer's list).", ui: ["idle footer"]),
+        .init(.shellNew, .sessions, "", "Open a plain shell in the console (DL-8); typing `claude` in it makes it a session.", ui: ["New Shell"]),
         // Groups (DL-24): related threads, grouped by hand; Duo-owned facts in the project's .duo/sessions.json.
         .init(.groups, .sessions, "[--project <p>]", "Groups and their sessions, with each group's most urgent state."),
         .init(.groupNew, .sessions, "<name> <session>…", "Group sessions of one project under a name."),
@@ -233,6 +238,9 @@ public enum Parity {
         "Next Pane": "not built yet",
         "Previous Pane": "not built yet",
         "Cancel": "a step inside another action's dialog or picker",
+        "Look Again": "re-reads what Duo already refreshes every 2 s; the CLI always reads fresh state",
+        "Open Settings…": "not built: Settings waits on its design (DB-10)",
+        "Locate Folder…": "not built: waits on its design (DB-8)",
         "Go": "a menu, not an action",
         "Format": "a menu, not an action",
         "No templates yet: add .md files to a templates folder": "a disabled hint",

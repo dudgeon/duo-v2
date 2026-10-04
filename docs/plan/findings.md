@@ -184,6 +184,37 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-58 · Surfaces slice 1 built: idle list, terminal colours, empty console, shell tabs (2026-10-04)
+
+- **Built to surfaces-handoff slice 1** (Geoff: build it if it fits the direction; the design choices go on the walk as decisions with mockups).
+  - **DB-1:** the map footer is a button; the idle list opens above it.
+    - Calendar-week buckets, then "Earlier" or months.
+    - Group, Unfiled and archived pills.
+    - "open in Terminal" rows.
+    - ↑↓, Return resumes, ⌘↩ opens the project, Esc, type-to-select.
+    - New verb `duo2 idle`.
+  - **DB-2:** the 16-colour palette, cursor, selection and Increase Contrast set, applied to every terminal and re-applied when the setting changes.
+    - The steady block cursor is set with DECSCUSR, because SwiftTerm keeps the terminal internal.
+  - **DB-3:** one message layout for every console with nothing to show.
+    - States: none open (Resume ‹last› first), never ran, Claude not found, open elsewhere (Look Again, Resume as a Fork), folder missing, Home with no session.
+    - An ended session keeps its output, with a bar (Resume, Close Tab).
+    - Exits come from SwiftTerm's process delegate.
+  - **DB-4:** shell tabs with the prompt mark, titled by the foreground job (KERN_PROCARGS2; a script shows as `./export-funnel.sh`, not `bash`).
+    - `+ ⌄` opens New Claude Session ⌘T and New Shell ⇧⌘T.
+    - Typing `claude` promotes the tab in place: the beacon's process descends from the shell. A shell that exits cleanly closes its tab; one that fails keeps the bar.
+    - Too many tabs: titles shorten to 24 characters, then the tabs furthest right move into `» n`.
+    - New verbs: `duo2 shell new`, `session fork`.
+- **Learned:**
+  - `claude --resume <id> --fork-session --session-id <new>` honours the given id; the transcript appears under it after the first message. Search's "Resume as a fork" was starting a plain new session; it now forks.
+  - A Claude started inside a Duo shell runs as the shell's child. Duo was counting it as "open elsewhere"; it now counts descendants of its own terminals as its own.
+  - `ClaudeLocator` now caches its answer, since the console asks on every draw and the PATH fallback starts a login shell.
+- **Compared:** idle-list, idle-many, console-none, console-ended, home-none and shell-tab, with `compare.sh` now also finding surfaces-handoff.
+  - Left as designed in the handoff's prose, where the screen differs:
+    - the ended session moves to Idle on the left (the target still shows it under Working);
+    - the idle list's height follows "the map's height less 32" (the target just stops drawing);
+    - the fixture's idle ages don't follow calendar weeks, so fixture mode uses the fixture's own buckets.
+- **Stubs:** Open Settings… (DB-10), Locate Folder… (DB-8), asking before closing a shell with a running command, the `» n` menu's look.
+
 ## F-57 · Groups and threads in the live workspace; duo2 changes undo one at a time (2026-10-04)
 
 - **Threads (DL-24, S11):**

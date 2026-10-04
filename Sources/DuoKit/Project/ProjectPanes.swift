@@ -306,34 +306,20 @@ struct ConsolePane: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        let tabs = model.currentProject.map { model.tabSessions(inProject: $0.name) } ?? []
         VStack(spacing: 0) {
-            HStack(spacing: 18) {
-                ForEach(tabs) { s in
-                    let active = s.tabKey == model.consoleTab
-                    HStack(spacing: DuoSpace.gapGlyphToLabel) {
-                        StateGlyph(s.state, on: .console(active: active))
-                        Text(s.name)
-                            .duoText(active ? .monoActiveTab : .mono)
-                            .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2)
-                            .lineLimit(1)
-                    }
-                    .contentShape(Rectangle())
-                    .onActivate { model.openConsoleTab(s.tabKey) }  // action: session open
-                    .accessibilityElement(children: .combine)
-                    .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
-                }
-                Text("+").duoText(.mono).foregroundStyle(DuoColor.consoleText2)
-                    .onActivate { model.newSession() }  // action: session new
-                    .accessibilityLabel("New session")
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, DuoSpace.panePadding)
-            .frame(height: DuoMetric.tabStripHeight)
+            ConsoleTabStrip(project: model.currentProject?.name)
             ConsoleRule()
-            if let project = model.currentProject, let tab = model.consoleTab,
-               let t = model.terminal(project: project.name, session: tab) {
+            let _ = model.endedRevision
+            if let ended = model.fixtureEnded, model.consoleTab == ended.key {
+                Color.clear
+                ConsoleEndedBar(key: ended.key, message: ended.message)
+            } else if let project = model.currentProject, let tab = model.consoleTab, model.fixtureConsole == nil,
+               let t = model.terminal(project: project.name, session: tab), !t.missingClaude {
                 TerminalSlot(session: t)
+                if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
+            } else if let project = model.currentProject, model.terminalsMode == .live || model.fixtureConsole != nil,
+                      let empty = model.consoleEmpty(project: project.name) {
+                ConsoleMessage(state: empty)
             } else {
                 Color.clear
             }
