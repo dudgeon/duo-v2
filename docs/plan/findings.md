@@ -184,6 +184,43 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-35 · Spikes S13–S15: Core ML search embedding passes all three P0 gates (2026-10-03)
+
+Geoff approved fetching the model (2026-10-03). `Spikes/S13CoreML` (conversion and parity, Python) and `Spikes/S14Embed` (Swift: tokenizer, queries, sandbox, throughput).
+
+**S13, conversion and parity (SRCH Q3): pass.**
+- `BAAI/bge-small-en-v1.5` at the POC's pinned revision `5c38ec7c`, fetched with checksums (`PROVENANCE.json`); its `tokenizer.json` is byte-identical to the POC's. Converted with coremltools 9.0, **torch pinned to 2.7.0 and transformers to 4.46.3** (transformers 5 emits `new_ones`, which coremltools can't convert).
+- **Parity, using the POC's own CLI** (its ingest, chunking and ranking; only the model call swapped through a `sitecustomize` hook), on its fixtures and 7 golden queries:
+
+| Variant | Golden top-1 | Top-5 order = ONNX | Max score diff |
+|---|---|---|---|
+| ONNX (the POC) | 7/7 | — | — |
+| Core ML fp32 (CPU, or all units) | 7/7 | 7/7 | 0 at the POC's printed precision |
+| Core ML fp16 (all units) | 7/7 | 7/7 | 0.0005 |
+| Core ML fp16 (CPU + Neural Engine) | 7/7 | 7/7 | 0.0017 |
+
+- **fp16 first came out NaN:** transformers masks padding with float32's minimum, which is −∞ in fp16. Masking with −10⁴ (the classic BERT value) fixes it with no effect at fp32. Tolerance proposed for the ship gate: every golden top-1 unchanged and scores within 0.005.
+- **Reproducible:** two conversions give byte-identical `weight.bin` and an identical program; `Manifest.json` (random UUIDs), the conversion-date metadata and protobuf map order differ. Provenance should checksum the weights and the canonical program, not package bytes.
+
+**S14, queries inside Claude's sandbox (SRCH Q2): pass.**
+- `MLModel.compileModel` compiles the `.mlpackage` at runtime in 52–67 ms, **no Xcode** (it writes to the temp folder, so the app compiles, not the sandboxed CLI). The CLI loads the precompiled `.mlmodelc`.
+- **A Swift WordPiece** matches Hugging Face `tokenizers` on 27/27 texts: golden queries, every fixture file, accents, CJK, emoji, fullwidth, ligatures, control characters.
+- **Swift Core ML vectors vs the POC's ONNX:** cosine 1.000000 (fp32), ≥ 0.9997 (fp16).
+- **Seatbelt** (no network, writes only in the work folder): every model and compute unit works and writes nothing; but with `.all` (GPU path) Metal Performance Shaders tries to save a cache in the system temp folder, is refused, and the query takes 1.3 s instead of 0.3 s. **The CLI must pick its compute unit, never `.all`.**
+- **Real Claude sandbox** (`sandbox.enabled`, Haiku running the binary): fp32 CPU, fp16 Neural Engine, GPU and all units all succeed; no files written under `~/Library/Caches` by it. **fp32 on the CPU is the query path:** load 15 ms, embed 6 ms, exact parity, no accelerators, no caches.
+
+**S15, throughput and corpus (SRCH NFR-1, NFR-3): pass on this Mac (Apple M6, 32 GB).**
+
+| Batch 32 × 300 tokens | CPU | GPU | Neural Engine | All |
+|---|---|---|---|---|
+| fp32, flexible shapes | 54/s | 237/s | 54/s | 234/s |
+| fp16, flexible shapes | 108/s | **667/s** | 109/s | 665/s |
+| fp16, enumerated shapes | — | 454/s | 5/s | 5/s |
+
+- Flexible shapes never reach the Neural Engine (its numbers equal the CPU's), and a fixed-shape variant runs it badly (5/s): the model would need restructuring for the Neural Engine. **Indexing runs fp16 on the GPU: about 20× the POC's 34 chunks/s.**
+- **Corpus on this Mac:** about 124,000 chunks (project files under `~/repos` ≈ 123,000; transcripts' message text ≈ 700), consistent with NFR-1's 10⁵. Backfill ≈ 3 minutes at 667/s, against ≈ 1 hour at the POC's speed. This isn't the reference (work) machine, and M6 isn't the slowest supported chip; both stay open.
+- Mixed precision: the index (fp16) and queries (fp32) differ by cosine ≥ 0.9997. FR-7.3.8 makes the numerical configuration part of the index identity, so record it; ranking isn't affected at this tolerance.
+
 ## F-34 · Spikes S4 and S5: CodeMirror 6 live preview in a WKWebView (2026-10-03)
 
 **Pass on everything checkable headless.** CodeMirror is vendored in `Vendor/codemirror` (Geoff, 2026-10-03: fetch it, vendor it): exact versions in the lockfile, a checked-in 528 KB bundle (`dist/cm6.js`) with its licences, rebuilt by `build.sh`. `Spikes/S4Editor` drives it from Swift.

@@ -103,9 +103,9 @@ Each is a throwaway target or branch with pass/fail written before it starts. Ne
 | S11 | *New:* fork lineage detection for threads (§11). **Passed (F-31):** shared message uuids, fork point by `parentUuid`, parent by file start time; `ForkLineage` | G |
 | S12 | *New:* an answer channel for a waiting interactive session (§12 Q1 option C; Agent View's inline reply) | H |
 | S8 | *Changed:* CLI transport from a sandboxed session (DL-15). **Passed (F-29):** Unix socket + token with a per-session `allowUnixSockets` grant (DL-43); `scripts/check-sandbox.sh` reproduces it under Seatbelt | F |
-| S13 | *New (SRCH P0):* Core ML conversion of `bge-small-en-v1.5`, reproducible, checksummed; ranking parity with the POC's golden set (SRCH Q3) | M |
-| S14 | *New (SRCH P0):* Core ML query embedding inside Claude Code's sandbox with no writes outside allowed paths; CPU-only and precompiled-model fallbacks (SRCH Q2). Includes whether model compilation works without Xcode (`MLModel.compileModel` at runtime vs `coremlc`) | M |
-| S15 | *New (SRCH P0):* indexing throughput on the slowest supported Apple silicon; corpus size on the reference machine (SRCH NFR-1, NFR-3) | M |
+| S13 | *New (SRCH P0):* Core ML conversion of `bge-small-en-v1.5`, reproducible, checksummed; ranking parity with the POC's golden set (SRCH Q3). **Passed (F-35):** 7/7 golden, fp32 and fp16 | M |
+| S14 | *New (SRCH P0):* Core ML query embedding inside Claude Code's sandbox with no writes outside allowed paths; CPU-only and precompiled-model fallbacks (SRCH Q2). Includes whether model compilation works without Xcode (`MLModel.compileModel` at runtime vs `coremlc`). **Passed (F-35):** runtime compile, Swift WordPiece parity, fp32 CPU queries in the real sandbox | M |
+| S15 | *New (SRCH P0):* indexing throughput on the slowest supported Apple silicon; corpus size on the reference machine (SRCH NFR-1, NFR-3). **Passed on M6 (F-35):** 667 chunks/s fp16 GPU; ≈124k chunks here. Slowest chip and the work Mac still open | M |
 | S4–S6 | CM6 live preview on a 1.2 MB file; external-edit merge; `swift-markdown-engine` hedge. **S4/S5 pass headless (F-34);** keyboard-side checks with Geoff and S6 still to do. CodeMirror vendored in `Vendor/codemirror` | I |
 | S7 | WKWebView: local-only default + allow list (DL-3); inspector on an allowed site. **Passed (F-33):** navigation policy + content rule list; `Spikes/S7WebView` | K |
 
