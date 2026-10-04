@@ -22,7 +22,7 @@ public enum HookEvents {
     }
 
     /// Writes (or rewrites) the session's settings file and returns its path.
-    public static func settingsFile(for sessionId: String, in dir: URL = DuoPaths.events) throws -> URL {
+    public static func settingsFile(for sessionId: String, in dir: URL = DuoPaths.events, cli: String? = nil) throws -> URL {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let folder = dir.path.replacingOccurrences(of: "'", with: "'\\''")
         // One printf per event, so an event is (nearly always) one write; the reader skips any
@@ -32,7 +32,15 @@ public enum HookEvents {
         let command = #"p=$(tr -d '\n'); i=$(printf %s "$p" | sed -n 's/^{ *"session_id" *: *"\([0-9A-Za-z-]*\)".*/\1/p'); "#
             + #"printf '{"at":%s,"e":%s}\n' "$(date +%s)" "$p" >> '"# + folder + #"'/"${i:-"# + sessionId + #"}.jsonl""#
         let hook: [String: Any] = ["hooks": [["type": "command", "command": command]]]
-        var settings: [String: Any] = ["hooks": Dictionary(uniqueKeysWithValues: names.map { ($0, [hook]) })]
+        var hooks: [String: Any] = Dictionary(uniqueKeysWithValues: names.map { ($0, [hook]) })
+        // Claude's own file edits on a document open in Duo go through the editor, so the user
+        // sees them highlighted and nothing writes under their unsaved text (DL-78). The hook
+        // answers only for open documents; anything else passes straight through.
+        if let cli {
+            let q = "'" + cli.replacingOccurrences(of: "'", with: "'\\''") + "'"
+            hooks["PreToolUse"] = [["matcher": "Edit|MultiEdit|Write", "hooks": [["type": "command", "command": q + " hook pre-edit", "timeout": 15]]]]
+        }
+        var settings: [String: Any] = ["hooks": hooks]
         // Lets duo2 reach Duo from inside Claude's sandbox: this one socket only (DL-43, F-29).
         // A no-op when the user's sandbox is off.
         settings["sandbox"] = ["network": ["allowUnixSockets": [ControlEndpoint.defaultSocket]]]

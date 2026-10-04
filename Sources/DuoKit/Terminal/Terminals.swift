@@ -117,7 +117,10 @@ public final class TerminalSession {
 
     /// Per-session hooks (F-23); none if the settings file can't be written.
     private static func hookArgs(_ id: String) -> [String] {
-        let settings = (try? HookEvents.settingsFile(for: id)).map { ["--settings", $0.path] } ?? []
+        // DUO_NO_EDIT_HOOK (checks only) leaves the edit hook out, as a managed setting that
+        // disables hooks would: the primer and the merge must hold on their own (DL-78).
+        let editHook = ProcessInfo.processInfo.environment["DUO_NO_EDIT_HOOK"] == nil ? ChildEnvironment.cliDirectory.map { $0 + "/duo2" } : nil
+        let settings = (try? HookEvents.settingsFile(for: id, cli: editHook)).map { ["--settings", $0.path] } ?? []
         return settings + ["--append-system-prompt", DuoAction.primer()]
     }
 

@@ -184,6 +184,60 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-50 · Collisions: merge by line, never write blind, keep every version (DL-77) (2026-10-04)
+
+- **Legacy, reviewed** (summary in `docs/design/collisions.md`):
+  - It read the disk before every save and had robust watching.
+  - It never merged: any outside change to a buffer with unsaved edits raised a banner.
+  - About 11 bugs came from Markdown round-trip normalising and self-echo timing.
+  - Its own record says autosave made the unsaved-edits protection "largely illusory".
+- **Built:**
+  - **Merge:** a three-way merge by line (Myers diff per side, diff3 grouping), replacing the one-hunk-per-side merge. A 30,000-line file merges in 4 ms (`node scripts/check-merge.mjs`, 9 cases).
+  - **Saving:** each save reads the disk first, and again before the rename; it merges an unseen outside write first, and a conflict stops the save.
+  - **Watching:** the file and its folder, with symlinks resolved, settling for 150 ms. Duo's own saves are recognised by content.
+  - **Kept text:** unsaved text kept per document when you switch away in a conflict or after a removal.
+  - **Removed on disk:** keeps the buffer, pauses autosave, offers Save to Recreate.
+  - **Quit:** saves flush (`applicationShouldTerminate`, 2 s cap).
+  - **History:** content-addressed snapshots in `App Support/Duo/history/`. Kept: the file as opened, both sides of a conflict, the side a resolution replaces, and the text before a removal. At most 200 per file. Listed by `duo2 doc history`.
+  - **Resolving:** Keep Mine / Use Theirs in the app and with `duo2 doc resolve`.
+- **Verified live** (harness actions `user-type`, `disk-write`, `disk-rename`, `disk-delete`, `editor-state`):
+  - unsaved typing plus an in-place write on another line: merged and saved;
+  - the same with an atomic rename: merged;
+  - the same line: a conflict, with the buffer kept as mine, the disk as theirs, and history holding both;
+  - switching away and back: the text is kept and the conflict re-detected;
+  - `duo2 doc resolve theirs`: took the file's version, with the user's text in history;
+  - delete: the bar shows, and the text stays.
+- **Not yet:**
+  - a Compare view;
+  - browsing and restoring history in the app;
+  - designed bars (Q-20);
+  - deletions highlighted (only inserted text is marked).
+
+## F-49 · Claude editing an open document: what it does, and the hook (DL-78) (2026-10-04)
+
+- **Setup:**
+  - A test workspace at `~/DuoAgentTest`, whose checkout folder Claude trusts (accepted with the harness's new `key:` action), and `build/edit-test.sh`.
+  - `docs/prd.md` is open in Duo's editor, and the prompts are neutral, never naming Duo or `duo2`.
+  - Tool calls are read from the transcript; the editor's highlight count and the disk diff are checked.
+- **Test A (Haiku, primer only, no hook):** it searched, read the file, and then went for its own Edit tool, never `duo2`. That stopped at a permission prompt, because auto mode doesn't apply to Haiku. Geoff's sessions run Opus in auto mode, where such an edit would go straight to disk. Under the old `doc status` wording ("write anyway and Duo merges"), it was even invited to.
+- **Test A again (Haiku, with the hook):**
+  - It ran `duo2 status`, read the file, then Edit.
+  - The hook applied the edit in the editor (highlighted) and declined the write with "Done: …".
+  - Claude reported success correctly, with no permission prompt; the file autosaved.
+  - Claude Code labels the decline "PreToolUse:Edit hook error", but Claude read the reason as intended.
+- **Test B (Haiku, stronger primer, hook off):** it still used Edit. Instructions alone don't steer Haiku.
+- **Test C (Opus, stronger primer, hook off, auto mode):**
+  - It ran `duo2 status`, then `cat` and `duo2 doc status`, then piped the Edit JSON into `duo2 doc edit --stdin`.
+  - Its first try used a relative path, which `doc edit` then wrongly rejected (fixed: relative to the caller's folder); it retried with the full path.
+  - The edit applied, highlighted.
+- **Test D (Haiku, with the hook, a two-part rewrite):** two Edits, both routed through the editor, with two highlighted changes, saved.
+- **So:**
+  - **The hook is the guarantee where hooks run.**
+  - **The primer is the backup where they don't** (followed by Opus, not by Haiku).
+  - **The merge is the floor:** a direct write still lands highlighted and never over unsaved text.
+  - `duo2 doctor` reports whether hooks run in the session.
+- **Only the showing document counts as open:** other tabs are files on disk, so an Edit to one of them passes through.
+
 ## F-48 · How sessions learn duo2: the install loop (DL-74, DL-75) (2026-10-04)
 
 - **Two reviews of legacy Duo** (its CLI, then how it teaches sessions) are summarised in `docs/design/cli-teaching.md`. Legacy's record: generated text never drifted, hand-written text did (verbs that don't exist in the always-on priming); "write only if missing" kept fixes from ever reaching users; a SessionStart hook doubled the always-on cost; the global `claude` wrapper broke when Claude moved.

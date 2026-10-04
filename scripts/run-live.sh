@@ -8,6 +8,7 @@ ws=$1 png=$2 then=$3 err=${4:-/dev/null}
 rm -f "$png"
 envargs=()
 [[ -n ${DUO_MODEL:-} ]] && envargs=(--env "ANTHROPIC_MODEL=$DUO_MODEL")
+[[ -n ${DUO_NO_EDIT_HOOK:-} ]] && envargs+=(--env "DUO_NO_EDIT_HOOK=1")   # sessions without the edit hook (DL-78)
 open -n $envargs --stderr "$err" build/Duo.app --args --workspace "$ws" --capture-window "$png" --then "$then"
 for i in {1..${DUO_TIMEOUT:-90}}; do
   [[ -f $png ]] && break

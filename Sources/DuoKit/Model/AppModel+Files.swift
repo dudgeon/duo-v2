@@ -6,6 +6,14 @@ extension AppModel {
     /// The project folder on disk (live mode).
     public var projectFolder: URL? { currentProject.flatMap { liveFolders[$0.name] } }
 
+    /// The editor's own file when it's gone from disk: the document stays open with its text
+    /// and the removed-on-disk bar (DL-77).
+    public func keptFile(_ path: String) -> URL? {
+        guard let e = editorIfLoaded, e.removedOnDisk, let u = e.url, let folder = projectFolder,
+              u.standardizedFileURL.path == folder.appending(path: path).standardizedFileURL.path else { return nil }
+        return u
+    }
+
     /// The project's own file: `PROJECT.md`, or `HOME.md` for Home (DL-52, DL-60).
     public var projectFile: String? {
         guard let folder = projectFolder else { return nil }

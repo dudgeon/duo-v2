@@ -28,7 +28,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
 /// Every action, by its CLI verb.
 public enum ActionID: String, CaseIterable, Sendable {
     // Duo
-    case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall
+    case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
     case viewSidebar = "view sidebar", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
@@ -45,7 +45,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Documents
     case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
     case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docFind = "doc find"
-    case docInsert = "doc insert", docReplace = "doc replace"
+    case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history"
     // HTML pages
     case htmlReload = "html reload", htmlPick = "html pick", htmlStop = "html stop", htmlElement = "html element", htmlSelection = "html selection"
     // Send to Claude
@@ -99,6 +99,7 @@ extension DuoAction {
         .init(.install, .setup, "", "Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74).",
               ui: ["Install"], local: true),
         .init(.uninstall, .setup, "", "Remove exactly what `duo2 install` added (anything you edited stays).", local: true),
+        .init(.hook, .setup, "pre-edit", "Used by Duo's sessions (a PreToolUse hook): Claude's Edit, MultiEdit and Write on a document open in Duo go through the editor instead of the file (DL-78).", local: true),
         .init(.legacy, .setup, "[disable --yes | restore <backup>]", "Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them.", local: true),
 
         // What's on screen
@@ -163,6 +164,12 @@ extension DuoAction {
         .init(.docInsert, .docs, "<text> [--line <n>]", "Insert text into the showing document through the editor (highlighted as added by Claude), at a line or the caret."),
         .init(.docReplace, .docs, "<find> <replacement>", "Replace text in the showing document through the editor (highlighted as added by Claude)."),
 
+        .init(.docEdit, .docs, "--stdin", "Apply an Edit-tool-shaped change ({file_path, old_string, new_string, replace_all} or {file_path, edits} or {file_path, content}, as JSON on stdin) to a document open in Duo, through the editor, highlighted."),
+
+        .init(.docResolve, .docs, "mine|theirs", "End a conflict in the showing document: keep the user's text (saved over the file) or take the file's. The other version stays in history. Only when the user asks.",
+              ui: ["Keep Mine", "Use Theirs"]),
+        .init(.docHistory, .docs, "[path]", "Versions Duo kept of a document (as opened, both sides of conflicts, before removal), newest last, with where each is stored."),
+
         // HTML pages
         .init(.htmlReload, .html, "", "Reload the HTML page showing (it also reloads when its files change).", ui: ["Reload Page"]),
         .init(.htmlPick, .html, "[selector]", "Start the element picker for the user, or select the element a CSS selector names.",
@@ -223,6 +230,7 @@ public enum Parity {
         "Add to .gitignore": "a one-time question to the user (DL-50)",
         "confirmation sheet": "the user's own consent; Claude can't confirm for them",
         "Not Now": "the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later",
+        "Save to Recreate": "writes the user's own text back after the file was removed on disk; Claude can do the same with `duo2 doc edit` (content) once the user asks",
     ]
 }
 
@@ -314,8 +322,10 @@ extension DuoAction {
             + all.filter(\.everyday).map { "- `\($0.usage)`: \($0.summary)" }.joined(separator: "\n")
             + "\nFor questions across projects, or about meaning rather than exact text, run `duo2 search \"<question>\"` before grep or reading folders. "
             + "Read only the lines it points to. Its scores only compare results within one search. Use `--exact` for identifiers."
-            + "\nWhen the user says \"this\", \"here\" or \"what I selected\", run `duo2 selection` first. Before editing a file, `duo2 doc status <file>`: "
-            + "if it's open in Duo, prefer `duo2 doc replace`/`doc insert` so the user sees your change highlighted."
+            + "\nWhen the user says \"this\", \"here\" or \"what I selected\", run `duo2 selection` first."
+            + "\nDocuments the user has open in Duo (`duo2 status` shows them) are theirs to see change: edit them with "
+            + "`duo2 doc edit --stdin`, piping the JSON your Edit tool takes ({\"file_path\",\"old_string\",\"new_string\"}, or {\"file_path\",\"content\"} to rewrite), "
+            + "not with Edit, Write or shell redirection. Duo applies it in the editor the user is looking at, highlighted, and merges it with their unsaved typing."
             + "\nWhen you start substantial work, `duo2 session note \"<one line>\"`; when you hand back, `duo2 session next \"<one line>\"`."
     }
 }

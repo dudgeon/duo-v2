@@ -13,8 +13,13 @@ func fail(_ message: String, code: Int32 = 1) -> Never {
 }
 
 // The verbs are the action registry (DL-72): two-word verbs ("file rename") first, then one word.
-guard let (action, rest) = DuoAction.resolve(argv.isEmpty ? ["help"] : argv) else {
+guard let (action, parsed) = DuoAction.resolve(argv.isEmpty ? ["help"] : argv) else {
     fail("unknown command '\(argv.prefix(2).joined(separator: " "))'. Run `duo2 help`.", code: 64)
+}
+var rest = parsed
+// `--stdin`: the argument is whatever is piped in (JSON for `doc edit`).
+if let i = rest.firstIndex(of: "--stdin") {
+    rest[i] = String(decoding: FileHandle.standardInput.readDataToEndOfFile(), as: UTF8.self)
 }
 let args = [action.verb] + rest   // what the local verbs below read (args[0] is the verb)
 
@@ -46,6 +51,34 @@ case .legacy:
             print("To turn them off (everything is backed up first, and can be restored): duo2 legacy disable --yes")
         }
     }
+case .hook:
+    // PreToolUse for Edit, MultiEdit and Write in Duo's sessions (DL-78). A document open in
+    // Duo's editor gets the change through the editor (highlighted, merged with the user's
+    // unsaved text) and the direct write is declined with a reason that says it's done. Anything
+    // else, or any failure to reach Duo, lets the tool run as usual (exit 0, no output).
+    guard rest.first == "pre-edit",
+          let hook = (try? JSONSerialization.jsonObject(with: FileHandle.standardInput.readDataToEndOfFile())) as? [String: Any],
+          let tool = hook["tool_name"] as? String, let input = hook["tool_input"] as? [String: Any],
+          let path = input["file_path"] as? String, let (endpoint, _) = ControlEndpoint.discover() else { exit(0) }
+    var edit: [String: Any] = ["file_path": path]
+    switch tool {
+    case "Edit": for k in ["old_string", "new_string", "replace_all"] { edit[k] = input[k] }
+    case "MultiEdit": edit["edits"] = input["edits"]
+    case "Write": edit["content"] = input["content"]
+    default: exit(0)
+    }
+    guard let json = try? JSONSerialization.data(withJSONObject: edit),
+          let r = try? ControlClient.send(ControlRequest(token: endpoint.token, command: "doc edit", args: [String(decoding: json, as: UTF8.self)],
+                                                         session: env["CLAUDE_CODE_SESSION_ID"] ?? env["DUO_SESSION_ID"], cwd: FileManager.default.currentDirectoryPath),
+                                          socket: endpoint.socket) else { exit(0) }
+    if !r.ok, r.output.hasPrefix("not open") { exit(0) }
+    let name = (path as NSString).lastPathComponent
+    let reason = r.ok
+        ? "Done: the user has \(name) open in Duo, so Duo made this change in its editor instead of writing the file. \(r.output) Don't repeat it. For further edits to \(name), keep using \(tool) as usual, or `duo2 doc edit`."
+        : "Not applied: the user has \(name) open in Duo, and Duo couldn't make this change there: \(r.output). Read the current text with `duo2 doc read \(path)` and try again; don't write the file directly."
+    let out: [String: Any] = ["hookSpecificOutput": ["hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": reason]]
+    FileHandle.standardOutput.write((try? JSONSerialization.data(withJSONObject: out)) ?? Data())
+    exit(0)
 case .install:
     guard let cli = Bundle.main.executableURL?.resolvingSymlinksInPath().path, Installer.isDuoCLIPath(cli) else {
         fail("run the duo2 inside Duo.app (Duo.app/Contents/Helpers/duo2) so the link points at the app", code: 64)
@@ -55,6 +88,14 @@ case .install:
 case .uninstall:
     print(Installer.uninstall().lines.joined(separator: "\n"))
 case .doctor:
+    // Hooks can be turned off by a managed setting (DL-78): then Claude's edits to open documents
+    // rely on Duo's instructions (`duo2 doc edit`) and Duo's merge, and attention on status files.
+    if let sid = env["CLAUDE_CODE_SESSION_ID"] ?? env["DUO_SESSION_ID"] {
+        let events = ControlEndpoint.file.deletingLastPathComponent().appending(path: "events/\(sid).jsonl")
+        let seen = (try? String(contentsOf: events, encoding: .utf8))?.contains("\"hook_event_name\"") ?? false
+        print(seen ? "Hooks: running in this session (Duo routes edits to open documents through its editor)."
+                   : "Hooks: none have run in this session, perhaps turned off by a managed setting. Edit documents open in Duo with `duo2 doc edit --stdin`; Duo still merges direct writes into what the user sees.")
+    }
     let me = Bundle.main.executableURL?.resolvingSymlinksInPath().path
     print(Installer.status(cli: me.flatMap { Installer.isDuoCLIPath($0) ? $0 : nil }).joined(separator: "\n"))
     let archive = ControlEndpoint.file.deletingLastPathComponent().appending(path: "archive")

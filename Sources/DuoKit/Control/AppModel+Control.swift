@@ -243,6 +243,40 @@ extension AppModel {
                 done(r == "replaced" ? .ok("Replaced at line \((v as? [String: Any])?["line"] as? Int ?? 0); highlighted for the user.") : .fail("text \(r)"))
             }
 
+        case .docEdit:
+            guard let raw = inv[0], let j = (try? JSONSerialization.jsonObject(with: Data(raw.utf8))) as? [String: Any],
+                  let path = j["file_path"] as? String else { return done(.fail("usage: \(id.action.usage) (JSON with file_path)")) }
+            // Relative paths are relative to the caller's folder, as Claude's tools take them.
+            let target = URL(fileURLWithPath: (path as NSString).expandingTildeInPath, relativeTo: req.cwd.map { URL(fileURLWithPath: $0, isDirectory: true) })
+                .absoluteURL.resolvingSymlinksInPath().standardizedFileURL.path
+            guard let e = editorIfLoaded, let open = e.url, open.resolvingSymlinksInPath().standardizedFileURL.path == target else {
+                return done(.fail("not open in Duo's editor"))
+            }
+            if let why = e.readOnlyReason { return done(.fail("open in Duo but read-only (\(why)); leave it, or ask the user")) }
+            if e.conflict { return done(.fail("open in Duo with a conflict the user hasn't resolved; ask the user before changing it")) }
+            let edits: Any = (j["edits"] as? [[String: Any]]) ?? (j["old_string"] != nil ? [j] : [])
+            e.run("return duo.agentEdit(e, c)", ["e": edits, "c": j["content"] ?? NSNull()]) { v in
+                let r = v as? [String: Any] ?? [:]
+                switch r["result"] as? String {
+                case "applied": done(.ok("Applied in Duo's editor\((r["line"] as? Int).map { " at line \($0)" } ?? ""); the user sees it highlighted, and it saves to disk within a second.", r))
+                case "unchanged": done(.ok("No change: the document already reads that way.", r))
+                default: done(.fail((r["reason"] as? String) ?? "couldn't apply the edit"))
+                }
+            }
+
+        case .docResolve:
+            guard let side = inv[0], ["mine", "theirs"].contains(side) else { return done(.fail("usage: \(id.action.usage)")) }
+            guard let e = editorIfLoaded, e.conflict else { return done(.fail("the showing document isn't in conflict")) }
+            e.resolve(keepMine: side == "mine") { ok in done(ok ? .ok(side == "mine" ? "Kept the user's text and saved it; the file's version is in history." : "Took the file's version; the user's text is in history.") : .fail("couldn't resolve")) }
+        case .docHistory:
+            guard let url = inv[0].flatMap({ locate($0, inv, req) }).flatMap({ l in liveFolders[l.project]?.appending(path: l.rel) }) ?? editorIfLoaded?.url
+                    ?? inv[0].map({ URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) }) else { return done(.fail("usage: \(id.action.usage)")) }
+            let list = FileHistory.index(url)
+            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            let lines = list.map { "\(f.string(from: Date(timeIntervalSince1970: $0.at)))  \($0.source.padding(toLength: 16, withPad: " ", startingAt: 0)) \($0.bytes) bytes  \(FileHistory.blob(url, hash: $0.hash).path)" }
+            done(.ok(lines.isEmpty ? "No versions kept for \(url.lastPathComponent)." : lines.joined(separator: "\n"),
+                     list.map { ["at": $0.at, "source": $0.source, "bytes": $0.bytes, "path": FileHistory.blob(url, hash: $0.hash).path] }))
+
         // MARK: HTML pages
         case .htmlReload:
             guard let v = htmlViewerIfLoaded, v.url != nil else { return done(.fail("no HTML page is showing")) }
@@ -284,7 +318,7 @@ extension AppModel {
                 }
             }
 
-        case .help, .doctor, .legacy, .install, .uninstall, .search, .searchStatus:
+        case .help, .doctor, .legacy, .install, .uninstall, .hook, .search, .searchStatus:
             done(.fail("`duo2 \(id.rawValue)` runs in the CLI, not the app"))
         }
     }

@@ -63,6 +63,8 @@ public final class AppModel {
     @ObservationIgnored public var htmlViewerIfLoaded: HTMLViewer?
     /// Bumped when the picker starts, freezes or ends, so the picker bar redraws.
     public var pickerRevision = 0
+    /// Bumped when the editor's document goes into or out of conflict or removed-on-disk.
+    public var editorRevision = 0
     /// The editor if it has been created (doc-status mustn't create one).
     @ObservationIgnored public var editorIfLoaded: EditorController?
 

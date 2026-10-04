@@ -84,6 +84,9 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 doc find <text>` | Find text in the showing document and select the next match. | Find |
 | `duo2 doc insert <text> [--line <n>]` | Insert text into the showing document through the editor (highlighted as added by Claude), at a line or the caret. | — |
 | `duo2 doc replace <find> <replacement>` | Replace text in the showing document through the editor (highlighted as added by Claude). | — |
+| `duo2 doc edit --stdin` | Apply an Edit-tool-shaped change ({file_path, old_string, new_string, replace_all} or {file_path, edits} or {file_path, content}, as JSON on stdin) to a document open in Duo, through the editor, highlighted. | — |
+| `duo2 doc resolve mine\|theirs` | End a conflict in the showing document: keep the user's text (saved over the file) or take the file's. The other version stays in history. Only when the user asks. | Keep Mine, Use Theirs |
+| `duo2 doc history [path]` | Versions Duo kept of a document (as opened, both sides of conflicts, before removal), newest last, with where each is stored. | — |
 
 ## HTML pages
 
@@ -121,6 +124,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 doctor` | How this terminal finds Duo, whether it can reach it, and what Duo installed. | — |
 | `duo2 install` | Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74). | Install |
 | `duo2 uninstall` | Remove exactly what `duo2 install` added (anything you edited stays). | — |
+| `duo2 hook pre-edit` | Used by Duo's sessions (a PreToolUse hook): Claude's Edit, MultiEdit and Write on a document open in Duo go through the editor instead of the file (DL-78). | — |
 | `duo2 legacy [disable --yes \| restore <backup>]` | Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them. | — |
 
 ## In the app only
@@ -138,6 +142,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Not Now | the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later |
 | Previous Pane | not built yet |
 | Resume a session | the debug gallery only (DL-59 removed it from the app) |
+| Save to Recreate | writes the user's own text back after the file was removed on disk; Claude can do the same with `duo2 doc edit` (content) once the user asks |
 | Search Everything… | not built yet (search UI, design queue); `duo2 search` covers the content |
 | Toggle Right Pane | not built yet |
 | confirmation sheet | the user's own consent; Claude can't confirm for them |

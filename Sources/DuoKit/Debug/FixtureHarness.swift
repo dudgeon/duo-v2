@@ -103,6 +103,27 @@ public enum FixtureHarness {
             }
         case "doc-status":
             if let url = model.editor.url { FileHandle.standardError.write(Data("doc-status: \(model.editor.status(of: url))\n".utf8)) }
+        // Collisions (DL-77): a person typing, and another writer on disk, at the same time.
+        case "user-type":     // user-type:<find>=><replacement> in the editor, unsaved
+            let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=>")
+            if p.count == 2 { model.editor.run("return duo.userReplace(f, t)", ["f": p[0], "t": p[1]]) { v in
+                FileHandle.standardError.write(Data("user-type: \(v as? Bool == true ? "typed" : "not found")\n".utf8)) } }
+        case "disk-write", "disk-rename":   // disk-write:<find>=><replacement>, in place or by atomic rename
+            let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=>")
+            if p.count == 2, let url = model.editor.url, let text = try? String(contentsOf: url, encoding: .utf8), text.contains(p[0]) {
+                try? text.replacingOccurrences(of: p[0], with: p[1]).write(to: url, atomically: parts[0] == "disk-rename", encoding: .utf8)
+                FileHandle.standardError.write(Data("\(parts[0]): done\n".utf8))
+            } else { FileHandle.standardError.write(Data("\(parts[0]): text not on disk\n".utf8)) }
+        case "disk-delete":
+            if let url = model.editor.url { try? FileManager.default.moveItem(at: url, to: url.appendingPathExtension("gone")) }
+        case "disk-restore":
+            if let url = model.editor.url { try? FileManager.default.moveItem(at: url.appendingPathExtension("gone"), to: url) }
+        case "editor-state":
+            let e = model.editor
+            e.run("return duo.text()") { v in
+                let disk = e.url.flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? "<none>"
+                FileHandle.standardError.write(Data("editor-state: event=\(e.lastEvent) dirty=\(e.dirty) conflict=\(e.conflict) removed=\(e.removedOnDisk)\n  buffer=\((v as? String ?? "").debugDescription)\n  disk=\(disk.debugDescription)\n  status=\(e.url.map { e.status(of: $0) } ?? "-")\n".utf8))
+            }
         case "outside":
             if let url = model.editor.url, var text = try? String(contentsOf: url, encoding: .utf8) {
                 text += "\nA line added by another app.\n"
@@ -120,6 +141,9 @@ public enum FixtureHarness {
             }
         case "type": model.visibleTerminal?.view.send(txt: parts.count > 1 ? parts[1] : "")
         case "enter": model.visibleTerminal?.view.send(txt: "\r")
+        case "key":   // key:down|up|esc|tab: one key into the visible terminal (menus such as the trust prompt)
+            let codes = ["down": "\u{1b}[B", "up": "\u{1b}[A", "esc": "\u{1b}", "tab": "\t"]
+            if parts.count > 1, let c = codes[parts[1]] { model.visibleTerminal?.view.send(txt: c) }
         case "dump":
             for t in model.terminals.all.sorted(by: { $0.key < $1.key }) {
                 t.view.selectAll()

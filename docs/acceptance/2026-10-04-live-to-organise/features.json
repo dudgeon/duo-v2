@@ -1,7 +1,7 @@
 {
  "sprint": "2026-10-04-live-to-organise",
- "title": "Duo acceptance: live workspace to send-to-Claude",
- "intro": "Everything built since the live workspace (Phase E) through organising, Send to Claude, local HTML with the element picker, and duo2 parity. Open Duo on the fixture workspace first: run `scripts/acceptance/open-duo.sh` in the duo-v2 repo. Fixtures live in ~/DuoAcceptance (rebuild with `scripts/acceptance/fixtures.py --reset`).",
+ "title": "Duo acceptance: live workspace to collisions",
+ "intro": "Everything built since the live workspace (Phase E) through organising, Send to Claude, local HTML with the element picker, duo2 parity, Claude editing open documents, and collisions with changes on disk. Open Duo on the fixture workspace first: run `scripts/acceptance/open-duo.sh` in the duo-v2 repo. Fixtures live in ~/DuoAcceptance (rebuild with `scripts/acceptance/fixtures.py --reset`).",
  "setup": [
   "In a terminal: `cd ~/repos/duo-v2 && scripts/acceptance/open-duo.sh` (it adds any new fixtures without resetting yours)",
   "duo2 commands: use `~/repos/duo-v2/build/Duo.app/Contents/Helpers/duo2` from a normal terminal, or plain `duo2` inside a Duo session's terminal (or anywhere, once you accept the install question).",
@@ -649,6 +649,100 @@
    ],
    "expect": "Claude Code offers files and folders from the session's folder and fills in the path. Use the comment box to say whether Duo should go further (other projects, Home).",
    "ref": "ENH-3, G-5"
+  },
+  {
+   "id": "agent-edit-open",
+   "group": "Claude edits open documents",
+   "title": "Claude's edits land in the editor, highlighted",
+   "what": "Duo's sessions route Claude's Edit/Write on a document you have open through Duo's editor (DL-78).",
+   "steps": [
+    "Open `docs/prd.md` in checkout. In a checkout session, ask (no mention of Duo): `Add a goal to the PRD: ship Apple Pay by December`."
+   ],
+   "expect": "The new goal appears in the editor highlighted, without a permission prompt; Claude says it's done; the file on disk has it a second later. ⌘Z undoes it.",
+   "ref": "DL-78, F-49"
+  },
+  {
+   "id": "agent-edit-while-typing",
+   "group": "Claude edits open documents",
+   "title": "Claude edits while you type",
+   "what": "Your unsaved typing and Claude's change merge.",
+   "steps": [
+    "Ask Claude for an edit near the end of the PRD, and while it works, keep typing in the Problem section."
+   ],
+   "expect": "Both your typing and Claude's change are there; nothing you typed disappears.",
+   "ref": "DL-77, DL-78"
+  },
+  {
+   "id": "agent-edit-doctor",
+   "group": "Claude edits open documents",
+   "title": "Hooks status, and the backup without them",
+   "what": "Hooks can be turned off by a managed setting; Duo says so, and the primer and merge still hold.",
+   "steps": [
+    "In a Duo session's terminal: `duo2 doctor`.",
+    "Optional, on the work Mac: if hooks are off there, repeat the Apple Pay request."
+   ],
+   "expect": "`Hooks: running in this session…` here. Without hooks, Claude should use `duo2 doc edit` (Opus did in testing; Haiku didn't), and a direct write still shows up highlighted and never over your unsaved text.",
+   "ref": "DL-78, F-49"
+  },
+  {
+   "id": "col-merge",
+   "group": "Collisions with disk",
+   "title": "Typing while something else writes the file",
+   "what": "Changes to different lines merge (DL-77).",
+   "steps": [
+    "Open `docs/prd.md`. In Terminal run `sleep 5; sed -i '' 's/Decide on saved cards/Decide on saved cards (Oct 10)/' ~/DuoAcceptance/workspace/payments/checkout/docs/prd.md`",
+    "Switch to Duo straight away and keep typing in the `## Goals` heading for a few seconds."
+   ],
+   "expect": "Your heading change stays; the outside change appears highlighted; the file on disk ends up with both.",
+   "ref": "DL-77, F-50"
+  },
+  {
+   "id": "col-conflict",
+   "group": "Collisions with disk",
+   "title": "Both edit the same line",
+   "what": "A real overlap keeps your text and asks.",
+   "steps": [
+    "In Terminal run `sleep 5; sed -i '' 's/## Open questions/## Open questions (theirs)/' ~/DuoAcceptance/workspace/payments/checkout/docs/prd.md`, then switch to Duo and keep typing at the end of the `## Open questions` heading.",
+    "Read the bar under the document; choose Use Theirs. Repeat the race and choose Keep Mine.",
+    "`duo2 doc history ~/DuoAcceptance/workspace/payments/checkout/docs/prd.md`"
+   ],
+   "expect": "A bar: `Changed on disk where you're editing (line …). Both versions are kept.` with Use Theirs / Keep Mine; autosave waits for your choice. History lists the version as opened and both sides. (Plain look: Q-20.)",
+   "ref": "DL-77, F-50"
+  },
+  {
+   "id": "col-switch",
+   "group": "Collisions with disk",
+   "title": "Nothing lost when you look away",
+   "what": "Unsaved text survives switching documents, even mid-conflict.",
+   "steps": [
+    "Make a conflict as above, then open `docs/research.md` and come back to `prd.md`."
+   ],
+   "expect": "Your text and the bar are still there.",
+   "ref": "DL-77"
+  },
+  {
+   "id": "col-removed",
+   "group": "Collisions with disk",
+   "title": "File removed on disk",
+   "what": "The text stays, with a way to put it back.",
+   "steps": [
+    "With `prd.md` open: `mv ~/DuoAcceptance/workspace/payments/checkout/docs/prd.md /tmp/prd-moved.md` in Terminal.",
+    "Click Save to Recreate. Then move /tmp/prd-moved.md back if you like."
+   ],
+   "expect": "`Removed on disk. Your text is still here.` and Save to Recreate writes it back; nothing autosaves it back on its own.",
+   "ref": "DL-77"
+  },
+  {
+   "id": "col-quit",
+   "group": "Collisions with disk",
+   "title": "Quitting right after typing",
+   "what": "The last second's typing is saved on quit.",
+   "steps": [
+    "Type a word in a document and press ⌘Q immediately.",
+    "Open the file in another editor."
+   ],
+   "expect": "The word is in the file.",
+   "ref": "DL-77"
   }
  ]
 }

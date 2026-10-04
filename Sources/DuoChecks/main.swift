@@ -539,6 +539,29 @@ func repoFixture() throws -> Fixture {
     check(((try? String(contentsOf: restored, encoding: .utf8)) ?? "").contains(Installer.block()), "legacy restore keeps Duo v2's block")
     check(Installer.block().split(separator: " ").count < 110, "the always-on block stays short")
 
+    print("collisions (DL-77, DL-78)")
+    let hroot = FileManager.default.temporaryDirectory.appending(path: "duo-history-\(UUID().uuidString)")
+    FileHistory.root = hroot
+    let doc = URL(fileURLWithPath: "/tmp/some/doc.md")
+    FileHistory.snapshot(doc, Data("one".utf8), source: "open")
+    FileHistory.snapshot(doc, Data("one".utf8), source: "open")
+    FileHistory.snapshot(doc, Data("two".utf8), source: "conflict-theirs")
+    let kept = FileHistory.index(doc)
+    check(kept.map(\.source) == ["open", "conflict-theirs"] && (try? String(contentsOf: FileHistory.blob(doc, hash: kept[1].hash), encoding: .utf8)) == "two",
+          "history keeps each version once, readable")
+    try? FileManager.default.removeItem(at: hroot)
+    let hookDir = FileManager.default.temporaryDirectory.appending(path: "duo-hooks-\(UUID().uuidString)")
+    let withHook = (try? HookEvents.settingsFile(for: "s9", in: hookDir, cli: "/Apps/Duo.app/Contents/Helpers/duo2")).flatMap { try? Data(contentsOf: $0) }
+        .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+    let pre = ((withHook?["hooks"] as? [String: Any])?["PreToolUse"] as? [[String: Any]])?.first
+    check(pre?["matcher"] as? String == "Edit|MultiEdit|Write" && ((pre?["hooks"] as? [[String: Any]])?.first?["command"] as? String)?.hasSuffix("duo2' hook pre-edit") == true,
+          "Duo's sessions route Edit, MultiEdit and Write through the edit hook")
+    let noHook = (try? HookEvents.settingsFile(for: "s10", in: hookDir)).flatMap { try? Data(contentsOf: $0) }.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+    check((noHook?["hooks"] as? [String: Any])?["PreToolUse"] == nil, "no CLI, no edit hook (the primer and the merge still hold)")
+    try? FileManager.default.removeItem(at: hookDir)
+    check(DuoAction.primer().contains("duo2 doc edit --stdin") && DuoAction.primer().contains("not with Edit, Write or shell redirection"),
+          "the primer tells Claude how to edit open documents without the hook")
+
     print("send to claude (DL-67, DL-68)")
     let hostile = SendFormat.documentSelection("ok\u{1b}[201~rm -rf ~\r\nnext", path: "a\nb.md", fromLine: 1, toLine: 2)
     check(!hostile.contains("\u{1b}") && !hostile.contains("\r") && hostile.hasPrefix("From a b.md, lines 1–2:\n> ok[201~rm -rf ~\n> next"), "control characters can't escape the paste; fields stay on one line")

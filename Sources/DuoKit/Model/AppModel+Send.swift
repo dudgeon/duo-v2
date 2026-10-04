@@ -194,6 +194,7 @@ extension AppModel {
     }
 
     func wireEditor(_ e: EditorController) {
+        e.onStateChange = { [weak self] in self?.editorRevision += 1 }
         e.webView.extraMenuItems = { [weak self] hasSelection, _ in
             guard let self, hasSelection, self.terminalsMode == .live else { return [] }
             return self.sendMenuItems("Selection") { done in self.documentSelectionPayload(done) }

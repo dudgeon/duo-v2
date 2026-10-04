@@ -14,13 +14,25 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public private(set) var lastEvent: String = "idle"   // for the harness and logs
     /// An outside change overlapped unsaved edits. Autosave pauses until it's resolved (LR-32):
     /// saving now would overwrite the other writer's change on disk. The banner is Q-20.
-    public private(set) var conflict = false
+    public private(set) var conflict = false { didSet { if oldValue != conflict { onStateChange?() } } }
     public private(set) var dirty = false
     private var pageReady = false
     private var pending: (() -> Void)?
     private var diskBytes = Data()                       // what's on disk as far as we know
     private var watcher: DispatchSourceFileSystemObject?
+    private var folderWatcher: DispatchSourceFileSystemObject?
+    private var settle: DispatchWorkItem?
     private var saveTask: Task<Void, Never>?
+    /// The file is gone from disk (deleted or moved outside Duo). The buffer stays; autosave
+    /// pauses so Duo doesn't quietly recreate a file someone removed (DL-77).
+    public private(set) var removedOnDisk = false { didSet { if oldValue != removedOnDisk { onStateChange?() } } }
+    /// Called when conflict or removed-on-disk changes (the bars under the document redraw).
+    var onStateChange: (() -> Void)?
+    /// Lines of the last conflict (1-based, in the base), for the bar and `duo2 doc status`.
+    public private(set) var conflictLines: [[Int]] = []
+    /// Unsaved text of documents left while in conflict or removed, kept until they're shown
+    /// again (DL-77: nothing is dropped when you look away).
+    private var kept: [URL: (text: String, base: Data, conflict: Bool)] = [:]
 
     public override init() {
         // Check spelling while typing unless the user turned it off (WebKit reads this default).
@@ -59,15 +71,81 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         pending?(); pending = nil
     }
 
-    /// Shows a file. The current document is saved first if it changed.
+    /// Shows a file. The current document is saved first if it changed; one in conflict, or
+    /// removed on disk, keeps its unsaved text in memory until it's shown again.
     public func open(_ file: URL) {
         guard file != url else { return }
-        saveNow()
+        if let leaving = url, readOnlyReason == nil, dirty, conflict || removedOnDisk {
+            let base = diskBytes, wasConflict = conflict
+            // Runs before the next document's text is loaded: the page runs scripts in order.
+            webView.callAsyncJavaScript("return duo.text()", arguments: [:], in: nil, in: .page) { [weak self] r in
+                if case .success(let v) = r, let text = v as? String { self?.kept[leaving] = (text, base, wasConflict) }
+            }
+        } else {
+            saveNow()
+        }
         dirty = false
+        conflict = false
+        removedOnDisk = false
         url = file
         readOnlyReason = nil
         let go: () -> Void = { [weak self] in self?.load(file) }
         if pageReady { go() } else { pending = go }
+    }
+
+    /// Ends a conflict (DL-77). Mine: the user's text is saved over the file (the file's version
+    /// is in history). Theirs: the file's version replaces the user's text (theirs is in history).
+    public func resolve(keepMine: Bool, done: (@MainActor (Bool) -> Void)? = nil) {
+        guard conflict, let file = url, let data = FileManager.default.contents(atPath: file.path),
+              let text = String(data: data, encoding: .utf8) else { done?(false); return }
+        if keepMine {
+            FileHistory.snapshot(file, data, source: "resolve-mine")
+            diskBytes = data
+            webView.callAsyncJavaScript("duo.setBaseText(b); return 1", arguments: ["b": text], in: nil, in: .page) { [weak self] _ in
+                guard let self else { return }
+                self.conflict = false
+                self.dirty = true
+                self.lastEvent = "kept mine"
+                self.saveNow { done?(true) }
+            }
+        } else {
+            webView.callAsyncJavaScript("return duo.text()", arguments: [:], in: nil, in: .page) { [weak self] r in
+                guard let self else { return }
+                if case .success(let t) = r, let t = t as? String { FileHistory.snapshot(file, Data(t.utf8), source: "resolve-theirs") }
+                self.diskBytes = data
+                self.webView.callAsyncJavaScript("const r = duo.create(t); duo.markSaved(); return r", arguments: ["t": text], in: nil, in: .page) { _ in
+                    self.conflict = false
+                    self.dirty = false
+                    self.lastEvent = "took theirs"
+                    done?(true)
+                }
+            }
+        }
+    }
+
+    /// The file was removed on disk: write the user's text back to where it was.
+    public func recreate(done: (@MainActor (Bool) -> Void)? = nil) {
+        guard removedOnDisk, let file = url else { done?(false); return }
+        webView.callAsyncJavaScript("return duo.text()", arguments: [:], in: nil, in: .page) { [weak self] r in
+            guard let self, case .success(let t) = r, let t = t as? String else { done?(false); return }
+            do {
+                try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try Data(t.utf8).write(to: file, options: .withoutOverwriting)
+                self.diskBytes = Data(t.utf8)
+                self.removedOnDisk = false
+                self.dirty = false
+                self.webView.evaluateJavaScript("duo.markSaved()")
+                self.watch(file)
+                self.lastEvent = "recreated"
+                done?(true)
+            } catch { done?(false) }
+        }
+    }
+
+    /// Saves now if it safely can (quit, closing the window). Calls back when done.
+    public func flush(_ done: @escaping @MainActor () -> Void) {
+        saveTask?.cancel()
+        saveNow(completion: done)
     }
 
     private func load(_ file: URL) {
@@ -75,10 +153,24 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             readOnlyReason = "can't read the file"; lastEvent = "unreadable"; return
         }
         diskBytes = data
+        FileHistory.snapshot(file, data, source: "open")
         guard let text = String(data: data, encoding: .utf8), Data(text.utf8) == data else {
             // Not valid UTF-8: showing it would mean rewriting it on save (LR-30).
             readOnlyReason = "not UTF-8"
             lastEvent = "read-only"
+            return
+        }
+        if let k = kept.removeValue(forKey: file), let baseText = String(data: k.base, encoding: .utf8) {
+            // Back to a document left with unsaved text: show that text over the base it was
+            // edited from, then reconcile with what's on disk now (it may merge cleanly now).
+            diskBytes = k.base
+            dirty = true
+            webView.callAsyncJavaScript("const r = duo.create(t); duo.setBaseText(b); return r", arguments: ["t": k.text, "b": baseText], in: nil, in: .page) { [weak self] _ in
+                guard let self else { return }
+                self.lastEvent = "reopened with unsaved edits"
+                self.reconcile(file)
+            }
+            watch(file)
             return
         }
         webView.callAsyncJavaScript("const r = duo.create(t); duo.markSaved(); return r", arguments: ["t": text], in: nil, in: .page) { [weak self] result in
@@ -106,10 +198,21 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         }
     }
 
-    /// Writes the buffer if it differs from disk: temp file, then rename (LR-35).
+    /// Writes the buffer if it differs from disk: temp file, then rename (LR-35). Never blind
+    /// (DL-77): if the file changed on disk since Duo last read it, that change is merged in
+    /// first, and a conflict stops the save.
     public func saveNow(completion: (@MainActor () -> Void)? = nil) {
         guard let file = url, readOnlyReason == nil else { completion?(); return }
         if conflict { lastEvent = "save paused: conflict"; completion?(); return }
+        if removedOnDisk { lastEvent = "save paused: removed on disk"; completion?(); return }
+        if let now = FileManager.default.contents(atPath: file.path), now != diskBytes {
+            // An outside write the watcher hasn't delivered yet: merge first, then save.
+            reconcile(file) { [weak self] in
+                guard let self, !self.conflict, self.url == file else { completion?(); return }
+                self.saveNow(completion: completion)
+            }
+            return
+        }
         // Nothing typed since the last save: nothing to write (opening a file never writes it).
         guard dirty else { completion?(); return }
         // Capture the file and its baseline now: switching documents loads the next file before
@@ -119,6 +222,14 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             guard let self, case .success(let value) = result, let text = value as? String else { completion?(); return }
             let data = Data(text.utf8)
             let stillOpen = self.url == file
+            // Last look before writing: an outside write that landed while the text came back.
+            if let now = FileManager.default.contents(atPath: file.path), now != baseline, stillOpen {
+                self.reconcile(file) { [weak self] in
+                    guard let self, !self.conflict else { completion?(); return }
+                    self.saveNow(completion: completion)
+                }
+                return
+            }
             if data != baseline {
                 do {
                     let tmp = file.deletingLastPathComponent().appending(path: ".\(file.lastPathComponent).duo-\(UUID().uuidString.prefix(8))")
@@ -141,37 +252,84 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
 
     // MARK: Outside changes
 
+    /// Watches the file and its folder (LR-36): editors that save by writing a new file and
+    /// renaming it over the old one replace the inode, which only the folder sees. Events settle
+    /// for 150 ms; then the file is read and compared by content with what Duo last read or
+    /// wrote, so Duo's own saves never look like outside changes.
     private func watch(_ file: URL) {
-        watcher?.cancel()
-        let fd = Darwin.open(file.path, O_EVTONLY)
-        guard fd >= 0 else { return }
-        let src = DispatchSource.makeFileSystemObjectSource(fileDescriptor: fd, eventMask: [.write, .delete, .rename, .extend], queue: .main)
-        src.setEventHandler { [weak self] in MainActor.assumeIsolated { self?.diskChanged() } }
-        src.setCancelHandler { close(fd) }
-        src.resume()
-        watcher = src
+        watcher?.cancel(); watcher = nil
+        folderWatcher?.cancel(); folderWatcher = nil
+        let real = file.resolvingSymlinksInPath()
+        let fd = Darwin.open(real.path, O_EVTONLY)
+        if fd >= 0 {
+            let src = DispatchSource.makeFileSystemObjectSource(fileDescriptor: fd, eventMask: [.write, .delete, .rename, .extend], queue: .main)
+            src.setEventHandler { [weak self] in MainActor.assumeIsolated { self?.diskChanged() } }
+            src.setCancelHandler { close(fd) }
+            src.resume()
+            watcher = src
+        }
+        let dfd = Darwin.open(real.deletingLastPathComponent().path, O_EVTONLY)
+        if dfd >= 0 {
+            let src = DispatchSource.makeFileSystemObjectSource(fileDescriptor: dfd, eventMask: [.write, .rename, .delete], queue: .main)
+            src.setEventHandler { [weak self] in MainActor.assumeIsolated { self?.diskChanged() } }
+            src.setCancelHandler { close(dfd) }
+            src.resume()
+            folderWatcher = src
+        }
     }
 
     private func diskChanged() {
         guard let file = url else { return }
-        // Editors that save by rename leave us watching the old file: re-arm on the new one.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+        settle?.cancel()
+        let work = DispatchWorkItem { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, self.url == file else { return }
-                self.watch(file)
-                guard let data = FileManager.default.contents(atPath: file.path), data != self.diskBytes,
-                      let text = String(data: data, encoding: .utf8) else { return }
-                self.diskBytes = data
-                self.conflict = false
-                self.webView.callAsyncJavaScript("return duo.external(d)", arguments: ["d": text], in: nil, in: .page) { result in
-                    if case .success(let v) = result, let r = (v as? [String: Any])?["result"] as? String {
-                        // A conflict keeps the user's text; its banner isn't designed yet (§13, Q-20).
-                        self.conflict = r == "conflict"
-                        if r == "same" { self.dirty = false }
-                        self.lastEvent = "outside change: \(r)"
-                    }
-                }
+                self.watch(file)          // re-arm on the current inode (or the file's return)
+                self.reconcile(file)
             }
+        }
+        settle = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
+    }
+
+    /// Brings what's on disk into the editor: merged by line with unsaved edits, or a conflict
+    /// (DL-77). A missing file marks the document removed on disk; its return clears that.
+    private func reconcile(_ file: URL, then: (@MainActor () -> Void)? = nil) {
+        guard let data = FileManager.default.contents(atPath: file.path) else {
+            if !FileManager.default.fileExists(atPath: file.path), !removedOnDisk {
+                removedOnDisk = true
+                lastEvent = "removed on disk"
+                FileHistory.snapshot(file, diskBytes, source: "removed")
+            }
+            then?(); return
+        }
+        if removedOnDisk { removedOnDisk = false; lastEvent = "back on disk" }
+        guard data != diskBytes else { then?(); return }
+        guard let text = String(data: data, encoding: .utf8) else {
+            // Rewritten as something that isn't UTF-8: show nothing new, save nothing over it.
+            readOnlyReason = "changed on disk to text that isn't UTF-8"
+            lastEvent = "read-only"; then?(); return
+        }
+        webView.callAsyncJavaScript("return duo.external(d)", arguments: ["d": text], in: nil, in: .page) { [weak self] result in
+            guard let self, self.url == file else { then?(); return }
+            if case .success(let v) = result, let r = (v as? [String: Any])?["result"] as? String {
+                if r == "conflict" {
+                    // Keep the user's text and the base it was edited from; disk stays as is.
+                    // Both sides go to history first; the bar for choosing is a stub (Q-20).
+                    self.conflictLines = ((v as? [String: Any])?["lines"] as? [[Int]]) ?? []
+                    FileHistory.snapshot(file, data, source: "conflict-theirs")
+                    self.webView.callAsyncJavaScript("return duo.text()", arguments: [:], in: nil, in: .page) { r in
+                        if case .success(let t) = r, let t = t as? String { FileHistory.snapshot(file, Data(t.utf8), source: "conflict-mine") }
+                    }
+                    self.conflict = true
+                } else {
+                    self.diskBytes = data
+                    self.conflict = false
+                    if r == "same" || r == "applied" { self.dirty = r == "applied" ? self.dirty : false }
+                }
+                self.lastEvent = "outside change: \(r)"
+            }
+            then?()
         }
     }
 
@@ -190,9 +348,11 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// The open file is gone (moved to the Trash): stop watching and never save it again.
     public func closeFile() {
         watcher?.cancel(); watcher = nil
+        folderWatcher?.cancel(); folderWatcher = nil
+        if let u = url { kept[u] = nil }
         saveTask?.cancel()
         url = nil
-        dirty = false; conflict = false
+        dirty = false; conflict = false; removedOnDisk = false
     }
 
     /// What `duo2 doc-status` reports (LR-34).
@@ -200,9 +360,14 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         guard let url, url.standardizedFileURL.resolvingSymlinksInPath() == file.standardizedFileURL.resolvingSymlinksInPath() else {
             return "not open in Duo"
         }
-        if conflict { return "open in Duo, in conflict: your change on disk and unsaved edits overlap; Duo won't save over it" }
+        if conflict {
+            let where_ = conflictLines.map { $0[0] == $0[1] ? "line \($0[0])" : "lines \($0[0])–\($0[1])" }.joined(separator: ", ")
+            return "open in Duo, in conflict\(where_.isEmpty ? "" : " at \(where_)"): an outside change and the user's unsaved edits touch the same lines; Duo saves neither over the other until the user chooses (Keep Mine or Use Theirs, or `duo2 doc resolve mine|theirs` if they ask you to). Both versions are in history."
+        }
+        if removedOnDisk { return "open in Duo, but removed on disk; the user's text is kept" }
         if readOnlyReason != nil { return "open in Duo, read-only (\(readOnlyReason!))" }
-        return dirty ? "open in Duo with unsaved edits: write anyway and Duo merges, or wait a second for its autosave" : "open in Duo, saved"
+        let how = "The user has it open: change it with `duo2 doc edit --stdin` (your Edit tool's JSON) or `duo2 doc replace`, so they see the change highlighted; don't write the file."
+        return (dirty ? "open in Duo with unsaved edits. " : "open in Duo, saved. ") + how
     }
 
     public func run(_ js: String, _ args: [String: Any] = [:], done: @escaping @MainActor (Any?) -> Void) {

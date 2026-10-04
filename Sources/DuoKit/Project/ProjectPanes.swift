@@ -381,11 +381,17 @@ struct RightPane: View {
                     HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
                     PickerBar()
                 }
-            } else if let path = model.rightTab, path.contains("."), let file = model.liveFile(path) {
-                DocumentEditorView(editor: model.editor, file: file)
+            } else if let path = model.rightTab, path.contains("."), let file = model.liveFile(path) ?? model.keptFile(path) {
+                VStack(spacing: 0) {
+                    DocumentEditorView(editor: model.editor, file: file)
+                    DocumentStateBar()
+                }
             } else if model.rightTab == "Project" || model.rightTab == nil, let own = model.projectFile, let file = model.liveFile(own) {
                 // The Project tab is the project's own file (DL-60).
-                DocumentEditorView(editor: model.editor, file: file)
+                VStack(spacing: 0) {
+                    DocumentEditorView(editor: model.editor, file: file)
+                    DocumentStateBar()
+                }
             } else if let path = model.rightTab, path.contains(".") {
                 DocumentPlaceholder(path: path)
             } else {
@@ -605,6 +611,38 @@ struct PickerBar: View {
                         Spacer(minLength: 8)
                         Button("Cancel") { v.stopPicking() }.keyboardShortcut(.cancelAction)
                     }
+                }
+            }
+            .controlSize(.small)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.bar)
+            .overlay(alignment: .top) { Divider() }
+        }
+    }
+}
+
+/// Under the document when it needs a decision (DL-77): a conflict, or the file removed on disk.
+/// Plain system look until the editor states are designed (Q-20).
+struct DocumentStateBar: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let _ = model.editorRevision
+        if let e = model.editorIfLoaded, e.conflict || e.removedOnDisk {
+            HStack(spacing: 8) {
+                if e.conflict {
+                    let lines = e.conflictLines.map { $0[0] == $0[1] ? "line \($0[0])" : "lines \($0[0])–\($0[1])" }.joined(separator: ", ")
+                    Text("Changed on disk where you're editing\(lines.isEmpty ? "" : " (\(lines))"). Both versions are kept.")
+                        .font(.callout).lineLimit(2)
+                    Spacer(minLength: 8)
+                    Button("Use Theirs") { e.resolve(keepMine: false) }
+                    Button("Keep Mine") { e.resolve(keepMine: true) }.keyboardShortcut(.defaultAction)
+                } else {
+                    Text("Removed on disk. Your text is still here.").font(.callout)
+                    Spacer(minLength: 8)
+                    Button("Save to Recreate") { e.recreate() }
                 }
             }
             .controlSize(.small)

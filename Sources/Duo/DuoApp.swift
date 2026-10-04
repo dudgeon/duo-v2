@@ -62,6 +62,13 @@ struct DuoApp: App {
         // sometimes finished launching with no window, and reopening didn't bring one back.
         let mainWindow = MainWindow(model: model, options: options)
         AppDelegate.reopen = { mainWindow.show() }
+        AppDelegate.flush = { done in
+            guard let e = model.editorIfLoaded else { return done() }
+            let once = Once()
+            let finish: @MainActor () -> Void = { if !once.fired { once.fired = true; done() } }
+            e.flush(finish)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { MainActor.assumeIsolated { finish() } }  // never hang a quit
+        }
         NotificationCenter.default.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated {
                 mainWindow.show()
@@ -85,9 +92,21 @@ struct DuoApp: App {
     }
 }
 
+@MainActor final class Once { var fired = false }
+
 /// Dock click or `open` with no window visible: show the main window again.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     nonisolated(unsafe) static var reopen: (@MainActor () -> Void)?
+    /// Saves the open document before quitting (DL-77: the last second's typing isn't lost).
+    nonisolated(unsafe) static var flush: (@MainActor (@escaping @MainActor () -> Void) -> Void)?
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let flush = Self.flush else { return .terminateNow }
+        MainActor.assumeIsolated {
+            flush { NSApp.reply(toApplicationShouldTerminate: true) }
+        }
+        return .terminateLater
+    }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag { MainActor.assumeIsolated { Self.reopen?() } }
