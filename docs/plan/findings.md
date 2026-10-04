@@ -184,6 +184,22 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-54 · Unattended runs: no step may raise a system dialog (2026-10-04)
+
+- **Seen:** while I ran the walk by computer control, macOS kept asking Duo for Screen Recording ("record screen and audio") although Settings listed Duo as allowed, and a UserNotificationCenter dialog sat over Duo and stopped the run. Geoff: "this is massively impacting your testing loops and you need to stop doing this"; later, "don't create a state where a system dialog blocks you".
+- **Causes:**
+  - `run-live.sh` used `--capture-window`, which ran screencapture(1), and that needs Screen Recording.
+  - Each rebuild is ad-hoc signed, so macOS sees a new app and asks again.
+  - Full-screen computer control puts system dialogs in front of the run.
+  - Quitting Duo with AppleScript can raise an Automation consent.
+- **Changed:**
+  - Captures draw the window themselves; screencapture only with `DUO_SCREENCAPTURE=1`.
+  - Duo quits on SIGTERM as on ⌘Q, so scripts quit by pid: `run-live.sh` and `open-duo.sh` no longer use AppleScript.
+  - The acceptance-walk skill now forbids unattended full-screen control and anything that prompts.
+- **Also learned:**
+  - Computer control keeps Escape for itself and can't send ⌘Q, so Escape and ⌘Q behaviour stay on Geoff's list.
+  - Background `app_key` Return reaches a Duo terminal, which is enough to run Claude turns unattended.
+
 ## F-53 · Duo set off macOS privacy prompts (Music, Photos…) it had no need for (2026-10-04)
 
 - **Seen:** while I ran the walk with computer control, macOS kept raising a privacy prompt over Duo. Geoff: "duo NEEDS to stop proactively asking for permissions to things it does not need, like music, photos, etc — it freaks users out".

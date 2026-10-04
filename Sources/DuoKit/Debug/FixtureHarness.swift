@@ -114,6 +114,8 @@ public enum FixtureHarness {
                 try? text.replacingOccurrences(of: p[0], with: p[1]).write(to: url, atomically: parts[0] == "disk-rename", encoding: .utf8)
                 FileHandle.standardError.write(Data("\(parts[0]): done\n".utf8))
             } else { FileHandle.standardError.write(Data("\(parts[0]): text not on disk\n".utf8)) }
+        case "quit":   // quit as ⌘Q would, mid-script (save-on-quit checks)
+            NSApp.terminate(nil)
         case "disk-delete":
             if let url = model.editor.url { try? FileManager.default.moveItem(at: url, to: url.appendingPathExtension("gone")) }
         case "disk-restore":

@@ -79,6 +79,18 @@ struct DuoApp: App {
         NotificationCenter.default.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated {
                 mainWindow.show()
+                // While the element picker is open, Escape closes it wherever the keyboard is
+                // (it reached the Claude terminal instead, where Escape interrupts Claude; F-52).
+                // Installed after launch: NSApp doesn't exist while the app initialises.
+                NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
+                    guard e.keyCode == 53 else { return e }
+                    let picking = MainActor.assumeIsolated { () -> Bool in
+                        guard let v = model.htmlViewerIfLoaded, v.picking else { return false }
+                        v.stopPicking()
+                        return true
+                    }
+                    return picking ? nil : e
+                }
                 // DL-74, DL-75: what lets Claude sessions anywhere use duo2; asked once, kept current.
                 if !options.capturing, let dir = ChildEnvironment.cliDirectory {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) { InstallPrompt.run(cli: dir + "/duo2") }
@@ -86,14 +98,7 @@ struct DuoApp: App {
             }
         }
         FixtureHarness.beforeExit = { model.terminals.terminateAll(); server.stop() }
-        // Diagnostic (F-52): where Escape goes. It never cancelled inline naming or the picker.
-        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
-            if e.keyCode == 53 {
-                let r = NSApp.keyWindow?.firstResponder
-                DuoLog.write("escape: key window \(NSApp.keyWindow?.title ?? "none"), first responder \(r.map { String(describing: type(of: $0)) } ?? "none")")
-            }
-            return e
-        }
+
         // SIGTERM quits like ⌘Q (sessions end cleanly, the document saves): scripts quit the one
         // instance they started by pid, never "the" Duo by app id, which may be the user's (C-18).
         signal(SIGTERM, SIG_IGN)

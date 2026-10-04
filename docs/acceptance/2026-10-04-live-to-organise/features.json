@@ -1,7 +1,7 @@
 {
  "sprint": "2026-10-04-live-to-organise",
  "title": "Duo acceptance: live workspace to collisions",
- "intro": "Everything built since the live workspace (Phase E) through organising, Send to Claude, local HTML with the element picker, duo2 parity, Claude editing open documents, and collisions with changes on disk. Open Duo on the fixture workspace first: run `scripts/acceptance/open-duo.sh` in the duo-v2 repo. Fixtures live in ~/DuoAcceptance (rebuild with `scripts/acceptance/fixtures.py --reset`).",
+ "intro": "Everything built since the live workspace (Phase E) through organising, Send to Claude, local HTML with the element picker, duo2 parity, Claude editing open documents, and collisions with changes on disk. Open Duo on the fixture workspace first: run `scripts/acceptance/open-duo.sh` in the duo-v2 repo. Fixtures live in ~/DuoAcceptance (rebuild with `scripts/acceptance/fixtures.py --reset`). Each test has a Set up test button (Duo arranges the fixtures) and, where Claude ran it first, what Claude did and what still needs your judgment.",
  "setup": [
   "In a terminal: `cd ~/repos/duo-v2 && scripts/acceptance/open-duo.sh` (it adds any new fixtures without resetting yours)",
   "duo2 commands: use `~/repos/duo-v2/build/Duo.app/Contents/Helpers/duo2` from a normal terminal, or plain `duo2` inside a Duo session's terminal (or anywhere, once you accept the install question).",
@@ -20,7 +20,19 @@
    "ref": "F-25",
    "setup": [
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Ran the setup (`go all`) and read the map with `duo2 projects` and a window capture.",
+     "Topics Growth, Payments, Research; goals and health match; refunds shows `At risk · Spec review Oct 8`."
+    ],
+    "didnt": [],
+    "human": [
+     "Whether the map reads well to you."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ws-home",
@@ -34,7 +46,16 @@
    "ref": "DL-42, DL-52, DL-54",
    "setup": [
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "On All projects the left pane shows ★ home with its session running (Claude Code at its prompt in ~/…/workspace/home)."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ws-new-session",
@@ -49,7 +70,16 @@
    "ref": "F-25",
    "setup": [
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Clicked + New session in checkout: a tab opened with Claude Code running in ~/DuoAcceptance/workspace/payments/checkout, filed in .duo/sessions.json with a Duo-minted id (created-by-duo)."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "zero-count",
@@ -63,7 +93,18 @@
    "ref": "handoff §8",
    "setup": [
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Toolbar reads `0 to review · 1 working · 36 idle`: no need-you count at zero."
+    ],
+    "didnt": [
+     "Didn't make a session need you to watch the count come back (that's att-question)."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "att-question",
@@ -74,11 +115,22 @@
     "In the Home terminal, type: Use AskUserQuestion to ask me whether to lead the readout with revenue or retention.",
     "Don't answer yet; look at the action column and the toolbar."
    ],
-   "expect": "A card with the verbatim question and options; the toolbar shows 1 need you.",
+   "expect": "The toolbar shows 1 need you (orange) and the action column a card for Home pointing at the Home terminal, where the question and options are (Home's card points there rather than repeating them, as designed).",
    "ref": "F-26",
    "setup": [
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "In Home's terminal asked Claude to use AskUserQuestion: the toolbar showed `1 need you` (orange) and the action column a `Readout lead choice · home` card pointing at the Home terminal; answering cleared both and the count disappeared at zero."
+    ],
+    "didnt": [],
+    "human": [
+     "For Home, the card points to the terminal (where the question is) rather than repeating it, as the design does; the step text said otherwise and is corrected."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "att-review",
@@ -95,7 +147,16 @@
    "setup": [
     "open refunds",
     "session-running refunds"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Asked a refunds session a one-line question and went to All projects: `1 to review`, a ready-for-review card with the reply's first line and Review, and the refunds tile marked the session. Review opened it; back on All projects: `0 to review`."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "titles",
@@ -109,7 +170,16 @@
    "ref": "F-27",
    "setup": [
     "open reading"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "reading lists `Reading note 1`…`9`, Claude's own titles, not per-process names."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "lp-history",
@@ -124,7 +194,17 @@
    "ref": "DL-59",
    "setup": [
     "open reading"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Five recent sessions, then `Older · 4`; clicking it showed notes 4, 3, 2, 1. No Resume a session button.",
+     "Fixed: the section header said `Idle · 6` (it counted the Older row as one); it now says `Idle · 9`."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "lp-identity",
@@ -139,7 +219,18 @@
    "ref": "F-43",
    "setup": [
     "open refunds"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Clicked each Untitled scratch row: the console opened e90c4afa and then 45e96930, two tabs, two conversations."
+    ],
+    "didnt": [],
+    "human": [
+     "Sessions in the acceptance folders open on Claude's trust prompt until you trust ~/DuoAcceptance once (see Before you start)."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ed-open",
@@ -154,7 +245,18 @@
    "setup": [
     "fixture reset-checkout",
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Clicked prd.md in Files: headings semibold, **15%** bold without stars, the link as text, task boxes as checkboxes; the caret's line shows raw Markdown."
+    ],
+    "didnt": [],
+    "human": [
+     "List markers (`-`) still show before task checkboxes; say if they should hide."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ed-autosave",
@@ -171,7 +273,16 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Typed ` Autosave check.` at the end of the Problem paragraph; 1–2 s later the file on disk was 16 bytes longer with exactly that sentence."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ed-crlf",
@@ -188,7 +299,16 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open docs/windows-notes.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Added ` Checked.` to windows-notes.md; `file` still reports CRLF line terminators."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ed-readonly",
@@ -205,7 +325,19 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open docs/mixed-endings.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "mixed-endings.md: typing did nothing; `duo2 doc status` says read-only (mixed line endings); the file's hash is unchanged.",
+     "Found and fixed: legacy-export.txt's tab showed the *previous* document's text (the editor never loaded a non-UTF-8 file). It now shows `Café résumé: exported in Latin-1…`, read-only; typing changes nothing; hash unchanged."
+    ],
+    "didnt": [],
+    "human": [
+     "There's still no visible read-only notice (Q-20)."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ed-spelling",
@@ -223,7 +355,22 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open docs/research.md"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Typed `We recieve teh notes weekly.`: `teh` was corrected to `the`; `recieve` got the red underline.",
+     "Right-click on a selection shows Send Selection to Claude ⌘D, Send Selection To, Look Up, Translate, Spelling and Grammar, Substitutions, Transformations, Speech, and an `Ask Siri` item."
+    ],
+    "didnt": [
+     "No item named Writing Tools appeared (on this macOS it may live under Ask Siri).",
+     "Couldn't test dictation (it needs your voice)."
+    ],
+    "human": [
+     "Try Writing Tools and Edit › Start Dictation… (G-2)."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ed-format",
@@ -239,7 +386,19 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "⌘B on `buyers` wrote `**buyers**`; ⌘I on `Guest` wrote `*Guest*`.",
+     "Found and fixed two bugs: Bold/Italic were greyed out while the editor had focus (menus checked focus only when they last redrew), and CodeMirror took ⌘I for itself. Web views now report focus changes, and Duo's chords win over the editor's."
+    ],
+    "didnt": [],
+    "human": [
+     "Clicking a line switches it to raw Markdown, which shifts words under the pointer (a double-click can miss); the same as Obsidian, but you may want it calmer."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ed-find",
@@ -255,7 +414,20 @@
    "setup": [
     "open checkout",
     "doc open docs/long-backlog.md"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "⌘F opened the find panel; with `FORWARDER` typed, the panel's next button jumped to line 1954 of 3234 (`duo2 doc selection` confirmed)."
+    ],
+    "didnt": [
+     "Return in the find field didn't jump in my run; that may be how my synthetic typing reached the field."
+    ],
+    "human": [
+     "Type a word and press Return in the find field."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ed-outside",
@@ -272,7 +444,17 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`echo … >> prd.md` while open: the line appeared in the editor within a second, highlighted.",
+     "Typing elsewhere cleared the highlight."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ed-conflict",
@@ -289,7 +471,19 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Typed in the title while a delayed `sed` changed the same line on disk: the bar `Changed on disk where you're editing (line 5). Both versions are kept.` appeared; disk had `(theirs)`, the editor `v2!!`; `duo2 doc status` reported the conflict.",
+     "Keep Mine saved my title over the file; `duo2 doc history` listed open, conflict-theirs, conflict-mine, resolve-mine."
+    ],
+    "didnt": [],
+    "human": [
+     "The bar's look is a stub (Q-20)."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "rp-tabs",
@@ -308,7 +502,17 @@
     "open checkout",
     "doc open docs/prd.md",
     "doc open docs/research.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "With prd.md and research.md open, clicked Project (PROJECT.md showed), then prd.md (back to it).",
+     "Clicked + in the tab strip: docs/Untitled.md was created next to the selected file, opened as a tab, and its name was selected in Files for typing."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "rp-close",
@@ -326,7 +530,16 @@
     "open checkout",
     "session-running checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "With the editor focused, ⌘W closed prd.md and the next tab showed; with the terminal focused, ⌘W closed the session's tab and the session stayed listed. The window stayed."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "fv-new",
@@ -341,7 +554,19 @@
    "setup": [
     "fixture reset-checkout",
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "⌘N made docs/Untitled.md (Return kept the name); ⇧⌘N made a folder I named walk-folder.",
+     "Right-click › New from Template lists meeting-notes (the project's) then decision-record (Home's); choosing meeting-notes made docs/meeting-notes.md identical to the template."
+    ],
+    "didnt": [
+     "Didn't use the Files background menu (the tree filled the pane in my window); the same New items are on every file's menu."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "fv-edit",
@@ -356,7 +581,24 @@
    "setup": [
     "fixture reset-checkout",
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Named a new file inline (walk-test, Return): renamed on disk and its tab followed.",
+     "Duplicate made `walk-test copy.md`; Move to Trash removed it; trashing the original closed its tab.",
+     "Fixed: Esc now cancels inline naming (the field claims Esc itself)."
+    ],
+    "didnt": [
+     "Couldn't test Esc myself (the computer-control overlay keeps it).",
+     "Didn't try Move To… (it opens a folder picker)."
+    ],
+    "human": [
+     "Try Move To… once.",
+     "Check whether Escape cancels naming for you."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "fv-copy",
@@ -370,7 +612,16 @@
    "ref": "DL-61",
    "setup": [
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Copy Path → `/Users/geoff/DuoAcceptance/workspace/payments/checkout/docs/prd.md`; Copy Relative Path → `docs/prd.md`; Copy as Link → `[prd](docs/prd.md)` (read from the clipboard)."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "fv-open",
@@ -384,7 +635,20 @@
    "ref": "DL-61",
    "setup": [
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Open With ▸ lists TextEdit (default), Numbers, Pages, Google Chrome, Notes, Claude…, then Other…."
+    ],
+    "didnt": [
+     "Didn't click Reveal in Finder or open another app (that would hand control to Finder or the app)."
+    ],
+    "human": [
+     "Reveal in Finder and one Open With."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "fv-send",
@@ -400,7 +664,22 @@
    "setup": [
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Right-clicked docs/prd.md in Files: the menu has Open, Open With, Reveal in Finder, Copy Path / Relative Path / as Link, Send to Claude, Send To ▸, the New items, Rename, Duplicate, Move To…, Move to Trash.",
+     "Send to Claude put `@docs/prd.md ` in checkout's prompt, not sent.",
+     "Send To ▸ Untitled scratch — refunds switched Duo to refunds and put the absolute path in that prompt."
+    ],
+    "didnt": [
+     "Didn't try Send To ▸ New Session here (html-picker-keys covers it)."
+    ],
+    "human": [
+     "Send To lists Home's session as `New session`, right above the New Session item: confusing names (logged)."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "org-folders",
@@ -414,7 +693,19 @@
    "ref": "DL-63",
    "setup": [
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Elsewhere shows scratch (No project file, 2 past sessions) and side-project (Has CLAUDE.md · no project file).",
+     "Found and fixed a bug: two different folders were both named `payments/checkout` (names are keys, so one hid the other). Names now take more parent folders until unique."
+    ],
+    "didnt": [],
+    "human": [
+     "Elsewhere also lists your real folders with Claude history (by design, DL-63); say if that's noise in the walk."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "org-make",
@@ -429,7 +720,19 @@
    "ref": "DL-63",
    "setup": [
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Right-click side-project: Send to Claude, Send To, Make a Project, Merge Sessions Into. Make a Project wrote PROJECT.md and opened it on the Project tab.",
+     "Edit › Undo Make Project removed PROJECT.md (to the Trash) and side-project went back to a folder."
+    ],
+    "didnt": [],
+    "human": [
+     "The starter PROJECT.md is a stub until your template (G-1)."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "org-move",
@@ -445,7 +748,18 @@
    "ref": "DL-64, DL-66",
    "setup": [
     "open scratch"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Right-clicked `Quick question about refund SLAs` in scratch: Send to Claude (greyed: no session showing), Send To, Move to Project ▸ (projects first, then folders).",
+     "Move to Project › refunds raised the sheet `Move this session to \"refunds\"?` naming the session and its source and saying files stay; Move filed it in refunds.",
+     "Edit › Undo Move Session put it back in scratch."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "org-merge",
@@ -461,7 +775,21 @@
    "ref": "DL-65, DL-66",
    "setup": [
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Dragged the scratch tile onto refunds with real mouse input: the sheet came up on the window; Merge moved both sessions; scratch left the map; refunds pulsed; Edit › Undo restored scratch.",
+     "Fixed the bug you hit (F-51): the confirmation used to come up as a loose alert under a frozen drag image, so the drop looked like it did nothing."
+    ],
+    "didnt": [
+     "Couldn't watch the drag card itself mid-drag (my screen capture happens after the drag)."
+    ],
+    "human": [
+     "How the card, the lift and the landing feel; tell me what to change."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "org-relocate",
@@ -476,7 +804,16 @@
    "ref": "DL-64, F-45",
    "setup": [
     "open scratch"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Moved `Draft a post about pricing` from scratch to checkout (through duo2, confirming the sheet), opened it from checkout: it resumed in scratch's folder, then Duo sent `/cd …/payments/checkout` and Claude replied `Moved to …/checkout`."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ret-archive",
@@ -493,7 +830,17 @@
    "setup": [
     "fixture purge",
     "open refunds"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`fixtures.py --purge` removed the purge-test transcript; refunds still listed `Refund edge cases (purge test)`; opening it restored the transcript from Duo's archive and resumed the conversation.",
+     "Found and fixed: before, a session only Claude's history knew about vanished from the list once its transcript was purged."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ret-carry",
@@ -507,7 +854,16 @@
    "ref": "Q-19",
    "setup": [
     "open refunds"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`duo2 session carry-on a1dbef24` started a session in refunds that read the archived transcript and summarised where it left off."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "ret-size",
@@ -518,7 +874,18 @@
     "`duo2 doctor`"
    ],
    "expect": "A line like Session archive: N sessions, X KB.",
-   "ref": "DL-56"
+   "ref": "DL-56",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`duo2 doctor`: `Session archive: 42 sessions, 301.7 MB … no limit, DL-56`."
+    ],
+    "didnt": [],
+    "human": [
+     "301 MB is mostly tool-output sidecars; say if that's too much."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "cli-basics",
@@ -529,7 +896,16 @@
     "duo2 help, then duo2 status, duo2 projects, duo2 open refunds."
    ],
    "expect": "Answers match the app; open switches Duo to refunds.",
-   "ref": "F-29"
+   "ref": "F-29",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`duo2 help` and `duo2 help files` answered; `duo2 status` matched the window; `duo2 open refunds` switched Duo to refunds."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "cli-search",
@@ -543,7 +919,19 @@
     "Quit Duo and run a search again."
    ],
    "expect": "notes/duplicate-billing.md first; errors.md for the exact code; the interview session; results still come back with Duo closed.",
-   "ref": "F-36, F-38"
+   "ref": "F-36, F-38",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`customers charged twice` → notes/duplicate-billing.md first (meaning, words); `ERR_REFUND_409` → spec/errors.md first (exact); `--kind session interview` → Interview synthesis notes second, after one of your real sessions.",
+     "With Duo quit, `duo2 search ERR_REFUND_409` and `customers charged twice` still answered."
+    ],
+    "didnt": [],
+    "human": [
+     "Search covers your real history too, so results mix fixtures with your sessions."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "cli-legacy",
@@ -556,7 +944,16 @@
     "`… duo2 legacy restore <the backup path it printed>`"
    ],
    "expect": "Lists 4 items; disable removes them (your own hook and text stay); restore puts everything back.",
-   "ref": "F-37"
+   "ref": "F-37",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "With the fake config: `duo2 legacy` listed 4 items; `disable --yes` removed them with a backup; `restore` put them back."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "app-gitignore",
@@ -567,7 +964,20 @@
     "After opening Duo on the fixtures, look for the alert about onboarding."
    ],
    "expect": "Add to `.gitignore` writes .duo/ to onboarding/`.gitignore`; Don't Add writes nothing; either answer is remembered.",
-   "ref": "DL-50"
+   "ref": "DL-50",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "onboarding's .gitignore has `.duo/` and the answer is remembered (not asked again). The fixture reset forgets the answer so you see the question once."
+    ],
+    "didnt": [
+     "Didn't see the alert itself (it was answered earlier)."
+    ],
+    "human": [
+     "Answer it when it appears after the reset."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "app-menus",
@@ -581,7 +991,17 @@
    "ref": "F-43",
    "setup": [
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Menu bar: Duo, File, Edit, View, Format, Go, Window, Help.",
+     "Go › Home went to All projects; ⌘↑ from checkout went to All projects (with Duo in front)."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "app-clear",
@@ -596,7 +1016,16 @@
    "setup": [
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Typed /clear then a prompt in refunds' Untitled scratch: the tab became `Refund edge cases` (a new id) and the old Untitled scratch stayed listed."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "send-doc-selection",
@@ -614,7 +1043,18 @@
     "open checkout",
     "session-running checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Selected text in prd.md: right-click shows `Send Selection to Claude ⌘D` and Send Selection To; ⌘D put `From docs/prd.md, line 9:` and the quoted text in checkout's prompt, not sent."
+    ],
+    "didnt": [
+     "Didn't use Edit › Send Selection to Claude from the menu bar (same command as ⌘D)."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "send-session-project",
@@ -630,7 +1070,17 @@
    "setup": [
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Right-click Interview synthesis notes › Send to Claude: the prompt got `Duo session \"Interview synthesis notes\" in project checkout (id …)`, how to read it, and the transcript path.",
+     "On All projects, right-click refunds › Send to Claude: Home's session got the project's block (shown as `[Pasted text #1 +4 lines]`)."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "send-why-not",
@@ -645,7 +1095,18 @@
    "ref": "DL-69, F-46",
    "setup": [
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "In scratch, with no session showing, a session's right-click menu reads `Send to Claude: No session is showing`, greyed, with Send To still available."
+    ],
+    "didnt": [
+     "Didn't catch the `Claude isn't ready yet` case (it needs a right-click within seconds of + New session)."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "html-view",
@@ -663,7 +1124,20 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open prototypes/checkout.html"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "checkout.html shows with its stylesheet and image; when Claude rewrote checkout.css the page reloaded by itself."
+    ],
+    "didnt": [
+     "Didn't click `Shipping policy` (it would open example.com in your browser)."
+    ],
+    "human": [
+     "Click the link: it should open in your browser, not in Duo."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "html-selection",
@@ -681,7 +1155,19 @@
     "open checkout",
     "session-running checkout",
     "doc open prototypes/checkout.html"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Selected the guest sentence, right-click › Send Selection to Claude: `From prototypes/checkout.html (\"Guest checkout prototype\"), selected:` and the quoted text landed in the prompt.",
+     "Right-click on the card image offers Send Image to Claude / Send Image To; sending it added the image's path (Claude Code shows it as a pasted block; it attaches PNG screenshots as images but leaves an SVG as a path)."
+    ],
+    "didnt": [
+     "My drag selected only the text, not the image too."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "html-picker",
@@ -701,7 +1187,20 @@
     "open checkout",
     "session-running checkout",
     "doc open prototypes/checkout.html"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Right-click on the page: Select Element, Reload Page (and WebKit's own Reload, a duplicate I'll remove).",
+     "Hovering outlined Pay now in the system highlight colour; clicking froze it; the bar read `<button#pay.cta.primary>` with Send to Claude, Send To, Pick Another, Cancel.",
+     "Send to Claude put `[Image #1][Pasted text #2 +11 lines]` in checkout's prompt; I typed `make this button yellow` and sent it: Claude changed `.primary` in checkout.css and the page reloaded by itself with a yellow Pay now."
+    ],
+    "didnt": [],
+    "human": [
+     "The picker's look is a stub (Q-21)."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "html-picker-keys",
@@ -720,7 +1219,22 @@
     "open checkout",
     "session-running checkout",
     "doc open prototypes/checkout.html"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Picked the Payment heading (`<h2>`), Pick Another, then the card field (`<input#card>`); Cancel closed the picker.",
+     "Fixed: Esc now closes the picker from anywhere (before, it went wherever the keyboard was, possibly the Claude terminal, where Esc interrupts Claude)."
+    ],
+    "didnt": [
+     "Couldn't test Esc: the computer-control overlay keeps Esc for itself, so my Esc never reaches Duo.",
+     "Didn't try Send To ▸ New Session."
+    ],
+    "human": [
+     "Press Esc with the picker open (also: Esc while naming a new file)."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "cli-help",
@@ -732,7 +1246,16 @@
     "Open `docs/cli/duo2.md` and `docs/features/duo2.md` in the repo."
    ],
    "expect": "Everyday verbs, then 10 families; the reference lists every verb with where you'd do it in the app, and the few UI-only items with reasons.",
-   "ref": "DL-71–DL-73, F-47"
+   "ref": "DL-71–DL-73, F-47",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`duo2 help` shows the everyday verbs and 10 families; `duo2 help files` lists the file verbs; docs/cli/duo2.md is checked current by DuoChecks."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "cli-agent-drives",
@@ -749,7 +1272,17 @@
     "fixture reset-checkout",
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "In checkout's session: `Using duo2, open docs/research.md in Duo, then rename it to interview-research.md.` → Duo showed it, the file was renamed and its tab followed.",
+     "Selected line 3 and asked `What do I have selected in Duo?`: Claude ran `duo2 selection` and quoted the line."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "cli-doc-edit",
@@ -766,7 +1299,16 @@
     "open checkout",
     "session-running checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Asked Claude to use `duo2 doc replace` on the title: it changed in the editor, highlighted, and on disk."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "cli-confirm",
@@ -781,7 +1323,20 @@
    "ref": "DL-66, DL-71",
    "setup": [
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 session move 5e56132f --to checkout` raised Duo's sheet; Cancel → the command printed `not moved (the user cancelled)`; asked again and Move → `Filed … in checkout … Undo: duo2 undo`."
+    ],
+    "didnt": [
+     "Didn't ask a Claude session to do it in words (I ran duo2 myself)."
+    ],
+    "human": [
+     "Ask a Home session in plain words, as the steps say."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "install-consent",
@@ -793,7 +1348,18 @@
     "`duo2 doctor`; look at the end of `~/.claude/CLAUDE.md`, `~/.claude/skills/duo2/SKILL.md`, and `ls -l ~/.local/bin/duo2`."
    ],
    "expect": "Install: a short `<!-- duo2:begin … -->` block after your own text, the skill, and the link into Duo.app; doctor says each is current. Not Now: nothing written, not asked again until the list changes.",
-   "ref": "DL-74, DL-75, F-48"
+   "ref": "DL-74, DL-75, F-48",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "You chose Install: `duo2 doctor` reports the CLAUDE.md block current, the skill current, `~/.local/bin/duo2` linked; your own CLAUDE.md text is intact above the block."
+    ],
+    "didnt": [
+     "Didn't see the alert itself (you answered it)."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "install-outside",
@@ -804,7 +1370,18 @@
     "In Terminal.app (not Duo): `cd ~/DuoAcceptance/workspace/payments/checkout && claude`, then ask `What's Duo? Use duo2 to list my projects.`"
    ],
    "expect": "Claude knows Duo from the block, runs `duo2 projects` and lists them (with Duo running). If its sandbox blocks the socket, `duo2 doctor` says how to allow it.",
-   "ref": "DL-74"
+   "ref": "DL-74",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Ran `claude -p \"What's Duo? Use duo2 to list my projects.\"` (Haiku) in a clean environment outside Duo, in checkout: it knew Duo from the CLAUDE.md block, ran duo2 via ~/.local/bin and listed the projects and folders."
+    ],
+    "didnt": [
+     "Ran it non-interactively, not in Terminal.app."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "install-respect",
@@ -817,7 +1394,20 @@
     "`duo2 uninstall`."
    ],
    "expect": "Your edit stays; the deleted block stays deleted; uninstall removes the skill and the link and leaves your own CLAUDE.md text (and legacy's block, if any) alone.",
-   "ref": "DL-74, F-48"
+   "ref": "DL-74, F-48",
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Checked by 11 automated checks against a temporary home: an edited block is left alone, a removed block never comes back, uninstall removes exactly what Duo wrote."
+    ],
+    "didnt": [
+     "Didn't edit or remove the block in your real ~/.claude/CLAUDE.md (removing it is permanent by design)."
+    ],
+    "human": [
+     "Only if you want to: try it on your real file."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "g5-at",
@@ -833,7 +1423,18 @@
    "setup": [
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Typed `@pro` in checkout's session: Claude Code listed prototypes/, PROJECT.md, prototypes/card.svg, checkout.css, checkout.html."
+    ],
+    "didnt": [],
+    "human": [
+     "Decide on ENH-3: whether Duo should reach further (other projects, Home)."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "agent-edit-open",
@@ -850,7 +1451,16 @@
     "open checkout",
     "session-running checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Typed `Add a goal to the PRD: ship Apple Pay by December` into the checkout session (Opus, auto mode) with prd.md open: Claude ran shell commands (duo2) and the goal appeared in the editor highlighted; Claude said it was highlighted in your open copy and saved; the file on disk has it."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "agent-edit-while-typing",
@@ -867,7 +1477,20 @@
     "open checkout",
     "session-running checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "The same merge is exercised by col-merge (your typing plus an outside write on another line) and by Claude's edits going through the editor."
+    ],
+    "didnt": [
+     "Didn't type while Claude worked: my typing and Claude's turn can't overlap reliably by script."
+    ],
+    "human": [
+     "Ask for an edit and keep typing elsewhere in the PRD."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "agent-edit-doctor",
@@ -883,7 +1506,20 @@
    "setup": [
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Fixed: `duo2 doctor` printed `Hooks: none have run in this session` in any Claude session, even ones Duo didn't start; it now speaks only in Duo's own sessions."
+    ],
+    "didnt": [
+     "Didn't run doctor inside a Duo session (that's a Claude turn)."
+    ],
+    "human": [
+     "In a Duo session: `duo2 doctor` should say hooks are running."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "col-merge",
@@ -900,7 +1536,16 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Typed in `## Goals` while a delayed `sed` changed `Decide on saved cards` on disk: both changes ended up in the file; the outside `(Oct 10)` showed highlighted; no bar."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "col-conflict",
@@ -918,7 +1563,18 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Same race as ed-conflict, then Use Theirs (in col-switch): the editor took the file's line, my text went to history (resolve-theirs)."
+    ],
+    "didnt": [],
+    "human": [
+     "Whether a person can trigger the race comfortably with the `sleep 5; sed` step."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "col-switch",
@@ -934,7 +1590,16 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Made a conflict on `## Open questions`, opened research.md, came back: the editor still had `(mine)`, the conflict still reported, the disk still `(theirs)`."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "col-removed",
@@ -951,7 +1616,17 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Moved prd.md away while open: `Removed on disk. Your text is still here.` with Save to Recreate; nothing autosaved it back.",
+     "Save to Recreate wrote it back byte-identical to the moved file."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "col-quit",
@@ -968,7 +1643,21 @@
     "fixture reset-checkout",
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Found and fixed: a quit right after typing could lose the last word (the editor's unsaved flag trails fast typing). Quit, closing a tab and switching documents now compare the text with the file instead of trusting the flag.",
+     "Verified in a scripted copy: typed, quit 0.6 s later (before autosave), and the word was in the file."
+    ],
+    "didnt": [
+     "Couldn't press ⌘Q myself (a system shortcut)."
+    ],
+    "human": [
+     "Type and press ⌘Q at once."
+    ],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "send-cmd-d",
@@ -986,7 +1675,18 @@
     "open checkout",
     "session-running checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Selected a word in prd.md and pressed ⌘D: `From docs/prd.md, line 9:` and the quoted word appeared in the checkout session's prompt, not sent."
+    ],
+    "didnt": [
+     "Didn't check Edit's menu label for ⌘D on screen (the menu bar lists Send Selection to Claude)."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
   },
   {
    "id": "search-field",
@@ -1000,7 +1700,44 @@
    "ref": "DL-80",
    "setup": [
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The toolbar field reads `Search all projects ⇧⌘A`.",
+     "The Go menu has no Jump item.",
+     "Pressed ⌘K with Duo in front: nothing happened."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "app-privacy",
+   "group": "App",
+   "title": "Duo asks for no permissions",
+   "what": "Duo never needs Music, Photos, Documents, Screen Recording or similar access; it no longer triggers those prompts (F-53, F-54).",
+   "steps": [
+    "Use Duo normally for a while: open projects, search, open files."
+   ],
+   "expect": "No macOS privacy prompt from Duo.",
+   "ref": "F-53, F-54",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Found and fixed (F-53): search walked your home folder (the `geoff` folder entry), so macOS asked Duo for Music, Photos and other access. No walk now enters Desktop, Documents, Downloads, Pictures, Movies, Music or Library unless a project lives there; files are indexed only for documented projects.",
+     "Found and fixed (F-54): my test runs captured the window with screencapture, so every rebuild asked for Screen Recording; test captures now draw the window themselves."
+    ],
+    "didnt": [],
+    "human": [
+     "Use Duo for a while and tell me if any permission prompt still appears; System Settings › Privacy & Security lists past answers, and Duo needs none of them."
+    ],
+    "at": "2026-10-04"
+   }
   }
  ],
  "decisions": [

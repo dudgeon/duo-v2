@@ -36,7 +36,12 @@ extension AppModel {
     /// Closes a document tab; its file is saved first if it changed. The neighbour, or Project, shows.
     public func closeDocument(_ path: String) {
         guard let i = openDocuments.firstIndex(of: path) else { return }
-        if liveFile(path) == editorIfLoaded?.url { editorIfLoaded?.saveNow() }
+        // Save, then let go of the file: the editor kept it after its tab closed, so doc status
+        // still said "open in Duo" and Claude's edits went into a buffer nobody could see (F-52).
+        if let e = editorIfLoaded, let u = liveFile(path), u.standardizedFileURL == e.url?.standardizedFileURL {
+            e.saveNow(force: true)
+            e.closeFile()
+        }
         openDocuments.remove(at: i)
         if rightTab == path {
             rightTab = openDocuments.indices.contains(i) ? openDocuments[i] : openDocuments.last ?? "Project"

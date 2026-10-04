@@ -19,10 +19,16 @@ public enum WindowCapture {
         try png.write(to: url)
     }
 
-    /// The whole window, frame and toolbar included, via screencapture(1). That needs the Screen
-    /// Recording permission for whichever app launched Duo; without it, falls back to drawing the
-    /// window's frame view, which shows the toolbar's contents but not always the system material.
+    /// The whole window, frame and toolbar included. By default the window's frame view is drawn,
+    /// which needs no permission. screencapture(1) is used only with DUO_SCREENCAPTURE=1: it needs
+    /// Screen Recording, and every rebuild (a new ad-hoc signature) made macOS ask again, which
+    /// blocked unattended test runs (F-54).
     public static func window(_ window: NSWindow, to url: URL) throws {
+        if ProcessInfo.processInfo.environment["DUO_SCREENCAPTURE"] == "1" { try screencapture(window, to: url); return }
+        try drawFrame(window, to: url)
+    }
+
+    static func screencapture(_ window: NSWindow, to url: URL) throws {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         p.arguments = ["-x", "-o", "-l", String(window.windowNumber), url.path]
@@ -30,7 +36,10 @@ public enum WindowCapture {
         try p.run()
         p.waitUntilExit()
         if p.terminationStatus == 0, FileManager.default.fileExists(atPath: url.path) { return }
+        try drawFrame(window, to: url)
+    }
 
+    static func drawFrame(_ window: NSWindow, to url: URL) throws {
         guard let frame = window.contentView?.superview else { throw CaptureError("No frame view") }
         frame.layoutSubtreeIfNeeded()
         frame.displayIfNeeded()
@@ -41,7 +50,6 @@ public enum WindowCapture {
               let png = try resample(srgb, width: Int(rect.width * 2), height: Int(rect.height * 2)).representation(using: .png, properties: [:])
         else { throw CaptureError("PNG encoding failed") }
         try png.write(to: url)
-        FileHandle.standardError.write(Data("note: no Screen Recording permission; drew the frame view instead\n".utf8))
     }
 
     /// Popovers (the peek) are separate windows; draw any that are showing over the capture at

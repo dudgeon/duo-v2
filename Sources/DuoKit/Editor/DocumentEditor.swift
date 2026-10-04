@@ -82,7 +82,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
                 if case .success(let v) = r, let text = v as? String { self?.kept[leaving] = (text, base, wasConflict) }
             }
         } else {
-            saveNow()
+            saveNow(force: true)
         }
         dirty = false
         conflict = false
@@ -150,7 +150,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// Saves now if it safely can (quit, closing the window). Calls back when done.
     public func flush(_ done: @escaping @MainActor () -> Void) {
         saveTask?.cancel()
-        saveNow(completion: done)
+        saveNow(force: true, completion: done)
     }
 
     private func load(_ file: URL) {
@@ -211,7 +211,10 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// Writes the buffer if it differs from disk: temp file, then rename (LR-35). Never blind
     /// (DL-77): if the file changed on disk since Duo last read it, that change is merged in
     /// first, and a conflict stops the save.
-    public func saveNow(completion: (@MainActor () -> Void)? = nil) {
+    /// `force`: compare the text with the file even if the editor hasn't reported unsaved changes
+    /// yet (quit, closing a tab): the report trails fast typing, and a quit right after typing
+    /// lost the last word (F-52).
+    public func saveNow(force: Bool = false, completion: (@MainActor () -> Void)? = nil) {
         guard let file = url, readOnlyReason == nil else { completion?(); return }
         if conflict { lastEvent = "save paused: conflict"; completion?(); return }
         if removedOnDisk { lastEvent = "save paused: removed on disk"; completion?(); return }
@@ -224,7 +227,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             return
         }
         // Nothing typed since the last save: nothing to write (opening a file never writes it).
-        guard dirty else { completion?(); return }
+        guard dirty || force else { completion?(); return }
         // Capture the file and its baseline now: switching documents loads the next file before
         // this save's text comes back, and comparing against *its* bytes rewrote this file (F-44).
         let baseline = diskBytes

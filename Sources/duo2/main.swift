@@ -90,7 +90,8 @@ case .uninstall:
 case .doctor:
     // Hooks can be turned off by a managed setting (DL-78): then Claude's edits to open documents
     // rely on Duo's instructions (`duo2 doc edit`) and Duo's merge, and attention on status files.
-    if let sid = env["CLAUDE_CODE_SESSION_ID"] ?? env["DUO_SESSION_ID"] {
+    // Only in sessions Duo started (DUO_SESSION_ID): any other Claude session has no Duo hooks.
+    if env["DUO_SESSION_ID"] != nil, let sid = env["CLAUDE_CODE_SESSION_ID"] ?? env["DUO_SESSION_ID"] {
         let events = ControlEndpoint.file.deletingLastPathComponent().appending(path: "events/\(sid).jsonl")
         let seen = (try? String(contentsOf: events, encoding: .utf8))?.contains("\"hook_event_name\"") ?? false
         print(seen ? "Hooks: running in this session (Duo routes edits to open documents through its editor)."

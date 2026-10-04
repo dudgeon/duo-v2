@@ -248,6 +248,35 @@ def add():
     print("added any missing fixtures")
 
 
+def forget(folder):
+    """Everything Claude and Duo hold for sessions under `folder` goes to the Trash: Claude's
+    transcripts (fixture sessions and any started during a walk), Duo's archive copies (else they'd
+    come back as archived history), and Duo's remembered answers for those folders. Run with Duo
+    quit: it rewrites Duo's archive manifest and state."""
+    folder = str(folder)
+    for d in CLAUDE.glob(encode(folder) + "*"):
+        trash(d)
+    support = HOME / "Library/Application Support/Duo"
+    man = support / "archive" / "manifest.json"
+    if man.exists():
+        m = json.loads(man.read_text())
+        gone = [k for k, v in m.get("sessions", {}).items() if v.get("cwd", "").startswith(folder)]
+        for k in gone:
+            trash(support / "archive" / (k + ".jsonl"))
+            trash(support / "archive" / k)
+            del m["sessions"][k]
+        man.write_text(json.dumps(m))
+    st = support / "state.json"
+    if st.exists():
+        s = json.loads(st.read_text())
+        for key in ("gitignore",):
+            if isinstance(s.get(key), dict):
+                s[key] = {k: v for k, v in s[key].items() if not k.startswith(folder)}
+        if isinstance(s.get("projects"), list):
+            s["projects"] = [p for p in s["projects"] if not p.startswith(folder)]
+        st.write_text(json.dumps(s, indent=1))
+
+
 def clean():
     if PLANTED.exists():
         info = json.loads(PLANTED.read_text())
@@ -259,8 +288,9 @@ def clean():
         arch = HOME / "Library" / "Application Support" / "Duo" / "archive"
         for f in info.get("transcripts", []):
             trash(arch / pathlib.Path(f).name)
+    forget(ROOT)
     trash(ROOT)
-    print("Moved %s and its planted sessions to the Trash." % ROOT)
+    print("Moved %s, its sessions and Duo's copies of them to the Trash." % ROOT)
 
 
 def purge():
@@ -282,6 +312,8 @@ if __name__ == "__main__":
         purge()
     elif arg == "--add":
         add()
+    elif arg == "--forget":   # a folder outside the fixtures (scratch test workspaces)
+        forget(pathlib.Path(sys.argv[2]).expanduser())
     elif arg == "--recipe":
         recipe(sys.argv[2] if len(sys.argv) > 2 else "")
     else:

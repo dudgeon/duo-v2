@@ -49,6 +49,25 @@ Open questions that are Geoff's to decide (Q-n in `concerns-and-questions.md`, `
 
 When reading back (step 5), also `ArtifactData` `list` collection `decisions`: record each answer as a DL-n entry (or update the Q-n row if Geoff chose "Something else" and needs a follow-up), then build what it unblocks.
 
+### Every test gets a setup (Geoff never arranges fixtures by hand)
+
+Give each feature a `setup`: steps Duo runs from the page's **Set up test** button (`duo2://walk-setup?id=…`) or `duo2 walk setup <id>`. A step is a `duo2` verb line (`open checkout`, `doc open docs/prd.md`, `go all`, `session open <id>`…), `session-running <project>` (shows a running Claude session, resuming the newest, waiting for its prompt), `fixture <recipe>` (a named recipe in `fixtures.py`, e.g. `reset-checkout`, `purge`) or `wait <seconds>`. Duo reads steps only from `~/DuoAcceptance/walk-setups.json`, which `build-page.py` writes; a link can only name a test. If a test needs a state no step makes, add a recipe to `fixtures.py` (or a verb), never a manual instruction. Run `duo2 walk setup <id>` for every test before publishing.
+
+### Claude runs every test first
+
+Before Geoff sees a test, run it yourself and record what happened in the feature's `claude` field: `{"result": "passed|partial|failed", "did": [...], "didnt": [...], "human": [...], "at": "<date>"}`. The page shows it on the card. `human` is only what needs Geoff's eyes or judgment (how something feels, voice, a design call) or what you truly couldn't do.
+- Drive the running acceptance Duo with `duo2` and the background computer-use tools (`app_screenshot`, `app_click`, `app_type`, `app_key`, `app_menu`). Put text into a session with `duo2 send text`, then press Return with a background `app_key`.
+- Scripted copies (`scripts/run-live.sh`) are fine. They use a private socket (C-18) and draw the window themselves.
+- Fix what you find. Note fixes on the card and in findings.
+- **Never create a state where a system dialog can block the run.** Geoff runs walks unattended.
+  - Full-screen computer control only while Geoff is at the Mac, never during unattended runs: system dialogs land in front of it and stop it.
+  - No `screencapture` (Screen Recording prompt; `DUO_SCREENCAPTURE=1` only if Geoff asks).
+  - No AppleScript to Duo (Automation prompt). Quit Duo with SIGTERM (`open-duo.sh` does).
+  - Nothing that reads privacy-guarded folders (F-53).
+  - Escape and ⌘Q can't be sent by computer control (it keeps Escape for itself; ⌘Q is a system shortcut). Use Cancel buttons and `NSApp.terminate` / SIGTERM, and list them under `human`.
+  - If a dialog appears anyway, stop that line of testing, tell Geoff what it is, and carry on with tests that don't need the screen.
+- When you add a feature to a walk later (new work), give it a setup and run it the same way before republishing.
+
 ## 2. Fixtures
 
 `scripts/acceptance/fixtures.py` builds `~/DuoAcceptance` (workspace, elsewhere folders, fake legacy config) and plants `[fixture]` sessions in `~/.claude/projects`. If a feature needs a state the fixtures lack (a project, a session, a document in some state), **add it to `fixtures.py`**, don't hand-make it. Then `python3 scripts/acceptance/fixtures.py --reset`. Check Duo sees it: `scripts/run-live.sh "$HOME/DuoAcceptance/workspace" build/ui/acceptance.png "wait,wait,wait,wait,projects"`. `--clean` removes everything it made (to the Trash).
@@ -83,6 +102,10 @@ Then:
 - Record the outcome in `walk.md` (counts, and where each rejection went), set status to `closed` (or `deferred` if untested items remain and Geoff stopped), update the README table. Commit.
 
 After fixing rejected items, Geoff re-tests them on the same page: clear those verdicts with `ArtifactData` `update` (`status: ""`, keep the comment, pinned with `if_version`) and tell him which to re-check.
+
+## Clearing what's done
+
+The page's **Clear done** hides accepted tests and answered decisions (their docs get `cleared: true`; **Show cleared** brings them back). When you read back, record answered decisions in the decision log and drop them, and drop accepted tests, from the next walk's `features.json`. The ledger keeps the history.
 
 ## Deferral
 

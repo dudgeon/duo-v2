@@ -218,6 +218,8 @@ public class DuoWebView: WKWebView {
         let hasSelection = ids.contains("WKMenuItemIdentifierCopy")
         let onImage = ids.contains("WKMenuItemIdentifierCopyImage")
         guard let items = extraMenuItems?(hasSelection, onImage), !items.isEmpty else { return }
+        // Duo's Reload Page replaces WebKit's own Reload (they did the same thing, twice).
+        for item in menu.items where item.identifier?.rawValue == "WKMenuItemIdentifierReload" { menu.removeItem(item) }
         for (i, item) in items.enumerated() { menu.insertItem(item, at: i) }
         menu.insertItem(.separator(), at: items.count)
     }

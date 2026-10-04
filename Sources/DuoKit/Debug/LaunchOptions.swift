@@ -4,7 +4,7 @@ import Foundation
 ///
 ///   Duo --state overview                       open in a target state
 ///   Duo --state overview --capture out.png     ...capture the content below the toolbar, then quit
-///   Duo --capture-window out.png               capture the whole window with screencapture(1)
+///   Duo --capture-window out.png               capture the whole window (drawn; screencapture(1) only with DUO_SCREENCAPTURE=1)
 ///   Duo --fixture path/to/fixture.json         use another fixture file
 ///   Duo --left collapsed                       start with the left pane collapsed
 ///   Duo --workspace ~/work                     real projects under a folder, live sessions

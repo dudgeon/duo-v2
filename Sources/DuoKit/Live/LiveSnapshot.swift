@@ -78,14 +78,19 @@ public enum LiveSnapshot {
         // Every session filed anywhere, and where: cwd-based attribution never steals them.
         var filedIn: [String: String] = [:]   // id → resolved folder path
         for (id, f) in actual { filedIn[id] = resolve(f.folder.path) }
-        let history = ctx.historyOverride ?? (ctx.includeHistory ? ClaudeStorage.history() : [])
+        // Claude's history, plus sessions only Duo's archive still has (Claude's cleanup removed the
+        // transcript, DL-44): they stay listed by title and resume from the copy.
+        let history = ctx.historyOverride ?? (ctx.includeHistory
+            ? ClaudeStorage.history() + SessionArchive.purged().map { (id: $0.id, transcript: $0.copy, cwd: $0.cwd) } : [])
 
         func makeSession(_ id: String, project name: String, folder: URL, entry: SessionIndex.Entry?) -> Fixture.Session {
             let beacon = beacons.first { $0.sessionId == id }
             let hooks = ctx.events.flatMap { HookEvents.summarize(HookEvents.read(id, in: $0)) }
             let live = beacon.map { Attention.live(beacon: $0, hooks: hooks, seenAt: ctx.seen[id]) }
             let mtime = history.first { $0.id == id }.flatMap { try? $0.transcript.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate }
-            let since = live?.since ?? (entry?.createdAt ?? mtime).map { $0.timeIntervalSince1970 * 1000 }
+            // Last activity: the transcript's change time when it's newer than the filing (a session
+            // filed 44 minutes ago and used 2 minutes ago is 2m old).
+            let since = live?.since ?? [entry?.createdAt, mtime].compactMap { $0 }.max().map { $0.timeIntervalSince1970 * 1000 }
             return Fixture.Session(
                 name: title(id: id, folder: folder, beacon: beacon),
                 project: name,
