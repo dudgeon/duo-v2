@@ -14,8 +14,16 @@ public enum InstallPrompt {
                 + Installer.plannedChanges(cli: cli).map { "• " + $0 }.joined(separator: "\n\n")
             alert.addButton(withTitle: "Install")
             alert.addButton(withTitle: "Not Now")
-            Installer.recordConsent(alert.runModal() == .alertFirstButtonReturn, cli: cli)
+            DuoAlert.present(alert) { r in
+                Installer.recordConsent(r == .alertFirstButtonReturn, cli: cli)
+                refresh(cli: cli)
+            }
+            return
         }
+        refresh(cli: cli)
+    }
+
+    static func refresh(cli: String) {
         let report = Installer.install(cli: cli)
         if !report.lines.isEmpty { FileHandle.standardError.write(Data(("install: " + report.lines.joined(separator: " | ") + "\n").utf8)) }
     }

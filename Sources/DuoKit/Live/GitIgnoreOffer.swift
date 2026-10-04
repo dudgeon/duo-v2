@@ -47,9 +47,8 @@ enum GitIgnoreOffer {
     }
 
     static func ask(project: String, repo: URL, interactive: Bool) {
-        let add: Bool
         if let auto = ProcessInfo.processInfo.environment["DUO_GITIGNORE_ANSWER"] {
-            add = auto == "add"   // scripted runs and checks
+            record(auto == "add", repo: repo)   // scripted runs and checks
         } else if interactive {
             showing = true
             let alert = NSAlert()
@@ -58,11 +57,15 @@ enum GitIgnoreOffer {
             alert.informativeText = "Duo keeps a small .duo folder in \(place) for its list of sessions. Add .duo/ to the repository's .gitignore so it stays out of commits?"
             alert.addButton(withTitle: "Add to .gitignore")
             alert.addButton(withTitle: "Don't Add")
-            add = alert.runModal() == .alertFirstButtonReturn
-            showing = false
-        } else {
-            return  // captures never block on a prompt; ask next time
+            DuoAlert.present(alert) { r in
+                record(r == .alertFirstButtonReturn, repo: repo)
+                showing = false
+            }
         }
+        // Captures never prompt; they ask next time.
+    }
+
+    static func record(_ add: Bool, repo: URL) {
         if add {
             let file = repo.appending(path: ".gitignore")
             var text = (try? String(contentsOf: file, encoding: .utf8)) ?? ""

@@ -196,6 +196,7 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
   - Captures draw the window themselves; screencapture only with `DUO_SCREENCAPTURE=1`.
   - Duo quits on SIGTERM as on ⌘Q, so scripts quit by pid: `run-live.sh` and `open-duo.sh` no longer use AppleScript.
   - The acceptance-walk skill now forbids unattended full-screen control and anything that prompts.
+  - Duo's own questions (the .gitignore offer, install consent, move/merge confirmations, error notes) were app-modal alerts. `runModal` holds the main queue, so while one waited unanswered, duo2, the edit hook and refresh all stalled. They are now sheets on the window (`DuoAlert`): the question waits, and the app keeps working. Checked: `duo2 ping` and `duo2 projects` answered with the .gitignore sheet up.
 - **Also learned:**
   - Computer control keeps Escape for itself and can't send ⌘Q, so Escape and ⌘Q behaviour stay on Geoff's list.
   - Background `app_key` Return reaches a Duo terminal, which is enough to run Claude turns unattended.

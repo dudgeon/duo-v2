@@ -165,11 +165,10 @@ extension AppModel {
         alert.informativeText = detail
         alert.addButton(withTitle: button)
         alert.addButton(withTitle: "Cancel")
-        guard let window = NSApp.windows.first(where: { $0.title == "Duo" }) else { return then(alert.runModal() == .alertFirstButtonReturn) }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             MainActor.assumeIsolated {
                 NSApp.activate(ignoringOtherApps: true)
-                alert.beginSheetModal(for: window) { r in MainActor.assumeIsolated { then(r == .alertFirstButtonReturn) } }
+                DuoAlert.present(alert) { r in then(r == .alertFirstButtonReturn) }
             }
         }
     }
@@ -177,7 +176,7 @@ extension AppModel {
     func info(_ text: String) {
         let alert = NSAlert()
         alert.messageText = text
-        alert.runModal()
+        DuoAlert.present(alert)
     }
 
     /// Edit › Undo, through the main window's undo manager.
