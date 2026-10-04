@@ -41,6 +41,10 @@ public final class AppModel {
     public var consoleTab: String?              // Session.tabKey (id when live, else name)
     public var rightTab: String?                // "Project", a group name, or a document path
     public var selectedFile: String?            // path relative to the project
+    /// Open document tabs by project (DL-60): switching to Project no longer closes them.
+    public var openDocumentsByProject: [String: [String]] = [:]
+    /// The file or folder being named inline in the tree (DL-62).
+    public var renamingPath: String?
 
     public var peekOpen = false
     /// The selected card in the peek, by Session.id.
@@ -328,6 +332,7 @@ public final class AppModel {
             selectedSidebarItem = target?.id
         }
         if let doc = document ?? target?.document {
+            if !(openDocumentsByProject[name] ?? []).contains(doc) { openDocumentsByProject[name, default: []].append(doc) }
             rightTab = doc
             selectedFile = doc
         } else {

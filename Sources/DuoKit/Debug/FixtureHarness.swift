@@ -61,6 +61,14 @@ public enum FixtureHarness {
         case "focus-tile": model.moveTileFocus(dx: 0, dy: 0)
         case "new": model.newSession()
         case "close": model.closeVisibleSession()
+        case "newfile": model.newMarkdownFile(near: parts.count > 1 ? parts[1] : nil)
+        case "newfolder": model.newFolder(near: parts.count > 1 ? parts[1] : nil)
+        case "rename":  // rename:<path>=<new name>
+            if parts.count > 1 { let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init); if kv.count == 2 { model.commitRename(kv[0], to: kv[1]) } }
+        case "dup": if parts.count > 1 { model.duplicate(parts[1]) }
+        case "trash": if parts.count > 1 { model.moveToTrash(parts[1]) }
+        case "tabs":
+            FileHandle.standardError.write(Data("tabs: \(model.openDocuments) right=\(model.rightTab ?? "-") renaming=\(model.renamingPath ?? "-") editor=\(model.editorIfLoaded?.url?.lastPathComponent ?? "-")\ntree: \(model.currentProject.flatMap { model.fixture.projectFiles[$0.name] } ?? [])\n".utf8))
         case "resume":
             if parts.count > 1, let s = model.fixture.sessions.first(where: { $0.sessionId?.hasPrefix(parts[1]) == true }), let id = s.sessionId {
                 model.open(project: s.project); model.consoleTab = id
@@ -139,8 +147,26 @@ public enum FixtureHarness {
         }
 
         guard options.capturing else { return }
-        // Give SwiftUI and the split view a moment to settle at the new size.
+        // Give SwiftUI and the split view a moment to settle at the new size. When the peek
+        // should be open, also wait for its popover to be on screen and done animating: a fixed
+        // delay sometimes caught it half-drawn or not yet there (F-44).
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5 + 0.6 * Double(options.thenActions.count)) {
+            whenPopoverSettled(model: model) { capture() }
+        }
+
+        func whenPopoverSettled(model: AppModel, tries: Int = 0, then: @escaping @MainActor () -> Void) {
+            let shown = NSApp.windows.contains { $0.isVisible && $0.className.contains("Popover") }
+            if !model.peekOpen || (shown && tries > 0) || tries >= 30 {
+                // One more beat after it appears, for the fade-in.
+                DispatchQueue.main.asyncAfter(deadline: .now() + (model.peekOpen ? 0.4 : 0)) { MainActor.assumeIsolated { then() } }
+                return
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                MainActor.assumeIsolated { whenPopoverSettled(model: model, tries: shown ? max(tries, 1) : tries + 1, then: then) }
+            }
+        }
+
+        func capture() {
             var failed = false
             do {
                 if let path = options.capturePath {

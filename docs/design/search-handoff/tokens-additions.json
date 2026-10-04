@@ -1,0 +1,102 @@
+{
+  "$note": "Additions to docs/design/build-handoff/tokens.json for search. Nothing existing changes. Points.",
+  "color": {
+    "light": {
+      "scrim": {
+        "value": "rgba(31, 35, 40, 0.32)",
+        "use": "Dims the whole window behind the search modal. The text colour at 32%."
+      }
+    }
+  },
+  "font": {
+    "style": {
+      "searchField": {
+        "family": "ui",
+        "size": 17,
+        "lineHeight": 24,
+        "weight": "regular",
+        "use": "The modal's field. The only new type size."
+      }
+    }
+  },
+  "size": {
+    "searchModal": {
+      "width": 960,
+      "top": 92,
+      "left": "centred (240 at 1440)",
+      "fieldRowHeight": 52,
+      "listColumnWidth": 420,
+      "bodyMinHeight": 440,
+      "footerHeight": 34,
+      "radius": 10
+    },
+    "searchRow": {
+      "padding": {
+        "top": 8,
+        "horizontal": 10,
+        "bottom": 10
+      },
+      "radius": 6,
+      "gap": 2,
+      "metaIndent": 20,
+      "kindIcon": 12,
+      "snippetMaxLines": 2
+    },
+    "searchPreview": {
+      "padding": {
+        "top": 14,
+        "horizontal": 20,
+        "bottom": 16
+      },
+      "blockRadius": 6,
+      "blockPadding": {
+        "top": 10,
+        "horizontal": 12,
+        "bottom": 12
+      }
+    },
+    "actionMenu": {
+      "width": 300,
+      "rowHeight": 24,
+      "padding": 6,
+      "radius": 10,
+      "anchor": {
+        "fromRowRight": 8,
+        "fromRowTop": 30
+      }
+    },
+    "toolbarSearchField": {
+      "width": 300,
+      "height": 24,
+      "label": "Search all projects",
+      "hint": "⇧⌘A"
+    }
+  },
+  "reuse": {
+    "rowHover": "ground",
+    "rowSelected": "selected",
+    "previewHighlight": "selected",
+    "openedFromSearchOutline": "1.5 text, inset",
+    "pill": "controlEdge border, radius 9, 11/16",
+    "filterSet": "selected fill, semibold label",
+    "footerFill": "ground",
+    "shadow": "shadow.popover"
+  },
+  "icon": {
+    "file": {
+      "viewBox": "0 0 12 12",
+      "svg": "<path d='M2.5 1h4.5l2.5 2.5V11h-7z' fill='none' stroke-width='1.2' stroke-linejoin='round'/><path d='M7 1v2.5h2.5' fill='none' stroke-width='1.2' stroke-linejoin='round'/>",
+      "stroke": "text2",
+      "sfSymbol": "doc"
+    },
+    "session": {
+      "viewBox": "0 0 12 12",
+      "svg": "<path d='M1.5 2h9v6.5H6L3.5 10.5v-2h-2z' fill='none' stroke-width='1.2' stroke-linejoin='round'/>",
+      "stroke": "text2",
+      "sfSymbol": "bubble.left"
+    },
+    "memory": {
+      "note": "Not designed."
+    }
+  }
+}

@@ -184,6 +184,21 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-44 · File verbs, document tabs, the Project tab, and a save race (2026-10-03)
+
+Built from Geoff's requests (DL-59–DL-62). Live mode; fixture mode attaches none of it.
+
+- **File verbs** (`FileActions`, `AppModel+Files`): New Markdown File (⌘N), New Folder (⇧⌘N), New from Template (the project's `templates/`, then Home's), Rename (inline), Duplicate, Move To…, Move to Trash (never a hard delete), Copy Path, Copy Relative Path, Copy as Link (`[name](relative/path.md)`, DL-17), Reveal in Finder, Open With (default app, others, or Other…), Send to Claude (types `@path ` into the console session's prompt without sending, DL-45). The same menu on file rows and on document tabs (plus Close Tab, Close Other Tabs); the tree's background offers the "new" verbs. Names never clobber ("Untitled 2.md").
+- **Inline naming** (DL-62): a native text field in the row, the stem selected; Return or clicking away confirms, Esc cancels. Rename carries open tabs and the editor to the new path; Move to Trash closes them.
+- **Document tabs persist** per project; switching to Project no longer closes your file. The right pane has a + like the console's. **The Project tab opens `PROJECT.md`** (or `HOME.md`) in the editor (DL-60); its frontmatter shows as text until ENH-1. "Resume a session" is gone (DL-59).
+- **The tree shows folders**, empty ones included (the snapshot now lists `folder/` entries).
+- **⌘W closes the focused tab**: the document when the editor has focus, else the session (menu: Close Tab).
+- **A save race, found by the checks here:** switching documents started the old file's save, then loaded the new file, which replaced the editor's idea of "what's on disk" before the save's text came back. The old file was then compared with the new file's bytes and rewritten (identical bytes this time; with different timing, the wrong file could have been written). Saves now capture the file and its baseline up front, skip entirely when nothing was typed, and only update state if the file is still the one open. Verified: viewing `PROJECT.md` no longer touches it; an edit followed by an immediate switch saves the right text to the right file.
+- **Flaky peek captures:** flow-zoom-3's popover was missing or half-drawn in about half the captures with this change set (a fixed 1.5 s delay sometimes landed before the popover finished appearing). The harness now waits for the popover window and its fade before capturing: 6/6. Bisect: 04c1f09 was stable, so something in this set slowed the first render slightly; not traced further.
+- **Fixture targets vs DL-59:** project, flow-zoom-2 and flow-zoom-3 now differ from the targets only where "Resume a session" was (rows 242–268 pt); an exemption by decision.
+- Verified live (harness): new file → opened and naming; rename → tab and editor follow; new folder shown; duplicate; trash. **Not yet seen with a real right-click** (the screen-takeover prompt timed out): Geoff to try.
+- 126 checks pass.
+
 ## F-43 · With the screen unlocked: the real window, menus and the editor by hand (2026-10-03)
 
 Checked with computer-use on the running app (live mode, demo workspace).

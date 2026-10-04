@@ -1,0 +1,152 @@
+{
+  "$note": "Every search design file. All are targets.",
+  "canvas": "https://claude.ai/artifact/Hip1Qk4vRHq2kWwXWnigic",
+  "canvasPage": "Search",
+  "snapshot": "2026-10-04",
+  "screens": [
+    {
+      "file": "screens/search-overview.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Search with results, at All projects. The canonical screen: field, scope switch, filters, result list, preview, coverage line, footer",
+      "canvasBoard": "Search-Overview.dc.html"
+    },
+    {
+      "file": "screens/search-project.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "The same search opened from inside checkout-redesign: all projects in scope, this project's results first",
+      "canvasBoard": "Search-Project.dc.html"
+    },
+    {
+      "file": "screens/search-project-narrowed.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Scope narrowed to the current project, with a way back to the results elsewhere",
+      "canvasBoard": "Search-Project-Narrowed.dc.html"
+    },
+    {
+      "file": "screens/search-jump.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "The Jump scope (Command-K): the same modal, matching projects, groups and sessions by name",
+      "canvasBoard": "Search-Jump.dc.html"
+    },
+    {
+      "file": "screens/search-empty.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Nothing typed: recent searches and one line of help",
+      "canvasBoard": "Search-Empty.dc.html"
+    },
+    {
+      "file": "screens/search-typing.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Results arriving while the search is still running",
+      "canvasBoard": "Search-Typing.dc.html"
+    },
+    {
+      "file": "screens/search-exact.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Exact mode, for a quoted phrase or an identifier",
+      "canvasBoard": "Search-Exact.dc.html"
+    },
+    {
+      "file": "screens/search-similar.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Find similar, pivoted from a result",
+      "canvasBoard": "Search-Similar.dc.html"
+    },
+    {
+      "file": "screens/search-none.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "No results, with the filters that may be hiding them",
+      "canvasBoard": "Search-None.dc.html"
+    },
+    {
+      "file": "screens/search-first-run.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "First run: the index is being built from nothing",
+      "canvasBoard": "Search-First-Run.dc.html"
+    },
+    {
+      "file": "screens/search-rebuilding.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "The index is being rebuilt; search is unavailable for a few minutes",
+      "canvasBoard": "Search-Rebuilding.dc.html"
+    },
+    {
+      "file": "screens/search-error.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "The index cannot be read",
+      "canvasBoard": "Search-Error.dc.html"
+    },
+    {
+      "file": "screens/search-actions-file.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Tab pressed on a file result: its actions",
+      "canvasBoard": "Search-Actions-File.dc.html"
+    },
+    {
+      "file": "screens/search-actions-session.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Tab pressed on a session result: its actions",
+      "canvasBoard": "Search-Actions-Session.dc.html"
+    },
+    {
+      "file": "screens/search-multi.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Two results selected, to send to Claude together",
+      "canvasBoard": "Search-Multi.dc.html"
+    },
+    {
+      "file": "screens/search-open-file.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "After Return on a file result: the document open at the matched lines (no modal)",
+      "canvasBoard": "Search-Open-File.dc.html"
+    },
+    {
+      "file": "screens/search-open-session.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "After \"Open read-only\" on a session result: the transcript at the matched turn (no modal)",
+      "canvasBoard": "Search-Open-Session.dc.html"
+    },
+    {
+      "file": "screens/search-look.html",
+      "kind": "target",
+      "width": 1440,
+      "height": 760,
+      "shows": "The parts on one sheet: row states, scope, filters, coverage, action menu, scrim, keys",
+      "canvasBoard": "Search-Look.dc.html"
+    }
+  ]
+}

@@ -30,7 +30,6 @@ struct ProjectSidebarPane: View {
                         }
                     }
                     HStack(spacing: DuoSpace.gapButtonToButton) {
-                        Button("Resume a session") {}.buttonStyle(.duo)
                         Button("+ New session") { model.newSession() }.buttonStyle(.duo)
                     }
                     .padding(.horizontal, DuoSpace.panePadding)
@@ -177,6 +176,8 @@ struct FileTreePane: View {
             ForEach(tree) { node in FileRow(node: node, depth: 0) }
         }
         .padding(.bottom, 12)
+        .contentShape(Rectangle())
+        .modifier(LiveContextMenu { NewItemsMenu(near: nil) })
     }
 }
 
@@ -190,7 +191,9 @@ struct FileNode: Identifiable, Equatable {
     static func tree(from paths: [String]) -> [FileNode] {
         var root: [FileNode] = []
         for path in paths {
-            insert(path.split(separator: "/").map(String.init), prefix: "", into: &root)
+            var parts = path.split(separator: "/").map(String.init)
+            if path.hasSuffix("/"), let last = parts.popLast() { parts.append(last + "/") }
+            insert(parts, prefix: "", into: &root)
         }
         return sorted(root)
     }
@@ -198,6 +201,14 @@ struct FileNode: Identifiable, Equatable {
     private static func insert(_ parts: [String], prefix: String, into nodes: inout [FileNode]) {
         guard let head = parts.first else { return }
         let path = prefix.isEmpty ? head : "\(prefix)/\(head)"
+        // "folder/" (live snapshot) is a folder, even an empty one.
+        if parts.count == 1, head.hasSuffix("/") {
+            let name = String(head.dropLast()), folderPath = String(path.dropLast())
+            if !nodes.contains(where: { $0.name == name && $0.children != nil }) {
+                nodes.append(FileNode(name: name, path: folderPath, children: []))
+            }
+            return
+        }
         if parts.count == 1 {
             nodes.append(FileNode(name: head, path: path, children: nil))
             return
@@ -232,9 +243,16 @@ struct FileRow: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: node.children == nil ? DuoSpace.gapRowItems : DuoSpace.gapGlyphToLabel) {
                 if node.children != nil { Chevron(direction: .down) }
-                Text(node.children == nil ? node.name : "\(node.name)/")
-                    .duoText(selected ? .monoActiveTab : .mono)
-                    .lineLimit(1)
+                if model.renamingPath == node.path {
+                    InlineNameField(name: node.name) { new in
+                        if let new { model.commitRename(node.path, to: new) } else { model.renamingPath = nil }
+                    }
+                    .frame(height: 18)
+                } else {
+                    Text(node.children == nil ? node.name : "\(node.name)/")
+                        .duoText(selected ? .monoActiveTab : .mono)
+                        .lineLimit(1)
+                }
                 if edited {
                     Spacer(minLength: 8)
                     Text("edited by Claude").font(.system(size: 12)).lineHeight(.exact(points: 20)).offset(y: 2)
@@ -251,7 +269,8 @@ struct FileRow: View {
             }
             .padding(.horizontal, DuoSpace.selectionInset)
             .contentShape(Rectangle())
-            .onActivate { if node.children == nil { model.selectedFile = node.path; model.rightTab = node.path } }
+            .onActivate { if node.children == nil { model.openDocument(node.path) } }
+            .modifier(LiveContextMenu { FileMenu(path: node.path, isFolder: node.children != nil, onTab: false) })
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(selected ? .isSelected : [])
             if let children = node.children {
@@ -320,7 +339,19 @@ struct RightPane: View {
                         .foregroundStyle(active ? DuoColor.text : DuoColor.text2)
                         .lineLimit(1)
                         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
-                        .onActivate { model.rightTab = tab.id }
+                        .onActivate { model.rightTab = tab.id; if tab.isDocument { model.selectedFile = tab.id } }
+                        .modifier(LiveContextMenu(enabled: tab.isDocument) {
+                            Button("Close Tab") { model.closeDocument(tab.id) }
+                            Button("Close Other Tabs") { model.closeOtherDocuments(than: tab.id) }
+                            Divider()
+                            FileMenu(path: tab.id, isFolder: false, onTab: true)
+                        })
+                }
+                // New Markdown file, the same treatment as the console's + (DL-61).
+                if model.terminalsMode == .live, model.projectFolder != nil {
+                    Text("+").duoText(.body).foregroundStyle(DuoColor.text2)
+                        .onActivate { model.newMarkdownFile(near: model.selectedFile) }
+                        .accessibilityLabel("New Markdown file")
                 }
                 Spacer(minLength: 0)
             }
@@ -329,10 +360,13 @@ struct RightPane: View {
             DuoColor.rule.frame(height: 1)
             if let path = model.rightTab, path.contains("."), let file = model.liveFile(path) {
                 DocumentEditorView(editor: model.editor, file: file)
+            } else if model.rightTab == "Project" || model.rightTab == nil, let own = model.projectFile, let file = model.liveFile(own) {
+                // The Project tab is the project's own file (DL-60).
+                DocumentEditorView(editor: model.editor, file: file)
             } else if let path = model.rightTab, path.contains(".") {
                 DocumentPlaceholder(path: path)
             } else {
-                // Project tab and group page are not designed in the final look (handoff §3.5).
+                // Fixture mode: the Project tab isn't designed in the final look (handoff §3.5).
                 Color.clear
             }
         }
@@ -340,15 +374,128 @@ struct RightPane: View {
         .background(DuoColor.pane)
     }
 
-    private var rightTabs: [(id: String, title: String)] {
-        var tabs: [(id: String, title: String)] = [(id: "Project", title: "Project")]
+    private var rightTabs: [(id: String, title: String, isDocument: Bool)] {
+        var tabs: [(id: String, title: String, isDocument: Bool)] = [(id: "Project", title: "Project", isDocument: false)]
         if let group = model.selectedSidebarItem, model.fixture.groups.contains(where: { $0.name == group }) {
-            tabs.append((id: group, title: group))
+            tabs.append((id: group, title: group, isDocument: false))
         }
-        if let doc = model.rightTab, doc.contains(".") {
-            tabs.append((id: doc, title: (doc as NSString).lastPathComponent))
+        for doc in model.openDocuments where doc != model.projectFile {
+            tabs.append((id: doc, title: (doc as NSString).lastPathComponent, isDocument: true))
+        }
+        // Fixture mode keeps its single document tab (the targets).
+        if let doc = model.rightTab, doc.contains("."), !tabs.contains(where: { $0.id == doc }), doc != model.projectFile {
+            tabs.append((id: doc, title: (doc as NSString).lastPathComponent, isDocument: true))
         }
         return tabs
+    }
+}
+
+/// The "new" verbs: for the tree's background, folders and files (DL-61).
+struct NewItemsMenu: View {
+    @Environment(AppModel.self) private var model
+    let near: String?
+
+    var body: some View {
+        Button("New Markdown File") { model.newMarkdownFile(near: near) }
+        Button("New Folder") { model.newFolder(near: near) }
+        Menu("New from Template") {
+            let templates = model.templates
+            if templates.isEmpty {
+                Button("No templates yet: add .md files to a templates folder") {}.disabled(true)
+            }
+            ForEach(templates, id: \.self) { t in
+                Button(t.deletingPathExtension().lastPathComponent) { model.newFromTemplate(t, near: near) }
+            }
+        }
+    }
+}
+
+/// Everything you can do with a file or folder: the tree's right-click menu and document tabs
+/// show the same verbs (DL-61).
+struct FileMenu: View {
+    @Environment(AppModel.self) private var model
+    let path: String
+    let isFolder: Bool
+    let onTab: Bool
+
+    var body: some View {
+        if !isFolder && !onTab { Button("Open") { model.openDocument(path) } }
+        if !isFolder {
+            Menu("Open With") {
+                if let url = model.projectFolder?.appending(path: path) {
+                    ForEach(Array(FileActions.apps(for: url).enumerated()), id: \.offset) { i, app in
+                        Button(FileManager.default.displayName(atPath: app.path) + (i == 0 ? " (default)" : "")) {
+                            NSWorkspace.shared.open([url], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+                        }
+                    }
+                    Divider()
+                }
+                Button("Other…") { model.openWithChosenApp(path) }
+            }
+        }
+        Button("Reveal in Finder") { model.reveal(path) }
+        Divider()
+        Button("Copy Path") { model.copyPath(path, relative: false) }
+        Button("Copy Relative Path") { model.copyPath(path, relative: true) }
+        if !isFolder { Button("Copy as Link") { model.copyLink(path) } }
+        Button("Send to Claude") { model.sendToClaude(path) }.disabled(model.consoleTerminal == nil)
+        Divider()
+        NewItemsMenu(near: path)
+        Divider()
+        Button("Rename") { model.renamingPath = path }.disabled(onTab && !model.isInTree(path))
+        Button("Duplicate") { model.duplicate(path) }
+        Button("Move To…") { model.moveToFolder(path) }
+        Divider()
+        Button("Move to Trash") { model.moveToTrash(path) }
+    }
+}
+
+/// Inline naming in the tree, like Finder (DL-62): the name is selected without its extension;
+/// Return confirms, Esc cancels.
+struct InlineNameField: NSViewRepresentable {
+    let name: String
+    let done: (String?) -> Void
+
+    func makeNSView(context: Context) -> NSTextField {
+        let f = NSTextField(string: name)
+        f.font = NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)
+        f.focusRingType = .none
+        f.isBezeled = false
+        f.drawsBackground = true
+        f.backgroundColor = DuoNSColor.pane
+        f.delegate = context.coordinator
+        DispatchQueue.main.async {
+            f.window?.makeFirstResponder(f)
+            let stem = (name as NSString).deletingPathExtension
+            f.currentEditor()?.selectedRange = NSRange(location: 0, length: (stem as NSString).length)
+        }
+        return f
+    }
+
+    func updateNSView(_ f: NSTextField, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(done: done) }
+
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        let done: (String?) -> Void
+        var finished = false
+        init(done: @escaping (String?) -> Void) { self.done = done }
+
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+            if selector == #selector(NSResponder.cancelOperation(_:)) { finish(nil); return true }
+            if selector == #selector(NSResponder.insertNewline(_:)) { finish(control.stringValue); return true }
+            return false
+        }
+
+        func controlTextDidEndEditing(_ obj: Notification) {
+            if let f = obj.object as? NSTextField { finish(f.stringValue) }  // clicking away confirms, like Finder
+        }
+
+        private func finish(_ value: String?) {
+            guard !finished else { return }
+            finished = true
+            done(value)
+        }
     }
 }
 
@@ -383,5 +530,16 @@ struct DocumentPlaceholder: View {
             .padding(DuoSpace.documentPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+}
+
+/// A context menu only in live mode: the file verbs act on real folders, and fixture mode has none.
+struct LiveContextMenu<Items: View>: ViewModifier {
+    @Environment(AppModel.self) private var model
+    var enabled = true
+    @ViewBuilder let items: () -> Items
+
+    func body(content: Content) -> some View {
+        if enabled && model.terminalsMode == .live { content.contextMenu { items() } } else { content }
     }
 }

@@ -15,10 +15,12 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case toggleRightPane    // ⌥⌘0, as Xcode's inspector
     case nextPane           // ⌥⌘→
     case previousPane       // ⌥⌘←
+    case newMarkdown        // ⌘N: a new Markdown file in the project, named inline (DL-61, DL-62)
+    case newFolder          // ⇧⌘N
     case save               // ⌘S saves the open document now (it also autosaves)
     case bold               // ⌘B, only while the editor has focus (stack rec #9)
     case italic             // ⌘I, likewise
-    case closeSession       // ⌘W closes the session tab, never the window (LR-60, LR-13)
+    case closeSession       // ⌘W closes the focused tab (document or session), never the window (LR-60, LR-13)
     case closeWindow        // ⇧⌘W, as in browsers once ⌘W closes tabs
 
     public var title: String {
@@ -33,10 +35,12 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .toggleRightPane: "Toggle Right Pane"
         case .nextPane: "Next Pane"
         case .previousPane: "Previous Pane"
+        case .newMarkdown: "New Markdown File"
+        case .newFolder: "New Folder"
         case .save: "Save"
         case .bold: "Bold"
         case .italic: "Italic"
-        case .closeSession: "Close Session"
+        case .closeSession: "Close Tab"
         case .closeWindow: "Close Window"
         }
     }
@@ -53,6 +57,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .toggleRightPane: KeyboardShortcut("0", modifiers: [.command, .option])
         case .nextPane: KeyboardShortcut(.rightArrow, modifiers: [.command, .option])
         case .previousPane: KeyboardShortcut(.leftArrow, modifiers: [.command, .option])
+        case .newMarkdown: KeyboardShortcut("n", modifiers: .command)
+        case .newFolder: KeyboardShortcut("n", modifiers: [.command, .shift])
         case .save: KeyboardShortcut("s", modifiers: .command)
         case .bold: KeyboardShortcut("b", modifiers: .command)
         case .italic: KeyboardShortcut("i", modifiers: .command)
@@ -69,7 +75,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .togglePeek: !model.altitude.isAllProjects && !model.needsYouElsewhere.isEmpty
         case .jumpToPeekSelection: model.peekOpen
         case .goHome, .toggleSidebar, .closeWindow: true
-        case .closeSession: model.visibleTerminal != nil
+        case .closeSession: model.visibleTerminal != nil || (model.editorIfLoaded?.hasFocus == true && model.openDocuments.contains(model.rightTab ?? ""))
+        case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
         case .save: model.terminalsMode == .live && model.editor.url != nil
         case .bold, .italic: model.editorIfLoaded?.hasFocus == true
         }
@@ -83,7 +90,11 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .togglePeek: model.togglePeek()
         case .jumpToPeekSelection: model.jumpToPeekSelection()
         case .toggleSidebar: model.leftCollapsed.toggle()
-        case .closeSession: model.closeVisibleSession()
+        case .closeSession:
+            if model.editorIfLoaded?.hasFocus == true, let doc = model.rightTab, model.openDocuments.contains(doc) { model.closeDocument(doc) }
+            else { model.closeVisibleSession() }
+        case .newMarkdown: model.newMarkdownFile(near: model.selectedFile)
+        case .newFolder: model.newFolder(near: model.selectedFile)
         case .save: model.editor.saveNow()
         case .bold: model.editor.run("duo.exec('bold'); return 1") { _ in }
         case .italic: model.editor.run("duo.exec('italic'); return 1") { _ in }
@@ -100,6 +111,10 @@ public struct DuoCommands: Commands {
     public init(model: AppModel) { self.model = model }
 
     public var body: some Commands {
+        CommandGroup(replacing: .newItem) {
+            item(.newMarkdown)
+            item(.newFolder)
+        }
         CommandGroup(replacing: .saveItem) {
             item(.save)
             item(.closeSession)

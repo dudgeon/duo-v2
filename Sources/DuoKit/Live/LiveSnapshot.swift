@@ -163,6 +163,7 @@ public enum LiveSnapshot {
             if rel.split(separator: "/").count > 3 { e.skipDescendants(); continue }
             if ["node_modules", ".build", "build"].contains(u.lastPathComponent) { e.skipDescendants(); continue }
             if (try? u.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true { out.append(rel) }
+            else if (try? u.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true { out.append(rel + "/") }
             if out.count >= 200 { break }
         }
         return out.sorted()

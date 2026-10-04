@@ -63,6 +63,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public func open(_ file: URL) {
         guard file != url else { return }
         saveNow()
+        dirty = false
         url = file
         readOnlyReason = nil
         let go: () -> Void = { [weak self] in self?.load(file) }
@@ -109,19 +110,27 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public func saveNow(completion: (@MainActor () -> Void)? = nil) {
         guard let file = url, readOnlyReason == nil else { completion?(); return }
         if conflict { lastEvent = "save paused: conflict"; completion?(); return }
+        // Nothing typed since the last save: nothing to write (opening a file never writes it).
+        guard dirty else { completion?(); return }
+        // Capture the file and its baseline now: switching documents loads the next file before
+        // this save's text comes back, and comparing against *its* bytes rewrote this file (F-44).
+        let baseline = diskBytes
         webView.callAsyncJavaScript("return duo.text()", arguments: [:], in: nil, in: .page) { [weak self] result in
             guard let self, case .success(let value) = result, let text = value as? String else { completion?(); return }
             let data = Data(text.utf8)
-            if data != self.diskBytes {
+            let stillOpen = self.url == file
+            if data != baseline {
                 do {
                     let tmp = file.deletingLastPathComponent().appending(path: ".\(file.lastPathComponent).duo-\(UUID().uuidString.prefix(8))")
                     try data.write(to: tmp)
                     _ = try FileManager.default.replaceItemAt(file, withItemAt: tmp)
-                    self.diskBytes = data
-                    self.dirty = false
                     self.lastEvent = "saved"
-                    self.webView.evaluateJavaScript("duo.markSaved()")
-                    self.watch(file)  // the rename replaced the inode we were watching
+                    if stillOpen {
+                        self.diskBytes = data
+                        self.dirty = false
+                        self.webView.evaluateJavaScript("duo.markSaved()")
+                        self.watch(file)  // the rename replaced the inode we were watching
+                    }
                 } catch {
                     self.lastEvent = "save failed: \(error.localizedDescription)"
                 }
@@ -170,6 +179,20 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public var hasFocus: Bool {
         guard let responder = webView.window?.firstResponder as? NSView else { return false }
         return responder === webView || responder.isDescendant(of: webView)
+    }
+
+    /// The open file was renamed or moved on purpose: follow it, no reload.
+    public func fileMoved(to newURL: URL) {
+        url = newURL
+        watch(newURL)
+    }
+
+    /// The open file is gone (moved to the Trash): stop watching and never save it again.
+    public func closeFile() {
+        watcher?.cancel(); watcher = nil
+        saveTask?.cancel()
+        url = nil
+        dirty = false; conflict = false
     }
 
     /// What `duo2 doc-status` reports (LR-34).
