@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Duo acceptance: live workspace to organising</title>
+<style>
+:root {
+  --bg: #f6f6f4; --card: #ffffff; --ink: #1d1d1f; --muted: #6e6e73; --line: #e2e2e0;
+  --chip: #efefec; --accent: #2f6fde; --ok: #1f8a4c; --ok-bg: #e5f4ea; --bad: #c4362c; --bad-bg: #fbe9e7;
+  --later: #8a6a12; --later-bg: #f8f0d8; --code: #f1f1ee;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1b1d; --card: #252528; --ink: #ececee; --muted: #9a9aa0; --line: #38383c;
+    --chip: #303034; --accent: #6b9cf0; --ok: #5ccb8a; --ok-bg: #1d3427; --bad: #f0786d; --bad-bg: #3d2220;
+    --later: #e2c264; --later-bg: #3a321b; --code: #2e2e32;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1b1d; --card: #252528; --ink: #ececee; --muted: #9a9aa0; --line: #38383c;
+  --chip: #303034; --accent: #6b9cf0; --ok: #5ccb8a; --ok-bg: #1d3427; --bad: #f0786d; --bad-bg: #3d2220;
+  --later: #e2c264; --later-bg: #3a321b; --code: #2e2e32;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+code { font: 12.5px "SF Mono", ui-monospace, Menlo, monospace; background: var(--code); padding: 1px 4px; border-radius: 4px; overflow-wrap: anywhere; }
+header { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); }
+.bar { max-width: 860px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+h1 { font-size: 17px; margin: 0; flex: 1 1 260px; }
+.progress { flex: 1 1 100%; height: 6px; border-radius: 3px; background: var(--chip); overflow: hidden; display: flex; }
+.progress span { display: block; height: 100%; }
+.counts { color: var(--muted); font-size: 12.5px; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+button { font: inherit; color: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--card); border-radius: 7px; padding: 5px 11px; }
+button:hover { border-color: var(--muted); }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.primary:hover { border-color: var(--accent); filter: brightness(1.08); }
+main { max-width: 860px; margin: 0 auto; padding: 8px 16px 80px; }
+.intro { color: var(--muted); margin: 14px 0 4px; }
+.setup { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 10px 0 6px; }
+.setup ol { margin: 4px 0; padding-left: 20px; }
+.store { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 26px 0 8px; }
+.card { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 0 0 10px; }
+.card.accepted { border-left-color: var(--ok); }
+.card.rejected { border-left-color: var(--bad); }
+.card.deferred { border-left-color: var(--later); }
+.top { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.top h3 { font-size: 15px; margin: 0; flex: 1 1 240px; }
+.ref { font-size: 11.5px; color: var(--muted); }
+.pill { font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); }
+.pill.accepted { background: var(--ok-bg); color: var(--ok); }
+.pill.rejected { background: var(--bad-bg); color: var(--bad); }
+.pill.deferred { background: var(--later-bg); color: var(--later); }
+.what { margin: 4px 0 8px; color: var(--muted); }
+.label { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); margin-top: 6px; }
+ol.steps { margin: 2px 0 6px; padding-left: 20px; }
+.expect { margin: 2px 0 10px; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.actions .accept[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: #fff; }
+.actions .reject[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: #fff; }
+.actions .defer[aria-pressed="true"] { background: var(--later); border-color: var(--later); color: #fff; }
+.saved { font-size: 11.5px; color: var(--muted); margin-left: auto; }
+textarea { width: 100%; min-height: 54px; margin-top: 8px; resize: vertical; font: inherit; color: inherit;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; }
+.hidden { display: none; }
+dialog { max-width: min(720px, calc(100vw - 32px)); width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); padding: 16px; }
+dialog::backdrop { background: rgba(0,0,0,.35); }
+dialog textarea { min-height: 320px; font: 12.5px "SF Mono", ui-monospace, Menlo, monospace; }
+.row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.row .note { margin-right: auto; color: var(--muted); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1 id="title"></h1>
+    <span class="counts" id="counts"></span>
+    <button class="primary" id="copy">Copy feedback for Claude</button>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <div class="filters" role="group" aria-label="Show">
+      <button data-f="all" aria-pressed="true">All</button>
+      <button data-f="todo" aria-pressed="false">To do</button>
+      <button data-f="accepted" aria-pressed="false">Accepted</button>
+      <button data-f="rejected" aria-pressed="false">Rejected</button>
+      <button data-f="deferred" aria-pressed="false">Not now</button>
+    </div>
+  </div>
+</header>
+<main>
+  <p class="intro" id="intro"></p>
+  <div class="setup"><div class="label">Before you start</div><ol id="setup"></ol>
+    <p class="store" id="store">Connecting to saved verdicts…</p></div>
+  <div id="list"></div>
+</main>
+<dialog id="dlg">
+  <strong>Feedback for Claude</strong>
+  <textarea id="out" readonly></textarea>
+  <div class="row"><span class="note" id="dlgnote"></span><button id="close">Close</button></div>
+</dialog>
+
+<script type="application/json" id="data">{"sprint": "2026-10-04-live-to-organise", "title": "Duo acceptance: live workspace to organising", "intro": "Everything built since the live workspace (Phase E) up to organising sessions and projects. Open Duo on the fixture workspace first: run `scripts/acceptance/open-duo.sh` in the duo-v2 repo. Fixtures live in ~/DuoAcceptance (rebuild with `scripts/acceptance/fixtures.py --reset`).", "setup": ["In a terminal: `cd ~/repos/duo-v2 && scripts/acceptance/open-duo.sh`", "duo2 commands: use `~/repos/duo-v2/build/Duo.app/Contents/Helpers/duo2` from a normal terminal, or plain duo2 inside a Duo session's terminal."], "features": [{"id": "ws-projects", "group": "Live workspace", "title": "Projects come from your folders", "what": "The map shows projects from PROJECT.md files, grouped by their parent folder as topics, with goal, health and next step from the frontmatter.", "steps": ["Look at the All projects map."], "expect": "Topics Growth, Payments, Research; projects onboarding, checkout, refunds, reading with their goals; refunds says At risk · Spec review Oct 8.", "ref": "F-25"}, {"id": "ws-home", "group": "Live workspace", "title": "Home is the folder with HOME.md, always running", "what": "Home is marked by HOME.md (DL-52) and starts a session if it has none (DL-54).", "steps": ["Look at the left pane on All projects."], "expect": "★ home with a running Claude Code terminal in `~/DuoAcceptance/workspace/home`.", "ref": "DL-42, DL-52, DL-54"}, {"id": "ws-new-session", "group": "Live workspace", "title": "+ New session", "what": "Starts a Claude Code session in the project folder with a Duo-minted id, filed in the project's `.duo/sessions.json`.", "steps": ["Open checkout.", "Click + New session (left pane) or the + in the console tab strip."], "expect": "A new tab opens with Claude Code running in `~/DuoAcceptance/workspace/payments/checkout`.", "ref": "F-25"}, {"id": "zero-count", "group": "Live workspace", "title": "No \"need you\" count at zero", "what": "The toolbar's need-you count isn't drawn when nothing needs you.", "steps": ["On All projects with nothing waiting, look at the toolbar."], "expect": "Only to review, working and idle counts. The count returns (in orange) when a session needs you.", "ref": "handoff §8"}, {"id": "att-question", "group": "Attention", "title": "Needs you, with Claude's actual question", "what": "When a session asks something, the action column shows the real question and options.", "steps": ["In the Home terminal, type: Use AskUserQuestion to ask me whether to lead the readout with revenue or retention.", "Don't answer yet; look at the action column and the toolbar."], "expect": "A card with the verbatim question and options; the toolbar shows 1 need you.", "ref": "F-26"}, {"id": "att-review", "group": "Attention", "title": "Ready for review, then seen", "what": "A finished turn shows as ready for review until you look at the session.", "steps": ["Start a session in refunds and ask Claude something short.", "While it answers, go to All projects.", "Then open the session again."], "expect": "After the answer it shows ready for review (◆) with the reply's first line; opening it clears that.", "ref": "F-26"}, {"id": "titles", "group": "Attention", "title": "Session titles that stay put", "what": "Sessions are named from Claude's own title for the conversation, not Claude's random per-process names.", "steps": ["Open reading and look at the session list."], "expect": "Titles like Reading note 1, not names like reading-3f.", "ref": "F-27"}, {"id": "lp-history", "group": "Left pane", "title": "Every past session listed, older ones folded", "what": "A project lists all past sessions in its folder, not just ones Duo started; beyond five they fold under Older · N. The Resume a session button is gone.", "steps": ["Open reading.", "Click Older · 4."], "expect": "Five recent sessions, then Older · 4, which expands to four more. No Resume a session button.", "ref": "DL-59"}, {"id": "lp-identity", "group": "Left pane", "title": "Sessions with the same name stay separate", "what": "Two sessions both titled Untitled scratch show as two rows and open separately.", "steps": ["Open refunds.", "Click each Untitled scratch row."], "expect": "Two rows; each opens its own conversation (first scratch thought vs second).", "ref": "F-43"}, {"id": "ed-open", "group": "Editor", "title": "Documents open in the right pane", "what": "Clicking a file opens it in the editor, styled like the design's document area, with live preview.", "steps": ["Open checkout; in Files, click `docs/prd.md`."], "expect": "Headings in semibold, **15%** shown bold without stars, the link shows as text, task boxes are checkboxes; the line with the caret shows its raw Markdown.", "ref": "F-40"}, {"id": "ed-autosave", "group": "Editor", "title": "Autosave, byte-faithful", "what": "Edits save about a second after you stop; untouched text is never rewritten.", "steps": ["Type a sentence in prd.md.", "Open `~/DuoAcceptance/workspace/payments/checkout/docs/prd.md` in another editor."], "expect": "Your sentence is there; nothing else changed.", "ref": "F-40, F-44"}, {"id": "ed-crlf", "group": "Editor", "title": "Windows line endings kept", "what": "A CRLF file stays CRLF after editing.", "steps": ["Open `docs/windows-notes.md`, add a word, wait a second.", "In a terminal: `file ~/DuoAcceptance/workspace/payments/checkout/docs/windows-notes.md`"], "expect": "file reports CRLF line terminators.", "ref": "F-34"}, {"id": "ed-readonly", "group": "Editor", "title": "Files that can't round-trip open read-only", "what": "Mixed line endings or non-UTF-8 text open read-only instead of being rewritten.", "steps": ["Open `docs/mixed-endings.md` and try to type.", "Open `docs/legacy-export.txt`."], "expect": "Neither accepts edits; both files are unchanged on disk. (The read-only notice isn't designed yet: Q-20.)", "ref": "F-40"}, {"id": "ed-spelling", "group": "Editor", "title": "Spelling, Writing Tools, dictation", "what": "The editor uses macOS text services.", "steps": ["Type recieve teh in a document.", "Select a sentence, right-click: look for Writing Tools.", "Edit › Start Dictation… and speak a sentence."], "expect": "Misspellings corrected or underlined; Writing Tools available if Apple Intelligence is on; dictation types into the document.", "ref": "F-43"}, {"id": "ed-format", "group": "Editor", "title": "Format menu: Bold and Italic", "what": "⌘B and ⌘I work while the editor has focus.", "steps": ["Double-click a word, press ⌘B; another, ⌘I."], "expect": "**word** and *word* in the file.", "ref": "F-43"}, {"id": "ed-find", "group": "Editor", "title": "Find in a document (⌘F)", "what": "Find searches the whole document, even text scrolled out of view.", "steps": ["Open `docs/long-backlog.md`.", "Press ⌘F, search for a word near the end."], "expect": "The find panel opens and finds matches anywhere in the file. (Its look is a placeholder: Q-20.)", "ref": "F-43"}, {"id": "ed-outside", "group": "Editor", "title": "Outside edits merge in, highlighted", "what": "When Claude or another app changes an open file, the change appears, highlighted until your next edit; your unsaved edits are kept.", "steps": ["With prd.md open, append a line to it from another editor or with `echo \"hello\" >> …/prd.md`.", "Then type somewhere."], "expect": "The line appears highlighted; the highlight goes when you type.", "ref": "F-40, DL-5"}, {"id": "ed-conflict", "group": "Editor", "title": "Overlapping edits never overwrite each other", "what": "If an outside change hits text you're editing, Duo keeps your text and pauses autosave instead of overwriting the other change.", "steps": ["Type in the title line of prd.md and, within a second, change the same line in another editor.", "In a Duo terminal: `duo2 doc-status docs/prd.md`"], "expect": "Your text stays; the file keeps the other change; doc-status says in conflict. (The banner isn't designed yet: Q-20.)", "ref": "F-40"}, {"id": "rp-tabs", "group": "Right pane", "title": "Document tabs stay open; Project shows PROJECT.md", "what": "Open documents are tabs; the Project tab opens PROJECT.md; a + makes a new file.", "steps": ["Open two documents.", "Click Project, then back to a document tab.", "Click + in the right pane's tab strip."], "expect": "Tabs persist; Project shows PROJECT.md; + creates `Untitled.md`, opens it and selects its name in Files for renaming.", "ref": "DL-60, DL-61"}, {"id": "rp-close", "group": "Right pane", "title": "⌘W closes the focused tab", "what": "⌘W closes the document when the editor has focus, else the session tab; ⇧⌘W closes the window.", "steps": ["Click into a document, press ⌘W.", "Click into a session terminal, press ⌘W."], "expect": "The document tab closes; then the session tab closes (the session stays listed and resumable). The window stays.", "ref": "F-44"}, {"id": "fv-new", "group": "File verbs", "title": "New file, folder, from template", "what": "From File (⌘N, ⇧⌘N), the + or a right-click in Files.", "steps": ["Right-click Files' background: New Markdown File, New Folder, New from Template ▸ meeting-notes."], "expect": "Each appears in Files with its name selected for typing; Return keeps it, Esc cancels the rename. Templates list the project's templates/ then Home's.", "ref": "DL-61, DL-62"}, {"id": "fv-edit", "group": "File verbs", "title": "Rename, duplicate, move, trash", "what": "Right-click a file or folder in Files, or a document tab.", "steps": ["Rename a file you made; Duplicate it; Move To… a folder; Move to Trash."], "expect": "Each works; an open tab follows a rename or move; Trash closes it and the file is in the macOS Trash.", "ref": "DL-61"}, {"id": "fv-copy", "group": "File verbs", "title": "Copy path, relative path, link", "what": "Three copy formats.", "steps": ["Right-click `docs/prd.md`: Copy Path, paste; Copy Relative Path, paste; Copy as Link, paste."], "expect": "/Users/…/`docs/prd.md`; `docs/prd.md`; [prd](`docs/prd.md`).", "ref": "DL-61"}, {"id": "fv-open", "group": "File verbs", "title": "Reveal in Finder, Open With", "what": "Hand a file to Finder or another app.", "steps": ["Right-click a file: Reveal in Finder; Open With ▸ another app."], "expect": "Finder selects it; the app opens it.", "ref": "DL-61"}, {"id": "fv-send", "group": "File verbs", "title": "Send to Claude", "what": "Puts @path into the console session's prompt without sending it.", "steps": ["With a session open in checkout's console, right-click prd.md › Send to Claude."], "expect": "`@docs/prd.md` appears in the prompt, ready for you to write the request.", "ref": "DL-61"}, {"id": "org-folders", "group": "Organising", "title": "Folders without a project file", "what": "Folders with Claude sessions but no PROJECT.md show on the map, marked.", "steps": ["On All projects, look under Elsewhere."], "expect": "scratch (No project file, 2 past sessions) and side-project (Has CLAUDE.md · no project file).", "ref": "DL-63"}, {"id": "org-make", "group": "Organising", "title": "Make a Project", "what": "Upgrades a folder to a documented project.", "steps": ["Right-click side-project › Make a Project.", "Then Edit › Undo."], "expect": "It becomes a project (under Elsewhere) and opens its new PROJECT.md; Undo puts it back as a folder and moves the PROJECT.md to the Trash.", "ref": "DL-63"}, {"id": "org-move", "group": "Organising", "title": "Move a session to a project", "what": "Right-click or drag a session onto a project; a sheet says exactly what moves; undoable.", "steps": ["Open scratch, right-click Quick question about refund SLAs › Move to Project › refunds.", "Read the sheet, click Move.", "Edit › Undo."], "expect": "The sheet names the session and says files stay put; it then appears in refunds; Undo returns it.", "ref": "DL-64, DL-66"}, {"id": "org-merge", "group": "Organising", "title": "Merge a project or folder (sessions only)", "what": "Right-click › Merge Into, or drag a tile onto another.", "steps": ["Drag the scratch tile onto refunds.", "Read the sheet, Merge, then Edit › Undo."], "expect": "The sheet lists both sessions and says scratch's folder and files stay; refunds gains them; Undo restores.", "ref": "DL-65, DL-66"}, {"id": "org-relocate", "group": "Organising", "title": "A moved session relocates when resumed", "what": "After a move, the next resume runs /cd so Claude moves the transcript to the new project's folder.", "steps": ["Move Draft a post about pricing (scratch) to checkout.", "Open checkout and click the session."], "expect": "Claude opens the old conversation, then shows Moved to …/payments/checkout.", "ref": "DL-64, F-45"}, {"id": "ret-archive", "group": "Retention", "title": "Sessions survive Claude's 30-day cleanup", "what": "Duo keeps a copy of every listed session (and its tool outputs) and puts it back on resume.", "steps": ["With Duo open for a minute, quit it.", "In the repo: `python3 scripts/acceptance/fixtures.py --purge` (simulates the cleanup).", "Open Duo again (open-duo.sh), open refunds, click Refund edge cases (purge test)."], "expect": "It's still listed by title and resumes with its conversation.", "ref": "DL-44, DL-47, DL-48"}, {"id": "ret-carry", "group": "Retention", "title": "Carry on in a new session", "what": "Starts a new session that picks up from an archived one.", "steps": ["In a Duo terminal: `duo2 session carry-on <id of the purge-test session>` (the id is in `~/DuoAcceptance/.planted.json`)."], "expect": "A new session starts in refunds, reads the archived transcript and summarises where it left off.", "ref": "Q-19"}, {"id": "ret-size", "group": "Retention", "title": "Archive size in `duo2 doctor`", "what": "No limit, but its size is shown.", "steps": ["`duo2 doctor`"], "expect": "A line like Session archive: N sessions, X KB.", "ref": "DL-56"}, {"id": "cli-basics", "group": "duo2 command line", "title": "duo2 talks to Duo", "what": "ping, status, projects, needs-you, open, help.", "steps": ["duo2 help, then duo2 status, duo2 projects, duo2 open refunds."], "expect": "Answers match the app; open switches Duo to refunds.", "ref": "F-29"}, {"id": "cli-search", "group": "duo2 command line", "title": "Search across every project", "what": "By meaning and by words, files and sessions, with the app closed too.", "steps": ["`duo2 search customers charged twice`", "`duo2 search ERR_REFUND_409`", "`duo2 search --kind session interview`", "Quit Duo and run a search again."], "expect": "notes/duplicate-billing.md first; errors.md for the exact code; the interview session; results still come back with Duo closed.", "ref": "F-36, F-38"}, {"id": "cli-legacy", "group": "duo2 command line", "title": "Legacy Duo detection and removal", "what": "Finds legacy Duo's instructions, disables them with a backup, restores them. The fixture is a fake config, not your real ~/.claude.", "steps": ["`CLAUDE_CONFIG_DIR=~/DuoAcceptance/legacy-claude-config duo2 legacy`", "`… duo2 legacy disable --yes`", "`… duo2 legacy restore <the backup path it printed>`"], "expect": "Lists 4 items; disable removes them (your own hook and text stay); restore puts everything back.", "ref": "F-37"}, {"id": "app-gitignore", "group": "App", "title": "Keep .duo out of git", "what": "In a git repo, Duo offers once to add .duo/ to `.gitignore`.", "steps": ["After opening Duo on the fixtures, look for the alert about onboarding."], "expect": "Add to `.gitignore` writes .duo/ to onboarding/`.gitignore`; Don't Add writes nothing; either answer is remembered.", "ref": "DL-50"}, {"id": "app-menus", "group": "App", "title": "Menus", "what": "File (New Markdown File, New Folder, Save, Close Tab, Close Window), Edit (text items, Find, Spelling), Format, View, Go.", "steps": ["Open each menu; try Go › All Projects and Go › Home."], "expect": "Items are present and work; disabled ones are greyed when they don't apply.", "ref": "F-43"}, {"id": "app-clear", "group": "App", "title": "`/clear` keeps the tab with the session", "what": "After `/clear` in a terminal, the tab follows the new conversation.", "steps": ["In a session, type `/clear`, then a short prompt."], "expect": "The tab is renamed after the new conversation; the old session is still listed.", "ref": "F-29"}]}</script>
+<script>
+const DATA = JSON.parse(document.getElementById("data").textContent);
+const KEY = "acceptance:" + DATA.sprint;
+const LABEL = { accepted: "Accepted", rejected: "Rejected", deferred: "Not now", "": "To do" };
+let verdicts = {};   // id -> {status, comment, at}
+let db = null, filter = "all";
+
+function local(read, value) {
+  try { if (read) return JSON.parse(localStorage.getItem(KEY) || "{}"); localStorage.setItem(KEY, JSON.stringify(value)); }
+  catch (e) { return read ? {} : undefined; }
+}
+verdicts = local(true);
+
+const $ = (s, el = document) => el.querySelector(s);
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+// Inline `code` in the fixture text.
+function rich(parent, text) {
+  text.split(/(`[^`]+`)/).forEach(part => {
+    if (part.startsWith("`") && part.endsWith("`") && part.length > 2) parent.append(el("code", null, part.slice(1, -1)));
+    else parent.append(document.createTextNode(part));
+  });
+  return parent;
+}
+
+$("#title").textContent = DATA.title;
+document.title = DATA.title;
+rich($("#intro"), DATA.intro || "");
+(DATA.setup || []).forEach(s => $("#setup").append(rich(el("li"), s)));
+
+const cards = {};
+function build() {
+  const list = $("#list");
+  let group = null;
+  DATA.features.forEach(f => {
+    if (f.group !== group) { group = f.group; list.append(el("h2", null, group)); }
+    const c = el("section", "card"); c.id = "f-" + f.id;
+    const top = el("div", "top");
+    top.append(el("h3", null, f.title));
+    if (f.ref) top.append(el("span", "ref", f.ref));
+    const pill = el("span", "pill"); top.append(pill);
+    c.append(top);
+    if (f.what) c.append(rich(el("p", "what"), f.what));
+    c.append(el("div", "label", "Try"));
+    const ol = el("ol", "steps"); f.steps.forEach(s => ol.append(rich(el("li"), s))); c.append(ol);
+    c.append(el("div", "label", "Expect"));
+    c.append(rich(el("p", "expect"), f.expect));
+    const acts = el("div", "actions");
+    const mk = (cls, text, status) => { const b = el("button", cls, text); b.setAttribute("aria-pressed", "false"); b.onclick = () => setStatus(f.id, status); acts.append(b); return b; };
+    const btns = { accepted: mk("accept", "Accept", "accepted"), rejected: mk("reject", "Reject", "rejected"), deferred: mk("defer", "Not now", "deferred") };
+    const saved = el("span", "saved"); acts.append(saved);
+    c.append(acts);
+    const ta = el("textarea"); ta.placeholder = "Comments (what you saw, what's wrong, what you'd change)";
+    let timer;
+    ta.oninput = () => { clearTimeout(timer); saved.textContent = "…"; timer = setTimeout(() => setComment(f.id, ta.value), 700); };
+    ta.onblur = () => { clearTimeout(timer); if ((verdicts[f.id]?.comment || "") !== ta.value) setComment(f.id, ta.value); };
+    c.append(ta);
+    list.append(c);
+    cards[f.id] = { c, pill, btns, ta, saved };
+  });
+}
+
+function render() {
+  const n = { accepted: 0, rejected: 0, deferred: 0, "": 0 };
+  DATA.features.forEach(f => {
+    const v = verdicts[f.id] || {}, s = v.status || "", k = cards[f.id];
+    n[s] = (n[s] || 0) + 1;
+    k.c.className = "card " + s;
+    k.pill.className = "pill " + s; k.pill.textContent = LABEL[s];
+    for (const [st, b] of Object.entries(k.btns)) b.setAttribute("aria-pressed", String(s === st));
+    if (document.activeElement !== k.ta && k.ta.value !== (v.comment || "")) k.ta.value = v.comment || "";
+    const show = filter === "all" || (filter === "todo" ? !s : s === filter);
+    k.c.classList.toggle("hidden", !show);
+  });
+  document.querySelectorAll("#list h2").forEach(h => {
+    let e = h.nextElementSibling, any = false;
+    while (e && e.tagName !== "H2") { if (!e.classList.contains("hidden")) any = true; e = e.nextElementSibling; }
+    h.classList.toggle("hidden", !any);
+  });
+  const total = DATA.features.length;
+  $("#counts").textContent = `${n.accepted} accepted · ${n.rejected} rejected · ${n.deferred} not now · ${n[""]} to do (${total})`;
+  const p = $("#progress"); p.textContent = "";
+  [["accepted", "var(--ok)"], ["rejected", "var(--bad)"], ["deferred", "var(--later)"]].forEach(([s, col]) => {
+    const span = el("span"); span.style.width = (100 * n[s] / total) + "%"; span.style.background = col; p.append(span);
+  });
+}
+
+async function write(id, patch) {
+  const k = cards[id];
+  const next = Object.assign({ status: "", comment: "" }, verdicts[id], patch, { at: new Date().toISOString() });
+  verdicts[id] = next;
+  local(false, verdicts);
+  render();
+  if (!db) { k.saved.textContent = "Saved in this browser"; return; }
+  k.saved.textContent = "Saving…";
+  try { await db.doc("verdicts/" + id).set(next); k.saved.textContent = "Saved"; }
+  catch (e) { k.saved.textContent = "Not saved (" + (e.code || e.message || "error") + "), kept in this browser"; }
+}
+function setStatus(id, status) {
+  const cur = verdicts[id]?.status || "";
+  write(id, { status: cur === status ? "" : status, comment: cards[id].ta.value });
+}
+function setComment(id, comment) { write(id, { comment }); }
+
+document.querySelectorAll(".filters button").forEach(b => b.onclick = () => {
+  filter = b.dataset.f;
+  document.querySelectorAll(".filters button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  render();
+});
+
+function feedback() {
+  const by = s => DATA.features.filter(f => (verdicts[f.id]?.status || "") === s);
+  const line = f => {
+    const c = (verdicts[f.id]?.comment || "").trim();
+    return `- **${f.title}** (\`${f.id}\`${f.ref ? ", " + f.ref : ""})` + (c ? `\n  ${c.replace(/\n/g, "\n  ")}` : "");
+  };
+  const out = [`# Acceptance feedback: ${DATA.title}`, `Sprint \`${DATA.sprint}\` · ${new Date().toLocaleString()}`, ""];
+  const sec = (name, list, all) => {
+    const items = all ? list : list.filter(f => (verdicts[f.id]?.comment || "").trim());
+    if (!items.length) return;
+    out.push(`## ${name} (${list.length})`, ...items.map(line), "");
+    if (!all && items.length < list.length) out.splice(out.length - 1, 0, `- ${list.length - items.length} more with no comment`);
+  };
+  sec("Rejected", by("rejected"), true);
+  sec("Accepted, with comments", by("accepted"), false);
+  sec("Not now", by("deferred"), true);
+  const todo = DATA.features.filter(f => !verdicts[f.id]?.status);
+  if (todo.length) out.push(`## Not yet tested (${todo.length})`, todo.map(f => f.id).join(", "), "");
+  const loose = todo.filter(f => (verdicts[f.id]?.comment || "").trim());
+  if (loose.length) out.push(`## Comments on untested items`, ...loose.map(line), "");
+  return out.join("\n");
+}
+
+$("#copy").onclick = async () => {
+  const text = feedback();
+  $("#out").value = text;
+  const extra = db ? " Claude can also read your verdicts directly." : "";
+  $("#dlgnote").textContent = "Select all and copy, then paste it into Claude." + extra;
+  $("#dlg").showModal();
+  $("#out").select();
+  // The clipboard can be refused (or never answer) inside a frame; the dialog is the fallback.
+  Promise.race([navigator.clipboard.writeText(text), new Promise((_, no) => setTimeout(no, 1500))])
+    .then(() => { $("#dlgnote").textContent = "Copied. Paste it into Claude." + extra; }, () => {});
+};
+$("#close").onclick = () => $("#dlg").close();
+
+build();
+render();
+
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  if (!db) { $("#store").textContent = "Verdicts are saved in this browser only. Use Copy feedback to send them to Claude."; return; }
+  $("#store").textContent = "Verdicts are saved with this page; you can stop and come back any time, and Claude can read them.";
+  // Anything recorded in this browser before the store connected goes up once.
+  const remote = await db.collection("verdicts").get().catch(() => null);
+  const have = new Set(remote ? remote.docs.map(d => d.id) : []);
+  for (const [id, v] of Object.entries(verdicts)) if (!have.has(id) && cards[id] && (v.status || v.comment)) db.doc("verdicts/" + id).set(v).catch(() => {});
+  db.collection("verdicts").onSnapshot(snap => {
+    snap.docs.forEach(d => { if (cards[d.id]) verdicts[d.id] = d.data(); });
+    local(false, verdicts);
+    render();
+  }, e => { $("#store").textContent = "Lost the connection to saved verdicts (" + (e.code || "error") + "); changes are kept in this browser."; });
+})();
+</script>
+</body>
+</html>

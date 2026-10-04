@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title>
+<style>
+:root {
+  --bg: #f6f6f4; --card: #ffffff; --ink: #1d1d1f; --muted: #6e6e73; --line: #e2e2e0;
+  --chip: #efefec; --accent: #2f6fde; --ok: #1f8a4c; --ok-bg: #e5f4ea; --bad: #c4362c; --bad-bg: #fbe9e7;
+  --later: #8a6a12; --later-bg: #f8f0d8; --code: #f1f1ee;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1b1d; --card: #252528; --ink: #ececee; --muted: #9a9aa0; --line: #38383c;
+    --chip: #303034; --accent: #6b9cf0; --ok: #5ccb8a; --ok-bg: #1d3427; --bad: #f0786d; --bad-bg: #3d2220;
+    --later: #e2c264; --later-bg: #3a321b; --code: #2e2e32;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1b1d; --card: #252528; --ink: #ececee; --muted: #9a9aa0; --line: #38383c;
+  --chip: #303034; --accent: #6b9cf0; --ok: #5ccb8a; --ok-bg: #1d3427; --bad: #f0786d; --bad-bg: #3d2220;
+  --later: #e2c264; --later-bg: #3a321b; --code: #2e2e32;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+code { font: 12.5px "SF Mono", ui-monospace, Menlo, monospace; background: var(--code); padding: 1px 4px; border-radius: 4px; overflow-wrap: anywhere; }
+header { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); }
+.bar { max-width: 860px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+h1 { font-size: 17px; margin: 0; flex: 1 1 260px; }
+.progress { flex: 1 1 100%; height: 6px; border-radius: 3px; background: var(--chip); overflow: hidden; display: flex; }
+.progress span { display: block; height: 100%; }
+.counts { color: var(--muted); font-size: 12.5px; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+button { font: inherit; color: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--card); border-radius: 7px; padding: 5px 11px; }
+button:hover { border-color: var(--muted); }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.primary:hover { border-color: var(--accent); filter: brightness(1.08); }
+main { max-width: 860px; margin: 0 auto; padding: 8px 16px 80px; }
+.intro { color: var(--muted); margin: 14px 0 4px; }
+.setup { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 10px 0 6px; }
+.setup ol { margin: 4px 0; padding-left: 20px; }
+.store { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 26px 0 8px; }
+.card { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 0 0 10px; }
+.card.accepted { border-left-color: var(--ok); }
+.card.rejected { border-left-color: var(--bad); }
+.card.deferred { border-left-color: var(--later); }
+.top { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.top h3 { font-size: 15px; margin: 0; flex: 1 1 240px; }
+.ref { font-size: 11.5px; color: var(--muted); }
+.pill { font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); }
+.pill.accepted { background: var(--ok-bg); color: var(--ok); }
+.pill.rejected { background: var(--bad-bg); color: var(--bad); }
+.pill.deferred { background: var(--later-bg); color: var(--later); }
+.what { margin: 4px 0 8px; color: var(--muted); }
+.label { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); margin-top: 6px; }
+ol.steps { margin: 2px 0 6px; padding-left: 20px; }
+.expect { margin: 2px 0 10px; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.actions .accept[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: #fff; }
+.actions .reject[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: #fff; }
+.actions .defer[aria-pressed="true"] { background: var(--later); border-color: var(--later); color: #fff; }
+.saved { font-size: 11.5px; color: var(--muted); margin-left: auto; }
+textarea { width: 100%; min-height: 54px; margin-top: 8px; resize: vertical; font: inherit; color: inherit;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; }
+.hidden { display: none; }
+dialog { max-width: min(720px, calc(100vw - 32px)); width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); padding: 16px; }
+dialog::backdrop { background: rgba(0,0,0,.35); }
+dialog textarea { min-height: 320px; font: 12.5px "SF Mono", ui-monospace, Menlo, monospace; }
+.row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.row .note { margin-right: auto; color: var(--muted); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1 id="title"></h1>
+    <span class="counts" id="counts"></span>
+    <button class="primary" id="copy">Copy feedback for Claude</button>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <div class="filters" role="group" aria-label="Show">
+      <button data-f="all" aria-pressed="true">All</button>
+      <button data-f="todo" aria-pressed="false">To do</button>
+      <button data-f="accepted" aria-pressed="false">Accepted</button>
+      <button data-f="rejected" aria-pressed="false">Rejected</button>
+      <button data-f="deferred" aria-pressed="false">Not now</button>
+    </div>
+  </div>
+</header>
+<main>
+  <p class="intro" id="intro"></p>
+  <div class="setup"><div class="label">Before you start</div><ol id="setup"></ol>
+    <p class="store" id="store">Connecting to saved verdicts…</p></div>
+  <div id="list"></div>
+</main>
+<dialog id="dlg">
+  <strong>Feedback for Claude</strong>
+  <textarea id="out" readonly></textarea>
+  <div class="row"><span class="note" id="dlgnote"></span><button id="close">Close</button></div>
+</dialog>
+
+<script type="application/json" id="data">__DATA__</script>
+<script>
+const DATA = JSON.parse(document.getElementById("data").textContent);
+const KEY = "acceptance:" + DATA.sprint;
+const LABEL = { accepted: "Accepted", rejected: "Rejected", deferred: "Not now", "": "To do" };
+let verdicts = {};   // id -> {status, comment, at}
+let db = null, filter = "all";
+
+function local(read, value) {
+  try { if (read) return JSON.parse(localStorage.getItem(KEY) || "{}"); localStorage.setItem(KEY, JSON.stringify(value)); }
+  catch (e) { return read ? {} : undefined; }
+}
+verdicts = local(true);
+
+const $ = (s, el = document) => el.querySelector(s);
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+// Inline `code` in the fixture text.
+function rich(parent, text) {
+  text.split(/(`[^`]+`)/).forEach(part => {
+    if (part.startsWith("`") && part.endsWith("`") && part.length > 2) parent.append(el("code", null, part.slice(1, -1)));
+    else parent.append(document.createTextNode(part));
+  });
+  return parent;
+}
+
+$("#title").textContent = DATA.title;
+document.title = DATA.title;
+rich($("#intro"), DATA.intro || "");
+(DATA.setup || []).forEach(s => $("#setup").append(rich(el("li"), s)));
+
+const cards = {};
+function build() {
+  const list = $("#list");
+  let group = null;
+  DATA.features.forEach(f => {
+    if (f.group !== group) { group = f.group; list.append(el("h2", null, group)); }
+    const c = el("section", "card"); c.id = "f-" + f.id;
+    const top = el("div", "top");
+    top.append(el("h3", null, f.title));
+    if (f.ref) top.append(el("span", "ref", f.ref));
+    const pill = el("span", "pill"); top.append(pill);
+    c.append(top);
+    if (f.what) c.append(rich(el("p", "what"), f.what));
+    c.append(el("div", "label", "Try"));
+    const ol = el("ol", "steps"); f.steps.forEach(s => ol.append(rich(el("li"), s))); c.append(ol);
+    c.append(el("div", "label", "Expect"));
+    c.append(rich(el("p", "expect"), f.expect));
+    const acts = el("div", "actions");
+    const mk = (cls, text, status) => { const b = el("button", cls, text); b.setAttribute("aria-pressed", "false"); b.onclick = () => setStatus(f.id, status); acts.append(b); return b; };
+    const btns = { accepted: mk("accept", "Accept", "accepted"), rejected: mk("reject", "Reject", "rejected"), deferred: mk("defer", "Not now", "deferred") };
+    const saved = el("span", "saved"); acts.append(saved);
+    c.append(acts);
+    const ta = el("textarea"); ta.placeholder = "Comments (what you saw, what's wrong, what you'd change)";
+    let timer;
+    ta.oninput = () => { clearTimeout(timer); saved.textContent = "…"; timer = setTimeout(() => setComment(f.id, ta.value), 700); };
+    ta.onblur = () => { clearTimeout(timer); if ((verdicts[f.id]?.comment || "") !== ta.value) setComment(f.id, ta.value); };
+    c.append(ta);
+    list.append(c);
+    cards[f.id] = { c, pill, btns, ta, saved };
+  });
+}
+
+function render() {
+  const n = { accepted: 0, rejected: 0, deferred: 0, "": 0 };
+  DATA.features.forEach(f => {
+    const v = verdicts[f.id] || {}, s = v.status || "", k = cards[f.id];
+    n[s] = (n[s] || 0) + 1;
+    k.c.className = "card " + s;
+    k.pill.className = "pill " + s; k.pill.textContent = LABEL[s];
+    for (const [st, b] of Object.entries(k.btns)) b.setAttribute("aria-pressed", String(s === st));
+    if (document.activeElement !== k.ta && k.ta.value !== (v.comment || "")) k.ta.value = v.comment || "";
+    const show = filter === "all" || (filter === "todo" ? !s : s === filter);
+    k.c.classList.toggle("hidden", !show);
+  });
+  document.querySelectorAll("#list h2").forEach(h => {
+    let e = h.nextElementSibling, any = false;
+    while (e && e.tagName !== "H2") { if (!e.classList.contains("hidden")) any = true; e = e.nextElementSibling; }
+    h.classList.toggle("hidden", !any);
+  });
+  const total = DATA.features.length;
+  $("#counts").textContent = `${n.accepted} accepted · ${n.rejected} rejected · ${n.deferred} not now · ${n[""]} to do (${total})`;
+  const p = $("#progress"); p.textContent = "";
+  [["accepted", "var(--ok)"], ["rejected", "var(--bad)"], ["deferred", "var(--later)"]].forEach(([s, col]) => {
+    const span = el("span"); span.style.width = (100 * n[s] / total) + "%"; span.style.background = col; p.append(span);
+  });
+}
+
+async function write(id, patch) {
+  const k = cards[id];
+  const next = Object.assign({ status: "", comment: "" }, verdicts[id], patch, { at: new Date().toISOString() });
+  verdicts[id] = next;
+  local(false, verdicts);
+  render();
+  if (!db) { k.saved.textContent = "Saved in this browser"; return; }
+  k.saved.textContent = "Saving…";
+  try { await db.doc("verdicts/" + id).set(next); k.saved.textContent = "Saved"; }
+  catch (e) { k.saved.textContent = "Not saved (" + (e.code || e.message || "error") + "), kept in this browser"; }
+}
+function setStatus(id, status) {
+  const cur = verdicts[id]?.status || "";
+  write(id, { status: cur === status ? "" : status, comment: cards[id].ta.value });
+}
+function setComment(id, comment) { write(id, { comment }); }
+
+document.querySelectorAll(".filters button").forEach(b => b.onclick = () => {
+  filter = b.dataset.f;
+  document.querySelectorAll(".filters button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  render();
+});
+
+function feedback() {
+  const by = s => DATA.features.filter(f => (verdicts[f.id]?.status || "") === s);
+  const line = f => {
+    const c = (verdicts[f.id]?.comment || "").trim();
+    return `- **${f.title}** (\`${f.id}\`${f.ref ? ", " + f.ref : ""})` + (c ? `\n  ${c.replace(/\n/g, "\n  ")}` : "");
+  };
+  const out = [`# Acceptance feedback: ${DATA.title}`, `Sprint \`${DATA.sprint}\` · ${new Date().toLocaleString()}`, ""];
+  const sec = (name, list, all) => {
+    const items = all ? list : list.filter(f => (verdicts[f.id]?.comment || "").trim());
+    if (!items.length) return;
+    out.push(`## ${name} (${list.length})`, ...items.map(line), "");
+    if (!all && items.length < list.length) out.splice(out.length - 1, 0, `- ${list.length - items.length} more with no comment`);
+  };
+  sec("Rejected", by("rejected"), true);
+  sec("Accepted, with comments", by("accepted"), false);
+  sec("Not now", by("deferred"), true);
+  const todo = DATA.features.filter(f => !verdicts[f.id]?.status);
+  if (todo.length) out.push(`## Not yet tested (${todo.length})`, todo.map(f => f.id).join(", "), "");
+  const loose = todo.filter(f => (verdicts[f.id]?.comment || "").trim());
+  if (loose.length) out.push(`## Comments on untested items`, ...loose.map(line), "");
+  return out.join("\n");
+}
+
+$("#copy").onclick = async () => {
+  const text = feedback();
+  $("#out").value = text;
+  const extra = db ? " Claude can also read your verdicts directly." : "";
+  $("#dlgnote").textContent = "Select all and copy, then paste it into Claude." + extra;
+  $("#dlg").showModal();
+  $("#out").select();
+  // The clipboard can be refused (or never answer) inside a frame; the dialog is the fallback.
+  Promise.race([navigator.clipboard.writeText(text), new Promise((_, no) => setTimeout(no, 1500))])
+    .then(() => { $("#dlgnote").textContent = "Copied. Paste it into Claude." + extra; }, () => {});
+};
+$("#close").onclick = () => $("#dlg").close();
+
+build();
+render();
+
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  if (!db) { $("#store").textContent = "Verdicts are saved in this browser only. Use Copy feedback to send them to Claude."; return; }
+  $("#store").textContent = "Verdicts are saved with this page; you can stop and come back any time, and Claude can read them.";
+  // Anything recorded in this browser before the store connected goes up once.
+  const remote = await db.collection("verdicts").get().catch(() => null);
+  const have = new Set(remote ? remote.docs.map(d => d.id) : []);
+  for (const [id, v] of Object.entries(verdicts)) if (!have.has(id) && cards[id] && (v.status || v.comment)) db.doc("verdicts/" + id).set(v).catch(() => {});
+  db.collection("verdicts").onSnapshot(snap => {
+    snap.docs.forEach(d => { if (cards[d.id]) verdicts[d.id] = d.data(); });
+    local(false, verdicts);
+    render();
+  }, e => { $("#store").textContent = "Lost the connection to saved verdicts (" + (e.code || "error") + "); changes are kept in this browser."; });
+})();
+</script>
+</body>
+</html>

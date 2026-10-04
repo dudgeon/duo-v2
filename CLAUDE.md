@@ -17,6 +17,7 @@ Read `README.md` first for build commands and layout.
 - **Don't edit `docs/design/build-handoff/screens/`.** They are a snapshot of the design canvas.
 - **Record as you go.** Facts learned while building go in `docs/plan/findings.md` (F-n); risks and questions in `docs/plan/concerns-and-questions.md` (C-n, Q-n); Geoff's decisions in `decisions.md`; wanted-but-unscheduled ideas in `docs/plan/enhancements.md` (ENH-n).
 - Never use `claude -c` or the resume picker programmatically; always mint `--session-id` (DL-14).
+- **Close out big batches with an acceptance walk.** When a sprint or large batch of work is done, use the `acceptance-walk` skill (`.claude/skills/acceptance-walk/SKILL.md`): features with steps, fixtures, a verdict page in Chrome beside Duo. Geoff may defer it; open walks are listed in `docs/acceptance/README.md`, so check there first.
 - **v1 scope is in the build plan §3a.** Don't pull later features into v1 without logging why.
 
 ## Running the app from a Claude session
