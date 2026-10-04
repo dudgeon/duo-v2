@@ -744,5 +744,247 @@
    "expect": "The word is in the file.",
    "ref": "DL-77"
   }
- ]
+ ],
+ "decisions": [
+  {
+   "id": "q22-send-chord",
+   "ref": "Q-22 · DL-34, DL-67",
+   "title": "A keyboard shortcut for Send Selection to Claude",
+   "context": [
+    "**Send Selection to Claude** puts the text you've selected (in a Markdown document or an HTML page) into the showing Claude session's prompt, quoted with its file and lines, without sending. Today it's in **Edit › Send Selection to Claude** and on the right-click menu, with no shortcut.",
+    "The shortcut map is locked (DL-34): every chord needs a decision. All Duo chords carry ⌘ so they never collide with keys typed into Claude Code. Chords already taken:",
+    [
+     "`⌘K` jump · `⇧⌘A` search · `⌘↑` All projects · `⇧⌘H` Home · `⇧⌘P` peek · `⌘↩` jump into the peek's selection",
+     "`⌃⌘S` sidebar · `⌥⌘0` right pane · `⌥⌘←/→` panes · `⌘N` / `⇧⌘N` new file / folder · `⌘S` save · `⌘B` / `⌘I` bold / italic · `⌘W` / `⇧⌘W` close tab / window",
+     "plus macOS's own: `⌘F` find, `⌘Z` undo, `⌘C/V/X`, `⌘A`, `⌘Q`…"
+    ],
+    "Legacy Duo used **⌘D** for exactly this (its \"Send → agent\" pill), so your fingers may already know it. ⌘D is free in Duo. In the macOS Save dialog ⌘D means \"Don't Save\", which can't clash with a document view.",
+    "This choice can also be Search's \"Send to Claude\" shortcut (decision 23e), so one chord means send everywhere."
+   ],
+   "options": [
+    {
+     "id": "cmd-d",
+     "label": "⌘D",
+     "recommended": true,
+     "desc": "Legacy's chord, free in Duo, one hand.",
+     "mockup": "<div class=\"mk-side\"><div class=\"mk\"><div class=\"mk-menu\"><div class=\"ttl\">Edit</div><div class=\"mk-item \"><span>Cut</span><span class=\"k\">⌘X</span></div><div class=\"mk-item \"><span>Copy</span><span class=\"k\">⌘C</span></div><div class=\"mk-item \"><span>Paste</span><span class=\"k\">⌘V</span></div><div class=\"mk-sep\"></div><div class=\"mk-item hl\"><span>Send Selection to Claude</span><span class=\"k\">⌘D</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Find…</span><span class=\"k\">⌘F</span></div></div></div><div class=\"mk\"><div class=\"mk-menu\"><div class=\"ttl\">Right-click on selected text</div><div class=\"mk-item hl\"><span>Send Selection to Claude</span><span class=\"k\">⌘D</span></div><div class=\"mk-item \"><span>Send Selection To</span><span class=\"k\">▸</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Copy</span><span class=\"k\">⌘C</span></div><div class=\"mk-item \"><span>Look Up “saved cards”</span><span class=\"k\"></span></div></div></div></div><div class=\"mk-caption\">Edit menu and right-click, with the chord shown.</div>"
+    },
+    {
+     "id": "shift-cmd-d",
+     "label": "⇧⌘D",
+     "desc": "Leaves ⌘D for something else later; two modifiers.",
+     "mockup": "<div class=\"mk-side\"><div class=\"mk\"><div class=\"mk-menu\"><div class=\"ttl\">Edit</div><div class=\"mk-item \"><span>Cut</span><span class=\"k\">⌘X</span></div><div class=\"mk-item \"><span>Copy</span><span class=\"k\">⌘C</span></div><div class=\"mk-item \"><span>Paste</span><span class=\"k\">⌘V</span></div><div class=\"mk-sep\"></div><div class=\"mk-item hl\"><span>Send Selection to Claude</span><span class=\"k\">⇧⌘D</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Find…</span><span class=\"k\">⌘F</span></div></div></div><div class=\"mk\"><div class=\"mk-menu\"><div class=\"ttl\">Right-click on selected text</div><div class=\"mk-item hl\"><span>Send Selection to Claude</span><span class=\"k\">⇧⌘D</span></div><div class=\"mk-item \"><span>Send Selection To</span><span class=\"k\">▸</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Copy</span><span class=\"k\">⌘C</span></div><div class=\"mk-item \"><span>Look Up “saved cards”</span><span class=\"k\"></span></div></div></div></div><div class=\"mk-caption\">Same places, two-modifier chord.</div>"
+    },
+    {
+     "id": "none",
+     "label": "No shortcut",
+     "desc": "Menu and right-click only, as now.",
+     "mockup": "<div class=\"mk-side\"><div class=\"mk\"><div class=\"mk-menu\"><div class=\"ttl\">Edit</div><div class=\"mk-item \"><span>Cut</span><span class=\"k\">⌘X</span></div><div class=\"mk-item \"><span>Copy</span><span class=\"k\">⌘C</span></div><div class=\"mk-item \"><span>Paste</span><span class=\"k\">⌘V</span></div><div class=\"mk-sep\"></div><div class=\"mk-item hl\"><span>Send Selection to Claude</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Find…</span><span class=\"k\">⌘F</span></div></div></div><div class=\"mk\"><div class=\"mk-menu\"><div class=\"ttl\">Right-click on selected text</div><div class=\"mk-item hl\"><span>Send Selection to Claude</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Send Selection To</span><span class=\"k\">▸</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Copy</span><span class=\"k\">⌘C</span></div><div class=\"mk-item \"><span>Look Up “saved cards”</span><span class=\"k\"></span></div></div></div></div><div class=\"mk-caption\">No chord; the menu item is the way in.</div>"
+    }
+   ]
+  },
+  {
+   "id": "q23a-narrow",
+   "ref": "Q-23 · search-handoff §5, §6",
+   "title": "Search: ⇧⌘A again narrows to this project",
+   "context": [
+    "Inside a project, Search covers **all projects**, with this project's results boosted (DL-76). The design proposes pressing **⇧⌘A again** to narrow to this project only, and once more to widen back. The scope pop-up shows it and a hint names the key. (The scope pop-up works either way.)"
+   ],
+   "options": [
+    {
+     "id": "yes",
+     "label": "Yes, ⇧⌘A toggles all ↔ this project",
+     "recommended": true,
+     "desc": "No new chord: the same key, pressed again.",
+     "mockup": "<div class=\"mk-side\"><div class=\"mk\"><div class=\"mk-modal\"><div class=\"mk-field\">🔍 <span class=\"q\">where did we land on saved cards</span><span class=\"mk-scope\"><span class=\"on\">Search <span style=\"opacity:.6\">⇧⌘A</span></span><span class=\"\">Jump <span style=\"opacity:.6\">⌘K</span></span></span></div><div class=\"mk-filters\"><span class=\"mk-pop\">All projects ▾</span><span class=\"mk-pop\">Any kind ▾</span><span class=\"mk-pop\">Any time ▾</span><span>☐ Include archived</span><span class=\"mk-hint\">⇧⌘A again: this project</span></div><div class=\"mk-body\"><div class=\"mk-row sel\"><div class=\"t\"><span class=\"mono\">docs/prd-v2.md</span></div><div class=\"m\">checkout-redesign · file · L40–58</div></div><div class=\"mk-row\"><div class=\"t\">PRD v2 edits</div><div class=\"m\">checkout-redesign · session · turn 6 · by meaning</div></div></div><div class=\"mk-foot\"><span>↩ Open in checkout-redesign</span><span class=\"r\">tab Actions · esc Close</span></div></div></div><div class=\"mk\"><div class=\"mk-modal\"><div class=\"mk-field\">🔍 <span class=\"q\">where did we land on saved cards</span><span class=\"mk-scope\"><span class=\"on\">Search <span style=\"opacity:.6\">⇧⌘A</span></span><span class=\"\">Jump <span style=\"opacity:.6\">⌘K</span></span></span></div><div class=\"mk-filters\"><span class=\"mk-pop set\">checkout-redesign ▾</span><span class=\"mk-pop\">Any kind ▾</span><span class=\"mk-pop\">Any time ▾</span><span>☐ Include archived</span><span class=\"mk-hint\">⇧⌘A again: all projects</span></div><div class=\"mk-body\"><div class=\"mk-row sel\"><div class=\"t\"><span class=\"mono\">docs/prd-v2.md</span></div><div class=\"m\">checkout-redesign · file · L40–58</div></div><div class=\"mk-row\"><div class=\"t\">PRD v2 edits</div><div class=\"m\">checkout-redesign · session · turn 6 · by meaning</div></div><div class=\"mk-help\">2 more in other projects</div></div><div class=\"mk-foot\"><span>↩ Open in checkout-redesign</span><span class=\"r\">tab Actions · esc Close</span></div></div></div></div><div class=\"mk-caption\">First press (all projects, this one boosted) → second press (narrowed; the pop-up fills).</div>"
+    },
+    {
+     "id": "popup-only",
+     "label": "No, use the scope pop-up",
+     "desc": "⇧⌘A only opens Search; narrowing is the pop-up (⇧Tab then arrows, or the mouse)."
+    }
+   ]
+  },
+  {
+   "id": "q23b-filters-key",
+   "ref": "Q-23 · search-handoff §5",
+   "title": "Search: ⇧Tab reaches the filters",
+   "context": [
+    "You decided **Tab shows the actions** for the selected result. So Tab can't also walk through controls. Arrows move through results while typing continues in the field. The design proposes **⇧Tab** to jump to the filter row (scope, kind, date, archived), then arrows across it."
+   ],
+   "options": [
+    {
+     "id": "yes",
+     "label": "Yes, ⇧Tab to the filters",
+     "recommended": true,
+     "desc": "Keyboard-only use stays possible (the brief asks for it).",
+     "mockup": "<div class=\"mk\"><div class=\"mk-modal\"><div class=\"mk-field\">🔍 <span class=\"q\">where did we land on saved cards</span><span class=\"mk-scope\"><span class=\"on\">Search <span style=\"opacity:.6\">⇧⌘A</span></span><span class=\"\">Jump <span style=\"opacity:.6\">⌘K</span></span></span></div><div class=\"mk-filters\"><span class=\"mk-pop focus\">All projects ▾</span><span class=\"mk-pop\">Any kind ▾</span><span class=\"mk-pop\">Any time ▾</span><span>☐ Include archived</span></div><div class=\"mk-body\"><div class=\"mk-row sel\"><div class=\"t\"><span class=\"mono\">docs/prd-v2.md</span></div><div class=\"m\">checkout-redesign · file · L40–58</div></div><div class=\"mk-row\"><div class=\"t\">PRD v2 edits</div><div class=\"m\">checkout-redesign · session · turn 6 · by meaning</div></div></div><div class=\"mk-foot\"><span>↩ Open in checkout-redesign</span><span class=\"r\">tab Actions · ⇧tab Filters · esc Close</span></div></div></div><div class=\"mk-caption\">After ⇧Tab: the scope pop-up has the focus ring.</div>"
+    },
+    {
+     "id": "mouse",
+     "label": "No: filters by mouse (and VoiceOver) only",
+     "desc": "Fewer keys to learn; the filters aren't reachable from the keyboard."
+    }
+   ]
+  },
+  {
+   "id": "q23c-multi",
+   "ref": "Q-23 · search-handoff §4, search-multi",
+   "title": "Search: ⇧↑ / ⇧↓ select several results",
+   "context": [
+    "Selecting several results lets **Return send them all** to Claude at once, as references (path with lines, session with turn), not pasted text, never submitted. The design proposes ⇧↑/⇧↓ to extend the selection, like a Finder list."
+   ],
+   "options": [
+    {
+     "id": "yes",
+     "label": "Yes, ⇧↑ / ⇧↓",
+     "recommended": true,
+     "desc": "Plus ⌘-click with the mouse.",
+     "mockup": "<div class=\"mk\"><div class=\"mk-modal\"><div class=\"mk-field\">🔍 <span class=\"q\">where did we land on saved cards</span><span class=\"mk-scope\"><span class=\"on\">Search <span style=\"opacity:.6\">⇧⌘A</span></span><span class=\"\">Jump <span style=\"opacity:.6\">⌘K</span></span></span></div><div class=\"mk-filters\"><span class=\"mk-pop\">All projects ▾</span><span class=\"mk-pop\">Any kind ▾</span><span class=\"mk-pop\">Any time ▾</span><span>☐ Include archived</span></div><div class=\"mk-body\"><div class=\"mk-row sel\"><div class=\"t\"><span class=\"mono\">docs/prd-v2.md</span></div><div class=\"m\">checkout-redesign · file · L40–58</div></div><div class=\"mk-row sel\"><div class=\"t\">PRD v2 edits</div><div class=\"m\">checkout-redesign · session · turn 6 · by meaning</div></div><div class=\"mk-row\"><div class=\"t\"><span class=\"mono\">docs/edge-cases.md</span></div><div class=\"m\">refunds-api-spec · file · L112–130</div></div></div><div class=\"mk-foot\"><span>↩ Send 2 to Claude in Morning triage</span><span class=\"r\">⇧↑↓ Select more · tab Actions</span></div></div></div>"
+    },
+    {
+     "id": "mouse",
+     "label": "Mouse only (⌘-click)",
+     "desc": "No keyboard multi-select."
+    },
+    {
+     "id": "none",
+     "label": "No multi-select",
+     "desc": "One result at a time."
+    }
+   ]
+  },
+  {
+   "id": "q23d-exact",
+   "ref": "Q-23 · search-handoff §6, search-exact",
+   "title": "Search: ⌘E turns Exact on and off",
+   "context": [
+    "Exact matching turns on **by itself** for a quoted phrase or an identifier like `ERR_REFUND_409`: every literal occurrence comes first, across projects. An **Exact** chip leads the filter row and removes itself when clicked. The proposal adds **⌘E** to toggle it by hand. (In macOS text fields ⌘E is \"Use Selection for Find\", which doesn't apply inside the search field.)"
+   ],
+   "options": [
+    {
+     "id": "cmd-e",
+     "label": "⌘E toggles Exact",
+     "recommended": true,
+     "desc": "The hint in the filter row names it.",
+     "mockup": "<div class=\"mk\"><div class=\"mk-modal\"><div class=\"mk-field\">🔍 <span class=\"q\">ERR_REFUND_409</span><span class=\"mk-scope\"><span class=\"on\">Search <span style=\"opacity:.6\">⇧⌘A</span></span><span class=\"\">Jump <span style=\"opacity:.6\">⌘K</span></span></span></div><div class=\"mk-filters\"><span class=\"mk-chip\">Exact ×</span><span class=\"mk-pop\">All projects ▾</span><span class=\"mk-pop\">Any kind ▾</span><span class=\"mk-pop\">Any time ▾</span><span>☐ Include archived</span><span class=\"mk-hint\">Every literal occurrence · ⌘E for meaning and words</span></div><div class=\"mk-body\"><div class=\"mk-row sel\"><div class=\"t\"><span class=\"mono\">spec/errors.md</span><span class=\"mk-pill\">exact</span></div><div class=\"m\">refunds-api-spec · file · L77</div></div><div class=\"mk-row\"><div class=\"t\">Edge-case matrix<span class=\"mk-pill\">exact</span></div><div class=\"m\">refunds-api-spec · session · turn 9</div></div></div><div class=\"mk-foot\"><span>↩ Open in refunds-api-spec</span><span class=\"r\">tab Actions · ⇧tab Filters · esc Close</span></div></div></div>"
+    },
+    {
+     "id": "chip-only",
+     "label": "No chord: automatic, plus the chip",
+     "desc": "Quotes or identifiers turn it on; click the chip's × to turn it off."
+    }
+   ]
+  },
+  {
+   "id": "q23e-action-keys",
+   "ref": "Q-23 · search-handoff §4–5, search-actions-file",
+   "title": "Search: direct shortcuts on the actions",
+   "context": [
+    "Return runs the main action and Tab opens the actions menu (both yours). The design proposes direct chords so you needn't open the menu:",
+    [
+     "`⌘↩` Send to Claude · `⌥⌘↩` open in split view (not built) · `⇧⌘↩` open a session read-only at the turn",
+     "`⌥⌘C` copy path (files) / copy resume command (sessions) · `⇧⌘C` copy passage · `⌘R` reveal in Finder"
+    ],
+    "**One clash:** `⌘↩` already means \"jump into the selected project\" in the peek (⇧⌘P). The peek and search are never open together, so it works, but one chord would have two meanings. If you choose ⌘D in decision 22, Send to Claude could be ⌘D here too."
+   ],
+   "options": [
+    {
+     "id": "as-proposed",
+     "label": "All as proposed (⌘↩ sends)",
+     "desc": "Matches the design exactly; ⌘↩ means two things in two places.",
+     "mockup": "<div class=\"mk\"><div class=\"mk-menu\"><div class=\"ttl\">Actions (Tab) · file result</div><div class=\"mk-item hl\"><span>Open</span><span class=\"k\">↩</span></div><div class=\"mk-item \"><span>Open in split view</span><span class=\"k\">⌥⌘↩</span></div><div class=\"mk-item \"><span>Go to checkout-redesign</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Send to Claude in Morning triage</span><span class=\"k\">⌘↩</span></div><div class=\"mk-item \"><span>Find similar</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Show all 3 passages</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Copy path</span><span class=\"k\">⌥⌘C</span></div><div class=\"mk-item \"><span>Copy passage</span><span class=\"k\">⇧⌘C</span></div><div class=\"mk-item \"><span>Copy Markdown link</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Reveal in Finder</span><span class=\"k\">⌘R</span></div></div></div>"
+    },
+    {
+     "id": "send-matches-22",
+     "label": "As proposed, but Send to Claude uses decision 22's chord",
+     "recommended": true,
+     "desc": "One chord for \"send to Claude\" everywhere (⌘D if you pick it); ⌘↩ keeps one meaning.",
+     "mockup": "<div class=\"mk\"><div class=\"mk-menu\"><div class=\"ttl\">Actions (Tab) · file result</div><div class=\"mk-item hl\"><span>Open</span><span class=\"k\">↩</span></div><div class=\"mk-item \"><span>Open in split view</span><span class=\"k\">⌥⌘↩</span></div><div class=\"mk-item \"><span>Go to checkout-redesign</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Send to Claude in Morning triage</span><span class=\"k\">⌘D</span></div><div class=\"mk-item \"><span>Find similar</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Show all 3 passages</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Copy path</span><span class=\"k\">⌥⌘C</span></div><div class=\"mk-item \"><span>Copy passage</span><span class=\"k\">⇧⌘C</span></div><div class=\"mk-item \"><span>Copy Markdown link</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Reveal in Finder</span><span class=\"k\">⌘R</span></div></div></div>"
+    },
+    {
+     "id": "menu-only",
+     "label": "No direct chords: Tab, arrows, Return",
+     "desc": "Fewer chords to learn; two keystrokes for anything but the main action.",
+     "mockup": "<div class=\"mk\"><div class=\"mk-menu\"><div class=\"ttl\">Actions (Tab) · file result</div><div class=\"mk-item hl\"><span>Open</span><span class=\"k\">↩</span></div><div class=\"mk-item \"><span>Open in split view</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Go to checkout-redesign</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Send to Claude in Morning triage</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Find similar</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Show all 3 passages</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Copy path</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Copy passage</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Copy Markdown link</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Reveal in Finder</span><span class=\"k\"></span></div></div></div>"
+    }
+   ]
+  },
+  {
+   "id": "q23f-send-target",
+   "ref": "Q-23 · search-handoff §2 Q4, DL-69",
+   "title": "Search: which session \"Send to Claude\" goes to",
+   "context": [
+    "Elsewhere in Duo, Send to Claude goes to the Claude session showing in the dark pane (the console in a project, Home's at All projects), with **Send To ▸** for others (DL-69). The design proposes the same for search, naming the session in the item: *Send to Claude in Morning triage*."
+   ],
+   "options": [
+    {
+     "id": "same-rule",
+     "label": "Same rule as everywhere: the dark pane's session, named",
+     "recommended": true,
+     "desc": "Plus Send To ▸ in the actions menu for the others.",
+     "mockup": "<div class=\"mk\"><div class=\"mk-menu\"><div class=\"ttl\">Actions (Tab)</div><div class=\"mk-item \"><span>Open</span><span class=\"k\">↩</span></div><div class=\"mk-sep\"></div><div class=\"mk-item hl\"><span>Send to Claude in Morning triage</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Send To</span><span class=\"k\">▸</span></div><div class=\"mk-item \"><span>Find similar</span><span class=\"k\"></span></div></div></div>"
+    },
+    {
+     "id": "always-home",
+     "label": "Always Home's session",
+     "desc": "Search is often triage; Home is where triage happens."
+    },
+    {
+     "id": "ask",
+     "label": "Ask each time",
+     "desc": "A small picker of running sessions."
+    }
+   ]
+  },
+  {
+   "id": "q23g-empty",
+   "ref": "Q-23 · search-handoff §2 Q3, search-empty",
+   "title": "Search: what shows before you type",
+   "context": [
+    "The design's proposal: recent searches (arrow keys pick one), and three lines of help. No suggestions."
+   ],
+   "options": [
+    {
+     "id": "recents-help",
+     "label": "Recent searches and help",
+     "recommended": true,
+     "desc": "As designed.",
+     "mockup": "<div class=\"mk\"><div class=\"mk-modal\"><div class=\"mk-field\">🔍 <span class=\"ph\">Search all projects</span><span class=\"mk-scope\"><span class=\"on\">Search <span style=\"opacity:.6\">⇧⌘A</span></span><span class=\"\">Jump <span style=\"opacity:.6\">⌘K</span></span></span></div><div class=\"mk-filters\"><span class=\"mk-pop\">All projects ▾</span><span class=\"mk-pop\">Any kind ▾</span><span class=\"mk-pop\">Any time ▾</span><span>☐ Include archived</span></div><div class=\"mk-body\"><div class=\"mk-sec\">RECENT SEARCHES</div><div class=\"mk-row\"><div class=\"t\">where did we land on saved cards</div><div class=\"m\">today</div></div><div class=\"mk-row\"><div class=\"t\">customers charged twice</div><div class=\"m\">yesterday</div></div><div class=\"mk-row\"><div class=\"t\"><span class=\"mono\">ERR_REFUND_409</span></div><div class=\"m\">3d</div></div><div class=\"mk-help\" style=\"margin-top:6px\">Search every project by meaning or by exact words.</div><div class=\"mk-help\">Put a phrase in quotes, or paste an identifier, to match it exactly.</div><div class=\"mk-help\">⌘K switches to jumping to a project, group or session by name.</div></div><div class=\"mk-foot\"><span>↑↓ Recent searches</span><span class=\"r\">⌘K Jump by name · esc Close</span></div></div></div>"
+    },
+    {
+     "id": "recents",
+     "label": "Recent searches only",
+     "desc": "Drop the help lines."
+    },
+    {
+     "id": "nothing",
+     "label": "Nothing until you type",
+     "desc": "An empty field and the filters."
+    }
+   ]
+  },
+  {
+   "id": "q23h-esc",
+   "ref": "Q-23 · search-handoff §5",
+   "title": "Search: Esc steps back one level",
+   "context": [
+    "The proposal: **Esc** closes the actions menu first, then leaves Find similar (back to the previous results), then closes search. A Spotlight-style alternative: Esc always closes."
+   ],
+   "options": [
+    {
+     "id": "step-back",
+     "label": "Esc steps back: menu → find similar → close",
+     "recommended": true,
+     "desc": "The footer says what Esc will do (`esc Back to results`)."
+    },
+    {
+     "id": "close",
+     "label": "Esc always closes search",
+     "desc": "Simpler; leaving Find similar needs a click."
+    }
+   ]
+  }
+ ],
+ "decisionsIntro": "Pick one option per question (or Something else, with a comment). Mockups are small sketches in Duo's look; the full designs are in `docs/design/search-handoff/` (open `screens/search-actions-file.html` etc. in a browser). Your answers save as you click, like the verdicts below."
 }

@@ -31,6 +31,24 @@ Rules for steps:
 - Group in the order he'd walk: workspace, attention, left pane, editor, right pane, files, organising, retention, CLI, app.
 - Nothing destructive outside the fixtures. Anything touching Claude config uses `CLAUDE_CONFIG_DIR=~/DuoAcceptance/legacy-claude-config` or another fake.
 
+### Decisions for Geoff
+
+Open questions that are Geoff's to decide (Q-n in `concerns-and-questions.md`, `[P]` proposals from a design handoff) go on the same page, above the features, so he answers them while he walks. Add them to `features.json`:
+
+```json
+"decisionsIntro": "…",
+"decisions": [ { "id": "q22-send-chord", "ref": "Q-22 · DL-34", "title": "…",
+                 "context": ["paragraph", ["bullet", "bullet"], "paragraph"],
+                 "options": [ { "id": "cmd-d", "label": "⌘D", "recommended": true, "desc": "…", "mockup": "<div class=\"mk\">…</div>" } ] } ]
+```
+
+- **Context must stand alone:** what the thing does today, what's already decided, the constraint (e.g. DL-34's locked chord map, chords already taken), any clash, and how the choice interacts with other decisions on the page. Split a bundled question into one decision per choice.
+- **Mockups when the choice is visual** (menus, chords as they'd appear, a modal's states): small HTML using the template's `mk-*` classes (`mk-menu`/`mk-item`/`mk-sep`, `mk-modal`/`mk-field`/`mk-filters`/`mk-pop`/`mk-chip`/`mk-row`/`mk-foot`). Match labels to the design screens exactly; take them from the screens' HTML.
+- The page adds "Something else" to every decision. Answers save to the `decisions` collection (`{choice, comment, at}`).
+- Point the Q-n row in `concerns-and-questions.md` at the page.
+
+When reading back (step 5), also `ArtifactData` `list` collection `decisions`: record each answer as a DL-n entry (or update the Q-n row if Geoff chose "Something else" and needs a follow-up), then build what it unblocks.
+
 ## 2. Fixtures
 
 `scripts/acceptance/fixtures.py` builds `~/DuoAcceptance` (workspace, elsewhere folders, fake legacy config) and plants `[fixture]` sessions in `~/.claude/projects`. If a feature needs a state the fixtures lack (a project, a session, a document in some state), **add it to `fixtures.py`**, don't hand-make it. Then `python3 scripts/acceptance/fixtures.py --reset`. Check Duo sees it: `scripts/run-live.sh "$HOME/DuoAcceptance/workspace" build/ui/acceptance.png "wait,wait,wait,wait,projects"`. `--clean` removes everything it made (to the Trash).

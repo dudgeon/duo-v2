@@ -27,6 +27,10 @@ def main():
         missing = {"id", "group", "title", "steps", "expect"} - f.keys()
         if missing:
             sys.exit(f"{f.get('id', '?')}: missing {sorted(missing)}")
+    for q in data.get("decisions", []):
+        missing = {"id", "title", "context", "options"} - q.keys()
+        if missing:
+            sys.exit(f"decision {q.get('id', '?')}: missing {sorted(missing)}")
     # Embedded in a <script> block: keep "</" from closing it.
     payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     html = TEMPLATE.read_text().replace("__TITLE__", data["title"]).replace("__DATA__", payload)
