@@ -184,6 +184,38 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-56 · Search M-UI built to search-handoff's screens (2026-10-04)
+
+- **Built:**
+  - The modal, opened by ⇧⌘A or by clicking the toolbar field. It has a scrim, a field row with no Search/Jump switch (DL-80), a filter row (pop-up buttons, Include archived, and the Exact chip with its ×), a 420-wide list beside the preview, the coverage line, and the footer.
+  - The Tab action menu, with DL-79's chords and ⌘D for Send to Claude.
+  - Every state: empty with recent searches, typing, exact, find similar (Esc goes back), none, first run, rebuilding, unreadable, multi-select, and narrowing to the project and back (⇧⌘A again).
+  - The two landings: a file opens at its lines with the `L40–58 · from search` outline and matched words semibold; a session opens read-only in a right-pane tab, with Resume.
+- **Live:**
+  - Name matches (projects, groups, sessions) come first as "Go to" rows and need no index (DL-80).
+  - Content comes from the index off the main thread. Later keystrokes cancel older answers.
+  - Several hits on the same file or session become one row with its passages, and file passages are labelled with their nearest heading.
+  - A session's preview shows the turns either side of the match.
+  - ⌘D sends references (`@path:lines`, or a session with its turn) into the dark pane's session without submitting.
+  - Recent searches are kept in Duo's defaults.
+- **Measured:**
+  - 15 targets compared with `scripts/check-ui.sh search-*`, with `compare.sh` now finding search-handoff's screens.
+  - Differences left on purpose:
+    - the scope switch (DL-80);
+    - placeholder bars in previews and in the fixture document (§0.4);
+    - the ⌘K copy (Q-25);
+    - the checkbox drawn inactive because the window isn't key during capture;
+    - split view greyed out.
+  - Each state has its own minimum body height, read from the targets: 440, 400 on first run, 360 exact, 260 none, 220 empty, error and rebuilding.
+- **Parity:**
+  - Search's controls map to `search` and `search-status`, Resume to `session open`.
+  - New verb `search-rebuild` for Rebuild the index.
+- **Not designed, stubbed:**
+  - New project from search (DB-9).
+  - Memory rows (DB-22).
+  - Filter pop-ups opened: they are native menus (DB-21).
+  - The scrim doesn't cover the toolbar: it's the system's, outside SwiftUI's content.
+
 ## F-55 · Walk reruns with the screen locked: real key events, three fixes (2026-10-04)
 
 - **How:** the screen locked while Geoff was out, so computer control could neither see nor click. Duo's harness now sends real key events (`event:esc|return`). They go through the app's queue, so the local monitors see them; when the window can't become key they go window-first, as NSApp would deliver them. Other new harness actions: `editor-js:`, `html-click:` / `html-js-click:`, `sheet:<button>`, `send-picked-new` and `ui-state`. `DUO_INSTALL_ROOT` points the installer, app and duo2 alike, at a throwaway folder, so the install loop runs end to end without touching `~/.claude`.

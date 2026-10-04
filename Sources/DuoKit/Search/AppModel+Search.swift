@@ -25,6 +25,7 @@ extension AppModel {
     }
 
     public func closeSearch() {
+        rememberSearch()
         search.isOpen = false
         search.menuOpen = false
         visibleTerminal.map { t in t.view.window?.makeFirstResponder(t.view) }
@@ -180,13 +181,28 @@ extension AppModel {
             s.items = names + content.map(\.item)
             s.selected = min(s.selected, max(0, s.items.count - 1))
             if s.items.isEmpty {
-                s.phase = .none(noneSentence(words), s.filtersSet ? hits.count : 0)
+                s.phase = .none(noneSentence(words), 0)
+                if s.filtersSet { countWithoutFilters(words, gen: gen) }
             } else { s.phase = .results }
-            if !words.isEmpty { SearchRecents.add(words) }
         }
     }
 
-    private func noneSentence(_ q: String) -> String {
+    /// search-none: "3 results without these filters." The same query, no project, kind or date.
+    private func countWithoutFilters(_ q: String, gen: Int) {
+        var query = SearchQuery(text: q)
+        query.exactOnly = search.exact
+        query.limit = 50
+        Task.detached(priority: .utility) {
+            let n = (try? SearchIndex(readOnly: true).search(query, embedder: query.exactOnly ? nil : try? Embedder(use: .query)))?.count ?? 0
+            await MainActor.run {
+                guard gen == self.search.generation, case .none(let sentence, _) = self.search.phase else { return }
+                self.search.phase = .none(sentence, n)
+            }
+        }
+    }
+
+    private func noneSentence(_ raw: String) -> String {
+        let q = SearchIndex.literal(in: raw) ?? raw
         let s = search
         let what = s.kind.map { $0 == .memory ? "in memory" : $0 == .file ? "in files" : "in sessions" } ?? ""
         let when = s.time == .any ? "" : "from the \(s.time.rawValue.lowercased().replacingOccurrences(of: "past ", with: "past "))"
@@ -319,6 +335,12 @@ extension AppModel {
     }
 
     // MARK: Actions
+
+    /// A search counts as recent once it was acted on or left with results, not at every keystroke.
+    func rememberSearch() {
+        let q = search.query.trimmingCharacters(in: .whitespaces)
+        if !q.isEmpty, case .results = search.phase, search.items.contains(where: \.isContent) { SearchRecents.add(q) }
+    }
 
     public func runSearchAction(_ id: SearchAction.ID) {
         let s = search

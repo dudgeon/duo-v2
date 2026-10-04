@@ -178,6 +178,10 @@ public enum FixtureHarness {
         case "search":   // search:<query>: open the modal (⇧⌘A) and type the query
             if !model.search.isOpen { model.openSearch() }
             model.searchQueryChanged(parts.count > 1 ? parts[1] : "")
+        case "search-kind":   // search-kind:file|session|memory|any (the Kind pop-up)
+            model.setSearchKind(parts.count > 1 ? SearchItem.Kind(rawValue: parts[1]) : nil)
+        case "search-close": model.closeSearch()
+        case "search-scope": model.setSearchScope(parts.count > 1 && parts[1] != "all" ? parts[1] : nil)
         case "search-pick":   // search-pick:<n>: select row n
             if parts.count > 1, let n = Int(parts[1]) { model.selectSearchRow(n) }
         case "search-action":   // search-action:<SearchAction.ID raw value>
@@ -191,6 +195,7 @@ public enum FixtureHarness {
             let st = model.search
             var lines = ["search-state: open=\(st.isOpen) phase=\(st.phase) query=\(st.query.debugDescription) exact=\(st.exact) scope=\(st.scopeProject ?? "all") selected=\(st.selected) menu=\(st.menuOpen) coverage=\(st.coverage ?? "-")"]
             lines += st.items.prefix(12).enumerated().map { i, it in "  \(i == st.selected ? ">" : " ") \(it.goTo ? "goto" : it.kind.rawValue) \(it.project ?? "Unfiled") · \(it.title) · \(it.location) · \(it.matchedBy) \(it.date ?? "")" }
+            if case .empty = st.phase { lines.append("  recents: \(st.recents.map(\.query))") }
             lines.append("  footer: ↩ \(st.returnLabel) · similar=\(st.similarTo?.title ?? "-") · at=\(model.altitude.isAllProjects ? "all" : model.currentProject?.name ?? "?") rightTab=\(model.rightTab ?? "-") console=\(model.consoleTab ?? "-")")
             FileHandle.standardError.write(Data((lines.joined(separator: "\n") + "\n").utf8))
         case "ui-state":

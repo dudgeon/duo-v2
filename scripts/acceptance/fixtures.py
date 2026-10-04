@@ -220,7 +220,7 @@ RECIPES = {
 
 
 def recipe(name):
-    """Named setup steps for the walk's Set up test (DL-81). Only these names run."""
+    """Named setup steps for the walk's Set up test (acceptance-walk skill). Only these names run."""
     co = WS / "payments" / "checkout"
     if name == "reset-checkout":
         # Anything a test added (new files, folders, duplicates, renames) goes to the Trash.

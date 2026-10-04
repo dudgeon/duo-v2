@@ -1672,7 +1672,7 @@
    "id": "search-field",
    "group": "App",
    "title": "The toolbar field says Search, ⌘K is free",
-   "what": "DL-80: Jump merged into Search; the field reads Search all projects ⇧⌘A (the modal itself isn't built yet).",
+   "what": "DL-80: Jump merged into Search; the field reads Search all projects ⇧⌘A and opens the search modal.",
    "steps": [
     "Look at the toolbar field; press ⌘K."
    ],
@@ -1716,6 +1716,215 @@
     "human": [
      "Use Duo for a while and tell me if any permission prompt still appears; System Settings › Privacy & Security lists past answers, and Duo needs none of them."
     ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "search-open",
+   "group": "Search",
+   "title": "⇧⌘A opens search; results with a preview",
+   "what": "One modal over a dimmed window: field, filters, results on the left, the selected one previewed on the right (DL-76).",
+   "steps": [
+    "Press ⇧⌘A (or click `Search all projects` in the toolbar).",
+    "Type `saved cards`.",
+    "Press ↓ and ↑ to move through the results."
+   ],
+   "expect": "Files show their path and lines, sessions their title and turn; matched words are bold; the preview shows the passage (files) or the turn with the ones either side (sessions). The design's grey bars are placeholders and aren't drawn.",
+   "ref": "DL-76, F-56",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live, on the fixtures: `saved cards` listed docs/prd.md, docs/research.md, Interview synthesis notes and more, one row per file or session.",
+     "Compared all 15 search screens with the design (`scripts/check-ui.sh search-*`): layout, type and spacing match; differences are the removed Search/Jump switch (DL-80) and the placeholder bars."
+    ],
+    "didnt": [],
+    "human": [
+     "Judge the look and feel: the scrim, the fade, how fast results arrive."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "search-names-first",
+   "group": "Search",
+   "title": "Names first: Go to a project, group or session",
+   "what": "DL-80: Jump merged in. Matching names lead the list; Return goes there. No ⌘K.",
+   "steps": [
+    "⇧⌘A, type `refunds`, press Return.",
+    "⇧⌘A, type `Interview`, look at the top rows."
+   ],
+   "expect": "`refunds` is the first row with its state glyph; Return opens the project. Sessions by name come first, then content.",
+   "ref": "DL-80, F-56",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`refunds` → the Go to row was first; Return opened refunds.",
+     "`checkout` → checkout and checkout-redesign as Go to rows, then a session by name, then content."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "search-open-file",
+   "group": "Search",
+   "title": "Return opens a file at its lines, outlined",
+   "what": "The passage is outlined with `L… · from search`, matched words bold (search-open-file).",
+   "steps": [
+    "⇧⌘A, type `Decide on saved cards`, press Return."
+   ],
+   "expect": "checkout opens with docs/prd.md in the right pane, scrolled to the match, outlined and labelled `L1–19 · from search`; typing clears the outline.",
+   "ref": "F-56",
+   "setup": [
+    "fixture reset-checkout",
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Return opened docs/prd.md in checkout; the editor showed the outline with `L1–19 · from search` and **Decide** / **saved cards** bold (editor snapshot)."
+    ],
+    "didnt": [],
+    "human": [
+     "The short PRD is one passage, so the whole file is outlined; try a longer file (`docs/long-backlog.md`)."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "search-actions",
+   "group": "Search",
+   "title": "Tab: the action menu",
+   "what": "Tab lists the other actions; Return runs the chosen one; Esc closes the menu (DL-79).",
+   "steps": [
+    "⇧⌘A, `saved cards`, Tab on a file; ↓ to Copy path, Return.",
+    "Tab on a session: Open read-only at turn n (⇧⌘↩)."
+   ],
+   "expect": "File: Open, Open in split view (greyed: not built), Go to the project, Send to Claude in ‹session› ⌘D, Find similar, Show all passages, Copy path ⌥⌘C, Copy passage ⇧⌘C, Copy Markdown link, Reveal in Finder ⌘R. Read-only opens a right-pane tab with a `read-only` pill and Resume.",
+   "ref": "DL-79, F-56",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Tab opened the menu on the selected row (matches search-actions-file and -session).",
+     "⇧⌘↩ on a session opened the read-only tab in its project."
+    ],
+    "didnt": [
+     "Didn't check the clipboard after Copy path."
+    ],
+    "human": [
+     "Click Resume on the read-only tab."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "search-send",
+   "group": "Search",
+   "title": "⌘D sends results to Claude as references",
+   "what": "Send to Claude goes to the dark pane's session, named in the menu; several selected with ⇧↓ go together; nothing is submitted (DL-79).",
+   "steps": [
+    "In checkout with a session showing: ⇧⌘A, `saved cards`, ⇧↓ to select two, ⌘D."
+   ],
+   "expect": "The session's prompt gets `@…/docs/prd.md:1-19` and `@…/docs/research.md:1-3`, not submitted; the modal closes.",
+   "ref": "DL-79, F-56",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Two selected, ⌘D: both paths with their lines landed in the session's prompt, unsent; the footer had read `Send 2 to Claude in …`."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "search-similar",
+   "group": "Search",
+   "title": "Find similar, and Esc steps back",
+   "what": "From the menu: results by meaning like the chosen one; Esc returns to the previous search, then closes (DL-79 h).",
+   "steps": [
+    "⇧⌘A, `saved cards`, Tab, Find similar.",
+    "Esc, then Esc again."
+   ],
+   "expect": "The field shows `Similar to` and the source as a chip; rows don't say `by meaning`; the footer says `esc Back to “saved cards”`. First Esc returns to it; second closes.",
+   "ref": "DL-79, F-56",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Find similar on docs/prd.md listed PROJECT.md and others; Esc brought back `saved cards`; Esc again closed."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "search-filters",
+   "group": "Search",
+   "title": "Filters, Exact, and narrowing to the project",
+   "what": "Project, kind and date pop-ups, Include archived, Exact (⌘E; on by itself for quotes and identifiers), ⇧⌘A again inside a project narrows (DL-79).",
+   "steps": [
+    "In checkout: ⇧⌘A, type `\"saved cards\"` (with quotes).",
+    "⇧⌘A again, and again.",
+    "Any kind ▸ Memory."
+   ],
+   "expect": "An `Exact` chip appears (× removes it); rows say `exact`. ⇧⌘A narrows to checkout (the pop-up fills) and back. With Memory and nothing found: `No results`, what's filtered, how many without the filters, Clear filters.",
+   "ref": "DL-79, F-56",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`\"saved cards\"` turned Exact on by itself; ⇧⌘A narrowed to checkout and back.",
+     "Scoped to onboarding: `Nothing in onboarding matches “Decide on saved cards”.` and `1 result without these filters.`"
+    ],
+    "didnt": [
+     "Didn't open the pop-ups (they're native menus; the harness sets the same filters)."
+    ],
+    "human": [
+     "Open each pop-up once."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "search-recents",
+   "group": "Search",
+   "title": "Empty state: recent searches and help",
+   "what": "With nothing typed: searches you used, and three help lines (DL-79 g, DL-81).",
+   "steps": [
+    "⇧⌘A with an empty field; ↓ then Return."
+   ],
+   "expect": "`RECENT SEARCHES` lists searches you opened something from or left with results (not every keystroke); Return reruns one. Help reads: by meaning or exact words; quotes for exact; names come first.",
+   "ref": "DL-79, DL-81, F-56",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Typed s, sa, saved, saved cards then closed: only `saved cards` was remembered."
+    ],
+    "didnt": [],
+    "human": [],
     "at": "2026-10-04"
    }
   }
