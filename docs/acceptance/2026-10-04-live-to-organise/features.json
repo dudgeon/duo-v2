@@ -416,17 +416,14 @@
     "doc open docs/long-backlog.md"
    ],
    "claude": {
-    "result": "partial",
+    "result": "passed",
     "did": [
-     "⌘F opened the find panel; with `FORWARDER` typed, the panel's next button jumped to line 1954 of 3234 (`duo2 doc selection` confirmed)."
+     "⌘F opened the find panel; with `FORWARDER` typed, the panel's next button jumped to line 1954 of 3234 (`duo2 doc selection` confirmed).",
+     "Rerun with a real Return key event in the find field: `FORWARDER` jumped to line 1954, Return again to line 3008."
     ],
-    "didnt": [
-     "Return in the find field didn't jump in my run; that may be how my synthetic typing reached the field."
-    ],
-    "human": [
-     "Type a word and press Return in the find field."
-    ],
-    "at": "2026-10-04"
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04 (rerun)"
    }
   },
   {
@@ -587,17 +584,17 @@
     "did": [
      "Named a new file inline (walk-test, Return): renamed on disk and its tab followed.",
      "Duplicate made `walk-test copy.md`; Move to Trash removed it; trashing the original closed its tab.",
-     "Fixed: Esc now cancels inline naming (the field claims Esc itself)."
+     "Fixed: Esc now cancels inline naming (the field claims Esc itself).",
+     "Rerun with real key events: a new file's name field now takes focus by itself, Esc cancels naming (the name stays `Untitled.md`) and Return confirms.",
+     "Fixed: the name field asked for focus once, before SwiftUI had put it in the window, so typing could land in the terminal or editor."
     ],
     "didnt": [
-     "Couldn't test Esc myself (the computer-control overlay keeps it).",
-     "Didn't try Move To… (it opens a folder picker)."
+     "Didn't try Move To… (its folder picker is a system panel I can't drive with the screen locked; `duo2 file move` does the same move and passes)."
     ],
     "human": [
-     "Try Move To… once.",
-     "Check whether Escape cancels naming for you."
+     "Try Move To… once."
     ],
-    "at": "2026-10-04"
+    "at": "2026-10-04 (rerun)"
    }
   },
   {
@@ -637,17 +634,15 @@
     "open checkout"
    ],
    "claude": {
-    "result": "partial",
+    "result": "passed",
     "did": [
-     "Open With ▸ lists TextEdit (default), Numbers, Pages, Google Chrome, Notes, Claude…, then Other…."
+     "Open With ▸ lists TextEdit (default), Numbers, Pages, Google Chrome, Notes, Claude…, then Other….",
+     "Rerun: Reveal in Finder (`Shown in Finder.`) and Open With TextEdit (`Opened in TextEdit.`, a new TextEdit window).",
+     "Fixed: `duo2 file reveal|open-with|path|…` from a terminal outside the project printed its usage line; paths now resolve in the project on screen too, and a wrong path says where Duo looked."
     ],
-    "didnt": [
-     "Didn't click Reveal in Finder or open another app (that would hand control to Finder or the app)."
-    ],
-    "human": [
-     "Reveal in Finder and one Open With."
-    ],
-    "at": "2026-10-04"
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04 (rerun)"
    }
   },
   {
@@ -968,15 +963,14 @@
    "claude": {
     "result": "passed",
     "did": [
-     "onboarding's .gitignore has `.duo/` and the answer is remembered (not asked again). The fixture reset forgets the answer so you see the question once."
+     "onboarding's .gitignore has `.duo/` and the answer is remembered (not asked again). The fixture reset forgets the answer so you see the question once.",
+     "Rerun: the .gitignore question now shows as a sheet on Duo's window, and duo2 kept answering while it was up."
     ],
-    "didnt": [
-     "Didn't see the alert itself (it was answered earlier)."
-    ],
+    "didnt": [],
     "human": [
      "Answer it when it appears after the reset."
     ],
-    "at": "2026-10-04"
+    "at": "2026-10-04 (rerun)"
    }
   },
   {
@@ -1097,15 +1091,14 @@
     "open checkout"
    ],
    "claude": {
-    "result": "partial",
+    "result": "passed",
     "did": [
-     "In scratch, with no session showing, a session's right-click menu reads `Send to Claude: No session is showing`, greyed, with Send To still available."
+     "In scratch, with no session showing, a session's right-click menu reads `Send to Claude: No session is showing`, greyed, with Send To still available.",
+     "Rerun: right after + New session the target reads `Claude isn't ready yet`; once the prompt is up it's that session; after closing it, `No session is showing`."
     ],
-    "didnt": [
-     "Didn't catch the `Claude isn't ready yet` case (it needs a right-click within seconds of + New session)."
-    ],
+    "didnt": [],
     "human": [],
-    "at": "2026-10-04"
+    "at": "2026-10-04 (rerun)"
    }
   },
   {
@@ -1126,17 +1119,16 @@
     "doc open prototypes/checkout.html"
    ],
    "claude": {
-    "result": "partial",
+    "result": "passed",
     "did": [
-     "checkout.html shows with its stylesheet and image; when Claude rewrote checkout.css the page reloaded by itself."
+     "checkout.html shows with its stylesheet and image; when Claude rewrote checkout.css the page reloaded by itself.",
+     "Rerun: activating `Shipping policy` handed https://example.com/shipping to your browser (Duo's log: `link out`), and the page in Duo stayed put."
     ],
     "didnt": [
-     "Didn't click `Shipping policy` (it would open example.com in your browser)."
+     "The click came from the page's own script: with the screen locked, WebKit ignores synthetic mouse clicks."
     ],
-    "human": [
-     "Click the link: it should open in your browser, not in Duo."
-    ],
-    "at": "2026-10-04"
+    "human": [],
+    "at": "2026-10-04 (rerun)"
    }
   },
   {
@@ -1221,19 +1213,16 @@
     "doc open prototypes/checkout.html"
    ],
    "claude": {
-    "result": "partial",
+    "result": "passed",
     "did": [
      "Picked the Payment heading (`<h2>`), Pick Another, then the card field (`<input#card>`); Cancel closed the picker.",
-     "Fixed: Esc now closes the picker from anywhere (before, it went wherever the keyboard was, possibly the Claude terminal, where Esc interrupts Claude)."
+     "Fixed: Esc now closes the picker from anywhere (before, it went wherever the keyboard was, possibly the Claude terminal, where Esc interrupts Claude).",
+     "Rerun: a real Esc key event with the picker open closed it (picking off, outline and bar gone).",
+     "Send To ▸ New Session on the picked `<input#card>`: a session started, and once its prompt was ready the element (trail, styles, screenshot, HTML) was pasted there once; the keyboard moved to it."
     ],
-    "didnt": [
-     "Couldn't test Esc: the computer-control overlay keeps Esc for itself, so my Esc never reaches Duo.",
-     "Didn't try Send To ▸ New Session."
-    ],
-    "human": [
-     "Press Esc with the picker open (also: Esc while naming a new file)."
-    ],
-    "at": "2026-10-04"
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04 (rerun)"
    }
   },
   {
@@ -1325,17 +1314,16 @@
     "go all"
    ],
    "claude": {
-    "result": "partial",
+    "result": "passed",
     "did": [
-     "`duo2 session move 5e56132f --to checkout` raised Duo's sheet; Cancel → the command printed `not moved (the user cancelled)`; asked again and Move → `Filed … in checkout … Undo: duo2 undo`."
+     "`duo2 session move 5e56132f --to checkout` raised Duo's sheet; Cancel → the command printed `not moved (the user cancelled)`; asked again and Move → `Filed … in checkout … Undo: duo2 undo`.",
+     "Rerun in words (Haiku, a checkout session): Claude found the session and ran `duo2 session move`; Duo's sheet showed Cancel | Move. Cancel → duo2 returned not moved; asked again, Move → filed in checkout.",
+     "Fixed: Haiku read the old `not moved (the user cancelled)` as still waiting; the message now says `Not moved: the user clicked Cancel in Duo. Nothing changed and nothing is pending.`",
+     "Set up test now also sends a session filed into checkout back where it came from."
     ],
-    "didnt": [
-     "Didn't ask a Claude session to do it in words (I ran duo2 myself)."
-    ],
-    "human": [
-     "Ask a Home session in plain words, as the steps say."
-    ],
-    "at": "2026-10-04"
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04 (rerun)"
    }
   },
   {
@@ -1352,13 +1340,12 @@
    "claude": {
     "result": "passed",
     "did": [
-     "You chose Install: `duo2 doctor` reports the CLAUDE.md block current, the skill current, `~/.local/bin/duo2` linked; your own CLAUDE.md text is intact above the block."
+     "You chose Install: `duo2 doctor` reports the CLAUDE.md block current, the skill current, `~/.local/bin/duo2` linked; your own CLAUDE.md text is intact above the block.",
+     "Rerun on a throwaway config: the consent sheet shows `Let Claude sessions outside Duo use it?` with Install | Not Now, as a sheet on Duo's window (it no longer blocks duo2)."
     ],
-    "didnt": [
-     "Didn't see the alert itself (you answered it)."
-    ],
+    "didnt": [],
     "human": [],
-    "at": "2026-10-04"
+    "at": "2026-10-04 (rerun)"
    }
   },
   {
@@ -1396,17 +1383,16 @@
    "expect": "Your edit stays; the deleted block stays deleted; uninstall removes the skill and the link and leaves your own CLAUDE.md text (and legacy's block, if any) alone.",
    "ref": "DL-74, F-48",
    "claude": {
-    "result": "partial",
+    "result": "passed",
     "did": [
-     "Checked by 11 automated checks against a temporary home: an edited block is left alone, a removed block never comes back, uninstall removes exactly what Duo wrote."
+     "Checked by 11 automated checks against a temporary home: an edited block is left alone, a removed block never comes back, uninstall removes exactly what Duo wrote.",
+     "Rerun end to end on a throwaway config (`DUO_INSTALL_ROOT`): the consent sheet (Install | Not Now) → block, skill and link written; an edited word in the block survived a relaunch (`edited by you, left alone`); a removed block stayed removed (`you removed it, so Duo won't add it back`); `duo2 uninstall` removed the skill and link and kept the file's own text."
     ],
     "didnt": [
-     "Didn't edit or remove the block in your real ~/.claude/CLAUDE.md (removing it is permanent by design)."
+     "Didn't touch your real ~/.claude/CLAUDE.md."
     ],
-    "human": [
-     "Only if you want to: try it on your real file."
-    ],
-    "at": "2026-10-04"
+    "human": [],
+    "at": "2026-10-04 (rerun)"
    }
   },
   {
@@ -1479,17 +1465,14 @@
     "doc open docs/prd.md"
    ],
    "claude": {
-    "result": "partial",
+    "result": "passed",
     "did": [
-     "The same merge is exercised by col-merge (your typing plus an outside write on another line) and by Claude's edits going through the editor."
+     "The same merge is exercised by col-merge (your typing plus an outside write on another line) and by Claude's edits going through the editor.",
+     "Rerun (Haiku): asked for a new last line in the PRD and typed eight edits into the Problem line, one every 3 s, while Claude worked. Buffer and disk both have all eight and Claude's line; Claude's change came through the editor (the hook), not the file."
     ],
-    "didnt": [
-     "Didn't type while Claude worked: my typing and Claude's turn can't overlap reliably by script."
-    ],
-    "human": [
-     "Ask for an edit and keep typing elsewhere in the PRD."
-    ],
-    "at": "2026-10-04"
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04 (rerun)"
    }
   },
   {
@@ -1508,17 +1491,14 @@
     "session-running checkout"
    ],
    "claude": {
-    "result": "partial",
+    "result": "passed",
     "did": [
-     "Fixed: `duo2 doctor` printed `Hooks: none have run in this session` in any Claude session, even ones Duo didn't start; it now speaks only in Duo's own sessions."
+     "Fixed: `duo2 doctor` printed `Hooks: none have run in this session` in any Claude session, even ones Duo didn't start; it now speaks only in Duo's own sessions.",
+     "Rerun in a Duo session (Haiku): `duo2 doctor` printed `Hooks: running in this session`, the block and skill current, the link, and `Reachable`."
     ],
-    "didnt": [
-     "Didn't run doctor inside a Duo session (that's a Claude turn)."
-    ],
-    "human": [
-     "In a Duo session: `duo2 doctor` should say hooks are running."
-    ],
-    "at": "2026-10-04"
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04 (rerun)"
    }
   },
   {

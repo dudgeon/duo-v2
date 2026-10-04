@@ -146,6 +146,39 @@ public enum FixtureHarness {
         case "key":   // key:down|up|esc|tab: one key into the visible terminal (menus such as the trust prompt)
             let codes = ["down": "\u{1b}[B", "up": "\u{1b}[A", "esc": "\u{1b}", "tab": "\t"]
             if parts.count > 1, let c = codes[parts[1]] { model.visibleTerminal?.view.send(txt: c) }
+        case "event":  // event:esc|return: a real key event through the app's queue (local monitors, key window, field editor)
+            let codes: [String: (UInt16, String)] = ["esc": (53, "\u{1b}"), "return": (36, "\r")]
+            if parts.count > 1, let (code, chars) = codes[parts[1]], let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
+                NSApp.activate(ignoringOtherApps: true); w.makeKey()
+                for type in [NSEvent.EventType.keyDown, .keyUp] {
+                    guard let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                                   windowNumber: w.windowNumber, context: nil, characters: chars,
+                                                   charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code) else { continue }
+                    NSApp.postEvent(e, atStart: false)
+                    // With the screen locked the window can't become key and the queue drops key events after
+                    // the monitors; deliver keyDown as NSApp would: key equivalents first, then the first responder.
+                    if type == .keyDown, !w.isKeyWindow {
+                        DispatchQueue.main.async { if !w.performKeyEquivalent(with: e) { w.sendEvent(e) } }
+                    }
+                }
+            }
+        case "editor-js":   // editor-js:<js>: run in the editor page (focused first), print what it returns
+            let e = model.editor
+            e.webView.window?.makeFirstResponder(e.webView)
+            e.run(parts.count > 1 ? parts[1] : "return null") { v in
+                FileHandle.standardError.write(Data("editor-js: \(String(describing: v ?? "nil"))\n".utf8))
+            }
+        case "sheet":   // sheet:<button title>: press that button on the sheet attached to Duo's window
+            if let w = NSApp.windows.first(where: { $0.title == "Duo" }), let sheet = w.attachedSheet {
+                func buttons(_ v: NSView) -> [NSButton] { (v as? NSButton).map { [$0] } ?? v.subviews.flatMap(buttons) }
+                let all = sheet.contentView.map(buttons) ?? []
+                FileHandle.standardError.write(Data("sheet: [\(all.map(\.title).joined(separator: " | "))]\n".utf8))
+                all.first(where: { $0.title == (parts.count > 1 ? parts[1] : "") })?.performClick(nil)
+            } else { FileHandle.standardError.write(Data("sheet: none\n".utf8)) }
+        case "ui-state":
+            let w = NSApp.windows.first(where: { $0.title == "Duo" })
+            let fr = w?.firstResponder.map { String(describing: type(of: $0)) } ?? "-"
+            FileHandle.standardError.write(Data("ui-state: renaming=\(model.renamingPath ?? "-") picking=\(model.htmlViewerIfLoaded?.picking ?? false) picked=\(model.htmlViewerIfLoaded?.picked?.selector ?? "-") send=\((try? model.sendTarget.get()).map { "ok \($0.key.prefix(12))" } ?? { if case .failure(let e) = model.sendTarget { return e.reason }; return "-" }()) key=\(w?.isKeyWindow ?? false) firstResponder=\(fr)\n".utf8))
         case "dump":
             for t in model.terminals.all.sorted(by: { $0.key < $1.key }) {
                 t.view.selectAll()
@@ -169,6 +202,21 @@ public enum FixtureHarness {
             model.htmlViewer.webView.callAsyncJavaScript(
                 "const r = document.createRange(); r.selectNodeContents(document.querySelector(s)); getSelection().removeAllRanges(); getSelection().addRange(r); return 1",
                 arguments: ["s": parts.count > 1 ? parts[1] : "body"], in: nil, in: .page, completionHandler: nil)
+        case "html-click":   // html-click:<css selector>: a real mouse click at that element's centre in the page
+            let wv = model.htmlViewer.webView
+            wv.callAsyncJavaScript("const r = document.querySelector(s).getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]",
+                                   arguments: ["s": parts.count > 1 ? parts[1] : "a"], in: nil, in: .page) { r in
+                guard case .success(let v) = r, let xy = v as? [Double], xy.count == 2, let w = wv.window else { return }
+                let inView = NSPoint(x: xy[0], y: wv.isFlipped ? xy[1] : wv.bounds.height - xy[1])
+                let p = wv.convert(inView, to: nil)
+                for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+                    if let e = NSEvent.mouseEvent(with: type, location: p, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                                  windowNumber: w.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) { w.sendEvent(e) }
+                }
+            }
+        case "html-js-click":   // html-js-click:<css selector>: the page's own click() on it (when real mouse events can't reach WebKit)
+            model.htmlViewer.webView.callAsyncJavaScript("document.querySelector(s).click(); return 1",
+                arguments: ["s": parts.count > 1 ? parts[1] : "a"], in: nil, in: .page, completionHandler: nil)
         case "send-html-selection": model.htmlSelectionPayload { if let p = $0 { model.send(p) } }
         case "html-pick": if parts.count > 1 { model.htmlViewer.pick(selector: parts[1]) }
         case "html-snapshot":   // html-snapshot:<png path>: what the page web view draws
@@ -180,6 +228,7 @@ public enum FixtureHarness {
                 FileHandle.standardError.write(Data("html-snapshot: \(image != nil ? path : "failed")\n".utf8))
             }
         case "send-picked": model.sendPickedElement(to: model.visibleSessionId)
+        case "send-picked-new": model.sendPickedElement(to: nil)   // Send To ▸ New Session
         case "dump-tail":   // the visible terminal's last lines
             if let t = model.visibleTerminal {
                 t.view.selectAll()

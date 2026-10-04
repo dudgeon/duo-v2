@@ -497,11 +497,7 @@ struct InlineNameField: NSViewRepresentable {
         f.drawsBackground = true
         f.backgroundColor = DuoNSColor.pane
         f.delegate = context.coordinator
-        DispatchQueue.main.async {
-            f.window?.makeFirstResponder(f)
-            let stem = (name as NSString).deletingPathExtension
-            f.currentEditor()?.selectedRange = NSRange(location: 0, length: (stem as NSString).length)
-        }
+        f.selectStem = (name as NSString).deletingPathExtension
         return f
     }
 
@@ -537,6 +533,21 @@ struct InlineNameField: NSViewRepresentable {
     /// before the field editor saw `cancelOperation`, so Escape never cancelled naming.
     final class EscapableField: NSTextField {
         var onEscape: (() -> Void)?
+        /// Set until the field has taken focus with the name's stem selected. Focus is taken
+        /// once the field is in a window: an async call from makeNSView could run before
+        /// SwiftUI attached it, leaving typing in the terminal or editor.
+        var selectStem: String?
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard window != nil, selectStem != nil else { return }
+            DispatchQueue.main.async { [weak self] in self?.takeFocus() }
+        }
+        private func takeFocus() {
+            guard let window, let stem = selectStem else { return }
+            selectStem = nil
+            window.makeFirstResponder(self)
+            currentEditor()?.selectedRange = NSRange(location: 0, length: (stem as NSString).length)
+        }
         override func performKeyEquivalent(with event: NSEvent) -> Bool {
             if event.keyCode == 53, currentEditor() != nil { onEscape?(); return true }
             return super.performKeyEquivalent(with: event)

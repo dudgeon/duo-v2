@@ -235,6 +235,12 @@ def recipe(name):
                 trash(f)
         checkout_docs(co)
         prototypes(co)
+        # Sessions a test filed into checkout (cli-confirm, org-move) go back where they came from.
+        reg = co / ".duo" / "sessions.json"
+        if reg.exists():
+            data = json.loads(reg.read_text())
+            data["sessions"] = [s for s in data.get("sessions", []) if not str(s.get("provenance", "")).startswith("moved-by-user")]
+            reg.write_text(json.dumps(data, indent=2) + "\n")
     elif name == "purge":
         purge()
     else:

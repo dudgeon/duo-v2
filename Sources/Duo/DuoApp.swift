@@ -92,7 +92,7 @@ struct DuoApp: App {
                     return picking ? nil : e
                 }
                 // DL-74, DL-75: what lets Claude sessions anywhere use duo2; asked once, kept current.
-                if !options.capturing, let dir = ChildEnvironment.cliDirectory {
+                if !options.capturing || Installer.testRoot != nil, let dir = ChildEnvironment.cliDirectory {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) { InstallPrompt.run(cli: dir + "/duo2") }
                 }
             }

@@ -249,6 +249,8 @@ Batch these into design passes; each is a ⛔ in its phase.
 5. v1.1: ~~search UI~~ (**designed 2026-10-04: `docs/design/search-handoff/`**, which also designs the ⌘K Jump palette as the modal's second scope), browser and inspector, version history, groups by hand and group page.
 6. Left by the search design (its README §9): filter pop-ups opened and a date picker, the memory result row, find similar started outside search, Jump's empty state and action menu, the create-project flow, split view, windows smaller than 1440×900, dark appearance, motion.
 
+Everything still waiting on design, batched for one pass: `docs/design/design-brief-2026-10-04.md` (DB-1 to DB-32).
+
 ## 4. Dependency order at a glance
 
 ```

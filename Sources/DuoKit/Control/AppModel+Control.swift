@@ -118,7 +118,7 @@ extension AppModel {
             }
             let count = fixture.sessions(inProject: src.name).filter { $0.sessionId != nil }.count
             mergeProject(src.name, into: dst.name) { ok in
-                done(ok ? .ok("Merged \(count) session(s) from \(src.name) into \(dst.name). Undo: duo2 undo") : .fail("not merged (the user cancelled, or nothing to move)"))
+                done(ok ? .ok("Merged \(count) session(s) from \(src.name) into \(dst.name). Undo: duo2 undo") : .fail("Not merged: the user clicked Cancel in Duo, or there was nothing to move. Nothing changed and nothing is pending."))
             }
 
         // MARK: Sessions
@@ -160,7 +160,7 @@ extension AppModel {
                 return done(.fail("usage: \(id.action.usage)"))
             }
             moveSessions([sid], to: dst.name) { ok in
-                done(ok ? .ok("Filed \(s.name) in \(dst.name); it moves there on its next resume. Undo: duo2 undo") : .fail("not moved (the user cancelled)"))
+                done(ok ? .ok("Filed \(s.name) in \(dst.name); it moves there on its next resume. Undo: duo2 undo") : .fail("Not moved: the user clicked Cancel in Duo. Nothing changed and nothing is pending."))
             }
         case .sessionNote, .sessionNext:
             guard let sid = req.session else { return done(.fail("not run from a Claude session (no session id)")) }
@@ -329,7 +329,10 @@ extension AppModel {
     // MARK: Files
 
     private func fileVerb(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
-        let projectName = inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name ?? currentProject?.name
+        // The path's project: --project, else the first of the caller's project and the showing one
+        // that has the path (a terminal in another folder still reaches the project on screen).
+        let candidates = inv.flags["project"].map { [$0] } ?? [projectFor(cwd: req.cwd)?.name, currentProject?.name].compactMap { $0 }
+        let projectName = inv[0].flatMap { a in candidates.first { relativePath(a, project: $0, cwd: req.cwd) != nil } } ?? candidates.first
         guard let projectName, let p = project(named: projectName), let folder = liveFolders[p.name] else { return done(.fail("no project here (use --project)")) }
         let isCurrent = currentProject?.name == p.name
         func url(_ s: String?) -> (URL, String)? {
@@ -342,6 +345,11 @@ extension AppModel {
             return u
         }
         func rel(_ u: URL) -> String { relativePathIn(u, folder: folder) ?? u.path }
+        /// Usage when the argument is missing; otherwise say the path wasn't found and where Duo looked.
+        func missing(_ a: String?) -> Reply {
+            guard let a else { return .fail("usage: \(id.action.usage)") }
+            return .fail("no '\(a)' in \(p.name) (\(folder.path)). Pass --project <name>, or a path from the project's folder.")
+        }
         func after(_ then: @escaping @MainActor () -> Void = {}) { refreshLive(); DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { MainActor.assumeIsolated { then() } } }
         do {
             switch id {
@@ -370,31 +378,34 @@ extension AppModel {
                 let ts = FileActions.templates(project: folder, home: fixture.home.flatMap { liveFolders[$0.name] })
                 done(.ok(ts.isEmpty ? "No templates: add .md files to a templates folder." : ts.map { $0.deletingPathExtension().lastPathComponent }.joined(separator: "\n"), ts.map(\.path)))
             case .fileRename:
-                guard let (u, old) = url(inv[0]), let name = inv[1] else { return done(.fail("usage: \(id.action.usage)")) }
+                guard let name = inv[1] else { return done(.fail("usage: \(id.action.usage)")) }
+                guard let (u, old) = url(inv[0]) else { return done(missing(inv[0])) }
                 let dest = try FileActions.rename(u, to: name)
                 let new = rel(dest)
                 if isCurrent { moved(old, to: new, url: dest) } else { retab(p.name, old, new); after() }
                 done(.ok("Renamed to \(new) in \(p.name).", ["path": new, "project": p.name]))
             case .fileDuplicate:
-                guard let (u, _) = url(inv[0]) else { return done(.fail("usage: \(id.action.usage)")) }
+                guard let (u, _) = url(inv[0]) else { return done(missing(inv[0])) }
                 let r = rel(try FileActions.duplicate(u)); after()
                 done(.ok("Duplicated as \(r) in \(p.name).", ["path": r, "project": p.name]))
             case .fileMove:
-                guard let (u, old) = url(inv[0]), let (d, _) = url(inv[1]) else { return done(.fail("usage: \(id.action.usage)")) }
+                guard inv[1] != nil else { return done(.fail("usage: \(id.action.usage)")) }
+                guard let (u, old) = url(inv[0]) else { return done(missing(inv[0])) }
+                guard let (d, _) = url(inv[1]) else { return done(missing(inv[1])) }
                 let dest = try FileActions.move(u, into: d)
                 let new = rel(dest)
                 if isCurrent { moved(old, to: new, url: dest) } else { retab(p.name, old, new); after() }
                 done(.ok("Moved to \(new) in \(p.name).", ["path": new, "project": p.name]))
             case .fileTrash:
-                guard let (u, r) = url(inv[0]) else { return done(.fail("usage: \(id.action.usage)")) }
+                guard let (u, r) = url(inv[0]) else { return done(missing(inv[0])) }
                 if isCurrent { closeDocumentsUnder(r) }
                 try FileActions.trash(u); after()
                 done(.ok("Moved \(r) (in \(p.name)) to the Trash."))
             case .fileReveal:
-                guard let (u, _) = url(inv[0]) else { return done(.fail("usage: \(id.action.usage)")) }
+                guard let (u, _) = url(inv[0]) else { return done(missing(inv[0])) }
                 FileActions.reveal(u); done(.ok("Shown in Finder."))
             case .fileOpenWith:
-                guard let (u, _) = url(inv[0]) else { return done(.fail("usage: \(id.action.usage)")) }
+                guard let (u, _) = url(inv[0]) else { return done(missing(inv[0])) }
                 if let name = inv.flags["app"] {
                     guard let app = FileActions.apps(for: u).first(where: { FileManager.default.displayName(atPath: $0.path).localizedCaseInsensitiveContains(name) })
                             ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: name) else { return done(.fail("no app '\(name)' opens this")) }
@@ -402,7 +413,7 @@ extension AppModel {
                     done(.ok("Opened in \(FileManager.default.displayName(atPath: app.path))."))
                 } else { FileActions.openInDefaultApp(u); done(.ok("Opened in the default app.")) }
             case .filePath:
-                guard let (u, r) = url(inv[0]) else { return done(.fail("usage: \(id.action.usage)")) }
+                guard let (u, r) = url(inv[0]) else { return done(missing(inv[0])) }
                 let out = inv.has("link") ? FileActions.markdownLink(name: u.lastPathComponent, relative: r) : inv.has("relative") ? r : u.path
                 if inv.has("copy") { FileActions.copy(out) }
                 done(.ok(out))

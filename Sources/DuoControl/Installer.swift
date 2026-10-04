@@ -18,8 +18,9 @@ public enum Installer {
     /// Bump when the installed shape changes.
     public static let format = 1
 
-    /// Checks only: puts everything under one folder instead of the real home.
-    nonisolated(unsafe) public static var testRoot: URL?
+    /// Checks and acceptance runs only: puts everything under one folder instead of the real home.
+    /// `DUO_INSTALL_ROOT` sets it for the app and duo2, so a walk can exercise the real loop on a fake.
+    nonisolated(unsafe) public static var testRoot: URL? = ProcessInfo.processInfo.environment["DUO_INSTALL_ROOT"].flatMap { $0.isEmpty ? nil : URL(fileURLWithPath: $0) }
 
     public static var claudeDir: URL { testRoot?.appending(path: "claude") ?? LegacyDuo.claudeDir }
     public static var claudeMD: URL { claudeDir.appending(path: "CLAUDE.md") }

@@ -75,7 +75,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         }
         if target.scheme == "about" { return decisionHandler(.allow) }
         // Anything else leaves Duo: the browser in the right pane comes later (Phase K).
-        if action.navigationType == .linkActivated { NSWorkspace.shared.open(target) }
+        if action.navigationType == .linkActivated { DuoLog.write("html: link out to \(target.absoluteString)"); NSWorkspace.shared.open(target) }
         decisionHandler(.cancel)
     }
 

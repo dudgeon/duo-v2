@@ -184,6 +184,18 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-55 · Walk reruns with the screen locked: real key events, three fixes (2026-10-04)
+
+- **How:** the screen locked while Geoff was out, so computer control could neither see nor click. Duo's harness now sends real key events (`event:esc|return`). They go through the app's queue, so the local monitors see them; when the window can't become key they go window-first, as NSApp would deliver them. Other new harness actions: `editor-js:`, `html-click:` / `html-js-click:`, `sheet:<button>`, `send-picked-new` and `ui-state`. `DUO_INSTALL_ROOT` points the installer, app and duo2 alike, at a throwaway folder, so the install loop runs end to end without touching `~/.claude`.
+- **Fixed:**
+  - **Inline naming:** the name field asked for focus once, asynchronously, before SwiftUI had put it in the window. Focus stayed elsewhere, so Esc and typing missed it. The field now takes focus when it reaches its window.
+  - **File verbs from another folder:** `duo2 file reveal|open-with|path|rename|…` resolved paths only in the caller's folder's project (from the repo, that's the `duo-v2` folder entry) and printed the usage line when the path wasn't there. They now try the project on screen too, and a wrong path says where Duo looked.
+  - **Cancel messages:** Haiku read `not moved (the user cancelled)` as "waiting for confirmation". The message now reads: "Not moved: the user clicked Cancel in Duo. Nothing changed and nothing is pending."
+- **Learned:**
+  - WebKit ignores synthetic mouse clicks in a window that isn't key. The page's own `click()` still raises a link activation.
+  - Claude Code labels Duo's PreToolUse deny "hook error", but Claude reads the "Done:" reason correctly and doesn't retry.
+- **Walk:** 63 of 65 passed by Claude's runs. Two items stay with Geoff: Writing Tools and dictation (ed-spelling), and Move To…'s folder panel (fv-edit).
+
 ## F-54 · Unattended runs: no step may raise a system dialog (2026-10-04)
 
 - **Seen:** while I ran the walk by computer control, macOS kept asking Duo for Screen Recording ("record screen and audio") although Settings listed Duo as allowed, and a UserNotificationCenter dialog sat over Duo and stopped the run. Geoff: "this is massively impacting your testing loops and you need to stop doing this"; later, "don't create a state where a system dialog blocks you".
