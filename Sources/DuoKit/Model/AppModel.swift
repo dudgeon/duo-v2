@@ -63,6 +63,9 @@ public final class AppModel {
     @ObservationIgnored public var htmlViewerIfLoaded: HTMLViewer?
     /// Bumped when the picker starts, freezes or ends, so the picker bar redraws.
     public var pickerRevision = 0
+    /// Which web view has the keyboard (menus re-validate on change).
+    public var webFocus: WebFocus = .none
+    public enum WebFocus: Equatable, Sendable { case none, editor, html }
     /// Drag and drop on the map (F-51): what's being dragged, the tile under it, the tile that
     /// just took a drop (it pulses).
     public var dragging: String?
@@ -202,7 +205,7 @@ public final class AppModel {
         }
         liveFolders = folders
         followSessionChanges(beacons)
-        SearchService.shared.update(projects: folders)
+        SearchService.shared.update(projects: folders, fileProjects: Set(merged.projects.filter { !$0.isFolderOnly }.map(\.name)))
         if let home = snapshot.home, let folder = folders[home.name]?.path, folder != rememberedHome {
             // First choice, or the remembered one is gone: remember what is in use now (DL-42).
             rememberedHome = folder
@@ -368,8 +371,11 @@ public final class AppModel {
     /// you (or the most recent live one) and the right pane on the document it is editing [P].
     public func open(project name: String, session sessionName: String? = nil, document: String? = nil) {
         let live = fixture.liveSessions(inProject: name)
+        // The named session, else the most urgent live one, else one with a running terminal: a
+        // session idle at its prompt has a tab, and left the console blank when skipped.
         let target = sessionName.flatMap { n in fixture.sessions(inProject: name).first { $0.name == n } }
             ?? SidebarRow.mostUrgent(live)
+            ?? tabSessions(inProject: name).first { terminals.existing($0.tabKey) != nil }
         altitude = .project(name)
         peekOpen = false
         consoleTab = target?.tabKey

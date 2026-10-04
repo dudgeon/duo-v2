@@ -17,7 +17,10 @@
     "Look at the All projects map."
    ],
    "expect": "Topics Growth, Payments, Research; projects onboarding, checkout, refunds, reading with their goals; refunds says At risk · Spec review Oct 8.",
-   "ref": "F-25"
+   "ref": "F-25",
+   "setup": [
+    "go all"
+   ]
   },
   {
    "id": "ws-home",
@@ -28,7 +31,10 @@
     "Look at the left pane on All projects."
    ],
    "expect": "★ home with a running Claude Code terminal in `~/DuoAcceptance/workspace/home`.",
-   "ref": "DL-42, DL-52, DL-54"
+   "ref": "DL-42, DL-52, DL-54",
+   "setup": [
+    "go all"
+   ]
   },
   {
    "id": "ws-new-session",
@@ -40,7 +46,10 @@
     "Click + New session (left pane) or the + in the console tab strip."
    ],
    "expect": "A new tab opens with Claude Code running in `~/DuoAcceptance/workspace/payments/checkout`.",
-   "ref": "F-25"
+   "ref": "F-25",
+   "setup": [
+    "open checkout"
+   ]
   },
   {
    "id": "zero-count",
@@ -51,7 +60,10 @@
     "On All projects with nothing waiting, look at the toolbar."
    ],
    "expect": "Only to review, working and idle counts. The count returns (in orange) when a session needs you.",
-   "ref": "handoff §8"
+   "ref": "handoff §8",
+   "setup": [
+    "go all"
+   ]
   },
   {
    "id": "att-question",
@@ -63,7 +75,10 @@
     "Don't answer yet; look at the action column and the toolbar."
    ],
    "expect": "A card with the verbatim question and options; the toolbar shows 1 need you.",
-   "ref": "F-26"
+   "ref": "F-26",
+   "setup": [
+    "go all"
+   ]
   },
   {
    "id": "att-review",
@@ -76,7 +91,11 @@
     "Then open the session again."
    ],
    "expect": "After the answer it shows ready for review (◆) with the reply's first line; opening it clears that.",
-   "ref": "F-26"
+   "ref": "F-26",
+   "setup": [
+    "open refunds",
+    "session-running refunds"
+   ]
   },
   {
    "id": "titles",
@@ -87,7 +106,10 @@
     "Open reading and look at the session list."
    ],
    "expect": "Titles like Reading note 1, not names like reading-3f.",
-   "ref": "F-27"
+   "ref": "F-27",
+   "setup": [
+    "open reading"
+   ]
   },
   {
    "id": "lp-history",
@@ -99,7 +121,10 @@
     "Click Older · 4."
    ],
    "expect": "Five recent sessions, then Older · 4, which expands to four more. No Resume a session button.",
-   "ref": "DL-59"
+   "ref": "DL-59",
+   "setup": [
+    "open reading"
+   ]
   },
   {
    "id": "lp-identity",
@@ -111,7 +136,10 @@
     "Click each Untitled scratch row."
    ],
    "expect": "Two rows; each opens its own conversation (first scratch thought vs second).",
-   "ref": "F-43"
+   "ref": "F-43",
+   "setup": [
+    "open refunds"
+   ]
   },
   {
    "id": "ed-open",
@@ -122,7 +150,11 @@
     "Open checkout; in Files, click `docs/prd.md`."
    ],
    "expect": "Headings in semibold, **15%** shown bold without stars, the link shows as text, task boxes are checkboxes; the line with the caret shows its raw Markdown.",
-   "ref": "F-40"
+   "ref": "F-40",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout"
+   ]
   },
   {
    "id": "ed-autosave",
@@ -134,7 +166,12 @@
     "Open `~/DuoAcceptance/workspace/payments/checkout/docs/prd.md` in another editor."
    ],
    "expect": "Your sentence is there; nothing else changed.",
-   "ref": "F-40, F-44"
+   "ref": "F-40, F-44",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "ed-crlf",
@@ -146,7 +183,12 @@
     "In a terminal: `file ~/DuoAcceptance/workspace/payments/checkout/docs/windows-notes.md`"
    ],
    "expect": "file reports CRLF line terminators.",
-   "ref": "F-34"
+   "ref": "F-34",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/windows-notes.md"
+   ]
   },
   {
    "id": "ed-readonly",
@@ -158,7 +200,12 @@
     "Open `docs/legacy-export.txt`."
    ],
    "expect": "Neither accepts edits; both files are unchanged on disk. (The read-only notice isn't designed yet: Q-20.)",
-   "ref": "F-40"
+   "ref": "F-40",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/mixed-endings.md"
+   ]
   },
   {
    "id": "ed-spelling",
@@ -171,7 +218,12 @@
     "Edit › Start Dictation… and speak a sentence."
    ],
    "expect": "Misspellings corrected or underlined; Writing Tools available if Apple Intelligence is on; dictation types into the document.",
-   "ref": "F-43"
+   "ref": "F-43",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/research.md"
+   ]
   },
   {
    "id": "ed-format",
@@ -182,7 +234,12 @@
     "Double-click a word, press ⌘B; another, ⌘I."
    ],
    "expect": "**word** and *word* in the file.",
-   "ref": "F-43"
+   "ref": "F-43",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "ed-find",
@@ -194,7 +251,11 @@
     "Press ⌘F, search for a word near the end."
    ],
    "expect": "The find panel opens and finds matches anywhere in the file. (Its look is a placeholder: Q-20.)",
-   "ref": "F-43"
+   "ref": "F-43",
+   "setup": [
+    "open checkout",
+    "doc open docs/long-backlog.md"
+   ]
   },
   {
    "id": "ed-outside",
@@ -206,7 +267,12 @@
     "Then type somewhere."
    ],
    "expect": "The line appears highlighted; the highlight goes when you type.",
-   "ref": "F-40, DL-5"
+   "ref": "F-40, DL-5",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "ed-conflict",
@@ -218,7 +284,12 @@
     "In a Duo terminal: `duo2 doc-status docs/prd.md`"
    ],
    "expect": "Your text stays; the file keeps the other change; doc-status says in conflict. (The banner isn't designed yet: Q-20.)",
-   "ref": "F-40"
+   "ref": "F-40",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "rp-tabs",
@@ -231,7 +302,13 @@
     "Click + in the right pane's tab strip."
    ],
    "expect": "Tabs persist; Project shows PROJECT.md; + creates `Untitled.md`, opens it and selects its name in Files for renaming.",
-   "ref": "DL-60, DL-61"
+   "ref": "DL-60, DL-61",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/prd.md",
+    "doc open docs/research.md"
+   ]
   },
   {
    "id": "rp-close",
@@ -243,7 +320,13 @@
     "Click into a session terminal, press ⌘W."
    ],
    "expect": "The document tab closes; then the session tab closes (the session stays listed and resumable). The window stays.",
-   "ref": "F-44"
+   "ref": "F-44",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "session-running checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "fv-new",
@@ -254,7 +337,11 @@
     "Right-click Files' background: New Markdown File, New Folder, New from Template ▸ meeting-notes."
    ],
    "expect": "Each appears in Files with its name selected for typing; Return keeps it, Esc cancels the rename. Templates list the project's templates/ then Home's.",
-   "ref": "DL-61, DL-62"
+   "ref": "DL-61, DL-62",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout"
+   ]
   },
   {
    "id": "fv-edit",
@@ -265,7 +352,11 @@
     "Rename a file you made; Duplicate it; Move To… a folder; Move to Trash."
    ],
    "expect": "Each works; an open tab follows a rename or move; Trash closes it and the file is in the macOS Trash.",
-   "ref": "DL-61"
+   "ref": "DL-61",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout"
+   ]
   },
   {
    "id": "fv-copy",
@@ -276,7 +367,10 @@
     "Right-click `docs/prd.md`: Copy Path, paste; Copy Relative Path, paste; Copy as Link, paste."
    ],
    "expect": "/Users/…/`docs/prd.md`; `docs/prd.md`; [prd](`docs/prd.md`).",
-   "ref": "DL-61"
+   "ref": "DL-61",
+   "setup": [
+    "open checkout"
+   ]
   },
   {
    "id": "fv-open",
@@ -287,7 +381,10 @@
     "Right-click a file: Reveal in Finder; Open With ▸ another app."
    ],
    "expect": "Finder selects it; the app opens it.",
-   "ref": "DL-61"
+   "ref": "DL-61",
+   "setup": [
+    "open checkout"
+   ]
   },
   {
    "id": "fv-send",
@@ -299,7 +396,11 @@
     "Right-click it again › Send To ▸ New Session."
    ],
    "expect": "`@docs/prd.md` appears in the prompt, not sent. Send To ▸ New Session starts a session and puts it there once Claude is ready.",
-   "ref": "DL-61, DL-67, DL-69"
+   "ref": "DL-61, DL-67, DL-69",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ]
   },
   {
    "id": "org-folders",
@@ -310,7 +411,10 @@
     "On All projects, look under Elsewhere."
    ],
    "expect": "scratch (No project file, 2 past sessions) and side-project (Has CLAUDE.md · no project file).",
-   "ref": "DL-63"
+   "ref": "DL-63",
+   "setup": [
+    "go all"
+   ]
   },
   {
    "id": "org-make",
@@ -322,7 +426,10 @@
     "Then Edit › Undo."
    ],
    "expect": "It becomes a project (under Elsewhere) and opens its new PROJECT.md; Undo puts it back as a folder and moves the PROJECT.md to the Trash.",
-   "ref": "DL-63"
+   "ref": "DL-63",
+   "setup": [
+    "go all"
+   ]
   },
   {
    "id": "org-move",
@@ -335,19 +442,26 @@
     "Edit › Undo."
    ],
    "expect": "The sheet names the session and says files stay put; it then appears in refunds; Undo returns it.",
-   "ref": "DL-64, DL-66"
+   "ref": "DL-64, DL-66",
+   "setup": [
+    "open scratch"
+   ]
   },
   {
    "id": "org-merge",
    "group": "Organising",
    "title": "Merge a project or folder (sessions only)",
-   "what": "Right-click › Merge Into, or drag a tile onto another.",
+   "what": "Right-click › Merge Into, or drag a tile onto another (F-51: the drag shows a white card with a shadow; tiles lift and land with motion).",
    "steps": [
-    "Drag the scratch tile onto refunds.",
-    "Read the sheet, Merge, then Edit › Undo."
+    "Drag the scratch tile onto refunds: watch the card, the scratch tile sinking and refunds rising as you hover.",
+    "Release: read the sheet on the window, click Merge; refunds pulses with `2 sessions moved in`.",
+    "Edit › Undo."
    ],
-   "expect": "The sheet lists both sessions and says scratch's folder and files stay; refunds gains them; Undo restores.",
-   "ref": "DL-65, DL-66"
+   "expect": "The sheet lists both sessions and says scratch's folder and files stay; after Merge, scratch leaves the map and refunds says what moved in; Undo restores. (Motion is a first pass on your brief; say what to change.)",
+   "ref": "DL-65, DL-66",
+   "setup": [
+    "go all"
+   ]
   },
   {
    "id": "org-relocate",
@@ -359,7 +473,10 @@
     "Open checkout and click the session."
    ],
    "expect": "Claude opens the old conversation, then shows Moved to …/payments/checkout.",
-   "ref": "DL-64, F-45"
+   "ref": "DL-64, F-45",
+   "setup": [
+    "open scratch"
+   ]
   },
   {
    "id": "ret-archive",
@@ -372,7 +489,11 @@
     "Open Duo again (open-duo.sh), open refunds, click Refund edge cases (purge test)."
    ],
    "expect": "It's still listed by title and resumes with its conversation.",
-   "ref": "DL-44, DL-47, DL-48"
+   "ref": "DL-44, DL-47, DL-48",
+   "setup": [
+    "fixture purge",
+    "open refunds"
+   ]
   },
   {
    "id": "ret-carry",
@@ -383,7 +504,10 @@
     "In a Duo terminal: `duo2 session carry-on <id of the purge-test session>` (the id is in `~/DuoAcceptance/.planted.json`)."
    ],
    "expect": "A new session starts in refunds, reads the archived transcript and summarises where it left off.",
-   "ref": "Q-19"
+   "ref": "Q-19",
+   "setup": [
+    "open refunds"
+   ]
   },
   {
    "id": "ret-size",
@@ -454,7 +578,10 @@
     "Open each menu; try Go › All Projects and Go › Home."
    ],
    "expect": "Items are present and work; disabled ones are greyed when they don't apply.",
-   "ref": "F-43"
+   "ref": "F-43",
+   "setup": [
+    "go all"
+   ]
   },
   {
    "id": "app-clear",
@@ -465,7 +592,11 @@
     "In a session, type `/clear`, then a short prompt."
    ],
    "expect": "The tab is renamed after the new conversation; the old session is still listed.",
-   "ref": "F-29"
+   "ref": "F-29",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ]
   },
   {
    "id": "send-doc-selection",
@@ -477,7 +608,13 @@
     "Right-click › Send Selection to Claude. Then try Edit › Send Selection to Claude."
    ],
    "expect": "The prompt shows a pasted block (`[Pasted text +N lines]`) starting `From docs/prd.md, lines …:` with the text quoted. Nothing is sent. (No shortcut yet: Q-22.)",
-   "ref": "DL-67, DL-68"
+   "ref": "DL-67, DL-68",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "session-running checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "send-session-project",
@@ -489,7 +626,11 @@
     "Go to All projects, right-click the refunds tile › Send to Claude (Home's session receives it)."
    ],
    "expect": "A short block naming the session (id, how to read it) or the project (folder, PROJECT.md, goal, health, next). Duo switches to the receiving session with the cursor in its prompt.",
-   "ref": "DL-67"
+   "ref": "DL-67",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ]
   },
   {
    "id": "send-why-not",
@@ -501,7 +642,10 @@
     "Close every session in the project (⌘W on each) and right-click a file."
    ],
    "expect": "The item reads like `Send to Claude: Claude isn't ready yet` or `…: No session is showing`, greyed out; Send To ▸ still lists other sessions and New Session.",
-   "ref": "DL-69, F-46"
+   "ref": "DL-69, F-46",
+   "setup": [
+    "open checkout"
+   ]
   },
   {
    "id": "html-view",
@@ -514,7 +658,12 @@
     "Click `Shipping policy`."
    ],
    "expect": "The page shows with its styles and card image; within a second of saving the button turns orange; the link opens in your browser, not in Duo. (The tab has no chrome yet: Q-21.)",
-   "ref": "DL-67, F-46"
+   "ref": "DL-67, F-46",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open prototypes/checkout.html"
+   ]
   },
   {
    "id": "html-selection",
@@ -526,7 +675,13 @@
     "Right-click only the card image › Send Image to Claude."
    ],
    "expect": "The prompt gets the quoted text and `image: …/prototypes/card.svg (alt \"A payment card\")`.",
-   "ref": "DL-67"
+   "ref": "DL-67",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "session-running checkout",
+    "doc open prototypes/checkout.html"
+   ]
   },
   {
    "id": "html-picker",
@@ -540,7 +695,13 @@
     "Type `make this button yellow` and press Return."
    ],
    "expect": "The prompt shows `[Image #1]` (the element's screenshot) and a pasted block with `<button#pay.cta.primary>`, selector `#pay`, `under: Checkout › Payment`, styles and HTML. Claude edits `checkout.css` and the page turns yellow by itself. (Plain look for now: Q-21.)",
-   "ref": "DL-67, DL-70, LR-44"
+   "ref": "DL-67, DL-70, LR-44",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "session-running checkout",
+    "doc open prototypes/checkout.html"
+   ]
   },
   {
    "id": "html-picker-keys",
@@ -553,7 +714,13 @@
     "Select Element again, press Esc."
    ],
    "expect": "Pick Another unfreezes; New Session starts one and pastes there once ready; Esc removes the outline and the bar.",
-   "ref": "DL-70"
+   "ref": "DL-70",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "session-running checkout",
+    "doc open prototypes/checkout.html"
+   ]
   },
   {
    "id": "cli-help",
@@ -577,7 +744,12 @@
     "Then: `What do I have selected in Duo?` after selecting a sentence in a document."
    ],
    "expect": "Duo shows research.md, then the file and its tab are renamed. Claude answers the second with your selection (it runs `duo2 selection`).",
-   "ref": "DL-71"
+   "ref": "DL-71",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "session-running checkout"
+   ]
   },
   {
    "id": "cli-doc-edit",
@@ -588,7 +760,13 @@
     "Open `docs/prd.md`. In a checkout session: `Use duo2 doc replace to change \"Checkout PRD\" to \"Checkout PRD (v2)\".`"
    ],
    "expect": "The title changes in front of you, highlighted until you type; the file autosaves.",
-   "ref": "LR-34, F-47"
+   "ref": "LR-34, F-47",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "session-running checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "cli-confirm",
@@ -600,7 +778,10 @@
     "Click Cancel on the sheet; ask again and click Move; then `duo2 undo`."
    ],
    "expect": "Cancel: Claude reports it wasn't moved. Move: it's filed in checkout. Undo puts it back.",
-   "ref": "DL-66, DL-71"
+   "ref": "DL-66, DL-71",
+   "setup": [
+    "go all"
+   ]
   },
   {
    "id": "install-consent",
@@ -648,7 +829,11 @@
     "Pick `prototypes/checkout.html` from the list."
    ],
    "expect": "Claude Code offers files and folders from the session's folder and fills in the path. Use the comment box to say whether Duo should go further (other projects, Home).",
-   "ref": "ENH-3, G-5"
+   "ref": "ENH-3, G-5",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ]
   },
   {
    "id": "agent-edit-open",
@@ -659,7 +844,13 @@
     "Open `docs/prd.md` in checkout. In a checkout session, ask (no mention of Duo): `Add a goal to the PRD: ship Apple Pay by December`."
    ],
    "expect": "The new goal appears in the editor highlighted, without a permission prompt; Claude says it's done; the file on disk has it a second later. ⌘Z undoes it.",
-   "ref": "DL-78, F-49"
+   "ref": "DL-78, F-49",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "session-running checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "agent-edit-while-typing",
@@ -670,7 +861,13 @@
     "Ask Claude for an edit near the end of the PRD, and while it works, keep typing in the Problem section."
    ],
    "expect": "Both your typing and Claude's change are there; nothing you typed disappears.",
-   "ref": "DL-77, DL-78"
+   "ref": "DL-77, DL-78",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "session-running checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "agent-edit-doctor",
@@ -682,7 +879,11 @@
     "Optional, on the work Mac: if hooks are off there, repeat the Apple Pay request."
    ],
    "expect": "`Hooks: running in this session…` here. Without hooks, Claude should use `duo2 doc edit` (Opus did in testing; Haiku didn't), and a direct write still shows up highlighted and never over your unsaved text.",
-   "ref": "DL-78, F-49"
+   "ref": "DL-78, F-49",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ]
   },
   {
    "id": "col-merge",
@@ -694,7 +895,12 @@
     "Switch to Duo straight away and keep typing in the `## Goals` heading for a few seconds."
    ],
    "expect": "Your heading change stays; the outside change appears highlighted; the file on disk ends up with both.",
-   "ref": "DL-77, F-50"
+   "ref": "DL-77, F-50",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "col-conflict",
@@ -707,7 +913,12 @@
     "`duo2 doc history ~/DuoAcceptance/workspace/payments/checkout/docs/prd.md`"
    ],
    "expect": "A bar: `Changed on disk where you're editing (line …). Both versions are kept.` with Use Theirs / Keep Mine; autosave waits for your choice. History lists the version as opened and both sides. (Plain look: Q-20.)",
-   "ref": "DL-77, F-50"
+   "ref": "DL-77, F-50",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "col-switch",
@@ -718,7 +929,12 @@
     "Make a conflict as above, then open `docs/research.md` and come back to `prd.md`."
    ],
    "expect": "Your text and the bar are still there.",
-   "ref": "DL-77"
+   "ref": "DL-77",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "col-removed",
@@ -730,7 +946,12 @@
     "Click Save to Recreate. Then move /tmp/prd-moved.md back if you like."
    ],
    "expect": "`Removed on disk. Your text is still here.` and Save to Recreate writes it back; nothing autosaves it back on its own.",
-   "ref": "DL-77"
+   "ref": "DL-77",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/prd.md"
+   ]
   },
   {
    "id": "col-quit",
@@ -742,7 +963,44 @@
     "Open the file in another editor."
    ],
    "expect": "The word is in the file.",
-   "ref": "DL-77"
+   "ref": "DL-77",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/prd.md"
+   ]
+  },
+  {
+   "id": "send-cmd-d",
+   "group": "Send to Claude",
+   "title": "⌘D sends the selection",
+   "what": "Your Q-22 answer: ⌘D is Send Selection to Claude (DL-79).",
+   "steps": [
+    "Select the Goals list in `docs/prd.md` and press ⌘D.",
+    "Check Edit › Send Selection to Claude shows ⌘D, and the right-click item too."
+   ],
+   "expect": "The selection lands in the checkout session's prompt, not sent. ⌘D no longer selects the next occurrence in the editor.",
+   "ref": "DL-79",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "session-running checkout",
+    "doc open docs/prd.md"
+   ]
+  },
+  {
+   "id": "search-field",
+   "group": "App",
+   "title": "The toolbar field says Search, ⌘K is free",
+   "what": "DL-80: Jump merged into Search; the field reads Search all projects ⇧⌘A (the modal itself isn't built yet).",
+   "steps": [
+    "Look at the toolbar field; press ⌘K."
+   ],
+   "expect": "`Search all projects ⇧⌘A`; ⌘K does nothing; Go menu has no Jump item.",
+   "ref": "DL-80",
+   "setup": [
+    "go all"
+   ]
   }
  ],
  "decisions": [

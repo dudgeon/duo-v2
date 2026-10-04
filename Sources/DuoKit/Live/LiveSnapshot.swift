@@ -1,3 +1,4 @@
+import DuoSearch
 import Foundation
 
 /// Builds the same snapshot the fixture provides from real sources (Phase E): projects found on
@@ -138,10 +139,13 @@ public enum LiveSnapshot {
         for (path, ids) in byFolder.sorted(by: { $0.key < $1.key }) {
             let url = URL(fileURLWithPath: path)
             guard FileManager.default.fileExists(atPath: path) else { continue }  // folder deleted: archive only
-            var name = url.lastPathComponent
-            if projects.contains(where: { $0.project.name == name }) || folderProjects.contains(where: { $0.name == name }) {
-                name = "\(url.deletingLastPathComponent().lastPathComponent)/\(name)"
-            }
+            // Names are keys (`folders[name]`): add parent folders until the name is unique among
+            // projects and other folders; two `payments/checkout`s once hid each other.
+            let taken: (String) -> Bool = { n in projects.contains { $0.project.name == n } || folderProjects.contains { $0.name == n } }
+            let parts = url.pathComponents.filter { $0 != "/" }
+            var depth = 1
+            var name = parts.suffix(depth).joined(separator: "/")
+            while taken(name) && depth < parts.count { depth += 1; name = parts.suffix(depth).joined(separator: "/") }
             let underRoot = path.hasPrefix(rootPath + "/")
             let parent = url.deletingLastPathComponent().path
             let topic = underRoot && parent != rootPath ? url.deletingLastPathComponent().lastPathComponent.capitalized : "Elsewhere"
@@ -212,7 +216,7 @@ public enum LiveSnapshot {
         for case let u as URL in e {
             let rel = u.path.replacingOccurrences(of: folder.path + "/", with: "")
             if rel.split(separator: "/").count > 3 { e.skipDescendants(); continue }
-            if ["node_modules", ".build", "build"].contains(u.lastPathComponent) { e.skipDescendants(); continue }
+            if ["node_modules", ".build", "build"].contains(u.lastPathComponent) || ProtectedFolders.skip(u, root: folder) { e.skipDescendants(); continue }
             if (try? u.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true { out.append(rel) }
             else if (try? u.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true { out.append(rel + "/") }
             if out.count >= 200 { break }

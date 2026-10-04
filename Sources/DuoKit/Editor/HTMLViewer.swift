@@ -189,6 +189,28 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
 public class DuoWebView: WKWebView {
     /// Items to put at the top of the context menu; `hasSelection` is whether WebKit offered Copy.
     var extraMenuItems: ((_ hasSelection: Bool, _ onImage: Bool) -> [NSMenuItem])?
+    /// Told when the keyboard arrives or leaves, so menus that depend on it (Format, Send
+    /// Selection) re-validate: reading the first responder when menus last rendered left
+    /// Bold and Italic disabled while the editor had focus.
+    var onFocusChange: ((Bool) -> Void)?
+
+    public override func becomeFirstResponder() -> Bool {
+        let ok = super.becomeFirstResponder()
+        if ok { onFocusChange?(true) }
+        return ok
+    }
+
+    public override func resignFirstResponder() -> Bool {
+        let ok = super.resignFirstResponder()
+        if ok { DispatchQueue.main.async { [weak self] in MainActor.assumeIsolated { self?.reportFocus() } } }
+        return ok
+    }
+
+    /// WKWebView hands focus to inner views; ask the window where it really is.
+    func reportFocus() {
+        guard let r = window?.firstResponder as? NSView else { onFocusChange?(false); return }
+        onFocusChange?(r === self || r.isDescendant(of: self))
+    }
 
     public override func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
         super.willOpenMenu(menu, with: event)

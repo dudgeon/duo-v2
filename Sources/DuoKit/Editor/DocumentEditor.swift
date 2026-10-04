@@ -142,6 +142,11 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         }
     }
 
+    /// Shows text that will never be saved (a file that isn't UTF-8, or can't be read).
+    private func showReadOnly(_ text: String) {
+        webView.callAsyncJavaScript("const r = duo.create(t); duo.markSaved(); duo.setReadOnly(true); return r", arguments: ["t": text], in: nil, in: .page, completionHandler: nil)
+    }
+
     /// Saves now if it safely can (quit, closing the window). Calls back when done.
     public func flush(_ done: @escaping @MainActor () -> Void) {
         saveTask?.cancel()
@@ -150,14 +155,19 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
 
     private func load(_ file: URL) {
         guard let data = FileManager.default.contents(atPath: file.path) else {
-            readOnlyReason = "can't read the file"; lastEvent = "unreadable"; return
+            readOnlyReason = "can't read the file"; lastEvent = "unreadable"
+            showReadOnly("")
+            return
         }
         diskBytes = data
         FileHistory.snapshot(file, data, source: "open")
         guard let text = String(data: data, encoding: .utf8), Data(text.utf8) == data else {
-            // Not valid UTF-8: showing it would mean rewriting it on save (LR-30).
+            // Not valid UTF-8: shown as best decoded, read-only, never saved (LR-30). Leaving
+            // the editor alone showed the previous document under this one's tab.
             readOnlyReason = "not UTF-8"
             lastEvent = "read-only"
+            showReadOnly(String(data: data, encoding: .windowsCP1252) ?? String(data: data, encoding: .isoLatin1) ?? "")
+            watch(file)
             return
         }
         if let k = kept.removeValue(forKey: file), let baseText = String(data: k.base, encoding: .utf8) {

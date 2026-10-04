@@ -29,6 +29,7 @@ public enum FileSource {
         // "is this still under the project?" must use the same spelling as the files found.
         let root = root.resolvingSymlinksInPath()
         var out: [Found] = []
+        if ProtectedFolders.isHome(root) { return out }
         walk(root, root: root, prefix: "", rules: GitIgnore.rules(in: root, base: ""), into: &out)
         return out
     }
@@ -45,6 +46,7 @@ public enum FileSource {
                   v.isSymbolicLink != true else { continue }
             if v.isDirectory == true {
                 if skipDirs.contains(name) || (name.hasPrefix(".") && name != ".github") { continue }
+                if ProtectedFolders.skip(url, root: root) { continue }
                 if GitIgnore.ignored(rel, isDirectory: true, rules: rules) { continue }
                 walk(url, root: root, prefix: rel, rules: rules + GitIgnore.rules(in: url, base: rel), into: &out)
                 continue

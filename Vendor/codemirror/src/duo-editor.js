@@ -203,6 +203,9 @@ function post(kind, body) {
   try { window.webkit?.messageHandlers?.duo?.postMessage({ kind, ...body }); } catch (_) {}
 }
 
+// Chords Duo's menus own (Commands.swift); the editor must not consume them.
+const DUO_CHORDS = new Set(["Mod-d", "Mod-i", "Mod-b", "Mod-s", "Mod-w", "Mod-n", "Shift-Mod-n", "Mod-k", "Shift-Mod-a", "Shift-Mod-p", "Shift-Mod-h", "Mod-Enter"]);
+
 function create(parent, text) {
   sepInfo = lineSeparatorOf(text);
   setBase(canon(text));
@@ -219,8 +222,9 @@ function create(parent, text) {
       ...(window.duoFlags?.noPreview ? [] : [livePreview]),
       addedField,
       clearOnUserEdit,
-      // ⌘D is Duo's Send Selection to Claude (Q-22): CodeMirror's select-next-occurrence gives it up.
-      keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap].filter((b) => b.key !== "Mod-d")),
+      // Duo's menu chords win over CodeMirror's: ⌘D is Send Selection to Claude (DL-79), ⌘I is
+      // Italic (CodeMirror's select-parent-syntax took it, so Format › Italic never fired).
+      keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap].filter((b) => !DUO_CHORDS.has(b.key))),
       EditorView.contentAttributes.of({ spellcheck: "true", autocorrect: "on", autocapitalize: "on" }),
       EditorView.updateListener.of((u) => {
         if (u.selectionSet || u.docChanged) {

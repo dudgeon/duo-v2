@@ -1,3 +1,4 @@
+import DuoSearch
 import Foundation
 
 /// Finds projects on disk (Phase E). A project is a folder with `PROJECT.md`; Home is a folder
@@ -44,10 +45,7 @@ public enum ProjectDiscovery {
 
     /// Folders macOS guards with a privacy prompt (F-28). A workspace inside one is fine (the
     /// root is never skipped); a broader root doesn't wander into them and trigger prompts.
-    static let protected: Set<String> = {
-        let home = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
-        return Set(["Desktop", "Documents", "Downloads", "Pictures", "Movies", "Music", "Library"].map { "\(home)/\($0)" })
-    }()
+    static var protected: Set<String> { ProtectedFolders.paths }
 
     /// A single folder made a project outside the root (DL-63): found if it has PROJECT.md.
     public static func found(at folder: URL, root: URL) -> Found? {

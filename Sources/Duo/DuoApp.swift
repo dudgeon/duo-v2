@@ -86,6 +86,14 @@ struct DuoApp: App {
             }
         }
         FixtureHarness.beforeExit = { model.terminals.terminateAll(); server.stop() }
+        // Diagnostic (F-52): where Escape goes. It never cancelled inline naming or the picker.
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
+            if e.keyCode == 53 {
+                let r = NSApp.keyWindow?.firstResponder
+                DuoLog.write("escape: key window \(NSApp.keyWindow?.title ?? "none"), first responder \(r.map { String(describing: type(of: $0)) } ?? "none")")
+            }
+            return e
+        }
         // SIGTERM quits like ⌘Q (sessions end cleanly, the document saves): scripts quit the one
         // instance they started by pid, never "the" Duo by app id, which may be the user's (C-18).
         signal(SIGTERM, SIG_IGN)

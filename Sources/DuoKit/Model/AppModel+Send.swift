@@ -198,6 +198,10 @@ extension AppModel {
 
     func wireEditor(_ e: EditorController) {
         e.onStateChange = { [weak self] in self?.editorRevision += 1 }
+        e.webView.onFocusChange = { [weak self] on in
+            guard let self else { return }
+            if on { self.webFocus = .editor } else if self.webFocus == .editor { self.webFocus = .none }
+        }
         e.webView.extraMenuItems = { [weak self] hasSelection, _ in
             guard let self, hasSelection, self.terminalsMode == .live else { return [] }
             return self.sendMenuItems("Selection") { done in self.documentSelectionPayload(done) }
@@ -206,6 +210,10 @@ extension AppModel {
 
     func wireHTMLViewer(_ v: HTMLViewer) {
         v.onChange = { [weak self] in self?.pickerRevision += 1 }
+        v.webView.onFocusChange = { [weak self] on in
+            guard let self else { return }
+            if on { self.webFocus = .html } else if self.webFocus == .html { self.webFocus = .none }
+        }
         v.webView.extraMenuItems = { [weak self] hasSelection, onImage in
             guard let self, self.terminalsMode == .live else { return [] }
             var items: [NSMenuItem] = []
@@ -252,15 +260,14 @@ extension AppModel {
             guard let self, let text else { return }
             if let key { self.send(text, to: key) } else { self.send(text) }
         }
-        if editorIfLoaded?.hasFocus == true { documentSelectionPayload(deliver) }
-        else if let v = htmlViewerIfLoaded, v.webView.window?.firstResponder === v.webView { htmlSelectionPayload(deliver) }
+        if webFocus == .editor || editorIfLoaded?.hasFocus == true { documentSelectionPayload(deliver) }
+        else if webFocus == .html { htmlSelectionPayload(deliver) }
     }
 
     /// Whether the menu item can work: a web view with the keyboard, and a session to receive.
     public var canSendSelection: Bool {
-        guard case .success = sendTarget else { return false }
-        if editorIfLoaded?.hasFocus == true { return true }
-        if let v = htmlViewerIfLoaded, v.webView.window?.firstResponder === v.webView { return true }
-        return false
+        // Observed (webFocus, the console tab) so the menu re-validates; the send itself checks
+        // the session's readiness and says why if it can't.
+        webFocus != .none && visibleSessionId != nil
     }
 }

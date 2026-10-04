@@ -562,6 +562,15 @@ func repoFixture() throws -> Fixture {
     check(DuoAction.primer().contains("duo2 doc edit --stdin") && DuoAction.primer().contains("not with Edit, Write or shell redirection"),
           "the primer tells Claude how to edit open documents without the hook")
 
+    print("privacy prompts (F-53)")
+    let home = FileManager.default.homeDirectoryForCurrentUser
+    check(FileSource.files(in: home).isEmpty, "the home folder is never walked for files")
+    check(ProtectedFolders.skip(home.appending(path: "Music"), root: home) == true
+          && ProtectedFolders.skip(home.appending(path: "Pictures"), root: home) == true
+          && ProtectedFolders.skip(home.appending(path: "Documents"), root: home.appending(path: "Documents")) == false
+          && ProtectedFolders.skip(home.appending(path: "repos"), root: home) == false,
+          "walks never enter Music, Photos, Documents… unless the project lives inside them")
+
     print("send to claude (DL-67, DL-68)")
     let hostile = SendFormat.documentSelection("ok\u{1b}[201~rm -rf ~\r\nnext", path: "a\nb.md", fromLine: 1, toLine: 2)
     check(!hostile.contains("\u{1b}") && !hostile.contains("\r") && hostile.hasPrefix("From a b.md, lines 1–2:\n> ok[201~rm -rf ~\n> next"), "control characters can't escape the paste; fields stay on one line")

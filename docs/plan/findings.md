@@ -184,6 +184,34 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-53 · Duo set off macOS privacy prompts (Music, Photos…) it had no need for (2026-10-04)
+
+- **Seen:** while I ran the walk with computer control, macOS kept raising a privacy prompt over Duo. Geoff: "duo NEEDS to stop proactively asking for permissions to things it does not need, like music, photos, etc — it freaks users out".
+- **Cause:** the search indexer walked the files of every folder on the map, including folder entries (DL-63). One is `geoff` (`~`, where Claude sessions were started), so the walk went into ~/Music, ~/Pictures, ~/Documents and the rest. F-28's guard covered only project discovery.
+- **Fixed:**
+  - `ProtectedFolders` (DuoSearch) is the one rule: no walk enters Desktop, Documents, Downloads, Pictures, Movies, Music, Library, Public or Applications under home unless the walk started inside it. The home folder is never a file root.
+  - Search indexes files only for documented projects; folder entries contribute their sessions. Their previously indexed files are dropped.
+  - Project discovery and the file list use the same rule.
+- **Checked:** 2 checks (the home folder yields no files; Music and Pictures are skipped from home, while a project at ~/Documents is still read).
+- **For Geoff:** macOS remembers the answers already given to Duo's prompts; System Settings › Privacy & Security lists them, and Duo needs none of them.
+
+## F-52 · Walk run by computer control: what it found (2026-10-04)
+
+Running every test on the acceptance page (Geoff: "attempt every test yourself prior to asking me"), with real clicks, keys and right-clicks:
+- **Opening a project could leave the console black:** opening only picked a session that was working or waiting on the user, never one idle at its prompt. Fixed: it falls back to a session with a running terminal.
+- **Format › Bold and Italic were greyed while the editor had the focus:** menus re-validate only when observed state changes, and the editor's focus wasn't observed. Fixed: web views report focus (`webFocus`).
+- **⌘I never reached Format › Italic:** CodeMirror's select-parent-syntax took it. Fixed: Duo's menu chords are removed from CodeMirror's keymap (⌘D, ⌘I, ⌘B, ⌘S, ⌘W, ⌘N, ⇧⌘N, ⌘K, ⇧⌘A, ⇧⌘P, ⇧⌘H, ⌘↩).
+- **A non-UTF-8 file's tab showed the previous document's text:** the editor never loaded it. Fixed: it's shown decoded (Windows-1252, then Latin-1), read-only, never saved.
+- **The Older fold:** a section with five sessions plus `Older · 4` was headed `Idle · 6`. Fixed: the fold counts its sessions.
+- **Two folder entries were both named `payments/checkout`:** names are keys, so one hid the other. Fixed: parent folders are added until the name is unique.
+- **Escape cancelled neither inline naming nor the element picker.** The field now claims Escape itself; a diagnostic logs where Escape goes (still open).
+- **Sessions in the acceptance folders opened on Claude's trust prompt.** Geoff allowed me to trust the fixture folders.
+- **Walk setup kept starting new sessions:** each restart added another `New session`. Fixed: it resumes the project's latest one.
+- **Other observations:**
+  - WebKit adds its own Reload beside Reload Page.
+  - Send To lists Home's session as `New session` right above the New Session item.
+  - The Edit menu names the undo action ("Undo Move Session") only while Duo is frontmost.
+
 ## F-51 · Drag and drop on the map: the confirmation was lost (2026-10-04)
 
 - **Geoff's report:**

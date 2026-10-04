@@ -24,7 +24,10 @@ struct ProjectSidebarPane: View {
                     ForEach(SessionState.allCases, id: \.self) { state in
                         let section = rows.filter { $0.state == state }
                         if !section.isEmpty {
-                            SectionLabel(text: state.sectionTitle, count: section.count, needsYou: state == .needsYou)
+                            // Rows, as the targets count them (a group is one), except the Older fold,
+                            // which stands for its sessions: 5 rows + Older · 4 is "Idle · 9".
+                            let count = section.reduce(0) { n, r in if case .older(let rows) = r.kind { n + rows.count } else { n + 1 } }
+                            SectionLabel(text: state.sectionTitle, count: count, needsYou: state == .needsYou)
                                 .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
                             ForEach(section) { row in SidebarRowView(row: row) }
                         }
@@ -486,7 +489,8 @@ struct InlineNameField: NSViewRepresentable {
     let done: (String?) -> Void
 
     func makeNSView(context: Context) -> NSTextField {
-        let f = NSTextField(string: name)
+        let f = EscapableField(string: name)
+        f.onEscape = { [weak coordinator = context.coordinator] in coordinator?.cancel() }
         f.font = NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)
         f.focusRingType = .none
         f.isBezeled = false
@@ -520,10 +524,22 @@ struct InlineNameField: NSViewRepresentable {
             if let f = obj.object as? NSTextField { finish(f.stringValue) }  // clicking away confirms, like Finder
         }
 
+        func cancel() { finish(nil) }
+
         private func finish(_ value: String?) {
             guard !finished else { return }
             finished = true
             done(value)
+        }
+    }
+
+    /// Takes Escape while editing: the window's SwiftUI host claimed it as a key equivalent
+    /// before the field editor saw `cancelOperation`, so Escape never cancelled naming.
+    final class EscapableField: NSTextField {
+        var onEscape: (() -> Void)?
+        override func performKeyEquivalent(with event: NSEvent) -> Bool {
+            if event.keyCode == 53, currentEditor() != nil { onEscape?(); return true }
+            return super.performKeyEquivalent(with: event)
         }
     }
 }

@@ -223,8 +223,16 @@ def recipe(name):
     """Named setup steps for the walk's Set up test (DL-81). Only these names run."""
     co = WS / "payments" / "checkout"
     if name == "reset-checkout":
-        for extra in ["docs/interview-research.md", "cli-test.md"]:
-            trash(co / extra)
+        # Anything a test added (new files, folders, duplicates, renames) goes to the Trash.
+        keep = {"docs": {"prd.md", "research.md", "windows-notes.md", "mixed-endings.md", "legacy-export.txt", "long-backlog.md"},
+                "prototypes": {"checkout.html", "checkout.css", "card.svg"}, "templates": {"meeting-notes.md"}}
+        for folder, names in keep.items():
+            for f in (co / folder).iterdir() if (co / folder).exists() else []:
+                if f.name not in names and not f.name.startswith("."):
+                    trash(f)
+        for f in co.iterdir():
+            if f.name not in {"PROJECT.md", "docs", "prototypes", "templates", ".duo"} and not f.name.startswith("."):
+                trash(f)
         checkout_docs(co)
         prototypes(co)
     elif name == "purge":

@@ -75,10 +75,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .togglePeek: !model.altitude.isAllProjects && !model.needsYouElsewhere.isEmpty
         case .jumpToPeekSelection: model.peekOpen
         case .goHome, .toggleSidebar, .closeWindow: true
-        case .closeSession: model.visibleTerminal != nil || (model.editorIfLoaded?.hasFocus == true && model.openDocuments.contains(model.rightTab ?? ""))
+        case .closeSession: model.visibleTerminal != nil || (model.webFocus == .editor && model.openDocuments.contains(model.rightTab ?? ""))
         case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
         case .save: model.terminalsMode == .live && model.editor.url != nil
-        case .bold, .italic: model.editorIfLoaded?.hasFocus == true
+        case .bold, .italic: model.webFocus == .editor
         case .sendSelection: model.canSendSelection
         }
     }

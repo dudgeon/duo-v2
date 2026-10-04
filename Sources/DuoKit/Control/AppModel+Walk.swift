@@ -56,6 +56,30 @@ extension AppModel {
         case "wait":
             let s = Double(words.dropFirst().first ?? "1") ?? 1
             DispatchQueue.main.asyncAfter(deadline: .now() + s) { MainActor.assumeIsolated { next("· waited \(s)s") } }
+        case "session-running":
+            // A Claude session showing in the project's console: a running one, else a new one,
+            // once its prompt is ready.
+            guard let project = words.dropFirst().first, fixture.projects.contains(where: { $0.name == project }) else { return next("✘ no project for \(step)") }
+            open(project: project)
+            if let t = terminals.all.first(where: { t in t.isLiveClaude && fixture.sessions.first { $0.tabKey == t.key }?.project == project }) {
+                openConsoleTab(t.key)
+                return next("· showing a running session in \(project)")
+            }
+            // Resume the newest session the project already has (restarts don't pile up new
+            // ones); a project with none gets a new session.
+            let existing = fixture.sessions(inProject: project).filter { $0.sessionId != nil }
+            let t: TerminalSession
+            if let s = existing.first(where: { $0.name == "New session" }) ?? existing.first, let resumed = terminal(project: project, session: s.tabKey) {
+                t = resumed
+                consoleTab = s.tabKey
+            } else {
+                guard let id = newSession(in: project), let made = terminals.existing(id) else { return next("✘ couldn't start a session in \(project)") }
+                t = made
+                consoleTab = id
+            }
+            var waited = false
+            whenPromptReady(t) { waited = true; next("· a session is ready in \(project)") }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 21) { MainActor.assumeIsolated { if !waited { next("· a session in \(project) is starting (its prompt isn't ready yet)") } } }
         case "fixture":
             // A named recipe in the repo's fixtures script (never a command from the caller).
             let recipe = words.dropFirst().joined(separator: " ")
