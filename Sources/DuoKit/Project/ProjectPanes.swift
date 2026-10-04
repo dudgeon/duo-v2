@@ -327,7 +327,9 @@ struct RightPane: View {
             .padding(.horizontal, 20)
             .frame(height: DuoMetric.tabStripHeight)
             DuoColor.rule.frame(height: 1)
-            if let path = model.rightTab, path.contains(".") {
+            if let path = model.rightTab, path.contains("."), let file = model.liveFile(path) {
+                DocumentEditorView(editor: model.editor, file: file)
+            } else if let path = model.rightTab, path.contains(".") {
                 DocumentPlaceholder(path: path)
             } else {
                 // Project tab and group page are not designed in the final look (handoff §3.5).

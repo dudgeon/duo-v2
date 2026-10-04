@@ -15,6 +15,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case toggleRightPane    // ⌥⌘0, as Xcode's inspector
     case nextPane           // ⌥⌘→
     case previousPane       // ⌥⌘←
+    case save               // ⌘S saves the open document now (it also autosaves)
     case closeSession       // ⌘W closes the session tab, never the window (LR-60, LR-13)
     case closeWindow        // ⇧⌘W, as in browsers once ⌘W closes tabs
 
@@ -30,6 +31,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .toggleRightPane: "Toggle Right Pane"
         case .nextPane: "Next Pane"
         case .previousPane: "Previous Pane"
+        case .save: "Save"
         case .closeSession: "Close Session"
         case .closeWindow: "Close Window"
         }
@@ -47,6 +49,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .toggleRightPane: KeyboardShortcut("0", modifiers: [.command, .option])
         case .nextPane: KeyboardShortcut(.rightArrow, modifiers: [.command, .option])
         case .previousPane: KeyboardShortcut(.leftArrow, modifiers: [.command, .option])
+        case .save: KeyboardShortcut("s", modifiers: .command)
         case .closeSession: KeyboardShortcut("w", modifiers: .command)
         case .closeWindow: KeyboardShortcut("w", modifiers: [.command, .shift])
         }
@@ -61,6 +64,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .jumpToPeekSelection: model.peekOpen
         case .goHome, .toggleSidebar, .closeWindow: true
         case .closeSession: model.visibleTerminal != nil
+        case .save: model.terminalsMode == .live && model.editor.url != nil
         }
     }
 
@@ -73,6 +77,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .jumpToPeekSelection: model.jumpToPeekSelection()
         case .toggleSidebar: model.leftCollapsed.toggle()
         case .closeSession: model.closeVisibleSession()
+        case .save: model.editor.saveNow()
         case .closeWindow: NSApp.keyWindow?.performClose(nil)
         case .jump, .search, .toggleRightPane, .nextPane, .previousPane: break
         }
@@ -87,6 +92,7 @@ public struct DuoCommands: Commands {
 
     public var body: some Commands {
         CommandGroup(replacing: .saveItem) {
+            item(.save)
             item(.closeSession)
             item(.closeWindow)
         }

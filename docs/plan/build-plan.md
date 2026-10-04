@@ -162,6 +162,7 @@ Shared by everything after it, including both PRDs.
 |---|---|
 | Builds | CM6 live-preview editor in one WKWebView (stack #8–9): byte-faithful saves (LR-30), one reconciliation primitive and its state machine (LR-31, LR-32), "added by Claude" highlight (LR-33, DL-5), agent edits through the buffer (LR-34), frontmatter panel (LR-37), Obsidian-compatible writes (DL-6, DL-17–DL-20), images (LR-39), trash/rename/reveal (LR-40). Version history next (DL-5). |
 | Needs | S4, S5 (S6 decides native vs web). |
+| Status | **I1 built (F-40):** the CM6 editor in the right pane (live mode), token styling, byte-faithful reads, atomic autosave, ⌘S, file watching with the three-way merge. **Next:** agent edits through the buffer with the "added by Claude" highlight (LR-34, DL-5); frontmatter panel (LR-37); designs for Q-20. |
 | Gates | ⛔ design: editor internals, conflict banners (§13). |
 
 ### Phase J — Bringing existing work in (CONS)

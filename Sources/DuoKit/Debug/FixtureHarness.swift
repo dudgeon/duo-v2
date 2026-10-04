@@ -61,6 +61,30 @@ public enum FixtureHarness {
         case "focus-tile": model.moveTileFocus(dx: 0, dy: 0)
         case "new": model.newSession()
         case "close": model.closeVisibleSession()
+        case "file": if parts.count > 1 { model.selectedFile = parts[1]; model.rightTab = parts[1] }
+        case "edit-bold": model.editor.run("duo.select(2, 9); duo.exec('bold'); return 1") { _ in }
+        case "editor-snapshot":
+            let out = parts.count > 1 ? parts[1] : "/tmp/editor.png"
+            model.editor.webView.takeSnapshot(with: nil) { image, _ in
+                if let tiff = image?.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) {
+                    try? png.write(to: URL(fileURLWithPath: out))
+                }
+            }
+        case "outside":
+            if let url = model.editor.url, var text = try? String(contentsOf: url, encoding: .utf8) {
+                text += "\nA line added by another app.\n"
+                try? text.write(to: url, atomically: false, encoding: .utf8)
+            }
+        case "editor":
+            let e = model.editor
+            e.run("""
+                const c = document.querySelector('.cm-content'), cs = c && getComputedStyle(c), h = document.querySelector('.duo-h');
+                return JSON.stringify({ length: duo.text().length, head: duo.text().slice(0, 60), font: cs && cs.fontSize, line: cs && cs.lineHeight,
+                  padding: cs && cs.padding, bg: getComputedStyle(document.body).backgroundColor, color: cs && cs.color,
+                  heading: h && getComputedStyle(h).fontSize + ' ' + getComputedStyle(h).fontWeight, hiddenMarks: document.querySelectorAll('.cm-line').length })
+                """) { v in
+                FileHandle.standardError.write(Data("editor: \(e.url?.lastPathComponent ?? "-") event=\(e.lastEvent) readOnly=\(e.readOnlyReason ?? "no") \(v ?? "nil")\n".utf8))
+            }
         case "type": model.visibleTerminal?.view.send(txt: parts.count > 1 ? parts[1] : "")
         case "enter": model.visibleTerminal?.view.send(txt: "\r")
         case "dump":

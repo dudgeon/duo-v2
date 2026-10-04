@@ -184,6 +184,16 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-40 · Phase I begins: the document editor in the right pane (2026-10-03)
+
+Geoff chose this next (2026-10-03). Live mode only: fixture mode keeps the placeholder the targets exempt, so the six fixture captures stay pixel-identical (checked: 0 differing pixels).
+
+- **One shared `WKWebView`** (`EditorController`, re-parented like terminals) loads the vendored bundle from `Duo.app/Contents/Resources/editor/` (`bundle.sh` copies it). Clicking a file in the tree opens it in the right pane.
+- **Styling from the tokens:** the app injects Duo's colours as CSS variables (no hex in the editor); body 13/20, headings 14 semibold, padding 22 28, pane background, as the target's document area. Verified by computed styles. Review image: `docs/plan/review/phase-i/editor-live.png` (WebKit's own snapshot; the frame-view capture can't see web content). Bold and link syntax hide off the caret's line; headings style; **task lists needed the GitHub-flavoured dialect** (`markdown({ base: markdownLanguage })`): CodeMirror's default is plain CommonMark.
+- **Files stay the truth:** opening never writes (checked byte for byte). Non-UTF-8 files and files with mixed line endings open read-only (LR-30). Autosave a second after the last change, and on switching documents; ⌘S saves now. Saves are temp-file-then-rename and only when the text differs from disk (LR-35).
+- **Outside changes:** a file watcher (re-armed after rename-saves) feeds the three-way merge from S5: applied, merged with local edits elsewhere, or a conflict that keeps the user's text. Verified live: an edit autosaved, then a line appended "by another app" merged in.
+- **Not designed yet (Q-20):** the conflict banner, the read-only notice, and editor internals beyond the target's type (list bullets, tables, images, code blocks). Stubs only; nothing invented.
+
 ## F-39 · Spike S6: the native hedge (swift-markdown-engine) doesn't scale; CodeMirror 6 stays (2026-10-03)
 
 Geoff asked for S6 to run now (2026-10-03). `Vendor/swift-markdown-engine`: the dependency-free core at commit `1c2e76c1` (Apache-2.0); it **builds with the Command Line Tools alone**. `Spikes/S6Native` hosts its `NativeTextViewWrapper` (TextKit 2) offscreen and drives the text view directly.

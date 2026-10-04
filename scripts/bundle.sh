@@ -22,6 +22,9 @@ mkdir -p "$app/Contents/Helpers"
 cp "$(dirname "$bin")/duo2" "$app/Contents/Helpers/duo2"
 codesign --force --sign - "$app/Contents/Helpers/duo2" >/dev/null 2>&1 || true
 cp "$root/docs/design/build-handoff/fixture.json" "$app/Contents/Resources/fixture.json"
+# The document editor: vendored CodeMirror bundle and its page (F-34).
+mkdir -p "$app/Contents/Resources/editor"
+cp "$root/Vendor/codemirror/dist/cm6.js" "$root/Vendor/codemirror/dist/editor.html" "$app/Contents/Resources/editor/"
 # The search model (DL-40, F-35): committed in parts, reassembled and verified here.
 model="$root/Models/bge-small-fp16"
 if [ -d "$model" ]; then

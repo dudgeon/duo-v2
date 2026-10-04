@@ -1,10 +1,10 @@
 // Duo's editor in one WKWebView (stack rec #8–9, spikes S4/S5). Markdown text is the only source
 // of truth: the live preview hides syntax with decorations and never rewrites the text, so a
 // save writes back exactly what was read plus the user's edits (LR-30).
-import { EditorState, ChangeSet, StateField, StateEffect, RangeSetBuilder, Text } from "@codemirror/state";
+import { EditorState, ChangeSet, StateField, StateEffect, RangeSetBuilder, Text, Compartment } from "@codemirror/state";
 import { EditorView, ViewPlugin, Decoration, WidgetType, keymap } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import { markdown } from "@codemirror/lang-markdown";
+import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { syntaxTree } from "@codemirror/language";
 import { search, searchKeymap, SearchQuery, setSearchQuery, findNext } from "@codemirror/search";
 
@@ -153,6 +153,27 @@ function diffOne(a, b) {
 
 // ---------- the editor ----------
 
+// Read-only when a file can't round-trip byte for byte (mixed line endings, LR-30).
+const readOnlyCompartment = new Compartment();
+
+// Duo's look (handoff §3.4: body 13/20, headings 14 semibold, padding 22 28, pane background).
+// Colours and sizes come from Duo's tokens as CSS variables set by the app; nothing is hard-coded.
+const duoTheme = EditorView.theme({
+  "&": { height: "100%", backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", fontSize: "13px" },
+  "&.cm-focused": { outline: "none" },
+  ".cm-scroller": { fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", lineHeight: "20px" },
+  ".cm-content": { padding: "22px 28px", caretColor: "var(--duo-text)" },
+  ".cm-line": { padding: "0" },
+  ".duo-h": { fontSize: "14px", fontWeight: "600" },
+  ".duo-strong": { fontWeight: "600" },
+  ".duo-em": { fontStyle: "italic" },
+  ".duo-code": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px" },
+  ".duo-link": { color: "var(--duo-text)", textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)" },
+  ".duo-added": { backgroundColor: "var(--duo-selected)", borderRadius: "var(--duo-radius-card)" },
+  ".duo-task": { margin: "0 6px 0 0", verticalAlign: "-1px" },
+  ".cm-searchMatch": { backgroundColor: "var(--duo-selected)" },
+});
+
 let view = null;
 // The text last read from or written to disk, with "\n" line breaks: CodeMirror counts a line
 // break as one position whatever the file uses, so diffs and positions are computed on this form.
@@ -177,9 +198,11 @@ function create(parent, text) {
     doc: text,
     extensions: [
       EditorState.lineSeparator.of(sepInfo.sep),
+      readOnlyCompartment.of([EditorState.readOnly.of(sepInfo.mixed), EditorView.editable.of(!sepInfo.mixed)]),
+      duoTheme,
       EditorView.lineWrapping,
       history(),
-      markdown(),
+      markdown({ base: markdownLanguage }),  // GitHub-flavoured: task lists, tables, strikethrough
       search({ top: true }),
       ...(window.duoFlags?.noPreview ? [] : [livePreview]),
       addedField,
@@ -272,6 +295,8 @@ function bench(n) {
 }
 
 window.duo = {
+  setReadOnly: (ro) => view.dispatch({ effects: readOnlyCompartment.reconfigure([EditorState.readOnly.of(ro), EditorView.editable.of(!ro)]) }),
+  focus: () => view.focus(),
   create: (text) => create(document.getElementById("editor"), text),
   text: fileText,
   markSaved: () => setBase(view.state.doc.toString()),

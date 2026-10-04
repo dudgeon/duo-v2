@@ -52,6 +52,15 @@ public final class AppModel {
 
     public var terminalsMode: TerminalsMode = .off
     @ObservationIgnored public let terminals = TerminalStore()
+    /// The one document editor (live mode; fixture mode keeps the placeholder the targets exempt).
+    @ObservationIgnored public lazy var editor = EditorController()
+
+    /// A project-relative path as a real file, in live mode.
+    public func liveFile(_ path: String) -> URL? {
+        guard terminalsMode == .live, let project = currentProject?.name, let folder = liveFolders[project] else { return nil }
+        let url = folder.appending(path: path)
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    }
 
     /// The terminal for a session, created on first use; nil when terminals are off, or when the
     /// session is running somewhere else (never two writers, LR-8).
