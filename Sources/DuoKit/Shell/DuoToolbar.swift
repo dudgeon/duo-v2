@@ -55,7 +55,8 @@ struct AllProjectsTitle: View {
         let c = model.fixture.counts
         HStack(spacing: DuoSpace.gapToolbarOverview) {
             Text("All projects").duoText(.bodyEmphasis).foregroundStyle(DuoColor.text)
-            Count(state: .needsYou, text: "\(c.needsYou) need you")
+            // Nothing needs you: not drawn (handoff §8). The accent only ever means "needs you".
+            if c.needsYou > 0 { Count(state: .needsYou, text: "\(c.needsYou) need you") }
             Count(state: .readyForReview, text: "\(c.readyForReview) to review")
             Count(state: .working, text: "\(c.working) working")
             Count(state: .idle, text: "\(c.idle) idle")
