@@ -363,6 +363,25 @@ func repoFixture() throws -> Fixture {
         try? FileManager.default.removeItem(at: scratch)
     }
 
+    print("legacy duo (DL-39)")
+    let lg = FileManager.default.temporaryDirectory.appending(path: "legacy-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: lg.appending(path: "skills/duo"), withIntermediateDirectories: true)
+    let lgSettings = #"{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"a","_duo":"managed-v3"}]},{"hooks":[{"type":"command","command":"mine"}]}]},"model":"opus"}"#
+    let lgMD = "# Mine\n\nKeep this.\n\n<!-- duo:managed-v3 -->\nDuo\n<!-- duo:end -->\n\nAnd this.\n"
+    try lgSettings.write(to: lg.appending(path: "settings.json"), atomically: true, encoding: .utf8)
+    try lgMD.write(to: lg.appending(path: "CLAUDE.md"), atomically: true, encoding: .utf8)
+    check(LegacyDuo.detect(in: lg).count == 3, "detects legacy hooks, block and skill")
+    let lgBackup = try LegacyDuo.disable(in: lg, backupRoot: lg.appending(path: "backups"))
+    let mdAfter = try String(contentsOf: lg.appending(path: "CLAUDE.md"), encoding: .utf8)
+    let setAfter = try String(contentsOf: lg.appending(path: "settings.json"), encoding: .utf8)
+    check(LegacyDuo.detect(in: lg).isEmpty && mdAfter == "# Mine\n\nKeep this.\n\nAnd this.\n" && setAfter.contains("mine") && setAfter.contains("opus"),
+          "disable removes only legacy's parts")
+    try LegacyDuo.restore(from: lgBackup)
+    check(try String(contentsOf: lg.appending(path: "CLAUDE.md"), encoding: .utf8) == lgMD
+          && (try String(contentsOf: lg.appending(path: "settings.json"), encoding: .utf8)) == lgSettings
+          && FileManager.default.fileExists(atPath: lg.appending(path: "skills/duo").path), "restore puts everything back exactly")
+    try? FileManager.default.removeItem(at: lg)
+
     print("launch options")
     let o = LaunchOptions(arguments: ["Duo", "--state", "flow-zoom-3", "--capture", "/tmp/x.png", "--left", "collapsed"])
     check(o.state == .flowZoom3 && o.capturePath == "/tmp/x.png" && o.collapseLeft && o.capturing, "flags parse")

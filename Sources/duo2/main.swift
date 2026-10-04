@@ -22,7 +22,32 @@ case "search", "search-status":
     exit(runSearch(command.name, Array(args.dropFirst())))
 case "help":
     print(ControlCommand.help(), terminator: "")
+case "legacy":
+    let sub = args.dropFirst().first
+    let backups = ControlEndpoint.file.deletingLastPathComponent().appending(path: "backups")
+    switch sub {
+    case "disable":
+        guard args.contains("--yes") else { fail("this changes ~/.claude (after a backup). Run `duo2 legacy disable --yes` to go ahead.", code: 64) }
+        guard !LegacyDuo.detect().isEmpty else { print("Nothing of legacy Duo's to disable."); exit(0) }
+        do {
+            let b = try LegacyDuo.disable(backupRoot: backups)
+            print("Disabled legacy Duo's instructions. Backup: \(b.path)\nUndo with: duo2 legacy restore \"\(b.path)\"")
+        } catch { fail("\(error)") }
+    case "restore":
+        guard let path = args.dropFirst(2).first else { fail("usage: duo2 legacy restore <backup folder>", code: 64) }
+        do { try LegacyDuo.restore(from: URL(fileURLWithPath: path)); print("Restored from \(path).") } catch { fail("\(error)") }
+    default:
+        let found = LegacyDuo.detect()
+        if found.isEmpty { print("No legacy Duo instructions in \(LegacyDuo.claudeDir.path).") }
+        else {
+            print("Legacy Duo installed these into \(LegacyDuo.claudeDir.path); they load into every Claude session, Duo v2's too:")
+            for f in found { print("  - \(f.what): \(f.path)") }
+            print("To turn them off (everything is backed up first, and can be restored): duo2 legacy disable --yes")
+        }
+    }
 case "doctor":
+    let legacy = LegacyDuo.detect()
+    if !legacy.isEmpty { print("Legacy Duo's instructions are still installed (\(legacy.map(\.what).joined(separator: ", "))). See `duo2 legacy`.") }
     guard let (endpoint, source) = ControlEndpoint.discover() else {
         print("Duo isn't running, or this terminal can't see it: no \(ControlEndpoint.socketVariable) in the environment and no live \(ControlEndpoint.file.path).")
         exit(1)

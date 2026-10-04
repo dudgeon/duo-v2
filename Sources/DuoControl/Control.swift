@@ -92,6 +92,8 @@ public struct ControlCommand: Sendable {
         .init(name: "search", usage: "duo2 search <query> [-k N] [--project P] [--exact] [--all-passages] [--json]",
               summary: "Search every project by meaning and by words. Works without the app; read-only.", needsApp: false),
         .init(name: "search-status", usage: "duo2 search-status [--json]", summary: "How much of each project the search index covers.", needsApp: false),
+        .init(name: "legacy", usage: "duo2 legacy [disable --yes | restore <backup>]",
+              summary: "Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them.", needsApp: false),
         .init(name: "doctor", usage: "duo2 doctor", summary: "Explain how this terminal finds Duo, and whether it can reach it.", needsApp: false),
         .init(name: "help", usage: "duo2 help", summary: "Show this list.", needsApp: false),
     ]

@@ -184,6 +184,12 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-37 · Legacy Duo detection and a reversible disable (DL-39) (2026-10-03)
+
+- Legacy Duo installs five things into `~/.claude` (its `install-service.ts`): hooks tagged `"_duo": "managed-v…"` in `settings.json`, a `<!-- duo:managed-v… -->` … `<!-- duo:end -->` block in `CLAUDE.md`, `skills/duo/`, `agents/duo.md`, and a `claude` wrapper in `duo/bin/`. None are on this Mac; the work Mac may have them.
+- `duo2 legacy` lists what's there; `duo2 doctor` mentions it. `duo2 legacy disable --yes` copies `settings.json` and `CLAUDE.md` into `~/Library/Application Support/Duo/backups/legacy-duo-<time>/`, removes only the marked hooks and block, and moves the skill, subagent and wrapper into the backup. `duo2 legacy restore <backup>` puts everything back byte for byte (checked on a scratch config folder; `CLAUDE_CONFIG_DIR` honoured). The user's own hooks and `CLAUDE.md` text are untouched; `settings.json` is rewritten with sorted keys (the original is in the backup).
+- The in-app notice DL-39 describes needs a design (§13); the CLI covers detection and the action until then. 110 checks pass.
+
 ## F-36 · Phase M1: search over every project's files, by meaning and by words (2026-10-03)
 
 Built ahead of v1.1 because every remaining v1 feature waits on a design (logged in the plan). `Sources/DuoSearch` (Foundation, SQLite, Core ML, Accelerate; no AppKit), the app's background indexer, and `duo2 search` / `search-status`.
