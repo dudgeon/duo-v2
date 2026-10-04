@@ -197,6 +197,8 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
 
     public func userContentController(_ u: WKUserContentController, didReceive m: WKScriptMessage) {
         guard let body = m.body as? [String: Any], body["kind"] as? String == "selection" else { return }
+        let count = body["claudeChanges"] as? Int ?? 0, atCaret = body["atClaudeChange"] as? Bool == true
+        if count != claudeChanges || atCaret != atClaudeChange { claudeChanges = count; atClaudeChange = atCaret; onStateChange?() }
         dirty = body["dirty"] as? Bool == true
         guard dirty else { return }
         // Autosave a second after the last change (no "Save?" prompts; files are the truth).
@@ -398,6 +400,20 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { MainActor.assumeIsolated { self.revealFromSearch(path: path, lines: lines, words: words, tries: tries - 1) } }
             }
         }
+    }
+
+    /// Claude's changes still highlighted (ENH-4), and whether the caret is in one.
+    public private(set) var claudeChanges = 0
+    public private(set) var atClaudeChange = false
+
+    /// Puts back what Claude's change at the caret replaced (ENH-4).
+    public func revertAtCaret(_ done: (@MainActor (Int) -> Void)? = nil) {
+        run("return duo.revertAt()") { v in done?((v as? Int) ?? 0) }
+    }
+
+    /// Puts back everything Claude changed since your last edit (ENH-4).
+    public func revertAll(_ done: (@MainActor (Int) -> Void)? = nil) {
+        run("return duo.revertAll()") { v in done?((v as? Int) ?? 0) }
     }
 
     public func run(_ js: String, _ args: [String: Any] = [:], done: @escaping @MainActor (Any?) -> Void) {

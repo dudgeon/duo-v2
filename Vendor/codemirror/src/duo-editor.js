@@ -155,6 +155,42 @@ const addedField = StateField.define({
   provide: (f) => EditorView.decorations.from(f),
 });
 
+// Claude's changes, revertable while they're highlighted (ENH-4): where each landed in the
+// current text (mapped through later edits) and the text it replaced. Same lifetime as the highlight.
+const recordChanges = StateEffect.define();
+const dropChange = StateEffect.define();
+const changesField = StateField.define({
+  create: () => [],
+  update(list, tr) {
+    list = list.map((c) => ({ ...c, from: tr.changes.mapPos(c.from, -1), to: tr.changes.mapPos(c.to, 1) }));
+    for (const e of tr.effects) {
+      if (e.is(recordChanges)) list = list.concat(e.value);
+      if (e.is(dropChange)) list = list.filter((c) => !e.value.includes(c.id));
+      if (e.is(clearAdded)) list = [];
+    }
+    return list;
+  },
+});
+let changeSeq = 0;
+// What a change set replaced, for each inserted or deleted range, so it can be put back.
+function changeRecords(set, beforeDoc) {
+  const out = [];
+  set.iterChanges((fA, tA, fB, tB) => out.push({ id: ++changeSeq, from: fB, to: tB, removed: beforeDoc.sliceString(fA, tA) }));
+  return out;
+}
+function changeAt(pos) {
+  const list = view.state.field(changesField);
+  return list.find((c) => pos >= c.from && pos <= c.to) ?? null;
+}
+// Puts back what one change (or all of them) replaced. Not a user edit, so other highlights stay.
+function revert(ids) {
+  const list = view.state.field(changesField).filter((c) => ids == null || ids.includes(c.id)).sort((a, b) => a.from - b.from);
+  if (!list.length) return 0;
+  const changes = list.map((c) => ({ from: c.from, to: c.to, insert: c.removed }));
+  view.dispatch({ changes, effects: dropChange.of(list.map((c) => c.id)), userEvent: "revert" });
+  return list.length;
+}
+
 // The highlight lasts until the user's next edit (DL-5, LR-33).
 const clearOnUserEdit = EditorView.updateListener.of((u) => {
   if (!u.docChanged || u.state.field(addedField).size === 0) return;
@@ -253,6 +289,7 @@ function create(parent, text) {
       search({ top: true }),
       ...(window.duoFlags?.noPreview ? [] : [livePreview]),
       addedField,
+      changesField,
       searchField,
       clearOnUserEdit,
       // Duo's menu chords win over CodeMirror's: ⌘D is Send Selection to Claude (DL-79), ⌘I is
@@ -263,7 +300,9 @@ function create(parent, text) {
         if (u.selectionSet || u.docChanged) {
           const r = u.state.selection.main;
           // Never stringify the document per keystroke: 1.2 MB × every edit was 280 MB of garbage (F-34).
-          post("selection", { from: r.from, to: r.to, empty: r.empty, dirty: !u.state.doc.eq(baseDoc) });
+          const claude = u.state.field(changesField);
+          post("selection", { from: r.from, to: r.to, empty: r.empty, dirty: !u.state.doc.eq(baseDoc),
+                              claudeChanges: claude.length, atClaudeChange: claude.some((c) => r.head >= c.from && r.head <= c.to) });
         }
       }),
     ],
@@ -410,7 +449,8 @@ function external(diskText) {
   // What arrived from outside (in Duo, usually Claude) is highlighted until the next edit (LR-33).
   const added = [];
   set.iterChanges((fromA, toA, fromB, toB) => { if (toB > fromB) added.push([fromB, toB]); });
-  view.dispatch({ changes: set, effects: added.length ? markAdded.of(added) : [], userEvent: "external" });
+  const records = changeRecords(set, view.state.doc);
+  view.dispatch({ changes: set, effects: [recordChanges.of(records), ...(added.length ? [markAdded.of(added)] : [])], userEvent: "external" });
   setBase(disk);
   return { result: userEdited ? "merged" : "applied", added: added.length, destructive: m.destructive };
 }
@@ -443,7 +483,8 @@ function agentEdit(edits, content) {
   const set = ChangeSet.of(changes, before.length);
   const added = [];
   set.iterChanges((fA, tA, fB, tB) => { if (tB > fB) added.push([fB, tB]); });
-  view.dispatch({ changes: set, effects: added.length ? markAdded.of(added) : [], userEvent: "agent" });
+  const records = changeRecords(set, view.state.doc);
+  view.dispatch({ changes: set, effects: [recordChanges.of(records), ...(added.length ? [markAdded.of(added)] : [])], userEvent: "agent" });
   const first = added.length ? view.state.doc.lineAt(added[0][0]).number : null;
   if (added.length) view.dispatch({ effects: EditorView.scrollIntoView(added[0][0], { y: "center" }) });
   return { result: "applied", changes: changes.length, line: first };
@@ -451,7 +492,7 @@ function agentEdit(edits, content) {
 
 // Agent edits go through the buffer (LR-34) and are highlighted until accepted (DL-5).
 function agentInsert(at, text) {
-  view.dispatch({ changes: { from: at, insert: text }, effects: markAdded.of([[at, at + text.length]]) });
+  view.dispatch({ changes: { from: at, insert: text }, effects: [markAdded.of([[at, at + text.length]]), recordChanges.of([{ id: ++changeSeq, from: at, to: at + text.length, removed: "" }])] });
 }
 
 // Human-paced typing: one character every `gap` ms, so the engine has idle time as it would
@@ -524,9 +565,19 @@ window.duo = {
     const at = doc.indexOf(find);
     if (at < 0) return { result: "not found" };
     if (doc.indexOf(find, at + 1) >= 0) return { result: "not unique" };
-    view.dispatch({ changes: { from: at, to: at + find.length, insert: text }, effects: markAdded.of([[at, at + text.length]]) });
+    view.dispatch({ changes: { from: at, to: at + find.length, insert: text },
+                    effects: [markAdded.of([[at, at + text.length]]), recordChanges.of([{ id: ++changeSeq, from: at, to: at + text.length, removed: find }])] });
     return { result: "replaced", line: view.state.doc.lineAt(at).number };
   },
+  // ENH-4: revert Claude's change at the caret (or at `pos`), or all of them.
+  revertAt: (pos) => { const c = changeAt(pos ?? view.state.selection.main.head); return c ? revert([c.id]) : 0; },
+  revertAll: () => revert(null),
+  revertAtLine: (n) => {
+    const l = view.state.doc.line(Math.min(Math.max(1, n), view.state.doc.lines));
+    const c = view.state.field(changesField).find((c) => c.to >= l.from && c.from <= l.to);
+    return c ? revert([c.id]) : 0;
+  },
+  claudeChanges: () => view.state.field(changesField).map((c) => ({ from: view.state.doc.lineAt(c.from).number, to: view.state.doc.lineAt(Math.max(c.from, c.to)).number, removed: c.removed.length, inserted: c.to - c.from })),
   revealFromSearch: (a, b, label, words) => {
     view.dispatch({ effects: markSearch.of(searchDecorations(view.state, a, b, label, words)),
                     selection: { anchor: view.state.doc.line(Math.min(Math.max(1, a), view.state.doc.lines)).from },

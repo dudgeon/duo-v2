@@ -21,6 +21,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case italic             // ⌘I, likewise
     case closeSession       // ⌘W closes the focused tab (document or session), never the window (LR-60, LR-13)
     case closeWindow        // ⇧⌘W, as in browsers once ⌘W closes tabs
+    case revertChange       // Edit › Revert Claude's Change (ENH-4); no chord
+    case revertAllChanges   // Edit › Revert All of Claude's Changes (ENH-4); no chord
     case newClaudeSession   // ⌘T: a new Claude session in this console (surfaces-handoff DB-4; Q-26)
     case newShell           // ⇧⌘T: a plain shell in this console (DL-8, DB-4; Q-26)
     case sendSelection      // ⌘D: Send Selection to Claude, legacy's chord (Q-22, DL-79); search's Send to Claude too
@@ -45,11 +47,13 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeWindow: "Close Window"
         case .sendSelection: "Send Selection to Claude"
         case .newClaudeSession: "New Claude Session"
+        case .revertChange: "Revert Claude's Change"
+        case .revertAllChanges: "Revert All of Claude's Changes"
         case .newShell: "New Shell"
         }
     }
 
-    public var shortcut: KeyboardShortcut {
+    public var shortcut: KeyboardShortcut? {
         switch self {
         case .search: KeyboardShortcut("a", modifiers: [.command, .shift])  // Chrome's tab search (DL-46)
         case .allProjects: KeyboardShortcut(.upArrow, modifiers: .command)
@@ -68,6 +72,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeSession: KeyboardShortcut("w", modifiers: .command)
         case .closeWindow: KeyboardShortcut("w", modifiers: [.command, .shift])
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
+        case .revertChange, .revertAllChanges: nil
         case .newClaudeSession: KeyboardShortcut("t", modifiers: .command)
         case .newShell: KeyboardShortcut("t", modifiers: [.command, .shift])
         }
@@ -88,6 +93,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .bold, .italic: model.webFocus == .editor
         case .sendSelection: model.canSendSelection
         case .newClaudeSession, .newShell: model.terminalsMode == .live
+        case .revertChange: model.webFocus == .editor && (model.editorIfLoaded?.atClaudeChange ?? false)
+        case .revertAllChanges: (model.editorIfLoaded?.claudeChanges ?? 0) > 0
         }
     }
 
@@ -110,6 +117,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeWindow: NSApp.keyWindow?.performClose(nil)
         case .sendSelection: model.sendSelection()
         case .newClaudeSession: model.newSession()
+        case .revertChange: model.editor.revertAtCaret()
+        case .revertAllChanges: model.editor.revertAll()
         case .newShell: model.newShell()
         case .search: model.openSearch()
         case .toggleRightPane, .nextPane, .previousPane: break
@@ -147,6 +156,9 @@ public struct DuoCommands: Commands {
         CommandGroup(after: .pasteboard) {
             Divider()
             item(.sendSelection)
+            Divider()
+            item(.revertChange)
+            item(.revertAllChanges)
         }
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)

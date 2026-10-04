@@ -165,7 +165,8 @@ public enum FixtureHarness {
         case "editor-js":   // editor-js:<js>: run in the editor page (focused first), print what it returns
             let e = model.editor
             e.webView.window?.makeFirstResponder(e.webView)
-            e.run(parts.count > 1 ? parts[1] : "return null") { v in
+            // `--then` splits on commas: write ⸴ for a comma inside the script.
+            e.run(parts.count > 1 ? parts[1].replacingOccurrences(of: "⸴", with: ",") : "return null") { v in
                 FileHandle.standardError.write(Data("editor-js: \(String(describing: v ?? "nil"))\n".utf8))
             }
         case "sheet":   // sheet:<button title>: press that button on the sheet attached to Duo's window

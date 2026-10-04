@@ -202,9 +202,16 @@ extension AppModel {
             guard let self else { return }
             if on { self.webFocus = .editor } else if self.webFocus == .editor { self.webFocus = .none }
         }
-        e.webView.extraMenuItems = { [weak self] hasSelection, _ in
-            guard let self, hasSelection, self.terminalsMode == .live else { return [] }
-            return self.sendMenuItems("Selection") { done in self.documentSelectionPayload(done) }
+        e.webView.extraMenuItems = { [weak self, weak e] hasSelection, _ in
+            guard let self, self.terminalsMode == .live else { return [] }
+            var items = hasSelection ? self.sendMenuItems("Selection") { done in self.documentSelectionPayload(done) } : []
+            // Revert Claude's changes (ENH-4): plain menu items until the highlight's own affordance is designed.
+            if let e, e.claudeChanges > 0 {
+                if !items.isEmpty { items.append(.separator()) }
+                if e.atClaudeChange { items.append(ActionMenuItem("Revert This Change") { e.revertAtCaret() }) }
+                items.append(ActionMenuItem("Revert All of Claude's Changes") { e.revertAll() })
+            }
+            return items
         }
     }
 

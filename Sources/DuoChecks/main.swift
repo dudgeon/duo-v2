@@ -76,7 +76,8 @@ func repoFixture() throws -> Fixture {
     check(tiles.focusedTile == "pricing-experiment-q4", "right moves to the next topic, nearest row")
     tiles.moveTileFocus(dx: 1, dy: 0)
     check(tiles.focusedTile == "api-deprecations", "right clamps to the last row of a shorter column")
-    check(DuoCommand.allCases.map { "\($0.shortcut.key.character)\($0.shortcut.modifiers.rawValue)" }.count == Set(DuoCommand.allCases.map { "\($0.shortcut.key.character)\($0.shortcut.modifiers.rawValue)" }).count, "no two commands share a chord")
+    let chords = DuoCommand.allCases.compactMap(\.shortcut).map { "\($0.key.character)\($0.modifiers.rawValue)" }
+    check(chords.count == Set(chords).count, "no two commands share a chord")
 
     print("claude storage")
     check(ClaudeStorage.encode("/Users/geoff/repos/duo-v2") == "-Users-geoff-repos-duo-v2", "encode: slashes")

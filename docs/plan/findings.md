@@ -184,6 +184,17 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-60 · Revert Claude's changes (ENH-4); clicking a session resumes it (2026-10-04)
+
+- **Revert:**
+  - The editor records each change that arrives from Claude (`doc edit`, `doc replace`, `doc insert`, the hook) or from outside (the merge), with the text it replaced. Positions are mapped through later edits, for as long as the change is highlighted (until the user's next edit, DL-5).
+  - **Revert This Change** puts back the change at the caret; **Revert All of Claude's Changes** puts back every change still highlighted. A revert isn't a user edit, so the other highlights stay.
+  - Where: the editor's right-click menu, Edit › Revert Claude's Change and Revert All of Claude's Changes, and `duo2 doc revert [--all | --line n]`.
+  - Checked live: two changes, one reverted by line, then the rest.
+  - The highlight's own affordance waits for a design. The harness's `editor-js:` takes `⸴` for a comma.
+- **Click to resume (Geoff):** a needs-you or review card at All projects now opens its project with the session resumed in the console. Tile rows, the session list, Home's tabs and the idle list already did. Arrow keys still only move the selection.
+- **Learned:** a fork keeps its original's title, and title lookups pick the first match, so Duo can open the fork when the original was meant. Session ids are unaffected.
+
 ## F-59 · CONS: inventory, evidence and the journaled migrator (2026-10-04)
 
 - **Read-only (P1):**

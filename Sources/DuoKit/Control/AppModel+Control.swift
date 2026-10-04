@@ -155,6 +155,13 @@ extension AppModel {
             guard terminals.existing(s.tabKey) != nil else { return done(.fail("\(s.name) isn't running in Duo")) }
             closeSession(s.tabKey)
             done(.ok("Closed \(s.name). It stays listed and resumable."))
+        case .docRevert:
+            guard editor.url != nil else { return done(.fail("no document is open in Duo")) }
+            let finish: @MainActor (Int) -> Void = { n in done(n > 0 ? .ok("Reverted \(n) of Claude's change(s).") : .fail("no change of Claude's there to revert")) }
+            if inv.has("all") { editor.revertAll(finish) }
+            else if let line = inv.flags["line"].flatMap(Int.init) {
+                editor.run("return duo.revertAtLine(n)", ["n": line]) { v in finish((v as? Int) ?? 0) }
+            } else { editor.revertAtCaret(finish) }
         case .migrations, .migratePlan, .migrateApply, .migrateUndo:
             migrateVerb(id, inv, done)
         case .inventory:
