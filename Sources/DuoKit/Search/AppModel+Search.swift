@@ -435,7 +435,8 @@ extension AppModel {
         case .copyPassage:
             FileActions.copy(item.passages.first?.snippet ?? item.snippet ?? "")
         case .copyLink:
-            FileActions.copy(FileActions.markdownLink(name: URL(fileURLWithPath: item.title).lastPathComponent, relative: item.title))
+            if let id = item.sessionId, let link = sessionLink(id) { FileActions.copy(link) }
+            else { FileActions.copy(FileActions.markdownLink(name: URL(fileURLWithPath: item.title).lastPathComponent, relative: item.title)) }
         case .copyResume:
             if let id = item.sessionId { FileActions.copy("claude --resume \(id)") }
         case .reveal:

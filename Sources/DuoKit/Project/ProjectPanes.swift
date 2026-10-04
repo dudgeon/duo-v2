@@ -9,7 +9,7 @@ struct ProjectSidebarPane: View {
 
     var body: some View {
         let project = model.currentProject
-        let rows = project.map { SidebarRow.rows(for: $0.name, in: model.fixture) } ?? []
+        let sections = project.map { p in SidebarRow.sections(for: p.name, in: model.fixture, isOpen: { model.hasOpenTerminal($0) }) } ?? []
         VStack(alignment: .leading, spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -26,16 +26,16 @@ struct ProjectSidebarPane: View {
                         .onActivate { model.rightTab = "Project"; model.selectedFile = nil }  // action: view tab
                         .accessibilityLabel("\(project.name), open the project file")
                     }
-                    ForEach(SessionState.allCases, id: \.self) { state in
-                        let section = rows.filter { $0.state == state }
-                        if !section.isEmpty {
-                            // Rows, as the targets count them (a group is one), except the Older fold,
-                            // which stands for its sessions: 5 rows + Older · 4 is "Idle · 9".
-                            let count = section.reduce(0) { n, r in if case .older(let rows) = r.kind { n + rows.count } else { n + 1 } }
-                            SectionLabel(text: state.sectionTitle, count: count, needsYou: state == .needsYou)
+                    // Needs you, Open, then history by date, then the folds (DL-91).
+                    ForEach(sections) { section in
+                        if !section.title.isEmpty {
+                            SectionLabel(text: section.title, count: section.id == "needs" || section.id == "open" ? section.rows.count : nil,
+                                         needsYou: section.needsYou)
                                 .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
-                            ForEach(section) { row in SidebarRowView(row: row) }
+                        } else {
+                            Color.clear.frame(height: 8)
                         }
+                        ForEach(section.rows) { row in SidebarRowView(row: row) }
                     }
                     if let project { ArchivedSessionsFold(project: project.name) }
                     HStack(spacing: DuoSpace.gapButtonToButton) {
@@ -77,14 +77,14 @@ struct SidebarRowView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: DuoSpace.gapRowItems) {
                     Chevron(direction: expanded ? .down : .right).frame(width: 10)
-                    Text("Older · \(rows.count)").duoText(.body).foregroundStyle(DuoColor.text2)
+                    Text("\(row.name) · \(rows.count)").duoText(.body).foregroundStyle(DuoColor.text2)
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 8 + DuoSpace.selectionInset)
                 .frame(height: DuoMetric.rowGroup)
                 .contentShape(Rectangle())
                 .onActivate { if expanded { model.expandedGroups.remove(row.id) } else { model.expandedGroups.insert(row.id) } }  // action: view group
-                .accessibilityLabel(expanded ? "Hide older sessions" : "Show \(rows.count) older sessions")
+                .accessibilityLabel(expanded ? "Hide \(row.name.lowercased()) sessions" : "Show \(rows.count) \(row.name.lowercased()) sessions")
                 if expanded { ForEach(rows) { r in SidebarLeafRow(row: r, nested: false) } }
             }
         case .group(let threads, let count):
@@ -148,7 +148,9 @@ struct SidebarLeafRow: View {
             Text(row.name).duoText(.body).lineLimit(1)
             if case .thread(let n) = row.kind { CountPill(text: "thread · \(n)", emphasised: false) }
             Spacer(minLength: 8)
-            WaitLabel(text: row.wait)
+            // Open in Duo (DL-91): say what it's doing rather than how long ago.
+            WaitLabel(text: model.hasOpenTerminal(row.sessionKey) && row.state == .idle ? "at prompt"
+                      : model.hasOpenTerminal(row.sessionKey) && row.state == .working ? "working" : row.wait)
         }
         // Nested rows sit 11 pt from the group's rule (which is 1.5 wide at x 21).
         .padding(.leading, nested ? 11 + DuoMetric.borderEmphasis : DuoSpace.panePadding)

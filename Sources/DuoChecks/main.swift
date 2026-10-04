@@ -32,6 +32,19 @@ func repoFixture() throws -> Fixture {
     check(f.sessions.count == 11, "eleven sessions")
     check(f.needsYou.map(\.name) == ["Morning triage", "Copy review pass 2", "PRD v2 edits"], "needs-you longest wait first")
 
+    print("session list: needs you, open, then history (DL-91)")
+    do {
+        let all = SidebarRow.rows(for: "checkout-redesign", in: f)
+        let leafs = all.flatMap { r -> [SidebarRow] in if case .older(let rows) = r.kind { return rows } else { return [r] } }
+        let quiet = leafs.first { $0.state != .needsYou }
+        let secs = SidebarRow.sections(for: "checkout-redesign", in: f, isOpen: { $0 == quiet?.sessionKey })
+        let flat = secs.flatMap { $0.rows.flatMap { r -> [SidebarRow] in if case .older(let rows) = r.kind { return rows } else { return [r] } } }
+        check(Set(flat.map(\.id)) == Set(leafs.map(\.id)) && flat.count == leafs.count, "every row once")
+        check(secs.first?.id == "needs" && secs.first?.rows.allSatisfy { $0.state == .needsYou } == true, "needs you first")
+        check(secs.dropFirst().first?.id == "open" && secs.dropFirst().first?.rows.map(\.id) == [quiet?.id].compactMap { $0 }, "then what's open in Duo")
+        check(secs.dropFirst(2).allSatisfy { ["today", "week", "earlier"].contains($0.id) }, "then history by date")
+    }
+
     print("ordering")
     check(WaitTime("1h") > WaitTime("12m") && WaitTime("3d") > WaitTime("1h") && WaitTime("now") < WaitTime("4m"), "wait times")
     check(SessionState.allCases.sorted() == [.needsYou, .readyForReview, .working, .idle, .resolved], "states most urgent first")
@@ -112,8 +125,8 @@ func repoFixture() throws -> Fixture {
     try write("old-home/HOME.md", "---\ntype: home\n---\n")
     try write("node_modules/x/PROJECT.md", "---\n---\n")
     let found = ProjectDiscovery.scan(root: ws)
-    check(found.map(\.project.name) == ["checkout-redesign", "onboarding-v3", "home", "old-home"].sorted { a, b in
-        found.first { $0.project.name == a }!.folder.path < found.first { $0.project.name == b }!.folder.path }, "finds projects and homes, skips nested and node_modules")
+    check(Set(found.map(\.project.name)) == ["checkout-redesign", "inner", "onboarding-v3", "home", "old-home"], "finds projects, nested ones and homes; skips node_modules")
+    check(found.first { $0.project.name == "inner" }?.project.topic == "Payments", "a project inside a project sits beside it, in its topic (DL-89)")
     let checkout = found.first { $0.project.name == "checkout-redesign" }?.project
     check(checkout?.topic == "Payments" && checkout?.health == "On track" && checkout?.next == "Exec review Oct 14", "topic from parent folder, health label, next")
     let homes = ProjectDiscovery.chooseHome(found, remembered: ws.appending(path: "home").path)
@@ -211,7 +224,8 @@ func repoFixture() throws -> Fixture {
     check(snap.projects.first { $0.name == "checkout-redesign" }?.health == "At risk"
           && snap.projects.first { $0.name == "checkout-redesign" }?.topic == "Payments", "project from PROJECT.md: health, topic")
     check(snap.projects.first { $0.isHome == true }?.name == "home" && folders["home"] != nil, "Home from HOME.md")
-    check(snap.groups.first?.sessions == ["New session", "PRD v2 edits"], "groups resolve ids to names; never-used session is New session")
+    check(snap.groups.first?.sessions.last == "PRD v2 edits" && snap.groups.first?.sessions.first?.hasPrefix("Session ") == true,
+          "groups resolve ids to names; a never-used session shows its start time (DL-90)")
     check(snap.counts.needsYou == 1 && snap.counts.idle == 1, "counts")
     let quiet = Beacon(pid: 1, sessionId: "aaaa-filed", cwd: proj.path, name: nil, status: "idle", waitingFor: nil,
                        statusUpdatedAt: nil, entrypoint: "cli", kind: nil)
@@ -310,7 +324,7 @@ func repoFixture() throws -> Fixture {
     let slash = rec(#"{"type":"user","message":{"content":"<command-name>/review</command-name><command-args></command-args>"}}"#)
     let ai = rec(#"{"type":"ai-title","aiTitle":"Refunds FAQ draft"}"#)
     let custom = rec(#"{"type":"custom-title","customTitle":"FAQ v2"}"#)
-    check(SessionTitles.title(head: [meta, prompt], tail: []) == "Draft the refunds FAQ for support", "first prompt, wrapper tags stripped, meta skipped")
+    check(SessionTitles.title(head: [meta, prompt], tail: []) == "“Draft the refunds FAQ for support”", "first prompt in quotes, wrapper tags stripped, meta skipped (DL-90)")
     check(SessionTitles.title(head: [slash, prompt], tail: []) == "/review", "slash command beats the prompt")
     check(SessionTitles.title(head: [prompt, ai], tail: []) == "Refunds FAQ draft", "AI title beats the prompt")
     check(SessionTitles.title(head: [prompt, ai], tail: [custom]) == "FAQ v2", "custom title beats all")

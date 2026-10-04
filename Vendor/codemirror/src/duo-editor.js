@@ -274,6 +274,32 @@ function post(kind, body) {
 // Chords Duo's menus own (Commands.swift); the editor must not consume them.
 const DUO_CHORDS = new Set(["Mod-d", "Mod-i", "Mod-b", "Mod-s", "Mod-w", "Mod-n", "Shift-Mod-n", "Mod-k", "Shift-Mod-a", "Shift-Mod-p", "Shift-Mod-h", "Mod-Enter"]);
 
+// Links (DL-87): a click on a rendered link (its line not showing raw markdown) opens it, as in
+// Obsidian's live preview; ⌘-click opens it from anywhere. Duo decides what opening means
+// (`duo2://session/<id>` resumes the session; web links go to the browser).
+function linkAt(state, pos) {
+  let node = syntaxTree(state).resolveInner(pos, 1);
+  while (node && node.name !== "Link") node = node.parent;
+  if (!node) return null;
+  const url = node.getChild("URL");
+  return url ? state.sliceDoc(url.from, url.to).trim() : null;
+}
+const linkClicks = EditorView.domEventHandlers({
+  mousedown(e, view) {
+    if (e.button !== 0 || !e.target.closest?.(".duo-link")) return false;
+    const pos = view.posAtCoords({ x: e.clientX, y: e.clientY });
+    if (pos == null) return false;
+    const line = view.state.doc.lineAt(pos).number;
+    const raw = view.state.selection.ranges.some((r) => line >= view.state.doc.lineAt(r.from).number && line <= view.state.doc.lineAt(r.to).number);
+    if (raw && !e.metaKey) return false;
+    const url = linkAt(view.state, pos);
+    if (!url) return false;
+    e.preventDefault();
+    post("openLink", { url });
+    return true;
+  },
+});
+
 function create(parent, text) {
   sepInfo = lineSeparatorOf(text);
   setBase(canon(text));
@@ -292,6 +318,7 @@ function create(parent, text) {
       changesField,
       searchField,
       clearOnUserEdit,
+      linkClicks,
       // Duo's menu chords win over CodeMirror's: ⌘D is Send Selection to Claude (DL-79), ⌘I is
       // Italic (CodeMirror's select-parent-syntax took it, so Format › Italic never fired).
       keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap].filter((b) => !DUO_CHORDS.has(b.key))),

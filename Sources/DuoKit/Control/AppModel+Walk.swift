@@ -69,7 +69,7 @@ extension AppModel {
             // ones); a project with none gets a new session.
             let existing = fixture.sessions(inProject: project).filter { $0.sessionId != nil }
             let t: TerminalSession
-            if let s = existing.first(where: { $0.name == "New session" }) ?? existing.first, let resumed = terminal(project: project, session: s.tabKey) {
+            if let s = existing.first(where: { $0.name == "New session" || $0.name.hasPrefix("Session ") }) ?? existing.first, let resumed = terminal(project: project, session: s.tabKey) {
                 t = resumed
                 consoleTab = s.tabKey
             } else {

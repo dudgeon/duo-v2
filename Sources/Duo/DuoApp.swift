@@ -71,6 +71,8 @@ struct DuoApp: App {
         let mainWindow = MainWindow(model: model, options: options)
         AppDelegate.reopen = { mainWindow.show() }
         AppDelegate.openURL = { url in
+            // Session links from notes or other apps (DL-87).
+            if url.scheme == "duo2", url.host == "session" { mainWindow.show(); model.openLink(url.absoluteString); return }
             guard url.scheme == "duo2", url.host == "walk-setup",
                   let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "id" })?.value else { return }
             mainWindow.show()

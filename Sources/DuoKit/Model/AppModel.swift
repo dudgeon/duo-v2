@@ -372,7 +372,7 @@ public final class AppModel {
         index.sessions.append(.init(sessionId: id, provenance: provenance))
         try? index.save(project: folder)
         _ = terminals.session(id, command: .newClaude(sessionID: id, prompt: prompt), cwd: folder.path)
-        fixture.sessions.append(Fixture.Session(name: "New session", project: project, state: .working, wait: "now",
+        fixture.sessions.append(Fixture.Session(name: LiveSnapshot.untitled(Date()), project: project, state: .working, wait: "now",
                                                 question: nil, options: nil, summary: nil, forkOf: nil, document: nil,
                                                 sessionId: id))
         return id

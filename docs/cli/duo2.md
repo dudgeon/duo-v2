@@ -61,6 +61,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 session next <text>` | Tell the user what this session needs next (one line). | — |
 | `duo2 session carry-on <id>` | Start a new session carrying on from an archived one. | — |
 | `duo2 session fork <id>` | Carry a session on as a fork: a new session with the same history (the original is left alone). | Resume as a Fork |
+| `duo2 session link <session>` | A Markdown link to a session for a note or task: [title](duo2://session/<id>). Clicking it in Duo opens or resumes the session (DL-87). | Copy Link, Copy Markdown link |
 | `duo2 session archive <id>` | File a session away: it leaves the lists and counts, keeps its transcript, stays searchable, and sits in its project's Archived fold. Not while it runs. Undo with `duo2 undo`. | Archive Session |
 | `duo2 session unarchive <id>` | Bring an archived session back into its project's list. | Unarchive Session, Archived fold |
 | `duo2 session delete <id>` | Delete a session and its local logs for good (transcript, file history, environment; Duo's archived copy). The user confirms in Duo; never for a running session. | Delete Session… |

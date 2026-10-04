@@ -12,9 +12,9 @@ public enum ProjectDiscovery {
     }
 
     /// Scans `root` up to `depth` levels for PROJECT.md / HOME.md. Hidden folders, `node_modules`
-    /// and `.build` are skipped; a folder that is a project isn't searched further (projects don't
-    /// nest, CONS L2).
-    public static func scan(root: URL, depth: Int = 3) -> [Found] {
+    /// and `.build` are skipped. A project inside another project's folder is found too, and shown
+    /// as its sibling (DL-89: parenthood doesn't matter on the map).
+    public static func scan(root: URL, depth: Int = 4) -> [Found] {
         var found: [Found] = []
         walk(root, root: root, depth: depth, into: &found)
         return found.sorted { $0.folder.path < $1.folder.path }
@@ -38,7 +38,6 @@ public enum ProjectDiscovery {
             let fmText = (try? String(contentsOf: file, encoding: .utf8)) ?? ""
             found.append(Found(project: project(from: Frontmatter.parse(fmText), folder: dir, root: root, isHome: isHome),
                                folder: dir, isHomeCandidate: isHome))
-            return
         }
         guard depth > 0, let children = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.isDirectoryKey],
                                                                        options: [.skipsHiddenFiles]) else { return }
@@ -79,13 +78,23 @@ public enum ProjectDiscovery {
     /// The map column a project or folder sits in (DL-83): inside Home, the folder it sits in
     /// ("" directly in Home: the unlabelled first column); outside Home, or with none, its parent
     /// folder's path (`~/repos`).
+    /// A project inside another project's folder sits beside it, in the same column (DL-89).
     public static func topic(for folder: URL, root: URL?) -> String {
-        let parent = folder.standardizedFileURL.deletingLastPathComponent()
-        if let root, folder.standardizedFileURL.path.hasPrefix(root.standardizedFileURL.path + "/") {
+        let fm = FileManager.default
+        let stops: [String] = [root?.standardizedFileURL.path, fm.homeDirectoryForCurrentUser.standardizedFileURL.path, "/"].compactMap { $0 }
+        // The outermost project folder around this one, if any: this one sits beside it.
+        var outer = folder.standardizedFileURL
+        var up = outer.deletingLastPathComponent()
+        while !stops.contains(up.path), up.path.count > 1 {
+            if fm.fileExists(atPath: up.appending(path: "PROJECT.md").path) { outer = up }
+            up = up.deletingLastPathComponent()
+        }
+        let parent = outer.deletingLastPathComponent()
+        if let root, outer.path.hasPrefix(root.standardizedFileURL.path + "/") {
             return parent.path == root.standardizedFileURL.path ? "" : parent.lastPathComponent.capitalized
         }
         let home = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
-        if folder.standardizedFileURL.path == home { return "~" }
+        if outer.path == home { return "~" }
         return parent.path == home ? "~" : parent.path.replacingOccurrences(of: home + "/", with: "~/")
     }
 

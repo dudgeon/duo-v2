@@ -198,6 +198,7 @@ extension AppModel {
 
     func wireEditor(_ e: EditorController) {
         e.onStateChange = { [weak self] in self?.editorRevision += 1 }
+        e.onOpenLink = { [weak self, weak e] link in self?.openLink(link, from: e?.url) }
         e.webView.onFocusChange = { [weak self] on in
             guard let self else { return }
             if on { self.webFocus = .editor } else if self.webFocus == .editor { self.webFocus = .none }

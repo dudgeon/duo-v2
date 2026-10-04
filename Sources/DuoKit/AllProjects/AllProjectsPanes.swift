@@ -497,6 +497,8 @@ struct SessionOrganizeMenu: ViewModifier {
                 .contextMenu {
                     SendMenu { _ in model.sessionPayload(sessionKey) }
                     Button("Find Similar") { model.findSimilar(session: sessionKey) }
+                    // A link for a task note (DL-87): [title](duo2://session/<id>).
+                    Button("Copy Link") { model.copySessionLink(sessionKey) }
                     Divider()
                     Menu("Move to Project") {
                         ForEach(model.moveTargets(excluding: s.project)) { p in

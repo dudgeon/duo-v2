@@ -58,7 +58,8 @@ public enum SessionTitles {
         for r in head where r["type"] as? String == "user" && r["isMeta"] as? Bool != true {
             guard let text = promptText(r) else { continue }
             if let cmd = firstMatch(#"<command-name>\s*(/[^<\s]+)"#, in: text) { return cmd }
-            if let p = clean(text) { return p }
+            // Before Claude titles it, the first words typed, in quotes (DL-90).
+            if let p = clean(text) { return "“\(p)”" }
         }
         return nil
     }

@@ -136,7 +136,7 @@ public enum LiveSnapshot {
             // filed 44 minutes ago and used 2 minutes ago is 2m old).
             let since = live?.since ?? [entry?.createdAt, mtime].compactMap { $0 }.max().map { $0.timeIntervalSince1970 * 1000 }
             return Fixture.Session(
-                name: title(id: id, folder: folder, beacon: beacon),
+                name: title(id: id, folder: folder, beacon: beacon, started: entry?.createdAt),
                 project: name,
                 state: live?.state ?? .idle,
                 wait: live?.state == .readyForReview ? nil : Attention.waitText(since: since, now: ctx.now),
@@ -268,12 +268,19 @@ public enum LiveSnapshot {
     /// LR-6: a name the user gave wins; then the transcript's ladder. A session with no
     /// transcript was never used, so it is a new session; Claude's derived names are unstable
     /// across processes (F-26) and aren't used.
-    static func title(id: String, folder: URL, beacon: Beacon?) -> String {
+    /// A session nothing has been typed in yet: its start time (DL-90), "Session 4:12 PM".
+    public static func untitled(_ started: Date) -> String {
+        Calendar.current.isDateInToday(started)
+            ? "Session \(started.formatted(date: .omitted, time: .shortened))"
+            : "Session \(started.formatted(.dateTime.month(.abbreviated).day().hour().minute()))"
+    }
+
+    static func title(id: String, folder: URL, beacon: Beacon?, started: Date? = nil) -> String {
         if let b = beacon, b.nameSource == "user", let n = b.name, !n.isEmpty { return n }
         guard let t = ClaudeStorage.transcript(sessionId: id, cwd: beacon?.cwd ?? folder.path) else {
             // Purged by Claude's cleanup but kept by Duo (DL-44): still has its title.
             let m = SessionArchive.manifest()
-            return m.sessions[id]?.title ?? "New session"
+            return m.sessions[id]?.title ?? untitled(started ?? Date())
         }
         return SessionTitles.title(transcript: t) ?? "Session \(id.prefix(8))"
     }

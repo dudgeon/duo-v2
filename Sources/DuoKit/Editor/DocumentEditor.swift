@@ -28,6 +28,8 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public private(set) var removedOnDisk = false { didSet { if oldValue != removedOnDisk { onStateChange?() } } }
     /// Called when conflict or removed-on-disk changes (the bars under the document redraw).
     var onStateChange: (() -> Void)?
+    /// A link clicked in the document (DL-87): its target as written.
+    var onOpenLink: ((String) -> Void)?
     /// Lines of the last conflict (1-based, in the base), for the bar and `duo2 doc status`.
     public private(set) var conflictLines: [[Int]] = []
     /// Unsaved text of documents left while in conflict or removed, kept until they're shown
@@ -196,6 +198,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     // MARK: Saving
 
     public func userContentController(_ u: WKUserContentController, didReceive m: WKScriptMessage) {
+        if let body = m.body as? [String: Any], body["kind"] as? String == "openLink", let link = body["url"] as? String {
+            onOpenLink?(link); return
+        }
         guard let body = m.body as? [String: Any], body["kind"] as? String == "selection" else { return }
         let count = body["claudeChanges"] as? Int ?? 0, atCaret = body["atClaudeChange"] as? Bool == true
         if count != claudeChanges || atCaret != atClaudeChange { claudeChanges = count; atClaudeChange = atCaret; onStateChange?() }
