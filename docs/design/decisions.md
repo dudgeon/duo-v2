@@ -90,3 +90,6 @@ Context: `docs/plan/concerns-and-questions.md`, asked one by one.
 | DL-53 | Duo's state location (Q-13) | **`~/Library/Application Support/Duo/`** (confirmed default). | `~/.claude/duo/` | Geoff, 2026-10-03. Keeps the archive out of reach of Claude's cleanup and tooling. |
 | DL-54 | Home auto-start (C-15) | **Keep:** live mode starts a Home session when Home has none. | Start on first use | Geoff, 2026-10-03. |
 | DL-55 | Running-but-quiet sessions (C-16) | **The idle glyph is fine**; running ones keep their tab and aren't counted as resumable. | A distinct design | Geoff, 2026-10-03. |
+| DL-56 | Archive disk limit (Q-19) | **No limit; show its size** (`duo2 doctor` now, Settings later). | A cap with oldest-first pruning; skip big sidecars | Geoff, 2026-10-03. |
+| DL-57 | Offer to raise `cleanupPeriodDays` (Q-19) | **No.** Archive plus keep-alive is enough; Duo never touches the global Claude setting. Sessions Duo doesn't list follow Claude's own 30 days. | Offer once, with a backup | Geoff, 2026-10-03. Supersedes C-4's retention consent in onboarding. |
+| DL-58 | Card button label (Q-9) | **Open project** everywhere (confirmed default). | Jump into project | Geoff, 2026-10-03. |

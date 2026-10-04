@@ -46,6 +46,15 @@ case "legacy":
         }
     }
 case "doctor":
+    let archive = ControlEndpoint.file.deletingLastPathComponent().appending(path: "archive")
+    if let walker = FileManager.default.enumerator(at: archive, includingPropertiesForKeys: [.fileSizeKey]) {
+        var bytes = 0, sessions = 0
+        for case let u as URL in walker {
+            bytes += (try? u.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+            if u.pathExtension == "jsonl", u.deletingLastPathComponent().lastPathComponent == "archive" { sessions += 1 }
+        }
+        print("Session archive: \(sessions) sessions, \(ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)) (\(archive.path); no limit, DL-56).")
+    }
     let legacy = LegacyDuo.detect()
     if !legacy.isEmpty { print("Legacy Duo's instructions are still installed (\(legacy.map(\.what).joined(separator: ", "))). See `duo2 legacy`.") }
     guard let (endpoint, source) = ControlEndpoint.discover() else {
