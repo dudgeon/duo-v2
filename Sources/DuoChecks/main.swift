@@ -359,6 +359,38 @@ func repoFixture() throws -> Fixture {
         check(!ex.isEmpty && ex.allSatisfy { $0.matched.contains("exact") }, "exact-only mode returns literal matches only")
         let cov = try reader.coverage()
         check(cov.first?.complete == true && cov.first?.known == stats.files, "coverage reported")
+        // Sessions (SRCH L7, FR-7.1.3-5, L17): conversation text only, by turn, attributed by cwd.
+        let claudeProjects = scratch.appending(path: "claude-projects")
+        let bucket = claudeProjects.appending(path: "-work-fx")
+        try FileManager.default.createDirectory(at: bucket, withIntermediateDirectories: true)
+        let lines = [
+            #"{"type":"user","cwd":"\#(proj.path)","message":{"role":"user","content":"Why do spring tides happen at new moon?"}}"#,
+            #"{"type":"assistant","message":{"content":[{"type":"thinking","thinking":"SECRET THOUGHT"},{"type":"text","text":"Because the Sun and Moon line up and their pulls add."}]}}"#,
+            #"{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"grep TOOLCALL"}}]}}"#,
+            #"{"type":"user","message":{"content":[{"type":"tool_result","content":"TOOLOUTPUT"}]}}"#,
+            #"{"type":"user","message":{"content":"Now draft the quarterly pricing readout outline."}}"#,
+            #"{"type":"assistant","message":{"content":[{"type":"text","text":"Outline: goals, results, decision."}]}}"#,
+            #"{"type":"ai-title","aiTitle":"Tides and pricing"}"#, "{not json",
+        ]
+        try lines.joined(separator: "\n").write(to: bucket.appending(path: "11111111-aaaa.jsonl"), atomically: true, encoding: .utf8)
+        try #"{"type":"user","cwd":"/elsewhere","message":{"content":"Unrelated chat about lunch"}}"#.write(to: bucket.appending(path: "22222222-bbbb.jsonl"), atomically: true, encoding: .utf8)
+        let ss: IndexStats = try blocking { try await index.indexSessions(projects: ["fx": proj], claudeProjects: claudeProjects, embedder: indexer) }
+        check(ss.changed == 2, "two transcripts indexed")
+        var sq = SearchQuery(text: "why spring tides at new moon"); sq.kinds = ["session"]
+        let sh = try reader.search(sq, embedder: queryEmbedder)
+        check(sh.first?.title == "Tides and pricing" && sh.first?.project == "fx" && sh.first?.locator == "turn 1", "session found by meaning, titled, attributed, at its turn")
+        var pq = SearchQuery(text: "quarterly pricing readout outline"); pq.kinds = ["session"]
+        check(try reader.search(pq, embedder: queryEmbedder).first?.locator == "turn 2", "second turn located")
+        for leak in ["SECRET THOUGHT", "TOOLCALL", "TOOLOUTPUT"] {
+            var lq = SearchQuery(text: leak); lq.exactOnly = true
+            check(try reader.search(lq, embedder: nil).isEmpty, "\(leak.lowercased()) not indexed (conversation text only)")
+        }
+        var uq = SearchQuery(text: "lunch"); uq.kinds = ["session"]
+        check(try reader.search(uq, embedder: queryEmbedder).first?.project == SearchIndex.unfiled, "a session outside every project is Unfiled")
+        try FileManager.default.removeItem(at: bucket.appending(path: "22222222-bbbb.jsonl"))
+        let swept: IndexStats = try blocking { try await index.indexSessions(projects: ["fx": proj], claudeProjects: claudeProjects, embedder: indexer) }
+        let afterSweep = try reader.search(uq, embedder: nil)
+        check(swept.removed == 1 && afterSweep.allSatisfy { $0.project != SearchIndex.unfiled }, "a deleted transcript leaves the index (L17)")
         unsetenv("DUO_SEARCH_ROOT")
         try? FileManager.default.removeItem(at: scratch)
     }

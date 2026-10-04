@@ -5,7 +5,7 @@ import Foundation
 /// the query on the CPU, print results with paths and line ranges so Claude reads only what
 /// matched (FR-7.7.5). Never writes anything, and works while Duo isn't running (S-NOAPP).
 func runSearch(_ name: String, _ argv: [String]) -> Int32 {
-    var words: [String] = [], projects: [String] = [], k = 8, exact = false, all = false, json = false
+    var words: [String] = [], projects: [String] = [], kinds: [String] = [], k = 8, exact = false, all = false, json = false
     var i = 0
     while i < argv.count {
         switch argv[i] {
@@ -14,6 +14,7 @@ func runSearch(_ name: String, _ argv: [String]) -> Int32 {
         case "--exact": exact = true
         case "--all-passages": all = true
         case "--json": json = true
+        case "--kind": i += 1; if let k = argv[safe: i] { kinds.append(k) }
         default: words.append(argv[i])
         }
         i += 1
@@ -40,19 +41,20 @@ func runSearch(_ name: String, _ argv: [String]) -> Int32 {
     }
     guard !words.isEmpty else { return report(json, error: "usage: duo2 search <query> [-k N] [--project P] [--exact] [--json]") }
     var q = SearchQuery(text: words.joined(separator: " "))
-    q.projects = projects; q.exactOnly = exact; q.limit = k; q.passagesPerItem = all ? 5 : 1
+    q.projects = projects; q.kinds = kinds; q.exactOnly = exact; q.limit = k; q.passagesPerItem = all ? 5 : 1
     q.currentProject = currentProject()
     do {
         let embedder = exact ? nil : try Embedder(use: .query)
         let hits = try index.search(q, embedder: embedder)
         if json {
             emit(["query": q.text, "coverage": coverageLine, "complete": missing.isEmpty,
-                  "results": hits.map { ["project": $0.project, "path": $0.path, "title": $0.title, "lines": [$0.startLine, $0.endLine],
+                  "results": hits.map { ["project": $0.project, "kind": $0.kind, "path": $0.path, "title": $0.title, "lines": [$0.startLine, $0.endLine],
                                          "locator": $0.locator, "matched": $0.matched, "score": (round($0.score * 1e4) / 1e4), "snippet": $0.snippet] as [String: Any] }])
         } else {
             if hits.isEmpty { print("No results.") }
             for (n, h) in hits.enumerated() {
-                print("\(n + 1). \(h.project) · \(h.title):\(h.locator)  (\(h.matched.joined(separator: ", ")))")
+                let label = h.kind == "file" ? "\(h.title):\(h.locator)" : "\(h.kind) “\(h.title)”, \(h.locator)"
+                print("\(n + 1). \(h.project) · \(label)  (\(h.matched.joined(separator: ", ")))")
                 print("   \(h.path)")
                 print("   \(h.snippet)")
             }

@@ -47,7 +47,7 @@ public final class SearchService {
             let embedder = try Embedder(use: .indexing)
             let index = try SearchIndex(readOnly: false)
             // Projects that left the workspace leave search (FR-7.1.1).
-            for c in try index.coverage() where projects[c.project] == nil { try index.removeProject(c.project) }
+            for c in try index.coverage() where projects[c.project] == nil && c.project != SearchIndex.unfiled { try index.removeProject(c.project) }
             let order = projects.sorted { latest($0.value) > latest($1.value) }
             var out: [String: IndexStats] = [:]
             for (name, root) in order {
@@ -55,6 +55,11 @@ public final class SearchService {
                     let busy = ProcessInfo.processInfo.isLowPowerModeEnabled || ProcessInfo.processInfo.thermalState.rawValue >= 2
                     try? await Task.sleep(for: .milliseconds(busy ? 500 : 15))
                 }
+            }
+            let claude = (ProcessInfo.processInfo.environment["CLAUDE_CONFIG_DIR"].map { URL(fileURLWithPath: $0) }
+                ?? FileManager.default.homeDirectoryForCurrentUser.appending(path: ".claude")).appending(path: "projects")
+            out["sessions"] = try await index.indexSessions(projects: projects, claudeProjects: claude, embedder: embedder) {
+                try? await Task.sleep(for: .milliseconds(ProcessInfo.processInfo.isLowPowerModeEnabled ? 500 : 15))
             }
             try index.vacuumContent()
             return out

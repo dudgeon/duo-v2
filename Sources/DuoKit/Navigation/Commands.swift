@@ -5,7 +5,7 @@ import SwiftUI
 /// (handoff §6.3), and none is on LR-60's avoid list (⌘\, ⌘⌥L, ⌘⌥;, ⌘⌥').
 public enum DuoCommand: String, CaseIterable, Sendable {
     case jump               // ⌘K: project, group and session picker (DL-38; not designed yet)
-    case search             // ⇧⌘F: search everything (DL-38; v1.1)
+    case search             // ⇧⌘A: search everything (DL-46, was ⇧⌘F in DL-38; v1.1)
     case allProjects        // ⌘↑, "up a level", as in Finder
     case goHome             // ⇧⌘H (handoff proposal)
     case togglePeek         // ⇧⌘P
@@ -33,7 +33,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     public var shortcut: KeyboardShortcut {
         switch self {
         case .jump: KeyboardShortcut("k", modifiers: .command)
-        case .search: KeyboardShortcut("f", modifiers: [.command, .shift])
+        case .search: KeyboardShortcut("a", modifiers: [.command, .shift])  // Chrome's tab search (DL-46)
         case .allProjects: KeyboardShortcut(.upArrow, modifiers: .command)
         case .goHome: KeyboardShortcut("h", modifiers: [.command, .shift])
         case .togglePeek: KeyboardShortcut("p", modifiers: [.command, .shift])

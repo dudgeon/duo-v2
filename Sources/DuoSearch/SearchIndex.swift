@@ -161,6 +161,7 @@ extension SearchIndex {
 public struct SearchQuery: Sendable {
     public var text: String
     public var projects: [String] = []          // empty: all (L2)
+    public var kinds: [String] = []             // file, session, memory; empty: all (FR-7.4.6)
     public var currentProject: String?          // modest boost (FR-7.4.3)
     public var exactOnly = false                // FR-7.4.2
     public var limit = 10
@@ -237,6 +238,8 @@ extension SearchIndex {
             guard try s.step() else { continue }
             let project = s.string(4) ?? ""
             if !q.projects.isEmpty && !q.projects.contains(project) { continue }
+            let kind = s.string(5) ?? "file"
+            if !q.kinds.isEmpty && !q.kinds.contains(kind) { continue }
             var score = base
             if project == q.currentProject { score *= Self.projectBoost }
             var matched: [String] = []
@@ -244,8 +247,12 @@ extension SearchIndex {
             if lexical[chunk] != nil { matched.append("words") }
             if exact.contains(chunk) { matched.append("exact") }
             let text = s.string(3) ?? ""
-            hits.append(SearchHit(project: project, kind: s.string(5) ?? "file", path: s.string(6) ?? "", title: s.string(7) ?? "",
-                                  locator: s.int(1) == s.int(2) ? "L\(s.int(1))" : "L\(s.int(1))-\(s.int(2))",
+            // Sessions and memory are stored as "session:<transcript>"; their locator is the turn.
+            let stored = s.string(6) ?? ""
+            let path = kind == "file" ? stored : String(stored.drop { $0 != ":" }.dropFirst())
+            let locator = kind == "session" ? "turn \(s.int(1))" : s.int(1) == s.int(2) ? "L\(s.int(1))" : "L\(s.int(1))-\(s.int(2))"
+            hits.append(SearchHit(project: project, kind: kind, path: path, title: s.string(7) ?? "",
+                                  locator: locator,
                                   startLine: s.int(1), endLine: s.int(2), score: score, matched: matched,
                                   snippet: Self.snippet(text, around: literal ?? q.text)))
         }

@@ -184,6 +184,16 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-38 · Search P2 back end: sessions and memory (2026-10-03)
+
+- **Sessions (L7, FR-7.2):** every top-level transcript in `~/.claude/projects/*/`. Only conversation text: user prompts (not tool results, harness-wrapped commands or system reminders) and assistant prose (not thinking or tool calls). One unit per turn ("You: … Claude: …"), split at 300 tokens, located as `turn N` (FR-7.2.3). Title: custom → AI → first prompt. Unknown record types and broken lines are skipped (FR-7.2.2); a changed transcript is re-read whole (FR-7.2.4, simple and correct; appends could be incremental later).
+- **Attribution:** the transcript's cwd (or its last `relocatedCwd`) inside a workspace project's folder → that project; otherwise **Unfiled** (FR-7.1.5). This conversation, run from `~/repos/duo-v2`, shows as Unfiled against the demo workspace, as it should.
+- **Memory:** `~/.claude/projects/<bucket>/memory/*.md`, attributed through the bucket's sessions. `CLAUDE.md` files inside projects were already covered as files.
+- **Deletion (L17):** a transcript that disappears (Claude's retention sweep, or deleted) leaves the index on the next pass; Q-19's archive will decide whether purged sessions stay findable.
+- `duo2 search --kind session|memory|file` filters by source (FR-7.4.6); session results give the transcript path and the turn.
+- Live on this Mac: 42 sessions, 10 memory notes and 20 files → 702 passages, 686 unique (embedded once). 118 checks pass, including: thinking, tool calls and tool output never reach the index; a session outside every project is Unfiled; a deleted transcript leaves.
+- **Chord change:** search is `⇧⌘A`, like Chrome's tab search (DL-46).
+
 ## F-37 · Legacy Duo detection and a reversible disable (DL-39) (2026-10-03)
 
 - Legacy Duo installs five things into `~/.claude` (its `install-service.ts`): hooks tagged `"_duo": "managed-v…"` in `settings.json`, a `<!-- duo:managed-v… -->` … `<!-- duo:end -->` block in `CLAUDE.md`, `skills/duo/`, `agents/duo.md`, and a `claude` wrapper in `duo/bin/`. None are on this Mac; the work Mac may have them.
@@ -203,7 +213,7 @@ Built ahead of v1.1 because every remaining v1 feature waits on a design (logged
 - **A real bug the checks caught:** relative paths were sliced off absolute ones, but directory listings spell `/var` and `/private/var` differently, so every file looked new on the second pass and gitignore rules matched the wrong paths. Relative paths are now built while walking, and the root is resolved first.
 - **Agent path (S-AGENT, S-NOAPP, FR-7.7.2–7.7.3):** with Duo closed, `duo2 search` answers in 0.3 s (cold, model load included; the POC's bar is 0.25 s). Under Seatbelt (`scripts/check-sandbox.sh`) and in Claude's real sandbox (Haiku, `sandbox.enabled` and nothing else) it returns the right result and writes nothing to Duo's folder or the caches.
 - **Sessions are told** about `duo2 search` (prefer it to grep across projects; read only the lines it points to; scores are relative) through the generated session guidance (FR-7.7.6).
-- **Not in M1:** sessions, memory and `CLAUDE.md` as sources (P2); the search UI (design-gated: ⇧⌘F, DL-38); duplicate-content folding (FR-7.4.5); user exclusions (FR-7.1.7); file watching (the indexer runs after workspace changes, at most once a minute).
+- **Not in M1:** sessions, memory and `CLAUDE.md` as sources (P2); the search UI (design-gated: ⇧⌘A, DL-46); duplicate-content folding (FR-7.4.5); user exclusions (FR-7.1.7); file watching (the indexer runs after workspace changes, at most once a minute).
 - 107 checks pass.
 
 ## F-35 · Spikes S13–S15: Core ML search embedding passes all three P0 gates (2026-10-03)
