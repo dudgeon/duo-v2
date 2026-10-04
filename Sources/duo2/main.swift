@@ -1,4 +1,5 @@
 import DuoControl
+import DuoSearch
 import Foundation
 
 // `duo2` (DL-37): the command line for the Duo app. Coexists with legacy `duo` (DL-16).
@@ -17,6 +18,8 @@ guard let command = ControlCommand.all.first(where: { $0.name == name || "--\($0
 }
 
 switch command.name {
+case "search", "search-status":
+    exit(runSearch(command.name, Array(args.dropFirst())))
 case "help":
     print(ControlCommand.help(), terminator: "")
 case "doctor":

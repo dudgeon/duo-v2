@@ -22,6 +22,19 @@ mkdir -p "$app/Contents/Helpers"
 cp "$(dirname "$bin")/duo2" "$app/Contents/Helpers/duo2"
 codesign --force --sign - "$app/Contents/Helpers/duo2" >/dev/null 2>&1 || true
 cp "$root/docs/design/build-handoff/fixture.json" "$app/Contents/Resources/fixture.json"
+# The search model (DL-40, F-35): committed in parts, reassembled and verified here.
+model="$root/Models/bge-small-fp16"
+if [ -d "$model" ]; then
+  dest="$app/Contents/Resources/search"
+  mkdir -p "$dest"
+  cp -R "$model/model.mlpackage" "$dest/bge-small-fp16.mlpackage"
+  w="$dest/bge-small-fp16.mlpackage/Data/com.apple.CoreML/weights"
+  cat "$w"/weight.bin.part* > "$w/weight.bin" && rm "$w"/weight.bin.part*
+  want=$(awk '$2=="weight.bin"{print $1}' "$model/SHA256SUMS")
+  have=$(shasum -a 256 "$w/weight.bin" | awk '{print $1}')
+  [ "$want" = "$have" ] || { echo "search model weights don't match SHA256SUMS" >&2; exit 1; }
+  cp "$model/vocab.txt" "$model/PROVENANCE.json" "$dest/"
+fi
 version="$(git -C "$root" describe --tags --always --dirty 2>/dev/null || echo dev)"
 cat > "$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

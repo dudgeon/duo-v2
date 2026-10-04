@@ -1,5 +1,6 @@
 import DuoControl
 import DuoKit
+import DuoSearch
 import Foundation
 
 // Plain assertions, run with `swift run DuoChecks`. Exit status is the number of failures.
@@ -296,6 +297,72 @@ func repoFixture() throws -> Fixture {
         print("lineage: roots \(Set(infos.compactMap(\.root)).count), parents \(ForkLineage.parents(infos, records: recs))")
     }
 
+    print("search: pieces")
+    check(GitIgnore_ignored("build/out.txt", rules: "build/\n*.log\n!keep.log\n/root-only.md\ndocs/**/draft*.md"), "gitignore: directory pattern")
+    check(GitIgnore_ignored("a/b/x.txt", rules: "*.txt") && !GitIgnore_ignored("keep.txt", rules: "*.txt\n!keep.txt"), "gitignore: glob and negation")
+    check(GitIgnore_ignored("docs/a/b/draft-1.md", rules: "docs/**/draft*.md") && !GitIgnore_ignored("other/draft.md", rules: "/draft.md"), "gitignore: ** and anchored")
+    check(Secrets.isDenied("/p/.env.local") && Secrets.isDenied("/p/id_ed25519") && Secrets.isDenied("/p/cert.pem") && !Secrets.isDenied("/p/notes.md"), "secret files denied")
+    let redacted = Secrets.redact("key AKIAABCDEFGHIJKLMNOP and sk-ant-api03-abcdefghijklmnopqrstuvwxyz0123 and ghp_abcdefghijklmnopqrstuvwxyz0123456789 password: hunter2hunter2")
+    check(!redacted.contains("AKIA") && !redacted.contains("sk-ant") && !redacted.contains("ghp_") && !redacted.contains("hunter2"), "secrets redacted before storing")
+    check(SearchIndex.literal(in: "\"exponential backoff\"") == "exponential backoff" && SearchIndex.literal(in: "retry_request") == "retry_request"
+          && SearchIndex.literal(in: "camelCaseName") == "camelCaseName" && SearchIndex.literal(in: "why are tides") == nil, "exact-match detection")
+    let fts = SearchIndex.ftsQuery("retry OR backoff* NEAR(x) -y", exact: false) ?? ""
+    check(fts.components(separatedBy: " OR ").allSatisfy { $0.hasPrefix("\"") && $0.hasSuffix("\"") }, "every FTS term is quoted, so query syntax can't break it")
+
+    // Golden set (SRCH § 12, the POC's), through Duo's own chunker and index, when the model is here.
+    let pkg = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .appending(path: "Spikes/S13CoreML/out/bge-small-fp16.mlpackage")
+    let vocabURL = pkg.deletingLastPathComponent().deletingLastPathComponent().appending(path: "hf/bge-small/vocab.txt")
+    let poc = FileManager.default.homeDirectoryForCurrentUser.appending(path: "repos/smol-sim-search/tests/fixtures")
+    if FileManager.default.fileExists(atPath: pkg.path), FileManager.default.fileExists(atPath: poc.path) {
+        print("search: golden set (POC fixtures)")
+        let scratch = FileManager.default.temporaryDirectory.appending(path: "duo-search-\(UUID().uuidString)")
+        setenv("DUO_SEARCH_ROOT", scratch.path, 1)
+        SearchSetup.registerExtractors()
+        let proj = scratch.appending(path: "work/fx")
+        try FileManager.default.createDirectory(at: proj.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: poc, to: proj)
+        let t0 = Date()
+        let compiled: URL = try blocking { try await Embedder.install(package: pkg, vocab: vocabURL) }
+        let indexer = try Embedder(modelAt: compiled, vocab: SearchPaths.vocab, use: .indexing)
+        let index = try SearchIndex(readOnly: false)
+        let stats: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
+        print("  indexed \(stats.files) files, \(stats.chunks) chunks in \(Int(Date().timeIntervalSince(t0) * 1000)) ms")
+        let reader = try SearchIndex(readOnly: true)
+        let queryEmbedder = try Embedder(use: .query)
+        let golden = [("why are there two high tides every day", "docs/tides.md"),
+                      ("feeding a sourdough starter with flour and water", "docs/sourdough.md"),
+                      ("horizontal pod autoscaler adds replicas", "docs/kubernetes.md"),
+                      ("retry a request with exponential backoff", "code/http_retry.py"),
+                      ("customer credit card charged twice", "data/tickets.jsonl"),
+                      ("magma erupts from a volcano", "papers/volcanoes.pdf"),
+                      ("growing tomato seedlings in sunlight", "notes/garden.txt")]
+        var top1 = 0
+        for (q, want) in golden {
+            let hits = try reader.search(SearchQuery(text: q), embedder: queryEmbedder)
+            if hits.first?.path.hasSuffix(want) == true { top1 += 1 } else { print("    \(q) → \(hits.first?.title ?? "-")") }
+        }
+        check(top1 == golden.count, "golden top-1 \(top1)/\(golden.count) through Duo's index")
+        // A small, unrelated file in the current project mustn't outrank the strong match (FR-7.4.3).
+        try "---\ngoal: \"Lift day-7 activation to 40%\"\n---\n# onboarding\n".write(to: scratch.appending(path: "work/onb/PROJECT.md").creatingParent(), atomically: true, encoding: .utf8)
+        _ = try blocking { try await index.indexProject("onb", root: scratch.appending(path: "work/onb"), embedder: indexer) }
+        var boosted = SearchQuery(text: "why are there two high tides every day"); boosted.currentProject = "onb"
+        check(try reader.search(boosted, embedder: queryEmbedder).first?.path.hasSuffix("docs/tides.md") == true,
+              "the current-project boost doesn't crowd out a strong match elsewhere")
+        let again: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
+        check(again.changed == 0 && again.embedded == 0, "re-index with nothing changed embeds nothing")
+        try FileManager.default.moveItem(at: proj.appending(path: "docs/tides.md"), to: proj.appending(path: "notes/tides-moved.md"))
+        let moved: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
+        check(moved.changed == 1 && moved.removed == 1 && moved.embedded == 0, "a moved file reuses its vectors (FR-7.3.5)")
+        var q = SearchQuery(text: "exponential backoff"); q.exactOnly = true
+        let ex = try reader.search(q, embedder: nil)
+        check(!ex.isEmpty && ex.allSatisfy { $0.matched.contains("exact") }, "exact-only mode returns literal matches only")
+        let cov = try reader.coverage()
+        check(cov.first?.complete == true && cov.first?.known == stats.files, "coverage reported")
+        unsetenv("DUO_SEARCH_ROOT")
+        try? FileManager.default.removeItem(at: scratch)
+    }
+
     print("launch options")
     let o = LaunchOptions(arguments: ["Duo", "--state", "flow-zoom-3", "--capture", "/tmp/x.png", "--left", "collapsed"])
     check(o.state == .flowZoom3 && o.capturePath == "/tmp/x.png" && o.collapseLeft && o.capturing, "flags parse")
@@ -309,3 +376,34 @@ func repoFixture() throws -> Fixture {
 do { try MainActor.assumeIsolated { try run() } } catch { print("✘ setup: \(error)"); failures += 1 }
 print("\(passes) passed, \(failures) failed")
 exit(Int32(failures))
+
+
+/// Runs async work from the synchronous checks.
+func blocking<T: Sendable>(_ work: @escaping @Sendable () async throws -> T) throws -> T {
+    let sem = DispatchSemaphore(value: 0)
+    nonisolated(unsafe) var result: Result<T, Error>!
+    Task.detached { do { result = .success(try await work()) } catch { result = .failure(error) }; sem.signal() }
+    sem.wait()
+    return try result.get()
+}
+
+/// .gitignore rules from text, applied to one path (checks only).
+func GitIgnore_ignored(_ rel: String, rules text: String) -> Bool {
+    let dir = FileManager.default.temporaryDirectory.appending(path: "gi-\(UUID().uuidString)")
+    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    try? text.write(to: dir.appending(path: ".gitignore"), atomically: true, encoding: .utf8)
+    defer { try? FileManager.default.removeItem(at: dir) }
+    // Lay the path out on disk and ask FileSource whether it would be indexed.
+    let file = dir.appending(path: rel)
+    try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try? "x".write(to: file, atomically: true, encoding: .utf8)
+    return !FileSource.files(in: dir).contains { $0.relative == rel }
+}
+
+extension URL {
+    /// Creates the parent folder and returns self (checks only).
+    func creatingParent() -> URL {
+        try? FileManager.default.createDirectory(at: deletingLastPathComponent(), withIntermediateDirectories: true)
+        return self
+    }
+}

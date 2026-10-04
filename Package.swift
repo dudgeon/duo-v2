@@ -16,11 +16,14 @@ let package = Package(
     targets: [
         // The app ↔ CLI protocol: Foundation only, so `duo2` stays small and sandbox-friendly.
         .target(name: "DuoControl"),
-        .target(name: "DuoKit", dependencies: ["DuoControl", .product(name: "SwiftTerm", package: "SwiftTerm")]),
-        .executableTarget(name: "duo2", dependencies: ["DuoControl"]),
+        // Cross-project search (SRCH, Phase M): index, Core ML embedder, hybrid ranking. Foundation,
+        // SQLite, Core ML and Accelerate only, so the read-only CLI can use it in Claude's sandbox.
+        .target(name: "DuoSearch", linkerSettings: [.linkedLibrary("sqlite3")]),
+        .target(name: "DuoKit", dependencies: ["DuoControl", "DuoSearch", .product(name: "SwiftTerm", package: "SwiftTerm")]),
+        .executableTarget(name: "duo2", dependencies: ["DuoControl", "DuoSearch"]),
         .executableTarget(name: "Duo", dependencies: ["DuoKit"]),
         // Checks run as an executable (`swift run DuoChecks`): the Command Line Tools ship neither
         // XCTest nor the Swift Testing macro plugin. Move these to a test target once Xcode is installed.
-        .executableTarget(name: "DuoChecks", dependencies: ["DuoKit", "DuoControl"]),
+        .executableTarget(name: "DuoChecks", dependencies: ["DuoKit", "DuoControl", "DuoSearch"]),
     ]
 )

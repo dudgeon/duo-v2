@@ -44,5 +44,17 @@ out=$(run "$allow" /usr/bin/touch "$HOME/duo-seatbelt-probe"); [[ -e $HOME/duo-s
 out=$(run "$allow" /usr/bin/nc -z -w 2 127.0.0.1 22); [[ $? -ne 0 ]] && echo "✔ loopback TCP stays blocked" || { echo "✘ loopback TCP reachable"; fail=1; }
 
 osascript -e 'tell application id "com.dudgeon.duo" to quit' >/dev/null 2>&1
+sleep 1
+
+# Search (SRCH FR-7.7.2-3): read-only, no app, no network, writes nothing, Claude's default sandbox.
+if [[ -f "$HOME/Library/Application Support/Duo/search/index.sqlite" ]]; then
+  marker=$work/.marker; touch $marker; sleep 1
+  out=$(run "" "$duo2" search tides and the moon -k 1 --json); code=$?
+  if [[ $code -eq 0 && $out == *'"results"'* && $out == *tides* ]]; then echo "✔ duo2 search works in the default sandbox, app closed"; else echo "✘ search in sandbox: $code $out"; fail=1; fi
+  changed=$(find "$HOME/Library/Application Support/Duo" "$HOME/Library/Caches" -newer $marker -type f 2>/dev/null | grep -v -i "claude\|google\|safari\|meta" | head -3)
+  [[ -z $changed ]] && echo "✔ search wrote nothing (Duo's folder, caches)" || { echo "✘ search wrote: $changed"; fail=1; }
+else
+  echo "- search: no index yet (run Duo with --workspace once); skipped"
+fi
 rm -rf "$work"
 exit $fail

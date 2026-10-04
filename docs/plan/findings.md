@@ -184,6 +184,22 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-36 · Phase M1: search over every project's files, by meaning and by words (2026-10-03)
+
+Built ahead of v1.1 because every remaining v1 feature waits on a design (logged in the plan). `Sources/DuoSearch` (Foundation, SQLite, Core ML, Accelerate; no AppKit), the app's background indexer, and `duo2 search` / `search-status`.
+
+- **Storage (SRCH Q4, decided here):** one SQLite file in `~/Library/Application Support/Duo/search/` (folder 0700, file 0600). FTS5 with the Porter stemmer for words; one fp32 vector per unique passage, keyed by the hash of its redacted text (FR-7.3.5: a moved file re-embedded nothing in the checks). **Rollback-journal mode, not WAL:** WAL readers must write the shared-memory file, which the sandboxed CLI can't. The model's identity is stored; a different model empties and rebuilds the index (FR-7.3.8).
+- **Model delivery (DL-40):** `Models/bge-small-fp16/` commits the converted model with its weights in two parts under 50 MB, `SHA256SUMS` and provenance; `bundle.sh` reassembles and verifies them, and the app compiles the model into Duo's folder on first launch. One fp16 model for both indexing (GPU) and queries (CPU), so index and query numerics are identical (64 MB, not 191 MB for two).
+- **Files (FR-7.1.2, FR-7.8):** text, code, CSV/TSV, JSON/JSONL and PDF (text via PDFKit, registered by the app only, so `duo2` doesn't load AppKit). `.gitignore` honoured (globs, `**`, anchored, directory-only, negation); dependency and build folders skipped; secret files denied; keys, tokens, JWTs, private-key blocks and credentials in URLs redacted before anything is stored.
+- **Chunks:** paragraphs and headings (Markdown, text), blank-line blocks (code), one record per row (JSONL, CSV); up to 300 tokens, 45-token overlap when a unit is split (the POC's numbers).
+- **Ranking (Q5, first tuning):** reciprocal-rank fusion (k = 10) of semantic and keyword candidates; literal matches of a quoted phrase or identifier-like token on top; current project × 1.08; grouped one result per file. **The first version put an unrelated `PROJECT.md` first** for a question asked from that project: OR'd stopwords ("day") made it a keyword match, rank fusion ignores how strong a match is, and a 15% boost decided it. Fixed with a stopword list, semantic candidates limited to within 0.12 cosine of the best (relative, FR-7.4.7), sharper fusion and a smaller boost; now a check.
+- **Golden set through Duo's own pipeline:** 7/7 top-1 on the POC's fixtures, PDF included. Re-indexing unchanged files embeds nothing.
+- **A real bug the checks caught:** relative paths were sliced off absolute ones, but directory listings spell `/var` and `/private/var` differently, so every file looked new on the second pass and gitignore rules matched the wrong paths. Relative paths are now built while walking, and the root is resolved first.
+- **Agent path (S-AGENT, S-NOAPP, FR-7.7.2–7.7.3):** with Duo closed, `duo2 search` answers in 0.3 s (cold, model load included; the POC's bar is 0.25 s). Under Seatbelt (`scripts/check-sandbox.sh`) and in Claude's real sandbox (Haiku, `sandbox.enabled` and nothing else) it returns the right result and writes nothing to Duo's folder or the caches.
+- **Sessions are told** about `duo2 search` (prefer it to grep across projects; read only the lines it points to; scores are relative) through the generated session guidance (FR-7.7.6).
+- **Not in M1:** sessions, memory and `CLAUDE.md` as sources (P2); the search UI (design-gated: ⇧⌘F, DL-38); duplicate-content folding (FR-7.4.5); user exclusions (FR-7.1.7); file watching (the indexer runs after workspace changes, at most once a minute).
+- 107 checks pass.
+
 ## F-35 · Spikes S13–S15: Core ML search embedding passes all three P0 gates (2026-10-03)
 
 Geoff approved fetching the model (2026-10-03). `Spikes/S13CoreML` (conversion and parity, Python) and `Spikes/S14Embed` (Swift: tokenizer, queries, sandbox, throughput).

@@ -156,6 +156,7 @@ public final class AppModel {
         }
         liveFolders = folders
         followSessionChanges(beacons)
+        SearchService.shared.update(projects: folders)
         if let home = snapshot.home, let folder = folders[home.name]?.path, folder != rememberedHome {
             // First choice, or the remembered one is gone: remember what is in use now (DL-42).
             rememberedHome = folder

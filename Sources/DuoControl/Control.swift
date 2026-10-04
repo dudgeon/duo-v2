@@ -89,6 +89,9 @@ public struct ControlCommand: Sendable {
         .init(name: "open", usage: "duo2 open <project> [session]", summary: "Open a project in Duo, optionally on one of its sessions.", needsApp: true),
         .init(name: "status", usage: "duo2 status", summary: "What Duo is showing: the view, the open project and session, and counts.", needsApp: true),
         .init(name: "session", usage: "duo2 session note|next <text>", summary: "Tell the user, in one line, what this session is doing (note) or needs next (next).", needsApp: true),
+        .init(name: "search", usage: "duo2 search <query> [-k N] [--project P] [--exact] [--all-passages] [--json]",
+              summary: "Search every project by meaning and by words. Works without the app; read-only.", needsApp: false),
+        .init(name: "search-status", usage: "duo2 search-status [--json]", summary: "How much of each project the search index covers.", needsApp: false),
         .init(name: "doctor", usage: "duo2 doctor", summary: "Explain how this terminal finds Duo, and whether it can reach it.", needsApp: false),
         .init(name: "help", usage: "duo2 help", summary: "Show this list.", needsApp: false),
     ]
@@ -99,6 +102,9 @@ public struct ControlCommand: Sendable {
         "You are running inside Duo, a Mac app that organizes the user's Claude Code sessions into projects. "
             + "The `duo2` command talks to Duo; it is already on PATH and needs no approval:\n"
             + all.filter { $0.name != "help" }.map { "- `\($0.usage)`: \($0.summary)" }.joined(separator: "\n")
+            + "\nFor questions across projects, or about meaning rather than exact text, run `duo2 search \"<question>\"` before grep or "
+            + "reading folders: it covers every project the user has and works offline. Read only the lines it points to (path:Lstart-end). "
+            + "Its scores only compare results within one search; don't treat them as percentages. Use `--exact` for identifiers and quoted strings."
             + "\nWhen you start substantial work, run `duo2 session note \"<one line>\"` so the user sees what you're doing; "
             + "when you hand back to the user, `duo2 session next \"<one line>\"`. Keep both short and plain."
     }
