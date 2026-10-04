@@ -34,9 +34,15 @@ def main():
     # Embedded in a <script> block: keep "</" from closing it.
     payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     html = TEMPLATE.read_text().replace("__TITLE__", data["title"]).replace("__DATA__", payload)
+    # What "Set up test" runs (DL-81): Duo reads this local file, never steps from a link.
+    setups = {f["id"]: f["setup"] for f in data["features"] if f.get("setup")}
+    walk_file = pathlib.Path.home() / "DuoAcceptance" / "walk-setups.json"
+    walk_file.parent.mkdir(parents=True, exist_ok=True)
+    walk_file.write_text(json.dumps({"workspace": str(pathlib.Path.home() / "DuoAcceptance" / "workspace"),
+                                     "repo": str(ROOT), "walk": sprint.name, "setups": setups}, indent=1))
     out = sprint / "walk.html"
     out.write_text(html)
-    print(f"{out}  ({len(ids)} features)")
+    print(f"{out}  ({len(ids)} features, {len(setups)} with setup, {sum(1 for f in data['features'] if f.get('claude'))} tried by Claude)")
 
 
 if __name__ == "__main__":

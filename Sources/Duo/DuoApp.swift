@@ -63,6 +63,12 @@ struct DuoApp: App {
         // sometimes finished launching with no window, and reopening didn't bring one back.
         let mainWindow = MainWindow(model: model, options: options)
         AppDelegate.reopen = { mainWindow.show() }
+        AppDelegate.openURL = { url in
+            guard url.scheme == "duo2", url.host == "walk-setup",
+                  let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "id" })?.value else { return }
+            mainWindow.show()
+            model.walkSetup(id) { r in FileHandle.standardError.write(Data("walk-setup \(id): \(r.text)\n".utf8)) }
+        }
         AppDelegate.flush = { done in
             guard let e = model.editorIfLoaded else { return done() }
             let once = Once()
@@ -106,6 +112,12 @@ struct DuoApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     nonisolated(unsafe) static var reopen: (@MainActor () -> Void)?
     nonisolated(unsafe) static var termSource: DispatchSourceSignal?
+    /// `duo2://walk-setup?id=<test>` from the acceptance walk page.
+    nonisolated(unsafe) static var openURL: (@MainActor (URL) -> Void)?
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        MainActor.assumeIsolated { for u in urls { Self.openURL?(u) } }
+    }
     /// Saves the open document before quitting (DL-77: the last second's typing isn't lost).
     nonisolated(unsafe) static var flush: (@MainActor (@escaping @MainActor () -> Void) -> Void)?
 

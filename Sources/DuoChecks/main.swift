@@ -640,7 +640,7 @@ func parityGaps() -> [String] {
                     .trimmingCharacters(in: CharacterSet(charactersIn: " :"))
                 if !known.contains(label) { gaps.append("\(file.lastPathComponent):\(n + 1) \"\(label)\"") }
             }
-            if l.contains(".onActivate {") || l.contains(".onDrag {") || l.contains(".onDrop(") {
+            if l.contains(".onActivate {") || l.contains(".onDrag {") || l.contains(".onDrag(") || l.contains(".onDrop(") {
                 if let m = l.firstMatch(of: /\/\/ action: ([a-z -]+)/), DuoAction.resolve(String(m.1).trimmingCharacters(in: .whitespaces).split(separator: " ").map(String.init)) != nil
                     || l.contains("// not an action:") { continue }
                 gaps.append("\(file.lastPathComponent):\(n + 1) click or drag without `// action: <verb>`")

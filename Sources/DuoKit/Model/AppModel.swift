@@ -63,6 +63,12 @@ public final class AppModel {
     @ObservationIgnored public var htmlViewerIfLoaded: HTMLViewer?
     /// Bumped when the picker starts, freezes or ends, so the picker bar redraws.
     public var pickerRevision = 0
+    /// Drag and drop on the map (F-51): what's being dragged, the tile under it, the tile that
+    /// just took a drop (it pulses).
+    public var dragging: String?
+    public var dropTarget: String?
+    public var landed: String?
+    public var landedNote = ""
     /// Bumped when the editor's document goes into or out of conflict or removed-on-disk.
     public var editorRevision = 0
     /// The editor if it has been created (doc-status mustn't create one).

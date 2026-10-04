@@ -6,6 +6,7 @@
     scripts/acceptance/fixtures.py --clean    move everything this script made to the Trash
     scripts/acceptance/fixtures.py --purge    simulate Claude's cleanup of the purge-test session (after Duo has run once)
     scripts/acceptance/fixtures.py --add      add fixtures introduced since the workspace was built (never overwrites)
+    scripts/acceptance/fixtures.py --recipe reset-checkout | purge   named setup steps for the walk page
 
 Builds a workspace of projects and documents in the states the walk needs, plants synthetic
 Claude sessions (marked "[fixture]") in ~/.claude/projects for its folders, and records what it
@@ -81,31 +82,7 @@ def build():
 
     co = WS / "payments" / "checkout"
     project(co, "Cut guest-checkout abandonment 15% by Q1", "on-track", "Exec review Oct 14")
-    write(co / "docs" / "prd.md", """---
-status: draft
-owner: geoff
----
-# Checkout PRD
-
-## Problem
-
-Guest checkout loses **15%** of buyers at the card step. See [the research](research.md).
-
-## Goals
-
-- [ ] Cut abandonment to 12.75%
-- [x] Interview six buyers
-- [ ] Decide on saved cards
-
-## Open questions
-
-Do we keep saved cards out of scope for v2? *Decision due Oct 10.*
-""")
-    write(co / "docs" / "research.md", "# Research\n\nSix interviews. Two said saved cards were the reason they left.\n")
-    write(co / "docs" / "windows-notes.md", "# Notes from the Windows team\n\nThis file uses CRLF line endings.\nSave it and they must stay CRLF.\n", newline="\r\n")
-    write(co / "docs" / "mixed-endings.md", None, raw=b"# Mixed endings\r\nThis line ends in CRLF.\nThis one in LF.\r\nDuo must open this read-only.\n")
-    write(co / "docs" / "legacy-export.txt", None, raw="Café résumé: exported in Latin-1, not UTF-8.\n".encode("latin-1"))
-    write(co / "templates" / "meeting-notes.md", "# Meeting notes\n\n**Date:** \n**Attendees:** \n\n## Decisions\n\n## Actions\n- [ ] \n")
+    checkout_docs(co)
     prototypes(co)
     big = pathlib.Path(HOME / "repos" / "duo" / "tasks.md")
     if big.exists():
@@ -155,6 +132,35 @@ Do we keep saved cards out of scope for v2? *Decision due Oct 10.*
 
     PLANTED.write_text(json.dumps({"transcripts": planted, "purge_session": purge, "built": datetime.datetime.now().isoformat()}, indent=2))
     print("Built %s\n  workspace: %s\n  planted %d sessions in %s" % (ROOT, WS, len(planted), CLAUDE))
+
+
+def checkout_docs(co):
+    """The checkout project's documents in their starting state (also the reset recipes)."""
+    write(co / "docs" / "prd.md", """---
+status: draft
+owner: geoff
+---
+# Checkout PRD
+
+## Problem
+
+Guest checkout loses **15%** of buyers at the card step. See [the research](research.md).
+
+## Goals
+
+- [ ] Cut abandonment to 12.75%
+- [x] Interview six buyers
+- [ ] Decide on saved cards
+
+## Open questions
+
+Do we keep saved cards out of scope for v2? *Decision due Oct 10.*
+""")
+    write(co / "docs" / "research.md", "# Research\n\nSix interviews. Two said saved cards were the reason they left.\n")
+    write(co / "docs" / "windows-notes.md", "# Notes from the Windows team\n\nThis file uses CRLF line endings.\nSave it and they must stay CRLF.\n", newline="\r\n")
+    write(co / "docs" / "mixed-endings.md", None, raw=b"# Mixed endings\r\nThis line ends in CRLF.\nThis one in LF.\r\nDuo must open this read-only.\n")
+    write(co / "docs" / "legacy-export.txt", None, raw="Café résumé: exported in Latin-1, not UTF-8.\n".encode("latin-1"))
+    write(co / "templates" / "meeting-notes.md", "# Meeting notes\n\n**Date:** \n**Attendees:** \n\n## Decisions\n\n## Actions\n- [ ] \n")
 
 
 def prototypes(co, only_missing=False):
@@ -207,6 +213,26 @@ input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; }
         write(f, text)
 
 
+RECIPES = {
+    "reset-checkout": "checkout's documents and HTML prototype back to their starting text",
+    "purge": "simulate Claude's cleanup of the purge-test session",
+}
+
+
+def recipe(name):
+    """Named setup steps for the walk's Set up test (DL-81). Only these names run."""
+    co = WS / "payments" / "checkout"
+    if name == "reset-checkout":
+        for extra in ["docs/interview-research.md", "cli-test.md"]:
+            trash(co / extra)
+        checkout_docs(co)
+        prototypes(co)
+    elif name == "purge":
+        purge()
+    else:
+        sys.exit("unknown recipe %r; known: %s" % (name, ", ".join(RECIPES)))
+
+
 def add():
     if not WS.exists():
         sys.exit("no fixtures yet: run without --add first")
@@ -248,6 +274,8 @@ if __name__ == "__main__":
         purge()
     elif arg == "--add":
         add()
+    elif arg == "--recipe":
+        recipe(sys.argv[2] if len(sys.argv) > 2 else "")
     else:
         if ROOT.exists():
             if arg != "--reset":

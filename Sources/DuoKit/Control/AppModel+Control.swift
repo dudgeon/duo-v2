@@ -116,10 +116,10 @@ extension AppModel {
             guard let s = inv[0], let target = inv.flags["into"] ?? inv[1], let src = project(named: s), let dst = project(named: target) else {
                 return done(.fail("usage: \(id.action.usage)"))
             }
-            let before = fixture.sessions(inProject: dst.name).count
-            mergeProject(src.name, into: dst.name)
-            let moved = fixture.sessions(inProject: dst.name).count - before
-            done(moved > 0 ? .ok("Merged \(moved) session(s) from \(src.name) into \(dst.name). Undo: duo2 undo") : .fail("not merged (the user cancelled, or nothing to move)"))
+            let count = fixture.sessions(inProject: src.name).filter { $0.sessionId != nil }.count
+            mergeProject(src.name, into: dst.name) { ok in
+                done(ok ? .ok("Merged \(count) session(s) from \(src.name) into \(dst.name). Undo: duo2 undo") : .fail("not merged (the user cancelled, or nothing to move)"))
+            }
 
         // MARK: Sessions
         case .sessions:
@@ -159,9 +159,9 @@ extension AppModel {
             guard let k = inv[0], let s = findSession(k, in: nil), let sid = s.sessionId, let to = inv.flags["to"] ?? inv[1], let dst = project(named: to) else {
                 return done(.fail("usage: \(id.action.usage)"))
             }
-            moveSessions([sid], to: dst.name)
-            let moved = fixture.sessions.first { $0.sessionId == sid }?.project == dst.name
-            done(moved ? .ok("Filed \(s.name) in \(dst.name); it moves there on its next resume. Undo: duo2 undo") : .fail("not moved (the user cancelled)"))
+            moveSessions([sid], to: dst.name) { ok in
+                done(ok ? .ok("Filed \(s.name) in \(dst.name); it moves there on its next resume. Undo: duo2 undo") : .fail("not moved (the user cancelled)"))
+            }
         case .sessionNote, .sessionNext:
             guard let sid = req.session else { return done(.fail("not run from a Claude session (no session id)")) }
             let text = inv.text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -318,6 +318,9 @@ extension AppModel {
                 }
             }
 
+        case .walkSetup:
+            guard let t = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
+            walkSetup(t, done: done)
         case .help, .doctor, .legacy, .install, .uninstall, .hook, .search, .searchStatus:
             done(.fail("`duo2 \(id.rawValue)` runs in the CLI, not the app"))
         }

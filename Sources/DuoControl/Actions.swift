@@ -28,7 +28,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
 /// Every action, by its CLI verb.
 public enum ActionID: String, CaseIterable, Sendable {
     // Duo
-    case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook
+    case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup"
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
     case viewSidebar = "view sidebar", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
@@ -99,6 +99,8 @@ extension DuoAction {
         .init(.install, .setup, "", "Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74).",
               ui: ["Install"], local: true),
         .init(.uninstall, .setup, "", "Remove exactly what `duo2 install` added (anything you edited stays).", local: true),
+        .init(.walkSetup, .setup, "<test id>", "Put Duo in the state an acceptance-walk test starts from (the walk page's Set up test button, or `duo2://walk-setup?id=…`). Steps come from ~/DuoAcceptance/walk-setups.json, never from the caller.",
+              ui: ["Set up test"]),
         .init(.hook, .setup, "pre-edit", "Used by Duo's sessions (a PreToolUse hook): Claude's Edit, MultiEdit and Write on a document open in Duo go through the editor instead of the file (DL-78).", local: true),
         .init(.legacy, .setup, "[disable --yes | restore <backup>]", "Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them.", local: true),
 

@@ -184,6 +184,30 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-51 · Drag and drop on the map: the confirmation was lost (2026-10-04)
+
+- **Geoff's report:**
+  - Dragging on All projects showed a translucent ghost, so tiles overlapping each other were illegible.
+  - There was no motion.
+  - Release did nothing visible: "half built or simply broken?"
+- **Cause, found with computer control and a new diagnostic log** (`App Support/Duo/logs/duo.log`, `DuoLog`):
+  - The drop reached Duo and the merge was called.
+  - Its confirmation was an app-modal `NSAlert` started inside the drop. It came up as a loose window, and the drag image froze over it.
+  - Nothing looked changed until it was answered.
+  - Drag and drop had never been exercised with real input before (F-45 used an auto-confirm switch).
+- **Fixed:**
+  - **Confirmation:** a sheet on the Duo window, shown 0.25 s after the drop, once the drag has finished. Move and merge now report their result by callback, so `duo2 session move` and `project merge` answer from the user's actual choice.
+  - **What follows the pointer** is an opaque white card with the popover shadow (`onDrag(_:preview:)`).
+  - **The source sinks** (35%, 96%) while dragged. SwiftUI has no drag-ended callback, so the mouse button is polled to restore it.
+  - **The tile under the card rises** (103%, 2 pt outline, shadow), with spring animations.
+  - **The target says what arrived:** it pulses and shows "2 sessions moved in" for 2.5 s. Tiles list only running sessions, so a merge of idle ones was otherwise invisible.
+- **Verified with real mouse input:**
+  - scratch dragged onto refunds brought up the sheet over the window;
+  - Merge moved both sessions, the empty scratch folder left the map and refunds pulsed;
+  - Edit › Undo put them back.
+- **Not verified:** the drag preview itself mid-drag, because full-screen capture wasn't approved in time.
+- **Noted:** the Edit menu shows "Undo" without the action's name ("Undo Merge Projects").
+
 ## F-50 · Collisions: merge by line, never write blind, keep every version (DL-77) (2026-10-04)
 
 - **Legacy, reviewed** (summary in `docs/design/collisions.md`):

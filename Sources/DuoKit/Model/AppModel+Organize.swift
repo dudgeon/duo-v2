@@ -14,34 +14,41 @@ extension AppModel {
     }
 
     /// Moves sessions into a project, after confirming exactly what moves.
-    public func moveSessions(_ ids: [String], to target: String) {
-        let moving = fixture.sessions.filter { s in s.sessionId.map(ids.contains) ?? false && s.project != target }
-        guard !moving.isEmpty, let targetFolder = liveFolders[target] else { return }
+    public func moveSessions(_ ids: [String], to target: String, done: (@MainActor (Bool) -> Void)? = nil) {
+        let moving = fixture.sessions.filter { s in (s.sessionId.map(ids.contains) ?? false) && s.project != target }
+        guard !moving.isEmpty, let targetFolder = liveFolders[target] else { done?(false); return }
         let names = moving.map { "“\($0.name)” (from \($0.project))" }
         let shown = names.prefix(8).joined(separator: "\n") + (names.count > 8 ? "\nand \(names.count - 8) more" : "")
-        guard confirm(title: moving.count == 1 ? "Move this session to “\(target)”?" : "Move \(moving.count) sessions to “\(target)”?",
-                      detail: "\(shown)\n\nFiles stay where they are. Each session moves to \(target)'s folder the next time you resume it. You can undo this.",
-                      button: "Move") else { return }
-        apply(moving, to: target, folder: targetFolder, action: moving.count == 1 ? "Move Session" : "Move Sessions")
+        confirm(title: moving.count == 1 ? "Move this session to “\(target)”?" : "Move \(moving.count) sessions to “\(target)”?",
+                detail: "\(shown)\n\nFiles stay where they are. Each session moves to \(target)'s folder the next time you resume it. You can undo this.",
+                button: "Move") { [weak self] ok in
+            guard let self, ok else { done?(false); return }
+            self.apply(moving, to: target, folder: targetFolder, action: moving.count == 1 ? "Move Session" : "Move Sessions")
+            done?(true)
+        }
     }
 
     /// Merges a project's (or folder's) sessions into another (DL-65: sessions only).
-    public func mergeProject(_ source: String, into target: String) {
+    public func mergeProject(_ source: String, into target: String, done: (@MainActor (Bool) -> Void)? = nil) {
         let moving = fixture.sessions(inProject: source).filter { $0.sessionId != nil }
-        guard let targetFolder = liveFolders[target] else { return }
+        DuoLog.write("mergeProject \(source) → \(target): \(moving.count) session(s), target folder \(liveFolders[target]?.path ?? "none")")
+        guard let targetFolder = liveFolders[target] else { done?(false); return }
         guard !moving.isEmpty else {
             info("“\(source)” has no sessions to merge.")
-            return
+            done?(false); return
         }
         let isFolder = fixture.projects.first { $0.name == source }?.isFolderOnly == true
         let names = moving.map { "“\($0.name)”" }
         let shown = names.prefix(8).joined(separator: "\n") + (names.count > 8 ? "\nand \(names.count - 8) more" : "")
-        guard confirm(title: "Merge “\(source)” into “\(target)”?",
-                      detail: "\(moving.count) session\(moving.count == 1 ? "" : "s") will move to \(target):\n\(shown)\n\n"
-                        + "\(source)'s folder and files stay where they are\(isFolder ? "" : ", and it stays a project with no sessions")"
-                        + ". Each session moves to \(target)'s folder the next time you resume it. You can undo this.",
-                      button: "Merge") else { return }
-        apply(moving, to: target, folder: targetFolder, action: "Merge Projects")
+        confirm(title: "Merge “\(source)” into “\(target)”?",
+                detail: "\(moving.count) session\(moving.count == 1 ? "" : "s") will move to \(target):\n\(shown)\n\n"
+                  + "\(source)'s folder and files stay where they are\(isFolder ? "" : ", and it stays a project with no sessions")"
+                  + ". Each session moves to \(target)'s folder the next time you resume it. You can undo this.",
+                button: "Merge") { [weak self] ok in
+            guard let self, ok else { done?(false); return }
+            self.apply(moving, to: target, folder: targetFolder, action: "Merge Projects")
+            done?(true)
+        }
     }
 
     /// Files the sessions in the target's index (sticky: provenance moved-by-user), removes them
@@ -100,33 +107,71 @@ extension AppModel {
 
     // MARK: Drag and drop
 
+    /// A drag began (the source dims; F-51). There's no drag-ended callback in SwiftUI, so this
+    /// watches the mouse button and clears when it's released, wherever the drop went.
+    func beginDrag(_ item: String) {
+        dragging = item
+        watchDragEnd(item)
+    }
+
+    private func watchDragEnd(_ item: String) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.dragging == item else { return }
+                if NSEvent.pressedMouseButtons == 0 { self.dragging = nil; self.dropTarget = nil } else { self.watchDragEnd(item) }
+            }
+        }
+    }
+
     /// What a dragged item carries: "duo-session:<id>" or "duo-project:<name>".
     public static func dragPayload(session id: String) -> String { "duo-session:\(id)" }
     public static func dragPayload(project name: String) -> String { "duo-project:\(name)" }
 
     /// A drop on a project tile (DL-66): sessions move; a project merges.
     public func handleDrop(_ payload: String, onto target: String) {
+        DuoLog.write("handleDrop \(payload) onto \(target)")
+        dragging = nil
+        let count = payload.hasPrefix("duo-project:")
+            ? fixture.sessions(inProject: String(payload.dropFirst("duo-project:".count))).filter { $0.sessionId != nil }.count : 1
+        let landed: @MainActor (Bool) -> Void = { [weak self] ok in
+            DuoLog.write("drop onto \(target): \(ok ? "done" : "cancelled")")
+            guard let self, ok else { return }
+            // The target pulses and says what arrived, for a few seconds (F-51): idle sessions
+            // don't show on tiles, so without this the move looked like nothing happened.
+            self.landed = target
+            self.landedNote = count == 1 ? "1 session moved in" : "\(count) sessions moved in"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { MainActor.assumeIsolated { if self.landed == target { self.landed = nil } } }
+        }
         if payload.hasPrefix("duo-session:") {
-            moveSessions([String(payload.dropFirst("duo-session:".count))], to: target)
+            moveSessions([String(payload.dropFirst("duo-session:".count))], to: target, done: landed)
         } else if payload.hasPrefix("duo-project:") {
             let source = String(payload.dropFirst("duo-project:".count))
-            if source != target { mergeProject(source, into: target) }
+            if source != target { mergeProject(source, into: target, done: landed) }
         }
     }
 
     // MARK: Helpers
 
-    func confirm(title: String, detail: String, button: String) -> Bool {
+    /// Asks before a move or merge, as a sheet on the window. Shown just after any drag has
+    /// finished: an alert started inside a drop came up as a loose window with the drag image
+    /// frozen over it, so a drop looked like it did nothing (F-51).
+    func confirm(title: String, detail: String, button: String, then: @escaping @MainActor (Bool) -> Void) {
         if ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {   // scripted checks only
             FileHandle.standardError.write(Data("confirm: \(title) | \(detail.replacingOccurrences(of: "\n", with: " / "))\n".utf8))
-            return true
+            return then(true)
         }
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = detail
         alert.addButton(withTitle: button)
         alert.addButton(withTitle: "Cancel")
-        return alert.runModal() == .alertFirstButtonReturn
+        guard let window = NSApp.windows.first(where: { $0.title == "Duo" }) else { return then(alert.runModal() == .alertFirstButtonReturn) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            MainActor.assumeIsolated {
+                NSApp.activate(ignoringOtherApps: true)
+                alert.beginSheetModal(for: window) { r in MainActor.assumeIsolated { then(r == .alertFirstButtonReturn) } }
+            }
+        }
     }
 
     func info(_ text: String) {

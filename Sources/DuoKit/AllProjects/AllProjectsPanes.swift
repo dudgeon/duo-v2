@@ -406,6 +406,7 @@ struct SessionOrganizeMenu: ViewModifier {
 
     func body(content: Content) -> some View {
         if model.terminalsMode == .live, let s = model.fixture.sessions.first(where: { $0.tabKey == sessionKey }), let id = s.sessionId {
+            let payload = AppModel.dragPayload(session: id)
             content
                 .contextMenu {
                     SendMenu { _ in model.sessionPayload(sessionKey) }
@@ -416,7 +417,11 @@ struct SessionOrganizeMenu: ViewModifier {
                         }
                     }
                 }
-                .onDrag { NSItemProvider(object: AppModel.dragPayload(session: id) as NSString) }  // action: session move
+                .modifier(Lifted(active: model.dragging == payload))
+                .onDrag({  // action: session move
+                    model.beginDrag(payload)
+                    return NSItemProvider(object: payload as NSString)
+                }, preview: { DragCard(title: s.name, detail: s.project) })
         } else {
             content
         }
@@ -431,6 +436,7 @@ struct ProjectOrganizeMenu: ViewModifier {
 
     func body(content: Content) -> some View {
         if model.terminalsMode == .live, project.isHome != true {
+            let payload = AppModel.dragPayload(project: project.name)
             content
                 .contextMenu {
                     SendMenu { _ in model.projectPayload(project.name) }
@@ -444,27 +450,119 @@ struct ProjectOrganizeMenu: ViewModifier {
                         }
                     }
                 }
-                .onDrag { NSItemProvider(object: AppModel.dragPayload(project: project.name) as NSString) }  // action: project merge
-                .onDrop(of: [.plainText, .utf8PlainText], isTargeted: nil) { providers in  // action: project merge
-                    guard let item = providers.first else { return false }
-                    _ = item.loadObject(ofClass: NSString.self) { obj, _ in
-                        guard let payload = obj as? String else { return }
-                        DispatchQueue.main.async { MainActor.assumeIsolated { model.handleDrop(payload, onto: project.name) } }
-                    }
-                    return true
-                }
+                .modifier(Lifted(active: model.dragging == payload))
+                .modifier(DropTarget(name: project.name))
+                .onDrag({  // action: project merge
+                    model.beginDrag(payload)
+                    return NSItemProvider(object: payload as NSString)
+                }, preview: { DragCard(title: project.name, detail: project.isFolderOnly ? project.path : project.goal) })
+                .modifier(TakesDrops(name: project.name))
         } else if model.terminalsMode == .live {
             // Home takes drops (sessions move into Home) but isn't merged away.
-            content.contextMenu { SendMenu { _ in model.projectPayload(project.name) } }.onDrop(of: [.plainText, .utf8PlainText], isTargeted: nil) { providers in  // action: session move
-                guard let item = providers.first else { return false }
-                _ = item.loadObject(ofClass: NSString.self) { obj, _ in
-                    guard let payload = obj as? String else { return }
-                    DispatchQueue.main.async { MainActor.assumeIsolated { model.handleDrop(payload, onto: project.name) } }
-                }
-                return true
-            }
+            content.contextMenu { SendMenu { _ in model.projectPayload(project.name) } }
+                .modifier(DropTarget(name: project.name))
+                .modifier(TakesDrops(name: project.name))
         } else {
             content
+        }
+    }
+}
+
+// MARK: Drag and drop feel (Geoff, 2026-10-04: an opaque card with a shadow, motion when picked
+// up and when it moves in, and a clear result; F-51)
+
+/// What follows the pointer: the item as a white card with the popover shadow, so it reads
+/// clearly over other tiles.
+struct DragCard: View {
+    let title: String
+    let detail: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title).duoText(.bodyEmphasis).foregroundStyle(DuoColor.text).lineLimit(1)
+            if !detail.isEmpty { Text(detail).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(2) }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(width: 190, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
+        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+        // The popover shadow token (0 12 32, the text colour at 22%).
+        .shadow(color: DuoColor.text.opacity(0.22), radius: 16, x: 0, y: 12)
+        .padding(24)  // room for the shadow inside the drag image
+    }
+}
+
+/// The item left behind while it's being dragged: it sinks back, so the pick-up registers.
+struct Lifted: ViewModifier {
+    let active: Bool
+    func body(content: Content) -> some View {
+        content
+            .opacity(active ? 0.35 : 1)
+            .scaleEffect(active ? 0.96 : 1)
+            .animation(.spring(response: 0.28, dampingFraction: 0.72), value: active)
+    }
+}
+
+/// A tile under a dragged item rises to meet it; a tile that just took a drop pulses.
+struct DropTarget: ViewModifier {
+    @Environment(AppModel.self) private var model
+    let name: String
+
+    func body(content: Content) -> some View {
+        let hot = model.dropTarget == name && model.dragging != AppModel.dragPayload(project: name)
+        let landed = model.landed == name
+        content
+            .overlay {
+                RoundedRectangle(cornerRadius: DuoMetric.radiusCard + 1)
+                    .strokeBorder(DuoColor.text, lineWidth: 2)
+                    .padding(-1)
+                    .opacity(hot ? 1 : 0)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: DuoMetric.radiusCard)
+                    .fill(DuoColor.selected)
+                    .opacity(landed ? 0.5 : 0)
+                    .allowsHitTesting(false)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if landed {
+                    Text(model.landedNote)
+                        .duoText(.bodyEmphasis)
+                        .foregroundStyle(DuoColor.text)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(Capsule().fill(DuoColor.pane))
+                        .overlay(Capsule().strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+                        .padding(8)
+                        .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                }
+            }
+            .scaleEffect(hot ? 1.03 : 1)
+            .shadow(color: DuoColor.text.opacity(hot ? 0.18 : 0), radius: 12, x: 0, y: 6)
+            .animation(.spring(response: 0.28, dampingFraction: 0.68), value: hot)
+            .animation(.easeOut(duration: 0.4), value: landed)
+    }
+}
+
+/// Takes a dropped session or project (the confirmation follows; DL-66).
+struct TakesDrops: ViewModifier {
+    @Environment(AppModel.self) private var model
+    let name: String
+
+    func body(content: Content) -> some View {
+        content.onDrop(of: [.plainText, .utf8PlainText], isTargeted: Binding(  // action: project merge
+            get: { model.dropTarget == name },
+            set: { on in
+                if on { model.dropTarget = name } else if model.dropTarget == name { model.dropTarget = nil }
+            })) { providers in
+            DuoLog.write("drop on \(name): \(providers.count) item(s)")
+            guard let item = providers.first else { return false }
+            _ = item.loadObject(ofClass: NSString.self) { obj, err in
+                if let err { DuoLog.write("drop on \(name): couldn't read it: \(err)") }
+                guard let payload = obj as? String else { return }
+                DispatchQueue.main.async { MainActor.assumeIsolated { model.handleDrop(payload, onto: name) } }
+            }
+            return true
         }
     }
 }

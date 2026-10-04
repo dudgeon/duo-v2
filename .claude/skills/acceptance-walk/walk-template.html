@@ -71,6 +71,19 @@ ol.steps { margin: 2px 0 6px; padding-left: 20px; }
 textarea { width: 100%; min-height: 54px; margin-top: 8px; resize: vertical; font: inherit; color: inherit;
   background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; }
 .hidden { display: none; }
+/* Set up test, Claude's attempt, cleared items */
+.setupbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 2px 0 8px; }
+a.setupbtn { display: inline-block; text-decoration: none; color: #fff; background: var(--accent); border-radius: 7px; padding: 4px 11px; font-weight: 600; font-size: 13px; }
+a.setupbtn:hover { filter: brightness(1.08); }
+.setupbar .alt { font-size: 12px; color: var(--muted); }
+.claude { border: 1px dashed var(--line); border-radius: 8px; padding: 7px 10px; margin: 6px 0 10px; background: var(--bg); }
+.claude .head { display: flex; gap: 8px; align-items: center; font-size: 12.5px; font-weight: 600; }
+.claude ul { margin: 2px 0 4px; padding-left: 18px; }
+.claude .lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); margin-top: 4px; }
+.pill.passed { background: var(--ok-bg); color: var(--ok); }
+.pill.failed { background: var(--bad-bg); color: var(--bad); }
+.pill.partial { background: var(--later-bg); color: var(--later); }
+.cleared-note { font-size: 12.5px; color: var(--muted); margin: 6px 0; }
 /* Decisions */
 #decisions h2 .count { font-weight: 400; text-transform: none; letter-spacing: 0; }
 .decision { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 12px 14px; margin: 0 0 12px; }
@@ -144,6 +157,8 @@ dialog textarea { min-height: 320px; font: 12.5px "SF Mono", ui-monospace, Menlo
       <button data-f="accepted" aria-pressed="false">Accepted</button>
       <button data-f="rejected" aria-pressed="false">Rejected</button>
       <button data-f="deferred" aria-pressed="false">Not now</button>
+      <button id="clear" title="Hide accepted tests and answered decisions (they stay recorded)">Clear done</button>
+      <button id="showcleared" aria-pressed="false">Show cleared</button>
     </div>
   </div>
 </header>
@@ -167,7 +182,7 @@ const KEY = "acceptance:" + DATA.sprint;
 const LABEL = { accepted: "Accepted", rejected: "Rejected", deferred: "Not now", "": "To do" };
 let verdicts = {};   // id -> {status, comment, at}
 let answers = {};    // decision id -> {choice, other, comment, at}
-let db = null, filter = "all";
+let db = null, filter = "all", showCleared = false;
 
 function local(read, value) {
   try { if (read) return JSON.parse(localStorage.getItem(KEY) || "{}"); localStorage.setItem(KEY, JSON.stringify(value)); }
@@ -208,6 +223,25 @@ function build() {
     const pill = el("span", "pill"); top.append(pill);
     c.append(top);
     if (f.what) c.append(rich(el("p", "what"), f.what));
+    if (f.setup && f.setup.length) {
+      const bar = el("div", "setupbar");
+      const a = el("a", "setupbtn", "Set up test"); a.href = "duo2://walk-setup?id=" + encodeURIComponent(f.id);
+      a.title = "Duo arranges the fixtures for this test: " + f.setup.join(" · ");
+      bar.append(a);
+      const alt = el("span", "alt"); alt.append("or in a terminal: "); alt.append(el("code", null, "duo2 walk setup " + f.id)); bar.append(alt);
+      c.append(bar);
+    }
+    if (f.claude) {
+      const b = el("div", "claude");
+      const head = el("div", "head"); head.append("Claude tried this"); head.append(el("span", "pill " + (f.claude.result || ""), f.claude.result || "not run"));
+      if (f.claude.at) head.append(el("span", "ref", f.claude.at));
+      b.append(head);
+      const list = (lbl, items) => { if (!items || !items.length) return; b.append(el("div", "lbl", lbl)); const ul = el("ul"); items.forEach(x => ul.append(rich(el("li"), x))); b.append(ul); };
+      list("Did and saw", f.claude.did);
+      list("Didn't or couldn't", f.claude.didnt);
+      list("Needs your judgment", f.claude.human);
+      c.append(b);
+    }
     c.append(el("div", "label", "Try"));
     const ol = el("ol", "steps"); f.steps.forEach(s => ol.append(rich(el("li"), s))); c.append(ol);
     c.append(el("div", "label", "Expect"));
@@ -236,7 +270,7 @@ function render() {
     k.pill.className = "pill " + s; k.pill.textContent = LABEL[s];
     for (const [st, b] of Object.entries(k.btns)) b.setAttribute("aria-pressed", String(s === st));
     if (document.activeElement !== k.ta && k.ta.value !== (v.comment || "")) k.ta.value = v.comment || "";
-    const show = filter === "all" || (filter === "todo" ? !s : s === filter);
+    const show = (filter === "all" || (filter === "todo" ? !s : s === filter)) && (showCleared || !v.cleared);
     k.c.classList.toggle("hidden", !show);
   });
   document.querySelectorAll("#list h2").forEach(h => {
@@ -309,6 +343,21 @@ function feedback() {
   return out.join("\n");
 }
 
+// Clear done: accepted tests and answered decisions are hidden (marked cleared, still recorded).
+$("#clear").onclick = async () => {
+  const fs = DATA.features.filter(f => verdicts[f.id]?.status === "accepted" && !verdicts[f.id]?.cleared);
+  const ds = (DATA.decisions || []).filter(d => answers[d.id]?.choice && !answers[d.id]?.cleared);
+  if (!fs.length && !ds.length) return;
+  for (const f of fs) await write(f.id, { cleared: true });
+  for (const d of ds) await writeAnswer(d.id, { cleared: true });
+  render(); renderDecisions();
+};
+$("#showcleared").onclick = () => {
+  showCleared = !showCleared;
+  $("#showcleared").setAttribute("aria-pressed", String(showCleared));
+  render(); renderDecisions();
+};
+
 $("#copy").onclick = async () => {
   const text = feedback();
   $("#out").value = text;
@@ -380,6 +429,7 @@ function renderDecisions() {
     const a = answers[d.id] || {}, k = dcards[d.id];
     if (a.choice) n++;
     k.c.classList.toggle("answered", !!a.choice);
+    k.c.classList.toggle("hidden", !!a.cleared && !showCleared);
     const opt = (d.options || []).find(o => o.id === a.choice);
     k.state.className = "pill" + (a.choice ? " accepted" : "");
     k.state.textContent = a.choice ? (opt ? opt.label : "Something else") : "Open";
