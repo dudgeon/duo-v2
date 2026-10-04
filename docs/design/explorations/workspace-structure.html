@@ -1,0 +1,507 @@
+<title>Home, Projects and Tasks</title>
+<style>
+/* Layout: one reading column. The big question gets full-width option cards (disk beside Duo); the smaller ones get a wrapping grid. */
+:root {
+  --ground: #F3F4F6; --pane: #FFFFFF; --sel: #E9ECEF; --rule: #C9CDD3; --edge: #8B939C;
+  --text: #1F2328; --text2: #5B636D; --accent: #C2410C; --active: #E8F0FA;
+  --pick: #2F6FDE; --task: #0F766E; --good: #1F7A3A; --bad: #B42318;
+  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #1B1E23; --pane: #23272E; --sel: #2F343C; --rule: #3A4048; --edge: #6B737D;
+  --text: #E6E8EB; --text2: #9AA1AB; --accent: #F0763E; --active: #24344A;
+  --pick: #6EA0F5; --task: #3CB4A6; --good: #5CC47A; --bad: #F07A6E; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #1B1E23; --pane: #23272E; --sel: #2F343C; --rule: #3A4048; --edge: #6B737D;
+  --text: #E6E8EB; --text2: #9AA1AB; --accent: #F0763E; --active: #24344A;
+  --pick: #6EA0F5; --task: #3CB4A6; --good: #5CC47A; --bad: #F07A6E; color-scheme: dark }
+
+body { background: var(--ground); color: var(--text); font: 14px/1.55 var(--ui); }
+.wrap { max-width: 1060px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 64px; display: grid; gap: 40px; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+h3 { font-size: 14px; margin: 0; }
+p { margin: 0; max-width: 70ch; }
+ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; max-width: 74ch; }
+.lede { color: var(--text2); font-size: 15px; }
+.label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); }
+code { font: 12.5px var(--mono); background: var(--sel); padding: 1px 5px; border-radius: 4px; }
+section { display: grid; gap: 14px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+.two > * { min-width: 0; }
+
+/* Folder trees */
+.panel { background: var(--pane); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px 12px; display: grid; gap: 6px; min-width: 0; }
+.opt .panel { background: var(--ground); }
+.panel > .label { font-size: 10px; }
+pre.tree { margin: 0; font: 12px/1.6 var(--mono); overflow-x: auto; color: var(--text2); }
+.tree b { font-weight: 600; }
+.k-home { color: var(--text); font-weight: 600; }
+.k-topic { color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.k-proj { color: var(--text); font-weight: 600; }
+.k-task { color: var(--task); font-weight: 600; }
+.k-sess { color: var(--pick); }
+.k-note { color: var(--edge); font-style: italic; }
+.key { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--text2); }
+.key span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 1px; background: currentColor; }
+.key .k-home, .key .k-proj { color: var(--text); }
+
+/* Duo-like mini mockups */
+.mock { font-size: 12.5px; min-width: 0; }
+.mock .h { padding: 0 2px 4px; }
+.mock .h b { display: block; }
+.mock .h span { color: var(--text2); font-size: 11.5px; }
+.sec { padding: 8px 2px 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); }
+.sec.need { color: var(--accent); }
+.row { display: flex; align-items: center; gap: 7px; padding: 2px 4px; min-height: 22px; border-radius: 4px; }
+.row .n { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .t { color: var(--text2); font-variant-numeric: tabular-nums; font-size: 11.5px; }
+.row.in { padding-left: 22px; }
+.row.in2 { padding-left: 38px; }
+.row.open { background: var(--active); }
+.tag { font-size: 10px; border: 1px solid var(--edge); border-radius: 8px; padding: 0 6px; color: var(--text2); white-space: nowrap; }
+.tag.task { border-color: var(--task); color: var(--task); }
+.fold { color: var(--text2); padding: 3px 4px; }
+.g { width: 8px; height: 8px; flex: none; display: inline-block; }
+.g.need { border-radius: 50%; background: var(--accent); }
+.g.work { border-radius: 50%; border: 1.5px solid var(--text); box-sizing: border-box; }
+.g.idle { height: 1.5px; background: var(--text2); }
+.g.todo { border: 1.5px solid var(--task); border-radius: 2px; box-sizing: border-box; }
+.crumb { color: var(--text2); font-size: 12px; padding: 0 2px 4px; }
+.crumb b { color: var(--text); }
+.map { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.map .label { font-size: 9.5px; margin-bottom: 4px; min-height: 14px; }
+.tile { border: 1px solid var(--rule); border-radius: 6px; padding: 5px 8px; font-size: 12px; background: var(--pane); margin-bottom: 6px; }
+.tile b { display: block; }
+.tile .s { color: var(--text2); font-size: 11px; }
+
+/* Facts */
+.facts { display: grid; gap: 10px; }
+.fact { display: grid; grid-template-columns: 170px 1fr; gap: 14px; align-items: baseline; }
+.fact dt { font-weight: 600; }
+.fact dd { margin: 0; max-width: 72ch; }
+@media (max-width: 560px) { .fact { grid-template-columns: 1fr; gap: 2px; } }
+.callout { background: var(--pane); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; }
+
+/* Questions and options */
+.q { display: grid; gap: 14px; padding-top: 10px; border-top: 1px solid var(--rule); }
+.qhead { display: grid; gap: 6px; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+.opts.wide { grid-template-columns: 1fr; }
+.opt { background: var(--pane); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; align-content: start; cursor: pointer; min-width: 0; }
+.opt:hover { border-color: var(--edge); }
+.opt:focus-visible { outline: 2px solid var(--pick); outline-offset: 2px; }
+.opt[aria-pressed="true"] { border-color: var(--pick); box-shadow: 0 0 0 1px var(--pick); }
+.opt .top { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.opt .letter { font: 600 12px var(--mono); color: var(--text2); }
+.opt .name { font-weight: 600; font-size: 15px; }
+.opt .sum { color: var(--text2); }
+.rec { font-size: 11px; font-weight: 600; color: var(--pick); border: 1px solid var(--pick); border-radius: 9px; padding: 0 7px; }
+.panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 10px; }
+.tradeoffs { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 18px; font-size: 13px; }
+.tradeoffs h3 { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+.tradeoffs .p h3 { color: var(--good); }
+.tradeoffs .c h3 { color: var(--bad); }
+.tradeoffs ul { gap: 3px; }
+.meta { font-size: 12.5px; color: var(--text2); display: grid; gap: 3px; }
+.meta b { color: var(--text); font-weight: 600; }
+
+/* Comparison */
+.tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; background: var(--pane); }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 12px; border-bottom: 1px solid var(--rule); }
+thead th { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--text2); background: var(--sel); }
+tbody th { font-weight: 600; width: 190px; }
+tr:last-child td, tr:last-child th { border-bottom: 0; }
+.y { color: var(--good); font-weight: 600; }
+.n { color: var(--bad); font-weight: 600; }
+
+/* Footer */
+.out { position: sticky; bottom: 0; background: var(--pane); border-top: 1px solid var(--rule); padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; }
+.out .line { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.out .sum { flex: 1; min-width: 200px; color: var(--text2); font-size: 13px; }
+textarea { width: 100%; box-sizing: border-box; font: 13px var(--ui); color: var(--text); background: var(--ground); border: 1px solid var(--rule); border-radius: 6px; padding: 6px 8px; resize: vertical; }
+textarea:focus-visible { outline: 2px solid var(--pick); outline-offset: 1px; }
+button.copy { font: 600 13px var(--ui); background: var(--text); color: var(--pane); border: 0; border-radius: 6px; padding: 7px 14px; cursor: pointer; }
+button.copy:focus-visible { outline: 2px solid var(--pick); outline-offset: 2px; }
+#picked { font: 12px var(--mono); }
+@media (prefers-reduced-motion: no-preference) { .opt { transition: border-color .12s, box-shadow .12s; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <span class="label">Duo · decision · Q-28</span>
+    <h1>Home, projects and tasks</h1>
+    <p class="lede">How Duo should model your workspace: Home holding many projects, topics as an optional folder layer, and tasks under projects that sometimes hold sessions. Three questions, one big and two smaller. Click one card per question, add a note if you like, then "Copy my picks" and paste it back.</p>
+  </header>
+
+  <section>
+    <h2>What you described</h2>
+    <div class="two">
+      <div class="panel">
+        <span class="label">The shape</span>
+<pre class="tree"><span class="k-home">~/work/</span>                  <span class="k-note">Home: one folder, HOME.md</span>
+├─ <span class="k-proj">pricing-page/</span>        <span class="k-note">most projects sit here</span>
+│  ├─ <span class="k-sess">● Fix footer links</span>  <span class="k-note">sessions</span>
+│  └─ <span class="k-task">☐ Launch copy</span>      <span class="k-note">a task…</span>
+│     └─ <span class="k-sess">● Draft headline</span> <span class="k-note">…sometimes with sessions</span>
+├─ <span class="k-proj">q4-planning/</span>
+└─ <span class="k-topic">payments/</span>            <span class="k-note">optional topic folder</span>
+   ├─ <span class="k-proj">checkout/</span>
+   └─ <span class="k-proj">refunds/</span></pre>
+        <div class="key"><span class="k-proj">project</span><span class="k-topic">topic</span><span class="k-task">task</span><span class="k-sess">session</span></div>
+      </div>
+      <div class="facts">
+        <p><b>Two layers are optional and shouldn't be enforced:</b> the topic above a project, and the task between a project and a session. A project can hold sessions directly, tasks, or both. A task can exist with no session at all; it's a to-do first.</p>
+        <p>The open part is where tasks live and how a session belongs to one. That decides whether projects "move up a level" only in Duo's lists or on disk too.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>How Duo does it today</h2>
+    <dl class="facts" style="margin:0">
+      <div class="fact"><dt>Home</dt><dd>The workspace folder, set only by the <code>--workspace</code> flag. Without it Duo shows sample data, which is what the 0.1.0 DMG opens to.</dd></div>
+      <div class="fact"><dt>Topic</dt><dd>Worked out on the fly: the name of the folder a project sits in, capitalised. Nothing stores it. A project sitting directly in Home has no topic and <b>doesn't appear on the map at all</b>, which is the wrong default for your layout.</dd></div>
+      <div class="fact"><dt>Project</dt><dd>Any folder with a <code>PROJECT.md</code>, found up to three levels down. Projects can't contain projects.</dd></div>
+      <div class="fact"><dt>Session</dt><dd>Belongs to the deepest project folder it ran in, or to the project you filed it in (DL-64).</dd></div>
+      <div class="fact"><dt>Task</dt><dd>Format decided, UI parked: one Obsidian-style file per task in <code>tasks/</code> (DL-6), whose <code>sessions:</code> line lists its sessions (DL-13). Nothing reads them yet (DL-25).</dd></div>
+      <div class="fact"><dt>Group</dt><dd>Sessions you bundled by hand. Duo-only, nothing on disk (DL-24). A task with sessions is very close to this.</dd></div>
+    </dl>
+  </section>
+
+  <section class="callout">
+    <h2>The constraint that matters: Claude files every session by folder</h2>
+    <p>Each session belongs to the folder Claude ran in. Its transcript sits in a bucket named after that folder, Claude reads <code>CLAUDE.md</code> from that folder and every folder above it, <code>claude --resume</code> lists that folder's sessions, and <code>/cd</code> moves a session to another folder. So the real choice is whether a task is <b>a note that points at sessions</b> (the sessions run in the project folder) or <b>a folder the sessions run in</b>.</p>
+  </section>
+
+  <section>
+    <h2>True whatever you pick</h2>
+    <ul>
+      <li><b>Home is chosen at first launch.</b> Pick (or create) the folder; Duo writes <code>HOME.md</code> if it's missing. This also fixes 0.1.0 opening to sample data. The first-run screen still needs a design (§13).</li>
+      <li><b>Projects directly in Home show on the map</b>, in a first column with no label. Today they're missing.</li>
+      <li><b>Topics never become required.</b> A project with no topic is normal.</li>
+      <li><b>Forks still fold into one thread row</b> under their session. Threads don't change.</li>
+      <li><b>A task row takes the state of its most urgent session</b>, like a group row today, so lists stay sorted by what needs you (handoff §2.1).</li>
+    </ul>
+  </section>
+
+  <!-- Q1 -->
+  <section class="q" data-q="Q1 tasks">
+    <div class="qhead">
+      <span class="label">Question 1 · the big one</span>
+      <h2>Where do tasks live, and how does a session belong to one?</h2>
+      <p class="lede" style="font-size:14px">Each option shows the same example on disk and in a project's session list. The Duo side is illustrative only; the real look goes to the design queue.</p>
+    </div>
+    <div class="opts wide">
+
+      <div class="opt" data-o="A: tasks are notes" tabindex="0" role="button" aria-pressed="false">
+        <div class="top"><span class="letter">A</span><span class="name">Tasks are notes that point at sessions</span><span class="rec">Recommended</span></div>
+        <p class="sum">A task is a Markdown file in the project's <code>tasks/</code> folder. Its <code>sessions:</code> line lists the sessions working on it. Every session still runs in the project folder, so Claude sees one project. This is DL-6 and DL-13 as already decided, finally shown.</p>
+        <div class="panels">
+          <div class="panel"><span class="label">On disk</span>
+<pre class="tree"><span class="k-proj">pricing-page/</span>
+├─ PROJECT.md
+├─ tasks/
+│  ├─ <span class="k-task">launch-copy.md</span>   <span class="k-note">sessions: [a1f…, 7d0…]</span>
+│  └─ <span class="k-task">ab-test-plan.md</span>  <span class="k-note">no sessions yet</span>
+└─ src/ …
+<span class="k-note">every session runs in pricing-page/</span></pre></div>
+          <div class="panel"><span class="label">In Duo</span>
+            <div class="mock">
+              <div class="h"><b>pricing-page</b><span>3 tasks · 5 sessions</span></div>
+              <div class="sec need">Needs you</div>
+              <div class="row"><i class="g need"></i><span class="n">Launch copy</span><span class="tag task">task · 2</span></div>
+              <div class="row in"><i class="g need"></i><span class="n">Draft headline</span><span class="t">3m</span></div>
+              <div class="row in"><i class="g idle"></i><span class="n">Tone pass</span><span class="t">1h</span></div>
+              <div class="sec">Idle</div>
+              <div class="row open"><i class="g idle"></i><span class="n">Fix footer links</span><span class="t">8m</span></div>
+              <div class="fold">› To do · 2 tasks with no session</div>
+            </div>
+          </div>
+        </div>
+        <div class="tradeoffs">
+          <div class="p"><h3>For</h3><ul>
+            <li>A task can exist with no session, which matches "tasks sometimes contain sessions".</li>
+            <li>Claude, Duo and Finder agree: one project, one folder, one <code>CLAUDE.md</code>.</li>
+            <li>Moving a session between tasks just edits a line, instantly. Nothing moves.</li>
+            <li>Tasks open in Obsidian as ordinary notes (DL-6). Nothing already decided is reversed.</li>
+          </ul></div>
+          <div class="c"><h3>Against</h3><ul>
+            <li><code>claude --resume</code> outside Duo still lists every session in the project, with no task grouping.</li>
+            <li>A task's own files have no home of their own; they sit in the project.</li>
+            <li>Writes <code>tasks/*.md</code> into the project. In a shared Git repo that shows in diffs (C-7).</li>
+          </ul></div>
+        </div>
+        <div class="meta"><span><b>Do projects move up?</b> In Duo's lists, yes: a project lists tasks and loose sessions. On disk, nothing moves.</span><span><b>Build:</b> medium. Read and write task files, task rows (reusing group rows), New Task, Add to Task, <code>duo2 task …</code>.</span></div>
+      </div>
+
+      <div class="opt" data-o="B: tasks are folders" tabindex="0" role="button" aria-pressed="false">
+        <div class="top"><span class="letter">B</span><span class="name">Tasks are folders that sessions run in</span></div>
+        <p class="sum">A task is a subfolder of the project with a <code>TASK.md</code>. Its sessions run inside it, so Claude files them under the task. Sessions that belong to no task run at the project's top level.</p>
+        <div class="panels">
+          <div class="panel"><span class="label">On disk</span>
+<pre class="tree"><span class="k-proj">pricing-page/</span>
+├─ PROJECT.md
+├─ CLAUDE.md           <span class="k-note">read by task sessions too</span>
+├─ <span class="k-task">launch-copy/</span>
+│  ├─ TASK.md
+│  └─ headline-drafts.md
+├─ <span class="k-task">ab-test-plan/</span>
+│  └─ TASK.md
+└─ src/ …
+<span class="k-note">"Draft headline" runs in launch-copy/</span></pre></div>
+          <div class="panel"><span class="label">In Duo</span>
+            <div class="mock">
+              <div class="crumb">pricing-page › <b>Launch copy</b></div>
+              <div class="sec need">Needs you</div>
+              <div class="row"><i class="g need"></i><span class="n">Draft headline</span><span class="t">3m</span></div>
+              <div class="sec">Idle</div>
+              <div class="row"><i class="g idle"></i><span class="n">Tone pass</span><span class="t">1h</span></div>
+              <div class="sec">Files</div>
+              <div class="row"><span class="n">TASK.md · headline-drafts.md</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="tradeoffs">
+          <div class="p"><h3>For</h3><ul>
+            <li>A task has a place for its own files, beside its sessions.</li>
+            <li><code>claude --resume</code> in a task folder lists only that task's sessions.</li>
+            <li>The structure is plain in Finder and survives without Duo.</li>
+          </ul></div>
+          <div class="c"><h3>Against</h3><ul>
+            <li>Every to-do needs a folder, even a one-line task with no session.</li>
+            <li>Moving a session between tasks is a real move, done on its next resume (DL-64).</li>
+            <li>Task folders land in repos. That's worse than C-7, and deeper paths too.</li>
+            <li>Partly reverses DL-6's "one file per task". Obsidian sees folders, not task notes.</li>
+          </ul></div>
+        </div>
+        <div class="meta"><span><b>Do projects move up?</b> Yes, on disk too: the project becomes a container and the task becomes where work runs.</span><span><b>Build:</b> large. Discovery, attribution to the task folder, task navigation, moves through the migrator.</span></div>
+      </div>
+
+      <div class="opt" data-o="C: nest freely" tabindex="0" role="button" aria-pressed="false">
+        <div class="top"><span class="letter">C</span><span class="name">Any folder, any depth: projects nest</span></div>
+        <p class="sum">Drop the fixed levels. Any folder with a <code>PROJECT.md</code> is a project, and projects can hold projects. A session belongs to the deepest project it ran in. Topic, project and task are just names for how deep you are.</p>
+        <div class="panels">
+          <div class="panel"><span class="label">On disk</span>
+<pre class="tree"><span class="k-home">~/work/</span>
+├─ <span class="k-proj">payments/</span>         <span class="k-note">PROJECT.md optional</span>
+│  ├─ <span class="k-proj">checkout/</span>      <span class="k-note">PROJECT.md</span>
+│  │  └─ <span class="k-proj">exec-review/</span> <span class="k-note">PROJECT.md: acts as a task</span>
+│  └─ <span class="k-proj">refunds/</span>
+└─ <span class="k-proj">pricing-page/</span></pre></div>
+          <div class="panel"><span class="label">In Duo</span>
+            <div class="mock">
+              <div class="h"><b>Outline</b><span>one tree replaces map columns and lists</span></div>
+              <div class="row"><span class="n">▾ payments</span><i class="g need"></i></div>
+              <div class="row in"><span class="n">▾ checkout</span><i class="g need"></i></div>
+              <div class="row in2"><i class="g need"></i><span class="n">exec-review</span><span class="tag">2</span></div>
+              <div class="row in2"><i class="g idle"></i><span class="n">PRD v2 edits</span><span class="t">1h</span></div>
+              <div class="row in"><span class="n">▸ refunds</span></div>
+              <div class="row"><span class="n">▸ pricing-page</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="tradeoffs">
+          <div class="p"><h3>For</h3><ul>
+            <li>One idea instead of three. Nothing is enforced and any depth works.</li>
+            <li>Projects really can move up: any project can gain children later.</li>
+            <li>A topic can have its own <code>PROJECT.md</code> and sessions if you want.</li>
+          </ul></div>
+          <div class="c"><h3>Against</h3><ul>
+            <li>A to-do with no folder doesn't fit, so tasks as notes would still be needed alongside.</li>
+            <li>The map's columns and the session lists become a tree. That's a large new design.</li>
+            <li>"Is this a project or a task?" has no answer, so lists and search lose a stable shape.</li>
+            <li>Reverses CONS L2 (projects don't nest). The migrator's moves and merges get harder.</li>
+          </ul></div>
+        </div>
+        <div class="meta"><span><b>Do projects move up?</b> Any level can, at any time.</span><span><b>Build:</b> largest, and design-bound: tree navigation, nested attribution, nested moves.</span></div>
+      </div>
+
+      <div class="opt" data-o="D: Duo keeps the outline" tabindex="0" role="button" aria-pressed="false">
+        <div class="top"><span class="letter">D</span><span class="name">Duo keeps the outline; folders stay flat</span></div>
+        <p class="sum">Projects stay flat folders in Home. Topics, tasks and which sessions sit in each are Duo's own records, like groups today, edited by dragging in Duo or with <code>duo2</code>.</p>
+        <div class="panels">
+          <div class="panel"><span class="label">On disk</span>
+<pre class="tree"><span class="k-home">~/work/</span>
+├─ <span class="k-proj">checkout/</span>
+├─ <span class="k-proj">pricing-page/</span>
+│  └─ .duo/outline.json  <span class="k-note">tasks, members</span>
+└─ <span class="k-proj">refunds/</span>
+<span class="k-note">topics in Duo's settings, not folders</span></pre></div>
+          <div class="panel"><span class="label">In Duo</span>
+            <div class="mock">
+              <div class="h"><b>pricing-page</b><span>same list as A</span></div>
+              <div class="sec need">Needs you</div>
+              <div class="row"><i class="g need"></i><span class="n">Launch copy</span><span class="tag task">task · 2</span></div>
+              <div class="row in"><i class="g need"></i><span class="n">Draft headline</span><span class="t">3m</span></div>
+              <div class="sec">Idle</div>
+              <div class="row"><i class="g idle"></i><span class="n">Fix footer links</span><span class="t">8m</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="tradeoffs">
+          <div class="p"><h3>For</h3><ul>
+            <li>Reorganising is instant and never moves a folder.</li>
+            <li>Nothing visible lands in repos beyond <code>.duo/</code>.</li>
+            <li>Topics could overlap: one project in two topics.</li>
+          </ul></div>
+          <div class="c"><h3>Against</h3><ul>
+            <li>Invisible outside Duo. Obsidian, Finder and Claude can't see tasks except through <code>duo2</code>.</li>
+            <li>Reverses DL-13 (task files are the truth) and DL-6's Obsidian-friendly tasks.</li>
+            <li>Lose Duo's records and the structure is gone, unlike files you can see.</li>
+          </ul></div>
+        </div>
+        <div class="meta"><span><b>Do projects move up?</b> Only in Duo.</span><span><b>Build:</b> medium. It's the groups code, generalised.</span></div>
+      </div>
+
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>At a glance</th><th>A · notes</th><th>B · folders</th><th>C · nest</th><th>D · Duo-owned</th></tr></thead>
+        <tbody>
+          <tr><th>A task with no session</th><td class="y">A file</td><td>A folder</td><td class="n">Needs a project folder</td><td class="y">A record</td></tr>
+          <tr><th>Seen in Finder / Obsidian</th><td class="y">Yes, as notes</td><td class="y">Yes, as folders</td><td class="y">Yes, as folders</td><td class="n">No</td></tr>
+          <tr><th>Folder Claude files sessions under</th><td>Project</td><td>Task</td><td>Deepest project</td><td>Project</td></tr>
+          <tr><th>Move a session to another task</th><td class="y">Instant</td><td>On next resume</td><td>On next resume</td><td class="y">Instant</td></tr>
+          <tr><th>Adds to a repo</th><td><code>tasks/*.md</code></td><td>Task folders</td><td>Nested folders</td><td class="y"><code>.duo/</code> only</td></tr>
+          <tr><th>Decisions reversed</th><td class="y">None (unparks DL-25)</td><td>DL-6, in part</td><td>CONS L2</td><td>DL-13, DL-6</td></tr>
+          <tr><th>New design needed</th><td>Task rows, To do</td><td>Task view</td><td class="n">Tree navigation</td><td>Task rows</td></tr>
+          <tr><th>Build size</th><td>Medium</td><td>Large</td><td class="n">Largest</td><td>Medium</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>Why A:</b> your description treats a task as a to-do that sometimes gathers sessions, and A is the only option where that is the native shape. It keeps Claude's folder and Duo's project the same thing, so nothing surprising happens outside Duo, and it builds what's already decided. B is the fallback if you find tasks need their own files more often than not. It can come later as "Make this task a folder", without undoing A.</p>
+  </section>
+
+  <!-- Q2 -->
+  <section class="q" data-q="Q2 topics">
+    <div class="qhead">
+      <span class="label">Question 2</span>
+      <h2>What makes a topic?</h2>
+      <p>Whichever you pick, root projects show in the unlabelled first column, and Elsewhere stays for folders outside Home.</p>
+    </div>
+    <div class="opts">
+      <div class="opt" data-o="T1: optional folder" tabindex="0" role="button" aria-pressed="false">
+        <div class="top"><span class="letter">T1</span><span class="name">An optional folder</span><span class="rec">Recommended</span></div>
+        <p class="sum">A folder in Home with no <code>PROJECT.md</code> that holds projects is a topic, named after the folder. Today's rule, minus the root-project bug.</p>
+        <div class="panel"><span class="label">On the map</span>
+          <div class="map">
+            <div><div class="label"></div><div class="tile"><b>pricing-page</b><span class="s">2 need you</span></div><div class="tile"><b>q4-planning</b><span class="s">idle</span></div></div>
+            <div><div class="label">Payments</div><div class="tile"><b>checkout</b><span class="s">1 working</span></div><div class="tile"><b>refunds</b><span class="s">idle</span></div></div>
+          </div>
+        </div>
+        <div class="tradeoffs"><div class="p"><h3>For</h3><ul><li>Finder and Duo agree. No new file.</li><li>Almost no build.</li></ul></div>
+        <div class="c"><h3>Against</h3><ul><li>Changing a project's topic moves its folder (the migrator carries its sessions).</li><li>One topic per project.</li></ul></div></div>
+      </div>
+      <div class="opt" data-o="T2: tag in PROJECT.md" tabindex="0" role="button" aria-pressed="false">
+        <div class="top"><span class="letter">T2</span><span class="name">A line in PROJECT.md</span></div>
+        <p class="sum"><code>topic: Payments</code> in the project's frontmatter. Folders stay flat in Home; the topic is a label.</p>
+        <div class="panel"><span class="label">On disk</span>
+<pre class="tree"><span class="k-proj">checkout/PROJECT.md</span>
+---
+topic: Payments
+---</pre></div>
+        <div class="tradeoffs"><div class="p"><h3>For</h3><ul><li>Retopic by editing a line; nothing moves.</li><li>Could later allow more than one.</li></ul></div>
+        <div class="c"><h3>Against</h3><ul><li>Finder doesn't show it.</li><li>Folders you already nested would be ignored.</li></ul></div></div>
+      </div>
+      <div class="opt" data-o="T3: folder, line overrides" tabindex="0" role="button" aria-pressed="false">
+        <div class="top"><span class="letter">T3</span><span class="name">Folder, unless the line says otherwise</span></div>
+        <p class="sum">T1 by default; a <code>topic:</code> line in <code>PROJECT.md</code> wins when present.</p>
+        <div class="tradeoffs"><div class="p"><h3>For</h3><ul><li>Works with any existing layout.</li><li>Retopic without moving when you'd rather not.</li></ul></div>
+        <div class="c"><h3>Against</h3><ul><li>Two sources of truth: "why is this project here?"</li><li>More to explain.</li></ul></div></div>
+      </div>
+      <div class="opt" data-o="T4: no topics" tabindex="0" role="button" aria-pressed="false">
+        <div class="top"><span class="letter">T4</span><span class="name">No topics</span></div>
+        <p class="sum">The map is one set of projects, sorted by what needs you. Projects in subfolders are still found, just not grouped.</p>
+        <div class="tradeoffs"><div class="p"><h3>For</h3><ul><li>Simplest model of all.</li></ul></div>
+        <div class="c"><h3>Against</h3><ul><li>Nothing to group many projects.</li><li>The map's column layout (DL-22) needs a redesign.</li></ul></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Q3 -->
+  <section class="q" data-q="Q3 groups">
+    <div class="qhead">
+      <span class="label">Question 3</span>
+      <h2>Do groups survive once tasks exist?</h2>
+      <p>A group is sessions bundled by hand, held by Duo only. A task with sessions is nearly the same thing, so with A or B there would be two ways to bundle sessions.</p>
+    </div>
+    <div class="opts">
+      <div class="opt" data-o="G1: groups become tasks" tabindex="0" role="button" aria-pressed="false">
+        <div class="top"><span class="letter">G1</span><span class="name">Groups become tasks</span><span class="rec">Recommended</span></div>
+        <p class="sum">"Group sessions" becomes "New task from sessions": it writes a task note listing them. Existing groups turn into tasks once, with undo.</p>
+        <div class="tradeoffs"><div class="p"><h3>For</h3><ul><li>One way to bundle sessions; one word to learn.</li><li>Bundles show outside Duo.</li></ul></div>
+        <div class="c"><h3>Against</h3><ul><li>Every bundle writes a file into the project (C-7).</li></ul></div></div>
+      </div>
+      <div class="opt" data-o="G2: keep both" tabindex="0" role="button" aria-pressed="false">
+        <div class="top"><span class="letter">G2</span><span class="name">Keep both</span></div>
+        <p class="sum">Groups stay as quick Duo-only bundles; tasks are notes with goals and status.</p>
+        <div class="tradeoffs"><div class="p"><h3>For</h3><ul><li>Bundling never touches the repo.</li></ul></div>
+        <div class="c"><h3>Against</h3><ul><li>Two similar rows in every list, each with its own menu. The confusion Q-27 is about.</li></ul></div></div>
+      </div>
+      <div class="opt" data-o="G3: group, then promote" tabindex="0" role="button" aria-pressed="false">
+        <div class="top"><span class="letter">G3</span><span class="name">Groups stay, and can be made tasks</span></div>
+        <p class="sum">As G2, plus "Make a Task" on a group writes the note and replaces the group.</p>
+        <div class="tradeoffs"><div class="p"><h3>For</h3><ul><li>Light bundling, with a path to a real task.</li></ul></div>
+        <div class="c"><h3>Against</h3><ul><li>Still two concepts, plus a conversion step.</li></ul></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What happens after you pick</h2>
+    <ul>
+      <li>I record your picks as DL entries and close Q-28.</li>
+      <li>I build the parts that need no new look: the Home chooser at first launch, root projects on the map, the topic rule, and reading and writing tasks with <code>duo2 task</code>.</li>
+      <li>Task rows, the To do fold and the first-run screen go to the design queue with a stub until the design agent draws them (no invented designs).</li>
+    </ul>
+  </section>
+</div>
+
+<div class="out">
+  <div class="line">
+    <textarea id="note" rows="1" aria-label="Anything else (optional)" placeholder="Anything else? e.g. A, but tasks should be able to hold files" style="flex:2;min-width:220px"></textarea>
+    <span class="sum" id="sum">No picks yet: click one card in each question.</span>
+    <button class="copy" id="copy" type="button">Copy my picks</button>
+  </div>
+  <textarea id="picked" rows="3" hidden aria-label="Your picks, to copy"></textarea>
+</div>
+
+<script>
+(function () {
+  const KEY = "duo-structure-q28";
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (_) {}
+  const picks = saved.picks || {};
+  const note = document.getElementById("note");
+  note.value = saved.note || "";
+  const qs = [...document.querySelectorAll(".q")];
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ picks, note: note.value })); } catch (_) {} };
+  function render() {
+    qs.forEach((q) => q.querySelectorAll(".opt").forEach((o) => o.setAttribute("aria-pressed", String(picks[q.dataset.q] === o.dataset.o))));
+    const done = qs.filter((q) => picks[q.dataset.q]);
+    document.getElementById("sum").textContent = done.length
+      ? done.map((q) => picks[q.dataset.q]).join(" · ") + (done.length < qs.length ? "  (" + (qs.length - done.length) + " to go)" : "")
+      : "No picks yet: click one card in each question.";
+  }
+  qs.forEach((q) => q.querySelectorAll(".opt").forEach((o) => {
+    const choose = () => { picks[q.dataset.q] = o.dataset.o; save(); render(); };
+    o.addEventListener("click", choose);
+    o.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); choose(); } });
+  }));
+  note.addEventListener("input", save);
+  document.getElementById("copy").addEventListener("click", () => {
+    let text = "Workspace structure (Q-28) picks: " + qs.map((q) => q.dataset.q + " = " + (picks[q.dataset.q] || "(no pick)")).join("; ");
+    if (note.value.trim()) text += ". Note: " + note.value.trim();
+    const area = document.getElementById("picked");
+    navigator.clipboard.writeText(text).then(() => {
+      document.getElementById("sum").textContent = "Copied. Paste it to Claude.";
+    }).catch(() => { area.hidden = false; area.value = text; area.select(); document.getElementById("sum").textContent = "Select and copy the text below."; });
+  });
+  render();
+})();
+</script>
