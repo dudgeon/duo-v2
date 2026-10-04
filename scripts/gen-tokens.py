@@ -41,7 +41,8 @@ for name, spec in light.items():
     d = dark.get(name, {}).get("value", spec["value"])
     use = spec.get("use", "")
     w(f"    /// {use}" if use else f"    /// {name}")
-    w(f"    public static let {name} = Color(nsColor: .duoDynamic(light: {hex6(spec['value'])}, dark: {hex6(d)}, name: \"{name}\"))")
+    alpha = f".withAlphaComponent({float(spec['alpha'])!r})" if "alpha" in spec else ""
+    w(f"    public static let {name} = Color(nsColor: NSColor.duoDynamic(light: {hex6(spec['value'])}, dark: {hex6(d)}, name: \"{name}\"){alpha})")
 w("")
 w("    // Console chrome: the same in every appearance.")
 for name, spec in console.items():
@@ -60,7 +61,8 @@ for name, spec in list(light.items()) + list(console.items()):
         w(f"    public static let {name} = NSColor.duoFixed({hex6(spec['value'])})")
     else:
         d = dark.get(name, {}).get("value", spec["value"])
-        w(f"    public static let {name} = NSColor.duoDynamic(light: {hex6(spec['value'])}, dark: {hex6(d)}, name: \"{name}\")")
+        alpha = f".withAlphaComponent({float(spec['alpha'])!r})" if "alpha" in spec else ""
+        w(f"    public static let {name} = NSColor.duoDynamic(light: {hex6(spec['value'])}, dark: {hex6(d)}, name: \"{name}\"){alpha}")
 w("}")
 w("")
 
@@ -94,6 +96,18 @@ w(f"    public static let paneProjectRight: CGFloat = {num(s['pane']['project'][
 for k, v in s["paneMinimumProposed"].items():
     w(f"    public static let paneMin{k[0].upper() + k[1:]}: CGFloat = {num(v)}")
 w(f"    public static let peekPopoverWidth: CGFloat = {num(s['peekPopoverWidth'])}")
+# Search (search-handoff tokens-additions): the modal, its rows, preview and action menu.
+for group, prefix in [("searchModal", "searchModal"), ("searchRow", "searchRow"), ("searchPreview", "searchPreview"), ("actionMenu", "actionMenu")]:
+    for k, v in s[group].items():
+        name = prefix + k[0].upper() + k[1:]
+        if isinstance(v, (int, float)):
+            w(f"    public static let {name}: CGFloat = {num(v)}")
+        elif isinstance(v, dict) and all(isinstance(x, (int, float)) for x in v.values()):
+            if {"top", "horizontal", "bottom"} <= v.keys():
+                w(f"    public static let {name} = EdgeInsets(top: {num(v['top'])}, leading: {num(v['horizontal'])}, bottom: {num(v['bottom'])}, trailing: {num(v['horizontal'])})")
+            else:
+                for kk, vv in v.items():
+                    w(f"    public static let {name}{kk[0].upper() + kk[1:]}: CGFloat = {num(vv)}")
 w(f"    public static let designWindow = CGSize(width: {num(s['designWindow']['width'])}, height: {num(s['designWindow']['height'])})")
 w(f"    public static let minimumWindow = CGSize(width: {num(s['minimumWindow']['width'])}, height: {num(s['minimumWindow']['height'])})")
 w("}")

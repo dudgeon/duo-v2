@@ -383,6 +383,23 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         return (dirty ? "open in Duo with unsaved edits. " : "open in Duo, saved. ") + how
     }
 
+    /// Outlines the lines a search result matched once `path` is the open document
+    /// (search-open-file): `L40–58 · from search`, matched words semibold.
+    public func revealFromSearch(path: String, lines: ClosedRange<Int>, words: [String], tries: Int = 20) {
+        let ready = url?.path.hasSuffix("/" + path) == true || url?.path == path
+        guard ready else {
+            if tries > 0 { DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { MainActor.assumeIsolated { self.revealFromSearch(path: path, lines: lines, words: words, tries: tries - 1) } } }
+            return
+        }
+        let label = (lines.count > 1 ? "L\(lines.lowerBound)–\(lines.upperBound)" : "L\(lines.lowerBound)") + " · from search"
+        run("return window.duo && duo.revealFromSearch ? duo.revealFromSearch(a, b, label, words) : false",
+            ["a": lines.lowerBound, "b": lines.upperBound, "label": label, "words": words]) { ok in
+            if (ok as? Bool) != true, tries > 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { MainActor.assumeIsolated { self.revealFromSearch(path: path, lines: lines, words: words, tries: tries - 1) } }
+            }
+        }
+    }
+
     public func run(_ js: String, _ args: [String: Any] = [:], done: @escaping @MainActor (Any?) -> Void) {
         webView.callAsyncJavaScript(js, arguments: args, in: nil, in: .page) { result in
             if case .success(let v) = result { done(v) } else { done(nil) }

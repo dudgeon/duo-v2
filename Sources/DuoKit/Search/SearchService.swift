@@ -42,6 +42,12 @@ public final class SearchService {
         }
     }
 
+    /// After the index was moved aside (unreadable): build it again on the next pass.
+    public func rebuild() {
+        lastProjects = [:]
+        lastPass = .distantPast
+    }
+
     nonisolated static func pass(projects: [String: URL], fileProjects: Set<String>, bundled: URL?) async -> [String: IndexStats] {
         SearchSetup.registerExtractors()
         do {

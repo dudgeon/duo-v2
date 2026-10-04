@@ -149,6 +149,8 @@ struct NeedsYouChip: View {
 /// projects, groups and sessions by name now that Jump is merged into it (DL-80). The modal isn't
 /// built yet (search M-UI), so for now it is the field's look with no action.
 struct JumpField: View {
+    @Environment(AppModel.self) private var model
+
     var body: some View {
         HStack(spacing: DuoSpace.gapGlyphToLabel) {
             Image(systemName: "magnifyingglass")
@@ -163,6 +165,8 @@ struct JumpField: View {
         .frame(width: DuoMetric.jumpFieldWidth, height: DuoMetric.jumpFieldHeight)
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusField).fill(DuoColor.pane))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusField).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+        .contentShape(Rectangle())
+        .onActivate { model.openSearch() }  // action: search
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Search all projects")
         .accessibilityAddTraits(.isSearchField)

@@ -7,27 +7,29 @@ import SwiftUI
 /// provisional and unapproved (§12 Q4), so the app forces light until Geoff signs one off.
 public enum DuoColor {
     /// Toolbar, sheet backgrounds
-    public static let ground = Color(nsColor: .duoDynamic(light: 0xF3F4F6, dark: 0x16181C, name: "ground"))
+    public static let ground = Color(nsColor: NSColor.duoDynamic(light: 0xF3F4F6, dark: 0x16181C, name: "ground"))
     /// Light panes, cards, popover, buttons
-    public static let pane = Color(nsColor: .duoDynamic(light: 0xFFFFFF, dark: 0x16181C, name: "pane"))
+    public static let pane = Color(nsColor: NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x16181C, name: "pane"))
     /// Selected row, Claude's-additions block
-    public static let selected = Color(nsColor: .duoDynamic(light: 0xE9ECEF, dark: 0x23262B, name: "selected"))
+    public static let selected = Color(nsColor: NSColor.duoDynamic(light: 0xE9ECEF, dark: 0x23262B, name: "selected"))
     /// Pane dividers, card borders, field border
-    public static let rule = Color(nsColor: .duoDynamic(light: 0xC9CDD3, dark: 0x2B2F36, name: "rule"))
+    public static let rule = Color(nsColor: NSColor.duoDynamic(light: 0xC9CDD3, dark: 0x2B2F36, name: "rule"))
     /// Button and pill borders, dashed borders, group rule, files rule
-    public static let controlEdge = Color(nsColor: .duoDynamic(light: 0x8B939C, dark: 0x4A4F57, name: "controlEdge"))
+    public static let controlEdge = Color(nsColor: NSColor.duoDynamic(light: 0x8B939C, dark: 0x4A4F57, name: "controlEdge"))
     /// Primary text; review and working glyphs; selected-card border
-    public static let text = Color(nsColor: .duoDynamic(light: 0x1F2328, dark: 0xE6E8EB, name: "text"))
+    public static let text = Color(nsColor: NSColor.duoDynamic(light: 0x1F2328, dark: 0xE6E8EB, name: "text"))
     /// Secondary text; idle and resolved glyphs; chevrons
-    public static let text2 = Color(nsColor: .duoDynamic(light: 0x5B636D, dark: 0x9AA1AB, name: "text2"))
+    public static let text2 = Color(nsColor: NSColor.duoDynamic(light: 0x5B636D, dark: 0x9AA1AB, name: "text2"))
     /// The one accent: needs-you glyph, label, chip, question box
-    public static let needsYou = Color(nsColor: .duoDynamic(light: 0xC2410C, dark: 0xF97316, name: "needsYou"))
+    public static let needsYou = Color(nsColor: NSColor.duoDynamic(light: 0xC2410C, dark: 0xF97316, name: "needsYou"))
     /// Text and glyph on the open (filled) chip
-    public static let onNeedsYou = Color(nsColor: .duoDynamic(light: 0xFFFFFF, dark: 0xFFFFFF, name: "onNeedsYou"))
+    public static let onNeedsYou = Color(nsColor: NSColor.duoDynamic(light: 0xFFFFFF, dark: 0xFFFFFF, name: "onNeedsYou"))
     /// Placeholder in the targets; not built
-    public static let placeholderBar = Color(nsColor: .duoDynamic(light: 0xD5D9DE, dark: 0xD5D9DE, name: "placeholderBar"))
+    public static let placeholderBar = Color(nsColor: NSColor.duoDynamic(light: 0xD5D9DE, dark: 0xD5D9DE, name: "placeholderBar"))
     /// Placeholder in the targets; not built
-    public static let placeholderBarOnSelected = Color(nsColor: .duoDynamic(light: 0xC3C8CE, dark: 0xC3C8CE, name: "placeholderBarOnSelected"))
+    public static let placeholderBarOnSelected = Color(nsColor: NSColor.duoDynamic(light: 0xC3C8CE, dark: 0xC3C8CE, name: "placeholderBarOnSelected"))
+    /// Dims the whole window behind the search modal. The text colour at 32% (search-handoff).
+    public static let scrim = Color(nsColor: NSColor.duoDynamic(light: 0x1F2328, dark: 0x1F2328, name: "scrim").withAlphaComponent(0.32))
 
     // Console chrome: the same in every appearance.
     /// Console pane, console tab strips, terminal background
@@ -58,6 +60,7 @@ public enum DuoNSColor {
     public static let onNeedsYou = NSColor.duoDynamic(light: 0xFFFFFF, dark: 0xFFFFFF, name: "onNeedsYou")
     public static let placeholderBar = NSColor.duoDynamic(light: 0xD5D9DE, dark: 0xD5D9DE, name: "placeholderBar")
     public static let placeholderBarOnSelected = NSColor.duoDynamic(light: 0xC3C8CE, dark: 0xC3C8CE, name: "placeholderBarOnSelected")
+    public static let scrim = NSColor.duoDynamic(light: 0x1F2328, dark: 0x1F2328, name: "scrim").withAlphaComponent(0.32)
     public static let console = NSColor.duoFixed(0x15171B)
     public static let consoleRule = NSColor.duoFixed(0x2B2F36)
     public static let consoleText = NSColor.duoFixed(0xE6E8EB)
@@ -103,6 +106,28 @@ public enum DuoMetric {
     public static let paneMinRight: CGFloat = 360.0
     public static let paneMinConsole: CGFloat = 480.0
     public static let peekPopoverWidth: CGFloat = 420.0
+    public static let searchModalWidth: CGFloat = 960.0
+    public static let searchModalTop: CGFloat = 92.0
+    public static let searchModalFieldRowHeight: CGFloat = 52.0
+    public static let searchModalListColumnWidth: CGFloat = 420.0
+    public static let searchModalBodyMinHeight: CGFloat = 440.0
+    public static let searchModalFooterHeight: CGFloat = 34.0
+    public static let searchModalRadius: CGFloat = 10.0
+    public static let searchRowPadding = EdgeInsets(top: 8.0, leading: 10.0, bottom: 10.0, trailing: 10.0)
+    public static let searchRowRadius: CGFloat = 6.0
+    public static let searchRowGap: CGFloat = 2.0
+    public static let searchRowMetaIndent: CGFloat = 20.0
+    public static let searchRowKindIcon: CGFloat = 12.0
+    public static let searchRowSnippetMaxLines: CGFloat = 2.0
+    public static let searchPreviewPadding = EdgeInsets(top: 14.0, leading: 20.0, bottom: 16.0, trailing: 20.0)
+    public static let searchPreviewBlockRadius: CGFloat = 6.0
+    public static let searchPreviewBlockPadding = EdgeInsets(top: 10.0, leading: 12.0, bottom: 12.0, trailing: 12.0)
+    public static let actionMenuWidth: CGFloat = 300.0
+    public static let actionMenuRowHeight: CGFloat = 24.0
+    public static let actionMenuPadding: CGFloat = 6.0
+    public static let actionMenuRadius: CGFloat = 10.0
+    public static let actionMenuAnchorFromRowRight: CGFloat = 8.0
+    public static let actionMenuAnchorFromRowTop: CGFloat = 30.0
     public static let designWindow = CGSize(width: 1440.0, height: 900.0)
     public static let minimumWindow = CGSize(width: 1280.0, height: 800.0)
 }
@@ -143,6 +168,7 @@ public enum DuoTextStyle: CaseIterable, Sendable {
     case mono
     case monoActiveTab
     case monoPath
+    case searchField
 
     public var spec: DuoTextSpec {
         switch self {
@@ -156,6 +182,7 @@ public enum DuoTextStyle: CaseIterable, Sendable {
         case .mono: DuoTextSpec(size: 12.0, lineHeight: 19.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
         case .monoActiveTab: DuoTextSpec(size: 12.0, lineHeight: 19.0, weight: .medium, mono: true, tracking: 0.0, uppercase: false)
         case .monoPath: DuoTextSpec(size: 11.0, lineHeight: 20.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
+        case .searchField: DuoTextSpec(size: 17.0, lineHeight: 24.0, weight: .regular, mono: false, tracking: 0.0, uppercase: false)
         }
     }
 }

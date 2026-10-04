@@ -222,5 +222,256 @@
       "PROJECT.md",
       "docs/prd-v2.md"
     ]
+  },
+  "search": {
+    "coverage": "Indexing: refunds-api-spec 212 of 340 files · sessions before Aug 12 not yet indexed",
+    "firstRun": "Building the index for the first time. Newest first: 2 of 7 projects done · sessions before Sep 20 not yet indexed.",
+    "recent": [
+      {
+        "query": "where did we land on saved cards",
+        "when": "today"
+      },
+      {
+        "query": "customers charged twice",
+        "when": "yesterday"
+      },
+      {
+        "query": "ERR_REFUND_409",
+        "when": "3d"
+      }
+    ],
+    "sendTarget": {
+      "allProjects": "Morning triage",
+      "insideProject": "PRD v2 edits"
+    },
+    "queries": [
+      {
+        "query": "where did we land on saved cards",
+        "mode": "meaning and words",
+        "currentProject": "checkout-redesign",
+        "screens": [
+          "search-overview",
+          "search-project",
+          "search-project-narrowed",
+          "search-typing",
+          "search-first-run",
+          "search-actions-file",
+          "search-actions-session",
+          "search-multi"
+        ],
+        "results": [
+          {
+            "project": "checkout-redesign",
+            "kind": "file",
+            "title": "docs/prd-v2.md",
+            "where": "L40–58",
+            "matchedBy": [
+              "meaning",
+              "words"
+            ],
+            "date": "today",
+            "snippet": "…two interviewees said saved cards are the main reason they abandon guest checkout. Decision: keep saved cards out of v2 scope; log as open question Q3…",
+            "matchedWords": [
+              "saved cards"
+            ],
+            "alsoIn": [
+              "research-notes/docs/prd-v2-copy.md"
+            ],
+            "passages": [
+              {
+                "where": "L40–58",
+                "heading": "What we heard",
+                "snippet": "…two interviewees said saved cards are the main reason they abandon guest checkout. Decision: keep saved cards out of v2 scope; log as open question Q3…"
+              },
+              {
+                "where": "L71–73",
+                "heading": "Non-goals",
+                "snippet": "…2. Saved cards and other stored payment methods…"
+              },
+              {
+                "where": "L88–90",
+                "heading": "Open questions",
+                "snippet": "…Q3. Saved cards: in scope for a later version?…"
+              }
+            ]
+          },
+          {
+            "project": "checkout-redesign",
+            "kind": "session",
+            "title": "PRD v2 edits",
+            "where": "turn 6",
+            "matchedBy": [
+              "meaning"
+            ],
+            "date": "4m",
+            "snippet": "You: Move saved cards into scope, or keep it out and log an open question? Claude: Keeping it out is consistent with non-goal #2…"
+          },
+          {
+            "project": "checkout-redesign",
+            "kind": "session",
+            "title": "Interview synth",
+            "where": "turn 11",
+            "matchedBy": [
+              "meaning"
+            ],
+            "date": "2d",
+            "snippet": "…P4 and P7 both mention re-typing card details on mobile as the moment they gave up…"
+          },
+          {
+            "project": "refunds-api-spec",
+            "kind": "file",
+            "title": "docs/edge-cases.md",
+            "where": "L112–130",
+            "matchedBy": [
+              "words"
+            ],
+            "date": "3d",
+            "snippet": "…refunds to a saved card versus the original payment method…",
+            "matchedWords": [
+              "saved card"
+            ]
+          },
+          {
+            "project": null,
+            "unfiled": true,
+            "kind": "session",
+            "title": "quick q about card vaulting",
+            "where": "turn 2",
+            "matchedBy": [
+              "meaning"
+            ],
+            "date": "3w",
+            "snippet": "…PCI scope for storing card tokens…"
+          }
+        ]
+      },
+      {
+        "query": "customers charged twice",
+        "mode": "meaning and words",
+        "screens": [
+          "search-none (with Kind: Memory and Date: Past week set, which hide all three)"
+        ],
+        "results": [
+          {
+            "project": "refunds-api-spec",
+            "kind": "file",
+            "title": "data/tickets.jsonl",
+            "where": "record 418",
+            "snippet": "duplicate billing after retry, two captures on one order"
+          },
+          {
+            "project": "refunds-api-spec",
+            "kind": "session",
+            "title": "Edge-case matrix",
+            "where": "turn 3"
+          },
+          {
+            "project": "fraud-rules-review",
+            "kind": "file",
+            "title": "notes/velocity-rules.md",
+            "where": "L9–20"
+          }
+        ]
+      },
+      {
+        "query": "ERR_REFUND_409",
+        "mode": "exact",
+        "screens": [
+          "search-exact"
+        ],
+        "results": [
+          {
+            "project": "refunds-api-spec",
+            "kind": "file",
+            "title": "spec/errors.md",
+            "where": "L77",
+            "matchedBy": [
+              "exact"
+            ],
+            "date": "5d"
+          },
+          {
+            "project": "refunds-api-spec",
+            "kind": "session",
+            "title": "Edge-case matrix",
+            "where": "turn 9",
+            "matchedBy": [
+              "exact"
+            ],
+            "date": "14m"
+          },
+          {
+            "project": "api-deprecations",
+            "kind": "file",
+            "title": "comms/v1-sunset.md",
+            "where": "L31",
+            "matchedBy": [
+              "exact"
+            ],
+            "date": "2w"
+          }
+        ]
+      }
+    ],
+    "similar": {
+      "source": {
+        "project": "checkout-redesign",
+        "kind": "file",
+        "title": "docs/prd-v2.md",
+        "where": "L40–58"
+      },
+      "returnsTo": "where did we land on saved cards",
+      "results": "results 2 to 5 of that query, in the same order",
+      "screens": [
+        "search-similar"
+      ]
+    },
+    "jump": {
+      "query": "prd",
+      "screens": [
+        "search-jump"
+      ],
+      "results": [
+        {
+          "kind": "group",
+          "title": "PRD v2",
+          "project": "checkout-redesign",
+          "sessions": 3,
+          "state": "needsYou",
+          "wait": "4m"
+        },
+        {
+          "kind": "session",
+          "title": "PRD v2 edits",
+          "project": "checkout-redesign",
+          "state": "needsYou",
+          "wait": "4m"
+        }
+      ],
+      "always": [
+        "New project “prd”",
+        "Search contents for “prd”"
+      ]
+    },
+    "archivedExample": {
+      "project": "checkout-redesign",
+      "kind": "session",
+      "title": "Kickoff deck notes",
+      "where": "turn 4",
+      "matchedBy": [
+        "words"
+      ],
+      "date": "4mo",
+      "archived": true,
+      "snippet": "…saved cards came up once in kickoff and was parked…"
+    },
+    "$additions": [
+      "search.queries[0].results[0].passages (count 3, and the L71–73 and L88–90 passages)",
+      "dates on the ERR_REFUND_409 results",
+      "search.recent",
+      "search.firstRun",
+      "search.archivedExample (used only on the sheet)",
+      "matchedWords (which words the snippets show in semibold)"
+    ]
   }
 }

@@ -19,6 +19,9 @@ public struct RootView: View {
                 .allowsHitTesting(!model.altitude.isAllProjects)
                 .accessibilityHidden(model.altitude.isAllProjects)
         }
+        // Search (DL-76): over both altitudes, scrim and modal; a short fade, none with Reduce Motion.
+        .overlay { if model.search.isOpen { SearchOverlay().transition(.opacity) } }
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: model.search.isOpen)
         // Altitude change: cross-fade, 150 ms, ease-out; none with Reduce Motion (handoff §9).
         .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: model.altitude)
         .background(DuoColor.pane)

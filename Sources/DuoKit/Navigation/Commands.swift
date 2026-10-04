@@ -70,7 +70,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     @MainActor
     public func isEnabled(in model: AppModel) -> Bool {
         switch self {
-        case .search, .toggleRightPane, .nextPane, .previousPane: false  // not built yet
+        case .search: true
+        case .toggleRightPane, .nextPane, .previousPane: false  // not built yet
         case .allProjects: !model.altitude.isAllProjects
         case .togglePeek: !model.altitude.isAllProjects && !model.needsYouElsewhere.isEmpty
         case .jumpToPeekSelection: model.peekOpen
@@ -101,7 +102,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .italic: model.editor.run("duo.exec('italic'); return 1") { _ in }
         case .closeWindow: NSApp.keyWindow?.performClose(nil)
         case .sendSelection: model.sendSelection()
-        case .search, .toggleRightPane, .nextPane, .previousPane: break
+        case .search: model.openSearch()
+        case .toggleRightPane, .nextPane, .previousPane: break
         }
     }
 }

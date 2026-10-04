@@ -52,7 +52,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sendFile = "send file", sendSession = "send session", sendProject = "send project", sendSelection = "send selection"
     case sendElement = "send element", sendText = "send text", selection
     // Search
-    case search, searchStatus = "search-status"
+    case search, searchStatus = "search-status", searchRebuild = "search-rebuild"
 }
 
 public struct DuoAction: Sendable {
@@ -129,7 +129,7 @@ extension DuoAction {
         .init(.sessionShow, .sessions, "<id>", "A session's title, project, state, note, next step, transcript path and recent turns.", everyday: true),
         .init(.sessionNew, .sessions, "[--project <p>] [--prompt <text>]", "Start a Claude session in a project (the current one by default).",
               ui: ["+ New session", "New Session", "console +"]),
-        .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab"]),
+        .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab", "Resume"]),
         .init(.sessionClose, .sessions, "[id]", "End a session's process and close its tab (it stays listed and resumable).", ui: ["Close Tab"]),
         .init(.sessionMove, .sessions, "<id> --to <project>", "File a session in another project; it moves there on its next resume. The user confirms in Duo.",
               ui: ["Move to Project", "drag a session onto a tile"], timeout: 600),
@@ -192,8 +192,10 @@ extension DuoAction {
 
         // Search
         .init(.search, .search, "<query> | --similar <path> [-k N] [--project P] [--kind file|session|memory] [--exact]",
-              "Search every project by meaning and by words. Works without the app; read-only.", local: true, everyday: true),
-        .init(.searchStatus, .search, "", "How much of each project the search index covers.", local: true),
+              "Search every project by meaning and by words. Works without the app; read-only.",
+              ui: ["Search Everything…", "Search all projects", "Clear filters", "Include archived", "Exact"], local: true, everyday: true),
+        .init(.searchStatus, .search, "", "How much of each project the search index covers.", ui: ["Show details"], local: true),
+        .init(.searchRebuild, .search, "", "Rebuild the search index from scratch (the old one goes to the Trash).", ui: ["Rebuild the index"]),
     ]
 
     public static let byID: [ActionID: DuoAction] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
@@ -219,7 +221,6 @@ extension DuoAction {
 public enum Parity {
     public static let uiOnly: [String: String] = [
         "Close Window": "window management",
-        "Search Everything…": "not built yet (search M-UI, designed); `duo2 search` covers content and `duo2 projects` / `sessions` the names",
         "Toggle Right Pane": "not built yet",
         "Next Pane": "not built yet",
         "Previous Pane": "not built yet",

@@ -175,6 +175,24 @@ public enum FixtureHarness {
                 FileHandle.standardError.write(Data("sheet: [\(all.map(\.title).joined(separator: " | "))]\n".utf8))
                 all.first(where: { $0.title == (parts.count > 1 ? parts[1] : "") })?.performClick(nil)
             } else { FileHandle.standardError.write(Data("sheet: none\n".utf8)) }
+        case "search":   // search:<query>: open the modal (⇧⌘A) and type the query
+            if !model.search.isOpen { model.openSearch() }
+            model.searchQueryChanged(parts.count > 1 ? parts[1] : "")
+        case "search-pick":   // search-pick:<n>: select row n
+            if parts.count > 1, let n = Int(parts[1]) { model.selectSearchRow(n) }
+        case "search-action":   // search-action:<SearchAction.ID raw value>
+            if parts.count > 1, let id = SearchAction.ID(rawValue: parts[1]) { model.runSearchAction(id) }
+        case "search-key":   // search-key:down|up|return|tab|esc|exact|narrow|send
+            let keys: [String: SearchKey] = ["down": .down, "up": .up, "return": .returnKey, "tab": .tab, "esc": .escape,
+                                             "exact": .toggleExact, "narrow": .narrow, "send": .chord(.sendToClaude), "extend": .extendDown,
+                                             "readonly": .chord(.readOnly), "copypath": .chord(.copyPath)]
+            if parts.count > 1, let k = keys[parts[1]] { model.searchKey(k) }
+        case "search-state":
+            let st = model.search
+            var lines = ["search-state: open=\(st.isOpen) phase=\(st.phase) query=\(st.query.debugDescription) exact=\(st.exact) scope=\(st.scopeProject ?? "all") selected=\(st.selected) menu=\(st.menuOpen) coverage=\(st.coverage ?? "-")"]
+            lines += st.items.prefix(12).enumerated().map { i, it in "  \(i == st.selected ? ">" : " ") \(it.goTo ? "goto" : it.kind.rawValue) \(it.project ?? "Unfiled") · \(it.title) · \(it.location) · \(it.matchedBy) \(it.date ?? "")" }
+            lines.append("  footer: ↩ \(st.returnLabel) · similar=\(st.similarTo?.title ?? "-") · at=\(model.altitude.isAllProjects ? "all" : model.currentProject?.name ?? "?") rightTab=\(model.rightTab ?? "-") console=\(model.consoleTab ?? "-")")
+            FileHandle.standardError.write(Data((lines.joined(separator: "\n") + "\n").utf8))
         case "ui-state":
             let w = NSApp.windows.first(where: { $0.title == "Duo" })
             let fr = w?.firstResponder.map { String(describing: type(of: $0)) } ?? "-"

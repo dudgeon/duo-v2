@@ -321,6 +321,8 @@ extension AppModel {
         case .walkSetup:
             guard let t = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             walkSetup(t, done: done)
+        case .searchRebuild:
+            rebuildSearchIndex(); done(.ok("Rebuilding the search index; `duo2 search-status` shows progress."))
         case .help, .doctor, .legacy, .install, .uninstall, .hook, .search, .searchStatus:
             done(.fail("`duo2 \(id.rawValue)` runs in the CLI, not the app"))
         }

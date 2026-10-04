@@ -44,7 +44,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 sessions [--project <p>]` | Sessions with id, state, title and project. | — |
 | `duo2 session show <id>` | A session's title, project, state, note, next step, transcript path and recent turns. | — |
 | `duo2 session new [--project <p>] [--prompt <text>]` | Start a Claude session in a project (the current one by default). | + New session, New Session, console + |
-| `duo2 session open <id>` | Show a session's terminal, resuming it if needed. | session row, console tab, Home tab |
+| `duo2 session open <id>` | Show a session's terminal, resuming it if needed. | session row, console tab, Home tab, Resume |
 | `duo2 session close [id]` | End a session's process and close its tab (it stays listed and resumable). | Close Tab |
 | `duo2 session move <id> --to <project>` | File a session in another project; it moves there on its next resume. The user confirms in Duo. | Move to Project, drag a session onto a tile |
 | `duo2 session note <text>` | Tell the user what this session is doing (one line, shown in Duo). | — |
@@ -114,8 +114,9 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 
 | Command | What it does | In the app |
 |---|---|---|
-| `duo2 search <query> \| --similar <path> [-k N] [--project P] [--kind file\|session\|memory] [--exact]` | Search every project by meaning and by words. Works without the app; read-only. | — |
-| `duo2 search-status` | How much of each project the search index covers. | — |
+| `duo2 search <query> \| --similar <path> [-k N] [--project P] [--kind file\|session\|memory] [--exact]` | Search every project by meaning and by words. Works without the app; read-only. | Search Everything…, Search all projects, Clear filters, Include archived, Exact |
+| `duo2 search-status` | How much of each project the search index covers. | Show details |
+| `duo2 search-rebuild` | Rebuild the search index from scratch (the old one goes to the Trash). | Rebuild the index |
 
 ## Setup
 
@@ -143,6 +144,5 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Previous Pane | not built yet |
 | Resume a session | the debug gallery only (DL-59 removed it from the app) |
 | Save to Recreate | writes the user's own text back after the file was removed on disk; Claude can do the same with `duo2 doc edit` (content) once the user asks |
-| Search Everything… | not built yet (search M-UI, designed); `duo2 search` covers content and `duo2 projects` / `sessions` the names |
 | Toggle Right Pane | not built yet |
 | confirmation sheet | the user's own consent; Claude can't confirm for them |

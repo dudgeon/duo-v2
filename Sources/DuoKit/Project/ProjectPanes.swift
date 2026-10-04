@@ -377,7 +377,9 @@ struct RightPane: View {
             .padding(.horizontal, 20)
             .frame(height: DuoMetric.tabStripHeight)
             DuoColor.rule.frame(height: 1)
-            if let path = model.rightTab, ["html", "htm"].contains((path as NSString).pathExtension.lowercased()),
+            if model.rightTab == ReadOnlySession.tabKey, let ro = model.readOnlySession {
+                ReadOnlySessionView(session: ro)
+            } else if let path = model.rightTab, ["html", "htm"].contains((path as NSString).pathExtension.lowercased()),
                let file = model.liveFile(path), let root = model.projectFolder {
                 // Local HTML, read-only and live (v1; DL-67): its own web view, with the element picker.
                 ZStack(alignment: .bottom) {
@@ -414,6 +416,7 @@ struct RightPane: View {
         for doc in model.openDocuments where doc != model.projectFile {
             tabs.append((id: doc, title: (doc as NSString).lastPathComponent, isDocument: true))
         }
+        if let ro = model.readOnlySession { tabs.append((id: ReadOnlySession.tabKey, title: ro.title, isDocument: false)) }
         // Fixture mode keeps its single document tab (the targets).
         if let doc = model.rightTab, doc.contains("."), !tabs.contains(where: { $0.id == doc }), doc != model.projectFile {
             tabs.append((id: doc, title: (doc as NSString).lastPathComponent, isDocument: true))
@@ -568,13 +571,20 @@ struct DocumentPlaceholder: View {
                 if doc.path == path {
                     ForEach(Array(doc.sections.enumerated()), id: \.element) { i, section in
                         if doc.addedByClaude.contains(section) {
+                            let landed = model.searchLanding?.section == section
                             HStack(alignment: .firstTextBaseline, spacing: DuoSpace.gapRowItems) {
                                 Text(section).duoText(.title)
                                 Text("added by Claude").duoText(.body).foregroundStyle(DuoColor.text2)
+                                if landed, let label = model.searchLanding?.label {
+                                    Spacer(minLength: 8)
+                                    Text(label).duoText(.body).foregroundStyle(DuoColor.text2)
+                                }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(EdgeInsets(top: 10, leading: 12, bottom: 12, trailing: 12))
                             .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.selected))
+                            // Opened from search: outlined in 1.5 text, apart from Claude's fill (search-open-file).
+                            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(landed ? DuoColor.text : .clear, lineWidth: 1.5))
                             .padding(.horizontal, -12)
                             .padding(.top, 8)
                         } else {

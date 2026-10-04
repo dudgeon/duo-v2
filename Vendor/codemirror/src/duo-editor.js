@@ -113,6 +113,33 @@ const livePreview = ViewPlugin.fromClass(class {
 
 // ---------- "added by Claude" highlight (DL-5, LR-33) ----------
 
+// Opened from search (search-open-file): the matched lines outlined in 1.5 text, labelled
+// `L40–58 · from search`, matched words semibold. Separate from Claude's `selected` fill, so
+// both can show at once. Cleared by the next edit.
+const markSearch = StateEffect.define();
+const searchField = StateField.define({
+  create: () => Decoration.none,
+  update(deco, tr) {
+    for (const e of tr.effects) if (e.is(markSearch)) deco = e.value;
+    return tr.docChanged ? Decoration.none : deco;
+  },
+  provide: (f) => EditorView.decorations.from(f),
+});
+function searchDecorations(state, a, b, label, words) {
+  const doc = state.doc, out = [];
+  const first = Math.min(Math.max(1, a), doc.lines), last = Math.min(Math.max(first, b), doc.lines);
+  for (let n = first; n <= last; n++) {
+    const cls = "duo-fs" + (n === first ? " duo-fs-first" : "") + (n === last ? " duo-fs-last" : "");
+    out.push(Decoration.line({ class: cls, attributes: n === first ? { "data-label": label } : {} }).range(doc.line(n).from));
+  }
+  const from = doc.line(first).from, to = doc.line(last).to, text = doc.sliceString(from, to).toLowerCase();
+  for (const w of words || []) {
+    const lw = w.toLowerCase();
+    if (!lw) continue;
+    for (let i = text.indexOf(lw); i >= 0; i = text.indexOf(lw, i + lw.length)) out.push(strong.range(from + i, from + i + lw.length));
+  }
+  return Decoration.set(out, true);
+}
 const markAdded = StateEffect.define();
 const clearAdded = StateEffect.define();
 const addedField = StateField.define({
@@ -177,6 +204,11 @@ const duoTheme = EditorView.theme({
   ".duo-em": { fontStyle: "italic" },
   ".duo-code": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px" },
   ".duo-link": { color: "var(--duo-text)", textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)" },
+  ".duo-fs": { boxShadow: "inset 1.5px 0 0 var(--duo-text), inset -1.5px 0 0 var(--duo-text)", paddingLeft: "12px", paddingRight: "12px", marginLeft: "-12px", marginRight: "-12px" },
+  ".duo-fs-first": { boxShadow: "inset 1.5px 0 0 var(--duo-text), inset -1.5px 0 0 var(--duo-text), inset 0 1.5px 0 var(--duo-text)", borderTopLeftRadius: "6px", borderTopRightRadius: "6px", paddingTop: "8px", position: "relative" },
+  ".duo-fs-last": { boxShadow: "inset 1.5px 0 0 var(--duo-text), inset -1.5px 0 0 var(--duo-text), inset 0 -1.5px 0 var(--duo-text)", borderBottomLeftRadius: "6px", borderBottomRightRadius: "6px", paddingBottom: "8px" },
+  ".duo-fs-first.duo-fs-last": { boxShadow: "inset 0 0 0 1.5px var(--duo-text)" },
+  ".duo-fs-first::after": { content: "attr(data-label)", position: "absolute", right: "12px", top: "8px", color: "var(--duo-text2)", fontFamily: "-apple-system, sans-serif", fontSize: "13px" },
   ".duo-added": { backgroundColor: "var(--duo-selected)", borderRadius: "var(--duo-radius-card)" },
   ".duo-task": { margin: "0 6px 0 0", verticalAlign: "-1px" },
   ".cm-searchMatch": { backgroundColor: "var(--duo-selected)" },
@@ -221,6 +253,7 @@ function create(parent, text) {
       search({ top: true }),
       ...(window.duoFlags?.noPreview ? [] : [livePreview]),
       addedField,
+      searchField,
       clearOnUserEdit,
       // Duo's menu chords win over CodeMirror's: ⌘D is Send Selection to Claude (DL-79), ⌘I is
       // Italic (CodeMirror's select-parent-syntax took it, so Format › Italic never fired).
@@ -493,6 +526,13 @@ window.duo = {
     if (doc.indexOf(find, at + 1) >= 0) return { result: "not unique" };
     view.dispatch({ changes: { from: at, to: at + find.length, insert: text }, effects: markAdded.of([[at, at + text.length]]) });
     return { result: "replaced", line: view.state.doc.lineAt(at).number };
+  },
+  revealFromSearch: (a, b, label, words) => {
+    view.dispatch({ effects: markSearch.of(searchDecorations(view.state, a, b, label, words)),
+                    selection: { anchor: view.state.doc.line(Math.min(Math.max(1, a), view.state.doc.lines)).from },
+                    scrollIntoView: true });
+    view.dispatch({ effects: EditorView.scrollIntoView(view.state.doc.line(Math.min(Math.max(1, a), view.state.doc.lines)).from, { y: "center" }) });
+    return true;
   },
   selectLines: (a, b) => {
     const doc = view.state.doc;

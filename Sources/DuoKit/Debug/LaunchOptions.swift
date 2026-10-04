@@ -20,6 +20,8 @@ import Foundation
 public struct LaunchOptions: Sendable {
     public var fixturePath: String?
     public var state: TargetState?
+    /// A search-handoff target (`search-overview`, …), applied on top of `state`.
+    public var searchState: String?
     public var capturePath: String?
     public var captureWindowPath: String?
     public var collapseLeft = false
@@ -39,6 +41,7 @@ public struct LaunchOptions: Sendable {
             case "--fixture": fixturePath = it.next()
             case "--state":
                 let name = it.next() ?? ""
+                if SearchTargets.screens.contains(name) { state = .overview; searchState = name; continue }
                 guard let s = TargetState(rawValue: name) else {
                     FileHandle.standardError.write(Data("Unknown state '\(name)'. Known: \(TargetState.allCases.map(\.rawValue).joined(separator: ", "))\n".utf8))
                     exit(64)

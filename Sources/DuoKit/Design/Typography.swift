@@ -76,4 +76,12 @@ extension View {
     public func duoText(_ style: DuoTextStyle, weight: Font.Weight? = nil) -> some View {
         modifier(DuoTextModifier(spec: style.spec, weight: weight))
     }
+
+    /// A style at another line height, for text that sits on a taller line than its own style
+    /// (search's 12 pt meta on the row's 20 pt line).
+    func duoText(_ style: DuoTextStyle, lineHeight: CGFloat, weight: Font.Weight? = nil) -> some View {
+        let s = style.spec
+        return modifier(DuoTextModifier(spec: DuoTextSpec(size: s.size, lineHeight: lineHeight, weight: s.weight, mono: s.mono,
+                                                          tracking: s.tracking, uppercase: s.uppercase), weight: weight))
+    }
 }

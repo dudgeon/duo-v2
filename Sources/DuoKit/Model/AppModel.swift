@@ -40,6 +40,12 @@ public final class AppModel {
     public var expandedGroups: Set<String> = []
     public var consoleTab: String?              // Session.tabKey (id when live, else name)
     public var rightTab: String?                // "Project", a group name, or a document path
+    /// The search modal (DL-76, DL-80).
+    public let search = SearchUI()
+    /// A session opened read-only from search, shown as a right-pane tab (search-open-session).
+    public var readOnlySession: ReadOnlySession?
+    /// Fixture mode's stand-in document: the section a search result landed on (search-open-file).
+    public var searchLanding: SearchLanding?
     public var selectedFile: String?            // path relative to the project
     /// Open document tabs by project (DL-60): switching to Project no longer closes them.
     public var openDocumentsByProject: [String: [String]] = [:]

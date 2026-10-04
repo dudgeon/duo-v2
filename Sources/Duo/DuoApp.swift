@@ -37,6 +37,7 @@ struct DuoApp: App {
         // Scripted and capture runs never take the socket from the user's open Duo (C-18).
         try? server.start(privateIfTaken: options.capturing) { ChildEnvironment.control = $0 }
         options.state?.apply(to: model)
+        if let screen = options.searchState { SearchTargets.apply(screen, to: model) }
         if options.collapseLeft { model.leftCollapsed = true }
         if let ws = options.workspace {
             model.startLive(root: URL(fileURLWithPath: (ws as NSString).expandingTildeInPath))

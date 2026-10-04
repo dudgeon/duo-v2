@@ -28,6 +28,8 @@ for a in "$@"; do
   esac
 done
 target="$root/screens/$screen.html"
+# Search's targets live in their own handoff (search-handoff/screens); same renderer, same compare.
+[ -f "$target" ] || { [ -f "$root/../search-handoff/screens/$screen.html" ] && root="$(cd "$root/../search-handoff" && pwd)" && target="$root/screens/$screen.html"; } || true
 [ -f "$target" ] || { echo "No such target: screens/$screen.html" >&2; exit 1; }
 [ -f "$shot" ] || { echo "No such screenshot: $shot" >&2; exit 1; }
 shot="$(cd "$(dirname "$shot")" && pwd)/$(basename "$shot")"
