@@ -2116,6 +2116,135 @@
     ],
     "at": "2026-10-04"
    }
+  },
+  {
+   "id": "cons-inventory",
+   "group": "Bringing work in (CONS)",
+   "title": "`duo2 inventory`: Claude's storage at a glance",
+   "what": "Every storage folder: sessions, size, missing folders, collisions, duplicate ids, catch-alls, what Claude's cleanup takes within 7 days (read only).",
+   "steps": [
+    "In a terminal: `duo2 inventory`."
+   ],
+   "expect": "One line per folder, newest first; your home folder marked catch-all; nothing changes on disk.",
+   "ref": "CONS FR-7.1, F-59",
+   "setup": [],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: 13 folders; ~ flagged catch-all; ran in well under a second.",
+     "Checks on a fake config: collision, duplicate and missing-folder flags."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "cons-evidence",
+   "group": "Bringing work in (CONS)",
+   "title": "`duo2 evidence`: what a catch-all folder's sessions worked on",
+   "what": "Files each session edited, its candidate home, and date clusters, so a junk drawer can be split by hand (read only).",
+   "steps": [
+    "`duo2 evidence geoff` (your home folder) and `duo2 evidence ~/repos`."
+   ],
+   "expect": "Sessions grouped by date; each with how many files it edited and the deepest folder holding them (blank when edits span folders).",
+   "ref": "CONS FR-7.10.2–4, F-59",
+   "setup": [],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: ~/repos showed a session that edited 76 files across two sibling repos (home blank, as the PRD says).",
+     "Checks: extraction from the editing tools, file-history and results (reads don't count); candidate home; 48-hour clusters."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "cons-migrate",
+   "group": "Bringing work in (CONS)",
+   "title": "Relocate a session or move a folder with its sessions",
+   "what": "`duo2 migrate plan relocate|move-folder` shows every step; `migrate apply` runs it after you confirm in Duo; `migrate undo` reverses it. Journaled, verified (DL-41 R2).",
+   "steps": [
+    "`duo2 migrate plan move-folder ~/DuoAcceptance/elsewhere/side-project --to ~/DuoAcceptance/workspace/side-project`",
+    "Only if you want to try it on the fixtures: `duo2 migrate apply <id>`, confirm, then `duo2 migrate undo <id>`."
+   ],
+   "expect": "The plan lists the folder rename and each transcript move with its relocated record; apply asks first; undo puts everything back. Claude asks to trust the new folder on the first resume there.",
+   "ref": "CONS §6.3, §7.4, §7.5, F-59",
+   "setup": [],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "10 checks on a throwaway Claude config: relocate, folder move, undo byte for byte, liveness, same-id collision, interrupted journal, encoder mismatch.",
+     "Live: planned two migrations on fixture sessions and printed them."
+    ],
+    "didnt": [
+     "Never applied anything to your real ~/.claude (as you asked)."
+    ],
+    "human": [
+     "Apply and undo one plan on the fixtures, if you're comfortable."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "click-resume",
+   "group": "Bringing work in (CONS)",
+   "title": "Clicking a session card resumes it",
+   "what": "At All projects, clicking a needs-you or review card opens its project with that session resumed in the console.",
+   "steps": [
+    "At All projects, click a card in the action column (not its button)."
+   ],
+   "expect": "Its project opens with the session's terminal live in the console.",
+   "ref": "F-60",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: opening Interview synthesis notes resumed it in the console."
+    ],
+    "didnt": [
+     "The click itself is a mouse action I couldn't make with the screen locked."
+    ],
+    "human": [
+     "Click a card."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "revert-claude",
+   "group": "Editor",
+   "title": "Revert Claude's changes",
+   "what": "Right-click in a highlighted change: Revert This Change, or Revert All of Claude's Changes; also in Edit and `duo2 doc revert` (ENH-4).",
+   "steps": [
+    "Ask Claude to change two lines of `docs/prd.md` in checkout.",
+    "Right-click in one highlight › Revert This Change; then Edit › Revert All of Claude's Changes."
+   ],
+   "expect": "The first puts back that line only (the other stays highlighted); the second puts back the rest. Typing anything first clears the highlights and the revert offer.",
+   "ref": "ENH-4, F-60",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout",
+    "doc open docs/prd.md",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: two changes, `revertAtLine(14)` put back `Interview six buyers` only, then revert-all the other; the text matched the original."
+    ],
+    "didnt": [
+     "Didn't use the right-click menu (screen locked)."
+    ],
+    "human": [
+     "Try it from the menu; say if the stub look will do until a design."
+    ],
+    "at": "2026-10-04"
+   }
   }
  ],
  "decisions": [
