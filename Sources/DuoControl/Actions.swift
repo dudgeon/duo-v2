@@ -34,7 +34,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case viewSidebar = "view sidebar", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
-    case inventory, evidence
+    case inventory, evidence, migrations, migratePlan = "migrate plan", migrateApply = "migrate apply", migrateUndo = "migrate undo"
     // Sessions
     case sessions, sessionShow = "session show", sessionNew = "session new", sessionOpen = "session open"
     case sessionClose = "session close", sessionMove = "session move"
@@ -126,6 +126,11 @@ extension DuoAction {
               ui: ["Make a Project"]),
         .init(.inventory, .projects, "", "Claude's session storage, read only: each folder's sessions, size, missing folders, collisions, duplicate ids, and what Claude's cleanup takes within 7 days (CONS FR-7.1).", timeout: 180),
         .init(.evidence, .projects, "<project|folder>", "For a catch-all folder, read only: the files each session edited, its candidate home, and date clusters (CONS FR-7.10).", timeout: 300),
+        .init(.migrations, .projects, "", "Storage migrations Duo planned or ran, newest first, with their state (CONS §6.3)."),
+        .init(.migratePlan, .projects, "relocate <session> --to <folder> | move-folder <folder> --to <new path>",
+              "Plan a storage change and show every step; nothing moves yet. Relocate moves a session's transcript into another folder's picker, as /cd does; move-folder moves a folder and its sessions together (CONS §7.4, §7.5)."),
+        .init(.migrateApply, .projects, "<migration>", "Run a planned migration: journaled, verified, undoable. The user confirms in Duo.", timeout: 600),
+        .init(.migrateUndo, .projects, "<migration>", "Undo a migration by replaying its journal in reverse.", timeout: 600),
         .init(.projectMerge, .projects, "<source> --into <target>", "Move every session of one project or folder into another. Files stay. The user confirms in Duo.",
               ui: ["Merge Into", "Merge Sessions Into", "drag a tile onto a tile"], timeout: 600),
 

@@ -155,6 +155,8 @@ extension AppModel {
             guard terminals.existing(s.tabKey) != nil else { return done(.fail("\(s.name) isn't running in Duo")) }
             closeSession(s.tabKey)
             done(.ok("Closed \(s.name). It stays listed and resumable."))
+        case .migrations, .migratePlan, .migrateApply, .migrateUndo:
+            migrateVerb(id, inv, done)
         case .inventory:
             // Reads every transcript's head: off the main thread, so Duo keeps answering.
             Task.detached(priority: .userInitiated) {

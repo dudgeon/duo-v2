@@ -184,6 +184,39 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-59 · CONS: inventory, evidence and the journaled migrator (2026-10-04)
+
+- **Read-only (P1):**
+  - `duo2 inventory` lists every Claude storage folder with:
+    - its sessions and bytes;
+    - folders whose cwd is gone;
+    - collisions (sessions from several cwds, FR-7.8.2);
+    - duplicate ids (FR-7.8.1);
+    - catch-all folders;
+    - how many sessions Claude's cleanup takes within 7 days, and how many Duo's archive already holds.
+  - `duo2 evidence <folder>` gives each session's edited files, its candidate home and its date clusters (FR-7.10.2–4).
+  - Both run off the main thread. Checked on a fake config, and live: the home folder is the only catch-all here.
+- **Migrator (P2/P3, Geoff: build it, test on fakes only):**
+  - `Migrator` relocates a session (moves its transcript, sidecar folder and siblings, then appends one `relocated` record, as `/cd` does) and moves a folder with every session under it (folder first, then transcripts, FR-7.5.5).
+  - Invariants enforced:
+    - a write-ahead journal in Duo's Application Support;
+    - liveness (running sessions are refused);
+    - encoder self-calibration (any folder name Duo can't reproduce stops everything);
+    - the CLI version gate (the binary must contain `relocatedCwd`);
+    - kept mtimes;
+    - verification (records parse, history bytes unchanged, the record is last, ids unique);
+    - undo by reverse replay;
+    - interrupted journals block new migrations.
+  - 10 checks run it end to end on a throwaway Claude config, including undo byte for byte.
+  - Verbs: `duo2 migrations`, `migrate plan relocate|move-folder`, `migrate apply` (the user confirms in Duo), `migrate undo`.
+  - Nothing has been applied to the real `~/.claude`. Two plans were made against fixture sessions to check the output, and left unapplied.
+- **Not built:**
+  - Delete (FR-7.6.2): destructive, and DL-47's copy archive covers preservation.
+  - Archive by move (DL-47 chose copies).
+  - Re-keying `~/.claude.json` and `history.jsonl` on a folder move. The plan notes the trust prompt that follows.
+  - `git worktree repair`.
+  - The curation surface: DB-31.
+
 ## F-58 · Surfaces slice 1 built: idle list, terminal colours, empty console, shell tabs (2026-10-04)
 
 - **Built to surfaces-handoff slice 1** (Geoff: build it if it fits the direction; the design choices go on the walk as decisions with mockups).

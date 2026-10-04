@@ -540,6 +540,58 @@ func repoFixture() throws -> Fixture {
         try? FileManager.default.removeItem(at: dir)
     }
 
+    print("migrator (CONS §6.3, §7.4, §7.5; DL-41) on a throwaway Claude config")
+    do {
+        let fm = FileManager.default
+        let root = fm.temporaryDirectory.appending(path: "duo-mig-\(UUID().uuidString)").resolvingSymlinksInPath()
+        let claude = root.appending(path: "claude"), work = root.appending(path: "work")
+        let a = work.appending(path: "a").path, b = work.appending(path: "b").path
+        try fm.createDirectory(atPath: a + "/sub", withIntermediateDirectories: true)
+        try fm.createDirectory(atPath: b, withIntermediateDirectories: true)
+        func session(_ id: String, cwd: String) throws -> URL {
+            let d = claude.appending(path: "projects/" + ClaudeStorage.encode(cwd)); try fm.createDirectory(at: d, withIntermediateDirectories: true)
+            let u = d.appending(path: "\(id).jsonl")
+            try (#"{"type":"user","cwd":"\#(cwd)","uuid":"u-\#(id)","sessionId":"\#(id)","message":{"content":"hi"}}"# + "\n").write(to: u, atomically: true, encoding: .utf8)
+            try fm.createDirectory(at: d.appending(path: id), withIntermediateDirectories: true)
+            try "tool output".write(to: d.appending(path: "\(id)/tool.txt"), atomically: true, encoding: .utf8)
+            try fm.setAttributes([.modificationDate: Date(timeIntervalSince1970: 1_790_000_000)], ofItemAtPath: u.path)
+            return u
+        }
+        let s1 = try session("s1", cwd: a), original = try Data(contentsOf: s1)
+        _ = try session("s2", cwd: a + "/sub")
+        let m = Migrator(claudeDir: claude, journalDir: root.appending(path: "migrations"))
+        let plan = try m.planRelocate("s1", to: b)
+        let done = try m.apply(plan)
+        let moved = claude.appending(path: "projects/\(ClaudeStorage.encode(b))/s1.jsonl")
+        let text = (try? String(contentsOf: moved, encoding: .utf8)) ?? ""
+        check(done.state == .committed && !fm.fileExists(atPath: s1.path) && fm.fileExists(atPath: moved.deletingLastPathComponent().appending(path: "s1/tool.txt").path),
+              "relocate moves the transcript and its sidecar folder, as /cd does")
+        check(text.hasPrefix(String(decoding: original, as: UTF8.self)) && text.contains(#""relocatedCwd":"\#(b)""#) && text.hasSuffix("}\n"),
+              "history untouched; one relocated record appended, last (R1, FR-7.4.3)")
+        check((try? fm.attributesOfItem(atPath: moved.path)[.modificationDate] as? Date)?.timeIntervalSince1970 == 1_790_000_000, "the mtime is kept, so Claude's cleanup clock is unchanged")
+        try m.undo(done)
+        check((try? Data(contentsOf: s1)) == original && !fm.fileExists(atPath: moved.path), "undo puts it back byte for byte")
+        check((try? m.planRelocate("s1", to: b, live: ["s1"])) == nil, "a running session is refused")
+        _ = try session("s1", cwd: b)   // the same id already in the target
+        check((try? m.planRelocate("s1", to: b)) == nil, "a same-id transcript in the target stops the plan (FR-7.4.4)")
+        try fm.removeItem(at: claude.appending(path: "projects/\(ClaudeStorage.encode(b))"))
+        let dest = work.appending(path: "moved").path
+        let move = try m.apply(try m.planFolderMove(a, to: dest))
+        let sub2 = claude.appending(path: "projects/\(ClaudeStorage.encode(dest + "/sub"))/s2.jsonl")
+        check(move.state == .committed && fm.fileExists(atPath: dest + "/sub") && fm.fileExists(atPath: sub2.path)
+              && ((try? String(contentsOf: sub2, encoding: .utf8)) ?? "").contains(#""relocatedCwd":"\#(dest)/sub""#),
+              "a folder move renames the folder and relocates every session under it to the mapped path (FR-7.5.4)")
+        try m.undo(move)
+        check(fm.fileExists(atPath: a + "/sub") && !fm.fileExists(atPath: dest) && (try? Data(contentsOf: s1)) == original, "and undo puts the folder and every transcript back")
+        var stuck = try m.planRelocate("s1", to: b); stuck.state = .applying; try m.save(stuck)
+        check((try? m.apply(try m.planRelocate("s2", to: b))) == nil, "an interrupted migration blocks new ones until it's completed or undone (FR-7.8.4)")
+        try m.undo(stuck)
+        try fm.createDirectory(at: claude.appending(path: "projects/-wrong-name"), withIntermediateDirectories: true)
+        try fm.copyItem(at: s1, to: claude.appending(path: "projects/-wrong-name/x.jsonl"))
+        check(m.calibrationProblem() != nil && (try? m.apply(try m.planRelocate("s2", to: b))) == nil, "a folder name Duo can't reproduce stops every physical operation (§6.3 5)")
+        try? fm.removeItem(at: root)
+    }
+
     print("surfaces slice 1 (DB-1 to DB-4)")
     do {
         // Saturday 3 Oct 2026, 12:00: this week began Sunday 27 Sep (or Monday 28, by locale).
