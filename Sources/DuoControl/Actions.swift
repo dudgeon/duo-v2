@@ -43,6 +43,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
     case sessionLink = "session link"
     case shellNew = "shell new", sessionFork = "session fork", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
+    case tasks, taskMake = "task make", taskAdd = "task add"
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
     case files, fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
@@ -168,6 +169,11 @@ extension DuoAction {
         .init(.idle, .sessions, "", "Idle, resumable sessions, newest first, grouped by when (the map footer's list).", ui: ["idle footer"]),
         .init(.shellNew, .sessions, "", "Open a plain shell in the console (DL-8); typing `claude` in it makes it a session.", ui: ["New Shell"]),
         // Groups (DL-24): related threads, grouped by hand; Duo-owned facts in the project's .duo/sessions.json.
+        .init(.tasks, .sessions, "[--project <p>]", "Task notes (tasks/*.md in each project) with their status and how many sessions their `sessions:` frontmatter links (DL-93)."),
+        .init(.taskMake, .sessions, "<session|group> [--title <t>]", "Make a Task: writes tasks/<slug>.md whose `sessions:` links the session (or the group's sessions; the group becomes the task) and opens it. Undo with `duo2 undo`.",
+              ui: ["Make a Task"]),
+        .init(.taskAdd, .sessions, "<task> <session>", "Add to Task: puts the session's link in the task note's `sessions:` list, touching nothing else in the note. Undo with `duo2 undo`.",
+              ui: ["Add to Task", "Open Task Note"]),
         .init(.groups, .sessions, "[--project <p>]", "Groups and their sessions, with each group's most urgent state."),
         .init(.groupNew, .sessions, "<name> <session>…", "Group sessions of one project under a name."),
         .init(.groupAdd, .sessions, "<group> <session>…", "Add sessions to a group."),

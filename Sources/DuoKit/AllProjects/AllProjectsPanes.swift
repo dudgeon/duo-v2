@@ -508,6 +508,18 @@ struct SessionOrganizeMenu: ViewModifier {
                     // A link for a task note (DL-87): [title](duo2://session/<id>).
                     Button("Copy Link") { model.copySessionLink(sessionKey) }
                     Divider()
+                    // Tasks (DL-93): a note in tasks/ whose `sessions:` links this session.
+                    Button("Make a Task") { model.makeTask(fromSession: sessionKey) }
+                    let tasks = model.taskNotes(in: s.project)
+                    if !tasks.isEmpty {
+                        Menu("Add to Task") {
+                            ForEach(tasks, id: \.path) { t in
+                                Button(t.title) { if let why = model.addToTask(sessionKey: sessionKey, task: t.path) { model.info(why) } }
+                                    .disabled(t.sessionIds.contains(id))
+                            }
+                        }
+                    }
+                    Divider()
                     Menu("Move to Project") {
                         ForEach(model.moveTargets(excluding: s.project)) { p in
                             Button(p.isFolderOnly ? "\(p.name) (folder)" : p.name) { model.moveSessions([id], to: p.name) }

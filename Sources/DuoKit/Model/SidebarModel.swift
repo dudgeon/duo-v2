@@ -25,6 +25,8 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
     public var state: SessionState
     public var wait: String?
     public var kind: Kind
+    /// For a task row (DL-93): the note's path in the project.
+    public var task: String? = nil
 
     /// The session a row stands for (its id when live, else its name): rows are keyed by identity.
     public var sessionKey: String { id.components(separatedBy: "/thread/").last ?? name }
@@ -48,8 +50,8 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
             let threads = g.threads.map { $0.compactMap(session(named:)) }.compactMap(threadRow).sorted(by: urgency)
             guard let lead = threads.first else { continue }
             grouped.formUnion(g.sessions.compactMap { session(named: $0)?.tabKey })
-            rows.append(SidebarRow(id: "\(project)/group/\(g.name)", name: g.name, state: lead.state, wait: lead.wait,
-                                   kind: .group(threads: threads, sessionCount: g.sessions.count)))
+            rows.append(SidebarRow(id: "\(project)/\(g.task == nil ? "group" : "task")/\(g.name)", name: g.name, state: lead.state, wait: lead.wait,
+                                   kind: .group(threads: threads, sessionCount: g.sessions.count), task: g.task))
         }
         // Fork families outside groups fold too: a session and the sessions forked from it.
         let loose = sessions.filter { !grouped.contains($0.tabKey) }

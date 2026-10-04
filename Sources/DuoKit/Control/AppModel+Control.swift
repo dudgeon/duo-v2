@@ -161,6 +161,8 @@ extension AppModel {
             guard isArchived(p.name) != on else { return done(.ok("\(p.name) is already \(on ? "archived" : "in its column").")) }
             setArchived(p.name, on)
             done(.ok(on ? "Archived \(p.name): it's in the Archived rollup under the map. Undo: duo2 undo" : "\(p.name) is back in its column."))
+        case .tasks, .taskMake, .taskAdd:
+            taskVerb(id, inv, req, done)
         case .sessionLink:
             guard let k = inv[0], let s = findSession(k, in: nil), let link = sessionLink(s.tabKey) else { return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)")) }
             done(.ok(link, ["link": link, "url": Self.sessionURL(s.sessionId ?? "")]))

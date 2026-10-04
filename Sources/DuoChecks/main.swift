@@ -45,6 +45,26 @@ func repoFixture() throws -> Fixture {
         check(secs.dropFirst(2).allSatisfy { ["today", "week", "earlier"].contains($0.id) }, "then history by date")
     }
 
+    print("task notes (DL-93)")
+    do {
+        let id1 = "aaaaaaaa-1111-4222-8333-444444444444", id2 = "bbbbbbbb-1111-4222-8333-444444444444"
+        let fresh = TaskNotes.newNote(title: "Exec review prep", links: [TaskNotes.link(title: "Interview [notes]", id: id1)])
+        let parsed = TaskNotes.parse(fresh, path: "tasks/exec-review-prep.md")
+        check(parsed.title == "Exec review prep" && parsed.status == "open" && parsed.sessionIds == [id1], "a new note reads back: title, status, linked session")
+        let added = TaskNotes.adding(TaskNotes.link(title: "Draft", id: id2), to: fresh)
+        check(added.map { TaskNotes.parse($0, path: "t.md").sessionIds } == [id1, id2], "Add to Task appends to the sessions list")
+        check(added.map { $0.replacingOccurrences(of: "\n  - \"[Draft](duo2://session/\(id2))\"", with: "") } == fresh, "and changes nothing else in the note")
+        check(TaskNotes.adding(TaskNotes.link(title: "x", id: id1), to: fresh) == nil, "a session already linked isn't added twice")
+        let bare = "---\ntitle: Old\nsessions: [\(id1)]\nowner: me\n---\nBody\r"
+        check(TaskNotes.parse(bare, path: "t.md").sessionIds == [id1], "bare ids still count (DL-13)")
+        check(TaskNotes.adding(TaskNotes.link(title: "y", id: id2), to: bare).map { TaskNotes.parse($0, path: "t.md").sessionIds } == [id1, id2]
+              && TaskNotes.adding(TaskNotes.link(title: "y", id: id2), to: bare)?.contains("owner: me\n---\nBody\r") == true, "an inline list becomes a block list; the rest stays")
+        let none = "# Just a note\n\nText\n"
+        check(TaskNotes.adding(TaskNotes.link(title: "z", id: id2), to: none).map { TaskNotes.parse($0, path: "tasks/just.md") }?.sessionIds == [id2]
+              && TaskNotes.parse(none, path: "tasks/just.md").title == "Just a note", "a note with no frontmatter gets one; title from its heading")
+        check(TaskNotes.slug("Exec review — prep (v2)!") == "exec-review-prep-v2", "slug filenames")
+    }
+
     print("ordering")
     check(WaitTime("1h") > WaitTime("12m") && WaitTime("3d") > WaitTime("1h") && WaitTime("now") < WaitTime("4m"), "wait times")
     check(SessionState.allCases.sorted() == [.needsYou, .readyForReview, .working, .idle, .resolved], "states most urgent first")

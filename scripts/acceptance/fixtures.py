@@ -108,8 +108,9 @@ def build():
     synth = session(co, "Interview synthesis notes", [("Summarise the six buyer interviews.", "Two buyers left over saved cards; four over shipping costs.")], days_ago=3)
     # A task is a plain note that links to the sessions working on it (DL-87).
     write(co / "tasks" / "exec-review-prep.md",
-          "---\ntype: task\nstatus: doing\n---\n\n# Exec review prep\n\nBuild the story for Oct 14 from the interviews.\n\n"
-          "- [ ] Pull the top three quotes\n- [ ] Draft the one-pager\n\nSessions: [Interview synthesis notes](duo2://session/%s)\n" % synth)
+          "---\ntype: task\ntitle: Exec review prep\nstatus: in-progress\nsessions:\n  - \"[Interview synthesis notes](duo2://session/%s)\"\n---\n\n"
+          "# Exec review prep\n\nBuild the story for Oct 14 from the interviews.\n\n"
+          "- [ ] Pull the top three quotes\n- [ ] Draft the one-pager\n\nStarted from [Interview synthesis notes](duo2://session/%s).\n" % (synth, synth))
     for i in range(9):
         session(rd, "Reading note %d" % (i + 1), [("Note %d on the platform reading." % (i + 1), "Noted.")], days_ago=2 + i)
     session(rf, "Untitled scratch", [("First scratch thought about refunds.", "OK.")], days_ago=1)

@@ -41,6 +41,8 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var project: String
         public var sessions: [String]
         public var threads: [[String]]
+        /// A task note's path in the project (DL-93), when this bundle is a task rather than a group.
+        public var task: String? = nil
     }
 
     public struct Counts: Codable, Sendable, Equatable {

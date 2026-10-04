@@ -823,3 +823,10 @@ Built from the decision path page (DL-87 to DL-91):
 - **Untitled sessions**: the first prompt rung of the title ladder is quoted; with no prompt yet, `Session h:mm a`.
 - **The session list** is built as sections (`SidebarRow.sections`): Needs you, Open (`hasOpenTerminal`), Today / This week by the wait text, Earlier as a fold, then the Archived fold. In fixture states nothing has a terminal open, so the target's "Working" section now shows under "Today" (`project-compare.png`), by decision.
 - 215 checks pass (new: list order, nested topics, quoted first words, start-time names).
+
+## F-66 · Tasks as notes with linked sessions (2026-10-04)
+
+- `TaskNotes` reads `tasks/*.md` (title from `title:`, else the first `# ` heading, else the filename; `status:`; ids from `sessions:` items, links or bare) and edits only the `sessions:` key: appends to a block list, turns an inline list into a block list with the same items, adds the key before the closing fence, or adds a frontmatter block to a note with none. Everything else in the note stays byte for byte (checked), CRLF kept.
+- In the snapshot a task is a `Fixture.Group` with `task:` set, built from the note's links to the project's sessions, so it folds, threads and sorts like a group (mixed by urgency, DL-93). A note linking no listed session isn't a row.
+- Live check on the acceptance fixtures through a private instance: `duo2 task make <session> --title …` wrote `refunds/tasks/refund-edge-cases.md` and opened it; `duo2 task add` appended the second link; the list showed `Refund edge cases · task · 2`.
+- 222 checks pass (8 new for task notes).

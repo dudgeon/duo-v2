@@ -168,6 +168,12 @@ public enum LiveSnapshot {
                 claimed.insert(id)
                 sessions.append(makeSession(id, project: name, folder: f.folder, entry: index.sessions.first { $0.sessionId == id }))
             }
+            // Tasks (DL-93): a note's `sessions:` links make its bundle, beside the groups (DL-88).
+            for t in TaskNotes.load(project: f.folder) {
+                let names = t.sessionIds.compactMap { id in sessions.first { $0.sessionId == id && $0.project == name }?.name }
+                guard !names.isEmpty else { continue }
+                groups.append(Fixture.Group(name: t.title, project: name, sessions: names, threads: names.map { [$0] }, task: t.path))
+            }
             for g in index.groups {
                 let names = g.sessions.compactMap { id in sessions.first { $0.sessionId == id }?.name }
                 groups.append(Fixture.Group(name: g.name, project: name, sessions: names, threads: names.map { [$0] }))

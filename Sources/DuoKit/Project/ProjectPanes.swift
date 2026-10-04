@@ -100,7 +100,8 @@ struct SidebarRowView: View {
                         .accessibilityLabel(expanded ? "Collapse" : "Expand")
                     StateGlyph(row.state)
                     Text(row.name).duoText(.bodyEmphasis).lineLimit(1)
-                    CountPill(text: "group · \(count)", emphasised: true)
+                    // Tasks and groups mix by urgency; the pill says which (DL-93).
+                    CountPill(text: "\(row.task == nil ? "group" : "task") · \(count)", emphasised: true)
                     Spacer(minLength: 8)
                     WaitLabel(text: row.wait)
                 }
@@ -111,9 +112,14 @@ struct SidebarRowView: View {
                 }
                 .padding(.horizontal, DuoSpace.selectionInset)
                 .contentShape(Rectangle())
-                .onActivate { model.selectedSidebarItem = row.name; model.rightTab = row.name }  // action: view tab
+                .onActivate {  // action: view tab
+                    model.selectedSidebarItem = row.name
+                    // A task row opens its note; a group row its group tab.
+                    if let task = row.task { model.openDocument(task) } else { model.rightTab = row.name }
+                }
+                .modifier(GroupRowMenu(name: row.name, task: row.task))
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("\(row.name), group of \(count), \(row.state.spokenName)")
+                .accessibilityLabel("\(row.name), \(row.task == nil ? "group" : "task") of \(count), \(row.state.spokenName)")
                 .accessibilityAddTraits(selected ? .isSelected : [])
 
                 if expanded {
