@@ -184,6 +184,13 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-62 · ⇧⌘A left the keyboard in the terminal (2026-10-04)
+
+- **Seen (Geoff):** the search modal opened, but typing still went to the terminal.
+- **Cause:** the field asked for focus in `updateNSView`, which runs before SwiftUI puts the field in its window on the modal's first appearance. The request found no window and was never repeated. This is the same race as the naming field (F-55).
+- **Fixed:** the field takes focus when it reaches its window, and keeps checking for a moment, since a re-rendering pane (the terminal) can reclaim first responder.
+- **Checked:** in a scripted run, first responder moved from the terminal to the field's editor. In Geoff's Duo, Go › Search Everything… then typing went into the search field.
+
 ## F-61 · Geoff's home-view round: open a project by click, archive a project, active tint, delete a session (2026-10-04)
 
 - **ENH-5:** a single click on a tile already opened its project, confirmed with a synthesised mouse event in a scripted run. A card's project name in the action column now opens the project too.

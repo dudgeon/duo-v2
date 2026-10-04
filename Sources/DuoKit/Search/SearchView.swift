@@ -112,6 +112,11 @@ struct SearchTextField: NSViewRepresentable {
         f.cell?.lineBreakMode = .byTruncatingTail
         f.delegate = context.coordinator
         f.onKey = { [weak model] key in model?.searchKey(key) ?? false }
+        f.wantsFocus = { [weak model] in
+            guard let s = model?.search, s.isOpen, s.wantsFocus else { return false }
+            s.wantsFocus = false
+            return true
+        }
         f.setAccessibilityLabel("Search all projects")
         return f
     }
@@ -121,10 +126,8 @@ struct SearchTextField: NSViewRepresentable {
         if f.stringValue != s.query { f.stringValue = s.query }
         f.placeholderAttributedString = NSAttributedString(string: placeholder, attributes: [
             .font: DuoTextStyle.searchField.spec.nsFont, .foregroundColor: DuoNSColor.text2])
-        if s.isOpen, s.wantsFocus, let w = f.window {
-            s.wantsFocus = false
-            DispatchQueue.main.async { w.makeFirstResponder(f); f.currentEditor()?.selectedRange = NSRange(location: (f.stringValue as NSString).length, length: 0) }
-        }
+        // On first appearance the field isn't in its window yet; KeyField takes focus when it gets there.
+        if s.isOpen, s.wantsFocus, f.window != nil, f.wantsFocus?() == true { f.takeFocus() }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(model: model) }
@@ -157,6 +160,26 @@ struct SearchTextField: NSViewRepresentable {
     /// Takes ⌘ chords and Escape before SwiftUI's host claims them as key equivalents.
     final class KeyField: NSTextField {
         var onKey: ((SearchKey) -> Bool)?
+        /// Asked when the field lands in a window: whether the modal wants the keyboard (⇧⌘A).
+        var wantsFocus: (() -> Bool)?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if window != nil, wantsFocus?() == true { takeFocus() }
+        }
+
+        /// Takes the keyboard from whatever had it (the terminal, the editor), and keeps it: a pane
+        /// that re-renders can reclaim first responder a moment later, so check for a short while.
+        func takeFocus(tries: Int = 8) {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, let w = self.window else { return }
+                if self.currentEditor() == nil || w.firstResponder !== self.currentEditor() {
+                    w.makeFirstResponder(self)
+                    self.currentEditor()?.selectedRange = NSRange(location: (self.stringValue as NSString).length, length: 0)
+                }
+                if tries > 0 { DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { self.takeFocus(tries: tries - 1) } }
+            }
+        }
         override func performKeyEquivalent(with e: NSEvent) -> Bool {
             guard currentEditor() != nil else { return super.performKeyEquivalent(with: e) }
             let mods = e.modifierFlags.intersection([.command, .option, .shift, .control])
