@@ -152,7 +152,9 @@ public final class AppModel {
 
     // MARK: - Live workspace (Phase E)
 
-    @ObservationIgnored public var liveRoot: URL?
+    /// Home's folder (DL-85); nil until one is chosen. Live mode runs either way (DL-82).
+    public var liveRoot: URL?
+    @ObservationIgnored public var isLive = false
     @ObservationIgnored public var liveFolders: [String: URL] = [:]
     /// Live sessions whose process Duo doesn't own (Terminal, the Desktop app, another Duo).
     public var liveElsewhere: Set<String> = []
@@ -179,9 +181,12 @@ public final class AppModel {
         }
     }
 
-    /// Switches to real projects under `root`, refreshing every 2 s from disk and beacons.
-    public func startLive(root: URL) {
+    /// Switches to every real session (DL-82), with Home's projects under `root` when there is a
+    /// Home, refreshing every 2 s from disk and beacons.
+    public func startLive(root: URL?) {
         liveRoot = root
+        guard !isLive else { return refreshLive() }
+        isLive = true
         terminalsMode = .live
         let state = DuoState.load()
         seen = state.seen
@@ -197,7 +202,8 @@ public final class AppModel {
     /// Rebuilds the snapshot off the main thread, one refresh at a time: disk reads can block
     /// (a privacy prompt for ~/Documents, a slow network volume) and must never freeze the UI (F-28).
     public func refreshLive() {
-        guard let root = liveRoot, !refreshing else { return }
+        guard isLive, !refreshing else { return }
+        let root = liveRoot
         refreshing = true
         if let id = visibleSessionId, fixture.sessions.contains(where: { $0.sessionId == id && $0.state == .readyForReview }) {
             seen[id] = Date().timeIntervalSince1970

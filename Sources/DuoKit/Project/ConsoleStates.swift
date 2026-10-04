@@ -17,6 +17,8 @@ public enum ConsoleEmpty: Equatable, Sendable {
     case folderMissing(path: String, nearest: String)
     /// The Home pane with no session (DL-54: only after the last Home tab closes).
     case homeNone
+    /// No Home folder chosen yet (DL-84): sessions are all listed on the map; Home waits.
+    case noHome
 
     var title: String {
         switch self {
@@ -26,6 +28,7 @@ public enum ConsoleEmpty: Equatable, Sendable {
         case .elsewhere(let s, _, let app, _): "\(s) is open in \(app)"
         case .folderMissing: "This session's folder is missing"
         case .homeNone: "No Home session"
+        case .noHome: "No Home folder yet"
         }
     }
 
@@ -38,6 +41,7 @@ public enum ConsoleEmpty: Equatable, Sendable {
             "It has been running there\(since.map { " since \($0)" } ?? ""), so Duo won't start a second copy of it. Finish there and look again, or carry on here as a fork: a new session with the same history."
         case .folderMissing(let path, let nearest): "\(path). Starting it will use the nearest folder that still exists, \(nearest)."
         case .homeNone: "Home is where asks get sorted and sent to projects."
+        case .noHome: "Every Claude session is on the map, by folder. Choose a folder to be Home: it holds the projects you track, and Home's own session sorts asks and sends them to projects."
         }
     }
 }
@@ -178,6 +182,8 @@ struct ConsoleMessage: View {
         case .folderMissing(_, let nearest):
             Button("Start in \(nearest)") { model.newSession() }.keyboardShortcut(.defaultAction)
             Button("Locate Folder…") { model.info("Locating a moved folder is waiting on its design (DB-8).") }
+        case .noHome:
+            Button("Choose Home Folder…") { model.chooseHomeFolder() }.keyboardShortcut(.defaultAction)
         case .homeNone:
             Button("Start Claude in Home") { if let h = model.fixture.home?.name { model.homeTab = model.newSession(in: h) } }
                 .keyboardShortcut(.defaultAction)

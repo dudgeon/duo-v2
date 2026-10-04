@@ -163,8 +163,9 @@ button.copy:focus-visible { outline: 2px solid var(--pick); outline-offset: 2px;
   <section>
     <h2>How Duo does it today</h2>
     <dl class="facts" style="margin:0">
-      <div class="fact"><dt>Home</dt><dd>The workspace folder, set only by the <code>--workspace</code> flag. Without it Duo shows sample data, which is what the 0.1.0 DMG opens to.</dd></div>
-      <div class="fact"><dt>Topic</dt><dd>Worked out on the fly: the name of the folder a project sits in, capitalised. Nothing stores it. A project sitting directly in Home has no topic and <b>doesn't appear on the map at all</b>, which is the wrong default for your layout.</dd></div>
+      <div class="fact"><dt>Sessions</dt><dd><b>Every session in Claude's logs, on every launch</b> (DL-82, built since this page first went up). No setup needed; folders are grouped by the folder they sit in (DL-83).</dd></div>
+      <div class="fact"><dt>Home</dt><dd>Optional, chosen any time (File › Choose Home Folder…). It's the container of the projects you track, with <code>HOME.md</code> at its top (DL-85). <b>Move into Home…</b> brings a project in with its sessions.</dd></div>
+      <div class="fact"><dt>Topic</dt><dd>Worked out on the fly from the folder a project sits in; nothing stores it. Projects directly in Home sit in an unlabelled first column; outside Home, columns are labelled by path (<code>~/repos</code>). That's T1 below, already built as the default.</dd></div>
       <div class="fact"><dt>Project</dt><dd>Any folder with a <code>PROJECT.md</code>, found up to three levels down. Projects can't contain projects.</dd></div>
       <div class="fact"><dt>Session</dt><dd>Belongs to the deepest project folder it ran in, or to the project you filed it in (DL-64).</dd></div>
       <div class="fact"><dt>Task</dt><dd>Format decided, UI parked: one Obsidian-style file per task in <code>tasks/</code> (DL-6), whose <code>sessions:</code> line lists its sessions (DL-13). Nothing reads them yet (DL-25).</dd></div>
@@ -180,8 +181,9 @@ button.copy:focus-visible { outline: 2px solid var(--pick); outline-offset: 2px;
   <section>
     <h2>True whatever you pick</h2>
     <ul>
-      <li><b>Home is chosen at first launch.</b> Pick (or create) the folder; Duo writes <code>HOME.md</code> if it's missing. This also fixes 0.1.0 opening to sample data. The first-run screen still needs a design (§13).</li>
-      <li><b>Projects directly in Home show on the map</b>, in a first column with no label. Today they're missing.</li>
+      <li><b>Every session is visible and usable, Home or not</b> (DL-82). Home is optional and can be chosen any time; Duo writes <code>HOME.md</code> if it's missing.</li>
+      <li><b>Projects directly in Home show on the map</b>, in a first column with no label; folders outside Home are grouped by their parent folder (DL-83). Built.</li>
+      <li><b>Moving a project into Home keeps its sessions</b> (DL-85): the folder and Claude's records move together, undoably.</li>
       <li><b>Topics never become required.</b> A project with no topic is normal.</li>
       <li><b>Forks still fold into one thread row</b> under their session. Threads don't change.</li>
       <li><b>A task row takes the state of its most urgent session</b>, like a group row today, so lists stay sorted by what needs you (handoff §2.1).</li>
@@ -456,7 +458,7 @@ topic: Payments
     <h2>What happens after you pick</h2>
     <ul>
       <li>I record your picks as DL entries and close Q-28.</li>
-      <li>I build the parts that need no new look: the Home chooser at first launch, root projects on the map, the topic rule, and reading and writing tasks with <code>duo2 task</code>.</li>
+      <li>I build the parts that need no new look: the topic rule you pick, and reading and writing tasks with <code>duo2 task</code>.</li>
       <li>Task rows, the To do fold and the first-run screen go to the design queue with a stub until the design agent draws them (no invented designs).</li>
     </ul>
   </section>

@@ -161,6 +161,16 @@ extension AppModel {
             guard isArchived(p.name) != on else { return done(.ok("\(p.name) is already \(on ? "archived" : "in its column").")) }
             setArchived(p.name, on)
             done(.ok(on ? "Archived \(p.name): it's in the Archived rollup under the map. Undo: duo2 undo" : "\(p.name) is back in its column."))
+        case .homeSet:
+            guard let path = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
+            let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath, relativeTo: req.cwd.map { URL(fileURLWithPath: $0) })
+            if let why = setHome(url) { return done(.fail(why)) }
+            done(.ok("Home is \(Self.short(url.standardizedFileURL.path)). Projects in it show on the map by the folder they sit in; everything else is still listed. Undo: duo2 undo"))
+        case .projectMoveIntoHome:
+            guard let name = inv[0], project(named: name) != nil else { return done(.fail(inv[0].map { "no project or folder '\($0)'" } ?? "usage: \(id.action.usage)")) }
+            moveIntoHome(name) { r in
+                switch r { case .success(let m): done(.ok(m)); case .failure(let e): done(.fail("\(e)")) }
+            }
         case .docRevert:
             guard editor.url != nil else { return done(.fail("no document is open in Duo")) }
             let finish: @MainActor (Int) -> Void = { n in done(n > 0 ? .ok("Reverted \(n) of Claude's change(s).") : .fail("no change of Claude's there to revert")) }

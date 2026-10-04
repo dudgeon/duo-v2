@@ -35,6 +35,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
     case projectArchive = "project archive", projectUnarchive = "project unarchive"
+    case homeSet = "home set", projectMoveIntoHome = "project move-into-home"
     case inventory, evidence, migrations, migratePlan = "migrate plan", migrateApply = "migrate apply", migrateUndo = "migrate undo"
     // Sessions
     case sessions, sessionShow = "session show", sessionNew = "session new", sessionOpen = "session open"
@@ -128,6 +129,10 @@ extension DuoAction {
         .init(.projectArchive, .projects, "<project>", "File a project away: its tile moves into the map's Archived rollup. Sessions, counts and search are unchanged. Undo with `duo2 undo`.",
               ui: ["Archive Project", "archived rollup"]),
         .init(.projectUnarchive, .projects, "<project>", "Bring an archived project back to its topic column.", ui: ["Unarchive Project"]),
+        .init(.homeSet, .projects, "<folder>", "Make a folder Home, the container of the projects the user tracks (DL-85): adds a HOME.md if there's none. Duo lists every session with or without a Home. Undo with `duo2 undo`.",
+              ui: ["Choose Home Folder…"]),
+        .init(.projectMoveIntoHome, .projects, "<project|folder>", "Move a project or folder into Home with every session filed under it (journaled; sessions stay its). The user confirms in Duo. Undo with `duo2 undo`.",
+              ui: ["Move into Home…"], timeout: 600),
         .init(.inventory, .projects, "", "Claude's session storage, read only: each folder's sessions, size, missing folders, collisions, duplicate ids, and what Claude's cleanup takes within 7 days (CONS FR-7.1).", timeout: 180),
         .init(.evidence, .projects, "<project|folder>", "For a catch-all folder, read only: the files each session edited, its candidate home, and date clusters (CONS FR-7.10).", timeout: 300),
         .init(.migrations, .projects, "", "Storage migrations Duo planned or ran, newest first, with their state (CONS §6.3)."),

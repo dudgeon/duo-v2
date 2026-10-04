@@ -42,11 +42,15 @@ struct DuoApp: App {
         }
         if options.collapseLeft { model.leftCollapsed = true }
         if let ws = options.workspace {
-            model.startLive(root: URL(fileURLWithPath: (ws as NSString).expandingTildeInPath))
+            // `--workspace none`: live with no Home, whatever Duo's state says (scripted runs, DL-84).
+            model.startLive(root: ws == "none" ? nil : URL(fileURLWithPath: (ws as NSString).expandingTildeInPath))
         } else if let t = options.terminals, t.hasPrefix("demo") {
             let root = t.split(separator: ":", maxSplits: 1).dropFirst().first.map(String.init)
                 ?? FileManager.default.currentDirectoryPath + "/.build/demo"
             model.terminalsMode = .demo(root: root)
+        } else if options.usesFixture == false {
+            // Every launch lists every Claude session (DL-82), with Home's projects once a Home is chosen.
+            model.startLive(root: DuoState.load().root.map { URL(fileURLWithPath: $0) })
         }
         self.model = model
         // Launch trace for scripted runs: one launch in a few opens no window (F-26).

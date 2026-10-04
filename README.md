@@ -16,7 +16,7 @@ scripts/bundle.sh
 open build/Duo.app
 ```
 
-The app currently runs on the design fixture (`docs/design/build-handoff/fixture.json`). To open it in one of the design targets' states:
+Opened plainly, Duo lists every Claude Code session on this Mac, from Claude's logs, grouped by folder; a Home folder (File › Choose Home Folder…, or `duo2 home set <folder>`) holds the projects you track (DL-82 to DL-85). The design fixture (`docs/design/build-handoff/fixture.json`) is for the design targets' states:
 
 ```bash
 build/Duo.app/Contents/MacOS/Duo --state project

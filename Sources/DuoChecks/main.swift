@@ -120,6 +120,54 @@ func repoFixture() throws -> Fixture {
     check(homes.home?.project.name == "home" && homes.contested, "two HOME.md: the remembered one wins, flagged as contested (DL-42)")
     try? FileManager.default.removeItem(at: ws)
 
+    print("home as container, topics by folder (DL-82..85)")
+    do {
+        let base = FileManager.default.temporaryDirectory.appending(path: "duo-home-\(UUID().uuidString)").resolvingSymlinksInPath()
+        let hw = base.appending(path: "work")
+        func put(_ rel: String, _ text: String = "---\n---\n") throws {
+            let u = base.appending(path: rel)
+            try FileManager.default.createDirectory(at: u.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try text.write(to: u, atomically: true, encoding: .utf8)
+        }
+        try put("work/HOME.md")
+        try put("work/checkout/PROJECT.md")
+        try put("work/payments/refunds/PROJECT.md")
+        try FileManager.default.createDirectory(at: hw.appending(path: "scratch"), withIntermediateDirectories: true)
+        try put("outside/repo/PROJECT.md")
+        try FileManager.default.createDirectory(at: base.appending(path: "outside/repo/src"), withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: base.appending(path: "outside/loose"), withIntermediateDirectories: true)
+        let hist: [(id: String, transcript: URL, cwd: String)] = [
+            ("h-home", base.appending(path: "t1.jsonl"), hw.path),
+            ("h-scratch", base.appending(path: "t2.jsonl"), hw.appending(path: "scratch").path),
+            ("h-checkout", base.appending(path: "t3.jsonl"), hw.appending(path: "checkout/src").path),
+            ("h-repo", base.appending(path: "t4.jsonl"), base.appending(path: "outside/repo/src").path),
+            ("h-loose", base.appending(path: "t5.jsonl"), base.appending(path: "outside/loose").path),
+        ]
+        var c = LiveSnapshot.Context(root: hw)
+        c.includeHistory = false
+        c.historyOverride = hist
+        let (hs, _, _) = LiveSnapshot.build(c, beacons: [])
+        let byId = { (id: String) in hs.sessions.first { $0.sessionId == id }?.project }
+        let outsideLabel = ProjectDiscovery.topic(for: base.appending(path: "outside/loose"), root: hw)
+        check(hs.home?.name == "work", "HOME.md at the root makes the root Home (DL-85)")
+        check(byId("h-home") == "work" && byId("h-scratch") == "scratch" && byId("h-checkout") == "checkout",
+              "Home holds only its own folder's sessions; a folder inside it is listed as a folder; deepest project wins")
+        check(byId("h-repo") == "repo" && byId("h-loose") == "loose", "outside Home: a PROJECT.md above the cwd makes a project; other folders listed (DL-82)")
+        check(hs.projects.first { $0.name == "checkout" }?.topic == "" && hs.projects.first { $0.name == "refunds" }?.topic == "Payments"
+              && hs.projects.first { $0.name == "scratch" }?.topic == "", "in Home: unlabelled when directly in it, else the folder it sits in (DL-83)")
+        check(hs.projects.first { $0.name == "repo" }?.topic == outsideLabel && outsideLabel.hasSuffix("/outside"), "outside Home: grouped by parent folder path")
+        check(hs.topics == ["", "Payments", outsideLabel], "columns: Home's root projects, Home's topics, then outside folders")
+        var none = c
+        none.root = nil
+        let (ns, _, _) = LiveSnapshot.build(none, beacons: [])
+        check(ns.home == nil && Set(ns.sessions.compactMap(\.sessionId)) == Set(hist.map(\.id)), "no Home: every session still listed (DL-82)")
+        check(ns.projects.first { $0.name == "checkout" }?.topic == ProjectDiscovery.topic(for: hw.appending(path: "checkout"), root: nil)
+              && ns.projects.first { $0.name == "checkout" }?.isFolderOnly == false, "no Home: projects found from the sessions' folders, grouped by parent")
+        check(ProjectDiscovery.topic(for: FileManager.default.homeDirectoryForCurrentUser.appending(path: "repos/duo"), root: nil) == "~/repos",
+              "a folder in ~/repos is labelled ~/repos")
+        try? FileManager.default.removeItem(at: base)
+    }
+
     print("attention")
     func beacon(_ status: String, _ waiting: String? = nil) -> Beacon {
         Beacon(pid: 1, sessionId: "s", cwd: "/", name: nil, status: status, waitingFor: waiting, statusUpdatedAt: nil, entrypoint: nil, kind: nil)

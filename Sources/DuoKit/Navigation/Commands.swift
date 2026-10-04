@@ -26,6 +26,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case newClaudeSession   // ⌘T: a new Claude session in this console (surfaces-handoff DB-4; Q-26)
     case newShell           // ⇧⌘T: a plain shell in this console (DL-8, DB-4; Q-26)
     case sendSelection      // ⌘D: Send Selection to Claude, legacy's chord (Q-22, DL-79); search's Send to Claude too
+    case chooseHome         // File › Choose Home Folder… (DL-84); no chord
 
     public var title: String {
         switch self {
@@ -50,6 +51,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .revertChange: "Revert Claude's Change"
         case .revertAllChanges: "Revert All of Claude's Changes"
         case .newShell: "New Shell"
+        case .chooseHome: "Choose Home Folder…"
         }
     }
 
@@ -72,7 +74,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeSession: KeyboardShortcut("w", modifiers: .command)
         case .closeWindow: KeyboardShortcut("w", modifiers: [.command, .shift])
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
-        case .revertChange, .revertAllChanges: nil
+        case .revertChange, .revertAllChanges, .chooseHome: nil
         case .newClaudeSession: KeyboardShortcut("t", modifiers: .command)
         case .newShell: KeyboardShortcut("t", modifiers: [.command, .shift])
         }
@@ -93,6 +95,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .bold, .italic: model.webFocus == .editor
         case .sendSelection: model.canSendSelection
         case .newClaudeSession, .newShell: model.terminalsMode == .live
+        case .chooseHome: model.terminalsMode == .live
         case .revertChange: model.webFocus == .editor && (model.editorIfLoaded?.atClaudeChange ?? false)
         case .revertAllChanges: (model.editorIfLoaded?.claudeChanges ?? 0) > 0
         }
@@ -120,6 +123,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .revertChange: model.editor.revertAtCaret()
         case .revertAllChanges: model.editor.revertAll()
         case .newShell: model.newShell()
+        case .chooseHome: model.chooseHomeFolder()
         case .search: model.openSearch()
         case .toggleRightPane, .nextPane, .previousPane: break
         }
@@ -139,6 +143,8 @@ public struct DuoCommands: Commands {
             Divider()
             item(.newMarkdown)
             item(.newFolder)
+            Divider()
+            item(.chooseHome)
         }
         CommandGroup(replacing: .saveItem) {
             item(.save)

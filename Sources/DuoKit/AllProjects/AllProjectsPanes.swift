@@ -14,7 +14,7 @@ struct HomePane: View {
         let tabs = home.map { model.tabSessions(inProject: $0.name) } ?? []
         VStack(spacing: 0) {
             HStack(spacing: DuoSpace.gapRowItems) {
-                Text("★ \(home?.name ?? "home")")
+                Text("★ \(home?.name ?? "Home")")
                     .duoText(.bodyEmphasis)
                     .foregroundStyle(DuoColor.consoleText)
                     .contentShape(Rectangle())
@@ -60,7 +60,7 @@ struct HomePane: View {
                     .accessibilityLabel("\(model.consoleTitle(key)), shell")
                 }
                 // With no tabs, a way to start one (home-none).
-                if tabs.isEmpty && (home.map { model.shells(inProject: $0.name).isEmpty } ?? true) {
+                if home != nil, tabs.isEmpty && (home.map { model.shells(inProject: $0.name).isEmpty } ?? true) {
                     HStack(spacing: 5) {
                         Text("+").duoText(.mono).foregroundStyle(DuoColor.consoleText2)
                             .onActivate { if let h = home?.name { model.homeTab = model.newSession(in: h) } }  // action: session new
@@ -85,6 +85,9 @@ struct HomePane: View {
                let t = model.terminal(project: home.name, session: tab), !t.missingClaude {
                 TerminalSlot(session: t)
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
+            } else if model.fixtureConsole == .noHome || (model.terminalsMode == .live && home == nil) {
+                // No Home folder chosen (DL-84): sessions are listed anyway (DL-82). Stub until designed.
+                ConsoleMessage(state: .noHome, inHome: true)
             } else if model.fixtureConsole == .homeNone || (model.terminalsMode == .live && home != nil) {
                 // Duo starts a Home session at launch (DL-54); this shows once the last one is closed.
                 ConsoleMessage(state: ClaudeLocator.resolve() == nil && model.terminalsMode == .live ? .notFound : .homeNone, inHome: true)
@@ -109,18 +112,25 @@ struct ProjectMapPane: View {
         let f = model.fixture
         VStack(spacing: 0) {
             ScrollView {
-                HStack(alignment: .top, spacing: DuoSpace.gapMapColumns) {
-                    ForEach(Array(f.topics.enumerated()), id: \.element) { i, topic in
-                        VStack(alignment: .leading, spacing: DuoSpace.gapTileToTile) {
-                            SectionLabel(text: topic)
-                            ForEach(model.mapProjects(inTopic: topic)) { p in
-                                ProjectTile(project: p)
-                            }
-                            if i == f.topics.count - 1 {
-                                NewProjectTile()
+                // Columns side by side while each gets 220; past that they wrap into rows (DL-83,
+                // handoff §13's suggested adaptive grid).
+                let topics = f.topics.filter { t in !model.mapProjects(inTopic: t).isEmpty || t == f.topics.last }
+                ViewThatFits(in: .horizontal) {
+                    ForEach(Array(stride(from: max(topics.count, 1), through: 1, by: -1)), id: \.self) { perRow in
+                        VStack(alignment: .leading, spacing: DuoSpace.gapMapColumns + 6) {
+                            ForEach(Array(stride(from: 0, to: topics.count, by: perRow)), id: \.self) { start in
+                                HStack(alignment: .top, spacing: DuoSpace.gapMapColumns) {
+                                    ForEach(start..<min(start + perRow, topics.count), id: \.self) { i in
+                                        MapColumn(topic: topics[i], last: i == topics.count - 1)
+                                            .frame(minWidth: perRow == 1 ? 0 : 220, idealWidth: 220, maxWidth: .infinity, alignment: .topLeading)
+                                    }
+                                    // A short last row keeps the others' column width.
+                                    ForEach(0..<(perRow - min(perRow, topics.count - start)), id: \.self) { _ in
+                                        Color.clear.frame(minWidth: 220, idealWidth: 220, maxWidth: .infinity, maxHeight: 0)
+                                    }
+                                }
                             }
                         }
-                        .frame(maxWidth: .infinity, alignment: .topLeading)
                     }
                 }
                 .padding(DuoSpace.panePadding)
@@ -162,6 +172,23 @@ struct ProjectMapPane: View {
                         .padding(.bottom, DuoMetric.overviewFooterHeight + DuoMetric.borderHairline + 6)
                 }
             }
+        }
+    }
+}
+
+/// One topic's column: its label (none for projects directly in Home, DL-83), then its tiles.
+struct MapColumn: View {
+    @Environment(AppModel.self) private var model
+    let topic: String
+    let last: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DuoSpace.gapTileToTile) {
+            SectionLabel(text: topic.isEmpty ? " " : topic)
+            ForEach(model.mapProjects(inTopic: topic)) { p in
+                ProjectTile(project: p)
+            }
+            if last { NewProjectTile() }
         }
     }
 }
@@ -511,6 +538,10 @@ struct ProjectOrganizeMenu: ViewModifier {
                     Divider()
                     if project.isFolderOnly {
                         Button("Make a Project") { model.makeProject(project.name) }
+                    }
+                    // Into Home with its sessions (DL-85); only for what isn't in Home already.
+                    if model.liveRoot != nil, !model.isInHome(project.name) {
+                        Button("Move into Home…") { model.moveIntoHome(project.name) }
                     }
                     Menu(project.isFolderOnly ? "Merge Sessions Into" : "Merge Into") {
                         ForEach(model.moveTargets(excluding: project.name)) { p in

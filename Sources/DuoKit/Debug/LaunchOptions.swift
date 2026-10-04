@@ -7,7 +7,8 @@ import Foundation
 ///   Duo --capture-window out.png               capture the whole window (drawn; screencapture(1) only with DUO_SCREENCAPTURE=1)
 ///   Duo --fixture path/to/fixture.json         use another fixture file
 ///   Duo --left collapsed                       start with the left pane collapsed
-///   Duo --workspace ~/work                     real projects under a folder, live sessions
+///   Duo                                        every Claude session, live; Home from Duo's state (DL-82)
+///   Duo --workspace ~/work                     the same, with ~/work as Home's folder for this run
 ///   Duo --terminals demo                       real claude terminals in scratch folders (.build/demo)
 ///   Duo --gallery on                           the component gallery instead of the window
 ///   Duo --then open:checkout-redesign,peek     run actions after launch, before capturing
@@ -33,6 +34,8 @@ public struct LaunchOptions: Sendable {
     public var workspace: String?
 
     public var capturing: Bool { capturePath != nil || captureWindowPath != nil }
+    /// The design fixture is for target states, captures and the gallery; a plain launch is live (DL-82).
+    public var usesFixture: Bool { state != nil || searchState != nil || fixturePath != nil || gallery || capturing || thenActions.isEmpty == false }
 
     public init(arguments: [String] = CommandLine.arguments) {
         var it = arguments.dropFirst().makeIterator()
