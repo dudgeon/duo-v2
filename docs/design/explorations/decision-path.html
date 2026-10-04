@@ -1,0 +1,336 @@
+<title>Duo Decision Path</title>
+<style>
+/* Layout: one column of numbered decision cards in dependency order, grouped by stage, with a side lane of quick decisions at the end. */
+:root {
+  --ground: #F3F4F6; --pane: #FFFFFF; --sel: #E9ECEF; --rule: #C9CDD3; --edge: #8B939C;
+  --text: #1F2328; --text2: #5B636D; --accent: #C2410C; --pick: #2F6FDE; --pickbg: #EAF1FD;
+  --done: #1F7A3A; --donebg: #E7F4EA; --wait: #8A6100;
+  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #1B1E23; --pane: #23272E; --sel: #2F343C; --rule: #3A4048; --edge: #6B737D;
+  --text: #E6E8EB; --text2: #9AA1AB; --accent: #F0763E; --pick: #6EA0F5; --pickbg: #22324A;
+  --done: #5CC47A; --donebg: #1F3326; --wait: #E0B04A; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #1B1E23; --pane: #23272E; --sel: #2F343C; --rule: #3A4048; --edge: #6B737D;
+  --text: #E6E8EB; --text2: #9AA1AB; --accent: #F0763E; --pick: #6EA0F5; --pickbg: #22324A;
+  --done: #5CC47A; --donebg: #1F3326; --wait: #E0B04A; color-scheme: dark }
+
+body { background: var(--ground); color: var(--text); font: 14px/1.55 var(--ui); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 72px; display: grid; gap: 28px; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 17px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+a { color: var(--pick); }
+code { font: 12.5px var(--mono); background: var(--sel); padding: 1px 5px; border-radius: 4px; }
+.lede { color: var(--text2); font-size: 15px; }
+.label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); }
+
+/* Progress and channel */
+.bar { display: flex; gap: 12px 20px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--text2); }
+.meter { flex: 1; min-width: 160px; height: 6px; background: var(--sel); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--done); }
+.chan { font-size: 12.5px; border: 1px solid var(--rule); border-radius: 12px; padding: 1px 9px; }
+.chan.ok { color: var(--done); border-color: var(--done); }
+
+/* Dependency map */
+.flow { background: var(--pane); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; overflow-x: auto; }
+.stages { display: grid; grid-template-columns: repeat(5, minmax(130px, 1fr)); gap: 10px; min-width: 700px; }
+.stage { display: grid; gap: 6px; align-content: start; }
+.stage .label { font-size: 10px; }
+.node { font-size: 12.5px; border: 1px solid var(--rule); border-radius: 6px; padding: 5px 8px; background: var(--ground); display: flex; gap: 6px; align-items: baseline; text-decoration: none; color: var(--text); }
+.node b { font: 600 11px var(--mono); color: var(--text2); }
+.node.done { background: var(--donebg); border-color: var(--done); }
+.node.done b { color: var(--done); }
+.node.ready { border-color: var(--pick); }
+.flow .key { margin-top: 12px; font-size: 12px; color: var(--text2); display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* Cards */
+.stagehead { display: grid; gap: 4px; padding-top: 8px; border-top: 1px solid var(--rule); }
+.card { background: var(--pane); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; scroll-margin-top: 16px; }
+.card.done { border-color: var(--done); }
+.top { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.num { font: 600 13px var(--mono); color: var(--text2); min-width: 1.6em; }
+.card.done .num { color: var(--done); }
+.title { font-weight: 600; font-size: 15px; flex: 1; min-width: 220px; }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge { font-size: 11px; border: 1px solid var(--rule); border-radius: 9px; padding: 0 7px; color: var(--text2); white-space: nowrap; }
+.badge.wait { color: var(--wait); border-color: var(--wait); }
+.badge.met { color: var(--done); border-color: var(--done); }
+.why { color: var(--text2); }
+.why b { color: var(--text); font-weight: 600; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
+.opt { text-align: left; font: inherit; color: var(--text); background: var(--ground); border: 1px solid var(--rule); border-radius: 8px; padding: 9px 11px; cursor: pointer; display: grid; gap: 3px; align-content: start; }
+.opt:hover { border-color: var(--edge); }
+.opt:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid var(--pick); outline-offset: 2px; }
+.opt[aria-pressed="true"] { border-color: var(--pick); background: var(--pickbg); box-shadow: 0 0 0 1px var(--pick); }
+.opt .l { font-weight: 600; display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+.opt .d { font-size: 12.5px; color: var(--text2); }
+.rec { font-size: 10.5px; font-weight: 600; color: var(--pick); border: 1px solid var(--pick); border-radius: 9px; padding: 0 6px; }
+.send { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.send textarea { flex: 1; min-width: 220px; box-sizing: border-box; font: 13px var(--ui); color: var(--text); background: var(--ground); border: 1px solid var(--rule); border-radius: 6px; padding: 6px 8px; resize: vertical; min-height: 34px; }
+button.go { font: 600 13px var(--ui); background: var(--text); color: var(--pane); border: 0; border-radius: 6px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+button.go:disabled { opacity: .4; cursor: default; }
+.status { font-size: 12.5px; color: var(--text2); flex-basis: 100%; }
+.status.ok { color: var(--done); }
+.status.err { color: var(--accent); }
+.more { font-size: 12.5px; }
+.quick .opts { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.lane { display: grid; gap: 12px; }
+@media (prefers-reduced-motion: no-preference) { .opt, .card { transition: border-color .12s, background-color .12s; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <span class="label">Duo · open decisions · 2026-10-04</span>
+    <h1>Duo decision path</h1>
+    <p class="lede">Every open question, in the order they unblock each other. Pick an option, add a note if you want, and press <b>Send to Claude</b>: your answer is saved here and posted to the Claude session building Duo as a comment, which it answers. Earlier steps shape later ones, so going in order wastes the least, but any card can be sent at any time.</p>
+    <div class="bar"><span id="count">0 of 15 decided</span><span class="meter"><i id="meter"></i></span><span class="chan" id="chan">Checking the line to Claude…</span></div>
+  </header>
+
+  <section class="flow" aria-label="How the decisions depend on each other">
+    <div class="stages" id="stages"></div>
+    <div class="key"><span>An arrow in a card's badges names what it waits on.</span><span>Green: decided.</span><span>Blue edge: ready, everything it waits on is decided.</span></div>
+  </section>
+
+  <div id="cards" style="display:grid;gap:16px"></div>
+</div>
+
+<script>
+(function () {
+  const STAGES = [
+    { id: "model", name: "1 · The model", blurb: "What Duo's objects are. Everything below is drawn from these answers, so they come first." },
+    { id: "lists", name: "2 · Lists and map", blurb: "How sessions and projects are shown, once the model is set." },
+    { id: "setup", name: "3 · Your setup", blurb: "Something only you can do in Duo 0.1.1, best done once the topic rule is settled." },
+    { id: "design", name: "4 · Design and acceptance", blurb: "What goes to the design agent, and what you walk, once the shapes above are known." },
+    { id: "next", name: "5 · What gets built next", blurb: "The next build round, which depends on everything above." },
+  ];
+  const D = [
+    { id: "tasks", n: 1, stage: "model", title: "Where do tasks live, and how does a session belong to one?",
+      why: "Tasks are optional between a project and its sessions, and a task can exist with no session. Claude files every session by the folder it ran in, so the choice is whether a task is a <b>note pointing at sessions</b> or <b>a folder sessions run in</b>. Decides the task UI, whether groups survive, and the session list's rows.",
+      deps: [], link: ["Options drawn on disk and in Duo", "https://claude.ai/artifact/Eh3kX6j4L1tCs1tQRtiV1F"],
+      opts: [
+        { id: "A", l: "A · Notes that point at sessions", d: "tasks/*.md lists its sessions; sessions run in the project folder. DL-6 and DL-13 as decided. Writes task notes into repos (C-7).", rec: true },
+        { id: "B", l: "B · Folders that sessions run in", d: "Each task is a subfolder with TASK.md. Gives task files a home; every to-do needs a folder, and moves happen on resume." },
+        { id: "C", l: "C · Projects nest at any depth", d: "One idea, no fixed levels. Needs a new tree navigation design; a to-do still needs a folder." },
+        { id: "D", l: "D · Duo keeps the outline", d: "Tasks and their sessions live in Duo's records. Instant, invisible outside Duo; reverses DL-13." },
+      ] },
+    { id: "groups", n: 2, stage: "model", title: "Do groups survive once tasks exist?",
+      why: "A group bundles sessions by hand, held only by Duo (DL-24). A task with sessions is almost the same thing. Only matters if step 1 is A or B.",
+      deps: ["tasks"],
+      opts: [
+        { id: "G1", l: "G1 · Groups become tasks", d: "Grouping sessions writes a task note. One way to bundle; every bundle is a file in the project.", rec: true },
+        { id: "G2", l: "G2 · Keep both", d: "Groups stay quick and Duo-only; tasks are notes. Two similar rows in every list." },
+        { id: "G3", l: "G3 · Groups, promotable", d: "As G2, plus Make a Task on a group." },
+        { id: "na", l: "Doesn't apply", d: "If step 1 is C or D." },
+      ] },
+    { id: "topics", n: 3, stage: "model", title: "What makes a topic?",
+      why: "Built today as T1 (DL-83): inside Home, the folder a project sits in; outside Home, the parent folder's path. This confirms it or changes it, and shapes the map (step 6) and where your Home goes (step 7).",
+      deps: [],
+      opts: [
+        { id: "T1", l: "T1 · An optional folder", d: "What's built. Finder and Duo agree; retopic by moving the folder (sessions follow).", rec: true },
+        { id: "T2", l: "T2 · A line in PROJECT.md", d: "topic: Payments. Folders stay flat; Finder doesn't show it." },
+        { id: "T3", l: "T3 · Folder, line overrides", d: "Flexible; two sources of truth." },
+        { id: "T4", l: "T4 · No topics", d: "One set of projects sorted by attention; the map's columns need a redesign." },
+      ] },
+    { id: "names", n: 4, stage: "lists", title: "What is a session called before Claude titles it?",
+      why: "Every new session reads \"New session\" until Claude names it, so several look the same. Independent of the model; it goes to the design brief with the list.",
+      deps: [], link: ["Session list options with mockups", "https://claude.ai/artifact/8kQoYfSz4rc6HMdkWy5NVN"],
+      opts: [
+        { id: "first-words", l: "Its first words", d: "The start of your first message, until Claude's title arrives.", rec: true },
+        { id: "start-time", l: "Its start time", d: "\"Session 3:42 pm\"." },
+        { id: "keep", l: "Keep \"New session\"", d: "As now." },
+      ] },
+    { id: "list", n: 5, stage: "lists", title: "How is a project's session list organised?",
+      why: "Today's sections (Needs you, Working, Idle, Older) left you unsure whether Idle means running (Q-27). With tasks from step 1, a task becomes a row that folds open, in the state of its most urgent session.",
+      deps: ["tasks", "groups"], link: ["Session list options with mockups", "https://claude.ai/artifact/8kQoYfSz4rc6HMdkWy5NVN"],
+      opts: [
+        { id: "A", l: "A · Open, then past", d: "What's open in Duo first (by state), then everything else by last use.", rec: true },
+        { id: "B", l: "B · Keep states, split Idle", d: "Idle becomes \"Open, quiet\" and \"Closed\"." },
+        { id: "C", l: "C · One timeline with filters", d: "Newest first, with chips to filter by state." },
+      ] },
+    { id: "map", n: 6, stage: "lists", title: "How does the map show folder, project and session?",
+      why: "Partly answered by DL-83: columns are folders, labelled by path outside Home. Left open: whether a breadcrumb shows where you are (Home › Payments › checkout › session) and how the layers are named.",
+      deps: ["topics"], link: ["Map options with mockups", "https://claude.ai/artifact/8kQoYfSz4rc6HMdkWy5NVN"],
+      opts: [
+        { id: "breadcrumb", l: "Folder headings and a full breadcrumb", d: "Columns stay folders; the project view's heading shows the full path of where you are.", rec: true },
+        { id: "labels", l: "Name the layers with labels", d: "Small \"Topic\", \"Project\" captions on the map." },
+        { id: "keep", l: "Keep as built", d: "Folder columns only (DL-83)." },
+      ] },
+    { id: "homefolder", n: 7, stage: "setup", title: "Which folder becomes your Home?",
+      why: "0.1.1 lists every session without a Home. Choosing one (File › Choose Home Folder…) gives tracked projects their own columns; Move into Home… brings a project in with its sessions. Moving a git repo also moves it for other tools (editor recents, other clones' paths).",
+      deps: ["topics"],
+      opts: [
+        { id: "new-work", l: "A new folder, like ~/work", d: "Move projects in as they become tracked. Matches \"begin moving projects into Home\".", rec: true },
+        { id: "repos", l: "~/repos as it is", d: "No moves: your repos become Home's projects at once, untracked ones included." },
+        { id: "later", l: "Not yet", d: "Keep using Duo without a Home for now." },
+      ] },
+    { id: "brief", n: 8, stage: "design", title: "When does design slice 2 go to the design agent?",
+      why: "Design is the bottleneck (C-5). 39 surfaces wait (DB-1 to DB-39). Some don't depend on steps 1–6 (Settings, first run, editor states, the no-Home pane); the task rows and session list do.",
+      deps: ["tasks", "list", "names"],
+      opts: [
+        { id: "split", l: "Split: stable surfaces now, lists after", d: "I write the prompt for the stable set today and a second once steps 1–6 are decided.", rec: true },
+        { id: "after", l: "One brief, after steps 1–6", d: "One pass, a little later." },
+        { id: "now", l: "Everything now", d: "The list and task rows go with open questions attached." },
+      ] },
+    { id: "walk", n: 9, stage: "design", title: "What happens to the open acceptance walk?",
+      why: "The walk has 89 features and 5 unanswered decisions (the quick ones below). The workspace and session-list features will change with steps 1–6; the editor, search, files and duo2 features won't.",
+      deps: ["list", "map"], link: ["The walk page", "https://claude.ai/artifact/Wu4bb9tB7C4HH1UEfXgKMa"],
+      opts: [
+        { id: "stable-now", l: "Walk the stable groups now", d: "Editor, search, files, sending, duo2, in 0.1.1. Workspace groups carry to the next walk.", rec: true },
+        { id: "all-now", l: "Walk it all now", d: "Including what's about to change." },
+        { id: "fresh-later", l: "Replace it with a fresh walk later", d: "After the next build round; nothing walked until then." },
+      ] },
+    { id: "next", n: 10, stage: "next", title: "What do I build after these decisions?",
+      why: "Everything here depends on the answers above. The browser (Phase K) also unblocks ENH-8, a new browser tab.",
+      deps: ["tasks", "list", "brief"],
+      opts: [
+        { id: "tasks-lists", l: "Tasks and the session list", d: "Whatever steps 1, 2, 4 and 5 chose, with stubs where design is pending.", rec: true },
+        { id: "browser", l: "The browser and ENH-8", d: "Phase K: browser tabs in the right pane, ⌥⌘T." },
+        { id: "settings", l: "Settings and first run", d: "Plain stand-ins for Q-12: Claude's path, Home, the retention consent." },
+        { id: "editor", l: "Editor enhancements", d: "ENH-1 frontmatter fields, ENH-3 @ completion." },
+      ] },
+  ];
+  const QUICK = [
+    { id: "s1-idle-elsewhere", title: "Idle list: show sessions open in Terminal?", opts: [{ id: "yes", l: "Show them", rec: true }, { id: "no", l: "Hide them" }] },
+    { id: "s1-elsewhere", title: "A session open in another app: offer to end it there?", opts: [{ id: "fork", l: "Explain and offer a fork", rec: true }, { id: "end", l: "Offer to end it" }] },
+    { id: "s1-chords", title: "⌘T new Claude session, ⇧⌘T new shell?", opts: [{ id: "t-st", l: "As built", rec: true }, { id: "swap", l: "Swap them" }, { id: "none", l: "No chords" }] },
+    { id: "s1-shell-exit", title: "A shell that exits cleanly: close its tab?", opts: [{ id: "close", l: "Close it", rec: true }, { id: "keep", l: "Keep it with Restart" }] },
+    { id: "s1-shell-glyph", title: "Shell tabs carry a prompt mark?", opts: [{ id: "mark", l: "Keep the mark", rec: true }, { id: "none", l: "No mark" }] },
+  ];
+  const ALL = D.concat(QUICK);
+  const byId = Object.fromEntries(ALL.map((d) => [d.id, d]));
+  const picks = {}, notes = {};
+  const saved = {};   // from the database: {choice, label, note, sent}
+  let db = null, comments = null, canSend = "off";
+
+  try { const s = JSON.parse(localStorage.getItem("duo-decision-path") || "{}"); Object.assign(picks, s.picks || {}); Object.assign(notes, s.notes || {}); } catch (_) {}
+  const keep = () => { try { localStorage.setItem("duo-decision-path", JSON.stringify({ picks, notes })); } catch (_) {} };
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const optLabel = (d, id) => id === "other" ? "Something else" : (d.opts.find((o) => o.id === id) || {}).l || id;
+
+  // The stage map
+  const stagesEl = document.getElementById("stages");
+  function drawMap() {
+    stagesEl.innerHTML = STAGES.map((s) => `<div class="stage"><span class="label">${esc(s.name)}</span>${
+      D.filter((d) => d.stage === s.id).map((d) => {
+        const done = !!saved[d.id], ready = !done && d.deps.every((x) => saved[x]);
+        return `<a class="node${done ? " done" : ready ? " ready" : ""}" href="#${d.id}"><b>${d.n}</b>${esc(short(d))}</a>`;
+      }).join("")}${s.id === "next" ? `<span class="label" style="margin-top:8px">Any time</span><a class="node${QUICK.every((q) => saved[q.id]) ? " done" : " ready"}" href="#quick"><b>Q</b>Five quick ones</a>` : ""}</div>`).join("");
+  }
+  function short(d) { return { tasks: "Where tasks live", groups: "Groups vs tasks", topics: "Topic rule", names: "Untitled sessions", list: "Session list", map: "Map layers", homefolder: "Your Home folder", brief: "Design slice 2", walk: "The open walk", next: "Next build" }[d.id]; }
+
+  // Cards
+  const cardsEl = document.getElementById("cards");
+  function optButtons(d) {
+    return d.opts.concat([{ id: "other", l: "Something else", d: "Say what in the note." }]).map((o) =>
+      `<button type="button" class="opt" data-d="${d.id}" data-o="${o.id}" aria-pressed="false"><span class="l">${esc(o.l)}${o.rec ? '<span class="rec">Recommended</span>' : ""}</span>${o.d ? `<span class="d">${esc(o.d)}</span>` : ""}</button>`).join("");
+  }
+  function sendRow(d) {
+    return `<div class="send"><textarea id="note-${d.id}" rows="1" aria-label="Note for ${esc(d.title)}" placeholder="Note (optional)">${esc(notes[d.id] || "")}</textarea><button type="button" class="go" data-send="${d.id}" disabled>Send to Claude</button><span class="status" id="st-${d.id}" aria-live="polite"></span></div>`;
+  }
+  let html = "";
+  STAGES.forEach((s) => {
+    html += `<div class="stagehead"><h2>${esc(s.name)}</h2><p class="why" style="color:var(--text2)">${esc(s.blurb)}</p></div>`;
+    D.filter((d) => d.stage === s.id).forEach((d) => {
+      html += `<article class="card" id="${d.id}"><div class="top"><span class="num">${d.n}</span><span class="title">${esc(d.title)}</span><span class="badges" id="bd-${d.id}"></span></div>
+        <p class="why">${d.why}</p>${d.link ? `<a class="more" href="${d.link[1]}" target="_blank" rel="noopener">${esc(d.link[0])} ↗</a>` : ""}
+        <div class="opts">${optButtons(d)}</div>${sendRow(d)}</article>`;
+    });
+  });
+  html += `<div class="stagehead" id="quick"><h2>Any time · five quick ones</h2><p style="color:var(--text2)">Left from surfaces slice 1 (Q-26). Built as recommended; none blocks anything. Your earlier answer on terminal colours (muted) is recorded.</p></div><div class="lane">`;
+  QUICK.forEach((q) => {
+    html += `<article class="card quick" id="${q.id}"><div class="top"><span class="num">Q</span><span class="title">${esc(q.title)}</span><span class="badges" id="bd-${q.id}"></span></div><div class="opts">${optButtons(q)}</div>${sendRow(q)}</article>`;
+  });
+  html += `</div>`;
+  cardsEl.innerHTML = html;
+
+  function render() {
+    ALL.forEach((d) => {
+      const pick = picks[d.id] || (saved[d.id] && saved[d.id].choice);
+      document.querySelectorAll(`.opt[data-d="${d.id}"]`).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.o === pick)));
+      const card = document.getElementById(d.id);
+      card.classList.toggle("done", !!saved[d.id]);
+      const btn = document.querySelector(`[data-send="${d.id}"]`);
+      const needsNote = pick === "other" && !(document.getElementById("note-" + d.id).value.trim());
+      btn.disabled = !pick || needsNote || !db;
+      btn.textContent = canSend === "available" ? (saved[d.id] ? "Send again" : "Send to Claude") : (saved[d.id] ? "Save again" : "Save decision");
+      const bd = [];
+      if (saved[d.id]) bd.push(`<span class="badge met">Decided: ${esc(saved[d.id].label)}</span>`);
+      (d.deps || []).forEach((x) => bd.push(`<span class="badge ${saved[x] ? "met" : "wait"}">${saved[x] ? "✓" : "after"} ${byId[x].n} ${esc(short(byId[x]))}</span>`));
+      document.getElementById("bd-" + d.id).innerHTML = bd.join("");
+      const st = document.getElementById("st-" + d.id);
+      if (saved[d.id] && !st.dataset.fresh) {
+        st.className = "status ok";
+        st.textContent = saved[d.id].sent ? "Sent to Claude." : "Saved here; Claude reads it when you ask.";
+      }
+    });
+    const n = ALL.filter((d) => saved[d.id]).length;
+    document.getElementById("count").textContent = `${n} of ${ALL.length} decided`;
+    document.getElementById("meter").style.width = (100 * n / ALL.length) + "%";
+    drawMap();
+  }
+
+  cardsEl.addEventListener("click", async (e) => {
+    const o = e.target.closest(".opt");
+    if (o) { picks[o.dataset.d] = o.dataset.o; keep(); render(); return; }
+    const b = e.target.closest("[data-send]");
+    if (!b || b.disabled) return;
+    const d = byId[b.dataset.send];
+    const choice = picks[d.id] || (saved[d.id] && saved[d.id].choice);
+    const note = document.getElementById("note-" + d.id).value.trim();
+    const label = optLabel(d, choice);
+    const st = document.getElementById("st-" + d.id);
+    st.dataset.fresh = "1"; st.className = "status"; st.textContent = "Saving…"; b.disabled = true;
+    const head = d.n ? `Decision ${d.n} (${d.id}): ${d.title}` : `Quick decision (${d.id}): ${d.title}`;
+    const text = `${head}\nChoice: ${label}${note ? `\nNote: ${note}` : ""}`;
+    let sent = false, why = "";
+    if (comments && canSend === "available") {
+      try { await comments.sendToClaude({ anchor: await comments.anchorFor(document.getElementById(d.id)), text }); sent = true; }
+      catch (err) { why = err && err.code === "consent_required" ? "Allow comments from this page to send it." : err && err.code === "claude_unavailable" ? "No Claude session is listening right now." : "Couldn't send it."; }
+    }
+    try {
+      await db.doc("decisions/" + d.id).set({ choice, label, note, sent, at: new Date().toISOString() });
+      st.className = "status ok";
+      st.textContent = sent ? "Sent to Claude. Its reply arrives as a comment on this card." : (why ? why + " Saved here; Claude reads it when you ask." : "Saved here; Claude reads it when you ask.");
+    } catch (err) {
+      st.className = "status err";
+      st.textContent = sent ? "Sent to Claude, but not saved here." : "Not saved: " + ((err && err.message) || "the store refused it") + ".";
+    }
+    delete st.dataset.fresh;
+    render();
+  });
+  cardsEl.addEventListener("input", (e) => {
+    if (e.target.id && e.target.id.startsWith("note-")) { notes[e.target.id.slice(5)] = e.target.value; keep(); render(); }
+  });
+
+  render();
+
+  // Capabilities light up when they arrive; the page works (read-only) without them.
+  (async () => {
+    const chan = document.getElementById("chan");
+    try { db = await window.claude?.use?.("db"); } catch (_) { db = null; }
+    if (db) {
+      db.collection("decisions").onSnapshot((snap) => {
+        for (const k of Object.keys(saved)) delete saved[k];
+        snap.docs.forEach((doc) => { if (doc.exists && byId[doc.id]) saved[doc.id] = doc.data(); });
+        render();
+      }, () => {});
+    }
+    try { comments = await window.claude?.use?.("comments"); } catch (_) { comments = null; }
+    const check = async () => {
+      try { canSend = comments ? await comments.canSendToClaude() : "off"; } catch (_) { canSend = "off"; }
+      chan.className = "chan" + (canSend === "available" ? " ok" : "");
+      chan.textContent = !db ? "Read-only here: open it on claude.ai to decide" :
+        canSend === "available" ? "Sends reach Claude directly" :
+        canSend === "no_session" ? "Claude isn't listening now: decisions are saved for it" :
+        "Decisions are saved for Claude to read";
+      render();
+    };
+    await check();
+    setInterval(check, 30000);
+  })();
+})();
+</script>
