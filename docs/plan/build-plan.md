@@ -187,7 +187,7 @@ Shared by everything after it, including both PRDs.
 | Builds | Follows SRCH's own phasing on Phase E's foundation. **M1 (SRCH P1):** central Duo-owned index (Application Support; content-hash keyed; one writer, many readers; crash-safe), file source across all registry projects, hybrid semantic + lexical retrieval, the read-only `search` CLI (Phase F), coverage reporting, a basic search UI. **M2 (SRCH P2):** session, memory and `CLAUDE.md` sources; Unsorted/Unfiled and archived handling; facets; open and resume actions; secret exclusion and redaction (SRCH L15). **M3 (SRCH P3):** find similar, send to Claude, curation-view integration (L14), replacing the curation title filter. Background throttled indexing with recent-first backfill (L8). Model delivered with Duo, checksummed, never downloaded (SRCH FR-7.9). |
 | Needs | S13, S14, S15; Phase E (inventory, registry, attribution); Phase F (CLI). |
 | Gates | ⛔ design: the search UI, and where it lives relative to the `⌘K` jump field (❓ G4). ❓ SRCH Q4–Q7 (storage engine, merge/boost tuning, deny-list, record columns). ❓ G2 (model weights in git). |
-| Status | **M1 back end built early (F-36)**, while every remaining v1 item waited on design (Geoff, 2026-10-03: progress whatever can be done with the screen locked): index, file source, hybrid ranking, `duo2 search` / `search-status`, coverage, session guidance; Q4 decided (SQLite, FTS5, rollback journal); DL-40 delivery done. **P2 sources built (F-38):** sessions (conversation text, by turn, attributed or Unfiled), memory notes. **Next:** the search UI once designed (brief for Claude Design queued); archived handling and facets in the UI; find similar (P3). |
+| Status | **M1 back end built early (F-36)**, while every remaining v1 item waited on design (Geoff, 2026-10-03: progress whatever can be done with the screen locked): index, file source, hybrid ranking, `duo2 search` / `search-status`, coverage, session guidance; Q4 decided (SQLite, FTS5, rollback journal); DL-40 delivery done. **P2 sources built (F-38):** sessions (conversation text, by turn, attributed or Unfiled), memory notes. **Next:** the search UI once designed (brief for Claude Design: `docs/design/search-design-brief.md`); archived handling and facets in the UI; find similar (P3). |
 
 ### Phase L — Ship
 
@@ -244,7 +244,7 @@ Batch these into design passes; each is a ⛔ in its phase.
 2. Before Phase D: terminal ANSI palette (pick in S1), shell tab appearance, empty console (LR-11).
 3. Before Phase E ends: empty states (first run, no projects, no Home, nothing needs you), project-moved notice (LR-23), create-project flow, "Use as Home" (Q-4), retention consent, minimal Settings (Q-12).
 4. Before v1 docs: Project tab (focused-project card), convert-folder and file-session interactions (DL-4, minimal), local HTML tab.
-5. v1.1: search UI, browser and inspector, version history, groups by hand and group page.
+5. v1.1: search UI (**brief ready: `docs/design/search-design-brief.md`**, includes the ⌘K relationship as its Q1), browser and inspector, version history, groups by hand and group page.
 
 ## 4. Dependency order at a glance
 
