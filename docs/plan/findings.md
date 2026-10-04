@@ -184,6 +184,23 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-39 · Spike S6: the native hedge (swift-markdown-engine) doesn't scale; CodeMirror 6 stays (2026-10-03)
+
+Geoff asked for S6 to run now (2026-10-03). `Vendor/swift-markdown-engine`: the dependency-free core at commit `1c2e76c1` (Apache-2.0); it **builds with the Command Line Tools alone**. `Spikes/S6Native` hosts its `NativeTextViewWrapper` (TextKit 2) offscreen and drives the text view directly.
+
+| Same criteria as S4 (F-34) | Native engine | CodeMirror 6 |
+|---|---|---|
+| Unedited round trip (385 KB, 13 KB, CRLF, 1.2 MB) | byte-identical ✔ | byte-identical ✔ |
+| Open 1.2 MB / 385 KB / 13 KB | 3.7 s / 1.2 s / 0.35 s | 7–23 ms |
+| Typing, 1.2 MB (p95) | **244 ms** | 1 ms |
+| Typing, 13 KB (p95) | 3.6 ms | — |
+| Memory with 1.2 MB open | 543 MB (process) | 102 MB (WebContent) |
+| After 300 characters on 1.2 MB | 1.4 GB | 129 MB (paced) |
+
+- **Decision stands: CodeMirror 6 for v1**, native later (stack rec #8). The engine is pleasant at PM-document sizes but its cost grows with document length, so a long transcript-derived note or the legacy `tasks.md` would freeze typing.
+- Not judged: the outside-edit caret (the spike rebuilt the view rather than updating it in place, which isn't a fair test), and the engine's own bold command (it needs its controller wired to the view; the spike typed the markers instead). The binding isn't updated synchronously after an edit (likely debounced).
+- Keyboard-side checks (spellcheck, dictation, Writing Tools) would favour native; they're still to do for CodeMirror with Geoff at the Mac.
+
 ## F-38 · Search P2 back end: sessions and memory (2026-10-03)
 
 - **Sessions (L7, FR-7.2):** every top-level transcript in `~/.claude/projects/*/`. Only conversation text: user prompts (not tool results, harness-wrapped commands or system reminders) and assistant prose (not thinking or tool calls). One unit per turn ("You: … Claude: …"), split at 300 tokens, located as `turn N` (FR-7.2.3). Title: custom → AI → first prompt. Unknown record types and broken lines are skipped (FR-7.2.2); a changed transcript is re-read whole (FR-7.2.4, simple and correct; appends could be incremental later).

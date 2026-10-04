@@ -1,0 +1,147 @@
+//
+//  PlatformDrawing.swift
+//  MarkdownEngine
+//
+//  Call-site drawing shims for the places where AppKit and UIKit genuinely diverge,
+//  used by the cross-platform `MarkdownTextLayoutFragment` draw helpers. `Platform.swift`
+//  declares the type vocabulary; these are the behavioral shims it intentionally
+//  defers to the subsystem that needs them.
+//
+//  Each shim reproduces the exact macOS behavior on macOS, so the fragment port is a
+//  no-op refactor there; the iOS branch mirrors it with the UIKit equivalent (the
+//  context/flip half is already validated by the Phase 0.5 + UITextView spikes).
+//
+
+import CoreGraphics
+import Foundation
+
+#if canImport(UIKit)
+import UIKit
+#else
+import AppKit
+#endif
+
+/// Run `body` with a top-left / y-down drawing context current, so the fragment's
+/// y-down geometry (`point.y + tb.origin.y`) draws upright on both platforms.
+///
+/// macOS: wrap the CGContext in a `flipped: true` `NSGraphicsContext` (the original
+/// idiom). iOS: the `draw(at:in:)` context is already top-left, so just push it as
+/// the current UIKit context (Path A from the spike).
+func withFlippedDrawingContext(_ cg: CGContext, _ body: () -> Void) {
+#if canImport(UIKit)
+    UIGraphicsPushContext(cg)
+    defer { UIGraphicsPopContext() }
+    body()
+#else
+    NSGraphicsContext.saveGraphicsState()
+    defer { NSGraphicsContext.restoreGraphicsState() }
+    NSGraphicsContext.current = NSGraphicsContext(cgContext: cg, flipped: true)
+    body()
+#endif
+}
+
+/// Fill `outerRect` minus `cutouts` using the current fill color and the even-odd
+/// rule — used to punch active text-selection rects out of the code-block background
+/// so the system selection highlight stays visible. Caller sets the fill color first.
+func fillEvenOdd(outerRect: CGRect, cutouts: [CGRect], cornerRadius: CGFloat = 0) {
+    // Clamp as in `platformRoundedRectPath` so a large radius on a short rect
+    // doesn't produce malformed UIKit geometry.
+    let radius = max(0, min(cornerRadius, min(outerRect.width, outerRect.height) / 2))
+#if canImport(UIKit)
+    let path = radius > 0
+        ? UIBezierPath(roundedRect: outerRect, cornerRadius: radius)
+        : UIBezierPath(rect: outerRect)
+    path.usesEvenOddFillRule = true
+    for r in cutouts { path.append(UIBezierPath(rect: r)) }
+    path.fill()
+#else
+    let path = NSBezierPath()
+    path.windingRule = .evenOdd
+    if radius > 0 {
+        path.appendRoundedRect(outerRect, xRadius: radius, yRadius: radius)
+    } else {
+        path.appendRect(outerRect)
+    }
+    for r in cutouts { path.appendRect(r) }
+    path.fill()
+#endif
+}
+
+/// A rounded-rect bezier path, spelled the same on both platforms.
+///
+/// The radius is clamped to half the shorter side: `NSBezierPath` clamps on its
+/// own, but `UIBezierPath(roundedRect:cornerRadius:)` produces malformed geometry
+/// when the radius exceeds `min(width, height) / 2` — which a small `cornerRadius`
+/// on a one-character inline-code pill (a few points wide) easily hits.
+func platformRoundedRectPath(_ rect: CGRect, cornerRadius: CGFloat) -> PlatformBezierPath {
+    let radius = max(0, min(cornerRadius, min(rect.width, rect.height) / 2))
+#if canImport(UIKit)
+    return UIBezierPath(roundedRect: rect, cornerRadius: radius)
+#else
+    return NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
+#endif
+}
+
+extension PlatformColor {
+    /// RGB components in a device/extended-RGB space, or nil if the color can't be
+    /// converted. Used for the tolerance compare in `isCodeBlockBackgroundColor`.
+    var rgbComponents: (red: CGFloat, green: CGFloat, blue: CGFloat)? {
+#if canImport(UIKit)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        guard getRed(&r, green: &g, blue: &b, alpha: &a) else { return nil }
+        return (r, g, b)
+#else
+        guard let c = usingColorSpace(.deviceRGB) else { return nil }
+        return (c.redComponent, c.greenComponent, c.blueComponent)
+#endif
+    }
+}
+
+/// Composite `draw` into a bitmap-backed `PlatformImage` of `size`, with a top-left /
+/// y-down drawing context current — so callers express geometry in top-down coordinates
+/// on both platforms (the table grid does, mirroring the original macOS table renderer).
+///
+/// macOS: a `flipped: true` `NSImage` (AppKit applies the y-flip without mirroring glyphs).
+/// iOS: `UIGraphicsImageRenderer`, whose context is already top-left/y-down.
+func renderFlippedPlatformImage(size: CGSize, _ draw: @escaping () -> Void) -> PlatformImage {
+#if canImport(UIKit)
+    let renderer = UIGraphicsImageRenderer(size: size)
+    return renderer.image { _ in draw() }
+#else
+    return NSImage(size: size, flipped: true) { _ in
+        draw()
+        return true
+    }
+#endif
+}
+
+extension PlatformBezierPath {
+    /// AppKit spells the line-segment append `line(to:)`; UIKit spells it `addLine(to:)`.
+    /// (`move(to:)` agrees across both.)
+    func addLineCompat(to point: CGPoint) {
+#if canImport(UIKit)
+        addLine(to: point)
+#else
+        line(to: point)
+#endif
+    }
+}
+
+/// A tinted SF Symbol image at the given point size, or nil if the symbol is missing.
+/// The tint is applied explicitly (`.alwaysOriginal` on iOS, hierarchical on macOS)
+/// so a template symbol doesn't inherit the surrounding context fill — the checkbox
+/// tint caveat the spike flagged.
+func tintedSymbolImage(named name: String, pointSize: CGFloat, tint: PlatformColor) -> PlatformImage? {
+#if canImport(UIKit)
+    let config = UIImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
+    return UIImage(systemName: name)?
+        .applyingSymbolConfiguration(config)?
+        .withTintColor(tint, renderingMode: .alwaysOriginal)
+#else
+    guard let base = NSImage(systemSymbolName: name, accessibilityDescription: nil) else { return nil }
+    let sizeConfig = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
+    let colorConfig = NSImage.SymbolConfiguration(hierarchicalColor: tint)
+    let symbolConfig = sizeConfig.applying(colorConfig)
+    return base.withSymbolConfiguration(symbolConfig) ?? base
+#endif
+}

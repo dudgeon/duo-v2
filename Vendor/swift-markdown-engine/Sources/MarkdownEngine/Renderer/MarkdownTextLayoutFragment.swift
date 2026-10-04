@@ -1,0 +1,774 @@
+//
+//  MarkdownTextLayoutFragment.swift
+//  MarkdownEngine
+//
+//  Created by Luca Chen on 12.04.26.
+//
+//  TextKit 2 replacement for CodeBlockLayoutManager.
+//  Draws code-block backgrounds, LaTeX images, and task checkboxes
+//  via NSTextLayoutFragment instead of NSLayoutManager glyph overrides.
+//
+//  Cross-platform: the draw helpers establish their flipped/top-left context and
+//  resolve theme/config/selection/scale through platform shims (PlatformDrawing.swift)
+//  and an injected `MarkdownFragmentContext`, so this file is AppKit-free and iOS-ready.
+//  On macOS every shim resolves to the original AppKit idiom, so this is an inert
+//  refactor of the macOS render path.
+//
+
+#if canImport(UIKit)
+import UIKit
+#else
+import AppKit
+#endif
+
+// MARK: - Custom attribute keys for rendering overlays
+
+extension NSAttributedString.Key {
+    static let latexImage = NSAttributedString.Key("LatexRenderedImage")
+    static let latexBounds = NSAttributedString.Key("LatexImageBounds")
+    static let latexIsBlock = NSAttributedString.Key("LatexIsBlock")
+    static let latexBlockOffsetY = NSAttributedString.Key("LatexBlockOffsetY")
+    static let thematicBreak = NSAttributedString.Key("ThematicBreak")
+    /// Int nesting level (1-based) of a blockquote line; the fragment
+    /// paints that many vertical bars in the left gutter.
+    static let blockquoteLevel = NSAttributedString.Key("BlockquoteLevel")
+    /// Marks a bullet-list marker char (`-`/`*`/`+`) whose glyph is hidden so
+    /// the fragment can paint a `•` in its place. Set to `true`.
+    static let bulletMarker = NSAttributedString.Key("BulletListMarker")
+    /// PlatformColor — inline-code background drawn as a rounded pill (instead
+    /// of the flat `.backgroundColor` run). Value is the fill color.
+    static let inlineCodePill = NSAttributedString.Key("InlineCodePill")
+    /// Bool — marks a `.latexImage` anchor as a genuine image embed (`![](…)`
+    /// or `![[…]]`) rather than a rendered LaTeX formula or table image. Only
+    /// these anchors honor `ImageEmbedStyle.cornerRadius`, so rounding an image
+    /// never clips a table's grid corners.
+    static let imageEmbedRoundable = NSAttributedString.Key("ImageEmbedRoundable")
+    /// CGFloat — natural image width; presence flags block as overlay-rendered.
+    static let scrollableBlockNaturalWidth = NSAttributedString.Key("ScrollableBlockNaturalWidth")
+    /// Int — hash of source text; key for overlay reconcile + offset persistence.
+    static let scrollableBlockSourceID = NSAttributedString.Key("ScrollableBlockSourceID")
+    /// CGFloat — total reserved height (image + scroller strip) for overlay sizing.
+    static let scrollableBlockTotalHeight = NSAttributedString.Key("ScrollableBlockTotalHeight")
+    /// NSValue(range:) — full multi-line range of the wide-table source, used to scope width-change restyles.
+    static let scrollableBlockFullRange = NSAttributedString.Key("ScrollableBlockFullRange")
+}
+
+final class MarkdownTextLayoutFragment: NSTextLayoutFragment {
+
+    /// Per-fragment rendering inputs (theme, syntax highlighter, base font, selection,
+    /// display scale), injected by `MarkdownLayoutManagerDelegate`. Queried live at
+    /// draw time. Replaces the macOS-only `container.textView as? NativeTextView` chain.
+    weak var renderingContext: (any MarkdownFragmentContext)?
+
+    /// Strip below an overlay block for the legacy-small scroller (~11pt) + buffer.
+    static let scrollableBlockScrollerStrip: CGFloat = 14
+
+    // MARK: - FB15131180
+
+    #if os(macOS)
+    /// Maps to TextKit-2's private `extraLineFragmentAttributes` selector so we can pin the trailing extra-line metrics to body font; otherwise a trailing heading paragraph inflates `usageBoundsForTextContainer` by ~30pt when the caret enters it. Pattern from STTextView.
+    ///
+    /// **macOS-only by design.** This overrides a PRIVATE Apple selector. Shipping it
+    /// in an embeddable iOS *library* risks an App Store private-API rejection
+    /// (ITMS-90338-class static-analysis flag). The trailing heading-metrics inflation
+    /// it fixes is a macOS-observed symptom; on iOS we accept the minor
+    /// trailing-line-spacing degradation at document end rather than ship a private
+    /// selector. (Tracked: revisit with a public-API trailing-metrics fix if needed.)
+    @objc(extraLineFragmentAttributes)
+    dynamic var stExtraLineFragmentAttributes: NSDictionary?
+    #endif
+
+    // MARK: - Rendering surface
+
+    /// Extend rendering bounds for code-block backgrounds (full container width)
+    /// and block images drawn below text via paragraphSpacing.
+    override var renderingSurfaceBounds: CGRect {
+        var bounds = super.renderingSurfaceBounds
+        if hasCodeBlockBackground || hasThematicBreak || hasBlockquote {
+            let containerWidth = textLayoutManager?.textContainer?.size.width ?? bounds.width
+            // Extend left to container edge
+            bounds.origin.x = -layoutFragmentFrame.origin.x
+            bounds.size.width = containerWidth
+        }
+        // Extend bounds to cover block images that render below the text line
+        // (visibleSource mode uses paragraphSpacing to create space for the image).
+        for rect in blockImageRects(at: .zero) {
+            bounds = bounds.union(rect)
+        }
+        // Inline-code pills widen each run by `horizontalPadding` beyond the glyph
+        // advances the base surface covers; inflate horizontally so an edge pill
+        // isn't clipped on a partial invalidation.
+        if let padding = renderingContext?.configuration.inlineCode.horizontalPadding,
+           padding.isFinite, padding > 0, hasInlineCodePill {
+            bounds = bounds.insetBy(dx: -padding, dy: 0)
+        }
+        return bounds
+    }
+
+    // MARK: - Drawing
+
+    override func draw(at point: CGPoint, in context: CGContext) {
+        // 1. Code-block backgrounds (behind text)
+        drawCodeBlockBackground(at: point, in: context)
+
+        // 2. LaTeX images (behind text — hidden markers are invisible anyway)
+        drawLatexImages(at: point, in: context)
+
+        // 2b. Inline-code pills (rounded background behind inline code text)
+        drawInlineCodePills(at: point, in: context)
+
+        // 3. Normal text
+        super.draw(at: point, in: context)
+
+        // 4. Task checkboxes (on top of hidden [ ]/[x] markers)
+        drawTaskCheckboxes(at: point, in: context)
+
+        // 4b. Bullet glyphs (on top of hidden -/*/+ markers)
+        drawBulletMarkers(at: point, in: context)
+
+        // 5. Thematic breaks (full-width line, painted last so it doesn't
+        //    fight with anything that already drew at the line's center)
+        drawThematicBreaks(at: point, in: context)
+
+        // 6. Blockquote bars (left gutter, behind nothing — text is indented)
+        drawBlockquoteBars(at: point, in: context)
+    }
+
+    // MARK: - Helpers
+
+    /// NSRange in the document for this fragment's content.
+    private var fragmentNSRange: NSRange? {
+        guard let tcs = textLayoutManager?.textContentManager as? NSTextContentStorage else { return nil }
+        let start = tcs.offset(from: tcs.documentRange.location, to: rangeInElement.location)
+        let end = tcs.offset(from: tcs.documentRange.location, to: rangeInElement.endLocation)
+        guard start != NSNotFound, end != NSNotFound, end > start else { return nil }
+        return NSRange(location: start, length: end - start)
+    }
+
+    private var textStorage: NSTextStorage? {
+        (textLayoutManager?.textContentManager as? NSTextContentStorage)?.textStorage
+    }
+
+    /// Returns the drawing position for a character at `docIndex` (document-level NSRange location).
+    /// `point` is the draw origin passed to `draw(at:in:)`.
+    private func drawPosition(forDocumentCharAt docIndex: Int, point: CGPoint) -> (x: CGFloat, baselineY: CGFloat, lineHeight: CGFloat)? {
+        guard let fragRange = fragmentNSRange else { return nil }
+        let localIndex = docIndex - fragRange.location
+        guard localIndex >= 0 else { return nil }
+
+        // NSTextLineFragment.typographicBounds.origin.y is already relative to the
+        // parent layout fragment, so we use it directly — accumulating per-line
+        // heights would double-count the inter-line offset on wrapped lines.
+        for lineFragment in textLineFragments {
+            let lr = lineFragment.characterRange
+            if localIndex >= lr.location && localIndex < lr.location + lr.length {
+                let charPos = lineFragment.locationForCharacter(at: localIndex)
+                let tb = lineFragment.typographicBounds
+                return (
+                    x: point.x + tb.origin.x + charPos.x,
+                    baselineY: point.y + tb.origin.y + charPos.y,
+                    lineHeight: tb.height
+                )
+            }
+        }
+        return nil
+    }
+
+    /// Typographic bounds of the line fragment containing `localIndex`
+    /// (index relative to the fragment, not the document).
+    private func lineBounds(forLocalIndex localIndex: Int, point: CGPoint) -> CGRect? {
+        for lineFragment in textLineFragments {
+            let lr = lineFragment.characterRange
+            if localIndex >= lr.location && localIndex < lr.location + lr.length {
+                let tb = lineFragment.typographicBounds
+                return CGRect(x: point.x + lineFragment.glyphOrigin.x + tb.origin.x,
+                              y: point.y + tb.origin.y,
+                              width: tb.width,
+                              height: tb.height)
+            }
+        }
+        return nil
+    }
+
+    // MARK: - Code Block Background
+
+    private var hasCodeBlockBackground: Bool {
+        guard let ts = textStorage, let range = fragmentNSRange, range.length > 0 else { return false }
+        let bgColor = ts.attribute(.backgroundColor, at: range.location, effectiveRange: nil) as? PlatformColor
+        guard let bgColor else { return false }
+        return isCodeBlockBackgroundColor(bgColor)
+    }
+
+    private var hasThematicBreak: Bool {
+        guard let ts = textStorage, let range = fragmentNSRange, range.length > 0 else { return false }
+        var found = false
+        ts.enumerateAttribute(.thematicBreak, in: range, options: []) { value, _, stop in
+            if value as? Bool == true {
+                found = true
+                stop.pointee = true
+            }
+        }
+        return found
+    }
+
+    private var hasBlockquote: Bool {
+        guard let ts = textStorage, let range = fragmentNSRange, range.length > 0 else { return false }
+        var found = false
+        ts.enumerateAttribute(.blockquoteLevel, in: range, options: []) { value, _, stop in
+            if value is Int {
+                found = true
+                stop.pointee = true
+            }
+        }
+        return found
+    }
+
+    private var hasInlineCodePill: Bool {
+        guard let ts = textStorage, let range = fragmentNSRange, range.length > 0 else { return false }
+        var found = false
+        ts.enumerateAttribute(.inlineCodePill, in: range, options: []) { value, _, stop in
+            if value is PlatformColor {
+                found = true
+                stop.pointee = true
+            }
+        }
+        return found
+    }
+
+    private func drawCodeBlockBackground(at point: CGPoint, in context: CGContext) {
+        guard let ts = textStorage, let range = fragmentNSRange, range.length > 0 else { return }
+
+        // Only fenced code-block fragments get the full-width fill (first char must carry the code background).
+        guard let color = ts.attribute(.backgroundColor, at: range.location, effectiveRange: nil) as? PlatformColor,
+              isCodeBlockBackgroundColor(color) else { return }
+
+        let containerWidth = textLayoutManager?.textContainer?.size.width ?? layoutFragmentFrame.width
+
+        var effectiveHeight = layoutFragmentFrame.height
+        if textLineFragments.count > 1,
+           let lastLF = textLineFragments.last,
+           lastLF.characterRange.length == 0 {
+            effectiveHeight -= lastLF.typographicBounds.height
+        }
+
+        let scale = renderingContext?.displayScale ?? 2.0
+        let rawY = point.y
+        let rawMaxY = point.y + effectiveHeight
+        let snappedY = floor(rawY * scale) / scale
+        let snappedMaxY = ceil(rawMaxY * scale) / scale
+
+        // Draw the background (optionally inset + rounded), clipping out any active
+        // selection rects so the system's blue selection highlight stays visible.
+        // A fenced block is a single layout fragment, so rounding the per-fragment
+        // rect yields one rounded card rather than rounding at line boundaries.
+        let codeStyle = renderingContext?.configuration.codeBlock ?? .default
+        let inset = max(0, codeStyle.backgroundHorizontalInset)
+        let cornerRadius = max(0, codeStyle.cornerRadius)
+        withFlippedDrawingContext(context) {
+            let bgRect = CGRect(
+                x: point.x - layoutFragmentFrame.origin.x + inset,
+                y: snappedY,
+                width: max(0, containerWidth - inset * 2),
+                height: snappedMaxY - snappedY
+            )
+
+            let selectionRects = selectionRectsInDrawCoordinates(drawPoint: point, snappedY: snappedY, snappedMaxY: snappedMaxY)
+            color.setFill()
+            if selectionRects.isEmpty {
+                if cornerRadius > 0 {
+                    platformRoundedRectPath(bgRect, cornerRadius: cornerRadius).fill()
+                } else {
+                    PlatformBezierPath(rect: bgRect).fill()
+                }
+            } else {
+                fillEvenOdd(outerRect: bgRect, cutouts: selectionRects.map { $0.intersection(bgRect) }, cornerRadius: cornerRadius)
+            }
+        }
+    }
+
+    /// Returns active text-selection rectangles intersecting this fragment, in
+    /// the same draw-relative coordinate system used by `drawCodeBlockBackground`.
+    private func selectionRectsInDrawCoordinates(drawPoint: CGPoint, snappedY: CGFloat, snappedMaxY: CGFloat) -> [CGRect] {
+        guard let tlm = textLayoutManager else { return [] }
+        var rects: [CGRect] = []
+
+        let dx = drawPoint.x - layoutFragmentFrame.origin.x
+        let myRange = self.rangeInElement
+
+        for selection in tlm.textSelections {
+            for textRange in selection.textRanges {
+                let interStart = textRange.location.compare(myRange.location) == .orderedAscending
+                    ? myRange.location : textRange.location
+                let interEnd = textRange.endLocation.compare(myRange.endLocation) == .orderedDescending
+                    ? myRange.endLocation : textRange.endLocation
+                guard interStart.compare(interEnd) == .orderedAscending,
+                      let intersection = NSTextRange(location: interStart, end: interEnd) else { continue }
+
+                tlm.enumerateTextSegments(in: intersection, type: .selection, options: []) { _, segFrame, _, _ in
+                    // Expand vertically to match the bgRect's snapped span so the
+                    // even-odd cut-out is geometrically congruent with the fill.
+                    let drawRect = CGRect(
+                        x: segFrame.origin.x + dx,
+                        y: snappedY,
+                        width: segFrame.width,
+                        height: snappedMaxY - snappedY
+                    )
+                    rects.append(drawRect)
+                    return true
+                }
+            }
+        }
+        return rects
+    }
+
+    private func isCodeBlockBackgroundColor(_ color: PlatformColor) -> Bool {
+        let highlighter = renderingContext?.configuration.services.syntaxHighlighter
+            ?? PlainTextSyntaxHighlighter()
+        let currentBg = highlighter.backgroundColor(for: renderingContext?.colorScheme ?? .light)
+        guard let colorRGB = color.rgbComponents,
+              let currentBgRGB = currentBg.rgbComponents else { return false }
+        let tolerance: CGFloat = 0.03
+        return abs(colorRGB.red - currentBgRGB.red) < tolerance &&
+               abs(colorRGB.green - currentBgRGB.green) < tolerance &&
+               abs(colorRGB.blue - currentBgRGB.blue) < tolerance
+    }
+
+    // MARK: - LaTeX / Block Image Helpers
+
+    /// Compute the draw rect for a block image at `attrRange` using `point` as
+    /// the draw origin.  Shared by `drawLatexImages` and `blockImageRects` so
+    /// bounds and rendering stay in sync.
+    private func blockImageDrawRect(
+        attrRange: NSRange,
+        imageBounds: CGRect,
+        blockOffsetY: CGFloat?,
+        point: CGPoint
+    ) -> CGRect? {
+        guard let pos = drawPosition(forDocumentCharAt: attrRange.location, point: point) else { return nil }
+        let fragLocation = fragmentNSRange?.location ?? 0
+        let localStart = attrRange.location - fragLocation
+        let localLast = max(localStart, localStart + attrRange.length - 1)
+        let firstLb = lineBounds(forLocalIndex: localStart, point: point)
+        // For a wrapped source span (e.g. a long `![alt](url)` that wraps in
+        // a narrow window), anchor to the LAST line's maxY so the image
+        // doesn't paint over subsequent wrapped lines of its own source.
+        let lastLb = lineBounds(forLocalIndex: localLast, point: point) ?? firstLb
+        let lineHeight = firstLb?.height ?? pos.lineHeight
+        let firstLineMinY = firstLb?.origin.y ?? (pos.baselineY - lineHeight)
+        let lastLineMaxY = (lastLb?.origin.y ?? firstLineMinY) + (lastLb?.height ?? lineHeight)
+
+        let yPosition: CGFloat
+        if let blockOffsetY {
+            // Backward-compatible interpretation: `blockOffsetY` is the gap
+            // from the FIRST line's top to the image's top (= baseLineHeight
+            // + imageGap on a single-line source). Re-anchor to the last
+            // line by subtracting one line height, leaving the same single-
+            // line geometry intact while pushing the image down by one
+            // extra line per wrap.
+            yPosition = lastLineMaxY + blockOffsetY - lineHeight
+        } else {
+            yPosition = firstLineMinY + (lineHeight - imageBounds.height) / 2
+        }
+        return CGRect(x: pos.x, y: yPosition,
+                       width: imageBounds.width, height: imageBounds.height)
+    }
+
+    /// Returns the rects of all block images in this fragment, relative to
+    /// `point`.  Used by `renderingSurfaceBounds` (with `.zero`) to extend
+    /// the surface so images drawn in paragraphSpacing aren't clipped.
+    private func blockImageRects(at point: CGPoint) -> [CGRect] {
+        guard let ts = textStorage, let range = fragmentNSRange, range.length > 0 else { return [] }
+        var rects: [CGRect] = []
+        ts.enumerateAttribute(.latexImage, in: range, options: []) { value, attrRange, _ in
+            guard value is PlatformImage else { return }
+            let isBlock = ts.attribute(.latexIsBlock, at: attrRange.location, effectiveRange: nil) as? Bool ?? false
+            guard isBlock else { return }
+            // Skip overlay blocks; surface bounds must stay within container.
+            if ts.attribute(.scrollableBlockNaturalWidth, at: attrRange.location, effectiveRange: nil) != nil {
+                return
+            }
+            let boundsVal = ts.attribute(.latexBounds, at: attrRange.location, effectiveRange: nil) as? NSValue
+            let imageBounds = boundsVal?.cgRectValue ?? .zero
+            let blockOffsetY = ts.attribute(.latexBlockOffsetY, at: attrRange.location, effectiveRange: nil) as? CGFloat
+            if let rect = blockImageDrawRect(attrRange: attrRange, imageBounds: imageBounds, blockOffsetY: blockOffsetY, point: point) {
+                rects.append(rect)
+            }
+        }
+        return rects
+    }
+
+    // MARK: - LaTeX Images
+
+    private func drawLatexImages(at point: CGPoint, in context: CGContext) {
+        guard let ts = textStorage, let range = fragmentNSRange, range.length > 0 else { return }
+
+        let imageCornerRadius = max(0, renderingContext?.configuration.imageEmbed.cornerRadius ?? 0)
+        withFlippedDrawingContext(context) {
+            ts.enumerateAttribute(.latexImage, in: range, options: []) { [weak self] value, attrRange, _ in
+                guard let self, let image = value as? PlatformImage else { return }
+
+                // Skip overlay-rendered blocks; WideTableOverlay owns the visual.
+                if ts.attribute(.scrollableBlockNaturalWidth, at: attrRange.location, effectiveRange: nil) != nil {
+                    return
+                }
+
+                let boundsVal = ts.attribute(.latexBounds, at: attrRange.location, effectiveRange: nil) as? NSValue
+                let imageBounds = boundsVal?.cgRectValue ?? CGRect(origin: .zero, size: image.size)
+                let isBlock = ts.attribute(.latexIsBlock, at: attrRange.location, effectiveRange: nil) as? Bool ?? false
+                let blockOffsetY = ts.attribute(.latexBlockOffsetY, at: attrRange.location, effectiveRange: nil) as? CGFloat
+
+                guard let pos = self.drawPosition(forDocumentCharAt: attrRange.location, point: point) else { return }
+
+                let drawRect: CGRect
+                if isBlock {
+                    guard let rect = self.blockImageDrawRect(attrRange: attrRange, imageBounds: imageBounds, blockOffsetY: blockOffsetY, point: point) else { return }
+                    drawRect = rect
+                } else {
+                    let descent = imageBounds.origin.y
+                    drawRect = CGRect(x: pos.x,
+                                      y: pos.baselineY + descent - imageBounds.height,
+                                      width: imageBounds.width, height: imageBounds.height)
+                }
+                // Only round genuine image embeds — LaTeX formulas and table
+                // grids share this `.latexImage` anchor and must not be clipped.
+                let isRoundableImage = ts.attribute(.imageEmbedRoundable, at: attrRange.location, effectiveRange: nil) as? Bool ?? false
+                if imageCornerRadius > 0 && isRoundableImage {
+                    context.saveGState()
+                    platformRoundedRectPath(drawRect, cornerRadius: imageCornerRadius).addClip()
+                    image.draw(in: drawRect)
+                    context.restoreGState()
+                } else {
+                    image.draw(in: drawRect)
+                }
+            }
+        }
+    }
+
+    // MARK: - Inline Code Pills
+
+    /// Paint a rounded background behind every inline-code span carrying the
+    /// `.inlineCodePill` attribute. Uses TextKit 2 segment enumeration so a
+    /// span that soft-wraps gets one pill per visual line. `horizontalPadding`
+    /// widens each pill visually (it does not reflow text). Only runs when the
+    /// consumer opted into a pill (radius/padding > 0); otherwise inline code
+    /// keeps the flat `.backgroundColor` run and this is a no-op.
+    private func drawInlineCodePills(at point: CGPoint, in context: CGContext) {
+        guard let ts = textStorage, let range = fragmentNSRange, range.length > 0 else { return }
+        guard let ltm = textLayoutManager,
+              let contentStorage = ltm.textContentManager as? NSTextContentStorage else { return }
+        let style = renderingContext?.configuration.inlineCode ?? .default
+        // Sanitize: a non-finite (`.infinity`/NaN) padding would inflate the pill
+        // and the rendering surface to invalid/unbounded geometry.
+        let radius = max(0, style.cornerRadius.isFinite ? style.cornerRadius : 0)
+        let padding = max(0, style.horizontalPadding.isFinite ? style.horizontalPadding : 0)
+        guard radius > 0 || padding > 0 else { return }
+
+        // Segment frames share the container coordinate space with
+        // `layoutFragmentFrame`; shift into this fragment's draw space.
+        let dx = point.x - layoutFragmentFrame.origin.x
+        let dy = point.y - layoutFragmentFrame.origin.y
+
+        // A fragment-level fill paints OVER the system's selection highlight, so
+        // punch active-selection rects out of each pill (same reason and machinery
+        // as `drawCodeBlockBackground`); otherwise selecting text under a pill
+        // makes the highlight vanish for that run.
+        let selectionRects = activeSelectionSegmentRects(dx: dx, dy: dy)
+
+        withFlippedDrawingContext(context) {
+            ts.enumerateAttribute(.inlineCodePill, in: range, options: []) { value, attrRange, _ in
+                guard let color = value as? PlatformColor,
+                      let textRange = TextStylingService.textRange(from: attrRange, in: contentStorage) else { return }
+                color.setFill()
+                ltm.enumerateTextSegments(in: textRange, type: .standard, options: []) { _, segmentFrame, _, _ in
+                    let rect = segmentFrame.offsetBy(dx: dx, dy: dy).insetBy(dx: -padding, dy: 0)
+                    guard !rect.isNull, !rect.isEmpty else { return true }
+                    let cutouts = selectionRects.compactMap { sel -> CGRect? in
+                        let hit = sel.intersection(rect)
+                        return (hit.isNull || hit.isEmpty) ? nil : hit
+                    }
+                    if cutouts.isEmpty {
+                        platformRoundedRectPath(rect, cornerRadius: radius).fill()
+                    } else {
+                        fillEvenOdd(outerRect: rect, cutouts: cutouts, cornerRadius: radius)
+                    }
+                    return true
+                }
+            }
+        }
+    }
+
+    /// Active text-selection segment rects intersecting this fragment, offset
+    /// into the fragment's draw space by `dx`/`dy` (the same transform the pill
+    /// segments use). Used to cut the selection highlight out of the pills.
+    private func activeSelectionSegmentRects(dx: CGFloat, dy: CGFloat) -> [CGRect] {
+        guard let tlm = textLayoutManager, !tlm.textSelections.isEmpty else { return [] }
+        let myRange = self.rangeInElement
+        var rects: [CGRect] = []
+        for selection in tlm.textSelections {
+            for textRange in selection.textRanges {
+                let interStart = textRange.location.compare(myRange.location) == .orderedAscending
+                    ? myRange.location : textRange.location
+                let interEnd = textRange.endLocation.compare(myRange.endLocation) == .orderedDescending
+                    ? myRange.endLocation : textRange.endLocation
+                guard interStart.compare(interEnd) == .orderedAscending,
+                      let intersection = NSTextRange(location: interStart, end: interEnd) else { continue }
+                tlm.enumerateTextSegments(in: intersection, type: .selection, options: []) { _, segFrame, _, _ in
+                    rects.append(segFrame.offsetBy(dx: dx, dy: dy))
+                    return true
+                }
+            }
+        }
+        return rects
+    }
+
+    // MARK: - Thematic Breaks (---, ***, ___)
+
+    /// Draw a 1pt horizontal rule across the full container width for any
+    /// line fragment whose backing text carries the `.thematicBreak`
+    /// attribute. This decouples HR rendering from the source-text length,
+    /// so a 3-char `---` looks the same as a 80-char auto-expanded line.
+    private func drawThematicBreaks(at point: CGPoint, in context: CGContext) {
+        guard let ts = textStorage, let range = fragmentNSRange, range.length > 0 else { return }
+        var hasThematic = false
+        ts.enumerateAttribute(.thematicBreak, in: range, options: []) { value, _, stop in
+            if value as? Bool == true {
+                hasThematic = true
+                stop.pointee = true
+            }
+        }
+        guard hasThematic else { return }
+
+        let containerWidth = textLayoutManager?.textContainer?.size.width ?? layoutFragmentFrame.width
+        let theme = renderingContext?.configuration.theme ?? .default
+
+        withFlippedDrawingContext(context) {
+            let strokeColor = theme.strikethroughColor.withAlphaComponent(0.4)
+            strokeColor.setFill()
+
+            // Walk each line fragment in this layout fragment and paint a
+            // band on those whose first character carries the marker. (HR
+            // tokens are always single-line, but the loop is robust if a
+            // future caller ever stacks several rules in one paragraph.)
+            let fragLocation = fragmentNSRange?.location ?? 0
+            for lineFragment in textLineFragments {
+                let lr = lineFragment.characterRange
+                let docStart = fragLocation + lr.location
+                // TextKit 2 appends a synthetic trailing empty line fragment whose
+                // characterRange lands at exactly `tsLen` — `attribute(at:)` needs
+                // a strictly in-bounds index, so skip the sentinel.
+                guard docStart < ts.length else { continue }
+                let isHR = ts.attribute(.thematicBreak, at: docStart, effectiveRange: nil) as? Bool == true
+                let tb = lineFragment.typographicBounds
+                if isHR {
+                    // tb.origin.y is already relative to this layout fragment.
+                    let centerY = point.y + tb.origin.y + tb.height / 2
+                    let bandRect = CGRect(
+                        x: point.x - layoutFragmentFrame.origin.x,
+                        y: centerY - 0.5,
+                        width: containerWidth,
+                        height: 1
+                    )
+                    PlatformBezierPath(rect: bandRect).fill()
+                }
+            }
+        }
+    }
+
+    // MARK: - Blockquote Bars
+
+    /// Paint `level` vertical bars in the left gutter of every line that
+    /// carries `.blockquoteLevel`. Each line paints its own segment, so a
+    /// run of quote lines reads as one continuous bar.
+    private func drawBlockquoteBars(at point: CGPoint, in context: CGContext) {
+        guard let ts = textStorage, let range = fragmentNSRange, range.length > 0 else { return }
+        var anyLevel = false
+        ts.enumerateAttribute(.blockquoteLevel, in: range, options: []) { value, _, stop in
+            if value is Int { anyLevel = true; stop.pointee = true }
+        }
+        guard anyLevel else { return }
+
+        let configuration = renderingContext?.configuration ?? .default
+        let theme = configuration.theme
+        let indentPerLevel = configuration.blockquote.indentPerLevel
+        let barWidth = configuration.blockquote.barWidth
+        let barLeadingInset = configuration.blockquote.barLeadingInset
+        let barColor = theme.resolvedBlockquoteBarColor
+
+        withFlippedDrawingContext(context) {
+            barColor.setFill()
+
+            let fragLocation = fragmentNSRange?.location ?? 0
+            let leftEdge = point.x - layoutFragmentFrame.origin.x
+            for lineFragment in textLineFragments {
+                let lr = lineFragment.characterRange
+                let docStart = fragLocation + lr.location
+                // TextKit 2 appends a synthetic trailing empty line fragment whose
+                // characterRange lands at exactly `tsLen` — `attribute(at:)` needs
+                // a strictly in-bounds index, so skip the sentinel.
+                guard docStart < ts.length else { continue }
+                let tb = lineFragment.typographicBounds
+                if let level = ts.attribute(.blockquoteLevel, at: docStart, effectiveRange: nil) as? Int {
+                    // tb.origin.y is already relative to this layout fragment.
+                    let barY = point.y + tb.origin.y
+                    for i in 0..<level {
+                        let barX = leftEdge + CGFloat(i) * indentPerLevel + barLeadingInset
+                        PlatformBezierPath(rect: CGRect(
+                            x: barX, y: barY, width: barWidth, height: tb.height
+                        )).fill()
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Bullet Markers
+
+    /// Paint a `•` over every hidden bullet marker (`.bulletMarker`). The
+    /// glyph (``ListStyle/bulletGlyph``, default `•`), its color
+    /// (``MarkdownEditorTheme/bulletColor``, default body ink), and its size
+    /// (``ListStyle/bulletGlyphSizeScale``, a fraction of the line font) are all
+    /// configurable. The glyph is optically centered on the text's x-height
+    /// midline so a shrunk dot reads as centered rather than sitting low, and
+    /// centered within the original marker char's advance so a glyph of a
+    /// different width still sits where `-`/`*`/`+` was.
+    private func drawBulletMarkers(at point: CGPoint, in context: CGContext) {
+        guard let ts = textStorage, let range = fragmentNSRange, range.length > 0 else { return }
+        let selectionRanges = renderingContext?.selectedDocumentRanges ?? []
+
+        let configuration = renderingContext?.configuration ?? .default
+        let theme = configuration.theme
+        let bulletColor = theme.resolvedBulletColor
+        // An empty glyph would hide the (already-suppressed) marker entirely,
+        // leaving list structure invisible — fall back to the default dot.
+        let glyphString = configuration.lists.bulletGlyph.isEmpty ? "•" : configuration.lists.bulletGlyph
+        let bullet = glyphString as NSString
+        // Clamp to a sane floor so a zero/negative scale can't collapse the dot.
+        let glyphSizeScale = max(0.1, configuration.lists.bulletGlyphSizeScale)
+        let storageString = ts.string as NSString
+
+        withFlippedDrawingContext(context) {
+            ts.enumerateAttribute(.bulletMarker, in: range, options: []) { [weak self] value, attrRange, _ in
+                guard let self, (value as? Bool) == true else { return }
+                // Leave a selected marker alone so the highlighted raw char shows.
+                if selectionRanges.contains(where: { NSIntersectionRange($0, attrRange).length > 0 }) { return }
+                guard let pos = self.drawPosition(forDocumentCharAt: attrRange.location, point: point) else { return }
+
+                let font = (ts.attribute(.font, at: attrRange.location, effectiveRange: nil) as? PlatformFont)
+                    ?? (self.renderingContext?.baseFont ?? PlatformFont.systemFont(ofSize: PlatformFont.systemFontSize))
+                // Draw the glyph in a (optionally) scaled copy of the line font. The
+                // source-marker advance is measured in the unscaled line font so
+                // horizontal centering stays anchored to where `-`/`*`/`+` was.
+                let glyphFont = glyphSizeScale == 1.0 ? font : font.withPointSizeCompat(font.pointSize * glyphSizeScale)
+                let bulletAttrs: [NSAttributedString.Key: Any] = [.font: glyphFont, .foregroundColor: bulletColor]
+
+                let markerWidth = storageString.substring(with: attrRange).size(withAttributes: [.font: font]).width
+                let bulletWidth = bullet.size(withAttributes: bulletAttrs).width
+                let xOffset = max(0, (markerWidth - bulletWidth) / 2)
+                // Optically center the dot on the text's x-height midline instead of
+                // baseline-aligning it: a scaled-down glyph pinned to the baseline
+                // reads as sitting low. Flipped context — y grows downward, so the
+                // midline is `xHeight/2` *above* (smaller y than) the baseline.
+                // At scale 1.0 (glyphFont == font) this reduces to `baselineY −
+                // ascender`, identical to plain baseline alignment, so the default
+                // bullet is unchanged.
+                let lineMidline = pos.baselineY - font.xHeight / 2
+                let glyphInkCenterFromTop = glyphFont.ascender - glyphFont.xHeight / 2
+                let topY = lineMidline - glyphInkCenterFromTop
+                bullet.draw(at: CGPoint(x: pos.x + xOffset, y: topY), withAttributes: bulletAttrs)
+            }
+        }
+    }
+
+    // MARK: - Task List Checkboxes
+
+    private func drawTaskCheckboxes(at point: CGPoint, in context: CGContext) {
+        guard let ts = textStorage, let range = fragmentNSRange, range.length > 0 else { return }
+        let selectionRanges = renderingContext?.selectedDocumentRanges ?? []
+
+        let configuration = renderingContext?.configuration ?? .default
+        let theme = configuration.theme
+        let checkboxStyle = configuration.checkbox
+
+        withFlippedDrawingContext(context) {
+            ts.enumerateAttribute(.taskCheckbox, in: range, options: []) { [weak self] value, attrRange, _ in
+                guard let self, value != nil else { return }
+                if selectionRanges.contains(where: { NSIntersectionRange($0, attrRange).length > 0 }) { return }
+
+                let isChecked = (value as? Bool) ?? false
+                guard let pos = self.drawPosition(forDocumentCharAt: attrRange.location, point: point) else { return }
+
+                let font = (ts.attribute(.font, at: attrRange.location, effectiveRange: nil) as? PlatformFont)
+                    ?? (self.renderingContext?.baseFont ?? PlatformFont.systemFont(ofSize: PlatformFont.systemFontSize))
+                let ascent = max(0, font.ascender)
+                let descent = max(0, -font.descender)
+                let fontHeight = max(1, ceil(ascent + descent))
+                let markerWidth = ("[ ]" as NSString).size(withAttributes: [.font: font]).width
+                let size = max(1.0, min(floor(fontHeight * checkboxStyle.sizeFromFontHeightFactor),
+                                        floor(markerWidth * checkboxStyle.sizeFromMarkerWidthFactor)))
+                let boxX = pos.x + max(0, (markerWidth - size) / 2)
+                let centerY = pos.baselineY + (descent - ascent) / 2
+                let boxY = centerY - size / 2
+
+                let scale = self.renderingContext?.displayScale ?? 2.0
+                func alignToPixel(_ value: CGFloat) -> CGFloat {
+                    (value * scale).rounded(.toNearestOrAwayFromZero) / scale
+                }
+                let boxRect = CGRect(x: alignToPixel(boxX), y: alignToPixel(boxY), width: size, height: size)
+                guard !boxRect.isEmpty, !boxRect.isNull else { return }
+
+                let iconInset = max(0.0, size * checkboxStyle.iconInsetFraction)
+                let iconRect = boxRect.insetBy(dx: iconInset, dy: iconInset)
+                let symbolName = isChecked ? checkboxStyle.checkedSymbolName : checkboxStyle.uncheckedSymbolName
+                let tint = isChecked ? theme.resolvedCheckboxCheckedTint : theme.resolvedCheckboxUncheckedTint
+                // The raw `[ ]`/`[x]` glyphs are already hidden (`.clear`), so a
+                // typo'd or OS-missing SF Symbol name would leave the checkbox
+                // invisible-but-toggleable. Fall back to the stock symbols so a
+                // bad name degrades to the default box rather than nothing.
+                let fallbackName = isChecked
+                    ? CheckboxStyle.default.checkedSymbolName
+                    : CheckboxStyle.default.uncheckedSymbolName
+                let symbol = tintedSymbolImage(named: symbolName, pointSize: iconRect.height, tint: tint)
+                    ?? (symbolName != fallbackName
+                        ? tintedSymbolImage(named: fallbackName, pointSize: iconRect.height, tint: tint)
+                        : nil)
+                symbol?.draw(in: iconRect)
+            }
+        }
+    }
+}
+
+// MARK: - Layout Manager Delegate
+
+final class MarkdownLayoutManagerDelegate: NSObject, NSTextLayoutManagerDelegate {
+    /// The per-fragment rendering context, injected onto each fragment as it's
+    /// created and used to seed trailing-line metrics (FB15131180). Set by the
+    /// view adapter when wiring the layout manager.
+    weak var context: (any MarkdownFragmentContext)?
+
+    func textLayoutManager(
+        _ textLayoutManager: NSTextLayoutManager,
+        textLayoutFragmentFor location: any NSTextLocation,
+        in textElement: NSTextElement
+    ) -> NSTextLayoutFragment {
+        let fragment = MarkdownTextLayoutFragment(textElement: textElement, range: textElement.elementRange)
+        fragment.renderingContext = context
+        #if os(macOS)
+        // Seed body font + paragraphStyle so the trailing fragment doesn't inherit heading metrics (FB15131180).
+        // macOS-only: the backing `extraLineFragmentAttributes` override is a private selector (see above).
+        if let context {
+            let baseFont = context.baseFont
+            let para = NSMutableParagraphStyle()
+            let lineHeight = layoutBridgeDefaultLineHeight(for: baseFont, using: context.layoutBridge)
+            para.minimumLineHeight = ceil(lineHeight) + context.configuration.paragraph.lineHeightExtraSpacing
+            para.paragraphSpacing = ceil(lineHeight * context.configuration.paragraph.spacingFactor)
+            para.paragraphSpacingBefore = 0
+            fragment.stExtraLineFragmentAttributes = NSDictionary(dictionary: [
+                NSAttributedString.Key.font: baseFont,
+                NSAttributedString.Key.foregroundColor: context.configuration.theme.bodyText,
+                NSAttributedString.Key.paragraphStyle: para
+            ])
+        }
+        #endif
+        return fragment
+    }
+}

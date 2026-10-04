@@ -106,7 +106,7 @@ Each is a throwaway target or branch with pass/fail written before it starts. Ne
 | S13 | *New (SRCH P0):* Core ML conversion of `bge-small-en-v1.5`, reproducible, checksummed; ranking parity with the POC's golden set (SRCH Q3). **Passed (F-35):** 7/7 golden, fp32 and fp16 | M |
 | S14 | *New (SRCH P0):* Core ML query embedding inside Claude Code's sandbox with no writes outside allowed paths; CPU-only and precompiled-model fallbacks (SRCH Q2). Includes whether model compilation works without Xcode (`MLModel.compileModel` at runtime vs `coremlc`). **Passed (F-35):** runtime compile, Swift WordPiece parity, fp32 CPU queries in the real sandbox | M |
 | S15 | *New (SRCH P0):* indexing throughput on the slowest supported Apple silicon; corpus size on the reference machine (SRCH NFR-1, NFR-3). **Passed on M6 (F-35):** 667 chunks/s fp16 GPU; ≈124k chunks here. Slowest chip and the work Mac still open | M |
-| S4–S6 | CM6 live preview on a 1.2 MB file; external-edit merge; `swift-markdown-engine` hedge. **S4/S5 pass headless (F-34);** keyboard-side checks with Geoff and S6 still to do. CodeMirror vendored in `Vendor/codemirror` | I |
+| S4–S6 | CM6 live preview on a 1.2 MB file; external-edit merge; `swift-markdown-engine` hedge. **S4/S5 pass headless (F-34); S6 run (F-39): native doesn't scale (244 ms typing at 1.2 MB), CM6 stays.** Keyboard-side checks with Geoff still to do. CodeMirror vendored in `Vendor/codemirror` | I |
 | S7 | WKWebView: local-only default + allow list (DL-3); inspector on an allowed site. **Passed (F-33):** navigation policy + content rule list; `Spikes/S7WebView` | K |
 
 ### Phase D — Terminals · slice 5 · *core built 2026-10-03 (F-22); open: shell tabs and auto-promote (DL-8), ANSI palette and empty console (design), ⌘W close*
