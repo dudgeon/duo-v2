@@ -61,6 +61,11 @@ public enum FixtureHarness {
         case "focus-tile": model.moveTileFocus(dx: 0, dy: 0)
         case "new": model.newSession()
         case "close": model.closeVisibleSession()
+        case "resume":
+            if parts.count > 1, let s = model.fixture.sessions.first(where: { $0.sessionId?.hasPrefix(parts[1]) == true }), let id = s.sessionId {
+                model.open(project: s.project); model.consoleTab = id
+                _ = model.terminal(project: s.project, session: id)
+            }
         case "file": if parts.count > 1 { model.selectedFile = parts[1]; model.rightTab = parts[1] }
         case "edit-bold": model.editor.run("duo.select(2, 9); duo.exec('bold'); return 1") { _ in }
         case "editor-snapshot":

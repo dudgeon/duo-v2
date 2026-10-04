@@ -137,7 +137,11 @@ public enum LiveSnapshot {
     /// across processes (F-26) and aren't used.
     static func title(id: String, folder: URL, beacon: Beacon?) -> String {
         if let b = beacon, b.nameSource == "user", let n = b.name, !n.isEmpty { return n }
-        guard let t = ClaudeStorage.transcript(sessionId: id, cwd: beacon?.cwd ?? folder.path) else { return "New session" }
+        guard let t = ClaudeStorage.transcript(sessionId: id, cwd: beacon?.cwd ?? folder.path) else {
+            // Purged by Claude's cleanup but kept by Duo (DL-44): still has its title.
+            let m = SessionArchive.manifest()
+            return m.sessions[id]?.title ?? "New session"
+        }
         return SessionTitles.title(transcript: t) ?? "Session \(id.prefix(8))"
     }
 

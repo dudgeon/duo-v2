@@ -184,6 +184,14 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-41 · Retention: archive and keep-alive (DL-44, DL-47) (2026-10-03)
+
+- **What Claude Code's cleanup checks** (its own code, 2.1.289): every swept file is deleted when `stat.mtime < now − cleanupPeriodDays` (`if(!(w.mtime<r))return s.filesRetainedFresh++`); session folders are judged by their modification time too. Timestamps inside the transcript don't matter. The period comes from settings (managed policy, then user), default 30; 0 turns cleanup off. A scratch-config test was inconclusive (unauthenticated, Claude exited before sweeping), so this rests on the code.
+- **Archive:** after each refresh is applied (at most once a minute, off the main thread), every listed session's transcript is copied to `~/Library/Application Support/Duo/archive/<id>.jsonl` (folder 0700, files 0600) when its size or modification time changed, with a manifest of its folder (after any `/cd`) and title. **The first version archived nothing:** it ran before the refresh applied the new snapshot, saw the empty starting state and waited a minute; now it runs after.
+- **Purged sessions:** stay listed under their archived title. Resuming puts the transcript back where Claude Code looks (never over an existing one) and runs `--resume`. Verified live: a planted transcript was archived, removed (simulating the sweep), listed as "Velocity rules audit", and resumed with its conversation back. `duo2 session carry-on <id>` starts a new session in the same project whose first prompt points Claude at the archived transcript (Geoff's idea).
+- **Keep-alive:** a listed transcript (and its sidecar folder of tool outputs and subagents) untouched for half the period gets its modification time set to *half the period ago*, not now, so it never ages out yet doesn't jump to the top of anything sorted by recency. Checked: a 25-day-old session moves to 15 days; a fresh one is untouched.
+- 124 checks pass. Still open in Q-19: archiving sidecars, a disk limit, and whether purged sessions stay searchable (SRCH Q8 says no today).
+
 ## F-40 · Phase I begins: the document editor in the right pane (2026-10-03)
 
 Geoff chose this next (2026-10-03). Live mode only: fixture mode keeps the placeholder the targets exempt, so the six fixture captures stay pixel-identical (checked: 0 differing pixels).

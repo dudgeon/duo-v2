@@ -79,6 +79,8 @@ public enum ClaudeStorage {
     /// The folder a transcript is filed under: the last `relocated` record's `relocatedCwd` if
     /// there is one (`/cd` moves the file, F-32), else the first `cwd`. Reads at most the first
     /// and last 64 KB (LR-9: never slurp).
+    public static func filedCwd(_ url: URL) -> String? { firstCwd(url) }
+
     static func firstCwd(_ url: URL) -> String? {
         guard let h = try? FileHandle(forReadingFrom: url) else { return nil }
         defer { try? h.close() }

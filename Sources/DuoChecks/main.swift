@@ -423,6 +423,30 @@ func repoFixture() throws -> Fixture {
           && FileManager.default.fileExists(atPath: lg.appending(path: "skills/duo").path), "restore puts everything back exactly")
     try? FileManager.default.removeItem(at: lg)
 
+    print("retention (DL-44, DL-47)")
+    let ar = FileManager.default.temporaryDirectory.appending(path: "archive-\(UUID().uuidString)")
+    setenv("DUO_ARCHIVE_ROOT", ar.appending(path: "archive").path, 1)
+    let bucketDir = ar.appending(path: "claude/projects/-work-p")
+    try FileManager.default.createDirectory(at: bucketDir.appending(path: "s-old/tool-results"), withIntermediateDirectories: true)
+    let oldT = bucketDir.appending(path: "s-old.jsonl"), freshT = bucketDir.appending(path: "s-new.jsonl")
+    try #"{"type":"user","cwd":"/work/p","message":{"content":"Plan the readout"}}"#.write(to: oldT, atomically: true, encoding: .utf8)
+    try #"{"type":"user","cwd":"/work/p","message":{"content":"Fresh one"}}"#.write(to: freshT, atomically: true, encoding: .utf8)
+    try "big output".write(to: bucketDir.appending(path: "s-old/tool-results/r1.txt"), atomically: true, encoding: .utf8)
+    let keepNow = Date()
+    for u in [oldT, bucketDir.appending(path: "s-old/tool-results/r1.txt"), bucketDir.appending(path: "s-old/tool-results"), bucketDir.appending(path: "s-old")] {
+        try FileManager.default.setAttributes([.modificationDate: keepNow.addingTimeInterval(-25 * 86_400)], ofItemAtPath: u.path)
+    }
+    check(try SessionArchive.sync([("s-old", oldT), ("s-new", freshT)]) == 2 && FileManager.default.fileExists(atPath: SessionArchive.copyURL("s-old").path), "listed transcripts are copied to Duo's archive")
+    check(try SessionArchive.sync([("s-old", oldT), ("s-new", freshT)]) == 0, "unchanged transcripts aren't copied again")
+    let refreshed = SessionArchive.keepAlive([oldT, freshT], periodDays: 30, now: keepNow)
+    let oldMod = try FileManager.default.attributesOfItem(atPath: oldT.path)[.modificationDate] as! Date
+    let freshMod = try FileManager.default.attributesOfItem(atPath: freshT.path)[.modificationDate] as! Date
+    check(refreshed == 4 && abs(oldMod.timeIntervalSince(keepNow.addingTimeInterval(-15 * 86_400))) < 2 && keepNow.timeIntervalSince(freshMod) < 60,
+          "keep-alive moves a quiet session to half the period ago (with its sidecars), leaves fresh ones alone")
+    check(SessionArchive.carryOnPrompt("s-old")?.contains(SessionArchive.copyURL("s-old").path) == true, "carry-on prompt points at the archived transcript")
+    unsetenv("DUO_ARCHIVE_ROOT")
+    try? FileManager.default.removeItem(at: ar)
+
     print("launch options")
     let o = LaunchOptions(arguments: ["Duo", "--state", "flow-zoom-3", "--capture", "/tmp/x.png", "--left", "collapsed"])
     check(o.state == .flowZoom3 && o.capturePath == "/tmp/x.png" && o.collapseLeft && o.capturing, "flags parse")

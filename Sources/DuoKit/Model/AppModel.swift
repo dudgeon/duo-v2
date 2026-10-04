@@ -78,6 +78,8 @@ public final class AppModel {
             guard let s = fixture.sessions(inProject: project).first(where: { $0.tabKey == key }),
                   let id = s.sessionId, let folder = liveFolders[project] else { return nil }
             if liveElsewhere.contains(id) { return nil }  // shown as running elsewhere
+            // A transcript Claude's cleanup removed comes back from Duo's archive first (DL-44).
+            if ClaudeStorage.transcript(sessionId: id, cwd: folder.path) == nil { _ = try? SessionArchive.restore(id) }
             let resumable = ClaudeStorage.transcript(sessionId: id, cwd: folder.path) != nil
             return terminals.session(key, command: resumable ? .resumeClaude(sessionID: id) : .newClaude(sessionID: id, prompt: nil),
                                      cwd: folder.path)
@@ -100,6 +102,7 @@ public final class AppModel {
     public var liveElsewhere: Set<String> = []
     @ObservationIgnored private var refreshTimer: Timer?
     @ObservationIgnored private var refreshing = false
+    @ObservationIgnored private var lastArchive = Date.distantPast
     /// Duo's "seen" marks (handoff §10): looking at a session clears ready-for-review.
     @ObservationIgnored public var seen: [String: Double] = [:]
     @ObservationIgnored public var rememberedHome: String?
@@ -179,6 +182,7 @@ public final class AppModel {
         var ids = Set<String>()
         merged.sessions = merged.sessions.filter { s in s.sessionId.map { ids.insert($0).inserted } ?? true }
         if merged != fixture { fixture = merged }
+        archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         // Home is always on (brief: the director agent); its empty state isn't designed (§13), so
         // live mode starts one Home session when there is none (concerns C-15).
         if let home = fixture.home {
@@ -187,6 +191,28 @@ public final class AppModel {
             if homeTab == nil || !fixture.sessions(inProject: home.name).contains(where: { $0.tabKey == homeTab }) {
                 homeTab = fixture.sessions(inProject: home.name).first?.tabKey
             }
+        }
+    }
+
+    /// Keeps Duo's copy of every listed session's transcript (DL-44), at most once a minute, off
+    /// the main thread.
+    private func archiveListedSessions() {
+        guard Date().timeIntervalSince(lastArchive) > 60 else { return }
+        lastArchive = Date()
+        let listed: [(String, String)] = fixture.sessions.compactMap { s in
+            guard let id = s.sessionId, let folder = liveFolders[s.project] else { return nil }
+            return (id, folder.path)
+        }
+        Task.detached(priority: .utility) {
+            let found = listed.compactMap { id, cwd in ClaudeStorage.transcript(sessionId: id, cwd: cwd).map { (id: id, transcript: $0) } }
+            do {
+                let n = try SessionArchive.sync(found)
+                if n > 0 { FileHandle.standardError.write(Data("archive: copied \(n) of \(found.count) listed transcripts\n".utf8)) }
+            } catch {
+                FileHandle.standardError.write(Data("archive: \(error)\n".utf8))
+            }
+            // DL-47: keep listed sessions out of Claude's cleanup as well as archiving them.
+            if let days = SessionArchive.cleanupPeriodDays() { SessionArchive.keepAlive(found.map(\.transcript), periodDays: days) }
         }
     }
 
@@ -241,16 +267,27 @@ public final class AppModel {
         consoleTab = fixture.sessions.last?.tabKey
     }
 
-    public func newSession(in project: String) {
-        guard terminalsMode == .live, let folder = liveFolders[project] else { return }
+    @discardableResult
+    public func newSession(in project: String, prompt: String? = nil, provenance: String = "created-by-duo") -> String? {
+        guard terminalsMode == .live, let folder = liveFolders[project] else { return nil }
         let id = UUID().uuidString.lowercased()
         var index = SessionIndex.load(project: folder)
-        index.sessions.append(.init(sessionId: id))
+        index.sessions.append(.init(sessionId: id, provenance: provenance))
         try? index.save(project: folder)
-        _ = terminals.session(id, command: .newClaude(sessionID: id, prompt: nil), cwd: folder.path)
+        _ = terminals.session(id, command: .newClaude(sessionID: id, prompt: prompt), cwd: folder.path)
         fixture.sessions.append(Fixture.Session(name: "New session", project: project, state: .working, wait: "now",
                                                 question: nil, options: nil, summary: nil, forkOf: nil, document: nil,
                                                 sessionId: id))
+        return id
+    }
+
+    /// Carries an archived session into a new one in the same project (Q-19, Geoff's idea).
+    public func carryOn(_ oldId: String) -> String? {
+        guard let s = fixture.sessions.first(where: { $0.sessionId == oldId }), let prompt = SessionArchive.carryOnPrompt(oldId) else { return nil }
+        guard let id = newSession(in: s.project, prompt: prompt, provenance: "carried-on-from:\(oldId)") else { return nil }
+        open(project: s.project)
+        consoleTab = id
+        return id
     }
 
     public init(fixture: Fixture) {

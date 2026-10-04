@@ -126,6 +126,11 @@ extension AppModel {
             let c = fixture.counts
             return .init(ok: true, output: "\(view)\n\(c.needsYou) need you · \(c.readyForReview) to review · \(c.working) working · \(c.idle) idle")
         case "session":
+            if req.args.first == "carry-on" {
+                guard let old = req.args.dropFirst().first else { return .init(ok: false, output: "usage: duo2 session carry-on <session-id>") }
+                guard let new = carryOn(old) else { return .init(ok: false, output: "no archived copy of session \(old)") }
+                return .init(ok: true, output: "Started session \(new.prefix(8)), carrying on from \(old.prefix(8)).")
+            }
             guard req.args.count >= 2, ["note", "next"].contains(req.args[0]) else {
                 return .init(ok: false, output: "usage: duo2 session note|next <text>")
             }
