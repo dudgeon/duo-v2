@@ -368,7 +368,9 @@ struct NeedsYouCard: View {
                   color: selected ? DuoColor.text : DuoColor.rule,
                   width: selected ? DuoMetric.borderEmphasis : DuoMetric.borderHairline)
         .contentShape(Rectangle())
-        .onActivate { model.selectedActionSession = session.id }  // action: view select
+        // Clicking a session resumes it (Geoff, 2026-10-04): its project opens with it in the console.
+        // Arrow keys still move the selection without opening.
+        .onActivate { model.selectedActionSession = session.id; model.open(project: session.project, session: session.name) }  // action: open
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(session.name), needs you, waiting \(session.wait ?? ""), \(session.project)")
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -427,6 +429,9 @@ struct ReviewCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .bordered(DuoSpace.cardPadding)
+        .contentShape(Rectangle())
+        // Clicking the card resumes the session, as Review does (Geoff, 2026-10-04).
+        .onActivate { model.open(project: session.project, session: session.name, document: session.document) }  // action: open
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(session.name), ready for review, \(session.project)")
     }
