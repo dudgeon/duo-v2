@@ -148,6 +148,8 @@ struct SidebarLeafRow: View {
         .padding(.leading, nested ? 11 + DuoMetric.borderEmphasis : DuoSpace.panePadding)
         .padding(.trailing, DuoSpace.panePadding)
         .frame(height: DuoMetric.rowSession)
+        // A terminal is open for it in Duo (ENH-7). The selected row's own fill is drawn by the list.
+        .background { if model.hasOpenTerminal(row.sessionKey) { DuoColor.activeTint } }
         .contentShape(Rectangle())
         .onActivate { model.openConsoleTab(row.sessionKey) }  // action: session open
         .modifier(SessionOrganizeMenu(sessionKey: row.sessionKey))

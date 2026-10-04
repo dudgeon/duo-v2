@@ -9,6 +9,13 @@ extension AppModel {
 
     public func isShell(_ key: String) -> Bool { key.hasPrefix(Self.shellPrefix) }
 
+    /// A session with a live terminal in Duo (ENH-7: "active"). Ended terminals don't count.
+    public func hasOpenTerminal(_ key: String) -> Bool {
+        _ = endedRevision
+        if let fixed = fixtureActive { return fixed.contains(key) }
+        return terminals.existing(key).map { !$0.exited } ?? false
+    }
+
     /// ⇧⌘T or the chevron's New Shell: a login shell in the project's folder (Home's at All projects).
     public func newShell() {
         let project = altitude.isAllProjects ? fixture.home?.name : currentProject?.name

@@ -167,7 +167,11 @@ struct ProjectTile: View {
 
     var body: some View {
         let focused = model.focusedTile == project.name
-        let sessions = model.fixture.liveSessions(inProject: project.name)
+        // Live sessions, plus ones open in a Duo terminal at their prompt (ENH-7: easy to jump back into).
+        let live = model.fixture.liveSessions(inProject: project.name)
+        let sessions = live + model.fixture.sessions(inProject: project.name).filter { s in
+            !live.contains(s) && model.hasOpenTerminal(s.tabKey)
+        }
         VStack(alignment: .leading, spacing: DuoSpace.gapTileRows) {
             // flow-zoom-1 wraps both the name and the hint when the hint is shown, as CSS flex
             // shrinks them (the target wins over handoff §8's truncation proposal).
@@ -206,7 +210,7 @@ struct ProjectTile: View {
                     .padding(.top, 6)
             } else {
                 ForEach(Array(sessions.enumerated()), id: \.element.id) { i, s in
-                    TileSessionRow(session: s, selected: model.selectedActionSession == s.id)
+                    TileSessionRow(session: s, selected: model.selectedActionSession == s.id, active: model.hasOpenTerminal(s.tabKey))
                         .padding(.top, i == 0 ? 6 : 0)
                         .contentShape(Rectangle())
                         .onActivate { model.open(project: project.name, session: s.name) }  // action: open
@@ -248,6 +252,8 @@ struct ProjectTile: View {
 struct TileSessionRow: View {
     let session: Fixture.Session
     var selected = false
+    /// A terminal is open for it in Duo (ENH-7): a tint, so it's easy to jump back in.
+    var active = false
 
     var body: some View {
         HStack(spacing: DuoSpace.gapRowItems) {
@@ -259,11 +265,12 @@ struct TileSessionRow: View {
             if session.state != .readyForReview { WaitLabel(text: session.wait) }
         }
         .frame(height: DuoMetric.rowTileSession)
-        .padding(.horizontal, selected ? 6 : 0)
+        .padding(.horizontal, selected || active ? 6 : 0)
         .background {
             if selected { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected) }
+            else if active { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.activeTint) }
         }
-        .padding(.horizontal, selected ? -6 : 0)
+        .padding(.horizontal, selected || active ? -6 : 0)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(session.name), \(session.state.spokenName)\(session.wait.map { ", waiting \($0)" } ?? "")")
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -351,6 +358,7 @@ struct NeedsYouCard: View {
             VStack(alignment: .leading, spacing: 0) {
                 CardHeader(session: session)
                 Text(session.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+                    .onActivate { model.open(project: session.project) }  // action: open
             }
             if let q = session.question {
                 Text(q)
@@ -418,6 +426,7 @@ struct ReviewCard: View {
         VStack(alignment: .leading, spacing: DuoSpace.gapTileRows) {
             CardHeader(session: session, showsWait: false)
             Text(session.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+                    .onActivate { model.open(project: session.project) }  // action: open
             if let summary = session.summary {
                 Text(summary).duoText(.body).fixedSize(horizontal: false, vertical: true)
             }

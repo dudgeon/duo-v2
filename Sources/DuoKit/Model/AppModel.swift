@@ -55,6 +55,8 @@ public final class AppModel {
     public var idleSelection = 0
     /// Fixture mode: the rows the idle-list targets show.
     public var fixtureIdle: [IdleRow]?
+    /// Fixture mode: sessions shown as having a terminal open (ENH-7).
+    public var fixtureActive: Set<String>?
     public var fixtureIdleBuckets: [(label: String, rows: [IdleRow])]?
     /// Fixture mode: a console tab whose session has ended, and the bar's text (console-ended).
     public var fixtureEnded: (key: String, message: String)?

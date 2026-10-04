@@ -30,6 +30,8 @@ public enum DuoColor {
     public static let placeholderBarOnSelected = Color(nsColor: NSColor.duoDynamic(light: 0xC3C8CE, dark: 0xC3C8CE, name: "placeholderBarOnSelected"))
     /// Dims the whole window behind the search modal. The text colour at 32% (search-handoff).
     public static let scrim = Color(nsColor: NSColor.duoDynamic(light: 0x1F2328, dark: 0x1F2328, name: "scrim").withAlphaComponent(0.32))
+    /// Behind sessions that have a terminal open in Duo, so it's easy to jump back in (ENH-7). Provisional, Geoff 2026-10-04: a tint distinct from `selected`, until designed.
+    public static let activeTint = Color(nsColor: NSColor.duoDynamic(light: 0xE8F0FA, dark: 0xE8F0FA, name: "activeTint"))
 
     // Console chrome: the same in every appearance.
     /// Console pane, console tab strips, terminal background
@@ -61,6 +63,7 @@ public enum DuoNSColor {
     public static let placeholderBar = NSColor.duoDynamic(light: 0xD5D9DE, dark: 0xD5D9DE, name: "placeholderBar")
     public static let placeholderBarOnSelected = NSColor.duoDynamic(light: 0xC3C8CE, dark: 0xC3C8CE, name: "placeholderBarOnSelected")
     public static let scrim = NSColor.duoDynamic(light: 0x1F2328, dark: 0x1F2328, name: "scrim").withAlphaComponent(0.32)
+    public static let activeTint = NSColor.duoDynamic(light: 0xE8F0FA, dark: 0xE8F0FA, name: "activeTint")
     public static let console = NSColor.duoFixed(0x15171B)
     public static let consoleRule = NSColor.duoFixed(0x2B2F36)
     public static let consoleText = NSColor.duoFixed(0xE6E8EB)

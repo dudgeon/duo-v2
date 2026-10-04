@@ -183,6 +183,19 @@ public enum FixtureHarness {
             model.setSearchKind(parts.count > 1 ? SearchItem.Kind(rawValue: parts[1]) : nil)
         case "search-close": model.closeSearch()
         case "shell": model.newShell()
+        case "click":   // click:<x> <y>: a real mouse click at that point of the window, from its top left
+            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
+                let xy = parts[1].split(separator: " ").compactMap { Double($0) }
+                if xy.count == 2, let content = w.contentView {
+                    let p = NSPoint(x: xy[0], y: content.bounds.height - xy[1])
+                    for (i, type) in [NSEvent.EventType.leftMouseDown, .leftMouseUp].enumerated() {
+                        if let e = NSEvent.mouseEvent(with: type, location: p, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime + Double(i) * 0.05,
+                                                      windowNumber: w.windowNumber, context: nil, eventNumber: i, clickCount: 1, pressure: 1) { w.sendEvent(e) }
+                    }
+                }
+            }
+        case "where":
+            FileHandle.standardError.write(Data("where: \(model.altitude.isAllProjects ? "all" : model.currentProject?.name ?? "?") console=\(model.consoleTab ?? "-")\n".utf8))
         case "fork":   // fork:<session id prefix>: Resume as a Fork (DB-3)
             if parts.count > 1, let s = model.fixture.sessions.first(where: { $0.sessionId?.hasPrefix(parts[1]) == true }), let id = s.sessionId {
                 model.open(project: s.project); model.resumeAsFork(id, in: s.project)
