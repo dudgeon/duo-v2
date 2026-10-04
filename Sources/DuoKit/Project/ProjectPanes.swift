@@ -474,6 +474,7 @@ struct FileMenu: View {
         Button("Copy Relative Path") { model.copyPath(path, relative: true) }
         if !isFolder { Button("Copy as Link") { model.copyLink(path) } }
         SendMenu { key in model.filePayload(path, for: key) }
+        if !isFolder { Button("Find Similar") { model.findSimilar(file: path) } }
         Divider()
         NewItemsMenu(near: path)
         Divider()

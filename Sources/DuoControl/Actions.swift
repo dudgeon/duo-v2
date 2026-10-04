@@ -193,7 +193,7 @@ extension DuoAction {
         // Search
         .init(.search, .search, "<query> | --similar <path> [-k N] [--project P] [--kind file|session|memory] [--exact]",
               "Search every project by meaning and by words. Works without the app; read-only.",
-              ui: ["Search Everything…", "Search all projects", "Clear filters", "Include archived", "Exact"], local: true, everyday: true),
+              ui: ["Search Everything…", "Search all projects", "Clear filters", "Include archived", "Exact", "Find Similar"], local: true, everyday: true),
         .init(.searchStatus, .search, "", "How much of each project the search index covers.", ui: ["Show details"], local: true),
         .init(.searchRebuild, .search, "", "Rebuild the search index from scratch (the old one goes to the Trash).", ui: ["Rebuild the index"]),
     ]

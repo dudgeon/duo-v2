@@ -210,6 +210,11 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - **Parity:**
   - Search's controls map to `search` and `search-status`, Resume to `session open`.
   - New verb `search-rebuild` for Rebuild the index.
+- **P3 (later the same day):**
+  - Archived sessions show the `archived` pill only with Include archived, and add Carry on in a new session (DL-47, DL-49). Resume puts the transcript back.
+  - Find Similar is on the file tree's and session rows' right-click menus. It opens the designed similar view (DB-23 may restyle it).
+  - Rows are built off the main thread. A session's neighbouring turns load only when it's selected, since transcripts can be tens of MB.
+  - 13 checks for the model.
 - **Not designed, stubbed:**
   - New project from search (DB-9).
   - Memory rows (DB-22).

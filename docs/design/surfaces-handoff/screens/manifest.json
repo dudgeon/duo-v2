@@ -1,0 +1,106 @@
+{
+  "$note": "Every design file in this handoff, in the order the brief lists its surfaces. kind=target: a window to build to. kind=sheet: parts and states on one page.",
+  "canvas": "https://claude.ai/artifact/Hip1Qk4vRHq2kWwXWnigic",
+  "canvasPage": "Surfaces",
+  "screens": [
+    {
+      "file": "screens/idle-list.html",
+      "db": "DB-1",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "The footer under the map opened: every idle, resumable session, newest first, grouped by when. Shows a group pill, an Unfiled session and an archived one.",
+      "canvasBoard": "Surf-idle-list.dc.html"
+    },
+    {
+      "file": "screens/idle-many.html",
+      "db": "DB-1",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "The same list with 312 sessions: it scrolls, grouped by week and then by month. Shows a title too long for its row, a session that is open in Terminal, and an Unfiled one.",
+      "canvasBoard": "Surf-idle-many.dc.html"
+    },
+    {
+      "file": "screens/terminal-palette.html",
+      "db": "DB-2",
+      "kind": "sheet",
+      "width": 1440,
+      "height": 760,
+      "shows": "The 16 ANSI colours, cursor and selection on the console background, the Increase Contrast set, and three samples.",
+      "canvasBoard": "Surf-terminal-palette.dc.html"
+    },
+    {
+      "file": "screens/console-none.html",
+      "db": "DB-3",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Inside a project with nothing running. The console says so and offers the last session first.",
+      "canvasBoard": "Surf-console-none.dc.html"
+    },
+    {
+      "file": "screens/console-ended.html",
+      "db": "DB-3",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "A session whose process has exited. Its last output stays; a bar under it says what happened.",
+      "canvasBoard": "Surf-console-ended.dc.html"
+    },
+    {
+      "file": "screens/home-none.html",
+      "db": "DB-3",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "All projects with no Home session running: the Home pane says so and offers to start one.",
+      "canvasBoard": "Surf-home-none.dc.html"
+    },
+    {
+      "file": "screens/console-empty-states.html",
+      "db": "DB-3",
+      "kind": "sheet",
+      "width": 1440,
+      "height": 700,
+      "shows": "Every message the console can show when there is no live terminal, on one sheet.",
+      "canvasBoard": "Surf-console-empty-states.dc.html"
+    },
+    {
+      "file": "screens/shell-tab.html",
+      "db": "DB-4",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Two Claude sessions and two shells in one tab strip, a shell selected. Shell tabs carry a prompt mark, not a state glyph.",
+      "canvasBoard": "Surf-shell-tab.dc.html"
+    },
+    {
+      "file": "screens/shell-new-menu.html",
+      "db": "DB-4",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "The chevron beside + opened: a new Claude session or a new shell.",
+      "canvasBoard": "Surf-shell-new-menu.dc.html"
+    },
+    {
+      "file": "screens/shell-narrow.html",
+      "db": "DB-4",
+      "kind": "target",
+      "width": 1280,
+      "height": 800,
+      "shows": "The window at 1280×800 with six tabs. Those that don’t fit move into a menu; the selected tab always stays.",
+      "canvasBoard": "Surf-shell-narrow.dc.html"
+    },
+    {
+      "file": "screens/console-tabs.html",
+      "db": "DB-4",
+      "kind": "sheet",
+      "width": 1440,
+      "height": 480,
+      "shows": "Tab kinds and states on one sheet: sessions and shells, promotion, a failed shell, overflow.",
+      "canvasBoard": "Surf-console-tabs.dc.html"
+    }
+  ]
+}

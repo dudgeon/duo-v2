@@ -410,6 +410,7 @@ struct SessionOrganizeMenu: ViewModifier {
             content
                 .contextMenu {
                     SendMenu { _ in model.sessionPayload(sessionKey) }
+                    Button("Find Similar") { model.findSimilar(session: sessionKey) }
                     Divider()
                     Menu("Move to Project") {
                         ForEach(model.moveTargets(excluding: s.project)) { p in

@@ -69,6 +69,7 @@ extension AppModel {
             guard let item = s.selectedItem, s.actions(for: item).contains(where: { $0.id == id && $0.enabled }) else { return id == .sendToClaude }
             runSearchAction(id)
         }
+        if s.isOpen { loadSelectedTurns() }
         return true
     }
 
@@ -107,6 +108,7 @@ extension AppModel {
             search.multi.insert(i)
         } else { search.multi = [] }
         search.selected = i
+        loadSelectedTurns()
     }
 
     public func runRecent(_ q: String) { searchQueryChanged(q) }
@@ -149,16 +151,17 @@ extension AppModel {
         query.similarTo = s.similarTo?.path
         let includeArchived = s.includeArchived, time = s.time
         Task.detached(priority: .userInitiated) {
-            let hits = Result { () throws -> [SearchHit] in
+            // Query and build the rows off the main thread: files are read for passage headings.
+            let rows = Result { () throws -> [SearchItem] in
                 let index = try SearchIndex(readOnly: true)
                 let embedder = query.exactOnly || query.similarTo != nil ? nil : try? Embedder(use: .query)
-                return try index.search(query, embedder: embedder)
+                return Self.rows(try index.search(query, embedder: embedder), words: q, includeArchived: includeArchived, time: time)
             }
-            await MainActor.run { self.searchAnswered(hits, gen: gen, words: q, includeArchived: includeArchived, time: time) }
+            await MainActor.run { self.searchAnswered(rows, gen: gen, words: q) }
         }
     }
 
-    private func searchAnswered(_ r: Result<[SearchHit], Error>, gen: Int, words: String, includeArchived: Bool, time: SearchTime) {
+    private func searchAnswered(_ r: Result<[SearchItem], Error>, gen: Int, words: String) {
         let s = search
         guard gen == s.generation else { return }
         s.stillSearching = nil
@@ -166,24 +169,48 @@ extension AppModel {
         switch r {
         case .failure(let e):
             if names.isEmpty { s.phase = .unreadable("\(e)") }
-            return
-        case .success(let hits):
-            let cutoff = time.seconds.map { Date().addingTimeInterval(-$0) }
-            // One row per item (search-handoff §3): later hits on the same file or session become its passages.
-            var grouped: [(SearchHit, [SearchHit])] = []
-            for h in hits where includeArchived || !h.archived {
-                if let i = grouped.firstIndex(where: { $0.0.path == h.path && $0.0.kind == h.kind }) {
-                    if !grouped[i].1.contains(where: { $0.startLine == h.startLine }) && grouped[i].0.startLine != h.startLine { grouped[i].1.append(h) }
-                } else { grouped.append((h, [])) }
-            }
-            var content = grouped.map { item(from: $0.0, more: $0.1, words: words) }
-            if let cutoff { content = content.filter { ($0.modified ?? .distantFuture) >= cutoff } }
-            s.items = names + content.map(\.item)
+        case .success(let content):
+            s.items = names + content
             s.selected = min(s.selected, max(0, s.items.count - 1))
             if s.items.isEmpty {
                 s.phase = .none(noneSentence(words), 0)
                 if s.filtersSet { countWithoutFilters(words, gen: gen) }
             } else { s.phase = .results }
+        }
+        loadSelectedTurns()
+    }
+
+    /// One row per item (search-handoff §3): later hits on the same file or session become its passages.
+    nonisolated public static func rows(_ hits: [SearchHit], words: String, includeArchived: Bool, time: SearchTime) -> [SearchItem] {
+        let cutoff = time.seconds.map { Date().addingTimeInterval(-$0) }
+        var grouped: [(SearchHit, [SearchHit])] = []
+        for h in hits where includeArchived || !h.archived {
+            if let i = grouped.firstIndex(where: { $0.0.path == h.path && $0.0.kind == h.kind }) {
+                if !grouped[i].1.contains(where: { $0.startLine == h.startLine }) && grouped[i].0.startLine != h.startLine { grouped[i].1.append(h) }
+            } else { grouped.append((h, [])) }
+        }
+        var content = grouped.map { item(from: $0.0, more: $0.1, words: words) }
+        if let cutoff { content = content.filter { ($0.modified ?? .distantFuture) >= cutoff } }
+        return content.map(\.item)
+    }
+
+    /// A session's turns either side of the match, read from its transcript when it's selected
+    /// (transcripts can be tens of MB, so never for every row).
+    func loadSelectedTurns() {
+        guard let item = search.selectedItem, item.kind == .session, !item.goTo, let path = item.path,
+              !item.turns.contains(where: { !$0.matched }) else { return }
+        let n = Int(item.location.split(separator: " ").last ?? "") ?? 0
+        let id = item.id
+        Task.detached(priority: .userInitiated) {
+            let turns = SessionSource.read(path).turns.filter { abs($0.index - n) <= 1 }.map { t -> SearchItem.Turn in
+                let parts = t.text.components(separatedBy: "\n\nClaude: ")
+                let you = parts.first.map { $0.hasPrefix("You: ") ? String($0.dropFirst(5)) : $0 }
+                return .init(number: t.index, you: you.map { String($0.prefix(400)) }, claude: parts.count > 1 ? String(parts[1].prefix(600)) : nil, matched: t.index == n)
+            }
+            await MainActor.run {
+                guard !turns.isEmpty, let i = self.search.items.firstIndex(where: { $0.id == id }) else { return }
+                self.search.items[i].turns = turns
+            }
         }
     }
 
@@ -211,7 +238,7 @@ extension AppModel {
         return middle.isEmpty ? "Nothing matches “\(q)”." : "Nothing \(middle) matches “\(q)”."
     }
 
-    private func item(from h: SearchHit, more: [SearchHit] = [], words: String) -> (item: SearchItem, modified: Date?) {
+    nonisolated static func item(from h: SearchHit, more: [SearchHit] = [], words: String) -> (item: SearchItem, modified: Date?) {
         let unfiled = h.project == SearchIndex.unfiled
         let attrs = try? FileManager.default.attributesOfItem(atPath: h.path)
         let modified = attrs?[.modificationDate] as? Date
@@ -237,29 +264,25 @@ extension AppModel {
         i.startLine = h.startLine; i.endLine = h.endLine
         if h.kind == "session" {
             i.sessionId = URL(fileURLWithPath: h.path).deletingPathExtension().lastPathComponent
-            // The matched turn with one either side, read from the transcript (search-handoff §3 preview).
+            // The matched turn now; the ones either side load when the row is selected (loadSelectedTurns).
             let n = Int(h.locator.split(separator: " ").last ?? "") ?? 0
-            let all = SessionSource.read(h.path).turns
-            i.turns = all.filter { abs($0.index - n) <= 1 }.map { t in
-                let parts = t.text.components(separatedBy: "\n\nClaude: ")
-                let you = parts.first.map { $0.hasPrefix("You: ") ? String($0.dropFirst(5)) : $0 }
-                return .init(number: t.index, you: you.map { String($0.prefix(400)) }, claude: parts.count > 1 ? String(parts[1].prefix(600)) : nil, matched: t.index == n)
-            }
-            if i.turns.isEmpty { i.turns = [.init(number: n, you: nil, claude: h.snippet, matched: true)] }
+            let parts = h.snippet.components(separatedBy: " Claude: ")
+            i.turns = [.init(number: n, you: parts.count > 1 ? parts[0].replacingOccurrences(of: "You: ", with: "") : nil,
+                             claude: parts.count > 1 ? parts[1] : h.snippet, matched: true)]
         }
         return (i, modified)
     }
 
     /// `L40-58` → `L40–58`, as the design writes ranges.
-    static func dashed(_ s: String) -> String { s.replacingOccurrences(of: "-", with: "–") }
+    nonisolated public static func dashed(_ s: String) -> String { s.replacingOccurrences(of: "-", with: "–") }
 
-    static func queryWords(_ q: String) -> [String] {
+    nonisolated public static func queryWords(_ q: String) -> [String] {
         if let lit = SearchIndex.literal(in: q) { return [lit] }
         return q.split(whereSeparator: { !$0.isLetter && !$0.isNumber && $0 != "_" && $0 != "-" }).map(String.init).filter { $0.count >= 3 }
     }
 
     /// The "Go to" block (DL-80): projects, groups, then sessions whose names contain the query.
-    func nameMatches(_ q: String) -> [SearchItem] {
+    public func nameMatches(_ q: String) -> [SearchItem] {
         guard search.similarTo == nil, !search.exact || !q.contains(" ") else { return [] }
         let needle = q.lowercased()
         var out: [SearchItem] = []
@@ -295,6 +318,33 @@ extension AppModel {
         case .project: return Array(fixture.sessions(inProject: item.title).prefix(6))
         default: return []
         }
+    }
+
+    // MARK: Find similar from elsewhere (SRCH P3)
+
+    /// Find similar started from the file tree or a session row: opens the modal in the designed
+    /// similar view, with nothing to go back to. (Started outside search: DB-23 may restyle it.)
+    public func findSimilar(file path: String) {
+        guard let folder = projectFolder, let project = currentProject?.name else { return }
+        var item = SearchItem(id: "similar:\(path)", kind: .file, project: project, title: path)
+        item.path = folder.appending(path: path).path
+        startSimilar(item)
+    }
+
+    public func findSimilar(session key: String) {
+        guard let s = fixture.sessions.first(where: { $0.tabKey == key }), let id = s.sessionId,
+              let folder = liveFolders[s.project], let t = ClaudeStorage.transcript(sessionId: id, cwd: folder.path) else { return }
+        var item = SearchItem(id: "similar:\(id)", kind: .session, project: s.project, title: s.name)
+        item.path = t.path; item.sessionId = id
+        startSimilar(item)
+    }
+
+    private func startSimilar(_ item: SearchItem) {
+        if !search.isOpen { openSearch() }
+        search.similarReturnsTo = nil
+        search.similarTo = item
+        search.exact = false
+        searchQueryChanged("")
     }
 
     // MARK: Index state
@@ -389,6 +439,11 @@ extension AppModel {
             if let id = item.sessionId { FileActions.copy("claude --resume \(id)") }
         case .reveal:
             if let p = item.path { FileActions.reveal(URL(fileURLWithPath: p)) }
+        case .carryOn:
+            closeSearch()
+            if let id = item.sessionId, let new = carryOn(id), let project = item.project ?? fixture.home?.name {
+                open(project: project); consoleTab = new
+            }
         case .splitView:
             break  // split view isn't built (search-handoff §9)
         }

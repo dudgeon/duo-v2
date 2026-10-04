@@ -181,6 +181,10 @@ public enum FixtureHarness {
         case "search-kind":   // search-kind:file|session|memory|any (the Kind pop-up)
             model.setSearchKind(parts.count > 1 ? SearchItem.Kind(rawValue: parts[1]) : nil)
         case "search-close": model.closeSearch()
+        case "similar-file": if parts.count > 1 { model.findSimilar(file: parts[1]) }   // the tree's Find Similar
+        case "search-archived": model.setIncludeArchived(true)
+        case "search-turns":
+            if let it = model.search.selectedItem { FileHandle.standardError.write(Data("search-turns: \(it.title) \(it.turns.map { "\($0.number)\($0.matched ? "*" : "")" }) archived=\(it.archived) actions=\(model.search.actions(for: it).map(\.title))\n".utf8)) }
         case "search-scope": model.setSearchScope(parts.count > 1 && parts[1] != "all" ? parts[1] : nil)
         case "search-pick":   // search-pick:<n>: select row n
             if parts.count > 1, let n = Int(parts[1]) { model.selectSearchRow(n) }

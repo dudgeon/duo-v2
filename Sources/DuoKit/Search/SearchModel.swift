@@ -45,6 +45,10 @@ public struct SearchItem: Identifiable, Equatable, Sendable {
     public var startLine = 0, endLine = 0
     public var sessionId: String?
 
+    public init(id: String, kind: Kind, goTo: Bool = false, project: String? = nil, unfiled: Bool = false, title: String) {
+        self.id = id; self.kind = kind; self.goTo = goTo; self.project = project; self.unfiled = unfiled; self.title = title
+    }
+
     public var isExact: Bool { matchedBy.contains("exact") }
     public var byMeaningOnly: Bool { matchedBy == ["meaning"] }
     public var isContent: Bool { !goTo }
@@ -54,7 +58,7 @@ public struct SearchItem: Identifiable, Equatable, Sendable {
 public struct SearchAction: Identifiable, Equatable, Sendable {
     public enum ID: String, Sendable {
         case open, resume, readOnly, fork, splitView, goToProject, sendToClaude, findSimilar, showPassages
-        case copyPath, copyPassage, copyLink, copyResume, reveal, goTo
+        case copyPath, copyPassage, copyLink, copyResume, reveal, goTo, carryOn
     }
     public var id: ID
     public var title: String
@@ -155,6 +159,10 @@ public final class SearchUI {
             return [
                 .init(id: .resume, title: "Resume", chord: "↩", group: 0),
                 .init(id: .readOnly, title: "Open read-only\(turn)", chord: "⇧⌘↩", group: 0),
+            ] + (item.archived ? [
+                // Claude's cleanup removed it; Duo's archive puts it back on resume, or carries it on (DL-47, DL-49).
+                .init(id: .carryOn, title: "Carry on in a new session", chord: nil, group: 0),
+            ] : []) + [
                 .init(id: .fork, title: "Resume as a fork", chord: nil, group: 0),
                 .init(id: .splitView, title: "Open in split view", chord: "⌥⌘↩", group: 0, enabled: false),
                 .init(id: .goToProject, title: "Go to \(item.project ?? "the project")", chord: nil, group: 0, enabled: item.project != nil),

@@ -114,7 +114,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 
 | Command | What it does | In the app |
 |---|---|---|
-| `duo2 search <query> \| --similar <path> [-k N] [--project P] [--kind file\|session\|memory] [--exact]` | Search every project by meaning and by words. Works without the app; read-only. | Search Everything…, Search all projects, Clear filters, Include archived, Exact |
+| `duo2 search <query> \| --similar <path> [-k N] [--project P] [--kind file\|session\|memory] [--exact]` | Search every project by meaning and by words. Works without the app; read-only. | Search Everything…, Search all projects, Clear filters, Include archived, Exact, Find Similar |
 | `duo2 search-status` | How much of each project the search index covers. | Show details |
 | `duo2 search-rebuild` | Rebuild the search index from scratch (the old one goes to the Trash). | Rebuild the index |
 

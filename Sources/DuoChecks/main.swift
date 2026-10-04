@@ -478,6 +478,44 @@ func repoFixture() throws -> Fixture {
     unsetenv("DUO_ARCHIVE_ROOT")
     try? FileManager.default.removeItem(at: ar)
 
+    print("search modal (DL-76, DL-79, DL-80)")
+    do {
+        func hit(_ path: String, _ kind: String, _ start: Int, archived: Bool = false) -> SearchHit {
+            let j = #"{"project":"checkout","kind":"\#(kind)","path":"\#(path)","title":"t","locator":"L\#(start)-\#(start + 2)","startLine":\#(start),"endLine":\#(start + 2),"score":1,"matched":["words"],"snippet":"saved cards","alsoIn":[],"archived":\#(archived)}"#
+            return try! JSONDecoder().decode(SearchHit.self, from: Data(j.utf8))
+        }
+        let rows = AppModel.rows([hit("/x/a.md", "file", 40), hit("/x/b.md", "file", 1), hit("/x/a.md", "file", 71), hit("/x/c.jsonl", "session", 3, archived: true)],
+                                 words: "saved cards", includeArchived: false, time: .any)
+        check(rows.map(\.path) == ["/x/a.md", "/x/b.md"], "one row per item; archived hidden unless asked")
+        check(rows.first?.passages.map(\.location) == ["L40–42", "L71–73"], "later hits become the item's passages, with en dashes")
+        check(AppModel.rows([hit("/x/c.jsonl", "session", 3, archived: true)], words: "", includeArchived: true, time: .any).first?.archived == true, "Include archived shows them, labelled")
+        check(AppModel.queryWords("where did we land on saved cards") == ["where", "did", "land", "saved", "cards"], "matched words skip short ones")
+        check(AppModel.queryWords("\"saved cards\"") == ["saved cards"], "a quoted phrase is one matched word")
+
+        let m = AppModel(fixture: f)
+        let names = m.nameMatches("prd")
+        check(names.first?.kind == .group && names.first?.title == "PRD v2", "Go to: groups before sessions, by name (DL-80)")
+        check(names.allSatisfy(\.goTo) && names.contains { $0.title == "PRD v2 edits" }, "Go to: sessions by name")
+        check(m.nameMatches("checkout").first?.kind == .project, "Go to: projects first")
+
+        let s = m.search
+        s.items = rows + [SearchItem(id: "s", kind: .session, project: "checkout", title: "PRD v2 edits")]
+        s.phase = .results; s.sendTargetName = "Morning triage"
+        s.move(1, extend: true)
+        check(s.multi == [0, 1] && s.returnLabel == "Send 2 to Claude in Morning triage", "⇧↓ selects several; Return sends them (DL-79 c)")
+        var archived = SearchItem(id: "a", kind: .session, project: "refunds", title: "Old"); archived.archived = true
+        check(s.actions(for: archived).contains { $0.id == .carryOn }, "archived sessions offer Carry on in a new session (DL-47)")
+        check(s.actions(for: rows[0]).first { $0.id == .sendToClaude }?.chord == "⌘D", "Send to Claude is ⌘D (DL-79 e)")
+        s.isOpen = true; s.menuOpen = true
+        m.searchKey(.escape)
+        check(s.isOpen && !s.menuOpen, "Esc closes the menu first (DL-79 h)")
+        s.similarTo = rows[0]; s.similarReturnsTo = "saved cards"
+        m.searchKey(.escape)
+        check(s.isOpen && s.similarTo == nil && s.query == "saved cards", "then leaves find similar for the previous search")
+        m.searchKey(.escape)
+        check(!s.isOpen, "then closes")
+    }
+
     print("launch options")
     let o = LaunchOptions(arguments: ["Duo", "--state", "flow-zoom-3", "--capture", "/tmp/x.png", "--left", "collapsed"])
     check(o.state == .flowZoom3 && o.capturePath == "/tmp/x.png" && o.collapseLeft && o.capturing, "flags parse")
