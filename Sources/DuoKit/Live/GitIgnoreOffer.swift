@@ -54,7 +54,8 @@ enum GitIgnoreOffer {
             showing = true
             let alert = NSAlert()
             alert.messageText = "Keep Duo's files out of git?"
-            alert.informativeText = "Duo keeps a small .duo folder in “\(project)” for its list of sessions. “\(repo.lastPathComponent)” is a git repository. Add .duo/ to its .gitignore so the folder stays out of commits?"
+            let place = repo.lastPathComponent == project ? "“\(project)”, a git repository," : "“\(project)” (in the git repository “\(repo.lastPathComponent)”)"
+            alert.informativeText = "Duo keeps a small .duo folder in \(place) for its list of sessions. Add .duo/ to the repository's .gitignore so it stays out of commits?"
             alert.addButton(withTitle: "Add to .gitignore")
             alert.addButton(withTitle: "Don't Add")
             add = alert.runModal() == .alertFirstButtonReturn

@@ -184,6 +184,20 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-43 · With the screen unlocked: the real window, menus and the editor by hand (2026-10-03)
+
+Checked with computer-use on the running app (live mode, demo workspace).
+
+- **The AppKit window** (F-30) looks and behaves as before; **menus press**: Go › All Projects moved the view (confirmed with `duo2 status`).
+- **The editor was invisible in the real window.** The web view was attached once while its container was zero-sized and not yet in a window; autoresizing alone never grew it (the scripted snapshot had passed because WebKit can snapshot an unattached view). It now sits in a host view that lays it out on every pass, as the terminals do. Shown: target typography, task checkboxes, hidden syntax, the raw line under the caret, the native caret.
+- **Spelling:** check-as-you-type is now on by default for the editor (`WebContinuousSpellCheckingEnabled`, registered so the user's choice still wins); typing "recieve teh" was corrected by macOS with its usual marks. **The Edit menu lacked** Find, Spelling and Grammar, Substitutions, Transformations and Speech; SwiftUI's `TextEditingCommands()` adds them.
+- **Format › Bold (⌘B) and Italic (⌘I)** drive the editor (stack rec #9) and are enabled only while it has focus; Bold on a double-clicked word reached the file via autosave.
+- **Find (⌘F) in the editor** routes to CodeMirror's search, not WebKit's: CodeMirror renders only visible lines, so a page-level find would miss the rest of a long document. The editor's web view handles both `performTextFinderAction:` and the older `performFindPanelAction:` (SwiftUI's Find item sends the latter); the panel is CodeMirror's, in token colours, a stub until designed (Q-20). Menu items that depend on focus are disabled while Duo isn't frontmost, which is macOS behaviour, not a bug. In a terminal, Find opens SwiftTerm's own find bar, which is cramped in the 340-pt Home pane (its buttons render 2 pt wide): a design item.
+- **Writing Tools** didn't appear in the Edit menu; the editor now asks for full Writing Tools (`writingToolsBehavior = .complete`). Whether they show depends on Apple Intelligence on this Mac; **still to check by hand**, with dictation.
+- **Sidebar bug:** sessions were folded into threads by *name*; two live sessions both called "New session" became a false "thread · 2" and one was hidden. Rows are now keyed by session identity; fixture captures unchanged (0 px).
+- **The `.gitignore` alert** shows as a standard alert; "Don't Add" records the answer and writes nothing. Wording now handles a project that is itself the repository.
+- Enhancements logged from Geoff: ENH-1 Obsidian-compatible frontmatter editing, ENH-2 JSON editing modes (`docs/plan/enhancements.md`).
+
 ## F-42 · Remote decisions built: sidecars, purged sessions in search, the .gitignore offer (2026-10-03)
 
 - **Sidecars (DL-48):** the archive copies a session's sidecar folder (tool outputs, subagent transcripts) when its fingerprint (files, bytes, newest change) moves, and restores it with the transcript.

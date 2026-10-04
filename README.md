@@ -66,6 +66,7 @@ Design reference PNGs need Google Chrome to re-render ([ADR-0002](docs/adr/0002-
 | `Sources/Duo/` | The app entry point |
 | `Sources/DuoControl/` | The app ↔ `duo2` protocol (Foundation only) |
 | `Sources/duo2/` | The `duo2` command line, bundled in `Duo.app/Contents/Helpers` |
+| `docs/plan/enhancements.md` | Wanted but unscheduled (ENH-n) |
 | `docs/design/search-design-brief.md` | The request to Claude Design for the search UI |
 | `Sources/DuoSearch/` | Cross-project search: index, Core ML embedder, hybrid ranking (shared by the app and `duo2`) |
 | `Models/` | The search model, committed in checksummed parts (DL-40) |

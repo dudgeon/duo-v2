@@ -15,7 +15,7 @@ Read `README.md` first for build commands and layout.
 - **Stay Xcode-free** (DL-30, ADR-0001): no `@State`, `@Entry`, `#Preview` or other SwiftUI macros; no XCTest or Swift Testing. App state is `@Observable` classes. Logic checks go in `Sources/DuoChecks`.
 - **Tokens are generated.** Edit `docs/design/build-handoff/tokens.json`, run `python3 scripts/gen-tokens.py`; never edit `Tokens.swift` by hand, never use raw hex in views.
 - **Don't edit `docs/design/build-handoff/screens/`.** They are a snapshot of the design canvas.
-- **Record as you go.** Facts learned while building go in `docs/plan/findings.md` (F-n); risks and questions in `docs/plan/concerns-and-questions.md` (C-n, Q-n); Geoff's decisions in `decisions.md`.
+- **Record as you go.** Facts learned while building go in `docs/plan/findings.md` (F-n); risks and questions in `docs/plan/concerns-and-questions.md` (C-n, Q-n); Geoff's decisions in `decisions.md`; wanted-but-unscheduled ideas in `docs/plan/enhancements.md` (ENH-n).
 - Never use `claude -c` or the resume picker programmatically; always mint `--session-id` (DL-14).
 - **v1 scope is in the build plan §3a.** Don't pull later features into v1 without logging why.
 

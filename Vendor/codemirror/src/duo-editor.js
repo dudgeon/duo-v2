@@ -6,7 +6,7 @@ import { EditorView, ViewPlugin, Decoration, WidgetType, keymap } from "@codemir
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { syntaxTree } from "@codemirror/language";
-import { search, searchKeymap, SearchQuery, setSearchQuery, findNext } from "@codemirror/search";
+import { search, searchKeymap, SearchQuery, setSearchQuery, findNext, findPrevious, openSearchPanel, replaceNext } from "@codemirror/search";
 
 // ---------- live preview ----------
 
@@ -180,6 +180,10 @@ const duoTheme = EditorView.theme({
   ".duo-added": { backgroundColor: "var(--duo-selected)", borderRadius: "var(--duo-radius-card)" },
   ".duo-task": { margin: "0 6px 0 0", verticalAlign: "-1px" },
   ".cm-searchMatch": { backgroundColor: "var(--duo-selected)" },
+  // Find panel: a stub in Duo's tokens until it has a design (Q-20).
+  ".cm-panels": { backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", borderColor: "var(--duo-rule)" },
+  ".cm-panels-top": { borderBottom: "1px solid var(--duo-rule)" },
+  ".cm-search": { fontFamily: "-apple-system, sans-serif", fontSize: "12px", padding: "6px 28px" },
 });
 
 let view = null;
@@ -323,6 +327,14 @@ window.duo = {
   find: (q) => { setSearchQuery.of(new SearchQuery({ search: q })); view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: q })) }); findNext(view); return view.state.selection.main.from; },
   bench,
   typeSlowly,
+  // The Edit > Find menu items (performTextFinderAction:) arrive here: CodeMirror only renders
+  // the visible lines, so a browser-level find would miss the rest of a long document.
+  findAction: (tag) => {
+    if (tag === 1 || tag === 12) { openSearchPanel(view); return true; }   // show find / find-and-replace
+    if (tag === 2) return findNext(view);
+    if (tag === 3) return findPrevious(view);
+    return false;
+  },
   typeOne: (at) => view.dispatch({ changes: { from: at, insert: "x" }, selection: { anchor: at + 1 } }),
   hiddenCount: () => document.querySelectorAll(".cm-line").length,
 };

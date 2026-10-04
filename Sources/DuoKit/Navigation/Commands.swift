@@ -16,6 +16,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case nextPane           // ⌥⌘→
     case previousPane       // ⌥⌘←
     case save               // ⌘S saves the open document now (it also autosaves)
+    case bold               // ⌘B, only while the editor has focus (stack rec #9)
+    case italic             // ⌘I, likewise
     case closeSession       // ⌘W closes the session tab, never the window (LR-60, LR-13)
     case closeWindow        // ⇧⌘W, as in browsers once ⌘W closes tabs
 
@@ -32,6 +34,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .nextPane: "Next Pane"
         case .previousPane: "Previous Pane"
         case .save: "Save"
+        case .bold: "Bold"
+        case .italic: "Italic"
         case .closeSession: "Close Session"
         case .closeWindow: "Close Window"
         }
@@ -50,6 +54,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .nextPane: KeyboardShortcut(.rightArrow, modifiers: [.command, .option])
         case .previousPane: KeyboardShortcut(.leftArrow, modifiers: [.command, .option])
         case .save: KeyboardShortcut("s", modifiers: .command)
+        case .bold: KeyboardShortcut("b", modifiers: .command)
+        case .italic: KeyboardShortcut("i", modifiers: .command)
         case .closeSession: KeyboardShortcut("w", modifiers: .command)
         case .closeWindow: KeyboardShortcut("w", modifiers: [.command, .shift])
         }
@@ -65,6 +71,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .goHome, .toggleSidebar, .closeWindow: true
         case .closeSession: model.visibleTerminal != nil
         case .save: model.terminalsMode == .live && model.editor.url != nil
+        case .bold, .italic: model.editorIfLoaded?.hasFocus == true
         }
     }
 
@@ -78,6 +85,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .toggleSidebar: model.leftCollapsed.toggle()
         case .closeSession: model.closeVisibleSession()
         case .save: model.editor.saveNow()
+        case .bold: model.editor.run("duo.exec('bold'); return 1") { _ in }
+        case .italic: model.editor.run("duo.exec('italic'); return 1") { _ in }
         case .closeWindow: NSApp.keyWindow?.performClose(nil)
         case .jump, .search, .toggleRightPane, .nextPane, .previousPane: break
         }
@@ -96,6 +105,13 @@ public struct DuoCommands: Commands {
             item(.closeSession)
             item(.closeWindow)
         }
+        CommandMenu("Format") {
+            item(.bold)
+            item(.italic)
+        }
+        // The standard text items (Find, Spelling and Grammar, Substitutions, Transformations,
+        // Speech) for the editor; Writing Tools joins them where the system supports it.
+        TextEditingCommands()
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)
             item(.toggleRightPane)

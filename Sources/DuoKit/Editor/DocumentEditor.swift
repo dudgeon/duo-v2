@@ -23,9 +23,12 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     private var saveTask: Task<Void, Never>?
 
     public override init() {
+        // Check spelling while typing unless the user turned it off (WebKit reads this default).
+        UserDefaults.standard.register(defaults: ["WebContinuousSpellCheckingEnabled": true, "WebGrammarCheckingEnabled": false])
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent()
-        webView = WKWebView(frame: .zero, configuration: config)
+        config.writingToolsBehavior = .complete  // full Writing Tools in the editor, where the system offers them
+        webView = EditorWebView(frame: .zero, configuration: config)
         super.init()
         webView.configuration.userContentController.add(self, name: "duo")  // the view copied `config`
         webView.configuration.userContentController.addUserScript(WKUserScript(
@@ -163,6 +166,12 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         }
     }
 
+    /// The editor holds keyboard focus (for menu validation, LR-60).
+    public var hasFocus: Bool {
+        guard let responder = webView.window?.firstResponder as? NSView else { return false }
+        return responder === webView || responder.isDescendant(of: webView)
+    }
+
     /// What `duo2 doc-status` reports (LR-34).
     public func status(of file: URL) -> String {
         guard let url, url.standardizedFileURL.resolvingSymlinksInPath() == file.standardizedFileURL.resolvingSymlinksInPath() else {
@@ -180,21 +189,56 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     }
 }
 
-/// The right pane's document view: the shared editor web view, re-parented like terminals.
+/// The editor's web view takes the standard Find menu (Edit > Find) and routes it to CodeMirror's
+/// own search, which sees the whole document (F-43).
+final class EditorWebView: WKWebView {
+    /// Find menu items arrive as `performTextFinderAction:` (NSTextFinder) or the older
+    /// `performFindPanelAction:`; both carry the same tags (1 show, 2 next, 3 previous).
+    override func performTextFinderAction(_ sender: Any?) { find(sender) }
+    @objc func performFindPanelAction(_ sender: Any?) { find(sender) }
+
+    private func find(_ sender: Any?) {
+        let tag = (sender as? NSValidatedUserInterfaceItem)?.tag ?? 1
+        callAsyncJavaScript("return duo.findAction(t)", arguments: ["t": tag], in: nil, in: .page, completionHandler: nil)
+    }
+
+    override func validateUserInterfaceItem(_ item: NSValidatedUserInterfaceItem) -> Bool {
+        if item.action == #selector(performTextFinderAction(_:)) || item.action == #selector(performFindPanelAction(_:)) {
+            return [1, 2, 3, 12].contains(item.tag)
+        }
+        return super.validateUserInterfaceItem(item)
+    }
+}
+
+/// The right pane's document view: the shared editor web view, re-parented like terminals. The
+/// host lays the web view out on every layout pass: attached once at zero size (before the pane
+/// has a frame), autoresizing alone left it invisible (F-43).
 struct DocumentEditorView: NSViewRepresentable {
     let editor: EditorController
     let file: URL
 
-    func makeNSView(context: Context) -> NSView { NSView() }
+    func makeNSView(context: Context) -> EditorHost { EditorHost() }
 
-    func updateNSView(_ host: NSView, context: Context) {
-        let web = editor.webView
-        if web.superview !== host {
-            web.removeFromSuperview()
-            web.frame = host.bounds
-            web.autoresizingMask = [.width, .height]
-            host.addSubview(web)
-        }
+    func updateNSView(_ host: EditorHost, context: Context) {
+        host.show(editor.webView)
         editor.open(file)
+    }
+
+    final class EditorHost: NSView {
+        private weak var current: NSView?
+
+        func show(_ view: NSView) {
+            guard current !== view else { return }
+            current?.removeFromSuperview()
+            view.removeFromSuperview()
+            addSubview(view)
+            current = view
+            needsLayout = true
+        }
+
+        override func layout() {
+            super.layout()
+            current?.frame = bounds
+        }
     }
 }

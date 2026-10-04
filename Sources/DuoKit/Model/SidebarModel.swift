@@ -21,28 +21,29 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
         let sessions = fixture.sessions(inProject: project)
         func session(named name: String) -> Fixture.Session? { sessions.first { $0.name == name } }
 
-        func threadRow(_ names: [String]) -> SidebarRow? {
-            let members = names.compactMap(session(named:))
+        /// Rows are keyed by session identity (id when live, else name): live sessions can share a
+        /// name ("New session"), and keying by name folded them into a false thread (F-43).
+        func threadRow(_ members: [Fixture.Session]) -> SidebarRow? {
             guard let lead = mostUrgent(members) else { return nil }
-            return SidebarRow(id: "\(project)/thread/\(lead.name)", name: lead.name, state: lead.state,
+            return SidebarRow(id: "\(project)/thread/\(lead.tabKey)", name: lead.name, state: lead.state,
                               wait: lead.wait, kind: members.count >= 2 ? .thread(count: members.count) : .session)
         }
 
-        var grouped = Set<String>()
+        var grouped = Set<String>()   // tabKeys
         var rows: [SidebarRow] = []
         for g in fixture.groups where g.project == project {
-            let threads = g.threads.compactMap(threadRow).sorted(by: urgency)
+            let threads = g.threads.map { $0.compactMap(session(named:)) }.compactMap(threadRow).sorted(by: urgency)
             guard let lead = threads.first else { continue }
-            grouped.formUnion(g.sessions)
+            grouped.formUnion(g.sessions.compactMap { session(named: $0)?.tabKey })
             rows.append(SidebarRow(id: "\(project)/group/\(g.name)", name: g.name, state: lead.state, wait: lead.wait,
                                    kind: .group(threads: threads, sessionCount: g.sessions.count)))
         }
         // Fork families outside groups fold too: a session and the sessions forked from it.
-        let loose = sessions.filter { !grouped.contains($0.name) }
+        let loose = sessions.filter { !grouped.contains($0.tabKey) }
         var seen = Set<String>()
-        for s in loose where !seen.contains(s.name) {
-            let family = loose.filter { $0.name == s.name || $0.forkOf == s.name || s.forkOf == $0.name }.map(\.name)
-            seen.formUnion(family)
+        for s in loose where !seen.contains(s.tabKey) {
+            let family = loose.filter { $0.tabKey == s.tabKey || ($0.forkOf != nil && $0.forkOf == s.name) || (s.forkOf != nil && s.forkOf == $0.name) }
+            seen.formUnion(family.map(\.tabKey))
             if let row = threadRow(family) { rows.append(row) }
         }
         return rows.sorted(by: urgency)
