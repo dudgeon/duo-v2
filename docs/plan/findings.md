@@ -184,6 +184,30 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-34 · Spikes S4 and S5: CodeMirror 6 live preview in a WKWebView (2026-10-03)
+
+**Pass on everything checkable headless.** CodeMirror is vendored in `Vendor/codemirror` (Geoff, 2026-10-03: fetch it, vendor it): exact versions in the lockfile, a checked-in 528 KB bundle (`dist/cm6.js`) with its licences, rebuilt by `build.sh`. `Spikes/S4Editor` drives it from Swift.
+
+| Check | Result |
+|---|---|
+| Unedited round trip, byte for byte | legacy `tasks.md` (385 KB; it was 1.2 MB when the plan was written), `about-duo.md` (HTML comments), a 1.2 MB file, a CRLF file: all identical. Open in 1–23 ms. |
+| Bold on a selection | changes exactly the selection (+4 characters) |
+| Edit in a CRLF file | keeps CRLF everywhere |
+| Typing proxy, 1.2 MB file | p50 under 1 ms, p95 1 ms, max 3 ms (budget 16 ms) |
+| WebContent RSS, human-paced typing | 41 MB empty, 102 MB with the 1.2 MB file, 129 MB after 1,200 characters at 30 ms each (budget 150) |
+| External edit, no local edit | applied; the caret stays on its word |
+| External + local edits in different places | merged (three-way, from the last saved text) |
+| Overlapping edits | reported as a conflict; nothing applied |
+| Agent insert | highlighted ("added by Claude", DL-5) |
+| Find | selects the match |
+
+What the spike taught:
+- **CodeMirror's `doc.toString()` always joins with `\n`**; only `state.sliceDoc()` uses the configured line separator. Saves must use `sliceDoc()`, and merge diffs must be computed on `\n`-normalised text because CodeMirror counts a CRLF as one position. Mixed line endings can't round-trip and should open read-only (LR-30).
+- **Never stringify the document per keystroke.** A dirty check doing `doc.toString() !== saved` cost about 280 MB of garbage over 300 burst keystrokes on the 1.2 MB file. `Text.eq` against the saved tree allocates nothing.
+- **Burst-typing benchmarks overstate memory:** 300 back-to-back edits pushed RSS from 106 to 187 MB as a high-water mark that later paced typing barely moved. Human-paced typing is the fair measure. The live preview is the largest per-edit cost; decorations are now reused and rebuilt only when the doc, the viewport or the set of raw lines changes.
+- **A hidden web view throttles its timers**, so paced tests are driven from Swift. **`callAsyncJavaScript` before the first navigation finishes never returns**, and **`WKWebViewConfiguration` is copied at init**: message handlers go on `webView.configuration`.
+- **Still to check with Geoff at the keyboard:** spellcheck, dictation and Writing Tools inside the editor; the native caret and selection; native menu items driving `duo.exec` with `validateMenuItem`. **S6** (the `swift-markdown-engine` hedge) needs that package fetched; not done.
+
 ## F-33 · Spike S7: WKWebView local-only by default, with an allow list (2026-10-03)
 
 **Passes** (`Spikes/S7WebView`, a throwaway package; `swift run` in that folder).

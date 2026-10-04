@@ -34,7 +34,7 @@ public enum ClaudeLocator {
 /// What a terminal runs.
 public enum TerminalCommand: Sendable, Equatable {
     /// A new Claude Code session with a Duo-minted id (DL-14), optionally seeded with a prompt
-    /// as its first message (never typed in: LR-15).
+    /// as its first message.
     case newClaude(sessionID: String, prompt: String?)
     /// Reopen a session by id. Never `-c` or the picker (DL-14).
     case resumeClaude(sessionID: String)

@@ -16,7 +16,7 @@ Read `README.md` first for build commands and layout.
 - **Tokens are generated.** Edit `docs/design/build-handoff/tokens.json`, run `python3 scripts/gen-tokens.py`; never edit `Tokens.swift` by hand, never use raw hex in views.
 - **Don't edit `docs/design/build-handoff/screens/`.** They are a snapshot of the design canvas.
 - **Record as you go.** Facts learned while building go in `docs/plan/findings.md` (F-n); risks and questions in `docs/plan/concerns-and-questions.md` (C-n, Q-n); Geoff's decisions in `decisions.md`.
-- **Duo never types into a running Claude session** (LR-15). The harness's `type:` action is for test sessions under `.build/` only; never use `claude -c` or the resume picker programmatically; always mint `--session-id` (DL-14).
+- Never use `claude -c` or the resume picker programmatically; always mint `--session-id` (DL-14).
 - **v1 scope is in the build plan §3a.** Don't pull later features into v1 without logging why.
 
 ## Running the app from a Claude session
