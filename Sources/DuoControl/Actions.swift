@@ -40,7 +40,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sessions, sessionShow = "session show", sessionNew = "session new", sessionOpen = "session open"
     case sessionClose = "session close", sessionMove = "session move"
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
-    case shellNew = "shell new", sessionFork = "session fork", idle, sessionDelete = "session delete"
+    case shellNew = "shell new", sessionFork = "session fork", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
     case files, fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
@@ -152,6 +152,9 @@ extension DuoAction {
         .init(.sessionCarryOn, .sessions, "<id>", "Start a new session carrying on from an archived one."),
         .init(.sessionFork, .sessions, "<id>", "Carry a session on as a fork: a new session with the same history (the original is left alone).",
               ui: ["Resume as a Fork"]),
+        .init(.sessionArchive, .sessions, "<id>", "File a session away: it leaves the lists and counts, keeps its transcript, stays searchable, and sits in its project's Archived fold. Not while it runs. Undo with `duo2 undo`.",
+              ui: ["Archive Session"]),
+        .init(.sessionUnarchive, .sessions, "<id>", "Bring an archived session back into its project's list.", ui: ["Unarchive Session", "Archived fold"]),
         .init(.sessionDelete, .sessions, "<id>", "Delete a session and its local logs for good (transcript, file history, environment; Duo's archived copy). The user confirms in Duo; never for a running session.",
               ui: ["Delete Session…"], timeout: 600),
         .init(.idle, .sessions, "", "Idle, resumable sessions, newest first, grouped by when (the map footer's list).", ui: ["idle footer"]),

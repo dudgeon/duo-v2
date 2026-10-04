@@ -71,7 +71,7 @@ extension AppModel {
     /// Delete Session… (Geoff, 2026-10-04): the session and its local logs, gone for good, after the
     /// user confirms in Duo. Refused while it runs anywhere.
     public func deleteSession(_ key: String, done: (@MainActor (Result<String, Error>) -> Void)? = nil) {
-        guard let s = fixture.sessions.first(where: { $0.tabKey == key || $0.sessionId == key }), let id = s.sessionId else {
+        guard let s = (fixture.sessions + (fixture.archivedSessions ?? [])).first(where: { $0.tabKey == key || $0.sessionId == key }), let id = s.sessionId else {
             done?(.failure(Migrator.Refusal("no session '\(key)'"))); return
         }
         let m = Migrator()

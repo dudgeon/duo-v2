@@ -58,7 +58,7 @@ public struct SearchItem: Identifiable, Equatable, Sendable {
 public struct SearchAction: Identifiable, Equatable, Sendable {
     public enum ID: String, Sendable {
         case open, resume, readOnly, fork, splitView, goToProject, sendToClaude, findSimilar, showPassages
-        case copyPath, copyPassage, copyLink, copyResume, reveal, goTo, carryOn
+        case copyPath, copyPassage, copyLink, copyResume, reveal, goTo, carryOn, archiveSession, deleteSession
     }
     public var id: ID
     public var title: String
@@ -170,6 +170,9 @@ public final class SearchUI {
                 .init(id: .findSimilar, title: "Find similar", chord: nil, group: 1),
                 .init(id: .copyPassage, title: "Copy passage", chord: "⇧⌘C", group: 2),
                 .init(id: .copyResume, title: "Copy resume command", chord: "⌥⌘C", group: 2),
+                // Wherever a session is listed, it can be filed away or deleted (Geoff, 2026-10-04).
+                .init(id: .archiveSession, title: "Archive session", chord: nil, group: 3, enabled: item.sessionId != nil && !item.archived),
+                .init(id: .deleteSession, title: "Delete session…", chord: nil, group: 3, enabled: item.sessionId != nil),
             ]
         case .project, .group:
             return [.init(id: .goTo, title: "Go to \(item.title)", chord: "↩", group: 0)]

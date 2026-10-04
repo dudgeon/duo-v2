@@ -43,6 +43,7 @@ struct HomePane: View {
                     }
                     .contentShape(Rectangle())
                     .onActivate { model.homeTab = s.tabKey }  // action: session open
+                    .modifier(SessionOrganizeMenu(sessionKey: s.tabKey))
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                 }
@@ -384,6 +385,7 @@ struct NeedsYouCard: View {
         // Clicking a session resumes it (Geoff, 2026-10-04): its project opens with it in the console.
         // Arrow keys still move the selection without opening.
         .onActivate { model.selectedActionSession = session.id; model.open(project: session.project, session: session.name) }  // action: open
+        .modifier(SessionOrganizeMenu(sessionKey: session.tabKey))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(session.name), needs you, waiting \(session.wait ?? ""), \(session.project)")
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -446,6 +448,7 @@ struct ReviewCard: View {
         .contentShape(Rectangle())
         // Clicking the card resumes the session, as Review does (Geoff, 2026-10-04).
         .onActivate { model.open(project: session.project, session: session.name, document: session.document) }  // action: open
+        .modifier(SessionOrganizeMenu(sessionKey: session.tabKey))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(session.name), ready for review, \(session.project)")
     }
@@ -460,7 +463,8 @@ struct SessionOrganizeMenu: ViewModifier {
     let sessionKey: String
 
     func body(content: Content) -> some View {
-        if model.terminalsMode == .live, let s = model.fixture.sessions.first(where: { $0.tabKey == sessionKey }), let id = s.sessionId {
+        if model.terminalsMode == .live, let s = (model.fixture.sessions + (model.fixture.archivedSessions ?? [])).first(where: { $0.tabKey == sessionKey }),
+           let id = s.sessionId {
             let payload = AppModel.dragPayload(session: id)
             content
                 .contextMenu {
@@ -473,6 +477,12 @@ struct SessionOrganizeMenu: ViewModifier {
                         }
                     }
                     Divider()
+                    // Filing (Geoff, 2026-10-04): out of the lists, kept, searchable; Unarchive from the Archived fold.
+                    if model.isSessionArchived(id) {
+                        Button("Unarchive Session") { _ = model.setSessionArchived(sessionKey, false) }
+                    } else {
+                        Button("Archive Session") { if let why = model.setSessionArchived(sessionKey, true) { model.info(why) } }
+                    }
                     Button("Delete Session…") { model.deleteSession(sessionKey) }
                 }
                 .modifier(Lifted(active: model.dragging == payload))

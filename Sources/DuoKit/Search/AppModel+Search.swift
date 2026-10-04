@@ -445,6 +445,12 @@ extension AppModel {
             if let id = item.sessionId, let new = carryOn(id), let project = item.project ?? fixture.home?.name {
                 open(project: project); consoleTab = new
             }
+        case .archiveSession:
+            closeSearch()
+            if let id = item.sessionId, let why = setSessionArchived(id, true) { info(why) }
+        case .deleteSession:
+            closeSearch()
+            if let id = item.sessionId { deleteSession(id) }
         case .splitView:
             break  // split view isn't built (search-handoff §9)
         }

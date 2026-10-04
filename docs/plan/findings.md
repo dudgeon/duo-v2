@@ -184,6 +184,22 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-63 · Archive a session anywhere it's listed; idle lists newest first (2026-10-04)
+
+- **Archive Session / Unarchive Session (Geoff):** filing, like archiving a project.
+  - Stored by id in Duo's state, so plain folders work too.
+  - Archived sessions leave every list and count: the snapshot moves them into `Fixture.archivedSessions` and out of groups.
+  - They keep their transcript and Duo's copy, stay searchable, and sit in an `Archived · n` fold at the end of their project's list.
+  - Refused while the session runs.
+  - Undoable. Also available as `duo2 session archive|unarchive`.
+- **The session menu (Send, Find Similar, Move to Project, Archive, Delete) is now wherever a session is listed:**
+  - tile rows, the project's list, the idle list;
+  - needs-you and review cards;
+  - console tabs and Home's tabs;
+  - search (Archive session and Delete session… in the Tab menu).
+  - The project list did have the menu (checked with a real right-click); what it lacked was Archive.
+- **Bug: a new session landed in "Older".** Rows sort by state, then by wait, longest first. That is right for needs-you and working, but for idle it put the oldest on top, and the fold then took everything after the first five, which meant the newest. Idle and resolved now sort most recent first.
+
 ## F-62 · ⇧⌘A left the keyboard in the terminal (2026-10-04)
 
 - **Seen (Geoff):** the search modal opened, but typing still went to the terminal.

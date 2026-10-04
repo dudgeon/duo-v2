@@ -37,6 +37,7 @@ struct ProjectSidebarPane: View {
                             ForEach(section) { row in SidebarRowView(row: row) }
                         }
                     }
+                    if let project { ArchivedSessionsFold(project: project.name) }
                     HStack(spacing: DuoSpace.gapButtonToButton) {
                         Button("+ New session") { model.newSession() }.buttonStyle(.duo)
                     }

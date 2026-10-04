@@ -188,6 +188,11 @@ extension AppModel {
                 let evidence = transcripts.map { Inventory.evidence($0.transcript, cwd: $0.cwd) }
                 await MainActor.run { self.evidenceReply(name, evidence, titles, done) }
             }
+        case .sessionArchive, .sessionUnarchive:
+            guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)")) }
+            let on = id == .sessionArchive
+            if let why = setSessionArchived(s.tabKey, on) { return done(.fail(why)) }
+            done(.ok(on ? "Archived \(s.name): it's in \(s.project)'s Archived fold, still searchable. Undo: duo2 undo" : "\(s.name) is back in \(s.project)'s list."))
         case .sessionDelete:
             guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)")) }
             deleteSession(s.tabKey) { r in
@@ -590,7 +595,8 @@ extension AppModel {
     }
 
     func findSession(_ key: String, in project: String?) -> Fixture.Session? {
-        let pool = project.map { fixture.sessions(inProject: $0) } ?? fixture.sessions
+        let everything = fixture.sessions + (fixture.archivedSessions ?? [])
+        let pool = project.map { p in everything.filter { $0.project == p } } ?? everything
         return pool.first { $0.sessionId == key } ?? pool.first { key.count >= 4 && ($0.sessionId?.hasPrefix(key) ?? false) }
             ?? pool.first { $0.name == key }
     }

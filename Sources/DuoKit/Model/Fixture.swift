@@ -74,6 +74,8 @@ public struct Fixture: Codable, Sendable, Equatable {
     public var homeInbox: [InboxItem]
     public var focusDocument: FocusDocument
     public var projectFiles: [String: [String]]
+    /// Sessions the user archived (filed away), kept apart from `sessions` so no list or count shows them.
+    public var archivedSessions: [Session]? = nil
 
     public static func load(from url: URL) throws -> Fixture {
         try JSONDecoder().decode(Fixture.self, from: Data(contentsOf: url))
@@ -83,6 +85,11 @@ public struct Fixture: Codable, Sendable, Equatable {
 
     public func projects(inTopic topic: String) -> [Project] {
         projects.filter { $0.topic == topic }
+    }
+
+    /// Archived sessions in a project (filed away: not in lists or counts).
+    public func archivedSessions(inProject project: String) -> [Session] {
+        (archivedSessions ?? []).filter { $0.project == project }
     }
 
     public func sessions(inProject project: String) -> [Session] {

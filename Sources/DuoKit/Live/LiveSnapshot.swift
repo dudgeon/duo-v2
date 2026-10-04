@@ -211,6 +211,14 @@ public enum LiveSnapshot {
             }
         }
 
+        // Archived sessions (filing): out of every list and count, kept for their project's Archived fold.
+        let archivedIDs = Set(DuoState.load().archivedSessions)
+        let archived = sessions.filter { $0.sessionId.map(archivedIDs.contains) ?? false }
+        sessions.removeAll { $0.sessionId.map(archivedIDs.contains) ?? false }
+        groups = groups.map { g in var g = g; g.sessions.removeAll { n in archived.contains { $0.project == g.project && $0.name == n } }
+                                g.threads = g.threads.map { $0.filter { n in !archived.contains { $0.project == g.project && $0.name == n } } }.filter { !$0.isEmpty }; return g }
+            .filter { !$0.sessions.isEmpty }
+
         var topics: [String] = []
         for p in projects { if let t = p.project.topic, !topics.contains(t) { topics.append(t) } }
         for p in folderProjects { if let t = p.topic, !topics.contains(t) { topics.append(t) } }
@@ -234,7 +242,8 @@ public enum LiveSnapshot {
                           idle: sessions.filter { s in s.state == .idle && !beacons.contains { $0.sessionId == s.sessionId } }.count),
             homeInbox: [],
             focusDocument: .init(project: "", path: "", sections: [], addedByClaude: []),
-            projectFiles: files
+            projectFiles: files,
+            archivedSessions: archived
         )
         return (fixture, folders, moves)
     }

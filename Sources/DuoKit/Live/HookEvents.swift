@@ -186,6 +186,9 @@ public struct DuoState: Codable, Sendable, Equatable {
     /// Projects and folders filed away (ENH-6): out of the map's columns, into its Archived rollup.
     /// Filing only: counts, search and sessions are unchanged. By folder path.
     public var archivedProjects: [String] = []
+    /// Sessions filed away (Geoff, 2026-10-04): out of every list and count, kept, still searchable,
+    /// shown under their project's Archived fold. By session id.
+    public var archivedSessions: [String] = []
 
     public init() {}
     public init(from decoder: Decoder) throws {
@@ -195,6 +198,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         gitignore = try c.decodeIfPresent([String: String].self, forKey: .gitignore) ?? [:]
         projects = try c.decodeIfPresent([String].self, forKey: .projects) ?? []
         archivedProjects = try c.decodeIfPresent([String].self, forKey: .archivedProjects) ?? []
+        archivedSessions = try c.decodeIfPresent([String].self, forKey: .archivedSessions) ?? []
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {

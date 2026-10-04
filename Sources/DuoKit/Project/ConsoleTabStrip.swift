@@ -68,6 +68,7 @@ struct ConsoleTabStrip: View {
         .fixedSize()
         .contentShape(Rectangle())
         .onActivate { model.openConsoleTab(t.id) }  // action: session open
+        .modifier(SessionOrganizeMenu(sessionKey: t.id))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(t.state == nil ? "\(t.title), shell" : t.title)
         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)

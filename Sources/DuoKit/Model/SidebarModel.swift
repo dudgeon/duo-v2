@@ -67,7 +67,12 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
         sessions.min { a, b in a.state != b.state ? a.state < b.state : WaitTime(a.wait) > WaitTime(b.wait) }
     }
 
+    /// Most urgent state first. Within needs you, review and working, the longest wait first (it's
+    /// been waiting on you); within idle and resolved, the most recent first, so a session you just
+    /// left is at the top and the Older fold holds the old ones (Geoff: a new session landed in Older).
     static func urgency(_ a: SidebarRow, _ b: SidebarRow) -> Bool {
-        a.state != b.state ? a.state < b.state : WaitTime(a.wait) > WaitTime(b.wait)
+        if a.state != b.state { return a.state < b.state }
+        let quiet = a.state == .idle || a.state == .resolved
+        return quiet ? WaitTime(a.wait) < WaitTime(b.wait) : WaitTime(a.wait) > WaitTime(b.wait)
     }
 }
