@@ -6,6 +6,7 @@ Ideas Geoff wants that aren't scheduled yet (ENH-n). Each says what and why; whe
 |---|---|---|---|
 | ENH-1 | **Frontmatter editing in the markdown editor**: Obsidian-compatible, but elegant and useful. Properties shown and edited as typed fields (text, list, date, checkbox, link) instead of raw YAML, with the YAML staying byte-faithful (LR-30) and readable by Obsidian (DL-6, `docs/research/obsidian-compatible-task-format.md`). | Builds on LR-37 (properties panel, expanded by default, typed one-click edits with undo, body untouched by property edits) and the task format research. Needs a design pass (Q-20 covers editor internals). | 2026-10-03 |
 | ENH-2 | **Editing modes for JSON files**: a JSON-aware view in the right pane (syntax colouring, folding, validation; perhaps a structured view for JSONL records). | Projects carry JSON and JSONL (data, configs, Claude records). Today the editor treats them as plain text. Not urgent. | 2026-10-03 |
+| ENH-3 | **`@` autocomplete for files and folders in a Claude session, from Duo**: type `@` and keep typing in a session's prompt; Duo offers matching file and folder names and, on choosing one, puts its path in the prompt. | Claude Code's own prompt already completes `@` paths inside the session's folder (it draws the list itself in the TUI). Duo's version earns its place by reaching further: other projects, Home, anything Duo indexes (search M1). Feasibility: SwiftTerm doesn't parse Claude's prompt; Duo would watch keystrokes it forwards (it sees every key typed into the terminal view) and show a native popover anchored at the caret cell, then send the chosen path as typed text. Needs a design pass (popover look) and a decision on clashing with Claude's own `@` list. **On hold: Geoff tries Claude Code's own `@` first (G-5).** | 2026-10-04 |
 
 ## Geoff's to-dos
 
@@ -15,3 +16,4 @@ Ideas Geoff wants that aren't scheduled yet (ENH-n). Each says what and why; whe
 | G-2 | Try Writing Tools (select text in a document, right-click) and dictation (Edit › Start Dictation) in the editor (F-43). | 2026-10-03 |
 | G-3 | Run the search design brief through Claude Design (`docs/design/search-design-brief.md`). | 2026-10-03 |
 | G-4 | Test Duo on the work Mac (DL-31, C-1). | 2026-10-03 |
+| G-5 | Try Claude Code's own `@` autocomplete in a Duo session (type `@` then part of a file name in the prompt) before deciding on ENH-3. | 2026-10-04 |

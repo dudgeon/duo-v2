@@ -486,6 +486,69 @@ func repoFixture() throws -> Fixture {
     check(DuoTextStyle.body.spec.size == 13 && DuoTextStyle.body.spec.lineHeight == 20, "body 13/20")
     check(DuoTextStyle.sectionLabel.spec.uppercase && DuoTextStyle.sectionLabel.spec.tracking == 0.66, "section label caps +0.66")
     check(DuoMetric.paneOverviewHome == 340 && DuoMetric.paneProjectRight == 460, "pane widths")
+
+    print("cli parity (DL-71, DL-72)")
+    check(Set(DuoAction.all.map(\.id)) == Set(ActionID.allCases) && DuoAction.all.count == ActionID.allCases.count, "every action is in the registry once")
+    let gaps = parityGaps()
+    if !gaps.isEmpty { print("    UI with no verb: " + gaps.joined(separator: "; ")) }
+    check(gaps.isEmpty, "every button, menu item, click and drag in the app names a duo2 action (or is listed in Parity.uiOnly)")
+    let primerVerbs = DuoAction.primer().matches(of: /`duo2 ([a-z-]+(?: [a-z-]+)?)/).map { String($0.1) }
+    check(!primerVerbs.isEmpty && primerVerbs.allSatisfy { DuoAction.resolve($0.split(separator: " ").map(String.init)) != nil }, "the primer names only verbs that exist")
+    check(DuoAction.resolve(["file", "rename", "a.md", "b.md"]).map { $0.0.id == .fileRename && $0.rest == ["a.md", "b.md"] } == true, "two-word verbs resolve")
+    check(DuoAction.resolve(["doc-status", "x.md"])?.0.id == .docStatus && DuoAction.resolve(["needs-you"])?.0.id == .needsYou, "old spellings resolve")
+    let inv = Invocation(["a.md", "--to", "abc", "--new", "--json", "b"])
+    check(inv.positional == ["a.md", "b"] && inv.flags["to"] == "abc" && inv.has("new") && inv.json, "flags and positionals parse")
+    let reference = try? String(contentsOf: repoRoot().appending(path: "docs/cli/duo2.md"), encoding: .utf8)
+    check(reference == DuoAction.markdown(), "docs/cli/duo2.md is current (regenerate: build/Duo.app/Contents/Helpers/duo2 help --markdown > docs/cli/duo2.md)")
+
+    print("install loop (DL-74, DL-75)")
+    let iroot = FileManager.default.temporaryDirectory.appending(path: "duo-install-\(UUID().uuidString)")
+    Installer.testRoot = iroot
+    defer { Installer.testRoot = nil; try? FileManager.default.removeItem(at: iroot) }
+    let cli = iroot.appending(path: "Duo.app/Contents/Helpers/duo2").creatingParent()
+    FileManager.default.createFile(atPath: cli.path, contents: Data())
+    try? FileManager.default.createDirectory(at: Installer.claudeDir, withIntermediateDirectories: true)
+    let mine = "# My rules\n\nBe brief.\n\n<!-- duo:managed-v0.13.0 -->\nlegacy\n<!-- duo:end -->\n"
+    try? mine.write(to: Installer.claudeMD, atomically: true, encoding: .utf8)
+    check(Installer.needsConsent(cli: cli.path), "asks before installing anything")
+    Installer.recordConsent(false, cli: cli.path)
+    Installer.install(cli: cli.path)
+    check((try? String(contentsOf: Installer.claudeMD, encoding: .utf8)) == mine && !Installer.needsConsent(cli: cli.path), "declined: nothing written, not asked again")
+    Installer.recordConsent(true, cli: cli.path)
+    Installer.install(cli: cli.path)
+    let md1 = (try? String(contentsOf: Installer.claudeMD, encoding: .utf8)) ?? ""
+    check(md1.hasPrefix(mine) && md1.contains(Installer.block()) && LegacyDuo.detect(in: Installer.claudeDir).count == 1, "block added after the user's text; legacy's block untouched and still detected as legacy's alone")
+    check((try? String(contentsOf: Installer.skillFile, encoding: .utf8)) == Installer.skill(), "skill written")
+    check((try? FileManager.default.destinationOfSymbolicLink(atPath: Installer.link.path)) == cli.path, "duo2 linked onto PATH")
+    check(Installer.install(cli: cli.path).lines.isEmpty, "a second launch changes nothing")
+    let edited = md1.replacingOccurrences(of: "## Duo", with: "## Duo (mine)")
+    try? edited.write(to: Installer.claudeMD, atomically: true, encoding: .utf8)
+    Installer.install(cli: cli.path)
+    check((try? String(contentsOf: Installer.claudeMD, encoding: .utf8)) == edited, "an edited block is left alone")
+    try? md1.replacingOccurrences(of: Installer.block() + "\n", with: "").write(to: Installer.claudeMD, atomically: true, encoding: .utf8)
+    Installer.install(cli: cli.path)
+    Installer.install(cli: cli.path)
+    check(!((try? String(contentsOf: Installer.claudeMD, encoding: .utf8)) ?? "").contains("duo2:begin"), "a removed block is never added back")
+    Installer.uninstall()
+    check(!FileManager.default.fileExists(atPath: Installer.skillFile.path) && (try? FileManager.default.destinationOfSymbolicLink(atPath: Installer.link.path)) == nil
+          && ((try? String(contentsOf: Installer.claudeMD, encoding: .utf8)) ?? "").hasPrefix("# My rules"), "uninstall removes exactly what Duo wrote")
+    let before = "# Mine\n\n" + Installer.block() + "\n"
+    let restored = iroot.appending(path: "restore/CLAUDE.md").creatingParent()
+    try? "# Mine\n".write(to: restored, atomically: true, encoding: .utf8)
+    Installer.reapplyBlock(ifPresentIn: before, to: restored)
+    check(((try? String(contentsOf: restored, encoding: .utf8)) ?? "").contains(Installer.block()), "legacy restore keeps Duo v2's block")
+    check(Installer.block().split(separator: " ").count < 110, "the always-on block stays short")
+
+    print("send to claude (DL-67, DL-68)")
+    let hostile = SendFormat.documentSelection("ok\u{1b}[201~rm -rf ~\r\nnext", path: "a\nb.md", fromLine: 1, toLine: 2)
+    check(!hostile.contains("\u{1b}") && !hostile.contains("\r") && hostile.hasPrefix("From a b.md, lines 1–2:\n> ok[201~rm -rf ~\n> next"), "control characters can't escape the paste; fields stay on one line")
+    check(SendFormat.file("docs/my notes.md") == "@\"docs/my notes.md\" " && SendFormat.file("docs/prd.md") == "@docs/prd.md ", "file references, quoted when they have spaces")
+    let el = SendFormat.Element(tag: "button", label: "button#pay", selector: "#pay", trail: ["Checkout", "Payment"], text: "Pay", attributes: ["type": "submit"],
+                                styles: ["color": "red"], rect: [1, 2, 30, 40], html: "<button>```</button>", url: "file:///x.html", title: "T")
+    let ep = SendFormat.element(el, path: "x.html", screenshot: "/tmp/e.png")
+    check(ep.contains("````html\n<button>```</button>\n````") && ep.contains("under: Checkout › Payment") && ep.contains("screenshot: /tmp/e.png"), "element payload: fence outgrows backticks, trail, screenshot")
+    check(SendFormat.documentSelection(String(repeating: "x", count: 9000), path: "a", fromLine: 1, toLine: 1).count < SendFormat.cap + 100, "payloads are capped")
+
 }
 
 do { try MainActor.assumeIsolated { try run() } } catch { print("✘ setup: \(error)"); failures += 1 }
@@ -528,4 +591,38 @@ func noHistory(_ root: URL) -> LiveSnapshot.Context {
     var c = LiveSnapshot.Context(root: root)
     c.includeHistory = false
     return c
+}
+
+
+func repoRoot() -> URL {
+    URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+}
+
+/// Labels and clicks in the app's views that aren't tied to an action (DL-71). Buttons, menus and
+/// menu items are matched by label against the registry's `ui` and `Parity.uiOnly`; clicks and
+/// drags (`.onActivate {`, `.onDrag`, `.onDrop`) must say `// action: <verb>` on the same line.
+func parityGaps() -> [String] {
+    let known = Set(DuoAction.all.flatMap(\.ui)).union(Parity.uiOnly.keys)
+    var gaps: [String] = []
+    for c in DuoCommand.allCases where !known.contains(c.title) { gaps.append("menu \(c.title)") }
+    let dir = repoRoot().appending(path: "Sources/DuoKit")
+    let files = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: nil)?.compactMap { $0 as? URL }.filter { $0.pathExtension == "swift" } ?? []
+    for file in files where !file.path.contains("/Debug/") {
+        guard let text = try? String(contentsOf: file, encoding: .utf8) else { continue }
+        for (n, line) in text.split(separator: "\n", omittingEmptySubsequences: false).enumerated() {
+            let l = String(line)
+            if l.trimmingCharacters(in: .whitespaces).hasPrefix("//") { continue }
+            for m in l.matches(of: /(?:Button|Menu|ActionMenuItem)\("((?:[^"\\]|\\.)+)"/) {
+                let label = String(m.1).replacing(/\\\([^)]*\)/, with: "").replacing(/\s+/, with: " ")
+                    .trimmingCharacters(in: CharacterSet(charactersIn: " :"))
+                if !known.contains(label) { gaps.append("\(file.lastPathComponent):\(n + 1) \"\(label)\"") }
+            }
+            if l.contains(".onActivate {") || l.contains(".onDrag {") || l.contains(".onDrop(") {
+                if let m = l.firstMatch(of: /\/\/ action: ([a-z -]+)/), DuoAction.resolve(String(m.1).trimmingCharacters(in: .whitespaces).split(separator: " ").map(String.init)) != nil
+                    || l.contains("// not an action:") { continue }
+                gaps.append("\(file.lastPathComponent):\(n + 1) click or drag without `// action: <verb>`")
+            }
+        }
+    }
+    return gaps
 }

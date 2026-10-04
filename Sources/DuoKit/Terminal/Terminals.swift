@@ -118,7 +118,7 @@ public final class TerminalSession {
     /// Per-session hooks (F-23); none if the settings file can't be written.
     private static func hookArgs(_ id: String) -> [String] {
         let settings = (try? HookEvents.settingsFile(for: id)).map { ["--settings", $0.path] } ?? []
-        return settings + ["--append-system-prompt", ControlCommand.sessionGuidance()]
+        return settings + ["--append-system-prompt", DuoAction.primer()]
     }
 
     private func showMissingClaude() {

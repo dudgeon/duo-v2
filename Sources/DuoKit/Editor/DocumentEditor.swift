@@ -8,7 +8,7 @@ import WebKit
 /// three-way and never clobber unsaved work (LR-31, LR-32; F-34).
 @MainActor
 public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
-    public let webView: WKWebView
+    public let webView: DuoWebView
     public private(set) var url: URL?
     public private(set) var readOnlyReason: String?
     public private(set) var lastEvent: String = "idle"   // for the harness and logs
@@ -214,7 +214,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
 
 /// The editor's web view takes the standard Find menu (Edit > Find) and routes it to CodeMirror's
 /// own search, which sees the whole document (F-43).
-final class EditorWebView: WKWebView {
+final class EditorWebView: DuoWebView {
     /// Find menu items arrive as `performTextFinderAction:` (NSTextFinder) or the older
     /// `performFindPanelAction:`; both carry the same tags (1 show, 2 next, 3 previous).
     override func performTextFinderAction(_ sender: Any?) { find(sender) }

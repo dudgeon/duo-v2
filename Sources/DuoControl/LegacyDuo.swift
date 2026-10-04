@@ -85,13 +85,16 @@ public enum LegacyDuo {
         return backup
     }
 
-    /// Puts a backup back exactly as it was.
+    /// Puts a backup back as it was, keeping Duo v2's own block in CLAUDE.md.
     public static func restore(from backup: URL) throws {
         let fm = FileManager.default
         guard let source = try? String(contentsOf: backup.appending(path: "SOURCE"), encoding: .utf8) else {
             throw NSError(domain: "duo2", code: 1, userInfo: [NSLocalizedDescriptionKey: "not a legacy-duo backup: \(backup.path)"])
         }
         let dir = URL(fileURLWithPath: source)
+        // Duo v2's own block was added after this backup; keep it (DL-74).
+        let before = (try? String(contentsOf: dir.appending(path: "CLAUDE.md"), encoding: .utf8)) ?? ""
+        defer { Installer.reapplyBlock(ifPresentIn: before, to: dir.appending(path: "CLAUDE.md")) }
         for name in ["settings.json", "CLAUDE.md"] where fm.fileExists(atPath: backup.appending(path: name).path) {
             _ = try? fm.removeItem(at: dir.appending(path: name))
             try fm.copyItem(at: backup.appending(path: name), to: dir.appending(path: name))

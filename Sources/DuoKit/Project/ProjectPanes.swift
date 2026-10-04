@@ -74,7 +74,7 @@ struct SidebarRowView: View {
                 .padding(.horizontal, 8 + DuoSpace.selectionInset)
                 .frame(height: DuoMetric.rowGroup)
                 .contentShape(Rectangle())
-                .onActivate { if expanded { model.expandedGroups.remove(row.id) } else { model.expandedGroups.insert(row.id) } }
+                .onActivate { if expanded { model.expandedGroups.remove(row.id) } else { model.expandedGroups.insert(row.id) } }  // action: view group
                 .accessibilityLabel(expanded ? "Hide older sessions" : "Show \(rows.count) older sessions")
                 if expanded { ForEach(rows) { r in SidebarLeafRow(row: r, nested: false) } }
             }
@@ -85,7 +85,7 @@ struct SidebarRowView: View {
                 HStack(spacing: DuoSpace.gapRowItems) {
                     Chevron(direction: expanded ? .down : .right).frame(width: 10)
                         .contentShape(Rectangle())
-                        .onActivate {
+                        .onActivate {  // action: view group
                             if expanded { model.expandedGroups.remove(row.name) } else { model.expandedGroups.insert(row.name) }
                         }
                         .accessibilityLabel(expanded ? "Collapse" : "Expand")
@@ -102,7 +102,7 @@ struct SidebarRowView: View {
                 }
                 .padding(.horizontal, DuoSpace.selectionInset)
                 .contentShape(Rectangle())
-                .onActivate { model.selectedSidebarItem = row.name; model.rightTab = row.name }
+                .onActivate { model.selectedSidebarItem = row.name; model.rightTab = row.name }  // action: view tab
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("\(row.name), group of \(count), \(row.state.spokenName)")
                 .accessibilityAddTraits(selected ? .isSelected : [])
@@ -146,7 +146,7 @@ struct SidebarLeafRow: View {
         .padding(.trailing, DuoSpace.panePadding)
         .frame(height: DuoMetric.rowSession)
         .contentShape(Rectangle())
-        .onActivate { model.openConsoleTab(row.sessionKey) }
+        .onActivate { model.openConsoleTab(row.sessionKey) }  // action: session open
         .modifier(SessionOrganizeMenu(sessionKey: row.sessionKey))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(row.name), \(row.state.spokenName)\(row.wait.map { ", waiting \($0)" } ?? "")")
@@ -285,7 +285,7 @@ struct FileRow: View {
             }
             .padding(.horizontal, DuoSpace.selectionInset)
             .contentShape(Rectangle())
-            .onActivate { if node.children == nil { model.openDocument(node.path) } }
+            .onActivate { if node.children == nil { model.openDocument(node.path) } }  // action: doc open
             .modifier(LiveContextMenu { FileMenu(path: node.path, isFolder: node.children != nil, onTab: false) })
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(selected ? .isSelected : [])
@@ -316,12 +316,12 @@ struct ConsolePane: View {
                             .lineLimit(1)
                     }
                     .contentShape(Rectangle())
-                    .onActivate { model.openConsoleTab(s.tabKey) }
+                    .onActivate { model.openConsoleTab(s.tabKey) }  // action: session open
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                 }
                 Text("+").duoText(.mono).foregroundStyle(DuoColor.consoleText2)
-                    .onActivate { model.newSession() }
+                    .onActivate { model.newSession() }  // action: session new
                     .accessibilityLabel("New session")
                 Spacer(minLength: 0)
             }
@@ -355,7 +355,7 @@ struct RightPane: View {
                         .foregroundStyle(active ? DuoColor.text : DuoColor.text2)
                         .lineLimit(1)
                         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
-                        .onActivate { model.rightTab = tab.id; if tab.isDocument { model.selectedFile = tab.id } }
+                        .onActivate { model.rightTab = tab.id; if tab.isDocument { model.selectedFile = tab.id } }  // action: view tab
                         .modifier(LiveContextMenu(enabled: tab.isDocument) {
                             Button("Close Tab") { model.closeDocument(tab.id) }
                             Button("Close Other Tabs") { model.closeOtherDocuments(than: tab.id) }
@@ -366,7 +366,7 @@ struct RightPane: View {
                 // New Markdown file, the same treatment as the console's + (DL-61).
                 if model.terminalsMode == .live, model.projectFolder != nil {
                     Text("+").duoText(.body).foregroundStyle(DuoColor.text2)
-                        .onActivate { model.newMarkdownFile(near: model.selectedFile) }
+                        .onActivate { model.newMarkdownFile(near: model.selectedFile) }  // action: file new
                         .accessibilityLabel("New Markdown file")
                 }
                 Spacer(minLength: 0)
@@ -374,7 +374,14 @@ struct RightPane: View {
             .padding(.horizontal, 20)
             .frame(height: DuoMetric.tabStripHeight)
             DuoColor.rule.frame(height: 1)
-            if let path = model.rightTab, path.contains("."), let file = model.liveFile(path) {
+            if let path = model.rightTab, ["html", "htm"].contains((path as NSString).pathExtension.lowercased()),
+               let file = model.liveFile(path), let root = model.projectFolder {
+                // Local HTML, read-only and live (v1; DL-67): its own web view, with the element picker.
+                ZStack(alignment: .bottom) {
+                    HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
+                    PickerBar()
+                }
+            } else if let path = model.rightTab, path.contains("."), let file = model.liveFile(path) {
                 DocumentEditorView(editor: model.editor, file: file)
             } else if model.rightTab == "Project" || model.rightTab == nil, let own = model.projectFile, let file = model.liveFile(own) {
                 // The Project tab is the project's own file (DL-60).
@@ -454,7 +461,7 @@ struct FileMenu: View {
         Button("Copy Path") { model.copyPath(path, relative: false) }
         Button("Copy Relative Path") { model.copyPath(path, relative: true) }
         if !isFolder { Button("Copy as Link") { model.copyLink(path) } }
-        Button("Send to Claude") { model.sendToClaude(path) }.disabled(model.consoleTerminal == nil)
+        SendMenu { key in model.filePayload(path, for: key) }
         Divider()
         NewItemsMenu(near: path)
         Divider()
@@ -557,5 +564,55 @@ struct LiveContextMenu<Items: View>: ViewModifier {
 
     func body(content: Content) -> some View {
         if enabled && model.terminalsMode == .live { content.contextMenu { items() } } else { content }
+    }
+}
+
+/// The element picker's bar (DL-70: plain system look until designed, Q-21). Shows while picking;
+/// once an element is frozen it names it and offers Send to Claude, Send To, Pick Another, Cancel.
+struct PickerBar: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let _ = model.pickerRevision
+        if let v = model.htmlViewerIfLoaded, v.picking {
+            VStack(alignment: .leading, spacing: 6) {
+                if let e = v.picked {
+                    Text("<\(e.label)>").font(.system(.callout, design: .monospaced)).lineLimit(1).truncationMode(.middle)
+                    HStack(spacing: 8) {
+                        switch model.sendTarget {
+                        case .success(let t): Button("Send to Claude") { model.sendPickedElement(to: t.key) }.keyboardShortcut(.defaultAction)
+                        case .failure(let why): Button("Send to Claude") {}.disabled(true).help(why.reason)
+                        }
+                        Menu("Send To") {
+                            let visible = (try? model.sendTarget.get())?.key
+                            ForEach(model.sendTargets.filter { $0.key != visible }) { t in
+                                Button(t.project.isEmpty ? t.title : "\(t.title) — \(t.project)") { model.sendPickedElement(to: t.key) }
+                            }
+                            Divider()
+                            Button("New Session") { model.sendPickedElement(to: nil) }
+                        }
+                        .fixedSize()
+                        Button("Pick Another") { v.pickAgain() }
+                        Spacer(minLength: 0)
+                        Button("Cancel") { v.stopPicking() }.keyboardShortcut(.cancelAction)
+                    }
+                    if case .failure(let why) = model.sendTarget {
+                        Text("\(why.reason): use Send To.").font(.caption).foregroundStyle(.secondary)
+                    }
+                } else {
+                    HStack {
+                        Text("Click an element to select it. Esc to stop.").font(.callout)
+                        Spacer(minLength: 8)
+                        Button("Cancel") { v.stopPicking() }.keyboardShortcut(.cancelAction)
+                    }
+                }
+            }
+            .controlSize(.small)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.bar)
+            .overlay(alignment: .top) { Divider() }
+        }
     }
 }

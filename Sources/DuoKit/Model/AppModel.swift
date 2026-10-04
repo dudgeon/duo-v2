@@ -57,7 +57,12 @@ public final class AppModel {
     public var terminalsMode: TerminalsMode = .off
     @ObservationIgnored public let terminals = TerminalStore()
     /// The one document editor (live mode; fixture mode keeps the placeholder the targets exempt).
-    @ObservationIgnored public lazy var editor: EditorController = { let e = EditorController(); editorIfLoaded = e; return e }()
+    @ObservationIgnored public lazy var editor: EditorController = { let e = EditorController(); editorIfLoaded = e; wireEditor(e); return e }()
+    /// Local HTML pages in the right pane (created on first use).
+    @ObservationIgnored public lazy var htmlViewer: HTMLViewer = { let v = HTMLViewer(); htmlViewerIfLoaded = v; wireHTMLViewer(v); return v }()
+    @ObservationIgnored public var htmlViewerIfLoaded: HTMLViewer?
+    /// Bumped when the picker starts, freezes or ends, so the picker bar redraws.
+    public var pickerRevision = 0
     /// The editor if it has been created (doc-status mustn't create one).
     @ObservationIgnored public var editorIfLoaded: EditorController?
 
@@ -121,6 +126,8 @@ public final class AppModel {
     @ObservationIgnored public var rememberedHome: String?
     /// Projects outside the workspace root (DL-63), from Duo's state.
     @ObservationIgnored public var extraProjects: [URL] = []
+    /// The last context sent to a session (Send to Claude), for `duo2 selection` and checks.
+    @ObservationIgnored public var lastSent: (key: String, text: String)?
 
     public var visibleTerminal: TerminalSession? { visibleSessionId.flatMap { terminals.existing($0) } }
 

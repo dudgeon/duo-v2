@@ -321,8 +321,37 @@ window.duo = {
   exec: (name) => { commands[name]?.(); return view.state.doc.length; },
   select: (from, to) => view.dispatch({ selection: { anchor: from, head: to ?? from } }),
   caret: () => view.state.selection.main.head,
+  // The selected text and its lines (1-based), for Send to Claude; null when nothing is selected.
+  selection: () => {
+    const { from, to } = view.state.selection.main;
+    if (from === to) return null;
+    const doc = view.state.doc;
+    return { text: view.state.sliceDoc(from, to), fromLine: doc.lineAt(from).number, toLine: doc.lineAt(Math.max(from, to - 1)).number };
+  },
   external,
   agentInsert,
+  // duo2 doc insert / doc replace / doc select (DL-71): agent edits go through the buffer and are
+  // highlighted as added by Claude (LR-34, DL-5).
+  agentInsertAtLine: (line, text) => {
+    const doc = view.state.doc;
+    const at = line == null ? view.state.selection.main.head : (line > doc.lines ? doc.length : doc.line(Math.max(1, line)).from);
+    agentInsert(at, text);
+    return at;
+  },
+  agentReplace: (find, text) => {
+    const doc = view.state.doc.toString();
+    const at = doc.indexOf(find);
+    if (at < 0) return { result: "not found" };
+    if (doc.indexOf(find, at + 1) >= 0) return { result: "not unique" };
+    view.dispatch({ changes: { from: at, to: at + find.length, insert: text }, effects: markAdded.of([[at, at + text.length]]) });
+    return { result: "replaced", line: view.state.doc.lineAt(at).number };
+  },
+  selectLines: (a, b) => {
+    const doc = view.state.doc;
+    const from = doc.line(Math.min(Math.max(1, a), doc.lines)).from, to = doc.line(Math.min(Math.max(1, b ?? a), doc.lines)).to;
+    view.dispatch({ selection: { anchor: from, head: to }, scrollIntoView: true });
+    return to - from;
+  },
   addedCount: () => view.state.field(addedField).size,
   find: (q) => { setSearchQuery.of(new SearchQuery({ search: q })); view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: q })) }); findNext(view); return view.state.selection.main.from; },
   bench,

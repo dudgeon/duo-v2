@@ -130,6 +130,38 @@ public enum FixtureHarness {
             for s in model.fixture.sessions where s.sessionId != nil {
                 FileHandle.standardError.write(Data("== \(s.sessionId!.prefix(8)) \(s.project)/\(s.name) [\(s.state)] wait=\(s.wait ?? "-") q=\(s.question ?? "-") opts=\(s.options ?? []) summary=\(s.summary ?? "-")\n".utf8))
             }
+        // Send to Claude (DL-67): each source, into the visible session.
+        case "send-file": if parts.count > 1, let p = model.filePayload(parts[1], for: model.visibleSessionId) { model.send(p) }
+        case "send-session":
+            if parts.count > 1, let s = model.fixture.sessions.first(where: { $0.name == parts[1] }), let p = model.sessionPayload(s.tabKey) { model.send(p) }
+        case "send-project": if parts.count > 1, let p = model.projectPayload(parts[1]) { model.send(p) }
+        case "doc-select":   // doc-select:<from>-<to> (character offsets)
+            let r = (parts.count > 1 ? parts[1] : "0-0").split(separator: "-").compactMap { Int($0) }
+            model.editor.run("duo.select(a, b); return 1", ["a": r.first ?? 0, "b": r.last ?? 0]) { _ in }
+        case "send-doc-selection": model.documentSelectionPayload { if let p = $0 { model.send(p) } }
+        case "html-select":  // html-select:<css selector>: select that element's contents
+            model.htmlViewer.webView.callAsyncJavaScript(
+                "const r = document.createRange(); r.selectNodeContents(document.querySelector(s)); getSelection().removeAllRanges(); getSelection().addRange(r); return 1",
+                arguments: ["s": parts.count > 1 ? parts[1] : "body"], in: nil, in: .page, completionHandler: nil)
+        case "send-html-selection": model.htmlSelectionPayload { if let p = $0 { model.send(p) } }
+        case "html-pick": if parts.count > 1 { model.htmlViewer.pick(selector: parts[1]) }
+        case "html-snapshot":   // html-snapshot:<png path>: what the page web view draws
+            let path = parts.count > 1 ? parts[1] : "/tmp/duo-html.png"
+            model.htmlViewer.webView.takeSnapshot(with: nil) { image, _ in
+                if let t = image?.tiffRepresentation, let png = NSBitmapImageRep(data: t)?.representation(using: .png, properties: [:]) {
+                    try? png.write(to: URL(fileURLWithPath: path))
+                }
+                FileHandle.standardError.write(Data("html-snapshot: \(image != nil ? path : "failed")\n".utf8))
+            }
+        case "send-picked": model.sendPickedElement(to: model.visibleSessionId)
+        case "dump-tail":   // the visible terminal's last lines
+            if let t = model.visibleTerminal {
+                t.view.selectAll()
+                let lines = (t.view.getSelection() ?? "").split(separator: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+                t.view.selectNone()
+                FileHandle.standardError.write(Data("---- tail \(t.key) ----\n\(lines.suffix(30).joined(separator: "\n"))\n".utf8))
+            }
+            if let l = model.lastSent { FileHandle.standardError.write(Data("---- lastSent to \(l.key.prefix(8)) ----\n\(l.text)\n----\n".utf8)) }
         case let a where a.hasPrefix("wait"): break
         default: FileHandle.standardError.write(Data("Unknown action '\(action)'\n".utf8))
         }

@@ -38,7 +38,7 @@ struct HomePane: View {
                             .lineLimit(1)
                     }
                     .contentShape(Rectangle())
-                    .onActivate { model.homeTab = s.tabKey }
+                    .onActivate { model.homeTab = s.tabKey }  // action: session open
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                 }
@@ -173,7 +173,7 @@ struct ProjectTile: View {
                     TileSessionRow(session: s, selected: model.selectedActionSession == s.id)
                         .padding(.top, i == 0 ? 6 : 0)
                         .contentShape(Rectangle())
-                        .onActivate { model.open(project: project.name, session: s.name) }
+                        .onActivate { model.open(project: project.name, session: s.name) }  // action: open
                         .modifier(SessionOrganizeMenu(sessionKey: s.tabKey))
                 }
             }
@@ -189,7 +189,7 @@ struct ProjectTile: View {
             }
         }
         .contentShape(Rectangle())
-        .onActivate { model.open(project: project.name) }
+        .onActivate { model.open(project: project.name) }  // action: open
         .modifier(ProjectOrganizeMenu(project: project))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(tileLabel(sessions))
@@ -332,7 +332,7 @@ struct NeedsYouCard: View {
                   color: selected ? DuoColor.text : DuoColor.rule,
                   width: selected ? DuoMetric.borderEmphasis : DuoMetric.borderHairline)
         .contentShape(Rectangle())
-        .onActivate { model.selectedActionSession = session.id }
+        .onActivate { model.selectedActionSession = session.id }  // action: view select
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(session.name), needs you, waiting \(session.wait ?? ""), \(session.project)")
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -365,7 +365,7 @@ struct HomePointerCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .bordered(DuoSpace.pointerCardPadding, color: DuoColor.controlEdge, dashed: true)
         .contentShape(Rectangle())
-        .onActivate { model.homeTab = session.tabKey; model.focusHomeRequest += 1 }
+        .onActivate { model.homeTab = session.tabKey; model.focusHomeRequest += 1 }  // action: session open
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(session.name), needs you, waiting in the Home terminal")
     }
@@ -408,13 +408,15 @@ struct SessionOrganizeMenu: ViewModifier {
         if model.terminalsMode == .live, let s = model.fixture.sessions.first(where: { $0.tabKey == sessionKey }), let id = s.sessionId {
             content
                 .contextMenu {
+                    SendMenu { _ in model.sessionPayload(sessionKey) }
+                    Divider()
                     Menu("Move to Project") {
                         ForEach(model.moveTargets(excluding: s.project)) { p in
                             Button(p.isFolderOnly ? "\(p.name) (folder)" : p.name) { model.moveSessions([id], to: p.name) }
                         }
                     }
                 }
-                .onDrag { NSItemProvider(object: AppModel.dragPayload(session: id) as NSString) }
+                .onDrag { NSItemProvider(object: AppModel.dragPayload(session: id) as NSString) }  // action: session move
         } else {
             content
         }
@@ -431,6 +433,8 @@ struct ProjectOrganizeMenu: ViewModifier {
         if model.terminalsMode == .live, project.isHome != true {
             content
                 .contextMenu {
+                    SendMenu { _ in model.projectPayload(project.name) }
+                    Divider()
                     if project.isFolderOnly {
                         Button("Make a Project") { model.makeProject(project.name) }
                     }
@@ -440,8 +444,8 @@ struct ProjectOrganizeMenu: ViewModifier {
                         }
                     }
                 }
-                .onDrag { NSItemProvider(object: AppModel.dragPayload(project: project.name) as NSString) }
-                .onDrop(of: [.plainText, .utf8PlainText], isTargeted: nil) { providers in
+                .onDrag { NSItemProvider(object: AppModel.dragPayload(project: project.name) as NSString) }  // action: project merge
+                .onDrop(of: [.plainText, .utf8PlainText], isTargeted: nil) { providers in  // action: project merge
                     guard let item = providers.first else { return false }
                     _ = item.loadObject(ofClass: NSString.self) { obj, _ in
                         guard let payload = obj as? String else { return }
@@ -451,7 +455,7 @@ struct ProjectOrganizeMenu: ViewModifier {
                 }
         } else if model.terminalsMode == .live {
             // Home takes drops (sessions move into Home) but isn't merged away.
-            content.onDrop(of: [.plainText, .utf8PlainText], isTargeted: nil) { providers in
+            content.contextMenu { SendMenu { _ in model.projectPayload(project.name) } }.onDrop(of: [.plainText, .utf8PlainText], isTargeted: nil) { providers in  // action: session move
                 guard let item = providers.first else { return false }
                 _ = item.loadObject(ofClass: NSString.self) { obj, _ in
                     guard let payload = obj as? String else { return }

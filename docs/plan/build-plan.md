@@ -137,7 +137,7 @@ Shared by everything after it, including both PRDs.
 |---|---|
 | Builds | Two parts with one name (DL-16) and one command table generating help and docs (LR-52): **app commands** over loopback TCP + per-launch token (list needs-you, open project, open/resume session, group/ungroup, open file, session note/next, orientation reads LR-53); **read-only commands** that work with the app closed and inside Claude's sandbox: `search` and `similar` (SRCH L10, FR-7.7), later inventory reads. Installed for Duo terminals and plain Terminal, coexisting with legacy `duo` (DL-15, DL-16). `doctor`. Consent for irreversible actions (LR-57). Detect legacy Duo's global skill/hooks/`CLAUDE.md` block and warn (DL-16). Claude-facing guidance (skill) that prefers Duo search over grep for cross-project questions (SRCH FR-7.7.6). |
 | Needs | S8 (passed, F-29); S14 for the search half. |
-| Status | **F1 built (F-29):** `duo2` with `help`, `doctor`, `ping`, `needs-you`, `projects`, `open`; socket server; PATH and environment in Duo terminals; per-session sandbox grant and allow rule. **F2 built (F-30):** `status`, `session note|next`, session guidance via `--append-system-prompt`. **F3 (F-37):** `duo2 legacy` detect / disable (backed up) / restore (DL-39); the in-app notice waits for a design. **Next:** group/ungroup (with Phase G), open file (with Phase I); generated docs from the command table; legacy detection (DL-39). |
+| Status | **F1 built (F-29):** `duo2` with `help`, `doctor`, `ping`, `needs-you`, `projects`, `open`; socket server; PATH and environment in Duo terminals; per-session sandbox grant and allow rule. **F2 built (F-30):** `status`, `session note|next`, session guidance via `--append-system-prompt`. **F3 (F-37):** `duo2 legacy` detect / disable (backed up) / restore (DL-39); the in-app notice waits for a design. **F4 (F-47, F-48): parity (DL-71–DL-74).** One action registry, 69 verbs in 10 families, enforced by a compile-time switch and a source scan; generated help, reference (`docs/cli/duo2.md`), primer, skill and CLAUDE.md block; install loop with consent (DL-75). **Next:** group/ungroup verbs with Phase G (the registry check will demand them); test instances on their own socket (C-18). |
 | Gates | ❓ CLI name (DL-16). ❓ neutralise legacy global instructions (DL-16). |
 
 ### Phase G — Groups and threads · slice 7
@@ -162,7 +162,7 @@ Shared by everything after it, including both PRDs.
 |---|---|
 | Builds | CM6 live-preview editor in one WKWebView (stack #8–9): byte-faithful saves (LR-30), one reconciliation primitive and its state machine (LR-31, LR-32), "added by Claude" highlight (LR-33, DL-5), agent edits through the buffer (LR-34), frontmatter panel (LR-37), Obsidian-compatible writes (DL-6, DL-17–DL-20), images (LR-39), trash/rename/reveal (LR-40). Version history next (DL-5). |
 | Needs | S4, S5 (S6 decides native vs web). |
-| Status | **I1 built (F-40):** the CM6 editor in the right pane (live mode), token styling, byte-faithful reads, atomic autosave, ⌘S, file watching with the three-way merge. **Next:** agent edits through the buffer with the "added by Claude" highlight (LR-34, DL-5); frontmatter panel (LR-37); designs for Q-20. |
+| Status | **I1 built (F-40):** the CM6 editor in the right pane (live mode), token styling, byte-faithful reads, atomic autosave, ⌘S, file watching with the three-way merge. **I2 (F-47):** agent edits through the buffer with the "added by Claude" highlight (`duo2 doc insert|replace`, LR-34). **Send to Claude (F-46, DL-67–DL-70):** document selections from the editor's right-click and Edit menu. **Next:** frontmatter panel (LR-37); designs for Q-20. |
 | Gates | ⛔ design: editor internals, conflict banners (§13). |
 
 ### Phase J — Bringing existing work in (CONS)
@@ -180,6 +180,7 @@ Shared by everything after it, including both PRDs.
 | Builds | WKWebView tab kind in the right pane; local-only default with an in-app allow list (DL-3); inspector (LR-44) and page-driving commands via the CLI (LR-45); Google Docs reading as a should (DL-7). |
 | Needs | S7, Phase F. |
 | Gates | ⛔ design: browser, inspector, allow list (§13). |
+| Status | **Pulled forward at Geoff's request (DL-67, 2026-10-04; F-46):** local HTML in the right pane (read-only, live reload, links out to the browser), the element inspector (LR-44) in a plain system look (DL-70, Q-21), Send Selection / Send Image from pages, `duo2 html …` verbs. Still gated: third-party sites, the allow list, page driving (LR-45). |
 
 ### Phase M — Cross-project search (SRCH)
 

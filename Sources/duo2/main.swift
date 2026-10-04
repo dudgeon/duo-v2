@@ -4,8 +4,7 @@ import Foundation
 
 // `duo2` (DL-37): the command line for the Duo app. Coexists with legacy `duo` (DL-16).
 
-let args = Array(CommandLine.arguments.dropFirst())
-let name = args.first ?? "help"
+let argv = Array(CommandLine.arguments.dropFirst())
 let env = ProcessInfo.processInfo.environment
 
 func fail(_ message: String, code: Int32 = 1) -> Never {
@@ -13,16 +12,18 @@ func fail(_ message: String, code: Int32 = 1) -> Never {
     exit(code)
 }
 
-guard let command = ControlCommand.all.first(where: { $0.name == name || "--\($0.name)" == name }) else {
-    fail("unknown command '\(name)'. Run `duo2 help`.", code: 64)
+// The verbs are the action registry (DL-72): two-word verbs ("file rename") first, then one word.
+guard let (action, rest) = DuoAction.resolve(argv.isEmpty ? ["help"] : argv) else {
+    fail("unknown command '\(argv.prefix(2).joined(separator: " "))'. Run `duo2 help`.", code: 64)
 }
+let args = [action.verb] + rest   // what the local verbs below read (args[0] is the verb)
 
-switch command.name {
-case "search", "search-status":
-    exit(runSearch(command.name, Array(args.dropFirst())))
-case "help":
-    print(ControlCommand.help(), terminator: "")
-case "legacy":
+switch action.id {
+case .search, .searchStatus:
+    exit(runSearch(action.verb, rest))
+case .help:
+    if rest.first == "--markdown" { print(DuoAction.markdown(), terminator: "") } else { print(DuoAction.help(family: rest.first), terminator: "") }
+case .legacy:
     let sub = args.dropFirst().first
     let backups = ControlEndpoint.file.deletingLastPathComponent().appending(path: "backups")
     switch sub {
@@ -45,7 +46,17 @@ case "legacy":
             print("To turn them off (everything is backed up first, and can be restored): duo2 legacy disable --yes")
         }
     }
-case "doctor":
+case .install:
+    guard let cli = Bundle.main.executableURL?.resolvingSymlinksInPath().path, Installer.isDuoCLIPath(cli) else {
+        fail("run the duo2 inside Duo.app (Duo.app/Contents/Helpers/duo2) so the link points at the app", code: 64)
+    }
+    Installer.recordConsent(true, cli: cli)
+    print(Installer.install(cli: cli).lines.joined(separator: "\n"))
+case .uninstall:
+    print(Installer.uninstall().lines.joined(separator: "\n"))
+case .doctor:
+    let me = Bundle.main.executableURL?.resolvingSymlinksInPath().path
+    print(Installer.status(cli: me.flatMap { Installer.isDuoCLIPath($0) ? $0 : nil }).joined(separator: "\n"))
     let archive = ControlEndpoint.file.deletingLastPathComponent().appending(path: "archive")
     if let walker = FileManager.default.enumerator(at: archive, includingPropertiesForKeys: [.fileSizeKey]) {
         var bytes = 0, sessions = 0
@@ -73,12 +84,12 @@ case "doctor":
     }
 default:
     guard let (endpoint, _) = ControlEndpoint.discover() else { fail("Duo isn't running. Run `duo2 doctor`.", code: 69) }
-    let request = ControlRequest(token: endpoint.token, command: command.name, args: Array(args.dropFirst()),
+    let request = ControlRequest(token: endpoint.token, command: action.verb, args: rest,
                                  // Claude's own id is current after /clear; Duo's may be stale (F-29).
                                  session: env["CLAUDE_CODE_SESSION_ID"] ?? env["DUO_SESSION_ID"],
                                  cwd: FileManager.default.currentDirectoryPath)
     do {
-        let r = try ControlClient.send(request, socket: endpoint.socket)
+        let r = try ControlClient.send(request, socket: endpoint.socket, timeout: action.timeout)
         if r.ok { print(r.output, terminator: r.output.hasSuffix("\n") ? "" : "\n") } else { fail(r.output) }
     } catch {
         fail("\(error). Run `duo2 doctor`.", code: 69)

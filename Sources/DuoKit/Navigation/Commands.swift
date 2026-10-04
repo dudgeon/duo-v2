@@ -127,6 +127,12 @@ public struct DuoCommands: Commands {
         // The standard text items (Find, Spelling and Grammar, Substitutions, Transformations,
         // Speech) for the editor; Writing Tools joins them where the system supports it.
         TextEditingCommands()
+        // Send to Claude (DL-67). No chord yet: the map is locked (DL-34); legacy used ⌘D (Q-22).
+        CommandGroup(after: .pasteboard) {
+            Divider()
+            Button("Send Selection to Claude") { model.sendSelection() }
+                .disabled(!model.canSendSelection)
+        }
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)
             item(.toggleRightPane)

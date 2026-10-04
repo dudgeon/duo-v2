@@ -82,7 +82,7 @@ struct PeekCard: View {
                   color: selected ? DuoColor.text : DuoColor.rule,
                   width: selected ? DuoMetric.borderEmphasis : DuoMetric.borderHairline)
         .contentShape(Rectangle())
-        .onActivate { model.peekSelection = session.id }
+        .onActivate { model.peekSelection = session.id }  // action: view select
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(session.name), needs you, waiting \(session.wait ?? ""), \(session.project)")
         .accessibilityAddTraits(selected ? .isSelected : [])

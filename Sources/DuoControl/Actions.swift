@@ -1,0 +1,321 @@
+import Foundation
+
+// The action registry (DL-71, DL-72): everything a person can do in Duo, defined once. The CLI's
+// verbs, `duo2 help`, the generated reference (`docs/cli/duo2.md`), the primer Duo gives each
+// session, and the parity check all come from this table. Views name the action they perform
+// (`ActionButton(.fileRename)`, `.onActivate(.sessionOpen)`), and `DuoChecks` fails when a button,
+// menu item or click in the app isn't tied to an action here or listed in `Parity.uiOnly`.
+
+public enum ActionFamily: String, CaseIterable, Sendable {
+    case app, view, projects, sessions, files, docs, html, send, search, setup
+
+    public var title: String {
+        switch self {
+        case .app: "Duo"
+        case .view: "What's on screen"
+        case .projects: "Projects"
+        case .sessions: "Sessions"
+        case .files: "Files"
+        case .docs: "Documents"
+        case .html: "HTML pages"
+        case .send: "Send to Claude"
+        case .search: "Search"
+        case .setup: "Setup"
+        }
+    }
+}
+
+/// Every action, by its CLI verb.
+public enum ActionID: String, CaseIterable, Sendable {
+    // Duo
+    case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall
+    // What's on screen
+    case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
+    case viewSidebar = "view sidebar", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
+    // Projects
+    case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
+    // Sessions
+    case sessions, sessionShow = "session show", sessionNew = "session new", sessionOpen = "session open"
+    case sessionClose = "session close", sessionMove = "session move"
+    case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
+    // Files
+    case files, fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
+    case fileRename = "file rename", fileDuplicate = "file duplicate", fileMove = "file move", fileTrash = "file trash"
+    case fileReveal = "file reveal", fileOpenWith = "file open-with", filePath = "file path"
+    // Documents
+    case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
+    case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docFind = "doc find"
+    case docInsert = "doc insert", docReplace = "doc replace"
+    // HTML pages
+    case htmlReload = "html reload", htmlPick = "html pick", htmlStop = "html stop", htmlElement = "html element", htmlSelection = "html selection"
+    // Send to Claude
+    case sendFile = "send file", sendSession = "send session", sendProject = "send project", sendSelection = "send selection"
+    case sendElement = "send element", sendText = "send text", selection
+    // Search
+    case search, searchStatus = "search-status"
+}
+
+public struct DuoAction: Sendable {
+    public var id: ActionID
+    public var family: ActionFamily
+    /// Arguments after the verb, in usage notation.
+    public var args: String
+    public var summary: String
+    /// Where a person does this in the app: the labels the parity check matches. Empty for
+    /// verbs that only Claude needs (reading, narrating).
+    public var ui: [String]
+    /// Runs without the app (otherwise the CLI asks the app).
+    public var local: Bool
+    /// In the primer every session gets (keep it short).
+    public var everyday: Bool
+    /// Seconds the CLI waits: long for actions the person confirms in a sheet.
+    public var timeout: Int
+
+    public var verb: String { id.rawValue }
+    public var usage: String { "duo2 \(verb)" + (args.isEmpty ? "" : " \(args)") }
+
+    init(_ id: ActionID, _ family: ActionFamily, _ args: String, _ summary: String, ui: [String] = [], local: Bool = false,
+         everyday: Bool = false, timeout: Int = 15) {
+        self.id = id; self.family = family; self.args = args; self.summary = summary; self.ui = ui; self.local = local
+        self.everyday = everyday; self.timeout = timeout
+    }
+}
+
+extension ActionID {
+    public var action: DuoAction { DuoAction.byID[self]! }
+    /// The label a button or menu item shows by default.
+    public var title: String { action.ui.first ?? rawValue }
+}
+
+extension DuoAction {
+    public static let all: [DuoAction] = [
+        // Duo
+        .init(.ping, .app, "", "Check that Duo is running and reachable."),
+        .init(.status, .app, "", "What Duo is showing: the view, the open project, session and document, and counts.", everyday: true),
+        .init(.needsYou, .app, "", "Sessions waiting for the user, with their questions.", ui: ["Needs You Elsewhere"]),
+        .init(.undo, .app, "", "Undo Duo's last move, merge or Make a Project (Edit › Undo).", ui: ["Undo"]),
+        .init(.help, .app, "[family | --markdown]", "Families and everyday verbs; a family's verbs; or the full reference as Markdown.", local: true),
+        .init(.doctor, .setup, "", "How this terminal finds Duo, whether it can reach it, and what Duo installed.", local: true),
+        .init(.install, .setup, "", "Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74).",
+              ui: ["Install"], local: true),
+        .init(.uninstall, .setup, "", "Remove exactly what `duo2 install` added (anything you edited stays).", local: true),
+        .init(.legacy, .setup, "[disable --yes | restore <backup>]", "Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them.", local: true),
+
+        // What's on screen
+        .init(.goAll, .view, "", "Show All projects.", ui: ["All Projects"]),
+        .init(.goHome, .view, "", "Show Home.", ui: ["Home"]),
+        .init(.open, .view, "<project> [session] [--file <path>]", "Open a project, optionally on one of its sessions or documents.",
+              ui: ["Open project", "Review", "project tile", "map session row"], everyday: true),
+        .init(.peek, .view, "[open|close]", "Show or hide the sessions that need the user in other projects.", ui: ["Needs You Elsewhere"]),
+        .init(.peekJump, .view, "", "Jump into the project selected in the peek.", ui: ["Jump into Selected Project"]),
+        .init(.viewSidebar, .view, "show|hide|toggle", "Show or hide the left pane.", ui: ["Toggle Sidebar"]),
+        .init(.viewTab, .view, "<Project | document path | group>", "Switch the right pane's tab.", ui: ["right pane tab"]),
+        .init(.viewGroup, .view, "<group> expand|collapse", "Expand or collapse a group in the session list.", ui: ["group row"]),
+        .init(.viewSelect, .view, "<session id>", "Select a session's card (action column or peek) without opening it.", ui: ["action card", "peek card"]),
+
+        // Projects
+        .init(.projects, .projects, "", "Projects and folders with sessions, with goal, health and next step.", everyday: true),
+        .init(.projectShow, .projects, "<project>", "A project's folder, project file, goal, health, next step and sessions."),
+        .init(.projectMake, .projects, "<folder name>", "Make a folder with sessions a documented project: writes a starter PROJECT.md and opens it. Undo with `duo2 undo`.",
+              ui: ["Make a Project"]),
+        .init(.projectMerge, .projects, "<source> --into <target>", "Move every session of one project or folder into another. Files stay. The user confirms in Duo.",
+              ui: ["Merge Into", "Merge Sessions Into", "drag a tile onto a tile"], timeout: 600),
+
+        // Sessions
+        .init(.sessions, .sessions, "[--project <p>]", "Sessions with id, state, title and project.", everyday: true),
+        .init(.sessionShow, .sessions, "<id>", "A session's title, project, state, note, next step, transcript path and recent turns.", everyday: true),
+        .init(.sessionNew, .sessions, "[--project <p>] [--prompt <text>]", "Start a Claude session in a project (the current one by default).",
+              ui: ["+ New session", "New Session", "console +"]),
+        .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab"]),
+        .init(.sessionClose, .sessions, "[id]", "End a session's process and close its tab (it stays listed and resumable).", ui: ["Close Tab"]),
+        .init(.sessionMove, .sessions, "<id> --to <project>", "File a session in another project; it moves there on its next resume. The user confirms in Duo.",
+              ui: ["Move to Project", "drag a session onto a tile"], timeout: 600),
+        .init(.sessionNote, .sessions, "<text>", "Tell the user what this session is doing (one line, shown in Duo).", everyday: true),
+        .init(.sessionNext, .sessions, "<text>", "Tell the user what this session needs next (one line).", everyday: true),
+        .init(.sessionCarryOn, .sessions, "<id>", "Start a new session carrying on from an archived one."),
+
+        // Files (paths are relative to the project, or absolute)
+        .init(.files, .files, "[folder] [--project <p>]", "The project's files and folders."),
+        .init(.fileNew, .files, "[--in <folder>] [--name <name>]", "Create a Markdown file and open it.", ui: ["New Markdown File", "right pane +"]),
+        .init(.fileNewFolder, .files, "[--in <folder>] [--name <name>]", "Create a folder.", ui: ["New Folder"]),
+        .init(.fileTemplate, .files, "<template> [--in <folder>]", "Create a file from a template (the project's templates/, then Home's).", ui: ["New from Template"]),
+        .init(.fileTemplates, .files, "", "The templates available here."),
+        .init(.fileRename, .files, "<path> <new name>", "Rename a file or folder; open tabs follow.", ui: ["Rename"]),
+        .init(.fileDuplicate, .files, "<path>", "Copy a file or folder next to itself.", ui: ["Duplicate"]),
+        .init(.fileMove, .files, "<path> <folder>", "Move a file or folder; open tabs follow.", ui: ["Move To…"]),
+        .init(.fileTrash, .files, "<path>", "Move to the Trash (never deleted outright).", ui: ["Move to Trash"]),
+        .init(.fileReveal, .files, "<path>", "Show in Finder.", ui: ["Reveal in Finder"]),
+        .init(.fileOpenWith, .files, "<path> [--app <name>]", "Open in another app (the default app if none named).", ui: ["Open With", "Other…"]),
+        .init(.filePath, .files, "<path> [--relative | --link] [--copy]", "Print a file's path, relative path or Markdown link; --copy puts it on the clipboard.",
+              ui: ["Copy Path", "Copy Relative Path", "Copy as Link"]),
+
+        // Documents
+        .init(.docOpen, .docs, "<path>", "Open a document in the right pane (Markdown in the editor, HTML as a page).", ui: ["Open", "file row"], everyday: true),
+        .init(.docClose, .docs, "[path] [--others]", "Close a document tab (saved first), or every other one.", ui: ["Close Tab", "Close Other Tabs"]),
+        .init(.docTabs, .docs, "", "The open document tabs, and which one shows."),
+        .init(.docStatus, .docs, "<file>", "Whether a file is open in Duo's editor, unsaved or in conflict. Check before editing a file the user may have open.", everyday: true),
+        .init(.docRead, .docs, "[path]", "A document's text as the editor has it (unsaved edits included); the showing document by default."),
+        .init(.docSelection, .docs, "", "The text selected in the editor, with its file and lines."),
+        .init(.docSelect, .docs, "<line> [to-line]", "Select lines in the showing document."),
+        .init(.docSave, .docs, "", "Save the showing document now (it also autosaves).", ui: ["Save"]),
+        .init(.docFormat, .docs, "bold|italic", "Make the selection bold or italic.", ui: ["Bold", "Italic"]),
+        .init(.docFind, .docs, "<text>", "Find text in the showing document and select the next match.", ui: ["Find"]),
+        .init(.docInsert, .docs, "<text> [--line <n>]", "Insert text into the showing document through the editor (highlighted as added by Claude), at a line or the caret."),
+        .init(.docReplace, .docs, "<find> <replacement>", "Replace text in the showing document through the editor (highlighted as added by Claude)."),
+
+        // HTML pages
+        .init(.htmlReload, .html, "", "Reload the HTML page showing (it also reloads when its files change).", ui: ["Reload Page"]),
+        .init(.htmlPick, .html, "[selector]", "Start the element picker for the user, or select the element a CSS selector names.",
+              ui: ["Select Element", "Pick Another"]),
+        .init(.htmlStop, .html, "", "Close the element picker.", ui: ["Cancel picking"]),
+        .init(.htmlElement, .html, "[selector]", "Describe an element (the picked one by default): selector, text, attributes, styles, box, HTML."),
+        .init(.htmlSelection, .html, "", "The text and images selected in the HTML page."),
+
+        // Send to Claude (into a session's prompt; never pressing Enter)
+        .init(.sendFile, .send, "<path> [--to <id> | --new]", "Put an @-reference to a file or folder into a session's prompt.", ui: ["Send to Claude", "Send To"]),
+        .init(.sendSession, .send, "<id> [--to <id> | --new]", "Put a session's reference into a session's prompt.", ui: ["Send to Claude"]),
+        .init(.sendProject, .send, "<project> [--to <id> | --new]", "Put a project's reference into a session's prompt.", ui: ["Send to Claude"]),
+        .init(.sendSelection, .send, "[--to <id> | --new]", "Put the user's selection (document or HTML page) into a session's prompt.",
+              ui: ["Send Selection to Claude", "Send Selection To", "Send Image to Claude", "Send Image To"]),
+        .init(.sendElement, .send, "[--to <id> | --new]", "Put the picked HTML element into a session's prompt.", ui: ["Send to Claude", "Send To", "New Session"]),
+        .init(.sendText, .send, "<text> [--to <id> | --new]", "Type text into a session's prompt for the user to finish and send."),
+        .init(.selection, .send, "", "What the user has selected or picked right now, in the editor or an HTML page.", everyday: true),
+
+        // Search
+        .init(.search, .search, "<query> | --similar <path> [-k N] [--project P] [--kind file|session|memory] [--exact]",
+              "Search every project by meaning and by words. Works without the app; read-only.", local: true, everyday: true),
+        .init(.searchStatus, .search, "", "How much of each project the search index covers.", local: true),
+    ]
+
+    public static let byID: [ActionID: DuoAction] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
+
+    /// Finds the action for a command line: two-word verbs first ("file rename"), then one word.
+    /// Old spellings keep working.
+    public static func resolve(_ args: [String]) -> (DuoAction, rest: [String])? {
+        let words = args.prefix(2).map { aliases[$0] ?? $0 }
+        if words.count == 2, let id = ActionID(rawValue: words.joined(separator: " ")) { return (byID[id]!, Array(args.dropFirst(2))) }
+        if let w = words.first {
+            if let id = ActionID(rawValue: w) { return (byID[id]!, Array(args.dropFirst())) }
+            // "doc-status file" → "doc status"
+            if let id = ActionID(rawValue: w.replacingOccurrences(of: "-", with: " ")) { return (byID[id]!, Array(args.dropFirst())) }
+        }
+        return nil
+    }
+
+    static let aliases = ["--help": "help", "-h": "help", "--ping": "ping"]
+}
+
+/// What the app shows a person but has no verb, and why (DL-71's exceptions). The parity check
+/// accepts these labels; everything else in the UI must name an action.
+public enum Parity {
+    public static let uiOnly: [String: String] = [
+        "Close Window": "window management",
+        "Jump to…": "not built yet (⌘K, design queue)",
+        "Search Everything…": "not built yet (search UI, design queue); `duo2 search` covers the content",
+        "Toggle Right Pane": "not built yet",
+        "Next Pane": "not built yet",
+        "Previous Pane": "not built yet",
+        "Cancel": "a step inside another action's dialog or picker",
+        "Go": "a menu, not an action",
+        "Format": "a menu, not an action",
+        "No templates yet: add .md files to a templates folder": "a disabled hint",
+        "Resume a session": "the debug gallery only (DL-59 removed it from the app)",
+        "Add to .gitignore": "a one-time question to the user (DL-50)",
+        "confirmation sheet": "the user's own consent; Claude can't confirm for them",
+        "Not Now": "the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later",
+    ]
+}
+
+// MARK: - Arguments
+
+/// A parsed command line after the verb: positionals and `--flags` (`--flag value` or `--flag`).
+public struct Invocation: Sendable {
+    public var positional: [String] = []
+    public var flags: [String: String] = [:]
+
+    /// Flags that take no value.
+    static let switches: Set<String> = ["json", "yes", "relative", "link", "copy", "others", "new", "markdown", "exact", "all"]
+
+    public init(_ args: [String]) {
+        var i = 0
+        while i < args.count {
+            let a = args[i]
+            if a.hasPrefix("--"), a.count > 2 {
+                let name = String(a.dropFirst(2))
+                if let eq = name.firstIndex(of: "=") {
+                    flags[String(name[..<eq])] = String(name[name.index(after: eq)...])
+                } else if Self.switches.contains(name) || i + 1 >= args.count {
+                    flags[name] = ""
+                } else {
+                    flags[name] = args[i + 1]; i += 1
+                }
+            } else {
+                positional.append(a)
+            }
+            i += 1
+        }
+    }
+
+    public var json: Bool { flags["json"] != nil }
+    public func has(_ flag: String) -> Bool { flags[flag] != nil }
+    public subscript(_ i: Int) -> String? { positional.indices.contains(i) ? positional[i] : nil }
+    /// Every positional joined, for free text (`session note fixing the parser`).
+    public var text: String { positional.joined(separator: " ") }
+}
+
+// MARK: - Help and generated docs
+
+extension DuoAction {
+    public static func help(family: String? = nil) -> String {
+        if let family, let f = ActionFamily.allCases.first(where: { $0.rawValue == family || $0.title.lowercased() == family.lowercased() }) {
+            return "\(f.title)\n\n" + table(all.filter { $0.family == f }) + "\nEvery verb takes --json.\n"
+        }
+        var out = "duo2 talks to the Duo app: everything a person can do in Duo, Claude can do here.\n\nEveryday:\n"
+        out += table(all.filter(\.everyday))
+        out += "\nAll verbs, by family (duo2 help <family>):\n"
+        out += ActionFamily.allCases.map { f in
+            "  \(f.rawValue.padding(toLength: 9, withPad: " ", startingAt: 0)) " + all.filter { $0.family == f }.map(\.verb).joined(separator: ", ")
+        }.joined(separator: "\n")
+        return out + "\n\nEvery verb takes --json. Errors go to stderr with a non-zero exit.\n"
+    }
+
+    /// Usage then summary, aligned; a usage too long to align puts its summary on the next line.
+    static func table(_ rows: [DuoAction]) -> String {
+        let width = min(44, rows.map(\.usage.count).max() ?? 0)
+        return rows.map { a in
+            a.usage.count > width
+                ? "  \(a.usage)\n  \(String(repeating: " ", count: width + 2))\(a.summary)"
+                : "  " + a.usage.padding(toLength: width + 2, withPad: " ", startingAt: 0) + a.summary
+        }.joined(separator: "\n") + "\n"
+    }
+
+    /// The full reference (`docs/cli/duo2.md`), generated; DuoChecks fails if the file is stale.
+    public static func markdown() -> String {
+        var out = "# duo2 reference\n\nGenerated from the action registry (`Sources/DuoControl/Actions.swift`) by `duo2 help --markdown`; don't edit by hand.\n\n"
+        out += "Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb takes `--json`; errors go to stderr with a non-zero exit.\n"
+        for f in ActionFamily.allCases {
+            out += "\n## \(f.title)\n\n| Command | What it does | In the app |\n|---|---|---|\n"
+            for a in all where a.family == f {
+                let ui = a.ui.isEmpty ? "—" : a.ui.joined(separator: ", ")
+                out += "| `\(a.usage.replacingOccurrences(of: "|", with: "\\|"))` | \(a.summary.replacingOccurrences(of: "|", with: "\\|")) | \(ui) |\n"
+            }
+        }
+        out += "\n## In the app only\n\n| Item | Why it has no verb |\n|---|---|\n"
+        for (k, v) in Parity.uiOnly.sorted(by: { $0.key < $1.key }) { out += "| \(k) | \(v) |\n" }
+        return out
+    }
+
+    /// What Duo tells each session it starts (`--append-system-prompt`, DL-15, DL-74): short,
+    /// generated, so it never names a verb that doesn't exist.
+    public static func primer() -> String {
+        "You are running inside Duo, a Mac app that organizes the user's Claude Code sessions into projects and shows their documents. "
+            + "The `duo2` command talks to Duo; it is on PATH and needs no approval. Everything the user can do in Duo, you can do with it "
+            + "(`duo2 help`, then `duo2 help <family>`: " + ActionFamily.allCases.map(\.rawValue).joined(separator: ", ") + "). Everyday:\n"
+            + all.filter(\.everyday).map { "- `\($0.usage)`: \($0.summary)" }.joined(separator: "\n")
+            + "\nFor questions across projects, or about meaning rather than exact text, run `duo2 search \"<question>\"` before grep or reading folders. "
+            + "Read only the lines it points to. Its scores only compare results within one search. Use `--exact` for identifiers."
+            + "\nWhen the user says \"this\", \"here\" or \"what I selected\", run `duo2 selection` first. Before editing a file, `duo2 doc status <file>`: "
+            + "if it's open in Duo, prefer `duo2 doc replace`/`doc insert` so the user sees your change highlighted."
+            + "\nWhen you start substantial work, `duo2 session note \"<one line>\"`; when you hand back, `duo2 session next \"<one line>\"`."
+    }
+}

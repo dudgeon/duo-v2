@@ -33,7 +33,7 @@ struct DuoApp: App {
         if FileManager.default.isExecutableFile(atPath: helpers.appending(path: "duo2").path) {
             ChildEnvironment.cliDirectory = helpers.path
         }
-        let server = ControlServer { model.handle($0) }
+        let server = ControlServer { model.handle($0, done: $1) }
         try? server.start { ChildEnvironment.control = $0 }
         options.state?.apply(to: model)
         if options.collapseLeft { model.leftCollapsed = true }
@@ -63,7 +63,13 @@ struct DuoApp: App {
         let mainWindow = MainWindow(model: model, options: options)
         AppDelegate.reopen = { mainWindow.show() }
         NotificationCenter.default.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { mainWindow.show() }
+            MainActor.assumeIsolated {
+                mainWindow.show()
+                // DL-74, DL-75: what lets Claude sessions anywhere use duo2; asked once, kept current.
+                if !options.capturing, let dir = ChildEnvironment.cliDirectory {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) { InstallPrompt.run(cli: dir + "/duo2") }
+                }
+            }
         }
         FixtureHarness.beforeExit = { model.terminals.terminateAll(); server.stop() }
         // End sessions cleanly on quit. Hiding or collapsing never does this (LR-13).

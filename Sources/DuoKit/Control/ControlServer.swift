@@ -7,11 +7,11 @@ import Network
 @MainActor
 public final class ControlServer {
     public private(set) var endpoint: ControlEndpoint?
-    private let handler: @MainActor (ControlRequest) -> ControlResponse
+    private let handler: @MainActor (ControlRequest, @escaping @MainActor (ControlResponse) -> Void) -> Void
     private var listener: NWListener?
     private let token = ControlEndpoint.newToken()
 
-    public init(handler: @escaping @MainActor (ControlRequest) -> ControlResponse) {
+    public init(handler: @escaping @MainActor (ControlRequest, @escaping @MainActor (ControlResponse) -> Void) -> Void) {
         self.handler = handler
     }
 
@@ -71,15 +71,14 @@ public final class ControlServer {
     }
 
     private func respond(_ c: NWConnection, to line: Data) {
-        let response: ControlResponse
-        if let req = try? JSONDecoder().decode(ControlRequest.self, from: line) {
-            response = Self.same(req.token, token) ? handler(req) : ControlResponse(ok: false, output: "wrong token")
-        } else {
-            response = ControlResponse(ok: false, output: "unreadable request")
+        let reply: @MainActor (ControlResponse) -> Void = { response in
+            var out = (try? JSONEncoder().encode(response)) ?? Data()
+            out.append(UInt8(ascii: "\n"))
+            c.send(content: out, completion: .contentProcessed { _ in c.cancel() })
         }
-        var out = (try? JSONEncoder().encode(response)) ?? Data()
-        out.append(UInt8(ascii: "\n"))
-        c.send(content: out, completion: .contentProcessed { _ in c.cancel() })
+        guard let req = try? JSONDecoder().decode(ControlRequest.self, from: line) else { return reply(ControlResponse(ok: false, output: "unreadable request")) }
+        guard Self.same(req.token, token) else { return reply(ControlResponse(ok: false, output: "wrong token")) }
+        handler(req, reply)
     }
 
     /// Constant-time comparison, so the token can't be guessed byte by byte.
@@ -88,64 +87,4 @@ public final class ControlServer {
         guard x.count == y.count else { return false }
         return zip(x, y).reduce(0) { $0 | ($1.0 ^ $1.1) } == 0
     }
-}
-
-extension AppModel {
-    /// What `duo2` commands do in the app (the table is `ControlCommand.all`).
-    public func handle(_ req: ControlRequest) -> ControlResponse {
-        switch req.command {
-        case "ping":
-            let mode = terminalsMode == .live ? "live" : "fixture"
-            return .init(ok: true, output: "Duo \(getpid()), \(mode), \(fixture.projects.count) projects")
-        case "needs-you":
-            let lines = fixture.needsYou.map { s in
-                "\(s.project) / \(s.name)" + (s.wait.map { " · \($0)" } ?? "") + (s.question.map { "\n  \($0)" } ?? "")
-            }
-            return .init(ok: true, output: lines.isEmpty ? "Nothing needs you." : lines.joined(separator: "\n"))
-        case "projects":
-            let lines = fixture.projects.map { p in
-                (p.isHome == true ? "★ " : "") + p.name + (p.goal.isEmpty ? "" : " — \(p.goal)")
-                    + ([p.health, p.next].compactMap { $0 }.joined(separator: " · ").nonEmpty.map { " (\($0))" } ?? "")
-            }
-            return .init(ok: true, output: lines.joined(separator: "\n"))
-        case "open":
-            guard let name = req.args.first else { return .init(ok: false, output: "usage: duo2 open <project> [session]") }
-            guard fixture.projects.contains(where: { $0.name == name }) else { return .init(ok: false, output: "no project '\(name)'") }
-            open(project: name, session: req.args.dropFirst().first)
-            return .init(ok: true, output: "Opened \(name).")
-        case "doc-status":
-            guard let path = req.args.first else { return .init(ok: false, output: "usage: duo2 doc-status <file>") }
-            let url = URL(fileURLWithPath: path, relativeTo: req.cwd.map { URL(fileURLWithPath: $0, isDirectory: true) }).absoluteURL
-            return .init(ok: true, output: editorIfLoaded?.status(of: url) ?? "not open in Duo")
-        case "status":
-            let view: String
-            switch altitude {
-            case .allProjects: view = "All projects" + (homeTab.flatMap { k in fixture.sessions.first { $0.tabKey == k } }.map { ", Home on \($0.name)" } ?? "")
-            case .project(let p): view = "Project \(p)" + (consoleTab.flatMap { k in fixture.sessions.first { $0.tabKey == k } }.map { ", console on \($0.name)" } ?? "")
-            }
-            let c = fixture.counts
-            return .init(ok: true, output: "\(view)\n\(c.needsYou) need you · \(c.readyForReview) to review · \(c.working) working · \(c.idle) idle")
-        case "session":
-            if req.args.first == "carry-on" {
-                guard let old = req.args.dropFirst().first else { return .init(ok: false, output: "usage: duo2 session carry-on <session-id>") }
-                guard let new = carryOn(old) else { return .init(ok: false, output: "no archived copy of session \(old)") }
-                return .init(ok: true, output: "Started session \(new.prefix(8)), carrying on from \(old.prefix(8)).")
-            }
-            guard req.args.count >= 2, ["note", "next"].contains(req.args[0]) else {
-                return .init(ok: false, output: "usage: duo2 session note|next <text>")
-            }
-            guard let id = req.session else { return .init(ok: false, output: "not run from a Claude session (no session id)") }
-            let text = req.args.dropFirst().joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
-            guard setNarration(id, kind: req.args[0], text: text) else {
-                return .init(ok: false, output: "Duo doesn't know session \(id.prefix(8)) yet")
-            }
-            return .init(ok: true, output: "Noted.")
-        default:
-            return .init(ok: false, output: "unknown command '\(req.command)'")
-        }
-    }
-}
-
-private extension String {
-    var nonEmpty: String? { isEmpty ? nil : self }
 }

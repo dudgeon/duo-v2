@@ -2,7 +2,7 @@
 # Opens Duo on the acceptance workspace (rebuilding the app first if the sources changed).
 set -e
 cd "${0:A:h:h:h}"
-[[ -d "$HOME/DuoAcceptance/workspace" ]] || python3 scripts/acceptance/fixtures.py
+if [[ -d "$HOME/DuoAcceptance/workspace" ]]; then python3 scripts/acceptance/fixtures.py --add; else python3 scripts/acceptance/fixtures.py; fi
 if [[ ! -x build/Duo.app/Contents/MacOS/Duo || -n "$(find Sources -newer build/Duo.app/Contents/MacOS/Duo -name '*.swift' | head -1)" ]]; then
   scripts/bundle.sh >/dev/null
 fi

@@ -5,6 +5,7 @@
     scripts/acceptance/fixtures.py --reset    move the old one (and its planted sessions) to the Trash, rebuild
     scripts/acceptance/fixtures.py --clean    move everything this script made to the Trash
     scripts/acceptance/fixtures.py --purge    simulate Claude's cleanup of the purge-test session (after Duo has run once)
+    scripts/acceptance/fixtures.py --add      add fixtures introduced since the workspace was built (never overwrites)
 
 Builds a workspace of projects and documents in the states the walk needs, plants synthetic
 Claude sessions (marked "[fixture]") in ~/.claude/projects for its folders, and records what it
@@ -105,6 +106,7 @@ Do we keep saved cards out of scope for v2? *Decision due Oct 10.*
     write(co / "docs" / "mixed-endings.md", None, raw=b"# Mixed endings\r\nThis line ends in CRLF.\nThis one in LF.\r\nDuo must open this read-only.\n")
     write(co / "docs" / "legacy-export.txt", None, raw="Café résumé: exported in Latin-1, not UTF-8.\n".encode("latin-1"))
     write(co / "templates" / "meeting-notes.md", "# Meeting notes\n\n**Date:** \n**Attendees:** \n\n## Decisions\n\n## Actions\n- [ ] \n")
+    prototypes(co)
     big = pathlib.Path(HOME / "repos" / "duo" / "tasks.md")
     if big.exists():
         shutil.copy(big, co / "docs" / "long-backlog.md")   # a long file for find and typing speed
@@ -155,6 +157,63 @@ Do we keep saved cards out of scope for v2? *Decision due Oct 10.*
     print("Built %s\n  workspace: %s\n  planted %d sessions in %s" % (ROOT, WS, len(planted), CLAUDE))
 
 
+def prototypes(co, only_missing=False):
+    """A local HTML prototype with a stylesheet and an image: HTML viewing, Send Selection, Select Element."""
+    files = {
+        co / "prototypes" / "checkout.html": """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guest checkout prototype</title>
+<link rel="stylesheet" href="checkout.css">
+</head>
+<body>
+<main>
+  <h1>Checkout</h1>
+  <section class="hero">
+    <img src="card.svg" alt="A payment card" width="120">
+    <p>Pay as a guest. We'll never store your card unless you ask.</p>
+  </section>
+  <h2>Payment</h2>
+  <form>
+    <label for="card">Card number</label>
+    <input id="card" name="card" placeholder="1234 5678 9012 3456">
+    <button id="pay" class="cta primary" type="submit">Pay now</button>
+    <button class="cta secondary" type="button">Save for later</button>
+  </form>
+  <h2>Shipping</h2>
+  <p>Free shipping on orders over $50. <a href="https://example.com/shipping">Shipping policy</a></p>
+</main>
+</body>
+</html>
+""",
+        co / "prototypes" / "checkout.css": """body { font: 15px/1.5 -apple-system, sans-serif; margin: 0; background: #fafafa; color: #222; }
+main { max-width: 560px; margin: 32px auto; padding: 0 16px; }
+.hero { display: flex; gap: 16px; align-items: center; }
+form { display: grid; gap: 8px; }
+input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; }
+.cta { padding: 10px 18px; border-radius: 8px; border: 0; font-weight: 600; }
+.primary { background: #2f6fde; color: #fff; }
+.secondary { background: #e8e8e8; color: #222; }
+""",
+        co / "prototypes" / "card.svg": """<svg xmlns="http://www.w3.org/2000/svg" width="120" height="76" viewBox="0 0 120 76">
+<rect width="120" height="76" rx="8" fill="#2f6fde"/><rect x="12" y="20" width="22" height="16" rx="3" fill="#f4c542"/>
+<text x="12" y="62" font-family="Menlo" font-size="10" fill="#fff">1234 5678 9012 3456</text></svg>
+""",
+    }
+    for f, text in files.items():
+        if only_missing and f.exists():
+            continue
+        write(f, text)
+
+
+def add():
+    if not WS.exists():
+        sys.exit("no fixtures yet: run without --add first")
+    prototypes(WS / "payments" / "checkout", only_missing=True)
+    print("added any missing fixtures")
+
+
 def clean():
     if PLANTED.exists():
         info = json.loads(PLANTED.read_text())
@@ -187,6 +246,8 @@ if __name__ == "__main__":
         clean()
     elif arg == "--purge":
         purge()
+    elif arg == "--add":
+        add()
     else:
         if ROOT.exists():
             if arg != "--reset":

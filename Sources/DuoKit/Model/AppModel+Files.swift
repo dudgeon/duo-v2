@@ -147,17 +147,6 @@ extension AppModel {
     public func openInDefaultApp(_ path: String) { projectFolder.map { FileActions.openInDefaultApp($0.appending(path: path)) } }
     public func openWithChosenApp(_ path: String) { projectFolder.map { FileActions.openWithChosenApp($0.appending(path: path)) } }
 
-    /// The console's session in this project, if one is running (send-to-Claude target).
-    public var consoleTerminal: TerminalSession? { consoleTab.flatMap { terminals.existing($0) } }
-
-    /// Puts an @-reference to the file in the console session's prompt, without sending it, so
-    /// you can add your request around it (DL-61; DL-45 allows typing into a session).
-    public func sendToClaude(_ path: String) {
-        guard let t = consoleTerminal else { return }
-        t.view.send(txt: "@\(path) ")
-        t.view.window?.makeFirstResponder(t.view)
-    }
-
     // MARK: Helpers
 
     /// Keeps tabs and the editor pointing at a file or folder that was renamed or moved.

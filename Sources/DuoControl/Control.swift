@@ -74,51 +74,6 @@ public struct ControlResponse: Codable, Sendable, Equatable {
     public init(ok: Bool, output: String) { self.ok = ok; self.output = output }
 }
 
-/// One table for every command: the CLI's help and the docs are generated from it (LR-52).
-public struct ControlCommand: Sendable {
-    public var name: String
-    public var usage: String
-    public var summary: String
-    /// Needs the app running (otherwise the CLI answers by itself).
-    public var needsApp: Bool
-
-    public static let all: [ControlCommand] = [
-        .init(name: "ping", usage: "duo2 ping", summary: "Check that Duo is running and reachable.", needsApp: true),
-        .init(name: "needs-you", usage: "duo2 needs-you", summary: "List sessions waiting for you, with their questions.", needsApp: true),
-        .init(name: "projects", usage: "duo2 projects", summary: "List projects with their goal, health and next step.", needsApp: true),
-        .init(name: "open", usage: "duo2 open <project> [session]", summary: "Open a project in Duo, optionally on one of its sessions.", needsApp: true),
-        .init(name: "doc-status", usage: "duo2 doc-status <file>", summary: "Whether a file is open in Duo's editor, unsaved or in conflict.", needsApp: true),
-        .init(name: "status", usage: "duo2 status", summary: "What Duo is showing: the view, the open project and session, and counts.", needsApp: true),
-        .init(name: "session", usage: "duo2 session note|next <text> | carry-on <id>", summary: "Tell the user what this session is doing (note) or needs next (next); or start a new session carrying on from an archived one.", needsApp: true),
-        .init(name: "search", usage: "duo2 search <query> | --similar <path> [-k N] [--project P] [--kind file|session|memory] [--exact] [--json]",
-              summary: "Search every project by meaning and by words. Works without the app; read-only.", needsApp: false),
-        .init(name: "search-status", usage: "duo2 search-status [--json]", summary: "How much of each project the search index covers.", needsApp: false),
-        .init(name: "legacy", usage: "duo2 legacy [disable --yes | restore <backup>]",
-              summary: "Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them.", needsApp: false),
-        .init(name: "doctor", usage: "duo2 doctor", summary: "Explain how this terminal finds Duo, and whether it can reach it.", needsApp: false),
-        .init(name: "help", usage: "duo2 help", summary: "Show this list.", needsApp: false),
-    ]
-
-    /// What Duo tells each session it starts (`--append-system-prompt`, DL-15): generated from
-    /// this table, so it never drifts from the CLI.
-    public static func sessionGuidance() -> String {
-        "You are running inside Duo, a Mac app that organizes the user's Claude Code sessions into projects. "
-            + "The `duo2` command talks to Duo; it is already on PATH and needs no approval:\n"
-            + all.filter { $0.name != "help" }.map { "- `\($0.usage)`: \($0.summary)" }.joined(separator: "\n")
-            + "\nFor questions across projects, or about meaning rather than exact text, run `duo2 search \"<question>\"` before grep or "
-            + "reading folders: it covers every project the user has and works offline. Read only the lines it points to (path:Lstart-end). "
-            + "Its scores only compare results within one search; don't treat them as percentages. Use `--exact` for identifiers and quoted strings."
-            + "\nWhen you start substantial work, run `duo2 session note \"<one line>\"` so the user sees what you're doing; "
-            + "when you hand back to the user, `duo2 session next \"<one line>\"`. Keep both short and plain."
-    }
-
-    public static func help() -> String {
-        let width = all.map(\.usage.count).max() ?? 0
-        return "duo2 talks to the Duo app.\n\n" + all.map { $0.usage.padding(toLength: width + 2, withPad: " ", startingAt: 0) + $0.summary }
-            .joined(separator: "\n") + "\n"
-    }
-}
-
 /// A blocking client: connect, send one line, read one line. Plain sockets keep the CLI small.
 public enum ControlClient {
     public enum Failure: Error, CustomStringConvertible {

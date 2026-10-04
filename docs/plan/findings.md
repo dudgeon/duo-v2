@@ -184,6 +184,32 @@ One Haiku session asked an AskUserQuestion and waited, with every hook logged th
 - A plain-text question ends with `Stop` and `status: idle`. The plan maps that to needs-you with reason "question" when `last_assistant_message` asks something, otherwise to idle, or to ready-for-review when a deliverable was written. Legacy set needs-you on every `Stop` (LR-2) and was noisy.
 - Hooks fire for permission prompts and AskUserQuestion alike; `notification_type` tells them apart (LR-2's "actionable types only").
 
+## F-48 · How sessions learn duo2: the install loop (DL-74, DL-75) (2026-10-04)
+
+- **Two reviews of legacy Duo** (its CLI, then how it teaches sessions) are summarised in `docs/design/cli-teaching.md`. Legacy's record: generated text never drifted, hand-written text did (verbs that don't exist in the always-on priming); "write only if missing" kept fixes from ever reaching users; a SessionStart hook doubled the always-on cost; the global `claude` wrapper broke when Claude moved.
+- **Built:** `Installer` (DuoControl), all generated from the registry: a short block (under 110 words, checked) in `~/.claude/CLAUDE.md` between `<!-- duo2:begin … -->` and `<!-- duo2:end -->` (legacy's regex can't match it, and v2's legacy detector ignores it); `~/.claude/skills/duo2/SKILL.md`; `~/.local/bin/duo2` linked to the app's `Helpers/duo2`. Rewritten at every launch; a file whose hash isn't Duo's is left alone and reported; a removed block is never re-added; the newest format wins; `installed.json` in App Support is the manifest.
+- **Consent** (DL-75): one alert at launch lists every change; the answer is stored with a hash of that list and asked again only when it changes. `duo2 install` / `duo2 uninstall` change it later; `duo2 doctor` shows each piece's state.
+- **Legacy restore copies whole files back**, which would drop v2's block: restore now re-adds it. 11 checks cover the loop against a temporary home (`Installer.testRoot`).
+
+## F-47 · duo2 parity: one action registry (DL-71–DL-73) (2026-10-04)
+
+- **`DuoAction.all`** (`Sources/DuoControl/Actions.swift`) is the only list of actions: 69 verbs in 10 families. The CLI resolves two-word verbs (`file rename`) then one-word ones, and old spellings (`doc-status`) still work. `duo2 help`, `duo2 help <family>`, the reference (`docs/cli/duo2.md`, `duo2 help --markdown`), the primer every Duo session gets, the skill and the CLAUDE.md block are all generated from it.
+- **Parity is enforced three ways:** the app's handler is a `switch` over every action with no `default`, so a new verb that the app doesn't handle won't compile; `DuoChecks` scans `Sources/DuoKit` and fails on any `Button`, `Menu` or menu item whose label isn't an action's `ui` label or in `Parity.uiOnly` (with its reason), and on any click or drag (`.onActivate`, `.onDrag`, `.onDrop`) without `// action: <verb>`; and the reference file must match the registry.
+- **Text by default, `--json` on every verb**; errors on stderr with a non-zero exit (64 for usage). Confirmations stay with the person: `session move` and `project merge` show Duo's sheet and the CLI waits (10-minute timeout) for the answer.
+- **Which project a verb acts on** without `--project`: the one holding the caller's folder (Claude's own project), then the one showing. Caught in testing: run from this repo, `file new` created a file in the repo (a folder entry), so every file reply now names its project.
+- **Agent edits go through the editor** (LR-34): `doc insert` and `doc replace` change the buffer with the "added by Claude" highlight and autosave; `doc replace` refuses text that isn't found or isn't unique.
+- Verified live, driven only by `duo2` (open, session new, files, file new/rename/path/duplicate/trash, doc open/read/insert/replace/tabs, html element/pick, send element/file/project/text, sessions, session show, project show, view tab, go all, undo, an unknown verb).
+
+## F-46 · Send to Claude, local HTML and the element picker (DL-67–DL-70) (2026-10-04)
+
+- **Delivery is one bracketed paste** (`ESC[200~ … ESC[201~`), never Enter. SwiftTerm doesn't expose whether the program asked for bracketed paste, so Duo always brackets; only Claude sessions receive sends, and Claude Code always enables it. Every control character but newline and tab is stripped first: an `ESC[201~` in the content would otherwise end the paste and run the rest as keystrokes.
+- **Claude Code folds pastes** into `[Pasted text #n +N lines]`, and **turns an image path in a paste into an attachment** (`[Image #1]`): the element's screenshot arrives as an image Claude can see.
+- **Readiness comes from the beacon:** no beacon means Claude is still at the folder-trust prompt (a paste there landed in the trust menu in testing); `waiting` means a question or permission menu. Sends wait for `busy` or `idle`, and the menu says why when they can't.
+- **The page's own selection**: WebKit adds a Copy item to its context menu only when something is selected (`WKMenuItemIdentifierCopy`), and Copy Image over an image; Duo reads those to decide whether to offer Send Selection / Send Image. Images in a selection are found in the range's cloned fragment and sent as file paths.
+- **The picker** is an injected user script: `mouseover` outlines, a capturing `click` freezes (and is swallowed so the page doesn't act), Esc exits. The payload follows LR-44 (tag, legacy's selector, heading trail, text, allow-listed attributes) plus computed styles, the box, capped outer HTML and an element screenshot (`takeSnapshot` of the element's rect, outline hidden), saved under `App Support/Duo/context/`.
+- **Local HTML** opens in its own read-only `WKWebView` with read access to the project folder, reloads within a second when the page or its neighbouring css/js/images change, and sends links to other sites to the default browser (DL-3).
+- Captures without Screen Recording draw web views blank (like terminals, F-25); `html-snapshot` in the harness takes the web view's own picture.
+
 ## F-45 · Organising sessions and projects (DL-63–DL-66) (2026-10-03)
 
 - **Claude's whole history is read** (`ClaudeStorage.history()`: every top-level transcript with the folder it belongs to after any `/cd`, cached by modification time). Each project lists every past session in its folder (DL-59), not only those Duo filed; beyond the five most recent idle ones they fold under **Older · N**.
