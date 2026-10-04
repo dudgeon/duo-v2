@@ -136,13 +136,12 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Close Window | window management |
 | Format | a menu, not an action |
 | Go | a menu, not an action |
-| Jump to… | not built yet (⌘K, design queue) |
 | Next Pane | not built yet |
 | No templates yet: add .md files to a templates folder | a disabled hint |
 | Not Now | the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later |
 | Previous Pane | not built yet |
 | Resume a session | the debug gallery only (DL-59 removed it from the app) |
 | Save to Recreate | writes the user's own text back after the file was removed on disk; Claude can do the same with `duo2 doc edit` (content) once the user asks |
-| Search Everything… | not built yet (search UI, design queue); `duo2 search` covers the content |
+| Search Everything… | not built yet (search M-UI, designed); `duo2 search` covers content and `duo2 projects` / `sessions` the names |
 | Toggle Right Pane | not built yet |
 | confirmation sheet | the user's own consent; Claude can't confirm for them |

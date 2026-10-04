@@ -145,17 +145,18 @@ struct NeedsYouChip: View {
     }
 }
 
-/// The jump field (handoff §3.1). The ⌘K palette it opens is not designed yet (§13), so for now
-/// it is the field's look with no action.
+/// The search field (handoff §3.1, relabelled by DL-76): opens search with ⇧⌘A, which also finds
+/// projects, groups and sessions by name now that Jump is merged into it (DL-80). The modal isn't
+/// built yet (search M-UI), so for now it is the field's look with no action.
 struct JumpField: View {
     var body: some View {
         HStack(spacing: DuoSpace.gapGlyphToLabel) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 11, weight: .medium))
-            Text("Jump to a project, group or session")
+            Text("Search all projects")
                 .duoText(.body)
             Spacer(minLength: 4)
-            Text("⌘K").duoText(.body)
+            Text("⇧⌘A").duoText(.body)
         }
         .foregroundStyle(DuoColor.text2)
         .padding(.horizontal, 8)
@@ -163,7 +164,7 @@ struct JumpField: View {
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusField).fill(DuoColor.pane))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusField).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Jump to a project, group or session")
+        .accessibilityLabel("Search all projects")
         .accessibilityAddTraits(.isSearchField)
     }
 }

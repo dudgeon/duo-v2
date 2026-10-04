@@ -179,7 +179,10 @@ extension AppModel {
         var items: [NSMenuItem] = []
         let visible = (try? sendTarget.get())?.key
         switch sendTarget {
-        case .success(let t): items.append(ActionMenuItem("Send \(noun) to Claude") { deliver(t.key) })
+        case .success(let t):
+            let item = ActionMenuItem("Send \(noun) to Claude") { deliver(t.key) }
+            if noun == "Selection" { item.keyEquivalent = "d"; item.keyEquivalentModifierMask = .command }  // shown; Edit's ⌘D does it
+            items.append(item)
         case .failure(let why): items.append(ActionMenuItem("Send \(noun) to Claude: \(why.reason)", enabled: false) {})
         }
         let more = NSMenuItem(title: "Send \(noun) To", action: nil, keyEquivalent: "")

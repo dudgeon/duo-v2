@@ -24,8 +24,11 @@ public struct ControlEndpoint: Codable, Sendable, Equatable {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appending(path: "Duo")
     }
     public static var file: URL { support.appending(path: "endpoint.json") }
-    /// One socket per user; a second Duo instance takes it over (the newest app answers).
+    /// One socket per user; a second Duo instance takes it over (the newest app answers), except a
+    /// scripted run while the user's Duo is open, which uses a private one (C-18).
     public static var defaultSocket: String { support.appending(path: "duo.sock").path }
+    public static var privateSocket: String { support.appending(path: "duo-\(getpid()).sock").path }
+    public static var privateFile: URL { support.appending(path: "endpoint-\(getpid()).json") }
 
     /// The environment first (Duo's own terminals), then the file. Nil if Duo isn't running.
     public static func discover(environment: [String: String] = ProcessInfo.processInfo.environment) -> (ControlEndpoint, source: String)? {
@@ -39,8 +42,7 @@ public struct ControlEndpoint: Codable, Sendable, Equatable {
     }
 
     /// Writes the endpoint file readable by the user only.
-    public func write() throws {
-        let url = Self.file
+    public func write(to url: URL = ControlEndpoint.file) throws {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try JSONEncoder().encode(self).write(to: url, options: .atomic)
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)

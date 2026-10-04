@@ -217,8 +217,7 @@ extension DuoAction {
 public enum Parity {
     public static let uiOnly: [String: String] = [
         "Close Window": "window management",
-        "Jump to…": "not built yet (⌘K, design queue)",
-        "Search Everything…": "not built yet (search UI, design queue); `duo2 search` covers the content",
+        "Search Everything…": "not built yet (search M-UI, designed); `duo2 search` covers content and `duo2 projects` / `sessions` the names",
         "Toggle Right Pane": "not built yet",
         "Next Pane": "not built yet",
         "Previous Pane": "not built yet",

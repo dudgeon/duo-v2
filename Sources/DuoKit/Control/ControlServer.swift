@@ -15,9 +15,17 @@ public final class ControlServer {
         self.handler = handler
     }
 
+    /// Whether this instance owns the shared socket and endpoint file (the user's Duo), or a
+    /// private socket beside it (a scripted run while the user's Duo is open, C-18).
+    public private(set) var shared = true
+
     /// Starts listening; `ready` runs once the port is known (the endpoint file is written first).
-    public func start(ready: @escaping @MainActor (ControlEndpoint) -> Void = { _ in }) throws {
-        let path = ControlEndpoint.defaultSocket
+    /// `privateIfTaken`: when another live Duo holds the shared endpoint, listen on a socket of
+    /// our own and leave theirs alone (scripted and capture runs never break the user's Duo).
+    public func start(privateIfTaken: Bool = false, ready: @escaping @MainActor (ControlEndpoint) -> Void = { _ in }) throws {
+        if privateIfTaken, let (other, _) = ControlEndpoint.discover(environment: [:]), other.pid != getpid() { shared = false }
+        let path = shared ? ControlEndpoint.defaultSocket : ControlEndpoint.privateSocket
+        if !shared { FileHandle.standardError.write(Data("control: another Duo owns the shared socket; listening on \(path)\n".utf8)) }
         try FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
         unlink(path)  // a stale socket from a crash, or an older instance: the newest Duo answers
         let params = NWParameters.tcp
@@ -32,7 +40,7 @@ public final class ControlServer {
                 chmod(path, 0o600)
                 let e = ControlEndpoint(socket: path, token: self.token, pid: getpid())
                 self.endpoint = e
-                try? e.write()
+                if self.shared { try? e.write() } else { try? e.write(to: ControlEndpoint.privateFile) }
                 ready(e)
             }
         }
@@ -42,6 +50,11 @@ public final class ControlServer {
 
     public func stop() {
         listener?.cancel()
+        if !shared, let e = endpoint {
+            unlink(e.socket)
+            try? FileManager.default.removeItem(at: ControlEndpoint.privateFile)
+            return
+        }
         if let e = endpoint, let current = ControlEndpoint.discover(environment: [:])?.0, current == e {
             try? FileManager.default.removeItem(at: ControlEndpoint.file)
             unlink(e.socket)

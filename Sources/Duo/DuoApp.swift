@@ -34,7 +34,8 @@ struct DuoApp: App {
             ChildEnvironment.cliDirectory = helpers.path
         }
         let server = ControlServer { model.handle($0, done: $1) }
-        try? server.start { ChildEnvironment.control = $0 }
+        // Scripted and capture runs never take the socket from the user's open Duo (C-18).
+        try? server.start(privateIfTaken: options.capturing) { ChildEnvironment.control = $0 }
         options.state?.apply(to: model)
         if options.collapseLeft { model.leftCollapsed = true }
         if let ws = options.workspace {
@@ -79,6 +80,13 @@ struct DuoApp: App {
             }
         }
         FixtureHarness.beforeExit = { model.terminals.terminateAll(); server.stop() }
+        // SIGTERM quits like ⌘Q (sessions end cleanly, the document saves): scripts quit the one
+        // instance they started by pid, never "the" Duo by app id, which may be the user's (C-18).
+        signal(SIGTERM, SIG_IGN)
+        let term = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        term.setEventHandler { MainActor.assumeIsolated { NSApp.terminate(nil) } }
+        term.resume()
+        AppDelegate.termSource = term
         // End sessions cleanly on quit. Hiding or collapsing never does this (LR-13).
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { model.terminals.terminateAll(); server.stop() }
@@ -97,6 +105,7 @@ struct DuoApp: App {
 /// Dock click or `open` with no window visible: show the main window again.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     nonisolated(unsafe) static var reopen: (@MainActor () -> Void)?
+    nonisolated(unsafe) static var termSource: DispatchSourceSignal?
     /// Saves the open document before quitting (DL-77: the last second's typing isn't lost).
     nonisolated(unsafe) static var flush: (@MainActor (@escaping @MainActor () -> Void) -> Void)?
 

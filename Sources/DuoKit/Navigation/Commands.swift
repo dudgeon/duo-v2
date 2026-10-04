@@ -5,8 +5,7 @@ import SwiftUI
 /// exactly one place. The map is locked (DL-34); changing a chord needs a decision-log entry. All carry ⌘ so they can't collide with keys typed into Claude Code's TUI
 /// (handoff §6.3), and none is on LR-60's avoid list (⌘\, ⌘⌥L, ⌘⌥;, ⌘⌥').
 public enum DuoCommand: String, CaseIterable, Sendable {
-    case jump               // ⌘K: project, group and session picker (DL-38; not designed yet)
-    case search             // ⇧⌘A: search everything (DL-46, was ⇧⌘F in DL-38; v1.1)
+    case search             // ⇧⌘A: search everything, names first (DL-46, DL-80: Jump merged in; ⌘K is free)
     case allProjects        // ⌘↑, "up a level", as in Finder
     case goHome             // ⇧⌘H (handoff proposal)
     case togglePeek         // ⇧⌘P
@@ -22,10 +21,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case italic             // ⌘I, likewise
     case closeSession       // ⌘W closes the focused tab (document or session), never the window (LR-60, LR-13)
     case closeWindow        // ⇧⌘W, as in browsers once ⌘W closes tabs
+    case sendSelection      // ⌘D: Send Selection to Claude, legacy's chord (Q-22, DL-79); search's Send to Claude too
 
     public var title: String {
         switch self {
-        case .jump: "Jump to…"
         case .search: "Search Everything…"
         case .allProjects: "All Projects"
         case .goHome: "Home"
@@ -42,12 +41,12 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .italic: "Italic"
         case .closeSession: "Close Tab"
         case .closeWindow: "Close Window"
+        case .sendSelection: "Send Selection to Claude"
         }
     }
 
     public var shortcut: KeyboardShortcut {
         switch self {
-        case .jump: KeyboardShortcut("k", modifiers: .command)
         case .search: KeyboardShortcut("a", modifiers: [.command, .shift])  // Chrome's tab search (DL-46)
         case .allProjects: KeyboardShortcut(.upArrow, modifiers: .command)
         case .goHome: KeyboardShortcut("h", modifiers: [.command, .shift])
@@ -64,13 +63,14 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .italic: KeyboardShortcut("i", modifiers: .command)
         case .closeSession: KeyboardShortcut("w", modifiers: .command)
         case .closeWindow: KeyboardShortcut("w", modifiers: [.command, .shift])
+        case .sendSelection: KeyboardShortcut("d", modifiers: .command)
         }
     }
 
     @MainActor
     public func isEnabled(in model: AppModel) -> Bool {
         switch self {
-        case .jump, .search, .toggleRightPane, .nextPane, .previousPane: false  // not built yet
+        case .search, .toggleRightPane, .nextPane, .previousPane: false  // not built yet
         case .allProjects: !model.altitude.isAllProjects
         case .togglePeek: !model.altitude.isAllProjects && !model.needsYouElsewhere.isEmpty
         case .jumpToPeekSelection: model.peekOpen
@@ -79,6 +79,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
         case .save: model.terminalsMode == .live && model.editor.url != nil
         case .bold, .italic: model.editorIfLoaded?.hasFocus == true
+        case .sendSelection: model.canSendSelection
         }
     }
 
@@ -99,7 +100,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .bold: model.editor.run("duo.exec('bold'); return 1") { _ in }
         case .italic: model.editor.run("duo.exec('italic'); return 1") { _ in }
         case .closeWindow: NSApp.keyWindow?.performClose(nil)
-        case .jump, .search, .toggleRightPane, .nextPane, .previousPane: break
+        case .sendSelection: model.sendSelection()
+        case .search, .toggleRightPane, .nextPane, .previousPane: break
         }
     }
 }
@@ -127,18 +129,16 @@ public struct DuoCommands: Commands {
         // The standard text items (Find, Spelling and Grammar, Substitutions, Transformations,
         // Speech) for the editor; Writing Tools joins them where the system supports it.
         TextEditingCommands()
-        // Send to Claude (DL-67). No chord yet: the map is locked (DL-34); legacy used ⌘D (Q-22).
+        // Send to Claude (DL-67), ⌘D (DL-79).
         CommandGroup(after: .pasteboard) {
             Divider()
-            Button("Send Selection to Claude") { model.sendSelection() }
-                .disabled(!model.canSendSelection)
+            item(.sendSelection)
         }
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)
             item(.toggleRightPane)
         }
         CommandMenu("Go") {
-            item(.jump)
             item(.search)
             Divider()
             item(.allProjects)

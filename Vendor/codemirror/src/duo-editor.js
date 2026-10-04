@@ -219,7 +219,8 @@ function create(parent, text) {
       ...(window.duoFlags?.noPreview ? [] : [livePreview]),
       addedField,
       clearOnUserEdit,
-      keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
+      // ⌘D is Duo's Send Selection to Claude (Q-22): CodeMirror's select-next-occurrence gives it up.
+      keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap].filter((b) => b.key !== "Mod-d")),
       EditorView.contentAttributes.of({ spellcheck: "true", autocorrect: "on", autocapitalize: "on" }),
       EditorView.updateListener.of((u) => {
         if (u.selectionSet || u.docChanged) {

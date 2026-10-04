@@ -15,5 +15,8 @@ for i in {1..${DUO_TIMEOUT:-90}}; do
   sleep 1
 done
 sleep 2
-if pgrep -xq Duo; then osascript -e 'tell application id "com.dudgeon.duo" to quit' >/dev/null 2>&1; sleep 2; fi
+# Quit the instance this script started, by pid (SIGTERM quits like ⌘Q). Never by app id: that
+# can reach the user's own Duo (C-18).
+pid=$(pgrep -f -- "--capture-window $png" | head -1)
+if [[ -n $pid ]]; then kill -TERM $pid; for i in {1..10}; do kill -0 $pid 2>/dev/null || break; sleep 1; done; fi
 [[ -f $png ]] && echo "captured $png" || { echo "no capture after ${DUO_TIMEOUT:-90}s"; exit 1; }
