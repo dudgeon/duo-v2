@@ -20,6 +20,11 @@ struct ProjectSidebarPane: View {
                                 .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
                         }
                         .padding(EdgeInsets(top: 14, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                        // The project's heading opens the project itself: its Project tab (DL-60).
+                        .onActivate { model.rightTab = "Project"; model.selectedFile = nil }  // action: view tab
+                        .accessibilityLabel("\(project.name), open the project file")
                     }
                     ForEach(SessionState.allCases, id: \.self) { state in
                         let section = rows.filter { $0.state == state }

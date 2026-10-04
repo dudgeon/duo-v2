@@ -17,6 +17,10 @@ struct HomePane: View {
                 Text("★ \(home?.name ?? "home")")
                     .duoText(.bodyEmphasis)
                     .foregroundStyle(DuoColor.consoleText)
+                    .contentShape(Rectangle())
+                    // Home's heading opens Home as a project, like any tile's name (Geoff, 2026-10-04).
+                    .onActivate { if let h = home?.name { model.open(project: h) } }  // action: open
+                    .accessibilityLabel("Open \(home?.name ?? "home")")
                 Spacer(minLength: 8)
                 Text(home?.path ?? "")
                     .duoText(.mono)
