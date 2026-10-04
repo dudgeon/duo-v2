@@ -1,0 +1,292 @@
+<title>Making Sense of Sessions</title>
+<style>
+/* Layout: one reading column; each question is a band of option cards that wrap to one column on a phone. */
+:root {
+  --ground: #F3F4F6; --pane: #FFFFFF; --sel: #E9ECEF; --rule: #C9CDD3; --edge: #8B939C;
+  --text: #1F2328; --text2: #5B636D; --accent: #C2410C; --active: #E8F0FA; --console: #15171B; --ctext: #E6E8EB; --ctext2: #9AA1AB;
+  --pick: #2F6FDE;
+  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #1B1E23; --pane: #23272E; --sel: #2F343C; --rule: #3A4048; --edge: #6B737D;
+  --text: #E6E8EB; --text2: #9AA1AB; --accent: #F0763E; --active: #24344A; --pick: #6EA0F5; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #1B1E23; --pane: #23272E; --sel: #2F343C; --rule: #3A4048; --edge: #6B737D;
+  --text: #E6E8EB; --text2: #9AA1AB; --accent: #F0763E; --active: #24344A; --pick: #6EA0F5; color-scheme: dark }
+
+body { background: var(--ground); color: var(--text); font: 14px/1.55 var(--ui); }
+.wrap { max-width: 1020px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 64px; display: grid; gap: 40px; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+h3 { font-size: 14px; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--text2); font-size: 15px; }
+.label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); }
+code { font: 12.5px var(--mono); background: var(--sel); padding: 1px 5px; border-radius: 4px; }
+section { display: grid; gap: 14px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; align-items: start; }
+
+/* The three layers */
+.layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.layer { background: var(--pane); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: grid; gap: 6px; min-width: 0; }
+.layer .what { font-weight: 600; }
+.layer .eg { color: var(--text2); font-size: 13px; }
+
+/* Duo-like mini mockups */
+.mock { background: var(--pane); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 0 12px; font-size: 13px; min-width: 0; }
+.mock .h { padding: 2px 14px 6px; }
+.mock .h b { display: block; }
+.mock .h span { color: var(--text2); font-size: 12px; }
+.sec { padding: 10px 14px 3px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); display: flex; gap: 6px; align-items: center; }
+.sec.need { color: var(--accent); }
+.row { display: flex; align-items: center; gap: 8px; padding: 3px 14px; height: 24px; }
+.row .n { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .t { color: var(--text2); font-variant-numeric: tabular-nums; font-size: 12px; }
+.row.open { background: var(--active); }
+.row.sel { background: var(--sel); }
+.row .tag { font-size: 10.5px; border: 1px solid var(--edge); border-radius: 9px; padding: 0 6px; color: var(--text2); }
+.fold { color: var(--text2); padding: 4px 14px; }
+.g { width: 9px; height: 9px; flex: none; display: inline-block; }
+.g.need { border-radius: 50%; background: var(--accent); }
+.g.work { border-radius: 50%; border: 1.5px solid var(--text); box-sizing: border-box; }
+.g.rev { width: 8px; height: 8px; background: var(--text); transform: rotate(45deg) scale(.8); }
+.g.idle { height: 1.5px; background: var(--text2); }
+.g.term { width: 10px; height: 8px; border: 1.5px solid var(--text); border-radius: 2px; box-sizing: border-box; }
+.chips { display: flex; gap: 6px; padding: 4px 14px 6px; flex-wrap: wrap; }
+.chip { font-size: 11.5px; border: 1px solid var(--edge); border-radius: 6px; padding: 1px 8px; }
+.chip.on { background: var(--sel); font-weight: 600; }
+.map { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 4px 12px; }
+.col .label { margin-bottom: 6px; display: flex; gap: 6px; align-items: center; }
+.tile { border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; font-size: 12.5px; }
+.tile b { display: block; }
+.tile .s { color: var(--text2); }
+.crumb { padding: 2px 14px 8px; color: var(--text2); font-size: 12.5px; }
+.crumb b { color: var(--text); }
+
+/* Today's legend */
+.legend { display: grid; gap: 8px; }
+.legend div { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: baseline; }
+.legend dt { font-weight: 600; }
+@media (max-width: 520px) { .legend div { grid-template-columns: 1fr; gap: 2px; } }
+.problems { display: grid; gap: 6px; padding-left: 18px; margin: 0; max-width: 72ch; }
+
+/* Options */
+.q { display: grid; gap: 14px; padding-top: 6px; border-top: 1px solid var(--rule); }
+.qhead { display: grid; gap: 4px; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+.opt { background: var(--pane); border: 1px solid var(--rule); border-radius: 10px; padding: 14px; display: grid; gap: 10px; align-content: start; cursor: pointer; min-width: 0; }
+.opt:hover { border-color: var(--edge); }
+.opt:focus-visible { outline: 2px solid var(--pick); outline-offset: 2px; }
+.opt[aria-pressed="true"] { border-color: var(--pick); box-shadow: 0 0 0 1px var(--pick); }
+.opt .top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.opt .name { font-weight: 600; }
+.rec { font-size: 11px; font-weight: 600; color: var(--pick); border: 1px solid var(--pick); border-radius: 9px; padding: 0 7px; }
+.opt .mock { background: var(--ground); }
+.opt .pro, .opt .con { font-size: 13px; color: var(--text2); }
+.opt .pro b, .opt .con b { color: var(--text); font-weight: 600; }
+
+/* Footer */
+.out { position: sticky; bottom: 0; background: var(--pane); border-top: 1px solid var(--rule); padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.out .sum { flex: 1; min-width: 200px; color: var(--text2); font-size: 13px; }
+button.copy { font: 600 13px var(--ui); background: var(--text); color: var(--pane); border: 0; border-radius: 6px; padding: 7px 14px; cursor: pointer; }
+button.copy:focus-visible { outline: 2px solid var(--pick); outline-offset: 2px; }
+textarea#picked { width: 100%; min-height: 0; font: 12px var(--mono); }
+@media (prefers-reduced-motion: no-preference) { .opt { transition: border-color .12s, box-shadow .12s; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <span class="label">Duo · information architecture</span>
+    <h1>Making sense of sessions</h1>
+    <p class="lede">What Payments, checkout and "New session" each are today, what the sections of a project's session list mean, and options to make both obvious. Pick one option per question (click a card); "Copy my picks" gives you text to paste back to Claude.</p>
+  </header>
+
+  <section>
+    <h2>The three layers, today</h2>
+    <div class="layers">
+      <div class="layer"><span class="label">Topic</span><span class="what">A folder that holds projects</span><span class="eg"><code>workspace/payments/</code> is the <b>Payments</b> column on the map. It has no file of its own and you can't open it; it only groups tiles.</span></div>
+      <div class="layer"><span class="label">Project</span><span class="what">A folder with a <code>PROJECT.md</code></span><span class="eg"><code>workspace/payments/checkout/</code> is the <b>checkout</b> tile. It has a goal, files and sessions; clicking it opens it.</span></div>
+      <div class="layer"><span class="label">Session</span><span class="what">One Claude Code conversation</span><span class="eg"><b>New session</b> inside checkout is one. It's called "New session" until Claude gives it a title after your first message.</span></div>
+    </div>
+    <p>Two more things fold sessions together: a <b>group</b> (sessions you put together by hand) and a <b>thread</b> (a session and its forks). Folders where Claude ran without a <code>PROJECT.md</code> show up under <b>Elsewhere</b>.</p>
+  </section>
+
+  <section>
+    <h2>A project's session list, today</h2>
+    <div class="cols">
+      <div class="mock" aria-label="Today's session list">
+        <div class="h"><b>checkout</b><span>On track · Exec review Oct 14</span></div>
+        <div class="sec need">Needs you · 1</div>
+        <div class="row"><i class="g need"></i><span class="n">PRD v2 edits</span><span class="t">4m</span></div>
+        <div class="sec">Working · 1</div>
+        <div class="row"><i class="g work"></i><span class="n">Teardown research</span><span class="t">6m</span></div>
+        <div class="sec">Idle · 10</div>
+        <div class="row open"><i class="g idle"></i><span class="n">New session</span><span class="t">8m</span></div>
+        <div class="row"><i class="g idle"></i><span class="n">Move Draft a post about pricing</span><span class="t">1h</span></div>
+        <div class="row"><i class="g idle"></i><span class="n">docs/prd.md owner sign-off</span><span class="t">1h</span></div>
+        <div class="fold">› Older · 5</div>
+        <div class="fold">› Archived · 1</div>
+      </div>
+      <dl class="legend" style="margin:0">
+        <div><dt>Needs you</dt><dd style="margin:0">Claude is waiting on you: a question, a permission, a plan to approve.</dd></div>
+        <div><dt>Ready for review</dt><dd style="margin:0">Claude finished and produced something to look at.</dd></div>
+        <div><dt>Working</dt><dd style="margin:0">Claude is doing something right now.</dd></div>
+        <div><dt>Idle</dt><dd style="margin:0"><b>Not working.</b> It may be open in a Duo tab at its prompt (tinted blue since today) or closed and resumable. <b>Idle doesn't mean running</b>, and it doesn't mean closed either: that's the confusion.</dd></div>
+        <div><dt>Older</dt><dd style="margin:0">Idle sessions past the five most recent, folded to keep the list short. A sorting bug put the newest in here; fixed today.</dd></div>
+        <div><dt>Archived</dt><dd style="margin:0">Sessions you filed away (new today): out of the lists, still searchable.</dd></div>
+      </dl>
+    </div>
+    <h3>What makes it confusing</h3>
+    <ul class="problems">
+      <li>"Idle" mixes the sessions you have open with ones you closed days ago.</li>
+      <li>The section words are Claude's states, not the question you're asking ("what am I in the middle of?").</li>
+      <li>Several sessions are called "New session" until Claude titles them, so they look alike.</li>
+      <li>On the map, nothing says that a column is a folder of projects and a tile is a project.</li>
+    </ul>
+  </section>
+
+  <section class="q" data-q="List" aria-labelledby="q1">
+    <div class="qhead"><span class="label">Question 1</span><h2 id="q1">How should a project's session list be organised?</h2></div>
+    <div class="opts">
+      <div class="opt" role="button" tabindex="0" aria-pressed="false" data-o="A · Open, then past">
+        <div class="top"><span class="name">A · Open, then past</span><span class="rec">Recommended</span></div>
+        <div class="mock">
+          <div class="sec need">Needs you · 1</div>
+          <div class="row"><i class="g need"></i><span class="n">PRD v2 edits</span><span class="t">4m</span></div>
+          <div class="sec">Open · 2</div>
+          <div class="row open"><i class="g work"></i><span class="n">Teardown research</span><span class="t">working</span></div>
+          <div class="row open"><i class="g idle"></i><span class="n">Session 4:12 PM</span><span class="t">at prompt</span></div>
+          <div class="sec">Today</div>
+          <div class="row"><i class="g idle"></i><span class="n">docs/prd.md owner sign-off</span><span class="t">1h</span></div>
+          <div class="sec">This week</div>
+          <div class="row"><i class="g idle"></i><span class="n">Interview synthesis notes</span><span class="t">2d</span></div>
+          <div class="fold">› Earlier · 5 &nbsp; › Archived · 1</div>
+        </div>
+        <p class="pro"><b>Answers "what am I in?"</b> Open means a tab is open in Duo, whatever Claude is doing. Everything else is history by date, like a browser's.</p>
+        <p class="con"><b>Cost:</b> review and working sessions that aren't open move into the dated history with a badge.</p>
+      </div>
+      <div class="opt" role="button" tabindex="0" aria-pressed="false" data-o="B · Keep states, split Idle">
+        <div class="top"><span class="name">B · Keep states, split Idle</span></div>
+        <div class="mock">
+          <div class="sec need">Needs you · 1</div>
+          <div class="row"><i class="g need"></i><span class="n">PRD v2 edits</span><span class="t">4m</span></div>
+          <div class="sec">Working · 1</div>
+          <div class="row"><i class="g work"></i><span class="n">Teardown research</span><span class="t">6m</span></div>
+          <div class="sec">Open, waiting for you · 1</div>
+          <div class="row open"><i class="g idle"></i><span class="n">Session 4:12 PM</span><span class="t">8m</span></div>
+          <div class="sec">Closed · 8</div>
+          <div class="row"><i class="g idle"></i><span class="n">docs/prd.md owner sign-off</span><span class="t">1h</span></div>
+          <div class="fold">› Older · 5 &nbsp; › Archived · 1</div>
+        </div>
+        <p class="pro"><b>Smallest change</b> from the approved design: same sections, Idle split into "Open, waiting for you" and "Closed".</p>
+        <p class="con"><b>Cost:</b> still five or six sections to learn.</p>
+      </div>
+      <div class="opt" role="button" tabindex="0" aria-pressed="false" data-o="C · One timeline with filters">
+        <div class="top"><span class="name">C · One timeline with filters</span></div>
+        <div class="mock">
+          <div class="chips"><span class="chip on">All</span><span class="chip">Open</span><span class="chip">Needs you</span></div>
+          <div class="row"><i class="g need"></i><span class="n">PRD v2 edits</span><span class="tag">needs you</span><span class="t">4m</span></div>
+          <div class="row open"><i class="g work"></i><span class="n">Teardown research</span><span class="t">6m</span></div>
+          <div class="row open"><i class="g idle"></i><span class="n">Session 4:12 PM</span><span class="t">8m</span></div>
+          <div class="row"><i class="g idle"></i><span class="n">docs/prd.md owner sign-off</span><span class="t">1h</span></div>
+          <div class="row"><i class="g idle"></i><span class="n">Interview synthesis notes</span><span class="t">2d</span></div>
+        </div>
+        <p class="pro"><b>No sections at all:</b> most recent first, needs-you pinned, glyph and tint carry the state.</p>
+        <p class="con"><b>Cost:</b> a long project is one long list; relies on the filter chips.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="q" data-q="Names" aria-labelledby="q2">
+    <div class="qhead"><span class="label">Question 2</span><h2 id="q2">What should a session be called before Claude titles it?</h2></div>
+    <div class="opts">
+      <div class="opt" role="button" tabindex="0" aria-pressed="false" data-o="Its first words">
+        <div class="top"><span class="name">Its first words</span><span class="rec">Recommended</span></div>
+        <div class="mock"><div class="row open"><i class="g idle"></i><span class="n">"Summarise the six buyer interviews…"</span><span class="t">8m</span></div><div class="row open"><i class="g idle"></i><span class="n">Session 4:12 PM</span><span class="t">now</span></div></div>
+        <p class="pro"><b>Recognisable at once.</b> What you typed first, in quotes, until Claude's title arrives; a session you haven't typed in yet shows its start time.</p>
+      </div>
+      <div class="opt" role="button" tabindex="0" aria-pressed="false" data-o="Its start time">
+        <div class="top"><span class="name">Its start time</span></div>
+        <div class="mock"><div class="row open"><i class="g idle"></i><span class="n">Session 4:04 PM</span><span class="t">8m</span></div><div class="row open"><i class="g idle"></i><span class="n">Session 4:12 PM</span><span class="t">now</span></div></div>
+        <p class="pro"><b>Always distinct</b>, never long.</p>
+      </div>
+      <div class="opt" role="button" tabindex="0" aria-pressed="false" data-o="Keep “New session”">
+        <div class="top"><span class="name">Keep "New session"</span></div>
+        <div class="mock"><div class="row open"><i class="g idle"></i><span class="n">New session</span><span class="t">8m</span></div><div class="row open"><i class="g idle"></i><span class="n">New session</span><span class="t">now</span></div></div>
+        <p class="pro"><b>As today.</b></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="q" data-q="Map" aria-labelledby="q3">
+    <div class="qhead"><span class="label">Question 3</span><h2 id="q3">How should the map show that Payments is a folder of projects?</h2></div>
+    <div class="opts">
+      <div class="opt" role="button" tabindex="0" aria-pressed="false" data-o="Folder headings and a full breadcrumb">
+        <div class="top"><span class="name">Folder headings and a full breadcrumb</span><span class="rec">Recommended</span></div>
+        <div class="mock">
+          <div class="map"><div class="col"><div class="label">▢ payments /</div><div class="tile"><b>checkout</b><span class="s">project · 1 open</span></div></div><div class="col"><div class="label">▢ growth /</div><div class="tile"><b>onboarding</b><span class="s">project · nothing open</span></div></div></div>
+          <div class="crumb">Inside: All projects › payments › <b>checkout</b></div>
+        </div>
+        <p class="pro"><b>Says what each thing is</b> where you look: the column reads as a folder, the tile as a project, and the toolbar names the path.</p>
+      </div>
+      <div class="opt" role="button" tabindex="0" aria-pressed="false" data-o="Name the layers with labels">
+        <div class="top"><span class="name">Name the layers with labels</span></div>
+        <div class="mock">
+          <div class="map"><div class="col"><div class="label">Area · Payments</div><div class="tile"><b>checkout</b><span class="s">Project</span></div></div><div class="col"><div class="label">Area · Growth</div><div class="tile"><b>onboarding</b><span class="s">Project</span></div></div></div>
+        </div>
+        <p class="pro"><b>Explicit words</b> ("Area", "Project") on every column and tile.</p>
+        <p class="con"><b>Cost:</b> repeated labels add noise once you've learned them.</p>
+      </div>
+      <div class="opt" role="button" tabindex="0" aria-pressed="false" data-o="Keep topic columns as they are">
+        <div class="top"><span class="name">Keep topic columns as they are</span></div>
+        <div class="mock"><div class="map"><div class="col"><div class="label">Payments</div><div class="tile"><b>checkout</b><span class="s">Cut guest-checkout…</span></div></div><div class="col"><div class="label">Growth</div><div class="tile"><b>onboarding</b><span class="s">Lift day-7…</span></div></div></div></div>
+        <p class="pro"><b>As designed</b>; explain it in first-run help instead.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="gap:8px">
+    <h2>Fixed today, whichever you pick</h2>
+    <ul class="problems">
+      <li>Newest idle sessions are listed first; "Older" holds the old ones.</li>
+      <li>Sessions open in a Duo tab are tinted (provisional look).</li>
+      <li>Right-click any session, wherever it's listed: Archive Session, Delete Session…</li>
+    </ul>
+  </section>
+</div>
+
+<div class="out">
+  <span class="sum" id="sum" aria-live="polite">No picks yet: click one card in each question.</span>
+  <button class="copy" id="copy" type="button">Copy my picks</button>
+  <textarea id="picked" rows="3" hidden aria-label="Your picks, to copy"></textarea>
+</div>
+
+<script>
+(function () {
+  const picks = {};
+  try { Object.assign(picks, JSON.parse(localStorage.getItem("duo-session-ia") || "{}")); } catch (_) {}
+  const qs = [...document.querySelectorAll(".q")];
+  function render() {
+    qs.forEach((q) => q.querySelectorAll(".opt").forEach((o) => o.setAttribute("aria-pressed", String(picks[q.dataset.q] === o.dataset.o))));
+    const done = qs.filter((q) => picks[q.dataset.q]);
+    document.getElementById("sum").textContent = done.length
+      ? done.map((q) => q.dataset.q + ": " + picks[q.dataset.q]).join(" · ")
+      : "No picks yet: click one card in each question.";
+  }
+  qs.forEach((q) => q.querySelectorAll(".opt").forEach((o) => {
+    const choose = () => { picks[q.dataset.q] = o.dataset.o; try { localStorage.setItem("duo-session-ia", JSON.stringify(picks)); } catch (_) {} render(); };
+    o.addEventListener("click", choose);
+    o.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); choose(); } });
+  }));
+  document.getElementById("copy").addEventListener("click", () => {
+    const text = "Session list picks: " + qs.map((q) => q.dataset.q + " = " + (picks[q.dataset.q] || "(no pick)")).join("; ");
+    const area = document.getElementById("picked");
+    navigator.clipboard.writeText(text).then(() => {
+      document.getElementById("sum").textContent = "Copied. Paste it to Claude.";
+    }).catch(() => { area.hidden = false; area.value = text; area.select(); document.getElementById("sum").textContent = "Select and copy the text below."; });
+  });
+  render();
+})();
+</script>
