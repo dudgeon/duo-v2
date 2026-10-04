@@ -155,6 +155,24 @@ extension AppModel {
             guard terminals.existing(s.tabKey) != nil else { return done(.fail("\(s.name) isn't running in Duo")) }
             closeSession(s.tabKey)
             done(.ok("Closed \(s.name). It stays listed and resumable."))
+        case .inventory:
+            // Reads every transcript's head: off the main thread, so Duo keeps answering.
+            Task.detached(priority: .userInitiated) {
+                let r = Inventory.build()
+                await MainActor.run { self.inventoryReply(r, done) }
+            }
+        case .evidence:
+            guard let name = inv[0], let folder = liveFolders[name] ?? (FileManager.default.fileExists(atPath: (name as NSString).expandingTildeInPath) ? URL(fileURLWithPath: (name as NSString).expandingTildeInPath) : nil) else {
+                return done(.fail("usage: \(id.action.usage)"))
+            }
+            let cwd = folder.resolvingSymlinksInPath().path
+            let ids = Set(fixture.sessions.filter { $0.project == name }.compactMap(\.sessionId))
+            let titles = Dictionary(fixture.sessions.compactMap { s in s.sessionId.map { ($0, s.name) } }, uniquingKeysWith: { a, _ in a })
+            Task.detached(priority: .userInitiated) {
+                let transcripts = ClaudeStorage.history().filter { ids.contains($0.id) || $0.cwd == cwd }
+                let evidence = transcripts.map { Inventory.evidence($0.transcript, cwd: $0.cwd) }
+                await MainActor.run { self.evidenceReply(name, evidence, titles, done) }
+            }
         case .idle:
             let b = idleGroups()
             let text = b.isEmpty ? "Nothing idle." : b.map { bucket in
@@ -519,6 +537,38 @@ extension AppModel {
     }
 
     /// A session by id, id prefix (8+ characters is plenty), or exact title (within a project if given).
+    func inventoryReply(_ r: Inventory.Report, _ done: @escaping @MainActor (Reply) -> Void) {
+        let f = ByteCountFormatter()
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let lines = r.buckets.map { b -> String in
+            var flags: [String] = []
+            if b.cwdMissing { flags.append("folder missing") }
+            if b.collision { flags.append("collision: \(b.cwds.count) folders") }
+            if b.junkDrawer { flags.append("catch-all") }
+            if b.sweepSoon > 0 { flags.append("\(b.sweepSoon) swept within 7 days (\(b.archivedByDuo) in Duo's archive)") }
+            let cwd = b.cwds.first.map { $0.replacingOccurrences(of: home, with: "~") } ?? b.folder
+            return "\(cwd)  \(b.sessions) session(s), \(f.string(fromByteCount: b.bytes))" + (flags.isEmpty ? "" : "  [" + flags.joined(separator: "; ") + "]")
+        }
+        let dups = r.duplicates.map { "duplicate \($0.key.prefix(8)): in \($0.value.joined(separator: ", "))" }
+        done(.ok("Claude keeps sessions \(r.periodDays) days. \(r.buckets.count) folders:\n" + (lines + dups).joined(separator: "\n"),
+                 r.buckets.map { ["folder": $0.folder, "cwds": $0.cwds, "sessions": $0.sessions, "bytes": $0.bytes, "cwdMissing": $0.cwdMissing,
+                                  "collision": $0.collision, "catchAll": $0.junkDrawer, "sweepWithin7Days": $0.sweepSoon, "inDuoArchive": $0.archivedByDuo] as [String: Any] }))
+    }
+
+    func evidenceReply(_ name: String, _ evidence: [Inventory.Evidence], _ titles: [String: String], _ done: @escaping @MainActor (Reply) -> Void) {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let df = DateFormatter(); df.dateFormat = "MMM d"
+        let text = Inventory.clusters(evidence).map { c -> String in
+            let from = c.first?.first.map(df.string) ?? "?", to = (c.compactMap { $0.last ?? $0.first }.max()).map(df.string) ?? "?"
+            return "\(from)–\(to) (\(c.count) session(s))\n" + c.map { e in
+                let title = titles[e.sessionId] ?? e.title ?? String(e.sessionId.prefix(8))
+                return "  \(e.sessionId.prefix(8))  \(title)  edited \(e.edited.count)\(e.partial ? "+ (partial)" : "")  home: \(e.candidateHome.map { $0.replacingOccurrences(of: home, with: "~") } ?? "-")"
+            }.joined(separator: "\n")
+        }.joined(separator: "\n")
+        done(.ok(text.isEmpty ? "No sessions with transcripts in \(name)." : text,
+                 evidence.map { ["id": $0.sessionId, "edited": $0.edited, "candidateHome": $0.candidateHome ?? NSNull(), "partial": $0.partial] as [String: Any] }))
+    }
+
     func findSession(_ key: String, in project: String?) -> Fixture.Session? {
         let pool = project.map { fixture.sessions(inProject: $0) } ?? fixture.sessions
         return pool.first { $0.sessionId == key } ?? pool.first { key.count >= 4 && ($0.sessionId?.hasPrefix(key) ?? false) }

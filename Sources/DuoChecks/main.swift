@@ -503,6 +503,43 @@ func repoFixture() throws -> Fixture {
         try? FileManager.default.removeItem(at: dir)
     }
 
+    print("inventory and evidence (CONS FR-7.1, 7.8, 7.10; DL-41)")
+    do {
+        let h = FileManager.default.homeDirectoryForCurrentUser.path
+        check(Inventory.candidateHome(["\(h)/w/a/x.md", "\(h)/w/a/b/y.md"], cwd: h) == "\(h)/w/a", "candidate home: the deepest folder holding every edit")
+        check(Inventory.candidateHome(["\(h)/w/a/x.md", "\(h)/v/y.md"], cwd: h) == nil, "disjoint edits under the cwd: no home")
+        check(Inventory.candidateHome(["/tmp/x", "\(h)/.claude/projects/p", "\(h)/w/a/x.md"], cwd: h) == "\(h)/w/a", "system, temp and ~/.claude paths don't count")
+        check(Inventory.candidateHome([], cwd: h) == nil, "nothing edited: no home")
+        let dir = FileManager.default.temporaryDirectory.appending(path: "duo-inv-\(UUID().uuidString)")
+        let claude = dir.appending(path: "claude")
+        func bucket(_ name: String, _ id: String, _ lines: [String]) throws -> URL {
+            let d = claude.appending(path: "projects/\(name)"); try FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
+            let u = d.appending(path: "\(id).jsonl"); try (lines.joined(separator: "\n") + "\n").write(to: u, atomically: true, encoding: .utf8); return u
+        }
+        let t = try bucket("-x-junk", "s1", [
+            #"{"type":"user","cwd":"/x/junk","uuid":"a","timestamp":"2026-09-01T10:00:00.000Z","message":{"content":"go"}}"#,
+            #"{"type":"assistant","timestamp":"2026-09-01T10:01:00.000Z","message":{"content":[{"type":"tool_use","name":"Edit","input":{"file_path":"/x/w/a/one.md"}},{"type":"tool_use","name":"Read","input":{"file_path":"/x/w/read-only.md"}}]}}"#,
+            #"{"type":"file-history-snapshot","snapshot":{"trackedFileBackups":{"/x/w/a/b/two.md":{}}}}"#,
+            #"{"type":"user","timestamp":"2026-09-01T10:02:00.000Z","toolUseResult":{"type":"create","filePath":"/x/w/a/three.md"}}"#])
+        let e = Inventory.evidence(t, cwd: "/x/junk")
+        check(Set(e.edited) == ["/x/w/a/one.md", "/x/w/a/b/two.md", "/x/w/a/three.md"], "edits from the editing tools, file-history and results; reads don't count")
+        check(e.candidateHome == "/x/w/a", "that session's candidate home")
+        _ = try bucket("-x-junk", "s2", [#"{"type":"user","cwd":"/x/other","uuid":"b","timestamp":"2026-09-05T10:00:00.000Z","message":{"content":"go"}}"#])
+        _ = try bucket("-x-copy", "s1", [#"{"type":"user","cwd":"/x/junk","uuid":"a","timestamp":"2026-09-01T10:00:00.000Z","message":{"content":"go"}}"#])
+        let r = Inventory.build(claudeDir: claude, now: ISO8601DateFormatter().date(from: "2026-10-04T00:00:00Z")!, periodDays: 30)
+        check(r.buckets.first { $0.folder == "-x-junk" }?.collision == true, "a folder holding sessions from two cwds is a collision (FR-7.8.2)")
+        check(r.duplicates["s1"]?.count == 2, "the same id in two folders is a duplicate (FR-7.8.1)")
+        check(r.buckets.first { $0.folder == "-x-junk" }?.cwdMissing == true, "folders whose cwds are all gone are flagged")
+        func ev(_ id: String, _ from: String, _ to: String) -> Inventory.Evidence {
+            let f = ISO8601DateFormatter()
+            return .init(sessionId: id, title: nil, first: f.date(from: from), last: f.date(from: to), edited: [], candidateHome: nil, partial: false)
+        }
+        let c = Inventory.clusters([ev("a", "2026-09-01T00:00:00Z", "2026-09-01T02:00:00Z"), ev("b", "2026-09-03T02:00:00Z", "2026-09-03T03:00:00Z"),
+                                    ev("c", "2026-09-05T03:00:01Z", "2026-09-05T04:00:00Z")])
+        check(c.map { $0.map(\.sessionId) } == [["a", "b"], ["c"]], "date clusters split at a 48-hour gap (FR-7.10.4)")
+        try? FileManager.default.removeItem(at: dir)
+    }
+
     print("surfaces slice 1 (DB-1 to DB-4)")
     do {
         // Saturday 3 Oct 2026, 12:00: this week began Sunday 27 Sep (or Monday 28, by locale).

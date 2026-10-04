@@ -34,6 +34,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case viewSidebar = "view sidebar", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
+    case inventory, evidence
     // Sessions
     case sessions, sessionShow = "session show", sessionNew = "session new", sessionOpen = "session open"
     case sessionClose = "session close", sessionMove = "session move"
@@ -123,6 +124,8 @@ extension DuoAction {
         .init(.projectShow, .projects, "<project>", "A project's folder, project file, goal, health, next step and sessions."),
         .init(.projectMake, .projects, "<folder name>", "Make a folder with sessions a documented project: writes a starter PROJECT.md and opens it. Undo with `duo2 undo`.",
               ui: ["Make a Project"]),
+        .init(.inventory, .projects, "", "Claude's session storage, read only: each folder's sessions, size, missing folders, collisions, duplicate ids, and what Claude's cleanup takes within 7 days (CONS FR-7.1).", timeout: 180),
+        .init(.evidence, .projects, "<project|folder>", "For a catch-all folder, read only: the files each session edited, its candidate home, and date clusters (CONS FR-7.10).", timeout: 300),
         .init(.projectMerge, .projects, "<source> --into <target>", "Move every session of one project or folder into another. Files stay. The user confirms in Duo.",
               ui: ["Merge Into", "Merge Sessions Into", "drag a tile onto a tile"], timeout: 600),
 

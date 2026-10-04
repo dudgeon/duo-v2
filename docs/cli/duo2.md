@@ -35,6 +35,8 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 projects` | Projects and folders with sessions, with goal, health and next step. | — |
 | `duo2 project show <project>` | A project's folder, project file, goal, health, next step and sessions. | — |
 | `duo2 project make <folder name>` | Make a folder with sessions a documented project: writes a starter PROJECT.md and opens it. Undo with `duo2 undo`. | Make a Project |
+| `duo2 inventory` | Claude's session storage, read only: each folder's sessions, size, missing folders, collisions, duplicate ids, and what Claude's cleanup takes within 7 days (CONS FR-7.1). | — |
+| `duo2 evidence <project\|folder>` | For a catch-all folder, read only: the files each session edited, its candidate home, and date clusters (CONS FR-7.10). | — |
 | `duo2 project merge <source> --into <target>` | Move every session of one project or folder into another. Files stay. The user confirms in Duo. | Merge Into, Merge Sessions Into, drag a tile onto a tile |
 
 ## Sessions
