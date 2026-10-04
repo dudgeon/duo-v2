@@ -113,6 +113,10 @@ extension AppModel {
             guard fixture.projects.contains(where: { $0.name == name }) else { return .init(ok: false, output: "no project '\(name)'") }
             open(project: name, session: req.args.dropFirst().first)
             return .init(ok: true, output: "Opened \(name).")
+        case "doc-status":
+            guard let path = req.args.first else { return .init(ok: false, output: "usage: duo2 doc-status <file>") }
+            let url = URL(fileURLWithPath: path, relativeTo: req.cwd.map { URL(fileURLWithPath: $0, isDirectory: true) }).absoluteURL
+            return .init(ok: true, output: editorIfLoaded?.status(of: url) ?? "not open in Duo")
         case "status":
             let view: String
             switch altitude {

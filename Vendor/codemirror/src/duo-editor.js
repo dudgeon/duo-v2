@@ -128,6 +128,14 @@ const addedField = StateField.define({
   provide: (f) => EditorView.decorations.from(f),
 });
 
+// The highlight lasts until the user's next edit (DL-5, LR-33).
+const clearOnUserEdit = EditorView.updateListener.of((u) => {
+  if (!u.docChanged || u.state.field(addedField).size === 0) return;
+  if (u.transactions.some((t) => t.isUserEvent("input") || t.isUserEvent("delete") || t.isUserEvent("move"))) {
+    u.view.dispatch({ effects: clearAdded.of(null) });
+  }
+});
+
 // ---------- text helpers ----------
 
 // CodeMirror splits lines on \r\n, \r and \n and joins with the line separator. Keeping the
@@ -206,6 +214,7 @@ function create(parent, text) {
       search({ top: true }),
       ...(window.duoFlags?.noPreview ? [] : [livePreview]),
       addedField,
+      clearOnUserEdit,
       keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
       EditorView.contentAttributes.of({ spellcheck: "true", autocorrect: "on", autocapitalize: "on" }),
       EditorView.updateListener.of((u) => {
@@ -228,6 +237,7 @@ function wrap(marker) {
   view.dispatch({
     changes: { from: r.from, to: r.to, insert: marker + text + marker },
     selection: { anchor: r.from + marker.length, head: r.to + marker.length },
+    userEvent: "input.format",  // a user edit: clears Claude's highlight (DL-5)
   });
 }
 
@@ -255,9 +265,13 @@ function external(diskText) {
   const outsideSet = ChangeSet.of([outside], base.length);
   const mineSet = ChangeSet.of(userEdited ? [mine] : [], base.length);
   const mapped = outsideSet.map(mineSet, true);
-  view.dispatch({ changes: mapped, annotations: [], userEvent: "external" });
+  // What arrived from outside (in Duo, usually Claude) is highlighted until the next edit (LR-33).
+  const added = [];
+  mapped.iterChanges((fromA, toA, fromB, toB) => { if (toB > fromB) added.push([fromB, toB]); });
+  const destructive = outside.to - outside.from > base.length * 0.5;
+  view.dispatch({ changes: mapped, effects: added.length ? markAdded.of(added) : [], userEvent: "external" });
   setBase(disk);
-  return { result: userEdited ? "merged" : "applied" };
+  return { result: userEdited ? "merged" : "applied", added: added.length, destructive };
 }
 
 // Agent edits go through the buffer (LR-34) and are highlighted until accepted (DL-5).

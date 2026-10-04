@@ -70,6 +70,13 @@ public enum FixtureHarness {
                     try? png.write(to: URL(fileURLWithPath: out))
                 }
             }
+        case "outside-title":
+            if let url = model.editor.url, let text = try? String(contentsOf: url, encoding: .utf8) {
+                let lines = text.components(separatedBy: "\n")
+                try? (["# PRD v3, renamed outside"] + lines.dropFirst()).joined(separator: "\n").write(to: url, atomically: false, encoding: .utf8)
+            }
+        case "doc-status":
+            if let url = model.editor.url { FileHandle.standardError.write(Data("doc-status: \(model.editor.status(of: url))\n".utf8)) }
         case "outside":
             if let url = model.editor.url, var text = try? String(contentsOf: url, encoding: .utf8) {
                 text += "\nA line added by another app.\n"
@@ -81,9 +88,9 @@ public enum FixtureHarness {
                 const c = document.querySelector('.cm-content'), cs = c && getComputedStyle(c), h = document.querySelector('.duo-h');
                 return JSON.stringify({ length: duo.text().length, head: duo.text().slice(0, 60), font: cs && cs.fontSize, line: cs && cs.lineHeight,
                   padding: cs && cs.padding, bg: getComputedStyle(document.body).backgroundColor, color: cs && cs.color,
-                  heading: h && getComputedStyle(h).fontSize + ' ' + getComputedStyle(h).fontWeight, hiddenMarks: document.querySelectorAll('.cm-line').length })
+                  heading: h && getComputedStyle(h).fontSize + ' ' + getComputedStyle(h).fontWeight, added: duo.addedCount() })
                 """) { v in
-                FileHandle.standardError.write(Data("editor: \(e.url?.lastPathComponent ?? "-") event=\(e.lastEvent) readOnly=\(e.readOnlyReason ?? "no") \(v ?? "nil")\n".utf8))
+                FileHandle.standardError.write(Data("editor: \(e.url?.lastPathComponent ?? "-") event=\(e.lastEvent) readOnly=\(e.readOnlyReason ?? "no") conflict=\(e.conflict) \(v ?? "nil")\n".utf8))
             }
         case "type": model.visibleTerminal?.view.send(txt: parts.count > 1 ? parts[1] : "")
         case "enter": model.visibleTerminal?.view.send(txt: "\r")

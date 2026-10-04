@@ -12,6 +12,10 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public private(set) var url: URL?
     public private(set) var readOnlyReason: String?
     public private(set) var lastEvent: String = "idle"   // for the harness and logs
+    /// An outside change overlapped unsaved edits. Autosave pauses until it's resolved (LR-32):
+    /// saving now would overwrite the other writer's change on disk. The banner is Q-20.
+    public private(set) var conflict = false
+    public private(set) var dirty = false
     private var pageReady = false
     private var pending: (() -> Void)?
     private var diskBytes = Data()                       // what's on disk as far as we know
@@ -86,7 +90,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     // MARK: Saving
 
     public func userContentController(_ u: WKUserContentController, didReceive m: WKScriptMessage) {
-        guard let body = m.body as? [String: Any], body["kind"] as? String == "selection", body["dirty"] as? Bool == true else { return }
+        guard let body = m.body as? [String: Any], body["kind"] as? String == "selection" else { return }
+        dirty = body["dirty"] as? Bool == true
+        guard dirty else { return }
         // Autosave a second after the last change (no "Save?" prompts; files are the truth).
         saveTask?.cancel()
         saveTask = Task { [weak self] in
@@ -99,6 +105,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// Writes the buffer if it differs from disk: temp file, then rename (LR-35).
     public func saveNow(completion: (@MainActor () -> Void)? = nil) {
         guard let file = url, readOnlyReason == nil else { completion?(); return }
+        if conflict { lastEvent = "save paused: conflict"; completion?(); return }
         webView.callAsyncJavaScript("return duo.text()", arguments: [:], in: nil, in: .page) { [weak self] result in
             guard let self, case .success(let value) = result, let text = value as? String else { completion?(); return }
             let data = Data(text.utf8)
@@ -108,6 +115,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
                     try data.write(to: tmp)
                     _ = try FileManager.default.replaceItemAt(file, withItemAt: tmp)
                     self.diskBytes = data
+                    self.dirty = false
                     self.lastEvent = "saved"
                     self.webView.evaluateJavaScript("duo.markSaved()")
                     self.watch(file)  // the rename replaced the inode we were watching
@@ -142,14 +150,27 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
                 guard let data = FileManager.default.contents(atPath: file.path), data != self.diskBytes,
                       let text = String(data: data, encoding: .utf8) else { return }
                 self.diskBytes = data
+                self.conflict = false
                 self.webView.callAsyncJavaScript("return duo.external(d)", arguments: ["d": text], in: nil, in: .page) { result in
                     if case .success(let v) = result, let r = (v as? [String: Any])?["result"] as? String {
                         // A conflict keeps the user's text; its banner isn't designed yet (§13, Q-20).
+                        self.conflict = r == "conflict"
+                        if r == "same" { self.dirty = false }
                         self.lastEvent = "outside change: \(r)"
                     }
                 }
             }
         }
+    }
+
+    /// What `duo2 doc-status` reports (LR-34).
+    public func status(of file: URL) -> String {
+        guard let url, url.standardizedFileURL.resolvingSymlinksInPath() == file.standardizedFileURL.resolvingSymlinksInPath() else {
+            return "not open in Duo"
+        }
+        if conflict { return "open in Duo, in conflict: your change on disk and unsaved edits overlap; Duo won't save over it" }
+        if readOnlyReason != nil { return "open in Duo, read-only (\(readOnlyReason!))" }
+        return dirty ? "open in Duo with unsaved edits: write anyway and Duo merges, or wait a second for its autosave" : "open in Duo, saved"
     }
 
     public func run(_ js: String, _ args: [String: Any] = [:], done: @escaping @MainActor (Any?) -> Void) {

@@ -87,6 +87,7 @@ public struct ControlCommand: Sendable {
         .init(name: "needs-you", usage: "duo2 needs-you", summary: "List sessions waiting for you, with their questions.", needsApp: true),
         .init(name: "projects", usage: "duo2 projects", summary: "List projects with their goal, health and next step.", needsApp: true),
         .init(name: "open", usage: "duo2 open <project> [session]", summary: "Open a project in Duo, optionally on one of its sessions.", needsApp: true),
+        .init(name: "doc-status", usage: "duo2 doc-status <file>", summary: "Whether a file is open in Duo's editor, unsaved or in conflict.", needsApp: true),
         .init(name: "status", usage: "duo2 status", summary: "What Duo is showing: the view, the open project and session, and counts.", needsApp: true),
         .init(name: "session", usage: "duo2 session note|next <text>", summary: "Tell the user, in one line, what this session is doing (note) or needs next (next).", needsApp: true),
         .init(name: "search", usage: "duo2 search <query> | --similar <path> [-k N] [--project P] [--kind file|session|memory] [--exact] [--json]",

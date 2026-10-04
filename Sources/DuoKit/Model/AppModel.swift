@@ -53,7 +53,9 @@ public final class AppModel {
     public var terminalsMode: TerminalsMode = .off
     @ObservationIgnored public let terminals = TerminalStore()
     /// The one document editor (live mode; fixture mode keeps the placeholder the targets exempt).
-    @ObservationIgnored public lazy var editor = EditorController()
+    @ObservationIgnored public lazy var editor: EditorController = { let e = EditorController(); editorIfLoaded = e; return e }()
+    /// The editor if it has been created (doc-status mustn't create one).
+    @ObservationIgnored public var editorIfLoaded: EditorController?
 
     /// A project-relative path as a real file, in live mode.
     public func liveFile(_ path: String) -> URL? {
