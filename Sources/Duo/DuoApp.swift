@@ -12,6 +12,9 @@ struct DuoApp: App {
     private let options: LaunchOptions
 
     init() {
+        // Before anything reads Duo's folder: a scripted run without DUO_SUPPORT_DIR gets a
+        // temporary one, never the user's (C-21, F-89).
+        SupportFolder.prepareForLaunch()
         let options = LaunchOptions()
         self.options = options
         // Light only until a dark appearance is approved (handoff §12 Q4).

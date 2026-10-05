@@ -1029,3 +1029,19 @@ Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and o
 - **Fixed:** a folder entry's tree lists like a project's (lazily, the folders it has open), unless the folder is gone. Checked in DuoChecks.
 - **Also:** inside a folder nothing said it wasn't a project; Make a Project was only on the map tile's right-click. A notice over the session list now says so and offers **Make a Project** (stand-in, Q-44). Captured on scratch data: `build/ui/folder-notice-live.png`.
 
+
+## F-89 · Scripted runs never touch the real support folder (2026-10-05)
+
+- **Why:** C-21. A run with `--workspace` and no `DUO_SUPPORT_DIR` rewrote Geoff's `state.json`. The rule that scripted runs set their own folder was honour-system only.
+- **One place decides:** `SupportFolder` (`Sources/DuoControl/SupportFolder.swift`). The five copies of the lookup (state and events, endpoint and socket, archive, migration journals, search index) now read `SupportFolder.duo`.
+  - `DUO_SUPPORT_DIR` set (not empty): that folder, always.
+  - Any `LaunchOptions` flag (`--workspace`, `--state`, `--capture`, `--capture-window`, `--then`, `--fixture`, `--terminals`, `--gallery`, `--left`) and no `DUO_SUPPORT_DIR`: a fresh `/tmp/duo-XXXXXX` (`mkdtemp`). Short, so the socket path stays far under 104 characters (34 bytes with a private socket).
+  - Neither: `~/Library/Application Support/Duo`, as before. AppKit's own `-NS…` flags don't count.
+- **How:** `SupportFolder.prepareForLaunch()` is the first line of `DuoApp.init`. For a scripted run it makes the folder, exports `DUO_SUPPORT_DIR` (so terminals, hooks and `duo2` inside the instance inherit it) and prints one line on stderr: `Duo: scripted run without DUO_SUPPORT_DIR; using a temporary support folder, /tmp/duo-… (C-21, F-89)`. If the folder can't be made, Duo exits (73) rather than fall back to the real one.
+- **Reaching the instance with `duo2`:** read the folder from the stderr line (`run-live.sh`'s fourth argument, `check-ui.sh`'s `build/ui/<state>.log`), then `DUO_SUPPORT_DIR=<folder> duo2 …`, with `DUO_SOCKET`/`DUO_TOKEN` unset. Its `endpoint.json` and `duo.sock` are in `<folder>/Duo`. Checked live: `duo2 ping` answered "Duo 36132, live, 0 projects".
+- **The acceptance Duo keeps the real folder on purpose:** it is Geoff's working Duo during a walk, driven by `duo2` and `duo2://` links through the real `endpoint.json`. `scripts/acceptance/open-duo.sh` now passes `DUO_SUPPORT_DIR="$HOME/Library/Application Support"` explicitly. Every other scripted run is isolated.
+- **Checked:**
+  - DuoChecks (support folder section): the three cases; every flag `LaunchOptions` parses is in `scriptedFlags`; no other source file resolves `.applicationSupportDirectory`. A scripted launch in-process makes and exports the folder, and state, archive, journals, endpoint and terminals' environment follow it.
+  - `scripts/bundle.sh`, `swift run DuoChecks` (278 passed), `NO_BUILD=1 scripts/check-ui.sh` (six states, each log naming its own `/tmp/duo-…`). A live `--workspace none --capture-window` run with no `DUO_SUPPORT_DIR` wrote only to its temporary folder.
+  - The real `state.json` kept its mtime (Oct 5 06:29:05) throughout.
+- **Not done:** temporary folders aren't deleted at quit, so a run can be inspected afterwards. `/tmp` is cleared at restart.

@@ -18,6 +18,9 @@ import Foundation
 /// Every flag takes a value. AppKit reads arguments as `-key value` pairs; a valueless flag
 /// swallows the next one, and a path left over is treated as a file to open, which stops the
 /// window from appearing (findings F-8).
+///
+/// Every flag makes a scripted run, which never uses the user's support folder: a new flag goes
+/// in `SupportFolder.scriptedFlags` too (C-21, F-89; DuoChecks checks).
 public struct LaunchOptions: Sendable {
     public var fixturePath: String?
     public var state: TargetState?
