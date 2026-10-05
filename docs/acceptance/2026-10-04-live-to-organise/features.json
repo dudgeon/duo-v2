@@ -1,7 +1,7 @@
 {
  "sprint": "2026-10-04-live-to-organise",
  "title": "Duo acceptance: live workspace to collisions",
- "intro": "Everything built since the live workspace (Phase E) through organising, Send to Claude, local HTML with the element picker, duo2 parity, Claude editing open documents, and collisions with changes on disk. Open Duo on the fixture workspace first: run `scripts/acceptance/open-duo.sh` in the duo-v2 repo. Fixtures live in ~/DuoAcceptance (rebuild with `scripts/acceptance/fixtures.py --reset`). Each test has a Set up test button (Duo arranges the fixtures) and, where Claude ran it first, what Claude did and what still needs your judgment.",
+ "intro": "Everything built since the live workspace (Phase E) through organising, Send to Claude, local HTML with the element picker, duo2 parity, Claude editing open documents, and collisions with changes on disk. Open Duo on the fixture workspace first: run `scripts/acceptance/open-duo.sh` in the duo-v2 repo. Fixtures live in ~/DuoAcceptance (rebuild with `scripts/acceptance/fixtures.py --reset`). Each test has a Set up test button (Duo arranges the fixtures) and, where Claude ran it first, what Claude did and what still needs your judgment. Updated 2026-10-04 evening with everything since (DL-82 to DL-98): Duo opening on every session, Home, folder columns, the Open-then-past list, untitled names, tasks and session links.",
  "setup": [
   "In a terminal: `cd ~/repos/duo-v2 && scripts/acceptance/open-duo.sh` (it adds any new fixtures without resetting yours)",
   "duo2 commands: use `~/repos/duo-v2/build/Duo.app/Contents/Helpers/duo2` from a normal terminal, or plain `duo2` inside a Duo session's terminal (or anywhere, once you accept the install question).",
@@ -66,8 +66,8 @@
     "Open checkout.",
     "Click + New session (left pane) or the + in the console tab strip."
    ],
-   "expect": "A new tab opens with Claude Code running in `~/DuoAcceptance/workspace/payments/checkout`.",
-   "ref": "F-25",
+   "expect": "A new tab opens with Claude Code running in `~/DuoAcceptance/workspace/payments/checkout`. Its row sits under Open · 1, named `Session <time>`, reading “at prompt”.",
+   "ref": "F-25, DL-90, DL-91",
    "setup": [
     "open checkout"
    ],
@@ -185,21 +185,21 @@
    "id": "lp-history",
    "group": "Left pane",
    "title": "Every past session listed, older ones folded",
-   "what": "A project lists all past sessions in its folder, not just ones Duo started; beyond five they fold under Older · N. The Resume a session button is gone.",
+   "what": "A project lists all past sessions in its folder, not just ones Duo started, by when they were last used: Today, This week, then an Earlier · N fold (DL-91).",
    "steps": [
     "Open reading.",
-    "Click Older · 4."
+    "Click Earlier · 3."
    ],
-   "expect": "Five recent sessions, then Older · 4, which expands to four more. No Resume a session button.",
-   "ref": "DL-59",
+   "expect": "Reading note 1 to 6 under This week (2d to 7d), then Earlier · 3, which opens to notes 7 to 9. The console offers Resume Reading note 1, the newest.",
+   "ref": "DL-59, DL-91",
    "setup": [
     "open reading"
    ],
    "claude": {
     "result": "passed",
     "did": [
-     "Five recent sessions, then `Older · 4`; clicking it showed notes 4, 3, 2, 1. No Resume a session button.",
-     "Fixed: the section header said `Idle · 6` (it counted the Older row as one); it now says `Idle · 9`."
+     "Live on the fixtures: This week lists Reading note 1–6 (2d–7d), then `Earlier · 3`.",
+     "Fixed while checking: the console's Resume offered Reading note 7 (the first listed) instead of the newest; and an empty next step left `On track ·` with a stray dot (F-67)."
     ],
     "didnt": [],
     "human": [],
@@ -682,23 +682,20 @@
    "title": "Folders without a project file",
    "what": "Folders with Claude sessions but no PROJECT.md show on the map, marked.",
    "steps": [
-    "On All projects, look under Elsewhere."
+    "On All projects, find the `~/DuoAcceptance/elsewhere /` column."
    ],
-   "expect": "scratch (No project file, 2 past sessions) and side-project (Has CLAUDE.md · no project file).",
-   "ref": "DL-63",
+   "expect": "scratch (No project file, 2 past sessions) and side-project (Has CLAUDE.md · no project file), in a column named for their parent folder. Your own folders with Claude history are in columns like `~/repos /`.",
+   "ref": "DL-63, DL-83",
    "setup": [
     "go all"
    ],
    "claude": {
     "result": "passed",
     "did": [
-     "Elsewhere shows scratch (No project file, 2 past sessions) and side-project (Has CLAUDE.md · no project file).",
-     "Found and fixed a bug: two different folders were both named `payments/checkout` (names are keys, so one hid the other). Names now take more parent folders until unique."
+     "Live: the `~/DuoAcceptance/elsewhere /` column holds scratch and side-project, marked; real folders sit under `~ /` and `~/repos /`."
     ],
     "didnt": [],
-    "human": [
-     "Elsewhere also lists your real folders with Claude history (by design, DL-63); say if that's noise in the walk."
-    ],
+    "human": [],
     "at": "2026-10-04"
    }
   },
@@ -2312,7 +2309,7 @@
     "Scroll to the bottom of the map; open `Archived · 1`.",
     "Right-click it › Unarchive Project (or ⌘Z)."
    ],
-   "expect": "scratch leaves Elsewhere and appears under Archived; clicking it opens it; Unarchive puts it back.",
+   "expect": "scratch leaves its column and appears under Archived; clicking it opens it; Unarchive puts it back.",
    "ref": "ENH-6, F-61",
    "setup": [
     "go all"
@@ -2354,6 +2351,315 @@
     "human": [
      "Try it on a fixture session if you want to see the sheet."
     ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "live-default",
+   "group": "Sessions first and tasks",
+   "title": "Duo opens on every session, no setup",
+   "what": "A plain launch lists every Claude Code session on this Mac, from Claude's logs, grouped by the folder it ran in; no workspace needed (DL-82).",
+   "steps": [
+    "Quit Duo (⌘Q).",
+    "In Terminal: `open ~/repos/duo-v2/build/Duo.app` (no flags).",
+    "Look over the map; open one of your own folders and resume a session.",
+    "When done, quit and run `scripts/acceptance/open-duo.sh` to come back to the fixtures."
+   ],
+   "expect": "Your own folders by parent (`~ /`, `~/repos /`, `~/DuoAcceptance/… /`), with their sessions resumable. Without a Home, the left pane says No Home folder yet with Choose Home Folder… (its look waits on design, DB-37).",
+   "ref": "DL-82, DL-84, F-64",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Ran with `--workspace none` on this Mac: 13 folders, 43 sessions, grouped `~`, `~/repos`, `~/DuoAcceptance/…`; the left pane showed the no-Home prompt and no Home session started."
+    ],
+    "didnt": [
+     "Didn't resume one of your real sessions."
+    ],
+    "human": [
+     "Judge the no-Home pane (DB-37)."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "choose-home",
+   "group": "Sessions first and tasks",
+   "title": "Choose Home Folder… (your ~/claude-home)",
+   "what": "Home is optional and the user picks it (DL-94). On this Mac it's `~/claude-home/`, already made with its HOME.md.",
+   "steps": [
+    "In the plain launch from the card above: File › Choose Home Folder….",
+    "Choose `~/claude-home` and click Make Home.",
+    "Try ⌘Z, then choose it again."
+   ],
+   "expect": "The left pane becomes ★ claude-home and Home's session starts there; ⌘Z puts you back to no Home. Duo leaves the existing HOME.md as it is.",
+   "ref": "DL-84, DL-85, DL-94",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "On a fake folder through `duo2 home set`: Home took effect at once and HOME.md was written; `duo2 undo` put the previous state back. Made `~/claude-home/HOME.md` for you."
+    ],
+    "didnt": [
+     "Didn't set your real Home: that's this card."
+    ],
+    "human": [
+     "The folder picker's prompt and message."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "move-into-home",
+   "group": "Sessions first and tasks",
+   "title": "Move into Home… keeps a project's sessions",
+   "what": "A project or folder outside Home moves into it with its sessions, journaled and undoable; the sessions stay its (DL-85).",
+   "steps": [
+    "On All projects, right-click side-project (in `~/DuoAcceptance/elsewhere /`) › Move into Home….",
+    "Read the confirmation; click Move.",
+    "Open side-project: its session is still there. Then Edit › Undo."
+   ],
+   "expect": "side-project moves to `~/DuoAcceptance/workspace/side-project` and into the map's unlabelled first column with its 1 past session; Undo puts the folder and its session back.",
+   "ref": "DL-85, F-64",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "On fakes (`~/DuoAcceptance/movetest`): `duo2 project move-into-home` moved the folder and both its transcripts (one from a subfolder); the project still listed both; `duo2 undo` put everything back."
+    ],
+    "didnt": [
+     "Didn't click the menu item."
+    ],
+    "human": [
+     "The confirmation's wording (DB-39)."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "folder-columns",
+   "group": "Sessions first and tasks",
+   "title": "Map columns are folders",
+   "what": "Columns read as folders: a folder mark, the folder's name, a slash; Home's own projects in an unlabelled first column; they wrap when there are more than fit (DL-83, DL-89, DL-92).",
+   "steps": [
+    "Look at All projects.",
+    "Make the window narrower until columns wrap into rows."
+   ],
+   "expect": "`payments /`, `growth /`, `research /`, then `~/DuoAcceptance/elsewhere /` and your own; columns at least 220 wide, wrapping into rows. A project inside another project's folder would sit beside it.",
+   "ref": "DL-83, DL-89, DL-92",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: folder mark and slash on every label; columns wrapped into rows of three in a 1440-wide window. Nested projects checked in DuoChecks (`checkout/docs/inner` sits under payments)."
+    ],
+    "didnt": [],
+    "human": [
+     "Long path labels truncate (DB-38)."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "breadcrumb",
+   "group": "Sessions first and tasks",
+   "title": "The toolbar names the folder",
+   "what": "Inside a project the toolbar reads All projects › folder › project (DL-92).",
+   "steps": [
+    "Open refunds."
+   ],
+   "expect": "`All projects › payments › refunds`.",
+   "ref": "DL-92",
+   "setup": [
+    "open refunds"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: `All projects › payments › refunds`."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "list-open-past",
+   "group": "Sessions first and tasks",
+   "title": "Session list: Needs you, Open, then history",
+   "what": "Sessions with a tab open in Duo sit under Open, whatever Claude is doing; the rest are history by date (DL-91).",
+   "steps": [
+    "Open checkout; click + New session.",
+    "Watch its row; then ⌘W to close its tab."
+   ],
+   "expect": "The new session sits under Open · 1 reading “at prompt” (tinted); after ⌘W it moves to Today. Needs-you sessions stay on top whether open or not.",
+   "ref": "DL-91",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: a resumed session sat under `Open · 1` reading “at prompt”; order checked in DuoChecks (needs you, open, today/this week, earlier)."
+    ],
+    "didnt": [
+     "Didn't watch a working session in Open."
+    ],
+    "human": [
+     "The Open section's look (S2-1 in the slice 2 brief)."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "untitled-names",
+   "group": "Sessions first and tasks",
+   "title": "New sessions are named by time, then your first words",
+   "what": "Until Claude titles a session it shows your first words in quotes; before you type, its start time (DL-90).",
+   "steps": [
+    "In checkout, + New session: read its name.",
+    "Type a short message and send it; watch the name."
+   ],
+   "expect": "`Session <time>` first; after your message, “your first words…” until Claude's own title replaces it.",
+   "ref": "DL-90",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "DuoChecks: a never-used session is `Session h:mm`; the first prompt reads back in quotes; Claude's title still wins."
+    ],
+    "didnt": [
+     "Didn't spend a live turn on it."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "task-row",
+   "group": "Sessions first and tasks",
+   "title": "Tasks are notes; their sessions fold under them",
+   "what": "A note in a project's tasks/ folder whose `sessions:` frontmatter links sessions shows as a task row, mixed with groups by urgency (DL-93).",
+   "steps": [
+    "Open checkout.",
+    "Find Exec review prep · task · 1; click its chevron, then its name."
+   ],
+   "expect": "It folds open to Interview synthesis notes; clicking the name opens `tasks/exec-review-prep.md`, whose frontmatter lists the session as a link.",
+   "ref": "DL-87, DL-93",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: a task note with two linked sessions showed as `Refund edge cases · task · 2` and opened its note."
+    ],
+    "didnt": [],
+    "human": [
+     "How task rows differ from group rows beyond the pill (S2-1)."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "session-links",
+   "group": "Sessions first and tasks",
+   "title": "Session links: Copy Link, and click to resume",
+   "what": "Copy Link gives `[title](duo2://session/<id>)`; clicking a link in a note opens or resumes that session, keeping the note open (DL-87).",
+   "steps": [
+    "In `tasks/exec-review-prep.md`, click Interview synthesis notes in the last line.",
+    "Right-click any session › Copy Link; paste it into the note."
+   ],
+   "expect": "The session resumes in the console with the note still open; the pasted link reads as its title. ⌘-click opens a link on the line you're editing.",
+   "ref": "DL-87, F-65",
+   "setup": [
+    "open checkout",
+    "doc open tasks/exec-review-prep.md"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: a click on the link in the note resumed Interview synthesis notes and the note stayed open (after a fix: it used to fall back to the Project tab)."
+    ],
+    "didnt": [
+     "Didn't open a duo2:// link from another app."
+    ],
+    "human": [
+     "How a session link looks in a note (S2-5)."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "make-task",
+   "group": "Sessions first and tasks",
+   "title": "Make a Task, Add to Task",
+   "what": "Make a Task on a session (or a group, which becomes the task) writes tasks/<name>.md linking its sessions; Add to Task adds a link to an existing note (DL-93).",
+   "steps": [
+    "In refunds, right-click Refund edge cases (purge test) › Make a Task.",
+    "Right-click an Untitled scratch › Add to Task › Refund edge cases.",
+    "⌘Z twice."
+   ],
+   "expect": "A note opens with the session linked in `sessions:`; the row becomes a task row; Add to Task adds the second link and nothing else in the note changes; undo removes both.",
+   "ref": "DL-93, F-66",
+   "setup": [
+    "open refunds"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live through `duo2 task make` and `duo2 task add` on these sessions: the note, both links, the task row. Byte-for-byte edits checked in DuoChecks."
+    ],
+    "didnt": [
+     "Didn't click the menu items, or Make a Task on a group."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "archive-anywhere",
+   "group": "Sessions first and tasks",
+   "title": "Archive a session from anywhere it's listed",
+   "what": "Right-click any session (tile, project list, idle list, card, tab, search) › Archive Session; it folds into its project's Archived fold, still searchable (F-63).",
+   "steps": [
+    "Open reading; right-click Reading note 6 › Archive Session.",
+    "Open the Archived fold at the bottom of the list; right-click it › Unarchive Session."
+   ],
+   "expect": "It leaves the list and counts, shows under Archived · 1, and comes back on Unarchive.",
+   "ref": "F-63",
+   "setup": [
+    "open reading"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live via `duo2 session archive|unarchive` and the menus on each list (F-63)."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "search-focus",
+   "group": "Search",
+   "title": "⇧⌘A takes the keyboard from a terminal",
+   "what": "Opening search from a focused terminal puts the cursor in the search field (F-62).",
+   "steps": [
+    "Click into a session's terminal.",
+    "Press ⇧⌘A and type."
+   ],
+   "expect": "What you type goes into the search field, not the terminal.",
+   "ref": "F-62",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: the field had focus after ⇧⌘A from a focused terminal (fixed: it asked for focus before it was in its window)."
+    ],
+    "didnt": [],
+    "human": [],
     "at": "2026-10-04"
    }
   }

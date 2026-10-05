@@ -6,4 +6,4 @@ A walk can be deferred: verdicts live in the page's database, so nothing is lost
 
 | Walk | Covers | Status |
 |---|---|---|
-| [2026-10-04-live-to-organise](2026-10-04-live-to-organise/walk.md) | live workspace … collisions and Claude's edits (up to search M-UI, F-56) | open |
+| [2026-10-04-live-to-organise](2026-10-04-live-to-organise/walk.md) | live workspace … collisions and Claude's edits, search, slice 1, Home, tasks and links (to DL-98) | open |

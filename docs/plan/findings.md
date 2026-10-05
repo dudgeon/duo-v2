@@ -830,3 +830,9 @@ Built from the decision path page (DL-87 to DL-91):
 - In the snapshot a task is a `Fixture.Group` with `task:` set, built from the note's links to the project's sessions, so it folds, threads and sorts like a group (mixed by urgency, DL-93). A note linking no listed session isn't a row.
 - Live check on the acceptance fixtures through a private instance: `duo2 task make <session> --title …` wrote `refunds/tasks/refund-edge-cases.md` and opened it; `duo2 task add` appended the second link; the list showed `Refund edge cases · task · 2`.
 - 222 checks pass (8 new for task notes).
+
+## F-67 · Resume offered an old session; a stray dot (2026-10-04)
+
+- The console's "No session open" offered **Resume <first listed session>**, which in a project whose sessions came from history was the oldest (reading offered note 7 of 9). It now offers the most recently used one.
+- A project with health but an empty `next:` showed `On track ·`. Empty parts are dropped.
+- Found while checking the walk's updated cards on the fixtures (DL-96). The walk now has 101 features; four existing cards were rewritten for DL-83/DL-91 (folder columns, the Open-then-past list).

@@ -16,7 +16,7 @@ struct ProjectSidebarPane: View {
                     if let project {
                         VStack(alignment: .leading, spacing: 0) {
                             Text(project.name).duoText(.title).lineLimit(1)
-                            Text([project.health, project.next].compactMap { $0 }.joined(separator: " · "))
+                            Text([project.health, project.next].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
                                 .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
                         }
                         .padding(EdgeInsets(top: 14, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))

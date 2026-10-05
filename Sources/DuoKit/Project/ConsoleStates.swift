@@ -65,7 +65,8 @@ extension AppModel {
             return .folderMissing(path: folder.path.replacingOccurrences(of: FileManager.default.homeDirectoryForCurrentUser.path, with: "~"),
                                   nearest: near.lastPathComponent)
         }
-        let past = fixture.sessions(inProject: project)
+        // Resume offers the most recently used session (it offered the first listed, F-67).
+        let past = fixture.sessions(inProject: project).sorted { WaitTime($0.wait) < WaitTime($1.wait) }
         if let last = past.first {
             return .noneOpen(project: project, last: last.name, lastKey: last.tabKey)
         }
