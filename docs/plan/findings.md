@@ -1022,3 +1022,10 @@ Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and o
 - **New Session in Task** (`duo2 task session <task>`): a Claude session in the task's project whose link is in the note's `sessions:` from its start, shown in the console. With the note open the link goes into the editor's buffer (as `+ Add` does); otherwise on disk. Its look is a stand-in (Q-43).
 - **Bug found on the way:** adding a session in the editor to a new task (`sessions: []`) put an item under the inline list, which isn't YAML (`+ Add` had it too). The line now becomes a block list holding the old items and the new one, as `TaskNotes.adding` writes it.
 - Checked live on a scratch workspace: real key events after + New task replaced the name, `title:` followed on disk and the Tasks fold read the new name; editing `title:` renamed the heading; New Session in Task from the menu path and from `duo2` linked the session and the task row read "1 session".
+
+## F-88 · A folder that isn't a project listed no files (2026-10-05)
+
+- **Found (Geoff):** a folder moved in Finder, opened in Duo, showed only its path under Files; Make a Project "fixed" it. The snapshot filled `projectFiles` for projects only, never for folder entries (DL-63), so their tree was empty, against DL-63's "keep working as is".
+- **Fixed:** a folder entry's tree lists like a project's (lazily, the folders it has open), unless the folder is gone. Checked in DuoChecks.
+- **Also:** inside a folder nothing said it wasn't a project; Make a Project was only on the map tile's right-click. A notice over the session list now says so and offers **Make a Project** (stand-in, Q-44). Captured on scratch data: `build/ui/folder-notice-live.png`.
+

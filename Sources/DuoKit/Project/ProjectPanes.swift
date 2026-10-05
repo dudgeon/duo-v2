@@ -26,6 +26,7 @@ struct ProjectSidebarPane: View {
                         .onActivate { model.rightTab = "Project"; model.selectedFile = nil }  // action: view tab
                         .accessibilityLabel("\(project.name), open the project file")
                         if project.isMissing { MissingNotice(project: project) }
+                        else if project.isFolderOnly { FolderNotice(project: project) }
                     }
                     // Needs you, Open, then history by date, then the folds (DL-91).
                     ForEach(sections) { section in
@@ -770,6 +771,28 @@ struct NoticeBar<Buttons: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DuoColor.ground)
         .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
+    }
+}
+
+/// Inside a folder with no project file (DL-63): a stand-in in MissingNotice's look, offering
+/// Make a Project (Q-44: not drawn).
+struct FolderNotice: View {
+    @Environment(AppModel.self) private var model
+    let project: Fixture.Project
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
+            Text("This folder isn’t a project yet.")
+                .duoText(.body).fixedSize(horizontal: false, vertical: true)
+            Text("Make it one to give it a PROJECT.md: its goal and next step show here and on the map.")
+                .duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
+            Button("Make a Project") { model.makeProject(project.name) }.buttonStyle(DefaultSheetButtonStyle())  // action: project make
+        }
+        .padding(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.ground))
+        .padding(.horizontal, DuoSpace.panePadding)
+        .padding(.vertical, 8)
     }
 }
 
