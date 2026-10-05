@@ -3516,6 +3516,37 @@
     "at": "2026-10-05"
    },
    "commit": "a3de9b3a81c3bb9e7f5b56ed0de87f92b11e4603"
+  },
+  {
+   "id": "sparkle-work-mac",
+   "group": "App",
+   "title": "In-app updates, on the work Mac too",
+   "what": "Release builds update themselves (Sparkle); `duo2 update probe` says whether a Mac can.",
+   "steps": [
+    "On the work Mac, install 0.1.6 from its GitHub release (drag to Applications).",
+    "Run `/Applications/Duo.app/Contents/Helpers/duo2 update probe` and note its verdict.",
+    "When 0.1.7 is out: Duo › Check for Updates…, Install, and let it relaunch."
+   ],
+   "expect": "The probe's checks pass; the update downloads, asks, relaunches as 0.1.7 with your tabs back. If something's blocked, the probe names the step; the test plan is docs/plan/spikes/sparkle-work-mac.md.",
+   "ref": "F-85, Phase L, G1",
+   "commit": "96b2b987ed5b1fa49ad66f02a50c166ca6aa567b",
+   "alsoCommits": [
+    "b0b78fbc4f258dfb43b91109528338bf7a7625a4"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Rehearsed the release: the app with Sparkle and the DMG notarized, Gatekeeper accepted both, the appcast's signature verified.",
+     "Ran the probe here: it reports the feed missing until 0.1.6 is published."
+    ],
+    "didnt": [
+     "An actual update needs 0.1.7, and the work Mac needs you."
+    ],
+    "human": [
+     "The work Mac."
+    ],
+    "at": "2026-10-05"
+   }
   }
  ],
  "decisions": [
