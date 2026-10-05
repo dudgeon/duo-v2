@@ -864,7 +864,8 @@ const addedField = StateField.define({
   update(deco, tr) {
     deco = deco.map(tr.changes);
     for (const e of tr.effects) {
-      if (e.is(markAdded)) deco = deco.update({ add: e.value.map(([f, t]) => Decoration.mark({ class: "duo-added" }).range(f, t)) });
+      // An empty insert marks nothing (a mark can't be empty).
+      if (e.is(markAdded)) deco = deco.update({ add: e.value.filter(([f, t]) => t > f).map(([f, t]) => Decoration.mark({ class: "duo-added" }).range(f, t)) });
       if (e.is(clearAdded)) deco = Decoration.none;
     }
     return deco;

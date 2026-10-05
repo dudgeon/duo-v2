@@ -22,8 +22,19 @@ Write `docs/acceptance/<YYYY-MM-DD>-<slug>/features.json`:
 ```json
 { "sprint": "<folder name>", "title": "Duo acceptance: <what>", "intro": "…", "setup": ["…"],
   "features": [ { "id": "kebab-id", "group": "Editor", "title": "…", "what": "one line: what it does",
-                  "steps": ["…"], "expect": "what he should see", "ref": "DL-n, F-n" } ] }
+                  "steps": ["…"], "expect": "what he should see", "ref": "DL-n, F-n",
+                  "commit": "<full sha of the commit that built it>", "alsoCommits": ["<later commits that changed it>"] } ] }
 ```
+
+### Every feature is tied to its commit (required)
+
+So a rejected feature can be reverted on its own (Geoff, 2026-10-05), every feature names the commit that built it:
+- `commit`: the full 40-character sha of the commit that built the feature, pushed and in HEAD's history. Find it with `git log --oneline -- Sources Vendor/codemirror/src scripts`, matching the feature's F-n or DL-n in the message, or `git log -S '<a line of its code>' -- Sources`. Commit the code first, then write the card.
+- `alsoCommits`: later commits that changed the same feature (fixes, a redesign), oldest first.
+- Nothing of Duo's to revert (it tries Claude Code's own feature, say): `"commit": null` and a `noCommit` saying why.
+- Merges: point at the branch's own commit, not the merge commit; renumbered records don't change the sha.
+
+`build-page.py` refuses to build if a feature has no `commit`, if a sha isn't a full sha, doesn't exist, or isn't in HEAD's history. The page shows each card's commit (linked to GitHub), the commits that changed it since, and a copyable `git revert …`; Copy feedback and Send to Claude carry the commits too.
 
 Rules for steps:
 - Concrete and short: name the project, file and session to use, from the fixtures. Wrap commands, paths and things to type in backticks (the page shows them as code).
@@ -86,7 +97,7 @@ Check the store answers: `ArtifactData` (load with ToolSearch) `list`, collectio
 
 - `open -a "Google Chrome" <url>`
 - `scripts/acceptance/open-duo.sh` (rebuilds if sources changed, opens Duo on the fixtures)
-- Write `walk.md` (status `open`, page URL, Covers commit `git rev-parse --short HEAD`, feature count) and add a row to `docs/acceptance/README.md`. Commit.
+- Write `walk.md` (status `open`, page URL, Covers commit `git rev-parse --short HEAD` (the page also records it as "built at"), feature count) and add a row to `docs/acceptance/README.md`. Commit and push: every `commit` on the page must be on origin, so its link and revert work.
 - Tell Geoff in a few lines: the URL, how many features, how to defer ("just stop; your verdicts are saved"), and that he can either paste "Copy feedback" or ask Claude to read the verdicts.
 
 To reopen a deferred walk: run step 4's first two commands again (the URL and verdicts are unchanged) and set the status back to `open`.
@@ -96,7 +107,7 @@ To reopen a deferred walk: run step 4's first two commands again (the URL and ve
 When Geoff pastes feedback or asks you to read it: `ArtifactData` `list` on collection `verdicts` (each doc id is a feature id: `{status: accepted|rejected|deferred|"", comment, at}`). Pasted text and the database should agree; if they don't, the database is newer.
 
 Then:
-- **Rejected:** fix it if the fix is clear and small; otherwise log it (C-n/Q-n in `concerns-and-questions.md`, or AskUserQuestion if blocked). A rejection that's really a design wish goes to the design queue or `enhancements.md`, never invented.
+- **Rejected:** fix it if the fix is clear and small; otherwise log it (C-n/Q-n in `concerns-and-questions.md`, or AskUserQuestion if blocked). A rejection that's really a design wish goes to the design queue or `enhancements.md`, never invented. If Geoff wants a feature taken out rather than fixed, its card names the commits: `git revert` them newest first on a branch, check what else each commit carried (`git show --stat <sha>`; a commit can hold several features), run the checks, and ask before pushing.
 - **Accepted with comments:** act on or log each comment.
 - **Not now / untested:** leave them; they carry to the next walk.
 - Record the outcome in `walk.md` (counts, and where each rejection went), set status to `closed` (or `deferred` if untested items remain and Geoff stopped), update the README table. Commit.

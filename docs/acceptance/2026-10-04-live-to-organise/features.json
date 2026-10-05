@@ -32,7 +32,8 @@
      "Whether the map reads well to you."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "7d2e64e63daa0c56010ac30973e94987dd209c5d"
   },
   {
    "id": "ws-home",
@@ -55,7 +56,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "7d2e64e63daa0c56010ac30973e94987dd209c5d"
   },
   {
    "id": "ws-new-session",
@@ -79,7 +81,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "7d2e64e63daa0c56010ac30973e94987dd209c5d"
   },
   {
    "id": "zero-count",
@@ -104,7 +107,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "d2711b47fe57dcff410fbc2eeaf051292a29d4f7"
   },
   {
    "id": "att-question",
@@ -130,7 +134,8 @@
      "For Home, the card points to the terminal (where the question is) rather than repeating it, as the design does; the step text said otherwise and is corrected."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "5530e921cb0facb80afbaecfba34a3c7c942f632"
   },
   {
    "id": "att-review",
@@ -156,7 +161,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "5530e921cb0facb80afbaecfba34a3c7c942f632"
   },
   {
    "id": "titles",
@@ -179,7 +185,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "77fc667fc1178366409ea56938090ff82c573c2e"
   },
   {
    "id": "lp-history",
@@ -204,7 +211,11 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "1b6aec33992568c0d4579016c0b0dfdb070d01df",
+   "alsoCommits": [
+    "c66bcc9fcbf19021be9c6061be7db1e84baa6399"
+   ]
   },
   {
    "id": "lp-identity",
@@ -230,7 +241,8 @@
      "Sessions in the acceptance folders open on Claude's trust prompt until you trust ~/DuoAcceptance once (see Before you start)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "04c1f09fca24f6fa470f37b51cbae14ccdc68c94"
   },
   {
    "id": "ed-open",
@@ -256,7 +268,8 @@
      "List markers (`-`) still show before task checkboxes; say if they should hide."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "096efaf291b685ffcbdad3ab2b57035dfe9305f0"
   },
   {
    "id": "ed-autosave",
@@ -282,7 +295,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "096efaf291b685ffcbdad3ab2b57035dfe9305f0"
   },
   {
    "id": "ed-crlf",
@@ -308,7 +322,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "2834235a1a97709f2d67eca9501894dddce17ee2"
   },
   {
    "id": "ed-readonly",
@@ -337,7 +352,8 @@
      "There's still no visible read-only notice (Q-20)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "096efaf291b685ffcbdad3ab2b57035dfe9305f0"
   },
   {
    "id": "ed-spelling",
@@ -370,7 +386,8 @@
      "Try Writing Tools and Edit › Start Dictation… (G-2)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "04c1f09fca24f6fa470f37b51cbae14ccdc68c94"
   },
   {
    "id": "ed-format",
@@ -398,7 +415,8 @@
      "Clicking a line switches it to raw Markdown, which shifts words under the pointer (a double-click can miss); the same as Obsidian, but you may want it calmer."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "04c1f09fca24f6fa470f37b51cbae14ccdc68c94"
   },
   {
    "id": "ed-find",
@@ -424,7 +442,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04 (rerun)"
-   }
+   },
+   "commit": "04c1f09fca24f6fa470f37b51cbae14ccdc68c94"
   },
   {
    "id": "ed-outside",
@@ -451,7 +470,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "cc05ba55507c4a63e9c4aed6f7f84f7f3a626764"
   },
   {
    "id": "ed-conflict",
@@ -480,7 +500,12 @@
      "The bar's look is a stub (Q-20)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "cc05ba55507c4a63e9c4aed6f7f84f7f3a626764",
+   "alsoCommits": [
+    "ed2b5aac273d9d710de0a3cb42cac2e00797ef5c",
+    "93b28a411ef7fea609825bfa4323b5fac700ac00"
+   ]
   },
   {
    "id": "rp-tabs",
@@ -509,7 +534,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "1b6aec33992568c0d4579016c0b0dfdb070d01df"
   },
   {
    "id": "rp-close",
@@ -536,7 +562,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "1b6aec33992568c0d4579016c0b0dfdb070d01df"
   },
   {
    "id": "fv-new",
@@ -563,7 +590,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "1b6aec33992568c0d4579016c0b0dfdb070d01df"
   },
   {
    "id": "fv-edit",
@@ -595,7 +623,8 @@
      "Try Move To… once."
     ],
     "at": "2026-10-04 (rerun)"
-   }
+   },
+   "commit": "1b6aec33992568c0d4579016c0b0dfdb070d01df"
   },
   {
    "id": "fv-copy",
@@ -618,7 +647,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "1b6aec33992568c0d4579016c0b0dfdb070d01df"
   },
   {
    "id": "fv-open",
@@ -643,7 +673,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04 (rerun)"
-   }
+   },
+   "commit": "1b6aec33992568c0d4579016c0b0dfdb070d01df"
   },
   {
    "id": "fv-send",
@@ -674,7 +705,8 @@
      "Send To lists Home's session as `New session`, right above the New Session item: confusing names (logged)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "org-folders",
@@ -697,7 +729,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "9384b9b29e63bd313a8ba8955f06944510e2b926"
   },
   {
    "id": "org-make",
@@ -724,7 +757,8 @@
      "The starter PROJECT.md is a stub until your template (G-1)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "9384b9b29e63bd313a8ba8955f06944510e2b926"
   },
   {
    "id": "org-move",
@@ -751,7 +785,11 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "9384b9b29e63bd313a8ba8955f06944510e2b926",
+   "alsoCommits": [
+    "528f3f724c49fdd26c0388d8e54904215cc2b294"
+   ]
   },
   {
    "id": "org-merge",
@@ -781,7 +819,11 @@
      "How the card, the lift and the landing feel; tell me what to change."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "9384b9b29e63bd313a8ba8955f06944510e2b926",
+   "alsoCommits": [
+    "528f3f724c49fdd26c0388d8e54904215cc2b294"
+   ]
   },
   {
    "id": "org-relocate",
@@ -805,7 +847,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "9384b9b29e63bd313a8ba8955f06944510e2b926"
   },
   {
    "id": "ret-archive",
@@ -832,7 +875,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "5816593896a7dbdd6afb352061ce59a7d4867bb8"
   },
   {
    "id": "ret-carry",
@@ -855,7 +899,11 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "5816593896a7dbdd6afb352061ce59a7d4867bb8",
+   "alsoCommits": [
+    "9c8a9870523f38f58db93a81b439c648f7b755cd"
+   ]
   },
   {
    "id": "ret-size",
@@ -877,7 +925,8 @@
      "301 MB is mostly tool-output sidecars; say if that's too much."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "f3eeac549acb70b3c3410d4bb32d57cd9f908c29"
   },
   {
    "id": "cli-basics",
@@ -897,7 +946,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "0452450b65ff06e65272a6993ddc60df0f7f17fc"
   },
   {
    "id": "cli-search",
@@ -923,7 +973,8 @@
      "Search covers your real history too, so results mix fixtures with your sessions."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "62e4ccd14b94d92940625ec101e14c81dae5a707"
   },
   {
    "id": "cli-legacy",
@@ -945,7 +996,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "69a5a1586d8e5908b7af654b4dd258329321a7b6"
   },
   {
    "id": "app-gitignore",
@@ -968,7 +1020,8 @@
      "Answer it when it appears after the reset."
     ],
     "at": "2026-10-04 (rerun)"
-   }
+   },
+   "commit": "d723c4ca2070105447c69e23b3d71e438420c112"
   },
   {
    "id": "app-menus",
@@ -992,7 +1045,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "04c1f09fca24f6fa470f37b51cbae14ccdc68c94"
   },
   {
    "id": "app-clear",
@@ -1016,7 +1070,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "0452450b65ff06e65272a6993ddc60df0f7f17fc"
   },
   {
    "id": "send-doc-selection",
@@ -1045,7 +1100,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "send-session-project",
@@ -1071,7 +1127,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "send-why-not",
@@ -1096,7 +1153,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04 (rerun)"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "html-view",
@@ -1126,7 +1184,8 @@
     ],
     "human": [],
     "at": "2026-10-04 (rerun)"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "html-selection",
@@ -1156,7 +1215,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "html-picker",
@@ -1189,7 +1249,8 @@
      "The picker's look is a stub (Q-21)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "html-picker-keys",
@@ -1220,7 +1281,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04 (rerun)"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "cli-help",
@@ -1241,7 +1303,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "cli-agent-drives",
@@ -1268,7 +1331,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "cli-doc-edit",
@@ -1294,7 +1358,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "cli-confirm",
@@ -1321,7 +1386,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04 (rerun)"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "install-consent",
@@ -1343,7 +1409,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04 (rerun)"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "install-outside",
@@ -1365,7 +1432,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "install-respect",
@@ -1390,7 +1458,8 @@
     ],
     "human": [],
     "at": "2026-10-04 (rerun)"
-   }
+   },
+   "commit": "c4a1051823dbef68d64de4e420baea28f65b5594"
   },
   {
    "id": "g5-at",
@@ -1417,7 +1486,9 @@
      "Decide on ENH-3: whether Duo should reach further (other projects, Home)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": null,
+   "noCommit": "Nothing of Duo's to revert: this tries Claude Code's own @ autocomplete (ENH-3 on hold)."
   },
   {
    "id": "agent-edit-open",
@@ -1443,7 +1514,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "ed2b5aac273d9d710de0a3cb42cac2e00797ef5c"
   },
   {
    "id": "agent-edit-while-typing",
@@ -1470,7 +1542,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04 (rerun)"
-   }
+   },
+   "commit": "ed2b5aac273d9d710de0a3cb42cac2e00797ef5c"
   },
   {
    "id": "agent-edit-doctor",
@@ -1496,7 +1569,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04 (rerun)"
-   }
+   },
+   "commit": "ed2b5aac273d9d710de0a3cb42cac2e00797ef5c"
   },
   {
    "id": "col-merge",
@@ -1522,7 +1596,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "ed2b5aac273d9d710de0a3cb42cac2e00797ef5c"
   },
   {
    "id": "col-conflict",
@@ -1551,7 +1626,11 @@
      "Whether a person can trigger the race comfortably with the `sleep 5; sed` step."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "ed2b5aac273d9d710de0a3cb42cac2e00797ef5c",
+   "alsoCommits": [
+    "93b28a411ef7fea609825bfa4323b5fac700ac00"
+   ]
   },
   {
    "id": "col-switch",
@@ -1576,7 +1655,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "ed2b5aac273d9d710de0a3cb42cac2e00797ef5c"
   },
   {
    "id": "col-removed",
@@ -1603,7 +1683,11 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "ed2b5aac273d9d710de0a3cb42cac2e00797ef5c",
+   "alsoCommits": [
+    "93b28a411ef7fea609825bfa4323b5fac700ac00"
+   ]
   },
   {
    "id": "col-quit",
@@ -1634,7 +1718,8 @@
      "Type and press ⌘Q at once."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "ed2b5aac273d9d710de0a3cb42cac2e00797ef5c"
   },
   {
    "id": "send-cmd-d",
@@ -1663,7 +1748,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "15e8f39120c38ab7bb66e9261ce5cb7692ea8335"
   },
   {
    "id": "search-field",
@@ -1688,7 +1774,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "15e8f39120c38ab7bb66e9261ce5cb7692ea8335"
   },
   {
    "id": "app-privacy",
@@ -1714,7 +1801,8 @@
      "Use Duo for a while and tell me if any permission prompt still appears; System Settings › Privacy & Security lists past answers, and Duo needs none of them."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "79b7c30bf3b3a6fa2dc597d052b02673444603ff"
   },
   {
    "id": "search-open",
@@ -1742,7 +1830,11 @@
      "Judge the look and feel: the scrim, the fade, how fast results arrive."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "7ce483dba918abadcf7de639501a03111b3c1427",
+   "alsoCommits": [
+    "4963960c014653c6c8da3b88e697c39d0fe6444a"
+   ]
   },
   {
    "id": "search-names-first",
@@ -1767,7 +1859,11 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "7ce483dba918abadcf7de639501a03111b3c1427",
+   "alsoCommits": [
+    "4963960c014653c6c8da3b88e697c39d0fe6444a"
+   ]
   },
   {
    "id": "search-open-file",
@@ -1793,7 +1889,11 @@
      "The short PRD is one passage, so the whole file is outlined; try a longer file (`docs/long-backlog.md`)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "7ce483dba918abadcf7de639501a03111b3c1427",
+   "alsoCommits": [
+    "4963960c014653c6c8da3b88e697c39d0fe6444a"
+   ]
   },
   {
    "id": "search-actions",
@@ -1822,7 +1922,11 @@
      "Click Resume on the read-only tab."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "7ce483dba918abadcf7de639501a03111b3c1427",
+   "alsoCommits": [
+    "4963960c014653c6c8da3b88e697c39d0fe6444a"
+   ]
   },
   {
    "id": "search-send",
@@ -1846,7 +1950,11 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "7ce483dba918abadcf7de639501a03111b3c1427",
+   "alsoCommits": [
+    "4963960c014653c6c8da3b88e697c39d0fe6444a"
+   ]
   },
   {
    "id": "search-similar",
@@ -1870,7 +1978,12 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "7ce483dba918abadcf7de639501a03111b3c1427",
+   "alsoCommits": [
+    "4963960c014653c6c8da3b88e697c39d0fe6444a",
+    "9c8a9870523f38f58db93a81b439c648f7b755cd"
+   ]
   },
   {
    "id": "search-filters",
@@ -1900,7 +2013,11 @@
      "Open each pop-up once."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "7ce483dba918abadcf7de639501a03111b3c1427",
+   "alsoCommits": [
+    "4963960c014653c6c8da3b88e697c39d0fe6444a"
+   ]
   },
   {
    "id": "search-recents",
@@ -1923,7 +2040,11 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "7ce483dba918abadcf7de639501a03111b3c1427",
+   "alsoCommits": [
+    "4963960c014653c6c8da3b88e697c39d0fe6444a"
+   ]
   },
   {
    "id": "s1-idle-list",
@@ -1953,7 +2074,8 @@
      "Try the keys and type-to-select."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "65695f2ae8a896b1b11dc0e7572e481c09b6481e"
   },
   {
    "id": "s1-console-empty",
@@ -1977,7 +2099,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "65695f2ae8a896b1b11dc0e7572e481c09b6481e"
   },
   {
    "id": "s1-console-ended",
@@ -2006,7 +2129,8 @@
      "Type /exit in a session and press Resume."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "65695f2ae8a896b1b11dc0e7572e481c09b6481e"
   },
   {
    "id": "s1-shells",
@@ -2034,7 +2158,8 @@
      "Try the chevron menu and ⌘T."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "65695f2ae8a896b1b11dc0e7572e481c09b6481e"
   },
   {
    "id": "s1-promote",
@@ -2060,7 +2185,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "65695f2ae8a896b1b11dc0e7572e481c09b6481e"
   },
   {
    "id": "s1-fork",
@@ -2083,7 +2209,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "cf61da6fec5307efb00dce22f7b1bb809a7b1c4d"
   },
   {
    "id": "s1-palette",
@@ -2112,7 +2239,8 @@
      "Look at the colours yourself."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "65695f2ae8a896b1b11dc0e7572e481c09b6481e"
   },
   {
    "id": "cons-inventory",
@@ -2134,7 +2262,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "fb99e95482114c8250ca618fd33c4d1fa5a0291d"
   },
   {
    "id": "cons-evidence",
@@ -2156,7 +2285,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "fb99e95482114c8250ca618fd33c4d1fa5a0291d"
   },
   {
    "id": "cons-migrate",
@@ -2183,7 +2313,8 @@
      "Apply and undo one plan on the fixtures, if you're comfortable."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "f83f3625733596befccac81406c4ff371bc556b4"
   },
   {
    "id": "click-resume",
@@ -2210,7 +2341,8 @@
      "Click a card."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "241909e95f625147860bd3f90f28074e35ceea73"
   },
   {
    "id": "revert-claude",
@@ -2241,7 +2373,8 @@
      "Try it from the menu; say if the stub look will do until a design."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "8b4899a87c72d375fbe0b5c4e7640c1382b5a7d6"
   },
   {
    "id": "home-click-project",
@@ -2267,7 +2400,8 @@
      "Try both with the mouse."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "01d09741fd29316a3e78db2a8a7387ea2ce85e46"
   },
   {
    "id": "home-active-tint",
@@ -2297,7 +2431,8 @@
      "Say whether the tint is enough until a design (DB-33)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "01d09741fd29316a3e78db2a8a7387ea2ce85e46"
   },
   {
    "id": "home-archive",
@@ -2324,7 +2459,8 @@
      "Judge the rollup's place and look (DB-34)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "ac8d6e8a364247d61f511ffa32ec4fe5b01901ec"
   },
   {
    "id": "home-delete",
@@ -2352,7 +2488,8 @@
      "Try it on a fixture session if you want to see the sheet."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "ac8d6e8a364247d61f511ffa32ec4fe5b01901ec"
   },
   {
    "id": "live-default",
@@ -2379,7 +2516,8 @@
      "Judge the no-Home pane (DB-37)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "d604e95567af5830e44b8609c808da80bec76c35"
   },
   {
    "id": "choose-home",
@@ -2405,7 +2543,11 @@
      "The folder picker's prompt and message."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "d604e95567af5830e44b8609c808da80bec76c35",
+   "alsoCommits": [
+    "3642245d52077b3f2de20565d95376c9125cb719"
+   ]
   },
   {
    "id": "move-into-home",
@@ -2434,7 +2576,11 @@
      "The confirmation's wording (DB-39)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "d604e95567af5830e44b8609c808da80bec76c35",
+   "alsoCommits": [
+    "3642245d52077b3f2de20565d95376c9125cb719"
+   ]
   },
   {
    "id": "folder-columns",
@@ -2460,7 +2606,8 @@
      "Long path labels truncate (DB-38)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "96b5a342aa328ab5d923e5d605b9ced51ea4c98d"
   },
   {
    "id": "breadcrumb",
@@ -2483,7 +2630,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "96b5a342aa328ab5d923e5d605b9ced51ea4c98d"
   },
   {
    "id": "list-open-past",
@@ -2511,7 +2659,8 @@
      "The Open section's look (S2-1 in the slice 2 brief)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c66bcc9fcbf19021be9c6061be7db1e84baa6399"
   },
   {
    "id": "untitled-names",
@@ -2534,7 +2683,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c66bcc9fcbf19021be9c6061be7db1e84baa6399"
   },
   {
    "id": "task-row",
@@ -2560,7 +2710,8 @@
      "How task rows differ from group rows beyond the pill (S2-1)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "5bd86bd15e61dda76c88000a9c86f30842fb60ac"
   },
   {
    "id": "session-links",
@@ -2589,7 +2740,8 @@
      "How a session link looks in a note (S2-5)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c66bcc9fcbf19021be9c6061be7db1e84baa6399"
   },
   {
    "id": "make-task",
@@ -2616,7 +2768,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "5bd86bd15e61dda76c88000a9c86f30842fb60ac"
   },
   {
    "id": "archive-anywhere",
@@ -2640,7 +2793,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "afd8655b9b22ee8711aa405bf7b1a95d87304888"
   },
   {
    "id": "search-focus",
@@ -2661,7 +2815,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "c4a4f249cb15b14c1cbbd176b610624ede4facbb"
   },
   {
    "id": "restore-relaunch",
@@ -2687,7 +2842,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "e12cca7b554682848849bccaa04e719f14ff5ee4"
   },
   {
    "id": "update-notice",
@@ -2709,7 +2865,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "f6f52de123989b25b9b96b14c396f84ae8c1161b"
   },
   {
    "id": "new-task",
@@ -2736,7 +2893,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "bc86a35328a44bf7d2446ae5b149e7393fad8552"
   },
   {
    "id": "home-open-tasks",
@@ -2762,7 +2920,8 @@
      "Where this list belongs (S2-5)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "bc86a35328a44bf7d2446ae5b149e7393fad8552"
   },
   {
    "id": "browser-tab",
@@ -2791,7 +2950,8 @@
      "The bar's look (DB-20)."
     ],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "cd648ecac9565e32fe0ba6eb0ba8666b893d5fcb"
   },
   {
    "id": "browser-send",
@@ -2814,7 +2974,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "cdd675dfcafe5eefcf08809eb7f15e7582e233d3"
   },
   {
    "id": "browser-drive",
@@ -2836,7 +2997,8 @@
     ],
     "human": [],
     "at": "2026-10-04"
-   }
+   },
+   "commit": "cdd675dfcafe5eefcf08809eb7f15e7582e233d3"
   },
   {
    "id": "s2-task-rows",
@@ -2857,7 +3019,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "3642245d52077b3f2de20565d95376c9125cb719"
   },
   {
    "id": "s2-outside-home",
@@ -2877,7 +3040,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "3642245d52077b3f2de20565d95376c9125cb719"
   },
   {
    "id": "s2-no-home",
@@ -2901,7 +3065,8 @@
     ],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "3642245d52077b3f2de20565d95376c9125cb719"
   },
   {
    "id": "s2-needs-you",
@@ -2924,7 +3089,8 @@
     ],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "3642245d52077b3f2de20565d95376c9125cb719"
   },
   {
    "id": "s2-move-sheet",
@@ -2946,7 +3112,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "3642245d52077b3f2de20565d95376c9125cb719"
   },
   {
    "id": "s2-new-project",
@@ -2968,7 +3135,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "3642245d52077b3f2de20565d95376c9125cb719"
   },
   {
    "id": "s2-properties",
@@ -2992,7 +3160,12 @@
     ],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "3642245d52077b3f2de20565d95376c9125cb719",
+   "alsoCommits": [
+    "159b69cbc8d6fa87e7b917989ed576b7a7415afb",
+    "9c5eb1643dc2c23ebf2d725c60f0180901c5622f"
+   ]
   },
   {
    "id": "s2-link-glyph",
@@ -3012,7 +3185,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "3642245d52077b3f2de20565d95376c9125cb719"
   },
   {
    "id": "props-look",
@@ -3035,7 +3209,11 @@
     ],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "159b69cbc8d6fa87e7b917989ed576b7a7415afb",
+   "alsoCommits": [
+    "9c5eb1643dc2c23ebf2d725c60f0180901c5622f"
+   ]
   },
   {
    "id": "props-tab",
@@ -3056,7 +3234,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "159b69cbc8d6fa87e7b917989ed576b7a7415afb"
   },
   {
    "id": "props-type-date",
@@ -3079,7 +3258,8 @@
     ],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "159b69cbc8d6fa87e7b917989ed576b7a7415afb"
   },
   {
    "id": "props-invalid",
@@ -3099,7 +3279,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "159b69cbc8d6fa87e7b917989ed576b7a7415afb"
   },
   {
    "id": "props-duo2",
@@ -3119,7 +3300,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "159b69cbc8d6fa87e7b917989ed576b7a7415afb"
   },
   {
    "id": "missing-tile",
@@ -3140,7 +3322,11 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "339c2e37f38f215b9992bb6c1639e9932f0da482",
+   "alsoCommits": [
+    "a3de9b3a81c3bb9e7f5b56ed0de87f92b11e4603"
+   ]
   },
   {
    "id": "missing-found",
@@ -3163,7 +3349,11 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "339c2e37f38f215b9992bb6c1639e9932f0da482",
+   "alsoCommits": [
+    "a3de9b3a81c3bb9e7f5b56ed0de87f92b11e4603"
+   ]
   },
   {
    "id": "s3-sheets",
@@ -3184,7 +3374,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "93b28a411ef7fea609825bfa4323b5fac700ac00"
   },
   {
    "id": "s3-delete-trash",
@@ -3207,7 +3398,8 @@
     ],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "93b28a411ef7fea609825bfa4323b5fac700ac00"
   },
   {
    "id": "s3-legacy",
@@ -3230,7 +3422,11 @@
     ],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "93b28a411ef7fea609825bfa4323b5fac700ac00",
+   "alsoCommits": [
+    "a3de9b3a81c3bb9e7f5b56ed0de87f92b11e4603"
+   ]
   },
   {
    "id": "s3-notices",
@@ -3253,7 +3449,8 @@
     ],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "93b28a411ef7fea609825bfa4323b5fac700ac00"
   },
   {
    "id": "s3-drawing",
@@ -3274,7 +3471,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "93b28a411ef7fea609825bfa4323b5fac700ac00"
   },
   {
    "id": "s3-settings",
@@ -3295,7 +3493,8 @@
     "didnt": [],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "a3de9b3a81c3bb9e7f5b56ed0de87f92b11e4603"
   },
   {
    "id": "s3-notify",
@@ -3315,7 +3514,8 @@
     ],
     "human": [],
     "at": "2026-10-05"
-   }
+   },
+   "commit": "a3de9b3a81c3bb9e7f5b56ed0de87f92b11e4603"
   }
  ],
  "decisions": [
