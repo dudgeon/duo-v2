@@ -79,6 +79,17 @@ public enum FixtureHarness {
         case "merge":  // merge:<source>=<target>
             if parts.count > 1 { let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init); if kv.count == 2 { model.mergeProject(kv[0], into: kv[1]) } }
         case "makeproject": if parts.count > 1 { model.makeProject(parts[1]) }
+        case "sheet-move":   // sheet-move:<project>: Move into Home…'s sheet, up and waiting
+            if parts.count > 1 { model.moveIntoHome(parts[1]) }
+        case "sheet-new":    // sheet-new[:<name>]: the New project sheet
+            model.showNewProject(name: parts.count > 1 ? parts[1] : "")
+        case "sheet-goal": model.newProjectForm?.goal = parts.count > 1 ? parts[1] : ""
+        case "sheet-into":   // sheet-into:<topic>: pick a place on whichever sheet is up
+            if let p = model.homePlaces().first(where: { $0.folder.lastPathComponent == (parts.count > 1 ? parts[1] : "") }) {
+                model.moveIntoHomeForm?.into = p; model.newProjectForm?.into = p
+            }
+        case "sheet-ok": if model.moveIntoHomeForm != nil { model.confirmMoveIntoHome() } else { model.commitNewProject() }
+        case "sheet-cancel": model.cancelSheet()
         case "undo": NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager?.undo()
         case "tabs":
             FileHandle.standardError.write(Data("tabs: \(model.openDocuments) right=\(model.rightTab ?? "-") renaming=\(model.renamingPath ?? "-") editor=\(model.editorIfLoaded?.url?.lastPathComponent ?? "-")\ntree: \(model.currentProject.flatMap { model.fixture.projectFiles[$0.name] } ?? [])\n".utf8))

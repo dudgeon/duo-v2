@@ -21,6 +21,8 @@ public struct RootView: View {
         }
         // Search (DL-76): over both altitudes, scrim and modal; a short fade, none with Reduce Motion.
         .overlay { if model.search.isOpen { SearchOverlay().transition(.opacity) } }
+        // Duo's sheets (DL-100): Move into Home…, New project.
+        .overlay { if model.sheetIsUp { SheetOverlay() } }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: model.search.isOpen)
         // Altitude change: cross-fade, 150 ms, ease-out; none with Reduce Motion (handoff §9).
         .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: model.altitude)
@@ -39,7 +41,7 @@ struct AllProjectsLayout: View {
             panes: [
                 .init(view: AnyView(HomePane()), width: DuoMetric.paneOverviewHome, minWidth: DuoMetric.paneMinHome,
                       collapsible: true, collapsed: model.leftCollapsedAllProjects),
-                .init(view: AnyView(ProjectMapPane()), width: nil, minWidth: 400),
+                .init(view: AnyView(ProjectMapPane().opacity(model.sheetIsUp ? DuoMetric.sheetDimmedOpacity : 1)), width: nil, minWidth: 400),
                 .init(view: AnyView(ActionColumnPane()), width: DuoMetric.paneOverviewActionColumn,
                       minWidth: DuoMetric.paneMinActionColumn, collapsible: true),
             ],

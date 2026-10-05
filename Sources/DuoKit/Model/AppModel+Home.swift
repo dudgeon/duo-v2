@@ -55,6 +55,12 @@ extension AppModel {
         return nil
     }
 
+    /// Not Now on Home's prompt (DL-100): collapse the pane at All projects and don't ask again.
+    public func dismissHomePrompt() {
+        DuoState.update { $0.homePromptDismissed = true }
+        leftCollapsedAllProjects = true
+    }
+
     /// Whether a project or folder already sits in Home's folder.
     public func isInHome(_ project: String) -> Bool {
         guard let root = liveRoot?.standardizedFileURL.path, let folder = liveFolders[project]?.standardizedFileURL.path else { return false }
@@ -62,33 +68,36 @@ extension AppModel {
     }
 
     /// Move into Home… (DL-85): the folder moves into Home with every session filed under it, as one
-    /// journaled, undoable migration (CONS §7.5). The user confirms in Duo.
-    public func moveIntoHome(_ project: String, done: (@MainActor (Result<String, Error>) -> Void)? = nil) {
+    /// journaled, undoable migration (CONS §7.5). The user confirms on the sheet (S2-4), choosing
+    /// Home's top level or a topic folder; `into` preselects one (duo2's `--into`).
+    public func moveIntoHome(_ project: String, into: HomePlace? = nil, done: (@MainActor (Result<String, Error>) -> Void)? = nil) {
         struct Refused: Error, CustomStringConvertible { let description: String }
         let fail = { (m: String) in if let done { done(.failure(Refused(description: m))) } else { self.info(m) } }
-        guard let root = liveRoot else { return fail("There's no Home folder yet: choose one first (File › Choose Home Folder…).") }
+        guard liveRoot != nil else { return fail("There's no Home folder yet: choose one first (File › Choose Home Folder…).") }
         guard let folder = liveFolders[project] else { return fail("No project or folder named '\(project)'.") }
         guard !isInHome(project) else { return fail("\(project) is already in Home.") }
         guard Migrator.cliUnderstandsRelocation(ClaudeLocator.resolve()) else {
             return fail("This Claude Code doesn't understand moved sessions, so Duo can't move \(project)'s folder without losing them (FR-7.4.8).")
         }
         let from = folder.resolvingSymlinksInPath().path
-        let dest = root.resolvingSymlinksInPath().appending(path: folder.lastPathComponent).path
+        let places = homePlaces()
         let m = Migrator()
-        let plan: Migrator.Journal
-        do {
-            plan = try m.planFolderMove(from, to: dest, live: Set(Beacon.readAll().map(\.sessionId)), openFolders: terminals.all.map(\.cwd))
-            try m.save(plan)
-        } catch { return fail("Can't move \(project) into Home: \(error)") }
-        let sessions = plan.steps.filter { $0.op == .appendRelocated }.count
-        confirm(title: "Move \(project) into Home?",
-                detail: "\(Self.short(from)) moves to \(Self.short(dest)), with its \(sessions) session\(sessions == 1 ? "" : "s"): they stay \(project)'s and resume from the new place. Every step is journaled, and Edit › Undo puts it all back.\n\n"
-                    + plan.warnings.joined(separator: "\n"),
-                button: "Move") { [weak self] ok in
+        let live = { Set(Beacon.readAll().map(\.sessionId)) }
+        func plan(_ place: HomePlace) throws -> Migrator.Journal {
+            let dest = place.folder.resolvingSymlinksInPath().appending(path: folder.lastPathComponent).path
+            let p = try m.planFolderMove(from, to: dest, live: live(), openFolders: terminals.all.map(\.cwd))
+            try m.save(p)
+            return p
+        }
+        let first: Migrator.Journal
+        do { first = try plan(into ?? places[0]) } catch { return fail("Can't move \(project) into Home: \(error)") }
+        let sessions = first.steps.filter { $0.op == .appendRelocated }.count
+        let run: @MainActor (HomePlace) -> Void = { [weak self] place in
             guard let self else { return }
-            guard ok else { return fail("Not moved: you clicked Cancel. Nothing changed.") }
             do {
-                let r = try m.apply(plan, live: Set(Beacon.readAll().map(\.sessionId)))
+                let journal = place == (into ?? places[0]) ? first : try plan(place)
+                let dest = place.folder.resolvingSymlinksInPath().appending(path: folder.lastPathComponent).path
+                let r = try m.apply(journal, live: live())
                 Self.repointState(from: from, to: dest)
                 self.extraProjects = DuoState.load().projects.map { URL(fileURLWithPath: $0) }
                 self.archivedProjectPaths = DuoState.load().archivedProjects
@@ -102,9 +111,21 @@ extension AppModel {
                     model.refreshLive()
                 }
                 self.refreshLive()
-                done?(.success("Moved \(project) into Home with \(sessions) session\(sessions == 1 ? "" : "s"). Undo: duo2 undo"))
+                done?(.success("Moved \(project) to \(Self.short(dest)) with \(sessions) session\(sessions == 1 ? "" : "s"). Undo: duo2 undo"))
             } catch { fail("Stopped and put back: \(error)") }
         }
+        if ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {   // scripted checks only
+            FileHandle.standardError.write(Data("confirm: Move \(project) into Home? | \(sessions) session(s)\n".utf8))
+            return run(into ?? places[0])
+        }
+        let form = MoveIntoHomeForm(project: project, from: from, sessions: sessions, warnings: first.warnings, places: places) { place in
+            guard let place else { return fail("Not moved: you clicked Cancel. Nothing changed.") }
+            run(place)
+        }
+        if let into { form.into = into }
+        cancelSheet()
+        if done != nil { NSApp.activate(ignoringOtherApps: true) }
+        moveIntoHomeForm = form
     }
 
     /// Duo's own records name folders by path: follow a moved folder.

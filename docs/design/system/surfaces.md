@@ -17,15 +17,15 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 |---|---|---|---|---|
 | Window, toolbar, counts | Designed; search field reads `Search all projects ⇧⌘A` (DL-80) | build `overview.html` | — | `Shell/DuoToolbar.swift` |
 | Home pane: terminal and session tabs | Designed | build `overview.html`, surfaces `home-none.html` | — | `AllProjects/AllProjectsPanes.swift` HomePane |
-| Home pane with no Home folder | Stand-in (DL-84) | — | DB-37, S2-3 | HomePane, `ConsoleMessage(.noHome)` |
-| The map: columns, tiles | Changed by decision: folder columns with a folder mark and slash, unlabelled first column, wrapping (DL-83, DL-89, DL-92) | build `overview.html` | DB-38, S2-2 | MapColumn, ProjectTile |
+| Home pane with no Home folder | Designed (DL-100): "Choose a Home folder", Choose Home Folder… and Not Now | slice2 `no-home.html` | — | HomePane, `ConsoleMessage(.noHome)` |
+| The map: columns, tiles | Designed (DL-100): Home's columns, then OUTSIDE HOME on a rule with path columns (`~/Desktop/…/interviews`) | slice2 `map-folders.html`, `no-home.html` | DB-38 (folder mark) | MapColumn, MapGrid, ProjectTile |
 | Folder tiles ("No project file") | Stand-in (DL-63) | — | DB-12 | ProjectTile |
-| New project tile | Designed; the flow behind it isn't (DB-9) | build `overview.html` | DB-9, S2-6 | NewProjectTile |
+| New project tile | Designed; opens the New project sheet (DL-100) | build `overview.html` | — | NewProjectTile |
 | Sessions open in Duo, tinted | Stand-in (ENH-7) | — | DB-33 | TileSessionRow, `activeTint` |
 | Archived rollup under the map | Stand-in (ENH-6) | — | DB-34 | `AllProjects/ArchivedProjects.swift` |
 | Idle footer and idle list | Designed (DB-1) | surfaces `idle-list.html`, `idle-many.html` | — | `AllProjects/IdleList.swift` |
-| Action column: needs you, ready for review | Designed (no reply buttons, DL-29) | build `overview.html`, `flow-zoom-*.html` | DB-7 | ActionColumnPane, NeedsYouCard, ReviewCard |
-| Action column: Open tasks | Stand-in (DL-93) | — | S2-5 | ActionColumnPane, TaskLine |
+| Action column: needs you, ready for review | Designed (no reply buttons, DL-29); the reason after the project, 6-line clamp with "… more", "Nothing needs you." (DL-100) | build `overview.html`, `flow-zoom-*.html`, slice2 `needs-you-states.html` | — | ActionColumnPane, NeedsYouCard, ReviewCard |
+| Action column: Open tasks | Designed (DL-100) | slice2 `map-folders.html` | — | ActionColumnPane, TaskLine |
 | Peek (needs you elsewhere) | Designed | build `flow-zoom-*.html` | — | `Navigation/PeekView.swift` |
 
 ## Inside a project
@@ -33,8 +33,8 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Surface | Status | Targets | Open | Code |
 |---|---|---|---|---|
 | Breadcrumb `All projects › folder › project` | Changed by decision (DL-92) | build `project.html` | — | ProjectBreadcrumb |
-| Session list: Needs you, Open, Today, This week, Earlier, Tasks, Archived | Changed by decision (DL-91); new sections are stand-ins | build `project.html` (by state, superseded) | S2-1, DB-33 | `Project/ProjectPanes.swift` |
-| Task rows and group rows | Stand-in (DL-93) | build `wireframes/` for groups | S2-1 | SidebarRowView, GroupRowMenu |
+| Session list: Needs you, Open, Today, This week, Earlier, Tasks, Archived | Designed (DL-100) | slice2 `project-sessions.html`, `session-rows.html` | DB-33 (open tint) | `Project/ProjectPanes.swift` |
+| Task rows and group rows | Designed (DL-100): task box, "status · n", no wait; groups keep `group · n` | slice2 `session-rows.html` | — | SidebarRowView, GroupRowMenu, TaskBox |
 | Untitled sessions (first words, start time) | Built (DL-90) | — | — | `Live/SessionTitles.swift` |
 | Files tree | Designed | build `project.html` | — | FileTreePane |
 | Console and its tabs | Designed (DB-4 shell tabs) | build `project.html`, surfaces `shell-tab.html`, `console-tabs.html` | — | `Project/ConsoleTabStrip.swift` |
@@ -44,7 +44,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Markdown editor | Built; its look of lists, tables and code isn't designed | build `project.html` | DB-15 | `Editor/`, CodeMirror |
 | Claude's edits highlighted; revert | Built; revert is menu-only | build `project.html` (added block) | DB-35, DB-19 | DocumentEditor |
 | Editor notices: conflict, removed, read-only | Stand-in (Q-20) | — | DB-14 | DocumentStateBar |
-| Properties (frontmatter) block | Designed, not built | frontmatter `frontmatter*.html` | DB-16 | (raw YAML today) |
+| Properties (frontmatter) block | Built: the look, a task note's status popup, `+ Add` and live session lines (DL-100). Not built: type icons, suggestions, Tab, type menu, date picker, invalid YAML, folding | slice2 `task-note.html`; frontmatter `frontmatter*.html` | DB-16 (the rest) | `Vendor/codemirror/src/duo-editor.js` |
 | Local HTML page and element picker | Stand-in (DL-70) | — | DB-13 | `Editor/HTMLViewer.swift`, PickerBar |
 | Browser tab and its bar; not-allowed page | Stand-in (DL-3, DL-99) | — | DB-20 | `Browser/BrowserTabs.swift` |
 | Group page | Designed at low fidelity | build `wireframes/group-page.html` | DB-17 | right pane group tab |
@@ -62,9 +62,10 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 
 | Surface | Status | Open | Code |
 |---|---|---|---|
-| Move, merge, Make a Project, Delete Session…, Move into Home… confirmations | Stand-in (standard sheets) | DB-12, DB-36, DB-39 | `Model/AppModel+Organize.swift`, `+Home.swift` |
+| Move into Home… and New project sheets | Designed (DL-100): Duo's own sheets under the toolbar, the map dimmed to 55% | — | `Shell/Sheets.swift` |
+| Move, merge, Make a Project, Delete Session… confirmations | Stand-in (standard sheets) | DB-12, DB-36 | `Model/AppModel+Organize.swift` |
 | Drag a session or tile; drop targets | Built (Geoff's feel, F-51) | DB-12 | AllProjectsPanes DragCard |
-| First launch | Not designed: Duo opens on every session | DB-5 → S2-3 | — |
+| First launch | Designed (DL-100): no welcome screen; the map is it | — | — |
 | Choose Home Folder… picker | System open panel | S2-3 | `Model/AppModel+Home.swift` |
 | Settings | Not built | DB-10 | — |
 | Update notice, install consent | Standard sheets | — | `+Update.swift`, `Shell/InstallPrompt.swift` |

@@ -131,6 +131,15 @@ public enum DuoMetric {
     public static let actionMenuRadius: CGFloat = 10.0
     public static let actionMenuAnchorFromRowRight: CGFloat = 8.0
     public static let actionMenuAnchorFromRowTop: CGFloat = 30.0
+    public static let sheetTop: CGFloat = 38.0
+    public static let sheetPadding: CGFloat = 20.0
+    public static let sheetMoveWidth: CGFloat = 460.0
+    public static let sheetNewProjectWidth: CGFloat = 520.0
+    public static let sheetLabelColumn: CGFloat = 96.0
+    public static let sheetRowGap: CGFloat = 12.0
+    public static let sheetFieldHeight: CGFloat = 24.0
+    public static let sheetFieldPaddingX: CGFloat = 8.0
+    public static let sheetDimmedOpacity: CGFloat = 0.55
     public static let idlePopoverWidth: CGFloat = 460.0
     public static let idlePopoverPadding = EdgeInsets(top: 12.0, leading: 8.0, bottom: 12.0, trailing: 8.0)
     public static let idleRowHeight: CGFloat = 26.0

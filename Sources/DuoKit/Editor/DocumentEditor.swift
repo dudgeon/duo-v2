@@ -30,6 +30,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     var onStateChange: (() -> Void)?
     /// A link clicked in the document (DL-87): its target as written.
     var onOpenLink: ((String) -> Void)?
+    /// The properties block's controls (S2-5): `propertyMenu` (status popup), `propertyAdd` (+ Add).
+    var onPropertyAction: ((String, [String: Any]) -> Void)?
+    private var noteContext = ""
     /// Lines of the last conflict (1-based, in the base), for the bar and `duo2 doc status`.
     public private(set) var conflictLines: [[Int]] = []
     /// Unsaved text of documents left while in conflict or removed, kept until they're shown
@@ -62,7 +65,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             return String(format: "#%02X%02X%02X", Int(round(s.redComponent * 255)), Int(round(s.greenComponent * 255)), Int(round(s.blueComponent * 255)))
         }
         let vars = [("pane", DuoNSColor.pane), ("text", DuoNSColor.text), ("text2", DuoNSColor.text2), ("selected", DuoNSColor.selected),
-                    ("rule", DuoNSColor.rule), ("control-edge", DuoNSColor.controlEdge)]
+                    ("rule", DuoNSColor.rule), ("control-edge", DuoNSColor.controlEdge), ("ground", DuoNSColor.ground), ("needs-you", DuoNSColor.needsYou)]
             .map { "--duo-\($0.0): \(hex($0.1));" }.joined(separator: " ")
         let css = ":root { \(vars) --duo-radius-card: \(Int(DuoMetric.radiusCard))px; }"
         return "document.documentElement.setAttribute('style', \(String(reflecting: css)).replace(/^:root \\{ | \\}$/g, ''));"
@@ -71,6 +74,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public func webView(_ w: WKWebView, didFinish n: WKNavigation!) {
         pageReady = true
         pending?(); pending = nil
+        if !noteContext.isEmpty { webView.evaluateJavaScript("window.__ctx = \(noteContext); window.duo && duo.setContext(window.__ctx)") }
     }
 
     /// Shows a file. The current document is saved first if it changed; one in conflict, or
@@ -195,11 +199,22 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         watch(file)
     }
 
+    /// What the properties block shows about the note's sessions (S2-5): JSON, sent when it changes.
+    public func setNoteContext(_ json: String) {
+        guard json != noteContext else { return }
+        noteContext = json
+        guard pageReady else { return }
+        webView.evaluateJavaScript("window.__ctx = \(json); window.duo && duo.setContext(window.__ctx)")
+    }
+
     // MARK: Saving
 
     public func userContentController(_ u: WKUserContentController, didReceive m: WKScriptMessage) {
         if let body = m.body as? [String: Any], body["kind"] as? String == "openLink", let link = body["url"] as? String {
             onOpenLink?(link); return
+        }
+        if let body = m.body as? [String: Any], let kind = body["kind"] as? String, kind.hasPrefix("property") {
+            onPropertyAction?(kind, body); return
         }
         guard let body = m.body as? [String: Any], body["kind"] as? String == "selection" else { return }
         let count = body["claudeChanges"] as? Int ?? 0, atCaret = body["atClaudeChange"] as? Bool == true

@@ -31,6 +31,8 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var document: String?
         /// The Claude Code session id, for live sessions (Phase E). Fixture sessions have none.
         public var sessionId: String?
+        /// Why it needs you, said after the project on its card (DL-100): question, permission, plan to approve.
+        public var reason: String? = nil
         public var id: String { "\(project)/\(name)" }
         /// What console tabs and terminals are keyed by: the session id when there is one.
         public var tabKey: String { sessionId ?? name }

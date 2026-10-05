@@ -181,6 +181,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var seen: [String: Double] = [:]
     /// The Home folder Duo chose (DL-42), so a second HOME.md never silently takes over.
     public var home: String?
+    /// "Not Now" on Home's prompt (DL-100): the pane stays collapsed at All projects until a Home is chosen.
+    public var homePromptDismissed = false
     /// Home's folder, the container of the user's tracked projects (DL-85), once chosen. Without it
     /// Duo still lists every session (DL-82).
     public var root: String?
@@ -204,6 +206,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         home = try c.decodeIfPresent(String.self, forKey: .home)
         root = try c.decodeIfPresent(String.self, forKey: .root)
         skippedUpdate = try c.decodeIfPresent(String.self, forKey: .skippedUpdate)
+        homePromptDismissed = try c.decodeIfPresent(Bool.self, forKey: .homePromptDismissed) ?? false
         gitignore = try c.decodeIfPresent([String: String].self, forKey: .gitignore) ?? [:]
         projects = try c.decodeIfPresent([String].self, forKey: .projects) ?? []
         archivedProjects = try c.decodeIfPresent([String].self, forKey: .archivedProjects) ?? []

@@ -31,6 +31,9 @@ struct HomePane: View {
             .frame(height: DuoMetric.tabStripHeight)
             ConsoleRule()
 
+            // No Home yet: no session row, the message sits under the heading (S2-3).
+            let noHome = model.fixtureConsole == .noHome || (model.terminalsMode == .live && home == nil)
+            if !noHome {
             HStack(spacing: 16) {
                 ForEach(tabs) { s in
                     let active = s.tabKey == model.homeTab
@@ -79,14 +82,15 @@ struct HomePane: View {
             .padding(.horizontal, DuoSpace.panePadding)
             .frame(height: DuoMetric.homeSessionTabsHeight)
             ConsoleRule()
+            }
 
             let _ = model.endedRevision
             if let home, let tab = model.homeTab, model.fixtureConsole != .homeNone,
                let t = model.terminal(project: home.name, session: tab), !t.missingClaude {
                 TerminalSlot(session: t)
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
-            } else if model.fixtureConsole == .noHome || (model.terminalsMode == .live && home == nil) {
-                // No Home folder chosen (DL-84): sessions are listed anyway (DL-82). Stub until designed.
+            } else if noHome {
+                // No Home folder chosen (DL-84, S2-3): sessions are listed anyway (DL-82).
                 ConsoleMessage(state: .noHome, inHome: true)
             } else if model.fixtureConsole == .homeNone || (model.terminalsMode == .live && home != nil) {
                 // Duo starts a Home session at launch (DL-54); this shows once the last one is closed.
@@ -112,26 +116,23 @@ struct ProjectMapPane: View {
         let f = model.fixture
         VStack(spacing: 0) {
             ScrollView {
-                // Columns side by side while each gets 220; past that they wrap into rows (DL-83,
-                // handoff §13's suggested adaptive grid).
-                let topics = f.topics.filter { t in !model.mapProjects(inTopic: t).isEmpty || t == f.topics.last }
-                ViewThatFits(in: .horizontal) {
-                    ForEach(Array(stride(from: max(topics.count, 1), through: 1, by: -1)), id: \.self) { perRow in
-                        VStack(alignment: .leading, spacing: DuoSpace.gapMapColumns + 6) {
-                            ForEach(Array(stride(from: 0, to: topics.count, by: perRow)), id: \.self) { start in
-                                HStack(alignment: .top, spacing: DuoSpace.gapMapColumns) {
-                                    ForEach(start..<min(start + perRow, topics.count), id: \.self) { i in
-                                        MapColumn(topic: topics[i], last: i == topics.count - 1)
-                                            .frame(minWidth: perRow == 1 ? 0 : 220, idealWidth: 220, maxWidth: .infinity, alignment: .topLeading)
-                                    }
-                                    // A short last row keeps the others' column width.
-                                    ForEach(0..<(perRow - min(perRow, topics.count - start)), id: \.self) { _ in
-                                        Color.clear.frame(minWidth: 220, idealWidth: 220, maxWidth: .infinity, maxHeight: 0)
-                                    }
-                                }
-                            }
+                // Home's columns, then the folders outside Home under an OUTSIDE HOME rule (DL-100,
+                // slice2 map-folders). With no Home, or nothing outside it, one grid as before.
+                let topics = f.topics.filter { t in !model.mapProjects(inTopic: t).isEmpty }
+                let outside = model.liveRoot == nil ? [] : topics.filter(MapColumn.isPath)
+                let home = topics.filter { !outside.contains($0) }
+                VStack(alignment: .leading, spacing: DuoSpace.gapMapColumns) {
+                    if !home.isEmpty { MapGrid(topics: home, tileAtEnd: outside.isEmpty) }
+                    if !outside.isEmpty {
+                        HStack(spacing: 10) {
+                            SectionLabel(text: "Outside Home")
+                            DuoColor.rule.frame(height: DuoMetric.borderHairline)
                         }
+                        .padding(.top, 6)
+                        MapGrid(topics: outside, tileAtEnd: false)
+                        NewProjectTile()
                     }
+                    if home.isEmpty && outside.isEmpty { NewProjectTile() }
                 }
                 .padding(DuoSpace.panePadding)
                 ArchivedRollup()
@@ -176,8 +177,47 @@ struct ProjectMapPane: View {
     }
 }
 
+/// Columns side by side while each gets 220; past that they wrap into rows (DL-83, handoff §13's
+/// suggested adaptive grid). `tileAtEnd`: the New project tile closes the last column.
+struct MapGrid: View {
+    let topics: [String]
+    let tileAtEnd: Bool
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            ForEach(Array(stride(from: max(topics.count, 1), through: 1, by: -1)), id: \.self) { perRow in
+                VStack(alignment: .leading, spacing: DuoSpace.gapMapColumns + 6) {
+                    ForEach(Array(stride(from: 0, to: topics.count, by: perRow)), id: \.self) { start in
+                        HStack(alignment: .top, spacing: DuoSpace.gapMapColumns) {
+                            ForEach(start..<min(start + perRow, topics.count), id: \.self) { i in
+                                MapColumn(topic: topics[i], last: tileAtEnd && i == topics.count - 1)
+                                    .frame(minWidth: perRow == 1 ? 0 : 220, idealWidth: 220, maxWidth: .infinity, alignment: .topLeading)
+                            }
+                            // A short last row keeps the others' column width.
+                            ForEach(0..<(perRow - min(perRow, topics.count - start)), id: \.self) { _ in
+                                Color.clear.frame(minWidth: 220, idealWidth: 220, maxWidth: .infinity, maxHeight: 0)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// One topic's column: its label (none for projects directly in Home, DL-83), then its tiles.
 struct MapColumn: View {
+    /// A column outside Home is labelled by its parent's path (`~/repos`).
+    static func isPath(_ topic: String) -> Bool { topic.hasPrefix("~") || topic.hasPrefix("/") }
+
+    /// A long path keeps its first and last parts: `~/Desktop/…/interviews` (DL-100).
+    static func label(_ topic: String) -> String {
+        guard isPath(topic) else { return topic }
+        let parts = topic.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count > 3 else { return topic }
+        return [parts[0], parts[1], "…", parts[parts.count - 1]].joined(separator: "/")
+    }
+
     @Environment(AppModel.self) private var model
     let topic: String
     let last: Bool
@@ -190,7 +230,7 @@ struct MapColumn: View {
                     Image(systemName: "folder").font(.system(size: 9, weight: .semibold)).foregroundStyle(DuoColor.text2)
                         .accessibilityHidden(true)
                 }
-                SectionLabel(text: topic.isEmpty ? " " : "\(topic) /")
+                SectionLabel(text: topic.isEmpty ? " " : "\(Self.label(topic)) /")
             }
             .accessibilityLabel(topic.isEmpty ? "" : "Folder \(topic)")
             ForEach(model.mapProjects(inTopic: topic)) { p in
@@ -318,8 +358,10 @@ struct TileSessionRow: View {
     }
 }
 
-/// `+ New project`: dashed, 38 high. The create-project flow is not designed (handoff §13).
+/// `+ New project`: dashed, 38 high. Opens the New project sheet (S2-6, DL-100).
 struct NewProjectTile: View {
+    @Environment(AppModel.self) private var model
+
     var body: some View {
         Text("+ New project")
             .duoText(.body)
@@ -331,6 +373,8 @@ struct NewProjectTile: View {
                 RoundedRectangle(cornerRadius: DuoMetric.radiusCard)
                     .strokeBorder(DuoColor.controlEdge, style: StrokeStyle(lineWidth: 1, dash: DuoShadow.dashPattern))
             )
+            .contentShape(Rectangle())
+            .onActivate { model.showNewProject() }  // action: project new
             .accessibilityAddTraits(.isButton)
     }
 }
@@ -346,6 +390,13 @@ struct ActionColumnPane: View {
         let reviews = f.sessions.filter { $0.state == .readyForReview }
         ScrollView {
             VStack(alignment: .leading, spacing: DuoSpace.gapCardToCard) {
+                if needsYou.isEmpty && model.terminalsMode == .live {
+                    // Nothing waiting (DL-100): one quiet line instead of an empty section.
+                    HStack(spacing: DuoSpace.gapGlyphToLabel) {
+                        StateGlyph(.resolved)
+                        Text("Nothing needs you.").duoText(.body).foregroundStyle(DuoColor.text2)
+                    }
+                }
                 if !needsYou.isEmpty {
                     SectionLabel(text: "Needs you", count: needsYou.count, needsYou: true)
                     ForEach(needsYou) { s in
@@ -408,15 +459,25 @@ struct NeedsYouCard: View {
         VStack(alignment: .leading, spacing: DuoSpace.gapCardContent) {
             VStack(alignment: .leading, spacing: 0) {
                 CardHeader(session: session)
-                Text(session.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+                // The reason follows the project (DL-100): "checkout · permission".
+                Text(session.project + (session.reason.map { " · \($0)" } ?? "")).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
                     .onActivate { model.open(project: session.project) }  // action: open
             }
             if let q = session.question {
-                Text(q)
-                    .duoText(.body)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .modifier(QuestionBox(boxed: selected))
+                let full = model.expandedQuestions.contains(session.id)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(q)
+                        .duoText(.body)
+                        .lineLimit(full ? nil : 6)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    // A question past 6 lines folds, "… more" under it (DL-100).
+                    if q.count > 280 {
+                        Text(full ? "less" : "… more").duoText(.body).foregroundStyle(DuoColor.text2)
+                            .onActivate { if full { model.expandedQuestions.remove(session.id) } else { model.expandedQuestions.insert(session.id) } }  // not an action: shows the rest of the text
+                    }
+                }
+                .modifier(QuestionBox(boxed: selected))
             }
             HStack(spacing: DuoSpace.gapButtonToButton) {
                 Button("Open project") { model.open(project: session.project, session: session.name) }.buttonStyle(.duo)

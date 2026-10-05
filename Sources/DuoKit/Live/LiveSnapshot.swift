@@ -144,7 +144,8 @@ public enum LiveSnapshot {
                 question: live?.question, options: live?.options,
                 summary: live?.summary ?? entry?.note.map { e in entry?.next.map { "\(e) · Next: \($0)" } ?? e },
                 forkOf: nil, document: nil,
-                sessionId: id)
+                sessionId: id,
+                reason: live?.state == .needsYou ? Self.reason(beacon: beacon, hooks: hooks) : nil)
         }
 
         for f in projects {
@@ -292,6 +293,13 @@ public enum LiveSnapshot {
             return m.sessions[id]?.title ?? untitled(started ?? Date())
         }
         return SessionTitles.title(transcript: t) ?? "Session \(id.prefix(8))"
+    }
+
+    /// Why a session needs you, in the card's words (DL-100).
+    static func reason(beacon: Beacon?, hooks: HookEvents.Summary?) -> String {
+        if let q = hooks?.question, q.contains("ExitPlanMode") { return "plan to approve" }
+        if hooks?.reason == .permission || beacon?.waitingFor == "permission prompt" { return "permission" }
+        return "question"
     }
 
     /// Nothing found yet: the state before the first scan completes.

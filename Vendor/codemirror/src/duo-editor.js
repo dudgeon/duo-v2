@@ -45,10 +45,15 @@ function buildDecorations(view) {
     for (let n = a; n <= b; n++) active.add(n);
   }
   const ranges = [];
+  // The frontmatter is the properties block's (above); the Markdown parser reads it as text.
+  const fm = frontmatterLines(state.doc);
+  const fmEnd = fm ? state.doc.line(fm[1]).to : -1;
+  const ctx = state.field(contextField);
   for (const { from, to } of view.visibleRanges) {
     syntaxTree(state).iterate({
       from, to,
       enter: (node) => {
+        if (node.from <= fmEnd) return node.to > fmEnd;
         const line = state.doc.lineAt(node.from).number;
         const raw = active.has(line);
         const name = node.name;
@@ -72,6 +77,11 @@ function buildDecorations(view) {
           }
         } else if (name === "Link") {
           ranges.push([node.from, node.to, link]);
+          const url = linkAt(state, node.from + 1);
+          // A session link shows its session's state glyph before its name (S2-5).
+          if (!raw && url && SESSION_URL.test(url)) {
+            ranges.push([node.from, node.from, Decoration.widget({ widget: new GlyphWidget(sessionInfo(ctx, url, "").state), side: -1 })]);
+          }
           if (!raw) {
             // [text](url) → text: hide `[` and `](url)`.
             const text = state.doc.sliceString(node.from, node.to);
@@ -106,10 +116,243 @@ const livePreview = ViewPlugin.fromClass(class {
   constructor(view) { this.decorations = buildDecorations(view); this.lines = activeLines(view.state); }
   update(u) {
     const lines = u.selectionSet ? activeLines(u.state) : this.lines;
-    if (u.docChanged || u.viewportChanged || lines !== this.lines) this.decorations = buildDecorations(u.view);
+    const ctxChanged = u.startState.field(contextField) !== u.state.field(contextField);
+    if (u.docChanged || u.viewportChanged || lines !== this.lines || ctxChanged) this.decorations = buildDecorations(u.view);
     this.lines = lines;
   }
 }, { decorations: (v) => v.decorations });
+
+// ---------- the properties block (DB-16 look; S2-5, DL-100) ----------
+
+// The document's own frontmatter lines, decorated in place: the text stays the truth (LR-30).
+// Built now: the heading, the ground block with muted names, a task note's status popup and its
+// live session lines. Still to build from DB-16: type icons, suggestions, Tab between values,
+// the type menu and the date picker (frontmatter-handoff §3–§4).
+const STATE_GLYPHS = {
+  needsYou: `<circle cx="5" cy="5" r="5" fill="var(--duo-needs-you)"/>`,
+  readyForReview: `<path d="M5 0 10 5 5 10 0 5z" fill="var(--duo-text)"/>`,
+  working: `<circle cx="5" cy="5" r="4.2" fill="none" stroke="var(--duo-text)" stroke-width="1.5"/>`,
+  idle: `<path d="M1 5h8" fill="none" stroke="var(--duo-text2)" stroke-width="1.6" stroke-linecap="round"/>`,
+  resolved: `<path d="M1.5 5.4 4 7.8 8.5 2.4" fill="none" stroke="var(--duo-text2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+};
+function glyphEl(state) {
+  const span = document.createElement("span");
+  span.className = "duo-glyph";
+  span.innerHTML = `<svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">${STATE_GLYPHS[state] || STATE_GLYPHS.idle}</svg>`;
+  return span;
+}
+const SESSION_URL = /^duo2:\/\/session\/([0-9a-fA-F-]+)/;
+
+// What Duo knows about the sessions a note links to: id → { state, name, wait }. Pushed from Swift.
+const setContext = StateEffect.define();
+const contextField = StateField.define({
+  create: () => ({ task: false, sessions: {} }),
+  update(v, tr) { for (const e of tr.effects) if (e.is(setContext)) v = { ...v, ...e.value }; return v; },
+});
+
+// The frontmatter's lines: [open fence line, close fence line], 1-based, or null.
+function frontmatterLines(doc) {
+  if (doc.lines < 2 || doc.line(1).text.trimEnd() !== "---") return null;
+  for (let n = 2; n <= Math.min(doc.lines, 400); n++) {
+    const t = doc.line(n).text.trimEnd();
+    if (t === "---" || t === "...") return [1, n];
+  }
+  return null;
+}
+
+class HeadingWidget extends WidgetType {
+  constructor(count) { super(); this.count = count; }
+  eq(o) { return o.count === this.count; }
+  toDOM(view) {
+    const d = document.createElement("div");
+    d.className = "duo-fm-head";
+    d.innerHTML = `<span class="duo-fm-label">PROPERTIES · ${this.count}</span><span class="duo-fm-plus" role="button" aria-label="Add a property">+</span>`;
+    d.querySelector(".duo-fm-plus").addEventListener("mousedown", (e) => { e.preventDefault(); addProperty(view); });
+    return d;
+  }
+  ignoreEvent() { return true; }
+}
+class RuleWidget extends WidgetType {
+  eq() { return true; }
+  toDOM() { const d = document.createElement("div"); d.className = "duo-fm-rule"; return d; }
+}
+class StatusWidget extends WidgetType {
+  constructor(value) { super(); this.value = value; }
+  eq(o) { return o.value === this.value; }
+  toDOM() {
+    const s = document.createElement("span");
+    s.className = "duo-fm-popup";
+    s.setAttribute("role", "button");
+    s.setAttribute("aria-label", `Status: ${this.value}. Change status.`);
+    s.innerHTML = `${this.value.replace(/-/g, " ").replace(/[<&]/g, "")}<svg width="10" height="8" viewBox="0 0 10 8" aria-hidden="true"><path d="M1.5 2 5 6 8.5 2" fill="none" stroke="var(--duo-text2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    s.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      const r = s.getBoundingClientRect();
+      post("propertyMenu", { key: "status", value: this.value, x: r.left, y: r.bottom });
+    });
+    return s;
+  }
+  ignoreEvent() { return true; }
+}
+class AddWidget extends WidgetType {
+  constructor(key) { super(); this.key = key; }
+  eq(o) { return o.key === this.key; }
+  toDOM() {
+    const s = document.createElement("span");
+    s.className = "duo-fm-add";
+    s.textContent = "+ Add";
+    s.setAttribute("role", "button");
+    s.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      const r = s.getBoundingClientRect();
+      post("propertyAdd", { key: this.key, x: r.left, y: r.bottom });
+    });
+    return s;
+  }
+  ignoreEvent() { return true; }
+}
+class SessionLineWidget extends WidgetType {
+  constructor(url, name, state, wait) { super(); this.url = url; this.name = name; this.state = state; this.wait = wait; }
+  eq(o) { return o.url === this.url && o.name === this.name && o.state === this.state && o.wait === this.wait; }
+  toDOM() {
+    const d = document.createElement("span");
+    d.className = "duo-fm-session";
+    d.appendChild(glyphEl(this.state));
+    const n = document.createElement("span");
+    n.className = "duo-fm-session-name";
+    n.textContent = this.name;
+    d.appendChild(n);
+    const w = document.createElement("span");
+    w.className = "duo-fm-wait";
+    w.textContent = this.wait || "";
+    d.appendChild(w);
+    // Opens or resumes the session; the note stays open (DL-87).
+    n.addEventListener("mousedown", (e) => { e.preventDefault(); post("openLink", { url: this.url }); });
+    return d;
+  }
+  ignoreEvent(e) { return e.type === "mousedown" && e.target.closest?.(".duo-fm-session-name") != null; }
+}
+class GlyphWidget extends WidgetType {
+  constructor(state) { super(); this.state = state; }
+  eq(o) { return o.state === this.state; }
+  toDOM() { const g = glyphEl(this.state); g.classList.add("duo-link-glyph"); return g; }
+}
+
+// A session's place in the list, as Duo shows it: its state and its wait (ready for review reads "ready").
+function sessionInfo(ctx, url, fallback) {
+  const id = SESSION_URL.exec(url)?.[1]?.toLowerCase();
+  const s = id ? (ctx.sessions[id] ?? Object.entries(ctx.sessions).find(([k]) => k.startsWith(id) || id.startsWith(k))?.[1]) : null;
+  return { name: s?.name || fallback, state: s?.state || "idle", wait: s ? (s.state === "readyForReview" ? "ready" : s.wait || "") : "" };
+}
+
+function propertiesDecorations(state) {
+  const fm = frontmatterLines(state.doc);
+  if (!fm) return Decoration.none;
+  const doc = state.doc, ctx = state.field(contextField);
+  const active = new Set();
+  for (const r of state.selection.ranges) for (let n = doc.lineAt(r.from).number; n <= doc.lineAt(r.to).number; n++) active.add(n);
+  const out = [];
+  let count = 0, key = null;
+  const isTask = ctx.task || Array.from({ length: fm[1] - 2 }, (_, i) => doc.line(i + 2).text).some((t) => /^type:\s*["']?task["']?\s*$/.test(t));
+  for (let n = fm[0] + 1; n < fm[1]; n++) {
+    const line = doc.line(n), t = line.text;
+    const cls = ["duo-fm"];
+    if (n === fm[0] + 1) cls.push("duo-fm-first");
+    if (n === fm[1] - 1) cls.push("duo-fm-last");
+    if (active.has(n)) cls.push("duo-fm-active");
+    const km = /^([^\s#:-][^:#]*?):(?=\s|$)/.exec(t);
+    const item = /^(\s*)-\s+(.*)$/.exec(t);
+    if (km) {
+      count++; key = km[1].trim();
+      out.push(Decoration.line({ class: cls.join(" ") }).range(line.from));
+      out.push(Decoration.mark({ class: "duo-fm-key" }).range(line.from, line.from + km[0].length));
+      const vFrom = line.from + km[0].length + (/^\s*/.exec(t.slice(km[0].length))[0].length);
+      const value = doc.sliceString(vFrom, line.to).trim().replace(/^["']|["']$/g, "");
+      if (isTask && key === "status" && value) {
+        out.push(Decoration.replace({ widget: new StatusWidget(value) }).range(vFrom, line.to));
+      } else if (isTask && key === "sessions" && vFrom === line.to) {
+        out.push(Decoration.widget({ widget: new AddWidget(key), side: 1 }).range(line.to));
+      }
+    } else if (item && key === "sessions" && !active.has(n)) {
+      cls.push("duo-fm-item");
+      out.push(Decoration.line({ class: cls.join(" ") }).range(line.from));
+      const raw = item[2].trim().replace(/^["']|["']$/g, "");
+      const lm = /^\[([^\]]*)\]\(([^)\s]+)\)$/.exec(raw);
+      if (lm && SESSION_URL.test(lm[2])) {
+        const info = sessionInfo(ctx, lm[2], lm[1]);
+        out.push(Decoration.replace({ widget: new SessionLineWidget(lm[2], info.name, info.state, info.wait) }).range(line.from, line.to));
+      }
+    } else {
+      if (item) cls.push("duo-fm-item");
+      out.push(Decoration.line({ class: cls.join(" ") }).range(line.from));
+    }
+  }
+  // The fences: the opening one becomes the heading, the closing one the rule under the block
+  // (with the blank line after it, so the text starts where the target puts it).
+  out.push(Decoration.replace({ widget: new HeadingWidget(count), block: true }).range(doc.line(fm[0]).from, doc.line(fm[0]).to));
+  const close = doc.line(fm[1]);
+  const next = fm[1] < doc.lines ? doc.line(fm[1] + 1) : null;
+  const end = next && next.text.trim() === "" && fm[1] + 1 < doc.lines ? next.to : close.to;
+  out.push(Decoration.replace({ widget: new RuleWidget(), block: true }).range(close.from, end));
+  return Decoration.set(out, true);
+}
+const propertiesField = StateField.define({
+  create: (state) => propertiesDecorations(state),
+  update(deco, tr) {
+    if (tr.docChanged || tr.selection || tr.effects.some((e) => e.is(setContext))) return propertiesDecorations(tr.state);
+    return deco;
+  },
+  provide: (f) => [
+    EditorView.decorations.from(f),
+    // With a properties block the heading sits 14 from the top (frontmatter-handoff §2).
+    EditorView.contentAttributes.compute([f], (state) => (frontmatterLines(state.doc) ? { class: "duo-has-fm" } : {})),
+  ],
+});
+
+// The heading's +: a new empty line at the end of the block, ready for a name.
+function addProperty(view) {
+  const fm = frontmatterLines(view.state.doc);
+  if (!fm) return;
+  const at = view.state.doc.line(fm[1]).from;
+  view.dispatch({ changes: { from: at, insert: "\n" }, selection: { anchor: at }, userEvent: "input" });
+  view.focus();
+}
+
+// Sets one property's value in the buffer, or removes it (null), touching only that line (LR-37).
+// A new property goes on the end, before the closing fence.
+function setProperty(key, value) {
+  const doc = view.state.doc, fm = frontmatterLines(doc);
+  if (!fm) return false;
+  for (let n = fm[0] + 1; n < fm[1]; n++) {
+    const line = doc.line(n), m = new RegExp(`^${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:(\\s*)(.*)$`).exec(line.text);
+    if (!m) continue;
+    if (value == null) {
+      view.dispatch({ changes: { from: line.from, to: Math.min(doc.length, line.to + 1) }, userEvent: "input" });
+    } else {
+      const from = line.from + key.length + 1;
+      view.dispatch({ changes: { from, to: line.to, insert: " " + value }, userEvent: "input" });
+    }
+    return true;
+  }
+  if (value == null) return true;
+  view.dispatch({ changes: { from: doc.line(fm[1]).from, insert: `${key}: ${value}\n` }, userEvent: "input" });
+  return true;
+}
+
+// Adds an item to a list property, one per line, after its last item (DL-93).
+function addListItem(key, item) {
+  const doc = view.state.doc, fm = frontmatterLines(doc);
+  if (!fm) return false;
+  let at = -1;
+  for (let n = fm[0] + 1; n < fm[1]; n++) {
+    const t = doc.line(n).text;
+    if (at < 0 && t.startsWith(key + ":")) { at = doc.line(n).to; continue; }
+    if (at >= 0) { if (/^\s*-\s/.test(t)) at = doc.line(n).to; else break; }
+  }
+  if (at < 0) return setProperty(key, "") && addListItem(key, item);
+  view.dispatch({ changes: { from: at, insert: `\n  - ${item}` }, userEvent: "input" });
+  return true;
+}
 
 // ---------- "added by Claude" highlight (DL-5, LR-33) ----------
 
@@ -247,6 +490,27 @@ const duoTheme = EditorView.theme({
   ".duo-fs-first::after": { content: "attr(data-label)", position: "absolute", right: "12px", top: "8px", color: "var(--duo-text2)", fontFamily: "-apple-system, sans-serif", fontSize: "13px" },
   ".duo-added": { backgroundColor: "var(--duo-selected)", borderRadius: "var(--duo-radius-card)" },
   ".duo-task": { margin: "0 6px 0 0", verticalAlign: "-1px" },
+  // The properties block (frontmatter-handoff §2, slice2 task-note): sizes from tokens size.propertiesBlock.
+  "&.duo-has-fm .cm-content, .cm-content.duo-has-fm": { paddingTop: "14px" },
+  ".duo-fm-head": { display: "flex", alignItems: "center", gap: "6px", margin: "0 -8px", paddingBottom: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px", lineHeight: "20px", color: "var(--duo-text2)" },
+  ".duo-fm-label": { fontSize: "11px", lineHeight: "16px", fontWeight: "600", letterSpacing: "0.06em" },
+  ".duo-fm-plus": { marginLeft: "auto", cursor: "default" },
+  ".cm-line.duo-fm": { position: "relative", zIndex: "0", margin: "0 -12px", padding: "1.5px 12px 1.5px 32px", minHeight: "19px", backgroundColor: "var(--duo-ground)", fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px", lineHeight: "19px" },
+  ".cm-line.duo-fm-first": { paddingTop: "9.5px", borderTopLeftRadius: "var(--duo-radius-card)", borderTopRightRadius: "var(--duo-radius-card)" },
+  ".cm-line.duo-fm-last": { paddingBottom: "9.5px", borderBottomLeftRadius: "var(--duo-radius-card)", borderBottomRightRadius: "var(--duo-radius-card)" },
+  ".cm-line.duo-fm-active::before": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", backgroundColor: "var(--duo-pane)", borderRadius: "4px", zIndex: "-1" },
+  ".cm-line.duo-fm-first.duo-fm-active::before": { top: "8px" },
+  ".cm-line.duo-fm-last.duo-fm-active::before": { bottom: "8px" },
+  ".duo-fm-key": { color: "var(--duo-text2)" },
+  ".duo-fm-popup": { display: "inline-flex", alignItems: "center", gap: "4px", height: "20px", padding: "0 6px", border: "1px solid var(--duo-rule)", borderRadius: "var(--duo-radius-card)", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px", lineHeight: "20px", verticalAlign: "top", margin: "-1.5px 0", cursor: "default" },  // 22 tall in a 22 line
+  ".duo-fm-add": { float: "right", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", color: "var(--duo-text2)", cursor: "default" },
+  ".cm-line.duo-fm-item": { paddingLeft: "32px" },
+  ".duo-fm-session": { display: "inline-flex", alignItems: "center", gap: "6px", width: "100%", verticalAlign: "top" },
+  ".duo-fm-session-name": { textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", cursor: "default" },
+  ".duo-fm-wait": { marginLeft: "auto", flex: "none", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", color: "var(--duo-text2)" },
+  ".duo-glyph": { display: "inline-flex", width: "9px", height: "9px", flex: "none" },
+  ".duo-link-glyph": { marginRight: "4px", verticalAlign: "-0.5px" },
+  ".duo-fm-rule": { height: "1px", margin: "14px -28px 22px", backgroundColor: "var(--duo-rule)" },
   ".cm-searchMatch": { backgroundColor: "var(--duo-selected)" },
   // Find panel: a stub in Duo's tokens until it has a design (Q-20).
   ".cm-panels": { backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", borderColor: "var(--duo-rule)" },
@@ -314,6 +578,8 @@ function create(parent, text) {
       markdown({ base: markdownLanguage }),  // GitHub-flavoured: task lists, tables, strikethrough
       search({ top: true }),
       ...(window.duoFlags?.noPreview ? [] : [livePreview]),
+      contextField,
+      ...(window.duoFlags?.noPreview ? [] : [propertiesField]),
       addedField,
       changesField,
       searchField,
@@ -336,6 +602,8 @@ function create(parent, text) {
   });
   if (view) view.destroy();
   view = new EditorView({ state, parent });
+  // Duo's context for the note (its sessions' states) outlives the document: apply it again.
+  if (window.__ctx) view.dispatch({ effects: setContext.of(window.__ctx) });
   return { mixedLineEndings: sepInfo.mixed, separator: JSON.stringify(sepInfo.sep) };
 }
 
@@ -552,6 +820,11 @@ function bench(n) {
 }
 
 window.duo = {
+  // The note's context from Duo: { task, sessions: { id: { state, name, wait } } } (S2-5).
+  setContext: (c) => { view.dispatch({ effects: setContext.of(c) }); return true; },
+  setProperty,
+  addListItem,
+  properties: () => { const fm = frontmatterLines(view.state.doc); return fm ? document.querySelectorAll(".duo-fm").length : 0; },
   setReadOnly: (ro) => view.dispatch({ effects: readOnlyCompartment.reconfigure([EditorState.readOnly.of(ro), EditorView.editable.of(!ro)]) }),
   focus: () => view.focus(),
   create: (text) => create(document.getElementById("editor"), text),

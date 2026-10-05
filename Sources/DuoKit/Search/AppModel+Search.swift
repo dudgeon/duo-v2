@@ -380,8 +380,7 @@ extension AppModel {
     }
 
     public func newProjectFromSearch(_ name: String) {
-        // The create-project flow isn't designed (handoff §13; design brief DB-9).
-        info("Creating a project from search isn't built yet: its flow is waiting on a design (DB-9).")
+        showNewProject(name: name)   // S2-6 (DL-100)
     }
 
     // MARK: Actions

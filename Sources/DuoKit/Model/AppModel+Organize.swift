@@ -31,53 +31,55 @@ extension AppModel {
     /// Move to Project ▸ New Project…: asks for a name, then makes the project in Home and moves the
     /// sessions into it. The name sheet is the confirmation: it says what will be made and moved.
     public func moveSessionsToNewProject(_ ids: [String]) {
-        guard interactivePrompts else { return info("New Project… asks for a name; scripted runs use `duo2 session move <id> --to <name> --new`.") }
-        guard let root = liveRoot else { return info("There's no Home folder yet: choose one first (File › Choose Home Folder…).") }
-        let count = fixture.sessions.filter { s in s.sessionId.map(ids.contains) ?? false }.count
-        guard count > 0 else { return }
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
-        field.placeholderString = "Project name"
-        let alert = NSAlert()
-        alert.messageText = count == 1 ? "Move this session to a new project" : "Move \(count) sessions to a new project"
-        alert.informativeText = "Duo makes the project's folder in \(Self.short(root.path)) with a starter PROJECT.md. Files stay where they are; "
-            + (count == 1 ? "the session moves" : "each session moves") + " to the new folder the next time you resume it. You can undo this."
-        alert.accessoryView = field
-        alert.addButton(withTitle: "Create and Move")
-        alert.addButton(withTitle: "Cancel")
-        alert.window.initialFirstResponder = field
-        NSApp.activate(ignoringOtherApps: true)
-        DuoAlert.present(alert) { [weak self] r in
-            guard let self, r == .alertFirstButtonReturn else { return }
-            if let why = self.createProject(named: field.stringValue, moving: ids) { self.info(why) }
-        }
+        guard fixture.sessions.contains(where: { s in s.sessionId.map(ids.contains) ?? false }) else { return }
+        showNewProject(moving: ids)
     }
 
-    /// Makes a project folder in Home with a starter PROJECT.md (as Make a Project writes) and files
-    /// the sessions in it, as one undo step. Returns why it couldn't, or nil.
+    /// Makes a project folder in Home (or one of its topic folders) with a starter PROJECT.md
+    /// carrying the goal, files any sessions given in it, and starts a session there if asked: one
+    /// undo step. Returns why it couldn't, or nil.
     @discardableResult
-    public func createProject(named raw: String, moving ids: [String]) -> String? {
+    public func createProject(named raw: String, goal: String = "", in parent: URL? = nil, moving ids: [String], startSession: Bool = false) -> String? {
         let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let why = newProjectProblem(name) { return why }
+        if let why = newProjectProblem(name, in: parent) { return why }
         guard let root = liveRoot else { return nil }
-        let folder = root.appending(path: name)
+        let folder = (parent ?? root).appending(path: name)
         let fm = FileManager.default
         let moving = fixture.sessions.filter { s in s.sessionId.map(ids.contains) ?? false }
-        guard !moving.isEmpty else { return "No session to move." }
-        let starter = "---\ngoal: \"\"\nhealth: on-track\nnext: \"\"\n---\n\n# \(name)\n\n"
+        guard ids.isEmpty || !moving.isEmpty else { return "No session to move." }
+        let g = goal.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\"", with: "\\\"")
+        let starter = "---\ngoal: \"\(g)\"\nhealth: on-track\nnext: \"\"\n---\n\n# \(name)\n\n"
         do {
             try fm.createDirectory(at: folder, withIntermediateDirectories: false)
             try Data(starter.utf8).write(to: folder.appending(path: "PROJECT.md"), options: .withoutOverwriting)
         } catch { return error.localizedDescription }
         // Undo also trashes the folder made here, unless something else has been put in it since.
-        apply(moving, to: name, folder: folder, action: "Move to New Project") { _ in
+        let trashIfUntouched: @MainActor (AppModel) -> Void = { _ in
             let left = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
             if Set(left).isSubset(of: ["PROJECT.md", ".duo"]) { try? FileManager.default.trashItem(at: folder, resultingItemURL: nil) }
+        }
+        if moving.isEmpty {
+            registerUndo("New Project") { model in trashIfUntouched(model); model.refreshLive() }
+        } else {
+            apply(moving, to: name, folder: folder, action: "Move to New Project", alsoUndo: trashIfUntouched)
+        }
+        liveFolders[name] = folder   // known now; the snapshot catches up on refresh
+        let started = startSession ? newSession(in: name) : nil
+        refreshLive()
+        if moving.isEmpty {
+            // Go to the new project once the refresh has it on the map.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                MainActor.assumeIsolated {
+                    self?.open(project: name)
+                    if let started { self?.consoleTab = started }
+                }
+            }
         }
         return nil
     }
 
     /// Why a new project can't be made in Home with this name, or nil.
-    public func newProjectProblem(_ raw: String) -> String? {
+    public func newProjectProblem(_ raw: String, in parent: URL? = nil) -> String? {
         let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let root = liveRoot else { return "There's no Home folder yet: choose one first (File › Choose Home Folder…)." }
         guard !name.isEmpty else { return "A project needs a name." }
@@ -85,7 +87,7 @@ extension AppModel {
             return "“\(name)” can't be a folder name: it can't start with a dot or contain / or :."
         }
         guard liveFolders[name] == nil else { return "There's already a project or folder called “\(name)”: use Move to Project ▸ \(name)." }
-        let folder = root.appending(path: name)
+        let folder = (parent ?? root).appending(path: name)
         guard !FileManager.default.fileExists(atPath: folder.path) else { return "\(Self.short(folder.path)) already exists." }
         return nil
     }

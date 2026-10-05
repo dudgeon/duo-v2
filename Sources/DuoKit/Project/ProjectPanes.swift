@@ -103,15 +103,19 @@ struct SidebarRowView: View {
                         }
                         .accessibilityLabel(expanded ? "Collapse" : "Expand")
                     StateGlyph(row.state)
+                    // A task leads with its box and reads "status · n"; a group keeps its pill (DL-100).
+                    if row.task != nil { TaskBox(color: DuoColor.text) }
                     Text(row.name).duoText(.bodyEmphasis).lineLimit(1).layoutPriority(1)   // the name keeps its room; status gives way
-                    // Tasks and groups mix by urgency; the pill says which (DL-93).
-                    CountPill(text: "\(row.task == nil ? "group" : "task") · \(count)", emphasised: true)
-                    // A task's status, when it's past open (DL-93).
-                    if let task = row.task, let st = model.fixture.tasks?.first(where: { $0.path == task && $0.project == model.currentProject?.name })?.status, st != "open" {
-                        Text(st).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).layoutPriority(-1)
+                    if let task = row.task {
+                        let st = model.fixture.tasks?.first(where: { $0.path == task && $0.project == model.currentProject?.name })?.status ?? "open"
+                        Text(st == "open" ? "\(count) session\(count == 1 ? "" : "s")" : "\(st.replacingOccurrences(of: "-", with: " ")) · \(count)")
+                            .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).layoutPriority(-1)
+                    } else {
+                        CountPill(text: "group · \(count)", emphasised: true)
                     }
                     Spacer(minLength: 8)
-                    WaitLabel(text: row.wait)
+                    // A task row has no wait of its own: its sessions show theirs (S2-1).
+                    WaitLabel(text: row.task == nil ? row.wait : nil)
                 }
                 .padding(.horizontal, 8)
                 .frame(height: DuoMetric.rowGroup)

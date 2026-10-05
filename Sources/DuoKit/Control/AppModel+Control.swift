@@ -190,9 +190,21 @@ extension AppModel {
             done(.ok("Home is \(Self.short(url.standardizedFileURL.path)). Projects in it show on the map by the folder they sit in; everything else is still listed. Undo: duo2 undo"))
         case .projectMoveIntoHome:
             guard let name = inv[0], project(named: name) != nil else { return done(.fail(inv[0].map { "no project or folder '\($0)'" } ?? "usage: \(id.action.usage)")) }
-            moveIntoHome(name) { r in
+            let into = inv.flags["into"]
+            guard let place = homePlace(named: into) else {
+                return done(.fail(liveRoot == nil ? "There's no Home folder yet: duo2 home set <folder>" : "Home has no topic folder '\(into ?? "")'. Choose from: \(homePlaces().map(\.label).joined(separator: ", "))"))
+            }
+            moveIntoHome(name, into: place) { r in
                 switch r { case .success(let m): done(.ok(m)); case .failure(let e): done(.fail("\(e)")) }
             }
+        case .projectNew:
+            guard let name = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
+            let into = inv.flags["into"]
+            guard let place = homePlace(named: into) else {
+                return done(.fail(liveRoot == nil ? "There's no Home folder yet: duo2 home set <folder>" : "Home has no topic folder '\(into ?? "")'. Choose from: \(homePlaces().map(\.label).joined(separator: ", "))"))
+            }
+            if let why = createProject(named: name, goal: inv.flags["goal"] ?? "", in: place.folder, moving: [], startSession: inv.has("session")) { return done(.fail(why)) }
+            done(.ok("Made the project \(name) at \(Self.short(place.folder.appending(path: name).path))\(inv.has("session") ? ", with a Claude session in it" : ""). Undo: duo2 undo"))
         case .docRevert:
             guard editor.url != nil else { return done(.fail("no document is open in Duo")) }
             let finish: @MainActor (Int) -> Void = { n in done(n > 0 ? .ok("Reverted \(n) of Claude's change(s).") : .fail("no change of Claude's there to revert")) }

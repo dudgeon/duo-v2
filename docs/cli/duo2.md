@@ -39,7 +39,8 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 project archive <project>` | File a project away: its tile moves into the map's Archived rollup. Sessions, counts and search are unchanged. Undo with `duo2 undo`. | Archive Project, archived rollup |
 | `duo2 project unarchive <project>` | Bring an archived project back to its topic column. | Unarchive Project |
 | `duo2 home set <folder>` | Make a folder Home, the container of the projects the user tracks (DL-85): adds a HOME.md if there's none. Duo lists every session with or without a Home. Undo with `duo2 undo`. | Choose Home Folder… |
-| `duo2 project move-into-home <project\|folder>` | Move a project or folder into Home with every session filed under it (journaled; sessions stay its). The user confirms in Duo. Undo with `duo2 undo`. | Move into Home… |
+| `duo2 project move-into-home <project\|folder> [--into <topic folder>]` | Move a project or folder into Home (its top level, or a topic folder with --into) with every session filed under it (journaled; sessions stay its). The user confirms in Duo. Undo with `duo2 undo`. | Move into Home…, Move |
+| `duo2 project new <name> [--goal <text>] [--into <topic folder>] [--session]` | Make a new project in Home (or a topic folder in it): a folder with a starter PROJECT.md holding the goal. --session starts a Claude session in it. Undo with `duo2 undo`. | + New project, Create Project |
 | `duo2 inventory` | Claude's session storage, read only: each folder's sessions, size, missing folders, collisions, duplicate ids, and what Claude's cleanup takes within 7 days (CONS FR-7.1). | — |
 | `duo2 evidence <project\|folder>` | For a catch-all folder, read only: the files each session edited, its candidate home, and date clusters (CONS FR-7.10). | — |
 | `duo2 migrations` | Storage migrations Duo planned or ran, newest first, with their state (CONS §6.3). | — |
@@ -184,6 +185,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Locate Folder… | not built: waits on its design (DB-8) |
 | Look Again | re-reads what Duo already refreshes every 2 s; the CLI always reads fresh state |
 | Next Pane | not built yet |
+| No other sessions in | a disabled hint on + Add |
 | No templates yet: add .md files to a templates folder | a disabled hint |
 | Not Now | the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later |
 | Open Settings… | not built: Settings waits on its design (DB-10) |

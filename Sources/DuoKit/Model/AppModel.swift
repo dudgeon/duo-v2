@@ -157,6 +157,11 @@ public final class AppModel {
     /// Home's folder (DL-85); nil until one is chosen. Live mode runs either way (DL-82).
     public var liveRoot: URL?
     @ObservationIgnored public var isLive = false
+    /// Needs-you cards showing their whole question (DL-100: past 6 lines they fold).
+    public var expandedQuestions: Set<String> = []
+    /// The sheet on the window, if any (DL-100): Move into Home… or New project.
+    public var moveIntoHomeForm: MoveIntoHomeForm?
+    public var newProjectForm: NewProjectForm?
     /// Restore on relaunch (LR-58): off for scripted and capture runs.
     @ObservationIgnored public var restoreEnabled = false
     @ObservationIgnored var restoreApplied = false
@@ -192,6 +197,8 @@ public final class AppModel {
     /// Home, refreshing every 2 s from disk and beacons.
     public func startLive(root: URL?) {
         liveRoot = root
+        // Home's prompt dismissed earlier: the pane starts collapsed until a Home exists (DL-100).
+        if root == nil, DuoState.load().homePromptDismissed { leftCollapsedAllProjects = true }
         guard !isLive else { return refreshLive() }
         isLive = true
         terminalsMode = .live
@@ -261,6 +268,7 @@ public final class AppModel {
         var ids = Set<String>()
         merged.sessions = merged.sessions.filter { s in s.sessionId.map { ids.insert($0).inserted } ?? true }
         if merged != fixture { fixture = merged }
+        pushNoteContext()
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts)
         // What was open when Duo last quit comes back once the sessions are known (LR-58).

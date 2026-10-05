@@ -4,8 +4,26 @@
     {
       "name": "wireframes",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8765", "--directory", "wireframes"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765",
+        "--directory",
+        "wireframes"
+      ],
       "port": 8765
+    },
+    {
+      "name": "edtest",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8766",
+        "--directory",
+        "build/edtest"
+      ],
+      "port": 8766
     }
   ]
 }

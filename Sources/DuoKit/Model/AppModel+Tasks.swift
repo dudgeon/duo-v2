@@ -224,7 +224,7 @@ struct TasksFold: View {
                 .accessibilityLabel(expanded ? "Hide tasks without sessions" : "Show \(tasks.count) tasks without sessions")
                 .padding(.top, 8)
                 if expanded {
-                    ForEach(tasks) { t in TaskLine(task: t, showsProject: false) }
+                    ForEach(tasks) { t in TaskLine(task: t, showsProject: false, indented: true) }
                 }
             }
         }
@@ -236,17 +236,19 @@ struct TaskLine: View {
     @Environment(AppModel.self) private var model
     let task: Fixture.TaskSummary
     let showsProject: Bool
+    /// Inside the Tasks fold, lines sit under the fold's label (DL-100).
+    var indented = false
 
     var body: some View {
         HStack(spacing: DuoSpace.gapRowItems) {
-            Image(systemName: "square").font(.system(size: 9, weight: .semibold)).foregroundStyle(DuoColor.text2).frame(width: 10)
-                .accessibilityHidden(true)
+            TaskBox()
             Text(task.title).duoText(.body).lineLimit(1)
             if showsProject { Text(task.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1) }
             Spacer(minLength: 8)
-            if let st = task.status, st != "open" { Text(st).duoText(.body).foregroundStyle(DuoColor.text2) }
+            if let st = task.status, st != "open" { Text(st.replacingOccurrences(of: "-", with: " ")).duoText(.body).foregroundStyle(DuoColor.text2) }
         }
         .padding(.horizontal, 8 + DuoSpace.selectionInset)
+        .padding(.leading, indented ? 18 : 0)
         .frame(height: DuoMetric.rowSession)
         .contentShape(Rectangle())
         .onActivate { model.openTask(project: task.project, path: task.path) }  // action: doc open
@@ -258,3 +260,71 @@ struct TaskLine: View {
         .accessibilityLabel("\(task.title), task, \(task.status ?? "open")")
     }
 }
+
+/// A task's box: a 10 pt rounded square, stroke 1.3 (DL-100, slice2 `session-rows`).
+struct TaskBox: View {
+    var color: Color = DuoColor.text2
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 2).strokeBorder(color, lineWidth: 1.3)
+            .frame(width: 8, height: 8).frame(width: 10, height: 10)
+            .accessibilityHidden(true)
+    }
+}
+
+// MARK: - The properties block's controls (S2-5, DL-100)
+
+extension AppModel {
+    /// Tells the editor every session's state, name and wait, for the session lines and link glyphs
+    /// in a note. Sent only when it changes.
+    func pushNoteContext() {
+        guard let e = editorIfLoaded else { return }
+        var sessions: [String: [String: String]] = [:]
+        for s in fixture.sessions + (fixture.archivedSessions ?? []) {
+            guard let id = s.sessionId?.lowercased() else { continue }
+            sessions[id] = ["state": s.state.rawValue, "name": s.name, "wait": s.wait ?? ""]
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: ["sessions": sessions], options: [.sortedKeys]),
+              let json = String(data: data, encoding: .utf8) else { return }
+        e.setNoteContext(json)
+    }
+
+    /// The status popup (a native menu of the six statuses, with a tick on the current one) and
+    /// `+ Add` on `sessions:` (this project's sessions not yet linked). Both edit the note's own text.
+    func propertyAction(_ kind: String, _ body: [String: Any], in e: EditorController) {
+        let at = NSPoint(x: body["x"] as? Double ?? 0, y: (body["y"] as? Double ?? 0) + 2)
+        let menu = NSMenu()
+        if kind == "propertyMenu", body["key"] as? String == "status" {
+            let current = body["value"] as? String
+            for st in TaskNotes.statuses {
+                let item = ActionMenuItem(st.replacingOccurrences(of: "-", with: " ")) { [weak e] in   // action: task status
+                    let closed = st == "done" || st == "dropped"
+                    let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
+                    // Status, plus `completed:` when it's done or dropped, as Status ▸ writes it (F-70).
+                    e?.run("duo.setProperty('status', s); duo.setProperty('completed', c); return 1", ["s": st, "c": closed ? f.string(from: Date()) : NSNull()]) { _ in }
+                }
+                item.state = st == current ? .on : .off
+                menu.addItem(item)
+            }
+        } else if kind == "propertyAdd", let project = currentProject?.name {
+            e.run("return duo.text()") { [weak self, weak e] v in
+                guard let self, let e else { return }
+                let text = v as? String ?? ""
+                let linked = Set(text.matches(of: /duo2:\/\/session\/([0-9a-fA-F-]+)/).map { String($0.1).lowercased() })
+                let candidates = self.fixture.sessions(inProject: project).filter { s in s.sessionId.map { !linked.contains($0.lowercased()) } ?? false }
+                for s in candidates.prefix(30) {
+                    guard let id = s.sessionId else { continue }
+                    let title = s.name.trimmingCharacters(in: CharacterSet(charactersIn: "“”\""))
+                    menu.addItem(ActionMenuItem(title) { [weak e] in   // action: task add
+                        e?.run("duo.addListItem('sessions', i); return 1", ["i": "\"" + TaskNotes.link(title: title, id: id) + "\""]) { _ in }
+                    })
+                }
+                if candidates.isEmpty { menu.addItem(ActionMenuItem("No other sessions in \(project)", enabled: false) {}) }
+                menu.popUp(positioning: nil, at: at, in: e.webView)
+            }
+            return
+        }
+        menu.popUp(positioning: nil, at: at, in: e.webView)
+    }
+}
+
