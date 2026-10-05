@@ -1,6 +1,10 @@
 // swift-tools-version: 6.2
 import PackageDescription
 
+// Sparkle (in-app updates) is vendored as a framework (Vendor/Sparkle/README.md) and linked by the
+// app alone: DuoChecks and duo2 don't load it.
+let sparkle = Context.packageDirectory + "/Vendor/Sparkle"
+
 let package = Package(
     name: "Duo",
     platforms: [.macOS(.v26)],
@@ -21,7 +25,10 @@ let package = Package(
         .target(name: "DuoSearch", linkerSettings: [.linkedLibrary("sqlite3")]),
         .target(name: "DuoKit", dependencies: ["DuoControl", "DuoSearch", .product(name: "SwiftTerm", package: "SwiftTerm")]),
         .executableTarget(name: "duo2", dependencies: ["DuoControl", "DuoSearch"]),
-        .executableTarget(name: "Duo", dependencies: ["DuoKit"]),
+        .executableTarget(name: "Duo", dependencies: ["DuoKit"],
+                          swiftSettings: [.unsafeFlags(["-F", sparkle])],
+                          linkerSettings: [.unsafeFlags(["-F", sparkle, "-framework", "Sparkle",
+                                                         "-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]),
         // Checks run as an executable (`swift run DuoChecks`): the Command Line Tools ship neither
         // XCTest nor the Swift Testing macro plugin. Move these to a test target once Xcode is installed.
         .executableTarget(name: "DuoChecks", dependencies: ["DuoKit", "DuoControl", "DuoSearch"]),

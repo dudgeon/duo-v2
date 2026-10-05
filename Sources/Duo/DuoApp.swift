@@ -55,7 +55,8 @@ struct DuoApp: App {
             model.startLive(root: DuoState.load().root.map { URL(fileURLWithPath: $0) })
         }
         self.model = model
-        // The update notice (until Sparkle): a quiet check once the window is up; release builds only.
+        // In-app updates (Sparkle) in release builds; the GitHub notice (F-69) where Sparkle isn't running.
+        if !options.capturing, model.terminalsMode == .live { SparkleUpdater.start(model: model) }
         if !options.capturing, model.terminalsMode == .live {
             DispatchQueue.main.asyncAfter(deadline: .now() + 8) { MainActor.assumeIsolated { model.checkForUpdates(userInitiated: false) } }
         }

@@ -55,6 +55,10 @@ identity="$(security find-identity -v -p codesigning "$keychain" | awk '/Develop
 echo "identity $(security find-identity -v -p codesigning "$keychain" | awk -v h="$identity" '$2==h {$1=$2=""; print; exit}')"
 xcrun notarytool history --keychain-profile "$profile" --keychain "$keychain" >/dev/null 2>&1 \
   || die "notary profile '$profile' doesn't work (see $signing/README.md)"
+# Sparkle (in-app updates): its signing tool and the update key, both outside the repo.
+sign_update="$signing/sparkle-bin/sign_update"
+sparkle_key="$signing/sparkle-ed25519.key"
+[ -x "$sign_update" ] && [ -f "$sparkle_key" ] || die "no Sparkle signing tool or key in $signing (see Vendor/Sparkle/README.md)"
 
 out="$root/build/release/$version"
 rm -rf "$out"
@@ -119,11 +123,18 @@ xattr -cr "$app"
 echo "built $(file -b "$app/Contents/MacOS/Duo"), version $version ($(git rev-list --count "$commit"))"
 
 step "Sign with Developer ID (Hardened Runtime, secure timestamp)"
-# Inside out: every nested Mach-O (duo2 in Helpers) first, then the app.
+# Inside out: Sparkle's helper, its updater app and the framework as bundles; then every other nested
+# Mach-O (duo2 in Helpers); then the app.
+spk="$app/Contents/Frameworks/Sparkle.framework"
+if [ -d "$spk" ]; then
+  for part in "$spk/Versions/B/Autoupdate" "$spk/Versions/B/Updater.app" "$spk"; do
+    codesign --force --options runtime --timestamp --keychain "$keychain" --sign "$identity" "$part"
+  done
+fi
 while IFS= read -r f; do
   file -b "$f" | grep -q Mach-O || continue
   codesign --force --options runtime --timestamp --keychain "$keychain" --sign "$identity" "$f"
-done < <(find "$app/Contents" -type f -perm +111 ! -path "$app/Contents/MacOS/*")
+done < <(find "$app/Contents" -type f -perm +111 ! -path "$app/Contents/MacOS/*" ! -path "$app/Contents/Frameworks/*")
 codesign --force --options runtime --timestamp --keychain "$keychain" --sign "$identity" "$app"
 codesign --verify --deep --strict "$app" || die "the signed app doesn't verify"
 codesign -d --entitlements - --xml "$app" 2>/dev/null | grep -q get-task-allow && die "the app carries get-task-allow"
@@ -162,6 +173,55 @@ mnt=""
 (cd "$out" && shasum -a 256 "Duo-$version.dmg" >"Duo-$version.dmg.sha256")
 echo "Gatekeeper accepts the DMG and the app; $(cut -d' ' -f1 "$out/Duo-$version.dmg.sha256")"
 
+step "Sparkle feed (appcast.xml)"
+# One item: this version, its signed DMG on this release, notes from the notes file. The app reads
+# releases/latest/download/appcast.xml, so a pre-release never reaches it.
+edsig="$("$sign_update" --ed-key-file "$sparkle_key" -p "$dmg")"
+length="$(stat -f %z "$dmg")"
+build="$(git rev-list --count "$commit")"
+notes_html="$(python3 - "$notes" <<'PY'
+import html, re, sys
+p = sys.argv[1] if len(sys.argv) > 1 else ""
+text = open(p).read() if p else ""
+out, inlist = [], False
+def inline(t):
+    t = html.escape(t)
+    t = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", t)
+    return re.sub(r"`(.+?)`", r"<code>\1</code>", t)
+for line in text.splitlines():
+    if line.startswith("- "):
+        if not inlist: out.append("<ul>"); inlist = True
+        out.append("<li>" + inline(line[2:]) + "</li>"); continue
+    if inlist: out.append("</ul>"); inlist = False
+    if line.startswith("## "): out.append("<h3>" + inline(line[3:]) + "</h3>")
+    elif line.strip(): out.append("<p>" + inline(line) + "</p>")
+if inlist: out.append("</ul>")
+print("\n".join(out))
+PY
+)"
+cat > "$out/appcast.xml" <<XML
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Duo</title>
+    <link>https://github.com/dudgeon/duo-v2/releases</link>
+    <item>
+      <title>Duo $version</title>
+      <pubDate>$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000")</pubDate>
+      <sparkle:version>$build</sparkle:version>
+      <sparkle:shortVersionString>$version</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+$notes_html
+      ]]></description>
+      <enclosure url="https://github.com/dudgeon/duo-v2/releases/download/$tag/Duo-$version.dmg" length="$length" type="application/octet-stream" sparkle:edSignature="$edsig"/>
+    </item>
+  </channel>
+</rss>
+XML
+"$sign_update" --ed-key-file "$sparkle_key" --verify "$dmg" "$edsig" >/dev/null 2>&1 || die "the DMG's Sparkle signature doesn't verify"
+echo "appcast for $version (build $build), DMG signed for Sparkle"
+
 if [ -z "$publish" ]; then
   step "Done (not published)"
   echo "$dmg"
@@ -175,5 +235,5 @@ args=(--verify-tag --title "Duo $version")
 if [ -n "$notes" ]; then args+=(--notes-file "$notes"); else args+=(--generate-notes); fi
 [ -z "$draft" ] || args+=(--draft)
 [[ "$version" != *-* ]] || args+=(--prerelease)
-url="$(gh release create "$tag" "$dmg" "$out/Duo-$version.dmg.sha256" "${args[@]}")"
+url="$(gh release create "$tag" "$dmg" "$out/Duo-$version.dmg.sha256" "$out/appcast.xml" "${args[@]}")"
 echo "$url"

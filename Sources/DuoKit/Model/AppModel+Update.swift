@@ -45,6 +45,11 @@ extension AppModel {
     /// `userInitiated`: from the menu or `duo2 update`, which always answer; the launch check offers a
     /// newer release once per version and stays quiet otherwise.
     public func checkForUpdates(userInitiated: Bool, done: (@MainActor (String) -> Void)? = nil) {
+        // Sparkle running (release builds): it checks on its own schedule, and the menu item is its.
+        if let sparkle = sparkleCheck {
+            if userInitiated && done == nil { sparkle() }
+            if done == nil { return }
+        }
         if !userInitiated, UpdateCheck.isDevelopmentBuild || !interactivePrompts { return }
         Task { @MainActor [weak self] in
             guard let self else { return }

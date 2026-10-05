@@ -21,6 +21,14 @@ cp "$bin" "$app/Contents/MacOS/Duo"
 mkdir -p "$app/Contents/Helpers"
 cp "$(dirname "$bin")/duo2" "$app/Contents/Helpers/duo2"
 codesign --force --sign - "$app/Contents/Helpers/duo2" >/dev/null 2>&1 || true
+# In-app updates (Vendor/Sparkle/README.md): the framework the app links, in Contents/Frameworks.
+mkdir -p "$app/Contents/Frameworks"
+ditto "$root/Vendor/Sparkle/Sparkle.framework" "$app/Contents/Frameworks/Sparkle.framework"
+# Its XPC services are removed (Duo isn't sandboxed), so re-seal it ad hoc, inside out.
+spk="$app/Contents/Frameworks/Sparkle.framework/Versions/B"
+for part in "$spk/Autoupdate" "$spk/Updater.app" "$app/Contents/Frameworks/Sparkle.framework"; do
+  codesign --force --sign - "$part" >/dev/null 2>&1 || echo "warning: ad-hoc signing $part failed" >&2
+done
 cp "$root/docs/design/build-handoff/fixture.json" "$app/Contents/Resources/fixture.json"
 cp "$root/docs/design/many-projects-handoff/fixture.json" "$app/Contents/Resources/fixture-many.json"
 # The document editor: vendored CodeMirror bundle and its page (F-34).
@@ -60,6 +68,10 @@ cat > "$app/Contents/Info.plist" <<PLIST
   <key>NSHighResolutionCapable</key><true/>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSSupportsAutomaticTermination</key><false/>
+  <key>SUFeedURL</key><string>https://github.com/dudgeon/duo-v2/releases/latest/download/appcast.xml</string>
+  <key>SUPublicEDKey</key><string>0fPkvvQZd60xfPbyCUeLvHbFPGjB1RE1ngsmb1ubMmw=</string>
+  <key>SUEnableAutomaticChecks</key><true/>
+  <key>SUScheduledCheckInterval</key><integer>86400</integer>
 </dict>
 </plist>
 PLIST

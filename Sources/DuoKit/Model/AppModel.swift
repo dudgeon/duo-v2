@@ -203,6 +203,8 @@ public final class AppModel {
     @ObservationIgnored var scanningCorpus = false
     /// Sessions already notified for their current wait (S3-6).
     @ObservationIgnored var notified = Set<String>()
+    /// Sparkle's "Check for Updates", when the app started it (release builds).
+    @ObservationIgnored public var sparkleCheck: (() -> Void)?
     public var newProjectForm: NewProjectForm?
     /// Restore on relaunch (LR-58): off for scripted and capture runs.
     @ObservationIgnored public var restoreEnabled = false
