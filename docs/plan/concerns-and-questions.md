@@ -50,6 +50,7 @@ Status: **open** (needs Geoff or a spike) · **defaulted** (Claude chose a defau
 | Q-39 | **How a tab for a file outside the project looks** (DL-106). Built as a stand-in: the file name like any tab, its full path as the tooltip; its menu drops relative path, link, rename, move and trash. Should it say it's outside (a path hint, a folder mark, `text2`)? | — | open | Recommend a trailing `~/Downloads` in `text2` after the name on hover only; needs a design pass. |
 | Q-40 | **Folders in a live project's tree start closed** (DL-105 asked for lazily listed folders). Opening a document opens its folders; fixture states stay open as their targets draw. Keep closed by default, or open the top level? | — | open | Recommend closed, as Finder's list view and editors do: big folders cost nothing until opened. |
 | Q-38 | **Coming back to a project:** reopen the right pane on the tab you left, rather than on Project as now? | — | closed | Recommend yes (the intent of DL-60's "tabs stay"); S. **Answered: DL-107 (all tabs, console and right pane).** |
+| Q-41 | **The menu bar (DB-26):** add Project and Session menus; File, Go, View and Edit tidied (New Task, New Project…; unbuilt items hidden); Format gains Code, Link…, Heading, Task, Add Properties, with ⌘K for Link… (changes DL-34's map); a Help menu. Proposed with menu mockups on the walk page (decisions m1–m4, https://claude.ai/artifact/Wu4bb9tB7C4HH1UEfXgKMa). | v1 | Geoff answers on the walk page; then build. |
 
 ## Concerns
 

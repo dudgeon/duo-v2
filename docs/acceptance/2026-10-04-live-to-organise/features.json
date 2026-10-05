@@ -3520,6 +3520,99 @@
  ],
  "decisions": [
   {
+   "id": "m1-menus",
+   "ref": "DB-26 · DL-34 · DL-71",
+   "title": "Menu bar: add Project and Session menus?",
+   "context": [
+    "Every action in Duo is in a menu or on a right-click, and every one also has a duo2 verb (DL-71). Today the menu bar is Duo, File, Edit, Format, View, Go, Window, Help; actions on a project or a session (Move into Home…, Make a Task, Archive Session, Delete Session…) are only on right-click menus, so there's no keyboard or menu-bar way to them, and VoiceOver users have to find the right row first.",
+    "Proposal: two menus that act on what's in front of you: **Project** (the project you're in, or the tile focused at All projects) and **Session** (the session showing in the console, or the selected row). Same items as the right-click menus, same names. No new chords: the chord map is locked (DL-34)."
+   ],
+   "options": [
+    {
+     "id": "both",
+     "label": "Add Project and Session menus",
+     "recommended": true,
+     "desc": "Duo, File, Edit, Format, View, Project, Session, Go, Window, Help.",
+     "mockup": "<div class=\"mk\" style=\"font:13px -apple-system,sans-serif;padding:6px 10px;background:#f6f6f6;border:1px solid #ddd;border-radius:6px;display:inline-flex;gap:16px\"><b>Duo</b><span>File</span><span>Edit</span><span>Format</span><span>View</span><span>Project</span><span>Session</span><span>Go</span><span>Window</span><span>Help</span></div><div style=\"height:8px\"></div><div class=\"mk\" style=\"display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start\"><div class=\"mk-menu\" style=\"width:270px\"><div class=\"ttl\">Project</div><div class=\"mk-item \"><span>Open Project File</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Reveal in Finder</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Make a Project</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Move into Home…</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Merge Into</span><span class=\"k\">▸</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Archive Project</span><span class=\"k\"></span></div><div class=\"mk-item dim\"><span>Locate Folder…</span><span class=\"k\"></span></div></div><div class=\"mk-menu\" style=\"width:270px\"><div class=\"ttl\">Session</div><div class=\"mk-item \"><span>Copy Link</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Resume as a Fork</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Make a Task</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Add to Task</span><span class=\"k\">▸</span></div><div class=\"mk-item \"><span>Move to Project</span><span class=\"k\">▸</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Archive Session</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Delete Session…</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>End Session</span><span class=\"k\"></span></div></div></div>"
+    },
+    {
+     "id": "none",
+     "label": "Keep right-click only",
+     "desc": "As today.",
+     "mockup": "<div class=\"mk\" style=\"font:13px -apple-system,sans-serif;padding:6px 10px;background:#f6f6f6;border:1px solid #ddd;border-radius:6px;display:inline-flex;gap:16px\"><b>Duo</b><span>File</span><span>Edit</span><span>Format</span><span>View</span><span>Go</span><span>Window</span><span>Help</span></div>"
+    }
+   ]
+  },
+  {
+   "id": "m2-file-go-view",
+   "ref": "DB-26",
+   "title": "Menu bar: File, Go, View and Edit, tidied",
+   "context": [
+    "Today's File menu mixes new things, opening, saving and Home. Proposed: new things first (sessions, shells, tabs, then files, task, project), then opening, then save/close, then Home. **New Task** and **New Project…** join it (today they're buttons only). Go keeps search and navigation. View gains Enter Full Screen (the system's) and drops the items that aren't built (Toggle Right Pane, Next/Previous Pane), which come back when they work.",
+    "Edit keeps the system's items; Duo adds Send Selection to Claude (⌘D) and the two Reverts after Paste, as now. Chords are unchanged (DL-34)."
+   ],
+   "options": [
+    {
+     "id": "as-drawn",
+     "label": "As drawn",
+     "recommended": true,
+     "desc": "",
+     "mockup": "<div class=\"mk\" style=\"display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start\"><div class=\"mk-menu\" style=\"width:270px\"><div class=\"ttl\">File</div><div class=\"mk-item \"><span>New Claude Session</span><span class=\"k\">⌘T</span></div><div class=\"mk-item \"><span>New Shell</span><span class=\"k\">⇧⌘T</span></div><div class=\"mk-item \"><span>New Browser Tab</span><span class=\"k\">⌥⌘T</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>New Markdown File</span><span class=\"k\">⌘N</span></div><div class=\"mk-item \"><span>New Folder</span><span class=\"k\">⇧⌘N</span></div><div class=\"mk-item \"><span>New Task</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>New Project…</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Open File…</span><span class=\"k\">⌘O</span></div><div class=\"mk-item \"><span>Open Location…</span><span class=\"k\">⌘L</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Save</span><span class=\"k\">⌘S</span></div><div class=\"mk-item \"><span>Close Tab</span><span class=\"k\">⌘W</span></div><div class=\"mk-item \"><span>Close Window</span><span class=\"k\">⇧⌘W</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Choose Home Folder…</span><span class=\"k\"></span></div></div><div class=\"mk-menu\" style=\"width:270px\"><div class=\"ttl\">Go</div><div class=\"mk-item \"><span>Search Everything…</span><span class=\"k\">⇧⌘A</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>All Projects</span><span class=\"k\">⌘↑</span></div><div class=\"mk-item \"><span>Home</span><span class=\"k\">⇧⌘H</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Needs You Elsewhere</span><span class=\"k\">⇧⌘P</span></div><div class=\"mk-item \"><span>Jump into Selected Project</span><span class=\"k\">⌘↩</span></div></div><div class=\"mk-menu\" style=\"width:270px\"><div class=\"ttl\">View</div><div class=\"mk-item \"><span>Toggle Sidebar</span><span class=\"k\">⌃⌘S</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Show Hidden Files</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Sort Projects By</span><span class=\"k\">▸</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Enter Full Screen</span><span class=\"k\">⌃⌘F</span></div></div><div class=\"mk-menu\" style=\"width:270px\"><div class=\"ttl\">Edit (Duo’s part)</div><div class=\"mk-item \"><span>Find…</span><span class=\"k\">⌘F</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Send Selection to Claude</span><span class=\"k\">⌘D</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Revert Claude&#x27;s Change</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Revert All of Claude&#x27;s Changes</span><span class=\"k\"></span></div></div></div>"
+    },
+    {
+     "id": "keep",
+     "label": "Keep today’s order",
+     "desc": "Only add New Task and New Project…."
+    }
+   ]
+  },
+  {
+   "id": "m3-format-k",
+   "ref": "DB-26 · DL-34 · DL-80",
+   "title": "Format menu, and ⌘K for Link…",
+   "context": [
+    "Format has Bold and Italic today. Proposed: Code, Link…, Heading ▸ (1–3), Task (a `- [ ]` line) and **Add Properties** (starts a frontmatter block, frontmatter-handoff's `frontmatter-none`).",
+    "⌘K is free since Jump merged into Search (DL-80). It's the common chord for a link in editors (Notion, Google Docs, Slack). Using it changes the locked chord map (DL-34), so it needs your yes."
+   ],
+   "options": [
+    {
+     "id": "k-link",
+     "label": "Format as drawn, ⌘K is Link…",
+     "recommended": true,
+     "desc": "",
+     "mockup": "<div class=\"mk\" style=\"display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start\"><div class=\"mk-menu\" style=\"width:270px\"><div class=\"ttl\">Format</div><div class=\"mk-item \"><span>Bold</span><span class=\"k\">⌘B</span></div><div class=\"mk-item \"><span>Italic</span><span class=\"k\">⌘I</span></div><div class=\"mk-item \"><span>Code</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Link…</span><span class=\"k\">⌘K</span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Heading</span><span class=\"k\">▸</span></div><div class=\"mk-item \"><span>Task</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Add Properties</span><span class=\"k\"></span></div></div></div>"
+    },
+    {
+     "id": "no-k",
+     "label": "Format as drawn, no chord for Link…",
+     "desc": "⌘K stays free.",
+     "mockup": "<div class=\"mk\" style=\"display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start\"><div class=\"mk-menu\" style=\"width:270px\"><div class=\"ttl\">Format</div><div class=\"mk-item \"><span>Bold</span><span class=\"k\">⌘B</span></div><div class=\"mk-item \"><span>Italic</span><span class=\"k\">⌘I</span></div><div class=\"mk-item \"><span>Code</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>Link…</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Heading</span><span class=\"k\">▸</span></div><div class=\"mk-item \"><span>Task</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Add Properties</span><span class=\"k\"></span></div></div></div>"
+    }
+   ]
+  },
+  {
+   "id": "m4-help",
+   "ref": "DB-26",
+   "title": "Help menu",
+   "context": [
+    "Help today is the system's search field only. Proposed: **duo2 Reference** (opens `docs/cli/duo2.md` on GitHub), **What’s New in This Version** (the release notes of the version you're running), **Report an Issue…** (a new GitHub issue with the version and macOS filled in; nothing sent without you)."
+   ],
+   "options": [
+    {
+     "id": "as-drawn",
+     "label": "As drawn",
+     "recommended": true,
+     "desc": "",
+     "mockup": "<div class=\"mk\" style=\"display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start\"><div class=\"mk-menu\" style=\"width:270px\"><div class=\"ttl\">Help</div><div class=\"mk-item \"><span>duo2 Reference</span><span class=\"k\"></span></div><div class=\"mk-item \"><span>What’s New in This Version</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item \"><span>Report an Issue…</span><span class=\"k\"></span></div></div></div>"
+    },
+    {
+     "id": "system",
+     "label": "Just the system’s search",
+     "desc": "As today."
+    }
+   ]
+  },
+  {
    "id": "q31-plan-reason",
    "ref": "Q-31 · DL-100",
    "title": "What a needs-you card says for a plan waiting on you",
