@@ -24,4 +24,12 @@ public enum ProtectedFolders {
     public static func isHome(_ url: URL) -> Bool {
         url.standardizedFileURL.path == FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
     }
+
+    /// Never walked for files: the home folder and every folder above it (a session started in
+    /// `/` or `/Users` would otherwise take in the whole disk).
+    public static func neverFileRoot(_ url: URL) -> Bool {
+        let home = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
+        let p = url.standardizedFileURL.path
+        return p == home || p == "/" || home.hasPrefix(p + "/")
+    }
 }

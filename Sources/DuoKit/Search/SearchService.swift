@@ -25,15 +25,15 @@ public final class SearchService {
     private var lastProjects: [String: URL] = [:]
 
     /// Called after each workspace refresh; starts a pass when the projects changed or a minute passed.
-    /// `fileProjects`: the documented projects whose files are indexed; folder entries (sessions
-    /// started somewhere without a project file, often `~`) contribute only their sessions (F-53).
-    public func update(projects: [String: URL], fileProjects: Set<String>? = nil) {
+    /// Every folder on the map is searched: projects, and Claude folders (sessions or a CLAUDE.md,
+    /// DL-103). The home folder and those above it never are (F-53); see `FileSource`.
+    public func update(projects: [String: URL]) {
         guard !running, projects != lastProjects || Date().timeIntervalSince(lastPass) > 60 else { return }
         running = true
         lastProjects = projects
         let bundled = Bundle.main.resourceURL?.appending(path: "search")
         Task.detached(priority: .utility) {
-            let stats = await Self.pass(projects: projects, fileProjects: fileProjects ?? Set(projects.keys), bundled: bundled)
+            let stats = await Self.pass(projects: projects, bundled: bundled)
             await MainActor.run {
                 self.lastStats = stats
                 self.running = false
@@ -48,18 +48,22 @@ public final class SearchService {
         lastPass = .distantPast
     }
 
-    nonisolated static func pass(projects: [String: URL], fileProjects: Set<String>, bundled: URL?) async -> [String: IndexStats] {
+    nonisolated static func pass(projects: [String: URL], bundled: URL?) async -> [String: IndexStats] {
         SearchSetup.registerExtractors()
         do {
             try await installModelIfNeeded(bundled: bundled)
             let embedder = try Embedder(use: .indexing)
             let index = try SearchIndex(readOnly: false)
+            let order = projects.filter { !ProtectedFolders.neverFileRoot($0.value) }.sorted { latest($0.value) > latest($1.value) }
             // Projects that left the workspace leave search (FR-7.1.1).
-            for c in try index.coverage() where fileProjects.contains(c.project) == false && c.project != SearchIndex.unfiled { try index.removeProject(c.project) }
-            let order = projects.filter { fileProjects.contains($0.key) && !ProtectedFolders.isHome($0.value) }.sorted { latest($0.value) > latest($1.value) }
+            for c in try index.coverage() where order.contains(where: { $0.key == c.project }) == false && c.project != SearchIndex.unfiled { try index.removeProject(c.project) }
+            let roots = order.map { $0.value.resolvingSymlinksInPath().path }
             var out: [String: IndexStats] = [:]
             for (name, root) in order {
-                out[name] = try await index.indexProject(name, root: root, embedder: embedder) {
+                // A folder inside another (a project in a Claude folder, Home's projects) is its own.
+                let path = root.resolvingSymlinksInPath().path
+                let inner = Set(roots.filter { $0.hasPrefix(path + "/") })
+                out[name] = try await index.indexProject(name, root: root, excluding: inner, embedder: embedder) {
                     let busy = ProcessInfo.processInfo.isLowPowerModeEnabled || ProcessInfo.processInfo.thermalState.rawValue >= 2
                     try? await Task.sleep(for: .milliseconds(busy ? 500 : 15))
                 }
