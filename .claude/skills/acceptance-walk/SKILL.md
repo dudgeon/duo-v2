@@ -78,7 +78,7 @@ Before Geoff sees a test, run it yourself and record what happened in the featur
 python3 scripts/acceptance/build-page.py docs/acceptance/<walk>
 ```
 
-Preview `walk.html` in the browser pane once (one card, a click, Copy feedback). Then publish with the Artifact tool: `file_path` = the `walk.html`, `capabilities: {"db": {}}`, an `icon` of `checklist` and a one-line `description`. The page template is `walk-template.html` in this skill folder; change it there, not in a walk's `walk.html`.
+Preview `walk.html` in the browser pane once (one card, a click, Copy feedback). Then publish with the Artifact tool: `file_path` = the `walk.html`, `capabilities: {"db": {}, "comments": {}}` (comments carries the cards' Send to Claude buttons to this session), an `icon` of `checklist` and a one-line `description`. The page template is `walk-template.html` in this skill folder; change it there, not in a walk's `walk.html`.
 
 Check the store answers: `ArtifactData` (load with ToolSearch) `list`, collection `verdicts`, on the URL. It should be empty.
 

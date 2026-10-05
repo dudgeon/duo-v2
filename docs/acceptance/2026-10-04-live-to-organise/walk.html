@@ -68,6 +68,15 @@ ol.steps { margin: 2px 0 6px; padding-left: 20px; }
 .actions .reject[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: #fff; }
 .actions .defer[aria-pressed="true"] { background: var(--later); border-color: var(--later); color: #fff; }
 .saved { font-size: 11.5px; color: var(--muted); margin-left: auto; }
+button.primary:disabled { opacity: .45; cursor: default; }
+.tosend { border-color: var(--accent); color: var(--accent); }
+.tosend:disabled { opacity: .45; cursor: default; border-color: var(--line); color: var(--muted); }
+.sent { font-size: 11.5px; color: var(--muted); }
+.sent.ok { color: var(--ok); }
+.sent.err { color: var(--bad); }
+.chan { font-size: 12px; color: var(--muted); }
+.chan.ok { color: var(--ok); }
+.dsend { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 textarea { width: 100%; min-height: 54px; margin-top: 8px; resize: vertical; font: inherit; color: inherit;
   background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; }
 .hidden { display: none; }
@@ -149,7 +158,9 @@ dialog textarea { min-height: 320px; font: 12.5px "SF Mono", ui-monospace, Menlo
   <div class="bar">
     <h1 id="title"></h1>
     <span class="counts" id="counts"></span>
-    <button class="primary" id="copy">Copy feedback for Claude</button>
+    <button class="primary" id="sendall" disabled title="Sends the whole summary to the Claude session watching this page">Send all to Claude</button>
+    <button id="copy">Copy feedback</button>
+    <span class="chan" id="chan" aria-live="polite">Checking for Claude…</span>
     <div class="progress" id="progress" aria-hidden="true"></div>
     <div class="filters" role="group" aria-label="Show">
       <button data-f="all" aria-pressed="true">All</button>
@@ -183,6 +194,53 @@ const LABEL = { accepted: "Accepted", rejected: "Rejected", deferred: "Not now",
 let verdicts = {};   // id -> {status, comment, at}
 let answers = {};    // decision id -> {choice, other, comment, at}
 let db = null, filter = "all", showCleared = false;
+// Send to Claude (comments capability): reaches the Claude session watching this page; its reply
+// arrives as a comment in the thread. Each card keeps one thread, so later sends reply into it.
+let comments = null, canSend = "off";
+let threads = {};
+try { threads = JSON.parse(localStorage.getItem("acceptance-threads:" + (JSON.parse(document.getElementById("data").textContent).sprint)) || "{}"); } catch (e) { threads = {}; }
+const keepThreads = () => { try { localStorage.setItem("acceptance-threads:" + DATA.sprint, JSON.stringify(threads)); } catch (e) {} };
+async function sendToClaude(key, anchorEl, text, statusEl) {
+  if (!comments || canSend !== "available") { statusEl.className = "sent err"; statusEl.textContent = "No Claude session is listening; it's saved here."; return false; }
+  statusEl.className = "sent"; statusEl.textContent = "Sending…";
+  const body = text.length > 3900 ? text.slice(0, 3900) + "\n… (more on the page; read the saved verdicts)" : text;
+  try {
+    let r;
+    if (threads[key]) {
+      try { r = await comments.sendToClaude({ threadId: threads[key], text: body }); }
+      catch (e) { if (e && e.code === "not_found") { delete threads[key]; } else throw e; }
+    }
+    if (!r) r = await comments.sendToClaude({ anchor: await comments.anchorFor(anchorEl), text: body });
+    threads[key] = r.threadId; keepThreads();
+    statusEl.className = "sent ok"; statusEl.textContent = "Sent to Claude; its reply arrives as a comment here.";
+    return true;
+  } catch (e) {
+    const code = e && e.code;
+    statusEl.className = "sent err";
+    statusEl.textContent = code === "consent_required" ? "Allow comments from this page, then send again."
+      : code === "claude_unavailable" ? "No Claude session could take it; it's saved here."
+      : code === "rate_limited" ? "Sending too fast; wait a moment."
+      : "Couldn't send (" + (code || "error") + "); it's saved here.";
+    return false;
+  }
+}
+function featureText(f) {
+  const v = verdicts[f.id] || {};
+  return `Walk ${DATA.sprint} · test \`${f.id}\`: ${f.title}${f.ref ? " (" + f.ref + ")" : ""}\nVerdict: ${LABEL[v.status || ""]}` + ((v.comment || "").trim() ? `\nComment: ${v.comment.trim()}` : "");
+}
+function decisionText(d) {
+  const a = answers[d.id] || {}, o = (d.options || []).find(x => x.id === a.choice);
+  return `Walk ${DATA.sprint} · decision \`${d.id}\`: ${d.title}${d.ref ? " (" + d.ref + ")" : ""}\nChoice: ${a.choice ? (o ? o.label : "Something else") : "not answered"}` + ((a.comment || "").trim() ? `\nComment: ${a.comment.trim()}` : "");
+}
+function sendable() {
+  document.querySelectorAll(".tosend[data-k]").forEach(b => {
+    const [kind, id] = b.dataset.k.split(":");
+    const has = kind === "f" ? !!((verdicts[id]?.status) || (verdicts[id]?.comment || "").trim()) : !!((answers[id]?.choice) || (answers[id]?.comment || "").trim());
+    b.disabled = canSend !== "available" || !has;
+    b.title = canSend === "available" ? (has ? "Send this to Claude now" : "Give a verdict or a comment first") : "No Claude session is listening right now";
+  });
+  const all = $("#sendall"); if (all) all.disabled = canSend !== "available";
+}
 
 function local(read, value) {
   try { if (read) return JSON.parse(localStorage.getItem(KEY) || "{}"); localStorage.setItem(KEY, JSON.stringify(value)); }
@@ -249,6 +307,14 @@ function build() {
     const acts = el("div", "actions");
     const mk = (cls, text, status) => { const b = el("button", cls, text); b.setAttribute("aria-pressed", "false"); b.onclick = () => setStatus(f.id, status); acts.append(b); return b; };
     const btns = { accepted: mk("accept", "Accept", "accepted"), rejected: mk("reject", "Reject", "rejected"), deferred: mk("defer", "Not now", "deferred") };
+    const send = el("button", "tosend", "Send to Claude"); send.dataset.k = "f:" + f.id;
+    const sent = el("span", "sent");
+    send.onclick = async () => {
+      // A comment still being typed goes with it.
+      if ((verdicts[f.id]?.comment || "") !== ta.value) await write(f.id, { comment: ta.value });
+      sendToClaude("f:" + f.id, c, featureText(f), sent);
+    };
+    acts.append(send); acts.append(sent);
     const saved = el("span", "saved"); acts.append(saved);
     c.append(acts);
     const ta = el("textarea"); ta.placeholder = "Comments (what you saw, what's wrong, what you'd change)";
@@ -279,6 +345,7 @@ function render() {
     h.classList.toggle("hidden", !any);
   });
   const total = DATA.features.length;
+  sendable();
   $("#counts").textContent = `${n.accepted} accepted · ${n.rejected} rejected · ${n.deferred} not now · ${n[""]} to do (${total})`;
   const p = $("#progress"); p.textContent = "";
   [["accepted", "var(--ok)"], ["rejected", "var(--bad)"], ["deferred", "var(--later)"]].forEach(([s, col]) => {
@@ -370,6 +437,29 @@ $("#copy").onclick = async () => {
     .then(() => { $("#dlgnote").textContent = "Copied. Paste it into Claude." + extra; }, () => {});
 };
 $("#close").onclick = () => $("#dlg").close();
+$("#sendall").onclick = async () => {
+  const st = $("#chan");
+  await sendToClaude("all", $("header"), feedback(), st);
+};
+
+// Send to Claude lights up when a session is watching; re-checked every 30 s.
+(async () => {
+  try { comments = await window.claude?.use?.("comments"); } catch (e) { comments = null; }
+  const check = async () => {
+    try { canSend = comments ? await comments.canSendToClaude() : "off"; } catch (e) { canSend = "off"; }
+    const chan = $("#chan");
+    if (!chan.textContent.startsWith("Sen")) {
+      chan.className = "chan" + (canSend === "available" ? " ok" : "");
+      chan.textContent = canSend === "available" ? "Claude is listening: sends reach it directly"
+        : canSend === "no_session" ? "No Claude session is listening; verdicts are saved for it"
+        : canSend === "writers_only" ? "Only the page's editors can send to Claude"
+        : "Verdicts are saved for Claude to read";
+    }
+    sendable();
+  };
+  await check();
+  setInterval(check, 30000);
+})();
 
 // Decisions Geoff makes from the page: context, options (with small mockups), a pick, comments.
 const dcards = {};
@@ -415,7 +505,16 @@ function buildDecisions() {
     ta.oninput = () => { clearTimeout(timer); timer = setTimeout(() => writeAnswer(d.id, { comment: ta.value }), 700); };
     ta.onblur = () => { clearTimeout(timer); if ((answers[d.id]?.comment || "") !== ta.value) writeAnswer(d.id, { comment: ta.value }); };
     c.append(ta);
-    const saved = el("div", "saved"); c.append(saved);
+    const row = el("div", "dsend");
+    const send = el("button", "tosend", "Send to Claude"); send.dataset.k = "d:" + d.id;
+    const sent = el("span", "sent");
+    send.onclick = async () => {
+      if ((answers[d.id]?.comment || "") !== ta.value) await writeAnswer(d.id, { comment: ta.value });
+      sendToClaude("d:" + d.id, c, decisionText(d), sent);
+    };
+    row.append(send); row.append(sent);
+    const saved = el("div", "saved"); row.append(saved);
+    c.append(row);
     sec.append(c);
     dcards[d.id] = { c, state, radios, ta, saved, d };
   });
@@ -437,6 +536,7 @@ function renderDecisions() {
     if (document.activeElement !== k.ta && k.ta.value !== (a.comment || "")) k.ta.value = a.comment || "";
   });
   $("#decisions .count").textContent = `(${n} of ${list.length} answered)`;
+  sendable();
 }
 
 async function writeAnswer(id, patch) {
