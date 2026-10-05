@@ -188,6 +188,10 @@ public struct DuoState: Codable, Sendable, Equatable {
     /// Missing folders the user removed from Duo (DB-8): their sessions stay in Claude's storage.
     public var forgottenFolders: [String] = []
     /// Legacy Duo's findings the user said Not Now to (asked again when they change), and the last backup (DL-39).
+    /// Settings (S3-1): a chosen `claude` (LR-19; nil = found automatically), and notifications (S3-6).
+    public var claudePath: String?
+    public var notifyNeedsYou = true
+    public var dockBadge = true
     public var legacyDismissed: String?
     public var legacyBackup: String?
     /// Home's folder, the container of the user's tracked projects (DL-85), once chosen. Without it
@@ -217,6 +221,9 @@ public struct DuoState: Codable, Sendable, Equatable {
         foldedProperties = try c.decodeIfPresent([String].self, forKey: .foldedProperties) ?? []
         forgottenFolders = try c.decodeIfPresent([String].self, forKey: .forgottenFolders) ?? []
         legacyDismissed = try c.decodeIfPresent(String.self, forKey: .legacyDismissed)
+        claudePath = try c.decodeIfPresent(String.self, forKey: .claudePath)
+        notifyNeedsYou = try c.decodeIfPresent(Bool.self, forKey: .notifyNeedsYou) ?? true
+        dockBadge = try c.decodeIfPresent(Bool.self, forKey: .dockBadge) ?? true
         legacyBackup = try c.decodeIfPresent(String.self, forKey: .legacyBackup)
         gitignore = try c.decodeIfPresent([String: String].self, forKey: .gitignore) ?? [:]
         projects = try c.decodeIfPresent([String].self, forKey: .projects) ?? []

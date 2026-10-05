@@ -265,9 +265,27 @@ struct ProjectTile: View {
                 }
             }
             if project.isMissing {
-                // Its folder is gone (DB-8). Stand-in look until S3-2 is approved (Q-32).
-                Text(project.missing ?? "Folder not found").duoText(.body)
-                Text("Was at \(project.path)").duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.middle)
+                // Its folder is gone (S3-2, DB-8): what happened, where it was, and what to do.
+                let n = model.fixture.sessions(inProject: project.name).count
+                let away = project.missing?.hasPrefix("On “") == true
+                Text(project.missing ?? "Folder not found").duoText(.body).fixedSize(horizontal: false, vertical: true)
+                if project.movedTo == nil {
+                    Text("Was at \(project.path)").duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.middle)
+                }
+                Text("\(n) session\(n == 1 ? "" : "s") · \(away ? "they open when the disk is back" : "they open again once it’s found")")
+                    .duoText(.body).foregroundStyle(DuoColor.text2)
+                if !away {
+                    HStack(spacing: DuoSpace.gapButtonToButton) {
+                        if project.movedTo != nil {
+                            Button("Use New Place") { model.useNewPlace(project.name) }.buttonStyle(DefaultSheetButtonStyle())
+                            Button("Locate Folder…") { model.locateFolder(project.name) }.buttonStyle(.duo)
+                        } else {
+                            Button("Locate Folder…") { model.locateFolder(project.name) }.buttonStyle(.duo)
+                            Button("Remove from Duo") { model.forgetFolder(project.name) }.buttonStyle(.duo)
+                        }
+                    }
+                    .padding(.top, 8)
+                }
             } else if project.isFolderOnly {
                 // A folder with Claude sessions but no PROJECT.md (DL-63).
                 Text(project.path).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.middle)
@@ -285,7 +303,9 @@ struct ProjectTile: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            if sessions.isEmpty, project.isFolderOnly {
+            if project.isMissing {
+                EmptyView()
+            } else if sessions.isEmpty, project.isFolderOnly {
                 let n = model.fixture.sessions(inProject: project.name).count
                 Text("\(n) past session\(n == 1 ? "" : "s")")
                     .duoText(.body)

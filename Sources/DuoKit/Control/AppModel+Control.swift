@@ -200,6 +200,32 @@ extension AppModel {
             moveIntoHome(name, into: place) { r in
                 switch r { case .success(let m): done(.ok(m)); case .failure(let e): done(.fail("\(e)")) }
             }
+        case .settings:
+            let st = DuoState.load()
+            func show() -> String {
+                let c = ClaudeLocator.resolve()
+                return ["claude-path: \(st.claudePath ?? "auto") (runs \(c ?? "nothing found"))",
+                        "notify: \(DuoState.load().notifyNeedsYou ? "on" : "off")", "dock-badge: \(DuoState.load().dockBadge ? "on" : "off")",
+                        "home: \(liveRoot.map { Self.short($0.path) } ?? "none")"].joined(separator: "\n")
+            }
+            guard let key = inv[0] else { return done(.ok(show())) }
+            guard let value = inv[1] else { return done(.fail("usage: \(id.action.usage)")) }
+            switch key {
+            case "claude-path":
+                if value == "auto" { setClaudePath(nil) }
+                else {
+                    let path = (value as NSString).expandingTildeInPath
+                    guard FileManager.default.isExecutableFile(atPath: path) else { return done(.fail("\(value) isn't a program Duo can run")) }
+                    setClaudePath(path)
+                }
+            case "notify", "dock-badge":
+                guard value == "on" || value == "off" else { return done(.fail("usage: \(id.action.usage)")) }
+                DuoState.update { if key == "notify" { $0.notifyNeedsYou = value == "on" } else { $0.dockBadge = value == "on" } }
+                updateDockBadge()
+                SettingsInfo.shared.revision += 1
+            default: return done(.fail("no setting '\(key)'. Settings: claude-path, notify, dock-badge"))
+            }
+            done(.ok(show()))
         case .projectReconnect:
             guard let name = inv[0], let p = project(named: name) else { return done(.fail(inv[0].map { "no project or folder '\($0)'" } ?? "usage: \(id.action.usage)")) }
             let to = inv.flags["to"].map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) }

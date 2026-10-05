@@ -29,7 +29,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
 public enum ActionID: String, CaseIterable, Sendable {
     // Duo
     case update
-    case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup"
+    case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup", settings
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
     case viewSidebar = "view sidebar", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
@@ -112,12 +112,15 @@ extension DuoAction {
         .init(.help, .app, "[family | --markdown]", "Families and everyday verbs; a family's verbs; or the full reference as Markdown.", local: true),
         .init(.doctor, .setup, "", "How this terminal finds Duo, whether it can reach it, and what Duo installed.", local: true),
         .init(.install, .setup, "", "Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74).",
-              ui: ["Install"], local: true),
-        .init(.uninstall, .setup, "", "Remove exactly what `duo2 install` added (anything you edited stays).", local: true),
+              ui: ["Install", "Install…"], local: true),
+        .init(.uninstall, .setup, "", "Remove exactly what `duo2 install` added (anything you edited stays).", ui: ["Remove…"], local: true),
+        .init(.settings, .setup, "[claude-path <path|auto> | notify on|off | dock-badge on|off]",
+              "Duo's settings (S3-1): with no arguments, all of them; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge.",
+              ui: ["Choose…", "Use Found One"]),
         .init(.walkSetup, .setup, "<test id>", "Put Duo in the state an acceptance-walk test starts from (the walk page's Set up test button, or `duo2://walk-setup?id=…`). Steps come from ~/DuoAcceptance/walk-setups.json, never from the caller.",
               ui: ["Set up test"]),
         .init(.hook, .setup, "pre-edit", "Used by Duo's sessions (a PreToolUse hook): Claude's Edit, MultiEdit and Write on a document open in Duo go through the editor instead of the file (DL-78).", local: true),
-        .init(.legacy, .setup, "[disable --yes | restore <backup>]", "Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them.", local: true),
+        .init(.legacy, .setup, "[disable --yes | restore <backup>]", "Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them.", ui: ["Disable…", "Restore"], local: true),
 
         // What's on screen
         .init(.goAll, .view, "", "Show All projects.", ui: ["All Projects"]),
@@ -140,7 +143,7 @@ extension DuoAction {
               ui: ["Archive Project", "archived rollup"]),
         .init(.projectUnarchive, .projects, "<project>", "Bring an archived project back to its topic column.", ui: ["Unarchive Project"]),
         .init(.homeSet, .projects, "<folder>", "Make a folder Home, the container of the projects the user tracks (DL-85): adds a HOME.md if there's none. Duo lists every session with or without a Home. Undo with `duo2 undo`.",
-              ui: ["Choose Home Folder…"]),
+              ui: ["Choose Home Folder…", "Change…"]),
         .init(.projectMoveIntoHome, .projects, "<project|folder> [--into <topic folder>]", "Move a project or folder into Home (its top level, or a topic folder with --into) with every session filed under it (journaled; sessions stay its). The user confirms in Duo. Undo with `duo2 undo`.",
               ui: ["Move into Home…", "Move"], timeout: 600),
         .init(.projectReconnect, .projects, "<project|folder> [--to <folder>]",
@@ -243,7 +246,7 @@ extension DuoAction {
         .init(.browserOpen, .html, "[url]", "A browser tab in the right pane (⌥⌘T). Sites not on the allow list show Allow or Open in Browser instead of loading (DL-3).",
               ui: ["New Browser Tab", "Open Location…", "Open in Browser", "Copy Address"]),
         .init(.browserAllow, .html, "<host>", "Add a site to the allow list, so its pages open in Duo's browser tabs (and its subdomains)."),
-        .init(.browserSites, .html, "", "The allow list: sites Duo opens in its own browser tabs; everything else opens in the system browser (DL-3)."),
+        .init(.browserSites, .html, "", "The allow list: sites Duo opens in its own browser tabs; everything else opens in the system browser (DL-3).", ui: ["Edit…"]),
         .init(.browserTabs, .html, "", "Browser tabs open in Duo: id, project, title, address."),
         .init(.browserRead, .html, "[selector] [--tab <id>]", "The page's text (or one element's), with its title and address (LR-45). Allowed sites only."),
         .init(.browserClick, .html, "<selector> [--tab <id>]", "Click the element a CSS selector names, scrolled into view."),
@@ -316,6 +319,8 @@ public enum Parity {
         "Add to .gitignore": "a one-time question to the user (DL-50)",
         "confirmation sheet": "the user's own consent; Claude can't confirm for them",
         "Not Now": "the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later",
+        "Show in Finder": "reveals a file or folder in Finder (Settings, editor notices, launch sheets)",
+        "OK": "dismisses a notice",
         "Save to Recreate": "writes the user's own text back after the file was removed on disk; Claude can do the same with `duo2 doc edit` (content) once the user asks",
     ]
 }

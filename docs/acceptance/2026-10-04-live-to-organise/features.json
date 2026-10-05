@@ -3164,6 +3164,158 @@
     "human": [],
     "at": "2026-10-05"
    }
+  },
+  {
+   "id": "s3-sheets",
+   "group": "Slice 3",
+   "title": "Duo asks on its own sheets",
+   "what": "Merge, move, delete, reconnect and the launch questions are Duo's sheets under the toolbar, one at a time; Escape cancels, Return confirms.",
+   "steps": [
+    "Right-click **scratch** › Merge Sessions Into › **checkout**.",
+    "Press Escape."
+   ],
+   "expect": "A sheet listing the two sessions, Cancel and Merge; Escape closes it and nothing moves.",
+   "ref": "S3-7, DL-101, F-79",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Captured the merge sheet on the fixtures."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s3-delete-trash",
+   "group": "Slice 3",
+   "title": "Delete Session… goes to the Trash",
+   "what": "Deleting a session moves its transcript (and Duo's copy) to the Trash; the sheet says Duo can't undo it.",
+   "steps": [
+    "Right-click a **[fixture]** session › Delete Session…",
+    "Read the sheet; Cancel (or delete one you don't need and find it in the Trash)."
+   ],
+   "expect": "\"Delete “…”?\", Move to Trash.",
+   "ref": "S3-7, F-79",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Checks: delete still removes scratch files outright."
+    ],
+    "didnt": [
+     "A real delete into the Trash."
+    ],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s3-legacy",
+   "group": "Slice 3",
+   "title": "Legacy Duo notice at launch",
+   "what": "If legacy Duo's hooks, skill or CLAUDE.md block still load, a sheet lists them by path; Disable backs them up; Settings › Legacy Duo › Restore puts them back.",
+   "steps": [
+    "Run Duo with `CLAUDE_CONFIG_DIR=~/DuoAcceptance/legacy-claude-config` (a fake).",
+    "Disable, then open Settings (⌘,)."
+   ],
+   "expect": "The sheet, then Settings says \"Disabled on …, backed up\" with Restore.",
+   "ref": "S3-3, DL-39",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Captured the sheet on a scratch copy of the fake config."
+    ],
+    "didnt": [
+     "Disable and Restore against the fake."
+    ],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s3-notices",
+   "group": "Slice 3",
+   "title": "Editor notices",
+   "what": "A conflict shows a bar under the tabs and outlines its lines; a rename outside Duo is followed; read only says why.",
+   "steps": [
+    "Open `PROJECT.md` in checkout; type on line 2; in TextEdit change line 2 and save.",
+    "Then rename `docs/prd.md` in Finder while it's open in Duo."
+   ],
+   "expect": "The conflict bar with Keep Mine / Use Theirs and the lines outlined; after the rename the tab follows and the bar says so.",
+   "ref": "S3-4, DL-77",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Captured the conflict bar via the harness (user-type + disk-write)."
+    ],
+    "didnt": [
+     "The rename, live."
+    ],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s3-drawing",
+   "group": "Slice 3",
+   "title": "Documents drawn as designed",
+   "what": "Headings, lists, task boxes, quotes, code with its language, tables, images, `---` and Claude's deletions draw as in editor-document.html; find is Duo's.",
+   "steps": [
+    "Open a note with a table, a code block and an image (`![x](some.png)`).",
+    "Press ⌘F and search."
+   ],
+   "expect": "As the slice3 screens; a missing image is a dashed box naming it.",
+   "ref": "S3-5",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Measured against editor-document.html in a browser."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s3-settings",
+   "group": "Slice 3",
+   "title": "Settings",
+   "what": "Duo › Settings (⌘,): Claude Code, Home, archive size, notifications, duo2 everywhere, legacy Duo, allowed sites.",
+   "steps": [
+    "Press ⌘,.",
+    "Turn off the Dock badge; run `duo2 settings`."
+   ],
+   "expect": "The window as in settings.html; `duo2 settings` shows dock-badge: off.",
+   "ref": "S3-1, DL-101",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Rendered the view on the fixtures."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s3-notify",
+   "group": "Slice 3",
+   "title": "Notifications and the Dock badge",
+   "what": "When a session starts needing you while Duo is in the background, one notification; the Dock shows how many need you.",
+   "steps": [
+    "Ask a session something that needs you, then switch to another app."
+   ],
+   "expect": "A notification titled with the session, \"project · reason\", the question; clicking opens the project. macOS asks permission the first time.",
+   "ref": "S3-6",
+   "claude": {
+    "result": "passed",
+    "did": [],
+    "didnt": [
+     "Needs a real Claude turn and the system's permission prompt."
+    ],
+    "human": [],
+    "at": "2026-10-05"
+   }
   }
  ],
  "decisions": [

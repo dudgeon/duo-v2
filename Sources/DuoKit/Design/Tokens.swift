@@ -142,6 +142,13 @@ public enum DuoMetric {
     public static let sheetDimmedOpacity: CGFloat = 0.55
     public static let noticePaddingX: CGFloat = 20.0
     public static let noticePaddingY: CGFloat = 10.0
+    public static let settingsWidth: CGFloat = 680.0
+    public static let settingsPaddingX: CGFloat = 24.0
+    public static let settingsPaddingY: CGFloat = 20.0
+    public static let settingsGroupGap: CGFloat = 18.0
+    public static let settingsLabelColumn: CGFloat = 150.0
+    public static let settingsRowPaddingX: CGFloat = 12.0
+    public static let settingsRowPaddingY: CGFloat = 10.0
     public static let idlePopoverWidth: CGFloat = 460.0
     public static let idlePopoverPadding = EdgeInsets(top: 12.0, leading: 8.0, bottom: 12.0, trailing: 8.0)
     public static let idleRowHeight: CGFloat = 26.0

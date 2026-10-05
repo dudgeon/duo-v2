@@ -20,7 +20,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Home pane with no Home folder | Designed (DL-100): "Choose a Home folder", Choose Home Folder… and Not Now | slice2 `no-home.html` | — | HomePane, `ConsoleMessage(.noHome)` |
 | The map: columns, tiles | Designed (DL-100): Home's columns, then OUTSIDE HOME on a rule with path columns (`~/Desktop/…/interviews`) | slice2 `map-folders.html`, `no-home.html` | DB-38 (folder mark) | MapColumn, MapGrid, ProjectTile |
 | Folder tiles ("No project file") | Stand-in (DL-63) | — | DB-12 | ProjectTile |
-| Missing or moved folder tiles ("Folder not found", "Moved to …") | Stand-in (F-78) | slice 3 canvas S3-2 (proposed) | DB-8, Q-32 | ProjectTile, `Live/MissingFolders.swift`, `Model/AppModel+Missing.swift` |
+| Missing or moved folder tiles ("Folder not found", "Moved to …") | Designed (DL-101); "In the Trash" not built | slice3 `missing-folder.html` | — | ProjectTile, MissingNotice, `Live/MissingFolders.swift` |
 | New project tile | Designed; opens the New project sheet (DL-100) | build `overview.html` | — | NewProjectTile |
 | Sessions open in Duo, tinted | Stand-in (ENH-7) | — | DB-33 | TileSessionRow, `activeTint` |
 | Archived rollup under the map | Stand-in (ENH-6) | — | DB-34 | `AllProjects/ArchivedProjects.swift` |
@@ -42,9 +42,9 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Console with nothing running; ended session bar | Designed (DB-3) | surfaces `console-none.html`, `console-ended.html`, `console-empty-states.html` | — | `Project/ConsoleStates.swift` |
 | Terminal colours | Designed (DB-2) | surfaces `terminal-palette.html` | — | `terminal*` tokens |
 | Right pane: Project tab (`PROJECT.md`) | Changed by decision (DL-60): the project's own file | build `project.html` (card, superseded) | DB-16 | RightPane |
-| Markdown editor | Built; its look of lists, tables and code isn't designed | build `project.html` | DB-15 | `Editor/`, CodeMirror |
+| Markdown editor | Designed (DL-101): headings, lists, tasks, quotes, code, tables, images, Claude's deletions, find | slice3 `editor-document.html`, `editor-states.html` | — | `Editor/`, CodeMirror |
 | Claude's edits highlighted; revert | Built; revert is menu-only | build `project.html` (added block) | DB-35, DB-19 | DocumentEditor |
-| Editor notices: conflict, removed, read-only | Stand-in (Q-20) | — | DB-14 | DocumentStateBar |
+| Editor notices: conflict, removed, renamed, read only | Designed (DL-101) | slice3 `editor-notices.html` | — | DocumentStateBar, NoticeBar |
 | Properties (frontmatter) block | Designed and built (F-77): icons, controls, fold, Tab, suggestions, type menu, date picker, invalid, changed by Claude; task notes keep their S2-5 look (Q-33) | frontmatter `frontmatter*.html`; slice2 `task-note.html` | — | `Vendor/codemirror/src/duo-editor.js`, `Live/PropertyCorpus.swift` |
 | Local HTML page and element picker | Stand-in (DL-70) | — | DB-13 | `Editor/HTMLViewer.swift`, PickerBar |
 | Browser tab and its bar; not-allowed page | Stand-in (DL-3, DL-99) | — | DB-20 | `Browser/BrowserTabs.swift` |
@@ -64,11 +64,12 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Surface | Status | Open | Code |
 |---|---|---|---|
 | Move into Home… and New project sheets | Designed (DL-100): Duo's own sheets under the toolbar, the map dimmed to 55% | — | `Shell/Sheets.swift` |
-| Move, merge, Make a Project, Delete Session… confirmations | Stand-in (standard sheets) | DB-12, DB-36 | `Model/AppModel+Organize.swift` |
+| Confirmations and launch questions (merge, move, delete, reconnect, install, legacy Duo, .gitignore) | Designed (DL-101): Duo's own sheets, one at a time | — | `Shell/DuoQuestion.swift` |
 | Drag a session or tile; drop targets | Built (Geoff's feel, F-51) | DB-12 | AllProjectsPanes DragCard |
 | First launch | Designed (DL-100): no welcome screen; the map is it | — | — |
 | Choose Home Folder… picker | System open panel | S2-3 | `Model/AppModel+Home.swift` |
-| Settings | Not built | DB-10 | — |
+| Settings | Designed (DL-101) | — | `Shell/SettingsView.swift` |
+| Notifications and the Dock badge | Designed (DL-101); drawn by macOS | — | `Model/AppModel+Notify.swift` |
 | Update notice, install consent | Standard sheets | — | `+Update.swift`, `Shell/InstallPrompt.swift` |
 | Menu bar | Built from the shortcut map | DB-26 | `Navigation/Commands.swift` |
 | Narrow windows, collapsing the right pane, motion | Not designed | DB-25 | — |

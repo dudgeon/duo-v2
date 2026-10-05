@@ -129,7 +129,7 @@ struct DuoApp: App {
 
     var body: some Scene {
         // The window itself is AppKit (MainWindow); this scene carries the menus.
-        Settings { EmptyView() }
+        Settings { SettingsView().environment(model) }
             .commands { DuoCommands(model: model) }
     }
 }

@@ -25,6 +25,7 @@ struct ProjectSidebarPane: View {
                         // The project's heading opens the project itself: its Project tab (DL-60).
                         .onActivate { model.rightTab = "Project"; model.selectedFile = nil }  // action: view tab
                         .accessibilityLabel("\(project.name), open the project file")
+                        if project.isMissing { MissingNotice(project: project) }
                     }
                     // Needs you, Open, then history by date, then the folds (DL-91).
                     ForEach(sections) { section in
@@ -754,3 +755,29 @@ struct NoticeBar<Buttons: View>: View {
         .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
     }
 }
+
+/// Inside a project whose folder is gone (S3-2): a notice on `ground` over the session list.
+struct MissingNotice: View {
+    @Environment(AppModel.self) private var model
+    let project: Fixture.Project
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
+            Text("This project’s folder isn’t at \(Text(project.path).font(Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)))) any more.")
+                .duoText(.body).fixedSize(horizontal: false, vertical: true)
+            Text(project.movedTo.map { "Duo found it at \(AppModel.short($0))." } ?? "Its sessions open again once it’s found.")
+                .duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: DuoSpace.gapButtonToButton) {
+                if project.movedTo != nil { Button("Use New Place") { model.useNewPlace(project.name) }.buttonStyle(DefaultSheetButtonStyle()) }
+                Button("Locate Folder…") { model.locateFolder(project.name) }.buttonStyle(.duo)
+                Button("Remove from Duo") { model.forgetFolder(project.name) }.buttonStyle(.duo)
+            }
+        }
+        .padding(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.ground))
+        .padding(.horizontal, DuoSpace.panePadding)
+        .padding(.vertical, 8)
+    }
+}
+

@@ -88,6 +88,19 @@ public enum FixtureHarness {
             if let p = model.homePlaces().first(where: { $0.folder.lastPathComponent == (parts.count > 1 ? parts[1] : "") }) {
                 model.moveIntoHomeForm?.into = p; model.newProjectForm?.into = p
             }
+        case "render-settings":   // render-settings:<png>: the Settings view, drawn to an image at 2x
+            if parts.count > 1 {
+                SettingsInfo.shared.refresh()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    MainActor.assumeIsolated {
+                        let r = ImageRenderer(content: SettingsView(scrolls: false).environment(model))
+                        r.scale = 2
+                        if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+                           let png = rep.representation(using: .png, properties: [:]) { try? png.write(to: URL(fileURLWithPath: parts[1])) }
+                    }
+                }
+            }
+        case "ask-legacy": LegacyPrompt.run()
         case "sheet-ok": if model.moveIntoHomeForm != nil { model.confirmMoveIntoHome() } else { model.commitNewProject() }
         case "sheet-cancel": model.cancelSheet()
         case "undo": NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager?.undo()

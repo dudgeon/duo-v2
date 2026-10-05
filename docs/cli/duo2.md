@@ -38,7 +38,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 project make <folder name>` | Make a folder with sessions a documented project: writes a starter PROJECT.md and opens it. Undo with `duo2 undo`. | Make a Project |
 | `duo2 project archive <project>` | File a project away: its tile moves into the map's Archived rollup. Sessions, counts and search are unchanged. Undo with `duo2 undo`. | Archive Project, archived rollup |
 | `duo2 project unarchive <project>` | Bring an archived project back to its topic column. | Unarchive Project |
-| `duo2 home set <folder>` | Make a folder Home, the container of the projects the user tracks (DL-85): adds a HOME.md if there's none. Duo lists every session with or without a Home. Undo with `duo2 undo`. | Choose Home Folder… |
+| `duo2 home set <folder>` | Make a folder Home, the container of the projects the user tracks (DL-85): adds a HOME.md if there's none. Duo lists every session with or without a Home. Undo with `duo2 undo`. | Choose Home Folder…, Change… |
 | `duo2 project move-into-home <project\|folder> [--into <topic folder>]` | Move a project or folder into Home (its top level, or a topic folder with --into) with every session filed under it (journaled; sessions stay its). The user confirms in Duo. Undo with `duo2 undo`. | Move into Home…, Move |
 | `duo2 project reconnect <project\|folder> [--to <folder>]` | A project or folder moved outside Duo (DB-8): its sessions follow it to where it is now (found by Duo, or --to), the way Claude's /cd moves them; journaled. The user confirms in Duo. Undo with `duo2 undo`. | Reconnect Sessions…, Use New Place, Locate Folder… |
 | `duo2 project forget <folder>` | Remove a missing folder's tile from Duo (DB-8); its sessions stay in Claude's storage and in search. Undo with `duo2 undo`. | Remove from Duo |
@@ -128,7 +128,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 |---|---|---|
 | `duo2 browser open [url]` | A browser tab in the right pane (⌥⌘T). Sites not on the allow list show Allow or Open in Browser instead of loading (DL-3). | New Browser Tab, Open Location…, Open in Browser, Copy Address |
 | `duo2 browser allow <host>` | Add a site to the allow list, so its pages open in Duo's browser tabs (and its subdomains). | — |
-| `duo2 browser sites` | The allow list: sites Duo opens in its own browser tabs; everything else opens in the system browser (DL-3). | — |
+| `duo2 browser sites` | The allow list: sites Duo opens in its own browser tabs; everything else opens in the system browser (DL-3). | Edit… |
 | `duo2 browser tabs` | Browser tabs open in Duo: id, project, title, address. | — |
 | `duo2 browser read [selector] [--tab <id>]` | The page's text (or one element's), with its title and address (LR-45). Allowed sites only. | — |
 | `duo2 browser click <selector> [--tab <id>]` | Click the element a CSS selector names, scrolled into view. | — |
@@ -170,11 +170,12 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Command | What it does | In the app |
 |---|---|---|
 | `duo2 doctor` | How this terminal finds Duo, whether it can reach it, and what Duo installed. | — |
-| `duo2 install` | Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74). | Install |
-| `duo2 uninstall` | Remove exactly what `duo2 install` added (anything you edited stays). | — |
+| `duo2 install` | Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74). | Install, Install… |
+| `duo2 uninstall` | Remove exactly what `duo2 install` added (anything you edited stays). | Remove… |
+| `duo2 settings [claude-path <path\|auto> \| notify on\|off \| dock-badge on\|off]` | Duo's settings (S3-1): with no arguments, all of them; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge. | Choose…, Use Found One |
 | `duo2 walk setup <test id>` | Put Duo in the state an acceptance-walk test starts from (the walk page's Set up test button, or `duo2://walk-setup?id=…`). Steps come from ~/DuoAcceptance/walk-setups.json, never from the caller. | Set up test |
 | `duo2 hook pre-edit` | Used by Duo's sessions (a PreToolUse hook): Claude's Edit, MultiEdit and Write on a document open in Duo go through the editor instead of the file (DL-78). | — |
-| `duo2 legacy [disable --yes \| restore <backup>]` | Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them. | — |
+| `duo2 legacy [disable --yes \| restore <backup>]` | Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them. | Disable…, Restore |
 
 ## In the app only
 
@@ -190,9 +191,11 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | No other sessions in | a disabled hint on + Add |
 | No templates yet: add .md files to a templates folder | a disabled hint |
 | Not Now | the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later |
+| OK | dismisses a notice |
 | Open Settings… | not built: Settings waits on its design (DB-10) |
 | Previous Pane | not built yet |
 | Resume a session | the debug gallery only (DL-59 removed it from the app) |
 | Save to Recreate | writes the user's own text back after the file was removed on disk; Claude can do the same with `duo2 doc edit` (content) once the user asks |
+| Show in Finder | reveals a file or folder in Finder (Settings, editor notices, launch sheets) |
 | Toggle Right Pane | not built yet |
 | confirmation sheet | the user's own consent; Claude can't confirm for them |

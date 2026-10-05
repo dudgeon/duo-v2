@@ -17,10 +17,20 @@ public enum ClaudeLocator {
 
     public static func resolve() -> String? {
         if let c = cached { return c }
-        let found = lookUp()
+        // One the user chose in Settings wins while it runs (LR-19, S3-1).
+        let found = chosenRunnable ?? lookUp()
         cached = .some(found)
         return found
     }
+
+    /// The `claude` chosen in Settings, if it's a program Duo can run.
+    public static var chosenRunnable: String? {
+        guard let p = DuoState.load().claudePath, FileManager.default.isExecutableFile(atPath: p) else { return nil }
+        return p
+    }
+
+    /// The one Duo finds by itself, ignoring a choice (Settings' "Use Found One").
+    public static func found() -> String? { lookUp() }
 
     private static func lookUp() -> String? {
         let home = FileManager.default.homeDirectoryForCurrentUser.path

@@ -170,6 +170,8 @@ public final class AppModel {
     /// Property names and values for the properties block's suggestions, per project (PropertyCorpus).
     @ObservationIgnored var propertyCorpus: (project: String, at: Date, json: [String: Any])?
     @ObservationIgnored var scanningCorpus = false
+    /// Sessions already notified for their current wait (S3-6).
+    @ObservationIgnored var notified = Set<String>()
     public var newProjectForm: NewProjectForm?
     /// Restore on relaunch (LR-58): off for scripted and capture runs.
     @ObservationIgnored public var restoreEnabled = false
@@ -278,6 +280,8 @@ public final class AppModel {
         merged.sessions = merged.sessions.filter { s in s.sessionId.map { ids.insert($0).inserted } ?? true }
         if merged != fixture { fixture = merged }
         pushNoteContext()
+        Notifier.shared.model = self
+        notifyNeedsYou()
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts)
         // What was open when Duo last quit comes back once the sessions are known (LR-58).
