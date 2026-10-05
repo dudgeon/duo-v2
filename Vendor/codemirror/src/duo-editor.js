@@ -127,9 +127,9 @@ const livePreview = ViewPlugin.fromClass(class {
 
 // The document's own frontmatter lines, decorated in place: the text stays the truth (LR-30), and
 // undo is the document's undo. Nothing here rewrites a line the user didn't act on (LR-37).
-// A task note keeps its own approved look (slice2 task-note.html): fences hidden, no icons, a status
-// popup and live session lines. Every other document follows frontmatter.html: fences in text2, a
-// type icon in the gutter, the value's control after it, a fold chevron.
+// One look everywhere (DL-102, Q-33), as frontmatter.html draws it: fences in text2, a type icon in
+// the gutter, the value's control after it, a fold chevron. A task note adds its status popup,
+// `+ Add` on `sessions:` and live session lines (S2-5).
 const STATE_GLYPHS = {
   needsYou: `<circle cx="5" cy="5" r="5" fill="var(--duo-needs-you)"/>`,
   readyForReview: `<path d="M5 0 10 5 5 10 0 5z" fill="var(--duo-text)"/>`,
@@ -410,7 +410,7 @@ function propertiesDecorations(state) {
   const p = parseFrontmatter(state.doc, caretLine(state));
   if (!p) return Decoration.none;
   const doc = state.doc, ctx = state.field(contextField), task = ctx.task || p.isTask;
-  const folded = !task && state.field(foldField);
+  const folded = state.field(foldField);
   const active = new Set();
   for (const r of state.selection.ranges) for (let n = doc.lineAt(r.from).number; n <= doc.lineAt(r.to).number; n++) active.add(n);
   const claude = new Set();
@@ -428,8 +428,6 @@ function propertiesDecorations(state) {
   }
   for (const L of p.lines) {
     const cls = ["duo-fm"];
-    if (task && L === p.lines[0]) cls.push("duo-fm-first");
-    if (task && L === p.lines[p.lines.length - 1]) cls.push("duo-fm-last");
     if (active.has(L.n)) cls.push("duo-fm-active");
     else if (claude.has(L.n)) cls.push("duo-fm-claude");
     if (p.invalid === L.n) cls.push("duo-fm-error");
@@ -448,13 +446,12 @@ function propertiesDecorations(state) {
     if (L.kind !== "key") continue;
     out.push(Decoration.mark({ class: "duo-fm-key" }).range(L.from, L.keyEnd));
     if (claude.has(L.n) && !active.has(L.n)) out.push(Decoration.widget({ widget: new ClaudeLabelWidget(), side: 2 }).range(L.to));
-    if (task) {
-      if (L.key === "status" && L.value) out.push(Decoration.replace({ widget: new StatusWidget(L.value.replace(/^["']|["']$/g, "")) }).range(L.vFrom, L.vTo));
-      else if (L.key === "sessions" && L.value === "") out.push(Decoration.widget({ widget: new AddWidget(L.key), side: 1 }).range(L.to));
-      continue;
-    }
     if (broken) continue;
     out.push(Decoration.widget({ widget: new IconWidget(L.type, L.n, L.key), side: -1 }).range(L.from));
+    if (task) {
+      if (L.key === "status" && L.value) { out.push(Decoration.replace({ widget: new StatusWidget(L.value.replace(/^["']|["']$/g, "")) }).range(L.vFrom, L.vTo)); continue; }
+      if (L.key === "sessions" && L.value === "") { out.push(Decoration.widget({ widget: new AddWidget(L.key), side: 1 }).range(L.to)); continue; }
+    }
     const v = L.value.trim();
     if (L.type === "checkbox") {
       out.push(Decoration.widget({ widget: new BoolWidget(/^true$/i.test(v), L.vFrom, L.vFrom + v.length), side: -1 }).range(L.vFrom));
@@ -466,11 +463,7 @@ function propertiesDecorations(state) {
       out.push(Decoration.widget({ widget: new ControlWidget("open", { url, title }), side: 1 }).range(L.to));
     }
   }
-  if (task) {
-    // The approved task-note look: the fences give way to the heading and the rule.
-    out.push(Decoration.replace({ widget: new HeadingWidget(p.count, false, false, p.invalid, false), block: true }).range(open.from, open.to));
-    out.push(Decoration.replace({ widget: new RuleWidget(p.invalid ? p.why : ""), block: true }).range(close.from, blankAfter ? next.to : close.to));
-  } else {
+  {
     out.push(Decoration.widget({ widget: new HeadingWidget(p.count, true, false, p.invalid, false), block: true, side: -1 }).range(open.from));
     for (const f of [open, close]) {
       out.push(Decoration.line({ class: `duo-fm duo-fm-fence ${f === open ? "duo-fm-first" : "duo-fm-last"}${active.has(f.number) ? " duo-fm-active" : ""}` }).range(f.from));
