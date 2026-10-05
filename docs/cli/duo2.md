@@ -10,6 +10,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 |---|---|---|
 | `duo2 ping` | Check that Duo is running and reachable. | — |
 | `duo2 update` | Whether a newer Duo is on GitHub, and where to get it (Duo › Check for Updates…). | Check for Updates… |
+| `duo2 update probe` | Whether in-app updates can work on this Mac, without Duo running: the update feed and the DMG reachable from here, and Duo installed where it can be replaced. | — |
 | `duo2 status` | What Duo is showing: the view, the open project, session and document, and counts. | — |
 | `duo2 needs-you` | Sessions waiting for the user, with their questions. | Needs You Elsewhere |
 | `duo2 undo` | Undo Duo's last move, merge or Make a Project (Edit › Undo). | Undo |

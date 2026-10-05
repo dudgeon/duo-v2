@@ -36,7 +36,7 @@ Measured against §3a's test: Geoff can use Duo all day instead of Terminal plus
 
 **Pulled forward from v1.1 and later** (each logged): search with its full UI (F-56), browser tabs and page driving (F-71, F-72), reconciling a moved project (F-78).
 
-**Left for v1:** gate zero on the work Mac; the menu bar (DB-26); narrow windows (DB-25); in-app updates (Sparkle, Phase L); Geoff's acceptance walk (`docs/acceptance/`).
+**Left for v1:** gate zero on the work Mac, now including whether in-app updates work there (`docs/plan/spikes/sparkle-work-mac.md`); the menu bar (DB-26, proposed as Q-41); narrow windows (DB-25); Geoff's acceptance walk (`docs/acceptance/`). In-app updates (Sparkle) are built (F-85).
 
 ---
 

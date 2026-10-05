@@ -29,7 +29,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
 public enum ActionID: String, CaseIterable, Sendable {
     // Duo
     case update
-    case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup", settings
+    case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup", settings, updateProbe = "update probe"
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
     case viewSidebar = "view sidebar", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
@@ -107,6 +107,7 @@ extension DuoAction {
         // Duo
         .init(.ping, .app, "", "Check that Duo is running and reachable."),
         .init(.update, .app, "", "Whether a newer Duo is on GitHub, and where to get it (Duo › Check for Updates…).", ui: ["Check for Updates…"], timeout: 30),
+        .init(.updateProbe, .app, "", "Whether in-app updates can work on this Mac, without Duo running: the update feed and the DMG reachable from here, and Duo installed where it can be replaced.", local: true),
         .init(.status, .app, "", "What Duo is showing: the view, the open project, session and document, and counts.", everyday: true),
         .init(.needsYou, .app, "", "Sessions waiting for the user, with their questions.", ui: ["Needs You Elsewhere"]),
         .init(.undo, .app, "", "Undo Duo's last move, merge or Make a Project (Edit › Undo).", ui: ["Undo"]),

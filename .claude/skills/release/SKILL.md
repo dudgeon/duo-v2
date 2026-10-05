@@ -64,6 +64,10 @@ The script prints the failing step and where its evidence is.
 | `tag … already exists` | Pick the next version. If a run died after pushing the tag but before `gh release create`, finish by hand with `gh release create v<v> build/release/<v>/Duo-<v>.dmg build/release/<v>/Duo-<v>.dmg.sha256 --verify-tag --title "Duo <v>" --notes-file …`. |
 | `the release build failed` | The committed tree doesn't build in a clean checkout (an uncommitted file it depends on, say). Fix it on the branch first. |
 
+## Sparkle (in-app updates)
+
+Since 0.1.6, release builds update themselves with Sparkle (`Vendor/Sparkle/README.md`). The script signs Sparkle's helper, updater app and framework inside out, signs the DMG with the Ed25519 key in `~/.duo-signing/sparkle-ed25519.key` (`sign_update`), writes `build/release/<v>/appcast.xml` (this version, its DMG's URL, length and signature, the notes as HTML) and uploads it with the release. The app reads `releases/latest/download/appcast.xml`, so pre-releases never reach installed copies. If the Sparkle tool or key is missing, the preflight stops. Check a published feed with `duo2 update probe` (it also tells whether a Mac can reach it; the work-Mac test is `docs/plan/spikes/sparkle-work-mac.md`).
+
 ## Not yet
 
-Sparkle updates, Universal (Intel) builds and an app icon are open Phase L work (build plan, G1). Don't add them as part of a release cut.
+Universal (Intel) builds and an app icon are open Phase L work (build plan, G1). Don't add them as part of a release cut.

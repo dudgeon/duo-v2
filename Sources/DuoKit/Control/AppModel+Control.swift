@@ -556,7 +556,7 @@ extension AppModel {
             walkSetup(t, done: done)
         case .searchRebuild:
             rebuildSearchIndex(); done(.ok("Rebuilding the search index; `duo2 search-status` shows progress."))
-        case .help, .doctor, .legacy, .install, .uninstall, .hook, .search, .searchStatus:
+        case .help, .doctor, .legacy, .install, .uninstall, .hook, .search, .searchStatus, .updateProbe:
             done(.fail("`duo2 \(id.rawValue)` runs in the CLI, not the app"))
         }
     }

@@ -85,6 +85,8 @@ case .install:
     }
     Installer.recordConsent(true, cli: cli)
     print(Installer.install(cli: cli).lines.joined(separator: "\n"))
+case .updateProbe:
+    exit(probeUpdates())
 case .uninstall:
     print(Installer.uninstall().lines.joined(separator: "\n"))
 case .doctor:
@@ -137,3 +139,72 @@ default:
         fail("\(error). Run `duo2 doctor`.", code: 69)
     }
 }
+
+/// `duo2 update probe` (the work-Mac test for Sparkle): can this Mac reach the update feed and the
+/// DMG it names, and is Duo installed where the updater can replace it? Prints each step and a
+/// verdict; exit 0 when all pass.
+func probeUpdates() -> Int32 {
+    let feed = URL(string: "https://github.com/dudgeon/duo-v2/releases/latest/download/appcast.xml")!
+    var ok = true
+    func fetch(_ url: URL, method: String) -> (status: Int, finalHost: String, data: Data, error: String?) {
+        var req = URLRequest(url: url, timeoutInterval: 20)
+        req.httpMethod = method
+        let done = DispatchSemaphore(value: 0)
+        nonisolated(unsafe) var out: (Int, String, Data, String?) = (0, "", Data(), nil)
+        URLSession.shared.dataTask(with: req) { data, resp, err in
+            let h = resp as? HTTPURLResponse
+            out = (h?.statusCode ?? 0, h?.url?.host ?? "", data ?? Data(), err?.localizedDescription)
+            done.signal()
+        }.resume()
+        done.wait()
+        return out
+    }
+    print("Update feed: \(feed.absoluteString)")
+    let f = fetch(feed, method: "GET")
+    var enclosure: URL?
+    if let e = f.error {
+        ok = false; print("  ✗ couldn't reach it: \(e)")
+    } else if f.status == 404 {
+        ok = false; print("  ✗ 404: no release has published a feed yet (the first is 0.1.6), or the latest release lacks appcast.xml")
+    } else if f.status != 200 {
+        ok = false; print("  ✗ HTTP \(f.status) from \(f.finalHost)")
+    } else {
+        let xml = String(decoding: f.data, as: UTF8.self)
+        let version = xml.firstMatch(of: /<sparkle:shortVersionString>([^<]+)</)?.1 ?? "?"
+        enclosure = (xml.firstMatch(of: /<enclosure url="([^"]+)"/)?.1).flatMap { URL(string: String($0)) }
+        print("  ✓ reached (via \(f.finalHost)); latest is \(version)")
+    }
+    if let enclosure {
+        print("Update download: \(enclosure.lastPathComponent)")
+        let d = fetch(enclosure, method: "HEAD")
+        if let e = d.error { ok = false; print("  ✗ couldn't reach it: \(e)") }
+        else if d.status != 200 { ok = false; print("  ✗ HTTP \(d.status) from \(d.finalHost)") }
+        else { print("  ✓ reachable (served from \(d.finalHost))") }
+    }
+    // Where Duo is installed: the updater replaces the app in place.
+    let me = Bundle.main.executableURL?.resolvingSymlinksInPath()
+    let app = me.flatMap { u -> URL? in
+        var x = u
+        while x.path != "/" { if x.pathExtension == "app" { return x }; x.deleteLastPathComponent() }
+        return nil
+    }
+    if let app {
+        let fm = FileManager.default
+        let writable = fm.isWritableFile(atPath: app.path) && fm.isWritableFile(atPath: app.deletingLastPathComponent().path)
+        print("Installed at: \(app.path)")
+        print(writable ? "  ✓ you can replace it (no administrator password needed)"
+                       : "  ! replacing it needs an administrator password: the updater will ask, or install updates by hand")
+        if app.path.hasPrefix("/Volumes/") || app.path.contains("/AppTranslocation/") {
+            ok = false; print("  ✗ running from a disk image or a translocated copy: drag Duo to Applications first")
+        }
+    } else {
+        print("Installed at: not inside an app (a development duo2); run Duo.app/Contents/Helpers/duo2 update probe")
+    }
+    if let proxy = (CFNetworkCopySystemProxySettings()?.takeRetainedValue() as? [String: Any]),
+       (proxy["HTTPSEnable"] as? Int) == 1 || proxy["ProxyAutoConfigURLString"] != nil {
+        print("Network: a system proxy is set (\((proxy["HTTPSProxy"] as? String) ?? (proxy["ProxyAutoConfigURLString"] as? String) ?? "PAC")); the updater uses it too")
+    }
+    print(ok ? "Verdict: in-app updates should work here." : "Verdict: in-app updates are blocked here at the step marked ✗; Duo's update notice (Duo › Check for Updates…) still points to the DMG.")
+    return ok ? 0 : 1
+}
+
