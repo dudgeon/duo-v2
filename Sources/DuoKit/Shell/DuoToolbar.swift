@@ -24,7 +24,7 @@ struct DuoToolbar: ToolbarContent {
         ToolbarSpacer(.flexible)
 
         ToolbarItem(placement: .primaryAction) {
-            JumpField()
+            SearchField()
         }
         .sharedBackgroundVisibility(.hidden)
     }
@@ -156,7 +156,7 @@ struct NeedsYouChip: View {
 /// The search field (handoff §3.1, relabelled by DL-76): opens search with ⇧⌘A, which also finds
 /// projects, groups and sessions by name now that Jump is merged into it (DL-80). The modal isn't
 /// built yet (search M-UI), so for now it is the field's look with no action.
-struct JumpField: View {
+struct SearchField: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {

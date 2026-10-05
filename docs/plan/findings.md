@@ -882,3 +882,33 @@ Built from the decision path page (DL-87 to DL-91):
 
 - After a migration commits, the Claude buckets its moves emptied are removed; after an undo, the ones the undo emptied. Only a folder directly in Claude's `projects/`, only when nothing (but `.DS_Store`) is left. F-64 had found both buckets left behind after Move into Home and its undo.
 - The first run of the new check caught a real bug: undoing a relocate moved the transcript back into a bucket the sweep had removed. Undo now recreates the bucket first. 238 checks pass.
+
+## F-74 · A design system for Claude Design (2026-10-05)
+
+- **How Claude Design reads one:**
+  - The design agent opens a design system's `project/README.md` and `project/tokens.json` first, never the rendered page.
+  - It copies the tokens into its own canvas, and mounts `window.<Namespace>` components when the README names a bundle.
+  - Tokens must be **lists** (`{"tokens":[{"name","value","usage"}]}`, colours per theme). A DTCG name-to-value map is unreadable there: the family shows empty.
+  - Names are unique across families, and each non-type family holds at most 60.
+  - Component previews don't run without `components/bundle.js`. For a SwiftUI app it only declares the namespace (`window.Duo`), and the previews are static recreations from `tokens.css`.
+- **Built:**
+  - `docs/design/system/` mirrors the type's `project/` layout: a README brand book, Model, Surfaces and Working on Duo's design sections, 24 components (README plus preview, each starting with a status line), a cover, and four asset groups (Screens, Targets, Glyphs, Icons, 39 uploads).
+  - It's published as https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH. `design-system.json` in the repo keeps the index and its upload ids.
+- **Generated, checked:**
+  - `scripts/gen-design-system.py` writes the system's `tokens.json` (55 colours, 11 type styles, 28 spacing, 7 radii, 61 sizes, each with a usage note, Swift names kept) and the icon and glyph SVGs (exact path data, ink baked in) from `build-handoff/tokens.json`.
+  - DuoChecks fails when they're stale.
+- **Token cleanup:**
+  - The frontmatter handoff's sizes and eight property icons are merged into `tokens.json`, plus the dash pattern and the folder and task marks.
+  - The generator emits `DuoShadow` (the popover shadow, radius = blur ÷ 2) and `dashPattern`. The four literal popover shadows now use `.duoPopoverShadow()`.
+  - `JumpField` is renamed `SearchField` (DL-80).
+- **Screens on sample data only:**
+  - `DUO_SUPPORT_DIR` stands in for Application Support (Duo's archive, state, journals, search index, socket). With `CLAUDE_CONFIG_DIR` set to a copy of the fixtures' buckets (`cp -Rp`, to keep dates), a capture shows nothing of the user's own sessions.
+  - Without it, Duo's archive copies listed the user's real folders.
+  - A fresh `CLAUDE_CONFIG_DIR` shows Claude Code's first-run and trust screens in terminals, so the All projects shot collapses the left pane.
+- **Found while capturing:** a task row's name was squeezed to "Exec re…" by its pill and status. The name now has layout priority and the status gives way.
+- **Docs:**
+  - Status banners on the superseded handoffs and briefs (what changed, by which DL).
+  - `docs/design/README.md` indexes every design doc with its status and the precedence.
+  - `explorations/README.md` lists what decided each page.
+  - CLAUDE.md points at the system.
+- **Left:** about 200 literal paddings and frames in views (inventory: SearchView 80, ProjectPanes 35, AllProjectsPanes 30, …), and system fonts outside `duoText` in a few stand-ins (C-19).

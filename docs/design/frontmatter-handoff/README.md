@@ -2,6 +2,8 @@
 
 Status: designed · 2026-10-04 · Owner: Geoff · Covers DB-16 of `design-brief-2026-10-04.md` and ENH-1. Written by the design session (Claude).
 
+> **Designed, not built (2026-10-05).** The editor still shows frontmatter as raw YAML. Its tokens are merged into `build-handoff/tokens.json` (`size.propertiesBlock`, the property icons).
+
 Same shape as the other handoffs, and the same rule: the files in `screens/` are the target. This document explains them and covers what a picture cannot show.
 
 | File | What it is |

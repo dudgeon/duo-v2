@@ -193,7 +193,7 @@ struct IdleListPopover: View {
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).fill(DuoColor.pane))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
         .overlay(alignment: .bottomLeading) { PopoverArrow().frame(width: 12, height: 12).offset(x: 44, y: 7) }
-        .shadow(color: DuoColor.text.opacity(0.22), radius: 16, x: 0, y: 12)
+        .duoPopoverShadow()
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Idle sessions")
     }

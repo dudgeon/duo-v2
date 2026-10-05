@@ -2,6 +2,17 @@
 
 Status: for build · 2026-10-03 · Owner: Geoff · Written by the design session (Claude), for the Claude Code agent building Duo.
 
+> **Still the target, with these superseded (2026-10-05):**
+> - The `⌘K` JumpField became the `Search all projects ⇧⌘A` field (DL-80).
+> - `project.html`'s session list by state became Needs you / Open / Today / This week / Earlier (DL-91).
+> - The topic labels, "Project not under a topic" and the Elsewhere placement became folder columns with a folder mark and slash, and an unlabelled first column (DL-83, DL-89, DL-92).
+> - The Project tab card became `PROJECT.md` itself (DL-60).
+> - "Tasks are parked" no longer holds: tasks are notes with linked sessions (DL-87, DL-93).
+> - The §4.1 terminal palette is now designed (surfaces-handoff DB-2).
+> - Several §13 items are designed in later handoffs.
+>
+> The Duo design system: `docs/design/system/`, published at https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH summarises what's current.
+
 This folder is the output of the design pass that `docs/design/claude-design-handoff.md` asked for. **The designs themselves are in `screens/`. They are the target. This document explains them; it does not replace them.**
 
 | File | What it is |

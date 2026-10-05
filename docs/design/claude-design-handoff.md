@@ -2,6 +2,12 @@
 
 Version 1 · 2026-10-03 · Owner: Geoff
 
+> **Historical (2026-10-05).** This was the first brief, answered by `build-handoff/`. Its model has since been replaced:
+> - Topic as an area, and Home as one project (§3), gave way to folders and an optional Home (DL-82 to DL-89).
+> - Parked tasks gave way to tasks as notes (DL-87, DL-93).
+>
+> For the current state read the Duo design system: `docs/design/system/`, published at https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH. `decisions.md` wins over this document.
+
 This is the input package for Claude Design. It describes the product, the people it's for, the information architecture, the decisions already made, the constraints, and the open questions we want the design exploration to answer. It deliberately contains **no reference visuals**: the earlier wireframes were thinking aids, not a direction to emulate. Start fresh.
 
 ---

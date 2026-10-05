@@ -2,6 +2,8 @@
 
 Status: proposed · 2026-10-03 · **Open questions in §4 were answered on 2026-10-03; see `decisions.md` (DL-1 to DL-20).**
 
+> **Later decisions win (2026-10-05).** Some LRs were revised: LR-7 by DL-59, LR-15 by DL-45, LR-55 by DL-74, LR-44 and LR-45 by DL-3 and F-72. `decisions.md` wins where they differ.
+
 Consolidates three reviews of `~/repos/duo` (v0.1.0 → v0.13.7, 1,133 commits, Apr–Sep 2026):
 
 - **[P]** `docs/research/legacy-duo-product-review.md`: VISION, DECISIONS, PRDs, UX docs, help (41 requirements, 15 questions)

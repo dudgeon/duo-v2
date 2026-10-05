@@ -19,7 +19,7 @@ public struct Migrator: Sendable {
     }
 
     public static var defaultJournalDir: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appending(path: "Duo/migrations")
+        (ProcessInfo.processInfo.environment["DUO_SUPPORT_DIR"].map { URL(fileURLWithPath: $0) } ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]).appending(path: "Duo/migrations")
     }
 
     var projects: URL { claudeDir.appending(path: "projects") }

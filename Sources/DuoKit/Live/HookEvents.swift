@@ -2,9 +2,11 @@ import DuoControl
 import Foundation
 
 /// Where Duo keeps its own state: `~/Library/Application Support/Duo/` (Q-13 default).
+/// Duo's own folder in Application Support. `DUO_SUPPORT_DIR` stands in for Application Support in
+/// scripted runs (captures for the design system, F-74), so they never read or touch the user's state.
 public enum DuoPaths {
     public static var support: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appending(path: "Duo")
+        (ProcessInfo.processInfo.environment["DUO_SUPPORT_DIR"].map { URL(fileURLWithPath: $0) } ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]).appending(path: "Duo")
     }
     public static var events: URL { support.appending(path: "events") }
     public static var state: URL { support.appending(path: "state.json") }

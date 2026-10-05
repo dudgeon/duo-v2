@@ -1,0 +1,336 @@
+{
+  "v": 3,
+  "layout": "files",
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-05T00:55:39Z"
+  },
+  "title": "Duo",
+  "namespace": "Duo",
+  "libraries": [],
+  "sections": {},
+  "groups": [
+    "Screens",
+    "Targets",
+    "Glyphs",
+    "Icons"
+  ],
+  "assetGroups": {
+    "Screens": {
+      "name": "Screens",
+      "tile": "l",
+      "order": [
+        "all-projects-sample.png",
+        "all-projects-folders.png",
+        "no-home.png",
+        "project-sample.png",
+        "project-open-and-task.png",
+        "project-tasks-fold.png",
+        "search.png",
+        "idle-list.png",
+        "console-none.png",
+        "browser-not-allowed.png"
+      ],
+      "files": {
+        "all-projects-sample.png": {
+          "name": "all-projects-sample.png",
+          "blob": "bb53592c13776c630f1edeb476d06f1c",
+          "size": 230774,
+          "type": "image/png"
+        },
+        "all-projects-folders.png": {
+          "name": "all-projects-folders.png",
+          "blob": "75f3232304860dac74a21a679b63b55a",
+          "size": 149516,
+          "type": "image/png"
+        },
+        "no-home.png": {
+          "name": "no-home.png",
+          "blob": "c0daa37e06d69ce70d33c4a3718a9e1d",
+          "size": 176688,
+          "type": "image/png"
+        },
+        "project-sample.png": {
+          "name": "project-sample.png",
+          "blob": "98c9facd22617153a9a7b6709f85af6f",
+          "size": 100409,
+          "type": "image/png"
+        },
+        "project-open-and-task.png": {
+          "name": "project-open-and-task.png",
+          "blob": "3daf707cb83ca463fab666e6d7c719b9",
+          "size": 214811,
+          "type": "image/png"
+        },
+        "project-tasks-fold.png": {
+          "name": "project-tasks-fold.png",
+          "blob": "63c60d5594dbf2944ab894cd5daf7d06",
+          "size": 115478,
+          "type": "image/png"
+        },
+        "search.png": {
+          "name": "search.png",
+          "blob": "8642647917f5c790e7e01486a62468d9",
+          "size": 319199,
+          "type": "image/png"
+        },
+        "idle-list.png": {
+          "name": "idle-list.png",
+          "blob": "aa5833d965bb2755a3b39f20e0611225",
+          "size": 380305,
+          "type": "image/png"
+        },
+        "console-none.png": {
+          "name": "console-none.png",
+          "blob": "31c3ee641eb3c339e3526575ea2c9219",
+          "size": 75948,
+          "type": "image/png"
+        },
+        "browser-not-allowed.png": {
+          "name": "browser-not-allowed.png",
+          "blob": "fee56cae979b1fd6b6118a88e3fb2342",
+          "size": 155371,
+          "type": "image/png"
+        }
+      }
+    },
+    "Targets": {
+      "name": "Targets",
+      "tile": "l",
+      "order": [
+        "overview.png",
+        "project.png",
+        "look.png",
+        "flow-zoom-4.png",
+        "search-overview.png",
+        "search-look.png",
+        "idle-list.png",
+        "console-empty-states.png",
+        "console-tabs.png",
+        "home-none.png"
+      ],
+      "files": {
+        "overview.png": {
+          "name": "overview.png",
+          "blob": "e0a3f5151b8d9c701c6668e74dae2a5b",
+          "size": 324497,
+          "type": "image/png"
+        },
+        "project.png": {
+          "name": "project.png",
+          "blob": "1a01c7e1d289ddc1c11f3674fe21d536",
+          "size": 199074,
+          "type": "image/png"
+        },
+        "look.png": {
+          "name": "look.png",
+          "blob": "cdee36ccf844d74f95f4872681d6ea11",
+          "size": 201456,
+          "type": "image/png"
+        },
+        "flow-zoom-4.png": {
+          "name": "flow-zoom-4.png",
+          "blob": "5fe8ee46a0c50c430e414838a175d599",
+          "size": 306823,
+          "type": "image/png"
+        },
+        "search-overview.png": {
+          "name": "search-overview.png",
+          "blob": "b45fbfe5e58bebd9ece1679aa7dac83c",
+          "size": 405876,
+          "type": "image/png"
+        },
+        "search-look.png": {
+          "name": "search-look.png",
+          "blob": "c91066517c194b56b84bed17c6a993bc",
+          "size": 349975,
+          "type": "image/png"
+        },
+        "idle-list.png": {
+          "name": "idle-list.png",
+          "blob": "33d910c88e1a08a8a9bbad768a473814",
+          "size": 405098,
+          "type": "image/png"
+        },
+        "console-empty-states.png": {
+          "name": "console-empty-states.png",
+          "blob": "a3288b140a2635554b74352c1a9e85e0",
+          "size": 260424,
+          "type": "image/png"
+        },
+        "console-tabs.png": {
+          "name": "console-tabs.png",
+          "blob": "f167cf46b89284fea680f32b646d8ee2",
+          "size": 196308,
+          "type": "image/png"
+        },
+        "home-none.png": {
+          "name": "home-none.png",
+          "blob": "04f85f64871cc8e49f46ec43e1449149",
+          "size": 243804,
+          "type": "image/png"
+        }
+      }
+    },
+    "Glyphs": {
+      "name": "Glyphs",
+      "tile": "xs",
+      "order": [
+        "needsYou.svg",
+        "readyForReview.svg",
+        "working.svg",
+        "idle.svg",
+        "resolved.svg"
+      ],
+      "files": {
+        "needsYou.svg": {
+          "name": "needsYou.svg",
+          "blob": "7e97a32bd6b41fd3c1b68bcebf33a71d",
+          "size": 134,
+          "type": "image/svg+xml"
+        },
+        "readyForReview.svg": {
+          "name": "readyForReview.svg",
+          "blob": "f8ece51f6964043bda3c1eb634815bbd",
+          "size": 136,
+          "type": "image/svg+xml"
+        },
+        "working.svg": {
+          "name": "working.svg",
+          "blob": "c26a0ef4773b3be76674f01f78762a92",
+          "size": 181,
+          "type": "image/svg+xml"
+        },
+        "idle.svg": {
+          "name": "idle.svg",
+          "blob": "a2467efe2d91aa59beb8c17ed15b2fe8",
+          "size": 191,
+          "type": "image/svg+xml"
+        },
+        "resolved.svg": {
+          "name": "resolved.svg",
+          "blob": "a858a9aee76cfd5539a20e5491ed68a0",
+          "size": 231,
+          "type": "image/svg+xml"
+        }
+      }
+    },
+    "Icons": {
+      "name": "Icons",
+      "tile": "xs",
+      "order": [
+        "chevronRight.svg",
+        "chevronDown.svg",
+        "searchFile.svg",
+        "searchSession.svg",
+        "shellPrompt.svg",
+        "moreTabs.svg",
+        "propertyText.svg",
+        "propertyList.svg",
+        "propertyNumber.svg",
+        "propertyCheckbox.svg",
+        "propertyDate.svg",
+        "propertyDateTime.svg",
+        "propertyLink.svg",
+        "propertyOpen.svg"
+      ],
+      "files": {
+        "chevronRight.svg": {
+          "name": "chevronRight.svg",
+          "blob": "2598a6904cd440b3228e1304370fb944",
+          "size": 290,
+          "type": "image/svg+xml"
+        },
+        "chevronDown.svg": {
+          "name": "chevronDown.svg",
+          "blob": "14a42ce6159ecac542f51a42aee3994a",
+          "size": 290,
+          "type": "image/svg+xml"
+        },
+        "searchFile.svg": {
+          "name": "searchFile.svg",
+          "blob": "a7b3c5a974598162986db6a73fd501a0",
+          "size": 356,
+          "type": "image/svg+xml"
+        },
+        "searchSession.svg": {
+          "name": "searchSession.svg",
+          "blob": "e3cff519152dc519dd8a586814551018",
+          "size": 282,
+          "type": "image/svg+xml"
+        },
+        "shellPrompt.svg": {
+          "name": "shellPrompt.svg",
+          "blob": "4002eabc49d789063910f940c8bd7a7a",
+          "size": 367,
+          "type": "image/svg+xml"
+        },
+        "moreTabs.svg": {
+          "name": "moreTabs.svg",
+          "blob": "19267e6c41cc861f21cbfd29394a2385",
+          "size": 314,
+          "type": "image/svg+xml"
+        },
+        "propertyText.svg": {
+          "name": "propertyText.svg",
+          "blob": "32c0b9ae716f99b7eba91609987a6aca",
+          "size": 215,
+          "type": "image/svg+xml"
+        },
+        "propertyList.svg": {
+          "name": "propertyList.svg",
+          "blob": "b9075b4ac5d626402fcc75aa0b7020b5",
+          "size": 279,
+          "type": "image/svg+xml"
+        },
+        "propertyNumber.svg": {
+          "name": "propertyNumber.svg",
+          "blob": "8579b9230299738dd63de85cc1a004ca",
+          "size": 252,
+          "type": "image/svg+xml"
+        },
+        "propertyCheckbox.svg": {
+          "name": "propertyCheckbox.svg",
+          "blob": "60034cd1abc05260456a8c9026f4aedf",
+          "size": 272,
+          "type": "image/svg+xml"
+        },
+        "propertyDate.svg": {
+          "name": "propertyDate.svg",
+          "blob": "7764a18e0a80818b465a4a5a56e6d5c6",
+          "size": 278,
+          "type": "image/svg+xml"
+        },
+        "propertyDateTime.svg": {
+          "name": "propertyDateTime.svg",
+          "blob": "843b790342477aff04396361b52101ce",
+          "size": 244,
+          "type": "image/svg+xml"
+        },
+        "propertyLink.svg": {
+          "name": "propertyLink.svg",
+          "blob": "64bc5b97b60f2287e5b6bda491d1d34f",
+          "size": 295,
+          "type": "image/svg+xml"
+        },
+        "propertyOpen.svg": {
+          "name": "propertyOpen.svg",
+          "blob": "03779a5023bc6b947ebe106292982531",
+          "size": 225,
+          "type": "image/svg+xml"
+        }
+      }
+    }
+  },
+  "blobs": {},
+  "docs": {
+    "readme": "project/README.md",
+    "sections": []
+  },
+  "lastChange": {
+    "by": "Geoff",
+    "at": "2026-10-05T00:55:39Z",
+    "via": "Claude Code \u00b7 dudgeon/duo-v2",
+    "note": "First build from the repo: tokens from tokens.json, 24 components, screens and targets"
+  }
+}

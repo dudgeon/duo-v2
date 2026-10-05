@@ -21,7 +21,7 @@ public struct ControlEndpoint: Codable, Sendable, Equatable {
     public static let tokenVariable = "DUO_TOKEN"
 
     static var support: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appending(path: "Duo")
+        (ProcessInfo.processInfo.environment["DUO_SUPPORT_DIR"].map { URL(fileURLWithPath: $0) } ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]).appending(path: "Duo")
     }
     public static var file: URL { support.appending(path: "endpoint.json") }
     /// One socket per user; a second Duo instance takes it over (the newest app answers), except a

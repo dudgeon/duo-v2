@@ -19,7 +19,7 @@ public enum SearchPaths {
     /// `DUO_SEARCH_ROOT` moves everything (tests, scratch indexes).
     public static var root: URL {
         if let r = ProcessInfo.processInfo.environment["DUO_SEARCH_ROOT"] { return URL(fileURLWithPath: r) }
-        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appending(path: "Duo/search")
+        return (ProcessInfo.processInfo.environment["DUO_SUPPORT_DIR"].map { URL(fileURLWithPath: $0) } ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]).appending(path: "Duo/search")
     }
     public static var index: URL { root.appending(path: "index.sqlite") }
     public static var compiledModel: URL { root.appending(path: "model/bge-small-fp16.mlmodelc") }

@@ -76,6 +76,8 @@ w("public enum DuoMetric {")
 for k, v in t["radius"].items():
     w(f"    public static let radius{k[0].upper() + k[1:]}: CGFloat = {num(v)}")
 for k, v in t["border"].items():
+    if k.startswith("$") or not isinstance(v, (int, float)):
+        continue   # notes, and the dash pattern (DuoShadow.dashPattern)
     w(f"    public static let border{k[0].upper() + k[1:]}: CGFloat = {num(v)}")
 s = t["size"]
 w(f"    public static let toolbarHeight: CGFloat = {num(s['toolbarHeight'])}")
@@ -174,6 +176,24 @@ for k, v in styles.items():
     w(f"        case .{k}: DuoTextSpec(size: {num(v['size'])}, lineHeight: {num(v['lineHeight'])}, weight: {weight}, mono: {mono}, tracking: {tracking}, uppercase: {upper})")
 w("        }")
 w("    }")
+w("}")
+w("")
+w("/// The popover shadow (handoff §4.5): search, the action menu, the idle list, drag cards.")
+w("public enum DuoShadow {")
+sh = t["shadow"]["popover"]
+m = re.fullmatch(r"rgba\((\d+),\s*(\d+),\s*(\d+),\s*([0-9.]+)\)", sh["color"].replace(" ", ""))
+w(f"    public static let popoverColor = Color(.sRGB, red: {int(m.group(1))}/255, green: {int(m.group(2))}/255, blue: {int(m.group(3))}/255, opacity: {float(m.group(4))!r})")
+w(f"    /// SwiftUI's radius is half the CSS blur.")
+w(f"    public static let popoverRadius: CGFloat = {num(sh['blur'] / 2)}")
+w(f"    public static let popoverX: CGFloat = {num(sh['x'])}")
+w(f"    public static let popoverY: CGFloat = {num(sh['y'])}")
+w(f"    /// Dashed borders (New project tile, drop targets): on, off.")
+w(f"    public static let dashPattern: [CGFloat] = [{', '.join(num(x) for x in t['border']['dash'])}]")
+w("}")
+w("")
+w("extension View {")
+w("    /// The popover shadow from tokens.json.")
+w("    public func duoPopoverShadow() -> some View { shadow(color: DuoShadow.popoverColor, radius: DuoShadow.popoverRadius, x: DuoShadow.popoverX, y: DuoShadow.popoverY) }")
 w("}")
 w("")
 w("/// Glyph and icon paths in a 10x10 (or stated) view box (handoff §4.4).")

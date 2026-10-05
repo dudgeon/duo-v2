@@ -1,10 +1,5 @@
 import SwiftUI
 
-extension DuoMetric {
-    /// A 1 pt CSS `dashed` border as Chrome draws it in the targets: 3 on, 2 off.
-    static let dashPattern: [CGFloat] = [3, 2]
-}
-
 // Shared pieces from handoff §5. Borders in the targets sit outside their padding (CSS
 // content-box), so content is inset by border width plus padding.
 
@@ -62,7 +57,7 @@ struct Bordered: ViewModifier {
                                 bottom: padding.bottom + width, trailing: padding.trailing + width))
             .overlay(
                 RoundedRectangle(cornerRadius: radius)
-                    .strokeBorder(color, style: StrokeStyle(lineWidth: width, dash: dashed ? DuoMetric.dashPattern : []))
+                    .strokeBorder(color, style: StrokeStyle(lineWidth: width, dash: dashed ? DuoShadow.dashPattern : []))
             )
     }
 }

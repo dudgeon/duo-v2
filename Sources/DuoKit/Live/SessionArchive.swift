@@ -25,7 +25,7 @@ public enum SessionArchive {
 
     public static var root: URL {
         if let r = ProcessInfo.processInfo.environment["DUO_ARCHIVE_ROOT"] { return URL(fileURLWithPath: r) }
-        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appending(path: "Duo/archive")
+        return (ProcessInfo.processInfo.environment["DUO_SUPPORT_DIR"].map { URL(fileURLWithPath: $0) } ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]).appending(path: "Duo/archive")
     }
     static var manifestURL: URL { root.appending(path: "manifest.json") }
     public static func copyURL(_ id: String) -> URL { root.appending(path: "\(id).jsonl") }

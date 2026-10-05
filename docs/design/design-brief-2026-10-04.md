@@ -2,6 +2,13 @@
 
 Version 1 · 2026-10-04 · Owner: Geoff · Written by Claude from the build plan, the handoffs and the code.
 
+> **Since this brief (2026-10-05):**
+> - DB-1 to DB-4 are designed and built (`surfaces-handoff/`); DB-16 is designed (`frontmatter-handoff/`) but not built.
+> - DB-5 ("choosing a workspace") and DB-6's "none" case are replaced by the no-Home pane and first launch (DB-37, S2-3).
+> - "Tasks anywhere: parked" no longer holds (DL-87, DL-93).
+>
+> The current brief is `docs/design/design-brief-slice-2.md`. Current state: `docs/design/system/`.
+
 This brief collects, in one place, every Duo surface that the build has reached but no design covers yet, so one design pass can take several at once (C-5). It states needs, not solutions: what each surface must show, its states, its actions and the decisions that bind it. There are no layouts or colours in it on purpose. The design system, the two altitudes and the components are settled (`docs/design/build-handoff/`, `docs/design/search-handoff/`); everything here must look like it always belonged there. Items are grouped in the order the build reaches them (the build plan's design queue). Each has a short id (DB-n). Where something is built today, it is a plain stub in the system look, and the design replaces it. Use the fixture's world for sample content (`docs/design/build-handoff/fixture.json`): topics Payments, Growth, Platform; projects `checkout-redesign`, `refunds-api-spec`, `fraud-rules-review`, `onboarding-v3`, `pricing-experiment-q4`, `api-deprecations`, and Home (`~/work/home`).
 
 **What we want back:** the same shape as `build-handoff/` and `search-handoff/` (target screens at 1440×900 in the light appearance, a manifest, any token additions, fixture additions, and a README covering what a picture can't show), with [G] / [P] marks so Geoff's decisions and the designer's proposals stay apart.

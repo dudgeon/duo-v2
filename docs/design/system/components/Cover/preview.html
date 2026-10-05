@@ -1,0 +1,44 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box}
+html,body{margin:0;height:288px;background:var(--pane);overflow:hidden}
+.wrap{position:relative;width:960px;height:288px}
+svg{position:absolute;left:0;top:0}
+.console{fill:var(--console)}
+.ink{fill:var(--text)}
+.accent{fill:var(--needsYou)}
+.tint{fill:var(--selected)}
+.edge{fill:var(--rule)}
+.glyph{fill:var(--needsYouOnConsole)}
+.ring{fill:none;stroke:var(--consoleText2);stroke-width:3}
+.tile{rx:var(--radiusCard);ry:var(--radiusCard)}
+.text{position:absolute;left:40px;bottom:36px;width:420px}
+.name{font:600 120px/0.92 var(--font-ui);color:var(--text);letter-spacing:-0.02em}
+.tag{font:400 14px/20px var(--font-ui);color:var(--text2);margin-top:14px}
+</style></head>
+<body><div class="wrap">
+<svg width="960" height="288" viewBox="0 0 960 288" aria-hidden="true">
+<!--
+  blocks: console slab 176 × 288 (11 × panePadding), bleeding top and bottom; tiles from tint, edge, ink and one accent (needsYou)
+  arrangement: the slab at x 496, then the map: three columns of tiles at gapMapColumns (14) pitch, one merged two-wide, as project tiles stack
+  pattern: geometric, modular, dense UI ("tiles cut by the radius tokens"): Duo's map is a grid of project tiles beside a dark console
+  scales: radiusCard 6 on every tile; gapMapColumns 14 and gapTileToTile 10 between them; glyphs at the needs-you and working shapes on the slab
+-->
+<rect class="console" x="496" y="0" width="176" height="288"/>
+<circle class="glyph" cx="536" cy="56" r="10"/>
+<circle class="ring" cx="536" cy="96" r="8.5"/>
+<rect class="edge tile" x="566" y="48" width="78" height="16"/>
+<rect class="edge tile" x="566" y="88" width="62" height="16"/>
+<rect class="tile tint" x="686" y="24" width="80" height="76"/>
+<rect class="tile accent" x="686" y="110" width="80" height="40"/>
+<rect class="tile tint" x="686" y="160" width="80" height="104"/>
+<rect class="tile ink" x="780" y="24" width="80" height="52"/>
+<rect class="tile tint" x="780" y="86" width="174" height="64"/>
+<rect class="tile edge" x="780" y="160" width="80" height="44"/>
+<rect class="tile tint" x="780" y="214" width="80" height="74"/>
+<rect class="tile edge" x="874" y="24" width="80" height="52"/>
+<rect class="tile tint" x="874" y="160" width="80" height="128"/>
+</svg>
+<div class="text"><div class="name">Duo</div><div class="tag">Your Claude Code sessions in projects, with what needs you first.</div></div>
+</div></body></html>

@@ -2,6 +2,13 @@
 
 Status: designed · 2026-10-04 · Owner: Geoff · Answers `docs/design/search-design-brief.md`. Written by the design session (Claude).
 
+> **Since this handoff (2026-10-05):**
+> - Jump merged into search and `⌘K` is free (DL-80): ignore the Jump scope and `⌘K` lines, and `screens/search-jump.html`.
+> - The empty-state and error copy that replaced them is DL-81.
+> - The [P] chords were accepted (DL-79), with Send to Claude as `⌘D`.
+>
+> Built as designed otherwise.
+
 Same shape as `docs/design/build-handoff/`, and the same rule: the files in `screens/` are the target. This document explains them and covers what a picture cannot show.
 
 | File | What it is |

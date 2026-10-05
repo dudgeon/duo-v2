@@ -103,12 +103,12 @@ struct SidebarRowView: View {
                         }
                         .accessibilityLabel(expanded ? "Collapse" : "Expand")
                     StateGlyph(row.state)
-                    Text(row.name).duoText(.bodyEmphasis).lineLimit(1)
+                    Text(row.name).duoText(.bodyEmphasis).lineLimit(1).layoutPriority(1)   // the name keeps its room; status gives way
                     // Tasks and groups mix by urgency; the pill says which (DL-93).
                     CountPill(text: "\(row.task == nil ? "group" : "task") · \(count)", emphasised: true)
                     // A task's status, when it's past open (DL-93).
                     if let task = row.task, let st = model.fixture.tasks?.first(where: { $0.path == task && $0.project == model.currentProject?.name })?.status, st != "open" {
-                        Text(st).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+                        Text(st).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).layoutPriority(-1)
                     }
                     Spacer(minLength: 8)
                     WaitLabel(text: row.wait)

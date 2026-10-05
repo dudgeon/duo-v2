@@ -214,6 +214,22 @@ public enum DuoTextStyle: CaseIterable, Sendable {
     }
 }
 
+/// The popover shadow (handoff §4.5): search, the action menu, the idle list, drag cards.
+public enum DuoShadow {
+    public static let popoverColor = Color(.sRGB, red: 31/255, green: 35/255, blue: 40/255, opacity: 0.22)
+    /// SwiftUI's radius is half the CSS blur.
+    public static let popoverRadius: CGFloat = 16.0
+    public static let popoverX: CGFloat = 0.0
+    public static let popoverY: CGFloat = 12.0
+    /// Dashed borders (New project tile, drop targets): on, off.
+    public static let dashPattern: [CGFloat] = [3.0, 2.0]
+}
+
+extension View {
+    /// The popover shadow from tokens.json.
+    public func duoPopoverShadow() -> some View { shadow(color: DuoShadow.popoverColor, radius: DuoShadow.popoverRadius, x: DuoShadow.popoverX, y: DuoShadow.popoverY) }
+}
+
 /// Glyph and icon paths in a 10x10 (or stated) view box (handoff §4.4).
 public enum DuoGlyphPath {
     public static let needsYou = "<circle cx='5' cy='5' r='5'/>"

@@ -806,6 +806,13 @@ func repoFixture() throws -> Fixture {
     check(inv.positional == ["a.md", "b"] && inv.flags["to"] == "abc" && inv.has("new") && inv.json, "flags and positionals parse")
     let reference = try? String(contentsOf: repoRoot().appending(path: "docs/cli/duo2.md"), encoding: .utf8)
     check(reference == DuoAction.markdown(), "docs/cli/duo2.md is current (regenerate: build/Duo.app/Contents/Helpers/duo2 help --markdown > docs/cli/duo2.md)")
+    // The design system Claude Design reads (docs/design/system) is generated from tokens.json.
+    let gen = Process()
+    gen.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
+    gen.arguments = [repoRoot().appending(path: "scripts/gen-design-system.py").path, "--check"]
+    gen.standardOutput = FileHandle.nullDevice
+    try? gen.run(); gen.waitUntilExit()
+    check(gen.terminationStatus == 0, "docs/design/system tokens and icons are current (regenerate: python3 scripts/gen-design-system.py)")
 
     print("install loop (DL-74, DL-75)")
     let iroot = FileManager.default.temporaryDirectory.appending(path: "duo-install-\(UUID().uuidString)")

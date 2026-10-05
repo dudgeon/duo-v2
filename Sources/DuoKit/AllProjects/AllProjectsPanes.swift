@@ -329,7 +329,7 @@ struct NewProjectTile: View {
             .frame(height: DuoMetric.newProjectTileHeight + 2 * DuoMetric.borderHairline)
             .overlay(
                 RoundedRectangle(cornerRadius: DuoMetric.radiusCard)
-                    .strokeBorder(DuoColor.controlEdge, style: StrokeStyle(lineWidth: 1, dash: DuoMetric.dashPattern))
+                    .strokeBorder(DuoColor.controlEdge, style: StrokeStyle(lineWidth: 1, dash: DuoShadow.dashPattern))
             )
             .accessibilityAddTraits(.isButton)
     }
@@ -622,7 +622,7 @@ struct DragCard: View {
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
         // The popover shadow token (0 12 32, the text colour at 22%).
-        .shadow(color: DuoColor.text.opacity(0.22), radius: 16, x: 0, y: 12)
+        .duoPopoverShadow()
         .padding(24)  // room for the shadow inside the drag image
     }
 }

@@ -58,7 +58,7 @@ struct SearchPanel: View {
                 }
             }
         }
-        .shadow(color: DuoColor.text.opacity(0.22), radius: 16, x: 0, y: 12)
+        .duoPopoverShadow()
     }
 
     var showsFilters: Bool {
@@ -902,7 +902,7 @@ struct ActionMenu: View {
         .frame(width: DuoMetric.actionMenuWidth)
         .background(RoundedRectangle(cornerRadius: DuoMetric.actionMenuRadius).fill(DuoColor.pane))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.actionMenuRadius).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
-        .shadow(color: DuoColor.text.opacity(0.22), radius: 16, x: 0, y: 12)
+        .duoPopoverShadow()
     }
 }
 

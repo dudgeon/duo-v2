@@ -90,6 +90,9 @@ def build():
 
     rf = WS / "payments" / "refunds"
     project(rf, "Ship refunds API spec to eng by Oct 10", "at-risk", "Spec review Oct 8")
+    # Tasks with no sessions yet (DL-93): they sit in the refunds list's Tasks fold.
+    write(rf / "tasks" / "write-the-refund-faq.md", "---\ntype: task\ntitle: Write the refund FAQ\nstatus: open\nsessions: []\n---\n\n# Write the refund FAQ\n\nFor support, before the spec review.\n")
+    write(rf / "tasks" / "check-chargeback-rules.md", "---\ntype: task\ntitle: Check chargeback rules\nstatus: waiting\nsessions: []\n---\n\n# Check chargeback rules\n\nWaiting on legal.\n")
     write(rf / "spec" / "errors.md", "# Errors\n\n| Code | Meaning |\n|---|---|\n| ERR_REFUND_409 | Refund already in progress |\n| ERR_REFUND_422 | Amount exceeds capture |\n")
 
     ob = WS / "growth" / "onboarding"

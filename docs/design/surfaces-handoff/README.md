@@ -2,6 +2,10 @@
 
 Status: slice 1 of several · 2026-10-04 · Owner: Geoff · Answers `docs/design/design-brief-2026-10-04.md`. Written by the design session (Claude).
 
+> **Since this handoff (2026-10-05):**
+> - Slice 1 (DB-1 to DB-4) is built and accepted: the terminal palette (DL-86) and the quick decisions (DL-98).
+> - The slice plan below is replaced by `docs/design/design-brief-slice-2.md`.
+
 Same shape as `build-handoff/` and `search-handoff/`, and the same rule: the files in `screens/` are the target. This document explains them and covers what a picture cannot show. It grows one slice at a time; Geoff reviews each slice on the canvas (page "Surfaces") before the next.
 
 | Slice | Surfaces | Status |
