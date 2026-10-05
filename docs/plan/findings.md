@@ -1008,3 +1008,10 @@ Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and o
 - **Signing:** the update key is an Ed25519 key in `~/.duo-signing/sparkle-ed25519.key`, made with CryptoKit because Sparkle's `generate_keys` stores keys in the keychain (a prompt would block an unattended release); `sign_update --ed-key-file` signs with it and the public key verified its signature. `release.sh` signs Sparkle's `Autoupdate`, `Updater.app` and the framework inside out with Developer ID and Hardened Runtime before the app, signs the DMG for Sparkle, and publishes `appcast.xml` with the release. Development bundles re-seal the framework ad hoc (removing the XPC services breaks its original seal).
 - **Rehearsed** (`release.sh 0.1.6 --no-publish`): the app with Sparkle and the DMG were notarized (Accepted), Gatekeeper accepts both, the app launched from the DMG, and the appcast names build 133 with a verified signature.
 - **The work Mac:** `duo2 update probe` (local, no Duo needed) checks the feed, the DMG's host, the install location and any proxy, with a verdict. The test plan is `docs/plan/spikes/sparkle-work-mac.md`; it needs 0.1.6 published (the first feed) and then 0.1.7 to update to.
+
+## F-88 · A folder that isn't a project listed no files (2026-10-05)
+
+- **Found (Geoff):** a folder moved in Finder, opened in Duo, showed only its path under Files; Make a Project "fixed" it. The snapshot filled `projectFiles` for projects only, never for folder entries (DL-63), so their tree was empty, against DL-63's "keep working as is".
+- **Fixed:** a folder entry's tree lists like a project's (lazily, the folders it has open), unless the folder is gone. Checked in DuoChecks.
+- **Also:** inside a folder nothing said it wasn't a project; Make a Project was only on the map tile's right-click. A notice over the session list now says so and offers **Make a Project** (stand-in, Q-44). Captured on scratch data: `build/ui/folder-notice-live.png`.
+

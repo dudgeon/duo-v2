@@ -250,6 +250,8 @@ public enum LiveSnapshot {
             }
             folderProjects.append(p)
             folders[name] = url
+            // A folder works as it is (DL-63): its tree lists, as a project's does (F-88).
+            if !gone { files[name] = treeFiles(url, showHidden: ctx.showHidden, expanded: ctx.expanded[url.path] ?? []) }
             for id in ids where !claimed.contains(id) {
                 claimed.insert(id)
                 sessions.append(makeSession(id, project: name, folder: url, entry: nil))

@@ -341,6 +341,7 @@ func repoFixture() throws -> Fixture {
     let orphanProject = hs.projects.first { $0.name == "scratch" }
     check(orphanProject?.isFolderOnly == true && orphanProject?.hasClaudeMD == true && hfolders["scratch"] != nil
           && hs.sessions.first { $0.sessionId == "hist-orphan" }?.project == "scratch", "a session from a non-project folder makes a folder entry, CLAUDE.md noted (DL-63)")
+    check(hs.projectFiles["scratch"] == ["CLAUDE.md"], "a folder entry's tree lists its files, as a project's does (DL-63, F-88)")
     var moveIdx = SessionIndex.load(project: proj)
     moveIdx.sessions.append(.init(sessionId: "hist-orphan", provenance: "moved-by-user:scratch"))
     try moveIdx.save(project: proj)
