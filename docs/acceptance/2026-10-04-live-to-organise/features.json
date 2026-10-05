@@ -2837,6 +2837,182 @@
     "human": [],
     "at": "2026-10-04"
    }
+  },
+  {
+   "id": "s2-task-rows",
+   "group": "Slice 2 look",
+   "title": "Task rows read like tasks",
+   "what": "A task row leads with a task box and reads `in progress · 2` (or `2 sessions` while open), with no wait of its own; groups keep `group · n`.",
+   "steps": [
+    "Open **checkout**.",
+    "Look at **Exec review prep** in the session list, then open the **Tasks** fold."
+   ],
+   "expect": "The row: chevron, glyph, box, bold name, `in progress · 1`. Tasks fold lines are indented under the fold.",
+   "ref": "DL-100, F-76",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Captured checkout on the fixtures and compared with `project-sessions.html`; dropped the row's wait to match."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s2-outside-home",
+   "group": "Slice 2 look",
+   "title": "Folders outside Home sit under OUTSIDE HOME",
+   "what": "Home's columns first, then a full-width OUTSIDE HOME label on a hairline, then folders by path; a long path keeps its first and last parts.",
+   "steps": [
+    "Go to All projects (⌘↑)."
+   ],
+   "expect": "`~/DUOACCEPTANCE/ELSEWHERE /` under OUTSIDE HOME, holding scratch and side-project; the New project tile ends the map.",
+   "ref": "DL-100",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Captured with the fixtures and compared with `map-folders.html`."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s2-no-home",
+   "group": "Slice 2 look",
+   "title": "No Home: explain once, Not Now",
+   "what": "With no Home, Home's pane says \"Choose a Home folder\", one paragraph, Choose Home Folder… and Not Now. Not Now collapses the pane and doesn't ask again.",
+   "steps": [
+    "Quit Duo. Run `open build/Duo.app --args --workspace none`.",
+    "Click **Not Now**.",
+    "Quit and open it the same way again."
+   ],
+   "expect": "The pane collapses after Not Now, and starts collapsed next time. File › Choose Home Folder… still works.",
+   "ref": "DL-100",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Captured and compared with `no-home.html`: the message now sits under the heading, no empty session row."
+    ],
+    "didnt": [
+     "Not Now's persistence across launches (needs a real quit and relaunch)."
+    ],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s2-needs-you",
+   "group": "Slice 2 look",
+   "title": "Needs-you cards say why, and fold long questions",
+   "what": "The project line reads `checkout · permission` / `· question` / `· plan to approve`; a question past 6 lines folds with \"… more\"; with nothing waiting the column says \"Nothing needs you.\"",
+   "steps": [
+    "Ask a session something that needs a permission, and another a long question.",
+    "Click **… more** on the long one."
+   ],
+   "expect": "The reasons show; \"… more\" opens the whole question and \"less\" folds it.",
+   "ref": "DL-100, Q-31",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "\"Nothing needs you.\" captured on the fixtures."
+    ],
+    "didnt": [
+     "A live permission prompt and a plan approval: needs a real Claude turn."
+    ],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s2-move-sheet",
+   "group": "Slice 2 look",
+   "title": "Move into Home is a sheet with Into",
+   "what": "Move into Home… opens Duo's own sheet: the paths, the session count, a warning, and Into (Home's top level or a topic folder). Undo puts it back.",
+   "steps": [
+    "Right-click **side-project** on the map › **Move into Home…**.",
+    "Choose **Into › payments /**, then **Move**.",
+    "Edit › Undo."
+   ],
+   "expect": "side-project moves to `workspace/payments/side-project` with its session, and back on Undo.",
+   "ref": "DL-100, F-76",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Captured the sheet; `duo2 project move-into-home side-project --into payments` moved it, `duo2 undo` restored it; fixtures and Claude's folders identical to a backup after."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s2-new-project",
+   "group": "Slice 2 look",
+   "title": "New project sheet",
+   "what": "+ New project (tile, search's New project \"…\", Move to Project ▸ New Project…) opens a sheet: Name, Goal, In, the path, Start a Claude session in it.",
+   "steps": [
+    "Click **+ New project** on the map.",
+    "Type `billing-emails`, a goal, In **payments /**, **Create Project**.",
+    "Edit › Undo."
+   ],
+   "expect": "The project opens with a Claude session in it; its tile shows the goal. Undo removes the folder.",
+   "ref": "DL-100, F-76",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Captured the sheet; `duo2 project new billing-emails --goal … --into payments` wrote PROJECT.md with the goal; `duo2 undo` removed it."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s2-properties",
+   "group": "Slice 2 look",
+   "title": "A task note's properties block",
+   "what": "A task note shows its frontmatter as the properties block: names muted, `status:` as a popup, each linked session with its live glyph and wait, and `+ Add`.",
+   "steps": [
+    "Open **checkout** › Tasks › **Exec review prep**.",
+    "Click the status popup and pick **waiting**.",
+    "Click **+ Add** and pick a session."
+   ],
+   "expect": "The status line rewrites only `status:`; the new session appears as a line with its glyph. Type icons, suggestions and the date picker aren't built yet (DB-16).",
+   "ref": "DL-100, DB-16, F-76",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Rendered the editor page at 460 and measured against `task-note.html`: block, rows and rule on the target's pixels."
+    ],
+    "didnt": [
+     "The menus themselves in the app (window captures can't draw web views, F-25)."
+    ],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "s2-link-glyph",
+   "group": "Slice 2 look",
+   "title": "Session links carry their state",
+   "what": "A session link in a note's text shows its session's state glyph before the name.",
+   "steps": [
+    "In the same note, look at \"Started from Interview synthesis notes\"."
+   ],
+   "expect": "A glyph (diamond when ready for review) before the underlined name; a click opens the session.",
+   "ref": "DL-100",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Seen in the rendered editor page."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
   }
  ],
  "decisions": [
