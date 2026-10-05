@@ -531,6 +531,8 @@ struct SessionOrganizeMenu: ViewModifier {
                     }
                     Divider()
                     Menu("Move to Project") {
+                        Button("New Project…") { model.moveSessionsToNewProject([id]) }
+                        Divider()
                         ForEach(model.moveTargets(excluding: s.project)) { p in
                             Button(p.isFolderOnly ? "\(p.name) (folder)" : p.name) { model.moveSessions([id], to: p.name) }
                         }

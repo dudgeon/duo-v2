@@ -247,6 +247,19 @@ extension AppModel {
             newShell(); done(.ok("Opened a shell in \(currentProject?.name ?? fixture.home?.name ?? "the console")."))
         case .groups, .groupNew, .groupAdd, .groupRemove, .groupRename, .groupDelete:
             groupVerb(id, inv, req, done)
+        case .sessionMove where inv.has("new"):
+            guard let k = inv[0], let s = findSession(k, in: nil), let sid = s.sessionId, let name = inv.flags["to"] ?? inv[1] else {
+                return done(.fail("usage: \(id.action.usage)"))
+            }
+            if let why = newProjectProblem(name) { return done(.fail(why)) }
+            confirm(title: "Move “\(s.name)” to a new project “\(name)”?",
+                    detail: "Duo makes \(name)'s folder in Home with a starter PROJECT.md. Files stay where they are; the session moves to the new folder the next time you resume it. You can undo this.",
+                    button: "Create and Move") { [weak self] ok in
+                guard let self else { return }
+                guard ok else { return done(.fail("Not moved: the user clicked Cancel in Duo. Nothing changed and nothing is pending.")) }
+                if let why = self.createProject(named: name, moving: [sid]) { return done(.fail(why)) }
+                done(.ok("Made the project \(name) in Home and filed \(s.name) in it; it moves there on its next resume. Undo: duo2 undo"))
+            }
         case .sessionMove:
             guard let k = inv[0], let s = findSession(k, in: nil), let sid = s.sessionId, let to = inv.flags["to"] ?? inv[1], let dst = project(named: to) else {
                 return done(.fail("usage: \(id.action.usage)"))
