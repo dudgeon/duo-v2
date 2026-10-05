@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1100">
+<meta name="design-size" content="1100x380">
+<meta name="design-kind" content="sheet">
+<meta name="design-surface" content="S3-6">
+<title>Duo · S3-6 · Notifications and the Dock badge</title>
+<!--
+S3-6 · Notifications and the Dock badge.
+DESIGN SHEET. Approved by Geoff 2026-10-05 (DL-101, DL-102); exported from the canvas https://claude.ai/artifact/GNXvk4CWjarrXeURrLcyVY (board Notifications.dc.html).
+It is a picture written in HTML: match what it draws, do not port its markup. Exempt, as in build-handoff: the traffic lights and toolbar material,
+anything macOS draws (notifications, the Dock, menus, the date picker), and everything inside a dark pane below its tab strip.
+-->
+<style>
+body{margin:0}
+button{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;cursor:default}
+a{color:#5B636D;text-decoration:underline;text-decoration-color:#8B939C;text-underline-offset:3px}a:hover{color:#1F2328;text-decoration-color:#1F2328}
+</style>
+</head>
+<body>
+<div style="width: 1100px; height: 380px; box-sizing: border-box; padding: 30px 40px; display: flex; flex-direction: row; gap: 48px; align-items: flex-start; background: #FFFFFF; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px"><div style="display: flex; flex-direction: column; gap: 8px"><div style="font-size: 11px; line-height: 16px; color: #5B636D">A notification (drawn by macOS; content only) [P]</div><div style="width: 360px; box-sizing: border-box; display: flex; gap: 10px; padding: 12px 14px; border-radius: 16px; background: rgba(246, 246, 246, 0.96); border: 1px solid #C9CDD3; box-shadow: 0 12px 32px rgba(31, 35, 40, 0.22); white-space: normal"><div style="width: 36px; height: 36px; flex: none; border-radius: 8px; background: #15171B; color: #E6E8EB; display: flex; align-items: center; justify-content: center; font-weight: 600">D</div><div style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 600">Run migrations</span><span style="color: #5B636D">checkout · permission</span><span>Allow Bash: <span style="font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 12px;">npm run db:migrate</span>?</span></div></div></div><div style="display: flex; flex-direction: column; gap: 8px"><div style="font-size: 11px; line-height: 16px; color: #5B636D">The Dock badge [P]</div><div style="position: relative; width: 64px; height: 64px; border-radius: 14px; background: #15171B; color: #E6E8EB; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600">D<span style="position: absolute; top: -6px; right: -8px; min-width: 22px; height: 22px; box-sizing: border-box; padding: 0 6px; border-radius: 11px; background: #E5484D; color: #FFFFFF; font-size: 13px; line-height: 22px; text-align: center">2</span></div></div><div style="display: flex; flex-direction: column; gap: 8px"><div style="font-size: 11px; line-height: 16px; color: #5B636D">The rules [P]</div><div style="width: 420px; display: flex; flex-direction: column; gap: 6px; white-space: normal"><div>Only <b>needs you</b> notifies. Ready for review and working never do.</div><div style="color: #5B636D">One per wait: a session that keeps waiting doesn’t repeat. Never for the session you’re looking at, and never while Duo is in front.</div><div style="color: #5B636D">The title is the session, the subtitle its project and reason, the text Claude’s question as asked. Clicking it opens the project with the card selected.</div><div style="color: #5B636D">macOS asks for permission the first time a session needs you while Duo is in the background, never at launch and never in a scripted run.</div><div style="color: #5B636D">The Dock badge counts sessions that need you; none, no badge. Both can be turned off in Settings.</div></div></div></div>
+</body>
+</html>

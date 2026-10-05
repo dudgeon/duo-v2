@@ -197,6 +197,7 @@ public enum DuoTextStyle: CaseIterable, Sendable {
     case body
     case bodyEmphasis
     case title
+    case heading1
     case control
     case chip
     case sectionLabel
@@ -211,6 +212,7 @@ public enum DuoTextStyle: CaseIterable, Sendable {
         case .body: DuoTextSpec(size: 13.0, lineHeight: 20.0, weight: .regular, mono: false, tracking: 0.0, uppercase: false)
         case .bodyEmphasis: DuoTextSpec(size: 13.0, lineHeight: 20.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
         case .title: DuoTextSpec(size: 14.0, lineHeight: 20.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
+        case .heading1: DuoTextSpec(size: 18.0, lineHeight: 24.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
         case .control: DuoTextSpec(size: 12.0, lineHeight: 16.0, weight: .regular, mono: false, tracking: 0.0, uppercase: false)
         case .chip: DuoTextSpec(size: 12.0, lineHeight: 20.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
         case .sectionLabel: DuoTextSpec(size: 11.0, lineHeight: 16.0, weight: .semibold, mono: false, tracking: 0.66, uppercase: true)

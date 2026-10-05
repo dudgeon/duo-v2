@@ -1,0 +1,87 @@
+{
+  "$note": "Slice 3 (design-brief-slice-3.md), approved 2026-10-05 (DL-101, DL-102). kind=target: a window or pane to build to. kind=sheet: parts and states on one page.",
+  "canvas": "https://claude.ai/artifact/GNXvk4CWjarrXeURrLcyVY",
+  "screens": [
+    {
+      "file": "screens/settings.html",
+      "s3": "S3-1",
+      "kind": "target",
+      "width": 680,
+      "height": 860,
+      "shows": "Settings (⌘,): one grouped pane on ground.",
+      "canvasBoard": "Main.dc.html"
+    },
+    {
+      "file": "screens/settings-states.html",
+      "s3": "S3-1",
+      "kind": "sheet",
+      "width": 1180,
+      "height": 600,
+      "shows": "Settings rows in their other states: Claude Code not found, a path that does not run, duo2 not installed, legacy Duo found.",
+      "canvasBoard": "SettingsStates.dc.html"
+    },
+    {
+      "file": "screens/missing-folder.html",
+      "s3": "S3-2",
+      "kind": "sheet",
+      "width": 1500,
+      "height": 660,
+      "shows": "Tiles for a folder not found, found elsewhere, in the Trash, on a disk that is not connected; the notice inside the project.",
+      "canvasBoard": "Missing.dc.html"
+    },
+    {
+      "file": "screens/launch-questions.html",
+      "s3": "S3-3",
+      "kind": "sheet",
+      "width": 2060,
+      "height": 620,
+      "shows": "The launch sheets: legacy Duo, install consent, .gitignore, and a partly failed disable.",
+      "canvasBoard": "LaunchQuestions.dc.html"
+    },
+    {
+      "file": "screens/editor-notices.html",
+      "s3": "S3-4",
+      "kind": "sheet",
+      "width": 2560,
+      "height": 640,
+      "shows": "Editor notices: conflict (with the lines outlined), removed, renamed, read only, and a notice on another tab.",
+      "canvasBoard": "EditorNotices.dc.html"
+    },
+    {
+      "file": "screens/editor-document.html",
+      "s3": "S3-5",
+      "kind": "target",
+      "width": 460,
+      "height": 1240,
+      "shows": "The right pane drawing a document: headings, lists, task boxes, a quote, code, a table, an image, Claude's addition and deletion marker.",
+      "canvasBoard": "EditorDocument.dc.html"
+    },
+    {
+      "file": "screens/editor-states.html",
+      "s3": "S3-5",
+      "kind": "sheet",
+      "width": 980,
+      "height": 700,
+      "shows": "Editor states: a wide table, a missing image, code with no language, the caret line, find.",
+      "canvasBoard": "EditorStates.dc.html"
+    },
+    {
+      "file": "screens/notifications.html",
+      "s3": "S3-6",
+      "kind": "sheet",
+      "width": 1100,
+      "height": 380,
+      "shows": "A notification's content, the Dock badge, and the rules.",
+      "canvasBoard": "Notifications.dc.html"
+    },
+    {
+      "file": "screens/confirmations.html",
+      "s3": "S3-7",
+      "kind": "sheet",
+      "width": 1600,
+      "height": 480,
+      "shows": "Merge, Delete Session… and Make a Project as Duo sheets.",
+      "canvasBoard": "Confirmations.dc.html"
+    }
+  ]
+}

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A director agent: the options, thought through</title>
+<style>
+  :root {
+    --ink: #1d1d1f; --muted: #6e6e73; --line: #e3e3e8; --bg: #fbfbfd; --card: #fff;
+    --good: #1f7a4d; --goodbg: #e8f5ee; --warn: #9a5b00; --warnbg: #fdf3e2; --bad: #b42318; --badbg: #fdecea;
+    --accent: #3a5ccc; --accentbg: #eef2fd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#f2f2f7; --muted:#a1a1a6; --line:#38383d; --bg:#161618; --card:#1f1f22;
+      --good:#5fd39a; --goodbg:#16301f; --warn:#f0b452; --warnbg:#33270f; --bad:#ff7b72; --badbg:#3a1714;
+      --accent:#8ea8ff; --accentbg:#1c2340; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 28px; line-height:1.2; margin: 0 0 6px; letter-spacing:-0.01em; }
+  h2 { font-size: 19px; margin: 44px 0 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 16px; margin: 0 0 6px; }
+  p { margin: 8px 0; }
+  .sub { color: var(--muted); margin-bottom: 24px; }
+  .step { display:inline-block; font-size:12px; font-weight:600; color:var(--accent); background:var(--accentbg);
+    border-radius: 999px; padding: 2px 10px; margin-bottom: 6px; letter-spacing:.02em; }
+  code { font: 13px/1.4 ui-monospace, "SF Mono", Menlo, monospace; background: var(--accentbg); padding: 1px 5px; border-radius: 4px; }
+  .callout { background: var(--card); border:1px solid var(--line); border-left: 4px solid var(--accent);
+    border-radius: 8px; padding: 14px 16px; margin: 16px 0; }
+  .callout.warn { border-left-color: var(--warn); }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(380px,1fr)); gap: 14px; margin-top: 14px; }
+  .card { background: var(--card); border:1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .card .tag { float:right; font-size:12px; font-weight:600; border-radius:999px; padding:2px 9px; }
+  .yes { color:var(--good); background:var(--goodbg); }
+  .part { color:var(--warn); background:var(--warnbg); }
+  .no { color:var(--bad); background:var(--badbg); }
+  .card ul { margin: 6px 0 0; padding-left: 18px; }
+  .card li { margin: 3px 0; }
+  .pro::marker { content: "+  "; color: var(--good); font-weight:700; }
+  .con::marker { content: "−  "; color: var(--bad); font-weight:700; }
+  table { width:100%; border-collapse: collapse; margin: 12px 0; background: var(--card); border:1px solid var(--line); border-radius: 10px; overflow:hidden; font-size: 14px; }
+  th, td { text-align:left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight:600; }
+  tr:last-child td { border-bottom: 0; }
+  .pill { display:inline-block; min-width: 22px; text-align:center; border-radius:6px; padding: 0 6px; font-weight:600; font-size:13px; }
+  svg text { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+  .diagram { background: var(--card); border:1px solid var(--line); border-radius: 10px; padding: 12px; margin: 14px 0; }
+  ol.plan > li { margin: 10px 0; }
+  .muted { color: var(--muted); }
+  .rec { background: var(--goodbg); border:1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 16px 0; }
+  .rec h3 { color: var(--good); }
+  footer { margin-top: 48px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>A director agent: the options, thought through</h1>
+<p class="sub">5 October 2026 · Follows <code>docs/research/director-agent.md</code>. Home Mac: Claude Code 2.1.289. Work Mac: 2.1.219.</p>
+
+<div class="callout">
+  <strong>Where I land:</strong> try the director at home this week as a skill, with no app code. At the same time, ask whether the work Mac can be updated. Write the director so that "tell a worker" and "hear back from a worker" are swappable. Then the work Mac's answer only decides <em>which</em> plumbing it uses, not whether the idea works. Build anything in Duo only if the home trial earns it and the work Mac can't be updated.
+</div>
+
+<h2>1 · Start from what a director actually does</h2>
+<p>Strip Claude Code Projects down and a director needs only four abilities. Everything else (the ledger, the review gate, merging with your go-ahead) is the director's own behaviour and works on any version.</p>
+
+<div class="diagram">
+<svg viewBox="0 0 800 270" width="100%" role="img" aria-label="Director with four verbs to workers">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+  </defs>
+  <g style="color:var(--ink)">
+    <rect x="20" y="95" width="170" height="80" rx="10" fill="var(--accentbg)" stroke="var(--accent)"/>
+    <text x="105" y="128" text-anchor="middle" font-size="16" font-weight="600" fill="var(--ink)">Director</text>
+    <text x="105" y="150" text-anchor="middle" font-size="12" fill="var(--muted)">you talk to this one</text>
+
+    <rect x="600" y="20" width="180" height="56" rx="10" fill="var(--card)" stroke="var(--line)"/>
+    <text x="690" y="45" text-anchor="middle" font-size="14" fill="var(--ink)">Worker · own worktree</text>
+    <text x="690" y="63" text-anchor="middle" font-size="12" fill="var(--muted)">t-retry-backoff</text>
+    <rect x="600" y="107" width="180" height="56" rx="10" fill="var(--card)" stroke="var(--line)"/>
+    <text x="690" y="132" text-anchor="middle" font-size="14" fill="var(--ink)">Worker · own worktree</text>
+    <text x="690" y="150" text-anchor="middle" font-size="12" fill="var(--muted)">t-docs-pass</text>
+    <rect x="600" y="194" width="180" height="56" rx="10" fill="var(--card)" stroke="var(--line)"/>
+    <text x="690" y="219" text-anchor="middle" font-size="14" fill="var(--ink)">Worker · own worktree</text>
+    <text x="690" y="237" text-anchor="middle" font-size="12" fill="var(--muted)">t-flaky-test</text>
+  </g>
+  <!-- verbs -->
+  <g font-size="13">
+    <line x1="195" y1="105" x2="595" y2="48" stroke="var(--good)" stroke-width="2" marker-end="url(#a)" style="color:var(--good)"/>
+    <text x="300" y="66" fill="var(--good)" font-weight="600">1 start a worker ✓</text>
+
+    <line x1="595" y1="135" x2="195" y2="130" stroke="var(--good)" stroke-width="2" marker-end="url(#a)" style="color:var(--good)" stroke-dasharray="2 4"/>
+    <text x="300" y="122" fill="var(--good)" font-weight="600">2 see its state ✓</text>
+
+    <line x1="195" y1="150" x2="595" y2="215" stroke="var(--bad)" stroke-width="2.5" marker-end="url(#a)" style="color:var(--bad)"/>
+    <text x="250" y="200" fill="var(--bad)" font-weight="600">3 tell it something ✗ at work</text>
+
+    <line x1="595" y1="232" x2="195" y2="168" stroke="var(--warn)" stroke-width="2.5" marker-end="url(#a)" style="color:var(--warn)"/>
+    <text x="330" y="250" fill="var(--warn)" font-weight="600">4 hear back when it's done ~ at work</text>
+  </g>
+</svg>
+<p class="muted" style="margin:4px 6px 0">On 2.1.219, verbs 1 and 2 work (<code>claude --bg</code> makes the worktree, <code>claude agents --json</code> shows state). Verb 3 is missing. Verb 4 half-works: a hook can write the worker's last message to a file, but nothing wakes the director by itself.</p>
+</div>
+
+<p>That reframes the work-Mac problem. It isn't "the work Mac can't run a director". It's "the work Mac is missing <strong>one wire and half of another</strong>." So the options are really different ways to supply those two wires.</p>
+
+<h2>2 · The options</h2>
+
+<div class="grid">
+
+  <div class="card">
+    <span class="tag yes">Works at work: if IT allows</span>
+    <h3>A · Update the work Mac</h3>
+    <p><code>claude update</code> to ≥ 2.1.236 (stable is 2.1.285). Both wires appear natively: <code>SendMessage</code> starts a turn in an idle worker, and <code>notify_when_idle</code> pings the director.</p>
+    <ul>
+      <li class="pro">No code. The same director runs at home and at work.</li>
+      <li class="pro">Also brings the 2.1.222 fix: worktree sessions can no longer run destructive git on your main checkout.</li>
+      <li class="con">Out of your hands if IT pins the version.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <span class="tag no">Works at work: no</span>
+    <h3>B · Try it at home first, natively</h3>
+    <p>A <code>director</code> skill plus agent definition. It uses <code>duo2 session new</code> to start workers, Duo tasks as the ledger, <code>SendMessage</code> to talk, and git to land. This is D0 from the research.</p>
+    <ul>
+      <li class="pro">No app code. Running for real this week, on this repo.</li>
+      <li class="pro">Answers the question that matters most: does a director actually save you attention?</li>
+      <li class="con">Doesn't help at work until A or D happens.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <span class="tag part">Works at work: clunky</span>
+    <h3>C · Files and hooks only</h3>
+    <p>Workers' Stop hooks write reports to <code>.director/reports/</code>, and Monitor wakes the director. To reach a worker, the director drops a note in <code>.director/inbox/&lt;id&gt;.md</code>, which a Stop hook hands over when that worker next finishes a turn.</p>
+    <ul>
+      <li class="pro">Plain Claude Code. Works on 2.1.219, inside Duo or not.</li>
+      <li class="con">An <em>idle</em> worker never sees its inbox. You must stop it and run <code>claude -p --resume</code>, which is ugly in a visible Duo terminal.</li>
+      <li class="con">Hooks in every worker's settings. More moving parts to debug at work.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <span class="tag yes">Works at work: yes, in Duo</span>
+    <h3>D · Duo carries the messages</h3>
+    <p>Two new <code>duo2</code> verbs. <code>duo2 message &lt;session&gt; "…"</code> waits until the session's prompt is idle, then pastes the text and presses Enter. <code>duo2 wait &lt;session&gt;</code> returns when that session goes idle, with its last message.</p>
+    <ul>
+      <li class="pro">Works on any Claude version Duo supports. Duo already does both halves: it types <code>/cd</code> + Enter into moved sessions (DL-64, <code>AppModel.swift:330</code>), and it already captures each turn's last message from the Stop hook (<code>HookEvents.swift:95</code>). DL-45 allows typing into sessions.</li>
+      <li class="pro">Everything stays visible in Duo's terminals. You can watch a worker get its instructions.</li>
+      <li class="con"><strong>Typed text counts as you.</strong> A native <code>SendMessage</code> arrives marked as from another session, and can't approve anything. Text Duo types is indistinguishable from your own typing. See §4.</li>
+      <li class="con">App code, after v1. Typing into a TUI is fragile if you're typing in that session at the same moment, or if a dialog is open.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <span class="tag part">Works at work: one task only</span>
+    <h3>E · Agent teams</h3>
+    <p>Experimental on 2.1.219 (<code>CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1</code>). It has a lead, teammates, a shared task list and mailboxes.</p>
+    <ul>
+      <li class="pro">Real messaging between agents, today, at work.</li>
+      <li class="con">The team lives and dies with one session and one task, so it isn't a director you keep feeding. No worktrees for teammates; they share a checkout. Token-heavy. Off by default, and IT may block the flag.</li>
+      <li class="pro">Still useful <em>inside</em> one worker, for a big refactor.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <span class="tag yes">Works at work: yes, invisibly</span>
+    <h3>F · Headless turns (a script runs the workers)</h3>
+    <p>Each worker turn is <code>claude -p --resume &lt;id&gt; "…" --output-format json</code>. The result <em>is</em> the report, and the next instruction <em>is</em> the next turn. The director (or a script) runs them in the background.</p>
+    <ul>
+      <li class="pro">Rock-solid on any version, including the old ones. No messaging needed at all.</li>
+      <li class="con">Workers aren't live sessions you can glance at or step into mid-turn. Approvals can't be asked, so permissions must be set up front. It feels like a batch system, not a team.</li>
+    </ul>
+  </div>
+
+</div>
+
+<h2>3 · Side by side</h2>
+<table>
+  <thead><tr><th>Option</th><th>Works at work today</th><th>App code</th><th>You can watch workers in Duo</th><th>Reaching an idle worker</th><th>Main risk</th></tr></thead>
+  <tbody>
+    <tr><td><strong>A</strong> Update</td><td><span class="pill part">if IT allows</span></td><td>none</td><td>yes</td><td>native, clean</td><td>IT says no</td></tr>
+    <tr><td><strong>B</strong> Home trial</td><td><span class="pill no">no</span></td><td>none</td><td>yes</td><td>native, clean</td><td>pattern doesn't earn its keep</td></tr>
+    <tr><td><strong>C</strong> Files + hooks</td><td><span class="pill part">clunky</span></td><td>none</td><td>yes</td><td>stop + resume</td><td>fiddly; idle workers</td></tr>
+    <tr><td><strong>D</strong> Duo carries messages</td><td><span class="pill yes">yes</span></td><td>2 verbs</td><td>yes</td><td>typed when idle</td><td>typed text carries your authority</td></tr>
+    <tr><td><strong>E</strong> Agent teams</td><td><span class="pill part">one task</span></td><td>none</td><td>one session only</td><td>mailbox</td><td>not a lasting director</td></tr>
+    <tr><td><strong>F</strong> Headless turns</td><td><span class="pill yes">yes</span></td><td>none</td><td>no (transcripts only)</td><td>is the design</td><td>no live view, no approvals</td></tr>
+  </tbody>
+</table>
+
+<h2>4 · How I weighed them</h2>
+
+<p><span class="step">Thought 1</span><br>
+<strong>The scarce thing is evidence, not plumbing.</strong> We don't yet know whether a director saves you attention or just moves it. Projects' early users report coordinators that relay rather than check (#97924), and plans drained "before lunch". The cheapest way to find out is B. It costs a skill file and runs where the plumbing is already complete. Nothing else should be built before that answer exists.</p>
+
+<p><span class="step">Thought 2</span><br>
+<strong>Don't pick the work-Mac plumbing yet; make it swappable.</strong> The director's skill only ever does two transport things: <em>tell worker X</em> and <em>wait for worker X's report</em>. If the skill says "use <code>SendMessage</code> if <code>/list-agents</code> exists, otherwise <code>duo2 message</code> if Duo offers it, otherwise the inbox file", the same director runs at home, at work after an update, and at work without one. That makes A, C and D interchangeable back-ends rather than competing plans.</p>
+
+<p><span class="step">Thought 3</span><br>
+<strong>A beats everything for work, if it's available.</strong> It's free and it's the version Anthropic tests. It also closes a safety gap that matters precisely for directors. Below 2.1.222, a worker "isolated" in a worktree can still run <code>git reset --hard</code> against your main checkout. So ask first.</p>
+
+<p><span class="step">Thought 4</span><br>
+<strong>If the update is refused, D is the better fallback than C.</strong> C's weak spot (an idle worker can't be reached) is exactly D's strength. D also fits Duo's direction: every action has a <code>duo2</code> verb (DL-71), and Duo already types into sessions when that's simplest (DL-45). But D has one real cost, below, so it needs your decision, not mine.</p>
+
+<div class="callout warn">
+  <strong>The catch with D: whose voice is it?</strong> Claude Code deliberately marks cross-session messages as <em>not from you</em>. They "can't approve anything", and a worker treats them as a colleague's request. Text that Duo types into a terminal arrives as if you typed it. A director could then, in effect, say "yes, force-push" in your voice.
+  <br><br>Mitigations:
+  <ul>
+    <li>Duo prefixes every typed message with <code>[from director · not Geoff]</code>, and the workers' brief says such text never counts as your approval.</li>
+    <li>The workers' PreToolUse hook hard-blocks merges, force-pushes and destructive git whatever anyone says.</li>
+    <li>Duo refuses to type while a permission dialog is open.</li>
+  </ul>
+  That makes D acceptable, but it's still weaker than the native channel. It's the main reason D is a fallback, not the plan.
+</div>
+
+<p><span class="step">Thought 5</span><br>
+<strong>E and F aren't directors, but they're good tools for one.</strong> A worker can run an agent team or a workflow for a big task. A nightly sweep can be headless turns. Neither replaces the long-lived conversation you feed.</p>
+
+<h2>5 · What I'd do, in order</h2>
+<div class="rec">
+<h3>Recommended sequence</h3>
+<ol class="plan">
+  <li><strong>This week, at home: B.</strong> I write the <code>director</code> agent and skill with the swappable transport from Thought 2, using native messaging. You give it a real batch of Duo work, say three or four independent fixes. We judge it on one test: <em>did you look at fewer things to get the same work landed?</em></li>
+  <li><strong>In parallel: A.</strong> You run <code>claude update</code> on the work Mac. If it doesn't stick, ask IT for ≥ 2.1.236. One message, no code.</li>
+  <li><strong>Only if B earns it <em>and</em> A is refused: D.</strong> Two <code>duo2</code> verbs with the "not Geoff" prefix and the guard hook. It's small, and logged as ENH-9's D1 alongside <code>session new --worktree</code>.</li>
+  <li><strong>Only if B earns it: the director surface in Duo.</strong> Thread cards, Ready for review, Land. That's new UI, so it goes through a design brief first.</li>
+</ol>
+</div>
+
+<h2>6 · What I need from you</h2>
+<ol>
+  <li><strong>Go on B?</strong> A skill and an agent file in this repo, no app code, tried on real Duo work this week.</li>
+  <li><strong>Can the work Mac update?</strong> Try <code>claude update</code> there and tell me the version it ends on.</li>
+  <li><strong>If D is ever needed:</strong> are you comfortable with the director typing into workers (prefixed, guarded), given that typed text carries your voice?</li>
+</ol>
+
+<footer>Sources and versions: <code>docs/research/director-agent.md</code>. Code references are to this repo at <code>eead5d9</code>.</footer>
+</main>
+</body>
+</html>
