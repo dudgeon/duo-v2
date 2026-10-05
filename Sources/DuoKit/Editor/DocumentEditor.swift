@@ -26,6 +26,11 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// The file is gone from disk (deleted or moved outside Duo). The buffer stays; autosave
     /// pauses so Duo doesn't quietly recreate a file someone removed (DL-77).
     public private(set) var removedOnDisk = false { didSet { if oldValue != removedOnDisk { onStateChange?() } } }
+    /// Renamed or moved on disk by something else; Duo followed it (S3-4). The new path, until dismissed.
+    public var renamedTo: String? { didSet { if oldValue != renamedTo { onStateChange?() } } }
+    /// Called when Duo follows a rename it saw on disk: old file, new file.
+    var onRenamed: ((URL, URL) -> Void)?
+    private var fileFD: Int32 = -1
     /// Called when conflict or removed-on-disk changes (the bars under the document redraw).
     var onStateChange: (() -> Void)?
     /// A link clicked in the document (DL-87): its target as written.
@@ -92,6 +97,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         }
         dirty = false
         conflict = false
+        renamedTo = nil
         removedOnDisk = false
         url = file
         readOnlyReason = nil
@@ -107,7 +113,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         if keepMine {
             FileHistory.snapshot(file, data, source: "resolve-mine")
             diskBytes = data
-            webView.callAsyncJavaScript("duo.setBaseText(b); return 1", arguments: ["b": text], in: nil, in: .page) { [weak self] _ in
+            webView.callAsyncJavaScript("duo.setBaseText(b); duo.markConflict(null); return 1", arguments: ["b": text], in: nil, in: .page) { [weak self] _ in
                 guard let self else { return }
                 self.conflict = false
                 self.dirty = true
@@ -199,6 +205,26 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         watch(file)
     }
 
+    /// An image beside the document, as a data URL (10 MB at most), or nil if it isn't there.
+    func imageDataURL(_ src: String) -> String? {
+        guard let doc = url else { return nil }
+        let rel = src.removingPercentEncoding ?? src
+        let file = rel.hasPrefix("/") ? URL(fileURLWithPath: rel) : doc.deletingLastPathComponent().appending(path: rel).standardizedFileURL
+        guard let size = (try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize, size < 10_000_000,
+              let data = FileManager.default.contents(atPath: file.path) else { return nil }
+        let type: String
+        switch file.pathExtension.lowercased() {
+        case "png": type = "image/png"
+        case "jpg", "jpeg": type = "image/jpeg"
+        case "gif": type = "image/gif"
+        case "webp": type = "image/webp"
+        case "svg": type = "image/svg+xml"
+        case "heic": type = "image/heic"
+        default: return nil
+        }
+        return "data:\(type);base64," + data.base64EncodedString()
+    }
+
     /// Whether this document's properties block was left folded.
     static func folded(_ file: URL) -> Bool { DuoState.load().foldedProperties.contains(file.standardizedFileURL.path) }
 
@@ -224,6 +250,11 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public func userContentController(_ u: WKUserContentController, didReceive m: WKScriptMessage) {
         if let body = m.body as? [String: Any], body["kind"] as? String == "openLink", let link = body["url"] as? String {
             onOpenLink?(link); return
+        }
+        if let body = m.body as? [String: Any], body["kind"] as? String == "image", let id = body["id"] as? Int, let src = body["src"] as? String {
+            // An image in the document (S3-5): the page can't read the project, so Duo hands it over.
+            webView.callAsyncJavaScript("return duo.imageLoaded(i, u)", arguments: ["i": id, "u": imageDataURL(src) ?? NSNull()], in: nil, in: .page) { _ in }
+            return
         }
         if let body = m.body as? [String: Any], let kind = body["kind"] as? String, kind.hasPrefix("property") {
             onPropertyAction?(kind, body); return
@@ -308,6 +339,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         folderWatcher?.cancel(); folderWatcher = nil
         let real = file.resolvingSymlinksInPath()
         let fd = Darwin.open(real.path, O_EVTONLY)
+        fileFD = fd
         if fd >= 0 {
             let src = DispatchSource.makeFileSystemObjectSource(fileDescriptor: fd, eventMask: [.write, .delete, .rename, .extend], queue: .main)
             src.setEventHandler { [weak self] in MainActor.assumeIsolated { self?.diskChanged() } }
@@ -331,6 +363,22 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         let work = DispatchWorkItem { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, self.url == file else { return }
+                // Renamed or moved by something else: the open descriptor knows where it went.
+                // Follow it, unless it went to the Trash (then it reads as removed).
+                if !FileManager.default.fileExists(atPath: file.path), self.fileFD >= 0 {
+                    var buf = [CChar](repeating: 0, count: Int(MAXPATHLEN))
+                    if fcntl(self.fileFD, F_GETPATH, &buf) != -1 {
+                        let now = URL(fileURLWithPath: String(cString: buf))
+                        if now.path != file.resolvingSymlinksInPath().path, !now.path.contains("/.Trash/"),
+                           FileManager.default.fileExists(atPath: now.path) {
+                            self.fileMoved(to: now)
+                            self.renamedTo = now.path
+                            self.lastEvent = "renamed on disk"
+                            self.onRenamed?(file, now)
+                            return
+                        }
+                    }
+                }
                 self.watch(file)          // re-arm on the current inode (or the file's return)
                 self.reconcile(file)
             }
@@ -369,6 +417,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
                         if case .success(let t) = r, let t = t as? String { FileHistory.snapshot(file, Data(t.utf8), source: "conflict-mine") }
                     }
                     self.conflict = true
+                    self.webView.callAsyncJavaScript("return duo.markConflict(l)", arguments: ["l": self.conflictLines], in: nil, in: .page) { _ in }
                 } else {
                     self.diskBytes = data
                     self.conflict = false
@@ -388,6 +437,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
 
     /// The open file was renamed or moved on purpose: follow it, no reload.
     public func fileMoved(to newURL: URL) {
+        if let old = url, kept[old] != nil { kept[newURL] = kept.removeValue(forKey: old) }
         url = newURL
         watch(newURL)
     }
@@ -401,6 +451,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         url = nil
         dirty = false; conflict = false; removedOnDisk = false
     }
+
+    /// Whether a document left while in conflict is waiting with its unsaved text (S3-4: its tab says so).
+    public func keptInConflict(_ file: URL) -> Bool { kept[file]?.conflict == true }
 
     /// What `duo2 doc-status` reports (LR-34).
     public func status(of file: URL) -> String {

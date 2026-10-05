@@ -226,23 +226,37 @@ extension AppModel {
             FileHandle.standardError.write(Data("confirm: \(title) | \(detail.replacingOccurrences(of: "\n", with: " / "))\n".utf8))
             return then(true)
         }
-        let alert = NSAlert()
-        alert.messageText = title
-        alert.informativeText = detail
-        alert.addButton(withTitle: button)
-        alert.addButton(withTitle: "Cancel")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            MainActor.assumeIsolated {
-                NSApp.activate(ignoringOtherApps: true)
-                DuoAlert.present(alert) { r in then(r == .alertFirstButtonReturn) }
-            }
-        }
+        // Duo's own sheet (S3-7, DL-101): the detail's paragraphs, and any list in it as items.
+        var q = Self.question(title: title, detail: detail)
+        q.choices = [.init(label: "Cancel", isCancel: true) { then(false) }, .init(label: button, isDefault: true) { then(true) }]
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { MainActor.assumeIsolated { SheetCenter.shared.ask(q) } }
     }
 
     func info(_ text: String) {
-        let alert = NSAlert()
-        alert.messageText = text
-        DuoAlert.present(alert)
+        if ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {
+            FileHandle.standardError.write(Data("info: \(text)\n".utf8)); return
+        }
+        SheetCenter.shared.ask(DuoQuestion(title: text, choices: [.init(label: "OK", isDefault: true, isCancel: true) {}]))
+    }
+
+    /// Splits a detail written for an alert into a sheet's parts: blank-line paragraphs, and a
+    /// list (lines starting "• ", or the lines after one ending in ":") as items.
+    static func question(title: String, detail: String) -> DuoQuestion {
+        var q = DuoQuestion(title: title, choices: [])
+        for block in detail.components(separatedBy: "\n\n") where !block.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let lines = block.split(separator: "\n").map(String.init)
+            if lines.allSatisfy({ $0.hasPrefix("• ") }) {
+                q.items += lines.map { .init(what: String($0.dropFirst(2)), path: "") }
+            } else if lines.count > 1, lines[0].hasSuffix(":") {
+                q.paragraphs.append(lines[0])
+                q.items += lines.dropFirst().map { .init(what: $0.hasPrefix("• ") ? String($0.dropFirst(2)) : $0, path: "") }
+            } else if q.items.isEmpty {
+                q.paragraphs.append(lines.joined(separator: " "))
+            } else {
+                q.note = [q.note, lines.joined(separator: " ")].compactMap { $0 }.joined(separator: " ")
+            }
+        }
+        return q
     }
 
     /// Edit › Undo, through the main window's undo manager.

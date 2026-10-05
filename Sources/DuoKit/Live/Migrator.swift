@@ -290,8 +290,14 @@ public struct Migrator: Sendable {
             guard !fm.fileExists(atPath: s.to) else { throw Refusal("\(s.to) appeared during the move; stopped") }
             try fm.moveItem(atPath: s.from, toPath: s.to)   // same volume: a rename, atomic per file (§6.3 2)
         case .delete:
-            // Permanent, by the user's explicit choice; the journal keeps what went.
-            if fm.fileExists(atPath: s.from) { try fm.removeItem(atPath: s.from) }
+            // To the Trash (S3-7, DL-101): the user can put it back from there; Duo can't undo it.
+            // Scratch folders (checks) are removed outright so the user's Trash stays theirs.
+            if fm.fileExists(atPath: s.from) {
+                let scratch = s.from.hasPrefix(fm.temporaryDirectory.resolvingSymlinksInPath().path) || s.from.hasPrefix(fm.temporaryDirectory.path) || s.from.hasPrefix("/private/tmp/") || s.from.hasPrefix("/tmp/")
+                if scratch { try fm.removeItem(atPath: s.from) } else {
+                    do { try fm.trashItem(at: URL(fileURLWithPath: s.from), resultingItemURL: nil) } catch { try fm.removeItem(atPath: s.from) }
+                }
+            }
         case .appendRelocated:
             let u = URL(fileURLWithPath: s.from)
             let before = try Data(contentsOf: u)

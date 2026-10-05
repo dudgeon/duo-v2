@@ -14,6 +14,7 @@ struct SheetOverlay: View {
             Group {
                 if let m = model.moveIntoHomeForm { MoveIntoHomeSheet(form: m) }
                 else if let n = model.newProjectForm { NewProjectSheet(form: n) }
+                else if let q = SheetCenter.shared.current { QuestionSheet(q: q).id(q.id) }
             }
             // The targets hang the sheet 38 from the window's top, over the toolbar's hairline.
             .offset(y: DuoMetric.sheetTop - FixtureHarness.designContentTop)

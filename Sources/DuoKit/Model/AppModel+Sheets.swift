@@ -100,5 +100,5 @@ extension AppModel {
         m.finish(m.into)
     }
 
-    public var sheetIsUp: Bool { moveIntoHomeForm != nil || newProjectForm != nil }
+    public var sheetIsUp: Bool { moveIntoHomeForm != nil || newProjectForm != nil || SheetCenter.shared.current != nil }
 }

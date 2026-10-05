@@ -200,6 +200,12 @@ extension AppModel {
     func wireEditor(_ e: EditorController) {
         e.onStateChange = { [weak self] in self?.editorRevision += 1 }
         e.onOpenLink = { [weak self, weak e] link in self?.openLink(link, from: e?.url) }
+        e.onRenamed = { [weak self] old, new in
+            // A rename seen on disk (S3-4): tabs and the tree follow, as for one made in Duo.
+            guard let self, let folder = self.projectFolder,
+                  let o = self.relativePathIn(old, folder: folder), let n = self.relativePathIn(new, folder: folder) else { return }
+            self.moved(o, to: n, url: new)
+        }
         e.onPropertyAction = { [weak self, weak e] kind, body in
             guard let self, let e else { return }
             self.propertyAction(kind, body, in: e)

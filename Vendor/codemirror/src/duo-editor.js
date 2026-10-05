@@ -7,26 +7,47 @@ import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { syntaxTree } from "@codemirror/language";
 import { autocompletion, startCompletion, completionStatus, acceptCompletion } from "@codemirror/autocomplete";
-import { search, searchKeymap, SearchQuery, setSearchQuery, findNext, findPrevious, openSearchPanel, replaceNext } from "@codemirror/search";
+import { search, searchKeymap, SearchQuery, setSearchQuery, getSearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel, replaceNext } from "@codemirror/search";
 
 // ---------- live preview ----------
 
+// A task box, drawn (S3-5): 12, radius 3; done is filled `text` with a white check. Clicking
+// rewrites `[ ]` ↔ `[x]`: the text stays the truth.
 class CheckboxWidget extends WidgetType {
   constructor(checked, from) { super(); this.checked = checked; this.from = from; }
   eq(o) { return o.checked === this.checked && o.from === this.from; }
   toDOM(view) {
-    const box = document.createElement("input");
-    box.type = "checkbox";
-    box.checked = this.checked;
+    const box = document.createElement("span");
     box.className = "duo-task";
+    box.setAttribute("role", "checkbox");
+    box.setAttribute("aria-checked", String(this.checked));
+    box.innerHTML = this.checked
+      ? `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="0.5" y="0.5" width="11" height="11" rx="3" fill="var(--duo-text)"/><path d="M3 6.2 5 8.2 9 3.8" fill="none" stroke="var(--duo-pane)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+      : `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="0.65" y="0.65" width="10.7" height="10.7" rx="3" fill="none" stroke="var(--duo-text2)" stroke-width="1.3"/></svg>`;
     box.addEventListener("mousedown", (e) => {
       e.preventDefault();
-      // Toggle by editing the text: `[ ]` ↔ `[x]`. The text stays the truth.
       view.dispatch({ changes: { from: this.from + 1, to: this.from + 2, insert: this.checked ? " " : "x" } });
     });
     return box;
   }
   ignoreEvent() { return false; }
+}
+// A list's mark, hung in text2 (S3-5): • for -, * and +; the number as written for ordered lists.
+class ListMarkWidget extends WidgetType {
+  constructor(text) { super(); this.text = text; }
+  eq(o) { return o.text === this.text; }
+  toDOM() { const s = document.createElement("span"); s.className = "duo-li-mark"; s.textContent = this.text; return s; }
+}
+// `---` away from the caret: a hairline (S3-5).
+class RuleLineWidget extends WidgetType {
+  eq() { return true; }
+  toDOM() { const s = document.createElement("span"); s.className = "duo-hr"; return s; }
+}
+// A code block's language, top right (S3-5).
+class CodeLangWidget extends WidgetType {
+  constructor(lang) { super(); this.lang = lang; }
+  eq(o) { return o.lang === this.lang; }
+  toDOM() { const s = document.createElement("span"); s.className = "duo-code-lang"; s.textContent = this.lang; return s; }
 }
 
 const hide = Decoration.replace({});
@@ -46,6 +67,7 @@ function buildDecorations(view) {
     for (let n = a; n <= b; n++) active.add(n);
   }
   const ranges = [];
+  const codeLines = new Set();
   // The frontmatter is the properties block's (above); the Markdown parser reads it as text.
   const fm = frontmatterLines(state.doc);
   const fmEnd = fm ? state.doc.line(fm[1]).to : -1;
@@ -59,6 +81,50 @@ function buildDecorations(view) {
         const raw = active.has(line);
         const name = node.name;
         const m = /^ATXHeading(\d)$/.exec(name);
+        if (name === "ListMark" && node.node.parent?.name === "ListItem") {
+          const item = node.node.parent, task = item.getChild("Task");
+          const lineStart = state.doc.lineAt(node.from).from;
+          ranges.push([lineStart, lineStart, Decoration.line({ class: "duo-li" })]);
+          if (!raw) {
+            const text = state.sliceDoc(node.from, node.to);
+            const ordered = item.parent?.name === "OrderedList";
+            // A task item shows only its box; others hang their mark (• or the number).
+            // Nested items take a dash, as the design draws them.
+            let depth = 0;
+            for (let p = item.parent; p; p = p.parent) if (p.name === "ListItem") depth++;
+            if (task) ranges.push([node.from, Math.min(node.to + 1, state.doc.lineAt(node.from).to), hide]);
+            else ranges.push([node.from, Math.min(node.to + 1, state.doc.lineAt(node.from).to), Decoration.replace({ widget: new ListMarkWidget(ordered ? text : depth ? "–" : "•") })]);
+          }
+          return;
+        }
+        if (name === "Task" && /^\[[xX]\]/.test(state.sliceDoc(node.from, node.from + 3))) {
+          ranges.push([node.from + 3, node.to, Decoration.mark({ class: "duo-done" })]);
+        }
+        if (name === "Blockquote") {
+          for (let n = state.doc.lineAt(node.from).number; n <= state.doc.lineAt(node.to).number; n++) {
+            const l = state.doc.line(n);
+            ranges.push([l.from, l.from, Decoration.line({ class: "duo-quote" })]);
+          }
+        } else if (name === "QuoteMark" && !raw) {
+          ranges.push([node.from, Math.min(node.to + 1, state.doc.lineAt(node.from).to), hide]);
+        } else if (name === "HorizontalRule" && !raw) {
+          ranges.push([node.from, node.to, Decoration.replace({ widget: new RuleLineWidget() })]);
+        } else if (name === "FencedCode") {
+          const first = state.doc.lineAt(node.from).number, last = state.doc.lineAt(node.to).number;
+          for (let n = first; n <= last; n++) codeLines.add(n);
+          const info = node.node.getChild("CodeInfo");
+          for (let n = first; n <= last; n++) {
+            const l = state.doc.line(n), fence = (n === first || n === last) && /^\s*(```|~~~)/.test(l.text);
+            const fenceRaw = active.has(n);
+            ranges.push([l.from, l.from, Decoration.line({ class: "duo-codeblock" + (n === first ? " duo-codeblock-first" : "") + (n === last ? " duo-codeblock-last" : "") + (fence && !fenceRaw ? " duo-codeblock-fence" : "") })]);
+            if (fence && !fenceRaw && l.to > l.from) ranges.push([l.from, l.to, hide]);
+          }
+          if (info && !active.has(first)) {
+            const l = state.doc.line(first);
+            ranges.push([l.to, l.to, Decoration.widget({ widget: new CodeLangWidget(state.sliceDoc(info.from, info.to).trim()), side: 1 })]);
+          }
+          return false;
+        }
         if (m) {
           ranges.push([node.from, node.to, headingMark(m[1])]);
         } else if (name === "HeaderMark" && !raw) {
@@ -99,6 +165,14 @@ function buildDecorations(view) {
         }
       },
     });
+  }
+  // Blocks sit 10 apart, as the design draws them (S3-5): a blank line away from the caret is 10 high.
+  for (const { from, to } of view.visibleRanges) {
+    for (let pos = from; pos <= to;) {
+      const l = state.doc.lineAt(pos);
+      if (l.length === 0 && !active.has(l.number) && !codeLines.has(l.number) && l.from > fmEnd) ranges.push([l.from, l.from, Decoration.line({ class: "duo-blank" })]);
+      pos = l.to + 1;
+    }
   }
   ranges.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   const builder = new RangeSetBuilder();
@@ -761,6 +835,28 @@ function searchDecorations(state, a, b, label, words) {
   }
   return Decoration.set(out, true);
 }
+// A conflict's lines, outlined in the text (S3-4): search's outline, labelled "Lines a–b · changed
+// on disk". Stays through typing (mapped), until Duo clears it when the conflict is resolved.
+const setConflict = StateEffect.define();
+const conflictField = StateField.define({
+  create: () => Decoration.none,
+  update(deco, tr) {
+    deco = deco.map(tr.changes);
+    for (const e of tr.effects) if (e.is(setConflict)) {
+      deco = Decoration.none;
+      if (e.value) {
+        const all = [];
+        for (const [a, b] of e.value) {
+          const set = searchDecorations(tr.state, a, b, a === b ? `Line ${a} · changed on disk` : `Lines ${a}–${b} · changed on disk`, []);
+          set.between(0, tr.state.doc.length, (f, t, v) => { all.push(v.range(f, t)); });
+        }
+        deco = Decoration.set(all, true);
+      }
+    }
+    return deco;
+  },
+  provide: (f) => EditorView.decorations.from(f),
+});
 const markAdded = StateEffect.define();
 const clearAdded = StateEffect.define();
 const addedField = StateField.define({
@@ -820,6 +916,165 @@ const clearOnUserEdit = EditorView.updateListener.of((u) => {
   }
 });
 
+// ---------- tables, images and Claude's deletions, drawn between lines (S3-5) ----------
+
+// A table away from the caret is drawn as a table: `rule` borders, the header on `ground`, a
+// wide one scrolling in its box. On the caret's lines it's its Markdown.
+class TableWidget extends WidgetType {
+  constructor(rows, align) { super(); this.rows = rows; this.align = align; }
+  eq(o) { return JSON.stringify(o.rows) === JSON.stringify(this.rows) && o.align.join() === this.align.join(); }
+  toDOM() {
+    const box = document.createElement("div");
+    box.className = "duo-table";
+    const t = document.createElement("table");
+    this.rows.forEach((r, i) => {
+      const tr = document.createElement("tr");
+      r.forEach((c, j) => { const td = document.createElement(i === 0 ? "th" : "td"); td.textContent = c; td.style.textAlign = this.align[j] || "left"; tr.appendChild(td); });
+      t.appendChild(tr);
+    });
+    box.appendChild(t);
+    return box;
+  }
+  ignoreEvent() { return false; }
+}
+function parseTable(text) {
+  const cells = (l) => l.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+  const lines = text.split("\n").filter((l) => l.trim());
+  if (lines.length < 2) return null;
+  const align = cells(lines[1]).map((d) => (/^:-+:$/.test(d) ? "center" : /-+:$/.test(d) ? "right" : "left"));
+  return { rows: [cells(lines[0]), ...lines.slice(2).map(cells)], align };
+}
+
+// An image on its own line: the picture (Duo reads the file and hands it over, since the page
+// can't), radius 6 with a `rule` border, its alt text as a 12 `text2` caption. A missing file is a
+// dashed box naming it.
+const imageWaiters = new Map();
+let imageSeq = 0;
+class ImageWidget extends WidgetType {
+  constructor(src, alt) { super(); this.src = src; this.alt = alt; }
+  eq(o) { return o.src === this.src && o.alt === this.alt; }
+  toDOM() {
+    const fig = document.createElement("div");
+    fig.className = "duo-figure";
+    const show = (url) => {
+      fig.textContent = "";
+      if (url) {
+        const img = document.createElement("img"); img.src = url; img.alt = this.alt; img.className = "duo-img"; fig.appendChild(img);
+        if (this.alt) { const c = document.createElement("div"); c.className = "duo-caption"; c.textContent = this.alt; fig.appendChild(c); }
+      } else {
+        const m = document.createElement("div"); m.className = "duo-img-missing";
+        const name = this.src.split("/").pop(), dir = this.src.includes("/") ? this.src.slice(0, this.src.lastIndexOf("/") + 1) : "this folder";
+        m.innerHTML = `<code></code>&nbsp;isn’t in ${dir.replace(/[<&]/g, "")}`; m.querySelector("code").textContent = name;
+        fig.appendChild(m);
+      }
+    };
+    if (/^(https?:|data:)/.test(this.src)) show(this.src);
+    else {
+      const id = ++imageSeq;
+      imageWaiters.set(id, show);
+      post("image", { id, src: this.src });
+      if (window.duoFlags?.noPost) show(null);
+    }
+    return fig;
+  }
+  ignoreEvent() { return false; }
+}
+
+// Where Claude deleted text (DL-5, S3-5): a hairline marker, "2 lines removed by Claude · Show ·
+// Revert", until the highlight clears. Show opens what went, struck through.
+class DeletionWidget extends WidgetType {
+  constructor(id, removed, block) { super(); this.id = id; this.removed = removed; this.block = block; }
+  eq(o) { return o.id === this.id && o.block === this.block; }
+  toDOM(view) {
+    const d = document.createElement(this.block ? "div" : "span");
+    d.className = "duo-deleted" + (this.block ? " duo-deleted-block" : "");
+    const n = this.removed.replace(/\n$/, "").split("\n").length;
+    const what = this.removed.includes("\n") ? `${n} line${n === 1 ? "" : "s"} removed by Claude` : "Removed by Claude";
+    d.innerHTML = `<span class="duo-deleted-rule"></span><span class="duo-deleted-text"></span><a href="#" class="duo-deleted-show">Show</a><a href="#" class="duo-deleted-revert">Revert</a><span class="duo-deleted-rule"></span>`;
+    d.querySelector(".duo-deleted-text").textContent = what;
+    const body = document.createElement("div"); body.className = "duo-deleted-body"; body.textContent = this.removed; body.hidden = true;
+    d.appendChild(body);
+    d.querySelector(".duo-deleted-show").addEventListener("mousedown", (e) => { e.preventDefault(); body.hidden = !body.hidden; e.target.textContent = body.hidden ? "Show" : "Hide"; view.requestMeasure(); });
+    d.querySelector(".duo-deleted-revert").addEventListener("mousedown", (e) => { e.preventDefault(); revert([this.id]); });
+    return d;
+  }
+  ignoreEvent() { return true; }
+}
+
+function blockDecorations(state) {
+  const out = [];
+  const active = new Set();
+  for (const r of state.selection.ranges) for (let n = state.doc.lineAt(r.from).number; n <= state.doc.lineAt(r.to).number; n++) active.add(n);
+  if (state.doc.length < 400000) {
+    const fm = frontmatterLines(state.doc), fmEnd = fm ? state.doc.line(fm[1]).to : -1;
+    syntaxTree(state).iterate({
+      enter: (node) => {
+        if (node.to <= fmEnd) return false;
+        if (node.name === "Table") {
+          const a = state.doc.lineAt(node.from), b = state.doc.lineAt(node.to);
+          for (let n = a.number; n <= b.number; n++) if (active.has(n)) return false;
+          const t = parseTable(state.sliceDoc(a.from, b.to));
+          if (t) out.push(Decoration.replace({ widget: new TableWidget(t.rows, t.align), block: true }).range(a.from, b.to));
+          return false;
+        }
+        if (node.name === "Image") {
+          const l = state.doc.lineAt(node.from);
+          if (active.has(l.number) || l.text.trim() !== state.sliceDoc(node.from, node.to).trim()) return false;
+          const text = state.sliceDoc(node.from, node.to), m = /^!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?/.exec(text);
+          if (m) out.push(Decoration.replace({ widget: new ImageWidget(m[2], m[1]), block: true }).range(l.from, l.to));
+          return false;
+        }
+      },
+    });
+  }
+  for (const c of state.field(changesField)) {
+    if (c.from !== c.to || !c.removed.trim()) continue;
+    const pos = Math.min(c.from, state.doc.length), atStart = state.doc.lineAt(pos).from === pos;
+    out.push(Decoration.widget({ widget: new DeletionWidget(c.id, c.removed, atStart), block: atStart, side: atStart ? -1 : 1 }).range(pos));
+  }
+  return Decoration.set(out, true);
+}
+const blocksField = StateField.define({
+  create: (state) => blockDecorations(state),
+  update(deco, tr) {
+    if (tr.docChanged || tr.selection || tr.effects.length) return blockDecorations(tr.state);
+    return deco;
+  },
+  provide: (f) => EditorView.decorations.from(f),
+});
+
+// ---------- find, in Duo's look (S3-5) ----------
+
+// A field with "n of m" inside it, then ‹ › and Done, under the tabs. Return finds the next,
+// ⇧Return the previous, Escape closes. (Replace is CodeMirror's keys only; its panel isn't drawn.)
+function findPanel(view) {
+  const dom = document.createElement("div");
+  dom.className = "duo-find";
+  dom.innerHTML = `<label class="duo-find-field"><input type="text" main-field="true" aria-label="Find" placeholder="Find"><span class="duo-find-count"></span></label>`
+    + `<button type="button" class="duo-find-btn" aria-label="Previous">‹</button><button type="button" class="duo-find-btn" aria-label="Next">›</button><button type="button" class="duo-find-btn">Done</button>`;
+  const input = dom.querySelector("input"), count = dom.querySelector(".duo-find-count");
+  const [prev, next, done] = dom.querySelectorAll("button");
+  const tally = () => {
+    const q = getSearchQuery(view.state);
+    if (!q.search || !q.valid) { count.textContent = ""; return; }
+    let n = 0, at = 0;
+    const head = view.state.selection.main.from;
+    const cur = q.getCursor(view.state);
+    for (let r = cur.next(); !r.done && n < 9999; r = cur.next()) { n++; if (r.value.from <= head) at = n; }
+    count.textContent = n ? `${Math.max(at, 1)} of ${n}` : "None";
+  };
+  input.value = getSearchQuery(view.state).search;
+  input.addEventListener("input", () => { view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: input.value })) }); findNext(view); tally(); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); (e.shiftKey ? findPrevious : findNext)(view); tally(); }
+    if (e.key === "Escape") { e.preventDefault(); closeSearchPanel(view); view.focus(); }
+  });
+  prev.onmousedown = (e) => { e.preventDefault(); findPrevious(view); tally(); };
+  next.onmousedown = (e) => { e.preventDefault(); findNext(view); tally(); };
+  done.onmousedown = (e) => { e.preventDefault(); closeSearchPanel(view); view.focus(); };
+  return { dom, top: true, mount() { input.focus(); input.select(); tally(); }, update(u) { if (u.selectionSet || u.docChanged) tally(); } };
+}
+
 // ---------- text helpers ----------
 
 // CodeMirror splits lines on \r\n, \r and \n and joins with the line separator. Keeping the
@@ -856,10 +1111,38 @@ const duoTheme = EditorView.theme({
   ".cm-scroller": { fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", lineHeight: "20px" },
   ".cm-content": { padding: "22px 28px", caretColor: "var(--duo-text)" },
   ".cm-line": { padding: "0" },
-  ".duo-h": { fontSize: "14px", fontWeight: "600" },
+  // How documents are drawn (S3-5, DL-101): H1 18/24, H2 14/20, the rest 13/20, all semibold.
+  ".duo-h": { fontSize: "13px", fontWeight: "600" },
+  ".duo-h1": { fontSize: "18px", lineHeight: "24px" },
+  ".duo-h2": { fontSize: "14px" },
+  ".cm-line.duo-li": { paddingLeft: "20px", textIndent: "-20px" },
+  ".duo-li-mark": { display: "inline-block", width: "12px", marginRight: "8px", textAlign: "right", textIndent: "0", color: "var(--duo-text2)" },
+  ".duo-done": { color: "var(--duo-text2)" },
+  ".cm-line.duo-quote": { borderLeft: "2px solid var(--duo-control-edge)", paddingLeft: "12px", color: "var(--duo-text2)" },
+  ".cm-line.duo-codeblock": { position: "relative", padding: "0 12px", backgroundColor: "var(--duo-ground)", fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px", lineHeight: "19px", whiteSpace: "pre-wrap" },
+  ".cm-line.duo-codeblock-first": { borderTopLeftRadius: "6px", borderTopRightRadius: "6px" },
+  ".cm-line.duo-codeblock-last": { borderBottomLeftRadius: "6px", borderBottomRightRadius: "6px" },
+  ".cm-line.duo-codeblock-fence": { height: "8px", lineHeight: "8px", fontSize: "0", overflow: "visible" },
+  ".duo-table": { overflowX: "auto", margin: "4px 0" },
+  ".duo-table table": { borderCollapse: "collapse", width: "100%", fontSize: "13px", lineHeight: "20px" },
+  ".cm-line.duo-blank": { height: "10px", lineHeight: "10px" },
+  ".duo-hr": { display: "inline-block", width: "100%", height: "1px", verticalAlign: "middle", backgroundColor: "var(--duo-rule)" },
+  ".duo-table th, .duo-table td": { padding: "4px 8px", border: "1px solid var(--duo-rule)", whiteSpace: "nowrap" },
+  ".duo-table th": { backgroundColor: "var(--duo-ground)", fontWeight: "600" },
+  ".duo-figure": { display: "flex", flexDirection: "column", gap: "4px", margin: "4px 0" },
+  ".duo-img": { maxWidth: "100%", borderRadius: "6px", border: "1px solid var(--duo-rule)" },
+  ".duo-caption": { fontSize: "12px", color: "var(--duo-text2)" },
+  ".duo-img-missing": { display: "flex", alignItems: "center", justifyContent: "center", height: "72px", border: "1px dashed var(--duo-control-edge)", borderRadius: "6px", color: "var(--duo-text2)" },
+  ".duo-img-missing code": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px" },
+  ".duo-deleted": { display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "12px", lineHeight: "16px", color: "var(--duo-text2)", flexWrap: "wrap" },
+  ".duo-deleted-block": { display: "flex", margin: "2px 0" },
+  ".duo-deleted-rule": { flex: "1", minWidth: "12px", height: "1px", backgroundColor: "var(--duo-rule)" },
+  ".duo-deleted a": { color: "var(--duo-text2)", textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px", cursor: "default" },
+  ".duo-deleted-body": { flexBasis: "100%", whiteSpace: "pre-wrap", textDecoration: "line-through", fontSize: "13px", lineHeight: "20px" },
+  ".duo-code-lang": { position: "absolute", right: "10px", top: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "11px", lineHeight: "16px", color: "var(--duo-text2)", zIndex: "1" },
   ".duo-strong": { fontWeight: "600" },
   ".duo-em": { fontStyle: "italic" },
-  ".duo-code": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px" },
+  ".duo-code": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px", backgroundColor: "var(--duo-ground)", borderRadius: "4px", padding: "1px 4px" },
   ".duo-link": { color: "var(--duo-text)", textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)" },
   ".duo-fs": { boxShadow: "inset 1.5px 0 0 var(--duo-text), inset -1.5px 0 0 var(--duo-text)", paddingLeft: "12px", paddingRight: "12px", marginLeft: "-12px", marginRight: "-12px" },
   ".duo-fs-first": { boxShadow: "inset 1.5px 0 0 var(--duo-text), inset -1.5px 0 0 var(--duo-text), inset 0 1.5px 0 var(--duo-text)", borderTopLeftRadius: "6px", borderTopRightRadius: "6px", paddingTop: "8px", position: "relative" },
@@ -867,7 +1150,7 @@ const duoTheme = EditorView.theme({
   ".duo-fs-first.duo-fs-last": { boxShadow: "inset 0 0 0 1.5px var(--duo-text)" },
   ".duo-fs-first::after": { content: "attr(data-label)", position: "absolute", right: "12px", top: "8px", color: "var(--duo-text2)", fontFamily: "-apple-system, sans-serif", fontSize: "13px" },
   ".duo-added": { backgroundColor: "var(--duo-selected)", borderRadius: "var(--duo-radius-card)" },
-  ".duo-task": { margin: "0 6px 0 0", verticalAlign: "-1px" },
+  ".duo-task": { display: "inline-flex", margin: "0 8px 0 0", verticalAlign: "-1px", cursor: "default", textIndent: "0" },
   // The properties block (frontmatter-handoff §2, slice2 task-note): sizes from tokens size.propertiesBlock.
   "&.duo-has-fm .cm-content, .cm-content.duo-has-fm": { paddingTop: "14px" },
   ".duo-fm-head": { display: "flex", alignItems: "center", gap: "6px", margin: "0 -8px", paddingBottom: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px", lineHeight: "20px", color: "var(--duo-text2)" },
@@ -922,6 +1205,12 @@ const duoTheme = EditorView.theme({
   ".cm-panels": { backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", borderColor: "var(--duo-rule)" },
   ".cm-panels-top": { borderBottom: "1px solid var(--duo-rule)" },
   ".cm-search": { fontFamily: "-apple-system, sans-serif", fontSize: "12px", padding: "6px 28px" },
+  ".cm-panels.cm-panels-top": { borderBottom: "1px solid var(--duo-rule)", backgroundColor: "var(--duo-pane)" },
+  ".duo-find": { display: "flex", alignItems: "center", gap: "6px", padding: "6px 20px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px" },
+  ".duo-find-field": { display: "flex", alignItems: "center", gap: "6px", flex: "1", height: "24px", boxSizing: "border-box", padding: "0 8px", border: "1px solid var(--duo-rule)", borderRadius: "6px", backgroundColor: "var(--duo-pane)" },
+  ".duo-find-field input": { flex: "1", minWidth: "0", border: "0", outline: "none", background: "transparent", font: "inherit", color: "var(--duo-text)" },
+  ".duo-find-count": { color: "var(--duo-text2)", whiteSpace: "nowrap" },
+  ".duo-find-btn": { font: "12px/16px -apple-system, BlinkMacSystemFont, sans-serif", padding: "4px 10px", border: "1px solid var(--duo-control-edge)", borderRadius: "6px", backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", cursor: "default" },
 });
 
 let view = null;
@@ -982,7 +1271,7 @@ function create(parent, text) {
       EditorView.lineWrapping,
       history(),
       markdown({ base: markdownLanguage }),  // GitHub-flavoured: task lists, tables, strikethrough
-      search({ top: true }),
+      search({ top: true, createPanel: findPanel }),
       ...(window.duoFlags?.noPreview ? [] : [livePreview]),
       contextField,
       foldField,
@@ -992,6 +1281,8 @@ function create(parent, text) {
           addToOptions: [{ position: 20, render: (c) => { const s = document.createElement("span"); s.className = "duo-sugg-icon";
             if (PROP_ICONS[c.type]) s.innerHTML = iconSvg(c.type); return s; } }] })]),
       addedField,
+      conflictField,
+      ...(window.duoFlags?.noPreview ? [] : [blocksField]),
       changesField,
       searchField,
       clearOnUserEdit,
@@ -1233,6 +1524,8 @@ function bench(n) {
 window.duo = {
   // The note's context from Duo: { task, sessions: { id: { state, name, wait } } } (S2-5).
   setContext: (c) => { view.dispatch({ effects: setContext.of(c) }); return true; },
+  imageLoaded: (id, url) => { const f = imageWaiters.get(id); imageWaiters.delete(id); if (f) f(url); return true; },
+  markConflict: (lines) => { view.dispatch({ effects: setConflict.of(lines && lines.length ? lines : null) }); return true; },
   setProperty,
   addListItem,
   listProperties,

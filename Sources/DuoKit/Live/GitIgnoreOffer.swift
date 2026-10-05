@@ -51,16 +51,14 @@ enum GitIgnoreOffer {
             record(auto == "add", repo: repo)   // scripted runs and checks
         } else if interactive {
             showing = true
-            let alert = NSAlert()
-            alert.messageText = "Keep Duo's files out of git?"
-            let place = repo.lastPathComponent == project ? "“\(project)”, a git repository," : "“\(project)” (in the git repository “\(repo.lastPathComponent)”)"
-            alert.informativeText = "Duo keeps a small .duo folder in \(place) for its list of sessions. Add .duo/ to the repository's .gitignore so it stays out of commits?"
-            alert.addButton(withTitle: "Add to .gitignore")
-            alert.addButton(withTitle: "Don't Add")
-            DuoAlert.present(alert) { r in
-                record(r == .alertFirstButtonReturn, repo: repo)
-                showing = false
-            }
+            // Duo's own sheet (S3-3, DL-101).
+            let home = FileManager.default.homeDirectoryForCurrentUser.path
+            let place = repo.path.replacingOccurrences(of: home, with: "~")
+            SheetCenter.shared.ask(DuoQuestion(
+                title: "Keep Duo’s files out of git?",
+                paragraphs: ["Duo keeps a small `.duo` folder in `\(place)` for its list of sessions. Add `.duo/` to the repository’s `.gitignore`?"],
+                choices: [.init(label: "Don’t Add", isCancel: true) { record(false, repo: repo); showing = false },
+                          .init(label: "Add to .gitignore", isDefault: true) { record(true, repo: repo); showing = false }]))
         }
         // Captures never prompt; they ask next time.
     }

@@ -118,6 +118,15 @@ public enum Installer {
         ]
     }
 
+    /// The same changes as the install sheet lists them: what, and where (S3-3).
+    public static func plannedItems(cli: String) -> [(what: String, path: String)] {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let short = { (p: String) in p.hasPrefix(home) ? "~" + p.dropFirst(home.count) : p }
+        return [("Add a short Duo section, between duo2 markers (\(block().split(separator: " ").count) words)", short(claudeMD.path)),
+                ("Write the duo2 skill", short(skillFile.path)),
+                ("Put duo2 on your PATH", short(link.path))]
+    }
+
     public static func consentHash(cli: String) -> String { hash(plannedChanges(cli: cli).joined(separator: "\n") + "\(format)") }
 
     /// Whether to ask: never answered, or the list changed since.

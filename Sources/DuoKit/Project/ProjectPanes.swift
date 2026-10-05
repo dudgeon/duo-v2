@@ -367,9 +367,10 @@ struct RightPane: View {
             HStack(spacing: DuoSpace.gapPaneTabs) {
                 ForEach(tabs, id: \.id) { tab in
                     let active = tab.id == model.rightTab
-                    Text(tab.title)
+                    // A document waiting in conflict says so on its tab (S3-4).
+                    let conflicted = !active && tab.isDocument && (model.liveFile(tab.id).map { model.editorIfLoaded?.keptInConflict($0) == true } ?? false)
+                    Text("\(Text(tab.title).foregroundStyle(active ? DuoColor.text : DuoColor.text2))\(conflicted ? Text(" · conflict").foregroundStyle(DuoColor.text) : Text(""))")
                         .duoText(active ? .bodyEmphasis : .body)
-                        .foregroundStyle(active ? DuoColor.text : DuoColor.text2)
                         .lineLimit(1)
                         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                         .onActivate { model.rightTab = tab.id; if tab.isDocument { model.selectedFile = tab.id } }  // action: view tab
@@ -418,14 +419,14 @@ struct RightPane: View {
                 }
             } else if let path = model.rightTab, path.contains("."), let file = model.liveFile(path) ?? model.keptFile(path) {
                 VStack(spacing: 0) {
-                    DocumentEditorView(editor: model.editor, file: file)
                     DocumentStateBar()
+                    DocumentEditorView(editor: model.editor, file: file)
                 }
             } else if model.rightTab == "Project" || model.rightTab == nil, let own = model.projectFile, let file = model.liveFile(own) {
                 // The Project tab is the project's own file (DL-60).
                 VStack(spacing: 0) {
-                    DocumentEditorView(editor: model.editor, file: file)
                     DocumentStateBar()
+                    DocumentEditorView(editor: model.editor, file: file)
                 }
             } else if let path = model.rightTab, path.contains(".") {
                 DocumentPlaceholder(path: path)
@@ -692,34 +693,64 @@ struct PickerBar: View {
     }
 }
 
-/// Under the document when it needs a decision (DL-77): a conflict, or the file removed on disk.
-/// Plain system look until the editor states are designed (Q-20).
+/// Over the document when it needs a decision or a word (S3-4, DL-77): a conflict, the file
+/// removed or renamed on disk, or why it's read only. A bar under the tabs on `ground`.
 struct DocumentStateBar: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
         let _ = model.editorRevision
-        if let e = model.editorIfLoaded, e.conflict || e.removedOnDisk {
-            HStack(spacing: 8) {
-                if e.conflict {
-                    let lines = e.conflictLines.map { $0[0] == $0[1] ? "line \($0[0])" : "lines \($0[0])–\($0[1])" }.joined(separator: ", ")
-                    Text("Changed on disk where you're editing\(lines.isEmpty ? "" : " (\(lines))"). Both versions are kept.")
-                        .font(.callout).lineLimit(2)
-                    Spacer(minLength: 8)
-                    Button("Use Theirs") { e.resolve(keepMine: false) }
-                    Button("Keep Mine") { e.resolve(keepMine: true) }.keyboardShortcut(.defaultAction)
-                } else {
-                    Text("Removed on disk. Your text is still here.").font(.callout)
-                    Spacer(minLength: 8)
-                    Button("Save to Recreate") { e.recreate() }
+        if let e = model.editorIfLoaded, let file = e.url {
+            if e.conflict {
+                let lines = e.conflictLines.map { $0[0] == $0[1] ? "line \($0[0])" : "lines \($0[0])–\($0[1])" }.joined(separator: ", ")
+                NoticeBar(text: "Changed on disk where you’re editing\(lines.isEmpty ? "" : " (\(lines))"). Both versions are kept.",
+                          sub: "Saving is paused until you choose.") {
+                    Button("Use Theirs") { e.resolve(keepMine: false) }.buttonStyle(.duo)
+                    Button("Keep Mine") { e.resolve(keepMine: true) }.buttonStyle(DefaultSheetButtonStyle()).keyboardShortcut(.defaultAction)
+                }
+            } else if e.removedOnDisk {
+                NoticeBar(text: "\(file.lastPathComponent) was removed on disk. Your text is still here.") {
+                    Button("Save to Recreate") { e.recreate() }.buttonStyle(DefaultSheetButtonStyle())
+                }
+            } else if let to = e.renamedTo {
+                NoticeBar(text: "Renamed on disk to \(model.projectFolder.flatMap { model.relativePathIn(URL(fileURLWithPath: to), folder: $0) } ?? AppModel.short(to)). Duo followed it.") {
+                    Button("OK") { e.renamedTo = nil }.buttonStyle(DefaultSheetButtonStyle())   // not an action: dismisses a notice
+                }
+            } else if let why = e.readOnlyReason {
+                NoticeBar(text: "Read only: " + Self.reason(why)) {
+                    Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
                 }
             }
-            .controlSize(.small)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.bar)
-            .overlay(alignment: .top) { Divider() }
         }
+    }
+
+    static func reason(_ r: String) -> String {
+        switch r {
+        case "mixed line endings": "this file mixes Windows and Mac line endings, so Duo can’t save it exactly as it was."
+        case "not UTF-8": "this file isn’t UTF-8 text, so saving it from Duo would change it."
+        case "can't read the file": "Duo can’t read this file."
+        case "changed on disk to text that isn't UTF-8": "it changed on disk to text that isn’t UTF-8, so Duo won’t save over it."
+        default: r + "."
+        }
+    }
+}
+
+/// The notice bar (S3-4): padding 10 20, the message, a `text2` line, the buttons; a `rule` below.
+struct NoticeBar<Buttons: View>: View {
+    let text: String
+    var sub: String? = nil
+    @ViewBuilder let buttons: () -> Buttons
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
+            Text(text).duoText(.body).fixedSize(horizontal: false, vertical: true)
+            if let sub { Text(sub).duoText(.body).foregroundStyle(DuoColor.text2) }
+            HStack(spacing: DuoSpace.gapButtonToButton) { buttons() }
+        }
+        .padding(.vertical, DuoMetric.noticePaddingY)
+        .padding(.horizontal, DuoMetric.noticePaddingX)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DuoColor.ground)
+        .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
     }
 }

@@ -82,9 +82,9 @@ extension AppModel {
         } catch { done?(.failure(error)); return }
         let bytes = ByteCountFormatter.string(fromByteCount: Int64(plan.steps.compactMap(\.bytesBefore).reduce(0, +)), countStyle: .file)
         let list = plan.steps.prefix(8).map { "• " + Self.short($0.from) }.joined(separator: "\n") + (plan.steps.count > 8 ? "\n• and \(plan.steps.count - 8) more" : "")
-        confirm(title: "Delete “\(s.name)” for good?",
-                detail: "This deletes the session and its local logs (\(plan.steps.count) item(s), \(bytes)), including Duo's archived copy. It can't be undone or resumed.\n\n\(list)",
-                button: "Delete") { [weak self] ok in
+        confirm(title: "Delete “\(s.name)”?",
+                detail: "Its transcript goes to the Trash, and Duo’s archived copy with it (\(plan.steps.count) item\(plan.steps.count == 1 ? "" : "s"), \(bytes)). You can put it back from the Trash, but Duo can’t undo this.\n\n\(list)",
+                button: "Move to Trash") { [weak self] ok in
             guard let self else { return }
             guard ok else { done?(.failure(Migrator.Refusal("Not deleted: the user clicked Cancel in Duo. Nothing changed."))); return }
             do {
