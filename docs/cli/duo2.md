@@ -122,6 +122,9 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 
 | Command | What it does | In the app |
 |---|---|---|
+| `duo2 browser open [url]` | A browser tab in the right pane (⌥⌘T). Sites not on the allow list show Allow or Open in Browser instead of loading (DL-3). | New Browser Tab, Open Location…, Open in Browser, Copy Address |
+| `duo2 browser allow <host>` | Add a site to the allow list, so its pages open in Duo's browser tabs (and its subdomains). | — |
+| `duo2 browser sites` | The allow list: sites Duo opens in its own browser tabs; everything else opens in the system browser (DL-3). | — |
 | `duo2 html reload` | Reload the HTML page showing (it also reloads when its files change). | Reload Page |
 | `duo2 html pick [selector]` | Start the element picker for the user, or select the element a CSS selector names. | Select Element, Pick Another |
 | `duo2 html stop` | Close the element picker. | Cancel picking |

@@ -92,6 +92,22 @@ func repoFixture() throws -> Fixture {
     check(UpdateCheck.isNewer("0.1.10", than: "0.1.9") && UpdateCheck.isNewer("v0.2.0", than: "0.1.2") && !UpdateCheck.isNewer("0.1.2", than: "0.1.2"), "versions compare by number")
     check(UpdateCheck.isNewer("0.2.0", than: "0.2.0-rc.1") && !UpdateCheck.isNewer("0.2.0-rc.1", than: "0.2.0"), "a pre-release sorts below its release")
 
+    print("browser tabs: allowed sites (DL-3)")
+    do {
+        let list = ["example.com", "docs.google.com"]
+        check(AllowedSites.allows(URL(string: "https://example.com/a")!, list: list) && AllowedSites.allows(URL(string: "https://www.example.com")!, list: list),
+              "a host allows itself and its subdomains")
+        check(!AllowedSites.allows(URL(string: "https://notexample.com")!, list: list) && !AllowedSites.allows(URL(string: "https://google.com")!, list: list),
+              "lookalikes and parents aren't allowed")
+        check(AllowedSites.allows(URL(string: "http://localhost:3000")!, list: []) && AllowedSites.allows(URL(string: "http://app.localhost")!, list: []),
+              "localhost is always allowed")
+        check(AllowedSites.url(from: "example.com/x")?.absoluteString == "https://example.com/x" && AllowedSites.url(from: "localhost:8080")?.absoluteString == "http://localhost:8080"
+              && AllowedSites.url(from: "two words") == nil, "the address field reads hosts, localhost and URLs")
+        let f = FileManager.default.temporaryDirectory.appending(path: "duo-sites-\(UUID().uuidString).txt")
+        check(AllowedSites.add("www.Example.com", to: f) && !AllowedSites.add("example.com", to: f) && AllowedSites.load(f) == ["example.com"], "allow list adds once, without www")
+        try? FileManager.default.removeItem(at: f)
+    }
+
     print("ordering")
     check(WaitTime("1h") > WaitTime("12m") && WaitTime("3d") > WaitTime("1h") && WaitTime("now") < WaitTime("4m"), "wait times")
     check(SessionState.allCases.sorted() == [.needsYou, .readyForReview, .working, .idle, .resolved], "states most urgent first")

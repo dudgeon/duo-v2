@@ -90,6 +90,8 @@ public final class AppModel {
     /// Local HTML pages in the right pane (created on first use).
     @ObservationIgnored public lazy var htmlViewer: HTMLViewer = { let v = HTMLViewer(); htmlViewerIfLoaded = v; wireHTMLViewer(v); return v }()
     @ObservationIgnored public var htmlViewerIfLoaded: HTMLViewer?
+    /// Browser tabs by id (`web:…`), kept alive while their tab is open (Phase K, ENH-8).
+    @ObservationIgnored public var webTabs: [String: WebTab] = [:]
     /// Bumped when the picker starts, freezes or ends, so the picker bar redraws.
     public var pickerRevision = 0
     /// Which web view has the keyboard (menus re-validate on change).

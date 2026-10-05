@@ -161,6 +161,19 @@ extension AppModel {
             guard isArchived(p.name) != on else { return done(.ok("\(p.name) is already \(on ? "archived" : "in its column").")) }
             setArchived(p.name, on)
             done(.ok(on ? "Archived \(p.name): it's in the Archived rollup under the map. Undo: duo2 undo" : "\(p.name) is back in its column."))
+        case .browserOpen:
+            let u = inv[0].flatMap { AllowedSites.url(from: $0) }
+            if inv[0] != nil, u == nil { return done(.fail("'\(inv[0]!)' isn't an address")) }
+            guard let id = newBrowserTab(u), let tab = webTabs[id] else { return done(.fail("open a project first: browser tabs sit in its right pane")) }
+            done(.ok(tab.blocked != nil ? "\(u!.host ?? "") isn't on the allow list: the tab offers Allow or Open in Browser (duo2 browser allow \(u!.host ?? ""))."
+                     : u.map { "Opened \($0.absoluteString) in a browser tab." } ?? "Opened a new browser tab.", ["tab": id]))
+        case .browserAllow:
+            guard let h = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
+            let host = URL(string: h)?.host ?? h
+            done(.ok(AllowedSites.add(host) ? "\(host) is allowed: its pages open in Duo." : "\(host) was already allowed."))
+        case .browserSites:
+            let list = AllowedSites.load()
+            done(.ok((list.isEmpty ? "No sites allowed yet (localhost always is)." : list.joined(separator: "\n")) + "\nThe list: \(AllowedSites.file.path)", ["sites": list]))
         case .update:
             checkForUpdates(userInitiated: true) { done(.ok($0)) }
         case .tasks, .taskMake, .taskAdd, .taskNew, .taskStatus:

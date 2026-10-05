@@ -30,7 +30,12 @@ extension AppModel {
             return info("Duo doesn't know the link \(text).")
         }
         if let url = URL(string: text), let scheme = url.scheme, !scheme.isEmpty {
-            NSWorkspace.shared.open(url)
+            // Allowed sites open in a browser tab beside the note (DL-3); the rest in the browser.
+            if ["http", "https"].contains(scheme.lowercased()), AllowedSites.allows(url), currentProject != nil, terminalsMode == .live {
+                newBrowserTab(url)
+            } else {
+                NSWorkspace.shared.open(url)
+            }
             return
         }
         // A relative link: a file next to the document, opened here if it's in this project.

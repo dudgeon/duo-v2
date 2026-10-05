@@ -15,6 +15,8 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     public private(set) var picking = false
     /// Called when picking state changes (the native bar shows and hides).
     var onChange: (() -> Void)?
+    /// A link to another site (not a file in the project): the model decides where it opens.
+    var onLinkOut: ((URL) -> Void)?
     private var root: URL?
     private var stamp: Date?
     private var timer: Timer?
@@ -75,7 +77,10 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         }
         if target.scheme == "about" { return decisionHandler(.allow) }
         // Anything else leaves Duo: the browser in the right pane comes later (Phase K).
-        if action.navigationType == .linkActivated { DuoLog.write("html: link out to \(target.absoluteString)"); NSWorkspace.shared.open(target) }
+        if action.navigationType == .linkActivated {
+            DuoLog.write("html: link out to \(target.absoluteString)")
+            if let out = onLinkOut { out(target) } else { NSWorkspace.shared.open(target) }
+        }
         decisionHandler(.cancel)
     }
 

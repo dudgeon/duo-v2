@@ -218,6 +218,7 @@ extension AppModel {
 
     func wireHTMLViewer(_ v: HTMLViewer) {
         v.onChange = { [weak self] in self?.pickerRevision += 1 }
+        v.onLinkOut = { [weak self] u in self?.openLink(u.absoluteString) }
         v.webView.onFocusChange = { [weak self] on in
             guard let self else { return }
             if on { self.webFocus = .html } else if self.webFocus == .html { self.webFocus = .none }

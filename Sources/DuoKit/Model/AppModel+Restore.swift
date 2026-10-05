@@ -26,9 +26,11 @@ public struct RestoreState: Codable, Equatable, Sendable {
         public var consoleTab: String?
         public var documents: [String]
         public var rightTab: String?
+        /// Browser tabs among `documents` (`web:…`), by the address each had.
+        public var webTabs: [String: String]? = nil
 
-        public init(folder: String, sessions: [String], consoleTab: String?, documents: [String], rightTab: String?) {
-            self.folder = folder; self.sessions = sessions; self.consoleTab = consoleTab; self.documents = documents; self.rightTab = rightTab
+        public init(folder: String, sessions: [String], consoleTab: String?, documents: [String], rightTab: String?, webTabs: [String: String]? = nil) {
+            self.folder = folder; self.sessions = sessions; self.consoleTab = consoleTab; self.documents = documents; self.rightTab = rightTab; self.webTabs = webTabs
         }
     }
 
@@ -66,10 +68,12 @@ extension AppModel {
             guard let folder = liveFolders[name]?.path else { continue }
             let tabs = tabSessions(inProject: name).compactMap(\.sessionId)
             let open = byProject[name] ?? []
+            let docs = openDocumentsByProject[name] ?? []
+            let web = Dictionary(docs.compactMap { d in webTabs[d]?.url.map { (d, $0.absoluteString) } }, uniquingKeysWith: { a, _ in a })
             s.projects.append(.init(folder: folder, sessions: tabs.filter(open.contains) + open.filter { !tabs.contains($0) },
                                     consoleTab: name == current ? consoleTab : nil,
-                                    documents: openDocumentsByProject[name] ?? [],
-                                    rightTab: name == current ? rightTab : nil))
+                                    documents: docs.filter { !$0.hasPrefix("web:") || web[$0] != nil },
+                                    rightTab: name == current ? rightTab : nil, webTabs: web.isEmpty ? nil : web))
         }
         return s
     }
@@ -95,7 +99,17 @@ extension AppModel {
         var reopened = 0
         for p in s.projects {
             guard let project = name(p.folder), let folder = liveFolders[project] else { continue }
-            let docs = p.documents.filter { FileManager.default.fileExists(atPath: folder.appending(path: $0).path) }
+            let docs = p.documents.filter { d in
+                if d.hasPrefix("web:") { return p.webTabs?[d].flatMap(URL.init(string:)) != nil }
+                return FileManager.default.fileExists(atPath: folder.appending(path: d).path)
+            }
+            for d in docs where d.hasPrefix("web:") {
+                guard let u = p.webTabs?[d].flatMap(URL.init(string:)) else { continue }
+                let tab = WebTab(id: d)
+                tab.onLinkOut = { [weak self] link in self?.openLink(link.absoluteString) }
+                webTabs[d] = tab
+                tab.load(u)
+            }
             if !docs.isEmpty { openDocumentsByProject[project] = docs }
             for id in p.sessions where !liveElsewhere.contains(id) {
                 guard let key = fixture.sessions(inProject: project).first(where: { $0.sessionId == id })?.tabKey else { continue }

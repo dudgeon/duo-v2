@@ -860,3 +860,12 @@ Built from the decision path page (DL-87 to DL-91):
 - `duo2 task status` reads the notes from disk, not the snapshot: a task made a second earlier was "not found" (the snapshot refreshes every 2 s).
 - Also: the stray `On track ·` dot was in the map tiles and search details too (F-67 fixed only the session list).
 - Live on the fixtures: two new tasks in refunds (one set to waiting) showed in the Tasks fold; checkout's task set to review; All projects listed all three with status. 231 checks pass.
+
+## F-71 · Browser tabs and the allow list (Phase K, ENH-8) (2026-10-04)
+
+- A browser tab is a right-pane tab (`web:<id>` among the project's open documents) with its own web view on the **default** website data store, so allowed sites stay signed in. A plain bar (stand-in for DB-20): back, forward, reload/stop, the address field, Open in Browser. Tab title follows the page (KVO on `title`: navigation callbacks alone left "New Tab").
+- **Allow list (DL-3):** `Application Support/Duo/allowed-sites.txt`, one host per line, comments kept; a host allows its subdomains; localhost and `*.localhost` always. A page from any other site isn't loaded: the tab says so with **Allow <host>** and **Open in Browser**. Frames inside an allowed page load freely; links to other sites go out through `openLink`.
+- Links to allowed sites from Markdown notes and from local HTML pages now open in a browser tab beside them; others still open in the system browser.
+- **New Browser Tab** ⌥⌘T (File, right-click `+`), **Open Location…** ⌘L (DL-99). `duo2 browser open [url]`, `browser allow <host>`, `browser sites`. Browser tabs come back on relaunch with the address they had (F-68's restore file gains `webTabs`).
+- Live, private instance: `duo2 browser open localhost:8765` loaded a test page titled in the tab; `duo2 browser open example.com` showed the not-allowed state with both buttons. Allowing was checked against a temporary list, so Geoff's own allow list is untouched (empty). 236 checks pass.
+- Not yet: the element picker and Send to Claude on web pages (they work on local HTML), page-driving verbs for Claude (LR-45), Google Docs reading (DL-7).

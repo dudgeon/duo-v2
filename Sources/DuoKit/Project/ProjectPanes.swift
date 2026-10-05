@@ -373,13 +373,23 @@ struct RightPane: View {
                             Button("Close Tab") { model.closeDocument(tab.id) }
                             Button("Close Other Tabs") { model.closeOtherDocuments(than: tab.id) }
                             Divider()
-                            FileMenu(path: tab.id, isFolder: false, onTab: true)
+                            if let web = model.webTabs[tab.id] {
+                                Button("Open in Browser") { if let u = web.url { NSWorkspace.shared.open(u) } }
+                                Button("Copy Address") { if let u = web.url { FileActions.copy(u.absoluteString) } }
+                            } else {
+                                FileMenu(path: tab.id, isFolder: false, onTab: true)
+                            }
                         })
                 }
                 // New Markdown file, the same treatment as the console's + (DL-61).
                 if model.terminalsMode == .live, model.projectFolder != nil {
                     Text("+").duoText(.body).foregroundStyle(DuoColor.text2)
                         .onActivate { model.newMarkdownFile(near: model.selectedFile) }  // action: file new
+                        // Right-click + for the other new tabs (ENH-8).
+                        .contextMenu {
+                            Button("New Markdown File") { model.newMarkdownFile(near: model.selectedFile) }
+                            Button("New Browser Tab") { model.newBrowserTab() }
+                        }
                         .accessibilityLabel("New Markdown file")
                 }
                 Spacer(minLength: 0)
@@ -387,7 +397,10 @@ struct RightPane: View {
             .padding(.horizontal, 20)
             .frame(height: DuoMetric.tabStripHeight)
             DuoColor.rule.frame(height: 1)
-            if model.rightTab == ReadOnlySession.tabKey, let ro = model.readOnlySession {
+            if let id = model.rightTab, let web = model.webTabs[id] {
+                // A browser tab (Phase K, ENH-8): allowed sites in Duo, the rest in the browser (DL-3).
+                BrowserTabView(tab: web)
+            } else if model.rightTab == ReadOnlySession.tabKey, let ro = model.readOnlySession {
                 ReadOnlySessionView(session: ro)
             } else if let path = model.rightTab, ["html", "htm"].contains((path as NSString).pathExtension.lowercased()),
                let file = model.liveFile(path), let root = model.projectFolder {
@@ -424,7 +437,8 @@ struct RightPane: View {
             tabs.append((id: group, title: group, isDocument: false))
         }
         for doc in model.openDocuments where doc != model.projectFile {
-            tabs.append((id: doc, title: (doc as NSString).lastPathComponent, isDocument: true))
+            let title = model.webTabs[doc].map { $0.title } ?? (doc as NSString).lastPathComponent
+            tabs.append((id: doc, title: title, isDocument: true))
         }
         if let ro = model.readOnlySession { tabs.append((id: ReadOnlySession.tabKey, title: ro.title, isDocument: false)) }
         // Fixture mode keeps its single document tab (the targets).

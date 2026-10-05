@@ -27,6 +27,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case newShell           // ⇧⌘T: a plain shell in this console (DL-8, DB-4; Q-26)
     case sendSelection      // ⌘D: Send Selection to Claude, legacy's chord (Q-22, DL-79); search's Send to Claude too
     case chooseHome         // File › Choose Home Folder… (DL-84); no chord
+    case newBrowserTab      // ⌥⌘T: a browser tab in the right pane (ENH-8), beside ⌘T and ⇧⌘T
+    case focusAddress       // ⌘L: the browser tab's address field, as in Safari and Chrome (ENH-8)
 
     public var title: String {
         switch self {
@@ -52,6 +54,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .revertAllChanges: "Revert All of Claude's Changes"
         case .newShell: "New Shell"
         case .chooseHome: "Choose Home Folder…"
+        case .newBrowserTab: "New Browser Tab"
+        case .focusAddress: "Open Location…"
         }
     }
 
@@ -75,6 +79,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeWindow: KeyboardShortcut("w", modifiers: [.command, .shift])
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
         case .revertChange, .revertAllChanges, .chooseHome: nil
+        case .newBrowserTab: KeyboardShortcut("t", modifiers: [.command, .option])
+        case .focusAddress: KeyboardShortcut("l", modifiers: .command)
         case .newClaudeSession: KeyboardShortcut("t", modifiers: .command)
         case .newShell: KeyboardShortcut("t", modifiers: [.command, .shift])
         }
@@ -96,6 +102,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .sendSelection: model.canSendSelection
         case .newClaudeSession, .newShell: model.terminalsMode == .live
         case .chooseHome: model.terminalsMode == .live
+        case .newBrowserTab: model.terminalsMode == .live
+        case .focusAddress: model.visibleWebTab != nil
         case .revertChange: model.webFocus == .editor && (model.editorIfLoaded?.atClaudeChange ?? false)
         case .revertAllChanges: (model.editorIfLoaded?.claudeChanges ?? 0) > 0
         }
@@ -124,6 +132,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .revertAllChanges: model.editor.revertAll()
         case .newShell: model.newShell()
         case .chooseHome: model.chooseHomeFolder()
+        case .newBrowserTab: model.newBrowserTab()
+        case .focusAddress: model.focusAddressField()
         case .search: model.openSearch()
         case .toggleRightPane, .nextPane, .previousPane: break
         }
@@ -144,6 +154,8 @@ public struct DuoCommands: Commands {
         CommandGroup(replacing: .newItem) {
             item(.newClaudeSession)
             item(.newShell)
+            item(.newBrowserTab)
+            item(.focusAddress)
             Divider()
             item(.newMarkdown)
             item(.newFolder)

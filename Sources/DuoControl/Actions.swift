@@ -55,6 +55,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docFind = "doc find"
     case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history", docRevert = "doc revert"
     // HTML pages
+    case browserOpen = "browser open", browserAllow = "browser allow", browserSites = "browser sites"
     case htmlReload = "html reload", htmlPick = "html pick", htmlStop = "html stop", htmlElement = "html element", htmlSelection = "html selection"
     // Send to Claude
     case sendFile = "send file", sendSession = "send session", sendProject = "send project", sendSelection = "send selection"
@@ -224,6 +225,10 @@ extension DuoAction {
         .init(.docHistory, .docs, "[path]", "Versions Duo kept of a document (as opened, both sides of conflicts, before removal), newest last, with where each is stored."),
 
         // HTML pages
+        .init(.browserOpen, .html, "[url]", "A browser tab in the right pane (⌥⌘T). Sites not on the allow list show Allow or Open in Browser instead of loading (DL-3).",
+              ui: ["New Browser Tab", "Open Location…", "Open in Browser", "Copy Address"]),
+        .init(.browserAllow, .html, "<host>", "Add a site to the allow list, so its pages open in Duo's browser tabs (and its subdomains)."),
+        .init(.browserSites, .html, "", "The allow list: sites Duo opens in its own browser tabs; everything else opens in the system browser (DL-3)."),
         .init(.htmlReload, .html, "", "Reload the HTML page showing (it also reloads when its files change).", ui: ["Reload Page"]),
         .init(.htmlPick, .html, "[selector]", "Start the element picker for the user, or select the element a CSS selector names.",
               ui: ["Select Element", "Pick Another"]),
