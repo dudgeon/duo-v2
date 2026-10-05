@@ -31,7 +31,7 @@ The three Home cards are interchangeable across options (board V).
 
 ## Geoff's answers (2026-10-05, DL-101)
 
-A · popup + filter · ★ tile · a session in Home's tile opens Home as a project on that session. The combined board is `pick`; its capture is `explorations/home-many-projects-pick.png`.
+A · popup + filter · ★ tile · a session in Home's tile opens Home as a project on that session. The combined board is `pick`; its capture is `explorations/home-many-projects/1-picked-A-with-home-tile.png`.
 
 ## Questions asked (Q-34)
 
