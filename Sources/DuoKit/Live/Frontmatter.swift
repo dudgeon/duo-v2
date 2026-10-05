@@ -68,8 +68,12 @@ public struct Frontmatter: Sendable, Equatable {
     }
 
     static func unquote(_ s: String) -> String {
-        if s.count >= 2, (s.hasPrefix("\"") && s.hasSuffix("\"")) || (s.hasPrefix("'") && s.hasSuffix("'")) {
-            return String(s.dropFirst().dropLast())
+        // Quoted YAML scalars: `\"` and `\\` inside double quotes, `''` inside single quotes.
+        if s.count >= 2, s.hasPrefix("\""), s.hasSuffix("\"") {
+            return String(s.dropFirst().dropLast()).replacing(/\\(["\\])/) { String($0.1) }
+        }
+        if s.count >= 2, s.hasPrefix("'"), s.hasSuffix("'") {
+            return String(s.dropFirst().dropLast()).replacingOccurrences(of: "''", with: "'")
         }
         return s
     }

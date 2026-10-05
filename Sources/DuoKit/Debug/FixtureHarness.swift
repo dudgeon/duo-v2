@@ -195,6 +195,27 @@ public enum FixtureHarness {
                     }
                 }
             }
+        case "new-task": if let p = model.currentProject?.name { model.newTask(in: p) }   // + New task in the open project
+        case "task-session":   // task-session:<path>: New Session in Task on a task in the open project
+            if parts.count > 1, let p = model.currentProject?.name { model.startSession(inTask: parts[1], project: p) }
+        case "keys":   // keys:<text>: real key events to whatever has the keyboard (no focusing first)
+            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
+                NSApp.activate(ignoringOtherApps: true); w.makeKey()
+                for ch in parts[1] {
+                    for type in [NSEvent.EventType.keyDown, .keyUp] {
+                        guard let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                                       windowNumber: w.windowNumber, context: nil, characters: String(ch),
+                                                       charactersIgnoringModifiers: String(ch), isARepeat: false, keyCode: 0) else { continue }
+                        if w.isKeyWindow { NSApp.postEvent(e, atStart: false) } else if type == .keyDown { w.sendEvent(e) }
+                    }
+                }
+            }
+        case "focus":   // what has the keyboard, and the editor's selection
+            let w = NSApp.windows.first(where: { $0.title == "Duo" })
+            let e = model.editor
+            e.run("const s = duo.selection(); return s ? s.text : ''") { v in
+                FileHandle.standardError.write(Data("focus: responder=\(w?.firstResponder.map { String(describing: type(of: $0)) } ?? "nil") editor=\(e.hasFocus) selected=\(String(describing: v ?? "nil").debugDescription)\n".utf8))
+            }
         case "editor-js":   // editor-js:<js>: run in the editor page (focused first), print what it returns
             let e = model.editor
             e.webView.window?.makeFirstResponder(e.webView)

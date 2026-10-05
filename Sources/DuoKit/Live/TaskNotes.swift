@@ -33,7 +33,9 @@ public enum TaskNotes {
         let fm = Frontmatter.parse(text)
         let heading = fm.body.split(separator: "\n").first { $0.hasPrefix("# ") }.map { String($0.dropFirst(2)).trimmingCharacters(in: .whitespaces) }
         let stem = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
-        return TaskNote(path: path, title: fm.string("title") ?? heading ?? stem, status: fm.string("status"),
+        // An emptied `title:` (the name being retyped) falls back to the heading, then the filename.
+        let title = [fm.string("title"), heading].compactMap { $0?.trimmingCharacters(in: .whitespaces) }.first { !$0.isEmpty }
+        return TaskNote(path: path, title: title ?? stem, status: fm.string("status"),
                         sessionIds: sessionIds(fm.list("sessions")))
     }
 
@@ -68,7 +70,7 @@ public enum TaskNotes {
 
     /// A new task note (DL-6's fields: type, title, status; DL-93's session links).
     public static func newNote(title: String, links: [String]) -> String {
-        let t = title.replacingOccurrences(of: "\"", with: "\\\"")
+        let t = title.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
         var s = "---\ntype: task\ntitle: \"\(t)\"\nstatus: open\n"
         s += links.isEmpty ? "sessions: []\n" : "sessions:\n" + links.map { "  - \(item($0))\n" }.joined()
         s += "---\n\n# \(title)\n\n"

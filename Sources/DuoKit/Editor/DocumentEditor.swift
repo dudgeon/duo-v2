@@ -487,6 +487,17 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         }
     }
 
+    /// + New task: once `path` is the open document, its heading's name is selected and the editor
+    /// has the keyboard, so typing names the task (`title:` follows the heading).
+    public func selectHeading(path: String, tries: Int = 20) {
+        let retry = { DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { MainActor.assumeIsolated { self.selectHeading(path: path, tries: tries - 1) } } }
+        guard url?.path.hasSuffix("/" + path) == true else { if tries > 0 { retry() }; return }
+        run("return window.duo && duo.selectHeading ? duo.selectHeading() : false") { [weak self] ok in
+            guard let self else { return }
+            if (ok as? Bool) == true { self.webView.window?.makeFirstResponder(self.webView) } else if tries > 0 { retry() }
+        }
+    }
+
     /// Claude's changes still highlighted (ENH-4), and whether the caret is in one.
     public private(set) var claudeChanges = 0
     public private(set) var atClaudeChange = false
