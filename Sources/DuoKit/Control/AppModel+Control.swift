@@ -197,7 +197,7 @@ extension AppModel {
             done(.ok((list.isEmpty ? "No sites allowed yet (localhost always is)." : list.joined(separator: "\n")) + "\nThe list: \(AllowedSites.file.path)", ["sites": list]))
         case .update:
             checkForUpdates(userInitiated: true) { done(.ok($0)) }
-        case .tasks, .taskMake, .taskAdd, .taskNew, .taskStatus:
+        case .tasks, .taskMake, .taskAdd, .taskNew, .taskSession, .taskStatus:
             taskVerb(id, inv, req, done)
         case .sessionLink:
             guard let k = inv[0], let s = findSession(k, in: nil), let link = sessionLink(s.tabKey) else { return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)")) }

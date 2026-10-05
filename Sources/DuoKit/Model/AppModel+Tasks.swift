@@ -54,9 +54,40 @@ extension AppModel {
         return .success(path)
     }
 
-    /// + New task: a note with no sessions yet, opened to be named and written.
+    /// + New task: a note with no sessions yet, opened with its name selected, so typing names it.
     public func newTask(in project: String, title: String = "Untitled task") {
-        if case .failure(let e) = makeTask(title: title, sessionIds: [], project: project) { info("Couldn't make the task: \(e)") }
+        switch makeTask(title: title, sessionIds: [], project: project) {
+        case .success(let path): editor.selectHeading(path: path)
+        case .failure(let e): info("Couldn't make the task: \(e)")
+        }
+    }
+
+    /// New Session in Task: a Claude session in the task's project, linked from the note's
+    /// `sessions:` list from its start, shown in the console when that project is open. Returns
+    /// the session id, or why not.
+    @discardableResult
+    public func newSession(inTask path: String, project: String) -> Result<String, Error> {
+        struct Refused: Error, CustomStringConvertible { let description: String }
+        guard let folder = liveFolders[project], FileManager.default.fileExists(atPath: folder.appending(path: path).path) else {
+            return .failure(Refused(description: "no task '\(path)' in \(project)"))
+        }
+        guard let id = newSession(in: project) else {
+            return .failure(Refused(description: "couldn't start a session in \(project)"))
+        }
+        // The note open with unsaved text takes the link in its buffer, as + Add does; otherwise on disk.
+        if let e = editorIfLoaded, e.url?.standardizedFileURL == folder.appending(path: path).standardizedFileURL {
+            let title = fixture.sessions.first { $0.sessionId == id }?.name ?? id
+            e.run("duo.addListItem('sessions', i); return 1", ["i": "\"" + TaskNotes.link(title: title, id: id) + "\""]) { _ in }
+        } else if let why = addToTask(sessionKey: id, task: path) {
+            return .failure(Refused(description: why))
+        }
+        if currentProject?.name == project { openConsoleTab(id) }
+        return .success(id)
+    }
+
+    /// New Session in Task from a menu: says why not, if it can't.
+    public func startSession(inTask path: String, project: String) {
+        if case .failure(let e) = newSession(inTask: path, project: project) { info("Couldn't start the session: \(e)") }
     }
 
     /// Status ▸ on a task: rewrites only `status:` (and `completed:` when done or dropped). Undoable.
@@ -108,6 +139,13 @@ extension AppModel {
         return nil
     }
 
+    /// A task by path (`tasks/x.md`, `x.md`, `x`) or title, from disk: one made a moment ago is found too.
+    func findTask(_ t: String, project: String?) -> Fixture.TaskSummary? {
+        let all = liveFolders.keys.sorted().flatMap { p in taskNotes(in: p).map { Fixture.TaskSummary(project: p, path: $0.path, title: $0.title, status: $0.status, sessionIds: $0.sessionIds) } }
+        return all.filter { $0.path == t || $0.path == "tasks/\(t)" || $0.path == "tasks/\(t).md" || $0.title.caseInsensitiveCompare(t) == .orderedSame }
+            .first { project == nil || $0.project == project }
+    }
+
     func taskVerb(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
         switch id {
         case .tasks:
@@ -142,13 +180,16 @@ extension AppModel {
             guard let t = inv[0], let status = inv[1], TaskNotes.statuses.contains(status) else {
                 return done(.fail("usage: \(id.action.usage) (\(TaskNotes.statuses.joined(separator: " | ")))"))
             }
-            // From disk, not the snapshot: a task made a moment ago is found too.
-            let all = liveFolders.keys.sorted().flatMap { p in taskNotes(in: p).map { Fixture.TaskSummary(project: p, path: $0.path, title: $0.title, status: $0.status, sessionIds: $0.sessionIds) } }
-            let hit = all.filter { $0.path == t || $0.path == "tasks/\(t)" || $0.path == "tasks/\(t).md" || $0.title.caseInsensitiveCompare(t) == .orderedSame }
-                .first { inv.flags["project"] == nil || $0.project == inv.flags["project"] }
-            guard let hit else { return done(.fail("no task '\(t)'")) }
+            guard let hit = findTask(t, project: inv.flags["project"]) else { return done(.fail("no task '\(t)'")) }
             if let why = setTaskStatus(project: hit.project, path: hit.path, status) { return done(.fail(why)) }
             done(.ok("\(hit.title) is \(status). Undo: duo2 undo"))
+        case .taskSession:
+            guard let t = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
+            guard let hit = findTask(t, project: inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name) ?? findTask(t, project: nil) else { return done(.fail("no task '\(t)'")) }
+            switch newSession(inTask: hit.path, project: hit.project) {
+            case .success(let sid): done(.ok("Started session \(sid) in \(hit.project), linked from \(hit.path).", ["id": sid, "project": hit.project, "task": hit.path]))
+            case .failure(let e): done(.fail("\(e)"))
+            }
         case .taskAdd:
             guard let t = inv[0], let k = inv[1], let s = findSession(k, in: nil) else { return done(.fail("usage: \(id.action.usage)")) }
             let path = t.hasPrefix("tasks/") ? t : taskNotes(in: s.project).first { $0.title.caseInsensitiveCompare(t) == .orderedSame || $0.path == "tasks/\(t)" || $0.path == "tasks/\(t).md" }?.path
@@ -171,6 +212,7 @@ struct GroupRowMenu: ViewModifier {
             content.contextMenu {
                 if let task {
                     Button("Open Task Note") { model.openDocument(task) }
+                    Button("New Session in Task") { model.startSession(inTask: task, project: project) }
                     TaskStatusMenu(project: project, path: task)
                 } else {
                     Button("Make a Task") { model.makeTask(fromGroup: name, project: project) }
@@ -254,6 +296,7 @@ struct TaskLine: View {
         .onActivate { model.openTask(project: task.project, path: task.path) }  // action: doc open
         .contextMenu {
             Button("Open Task Note") { model.openTask(project: task.project, path: task.path) }
+            Button("New Session in Task") { model.startSession(inTask: task.path, project: task.project) }
             TaskStatusMenu(project: task.project, path: task.path)
         }
         .accessibilityElement(children: .combine)
@@ -360,6 +403,11 @@ extension AppModel {
                 let text = v as? String ?? ""
                 let linked = Set(text.matches(of: /duo2:\/\/session\/([0-9a-fA-F-]+)/).map { String($0.1).lowercased() })
                 let candidates = self.fixture.sessions(inProject: project).filter { s in s.sessionId.map { !linked.contains($0.lowercased()) } ?? false }
+                // A new session, linked here from its start, then the sessions there are.
+                if let u = e.url, let folder = self.liveFolders[project], let path = self.relativePathIn(u, folder: folder) {
+                    menu.addItem(ActionMenuItem("New Session in Task") { [weak self] in self?.startSession(inTask: path, project: project) })  // action: task session
+                    menu.addItem(.separator())
+                }
                 for s in candidates.prefix(30) {
                     guard let id = s.sessionId else { continue }
                     let title = s.name.trimmingCharacters(in: CharacterSet(charactersIn: "“”\""))

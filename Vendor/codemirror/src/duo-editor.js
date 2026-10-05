@@ -724,11 +724,34 @@ function setProperty(key, value, agent = false) {
 }
 
 // Adds an item to a list property, one per line, after its last item (DL-93).
+// `a, "b, c", d` split on commas outside quotes (Frontmatter.splitInlineList), blanks dropped.
+function splitInline(s) {
+  const out = [];
+  let cur = "", q = null;
+  for (const ch of s) {
+    if (q) { if (ch === q) q = null; cur += ch; }
+    else if (ch === "\"" || ch === "'") { q = ch; cur += ch; }
+    else if (ch === ",") { out.push(cur.trim()); cur = ""; }
+    else cur += ch;
+  }
+  out.push(cur.trim());
+  return out.filter(Boolean);
+}
+
 function addListItem(key, item) {
   const p = parseFrontmatter(view.state.doc);
   if (!p) return setProperty(key, "") && addListItem(key, item);
   const L = p.lines.find((l) => l.kind === "key" && l.key === key);
   if (!L) return setProperty(key, "") && addListItem(key, item);
+  const v = L.value.trim();
+  if (v) {
+    // `sessions: []` (a new task) or `key: a`: the line becomes a block list with what it held
+    // first, as TaskNotes.adding writes it. An item under an inline list isn't YAML.
+    const inline = /^\[.*\]$/.test(v), old = inline ? splitInline(v.slice(1, -1)) : [v];
+    const insert = `${key}:` + [...old, item].map((x) => `\n  - ${x}`).join("");
+    view.dispatch({ changes: { from: L.from, to: L.to, insert }, userEvent: "input" });
+    return true;
+  }
   let at = L.to;
   for (const o of p.lines) if (o.n > L.n) { if (o.kind === "item" && o.key === key) at = o.to; else if (o.kind === "key") break; }
   view.dispatch({ changes: { from: at, insert: `\n  - ${item}` }, userEvent: "input" });
@@ -1260,6 +1283,66 @@ const linkClicks = EditorView.domEventHandlers({
   },
 });
 
+// ---------- a note's name: `title:` and its heading ----------
+
+// A task note names itself twice, in `title:` and in the `# ` heading that opens its text (Make a
+// Task, + New task); Duo's lists read `title:`. While the two agree, a person's edit to one is made
+// to the other in the same step (one undo), so renaming a task by its heading renames it everywhere.
+// Once they differ on purpose, each is left alone.
+function nameSpots(doc) {
+  const p = parseFrontmatter(doc);
+  const L = p?.lines.find((l) => l.kind === "key" && l.key === "title");
+  let title = null, heading = null;
+  // A quote still being typed isn't a name yet.
+  const unclosed = L && /^["']/.test(L.value) && !(L.value.length > 1 && L.value.endsWith(L.value[0]));
+  if (L && !unclosed) {
+    title = { from: L.vFrom, to: L.vTo, raw: L.value, name: unquoteYAML(L.value) };
+  }
+  // The heading is the text's first line that isn't blank, if it's a level-1 heading.
+  for (let n = (p ? p.fm[1] : 0) + 1; n <= doc.lines; n++) {
+    const line = doc.line(n);
+    if (!line.text.trim()) continue;
+    const m = /^#(?:[ \t]+|$)(.*)$/.exec(line.text);
+    if (m) {
+      const from = line.to - m[1].length, name = m[1].trim();
+      heading = { from, to: line.to, name, nameTo: from + m[1].trimEnd().length };
+    }
+    break;
+  }
+  return { title, heading };
+}
+
+function unquoteYAML(v) {
+  if (v.length > 1 && v.startsWith("\"") && v.endsWith("\"")) return v.slice(1, -1).replace(/\\(["\\])/g, "$1");
+  if (v.length > 1 && v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1).replace(/''/g, "'");
+  return v.replace(/\s+#.*$/, "");
+}
+
+// The name written as `old` was: quoted the same way, or plain when plain is safe YAML.
+function quoteYAMLLike(old, s) {
+  if (old.startsWith("'")) return "'" + s.replace(/'/g, "''") + "'";
+  if (old.startsWith("\"") || s === "" || /^[\s'"\[\]{}>|*&!%@`#,?:-]|: | #|\s$|^(true|false|yes|no|null|~|-?\d+(\.\d+)?)$/i.test(s)) {
+    return "\"" + s.replace(/\\/g, "\\\\").replace(/"/g, "\\\"") + "\"";
+  }
+  return s;
+}
+
+const titleFollowsHeading = EditorState.transactionFilter.of((tr) => {
+  if (!tr.docChanged || !(tr.isUserEvent("input") || tr.isUserEvent("delete"))) return tr;
+  const before = nameSpots(tr.startState.doc);
+  if (!before.title || !before.heading || before.title.name !== before.heading.name) return tr;
+  const after = nameSpots(tr.newDoc);
+  if (!after.title || !after.heading) return tr;
+  const headingMoved = after.heading.name !== before.heading.name, titleMoved = after.title.name !== before.title.name;
+  if (headingMoved && !titleMoved) {
+    return [tr, { changes: { from: after.title.from, to: after.title.to, insert: quoteYAMLLike(after.title.raw, after.heading.name) }, sequential: true }];
+  }
+  if (titleMoved && !headingMoved) {
+    return [tr, { changes: { from: after.heading.from, to: after.heading.to, insert: after.title.name }, sequential: true }];
+  }
+  return tr;
+});
+
 function create(parent, text) {
   sepInfo = lineSeparatorOf(text);
   setBase(canon(text));
@@ -1287,6 +1370,7 @@ function create(parent, text) {
       changesField,
       searchField,
       clearOnUserEdit,
+      titleFollowsHeading,
       linkClicks,
       // Duo's menu chords win over CodeMirror's: ⌘D is Send Selection to Claude (DL-79), ⌘I is
       // Italic (CodeMirror's select-parent-syntax took it, so Format › Italic never fired).
@@ -1538,6 +1622,14 @@ window.duo = {
   properties: () => { const fm = frontmatterLines(view.state.doc); return fm ? document.querySelectorAll(".duo-fm").length : 0; },
   setReadOnly: (ro) => view.dispatch({ effects: readOnlyCompartment.reconfigure([EditorState.readOnly.of(ro), EditorView.editable.of(!ro)]) }),
   focus: () => view.focus(),
+  // + New task: the heading's name selected, so typing names the task.
+  selectHeading: () => {
+    const h = nameSpots(view.state.doc).heading;
+    if (!h) return false;
+    view.dispatch({ selection: { anchor: h.from, head: h.nameTo }, scrollIntoView: true });
+    view.focus();
+    return true;
+  },
   create: (text) => create(document.getElementById("editor"), text),
   text: fileText,
   markSaved: () => setBase(view.state.doc.toString()),

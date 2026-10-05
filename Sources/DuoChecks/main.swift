@@ -92,6 +92,11 @@ func repoFixture() throws -> Fixture {
               "status done adds completed:, nothing else changes")
         check(TaskNotes.settingStatus("in-progress", in: done) == fresh.replacingOccurrences(of: "status: open", with: "status: in-progress"),
               "reopening removes completed: and puts the note back as it was")
+        let quoted = TaskNotes.newNote(title: #"Say "hi" \ bye"#, links: [])
+        check(TaskNotes.parse(quoted, path: "t.md").title == #"Say "hi" \ bye"#, "a title with quotes and backslashes reads back as written")
+        check(TaskNotes.parse("---\ntitle: 'It''s done'\n---\n", path: "t.md").title == "It's done", "single-quoted titles unescape ''")
+        check(TaskNotes.parse("---\ntitle: \"\"\n---\n\n# Retyped\n", path: "tasks/x.md").title == "Retyped",
+              "an emptied title: falls back to the heading")
     }
 
     print("restore on relaunch (LR-58)")
