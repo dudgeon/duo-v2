@@ -345,7 +345,8 @@ func repoFixture() throws -> Fixture {
     try moveIdx.save(project: proj)
     let (ms, _, mmoves) = LiveSnapshot.build(hctx, beacons: [])
     check(ms.sessions.first { $0.sessionId == "hist-orphan" }?.project == "checkout-redesign" && !mmoves.contains { $0.sessionId == "hist-orphan" }
-          && !ms.projects.contains { $0.name == "scratch" }, "a session the user moved stays where it was filed (DL-64)")
+          && ms.sessions(inProject: "scratch").isEmpty, "a session the user moved stays where it was filed (DL-64)")
+    check(ms.projects.first { $0.name == "scratch" }?.hasClaudeMD == true, "its folder stays listed: it has a CLAUDE.md (DL-101)")
     try? FileManager.default.removeItem(at: lw)
 
     print("hooks")
@@ -916,6 +917,30 @@ func repoFixture() throws -> Fixture {
           && ProtectedFolders.skip(home.appending(path: "Documents"), root: home.appending(path: "Documents")) == false
           && ProtectedFolders.skip(home.appending(path: "repos"), root: home) == false,
           "walks never enter Music, Photos, Documents… unless the project lives inside them")
+    check(FileSource.files(in: URL(fileURLWithPath: "/")).isEmpty && FileSource.files(in: home.deletingLastPathComponent()).isEmpty,
+          "folders above home are never walked for files (a session started in / or /Users)")
+
+    print("Claude folders (DL-101)")
+    let cw = FileManager.default.temporaryDirectory.appending(path: "duo-claude-\(UUID().uuidString)")
+    for (dir, file) in [("", "HOME.md"), ("tool", "CLAUDE.md"), ("tool/pkg", "CLAUDE.md"), ("tool/inner", "PROJECT.md"),
+                        ("proj", "PROJECT.md"), ("proj/sub", "CLAUDE.md"), ("plain", "notes.md")] {
+        try FileManager.default.createDirectory(at: cw.appending(path: dir), withIntermediateDirectories: true)
+        try "---\ngoal: x\n---\n".write(to: cw.appending(path: dir).appending(path: file), atomically: true, encoding: .utf8)
+    }
+    let cscan = ProjectDiscovery.scanAll(root: cw)
+    check(cscan.claudeFolders.map(\.lastPathComponent) == ["tool"],
+          "a CLAUDE.md folder is found; one inside it or inside a project is part of that one")
+    check(Set(cscan.projects.map(\.folder.lastPathComponent)) == [cw.lastPathComponent, "inner", "proj"],
+          "projects are still found, inside a Claude folder too")
+    let (csnap, cfolders, _) = LiveSnapshot.build(noHistory(cw), beacons: [])
+    let toolEntry = csnap.projects.first { $0.name == "tool" }
+    check(toolEntry?.isFolderOnly == true && toolEntry?.hasClaudeMD == true && cfolders["tool"] != nil
+          && csnap.sessions(inProject: "tool").isEmpty && csnap.projects.contains { $0.name == "plain" } == false,
+          "a Claude folder without sessions is on the map as a folder; a plain folder isn't")
+    let toolFiles = FileSource.files(in: cw.appending(path: "tool"), excluding: [cw.appending(path: "tool/inner").path]).map(\.relative)
+    check(toolFiles.contains("CLAUDE.md") && toolFiles.contains("pkg/CLAUDE.md") && !toolFiles.contains("inner/PROJECT.md"),
+          "a folder's files leave out a searched folder inside it, so no file is indexed twice")
+    try? FileManager.default.removeItem(at: cw)
 
     print("send to claude (DL-67, DL-68)")
     let hostile = SendFormat.documentSelection("ok\u{1b}[201~rm -rf ~\r\nnext", path: "a\nb.md", fromLine: 1, toLine: 2)

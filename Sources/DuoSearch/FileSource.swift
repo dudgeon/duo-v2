@@ -24,19 +24,22 @@ public enum FileSource {
         public var modified: Date
     }
 
-    public static func files(in root: URL) -> [Found] {
+    /// `excluding`: other searched folders inside this one (a project in a Claude folder, Home's
+    /// projects), whose files belong to them, so no file is indexed under two names (DL-101).
+    public static func files(in root: URL, excluding: Set<String> = []) -> [Found] {
         // Resolve symlinks first (/var → /private/var, a symlinked workspace): relative paths and
         // "is this still under the project?" must use the same spelling as the files found.
         let root = root.resolvingSymlinksInPath()
         var out: [Found] = []
-        if ProtectedFolders.isHome(root) { return out }
-        walk(root, root: root, prefix: "", rules: GitIgnore.rules(in: root, base: ""), into: &out)
+        if ProtectedFolders.neverFileRoot(root) { return out }
+        let excluding = Set(excluding.map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path })
+        walk(root, root: root, prefix: "", rules: GitIgnore.rules(in: root, base: ""), excluding: excluding, into: &out)
         return out
     }
 
     /// Relative paths are built while walking, never sliced off a path: the directory listing may
     /// spell the same folder differently (`/var` vs `/private/var`).
-    private static func walk(_ dir: URL, root: URL, prefix: String, rules: [GitIgnore.Rule], into out: inout [Found]) {
+    private static func walk(_ dir: URL, root: URL, prefix: String, rules: [GitIgnore.Rule], excluding: Set<String>, into out: inout [Found]) {
         let fm = FileManager.default
         guard let items = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey, .isSymbolicLinkKey]) else { return }
         for url in items.sorted(by: { $0.path < $1.path }) {
@@ -48,7 +51,8 @@ public enum FileSource {
                 if skipDirs.contains(name) || (name.hasPrefix(".") && name != ".github") { continue }
                 if ProtectedFolders.skip(url, root: root) { continue }
                 if GitIgnore.ignored(rel, isDirectory: true, rules: rules) { continue }
-                walk(url, root: root, prefix: rel, rules: rules + GitIgnore.rules(in: url, base: rel), into: &out)
+                if excluding.contains(root.path + "/" + rel) { continue }
+                walk(url, root: root, prefix: rel, rules: rules + GitIgnore.rules(in: url, base: rel), excluding: excluding, into: &out)
                 continue
             }
             let ext = url.pathExtension.lowercased()

@@ -82,10 +82,12 @@ extension SearchIndex {
     /// Brings one project's files up to date: removed files leave, changed files are re-chunked,
     /// and only passages the index hasn't seen are embedded. Recent files first (FR-7.3.2).
     /// `pause` runs between files so the caller can throttle (FR-7.3.3).
-    public func indexProject(_ name: String, root: URL, embedder: Embedder, pause: () async -> Void = {}) async throws -> IndexStats {
+    /// `excluding`: searched folders inside this one, indexed under their own names.
+    public func indexProject(_ name: String, root: URL, excluding: Set<String> = [], embedder: Embedder,
+                             pause: () async -> Void = {}) async throws -> IndexStats {
         var stats = IndexStats()
         let root = root.resolvingSymlinksInPath()
-        let files = FileSource.files(in: root).sorted { $0.modified > $1.modified }
+        let files = FileSource.files(in: root, excluding: excluding).sorted { $0.modified > $1.modified }
         stats.files = files.count
         var known: [String: (id: Int, modified: Double, size: Int)] = [:]
         let q = try db.prepare("SELECT id, path, modified, size FROM items WHERE project = ? AND kind = 'file'").bind([name])

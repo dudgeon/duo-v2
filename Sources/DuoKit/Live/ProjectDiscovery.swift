@@ -14,19 +14,27 @@ public enum ProjectDiscovery {
     /// Scans `root` up to `depth` levels for PROJECT.md / HOME.md. Hidden folders, `node_modules`
     /// and `.build` are skipped. A project inside another project's folder is found too, and shown
     /// as its sibling (DL-89: parenthood doesn't matter on the map).
-    public static func scan(root: URL, depth: Int = 4) -> [Found] {
+    public static func scan(root: URL, depth: Int = 4) -> [Found] { scanAll(root: root, depth: depth).projects }
+
+    /// The same walk, also returning Claude folders: ones with a `CLAUDE.md` but no PROJECT.md,
+    /// listed on the map as folders and searched (DL-101). One inside a project or another Claude
+    /// folder belongs to that one (a monorepo's nested `CLAUDE.md` files) and isn't listed.
+    public static func scanAll(root: URL, depth: Int = 4) -> (projects: [Found], claudeFolders: [URL]) {
         var found: [Found] = []
-        walk(root, root: root, depth: depth, into: &found)
-        return found.sorted { $0.folder.path < $1.folder.path }
+        var claude: [URL] = []
+        walk(root, root: root, depth: depth, enclosed: false, into: &found, claude: &claude)
+        return (found.sorted { $0.folder.path < $1.folder.path }, claude.sorted { $0.path < $1.path })
     }
 
-    private static func walk(_ dir: URL, root: URL, depth: Int, into found: inout [Found]) {
+    private static func walk(_ dir: URL, root: URL, depth: Int, enclosed: Bool, into found: inout [Found], claude: inout [URL]) {
         let fm = FileManager.default
         let projectFile = dir.appending(path: "PROJECT.md")
         let homeFile = dir.appending(path: "HOME.md")
         let isProject = fm.fileExists(atPath: projectFile.path)
         let isHome = fm.fileExists(atPath: homeFile.path)
         let atRoot = dir.standardizedFileURL == root.standardizedFileURL
+        let isClaude = !atRoot && !isProject && !isHome && fm.fileExists(atPath: dir.appending(path: "CLAUDE.md").path)
+        if isClaude, !enclosed { claude.append(dir) }
         // Home is the container of its projects (DL-85): a HOME.md at the root makes the root Home,
         // and its projects are still found inside it.
         if atRoot, isHome {
@@ -45,7 +53,8 @@ public enum ProjectDiscovery {
         where (try? child.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
             && !["node_modules", ".build", "build", "Library"].contains(child.lastPathComponent)
             && !protected.contains(child.standardizedFileURL.path) {
-            walk(child, root: root, depth: depth - 1, into: &found)
+            walk(child, root: root, depth: depth - 1, enclosed: enclosed || (!atRoot && (isProject || isHome || isClaude)),
+                 into: &found, claude: &claude)
         }
     }
 

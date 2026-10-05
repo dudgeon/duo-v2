@@ -43,6 +43,7 @@ Status: **open** (needs Geoff or a spike) · **defaulted** (Claude chose a defau
 | Q-31 | **Needs-you reason wording for plans.** The slice-2 targets disagree: the map and Move into Home screens read `checkout · plan`; the Needs you sheet and the handoff README read `· plan to approve`. Built: `plan to approve` (the sheet dedicated to the state). | Low | Geoff: keep `plan to approve`, or shorten to `plan`. |
 | Q-32 | **Slice 3 designs** (Settings, moved or missing projects, launch questions, editor notices, how documents are drawn, notifications, confirmation sheets): designed on https://claude.ai/artifact/GNXvk4CWjarrXeURrLcyVY, brief `docs/design/design-brief-slice-3.md`. Every mark is [P]. | v1 | Geoff reviews the canvas; on approval, export to `docs/design/slice3-handoff/` and build. |
 | Q-33 | **Task notes' properties look.** The approved task-note screen (slice2 `task-note.html`) hides the `---` fences, has no type icons and no fold chevron; the frontmatter handoff's screens show all three on every document. Each is built to its own screen (F-77). | Low | Recommend task notes take the general look, keeping their status popup and session lines: one block everywhere. Geoff's call. |
+| Q-34 | **A `CLAUDE.md` folder with no sessions reads "0 past sessions"** on its map tile (DL-101, F-78): the folder tile's existing line, never drawn for zero. | Low | Copy for that case (e.g. "No sessions yet"), or keep it. Design's call; built as is. |
 
 ## Concerns
 

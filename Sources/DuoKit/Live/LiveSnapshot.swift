@@ -71,7 +71,9 @@ public enum LiveSnapshot {
         // transcript, DL-44): they stay listed by title and resume from the copy.
         let history = ctx.historyOverride ?? (ctx.includeHistory
             ? ClaudeStorage.history() + SessionArchive.purged().map { (id: $0.id, transcript: $0.copy, cwd: $0.cwd) } : [])
-        var found = (ctx.root.map { ProjectDiscovery.scan(root: $0) } ?? [])
+        let scanned = ctx.root.map { ProjectDiscovery.scanAll(root: $0) }
+        var found = scanned?.projects ?? []
+        let claudeFolders = scanned?.claudeFolders ?? []
         // Projects outside Home: made in Duo (DL-63), or any folder Claude ran in that has (or sits
         // inside) a PROJECT.md (DL-82).
         var outside = ctx.extraProjects
@@ -184,7 +186,7 @@ public enum LiveSnapshot {
             files[name] = topLevelFiles(f.folder)
         }
 
-        // Folders with Claude sessions that aren't projects (DL-63): shown in their own place,
+        // Folders with Claude sessions or a CLAUDE.md that aren't projects (DL-63): shown in their own place,
         // marked, so they can stay as they are, become projects, or merge into one.
         var folderProjects: [Fixture.Project] = []
         var byFolder: [String: [String]] = [:]
@@ -192,6 +194,8 @@ public enum LiveSnapshot {
         for b in beacons where !claimed.contains(b.sessionId) && filedIn[b.sessionId] == nil {
             if !(byFolder[resolve(b.cwd)] ?? []).contains(b.sessionId) { byFolder[resolve(b.cwd), default: []].append(b.sessionId) }
         }
+        // Claude folders in Home without sessions (DL-101): a CLAUDE.md is made with intent.
+        for url in claudeFolders where owner(ofPath: resolve(url.path)) == nil { byFolder[resolve(url.path), default: []] += [] }
         let userHome = resolve(FileManager.default.homeDirectoryForCurrentUser.path)
         for (path, ids) in byFolder.sorted(by: { $0.key < $1.key }) {
             let url = URL(fileURLWithPath: path)
