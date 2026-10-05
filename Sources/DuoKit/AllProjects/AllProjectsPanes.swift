@@ -193,9 +193,34 @@ struct MapGrid: View {
     let tileAtEnd: Bool
 
     var body: some View {
-        AdaptiveColumns(count: columns.count, rowSpacing: DuoSpace.gapMapColumns + 6) { i in
-            MapColumn(topic: columns[i].topic, projects: columns[i].projects, home: i == 0 ? home : nil,
-                      last: tileAtEnd && i == columns.count - 1)
+        if columns.count == 1, columns[0].topic.isEmpty {
+            loneColumn
+        } else {
+            AdaptiveColumns(count: columns.count, rowSpacing: DuoSpace.gapMapColumns + 6) { i in
+                MapColumn(topic: columns[i].topic, projects: columns[i].projects, home: i == 0 ? home : nil,
+                          last: tileAtEnd && i == columns.count - 1)
+            }
+        }
+    }
+
+    /// Stand-in (Q-42, F-86): with every project directly in Home there is only the unlabelled column,
+    /// which a third of the width left as one tall stack with the rest empty. Its tiles flow three
+    /// across instead, as ACTIVE OUTSIDE HOME's do; the blank label row keeps Home's tile where it was.
+    var loneColumn: some View {
+        let projects = columns[0].projects
+        let count = (home == nil ? 0 : 1) + projects.count + (tileAtEnd ? 1 : 0)
+        return VStack(alignment: .leading, spacing: DuoSpace.gapTileToTile) {
+            SectionLabel(text: " ")
+            AdaptiveColumns(count: count, rowSpacing: DuoSpace.gapTileToTile) { i in
+                let p = i - (home == nil ? 0 : 1)
+                if let home, i == 0 {
+                    HomeTile(home: home)
+                } else if p < projects.count {
+                    ProjectTile(project: projects[p])
+                } else {
+                    NewProjectTile()
+                }
+            }
         }
     }
 }
