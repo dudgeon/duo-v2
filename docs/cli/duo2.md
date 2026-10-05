@@ -28,6 +28,10 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 view tab <Project \| document path \| group>` | Switch the right pane's tab. | right pane tab |
 | `duo2 view group <group> expand\|collapse` | Expand or collapse a group in the session list. | group row |
 | `duo2 view select <session id>` | Select a session's card (action column or peek) without opening it. | action card, peek card |
+| `duo2 view sort recent\|name` | Order All projects' map by newest activity or by name (View › Sort Projects By). | Sort Projects By, map sort popup |
+| `duo2 view filter [text]` | Narrow All projects' map to projects and folders whose name or path has the text; no text clears it. | Filter folders |
+| `duo2 view hidden on\|off\|toggle` | Show or hide dotfiles in the project's file tree (View › Show Hidden Files). | Show Hidden Files |
+| `duo2 view folder <folder> open\|close` | Open or close a folder in the project's file tree. | folder row |
 
 ## Projects
 
@@ -87,7 +91,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 
 | Command | What it does | In the app |
 |---|---|---|
-| `duo2 files [folder] [--project <p>]` | The project's files and folders. | — |
+| `duo2 files [folder] [--project <p>] [--hidden]` | The project's files and folders, three levels deep; --hidden includes dotfiles. | — |
 | `duo2 file new [--in <folder>] [--name <name>]` | Create a Markdown file and open it. | New Markdown File, right pane + |
 | `duo2 file new-folder [--in <folder>] [--name <name>]` | Create a folder. | New Folder |
 | `duo2 file template <template> [--in <folder>]` | Create a file from a template (the project's templates/, then Home's). | New from Template |
@@ -104,7 +108,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 
 | Command | What it does | In the app |
 |---|---|---|
-| `duo2 doc open <path>` | Open a document in the right pane (Markdown in the editor, HTML as a page). | Open, file row |
+| `duo2 doc open <path> [--project <p>]` | Open a document in the right pane (Markdown in the editor, HTML as a page). A file outside every project opens as a tab in the project on screen (or --project). | Open, file row, Open File…, file dropped on the right pane |
 | `duo2 doc close [path] [--others]` | Close a document tab (saved first), or every other one. | Close Tab, Close Other Tabs |
 | `duo2 doc tabs` | The open document tabs, and which one shows. | — |
 | `duo2 doc status <file>` | Whether a file is open in Duo's editor, unsaved or in conflict. Check before editing a file the user may have open. | — |

@@ -72,6 +72,12 @@ public final class AppModel {
     public var selectedFile: String?            // path relative to the project
     /// Open document tabs by project (DL-60): switching to Project no longer closes them.
     public var openDocumentsByProject: [String: [String]] = [:]
+    /// The file tree (DL-105): hidden files on or off, and the folders open in each project's tree.
+    public var showHiddenFiles = DuoState.load().showHiddenFiles
+    public var expandedFolders: [String: Set<String>] = [:]
+    /// The console and right-pane tab each project showed when the user left it (DL-107).
+    public var lastConsoleTab: [String: String] = [:]
+    public var lastRightTab: [String: String] = [:]
     /// The file or folder being named inline in the tree (DL-62).
     public var renamingPath: String?
 
@@ -108,11 +114,29 @@ public final class AppModel {
     /// The editor if it has been created (doc-status mustn't create one).
     @ObservationIgnored public var editorIfLoaded: EditorController?
 
-    /// A project-relative path as a real file, in live mode.
+    /// A tab for a file outside the project (DL-106): `file:` and its absolute path.
+    public static let outsideFilePrefix = "file:"
+    public static func isOutsideFile(_ tab: String) -> Bool { tab.hasPrefix(outsideFilePrefix) }
+
+    /// A project-relative path as a real file, in live mode; or an outside file's tab (DL-106).
     public func liveFile(_ path: String) -> URL? {
-        guard terminalsMode == .live, let project = currentProject?.name, let folder = liveFolders[project] else { return nil }
-        let url = folder.appending(path: path)
+        guard terminalsMode == .live else { return nil }
+        if Self.isOutsideFile(path) {
+            let url = URL(fileURLWithPath: String(path.dropFirst(Self.outsideFilePrefix.count)))
+            return FileManager.default.fileExists(atPath: url.path) ? url : nil
+        }
+        guard let project = currentProject?.name, let folder = liveFolders[project],
+              let url = Self.contained(path, in: folder) else { return nil }
         return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    }
+
+    /// A relative path inside `folder`, or nil when `..` takes it outside (C-20). Symlinks the user
+    /// made inside the project are theirs to follow, so only the path itself is checked.
+    public static func contained(_ path: String, in folder: URL) -> URL? {
+        guard !path.hasPrefix("/") else { return nil }
+        let root = folder.standardizedFileURL.path
+        let url = folder.appending(path: path).standardizedFileURL
+        return url.path == root || url.path.hasPrefix(root.hasSuffix("/") ? root : root + "/") ? url : nil
     }
 
     /// The terminal for a session, created on first use; nil when terminals are off, or when the
@@ -159,6 +183,13 @@ public final class AppModel {
     }
 
     // MARK: - Live workspace (Phase E)
+
+    /// The map's order, filter and opened groups (DL-104). `mapSettled` holds each project's
+    /// activity as it was on arrival at All projects, so tiles don't reshuffle while you look.
+    public var mapSort: MapSort = MapSort(rawValue: DuoState.load().mapSort ?? "") ?? .recent
+    public var mapFilter = ""
+    public var openOutsideGroups: Set<String> = []
+    @ObservationIgnored public var mapSettled: [String: Double] = [:]
 
     /// Home's folder (DL-85); nil until one is chosen. Live mode runs either way (DL-82).
     public var liveRoot: URL?
@@ -236,6 +267,8 @@ public final class AppModel {
         }
         var ctx = LiveSnapshot.Context(root: root, rememberedHome: rememberedHome, events: DuoPaths.events, seen: seen)
         ctx.extraProjects = extraProjects
+        ctx.showHidden = showHiddenFiles
+        ctx.expanded = Dictionary(expandedFolders.compactMap { k, v in liveFolders[k].map { ($0.path, v) } }, uniquingKeysWith: { a, b in a.union(b) })
         Task.detached(priority: .utility) { [weak self] in
             let beacons = Beacon.readAll()
             let (snapshot, folders, moves) = LiveSnapshot.build(ctx, beacons: beacons)
@@ -279,6 +312,8 @@ public final class AppModel {
         var ids = Set<String>()
         merged.sessions = merged.sessions.filter { s in s.sessionId.map { ids.insert($0).inserted } ?? true }
         if merged != fixture { fixture = merged }
+        // The map's order settles on the first scan, then on each arrival at All projects (DL-104).
+        if mapSettled.isEmpty || altitude != .allProjects { settleMapOrder() }
         pushNoteContext()
         Notifier.shared.model = self
         notifyNeedsYou()
@@ -440,15 +475,20 @@ public final class AppModel {
     /// Zooms into a project. With no session given, the console opens on the session that needs
     /// you (or the most recent live one) and the right pane on the document it is editing [P].
     public func open(project name: String, session sessionName: String? = nil, document: String? = nil) {
+        rememberTabs()
         let live = fixture.liveSessions(inProject: name)
-        // The named session, else the most urgent live one, else one with a running terminal: a
-        // session idle at its prompt has a tab, and left the console blank when skipped.
+        // Coming back (DL-107): the tab the user left on, while it's still open.
+        let returning = sessionName == nil ? lastConsoleTab[name] : nil
+        let returningShell = returning.flatMap { k in isShell(k) && shells(inProject: name).contains(k) ? k : nil }
+        // The named session, else the one the user left on, else the most urgent live one, else one
+        // with a running terminal: a session idle at its prompt has a tab, and left the console blank when skipped.
         let target = sessionName.flatMap { n in fixture.sessions(inProject: name).first { $0.name == n } }
-            ?? SidebarRow.mostUrgent(live)
-            ?? tabSessions(inProject: name).first { terminals.existing($0.tabKey) != nil }
+            ?? returning.flatMap { k in tabSessions(inProject: name).first { $0.tabKey == k } }
+            ?? (returningShell == nil ? SidebarRow.mostUrgent(live) : nil)
+            ?? (returningShell == nil ? tabSessions(inProject: name).first { terminals.existing($0.tabKey) != nil } : nil)
         altitude = .project(name)
         peekOpen = false
-        consoleTab = target?.tabKey
+        consoleTab = returningShell ?? target?.tabKey
         if let target { lastVisitedSession = target.id }
         if let target, let group = fixture.groups.first(where: { g in g.project == name && g.sessions.contains(target.name) }) {
             selectedSidebarItem = group.name
@@ -456,19 +496,33 @@ public final class AppModel {
         } else {
             selectedSidebarItem = target?.id
         }
-        if let doc = document ?? target?.document {
+        // A document asked for, or the named session's, wins; then the tab left open (DL-107).
+        let returningRight = lastRightTab[name].flatMap { t in t == "Project" || (openDocumentsByProject[name] ?? []).contains(t) ? t : nil }
+        if let doc = document ?? (sessionName != nil || returningRight == nil ? target?.document : nil) {
             if !(openDocumentsByProject[name] ?? []).contains(doc) { openDocumentsByProject[name, default: []].append(doc) }
             rightTab = doc
             selectedFile = doc
+        } else if let tab = returningRight, tab != "Project" {
+            rightTab = tab
+            selectedFile = tab
         } else {
             rightTab = "Project"
             selectedFile = nil
         }
     }
 
+    /// Notes the tabs the current project shows, before leaving it (DL-107).
+    func rememberTabs() {
+        guard let p = currentProject?.name else { return }
+        lastConsoleTab[p] = consoleTab
+        lastRightTab[p] = rightTab
+    }
+
     /// Back to All projects; the session last opened is the selected row (flow-zoom-4).
     public func zoomOut() {
+        rememberTabs()
         altitude = .allProjects
+        settleMapOrder()
         peekOpen = false
         if let last = lastVisitedSession { selectedActionSession = last }
         focusedTile = nil
@@ -510,9 +564,9 @@ public final class AppModel {
         peekSelection = ids[max(0, min(ids.count - 1, i + delta))]
     }
 
-    /// Arrow keys between tiles on the map: columns are topics, rows are tiles.
+    /// Arrow keys between tiles on the map: columns as drawn (DL-104), rows are tiles.
     public func moveTileFocus(dx: Int, dy: Int) {
-        let columns = fixture.topics.map { mapProjects(inTopic: $0).map(\.name) }
+        let columns = mapLayout.focusColumns
         guard let current = focusedTile,
               let c = columns.firstIndex(where: { $0.contains(current) }),
               let r = columns[c].firstIndex(of: current) else {

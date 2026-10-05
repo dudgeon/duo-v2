@@ -49,7 +49,7 @@ public struct RestoreState: Codable, Equatable, Sendable {
 
 extension AppModel {
     /// What's open now, as a restore state.
-    func currentRestoreState() -> RestoreState {
+    public func currentRestoreState() -> RestoreState {
         var s = RestoreState()
         s.root = liveRoot?.path
         s.leftCollapsedAllProjects = leftCollapsedAllProjects
@@ -63,7 +63,9 @@ extension AppModel {
                   session.project != fixture.home?.name else { continue }
             byProject[session.project, default: []].append(id)
         }
+        // Every project with something open or a tab remembered (DL-107), not only the one on screen.
         let names = Set(byProject.keys).union(openDocumentsByProject.filter { !$0.value.isEmpty }.keys).union(current.map { [$0] } ?? [])
+            .union(lastConsoleTab.keys).union(lastRightTab.keys)
         for name in names.sorted() {
             guard let folder = liveFolders[name]?.path else { continue }
             let tabs = tabSessions(inProject: name).compactMap(\.sessionId)
@@ -71,9 +73,9 @@ extension AppModel {
             let docs = openDocumentsByProject[name] ?? []
             let web = Dictionary(docs.compactMap { d in webTabs[d]?.url.map { (d, $0.absoluteString) } }, uniquingKeysWith: { a, _ in a })
             s.projects.append(.init(folder: folder, sessions: tabs.filter(open.contains) + open.filter { !tabs.contains($0) },
-                                    consoleTab: name == current ? consoleTab : nil,
+                                    consoleTab: name == current ? consoleTab : lastConsoleTab[name],
                                     documents: docs.filter { !$0.hasPrefix("web:") || web[$0] != nil },
-                                    rightTab: name == current ? rightTab : nil, webTabs: web.isEmpty ? nil : web))
+                                    rightTab: name == current ? rightTab : lastRightTab[name], webTabs: web.isEmpty ? nil : web))
         }
         return s
     }
@@ -101,7 +103,9 @@ extension AppModel {
             guard let project = name(p.folder), let folder = liveFolders[project] else { continue }
             let docs = p.documents.filter { d in
                 if d.hasPrefix("web:") { return p.webTabs?[d].flatMap(URL.init(string:)) != nil }
-                return FileManager.default.fileExists(atPath: folder.appending(path: d).path)
+                // A file outside the project (DL-106) is kept by its own path.
+                if Self.isOutsideFile(d) { return FileManager.default.fileExists(atPath: String(d.dropFirst(Self.outsideFilePrefix.count))) }
+                return Self.contained(d, in: folder).map { FileManager.default.fileExists(atPath: $0.path) } ?? false
             }
             for d in docs where d.hasPrefix("web:") {
                 guard let u = p.webTabs?[d].flatMap(URL.init(string:)) else { continue }
@@ -111,6 +115,9 @@ extension AppModel {
                 tab.load(u)
             }
             if !docs.isEmpty { openDocumentsByProject[project] = docs }
+            // The tabs it showed, for coming back to it (DL-107).
+            if let t = p.consoleTab { lastConsoleTab[project] = t }
+            if let r = p.rightTab, r == "Project" || docs.contains(r) { lastRightTab[project] = r }
             for id in p.sessions where !liveElsewhere.contains(id) {
                 guard let key = fixture.sessions(inProject: project).first(where: { $0.sessionId == id })?.tabKey else { continue }
                 if terminal(project: project, session: key) != nil { reopened += 1 }

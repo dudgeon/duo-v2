@@ -289,8 +289,9 @@ struct FileRow: View {
         let selected = model.selectedFile == node.path
         let edited = model.fixture.focusDocument.path == node.path
         VStack(alignment: .leading, spacing: 0) {
+            let open = node.children != nil && model.isFolderOpen(node.path)
             HStack(spacing: node.children == nil ? DuoSpace.gapRowItems : DuoSpace.gapGlyphToLabel) {
-                if node.children != nil { Chevron(direction: .down) }
+                if node.children != nil { Chevron(direction: open ? .down : .right) }
                 if model.renamingPath == node.path {
                     InlineNameField(name: node.name) { new in
                         if let new { model.commitRename(node.path, to: new) } else { model.renamingPath = nil }
@@ -299,6 +300,8 @@ struct FileRow: View {
                 } else {
                     Text(node.children == nil ? node.name : "\(node.name)/")
                         .duoText(selected ? .monoActiveTab : .mono)
+                        // Hidden files, when shown, are quieter (DL-105).
+                        .foregroundStyle(node.path.split(separator: "/").contains { $0.hasPrefix(".") } ? DuoColor.text2 : DuoColor.text)
                         .lineLimit(1)
                 }
                 if edited {
@@ -317,11 +320,11 @@ struct FileRow: View {
             }
             .padding(.horizontal, DuoSpace.selectionInset)
             .contentShape(Rectangle())
-            .onActivate { if node.children == nil { model.openDocument(node.path) } }  // action: doc open
+            .onActivate { if node.children == nil { model.openDocument(node.path) } else { model.toggleFolder(node.path) } }  // action: doc open
             .modifier(LiveContextMenu { FileMenu(path: node.path, isFolder: node.children != nil, onTab: false) })
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(selected ? .isSelected : [])
-            if let children = node.children {
+            if let children = node.children, open {
                 ForEach(children) { c in FileRow(node: c, depth: depth + 1) }
             }
         }
@@ -374,6 +377,8 @@ struct RightPane: View {
                         .duoText(active ? .bodyEmphasis : .body)
                         .lineLimit(1)
                         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+                        // A file outside the project shows its name; its path is the tooltip (DL-106, look: Q-39).
+                        .help(AppModel.isOutsideFile(tab.id) ? String(tab.id.dropFirst(AppModel.outsideFilePrefix.count)) : "")
                         .onActivate { model.rightTab = tab.id; if tab.isDocument { model.selectedFile = tab.id } }  // action: view tab
                         .modifier(LiveContextMenu(enabled: tab.isDocument) {
                             Button("Close Tab") { model.closeDocument(tab.id) }
@@ -412,7 +417,9 @@ struct RightPane: View {
             } else if model.rightTab == ReadOnlySession.tabKey, let ro = model.readOnlySession {
                 ReadOnlySessionView(session: ro)
             } else if let path = model.rightTab, ["html", "htm"].contains((path as NSString).pathExtension.lowercased()),
-               let file = model.liveFile(path), let root = model.projectFolder {
+               let file = model.liveFile(path),
+               // An outside page reads from its own folder (DL-106); a project's from the project.
+               let root = AppModel.isOutsideFile(path) ? file.deletingLastPathComponent() : model.projectFolder {
                 // Local HTML, read-only and live (v1; DL-67): its own web view, with the element picker.
                 ZStack(alignment: .bottom) {
                     HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
@@ -438,6 +445,11 @@ struct RightPane: View {
         }
         .foregroundStyle(DuoColor.text)
         .background(DuoColor.pane)
+        // Files dropped from Finder open as tabs here, from inside the project or anywhere (DL-106).
+        .dropDestination(for: URL.self) { urls, _ in
+            let opened = urls.filter(\.isFileURL).compactMap { model.openFile(at: $0) }
+            return !opened.isEmpty
+        }
     }
 
     private var rightTabs: [(id: String, title: String, isDocument: Bool)] {
@@ -490,7 +502,7 @@ struct FileMenu: View {
         if !isFolder && !onTab { Button("Open") { model.openDocument(path) } }
         if !isFolder {
             Menu("Open With") {
-                if let url = model.projectFolder?.appending(path: path) {
+                if let url = model.fileURL(path) {
                     ForEach(Array(FileActions.apps(for: url).enumerated()), id: \.offset) { i, app in
                         Button(FileManager.default.displayName(atPath: app.path) + (i == 0 ? " (default)" : "")) {
                             NSWorkspace.shared.open([url], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
@@ -504,18 +516,23 @@ struct FileMenu: View {
         Button("Reveal in Finder") { model.reveal(path) }
         Divider()
         Button("Copy Path") { model.copyPath(path, relative: false) }
-        Button("Copy Relative Path") { model.copyPath(path, relative: true) }
-        if !isFolder { Button("Copy as Link") { model.copyLink(path) } }
+        // A file outside the project (DL-106) has no place in it: no relative path, link, new
+        // items, rename, move or trash from here; Finder is a click away.
+        let outside = AppModel.isOutsideFile(path)
+        if !outside { Button("Copy Relative Path") { model.copyPath(path, relative: true) } }
+        if !isFolder && !outside { Button("Copy as Link") { model.copyLink(path) } }
         SendMenu { key in model.filePayload(path, for: key) }
-        if !isFolder { Button("Find Similar") { model.findSimilar(file: path) } }
-        Divider()
-        NewItemsMenu(near: path)
-        Divider()
-        Button("Rename") { model.renamingPath = path }.disabled(onTab && !model.isInTree(path))
-        Button("Duplicate") { model.duplicate(path) }
-        Button("Move To…") { model.moveToFolder(path) }
-        Divider()
-        Button("Move to Trash") { model.moveToTrash(path) }
+        if !isFolder && !outside { Button("Find Similar") { model.findSimilar(file: path) } }
+        if !outside {
+            Divider()
+            NewItemsMenu(near: path)
+            Divider()
+            Button("Rename") { model.renamingPath = path }.disabled(onTab && !model.isInTree(path))
+            Button("Duplicate") { model.duplicate(path) }
+            Button("Move To…") { model.moveToFolder(path) }
+            Divider()
+            Button("Move to Trash") { model.moveToTrash(path) }
+        }
     }
 }
 

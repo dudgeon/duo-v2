@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duo · All projects with many projects (S4-1 options)</title>
+<!--
+Exploration, not a target. Every mark on these boards is [P], a proposal for Geoff.
+Drawn with Duo's tokens (build-handoff/tokens.json). The blue is annotation only; Duo never uses it.
+?board=<id> shows one board at 1:1 with no page chrome (for headless captures).
+-->
+<style>
+:root{
+  --ground:#F3F4F6;--pane:#FFFFFF;--selected:#E9ECEF;--rule:#C9CDD3;--edge:#8B939C;--text:#1F2328;--text2:#5B636D;
+  --needs:#C2410C;--active:#E8F0FA;--console:#15171B;--crule:#2B2F36;--ctext:#E6E8EB;--ctext2:#9AA1AB;--cneeds:#F97316;--tuiedge:#4A4F57;
+  --note:#2F6FDE;
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#E4E6EA;color:var(--text);font:14px/1.55 var(--ui)}
+.page{max-width:1500px;margin:0 auto;padding:32px 24px 80px;display:grid;gap:36px}
+h1{font-size:26px;line-height:1.2;margin:0;letter-spacing:-.01em}
+h2{font-size:19px;margin:0}
+h3{font-size:14px;margin:0}
+p{margin:0;max-width:78ch}
+.lede{color:var(--text2);font-size:15px}
+.k{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text2)}
+code{font:12.5px var(--mono);background:var(--selected);padding:1px 5px;border-radius:4px}
+.pp{color:var(--note);font-weight:600}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px 28px}
+.notes ul{margin:4px 0 0;padding-left:18px}
+.notes li{margin:3px 0}
+.boardwrap{display:grid;gap:12px}
+.scaler{overflow:hidden;border-radius:10px;box-shadow:0 8px 28px rgba(31,35,40,.18);background:var(--pane);width:fit-content}
+.board-host>.board{transform-origin:0 0}
+.legend{display:flex;gap:18px;flex-wrap:wrap;color:var(--text2);font-size:13px}
+.qs{background:var(--pane);border:1px solid var(--rule);border-radius:10px;padding:16px 20px}
+.qs ol{margin:6px 0 0;padding-left:20px}.qs li{margin:6px 0}
+table.cmp{border-collapse:collapse;background:var(--pane);font-size:13px}
+table.cmp th,table.cmp td{border:1px solid var(--rule);padding:6px 10px;text-align:left;vertical-align:top}
+table.cmp th{background:var(--ground)}
+
+/* ---------- The Duo window, drawn with tokens ---------- */
+.board{width:1440px;background:var(--pane);color:var(--text);font:13px/20px var(--ui);white-space:nowrap;position:relative;display:flex;flex-direction:column}
+.tb{display:flex;align-items:center;gap:8px;height:38px;flex:none;padding:0 12px 0 20px;border-bottom:1px solid var(--rule);background:var(--ground)}
+.tl{display:flex;gap:8px;margin-right:4px}.tl i{width:12px;height:12px;border-radius:50%;display:block}
+.tb .ttl{font-weight:600}
+.tb .cnt{display:flex;gap:16px;margin-left:8px;align-items:center}.tb .cnt span{display:flex;gap:6px;align-items:center}
+.tb .srch{margin-left:auto;width:300px;height:24px;border:1px solid var(--rule);border-radius:6px;background:var(--pane);display:flex;align-items:center;gap:6px;padding:0 8px;color:var(--text2);font-size:12px}
+.tb .srch b{margin-left:auto;font-weight:400}
+.body{display:flex;flex:1;min-height:0}
+.home{width:340px;flex:none;background:var(--console);color:var(--ctext);display:flex;flex-direction:column;font:12px/19px var(--mono)}
+.home .hd{height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--crule);font:600 13px/20px var(--ui)}
+.home .hd span{font:12px/19px var(--mono);color:var(--ctext2)}
+.home .tabs{height:32px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--crule);color:var(--ctext2);overflow:hidden}
+.home .tabs .on{color:var(--ctext);font-weight:500}
+.home .tabs span{display:flex;gap:6px;align-items:center}
+.home .term{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:0}
+.home .term .d{color:var(--ctext2)}
+.home .inp{margin:0 16px 16px;height:30px;border:1px solid var(--tuiedge);border-radius:6px;display:flex;align-items:center;padding:0 10px;color:var(--ctext2)}
+.home .stick{position:sticky;bottom:16px}
+.mapcol{flex:1;min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--rule)}
+.map{flex:1;padding:16px 16px 20px;display:flex;flex-direction:column;gap:14px}
+.foot{height:34px;flex:none;border-top:1px solid var(--rule);display:flex;align-items:center;gap:8px;padding:0 16px;color:var(--text2)}
+.act{width:340px;flex:none;padding:16px;display:flex;flex-direction:column;gap:10px}
+.sl{font:600 11px/16px var(--ui);letter-spacing:.66px;text-transform:uppercase;color:var(--text2);display:flex;align-items:center;gap:6px}
+.sl.nd{color:var(--needs)}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.colh{height:16px;display:flex;align-items:center}
+.tile{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;border:1px solid var(--rule);border-radius:6px;min-width:0;background:var(--pane)}
+.tile .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.tile .gl{white-space:normal}
+.tile .t2{color:var(--text2);overflow:hidden;text-overflow:ellipsis}
+.tile .sess{margin-top:6px;display:flex;flex-direction:column;gap:2px}
+.srow{height:24px;display:flex;align-items:center;gap:6px;padding:0 8px;margin:0 -8px;border-radius:6px;min-width:0}
+.srow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.srow .w{color:var(--text2);font-variant-numeric:tabular-nums}
+.srow.open{background:var(--active)}
+.g{flex:none}
+.newp{height:38px;border:1px dashed var(--edge);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.rulelabel{display:flex;align-items:center;gap:10px}.rulelabel hr{flex:1;border:0;border-top:1px solid var(--rule);margin:0}
+.btn{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border:1px solid var(--edge);border-radius:6px;background:var(--pane);font-size:12px;line-height:16px;color:var(--text)}
+.popup{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 6px 0 8px;border:1px solid var(--rule);border-radius:6px;background:var(--pane);font-size:12px;line-height:16px}
+.popup.flat{border-color:transparent;background:transparent;color:var(--text2)}
+.seg{display:inline-flex;border:1px solid var(--edge);border-radius:6px;overflow:hidden;font-size:12px;line-height:16px;height:22px}
+.seg span{padding:2px 10px;display:flex;align-items:center;gap:5px}.seg span+span{border-left:1px solid var(--edge)}
+.seg .on{background:var(--selected);font-weight:600}
+.filter{display:inline-flex;align-items:center;gap:6px;height:22px;width:200px;padding:0 8px;border:1px solid var(--rule);border-radius:6px;color:var(--text2);font-size:12px}
+.maphead{display:flex;align-items:center;gap:10px;height:22px}
+.maphead .sp{flex:1}
+.card{border:1px solid var(--rule);border-radius:6px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;white-space:normal}
+.card .q{border:1px solid var(--needs);border-radius:6px;padding:8px 10px;margin:8px 0}
+.task{display:flex;gap:8px;align-items:center;height:26px}.task .t2{color:var(--text2)}
+/* Outside Home as compact rows */
+.olist{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.ogrp{display:flex;flex-direction:column;min-width:0}
+.ogrp .colh{height:20px;margin-bottom:4px}
+.orow{height:24px;display:flex;align-items:center;gap:6px;min-width:0;padding:0 8px;margin:0 -8px;border-radius:6px}
+.orow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.orow .c{color:var(--text2);font-variant-numeric:tabular-nums}
+.orow .w{color:var(--text2);font-variant-numeric:tabular-nums;width:34px;text-align:right}
+.more{height:24px;display:flex;align-items:center;gap:6px;color:var(--text2)}
+/* Home band */
+.hband{border:1px solid var(--rule);border-radius:6px;padding:10px 12px 10px;display:flex;flex-direction:column;gap:2px;background:var(--pane)}
+.hband .top{display:flex;align-items:baseline;gap:10px}
+.hband .top .nm{font-weight:600}
+.hband .top .t2{color:var(--text2)}
+.hband .top .r{margin-left:auto;color:var(--text2);display:flex;gap:6px;align-items:center}
+.hband .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;margin-top:6px}
+/* Table */
+table.ft{width:100%;border-collapse:collapse;table-layout:fixed}
+table.ft th{font:600 11px/16px var(--ui);letter-spacing:.66px;text-transform:uppercase;color:var(--text2);text-align:left;height:26px;border-bottom:1px solid var(--rule);padding:0 8px}
+table.ft th.sorted{color:var(--text)}
+table.ft td{height:26px;padding:0 8px;overflow:hidden;text-overflow:ellipsis}
+table.ft td.t2{color:var(--text2)}
+table.ft tr.grp td{font:600 11px/16px var(--ui);letter-spacing:.66px;text-transform:uppercase;color:var(--text2);height:30px;padding-top:8px}
+table.ft td.r,table.ft th.r{text-align:right;font-variant-numeric:tabular-nums}
+/* Menu */
+.menu{position:absolute;background:var(--pane);border:1px solid var(--rule);border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:6px;font-size:13px;z-index:5;min-width:220px}
+.menu div{height:24px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:5px}
+.menu .on{background:var(--selected)}
+.menu .sep{height:1px;background:var(--rule);margin:5px 4px;padding:0}
+.menu .hdr{color:var(--text2);font-size:11px;font-weight:600;letter-spacing:.66px;text-transform:uppercase}
+.menu .ck{width:12px;display:inline-block}
+/* Annotation */
+.fold{position:absolute;left:0;right:0;height:0;border-top:2px dashed var(--note);z-index:6}
+.fold span{position:absolute;right:8px;top:-22px;background:var(--note);color:#fff;font:600 11px/16px var(--ui);padding:2px 8px;border-radius:4px}
+.pin{position:absolute;z-index:7;width:22px;height:22px;border-radius:50%;background:var(--note);color:#fff;font:700 12px/22px var(--ui);text-align:center;box-shadow:0 0 0 2px #fff}
+.callout{outline:2px solid var(--note);outline-offset:3px;border-radius:6px}
+/* Variant strip (board V) */
+.vstrip{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;padding:28px;background:var(--pane)}
+.vstrip h3{margin-bottom:10px}
+.only .page{max-width:none;padding:0}
+</style>
+</head>
+<body>
+<div class="page" id="page">
+  <header style="display:grid;gap:10px">
+    <div class="k">Duo · design exploration · S4-1 · 2026-10-05 · every mark is [P] · direction picked: A with the ★ tile (DL-104)</div>
+    <h1>All projects when there are many projects</h1>
+    <p class="lede">Claude has run in dozens of folders on a normal Mac: every repo, Desktop, Downloads, temporary folders. Today's map (S2-2, DL-100) gives each one a full tile, so the few projects in Home sink under sixty folders nobody chose. Three asks: <b>Home's projects come first</b>, <b>sort by recent or A–Z</b>, and <b>a card for Home itself on the map</b>, because Home will collect many sessions and its pane only shows the open ones.</p>
+    <div class="legend"><span><b>Data:</b> slice 2's fixture: Home with 6 projects in 3 folders, plus 64 folders outside Home in 7 parent folders, 3 with something live.</span><span><span class="pp">Blue</span> is annotation, never Duo.</span><span>A dashed line marks the bottom of a 1440×900 window; the map scrolls below it.</span></div>
+  </header>
+
+  <section style="display:grid;gap:12px">
+    <h2>Picked: A, with the ★ tile <span class="pp">(Geoff, 2026-10-05, DL-104)</span></h2>
+    <p>Option A's rows outside Home, live folders promoted to tiles, <code>Filter folders</code> and the <code>Recent / Name</code> popup; Home is B's ★ tile, first in its unlabelled column. A session in Home's tile opens Home as a project on that session; <code>37 more ›</code> opens Home as a project. This board is the basis for the handoff once Geoff has looked at it.</p>
+    <div class="boardwrap" data-board="pick"></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Today, at this scale</h2>
+    <p>S2-2 as built, with 64 folders outside Home. Home's projects are fine in the first screen, but the map runs to <span data-measure="today">several thousand</span> points of folder tiles that all look equally important (cut short here). Home has no card; its 42 sessions are reachable only from the ★ heading. There is no order a user can choose, and nothing to filter by name.</p>
+    <div class="boardwrap" data-board="today" data-crop="1500"></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Option A · Tiles for Home, rows for everything else <span class="pp">(recommended)</span></h2>
+    <div class="notes">
+      <div><h3>Hierarchy</h3><ul>
+        <li>Home's projects keep their full tiles and columns, unchanged from S2-2.</li>
+        <li>Outside Home, each folder becomes one 24-point row: name, session count, last active. Rows sit under their parent-folder heading (DL-83 still holds), three groups across.</li>
+        <li>A group shows its 5 most recent rows, then <code>+ 18 more</code>, which opens the group in place.</li>
+        <li><b>Attention can't hide:</b> a folder outside Home with a session that needs you or is working is drawn as a full tile, in an <code>ACTIVE OUTSIDE HOME</code> row above the lists, until it goes idle.</li>
+      </ul></div>
+      <div><h3>Sort and find</h3><ul>
+        <li>A map header: <code>Filter folders</code> on the left, a sort popup on the right: <code>Recent</code> or <code>Name</code>.</li>
+        <li>The sort applies to tiles in each column, rows in each group, and the order of the groups. Home's unlabelled column and Home's card always come first.</li>
+        <li>Recent means the newest session activity in the folder, not the folder's own date.</li>
+        <li>The order settles when you arrive at All projects and doesn't shuffle while you look; a tile that becomes live outside Home moves up only when you next arrive.</li>
+        <li>The filter narrows tiles and rows by name or path as you type; Esc clears it.</li>
+      </ul></div>
+      <div><h3>Home's card</h3><ul>
+        <li>A full-width band at the top of the map: <code>★ claude-home</code>, the goal from <code>HOME.md</code>, then Home's sessions in two columns, in attention order (S2-1's order), 8 at most.</li>
+        <li><code>42 sessions · Open ›</code> at the right opens Home as a project, like the pane's ★ heading.</li>
+        <li>A session row opens that session in Home's pane on the left, staying at All projects; sessions already open there carry the <code>activeTint</code>.</li>
+      </ul></div>
+    </div>
+    <div class="boardwrap" data-board="A"></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Option A · details: the sort menu, Name order, a filter</h2>
+    <p>Left: the sort popup open, with the same choice in <code>View › Sort Projects By</code>. Right: Name order with <code>pay</code> typed in the filter: tiles and rows that don't match go, groups with nothing left go, and the counts read <code>3 of 70</code>.</p>
+    <div style="display:flex;gap:24px;flex-wrap:wrap">
+      <div class="boardwrap" data-board="Amenu" data-crop="900"></div>
+      <div class="boardwrap" data-board="Afilter" data-crop="900"></div>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Option B · Keep the tiles, fold what's outside Home</h2>
+    <div class="notes">
+      <div><h3>Hierarchy</h3><ul>
+        <li>Everything stays a tile, as S2-2 draws it.</li>
+        <li>Outside Home shows only the 6 most recent folders (live ones first), then a full-width <code>Show all 64 folders outside Home</code>, which unfolds the rest in place and remembers that it's open.</li>
+        <li>Lightest change to what's built; least dense when unfolded.</li>
+      </ul></div>
+      <div><h3>Sort</h3><ul>
+        <li>A two-part control at the top right of the map: <code>Recent | A–Z</code>. Always visible, one click, no menu.</li>
+        <li>No filter field: search (⇧⌘A) is the way to find a folder by name.</li>
+      </ul></div>
+      <div><h3>Home's card</h3><ul>
+        <li>Home is the first tile in its unlabelled column, the same width as the others, marked ★ and drawn with a <code>text</code> border so it reads first.</li>
+        <li>It lists 5 sessions, then <code>37 more ›</code>, which opens Home as a project.</li>
+      </ul></div>
+    </div>
+    <div class="boardwrap" data-board="B"></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Option C · Two scopes: Home, and Everywhere</h2>
+    <div class="notes">
+      <div><h3>Hierarchy</h3><ul>
+        <li>A scope control at the top of the map: <code>Home</code> and <code>Everywhere · 64</code>. Duo opens on Home.</li>
+        <li><b>Home</b> draws Home's card and Home's tiles, plus <code>ACTIVE OUTSIDE HOME</code> for live folders elsewhere, so nothing that needs you is out of sight.</li>
+        <li><b>Everywhere</b> is a table of every folder outside Home, grouped by parent folder: name, sessions, last active, project file.</li>
+        <li>The strongest separation; but outside folders are a click away, which suits people who live in Home and hurts people who don't have one yet.</li>
+      </ul></div>
+      <div><h3>Sort</h3><ul>
+        <li>In Everywhere, click a column heading to sort by it; click again to reverse. The sorted heading turns <code>text</code> with a chevron.</li>
+        <li>In Home, the same sort popup as A.</li>
+      </ul></div>
+      <div><h3>Home's card</h3><ul>
+        <li>A compact band: the name, the goal, and counts by state (<code>1 needs you · 1 working · 40 idle</code>), with <code>Open ›</code>. The sessions themselves stay in the pane and the project.</li>
+      </ul></div>
+    </div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap">
+      <div class="boardwrap" data-board="C1" data-crop="900"></div>
+      <div class="boardwrap" data-board="C2" data-crop="900"></div>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Home's card, three ways</h2>
+    <p>Any of these can go with any of A, B or C. A shows the band, B the tile, C the summary.</p>
+    <div class="boardwrap" data-board="V"></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Side by side</h2>
+    <table class="cmp">
+      <tr><th></th><th>A · Rows outside Home</th><th>B · Fold outside Home</th><th>C · Two scopes</th></tr>
+      <tr><th>Map length, 70 folders</th><td>About 1,500 pt (≈2 screens), groups folded</td><td>About 1,150 pt folded; <span data-measure="today">thousands</span> unfolded</td><td>Home: one screen. Everywhere: a 2,000 pt table, groups fold</td></tr>
+      <tr><th>Home's prominence</th><td>Strong: tiles against rows</td><td>Moderate: position only</td><td>Strongest: its own scope</td></tr>
+      <tr><th>Outside Home at a glance</th><td>Every group visible, 5 rows each</td><td>6 tiles, then a click</td><td>A click away</td></tr>
+      <tr><th>Live work outside Home</th><td>Promoted to tiles</td><td>Sorted into the first 6</td><td>Promoted in Home scope</td></tr>
+      <tr><th>Sort control</th><td>Popup + filter field</td><td>Segmented, always visible</td><td>Table headings + popup</td></tr>
+      <tr><th>Change to S2-2 / DL-83</th><td>New row component; DL-83 kept</td><td>Smallest; DL-83 kept</td><td>A new table surface; DL-83 kept as groups</td></tr>
+      <tr><th>With no Home (DL-82)</th><td>Everything is outside Home: all rows, live as tiles. Reads well.</td><td>6 tiles then fold: hides most of the Mac</td><td>Home scope is empty; opens on Everywhere</td></tr>
+    </table>
+  </section>
+
+  <section class="qs">
+    <h2>For Geoff (answered 2026-10-05: A · popup + filter · ★ tile · opens Home as a project)</h2>
+    <ol>
+      <li>Which treatment for folders outside Home: A rows, B fold, or C scopes?</li>
+      <li>Which sort control: a popup with Recent / Name, or always-visible <code>Recent | A–Z</code>? With a filter field or not?</li>
+      <li>Which Home card: the band with sessions, the ★ tile, or the summary?</li>
+      <li>Should a session row in Home's card open it in Home's pane (stay at All projects), or open Home as a project on that session?</li>
+    </ol>
+  </section>
+</div>
+
+<script>
+/* ---------------- Data ---------------- */
+const G = {
+  needs:'<svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#C2410C"/></svg>',
+  needsC:'<svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#F97316"/></svg>',
+  review:'<svg class="g" width="9" height="9" viewBox="0 0 10 10"><path d="M5 0 10 5 5 10 0 5z" fill="#1F2328"/></svg>',
+  working:'<svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"/></svg>',
+  workingC:a=>`<svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="${a?'#E6E8EB':'#9AA1AB'}" stroke-width="1.5"/></svg>`,
+  idle:'<svg class="g" width="9" height="9" viewBox="0 0 10 10"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  folder:'<svg class="g" width="12" height="10" viewBox="0 0 12 10"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.6l1 1.2h4c.7 0 1.2.5 1.2 1.2v4.4c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"/></svg>',
+  chevR:'<svg class="g" width="8" height="10" viewBox="0 0 8 10"><path d="M2 1.5 6 5 2 8.5" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  chevD:'<svg class="g" width="10" height="8" viewBox="0 0 10 8"><path d="M1.5 2 5 6 8.5 2" fill="none" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  updown:'<svg class="g" width="8" height="12" viewBox="0 0 8 12"><path d="M1.5 4.5 4 2l2.5 2.5M1.5 7.5 4 10l2.5-2.5" fill="none" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  search:'<svg class="g" width="12" height="12" viewBox="0 0 12 12"><circle cx="5" cy="5" r="3.8" fill="none" stroke="#5B636D" stroke-width="1.3"/><path d="M8 8l3 3" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round"/></svg>',
+  star:'★',
+};
+const glyph = s => s==='needs'?G.needs:s==='review'?G.review:s==='working'?G.working:G.idle;
+
+const HOME = {name:'claude-home', path:'~/claude-home', goal:'Triage, inbox and the weekly status', count:42,
+  sessions:[
+    {n:'Morning triage', s:'needs', w:'1m', open:true},
+    {n:'Weekly status draft', s:'working', w:'working', open:true},
+    {n:'Inbox sweep', s:'idle', w:'2h'},
+    {n:'Legal call prep', s:'idle', w:'5h'},
+    {n:'Q4 pricing numbers?', s:'idle', w:'1d'},
+    {n:'Vendor shortlist', s:'idle', w:'2d'},
+    {n:'Reading: buyer interviews', s:'idle', w:'3d'},
+    {n:'“Summarise the six buyer…”', s:'idle', w:'4d'},
+  ]};
+
+const HOME_COLS = [
+  {label:null, tiles:[
+    {name:'pricing-page', goal:'Launch the new tiers by Oct 20', health:'On track · Copy freeze Oct 12', act:1, sessions:[{n:'Tier names',s:'needs',w:'2m'}]},
+    {name:'q4-planning', goal:'Q4 plan signed off by staff', health:'At risk · Draft due Oct 9', act:6, sessions:[{n:'Roadmap narrative',s:'working',w:'6m',open:true}]},
+  ]},
+  {label:'payments', tiles:[
+    {name:'checkout', goal:'Cut guest-checkout abandonment 15% by Q1', health:'On track · Exec review Oct 14', act:2, sessions:[{n:'PRD v2 edits',s:'needs',w:'4m'},{n:'Teardown research',s:'working',w:'6m',open:true}]},
+    {name:'refunds', goal:'Ship refunds API spec to eng by Oct 10', health:'At risk · Spec review Oct 8', act:300, sessions:[], none:'Nothing running'},
+  ]},
+  {label:'growth', tiles:[
+    {name:'onboarding', goal:'Lift day-7 activation to 40%', health:'On track · Copy freeze Oct 6', act:30, sessions:[{n:'Funnel SQL',s:'review',w:''}]},
+  ]},
+];
+
+// Folders outside Home: [name, sessions, lastActive(minutes), note, live]
+const OUT = [
+  {parent:'~/repos', folders:[
+    ['duo-v2',38,3,'Has CLAUDE.md','working','Slice 3 build'],['pm-harness',2,2880,'Has CLAUDE.md'],['duo-legacy',61,4320,'Has CLAUDE.md'],['obsidian-sync',7,1440*6],
+    ['dotfiles',4,1440*9],['blog',3,1440*12],['claude-skills',12,1440*2],['mcp-notion',5,1440*15],['fin-models',3,1440*20],['interview-kit',2,1440*24],
+    ['slackbot',9,1440*30],['scratch',14,1440*3],['website-2024',6,1440*45],['data-pipes',4,1440*50],['prd-templates',3,1440*5],['analytics-sql',8,1440*8],
+    ['roadmap-viz',2,1440*60],['okr-tracker',3,1440*70],['ai-evals',5,1440*11],['research-bot',1,1440*90],['figma-export',2,1440*100],['launch-checklist',1,1440*110],
+    ['pricing-sim',4,1440*4],['survey-tools',2,1440*120]]},
+  {parent:'~/Desktop', folders:[
+    ['interviews',1,1440*7,'','','','~/Desktop/research/interviews'],['offsite-plan',3,1440],['board-deck',5,1440*3,'','needs','Slide 7 numbers'],['q3-review',2,1440*25],['competitor-teardown',6,1440*10],
+    ['screenshots',1,1440*40],['tmp-notes',2,1440*33],['hiring',4,1440*16]]},
+  {parent:'~/Documents', folders:[
+    ['taxes-2025',3,1440*2],['house',2,1440*13],['resume',4,1440*28],['reading-notes',9,1440*6],['letters',1,1440*80],['journal',11,1440],['recipes',1,1440*95],['travel-japan',2,1440*140],['kids-school',2,1440*21]]},
+  {parent:'~/Downloads', folders:[
+    ['invoice-parse',2,1440*5],['csv-cleanup',3,1440*9],['pdf-merge',1,1440*30],['statements',2,1440*14],['transcript-dump',1,1440*60],['logo-files',1,1440*75],['export-0912',1,1440*23]]},
+  {parent:'~/code/work', folders:[
+    ['payments-api',6,1440*1,'Has CLAUDE.md','working','Webhook retries'],['ledger',4,1440*4,'Has CLAUDE.md'],['checkout-web',8,1440*2,'Has CLAUDE.md'],['risk-rules',3,1440*17],['ops-scripts',2,1440*26],
+    ['design-tokens',2,1440*31],['mobile-app',5,1440*12],['admin-console',3,1440*38],['feature-flags',1,1440*65],['docs-site',2,1440*44]]},
+  {parent:'~', folders:[['geoff',4,600]]},
+  {parent:'/private/tmp', folders:[['tmp.x8Yq2',1,1440*2],['claude-test',2,1440*19],['sandbox-1',1,1440*48],['sandbox-2',1,1440*48],['tmp.Ka01',1,1440*130]]},
+];
+const OUT_TOTAL = OUT.reduce((a,g)=>a+g.folders.length,0);
+const wait = m => m<60?`${m}m`:m<1440?`${Math.round(m/60)}h`:`${Math.round(m/1440)}d`;
+const F = (g,f) => ({parent:g.parent,name:f[0],count:f[1],act:f[4]?(f[4]==='needs'?9:3):f[2],note:f[3]||'',live:f[4]||'',liveName:f[5]||'',path:f[6]||(g.parent==='~'?'~':`${g.parent}/${f[0]}`)});
+const allOut = () => OUT.flatMap(g=>g.folders.map(f=>F(g,f)));
+
+/* ---------------- Window parts ---------------- */
+function toolbar(){
+  return `<div class="tb"><span class="tl"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i></span>
+  <span style="display:flex;padding:4px 6px"><svg width="18" height="14" viewBox="0 0 18 14"><rect x="1" y="1" width="16" height="12" rx="2.5" fill="none" stroke="#5B636D" stroke-width="1.3"/><path d="M6.5 1v12" stroke="#5B636D" stroke-width="1.3"/></svg></span>
+  <span class="ttl">All projects</span>
+  <span class="cnt"><span>${G.review}1 to review</span><span>${G.working}4 working</span><span style="color:#5B636D">${G.idle}63 idle</span></span>
+  <span class="srch">${G.search}Search all projects<b>⇧⌘A</b></span></div>`;
+}
+function homePane(){
+  return `<div class="home"><div class="hd">★ claude-home <span>~/claude-home</span></div>
+  <div class="tabs"><span class="on">${G.needsC}Morning triage</span><span>${G.workingC(false)}Weekly status draft</span></div>
+  <div class="term"><div class="d">Inbox · this morning</div><div>Legal wants a call re: saved cards</div><div class="d">suggested → payments/checkout</div><div>Q4 pricing numbers?</div><div class="d">routed → pricing-page, resumed Tier names</div></div>
+  <div class="inp stick">&gt; ▍</div></div>`;
+}
+function actionCol(){
+  return `<div class="act">
+  <div class="sl nd">Needs you · 3</div>
+  <div class="card" style="border-color:#1F2328"><div style="display:flex;gap:8px;align-items:center">${G.needs}<b>Tier names</b><span style="margin-left:auto;color:#5B636D">2m</span></div><div style="color:#5B636D">pricing-page · question</div><div class="q">Rename “Pro” to “Team” everywhere, including the billing emails?</div><div><span class="btn">Open project</span></div></div>
+  <div class="card"><div style="display:flex;gap:8px;align-items:center">${G.needs}<b>Slide 7 numbers</b><span style="margin-left:auto;color:#5B636D">9m</span></div><div style="color:#5B636D">board-deck · permission</div><div class="q">Run python3 chart.py?</div><div><span class="btn">Open project</span></div></div>
+  <div class="sl" style="margin-top:8px">Ready for review · 1</div>
+  <div class="card"><div style="display:flex;gap:8px;align-items:center">${G.review}<b>Funnel SQL</b></div><div style="color:#5B636D">onboarding</div><div style="color:#5B636D">wrote funnel.sql, 3 files</div><div style="margin-top:8px"><span class="btn">Review</span></div></div>
+  <div class="sl" style="margin-top:8px">Open tasks · 3</div>
+  <div class="task"><span style="width:10px;height:10px;border:1.2px solid #1F2328;border-radius:2px"></span>Exec review prep <span class="t2">checkout</span><span class="t2" style="margin-left:auto">in progress</span></div>
+  <div class="task"><span style="width:10px;height:10px;border:1.2px solid #1F2328;border-radius:2px"></span>Legal review of saved cards <span class="t2">checkout</span></div>
+  </div>`;
+}
+const colLabel = l => l===null?'<div class="colh"></div>':`<div class="colh sl">${G.folder}${l} /</div>`;
+const shortPath = p => { const parts=p.split('/'); return parts.length>4?`${parts[0]}/${parts[1]}/…/${parts[parts.length-1]}`:p; };
+
+function sessRow(s){ return `<div class="srow${s.open?' open':''}">${glyph(s.s)}<span class="n">${s.n}</span><span class="w">${s.w}</span></div>`; }
+function projTile(t){
+  return `<div class="tile"><div class="nm">${t.name}</div><div class="gl">${t.goal}</div><div class="t2">${t.health}</div>
+  <div class="sess">${t.sessions.length?t.sessions.map(sessRow).join(''):`<div class="t2" style="height:24px;display:flex;align-items:center">${t.none||''}</div>`}</div></div>`;
+}
+function folderTile(f){
+  const note = f.note?`${f.note} · no project file`:'No project file';
+  const tail = f.live?sessRow({n:f.liveName,s:f.live,w:f.live==='needs'?'9m':'3m'}):`<div class="t2" style="height:24px;display:flex;align-items:center">${f.count} past session${f.count>1?'s':''}</div>`;
+  return `<div class="tile"><div class="nm">${f.name}</div><div class="t2">${shortPath(f.path)}</div><div class="t2">${note}</div><div class="sess">${tail}</div></div>`;
+}
+function homeCols(sort, homeTile){
+  let cols = HOME_COLS.map(c=>({...c,tiles:[...c.tiles]}));
+  if(sort==='name') cols.forEach(c=>c.tiles.sort((a,b)=>a.name.localeCompare(b.name)));
+  else cols.forEach(c=>c.tiles.sort((a,b)=>a.act-b.act));
+  if(homeTile) cols[0].tiles.unshift({home:true});
+  return `<div class="cols">${cols.map(c=>`<div class="col">${colLabel(c.label)}${c.tiles.map(t=>t.home?homeTile:projTile(t)).join('')}</div>`).join('')}</div>`;
+}
+function windowBoard(id, mapHTML, opts={}){
+  const foot = `<div class="foot">${G.idle}63 idle, resumable ${G.chevR}</div>`;
+  return `<div class="board" id="b-${id}">${toolbar()}<div class="body">${homePane()}<div class="mapcol"><div class="map">${mapHTML}</div>${foot}</div>${actionCol()}</div>
+    ${opts.fold!==false?'<div class="fold" style="top:900px"><span>bottom of a 1440×900 window</span></div>':''}${opts.extra||''}</div>`;
+}
+
+/* ---------------- Boards ---------------- */
+function boardToday(){
+  const groups = OUT.map(g=>({label:g.parent, tiles:g.folders.map(f=>F(g,f)).sort((a,b)=>a.act-b.act)}));
+  // DL-83: columns wrap; each parent folder is a column; columns flow in rows of three
+  let html = homeCols('recent') + `<div class="rulelabel"><span class="sl">Outside Home</span><hr></div>`;
+  html += `<div class="cols">${groups.map(g=>`<div class="col">${colLabel(g.label)}${g.tiles.map(folderTile).join('')}</div>`).join('')}</div>`;
+  html += `<div class="newp">+ New project</div>`;
+  return windowBoard('today', html);
+}
+
+function homeBand(){
+  return `<div class="hband"><div class="top"><span class="nm">★ ${HOME.name}</span><span class="t2">${HOME.goal}</span><span class="r">${HOME.count} sessions · Open ${G.chevR}</span></div>
+  <div class="grid">${HOME.sessions.map(sessRow).join('')}</div></div>`;
+}
+function homeStarTile(){
+  return `<div class="tile" style="border-color:#1F2328"><div class="nm">★ ${HOME.name}</div><div class="gl">${HOME.goal}</div><div class="t2">Home · ${HOME.count} sessions</div>
+  <div class="sess">${HOME.sessions.slice(0,5).map(sessRow).join('')}<div class="srow" style="color:#5B636D">${HOME.count-5} more ${G.chevR}</div></div></div>`;
+}
+function homeSummary(){
+  return `<div class="hband" style="flex-direction:row;align-items:center;gap:14px;padding:10px 12px"><span style="font-weight:600">★ ${HOME.name}</span><span style="color:#5B636D;overflow:hidden;text-overflow:ellipsis">${HOME.goal}</span>
+  <span style="margin-left:auto;display:flex;gap:14px;align-items:center"><span style="display:flex;gap:6px;align-items:center">${G.needs}1 needs you</span><span style="display:flex;gap:6px;align-items:center">${G.working}1 working</span><span style="display:flex;gap:6px;align-items:center;color:#5B636D">${G.idle}40 idle</span><span class="btn">Open ${G.chevR}</span></span></div>`;
+}
+
+function orow(f){ return `<div class="orow"><span class="n">${f.name}</span><span class="c">${f.count}</span><span class="w">${wait(f.act)}</span></div>`; }
+function outsideRows(sort, filter, limit=5, expanded={}){
+  let groups = OUT.map(g=>({label:g.parent, rows:g.folders.map(f=>F(g,f)).filter(f=>!f.live)}));
+  if(filter) groups.forEach(g=>g.rows=g.rows.filter(f=>(f.name+f.path).includes(filter)));
+  groups = groups.filter(g=>g.rows.length);
+  const key = sort==='name'?((a,b)=>a.name.localeCompare(b.name)):((a,b)=>a.act-b.act);
+  groups.forEach(g=>{g.rows.sort(key); g.first=g.rows[0];});
+  if(sort==='name') groups.sort((a,b)=>a.label.replace('~','').localeCompare(b.label.replace('~','')));
+  else groups.sort((a,b)=>a.first.act-b.first.act);
+  return `<div class="olist">${groups.map(g=>{
+    const lim = expanded[g.label]?999:limit;
+    const shown = g.rows.slice(0,lim), rest=g.rows.length-shown.length;
+    return `<div class="ogrp"><div class="colh sl">${G.folder}${g.label} /<span style="margin-left:auto;font-weight:400;letter-spacing:0">${g.rows.length}</span></div>${shown.map(orow).join('')}${rest>0?`<div class="more">+ ${rest} more</div>`:''}</div>`;
+  }).join('')}</div>`;
+}
+function activeOutside(){
+  const live = allOut().filter(f=>f.live).sort((a,b)=>(a.live==='needs'?0:1)-(b.live==='needs'?0:1));
+  return `<div class="sl" style="margin-top:2px">Active outside Home · ${live.length}</div><div class="cols">${live.map(f=>`<div class="col">${folderTile(f)}</div>`).join('')}</div>`;
+}
+function mapHead(sort, filter){
+  const label = sort==='name'?'Name':'Recent';
+  return `<div class="maphead"><span class="filter" ${filter?'style="color:#1F2328;border-color:#8B939C"':''}>${G.search}${filter||'Filter folders'}${filter?'<span style="margin-left:auto;color:#5B636D">3 of 70</span>':''}</span><span class="sp"></span>
+  <span style="color:#5B636D;font-size:12px">Sort</span><span class="popup" data-sort>${label}${G.updown}</span></div>`;
+}
+function boardA(id, sort='recent', filter='', star=false){
+  let html = mapHead(sort, filter);
+  if(!filter){
+    if(!star) html += homeBand();
+    html += homeCols(sort, star?homeStarTile():null);
+    html += `<div class="rulelabel"><span class="sl">Outside Home · ${OUT_TOTAL}</span><hr></div>`;
+    html += activeOutside();
+    html += outsideRows(sort);
+    html += `<div class="newp">+ New project</div>`;
+  } else {
+    // filter "pay": payments column (checkout, refunds match by path) + payments-api row
+    html += `<div class="cols"><div class="col">${colLabel('payments')}${projTile(HOME_COLS[1].tiles[0])}${projTile(HOME_COLS[1].tiles[1])}</div></div>`;
+    html += `<div class="rulelabel"><span class="sl">Outside Home · 1 of ${OUT_TOTAL}</span><hr></div>`;
+    html += `<div class="cols"><div class="col">${colLabel('~/code/work')}${folderTile(allOut().find(f=>f.name==='payments-api'))}</div></div>`;
+  }
+  return windowBoard(id, html);
+}
+function boardB(){
+  const live = allOut().filter(f=>f.live);
+  const rest = allOut().filter(f=>!f.live).sort((a,b)=>a.act-b.act).slice(0,6-live.length);
+  const shown = [...live, ...rest];
+  let html = `<div class="maphead"><span class="sp"></span><span class="seg"><span class="on">Recent</span><span>A–Z</span></span></div>`;
+  html += homeCols('recent', homeStarTile());
+  html += `<div class="rulelabel"><span class="sl">Outside Home · ${OUT_TOTAL}</span><hr></div>`;
+  html += `<div class="cols">${[0,1,2].map(i=>`<div class="col">${shown.filter((_,j)=>j%3===i).map(f=>`<div class="sl" style="height:20px">${G.folder}${f.parent} /</div>`+folderTile(f)).join('')}</div>`).join('')}</div>`;
+  html += `<div class="newp" style="border-style:solid;border-color:#C9CDD3;color:#1F2328;gap:6px">Show all ${OUT_TOTAL} folders outside Home ${G.chevD}</div>`;
+  html += `<div class="newp">+ New project</div>`;
+  return windowBoard('B', html);
+}
+
+function boardC1(){
+  let html = `<div class="maphead"><span class="seg"><span class="on">Home</span><span>Everywhere · ${OUT_TOTAL}</span></span><span class="sp"></span><span style="color:#5B636D;font-size:12px">Sort</span><span class="popup">Recent${G.updown}</span></div>`;
+  html += homeSummary();
+  html += homeCols('recent');
+  html += activeOutside();
+  html += `<div class="newp">+ New project</div>`;
+  return windowBoard('C1', html, {fold:false});
+}
+function boardC2(){
+  const groups = OUT.map(g=>({label:g.parent, rows:g.folders.map(f=>F(g,f)).sort((a,b)=>a.act-b.act)})).sort((a,b)=>a.rows[0].act-b.rows[0].act);
+  let rows='';
+  groups.forEach(g=>{
+    rows += `<tr class="grp"><td colspan="4"><span style="display:flex;gap:6px;align-items:center">${G.chevD.replace('#1F2328','#5B636D')}${G.folder}${g.label} / · ${g.rows.length}</span></td></tr>`;
+    g.rows.forEach(f=>{ rows += `<tr><td style="padding-left:30px"><span style="display:flex;gap:6px;align-items:center">${f.live?glyph(f.live):''}<span style="overflow:hidden;text-overflow:ellipsis">${f.name}</span></span></td><td class="r">${f.count}</td><td class="r t2">${f.live?(f.live==='needs'?'9m':'working'):wait(f.act)}</td><td class="t2">${f.note||'—'}</td></tr>`; });
+  });
+  let html = `<div class="maphead"><span class="seg"><span>Home</span><span class="on">Everywhere · ${OUT_TOTAL}</span></span><span class="sp"></span><span class="filter">${G.search}Filter folders</span></div>
+  <table class="ft"><colgroup><col style="width:44%"><col style="width:16%"><col style="width:17%"><col style="width:23%"></colgroup>
+  <tr><th>Folder</th><th class="r">Sessions</th><th class="r sorted">Last active ${G.chevD}</th><th>Notes</th></tr>${rows}</table>`;
+  return windowBoard('C2', html, {fold:false});
+}
+function boardV(){
+  const w = 'width:440px';
+  return `<div class="board" id="b-V" style="width:1440px"><div class="vstrip">
+    <div><h3>1 · Band with sessions (A)</h3><p style="color:#5B636D;margin-bottom:12px;white-space:normal">Full map width. Up to 8 sessions in attention order, two columns. Shows the most; costs about 130 points of height.</p><div style="${w}">${homeBand().replace('grid-template-columns:repeat(2','grid-template-columns:repeat(1')}</div></div>
+    <div><h3>2 · ★ tile (B)</h3><p style="color:#5B636D;margin-bottom:12px;white-space:normal">One tile wide, first in Home's column, with a <code>text</code> border. Reads as a project among projects; 5 sessions then “37 more”.</p><div style="width:232px">${homeStarTile()}</div></div>
+    <div><h3>3 · Summary (C)</h3><p style="color:#5B636D;margin-bottom:12px;white-space:normal">One line: counts by state and Open. Smallest; leaves the sessions to Home's pane and to Home as a project.</p><div style="${w}">${homeSummary()}</div></div>
+  </div></div>`;
+}
+
+const BOARDS = {
+  today: boardToday,
+  A: ()=>boardA('A','recent'),
+  pick: ()=>boardA('pick','recent','',true),
+  Amenu: ()=>{ const b = boardA('Amenu','recent'); const extra = `<div class="menu" style="left:${1440-340-16-150}px;top:${38+16+26}px;min-width:150px"><div class="hdr">Sort by</div><div class="on"><span class="ck">✓</span>Recent</div><div><span class="ck"></span>Name</div></div>`; return b.replace(/<\/div>$/, extra+'</div>'); },
+  Afilter: ()=>boardA('Afilter','name','pay'),
+  B: boardB, C1: boardC1, C2: boardC2, V: boardV,
+};
+
+/* ---------------- Mount ---------------- */
+const params = new URLSearchParams(location.search);
+const only = params.get('board');
+if(only){
+  document.body.classList.add('only');
+  document.getElementById('page').innerHTML = BOARDS[only]();
+  const crop = params.get('h'); if(crop){ const b=document.querySelector('.board'); b.style.height=crop+'px'; b.style.overflow='hidden'; }
+  // ?target=1: the board as a design target (many-projects-handoff): the window only, no annotation.
+  if(params.get('target')){ document.querySelectorAll('.fold').forEach(e=>e.remove()); document.querySelectorAll('.srow.open').forEach(e=>e.classList.remove('open')); const b=document.querySelector('.board'); b.style.height='900px'; b.style.overflow='hidden';
+    // As the window draws it: the map scrolls under its pinned footer.
+    b.querySelector('.body').style.minHeight='0'; b.querySelector('.mapcol').style.minHeight='0'; const m=b.querySelector('.map'); m.style.minHeight='0'; m.style.overflow='hidden'; }
+} else {
+  document.querySelectorAll('[data-board]').forEach(el=>{
+    const id = el.dataset.board, crop = el.dataset.crop;
+    const pair = el.parentElement.style.display==='flex';
+    const scale = pair?0.5:Math.min(1,(Math.min(document.documentElement.clientWidth,1500)-48)/1440);
+    el.innerHTML = `<div class="scaler"><div class="board-host">${BOARDS[id]()}</div></div><div style="font-size:12px;color:#5B636D">Board ${id} · <a href="?board=${id}">open at 1:1</a></div>`;
+    const b = el.querySelector('.board'); b.style.transform=`scale(${scale})`;
+    const full = b.offsetHeight;
+    if(id==='today') document.querySelectorAll('[data-measure=today]').forEach(m=>m.textContent=(Math.round(full/100)*100).toLocaleString());
+    if(crop){ b.style.height=crop+'px'; b.style.overflow='hidden';
+      if(full>+crop+40) b.insertAdjacentHTML('beforeend',`<div style="position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(transparent,#fff 70%);display:flex;align-items:flex-end;justify-content:center;padding-bottom:18px;z-index:8"><span style="background:#2F6FDE;color:#fff;font:600 13px/18px var(--ui);padding:4px 12px;border-radius:4px">continues to ${full.toLocaleString()} points</span></div>`); }
+    requestAnimationFrame(()=>{ const sc=el.querySelector('.scaler'); sc.style.width=(1440*scale)+'px'; sc.style.height=(b.offsetHeight*scale)+'px'; });
+  });
+}
+</script>
+</body>
+</html>

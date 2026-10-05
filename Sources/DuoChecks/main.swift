@@ -168,7 +168,8 @@ func repoFixture() throws -> Fixture {
     check(nav.altitude == .allProjects && nav.homeTab == "Morning triage" && nav.focusHomeRequest == 1, "shift-cmd-H: All projects, Home terminal focused")
     let tiles = AppModel(fixture: f)
     tiles.moveTileFocus(dx: 0, dy: 0)
-    check(tiles.focusedTile == "checkout-redesign", "first arrow focuses the first tile")
+    check(tiles.focusedTile == "home", "first arrow focuses the first tile: Home's, in a column of its own (DL-104)")
+    tiles.moveTileFocus(dx: 1, dy: 0)
     tiles.moveTileFocus(dx: 0, dy: 1)
     check(tiles.focusedTile == "refunds-api-spec", "down moves within a topic column")
     tiles.moveTileFocus(dx: 1, dy: 0)
@@ -964,6 +965,88 @@ func repoFixture() throws -> Fixture {
     check(ep.contains("````html\n<button>```</button>\n````") && ep.contains("under: Checkout › Payment") && ep.contains("screenshot: /tmp/e.png"), "element payload: fence outgrows backticks, trail, screenshot")
     check(SendFormat.documentSelection(String(repeating: "x", count: 9000), path: "a", fromLine: 1, toLine: 1).count < SendFormat.cap + 100, "payloads are capped")
 
+    print("the map with many projects (DL-104)")
+    var many = f
+    many.topics += ["~/repos", "~/Desktop"]
+    func decoded<T: Decodable>(_ value: [String: Any]) -> T {
+        try! JSONDecoder().decode(T.self, from: JSONSerialization.data(withJSONObject: value))
+    }
+    func folder(_ name: String, _ parent: String) -> Fixture.Project {
+        decoded(["name": name, "topic": parent, "path": "\(parent)/\(name)", "goal": "", "kind": "folder"])
+    }
+    func idle(_ name: String, _ project: String, _ wait: String, _ state: SessionState = .idle) -> Fixture.Session {
+        decoded(["name": name, "project": project, "state": state.rawValue, "wait": wait])
+    }
+    for (i, n) in ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf"].enumerated() {
+        many.projects.append(folder(n, "~/repos"))
+        many.sessions.append(idle("s-\(n)", n, "\(i + 1)d"))
+    }
+    many.projects.append(folder("zulu", "~/Desktop"))
+    many.sessions.append(idle("s-zulu", "zulu", "2h"))
+    many.projects.append(folder("board-deck", "~/Desktop"))
+    many.sessions.append(idle("Slide 7", "board-deck", "9m", .needsYou))
+    let m1 = MapLayout.build(many, sort: .recent, filter: "")
+    check(m1.home?.name == "home" && m1.homeColumns.map(\.topic) == ["", "Payments", "Growth", "Platform"], "Home's tile, then Home's columns as tiles")
+    check(m1.active.map(\.name) == ["board-deck"], "a folder outside Home that needs you is a tile, not a row")
+    check(m1.outside.map(\.topic) == ["~/Desktop", "~/repos"], "Recent: the group with the newest activity first")
+    check(m1.outside.last?.projects.map(\.name) == ["alpha", "bravo", "charlie", "delta", "echo"] && m1.outside.last?.hidden == 2,
+          "rows newest first, five, then + n more")
+    let m2 = MapLayout.build(many, sort: .name, filter: "", openGroups: ["~/repos"])
+    check(m2.outside.map(\.topic) == ["~/Desktop", "~/repos"] && m2.outside.last?.projects.count == 7 && m2.outside.last?.hidden == 0,
+          "Name: groups and rows by name; an opened group shows every row")
+    check(m2.homeColumns.first { $0.topic == "Payments" }?.projects.map(\.name) == ["checkout-redesign", "fraud-rules-review", "refunds-api-spec"], "Name orders Home's tiles too")
+    let m3 = MapLayout.build(many, sort: .name, filter: "ECH")
+    check(m3.home == nil && m3.homeColumns.isEmpty && m3.outside.flatMap(\.projects).map(\.name) == ["echo"] && m3.shown == 1,
+          "the filter matches names and paths, ignoring case")
+    check(m3.total == many.projects.count && m1.outsideTotal == 9, "counts before the filter")
+    let settled = MapLayout.build(many, sort: .recent, filter: "", settled: ["golf": .greatestFiniteMagnitude])
+    check(settled.outside.first?.topic == "~/repos" && settled.outside.first?.projects.first?.name == "golf", "the order holds what was settled on arrival")
+    check(MapLayout.minutesAgo("3d") == 4320 && MapLayout.minutesAgo("at prompt") == 0 && MapLayout.minutesAgo(nil) == nil, "wait words to minutes")
+    check(MapLayout.homeSessions(many).first?.state == .needsYou, "Home's tile lists its sessions in attention order")
+
+    print("files in and out of the project (C-20, DL-105, DL-106, DL-107)")
+    let treeDir = FileManager.default.temporaryDirectory.appending(path: "duo-tree-\(UUID().uuidString)")
+    let tfm = FileManager.default
+    for d in ["docs/deep", ".git", ".claude/worktrees/x", ".claude/skills", "node_modules/pkg", ".duo"] { try tfm.createDirectory(at: treeDir.appending(path: d), withIntermediateDirectories: true) }
+    for f in ["PROJECT.md", "docs/a.md", "docs/deep/b.md", ".env", ".gitignore", ".DS_Store", ".claude/settings.json"] { try Data("x".utf8).write(to: treeDir.appending(path: f)) }
+    check(AppModel.contained("docs/a.md", in: treeDir) != nil && AppModel.contained("../outside.md", in: treeDir) == nil
+          && AppModel.contained("docs/../../x", in: treeDir) == nil && AppModel.contained("/etc/hosts", in: treeDir) == nil,
+          "a tree path can't leave the project (C-20)")
+    let closed = LiveSnapshot.treeFiles(treeDir)
+    check(closed == ["PROJECT.md", "docs/"], "the tree lists the top level only, folders closed, no dotfiles")
+    check(LiveSnapshot.treeFiles(treeDir, expanded: ["docs"]) == ["PROJECT.md", "docs/", "docs/a.md", "docs/deep/"], "an open folder lists what's inside it, one level")
+    let hidden = LiveSnapshot.treeFiles(treeDir, showHidden: true, expanded: [".claude"])
+    check(hidden.contains(".env") && hidden.contains(".gitignore") && hidden.contains(".claude/") && hidden.contains(".claude/skills/")
+          && !hidden.contains(".git/") && !hidden.contains(".DS_Store") && !hidden.contains(".duo/") && !hidden.contains(".claude/worktrees/") && !hidden.contains("node_modules/"),
+          "Show Hidden Files adds dotfiles; .git, .DS_Store, .duo, worktrees and node_modules never show (DL-105)")
+    check(LiveSnapshot.topLevelFiles(treeDir).contains("docs/deep/b.md"), "duo2 files still lists three levels, whatever the tree has open")
+    let outsideFile = FileManager.default.temporaryDirectory.appending(path: "duo-outside-\(UUID().uuidString).md")
+    try Data("# outside".utf8).write(to: outsideFile)
+    var tabsFixture = f
+    tabsFixture.projects.append(decoded(["name": "treeproj", "topic": "Platform", "path": treeDir.path, "goal": "g"]))
+    let tabsModel = AppModel(fixture: tabsFixture)
+    tabsModel.terminalsMode = .live
+    tabsModel.liveFolders["treeproj"] = treeDir
+    tabsModel.open(project: "treeproj")
+    let outTab = tabsModel.openFile(at: outsideFile)
+    check(outTab == AppModel.outsideFilePrefix + outsideFile.standardizedFileURL.path && tabsModel.liveFile(outTab ?? "") != nil
+          && tabsModel.openFile(at: treeDir.appending(path: "docs/a.md")) == "docs/a.md" && tabsModel.openFile(at: treeDir.appending(path: "docs")) == nil,
+          "Open File…: outside files as file: tabs, the project's own as themselves, folders refused (DL-106)")
+    check(tabsModel.expandedFolders["treeproj"]?.contains("docs") == true, "opening a document opens its folders in the tree")
+    tabsModel.rightTab = outTab
+    tabsModel.open(project: "checkout-redesign")
+    tabsModel.zoomOut()
+    tabsModel.open(project: "treeproj")
+    check(tabsModel.rightTab == outTab && tabsModel.openDocuments.contains(outTab ?? ""), "coming back to a project shows the tab it was on, an outside file too (DL-107)")
+    tabsModel.open(project: "checkout-redesign", session: "Teardown research")
+    let wasConsole = tabsModel.consoleTab
+    tabsModel.open(project: "treeproj")
+    tabsModel.open(project: "checkout-redesign")
+    check(wasConsole != nil && tabsModel.consoleTab == wasConsole, "coming back shows the console tab it was on, not the most urgent (DL-107)")
+    let tabsSaved = tabsModel.currentRestoreState()
+    check(tabsSaved.projects.first { $0.folder == treeDir.path }?.rightTab == outTab, "the restore file keeps each project's tabs, not only the one on screen")
+    try? tfm.removeItem(at: treeDir)
+    try? tfm.removeItem(at: outsideFile)
 }
 
 do { try MainActor.assumeIsolated { try run() } } catch { print("✘ setup: \(error)"); failures += 1 }

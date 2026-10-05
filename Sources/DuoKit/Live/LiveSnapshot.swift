@@ -21,6 +21,10 @@ public enum LiveSnapshot {
         public var extraProjects: [URL] = []
         /// Checks supply their own history.
         public var historyOverride: [(id: String, transcript: URL, cwd: String)]?
+        /// The file tree (DL-105): hidden files on or off, and the folders open in each project's
+        /// tree, by the project folder's path.
+        public var showHidden = false
+        public var expanded: [String: Set<String>] = [:]
 
         public init(root: URL?, rememberedHome: String? = nil, events: URL? = nil, seen: [String: Double] = [:]) {
             self.root = root
@@ -147,7 +151,8 @@ public enum LiveSnapshot {
                 summary: live?.summary ?? entry?.note.map { e in entry?.next.map { "\(e) · Next: \($0)" } ?? e },
                 forkOf: nil, document: nil,
                 sessionId: id,
-                reason: live?.state == .needsYou ? Self.reason(beacon: beacon, hooks: hooks) : nil)
+                reason: live?.state == .needsYou ? Self.reason(beacon: beacon, hooks: hooks) : nil,
+                lastActive: since)
         }
 
         // Where each session ran, last (after any /cd): a project that moved still has sessions
@@ -195,7 +200,7 @@ public enum LiveSnapshot {
                 let names = g.sessions.compactMap { id in sessions.first { $0.sessionId == id }?.name }
                 groups.append(Fixture.Group(name: g.name, project: name, sessions: names, threads: names.map { [$0] }))
             }
-            files[name] = topLevelFiles(f.folder)
+            files[name] = treeFiles(f.folder, showHidden: ctx.showHidden, expanded: ctx.expanded[f.folder.path] ?? [])
         }
 
         // Folders with Claude sessions or a CLAUDE.md that aren't projects (DL-63): shown in their own place,
@@ -348,14 +353,49 @@ public enum LiveSnapshot {
     }
 
     /// Markdown and text files near the top of a project, for the file tree (fixture-shaped).
-    static func topLevelFiles(_ folder: URL) -> [String] {
+    /// Never in the tree or `duo2 files`, hidden files on or not (DL-105): version control, Finder's
+    /// litter, Duo's own folder, and build output.
+    public static let neverListed: Set<String> = [".git", ".DS_Store", ".duo", "node_modules", ".build", "build"]
+
+    static func unlisted(_ u: URL, rel: String, root: URL) -> Bool {
+        neverListed.contains(u.lastPathComponent) || rel == ".claude/worktrees" || ProtectedFolders.skip(u, root: root)
+    }
+
+    /// The project's tree (DL-105): its top level and the inside of each folder the user opened, one
+    /// directory read per open folder, so a big folder costs nothing until it's opened. Hidden files
+    /// only when asked. Folders end in `/`.
+    public static func treeFiles(_ folder: URL, showHidden: Bool = false, expanded: Set<String> = [], cap: Int = 2000) -> [String] {
+        var out: [String] = []
+        func list(_ dir: URL, _ prefix: String) {
+            guard out.count < cap,
+                  let items = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.isDirectoryKey],
+                                                                           options: showHidden ? [] : [.skipsHiddenFiles]) else { return }
+            for u in items {
+                let rel = prefix + u.lastPathComponent
+                if unlisted(u, rel: rel, root: folder) { continue }
+                if (try? u.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true {
+                    out.append(rel + "/")
+                    if expanded.contains(rel) { list(u, rel + "/") }
+                } else {
+                    out.append(rel)
+                }
+                if out.count >= cap { return }
+            }
+        }
+        list(folder, "")
+        return out.sorted()
+    }
+
+    /// `duo2 files`: three levels at once, whatever the tree has open.
+    public static func topLevelFiles(_ folder: URL, showHidden: Bool = false) -> [String] {
         let fm = FileManager.default
-        guard let e = fm.enumerator(at: folder, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles]) else { return [] }
+        guard let e = fm.enumerator(at: folder, includingPropertiesForKeys: [.isRegularFileKey], options: showHidden ? [] : [.skipsHiddenFiles]) else { return [] }
         var out: [String] = []
         for case let u as URL in e {
-            let rel = u.path.replacingOccurrences(of: folder.path + "/", with: "")
+            // By depth, not by cutting the folder's path off: the enumerator may report /private/var for /var.
+            let rel = u.pathComponents.suffix(e.level).joined(separator: "/")
             if rel.split(separator: "/").count > 3 { e.skipDescendants(); continue }
-            if ["node_modules", ".build", "build"].contains(u.lastPathComponent) || ProtectedFolders.skip(u, root: folder) { e.skipDescendants(); continue }
+            if unlisted(u, rel: rel, root: folder) { e.skipDescendants(); continue }
             if (try? u.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true { out.append(rel) }
             else if (try? u.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true { out.append(rel + "/") }
             if out.count >= 200 { break }

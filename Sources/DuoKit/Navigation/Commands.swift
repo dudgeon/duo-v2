@@ -29,6 +29,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case chooseHome         // File › Choose Home Folder… (DL-84); no chord
     case newBrowserTab      // ⌥⌘T: a browser tab in the right pane (ENH-8), beside ⌘T and ⇧⌘T
     case focusAddress       // ⌘L: the browser tab's address field, as in Safari and Chrome (ENH-8)
+    case openFile           // ⌘O: any file on the Mac as a tab in this project (DL-106)
 
     public var title: String {
         switch self {
@@ -56,6 +57,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .chooseHome: "Choose Home Folder…"
         case .newBrowserTab: "New Browser Tab"
         case .focusAddress: "Open Location…"
+        case .openFile: "Open File…"
         }
     }
 
@@ -81,6 +83,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .revertChange, .revertAllChanges, .chooseHome: nil
         case .newBrowserTab: KeyboardShortcut("t", modifiers: [.command, .option])
         case .focusAddress: KeyboardShortcut("l", modifiers: .command)
+        case .openFile: KeyboardShortcut("o", modifiers: .command)
         case .newClaudeSession: KeyboardShortcut("t", modifiers: .command)
         case .newShell: KeyboardShortcut("t", modifiers: [.command, .shift])
         }
@@ -104,6 +107,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .chooseHome: model.terminalsMode == .live
         case .newBrowserTab: model.terminalsMode == .live
         case .focusAddress: model.visibleWebTab != nil
+        case .openFile: model.terminalsMode == .live && model.projectFolder != nil
         case .revertChange: model.webFocus == .editor && (model.editorIfLoaded?.atClaudeChange ?? false)
         case .revertAllChanges: (model.editorIfLoaded?.claudeChanges ?? 0) > 0
         }
@@ -134,6 +138,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .chooseHome: model.chooseHomeFolder()
         case .newBrowserTab: model.newBrowserTab()
         case .focusAddress: model.focusAddressField()
+        case .openFile: model.chooseFilesToOpen()
         case .search: model.openSearch()
         case .toggleRightPane, .nextPane, .previousPane: break
         }
@@ -160,6 +165,8 @@ public struct DuoCommands: Commands {
             item(.newMarkdown)
             item(.newFolder)
             Divider()
+            item(.openFile)
+            Divider()
             item(.chooseHome)
         }
         CommandGroup(replacing: .saveItem) {
@@ -185,6 +192,15 @@ public struct DuoCommands: Commands {
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)
             item(.toggleRightPane)
+            Divider()
+            // Dotfiles in the project's tree (DL-105).
+            Toggle("Show Hidden Files", isOn: Binding(get: { model.showHiddenFiles }, set: { model.setShowHiddenFiles($0) }))
+            Divider()
+            // The map's order (DL-104), the same choice as its Sort popup.
+            Picker("Sort Projects By", selection: Binding(get: { model.mapSort }, set: { model.setMapSort($0) })) {
+                Text("Recent Activity").tag(MapSort.recent)
+                Text("Name").tag(MapSort.name)
+            }
         }
         CommandMenu("Go") {
             item(.search)

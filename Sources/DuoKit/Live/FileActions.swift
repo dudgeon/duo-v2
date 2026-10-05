@@ -68,6 +68,17 @@ public enum FileActions {
         return panel.runModal() == .OK ? panel.url : nil
     }
 
+    /// File › Open File… (DL-106): any file on the Mac, several at once.
+    public static func chooseFiles(startingAt dir: URL?) -> [URL] {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.allowsMultipleSelection = true
+        panel.directoryURL = dir
+        panel.prompt = "Open"
+        return panel.runModal() == .OK ? panel.urls : []
+    }
+
     /// Moves to the Trash (recoverable). Never deletes.
     public static func trash(_ url: URL) throws {
         try FileManager.default.trashItem(at: url, resultingItemURL: nil)

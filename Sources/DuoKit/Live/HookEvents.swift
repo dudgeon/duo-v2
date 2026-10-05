@@ -209,6 +209,10 @@ public struct DuoState: Codable, Sendable, Equatable {
     /// Sessions filed away (Geoff, 2026-10-04): out of every list and count, kept, still searchable,
     /// shown under their project's Archived fold. By session id.
     public var archivedSessions: [String] = []
+    /// The map's order (DL-104): "recent" (the default) or "name".
+    public var mapSort: String?
+    /// View › Show Hidden Files (DL-105).
+    public var showHiddenFiles = false
 
     public init() {}
     public init(from decoder: Decoder) throws {
@@ -229,6 +233,8 @@ public struct DuoState: Codable, Sendable, Equatable {
         projects = try c.decodeIfPresent([String].self, forKey: .projects) ?? []
         archivedProjects = try c.decodeIfPresent([String].self, forKey: .archivedProjects) ?? []
         archivedSessions = try c.decodeIfPresent([String].self, forKey: .archivedSessions) ?? []
+        mapSort = try c.decodeIfPresent(String.self, forKey: .mapSort)
+        showHiddenFiles = try c.decodeIfPresent(Bool.self, forKey: .showHiddenFiles) ?? false
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {

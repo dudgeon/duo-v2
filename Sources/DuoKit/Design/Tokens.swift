@@ -149,6 +149,9 @@ public enum DuoMetric {
     public static let settingsLabelColumn: CGFloat = 150.0
     public static let settingsRowPaddingX: CGFloat = 12.0
     public static let settingsRowPaddingY: CGFloat = 10.0
+    public static let mapHeaderControlHeight: CGFloat = 22.0
+    public static let mapFilterWidth: CGFloat = 200.0
+    public static let mapOutsideRowWaitWidth: CGFloat = 34.0
     public static let idlePopoverWidth: CGFloat = 460.0
     public static let idlePopoverPadding = EdgeInsets(top: 12.0, leading: 8.0, bottom: 12.0, trailing: 8.0)
     public static let idleRowHeight: CGFloat = 26.0

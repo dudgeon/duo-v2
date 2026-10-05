@@ -3175,7 +3175,7 @@
     "Press Escape."
    ],
    "expect": "A sheet listing the two sessions, Cancel and Merge; Escape closes it and nothing moves.",
-   "ref": "S3-7, DL-101, F-79",
+   "ref": "S3-7, DL-101, F-84",
    "claude": {
     "result": "passed",
     "did": [
@@ -3196,7 +3196,7 @@
     "Read the sheet; Cancel (or delete one you don't need and find it in the Trash)."
    ],
    "expect": "\"Delete “…”?\", Move to Trash.",
-   "ref": "S3-7, F-79",
+   "ref": "S3-7, F-84",
    "claude": {
     "result": "passed",
     "did": [

@@ -99,7 +99,7 @@ for k, v in s["paneMinimumProposed"].items():
     w(f"    public static let paneMin{k[0].upper() + k[1:]}: CGFloat = {num(v)}")
 w(f"    public static let peekPopoverWidth: CGFloat = {num(s['peekPopoverWidth'])}")
 # Search (search-handoff tokens-additions): the modal, its rows, preview and action menu.
-for group, prefix in [("searchModal", "searchModal"), ("searchRow", "searchRow"), ("searchPreview", "searchPreview"), ("actionMenu", "actionMenu"), ("sheet", "sheet"), ("notice", "notice"), ("settings", "settings")]:
+for group, prefix in [("searchModal", "searchModal"), ("searchRow", "searchRow"), ("searchPreview", "searchPreview"), ("actionMenu", "actionMenu"), ("sheet", "sheet"), ("notice", "notice"), ("settings", "settings"), ("map", "map")]:
     for k, v in s[group].items():
         name = prefix + k[0].upper() + k[1:]
         if isinstance(v, (int, float)):
