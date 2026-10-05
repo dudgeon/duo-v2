@@ -877,3 +877,8 @@ Built from the decision path page (DL-87 to DL-91):
 - Page driving for Claude: `duo2 browser read [selector]`, `click`, `fill`, `wait`, `screenshot`, `go`, `back`, `forward`, `tabs`, `close`, on the tab on screen or `--tab <id>`. They refuse on a page that isn't allowed. No arbitrary script (LR-45 lists eval; left out because these tabs carry the user's logins). `fill` sets the value through the element's native setter and fires input and change, so framework-bound fields notice.
 - Live on a localhost form: read the page, filled `#name`, clicked `#go`, waited for `#out.done`, read "Hello, Geoff", saved a real screenshot of the page, picked `h1` (described with selector, text, box), listed the tab, and `browser go example.com` refused.
 - Still open from LR-45: the accessibility-tree fallback for canvas apps (Google Docs, Sheets, Figma; DL-7), and keys. Web views draw blank in `--capture-window` captures (F-25), so screenshots come from WebKit's own snapshot.
+
+## F-73 · Moves no longer leave empty Claude folders (2026-10-04)
+
+- After a migration commits, the Claude buckets its moves emptied are removed; after an undo, the ones the undo emptied. Only a folder directly in Claude's `projects/`, only when nothing (but `.DS_Store`) is left. F-64 had found both buckets left behind after Move into Home and its undo.
+- The first run of the new check caught a real bug: undoing a relocate moved the transcript back into a bucket the sweep had removed. Undo now recreates the bucket first. 238 checks pass.

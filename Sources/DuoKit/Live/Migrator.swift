@@ -230,6 +230,7 @@ public struct Migrator: Sendable {
             try verify(j)
             j.state = .committed
             try save(j)
+            sweepEmptyBuckets(j.steps.filter { $0.op == .move }.map(\.from))
             return j
         } catch {
             j.error = "\(error)"
@@ -321,6 +322,8 @@ public struct Migrator: Sendable {
                 if let mtime { try? fm.setAttributes([.modificationDate: mtime], ofItemAtPath: s.to) }
             case .move:
                 guard fm.fileExists(atPath: s.to), !fm.fileExists(atPath: s.from) else { continue }
+                // The bucket may have been swept when the move left it empty.
+                try fm.createDirectory(at: URL(fileURLWithPath: s.from).deletingLastPathComponent(), withIntermediateDirectories: true)
                 try fm.moveItem(atPath: s.to, toPath: s.from)
                 if let m = s.mtime { try? fm.setAttributes([.modificationDate: Date(timeIntervalSince1970: m)], ofItemAtPath: s.from) }
             case .renameDir:
@@ -332,6 +335,19 @@ public struct Migrator: Sendable {
         }
         j.state = .reverted
         try save(j)
+        sweepEmptyBuckets(j.steps.filter { $0.op == .move }.map(\.to))
+    }
+
+    /// Claude's per-folder buckets a move or an undo left empty (F-64 noted them). Only a folder
+    /// directly in Claude's projects folder, and only when nothing is left in it (`.DS_Store` aside).
+    func sweepEmptyBuckets(_ paths: [String]) {
+        let fm = FileManager.default
+        let root = projects.standardizedFileURL.path
+        for dir in Set(paths.map { URL(fileURLWithPath: $0).deletingLastPathComponent().standardizedFileURL }) {
+            guard dir.deletingLastPathComponent().path == root,
+                  let left = try? fm.contentsOfDirectory(atPath: dir.path), left.allSatisfy({ $0 == ".DS_Store" }) else { continue }
+            try? fm.removeItem(at: dir)
+        }
     }
 
     // MARK: Helpers

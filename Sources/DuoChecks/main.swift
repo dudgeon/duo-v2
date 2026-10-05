@@ -707,8 +707,11 @@ func repoFixture() throws -> Fixture {
         check(move.state == .committed && fm.fileExists(atPath: dest + "/sub") && fm.fileExists(atPath: sub2.path)
               && ((try? String(contentsOf: sub2, encoding: .utf8)) ?? "").contains(#""relocatedCwd":"\#(dest)/sub""#),
               "a folder move renames the folder and relocates every session under it to the mapped path (FR-7.5.4)")
+        let bucket = { (p: String) in claude.appending(path: "projects/" + ClaudeStorage.encode(p)).path }
+        check(!fm.fileExists(atPath: bucket(a)) && !fm.fileExists(atPath: bucket(a + "/sub")), "the emptied buckets are swept after the move")
         try m.undo(move)
         check(fm.fileExists(atPath: a + "/sub") && !fm.fileExists(atPath: dest) && (try? Data(contentsOf: s1)) == original, "and undo puts the folder and every transcript back")
+        check(!fm.fileExists(atPath: bucket(dest)) && !fm.fileExists(atPath: bucket(dest + "/sub")), "and sweeps the buckets the undo emptied")
         var stuck = try m.planRelocate("s1", to: b); stuck.state = .applying; try m.save(stuck)
         check((try? m.apply(try m.planRelocate("s2", to: b))) == nil, "an interrupted migration blocks new ones until it's completed or undone (FR-7.8.4)")
         try m.undo(stuck)
