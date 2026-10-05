@@ -1,4 +1,5 @@
 import CryptoKit
+import DuoControl
 import Foundation
 
 /// The deterministic, journaled migrator (CONS §6.3, §7.4, §7.5, §7.8.4; DL-41 R2). Moves only
@@ -19,7 +20,7 @@ public struct Migrator: Sendable {
     }
 
     public static var defaultJournalDir: URL {
-        (ProcessInfo.processInfo.environment["DUO_SUPPORT_DIR"].map { URL(fileURLWithPath: $0) } ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]).appending(path: "Duo/migrations")
+        SupportFolder.duo.appending(path: "migrations")
     }
 
     var projects: URL { claudeDir.appending(path: "projects") }

@@ -841,6 +841,43 @@ func repoFixture() throws -> Fixture {
     let o = LaunchOptions(arguments: ["Duo", "--state", "flow-zoom-3", "--capture", "/tmp/x.png", "--left", "collapsed"])
     check(o.state == .flowZoom3 && o.capturePath == "/tmp/x.png" && o.collapseLeft && o.capturing, "flags parse")
 
+    print("support folder: scripted runs never use the real one (C-21, F-89)")
+    do {
+        let none: [String: String] = ["HOME": NSHomeDirectory()]
+        let given = ["DUO_SUPPORT_DIR": "/tmp/duo-given"]
+        for flag in ["--workspace", "--state", "--capture", "--capture-window", "--then"] {
+            check(SupportFolder.choose(arguments: ["Duo", flag, "x"], environment: none) == .temporary, "\(flag) without DUO_SUPPORT_DIR → a temporary folder")
+        }
+        check(SupportFolder.choose(arguments: ["Duo", "--workspace", "/tmp/ws", "--capture-window", "/tmp/x.png", "--then", "wait"], environment: given) == .given("/tmp/duo-given"), "DUO_SUPPORT_DIR always wins")
+        check(SupportFolder.choose(arguments: ["Duo"], environment: given) == .given("/tmp/duo-given"), "DUO_SUPPORT_DIR wins on a plain launch too")
+        check(SupportFolder.choose(arguments: ["Duo"], environment: none) == .real, "a plain launch uses the real folder")
+        check(SupportFolder.choose(arguments: ["Duo", "-NSDocumentRevisionsDebugMode", "YES"], environment: none) == .real, "AppKit's own flags aren't a scripted run")
+        check(SupportFolder.choose(arguments: ["Duo", "--state", "overview"], environment: ["DUO_SUPPORT_DIR": ""]) == .temporary, "an empty DUO_SUPPORT_DIR counts as unset")
+        // Every flag LaunchOptions reads marks a scripted run.
+        let src = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Debug/LaunchOptions.swift"), encoding: .utf8)) ?? ""
+        let flags = Set(src.matches(of: /case "(--[a-z-]+)"/).map { String($0.1) })
+        check(!flags.isEmpty && flags.isSubset(of: SupportFolder.scriptedFlags), "every LaunchOptions flag is a scripted flag (missing: \(flags.subtracting(SupportFolder.scriptedFlags).sorted()))")
+        // No other place resolves the folder itself.
+        let strays = (FileManager.default.enumerator(at: repoRoot().appending(path: "Sources"), includingPropertiesForKeys: nil)?.compactMap { $0 as? URL } ?? [])
+            .filter { $0.pathExtension == "swift" && $0.lastPathComponent != "SupportFolder.swift" && !$0.path.contains("/DuoChecks/") }
+            .filter { ((try? String(contentsOf: $0, encoding: .utf8)) ?? "").contains(".applicationSupportDirectory") }
+        check(strays.isEmpty, "only SupportFolder resolves Application Support (\(strays.map(\.lastPathComponent)))")
+        // The launch step, in this process: a temporary folder, short, exported; then put back.
+        let saved = getenv("DUO_SUPPORT_DIR").map { String(cString: $0) }
+        unsetenv("DUO_SUPPORT_DIR")
+        let real = SupportFolder.duo.path
+        check(real.hasSuffix("/Library/Application Support/Duo"), "unset → the real folder (\(real))")
+        let choice = SupportFolder.prepareForLaunch(arguments: ["Duo", "--workspace", "/tmp/ws"], environment: [:])
+        let temp = ProcessInfo.processInfo.environment["DUO_SUPPORT_DIR"] ?? ""
+        check(choice == .temporary && temp.hasPrefix("/tmp/duo-") && FileManager.default.fileExists(atPath: temp), "a scripted launch makes and exports \(temp)")
+        check(SupportFolder.duo.path == temp + "/Duo" && ControlEndpoint.file.path.hasPrefix(temp) && DuoPaths.state.path.hasPrefix(temp) && SessionArchive.root.path.hasPrefix(temp) && Migrator.defaultJournalDir.path.hasPrefix(temp), "state, archive, journals and endpoint follow it")
+        check(ControlEndpoint.privateSocket.utf8.count < 104, "its socket path is short (\(ControlEndpoint.privateSocket.utf8.count) bytes)")
+        check(ChildEnvironment.make(sessionID: nil).contains("DUO_SUPPORT_DIR=\(temp)"), "terminals inherit it, so duo2 in them finds the instance")
+        check(SupportFolder.prepareForLaunch(arguments: ["Duo"], environment: ProcessInfo.processInfo.environment) == .given(temp), "an explicit folder is kept, not replaced")
+        try? FileManager.default.removeItem(atPath: temp)
+        if let saved { setenv("DUO_SUPPORT_DIR", saved, 1) } else { unsetenv("DUO_SUPPORT_DIR") }
+    }
+
     print("tokens")
     check(DuoTextStyle.body.spec.size == 13 && DuoTextStyle.body.spec.lineHeight == 20, "body 13/20")
     check(DuoTextStyle.sectionLabel.spec.uppercase && DuoTextStyle.sectionLabel.spec.tracking == 0.66, "section label caps +0.66")

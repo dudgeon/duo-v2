@@ -13,6 +13,8 @@ if pgrep -xq Duo; then
   # A dialog open in Duo cancels the quit; never start a second copy (they'd share one socket, C-18).
   if pgrep -xq Duo; then echo "Duo is still open (a dialog in it may be waiting). Answer it or quit Duo, then run this again."; exit 1; fi
 fi
-open -n build/Duo.app --args --workspace "$HOME/DuoAcceptance/workspace"
+# The acceptance Duo is Geoff's working Duo during a walk (duo2 and duo2:// links reach it through the
+# real endpoint.json), so it opts into the real support folder; other scripted runs get a temporary one (F-89).
+open -n --env "DUO_SUPPORT_DIR=$HOME/Library/Application Support" build/Duo.app --args --workspace "$HOME/DuoAcceptance/workspace"
 sleep 3
 echo "Duo is open on ~/DuoAcceptance/workspace"

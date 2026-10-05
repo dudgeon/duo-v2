@@ -22,7 +22,7 @@ let package = Package(
         .target(name: "DuoControl"),
         // Cross-project search (SRCH, Phase M): index, Core ML embedder, hybrid ranking. Foundation,
         // SQLite, Core ML and Accelerate only, so the read-only CLI can use it in Claude's sandbox.
-        .target(name: "DuoSearch", linkerSettings: [.linkedLibrary("sqlite3")]),
+        .target(name: "DuoSearch", dependencies: ["DuoControl"], linkerSettings: [.linkedLibrary("sqlite3")]),
         .target(name: "DuoKit", dependencies: ["DuoControl", "DuoSearch", .product(name: "SwiftTerm", package: "SwiftTerm")]),
         .executableTarget(name: "duo2", dependencies: ["DuoControl", "DuoSearch"]),
         .executableTarget(name: "Duo", dependencies: ["DuoKit"],
