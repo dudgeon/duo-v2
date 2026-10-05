@@ -943,3 +943,13 @@ Built from the decision path page (DL-87 to DL-91):
 - **Pulled forward:** "reconcile a moved project" was v1.1 (§3a). It's in v1 because the migrator was already built for Move into Home (DL-85) and without it a moved project's sessions don't resume, which fails v1's test (never lose a session).
 - **Tried** on the fixtures with a scratch config: renamed → "Folder not found"; moved into Home's `research/` → "Moved to …/research/scratch"; `duo2 project reconnect scratch` moved both transcripts; `duo2 undo` put them back; fixtures and the scratch Claude folder byte-identical after. New check: reconnect maps nested paths, undoes, refuses a folder that isn't there.
 - **Not done:** the Trash (macOS guards `~/.Trash`; listing it can raise a permission prompt, F-54), so "In the Trash" and Put Back from S3-2 wait. The look is a stand-in until S3-2 (Q-32).
+
+## F-79 · File navigator scope, a spike (2026-10-05)
+
+Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and on a scratch workspace (no Claude turns).
+
+- **Hidden files are never shown.** `LiveSnapshot.topLevelFiles` (`Live/LiveSnapshot.swift:347`) lists with `.skipsHiddenFiles`; `.env`, `.gitignore` and `.claude/` don't appear, and `duo2 files` reads the same list. The same listing stops silently at 3 levels and 200 entries, and folders can't be collapsed.
+- **The navigator can't leave the project folder,** by design (DL-23, handoff §3.3: "rooted in the project's working directory") and by construction: tree entries and file verbs are paths relative to the project. Duo isn't App Sandboxed; the only OS limit is the privacy prompts for Desktop, Documents and the like (F-28, F-53).
+- **No way to open an outside file as a tab.** Tabs (`openDocumentsByProject`, keyed by the project's display name, relative paths) do survive switching projects, in memory and on relaunch; the right pane goes back to Project on return (`open(project:)`).
+- **Sizes:** outside files as tabs M (an explicit `file:`+absolute-path tab id; the editor already watches any path); a hidden-files toggle S on its own but M with collapsible, lazily listed folders and a skip list; browsing outside the folder L, not recommended; remembering the selected tab S.
+- Questions Q-35 to Q-37; the `../` hole is C-20; the work is ENH-9.
