@@ -2,6 +2,8 @@
 
 Status: ready for the design session · 2026-10-04 · Owner: Geoff · One brief, written once the model was settled (DL-95). It amends `design-brief-2026-10-04.md` (DB-n) and `surfaces-handoff/README.md`'s slice plan; where they disagree, this wins, and `decisions.md` wins over both.
 
+> **Designed (2026-10-05), awaiting review:** https://claude.ai/artifact/JSmkQh1Gsj9uyPSzkcuQFV (Q-29).
+>
 > **Read first:** the Duo design system: `docs/design/system/`, published at https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH. It holds the tokens, every component's guidelines and status, every surface's status, and screens of the app as built.
 
 Slice 1 (DB-1 to DB-4) is built and in review. This slice was going to be DB-5 to DB-9. Geoff has since changed what Duo's objects are (DL-82 to DL-98), which redraws several of those and adds the two places people spend most of their time: the map and a project's session list. Everything below is built today with a plain stand-in look, so the shapes and the copy can be tried in the app; nothing here is a new feature to invent, only a look to give it.
