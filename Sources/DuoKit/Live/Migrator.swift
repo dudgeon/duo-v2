@@ -84,15 +84,17 @@ public struct Migrator: Sendable {
 
     // MARK: Gates (§6.3: 4, 5, 6)
 
-    /// Every bucket with a readable first cwd must encode to its own name (encoder self-calibration).
+    /// A project folder whose name Duo's encoder can't reproduce from the sessions in it, or nil
+    /// (encoder self-calibration, `ClaudeStorage.calibrate`).
     public func calibrationProblem() -> String? {
-        let fm = FileManager.default
-        for dir in (try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil)) ?? [] {
-            guard let first = ((try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []).first(where: { $0.pathExtension == "jsonl" }),
-                  let cwd = Self.firstCwd(first) else { continue }
-            if ClaudeStorage.encode(cwd) != dir.lastPathComponent { return "\(dir.lastPathComponent) holds sessions from \(cwd), which encodes to \(ClaudeStorage.encode(cwd))" }
-        }
-        return nil
+        guard let m = ClaudeStorage.calibrate(in: projects).mismatches.first else { return nil }
+        return "\(m.folder) holds sessions from \(m.cwd), which encodes to \(m.encoded)"
+    }
+
+    /// Physical operations wait for a calibrated encoder (§6.3 5); planning checks too, so the
+    /// refusal comes before the user confirms.
+    func requireCalibrated() throws {
+        if let problem = calibrationProblem() { throw Refusal("Duo's folder naming doesn't match Claude's here: \(problem). Nothing was moved (§6.3 5).") }
     }
 
     /// FR-7.4.8: the installed CLI must understand the `relocated` record.
@@ -131,6 +133,7 @@ public struct Migrator: Sendable {
     public func planRelocate(_ id: String, to target: String, live: Set<String> = []) throws -> Journal {
         if live.contains(id) { throw Refusal("\(id.prefix(8)) is running; relocation waits until it isn't (§6.3 liveness)") }
         guard let from = bucket(holding: id) else { throw Refusal("no transcript for \(id.prefix(8))") }
+        try requireCalibrated()
         let dest = projects.appending(path: ClaudeStorage.encode(target))
         if from.standardizedFileURL == dest.standardizedFileURL { throw Refusal("\(id.prefix(8)) already lives in \(target)'s folder") }
         if FileManager.default.fileExists(atPath: dest.appending(path: "\(id).jsonl").path) {
@@ -156,6 +159,7 @@ public struct Migrator: Sendable {
         if let open = openFolders.first(where: { $0 == folder || $0.hasPrefix(folder + "/") }) {
             throw Refusal("a Duo tab is open in \(open); close it first (FR-7.5.3)")
         }
+        try requireCalibrated()
         var steps = [Step(n: 1, op: .renameDir, from: folder, to: dest)]
         var warnings: [String] = []
         for b in (try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil)) ?? [] {
@@ -216,7 +220,7 @@ public struct Migrator: Sendable {
     @discardableResult
     public func apply(_ plan: Journal, live: Set<String> = []) throws -> Journal {
         if let open = interrupted().first { throw Refusal("an earlier migration (\(open.summary)) was interrupted; complete or undo it first (FR-7.8.4)") }
-        if let problem = calibrationProblem() { throw Refusal("Duo's folder naming doesn't match Claude's here: \(problem). Nothing was moved (§6.3 5).") }
+        try requireCalibrated()
         if let s = plan.steps.compactMap(\.sessionId).first(where: live.contains) { throw Refusal("\(s.prefix(8)) is running now; nothing was moved") }
         var j = plan
         j.state = .applying
