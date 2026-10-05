@@ -44,7 +44,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Markdown editor | Built; its look of lists, tables and code isn't designed | build `project.html` | DB-15 | `Editor/`, CodeMirror |
 | Claude's edits highlighted; revert | Built; revert is menu-only | build `project.html` (added block) | DB-35, DB-19 | DocumentEditor |
 | Editor notices: conflict, removed, read-only | Stand-in (Q-20) | — | DB-14 | DocumentStateBar |
-| Properties (frontmatter) block | Built: the look, a task note's status popup, `+ Add` and live session lines (DL-100). Not built: type icons, suggestions, Tab, type menu, date picker, invalid YAML, folding | slice2 `task-note.html`; frontmatter `frontmatter*.html` | DB-16 (the rest) | `Vendor/codemirror/src/duo-editor.js` |
+| Properties (frontmatter) block | Designed and built (F-77): icons, controls, fold, Tab, suggestions, type menu, date picker, invalid, changed by Claude; task notes keep their S2-5 look (Q-33) | frontmatter `frontmatter*.html`; slice2 `task-note.html` | — | `Vendor/codemirror/src/duo-editor.js`, `Live/PropertyCorpus.swift` |
 | Local HTML page and element picker | Stand-in (DL-70) | — | DB-13 | `Editor/HTMLViewer.swift`, PickerBar |
 | Browser tab and its bar; not-allowed page | Stand-in (DL-3, DL-99) | — | DB-20 | `Browser/BrowserTabs.swift` |
 | Group page | Designed at low fidelity | build `wireframes/group-page.html` | DB-17 | right pane group tab |

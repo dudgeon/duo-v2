@@ -23,7 +23,7 @@ Start with the **design system**, `system/`. It's also published for Claude Desi
 | `build-handoff/` | The main handoff (overview, project, peek, look) and the canonical `tokens.json` | Target; parts superseded, see its banner |
 | `search-handoff/` | Search (⇧⌘A), 18 screens | Target; Jump and ⌘K superseded |
 | `surfaces-handoff/` | Slice 1: idle list, terminal palette, console states, shell tabs | Target; built and accepted |
-| `frontmatter-handoff/` | The properties block (DB-16), 13 screens | Target; **not built yet** |
+| `frontmatter-handoff/` | The properties block (DB-16), 13 screens | Target; built (F-77) |
 | `claude-design-handoff.md` | The first brief for Claude Design | Historical |
 | `search-design-brief.md` | The search brief | Historical: answered by `search-handoff/` |
 | `legacy-requirements.md` | Requirements carried from legacy Duo (LR-n) | Reference; some revised by DL-n |

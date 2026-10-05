@@ -53,6 +53,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Documents
     case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
     case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docFind = "doc find"
+    case docProp = "doc prop"
     case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history", docRevert = "doc revert"
     // HTML pages
     case browserOpen = "browser open", browserAllow = "browser allow", browserSites = "browser sites"
@@ -218,6 +219,9 @@ extension DuoAction {
         .init(.docSave, .docs, "", "Save the showing document now (it also autosaves).", ui: ["Save"]),
         .init(.docFormat, .docs, "bold|italic", "Make the selection bold or italic.", ui: ["Bold", "Italic"]),
         .init(.docFind, .docs, "<text>", "Find text in the showing document and select the next match.", ui: ["Find"]),
+        .init(.docProp, .docs, "list | get <name> | set <name> <value> | remove <name> | type <name> <text|list|number|checkbox|date|datetime|link>",
+              "The showing document's properties (frontmatter): read them, or change one line through the editor, highlighted as Claude's (DB-16). Lists: `set tags \"[a, b]\"`.",
+              ui: ["Add a property", "property type menu", "Pick a date", "property checkbox"]),
         .init(.docInsert, .docs, "<text> [--line <n>]", "Insert text into the showing document through the editor (highlighted as added by Claude), at a line or the caret."),
         .init(.docReplace, .docs, "<find> <replacement>", "Replace text in the showing document through the editor (highlighted as added by Claude)."),
 

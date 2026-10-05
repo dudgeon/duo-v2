@@ -183,6 +183,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var home: String?
     /// "Not Now" on Home's prompt (DL-100): the pane stays collapsed at All projects until a Home is chosen.
     public var homePromptDismissed = false
+    /// Documents whose properties block is folded (frontmatter-handoff §2), by path.
+    public var foldedProperties: [String] = []
     /// Home's folder, the container of the user's tracked projects (DL-85), once chosen. Without it
     /// Duo still lists every session (DL-82).
     public var root: String?
@@ -207,6 +209,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         root = try c.decodeIfPresent(String.self, forKey: .root)
         skippedUpdate = try c.decodeIfPresent(String.self, forKey: .skippedUpdate)
         homePromptDismissed = try c.decodeIfPresent(Bool.self, forKey: .homePromptDismissed) ?? false
+        foldedProperties = try c.decodeIfPresent([String].self, forKey: .foldedProperties) ?? []
         gitignore = try c.decodeIfPresent([String: String].self, forKey: .gitignore) ?? [:]
         projects = try c.decodeIfPresent([String].self, forKey: .projects) ?? []
         archivedProjects = try c.decodeIfPresent([String].self, forKey: .archivedProjects) ?? []

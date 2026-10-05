@@ -112,6 +112,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 doc save` | Save the showing document now (it also autosaves). | Save |
 | `duo2 doc format bold\|italic` | Make the selection bold or italic. | Bold, Italic |
 | `duo2 doc find <text>` | Find text in the showing document and select the next match. | Find |
+| `duo2 doc prop list \| get <name> \| set <name> <value> \| remove <name> \| type <name> <text\|list\|number\|checkbox\|date\|datetime\|link>` | The showing document's properties (frontmatter): read them, or change one line through the editor, highlighted as Claude's (DB-16). Lists: `set tags "[a, b]"`. | Add a property, property type menu, Pick a date, property checkbox |
 | `duo2 doc insert <text> [--line <n>]` | Insert text into the showing document through the editor (highlighted as added by Claude), at a line or the caret. | — |
 | `duo2 doc replace <find> <replacement>` | Replace text in the showing document through the editor (highlighted as added by Claude). | — |
 | `duo2 doc revert [--all \| --line <n>]` | Put back what Claude changed in the open document: the change at the caret or a line, or all of them since the user's last edit (ENH-4). | Revert This Change, Revert All of Claude's Changes, Revert Claude's Change |

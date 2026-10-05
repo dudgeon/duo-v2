@@ -3013,6 +3013,113 @@
     "human": [],
     "at": "2026-10-05"
    }
+  },
+  {
+   "id": "props-look",
+   "group": "Properties",
+   "title": "Properties look like the handoff",
+   "what": "A document's frontmatter shows as the properties block: fences in grey, a type icon per line, the value's control, a fold chevron that's remembered.",
+   "steps": [
+    "Open **checkout** › Project tab (`PROJECT.md`).",
+    "Click the chevron by PROPERTIES, switch tabs and come back."
+   ],
+   "expect": "The block as in `frontmatter.html`; folded stays folded when you come back.",
+   "ref": "DB-16, F-77",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Measured against frontmatter.html in a browser: rows, icons, controls and the rule on the target's pixels."
+    ],
+    "didnt": [
+     "The fold across a relaunch."
+    ],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "props-tab",
+   "group": "Properties",
+   "title": "Tab between values; Tab past the last for a new one",
+   "what": "Tab and ⇧Tab select each value; Tab past the last starts a line with suggestions; Tab on an empty new line removes it.",
+   "steps": [
+    "Click into `health:`, press Tab a few times, then past the last.",
+    "Type `ow`, press Tab."
+   ],
+   "expect": "Each Tab selects the next value; the last opens a new line with suggestions, New property last; Tab takes `owner`.",
+   "ref": "DB-16",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Driven by keyboard in the editor page: selections, new line, suggestions and acceptance as expected."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "props-type-date",
+   "group": "Properties",
+   "title": "Change a type; pick a date",
+   "what": "Clicking a line's icon opens a menu of the seven types with a tick; Date opens the Mac's calendar when the value isn't one.",
+   "steps": [
+    "Click the icon by `next:` › **Date**.",
+    "Pick a day in the calendar."
+   ],
+   "expect": "`next:` becomes a date like `2026-10-14`; nothing changes if you close the calendar.",
+   "ref": "DB-16",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`duo2 doc prop type next list` and `… type health date` (refused, as designed) on the fixtures."
+    ],
+    "didnt": [
+     "The menu and calendar themselves: native, need a human click."
+    ],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "props-invalid",
+   "group": "Properties",
+   "title": "Broken YAML is shown, not thrown away",
+   "what": "An unclosed quote outlines its line and says why; typing keeps saving as is.",
+   "steps": [
+    "In `PROJECT.md`, delete the closing quote of `goal:`."
+   ],
+   "expect": "The line outlined, `Not valid YAML · line 2` in the heading, the reason under the block; put the quote back and the icons return.",
+   "ref": "DB-16",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Seen in the editor page."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "props-duo2",
+   "group": "Properties",
+   "title": "Claude can read and set properties",
+   "what": "`duo2 doc prop list | get | set | remove | type` work on the showing document; Claude's changes are marked \"changed by Claude\".",
+   "steps": [
+    "Ask a Claude session in checkout: \"set the owner property of PROJECT.md to me\"."
+   ],
+   "expect": "An `owner:` line appears, marked changed by Claude, and saves.",
+   "ref": "DB-16, DL-71",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Every verb on the fixtures, file checked after autosave, restored."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
   }
  ],
  "decisions": [

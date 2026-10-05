@@ -1,11 +1,12 @@
 // Duo's editor in one WKWebView (stack rec #8–9, spikes S4/S5). Markdown text is the only source
 // of truth: the live preview hides syntax with decorations and never rewrites the text, so a
 // save writes back exactly what was read plus the user's edits (LR-30).
-import { EditorState, ChangeSet, StateField, StateEffect, RangeSetBuilder, Text, Compartment } from "@codemirror/state";
+import { EditorState, ChangeSet, StateField, StateEffect, RangeSetBuilder, Text, Compartment, Prec } from "@codemirror/state";
 import { EditorView, ViewPlugin, Decoration, WidgetType, keymap } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { syntaxTree } from "@codemirror/language";
+import { autocompletion, startCompletion, completionStatus, acceptCompletion } from "@codemirror/autocomplete";
 import { search, searchKeymap, SearchQuery, setSearchQuery, findNext, findPrevious, openSearchPanel, replaceNext } from "@codemirror/search";
 
 // ---------- live preview ----------
@@ -122,12 +123,13 @@ const livePreview = ViewPlugin.fromClass(class {
   }
 }, { decorations: (v) => v.decorations });
 
-// ---------- the properties block (DB-16 look; S2-5, DL-100) ----------
+// ---------- the properties block (DB-16, frontmatter-handoff; S2-5, DL-100) ----------
 
-// The document's own frontmatter lines, decorated in place: the text stays the truth (LR-30).
-// Built now: the heading, the ground block with muted names, a task note's status popup and its
-// live session lines. Still to build from DB-16: type icons, suggestions, Tab between values,
-// the type menu and the date picker (frontmatter-handoff §3–§4).
+// The document's own frontmatter lines, decorated in place: the text stays the truth (LR-30), and
+// undo is the document's undo. Nothing here rewrites a line the user didn't act on (LR-37).
+// A task note keeps its own approved look (slice2 task-note.html): fences hidden, no icons, a status
+// popup and live session lines. Every other document follows frontmatter.html: fences in text2, a
+// type icon in the gutter, the value's control after it, a fold chevron.
 const STATE_GLYPHS = {
   needsYou: `<circle cx="5" cy="5" r="5" fill="var(--duo-needs-you)"/>`,
   readyForReview: `<path d="M5 0 10 5 5 10 0 5z" fill="var(--duo-text)"/>`,
@@ -143,11 +145,20 @@ function glyphEl(state) {
 }
 const SESSION_URL = /^duo2:\/\/session\/([0-9a-fA-F-]+)/;
 
-// What Duo knows about the sessions a note links to: id → { state, name, wait }. Pushed from Swift.
+// What Duo knows: the sessions a note links to (id → { state, name, wait }) and, for suggestions,
+// the property names and values used across the project (names: [{ name, type, count }], values:
+// { name: [{ value, count }] }). Pushed from Swift.
 const setContext = StateEffect.define();
 const contextField = StateField.define({
-  create: () => ({ task: false, sessions: {} }),
+  create: () => ({ task: false, sessions: {}, names: [], values: {} }),
   update(v, tr) { for (const e of tr.effects) if (e.is(setContext)) v = { ...v, ...e.value }; return v; },
+});
+
+// Folded or not, remembered per document by Duo (frontmatter-handoff §2).
+const setFolded = StateEffect.define();
+const foldField = StateField.define({
+  create: () => !!window.__folded,
+  update(v, tr) { for (const e of tr.effects) if (e.is(setFolded)) v = e.value; return v; },
 });
 
 // The frontmatter's lines: [open fence line, close fence line], 1-based, or null.
@@ -160,21 +171,170 @@ function frontmatterLines(doc) {
   return null;
 }
 
+const KEY_RE = /^([^\s#:\-][^:#]*?):(?=\s|$)/;
+const ITEM_RE = /^(\s*)-(\s+|$)(.*)$/;
+const MD_LINK = /^["']?\[([^\]]*)\]\(([^)\s]+)\)["']?$/;
+// The type, read from how the value is written: nothing is stored outside the file (DL-20).
+function valueType(key, value, hasItems) {
+  const v = value.trim();
+  if (hasItems || /^(aliases|tags|cssclasses)$/.test(key) || /^\[.*\]$/.test(v)) return "list";
+  if (/^(true|false)$/i.test(v)) return "checkbox";
+  if (/^-?\d+(\.\d+)?$/.test(v)) return "number";
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)) return "datetime";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return "date";
+  if (MD_LINK.test(v) || /^["']?https?:\/\/\S+["']?$/.test(v)) return "link";
+  return "text";
+}
+
+// One pass over the frontmatter: each line's kind, key, value range and type, the count of
+// properties, and the first line that isn't valid YAML (with why), if any.
+function parseFrontmatter(doc, typingLine = -1) {
+  const fm = frontmatterLines(doc);
+  if (!fm) return null;
+  const lines = [];
+  let count = 0, key = null, invalid = null, why = "";
+  for (let n = fm[0] + 1; n < fm[1]; n++) {
+    const line = doc.line(n), t = line.text;
+    const km = KEY_RE.exec(t), im = ITEM_RE.exec(t);
+    const L = { n, from: line.from, to: line.to, text: t, kind: "other" };
+    if (km) {
+      count++; key = km[1].trim();
+      const lead = km[0].length + /^\s*/.exec(t.slice(km[0].length))[0].length;
+      Object.assign(L, { kind: "key", key, keyEnd: line.from + km[0].length, vFrom: line.from + lead, vTo: line.to, value: t.slice(lead).trimEnd() });
+      const v = L.value;
+      if (!invalid && /^"/.test(v) && !/[^\\]"$|^""$/.test(v.length > 1 ? v : "")) { invalid = n; why = `Line ${n} has a quote that never closes.`; }
+      else if (!invalid && /^'/.test(v) && !/'$/.test(v.slice(1))) { invalid = n; why = `Line ${n} has a quote that never closes.`; }
+      else if (!invalid && /^\[/.test(v) && !/\]$/.test(v)) { invalid = n; why = `Line ${n} has a list that never closes.`; }
+    } else if (im) {
+      Object.assign(L, { kind: "item", key, vFrom: line.from + im[1].length + 1 + im[2].length, vTo: line.to, value: im[3].trimEnd() });
+    } else if (/^\s*(#.*)?$/.test(t)) {
+      L.kind = "blank";
+    } else if (/^\s+\S/.test(t)) {
+      L.kind = "cont";
+    } else if (n === typingLine && /^[^\s#:\-][^:#]*$/.test(t)) {
+      L.kind = "pending";  // a name being typed on the caret's line: not an error yet
+    } else if (!invalid) {
+      invalid = n; why = `Line ${n} isn’t a property: a name, a colon, then its value.`;
+    }
+    lines.push(L);
+  }
+  for (const L of lines) if (L.kind === "key") L.type = valueType(L.key, L.value, L.value === "" && lines.some((o) => o.kind === "item" && o.key === L.key));
+  const isTask = lines.some((L) => L.kind === "key" && L.key === "type" && /^["']?task["']?$/.test(L.value));
+  return { fm, lines, count, invalid, why, isTask };
+}
+
+const PROP_ICONS = {
+  text: `<path d="M2 3h8M2 6h8M2 9h5"/>`,
+  list: `<path d="M4.5 3H10M4.5 6H10M4.5 9H10"/><path d="M2 3h.01M2 6h.01M2 9h.01" stroke-width="1.7"/>`,
+  number: `<path d="M4.7 1.5 3.7 10.5M8.3 1.5 7.3 10.5M2 4.5h8.5M1.5 7.5H10"/>`,
+  checkbox: `<rect x="1.8" y="1.8" width="8.4" height="8.4" rx="2"/><path d="M4 6.2 5.4 7.6 8 4.6"/>`,
+  date: `<rect x="1.5" y="2.5" width="9" height="8" rx="1.5"/><path d="M1.5 5h9M4 1.2v2.2M8 1.2v2.2"/>`,
+  datetime: `<circle cx="6" cy="6" r="4.5"/><path d="M6 3.5V6l1.8 1.2"/>`,
+  link: `<path d="M5 7 7 5"/><path d="M5.6 3.6 6.5 2.7a2 2 0 0 1 2.8 2.8l-.9.9M6.4 8.4l-.9.9a2 2 0 0 1-2.8-2.8l.9-.9"/>`,
+  open: `<path d="M4.5 2.5H9.5V7.5M9.5 2.5 3 9"/>`,
+};
+const TYPE_NAMES = { text: "Text", list: "List", number: "Number", checkbox: "Checkbox", date: "Date", datetime: "Date and time", link: "Link" };
+const iconSvg = (k) => `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="var(--duo-text2)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">${PROP_ICONS[k]}</svg>`;
+const chevronSvg = (down) => down
+  ? `<svg width="10" height="8" viewBox="0 0 10 8" aria-hidden="true"><path d="M1.5 2 5 6 8.5 2" fill="none" stroke="var(--duo-text2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+  : `<svg width="8" height="10" viewBox="0 0 8 10" aria-hidden="true"><path d="M2 1.5 6 5 2 8.5" fill="none" stroke="var(--duo-text2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const where = (el) => { const r = el.getBoundingClientRect(); return { x: r.left, y: r.bottom }; };
+
+// The heading: a fold chevron (not on a task note), PROPERTIES · n, then + (or, when the YAML
+// doesn't read, "Not valid YAML · line n" in its place).
 class HeadingWidget extends WidgetType {
-  constructor(count) { super(); this.count = count; }
-  eq(o) { return o.count === this.count; }
+  constructor(count, chevron, folded, invalid, rule) { super(); Object.assign(this, { count, chevron, folded, invalid, rule }); }
+  eq(o) { return o.count === this.count && o.chevron === this.chevron && o.folded === this.folded && o.invalid === this.invalid && o.rule === this.rule; }
   toDOM(view) {
+    const box = document.createElement("div");
     const d = document.createElement("div");
-    d.className = "duo-fm-head";
-    d.innerHTML = `<span class="duo-fm-label">PROPERTIES · ${this.count}</span><span class="duo-fm-plus" role="button" aria-label="Add a property">+</span>`;
-    d.querySelector(".duo-fm-plus").addEventListener("mousedown", (e) => { e.preventDefault(); addProperty(view); });
-    return d;
+    d.className = this.chevron ? "duo-fm-head duo-fm-head-chev" : "duo-fm-head";  // with a chevron the row is 16 high (frontmatter.html), else 20 (task-note.html)
+    const label = this.invalid ? "PROPERTIES" : `PROPERTIES · ${this.count}`;
+    d.innerHTML = (this.chevron ? `<span class="duo-fm-chev" role="button" aria-label="${this.folded ? "Show" : "Hide"} properties">${chevronSvg(!this.folded)}</span>` : "")
+      + `<span class="duo-fm-label">${label}</span>`
+      + (this.invalid ? `<span class="duo-fm-invalid-note">Not valid YAML · line ${this.invalid}</span>`
+                      : `<span class="duo-fm-plus" role="button" aria-label="Add a property">+</span>`);
+    d.querySelector(".duo-fm-plus")?.addEventListener("mousedown", (e) => { e.preventDefault(); addProperty(view); });
+    d.querySelector(".duo-fm-chev")?.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      const folded = !view.state.field(foldField);
+      view.dispatch({ effects: setFolded.of(folded) });
+      post("propertiesFolded", { folded });
+    });
+    box.appendChild(d);
+    if (this.rule) { const r = document.createElement("div"); r.className = "duo-fm-rule duo-fm-rule-folded"; box.appendChild(r); }
+    return box;
   }
   ignoreEvent() { return true; }
 }
 class RuleWidget extends WidgetType {
+  constructor(message) { super(); this.message = message || ""; }
+  eq(o) { return o.message === this.message; }
+  toDOM() {
+    const box = document.createElement("div");
+    if (this.message) { const m = document.createElement("div"); m.className = "duo-fm-message"; m.textContent = this.message; box.appendChild(m); }
+    const r = document.createElement("div"); r.className = "duo-fm-rule"; box.appendChild(r);
+    return box;
+  }
+}
+// The type icon in the gutter; a button that opens the type menu (§3).
+class IconWidget extends WidgetType {
+  constructor(type, line, key) { super(); Object.assign(this, { type, line, key }); }
+  eq(o) { return o.type === this.type && o.line === this.line && o.key === this.key; }
+  toDOM() {
+    const s = document.createElement("span");
+    s.className = "duo-fm-icon";
+    s.setAttribute("role", "button");
+    s.setAttribute("aria-label", `Type: ${TYPE_NAMES[this.type].toLowerCase()}. Change type.`);
+    s.innerHTML = iconSvg(this.type);
+    s.addEventListener("mousedown", (e) => { e.preventDefault(); post("propertyType", { line: this.line, key: this.key, type: this.type, ...where(s) }); });
+    return s;
+  }
+  ignoreEvent() { return true; }
+}
+// A checkbox before true/false: clicking rewrites the word.
+class BoolWidget extends WidgetType {
+  constructor(on, from, to) { super(); Object.assign(this, { on, from, to }); }
+  eq(o) { return o.on === this.on && o.from === this.from && o.to === this.to; }
+  toDOM(view) {
+    const box = document.createElement("input");
+    box.type = "checkbox"; box.checked = this.on; box.className = "duo-fm-check";
+    box.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      view.dispatch({ changes: { from: this.from, to: this.to, insert: this.on ? "false" : "true" }, userEvent: "input.toggle" });
+    });
+    return box;
+  }
+  ignoreEvent() { return false; }
+}
+// A small button after the value: the calendar for dates, open for links.
+class ControlWidget extends WidgetType {
+  constructor(kind, payload) { super(); this.kind = kind; this.payload = payload; }
+  eq(o) { return o.kind === this.kind && JSON.stringify(o.payload) === JSON.stringify(this.payload); }
+  toDOM() {
+    const s = document.createElement("span");
+    s.className = "duo-fm-control";
+    s.setAttribute("role", "button");
+    s.setAttribute("aria-label", this.kind === "open" ? `Open ${this.payload.title || "the link"}` : "Pick a date");
+    s.innerHTML = iconSvg(this.kind === "open" ? "open" : this.payload.time ? "datetime" : "date");
+    s.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      if (this.kind === "open") post("openLink", { url: this.payload.url });
+      else post("propertyDate", { ...this.payload, ...where(s) });
+    });
+    return s;
+  }
+  ignoreEvent() { return true; }
+}
+// A link away from the caret: its title, underlined (§3).
+class LinkTitleWidget extends WidgetType {
+  constructor(title) { super(); this.title = title; }
+  eq(o) { return o.title === this.title; }
+  toDOM() { const s = document.createElement("span"); s.className = "duo-fm-link"; s.textContent = this.title; return s; }
+}
+class ClaudeLabelWidget extends WidgetType {
   eq() { return true; }
-  toDOM() { const d = document.createElement("div"); d.className = "duo-fm-rule"; return d; }
+  toDOM() { const s = document.createElement("span"); s.className = "duo-fm-claude-label"; s.textContent = "changed by Claude"; return s; }
 }
 class StatusWidget extends WidgetType {
   constructor(value) { super(); this.value = value; }
@@ -245,61 +405,86 @@ function sessionInfo(ctx, url, fallback) {
   return { name: s?.name || fallback, state: s?.state || "idle", wait: s ? (s.state === "readyForReview" ? "ready" : s.wait || "") : "" };
 }
 
+const caretLine = (state) => state.doc.lineAt(state.selection.main.head).number;
 function propertiesDecorations(state) {
-  const fm = frontmatterLines(state.doc);
-  if (!fm) return Decoration.none;
-  const doc = state.doc, ctx = state.field(contextField);
+  const p = parseFrontmatter(state.doc, caretLine(state));
+  if (!p) return Decoration.none;
+  const doc = state.doc, ctx = state.field(contextField), task = ctx.task || p.isTask;
+  const folded = !task && state.field(foldField);
   const active = new Set();
   for (const r of state.selection.ranges) for (let n = doc.lineAt(r.from).number; n <= doc.lineAt(r.to).number; n++) active.add(n);
+  const claude = new Set();
+  state.field(addedField).between(doc.line(p.fm[0]).from, doc.line(p.fm[1]).to, (f, t) => {
+    for (let n = doc.lineAt(f).number; n <= doc.lineAt(Math.max(f, t - 1)).number; n++) claude.add(n);
+  });
   const out = [];
-  let count = 0, key = null;
-  const isTask = ctx.task || Array.from({ length: fm[1] - 2 }, (_, i) => doc.line(i + 2).text).some((t) => /^type:\s*["']?task["']?\s*$/.test(t));
-  for (let n = fm[0] + 1; n < fm[1]; n++) {
-    const line = doc.line(n), t = line.text;
+  const open = doc.line(p.fm[0]), close = doc.line(p.fm[1]);
+  const next = p.fm[1] < doc.lines ? doc.line(p.fm[1] + 1) : null;
+  const blankAfter = next && next.text.trim() === "" && p.fm[1] + 1 < doc.lines;
+  if (folded) {
+    // The heading alone, chevron pointing right, and the rule 6 under it.
+    out.push(Decoration.replace({ widget: new HeadingWidget(p.count, true, true, p.invalid, true), block: true }).range(open.from, blankAfter ? next.to : close.to));
+    return Decoration.set(out, true);
+  }
+  for (const L of p.lines) {
     const cls = ["duo-fm"];
-    if (n === fm[0] + 1) cls.push("duo-fm-first");
-    if (n === fm[1] - 1) cls.push("duo-fm-last");
-    if (active.has(n)) cls.push("duo-fm-active");
-    const km = /^([^\s#:-][^:#]*?):(?=\s|$)/.exec(t);
-    const item = /^(\s*)-\s+(.*)$/.exec(t);
-    if (km) {
-      count++; key = km[1].trim();
-      out.push(Decoration.line({ class: cls.join(" ") }).range(line.from));
-      out.push(Decoration.mark({ class: "duo-fm-key" }).range(line.from, line.from + km[0].length));
-      const vFrom = line.from + km[0].length + (/^\s*/.exec(t.slice(km[0].length))[0].length);
-      const value = doc.sliceString(vFrom, line.to).trim().replace(/^["']|["']$/g, "");
-      if (isTask && key === "status" && value) {
-        out.push(Decoration.replace({ widget: new StatusWidget(value) }).range(vFrom, line.to));
-      } else if (isTask && key === "sessions" && vFrom === line.to) {
-        out.push(Decoration.widget({ widget: new AddWidget(key), side: 1 }).range(line.to));
-      }
-    } else if (item && key === "sessions" && !active.has(n)) {
-      cls.push("duo-fm-item");
-      out.push(Decoration.line({ class: cls.join(" ") }).range(line.from));
-      const raw = item[2].trim().replace(/^["']|["']$/g, "");
-      const lm = /^\[([^\]]*)\]\(([^)\s]+)\)$/.exec(raw);
+    if (task && L === p.lines[0]) cls.push("duo-fm-first");
+    if (task && L === p.lines[p.lines.length - 1]) cls.push("duo-fm-last");
+    if (active.has(L.n)) cls.push("duo-fm-active");
+    else if (claude.has(L.n)) cls.push("duo-fm-claude");
+    if (p.invalid === L.n) cls.push("duo-fm-error");
+    const broken = p.invalid != null && L.n >= p.invalid;  // from the error on: no icons or controls
+    if (L.kind === "item") cls.push("duo-fm-item");
+    if (L.kind === "item" && L.key === "sessions" && task && !active.has(L.n)) {
+      const lm = MD_LINK.exec(L.value.trim());
+      out.push(Decoration.line({ class: cls.join(" ") }).range(L.from));
       if (lm && SESSION_URL.test(lm[2])) {
         const info = sessionInfo(ctx, lm[2], lm[1]);
-        out.push(Decoration.replace({ widget: new SessionLineWidget(lm[2], info.name, info.state, info.wait) }).range(line.from, line.to));
+        out.push(Decoration.replace({ widget: new SessionLineWidget(lm[2], info.name, info.state, info.wait) }).range(L.from, L.to));
       }
-    } else {
-      if (item) cls.push("duo-fm-item");
-      out.push(Decoration.line({ class: cls.join(" ") }).range(line.from));
+      continue;
+    }
+    out.push(Decoration.line({ class: cls.join(" ") }).range(L.from));
+    if (L.kind !== "key") continue;
+    out.push(Decoration.mark({ class: "duo-fm-key" }).range(L.from, L.keyEnd));
+    if (claude.has(L.n) && !active.has(L.n)) out.push(Decoration.widget({ widget: new ClaudeLabelWidget(), side: 2 }).range(L.to));
+    if (task) {
+      if (L.key === "status" && L.value) out.push(Decoration.replace({ widget: new StatusWidget(L.value.replace(/^["']|["']$/g, "")) }).range(L.vFrom, L.vTo));
+      else if (L.key === "sessions" && L.value === "") out.push(Decoration.widget({ widget: new AddWidget(L.key), side: 1 }).range(L.to));
+      continue;
+    }
+    if (broken) continue;
+    out.push(Decoration.widget({ widget: new IconWidget(L.type, L.n, L.key), side: -1 }).range(L.from));
+    const v = L.value.trim();
+    if (L.type === "checkbox") {
+      out.push(Decoration.widget({ widget: new BoolWidget(/^true$/i.test(v), L.vFrom, L.vFrom + v.length), side: -1 }).range(L.vFrom));
+    } else if (L.type === "date" || L.type === "datetime") {
+      out.push(Decoration.widget({ widget: new ControlWidget("date", { line: L.n, key: L.key, value: v, time: L.type === "datetime" }), side: 1 }).range(L.to));
+    } else if (L.type === "link") {
+      const lm = MD_LINK.exec(v), url = lm ? lm[2] : v.replace(/^["']|["']$/g, ""), title = lm ? lm[1] : url;
+      if (!active.has(L.n)) out.push(Decoration.replace({ widget: new LinkTitleWidget(title) }).range(L.vFrom, L.vFrom + v.length));
+      out.push(Decoration.widget({ widget: new ControlWidget("open", { url, title }), side: 1 }).range(L.to));
     }
   }
-  // The fences: the opening one becomes the heading, the closing one the rule under the block
-  // (with the blank line after it, so the text starts where the target puts it).
-  out.push(Decoration.replace({ widget: new HeadingWidget(count), block: true }).range(doc.line(fm[0]).from, doc.line(fm[0]).to));
-  const close = doc.line(fm[1]);
-  const next = fm[1] < doc.lines ? doc.line(fm[1] + 1) : null;
-  const end = next && next.text.trim() === "" && fm[1] + 1 < doc.lines ? next.to : close.to;
-  out.push(Decoration.replace({ widget: new RuleWidget(), block: true }).range(close.from, end));
+  if (task) {
+    // The approved task-note look: the fences give way to the heading and the rule.
+    out.push(Decoration.replace({ widget: new HeadingWidget(p.count, false, false, p.invalid, false), block: true }).range(open.from, open.to));
+    out.push(Decoration.replace({ widget: new RuleWidget(p.invalid ? p.why : ""), block: true }).range(close.from, blankAfter ? next.to : close.to));
+  } else {
+    out.push(Decoration.widget({ widget: new HeadingWidget(p.count, true, false, p.invalid, false), block: true, side: -1 }).range(open.from));
+    for (const f of [open, close]) {
+      out.push(Decoration.line({ class: `duo-fm duo-fm-fence ${f === open ? "duo-fm-first" : "duo-fm-last"}${active.has(f.number) ? " duo-fm-active" : ""}` }).range(f.from));
+      out.push(Decoration.mark({ class: "duo-fm-key" }).range(f.from, f.to));
+    }
+    if (blankAfter) out.push(Decoration.replace({ widget: new RuleWidget(p.invalid ? p.why + " Keep typing: it is saved as it is, and the icons and suggestions come back once it reads correctly." : ""), block: true }).range(next.from, next.to));
+    else out.push(Decoration.widget({ widget: new RuleWidget(p.invalid ? p.why + " Keep typing: it is saved as it is, and the icons and suggestions come back once it reads correctly." : ""), block: true, side: 1 }).range(close.to));
+  }
   return Decoration.set(out, true);
 }
 const propertiesField = StateField.define({
   create: (state) => propertiesDecorations(state),
   update(deco, tr) {
-    if (tr.docChanged || tr.selection || tr.effects.some((e) => e.is(setContext))) return propertiesDecorations(tr.state);
+    if (tr.docChanged || tr.selection || tr.effects.some((e) => e.is(setContext) || e.is(setFolded) || e.is(markAdded) || e.is(clearAdded))) return propertiesDecorations(tr.state);
     return deco;
   },
   provide: (f) => [
@@ -309,48 +494,248 @@ const propertiesField = StateField.define({
   ],
 });
 
-// The heading's +: a new empty line at the end of the block, ready for a name.
+// The heading's +: a new empty line at the end of the block, ready for a name, with suggestions.
 function addProperty(view) {
   const fm = frontmatterLines(view.state.doc);
   if (!fm) return;
+  if (view.state.field(foldField)) { view.dispatch({ effects: setFolded.of(false) }); post("propertiesFolded", { folded: false }); }
   const at = view.state.doc.line(fm[1]).from;
   view.dispatch({ changes: { from: at, insert: "\n" }, selection: { anchor: at }, userEvent: "input" });
   view.focus();
+  startCompletion(view);
+}
+
+// Tab and ⇧Tab move between values; Tab past the last one starts a new line for a name; Tab on a
+// new line left empty removes it and carries on into the document (§4). Only inside the block.
+function valueRanges(state) {
+  const p = parseFrontmatter(state.doc);
+  return p ? { p, ranges: p.lines.filter((L) => L.kind === "key" || L.kind === "item").map((L) => ({ n: L.n, from: L.vFrom, to: L.vTo })) } : null;
+}
+function inBlock(state) {
+  const fm = frontmatterLines(state.doc);
+  if (!fm) return null;
+  const n = state.doc.lineAt(state.selection.main.head).number;
+  return n > fm[0] && n < fm[1] ? { fm, n } : null;
+}
+function tabProperty(view, back) {
+  const at = inBlock(view.state);
+  if (!at) return false;
+  if (!back && completionStatus(view.state) === "active") return acceptCompletion(view);
+  const vr = valueRanges(view.state), head = view.state.selection.main.head, doc = view.state.doc;
+  const line = doc.line(at.n);
+  if (!back && line.text.trim() === "") {
+    // An empty new line: take it out and go into the document.
+    const after = at.fm[1] < doc.lines ? doc.line(at.fm[1] + 1).from - (line.length + 1) : doc.length - (line.length + 1);
+    view.dispatch({ changes: { from: line.from, to: Math.min(doc.length, line.to + 1) }, selection: { anchor: Math.max(0, after) }, userEvent: "delete" });
+    return true;
+  }
+  const list = vr.ranges;
+  const i = list.findIndex((r) => r.n === at.n);
+  const target = back ? list[Math.max(0, i - 1)] : list[i + 1];
+  if (target && (back ? i > 0 : true)) {
+    view.dispatch({ selection: { anchor: target.from, head: target.to }, scrollIntoView: true });
+    return true;
+  }
+  if (back) return true;
+  const end = doc.line(at.fm[1]).from;
+  view.dispatch({ changes: { from: end, insert: "\n" }, selection: { anchor: end }, userEvent: "input" });
+  startCompletion(view);
+  return true;
+}
+const propertiesKeymap = Prec.highest(keymap.of([
+  { key: "Tab", run: (v) => tabProperty(v, false) },
+  { key: "Shift-Tab", run: (v) => tabProperty(v, true) },
+  { key: "Alt-Escape", run: (v) => { if (!inBlock(v.state)) return false; const p = parseFrontmatter(v.state.doc), L = p.lines.find((l) => l.n === inBlock(v.state).n);
+      if (L && (L.type === "date" || L.type === "datetime")) { const c = v.coordsAtPos(L.vFrom); post("propertyDate", { line: L.n, key: L.key, value: L.value, time: L.type === "datetime", x: c?.left ?? 0, y: c?.bottom ?? 0 }); return true; }
+      return startCompletion(v); } },
+  { key: "Mod-Enter", run: (v) => { const at = inBlock(v.state); if (!at) return false; const p = parseFrontmatter(v.state.doc), L = p.lines.find((l) => l.n === at.n);
+      if (!L || L.type !== "link") return false; const lm = MD_LINK.exec(L.value.trim()); post("openLink", { url: lm ? lm[2] : L.value.trim().replace(/^["']|["']$/g, "") }); return true; } },
+  { key: "Alt-ArrowUp", run: (v) => moveProperty(v, -1) },
+  { key: "Alt-ArrowDown", run: (v) => moveProperty(v, 1) },
+]));
+// ⌥↑ ⌥↓: swap the caret's line with its neighbour inside the block.
+function moveProperty(view, dir) {
+  const at = inBlock(view.state);
+  if (!at) return false;
+  const other = at.n + dir;
+  if (other <= at.fm[0] || other >= at.fm[1]) return true;
+  const doc = view.state.doc, a = doc.line(Math.min(at.n, other)), b = doc.line(Math.max(at.n, other));
+  const head = view.state.selection.main.head, col = head - doc.line(at.n).from;
+  const insert = b.text + view.state.lineBreak + a.text;
+  const newLineStart = dir < 0 ? a.from : a.from + b.text.length + 1;
+  view.dispatch({ changes: { from: a.from, to: b.to, insert }, selection: { anchor: newLineStart + Math.min(col, doc.line(at.n).length) }, userEvent: "move.line" });
+  return true;
+}
+
+// Suggestions (§4): names used elsewhere (this project first, most used first, leaving out names
+// this document has), ending with New property "…"; values used under the same name. Never limits
+// what can be typed. Duo sends the lists (contextField).
+// The suggestions' last line names the keys (§4).
+const suggestionKeys = EditorView.updateListener.of((u) => {
+  const tip = u.view.dom.querySelector(".cm-tooltip-autocomplete");
+  if (tip && !tip.querySelector(".duo-sugg-keys")) {
+    const k = document.createElement("div");
+    k.className = "duo-sugg-keys";
+    k.innerHTML = "<span>tab Choose</span><span>↑↓ Move</span><span>esc Cancel</span>";
+    tip.appendChild(k);
+  }
+});
+// Sections only to keep New property "…" last; their headers are hidden.
+const NAMES_SECTION = { name: "names", rank: 0 }, NEW_SECTION = { name: "new", rank: 1 };
+function propertyCompletions(context) {
+  const state = context.state, at = inBlock(state);
+  if (!at) return null;
+  const line = state.doc.line(at.n), before = state.sliceDoc(line.from, context.pos), ctx = state.field(contextField);
+  const p = parseFrontmatter(state.doc, at.n);
+  if (p.invalid && at.n >= p.invalid) return null;
+  if (!before.includes(":") && !/^\s*-/.test(before)) {
+    const typed = before.trim();
+    const have = new Set(p.lines.filter((L) => L.kind === "key" && L.n !== at.n).map((L) => L.key));
+    const options = (ctx.names || []).filter((o) => !have.has(o.name)).map((o) => ({
+      label: o.name, type: o.type || "text", detail: `${TYPE_NAMES[o.type || "text"].toLowerCase()} · ${o.count} document${o.count === 1 ? "" : "s"}`, boost: (o.here ? 50 : 0) + Math.min(40, o.count), section: NAMES_SECTION,
+      apply: (view, c, from, to) => acceptName(view, o.name, o.type || "text", from, to),
+    }));
+    if (typed && !(ctx.names || []).some((o) => o.name === typed)) options.push({ label: typed, displayLabel: `New property “${typed}”`, type: "text", detail: "text", section: NEW_SECTION,
+      apply: (view, c, from, to) => acceptName(view, typed, "text", from, to) });
+    return { from: line.from + (before.length - before.trimStart().length), options, filter: true };
+  }
+  const L = p.lines.find((l) => l.n === at.n);
+  const key = L?.key;
+  if (!key) return null;
+  const vals = (ctx.values || {})[key] || [];
+  if (!vals.length) return null;
+  const from = L.kind === "item" ? L.vFrom : (L.vFrom > context.pos ? context.pos : L.vFrom);
+  return { from, options: vals.map((v) => ({ label: v.value, detail: `${v.count} document${v.count === 1 ? "" : "s"}`, type: L.kind === "item" ? "list" : (L.type || "text") })), filter: true };
+}
+// Taking a name writes `name: ` and sets up its value for its type.
+function acceptName(view, name, type, from, to) {
+  const insert = type === "checkbox" ? `${name}: false` : type === "list" ? `${name}:\n  - ` : `${name}: `;
+  view.dispatch({ changes: { from, to: view.state.doc.lineAt(from).to, insert }, selection: { anchor: from + insert.length }, userEvent: "input.complete" });
+  if (type === "date" || type === "datetime") {
+    const n = view.state.doc.lineAt(from).number, c = view.coordsAtPos(from + insert.length);
+    post("propertyDate", { line: n, key: name, value: "", time: type === "datetime", x: c?.left ?? 0, y: c?.bottom ?? 0 });
+  }
+}
+
+// One change to the frontmatter: the user's (an ordinary edit) or Claude's through duo2, which is
+// highlighted and revertable like any change of Claude's (DL-5, frontmatter-claude.html).
+function applyPropChange(change, agent, userEvent = "input") {
+  if (!agent) { view.dispatch({ changes: change, userEvent }); return; }
+  const removed = view.state.sliceDoc(change.from, change.to ?? change.from), ins = change.insert ?? "";
+  const effects = [recordChanges.of([{ id: ++changeSeq, from: change.from, to: change.from + ins.length, removed }])];
+  if (ins.length) effects.push(markAdded.of([[change.from, change.from + ins.length]]));
+  view.dispatch({ changes: change, effects, userEvent: "agent" });
 }
 
 // Sets one property's value in the buffer, or removes it (null), touching only that line (LR-37).
 // A new property goes on the end, before the closing fence.
-function setProperty(key, value) {
-  const doc = view.state.doc, fm = frontmatterLines(doc);
-  if (!fm) return false;
-  for (let n = fm[0] + 1; n < fm[1]; n++) {
-    const line = doc.line(n), m = new RegExp(`^${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:(\\s*)(.*)$`).exec(line.text);
-    if (!m) continue;
+function setProperty(key, value, agent = false) {
+  const p = parseFrontmatter(view.state.doc);
+  if (!p) {
+    if (value == null) return true;
+    applyPropChange({ from: 0, insert: `---\n${key}: ${value}\n---\n\n` }, agent);
+    return true;
+  }
+  const L = p.lines.find((l) => l.kind === "key" && l.key === key);
+  if (L) {
     if (value == null) {
-      view.dispatch({ changes: { from: line.from, to: Math.min(doc.length, line.to + 1) }, userEvent: "input" });
+      // The property and its list items go together.
+      let end = L.n;
+      while (end + 1 < p.fm[1] && p.lines.find((l) => l.n === end + 1)?.kind === "item") end++;
+      const last = view.state.doc.line(end);
+      applyPropChange({ from: L.from, to: Math.min(view.state.doc.length, last.to + 1) }, agent);
     } else {
-      const from = line.from + key.length + 1;
-      view.dispatch({ changes: { from, to: line.to, insert: " " + value }, userEvent: "input" });
+      let end = L.to;
+      for (const o of p.lines) if (o.n > L.n) { if (o.kind === "item" && o.key === key) end = o.to; else break; }
+      applyPropChange({ from: L.keyEnd, to: end, insert: value === "" ? "" : " " + value }, agent);
     }
     return true;
   }
   if (value == null) return true;
-  view.dispatch({ changes: { from: doc.line(fm[1]).from, insert: `${key}: ${value}\n` }, userEvent: "input" });
+  applyPropChange({ from: view.state.doc.line(p.fm[1]).from, insert: `${key}: ${value}\n` }, agent);
   return true;
 }
 
 // Adds an item to a list property, one per line, after its last item (DL-93).
 function addListItem(key, item) {
-  const doc = view.state.doc, fm = frontmatterLines(doc);
-  if (!fm) return false;
-  let at = -1;
-  for (let n = fm[0] + 1; n < fm[1]; n++) {
-    const t = doc.line(n).text;
-    if (at < 0 && t.startsWith(key + ":")) { at = doc.line(n).to; continue; }
-    if (at >= 0) { if (/^\s*-\s/.test(t)) at = doc.line(n).to; else break; }
-  }
-  if (at < 0) return setProperty(key, "") && addListItem(key, item);
+  const p = parseFrontmatter(view.state.doc);
+  if (!p) return setProperty(key, "") && addListItem(key, item);
+  const L = p.lines.find((l) => l.kind === "key" && l.key === key);
+  if (!L) return setProperty(key, "") && addListItem(key, item);
+  let at = L.to;
+  for (const o of p.lines) if (o.n > L.n) { if (o.kind === "item" && o.key === key) at = o.to; else if (o.kind === "key") break; }
   view.dispatch({ changes: { from: at, insert: `\n  - ${item}` }, userEvent: "input" });
+  return true;
+}
+
+// The properties as Duo and duo2 read them: name, type, value (lists as arrays), line.
+function listProperties() {
+  const p = parseFrontmatter(view.state.doc);
+  if (!p) return { properties: [], invalid: null };
+  const props = p.lines.filter((L) => L.kind === "key").map((L) => {
+    const items = p.lines.filter((o) => o.kind === "item" && o.key === L.key).map((o) => o.value.replace(/^["']|["']$/g, ""));
+    const v = L.value.trim();
+    const value = L.type === "list" ? (items.length ? items : v.replace(/^\[|\]$/g, "").split(",").map((x) => x.trim()).filter(Boolean)) : v.replace(/^["']|["']$/g, "");
+    return { name: L.key, type: L.type, value: Array.isArray(value) ? value.filter((x) => x !== "") : value, line: L.n };
+  });
+  return { properties: props, invalid: p.invalid, why: p.why };
+}
+
+// Changing a type rewrites the value to match when it can (§3): text to a one-item list, a list
+// to text joined by commas, text that reads as a date to the ISO form. When it can't, nothing
+// changes and Duo says so (for a date, it opens the calendar instead).
+function convertProperty(lineNo, type) {
+  const p = parseFrontmatter(view.state.doc);
+  const L = p?.lines.find((l) => l.n === lineNo && l.kind === "key");
+  if (!L) return { result: "no property on that line" };
+  if (L.type === type) return { result: "unchanged" };
+  const items = p.lines.filter((o) => o.kind === "item" && o.key === L.key);
+  const raw = L.value.trim().replace(/^["']|["']$/g, "");
+  const words = L.type === "list" ? (items.length ? items.map((o) => o.value.replace(/^["']|["']$/g, "")) : raw.replace(/^\[|\]$/g, "").split(",").map((x) => x.trim()).filter(Boolean)) : [raw];
+  let value = null;
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  switch (type) {
+    case "text": value = words.join(", "); break;
+    case "list": value = raw ? `[${raw}]` : "[]"; break;
+    case "number": if (/^-?\d+(\.\d+)?$/.test(words.join(""))) value = words.join(""); break;
+    case "checkbox": value = /^(true|yes|1|done)$/i.test(raw) ? "true" : "false"; break;
+    case "link": if (/^https?:\/\//.test(raw) || /\.md$/.test(raw)) value = `"[${raw.split("/").pop()}](${raw})"`; break;
+    case "date": case "datetime": {
+      const d = parseDate(raw);
+      if (d) value = type === "date" ? iso(d) : `${iso(d)}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+      else return { result: "needs date" };
+      break;
+    }
+  }
+  if (value == null) return { result: `can't read “${raw}” as ${TYPE_NAMES[type].toLowerCase()}` };
+  const end = items.length ? items[items.length - 1].to : L.to;
+  view.dispatch({ changes: { from: L.keyEnd, to: end, insert: value === "" ? "" : " " + value }, userEvent: "input.type" });
+  return { result: "changed", value };
+}
+// Dates typed loosely: "2026-10-14", "oct 14", "October 14, 2026", "tomorrow", "next fri".
+function parseDate(text) {
+  const t = text.trim().toLowerCase(), now = new Date(), day = 86400000;
+  if (!t) return null;
+  if (t === "today") return now;
+  if (t === "tomorrow") return new Date(now.getTime() + day);
+  if (t === "yesterday") return new Date(now.getTime() - day);
+  const wd = /^(next\s+)?(sun|mon|tue|wed|thu|fri|sat)[a-z]*$/.exec(t);
+  if (wd) {
+    const target = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"].indexOf(wd[2]);
+    let add = (target - now.getDay() + 7) % 7 || 7;
+    return new Date(now.getTime() + add * day);
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(t)) { const d = new Date(t.length === 10 ? t + "T00:00" : t); return isNaN(d) ? null : d; }
+  const withYear = /\d{4}/.test(t) ? t : `${t} ${now.getFullYear()}`;
+  const d = new Date(withYear);
+  return isNaN(d) ? null : d;
+}
+// Sets the value on one line (the date picker's choice), touching only that line.
+function setPropertyLine(lineNo, value) {
+  const p = parseFrontmatter(view.state.doc);
+  const L = p?.lines.find((l) => l.n === lineNo && l.kind === "key");
+  if (!L) return false;
+  view.dispatch({ changes: { from: L.keyEnd, to: L.to, insert: " " + value }, userEvent: "input" });
   return true;
 }
 
@@ -505,6 +890,34 @@ const duoTheme = EditorView.theme({
   ".duo-fm-popup": { display: "inline-flex", alignItems: "center", gap: "4px", height: "20px", padding: "0 6px", border: "1px solid var(--duo-rule)", borderRadius: "var(--duo-radius-card)", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px", lineHeight: "20px", verticalAlign: "top", margin: "-1.5px 0", cursor: "default" },  // 22 tall in a 22 line
   ".duo-fm-add": { float: "right", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", color: "var(--duo-text2)", cursor: "default" },
   ".cm-line.duo-fm-item": { paddingLeft: "32px" },
+  ".duo-fm-head.duo-fm-head-chev": { lineHeight: "16px" },
+  ".duo-fm-chev": { display: "flex", alignItems: "center", cursor: "default" },
+  ".duo-fm-invalid-note": { marginLeft: "auto", fontSize: "12px", lineHeight: "16px" },
+  ".cm-line.duo-fm-fence": { color: "var(--duo-text2)" },
+  ".duo-fm-icon": { position: "absolute", left: "12px", top: "0", width: "14px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "default" },
+  ".cm-line.duo-fm-first .duo-fm-icon": { top: "8px" },
+  ".duo-fm-check": { margin: "0 4px 0 0", verticalAlign: "-2px" },
+  ".duo-fm-control": { display: "inline-flex", alignItems: "center", marginLeft: "12px", verticalAlign: "-2px", cursor: "default" },
+  ".duo-fm-link": { textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px" },
+  ".cm-line.duo-fm-claude::before": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", backgroundColor: "var(--duo-selected)", borderRadius: "4px", zIndex: "-1" },
+  ".duo-fm-claude-label": { float: "right", paddingLeft: "8px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", color: "var(--duo-text2)", whiteSpace: "nowrap" },
+  ".cm-line.duo-fm-error::after": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", boxShadow: "inset 0 0 0 1.5px var(--duo-text)", borderRadius: "4px", pointerEvents: "none" },
+  ".duo-fm-message": { margin: "8px -8px 0", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", lineHeight: "16px", color: "var(--duo-text2)" },
+  ".duo-fm-rule.duo-fm-rule-folded": { margin: "6px -28px 22px" },
+  // Suggestions (§4): pane, rule border, radius 10, the popover shadow; rows 26, radius 6.
+  ".cm-tooltip.cm-tooltip-autocomplete": { backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "0 12px 32px rgba(31, 35, 40, 0.22)", padding: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px" },
+  ".cm-tooltip.duo-sugg-names > ul": { width: "286px" },
+  ".cm-tooltip.duo-sugg-values > ul": { width: "266px" },
+  ".cm-tooltip.cm-tooltip-autocomplete > ul": { fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", maxHeight: "260px" },
+  ".cm-tooltip.cm-tooltip-autocomplete > ul > li": { display: "flex", alignItems: "center", gap: "8px", height: "26px", lineHeight: "26px", padding: "0 8px", borderRadius: "6px", color: "var(--duo-text)" },
+  ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected]": { backgroundColor: "var(--duo-selected)", color: "var(--duo-text)" },
+  ".cm-tooltip.cm-tooltip-autocomplete.cm-tooltip > ul > completion-section": { display: "none" },
+  // The hairline before New property "…": the second section's header, drawn as a rule.
+  ".cm-tooltip.cm-tooltip-autocomplete.cm-tooltip > ul > li + completion-section": { display: "block", height: "1px", margin: "4px 8px", padding: "0", border: "0", fontSize: "0", backgroundColor: "var(--duo-rule)", opacity: "1" },
+  ".duo-sugg-keys": { display: "flex", gap: "12px", padding: "6px 8px 2px", fontSize: "12px", lineHeight: "16px", color: "var(--duo-text2)", whiteSpace: "nowrap" },
+  ".cm-completionMatchedText": { textDecoration: "none", fontWeight: "600" },
+  ".cm-completionDetail": { marginLeft: "auto", fontStyle: "normal", fontSize: "12px", color: "var(--duo-text2)" },
+  ".duo-sugg-icon": { display: "inline-flex", width: "14px", justifyContent: "center", flex: "none" },
   ".duo-fm-session": { display: "inline-flex", alignItems: "center", gap: "6px", width: "100%", verticalAlign: "top" },
   ".duo-fm-session-name": { textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", cursor: "default" },
   ".duo-fm-wait": { marginLeft: "auto", flex: "none", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", color: "var(--duo-text2)" },
@@ -579,7 +992,12 @@ function create(parent, text) {
       search({ top: true }),
       ...(window.duoFlags?.noPreview ? [] : [livePreview]),
       contextField,
-      ...(window.duoFlags?.noPreview ? [] : [propertiesField]),
+      foldField,
+      ...(window.duoFlags?.noPreview ? [] : [propertiesField, propertiesKeymap, suggestionKeys,
+        autocompletion({ override: [propertyCompletions], icons: false, activateOnTyping: true,
+          tooltipClass: (st) => (inBlock(st) && !st.sliceDoc(st.doc.lineAt(st.selection.main.head).from, st.selection.main.head).includes(":") ? "duo-sugg-names" : "duo-sugg-values"),
+          addToOptions: [{ position: 20, render: (c) => { const s = document.createElement("span"); s.className = "duo-sugg-icon";
+            if (PROP_ICONS[c.type]) s.innerHTML = iconSvg(c.type); return s; } }] })]),
       addedField,
       changesField,
       searchField,
@@ -824,6 +1242,12 @@ window.duo = {
   setContext: (c) => { view.dispatch({ effects: setContext.of(c) }); return true; },
   setProperty,
   addListItem,
+  listProperties,
+  agentSetProperty: (k, v) => setProperty(k, v, true),
+  propertyLine: (k) => parseFrontmatter(view.state.doc)?.lines.find((l) => l.kind === "key" && l.key === k)?.n ?? null,
+  convertProperty,
+  setPropertyLine,
+  setFolded: (f) => { view.dispatch({ effects: setFolded.of(!!f) }); return true; },
   properties: () => { const fm = frontmatterLines(view.state.doc); return fm ? document.querySelectorAll(".duo-fm").length : 0; },
   setReadOnly: (ro) => view.dispatch({ effects: readOnlyCompartment.reconfigure([EditorState.readOnly.of(ro), EditorView.editable.of(!ro)]) }),
   focus: () => view.focus(),

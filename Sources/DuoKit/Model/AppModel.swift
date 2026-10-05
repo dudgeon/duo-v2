@@ -161,6 +161,9 @@ public final class AppModel {
     public var expandedQuestions: Set<String> = []
     /// The sheet on the window, if any (DL-100): Move into Home… or New project.
     public var moveIntoHomeForm: MoveIntoHomeForm?
+    /// Property names and values for the properties block's suggestions, per project (PropertyCorpus).
+    @ObservationIgnored var propertyCorpus: (project: String, at: Date, json: [String: Any])?
+    @ObservationIgnored var scanningCorpus = false
     public var newProjectForm: NewProjectForm?
     /// Restore on relaunch (LR-58): off for scripted and capture runs.
     @ObservationIgnored public var restoreEnabled = false

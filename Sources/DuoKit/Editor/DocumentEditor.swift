@@ -181,7 +181,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             // edited from, then reconcile with what's on disk now (it may merge cleanly now).
             diskBytes = k.base
             dirty = true
-            webView.callAsyncJavaScript("const r = duo.create(t); duo.setBaseText(b); return r", arguments: ["t": k.text, "b": baseText], in: nil, in: .page) { [weak self] _ in
+            webView.callAsyncJavaScript("window.__folded = f; const r = duo.create(t); duo.setBaseText(b); return r", arguments: ["t": k.text, "b": baseText, "f": Self.folded(file)], in: nil, in: .page) { [weak self] _ in
                 guard let self else { return }
                 self.lastEvent = "reopened with unsaved edits"
                 self.reconcile(file)
@@ -189,7 +189,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             watch(file)
             return
         }
-        webView.callAsyncJavaScript("const r = duo.create(t); duo.markSaved(); return r", arguments: ["t": text], in: nil, in: .page) { [weak self] result in
+        webView.callAsyncJavaScript("window.__folded = f; const r = duo.create(t); duo.markSaved(); return r", arguments: ["t": text, "f": Self.folded(file)], in: nil, in: .page) { [weak self] result in
             guard let self else { return }
             if case .success(let info) = result, let d = info as? [String: Any], (d["mixedLineEndings"] as? Bool) == true {
                 self.readOnlyReason = "mixed line endings"
@@ -197,6 +197,18 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             self.lastEvent = self.readOnlyReason == nil ? "opened" : "read-only"
         }
         watch(file)
+    }
+
+    /// Whether this document's properties block was left folded.
+    static func folded(_ file: URL) -> Bool { DuoState.load().foldedProperties.contains(file.standardizedFileURL.path) }
+
+    /// Remembers the fold, per document (frontmatter-handoff §2).
+    func rememberFold(_ folded: Bool) {
+        guard let path = url?.standardizedFileURL.path else { return }
+        DuoState.update { s in
+            s.foldedProperties.removeAll { $0 == path }
+            if folded { s.foldedProperties.append(path) }
+        }
     }
 
     /// What the properties block shows about the note's sessions (S2-5): JSON, sent when it changes.

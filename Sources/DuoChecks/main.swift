@@ -45,6 +45,29 @@ func repoFixture() throws -> Fixture {
         check(secs.dropFirst(2).allSatisfy { ["today", "week", "earlier"].contains($0.id) }, "then history by date")
     }
 
+    print("properties (DB-16)")
+    do {
+        check(PropertyCorpus.type(name: "due", value: "2026-10-14", hasItems: false) == "date"
+              && PropertyCorpus.type(name: "at", value: "2026-10-14T09:30", hasItems: false) == "datetime"
+              && PropertyCorpus.type(name: "ok", value: "false", hasItems: false) == "checkbox"
+              && PropertyCorpus.type(name: "n", value: "15", hasItems: false) == "number"
+              && PropertyCorpus.type(name: "prd", value: "\"[PRD v2](docs/prd-v2.md)\"", hasItems: false) == "link"
+              && PropertyCorpus.type(name: "tags", value: "", hasItems: false) == "list"
+              && PropertyCorpus.type(name: "x", value: "[a, b]", hasItems: false) == "list"
+              && PropertyCorpus.type(name: "goal", value: "\"Cut churn\"", hasItems: false) == "text", "types read from how values are written, as the editor reads them")
+        let dir = FileManager.default.temporaryDirectory.appending(path: "duo-corpus-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: dir.appending(path: "a"), withIntermediateDirectories: true)
+        try? "---\nowner: Geoff\ntags:\n  - pm\n  - q4\n---\n# A\n".write(to: dir.appending(path: "a/one.md"), atomically: true, encoding: .utf8)
+        try? "---\nowner: Geoff\ndue: 2026-10-14\n---\n".write(to: dir.appending(path: "two.md"), atomically: true, encoding: .utf8)
+        try? "no frontmatter\n".write(to: dir.appending(path: "three.md"), atomically: true, encoding: .utf8)
+        let c = PropertyCorpus.scan(here: dir, others: [])
+        let names = (c["names"] as? [[String: Any]]) ?? []
+        let owner = names.first { $0["name"] as? String == "owner" }
+        check(names.first?["name"] as? String == "owner" && owner?["count"] as? Int == 2 && owner?["here"] as? Bool == true, "names counted by document, most used first")
+        check(names.contains { $0["name"] as? String == "tags" && $0["type"] as? String == "list" } && (((c["values"] as? [String: Any])?["tags"] as? [[String: Any]])?.count == 2), "list items become suggested values")
+        try? FileManager.default.removeItem(at: dir)
+    }
+
     print("task notes (DL-93)")
     do {
         let id1 = "aaaaaaaa-1111-4222-8333-444444444444", id2 = "bbbbbbbb-1111-4222-8333-444444444444"

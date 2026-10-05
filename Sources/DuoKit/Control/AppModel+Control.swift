@@ -345,6 +345,47 @@ extension AppModel {
         case .docFind:
             guard !inv.text.isEmpty, editorIfLoaded?.url != nil else { return done(.fail("usage: \(id.action.usage) (with a document showing)")) }
             editor.run("return duo.find(q)", ["q": inv.text]) { v in done(.ok("Selected the next match at offset \(v as? Int ?? -1).")) }
+        case .docProp:
+            guard let e = editorIfLoaded, e.url != nil, let sub = inv[0] else { return done(.fail("usage: \(id.action.usage) (with a document showing)")) }
+            let name = inv[1], value = inv.positional.dropFirst(2).joined(separator: " ")
+            func show(_ v: Any?) -> String {
+                guard let d = v as? [String: Any], let props = d["properties"] as? [[String: Any]] else { return "" }
+                return props.map { p in
+                    let val = (p["value"] as? [String]).map { "[" + $0.joined(separator: ", ") + "]" } ?? "\(p["value"] ?? "")"
+                    return "\(p["name"] ?? ""): \(val)  (\(p["type"] ?? "text"), line \(p["line"] ?? 0))"
+                }.joined(separator: "\n")
+            }
+            if sub != "list" && sub != "get", let why = e.readOnlyReason { return done(.fail("the document is read-only (\(why))")) }
+            switch sub {
+            case "list":
+                e.run("return duo.listProperties()") { v in
+                    let d = v as? [String: Any]
+                    if let bad = d?["invalid"] as? Int { return done(.ok("Not valid YAML from line \(bad): \(d?["why"] ?? "")\n" + show(v))) }
+                    let text = show(v)
+                    done(.ok(text.isEmpty ? "No properties." : text, ["properties": d?["properties"] ?? []]))
+                }
+            case "get":
+                guard let name else { return done(.fail("usage: duo2 doc prop get <name>")) }
+                e.run("return duo.listProperties()") { v in
+                    let p = ((v as? [String: Any])?["properties"] as? [[String: Any]])?.first { $0["name"] as? String == name }
+                    guard let p else { return done(.fail("no property '\(name)'")) }
+                    done(.ok((p["value"] as? [String]).map { $0.joined(separator: "\n") } ?? "\(p["value"] ?? "")", ["property": p]))
+                }
+            case "set":
+                guard let name, !value.isEmpty else { return done(.fail("usage: duo2 doc prop set <name> <value>")) }
+                e.run("return duo.agentSetProperty(k, v)", ["k": name, "v": value]) { _ in done(.ok("Set \(name); the user sees the line marked as changed by Claude. It autosaves.")) }
+            case "remove":
+                guard let name else { return done(.fail("usage: duo2 doc prop remove <name>")) }
+                e.run("return duo.agentSetProperty(k, null)", ["k": name]) { _ in done(.ok("Removed \(name).")) }
+            case "type":
+                guard let name, let t = inv[2] else { return done(.fail("usage: duo2 doc prop type <name> <type>")) }
+                e.run("const l = duo.propertyLine(k); return l == null ? {result: 'no property'} : duo.convertProperty(l, t)", ["k": name, "t": t]) { v in
+                    let r = (v as? [String: Any])?["result"] as? String ?? "failed"
+                    done(r == "changed" || r == "unchanged" ? .ok("\(name) is now \(t)\((v as? [String: Any])?["value"].map { ": \($0)" } ?? "").") : .fail(r == "needs date" ? "can't read \(name)'s value as a date; set it with `duo2 doc prop set \(name) 2026-10-14`" : r))
+                }
+            default:
+                done(.fail("usage: \(id.action.usage)"))
+            }
         case .docInsert:
             guard let e = editorIfLoaded, e.url != nil, let text = inv[0] else { return done(.fail("usage: \(id.action.usage) (with a document showing)")) }
             if let why = e.readOnlyReason { return done(.fail("the document is read-only (\(why))")) }

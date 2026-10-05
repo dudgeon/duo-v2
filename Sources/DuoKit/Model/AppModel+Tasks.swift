@@ -284,7 +284,25 @@ extension AppModel {
             guard let id = s.sessionId?.lowercased() else { continue }
             sessions[id] = ["state": s.state.rawValue, "name": s.name, "wait": s.wait ?? ""]
         }
-        guard let data = try? JSONSerialization.data(withJSONObject: ["sessions": sessions], options: [.sortedKeys]),
+        var ctx: [String: Any] = ["sessions": sessions]
+        // Names and values used in this project's notes and Home's, for suggestions (frontmatter-handoff §4).
+        // Read off the main thread, at most once a minute per project.
+        let project = currentProject?.name ?? ""
+        if let c = propertyCorpus, c.project == project { ctx.merge(c.json) { $1 } }
+        if propertyCorpus?.project != project || (propertyCorpus?.at.timeIntervalSinceNow ?? -999) < -60, !scanningCorpus {
+            scanningCorpus = true
+            let here = liveFolders[project], home = liveRoot
+            Task.detached(priority: .utility) { [weak self] in
+                let json = PropertyCorpus.scan(here: here, others: home.map { [$0] } ?? [])
+                await MainActor.run {
+                    guard let self else { return }
+                    self.propertyCorpus = (project, Date(), json)
+                    self.scanningCorpus = false
+                    self.pushNoteContext()
+                }
+            }
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: ctx, options: [.sortedKeys]),
               let json = String(data: data, encoding: .utf8) else { return }
         e.setNoteContext(json)
     }
@@ -294,6 +312,36 @@ extension AppModel {
     func propertyAction(_ kind: String, _ body: [String: Any], in e: EditorController) {
         let at = NSPoint(x: body["x"] as? Double ?? 0, y: (body["y"] as? Double ?? 0) + 2)
         let menu = NSMenu()
+        if kind == "propertiesFolded" {
+            e.rememberFold(body["folded"] as? Bool == true)
+            return
+        }
+        if kind == "propertyType", let line = body["line"] as? Int {
+            // The seven types, a tick on the current one (frontmatter-handoff §3).
+            let current = body["type"] as? String
+            for (t, title) in [("text", "Text"), ("list", "List"), ("number", "Number"), ("checkbox", "Checkbox"), ("date", "Date"), ("datetime", "Date and Time"), ("link", "Link")] {
+                let item = ActionMenuItem(title) { [weak self, weak e] in   // action: doc prop
+                    guard let e else { return }
+                    e.run("return duo.convertProperty(l, t)", ["l": line, "t": t]) { v in
+                        let r = (v as? [String: Any])?["result"] as? String ?? ""
+                        if r == "needs date" {
+                            // Not a date yet: the calendar opens, and nothing changes until one is picked.
+                            self?.showDatePicker(line: line, value: "", time: t == "datetime", at: at, in: e)
+                        } else if r != "changed" && r != "unchanged" {
+                            NSSound.beep()
+                        }
+                    }
+                }
+                item.state = t == current ? .on : .off
+                menu.addItem(item)
+            }
+            menu.popUp(positioning: nil, at: at, in: e.webView)
+            return
+        }
+        if kind == "propertyDate", let line = body["line"] as? Int {
+            showDatePicker(line: line, value: body["value"] as? String ?? "", time: body["time"] as? Bool == true, at: at, in: e)
+            return
+        }
         if kind == "propertyMenu", body["key"] as? String == "status" {
             let current = body["value"] as? String
             for st in TaskNotes.statuses {
@@ -326,5 +374,43 @@ extension AppModel {
         }
         menu.popUp(positioning: nil, at: at, in: e.webView)
     }
+
+    /// The Mac's own date picker in a popover (frontmatter-handoff §4, Geoff's [G]); a pick writes
+    /// the ISO form, `2026-10-14` (or `2026-10-14T09:30`), on that line only.
+    func showDatePicker(line: Int, value: String, time: Bool, at: NSPoint, in e: EditorController) {
+        let picker = NSDatePicker()
+        picker.datePickerStyle = .clockAndCalendar
+        picker.datePickerElements = time ? [.yearMonthDay, .hourMinute] : [.yearMonthDay]
+        picker.isBezeled = false
+        picker.drawsBackground = false
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = time ? "yyyy-MM-dd'T'HH:mm" : "yyyy-MM-dd"
+        picker.dateValue = f.date(from: value.trimmingCharacters(in: CharacterSet(charactersIn: "\"' "))) ?? Date()
+        picker.sizeToFit()
+        let host = NSViewController()
+        host.view = NSView(frame: NSRect(x: 0, y: 0, width: picker.frame.width + 16, height: picker.frame.height + 16))
+        picker.frame.origin = NSPoint(x: 8, y: 8)
+        host.view.addSubview(picker)
+        let pop = NSPopover()
+        pop.behavior = .transient
+        pop.contentViewController = host
+        let target = DatePickTarget { [weak e] d in
+            e?.run("return duo.setPropertyLine(l, v)", ["l": line, "v": f.string(from: d)]) { _ in }
+        }
+        picker.target = target
+        picker.action = #selector(DatePickTarget.changed(_:))
+        objc_setAssociatedObject(picker, &DatePickTarget.key, target, .OBJC_ASSOCIATION_RETAIN)
+        pop.show(relativeTo: NSRect(x: at.x, y: at.y - 4, width: 1, height: 4), of: e.webView, preferredEdge: .maxY)
+    }
+}
+
+/// Carries a date picker's changes to a closure.
+@MainActor
+final class DatePickTarget: NSObject {
+    nonisolated(unsafe) static var key = 0
+    let onPick: @MainActor (Date) -> Void
+    init(_ onPick: @escaping @MainActor (Date) -> Void) { self.onPick = onPick }
+    @objc func changed(_ sender: NSDatePicker) { onPick(sender.dateValue) }
 }
 
