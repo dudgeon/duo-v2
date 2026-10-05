@@ -125,6 +125,16 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 browser open [url]` | A browser tab in the right pane (⌥⌘T). Sites not on the allow list show Allow or Open in Browser instead of loading (DL-3). | New Browser Tab, Open Location…, Open in Browser, Copy Address |
 | `duo2 browser allow <host>` | Add a site to the allow list, so its pages open in Duo's browser tabs (and its subdomains). | — |
 | `duo2 browser sites` | The allow list: sites Duo opens in its own browser tabs; everything else opens in the system browser (DL-3). | — |
+| `duo2 browser tabs` | Browser tabs open in Duo: id, project, title, address. | — |
+| `duo2 browser read [selector] [--tab <id>]` | The page's text (or one element's), with its title and address (LR-45). Allowed sites only. | — |
+| `duo2 browser click <selector> [--tab <id>]` | Click the element a CSS selector names, scrolled into view. | — |
+| `duo2 browser fill <selector> <text…> [--tab <id>]` | Type into an input, text area or editable element, as a person would (input and change events). | — |
+| `duo2 browser wait <selector> [--timeout <s>] [--tab <id>]` | Wait for an element to appear (default 10 s). | — |
+| `duo2 browser screenshot [--tab <id>]` | Save a picture of the visible page as a PNG and print its path. | — |
+| `duo2 browser go <url> [--tab <id>]` | Go to an address in the tab; a site not on the allow list isn't loaded. | — |
+| `duo2 browser back [--tab <id>]` | Back in the tab's history. | Back |
+| `duo2 browser forward [--tab <id>]` | Forward in the tab's history. | Forward |
+| `duo2 browser close [--tab <id>]` | Close the browser tab. | — |
 | `duo2 html reload` | Reload the HTML page showing (it also reloads when its files change). | Reload Page |
 | `duo2 html pick [selector]` | Start the element picker for the user, or select the element a CSS selector names. | Select Element, Pick Another |
 | `duo2 html stop` | Close the element picker. | Cancel picking |

@@ -399,7 +399,10 @@ struct RightPane: View {
             DuoColor.rule.frame(height: 1)
             if let id = model.rightTab, let web = model.webTabs[id] {
                 // A browser tab (Phase K, ENH-8): allowed sites in Duo, the rest in the browser (DL-3).
-                BrowserTabView(tab: web)
+                ZStack(alignment: .bottom) {
+                    BrowserTabView(tab: web)
+                    PickerBar()
+                }
             } else if model.rightTab == ReadOnlySession.tabKey, let ro = model.readOnlySession {
                 ReadOnlySessionView(session: ro)
             } else if let path = model.rightTab, ["html", "htm"].contains((path as NSString).pathExtension.lowercased()),
@@ -642,7 +645,7 @@ struct PickerBar: View {
 
     var body: some View {
         let _ = model.pickerRevision
-        if let v = model.htmlViewerIfLoaded, v.picking {
+        if let v = model.visiblePage, v.picking {
             VStack(alignment: .leading, spacing: 6) {
                 if let e = v.picked {
                     Text("<\(e.label)>").font(.system(.callout, design: .monospaced)).lineLimit(1).truncationMode(.middle)

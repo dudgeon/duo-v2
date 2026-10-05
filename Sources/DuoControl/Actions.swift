@@ -56,6 +56,9 @@ public enum ActionID: String, CaseIterable, Sendable {
     case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history", docRevert = "doc revert"
     // HTML pages
     case browserOpen = "browser open", browserAllow = "browser allow", browserSites = "browser sites"
+    case browserTabs = "browser tabs", browserRead = "browser read", browserClick = "browser click", browserFill = "browser fill"
+    case browserWait = "browser wait", browserScreenshot = "browser screenshot", browserGo = "browser go", browserBack = "browser back"
+    case browserForward = "browser forward", browserClose = "browser close"
     case htmlReload = "html reload", htmlPick = "html pick", htmlStop = "html stop", htmlElement = "html element", htmlSelection = "html selection"
     // Send to Claude
     case sendFile = "send file", sendSession = "send session", sendProject = "send project", sendSelection = "send selection"
@@ -229,6 +232,16 @@ extension DuoAction {
               ui: ["New Browser Tab", "Open Location…", "Open in Browser", "Copy Address"]),
         .init(.browserAllow, .html, "<host>", "Add a site to the allow list, so its pages open in Duo's browser tabs (and its subdomains)."),
         .init(.browserSites, .html, "", "The allow list: sites Duo opens in its own browser tabs; everything else opens in the system browser (DL-3)."),
+        .init(.browserTabs, .html, "", "Browser tabs open in Duo: id, project, title, address."),
+        .init(.browserRead, .html, "[selector] [--tab <id>]", "The page's text (or one element's), with its title and address (LR-45). Allowed sites only."),
+        .init(.browserClick, .html, "<selector> [--tab <id>]", "Click the element a CSS selector names, scrolled into view."),
+        .init(.browserFill, .html, "<selector> <text…> [--tab <id>]", "Type into an input, text area or editable element, as a person would (input and change events)."),
+        .init(.browserWait, .html, "<selector> [--timeout <s>] [--tab <id>]", "Wait for an element to appear (default 10 s)."),
+        .init(.browserScreenshot, .html, "[--tab <id>]", "Save a picture of the visible page as a PNG and print its path."),
+        .init(.browserGo, .html, "<url> [--tab <id>]", "Go to an address in the tab; a site not on the allow list isn't loaded."),
+        .init(.browserBack, .html, "[--tab <id>]", "Back in the tab's history.", ui: ["Back"]),
+        .init(.browserForward, .html, "[--tab <id>]", "Forward in the tab's history.", ui: ["Forward"]),
+        .init(.browserClose, .html, "[--tab <id>]", "Close the browser tab."),
         .init(.htmlReload, .html, "", "Reload the HTML page showing (it also reloads when its files change).", ui: ["Reload Page"]),
         .init(.htmlPick, .html, "[selector]", "Start the element picker for the user, or select the element a CSS selector names.",
               ui: ["Select Element", "Pick Another"]),

@@ -234,7 +234,7 @@ public enum FixtureHarness {
         case "ui-state":
             let w = NSApp.windows.first(where: { $0.title == "Duo" })
             let fr = w?.firstResponder.map { String(describing: type(of: $0)) } ?? "-"
-            FileHandle.standardError.write(Data("ui-state: renaming=\(model.renamingPath ?? "-") picking=\(model.htmlViewerIfLoaded?.picking ?? false) picked=\(model.htmlViewerIfLoaded?.picked?.selector ?? "-") send=\((try? model.sendTarget.get()).map { "ok \($0.key.prefix(12))" } ?? { if case .failure(let e) = model.sendTarget { return e.reason }; return "-" }()) key=\(w?.isKeyWindow ?? false) firstResponder=\(fr)\n".utf8))
+            FileHandle.standardError.write(Data("ui-state: renaming=\(model.renamingPath ?? "-") picking=\(model.visiblePage?.picking ?? false) picked=\(model.visiblePage?.picked?.selector ?? "-") send=\((try? model.sendTarget.get()).map { "ok \($0.key.prefix(12))" } ?? { if case .failure(let e) = model.sendTarget { return e.reason }; return "-" }()) key=\(w?.isKeyWindow ?? false) firstResponder=\(fr)\n".utf8))
         case "dump":
             for t in model.terminals.all.sorted(by: { $0.key < $1.key }) {
                 t.view.selectAll()

@@ -161,6 +161,8 @@ extension AppModel {
             guard isArchived(p.name) != on else { return done(.ok("\(p.name) is already \(on ? "archived" : "in its column").")) }
             setArchived(p.name, on)
             done(.ok(on ? "Archived \(p.name): it's in the Archived rollup under the map. Undo: duo2 undo" : "\(p.name) is back in its column."))
+        case .browserTabs, .browserRead, .browserClick, .browserFill, .browserWait, .browserScreenshot, .browserGo, .browserBack, .browserForward, .browserClose:
+            browserVerb(id, inv, done)
         case .browserOpen:
             let u = inv[0].flatMap { AllowedSites.url(from: $0) }
             if inv[0] != nil, u == nil { return done(.fail("'\(inv[0]!)' isn't an address")) }
@@ -369,17 +371,17 @@ extension AppModel {
 
         // MARK: HTML pages
         case .htmlReload:
-            guard let v = htmlViewerIfLoaded, v.url != nil else { return done(.fail("no HTML page is showing")) }
+            guard let v = visiblePage, v.pageURL != nil else { return done(.fail("no web page is showing")) }
             v.reload(); done(.ok("Reloaded."))
         case .htmlPick:
-            guard let v = htmlViewerIfLoaded, v.url != nil else { return done(.fail("no HTML page is showing")) }
+            guard let v = visiblePage, v.pageURL != nil else { return done(.fail("no web page is showing")) }
             if let sel = inv[0] {
                 v.pick(selector: sel) { ok in done(ok ? .ok("Picked \(sel). `duo2 html element` describes it; the user sees it outlined.") : .fail("no element matches \(sel)")) }
             } else { v.startPicking(); done(.ok("The picker is on: the user clicks an element.")) }
         case .htmlStop:
-            htmlViewerIfLoaded?.stopPicking(); done(.ok("Picker closed."))
+            visiblePage?.stopPicking(); done(.ok("Picker closed."))
         case .htmlElement:
-            guard let v = htmlViewerIfLoaded, let url = v.url else { return done(.fail("no HTML page is showing")) }
+            guard let v = visiblePage, let url = v.pageURL else { return done(.fail("no web page is showing")) }
             let describe: @MainActor (SendFormat.Element?, CGRect?) -> Void = { [weak self] e, rect in
                 guard let self, let e else { return done(.fail("no element (pick one, or pass a selector)")) }
                 v.screenshot(rect: rect) { shot in
@@ -402,7 +404,7 @@ extension AppModel {
             group.notify(queue: .main) { [weak self] in
                 MainActor.assumeIsolated {
                     guard let self else { return }
-                    if let v = self.htmlViewerIfLoaded, let e = v.picked, let url = v.url { parts.append(SendFormat.element(e, path: self.displayPath(url), screenshot: nil)) }
+                    if let v = self.visiblePage, let e = v.picked, let url = v.pageURL { parts.append(SendFormat.element(e, path: self.displayPath(url), screenshot: nil)) }
                     if let f = self.selectedFile, self.terminalsMode == .live { parts.append("Selected in Files: \(f)") }
                     done(parts.isEmpty ? .fail("nothing is selected") : .ok(parts.joined(separator: "\n")))
                 }
@@ -565,7 +567,7 @@ extension AppModel {
         case .sendElement:
             pickedElementPayload { p in
                 deliver(p)
-                if p != nil { self.htmlViewerIfLoaded?.stopPicking() }
+                if p != nil { self.visiblePage?.stopPicking() }
             }
         case .sendText:
             guard !inv.text.isEmpty else { return done(.fail("usage: \(id.action.usage)")) }
@@ -706,7 +708,7 @@ extension AppModel {
             j["rightTab"] = tab
             j["documents"] = openDocuments
             lines.append("Right pane: \(tab)" + (openDocuments.isEmpty ? "" : " (open: \(openDocuments.joined(separator: ", ")))"))
-            if let v = htmlViewerIfLoaded, v.picking { lines.append("Element picker on" + (v.picked.map { ": <\($0.label)> picked" } ?? "")) }
+            if let v = visiblePage, v.picking { lines.append("Element picker on" + (v.picked.map { ": <\($0.label)> picked" } ?? "")) }
         }
         let c = fixture.counts
         j["counts"] = ["needsYou": c.needsYou, "review": c.readyForReview, "working": c.working, "idle": c.idle]

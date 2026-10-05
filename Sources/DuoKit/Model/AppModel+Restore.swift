@@ -106,7 +106,7 @@ extension AppModel {
             for d in docs where d.hasPrefix("web:") {
                 guard let u = p.webTabs?[d].flatMap(URL.init(string:)) else { continue }
                 let tab = WebTab(id: d)
-                tab.onLinkOut = { [weak self] link in self?.openLink(link.absoluteString) }
+                wireWebTab(tab)
                 webTabs[d] = tab
                 tab.load(u)
             }

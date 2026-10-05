@@ -10,11 +10,11 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     public let webView: DuoWebView
     public private(set) var url: URL?
     /// The element the picker froze, waiting for Send or Cancel.
-    public private(set) var picked: SendFormat.Element?
-    private var pickedViewRect: CGRect?
-    public private(set) var picking = false
+    public var picked: SendFormat.Element?
+    public var pickedViewRect: CGRect?
+    public var picking = false
     /// Called when picking state changes (the native bar shows and hides).
-    var onChange: (() -> Void)?
+    public var onChange: (() -> Void)?
     /// A link to another site (not a file in the project): the model decides where it opens.
     var onLinkOut: ((URL) -> Void)?
     private var root: URL?
@@ -84,99 +84,12 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         decisionHandler(.cancel)
     }
 
-    // MARK: The page's selection and the picker
+    // MARK: The page's selection and the picker: PageHost (shared with browser tabs)
 
-    /// The page's selection (text and images), or nil when nothing is selected.
-    public func selection(_ done: @escaping @MainActor ([String: Any]?) -> Void) {
-        webView.callAsyncJavaScript("return window.__duo ? __duo.selection() : null", arguments: [:], in: nil, in: .page) { r in
-            if case .success(let v) = r { done(v as? [String: Any]) } else { done(nil) }
-        }
-    }
+    public var pageURL: URL? { url }
+    public var world: WKContentWorld { .page }
 
-    public func startPicking() {
-        picked = nil
-        picking = true
-        webView.evaluateJavaScript("window.__duo && __duo.start()")
-        webView.window?.makeFirstResponder(webView)
-        onChange?()
-    }
-
-    public func stopPicking() {
-        picked = nil
-        picking = false
-        webView.evaluateJavaScript("window.__duo && __duo.stop()")
-        onChange?()
-    }
-
-    /// Pick another element after one was frozen.
-    public func pickAgain() {
-        picked = nil
-        webView.evaluateJavaScript("window.__duo && __duo.unfreeze()")
-        onChange?()
-    }
-
-    /// Freezes the element a CSS selector names, as if it had been clicked in the picker
-    /// (`duo2 html pick`, and checks).
-    public func pick(selector: String, _ done: (@MainActor (Bool) -> Void)? = nil) {
-        describe(selector: selector) { [weak self] e, rect in
-            guard let self, let e else { done?(false); return }
-            self.picking = true
-            self.picked = e
-            self.pickedViewRect = rect
-            self.webView.callAsyncJavaScript("window.__duo && (__duo.start(), __duo.freeze(s))", arguments: ["s": selector], in: nil, in: .page, completionHandler: nil)
-            self.onChange?()
-            done?(true)
-        }
-    }
-
-    /// Describes the element a CSS selector names (for `duo2`), without the picker.
-    public func describe(selector: String, _ done: @escaping @MainActor (SendFormat.Element?, CGRect?) -> Void) {
-        webView.callAsyncJavaScript("return window.__duo ? __duo.describe(s) : null", arguments: ["s": selector], in: nil, in: .page) { r in
-            guard case .success(let v) = r, let d = v as? [String: Any] else { return done(nil, nil) }
-            done(Self.element(d), Self.viewRect(d))
-        }
-    }
-
-    public func userContentController(_ c: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard let body = message.body as? [String: Any], let kind = body["kind"] as? String else { return }
-        switch kind {
-        case "picked":
-            guard let d = body["element"] as? [String: Any] else { return }
-            picked = Self.element(d)
-            pickedViewRect = Self.viewRect(d)
-        case "pickEnded":
-            picked = nil
-            picking = false
-        default: return
-        }
-        onChange?()
-    }
-
-    /// Saves a picture of the element (the outline hidden) as a PNG Claude can read, and returns
-    /// its path. The page coordinates are the view's: WKWebView is flipped like the page.
-    public func screenshot(rect: CGRect?, _ done: @escaping @MainActor (String?) -> Void) {
-        guard let rect = rect ?? pickedViewRect, rect.width >= 1, rect.height >= 1 else { return done(nil) }
-        webView.evaluateJavaScript("window.__duo && __duo.hideOutline()") { [weak self] _, _ in
-            MainActor.assumeIsolated {
-                guard let self else { return done(nil) }
-                let config = WKSnapshotConfiguration()
-                config.rect = rect.intersection(self.webView.bounds)
-                self.webView.takeSnapshot(with: config) { image, _ in
-                    MainActor.assumeIsolated {
-                        self.webView.evaluateJavaScript("window.__duo && __duo.showOutline()")
-                        guard let image, let tiff = image.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
-                              let png = rep.representation(using: .png, properties: [:]) else { return done(nil) }
-                        let dir = DuoPaths.support.appending(path: "context")
-                        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-                        let f = DateFormatter()
-                        f.dateFormat = "yyyyMMdd-HHmmss-SSS"
-                        let file = dir.appending(path: "element-\(f.string(from: Date())).png")
-                        do { try png.write(to: file); done(file.path) } catch { done(nil) }
-                    }
-                }
-            }
-        }
-    }
+    public func userContentController(_ c: WKUserContentController, didReceive message: WKScriptMessage) { handlePageMessage(message) }
 
     static func element(_ d: [String: Any]) -> SendFormat.Element? {
         guard let data = try? JSONSerialization.data(withJSONObject: d) else { return nil }

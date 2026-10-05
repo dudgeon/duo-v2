@@ -132,6 +132,7 @@ extension AppModel {
     /// A file's path as Claude should see it: relative to the visible session's folder when
     /// inside it, else absolute.
     func displayPath(_ url: URL) -> String {
+        if !url.isFileURL { return url.absoluteString }   // a web page: its address
         let abs = url.standardizedFileURL.path
         if let cwd = visibleSessionId.flatMap(cwd(of:)).map({ URL(fileURLWithPath: $0).standardizedFileURL.path }), abs.hasPrefix(cwd + "/") {
             return String(abs.dropFirst(cwd.count + 1))
@@ -237,7 +238,7 @@ extension AppModel {
 
     /// The HTML page's selected text and images.
     func htmlSelectionPayload(_ done: @escaping @MainActor (String?) -> Void) {
-        guard let v = htmlViewerIfLoaded, let url = v.url else { return done(nil) }
+        guard let v = visiblePage, let url = v.pageURL else { return done(nil) }
         v.selection { [weak self] sel in
             guard let self, let sel else { return done(nil) }
             let images = (sel["images"] as? [[String: Any]] ?? []).map { (src: $0["src"] as? String ?? "", alt: $0["alt"] as? String ?? "") }
@@ -247,7 +248,7 @@ extension AppModel {
 
     /// The picked element, with a screenshot saved for Claude to read.
     func pickedElementPayload(_ done: @escaping @MainActor (String?) -> Void) {
-        guard let v = htmlViewerIfLoaded, let url = v.url, let e = v.picked else { return done(nil) }
+        guard let v = visiblePage, let url = v.pageURL, let e = v.picked else { return done(nil) }
         v.screenshot(rect: nil) { [weak self] shot in
             guard let self else { return done(nil) }
             done(SendFormat.element(e, path: self.displayPath(url), screenshot: shot))
@@ -259,7 +260,7 @@ extension AppModel {
         pickedElementPayload { [weak self] text in
             guard let self, let text else { return }
             if let key { self.send(text, to: key) } else { self.sendToNewSession(text) }
-            self.htmlViewerIfLoaded?.stopPicking()
+            self.visiblePage?.stopPicking()
         }
     }
 

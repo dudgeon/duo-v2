@@ -869,3 +869,11 @@ Built from the decision path page (DL-87 to DL-91):
 - **New Browser Tab** ⌥⌘T (File, right-click `+`), **Open Location…** ⌘L (DL-99). `duo2 browser open [url]`, `browser allow <host>`, `browser sites`. Browser tabs come back on relaunch with the address they had (F-68's restore file gains `webTabs`).
 - Live, private instance: `duo2 browser open localhost:8765` loaded a test page titled in the tab; `duo2 browser open example.com` showed the not-allowed state with both buttons. Allowing was checked against a temporary list, so Geoff's own allow list is untouched (empty). 236 checks pass.
 - Not yet: the element picker and Send to Claude on web pages (they work on local HTML), page-driving verbs for Claude (LR-45), Google Docs reading (DL-7).
+
+## F-72 · Browser tabs get the picker, Send to Claude and page driving (LR-44, LR-45) (2026-10-04)
+
+- The picker, selection and element screenshots moved out of `HTMLViewer` into `PageHost`, which `HTMLViewer` and `WebTab` both adopt; the model asks for `visiblePage` (a browser tab, or local HTML), so the picker bar, Send Selection, the right-click Send / Select Element items and `duo2 html pick|element|selection|stop|reload` work on either.
+- On browser tabs Duo's picker script and message handler live in `WKContentWorld.defaultClient`, apart from the site's own scripts: a page can't see `__duo` or post fake `picked` messages. Local HTML keeps the page world (it's the user's own file).
+- Page driving for Claude: `duo2 browser read [selector]`, `click`, `fill`, `wait`, `screenshot`, `go`, `back`, `forward`, `tabs`, `close`, on the tab on screen or `--tab <id>`. They refuse on a page that isn't allowed. No arbitrary script (LR-45 lists eval; left out because these tabs carry the user's logins). `fill` sets the value through the element's native setter and fires input and change, so framework-bound fields notice.
+- Live on a localhost form: read the page, filled `#name`, clicked `#go`, waited for `#out.done`, read "Hello, Geoff", saved a real screenshot of the page, picked `h1` (described with selector, text, box), listed the tab, and `browser go example.com` refused.
+- Still open from LR-45: the accessibility-tree fallback for canvas apps (Google Docs, Sheets, Figma; DL-7), and keys. Web views draw blank in `--capture-window` captures (F-25), so screenshots come from WebKit's own snapshot.
