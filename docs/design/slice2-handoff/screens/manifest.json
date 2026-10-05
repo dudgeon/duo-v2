@@ -1,0 +1,78 @@
+{
+  "$note": "Slice 2 (design-brief-slice-2.md), approved 2026-10-05 (DL-100). kind=target: a window or pane to build to. kind=sheet: parts and states on one page.",
+  "canvas": "https://claude.ai/artifact/JSmkQh1Gsj9uyPSzkcuQFV",
+  "screens": [
+    {
+      "file": "screens/project-sessions.html",
+      "s2": "S2-1",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "Inside a project: the session list by Needs you, Open, Today, This week, then the Earlier, Tasks and Archived folds; a task row open on its sessions; a group; + New task.",
+      "canvasBoard": "Main.dc.html"
+    },
+    {
+      "file": "screens/session-rows.html",
+      "s2": "S2-1",
+      "kind": "sheet",
+      "width": 720,
+      "height": 820,
+      "shows": "Every session-list row and fold, one per box.",
+      "canvasBoard": "RowStates.dc.html"
+    },
+    {
+      "file": "screens/map-folders.html",
+      "s2": "S2-2",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "All projects with a Home: Home's columns, then OUTSIDE HOME columns by path; Open tasks in the action column.",
+      "canvasBoard": "Map.dc.html"
+    },
+    {
+      "file": "screens/no-home.html",
+      "s2": "S2-3",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "First launch with no Home folder: the map lists every folder; the left pane explains Home once.",
+      "canvasBoard": "NoHome.dc.html"
+    },
+    {
+      "file": "screens/move-into-home.html",
+      "s2": "S2-4",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "shows": "The Move into Home sheet over All projects.",
+      "canvasBoard": "MoveIntoHome.dc.html"
+    },
+    {
+      "file": "screens/task-note.html",
+      "s2": "S2-5",
+      "kind": "target",
+      "width": 460,
+      "height": 900,
+      "shows": "The right pane on a task note: the properties block with its linked sessions' live states, and a session link in the text.",
+      "canvasBoard": "TaskNote.dc.html"
+    },
+    {
+      "file": "screens/needs-you-states.html",
+      "s2": "S2-6",
+      "kind": "sheet",
+      "width": 1120,
+      "height": 860,
+      "shows": "The action column with nothing waiting, with reasons, and with a long question.",
+      "canvasBoard": "NeedsYou.dc.html"
+    },
+    {
+      "file": "screens/new-project.html",
+      "s2": "S2-6",
+      "kind": "sheet",
+      "width": 600,
+      "height": 380,
+      "shows": "The New project sheet.",
+      "canvasBoard": "NewProject.dc.html"
+    }
+  ]
+}
