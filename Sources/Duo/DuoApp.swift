@@ -55,6 +55,10 @@ struct DuoApp: App {
             model.startLive(root: DuoState.load().root.map { URL(fileURLWithPath: $0) })
         }
         self.model = model
+        // The update notice (until Sparkle): a quiet check once the window is up; release builds only.
+        if !options.capturing, model.terminalsMode == .live {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 8) { MainActor.assumeIsolated { model.checkForUpdates(userInitiated: false) } }
+        }
         // Launch trace for scripted runs: one launch in a few opens no window (F-26).
         if options.capturing {
             let trace: @Sendable (String) -> Void = { m in FileHandle.standardError.write(Data("trace \(String(format: "%.2f", ProcessInfo.processInfo.systemUptime)) \(m)\n".utf8)) }

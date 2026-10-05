@@ -844,3 +844,9 @@ Built from the decision path page (DL-87 to DL-91):
 - A file from a newer Duo, or one that doesn't decode, is ignored (versioned envelope, graceful downgrade).
 - On launch, after the first snapshot: documents that still exist reopen; sessions resume by id, except any now running in another app (never two writers, LR-8) or no longer listed.
 - Off in capture and scripted runs unless `DUO_RESTORE=1`. Live check on the fixtures, two launches: the first resumed a session in checkout and opened `tasks/exec-review-prep.md`, then quit; the second came back in checkout with that session resumed (`restore: reopened 1 session(s) in 1 project(s)`) and the note open.
+
+## F-69 · Update notice until Sparkle (2026-10-04)
+
+- Release builds ask GitHub (`/repos/dudgeon/duo-v2/releases/latest`, unauthenticated, 10 s timeout) 8 s after launch, never in capture runs. A newer release is offered once per version as a confirmation (Download opens its release page; Later remembers it in `DuoState.skippedUpdate`). Development builds (version 0.0.1) check only when asked.
+- Duo › Check for Updates… and `duo2 update` always answer: up to date, newer (with the link), or couldn't reach GitHub. Live: `duo2 update` on a dev build answered "Duo 0.1.2 is available (this is a development build)".
+- Versions compare numerically (`0.1.10` > `0.1.9`); a pre-release sorts below its release.

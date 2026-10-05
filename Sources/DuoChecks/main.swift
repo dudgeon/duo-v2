@@ -82,6 +82,10 @@ func repoFixture() throws -> Fixture {
         try? FileManager.default.removeItem(at: tmp)
     }
 
+    print("update notice")
+    check(UpdateCheck.isNewer("0.1.10", than: "0.1.9") && UpdateCheck.isNewer("v0.2.0", than: "0.1.2") && !UpdateCheck.isNewer("0.1.2", than: "0.1.2"), "versions compare by number")
+    check(UpdateCheck.isNewer("0.2.0", than: "0.2.0-rc.1") && !UpdateCheck.isNewer("0.2.0-rc.1", than: "0.2.0"), "a pre-release sorts below its release")
+
     print("ordering")
     check(WaitTime("1h") > WaitTime("12m") && WaitTime("3d") > WaitTime("1h") && WaitTime("now") < WaitTime("4m"), "wait times")
     check(SessionState.allCases.sorted() == [.needsYou, .readyForReview, .working, .idle, .resolved], "states most urgent first")

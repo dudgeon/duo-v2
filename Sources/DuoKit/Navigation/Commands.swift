@@ -137,6 +137,10 @@ public struct DuoCommands: Commands {
     public init(model: AppModel) { self.model = model }
 
     public var body: some Commands {
+        // Until Sparkle (v1.1): ask GitHub for a newer release.
+        CommandGroup(after: .appInfo) {
+            Button("Check for Updates…") { model.checkForUpdates(userInitiated: true) }
+        }
         CommandGroup(replacing: .newItem) {
             item(.newClaudeSession)
             item(.newShell)

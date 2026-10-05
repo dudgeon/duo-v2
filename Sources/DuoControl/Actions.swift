@@ -28,6 +28,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
 /// Every action, by its CLI verb.
 public enum ActionID: String, CaseIterable, Sendable {
     // Duo
+    case update
     case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup"
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
@@ -98,6 +99,7 @@ extension DuoAction {
     public static let all: [DuoAction] = [
         // Duo
         .init(.ping, .app, "", "Check that Duo is running and reachable."),
+        .init(.update, .app, "", "Whether a newer Duo is on GitHub, and where to get it (Duo › Check for Updates…).", ui: ["Check for Updates…"], timeout: 30),
         .init(.status, .app, "", "What Duo is showing: the view, the open project, session and document, and counts.", everyday: true),
         .init(.needsYou, .app, "", "Sessions waiting for the user, with their questions.", ui: ["Needs You Elsewhere"]),
         .init(.undo, .app, "", "Undo Duo's last move, merge or Make a Project (Edit › Undo).", ui: ["Undo"]),

@@ -182,6 +182,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     /// Home's folder, the container of the user's tracked projects (DL-85), once chosen. Without it
     /// Duo still lists every session (DL-82).
     public var root: String?
+    /// A release the user chose not to download from the update notice; not offered again.
+    public var skippedUpdate: String?
     /// Answers to the .gitignore offer, by repository root (DL-50).
     public var gitignore: [String: String] = [:]
     /// Folders made projects outside the workspace root (DL-63): discovery includes them.
@@ -199,6 +201,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         seen = try c.decodeIfPresent([String: Double].self, forKey: .seen) ?? [:]
         home = try c.decodeIfPresent(String.self, forKey: .home)
         root = try c.decodeIfPresent(String.self, forKey: .root)
+        skippedUpdate = try c.decodeIfPresent(String.self, forKey: .skippedUpdate)
         gitignore = try c.decodeIfPresent([String: String].self, forKey: .gitignore) ?? [:]
         projects = try c.decodeIfPresent([String].self, forKey: .projects) ?? []
         archivedProjects = try c.decodeIfPresent([String].self, forKey: .archivedProjects) ?? []
