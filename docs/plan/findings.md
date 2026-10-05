@@ -943,3 +943,10 @@ Built from the decision path page (DL-87 to DL-91):
 - **Pulled forward:** "reconcile a moved project" was v1.1 (§3a). It's in v1 because the migrator was already built for Move into Home (DL-85) and without it a moved project's sessions don't resume, which fails v1's test (never lose a session).
 - **Tried** on the fixtures with a scratch config: renamed → "Folder not found"; moved into Home's `research/` → "Moved to …/research/scratch"; `duo2 project reconnect scratch` moved both transcripts; `duo2 undo` put them back; fixtures and the scratch Claude folder byte-identical after. New check: reconnect maps nested paths, undoes, refuses a folder that isn't there.
 - **Not done:** the Trash (macOS guards `~/.Trash`; listing it can raise a permission prompt, F-54), so "In the Trash" and Put Back from S3-2 wait. The look is a stand-in until S3-2 (Q-32).
+
+## F-79 · Sessions Duo starts can message each other through Claude Code (2026-10-05)
+
+- Duo strips the parent's `CLAUDE_CODE_*` (including its messaging socket and token) from children (`ChildEnvironment.make`), but each child binds **its own** cross-session inbox. Live beacons in `~/.claude/sessions/` for Duo-started sessions (e.g. `home-4d`, entrypoint `cli`, in the acceptance workspace) carry a `messagingSocketPath` and `peerFeatures: notify_idle, reply_across_default_dirs, artifact_yield`, on 2.1.289.
+- So any session (in Duo or not) can `SendMessage` a Duo session by name, and `notify_when_idle` works. Claude Code delivers between tool calls, or **starts a new turn** when the target is idle; it's plain text and can't approve anything. Delivery is held when exactly one side bypasses permissions.
+- Needs Claude Code ≥ 2.1.224 (`notify_when_idle` ≥ 2.1.236). The beacon's `version` and `peerFeatures` are enough to gate on; Duo doesn't decode either yet.
+- Background for ENH-9 (director agent), `docs/research/director-agent.md`.
