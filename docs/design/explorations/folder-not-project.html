@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1500">
+<meta name="design-size" content="1500x700">
+<meta name="design-kind" content="sheet">
+<title>Duo · Q-44 · Inside a folder that isn’t a project</title>
+<!--
+Q-44 · Inside a folder that isn't a project (DL-63, F-88).
+PROPOSAL, not approved. Every mark is [P]. Drawn with the Duo design system's tokens and the S3-2 notice (slice3 missing-folder.html).
+The Design canvas tool wasn't available in the session that drew this, so it is an HTML sheet in the handoff shape.
+-->
+<style>
+body{margin:0}
+button{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;cursor:default}
+button.default{border-color:#1F2328;font-weight:600}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px}
+.label{font-size:11px;line-height:16px;color:#5B636D}
+.section{padding:12px 16px 4px;font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B636D}
+.row{display:flex;align-items:center;gap:8px;height:26px;padding:0 16px}
+.row .age{margin-left:auto;color:#5B636D;flex:none}
+.pane{box-sizing:border-box;display:flex;flex-direction:column;border:1px solid #C9CDD3;white-space:normal;background:#FFFFFF}
+.files{margin-top:auto;display:flex;flex-direction:column;padding-bottom:12px;border-top:2px solid #8B939C}
+.file{padding:0 16px;height:26px;display:flex;align-items:center;gap:6px}
+.notes li{margin-bottom:8px}
+</style>
+</head>
+<body>
+<div style="width:1500px;height:700px;box-sizing:border-box;padding:30px 40px;display:flex;gap:40px;align-items:flex-start;background:#FFFFFF;color:#1F2328;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;font-size:13px;line-height:20px">
+
+<!-- 1 · The notice -->
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="label">1 · Inside a folder: a notice over the list [P]</div>
+<div class="pane" style="width:300px;height:600px">
+  <div style="display:flex;flex-direction:column;padding:14px 16px 4px"><span style="font-size:14px;font-weight:600">tool</span><span style="color:#5B636D">Folder · no project file</span></div>
+  <div style="margin:8px 16px;padding:8px 12px;border-radius:6px;background:#F3F4F6;display:flex;flex-direction:column;gap:6px">
+    <span>This folder isn’t a project yet.</span>
+    <span style="color:#5B636D">A project file gives it a goal and a next step, shown here and on the map.</span>
+    <div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="default">Make a Project</button><button type="button">Not Now</button></div>
+  </div>
+  <div class="section">THIS WEEK</div>
+  <div class="row"><span style="width:10px"></span><svg width="9" height="9" viewBox="0 0 10 10"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"/></svg><span>Parser cleanup</span><span class="age">1d</span></div>
+  <div class="row"><span style="width:10px"></span><svg width="9" height="9" viewBox="0 0 10 10"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"/></svg><span>Release script</span><span class="age">3d</span></div>
+  <div class="files">
+    <div class="section">FILES</div>
+    <div class="mono" style="padding:0 16px 6px;color:#5B636D">~/tool</div>
+    <div class="file mono">CLAUDE.md</div><div class="file mono">main.py</div><div class="file mono">README.md</div>
+    <div class="file mono"><svg width="8" height="8" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" fill="none" stroke="#1F2328" stroke-width="1.6" stroke-linecap="round"/></svg>docs/</div>
+  </div>
+</div>
+</div>
+
+<!-- 2 · After Not Now -->
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="label">2 · After Not Now: the line under the name stays [P]</div>
+<div class="pane" style="width:300px;height:600px">
+  <div style="display:flex;flex-direction:column;padding:14px 16px 4px"><span style="font-size:14px;font-weight:600">tool</span><span style="color:#5B636D">Folder · no project file</span></div>
+  <div class="section" style="padding-top:16px">THIS WEEK</div>
+  <div class="row"><span style="width:10px"></span><svg width="9" height="9" viewBox="0 0 10 10"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"/></svg><span>Parser cleanup</span><span class="age">1d</span></div>
+  <div class="row"><span style="width:10px"></span><svg width="9" height="9" viewBox="0 0 10 10"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"/></svg><span>Release script</span><span class="age">3d</span></div>
+  <div class="files">
+    <div class="section">FILES</div>
+    <div class="mono" style="padding:0 16px 6px;color:#5B636D">~/tool</div>
+    <div class="file mono">CLAUDE.md</div><div class="file mono">main.py</div><div class="file mono">README.md</div>
+    <div class="file mono"><svg width="8" height="8" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" fill="none" stroke="#1F2328" stroke-width="1.6" stroke-linecap="round"/></svg>docs/</div>
+  </div>
+</div>
+</div>
+
+<!-- 3 · The Project tab -->
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="label">3 · The Project tab of a folder: the offer, not a blank page [P]</div>
+<div class="pane" style="width:420px;height:600px">
+  <div style="display:flex;align-items:center;gap:16px;height:36px;padding:0 20px;border-bottom:1px solid #C9CDD3"><span style="font-weight:600">Project</span><span style="color:#5B636D">+</span></div>
+  <div style="padding:22px 28px;display:flex;flex-direction:column;gap:6px">
+    <span style="font-weight:600">No project file</span>
+    <span style="color:#5B636D">A <span class="mono">PROJECT.md</span> holds this folder’s goal, health and next step. Duo shows them here and on the map.</span>
+    <div style="display:flex;gap:6px;margin-top:6px"><button type="button" class="default">Make a Project</button><button type="button">Open CLAUDE.md</button></div>
+    <span class="label" style="margin-top:4px">Open CLAUDE.md only when the folder has one [P]</span>
+  </div>
+</div>
+</div>
+
+<!-- Notes -->
+<div style="display:flex;flex-direction:column;gap:8px;width:300px">
+<div class="label">Notes</div>
+<ul class="notes" style="margin:0;padding-left:18px">
+<li><b>Make a Project</b> does what it does today: writes the starter PROJECT.md and opens it in the Project tab. Undo removes it. [P]</li>
+<li><b>Not Now</b> hides the notice for that folder only, remembered by Duo (not written in the folder). The line under the name and the Project tab keep the offer. Undo brings it back. [P]</li>
+<li>The line under the name, <span style="color:#5B636D">Folder · no project file</span>, matches the map tile (“Has CLAUDE.md · no project file” when it has one), where a project shows its health and next step. [P]</li>
+<li>Same notice whether or not the folder has a CLAUDE.md. [P]</li>
+<li>The console’s empty state says “Nothing has run in this folder yet” for a folder, not “project”. [P]</li>
+<li>Not Now gets a <span class="mono">duo2</span> verb (DL-71), e.g. <span class="mono">duo2 project make &lt;folder&gt; --not-now</span>. [P]</li>
+</ul>
+</div>
+
+</div>
+</body>
+</html>
