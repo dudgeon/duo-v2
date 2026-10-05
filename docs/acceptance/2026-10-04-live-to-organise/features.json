@@ -2662,6 +2662,181 @@
     "human": [],
     "at": "2026-10-04"
    }
+  },
+  {
+   "id": "restore-relaunch",
+   "group": "App",
+   "title": "What you had open comes back",
+   "what": "Quit and reopen: the project you were in, each project's Claude session tabs (resumed), open documents, browser tabs and Home's tab come back (LR-58).",
+   "steps": [
+    "Open checkout; resume a session; open `tasks/exec-review-prep.md`.",
+    "⌘Q, then `scripts/acceptance/open-duo.sh`."
+   ],
+   "expect": "Duo opens on checkout with that session resumed in the console and the note open. A session now running in Terminal would stay there.",
+   "ref": "LR-58, F-68",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Two launches on the fixtures (with DUO_RESTORE=1): the second came back on checkout with the session resumed and the note open."
+    ],
+    "didnt": [
+     "Didn't restore browser tabs live (checked by reading the saved file's shape)."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "update-notice",
+   "group": "App",
+   "title": "Duo says when there's a newer version",
+   "what": "Release builds check GitHub shortly after launch and offer a newer DMG once per version; Duo › Check for Updates… and `duo2 update` any time.",
+   "steps": [
+    "Duo › Check for Updates…."
+   ],
+   "expect": "From this repo build: \"Duo 0.1.3 is available (this is a development build)\" with Download; from 0.1.3 itself: \"Duo 0.1.3 is the latest.\"",
+   "ref": "F-69",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`duo2 update` on a dev build answered that 0.1.2 was available (before 0.1.3 shipped)."
+    ],
+    "didnt": [
+     "Didn't see the launch offer (release builds only)."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "new-task",
+   "group": "Sessions first and tasks",
+   "title": "+ New task, the Tasks fold, and status",
+   "what": "Tasks with no sessions yet sit in a Tasks fold; Status ▸ sets open, in-progress, waiting, review, done or dropped (DL-93, F-70).",
+   "steps": [
+    "In refunds, click + New task; rename it in the note's `title:` and heading.",
+    "Find it under Tasks · 1; right-click › Status › waiting.",
+    "Right-click › Status › done."
+   ],
+   "expect": "The note opens with `sessions: []`; it shows under Tasks with \"waiting\"; done adds `completed:` with today's date and takes it off the list.",
+   "ref": "DL-93, F-70",
+   "setup": [
+    "open refunds"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live through `duo2 task new` and `duo2 task status`: the fold, the status, the note's `status:` and `completed:` lines."
+    ],
+    "didnt": [
+     "Didn't click the menus."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "home-open-tasks",
+   "group": "Sessions first and tasks",
+   "title": "Open tasks across projects at All projects",
+   "what": "Every open task in every project, with its status, under Needs you and Ready for review.",
+   "steps": [
+    "Go to All projects; look at the right column.",
+    "Click Exec review prep."
+   ],
+   "expect": "Open tasks · n lists each task with its project; clicking opens checkout on the note.",
+   "ref": "F-70",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: three tasks listed across checkout and refunds with their statuses."
+    ],
+    "didnt": [],
+    "human": [
+     "Where this list belongs (S2-5)."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "browser-tab",
+   "group": "Browser",
+   "title": "Browser tabs, and the allow list",
+   "what": "⌥⌘T opens a browser tab in the right pane. Sites on your allow list open there and stay signed in; others offer Allow or Open in Browser (DL-3).",
+   "steps": [
+    "Open checkout; ⌥⌘T; type a site you use (say `github.com`) and Return.",
+    "Click Allow github.com; sign in if you like.",
+    "⌘L, type another address."
+   ],
+   "expect": "The first visit asks; after Allow the page loads in the tab with its title on the tab; the site is added to `~/Library/Application Support/Duo/allowed-sites.txt`. Right-click `+` also offers New Browser Tab.",
+   "ref": "DL-3, DL-99, F-71",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: a localhost page loaded and took its title; example.com showed the allow prompt. Allowing tested on a temporary list (your list is untouched)."
+    ],
+    "didnt": [
+     "Didn't sign in anywhere."
+    ],
+    "human": [
+     "The bar's look (DB-20)."
+    ],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "browser-send",
+   "group": "Browser",
+   "title": "Pick an element on a web page and send it",
+   "what": "The element picker and Send Selection work in browser tabs as on local HTML; Duo's picker runs apart from the site's own scripts (F-72).",
+   "steps": [
+    "In an allowed site's tab, right-click › Select Element; click something.",
+    "Send to Claude (with a session showing)."
+   ],
+   "expect": "The picker bar shows the element; Claude's prompt gets the page address, the element and a screenshot path.",
+   "ref": "LR-44, F-72",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live: `duo2 html pick h1` on a localhost tab outlined and described it (selector, text, box)."
+    ],
+    "didnt": [
+     "Didn't send to a live session."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
+  },
+  {
+   "id": "browser-drive",
+   "group": "Browser",
+   "title": "Claude can read and drive an allowed page",
+   "what": "`duo2 browser read|click|fill|wait|screenshot|go|back|forward|tabs|close` act on the tab on screen, allowed sites only, no arbitrary script (LR-45).",
+   "steps": [
+    "With a browser tab showing, ask a Claude session in Duo: \"read the page in my browser tab and summarise it\"."
+   ],
+   "expect": "Claude runs `duo2 browser read` and answers from the page. On a site that isn't allowed it's refused.",
+   "ref": "LR-45, F-72",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Live on a localhost form: read, fill, click, wait, read the result (\"Hello, Geoff\"), a real screenshot; `browser go example.com` refused."
+    ],
+    "didnt": [
+     "Canvas apps (Google Docs) aren't readable yet (DL-7)."
+    ],
+    "human": [],
+    "at": "2026-10-04"
+   }
   }
  ],
  "decisions": [
