@@ -3168,6 +3168,80 @@
  ],
  "decisions": [
   {
+   "id": "q31-plan-reason",
+   "ref": "Q-31 · DL-100",
+   "title": "What a needs-you card says for a plan waiting on you",
+   "context": [
+    "Needs-you cards now say why a session is waiting, after the project: `checkout · permission`, `checkout · question`. For a plan Claude wants approved, the slice 2 screens disagree: the map and Move into Home screens read `· plan`, the Needs you sheet and the handoff README `· plan to approve`.",
+    "Built today: `plan to approve`. Either fits the card's width."
+   ],
+   "options": [
+    {
+     "id": "plan-to-approve",
+     "label": "plan to approve",
+     "recommended": true,
+     "desc": "Built. Says what you'd do.",
+     "mockup": "<div class=\"mk\"><div style=\"font:13px/20px -apple-system,sans-serif;color:#1F2328;width:300px;padding:10px 12px 12px;border:1.5px solid #1F2328;border-radius:6px\"><div style=\"display:flex;align-items:center;gap:8px\"><span style=\"width:9px;height:9px;border-radius:50%;background:#C2410C\"></span><b>PRD v2 edits</b><span style=\"margin-left:auto;color:#5B636D\">4m</span></div><div style=\"color:#5B636D\">checkout · plan to approve</div><div style=\"margin-top:8px;padding:8px 10px;border:1.5px solid #C2410C;border-radius:6px\">Here’s the plan: move saved cards into scope and log the legal question. Go ahead?</div></div></div>"
+    },
+    {
+     "id": "plan",
+     "label": "plan",
+     "desc": "Shorter, matches the other one-word reasons.",
+     "mockup": "<div class=\"mk\"><div style=\"font:13px/20px -apple-system,sans-serif;color:#1F2328;width:300px;padding:10px 12px 12px;border:1.5px solid #1F2328;border-radius:6px\"><div style=\"display:flex;align-items:center;gap:8px\"><span style=\"width:9px;height:9px;border-radius:50%;background:#C2410C\"></span><b>PRD v2 edits</b><span style=\"margin-left:auto;color:#5B636D\">4m</span></div><div style=\"color:#5B636D\">checkout · plan</div><div style=\"margin-top:8px;padding:8px 10px;border:1.5px solid #C2410C;border-radius:6px\">Here’s the plan: move saved cards into scope and log the legal question. Go ahead?</div></div></div>"
+    }
+   ]
+  },
+  {
+   "id": "q32-slice3",
+   "ref": "Q-32 · slice 3 canvas",
+   "title": "Slice 3: build as drawn?",
+   "context": [
+    "The canvas: https://claude.ai/artifact/GNXvk4CWjarrXeURrLcyVY. Seven boards, every mark a proposal [P]:",
+    [
+     "S3-1 Settings: one grouped pane (Claude Code, Home, archive size, notifications, duo2 everywhere, legacy Duo, allowed sites)",
+     "S3-2 Moved or missing folders: the tile says what happened; a notice inside the project (the logic is built, F-78, with a stand-in look)",
+     "S3-3 Launch questions (legacy Duo, install, .gitignore) as Duo's sheets, one at a time",
+     "S3-4 Editor notices: conflict outlined in the text, renames followed, read only says why",
+     "S3-5 How documents are drawn: H1 18/24, lists, task boxes, quotes, code, tables, images, Claude's deletions as a marker",
+     "S3-6 Notifications for needs you only, and a Dock badge",
+     "S3-7 Merge, Delete Session… and Make a Project as Duo's sheets"
+    ],
+    "You said it looks good; pick Build as drawn, or Something else with the boards to change in the comment."
+   ],
+   "options": [
+    {
+     "id": "as-drawn",
+     "label": "Build as drawn",
+     "recommended": true,
+     "desc": "Export to docs/design/slice3-handoff and build every board."
+    }
+   ]
+  },
+  {
+   "id": "q33-task-props",
+   "ref": "Q-33 · F-77",
+   "title": "Task notes' properties: their own look, or the general one?",
+   "context": [
+    "The properties block is built (F-77). Every document gets the frontmatter handoff's look: `---` fences in grey, a type icon per line, a fold chevron. Task notes were drawn separately in slice 2 (task-note.html) without those three, and are built that way.",
+    "Either way, task notes keep their status popup, `+ Add` and live session lines."
+   ],
+   "options": [
+    {
+     "id": "general",
+     "label": "One look everywhere",
+     "recommended": true,
+     "desc": "Task notes get fences, icons and the fold too.",
+     "mockup": "<div class=\"mk\"><div style=\"font:13px/20px -apple-system,sans-serif;color:#1F2328;width:340px\"><div style=\"font-size:11px;font-weight:600;letter-spacing:.06em;color:#5B636D;padding:0 4px 6px\"><span style=\"color:#5B636D\">⌄ </span>PROPERTIES · 4</div><div style=\"background:#F3F4F6;border-radius:6px;padding:8px 12px;font:12px/22px ui-monospace,Menlo,monospace\"><div style=\"color:#5B636D;padding-left:20px\">---</div><div><span style=\"color:#5B636D;width:14px;display:inline-block\">≡</span> <span style=\"color:#5B636D\">type:</span> task</div><div><span style=\"color:#5B636D;width:14px;display:inline-block\">≡</span> <span style=\"color:#5B636D\">title:</span> Exec review prep</div><div><span style=\"color:#5B636D;width:14px;display:inline-block\">≡</span> <span style=\"color:#5B636D\">status:</span> <span style=\"font:13px -apple-system,sans-serif;border:1px solid #C9CDD3;border-radius:6px;padding:0 6px\">in progress ⌄</span></div><div><span style=\"color:#5B636D;width:14px;display:inline-block\">≡</span> <span style=\"color:#5B636D\">sessions:</span><span style=\"float:right;font:12px -apple-system,sans-serif;color:#5B636D\">+ Add</span></div><div style=\"padding-left:20px\">◆ <u>Interview synthesis notes</u><span style=\"float:right;font:12px -apple-system,sans-serif;color:#5B636D\">ready</span></div><div style=\"color:#5B636D;padding-left:20px\">---</div></div></div></div>"
+    },
+    {
+     "id": "task-own",
+     "label": "Task notes stay simpler",
+     "desc": "Built today: no fences, icons or fold.",
+     "mockup": "<div class=\"mk\"><div style=\"font:13px/20px -apple-system,sans-serif;color:#1F2328;width:340px\"><div style=\"font-size:11px;font-weight:600;letter-spacing:.06em;color:#5B636D;padding:0 4px 6px\">PROPERTIES · 4</div><div style=\"background:#F3F4F6;border-radius:6px;padding:8px 12px;font:12px/22px ui-monospace,Menlo,monospace\"><div><span style=\"width:14px;display:inline-block\"></span> <span style=\"color:#5B636D\">type:</span> task</div><div><span style=\"width:14px;display:inline-block\"></span> <span style=\"color:#5B636D\">title:</span> Exec review prep</div><div><span style=\"width:14px;display:inline-block\"></span> <span style=\"color:#5B636D\">status:</span> <span style=\"font:13px -apple-system,sans-serif;border:1px solid #C9CDD3;border-radius:6px;padding:0 6px\">in progress ⌄</span></div><div><span style=\"width:14px;display:inline-block\"></span> <span style=\"color:#5B636D\">sessions:</span><span style=\"float:right;font:12px -apple-system,sans-serif;color:#5B636D\">+ Add</span></div><div style=\"padding-left:20px\">◆ <u>Interview synthesis notes</u><span style=\"float:right;font:12px -apple-system,sans-serif;color:#5B636D\">ready</span></div></div></div></div>"
+    }
+   ]
+  },
+  {
    "id": "q22-send-chord",
    "ref": "Q-22 · DL-34, DL-67",
    "title": "A keyboard shortcut for Send Selection to Claude",
