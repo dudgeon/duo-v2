@@ -1,6 +1,8 @@
 # Duo v2 — Build plan
 
-Status: draft v2 · 2026-10-03 · Owner: Geoff
+Status: v2, in progress · started 2026-10-03, last brought up to date 2026-10-05 (v0.1.5) · Owner: Geoff
+
+> **Where v1 stands** is the next section. The phase tables in §3 keep their history: a phase's "Next" line may be done since; the findings (F-n) have the details.
 
 Inputs, and how they're cited here:
 
@@ -14,6 +16,27 @@ Inputs, and how they're cited here:
 | SRCH | `docs/prd/cross-project-search.md`, PR #2 (L1–L18 locked by Geoff) |
 
 The handoff's screens are the target for every visible surface. The spikes de-risk the engines. The two PRDs add two capabilities that sit on a shared foundation (inventory + registry). This plan orders all of it so UI work never waits on a spike it doesn't need, and each spike lands just before the phase that depends on it.
+
+## Where v1 stands (2026-10-05, v0.1.5)
+
+Measured against §3a's test: Geoff can use Duo all day instead of Terminal plus legacy Duo, on this Mac and the work Mac, and it never loses a session.
+
+| §3a area | State |
+|---|---|
+| Shell and look | Built to the screens: both altitudes, zoom, peek, chords, restore on relaunch (F-68), the update notice (F-69). |
+| Sessions | Built: live terminals for every session and Home, shells with promotion (F-58), forks as threads (F-57), resume-first lists. |
+| Live state | Built: every session from Claude's logs with no setup (DL-82), hooks and attention (F-26), titles (F-27), Home optional (DL-84), many projects (DL-104, F-82). |
+| Not losing sessions | Built: Duo-minted ids, the archive (DL-44), moved and missing folders found and reconnected (F-78), journaled migrations with undo (F-59). |
+| Existing work | Built: make a project, move, merge, Move into Home, New project (F-45, F-64, F-76). |
+| Groups and tasks | Built: groups by verb, tasks as notes with linked sessions (DL-93, F-70). Grouping by hand and the group page wait for DB-17/18 (v1.1). |
+| Documents | Built: the editor with byte-faithful saves, collisions (DL-77), Claude's edits through the buffer (DL-78), the properties block (F-77), documents drawn as designed (F-84), local HTML. |
+| CLI | Built: `duo2` parity with every UI action (DL-71), install loop (DL-75). |
+| Delivery | Signed, notarized DMG releases (v0.1.0–v0.1.5). **Gate zero on the work Mac (§2, G1) is still to run.** |
+| Undesigned-but-required | Designed and built in slices 1–3 (F-58, F-76, F-84). Left: the menu bar (DB-26) and narrow windows / right-pane collapse (DB-25). |
+
+**Pulled forward from v1.1 and later** (each logged): search with its full UI (F-56), browser tabs and page driving (F-71, F-72), reconciling a moved project (F-78).
+
+**Left for v1:** gate zero on the work Mac; the menu bar (DB-26); narrow windows (DB-25); in-app updates (Sparkle, Phase L); Geoff's acceptance walk (`docs/acceptance/`).
 
 ---
 

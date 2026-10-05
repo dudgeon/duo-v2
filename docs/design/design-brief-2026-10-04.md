@@ -2,12 +2,15 @@
 
 Version 1 · 2026-10-04 · Owner: Geoff · Written by Claude from the build plan, the handoffs and the code.
 
-> **Since this brief (2026-10-05):**
-> - DB-1 to DB-4 are designed and built (`surfaces-handoff/`); DB-16 is designed (`frontmatter-handoff/`) but not built.
-> - DB-5 ("choosing a workspace") and DB-6's "none" case are replaced by the no-Home pane and first launch (DB-37, S2-3).
+> **Since this brief (to 2026-10-05):** most of it is designed and built.
+> - DB-1 to DB-4: `surfaces-handoff/`. DB-16: `frontmatter-handoff/`, built (F-77).
+> - DB-5, DB-6, DB-7, DB-9, DB-33, DB-37 to DB-39: slice 2 (`slice2-handoff/`, DL-100, F-76). DB-5 ("choosing a workspace") is replaced by the no-Home pane; there is no workspace.
+> - DB-8, DB-10, DB-11, DB-12 (confirmations), DB-14, DB-15, DB-27, DB-36: slice 3 (`slice3-handoff/`, DL-101, F-84).
+> - The map with many projects (S4-1, not in this brief): `many-projects-handoff/` (DL-104, F-82).
+> - Still open: DB-13 (local HTML look), DB-34 (the Archived rollup's look), DB-35 (revert from the highlight itself; Claude's deletions got Show and Revert in S3-5), DB-17 to DB-24 (v1.1 and search follow-ons), DB-25 (narrow windows), DB-26 (the menu bar), DB-28 to DB-32 (later).
 > - "Tasks anywhere: parked" no longer holds (DL-87, DL-93).
 >
-> The current brief is `docs/design/design-brief-slice-2.md`. Current state: `docs/design/system/`.
+> Current state of every surface: `docs/design/system/surfaces.md`.
 
 This brief collects, in one place, every Duo surface that the build has reached but no design covers yet, so one design pass can take several at once (C-5). It states needs, not solutions: what each surface must show, its states, its actions and the decisions that bind it. There are no layouts or colours in it on purpose. The design system, the two altitudes and the components are settled (`docs/design/build-handoff/`, `docs/design/search-handoff/`); everything here must look like it always belonged there. Items are grouped in the order the build reaches them (the build plan's design queue). Each has a short id (DB-n). Where something is built today, it is a plain stub in the system look, and the design replaces it. Use the fixture's world for sample content (`docs/design/build-handoff/fixture.json`): topics Payments, Growth, Platform; projects `checkout-redesign`, `refunds-api-spec`, `fraud-rules-review`, `onboarding-v3`, `pricing-experiment-q4`, `api-deprecations`, and Home (`~/work/home`).
 

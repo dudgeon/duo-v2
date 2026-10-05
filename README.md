@@ -2,7 +2,11 @@
 
 A native macOS workspace for product managers who work with Claude Code. Projects, sessions and documents stay organized in plain files you can read, every session keeps a live terminal running Claude Code's own TUI, and one screen shows what needs you across all of them.
 
-Status: early build. The UI is being built against approved design screens using fixture data; terminals and live session state come next. See the [build plan](docs/plan/build-plan.md).
+Status: in daily use toward v1. Duo lists every Claude Code session on the Mac, runs them in live terminals beside their documents, and shows what needs you; most of v1 is built (see the [build plan](docs/plan/build-plan.md) §3a and its "Where v1 stands"). Releases are signed and notarized.
+
+## Install
+
+Download the newest DMG from [Releases](https://github.com/dudgeon/duo-v2/releases), open it and drag Duo to Applications. Requires macOS 26 or later, Apple Silicon, and Claude Code. The `duo2` command is at `Duo.app/Contents/Helpers/duo2`; Duo offers to put it on your PATH.
 
 ## Build and run
 
@@ -62,25 +66,30 @@ Design reference PNGs need Google Chrome to re-render ([ADR-0002](docs/adr/0002-
 
 | Path | What |
 |---|---|
-| `Sources/DuoKit/` | Views, model, design tokens, fixture harness |
 | `Sources/Duo/` | The app entry point |
-| `Sources/DuoControl/` | The app ↔ `duo2` protocol (Foundation only) |
+| `Sources/DuoKit/` | Views, model, live state, editor host, design tokens, fixture harness |
+| `Sources/DuoControl/` | The app ↔ `duo2` protocol and the action registry (Foundation only) |
 | `Sources/duo2/` | The `duo2` command line, bundled in `Duo.app/Contents/Helpers` |
-| `docs/plan/enhancements.md` | Wanted but unscheduled (ENH-n) |
-| `docs/design/search-design-brief.md` | The request to Claude Design for the search UI |
 | `Sources/DuoSearch/` | Cross-project search: index, Core ML embedder, hybrid ranking (shared by the app and `duo2`) |
-| `Models/` | The search model, committed in checksummed parts (DL-40) |
-| `Vendor/codemirror/` | CodeMirror 6 and Duo's editor module, bundled into a checked-in `dist/cm6.js` |
-| `Spikes/` | Throwaway packages from the spike track (`swift run` inside each) |
 | `Sources/DuoChecks/` | Logic checks (`swift run DuoChecks`) |
-| `scripts/` | Bundle, token generation, UI comparison, pixel sampling |
-| `docs/design/build-handoff/` | The design target: screens, tokens, fixture, comparison tools |
+| `Vendor/codemirror/` | CodeMirror 6 and Duo's editor module (`src/duo-editor.js`), bundled into a checked-in `dist/cm6.js` by `build.sh` |
+| `Models/` | The search model, committed in checksummed parts (DL-40) |
+| `Spikes/` | Throwaway packages from the spike track (`swift run` inside each) |
+| `scripts/` | Bundle, release, token and design-system generation, UI comparison, pixel sampling, acceptance fixtures |
 | `docs/design/decisions.md` | Owner decisions (DL-n); these win over other docs |
+| `docs/design/README.md` | Index of every design doc and handoff, with its status |
+| `docs/design/system/` | The design system: tokens, components, surfaces, as built |
+| `docs/design/*-handoff/` | Approved design targets: screens, manifests, READMEs |
 | `docs/design/legacy-requirements.md` | Requirements carried from legacy Duo (LR-n) |
 | `docs/design/stack-recommendation.md` | Stack choices and spikes |
-| `docs/plan/` | Build plan and roadmap, findings, concerns and open questions |
+| `docs/plan/` | Build plan and roadmap, findings (F-n), concerns and questions (C-n, Q-n), enhancements (ENH-n), spikes |
+| `docs/prd/` | Product requirements for consolidation (CONS) and cross-project search (SRCH) |
+| `docs/cli/duo2.md` | The `duo2` reference, generated from the action registry |
+| `docs/features/` | Guides to larger features (`duo2`, Send to Claude) |
+| `docs/acceptance/` | Acceptance walks: features, verdict pages, ledgers |
 | `docs/adr/` | Architecture decision records |
 | `docs/research/` | Research behind the decisions |
+| `.claude/skills/` | The acceptance-walk and release skills |
 
 ## Licence
 
