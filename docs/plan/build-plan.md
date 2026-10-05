@@ -12,7 +12,7 @@ Inputs, and how they're cited here:
 | DL-n | `docs/design/decisions.md` |
 | LR-n | `docs/design/legacy-requirements.md` |
 | stack #n, S1–S10 | `docs/design/stack-recommendation.md` (amended by DL-14, DL-15) |
-| CONS | `docs/prd/legacy-session-consolidation.md`, PR #1 (goals binding per DL-4; UI not binding) |
+| CONS | `docs/prd/legacy-session-consolidation.md` (goals binding per DL-4; UI not binding) |
 | SRCH | `docs/prd/cross-project-search.md`, PR #2 (L1–L18 locked by Geoff) |
 
 The handoff's screens are the target for every visible surface. The spikes de-risk the engines. The two PRDs add two capabilities that sit on a shared foundation (inventory + registry). This plan orders all of it so UI work never waits on a spike it doesn't need, and each spike lands just before the phase that depends on it.
