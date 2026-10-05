@@ -720,6 +720,16 @@ func repoFixture() throws -> Fixture {
         check(m.calibrationProblem() != nil && (try? m.apply(try m.planRelocate("s2", to: b))) == nil, "a folder name Duo can't reproduce stops every physical operation (§6.3 5)")
         // Delete (FR-7.6.2): the transcript, sidecar, and Claude's per-session folders; never memory or history.
         try fm.removeItem(at: claude.appending(path: "projects/-wrong-name"))
+        // A bucket can rightly hold a session whose first cwd is elsewhere: a fork opens with its parent's
+        // records (F-31), a `/cd` keeps the old head cwd. Neither is an encoder change.
+        let host = work.appending(path: "host").path, parentDir = claude.appending(path: "projects/" + ClaudeStorage.encode(host))
+        try fm.createDirectory(at: parentDir, withIntermediateDirectories: true)
+        try ([#"{"type":"user","cwd":"\#(host)/kb","uuid":"u-p","sessionId":"f1"}"#, #"{"type":"user","cwd":"\#(host)","uuid":"u-f","sessionId":"f1"}"#]
+            .joined(separator: "\n") + "\n").write(to: parentDir.appending(path: "f1.jsonl"), atomically: true, encoding: .utf8)
+        try ([#"{"type":"user","cwd":"\#(host)/kb","sessionId":"c1"}"#, #"{"type":"relocated","relocatedCwd":"\#(host)"}"#]
+            .joined(separator: "\n") + "\n").write(to: parentDir.appending(path: "c1.jsonl"), atomically: true, encoding: .utf8)
+        check(m.calibrationProblem() == nil, "a bucket holding a fork or a /cd'd session that started in another folder still calibrates")
+        try fm.removeItem(at: parentDir)
         let gone = try session("s9", cwd: b)
         let fh = claude.appending(path: "file-history/s9"); try fm.createDirectory(at: fh, withIntermediateDirectories: true)
         let env = claude.appending(path: "session-env/s9"); try fm.createDirectory(at: env, withIntermediateDirectories: true)

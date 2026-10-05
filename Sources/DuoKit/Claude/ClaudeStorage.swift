@@ -50,24 +50,28 @@ public enum ClaudeStorage {
         public var ok: Bool { checked > 0 && mismatches.isEmpty }
     }
 
-    /// Checks `encode` against every project folder: the first `cwd` recorded in a transcript
-    /// must encode to the folder's name. One mismatch means Claude Code changed the rule, and
-    /// Duo must not perform physical operations until it is updated (CONS §6.3 item 5).
-    public static func calibrate(limit: Int = .max) -> Calibration {
+    /// Checks `encode` against every project folder: some transcript in it must record a cwd
+    /// that encodes to the folder's name (where it was filed after any `/cd`, its first cwd, or its
+    /// last: a fork opens with its parent's records, from the parent's folder, F-31). One folder
+    /// with none means Claude Code changed the rule, and Duo must not perform physical operations
+    /// until it is updated (CONS §6.3 item 5). `dir`: the projects folder (checks pass their own).
+    public static func calibrate(in dir: URL = ClaudeStorage.projects, limit: Int = .max) -> Calibration {
         var c = Calibration()
         let fm = FileManager.default
-        guard let folders = try? fm.contentsOfDirectory(atPath: projects.path) else { return c }
+        guard let folders = try? fm.contentsOfDirectory(atPath: dir.path) else { return c }
         for folder in folders.prefix(limit) {
-            let dir = projects.appending(path: folder)
-            guard let files = try? fm.contentsOfDirectory(atPath: dir.path) else { continue }
-            var cwds = Set<String>()
+            let d = dir.appending(path: folder)
+            guard let files = try? fm.contentsOfDirectory(atPath: d.path) else { continue }
+            var cwds = Set<String>(), recorded = Set<String>()
             for f in files where f.hasSuffix(".jsonl") {
-                if let cwd = firstCwd(dir.appending(path: f)) { cwds.insert(cwd) }
+                let r = filingCwds(d.appending(path: f))
+                if let filed = r.first { cwds.insert(filed) }
+                recorded.formUnion(r)
             }
             guard !cwds.isEmpty else { continue }
             if cwds.count > 1 { c.collisions += 1 }
             c.checked += 1
-            if cwds.contains(where: { encode($0) == folder }) {
+            if recorded.contains(where: { encode($0) == folder }) {
                 c.matched += 1
             } else if let cwd = cwds.first {
                 c.mismatches.append((folder, cwd, encode(cwd)))
@@ -111,8 +115,12 @@ public enum ClaudeStorage {
         return out
     }
 
-    static func firstCwd(_ url: URL) -> String? {
-        guard let h = try? FileHandle(forReadingFrom: url) else { return nil }
+    static func firstCwd(_ url: URL) -> String? { filingCwds(url).first }
+
+    /// The cwds a transcript can be filed under, most likely first: the last `relocated` record's
+    /// `relocatedCwd`, the first `cwd`, the last `cwd`. Reads at most the first and last 64 KB.
+    static func filingCwds(_ url: URL) -> [String] {
+        guard let h = try? FileHandle(forReadingFrom: url) else { return [] }
         defer { try? h.close() }
         let head = (try? h.read(upToCount: 64 * 1024)) ?? Data()
         let size = (try? h.seekToEnd()) ?? 0
@@ -123,12 +131,18 @@ public enum ClaudeStorage {
         }
         func lines(_ d: Data) -> [Substring] { (String(data: d, encoding: .utf8) ?? "").split(separator: "\n") }
         func object(_ line: Substring) -> [String: Any]? { try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any] }
-        for line in (lines(head) + lines(tail)).reversed() where line.contains("\"relocated\"") {
-            if let o = object(line), o["type"] as? String == "relocated", let to = o["relocatedCwd"] as? String { return to }
+        let all = lines(head) + lines(tail)
+        var out: [String] = []
+        for line in all.reversed() where line.contains("\"relocated\"") {
+            if let o = object(line), o["type"] as? String == "relocated", let to = o["relocatedCwd"] as? String { out.append(to); break }
         }
-        for line in lines(head) where line.contains("\"cwd\"") {
-            if let cwd = object(line)?["cwd"] as? String { return cwd }
+        for line in all where line.contains("\"cwd\"") {
+            if let cwd = object(line)?["cwd"] as? String { out.append(cwd); break }
         }
-        return nil
+        for line in all.reversed() where line.contains("\"cwd\"") {
+            if let cwd = object(line)?["cwd"] as? String { out.append(cwd); break }
+        }
+        var seen = Set<String>()
+        return out.filter { seen.insert($0).inserted }
     }
 }
