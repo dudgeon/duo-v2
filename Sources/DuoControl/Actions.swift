@@ -37,6 +37,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
     case projectArchive = "project archive", projectUnarchive = "project unarchive"
     case homeSet = "home set", projectMoveIntoHome = "project move-into-home", projectNew = "project new"
+    case projectReconnect = "project reconnect", projectForget = "project forget"
     case inventory, evidence, migrations, migratePlan = "migrate plan", migrateApply = "migrate apply", migrateUndo = "migrate undo"
     // Sessions
     case sessions, sessionShow = "session show", sessionNew = "session new", sessionOpen = "session open"
@@ -142,6 +143,11 @@ extension DuoAction {
               ui: ["Choose Home Folder…"]),
         .init(.projectMoveIntoHome, .projects, "<project|folder> [--into <topic folder>]", "Move a project or folder into Home (its top level, or a topic folder with --into) with every session filed under it (journaled; sessions stay its). The user confirms in Duo. Undo with `duo2 undo`.",
               ui: ["Move into Home…", "Move"], timeout: 600),
+        .init(.projectReconnect, .projects, "<project|folder> [--to <folder>]",
+              "A project or folder moved outside Duo (DB-8): its sessions follow it to where it is now (found by Duo, or --to), the way Claude's /cd moves them; journaled. The user confirms in Duo. Undo with `duo2 undo`.",
+              ui: ["Reconnect Sessions…", "Use New Place", "Locate Folder…"], timeout: 600),
+        .init(.projectForget, .projects, "<folder>", "Remove a missing folder's tile from Duo (DB-8); its sessions stay in Claude's storage and in search. Undo with `duo2 undo`.",
+              ui: ["Remove from Duo"]),
         .init(.projectNew, .projects, "<name> [--goal <text>] [--into <topic folder>] [--session]", "Make a new project in Home (or a topic folder in it): a folder with a starter PROJECT.md holding the goal. --session starts a Claude session in it. Undo with `duo2 undo`.",
               ui: ["+ New project", "Create Project"]),
         .init(.inventory, .projects, "", "Claude's session storage, read only: each folder's sessions, size, missing folders, collisions, duplicate ids, and what Claude's cleanup takes within 7 days (CONS FR-7.1).", timeout: 180),
@@ -302,7 +308,6 @@ public enum Parity {
         "Cancel": "a step inside another action's dialog or picker",
         "Look Again": "re-reads what Duo already refreshes every 2 s; the CLI always reads fresh state",
         "Open Settings…": "not built: Settings waits on its design (DB-10)",
-        "Locate Folder…": "not built: waits on its design (DB-8)",
         "Go": "a menu, not an action",
         "Format": "a menu, not an action",
         "No templates yet: add .md files to a templates folder": "a disabled hint",

@@ -264,7 +264,11 @@ struct ProjectTile: View {
                     Text("Enter\u{00A0}to open").duoText(.body).foregroundStyle(DuoColor.text2)
                 }
             }
-            if project.isFolderOnly {
+            if project.isMissing {
+                // Its folder is gone (DB-8). Stand-in look until S3-2 is approved (Q-32).
+                Text(project.missing ?? "Folder not found").duoText(.body)
+                Text("Was at \(project.path)").duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.middle)
+            } else if project.isFolderOnly {
                 // A folder with Claude sessions but no PROJECT.md (DL-63).
                 Text(project.path).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.middle)
                 Text(project.hasClaudeMD == true ? "Has CLAUDE.md · no project file" : "No project file")
@@ -275,6 +279,11 @@ struct ProjectTile: View {
                     .duoText(.body)
                     .foregroundStyle(DuoColor.text2)
                     .fixedSize(horizontal: false, vertical: true)
+                if let from = project.movedFrom, let n = project.staleSessions {
+                    // Moved outside Duo; its sessions follow when resumed, or all at once (DB-8, stand-in).
+                    Text("\(n) session\(n == 1 ? "" : "s") still filed under \(from)").duoText(.body).foregroundStyle(DuoColor.text2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             if sessions.isEmpty, project.isFolderOnly {
                 let n = model.fixture.sessions(inProject: project.name).count
@@ -631,11 +640,19 @@ struct ProjectOrganizeMenu: ViewModifier {
                 .contextMenu {
                     SendMenu { _ in model.projectPayload(project.name) }
                     Divider()
-                    if project.isFolderOnly {
+                    if project.isMissing {
+                        if project.movedTo != nil { Button("Use New Place") { model.useNewPlace(project.name) } }
+                        Button("Locate Folder…") { model.locateFolder(project.name) }
+                        Button("Remove from Duo") { model.forgetFolder(project.name) }
+                        Divider()
+                    } else if project.isFolderOnly {
                         Button("Make a Project") { model.makeProject(project.name) }
                     }
+                    if project.staleSessions != nil {
+                        Button("Reconnect Sessions…") { model.reconnectStale(project.name) }
+                    }
                     // Into Home with its sessions (DL-85); only for what isn't in Home already.
-                    if model.liveRoot != nil, !model.isInHome(project.name) {
+                    if model.liveRoot != nil, !model.isInHome(project.name), !project.isMissing {
                         Button("Move into Home…") { model.moveIntoHome(project.name) }
                     }
                     Menu(project.isFolderOnly ? "Merge Sessions Into" : "Merge Into") {

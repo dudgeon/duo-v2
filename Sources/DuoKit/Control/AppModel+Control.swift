@@ -96,7 +96,10 @@ extension AppModel {
         case .projects:
             let ps = fixture.projects
             let lines = ps.map { p in
-                (p.isHome == true ? "★ " : "") + p.name + (p.isFolderOnly ? " (folder, no project file)" : "") + (isArchived(p.name) ? " [archived]" : "") + (p.goal.isEmpty ? "" : " — \(p.goal)")
+                (p.isHome == true ? "★ " : "") + p.name
+                    + (p.isMissing ? " (missing: \(p.missing ?? "folder not found"); was at \(p.path))" : p.isFolderOnly ? " (folder, no project file)" : "")
+                    + (p.staleSessions.map { " (\($0) session(s) still filed under \(p.movedFrom ?? "its old place"): duo2 project reconnect \(p.name))" } ?? "")
+                    + (isArchived(p.name) ? " [archived]" : "") + (p.goal.isEmpty ? "" : " — \(p.goal)")
                     + ([p.health, p.next].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ").nonEmptyOrNil.map { " (\($0))" } ?? "")
             }
             done(.ok(lines.joined(separator: "\n"), ps.map(projectJSON)))
@@ -197,6 +200,22 @@ extension AppModel {
             moveIntoHome(name, into: place) { r in
                 switch r { case .success(let m): done(.ok(m)); case .failure(let e): done(.fail("\(e)")) }
             }
+        case .projectReconnect:
+            guard let name = inv[0], let p = project(named: name) else { return done(.fail(inv[0].map { "no project or folder '\($0)'" } ?? "usage: \(id.action.usage)")) }
+            let to = inv.flags["to"].map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) }
+            let from = p.isMissing ? p.path : p.movedFrom
+            let target = to ?? (p.isMissing ? p.movedTo.map { URL(fileURLWithPath: $0) } : liveFolders[p.name])
+            guard let from, let target else {
+                return done(.fail(p.isMissing ? "Duo hasn't found where \(p.name) went; pass --to <folder>" : "\(p.name)'s sessions are all where it is"))
+            }
+            reconnect(from: from, to: target, name: p.name) { r in
+                switch r { case .success(let m): done(.ok(m)); case .failure(let e): done(.fail("\(e)")) }
+            }
+        case .projectForget:
+            guard let name = inv[0], let p = project(named: name) else { return done(.fail("usage: \(id.action.usage)")) }
+            guard p.isMissing else { return done(.fail("\(p.name)'s folder is there; only a missing folder can be removed from Duo")) }
+            forgetFolder(p.name)
+            done(.ok("Removed \(p.name) from Duo; its sessions stay in Claude's storage and search. Undo: duo2 undo"))
         case .projectNew:
             guard let name = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             let into = inv.flags["into"]
@@ -753,6 +772,8 @@ extension AppModel {
         if let v = p.health { j["health"] = v }
         if let v = p.next { j["next"] = v }
         if let v = p.topic { j["topic"] = v }
+        if p.isMissing { j["kind"] = "missing"; j["missing"] = p.missing ?? ""; if let t = p.movedTo { j["movedTo"] = t } }
+        if let n = p.staleSessions { j["staleSessions"] = n; j["movedFrom"] = p.movedFrom ?? "" }
         return j
     }
 

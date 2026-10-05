@@ -228,7 +228,7 @@ Geoff delegated scoping. The test for v1: **Geoff can use Duo all day instead of
 - **Browser:** third-party sites via the allow list (DL-3), element inspector (LR-44), page-driving commands.
 - **Version history** for files (DL-5).
 - **Groups by hand** and the group page (after design).
-- **Reconcile a moved project:** relocate transcripts the way `/cd` does, journaled and undoable.
+- **Reconcile a moved project:** relocate transcripts the way `/cd` does, journaled and undoable. **Pulled into v1 (F-78):** the migrator already existed for Move into Home, and a moved project's sessions don't resume without it.
 - Developer ID signing, notarization and auto-update, if gate zero shows the work Mac accepts them.
 
 ### v1.2 and later

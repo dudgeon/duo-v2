@@ -20,6 +20,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Home pane with no Home folder | Designed (DL-100): "Choose a Home folder", Choose Home Folder… and Not Now | slice2 `no-home.html` | — | HomePane, `ConsoleMessage(.noHome)` |
 | The map: columns, tiles | Designed (DL-100): Home's columns, then OUTSIDE HOME on a rule with path columns (`~/Desktop/…/interviews`) | slice2 `map-folders.html`, `no-home.html` | DB-38 (folder mark) | MapColumn, MapGrid, ProjectTile |
 | Folder tiles ("No project file") | Stand-in (DL-63) | — | DB-12 | ProjectTile |
+| Missing or moved folder tiles ("Folder not found", "Moved to …") | Stand-in (F-78) | slice 3 canvas S3-2 (proposed) | DB-8, Q-32 | ProjectTile, `Live/MissingFolders.swift`, `Model/AppModel+Missing.swift` |
 | New project tile | Designed; opens the New project sheet (DL-100) | build `overview.html` | — | NewProjectTile |
 | Sessions open in Duo, tinted | Stand-in (ENH-7) | — | DB-33 | TileSessionRow, `activeTint` |
 | Archived rollup under the map | Stand-in (ENH-6) | — | DB-34 | `AllProjects/ArchivedProjects.swift` |

@@ -148,6 +148,10 @@ public enum LiveSnapshot {
                 reason: live?.state == .needsYou ? Self.reason(beacon: beacon, hooks: hooks) : nil)
         }
 
+        // Where each session ran, last (after any /cd): a project that moved still has sessions
+        // filed under its old path, which won't resume until they follow it (DB-8).
+        let cwdOf = Dictionary(history.map { ($0.id, resolve($0.cwd)) }, uniquingKeysWith: { a, _ in a })
+        var projectList = projects.map(\.project)
         for f in projects {
             let name = f.project.name
             folders[name] = f.folder
@@ -166,9 +170,17 @@ public enum LiveSnapshot {
             for h in history.sorted(by: { $0.transcript.path > $1.transcript.path }) where inside(h.cwd) && !filedElsewhere(h.id) {
                 if !ids.contains(h.id) { ids.append(h.id) }
             }
+            var stale: [String: Int] = [:]
             for id in ids where !claimed.contains(id) {
                 claimed.insert(id)
                 sessions.append(makeSession(id, project: name, folder: f.folder, entry: index.sessions.first { $0.sessionId == id }))
+                if let cwd = cwdOf[id], cwd != folderPath, !cwd.hasPrefix(folderPath + "/"), !FileManager.default.fileExists(atPath: cwd) {
+                    stale[cwd, default: 0] += 1
+                }
+            }
+            if let (from, _) = stale.max(by: { $0.value < $1.value }), let i = projectList.firstIndex(where: { $0.name == name }) {
+                projectList[i].movedFrom = from.replacingOccurrences(of: resolve(FileManager.default.homeDirectoryForCurrentUser.path), with: "~")
+                projectList[i].staleSessions = stale.values.reduce(0, +)
             }
             // Tasks (DL-93): a note's `sessions:` links make its bundle, beside the groups (DL-88).
             for t in TaskNotes.load(project: f.folder) {
@@ -193,9 +205,13 @@ public enum LiveSnapshot {
             if !(byFolder[resolve(b.cwd)] ?? []).contains(b.sessionId) { byFolder[resolve(b.cwd), default: []].append(b.sessionId) }
         }
         let userHome = resolve(FileManager.default.homeDirectoryForCurrentUser.path)
+        let forgotten = Set(DuoState.load().forgottenFolders)
         for (path, ids) in byFolder.sorted(by: { $0.key < $1.key }) {
             let url = URL(fileURLWithPath: path)
-            guard FileManager.default.fileExists(atPath: path) else { continue }  // folder deleted: archive only
+            // A folder that's gone keeps its tile, saying what happened (DB-8, LR-23), unless the
+            // user removed it from Duo. Never the user's home folder or a system folder.
+            let gone = !FileManager.default.fileExists(atPath: path)
+            if gone && (forgotten.contains(path) || path == userHome || !path.hasPrefix("/Users/") && !path.hasPrefix("/Volumes/")) { continue }
             // Names are keys (`folders[name]`): add parent folders until the name is unique among
             // projects and other folders; two `payments/checkout`s once hid each other.
             let taken: (String) -> Bool = { n in projects.contains { $0.project.name == n } || folderProjects.contains { $0.name == n } }
@@ -204,9 +220,26 @@ public enum LiveSnapshot {
             var name = parts.suffix(depth).joined(separator: "/")
             while taken(name) && depth < parts.count { depth += 1; name = parts.suffix(depth).joined(separator: "/") }
             let topic = ProjectDiscovery.topic(for: url, root: ctx.root)
-            folderProjects.append(Fixture.Project(name: name, topic: topic, path: path.replacingOccurrences(of: userHome, with: "~"),
-                                                  isHome: nil, goal: "", health: nil, next: nil, kind: "folder",
-                                                  hasClaudeMD: FileManager.default.fileExists(atPath: url.appending(path: "CLAUDE.md").path)))
+            var p = Fixture.Project(name: name, topic: topic, path: path.replacingOccurrences(of: userHome, with: "~"),
+                                    isHome: nil, goal: "", health: nil, next: nil, kind: gone ? "missing" : "folder",
+                                    hasClaudeMD: FileManager.default.fileExists(atPath: url.appending(path: "CLAUDE.md").path))
+            if gone {
+                // Only what still matters: found elsewhere, on a disk that's away, or used in the
+                // last 14 days. Older deleted scratch folders stay out of the map (search keeps them).
+                if url.pathComponents.contains(where: { $0.hasPrefix(".") }) { continue }
+                let recent = ids.contains { id in
+                    let t = history.first { $0.id == id }?.transcript
+                    let m = t.flatMap { try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate }
+                    return (m?.timeIntervalSince(ctx.now) ?? -.infinity) > -14 * 86400
+                }
+                // Looking for where it went costs a walk of Home: only for recent ones.
+                let status = recent ? MissingFolders.status(of: path, sessionIds: ids, searchIn: [ctx.root].compactMap { $0 })
+                                    : MissingFolders.volumeStatus(of: path)
+                if status == .notFound { if !recent { continue } }
+                p.missing = status.text
+                if case .movedTo(let to) = status { p.movedTo = to }
+            }
+            folderProjects.append(p)
             folders[name] = url
             for id in ids where !claimed.contains(id) {
                 claimed.insert(id)
@@ -253,7 +286,7 @@ public enum LiveSnapshot {
             now: ISO8601DateFormatter().string(from: ctx.now),
             user: NSFullUserName(),
             topics: topics,
-            projects: projects.map(\.project).map { p in
+            projects: projectList.map { p in
                 var p = p
                 if let h = home, p.name == h.project.name { p.isHome = true; p.topic = nil }
                 return p

@@ -735,6 +735,18 @@ func repoFixture() throws -> Fixture {
         try m.undo(move)
         check(fm.fileExists(atPath: a + "/sub") && !fm.fileExists(atPath: dest) && (try? Data(contentsOf: s1)) == original, "and undo puts the folder and every transcript back")
         check(!fm.fileExists(atPath: bucket(dest)) && !fm.fileExists(atPath: bucket(dest + "/sub")), "and sweeps the buckets the undo emptied")
+        // A folder moved outside Duo (DB-8): its sessions follow without moving the folder again.
+        let elsewhere = work.appending(path: "elsewhere").path
+        try fm.moveItem(atPath: a, toPath: elsewhere)
+        let reconnect = try m.apply(try m.planReconnect(a, to: elsewhere))
+        let s2there = claude.appending(path: "projects/\(ClaudeStorage.encode(elsewhere + "/sub"))/s2.jsonl")
+        check(reconnect.state == .committed && fm.fileExists(atPath: s2there.path) && !fm.fileExists(atPath: s1.path)
+              && ((try? String(contentsOf: s2there, encoding: .utf8)) ?? "").contains(#""relocatedCwd":"\#(elsewhere)/sub""#),
+              "reconnect moves a moved folder's sessions to where it is now, mapped path by path (DB-8)")
+        try m.undo(reconnect)
+        try fm.moveItem(atPath: elsewhere, toPath: a)
+        check((try? Data(contentsOf: s1)) == original, "and undo puts them back")
+        check((try? m.planReconnect(a, to: work.appending(path: "nowhere").path)) == nil, "reconnect needs a folder that's there")
         var stuck = try m.planRelocate("s1", to: b); stuck.state = .applying; try m.save(stuck)
         check((try? m.apply(try m.planRelocate("s2", to: b))) == nil, "an interrupted migration blocks new ones until it's completed or undone (FR-7.8.4)")
         try m.undo(stuck)

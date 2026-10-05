@@ -129,13 +129,19 @@ public final class AppModel {
             guard let s = fixture.sessions(inProject: project).first(where: { $0.tabKey == key }),
                   let id = s.sessionId, let folder = liveFolders[project] else { return nil }
             if liveElsewhere.contains(id) { return nil }  // shown as running elsewhere
+            // Its folder is gone (DB-8): nothing to run in until it's located.
+            guard FileManager.default.fileExists(atPath: folder.path) else { return nil }
             // A transcript Claude's cleanup removed comes back from Duo's archive first (DL-44).
             if ClaudeStorage.transcript(sessionId: id, cwd: folder.path) == nil { _ = try? SessionArchive.restore(id) }
             let transcript = ClaudeStorage.transcript(sessionId: id, cwd: folder.path)
             // A session moved here from another folder (DL-64) resumes where it was, then /cd moves
             // it (and its transcript) to this folder, as Claude does itself. /cd to the folder it's
             // already in moves nothing (F-45), hence starting in the old one.
-            let filed = transcript.flatMap(ClaudeStorage.filedCwd).map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path }
+            var filed = transcript.flatMap(ClaudeStorage.filedCwd).map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path }
+            // Still filed under a folder that's gone (the project was moved outside Duo): it follows
+            // the project first, or Claude wouldn't find it here (DB-8, F-78).
+            if let f = filed, f != folder.resolvingSymlinksInPath().path, !FileManager.default.fileExists(atPath: f),
+               reconnectForResume(id, to: folder) { filed = folder.resolvingSymlinksInPath().path }
             let movedHere = filed.map { $0 != folder.resolvingSymlinksInPath().path && FileManager.default.fileExists(atPath: $0) } ?? false
             let t = terminals.session(key, command: transcript != nil ? .resumeClaude(sessionID: id) : .newClaude(sessionID: id, prompt: nil),
                                       cwd: movedHere ? filed! : folder.path)

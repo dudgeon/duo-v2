@@ -3120,6 +3120,50 @@
     "human": [],
     "at": "2026-10-05"
    }
+  },
+  {
+   "id": "missing-tile",
+   "group": "Moved and missing folders",
+   "title": "A folder that's gone keeps its tile",
+   "what": "Rename or delete a folder Claude worked in: its tile stays, says what happened, and its sessions stay listed.",
+   "steps": [
+    "In Finder, rename `~/DuoAcceptance/elsewhere/scratch` to `scratch-old`.",
+    "Look at the map (it refreshes within a few seconds)."
+   ],
+   "expect": "The scratch tile reads “Folder not found · Was at ~/DuoAcceptance/elsewhere/scratch”. Its look waits on S3-2 (Q-32).",
+   "ref": "DB-8, LR-23, F-78",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Seen through `duo2 projects` on the fixtures."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "missing-found",
+   "group": "Moved and missing folders",
+   "title": "Duo finds where it went, and the sessions follow",
+   "what": "Move the folder into Home: the tile says where; Use New Place reconnects its sessions so they resume there; Undo puts them back.",
+   "steps": [
+    "Move `scratch-old` back as `~/DuoAcceptance/workspace/research/scratch`.",
+    "Right-click the scratch tile › **Use New Place**, confirm.",
+    "Open one of its sessions.",
+    "Edit › Undo, then move the folder back to `elsewhere/scratch`."
+   ],
+   "expect": "“Moved to …/research/scratch”; after Use New Place the tile is a normal folder in research and the session resumes; Undo restores it.",
+   "ref": "DB-8, F-78",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`duo2 project reconnect scratch` and `duo2 undo` on a scratch Claude folder: byte-identical after."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
   }
  ],
  "decisions": [

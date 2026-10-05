@@ -148,6 +148,36 @@ public struct Migrator: Sendable {
                        summary: "Relocate \(id.prefix(8)) to \(target)", mapping: ["session": id, "to": target], steps: steps)
     }
 
+    /// After a folder was moved outside Duo (DB-8, LR-23): its sessions follow it, as Claude's /cd
+    /// moves them, without moving the folder again. Same journal, verify and undo as a folder move.
+    public func planReconnect(_ old: String, to new: String, live: Set<String> = []) throws -> Journal {
+        let fm = FileManager.default
+        var isDir: ObjCBool = false
+        guard fm.fileExists(atPath: new, isDirectory: &isDir), isDir.boolValue else { throw Refusal("\(new) isn't a folder") }
+        if old == new { throw Refusal("that's the same folder") }
+        try requireCalibrated()
+        var steps: [Step] = []
+        for b in (try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil)) ?? [] {
+            for t in ((try? fm.contentsOfDirectory(at: b, includingPropertiesForKeys: nil)) ?? []) where t.pathExtension == "jsonl" {
+                guard let cwd = Self.currentCwd(t), cwd == old || cwd.hasPrefix(old + "/") else { continue }
+                let id = t.deletingPathExtension().lastPathComponent
+                if live.contains(id) { throw Refusal("\(id.prefix(8)) is running in \(cwd); end it first (FR-7.5.3)") }
+                let mapped = new + cwd.dropFirst(old.count)
+                let target = projects.appending(path: ClaudeStorage.encode(String(mapped)))
+                if fm.fileExists(atPath: target.appending(path: "\(id).jsonl").path) { continue }  // already there
+                for f in files(of: id, in: b) {
+                    steps.append(Step(n: steps.count + 1, op: .move, from: f.path, to: target.appending(path: f.lastPathComponent).path, sessionId: id))
+                }
+                steps.append(Step(n: steps.count + 1, op: .appendRelocated, from: target.appending(path: "\(id).jsonl").path,
+                                  to: target.appending(path: "\(id).jsonl").path, sessionId: id, relocatedCwd: String(mapped)))
+            }
+        }
+        if steps.isEmpty { throw Refusal("no sessions are filed under \(old)") }
+        return Journal(id: Self.newID(), kind: .folderMove, state: .planned, created: Date(),
+                       summary: "Reconnect the sessions of \(old) to \(new)", mapping: ["from": old, "to": new], steps: steps,
+                       warnings: ["Claude will ask to trust \(new) on the first resume there."])
+    }
+
     /// Move a folder and, in the same transaction, every session filed under it (FR-7.5).
     public func planFolderMove(_ folder: String, to dest: String, live: Set<String> = [], openFolders: [String] = []) throws -> Journal {
         let fm = FileManager.default

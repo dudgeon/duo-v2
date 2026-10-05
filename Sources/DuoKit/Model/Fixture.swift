@@ -15,8 +15,16 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var kind: String?
         /// The folder has a CLAUDE.md: it was set up with intent, a likely project (DL-63).
         public var hasClaudeMD: Bool?
+        /// DB-8: a folder whose sessions remain but which isn't where they ran ("missing" kind):
+        /// what happened, in words, and where Duo found it, if it did.
+        public var missing: String? = nil
+        public var movedTo: String? = nil
+        /// A project whose sessions are still filed under the folder it moved from: that path, and how many.
+        public var movedFrom: String? = nil
+        public var staleSessions: Int? = nil
         public var id: String { name }
-        public var isFolderOnly: Bool { kind == "folder" }
+        public var isFolderOnly: Bool { kind == "folder" || kind == "missing" }
+        public var isMissing: Bool { kind == "missing" }
     }
 
     public struct Session: Codable, Sendable, Equatable, Identifiable {
