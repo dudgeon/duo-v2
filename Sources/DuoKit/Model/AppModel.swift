@@ -155,6 +155,11 @@ public final class AppModel {
     /// Home's folder (DL-85); nil until one is chosen. Live mode runs either way (DL-82).
     public var liveRoot: URL?
     @ObservationIgnored public var isLive = false
+    /// Restore on relaunch (LR-58): off for scripted and capture runs.
+    @ObservationIgnored public var restoreEnabled = false
+    @ObservationIgnored var restoreApplied = false
+    @ObservationIgnored var lastRestoreSave = Date.distantPast
+    @ObservationIgnored var lastRestoreData: Data?
     @ObservationIgnored public var liveFolders: [String: URL] = [:]
     /// Live sessions whose process Duo doesn't own (Terminal, the Desktop app, another Duo).
     public var liveElsewhere: Set<String> = []
@@ -256,6 +261,9 @@ public final class AppModel {
         if merged != fixture { fixture = merged }
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts)
+        // What was open when Duo last quit comes back once the sessions are known (LR-58).
+        if !restoreApplied, !fixture.sessions.isEmpty || !folders.isEmpty { applyRestore() }
+        defer { saveRestoreState() }
         // Home is always on (brief: the director agent); its empty state isn't designed (§13), so
         // live mode starts one Home session when there is none (concerns C-15).
         if let home = fixture.home {

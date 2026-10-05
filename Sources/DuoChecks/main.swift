@@ -65,6 +65,23 @@ func repoFixture() throws -> Fixture {
         check(TaskNotes.slug("Exec review — prep (v2)!") == "exec-review-prep-v2", "slug filenames")
     }
 
+    print("restore on relaunch (LR-58)")
+    do {
+        let tmp = FileManager.default.temporaryDirectory.appending(path: "duo-restore-\(UUID().uuidString).json")
+        var r = RestoreState(); r.root = "/x/home"; r.project = "/x/home/a"
+        r.projects = [.init(folder: "/x/home/a", sessions: ["s1"], consoleTab: "s1", documents: ["notes.md"], rightTab: "notes.md")]
+        try JSONEncoder().encode(r).write(to: tmp)
+        check(RestoreState.load(tmp) == r, "round-trips")
+        var newer = r; newer.version = RestoreState.version + 1
+        try JSONEncoder().encode(newer).write(to: tmp)
+        check(RestoreState.load(tmp) == nil, "a file from a newer Duo is ignored")
+        try Data("not json".utf8).write(to: tmp)
+        check(RestoreState.load(tmp) == nil, "an unreadable file is ignored")
+        check(RestoreState.file(root: "/x/home") != RestoreState.file(root: "/y/home") && RestoreState.file(root: nil).lastPathComponent == "restore-no-home.json",
+              "one file per Home")
+        try? FileManager.default.removeItem(at: tmp)
+    }
+
     print("ordering")
     check(WaitTime("1h") > WaitTime("12m") && WaitTime("3d") > WaitTime("1h") && WaitTime("now") < WaitTime("4m"), "wait times")
     check(SessionState.allCases.sorted() == [.needsYou, .readyForReview, .working, .idle, .resolved], "states most urgent first")

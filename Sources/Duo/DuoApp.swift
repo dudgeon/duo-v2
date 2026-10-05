@@ -27,6 +27,8 @@ struct DuoApp: App {
         }
         let model = AppModel(fixture: fixture)
         model.interactivePrompts = !options.capturing
+        // Scripted runs restore only when asked (DUO_RESTORE=1), on their own workspace's file.
+        model.restoreEnabled = (!options.capturing && options.thenActions.isEmpty) || ProcessInfo.processInfo.environment["DUO_RESTORE"] == "1"
         // duo2's endpoint (DL-15). Terminals start after the window appears, by which time the
         // listener is ready; the environment is read when each process starts.
         let helpers = Bundle.main.bundleURL.appending(path: "Contents/Helpers")
@@ -117,7 +119,7 @@ struct DuoApp: App {
         AppDelegate.termSource = term
         // End sessions cleanly on quit. Hiding or collapsing never does this (LR-13).
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { model.terminals.terminateAll(); server.stop() }
+            MainActor.assumeIsolated { model.saveRestoreState(force: true); model.terminals.terminateAll(); server.stop() }
         }
     }
 

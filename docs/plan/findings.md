@@ -836,3 +836,11 @@ Built from the decision path page (DL-87 to DL-91):
 - The console's "No session open" offered **Resume <first listed session>**, which in a project whose sessions came from history was the oldest (reading offered note 7 of 9). It now offers the most recently used one.
 - A project with health but an empty `next:` showed `On track ·`. Empty parts are dropped.
 - Found while checking the walk's updated cards on the fixtures (DL-96). The walk now has 101 features; four existing cards were rewritten for DL-83/DL-91 (folder columns, the Open-then-past list).
+
+## F-68 · Restore on relaunch (LR-58) (2026-10-04)
+
+- What's open is saved to `Application Support/Duo/restore-<home>.json`: the project on screen, each project's Claude session tabs (by id, in tab order), its open documents and right-pane tab, the console tab, Home's tab, and both left-pane collapse states. Written when it changes (at most every 5 s, from the refresh) and on quit, so a crash loses little.
+- One file per Home (a hash of its path; `restore-no-home.json` without one): a run on another workspace, like the acceptance fixtures, neither reads nor replaces the user's.
+- A file from a newer Duo, or one that doesn't decode, is ignored (versioned envelope, graceful downgrade).
+- On launch, after the first snapshot: documents that still exist reopen; sessions resume by id, except any now running in another app (never two writers, LR-8) or no longer listed.
+- Off in capture and scripted runs unless `DUO_RESTORE=1`. Live check on the fixtures, two launches: the first resumed a session in checkout and opened `tasks/exec-review-prep.md`, then quit; the second came back in checkout with that session resumed (`restore: reopened 1 session(s) in 1 project(s)`) and the note open.

@@ -88,6 +88,11 @@ public enum FixtureHarness {
                 _ = model.terminal(project: s.project, session: id)
             }
         case "file": if parts.count > 1 { model.selectedFile = parts[1]; model.rightTab = parts[1] }
+        case "doc": if parts.count > 1 { model.openDocument(parts[1]) }   // doc:<path>: a document tab, as the file tree opens it
+        case "restore-save": model.saveRestoreState(force: true)
+        case "restore-state":
+            let s = model.currentRestoreState()
+            FileHandle.standardError.write(Data("restore-state: project=\(s.project.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "-") \(s.projects.map { "\(URL(fileURLWithPath: $0.folder).lastPathComponent):\($0.sessions.count)s/\($0.documents.joined(separator: "+"))/\($0.rightTab ?? "-")" }.joined(separator: " "))\n".utf8))
         case "edit-bold": model.editor.run("duo.select(2, 9); duo.exec('bold'); return 1") { _ in }
         case "editor-snapshot":
             let out = parts.count > 1 ? parts[1] : "/tmp/editor.png"
