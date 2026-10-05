@@ -44,7 +44,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
     case sessionLink = "session link"
     case shellNew = "shell new", sessionFork = "session fork", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
-    case tasks, taskMake = "task make", taskAdd = "task add"
+    case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskStatus = "task status"
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
     case files, fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
@@ -174,6 +174,9 @@ extension DuoAction {
         .init(.tasks, .sessions, "[--project <p>]", "Task notes (tasks/*.md in each project) with their status and how many sessions their `sessions:` frontmatter links (DL-93)."),
         .init(.taskMake, .sessions, "<session|group> [--title <t>]", "Make a Task: writes tasks/<slug>.md whose `sessions:` links the session (or the group's sessions; the group becomes the task) and opens it. Undo with `duo2 undo`.",
               ui: ["Make a Task"]),
+        .init(.taskNew, .sessions, "[title] [--project <p>]", "+ New task: a task note with no sessions yet, opened to write. Undo with `duo2 undo`.", ui: ["+ New task"]),
+        .init(.taskStatus, .sessions, "<task> <open|in-progress|waiting|review|done|dropped> [--project <p>]", "Set a task's status: rewrites only `status:` (and `completed:` when done or dropped). Done and dropped tasks leave the lists. Undo with `duo2 undo`.",
+              ui: ["Status"]),
         .init(.taskAdd, .sessions, "<task> <session>", "Add to Task: puts the session's link in the task note's `sessions:` list, touching nothing else in the note. Undo with `duo2 undo`.",
               ui: ["Add to Task", "Open Task Note"]),
         .init(.groups, .sessions, "[--project <p>]", "Groups and their sessions, with each group's most urgent state."),

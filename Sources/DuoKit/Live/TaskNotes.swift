@@ -75,6 +75,31 @@ public enum TaskNotes {
         return s
     }
 
+    /// The statuses a task can have (research doc §1; TaskNotes-compatible).
+    public static let statuses = ["open", "in-progress", "waiting", "review", "done", "dropped"]
+
+    /// The note with one scalar frontmatter key set (or removed, `value` nil), touching nothing else.
+    public static func setting(_ key: String, _ value: String?, in text: String) -> String {
+        let nl = text.contains("\r\n") ? "\r\n" : "\n"
+        var lines = text.components(separatedBy: nl)
+        guard lines.first == "---", let close = lines.dropFirst().firstIndex(of: "---") else {
+            return value.map { (["---", "\(key): \($0)", "---"] + lines).joined(separator: nl) } ?? text
+        }
+        if let k = (1..<close).first(where: { lines[$0].hasPrefix("\(key):") }) {
+            if let value { lines[k] = "\(key): \(value)" } else { lines.remove(at: k) }
+        } else if let value {
+            lines.insert("\(key): \(value)", at: close)
+        }
+        return lines.joined(separator: nl)
+    }
+
+    /// Status, plus `completed:` (a date) when it becomes done or dropped, removed when it reopens.
+    public static func settingStatus(_ status: String, in text: String, today: Date = Date()) -> String {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
+        let closed = ["done", "dropped"].contains(status)
+        return setting("completed", closed ? f.string(from: today) : nil, in: setting("status", status, in: text))
+    }
+
     /// The note with `link` added to its `sessions:` list, touching only that key; nil if the
     /// session is already listed.
     public static func adding(_ link: String, to text: String) -> String? {

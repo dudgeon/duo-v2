@@ -163,7 +163,7 @@ extension AppModel {
             done(.ok(on ? "Archived \(p.name): it's in the Archived rollup under the map. Undo: duo2 undo" : "\(p.name) is back in its column."))
         case .update:
             checkForUpdates(userInitiated: true) { done(.ok($0)) }
-        case .tasks, .taskMake, .taskAdd:
+        case .tasks, .taskMake, .taskAdd, .taskNew, .taskStatus:
             taskVerb(id, inv, req, done)
         case .sessionLink:
             guard let k = inv[0], let s = findSession(k, in: nil), let link = sessionLink(s.tabKey) else { return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)")) }

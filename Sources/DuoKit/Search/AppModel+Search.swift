@@ -289,7 +289,7 @@ extension AppModel {
         for p in fixture.projects where p.name.lowercased().contains(needle) && (search.scopeProject == nil || search.scopeProject == p.name) {
             let top = fixture.sessions(inProject: p.name).map(\.state).min()
             var i = SearchItem(id: "project:\(p.name)", kind: .project, goTo: true, project: nil, title: p.name)
-            i.state = top; i.detail = [p.health, p.next].compactMap { $0 }.joined(separator: " · ")
+            i.state = top; i.detail = [p.health, p.next].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
             out.append(i)
         }
         for g in fixture.groups where g.name.lowercased().contains(needle) && (search.scopeProject == nil || search.scopeProject == g.project) {
@@ -297,7 +297,7 @@ extension AppModel {
             let top = members.min { $0.state < $1.state }
             var i = SearchItem(id: "group:\(g.project)/\(g.name)", kind: .group, goTo: true, project: g.project, title: g.name)
             i.state = top?.state; i.wait = top?.wait; i.groupSessions = members.count
-            i.detail = fixture.projects.first { $0.name == g.project }.map { [$0.health, $0.next].compactMap { $0 }.joined(separator: " · ") }
+            i.detail = fixture.projects.first { $0.name == g.project }.map { [$0.health, $0.next].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ") }
             out.append(i)
         }
         for s in fixture.sessions where s.name.lowercased().contains(needle) && (search.scopeProject == nil || search.scopeProject == s.project) {

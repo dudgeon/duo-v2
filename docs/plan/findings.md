@@ -850,3 +850,13 @@ Built from the decision path page (DL-87 to DL-91):
 - Release builds ask GitHub (`/repos/dudgeon/duo-v2/releases/latest`, unauthenticated, 10 s timeout) 8 s after launch, never in capture runs. A newer release is offered once per version as a confirmation (Download opens its release page; Later remembers it in `DuoState.skippedUpdate`). Development builds (version 0.0.1) check only when asked.
 - Duo › Check for Updates… and `duo2 update` always answer: up to date, newer (with the link), or couldn't reach GitHub. Live: `duo2 update` on a dev build answered "Duo 0.1.2 is available (this is a development build)".
 - Versions compare numerically (`0.1.10` > `0.1.9`); a pre-release sorts below its release.
+
+## F-70 · Tasks day to day (2026-10-04)
+
+- **+ New task** beside + New session (and `duo2 task new <title> --project <p>`) writes `tasks/untitled-task.md` (or the title's slug) with `sessions: []` and opens it.
+- **Tasks · n** fold under the session list: the project's open tasks with no listed session yet; a line each (box, title, status past `open`), opening the note; right-click for Open Task Note and **Status ▸**.
+- **Status ▸** (task rows, task lines, `duo2 task status <task> <status>`): rewrites only `status:`; done or dropped adds `completed: <date>`, reopening removes it, so a reopened note is byte for byte what it was (checked). Done and dropped tasks leave the lists. Task rows show their status when past open.
+- **Open tasks · n** at All projects, under Needs you and Ready for review: every open task across projects with its project and status; a click opens the project on the note.
+- `duo2 task status` reads the notes from disk, not the snapshot: a task made a second earlier was "not found" (the snapshot refreshes every 2 s).
+- Also: the stray `On track ·` dot was in the map tiles and search details too (F-67 fixed only the session list).
+- Live on the fixtures: two new tasks in refunds (one set to waiting) showed in the Tasks fold; checkout's task set to review; All projects listed all three with status. 231 checks pass.

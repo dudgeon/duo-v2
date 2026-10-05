@@ -70,6 +70,8 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 shell new` | Open a plain shell in the console (DL-8); typing `claude` in it makes it a session. | New Shell |
 | `duo2 tasks [--project <p>]` | Task notes (tasks/*.md in each project) with their status and how many sessions their `sessions:` frontmatter links (DL-93). | — |
 | `duo2 task make <session\|group> [--title <t>]` | Make a Task: writes tasks/<slug>.md whose `sessions:` links the session (or the group's sessions; the group becomes the task) and opens it. Undo with `duo2 undo`. | Make a Task |
+| `duo2 task new [title] [--project <p>]` | + New task: a task note with no sessions yet, opened to write. Undo with `duo2 undo`. | + New task |
+| `duo2 task status <task> <open\|in-progress\|waiting\|review\|done\|dropped> [--project <p>]` | Set a task's status: rewrites only `status:` (and `completed:` when done or dropped). Done and dropped tasks leave the lists. Undo with `duo2 undo`. | Status |
 | `duo2 task add <task> <session>` | Add to Task: puts the session's link in the task note's `sessions:` list, touching nothing else in the note. Undo with `duo2 undo`. | Add to Task, Open Task Note |
 | `duo2 groups [--project <p>]` | Groups and their sessions, with each group's most urgent state. | — |
 | `duo2 group new <name> <session>…` | Group sessions of one project under a name. | — |

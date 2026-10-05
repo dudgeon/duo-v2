@@ -54,6 +54,29 @@ extension AppModel {
         return .success(path)
     }
 
+    /// + New task: a note with no sessions yet, opened to be named and written.
+    public func newTask(in project: String, title: String = "Untitled task") {
+        if case .failure(let e) = makeTask(title: title, sessionIds: [], project: project) { info("Couldn't make the task: \(e)") }
+    }
+
+    /// Status ▸ on a task: rewrites only `status:` (and `completed:` when done or dropped). Undoable.
+    @discardableResult
+    public func setTaskStatus(project: String, path: String, _ status: String) -> String? {
+        guard let folder = liveFolders[project] else { return "no project '\(project)'" }
+        let file = folder.appending(path: path)
+        guard let data = FileManager.default.contents(atPath: file.path), let text = String(data: data, encoding: .utf8) else { return "\(path) isn't readable" }
+        do { try Data(TaskNotes.settingStatus(status, in: text).utf8).write(to: file, options: .atomic) } catch { return error.localizedDescription }
+        registerUndo("Set Task Status") { model in try? data.write(to: file, options: .atomic); model.refreshLive() }
+        refreshLive()
+        return nil
+    }
+
+    /// Opens a task's note in its project (from Home's list or a fold).
+    public func openTask(project: String, path: String) {
+        if currentProject?.name != project { open(project: project) }
+        openDocument(path)
+    }
+
     /// Make a Task on a session's right-click menu: titled after the session.
     public func makeTask(fromSession key: String) {
         guard let s = fixture.sessions.first(where: { $0.tabKey == key || $0.sessionId == key }), let id = s.sessionId else { return }
@@ -108,6 +131,24 @@ extension AppModel {
                 case .failure(let e): done(.fail("\(e)"))
                 }
             } else { done(.fail("no session or group '\(k)'")) }
+        case .taskNew:
+            let name = inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name ?? currentProject?.name
+            guard let name, project(named: name) != nil else { return done(.fail("which project? --project <p>")) }
+            switch makeTask(title: inv.positional.isEmpty ? "Untitled task" : inv.positional.joined(separator: " "), sessionIds: [], project: name) {
+            case .success(let p): done(.ok("Made \(name)/\(p). Undo: duo2 undo"))
+            case .failure(let e): done(.fail("\(e)"))
+            }
+        case .taskStatus:
+            guard let t = inv[0], let status = inv[1], TaskNotes.statuses.contains(status) else {
+                return done(.fail("usage: \(id.action.usage) (\(TaskNotes.statuses.joined(separator: " | ")))"))
+            }
+            // From disk, not the snapshot: a task made a moment ago is found too.
+            let all = liveFolders.keys.sorted().flatMap { p in taskNotes(in: p).map { Fixture.TaskSummary(project: p, path: $0.path, title: $0.title, status: $0.status, sessionIds: $0.sessionIds) } }
+            let hit = all.filter { $0.path == t || $0.path == "tasks/\(t)" || $0.path == "tasks/\(t).md" || $0.title.caseInsensitiveCompare(t) == .orderedSame }
+                .first { inv.flags["project"] == nil || $0.project == inv.flags["project"] }
+            guard let hit else { return done(.fail("no task '\(t)'")) }
+            if let why = setTaskStatus(project: hit.project, path: hit.path, status) { return done(.fail(why)) }
+            done(.ok("\(hit.title) is \(status). Undo: duo2 undo"))
         case .taskAdd:
             guard let t = inv[0], let k = inv[1], let s = findSession(k, in: nil) else { return done(.fail("usage: \(id.action.usage)")) }
             let path = t.hasPrefix("tasks/") ? t : taskNotes(in: s.project).first { $0.title.caseInsensitiveCompare(t) == .orderedSame || $0.path == "tasks/\(t)" || $0.path == "tasks/\(t).md" }?.path
@@ -130,6 +171,7 @@ struct GroupRowMenu: ViewModifier {
             content.contextMenu {
                 if let task {
                     Button("Open Task Note") { model.openDocument(task) }
+                    TaskStatusMenu(project: project, path: task)
                 } else {
                     Button("Make a Task") { model.makeTask(fromGroup: name, project: project) }
                 }
@@ -137,5 +179,82 @@ struct GroupRowMenu: ViewModifier {
         } else {
             content
         }
+    }
+}
+
+/// Status ▸ open / in-progress / waiting / review / done / dropped, the current one checked.
+struct TaskStatusMenu: View {
+    @Environment(AppModel.self) private var model
+    let project: String
+    let path: String
+
+    var body: some View {
+        let current = model.fixture.tasks?.first { $0.project == project && $0.path == path }?.status ?? "open"
+        Menu("Status") {
+            ForEach(TaskNotes.statuses, id: \.self) { st in
+                Button { if let why = model.setTaskStatus(project: project, path: path, st) { model.info(why) } } label: {
+                    if st == current { Label(st, systemImage: "checkmark") } else { Text(st) }
+                }
+            }
+        }
+    }
+}
+
+/// Tasks with no sessions yet (DL-93): a fold under the session list. Stand-in look (S2-1).
+struct TasksFold: View {
+    @Environment(AppModel.self) private var model
+    let project: String
+
+    var body: some View {
+        let listed = Set(model.fixture.sessions(inProject: project).compactMap(\.sessionId))
+        let tasks = (model.fixture.tasks ?? []).filter { $0.project == project && $0.isOpen && !$0.sessionIds.contains(where: listed.contains) }
+        if !tasks.isEmpty {
+            let key = "\(project)/tasks-fold"
+            let expanded = !model.expandedGroups.contains(key)   // open unless folded
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: DuoSpace.gapRowItems) {
+                    Chevron(direction: expanded ? .down : .right).frame(width: 10)
+                    Text("Tasks · \(tasks.count)").duoText(.body).foregroundStyle(DuoColor.text2)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 8 + DuoSpace.selectionInset)
+                .frame(height: DuoMetric.rowGroup)
+                .contentShape(Rectangle())
+                .onActivate { if expanded { model.expandedGroups.insert(key) } else { model.expandedGroups.remove(key) } }  // action: view group
+                .accessibilityLabel(expanded ? "Hide tasks without sessions" : "Show \(tasks.count) tasks without sessions")
+                .padding(.top, 8)
+                if expanded {
+                    ForEach(tasks) { t in TaskLine(task: t, showsProject: false) }
+                }
+            }
+        }
+    }
+}
+
+/// One task as a line: a box, its title, its status (and project at All projects). Opens its note.
+struct TaskLine: View {
+    @Environment(AppModel.self) private var model
+    let task: Fixture.TaskSummary
+    let showsProject: Bool
+
+    var body: some View {
+        HStack(spacing: DuoSpace.gapRowItems) {
+            Image(systemName: "square").font(.system(size: 9, weight: .semibold)).foregroundStyle(DuoColor.text2).frame(width: 10)
+                .accessibilityHidden(true)
+            Text(task.title).duoText(.body).lineLimit(1)
+            if showsProject { Text(task.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1) }
+            Spacer(minLength: 8)
+            if let st = task.status, st != "open" { Text(st).duoText(.body).foregroundStyle(DuoColor.text2) }
+        }
+        .padding(.horizontal, 8 + DuoSpace.selectionInset)
+        .frame(height: DuoMetric.rowSession)
+        .contentShape(Rectangle())
+        .onActivate { model.openTask(project: task.project, path: task.path) }  // action: doc open
+        .contextMenu {
+            Button("Open Task Note") { model.openTask(project: task.project, path: task.path) }
+            TaskStatusMenu(project: task.project, path: task.path)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(task.title), task, \(task.status ?? "open")")
     }
 }

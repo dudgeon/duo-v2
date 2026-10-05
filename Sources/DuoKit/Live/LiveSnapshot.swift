@@ -97,6 +97,7 @@ public enum LiveSnapshot {
         var files: [String: [String]] = [:]
         var folders: [String: URL] = [:]
         var claimed = Set<String>()
+        var allTasks: [Fixture.TaskSummary] = []
 
         // Where each filed session actually is (F-32): a live session's cwd, else the project
         // whose folder its transcript is filed under. `/cd` moves both.
@@ -170,6 +171,7 @@ public enum LiveSnapshot {
             }
             // Tasks (DL-93): a note's `sessions:` links make its bundle, beside the groups (DL-88).
             for t in TaskNotes.load(project: f.folder) {
+                allTasks.append(.init(project: name, path: t.path, title: t.title, status: t.status, sessionIds: t.sessionIds))
                 let names = t.sessionIds.compactMap { id in sessions.first { $0.sessionId == id && $0.project == name }?.name }
                 guard !names.isEmpty else { continue }
                 groups.append(Fixture.Group(name: t.title, project: name, sessions: names, threads: names.map { [$0] }, task: t.path))
@@ -266,7 +268,8 @@ public enum LiveSnapshot {
             homeInbox: [],
             focusDocument: .init(project: "", path: "", sections: [], addedByClaude: []),
             projectFiles: files,
-            archivedSessions: archived
+            archivedSessions: archived,
+            tasks: allTasks
         )
         return (fixture, folders, moves)
     }

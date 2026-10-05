@@ -78,6 +78,19 @@ public struct Fixture: Codable, Sendable, Equatable {
     public var projectFiles: [String: [String]]
     /// Sessions the user archived (filed away), kept apart from `sessions` so no list or count shows them.
     public var archivedSessions: [Session]? = nil
+    /// Every task note in every project (DL-93), with or without sessions.
+    public var tasks: [TaskSummary]? = nil
+
+    public struct TaskSummary: Codable, Sendable, Equatable, Identifiable {
+        public var project: String
+        public var path: String
+        public var title: String
+        public var status: String?
+        public var sessionIds: [String]
+        public var id: String { project + "/" + path }
+        /// Done and dropped tasks leave the lists (they stay notes).
+        public var isOpen: Bool { !["done", "dropped"].contains(status ?? "") }
+    }
 
     public static func load(from url: URL) throws -> Fixture {
         try JSONDecoder().decode(Fixture.self, from: Data(contentsOf: url))

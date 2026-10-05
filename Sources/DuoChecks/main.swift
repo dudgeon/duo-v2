@@ -63,6 +63,12 @@ func repoFixture() throws -> Fixture {
         check(TaskNotes.adding(TaskNotes.link(title: "z", id: id2), to: none).map { TaskNotes.parse($0, path: "tasks/just.md") }?.sessionIds == [id2]
               && TaskNotes.parse(none, path: "tasks/just.md").title == "Just a note", "a note with no frontmatter gets one; title from its heading")
         check(TaskNotes.slug("Exec review — prep (v2)!") == "exec-review-prep-v2", "slug filenames")
+        let day = Date(timeIntervalSince1970: 1_791_000_000)
+        let done = TaskNotes.settingStatus("done", in: fresh, today: day)
+        check(TaskNotes.parse(done, path: "t.md").status == "done" && done.contains("\ncompleted: 2026-") && done.hasSuffix("# Exec review prep\n\n"),
+              "status done adds completed:, nothing else changes")
+        check(TaskNotes.settingStatus("in-progress", in: done) == fresh.replacingOccurrences(of: "status: open", with: "status: in-progress"),
+              "reopening removes completed: and puts the note back as it was")
     }
 
     print("restore on relaunch (LR-58)")

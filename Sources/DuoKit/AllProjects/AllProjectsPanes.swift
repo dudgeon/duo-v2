@@ -231,7 +231,7 @@ struct ProjectTile: View {
                     .duoText(.body).foregroundStyle(DuoColor.text2)
             } else {
                 Text(project.goal).duoText(.body).fixedSize(horizontal: false, vertical: true)
-                Text([project.health, project.next].compactMap { $0 }.joined(separator: " · "))
+                Text([project.health, project.next].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
                     .duoText(.body)
                     .foregroundStyle(DuoColor.text2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -360,6 +360,16 @@ struct ActionColumnPane: View {
                     SectionLabel(text: "Ready for review", count: reviews.count)
                         .padding(.top, needsYou.isEmpty ? 0 : 6)
                     ForEach(reviews) { s in ReviewCard(session: s) }
+                }
+                // Open tasks across projects (DL-93): what you're working on. Stand-in look (S2-5).
+                let tasks = (f.tasks ?? []).filter(\.isOpen)
+                if !tasks.isEmpty {
+                    SectionLabel(text: "Open tasks", count: tasks.count)
+                        .padding(.top, needsYou.isEmpty && reviews.isEmpty ? 0 : 6)
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(tasks) { t in TaskLine(task: t, showsProject: true) }
+                    }
+                    .padding(.horizontal, -(8 + DuoSpace.selectionInset))
                 }
             }
             .padding(DuoSpace.panePadding)

@@ -37,9 +37,13 @@ struct ProjectSidebarPane: View {
                         }
                         ForEach(section.rows) { row in SidebarRowView(row: row) }
                     }
+                    if let project, model.terminalsMode == .live { TasksFold(project: project.name) }
                     if let project { ArchivedSessionsFold(project: project.name) }
                     HStack(spacing: DuoSpace.gapButtonToButton) {
                         Button("+ New session") { model.newSession() }.buttonStyle(.duo)
+                        if let project, model.terminalsMode == .live {
+                            Button("+ New task") { model.newTask(in: project.name) }.buttonStyle(.duo)
+                        }
                     }
                     .padding(.horizontal, DuoSpace.panePadding)
                     .padding(.vertical, 14)
@@ -102,6 +106,10 @@ struct SidebarRowView: View {
                     Text(row.name).duoText(.bodyEmphasis).lineLimit(1)
                     // Tasks and groups mix by urgency; the pill says which (DL-93).
                     CountPill(text: "\(row.task == nil ? "group" : "task") · \(count)", emphasised: true)
+                    // A task's status, when it's past open (DL-93).
+                    if let task = row.task, let st = model.fixture.tasks?.first(where: { $0.path == task && $0.project == model.currentProject?.name })?.status, st != "open" {
+                        Text(st).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+                    }
                     Spacer(minLength: 8)
                     WaitLabel(text: row.wait)
                 }
