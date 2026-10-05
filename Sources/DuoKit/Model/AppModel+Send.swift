@@ -96,7 +96,7 @@ extension AppModel {
     /// A file or folder, as an @-reference relative to the receiving session's folder when it's
     /// inside it, else absolute.
     public func filePayload(_ path: String, for key: String?) -> String? {
-        guard let url = projectFolder?.appending(path: path) else { return nil }
+        guard let url = fileURL(path) else { return nil }
         let abs = url.standardizedFileURL.path
         if let cwd = key.flatMap(cwd(of:)).map({ URL(fileURLWithPath: $0).standardizedFileURL.path }), abs.hasPrefix(cwd + "/") {
             return SendFormat.file(String(abs.dropFirst(cwd.count + 1)))

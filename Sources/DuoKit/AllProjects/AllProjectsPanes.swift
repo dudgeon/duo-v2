@@ -372,7 +372,7 @@ struct OutsideGroup: View {
                     .foregroundStyle(DuoColor.text2)
                     .frame(height: DuoMetric.rowTileSession)
                     .contentShape(Rectangle())
-                    .onActivate { model.openOutsideGroups.insert(column.topic) }  // not an action: view-only unfold
+                    .onActivate { model.openOutsideGroups.insert(column.topic) }  // not an action: view-only unfold, like scrolling
                     .accessibilityAddTraits(.isButton)
             }
         }

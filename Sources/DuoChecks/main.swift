@@ -978,6 +978,50 @@ func repoFixture() throws -> Fixture {
     check(settled.outside.first?.topic == "~/repos" && settled.outside.first?.projects.first?.name == "golf", "the order holds what was settled on arrival")
     check(MapLayout.minutesAgo("3d") == 4320 && MapLayout.minutesAgo("at prompt") == 0 && MapLayout.minutesAgo(nil) == nil, "wait words to minutes")
     check(MapLayout.homeSessions(many).first?.state == .needsYou, "Home's tile lists its sessions in attention order")
+
+    print("files in and out of the project (C-20, DL-102, DL-103, DL-104)")
+    let treeDir = FileManager.default.temporaryDirectory.appending(path: "duo-tree-\(UUID().uuidString)")
+    let tfm = FileManager.default
+    for d in ["docs/deep", ".git", ".claude/worktrees/x", ".claude/skills", "node_modules/pkg", ".duo"] { try tfm.createDirectory(at: treeDir.appending(path: d), withIntermediateDirectories: true) }
+    for f in ["PROJECT.md", "docs/a.md", "docs/deep/b.md", ".env", ".gitignore", ".DS_Store", ".claude/settings.json"] { try Data("x".utf8).write(to: treeDir.appending(path: f)) }
+    check(AppModel.contained("docs/a.md", in: treeDir) != nil && AppModel.contained("../outside.md", in: treeDir) == nil
+          && AppModel.contained("docs/../../x", in: treeDir) == nil && AppModel.contained("/etc/hosts", in: treeDir) == nil,
+          "a tree path can't leave the project (C-20)")
+    let closed = LiveSnapshot.treeFiles(treeDir)
+    check(closed == ["PROJECT.md", "docs/"], "the tree lists the top level only, folders closed, no dotfiles")
+    check(LiveSnapshot.treeFiles(treeDir, expanded: ["docs"]) == ["PROJECT.md", "docs/", "docs/a.md", "docs/deep/"], "an open folder lists what's inside it, one level")
+    let hidden = LiveSnapshot.treeFiles(treeDir, showHidden: true, expanded: [".claude"])
+    check(hidden.contains(".env") && hidden.contains(".gitignore") && hidden.contains(".claude/") && hidden.contains(".claude/skills/")
+          && !hidden.contains(".git/") && !hidden.contains(".DS_Store") && !hidden.contains(".duo/") && !hidden.contains(".claude/worktrees/") && !hidden.contains("node_modules/"),
+          "Show Hidden Files adds dotfiles; .git, .DS_Store, .duo, worktrees and node_modules never show (DL-102)")
+    check(LiveSnapshot.topLevelFiles(treeDir).contains("docs/deep/b.md"), "duo2 files still lists three levels, whatever the tree has open")
+    let outsideFile = FileManager.default.temporaryDirectory.appending(path: "duo-outside-\(UUID().uuidString).md")
+    try Data("# outside".utf8).write(to: outsideFile)
+    var tabsFixture = f
+    tabsFixture.projects.append(decoded(["name": "treeproj", "topic": "Platform", "path": treeDir.path, "goal": "g"]))
+    let tabsModel = AppModel(fixture: tabsFixture)
+    tabsModel.terminalsMode = .live
+    tabsModel.liveFolders["treeproj"] = treeDir
+    tabsModel.open(project: "treeproj")
+    let outTab = tabsModel.openFile(at: outsideFile)
+    check(outTab == AppModel.outsideFilePrefix + outsideFile.standardizedFileURL.path && tabsModel.liveFile(outTab ?? "") != nil
+          && tabsModel.openFile(at: treeDir.appending(path: "docs/a.md")) == "docs/a.md" && tabsModel.openFile(at: treeDir.appending(path: "docs")) == nil,
+          "Open File…: outside files as file: tabs, the project's own as themselves, folders refused (DL-103)")
+    check(tabsModel.expandedFolders["treeproj"]?.contains("docs") == true, "opening a document opens its folders in the tree")
+    tabsModel.rightTab = outTab
+    tabsModel.open(project: "checkout-redesign")
+    tabsModel.zoomOut()
+    tabsModel.open(project: "treeproj")
+    check(tabsModel.rightTab == outTab && tabsModel.openDocuments.contains(outTab ?? ""), "coming back to a project shows the tab it was on, an outside file too (DL-104)")
+    tabsModel.open(project: "checkout-redesign", session: "Teardown research")
+    let wasConsole = tabsModel.consoleTab
+    tabsModel.open(project: "treeproj")
+    tabsModel.open(project: "checkout-redesign")
+    check(wasConsole != nil && tabsModel.consoleTab == wasConsole, "coming back shows the console tab it was on, not the most urgent (DL-104)")
+    let tabsSaved = tabsModel.currentRestoreState()
+    check(tabsSaved.projects.first { $0.folder == treeDir.path }?.rightTab == outTab, "the restore file keeps each project's tabs, not only the one on screen")
+    try? tfm.removeItem(at: treeDir)
+    try? tfm.removeItem(at: outsideFile)
 }
 
 do { try MainActor.assumeIsolated { try run() } } catch { print("✘ setup: \(error)"); failures += 1 }

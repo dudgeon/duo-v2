@@ -37,7 +37,8 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Session list: Needs you, Open, Today, This week, Earlier, Tasks, Archived | Designed (DL-100) | slice2 `project-sessions.html`, `session-rows.html` | DB-33 (open tint) | `Project/ProjectPanes.swift` |
 | Task rows and group rows | Designed (DL-100): task box, "status · n", no wait; groups keep `group · n` | slice2 `session-rows.html` | — | SidebarRowView, GroupRowMenu, TaskBox |
 | Untitled sessions (first words, start time) | Built (DL-90) | — | — | `Live/SessionTitles.swift` |
-| Files tree | Designed | build `project.html` | — | FileTreePane |
+| Files tree | Designed; open and closed folders and hidden files are stand-ins (DL-102) | build `project.html` | Q-39 | FileTreePane |
+| A tab for a file outside the project | Stand-in (DL-103): the file name, its path as the tooltip; File › Open File… (⌘O) or a drop from Finder | — | Q-38 | RightPane, `Model/AppModel+Files.swift` `openFile` |
 | Console and its tabs | Designed (DB-4 shell tabs) | build `project.html`, surfaces `shell-tab.html`, `console-tabs.html` | — | `Project/ConsoleTabStrip.swift` |
 | Console with nothing running; ended session bar | Designed (DB-3) | surfaces `console-none.html`, `console-ended.html`, `console-empty-states.html` | — | `Project/ConsoleStates.swift` |
 | Terminal colours | Designed (DB-2) | surfaces `terminal-palette.html` | — | `terminal*` tokens |

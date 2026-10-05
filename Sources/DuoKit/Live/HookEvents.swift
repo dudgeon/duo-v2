@@ -204,6 +204,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var archivedSessions: [String] = []
     /// The map's order (DL-101): "recent" (the default) or "name".
     public var mapSort: String?
+    /// View › Show Hidden Files (DL-102).
+    public var showHiddenFiles = false
 
     public init() {}
     public init(from decoder: Decoder) throws {
@@ -220,6 +222,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         archivedProjects = try c.decodeIfPresent([String].self, forKey: .archivedProjects) ?? []
         archivedSessions = try c.decodeIfPresent([String].self, forKey: .archivedSessions) ?? []
         mapSort = try c.decodeIfPresent(String.self, forKey: .mapSort)
+        showHiddenFiles = try c.decodeIfPresent(Bool.self, forKey: .showHiddenFiles) ?? false
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {

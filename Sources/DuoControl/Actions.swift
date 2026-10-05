@@ -33,6 +33,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
     case viewSidebar = "view sidebar", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
+    case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFolder = "view folder"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
     case projectArchive = "project archive", projectUnarchive = "project unarchive"
@@ -130,6 +131,10 @@ extension DuoAction {
         .init(.viewTab, .view, "<Project | document path | group>", "Switch the right pane's tab.", ui: ["right pane tab"]),
         .init(.viewGroup, .view, "<group> expand|collapse", "Expand or collapse a group in the session list.", ui: ["group row"]),
         .init(.viewSelect, .view, "<session id>", "Select a session's card (action column or peek) without opening it.", ui: ["action card", "peek card"]),
+        .init(.viewSort, .view, "recent|name", "Order All projects' map by newest activity or by name (View › Sort Projects By).", ui: ["Sort Projects By", "map sort popup"]),
+        .init(.viewFilter, .view, "[text]", "Narrow All projects' map to projects and folders whose name or path has the text; no text clears it.", ui: ["Filter folders"]),
+        .init(.viewHidden, .view, "on|off|toggle", "Show or hide dotfiles in the project's file tree (View › Show Hidden Files).", ui: ["Show Hidden Files"]),
+        .init(.viewFolder, .view, "<folder> open|close", "Open or close a folder in the project's file tree.", ui: ["folder row"]),
 
         // Projects
         .init(.projects, .projects, "", "Projects and folders with sessions, with goal, health and next step.", everyday: true),
@@ -200,7 +205,7 @@ extension DuoAction {
         .init(.groupDelete, .sessions, "<group>", "Ungroup: the group goes, its sessions stay."),
 
         // Files (paths are relative to the project, or absolute)
-        .init(.files, .files, "[folder] [--project <p>]", "The project's files and folders."),
+        .init(.files, .files, "[folder] [--project <p>] [--hidden]", "The project's files and folders, three levels deep; --hidden includes dotfiles."),
         .init(.fileNew, .files, "[--in <folder>] [--name <name>]", "Create a Markdown file and open it.", ui: ["New Markdown File", "right pane +"]),
         .init(.fileNewFolder, .files, "[--in <folder>] [--name <name>]", "Create a folder.", ui: ["New Folder"]),
         .init(.fileTemplate, .files, "<template> [--in <folder>]", "Create a file from a template (the project's templates/, then Home's).", ui: ["New from Template"]),
@@ -215,7 +220,7 @@ extension DuoAction {
               ui: ["Copy Path", "Copy Relative Path", "Copy as Link"]),
 
         // Documents
-        .init(.docOpen, .docs, "<path>", "Open a document in the right pane (Markdown in the editor, HTML as a page).", ui: ["Open", "file row"], everyday: true),
+        .init(.docOpen, .docs, "<path> [--project <p>]", "Open a document in the right pane (Markdown in the editor, HTML as a page). A file outside every project opens as a tab in the project on screen (or --project).", ui: ["Open", "file row", "Open File…", "file dropped on the right pane"], everyday: true),
         .init(.docClose, .docs, "[path] [--others]", "Close a document tab (saved first), or every other one.", ui: ["Close Tab", "Close Other Tabs"]),
         .init(.docTabs, .docs, "", "The open document tabs, and which one shows."),
         .init(.docStatus, .docs, "<file>", "Whether a file is open in Duo's editor, unsaved or in conflict. Check before editing a file the user may have open.", everyday: true),

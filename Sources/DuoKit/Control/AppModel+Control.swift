@@ -75,6 +75,22 @@ extension AppModel {
         case .viewSidebar:
             switch inv[0] { case "show": leftCollapsed = false; case "hide": leftCollapsed = true; default: leftCollapsed.toggle() }
             done(.ok(leftCollapsed ? "Left pane hidden." : "Left pane showing."))
+        case .viewSort:
+            guard let s = inv[0].flatMap(MapSort.init(rawValue:)) else { return done(.fail("usage: \(id.action.usage)")) }
+            setMapSort(s)
+            done(.ok("All projects sorted by \(s.title.lowercased())."))
+        case .viewFilter:
+            mapFilter = inv.positional.joined(separator: " ")
+            let m = mapLayout
+            done(.ok(mapFilter.isEmpty ? "Filter cleared." : "\(m.shown) of \(m.total) match '\(mapFilter)'."))
+        case .viewHidden:
+            switch inv[0] { case "on": setShowHiddenFiles(true); case "off": setShowHiddenFiles(false); default: setShowHiddenFiles(!showHiddenFiles) }
+            done(.ok(showHiddenFiles ? "Hidden files showing." : "Hidden files hidden."))
+        case .viewFolder:
+            guard let f = inv[0], currentProject != nil else { return done(.fail(currentProject == nil ? "no project is open" : "usage: \(id.action.usage)")) }
+            let path = f.hasSuffix("/") ? String(f.dropLast()) : f
+            if (inv[1] == "open") != isFolderOpen(path) { toggleFolder(path) }
+            done(.ok("\(path)/ \(isFolderOpen(path) ? "open" : "closed")."))
         case .viewTab:
             guard let tab = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             guard currentProject != nil else { return done(.fail("no project is open")) }
@@ -316,16 +332,30 @@ extension AppModel {
         // MARK: Documents
         case .docOpen:
             guard let f = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
-            guard let (p, rel) = locate(f, inv, req) else { return done(.fail("'\(f)' isn't a file in a project Duo knows")) }
+            guard let (p, rel) = locate(f, inv, req) else {
+                // A file outside every project opens as a tab in the project asked for, or on screen (DL-103).
+                let url = URL(fileURLWithPath: (f as NSString).expandingTildeInPath, relativeTo: req.cwd.map { URL(fileURLWithPath: $0, isDirectory: true) }).absoluteURL
+                guard let target = inv.flags["project"] ?? currentProject?.name, FileManager.default.fileExists(atPath: url.path) else {
+                    return done(.fail("'\(f)' isn't a file in a project Duo knows; to open a file from elsewhere, open a project or pass --project"))
+                }
+                if currentProject?.name != target { open(project: target) }
+                guard openFile(at: url) != nil else { return done(.fail("'\(f)' is a folder, not a file")) }
+                return done(.ok("Opened \(url.path) in \(target)."))
+            }
             if currentProject?.name != p { open(project: p) }
             openDocument(rel)
             done(.ok("Opened \(rel) in \(p)."))
         case .docClose:
+            // An outside file's tab is named by its path (DL-103).
+            let outsideTab = inv[0].flatMap { f -> String? in
+                let t = Self.outsideFilePrefix + URL(fileURLWithPath: (f as NSString).expandingTildeInPath).standardizedFileURL.path
+                return openDocuments.contains(t) ? t : nil
+            }
             if inv.has("others") {
-                guard let keep = inv[0].flatMap({ relativePath($0, project: currentProject?.name, cwd: req.cwd) }) ?? rightTab else { return done(.fail("no document showing")) }
+                guard let keep = outsideTab ?? inv[0].flatMap({ relativePath($0, project: currentProject?.name, cwd: req.cwd) }) ?? rightTab else { return done(.fail("no document showing")) }
                 closeOtherDocuments(than: keep); return done(.ok("Closed every tab but \(keep)."))
             }
-            guard let path = inv[0].flatMap({ relativePath($0, project: currentProject?.name, cwd: req.cwd) }) ?? rightTab, openDocuments.contains(path) else {
+            guard let path = outsideTab ?? inv[0].flatMap({ relativePath($0, project: currentProject?.name, cwd: req.cwd) }) ?? rightTab, openDocuments.contains(path) else {
                 return done(.fail("that document isn't open"))
             }
             closeDocument(path); done(.ok("Closed \(path)."))
@@ -534,7 +564,10 @@ extension AppModel {
             switch id {
             case .files:
                 let base = inv[0].flatMap { relativePath($0, project: p.name, cwd: req.cwd) }
-                let all = (fixture.projectFiles[p.name] ?? []).filter { base == nil || $0.hasPrefix(base! + "/") }
+                // Three levels from disk, not the tree's open folders (DL-102); --hidden adds dotfiles.
+                let listed = terminalsMode == .live ? LiveSnapshot.topLevelFiles(folder, showHidden: inv.has("hidden") || showHiddenFiles)
+                                                    : fixture.projectFiles[p.name] ?? []
+                let all = listed.filter { base == nil || $0.hasPrefix(base! + "/") }
                 done(.ok(all.isEmpty ? "No files listed for \(p.name)." : "\(p.name) (\(folder.path)):\n" + all.joined(separator: "\n"), all))
             case .fileNew, .fileNewFolder:
                 guard let d = dir() else { return done(.fail("no folder '\(inv.flags["in"]!)'")) }
