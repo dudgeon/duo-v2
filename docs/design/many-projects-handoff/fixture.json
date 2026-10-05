@@ -1,0 +1,2789 @@
+{
+ "$note": "S4-1 (DL-101): the map with many projects. Made by scripts/make-many-fixture.py; don't edit by hand.",
+ "now": "2026-10-05T09:40:00",
+ "user": "Geoff",
+ "topics": [
+  "",
+  "payments",
+  "growth",
+  "~/repos",
+  "~/Desktop",
+  "~/Documents",
+  "~/Downloads",
+  "~/code/work",
+  "~",
+  "/private/tmp"
+ ],
+ "projects": [
+  {
+   "name": "claude-home",
+   "path": "~/claude-home",
+   "isHome": true,
+   "goal": "Triage, inbox and the weekly status"
+  },
+  {
+   "name": "pricing-page",
+   "topic": "",
+   "path": "~/claude-home/pricing-page",
+   "goal": "Launch the new tiers by Oct 20",
+   "health": "On track",
+   "next": "Copy freeze Oct 12"
+  },
+  {
+   "name": "q4-planning",
+   "topic": "",
+   "path": "~/claude-home/q4-planning",
+   "goal": "Q4 plan signed off by staff",
+   "health": "At risk",
+   "next": "Draft due Oct 9"
+  },
+  {
+   "name": "checkout",
+   "topic": "payments",
+   "path": "~/claude-home/payments/checkout",
+   "goal": "Cut guest-checkout abandonment 15% by Q1",
+   "health": "On track",
+   "next": "Exec review Oct 14"
+  },
+  {
+   "name": "refunds",
+   "topic": "payments",
+   "path": "~/claude-home/payments/refunds",
+   "goal": "Ship refunds API spec to eng by Oct 10",
+   "health": "At risk",
+   "next": "Spec review Oct 8"
+  },
+  {
+   "name": "onboarding",
+   "topic": "growth",
+   "path": "~/claude-home/growth/onboarding",
+   "goal": "Lift day-7 activation to 40%",
+   "health": "On track",
+   "next": "Copy freeze Oct 6"
+  },
+  {
+   "name": "duo-v2",
+   "topic": "~/repos",
+   "path": "~/repos/duo-v2",
+   "goal": "",
+   "kind": "folder",
+   "hasClaudeMD": true
+  },
+  {
+   "name": "pm-harness",
+   "topic": "~/repos",
+   "path": "~/repos/pm-harness",
+   "goal": "",
+   "kind": "folder",
+   "hasClaudeMD": true
+  },
+  {
+   "name": "duo-legacy",
+   "topic": "~/repos",
+   "path": "~/repos/duo-legacy",
+   "goal": "",
+   "kind": "folder",
+   "hasClaudeMD": true
+  },
+  {
+   "name": "obsidian-sync",
+   "topic": "~/repos",
+   "path": "~/repos/obsidian-sync",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "dotfiles",
+   "topic": "~/repos",
+   "path": "~/repos/dotfiles",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "blog",
+   "topic": "~/repos",
+   "path": "~/repos/blog",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "claude-skills",
+   "topic": "~/repos",
+   "path": "~/repos/claude-skills",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "mcp-notion",
+   "topic": "~/repos",
+   "path": "~/repos/mcp-notion",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "fin-models",
+   "topic": "~/repos",
+   "path": "~/repos/fin-models",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "interview-kit",
+   "topic": "~/repos",
+   "path": "~/repos/interview-kit",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "slackbot",
+   "topic": "~/repos",
+   "path": "~/repos/slackbot",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "scratch",
+   "topic": "~/repos",
+   "path": "~/repos/scratch",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "website-2024",
+   "topic": "~/repos",
+   "path": "~/repos/website-2024",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "data-pipes",
+   "topic": "~/repos",
+   "path": "~/repos/data-pipes",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "prd-templates",
+   "topic": "~/repos",
+   "path": "~/repos/prd-templates",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "analytics-sql",
+   "topic": "~/repos",
+   "path": "~/repos/analytics-sql",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "roadmap-viz",
+   "topic": "~/repos",
+   "path": "~/repos/roadmap-viz",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "okr-tracker",
+   "topic": "~/repos",
+   "path": "~/repos/okr-tracker",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "ai-evals",
+   "topic": "~/repos",
+   "path": "~/repos/ai-evals",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "research-bot",
+   "topic": "~/repos",
+   "path": "~/repos/research-bot",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "figma-export",
+   "topic": "~/repos",
+   "path": "~/repos/figma-export",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "launch-checklist",
+   "topic": "~/repos",
+   "path": "~/repos/launch-checklist",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "pricing-sim",
+   "topic": "~/repos",
+   "path": "~/repos/pricing-sim",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "survey-tools",
+   "topic": "~/repos",
+   "path": "~/repos/survey-tools",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "interviews",
+   "topic": "~/Desktop",
+   "path": "~/Desktop/interviews",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "offsite-plan",
+   "topic": "~/Desktop",
+   "path": "~/Desktop/offsite-plan",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "board-deck",
+   "topic": "~/Desktop",
+   "path": "~/Desktop/board-deck",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "q3-review",
+   "topic": "~/Desktop",
+   "path": "~/Desktop/q3-review",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "competitor-teardown",
+   "topic": "~/Desktop",
+   "path": "~/Desktop/competitor-teardown",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "screenshots",
+   "topic": "~/Desktop",
+   "path": "~/Desktop/screenshots",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "tmp-notes",
+   "topic": "~/Desktop",
+   "path": "~/Desktop/tmp-notes",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "hiring",
+   "topic": "~/Desktop",
+   "path": "~/Desktop/hiring",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "taxes-2025",
+   "topic": "~/Documents",
+   "path": "~/Documents/taxes-2025",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "house",
+   "topic": "~/Documents",
+   "path": "~/Documents/house",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "resume",
+   "topic": "~/Documents",
+   "path": "~/Documents/resume",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "reading-notes",
+   "topic": "~/Documents",
+   "path": "~/Documents/reading-notes",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "letters",
+   "topic": "~/Documents",
+   "path": "~/Documents/letters",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "journal",
+   "topic": "~/Documents",
+   "path": "~/Documents/journal",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "recipes",
+   "topic": "~/Documents",
+   "path": "~/Documents/recipes",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "travel-japan",
+   "topic": "~/Documents",
+   "path": "~/Documents/travel-japan",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "kids-school",
+   "topic": "~/Documents",
+   "path": "~/Documents/kids-school",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "invoice-parse",
+   "topic": "~/Downloads",
+   "path": "~/Downloads/invoice-parse",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "csv-cleanup",
+   "topic": "~/Downloads",
+   "path": "~/Downloads/csv-cleanup",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "pdf-merge",
+   "topic": "~/Downloads",
+   "path": "~/Downloads/pdf-merge",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "statements",
+   "topic": "~/Downloads",
+   "path": "~/Downloads/statements",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "transcript-dump",
+   "topic": "~/Downloads",
+   "path": "~/Downloads/transcript-dump",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "logo-files",
+   "topic": "~/Downloads",
+   "path": "~/Downloads/logo-files",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "export-0912",
+   "topic": "~/Downloads",
+   "path": "~/Downloads/export-0912",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "payments-api",
+   "topic": "~/code/work",
+   "path": "~/code/work/payments-api",
+   "goal": "",
+   "kind": "folder",
+   "hasClaudeMD": true
+  },
+  {
+   "name": "ledger",
+   "topic": "~/code/work",
+   "path": "~/code/work/ledger",
+   "goal": "",
+   "kind": "folder",
+   "hasClaudeMD": true
+  },
+  {
+   "name": "checkout-web",
+   "topic": "~/code/work",
+   "path": "~/code/work/checkout-web",
+   "goal": "",
+   "kind": "folder",
+   "hasClaudeMD": true
+  },
+  {
+   "name": "risk-rules",
+   "topic": "~/code/work",
+   "path": "~/code/work/risk-rules",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "ops-scripts",
+   "topic": "~/code/work",
+   "path": "~/code/work/ops-scripts",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "design-tokens",
+   "topic": "~/code/work",
+   "path": "~/code/work/design-tokens",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "mobile-app",
+   "topic": "~/code/work",
+   "path": "~/code/work/mobile-app",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "admin-console",
+   "topic": "~/code/work",
+   "path": "~/code/work/admin-console",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "feature-flags",
+   "topic": "~/code/work",
+   "path": "~/code/work/feature-flags",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "docs-site",
+   "topic": "~/code/work",
+   "path": "~/code/work/docs-site",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "geoff",
+   "topic": "~",
+   "path": "~",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "tmp.x8Yq2",
+   "topic": "/private/tmp",
+   "path": "/private/tmp/tmp.x8Yq2",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "claude-test",
+   "topic": "/private/tmp",
+   "path": "/private/tmp/claude-test",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "sandbox-1",
+   "topic": "/private/tmp",
+   "path": "/private/tmp/sandbox-1",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "sandbox-2",
+   "topic": "/private/tmp",
+   "path": "/private/tmp/sandbox-2",
+   "goal": "",
+   "kind": "folder"
+  },
+  {
+   "name": "tmp.Ka01",
+   "topic": "/private/tmp",
+   "path": "/private/tmp/tmp.Ka01",
+   "goal": "",
+   "kind": "folder"
+  }
+ ],
+ "sessions": [
+  {
+   "name": "Morning triage",
+   "project": "claude-home",
+   "state": "needsYou",
+   "wait": "1m",
+   "question": "5 new asks: route 3 to projects?",
+   "reason": "question"
+  },
+  {
+   "name": "Weekly status draft",
+   "project": "claude-home",
+   "state": "working",
+   "wait": "working"
+  },
+  {
+   "name": "Inbox sweep",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "2h"
+  },
+  {
+   "name": "Legal call prep",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "5h"
+  },
+  {
+   "name": "Q4 pricing numbers?",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "1d"
+  },
+  {
+   "name": "Vendor shortlist",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "2d"
+  },
+  {
+   "name": "Reading: buyer interviews",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "3d"
+  },
+  {
+   "name": "“Summarise the six buyer…”",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "4d"
+  },
+  {
+   "name": "Session 1",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "Session 2",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "Session 3",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "Session 4",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "8d"
+  },
+  {
+   "name": "Session 5",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "9d"
+  },
+  {
+   "name": "Session 6",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "10d"
+  },
+  {
+   "name": "Session 7",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "Session 8",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "Session 9",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "13d"
+  },
+  {
+   "name": "Session 10",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "14d"
+  },
+  {
+   "name": "Session 11",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "15d"
+  },
+  {
+   "name": "Session 12",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "16d"
+  },
+  {
+   "name": "Session 13",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "17d"
+  },
+  {
+   "name": "Session 14",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "18d"
+  },
+  {
+   "name": "Session 15",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "19d"
+  },
+  {
+   "name": "Session 16",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "20d"
+  },
+  {
+   "name": "Session 17",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "21d"
+  },
+  {
+   "name": "Session 18",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "22d"
+  },
+  {
+   "name": "Session 19",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "23d"
+  },
+  {
+   "name": "Session 20",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "24d"
+  },
+  {
+   "name": "Session 21",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "25d"
+  },
+  {
+   "name": "Session 22",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "26d"
+  },
+  {
+   "name": "Session 23",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "27d"
+  },
+  {
+   "name": "Session 24",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "28d"
+  },
+  {
+   "name": "Session 25",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "29d"
+  },
+  {
+   "name": "Session 26",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "30d"
+  },
+  {
+   "name": "Session 27",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "31d"
+  },
+  {
+   "name": "Session 28",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "32d"
+  },
+  {
+   "name": "Session 29",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "33d"
+  },
+  {
+   "name": "Session 30",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "34d"
+  },
+  {
+   "name": "Session 31",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "35d"
+  },
+  {
+   "name": "Session 32",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "36d"
+  },
+  {
+   "name": "Session 33",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "37d"
+  },
+  {
+   "name": "Session 34",
+   "project": "claude-home",
+   "state": "idle",
+   "wait": "38d"
+  },
+  {
+   "name": "Tier names",
+   "project": "pricing-page",
+   "state": "needsYou",
+   "wait": "2m",
+   "question": "Rename “Pro” to “Team” everywhere, including the billing emails?",
+   "reason": "question"
+  },
+  {
+   "name": "Roadmap narrative",
+   "project": "q4-planning",
+   "state": "working",
+   "wait": "6m"
+  },
+  {
+   "name": "PRD v2 edits",
+   "project": "checkout",
+   "state": "needsYou",
+   "wait": "4m",
+   "question": "Move saved cards into scope, or keep it out and log an open question?",
+   "reason": "plan to approve"
+  },
+  {
+   "name": "Teardown research",
+   "project": "checkout",
+   "state": "working",
+   "wait": "6m"
+  },
+  {
+   "name": "Edge cases",
+   "project": "refunds",
+   "state": "idle",
+   "wait": "5h"
+  },
+  {
+   "name": "Funnel SQL",
+   "project": "onboarding",
+   "state": "readyForReview",
+   "summary": "wrote funnel.sql, 3 files"
+  },
+  {
+   "name": "Slice 3 build",
+   "project": "duo-v2",
+   "state": "working",
+   "wait": "3m"
+  },
+  {
+   "name": "duo-v2 2",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "1d"
+  },
+  {
+   "name": "duo-v2 3",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "2d"
+  },
+  {
+   "name": "duo-v2 4",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "3d"
+  },
+  {
+   "name": "duo-v2 5",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "4d"
+  },
+  {
+   "name": "duo-v2 6",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "duo-v2 7",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "duo-v2 8",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "duo-v2 9",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "8d"
+  },
+  {
+   "name": "duo-v2 10",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "9d"
+  },
+  {
+   "name": "duo-v2 11",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "10d"
+  },
+  {
+   "name": "duo-v2 12",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "duo-v2 13",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "duo-v2 14",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "13d"
+  },
+  {
+   "name": "duo-v2 15",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "14d"
+  },
+  {
+   "name": "duo-v2 16",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "15d"
+  },
+  {
+   "name": "duo-v2 17",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "16d"
+  },
+  {
+   "name": "duo-v2 18",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "17d"
+  },
+  {
+   "name": "duo-v2 19",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "18d"
+  },
+  {
+   "name": "duo-v2 20",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "19d"
+  },
+  {
+   "name": "duo-v2 21",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "20d"
+  },
+  {
+   "name": "duo-v2 22",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "21d"
+  },
+  {
+   "name": "duo-v2 23",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "22d"
+  },
+  {
+   "name": "duo-v2 24",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "23d"
+  },
+  {
+   "name": "duo-v2 25",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "24d"
+  },
+  {
+   "name": "duo-v2 26",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "25d"
+  },
+  {
+   "name": "duo-v2 27",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "26d"
+  },
+  {
+   "name": "duo-v2 28",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "27d"
+  },
+  {
+   "name": "duo-v2 29",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "28d"
+  },
+  {
+   "name": "duo-v2 30",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "29d"
+  },
+  {
+   "name": "duo-v2 31",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "30d"
+  },
+  {
+   "name": "duo-v2 32",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "31d"
+  },
+  {
+   "name": "duo-v2 33",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "32d"
+  },
+  {
+   "name": "duo-v2 34",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "33d"
+  },
+  {
+   "name": "duo-v2 35",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "34d"
+  },
+  {
+   "name": "duo-v2 36",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "35d"
+  },
+  {
+   "name": "duo-v2 37",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "36d"
+  },
+  {
+   "name": "duo-v2 38",
+   "project": "duo-v2",
+   "state": "idle",
+   "wait": "37d"
+  },
+  {
+   "name": "pm-harness 1",
+   "project": "pm-harness",
+   "state": "idle",
+   "wait": "2d"
+  },
+  {
+   "name": "pm-harness 2",
+   "project": "pm-harness",
+   "state": "idle",
+   "wait": "3d"
+  },
+  {
+   "name": "duo-legacy 1",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "3d"
+  },
+  {
+   "name": "duo-legacy 2",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "4d"
+  },
+  {
+   "name": "duo-legacy 3",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "duo-legacy 4",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "duo-legacy 5",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "duo-legacy 6",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "8d"
+  },
+  {
+   "name": "duo-legacy 7",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "9d"
+  },
+  {
+   "name": "duo-legacy 8",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "10d"
+  },
+  {
+   "name": "duo-legacy 9",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "duo-legacy 10",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "duo-legacy 11",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "13d"
+  },
+  {
+   "name": "duo-legacy 12",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "14d"
+  },
+  {
+   "name": "duo-legacy 13",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "15d"
+  },
+  {
+   "name": "duo-legacy 14",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "16d"
+  },
+  {
+   "name": "duo-legacy 15",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "17d"
+  },
+  {
+   "name": "duo-legacy 16",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "18d"
+  },
+  {
+   "name": "duo-legacy 17",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "19d"
+  },
+  {
+   "name": "duo-legacy 18",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "20d"
+  },
+  {
+   "name": "duo-legacy 19",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "21d"
+  },
+  {
+   "name": "duo-legacy 20",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "22d"
+  },
+  {
+   "name": "duo-legacy 21",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "23d"
+  },
+  {
+   "name": "duo-legacy 22",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "24d"
+  },
+  {
+   "name": "duo-legacy 23",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "25d"
+  },
+  {
+   "name": "duo-legacy 24",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "26d"
+  },
+  {
+   "name": "duo-legacy 25",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "27d"
+  },
+  {
+   "name": "duo-legacy 26",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "28d"
+  },
+  {
+   "name": "duo-legacy 27",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "29d"
+  },
+  {
+   "name": "duo-legacy 28",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "30d"
+  },
+  {
+   "name": "duo-legacy 29",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "31d"
+  },
+  {
+   "name": "duo-legacy 30",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "32d"
+  },
+  {
+   "name": "duo-legacy 31",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "33d"
+  },
+  {
+   "name": "duo-legacy 32",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "34d"
+  },
+  {
+   "name": "duo-legacy 33",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "35d"
+  },
+  {
+   "name": "duo-legacy 34",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "36d"
+  },
+  {
+   "name": "duo-legacy 35",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "37d"
+  },
+  {
+   "name": "duo-legacy 36",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "38d"
+  },
+  {
+   "name": "duo-legacy 37",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "39d"
+  },
+  {
+   "name": "duo-legacy 38",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "40d"
+  },
+  {
+   "name": "duo-legacy 39",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "41d"
+  },
+  {
+   "name": "duo-legacy 40",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "42d"
+  },
+  {
+   "name": "duo-legacy 41",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "43d"
+  },
+  {
+   "name": "duo-legacy 42",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "44d"
+  },
+  {
+   "name": "duo-legacy 43",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "45d"
+  },
+  {
+   "name": "duo-legacy 44",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "46d"
+  },
+  {
+   "name": "duo-legacy 45",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "47d"
+  },
+  {
+   "name": "duo-legacy 46",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "48d"
+  },
+  {
+   "name": "duo-legacy 47",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "49d"
+  },
+  {
+   "name": "duo-legacy 48",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "50d"
+  },
+  {
+   "name": "duo-legacy 49",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "51d"
+  },
+  {
+   "name": "duo-legacy 50",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "52d"
+  },
+  {
+   "name": "duo-legacy 51",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "53d"
+  },
+  {
+   "name": "duo-legacy 52",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "54d"
+  },
+  {
+   "name": "duo-legacy 53",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "55d"
+  },
+  {
+   "name": "duo-legacy 54",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "56d"
+  },
+  {
+   "name": "duo-legacy 55",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "57d"
+  },
+  {
+   "name": "duo-legacy 56",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "58d"
+  },
+  {
+   "name": "duo-legacy 57",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "59d"
+  },
+  {
+   "name": "duo-legacy 58",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "60d"
+  },
+  {
+   "name": "duo-legacy 59",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "61d"
+  },
+  {
+   "name": "duo-legacy 60",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "62d"
+  },
+  {
+   "name": "duo-legacy 61",
+   "project": "duo-legacy",
+   "state": "idle",
+   "wait": "63d"
+  },
+  {
+   "name": "obsidian-sync 1",
+   "project": "obsidian-sync",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "obsidian-sync 2",
+   "project": "obsidian-sync",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "obsidian-sync 3",
+   "project": "obsidian-sync",
+   "state": "idle",
+   "wait": "8d"
+  },
+  {
+   "name": "obsidian-sync 4",
+   "project": "obsidian-sync",
+   "state": "idle",
+   "wait": "9d"
+  },
+  {
+   "name": "obsidian-sync 5",
+   "project": "obsidian-sync",
+   "state": "idle",
+   "wait": "10d"
+  },
+  {
+   "name": "obsidian-sync 6",
+   "project": "obsidian-sync",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "obsidian-sync 7",
+   "project": "obsidian-sync",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "dotfiles 1",
+   "project": "dotfiles",
+   "state": "idle",
+   "wait": "9d"
+  },
+  {
+   "name": "dotfiles 2",
+   "project": "dotfiles",
+   "state": "idle",
+   "wait": "10d"
+  },
+  {
+   "name": "dotfiles 3",
+   "project": "dotfiles",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "dotfiles 4",
+   "project": "dotfiles",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "blog 1",
+   "project": "blog",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "blog 2",
+   "project": "blog",
+   "state": "idle",
+   "wait": "13d"
+  },
+  {
+   "name": "blog 3",
+   "project": "blog",
+   "state": "idle",
+   "wait": "14d"
+  },
+  {
+   "name": "claude-skills 1",
+   "project": "claude-skills",
+   "state": "idle",
+   "wait": "2d"
+  },
+  {
+   "name": "claude-skills 2",
+   "project": "claude-skills",
+   "state": "idle",
+   "wait": "3d"
+  },
+  {
+   "name": "claude-skills 3",
+   "project": "claude-skills",
+   "state": "idle",
+   "wait": "4d"
+  },
+  {
+   "name": "claude-skills 4",
+   "project": "claude-skills",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "claude-skills 5",
+   "project": "claude-skills",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "claude-skills 6",
+   "project": "claude-skills",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "claude-skills 7",
+   "project": "claude-skills",
+   "state": "idle",
+   "wait": "8d"
+  },
+  {
+   "name": "claude-skills 8",
+   "project": "claude-skills",
+   "state": "idle",
+   "wait": "9d"
+  },
+  {
+   "name": "claude-skills 9",
+   "project": "claude-skills",
+   "state": "idle",
+   "wait": "10d"
+  },
+  {
+   "name": "claude-skills 10",
+   "project": "claude-skills",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "claude-skills 11",
+   "project": "claude-skills",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "claude-skills 12",
+   "project": "claude-skills",
+   "state": "idle",
+   "wait": "13d"
+  },
+  {
+   "name": "mcp-notion 1",
+   "project": "mcp-notion",
+   "state": "idle",
+   "wait": "15d"
+  },
+  {
+   "name": "mcp-notion 2",
+   "project": "mcp-notion",
+   "state": "idle",
+   "wait": "16d"
+  },
+  {
+   "name": "mcp-notion 3",
+   "project": "mcp-notion",
+   "state": "idle",
+   "wait": "17d"
+  },
+  {
+   "name": "mcp-notion 4",
+   "project": "mcp-notion",
+   "state": "idle",
+   "wait": "18d"
+  },
+  {
+   "name": "mcp-notion 5",
+   "project": "mcp-notion",
+   "state": "idle",
+   "wait": "19d"
+  },
+  {
+   "name": "fin-models 1",
+   "project": "fin-models",
+   "state": "idle",
+   "wait": "20d"
+  },
+  {
+   "name": "fin-models 2",
+   "project": "fin-models",
+   "state": "idle",
+   "wait": "21d"
+  },
+  {
+   "name": "fin-models 3",
+   "project": "fin-models",
+   "state": "idle",
+   "wait": "22d"
+  },
+  {
+   "name": "interview-kit 1",
+   "project": "interview-kit",
+   "state": "idle",
+   "wait": "24d"
+  },
+  {
+   "name": "interview-kit 2",
+   "project": "interview-kit",
+   "state": "idle",
+   "wait": "25d"
+  },
+  {
+   "name": "slackbot 1",
+   "project": "slackbot",
+   "state": "idle",
+   "wait": "30d"
+  },
+  {
+   "name": "slackbot 2",
+   "project": "slackbot",
+   "state": "idle",
+   "wait": "31d"
+  },
+  {
+   "name": "slackbot 3",
+   "project": "slackbot",
+   "state": "idle",
+   "wait": "32d"
+  },
+  {
+   "name": "slackbot 4",
+   "project": "slackbot",
+   "state": "idle",
+   "wait": "33d"
+  },
+  {
+   "name": "slackbot 5",
+   "project": "slackbot",
+   "state": "idle",
+   "wait": "34d"
+  },
+  {
+   "name": "slackbot 6",
+   "project": "slackbot",
+   "state": "idle",
+   "wait": "35d"
+  },
+  {
+   "name": "slackbot 7",
+   "project": "slackbot",
+   "state": "idle",
+   "wait": "36d"
+  },
+  {
+   "name": "slackbot 8",
+   "project": "slackbot",
+   "state": "idle",
+   "wait": "37d"
+  },
+  {
+   "name": "slackbot 9",
+   "project": "slackbot",
+   "state": "idle",
+   "wait": "38d"
+  },
+  {
+   "name": "scratch 1",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "3d"
+  },
+  {
+   "name": "scratch 2",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "4d"
+  },
+  {
+   "name": "scratch 3",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "scratch 4",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "scratch 5",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "scratch 6",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "8d"
+  },
+  {
+   "name": "scratch 7",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "9d"
+  },
+  {
+   "name": "scratch 8",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "10d"
+  },
+  {
+   "name": "scratch 9",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "scratch 10",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "scratch 11",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "13d"
+  },
+  {
+   "name": "scratch 12",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "14d"
+  },
+  {
+   "name": "scratch 13",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "15d"
+  },
+  {
+   "name": "scratch 14",
+   "project": "scratch",
+   "state": "idle",
+   "wait": "16d"
+  },
+  {
+   "name": "website-2024 1",
+   "project": "website-2024",
+   "state": "idle",
+   "wait": "45d"
+  },
+  {
+   "name": "website-2024 2",
+   "project": "website-2024",
+   "state": "idle",
+   "wait": "46d"
+  },
+  {
+   "name": "website-2024 3",
+   "project": "website-2024",
+   "state": "idle",
+   "wait": "47d"
+  },
+  {
+   "name": "website-2024 4",
+   "project": "website-2024",
+   "state": "idle",
+   "wait": "48d"
+  },
+  {
+   "name": "website-2024 5",
+   "project": "website-2024",
+   "state": "idle",
+   "wait": "49d"
+  },
+  {
+   "name": "website-2024 6",
+   "project": "website-2024",
+   "state": "idle",
+   "wait": "50d"
+  },
+  {
+   "name": "data-pipes 1",
+   "project": "data-pipes",
+   "state": "idle",
+   "wait": "50d"
+  },
+  {
+   "name": "data-pipes 2",
+   "project": "data-pipes",
+   "state": "idle",
+   "wait": "51d"
+  },
+  {
+   "name": "data-pipes 3",
+   "project": "data-pipes",
+   "state": "idle",
+   "wait": "52d"
+  },
+  {
+   "name": "data-pipes 4",
+   "project": "data-pipes",
+   "state": "idle",
+   "wait": "53d"
+  },
+  {
+   "name": "prd-templates 1",
+   "project": "prd-templates",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "prd-templates 2",
+   "project": "prd-templates",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "prd-templates 3",
+   "project": "prd-templates",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "analytics-sql 1",
+   "project": "analytics-sql",
+   "state": "idle",
+   "wait": "8d"
+  },
+  {
+   "name": "analytics-sql 2",
+   "project": "analytics-sql",
+   "state": "idle",
+   "wait": "9d"
+  },
+  {
+   "name": "analytics-sql 3",
+   "project": "analytics-sql",
+   "state": "idle",
+   "wait": "10d"
+  },
+  {
+   "name": "analytics-sql 4",
+   "project": "analytics-sql",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "analytics-sql 5",
+   "project": "analytics-sql",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "analytics-sql 6",
+   "project": "analytics-sql",
+   "state": "idle",
+   "wait": "13d"
+  },
+  {
+   "name": "analytics-sql 7",
+   "project": "analytics-sql",
+   "state": "idle",
+   "wait": "14d"
+  },
+  {
+   "name": "analytics-sql 8",
+   "project": "analytics-sql",
+   "state": "idle",
+   "wait": "15d"
+  },
+  {
+   "name": "roadmap-viz 1",
+   "project": "roadmap-viz",
+   "state": "idle",
+   "wait": "60d"
+  },
+  {
+   "name": "roadmap-viz 2",
+   "project": "roadmap-viz",
+   "state": "idle",
+   "wait": "61d"
+  },
+  {
+   "name": "okr-tracker 1",
+   "project": "okr-tracker",
+   "state": "idle",
+   "wait": "70d"
+  },
+  {
+   "name": "okr-tracker 2",
+   "project": "okr-tracker",
+   "state": "idle",
+   "wait": "71d"
+  },
+  {
+   "name": "okr-tracker 3",
+   "project": "okr-tracker",
+   "state": "idle",
+   "wait": "72d"
+  },
+  {
+   "name": "ai-evals 1",
+   "project": "ai-evals",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "ai-evals 2",
+   "project": "ai-evals",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "ai-evals 3",
+   "project": "ai-evals",
+   "state": "idle",
+   "wait": "13d"
+  },
+  {
+   "name": "ai-evals 4",
+   "project": "ai-evals",
+   "state": "idle",
+   "wait": "14d"
+  },
+  {
+   "name": "ai-evals 5",
+   "project": "ai-evals",
+   "state": "idle",
+   "wait": "15d"
+  },
+  {
+   "name": "research-bot 1",
+   "project": "research-bot",
+   "state": "idle",
+   "wait": "90d"
+  },
+  {
+   "name": "figma-export 1",
+   "project": "figma-export",
+   "state": "idle",
+   "wait": "100d"
+  },
+  {
+   "name": "figma-export 2",
+   "project": "figma-export",
+   "state": "idle",
+   "wait": "101d"
+  },
+  {
+   "name": "launch-checklist 1",
+   "project": "launch-checklist",
+   "state": "idle",
+   "wait": "110d"
+  },
+  {
+   "name": "pricing-sim 1",
+   "project": "pricing-sim",
+   "state": "idle",
+   "wait": "4d"
+  },
+  {
+   "name": "pricing-sim 2",
+   "project": "pricing-sim",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "pricing-sim 3",
+   "project": "pricing-sim",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "pricing-sim 4",
+   "project": "pricing-sim",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "survey-tools 1",
+   "project": "survey-tools",
+   "state": "idle",
+   "wait": "120d"
+  },
+  {
+   "name": "survey-tools 2",
+   "project": "survey-tools",
+   "state": "idle",
+   "wait": "121d"
+  },
+  {
+   "name": "interviews 1",
+   "project": "interviews",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "offsite-plan 1",
+   "project": "offsite-plan",
+   "state": "idle",
+   "wait": "1d"
+  },
+  {
+   "name": "offsite-plan 2",
+   "project": "offsite-plan",
+   "state": "idle",
+   "wait": "2d"
+  },
+  {
+   "name": "offsite-plan 3",
+   "project": "offsite-plan",
+   "state": "idle",
+   "wait": "3d"
+  },
+  {
+   "name": "Slide 7 numbers",
+   "project": "board-deck",
+   "state": "needsYou",
+   "wait": "9m",
+   "question": "Run python3 chart.py?",
+   "reason": "permission"
+  },
+  {
+   "name": "board-deck 2",
+   "project": "board-deck",
+   "state": "idle",
+   "wait": "4d"
+  },
+  {
+   "name": "board-deck 3",
+   "project": "board-deck",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "board-deck 4",
+   "project": "board-deck",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "board-deck 5",
+   "project": "board-deck",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "q3-review 1",
+   "project": "q3-review",
+   "state": "idle",
+   "wait": "25d"
+  },
+  {
+   "name": "q3-review 2",
+   "project": "q3-review",
+   "state": "idle",
+   "wait": "26d"
+  },
+  {
+   "name": "competitor-teardown 1",
+   "project": "competitor-teardown",
+   "state": "idle",
+   "wait": "10d"
+  },
+  {
+   "name": "competitor-teardown 2",
+   "project": "competitor-teardown",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "competitor-teardown 3",
+   "project": "competitor-teardown",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "competitor-teardown 4",
+   "project": "competitor-teardown",
+   "state": "idle",
+   "wait": "13d"
+  },
+  {
+   "name": "competitor-teardown 5",
+   "project": "competitor-teardown",
+   "state": "idle",
+   "wait": "14d"
+  },
+  {
+   "name": "competitor-teardown 6",
+   "project": "competitor-teardown",
+   "state": "idle",
+   "wait": "15d"
+  },
+  {
+   "name": "screenshots 1",
+   "project": "screenshots",
+   "state": "idle",
+   "wait": "40d"
+  },
+  {
+   "name": "tmp-notes 1",
+   "project": "tmp-notes",
+   "state": "idle",
+   "wait": "33d"
+  },
+  {
+   "name": "tmp-notes 2",
+   "project": "tmp-notes",
+   "state": "idle",
+   "wait": "34d"
+  },
+  {
+   "name": "hiring 1",
+   "project": "hiring",
+   "state": "idle",
+   "wait": "16d"
+  },
+  {
+   "name": "hiring 2",
+   "project": "hiring",
+   "state": "idle",
+   "wait": "17d"
+  },
+  {
+   "name": "hiring 3",
+   "project": "hiring",
+   "state": "idle",
+   "wait": "18d"
+  },
+  {
+   "name": "hiring 4",
+   "project": "hiring",
+   "state": "idle",
+   "wait": "19d"
+  },
+  {
+   "name": "taxes-2025 1",
+   "project": "taxes-2025",
+   "state": "idle",
+   "wait": "2d"
+  },
+  {
+   "name": "taxes-2025 2",
+   "project": "taxes-2025",
+   "state": "idle",
+   "wait": "3d"
+  },
+  {
+   "name": "taxes-2025 3",
+   "project": "taxes-2025",
+   "state": "idle",
+   "wait": "4d"
+  },
+  {
+   "name": "house 1",
+   "project": "house",
+   "state": "idle",
+   "wait": "13d"
+  },
+  {
+   "name": "house 2",
+   "project": "house",
+   "state": "idle",
+   "wait": "14d"
+  },
+  {
+   "name": "resume 1",
+   "project": "resume",
+   "state": "idle",
+   "wait": "28d"
+  },
+  {
+   "name": "resume 2",
+   "project": "resume",
+   "state": "idle",
+   "wait": "29d"
+  },
+  {
+   "name": "resume 3",
+   "project": "resume",
+   "state": "idle",
+   "wait": "30d"
+  },
+  {
+   "name": "resume 4",
+   "project": "resume",
+   "state": "idle",
+   "wait": "31d"
+  },
+  {
+   "name": "reading-notes 1",
+   "project": "reading-notes",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "reading-notes 2",
+   "project": "reading-notes",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "reading-notes 3",
+   "project": "reading-notes",
+   "state": "idle",
+   "wait": "8d"
+  },
+  {
+   "name": "reading-notes 4",
+   "project": "reading-notes",
+   "state": "idle",
+   "wait": "9d"
+  },
+  {
+   "name": "reading-notes 5",
+   "project": "reading-notes",
+   "state": "idle",
+   "wait": "10d"
+  },
+  {
+   "name": "reading-notes 6",
+   "project": "reading-notes",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "reading-notes 7",
+   "project": "reading-notes",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "reading-notes 8",
+   "project": "reading-notes",
+   "state": "idle",
+   "wait": "13d"
+  },
+  {
+   "name": "reading-notes 9",
+   "project": "reading-notes",
+   "state": "idle",
+   "wait": "14d"
+  },
+  {
+   "name": "letters 1",
+   "project": "letters",
+   "state": "idle",
+   "wait": "80d"
+  },
+  {
+   "name": "journal 1",
+   "project": "journal",
+   "state": "idle",
+   "wait": "1d"
+  },
+  {
+   "name": "journal 2",
+   "project": "journal",
+   "state": "idle",
+   "wait": "2d"
+  },
+  {
+   "name": "journal 3",
+   "project": "journal",
+   "state": "idle",
+   "wait": "3d"
+  },
+  {
+   "name": "journal 4",
+   "project": "journal",
+   "state": "idle",
+   "wait": "4d"
+  },
+  {
+   "name": "journal 5",
+   "project": "journal",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "journal 6",
+   "project": "journal",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "journal 7",
+   "project": "journal",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "journal 8",
+   "project": "journal",
+   "state": "idle",
+   "wait": "8d"
+  },
+  {
+   "name": "journal 9",
+   "project": "journal",
+   "state": "idle",
+   "wait": "9d"
+  },
+  {
+   "name": "journal 10",
+   "project": "journal",
+   "state": "idle",
+   "wait": "10d"
+  },
+  {
+   "name": "journal 11",
+   "project": "journal",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "recipes 1",
+   "project": "recipes",
+   "state": "idle",
+   "wait": "95d"
+  },
+  {
+   "name": "travel-japan 1",
+   "project": "travel-japan",
+   "state": "idle",
+   "wait": "140d"
+  },
+  {
+   "name": "travel-japan 2",
+   "project": "travel-japan",
+   "state": "idle",
+   "wait": "141d"
+  },
+  {
+   "name": "kids-school 1",
+   "project": "kids-school",
+   "state": "idle",
+   "wait": "21d"
+  },
+  {
+   "name": "kids-school 2",
+   "project": "kids-school",
+   "state": "idle",
+   "wait": "22d"
+  },
+  {
+   "name": "invoice-parse 1",
+   "project": "invoice-parse",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "invoice-parse 2",
+   "project": "invoice-parse",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "csv-cleanup 1",
+   "project": "csv-cleanup",
+   "state": "idle",
+   "wait": "9d"
+  },
+  {
+   "name": "csv-cleanup 2",
+   "project": "csv-cleanup",
+   "state": "idle",
+   "wait": "10d"
+  },
+  {
+   "name": "csv-cleanup 3",
+   "project": "csv-cleanup",
+   "state": "idle",
+   "wait": "11d"
+  },
+  {
+   "name": "pdf-merge 1",
+   "project": "pdf-merge",
+   "state": "idle",
+   "wait": "30d"
+  },
+  {
+   "name": "statements 1",
+   "project": "statements",
+   "state": "idle",
+   "wait": "14d"
+  },
+  {
+   "name": "statements 2",
+   "project": "statements",
+   "state": "idle",
+   "wait": "15d"
+  },
+  {
+   "name": "transcript-dump 1",
+   "project": "transcript-dump",
+   "state": "idle",
+   "wait": "60d"
+  },
+  {
+   "name": "logo-files 1",
+   "project": "logo-files",
+   "state": "idle",
+   "wait": "75d"
+  },
+  {
+   "name": "export-0912 1",
+   "project": "export-0912",
+   "state": "idle",
+   "wait": "23d"
+  },
+  {
+   "name": "Webhook retries",
+   "project": "payments-api",
+   "state": "working",
+   "wait": "3m"
+  },
+  {
+   "name": "payments-api 2",
+   "project": "payments-api",
+   "state": "idle",
+   "wait": "2d"
+  },
+  {
+   "name": "payments-api 3",
+   "project": "payments-api",
+   "state": "idle",
+   "wait": "3d"
+  },
+  {
+   "name": "payments-api 4",
+   "project": "payments-api",
+   "state": "idle",
+   "wait": "4d"
+  },
+  {
+   "name": "payments-api 5",
+   "project": "payments-api",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "payments-api 6",
+   "project": "payments-api",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "ledger 1",
+   "project": "ledger",
+   "state": "idle",
+   "wait": "4d"
+  },
+  {
+   "name": "ledger 2",
+   "project": "ledger",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "ledger 3",
+   "project": "ledger",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "ledger 4",
+   "project": "ledger",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "checkout-web 1",
+   "project": "checkout-web",
+   "state": "idle",
+   "wait": "2d"
+  },
+  {
+   "name": "checkout-web 2",
+   "project": "checkout-web",
+   "state": "idle",
+   "wait": "3d"
+  },
+  {
+   "name": "checkout-web 3",
+   "project": "checkout-web",
+   "state": "idle",
+   "wait": "4d"
+  },
+  {
+   "name": "checkout-web 4",
+   "project": "checkout-web",
+   "state": "idle",
+   "wait": "5d"
+  },
+  {
+   "name": "checkout-web 5",
+   "project": "checkout-web",
+   "state": "idle",
+   "wait": "6d"
+  },
+  {
+   "name": "checkout-web 6",
+   "project": "checkout-web",
+   "state": "idle",
+   "wait": "7d"
+  },
+  {
+   "name": "checkout-web 7",
+   "project": "checkout-web",
+   "state": "idle",
+   "wait": "8d"
+  },
+  {
+   "name": "checkout-web 8",
+   "project": "checkout-web",
+   "state": "idle",
+   "wait": "9d"
+  },
+  {
+   "name": "risk-rules 1",
+   "project": "risk-rules",
+   "state": "idle",
+   "wait": "17d"
+  },
+  {
+   "name": "risk-rules 2",
+   "project": "risk-rules",
+   "state": "idle",
+   "wait": "18d"
+  },
+  {
+   "name": "risk-rules 3",
+   "project": "risk-rules",
+   "state": "idle",
+   "wait": "19d"
+  },
+  {
+   "name": "ops-scripts 1",
+   "project": "ops-scripts",
+   "state": "idle",
+   "wait": "26d"
+  },
+  {
+   "name": "ops-scripts 2",
+   "project": "ops-scripts",
+   "state": "idle",
+   "wait": "27d"
+  },
+  {
+   "name": "design-tokens 1",
+   "project": "design-tokens",
+   "state": "idle",
+   "wait": "31d"
+  },
+  {
+   "name": "design-tokens 2",
+   "project": "design-tokens",
+   "state": "idle",
+   "wait": "32d"
+  },
+  {
+   "name": "mobile-app 1",
+   "project": "mobile-app",
+   "state": "idle",
+   "wait": "12d"
+  },
+  {
+   "name": "mobile-app 2",
+   "project": "mobile-app",
+   "state": "idle",
+   "wait": "13d"
+  },
+  {
+   "name": "mobile-app 3",
+   "project": "mobile-app",
+   "state": "idle",
+   "wait": "14d"
+  },
+  {
+   "name": "mobile-app 4",
+   "project": "mobile-app",
+   "state": "idle",
+   "wait": "15d"
+  },
+  {
+   "name": "mobile-app 5",
+   "project": "mobile-app",
+   "state": "idle",
+   "wait": "16d"
+  },
+  {
+   "name": "admin-console 1",
+   "project": "admin-console",
+   "state": "idle",
+   "wait": "38d"
+  },
+  {
+   "name": "admin-console 2",
+   "project": "admin-console",
+   "state": "idle",
+   "wait": "39d"
+  },
+  {
+   "name": "admin-console 3",
+   "project": "admin-console",
+   "state": "idle",
+   "wait": "40d"
+  },
+  {
+   "name": "feature-flags 1",
+   "project": "feature-flags",
+   "state": "idle",
+   "wait": "65d"
+  },
+  {
+   "name": "docs-site 1",
+   "project": "docs-site",
+   "state": "idle",
+   "wait": "44d"
+  },
+  {
+   "name": "docs-site 2",
+   "project": "docs-site",
+   "state": "idle",
+   "wait": "45d"
+  },
+  {
+   "name": "geoff 1",
+   "project": "geoff",
+   "state": "idle",
+   "wait": "10h"
+  },
+  {
+   "name": "geoff 2",
+   "project": "geoff",
+   "state": "idle",
+   "wait": "1d"
+  },
+  {
+   "name": "geoff 3",
+   "project": "geoff",
+   "state": "idle",
+   "wait": "2d"
+  },
+  {
+   "name": "geoff 4",
+   "project": "geoff",
+   "state": "idle",
+   "wait": "3d"
+  },
+  {
+   "name": "tmp.x8Yq2 1",
+   "project": "tmp.x8Yq2",
+   "state": "idle",
+   "wait": "2d"
+  },
+  {
+   "name": "claude-test 1",
+   "project": "claude-test",
+   "state": "idle",
+   "wait": "19d"
+  },
+  {
+   "name": "claude-test 2",
+   "project": "claude-test",
+   "state": "idle",
+   "wait": "20d"
+  },
+  {
+   "name": "sandbox-1 1",
+   "project": "sandbox-1",
+   "state": "idle",
+   "wait": "48d"
+  },
+  {
+   "name": "sandbox-2 1",
+   "project": "sandbox-2",
+   "state": "idle",
+   "wait": "48d"
+  },
+  {
+   "name": "tmp.Ka01 1",
+   "project": "tmp.Ka01",
+   "state": "idle",
+   "wait": "130d"
+  }
+ ],
+ "otherIdleSessions": 0,
+ "groups": [],
+ "counts": {
+  "needsYou": 4,
+  "readyForReview": 1,
+  "working": 5,
+  "idle": 63
+ },
+ "homeInbox": [
+  {
+   "title": "Legal wants a call re: saved cards",
+   "source": "Slack · Priya · 8:12",
+   "status": "suggested → checkout-redesign"
+  },
+  {
+   "title": "1:1 notes with Dana",
+   "source": "Granola · 9:00",
+   "status": "suggested → home/personal-ops"
+  },
+  {
+   "title": "Refund SLA question",
+   "status": "routed → refunds-api-spec, session started"
+  },
+  {
+   "title": "Q4 pricing numbers?",
+   "status": "routed → pricing-experiment-q4, resumed Results readout"
+  },
+  {
+   "title": "1 duplicate, ignored"
+  }
+ ],
+ "focusDocument": {
+  "project": "checkout-redesign",
+  "path": "docs/prd-v2.md",
+  "sections": [
+   "Problem",
+   "Goals",
+   "What we heard",
+   "Requirements",
+   "Non-goals",
+   "Open questions"
+  ],
+  "addedByClaude": [
+   "What we heard"
+  ]
+ },
+ "projectFiles": {},
+ "tasks": [
+  {
+   "project": "checkout",
+   "path": "tasks/exec-review-prep.md",
+   "title": "Exec review prep",
+   "status": "in progress",
+   "sessionIds": []
+  },
+  {
+   "project": "checkout",
+   "path": "tasks/legal-review.md",
+   "title": "Legal review of saved cards",
+   "status": "waiting",
+   "sessionIds": []
+  },
+  {
+   "project": "pricing-page",
+   "path": "tasks/tier-table.md",
+   "title": "Tier comparison table",
+   "status": null,
+   "sessionIds": []
+  }
+ ]
+}

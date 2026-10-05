@@ -19,7 +19,8 @@ Start with the **design system**, `system/`. It's also published for Claude Desi
 | `decisions.md` | Every decision, DL-1 onward | **Current; wins** |
 | `design-brief-slice-2.md` | Slice 2 (S2-1 to S2-6) | Approved (DL-100) and built (F-76) |
 | `design-brief-slice-3.md` | Slice 3: what v1 still needs (S3-1 to S3-7), on a canvas | **Awaiting review (Q-32)** |
-| `design-brief-many-projects.md` | S4-1: All projects with many projects (hierarchy, sort, Home's card); options A/B/C on `explorations/home-many-projects.html` | **Direction picked (DL-101)**; combined board awaits a look, then a handoff |
+| `design-brief-many-projects.md` | S4-1: All projects with many projects (hierarchy, sort, Home's card); options A/B/C on `explorations/home-many-projects.html` | Picked (DL-101) |
+| `many-projects-handoff/` | S4-1's target, `map-many` (DL-101) | Target; built (F-80) |
 | `design-brief-2026-10-04.md` | Everything waiting on design (DB-1 to DB-39) | Current list; partly superseded, see its banner |
 | `build-handoff/` | The main handoff (overview, project, peek, look) and the canonical `tokens.json` | Target; parts superseded, see its banner |
 | `search-handoff/` | Search (⇧⌘A), 18 screens | Target; Jump and ⌘K superseded |

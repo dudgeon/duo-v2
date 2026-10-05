@@ -145,7 +145,8 @@ public enum LiveSnapshot {
                 summary: live?.summary ?? entry?.note.map { e in entry?.next.map { "\(e) · Next: \($0)" } ?? e },
                 forkOf: nil, document: nil,
                 sessionId: id,
-                reason: live?.state == .needsYou ? Self.reason(beacon: beacon, hooks: hooks) : nil)
+                reason: live?.state == .needsYou ? Self.reason(beacon: beacon, hooks: hooks) : nil,
+                lastActive: since)
         }
 
         // Where each session ran, last (after any /cd): a project that moved still has sessions

@@ -18,7 +18,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Window, toolbar, counts | Designed; search field reads `Search all projects ⇧⌘A` (DL-80) | build `overview.html` | — | `Shell/DuoToolbar.swift` |
 | Home pane: terminal and session tabs | Designed | build `overview.html`, surfaces `home-none.html` | — | `AllProjects/AllProjectsPanes.swift` HomePane |
 | Home pane with no Home folder | Designed (DL-100): "Choose a Home folder", Choose Home Folder… and Not Now | slice2 `no-home.html` | — | HomePane, `ConsoleMessage(.noHome)` |
-| The map: columns, tiles | Designed (DL-100): Home's columns, then OUTSIDE HOME on a rule with path columns (`~/Desktop/…/interviews`) | slice2 `map-folders.html`, `no-home.html` | DB-38 (folder mark) | MapColumn, MapGrid, ProjectTile |
+| The map: columns, tiles | Designed (DL-100), changed by decision (DL-101): a filter and sort header, Home's ★ tile, folders outside Home as rows by parent folder with live ones as tiles | slice2 `map-folders.html`, `no-home.html`; many-projects `map-many.html` | DB-38 (folder mark) | MapColumn, MapGrid, MapHeader, HomeTile, OutsideGroup, ProjectTile |
 | Folder tiles ("No project file") | Stand-in (DL-63) | — | DB-12 | ProjectTile |
 | Missing or moved folder tiles ("Folder not found", "Moved to …") | Stand-in (F-78) | slice 3 canvas S3-2 (proposed) | DB-8, Q-32 | ProjectTile, `Live/MissingFolders.swift`, `Model/AppModel+Missing.swift` |
 | New project tile | Designed; opens the New project sheet (DL-100) | build `overview.html` | — | NewProjectTile |

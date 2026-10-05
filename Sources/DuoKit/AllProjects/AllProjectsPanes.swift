@@ -113,26 +113,33 @@ struct ProjectMapPane: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        let f = model.fixture
+        let map = model.mapLayout
         VStack(spacing: 0) {
             ScrollView {
-                // Home's columns, then the folders outside Home under an OUTSIDE HOME rule (DL-100,
-                // slice2 map-folders). With no Home, or nothing outside it, one grid as before.
-                let topics = f.topics.filter { t in !model.mapProjects(inTopic: t).isEmpty }
-                let outside = model.liveRoot == nil ? [] : topics.filter(MapColumn.isPath)
-                let home = topics.filter { !outside.contains($0) }
+                // DL-101: the filter and sort, Home's ★ tile and columns as tiles, then the folders
+                // outside Home: live ones as tiles, the rest as rows under their parent folder.
+                let outsideAny = !map.active.isEmpty || !map.outside.isEmpty
                 VStack(alignment: .leading, spacing: DuoSpace.gapMapColumns) {
-                    if !home.isEmpty { MapGrid(topics: home, tileAtEnd: outside.isEmpty) }
-                    if !outside.isEmpty {
-                        HStack(spacing: 10) {
-                            SectionLabel(text: "Outside Home")
-                            DuoColor.rule.frame(height: DuoMetric.borderHairline)
-                        }
-                        .padding(.top, 6)
-                        MapGrid(topics: outside, tileAtEnd: false)
-                        NewProjectTile()
+                    MapHeader(layout: map)
+                    if !map.homeColumns.isEmpty {
+                        MapGrid(columns: map.homeColumns, home: map.home, tileAtEnd: !outsideAny && model.mapFilter.isEmpty)
                     }
-                    if home.isEmpty && outside.isEmpty { NewProjectTile() }
+                    if outsideAny {
+                        if model.fixture.home != nil {
+                            HStack(spacing: 10) {
+                                SectionLabel(text: "Outside Home", count: map.outsideTotal)
+                                DuoColor.rule.frame(height: DuoMetric.borderHairline)
+                            }
+                            .padding(.top, 6)
+                        }
+                        if !map.active.isEmpty {
+                            SectionLabel(text: "Active outside Home", count: map.active.count)
+                            TileFlow(projects: map.active)
+                        }
+                        if !map.outside.isEmpty { OutsideGroups(columns: map.outside) }
+                        if model.mapFilter.isEmpty { NewProjectTile() }
+                    }
+                    if map.isEmpty && model.mapFilter.isEmpty { NewProjectTile() }
                 }
                 .padding(DuoSpace.panePadding)
                 ArchivedRollup()
@@ -180,21 +187,38 @@ struct ProjectMapPane: View {
 /// Columns side by side while each gets 220; past that they wrap into rows (DL-83, handoff §13's
 /// suggested adaptive grid). `tileAtEnd`: the New project tile closes the last column.
 struct MapGrid: View {
-    let topics: [String]
+    let columns: [MapLayout.Column]
+    /// Home's ★ tile, first in the first (unlabelled) column (DL-101).
+    var home: Fixture.Project? = nil
     let tileAtEnd: Bool
 
     var body: some View {
+        AdaptiveColumns(count: columns.count, rowSpacing: DuoSpace.gapMapColumns + 6) { i in
+            MapColumn(topic: columns[i].topic, projects: columns[i].projects, home: i == 0 ? home : nil,
+                      last: tileAtEnd && i == columns.count - 1)
+        }
+    }
+}
+
+/// Columns side by side while each gets 220; past that they wrap into rows, a short last row keeping
+/// the others' width (DL-83's adaptive grid). Three slots across, as the map's targets draw: one
+/// column or group stays a column wide.
+struct AdaptiveColumns<Cell: View>: View {
+    let count: Int
+    var maxPerRow = 3
+    var rowSpacing: CGFloat = DuoSpace.gapMapColumns
+    @ViewBuilder let cell: (Int) -> Cell
+
+    var body: some View {
         ViewThatFits(in: .horizontal) {
-            ForEach(Array(stride(from: max(topics.count, 1), through: 1, by: -1)), id: \.self) { perRow in
-                VStack(alignment: .leading, spacing: DuoSpace.gapMapColumns + 6) {
-                    ForEach(Array(stride(from: 0, to: topics.count, by: perRow)), id: \.self) { start in
+            ForEach(Array(stride(from: maxPerRow, through: 1, by: -1)), id: \.self) { perRow in
+                VStack(alignment: .leading, spacing: rowSpacing) {
+                    ForEach(Array(stride(from: 0, to: count, by: perRow)), id: \.self) { start in
                         HStack(alignment: .top, spacing: DuoSpace.gapMapColumns) {
-                            ForEach(start..<min(start + perRow, topics.count), id: \.self) { i in
-                                MapColumn(topic: topics[i], last: tileAtEnd && i == topics.count - 1)
-                                    .frame(minWidth: perRow == 1 ? 0 : 220, idealWidth: 220, maxWidth: .infinity, alignment: .topLeading)
+                            ForEach(start..<min(start + perRow, count), id: \.self) { i in
+                                cell(i).frame(minWidth: perRow == 1 ? 0 : 220, idealWidth: 220, maxWidth: .infinity, alignment: .topLeading)
                             }
-                            // A short last row keeps the others' column width.
-                            ForEach(0..<(perRow - min(perRow, topics.count - start)), id: \.self) { _ in
+                            ForEach(0..<(perRow - min(perRow, count - start)), id: \.self) { _ in
                                 Color.clear.frame(minWidth: 220, idealWidth: 220, maxWidth: .infinity, maxHeight: 0)
                             }
                         }
@@ -202,6 +226,193 @@ struct MapGrid: View {
                 }
             }
         }
+    }
+}
+
+/// Tiles three across with no column labels: folders outside Home with something live (DL-101).
+struct TileFlow: View {
+    let projects: [Fixture.Project]
+
+    var body: some View {
+        AdaptiveColumns(count: projects.count, rowSpacing: DuoSpace.gapTileToTile) { i in ProjectTile(project: projects[i]) }
+    }
+}
+
+/// The map's header (DL-101): `Filter folders` on the left, `Sort` and its popup on the right.
+struct MapHeader: View {
+    @Environment(AppModel.self) private var model
+    let layout: MapLayout
+
+    var body: some View {
+        @Bindable var model = model
+        HStack(spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass").font(.system(size: 10, weight: .medium)).foregroundStyle(DuoColor.text2)
+                    .accessibilityHidden(true)
+                TextField("Filter folders", text: $model.mapFilter)
+                    .textFieldStyle(.plain)
+                    .duoText(.control)
+                    .foregroundStyle(DuoColor.text)
+                    .onExitCommand { model.mapFilter = "" }
+                    .accessibilityLabel("Filter projects and folders")
+                if !model.mapFilter.isEmpty {
+                    Text("\(layout.shown) of \(layout.total)").duoText(.control).foregroundStyle(DuoColor.text2).fixedSize()
+                }
+            }
+            .padding(.horizontal, 8)
+            .frame(width: DuoMetric.mapFilterWidth, height: DuoMetric.mapHeaderControlHeight)
+            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusField)
+                .strokeBorder(model.mapFilter.isEmpty ? DuoColor.rule : DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline))
+            Spacer(minLength: 8)
+            Text("Sort").duoText(.control).foregroundStyle(DuoColor.text2)
+            Menu {
+                ForEach(MapSort.allCases, id: \.self) { s in
+                    Button { model.setMapSort(s) } label: {
+                        if s == model.mapSort { Label(s.title, systemImage: "checkmark") } else { Text(s.title) }
+                    }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Text(model.mapSort.title).duoText(.control).foregroundStyle(DuoColor.text)
+                    Image(systemName: "chevron.up.chevron.down").font(.system(size: 8, weight: .semibold)).foregroundStyle(DuoColor.text2)
+                }
+                .padding(.leading, 8).padding(.trailing, 6)
+                .frame(height: DuoMetric.mapHeaderControlHeight)
+                .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+                .contentShape(Rectangle())
+            }
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .accessibilityLabel("Sort projects by \(model.mapSort.title)")
+        }
+        .frame(height: DuoMetric.mapHeaderControlHeight)
+    }
+}
+
+/// Home on the map (DL-101): first in its column, a `text` border, its goal, `Home · n sessions`,
+/// five sessions in attention order, then `n more ›`. Every part opens Home as a project; a session
+/// opens on that session.
+struct HomeTile: View {
+    @Environment(AppModel.self) private var model
+    let home: Fixture.Project
+
+    var body: some View {
+        let all = MapLayout.homeSessions(model.fixture)
+        let shown = Array(all.prefix(5))
+        VStack(alignment: .leading, spacing: DuoSpace.gapTileRows) {
+            Text("★ \(home.name)").duoText(.bodyEmphasis).lineLimit(1)
+            if !home.goal.isEmpty { Text(home.goal).duoText(.body).fixedSize(horizontal: false, vertical: true) }
+            Text("Home · \(all.count) session\(all.count == 1 ? "" : "s")").duoText(.body).foregroundStyle(DuoColor.text2)
+            ForEach(Array(shown.enumerated()), id: \.element.id) { i, s in
+                TileSessionRow(session: s, selected: model.selectedActionSession == s.id, active: model.hasOpenTerminal(s.tabKey))
+                    .padding(.top, i == 0 ? 6 : 0)
+                    .contentShape(Rectangle())
+                    .onActivate { model.open(project: home.name, session: s.name) }  // action: open
+                    .modifier(SessionOrganizeMenu(sessionKey: s.tabKey))
+            }
+            if all.count > shown.count {
+                HStack(spacing: DuoSpace.gapGlyphToLabel) {
+                    Text("\(all.count - shown.count) more").duoText(.body)
+                    Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold)).accessibilityHidden(true)
+                }
+                .foregroundStyle(DuoColor.text2)
+                .frame(height: DuoMetric.rowTileSession)
+                .contentShape(Rectangle())
+                .onActivate { model.open(project: home.name) }  // action: open
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .bordered(DuoSpace.cardPadding, color: DuoColor.text)
+        .overlay {
+            if model.focusedTile == home.name {
+                RoundedRectangle(cornerRadius: DuoMetric.radiusCard + 1).strokeBorder(DuoColor.text, lineWidth: 1).padding(-1)
+            }
+        }
+        .contentShape(Rectangle())
+        .onActivate { model.open(project: home.name) }  // action: open
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Home, \(home.name), \(all.count) sessions")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { model.open(project: home.name) }
+    }
+}
+
+/// Folders outside Home as rows under their parent folder, three groups across (DL-101).
+struct OutsideGroups: View {
+    let columns: [MapLayout.Column]
+
+    var body: some View {
+        AdaptiveColumns(count: columns.count, rowSpacing: DuoSpace.gapMapColumns + 6) { i in OutsideGroup(column: columns[i]) }
+    }
+}
+
+struct OutsideGroup: View {
+    @Environment(AppModel.self) private var model
+    let column: MapLayout.Column
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 5) {
+                Image(systemName: "folder").font(.system(size: 9, weight: .semibold)).foregroundStyle(DuoColor.text2)
+                    .accessibilityHidden(true)
+                SectionLabel(text: "\(MapColumn.label(column.topic)) /")
+                Spacer(minLength: 6)
+                Text("\(column.projects.count + column.hidden)").duoText(.pill).foregroundStyle(DuoColor.text2)
+            }
+            .frame(height: 20)
+            .padding(.bottom, 4)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Folder \(column.topic), \(column.projects.count + column.hidden) folders")
+            ForEach(column.projects) { p in OutsideRow(project: p) }
+            if column.hidden > 0 {
+                Text("+ \(column.hidden) more")
+                    .duoText(.body)
+                    .foregroundStyle(DuoColor.text2)
+                    .frame(height: DuoMetric.rowTileSession)
+                    .contentShape(Rectangle())
+                    .onActivate { model.openOutsideGroups.insert(column.topic) }  // not an action: view-only unfold
+                    .accessibilityAddTraits(.isButton)
+            }
+        }
+    }
+}
+
+/// One folder outside Home: its name, its session count, its last activity (DL-101).
+struct OutsideRow: View {
+    @Environment(AppModel.self) private var model
+    let project: Fixture.Project
+
+    var body: some View {
+        let sessions = model.fixture.sessions(inProject: project.name)
+        let focused = model.focusedTile == project.name
+        let last = MapLayout.activity(of: project.name, in: model.fixture, now: Date().timeIntervalSince1970 * 1000)
+        HStack(spacing: DuoSpace.gapGlyphToLabel) {
+            Text(project.name.split(separator: "/").last.map(String.init) ?? project.name)
+                .duoText(.body).lineLimit(1).truncationMode(.tail)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text("\(sessions.count)").duoText(.body).foregroundStyle(DuoColor.text2).monospacedDigit()
+            Text(Self.wait(last)).duoText(.body).foregroundStyle(DuoColor.text2).monospacedDigit()
+                .frame(width: DuoMetric.mapOutsideRowWaitWidth, alignment: .trailing)
+        }
+        .frame(height: DuoMetric.rowTileSession)
+        .padding(.horizontal, 8)
+        .background { if focused { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected) } }
+        .padding(.horizontal, -8)
+        .contentShape(Rectangle())
+        .onActivate { model.open(project: project.name) }  // action: open
+        .modifier(ProjectOrganizeMenu(project: project))
+        .help(project.path)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(project.name), \(sessions.count) sessions, last active \(Self.wait(last))")
+        .accessibilityAddTraits(.isButton)
+    }
+
+    /// The wait words for a time (`4m`, `1h`, `3d`, `2w`), the same as session rows (Attention).
+    static func wait(_ ms: Double) -> String {
+        guard ms > 0 else { return "" }
+        return Attention.waitText(since: ms, now: Date()) ?? ""
     }
 }
 
@@ -218,8 +429,9 @@ struct MapColumn: View {
         return [parts[0], parts[1], "…", parts[parts.count - 1]].joined(separator: "/")
     }
 
-    @Environment(AppModel.self) private var model
     let topic: String
+    let projects: [Fixture.Project]
+    var home: Fixture.Project? = nil
     let last: Bool
 
     var body: some View {
@@ -233,7 +445,8 @@ struct MapColumn: View {
                 SectionLabel(text: topic.isEmpty ? " " : "\(Self.label(topic)) /")
             }
             .accessibilityLabel(topic.isEmpty ? "" : "Folder \(topic)")
-            ForEach(model.mapProjects(inTopic: topic)) { p in
+            if let home { HomeTile(home: home) }
+            ForEach(projects) { p in
                 ProjectTile(project: p)
             }
             if last { NewProjectTile() }

@@ -41,6 +41,9 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var sessionId: String?
         /// Why it needs you, said after the project on its card (DL-100): question, permission, plan to approve.
         public var reason: String? = nil
+        /// Last activity, ms since 1970 (live sessions; DL-101's Recent order). Fixture sessions have
+        /// none and are ordered by their wait text instead.
+        public var lastActive: Double? = nil
         public var id: String { "\(project)/\(name)" }
         /// What console tabs and terminals are keyed by: the session id when there is one.
         public var tabKey: String { sessionId ?? name }

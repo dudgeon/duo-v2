@@ -160,6 +160,13 @@ public final class AppModel {
 
     // MARK: - Live workspace (Phase E)
 
+    /// The map's order, filter and opened groups (DL-101). `mapSettled` holds each project's
+    /// activity as it was on arrival at All projects, so tiles don't reshuffle while you look.
+    public var mapSort: MapSort = MapSort(rawValue: DuoState.load().mapSort ?? "") ?? .recent
+    public var mapFilter = ""
+    public var openOutsideGroups: Set<String> = []
+    @ObservationIgnored public var mapSettled: [String: Double] = [:]
+
     /// Home's folder (DL-85); nil until one is chosen. Live mode runs either way (DL-82).
     public var liveRoot: URL?
     @ObservationIgnored public var isLive = false
@@ -277,6 +284,8 @@ public final class AppModel {
         var ids = Set<String>()
         merged.sessions = merged.sessions.filter { s in s.sessionId.map { ids.insert($0).inserted } ?? true }
         if merged != fixture { fixture = merged }
+        // The map's order settles on the first scan, then on each arrival at All projects (DL-101).
+        if mapSettled.isEmpty || altitude != .allProjects { settleMapOrder() }
         pushNoteContext()
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts)
@@ -465,6 +474,7 @@ public final class AppModel {
     /// Back to All projects; the session last opened is the selected row (flow-zoom-4).
     public func zoomOut() {
         altitude = .allProjects
+        settleMapOrder()
         peekOpen = false
         if let last = lastVisitedSession { selectedActionSession = last }
         focusedTile = nil
@@ -506,9 +516,9 @@ public final class AppModel {
         peekSelection = ids[max(0, min(ids.count - 1, i + delta))]
     }
 
-    /// Arrow keys between tiles on the map: columns are topics, rows are tiles.
+    /// Arrow keys between tiles on the map: columns as drawn (DL-101), rows are tiles.
     public func moveTileFocus(dx: Int, dy: Int) {
-        let columns = fixture.topics.map { mapProjects(inTopic: $0).map(\.name) }
+        let columns = mapLayout.focusColumns
         guard let current = focusedTile,
               let c = columns.firstIndex(where: { $0.contains(current) }),
               let r = columns[c].firstIndex(of: current) else {

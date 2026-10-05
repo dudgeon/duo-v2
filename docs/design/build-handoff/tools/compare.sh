@@ -29,7 +29,7 @@ for a in "$@"; do
 done
 target="$root/screens/$screen.html"
 # Search's targets live in their own handoff (search-handoff/screens); same renderer, same compare.
-for other in search-handoff surfaces-handoff slice2-handoff; do
+for other in search-handoff surfaces-handoff slice2-handoff many-projects-handoff; do
   [ -f "$target" ] || { [ -f "$root/../$other/screens/$screen.html" ] && root="$(cd "$root/../$other" && pwd)" && target="$root/screens/$screen.html"; } || true
 done
 [ -f "$target" ] || { echo "No such target: screens/$screen.html" >&2; exit 1; }

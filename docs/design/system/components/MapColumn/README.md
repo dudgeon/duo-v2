@@ -1,9 +1,12 @@
-A column of project tiles on the map, headed by the folder it represents.
+A column of project tiles on the map, headed by the folder it represents; and, outside Home, a group of folder rows.
 
-**Status:** Designed (DL-100, slice2 `map-folders.html`); the folder mark is still a stand-in (DB-38). **In code:** `AllProjects/AllProjectsPanes.swift` `MapColumn`, `ProjectMapPane`.
+**Status:** Designed (DL-100, slice2 `map-folders.html`), changed by decision (DL-101, many-projects `map-many.html`); the folder mark is still a stand-in (DB-38). **In code:** `AllProjects/AllProjectsPanes.swift` `MapColumn`, `MapGrid`, `AdaptiveColumns`, `MapHeader`, `HomeTile`, `OutsideGroup`, `OutsideRow`, `ProjectMapPane`; the order in `AllProjects/MapLayout.swift`.
 
-**Anatomy:** a label (SF Symbol `folder` 9 pt in `text2`, then `sectionLabel` with the folder's own name and a slash: `payments /`), then ProjectTiles `gapTileToTile` (10) apart; Home's columns come first; folders outside Home follow a full-width `OUTSIDE HOME` section label on a `rule` hairline, labelled by path, a long path keeping its first and last parts (`~/Desktop/…/interviews`). The NewProjectTile ends the map. Columns sit `gapMapColumns` (14) apart, side by side while each gets 220; past that they wrap into rows.
+**Anatomy:** a label (SF Symbol `folder` 9 pt in `text2`, then `sectionLabel` with the folder's own name and a slash: `payments /`), then ProjectTiles `gapTileToTile` (10) apart. Columns sit `gapMapColumns` (14) apart, three slots across while each gets 220 (one column stays a column wide); past that they wrap into rows.
 
-**Order:** projects directly in Home first, in a column with no label; then Home's topic folders; then folders outside Home, labelled by path (`~/repos /`).
+**The map at scale (DL-101):**
+- **Header:** `Filter folders` (200 × 22, `rule` border, `controlEdge` while it has text, `n of m` at its right), and at the right `Sort` in `text2` with a popup, `Recent` or `Name` (22 high, `rule` border). View › Sort Projects By is the same choice. Esc clears the filter.
+- **Home's tile** heads the unlabelled first column (a column of its own when no project sits directly in Home): `★ name` in `bodyEmphasis`, the goal, `Home · n sessions` in `text2`, five sessions in attention order, `n more ›`; a `text` border. Every part opens Home as a project; a session opens on that session.
+- **Outside Home:** `OUTSIDE HOME · n` on a `rule` hairline (only when there's a Home); then `ACTIVE OUTSIDE HOME · n` with full tiles for folders that have a session needing you or working; then groups by parent folder: the label with the folder count at its right, then 24-pt rows (name; session count and last activity in `text2`, the time right-aligned in 34), five per group, then `+ n more` in `text2`, which opens the group in place.
 
-**Open for design (S2-2):** long path labels (truncated today); a break between Home's columns and outside ones; single-tile columns in a wrapped row.
+**Order:** Home's tile, projects directly in Home, Home's topic folders, then outside Home. `Recent` (the default) orders tiles, rows and groups by newest session activity; `Name` by name, folders by path without `~/`. The order settles when the user arrives at All projects and holds while they look.

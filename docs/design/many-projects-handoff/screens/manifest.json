@@ -1,0 +1,15 @@
+{
+  "$note": "S4-1 (design-brief-many-projects.md), picked 2026-10-05 (DL-101). kind=target: a window to build to.",
+  "source": "docs/design/explorations/home-many-projects.html?board=pick&target=1",
+  "screens": [
+    {
+      "file": "screens/map-many.html",
+      "s4": "S4-1",
+      "kind": "target",
+      "width": 1440,
+      "height": 900,
+      "state": "map-many",
+      "shows": "All projects with Home and 64 folders outside it: the filter and sort header, Home's ★ tile, Home's columns, ACTIVE OUTSIDE HOME tiles, then folder rows by parent folder."
+    }
+  ]
+}

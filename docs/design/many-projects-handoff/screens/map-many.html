@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="design-size" content="1440x900">
+<meta name="design-kind" content="target">
+<meta name="design-surface" content="S4-1">
+<!--
+S4-1 · All projects with many projects.
+DESIGN TARGET. Picked by Geoff 2026-10-05 (DL-101) from docs/design/explorations/home-many-projects.html (board `pick`),
+exported with ?board=pick&target=1. It is a picture written in HTML: match what it draws, do not port its markup.
+Exempt, as in build-handoff: the traffic lights and toolbar material, and everything inside a dark pane below its tab strip.
+Data: docs/design/many-projects-handoff/fixture.json (scripts/make-many-fixture.py); state `map-many`.
+-->
+<title>Duo · S4-1 · All projects with many projects</title>
+
+<style>
+:root{
+  --ground:#F3F4F6;--pane:#FFFFFF;--selected:#E9ECEF;--rule:#C9CDD3;--edge:#8B939C;--text:#1F2328;--text2:#5B636D;
+  --needs:#C2410C;--active:#E8F0FA;--console:#15171B;--crule:#2B2F36;--ctext:#E6E8EB;--ctext2:#9AA1AB;--cneeds:#F97316;--tuiedge:#4A4F57;
+  --note:#2F6FDE;
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#E4E6EA;color:var(--text);font:14px/1.55 var(--ui)}
+.page{max-width:1500px;margin:0 auto;padding:32px 24px 80px;display:grid;gap:36px}
+h1{font-size:26px;line-height:1.2;margin:0;letter-spacing:-.01em}
+h2{font-size:19px;margin:0}
+h3{font-size:14px;margin:0}
+p{margin:0;max-width:78ch}
+.lede{color:var(--text2);font-size:15px}
+.k{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text2)}
+code{font:12.5px var(--mono);background:var(--selected);padding:1px 5px;border-radius:4px}
+.pp{color:var(--note);font-weight:600}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px 28px}
+.notes ul{margin:4px 0 0;padding-left:18px}
+.notes li{margin:3px 0}
+.boardwrap{display:grid;gap:12px}
+.scaler{overflow:hidden;border-radius:10px;box-shadow:0 8px 28px rgba(31,35,40,.18);background:var(--pane);width:fit-content}
+.board-host>.board{transform-origin:0 0}
+.legend{display:flex;gap:18px;flex-wrap:wrap;color:var(--text2);font-size:13px}
+.qs{background:var(--pane);border:1px solid var(--rule);border-radius:10px;padding:16px 20px}
+.qs ol{margin:6px 0 0;padding-left:20px}.qs li{margin:6px 0}
+table.cmp{border-collapse:collapse;background:var(--pane);font-size:13px}
+table.cmp th,table.cmp td{border:1px solid var(--rule);padding:6px 10px;text-align:left;vertical-align:top}
+table.cmp th{background:var(--ground)}
+
+/* ---------- The Duo window, drawn with tokens ---------- */
+.board{width:1440px;background:var(--pane);color:var(--text);font:13px/20px var(--ui);white-space:nowrap;position:relative;display:flex;flex-direction:column}
+.tb{display:flex;align-items:center;gap:8px;height:38px;flex:none;padding:0 12px 0 20px;border-bottom:1px solid var(--rule);background:var(--ground)}
+.tl{display:flex;gap:8px;margin-right:4px}.tl i{width:12px;height:12px;border-radius:50%;display:block}
+.tb .ttl{font-weight:600}
+.tb .cnt{display:flex;gap:16px;margin-left:8px;align-items:center}.tb .cnt span{display:flex;gap:6px;align-items:center}
+.tb .srch{margin-left:auto;width:300px;height:24px;border:1px solid var(--rule);border-radius:6px;background:var(--pane);display:flex;align-items:center;gap:6px;padding:0 8px;color:var(--text2);font-size:12px}
+.tb .srch b{margin-left:auto;font-weight:400}
+.body{display:flex;flex:1;min-height:0}
+.home{width:340px;flex:none;background:var(--console);color:var(--ctext);display:flex;flex-direction:column;font:12px/19px var(--mono)}
+.home .hd{height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--crule);font:600 13px/20px var(--ui)}
+.home .hd span{font:12px/19px var(--mono);color:var(--ctext2)}
+.home .tabs{height:32px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--crule);color:var(--ctext2);overflow:hidden}
+.home .tabs .on{color:var(--ctext);font-weight:500}
+.home .tabs span{display:flex;gap:6px;align-items:center}
+.home .term{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:0}
+.home .term .d{color:var(--ctext2)}
+.home .inp{margin:0 16px 16px;height:30px;border:1px solid var(--tuiedge);border-radius:6px;display:flex;align-items:center;padding:0 10px;color:var(--ctext2)}
+.home .stick{position:sticky;bottom:16px}
+.mapcol{flex:1;min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--rule)}
+.map{flex:1;padding:16px 16px 20px;display:flex;flex-direction:column;gap:14px}
+.foot{height:34px;flex:none;border-top:1px solid var(--rule);display:flex;align-items:center;gap:8px;padding:0 16px;color:var(--text2)}
+.act{width:340px;flex:none;padding:16px;display:flex;flex-direction:column;gap:10px}
+.sl{font:600 11px/16px var(--ui);letter-spacing:.66px;text-transform:uppercase;color:var(--text2);display:flex;align-items:center;gap:6px}
+.sl.nd{color:var(--needs)}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.colh{height:16px;display:flex;align-items:center}
+.tile{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;border:1px solid var(--rule);border-radius:6px;min-width:0;background:var(--pane)}
+.tile .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.tile .gl{white-space:normal}
+.tile .t2{color:var(--text2);overflow:hidden;text-overflow:ellipsis}
+.tile .sess{margin-top:6px;display:flex;flex-direction:column;gap:2px}
+.srow{height:24px;display:flex;align-items:center;gap:6px;padding:0 8px;margin:0 -8px;border-radius:6px;min-width:0}
+.srow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.srow .w{color:var(--text2);font-variant-numeric:tabular-nums}
+.srow.open{background:var(--active)}
+.g{flex:none}
+.newp{height:38px;border:1px dashed var(--edge);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.rulelabel{display:flex;align-items:center;gap:10px}.rulelabel hr{flex:1;border:0;border-top:1px solid var(--rule);margin:0}
+.btn{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border:1px solid var(--edge);border-radius:6px;background:var(--pane);font-size:12px;line-height:16px;color:var(--text)}
+.popup{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 6px 0 8px;border:1px solid var(--rule);border-radius:6px;background:var(--pane);font-size:12px;line-height:16px}
+.popup.flat{border-color:transparent;background:transparent;color:var(--text2)}
+.seg{display:inline-flex;border:1px solid var(--edge);border-radius:6px;overflow:hidden;font-size:12px;line-height:16px;height:22px}
+.seg span{padding:2px 10px;display:flex;align-items:center;gap:5px}.seg span+span{border-left:1px solid var(--edge)}
+.seg .on{background:var(--selected);font-weight:600}
+.filter{display:inline-flex;align-items:center;gap:6px;height:22px;width:200px;padding:0 8px;border:1px solid var(--rule);border-radius:6px;color:var(--text2);font-size:12px}
+.maphead{display:flex;align-items:center;gap:10px;height:22px}
+.maphead .sp{flex:1}
+.card{border:1px solid var(--rule);border-radius:6px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;white-space:normal}
+.card .q{border:1px solid var(--needs);border-radius:6px;padding:8px 10px;margin:8px 0}
+.task{display:flex;gap:8px;align-items:center;height:26px}.task .t2{color:var(--text2)}
+/* Outside Home as compact rows */
+.olist{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.ogrp{display:flex;flex-direction:column;min-width:0}
+.ogrp .colh{height:20px;margin-bottom:4px}
+.orow{height:24px;display:flex;align-items:center;gap:6px;min-width:0;padding:0 8px;margin:0 -8px;border-radius:6px}
+.orow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.orow .c{color:var(--text2);font-variant-numeric:tabular-nums}
+.orow .w{color:var(--text2);font-variant-numeric:tabular-nums;width:34px;text-align:right}
+.more{height:24px;display:flex;align-items:center;gap:6px;color:var(--text2)}
+/* Home band */
+.hband{border:1px solid var(--rule);border-radius:6px;padding:10px 12px 10px;display:flex;flex-direction:column;gap:2px;background:var(--pane)}
+.hband .top{display:flex;align-items:baseline;gap:10px}
+.hband .top .nm{font-weight:600}
+.hband .top .t2{color:var(--text2)}
+.hband .top .r{margin-left:auto;color:var(--text2);display:flex;gap:6px;align-items:center}
+.hband .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;margin-top:6px}
+/* Table */
+table.ft{width:100%;border-collapse:collapse;table-layout:fixed}
+table.ft th{font:600 11px/16px var(--ui);letter-spacing:.66px;text-transform:uppercase;color:var(--text2);text-align:left;height:26px;border-bottom:1px solid var(--rule);padding:0 8px}
+table.ft th.sorted{color:var(--text)}
+table.ft td{height:26px;padding:0 8px;overflow:hidden;text-overflow:ellipsis}
+table.ft td.t2{color:var(--text2)}
+table.ft tr.grp td{font:600 11px/16px var(--ui);letter-spacing:.66px;text-transform:uppercase;color:var(--text2);height:30px;padding-top:8px}
+table.ft td.r,table.ft th.r{text-align:right;font-variant-numeric:tabular-nums}
+/* Menu */
+.menu{position:absolute;background:var(--pane);border:1px solid var(--rule);border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:6px;font-size:13px;z-index:5;min-width:220px}
+.menu div{height:24px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:5px}
+.menu .on{background:var(--selected)}
+.menu .sep{height:1px;background:var(--rule);margin:5px 4px;padding:0}
+.menu .hdr{color:var(--text2);font-size:11px;font-weight:600;letter-spacing:.66px;text-transform:uppercase}
+.menu .ck{width:12px;display:inline-block}
+/* Annotation */
+.fold{position:absolute;left:0;right:0;height:0;border-top:2px dashed var(--note);z-index:6}
+.fold span{position:absolute;right:8px;top:-22px;background:var(--note);color:#fff;font:600 11px/16px var(--ui);padding:2px 8px;border-radius:4px}
+.pin{position:absolute;z-index:7;width:22px;height:22px;border-radius:50%;background:var(--note);color:#fff;font:700 12px/22px var(--ui);text-align:center;box-shadow:0 0 0 2px #fff}
+.callout{outline:2px solid var(--note);outline-offset:3px;border-radius:6px}
+/* Variant strip (board V) */
+.vstrip{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;padding:28px;background:var(--pane)}
+.vstrip h3{margin-bottom:10px}
+.only .page{max-width:none;padding:0}
+</style>
+</head>
+<body class="only">
+<div class="page" id="page"><div class="board" id="b-pick" style="height: 900px; overflow: hidden;"><div class="tb"><span class="tl"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i></span>
+  <span style="display:flex;padding:4px 6px"><svg width="18" height="14" viewBox="0 0 18 14"><rect x="1" y="1" width="16" height="12" rx="2.5" fill="none" stroke="#5B636D" stroke-width="1.3"></rect><path d="M6.5 1v12" stroke="#5B636D" stroke-width="1.3"></path></svg></span>
+  <span class="ttl">All projects</span>
+  <span class="cnt"><span><svg class="g" width="9" height="9" viewBox="0 0 10 10"><path d="M5 0 10 5 5 10 0 5z" fill="#1F2328"></path></svg>1 to review</span><span><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>4 working</span><span style="color:#5B636D"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg>63 idle</span></span>
+  <span class="srch"><svg class="g" width="12" height="12" viewBox="0 0 12 12"><circle cx="5" cy="5" r="3.8" fill="none" stroke="#5B636D" stroke-width="1.3"></circle><path d="M8 8l3 3" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round"></path></svg>Search all projects<b>⇧⌘A</b></span></div><div class="body" style="min-height: 0px;"><div class="home"><div class="hd">★ claude-home <span>~/claude-home</span></div>
+  <div class="tabs"><span class="on"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#F97316"></circle></svg>Morning triage</span><span><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#9AA1AB" stroke-width="1.5"></circle></svg>Weekly status draft</span></div>
+  <div class="term"><div class="d">Inbox · this morning</div><div>Legal wants a call re: saved cards</div><div class="d">suggested → payments/checkout</div><div>Q4 pricing numbers?</div><div class="d">routed → pricing-page, resumed Tier names</div></div>
+  <div class="inp stick">&gt; ▍</div></div><div class="mapcol" style="min-height: 0px;"><div class="map" style="min-height: 0px; overflow: hidden;"><div class="maphead"><span class="filter"><svg class="g" width="12" height="12" viewBox="0 0 12 12"><circle cx="5" cy="5" r="3.8" fill="none" stroke="#5B636D" stroke-width="1.3"></circle><path d="M8 8l3 3" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round"></path></svg>Filter folders</span><span class="sp"></span>
+  <span style="color:#5B636D;font-size:12px">Sort</span><span class="popup" data-sort="">Recent<svg class="g" width="8" height="12" viewBox="0 0 8 12"><path d="M1.5 4.5 4 2l2.5 2.5M1.5 7.5 4 10l2.5-2.5" fill="none" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></div><div class="cols"><div class="col"><div class="colh"></div><div class="tile" style="border-color:#1F2328"><div class="nm">★ claude-home</div><div class="gl">Triage, inbox and the weekly status</div><div class="t2">Home · 42 sessions</div>
+  <div class="sess"><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span class="n">Morning triage</span><span class="w">1m</span></div><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span class="n">Weekly status draft</span><span class="w">working</span></div><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="n">Inbox sweep</span><span class="w">2h</span></div><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="n">Legal call prep</span><span class="w">5h</span></div><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="n">Q4 pricing numbers?</span><span class="w">1d</span></div><div class="srow" style="color:#5B636D">37 more <svg class="g" width="8" height="10" viewBox="0 0 8 10"><path d="M2 1.5 6 5 2 8.5" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div></div><div class="tile"><div class="nm">pricing-page</div><div class="gl">Launch the new tiers by Oct 20</div><div class="t2">On track · Copy freeze Oct 12</div>
+  <div class="sess"><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span class="n">Tier names</span><span class="w">2m</span></div></div></div><div class="tile"><div class="nm">q4-planning</div><div class="gl">Q4 plan signed off by staff</div><div class="t2">At risk · Draft due Oct 9</div>
+  <div class="sess"><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span class="n">Roadmap narrative</span><span class="w">6m</span></div></div></div></div><div class="col"><div class="colh sl"><svg class="g" width="12" height="10" viewBox="0 0 12 10"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.6l1 1.2h4c.7 0 1.2.5 1.2 1.2v4.4c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>payments /</div><div class="tile"><div class="nm">checkout</div><div class="gl">Cut guest-checkout abandonment 15% by Q1</div><div class="t2">On track · Exec review Oct 14</div>
+  <div class="sess"><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span class="n">PRD v2 edits</span><span class="w">4m</span></div><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span class="n">Teardown research</span><span class="w">6m</span></div></div></div><div class="tile"><div class="nm">refunds</div><div class="gl">Ship refunds API spec to eng by Oct 10</div><div class="t2">At risk · Spec review Oct 8</div>
+  <div class="sess"><div class="t2" style="height:24px;display:flex;align-items:center">Nothing running</div></div></div></div><div class="col"><div class="colh sl"><svg class="g" width="12" height="10" viewBox="0 0 12 10"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.6l1 1.2h4c.7 0 1.2.5 1.2 1.2v4.4c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>growth /</div><div class="tile"><div class="nm">onboarding</div><div class="gl">Lift day-7 activation to 40%</div><div class="t2">On track · Copy freeze Oct 6</div>
+  <div class="sess"><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><path d="M5 0 10 5 5 10 0 5z" fill="#1F2328"></path></svg><span class="n">Funnel SQL</span><span class="w"></span></div></div></div></div></div><div class="rulelabel"><span class="sl">Outside Home · 64</span><hr></div><div class="sl" style="margin-top:2px">Active outside Home · 3</div><div class="cols"><div class="col"><div class="tile"><div class="nm">board-deck</div><div class="t2">~/Desktop/board-deck</div><div class="t2">No project file</div><div class="sess"><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span class="n">Slide 7 numbers</span><span class="w">9m</span></div></div></div></div><div class="col"><div class="tile"><div class="nm">duo-v2</div><div class="t2">~/repos/duo-v2</div><div class="t2">Has CLAUDE.md · no project file</div><div class="sess"><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span class="n">Slice 3 build</span><span class="w">3m</span></div></div></div></div><div class="col"><div class="tile"><div class="nm">payments-api</div><div class="t2">~/code/work/payments-api</div><div class="t2">Has CLAUDE.md · no project file</div><div class="sess"><div class="srow"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span class="n">Webhook retries</span><span class="w">3m</span></div></div></div></div></div><div class="olist"><div class="ogrp"><div class="colh sl"><svg class="g" width="12" height="10" viewBox="0 0 12 10"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.6l1 1.2h4c.7 0 1.2.5 1.2 1.2v4.4c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>~ /<span style="margin-left:auto;font-weight:400;letter-spacing:0">1</span></div><div class="orow"><span class="n">geoff</span><span class="c">4</span><span class="w">10h</span></div></div><div class="ogrp"><div class="colh sl"><svg class="g" width="12" height="10" viewBox="0 0 12 10"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.6l1 1.2h4c.7 0 1.2.5 1.2 1.2v4.4c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>~/Desktop /<span style="margin-left:auto;font-weight:400;letter-spacing:0">7</span></div><div class="orow"><span class="n">offsite-plan</span><span class="c">3</span><span class="w">1d</span></div><div class="orow"><span class="n">interviews</span><span class="c">1</span><span class="w">7d</span></div><div class="orow"><span class="n">competitor-teardown</span><span class="c">6</span><span class="w">10d</span></div><div class="orow"><span class="n">hiring</span><span class="c">4</span><span class="w">16d</span></div><div class="orow"><span class="n">q3-review</span><span class="c">2</span><span class="w">25d</span></div><div class="more">+ 2 more</div></div><div class="ogrp"><div class="colh sl"><svg class="g" width="12" height="10" viewBox="0 0 12 10"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.6l1 1.2h4c.7 0 1.2.5 1.2 1.2v4.4c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>~/Documents /<span style="margin-left:auto;font-weight:400;letter-spacing:0">9</span></div><div class="orow"><span class="n">journal</span><span class="c">11</span><span class="w">1d</span></div><div class="orow"><span class="n">taxes-2025</span><span class="c">3</span><span class="w">2d</span></div><div class="orow"><span class="n">reading-notes</span><span class="c">9</span><span class="w">6d</span></div><div class="orow"><span class="n">house</span><span class="c">2</span><span class="w">13d</span></div><div class="orow"><span class="n">kids-school</span><span class="c">2</span><span class="w">21d</span></div><div class="more">+ 4 more</div></div><div class="ogrp"><div class="colh sl"><svg class="g" width="12" height="10" viewBox="0 0 12 10"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.6l1 1.2h4c.7 0 1.2.5 1.2 1.2v4.4c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>~/repos /<span style="margin-left:auto;font-weight:400;letter-spacing:0">23</span></div><div class="orow"><span class="n">pm-harness</span><span class="c">2</span><span class="w">2d</span></div><div class="orow"><span class="n">claude-skills</span><span class="c">12</span><span class="w">2d</span></div><div class="orow"><span class="n">duo-legacy</span><span class="c">61</span><span class="w">3d</span></div><div class="orow"><span class="n">scratch</span><span class="c">14</span><span class="w">3d</span></div><div class="orow"><span class="n">pricing-sim</span><span class="c">4</span><span class="w">4d</span></div><div class="more">+ 18 more</div></div><div class="ogrp"><div class="colh sl"><svg class="g" width="12" height="10" viewBox="0 0 12 10"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.6l1 1.2h4c.7 0 1.2.5 1.2 1.2v4.4c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>~/code/work /<span style="margin-left:auto;font-weight:400;letter-spacing:0">9</span></div><div class="orow"><span class="n">checkout-web</span><span class="c">8</span><span class="w">2d</span></div><div class="orow"><span class="n">ledger</span><span class="c">4</span><span class="w">4d</span></div><div class="orow"><span class="n">mobile-app</span><span class="c">5</span><span class="w">12d</span></div><div class="orow"><span class="n">risk-rules</span><span class="c">3</span><span class="w">17d</span></div><div class="orow"><span class="n">ops-scripts</span><span class="c">2</span><span class="w">26d</span></div><div class="more">+ 4 more</div></div><div class="ogrp"><div class="colh sl"><svg class="g" width="12" height="10" viewBox="0 0 12 10"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.6l1 1.2h4c.7 0 1.2.5 1.2 1.2v4.4c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>/private/tmp /<span style="margin-left:auto;font-weight:400;letter-spacing:0">5</span></div><div class="orow"><span class="n">tmp.x8Yq2</span><span class="c">1</span><span class="w">2d</span></div><div class="orow"><span class="n">claude-test</span><span class="c">2</span><span class="w">19d</span></div><div class="orow"><span class="n">sandbox-1</span><span class="c">1</span><span class="w">48d</span></div><div class="orow"><span class="n">sandbox-2</span><span class="c">1</span><span class="w">48d</span></div><div class="orow"><span class="n">tmp.Ka01</span><span class="c">1</span><span class="w">130d</span></div></div><div class="ogrp"><div class="colh sl"><svg class="g" width="12" height="10" viewBox="0 0 12 10"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.6l1 1.2h4c.7 0 1.2.5 1.2 1.2v4.4c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>~/Downloads /<span style="margin-left:auto;font-weight:400;letter-spacing:0">7</span></div><div class="orow"><span class="n">invoice-parse</span><span class="c">2</span><span class="w">5d</span></div><div class="orow"><span class="n">csv-cleanup</span><span class="c">3</span><span class="w">9d</span></div><div class="orow"><span class="n">statements</span><span class="c">2</span><span class="w">14d</span></div><div class="orow"><span class="n">export-0912</span><span class="c">1</span><span class="w">23d</span></div><div class="orow"><span class="n">pdf-merge</span><span class="c">1</span><span class="w">30d</span></div><div class="more">+ 2 more</div></div></div><div class="newp">+ New project</div></div><div class="foot"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg>63 idle, resumable <svg class="g" width="8" height="10" viewBox="0 0 8 10"><path d="M2 1.5 6 5 2 8.5" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div><div class="act">
+  <div class="sl nd">Needs you · 3</div>
+  <div class="card" style="border-color:#1F2328"><div style="display:flex;gap:8px;align-items:center"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><b>Tier names</b><span style="margin-left:auto;color:#5B636D">2m</span></div><div style="color:#5B636D">pricing-page · question</div><div class="q">Rename “Pro” to “Team” everywhere, including the billing emails?</div><div><span class="btn">Open project</span></div></div>
+  <div class="card"><div style="display:flex;gap:8px;align-items:center"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><b>Slide 7 numbers</b><span style="margin-left:auto;color:#5B636D">9m</span></div><div style="color:#5B636D">board-deck · permission</div><div class="q">Run python3 chart.py?</div><div><span class="btn">Open project</span></div></div>
+  <div class="sl" style="margin-top:8px">Ready for review · 1</div>
+  <div class="card"><div style="display:flex;gap:8px;align-items:center"><svg class="g" width="9" height="9" viewBox="0 0 10 10"><path d="M5 0 10 5 5 10 0 5z" fill="#1F2328"></path></svg><b>Funnel SQL</b></div><div style="color:#5B636D">onboarding</div><div style="color:#5B636D">wrote funnel.sql, 3 files</div><div style="margin-top:8px"><span class="btn">Review</span></div></div>
+  <div class="sl" style="margin-top:8px">Open tasks · 3</div>
+  <div class="task"><span style="width:10px;height:10px;border:1.2px solid #1F2328;border-radius:2px"></span>Exec review prep <span class="t2">checkout</span><span class="t2" style="margin-left:auto">in progress</span></div>
+  <div class="task"><span style="width:10px;height:10px;border:1.2px solid #1F2328;border-radius:2px"></span>Legal review of saved cards <span class="t2">checkout</span></div>
+  </div></div>
+    </div></div>
+
+
+
+
+</body></html>

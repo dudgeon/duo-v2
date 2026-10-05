@@ -953,3 +953,13 @@ Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and o
 - **No way to open an outside file as a tab.** Tabs (`openDocumentsByProject`, keyed by the project's display name, relative paths) do survive switching projects, in memory and on relaunch; the right pane goes back to Project on return (`open(project:)`).
 - **Sizes:** outside files as tabs M (an explicit `file:`+absolute-path tab id; the editor already watches any path); a hidden-files toggle S on its own but M with collapsible, lazily listed folders and a skip list; browsing outside the folder L, not recommended; remembering the selected tab S.
 - Questions Q-35 to Q-37; the `../` hole is C-20; the work is ENH-9.
+
+## F-80 · The map with many projects, built (DL-101) (2026-10-05)
+
+- **Built:** `MapLayout` (`AllProjects/MapLayout.swift`) decides what the map draws and in what order, as a pure function with checks: Home's ★ tile (`HomeTile`) heading the unlabelled column (a column of its own when no project sits directly in Home); Home's columns as tiles; outside Home, `ACTIVE OUTSIDE HOME` tiles for folders with a session that needs you or is working, then 24-pt rows by parent folder (`OutsideGroup`, `OutsideRow`), five a group then `+ n more`. A header (`MapHeader`) with `Filter folders` and a `Recent / Name` popup; View › Sort Projects By. The sort persists in `state.json` (`mapSort`).
+- **Recency:** sessions now carry `lastActive` (ms; the same `since` that makes their wait text). Fixture sessions have none, so `MapLayout.minutesAgo` reads their wait text. A live session counts as now.
+- **Settling:** the order is fixed on the first scan and on each arrival at All projects (`mapSettled`); a refresh while you look doesn't move tiles. Projects new since then use their current activity.
+- **Grid:** `AdaptiveColumns` keeps three slots across, so a lone column, tile or group stays a column wide instead of spanning the map.
+- **Measured:** `scripts/check-ui.sh map-many` against `many-projects-handoff/screens/map-many.html`: the filter, Home's tile (78.5–347), the next tile (359), the columns and the active tiles land on the target's pixels; the footer rule is 1 pt off (the toolbar's border). Rows were looked at in a one-off capture with Home's projects removed: groups, counts, times and `+ n more` as drawn.
+- **Changed by decision:** `overview` and `flow-zoom-*` now draw the header and Home's tile in its own column, so Platform wraps to a second row at 1440; their targets predate DL-101. The first arrow key now focuses Home's tile.
+- **Exempt in the comparison:** the action column (illustrative on the board), active tints (no terminals in fixture states), Home's goal wrapping (F-13).

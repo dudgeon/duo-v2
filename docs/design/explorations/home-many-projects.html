@@ -68,12 +68,12 @@ table.cmp th{background:var(--ground)}
 .sl.nd{color:var(--needs)}
 .cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
 .col{display:flex;flex-direction:column;gap:10px;min-width:0}
-.colh{height:20px;display:flex;align-items:center}
+.colh{height:16px;display:flex;align-items:center}
 .tile{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;border:1px solid var(--rule);border-radius:6px;min-width:0;background:var(--pane)}
 .tile .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis}
 .tile .gl{white-space:normal}
 .tile .t2{color:var(--text2);overflow:hidden;text-overflow:ellipsis}
-.tile .sess{margin-top:8px;display:flex;flex-direction:column}
+.tile .sess{margin-top:6px;display:flex;flex-direction:column;gap:2px}
 .srow{height:24px;display:flex;align-items:center;gap:6px;padding:0 8px;margin:0 -8px;border-radius:6px;min-width:0}
 .srow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .srow .w{color:var(--text2);font-variant-numeric:tabular-nums}
@@ -96,7 +96,7 @@ table.cmp th{background:var(--ground)}
 /* Outside Home as compact rows */
 .olist{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
 .ogrp{display:flex;flex-direction:column;min-width:0}
-.ogrp .colh{margin-bottom:4px}
+.ogrp .colh{height:20px;margin-bottom:4px}
 .orow{height:24px;display:flex;align-items:center;gap:6px;min-width:0;padding:0 8px;margin:0 -8px;border-radius:6px}
 .orow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .orow .c{color:var(--text2);font-variant-numeric:tabular-nums}
@@ -508,6 +508,10 @@ if(only){
   document.body.classList.add('only');
   document.getElementById('page').innerHTML = BOARDS[only]();
   const crop = params.get('h'); if(crop){ const b=document.querySelector('.board'); b.style.height=crop+'px'; b.style.overflow='hidden'; }
+  // ?target=1: the board as a design target (many-projects-handoff): the window only, no annotation.
+  if(params.get('target')){ document.querySelectorAll('.fold').forEach(e=>e.remove()); document.querySelectorAll('.srow.open').forEach(e=>e.classList.remove('open')); const b=document.querySelector('.board'); b.style.height='900px'; b.style.overflow='hidden';
+    // As the window draws it: the map scrolls under its pinned footer.
+    b.querySelector('.body').style.minHeight='0'; b.querySelector('.mapcol').style.minHeight='0'; const m=b.querySelector('.map'); m.style.minHeight='0'; m.style.overflow='hidden'; }
 } else {
   document.querySelectorAll('[data-board]').forEach(el=>{
     const id = el.dataset.board, crop = el.dataset.crop;

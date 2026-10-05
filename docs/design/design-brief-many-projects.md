@@ -1,6 +1,6 @@
 # Duo — Design, S4-1: All projects with many projects
 
-Status: **direction picked (DL-101): A with the ★ tile**; the combined board awaits Geoff's look before the handoff · 2026-10-05 · Owner: Geoff · Designed by Claude in the build session, with Duo's tokens.
+Status: **picked (DL-101): A with the ★ tile**; handoff `many-projects-handoff/`, built (F-80) · 2026-10-05 · Owner: Geoff · Designed by Claude in the build session, with Duo's tokens.
 
 Options page: `docs/design/explorations/home-many-projects.html` (open in a browser; `?board=<id>` shows one board at 1:1). Every mark is [P]. The design canvas tool wasn't available in this session, so the boards are HTML drawn with the tokens; on a pick they move to a canvas or straight to a handoff in the slice2 shape.
 

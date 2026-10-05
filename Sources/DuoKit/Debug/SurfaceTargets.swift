@@ -5,7 +5,7 @@ import Foundation
 /// neither is a capture target at the design size; their logic has checks.
 @MainActor
 public enum SurfaceTargets {
-    nonisolated public static let screens = ["idle-list", "idle-many", "console-none", "console-ended", "home-none", "shell-tab"]
+    nonisolated public static let screens = ["idle-list", "idle-many", "console-none", "console-ended", "home-none", "shell-tab", "map-many"]
 
     public static func apply(_ screen: String, to model: AppModel) {
         guard let url = Bundle.main.url(forResource: "fixture", withExtension: "json"),
@@ -72,6 +72,14 @@ public enum SurfaceTargets {
                 if t["selected"] as? Bool == true { model.consoleTab = key }
             }
             model.shellTabs[project] = keys
+        case "map-many":
+            // S4-1 (DL-101): slice 2's Home and 64 folders outside it (scripts/make-many-fixture.py).
+            if let u = Bundle.main.url(forResource: "fixture-many", withExtension: "json"), let many = try? Fixture.load(from: u) {
+                model.fixture = many
+            }
+            model.homeTab = "Morning triage"
+            model.mapSort = .recent
+            model.settleMapOrder()
         default: break
         }
     }

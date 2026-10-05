@@ -185,6 +185,12 @@ public struct DuoCommands: Commands {
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)
             item(.toggleRightPane)
+            Divider()
+            // The map's order (DL-101), the same choice as its Sort popup.
+            Picker("Sort Projects By", selection: Binding(get: { model.mapSort }, set: { model.setMapSort($0) })) {
+                Text("Recent Activity").tag(MapSort.recent)
+                Text("Name").tag(MapSort.name)
+            }
         }
         CommandMenu("Go") {
             item(.search)
