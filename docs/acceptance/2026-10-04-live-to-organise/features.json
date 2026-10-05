@@ -3547,6 +3547,72 @@
     ],
     "at": "2026-10-05"
    }
+  },
+  {
+   "id": "map-lone-column",
+   "group": "After slice 3 (other sessions)",
+   "title": "A lone Home column flows three across",
+   "what": "With every Home project directly in Home (no topic folders), its tiles flow three across instead of one tall stack in the left third.",
+   "steps": [
+    "In `~/DuoAcceptance/workspace`, temporarily move `payments/checkout` and `research/reading` up into the workspace itself, or try it on your own Home if all its projects sit directly in it.",
+    "Look at All projects; narrow the window."
+   ],
+   "expect": "Home's ★ tile, the projects and New project flow three across, wrapping to two or one when narrow; arrow keys walk them in order. The look is a stand-in (Q-42).",
+   "ref": "F-86, Q-42",
+   "commit": "4026a17624ecb585f4bc368c0eb378f09c86d52c",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Built and measured by another session: before/after captures on map-many's fixture, check-ui unchanged (F-86)."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "task-naming",
+   "group": "After slice 3 (other sessions)",
+   "title": "Tasks: named on creation, renamed by their heading, New Session in Task",
+   "what": "+ New task selects the name to type over; editing the heading renames the task in the lists; New Session in Task starts a session already linked to the note.",
+   "steps": [
+    "In checkout, click **+ New task** and type a name.",
+    "Edit the note's `# ` heading; check the Tasks fold.",
+    "Right-click the task › **New Session in Task** (or `duo2 task session <task>`)."
+   ],
+   "expect": "Typing replaces \"Untitled task\"; the fold reads the new name; the new session's link appears in `sessions:` and the row reads \"1 session\". The menu item's look is a stand-in (Q-43).",
+   "ref": "F-87, Q-43",
+   "commit": "a0e20dad2aaa9c129e90932ec6ae73d519c508d8",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Checked live by another session with real key events on a scratch workspace (F-87)."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
+  },
+  {
+   "id": "folder-files",
+   "group": "After slice 3 (other sessions)",
+   "title": "A folder that isn't a project lists its files",
+   "what": "Inside a folder without PROJECT.md, Files lists its files, and a notice offers Make a Project.",
+   "steps": [
+    "Open **scratch** (`~/DuoAcceptance/elsewhere/scratch`) from the map."
+   ],
+   "expect": "Its files are listed under Files; a notice over the session list says it isn't a project and offers Make a Project. The notice is a stand-in (Q-44; proposal board d28276b).",
+   "ref": "F-88, Q-44, DL-63",
+   "commit": "abc95abaf2ed5043998f1ea88670864da745f7f8",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Fixed and checked by another session; captured on scratch data (F-88)."
+    ],
+    "didnt": [],
+    "human": [],
+    "at": "2026-10-05"
+   }
   }
  ],
  "decisions": [
