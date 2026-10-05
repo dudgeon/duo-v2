@@ -384,7 +384,7 @@ That gives a CLI user one command for something close to Projects.
 3. **Duo's own `send` never presses Enter** (DL-67) and refuses waiting sessions. The director should use Claude Code's **`SendMessage`**, not `duo2 send`. That leaves DL-67 untouched, since it governs what *you* send from Duo. A message from the director still starts a turn in a worker, and that deserves an explicit decision.
 4. **Nothing for review and landing:** no diff view, no merge actions, no *Landing* state.
 5. **Notifications aren't built** (DB-27, slice 3).
-6. **No Claude Code version check.** Director features need ≥ 2.1.224 (≥ 2.1.236 for `notify_when_idle`). Beacons carry `version` and `peerFeatures`, so Duo can gate on `notify_idle` being present.
+6. **No Claude Code version check.** Director features need ≥ 2.1.224 (≥ 2.1.236 for `notify_when_idle`). Beacons carry `version` and `peerFeatures`, so Duo can gate on `notify_idle` being present. This bites in practice: Geoff's work Mac runs **2.1.219** (2026-10-05, `/list-agents` not recognized), which is Scenario B, so a Duo director must degrade to report files and Stop-hook inboxes there, or say plainly that it needs an update.
 
 ### 9.3 Recommendation
 - **D0: no app code; try it now.**
