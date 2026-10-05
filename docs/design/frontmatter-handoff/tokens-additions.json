@@ -1,0 +1,98 @@
+{
+  "$note": "Additions to docs/design/build-handoff/tokens.json for the properties block (DB-16). No new colours and no new type sizes. Points.",
+  "size": {
+    "propertiesBlock": {
+      "heading": {
+        "padding": {
+          "top": 14,
+          "horizontal": 20,
+          "bottom": 6
+        },
+        "gap": 6
+      },
+      "block": {
+        "marginHorizontal": 16,
+        "padding": {
+          "vertical": 8,
+          "horizontal": 12
+        },
+        "radius": 6
+      },
+      "line": {
+        "minHeight": 22,
+        "gutterWidth": 14,
+        "gap": 6,
+        "activeBleed": 6,
+        "activeRadius": 4,
+        "controlGap": 6
+      },
+      "ruleBelow": 14,
+      "suggestions": {
+        "widthNames": 300,
+        "widthValues": 280,
+        "padding": 6,
+        "rowHeight": 26,
+        "rowRadius": 6,
+        "radius": 10,
+        "metaSize": 12
+      },
+      "typeMenu": {
+        "width": 200,
+        "note": "A native menu; the system draws it."
+      },
+      "calendar": {
+        "width": 232,
+        "note": "The system date picker in a popover; the system draws it."
+      },
+      "errorOutline": 1.5
+    }
+  },
+  "reuse": {
+    "blockFill": "ground",
+    "activeLine": "pane",
+    "changedByClaude": "selected, with the words 'changed by Claude'",
+    "name and fences": "text2",
+    "value": "text",
+    "type": "mono 12/19 (the console and path style)",
+    "heading": "sectionLabel",
+    "link": "underlined with a controlEdge underline, offset 3",
+    "popups": "pane fill, 1 rule border, radius 10, shadow.popover; chosen row selected fill",
+    "errorLine": "1.5 text outline, inset"
+  },
+  "icon": {
+    "$note": "12 x 12, stroke 1.2, round caps and joins, text2. Drawn in a 12 x 12 viewBox.",
+    "text": {
+      "svg": "<path d='M2 3h8M2 6h8M2 9h5'/>",
+      "sfSymbol": "text.alignleft"
+    },
+    "list": {
+      "svg": "<path d='M4.5 3H10M4.5 6H10M4.5 9H10'/><path d='M2 3h.01M2 6h.01M2 9h.01' stroke-width='1.7'/>",
+      "sfSymbol": "list.bullet"
+    },
+    "number": {
+      "svg": "<path d='M4.7 1.5 3.7 10.5M8.3 1.5 7.3 10.5M2 4.5h8.5M1.5 7.5H10'/>",
+      "sfSymbol": "number"
+    },
+    "checkbox": {
+      "svg": "<rect x='1.8' y='1.8' width='8.4' height='8.4' rx='2'/><path d='M4 6.2 5.4 7.6 8 4.6'/>",
+      "sfSymbol": "checkmark.square"
+    },
+    "date": {
+      "svg": "<rect x='1.5' y='2.5' width='9' height='8' rx='1.5'/><path d='M1.5 5h9M4 1.2v2.2M8 1.2v2.2'/>",
+      "sfSymbol": "calendar"
+    },
+    "dateTime": {
+      "svg": "<circle cx='6' cy='6' r='4.5'/><path d='M6 3.5V6l1.8 1.2'/>",
+      "sfSymbol": "clock"
+    },
+    "link": {
+      "svg": "<path d='M5 7 7 5'/><path d='M5.6 3.6 6.5 2.7a2 2 0 0 1 2.8 2.8l-.9.9M6.4 8.4l-.9.9a2 2 0 0 1-2.8-2.8l.9-.9'/>",
+      "sfSymbol": "link"
+    },
+    "open": {
+      "svg": "<path d='M4.5 2.5H9.5V7.5M9.5 2.5 3 9'/>",
+      "sfSymbol": "arrow.up.right",
+      "use": "Opens the link on that line"
+    }
+  }
+}

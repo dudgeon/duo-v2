@@ -1,0 +1,124 @@
+{
+  "$note": "Every design file in this handoff. kind=pane: the right pane alone, 460 x 900, to build to. kind=sheet: parts and states on one page.",
+  "canvas": "https://claude.ai/artifact/Hip1Qk4vRHq2kWwXWnigic",
+  "canvasPage": "Frontmatter",
+  "screens": [
+    {
+      "file": "screens/frontmatter.html",
+      "db": "DB-16",
+      "kind": "pane",
+      "width": 460,
+      "height": 900,
+      "shows": "At rest, with the caret in a value. The frontmatter is the file’s own text in a quiet block; each line has a type icon, and dates, links and checkboxes get a small control.",
+      "canvasBoard": "FM2-frontmatter.dc.html"
+    },
+    {
+      "file": "screens/frontmatter-new.html",
+      "db": "DB-16",
+      "kind": "pane",
+      "width": 460,
+      "height": 900,
+      "shows": "Tab from the last value made a new line. Names used elsewhere are offered as you type, each with its type.",
+      "canvasBoard": "FM2-frontmatter-new.dc.html"
+    },
+    {
+      "file": "screens/frontmatter-value.html",
+      "db": "DB-16",
+      "kind": "pane",
+      "width": 460,
+      "height": 900,
+      "shows": "A text value offers what other documents put under the same name.",
+      "canvasBoard": "FM2-frontmatter-value.dc.html"
+    },
+    {
+      "file": "screens/frontmatter-type.html",
+      "db": "DB-16",
+      "kind": "pane",
+      "width": 460,
+      "height": 900,
+      "shows": "Click a line’s icon to change its type. The value is rewritten to match when it can be.",
+      "canvasBoard": "FM2-frontmatter-type.dc.html"
+    },
+    {
+      "file": "screens/frontmatter-date.html",
+      "db": "DB-16",
+      "kind": "pane",
+      "width": 460,
+      "height": 900,
+      "shows": "The calendar button, or the completion key, opens the Mac’s own date picker. The file keeps the ISO date.",
+      "canvasBoard": "FM2-frontmatter-date.dc.html"
+    },
+    {
+      "file": "screens/frontmatter-list.html",
+      "db": "DB-16",
+      "kind": "pane",
+      "width": 460,
+      "height": 900,
+      "shows": "Typing a new item in a list offers items other documents use.",
+      "canvasBoard": "FM2-frontmatter-list.dc.html"
+    },
+    {
+      "file": "screens/frontmatter-link.html",
+      "db": "DB-16",
+      "kind": "pane",
+      "width": 460,
+      "height": 900,
+      "shows": "A link value offers files in the project by title or path, and writes a quoted Markdown link.",
+      "canvasBoard": "FM2-frontmatter-link.dc.html"
+    },
+    {
+      "file": "screens/frontmatter-invalid.html",
+      "db": "DB-16",
+      "kind": "pane",
+      "width": 460,
+      "height": 900,
+      "shows": "While the text doesn’t parse, the offending line is outlined, a line under the block says why, and nothing is rewritten or lost.",
+      "canvasBoard": "FM2-frontmatter-invalid.dc.html"
+    },
+    {
+      "file": "screens/frontmatter-claude.html",
+      "db": "DB-16",
+      "kind": "pane",
+      "width": 460,
+      "height": 900,
+      "shows": "A line Claude changed carries the same mark as Claude’s additions in the document, until your next edit.",
+      "canvasBoard": "FM2-frontmatter-claude.dc.html"
+    },
+    {
+      "file": "screens/frontmatter-folded.html",
+      "db": "DB-16",
+      "kind": "pane",
+      "width": 460,
+      "height": 900,
+      "shows": "Folded to its heading. The document starts straight under it.",
+      "canvasBoard": "FM2-frontmatter-folded.dc.html"
+    },
+    {
+      "file": "screens/frontmatter-task.html",
+      "db": "DB-16",
+      "kind": "pane",
+      "width": 460,
+      "height": 900,
+      "shows": "A task note. Its sessions list is a list of links, one per line; away from the caret each shows as its title with a button that opens the session.",
+      "canvasBoard": "FM2-frontmatter-task.dc.html"
+    },
+    {
+      "file": "screens/frontmatter-none.html",
+      "db": "DB-16",
+      "kind": "pane",
+      "width": 460,
+      "height": 900,
+      "shows": "Typing --- on the first line of a document, or choosing Add Properties, starts the block with the most-used names on offer.",
+      "canvasBoard": "FM2-frontmatter-none.dc.html"
+    },
+    {
+      "file": "screens/frontmatter-look.html",
+      "db": "DB-16",
+      "kind": "sheet",
+      "width": 1440,
+      "height": 720,
+      "shows": "The parts on one sheet: a line and its states, the types and how each is written in the file, the controls, lists over several lines, and the keys.",
+      "canvasBoard": "FM2-frontmatter-look.dc.html"
+    }
+  ]
+}

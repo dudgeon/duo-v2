@@ -1,0 +1,135 @@
+{
+  "$note": "Sample data the properties screens use. Not a schema.",
+  "$additions": [
+    "PROJECT.md gains title, aliases, due, prd and exec_ready so every type appears (the built file has goal, health and next)",
+    "The task note's owner and done_when values",
+    "Every suggestion list and its counts"
+  ],
+  "projectFile": {
+    "path": "~/work/payments/checkout-redesign/PROJECT.md",
+    "frontmatter": "---\ntitle: Checkout redesign\naliases: [checkout-redesign, Guest checkout]\ngoal: \"Cut guest-checkout abandonment 15% by Q1\"\nhealth: on-track\nnext: \"Exec review Oct 14\"\ndue: 2026-10-14\nprd: \"[PRD v2](docs/prd-v2.md)\"\nexec_ready: false\n---\n",
+    "types": {
+      "title": "text",
+      "aliases": "list",
+      "goal": "text",
+      "health": "text",
+      "next": "text",
+      "due": "date",
+      "prd": "link",
+      "exec_ready": "checkbox"
+    }
+  },
+  "taskNote": {
+    "path": "~/work/payments/checkout-redesign/tasks/draft-prd-v2.md",
+    "frontmatter": "---\ntype: task\ntitle: \"Draft PRD v2\"\nstatus: in-progress\nowner: Geoff\ndone_when: Approved by eng and design\ndue: 2026-10-10\nsessions:\n  - \"[PRD v2 edits](duo2://session/<id>)\"\n  - \"[Interview synth](duo2://session/<id>)\"\ncreated: 2026-10-03\n---\n"
+  },
+  "suggestions": {
+    "namesFor_re": [
+      {
+        "name": "reviewers",
+        "type": "list",
+        "documents": 6
+      },
+      {
+        "name": "review_by",
+        "type": "date",
+        "documents": 3
+      },
+      {
+        "name": "release",
+        "type": "text",
+        "documents": 2
+      }
+    ],
+    "namesWhenEmpty": [
+      {
+        "name": "tags",
+        "type": "list",
+        "documents": 22
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "documents": 14
+      },
+      {
+        "name": "owner",
+        "type": "text",
+        "documents": 9
+      },
+      {
+        "name": "due",
+        "type": "date",
+        "documents": 7
+      },
+      {
+        "name": "reviewers",
+        "type": "list",
+        "documents": 6
+      }
+    ],
+    "valuesFor_health": [
+      {
+        "value": "on-track",
+        "projects": 4
+      },
+      {
+        "value": "at-risk",
+        "projects": 1
+      },
+      {
+        "value": "off-track",
+        "projects": 1
+      },
+      {
+        "value": "done-pending-readout",
+        "projects": 1
+      }
+    ],
+    "itemsFor_aliases_Ex": [
+      {
+        "value": "Exec review",
+        "documents": 2
+      },
+      {
+        "value": "Exec sponsor notes",
+        "documents": 1
+      }
+    ],
+    "linksFor_prd": [
+      {
+        "title": "PRD v2",
+        "path": "docs/prd-v2.md"
+      },
+      {
+        "title": "Teardown notes",
+        "path": "docs/teardown-notes.md"
+      },
+      {
+        "title": "PROJECT",
+        "path": "PROJECT.md"
+      }
+    ]
+  },
+  "states": {
+    "invalid": {
+      "line": 4,
+      "what": "the goal value's closing quote is missing"
+    },
+    "changedByClaude": {
+      "name": "health",
+      "from": "on-track",
+      "to": "at-risk"
+    },
+    "calendar": {
+      "month": "October 2026",
+      "selected": "2026-10-14",
+      "today": "2026-10-03"
+    },
+    "typeMenu": {
+      "line": "next",
+      "current": "Text",
+      "pointerOn": "Date"
+    }
+  }
+}
