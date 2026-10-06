@@ -143,6 +143,7 @@ layout = [
     {"name": "minimumWindow", "value": f"{s['minimumWindow']['width']}px", "usage": f"Smallest window: {s['minimumWindow']['width']} × {s['minimumWindow']['height']}."},
     {"name": "toolbarHeight", "value": px(s["toolbarHeight"]), "usage": "Toolbar (the system draws 40 on macOS 27; content sits below it)."},
     {"name": "tabStripHeight", "value": px(s["tabStripHeight"]), "usage": "Console and right-pane tab strips."},
+    {"name": "deckBarHeight", "value": px(s["deckBarHeight"]), "usage": "The PowerPoint viewer's bar under the tabs (DL-125)."},
     {"name": "homeSessionTabsHeight", "value": px(s["homeSessionTabsHeight"]), "usage": "Home's session tabs under its header."},
     {"name": "overviewFooterHeight", "value": px(s["overviewFooterHeight"]), "usage": "The map's footer (`N idle, resumable ›`)."},
     {"name": "buttonHeight", "value": px(s["buttonHeight"]), "usage": "Buttons."},

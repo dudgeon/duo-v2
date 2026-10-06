@@ -1,6 +1,6 @@
 # Duo: the PowerPoint viewer — design handoff
 
-Status: approved by Geoff, 2026-10-06 (DL-125); being built. The boards were drawn on the Design canvas https://claude.ai/artifact/UXSLiK37uMERJEh1mNyevE with the Duo design system (every mark a [P]), and are exported here as static HTML with PNGs in `screens/png/`. The renderer and the reasons for it are in `docs/plan/spikes/pptx-viewer.md` (DL-121).
+Status: approved by Geoff, 2026-10-06 (DL-125), and built (F-121). The boards were drawn on the Design canvas https://claude.ai/artifact/UXSLiK37uMERJEh1mNyevE with the Duo design system (every mark a [P]), and are exported here as static HTML with PNGs in `screens/png/`. The renderer and the reasons for it are in `docs/plan/spikes/pptx-viewer.md` (DL-121).
 
 ## What the boards settle
 

@@ -1562,3 +1562,43 @@ Spike: `docs/plan/spikes/browser-engine.md`.
 - **⌘W only ever closes the visible tab** (`closeVisibleSession`, or `closeDocument` when the editor has focus). The × closes any tab, so it calls the same pieces by key: `closeShell` for a shell, `closeSession` for a session (what the Ended bar's Close Tab does), `closeDocument` for a document or browser tab (the tab menu's Close Tab). None of them asks anything; that's Q-71.
 - **Harness:** `hover-tab:<tab key or document path>[=close|press]` holds the pointer over a tab, on its ×, or pressing it (`pressedTabClose`), for captures. In fixture states a session's key is its name (`hover-tab:Teardown research`).
 
+
+## F-121 · The PowerPoint viewer (ENH-12, DL-121, DL-125, 2026-10-06)
+
+- **What's built** (target `docs/design/pptx-handoff/`, boards A to E):
+  - A `.pptx`, `.pptm` or `.ppsx` opens in `DeckView` instead of Quick Look.
+  - `DeckViewer` hosts the vendored renderer (`Vendor/pptx-renderer/`: @aiden0z/pptx-renderer 1.3.0, Apache-2.0, hash-pinned, with the four-line id patch) in a web view.
+  - Duo serves the page, its scripts and the deck's bytes through its own `duo-deck:` scheme. ES modules from `file:` URLs aren't dependable in WKWebView, and the deck needn't be passed as base64.
+  - The page (`deck.html`, `deck.js`) restyles the renderer's list: no shadow, a `rule` round each slide, its number above. It reports the slide filling most of the pane, runs the shape picker with HTMLPicker's protocol (`window.__duo` start, stop, freeze, describe, hideOutline), and moves with ‹ ›, Page Up and Page Down.
+- **One identity, two ways.** The renderer stamps `data-duo-shape-id` (`p:cNvPr`) on every shape, picture, table, chart and group. `Pptx.outline` reads the same ids from the file. DuoChecks renders the four synthetic decks in a real `DeckViewer` and finds every outline shape drawn with the same slide, id, name and groups: 6, 6, 13 and the garden deck's. Picking slide 2's shape 7 gives the outline's box to the pixel.
+- **Picking and sending reuse the HTML flow.**
+  - `DeckViewer` adopts `PageHost`, so start, stop, Pick Another, the screenshot and `visiblePage` work as on HTML pages.
+  - The page describes a shape in `SendFormat.Element`'s shape: tag `shape`, the slide, id and type as attributes, the groups as the trail, the box as the rect. `pickedShape` reads it back.
+  - `SendFormat.shape` writes board D's text; `send element` and `selection` use it for a deck.
+- **Verbs** (DL-71), in a new `slides` family:
+  - `slide`: the deck and the slide on screen, with that slide's outline.
+  - `slide go <n>|next|previous`: counts from the slide just asked for, not the page's last report.
+  - `slide shapes [<file>] [n]` and `slide notes`: from the file, so they work on any deck, showing or not.
+  - `slide pick [<slide>/<id>]` and `slide element`.
+  - Select Shape and Pick Another are `slide pick`; ‹ › are `slide go`.
+- **Can't draw (E).** It is decided before trying:
+  - a `.pptx` that is an OLE file is how Office saves a password;
+  - one whose zip or slide list won't read is damaged;
+  - the renderer's own failure reads "it uses something the viewer can’t read";
+  - a page that doesn't load ends in "Duo’s viewer didn’t load", never "Drawing…" for ever.
+- **C-26's note, done:** `EditorController.open` refuses a file that isn't text, whoever asks. `duo2 doc read` on a deck says it isn't text and names `slide shapes` instead of returning bytes.
+- **Hardening:**
+  - The page carries a Content-Security-Policy: scripts only from `duo-deck:`, images and fonts from `blob:` or `data:`, nothing from the network. A violation is reported to `DeckViewer.blocked` and logged; DuoChecks expects none with charts drawn.
+  - A link on a slide opens only if it's http, https or mailto.
+- **New token:** `size.deckBarHeight` 44 (`gen-tokens.py` and `gen-design-system.py` list sizes by name, so both scripts gained the line).
+- **Proved:**
+  - `swift run DuoChecks`: 570 pass, 26 of them new for the viewer and verbs. `scripts/bundle.sh` and `NO_BUILD=1 scripts/check-ui.sh` pass, and the fixture states are unchanged.
+  - Live captures on scratch data (own `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`, the synthetic Garden deck) compared with the boards: `build/ui/pptx-viewer-compare.png`, `pptx-picking-compare.png`, `pptx-picked-compare.png`, `pptx-fallback-compare.png`. The chrome lines up; slide content and Quick Look are exempt.
+  - Every verb was driven with `duo2` against that instance.
+
+## F-122 · Scripted runs of the deck viewer: what they show and don't (2026-10-06)
+
+- **Charts stay blank in scripted captures.** The capture window isn't on screen (`trace capture onScreen=false`), so WebKit runs no requestAnimationFrame and ECharts never paints. The spike saw the same in an occluded window (F-102), and charts draw in a window on screen. Slide content is exempt from the comparison, and DuoChecks checks the chart's shape id, not its pixels.
+- **`--then` runs only with a capture.** A long-lived scripted instance (no `--capture-window`) ignores its actions, so the live `duo2` test opened the deck with `duo2 open` and `duo2 doc open`.
+- **The path Claude is given** is relative to the session on screen's folder (`displayPath`), as for HTML elements. With no session open it's absolute, as in the scratch run. Board D's `decks/Garden plan.pptx` is what a session in the project gets.
+- **A scripted pick** (`slide pick 2/7`, `slide-pick:`) scrolls to the shape's slide first. The page then reports the shape again, so its screenshot is taken where it now is, not where it was before the scroll.
