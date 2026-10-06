@@ -1,0 +1,34 @@
+
+
+✻ Churned for 0s · done 10:09 AM
+
+❯ SCENARIO:ask1                                                                                     
+
+⏺ User declined to answer questions
+  ⎿  · Which database should we use? (Postgres / SQLite / MySQL)
+
+⏺ Done. The tool said: "The user doesn't want to proceed with this tool use. The tool use was
+  rejected (eg. if it was a file edit, the new_string was NOT written to the file). To tell
+
+✻ Cooked for 0s · done 10:10 AM
+
+❯ SCENARIO:askmulti1                                                                                
+────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☒ Checks  ✔ Submit  →
+
+Which checks should run on every commit?
+
+  1. [✔] Lint
+         About Lint
+  2. [ ] Unit tests
+         About Unit tests
+  3. [✔] Type check
+         About Type check
+  4. [ ] Build
+         About Build
+  5. [ ] Type something
+❯    Submit
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  6. Chat about this
+
+Enter to select · ↑/↓ to navigate · ctrl+g to edit in Vim · Esc to cancel

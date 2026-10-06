@@ -1,0 +1,33 @@
+
+ ▐▛███▛█   Claude Code v2.1.291
+▝▜██████▀  Haiku 4.5 · API Usage Billing
+ ▝▝   ▝▝   ~/repos/duo-v2/.claude/worktrees/chat-mode-ask/Spikes/chat-mode/scratch/ws
+
+
+❯ SCENARIO:askpreview                                                                               
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ ☐ Layout 
+
+Which layout should the card use?
+
+  1. Stacked                      ┌──────────────────────────────────────────┐
+❯ 2. Side by side                 │ +--------+---------+                     │
+  3. Compact                      │ | > One  | Detail  |                     │
+                                  │ |   Two  | of one  |                     │
+                                  │ +--------+---------+                     │
+                                  └──────────────────────────────────────────┘
+
+                                  Notes: keep it short 
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  Chat about this
+
+Enter to select · ↑/↓ to navigate · n to add notes · ctrl+g to edit in Vim · Esc to cancel
+
+
+
+
+
+
+

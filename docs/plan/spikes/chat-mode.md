@@ -1,6 +1,6 @@
 # Spike: chat mode, a readable overlay on the real Claude Code TUI
 
-2026-10-06 · research session for the director · Claude Code **2.1.291** · binding constraints **DL-118** · records ENH-13, F-103, F-104, F-105 · proof of concept in `Spikes/chat-mode/`
+2026-10-06 · research session for the director · Claude Code **2.1.291** · binding constraints **DL-118** · records ENH-13, F-103, F-104, F-105, F-106 · proof of concept in `Spikes/chat-mode/`
 
 ## Answer
 
@@ -61,6 +61,54 @@ Hooks fired as they do with the mock: `SessionStart`, `UserPromptSubmit`, `Messa
 ![A real plan: the whole plan on the card, cut short in the TUI](chat-mode/07-real-plan.jpg)
 ![A real AskUserQuestion](chat-mode/08-real-question.jpg)
 
+## AskUserQuestion in depth (F-106)
+
+Geoff asked for AskUserQuestion to be tried hard before falling back. It doesn't need to fall back for anything the tool can ask.
+
+**What the tool can ask** (its schema in 2.1.291):
+- 1 to 4 questions, each with a `header` (≤ 12 characters), 2 to 4 options with `label` and `description`, and `multiSelect`.
+- An optional `preview` per option, single-select only.
+- The answer carries `answers` and per-question `annotations` (`preview`, `notes`).
+
+**How the TUI draws it, and what the card does:**
+
+| Shape | TUI | Chat-mode card |
+|---|---|---|
+| Single-select | Numbered options, then "Type something.", a rule, "Chat about this". A digit picks and submits at once | Options from the request; a click picks (arrows to it, Enter) |
+| Multi-select | `[ ]`/`[✔]` rows; under the free-text row an unnumbered **Next** (more questions follow) or **Submit** (last) row. Even a single multi-select question ends on the review page | Click ticks/unticks (Space); Next / Submit button = Enter on that row |
+| Other (free text) | Typing into "Type something" replaces the placeholder; on multi-select it ticks itself. ↑/↓ leave the field and keep the text; ←/→ and Space edit the text | A text field pre-filled with what's typed; Answer (single: Enter) or Add (multi). Existing text is replaced with Backspaces first |
+| Several questions | A tab strip `← ☐ A ☒ B ✔ Submit →`; ←/→ move between them; a revisited single-select shows the chosen option with a trailing ✔ | Clickable tabs (☒ answered), Back; the current tab comes from matching the screen's question to the request (the strip's highlight is only colour) |
+| Review | "Review your answers", each question → answer, "1. Submit answers / 2. Cancel" (Cancel declines) | The same list; Submit answers / Cancel |
+| Previews | Options on the left, the focused option's preview boxed on the right (clipped with `✂ n lines hidden` when short), no free-text row, "Chat about this" unnumbered, `n` adds notes | Every option's preview side by side, a notes field; a click with notes = `n`, type, Enter |
+| Chat about this | Ends the question; Claude gets "The user wants to clarify these questions…" | Button; then focus moves to the composer |
+| Decline | Esc: "User declined to answer questions" | Button |
+
+**How answers stay faithful:**
+- The card sends an intent (`pick`, `toggle`, `other`, `next`, `tab`, `notes`, `chat`, `submit`, `cancel-review`, `decline`), never a key list.
+- The server (`ask.mjs`) first checks that the question on screen is one Claude asked and that its options are the asked labels in order. Wrapped labels show only their start, and a short terminal scrolls off the top of a long question, so the visible tail must match exactly one question.
+- Then it moves **one arrow at a time, re-reading the cursor row after each key**, until it reaches the row the human clicked, and only then sends Enter, Space or `n`.
+- It stops at the first surprise and the card falls back; a stale card (an older question's signature) is refused without sending a key.
+
+**Tests:**
+- `asktest.mjs` drives 13 cases end to end through the server's websocket against the real TUI with the mock API, and compares what Claude received (`toolUseResult.answers` / `annotations`, or the denial) with what was clicked.
+- The cases: single pick; single Other; two ticks; untick; tick + Other; four questions with going back to change one, Other on a multi-select and the review page; a long wrapped question; preview pick; preview with notes; Chat about this; decline; review Cancel; a stale card refused.
+- `asktest.sh` runs them at **100×34, 60×34 and 80×20: 39/39 pass**. At 80×20 the first version refused three cases (scrolled question, clipped preview) before the fixes; it never answered wrongly.
+- **Real Haiku under the CLI login**, from the page, all verified against what Claude received:
+  - a single question answered with Other ("DuckDB, embedded");
+  - four mixed questions with q1 changed after going back and "Linux" added as Other on a multi-select;
+  - previews with notes ("Add a 'forgot password' link", which Claude quoted back);
+  - Chat about this, then a composer follow-up;
+  - a decline.
+
+**Hooks and records:**
+- `PermissionRequest` gives the full questions.
+- An answered question gives `PostToolUse` (`tool_response.answers`).
+- **A declined question, and Chat about this, fire no hook at all, not even `Stop`.** Only the transcript's `tool_result` (`toolDenialKind: user-rejected`) records it, so the card closes on the screen leaving the question, and the log notes "Declined" from the transcript.
+
+![Four questions: the card and the TUI in step](chat-mode/09-ask-four-questions.jpg)
+![The review page](chat-mode/10-ask-review.jpg)
+![Real previews: all three on the card, one clipped in the TUI](chat-mode/11-ask-previews-real.jpg)
+
 ## Sources of structured truth (verified)
 
 | Source | What it gives | Latency (measured) | Verdict |
@@ -88,9 +136,9 @@ Faithful = chat mode shows the same choices and information and the answer reach
 | File edits and diffs | `PreToolUse`/`PermissionRequest` tool_input (old/new, content), `PostToolUse` `structuredPatch` | — | **Faithful** (Duo renders the diff; the TUI's line numbers come from the screen if wanted) |
 | Permission prompt: allow once / always / deny | `PermissionRequest` (what) + screen (the **verbatim option labels**, e.g. `2. Yes, and always allow access to <dir> from this project`, `2. Yes, and switch to accept edits … (shift+tab)`) | The option's digit (verified for 1–3); Esc = cancel | **Faithful** when buttons are built from the screen's labels, never a fixed list. **Tab to amend** (feedback text) → fallback for now |
 | Plan approval (`ExitPlanMode`) | `PermissionRequest.tool_input.plan` (Markdown) + `planFilePath`; screen "Ready to code?" with `1. Yes, auto-accept edits` / `2. Yes, manually approve edits` / `3. Tell Claude what to change` (+ "shift+tab to approve with this feedback"); auto mode adds "Yes, and use auto mode" (changelog 2.1.280) | Digit or arrows + Enter; 3 = arrows to it, type, Enter (**verified**: Claude received "the user said: Also update the docs") | **Faithful** for 1–3. "Approve with this feedback" (shift+tab on 3) and Ctrl+G-to-edit the plan → fallback. A refused plan fires **no hook**: only the transcript's `toolDenialKind: user-rejected` and `userFeedback` say so |
-| AskUserQuestion, single | `PermissionRequest.tool_input.questions[]` + screen | Arrows from the cursor row, Enter (**verified**) | **Faithful** |
-| AskUserQuestion, multi-select, several questions, "Type something" (Other), review page | Same; the screen gives the tab strip (`☐ Platforms ☐ Timing ✔ Submit`), `[✔]` marks and "Review your answers" | Space toggles, → moves to the next question, type into "Type something", Enter; then "Submit answers" (**all verified**, end to end from the page) | **Faithful**, as long as the card mirrors the TUI's own steps and re-reads the screen after every key. Esc = "User declined to answer questions" |
-| AskUserQuestion "Chat about this", option `preview` panes, notes | Screen | — | **Fallback** (preview: until designed) |
+| AskUserQuestion, single | `PermissionRequest.tool_input.questions[]` (full text, descriptions, previews) + screen (cursor, chosen ✔) | Intent → arrows one at a time, re-read, Enter (**verified**, mock and real) | **Faithful** |
+| AskUserQuestion: multi-select, up to 4 questions, Other, going back to change an answer, review page | Same; the screen gives the tab strip, `[✔]` ticks, the free-text row's typed text, the Next/Submit row | Intents (`ask.mjs`): toggle = Space; Other = type into the free-text row (multi ticks it itself; never Space there); Next = Enter on the Next/Submit row; ←/→ between questions (never from inside the free-text row); Submit answers (**verified**: 13 cases × 3 terminal sizes, and real Haiku) | **Faithful** |
+| AskUserQuestion: option `preview` panes and notes, "Chat about this", decline | Request (every preview) + screen (side-by-side layout, `Notes:`) | Notes = `n`, type, Enter on the option; Chat about this = Enter on its row (Claude is told the user wants to clarify; the composer takes over); Esc (**verified**, mock and real) | **Faithful**. The card shows every preview at once; the TUI shows one, clipped in a short terminal |
 | /commands | Screen (the menu filters as you type) | Typed into the input | **Partial**: the composer can offer the list; any command with its own UI (`/model`, `/config`, `/permissions`, `/resume`, `/agents`, `/mcp`, `/tasks`) → **automatic fallback** (verified with `/model`) |
 | Errors and retries | `StopFailure`; screen status (`529 Overloaded · Retrying in 2s · attempt 4/10`) | — | **Faithful** as a status line |
 | Interrupt | `PostToolUseFailure.is_interrupt`; screen "Interrupted · What should Claude do instead?" | Esc (verified) | **Faithful** |
@@ -153,7 +201,7 @@ Chat mode shows the terminal, with a one-line reason and "Back to chat", wheneve
 2. **The screen and the hooks disagree**: a permission dialog with no pending `PermissionRequest` (or one for a different tool), or a plan or question screen whose text doesn't match the request's.
 3. **A signature matched but the CLI version isn't one the dialog table was verified on.** Rendering continues; dialogs go to the terminal.
 4. **The answer can't be delivered**: the screen changed between drawing the card and sending (signature check), the input wasn't empty, or the echo didn't match.
-5. **The user picks something chat mode doesn't do**: Tab to amend, Chat about this, preview panes, Ctrl+O, the agents manager.
+5. **The user picks something chat mode doesn't do**: Tab to amend, Ctrl+O, the agents manager.
 
 When the screen returns to the idle or busy input box, chat mode comes back by itself if it left by itself. If the user chose the terminal, it stays. The toggle (header control, a shortcut) works at any moment, both ways.
 
@@ -201,6 +249,7 @@ When the screen returns to the idle or busy input box, chat mode comes back by i
 `Spikes/chat-mode/` (Node; not part of the app). It contains:
 - `server.mjs` runs `claude` in a PTY with hooks, tails the events and the transcript, reads the screen (`screen.mjs`), and serves `index.html`.
 - `index.html` shows the real terminal (xterm.js) beside the chat: Markdown from `MessageDisplay`, tool cards with diffs, permission, plan and question cards drawn from the screen and the request, a composer, a mode chip, Stop, the Chat / Both / Terminal toggle, and the automatic fallback.
+- `ask.mjs` answers AskUserQuestion intents key by key (F-106); `asktest.mjs` / `asktest.sh` test it end to end at three terminal sizes.
 - `mock.mjs` is the scripted API.
 - `drive.mjs` / `tour.sh` play a scenario headlessly and dump screens; `scenario-tour.json` is the one used here.
 - `screens/` holds the captured TUI states.

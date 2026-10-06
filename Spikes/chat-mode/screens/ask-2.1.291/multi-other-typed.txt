@@ -1,0 +1,33 @@
+
+ ▐▛███▛█   Claude Code v2.1.291
+▝▜██████▀  Haiku 4.5 · API Usage Billing
+ ▝▝   ▝▝   ~/repos/duo-v2/.claude/worktrees/chat-mode-ask/Spikes/chat-mode/scratch/ws
+
+
+❯ SCENARIO:ask4                                                                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☒ Framework  ☒ Sections  ☒ Storage  ☒ Platforms  ✔ Submit  →
+
+Which platforms need it first?
+
+  1. [ ] macOS
+         About macOS
+  2. [ ] iOS
+         About iOS
+❯ 3. [✔] watchOS 
+     Submit
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  4. Chat about this
+  
+Enter to select · Tab/Arrow keys to navigate · ctrl+g to edit in Vim · Esc to cancel
+
+
+
+
+
+
+
+
+
+
+

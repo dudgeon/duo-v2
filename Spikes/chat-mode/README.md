@@ -9,11 +9,13 @@ npm install && find node_modules/node-pty -name spawn-helper -exec chmod +x {} \
 ./tour.sh scenario-tour.json /tmp/tour  # every dialog, headless; diff /tmp/tour against screens/tour-2.1.291/
 ```
 
-With the mock, put `SCENARIO:<name>` in a prompt: `md`, `bash`, `read` (then an edit), `ask`, `askmulti`, `plan` (Shift+Tab twice into plan mode first), `agent`, `long`, `err`.
+With the mock, put `SCENARIO:<name>` in a prompt: `md`, `bash`, `read` (then an edit), `ask`, `askmulti`, `ask1`, `askmulti1`, `ask4`, `asklong`, `askpreview`, `plan` (Shift+Tab twice into plan mode first), `agent`, `long`, `err`.
 
 | File | What |
 |---|---|
 | `server.mjs` | Runs `claude` with per-session hooks (print nothing), tails events and transcript, reads the screen, serves the page, turns answers into keys after re-checking the screen |
+| `ask.mjs` | AskUserQuestion: turns the card's intent (pick, toggle, other, next, tab, notes, chat, submit, decline) into keys one at a time, re-reading the screen after each (F-106) |
+| `asktest.mjs`, `asktest.sh` | 13 AskUserQuestion cases end to end through the server, at three terminal sizes; checks what Claude received |
 | `screen.mjs` | The 2.1.291 dialog signatures: idle, busy, permission, plan, question, review, else `unknown` |
 | `index.html` | Terminal (xterm.js) and chat side by side: Markdown from `MessageDisplay`, tool cards, dialog cards, composer, toggle, automatic fallback |
 | `mock.mjs` | A scripted stand-in for the Messages API |
@@ -22,3 +24,5 @@ With the mock, put `SCENARIO:<name>` in a prompt: `md`, `bash`, `read` (then an 
 | `screens/` | Captured TUI states, including the desyncs (`desync-glued-prompt.txt`) and unknown screens |
 
 `screens/real-cli-login-2.1.291/` holds the same states from real Haiku turns under the CLI login (F-105). Differences from the mock baseline are listed in the spike doc.
+
+`./asktest.sh` runs the AskUserQuestion suite (mock, about 10 minutes for three terminal sizes).
