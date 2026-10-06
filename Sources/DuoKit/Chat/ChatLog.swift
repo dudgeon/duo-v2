@@ -120,10 +120,18 @@ public struct ChatToolStep: Identifiable, Equatable, Sendable {
     public var output: [String]?
     public var error: String?
     public var agent: ChatAgentResult?
+    /// Reads grouped into this step's line (`Read a.md, b.md`): each one's shown path and real path.
+    public var others: [(String, String?)] = []
     /// A folded step's first lines of output (Read, Search), shown when opened.
     public var preview: [String]?
     /// The input, canonical, to match a PermissionRequest (which has no tool_use_id, F-103).
     var inputKey: String
+
+    public static func == (a: ChatToolStep, b: ChatToolStep) -> Bool {
+        a.id == b.id && a.verb == b.verb && a.object == b.object && a.detail == b.detail && a.status == b.status && a.adds == b.adds && a.dels == b.dels
+            && a.diff == b.diff && a.output == b.output && a.error == b.error && a.agent == b.agent && a.preview == b.preview
+            && a.others.map(\.0) == b.others.map(\.0)
+    }
 
     /// Folded to one line until opened (Read, Search, Fetch); the others open.
     public var foldsByDefault: Bool { diff == nil && output == nil && error == nil && agent == nil }

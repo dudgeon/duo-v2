@@ -11,13 +11,33 @@ struct ChatToolThread: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(steps) { s in ChatToolStepView(step: s, chat: chat) }
+            ForEach(Self.grouped(steps)) { s in ChatToolStepView(step: s, chat: chat) }
         }
         .padding(.leading, 6)
         .background(alignment: .leading) {
             DottedLine().stroke(DuoColor.controlEdge, style: StrokeStyle(lineWidth: 1.5, dash: [1.5, 2.5]))
                 .frame(width: 1.5).padding(.leading, 6)
         }
+    }
+}
+
+extension ChatToolThread {
+    /// Reads in a row are one step, `Read a.md, b.md` (handoff `plan`), as the TUI groups them.
+    static func grouped(_ steps: [ChatToolStep]) -> [ChatToolStep] {
+        var out: [ChatToolStep] = []
+        for s in steps {
+            if s.name == "Read", s.status == .done, let last = out.last, last.name == "Read", last.status == .done {
+                var g = last
+                g.object += ", " + s.object
+                g.others.append((s.object, s.path))
+                g.detail = nil
+                g.preview = nil
+                out[out.count - 1] = g
+            } else {
+                out.append(s)
+            }
+        }
+        return out
     }
 }
 
@@ -74,12 +94,16 @@ struct ChatToolStepView: View {
         switch step.objectKind {
         case .path, .url:
             obj = AttributedString(" ")
-            var link = AttributedString(step.object)
-            link.foregroundColor = DuoColor.text
-            link.underlineStyle = Text.LineStyle(pattern: .solid, color: DuoColor.controlEdge)
-            if step.objectKind == .path, let p = step.path { link.link = ChatMarkdown.fileURL(p) }
-            if step.objectKind == .url, let u = step.path.flatMap(URL.init(string:)) { link.link = u }
-            obj += link
+            let first = step.others.isEmpty ? step.object : String(step.object.prefix { $0 != "," })
+            for (i, part) in ([(first, step.path)] + step.others).enumerated() {
+                if i > 0 { var sep = AttributedString(", "); sep.foregroundColor = DuoColor.text2; obj += sep }
+                var link = AttributedString(part.0)
+                link.foregroundColor = DuoColor.text
+                link.underlineStyle = Text.LineStyle(pattern: .solid, color: DuoColor.controlEdge)
+                if step.objectKind == .path, let p = part.1 { link.link = ChatMarkdown.fileURL(p) }
+                if step.objectKind == .url, let u = part.1.flatMap(URL.init(string:)) { link.link = u }
+                obj += link
+            }
         case .code:
             obj.font = Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular))
             obj.foregroundColor = DuoColor.text2
@@ -109,7 +133,7 @@ struct ChatToolStepView: View {
         if failed {
             Text(step.error ?? "").duoText(.chatDiff).foregroundStyle(DuoColor.diffDelText)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(EdgeInsets(top: 6, leading: 10, bottom: 6, trailing: 10))
+                .padding(EdgeInsets(top: 7, leading: 11, bottom: 7, trailing: 11))
                 .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).strokeBorder(DuoColor.toolErrorEdge, lineWidth: DuoMetric.borderHairline))
                 .textSelection(.enabled)
         } else if let diff = step.diff {
@@ -134,7 +158,8 @@ struct ChatDiffView: View {
     var framed = true
     var body: some View {
         if framed {
-            rows.clipShape(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody))
+            // CSS draws the border outside the rows: 1 pt more each side than strokeBorder.
+            rows.clipShape(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody)).padding(DuoMetric.borderHairline)
                 .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).strokeBorder(DuoColor.selected, lineWidth: DuoMetric.borderHairline))
         } else { rows }
     }
@@ -149,7 +174,7 @@ struct ChatDiffView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .duoText(.chatDiff)
-                .padding(EdgeInsets(top: i == 0 ? 2 : 0, leading: 0, bottom: i == lines.count - 1 ? 2 : 0, trailing: 10))
+                .padding(EdgeInsets(top: i == 0 ? 2 : 0, leading: 0, bottom: i == lines.count - 1 || (i == 0 && l.kind == .context) ? 2 : 0, trailing: 10))
                 .background(l.kind == .add ? DuoColor.diffAddFill : l.kind == .del ? DuoColor.diffDelFill : .clear)
             }
         }
@@ -174,7 +199,7 @@ struct ChatOutputView: View {
             }
             if !all, lines.count > Self.shown {
                 let n = lines.count - Self.shown
-                Text("Show \(n) more line\(n == 1 ? "" : "s")").duoText(.chatMeta).foregroundStyle(DuoColor.text)
+                Text("Show \(n) more line\(n == 1 ? "" : "s")").duoText(.chatMeta, lineHeight: DuoTextStyle.chatDiff.spec.lineHeight).foregroundStyle(DuoColor.text)
                     .underline(color: DuoColor.controlEdge)
                     .padding(.top, 4)
                     .onActivate { chat.ui.fullOutput.insert(id) }  // not an action: shows more of what's drawn
@@ -182,7 +207,7 @@ struct ChatOutputView: View {
         }
         .textSelection(.enabled)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(EdgeInsets(top: 6, leading: 10, bottom: 6, trailing: 10))
+        .padding(EdgeInsets(top: 6 + 1, leading: 10 + 1, bottom: 6 + 1, trailing: 10 + 1))
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).fill(DuoColor.toolOutputFill))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).strokeBorder(DuoColor.selected, lineWidth: DuoMetric.borderHairline))
     }
@@ -206,7 +231,7 @@ struct ChatAgentBox: View {
                     .buttonStyle(.duo)
             }
         }
-        .padding(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+        .padding(EdgeInsets(top: 9, leading: 13, bottom: 9, trailing: 13))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).strokeBorder(DuoColor.selected, lineWidth: DuoMetric.borderHairline))
     }
 

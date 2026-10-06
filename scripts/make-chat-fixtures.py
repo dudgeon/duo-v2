@@ -200,6 +200,7 @@ PLAN = "## Saved cards for guests\n\n1. Move “Storing cards for guests” from
 r = Rec()
 r.t.append({"type": "user", "message": {"role": "user", "content": "Plan how we’d bring saved cards into scope. Don’t change anything yet."}, "timestamp": iso("10:30"), "origin": {"kind": "human"}, "permissionMode": "plan"})
 r.tool("10:31", "toolu_l1", "Read", {"file_path": PRD}, {"type": "text", "file": {"content": "", "numLines": 88}})
+r.tool("10:31", "toolu_l1b", "Read", {"file_path": CWD + "/research/interviews.md"}, {"type": "text", "file": {"content": "", "numLines": 214}})
 r.say("10:31", "Here’s the plan.")
 r.tool("10:31", "toolu_l2", "ExitPlanMode", {})
 r.hook("10:31", 5, hook_event_name="PermissionRequest", tool_name="ExitPlanMode", tool_input={"plan": PLAN, "planFilePath": PLAN_PATH})

@@ -21,7 +21,8 @@ struct ChatReviewCard: View {
             default: EmptyView()
             }
         }
-        .padding(EdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16))
+        // The board's 14/16 padding sits inside a 1.5 border that CSS draws outside it.
+        .padding(EdgeInsets(top: 15.5, leading: 17.5, bottom: 15.5, trailing: 17.5))
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusReviewCard).fill(DuoColor.pane))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusReviewCard).strokeBorder(DuoColor.needsYou, lineWidth: 1.5))
@@ -81,7 +82,7 @@ struct ChatOptionButton<Lead: View>: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(EdgeInsets(top: 6, leading: 10, bottom: 6, trailing: 10))
+        .padding(EdgeInsets(top: 7, leading: 11, bottom: 7, trailing: 11))   // 6/10 inside a 1 pt border
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).fill(DuoColor.pane))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody)
@@ -208,7 +209,7 @@ struct ChatPlanBody: View {
             ChatMarkdownView(blocks: ChatMarkdown.parse(chat.planText ?? ""), streaming: false, compact: true)
                 .padding(EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14))
         }
-        .frame(height: 196)
+        .frame(height: 196 + 20 + 2)   // the board's 196 of plan, its 10/14 padding and border outside it
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).strokeBorder(DuoColor.selected, lineWidth: DuoMetric.borderHairline))
         Text(screen.body ?? "").duoText(.body).foregroundStyle(DuoColor.text).fixedSize(horizontal: false, vertical: true)
         VStack(spacing: 6) {
@@ -224,7 +225,7 @@ struct ChatPlanBody: View {
                             Task { if await chat.planFeedback(text, sig: screen.sig).ok { ui.planFeedback = "" } }
                         }
                     }
-                    .padding(EdgeInsets(top: 6, leading: 10, bottom: 6, trailing: 10))
+                    .padding(EdgeInsets(top: 7, leading: 11, bottom: 7, trailing: 11))
                     .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody)
                         .strokeBorder(ui.planFeedback.isEmpty ? DuoColor.controlEdge : DuoColor.text, lineWidth: ui.planFeedback.isEmpty ? DuoMetric.borderHairline : 1.5))
                 } else {
@@ -344,7 +345,7 @@ struct ChatQuestionOptions: View {
                         Task { if await chat.ask(.other(text), sig: screen.sig).ok { ui.other[index] = nil } }
                     }
                 }
-                .padding(EdgeInsets(top: 6, leading: 10, bottom: 6, trailing: 10))
+                .padding(EdgeInsets(top: 7, leading: 11, bottom: 7, trailing: 11))
                 .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody)
                     .strokeBorder(typed && !screen.multi ? DuoColor.text : DuoColor.controlEdge, lineWidth: typed && !screen.multi ? 1.5 : DuoMetric.borderHairline))
             }
@@ -428,7 +429,7 @@ struct ChatPreviewOptions: View {
                 Task { if await chat.ask(.notes(label, notes), sig: screen.sig).ok { ui.notes = "" } }
             }
         }
-        .padding(EdgeInsets(top: 6, leading: 10, bottom: 6, trailing: 10))
+        .padding(EdgeInsets(top: 7, leading: 11, bottom: 7, trailing: 11))
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).strokeBorder(DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline))
     }
 }
