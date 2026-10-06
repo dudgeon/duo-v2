@@ -55,6 +55,8 @@ struct HomePane: View {
                     .modifier(TabHover(key: s.tabKey) { model.closeConsoleTab(s.tabKey) })
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+                    .background(DuoColor.console)
+                    .transition(.tab)
                 }
                 // Home's shells (DB-4), after its sessions.
                 ForEach(home.map { model.shells(inProject: $0.name) } ?? [], id: \.self) { key in
@@ -73,6 +75,8 @@ struct HomePane: View {
                     .onActivate { model.homeTab = key }  // action: session open
                     .modifier(TabHover(key: key) { model.closeConsoleTab(key) })
                     .accessibilityLabel("\(model.consoleTitle(key)), shell")
+                    .background(DuoColor.console)
+                    .transition(.tab)
                 }
                 // With no tabs, a way to start one (home-none).
                 if home != nil, tabs.isEmpty && (home.map { model.shells(inProject: $0.name).isEmpty } ?? true) {
@@ -93,6 +97,7 @@ struct HomePane: View {
             }
             .padding(.horizontal, DuoSpace.panePadding)
             .frame(height: DuoMetric.homeSessionTabsHeight)
+            .duoAnimation(.tabMove, value: tabs.map(\.tabKey) + (home.map { model.shells(inProject: $0.name) } ?? []))
             ConsoleRule()
             }
 

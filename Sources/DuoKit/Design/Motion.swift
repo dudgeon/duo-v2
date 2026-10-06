@@ -93,3 +93,16 @@ extension AnyTransition {
                     removal: .opacity.animation(DuoMotionToken.rowOut.animation))
     }
 }
+
+extension AnyTransition {
+    /// A tab opening or closing (DL-130): it fades in (`tabIn`) or out (`tabOut`); the strip
+    /// slides the others (`tabMove`).
+    @MainActor static var tab: AnyTransition {
+        .asymmetric(insertion: .opacity.animation(DuoMotionToken.tabIn.animation),
+                    removal: .opacity.animation(DuoMotionToken.tabOut.animation))
+    }
+
+    /// A notice bar arriving under the tab strip, or leaving (DL-130): it slides down from under
+    /// the strip, pushing what's below (the container animates `noticeIn` / `noticeOut` and clips).
+    @MainActor static var notice: AnyTransition { .move(edge: .top) }
+}

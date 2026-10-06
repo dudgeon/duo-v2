@@ -453,7 +453,7 @@ struct BrowserTabView: View {
             .padding(.horizontal, 12)
             .frame(height: 34)
             DuoColor.rule.frame(height: 1)
-            if let d = tab.download { DownloadNotice(tab: tab, record: d) }
+            if let d = tab.download { DownloadNotice(tab: tab, record: d).transition(.notice) }
             if let blocked = tab.blocked {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("\(blocked.host ?? blocked.absoluteString) isn't on your allowed sites").duoText(.bodyEmphasis)
@@ -471,6 +471,7 @@ struct BrowserTabView: View {
                 WebTabHost(tab: tab)
             }
         }
+        .modifier(NoticeMotion(key: tab.download != nil ? "download" : nil))
     }
 
     private func barItem(_ symbol: String, _ label: String, enabled: Bool, _ action: @escaping () -> Void) -> some View {

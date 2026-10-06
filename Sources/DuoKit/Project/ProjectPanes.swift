@@ -467,6 +467,8 @@ struct RightPane: View {
                                 FileMenu(path: tab.id, isFolder: false, onTab: true)
                             }
                         })
+                        .background(DuoColor.pane)
+                        .transition(.tab)
                 }
                 // New Markdown file, the same treatment as the console's + (DL-61).
                 if model.terminalsMode == .live, model.projectFolder != nil {
@@ -479,11 +481,13 @@ struct RightPane: View {
                             Button("New Browser Tab") { model.newBrowserTab() }
                         }
                         .accessibilityLabel("New Markdown file")
+                        .background(DuoColor.pane)
                 }
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 20)
             .frame(height: DuoMetric.tabStripHeight)
+            .duoAnimation(.tabMove, value: tabs.map(\.id))
             DuoColor.rule.frame(height: 1)
             if let id = model.rightTab, let web = model.webTabs[id] {
                 // A browser tab (Phase K, ENH-8): allowed sites in Duo, the rest in the browser (DL-3).
@@ -513,12 +517,14 @@ struct RightPane: View {
                     DocumentStateBar()
                     DocumentEditorView(editor: model.editor, file: file)
                 }
+                .modifier(NoticeMotion(key: DocumentStateBar.key(model)))
             } else if model.rightTab == "Project" || model.rightTab == nil, let own = model.projectFile, let file = model.liveFile(own) {
                 // The Project tab is the project's own file (DL-60).
                 VStack(spacing: 0) {
                     DocumentStateBar()
                     DocumentEditorView(editor: model.editor, file: file)
                 }
+                .modifier(NoticeMotion(key: DocumentStateBar.key(model)))
             } else if let path = model.rightTab, path.contains(".") {
                 DocumentPlaceholder(path: path)
             } else if model.rightTab == "Project" || model.rightTab == nil, let p = model.currentProject, p.kind == "folder" {
@@ -802,7 +808,23 @@ struct PickerBar: View {
 struct DocumentStateBar: View {
     @Environment(AppModel.self) private var model
 
+    /// Which bar shows, if any: the document's container animates on it (DL-130).
+    static func key(_ model: AppModel) -> String? {
+        let _ = model.editorRevision
+        guard let e = model.editorIfLoaded, e.url != nil else { return nil }
+        if e.conflict { return "conflict" }
+        if e.removedOnDisk { return "removed" }
+        if e.renamedTo != nil { return "renamed" }
+        if e.readOnlyReason != nil { return "read-only" }
+        if let tab = model.rightTab, model.conversions[tab] != nil { return "converted" }
+        return nil
+    }
+
     var body: some View {
+        Group { bar }.transition(.notice)
+    }
+
+    @ViewBuilder var bar: some View {
         let _ = model.editorRevision
         if let e = model.editorIfLoaded, let file = e.url {
             if e.conflict {
@@ -937,3 +959,13 @@ struct MissingNotice: View {
     }
 }
 
+/// A container whose notice bar comes and goes (DL-130): the bar slides down from under the tab
+/// strip and pushes the content (`noticeIn`), and slides back up (`noticeOut`), clipped to it.
+struct NoticeMotion: ViewModifier {
+    let key: String?
+    func body(content: Content) -> some View {
+        content
+            .clipped()
+            .animation((key != nil ? DuoMotionToken.noticeIn : .noticeOut).animation, value: key)
+    }
+}

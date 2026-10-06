@@ -1806,3 +1806,21 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - the chat boards window, text, permission-edit, plan, question-multi, question-review, composer and fallback;
   - overview and project.
 - **Checks:** DuoChecks 627 and the chat checks (`DUO_CHECKS=chat`) 96 pass.
+
+## F-137 · Tabs fade in and out while the strip slides; notice bars slide down from under the tabs (DL-130, 2026-10-06)
+
+- **Tabs** (console strip, the right pane's strip, Home's strip):
+  - A tab opening fades in (`tabIn`) and a tab closing fades out (`tabOut`). The rest of the strip, `+` and the chevron included, slides (`tabMove`), keyed on the tab ids, so a title change or a re-shortening doesn't animate.
+  - Every tab and the `+` are opaque on their strip (`console` or `pane`). A first capture had the sliding `+` overprint the tab fading under it.
+  - The hover × is unchanged: instant, as DL-126 says.
+  - Tabs that move into or out of the `» n` menu fade like any other.
+- **Notices** (`NoticeMotion`): the document's state bar (conflict, removed, renamed, read only, converted) and a browser tab's download notice slide down from under the tab strip, `noticeIn` 150 ms ease-out, pushing the document or page down; OK slides them back up, `noticeOut`. The container clips them, so they never draw over the tabs.
+- **Left at once, on purpose:**
+  - a bar that comes with its view: a binary file's or Word document's bar, or the deck that won't draw;
+  - the chat fallback bar, which sits over a live terminal. Sliding it would resize the PTY on every frame (LR-14), so it appears at once.
+- **Proof** (scale 10; `build/motion/<name>/strip.png`):
+  - `tab-open` (`shell`): the shell's tab fades in, and `+` slides along, covering it.
+  - `tab-close` (`close`): the tab fades out under the sliding `+`.
+  - `notice` (live, `user-type:` then `disk-write:` on the same line, 20 ms apart): the conflict bar slides down over 0.4 to 1.6 s, pushing the document.
+  - With Reduce Motion, every frame is the end state.
+- **Unchanged at rest** against origin/main's build (0 pixels): overview, project, flow-zoom-1 to 4, shell-tab, the hover × on a console and a document tab, chat-window and narrow-project. DuoChecks 627 and the chat checks 96 pass.
