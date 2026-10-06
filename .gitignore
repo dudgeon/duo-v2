@@ -2,3 +2,6 @@
 .build/
 .swiftpm/
 build/
+
+# Duo's session index (DL-50)
+.duo/
