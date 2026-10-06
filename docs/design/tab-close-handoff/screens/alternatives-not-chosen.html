@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tab close alternatives</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1400px; height: 420px; box-sizing: border-box; padding: 24px; background: #F3F4F6; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; row-gap: 14px; align-content: start">
+
+<div style="font-size: 14px; font-weight: 600; line-height: 20px">[P] B · × after the title; the strip makes room (tabs to its right shift 20)</div>
+<div style="font-size: 14px; font-weight: 600; line-height: 20px">[P] C · × after the title, over the gap (nothing moves; the × crowds the next tab)</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] Console, pointer over “Buyer interviews”</div>
+<div style="height: 36px; background: #15171B; padding: 0 16px; display: flex; align-items: center; gap: 18px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 19px">
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg><span style="color: #E6E8EB; font-weight: 500">Refund policy draft</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#F97316"></circle></svg><span style="color: #9AA1AB">Buyer interviews</span><div style="width: 16px; height: 16px; margin-left: -2px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg></div></div>
+<div style="display: flex; align-items: center; gap: 6px"><svg width="11" height="9" viewBox="0 0 12 10"><path d="M1.5 2 L5 5 L1.5 8 M6.5 8.5 L10.5 8.5" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="color: #9AA1AB">zsh</span></div>
+<span style="color: #9AA1AB">+ ⌄</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] Console, pointer over “Buyer interviews”</div>
+<div style="height: 36px; background: #15171B; padding: 0 16px; display: flex; align-items: center; gap: 18px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 19px">
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg><span style="color: #E6E8EB; font-weight: 500">Refund policy draft</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#F97316"></circle></svg><span style="position: relative; color: #9AA1AB">Buyer interviews<span style="position: absolute; right: -17px; top: 1px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg></span></span></div>
+<div style="display: flex; align-items: center; gap: 6px"><svg width="11" height="9" viewBox="0 0 12 10"><path d="M1.5 2 L5 5 L1.5 8 M6.5 8.5 L10.5 8.5" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="color: #9AA1AB">zsh</span></div>
+<span style="color: #9AA1AB">+ ⌄</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] Right pane, pointer over “pricing.md”</div>
+<div style="height: 36px; background: #FFFFFF; border-bottom: 1px solid #C9CDD3; padding: 0 20px; display: flex; align-items: center; gap: 18px; font-size: 13px; line-height: 20px">
+<span style="color: #5B636D">Project</span><span style="color: #1F2328; font-weight: 600">launch-notes.md</span>
+<span style="display: flex; align-items: center; gap: 4px; color: #5B636D">pricing.md<span style="width: 16px; height: 16px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round"></path></svg></span></span>
+<span style="color: #5B636D">Stripe Docs</span><span style="color: #5B636D">+</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] Right pane, pointer over “pricing.md”</div>
+<div style="height: 36px; background: #FFFFFF; border-bottom: 1px solid #C9CDD3; padding: 0 20px; display: flex; align-items: center; gap: 18px; font-size: 13px; line-height: 20px">
+<span style="color: #5B636D">Project</span><span style="color: #1F2328; font-weight: 600">launch-notes.md</span>
+<span style="position: relative; color: #5B636D">pricing.md<span style="position: absolute; right: -17px; top: 2px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round"></path></svg></span></span>
+<span style="color: #5B636D">Stripe Docs</span><span style="color: #5B636D">+</span>
+</div>
+</div>
+
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] Hover, pressed, which tabs, keyboard and unsaved: as A.</div>
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] Hover, pressed, which tabs, keyboard and unsaved: as A.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":420}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

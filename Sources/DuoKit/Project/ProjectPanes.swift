@@ -395,14 +395,30 @@ struct RightPane: View {
     var body: some View {
         let tabs = rightTabs
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: DuoSpace.gapPaneTabs) {
-                ForEach(tabs, id: \.id) { tab in
+            // Spacing is laid out by hand so a document tab's × (DL-126) sits in the gap before its
+            // title: the gap is the 1 left over, the × box and the 1 before the title.
+            HStack(spacing: 0) {
+                ForEach(Array(tabs.enumerated()), id: \.element.id) { i, tab in
                     let active = tab.id == model.rightTab
                     // A document waiting in conflict says so on its tab (S3-4).
                     let conflicted = !active && tab.isDocument && (model.liveFile(tab.id).map { model.editorIfLoaded?.keptInConflict($0) == true } ?? false)
-                    Text("\(Text(tab.title).foregroundStyle(active ? DuoColor.text : DuoColor.text2))\(conflicted ? Text(" · conflict").foregroundStyle(DuoColor.text) : Text(""))")
-                        .duoText(active ? .bodyEmphasis : .body)
-                        .lineLimit(1)
+                    let closeSlot = tab.isDocument ? DuoMetric.tabCloseSize + DuoMetric.tabCloseTitleGap : 0
+                    HStack(spacing: DuoMetric.tabCloseTitleGap) {
+                        if tab.isDocument {
+                            if model.showsTabClose(tab.id) {
+                                TabCloseButton(key: tab.id, onConsole: false, active: active) { model.closeDocument(tab.id) }  // action: doc close
+                            } else {
+                                Color.clear.frame(width: DuoMetric.tabCloseSize, height: DuoMetric.tabCloseSize)
+                            }
+                        }
+                        Text("\(Text(tab.title).foregroundStyle(active ? DuoColor.text : DuoColor.text2))\(conflicted ? Text(" · conflict").foregroundStyle(DuoColor.text) : Text(""))")
+                            .duoText(active ? .bodyEmphasis : .body)
+                            .lineLimit(1)
+                    }
+                        .padding(.leading, (i == 0 ? 0 : DuoSpace.gapPaneTabs) - closeSlot)
+                        .contentShape(Rectangle())
+                        .modifier(TabHover(key: tab.id, enabled: tab.isDocument) { model.closeDocument(tab.id) })
+                        .accessibilityElement(children: .combine)
                         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                         // A file outside the project shows its name; its path is the tooltip (DL-106, look: Q-39).
                         .help(AppModel.isOutsideFile(tab.id) ? String(tab.id.dropFirst(AppModel.outsideFilePrefix.count)) : "")
@@ -422,6 +438,7 @@ struct RightPane: View {
                 // New Markdown file, the same treatment as the console's + (DL-61).
                 if model.terminalsMode == .live, model.projectFolder != nil {
                     Text("+").duoText(.body).foregroundStyle(DuoColor.text2)
+                        .padding(.leading, tabs.isEmpty ? 0 : DuoSpace.gapPaneTabs)
                         .onActivate { model.newMarkdownFile(near: model.selectedFile) }  // action: file new
                         // Right-click + for the other new tabs (ENH-8).
                         .contextMenu {

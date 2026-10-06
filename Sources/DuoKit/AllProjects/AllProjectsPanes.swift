@@ -38,7 +38,12 @@ struct HomePane: View {
                 ForEach(tabs) { s in
                     let active = s.tabKey == model.homeTab
                     HStack(spacing: DuoSpace.gapGlyphToLabel) {
-                        StateGlyph(s.state, on: .console(active: active))
+                        if model.showsTabClose(s.tabKey) {   // DL-126
+                            TabCloseButton(key: s.tabKey, onConsole: true, active: active) { model.closeConsoleTab(s.tabKey) }  // action: session close
+                                .frame(width: DuoMetric.glyph, height: DuoMetric.glyph)
+                        } else {
+                            StateGlyph(s.state, on: .console(active: active))
+                        }
                         Text(s.name)
                             .duoText(active ? .monoActiveTab : .mono)
                             .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2)
@@ -47,6 +52,7 @@ struct HomePane: View {
                     .contentShape(Rectangle())
                     .onActivate { model.homeTab = s.tabKey }  // action: session open
                     .modifier(SessionOrganizeMenu(sessionKey: s.tabKey))
+                    .modifier(TabHover(key: s.tabKey) { model.closeConsoleTab(s.tabKey) })
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                 }
@@ -54,12 +60,18 @@ struct HomePane: View {
                 ForEach(home.map { model.shells(inProject: $0.name) } ?? [], id: \.self) { key in
                     let active = key == model.homeTab
                     HStack(spacing: DuoSpace.gapGlyphToLabel) {
-                        ShellPromptMark(active: active).frame(width: 11, height: 9)
+                        if model.showsTabClose(key) {
+                            TabCloseButton(key: key, onConsole: true, active: active) { model.closeConsoleTab(key) }  // action: session close
+                                .frame(width: 11, height: 9)
+                        } else {
+                            ShellPromptMark(active: active).frame(width: 11, height: 9)
+                        }
                         Text(model.consoleTitle(key)).duoText(active ? .monoActiveTab : .mono)
                             .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2).lineLimit(1)
                     }
                     .contentShape(Rectangle())
                     .onActivate { model.homeTab = key }  // action: session open
+                    .modifier(TabHover(key: key) { model.closeConsoleTab(key) })
                     .accessibilityLabel("\(model.consoleTitle(key)), shell")
                 }
                 // With no tabs, a way to start one (home-none).

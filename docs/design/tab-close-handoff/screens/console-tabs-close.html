@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Console tab close</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 760px; height: 640px; box-sizing: border-box; padding: 24px; background: #F3F4F6; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 14px; font-weight: 600; line-height: 20px">[P] Console tabs: the × takes the place of the state glyph while the pointer is over the tab</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] 1 · Rest: unchanged</div>
+<div style="height: 36px; background: #15171B; padding: 0 16px; display: flex; align-items: center; gap: 18px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 19px">
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg><span style="color: #E6E8EB; font-weight: 500">Refund policy draft</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#F97316"></circle></svg><span style="color: #9AA1AB">Buyer interviews</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><svg width="11" height="9" viewBox="0 0 12 10"><path d="M1.5 2 L5 5 L1.5 8 M6.5 8.5 L10.5 8.5" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="color: #9AA1AB">zsh</span></div>
+<span style="color: #9AA1AB">+ ⌄</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] 2 · Pointer over an unselected tab: its glyph becomes ×, 7 pt, stroke 1.5, round caps, consoleText2. Nothing moves.</div>
+<div style="height: 36px; background: #15171B; padding: 0 16px; display: flex; align-items: center; gap: 18px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 19px">
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg><span style="color: #E6E8EB; font-weight: 500">Refund policy draft</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg><span style="color: #9AA1AB">Buyer interviews</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><svg width="11" height="9" viewBox="0 0 12 10"><path d="M1.5 2 L5 5 L1.5 8 M6.5 8.5 L10.5 8.5" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="color: #9AA1AB">zsh</span></div>
+<span style="color: #9AA1AB">+ ⌄</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] 3 · Pointer over the selected tab: × in consoleText</div>
+<div style="height: 36px; background: #15171B; padding: 0 16px; display: flex; align-items: center; gap: 18px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 19px">
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round"></path></svg><span style="color: #E6E8EB; font-weight: 500">Refund policy draft</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#F97316"></circle></svg><span style="color: #9AA1AB">Buyer interviews</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><svg width="11" height="9" viewBox="0 0 12 10"><path d="M1.5 2 L5 5 L1.5 8 M6.5 8.5 L10.5 8.5" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="color: #9AA1AB">zsh</span></div>
+<span style="color: #9AA1AB">+ ⌄</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] 4 · Pointer on the ×: a 16 × 16 consoleRule square, radius 4, behind it; × in consoleText. Tooltip “Close Tab”.</div>
+<div style="height: 36px; background: #15171B; padding: 0 16px; display: flex; align-items: center; gap: 18px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 19px">
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg><span style="color: #E6E8EB; font-weight: 500">Refund policy draft</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><div style="width: 16px; height: 16px; margin: -3px; border-radius: 4px; background: #2B2F36; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round"></path></svg></div><span style="color: #9AA1AB">Buyer interviews</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><svg width="11" height="9" viewBox="0 0 12 10"><path d="M1.5 2 L5 5 L1.5 8 M6.5 8.5 L10.5 8.5" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="color: #9AA1AB">zsh</span></div>
+<span style="color: #9AA1AB">+ ⌄</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] 5 · Pressed: the square in tuiInputBorder. Releasing on it closes the tab, exactly as ⌘W would.</div>
+<div style="height: 36px; background: #15171B; padding: 0 16px; display: flex; align-items: center; gap: 18px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 19px">
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg><span style="color: #E6E8EB; font-weight: 500">Refund policy draft</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><div style="width: 16px; height: 16px; margin: -3px; border-radius: 4px; background: #4A4F57; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#E6E8EB" stroke-width="1.5" stroke-linecap="round"></path></svg></div><span style="color: #9AA1AB">Buyer interviews</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><svg width="11" height="9" viewBox="0 0 12 10"><path d="M1.5 2 L5 5 L1.5 8 M6.5 8.5 L10.5 8.5" fill="none" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="color: #9AA1AB">zsh</span></div>
+<span style="color: #9AA1AB">+ ⌄</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] 6 · A shell: its prompt mark becomes ×. Home’s session tabs (32 high) behave the same.</div>
+<div style="height: 32px; background: #15171B; padding: 0 16px; display: flex; align-items: center; gap: 18px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 19px">
+<div style="display: flex; align-items: center; gap: 6px"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg><span style="color: #E6E8EB; font-weight: 500">Weekly plan</span></div>
+<div style="display: flex; align-items: center; gap: 6px"><div style="width: 11px; height: 9px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10" style="margin-top: -0.5px"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#9AA1AB" stroke-width="1.5" stroke-linecap="round"></path></svg></div><span style="color: #9AA1AB">zsh</span></div>
+<span style="color: #9AA1AB">+ ⌄</span>
+</div>
+</div>
+
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] Keyboard: no × appears for keyboard focus; ⌘W closes the tab, and VoiceOver offers “Close Tab” as an action on each tab. A tab in the » n menu has no ×: select it first.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":640}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

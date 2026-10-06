@@ -42,6 +42,12 @@ public final class AppModel {
     public var expandedGroups: Set<String> = []
     /// The task row under the pointer ("<project>/<note path>"), which shows its + (DL-112).
     public var hoveredTaskRow: String?
+    /// The tab under the pointer (a console or Home tab's key, or a right-pane document path),
+    /// which shows its close button (DL-126); `hoveredTabClose` when the pointer is on the button,
+    /// `pressedTabClose` a press held for a capture (FixtureHarness `hover-tab`).
+    public var hoveredTab: String?
+    public var hoveredTabClose: String?
+    public var pressedTabClose: String?
     public var consoleTab: String?              // Session.tabKey (id when live, else name)
     public var rightTab: String?                // "Project", a group name, or a document path
     /// The search modal (DL-76, DL-80).

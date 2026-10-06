@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Right-pane tab close</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 560px; height: 640px; box-sizing: border-box; padding: 24px; background: #F3F4F6; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 14px; font-weight: 600; line-height: 20px">[P] Right pane: the × sits in the gap before the title, so nothing moves</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] 1 · Rest: unchanged</div>
+<div style="height: 36px; background: #FFFFFF; border-bottom: 1px solid #C9CDD3; padding: 0 20px; display: flex; align-items: center; gap: 18px; font-size: 13px; line-height: 20px">
+<span style="color: #5B636D">Project</span><span style="color: #1F2328; font-weight: 600">launch-notes.md</span><span style="color: #5B636D">pricing.md</span><span style="color: #5B636D">Stripe Docs</span><span style="color: #5B636D">+</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] 2 · Pointer over a document tab: × in text2, 4 before the title, inside the 18 gap</div>
+<div style="height: 36px; background: #FFFFFF; border-bottom: 1px solid #C9CDD3; padding: 0 20px; display: flex; align-items: center; gap: 18px; font-size: 13px; line-height: 20px">
+<span style="color: #5B636D">Project</span><span style="color: #1F2328; font-weight: 600">launch-notes.md</span>
+<span style="position: relative; color: #5B636D">pricing.md<span style="position: absolute; left: -17px; top: 2px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round"></path></svg></span></span>
+<span style="color: #5B636D">Stripe Docs</span><span style="color: #5B636D">+</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] 3 · Pointer on the ×: 16 × 16 selected square, radius 4; × in text. Tooltip “Close Tab”.</div>
+<div style="height: 36px; background: #FFFFFF; border-bottom: 1px solid #C9CDD3; padding: 0 20px; display: flex; align-items: center; gap: 18px; font-size: 13px; line-height: 20px">
+<span style="color: #5B636D">Project</span><span style="color: #1F2328; font-weight: 600">launch-notes.md</span>
+<span style="position: relative; color: #5B636D">pricing.md<span style="position: absolute; left: -17px; top: 2px; width: 16px; height: 16px; border-radius: 4px; background: #E9ECEF; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round"></path></svg></span></span>
+<span style="color: #5B636D">Stripe Docs</span><span style="color: #5B636D">+</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] 4 · Pressed: the square in rule. Release closes it as Close Tab does: saved first, the neighbour shows.</div>
+<div style="height: 36px; background: #FFFFFF; border-bottom: 1px solid #C9CDD3; padding: 0 20px; display: flex; align-items: center; gap: 18px; font-size: 13px; line-height: 20px">
+<span style="color: #5B636D">Project</span><span style="color: #1F2328; font-weight: 600">launch-notes.md</span>
+<span style="position: relative; color: #5B636D">pricing.md<span style="position: absolute; left: -17px; top: 2px; width: 16px; height: 16px; border-radius: 4px; background: #C9CDD3; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round"></path></svg></span></span>
+<span style="color: #5B636D">Stripe Docs</span><span style="color: #5B636D">+</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] 5 · The selected tab, and a browser tab, the same; × in text on the selected one</div>
+<div style="height: 36px; background: #FFFFFF; border-bottom: 1px solid #C9CDD3; padding: 0 20px; display: flex; align-items: center; gap: 18px; font-size: 13px; line-height: 20px">
+<span style="color: #5B636D">Project</span>
+<span style="position: relative; color: #1F2328; font-weight: 600">launch-notes.md<span style="position: absolute; left: -17px; top: 2px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.5 1.5 L8.5 8.5 M8.5 1.5 L1.5 8.5" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round"></path></svg></span></span>
+<span style="color: #5B636D">pricing.md</span><span style="color: #5B636D">Stripe Docs</span><span style="color: #5B636D">+</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] 6 · Pointer over Project (or a group page, or a read-only session): no ×. They have no Close Tab today.</div>
+<div style="height: 36px; background: #FFFFFF; border-bottom: 1px solid #C9CDD3; padding: 0 20px; display: flex; align-items: center; gap: 18px; font-size: 13px; line-height: 20px">
+<span style="color: #5B636D">Project</span><span style="color: #1F2328; font-weight: 600">launch-notes.md</span><span style="color: #5B636D">pricing.md</span><span style="color: #5B636D">Stripe Docs</span><span style="color: #5B636D">+</span>
+</div>
+</div>
+
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] Unsaved changes: no dot. Duo saves as you type, and Close Tab saves before it closes, so there is never an unsaved tab to mark. A tab in conflict keeps “· conflict” and gets the × like any other.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":560,"height":640}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
