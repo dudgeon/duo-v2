@@ -46,6 +46,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Terminal colours | Designed (DB-2) | surfaces `terminal-palette.html` | — | `terminal*` tokens |
 | Right pane: Project tab (`PROJECT.md`) | Changed by decision (DL-60): the project's own file | build `project.html` (card, superseded) | DB-16 | RightPane |
 | Markdown editor | Designed (DL-101): headings, lists, tasks, quotes, code, tables, images, Claude's deletions, find | slice3 `editor-document.html`, `editor-states.html` | — | `Editor/`, CodeMirror |
+| Editing tables (Format › Table, the bar while the caret is in a table, Tab between cells) | Designed (DL-113) | tables `tables-menu.html`, `tables-bar.html`, `tables-insert.html` | — | `duo-editor.js` (tables), `EditorController.tableMenu` |
 | Claude's edits highlighted; revert | Built; revert is menu-only | build `project.html` (added block) | DB-35, DB-19 | DocumentEditor |
 | Editor notices: conflict, removed, renamed, read only | Designed (DL-101) | slice3 `editor-notices.html` | — | DocumentStateBar, NoticeBar |
 | Properties (frontmatter) block | Designed and built (F-77): icons, controls, fold, Tab, suggestions, type menu, date picker, invalid, changed by Claude; task notes keep their S2-5 look (Q-33) | frontmatter `frontmatter*.html`; slice2 `task-note.html` | — | `Vendor/codemirror/src/duo-editor.js`, `Live/PropertyCorpus.swift` |
@@ -76,6 +77,6 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Notifications and the Dock badge | Designed (DL-101); drawn by macOS | — | `Model/AppModel+Notify.swift` |
 | Update question (Open Releases Page, Install Now, Later) | Stand-in (DL-114): DuoQuestion's look; Open Releases Page is the default where installing needs an administrator password | Q-47 | `Model/AppModel+Update.swift` |
 | Install consent | Standard sheet | — | `Shell/InstallPrompt.swift` |
-| Menu bar | Built from the shortcut map | DB-26 | `Navigation/Commands.swift` |
+| Menu bar | Designed (DL-108): the walk page's mockups m1–m4: Duo, File, Edit, Format (with Table ▸, DL-113), View, Project, Session, Go, Window, Help; ⌘K is Link… | — | `Navigation/Commands.swift`, `Navigation/ObjectMenus.swift` |
 | Narrow windows, collapsing the right pane, motion | Not designed | DB-25 | — |
 | Dark appearance | Not approved | DB-29 | — |
