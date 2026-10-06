@@ -3839,6 +3839,233 @@
    },
    "commit": "28123ad6fb41ade54a8cbb182e2373ee8aa179ef",
    "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "chat-toggle",
+   "title": "Chat mode: the toggle and a readable transcript",
+   "what": "A pill at the right end of the console's tab strip switches a Claude session between the terminal and chat: the same session, shown as a transcript with Markdown, links and tool steps on a thread. Switching sends nothing to Claude.",
+   "steps": [
+    "In `checkout`, with a Claude session showing in the console, click the chat icon at the right end of the tab strip.",
+    "Read back a recent exchange: your messages are blue bubbles on the right, Claude's are white cards, and tool steps sit on a dotted thread with their output.",
+    "Click the `>_` icon to go back to the terminal. It's the same session, untouched.",
+    "Optional: `duo2 session chat toggle`."
+   ],
+   "expect": "Matches `chat-mode-handoff` (window, toggle, text, tools, status). If Duo can't read the screen (an unknown dialog, or a Claude Code version it hasn't checked), it shows the terminal and says why. Dark appearance and other stand-ins: Q-57.",
+   "ref": "DL-118, DL-119, DL-120, F-108, F-109",
+   "setup": [
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-108, F-109): screen reading against the spike's captured screens, rendering checks, the fallback timer; captures compared with the chat-mode boards."
+    ],
+    "didnt": [
+     "This walk's own run in your Duo."
+    ],
+    "human": [
+     "Whether the transcript reads well and the toggle is easy to find."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "3ea4ebe5ec4a4f859109214f5bd7d9cc9c48d2ee",
+   "alsoCommits": [
+    "9db766b937a497f8eca05e2be016ad184d79671a",
+    "f8b5e91223526984864adf010ab53747dc9b8d53",
+    "0e6860400407baf68b54a8d92cc18b99a25863e5"
+   ],
+   "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "chat-review",
+   "title": "Chat mode: permission, plan and question cards",
+   "what": "When Claude asks for permission, a plan approval or an AskUserQuestion, chat shows it as a card where the composer was, with everything Claude Code shows. Your choice goes back as keys to the real terminal; chat never answers or pre-selects for you.",
+   "steps": [
+    "In chat mode, ask Claude for something that needs permission (for example, to run `ls` in the project). Answer on the card: Yes, or No with a reason.",
+    "Ask Claude to plan a small change in plan mode, and approve or give feedback on the plan card.",
+    "Switch to the terminal mid-question: it's the same prompt, unanswered."
+   ],
+   "expect": "Matches the `permission-*`, `plan` and `question-*` boards. Use Haiku or keep the turns short; each answer is a real turn.",
+   "ref": "DL-118, DL-119, F-110",
+   "setup": [
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-110, F-112): `DUO_CHECKS=chat-live` against the real TUI, and a real-login run on Haiku in which the Bash card, an edit, AskUserQuestion with multi-select and Other, and plan feedback all passed."
+    ],
+    "didnt": [
+     "This walk's own run in your Duo."
+    ],
+    "human": [
+     "Whether the cards give you enough to decide."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "023f0fe16a70347fe309c87a47e749d05482f7b7",
+   "alsoCommits": [
+    "149006eb5f7f08fbfcb7ebe63b43e6c1438719e5"
+   ],
+   "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "chat-composer",
+   "title": "Chat mode: the composer, Stop, and moving between messages",
+   "what": "Chat's composer is Claude's own prompt (handed over through Ctrl+G), so what you type is exactly what Claude gets. Stop interrupts, the mode chip changes mode, `/` opens the command menu, and ⌘[ / ⌘] move between your messages.",
+   "steps": [
+    "In chat mode, type a short message in the composer and press Return.",
+    "While Claude replies, click Stop: the reply ends with Interrupted, not as your message.",
+    "Type `/` to see the command menu, and use the mode chip to switch to plan mode and back.",
+    "Press ⌘[ and ⌘] to jump between your earlier messages."
+   ],
+   "expect": "Matches the `composer` and `status` boards. If you typed in the terminal meanwhile, the composer refuses to send, keeps your text and says why. Your own EDITOR still works for Ctrl+G in the terminal.",
+   "ref": "DL-119, DL-120, F-112",
+   "setup": [
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-112): hand-over into an empty prompt, carry-over, the changed-in-terminal refusal, paste-on-send, sending while busy, the / menu, and an interrupt under the real login after the fix in ad099e9."
+    ],
+    "didnt": [
+     "This walk's own run in your Duo."
+    ],
+    "human": [
+     "How typing in chat feels compared with the terminal."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "bf2964d5ab44647811c8ee2860095b31b1f21e5d",
+   "alsoCommits": [
+    "e70687ed5db923cd7427854dfa9f5b0119704a2f",
+    "7001c3b7c25c499b0e3880aeef40e5c12050cce9",
+    "323c58ba01b8be311832de82ccdc530c57c746a6",
+    "ad099e9fdfba36133d73a11826d37e6ced1aab4c"
+   ],
+   "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "docx-markdown",
+   "title": "Open a Word document as Markdown",
+   "what": "Opening a .docx offers a clean Markdown copy beside it: headings, lists and tables inferred, comments as endnotes, tracked changes accepted. The .docx is never changed, and Undo removes the copy.",
+   "steps": [
+    "In `checkout`, click `docs/vendor-brief.docx` in the file tree: a bar offers to make a Markdown copy.",
+    "Make the copy: `vendor-brief.md` (and `vendor-brief-images` if it has pictures) appear beside it and open, with a notice saying it's a copy.",
+    "⌘Z removes the copy. Optional: `duo2 file convert docs/vendor-brief.docx`."
+   ],
+   "expect": "Matches `docx-handoff` (the offer, converting, the result, failures). A password-protected or scanned document says why it can't convert.",
+   "ref": "DL-123, F-114, F-115, F-116, ENH-14",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-116): 27 new DuoChecks over the spike's sample documents (headings, fake headings and lists, layout tables, tracked changes, comments, images, footnotes, a scan, a password-protected file); captures against the docx boards."
+    ],
+    "didnt": [
+     "Opening the result in Google Docs from this walk."
+    ],
+    "human": [
+     "Whether the Markdown is clean enough for your documents."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "1707a49f2cc2be91a91ce41e9a3b333b5321fb11",
+   "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "browser-google",
+   "title": "Google stops calling Duo's browser unsupported",
+   "what": "Duo's web views now say they're the installed Safari, so Google Docs, Sheets and sign-in load normally in a browser tab.",
+   "steps": [
+    "Open a browser tab (⌥⌘T) on docs.google.com, allowing it if asked."
+   ],
+   "expect": "No unsupported-browser banner. Signing in and editing a document weren't tested by Claude.",
+   "ref": "F-117, C-32",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-117): DuoChecks covers the Safari token and that every web view is made through DuoWebView."
+    ],
+    "didnt": [
+     "Signing in to Google, and editing a doc."
+    ],
+    "human": [
+     "Whether Google Docs works for you in a tab."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "c967072de9a627898757391baa48acd7ccf0eac6",
+   "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "browser-basics",
+   "title": "Browser tabs: uploads, downloads, print, popups, zoom",
+   "what": "In a browser tab, a file field opens the open panel; downloads go to ~/Downloads with a notice in the tab; ⌘P prints; popups open as a tab beside their page; ⌘+ ⌘- ⌘0 zoom, remembered per site.",
+   "steps": [
+    "In a browser tab on a site you use, upload a file through one of its file fields.",
+    "Download something: a notice in the tab offers Open and Show in Finder.",
+    "Press ⌘P (or File › Print…).",
+    "Click a link that opens a new window: it opens as a tab beside the page.",
+    "Press ⌘+ twice, switch tabs and come back: the zoom is kept for that site. ⌘0 resets it."
+   ],
+   "expect": "The download notice, the zoom level's display and where the menu items sit are stand-ins (Q-66); the popup's mark is a stand-in (Q-67).",
+   "ref": "DL-124, F-118, F-119, Q-66, Q-67",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-118, F-119): DuoChecks covers download naming, the zoom store, popup placement and the chord map; print and popups were run live."
+    ],
+    "didnt": [
+     "Uploads and downloads on a real site with a pointer."
+    ],
+    "human": [
+     "Whether the stand-ins (the notice, the zoom) are good enough."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "2b20844056ffd0d60606543e38d08950a334c11c",
+   "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "task-context",
+   "title": "A session in a task knows its task",
+   "what": "A Claude session linked from a task note is told, in a few lines, which task it's in and where its brief is. It's told again only when the task changes (renamed, moved, status). `/clear` keeps it in the task.",
+   "steps": [
+    "In `checkout`, start New Session in Task on `exec-review-prep` (the + on hover), add \"what task are you working on?\" to the drafted prompt and press Return.",
+    "Claude answers with the task's name and its note's path.",
+    "Optional: `duo2 session task <id>` shows the same."
+   ],
+   "expect": "Claude is told the task's title, status and note, never the whole note. A session in no task is told nothing. Uses one real turn; Haiku is fine.",
+   "ref": "DL-116, F-98, C-27",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-98): DuoChecks for start, resume, compact, a change mid-session told once, rename, archive, move, unlinked, and no task; live with a stand-in claude running Duo's real hook commands."
+    ],
+    "didnt": [
+     "A real Claude turn reading the context."
+    ],
+    "human": [
+     "Whether what Claude is told is the right amount."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "8974f5801f3ebc9995c8b50621bf03948d5f3dbe",
+   "group": "After slice 3 (other sessions)"
   }
  ],
  "decisions": []
