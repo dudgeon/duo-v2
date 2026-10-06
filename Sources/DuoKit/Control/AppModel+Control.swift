@@ -421,6 +421,16 @@ extension AppModel {
         case .docFormat:
             guard let f = inv[0], DuoCommand.allCases.contains(where: { $0.formatName == f }), editorIfLoaded?.url != nil else { return done(.fail("usage: \(id.action.usage)")) }
             editor.run("duo.exec(f); return 1", ["f": f]) { _ in done(.ok("Done.")) }
+        case .docTable:
+            // Format › Table's commands at the caret (DL-113); `doc select` puts the caret first.
+            let words = ["insert": "tableInsert", "row-above": "tableRowAbove", "row-below": "tableRowBelow", "column-before": "tableColumnBefore",
+                         "column-after": "tableColumnAfter", "delete-row": "tableDeleteRow", "delete-column": "tableDeleteColumn",
+                         "align-left": "tableAlignLeft", "align-center": "tableAlignCenter", "align-right": "tableAlignRight",
+                         "next": "tableNext", "previous": "tablePrevious"]
+            guard let w = inv[0], let f = words[w], editorIfLoaded?.url != nil else { return done(.fail("usage: \(id.action.usage) (with a document showing)")) }
+            editor.run("duo.exec(f); return duo.text()", ["f": f]) { v in
+                done(.ok(w == "insert" ? "Inserted a table at the caret." : "Done."))
+            }
         case .docFind:
             guard !inv.text.isEmpty, editorIfLoaded?.url != nil else { return done(.fail("usage: \(id.action.usage) (with a document showing)")) }
             editor.run("return duo.find(q)", ["q": inv.text]) { v in done(.ok("Selected the next match at offset \(v as? Int ?? -1).")) }

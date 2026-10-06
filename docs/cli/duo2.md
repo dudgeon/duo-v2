@@ -119,6 +119,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 doc select <line> [to-line]` | Select lines in the showing document. | — |
 | `duo2 doc save` | Save the showing document now (it also autosaves). | Save |
 | `duo2 doc format bold\|italic\|code\|link\|heading1\|heading2\|heading3\|task\|properties` | Format the selection (bold, italic, code, a link waiting for its address), make its lines headings or tasks (again takes it off), or start the properties block. | Bold, Italic, Code, Link…, Heading 1, Heading 2, Heading 3, Task, Add Properties |
+| `duo2 doc table insert\|row-above\|row-below\|column-before\|column-after\|delete-row\|delete-column\|align-left\|align-center\|align-right\|next\|previous` | Edit the table at the caret as Markdown, its columns kept lined up: insert a 3 × 2 table, add or delete a row or column, align a column, or move to the next or previous cell (the last cell's next adds a row). | Insert Table, Add Row Above, Add Row Below, Add Column Before, Add Column After, Delete Row, Delete Column, Left, Center, Right, + Row, + Column, Align, Delete |
 | `duo2 doc find <text>` | Find text in the showing document and select the next match. | Find |
 | `duo2 doc prop list \| get <name> \| set <name> <value> \| remove <name> \| type <name> <text\|list\|number\|checkbox\|date\|datetime\|link>` | The showing document's properties (frontmatter): read them, or change one line through the editor, highlighted as Claude's (DB-16). Lists: `set tags "[a, b]"`. | Add a property, property type menu, Pick a date, property checkbox |
 | `duo2 doc insert <text> [--line <n>]` | Insert text into the showing document through the editor (highlighted as added by Claude), at a line or the caret. | — |
@@ -188,6 +189,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Item | Why it has no verb |
 |---|---|
 | Add to .gitignore | a one-time question to the user (DL-50) |
+| Align Column | a submenu, not an action |
 | Cancel | a step inside another action's dialog or picker |
 | Close Window | window management |
 | Enter Full Screen | window management |
@@ -209,6 +211,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Save to Recreate | writes the user's own text back after the file was removed on disk; Claude can do the same with `duo2 doc edit` (content) once the user asks |
 | Session | a menu, not an action |
 | Show in Finder | reveals a file or folder in Finder (Settings, editor notices, launch sheets) |
+| Table | a submenu, not an action |
 | Toggle Right Pane | not built yet |
 | What’s New in This Version | opens this version's release notes on GitHub; `duo2 status` names the version |
 | confirmation sheet | the user's own consent; Claude can't confirm for them |

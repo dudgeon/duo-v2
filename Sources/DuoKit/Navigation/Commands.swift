@@ -38,6 +38,9 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case heading1, heading2, heading3  // Format › Heading ▸
     case task               // Format › Task: a `- [ ]` line
     case addProperties      // Format › Add Properties (frontmatter-handoff's frontmatter-none)
+    // Format › Table ▸ (DL-113, tables-handoff): Markdown commands; no chords (DL-34)
+    case tableInsert, tableRowAbove, tableRowBelow, tableColumnBefore, tableColumnAfter
+    case tableDeleteRow, tableDeleteColumn, tableAlignLeft, tableAlignCenter, tableAlignRight
     case duo2Reference      // Help: docs/cli/duo2.md on GitHub
     case whatsNew           // Help: this version's release notes
     case reportIssue        // Help: a new GitHub issue with the version and macOS filled in
@@ -78,6 +81,16 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .heading3: "Heading 3"
         case .task: "Task"
         case .addProperties: "Add Properties"
+        case .tableInsert: "Insert Table"
+        case .tableRowAbove: "Add Row Above"
+        case .tableRowBelow: "Add Row Below"
+        case .tableColumnBefore: "Add Column Before"
+        case .tableColumnAfter: "Add Column After"
+        case .tableDeleteRow: "Delete Row"
+        case .tableDeleteColumn: "Delete Column"
+        case .tableAlignLeft: "Left"
+        case .tableAlignCenter: "Center"
+        case .tableAlignRight: "Right"
         case .duo2Reference: "duo2 Reference"
         case .whatsNew: "What’s New in This Version"
         case .reportIssue: "Report an Issue…"
@@ -105,7 +118,9 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
         case .link: KeyboardShortcut("k", modifiers: .command)  // DL-108
         case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newProject, .code, .heading1, .heading2, .heading3,
-             .task, .addProperties, .duo2Reference, .whatsNew, .reportIssue: nil
+             .task, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .tableInsert, .tableRowAbove, .tableRowBelow,
+             .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft, .tableAlignCenter,
+             .tableAlignRight: nil
         case .newBrowserTab: KeyboardShortcut("t", modifiers: [.command, .option])
         case .focusAddress: KeyboardShortcut("l", modifiers: .command)
         case .openFile: KeyboardShortcut("o", modifiers: .command)
@@ -126,7 +141,9 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeSession: model.visibleTerminal != nil || (model.webFocus == .editor && model.openDocuments.contains(model.rightTab ?? ""))
         case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
         case .save: model.terminalsMode == .live && model.editor.url != nil
-        case .bold, .italic, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties: model.webFocus == .editor
+        case .bold, .italic, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert: model.webFocus == .editor
+        case .tableRowAbove, .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn,
+             .tableAlignLeft, .tableAlignCenter, .tableAlignRight: model.webFocus == .editor && (model.editorIfLoaded?.inTable ?? false)
         case .newTask: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
         case .newProject: model.terminalsMode == .live && model.liveRoot != nil
         case .duo2Reference, .whatsNew, .reportIssue: true
@@ -157,6 +174,23 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         }
     }
 
+    /// The editor's name for a Format › Table item, and its `duo2 doc table` word.
+    public var tableName: String? {
+        switch self {
+        case .tableInsert: "tableInsert"
+        case .tableRowAbove: "tableRowAbove"
+        case .tableRowBelow: "tableRowBelow"
+        case .tableColumnBefore: "tableColumnBefore"
+        case .tableColumnAfter: "tableColumnAfter"
+        case .tableDeleteRow: "tableDeleteRow"
+        case .tableDeleteColumn: "tableDeleteColumn"
+        case .tableAlignLeft: "tableAlignLeft"
+        case .tableAlignCenter: "tableAlignCenter"
+        case .tableAlignRight: "tableAlignRight"
+        default: nil
+        }
+    }
+
     @MainActor
     public func perform(in model: AppModel) {
         switch self {
@@ -171,8 +205,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .newMarkdown: model.newMarkdownFile(near: model.selectedFile)
         case .newFolder: model.newFolder(near: model.selectedFile)
         case .save: model.editor.saveNow()
-        case .bold, .italic, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties:
-            model.editor.run("duo.exec(f); return 1", ["f": formatName!]) { _ in }
+        case .bold, .italic, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert, .tableRowAbove,
+             .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft,
+             .tableAlignCenter, .tableAlignRight:
+            model.editor.run("duo.exec(f); return 1", ["f": (formatName ?? tableName)!]) { _ in }
         case .newTask: if let p = model.currentProject?.name { model.newTask(in: p) }
         case .newProject: model.showNewProject()
         case .duo2Reference: NSWorkspace.shared.open(DuoLinks.duo2Reference)
@@ -239,6 +275,24 @@ public struct DuoCommands: Commands {
                 item(.heading3)
             }
             item(.task)
+            // Tables (DL-113): edited as Markdown; the bar over a table has the same items.
+            Menu("Table") {
+                item(.tableInsert)
+                Divider()
+                item(.tableRowAbove)
+                item(.tableRowBelow)
+                item(.tableColumnBefore)
+                item(.tableColumnAfter)
+                Divider()
+                item(.tableDeleteRow)
+                item(.tableDeleteColumn)
+                Divider()
+                Menu("Align Column") {
+                    item(.tableAlignLeft)
+                    item(.tableAlignCenter)
+                    item(.tableAlignRight)
+                }
+            }
             Divider()
             item(.addProperties)
         }

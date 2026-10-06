@@ -24,6 +24,7 @@ Start with the **design system**, `system/`. It's also published for Claude Desi
 | `many-projects-handoff/` | S4-1's target, `map-many` (DL-104) | Target; built (F-82) |
 | `design-brief-2026-10-04.md` | Everything waiting on design (DB-1 to DB-39) | Current list; partly superseded, see its banner |
 | `folder-handoff/` | Inside a folder that isn't a project (Q-44), 1 sheet | Target; built (F-90) |
+| `tables-handoff/` | Editing tables in documents (ENH-11, Q-45): Format › Table, the bar while in a table, Insert Table, 3 canvas boards | Target; built (F-94) |
 | `stand-ins-handoff/` | Q-42 (the map with Home's projects directly in Home) and Q-43 (New Session in Task: the hover + and the drafted prompt), 5 canvas boards | Target; built (F-86, F-92) |
 | `build-handoff/` | The main handoff (overview, project, peek, look) and the canonical `tokens.json` | Target; parts superseded, see its banner |
 | `search-handoff/` | Search (⇧⌘A), 18 screens | Target; Jump and ⌘K superseded |
