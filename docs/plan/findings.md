@@ -1405,3 +1405,19 @@ The spike's recommendation 1 and 2 (`docs/plan/spikes/scripted-instances.md`, F-
   - **Live:** a scratch Duo (own `DUO_SUPPORT_DIR`, scratch `CLAUDE_CONFIG_DIR`, `DUO_INSTALL_ROOT`, a clean environment) ran a stand-in `claude` that runs the real hook commands from Duo's settings file with sample payloads. No model was called.
   - The live run covered New Session in Task → start context; an unchanged prompt → nothing; `duo2 task add` + `task status` → told once; compact → full context; `/clear` → the new id linked into both notes and full context; unlinking by hand → told once.
 - **Scripted runs:** a launch without `DUO_INSTALL_ROOT` relinked Geoff's `~/.local/bin/duo2` (F-107, C-28). Set it, as well as `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`, until F-113's isolation is in the running build.
+
+## F-114 · What Google Docs' Markdown import keeps (ENH-14, 2026-10-06)
+
+Tested by importing Markdown into a Google Doc through Drive (the same as File → Open of a .md), looking at it in Duo's browser (`/mobilebasic` view), and exporting it back as Markdown and HTML. The table is in `docs/plan/spikes/docx-to-markdown.md`.
+- **Clean:** headings 1–6, bold, italic, strikethrough, inline code, links (including autolinks and bare URLs), `\` hard breaks, tight nested lists (`-` at 2 spaces, `1.` at 3), task lists, GFM tables with alignment, block quotes, `---`, **footnotes (real Docs footnotes)**, and images from `https:` or `data:` URLs.
+- **Lossy:** fenced and indented code become plain body text. Loose lists gain an empty paragraph between items. Two lists separated only by a blank line or `<!-- -->` merge and keep counting. Relative image paths aren't imported. Raw HTML tags are dropped (text kept), except `<sub>`, `<sup>` and `<br>`. Pandoc's `~sub~` turns into strikethrough.
+- **So Duo's converter writes** GFM with no raw HTML: tight lists, Unicode sub/superscript digits, and no lone `~`. Its output for nine test documents round-tripped through Docs unchanged in substance.
+
+## F-115 · Converting .docx to Markdown: pandoc, mammoth and our own (ENH-14, 2026-10-06)
+
+Nine synthetic documents (`Spikes/DocxToMarkdown/make_docs.py`), run through pandoc 3.12, mammoth 1.13 and a Swift prototype (`Spikes/DocxToMarkdown/Docx.swift`, on `Pptx.Zip`). Outputs are in `Spikes/DocxToMarkdown/out/`; the comparison is in `docs/plan/spikes/docx-to-markdown.md`.
+- **pandoc** converts semantic structure well, but infers nothing. It drops the Title paragraph, splits "List Bullet 2" into a separate list, and writes raw HTML for layout or merged tables, images, underline and sub/superscript. It is 192 MB (Duo.app is 94 MB) and GPL-2.0-or-later: bundling it is allowed as aggregation, but it must ship with its licence and an offer of source.
+- **mammoth's** Markdown writer loses tables, flattens nesting, escapes every `.` and writes raw footnote anchors. Its HTML is fine, but would need an HTML → Markdown step on top.
+- **Neither** infers headings from font size or bold, or lists from typed `•`/`1.`, and both drop comments silently.
+- **Our own** handled all nine documents: headings from size, bold and outline level; typed lists; nesting by indent; layout tables unwrapped; tracked changes accepted or rejected; comments left out or kept as footnotes; images extracted with alt text; and a summary of what it did.
+- **Word's "List Bullet 2/3" styles** are separate lists at ilvl 0 with a bigger indent, not deeper levels. Nest list items by indent within a run of items.
