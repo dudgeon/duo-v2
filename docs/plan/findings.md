@@ -1706,3 +1706,21 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - Proof: `build/motion/drag/strip.png`, on a live workspace (drag feedback exists only in live mode). The motion row rises across 0 to 1500 ms at scale 10. The Reduce Motion row is identical from 0 ms, at 100%.
 - **Unchanged at rest:** overview, project, flow-zoom-1, 2 and 4, idle-list, and `sheet-move` capture identically (0 pixels differ) against origin/main's build.
 - **Records:** F-132 on main was taken by the peek-capture fix, inside this branch's reserved range (F-131 to F-133), so this branch skips it.
+
+## F-133 · Duo's sheets hang from the toolbar (DL-130, 2026-10-06)
+
+- **`SheetOverlay` is always in the tree** and holds the sheet only while `sheetIsUp`. Inserted by RootView's `if`, a child's transition never ran: SwiftUI applies only the inserted parent's.
+  - The sheet moves in from the top edge, `.transition(.move(edge: .top))`: `sheetIn` 200 ms ease-out going down, `sheetOut` 150 ms ease-in going up.
+  - A mask starting at the hairline the sheet hangs from (1 pt above the content area) keeps it under the toolbar while it slides.
+  - The map's dim to 55% runs on `scrimIn` / `scrimOut` inside its own pane, because each pane is its own hosting view.
+- **The next queued question:**
+  - `QuestionSheet(q).id(q.id)` fades, `sheetSwap` 120 ms, inside the sheet's container, which stays put, so it doesn't drop again.
+  - A taller or shorter question changes the sheet's height at once.
+- **Proof** (`scripts/check-motion.sh`, scale 10; strips in `build/motion/sheet-{in,out,swap}/strip.png`):
+  - `sheet-move:` on overview slides down over 0 to 1.6 s;
+  - `answer:OK` slides it up and it's gone by 1.2 s;
+  - `ask-close:` then `ask-update:`, answering Cancel, cross-fades the close question into the update question in place.
+  - With Reduce Motion, every frame from 0 ms is the end state.
+- **Unchanged at rest** against origin/main's build (0 pixels differ):
+  - overview, project and flow-zoom-1 to 4;
+  - `sheet-move:`, `sheet-new:`, `ask-update:`, `task-archive:` and `ask-close:`.
