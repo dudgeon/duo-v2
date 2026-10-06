@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x860">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-119">
+<!--
+Markdown, links, streaming [G]
+APPROVED BOARD. Geoff, 2026-10-06 (DL-119). Exported from the Design canvas
+https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd (board IText.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative;
+every option label inside a review card comes from Claude Code's screen at run time, never from this file.
+-->
+<title>Duo · Chat mode · Markdown, links, streaming</title>
+<style>
+body{margin:0}
+a{color:#1F2328;text-decoration:underline;text-decoration-color:#8B939C;text-underline-offset:3px}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.tab{display:flex;align-items:center;gap:6px;white-space:nowrap;color:#9AA1AB}
+.seg{display:flex;margin-left:auto;border:1px solid #4A4F57;border-radius:6px;overflow:hidden}
+.seg span{width:26px;height:20px;display:flex;align-items:center;justify-content:center;color:#9AA1AB}
+.seg .on{background:#2B2F36;color:#E6E8EB}
+.who{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:#5B636D}
+.card{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:9px 14px}
+.code{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12.5px;background:#F3F4F6;border-radius:4px;padding:0 4px}
+td,th{padding:5px 16px 5px 0;text-align:left;border-bottom:1px solid #E9ECEF;font-weight:400}
+th{color:#5B636D;font-weight:600;font-size:12px}
+.ic{width:26px;height:24px;border:1px solid #C9CDD3;border-radius:8px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;padding:0}
+.tip{position:absolute;background:#FFFFFF;border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.18),0 0 0 1px rgba(31,35,40,.08);padding:6px 10px;font-size:12px;line-height:16px;white-space:nowrap}
+</style>
+</head>
+<body>
+<div style="position: relative; width: 680px; height: 860px; display: flex; flex-direction: column; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+<div class="mono" style="display: flex; align-items: center; gap: 18px; height: 36px; flex: none; padding: 0 12px 0 16px; background: #15171B">
+<span class="tab" style="color: #E6E8EB; font-weight: 500"><svg width="9" height="9" viewBox="0 0 10 10" aria-label="working"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg>PRD v2 edits</span>
+<span class="tab"><svg width="9" height="9" viewBox="0 0 10 10" aria-label="working"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#9AA1AB" stroke-width="1.5"></circle></svg>Teardown research</span>
+<span style="color: #9AA1AB">+ ⌄</span>
+<span class="seg"><span aria-label="Terminal"><svg width="13" height="10" viewBox="0 0 13 10"><path d="M1.5 2 5 5 1.5 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.5 8.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></span><span class="on" aria-label="Chat"><svg width="13" height="11" viewBox="0 0 13 11"><path d="M2.5 1h8A1.5 1.5 0 0 1 12 2.5v4A1.5 1.5 0 0 1 10.5 8H6L3.5 10V8h-1A1.5 1.5 0 0 1 1 6.5v-4A1.5 1.5 0 0 1 2.5 1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></span>
+</div>
+
+<div style="flex: 1; min-height: 0; padding: 18px 24px 12px; display: flex; flex-direction: column; gap: 14px; overflow: hidden">
+<div style="align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 440px">
+<div class="who">You · 9:52</div>
+<div class="you">Compare the <b>two refund flows</b> in a table, with a short recommendation.</div>
+</div>
+
+<div style="margin-right: 36px; display: flex; flex-direction: column; gap: 4px">
+<div class="who">Claude · 9:52</div>
+<div class="card">
+<div style="display: flex; align-items: center; gap: 6px; color: #5B636D; font-size: 12px; line-height: 16px"><span>›</span><span>Thought for 6s</span></div>
+<div style="font-size: 16px; line-height: 24px; font-weight: 600">Refund flows compared</div>
+<div>Both flows are in <a href="#" class="mono" style="font-size: 12.5px">docs/refunds/flows.md:42</a>. The main difference is <b>who confirms</b> the refund.</div>
+<table style="border-collapse: collapse; font-size: 13px; line-height: 20px">
+<tr><th>Flow</th><th>Confirms</th><th>Median time</th></tr>
+<tr><td>Self-serve</td><td>Buyer</td><td>2 min</td></tr>
+<tr><td>Assisted</td><td>Support agent</td><td>3.4 h</td></tr>
+</table>
+<ol style="margin: 0; padding-left: 22px">
+<li>Keep self-serve as the default.</li>
+<li>Route orders over $500 to assisted.</li>
+</ol>
+<div style="position: relative; display: flex; align-items: flex-start; gap: 10px; background: #F3F4F6; border-radius: 10px; padding: 10px 8px 10px 14px">
+<pre class="mono" style="flex: 1; margin: 0; white-space: pre">refund.threshold = 500   // USD
+refund.route     = "assisted"</pre>
+<button type="button" class="ic" aria-label="Copy" title="Copy"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="none" stroke="#5B636D" stroke-width="1.2"></rect><path d="M8.5 3.5V2A1.5 1.5 0 0 0 7 .5H2A1.5 1.5 0 0 0 .5 2v5A1.5 1.5 0 0 0 2 8.5h1.5" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linecap="round"></path></svg></button>
+</div>
+<div>See the <a href="#">Stripe refunds guide</a> for the limits on partial refu<span style="display: inline-block; width: 2px; height: 15px; background: #1F2328; vertical-align: -2px; margin-left: 1px"></span></div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; color: #5B636D; font-size: 12px; line-height: 16px; padding-left: 4px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Writing · 14s · Esc to interrupt</div>
+</div>
+
+<div style="flex: none; padding: 0 24px 12px; display: flex; flex-direction: column; gap: 6px">
+<div style="min-height: 44px; box-sizing: border-box; background: #FFFFFF; border: 1px solid #8B939C; border-radius: 12px; padding: 11px 14px; color: #5B636D">Reply to Claude</div>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 16px; color: #5B636D; padding: 0 4px"><span style="border: 1px solid #C9CDD3; border-radius: 9px; padding: 0 8px; background: #FFFFFF">⏸ manual mode</span><span>⏎ send · ⇧⏎ new line · / commands · ⌘[ ⌘] your messages</span><span style="margin-left: auto">Opus</span></div>
+</div>
+
+<div class="tip" style="left: 96px; top: 238px">Open flows.md at line 42 in Duo</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x860">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-119">
+<!--
+AskUserQuestion: previews and notes [G]
+APPROVED BOARD. Geoff, 2026-10-06 (DL-119). Exported from the Design canvas
+https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd (board IPreview.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative;
+every option label inside a review card comes from Claude Code's screen at run time, never from this file.
+-->
+<title>Duo · Chat mode · AskUserQuestion: previews and notes</title>
+<style>
+body{margin:0}
+a{color:#1F2328;text-decoration:underline;text-decoration-color:#8B939C;text-underline-offset:3px}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.tab{display:flex;align-items:center;gap:6px;white-space:nowrap;color:#9AA1AB}
+.seg{display:flex;margin-left:auto;border:1px solid #4A4F57;border-radius:6px;overflow:hidden}
+.seg span{width:26px;height:20px;display:flex;align-items:center;justify-content:center;color:#9AA1AB}
+.seg .on{background:#2B2F36;color:#E6E8EB}
+.who{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:#5B636D}
+.card{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:9px 14px}
+.trail{display:flex;flex-direction:column;border-left:1.5px dotted #8B939C;margin-left:6px}
+.step{display:flex;align-items:center;gap:10px;min-height:24px;color:#5B636D;font-size:12px;line-height:16px;margin-left:-5px}
+.dot{width:7px;height:7px;border-radius:4px;border:1.5px solid #8B939C;background:#FFFFFF;flex:none;margin-left:3px}
+.step b{font-weight:600;color:#1F2328}
+.ask{background:#FFFFFF;border:1.5px solid #C2410C;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em}
+.opt{display:flex;align-items:flex-start;gap:10px;text-align:left;font:inherit;font-size:13px;line-height:20px;color:#1F2328;background:#FFFFFF;border:1px solid #8B939C;border-radius:8px;padding:6px 10px}
+.key{flex:none;width:18px;height:18px;margin-top:1px;border:1px solid #C9CDD3;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:11px;line-height:16px;color:#5B636D;background:#F3F4F6}
+.btn{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328}
+.del{background:#FDECEA;color:#B42318}
+.add{background:#E6F4EA;color:#2F7D32}
+.ln{display:inline-block;width:24px;color:#8B939C;text-align:right;margin-right:10px}
+.qt{display:flex;align-items:center;gap:5px;font-size:12px;line-height:16px;padding:3px 9px;border-radius:9px;color:#5B636D;border:1px solid transparent}
+.qt.on{border-color:#1F2328;color:#1F2328;font-weight:600}
+.box{flex:none;width:14px;height:14px;margin-top:3px;border:1.5px solid #8B939C;border-radius:3px;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+.box.on{background:#1F2328;border-color:#1F2328}
+.desc{display:block;color:#5B636D;font-size:12px;line-height:16px}
+.radio{flex:none;width:14px;height:14px;margin-top:3px;border:1.5px solid #8B939C;border-radius:7px;box-sizing:border-box}
+.pv{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;text-align:left;font:inherit;font-size:13px;line-height:18px;color:#1F2328;background:#FFFFFF;border:1px solid #8B939C;border-radius:10px;padding:8px}
+.pv pre{margin:0;background:#F3F4F6;border-radius:6px;padding:6px 8px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10.5px;line-height:14px;color:#1F2328;overflow:hidden}
+</style>
+</head>
+<body>
+<div style="width: 680px; height: 860px; display: flex; flex-direction: column; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+<div class="mono" style="display: flex; align-items: center; gap: 18px; height: 36px; flex: none; padding: 0 12px 0 16px; background: #15171B">
+<span class="tab" style="color: #E6E8EB; font-weight: 500"><svg width="9" height="9" viewBox="0 0 10 10" aria-label="needs you"><circle cx="5" cy="5" r="5" fill="#F97316"></circle></svg>PRD v2 edits</span>
+<span style="color: #9AA1AB">+ ⌄</span>
+<span class="seg"><span aria-label="Terminal"><svg width="13" height="10" viewBox="0 0 13 10"><path d="M1.5 2 5 5 1.5 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.5 8.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></span><span class="on" aria-label="Chat"><svg width="13" height="11" viewBox="0 0 13 11"><path d="M2.5 1h8A1.5 1.5 0 0 1 12 2.5v4A1.5 1.5 0 0 1 10.5 8H6L3.5 10V8h-1A1.5 1.5 0 0 1 1 6.5v-4A1.5 1.5 0 0 1 2.5 1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></span>
+</div>
+
+<div style="flex: 1; min-height: 0; padding: 18px 24px 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; justify-content: flex-end">
+<div style="align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 440px">
+<div class="who">You · 11:20</div>
+<div class="you">Mock up the guest sign-in step.</div>
+</div>
+<div style="margin-right: 36px; display: flex; flex-direction: column; gap: 4px">
+<div class="who">Claude · 11:20</div>
+<div class="card"><div>Three layouts. Which one should I build out?</div></div>
+</div>
+</div>
+
+<div style="flex: none; padding: 0 16px 14px">
+<div class="ask" role="group" aria-label="Claude needs you: Claude’s question">
+<div style="display: flex; align-items: center; gap: 8px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span class="lbl" style="color: #C2410C">NEEDS YOU</span><span class="lbl" style="color: #5B636D">· CLAUDE’S QUESTION · SIGN-IN</span></div>
+<div style="font-weight: 600">Which sign-in layout should the guest checkout use?</div>
+<div style="display: flex; gap: 8px">
+<button type="button" class="pv"><pre>┌──────────────┐
+│ Email        │
+│ [__________] │
+│ [ Continue ] │
+│ ──── or ──── │
+│ [ Apple Pay ]│
+└──────────────┘</pre><span style="display: flex; gap: 6px"><span class="key">1</span><span><b style="font-weight: 600">Email first</b><span class="desc">Wallets below</span></span></span></button>
+<button type="button" class="pv" style="border-color: #1F2328; border-width: 1.5px"><pre>┌──────────────┐
+│ [ Apple Pay ]│
+│ [ Google Pay]│
+│ ──── or ──── │
+│ Email        │
+│ [__________] │
+└──────────────┘</pre><span style="display: flex; gap: 6px"><span class="key">2</span><span><b style="font-weight: 600">Wallets first</b> <span aria-label="chosen">✔</span><span class="desc">Email below</span></span></span></button>
+<button type="button" class="pv"><pre>┌──────────────┐
+│ Phone        │
+│ [__________] │
+│ We'll text a │
+│ code.        │
+│ [ Send code ]│
+└──────────────┘</pre><span style="display: flex; gap: 6px"><span class="key">3</span><span><b style="font-weight: 600">Phone code</b><span class="desc">No password</span></span></span></button>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; border: 1px solid #8B939C; border-radius: 8px; padding: 6px 10px; font-size: 13px; line-height: 20px"><span style="color: #5B636D; flex: none">Notes</span><span style="flex: 1; border-left: 1px solid #C9CDD3; padding-left: 10px">Add a “forgot password” link<span style="display: inline-block; width: 1.5px; height: 15px; background: #1F2328; vertical-align: -3px; margin-left: 1px"></span></span><button type="button" class="btn" style="padding: 1px 8px">Choose with Notes ⏎</button></div>
+<div style="display: flex; align-items: center; gap: 6px; border-top: 1px solid #E9ECEF; padding-top: 10px">
+<button type="button" class="btn">Decline <span style="color: #5B636D">esc</span></button>
+<button type="button" class="btn">Chat about this</button>
+<span style="margin-left: auto; font-size: 12px; line-height: 16px; color: #5B636D">Every layout at once; Claude Code shows one at a time</span>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

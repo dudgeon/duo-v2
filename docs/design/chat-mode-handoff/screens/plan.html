@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x860">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-119">
+<!--
+Plan approval [G]
+APPROVED BOARD. Geoff, 2026-10-06 (DL-119). Exported from the Design canvas
+https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd (board IPlan.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative;
+every option label inside a review card comes from Claude Code's screen at run time, never from this file.
+-->
+<title>Duo · Chat mode · Plan approval</title>
+<style>
+body{margin:0}
+a{color:#1F2328;text-decoration:underline;text-decoration-color:#8B939C;text-underline-offset:3px}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.tab{display:flex;align-items:center;gap:6px;white-space:nowrap;color:#9AA1AB}
+.seg{display:flex;margin-left:auto;border:1px solid #4A4F57;border-radius:6px;overflow:hidden}
+.seg span{width:26px;height:20px;display:flex;align-items:center;justify-content:center;color:#9AA1AB}
+.seg .on{background:#2B2F36;color:#E6E8EB}
+.who{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:#5B636D}
+.card{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:9px 14px}
+.trail{display:flex;flex-direction:column;border-left:1.5px dotted #8B939C;margin-left:6px}
+.step{display:flex;align-items:center;gap:10px;min-height:24px;color:#5B636D;font-size:12px;line-height:16px;margin-left:-5px}
+.dot{width:7px;height:7px;border-radius:4px;border:1.5px solid #8B939C;background:#FFFFFF;flex:none;margin-left:3px}
+.step b{font-weight:600;color:#1F2328}
+.ask{background:#FFFFFF;border:1.5px solid #C2410C;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em}
+.opt{display:flex;align-items:flex-start;gap:10px;text-align:left;font:inherit;font-size:13px;line-height:20px;color:#1F2328;background:#FFFFFF;border:1px solid #8B939C;border-radius:8px;padding:6px 10px}
+.key{flex:none;width:18px;height:18px;margin-top:1px;border:1px solid #C9CDD3;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:11px;line-height:16px;color:#5B636D;background:#F3F4F6}
+.btn{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328}
+.del{background:#FDECEA;color:#B42318}
+.add{background:#E6F4EA;color:#2F7D32}
+.ln{display:inline-block;width:24px;color:#8B939C;text-align:right;margin-right:10px}
+</style>
+</head>
+<body>
+<div style="width: 680px; height: 860px; display: flex; flex-direction: column; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+<div class="mono" style="display: flex; align-items: center; gap: 18px; height: 36px; flex: none; padding: 0 12px 0 16px; background: #15171B">
+<span class="tab" style="color: #E6E8EB; font-weight: 500"><svg width="9" height="9" viewBox="0 0 10 10" aria-label="needs you"><circle cx="5" cy="5" r="5" fill="#F97316"></circle></svg>PRD v2 edits</span>
+<span style="color: #9AA1AB">+ ⌄</span>
+<span class="seg"><span aria-label="Terminal"><svg width="13" height="10" viewBox="0 0 13 10"><path d="M1.5 2 5 5 1.5 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.5 8.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></span><span class="on" aria-label="Chat"><svg width="13" height="11" viewBox="0 0 13 11"><path d="M2.5 1h8A1.5 1.5 0 0 1 12 2.5v4A1.5 1.5 0 0 1 10.5 8H6L3.5 10V8h-1A1.5 1.5 0 0 1 1 6.5v-4A1.5 1.5 0 0 1 2.5 1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></span>
+</div>
+
+<div style="flex: 1; min-height: 0; padding: 18px 24px 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; justify-content: flex-end">
+<div style="align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 440px">
+<div class="who">You · 10:30 · plan mode</div>
+<div class="you">Plan how we’d bring saved cards into scope. Don’t change anything yet.</div>
+</div>
+<div style="margin-right: 36px; display: flex; flex-direction: column; gap: 4px">
+<div class="who">Claude · 10:31</div>
+<div class="card">
+<div class="trail">
+<div class="step"><span class="dot"></span><span><b>Read</b> <a href="#">docs/prd-v2.md</a>, <a href="#">research/interviews.md</a></span></div>
+</div>
+<div>Here’s the plan.</div>
+</div>
+</div>
+</div>
+
+<div style="flex: none; padding: 0 16px 14px">
+<div class="ask" role="group" aria-label="Claude needs you: ready to code?">
+<div style="display: flex; align-items: center; gap: 8px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span class="lbl" style="color: #C2410C">NEEDS YOU</span><span class="lbl" style="color: #5B636D">· READY TO CODE?</span><a href="#" style="margin-left: auto; font-size: 12px; line-height: 16px; color: #5B636D">Open plan in Duo</a></div>
+<div style="border: 1px solid #E9ECEF; border-radius: 8px; padding: 10px 14px; height: 196px; overflow: hidden; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 20px; position: relative">
+<div style="font-size: 15px; line-height: 22px; font-weight: 600">Saved cards for guests</div>
+<ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px">
+<li>Move “Storing cards for guests” from <b>Non-goals</b> to <b>Requirements</b> in <span class="mono">docs/prd-v2.md</span>.</li>
+<li>Add a requirement: a guest can save a card <i>without</i> creating an account.</li>
+<li>Log the account question under <b>Open questions</b>, with P2 and P5 as evidence.</li>
+<li>Update the success metric: abandonment at the card form, target −15%.</li>
+<li>Add survey-q3’s 31% to <b>What we heard</b>.</li>
+</ol>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 28px; background: linear-gradient(rgba(255,255,255,0), #FFFFFF)"></div>
+</div>
+<div style="font-size: 13px; line-height: 20px">Claude has written up a plan and is ready to execute. Would you like to proceed?</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<button type="button" class="opt"><span class="key">1</span><span>Yes, auto-accept edits</span></button>
+<button type="button" class="opt"><span class="key">2</span><span>Yes, manually approve edits</span></button>
+<div class="opt" style="border-color: #1F2328; border-width: 1.5px; align-items: center"><span class="key">3</span><span style="flex: none; color: #5B636D">Tell Claude what to change</span><span style="flex: 1; min-width: 0; border-left: 1px solid #C9CDD3; padding-left: 10px">Keep the survey number out of the PRD<span style="display: inline-block; width: 1.5px; height: 15px; background: #1F2328; vertical-align: -3px; margin-left: 1px"></span></span><button type="button" class="btn" style="padding: 1px 8px">Send ⏎</button></div>
+</div>
+<div style="display: flex; align-items: center; gap: 6px">
+<button type="button" class="btn">Cancel <span style="color: #5B636D">esc</span></button>
+<button type="button" class="btn">Approve with Feedback in Terminal…</button>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x860">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-119">
+<!--
+The composer [G]
+APPROVED BOARD. Geoff, 2026-10-06 (DL-119). Exported from the Design canvas
+https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd (board IComposer.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative;
+every option label inside a review card comes from Claude Code's screen at run time, never from this file.
+-->
+<title>Duo · Chat mode · The composer</title>
+<style>
+body{margin:0}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B636D}
+.field{background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:10px 14px;min-height:44px;box-sizing:border-box}
+.hint{display:flex;align-items:center;gap:8px;font-size:12px;line-height:16px;color:#5B636D;padding:0 4px}
+.chipm{border:1px solid #C9CDD3;border-radius:9px;padding:0 8px;background:#FFFFFF}
+.file{display:inline-flex;align-items:center;gap:4px;vertical-align:1px;border:1px solid #C9CDD3;border-radius:6px;padding:0 6px;background:#F3F4F6;font-size:12px;line-height:18px}
+.btn{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328}
+.caret{display:inline-block;width:1.5px;height:15px;background:#1F2328;vertical-align:-3px;margin-left:1px}
+.cmd{display:flex;align-items:baseline;gap:12px;padding:3px 10px;border-radius:6px;font-size:13px;line-height:20px}
+.cmd .n{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;width:110px;flex:none}
+.cmd .d{color:#5B636D}
+.snip{display:flex;flex-direction:column;gap:6px}
+</style>
+</head>
+<body>
+<div style="width: 680px; height: 860px; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 18px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+
+<div class="snip">
+<div class="lbl">AT REST · WHAT’S IN CLAUDE’S PROMPT, AND THE MODE</div>
+<div class="field" style="color: #5B636D">Reply to Claude</div>
+<div class="hint"><button type="button" class="chipm" style="font: inherit; color: #5B636D">⏵⏵ accept edits on</button><span>⏎ send · ⇧⏎ new line · / commands</span><span style="margin-left: auto">Opus</span></div>
+</div>
+
+<div class="snip">
+<div class="lbl">SEVERAL LINES, WITH FILES DROPPED IN</div>
+<div class="field" style="display: flex; flex-direction: column; gap: 2px">
+<div>Compare these two and tell me where they **disagree**:</div>
+<div><span class="file"><svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M1.5.5h4.5l2.5 2.5v8H1.5Z" fill="none" stroke="#5B636D" stroke-width="1.1" stroke-linejoin="round"></path></svg>prd-v2.md</span> <span class="file"><svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M1.5.5h4.5l2.5 2.5v8H1.5Z" fill="none" stroke="#5B636D" stroke-width="1.1" stroke-linejoin="round"></path></svg>survey-q3.csv</span><span class="caret"></span></div>
+</div>
+<div class="hint"><span>Dropped files go in as their full paths, shown by name</span><span style="margin-left: auto">⏎ send</span></div>
+</div>
+
+<div class="snip">
+<div class="lbl">COMMANDS</div>
+<div style="background: #FFFFFF; border-radius: 10px; box-shadow: 0 8px 24px rgba(31,35,40,.18), 0 0 0 1px rgba(31,35,40,.08); padding: 5px">
+<div class="cmd" style="background: #E9ECEF"><span class="n">/add-dir</span><span class="d">Add a new working directory</span></div>
+<div class="cmd"><span class="n">/autocompact</span><span class="d">Set how full the context gets before auto-summarizing</span></div>
+<div class="cmd"><span class="n">/background</span><span class="d">Send this session to the background and free the terminal</span></div>
+<div class="cmd"><span class="n">/model</span><span class="d">Opens in the terminal</span><svg style="margin-left: auto; align-self: center" width="13" height="10" viewBox="0 0 13 10" aria-label="terminal"><path d="M1.5 2 5 5 1.5 8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.5 8.5h5" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round"></path></svg></div>
+</div>
+<div class="field"><span class="mono">/</span><span class="caret"></span></div>
+</div>
+
+<div class="snip">
+<div class="lbl">WHILE CLAUDE WORKS · A QUEUED MESSAGE, AND STOP</div>
+<div style="align-self: flex-end; max-width: 420px; background: #DCE6F7; opacity: .6; border-radius: 14px 14px 3px 14px; padding: 6px 12px; font-size: 13px; line-height: 20px">Also check the Android numbers.</div>
+<div style="align-self: flex-end; font-size: 12px; line-height: 16px; color: #5B636D">Queued · Claude reads it when it’s ready</div>
+<div style="display: flex; gap: 8px; align-items: stretch">
+<div class="field" style="flex: 1; color: #5B636D">Reply to Claude</div>
+<button type="button" class="btn" style="align-self: center">Stop <span style="color: #5B636D">esc</span></button>
+</div>
+<div class="hint"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span>Writing · 32s</span></div>
+</div>
+
+<div class="snip">
+<div class="lbl">TEXT TYPED IN THE TERMINAL CARRIES OVER</div>
+<div class="field">half-typed in the terminal, finished here<span class="caret"></span></div>
+<div class="hint"><span>The composer opens on Claude’s own prompt, so nothing is lost either way</span></div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "$note": "Additions to docs/design/build-handoff/tokens.json from the chat-mode handoff (DL-119). Nothing existing changes. Points. Contrast is against the fill named.",
+  "color": {
+    "light": {
+      "chatGround": {
+        "value": "#F3F4F6",
+        "same as": "ground",
+        "usage": "The chat transcript's ground, so chat mode stands apart from the white panes beside it (Sep 1b). An alias, not a new colour."
+      },
+      "chatYou": {
+        "value": "#DCE6F7",
+        "usage": "Your messages' bubble, and your answers to review cards (You chose …). Not the accent: needsYou keeps its one meaning.",
+        "contrast": {"text": 12.6}
+      },
+      "diffAddFill": {"value": "#E6F4EA", "usage": "Added lines in a diff"},
+      "diffAddText": {"value": "#2F7D32", "usage": "Added-line text and +n counts", "contrast": {"diffAddFill": 4.5, "pane": 5.1}},
+      "diffDelFill": {"value": "#FDECEA", "usage": "Removed lines in a diff"},
+      "diffDelText": {"value": "#B42318", "usage": "Removed-line text, −n counts, a failed tool's status and error text", "contrast": {"diffDelFill": 5.7, "pane": 6.6}},
+      "toolErrorEdge": {"value": "#F4C7C1", "usage": "The border of a failed tool's output box (decoration; the text says failed)"}
+    }
+  },
+  "radius": {
+    "chatBubble": {"value": "14 14 3 14", "usage": "Your message: rounded, with a sharp bottom-right corner that points at you"},
+    "chatCard": {"value": "14 14 14 3", "usage": "Claude's reply card: its sharp bottom-left corner mirrors the bubble"},
+    "reviewCard": {"value": 14, "usage": "A permission, plan or question card docked at the bottom, with a 1.5 needsYou border"},
+    "composer": {"value": 12, "usage": "The composer field"}
+  },
+  "space": {
+    "chatColumnInset": {"value": 24, "usage": "Transcript side padding"},
+    "chatCardTrailing": {"value": 36, "usage": "Space kept to the right of Claude's card (Geoff: half the first board's skew)"},
+    "chatBubbleMax": {"value": 440, "usage": "Your bubble's maximum width"}
+  },
+  "type": {
+    "chatBody": {"value": "SF Pro 14/22", "usage": "Text in bubbles and cards"},
+    "chatHeading": {"value": "SF Pro 16/24 semibold", "usage": "Headings in Claude's Markdown, as drawn (other levels: Q-56)"},
+    "chatMeta": {"value": "SF Pro 12/16, text2", "usage": "You · 9:41, Claude · 9:42, tool steps, status lines"}
+  }
+}

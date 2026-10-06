@@ -1,0 +1,141 @@
+{
+  "$note": "Chat mode, approved 2026-10-06 (DL-119). kind=board: a part of the window drawn on the Design canvas, exported as static HTML.",
+  "source": "https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd",
+  "screens": [
+    {
+      "file": "screens/window.html",
+      "board": "SepCards.dc.html",
+      "kind": "board",
+      "width": 1440,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "B4 on a grey ground (Sep 1b): your Markdown message in a blue bubble on the right, Claude's reply on a white card with tool steps on a dotted thread, a white composer; the session list and editor beside it."
+    },
+    {
+      "file": "screens/toggle.html",
+      "board": "ToggleStrip.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 560,
+      "decision": "DL-119",
+      "shows": "Terminal (>_) and Chat (bubble) segments at the right end of the console tab strip, in chat and in the terminal."
+    },
+    {
+      "file": "screens/text.html",
+      "board": "IText.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "Thinking folded, heading, inline bold, a file link with its tooltip, a table, a list, a code block with a copy icon, text streaming with a caret, the Writing status, the mode chip and ⌘[ ⌘] hint."
+    },
+    {
+      "file": "screens/tools.html",
+      "board": "ITools.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "Read, Search and Fetch folded; an Edit's diff and a Bash command's output open; a failed Bash with its error; a background agent's final message with Manage in Terminal…."
+    },
+    {
+      "file": "screens/permission-edit.html",
+      "board": "IPermEdit.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "The review card docked in the composer's place: needs-you border, the diff, Claude Code's question and its three options verbatim with their keys, Cancel (esc), Amend in Terminal…."
+    },
+    {
+      "file": "screens/permission-bash.html",
+      "board": "IPermBash.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "An earlier answer shown as your reply (You chose 1 · Yes); a Bash command card with option 2 naming the folder verbatim."
+    },
+    {
+      "file": "screens/plan.html",
+      "board": "IPlan.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "The whole plan as Markdown, Claude Code's three options, option 3's field with typed feedback and Send, Open plan in Duo, Approve with Feedback in Terminal…."
+    },
+    {
+      "file": "screens/question-multi.html",
+      "board": "IQuestion.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "Question tabs (Platforms, Timing, Submit), checkboxes with descriptions, Type something, Next, Chat about This in Terminal…."
+    },
+    {
+      "file": "screens/question-other.html",
+      "board": "IQuestionOther.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "The second question with your own answer typed into the Type something row."
+    },
+    {
+      "file": "screens/question-review.html",
+      "board": "IReview.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "Review your answers, Ready to submit your answers?, Submit answers and Cancel."
+    },
+    {
+      "file": "screens/question-previews.html",
+      "board": "IPreview.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "Every option's preview side by side (Claude Code shows one at a time), the chosen one ticked, a Notes field and Choose with Notes."
+    },
+    {
+      "file": "screens/question-chat-decline.html",
+      "board": "IChatAbout.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "Chat about this closes the question and puts focus in the composer; a declined question leaves a You declined line."
+    },
+    {
+      "file": "screens/composer.html",
+      "board": "IComposer.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "At rest with the mode chip; several lines with dropped files shown by name; the / command menu with a terminal-only command; a queued message and Stop while Claude works; text carried over from the terminal."
+    },
+    {
+      "file": "screens/status.html",
+      "board": "IStatus.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "The compaction divider, a background agent's finished line, an interrupted reply with Interrupted · What should Claude do instead?, and the 529 retry status line."
+    },
+    {
+      "file": "screens/fallback.html",
+      "board": "IFallback.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-119",
+      "shows": "Automatic: the terminal with a bar saying why and Back to Chat (/model shown). Chosen: Amend in Terminal, with the same bar."
+    }
+  ]
+}
