@@ -1045,3 +1045,10 @@ Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and o
   - `scripts/bundle.sh`, `swift run DuoChecks` (278 passed), `NO_BUILD=1 scripts/check-ui.sh` (six states, each log naming its own `/tmp/duo-…`). A live `--workspace none --capture-window` run with no `DUO_SUPPORT_DIR` wrote only to its temporary folder.
   - The real `state.json` kept its mtime (Oct 5 06:29:05) throughout.
 - **Not done:** temporary folders aren't deleted at quit, so a run can be inspected afterwards. `/tmp` is cleared at restart.
+
+## F-90 · Inside a folder that isn't a project, as designed (2026-10-05)
+
+- **Built (DL-110):** the line under a folder's name; the notice with Make a Project and Not Now (`FolderNotice`); the Project tab's offer (`FolderProjectTab`, Open CLAUDE.md when there is one); "Nothing has run in this folder yet." Not Now is kept by folder path in `state.json` (`notNowFolders`) and reaches the view as `Fixture.Project.notNow`, set by the snapshot. `duo2 project make <folder> --not-now`; the harness has `notnow:<folder>`.
+- **Checked live on scratch data** (own `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`): the three states against the board, region by region (`build/ui/folder-*.png`); `duo2 project make tool --not-now` hid it and `duo2 undo` brought it back; `duo2 project make tool` wrote PROJECT.md.
+- **Not in DuoChecks:** Not Now writes Duo's `state.json`, and DuoChecks reads the real one, so it is checked live instead.
+

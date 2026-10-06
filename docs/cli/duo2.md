@@ -40,7 +40,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 |---|---|---|
 | `duo2 projects` | Projects and folders with sessions, with goal, health and next step. | — |
 | `duo2 project show <project>` | A project's folder, project file, goal, health, next step and sessions. | — |
-| `duo2 project make <folder name>` | Make a folder with sessions a documented project: writes a starter PROJECT.md and opens it. Undo with `duo2 undo`. | Make a Project |
+| `duo2 project make <folder name> [--not-now]` | Make a folder with sessions a documented project: writes a starter PROJECT.md and opens it. --not-now instead hides the folder's Make a Project notice (the Project tab still offers it). Undo with `duo2 undo`. | Make a Project, Not Now |
 | `duo2 project archive <project>` | File a project away: its tile moves into the map's Archived rollup. Sessions, counts and search are unchanged. Undo with `duo2 undo`. | Archive Project, archived rollup |
 | `duo2 project unarchive <project>` | Bring an archived project back to its topic column. | Unarchive Project |
 | `duo2 home set <folder>` | Make a folder Home, the container of the projects the user tracks (DL-85): adds a HOME.md if there's none. Duo lists every session with or without a Home. Undo with `duo2 undo`. | Choose Home Folder…, Change… |
@@ -110,7 +110,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 
 | Command | What it does | In the app |
 |---|---|---|
-| `duo2 doc open <path> [--project <p>]` | Open a document in the right pane (Markdown in the editor, HTML as a page). A file outside every project opens as a tab in the project on screen (or --project). | Open, file row, Open File…, file dropped on the right pane |
+| `duo2 doc open <path> [--project <p>]` | Open a document in the right pane (Markdown in the editor, HTML as a page). A file outside every project opens as a tab in the project on screen (or --project). | Open, file row, Open File…, file dropped on the right pane, Open CLAUDE.md |
 | `duo2 doc close [path] [--others]` | Close a document tab (saved first), or every other one. | Close Tab, Close Other Tabs |
 | `duo2 doc tabs` | The open document tabs, and which one shows. | — |
 | `duo2 doc status <file>` | Whether a file is open in Duo's editor, unsaved or in conflict. Check before editing a file the user may have open. | — |

@@ -23,6 +23,7 @@ Start with the **design system**, `system/`. It's also published for Claude Desi
 | `design-brief-many-projects.md` | S4-1: All projects with many projects (hierarchy, sort, Home's card); options A/B/C on `explorations/home-many-projects.html` | Picked (DL-104) |
 | `many-projects-handoff/` | S4-1's target, `map-many` (DL-104) | Target; built (F-82) |
 | `design-brief-2026-10-04.md` | Everything waiting on design (DB-1 to DB-39) | Current list; partly superseded, see its banner |
+| `folder-handoff/` | Inside a folder that isn't a project (Q-44), 1 sheet | Target; built (F-90) |
 | `build-handoff/` | The main handoff (overview, project, peek, look) and the canonical `tokens.json` | Target; parts superseded, see its banner |
 | `search-handoff/` | Search (⇧⌘A), 18 screens | Target; Jump and ⌘K superseded |
 | `surfaces-handoff/` | Slice 1: idle list, terminal palette, console states, shell tabs | Target; built and accepted |

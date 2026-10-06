@@ -215,6 +215,7 @@ public enum LiveSnapshot {
         for url in claudeFolders where owner(ofPath: resolve(url.path)) == nil { byFolder[resolve(url.path), default: []] += [] }
         let userHome = resolve(FileManager.default.homeDirectoryForCurrentUser.path)
         let forgotten = Set(DuoState.load().forgottenFolders)
+        let notNow = Set(DuoState.load().notNowFolders)
         for (path, ids) in byFolder.sorted(by: { $0.key < $1.key }) {
             let url = URL(fileURLWithPath: path)
             // A folder that's gone keeps its tile, saying what happened (DB-8, LR-23), unless the
@@ -248,6 +249,7 @@ public enum LiveSnapshot {
                 p.missing = status.text
                 if case .movedTo(let to) = status { p.movedTo = to }
             }
+            if notNow.contains(path) { p.notNow = true }
             folderProjects.append(p)
             folders[name] = url
             // A folder works as it is (DL-63): its tree lists, as a project's does (F-88).

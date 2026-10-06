@@ -186,6 +186,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var foldedProperties: [String] = []
     /// Missing folders the user removed from Duo (DB-8): their sessions stay in Claude's storage.
     public var forgottenFolders: [String] = []
+    /// Folders whose Make a Project notice the user said Not Now to (DL-110), by path.
+    public var notNowFolders: [String] = []
     /// Legacy Duo's findings the user said Not Now to (asked again when they change), and the last backup (DL-39).
     /// Settings (S3-1): a chosen `claude` (LR-19; nil = found automatically), and notifications (S3-6).
     public var claudePath: String?
@@ -223,6 +225,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         homePromptDismissed = try c.decodeIfPresent(Bool.self, forKey: .homePromptDismissed) ?? false
         foldedProperties = try c.decodeIfPresent([String].self, forKey: .foldedProperties) ?? []
         forgottenFolders = try c.decodeIfPresent([String].self, forKey: .forgottenFolders) ?? []
+        notNowFolders = try c.decodeIfPresent([String].self, forKey: .notNowFolders) ?? []
         legacyDismissed = try c.decodeIfPresent(String.self, forKey: .legacyDismissed)
         claudePath = try c.decodeIfPresent(String.self, forKey: .claudePath)
         notifyNeedsYou = try c.decodeIfPresent(Bool.self, forKey: .notifyNeedsYou) ?? true

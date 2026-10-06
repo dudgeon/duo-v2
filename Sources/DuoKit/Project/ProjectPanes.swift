@@ -16,7 +16,9 @@ struct ProjectSidebarPane: View {
                     if let project {
                         VStack(alignment: .leading, spacing: 0) {
                             Text(project.name).duoText(.title).lineLimit(1)
-                            Text([project.health, project.next].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
+                            // A folder says what it is where a project shows its health and next step, as its tile does (DL-110).
+                            Text(project.kind == "folder" ? (project.hasClaudeMD == true ? "Has CLAUDE.md · no project file" : "Folder · no project file")
+                                 : [project.health, project.next].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
                                 .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
                         }
                         .padding(EdgeInsets(top: 14, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
@@ -26,7 +28,7 @@ struct ProjectSidebarPane: View {
                         .onActivate { model.rightTab = "Project"; model.selectedFile = nil }  // action: view tab
                         .accessibilityLabel("\(project.name), open the project file")
                         if project.isMissing { MissingNotice(project: project) }
-                        else if project.isFolderOnly { FolderNotice(project: project) }
+                        else if project.kind == "folder", project.notNow != true { FolderNotice(project: project) }
                     }
                     // Needs you, Open, then history by date, then the folds (DL-91).
                     ForEach(sections) { section in
@@ -439,6 +441,9 @@ struct RightPane: View {
                 }
             } else if let path = model.rightTab, path.contains(".") {
                 DocumentPlaceholder(path: path)
+            } else if model.rightTab == "Project" || model.rightTab == nil, let p = model.currentProject, p.kind == "folder" {
+                // A folder's Project tab offers to make it one, rather than a blank page (DL-110).
+                FolderProjectTab(project: p)
             } else {
                 // Fixture mode: the Project tab isn't designed in the final look (handoff §3.5).
                 Color.clear
@@ -774,8 +779,8 @@ struct NoticeBar<Buttons: View>: View {
     }
 }
 
-/// Inside a folder with no project file (DL-63): a stand-in in MissingNotice's look, offering
-/// Make a Project (Q-44: not drawn).
+/// Inside a folder with no project file (DL-63, DL-110): a notice in MissingNotice's look, offering
+/// Make a Project; Not Now hides it for that folder. Target: folder-handoff `folder-not-project.html`.
 struct FolderNotice: View {
     @Environment(AppModel.self) private var model
     let project: Fixture.Project
@@ -784,15 +789,41 @@ struct FolderNotice: View {
         VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
             Text("This folder isn’t a project yet.")
                 .duoText(.body).fixedSize(horizontal: false, vertical: true)
-            Text("Make it one to give it a PROJECT.md: its goal and next step show here and on the map.")
+            Text("A project file gives it a goal and a next step, shown here and on the map.")
                 .duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
-            Button("Make a Project") { model.makeProject(project.name) }.buttonStyle(DefaultSheetButtonStyle())  // action: project make
+            HStack(spacing: DuoSpace.gapButtonToButton) {
+                Button("Make a Project") { model.makeProject(project.name) }.buttonStyle(DefaultSheetButtonStyle())
+                Button("Not Now") { model.notNowProject(project.name) }.buttonStyle(.duo)
+            }
         }
         .padding(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.ground))
         .padding(.horizontal, DuoSpace.panePadding)
         .padding(.vertical, 8)
+    }
+}
+
+/// The Project tab of a folder that isn't a project (DL-110): what a project file adds, and the offer.
+struct FolderProjectTab: View {
+    @Environment(AppModel.self) private var model
+    let project: Fixture.Project
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
+            Text("No project file").duoText(.bodyEmphasis)
+            Text("A \(Text("PROJECT.md").font(Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)))) holds this folder’s goal, health and next step. Duo shows them here and on the map.")
+                .duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: DuoSpace.gapButtonToButton) {
+                Button("Make a Project") { model.makeProject(project.name) }.buttonStyle(DefaultSheetButtonStyle())
+                if project.hasClaudeMD == true {
+                    Button("Open CLAUDE.md") { model.openDocument("CLAUDE.md") }.buttonStyle(.duo)
+                }
+            }
+            .padding(.top, 6)
+        }
+        .padding(DuoSpace.documentPadding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 

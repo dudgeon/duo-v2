@@ -171,6 +171,20 @@ extension AppModel {
         }
     }
 
+    /// Not Now on a folder's Make a Project notice (DL-110): hides the notice for that folder,
+    /// remembered by Duo, not written in the folder. The line under its name and the Project tab
+    /// still offer it.
+    public func notNowProject(_ name: String) {
+        guard let folder = liveFolders[name] else { return }
+        let path = folder.path
+        DuoState.update { if !$0.notNowFolders.contains(path) { $0.notNowFolders.append(path) } }
+        registerUndo("Not Now") { model in
+            DuoState.update { $0.notNowFolders.removeAll { $0 == path } }
+            model.refreshLive()
+        }
+        refreshLive()
+    }
+
     // MARK: Drag and drop
 
     /// A drag began (the source dims; F-51). There's no drag-ended callback in SwiftUI, so this

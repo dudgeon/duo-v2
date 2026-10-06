@@ -143,8 +143,8 @@ extension DuoAction {
         // Projects
         .init(.projects, .projects, "", "Projects and folders with sessions, with goal, health and next step.", everyday: true),
         .init(.projectShow, .projects, "<project>", "A project's folder, project file, goal, health, next step and sessions."),
-        .init(.projectMake, .projects, "<folder name>", "Make a folder with sessions a documented project: writes a starter PROJECT.md and opens it. Undo with `duo2 undo`.",
-              ui: ["Make a Project"]),
+        .init(.projectMake, .projects, "<folder name> [--not-now]", "Make a folder with sessions a documented project: writes a starter PROJECT.md and opens it. --not-now instead hides the folder's Make a Project notice (the Project tab still offers it). Undo with `duo2 undo`.",
+              ui: ["Make a Project", "Not Now"]),
         .init(.projectArchive, .projects, "<project>", "File a project away: its tile moves into the map's Archived rollup. Sessions, counts and search are unchanged. Undo with `duo2 undo`.",
               ui: ["Archive Project", "archived rollup"]),
         .init(.projectUnarchive, .projects, "<project>", "Bring an archived project back to its topic column.", ui: ["Unarchive Project"]),
@@ -226,7 +226,7 @@ extension DuoAction {
               ui: ["Copy Path", "Copy Relative Path", "Copy as Link"]),
 
         // Documents
-        .init(.docOpen, .docs, "<path> [--project <p>]", "Open a document in the right pane (Markdown in the editor, HTML as a page). A file outside every project opens as a tab in the project on screen (or --project).", ui: ["Open", "file row", "Open File…", "file dropped on the right pane"], everyday: true),
+        .init(.docOpen, .docs, "<path> [--project <p>]", "Open a document in the right pane (Markdown in the editor, HTML as a page). A file outside every project opens as a tab in the project on screen (or --project).", ui: ["Open", "file row", "Open File…", "file dropped on the right pane", "Open CLAUDE.md"], everyday: true),
         .init(.docClose, .docs, "[path] [--others]", "Close a document tab (saved first), or every other one.", ui: ["Close Tab", "Close Other Tabs"]),
         .init(.docTabs, .docs, "", "The open document tabs, and which one shows."),
         .init(.docStatus, .docs, "<file>", "Whether a file is open in Duo's editor, unsaved or in conflict. Check before editing a file the user may have open.", everyday: true),
