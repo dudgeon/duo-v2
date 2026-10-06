@@ -54,7 +54,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case fileReveal = "file reveal", fileOpenWith = "file open-with", filePath = "file path"
     // Documents
     case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
-    case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docFind = "doc find"
+    case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docTable = "doc table", docFind = "doc find"
     case docProp = "doc prop"
     case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history", docRevert = "doc revert"
     // HTML pages
@@ -237,6 +237,10 @@ extension DuoAction {
         .init(.docFormat, .docs, "bold|italic|code|link|heading1|heading2|heading3|task|properties",
               "Format the selection (bold, italic, code, a link waiting for its address), make its lines headings or tasks (again takes it off), or start the properties block.",
               ui: ["Bold", "Italic", "Code", "Link…", "Heading 1", "Heading 2", "Heading 3", "Task", "Add Properties"]),
+        .init(.docTable, .docs, "insert|row-above|row-below|column-before|column-after|delete-row|delete-column|align-left|align-center|align-right|next|previous",
+              "Edit the table at the caret as Markdown, its columns kept lined up: insert a 3 × 2 table, add or delete a row or column, align a column, or move to the next or previous cell (the last cell's next adds a row).",
+              ui: ["Insert Table", "Add Row Above", "Add Row Below", "Add Column Before", "Add Column After", "Delete Row", "Delete Column",
+                   "Left", "Center", "Right", "+ Row", "+ Column", "Align", "Delete"]),
         .init(.docFind, .docs, "<text>", "Find text in the showing document and select the next match.", ui: ["Find"]),
         .init(.docProp, .docs, "list | get <name> | set <name> <value> | remove <name> | type <name> <text|list|number|checkbox|date|datetime|link>",
               "The showing document's properties (frontmatter): read them, or change one line through the editor, highlighted as Claude's (DB-16). Lists: `set tags \"[a, b]\"`.",
@@ -328,6 +332,8 @@ public enum Parity {
         "Project": "a menu, not an action",
         "Session": "a menu, not an action",
         "Heading": "a submenu, not an action",
+        "Table": "a submenu, not an action",
+        "Align Column": "a submenu, not an action",
         "What’s New in This Version": "opens this version's release notes on GitHub; `duo2 status` names the version",
         "Report an Issue…": "opens GitHub's new-issue form, filled in, for the user to edit and submit",
         "No templates yet: add .md files to a templates folder": "a disabled hint",

@@ -1086,3 +1086,25 @@ Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and o
   - `NO_BUILD=1 scripts/check-ui.sh`: six states produced.
 - **Not checked:** the tooltip (it needs a real pointer); real Claude Code taking the paste at its prompt (Send to Claude already relies on that, DL-68).
 
+
+## F-94 · Editing tables as Markdown, as decided (2026-10-06)
+
+(F-93 is the director agent's update-flow finding.)
+
+- **Built (DL-113, `tables-handoff/`):** Format › Table ▸ (Insert Table; Add Row Above/Below; Add Column Before/After; Delete Row, Delete Column; Align Column ▸ Left, Center, Right).
+  - The bar over a table appears only while the caret is in it (`TableBarWidget`). Its Align ▾ and Delete ▾ are native menus (`EditorController.tableMenu`).
+  - Tab and ⇧Tab move between cells, and Tab in the last cell adds a row. Return moves down a row, and adds one at the end.
+  - `duo2 doc table insert|row-above|row-below|column-before|column-after|delete-row|delete-column|align-left|align-center|align-right|next|previous`.
+  - The menu's row and column items dim unless the caret is in a table: the page reports `inTable` with each selection.
+- **How:** `duo-editor.js` reads the table at the caret from the syntax tree (`tableAt`). It splits rows only on unescaped pipes (`splitRow`; the drawn table now does too) and writes the whole table back with the columns padded (`writeTable`), as one undoable change.
+- **Guarding against other renderers (Geoff, on t1):**
+  - An inserted table gets a blank line before and after, so it never joins a list or a paragraph.
+  - A paste into a cell becomes one line: line breaks become `<br>` and `|` becomes `\|`. A list pasted into a cell stays as its text.
+  - The drawn table shows `<br>` as a line break, as GitHub and Obsidian do.
+- **Checked:**
+  - In the editor page (browser): every command, Tab across the end, Return in the last row, a paste with a nested list and a pipe, escaped pipes kept through Add Column, and Insert after a list and mid-paragraph.
+  - A document written that way (a nested list, then a table holding `\|`, a code span with `\|`, a pasted list, an empty row, then a second table followed by a list) was rendered by GitHub's GFM renderer (`gh api markdown`, sample text only). Both tables come out as tables with the right rows and cells, escaped pipes show as `|`, `<br>` breaks lines, and the lists stay outside the tables.
+  - The bar was compared with `tables-bar` (`build/ui/tables-bar-compare.png`): the same buttons, 31 pt below the paragraph and 27 pt above the table. The heading spacing differs by a few points because the board simplified it; S3-5's document target governs that.
+  - Live, on a scratch workspace with its own `DUO_SUPPORT_DIR`: the `menus` dump with the caret in a table shows Format › Table enabled. `duo2 doc table row-below`, `align-center` and `next`, then `doc save`, wrote the realigned table to disk; a bad word gives the usage line.
+  - DuoChecks (290 passed) includes parity for every new item.
+- **Not checked:** clicking the bar's buttons with a real pointer (they run the same commands), and Obsidian's renderer (it isn't installed here).

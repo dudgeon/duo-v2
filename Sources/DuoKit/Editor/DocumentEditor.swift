@@ -256,12 +256,17 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             webView.callAsyncJavaScript("return duo.imageLoaded(i, u)", arguments: ["i": id, "u": imageDataURL(src) ?? NSNull()], in: nil, in: .page) { _ in }
             return
         }
+        if let body = m.body as? [String: Any], body["kind"] as? String == "tableMenu" {
+            tableMenu(body["menu"] as? String ?? "", at: NSPoint(x: body["x"] as? Double ?? 0, y: (body["y"] as? Double ?? 0) + 2)); return
+        }
         if let body = m.body as? [String: Any], let kind = body["kind"] as? String, kind.hasPrefix("property") {
             onPropertyAction?(kind, body); return
         }
         guard let body = m.body as? [String: Any], body["kind"] as? String == "selection" else { return }
-        let count = body["claudeChanges"] as? Int ?? 0, atCaret = body["atClaudeChange"] as? Bool == true
-        if count != claudeChanges || atCaret != atClaudeChange { claudeChanges = count; atClaudeChange = atCaret; onStateChange?() }
+        let count = body["claudeChanges"] as? Int ?? 0, atCaret = body["atClaudeChange"] as? Bool == true, table = body["inTable"] as? Bool == true
+        if count != claudeChanges || atCaret != atClaudeChange || table != inTable {
+            claudeChanges = count; atClaudeChange = atCaret; inTable = table; onStateChange?()
+        }
         dirty = body["dirty"] as? Bool == true
         guard dirty else { return }
         // Autosave a second after the last change (no "Save?" prompts; files are the truth).
@@ -501,6 +506,8 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// Claude's changes still highlighted (ENH-4), and whether the caret is in one.
     public private(set) var claudeChanges = 0
     public private(set) var atClaudeChange = false
+    /// The caret is in a table: Format › Table's row and column items apply (DL-113).
+    public private(set) var inTable = false
 
     /// Puts back what Claude's change at the caret replaced (ENH-4).
     public func revertAtCaret(_ done: (@MainActor (Int) -> Void)? = nil) {
@@ -570,5 +577,20 @@ struct DocumentEditorView: NSViewRepresentable {
             super.layout()
             current?.frame = bounds
         }
+    }
+}
+
+extension EditorController {
+    /// The table bar's Align ▾ and Delete ▾ (DL-113): the system's menu under the button, with
+    /// the same items as Format › Table.
+    func tableMenu(_ which: String, at point: NSPoint) {
+        let menu = NSMenu()
+        let items: [(String, String)] = which == "align"
+            ? [("Left", "tableAlignLeft"), ("Center", "tableAlignCenter"), ("Right", "tableAlignRight")]
+            : [("Delete Row", "tableDeleteRow"), ("Delete Column", "tableDeleteColumn")]
+        for (title, name) in items {
+            menu.addItem(ActionMenuItem(title) { [weak self] in self?.run("duo.exec(f); return 1", ["f": name]) { _ in } })  // action: doc table
+        }
+        menu.popUp(positioning: nil, at: point, in: webView)
     }
 }

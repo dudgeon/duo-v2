@@ -1,0 +1,12 @@
+{
+  "$note": "Tables in documents (ENH-11), approved 2026-10-06 (DL-113). kind=board: the right pane drawn on the Design canvas, exported as static HTML.",
+  "source": "https://claude.ai/artifact/AmLcw8SFba5CnqvymoCz2S",
+  "screens": [
+    {"file": "screens/tables-menu.html", "board": "Main.dc.html", "kind": "board", "width": 460, "height": 640, "decision": "DL-113",
+     "shows": "Format › Table ▸ open, the caret in a table showing its Markdown."},
+    {"file": "screens/tables-bar.html", "board": "Toolbar.dc.html", "kind": "board", "width": 460, "height": 640, "decision": "DL-113",
+     "shows": "The table bar (+ Row, + Column, Align ▾, Delete ▾) over a table while the caret is in it."},
+    {"file": "screens/tables-insert.html", "board": "InsertDirect.dc.html", "kind": "board", "width": 460, "height": 520, "decision": "DL-113",
+     "shows": "Insert Table: a 3-column table with a header and two rows, Column 1 selected."}
+  ]
+}

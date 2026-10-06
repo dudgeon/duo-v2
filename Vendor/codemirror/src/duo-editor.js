@@ -953,7 +953,12 @@ class TableWidget extends WidgetType {
     const t = document.createElement("table");
     this.rows.forEach((r, i) => {
       const tr = document.createElement("tr");
-      r.forEach((c, j) => { const td = document.createElement(i === 0 ? "th" : "td"); td.textContent = c; td.style.textAlign = this.align[j] || "left"; tr.appendChild(td); });
+      r.forEach((c, j) => {
+        const td = document.createElement(i === 0 ? "th" : "td");
+        // `<br>` is how a cell holds several lines in GFM (a paste into a cell writes it, DL-113).
+        c.split(/<br\s*\/?>/i).forEach((part, k) => { if (k) td.appendChild(document.createElement("br")); td.appendChild(document.createTextNode(part)); });
+        td.style.textAlign = this.align[j] || "left"; tr.appendChild(td);
+      });
       t.appendChild(tr);
     });
     box.appendChild(t);
@@ -962,11 +967,193 @@ class TableWidget extends WidgetType {
   ignoreEvent() { return false; }
 }
 function parseTable(text) {
-  const cells = (l) => l.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
   const lines = text.split("\n").filter((l) => l.trim());
   if (lines.length < 2) return null;
-  const align = cells(lines[1]).map((d) => (/^:-+:$/.test(d) ? "center" : /-+:$/.test(d) ? "right" : "left"));
-  return { rows: [cells(lines[0]), ...lines.slice(2).map(cells)], align };
+  const align = splitRow(lines[1]).map((d) => (/^:-+:$/.test(d) ? "center" : /-+:$/.test(d) ? "right" : "left"));
+  const shown = (r) => splitRow(r).map((c) => c.replace(/\\\|/g, "|"));
+  return { rows: [shown(lines[0]), ...lines.slice(2).map(shown)], align };
+}
+
+// ---------- editing tables (DL-113): Markdown on the caret, Format › Table, the bar, Tab ----------
+
+// A row's cells, split on pipes that aren't escaped; `\|` stays in the cell's text (GFM).
+function splitRow(line) {
+  let t = line.trim();
+  if (t.startsWith("|")) t = t.slice(1);
+  if (t.endsWith("|") && !t.endsWith("\\|")) t = t.slice(0, -1);
+  const cells = [];
+  let cur = "";
+  for (let i = 0; i < t.length; i++) {
+    if (t[i] === "\\" && t[i + 1] === "|") { cur += "\\|"; i++; } else if (t[i] === "|") { cells.push(cur.trim()); cur = ""; } else cur += t[i];
+  }
+  cells.push(cur.trim());
+  return cells;
+}
+
+// The table around a position: its lines, its cells, each column's alignment, and where the
+// position is (row 0 is the header; the delimiter line counts as the header).
+function tableAt(state, pos) {
+  let node = null;
+  syntaxTree(state).iterate({ from: pos, to: pos, enter: (n) => { if (n.name === "Table") { node = { from: n.from, to: n.to }; return false; } } });
+  if (!node) return null;
+  const a = state.doc.lineAt(node.from), b = state.doc.lineAt(node.to);
+  const lines = [];
+  for (let n = a.number; n <= b.number; n++) lines.push(state.doc.line(n));
+  if (lines.length < 2) return null;
+  const align = splitRow(lines[1].text).map((d) => (/^:-+:$/.test(d) ? "center" : /-+:$/.test(d) ? "right" : /^:-+$/.test(d) ? "left" : "none"));
+  const rows = [splitRow(lines[0].text), ...lines.slice(2).map((l) => splitRow(l.text))];
+  const cols = Math.max(align.length, ...rows.map((r) => r.length));
+  for (const r of rows) while (r.length < cols) r.push("");
+  while (align.length < cols) align.push("none");
+  const line = state.doc.lineAt(pos), li = line.number - a.number;
+  const before = state.sliceDoc(line.from, pos).replace(/\\\|/g, "");
+  const pipes = (before.match(/\|/g) || []).length, lead = /^\s*\|/.test(line.text) ? 1 : 0;
+  return { from: a.from, to: b.to, rows, align, cols, row: li <= 1 ? 0 : li - 1, col: Math.max(0, Math.min(cols - 1, pipes - lead)) };
+}
+
+// The table written out with its columns lined up, and where each cell's text sits.
+function writeTable(t) {
+  const widths = [];
+  for (let j = 0; j < t.cols; j++) widths.push(Math.max(3, ...t.rows.map((r) => r[j].length)));
+  const spots = [];
+  const row = (cells, ri, lineStart) => {
+    let s = "|";
+    const at = [];
+    cells.forEach((c, j) => {
+      const room = widths[j] - c.length, a = t.align[j];
+      const left = a === "right" ? room : a === "center" ? Math.floor(room / 2) : 0;
+      s += " " + " ".repeat(left);
+      at.push([lineStart + s.length, lineStart + s.length + c.length]);
+      s += c + " ".repeat(room - left) + " |";
+    });
+    spots[ri] = at;
+    return s;
+  };
+  const dash = (j) => {
+    const w = widths[j], a = t.align[j];
+    return a === "center" ? ":" + "-".repeat(w - 2) + ":" : a === "right" ? "-".repeat(w - 1) + ":" : a === "left" ? ":" + "-".repeat(w - 1) : "-".repeat(w);
+  };
+  const out = [];
+  let off = 0;
+  t.rows.forEach((cells, ri) => {
+    const s = row(cells, ri, off);
+    out.push(s); off += s.length + 1;
+    if (ri === 0) { const d = "| " + widths.map((_, j) => dash(j)).join(" | ") + " |"; out.push(d); off += d.length + 1; }
+  });
+  return { text: out.join("\n"), spots };
+}
+
+// Rewrites the table and puts the caret in a cell (its text selected when `select`).
+function putTable(view, t, row, col, select) {
+  const w = writeTable(t);
+  const [s, e] = w.spots[Math.max(0, Math.min(row, t.rows.length - 1))][Math.max(0, Math.min(col, t.cols - 1))];
+  view.dispatch({ changes: { from: t.from, to: t.to, insert: w.text }, selection: { anchor: t.from + (select ? s : e), head: t.from + e },
+                  scrollIntoView: true, userEvent: "input.table" });
+  return true;
+}
+const here = () => tableAt(view.state, view.state.selection.main.head);
+const emptyRow = (t) => Array.from({ length: t.cols }, () => "");
+
+function insertTable() {
+  const state = view.state, line = state.doc.lineAt(state.selection.main.head);
+  // A blank line before and after: other readers only see a table that stands apart (DL-113).
+  const atEmpty = line.text.trim() === "";
+  const from = atEmpty ? line.from : line.to;
+  const before = atEmpty ? (line.number > 1 && state.doc.line(line.number - 1).text.trim() !== "" ? "\n" : "") : "\n\n";
+  const next = line.number < state.doc.lines ? state.doc.line(line.number + 1) : null;
+  const after = next && next.text.trim() !== "" ? "\n" : "";
+  const t = { rows: [["Column 1", "Column 2", "Column 3"], ["", "", ""], ["", "", ""]], align: ["none", "none", "none"], cols: 3 };
+  const w = writeTable(t), at = from + before.length;
+  view.dispatch({ changes: { from, to: atEmpty ? line.to : line.to, insert: before + w.text + after },
+                  selection: { anchor: at + w.spots[0][0][0], head: at + w.spots[0][0][1] }, scrollIntoView: true, userEvent: "input.table" });
+  view.focus();
+  return true;
+}
+function addRow(below) {
+  const t = here(); if (!t) return false;
+  const at = below || t.row === 0 ? Math.max(1, t.row + 1) : t.row;
+  t.rows.splice(at, 0, emptyRow(t));
+  return putTable(view, t, at, t.col, false);
+}
+function addColumn(after) {
+  const t = here(); if (!t) return false;
+  const at = after ? t.col + 1 : t.col;
+  for (const r of t.rows) r.splice(at, 0, "");
+  t.align.splice(at, 0, "none"); t.cols++;
+  return putTable(view, t, t.row, at, false);
+}
+function deleteRow() {
+  const t = here(); if (!t || t.row === 0) return false;   // the header stays: a table needs one
+  t.rows.splice(t.row, 1);
+  return putTable(view, t, Math.min(t.row, t.rows.length - 1), t.col, false);
+}
+function deleteColumn() {
+  const t = here(); if (!t) return false;
+  if (t.cols === 1) {   // the last column: the table goes
+    view.dispatch({ changes: { from: t.from, to: Math.min(view.state.doc.length, t.to + 1) }, userEvent: "delete.table" });
+    return true;
+  }
+  for (const r of t.rows) r.splice(t.col, 1);
+  t.align.splice(t.col, 1); t.cols--;
+  return putTable(view, t, t.row, Math.min(t.col, t.cols - 1), false);
+}
+function alignColumn(a) {
+  const t = here(); if (!t) return false;
+  t.align[t.col] = a;
+  return putTable(view, t, t.row, t.col, false);
+}
+// Tab and ⇧Tab: the next or previous cell, its text selected; Tab in the last cell adds a row.
+function tabCell(back) {
+  const t = here(); if (!t) return false;
+  let r = t.row, c = t.col + (back ? -1 : 1);
+  if (c >= t.cols) { c = 0; r++; }
+  if (c < 0) { c = t.cols - 1; r--; }
+  if (r < 0) return true;
+  if (r >= t.rows.length) t.rows.push(emptyRow(t));
+  return putTable(view, t, r, c, true);
+}
+// Return: the same column in the next row; in the last row, a new row. A row never breaks in two.
+function enterCell() {
+  const t = here(); if (!t || !view.state.selection.main.empty) return false;
+  const r = t.row + 1;
+  if (r >= t.rows.length) t.rows.push(emptyRow(t));
+  return putTable(view, t, r, t.col, false);
+}
+const tableKeymap = Prec.high(keymap.of([
+  { key: "Tab", run: () => tabCell(false) },
+  { key: "Shift-Tab", run: () => tabCell(true) },
+  { key: "Enter", run: () => enterCell() },
+]));
+// Pasting into a cell: one line, pipes escaped, so the row stays a row everywhere (DL-113).
+function pasteIntoCell(e, v) {
+  const sel = v.state.selection.main, text = e.clipboardData?.getData("text/plain");
+  if (!text || v.state.doc.lineAt(sel.from).number !== v.state.doc.lineAt(sel.to).number || !tableAt(v.state, sel.head)) return false;
+  if (!/[\n|]/.test(text)) return false;
+  const one = text.replace(/\r\n?/g, "\n").replace(/\n+$/, "").replace(/(^|[^\\])\|/g, "$1\\|").replace(/\n/g, "<br>");
+  e.preventDefault();
+  v.dispatch({ changes: { from: sel.from, to: sel.to, insert: one }, selection: { anchor: sel.from + one.length }, userEvent: "input.paste" });
+  return true;
+}
+
+// The bar over a table while the caret is in it (DL-113, tables-handoff `tables-bar`).
+class TableBarWidget extends WidgetType {
+  eq() { return true; }
+  toDOM() {
+    const d = document.createElement("div");
+    d.className = "duo-table-bar";
+    d.innerHTML = `<button type="button" data-a="row">+ Row</button><button type="button" data-a="column">+ Column</button>` +
+                  `<button type="button" data-a="align">Align ▾</button><button type="button" data-a="delete">Delete ▾</button>`;
+    d.addEventListener("mousedown", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      e.preventDefault();
+      const a = b.dataset.a;
+      if (a === "row") addRow(true);
+      else if (a === "column") addColumn(true);
+      else { const r = b.getBoundingClientRect(); post("tableMenu", { menu: a, x: r.left, y: r.bottom }); }
+    });
+    return d;
+  }
+  ignoreEvent() { return true; }
 }
 
 // An image on its own line: the picture (Duo reads the file and hands it over, since the page
@@ -1036,7 +1223,10 @@ function blockDecorations(state) {
         if (node.to <= fmEnd) return false;
         if (node.name === "Table") {
           const a = state.doc.lineAt(node.from), b = state.doc.lineAt(node.to);
-          for (let n = a.number; n <= b.number; n++) if (active.has(n)) return false;
+          for (let n = a.number; n <= b.number; n++) if (active.has(n)) {
+            out.push(Decoration.widget({ widget: new TableBarWidget(), block: true, side: -1 }).range(a.from));
+            return false;
+          }
           const t = parseTable(state.sliceDoc(a.from, b.to));
           if (t) out.push(Decoration.replace({ widget: new TableWidget(t.rows, t.align), block: true }).range(a.from, b.to));
           return false;
@@ -1152,6 +1342,9 @@ const duoTheme = EditorView.theme({
   ".cm-line.duo-blank": { height: "10px", lineHeight: "10px" },
   ".duo-hr": { display: "inline-block", width: "100%", height: "1px", verticalAlign: "middle", backgroundColor: "var(--duo-rule)" },
   ".duo-table th, .duo-table td": { padding: "4px 8px", border: "1px solid var(--duo-rule)", whiteSpace: "nowrap" },
+  ".duo-table-bar": { display: "flex", gap: "6px", margin: "0 0 6px" },
+  ".duo-table-bar button": { font: "inherit", fontSize: "12px", lineHeight: "16px", padding: "2px 8px", border: "1px solid var(--duo-control-edge)",
+                             borderRadius: "6px", background: "var(--duo-pane)", color: "var(--duo-text)", cursor: "default", whiteSpace: "nowrap" },
   ".duo-table th": { backgroundColor: "var(--duo-ground)", fontWeight: "600" },
   ".duo-figure": { display: "flex", flexDirection: "column", gap: "4px", margin: "4px 0" },
   ".duo-img": { maxWidth: "100%", borderRadius: "6px", border: "1px solid var(--duo-rule)" },
@@ -1359,7 +1552,7 @@ function create(parent, text) {
       ...(window.duoFlags?.noPreview ? [] : [livePreview]),
       contextField,
       foldField,
-      ...(window.duoFlags?.noPreview ? [] : [propertiesField, propertiesKeymap, suggestionKeys,
+      ...(window.duoFlags?.noPreview ? [] : [propertiesField, propertiesKeymap, tableKeymap, EditorView.domEventHandlers({ paste: pasteIntoCell }), suggestionKeys,
         autocompletion({ override: [propertyCompletions], icons: false, activateOnTyping: true,
           tooltipClass: (st) => (inBlock(st) && !st.sliceDoc(st.doc.lineAt(st.selection.main.head).from, st.selection.main.head).includes(":") ? "duo-sugg-names" : "duo-sugg-values"),
           addToOptions: [{ position: 20, render: (c) => { const s = document.createElement("span"); s.className = "duo-sugg-icon";
@@ -1382,7 +1575,8 @@ function create(parent, text) {
           // Never stringify the document per keystroke: 1.2 MB × every edit was 280 MB of garbage (F-34).
           const claude = u.state.field(changesField);
           post("selection", { from: r.from, to: r.to, empty: r.empty, dirty: !u.state.doc.eq(baseDoc),
-                              claudeChanges: claude.length, atClaudeChange: claude.some((c) => r.head >= c.from && r.head <= c.to) });
+                              claudeChanges: claude.length, atClaudeChange: claude.some((c) => r.head >= c.from && r.head <= c.to),
+                              inTable: !!tableAt(u.state, r.head) });
         }
       }),
     ],
@@ -1451,6 +1645,18 @@ const commands = {
   heading3: () => lineMark("### ", HEADING_MARK),
   task: () => lineMark("- [ ] ", LIST_MARK, (t) => /^\s*[-*+][ \t]+\[[ xX]\][ \t]/.test(t)),
   properties: addProperties,
+  tableInsert: insertTable,
+  tableRowAbove: () => addRow(false),
+  tableRowBelow: () => addRow(true),
+  tableColumnBefore: () => addColumn(false),
+  tableColumnAfter: () => addColumn(true),
+  tableDeleteRow: deleteRow,
+  tableDeleteColumn: deleteColumn,
+  tableAlignLeft: () => alignColumn("left"),
+  tableAlignCenter: () => alignColumn("center"),
+  tableAlignRight: () => alignColumn("right"),
+  tableNext: () => tabCell(false),
+  tablePrevious: () => tabCell(true),
 };
 
 // Lines with their terminators, so joining the pieces gives the text back exactly.
