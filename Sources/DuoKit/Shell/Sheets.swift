@@ -7,20 +7,34 @@ struct SheetOverlay: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
+        let up = model.sheetIsUp
         ZStack(alignment: .top) {
-            // Clicks behind a sheet go nowhere, as with a window sheet.
-            Color.clear.contentShape(Rectangle())
-                .onActivate {}  // not an action: swallows clicks behind the sheet
-            Group {
-                if let m = model.moveIntoHomeForm { MoveIntoHomeSheet(form: m) }
-                else if let n = model.newProjectForm { NewProjectSheet(form: n) }
-                else if let q = SheetCenter.shared.current { QuestionSheet(q: q).id(q.id) }
+            if up {
+                // Clicks behind a sheet go nowhere, as with a window sheet.
+                Color.clear.contentShape(Rectangle())
+                    .onActivate {}  // not an action: swallows clicks behind the sheet
+                // It hangs down from the toolbar and goes back up, as a window sheet does (DL-130):
+                // `sheetIn` 200 ms ease-out, `sheetOut` 150 ms ease-in. The next queued question
+                // cross-fades in its place (`sheetSwap`) instead of dropping again.
+                ZStack(alignment: .top) {
+                    if let m = model.moveIntoHomeForm { MoveIntoHomeSheet(form: m) }
+                    else if let n = model.newProjectForm { NewProjectSheet(form: n) }
+                    else if let q = SheetCenter.shared.current { QuestionSheet(q: q).id(q.id).transition(.opacity) }
+                }
+                .duoAnimation(.sheetSwap, value: SheetCenter.shared.current?.id)
+                // The targets hang the sheet 38 from the window's top, over the toolbar's hairline.
+                .offset(y: DuoMetric.sheetTop - FixtureHarness.designContentTop)
+                .transition(.move(edge: .top))
             }
-            // The targets hang the sheet 38 from the window's top, over the toolbar's hairline.
-            .offset(y: DuoMetric.sheetTop - FixtureHarness.designContentTop)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        // Slides from under the toolbar, never over it: clip at the hairline the sheet hangs from.
+        .mask(Rectangle().padding(.top, DuoMetric.sheetTop - FixtureHarness.designContentTop))
+        .animation((up ? DuoMotionToken.sheetIn : .sheetOut).animation, value: up)
+        .allowsHitTesting(up)
         .accessibilityElement(children: .contain)
-        .accessibilityAddTraits(.isModal)
+        .accessibilityAddTraits(up ? .isModal : [])
+        .accessibilityHidden(!up)
     }
 }
 
