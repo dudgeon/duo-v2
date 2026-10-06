@@ -1681,3 +1681,28 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - `NO_BUILD=1 scripts/check-ui.sh flow-zoom-3`: 0 pixels differ in 5 runs in a row, with Duo (Geoff's) in front.
   - DuoChecks passes.
 - **Tried and dropped:** a fallback that closed and reopened the peek if the popover was missing just before capture. It never fired once `peekOpen` was held, so it isn't shipped.
+
+## F-131 · Motion: one Reduce Motion flag, tokens with easings, and frames mid-motion (DL-130, Q-77, 2026-10-06)
+
+- **One flag.** `MotionSettings.shared` (`Design/Motion.swift`, an `@Observable` class) holds `reduce`, read from `NSWorkspace.accessibilityDisplayShouldReduceMotion` and updated on `accessibilityDisplayOptionsDidChangeNotification`.
+  - Every animation is built from a token through it: `DuoMotionToken.x.animation` (nil with Reduce Motion), `.duration`, `.delay` (kept with Reduce Motion: `rowHold` is time, not motion), `.css` for the web pages.
+  - `.duoAnimation(.x, value:)` and `withDuoAnimation(.x) {}` wrap SwiftUI's.
+  - Before this, the map's drag springs and the chat scroll ignored Reduce Motion, and only `RootView` read it.
+  - DuoChecks fails if any other file reads the system setting or uses a spring.
+- **Tokens:**
+  - `motion` gains DL-130's 25 durations, and a new `motionEase` map gives each token `out`, `in`, `inOut` or `none` (the delay).
+  - `gen-tokens.py` writes `DuoMotionToken` (seconds and ease) beside `DuoMotion`'s constants.
+  - `gen-design-system.py` lists them all with their uses.
+- **Proof without screencapture (Q-77).** Duo's own capture path (`cacheDisplay`) draws a SwiftUI animation's in-flight values, so frames can be taken mid-motion. Search's scrim at `DUO_MOTION_SCALE=10` read `#FFFFFF`, `#EBEBEC`, `#D2D3D4`, `#C0C1C2` and `#B7B8BA` at 0, 300, 600, 900 and 1500 ms.
+  - `DUO_MOTION_SCALE=<n>` stretches every token n times. `DUO_REDUCE_MOTION=1|0` overrides the system setting.
+  - `--then` gains `+<action>`, which runs 20 ms after the action before it (not 0.6 s), and `film:<prefix>:<ms>|<ms>|…`, which writes `<prefix>-<ms>.png` at those offsets. Frames land within about 2 to 120 ms of their time; the log says how late.
+  - `scripts/check-motion.sh <name> <state> <setup> <trigger> [offsets]` runs a motion twice, with Reduce Motion off and on. A `live:<workspace>` state runs on real folders with an empty scratch `CLAUDE_CONFIG_DIR`, so sessions start signed out and spend nothing.
+  - `scripts/filmstrip.py build/motion/<name> X Y W H` lays one region of every frame side by side, motion above and Reduce Motion below.
+  - Harness actions `drag-lift:`, `drag-over:` and `drag-land:` set the map's drag state as a real drag would.
+- **Drag and drop on tokens** (DL-130, item 4):
+  - F-51's look is unchanged.
+  - The source sinks and the target rises over `lift` (200 ms, ease-out, no spring); the landed fill and capsule take `landed` (400 ms). The capsule fades and no longer scales.
+  - With Reduce Motion nothing scales, and the outline and shadow are there at once.
+  - Proof: `build/motion/drag/strip.png`, on a live workspace (drag feedback exists only in live mode). The motion row rises across 0 to 1500 ms at scale 10. The Reduce Motion row is identical from 0 ms, at 100%.
+- **Unchanged at rest:** overview, project, flow-zoom-1, 2 and 4, idle-list, and `sheet-move` capture identically (0 pixels differ) against origin/main's build.
+- **Records:** F-132 on main was taken by the peek-capture fix, inside this branch's reserved range (F-131 to F-133), so this branch skips it.

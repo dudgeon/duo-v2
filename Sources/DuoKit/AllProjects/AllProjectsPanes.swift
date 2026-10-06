@@ -532,7 +532,6 @@ struct MapColumn: View {
         return [parts[0], parts[1], "…", parts[parts.count - 1]].joined(separator: "/")
     }
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let topic: String
     let projects: [Fixture.Project]
     var home: Fixture.Project? = nil
@@ -553,7 +552,7 @@ struct MapColumn: View {
             ForEach(projects) { p in
                 ProjectTile(project: p)
                     // A new tile fades in where it lands, 150 ms; the others just move (DL-129).
-                    .transition(reduceMotion ? .identity : .opacity.animation(.easeOut(duration: DuoMotion.tileIn)))
+                    .transition(MotionSettings.shared.reduce ? .identity : .opacity.animation(DuoMotionToken.tileIn.animation))
             }
             if last { NewProjectTile() }
         }
@@ -1035,13 +1034,14 @@ struct DragCard: View {
 }
 
 /// The item left behind while it's being dragged: it sinks back, so the pick-up registers.
+/// `lift`, ease-out; with Reduce Motion it dims at once and doesn't shrink (DL-130).
 struct Lifted: ViewModifier {
     let active: Bool
     func body(content: Content) -> some View {
         content
             .opacity(active ? 0.35 : 1)
-            .scaleEffect(active ? 0.96 : 1)
-            .animation(.spring(response: 0.28, dampingFraction: 0.72), value: active)
+            .scaleEffect(active && !MotionSettings.shared.reduce ? 0.96 : 1)
+            .duoAnimation(.lift, value: active)
     }
 }
 
@@ -1075,13 +1075,14 @@ struct DropTarget: ViewModifier {
                         .background(Capsule().fill(DuoColor.pane))
                         .overlay(Capsule().strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
                         .padding(8)
-                        .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                        .transition(.opacity)
                 }
             }
-            .scaleEffect(hot ? 1.03 : 1)
+            // DL-130: `lift` and `landed`, ease-out, no spring; nothing scales with Reduce Motion.
+            .scaleEffect(hot && !MotionSettings.shared.reduce ? 1.03 : 1)
             .shadow(color: DuoColor.text.opacity(hot ? 0.18 : 0), radius: 12, x: 0, y: 6)
-            .animation(.spring(response: 0.28, dampingFraction: 0.68), value: hot)
-            .animation(.easeOut(duration: 0.4), value: landed)
+            .duoAnimation(.lift, value: hot)
+            .duoAnimation(.landed, value: landed)
     }
 }
 

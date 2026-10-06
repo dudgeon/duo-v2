@@ -305,13 +305,114 @@ public enum DuoTextStyle: CaseIterable, Sendable {
     }
 }
 
-/// Motion (DL-129), in seconds. None of it runs with Reduce Motion.
+/// Motion (DL-129, DL-130), in seconds. None of it runs with Reduce Motion; build it with `DuoMotionToken`.
 public enum DuoMotion {
     public static let paneToggle: Double = 0.2
     public static let scrimIn: Double = 0.12
     public static let scrimOut: Double = 0.1
     public static let tileIn: Double = 0.15
     public static let altitude: Double = 0.15
+    public static let rowIn: Double = 0.15
+    public static let rowOut: Double = 0.15
+    public static let rowMove: Double = 0.2
+    public static let rowHold: Double = 5.0
+    public static let fold: Double = 0.18
+    public static let sheetIn: Double = 0.2
+    public static let sheetOut: Double = 0.15
+    public static let sheetSwap: Double = 0.12
+    public static let cardIn: Double = 0.2
+    public static let cardOut: Double = 0.15
+    public static let lift: Double = 0.2
+    public static let landed: Double = 0.4
+    public static let tabIn: Double = 0.15
+    public static let tabOut: Double = 0.12
+    public static let tabMove: Double = 0.15
+    public static let noticeIn: Double = 0.15
+    public static let noticeOut: Double = 0.12
+    public static let chipIn: Double = 0.15
+    public static let count: Double = 0.2
+    public static let highlightIn: Double = 0.2
+    public static let highlightOut: Double = 0.6
+    public static let slide: Double = 0.25
+    public static let outline: Double = 0.08
+    public static let messageIn: Double = 0.12
+    public static let dropIn: Double = 0.1
+}
+
+/// How a motion eases (DL-130): arriving eases out, leaving eases in, moving eases in and out.
+public enum DuoEase: Sendable { case out, `in`, inOut, none }
+
+/// One motion token: its duration and its easing.
+public enum DuoMotionToken: String, CaseIterable, Sendable {
+    case paneToggle, scrimIn, scrimOut, tileIn, altitude, rowIn, rowOut, rowMove, rowHold, fold, sheetIn, sheetOut, sheetSwap, cardIn, cardOut, lift, landed, tabIn, tabOut, tabMove, noticeIn, noticeOut, chipIn, count, highlightIn, highlightOut, slide, outline, messageIn, dropIn
+    public var seconds: Double {
+        switch self {
+        case .paneToggle: DuoMotion.paneToggle
+        case .scrimIn: DuoMotion.scrimIn
+        case .scrimOut: DuoMotion.scrimOut
+        case .tileIn: DuoMotion.tileIn
+        case .altitude: DuoMotion.altitude
+        case .rowIn: DuoMotion.rowIn
+        case .rowOut: DuoMotion.rowOut
+        case .rowMove: DuoMotion.rowMove
+        case .rowHold: DuoMotion.rowHold
+        case .fold: DuoMotion.fold
+        case .sheetIn: DuoMotion.sheetIn
+        case .sheetOut: DuoMotion.sheetOut
+        case .sheetSwap: DuoMotion.sheetSwap
+        case .cardIn: DuoMotion.cardIn
+        case .cardOut: DuoMotion.cardOut
+        case .lift: DuoMotion.lift
+        case .landed: DuoMotion.landed
+        case .tabIn: DuoMotion.tabIn
+        case .tabOut: DuoMotion.tabOut
+        case .tabMove: DuoMotion.tabMove
+        case .noticeIn: DuoMotion.noticeIn
+        case .noticeOut: DuoMotion.noticeOut
+        case .chipIn: DuoMotion.chipIn
+        case .count: DuoMotion.count
+        case .highlightIn: DuoMotion.highlightIn
+        case .highlightOut: DuoMotion.highlightOut
+        case .slide: DuoMotion.slide
+        case .outline: DuoMotion.outline
+        case .messageIn: DuoMotion.messageIn
+        case .dropIn: DuoMotion.dropIn
+        }
+    }
+    public var ease: DuoEase {
+        switch self {
+        case .paneToggle: .inOut
+        case .scrimIn: .out
+        case .scrimOut: .`in`
+        case .tileIn: .out
+        case .altitude: .out
+        case .rowIn: .out
+        case .rowOut: .`in`
+        case .rowMove: .inOut
+        case .rowHold: .none
+        case .fold: .inOut
+        case .sheetIn: .out
+        case .sheetOut: .`in`
+        case .sheetSwap: .inOut
+        case .cardIn: .out
+        case .cardOut: .`in`
+        case .lift: .out
+        case .landed: .out
+        case .tabIn: .out
+        case .tabOut: .`in`
+        case .tabMove: .inOut
+        case .noticeIn: .out
+        case .noticeOut: .`in`
+        case .chipIn: .out
+        case .count: .out
+        case .highlightIn: .out
+        case .highlightOut: .inOut
+        case .slide: .inOut
+        case .outline: .out
+        case .messageIn: .out
+        case .dropIn: .out
+        }
+    }
 }
 
 /// The popover shadow (handoff §4.5): search, the action menu, the idle list, drag cards.

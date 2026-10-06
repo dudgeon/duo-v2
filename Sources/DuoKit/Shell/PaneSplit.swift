@@ -189,7 +189,7 @@ final class DuoSplitView: NSSplitView {
         guard placed else { pendingCollapse[i] = collapsed; return }
         guard !isAnimatingPane, arrangedSubviews.indices.contains(i), isSubviewCollapsed(arrangedSubviews[i]) != collapsed,
               let flex = designWidths.firstIndex(where: { $0 == nil }) else { return }
-        guard window != nil, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion, PaneMotion.enabled else {
+        guard window != nil, !MotionSettings.shared.reduce, PaneMotion.enabled else {
             snapCollapsed(collapsed, paneAt: i); return
         }
         let views = arrangedSubviews
@@ -198,7 +198,7 @@ final class DuoSplitView: NSSplitView {
         if collapsed { savedWidths[i] = open }
         if !collapsed { snapCollapsed(false, paneAt: i) }   // back in the split, then slide from nothing
         let start = views.map { isSubviewCollapsed($0) ? 0 : $0.frame.width }
-        let duration = DuoMotion.paneToggle
+        let duration = DuoMotionToken.paneToggle.duration
         isAnimatingPane = true
         PaneMotion.began()
         let began = CACurrentMediaTime()
