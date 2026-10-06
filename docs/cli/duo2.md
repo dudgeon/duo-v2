@@ -9,7 +9,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Command | What it does | In the app |
 |---|---|---|
 | `duo2 ping` | Check that Duo is running and reachable. | — |
-| `duo2 update` | Whether a newer Duo is on GitHub, and where to get it (Duo › Check for Updates…). | Check for Updates… |
+| `duo2 update [--open]` | Whether a newer Duo is on GitHub, its releases page, and whether installing it in place needs an administrator password (Duo › Check for Updates…, DL-114). --open opens the releases page, as the question's Open Releases Page does, to download the DMG and install it by hand. | Check for Updates…, Open Releases Page |
 | `duo2 update probe` | Whether in-app updates can work on this Mac, without Duo running: the update feed and the DMG reachable from here, and Duo installed where it can be replaced. | — |
 | `duo2 status` | What Duo is showing: the view, the open project, session and document, and counts. | — |
 | `duo2 needs-you` | Sessions waiting for the user, with their questions. | Needs You Elsewhere |
@@ -197,6 +197,8 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Format | a menu, not an action |
 | Go | a menu, not an action |
 | Heading | a submenu, not an action |
+| Install Now | on the update question: hands to Sparkle's own window, which installs only once the user agrees there (and gives an administrator password where one is needed); `duo2 update` says whether one is (DL-114) |
+| Later | the user's answer to the update question; it remembers the version so the launch and scheduled checks don't ask again (DL-114) |
 | Look Again | re-reads what Duo already refreshes every 2 s; the CLI always reads fresh state |
 | Next Pane | not built yet |
 | No other sessions in | a disabled hint on + Add |

@@ -850,6 +850,7 @@ Built from the decision path page (DL-87 to DL-91):
 - Release builds ask GitHub (`/repos/dudgeon/duo-v2/releases/latest`, unauthenticated, 10 s timeout) 8 s after launch, never in capture runs. A newer release is offered once per version as a confirmation (Download opens its release page; Later remembers it in `DuoState.skippedUpdate`). Development builds (version 0.0.1) check only when asked.
 - Duo › Check for Updates… and `duo2 update` always answer: up to date, newer (with the link), or couldn't reach GitHub. Live: `duo2 update` on a dev build answered "Duo 0.1.2 is available (this is a development build)".
 - Versions compare numerically (`0.1.10` > `0.1.9`); a pre-release sorts below its release.
+- Since DL-114 (F-93) the confirmation is the update question (Later, Open Releases Page, and Install Now where Sparkle runs), and `duo2 update` also names the releases page and whether installing in place needs an administrator password.
 
 ## F-70 · Tasks day to day (2026-10-04)
 
@@ -1008,6 +1009,7 @@ Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and o
 - **Signing:** the update key is an Ed25519 key in `~/.duo-signing/sparkle-ed25519.key`, made with CryptoKit because Sparkle's `generate_keys` stores keys in the keychain (a prompt would block an unattended release); `sign_update --ed-key-file` signs with it and the public key verified its signature. `release.sh` signs Sparkle's `Autoupdate`, `Updater.app` and the framework inside out with Developer ID and Hardened Runtime before the app, signs the DMG for Sparkle, and publishes `appcast.xml` with the release. Development bundles re-seal the framework ad hoc (removing the XPC services breaks its original seal).
 - **Rehearsed** (`release.sh 0.1.6 --no-publish`): the app with Sparkle and the DMG were notarized (Accepted), Gatekeeper accepts both, the app launched from the DMG, and the appcast names build 133 with a verified signature.
 - **The work Mac:** `duo2 update probe` (local, no Duo needed) checks the feed, the DMG's host, the install location and any proxy, with a verdict. The test plan is `docs/plan/spikes/sparkle-work-mac.md`; it needs 0.1.6 published (the first feed) and then 0.1.7 to update to.
+- **Administrator prompts:** Sparkle asks for an administrator password whenever this account can't write Duo's app or its folder (a standard account and `/Applications`). Geoff hit it on 2026-10-06. Since DL-114 (F-93), Duo › Check for Updates… asks Duo's own question first, and on such an install Open Releases Page is the default, to install by hand. Sparkle's scheduled checks there ask that question instead of showing Sparkle's window.
 
 ## F-86 · A lone Home column no longer leaves the map two-thirds empty (2026-10-05)
 
@@ -1087,9 +1089,39 @@ Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and o
 - **Not checked:** the tooltip (it needs a real pointer); real Claude Code taking the paste at its prompt (Send to Claude already relies on that, DL-68).
 
 
-## F-94 · Editing tables as Markdown, as decided (2026-10-06)
+## F-93 · Updating by hand from the releases page (2026-10-06)
 
-(F-93 is the director agent's update-flow finding.)
+- **Why:** DL-114. Geoff tested the in-app update and Sparkle asked for an administrator login. Sparkle asks whenever this account can't write Duo's app or the folder holding it (a standard account and `/Applications`), and its standard window can't take another button.
+- **Built:**
+  - **One writability test,** `InstallLocation` (`Sources/DuoControl/InstallLocation.swift`): write access to the app and its folder. `duo2 update probe`, `duo2 update` and the question all use it.
+  - **Duo › Check for Updates…** asks GitHub first (`UpdateCheck.latest()`), then decides with `UpdateCheck.plan(latest:current:installWritable:sparkle:)`, which is pure.
+    - A newer release gets Duo's question (`UpdateCheck.question`, on `SheetCenter`): "Duo 0.1.9 is available.", "You have 0.1.8.", then a line for the case, and **Later**, **Install Now**, **Open Releases Page**.
+    - Not writable: "Installing it here needs an administrator password: this account can't replace Duo in `/Applications`. …", and Open Releases Page is the default.
+    - Writable: Install Now is the default. It calls Sparkle's `checkForUpdates`, so Sparkle's own window then offers the update (and its notes) as before.
+    - Without Sparkle (development and scripted builds) the question has Later and Open Releases Page only. This replaces F-69's Download/Cancel confirmation.
+    - Up to date or GitHub unreachable: Sparkle's window answers as before (without Sparkle, Duo's notice as before).
+    - Later remembers the version (`DuoState.skippedUpdate`, as F-69's Cancel did): the launch and scheduled checks don't ask about it again; the menu still does.
+  - **Sparkle's scheduled checks:** an `SPUUpdaterDelegate` (`Sources/Duo/Updater.swift`) implements `updater(_:shouldProceedWithUpdate:updateCheck:)`. For a background check on an install this account can't replace, it asks Duo's question (once per version) and throws, which Sparkle documents as "the user is not shown this update nor is it downloaded or installed". Menu checks, and installs this account can replace, go on as Sparkle's.
+  - **`duo2 update [--open]`:** three lines: what's newest, `Releases page: <url>` (the release's page, or every release's when GitHub didn't answer), and `Installed at <path>: installing in place needs (no) an administrator password …`. `--json` adds `latest`, `page`, `installedAt`, `needsAdmin`, `reachable`. `--open` opens the page. Install Now and Later are in `Parity.uiOnly`. `docs/cli/duo2.md` regenerated.
+  - **Harness:** `ask-update:writable|admin|no-sparkle` asks the question for 0.1.9 over 0.1.8 in `/Applications` with its buttons only logged.
+- **Checked:**
+  - `swift run DuoChecks`, 308 passed. The new section feeds the plan with no network:
+    - writable: Install Now is the default and no password is mentioned;
+    - not writable: the password line names the folder and Open Releases Page is the default;
+    - up to date and unreachable: no offer;
+    - no Sparkle and development builds: no Install Now;
+    - `duo2 update`'s text names the page and the password;
+    - `--open` takes no value;
+    - `InstallLocation` on a temporary app (replaceable) and on `/System/Applications/Calculator.app` (not replaceable).
+  - Captures on the fixture, each run with its own `/tmp/duo-u-…` support folder: `build/ui/update-question-writable.png`, `-admin.png`, `-no-sparkle.png`, with the sheet cropped in `*-sheet.png`. Each is DuoQuestion's look, as the other questions are. Nothing draws this question to compare against (Q-47).
+  - Live `duo2 update` and `--json` against a scratch instance (development build): "Duo 0.1.8 is available (this is a development build).", its page, and "installing in place needs no administrator password; this build doesn't update itself".
+  - `NO_BUILD=1 scripts/check-ui.sh`: six states produced.
+- **Not checked:**
+  - The scheduled-check delegate and Install Now against a real Sparkle install. That needs a published release with a feed and a newer one to find, on an install this account can't write. Planned for the work-Mac spike (`docs/plan/spikes/sparkle-work-mac.md`) once 0.1.9 is out and 0.1.10 follows.
+  - That Sparkle shows nothing at all for the declined background update. Its delegate documentation says so; it hasn't been seen on a real install.
+- **Note:** dragging the new Duo into the same `/Applications` also needs an administrator password in Finder when the folder isn't this account's. The question doesn't suggest `~/Applications`; that's for Q-47.
+
+## F-94 · Editing tables as Markdown, as decided (2026-10-06)
 
 - **Built (DL-113, `tables-handoff/`):** Format › Table ▸ (Insert Table; Add Row Above/Below; Add Column Before/After; Delete Row, Delete Column; Align Column ▸ Left, Center, Right).
   - The bar over a table appears only while the caret is in it (`TableBarWidget`). Its Align ▾ and Delete ▾ are native menus (`EditorController.tableMenu`).

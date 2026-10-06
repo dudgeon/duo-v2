@@ -72,7 +72,8 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Choose Home Folder… picker | System open panel | S2-3 | `Model/AppModel+Home.swift` |
 | Settings | Designed (DL-101) | — | `Shell/SettingsView.swift` |
 | Notifications and the Dock badge | Designed (DL-101); drawn by macOS | — | `Model/AppModel+Notify.swift` |
-| Update notice, install consent | Standard sheets | — | `+Update.swift`, `Shell/InstallPrompt.swift` |
+| Update question (Open Releases Page, Install Now, Later) | Stand-in (DL-114): DuoQuestion's look; Open Releases Page is the default where installing needs an administrator password | Q-47 | `Model/AppModel+Update.swift` |
+| Install consent | Standard sheet | — | `Shell/InstallPrompt.swift` |
 | Menu bar | Built from the shortcut map | DB-26 | `Navigation/Commands.swift` |
 | Narrow windows, collapsing the right pane, motion | Not designed | DB-25 | — |
 | Dark appearance | Not approved | DB-29 | — |

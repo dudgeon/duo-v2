@@ -106,7 +106,8 @@ extension DuoAction {
     public static let all: [DuoAction] = [
         // Duo
         .init(.ping, .app, "", "Check that Duo is running and reachable."),
-        .init(.update, .app, "", "Whether a newer Duo is on GitHub, and where to get it (Duo › Check for Updates…).", ui: ["Check for Updates…"], timeout: 30),
+        .init(.update, .app, "[--open]", "Whether a newer Duo is on GitHub, its releases page, and whether installing it in place needs an administrator password (Duo › Check for Updates…, DL-114). --open opens the releases page, as the question's Open Releases Page does, to download the DMG and install it by hand.",
+              ui: ["Check for Updates…", "Open Releases Page"], timeout: 30),
         .init(.updateProbe, .app, "", "Whether in-app updates can work on this Mac, without Duo running: the update feed and the DMG reachable from here, and Duo installed where it can be replaced.", local: true),
         .init(.status, .app, "", "What Duo is showing: the view, the open project, session and document, and counts.", everyday: true),
         .init(.needsYou, .app, "", "Sessions waiting for the user, with their questions.", ui: ["Needs You Elsewhere"]),
@@ -344,6 +345,8 @@ public enum Parity {
         "Not Now": "the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later",
         "Show in Finder": "reveals a file or folder in Finder (Settings, editor notices, launch sheets)",
         "OK": "dismisses a notice",
+        "Install Now": "on the update question: hands to Sparkle's own window, which installs only once the user agrees there (and gives an administrator password where one is needed); `duo2 update` says whether one is (DL-114)",
+        "Later": "the user's answer to the update question; it remembers the version so the launch and scheduled checks don't ask again (DL-114)",
         "Save to Recreate": "writes the user's own text back after the file was removed on disk; Claude can do the same with `duo2 doc edit` (content) once the user asks",
     ]
 }
@@ -356,7 +359,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    static let switches: Set<String> = ["json", "yes", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session"]
+    static let switches: Set<String> = ["json", "yes", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open"]
 
     public init(_ args: [String]) {
         var i = 0

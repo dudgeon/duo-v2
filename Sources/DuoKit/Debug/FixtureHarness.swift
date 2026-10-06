@@ -114,6 +114,12 @@ public enum FixtureHarness {
                 }
             }
         case "ask-legacy": LegacyPrompt.run()
+        case "ask-update":   // ask-update:writable|admin|no-sparkle: the update question (DL-114) for 0.1.9 over 0.1.8, its buttons only logged
+            let form = parts.count > 1 ? parts[1] : "writable"
+            let o = UpdateCheck.Offer(version: "0.1.9", current: "0.1.8", page: UpdateCheck.releasePage("0.1.9"), needsAdmin: form == "admin",
+                                      canInstallNow: form != "no-sparkle", folder: "/Applications")
+            func say(_ s: String) -> @MainActor () -> Void { { FileHandle.standardError.write(Data("ask-update: \(s)\n".utf8)) } }
+            SheetCenter.shared.ask(UpdateCheck.question(o, openPage: say("Open Releases Page"), installNow: say("Install Now"), later: say("Later")))
         case "sheet-ok": if model.moveIntoHomeForm != nil { model.confirmMoveIntoHome() } else { model.commitNewProject() }
         case "sheet-cancel": model.cancelSheet()
         case "undo": NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager?.undo()

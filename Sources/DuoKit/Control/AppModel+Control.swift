@@ -200,7 +200,7 @@ extension AppModel {
             let list = AllowedSites.load()
             done(.ok((list.isEmpty ? "No sites allowed yet (localhost always is)." : list.joined(separator: "\n")) + "\nThe list: \(AllowedSites.file.path)", ["sites": list]))
         case .update:
-            checkForUpdates(userInitiated: true) { done(.ok($0)) }
+            checkForUpdates(userInitiated: true, open: inv.has("open")) { done(.ok($0, $1)) }
         case .tasks, .taskMake, .taskAdd, .taskNew, .taskSession, .taskStatus:
             taskVerb(id, inv, req, done)
         case .sessionLink:
