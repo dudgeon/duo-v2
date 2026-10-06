@@ -79,8 +79,9 @@ public enum ChildEnvironment {
     /// from one (CLAUDECODE, CLAUDE_CODE_SESSION_ID, messaging socket and token, …; findings
     /// F-17): a child inheriting CLAUDE_CODE_SESSION_ID would write into the parent's session.
     /// CLAUDE_CONFIG_DIR is the user's and is kept.
-    public static func make(sessionID: String?) -> [String] {
-        var env = ProcessInfo.processInfo.environment.filter { k, _ in
+    /// `base` is Duo's own environment; checks pass a fixed one.
+    public static func make(sessionID: String?, base: [String: String] = ProcessInfo.processInfo.environment) -> [String] {
+        var env = base.filter { k, _ in
             !(k == "CLAUDECODE" || (k.hasPrefix("CLAUDE_") && k != "CLAUDE_CONFIG_DIR"))
         }
         env["TERM"] = "xterm-256color"
