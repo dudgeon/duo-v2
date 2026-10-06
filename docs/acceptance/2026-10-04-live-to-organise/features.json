@@ -3615,31 +3615,6 @@
    }
   }
  ],
- "decisions": [
-  {
-   "id": "s1-elsewhere",
-   "ref": "DB-3 · LR-8 · F-58",
-   "title": "A session open somewhere else: offer to end it there?",
-   "context": [
-    "When you open a session that's running in another app, the console says so instead of starting a second copy.",
-    "The design explains and offers **Resume as a Fork**: a new session with the same history (built; `claude --resume … --fork-session`, checked live). It never ends the other process, since that could lose a turn in flight."
-   ],
-   "options": [
-    {
-     "id": "fork",
-     "label": "Explain, offer a fork",
-     "recommended": true,
-     "desc": "Built. Nothing in the other app is touched.",
-     "mockup": "<div class=\"mk\"><div style=\"background:#15171B;color:#E6E8EB;border-radius:8px;padding:12px 14px;font:13px -apple-system,sans-serif;width:360px\"><div style=\"font-weight:600\">PRD v2 edits is open in Terminal</div><div style=\"color:#9AA1AB;margin-top:4px\">It has been running there since 9:12, so Duo won't start a second copy of it. Finish there and look again, or carry on here as a fork.</div><div><span style=\"display:inline-block;border:1px solid #9AA1AB;border-radius:6px;padding:2px 9px;font-size:12px;margin:8px 6px 0 0;color:#E6E8EB\">Look Again</span><span style=\"display:inline-block;border:1px solid #9AA1AB;border-radius:6px;padding:2px 9px;font-size:12px;margin:8px 6px 0 0;color:#E6E8EB\">Resume as a Fork</span></div></div></div>"
-    },
-    {
-     "id": "end",
-     "label": "Also offer to end it",
-     "desc": "A third button that stops the other copy and resumes here.",
-     "mockup": "<div class=\"mk\"><div style=\"background:#15171B;color:#E6E8EB;border-radius:8px;padding:12px 14px;font:13px -apple-system,sans-serif;width:360px\"><div style=\"font-weight:600\">PRD v2 edits is open in Terminal</div><div style=\"color:#9AA1AB;margin-top:4px\">It has been running there since 9:12. End it there to resume it here, or carry on as a fork.</div><div><span style=\"display:inline-block;border:1px solid #9AA1AB;border-radius:6px;padding:2px 9px;font-size:12px;margin:8px 6px 0 0;color:#E6E8EB\">Look Again</span><span style=\"display:inline-block;border:1px solid #9AA1AB;border-radius:6px;padding:2px 9px;font-size:12px;margin:8px 6px 0 0;color:#E6E8EB\">Resume as a Fork</span><span style=\"display:inline-block;border:1px solid #9AA1AB;border-radius:6px;padding:2px 9px;font-size:12px;margin:8px 6px 0 0;color:#E6E8EB\">End There and Resume…</span></div></div></div>"
-    }
-   ]
-  }
- ],
+ "decisions": [],
  "decisionsIntro": "Pick one option per question (or Something else, with a comment). Mockups are small sketches in Duo's look; the full designs are in `docs/design/search-handoff/` (open `screens/search-actions-file.html` etc. in a browser). Your answers save as you click, like the verdicts below."
 }
