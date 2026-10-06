@@ -45,7 +45,25 @@ public enum FixtureHarness {
     /// Cleanup the app registers for the capture path's direct exit.
     nonisolated(unsafe) public static var beforeExit: (@MainActor () -> Void)?
 
-    /// Runs one scripted action (`--then`), as a click or chord would.
+    /// A menu as indented text: separators as —, submenus nested, dimmed and checked items marked.
+    static func walk(_ menu: NSMenu, _ depth: Int) -> [String] {
+        menu.delegate?.menuNeedsUpdate?(menu)
+        if ProcessInfo.processInfo.environment["DUO_MENU_UPDATE"] != nil { menu.update() }
+        return menu.items.flatMap { i -> [String] in
+            if i.isHidden { return [] }
+            if i.isSeparatorItem { return [String(repeating: "  ", count: depth) + "—"] }
+            var mods = ""
+            if !i.keyEquivalent.isEmpty {
+                let m = i.keyEquivalentModifierMask
+                if m.contains(.control) { mods += "⌃" }; if m.contains(.option) { mods += "⌥" }
+                if m.contains(.shift) || i.keyEquivalent != i.keyEquivalent.lowercased() { mods += "⇧" }; if m.contains(.command) { mods += "⌘" }
+            }
+            let key = i.keyEquivalent.isEmpty ? "" : "  \(mods)\(keyName(i.keyEquivalent))"
+            let line = String(repeating: "  ", count: depth) + i.title + (i.submenu?.autoenablesItems == true ? " [auto]" : "") + key + (i.isEnabled ? "" : "  (dim)") + (i.state == .on ? "  ✓" : "")
+            return [line] + (i.submenu.map { walk($0, depth + 1) } ?? [])
+        }
+    }
+
     /// A key equivalent as the menu shows it.
     static func keyName(_ k: String) -> String {
         switch k.unicodeScalars.first.map({ Int($0.value) }) ?? 0 {
@@ -58,6 +76,7 @@ public enum FixtureHarness {
         }
     }
 
+    /// Runs one scripted action (`--then`), as a click or chord would.
     static func perform(_ action: String, on model: AppModel) {
         let parts = action.split(separator: ":", maxSplits: 1).map(String.init)
         switch parts[0] {
@@ -323,25 +342,25 @@ public enum FixtureHarness {
             let fr = w?.firstResponder.map { String(describing: type(of: $0)) } ?? "-"
             FileHandle.standardError.write(Data("ui-state: renaming=\(model.renamingPath ?? "-") picking=\(model.visiblePage?.picking ?? false) picked=\(model.visiblePage?.picked?.selector ?? "-") send=\((try? model.sendTarget.get()).map { "ok \($0.key.prefix(12))" } ?? { if case .failure(let e) = model.sendTarget { return e.reason }; return "-" }()) key=\(w?.isKeyWindow ?? false) firstResponder=\(fr)\n".utf8))
         case "menus":   // the menu bar as text, to compare with the walk's mockups (DL-108): window captures don't draw it
-            func walk(_ menu: NSMenu, _ depth: Int) -> [String] {
-                menu.delegate?.menuNeedsUpdate?(menu)
-                if ProcessInfo.processInfo.environment["DUO_MENU_UPDATE"] != nil { menu.update() }
-                return menu.items.flatMap { i -> [String] in
-                    if i.isHidden { return [] }
-                    if i.isSeparatorItem { return [String(repeating: "  ", count: depth) + "—"] }
-                    var mods = ""
-                    if !i.keyEquivalent.isEmpty {
-                        let m = i.keyEquivalentModifierMask
-                        if m.contains(.control) { mods += "⌃" }; if m.contains(.option) { mods += "⌥" }
-                        if m.contains(.shift) || i.keyEquivalent != i.keyEquivalent.lowercased() { mods += "⇧" }; if m.contains(.command) { mods += "⌘" }
-                    }
-                    let key = i.keyEquivalent.isEmpty ? "" : "  \(mods)\(Self.keyName(i.keyEquivalent))"
-                    let line = String(repeating: "  ", count: depth) + i.title + (i.submenu?.autoenablesItems == true ? " [auto]" : "") + key + (i.isEnabled ? "" : "  (dim)") + (i.state == .on ? "  ✓" : "")
-                    return [line] + (i.submenu.map { walk($0, depth + 1) } ?? [])
-                }
-            }
             if let bar = NSApp.mainMenu {
-                FileHandle.standardError.write(Data(("---- menus ----\n" + walk(bar, 0).joined(separator: "\n") + "\n---- end menus ----\n").utf8))
+                FileHandle.standardError.write(Data(("---- menus ----\n" + Self.walk(bar, 0).joined(separator: "\n") + "\n---- end menus ----\n").utf8))
+            }
+        case "task-menu":   // task-menu:<path>: a task's right-click menu as text (DL-115, board A or B), in the open project
+            if parts.count > 1, let p = model.currentProject?.name ?? model.fixture.tasks?.first(where: { $0.path == parts[1] })?.project {
+                let menu = NSHostingMenu(rootView: TaskMenuItems(model: model, project: p, path: parts[1]).environment(model))
+                menu.update()
+                FileHandle.standardError.write(Data(("---- task menu \(parts[1]) ----\n" + Self.walk(menu, 0).joined(separator: "\n") + "\n---- end menus ----\n").utf8))
+            }
+        case "expand":   // expand:<key>: open a fold (`<project>/archived`, a group's name)
+            if parts.count > 1 { model.expandedGroups.insert(parts[1]) }
+        case "task-archive", "task-delete":   // task-archive:<path>, task-delete:<path>: the task's question, up and waiting (board C)
+            if parts.count > 1, let p = model.currentProject?.name {
+                if parts[0] == "task-archive" { model.askArchiveTask(project: p, path: parts[1]) } else { model.askDeleteTask(project: p, path: parts[1]) }
+            }
+        case "task-move":   // task-move:<path>=<project>: Move to Project's question (board C)
+            if parts.count > 1, let p = model.currentProject?.name {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                if kv.count == 2 { model.askMoveTask(project: p, path: kv[0], to: kv[1]) }
             }
         case "dump":
             for t in model.terminals.all.sorted(by: { $0.key < $1.key }) {

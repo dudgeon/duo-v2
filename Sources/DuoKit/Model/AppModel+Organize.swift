@@ -117,7 +117,7 @@ extension AppModel {
 
     /// Files the sessions in the target's index (sticky: provenance moved-by-user), removes them
     /// from wherever they were filed, and registers an undo that restores every index exactly.
-    private func apply(_ moving: [Fixture.Session], to target: String, folder targetFolder: URL, action: String,
+    func apply(_ moving: [Fixture.Session], to target: String, folder targetFolder: URL, action: String,
                        alsoUndo: (@MainActor (AppModel) -> Void)? = nil) {
         let touched = Set(moving.compactMap { liveFolders[$0.project] } + [targetFolder])
         let before = touched.map { ($0, SessionIndex.load(project: $0)) }
@@ -275,6 +275,8 @@ extension AppModel {
 
     /// Edit › Undo, through the main window's undo manager.
     func registerUndo(_ name: String, _ undo: @escaping @MainActor (AppModel) -> Void) {
+        if undoBatch != nil { undoBatch?.append((name, undo)); return }
+        if let undoRecorder { return undoRecorder(name, undo) }
         guard let manager = NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager else { return }
         // Each change is its own undo step. Left to group by event, a change made from duo2 opens a
         // group that only closes at the next user event, so several duo2 changes undid as one (F-57).

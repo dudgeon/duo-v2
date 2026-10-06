@@ -230,6 +230,13 @@ public final class AppModel {
     @ObservationIgnored public var rememberedHome: String?
     /// Projects outside the workspace root (DL-63), from Duo's state.
     @ObservationIgnored public var extraProjects: [URL] = []
+    /// Task titles as last seen, by "project/path": a title that changes moves its note to the
+    /// new name's slug once it settles (DL-115, C-24).
+    @ObservationIgnored var taskTitlesSeen: [String: String]?
+    /// Undo steps being gathered into one (a task with its sessions archives, moves or comes back in one step).
+    @ObservationIgnored var undoBatch: [(String, @MainActor (AppModel) -> Void)]?
+    /// Checks only: undo steps go here instead of the window's undo manager.
+    @ObservationIgnored public var undoRecorder: ((String, @escaping @MainActor (AppModel) -> Void) -> Void)?
     /// The last context sent to a session (Send to Claude), for `duo2 selection` and checks.
     @ObservationIgnored public var lastSent: (key: String, text: String)?
     /// The last task reference drafted into a new session's prompt (DL-112), for the harness and checks.
@@ -322,6 +329,7 @@ public final class AppModel {
         var ids = Set<String>()
         merged.sessions = merged.sessions.filter { s in s.sessionId.map { ids.insert($0).inserted } ?? true }
         if merged != fixture { fixture = merged }
+        followTaskTitles()
         // The map's order settles on the first scan, then on each arrival at All projects (DL-104).
         if mapSettled.isEmpty || altitude != .allProjects { settleMapOrder() }
         pushNoteContext()

@@ -14,6 +14,10 @@ public struct TaskNote: Sendable, Equatable {
     public var title: String
     public var status: String?
     public var sessionIds: [String]
+    /// Filed away (DL-115): `archived: true`. Out of the lists and counts, still a note, still searchable.
+    public var archived = false
+    /// The note's `id:` (DL-115): what a `duo2://task/<id>` link names, so it survives renames and moves.
+    public var id: String? = nil
 }
 
 public enum TaskNotes {
@@ -41,7 +45,8 @@ public enum TaskNotes {
         // An emptied `title:` (the name being retyped) falls back to the heading, then the filename.
         let title = [fm.string("title"), heading].compactMap { $0?.trimmingCharacters(in: .whitespaces) }.first { !$0.isEmpty }
         return TaskNote(path: path, title: title ?? stem, status: fm.string("status"),
-                        sessionIds: sessionIds(fm.list("sessions")))
+                        sessionIds: sessionIds(fm.list("sessions")), archived: fm.string("archived")?.lowercased() == "true",
+                        id: fm.string("id").flatMap { $0.isEmpty ? nil : $0 })
     }
 
     /// The session ids in `sessions:` items: `duo2://session/<id>` links, or bare ids.
@@ -73,13 +78,48 @@ public enum TaskNotes {
         return s.isEmpty ? "task" : String(s.prefix(60)).trimmingCharacters(in: CharacterSet(charactersIn: "-"))
     }
 
+    /// A title as a double-quoted YAML scalar.
+    static func quoted(_ title: String) -> String {
+        "\"" + title.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
+    }
+
     /// A new task note (DL-6's fields: type, title, status; DL-93's session links).
     public static func newNote(title: String, links: [String]) -> String {
-        let t = title.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-        var s = "---\ntype: task\ntitle: \"\(t)\"\nstatus: open\n"
+        var s = "---\ntype: task\ntitle: \(quoted(title))\nstatus: open\n"
         s += links.isEmpty ? "sessions: []\n" : "sessions:\n" + links.map { "  - \(item($0))\n" }.joined()
         s += "---\n\n# \(title)\n\n"
         return s
+    }
+
+    /// The note renamed (DL-115): `title:` and the `# ` heading that opens its text, wherever the
+    /// old name is written (F-87 keeps the two together; a heading that says something else is
+    /// left alone). Nothing else changes.
+    public static func renaming(to title: String, in text: String) -> String {
+        let old = parse(text, path: "x.md").title
+        let nl = text.contains("\r\n") ? "\r\n" : "\n"
+        var lines = text.components(separatedBy: nl)
+        var bodyStart = 0
+        if lines.first == "---", let close = lines.dropFirst().firstIndex(of: "---") {
+            bodyStart = close + 1
+            if let k = (1..<close).first(where: { lines[$0].hasPrefix("title:") }) { lines[k] = "title: \(quoted(title))" }
+        }
+        if let h = lines[bodyStart...].firstIndex(where: { $0.hasPrefix("# ") }),
+           lines[h].dropFirst(2).trimmingCharacters(in: .whitespaces) == old || bodyStart == 0 {
+            lines[h] = "# " + title
+        }
+        return lines.joined(separator: nl)
+    }
+
+    /// Where a task's note belongs for its title (DL-115, C-24): `tasks/<slug>.md`, or `-2`, `-3`…
+    /// when another note has that name. A note already at its title's name (with or without a
+    /// number) stays where it is.
+    public static func pathForTitle(_ title: String, current: String, exists: (String) -> Bool) -> String {
+        let base = slug(title)
+        let stem = URL(fileURLWithPath: current).deletingPathExtension().lastPathComponent
+        if stem == base || stem.range(of: "^" + NSRegularExpression.escapedPattern(for: base) + "-[0-9]+$", options: .regularExpression) != nil { return current }
+        var candidate = "tasks/\(base).md", n = 2
+        while candidate != current && exists(candidate) { candidate = "tasks/\(base)-\(n).md"; n += 1 }
+        return candidate
     }
 
     /// The statuses a task can have (research doc §1; TaskNotes-compatible).

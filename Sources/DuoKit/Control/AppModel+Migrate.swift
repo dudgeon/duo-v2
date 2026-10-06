@@ -88,23 +88,39 @@ extension AppModel {
             guard let self else { return }
             guard ok else { done?(.failure(Migrator.Refusal("Not deleted: the user clicked Cancel in Duo. Nothing changed."))); return }
             do {
-                try m.apply(plan, live: Set(Beacon.readAll().map(\.sessionId)))
-                SessionArchive.forget(id)
-                // Duo's filing: out of every project's index and group.
-                for folder in self.liveFolders.values {
-                    var index = SessionIndex.load(project: folder)
-                    let before = index
-                    index.sessions.removeAll { $0.sessionId == id }
-                    for i in index.groups.indices { index.groups[i].sessions.removeAll { $0 == id } }
-                    index.groups.removeAll { $0.sessions.isEmpty }
-                    if index != before { try? index.save(project: folder) }
-                }
-                self.terminals.close(key)
-                if self.consoleTab == key { self.consoleTab = nil }
-                if self.homeTab == key { self.homeTab = nil }
-                self.refreshLive()
+                try self.applyDelete(plan, id: id, key: key)
                 done?(.success("Deleted \(s.name) and its local logs (\(bytes))."))
             } catch { done?(.failure(error)) }
         }
+    }
+
+    /// Delete Task…'s sessions (DL-115): the same delete, without its own question (the task's asked).
+    @discardableResult
+    func deleteSessionNow(_ s: Fixture.Session) throws -> String {
+        guard let id = s.sessionId else { throw Migrator.Refusal("\(s.name) has no session id") }
+        let live = Set(Beacon.readAll().map(\.sessionId)).union(terminals.existing(s.tabKey).map { $0.exited ? [] : [id] } ?? [])
+        let plan = try Migrator().planDelete(id, live: live, extra: [SessionArchive.copyURL(id), SessionArchive.sidecarURL(id)])
+        try applyDelete(plan, id: id, key: s.tabKey)
+        return "Deleted \(s.name)."
+    }
+
+    /// Applies a session's delete and forgets it everywhere Duo files it.
+    func applyDelete(_ plan: Migrator.Journal, id: String, key: String) throws {
+        try Migrator().apply(plan, live: Set(Beacon.readAll().map(\.sessionId)))
+        SessionArchive.forget(id)
+        // Duo's filing: out of every project's index and group.
+        for folder in liveFolders.values {
+            var index = SessionIndex.load(project: folder)
+            let before = index
+            index.sessions.removeAll { $0.sessionId == id }
+            for i in index.groups.indices { index.groups[i].sessions.removeAll { $0 == id } }
+            index.groups.removeAll { $0.sessions.isEmpty }
+            if index != before { try? index.save(project: folder) }
+        }
+        DuoState.update { $0.archivedSessions.removeAll { $0 == id } }
+        terminals.close(key)
+        if consoleTab == key { consoleTab = nil }
+        if homeTab == key { homeTab = nil }
+        refreshLive()
     }
 }
