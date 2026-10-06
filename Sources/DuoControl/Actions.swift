@@ -44,7 +44,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sessions, sessionShow = "session show", sessionNew = "session new", sessionOpen = "session open"
     case sessionClose = "session close", sessionMove = "session move"
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
-    case sessionLink = "session link"
+    case sessionLink = "session link", sessionTask = "session task"
     case shellNew = "shell new", sessionFork = "session fork", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
     case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskSession = "task session", taskStatus = "task status"
     case taskRename = "task rename", taskArchive = "task archive", taskUnarchive = "task unarchive", taskDelete = "task delete"
@@ -124,7 +124,7 @@ extension DuoAction {
               ui: ["Choose…", "Use Found One"]),
         .init(.walkSetup, .setup, "<test id>", "Put Duo in the state an acceptance-walk test starts from (the walk page's Set up test button, or `duo2://walk-setup?id=…`). Steps come from ~/DuoAcceptance/walk-setups.json, never from the caller.",
               ui: ["Set up test"]),
-        .init(.hook, .setup, "pre-edit", "Used by Duo's sessions (a PreToolUse hook): Claude's Edit, MultiEdit and Write on a document open in Duo go through the editor instead of the file (DL-78).", local: true),
+        .init(.hook, .setup, "pre-edit | context", "Used by Duo's sessions. `pre-edit` (PreToolUse): Claude's Edit, MultiEdit and Write on a document open in Duo go through the editor instead of the file (DL-78). `context` (SessionStart, UserPromptSubmit): tells Claude the task(s) its session is attributed to, and on a prompt what changed since (DL-116).", local: true),
         .init(.legacy, .setup, "[disable --yes | restore <backup>]", "Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them.", ui: ["Disable…", "Restore"], local: true),
 
         // What's on screen
@@ -183,6 +183,7 @@ extension DuoAction {
               ui: ["Move to Project", "New Project…", "drag a session onto a tile"], timeout: 600),
         .init(.sessionNote, .sessions, "<text>", "Tell the user what this session is doing (one line, shown in Duo).", everyday: true),
         .init(.sessionNext, .sessions, "<text>", "Tell the user what this session needs next (one line).", everyday: true),
+        .init(.sessionTask, .sessions, "[id]", "The task(s) a session is attributed to (this session by default): each note's title, status and path. Duo's hooks tell Claude the same when the session starts, resumes, clears or compacts, and what changed on its next prompt (DL-116)."),
         .init(.sessionCarryOn, .sessions, "<id>", "Start a new session carrying on from an archived one."),
         .init(.sessionFork, .sessions, "<id>", "Carry a session on as a fork: a new session with the same history (the original is left alone).",
               ui: ["Resume as a Fork"]),

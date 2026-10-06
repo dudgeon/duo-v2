@@ -482,6 +482,19 @@ func repoFixture() throws -> Fixture {
     fire(#"{"session_id":"s2-cleared","hook_event_name":"UserPromptSubmit","tool_input":{"note":"{\"session_id\": \"decoy\"}"}}"#)
     check(HookEvents.read("s2-cleared", in: ev).count == 1 && HookEvents.read("decoy", in: ev).isEmpty,
           "events follow the payload's session_id (/clear), first key only")
+    // C-27: hooks fire together. 40 concurrent events of ~1 KB each must land as 40 whole lines.
+    let stressPad = String(repeating: "x", count: 1100)
+    DispatchQueue.concurrentPerform(iterations: 40) { n in
+        let p = Process(); p.executableURL = URL(fileURLWithPath: "/bin/sh"); p.arguments = ["-c", stopCmd!]
+        let pin = Pipe(); p.standardInput = pin
+        try? p.run()
+        pin.fileHandleForWriting.write(Data(#"{"session_id":"stress","hook_event_name":"Stop","last_assistant_message":"\#(n) \#(stressPad)"}"#.utf8))
+        try? pin.fileHandleForWriting.close(); p.waitUntilExit()
+    }
+    let stressLines = (try? String(contentsOf: HookEvents.file(for: "stress", in: ev), encoding: .utf8))?.split(separator: "\n") ?? []
+    check(stressLines.count == 40 && HookEvents.read("stress", in: ev).count == 40
+          && Set(HookEvents.read("stress", in: ev).compactMap { $0.lastMessage?.split(separator: " ").first }).count == 40,
+          "40 concurrent ~1 KB hook events: 40 lines, every one parses (one write each, C-27)")
     let store = TerminalStore()
     _ = store.session("old-id", command: .shell, cwd: NSTemporaryDirectory())
     store.rekey("old-id", to: "new-id")
@@ -1088,7 +1101,74 @@ func repoFixture() throws -> Fixture {
           "Duo's sessions route Edit, MultiEdit and Write through the edit hook")
     let noHook = (try? HookEvents.settingsFile(for: "s10", in: hookDir)).flatMap { try? Data(contentsOf: $0) }.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
     check((noHook?["hooks"] as? [String: Any])?["PreToolUse"] == nil, "no CLI, no edit hook (the primer and the merge still hold)")
+    let ctxHooks = withHook?["hooks"] as? [String: Any]
+    for e in ["SessionStart", "UserPromptSubmit"] {
+        let cmds = ((ctxHooks?[e] as? [[String: Any]])?.first?["hooks"] as? [[String: Any]])?.compactMap { $0["command"] as? String } ?? []
+        check(cmds.count == 2 && cmds[0].hasPrefix("/usr/bin/perl") && cmds[1].hasSuffix("duo2' hook context"), "\(e): the event hook, then the task context hook (DL-116)")
+    }
+    check((((noHook?["hooks"] as? [String: Any])?["SessionStart"] as? [[String: Any]])?.first?["hooks"] as? [[String: Any]])?.count == 1, "no CLI, no task context hook")
     try? FileManager.default.removeItem(at: hookDir)
+
+    print("task context (DL-116)")
+    let tc = FileManager.default.temporaryDirectory.appending(path: "duo-tc-\(UUID().uuidString)")
+    let tcProj = tc.appending(path: "proj"), tcOther = tc.appending(path: "other"), told = tc.appending(path: "events")
+    for f in [tcProj, tcOther] { try FileManager.default.createDirectory(at: f.appending(path: "tasks"), withIntermediateDirectories: true) }
+    let sA = "11111111-2222-3333-4444-555555555555", sB = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    func note(_ folder: URL, _ name: String, _ text: String) { try? Data(text.utf8).write(to: folder.appending(path: "tasks/\(name)")) }
+    func gone(_ folder: URL, _ name: String) { try? FileManager.default.removeItem(at: folder.appending(path: "tasks/\(name)")) }
+    let tcFolders = ["proj": tcProj, "other": tcOther]
+    func ctx(_ event: String, _ sid: String = sA, cwd: String? = tcProj.path) -> String {
+        TaskContext.hook(event, sessionId: sid, now: TaskContext.entries(for: [sid], folders: tcFolders), cwd: cwd, in: told)
+    }
+    note(tcProj, "exec-review-prep.md", TaskNotes.newNote(title: "Exec review prep", links: [TaskNotes.link(title: "Draft", id: sA)]))
+    note(tcProj, "unrelated.md", TaskNotes.newNote(title: "Unrelated", links: [TaskNotes.link(title: "Other", id: sB)]))
+    let start = ctx("start")
+    print("    start: " + start.replacingOccurrences(of: "\n", with: "\n           "))
+    check(start.hasPrefix("Duo: This session is attributed to the task “Exec review prep” (status: open).")
+          && start.contains("Its note, tasks/exec-review-prep.md, is the task's brief") && start.contains("`duo2 session task`")
+          && !start.contains("Unrelated") && start.split(separator: "\n").count == 3, "start: the one task, its status and note, in three lines")
+    check(ctx("prompt") == "", "a prompt with nothing changed adds nothing")
+    check(ctx("start", cwd: "/elsewhere").contains(tcProj.appending(path: "tasks/exec-review-prep.md").path), "outside the project the note's path is absolute")
+    check(ctx("start") == start && ctx("prompt") == "", "resume and compact (SessionStart again) say it all again; the next prompt nothing")
+    // Status changes, then the session joins a second task in another project.
+    note(tcProj, "exec-review-prep.md", TaskNotes.settingStatus("review", in: TaskNotes.newNote(title: "Exec review prep", links: [TaskNotes.link(title: "Draft", id: sA)])))
+    note(tcOther, "q4-plan.md", TaskNotes.newNote(title: "Q4 plan", links: [TaskNotes.link(title: "Draft", id: sA)]))
+    let two = ctx("prompt")
+    print("    two:   " + two.replacingOccurrences(of: "\n", with: "\n           "))
+    check(two.contains("The task “Exec review prep” is now review (was open).") && two.contains("This session was added to the task “Q4 plan”.")
+          && two.contains("This session is attributed to 2 tasks:") && two.contains("- “Q4 plan” (status: open): " + tcOther.appending(path: "tasks/q4-plan.md").path),
+          "linked to a second task mid-session: told once, on the next prompt, with both listed")
+    check(ctx("prompt") == "", "…and only once")
+    // Renamed (the note follows its title, C-24), given an id and archived.
+    gone(tcOther, "q4-plan.md")
+    note(tcOther, "q4-plan-final.md", "---\nid: 0b9e7c1e-1111-2222-3333-444455556666\narchived: true\n" + TaskNotes.newNote(title: "Q4 plan final", links: [TaskNotes.link(title: "Draft", id: sA)]).dropFirst(4))
+    let renamed = ctx("prompt")
+    print("    renamed: " + renamed.replacingOccurrences(of: "\n", with: "\n           "))
+    check(renamed.contains("The task “Q4 plan” was renamed “Q4 plan final”.") && renamed.contains("q4-plan.md to ") && renamed.contains("q4-plan-final.md")
+          && renamed.contains("was archived") && renamed.contains("(status: open, archived, id: 0b9e7c1e-1111-2222-3333-444455556666)"),
+          "renamed, moved, archived: told the new title and path, archived tasks still told (marked)")
+    // Unlinked from both.
+    note(tcProj, "exec-review-prep.md", TaskNotes.newNote(title: "Exec review prep", links: []))
+    gone(tcOther, "q4-plan-final.md")
+    let unlinked = ctx("prompt")
+    print("    unlinked: " + unlinked.replacingOccurrences(of: "\n", with: "\n           "))
+    check(unlinked.contains("This session was removed from the task “Exec review prep” (tasks/exec-review-prep.md).")
+          && unlinked.contains("removed from the task “Q4 plan final”") && unlinked.hasSuffix("This session has no task now."), "unlinked: told once which tasks it left")
+    check(ctx("prompt") == "" && ctx("start") == "", "no task: no output at prompt or start")
+    // A session with no task that's never been told: nothing; linked later: told on the next prompt.
+    check(ctx("start", sB + "x") == "" && ctx("prompt", "99999999-2222-3333-4444-555555555555") == "", "never attributed: nothing, ever")
+    note(tcProj, "exec-review-prep.md", TaskNotes.newNote(title: "Exec review prep", links: [TaskNotes.link(title: "Draft", id: sA)]))
+    let added = ctx("prompt")
+    check(added.hasPrefix("Duo: This session was added to the task “Exec review prep”.\nThis session is attributed to the task"), "linked mid-session (Make a Task, Add to Task): told on the next prompt")
+    check(TaskContext.onPrompt(TaskContext.entries(for: [sA], folders: tcFolders), told: nil, cwd: nil) == TaskContext.atStart(TaskContext.entries(for: [sA], folders: tcFolders), cwd: nil),
+          "a session never told (older settings) hears it all on its next prompt")
+    let launch = TaskContext.Entry(project: "proj", folder: "/w/proj", path: "tasks/launch.md", title: "Launch", status: "open")
+    var after = launch; after.project = "other"; after.folder = "/w/other"
+    let movedCtx = TaskContext.onPrompt([after], told: [launch], cwd: "/w/proj") ?? ""
+    check(movedCtx.hasPrefix("Duo: The task “Launch” moved to the project other; its note is now /w/other/tasks/launch.md.") && !movedCtx.contains("removed"),
+          "Move to Project: told the note's new place, not removed and added")
+    try? FileManager.default.removeItem(at: tc)
+
     check(DuoAction.primer().contains("duo2 doc edit --stdin") && DuoAction.primer().contains("not with Edit, Write or shell redirection"),
           "the primer tells Claude how to edit open documents without the hook")
 

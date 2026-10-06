@@ -68,6 +68,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 session move <id> --to <project> [--new]` | File a session in another project, or with --new in a new project of that name made in Home; it moves there on its next resume. The user confirms in Duo. Undo with `duo2 undo`. | Move to Project, New Project…, drag a session onto a tile |
 | `duo2 session note <text>` | Tell the user what this session is doing (one line, shown in Duo). | — |
 | `duo2 session next <text>` | Tell the user what this session needs next (one line). | — |
+| `duo2 session task [id]` | The task(s) a session is attributed to (this session by default): each note's title, status and path. Duo's hooks tell Claude the same when the session starts, resumes, clears or compacts, and what changed on its next prompt (DL-116). | — |
 | `duo2 session carry-on <id>` | Start a new session carrying on from an archived one. | — |
 | `duo2 session fork <id>` | Carry a session on as a fork: a new session with the same history (the original is left alone). | Resume as a Fork |
 | `duo2 session link <session>` | A Markdown link to a session for a note or task: [title](duo2://session/<id>). Clicking it in Duo opens or resumes the session (DL-87). | Copy Link, Copy Markdown link |
@@ -188,7 +189,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 uninstall` | Remove exactly what `duo2 install` added (anything you edited stays). | Remove… |
 | `duo2 settings [claude-path <path\|auto> \| notify on\|off \| dock-badge on\|off]` | Duo's settings (S3-1): with no arguments, all of them; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge. | Choose…, Use Found One |
 | `duo2 walk setup <test id>` | Put Duo in the state an acceptance-walk test starts from (the walk page's Set up test button, or `duo2://walk-setup?id=…`). Steps come from ~/DuoAcceptance/walk-setups.json, never from the caller. | Set up test |
-| `duo2 hook pre-edit` | Used by Duo's sessions (a PreToolUse hook): Claude's Edit, MultiEdit and Write on a document open in Duo go through the editor instead of the file (DL-78). | — |
+| `duo2 hook pre-edit \| context` | Used by Duo's sessions. `pre-edit` (PreToolUse): Claude's Edit, MultiEdit and Write on a document open in Duo go through the editor instead of the file (DL-78). `context` (SessionStart, UserPromptSubmit): tells Claude the task(s) its session is attributed to, and on a prompt what changed since (DL-116). | — |
 | `duo2 legacy [disable --yes \| restore <backup>]` | Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them. | Disable…, Restore |
 
 ## In the app only

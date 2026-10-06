@@ -13,8 +13,9 @@ public enum DuoPaths {
 
 /// Claude Code hooks for sessions Duo starts (findings F-23). Each session gets its own
 /// `--settings` file whose hooks append the payload to `events/<id>.jsonl`, one line per event:
-/// `{"at": <epoch seconds>, "e": <payload>}`. Nothing global is touched (LR-55). Hook commands
-/// print nothing, so they never answer a permission prompt on the user's behalf.
+/// `{"at": <epoch seconds>, "e": <payload>}`. Nothing global is touched (LR-55). The event
+/// hooks print nothing, so they never answer a permission prompt on the user's behalf; `duo2 hook
+/// context` prints only additional context for Claude (DL-116).
 public enum HookEvents {
     static let names = ["SessionStart", "UserPromptSubmit", "PermissionRequest", "PostToolUse", "Notification", "Stop", "SessionEnd"]
 
@@ -26,12 +27,17 @@ public enum HookEvents {
     public static func settingsFile(for sessionId: String, in dir: URL = DuoPaths.events, cli: String? = nil) throws -> URL {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let folder = dir.path.replacingOccurrences(of: "'", with: "'\\''")
-        // One printf per event, so an event is (nearly always) one write; the reader skips any
-        // line that doesn't parse. `tr` folds pretty-printed payloads onto one line (newlines
-        // inside JSON strings are already escaped). Events go to the file of the payload's
-        // session_id: `/clear` and `/resume` change the session inside one process (F-29).
-        let command = #"p=$(tr -d '\n'); i=$(printf %s "$p" | sed -n 's/^{ *"session_id" *: *"\([0-9A-Za-z-]*\)".*/\1/p'); "#
-            + #"printf '{"at":%s,"e":%s}\n' "$(date +%s)" "$p" >> '"# + folder + #"'/"${i:-"# + sessionId + #"}.jsonl""#
+        // One write(2) per event, to a file opened O_APPEND (perl's syswrite): hooks fire together
+        // (the attention hooks beside the task context, the last MessageDisplay with Stop), and
+        // sh's printf wrote ~1 KB payloads in pieces that interleaved, so lines merged and events
+        // were lost (C-27, F-98). Newlines are folded (those inside JSON strings are escaped
+        // already); the reader skips any line that doesn't parse. Events go to the file of the
+        // payload's session_id, first key only: `/clear` and `/resume` change the session inside
+        // one process (F-29).
+        let script = #"use Time::HiRes "time"; local $/; my $p = <STDIN>; exit 0 unless defined $p; $p =~ tr/\n//d; exit 0 unless length $p; "#
+            + #"my ($i) = $p =~ /^\{ *"session_id" *: *"([0-9A-Za-z-]*)"/; $i = $ARGV[1] unless defined $i && length $i; "#
+            + #"open(my $f, ">>", "$ARGV[0]/$i.jsonl") or exit 0; syswrite($f, sprintf(qq({"at":%.3f,"e":%s}\n), time, $p));"#
+        let command = "/usr/bin/perl -e '" + script + "' '" + folder + "' '" + sessionId.replacingOccurrences(of: "'", with: "'\\''") + "'"
         let hook: [String: Any] = ["hooks": [["type": "command", "command": command]]]
         var hooks: [String: Any] = Dictionary(uniqueKeysWithValues: names.map { ($0, [hook]) })
         // Claude's own file edits on a document open in Duo go through the editor, so the user
@@ -40,6 +46,9 @@ public enum HookEvents {
         if let cli {
             let q = "'" + cli.replacingOccurrences(of: "'", with: "'\\''") + "'"
             hooks["PreToolUse"] = [["matcher": "Edit|MultiEdit|Write", "hooks": [["type": "command", "command": q + " hook pre-edit", "timeout": 15]]]]
+            // The task(s) the session is attributed to, at start and when they change (DL-116).
+            let context: [String: Any] = ["type": "command", "command": q + " hook context", "timeout": 10]
+            for e in ["SessionStart", "UserPromptSubmit"] { hooks[e] = [["hooks": [hook["hooks"] as! [[String: Any]], [context]].flatMap { $0 }]] }
         }
         var settings: [String: Any] = ["hooks": hooks]
         // Lets duo2 reach Duo from inside Claude's sandbox: this one socket only (DL-43, F-29).

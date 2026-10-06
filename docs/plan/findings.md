@@ -1342,3 +1342,42 @@ The spike's recommendation 1 and 2 (`docs/plan/spikes/scripted-instances.md`, F-
 - **The hole the live test found:** Duo's terminals inherited `DUO_SUPPORT_DIR` from Duo's own process. `open-duo.sh` sets it to the real folder, and `open -n` passes the caller's environment on. So a test Duo launched from any of Geoff's sessions ran on his **real** folder: it took over `duo.sock` and `endpoint.json`, came to the front, and on quit deleted both. That left his running Duo unreachable by `duo2` until it restarts. (It happened during this fix's first live run: pid 5204, 11:05.) Now `ChildEnvironment.make` drops `DUO_SUPPORT_DIR` when it's the real folder, so a session's scripted launch gets a temporary folder. An isolated instance still passes its own folder down. This takes effect for sessions started after Geoff's Duo runs this build. Until then, launch test instances with `env -u DUO_SUPPORT_DIR`.
 - **Proof (live, `open -n build/Duo.app --args --workspace /tmp/x` with no `DUO_SUPPORT_DIR`):** it used `/tmp/duo-o46pyw`, its own socket and `install: skipped`. It wrote no `installed.json`, the front app stayed Geoff's Duo (pid 22756), and it quit with SIGTERM. `~/.local/bin/duo2` → `.claude/worktrees/session-task-context/build/…/duo2` before and after (left as Geoff chose). `~/.claude/CLAUDE.md` and the duo2 skill have the same hashes before and after.
 - **Left for later (spike §4.3):** search recents in shared `UserDefaults`, and cleaning up old `/tmp/duo-*` folders.
+
+## F-98 · A session knows its task, and hook events written whole (DL-116, C-27, 2026-10-06)
+
+- **Claude Code 2.1.291, checked against its hooks docs** (code.claude.com/docs/en/hooks, hooks-guide):
+  - SessionStart's input carries `session_id`, `cwd`, `hook_event_name` and `source`: `startup`, `resume`, `clear`, `compact` (and `fork`).
+  - SessionStart and UserPromptSubmit both take `{"hookSpecificOutput": {"hookEventName": …, "additionalContext": "…"}}`. Claude reads it as a system reminder, with nothing shown in the transcript. No length limit is documented; ours is a few lines.
+  - **Exit 2 from a UserPromptSubmit hook blocks the prompt**, so `duo2 hook context` always exits 0 and prints nothing when it has nothing to say or can't reach Duo.
+  - `/clear` gives a new `session_id` and fires SessionStart `clear` with it. Compaction keeps the id (`compact`), and so does `--resume <id>`. Hooks on one event run in parallel, and UserPromptSubmit's default timeout is 30 s (ours is 10 s, with an 8 s socket timeout).
+- **How it's built:** the session's settings file (`HookEvents.settingsFile`) gives SessionStart and UserPromptSubmit a second hook, `duo2 hook context`, after the event logger. It sends `session task <id> --hook start|prompt` to Duo.
+  - Duo reads the task notes at that moment (`TaskContext.entries`, every project's `tasks/*.md` linking the id). It renders the text and records what it told the session in `events/<id>.task.json`, so a prompt is told about a change once.
+  - Changes pair tasks by `id:`, then by note. A lone task that went and a lone one that came are one task renamed or moved (C-24's rename moves the note; Move to Project changes its project).
+  - With no task, and nothing told before, there's no output at all.
+- **After `/clear`** Duo finds the session it replaced in this order:
+  - the id of the Duo terminal the hook runs under (the hook's parent process, before Duo re-keys the tab, F-29);
+  - otherwise the `continued-from:` provenance;
+  - otherwise `DUO_SESSION_ID`.
+  
+  Duo then adds the new session's link to each of that session's notes: in the editor's buffer if the note is open there, otherwise on disk. It doesn't do this on `resume` or `fork`.
+- **What Claude reads** (one task, at start; paths are relative to Claude's folder when the note is inside it, otherwise absolute):
+
+      Duo: This session is attributed to the task “Exec review prep” (status: in-progress).
+      Its note, tasks/exec-review-prep.md, is the task's brief: read it before working on the task, and record progress and decisions there. Duo manages the `sessions:` list in the frontmatter; leave it as it is.
+      Check this any time with `duo2 session task`.
+
+  With two tasks, it's one line per task, `- “Q4 plan” (status: open, archived, id: …): <path>`. On a prompt after a change, one sentence per change comes first, then the same listing:
+  - "The task “Exec review prep” is now review (was in-progress)."
+  - "This session was added to the task “Q4 plan”."
+  - "The task “Q4 plan” was renamed “Q4 plan final”." followed by "Its note moved from … to …."
+  - "The task “Launch” moved to the project other; its note is now …."
+  - "… was archived."
+  - "This session was removed from the task “Q4 plan” (tasks/q4-plan.md)."
+  - "This session has no task now."
+- **C-27, events written whole:** the event logger is now one perl `syswrite` per event to a file opened `>>` (`O_APPEND`). Newlines are folded, and the event goes to the payload's first-key `session_id`, as before. sh's `printf` had written ~1 KB payloads in pieces that interleaved when hooks fired together. `at` now has milliseconds.
+- **Checked:**
+  - **DuoChecks:** 378 pass. New checks cover start, prompt with no change, resume/compact, absolute paths outside the project, a second task plus a status change mid-session (told once), rename with a new id and archive, Move to Project, unlinked from both, no task meaning no output, linked mid-session, never told before, the settings file's hook order, and 40 concurrent ~1 KB events giving 40 lines that all parse.
+  - `scripts/bundle.sh` passes, and `NO_BUILD=1 scripts/check-ui.sh` passes (nothing visible changed).
+  - **Live:** a scratch Duo (own `DUO_SUPPORT_DIR`, scratch `CLAUDE_CONFIG_DIR`, `DUO_INSTALL_ROOT`, a clean environment) ran a stand-in `claude` that runs the real hook commands from Duo's settings file with sample payloads. No model was called.
+  - The live run covered New Session in Task → start context; an unchanged prompt → nothing; `duo2 task add` + `task status` → told once; compact → full context; `/clear` → the new id linked into both notes and full context; unlinking by hand → told once.
+- **Scripted runs:** a launch without `DUO_INSTALL_ROOT` relinked Geoff's `~/.local/bin/duo2` (F-107, C-28). Set it, as well as `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`, until F-113's isolation is in the running build.
