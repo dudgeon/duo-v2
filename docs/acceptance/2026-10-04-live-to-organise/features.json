@@ -1026,27 +1026,34 @@
   {
    "id": "app-menus",
    "group": "App",
-   "title": "Menus",
-   "what": "File (New Markdown File, New Folder, Save, Close Tab, Close Window), Edit (text items, Find, Spelling), Format, View, Go.",
+   "title": "The menu bar",
+   "what": "Duo, File, Edit, Format, View, Project, Session, Go, Window, Help, as you chose on this page (DL-108). Project and Session act on what's in front of you.",
    "steps": [
-    "Open each menu; try Go › All Projects and Go › Home."
+    "At All projects, open each menu. Click a project tile, then open Project: its items act on that tile.",
+    "Open `checkout`. Open Project and Session: Project acts on checkout, Session on the session in the console. Try Session › Copy Link and Project › Open Project File.",
+    "Open `docs/prd.md`, click in the text, and try Format › Heading › Heading 2, then Format › Task, then select a word and press ⌘K. Undo each with ⌘Z.",
+    "Help › duo2 Reference, What’s New in This Version and Report an Issue… each open a GitHub page; the issue isn't sent until you submit it there."
    ],
-   "expect": "Items are present and work; disabled ones are greyed when they don't apply.",
-   "ref": "F-43",
+   "expect": "Order, names and chords match the mockups you approved (m1–m4). Items that can't act on anything are dim. ⌘K makes the selection a link and waits for its address. View › Enter Full Screen (⌃⌘F) works and becomes Exit Full Screen.",
+   "ref": "DL-108, F-91",
    "setup": [
     "go all"
    ],
    "claude": {
     "result": "passed",
     "did": [
-     "Menu bar: Duo, File, Edit, View, Format, Go, Window, Help.",
-     "Go › Home went to All projects; ⌘↑ from checkout went to All projects (with Duo in front)."
+     "Printed the menu bar in three states (All projects, inside checkout, editor focused) and compared it item by item with m1–m4: order, labels and chords match.",
+     "Format commands in the editor page: Code, Link… (selection and empty), Heading 1–3 (replacing and toggling off), Task (several lines; a done task toggles off), Add Properties (new block with the most-used names offered, or a new line in an existing block)."
     ],
-    "didnt": [],
-    "human": [],
-    "at": "2026-10-04"
+    "didnt": [
+     "Clicking the menus with the pointer, and Help's pages opening in a browser."
+    ],
+    "human": [
+     "Whether Project and Session pick the thing you expect in front of you."
+    ],
+    "at": "2026-10-05"
    },
-   "commit": "04c1f09fca24f6fa470f37b51cbae14ccdc68c94"
+   "commit": "e03c7ecc49d39783b7011a651695af5329c38304"
   },
   {
    "id": "app-clear",
@@ -3615,6 +3622,71 @@
    }
   }
  ],
- "decisions": [],
- "decisionsIntro": "Pick one option per question (or Something else, with a comment). Mockups are small sketches in Duo's look; the full designs are in `docs/design/search-handoff/` (open `screens/search-actions-file.html` etc. in a browser). Your answers save as you click, like the verdicts below."
+ "decisions": [
+  {
+   "id": "t1-table-edit",
+   "ref": "ENH-11 · DL-108 · S3-5",
+   "title": "Editing a table: which way?",
+   "context": [
+    "Today a table away from the caret is drawn as a table (`rule` borders, header on `ground`, S3-5). With the caret on it, it shows as Markdown pipes, and you edit those by hand.",
+    "Every option adds a **Table ▸** submenu to Format (DL-108's Format menu): Insert Table…, Add Row Above/Below, Add Column Before/After, Delete Row, Delete Column, Align Column ▸, each with a `duo2 doc table …` verb. None adds a ⌘ chord (DL-34). The options differ in what you see and touch while the caret is in a table:",
+    [
+     "**A · Markdown with commands:** as today, the caret shows the pipes; the commands rewrite them, keeping the columns lined up. In a table, Tab and ⇧Tab move between cells and Return in the last row adds a row, as Tab does in the properties block. Size S.",
+     "**B · Edit in the drawn table:** the table stays drawn while you type in a cell. A + appears between rows and columns on hover, and right-clicking a cell gives the table items plus Edit as Markdown. Like Notion or Google Docs. Size L: CodeMirror doesn't edit inside a drawn widget, so cells need their own editing.",
+     "**C · Markdown with a table bar:** like A, plus a row of small buttons over the table while the caret is in it (+ Row, + Column, Align ▾, Delete ▾). Size M."
+    ],
+    "A keeps Duo's rule that the file is what you see when you're in it, and costs least; B is friendliest for people who never want to see pipes."
+   ],
+   "options": [
+    {
+     "id": "a-markdown",
+     "label": "A · Markdown with commands",
+     "recommended": true,
+     "desc": "Format › Table ▸ and Tab between cells; the pipes stay visible on the caret.",
+     "mockup": "<div class=\"mk\" style=\"display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap\"><div class=\"mono\" style=\"white-space:pre;line-height:17px\">| Path  | Limit | Approvers |\n| ----- | ----- | --------: |\n| Card  | $500  |         2 |\n| Async | $250  |         1 |</div><div class=\"mk-menu\" style=\"width:200px\"><div class=\"ttl\">Format › Table</div><div class=\"mk-item\"><span>Insert Table…</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item\"><span>Add Row Above</span><span class=\"k\"></span></div><div class=\"mk-item\"><span>Add Row Below</span><span class=\"k\"></span></div><div class=\"mk-item\"><span>Add Column Before</span><span class=\"k\"></span></div><div class=\"mk-item\"><span>Add Column After</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item\"><span>Delete Row</span><span class=\"k\"></span></div><div class=\"mk-item\"><span>Delete Column</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item\"><span>Align Column</span><span class=\"k\">▸</span></div></div></div>"
+    },
+    {
+     "id": "b-grid",
+     "label": "B · Edit in the drawn table",
+     "desc": "Type in cells; + between rows and columns; right-click for the rest.",
+     "mockup": "<div class=\"mk\" style=\"display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap\"><table style=\"border-collapse:collapse;font-size:12px\"><tr><th style=\"border:1px solid #c9cdd3;padding:2px 6px;background:#f3f4f6;font-weight:600;\">Path</th><th style=\"border:1px solid #c9cdd3;padding:2px 6px;background:#f3f4f6;font-weight:600;\">Limit</th><th style=\"border:1px solid #c9cdd3;padding:2px 6px;background:#f3f4f6;font-weight:600;\">Approvers</th></tr><tr><td style=\"border:1px solid #c9cdd3;padding:2px 6px;\">Card</td><td style=\"border:1px solid #c9cdd3;padding:2px 6px;\">$500</td><td style=\"border:1px solid #c9cdd3;padding:2px 6px;\">2</td></tr><tr><td style=\"border:1px solid #c9cdd3;padding:2px 6px;\">Async</td><td style=\"border:1px solid #c9cdd3;padding:2px 6px;\"><span style=\"outline:1.5px solid #1f2328;outline-offset:2px\">$25|0</span></td><td style=\"border:1px solid #c9cdd3;padding:2px 6px;\">1</td></tr></table><div class=\"mk-menu\" style=\"width:200px\"><div class=\"ttl\">Right-click a cell</div><div class=\"mk-item\"><span>Add Row Above</span><span class=\"k\"></span></div><div class=\"mk-item\"><span>Add Row Below</span><span class=\"k\"></span></div><div class=\"mk-item\"><span>Add Column Before</span><span class=\"k\"></span></div><div class=\"mk-item\"><span>Add Column After</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item\"><span>Delete Row</span><span class=\"k\"></span></div><div class=\"mk-item\"><span>Delete Column</span><span class=\"k\"></span></div><div class=\"mk-sep\"></div><div class=\"mk-item\"><span>Align Column</span><span class=\"k\">▸</span></div><div class=\"mk-sep\"></div><div class=\"mk-item\"><span>Edit as Markdown</span><span class=\"k\"></span></div></div></div>"
+    },
+    {
+     "id": "c-bar",
+     "label": "C · Markdown with a table bar",
+     "desc": "As A, with buttons over the table while you're in it.",
+     "mockup": "<div class=\"mk\"><div style=\"display:flex;gap:6px;margin-bottom:6px\"><span class=\"mk-chip\">+ Row</span><span class=\"mk-chip\">+ Column</span><span class=\"mk-chip\">Align ▾</span><span class=\"mk-chip\">Delete ▾</span></div><div class=\"mono\" style=\"white-space:pre;line-height:17px\">| Path  | Limit | Approvers |\n| ----- | ----- | --------: |\n| Card  | $500  |         2 |\n| Async | $250  |         1 |</div></div>"
+    }
+   ]
+  },
+  {
+   "id": "t2-table-insert",
+   "ref": "ENH-11",
+   "title": "Format › Insert Table…: what it does",
+   "context": [
+    "Inserting a table needs a size. Either Duo puts in a small one straight away and you grow it with the commands above, or it asks first.",
+    [
+     "**Insert at once:** three columns, a header and two rows, with `Column 1` selected so typing names it; Tab moves on. The menu item is then `Insert Table` (no ellipsis).",
+     "**Pick a size:** a small grid under the caret; move over it to choose columns × rows (up to 8 × 6), click or Return to insert. Esc cancels."
+    ],
+    "Either way the result is plain Markdown and `duo2 doc table insert [--columns n --rows n]` does the same."
+   ],
+   "options": [
+    {
+     "id": "at-once",
+     "label": "Insert at once (3 × 2)",
+     "recommended": true,
+     "desc": "One step; grow it with Add Row / Add Column or Tab.",
+     "mockup": "<div class=\"mk\"><div class=\"mono\" style=\"white-space:pre;line-height:17px\">| <span style=\"background:#e9ecef\">Column 1</span> | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n|          |          |          |\n|          |          |          |</div></div>"
+    },
+    {
+     "id": "picker",
+     "label": "Pick a size first",
+     "desc": "A grid popover; the size you point at is inserted.",
+     "mockup": "<div class=\"mk\"><div style=\"display:inline-flex;flex-direction:column;gap:6px;padding:8px;border:1px solid #c9cdd3;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.15)\"><div style=\"display:grid;grid-template-columns:repeat(8,12px);gap:2px\"><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #1f2328;background:#e9ecef;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #1f2328;background:#e9ecef;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #1f2328;background:#e9ecef;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #1f2328;background:#e9ecef;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #1f2328;background:#e9ecef;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #1f2328;background:#e9ecef;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #1f2328;background:#e9ecef;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #1f2328;background:#e9ecef;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #1f2328;background:#e9ecef;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div><div style=\"width:12px;height:12px;box-sizing:border-box;border:1px solid #c9cdd3;background:#fff;border-radius:2px\"></div></div><div style=\"font-size:11px\">3 columns × 2 rows <span style=\"color:#6e7781\">plus a header</span></div></div></div>"
+    }
+   ]
+  }
+ ],
+ "decisionsIntro": "Two questions about editing tables (ENH-11, from your comment on m3). The full designs are on the canvas https://claude.ai/artifact/AmLcw8SFba5CnqvymoCz2S (boards A, B, C and Insert 1, 2); the sketches here are small versions. Every option keeps the file plain Markdown."
 }
