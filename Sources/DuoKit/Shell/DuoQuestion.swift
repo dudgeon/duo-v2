@@ -6,7 +6,19 @@ import SwiftUI
 /// A question Duo asks on its own sheet (slice 3, S3-3 and S3-7; DL-101), never a system alert,
 /// so a scripted run can't block on one (F-54). One at a time: the rest wait in the queue.
 public struct DuoQuestion: Identifiable {
-    public struct Item { public var what: String; public var path: String }
+    public struct Item {
+        public var what: String
+        public var path: String
+        /// With no `what`: the path alone in `text`, this at its right in `text2` ("edited 2d ago").
+        public var detail: String? = nil
+    }
+    /// A name to type, filled in with a suggestion (B of the .docx boards, DL-123). A class, so
+    /// the choices read what was typed when they run.
+    public final class Field {
+        public let label: String
+        public var text: String
+        public init(label: String, text: String) { self.label = label; self.text = text }
+    }
     public struct Choice {
         public var label: String
         public var isDefault = false
@@ -20,6 +32,7 @@ public struct DuoQuestion: Identifiable {
     public var paragraphs: [String] = []
     /// What it changes, each with its path, in a box (launch questions, merges, deletes).
     public var items: [Item] = []
+    public var field: Field? = nil
     public var note: String? = nil
     public var choices: [Choice]
 }
@@ -72,11 +85,20 @@ struct QuestionSheet: View {
             if !q.items.isEmpty {
                 VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
                     ForEach(Array(q.items.enumerated()), id: \.offset) { _, i in
-                        VStack(alignment: .leading, spacing: 0) {
-                            Text(i.what).duoText(.body).fixedSize(horizontal: false, vertical: true)
-                            if !i.path.isEmpty {
-                                Text(i.path).duoText(.mono, lineHeight: DuoTextStyle.body.spec.lineHeight).foregroundStyle(DuoColor.text2)
+                        if i.what.isEmpty {
+                            HStack(spacing: DuoSpace.gapCardToCard) {
+                                Text(i.path).duoText(.mono, lineHeight: DuoTextStyle.body.spec.lineHeight)
                                     .lineLimit(1).truncationMode(.middle)
+                                Spacer(minLength: 0)
+                                if let d = i.detail { Text(d).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize() }
+                            }
+                        } else {
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text(i.what).duoText(.body).fixedSize(horizontal: false, vertical: true)
+                                if !i.path.isEmpty {
+                                    Text(i.path).duoText(.mono, lineHeight: DuoTextStyle.body.spec.lineHeight).foregroundStyle(DuoColor.text2)
+                                        .lineLimit(1).truncationMode(.middle)
+                                }
                             }
                         }
                     }
@@ -86,6 +108,14 @@ struct QuestionSheet: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
                 .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+            }
+            if let f = q.field {
+                SheetRow(f.label, center: true) {
+                    SheetField(text: f.text, focus: true,
+                               submit: { if let c = q.choices.first(where: \.isDefault) { SheetCenter.shared.answer(c) } },
+                               cancel: { SheetCenter.shared.cancelCurrent() },
+                               changed: { f.text = $0 })
+                }
             }
             if let n = q.note {
                 Text(Self.rich(n)).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)

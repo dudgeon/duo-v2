@@ -53,7 +53,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Files
     case files, fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
     case fileRename = "file rename", fileDuplicate = "file duplicate", fileMove = "file move", fileTrash = "file trash"
-    case fileReveal = "file reveal", fileOpenWith = "file open-with", filePath = "file path"
+    case fileReveal = "file reveal", fileOpenWith = "file open-with", filePath = "file path", fileConvert = "file convert"
     // Documents
     case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
     case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docTable = "doc table", docFind = "doc find"
@@ -114,7 +114,7 @@ extension DuoAction {
         .init(.updateProbe, .app, "", "Whether in-app updates can work on this Mac, without Duo running: the update feed and the DMG reachable from here, and Duo installed where it can be replaced.", local: true),
         .init(.status, .app, "", "What Duo is showing: the view, the open project, session and document, and counts.", everyday: true),
         .init(.needsYou, .app, "", "Sessions waiting for the user, with their questions.", ui: ["Needs You Elsewhere"]),
-        .init(.undo, .app, "", "Undo Duo's last move, merge or Make a Project (Edit › Undo).", ui: ["Undo"]),
+        .init(.undo, .app, "", "Undo Duo's last move, merge or Make a Project (Edit › Undo).", ui: ["Undo", "Undo Conversion"]),
         .init(.help, .app, "[family | --markdown]", "Families and everyday verbs; a family's verbs; or the full reference as Markdown.", ui: ["duo2 Reference"], local: true),
         .init(.doctor, .setup, "", "How this terminal finds Duo, whether it can reach it, and what Duo installed.", local: true),
         .init(.install, .setup, "", "Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74).",
@@ -239,7 +239,9 @@ extension DuoAction {
               ui: ["Move To…", "files dropped on the file tree"]),
         .init(.fileTrash, .files, "<path>", "Move to the Trash (never deleted outright).", ui: ["Move to Trash"]),
         .init(.fileReveal, .files, "<path>", "Show in Finder.", ui: ["Reveal in Finder"]),
-        .init(.fileOpenWith, .files, "<path> [--app <name>]", "Open in another app (the default app if none named).", ui: ["Open With", "Other…"]),
+        .init(.fileOpenWith, .files, "<path> [--app <name>]", "Open in another app (the default app if none named).", ui: ["Open With", "Other…", "Open Original"]),
+        .init(.fileConvert, .files, "<docx> [--as <name.md>] [--replace] [--anyway]", "Make a Markdown copy of a Word document beside it (<name>.md, pictures in <name>-images); the .docx isn't changed (DL-123). Headings, lists and layout tables are inferred and cleaned; tracked changes are accepted; comments become endnotes. Prints what it inferred and what didn't come over. A taken name fails unless --as or --replace (the one there goes to the Trash); --anyway converts a document with no text. Undo with `duo2 undo`.",
+              ui: ["Convert to Markdown", "Convert Anyway"]),
         .init(.filePath, .files, "<path> [--relative | --link] [--copy]", "Print a file's path, relative path or Markdown link; --copy puts it on the clipboard.",
               ui: ["Copy Path", "Copy Relative Path", "Copy as Link"]),
 

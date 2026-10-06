@@ -1,4 +1,5 @@
 import DuoControl
+import DuoSearch
 import Foundation
 import Observation
 
@@ -122,6 +123,14 @@ public final class AppModel {
     public var editorRevision = 0
     /// The editor if it has been created (doc-status mustn't create one).
     @ObservationIgnored public var editorIfLoaded: EditorController?
+    /// Word documents being converted to Markdown (DL-123), by the .docx's tab: how far, and what
+    /// it's doing. Set only once a conversion has taken half a second, so a quick one shows nothing.
+    public var converting: [String: (fraction: Double, stage: String)] = [:]
+    @ObservationIgnored var conversionTasks: [String: Task<Void, Never>] = [:]
+    /// Why a .docx couldn't be converted, by its tab, until it's converted or closed (F, F2).
+    public var conversionFailures: [String: Docx.Failure] = [:]
+    /// The notice on a Markdown copy just made (D, E), by its tab, until OK.
+    public var conversions: [String: DocxConversion] = [:]
 
     /// A tab for a file outside the project (DL-106): `file:` and its absolute path.
     public static let outsideFilePrefix = "file:"

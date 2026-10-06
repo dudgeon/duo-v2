@@ -1406,6 +1406,51 @@ The spike's recommendation 1 and 2 (`docs/plan/spikes/scripted-instances.md`, F-
   - The live run covered New Session in Task → start context; an unchanged prompt → nothing; `duo2 task add` + `task status` → told once; compact → full context; `/clear` → the new id linked into both notes and full context; unlinking by hand → told once.
 - **Scripted runs:** a launch without `DUO_INSTALL_ROOT` relinked Geoff's `~/.local/bin/duo2` (F-107, C-28). Set it, as well as `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`, until F-113's isolation is in the running build.
 
+## F-114 · What Google Docs' Markdown import keeps (ENH-14, 2026-10-06)
+
+Tested by importing Markdown into a Google Doc through Drive (the same as File → Open of a .md), looking at it in Duo's browser (`/mobilebasic` view), and exporting it back as Markdown and HTML. The table is in `docs/plan/spikes/docx-to-markdown.md`.
+- **Clean:** headings 1–6, bold, italic, strikethrough, inline code, links (including autolinks and bare URLs), `\` hard breaks, tight nested lists (`-` at 2 spaces, `1.` at 3), task lists, GFM tables with alignment, block quotes, `---`, **footnotes (real Docs footnotes)**, and images from `https:` or `data:` URLs.
+- **Lossy:** fenced and indented code become plain body text. Loose lists gain an empty paragraph between items. Two lists separated only by a blank line or `<!-- -->` merge and keep counting. Relative image paths aren't imported. Raw HTML tags are dropped (text kept), except `<sub>`, `<sup>` and `<br>`. Pandoc's `~sub~` turns into strikethrough.
+- **So Duo's converter writes** GFM with no raw HTML: tight lists, Unicode sub/superscript digits, and no lone `~`. Its output for nine test documents round-tripped through Docs unchanged in substance.
+
+## F-115 · Converting .docx to Markdown: pandoc, mammoth and our own (ENH-14, 2026-10-06)
+
+Nine synthetic documents (`Spikes/DocxToMarkdown/make_docs.py`), run through pandoc 3.12, mammoth 1.13 and a Swift prototype (`Spikes/DocxToMarkdown/Docx.swift`, on `Pptx.Zip`). Outputs are in `Spikes/DocxToMarkdown/out/`; the comparison is in `docs/plan/spikes/docx-to-markdown.md`.
+- **pandoc** converts semantic structure well, but infers nothing. It drops the Title paragraph, splits "List Bullet 2" into a separate list, and writes raw HTML for layout or merged tables, images, underline and sub/superscript. It is 192 MB (Duo.app is 94 MB) and GPL-2.0-or-later: bundling it is allowed as aggregation, but it must ship with its licence and an offer of source.
+- **mammoth's** Markdown writer loses tables, flattens nesting, escapes every `.` and writes raw footnote anchors. Its HTML is fine, but would need an HTML → Markdown step on top.
+- **Neither** infers headings from font size or bold, or lists from typed `•`/`1.`, and both drop comments silently.
+- **Our own** handled all nine documents: headings from size, bold and outline level; typed lists; nesting by indent; layout tables unwrapped; tracked changes accepted or rejected; comments left out or kept as footnotes; images extracted with alt text; and a summary of what it did.
+- **Word's "List Bullet 2/3" styles** are separate lists at ilvl 0 with a bigger indent, not deeper levels. Nest list items by indent within a run of items.
+
+## F-116 · Opening a Word document as Markdown, built (ENH-14, DL-123, 2026-10-06)
+
+Built to `docs/design/docx-handoff/` (the canvas https://claude.ai/artifact/YRWyEm4MHbxYYtnRVr55xp). Side-by-side comparisons: `docs/design/docx-handoff/build-compare.png`.
+- **The converter** is `Sources/DuoSearch/Docx.swift`, on `Pptx.Zip` and its XML reader (the spike's prototype, F-115). It adds comments as endnotes (the default, DL-123), a failure for each case the bar names, progress and cancellation (`Task.checkCancellation` every 64 top-level blocks), and the summary split into what was done and what didn't come over. `Spikes/DocxToMarkdown/main.swift` now builds against the app's source, so there is one converter. Its outputs in `out/duo` are the golden copies DuoChecks compares.
+- **Telling failures apart without opening the file:**
+  - A password-protected .docx is not a zip. It's an OLE compound file (`D0 CF 11 E0`) holding an `EncryptedPackage` stream (its name is UTF-16LE in the directory).
+  - An old .doc is the same container without that stream.
+  - Anything else that isn't a zip is damaged.
+  - A zip with no `word/document.xml` isn't a Word document.
+  - "Only pictures" is judged after converting: the Markdown is empty once the image links are removed.
+- **The app:** `Model/AppModel+Convert.swift`.
+  - The work runs on a detached task, and the bar shows only after 0.5 s.
+  - Files are written on the main actor: pictures first, then the .md, atomically.
+  - The copy takes the .docx's tab.
+  - Undo is one step. It moves the copy and its pictures to the Trash, and moves back anything Replace trashed (from `trashItem`'s resulting URL).
+  - A copy that is unsaved in the editor (`dirty`) or changed on disk since is left, and Duo says why.
+  - A leftover `<name>-images` folder with no .md is never written into: the new folder gets " 2".
+- **The sheet's field:** `DuoQuestion.Field`, a class so the choices read what was typed, drawn with `SheetRow` and `SheetField`. A path-only `Item` with `detail` draws "edited 2d ago" at the right. Under `DUO_AUTOCONFIRM` the name-taken question takes the free name.
+- **A `Menu` styled as the default button** (`.menuStyle(.button)` with `DefaultSheetButtonStyle`) loses its chevron. The label draws `chevron.down` itself.
+- **The editor's web view draws in window captures only sometimes** (F-25). The first D and E captures showed the converted text; after `main` was merged in, none did, even for a two-line file, though `editor-state` showed the right buffer each time. Editor text is exempt from the comparison; check it with `editor-state`, or in a browser at the pane's width. Board D's summary line was recaptured from `Spikes/DocxToMarkdown/make_board_d.py` (headings, typed bullets, tracked changes, a comment, pictures). The first D used the clean document, which had nothing to summarise.
+- **Checks:** 27 new, all passing. They cover:
+  - golden output for the nine documents, stable on a second run, with no raw HTML;
+  - headings by size and bold, never skipping a level; typed lists; nesting by indent; layout tables; tracked changes both ways; endnotes; pictures;
+  - the five failures;
+  - the app's flow: the copy and its tab, the free name, a second name with its own folder, one undo step each, an edited copy left, Replace, and a refused scan writing nothing.
+  - The suite's three other failures:
+    - `docs/cli/duo2.md` passes once regenerated.
+    - Encoder self-calibration and live beacons are checks "on this machine", not in code this branch touches.
+- **Live, on scratch data** (own `DUO_SUPPORT_DIR`, scratch `CLAUDE_CONFIG_DIR`): `duo2 file convert` converted, refused a taken name with the free name to pass, took `--as`, reported a password-protected file, and `duo2 undo` removed the copy. Captures are in `build/ui/docx-*.png`.
 ## F-117 · Google calls Duo's browser unsupported because a bare WKWebView doesn't say it's Safari (C-32, Q-65, 2026-10-06)
 
 Spike: `docs/plan/spikes/browser-engine.md`.

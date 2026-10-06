@@ -1,0 +1,78 @@
+{
+ "$note": "Opening a Word document as Markdown, approved 2026-10-06 (DL-123). kind=board: a part of the window drawn on the Design canvas, exported as static HTML.",
+ "source": "https://claude.ai/artifact/YRWyEm4MHbxYYtnRVr55xp",
+ "screens": [
+  {
+   "file": "screens/docx-offer.html",
+   "board": "Main.dc.html",
+   "kind": "board",
+   "width": 460,
+   "height": 600,
+   "decision": "DL-123",
+   "shows": "The .docx opens in Quick Look with the notice bar: Convert to Markdown (default), Open With, Show in Finder."
+  },
+  {
+   "file": "screens/docx-offer-sheet.html",
+   "board": "SheetAlt.dc.html",
+   "kind": "board",
+   "width": 520,
+   "height": 380,
+   "decision": "DL-123",
+   "shows": "NOT CHOSEN (DL-123 picked A): the same offer as a sheet on open."
+  },
+  {
+   "file": "screens/docx-name-taken.html",
+   "board": "NameTaken.dc.html",
+   "kind": "board",
+   "width": 520,
+   "height": 340,
+   "decision": "DL-123",
+   "shows": "<name>.md exists: a Duo question with the path and its age, a Save new as field filled with a free name (Report 2.md), Cancel, Replace, Open Existing, Convert (default)."
+  },
+  {
+   "file": "screens/docx-converting.html",
+   "board": "Converting.dc.html",
+   "kind": "board",
+   "width": 460,
+   "height": 600,
+   "decision": "DL-123",
+   "shows": "Converting, after half a second: a progress bar, what it's doing, Cancel."
+  },
+  {
+   "file": "screens/docx-result.html",
+   "board": "Result.dc.html",
+   "kind": "board",
+   "width": 800,
+   "height": 600,
+   "decision": "DL-123",
+   "shows": "The copy takes the .docx's tab: Converted from Report.docx. The Word document is unchanged; the summary; Undo Conversion, Open Original, OK (default)."
+  },
+  {
+   "file": "screens/docx-partial.html",
+   "board": "Partial.dc.html",
+   "kind": "board",
+   "width": 800,
+   "height": 600,
+   "decision": "DL-123",
+   "shows": "With gaps: Not carried over: …, then Also: …."
+  },
+  {
+   "file": "screens/docx-failed.html",
+   "board": "Failed.dc.html",
+   "kind": "board",
+   "width": 460,
+   "height": 600,
+   "decision": "DL-123",
+   "shows": "Couldn't convert: why, Nothing was written and what to do; Open With (default), Show in Finder; the preview or No preview below."
+  },
+  {
+   "file": "screens/docx-failed-kinds.html",
+   "board": "FailedKinds.dc.html",
+   "kind": "board",
+   "width": 520,
+   "height": 460,
+   "decision": "DL-123",
+   "shows": "Damaged, the older Word format (read only), nothing to convert (Convert Anyway)."
+  }
+ ]
+}

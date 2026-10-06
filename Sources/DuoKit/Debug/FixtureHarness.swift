@@ -1,4 +1,5 @@
 import AppKit
+import DuoSearch
 import SwiftUI
 
 /// Hands the hosting NSWindow to a closure once the view is in it.
@@ -166,6 +167,14 @@ public enum FixtureHarness {
             }
         case "file": if parts.count > 1 { model.selectedFile = parts[1]; model.rightTab = parts[1] }
         case "doc": if parts.count > 1 { model.openDocument(parts[1]) }   // doc:<path>: a document tab, as the file tree opens it
+        case "convert": if parts.count > 1 { model.convertToMarkdown(parts[1]) }   // convert:<docx>: the bar's Convert to Markdown (DL-123)
+        case "converting":   // converting:<docx>: hold the progress bar (C) as drawn, for a capture
+            if parts.count > 1 { model.converting[parts[1]] = (0.62, "Images, 3 of 5") }
+        case "convert-failed":   // convert-failed:<docx>=password|damaged|scan: the failure bar (F, F2)
+            let kv = parts.count > 1 ? parts[1].split(separator: "=", maxSplits: 1).map(String.init) : []
+            if kv.count == 2 {
+                model.conversionFailures[kv[0]] = kv[1] == "password" ? .passwordProtected : kv[1] == "scan" ? .noText(images: 4) : .damaged
+            }
         case "open-file": if parts.count > 1 { model.openFile(at: URL(fileURLWithPath: parts[1])) }   // open-file:<path>: Open File… (DL-106)
         case "hidden": model.setShowHiddenFiles(parts.count > 1 ? parts[1] == "on" : !model.showHiddenFiles)   // hidden:on|off (DL-105)
         case "folder": if parts.count > 1 { model.toggleFolder(parts[1]) }   // folder:<path>: open or close it in the tree

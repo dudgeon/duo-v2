@@ -27,6 +27,7 @@ Start with the **design system**, `system/`. It's also published for Claude Desi
 | `tables-handoff/` | Editing tables in documents (ENH-11, Q-45): Format › Table, the bar while in a table, Insert Table, 3 canvas boards | Target; built (F-94) |
 | `stand-ins-handoff/` | Q-42 (the map with Home's projects directly in Home) and Q-43 (New Session in Task: the hover + and the drafted prompt), 5 canvas boards | Target; built (F-86, F-92) |
 | `chat-mode-handoff/` | Chat mode (ENH-13, DL-118): the look, the toggle, tool and review cards, AskUserQuestion, the composer, fallback; 15 canvas boards | Target (DL-119); not built |
+| `docx-handoff/` | Opening a Word document as Markdown (ENH-14, DL-123): the offer, the name-taken question, converting, the copy and its notice, with gaps, failures; 8 canvas boards (A2 not chosen) | Target; built (F-116) |
 | `task-menu-handoff/` | The task right-click menu (DL-115): the menu, an archived task's menu in the Archived fold, and the Archive, Delete and Move questions, 3 canvas boards | Target; built (F-97) |
 | `build-handoff/` | The main handoff (overview, project, peek, look) and the canonical `tokens.json` | Target; parts superseded, see its banner |
 | `search-handoff/` | Search (⇧⌘A), 18 screens | Target; Jump and ⌘K superseded |

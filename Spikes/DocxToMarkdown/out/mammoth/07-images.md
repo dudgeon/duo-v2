@@ -1,0 +1,10 @@
+# Plot Map
+
+The figure shows the bed layout\.
+
+![Green rectangle standing for bed one](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAA8CAIAAAAiz\+n/AAAAhklEQVR4nO3QAQkAIADAMIMZwmCGtoXCHTzA2Zh76ULj\+cEngQbdCjToVqBBtwINuhVo0K1Ag24FGnQr0KBbgQbdCjToVqBBtwINuhVo0K1Ag24FGnQr0KBbgQbdCjToVqBBtwINuhVo0K1Ag24FGnQr0KBbgQbdCjToVqBBtwINuhVo0K0O0OXEw3SOXMoAAAAASUVORK5CYII=)
+
+And a second picture without alt text:
+
+![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAIAAAADnC86AAAAMElEQVR4nO3NQQkAAAgEsAtmCGMbyxKCn8H\+y3S9iFgsFovFYrFYLBaLxWKxWHxnAftZTXkF2MgOAAAAAElFTkSuQmCC)
+
