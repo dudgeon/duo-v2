@@ -414,6 +414,10 @@ extension AppModel {
                 if editorIfLoaded?.url?.standardizedFileURL == url.standardizedFileURL {
                     editor.run("return duo.text()") { v in done(.ok(v as? String ?? "")) }
                 } else {
+                    // A deck or any other file that isn't text: say so, never its bytes (C-26).
+                    if FileKind.isBinary(url) {
+                        return done(.fail("\(rel) isn't text" + (Self.isDeck(rel) ? ": `duo2 slide shapes \(SendFormat.quoted(rel))` reads its slides" : "")))
+                    }
                     guard let data = FileManager.default.contents(atPath: url.path) else { return done(.fail("can't read \(rel)")) }
                     done(.ok(String(decoding: data, as: UTF8.self)))
                 }
@@ -535,6 +539,8 @@ extension AppModel {
                      list.map { ["at": $0.at, "source": $0.source, "bytes": $0.bytes, "path": FileHistory.blob(url, hash: $0.hash).path] }))
 
         // MARK: HTML pages
+        case .slide, .slideGo, .slideShapes, .slideNotes, .slidePick, .slideElement:
+            slideVerb(id, inv, req, done)
         case .htmlReload:
             guard let v = visiblePage, v.pageURL != nil else { return done(.fail("no web page is showing")) }
             v.reload(); done(.ok("Reloaded."))
@@ -569,7 +575,9 @@ extension AppModel {
             group.notify(queue: .main) { [weak self] in
                 MainActor.assumeIsolated {
                     guard let self else { return }
-                    if let v = self.visiblePage, let e = v.picked, let url = v.pageURL { parts.append(SendFormat.element(e, path: self.displayPath(url), screenshot: nil)) }
+                    if let d = self.visiblePage as? DeckViewer, let s = d.pickedShape, let url = d.pageURL {
+                        parts.append(SendFormat.shape(s, path: self.displayPath(url), screenshot: nil))
+                    } else if let v = self.visiblePage, let e = v.picked, let url = v.pageURL { parts.append(SendFormat.element(e, path: self.displayPath(url), screenshot: nil)) }
                     if let f = self.selectedFile, self.terminalsMode == .live { parts.append("Selected in Files: \(f)") }
                     done(parts.isEmpty ? .fail("nothing is selected") : .ok(parts.joined(separator: "\n")))
                 }

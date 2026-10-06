@@ -1,0 +1,60 @@
+{
+ "$note": "The PowerPoint viewer, approved 2026-10-06 (DL-125). kind=board: a part of the window drawn on the Design canvas, exported as static HTML.",
+ "source": "https://claude.ai/artifact/UXSLiK37uMERJEh1mNyevE",
+ "screens": [
+  {
+   "file": "screens/pptx-viewer.html",
+   "board": "Main.dc.html",
+   "kind": "board",
+   "width": 460,
+   "height": 800,
+   "decision": "DL-125",
+   "shows": "Slides scroll at the pane's width, numbered; the bar under the tabs: previous, next, Slide n of N (the slide filling most of the pane), Select Shape, Open With."
+  },
+  {
+   "file": "screens/pptx-one-slide.html",
+   "board": "OneSlide.dc.html",
+   "kind": "board",
+   "width": 460,
+   "height": 800,
+   "decision": "DL-125",
+   "shows": "NOT CHOSEN (DL-125 picked A): one slide centred with a strip of numbered thumbnails."
+  },
+  {
+   "file": "screens/pptx-picking.html",
+   "board": "Picking.dc.html",
+   "kind": "board",
+   "width": 460,
+   "height": 800,
+   "decision": "DL-125",
+   "shows": "Select Shape pressed; a dashed outline and the shape's name over the shape under the pointer; the picker bar: Click a shape on a slide to select it. Esc to stop. Cancel."
+  },
+  {
+   "file": "screens/pptx-picked.html",
+   "board": "Picked.dc.html",
+   "kind": "board",
+   "width": 460,
+   "height": 800,
+   "decision": "DL-125",
+   "shows": "A solid 1.5 outline and the name over the picked shape; the bar: <name> on slide n · “text”, In <groups>, Send to Claude (default), Send To, Pick Another, Cancel."
+  },
+  {
+   "file": "screens/pptx-sent.html",
+   "board": "Sent.dc.html",
+   "kind": "board",
+   "width": 700,
+   "height": 460,
+   "decision": "DL-125",
+   "shows": "Send to Claude pastes the shape into Claude's prompt without Return (Claude Code shows [Pasted text]); the pasted text: file, slide n of N, name and id, type, groups, text, box on the slide, the duo2 command for the whole slide, a screenshot."
+  },
+  {
+   "file": "screens/pptx-fallback.html",
+   "board": "Fallback.dc.html",
+   "kind": "board",
+   "width": 460,
+   "height": 800,
+   "decision": "DL-125",
+   "shows": "A deck the renderer can't open (password, damaged): the notice says why and that Claude can't read its slides either, Open With, Show in Finder, over Quick Look."
+  }
+ ]
+}

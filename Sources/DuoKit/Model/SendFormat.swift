@@ -107,6 +107,45 @@ public enum SendFormat {
         return finish(out)
     }
 
+    /// A shape picked on a slide (ENH-12, DL-125 board D).
+    public struct Shape: Codable, Equatable, Sendable {
+        public var slide, count, id: Int
+        public var name, type: String
+        public var groups: [String]
+        public var text: String
+        /// x, y, width, height in slide pixels (96 per inch).
+        public var box: [Int]
+        public var slideSize: [Int]
+
+        public init(slide: Int, count: Int, id: Int, name: String, type: String, groups: [String], text: String, box: [Int], slideSize: [Int]) {
+            self.slide = slide; self.count = count; self.id = id; self.name = name; self.type = type
+            self.groups = groups; self.text = text; self.box = box; self.slideSize = slideSize
+        }
+    }
+
+    /// What Claude gets for a picked shape: where it is, what it is, the command for the whole
+    /// slide, and a picture (pptx-handoff `pptx-sent`).
+    public static func shape(_ s: Shape, path: String, screenshot: String?) -> String {
+        var out = "From \(line(path)), slide \(s.slide)\(s.count > 0 ? " of \(s.count)" : ""), the shape \"\(line(s.name))\" (id \(s.id)):"
+        out += "\ntype: \(line(s.type))" + (s.groups.isEmpty ? "" : " · in groups: " + s.groups.map(line).joined(separator: " › "))
+        let text = line(s.text)
+        if !text.isEmpty { out += "\ntext: \"\(text.count > 300 ? String(text.prefix(300)) + "…" : text)\"" }
+        if s.box.count == 4 {
+            out += "\nbox: \(s.box[2])×\(s.box[3]) at (\(s.box[0]), \(s.box[1]))" + (s.slideSize.count == 2 ? " on a \(s.slideSize[0])×\(s.slideSize[1]) slide" : "")
+        }
+        out += "\nthe whole slide: duo2 slide shapes \(quoted(path)) \(s.slide)"
+        if let shot = screenshot { out += "\nscreenshot: \(line(shot))" }
+        return finish(out)
+    }
+
+    /// A path as the board writes it in a command: bare when it's plain, else in double quotes.
+    static func quoted(_ s: String) -> String {
+        let l = line(s)
+        if l.allSatisfy({ $0.isLetter || $0.isNumber || "-_./~".contains($0) }) { return l }
+        return "\"" + l.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "$", with: "\\$").replacingOccurrences(of: "`", with: "\\`") + "\""
+    }
+
     // MARK: Hardening
 
     /// No control characters but newline and tab; CRLF becomes LF.

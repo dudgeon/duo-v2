@@ -166,6 +166,17 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 html element [selector]` | Describe an element (the picked one by default): selector, text, attributes, styles, box, HTML. | — |
 | `duo2 html selection` | The text and images selected in the HTML page. | — |
 
+## PowerPoint decks
+
+| Command | What it does | In the app |
+|---|---|---|
+| `duo2 slide` | The deck showing and the slide on screen, with that slide's shapes and text. | — |
+| `duo2 slide go <n> \| next \| previous` | Show a slide of the deck in the right pane (also ‹ ›, Page Up and Page Down). | Previous Slide, Next Slide |
+| `duo2 slide shapes [<file.pptx>] [<n>]` | A slide's shapes from the file: OOXML id, name, type, groups, text, box, tables, chart data, notes. The deck showing and its slide by default; a file without a slide gives every slide. | — |
+| `duo2 slide notes [<file.pptx>] [<n>]` | A slide's speaker notes (the slide on screen by default). | — |
+| `duo2 slide pick [<slide>/<shape id>]` | Start the shape picker for the user, or select the shape a slide and id name. | Select Shape, Pick Another |
+| `duo2 slide element [<slide>/<shape id>]` | Describe a shape (the picked one by default): slide, id, name, groups, text, box, and a screenshot. | — |
+
 ## Send to Claude
 
 | Command | What it does | In the app |
@@ -174,7 +185,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 send session <id> [--to <id> \| --new]` | Put a session's reference into a session's prompt. | Send to Claude |
 | `duo2 send project <project> [--to <id> \| --new]` | Put a project's reference into a session's prompt. | Send to Claude |
 | `duo2 send selection [--to <id> \| --new]` | Put the user's selection (document or HTML page) into a session's prompt. | Send Selection to Claude, Send Selection To, Send Image to Claude, Send Image To |
-| `duo2 send element [--to <id> \| --new]` | Put the picked HTML element into a session's prompt. | Send to Claude, Send To, New Session |
+| `duo2 send element [--to <id> \| --new]` | Put the picked HTML element, or the shape picked on a slide, into a session's prompt. | Send to Claude, Send To, New Session |
 | `duo2 send text <text> [--to <id> \| --new]` | Type text into a session's prompt for the user to finish and send. | — |
 | `duo2 selection` | What the user has selected or picked right now, in the editor or an HTML page. | — |
 
