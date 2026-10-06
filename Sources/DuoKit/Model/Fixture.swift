@@ -46,6 +46,8 @@ public struct Fixture: Codable, Sendable, Equatable {
         /// Last activity, ms since 1970 (live sessions; DL-104's Recent order). Fixture sessions have
         /// none and are ordered by their wait text instead.
         public var lastActive: Double? = nil
+        /// The Remote Control name it was started with (DL-128), from the session index.
+        public var remoteControl: String? = nil
         public var id: String { "\(project)/\(name)" }
         /// What console tabs and terminals are keyed by: the session id when there is one.
         public var tabKey: String { sessionId ?? name }

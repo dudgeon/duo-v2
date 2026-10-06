@@ -29,6 +29,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat" { return try chatChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-live" { return try chatLiveChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-real" { return try chatRealChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "remote-control" { return try remoteControlChecks() }
     let f = try repoFixture()
 
     print("fixture")
@@ -1971,7 +1972,7 @@ func repoFixture() throws -> Fixture {
     }
 }
 
-do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
+do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
 print("\(passes) passed, \(failures) failed")
 exit(Int32(failures))
 

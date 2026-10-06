@@ -152,7 +152,8 @@ public enum LiveSnapshot {
                 forkOf: nil, document: nil,
                 sessionId: id,
                 reason: live?.state == .needsYou ? Self.reason(beacon: beacon, hooks: hooks) : nil,
-                lastActive: since)
+                lastActive: since,
+                remoteControl: entry?.remoteControl)
         }
 
         // Where each session ran, last (after any /cd): a project that moved still has sessions

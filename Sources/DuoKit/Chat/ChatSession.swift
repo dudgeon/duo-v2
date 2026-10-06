@@ -392,27 +392,34 @@ public enum ClaudeVersion {
     /// Runs `claude --version`, ending it after `timeout`, and caches the answer (or its absence).
     @discardableResult
     static func ask(_ path: String) -> String? {
+        let v = output(path, ["--version"])?.split(separator: " ").first.map(String.init).flatMap { ChatVersion($0) != nil ? $0 : nil }
+        lock.lock(); cache[path] = v ?? ""; lock.unlock()
+        return v
+    }
+
+    /// What `claude <args>` prints, or nil if it can't run or takes longer than `timeout` (it's ended).
+    static func output(_ path: String, _ args: [String]) -> String? {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: path)
-        p.arguments = ["--version"]
+        p.arguments = args
         let out = Pipe()
         p.standardOutput = out
         p.standardError = FileHandle.nullDevice
         p.standardInput = FileHandle.nullDevice
+        // Read as it comes: a long answer (`--help`) would otherwise fill the pipe and never exit.
         let exited = DispatchSemaphore(value: 0)
         p.terminationHandler = { _ in exited.signal() }
-        var v: String?
-        if (try? p.run()) != nil {
-            if exited.wait(timeout: .now() + timeout) == .timedOut {
-                p.terminate()
-                if exited.wait(timeout: .now() + 0.5) == .timedOut { kill(p.processIdentifier, SIGKILL) }
-            } else {
-                let s = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-                v = s.split(separator: " ").first.map(String.init).flatMap { ChatVersion($0) != nil ? $0 : nil }
-            }
+        guard (try? p.run()) != nil else { return nil }
+        nonisolated(unsafe) var data = Data()
+        let read = DispatchSemaphore(value: 0)
+        DispatchQueue.global(qos: .utility).async { data = out.fileHandleForReading.readDataToEndOfFile(); read.signal() }
+        if exited.wait(timeout: .now() + timeout) == .timedOut {
+            p.terminate()
+            if exited.wait(timeout: .now() + 0.5) == .timedOut { kill(p.processIdentifier, SIGKILL) }
+            return nil
         }
-        lock.lock(); cache[path] = v ?? ""; lock.unlock()
-        return v
+        guard read.wait(timeout: .now() + 0.5) == .success else { return nil }
+        return String(decoding: data, as: UTF8.self)
     }
 
     @MainActor public static func of(_ path: String, done: @escaping @MainActor (String?) -> Void) {

@@ -13,7 +13,7 @@ public enum ClaudeLocator {
     nonisolated(unsafe) private static var cached: String??
 
     /// Look again next time (DB-3's Look Again).
-    public static func forget() { cached = nil; ClaudeVersion.forget() }
+    public static func forget() { cached = nil; ClaudeVersion.forget(); RemoteControl.forget() }
 
     public static func resolve() -> String? {
         if let c = cached { return c }
@@ -58,9 +58,10 @@ public enum ClaudeLocator {
 public enum TerminalCommand: Sendable, Equatable {
     /// A new Claude Code session with a Duo-minted id (DL-14), optionally seeded with a prompt
     /// as its first message.
-    case newClaude(sessionID: String, prompt: String?)
+    /// `remoteControl` names it for the Claude app (`--remote-control <name>`, DL-128).
+    case newClaude(sessionID: String, prompt: String?, remoteControl: String? = nil)
     /// Reopen a session by id. Never `-c` or the picker (DL-14).
-    case resumeClaude(sessionID: String)
+    case resumeClaude(sessionID: String, remoteControl: String? = nil)
     /// A new session with the same history: `--resume <from> --fork-session`, under a Duo-minted id.
     case forkClaude(from: String, sessionID: String)
     /// A plain shell (DL-8). Auto-promotion of `claude` typed in it comes later.
@@ -155,15 +156,15 @@ public final class TerminalSession {
     private func start() {
         try? FileManager.default.createDirectory(atPath: cwd, withIntermediateDirectories: true)
         switch command {
-        case .newClaude(let id, let prompt):
+        case .newClaude(let id, let prompt, let remote):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
-            var args = ["--session-id", id] + Self.hookArgs(id)
+            var args = ["--session-id", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude)
             if let prompt { args.append(prompt) }
             view.startProcess(executable: claude, args: args, environment: ChildEnvironment.make(sessionID: id),
                               execName: nil, currentDirectory: cwd)
-        case .resumeClaude(let id):
+        case .resumeClaude(let id, let remote):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
-            view.startProcess(executable: claude, args: ["--resume", id] + Self.hookArgs(id), environment: ChildEnvironment.make(sessionID: id),
+            view.startProcess(executable: claude, args: ["--resume", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude), environment: ChildEnvironment.make(sessionID: id),
                               execName: nil, currentDirectory: cwd)
         case .forkClaude(let from, let id):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }

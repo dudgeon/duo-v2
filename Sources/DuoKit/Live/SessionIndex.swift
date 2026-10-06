@@ -14,6 +14,9 @@ public struct SessionIndex: Codable, Sendable, Equatable {
         public var next: String?
         public var starred: Bool?
         public var archived: Bool?
+        /// The Remote Control name the session was started with (`duo2 session new --remote-control`,
+        /// DL-128): every resume passes it again, so the session stays reachable from the Claude app.
+        public var remoteControl: String?
 
         public init(sessionId: String, createdAt: Date = Date(), provenance: String = "created-by-duo") {
             self.sessionId = sessionId
