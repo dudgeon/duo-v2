@@ -103,6 +103,7 @@ gap_use = {
     "cardContent": "Between a card's header, question and buttons.", "tileToTile": "Between tiles in a map column.",
     "mapColumns": "Between map columns (and wrapped rows).", "toolbarOverview": "Between items on the All projects toolbar.",
     "toolbarProject": "Between breadcrumb items in a project.", "paneTabs": "Between right-pane tabs.",
+    "aboveDocumentHeading": "Extra space above a document's H2 and smaller headings, on top of the 10 between blocks (S3-5, C-22).",
 }
 for k, v in sp["gap"].items():
     spacing.append({"name": "gap" + cap(k), "value": px(v), "usage": gap_use.get(k, k)})

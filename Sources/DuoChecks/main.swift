@@ -893,6 +893,10 @@ func repoFixture() throws -> Fixture {
     check(DuoTextStyle.body.spec.size == 13 && DuoTextStyle.body.spec.lineHeight == 20, "body 13/20")
     check(DuoTextStyle.sectionLabel.spec.uppercase && DuoTextStyle.sectionLabel.spec.tracking == 0.66, "section label caps +0.66")
     check(DuoMetric.paneOverviewHome == 340 && DuoMetric.paneProjectRight == 460, "pane widths")
+    // C-22: the editor's H2 and smaller sit 4 lower, from the token the app hands the page.
+    let editorSource = (try? String(contentsOf: repoRoot().appending(path: "Vendor/codemirror/src/duo-editor.js"), encoding: .utf8)) ?? ""
+    check(EditorController.tokenCSS().contains("--duo-heading-above: \(Int(DuoSpace.gapAboveDocumentHeading))px")
+          && editorSource.contains("paddingTop: \"var(--duo-heading-above)\""), "the editor's space above H2 and smaller comes from space.gap.aboveDocumentHeading")
 
     print("cli parity (DL-71, DL-72)")
     check(Set(DuoAction.all.map(\.id)) == Set(ActionID.allCases) && DuoAction.all.count == ActionID.allCases.count, "every action is in the registry once")

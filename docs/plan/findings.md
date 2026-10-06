@@ -1108,3 +1108,34 @@ Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and o
   - Live, on a scratch workspace with its own `DUO_SUPPORT_DIR`: the `menus` dump with the caret in a table shows Format › Table enabled. `duo2 doc table row-below`, `align-center` and `next`, then `doc save`, wrote the realigned table to disk; a bad word gives the usage line.
   - DuoChecks (290 passed) includes parity for every new item.
 - **Not checked:** clicking the bar's buttons with a real pointer (they run the same commands), and Obsidian's renderer (it isn't installed here).
+
+## F-95 · The editor's space above H2 and H3, as editor-document draws it (C-22, 2026-10-06)
+
+- **Cause:** `editor-document` (slice 3) stacks blocks 10 apart and gives H2 and H3 `margin-top: 4px` on top. The editor gave headings only a font (a mark on the text), so there was nowhere to put the 4: every heading after the first sat 4 pt high, and everything under it with it. A drawn table had `margin: 4px 0`, which the target doesn't have; it hid the missing 4 under a table (Open questions landed right by accident) and put the table itself 4 low.
+- **Built:**
+  - A token, `space.gap.aboveDocumentHeading` = 4 (`DuoSpace.gapAboveDocumentHeading`, `gapAboveDocumentHeading` in the design system). The app hands it to the page as `--duo-heading-above`, beside the colours (`EditorController.tokenCSS`).
+  - `duo-editor.js` puts a line class on each heading that starts its line (`duo-hl duo-hl1`…`6`). H2 to H6 lines take `padding-top: var(--duo-heading-above)`: padding, not margin, so CodeMirror measures the line with it. H1 takes none, as drawn. The space stays while the caret shows the heading's `## `, so nothing jumps.
+  - The drawn table loses its margin: the blank lines around it give the 10, as drawn.
+  - A DuoChecks check ties the page's rule to the token (291 passed).
+- **Measured** in a browser page at the pane's width (460, under a 36 + 1 pt tab strip, colours from `tokens.json`), against the two targets. Text ink tops, in points from the pane's top, target / before / after:
+
+  | | target | before | after |
+  |---|---|---|---|
+  | `editor-document` H1 | 64 | 64 | 64 |
+  | its paragraph | 98.5 | 98.5 | 98.5 |
+  | Thresholds (H2) | 152.5 | 148.5 | 152.5 |
+  | Finance confirmed… | 183 | 179 | 183 |
+  | `tables-bar` Thresholds (H2) | 101.5 | 97.5 | 101.5 |
+  | Limits per path… | 132.5 | 128.5 | 132.5 |
+  | the bar's buttons | 163.5 | 159.5 | 163.5 |
+  | the table's rows | 190.5, 211, 230 | 186.5, 207, 226 | 190.5, 211, 230 |
+  | Open questions (H3) | 284 | 276 | 284 |
+  | its paragraph | 314 | 306 | 314 |
+
+  On `tables-bar` the page now matches the board pixel for pixel, apart from the caret and the tab strip's labels (the harness strip has none). Line boxes agree too: on `editor-document` the Thresholds line's text starts at 148 against the target's 148 (144 before).
+- **Still different on `editor-document`, not C-22:**
+  - The "2 lines removed by Claude" row has `margin: 2px 0` of its own (`.duo-deleted-block`). The target puts it 10 from its neighbours, so in the editor it sits 2 low and the rest of the page 4 low: the table is at 248 against 244, Open questions at 345 against 341.
+  - List and task items are 20 apart; the target draws them 22 apart (`gap: 2px`).
+  - The first paragraph wraps before "See" where the target wraps after it (the inline code's padding).
+- **The fixture states don't change** (window captures don't draw the web view, F-25). `scripts/samepng.py` gave 0 differing pixels for all six against captures from before.
+- **Not checked live:** the `--state project` fixture never loads the editor page (`editor-js:` finds `about:blank`), so the token variable was checked by DuoChecks and the binary, not in the app's own web view.

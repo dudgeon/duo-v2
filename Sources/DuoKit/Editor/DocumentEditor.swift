@@ -64,7 +64,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     }
 
     /// Duo's tokens as CSS variables (no raw hex anywhere: values come from `DuoNSColor`).
-    static func tokenCSS() -> String {
+    public static func tokenCSS() -> String {
         func hex(_ c: NSColor) -> String {
             let s = c.usingColorSpace(.sRGB) ?? c
             return String(format: "#%02X%02X%02X", Int(round(s.redComponent * 255)), Int(round(s.greenComponent * 255)), Int(round(s.blueComponent * 255)))
@@ -72,7 +72,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         let vars = [("pane", DuoNSColor.pane), ("text", DuoNSColor.text), ("text2", DuoNSColor.text2), ("selected", DuoNSColor.selected),
                     ("rule", DuoNSColor.rule), ("control-edge", DuoNSColor.controlEdge), ("ground", DuoNSColor.ground), ("needs-you", DuoNSColor.needsYou)]
             .map { "--duo-\($0.0): \(hex($0.1));" }.joined(separator: " ")
-        let css = ":root { \(vars) --duo-radius-card: \(Int(DuoMetric.radiusCard))px; }"
+        let css = ":root { \(vars) --duo-radius-card: \(Int(DuoMetric.radiusCard))px; --duo-heading-above: \(Int(DuoSpace.gapAboveDocumentHeading))px; }"
         return "document.documentElement.setAttribute('style', \(String(reflecting: css)).replace(/^:root \\{ | \\}$/g, ''));"
     }
 

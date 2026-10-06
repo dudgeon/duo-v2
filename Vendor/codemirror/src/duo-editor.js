@@ -53,6 +53,8 @@ class CodeLangWidget extends WidgetType {
 const hide = Decoration.replace({});
 const headingMarks = [1, 2, 3, 4, 5, 6].map((l) => Decoration.mark({ class: `duo-h duo-h${l}` }));
 const headingMark = (level) => headingMarks[level - 1];
+// The heading's line, so H2 and smaller can sit a little lower than the 10 between blocks (C-22).
+const headingLines = [1, 2, 3, 4, 5, 6].map((l) => Decoration.line({ class: `duo-hl duo-hl${l}` }));
 const strong = Decoration.mark({ class: "duo-strong" });
 const em = Decoration.mark({ class: "duo-em" });
 const code = Decoration.mark({ class: "duo-code" });
@@ -126,6 +128,7 @@ function buildDecorations(view) {
           return false;
         }
         if (m) {
+          if (state.doc.lineAt(node.from).from === node.from) ranges.push([node.from, node.from, headingLines[m[1] - 1]]);
           ranges.push([node.from, node.to, headingMark(m[1])]);
         } else if (name === "HeaderMark" && !raw) {
           // `## ` → hide the hashes and the space after them.
@@ -1329,6 +1332,10 @@ const duoTheme = EditorView.theme({
   ".duo-h": { fontSize: "13px", fontWeight: "600" },
   ".duo-h1": { fontSize: "18px", lineHeight: "24px" },
   ".duo-h2": { fontSize: "14px" },
+  // H2 and smaller sit 4 lower than the 10 between blocks, as editor-document draws them (C-22):
+  // space.gap.aboveDocumentHeading, set by the app as --duo-heading-above. Padding, not margin, so
+  // CodeMirror measures the line's height with it.
+  ".cm-line.duo-hl2, .cm-line.duo-hl3, .cm-line.duo-hl4, .cm-line.duo-hl5, .cm-line.duo-hl6": { paddingTop: "var(--duo-heading-above)" },
   ".cm-line.duo-li": { paddingLeft: "20px", textIndent: "-20px" },
   ".duo-li-mark": { display: "inline-block", width: "12px", marginRight: "8px", textAlign: "right", textIndent: "0", color: "var(--duo-text2)" },
   ".duo-done": { color: "var(--duo-text2)" },
@@ -1337,7 +1344,8 @@ const duoTheme = EditorView.theme({
   ".cm-line.duo-codeblock-first": { borderTopLeftRadius: "6px", borderTopRightRadius: "6px" },
   ".cm-line.duo-codeblock-last": { borderBottomLeftRadius: "6px", borderBottomRightRadius: "6px" },
   ".cm-line.duo-codeblock-fence": { height: "8px", lineHeight: "8px", fontSize: "0", overflow: "visible" },
-  ".duo-table": { overflowX: "auto", margin: "4px 0" },
+  // No margin: the blank lines around it give the 10 between blocks, as the target draws it (C-22).
+  ".duo-table": { overflowX: "auto" },
   ".duo-table table": { borderCollapse: "collapse", width: "100%", fontSize: "13px", lineHeight: "20px" },
   ".cm-line.duo-blank": { height: "10px", lineHeight: "10px" },
   ".duo-hr": { display: "inline-block", width: "100%", height: "1px", verticalAlign: "middle", backgroundColor: "var(--duo-rule)" },
