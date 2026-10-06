@@ -269,11 +269,14 @@ struct TasksFold: View {
                 .padding(.horizontal, 8 + DuoSpace.selectionInset)
                 .frame(height: DuoMetric.rowGroup)
                 .contentShape(Rectangle())
-                .onActivate { if expanded { model.expandedGroups.insert(key) } else { model.expandedGroups.remove(key) } }  // action: view group
+                .onActivate { withDuoAnimation(.fold) { if expanded { model.expandedGroups.insert(key) } else { model.expandedGroups.remove(key) } } }  // action: view group
                 .accessibilityLabel(expanded ? "Hide tasks without sessions" : "Show \(tasks.count) tasks without sessions")
                 .padding(.top, 8)
                 if expanded {
-                    ForEach(tasks) { t in TaskLine(task: t, showsProject: false, indented: true) }
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(tasks) { t in TaskLine(task: t, showsProject: false, indented: true) }
+                    }
+                    .transition(.foldRows)
                 }
             }
         }

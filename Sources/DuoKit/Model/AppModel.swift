@@ -43,6 +43,9 @@ public final class AppModel {
     // Inside a project
     public var selectedSidebarItem: String?     // group name or Session.id
     public var expandedGroups: Set<String> = []
+    /// The session list's order while the pointer is in it (Q-80, DL-130): project, then each
+    /// section's row ids. Nil when the list is free to reorder.
+    public var sidebarHold: (project: String, order: [String: [String]])?
     /// The task row under the pointer ("<project>/<note path>"), which shows its + (DL-112).
     public var hoveredTaskRow: String?
     /// The tab under the pointer (a console or Home tab's key, or a right-pane document path),
@@ -646,5 +649,27 @@ public final class AppModel {
     public var needsYouElsewhere: [Fixture.Session] {
         let here = currentProject?.name
         return fixture.needsYou.filter { $0.project != here }
+    }
+}
+
+extension AppModel {
+    /// The open project's session list as shown: held still while the pointer is in it (Q-80).
+    public func sidebarSections() -> [SidebarSection] {
+        guard let p = currentProject?.name else { return [] }
+        let fresh = SidebarRow.sections(for: p, in: fixture, isOpen: { hasOpenTerminal($0) })
+        guard let hold = sidebarHold, hold.project == p else { return fresh }
+        return SidebarRow.held(fresh, order: hold.order)
+    }
+
+    /// The pointer came into the session list, or left it. Coming in, the list holds its order;
+    /// leaving, rows move to where they belong now (`rowMove`, DL-130).
+    public func hoverSidebar(_ inside: Bool) {
+        guard let p = currentProject?.name else { return }
+        if inside {
+            guard sidebarHold?.project != p else { return }
+            sidebarHold = (p, Dictionary(uniqueKeysWithValues: sidebarSections().map { ($0.id, $0.rows.map(\.id)) }))
+        } else if sidebarHold != nil {
+            withDuoAnimation(.rowMove) { sidebarHold = nil }
+        }
     }
 }

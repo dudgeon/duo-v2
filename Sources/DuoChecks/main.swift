@@ -1164,6 +1164,16 @@ func repoFixture() throws -> Fixture {
                   return t.contains("accessibilityReduceMotion") || t.contains("accessibilityDisplayShouldReduceMotion") || t.contains(".spring(") }
     check(motionStrays.isEmpty, "motion reads Reduce Motion only through MotionSettings, with no springs (\(motionStrays.map(\.lastPathComponent)))")
 
+    // Q-80: while the pointer is in the session list, rows keep their place; new rows join; gone rows go.
+    do {
+        func r(_ id: String, _ st: SessionState) -> SidebarRow { SidebarRow(id: id, name: id, state: st, wait: "1m", kind: .session) }
+        let fresh = [SidebarSection(id: "needs", title: "Needs you", rows: [r("b", .needsYou), r("a", .needsYou)], needsYou: true),
+                     SidebarSection(id: "today", title: "Today", rows: [r("new", .idle), r("c", .idle)])]
+        let held = SidebarRow.held(fresh, order: ["needs": ["a"], "today": ["b", "c", "gone"]])
+        check(held.map(\.id) == ["needs", "today"] && held[0].rows.map(\.id) == ["a"] && held[1].rows.map(\.id) == ["new", "b", "c"]
+              && held[1].rows[1].state == SessionState.needsYou, "a held list keeps rows in place with fresh state, adds new rows, drops gone ones (Q-80)")
+    }
+
     print("cli parity (DL-71, DL-72)")
     check(Set(DuoAction.all.map(\.id)) == Set(ActionID.allCases) && DuoAction.all.count == ActionID.allCases.count, "every action is in the registry once")
     let gaps = parityGaps()

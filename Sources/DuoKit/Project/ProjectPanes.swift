@@ -9,7 +9,8 @@ struct ProjectSidebarPane: View {
 
     var body: some View {
         let project = model.currentProject
-        let sections = project.map { p in SidebarRow.sections(for: p.name, in: model.fixture, isOpen: { model.hasOpenTerminal($0) }) } ?? []
+        let sections = model.sidebarSections()
+        let items = SidebarItem.items(sections)
         VStack(alignment: .leading, spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -30,16 +31,22 @@ struct ProjectSidebarPane: View {
                         if project.isMissing { MissingNotice(project: project) }
                         else if project.kind == "folder", project.notNow != true { FolderNotice(project: project) }
                     }
-                    // Needs you, Open, then history by date, then the folds (DL-91).
-                    ForEach(sections) { section in
-                        if !section.title.isEmpty {
+                    // Needs you, Open, then history by date, then the folds (DL-91). One flat list, so a
+                    // row keeps its identity when it changes section and travels there (DL-130):
+                    // `rowMove`; a new row fades in (`rowIn`), a row that goes fades out (`rowOut`).
+                    ForEach(items) { item in
+                        switch item.kind {
+                        case .label(let section):
                             SectionLabel(text: section.title, count: section.id == "needs" || section.id == "open" ? section.rows.count : nil,
                                          needsYou: section.needsYou)
                                 .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
-                        } else {
+                        case .gap:
                             Color.clear.frame(height: 8)
+                        case .row(let row):
+                            SidebarRowView(row: row)
+                                .transition(.asymmetric(insertion: .opacity.animation(DuoMotionToken.rowIn.animation),
+                                                        removal: .opacity.animation(DuoMotionToken.rowOut.animation)))
                         }
-                        ForEach(section.rows) { row in SidebarRowView(row: row) }
                     }
                     if let project, model.terminalsMode == .live { TasksFold(project: project.name) }
                     if let project { ArchivedSessionsFold(project: project.name) }
@@ -53,11 +60,29 @@ struct ProjectSidebarPane: View {
                     .padding(.vertical, 14)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                // Everything under a row that moves goes with it, the buttons and folds too.
+                .duoAnimation(.rowMove, value: items.map(\.id))
             }
+            .onHover { model.hoverSidebar($0) }
             FileTreePane()
         }
         .foregroundStyle(DuoColor.text)
         .background(DuoColor.pane)
+    }
+}
+
+/// The session list flattened: section labels, gaps and rows in one run, keyed so a row is the
+/// same view in whichever section it sits (DL-130).
+struct SidebarItem: Identifiable {
+    enum Kind { case label(SidebarSection), gap, row(SidebarRow) }
+    let id: String
+    let kind: Kind
+
+    static func items(_ sections: [SidebarSection]) -> [SidebarItem] {
+        sections.flatMap { s -> [SidebarItem] in
+            let head = SidebarItem(id: "section/\(s.id)", kind: s.title.isEmpty ? .gap : .label(s))
+            return [head] + s.rows.map { SidebarItem(id: "row/\($0.id)", kind: .row($0)) }
+        }
     }
 }
 
@@ -91,9 +116,9 @@ struct SidebarRowView: View {
                 .padding(.horizontal, 8 + DuoSpace.selectionInset)
                 .frame(height: DuoMetric.rowGroup)
                 .contentShape(Rectangle())
-                .onActivate { if expanded { model.expandedGroups.remove(row.id) } else { model.expandedGroups.insert(row.id) } }  // action: view group
+                .onActivate { withDuoAnimation(.fold) { if expanded { model.expandedGroups.remove(row.id) } else { model.expandedGroups.insert(row.id) } } }  // action: view group
                 .accessibilityLabel(expanded ? "Hide \(row.name.lowercased()) sessions" : "Show \(rows.count) \(row.name.lowercased()) sessions")
-                if expanded { ForEach(rows) { r in SidebarLeafRow(row: r, nested: false) } }
+                if expanded { ForEach(rows) { r in SidebarLeafRow(row: r, nested: false) }.transition(.foldRows) }
             }
         case .group(let threads, let count):
             let expanded = model.expandedGroups.contains(row.name)
@@ -103,7 +128,7 @@ struct SidebarRowView: View {
                     Chevron(direction: expanded ? .down : .right).frame(width: 10)
                         .contentShape(Rectangle())
                         .onActivate {  // action: view group
-                            if expanded { model.expandedGroups.remove(row.name) } else { model.expandedGroups.insert(row.name) }
+                            withDuoAnimation(.fold) { if expanded { model.expandedGroups.remove(row.name) } else { model.expandedGroups.insert(row.name) } }
                         }
                         .accessibilityLabel(expanded ? "Collapse" : "Expand")
                     StateGlyph(row.state)
@@ -153,6 +178,7 @@ struct SidebarRowView: View {
                         DuoColor.controlEdge.frame(width: DuoMetric.borderEmphasis)
                     }
                     .padding(.leading, DuoSpace.threadRuleX)
+                    .transition(.foldRows)
                 }
             }
         case .thread, .session:
@@ -336,7 +362,7 @@ struct FileRow: View {
             }
             .padding(.horizontal, DuoSpace.selectionInset)
             .contentShape(Rectangle())
-            .onActivate { if node.children == nil { model.openDocument(node.path) } else { model.toggleFolder(node.path) } }  // action: doc open
+            .onActivate { if node.children == nil { model.openDocument(node.path) } else { withDuoAnimation(.fold) { model.toggleFolder(node.path) } } }  // action: doc open
             .modifier(LiveContextMenu { FileMenu(path: node.path, isFolder: node.children != nil, onTab: false) })
             // Drag the file out (a terminal types its path); drop files on a folder, or on a file for its folder (DL-117).
             .modifier(DragsFile(path: node.path, name: node.name))
@@ -344,7 +370,7 @@ struct FileRow: View {
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(selected ? .isSelected : [])
             if let children = node.children, open {
-                ForEach(children) { c in FileRow(node: c, depth: depth + 1) }
+                ForEach(children) { c in FileRow(node: c, depth: depth + 1) }.transition(.foldRows)
             }
         }
     }

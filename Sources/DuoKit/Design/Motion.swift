@@ -71,3 +71,14 @@ public extension View {
 @MainActor public func withDuoAnimation<R>(_ token: DuoMotionToken, _ body: () throws -> R) rethrows -> R {
     try withAnimation(token.animation, body)
 }
+
+extension AnyTransition {
+    /// A fold's rows (DL-130): they fade in over the second half of `fold`, once the rows around
+    /// them have made room, and fade out over its first half. At once with Reduce Motion.
+    @MainActor static var foldRows: AnyTransition {
+        let half = DuoMotionToken.fold.duration / 2
+        guard half > 0 else { return .identity }
+        return .asymmetric(insertion: .opacity.animation(.easeOut(duration: half).delay(half)),
+                           removal: .opacity.animation(.easeIn(duration: half)))
+    }
+}
