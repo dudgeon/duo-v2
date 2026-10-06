@@ -175,7 +175,15 @@ extension AppModel {
             done(.ok("Showing \(s.name)."))
         case .sessionClose:
             guard let k = inv[0] ?? visibleSessionId, let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }) else { return done(.fail("no session to close")) }
-            guard terminals.existing(s.tabKey) != nil else { return done(.fail("\(s.name) isn't running in Duo")) }
+            guard terminals.existing(s.tabKey) != nil else {
+                // Duo's own child with no terminal (C-30): end it.
+                if let id = s.sessionId, let pid = orphanPid(id) {
+                    endOrphan(pid)
+                    refreshLive()
+                    return done(.ok("Ended \(s.name), which Duo was running without a tab. It stays listed and resumable."))
+                }
+                return done(.fail("\(s.name) isn't running in Duo"))
+            }
             // A working session isn't closed by surprise: the UI asks, duo2 needs --force (Q-71).
             if !inv.has("force"), busy(s.tabKey) != nil {
                 return done(.fail("Claude is still working in \(s.name). Pass --force to close it anyway."))

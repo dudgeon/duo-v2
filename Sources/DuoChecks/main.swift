@@ -567,6 +567,7 @@ func repoFixture() throws -> Fixture {
     check(store.existing("old-id") == nil && store.existing("new-id")?.key == "new-id", "terminal re-keys to the new session id")
     store.terminateAll()
     try? FileManager.default.removeItem(at: ev)
+    reapChecks()
 
     print("titles")
     func rec(_ json: String) -> [String: Any] { try! JSONSerialization.jsonObject(with: Data(json.utf8)) as! [String: Any] }

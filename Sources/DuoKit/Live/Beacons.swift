@@ -22,15 +22,42 @@ public struct Beacon: Sendable, Equatable, Decodable {
         self.nameSource = nameSource
     }
 
-    /// Reads every beacon whose process is still alive.
+    /// Reads every beacon whose process is still running: one that's exiting or a zombie has ended,
+    /// though `kill -0` still reaches it (C-30, F-126).
     public static func readAll(in dir: URL = ClaudeStorage.sessions) -> [Beacon] {
         guard let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else { return [] }
         return files.filter { $0.pathExtension == "json" }.compactMap { url in
             guard let data = try? Data(contentsOf: url),
                   let b = try? JSONDecoder().decode(Beacon.self, from: data),
-                  kill(b.pid, 0) == 0 else { return nil }
+                  ProcessLiveness.isRunning(b.pid) else { return nil }
             return b
         }
+    }
+}
+
+/// Whether a process is still running. `kill(pid, 0)` also succeeds for one that is exiting (state
+/// `E`: a Claude whose last output its terminal never read waits there, F-126) or a zombie
+/// nobody has reaped; both have ended as far as Duo cares.
+public enum ProcessLiveness {
+    public static func isRunning(_ pid: Int32) -> Bool {
+        guard pid > 0, kill(pid, 0) == 0 else { return false }
+        var info = kinfo_proc()
+        var size = MemoryLayout<kinfo_proc>.stride
+        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
+        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else { return true }  // can't tell: as kill says
+        return !isEnded(stat: info.kp_proc.p_stat, flag: info.kp_proc.p_flag)
+    }
+
+    /// A zombie, or past `exit` (P_WEXIT).
+    public static func isEnded(stat: CChar, flag: Int32) -> Bool { Int32(stat) == SZOMB || flag & P_WEXIT != 0 }
+
+    /// The parent of a process; 0 when it can't be read.
+    public static func parent(_ pid: Int32) -> Int32 {
+        var info = kinfo_proc()
+        var size = MemoryLayout<kinfo_proc>.stride
+        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
+        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else { return 0 }
+        return info.kp_eproc.e_ppid
     }
 }
 

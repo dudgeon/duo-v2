@@ -6,11 +6,14 @@ import SwiftUI
 extension AppModel {
     public func isSessionArchived(_ id: String) -> Bool { DuoState.load().archivedSessions.contains(id) }
 
-    /// Refused while the session runs (a tab open in Duo, or live elsewhere): end it first.
+    /// Refused while the session runs (a tab open in Duo, or live elsewhere): end it first. One that
+    /// is exiting has ended (`Beacon.readAll`).
     @discardableResult
     public func setSessionArchived(_ key: String, _ on: Bool) -> String? {
         let all = fixture.sessions + (fixture.archivedSessions ?? [])
         guard let s = all.first(where: { $0.tabKey == key || $0.sessionId == key }), let id = s.sessionId else { return "no session '\(key)'" }
+        // A process Duo started but holds no terminal for has nothing to lose: it ends (C-30, F-126).
+        if on, !hasOpenTerminal(s.tabKey), liveElsewhere.contains(id), let pid = orphanPid(id) { endOrphan(pid); liveElsewhere.remove(id) }
         if on, hasOpenTerminal(s.tabKey) || liveElsewhere.contains(id) { return "\(s.name) is running; end it before archiving it" }
         guard isSessionArchived(id) != on else { return nil }
         DuoState.update { st in
