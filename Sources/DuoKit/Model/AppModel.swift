@@ -1,3 +1,4 @@
+import DuoControl
 import Foundation
 import Observation
 
@@ -336,7 +337,7 @@ public final class AppModel {
         Notifier.shared.model = self
         notifyNeedsYou()
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
-        GitIgnoreOffer.consider(folders, interactive: interactivePrompts)
+        GitIgnoreOffer.consider(folders, interactive: interactivePrompts && !SupportFolder.isIsolated)   // C-28: no first-run questions in an isolated instance
         // What was open when Duo last quit comes back once the sessions are known (LR-58).
         if !restoreApplied, !fixture.sessions.isEmpty || !folders.isEmpty { applyRestore() }
         defer { saveRestoreState() }

@@ -211,6 +211,6 @@ final class MainWindow {
         }
         FixtureHarness.configure(w, model: model, options: options)
         w.makeKeyAndOrderFront(nil)
-        NSApp.activate()
+        if !SupportFolder.isIsolated { NSApp.activate() }   // an isolated instance never takes focus (C-28)
     }
 }

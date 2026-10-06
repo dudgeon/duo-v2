@@ -7,6 +7,9 @@ import DuoControl
 @MainActor
 public enum InstallPrompt {
     public static func run(cli: String) {
+        // An isolated instance (its own support folder) neither asks nor refreshes, and so asks
+        // nothing about legacy Duo either: its targets are the user's real files (C-28, F-113).
+        if let why = Installer.refusal { return FileHandle.standardError.write(Data("install: skipped. \(why)\n".utf8)) }
         if Installer.needsConsent(cli: cli) {
             // Duo's own sheet (S3-3, DL-101), naming every change and where it goes (DL-75).
             SheetCenter.shared.ask(DuoQuestion(

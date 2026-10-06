@@ -17,7 +17,7 @@ extension AppModel {
         panel.prompt = "Make Home"
         panel.message = "Home holds the projects you track. Duo adds a HOME.md to the folder if it has none."
         if let r = liveRoot { panel.directoryURL = r } else { panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser }
-        NSApp.activate(ignoringOtherApps: true)
+        DuoFocus.take()
         guard panel.runModal() == .OK, let url = panel.url else { return }
         if let why = setHome(url) { info(why) }
     }
@@ -124,7 +124,7 @@ extension AppModel {
         }
         if let into { form.into = into }
         cancelSheet()
-        if done != nil { NSApp.activate(ignoringOtherApps: true) }
+        if done != nil { DuoFocus.take() }
         moveIntoHomeForm = form
     }
 

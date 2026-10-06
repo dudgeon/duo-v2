@@ -1,4 +1,5 @@
 import AppKit
+import DuoControl
 import Observation
 import SwiftUI
 
@@ -23,6 +24,16 @@ public struct DuoQuestion: Identifiable {
     public var choices: [Choice]
 }
 
+/// Brings Duo forward, unless this instance is isolated (C-28, F-113): a scripted instance with
+/// its own support folder never takes the keyboard from the user's work, so a stray Return can't
+/// answer its questions. Its windows still show, behind whatever has focus.
+@MainActor public enum DuoFocus {
+    public static func take() {
+        guard !SupportFolder.isIsolated else { return }
+        NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
 /// The queue of Duo's own questions. Static so the launch questions (install, legacy Duo,
 /// .gitignore), which run outside the model, can ask too.
 @MainActor @Observable public final class SheetCenter {
@@ -32,7 +43,7 @@ public struct DuoQuestion: Identifiable {
 
     public func ask(_ q: DuoQuestion) {
         queue.append(q)
-        NSApp.activate(ignoringOtherApps: true)
+        DuoFocus.take()
     }
 
     /// Takes the current question off the queue, then runs the choice (which may ask another).

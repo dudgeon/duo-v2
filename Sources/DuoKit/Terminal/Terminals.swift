@@ -86,6 +86,11 @@ public enum ChildEnvironment {
         env["COLORTERM"] = "truecolor"
         env["LANG"] = env["LANG"] ?? "en_US.UTF-8"
         env.removeValue(forKey: "TERM_PROGRAM")
+        // The user's Duo doesn't hand its real support folder down (open-duo.sh sets it): a session
+        // that launches a test Duo would otherwise pass it on, and that Duo would count as the
+        // user's own, take the shared socket and remove it on quit (C-28, F-113). Without it, a
+        // scripted launch gets a temporary folder (F-89); an isolated instance keeps passing its own.
+        if !SupportFolder.isIsolated { env.removeValue(forKey: SupportFolder.variable) }
         if let sessionID { env["DUO_SESSION_ID"] = sessionID }  // LR-20
         // duo2 and how to reach the app (DL-15): on PATH and in the environment, never installed
         // globally (LR-55).
