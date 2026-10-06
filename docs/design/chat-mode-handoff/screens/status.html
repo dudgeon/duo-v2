@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x860">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-119">
+<!--
+Interrupt, retry, compaction [G]
+APPROVED BOARD. Geoff, 2026-10-06 (DL-119). Exported from the Design canvas
+https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd (board IStatus.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative;
+every option label inside a review card comes from Claude Code's screen at run time, never from this file.
+-->
+<title>Duo · Chat mode · Interrupt, retry, compaction</title>
+<style>
+body{margin:0}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B636D}
+.who{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:#5B636D}
+.card{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:9px 14px}
+.sys{display:flex;align-items:center;gap:10px;font-size:12px;line-height:16px;color:#5B636D}
+.sys .r{flex:1;height:1px;background:#C9CDD3}
+.field{background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:10px 14px;min-height:44px;box-sizing:border-box}
+.btn{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328}
+</style>
+</head>
+<body>
+<div style="width: 680px; height: 860px; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+<div class="lbl">COMPACTION, A BACKGROUND TASK, AN INTERRUPT</div>
+<div class="sys"><span class="r"></span><span>Conversation compacted · earlier turns are summarised for Claude</span><span class="r"></span></div>
+<div style="margin-right: 36px" class="card"><div>The survey cross-check is running in the background. I’ll draft the rollout section meanwhile.</div></div>
+<div class="sys" style="justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5.5 4 8 8.5 2" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Background agent finished: Survey cross-check</span></div>
+<div style="align-self: flex-end; max-width: 440px" class="you">Actually, hold the rollout section.</div>
+<div style="margin-right: 36px; display: flex; flex-direction: column; gap: 4px">
+<div class="who">Claude · 11:02</div>
+<div class="card"><div style="font-size: 16px; line-height: 24px; font-weight: 600">Rollout</div><div style="color: #5B636D">Phase one ships saved cards to the iOS app behind the wallet sh…</div></div>
+</div>
+<div class="sys"><span style="font-weight: 600; color: #1F2328">Interrupted</span><span>· What should Claude do instead?</span></div>
+<div class="field">Wait for the beta numbers, then pick this up<span style="display: inline-block; width: 1.5px; height: 15px; background: #1F2328; vertical-align: -3px; margin-left: 1px"></span></div>
+
+<div class="lbl" style="margin-top: 14px">WHEN CLAUDE’S SERVICE IS BUSY</div>
+<div style="align-self: flex-end; max-width: 440px" class="you">Draft the FAQ.</div>
+<div class="sys" style="padding-left: 4px"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span style="color: #1F2328">529 Overloaded · Retrying in 2s · attempt 4/10</span></div>
+<div style="display: flex; gap: 8px; align-items: center">
+<div class="field" style="flex: 1; color: #5B636D">Reply to Claude</div>
+<button type="button" class="btn">Stop <span style="color: #5B636D">esc</span></button>
+</div>
+</div>
+</body>
+</html>
