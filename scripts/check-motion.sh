@@ -8,7 +8,8 @@
 # Frames land in build/motion/<name>/{motion,reduce}-<ms>.png, plus each run's log. Offsets are
 # real milliseconds: at scale 10 a 200 ms motion runs 2000 ms. NO_BUILD=1 skips the bundle.
 # A <state> of `live:<workspace>` runs on real folders (`--workspace`) with an empty scratch
-# CLAUDE_CONFIG_DIR, so sessions start signed out and spend nothing.
+# CLAUDE_CONFIG_DIR, so sessions start signed out and spend nothing. BEFORE_EACH="<command>" runs
+# before each of the two runs (to put a workspace's files back).
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
@@ -28,12 +29,13 @@ run() {
   actions+="$trigger,+film:$out/$mode:$offsets"
   last="${offsets##*|}"
   actions+=",wait:$(awk "BEGIN{print $last/1000}")"
+  [ -z "${BEFORE_EACH:-}" ] || bash -c "$BEFORE_EACH"
   local where=(--state "$state") envs=()
   if [[ "$state" == live:* ]]; then
     where=(--workspace "${state#live:}")
     mkdir -p "$support/claude-$mode"; envs=(--env CLAUDE_CONFIG_DIR="$support/claude-$mode")
   fi
-  open -W -n --env DUO_SUPPORT_DIR="$support/$mode" --env DUO_MOTION_SCALE="$scale" --env DUO_REDUCE_MOTION="$reduce" ${envs[@]+"${envs[@]}"} \
+  open -W -n --env DUO_SUPPORT_DIR="$support/$mode" --env DUO_MOTION_SCALE="$scale" --env DUO_REDUCE_MOTION="$reduce" ${DUO_MOTION_HOLD:+--env DUO_MOTION_HOLD=$DUO_MOTION_HOLD} ${envs[@]+"${envs[@]}"} \
     --stdout /dev/null --stderr "$out/$mode.log" build/Duo.app --args "${where[@]}" --then "$actions" --capture "$out/$mode-rest.png" &
   pid=$!
   for ((i = 0; i < 240; i++)); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done

@@ -143,8 +143,20 @@ extension AppModel {
 
     // MARK: Complete, link, reveal
 
+    /// Mark Complete (DL-130): the line shows checked, struck through and grey at once, stays for
+    /// `rowHold` (5 s) in case it was a mistake (⌘Z or Mark Open keeps it), then leaves.
     public func completeTask(project: String, path: String) {
-        if let why = setTaskStatus(project: project, path: path, "done") { info(why) }
+        let key = project + "/" + path
+        // Only a listed (open) task holds; one already done just stays done.
+        let listed = fixture.tasks?.first(where: { $0.id == key })?.isOpen == true
+        if listed { completingTasks.insert(key) }
+        if let why = setTaskStatus(project: project, path: path, "done") { completingTasks.remove(key); info(why); return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + DuoMotionToken.rowHold.delay) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.completingTasks.contains(key) else { return }
+                withDuoAnimation(.rowMove) { _ = self.completingTasks.remove(key) }
+            }
+        }
     }
 
     /// `[Title](duo2://task/<id>)`. A note without an `id:` gets one (a lowercase UUID), written once.
@@ -194,6 +206,7 @@ extension AppModel {
         var failed: Error?
         asOneUndo("Archive Task") {
             do { try Data(TaskNotes.setting("archived", "true", in: text).utf8).write(to: file, options: .atomic) } catch { failed = error; return }
+            showNow { setShownTask(project, path) { $0.archived = true } }
             registerUndo("Archive Task") { model in try? data.write(to: file, options: .atomic); model.refreshLive() }
             guard sessions else { return }
             for s in linkedSessions(t) where !(fixture.archivedSessions ?? []).contains(where: { $0.sessionId == s.sessionId }) {
@@ -215,6 +228,7 @@ extension AppModel {
         var failed: String?
         asOneUndo("Unarchive Task") {
             do { try Data(TaskNotes.setting("archived", nil, in: text).utf8).write(to: file, options: .atomic) } catch { failed = error.localizedDescription; return }
+            showNow { setShownTask(project, path) { $0.archived = nil } }
             registerUndo("Unarchive Task") { model in try? data.write(to: file, options: .atomic); model.refreshLive() }
             for s in fixture.archivedSessions ?? [] where s.sessionId.map(t.sessionIds.contains) ?? false {
                 _ = setSessionArchived(s.tabKey, false)

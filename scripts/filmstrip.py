@@ -47,10 +47,11 @@ def main():
     canvas = [bytearray([200, 200, 200] * W) for _ in range(H)]
     for li, frames in enumerate(lanes):
         for fi, f in enumerate(frames):
-            # Crop with sips first: decoding a whole 2880-wide frame in Python is slow.
+            # Crop with sips first: decoding a whole 2880-wide frame in Python is slow. (sips centres
+            # the crop when the offset is 0,0, so it's at least 1.)
             with tempfile.TemporaryDirectory() as tmp:
                 c = pathlib.Path(tmp) / "c.png"
-                subprocess.run(["sips", "-s", "format", "png", "--cropOffset", str(y), str(x), "-c", str(h), str(w), str(f), "--out", str(c)],
+                subprocess.run(["sips", "-s", "format", "png", "--cropOffset", str(max(y, 1)), str(max(x, 1)), "-c", str(h), str(w), str(f), "--out", str(c)],
                                check=True, capture_output=True)
                 cw, ch, bpp, px = read_png(c)
             for r in range(min(h, ch)):

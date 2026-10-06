@@ -1967,7 +1967,9 @@ func repoFixture() throws -> Fixture {
 
         // Unarchive brings back the sessions archived with it.
         _ = m.archiveTask(project: "tasky", path: path, sessions: true)
-        m.fixture.archivedSessions = m.fixture.sessions.filter { $0.sessionId == quiet }
+        // Archiving shows at once (Q-78): the session is already in the Archived list.
+        m.fixture.archivedSessions = (m.fixture.sessions + (m.fixture.archivedSessions ?? [])).filter { $0.sessionId == quiet }
+        m.fixture.sessions.removeAll { $0.sessionId == quiet }
         check(m.unarchiveTask(project: "tasky", path: path) == nil && m.loadTask("tasky", path)?.archived == false && archivedIds().isEmpty,
               "Unarchive Task brings back the task and the sessions archived with it")
         m.fixture.archivedSessions = nil

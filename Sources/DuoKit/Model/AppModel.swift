@@ -46,6 +46,14 @@ public final class AppModel {
     /// The session list's order while the pointer is in it (Q-80, DL-130): project, then each
     /// section's row ids. Nil when the list is free to reorder.
     public var sidebarHold: (project: String, order: [String: [String]])?
+    /// Tasks just marked complete, still listed (checked, struck through) for `rowHold` (DL-130).
+    public var completingTasks: Set<String> = []
+    /// Counts changes Duo shows before the snapshot does (Q-78). A snapshot started before the
+    /// latest one is stale: it would put the old state back for a beat, so it's dropped.
+    @ObservationIgnored var localChange = 0
+    /// Which section each row of the session list was in when last shown, to lift the rows that
+    /// change section above the ones they pass (DL-130).
+    @ObservationIgnored var sidebarShown: [String: String] = [:]
     /// The task row under the pointer ("<project>/<note path>"), which shows its + (DL-112).
     public var hoveredTaskRow: String?
     /// The tab under the pointer (a console or Home tab's key, or a right-pane document path),
@@ -319,6 +327,7 @@ public final class AppModel {
         ctx.extraProjects = extraProjects
         ctx.showHidden = showHiddenFiles
         ctx.expanded = Dictionary(expandedFolders.compactMap { k, v in liveFolders[k].map { ($0.path, v) } }, uniquingKeysWith: { a, b in a.union(b) })
+        let generation = localChange
         Task.detached(priority: .utility) { [weak self] in
             let beacons = Beacon.readAll()
             let (snapshot, folders, moves) = LiveSnapshot.build(ctx, beacons: beacons)
@@ -334,12 +343,17 @@ public final class AppModel {
                 }
                 try? from.save(project: m.from)
             }
-            await self?.apply(snapshot, folders: folders, beacons: beacons)
+            await self?.apply(snapshot, folders: folders, beacons: beacons, generation: generation)
         }
     }
 
-    private func apply(_ snapshot: Fixture, folders: [String: URL], beacons: [Beacon]) {
+    private func apply(_ snapshot: Fixture, folders: [String: URL], beacons: [Beacon], generation: Int) {
         refreshing = false
+        // Read before a change Duo has already shown (Q-78): drop it and read again now.
+        guard generation == localChange else {
+            FileHandle.standardError.write(Data("live: dropped a snapshot read before a change Duo had shown (Q-78)\n".utf8))
+            refreshLive(); return
+        }
         // Sessions Duo started but Claude hasn't written a beacon for yet keep their tab.
         var merged = snapshot
         for s in fixture.sessions where s.sessionId != nil && terminals.existing(s.tabKey) != nil
@@ -671,5 +685,29 @@ extension AppModel {
         } else if sidebarHold != nil {
             withDuoAnimation(.rowMove) { sidebarHold = nil }
         }
+    }
+}
+
+extension AppModel {
+    /// Shows a change the user just made at once, before the snapshot that confirms it (Q-78,
+    /// DL-130). The lists move by their own animations (keyed on their rows), so text and marks
+    /// change at once. A snapshot already in flight is dropped (`localChange`), so the old state
+    /// never comes back for a beat; if the change didn't happen on disk, the next snapshot shows that.
+    func showNow(_ change: () -> Void) {
+        localChange += 1
+        change()
+    }
+}
+
+extension AppModel {
+    /// Rows now in a different section from where they were last shown: the ones that travel.
+    func sidebarMovers(_ sections: [SidebarSection]) -> Set<String> {
+        var out = Set<String>()
+        for s in sections { for r in s.rows where sidebarShown[r.id].map({ $0 != s.id }) ?? false { out.insert(r.id) } }
+        return out
+    }
+
+    func noteSidebar(_ sections: [SidebarSection]) {
+        sidebarShown = Dictionary(sections.flatMap { s in s.rows.map { ($0.id, s.id) } }, uniquingKeysWith: { a, _ in a })
     }
 }
