@@ -63,7 +63,11 @@ struct ConsoleTabStrip: View {
     @ViewBuilder func tab(_ t: Tab, short: Bool) -> some View {
         let active = t.id == model.consoleTab
         HStack(spacing: DuoSpace.gapGlyphToLabel) {
-            if let st = t.state { StateGlyph(st, on: .console(active: active)) }
+            // Under the pointer the glyph's place holds the × (DL-126); nothing moves.
+            if model.showsTabClose(t.id) {
+                TabCloseButton(key: t.id, onConsole: true, active: active) { model.closeConsoleTab(t.id) }  // action: session close
+                    .frame(width: t.state == nil ? 11 : DuoMetric.glyph, height: t.state == nil ? 9 : DuoMetric.glyph)   // the glyph's own box
+            } else if let st = t.state { StateGlyph(st, on: .console(active: active)) }
             else { ShellPromptMark(active: active).frame(width: 11, height: 9) }
             Text(short ? Self.short(t.title) : t.title)
                 .duoText(active ? .monoActiveTab : .mono)
@@ -74,6 +78,7 @@ struct ConsoleTabStrip: View {
         .contentShape(Rectangle())
         .onActivate { model.openConsoleTab(t.id) }  // action: session open
         .modifier(SessionOrganizeMenu(sessionKey: t.id))
+        .modifier(TabHover(key: t.id) { model.closeConsoleTab(t.id) })
         .accessibilityElement(children: .combine)
         .accessibilityLabel(t.state == nil ? "\(t.title), shell" : t.title)
         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)

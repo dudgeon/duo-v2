@@ -1553,3 +1553,12 @@ Spike: `docs/plan/spikes/browser-engine.md`.
 - Now `ClaudeVersion.ask` waits on the process's termination for at most 2 s (`ClaudeVersion.timeout`). Past that it sends SIGTERM, then SIGKILL after 0.5 s, and the version is unknown. Unknown means chat mode's hooks are off for that session: the safe default (chat mode then renders from the transcript, and its dialogs go to the terminal). Duo's own hooks stay on.
 - Each binary's answer is cached, including "none", so a hung or broken `claude` costs at most 2 s once per run. Duo asks at launch on a background queue (`ClaudeVersion.warm`), so the first session normally finds it cached. Choosing another `claude` in Settings clears it. The async path (`ClaudeVersion.of`) goes through the same bounded `ask`.
 - DuoChecks: a stand-in `claude` that sleeps forever is ended in 2.0 s with the version unknown; the second ask doesn't wait; the settings for that session have no MessageDisplay but keep Stop; a working stand-in still answers; no orphaned child remains.
+
+## F-124 · The tab close button: hover in the model, and the right pane's spacing laid out by hand (DL-126, 2026-10-06)
+
+- **Hover lives in the model** (`AppModel.hoveredTab`, `hoveredTabClose`; DL-30 allows no `@State`), set by `TabHover` on the tab and by the × itself. The × shows while either names the tab, so moving from a right-pane title onto its × (outside the title) doesn't lose it.
+- **The right pane's tabs were an `HStack(spacing: 18)`.** To put the × in the gap without moving anything, each document tab now carries a 16 pt slot and a 1 pt gap before its title, and the strip is laid out with `spacing: 0` and leading padding of 18 minus the slot. With nothing hovered the six fixture states are byte-identical to `main`'s captures.
+- **On the console the × takes the glyph's 9 pt (or the shell mark's 11 × 9) frame** and overflows it to 16 pt, so the tab's width never changes.
+- **⌘W only ever closes the visible tab** (`closeVisibleSession`, or `closeDocument` when the editor has focus). The × closes any tab, so it calls the same pieces by key: `closeShell` for a shell, `closeSession` for a session (what the Ended bar's Close Tab does), `closeDocument` for a document or browser tab (the tab menu's Close Tab). None of them asks anything; that's Q-71.
+- **Harness:** `hover-tab:<tab key or document path>[=close|press]` holds the pointer over a tab, on its ×, or pressing it (`pressedTabClose`), for captures. In fixture states a session's key is its name (`hover-tab:Teardown research`).
+

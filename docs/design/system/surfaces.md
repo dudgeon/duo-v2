@@ -16,7 +16,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Surface | Status | Targets | Open | Code |
 |---|---|---|---|---|
 | Window, toolbar, counts | Designed; search field reads `Search all projects ⇧⌘A` (DL-80) | build `overview.html` | — | `Shell/DuoToolbar.swift` |
-| Home pane: terminal and session tabs | Designed | build `overview.html`, surfaces `home-none.html` | — | `AllProjects/AllProjectsPanes.swift` HomePane |
+| Home pane: terminal and session tabs | Designed (DL-126 the hover ×) | build `overview.html`, surfaces `home-none.html`, tab-close `console-tabs-close.html` | — | `AllProjects/AllProjectsPanes.swift` HomePane |
 | Home pane with no Home folder | Designed (DL-100): "Choose a Home folder", Choose Home Folder… and Not Now | slice2 `no-home.html` | — | HomePane, `ConsoleMessage(.noHome)` |
 | The map: columns, tiles | Designed (DL-100), changed by decision (DL-104): a filter and sort header, Home's ★ tile, folders outside Home as rows by parent folder with live ones as tiles; Home's unlabelled column alone flows its tiles three across, and two lists keep a third each (DL-111) | slice2 `map-folders.html`, `no-home.html`; many-projects `map-many.html`; stand-ins `q42-one-list.html`, `q42-two-lists.html` | DB-38 (folder mark) | MapColumn, MapGrid, MapHeader, HomeTile, OutsideGroup, ProjectTile |
 | Folder tiles ("No project file") | Stand-in (DL-63) | — | DB-12 | ProjectTile |
@@ -40,7 +40,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Untitled sessions (first words, start time) | Built (DL-90) | — | — | `Live/SessionTitles.swift` |
 | Files tree | Designed; open and closed folders and hidden files are stand-ins (DL-105) | build `project.html` | Q-40 | FileTreePane |
 | A tab for a file outside the project | Stand-in (DL-106): the file name, its path as the tooltip; File › Open File… (⌘O) or a drop from Finder | — | Q-39 | RightPane, `Model/AppModel+Files.swift` `openFile` |
-| Console and its tabs | Designed (DB-4 shell tabs) | build `project.html`, surfaces `shell-tab.html`, `console-tabs.html` | — | `Project/ConsoleTabStrip.swift` |
+| Console and its tabs | Designed (DB-4 shell tabs; DL-126 the hover ×) | build `project.html`, surfaces `shell-tab.html`, `console-tabs.html`, tab-close `console-tabs-close.html` | — | `Project/ConsoleTabStrip.swift` |
 | Console with nothing running; ended session bar | Designed (DB-3) | surfaces `console-none.html`, `console-ended.html`, `console-empty-states.html` | — | `Project/ConsoleStates.swift` |
 | Chat mode: a readable view of the Claude session (toggle pill, transcript, tool cards, review cards, composer, fallback bar) | Designed (DL-119), built to its boards (F-108 to F-112); stand-ins for Q-56 (dark, other heading levels, long history, narrow panes, pasted images) | chat-mode `window.html`, `toggle.html`, `text.html`, `tools.html`, `permission-*.html`, `plan.html`, `question-*.html`, `composer.html`, `status.html`, `fallback.html` | Q-57 (Home pane, link tooltips) | `Chat/` (ChatView, ChatToolViews, ChatReviewCard, ChatComposerView, ChatChrome) |
 | Terminal colours | Designed (DB-2) | surfaces `terminal-palette.html` | — | `terminal*` tokens |
