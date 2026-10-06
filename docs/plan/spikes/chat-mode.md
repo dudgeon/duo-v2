@@ -1,6 +1,6 @@
 # Spike: chat mode, a readable overlay on the real Claude Code TUI
 
-2026-10-06 · research session for the director · Claude Code **2.1.291** · binding constraints **DL-118** · records ENH-13, F-103, F-104 · proof of concept in `Spikes/chat-mode/`
+2026-10-06 · research session for the director · Claude Code **2.1.291** · binding constraints **DL-118** · records ENH-13, F-103, F-104, F-105 · proof of concept in `Spikes/chat-mode/`
 
 ## Answer
 
@@ -10,6 +10,8 @@
 - The screen buffer is used for one job: knowing which dialog is up, its exact option labels, and what's in the input box. Answers go back as keystrokes, after a re-check that the same dialog is still on screen.
 - Anything the screen reader can't name sends the user to the terminal automatically.
 - Ctrl+G (Claude Code's own external-editor binding) gives a native composer that can't get out of step with the TUI's input.
+
+**Chat mode needs only the Claude Code CLI login**: the subscription login a user already has for `claude`. No API key, no `ANTHROPIC_BASE_URL`, no SDK, no `-p`. Everything it reads comes from the user's own interactive `claude` (hooks loaded per session with `--settings`, the transcript, the terminal screen), and everything it sends is keystrokes into that same process. This was confirmed with real Haiku turns under Geoff's normal CLI login ("Haiku 4.5 · Claude Max" in the TUI header). See [Real turns under the CLI login](#real-turns-under-the-cli-login-f-105). The mock API below is only a test fixture for developing and checking chat mode; users never run it.
 
 Recommended shape: **render from hooks, check dialogs against the screen, answer with keys, compose through Ctrl+G.** Fall back on anything unrecognised, and gate dialog answering per CLI version with the mock-API tour below as the test.
 
@@ -21,9 +23,43 @@ The real interactive TUI ran on a PTY with a headless xterm mirror of the screen
 - `claude` 2.1.291, Duo's own kind of per-session `--settings` hooks, a scratch `CLAUDE_CONFIG_DIR`.
 - It was pointed at a **local mock of the Messages API** (`mock.mjs`, via `ANTHROPIC_BASE_URL` and a dummy key the scratch config pre-approves).
 
-The mock answers each prompt from a script (`SCENARIO:ask`, `askmulti`, `read` (then edit), `plan`, `agent`, `long`, `err`, `bash`, `md`), so every dialog came up on demand. That needed **no credentials and no tokens**, and nothing touched Geoff's config. The scratch config has no login, and copying credentials is ruled out, which is why no real Haiku turns were run (see Open questions).
+The mock answers each prompt from a script (`SCENARIO:ask`, `askmulti`, `read` (then edit), `plan`, `agent`, `long`, `err`, `bash`, `md`), so every dialog came up on demand. That needed **no credentials and no tokens**, and nothing touched Geoff's config. Real turns under the CLI login came later and are in their own section below (F-105).
 
 Every claim below has a screen dump (`Spikes/chat-mode/screens/`) or a hook log behind it. The page PoC was then driven in Chrome, and the screenshots here come from it.
+
+## Real turns under the CLI login (F-105)
+
+The test ran exactly as a user would, with Geoff's go-ahead through the director:
+- plain interactive `claude` under his normal CLI login (his default config);
+- no `ANTHROPIC_API_KEY` or `ANTHROPIC_BASE_URL` anywhere, and no credentials read or copied;
+- `--model claude-haiku-4-5-20251001` in a throwaway folder (`/tmp/duo-chat-real/ws`);
+- hooks only through the PoC's per-session `--settings` file; no global setting touched.
+
+About 10 short turns over two sessions (8 prompts plus plan feedback and a revised plan), both archived afterwards with `duo2 session archive`. Every answer except the trust prompt was given from the PoC page. One extra prompt reached session 1 by mistake (my script talked to a server I thought I'd stopped); it was interrupted and isn't counted below.
+
+| Turn | Result |
+|---|---|
+| First run in the new folder | The trust prompt ("Is this a project you created or one you trust?") read as `unknown`: **fell back to the terminal**, answered there, and chat returned by itself |
+| Markdown reply | Streamed through `MessageDisplay` (10 flushes, about 0.1 s apart), rendered as heading, link, table, list, code |
+| Edit permission | Dialog **identical to the mock baseline**; "Yes" from the card applied the edit |
+| Bash permission | Identical signature. The `permission_suggestions` field said `destination: session` while the TUI's option read "Yes, and always allow access to … from this project", which is why labels come from the screen |
+| AskUserQuestion, two questions, multi-select + Other | Identical layout (`☐ Platforms ☐ Timeline ✔ Submit`, descriptions, "Type something", "Chat about this"). macOS + Web toggled, Next, "After the beta" typed as Other, review page, "Submit answers". Claude replied "Platforms: macOS, Web / Timeline: After the beta" |
+| Plan approval | Identical options. The real plan is longer than the TUI's dialog shows (it cuts off with a scroll mark); the card showed all of it. Option 3 feedback reached Claude as `userFeedback`; Claude revised the plan. Option 2 ("manually approve edits") led to an edit permission, answered "Yes" |
+| Interrupt | Stop (Esc) from the page; the TUI showed "Interrupted · What should Claude do instead?" |
+| Ctrl+G compose | Half-typed text in the TUI went to the stand-in editor; the composed text came back into the input; Enter; Claude replied "composed" |
+
+Hooks fired as they do with the mock: `SessionStart`, `UserPromptSubmit`, `MessageDisplay`, `PreToolUse`, `PostToolUse`, `PermissionRequest` (Edit ×2, Bash, AskUserQuestion, ExitPlanMode ×2), `Notification` (`permission_prompt` and `idle_prompt`), `Stop`, `SubagentStop`. Nothing in the design needs an API key.
+
+**Differences from the mock baseline** (`Spikes/chat-mode/screens/real-cli-login-2.1.291/` vs `tour-2.1.291/`):
+1. **A named session writes its name into the input box's top rule** (`──── add-second-line-notes ─`). The mock's sessions never got one. The PoC's rule pattern didn't allow it, so every screen after naming read as `unknown`. Fixed in `screen.mjs`; the baseline still reads the same.
+2. **Concurrent hooks interleaved in the events file.** The final `MessageDisplay` and `Stop` fire together; with real ~1 KB payloads, `sh`'s `printf` wrote in pieces and the two lines merged, so both were lost and the reply never got its end. The PoC now writes each event with one `syswrite` (O_APPEND); a mock re-run had 0 bad lines. Duo's own hook command (`HookEvents.swift`) has the same weakness (F-23 already skips bad lines).
+3. **An interrupted text reply fires no hook at all**: no final `MessageDisplay`, no `Stop`, no `PostToolUseFailure`. Only the screen (busy → idle, "Interrupted") says the reply ended. The PoC now closes an open reply on busy → idle.
+4. **The screen is blank for a moment** at start and while the external editor runs (Ctrl+G), and both read as `unknown`. The fallback now waits 500 ms for `unknown` to persist.
+5. Cosmetic, no effect on reading: the header says "Claude Max" (vs "API Usage Billing"); a "Tip:" line can sit under the spinner; the spinner shows "thinking" / "thought for 1s"; the plan dialog names the editor ("ctrl+g to edit in Compose-editor.sh").
+
+![A real Haiku reply, rendered](chat-mode/06-real-markdown.jpg)
+![A real plan: the whole plan on the card, cut short in the TUI](chat-mode/07-real-plan.jpg)
+![A real AskUserQuestion](chat-mode/08-real-question.jpg)
 
 ## Sources of structured truth (verified)
 
@@ -113,7 +149,7 @@ ChatView (WKWebView or native) ◀── ChatModel + DialogState
 
 Chat mode shows the terminal, with a one-line reason and "Back to chat", whenever:
 
-1. **The screen is `unknown`**: no input box and none of the known dialog signatures. This covers first-run, login, trust, API-key, update notices, `/model`, `/config`, `/permissions`, `/resume`, `/agents`, `/mcp`, `/tasks`, elicitation, Vim mode, fullscreen mode and anything new.
+1. **The screen stays `unknown` for 500 ms** (a blank screen at start or during Ctrl+G is not a reason): no input box and none of the known dialog signatures. This covers first-run, login, trust, API-key, update notices, `/model`, `/config`, `/permissions`, `/resume`, `/agents`, `/mcp`, `/tasks`, elicitation, Vim mode, fullscreen mode and anything new.
 2. **The screen and the hooks disagree**: a permission dialog with no pending `PermissionRequest` (or one for a different tool), or a plan or question screen whose text doesn't match the request's.
 3. **A signature matched but the CLI version isn't one the dialog table was verified on.** Rendering continues; dialogs go to the terminal.
 4. **The answer can't be delivered**: the screen changed between drawing the card and sending (signature check), the input wasn't empty, or the echo didn't match.
@@ -157,6 +193,7 @@ When the screen returns to the idle or busy input box, chat mode comes back by i
 | Latency | Low | Screen settles ~60 ms; hook lines arrive as written; answers are keys | — |
 | **Losing information** | Medium | The TUI shows things no source carries: spinner tips and token counts, groupings, Ctrl+O expansions, the statusline, background-task panel, prompt suggestions, mod rows above the prompt, hook output lines | "Both" view and the one-key toggle; list what's dropped in the design; never hide a dialog |
 | Accessibility | — (an opportunity) | A chat log with a live region reads far better under VoiceOver than a terminal grid | Cards must be keyboard-operable in the TUI's order; announce new dialogs (`aria-live` / NSAccessibility notifications) |
+| Hook lines lost when hooks fire together (seen with real payloads, F-105) | High without a fix | A reply never ends; an event missed | One `write(2)` per event with O_APPEND (a small helper, not `sh` + `printf`); fix Duo's existing hook command the same way |
 | One session, two writers | Low | — | There is only ever one: the TUI. Chat mode never runs Claude itself |
 
 ## The proof of concept
@@ -190,7 +227,7 @@ It answers through the composer as paste-on-send. The Ctrl+G bridge was verified
 
 ## Open questions
 
-- **Real turns.** Everything ran against the mock, since a scratch config has no login and credentials must not be copied. The TUI, the hooks and the transcript were real; the model wasn't. Before a build, run `./start.sh --real` (Geoff's login, a throwaway folder, Haiku) for one turn of each kind, to confirm real streaming cadence and thinking blocks.
+- ~~Real turns~~: done, under the CLI login (F-105). A longer real session would also show compaction and subagents with a real model; the mock covered both.
 - **Ctrl+G in the build:** confirm `EDITOR` vs `VISUAL` precedence and what Claude's Bash tool inherits. Then decide between a `duo2 compose` helper and an env var Claude might add.
 - **IDE bridge** as a later source of diffs and selection: a separate spike.
 - **Rendering stack**: reuse the editor's web view (Markdown, links, code) or go native. A design-session question (DL-119).

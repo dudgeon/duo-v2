@@ -1240,3 +1240,30 @@ Verified on Claude Code 2.1.291. The real interactive TUI ran on a PTY with a he
   Cautions: `EDITOR` is inherited by Claude's Bash tool, so a helper must act only on `claude-prompt-*.md`; the 2.1.269 redraw fix gates it.
 - **The mock-API tour is the version check.** `Spikes/chat-mode/tour.sh scenario-tour.json <out>` runs every dialog against the installed CLI in under 30 s and dumps each screen (the 2.1.291 baseline is `screens/tour-2.1.291/`). Running it on each new CLI (and on the work Mac's 2.1.219) is how dialog signatures stay verified (C-1).
 - **Not done:** no real-model turns (no login in a scratch config); the IDE bridge; Tab-to-amend, "Chat about this" and preview panes (fallback); fullscreen and Vim modes (fallback by rule, untested).
+
+## F-105 · Chat mode under the CLI login: real turns, and what the mock missed (ENH-13, DL-118, 2026-10-06)
+
+- **Chat mode needs only the Claude Code CLI login. No API key, no SDK.**
+  - The test ran as a user would: plain interactive `claude` under Geoff's normal CLI login (the TUI header read "Haiku 4.5 · Claude Max"), `--model claude-haiku-4-5-20251001`, a throwaway folder in `/tmp`.
+  - No `ANTHROPIC_API_KEY` or `ANTHROPIC_BASE_URL`, no credentials read or copied; hooks only through a per-session `--settings` file.
+  - About 10 short turns over two sessions, both archived with `duo2 session archive`.
+  - Every hook fired as with the mock: `MessageDisplay`, `PermissionRequest` (Edit, Bash, AskUserQuestion, ExitPlanMode), `Notification` (`permission_prompt`, `idle_prompt`) and the rest.
+- **Verified with the real model, answers given from the PoC page:**
+  - a streamed Markdown reply;
+  - edit and Bash permissions;
+  - AskUserQuestion with two questions, multi-select, Other text and the review step;
+  - plan approval, with option 3 feedback (Claude revised the plan) and then option 2;
+  - an interrupt;
+  - Ctrl+G compose (half-typed text out, composed text back, sent).
+
+  The edit, review and plan dialogs are line for line the mock baseline's. Real screens: `Spikes/chat-mode/screens/real-cli-login-2.1.291/`.
+- **What the mock missed:**
+  - **A named session writes its name into the input box's top rule** (`──── add-second-line-notes ─`). The PoC's rule pattern then failed, and every screen read as unknown. Fixed in `screen.mjs`; the mock baseline still reads the same.
+  - **Concurrent hooks interleave.** The final `MessageDisplay` and `Stop` fire together. With real ~1 KB payloads, `sh` + `printf` appended in pieces and the two lines merged (2 bad lines in session 1), so the reply never got its end.
+    - Fix: one `write(2)` per event with O_APPEND. The PoC uses a `perl` `syswrite`, and a mock re-run had 0 bad lines.
+    - **Duo's own hook command in `HookEvents.swift` has the same weakness** (F-23's reader already skips bad lines, losing those events). It should get the same fix.
+  - **An interrupted text reply fires no hook**: no final `MessageDisplay`, no `Stop`, no `PostToolUseFailure`. Only the screen going busy → idle ("Interrupted · What should Claude do instead?") ends it.
+  - **The screen is blank for a moment** at start and while the external editor runs, and reads as unknown. The fallback should wait for unknown to persist; the PoC waits 500 ms.
+  - The first run in a new folder shows the trust prompt. It read as unknown, fell back to the terminal, and chat came back once it was answered.
+  - `PermissionRequest.permission_suggestions` said `destination: session` while the TUI's option said "… from this project". That confirms card labels must come from the screen.
+- Also seen: a real plan can be longer than the TUI's dialog shows, and the card showed all of it. The plan file lands in `~/.claude/plans/` as with any plan-mode session.

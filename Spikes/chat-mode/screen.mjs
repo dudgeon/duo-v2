@@ -1,6 +1,8 @@
 // Reads Claude Code's TUI screen (2.1.291) into a state chat mode can show. Anything it can't name
 // is "unknown", and unknown means fall back to the terminal (DL-118).
-const RULE = /^─{20,}$/;
+// A full-width rule. Once a session has a name, the TUI writes it into the input box's top rule
+// ("──── add-second-line-notes ─"), seen with a real model, never with the mock (F-105).
+const RULE = /^─{20,}(?: \S.*\S ─+)?$/;
 const opt = /^\s*(❯)?\s*(\d+)\.\s(\[[ ✔]\]\s)?(.*)$/;
 
 function options(lines, from, to, cols = 100) {

@@ -20,3 +20,5 @@ With the mock, put `SCENARIO:<name>` in a prompt: `md`, `bash`, `read` (then an 
 | `drive.mjs`, `tour.sh`, `scenario-tour.json` | Headless runs that dump each screen |
 | `scratch.sh` | The scratch config (`./scratch/`, ignored): trusts the workspace, approves only the dummy key |
 | `screens/` | Captured TUI states, including the desyncs (`desync-glued-prompt.txt`) and unknown screens |
+
+`screens/real-cli-login-2.1.291/` holds the same states from real Haiku turns under the CLI login (F-105). Differences from the mock baseline are listed in the spike doc.

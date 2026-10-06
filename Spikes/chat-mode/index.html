@@ -233,11 +233,17 @@ function renderAsk() {
   }
 }
 
+let unknownTimer = null;
 function onScreen(s) {
+  // An interrupted reply fires no final MessageDisplay and no Stop: busy → idle closes it (F-105).
+  if (screen.kind === 'busy' && s.kind === 'idle') document.querySelectorAll('.streaming').forEach(el => el.classList.remove('streaming'));
   screen = s;
   $('#state').textContent = s.kind + (s.mode ? ' · ' + s.mode : '');
   const known = ['idle', 'busy', 'permission', 'plan', 'question', 'question-review', 'starting'].includes(s.kind);
-  if (!known) fallBack('Chat mode can\'t show this screen.');
+  // The screen is blank for a moment at start and while the external editor runs: fall back only
+  // when it stays unknown (F-105).
+  clearTimeout(unknownTimer);
+  if (!known) unknownTimer = setTimeout(() => { if (!['idle', 'busy', 'permission', 'plan', 'question', 'question-review', 'starting'].includes(screen.kind)) fallBack('Chat mode can\'t show this screen.'); }, 500);
   else if (autoFell && (s.kind === 'idle' || s.kind === 'busy')) { autoFell = false; setView('both'); }
   const typing = s.kind === 'idle' || s.kind === 'busy';
   $('#input').disabled = !typing;
