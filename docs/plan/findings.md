@@ -1267,3 +1267,37 @@ Verified on Claude Code 2.1.291. The real interactive TUI ran on a PTY with a he
   - The first run in a new folder shows the trust prompt. It read as unknown, fell back to the terminal, and chat came back once it was answered.
   - `PermissionRequest.permission_suggestions` said `destination: session` while the TUI's option said "… from this project". That confirms card labels must come from the screen.
 - Also seen: a real plan can be longer than the TUI's dialog shows, and the card showed all of it. The plan file lands in `~/.claude/plans/` as with any plan-mode session.
+
+## F-106 · Chat mode: AskUserQuestion, every shape, answered faithfully (ENH-13, DL-118, 2026-10-06)
+
+Geoff: "please be sure to test how askUserQuestions works in chat mode". Result: **no AskUserQuestion shape needs the terminal.** The detail is in the spike doc's "AskUserQuestion in depth".
+
+- **The schema (2.1.291):**
+  - 1–4 questions, each with a `header`, 2–4 options (`label`, `description`, optional `preview` for single-select only) and `multiSelect`;
+  - answers come back as `answers` plus per-question `annotations` (`preview`, `notes`).
+- **TUI behaviours the card must follow** (captured in `Spikes/chat-mode/screens/ask-2.1.291/`):
+  - A digit picks and submits a single question at once.
+  - Multi-select lists end in an unnumbered **Next**/**Submit** row, and even one multi-select question ends on the review page; review **Cancel** declines.
+  - The free-text row ("Type something.") ticks itself on multi-select. ↑/↓ leave it with the text kept; ←/→ and Space edit the text. The first PoC card sent Space after Other on multi-select, which types a space; it is fixed.
+  - A revisited single-select marks its choice with a trailing ✔.
+  - The current question tab is shown only by colour, so the current question is found by matching the screen's question text to the request.
+  - **Previews** use a different layout: options left, the focused preview boxed right (clipped `✂ n lines hidden` in a short terminal), no free-text row, an unnumbered "Chat about this", and `n` for notes.
+  - "Chat about this" tells Claude "The user wants to clarify these questions…".
+- **Short or narrow terminals:**
+  - a long question scrolls its top (and the tab strip) off screen;
+  - labels wrap, so the screen shows only their start;
+  - the clipped preview box uses `├`.
+
+  Fix: take text from the request and structure from the screen. A question matches if the visible text is the end of exactly one asked question and every visible label is the start of the asked label at that position.
+- **Answering** (`Spikes/chat-mode/ask.mjs`): the card sends intents, not keys.
+  - The server checks the question and options against the pending `PermissionRequest`.
+  - It moves one arrow at a time, re-reading the cursor row, until it is on the clicked row; only then Enter, Space or `n`.
+  - Any surprise refuses and falls back. A stale card is refused with no key sent.
+- **Tested:** `asktest.sh` runs 13 end-to-end cases (single, Other, multi tick/untick/Other, four questions with going back to change an answer, long wrapped, preview, preview + notes, Chat about this, decline, review Cancel, stale card) at 100×34, 60×34 and 80×20 against the mock: **39/39 pass**, each checked against what Claude received.
+- **Real Haiku under the CLI login** (no API key; session archived), from the page:
+  - Other on a single question;
+  - four mixed questions with a changed answer and Other on a multi-select (answers exactly as clicked);
+  - previews with notes (Claude quoted the note);
+  - Chat about this, then a composer follow-up;
+  - a decline.
+- **No hook for declines:** a declined question and "Chat about this" fire no hook, not even `Stop`. Only the transcript's `tool_result` (`toolDenialKind: user-rejected`, no `userFeedback`) records it.

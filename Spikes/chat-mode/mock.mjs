@@ -13,6 +13,7 @@ function textOf(content) {
 }
 const MD = `## Results\n\nHere is **bold**, *italic*, \`code\` and a [link](https://example.com).\n\n| Col | Value |\n|---|---|\n| a | 1 |\n| b | 2 |\n\n\`\`\`swift\nlet x = 1\nprint(x)\n\`\`\`\n\n- one\n- two\n  - nested\n\nSee /tmp/example.txt:12 for more.`;
 
+const Q = (question, header, multiSelect, labels) => ({ question, header, multiSelect, options: labels.map(l => ({ label: l, description: `About ${l.replace(/ \(Recommended\)/, '')}` })) });
 const scenarios = {
   hello: () => [{ text: 'Hello from the mock. This is **Markdown**.' }],
   md: () => [{ text: MD, slow: true }],
@@ -20,6 +21,23 @@ const scenarios = {
   askmulti: () => [{ tool: 'AskUserQuestion', input: { questions: [
     { question: 'Which platforms should we ship?', header: 'Platforms', multiSelect: true, options: [{ label: 'macOS', description: 'Native' }, { label: 'iOS', description: 'Phone' }, { label: 'Web', description: 'Browser' }] },
     { question: 'How soon?', header: 'Timing', multiSelect: false, options: [{ label: 'This week', description: 'Fast' }, { label: 'Next month', description: 'Careful' }] }] } }],
+  // AskUserQuestion variants (F-106): every shape the tool's schema allows.
+  ask1: () => [{ tool: 'AskUserQuestion', input: { questions: [Q('Which database should we use?', 'Database', false, ['Postgres', 'SQLite', 'MySQL'])] } }],
+  askmulti1: () => [{ tool: 'AskUserQuestion', input: { questions: [Q('Which checks should run on every commit?', 'Checks', true, ['Lint', 'Unit tests', 'Type check', 'Build'])] } }],
+  ask4: () => [{ tool: 'AskUserQuestion', input: { questions: [
+    Q('Which framework should the settings page use?', 'Framework', false, ['SwiftUI (Recommended)', 'AppKit']),
+    Q('Which sections should it have?', 'Sections', true, ['General', 'Accounts', 'Advanced']),
+    Q('Where should settings be stored?', 'Storage', false, ['UserDefaults', 'A JSON file', 'Keychain']),
+    Q('Which platforms need it first?', 'Platforms', true, ['macOS', 'iOS'])] } }],
+  asklong: () => [{ tool: 'AskUserQuestion', input: { questions: [{ question: 'This question is deliberately long so that it wraps across more than one line of the terminal at its usual width: which migration strategy should we use for the existing sessions folder?', header: 'Migration', multiSelect: false, options: [
+    { label: 'Move everything in one pass with a journal so it can be undone (Recommended)', description: 'Fast and atomic per folder; needs free disk space equal to the largest folder, and a journal file so an interrupted run can be repaired on the next launch.' },
+    { label: 'Copy, verify, then delete', description: 'Slower and needs double the space, but the originals stay until every copy is checked byte for byte.' },
+    { label: 'Leave old sessions where they are', description: 'Nothing moves; new sessions go to the new place.' },
+    { label: 'Ask per folder', description: 'Show each folder with its size and let the user choose.' }] }] } }],
+  askpreview: () => [{ tool: 'AskUserQuestion', input: { questions: [{ question: 'Which layout should the card use?', header: 'Layout', multiSelect: false, options: [
+    { label: 'Stacked', description: 'Question above, options below', preview: '+------------------+\n| Question?        |\n| [ Option one   ] |\n| [ Option two   ] |\n+------------------+' },
+    { label: 'Side by side', description: 'Options left, detail right', preview: '+--------+---------+\n| > One  | Detail  |\n|   Two  | of one  |\n+--------+---------+' },
+    { label: 'Compact', description: 'One line per option', preview: 'Question?  (o) One  ( ) Two  ( ) Three' }] }] } }],
   bash: () => [{ text: 'Running a command.' }, { tool: 'Bash', input: { command: 'echo hello > hello.txt && cat hello.txt', description: 'Write and read a file' } }],
   edit: () => [{ tool: 'Write', input: { file_path: (process.env.MOCK_CWD || process.cwd()) + '/notes.md', content: '# Notes\n\nFirst line.\n' } }],
   read: () => [{ tool: 'Read', input: { file_path: (process.env.MOCK_CWD || process.cwd()) + '/notes.md' } }],

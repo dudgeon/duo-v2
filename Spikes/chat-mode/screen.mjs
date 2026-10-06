@@ -56,19 +56,75 @@ export function classify(text, solid = text) {
   const review = find(/^Review your answers/);
   if (review >= 0 && find(/Ready to submit your answers\?/) > review) {
     {
-      return { kind: 'question-review', options: options(t, find(/Ready to submit your answers\?/) + 1, t.length), answers: t.slice(review + 1, find(/Ready to submit/)).join('\n').trim(), sig: 'review' };
+      const strip = t.find(l => /(☐|☒)/.test(l)) || '';
+      return { kind: 'question-review', tabs: [...strip.matchAll(/(☐|☒|✔)\s([^☐☒✔→]+?)(?=\s{2}|\s*→|$)/g)].map(m => ({ done: m[1] !== '☐', label: m[2].trim() })), options: options(t, find(/Ready to submit your answers\?/) + 1, t.length), answers: t.slice(review + 1, find(/Ready to submit/)).join('\n').trim(), sig: 'review' };
     }
   }
   const nav = find(/^Enter to select · /);
-  if (nav >= 0) {
-    const tabs = find(/(☐|☒)/);
-    const strip = tabs >= 0 ? t[tabs] : '';
-    let qi = tabs + 1; while (qi < nav && !t[qi].trim()) qi++;
-    const qline = t[qi]?.trim();
-    const opts = options(t, qi + 1, nav);
-    return { kind: 'question', tabs: [...strip.matchAll(/(☐|☒|✔)\s([^☐☒✔→]+?)(?=\s{2}|\s*→|$)/g)].map(m => ({ done: m[1] !== '☐', label: m[2].trim() })), question: qline, options: opts, multi: opts.some(o => o.checked !== undefined), sig: 'q:' + qline };
-  }
+  if (nav >= 0) return question(t, sl, nav);
   const status = rules.length >= 2 ? t.slice(0, rules[rules.length - 2]).reverse().find(l => /^[✻✽✶✳✢·*] \S/.test(l)) : null;
   if (input !== null) return { kind: busy ? 'busy' : 'idle', input, mode, status: status?.trim(), menu: /^\s+❯ \//.test(t[rules[rules.length - 2] - 4] ?? '') || t.some(l => /^\s{2}❯ \/\S+\s{2,}/.test(l)), sig: 'input' };
   return { kind: 'unknown', sig: 'unknown' };
+}
+
+// AskUserQuestion (F-106). Every row in screen order, so answers can steer the cursor row by row:
+//   option  a choice ("1. Postgres", "1. [✔] Lint"; a chosen answer on a revisited question ends " ✔")
+//   other   the free-text row ("Type something." until typed into; typing ticks it on multi-select)
+//   next / submit   the unnumbered row under a multi-select list
+//   chat    "Chat about this", below the rule (numbered, or not in the preview layout)
+// The preview layout draws the focused option's preview in a box to the right of the list, has no
+// free-text row, and takes notes with "n".
+const BOX = /\s{2,}(?=[┌│└├])/;   // ├ is the clipped preview's "✂ n lines hidden" row
+function question(t, sl, nav) {
+  const tabsAt = t.findIndex(l => /(☐|☒)/.test(l));
+  const strip = tabsAt >= 0 ? t[tabsAt] : '';
+  const tabs = [...strip.matchAll(/(☐|☒|✔)\s([^☐☒✔→]+?)(?=\s{2}|\s*→|$)/g)].map(m => ({ done: m[1] !== '☐', label: m[2].trim() }));
+  const rows = [];
+  const qlines = [];
+  let afterRule = false, preview = false, notes = null;
+  const widest = Math.max(...t.map(l => l.length));
+  for (let i = tabsAt + 1; i < nav; i++) {
+    const raw = t[i];
+    if (!raw.trim()) continue;
+    if (/^─{20,}/.test(raw.trim())) { afterRule = true; continue; }
+    const nm = raw.match(/Notes: (.*)$/);
+    if (nm) { notes = /^(press n to add notes|Add notes on this design…)$/.test(nm[1].trim()) ? '' : nm[1].trim(); continue; }
+    if (BOX.test(raw)) preview = true;
+    const left = raw.split(BOX)[0];
+    const solid = (sl[i] ?? '').split(BOX)[0];
+    let m = left.match(/^\s*(❯)?\s*(\d+)\.\s(\[([ ✔])\]\s)?(.*?)\s*$/);
+    if (m) {
+      let label = m[5], selected = false;
+      if (/ ✔$/.test(label)) { selected = true; label = label.replace(/ ✔$/, ''); }
+      const sm = solid.match(/^\s*(?:❯)?\s*\d+\.\s(?:\[[ ✔]\]\s)?(.*?)\s*$/);
+      rows.push({ kind: afterRule && label === 'Chat about this' ? 'chat' : 'option', n: +m[2], label, cursor: !!m[1],
+                  checked: m[3] ? m[4] === '✔' : undefined, selected, note: '', solid: sm ? sm[1] : label, at: i });
+      continue;
+    }
+    m = left.match(/^\s*(❯)?\s+(Next|Submit)\s*$/);
+    if (m && rows.length) { rows.push({ kind: m[2].toLowerCase(), label: m[2], cursor: !!m[1] }); continue; }
+    m = left.match(/^\s*(❯)?\s*Chat about this\s*$/);
+    if (m) { rows.push({ kind: 'chat', label: 'Chat about this', cursor: !!m[1] }); continue; }
+    const last = rows[rows.length - 1];
+    if (!last) { qlines.push(left.trim().replace(/^│\s?/, '')); continue; }   // the question, possibly wrapped
+    if (last.kind === 'option' && left.trim()) {
+      if (!last.note && t[i - 1].length >= widest - 4) last.label += ' ' + left.trim();   // a label wrapped at the edge
+      else last.note = (last.note ? last.note + ' ' : '') + left.trim();
+    }
+  }
+  // The free-text row is the last numbered row above the rule (not in the preview layout).
+  if (!preview) {
+    const above = rows.filter(r => r.kind === 'option' && (afterRule ? true : true));
+    const ruleRow = rows.findIndex(r => r.kind === 'chat');
+    const cands = rows.slice(0, ruleRow < 0 ? rows.length : ruleRow).filter(r => r.kind === 'option');
+    const other = cands[cands.length - 1];
+    if (other && rows.length > 1) {
+      other.kind = 'other';
+      other.value = /^Type something\.?$/.test(other.solid.trim()) || !other.solid.trim() ? '' : other.solid.replace(/\s+$/, '');
+    }
+  }
+  const multi = rows.some(r => r.checked !== undefined);
+  const q = qlines.join(' ').replace(/\s+/g, ' ').trim();
+  return { kind: 'question', tabs, question: q, rows, options: rows.filter(r => r.kind === 'option'), other: rows.find(r => r.kind === 'other') || null,
+           cursor: rows.findIndex(r => r.cursor), multi, preview, notes, sig: 'q:' + q };
 }

@@ -1,0 +1,33 @@
+
+ ▐▛███▛█   Claude Code v2.1.291
+▝▜██████▀  Haiku 4.5 · API Usage Billing
+ ▝▝   ▝▝   ~/repos/duo-v2/.claude/worktrees/chat-mode-ask/Spikes/chat-mode/scratch/ws
+
+
+❯ SCENARIO:ask4                                                                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☒ Framework  ☒ Sections  ☐ Storage  ☐ Platforms  ✔ Submit  →
+
+Which framework should the settings page use?
+
+❯ 1. SwiftUI (Recommended) ✔
+     About SwiftUI
+  2. AppKit
+     About AppKit
+  3. Type something.
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  4. Chat about this
+     
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel
+
+
+
+
+
+
+
+
+
+
+
+

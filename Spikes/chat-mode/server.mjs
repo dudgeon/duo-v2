@@ -16,6 +16,7 @@ import pty from 'node-pty';
 import xh from '@xterm/headless';
 import { WebSocketServer } from 'ws';
 import { classify } from './screen.mjs';
+import { runAsk } from './ask.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
@@ -96,14 +97,20 @@ function tail(file, onRecord, fromStart = true) {
 const history = [];   // everything sent to the page, replayed to late joiners
 const send = m => { history.push(m); broadcast(m); };
 let transcriptTail = null;
+// The AskUserQuestion Claude is waiting on, from the PermissionRequest hook. A declined question
+// fires no hook of its own, so the turn's Stop (or a new prompt) clears it too.
+let pendingAsk = null;
 tail(events, ({ at, e }) => {
   send({ t: 'hook', at, e });
+  if (e.hook_event_name === 'PermissionRequest' && e.tool_name === 'AskUserQuestion') pendingAsk = e.tool_input;
+  else if (['PostToolUse', 'PostToolUseFailure'].includes(e.hook_event_name) && e.tool_name === 'AskUserQuestion') pendingAsk = null;
+  else if (['Stop', 'UserPromptSubmit', 'SessionStart'].includes(e.hook_event_name)) pendingAsk = null;
   if (e.hook_event_name === 'SessionStart' && e.transcript_path && !transcriptTail)
     transcriptTail = tail(e.transcript_path, r => send({ t: 'record', r, at: Date.now() / 1000 }));
 });
 
 // Input from the page. Every path ends in PTY keystrokes; nothing answers on the human's behalf.
-const KEYS = { enter: '\r', esc: '\x1b', up: '\x1b[A', down: '\x1b[B', left: '\x1b[D', right: '\x1b[C', tab: '\t', space: ' ', 'shift-tab': '\x1b[Z' };
+const KEYS = { bs: '\x7f', enter: '\r', esc: '\x1b', up: '\x1b[A', down: '\x1b[B', left: '\x1b[D', right: '\x1b[C', tab: '\t', space: ' ', 'shift-tab': '\x1b[Z' };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function keys(list) { for (const k of list) { p.write(KEYS[k] ?? k); await sleep(80); } }
 function fresh() { return read(); }
@@ -132,6 +139,11 @@ async function handle(ws, m) {
     if (m.then) await keys(m.then);
     return reply({ ok: true });
   }
+  if (m.t === 'ask') {
+    const io = { read: fresh, key: k => p.write(KEYS[k] ?? k), type: t => p.write(t), sleep, request: () => pendingAsk };
+    const r = await runAsk(m.intent, io, m.sig).catch(e => ({ ok: false, why: 'chat mode lost track of the question (' + e.message + ')' }));
+    return reply(r.ok ? { ok: true } : { ok: false, fallback: true, why: r.why });
+  }
   if (m.t === 'interrupt') { await keys(['esc']); return reply({ ok: true }); }
   if (m.t === 'mode') { await keys(['shift-tab']); return reply({ ok: true }); }
 }
@@ -146,7 +158,7 @@ const server = http.createServer((req, res) => {
 new WebSocketServer({ server }).on('connection', ws => {
   clients.add(ws);
   ws.send(JSON.stringify({ t: 'hello', sessionId, cols, rows, pty: ptyLog.join(''), screen, history }));
-  ws.on('message', d => { try { handle(ws, JSON.parse(d)); } catch {} });
+  ws.on('message', d => { try { handle(ws, JSON.parse(d)).catch(() => {}); } catch {} });
   ws.on('close', () => clients.delete(ws));
 });
 server.listen(port, '127.0.0.1', () => console.log(`chat mode PoC on http://127.0.0.1:${port}  session ${sessionId}`));

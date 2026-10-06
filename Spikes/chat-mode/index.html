@@ -45,7 +45,13 @@
   .note { color: var(--muted); font-size: 12px; text-align: center; }
   .divider { border-top: 1px dashed var(--line); margin: 18px 0; text-align: center; } .divider span { position: relative; top: -10px; background: var(--panel); padding: 0 8px; color: var(--muted); font-size: 12px; }
   #ask { border-top: 1px solid var(--line); padding: 12px 20px; display: none; background: var(--bg); }
-  #ask.on { display: block; }
+  #ask.on { display: block; max-height: 70vh; overflow-y: auto; }
+  .qtabs { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .qtab { border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 2px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+  .qtab.on { color: var(--ink); border-color: var(--ink); }
+  .opts.previews { flex-direction: row; flex-wrap: wrap; } .opts.previews button { flex: 1 1 200px; }
+  .pv { font: 11.5px/1.35 var(--mono); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin: 6px 0 0; white-space: pre; overflow-x: auto; }
+  button.primary { border: 0; background: var(--ink); color: var(--bg); border-radius: 7px; padding: 5px 12px; font: inherit; font-size: 13px; cursor: pointer; }
   #ask h3 { margin: 0 0 4px; font-size: 14px; } #ask .kind { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
   #ask pre { font: 12px var(--mono); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; white-space: pre-wrap; max-height: 200px; overflow: auto; }
   .opts { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
@@ -181,6 +187,7 @@ function onRecord(r) {
   if (r.type === 'user' && Array.isArray(r.message?.content)) for (const b of r.message.content) if (b.type === 'tool_result' && b.is_error && r.toolDenialKind) {
     const c = cards.get(b.tool_use_id); if (c) { c.classList.add('err'); c.querySelector('.st').textContent = 'not approved'; }
     if (r.userFeedback) add(div("msg note", "Your feedback: " + esc(r.userFeedback)));
+    else add(div('msg note', 'Declined'));   // a declined question fires no hook at all, not even Stop (F-106)
   }
   if (r.type === 'system' && r.subtype === 'compact_boundary') add(div('divider', '<span>Earlier messages summarised</span>'));
 }
@@ -214,23 +221,79 @@ function renderAsk() {
     // Option 3 opens an inline field in the TUI: move to it, type, Enter.
     r.children[1].onclick = () => { const t = r.children[0].value.trim(); if (t) answer(moveTo(2), { text: t, then: ['enter'] }); };
     ask.appendChild(r);
-  } else if (s.kind === 'question') {
-    ask.classList.add('on');
-    const tabs = s.tabs.length > 1 ? `<div class="kind">${s.tabs.map(t => (t.done ? '☒ ' : '☐ ') + esc(t.label)).join(' · ')}</div>` : `<div class="kind">${esc(s.tabs[0]?.label || 'Question')}</div>`;
-    ask.innerHTML = `${tabs}<h3>${esc(s.question)}</h3>`;
-    const real = s.options.filter(o => !/^Type something|^Chat about this|^Next$/.test(o.label));
-    ask.appendChild(optButtons(real, (o) => { const i = s.options.indexOf(o); answer([...moveTo(i), s.multi ? 'space' : 'enter']); }));
-    const other = s.options.findIndex(o => /^Type something/.test(o.label) || (o.cursor && !real.includes(o) && !/^Chat about/.test(o.label)));
-    const r = div('row'); r.innerHTML = `<input placeholder="Other: type your own answer"><button class="ghost">Answer</button>${s.multi ? '<button class="ghost">Next →</button>' : ''}<button class="ghost">Chat about this in the terminal…</button>`;
-    r.children[1].onclick = () => { const t = r.children[0].value.trim(); if (t && other >= 0) answer(moveTo(other), { text: t, then: s.multi ? ['space'] : ['enter'] }); };
-    if (s.multi) r.children[2].onclick = () => answer(['right']);
-    r.lastChild.onclick = () => setView('term');
-    ask.appendChild(r);
-  } else if (s.kind === 'question-review') {
-    ask.classList.add('on');
-    ask.innerHTML = `<div class="kind">Review your answers</div><pre>${esc(s.answers)}</pre>`;
-    ask.appendChild(optButtons(s.options, (o, i) => answer([...moveTo(i), 'enter'])));
+  } else if (s.kind === 'question' || s.kind === 'question-review') {
+    renderQuestion(ask, s, pr?.tool_name === 'AskUserQuestion' ? pr.tool_input : null);
   }
+}
+
+// AskUserQuestion (F-106). Text comes from Claude's request (the screen may wrap or cut it);
+// which options are ticked, chosen or typed comes from the screen. Every control sends an intent
+// that the server carries out key by key against the live TUI (ask.mjs).
+function ask(intent) { ws.send(JSON.stringify({ t: 'ask', id: ++reqId, sig: screen.sig, intent })); }
+const normText = t => String(t ?? '').replace(/\s+/g, ' ').trim();
+function renderQuestion(box, s, req) {
+  if (!req) return fallBack('Chat mode can\'t match this question to the one Claude asked.');
+  const qs = req.questions || [];
+  const here = s.kind === 'question'
+    ? qs.findIndex(q => normText(q.question) === normText(s.question) || (normText(s.question).length >= 20 && normText(q.question).endsWith(normText(s.question))))
+    : qs.length;
+  if (here < 0) return fallBack('Chat mode can\'t match this question to the one Claude asked.');
+  box.classList.add('on');
+  // Question tabs: the TUI's own strip (☐ not answered, ☒ answered), clickable to move between them.
+  if (qs.length > 1 || (s.kind === 'question' && s.multi)) {
+    const strip = div('qtabs');
+    const marks = s.tabs || [];
+    qs.forEach((q, i) => { const b = document.createElement('button'); b.className = 'qtab' + (i === here ? ' on' : ''); b.textContent = `${marks[i]?.done ? '☒' : '☐'} ${q.header}`; b.onclick = () => ask({ type: 'tab', index: i }); strip.appendChild(b); });
+    const r = document.createElement('button'); r.className = 'qtab' + (here === qs.length ? ' on' : ''); r.textContent = '✔ Review'; r.onclick = () => ask({ type: 'tab', index: qs.length }); strip.appendChild(r);
+    box.appendChild(strip);
+  }
+  if (s.kind === 'question-review') {
+    box.appendChild(div('', `<h3>Review your answers</h3><pre>${esc(s.answers)}</pre>`));
+    const r = div('row'); r.innerHTML = '<button class="primary">Submit answers</button><button class="ghost">Cancel</button>';
+    r.children[0].onclick = () => ask({ type: 'submit' }); r.children[1].onclick = () => ask({ type: 'cancel-review' });
+    return box.appendChild(r);
+  }
+  const q = qs[here];
+  box.appendChild(div('', `<div class="kind">${esc(q.header)}${s.multi ? ' · choose any' : ''}</div><h3>${esc(q.question)}</h3>`));
+  const opts = div('opts' + (s.preview ? ' previews' : ''));
+  q.options.forEach((o, i) => {
+    const row = s.options[i] || {};
+    const b = document.createElement('button');
+    const mark = s.multi ? (row.checked ? '☑ ' : '☐ ') : (row.selected ? '● ' : '');
+    b.innerHTML = `${mark}${esc(o.label)}<small>${esc(o.description || '')}</small>` + (o.preview ? `<pre class="pv">${esc(o.preview)}</pre>` : '');
+    if (row.checked || row.selected) b.classList.add('on');
+    b.onclick = () => {
+      const notes = box.querySelector('.notes input')?.value.trim();
+      if (s.preview && notes) ask({ type: 'notes', label: o.label, text: notes });
+      else ask({ type: s.multi ? 'toggle' : 'pick', label: o.label });
+    };
+    opts.appendChild(b);
+  });
+  box.appendChild(opts);
+  if (s.preview) {
+    const n = div('row notes'); n.innerHTML = `<input placeholder="Notes for Claude on the option you choose (optional)" value="${esc(s.notes || '')}">`;
+    box.appendChild(n);
+  }
+  if (s.other) {
+    const r = div('row'); r.innerHTML = `${s.multi && s.other.checked ? '☑ ' : ''}<input placeholder="Other: type your own answer" value="${esc(s.other.value || '')}"><button class="ghost">${s.multi ? 'Add' : 'Answer'}</button>`;
+    const go = () => { const t = r.querySelector('input').value.trim(); if (t) ask({ type: 'other', text: t }); };
+    const [inp, btn] = r.querySelectorAll('input, button');
+    btn.onclick = go; inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); go(); } };
+    box.appendChild(r);
+  }
+  const nav = div('row');
+  const next = s.rows.find(r => r.kind === 'next' || r.kind === 'submit');
+  nav.innerHTML = (here > 0 ? '<button class="ghost" data-a="back">← Back</button>' : '')
+    + (next ? `<button class="primary" data-a="next">${next.kind === 'submit' ? 'Submit' : 'Next →'}</button>` : '')
+    + '<span style="flex:1"></span><button class="ghost" data-a="chat">Chat about this instead</button><button class="ghost" data-a="decline">Decline (Esc)</button>';
+  nav.querySelectorAll('button').forEach(b => b.onclick = () => {
+    const a = b.dataset.a;
+    if (a === 'back') ask({ type: 'tab', index: here - 1 });
+    if (a === 'next') ask({ type: 'next' });
+    if (a === 'chat') { ask({ type: 'chat' }); setTimeout(() => document.querySelector('#input').focus(), 400); }
+    if (a === 'decline') ask({ type: 'decline' });
+  });
+  box.appendChild(nav);
 }
 
 let unknownTimer = null;
