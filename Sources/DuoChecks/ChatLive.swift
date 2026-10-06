@@ -1,3 +1,4 @@
+import DuoControl
 import DuoKit
 import Foundation
 import SwiftTerm
@@ -111,11 +112,16 @@ struct AskCase {
 
 @MainActor func askCases(size: (Int, Int), dir: String, port: Int, claude: String, version: String?) throws {
     let id = UUID().uuidString.lowercased()
+    // The composer's helper (F-112): this build's duo2 as Claude's external editor.
+    let bin = repoRoot().appending(path: ".build/out/Products/Debug/duo2").path
+    let composeDir = dir + "/compose"
     let settings = try HookEvents.settingsFile(for: id, chatEvents: true)
     let ws = dir + "/ws"
     let env = ["HOME=\(NSHomeDirectory())", "PATH=\(ProcessInfo.processInfo.environment["PATH"] ?? "/usr/bin:/bin")", "TERM=xterm-256color", "LANG=en_US.UTF-8",
                "CLAUDE_CONFIG_DIR=\(dir)/cfg", "ANTHROPIC_BASE_URL=http://127.0.0.1:\(port)", "ANTHROPIC_API_KEY=sk-ant-mock-key-0000000000000000000",
-               "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1", "DISABLE_AUTOUPDATER=1"]
+               "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1", "DISABLE_AUTOUPDATER=1",
+               "DUO_SESSION_ID=\(id)", "EDITOR=\(ProcessInfo.processInfo.environment["DUO_CHAT_LIVE_EDITOR"] ?? ChatComposer.editorCommand(cli: bin) ?? "")", "VISUAL=\(ProcessInfo.processInfo.environment["DUO_CHAT_LIVE_EDITOR"] ?? ChatComposer.editorCommand(cli: bin) ?? "")",
+               "\(ChatCompose.dirVariable)=\(composeDir)", "\(ChatCompose.userEditor)=/usr/bin/true"]
     let tui = HeadlessTUI(cols: size.0, rows: size.1)
     setenv("CLAUDE_CONFIG_DIR", dir + "/cfg", 1)   // where ChatFeed finds the transcript
     tui.process.startProcess(executable: claude, args: ["--session-id", id, "--settings", settings.path, "--model", "claude-haiku-4-5-20251001"],
@@ -124,6 +130,7 @@ struct AskCase {
     let chat = ChatSession(key: id, mode: .chat)
     chat.setVersion(version)
     chat.attach(tui)
+    chat.composeDir = URL(fileURLWithPath: composeDir)
     chat.follow(sessionId: id, cwd: URL(fileURLWithPath: ws).resolvingSymlinksInPath().path)
     func until(_ s: TimeInterval, _ f: () -> Bool) -> Bool {
         let end = Date().addingTimeInterval(s)
@@ -191,7 +198,7 @@ struct AskCase {
         check(ok, "\(c.name)" + (ok ? "" : "  (\(error ?? "") got \(String(describing: got)))"))
         if chat.reread().kind != .idle { tui.sendKeys("\u{1b}"); _ = idle() }
     }
-    guard only == nil, size.0 == 100 else { return }
+    guard only == nil || only == "none", size.0 == 100 else { return }
 
     // A streamed reply: MessageDisplay draws it as it comes; the transcript's block matches it.
     prompt("md")
@@ -205,7 +212,6 @@ struct AskCase {
     check(texts.count == 1 && texts[0].markdown.contains("## Results") && !texts[0].streaming,
           "the streamed reply shows once, whole, after the transcript catches up (\(texts.count) text blocks)")
 
-    // Permissions and the plan (the tour's dialogs), answered from cards.
     func prompt(_ p: String) { tui.sendKeys("\u{1b}[200~SCENARIO:\(p)\u{1b}[201~"); spin(0.2); tui.sendKeys("\r") }
     func await_<T>(_ f: @escaping () async -> T) -> T? {
         var r: T?
@@ -213,12 +219,73 @@ struct AskCase {
         _ = until(20) { r != nil }
         return r
     }
+    // The composer (F-104, F-112): Claude's own prompt, handed over through Ctrl+G.
+    func lastPrompt(after offset: Int) -> String? {
+        guard let url = ClaudeStorage.transcript(sessionId: id, cwd: ws), let data = try? Data(contentsOf: url), data.count > offset else { return nil }
+        return data.suffix(from: offset).split(separator: UInt8(ascii: "\n")).compactMap { try? JSONSerialization.jsonObject(with: Data($0)) as? [String: Any] }
+            .last { $0["type"] as? String == "user" && ($0["message"] as? [String: Any])?["content"] is String }
+            .flatMap { ($0["message"] as? [String: Any])?["content"] as? String }
+    }
+    func transcriptSize() -> Int { ClaudeStorage.transcript(sessionId: id, cwd: ws).flatMap { try? Data(contentsOf: $0) }?.count ?? 0 }
+    _ = idle()
+    var from = transcriptSize()
+    let sent = await_ { await chat.send("Hello from the composer, **in Markdown**. SCENARIO:hello") }
+    _ = idle(); spin(1)
+    check(sent?.ok == true && lastPrompt(after: from) == "Hello from the composer, **in Markdown**. SCENARIO:hello",
+          "the composer's text reached Claude through Ctrl+G and duo2 compose (\(sent?.why ?? "ok"))")
+    check(chat.log.items.filter { if case .you(let y) = $0 { return y.text.contains("Hello from the composer") } else { return false } }.count == 1,
+          "and shows once, matched to its echo")
+    tui.sendKeys("half-typed in the terminal"); spin(0.6)
+    let carried = chat.reread().input
+    check(carried == "half-typed in the terminal", "text typed in the terminal is Claude's prompt, read for the composer (\(carried ?? "-"))")
+    chat.ui.composerBasis = carried
+    from = transcriptSize()
+    let finished = await_ { await chat.send("half-typed in the terminal, finished here SCENARIO:hello") }
+    _ = idle(); spin(1)
+    check(finished?.ok == true && lastPrompt(after: from) == "half-typed in the terminal, finished here SCENARIO:hello", "carried over and finished in the composer")
+    tui.sendKeys("typed in the terminal meanwhile"); spin(0.6)
+    chat.ui.composerBasis = ""
+    from = transcriptSize()
+    let stale = await_ { await chat.send("This must not replace it") }
+    chat.fallback = nil
+    spin(0.5)
+    check(stale?.ok == false && chat.reread().input == "typed in the terminal meanwhile" && lastPrompt(after: from) == nil,
+          "a prompt changed in the terminal is never overwritten; nothing sent (\(stale?.why ?? "-"))")
+    for _ in 0..<40 { tui.sendKeys("\u{7f}") }; spin(0.5)
+    let saved = chat.composeDir
+    chat.composeDir = nil
+    from = transcriptSize()
+    let pasted = await_ { await chat.send("Pasted on send SCENARIO:hello") }
+    chat.composeDir = saved
+    _ = idle(); spin(1)
+    check(pasted?.ok == true && lastPrompt(after: from) == "Pasted on send SCENARIO:hello", "paste-on-send, for older CLIs (\(pasted?.why ?? "ok"))")
+    prompt("long")
+    _ = until(10) { chat.reread().kind == .busy }
+    from = transcriptSize()
+    let queued = await_ { await chat.send("Queued while Claude works SCENARIO:hello") }
+    let wasBusy = chat.screen.kind == .busy || chat.log.writing
+    _ = until(40) { lastPrompt(after: from) == "Queued while Claude works SCENARIO:hello" }
+    _ = idle(); spin(1)
+    let bubbles = chat.log.items.filter { if case .you(let y) = $0 { return y.text.hasPrefix("Queued while") } else { return false } }.count
+    check(queued?.ok == true && wasBusy && bubbles == 1 && lastPrompt(after: from) == "Queued while Claude works SCENARIO:hello",
+          "a message sent while Claude works is taken, and shows once (sent busy \(wasBusy), \(bubbles) bubble)")
+
+    // `/` in the composer: Claude Code's own command list, read from its screen.
+    _ = idle()
+    _ = await_ { await chat.mirrorSlash("/mo") }
+    _ = until(5) { !chat.reread().commands.isEmpty }
+    let cmds = chat.screen.commands.map(\.name)
+    check(cmds.contains("/model"), "`/` shows Claude Code's own commands, filtered as typed (\(cmds.prefix(4)))")
+    _ = await_ { await chat.mirrorSlash("") }
+    spin(0.4)
+    check(chat.reread().input == "", "leaving `/` clears what it typed into Claude's prompt")
+
+    // Permissions and the plan (the tour's dialogs), answered from cards.
     func lastResult(after offset: Int) -> [String: Any]? {
         guard let url = ClaudeStorage.transcript(sessionId: id, cwd: ws), let data = try? Data(contentsOf: url), data.count > offset else { return nil }
         return data.suffix(from: offset).split(separator: UInt8(ascii: "\n")).compactMap { try? JSONSerialization.jsonObject(with: Data($0)) as? [String: Any] }
             .last { (($0["message"] as? [String: Any])?["content"] as? [[String: Any]])?.contains { $0["type"] as? String == "tool_result" } == true }
     }
-    func transcriptSize() -> Int { ClaudeStorage.transcript(sessionId: id, cwd: ws).flatMap { try? Data(contentsOf: $0) }?.count ?? 0 }
 
     var start = transcriptSize()
     prompt("bash")

@@ -1,3 +1,4 @@
+import DuoControl
 import DuoKit
 import Foundation
 
@@ -171,6 +172,11 @@ func spikeScreen(_ name: String) -> String {
         if case .interrupted? = log.items.last, !log.writing { check(true, "an interrupt (no hook) ends the reply, from the screen (F-105)") } else { check(false, "interrupt") }
         ChatIngest.record(["type": "system", "subtype": "compact_boundary"], into: log)
         if case .divider? = log.items.last { check(true, "compaction is a divider") } else { check(false, "compaction") }
+        let q = ChatLog()
+        q.sent("Also check Android", time: nil, queued: true)
+        if case .you(let y)? = q.items.last { check(y.queued, "a message sent while Claude works shows as Queued") } else { check(false, "queued bubble") }
+        ChatIngest.hook(["hook_event_name": "UserPromptSubmit", "prompt": "Also check Android", "source": "user"], at: 1, into: q)
+        if case .you(let y)? = q.items.last, q.items.count == 1 { check(!y.queued, "until Claude Code takes it (its prompt hook): then it's yours, once") } else { check(false, "queued taken") }
         check(ChatIngest.lines(Data("{\"a\":1}\n{\"b\":2}{\"c\":\n{\"d\":4}\n".utf8)).count == 2, "merged hook lines are skipped, the rest read")
         var recs: [ChatJSON] = []
         for i in 0..<120 { recs.append(["type": "user", "message": ["content": "p\(i)"]]); recs.append(["type": "assistant", "message": ["content": [["type": "text", "text": "r\(i)"]]]]) }
@@ -199,6 +205,31 @@ func spikeScreen(_ name: String) -> String {
         let line = (try? String(contentsOf: dir.appending(path: "b.jsonl"), encoding: .utf8)) ?? ""
         let obj = ChatIngest.lines(Data(line.utf8)).first
         check(obj?["at"] is NSNumber && (obj?["e"] as? ChatJSON)?["delta"] as? String == "x", "and writes one whole line with a fractional time (\(line.prefix(30)))")
+        try? FileManager.default.removeItem(at: dir)
+    }
+
+    print("chat mode: the composer's hand-over, duo2 compose (F-104, F-112)")
+    do {
+        let dir = FileManager.default.temporaryDirectory.appending(path: "duo-compose-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let prompt = dir.appending(path: "claude-prompt-abc.md")
+        try "".write(to: prompt, atomically: true, encoding: .utf8)
+        try ChatCompose.leave(.init(text: "Hello\nthere", basis: ""), in: dir, session: "s")
+        check(ChatCompose.take(file: prompt, dir: dir, session: "s") == .handedOver && (try? String(contentsOf: prompt, encoding: .utf8)) == "Hello\nthere",
+              "Claude's prompt file takes the composer's text, multi-line, exactly")
+        check(!FileManager.default.fileExists(atPath: ChatCompose.handoverFile(dir, "s").path), "a hand-over is used once")
+        check(ChatCompose.take(file: prompt, dir: dir, session: "s") == .notOurs, "with nothing handed over, Ctrl+G in the terminal opens the user's own editor")
+        try "typed in the terminal".write(to: prompt, atomically: true, encoding: .utf8)
+        try ChatCompose.leave(.init(text: "mine", basis: ""), in: dir, session: "s")
+        check(ChatCompose.take(file: prompt, dir: dir, session: "s") == .refused && (try? String(contentsOf: prompt, encoding: .utf8)) == "typed in the terminal",
+              "a prompt that changed in the terminal is left alone (nothing lost)")
+        try ChatCompose.leave(.init(text: "x", basis: ""), in: dir, session: "s")
+        check(ChatCompose.take(file: dir.appending(path: "COMMIT_EDITMSG"), dir: dir, session: "s") == .notOurs,
+              "anything but Claude's prompt (git commit from Claude's Bash) goes to the user's editor")
+        check(ChatCompose.userEditorCommand(["DUO_USER_VISUAL": "code -w", "DUO_USER_EDITOR": "vim"]) == "code -w" && ChatCompose.userEditorCommand([:]) == "vi",
+              "the user's VISUAL, then EDITOR, as they were")
+        check(ChatComposer.editorCommand(cli: "/Applications/Duo.app/Contents/Helpers/duo2") == "/Applications/Duo.app/Contents/Helpers/duo2 compose"
+              && ChatComposer.editorCommand(cli: "/Users/x/Duo copy.app/duo2") == nil, "EDITOR unquoted (Claude splits it without a shell); a path with a space pastes instead")
         try? FileManager.default.removeItem(at: dir)
     }
 }

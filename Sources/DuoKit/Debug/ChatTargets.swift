@@ -40,6 +40,8 @@ public enum ChatTargets {
             model.shellTabs[project] = keys
         }
         let chat = ChatSession(key: tab, mode: ChatViewMode(rawValue: meta["mode"] as? String ?? "chat") ?? .chat)
+        chat.lastDeclined = meta["lastDeclined"] as? String
+        if meta["focusComposer"] as? Bool == true { chat.focusComposer += 1 }
         // Files a card reads (an edit's line numbers, a plan), as the board's project has them.
         let files = meta["files"] as? [String: String] ?? [:]
         chat.readFile = { files[$0] }

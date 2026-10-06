@@ -159,6 +159,8 @@ public final class ChatLog {
     public internal(set) var hooksSeen = false
     /// MessageDisplay is streaming replies, so the transcript's text is only matched, never added.
     public internal(set) var streams = false
+    /// The model Claude answers with, by family name (Opus, Sonnet, Haiku, Fable), from the transcript.
+    public internal(set) var model: String?
     /// Turns before the last 50 aren't shown yet (Earlier turns, Q-56c).
     public internal(set) var earlierHidden = false
     @ObservationIgnored private var nextID = 0
@@ -242,6 +244,13 @@ public final class ChatLog {
         // The other source already showed it: match the latest unmatched bubble with this text.
         for i in items.indices.reversed().prefix(12) {
             guard case .you(var y) = items[i], y.text.chatNorm == t.chatNorm else { continue }
+            // A message sent from the composer: the first echo claims it.
+            if !y.fromHook, !y.fromTranscript {
+                if fromHook { y.fromHook = true } else { y.fromTranscript = true }
+                y.queued = false
+                items[i] = .you(y)
+                return
+            }
             if fromHook ? !y.fromHook : !y.fromTranscript {
                 if fromHook { y.fromHook = true } else { y.fromTranscript = true }
                 y.queued = false
@@ -253,6 +262,14 @@ public final class ChatLog {
         if fromHook { y.fromHook = true } else { y.fromTranscript = true }
         items.append(.you(y))
         turnStarted = time ?? Date()
+    }
+
+    /// Your message, sent from the composer: shown now, matched when the hook and transcript echo it.
+    public func sent(_ text: String, time: Date?, queued: Bool, planMode: Bool = false) {
+        var y = ChatYou(id: newID("you"), text: text, time: time, queued: queued, planMode: planMode)
+        y.fromHook = false
+        items.append(.you(y))
+        if !queued { turnStarted = time ?? Date() }
     }
 
     /// A MessageDisplay flush: newly completed Markdown lines of one reply (2.1.152).

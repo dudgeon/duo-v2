@@ -37,11 +37,11 @@ class Rec:
     def you(self, hm, text):
         self.t.append({"type": "user", "message": {"role": "user", "content": text}, "timestamp": iso(hm), "origin": {"kind": "human"}, "cwd": CWD})
 
-    def say(self, hm, text, s=0):
-        self.t.append({"type": "assistant", "message": {"content": [{"type": "text", "text": text}]}, "timestamp": iso(hm, s), "cwd": CWD})
+    def say(self, hm, text, s=0, model="claude-opus-5-5"):
+        self.t.append({"type": "assistant", "message": {"model": model, "content": [{"type": "text", "text": text}]}, "timestamp": iso(hm, s), "cwd": CWD})
 
     def think(self, hm, ms):
-        self.t.append({"type": "assistant", "message": {"content": [{"type": "thinking", "thinking": ""}]}, "thinkingDurationMs": ms, "timestamp": iso(hm)})
+        self.t.append({"type": "assistant", "message": {"model": "claude-opus-5-5", "content": [{"type": "thinking", "thinking": ""}]}, "thinkingDurationMs": ms, "timestamp": iso(hm)})
 
     def tool(self, hm, id, name, inp, result=None, content="", error=False, denial=None):
         self.t.append({"type": "assistant", "message": {"content": [{"type": "tool_use", "id": id, "name": name, "input": inp}]}, "timestamp": iso(hm)})
@@ -269,3 +269,21 @@ for i in range(max(len(left), len(box))):
 write_screen("question-previews", screen(["❯ Mock up the guest sign-in step.", "", RULE, " ☐ Sign-in ", P["question"]] + rows
                                          + [" " * 34 + "Notes: press n to add notes", RULE, "  Chat about this", "Enter to select · ↑/↓ to navigate · n to add notes · Esc to cancel"]))
 print("wrote review boards")
+
+# composer: at rest, accept edits on (the board's first vignette).
+r = Rec()
+r.you("10:50", "Tighten the non-goals.")
+r.say("10:50", "Done: non-goal #3 is gone.")
+r.write("composer", {"mode": "chat", "tab": "PRD v2 edits"}, None)
+idle = (spike / IDLE).read_text().replace("⏸ manual mode on", "⏵⏵ accept edits on")
+write_screen("composer", idle)
+
+# question-chat-decline: Chat about this closed the questions; the composer takes over.
+r = Rec()
+r.say("10:40", "Two questions before I write it.")
+r.tool("10:40", "toolu_q1", "AskUserQuestion", {"questions": [Q1, Q2]})
+r.t.append({"type": "user", "toolDenialKind": "user-rejected", "message": {"content": [{"type": "tool_result", "tool_use_id": "toolu_q1", "is_error": True, "content": "The user wants to clarify these questions."}]}, "timestamp": iso("10:41")})
+r.write("question-chat-decline", {"mode": "chat", "tab": "PRD v2 edits", "lastDeclined": "You chose to chat about these questions",
+                                  "drafts": {"composer": "By “staff”, do you mean engineering or support?"}, "focusComposer": True}, None)
+write_screen("question-chat-decline", (spike / IDLE).read_text())
+print("wrote composer boards")

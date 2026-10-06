@@ -239,6 +239,9 @@ public enum ChatIngest {
                 }
             }
         case "assistant":
+            if let m = message?["model"] as? String, let family = ["opus", "sonnet", "haiku", "fable"].first(where: { m.contains($0) }) {
+                if log.model != family.capitalized { log.model = family.capitalized }
+            }
             for b in message?["content"] as? [ChatJSON] ?? [] {
                 switch b["type"] as? String {
                 case "text":

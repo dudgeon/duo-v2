@@ -43,6 +43,12 @@ public struct ChatSignatures: Sendable, Equatable {
     public var commandMenu = #"^\s{2}❯ /\S+\s{2,}"#
     /// Chat about this, Next and Submit in a question.
     public var chatAbout = "Chat about this"
+    /// A row of the `/` command menu: `  ❯ /add-dir      Add a new working directory`.
+    public var commandRow = #"^\s{2}(❯ )?\s*(/[\w:.-]+)\s{2,}(\S.*)$"#
+    /// Commands with a screen of their own: they open in the terminal (spike; handoff `composer`).
+    public var terminalCommands: Set<String> = ["/model", "/config", "/permissions", "/resume", "/agents", "/mcp", "/tasks", "/login", "/logout",
+                                                "/doctor", "/hooks", "/memory", "/theme", "/status", "/vim", "/terminal-setup", "/install-github-app",
+                                                "/output-style", "/statusline", "/ide", "/export", "/rewind", "/plugin", "/usage", "/cost"]
 
     /// 2.1.291: every dialog verified with the mock tour and asktest (F-104, F-106) and with real
     /// turns under the CLI login (F-105).
@@ -150,6 +156,8 @@ public struct ChatScreen: Sendable, Equatable {
     public var notes: String?
     public var answers: String?
     public var why: String?
+    /// The `/` menu Claude Code shows under what's typed, with its own descriptions.
+    public var commands: [(name: String, description: String, selected: Bool)] = []
 
     public var options: [ChatScreenRow] { rows.filter { $0.kind == .option } }
     public var other: ChatScreenRow? { rows.first { $0.kind == .other } }
@@ -164,6 +172,7 @@ public struct ChatScreen: Sendable, Equatable {
             && a.amend == b.amend && a.mode == b.mode && a.input == b.input && a.status == b.status && a.interrupted == b.interrupted
             && a.menu == b.menu && a.tabs.map(\.label) == b.tabs.map(\.label) && a.tabs.map(\.done) == b.tabs.map(\.done)
             && a.question == b.question && a.multi == b.multi && a.preview == b.preview && a.notes == b.notes && a.answers == b.answers
+            && a.commands.map(\.name) == b.commands.map(\.name) && a.commands.map(\.selected) == b.commands.map(\.selected)
     }
 }
 
@@ -274,6 +283,11 @@ public enum ChatScreenReader {
                 r.interrupted = !above[(i + 1)...].contains { $0.hasPrefix("❯") || $0.hasPrefix("⏺") }
             }
             r.menu = t.contains { $0.chatIs(s.commandMenu) }
+            if rules.count >= 2 {
+                r.commands = t[0..<rules[rules.count - 2]].compactMap { l in
+                    l.chatMatch(s.commandRow).map { m in (m[2] ?? "", (m[3] ?? "").chatTrim, m[1] != nil) }
+                }
+            }
             return r
         }
         return ChatScreen(kind: .unknown, sig: "unknown")

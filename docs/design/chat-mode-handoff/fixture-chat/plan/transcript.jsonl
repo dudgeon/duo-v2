@@ -1,5 +1,5 @@
 {"type": "user", "message": {"role": "user", "content": "Plan how we’d bring saved cards into scope. Don’t change anything yet."}, "timestamp": "2026-10-06T10:30:00.000Z", "origin": {"kind": "human"}, "permissionMode": "plan"}
 {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "toolu_l1", "name": "Read", "input": {"file_path": "/Users/pm/work/payments/checkout-redesign/docs/prd-v2.md"}}]}, "timestamp": "2026-10-06T10:31:00.000Z"}
 {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "toolu_l1", "content": "", "is_error": false}]}, "timestamp": "2026-10-06T10:31:00.000Z", "toolUseResult": {"type": "text", "file": {"content": "", "numLines": 88}}}
-{"type": "assistant", "message": {"content": [{"type": "text", "text": "Here’s the plan."}]}, "timestamp": "2026-10-06T10:31:00.000Z", "cwd": "/Users/pm/work/payments/checkout-redesign"}
+{"type": "assistant", "message": {"model": "claude-opus-5-5", "content": [{"type": "text", "text": "Here’s the plan."}]}, "timestamp": "2026-10-06T10:31:00.000Z", "cwd": "/Users/pm/work/payments/checkout-redesign"}
 {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "toolu_l2", "name": "ExitPlanMode", "input": {}}]}, "timestamp": "2026-10-06T10:31:00.000Z"}

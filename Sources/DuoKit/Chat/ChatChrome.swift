@@ -123,6 +123,8 @@ extension AppModel {
         if (c.terminal as? LiveChatTerminal)?.view !== t.view { c.attach(LiveChatTerminal(t.view)) }
         // Live sessions are keyed by their id; demo and fixture terminals have no hooks to read.
         if terminalsMode == .live { c.follow(sessionId: t.key, cwd: t.cwd) }
+        // The composer hands over through `duo2 compose` when this build has it (F-112).
+        if let bin = ChildEnvironment.cliDirectory, ChatComposer.editorCommand(cli: bin + "/duo2") != nil { c.composeDir = ChatComposer.dir }
         if c.cliVersion == nil, let path = ClaudeLocator.resolve() {
             ClaudeVersion.of(path) { [weak c] v in c?.setVersion(v) }
         }

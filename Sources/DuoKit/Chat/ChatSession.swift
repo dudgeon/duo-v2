@@ -155,6 +155,8 @@ public final class ChatSession {
 
     /// Held strongly: the live adapter holds its view weakly, so there's no cycle.
     @ObservationIgnored var terminal: ChatTerminal?
+    /// Where `duo2 compose` finds the composer's text; nil: paste instead (no helper in this build).
+    @ObservationIgnored public var composeDir: URL?
     /// The hook and transcript reader, for a live session.
     @ObservationIgnored var feed: ChatFeed?
     /// Fixture mode: the screen the stand-in terminal shows.
@@ -249,7 +251,10 @@ public final class ChatSession {
         let before = screen
         if s != before { screen = s }
         // An interrupted reply fires no hook: busy → idle ends it (F-105).
-        if before.kind == .busy, s.kind == .idle { log.endStreaming(interrupted: s.interrupted) }
+        if before.kind == .busy, s.kind == .idle {
+            log.endStreaming(interrupted: s.interrupted)
+            if s.interrupted { focusComposer += 1 }   // "What should Claude do instead?": the composer is ready
+        }
         evaluateFallback()
     }
 

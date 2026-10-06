@@ -190,6 +190,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 uninstall` | Remove exactly what `duo2 install` added (anything you edited stays). | Remove… |
 | `duo2 settings [claude-path <path\|auto> \| notify on\|off \| dock-badge on\|off]` | Duo's settings (S3-1): with no arguments, all of them; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge. | Choose…, Use Found One |
 | `duo2 walk setup <test id>` | Put Duo in the state an acceptance-walk test starts from (the walk page's Set up test button, or `duo2://walk-setup?id=…`). Steps come from ~/DuoAcceptance/walk-setups.json, never from the caller. | Set up test |
+| `duo2 compose <file>` | Claude Code's external editor in Duo's sessions (Ctrl+G; chat mode's composer, F-104, F-112): hands Claude the composer's text when chat mode asked for it, and otherwise opens your own editor ($VISUAL or $EDITOR as they were). Not for running by hand. | — |
 | `duo2 hook pre-edit \| context` | Used by Duo's sessions. `pre-edit` (PreToolUse): Claude's Edit, MultiEdit and Write on a document open in Duo go through the editor instead of the file (DL-78). `context` (SessionStart, UserPromptSubmit): tells Claude the task(s) its session is attributed to, and on a prompt what changed since (DL-116). | — |
 | `duo2 legacy [disable --yes \| restore <backup>]` | Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them. | Disable…, Restore |
 

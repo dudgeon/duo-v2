@@ -19,8 +19,11 @@ public final class ChatUIState {
     public var planFeedback = ""
     public var other: [Int: String] = [:]
     public var notes = ""
-    /// The composer's text (Claude's prompt, phase 4).
+    /// The composer's text, and what Claude's prompt held when the composer opened on it (nil:
+    /// not opened on it yet; the screen's input is the basis).
     public var composer = ""
+    public var composerBasis: String?
+    public var composerFocused = false
     public init() {}
 }
 
@@ -59,7 +62,7 @@ struct ChatPane: View {
                 ChatReviewCard(chat: chat)
                     .padding(EdgeInsets(top: 0, leading: 16, bottom: 14, trailing: 16))
             } else {
-                ChatComposerStandIn()
+                ChatComposerArea(chat: chat)
                     .padding(EdgeInsets(top: 0, leading: DuoSpace.chatColumnInset, bottom: 12, trailing: DuoSpace.chatColumnInset))
             }
         }
