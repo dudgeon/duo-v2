@@ -13,7 +13,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 update probe` | Whether in-app updates can work on this Mac, without Duo running: the update feed and the DMG reachable from here, and Duo installed where it can be replaced. | — |
 | `duo2 status` | What Duo is showing: the view, the open project, session and document, and counts. | — |
 | `duo2 needs-you` | Sessions waiting for the user, with their questions. | Needs You Elsewhere |
-| `duo2 undo` | Undo Duo's last move, merge or Make a Project (Edit › Undo). | Undo |
+| `duo2 undo` | Undo Duo's last move, merge or Make a Project (Edit › Undo). | Undo, Undo Conversion |
 | `duo2 help [family \| --markdown]` | Families and everyday verbs; a family's verbs; or the full reference as Markdown. | duo2 Reference |
 
 ## What's on screen
@@ -111,7 +111,8 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 file move <path>… <folder> [--replace \| --keep-both]` | Move files or folders into a folder; open tabs follow. A path may be anywhere on the Mac (the same move as dropping it from Finder on the tree); from another volume it's copied, as Finder does. A taken name fails unless --replace (the one there goes to the Trash) or --keep-both ("name 2"). A folder can't go into itself. Undo with `duo2 undo`. | Move To…, files dropped on the file tree |
 | `duo2 file trash <path>` | Move to the Trash (never deleted outright). | Move to Trash |
 | `duo2 file reveal <path>` | Show in Finder. | Reveal in Finder |
-| `duo2 file open-with <path> [--app <name>]` | Open in another app (the default app if none named). | Open With, Other… |
+| `duo2 file open-with <path> [--app <name>]` | Open in another app (the default app if none named). | Open With, Other…, Open Original |
+| `duo2 file convert <docx> [--as <name.md>] [--replace] [--anyway]` | Make a Markdown copy of a Word document beside it (<name>.md, pictures in <name>-images); the .docx isn't changed (DL-123). Headings, lists and layout tables are inferred and cleaned; tracked changes are accepted; comments become endnotes. Prints what it inferred and what didn't come over. A taken name fails unless --as or --replace (the one there goes to the Trash); --anyway converts a document with no text. Undo with `duo2 undo`. | Convert to Markdown, Convert Anyway |
 | `duo2 file path <path> [--relative \| --link] [--copy]` | Print a file's path, relative path or Markdown link; --copy puts it on the clipboard. | Copy Path, Copy Relative Path, Copy as Link |
 
 ## Documents

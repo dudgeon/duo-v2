@@ -1,4 +1,5 @@
 import AppKit
+import DuoSearch
 import Quartz
 import SwiftUI
 
@@ -13,20 +14,23 @@ struct BinaryFileView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            NoticeBar(text: "Read only: Duo can’t edit \(Self.article(FileKind.description(file))).") {
-                Menu("Open With") {
-                    ForEach(Array(FileActions.apps(for: file).enumerated()), id: \.offset) { i, app in
-                        Button(FileManager.default.displayName(atPath: app.path) + (i == 0 ? " (default)" : "")) {
-                            NSWorkspace.shared.open([file], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
-                        }
-                    }
-                    Divider()
-                    Button("Other…") { model.openWithChosenApp(path) }
+            if AppModel.isWordDocument(file) {
+                WordDocumentBar(path: path, file: file)
+            } else if AppModel.isOldWordDocument(file) {
+                // F2: the older format can't be converted; say how to get a .docx.
+                NoticeBar(text: "Read only: Duo can’t edit a Word 97–2004 document, or convert one.",
+                          sub: "Save it as .docx in Word or Pages, and Duo can make a Markdown copy.") {
+                    OpenWithMenu(path: path, file: file)
+                    Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
                 }
-                .menuStyle(.borderlessButton).fixedSize()
-                Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
+            } else {
+                NoticeBar(text: "Read only: Duo can’t edit \(Self.article(FileKind.description(file))).") {
+                    OpenWithMenu(path: path, file: file)
+                    Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
+                }
             }
-            if FileKind.quickLookPreviews(file) {
+            // Quick Look can't open a locked or damaged .docx either: say so, as F draws it.
+            if FileKind.quickLookPreviews(file), ![.passwordProtected, .damaged].contains(model.conversionFailures[path]) {
                 QuickLookPane(file: file)
             } else {
                 VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
@@ -44,6 +48,119 @@ struct BinaryFileView: View {
     static func article(_ s: String) -> String {
         let lower = s.prefix(1).lowercased()
         return (["a", "e", "i", "o", "u"].contains(lower) ? "an " : "a ") + s
+    }
+}
+
+/// Open With: the apps that open the file, the default first, then Other… (C-26). As the default
+/// button when nothing else on the bar is (F, F2).
+struct OpenWithMenu: View {
+    @Environment(AppModel.self) private var model
+    let path: String
+    let file: URL
+    var isDefault = false
+
+    var body: some View {
+        let menu = Menu {
+            ForEach(Array(FileActions.apps(for: file).enumerated()), id: \.offset) { i, app in
+                Button(FileManager.default.displayName(atPath: app.path) + (i == 0 ? " (default)" : "")) {
+                    NSWorkspace.shared.open([file], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+                }
+            }
+            Divider()
+            Button("Other…") { model.openWithChosenApp(path) }
+        } label: {
+            if isDefault {
+                // The button style hides the menu's own chevron; draw it, as on the boards (F, F2).
+                HStack(spacing: 4) { Text("Open With"); Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)) }
+            } else {
+                Text("Open With")
+            }
+        }
+        if isDefault {
+            menu.menuStyle(.button).buttonStyle(DefaultSheetButtonStyle()).fixedSize()
+        } else {
+            menu.menuStyle(.borderlessButton).fixedSize()
+        }
+    }
+}
+
+/// A .docx (DL-123; canvas https://claude.ai/artifact/YRWyEm4MHbxYYtnRVr55xp): the offer to make a
+/// Markdown copy (A), its progress (C), or why it couldn't (F, F2). Quick Look's preview stays below.
+struct WordDocumentBar: View {
+    @Environment(AppModel.self) private var model
+    let path: String
+    let file: URL
+
+    var body: some View {
+        let name = file.lastPathComponent
+        if let p = model.converting[path] {
+            VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
+                Text("Converting \(name) to Markdown…").duoText(.body)
+                HStack(spacing: DuoSpace.gapCardToCard) {
+                    GeometryReader { g in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(DuoColor.rule)
+                            Capsule().fill(DuoColor.text2).frame(width: g.size.width * max(0, min(1, p.fraction)))
+                        }
+                    }
+                    .frame(height: 4)
+                    Text(p.stage).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize()
+                    Button("Cancel") { model.cancelConversion(path) }.buttonStyle(.duo)
+                }
+            }
+            .padding(.vertical, DuoMetric.noticePaddingY)
+            .padding(.horizontal, DuoMetric.noticePaddingX)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(DuoColor.ground)
+            .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
+        } else if let f = model.conversionFailures[path] {
+            NoticeBar(text: "Couldn’t convert \(name): \(f).", sub: Self.advice(f)) {
+                if case .noText = f {
+                    Button("Convert Anyway") { model.convertAnyway(path) }.buttonStyle(.duo)
+                }
+                OpenWithMenu(path: path, file: file, isDefault: true)
+                Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
+            }
+        } else {
+            NoticeBar(text: "\(name) is a Word document. Duo can make a Markdown copy of it to read and edit here, with Claude.",
+                      sub: "The copy goes beside it as \(file.deletingPathExtension().lastPathComponent).md. The Word document isn’t changed.") {
+                Button("Convert to Markdown") { model.convertToMarkdown(path) }.buttonStyle(DefaultSheetButtonStyle())
+                OpenWithMenu(path: path, file: file)
+                Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
+            }
+        }
+    }
+
+    static func advice(_ f: Docx.Failure) -> String {
+        switch f {
+        case .passwordProtected: "Nothing was written. Remove the password in Word, then convert again."
+        case .damaged: "Nothing was written. Word may be able to repair it: open it there and save a copy."
+        case .oldFormat: "Nothing was written. Save it as .docx in Word or Pages, then convert again."
+        case .notWord: "Nothing was written. Open it in the app that made it."
+        case .noText: "It may be a scan. Nothing was written."
+        }
+    }
+}
+
+/// The Markdown copy just made (D), or with gaps (E): where it came from, the summary, and Undo
+/// Conversion, Open Original, OK.
+struct ConversionNotice: View {
+    @Environment(AppModel.self) private var model
+    let tab: String
+    let conversion: DocxConversion
+
+    var body: some View {
+        let c = conversion
+        let source = c.source.lastPathComponent
+        NoticeBar(text: c.gaps.isEmpty ? "Converted from \(source). The Word document is unchanged."
+                                       : "Converted from \(source), with gaps. The Word document is unchanged.",
+                  sub: c.gaps.isEmpty ? (c.done.isEmpty ? nil : c.done.joined(separator: " · "))
+                                      : "Not carried over: " + c.gaps.joined(separator: " · "),
+                  sub2: c.gaps.isEmpty || c.done.isEmpty ? nil : "Also: " + c.done.joined(separator: " · ")) {
+            Button("Undo Conversion") { model.undoConversion(c) }.buttonStyle(.duo)
+            Button("Open Original") { model.openOriginal(tab) }.buttonStyle(.duo)
+            Button("OK") { model.dismissConversion(tab) }.buttonStyle(DefaultSheetButtonStyle()).keyboardShortcut(.defaultAction)
+        }
     }
 }
 

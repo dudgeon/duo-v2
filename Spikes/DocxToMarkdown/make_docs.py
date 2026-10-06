@@ -272,6 +272,14 @@ def mixed():
     d.save(f"{OUT}/09-mixed.docx")
 
 
-for f in [clean, fake_headings, fake_lists, layout_table, tracked, comments, images, footnotes_fields, mixed]:
+# 10. a scan: pictures and no text (Duo refuses unless told to convert anyway).
+def scan():
+    d = Document()
+    for rgb in [(200, 200, 200), (180, 180, 180)]:
+        d.add_picture(io.BytesIO(png(60, 80, rgb)), width=Inches(3))
+    d.save(f"{OUT}/10-scan.docx")
+
+
+for f in [scan, clean, fake_headings, fake_lists, layout_table, tracked, comments, images, footnotes_fields, mixed]:
     f()
 print("\n".join(sorted(os.listdir(OUT))))

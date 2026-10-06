@@ -1421,3 +1421,33 @@ Nine synthetic documents (`Spikes/DocxToMarkdown/make_docs.py`), run through pan
 - **Neither** infers headings from font size or bold, or lists from typed `•`/`1.`, and both drop comments silently.
 - **Our own** handled all nine documents: headings from size, bold and outline level; typed lists; nesting by indent; layout tables unwrapped; tracked changes accepted or rejected; comments left out or kept as footnotes; images extracted with alt text; and a summary of what it did.
 - **Word's "List Bullet 2/3" styles** are separate lists at ilvl 0 with a bigger indent, not deeper levels. Nest list items by indent within a run of items.
+
+## F-116 · Opening a Word document as Markdown, built (ENH-14, DL-123, 2026-10-06)
+
+Built to `docs/design/docx-handoff/` (the canvas https://claude.ai/artifact/YRWyEm4MHbxYYtnRVr55xp). Side-by-side comparisons: `docs/design/docx-handoff/build-compare.png`.
+- **The converter** is `Sources/DuoSearch/Docx.swift`, on `Pptx.Zip` and its XML reader (the spike's prototype, F-115). It adds comments as endnotes (the default, DL-123), a failure for each case the bar names, progress and cancellation (`Task.checkCancellation` every 64 top-level blocks), and the summary split into what was done and what didn't come over. `Spikes/DocxToMarkdown/main.swift` now builds against the app's source, so there is one converter. Its outputs in `out/duo` are the golden copies DuoChecks compares.
+- **Telling failures apart without opening the file:**
+  - A password-protected .docx is not a zip. It's an OLE compound file (`D0 CF 11 E0`) holding an `EncryptedPackage` stream (its name is UTF-16LE in the directory).
+  - An old .doc is the same container without that stream.
+  - Anything else that isn't a zip is damaged.
+  - A zip with no `word/document.xml` isn't a Word document.
+  - "Only pictures" is judged after converting: the Markdown is empty once the image links are removed.
+- **The app:** `Model/AppModel+Convert.swift`.
+  - The work runs on a detached task, and the bar shows only after 0.5 s.
+  - Files are written on the main actor: pictures first, then the .md, atomically.
+  - The copy takes the .docx's tab.
+  - Undo is one step. It moves the copy and its pictures to the Trash, and moves back anything Replace trashed (from `trashItem`'s resulting URL).
+  - A copy that is unsaved in the editor (`dirty`) or changed on disk since is left, and Duo says why.
+  - A leftover `<name>-images` folder with no .md is never written into: the new folder gets " 2".
+- **The sheet's field:** `DuoQuestion.Field`, a class so the choices read what was typed, drawn with `SheetRow` and `SheetField`. A path-only `Item` with `detail` draws "edited 2d ago" at the right. Under `DUO_AUTOCONFIRM` the name-taken question takes the free name.
+- **A `Menu` styled as the default button** (`.menuStyle(.button)` with `DefaultSheetButtonStyle`) loses its chevron. The label draws `chevron.down` itself.
+- **Window captures now include the editor's web view.** D and E show the converted text, so F-25's "check the editor in a browser" wasn't needed here. Quick Look's preview is exempt.
+- **Checks:** 27 new, all passing. They cover:
+  - golden output for the nine documents, stable on a second run, with no raw HTML;
+  - headings by size and bold, never skipping a level; typed lists; nesting by indent; layout tables; tracked changes both ways; endnotes; pictures;
+  - the five failures;
+  - the app's flow: the copy and its tab, the free name, a second name with its own folder, one undo step each, an edited copy left, Replace, and a refused scan writing nothing.
+  - The suite's three other failures:
+    - `docs/cli/duo2.md` passes once regenerated.
+    - Encoder self-calibration and live beacons are checks "on this machine", not in code this branch touches.
+- **Live, on scratch data** (own `DUO_SUPPORT_DIR`, scratch `CLAUDE_CONFIG_DIR`): `duo2 file convert` converted, refused a taken name with the free name to pass, took `--as`, reported a password-protected file, and `duo2 undo` removed the copy. Captures are in `build/ui/docx-*.png`.

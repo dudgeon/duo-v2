@@ -1290,6 +1290,119 @@ func repoFixture() throws -> Fixture {
     check((try? Pptx.outline(binDir.appending(path: "notes.md"))) == nil && (try? Pptx.outline(binDir.appending(path: "mystery.blob"))) == nil,
           "a file that isn't a deck is refused, not misread")
 
+    print("a Word document as Markdown (ENH-14, DL-123)")
+    let wordDocs = repoRoot().appending(path: "Spikes/DocxToMarkdown/docs")
+    let golden = repoRoot().appending(path: "Spikes/DocxToMarkdown/out/duo")
+    func md(_ name: String, _ tweak: (inout Docx.Options) -> Void = { _ in }) throws -> Docx.Result {
+        var o = Docx.Options(imagesFolder: "\(name)-images")
+        tweak(&o)
+        return try Docx.convert(wordDocs.appending(path: "\(name).docx"), options: o)
+    }
+    let names = ["01-clean", "02-fake-headings", "03-fake-lists", "04-layout-table", "05-tracked-changes", "06-comments", "07-images", "08-footnotes-fields", "09-mixed"]
+    var outputs: [String: String] = [:]
+    for n in names { outputs[n] = try md(n).markdown }
+    let drift = names.filter { outputs[$0] != (try? String(contentsOf: golden.appending(path: "\($0).md"), encoding: .utf8)) }
+    check(drift.isEmpty, "all nine test documents convert exactly as their golden copies in Spikes/DocxToMarkdown/out/duo (drifted: \(drift))")
+    check(names.allSatisfy { (try? md($0).markdown) == outputs[$0] }, "the same document always converts to the same Markdown")
+    let html = names.filter { outputs[$0]!.range(of: #"<[A-Za-z/!]"#, options: .regularExpression) != nil }
+    check(html.isEmpty, "no raw HTML in any of them (Google Docs drops it; F-114) (\(html))")
+    let handbook = outputs["02-fake-headings"]!.split(separator: "\n").filter { $0.hasPrefix("#") }
+    check(handbook == ["# Volunteer Handbook", "## Getting started", "### Your first shift", "### What to bring", "## Safety", "### Tools"],
+          "headings set only by font size and bold become #, ## and ###, biggest first, never skipping a level (\(handbook))")
+    check(outputs["02-fake-headings"]!.contains("\n**Never use the mower without a lead present, even if you have used one before.**\n")
+          && outputs["02-fake-headings"]!.contains("\n*“Every hour helps.”*"),
+          "a bold sentence ending in a full stop and a large italic pull quote stay text")
+    check(outputs["01-clean"]!.hasPrefix("# Quarterly Garden Report\n") && outputs["01-clean"]!.contains("\n## Summary\n")
+          && outputs["01-clean"]!.contains("- Squash\n  - Runner beans\n") && outputs["01-clean"]!.contains("| Crop | Kilos | Beds |\n| --- | --- | --- |"),
+          "a Title is the one #, headings shift under it, List Bullet 2 nests by indent, a table is GFM")
+    let lists = outputs["03-fake-lists"]!
+    check(lists.contains("- Tent\n- Sleeping bag\n- Torch\n- Spare socks\n- Map") && lists.contains("1. Car park\n2. Ridge path\n3. Summit\n4. Back down")
+          && lists.contains("\n1.1 Planning\n") && lists.contains("\n2026 was the first year"),
+          "typed bullets and numbers become lists; 1.1 and a year starting a sentence stay text")
+    check(outputs["04-layout-table"]!.contains("\nWhen: Saturday\n\nWhere: Example Park\n") && outputs["04-layout-table"]!.contains("| Merged header |  | Other |"),
+          "a one-row layout table is unwrapped; a merged cell is split")
+    check(outputs["05-tracked-changes"]!.contains("agreed to paint the shed and repair the fence.") && !outputs["05-tracked-changes"]!.contains("removed"),
+          "tracked changes are accepted (DL-123)")
+    check(try md("05-tracked-changes") { $0.trackedChanges = .reject }.markdown.contains("repair the fence before winter."), "or rejected, when asked (Q-62)")
+    check(outputs["06-comments"]!.hasSuffix("[^c1]: Comment. Reviewer A: Is fifty enough?\n\n[^c2]: Comment. Reviewer B: Check the tool library first.\n")
+          && outputs["06-comments"]!.contains("seeds.[^c1]"), "comments become endnotes at the end, marked where they were (DL-123)")
+    let pics = try md("07-images")
+    check(pics.images.map(\.name) == ["image-1.png", "image-2.png"] && pics.markdown.contains("![Green rectangle standing for bed one](07-images-images/image-1.png)"),
+          "pictures are saved as image-1.png… with their alt text and relative links")
+    check(outputs["08-footnotes-fields"]!.contains("air[^1] and water") && outputs["08-footnotes-fields"]!.contains("[compost guide](https://example.com/compost)")
+          && outputs["08-footnotes-fields"]!.contains("First line\n\nAfter two soft breaks"),
+          "footnotes, a HYPERLINK field, and soft breaks used as spacing")
+    check(outputs["09-mixed"]!.contains("## Membership\n") && outputs["09-mixed"]!.contains("### Fees\n") && outputs["09-mixed"]!.contains("H₂O"),
+          "an outline-level paragraph and a style based on Heading 2 are headings; subscript digits are Unicode")
+    let summary = try md("02-fake-headings").report.summary(Docx.Options(imagesFolder: "x"))
+    check(summary.done == ["6 headings inferred from font size and bold text"] && summary.gaps.isEmpty, "the summary says what was inferred (\(summary))")
+    func failure(_ url: URL) -> Docx.Failure? {
+        do { _ = try Docx.convert(url, options: Docx.Options(imagesFolder: "x")); return nil } catch { return error as? Docx.Failure }
+    }
+    let bad = binDir.appending(path: "bad.docx"), old = binDir.appending(path: "old.docx"), locked = binDir.appending(path: "locked.docx")
+    try Data("not a zip at all".utf8).write(to: bad)
+    let ole = Data([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]) + Data(count: 504)
+    try ole.write(to: old)
+    try (ole + Data("EncryptedPackage".utf16.flatMap { [UInt8($0 & 0xFF), UInt8($0 >> 8)] })).write(to: locked)
+    check(failure(bad) == .damaged && failure(old) == .oldFormat && failure(locked) == .passwordProtected,
+          "a damaged file, an old .doc and a password-protected one are told apart")
+    check(failure(decks.appending(path: "basics.pptx")) == .notWord, "a zip that isn't a Word document is refused")
+    check(failure(wordDocs.appending(path: "10-scan.docx")) == .noText(images: 2), "pictures with no text are refused as a likely scan")
+    check((try? md("10-scan") { $0.allowEmpty = true })?.images.count == 2, "unless converted anyway")
+
+    // The app's side: the copy beside the .docx, its tab and notice, a taken name, and Undo.
+    do {
+        let proj = FileManager.default.temporaryDirectory.appending(path: "duo-docx-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: proj, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: proj) }
+        for n in ["Report", "Plot"] { try FileManager.default.copyItem(at: wordDocs.appending(path: n == "Report" ? "01-clean.docx" : "07-images.docx"), to: proj.appending(path: "\(n).docx")) }
+        var fx = try repoFixture()
+        fx.projects.append(try JSONDecoder().decode(Fixture.Project.self, from: JSONSerialization.data(withJSONObject: ["name": "garden", "topic": "Platform", "path": proj.path, "goal": "g"])))
+        let m = AppModel(fixture: fx)
+        m.terminalsMode = .live
+        m.liveFolders["garden"] = proj
+        m.altitude = .project("garden")
+        var undos: [(String, @MainActor (AppModel) -> Void)] = []
+        m.undoRecorder = { name, u in undos.append((name, u)) }
+        func convert(_ tab: String, as name: String? = nil, replace: Bool = false) -> Result<DocxConversion, Error>? {
+            var out: Result<DocxConversion, Error>?
+            let docx = proj.appending(path: tab)
+            let target = proj.appending(path: name ?? ((tab as NSString).deletingPathExtension + ".md"))
+            m.startConversion(tab, docx: docx, md: target, replace: replace, allowEmpty: false, show: true) { out = $0 }
+            let until = Date().addingTimeInterval(20)
+            while out == nil, Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+            return out
+        }
+        m.openDocument("Plot.docx")
+        guard case .success(let c)? = convert("Plot.docx") else { check(false, "Plot.docx converted"); throw CancellationError() }
+        check(FileManager.default.fileExists(atPath: proj.appending(path: "Plot.md").path) && FileManager.default.fileExists(atPath: proj.appending(path: "Plot-images/image-1.png").path),
+              "the copy goes beside the .docx as Plot.md, its pictures in Plot-images")
+        check(m.openDocuments == ["Plot.md"] && m.rightTab == "Plot.md" && m.conversions["Plot.md"] != nil,
+              "the copy takes the .docx's tab, with its notice (D)")
+        check(c.done.contains("2 images in Plot-images"), "the notice lists what was done (\(c.done))")
+        check(AppModel.freeMarkdownName(proj.appending(path: "Plot.md")).lastPathComponent == "Plot 2.md", "a taken name suggests Plot 2.md (B)")
+        guard case .success(let c2)? = convert("Plot.docx", as: "Plot 2.md") else { check(false, "converted as Plot 2.md"); throw CancellationError() }
+        check(try c2.images?.lastPathComponent == "Plot 2-images" && (String(contentsOf: c2.markdown, encoding: .utf8)).contains("](Plot%202-images/image-1.png)"),
+              "a copy under another name has its own images folder, linked with the space escaped")
+        check(undos.map(\.0) == ["Convert to Markdown", "Convert to Markdown"], "each conversion is one undo step")
+        undos.removeLast().1(m)
+        check(!FileManager.default.fileExists(atPath: c2.markdown.path) && !FileManager.default.fileExists(atPath: c2.images!.path),
+              "Undo puts the copy and its images in the Trash")
+        try Data("# Mine now\n".utf8).write(to: c.markdown)
+        m.undoRecorder = { _, _ in }
+        let infos = SheetCenter.shared.queue.count
+        undos.removeLast().1(m)
+        check(FileManager.default.fileExists(atPath: c.markdown.path), "a copy edited since is left (Duo says why)")
+        while SheetCenter.shared.queue.count > infos { SheetCenter.shared.cancelCurrent() }
+        guard case .success? = convert("Plot.docx", replace: true) else { check(false, "replaced"); throw CancellationError() }
+        check(try String(contentsOf: c.markdown, encoding: .utf8).hasPrefix("# Plot Map"), "Replace writes over the name, the old copy in the Trash")
+        check(m.conversionFailures.isEmpty, "no failure recorded")
+        try FileManager.default.copyItem(at: wordDocs.appending(path: "10-scan.docx"), to: proj.appending(path: "Scan.docx"))
+        guard case .failure? = convert("Scan.docx") else { check(false, "a scan is refused"); throw CancellationError() }
+        check(m.conversionFailures["Scan.docx"] == .noText(images: 2) && !FileManager.default.fileExists(atPath: proj.appending(path: "Scan.md").path),
+              "a refused one records why for the bar (F) and writes nothing")
+    } catch is CancellationError {}
+
     print("files in and out of the project (C-20, DL-105, DL-106, DL-107)")
     let treeDir = FileManager.default.temporaryDirectory.appending(path: "duo-tree-\(UUID().uuidString)")
     let tfm = FileManager.default

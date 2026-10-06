@@ -763,6 +763,8 @@ struct DocumentStateBar: View {
                 NoticeBar(text: "Read only: " + Self.reason(why)) {
                     Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
                 }
+            } else if let tab = model.rightTab, let c = model.conversions[tab] {
+                ConversionNotice(tab: tab, conversion: c)
             }
         }
     }
@@ -782,12 +784,15 @@ struct DocumentStateBar: View {
 struct NoticeBar<Buttons: View>: View {
     let text: String
     var sub: String? = nil
+    /// A second `text2` line (a converted document's gaps, then what was done: DL-123, E).
+    var sub2: String? = nil
     @ViewBuilder let buttons: () -> Buttons
 
     var body: some View {
         VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
             Text(text).duoText(.body).fixedSize(horizontal: false, vertical: true)
-            if let sub { Text(sub).duoText(.body).foregroundStyle(DuoColor.text2) }
+            if let sub { Text(sub).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true) }
+            if let sub2 { Text(sub2).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true) }
             HStack(spacing: DuoSpace.gapButtonToButton) { buttons() }
         }
         .padding(.vertical, DuoMetric.noticePaddingY)

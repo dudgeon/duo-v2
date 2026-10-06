@@ -359,7 +359,7 @@ extension AppModel {
 
         // MARK: Files
         case .files, .fileNew, .fileNewFolder, .fileTemplate, .fileTemplates, .fileRename, .fileDuplicate, .fileMove, .fileTrash,
-             .fileReveal, .fileOpenWith, .filePath:
+             .fileReveal, .fileOpenWith, .filePath, .fileConvert:
             fileVerb(id, inv, req, done)
 
         // MARK: Documents
@@ -696,6 +696,32 @@ extension AppModel {
                 let out = inv.has("link") ? FileActions.markdownLink(name: u.lastPathComponent, relative: r) : inv.has("relative") ? r : u.path
                 if inv.has("copy") { FileActions.copy(out) }
                 done(.ok(out))
+            case .fileConvert:
+                // The bar's Convert to Markdown (DL-123), without its question: a taken name fails
+                // unless --as names another or --replace sends the old copy to the Trash.
+                guard let (u, r) = url(inv[0]) else { return done(missing(inv[0])) }
+                guard AppModel.isWordDocument(u) else { return done(.fail("\(r) isn't a Word document (.docx)")) }
+                var md = u.deletingPathExtension().appendingPathExtension("md")
+                if let n = inv.flags["as"] {
+                    guard !n.contains("/") else { return done(.fail("--as takes a file name, not a path")) }
+                    md = u.deletingLastPathComponent().appending(path: n.lowercased().hasSuffix(".md") ? n : n + ".md")
+                }
+                if FileManager.default.fileExists(atPath: md.path), !inv.has("replace") {
+                    return done(.fail("“\(md.lastPathComponent)” already exists beside it; pass --as \"\(AppModel.freeMarkdownName(md).lastPathComponent)\" or --replace (the one there goes to the Trash)"))
+                }
+                startConversion(isCurrent ? r : u.path, docx: u, md: md, replace: inv.has("replace"), allowEmpty: inv.has("anyway"), show: isCurrent) { result in
+                    switch result {
+                    case .success(let c):
+                        var lines = ["Converted \(r) to \(rel(c.markdown))" + (c.images.map { " (pictures in \(rel($0))/)" } ?? "") + " in \(p.name). The .docx is unchanged."]
+                        if !c.done.isEmpty { lines.append(c.done.joined(separator: " · ")) }
+                        if !c.gaps.isEmpty { lines.append("Not carried over: " + c.gaps.joined(separator: " · ")) }
+                        lines.append("Undo: duo2 undo")
+                        done(.ok(lines.joined(separator: "\n"), ["path": rel(c.markdown), "images": c.images.map(rel) as Any, "project": p.name,
+                                                                  "done": c.done, "gaps": c.gaps] as [String: Any]))
+                    case .failure(let e):
+                        done(.fail(e is CancellationError ? "cancelled" : "couldn’t convert \(r): \(e)"))
+                    }
+                }
             default: done(.fail("not a file verb"))
             }
         } catch {

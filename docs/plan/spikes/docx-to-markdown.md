@@ -1,6 +1,6 @@
 # Spike: opening a Word document as Markdown (ENH-14)
 
-Status: **research done, awaiting Geoff (DL-123)** · 2026-10-06 · F-114, F-115
+Status: **decided (DL-123), built (F-116)**: our own converter, every clean-up rule, comments as endnotes, tracked changes accepted for now (Q-62) · 2026-10-06 · F-114, F-115
 
 **The ask (Geoff, 2026-10-06):** a minimally destructive .docx → .md open path. Opening a .docx asks for consent to convert it. Duo then does its best to produce clean Markdown, repairing structure Word only implies: headings set by font size, typed bullets, and so on. The goal is Markdown that imports well into Google Docs.
 

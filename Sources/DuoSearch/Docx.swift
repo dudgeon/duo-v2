@@ -1,19 +1,25 @@
 import Foundation
 
-/// A Word document as clean Markdown (ENH-14, spike): the subset Google Docs imports cleanly
+/// A Word document as clean Markdown (ENH-14, DL-123): the subset Google Docs imports cleanly
 /// (headings, emphasis, links, tight nested lists, GFM tables, block quotes, footnotes, images),
-/// with no raw HTML. Structure Word only implies is inferred: headings set by font size or bold,
-/// lists typed as "•" or "1.", tables used for layout. Reads the zip with `Pptx.Zip`; the .docx is
-/// never written.
+/// with no raw HTML (F-114). Structure Word only implies is inferred: headings set by font size,
+/// bold or outline level, lists typed as "•" or "1.", tables used for layout. Reads the zip with
+/// `Pptx.Zip`; the .docx is never written. Spike: `docs/plan/spikes/docx-to-markdown.md`.
 public enum Docx {
     public enum TrackedChanges: String, Sendable { case accept, reject }
-    public enum Comments: String, Sendable { case leaveOut, footnotes }
+    public enum Comments: String, Sendable { case leaveOut, endnotes }
 
     public struct Options: Sendable {
         /// The folder images go in, relative to the .md (`<name>-images`).
         public var imagesFolder: String
+        /// Accepted for now (DL-123); better handling later (Q-62).
         public var trackedChanges: TrackedChanges = .accept
-        public var comments: Comments = .leaveOut
+        /// Endnotes, `[^c1]: Comment. Reviewer A: …` (DL-123).
+        public var comments: Comments = .endnotes
+        /// Convert a document with no text (only pictures) rather than refusing.
+        public var allowEmpty = false
+        /// Called now and then with how far it got (0…1) and what it's doing, off the main thread.
+        public var progress: (@Sendable (Double, String) -> Void)?
         public init(imagesFolder: String) { self.imagesFolder = imagesFolder }
     }
 
@@ -27,9 +33,10 @@ public enum Docx {
         public var textBoxes = 0, equations = 0, tableOfContents = 0, headersFooters = 0, codeBlocks = 0
         public var underlines = 0
 
-        /// One short line per thing done, most important first.
-        public func lines(_ o: Options) -> [String] {
-            var out: [String] = []
+        /// What was done (inferred, cleaned, kept), and what didn't come over whole: one short
+        /// phrase each, most important first.
+        public func summary(_ o: Options) -> (done: [String], gaps: [String]) {
+            var done: [String] = [], gaps: [String] = []
             func n(_ c: Int, _ one: String, _ many: String) -> String { c == 1 ? one : many.replacingOccurrences(of: "#", with: "\(c)") }
             let inferred = headingsFromSize + headingsFromBold + headingsFromOutline
             if inferred > 0 {
@@ -37,26 +44,26 @@ public enum Docx {
                 if headingsFromSize > 0 { how.append("font size") }
                 if headingsFromBold > 0 { how.append("bold text") }
                 if headingsFromOutline > 0 { how.append("outline level") }
-                out.append(n(inferred, "1 heading inferred from ", "# headings inferred from ") + how.joined(separator: " and "))
+                done.append(n(inferred, "1 heading inferred from ", "# headings inferred from ") + (how.count > 1 ? how.dropLast().joined(separator: ", ") + " and " + how.last! : how[0]))
             }
-            if typedBullets + typedNumbers > 0 { out.append(n(typedBullets + typedNumbers, "1 typed list item made a real list item", "# typed list items made real lists")) }
-            if layoutTables > 0 { out.append(n(layoutTables, "1 layout table unwrapped into paragraphs", "# layout tables unwrapped into paragraphs")) }
-            if mergedCells > 0 { out.append(n(mergedCells, "1 merged table cell split", "# merged table cells split")) }
-            if cellsJoined > 0 { out.append(n(cellsJoined, "1 table cell's paragraphs joined", "# table cells' paragraphs joined")) }
+            if typedBullets + typedNumbers > 0 { done.append(n(typedBullets + typedNumbers, "1 typed list item made a real one", "# typed list items made real lists")) }
+            if layoutTables > 0 { done.append(n(layoutTables, "1 layout table unwrapped", "# layout tables unwrapped")) }
             if insertions + deletions > 0 {
-                out.append(n(insertions + deletions, "1 tracked change ", "# tracked changes ") + (o.trackedChanges == .accept ? "accepted" : "rejected"))
+                done.append(n(insertions + deletions, "1 tracked change ", "# tracked changes ") + (o.trackedChanges == .accept ? "accepted" : "rejected"))
             }
-            if comments > 0 { out.append(n(comments, "1 comment ", "# comments ") + (o.comments == .leaveOut ? "left out (the .docx keeps them)" : "kept as footnotes")) }
-            if images > 0 { out.append(n(images, "1 image saved in ", "# images saved in ") + o.imagesFolder + "/") }
-            if imagesUnviewable > 0 { out.append(n(imagesUnviewable, "1 image is a Windows drawing (EMF/WMF) Duo can't show", "# images are Windows drawings (EMF/WMF) Duo can't show")) }
-            if linkedImages > 0 { out.append(n(linkedImages, "1 linked image left out", "# linked images left out")) }
-            if footnotes > 0 { out.append(n(footnotes, "1 footnote kept", "# footnotes kept")) }
-            if tableOfContents > 0 { out.append("Table of contents left out") }
-            if textBoxes > 0 { out.append(n(textBoxes, "1 text box moved into the text", "# text boxes moved into the text")) }
-            if equations > 0 { out.append(n(equations, "1 equation kept as plain text", "# equations kept as plain text")) }
-            if headersFooters > 0 { out.append("Headers and footers left out") }
-            if underlines > 0 { out.append("Underlining dropped (Markdown has none)") }
-            return out
+            if comments > 0 { done.append(n(comments, "1 comment ", "# comments ") + (o.comments == .leaveOut ? "left out" : (comments == 1 ? "kept as an endnote" : "kept as endnotes"))) }
+            if images > 0 { done.append(n(images, "1 image in ", "# images in ") + o.imagesFolder) }
+            if footnotes > 0 { done.append(n(footnotes, "1 footnote", "# footnotes")) }
+            if imagesUnviewable > 0 { gaps.append(n(imagesUnviewable, "1 image is a Windows drawing Duo can’t show", "# images are Windows drawings Duo can’t show")) }
+            if linkedImages > 0 { gaps.append(n(linkedImages, "1 linked image left out", "# linked images left out")) }
+            if equations > 0 { gaps.append(n(equations, "1 equation kept as plain text", "# equations kept as plain text")) }
+            if textBoxes > 0 { gaps.append(n(textBoxes, "1 text box moved into the text", "# text boxes moved into the text")) }
+            if mergedCells > 0 { gaps.append(n(mergedCells, "1 merged table cell split", "# merged table cells split")) }
+            if cellsJoined > 0 { gaps.append(n(cellsJoined, "1 table cell’s paragraphs joined", "# table cells’ paragraphs joined")) }
+            if tableOfContents > 0 { gaps.append("the table of contents left out") }
+            if headersFooters > 0 { gaps.append("headers and footers left out") }
+            if underlines > 0 { gaps.append("underlining dropped") }
+            return (done, gaps)
         }
     }
 
@@ -67,16 +74,48 @@ public enum Docx {
         public var report: Report
     }
 
-    public struct Failure: Error, CustomStringConvertible { public let description: String }
+    /// Why a document couldn't be converted, in the words the bar uses (F, F2).
+    public enum Failure: Error, Equatable, CustomStringConvertible {
+        case passwordProtected, damaged, oldFormat, notWord
+        /// No text at all, only this many pictures: perhaps a scan.
+        case noText(images: Int)
+
+        public var description: String {
+            switch self {
+            case .passwordProtected: "it’s protected with a password"
+            case .damaged: "the file is damaged"
+            case .oldFormat: "it’s a Word 97–2004 document"
+            case .notWord: "it isn’t a Word document"
+            case .noText(let n): n == 1 ? "it has no text, only 1 picture" : "it has no text, only \(n) pictures"
+            }
+        }
+    }
 
     public static func convert(_ url: URL, options: Options) throws -> Result {
-        let zip = try Pptx.Zip(url)
-        guard let doc = try zip.xml("word/document.xml"), let body = doc.first("body") else {
-            throw Failure(description: "not a Word document: no word/document.xml")
+        let zip: Pptx.Zip
+        do { zip = try Pptx.Zip(url) } catch { throw classify(url) }
+        guard let doc = try? zip.xml("word/document.xml"), let body = doc.first("body") else {
+            throw zip.entries.isEmpty ? Failure.damaged : Failure.notWord
         }
         var c = Converter(zip: zip, options: options)
         try c.load()
-        return try c.run(body)
+        let r = try c.run(body)
+        if !options.allowEmpty, r.report.images > 0,
+           r.markdown.replacingOccurrences(of: #"!\[[^\]]*\]\([^)]*\)"#, with: "", options: .regularExpression).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            throw Failure.noText(images: r.report.images)
+        }
+        return r
+    }
+
+    /// A file that isn't a zip: an encrypted Office file and an old .doc are both OLE compound
+    /// files (D0 CF 11 E0); an encrypted one holds an `EncryptedPackage` stream.
+    static func classify(_ url: URL) -> Failure {
+        guard let h = FileHandle(forReadingAtPath: url.path) else { return .damaged }
+        defer { try? h.close() }
+        let head = (try? h.read(upToCount: 1 << 20)) ?? Data()
+        guard head.starts(with: [0xD0, 0xCF, 0x11, 0xE0]) else { return .damaged }
+        let name = Data("EncryptedPackage".utf16.flatMap { [UInt8($0 & 0xFF), UInt8($0 >> 8)] })
+        return head.range(of: name) != nil ? .passwordProtected : .oldFormat
     }
 
     // MARK: Model
@@ -146,6 +185,7 @@ public enum Docx {
         var fields: [(instr: String, result: Bool)] = []
         /// Paragraphs that came out of text boxes, emitted after the paragraph holding them.
         var pendingBoxes: [Block] = []
+        var body: Pptx.Node?
 
         init(zip: Pptx.Zip, options: Options) { self.zip = zip; self.options = options }
 
@@ -253,7 +293,10 @@ public enum Docx {
         // MARK: Run
 
         mutating func run(_ body: Pptx.Node) throws -> Result {
+            self.body = body
+            options.progress?(0.05, "Reading")
             var blocks = try readBlocks(body)
+            options.progress?(0.9, "Cleaning up")
             let bodySize = self.bodySize(blocks)
             blocks = inferHeadings(blocks, bodySize: bodySize)
             blocks = inferLists(blocks)
@@ -266,7 +309,13 @@ public enum Docx {
 
         mutating func readBlocks(_ container: Pptx.Node) throws -> [Block] {
             var out: [Block] = []
-            for el in container.children {
+            let top = container === body
+            for (i, el) in container.children.enumerated() {
+                if top, i % 64 == 0 {
+                    try Task.checkCancellation()
+                    let n = container.children.count
+                    options.progress?(0.05 + 0.85 * Double(i) / Double(max(n, 1)), images.isEmpty ? "Reading" : "Images, \(images.count)")
+                }
                 switch el.name {
                 case "p":
                     let p = try readPara(el)
@@ -429,7 +478,7 @@ public enum Docx {
                     out.append(.note(label))
                 case "commentReference":
                     report.comments += 1
-                    if options.comments == .footnotes, let id = c.attr("w:id"), let n = commentXML[id] {
+                    if options.comments == .endnotes, let id = c.attr("w:id"), let n = commentXML[id] {
                         let label = "c\(notes.filter { $0.label.hasPrefix("c") }.count + 1)"
                         let who = n.attr("w:author").map { "\($0): " } ?? ""
                         notes.append((label, "Comment. " + who + (try noteText(n))))
