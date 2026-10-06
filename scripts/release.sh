@@ -91,7 +91,7 @@ launch_check() {
 # Submits a file to Apple's notary service and waits; prints Apple's log on rejection.
 notarize() {
   local file="$1" json="$out/notary-$(basename "$1").json" id status
-  xcrun notarytool submit "$file" --keychain-profile "$profile" --keychain "$keychain" --wait --timeout 30m \
+  xcrun notarytool submit "$file" --keychain-profile "$profile" --keychain "$keychain" --wait --timeout "${DUO_NOTARY_TIMEOUT:-30m}" \
     --output-format json >"$json" || true
   id="$(plutil -extract id raw -o - "$json" 2>/dev/null || true)"
   status="$(plutil -extract status raw -o - "$json" 2>/dev/null || true)"
