@@ -1,8 +1,66 @@
 import AppKit
+import WebKit
 
 /// Captures the window for the comparison loop (handoff §0.2).
 @MainActor
 public enum WindowCapture {
+    /// Runs `body` (the captures) with each showing web view's own snapshot laid over it.
+    ///
+    /// A web view's pixels come from WebKit's web process. While its window is on screen they're
+    /// in the view's layers and a capture draws them; once the window is covered by other apps'
+    /// windows (an isolated Duo never takes focus, C-28) or the screen is locked, WebKit treats the
+    /// page as hidden and they're gone, so the capture showed a blank pane (F-25, F-120).
+    /// `takeSnapshot` has the web process paint the page whether or not it's on screen. Each
+    /// snapshot goes in as an image view inside the web view, so anything drawn above the web view
+    /// still draws above it. Gives up waiting after `timeout` and captures what it has.
+    public static func withWebSnapshots(in window: NSWindow, timeout: TimeInterval = 5, _ body: @escaping @MainActor () -> Void) {
+        let webViews = (window.contentView?.superview).map(webViews(under:)) ?? []
+        var overlays: [NSView] = [], waiting = webViews.count, finished = false
+        func finish() {
+            guard !finished else { return }
+            finished = true
+            body()
+            overlays.forEach { $0.removeFromSuperview() }
+        }
+        guard waiting > 0 else { return finish() }
+        for web in webViews {
+            // WKWebView's visibleRect reaches under the toolbar (its obscured inset); keep to its bounds.
+            let visible = web.visibleRect.intersection(web.bounds)
+            let config = WKSnapshotConfiguration()
+            config.rect = visible
+            config.afterScreenUpdates = false   // a hidden page has no screen updates to wait for
+            config.snapshotWidth = NSNumber(value: Double(visible.width))
+            web.takeSnapshot(with: config) { image, _ in
+                MainActor.assumeIsolated {
+                    if let image, !finished {
+                        let overlay = NSImageView(frame: visible)
+                        overlay.image = image
+                        overlay.imageScaling = .scaleAxesIndependently
+                        overlay.identifier = NSUserInterfaceItemIdentifier("duo.capture.webSnapshot")
+                        web.addSubview(overlay)
+                        overlays.append(overlay)
+                    }
+                    waiting -= 1
+                    if waiting == 0 { finish() }
+                }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
+            MainActor.assumeIsolated {
+                if !finished { FileHandle.standardError.write(Data("capture: \(waiting) web view snapshot(s) didn't arrive in \(Int(timeout)) s\n".utf8)) }
+                finish()
+            }
+        }
+    }
+
+    /// Web views showing in the window: in it, not hidden, with some of them in view.
+    static func webViews(under view: NSView) -> [WKWebView] {
+        if let web = view as? WKWebView {
+            return !web.isHiddenOrHasHiddenAncestor && !web.visibleRect.intersection(web.bounds).isEmpty ? [web] : []
+        }
+        return view.subviews.flatMap(webViews(under:))
+    }
+
     /// The content below the toolbar at 2x, in sRGB so token colours sample exactly.
     /// Compare with `compare.sh <screen> <png> --content-only`.
     public static func content(of window: NSWindow, to url: URL) throws {

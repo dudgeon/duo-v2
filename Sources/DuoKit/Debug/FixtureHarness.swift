@@ -477,6 +477,15 @@ public enum FixtureHarness {
             if let l = model.lastDrafted { FileHandle.standardError.write(Data("---- lastDrafted into \(l.key.prefix(8)) ----\n\(l.text.debugDescription)\n----\n".utf8)) }
         case "browser":   // browser:<url>: a browser tab on that address (duo2 browser open)
             if parts.count > 1, let u = AllowedSites.url(from: parts[1]) { model.newBrowserTab(u) }
+        case "browser-cookies":   // the visible tab's store: persistent or not, and each cookie's domain and name (never values; C-32)
+            guard let store = model.visibleWebTab?.webView.configuration.websiteDataStore else {
+                FileHandle.standardError.write(Data("browser-cookies: no browser tab\n".utf8)); break
+            }
+            store.httpCookieStore.getAllCookies { cookies in
+                let names = cookies.map { "\($0.domain) \($0.name)" }.sorted()
+                let google = names.filter { $0.contains("google.") }
+                FileHandle.standardError.write(Data("browser-cookies: persistent=\(store.isPersistent) count=\(cookies.count) google=\(google.count)\n\(names.map { "  " + $0 }.joined(separator: "\n"))\n".utf8))
+            }
         case "browser-click":   // browser-click:<css selector>: duo2 browser click, real mouse events (DL-124)
             if parts.count > 1 { model.visibleWebTab?.click(selector: parts[1]) { FileHandle.standardError.write(Data("browser-click: \($0 ?? "no match")\n".utf8)) } }
         case "browser-key":   // browser-key:=|-|0|p: ⌘ and the key, with the page holding the keyboard, as NSApp delivers it (no activation)
@@ -540,7 +549,14 @@ public enum FixtureHarness {
             }
         }
 
+        // Web views are drawn from their own snapshots, so they show even when the window is
+        // covered or the screen is locked (F-120). The trace says whether the window was on screen.
         func capture() {
+            FileHandle.standardError.write(Data("trace capture onScreen=\(window.occlusionState.contains(.visible)) active=\(NSApp.isActive) editorReady=\(model.editor.isPageReady)\n".utf8))
+            WindowCapture.withWebSnapshots(in: window) { captureNow() }
+        }
+
+        func captureNow() {
             var failed = false
             do {
                 if let path = options.capturePath {

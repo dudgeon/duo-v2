@@ -19,6 +19,8 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// When the user last changed the text: a task's note moves to its new name only once typing pauses (C-24).
     public private(set) var lastTyped = Date.distantPast
     private var pageReady = false
+    /// Whether the editor page has finished loading (scripted captures report it).
+    public var isPageReady: Bool { pageReady }
     private var pending: (() -> Void)?
     private var diskBytes = Data()                       // what's on disk as far as we know
     private var watcher: DispatchSourceFileSystemObject?
