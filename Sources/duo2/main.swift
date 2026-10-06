@@ -51,6 +51,26 @@ case .legacy:
             print("To turn them off (everything is backed up first, and can be restored): duo2 legacy disable --yes")
         }
     }
+case .hook where rest.first == "context":
+    // SessionStart and UserPromptSubmit in Duo's sessions (DL-116): the task(s) the session is
+    // attributed to, in full at start (startup, resume, clear, compact) and, on a prompt, what
+    // changed since Duo last told it. Duo works out the text; this wraps it as the hook's
+    // additionalContext. Nothing to say, or Duo out of reach: no output, exit 0, so the prompt
+    // always goes through (exit 2 would block it).
+    guard let hook = (try? JSONSerialization.jsonObject(with: FileHandle.standardInput.readDataToEndOfFile())) as? [String: Any],
+          let name = hook["hook_event_name"] as? String, ["SessionStart", "UserPromptSubmit"].contains(name),
+          let sid = (hook["session_id"] as? String) ?? env["CLAUDE_CODE_SESSION_ID"],
+          let (endpoint, _) = ControlEndpoint.discover() else { exit(0) }
+    var a = [sid, "--hook", name == "SessionStart" ? "start" : "prompt", "--pid", String(getppid())]
+    if let source = hook["source"] as? String { a += ["--source", source] }
+    if let origin = env["DUO_SESSION_ID"] { a += ["--origin", origin] }
+    guard let r = try? ControlClient.send(ControlRequest(token: endpoint.token, command: "session task", args: a, session: sid,
+                                                         cwd: (hook["cwd"] as? String) ?? FileManager.default.currentDirectoryPath),
+                                          socket: endpoint.socket, timeout: 8),
+          r.ok, !r.output.isEmpty else { exit(0) }
+    let out: [String: Any] = ["hookSpecificOutput": ["hookEventName": name, "additionalContext": r.output]]
+    FileHandle.standardOutput.write((try? JSONSerialization.data(withJSONObject: out)) ?? Data())
+    exit(0)
 case .hook:
     // PreToolUse for Edit, MultiEdit and Write in Duo's sessions (DL-78). A document open in
     // Duo's editor gets the change through the editor (highlighted, merged with the user's
