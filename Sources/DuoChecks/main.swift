@@ -131,6 +131,73 @@ func repoFixture() throws -> Fixture {
     check(UpdateCheck.isNewer("0.1.10", than: "0.1.9") && UpdateCheck.isNewer("v0.2.0", than: "0.1.2") && !UpdateCheck.isNewer("0.1.2", than: "0.1.2"), "versions compare by number")
     check(UpdateCheck.isNewer("0.2.0", than: "0.2.0-rc.1") && !UpdateCheck.isNewer("0.2.0-rc.1", than: "0.2.0"), "a pre-release sorts below its release")
 
+    print("update question: Open Releases Page, Install Now, Later (DL-114)")
+    do {
+        let page = URL(string: "https://github.com/dudgeon/duo-v2/releases/tag/v0.1.9")!
+        let r = UpdateCheck.Release(version: "0.1.9", page: page)
+        func plan(_ latest: UpdateCheck.Release?, _ current: String = "0.1.8", writable: Bool, sparkle: Bool = true, user: Bool = true) -> UpdateCheck.Plan {
+            UpdateCheck.plan(latest: latest, current: current, installWritable: writable, sparkle: sparkle, folder: "/Applications", userInitiated: user)
+        }
+        func labels(_ q: DuoQuestion) -> [String] { q.choices.map(\.label) }
+        func defaultLabel(_ q: DuoQuestion) -> String? { q.choices.first(where: \.isDefault)?.label }
+        func ask(_ p: UpdateCheck.Plan) -> DuoQuestion? {
+            guard case .offer(let o) = p else { return nil }
+            return UpdateCheck.question(o, openPage: {}, installNow: {}, later: {})
+        }
+
+        // Writable: Install Now is the default, Open Releases Page beside it.
+        let w = plan(r, writable: true)
+        check(w == .offer(.init(version: "0.1.9", current: "0.1.8", page: page, needsAdmin: false, canInstallNow: true, folder: "/Applications")),
+              "writable: a newer release is offered, no password needed")
+        if let q = ask(w) {
+            check(q.title == "Duo 0.1.9 is available." && q.paragraphs.first == "You have 0.1.8.", "writable: the title names the version, then what you have")
+            check(labels(q) == ["Later", "Open Releases Page", "Install Now"] && defaultLabel(q) == "Install Now" && q.choices.first?.isCancel == true,
+                  "writable: Install Now is the default, Later is Escape")
+            check(!q.paragraphs.joined().contains("administrator"), "writable: no mention of a password")
+        } else { check(false, "writable: asks") }
+
+        // Not writable: say so, and Open Releases Page is the default.
+        let n = plan(r, writable: false)
+        if let q = ask(n) {
+            check(q.paragraphs.contains { $0.hasPrefix("Installing it here needs an administrator password") && $0.contains("`/Applications`") },
+                  "not writable: the question says installing here needs an administrator password")
+            check(labels(q) == ["Later", "Install Now", "Open Releases Page"] && defaultLabel(q) == "Open Releases Page",
+                  "not writable: Open Releases Page is the default, Install Now still offered")
+        } else { check(false, "not writable: asks") }
+
+        // Up to date and unreachable: no question (Sparkle answers as before).
+        check(plan(r, "0.1.9", writable: false) == .upToDate(current: "0.1.9", page: page) && plan(r, "0.2.0", writable: true) == .upToDate(current: "0.2.0", page: page),
+              "up to date: no offer")
+        check(plan(nil, writable: true) == .unreachable && plan(nil, writable: false) == .unreachable, "GitHub unreachable: no offer")
+
+        // Without Sparkle (development and scripted builds) only the releases page is offered.
+        if let q = ask(plan(r, writable: true, sparkle: false)) {
+            check(labels(q) == ["Later", "Open Releases Page"] && defaultLabel(q) == "Open Releases Page", "no Sparkle: Open Releases Page and Later only")
+        } else { check(false, "no Sparkle: asks") }
+        check(ask(plan(r, "0.0.1", writable: true, sparkle: true)).map(labels) == ["Later", "Open Releases Page"]
+              && ask(plan(r, "0.0.1", writable: true)).map { $0.paragraphs.first } == "You have a development build.",
+              "a development build is offered the latest, never Install Now")
+
+        // duo2 update's answer names the releases page and the password.
+        let sw = UpdateCheck.summary(w, installedAt: "/Applications/Duo.app", installWritable: true, sparkle: true)
+        let sn = UpdateCheck.summary(n, installedAt: "/Applications/Duo.app", installWritable: false, sparkle: true)
+        let su = UpdateCheck.summary(.unreachable, installedAt: "/Applications/Duo.app", installWritable: false, sparkle: true)
+        check(sw.contains("Releases page: \(page.absoluteString)") && sw.contains("needs no administrator password"), "duo2 update, writable: the page and no password")
+        check(sn.contains("Releases page: \(page.absoluteString)") && sn.contains("needs an administrator password"), "duo2 update, not writable: the page and the password")
+        check(su.hasPrefix("Couldn't reach GitHub") && su.contains("Releases page: https://github.com/dudgeon/duo-v2/releases\n"), "duo2 update, unreachable: every release's page")
+        check(UpdateCheck.page(plan(r, "0.1.9", writable: true)) == page && UpdateCheck.page(.unreachable) == UpdateCheck.releasesList, "--open opens the release's page, or every release's")
+        check(Invocation(["--open", "--json"]).has("open") && Invocation(["--open", "--json"]).json, "--open takes no value")
+
+        // The writability test the probe and the question share.
+        let tmpApp = FileManager.default.temporaryDirectory.appending(path: "duo-checks-\(UUID().uuidString)/Duo.app")
+        try FileManager.default.createDirectory(at: tmpApp.appending(path: "Contents/Helpers"), withIntermediateDirectories: true)
+        check(InstallLocation.app(containing: tmpApp.appending(path: "Contents/Helpers/duo2"))?.lastPathComponent == "Duo.app"
+              && InstallLocation.app(containing: URL(fileURLWithPath: "/usr/bin/true")) == nil, "the app around a helper, none outside one")
+        check(InstallLocation.canReplace(tmpApp), "an app in a folder you own can be replaced")
+        check(!InstallLocation.canReplace(URL(fileURLWithPath: "/System/Applications/Calculator.app")), "an app in a folder you can't write can't")
+        try? FileManager.default.removeItem(at: tmpApp.deletingLastPathComponent())
+    }
+
     print("browser tabs: allowed sites (DL-3)")
     do {
         let list = ["example.com", "docs.google.com"]

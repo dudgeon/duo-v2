@@ -182,19 +182,11 @@ func probeUpdates() -> Int32 {
         else { print("  ✓ reachable (served from \(d.finalHost))") }
     }
     // Where Duo is installed: the updater replaces the app in place.
-    let me = Bundle.main.executableURL?.resolvingSymlinksInPath()
-    let app = me.flatMap { u -> URL? in
-        var x = u
-        while x.path != "/" { if x.pathExtension == "app" { return x }; x.deleteLastPathComponent() }
-        return nil
-    }
-    if let app {
-        let fm = FileManager.default
-        let writable = fm.isWritableFile(atPath: app.path) && fm.isWritableFile(atPath: app.deletingLastPathComponent().path)
+    if let app = InstallLocation.app(containing: Bundle.main.executableURL) {
         print("Installed at: \(app.path)")
-        print(writable ? "  ✓ you can replace it (no administrator password needed)"
-                       : "  ! replacing it needs an administrator password: the updater will ask, or install updates by hand")
-        if app.path.hasPrefix("/Volumes/") || app.path.contains("/AppTranslocation/") {
+        print(InstallLocation.canReplace(app) ? "  ✓ you can replace it (no administrator password needed)"
+              : "  ! replacing it needs an administrator password: Duo › Check for Updates… offers Open Releases Page to install by hand (DL-114)")
+        if InstallLocation.isTransient(app) {
             ok = false; print("  ✗ running from a disk image or a translocated copy: drag Duo to Applications first")
         }
     } else {
