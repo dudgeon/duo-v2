@@ -1129,6 +1129,25 @@ func repoFixture() throws -> Fixture {
     check(MapLayout.minutesAgo("3d") == 4320 && MapLayout.minutesAgo("at prompt") == 0 && MapLayout.minutesAgo(nil) == nil, "wait words to minutes")
     check(MapLayout.homeSessions(many).first?.state == .needsYou, "Home's tile lists its sessions in attention order")
 
+    print("files that aren't text never open in the editor (C-26, F-102)")
+    let binDir = FileManager.default.temporaryDirectory.appending(path: "duo-bin-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: binDir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: binDir) }
+    let zipBytes = Data([0x50, 0x4B, 0x03, 0x04, 0x14, 0x00, 0x06, 0x00]) + Data("[Content_Types].xml".utf8)
+    for (name, data) in [("deck.pptx", Data("not even a zip".utf8)), ("mystery.blob", zipBytes), ("notes.md", Data("# Notes\n\tcafé ✓\n".utf8)),
+                         ("app.ts", Data("export const a = 1\n".utf8)), ("logo.svg", Data("<svg xmlns='http://www.w3.org/2000/svg'/>".utf8)),
+                         ("Makefile", Data("all:\n\tswift build\n".utf8)), ("table.data", Data("a,b\n1,2\n".utf8)),
+                         ("raw.bin", Data((0..<200).map { UInt8(1 + $0 % 8) })), ("empty.txt", Data()), ("shot.png", Data("x".utf8))] {
+        try data.write(to: binDir.appending(path: name))
+    }
+    let bin = { (n: String) in FileKind.isBinary(binDir.appending(path: n)) }
+    check(bin("deck.pptx") && bin("shot.png"), "a PowerPoint deck or an image is binary by its type, whatever is in it")
+    check(bin("mystery.blob") && bin("raw.bin"), "an unknown type is sniffed: NUL bytes or control characters make it binary")
+    check(!bin("notes.md") && !bin("Makefile") && !bin("table.data") && !bin("empty.txt"), "Markdown, a Makefile, text in an unknown type and an empty file are text")
+    check(!bin("app.ts") && !bin("logo.svg"), "TypeScript (an MPEG stream to the system) and SVG (an image that is text) open as text")
+    check(FileKind.quickLookPreviews(binDir.appending(path: "deck.pptx")) && !FileKind.quickLookPreviews(binDir.appending(path: "raw.bin")),
+          "Quick Look previews a deck; an unknown binary gets the note")
+
     print("files in and out of the project (C-20, DL-105, DL-106, DL-107)")
     let treeDir = FileManager.default.temporaryDirectory.appending(path: "duo-tree-\(UUID().uuidString)")
     let tfm = FileManager.default
