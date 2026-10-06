@@ -1,0 +1,44 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>PPTX spike: pptx-renderer</title>
+<link rel="stylesheet" href="style.css">
+<div id="host"></div>
+<script type="module">
+import { PptxViewer, RECOMMENDED_ZIP_LIMITS } from './vendor/aiden0z/aiden0z-pptx-renderer.browser.es.js';
+import { setup } from './harness.js';
+const h = setup('@aiden0z/pptx-renderer 1.3.0 (patched)');
+const t0 = performance.now();
+const buf = await (await fetch(h.url)).arrayBuffer();
+const host = document.getElementById('host');
+const viewer = await PptxViewer.open(buf, host, { zipLimits: RECOMMENDED_ZIP_LIMITS, fitMode: 'contain', width: host.clientWidth - 32 });
+const pres = viewer.presentationData;
+h.rendered(performance.now() - t0, pres.slides.length);
+// Current slide: the renderer's own event, and the IntersectionObserver for comparison.
+viewer.addEventListener?.('slidechange', e => h.slide(e.detail.index + 1));
+h.trackSlides([...host.querySelectorAll('[data-slide-index]')], el => +el.dataset.slideIndex + 1);
+// The model node behind a shape id, searched through groups, for its text.
+const find = (nodes, id) => { for (const n of nodes) { if (String(n.id) === String(id)) return n; const c = Array.isArray(n.children) && find(n.children, id); if (c) return c; } };
+const arr = x => Array.isArray(x) ? x : [];
+const text = n => n.textBody ? arr(n.textBody.paragraphs).map(p => arr(p.runs).map(r => r.text || '').join('')).join('\n')
+  : Array.isArray(n.rows) ? n.rows.map(r => arr(r.cells).map(c => text(c)).join('\t')).join('\n')
+  : Array.isArray(n.children) ? n.children.map(text).filter(Boolean).join('\n') : '';
+// The shape's box in slide pixels (96 per inch), from the DOM: groups' children are parsed only
+// when drawn, so the model has no position for them.
+const box = (el, slideEl) => {
+  const r = el.getBoundingClientRect(), s = slideEl.getBoundingClientRect(), k = pres.width / s.width;
+  return { x: Math.round((r.x - s.x) * k), y: Math.round((r.y - s.y) * k), w: Math.round(r.width * k), h: Math.round(r.height * k) };
+};
+host.addEventListener('click', e => {
+  const el = e.target.closest('[data-duo-shape-id]');
+  if (!el) return;
+  const slideEl = el.closest('[data-slide-index]');
+  const slide = +slideEl.dataset.slideIndex;
+  const node = find(pres.slides[slide].nodes, el.dataset.duoShapeId);
+  const groups = []; for (let p = el.parentElement?.closest('[data-duo-shape-id]'); p; p = p.parentElement?.closest('[data-duo-shape-id]')) groups.unshift(p.dataset.duoShapeName);
+  h.picked({ slide: slide + 1, shapeId: +el.dataset.duoShapeId, name: el.dataset.duoShapeName, type: el.dataset.duoShapeType,
+             inGroups: groups, text: node ? text(node) : el.innerText.trim(),
+             box: box(el, slideEl) }, el);
+  e.stopPropagation();
+});
+window.__duo_viewer = viewer;
+</script>
