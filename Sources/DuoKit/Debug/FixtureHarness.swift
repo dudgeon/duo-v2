@@ -423,6 +423,10 @@ public enum FixtureHarness {
                 if kv.count == 2 { model.askMoveTask(project: p, path: kv[0], to: kv[1]) }
             }
         // Chat mode (DL-118): the visible Claude session's chat.
+        case "chat-screen":   // chat-screen:idle|permission|…: the fixture chat's screen, as if the dialog came or went
+            if parts.count > 1, let k = ChatScreen.Kind(rawValue: parts[1]), let tab = model.consoleTab, let c = model.fixtureChats[tab] {
+                c.harnessScreenKind(k)
+            }
         case "chat":   // chat:on|off
             if let k = model.visibleSessionId { model.setChatMode(parts.count > 1 && parts[1] == "off" ? .terminal : .chat, for: k) }
         case "chat-send":   // chat-send:<text>: the composer's Return

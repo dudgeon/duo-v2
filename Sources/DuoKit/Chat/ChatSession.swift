@@ -187,6 +187,9 @@ public final class ChatSession {
     }
 
     /// A review card is showing: a verified dialog that agrees with the request.
+    /// For the harness: the screen as if Claude's dialog had come up or gone (DL-130's proofs).
+    func harnessScreenKind(_ kind: ChatScreen.Kind) { screen.kind = kind }
+
     public var cardUp: Bool {
         [.permission, .plan, .question, .questionReview].contains(screen.kind) && dialogsVerified && requestAgrees
     }

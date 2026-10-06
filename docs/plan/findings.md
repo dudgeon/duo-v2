@@ -1786,3 +1786,23 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - One task check rebuilt the archived list from `fixture.sessions` alone. Archiving now moves the session out at once, so it reads both lists.
   - Not verified by capture: archiving a session at once. The scratch workspace has no quiet session to archive without spending a turn; DuoChecks covers it.
 - **Unchanged at rest** against origin/main's build (0 pixels): the ten fixture states, and a live Tasks fold cropped to the sidebar.
+
+## F-136 · The chat review card rises in place of the composer and sinks after the answer (DL-130, 2026-10-06)
+
+- **The card** (`ChatPane`):
+  - When Claude's dialog comes up (`cardUp`), the review card moves up from the pane's bottom edge into the composer's place (`cardIn`, 200 ms ease-out) while the composer fades.
+  - Once the screen shows Claude has the answer, it moves back down (`cardOut`, 150 ms ease-in) and the composer fades back.
+  - `cardUp` comes from the screen scrape, outside any click's transaction, so the pane animates on `cardUp` itself.
+- **No overprint:**
+  - The card is opaque and sits above the composer (`zIndex`), and it moves without fading, so it covers the composer's text while they cross.
+  - A first try faded the card as it moved, and "Reply to Claude" showed through it.
+  - While leaving, the card draws its answered state (options greyed), because the screen has already changed.
+- **The feed:**
+  - It keeps the alignment chat mode already gives it: bottom while a card is up, top otherwise. A short conversation therefore slides down to sit above the card as it rises, and back up after.
+  - Its scroll stays pinned to the bottom. Streaming and the Terminal/Chat swap are unchanged (DL-130: no motion).
+- **Harness:** `chat-screen:<kind>` sets a fixture chat's screen, as if the dialog came or went.
+- **Proof** (scale 10; `build/motion/card-{in,out}/strip.png`): `chat-permission-edit`, `chat-screen:idle` then `chat-screen:permission`. With Reduce Motion, every frame is the end state.
+- **Unchanged at rest** against origin/main's build (0 pixels):
+  - the chat boards window, text, permission-edit, plan, question-multi, question-review, composer and fallback;
+  - overview and project.
+- **Checks:** DuoChecks 627 and the chat checks (`DUO_CHECKS=chat`) 96 pass.
