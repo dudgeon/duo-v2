@@ -956,6 +956,51 @@ func repoFixture() throws -> Fixture {
         if let saved { setenv("DUO_SUPPORT_DIR", saved, 1) } else { unsetenv("DUO_SUPPORT_DIR") }
     }
 
+    print("isolated instances: no install questions, no focus, no writes outside (C-28, F-113)")
+    do {
+        let real = SupportFolder.real
+        check(!SupportFolder.isIsolated(given: nil) && !SupportFolder.isIsolated(given: ""), "no DUO_SUPPORT_DIR: the real folder, not isolated")
+        check(!SupportFolder.isIsolated(given: real.path) && !SupportFolder.isIsolated(given: real.path + "/"), "DUO_SUPPORT_DIR = the real Application Support (Geoff's --workspace Duo): not isolated")
+        check(SupportFolder.isIsolated(given: "/tmp/duo-AbC123"), "a temporary folder (F-89): isolated")
+        check(SupportFolder.isIsolated(given: NSHomeDirectory() + "/scratch/support"), "an explicit other folder: isolated")
+        // Geoff's own launch: --workspace with the real folder keeps it, and installs as before.
+        check(SupportFolder.choose(arguments: ["Duo", "--workspace", "/tmp/ws"], environment: ["DUO_SUPPORT_DIR": real.path]) == .given(real.path), "Geoff's --workspace launch keeps the real folder")
+        let saved = getenv("DUO_SUPPORT_DIR").map { String(cString: $0) }
+        let savedRoot = Installer.testRoot
+        Installer.testRoot = nil
+        setenv("DUO_SUPPORT_DIR", real.path, 1)
+        check(!SupportFolder.isIsolated && Installer.refusal == nil, "with the real folder, the Installer installs as before")
+        check(!ChildEnvironment.make(sessionID: nil).contains { $0.hasPrefix("DUO_SUPPORT_DIR=") }, "the real folder isn't handed to terminals, so a test Duo a session launches is isolated")
+        unsetenv("DUO_SUPPORT_DIR")
+        check(!SupportFolder.isIsolated && Installer.refusal == nil, "a plain launch (no DUO_SUPPORT_DIR) installs as before")
+        // An isolated instance: the Installer refuses before touching anything, and the prompt doesn't ask.
+        let temp = FileManager.default.temporaryDirectory.appending(path: "duo-iso-\(UUID().uuidString)")
+        setenv("DUO_SUPPORT_DIR", temp.path, 1)
+        let linkBefore = try? FileManager.default.destinationOfSymbolicLink(atPath: Installer.link.path)
+        let mdBefore = try? Data(contentsOf: Installer.claudeMD)
+        let ins = Installer.install(cli: "/tmp/elsewhere/Duo.app/Contents/Helpers/duo2"), un = Installer.uninstall()
+        check(SupportFolder.isIsolated && ins.lines.count == 1 && ins.lines[0].hasPrefix("Not installed") && un.lines.count == 1 && un.lines[0].hasPrefix("Nothing removed"),
+              "isolated: install and uninstall refuse with a line saying why")
+        check((try? FileManager.default.destinationOfSymbolicLink(atPath: Installer.link.path)) == linkBefore && (try? Data(contentsOf: Installer.claudeMD)) == mdBefore,
+              "isolated: ~/.local/bin/duo2 and CLAUDE.md untouched")
+        InstallPrompt.run(cli: "/tmp/elsewhere/Duo.app/Contents/Helpers/duo2")
+        check(SheetCenter.shared.queue.isEmpty, "isolated: the launch asks neither the install nor the legacy question")
+        let iroot = FileManager.default.temporaryDirectory.appending(path: "duo-iso-root-\(UUID().uuidString)")
+        Installer.testRoot = iroot
+        check(Installer.refusal == nil && Installer.link.path.hasPrefix(iroot.path), "isolated with DUO_INSTALL_ROOT: allowed, inside the install root")
+        Installer.testRoot = savedRoot
+        try? FileManager.default.removeItem(at: iroot)
+        try? FileManager.default.removeItem(at: temp)
+        if let saved { setenv("DUO_SUPPORT_DIR", saved, 1) } else { unsetenv("DUO_SUPPORT_DIR") }
+        // Focus goes through DuoFocus (or the debug harness's own key events), so isolation covers it.
+        let activators = (FileManager.default.enumerator(at: repoRoot().appending(path: "Sources"), includingPropertiesForKeys: nil)?.compactMap { $0 as? URL } ?? [])
+            .filter { $0.pathExtension == "swift" && !["DuoQuestion.swift", "FixtureHarness.swift", "DuoApp.swift"].contains($0.lastPathComponent) && !$0.path.contains("/DuoChecks/") }
+            .filter { ((try? String(contentsOf: $0, encoding: .utf8)) ?? "").contains("NSApp.activate") }
+        check(activators.isEmpty, "only DuoFocus takes focus (\(activators.map(\.lastPathComponent)))")
+        let app = (try? String(contentsOf: repoRoot().appending(path: "Sources/Duo/DuoApp.swift"), encoding: .utf8)) ?? ""
+        check(app.contains("if !SupportFolder.isIsolated { NSApp.activate() }"), "the window opens without taking focus when isolated")
+    }
+
     print("tokens")
     check(DuoTextStyle.body.spec.size == 13 && DuoTextStyle.body.spec.lineHeight == 20, "body 13/20")
     check(DuoTextStyle.sectionLabel.spec.uppercase && DuoTextStyle.sectionLabel.spec.tracking == 0.66, "section label caps +0.66")

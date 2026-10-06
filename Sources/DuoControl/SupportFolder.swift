@@ -43,7 +43,27 @@ public enum SupportFolder {
         if let p = getenv(variable), let given = String(validatingCString: p), !given.isEmpty {
             return URL(fileURLWithPath: given)
         }
-        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        return real
+    }
+
+    /// The user's own Application Support, whatever `DUO_SUPPORT_DIR` says.
+    public static var real: URL { FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0] }
+
+    /// Whether an instance with this `DUO_SUPPORT_DIR` is isolated from the user's Duo (C-28,
+    /// F-113): its support folder is anything but the real Application Support (a temporary one
+    /// from F-89, or an explicit other folder). The one test; it looks at the folder, never the
+    /// launch flags, so the user's own Duo started with `--workspace` and the real folder stays theirs.
+    /// An isolated instance asks no install or first-run question, never takes focus, and
+    /// `Installer` writes nothing outside it unless `DUO_INSTALL_ROOT` is set.
+    public static func isIsolated(given: String?, real: URL = real) -> Bool {
+        guard let given, !given.isEmpty else { return false }
+        let norm = { (u: URL) in u.standardizedFileURL.resolvingSymlinksInPath().path }
+        return norm(URL(fileURLWithPath: given)) != norm(real)
+    }
+
+    /// This process: read from the environment each time (`prepareForLaunch` may have set it).
+    public static var isIsolated: Bool {
+        isIsolated(given: getenv(variable).flatMap { String(validatingCString: $0) })
     }
 
     /// Duo's own folder: state, archive, journals, search index, events, socket and endpoint.

@@ -49,7 +49,7 @@ extension AppModel {
         panel.allowsMultipleSelection = false
         panel.prompt = "Use This Folder"
         panel.message = "Where is \(project) now? Its sessions will resume there."
-        NSApp.activate(ignoringOtherApps: true)
+        DuoFocus.take()
         guard panel.runModal() == .OK, let url = panel.url else { return }
         reconnect(from: p.path, to: url, name: project)
     }

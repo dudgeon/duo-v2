@@ -22,6 +22,15 @@ public enum Installer {
     /// `DUO_INSTALL_ROOT` sets it for the app and duo2, so a walk can exercise the real loop on a fake.
     nonisolated(unsafe) public static var testRoot: URL? = ProcessInfo.processInfo.environment["DUO_INSTALL_ROOT"].flatMap { $0.isEmpty ? nil : URL(fileURLWithPath: $0) }
 
+    /// Why this process mustn't write the user's files, or nil (C-28, F-113): an isolated instance
+    /// (`SupportFolder.isIsolated`) leaves `~/.local/bin`, CLAUDE.md and the skill alone unless
+    /// `DUO_INSTALL_ROOT` puts them in a folder of its own. The second line of defence behind
+    /// the launch skipping the question.
+    public static var refusal: String? {
+        guard testRoot == nil, SupportFolder.isIsolated else { return nil }
+        return "Not installed: this Duo uses its own support folder (\(SupportFolder.applicationSupport.path)), so it leaves ~/.local/bin/duo2, CLAUDE.md and the duo2 skill to your own Duo. Set DUO_INSTALL_ROOT to install into a folder of its own (C-28)."
+    }
+
     public static var claudeDir: URL { testRoot?.appending(path: "claude") ?? LegacyDuo.claudeDir }
     public static var claudeMD: URL { claudeDir.appending(path: "CLAUDE.md") }
     public static var skillFile: URL { claudeDir.appending(path: "skills/duo2/SKILL.md") }
@@ -148,8 +157,9 @@ public enum Installer {
     /// Writes or refreshes everything (only with consent). Idempotent; safe at every launch.
     @discardableResult
     public static func install(cli: String) -> Report {
-        var m = manifest()
         var r = Report()
+        if let why = refusal { r.lines.append(why); return r }
+        var m = manifest()
         guard m.consented else { r.lines.append("Not installed: Duo asked and you said not now. `duo2 install` installs it."); return r }
         guard m.format <= format else { r.lines.append("A newer Duo installed these (format \(m.format)); this one leaves them alone."); return r }
         m.format = format
@@ -214,8 +224,9 @@ public enum Installer {
     /// Removes exactly what the manifest says Duo wrote. Edited files stay, with a note.
     @discardableResult
     public static func uninstall() -> Report {
-        var m = manifest()
         var r = Report()
+        if let why = refusal { r.lines.append(why.replacingOccurrences(of: "Not installed", with: "Nothing removed")); return r }
+        var m = manifest()
         let fm = FileManager.default
         if let text = try? String(contentsOf: claudeMD, encoding: .utf8), let b = firstBlock(in: text) {
             if m.blockHash == nil || hash(b) == m.blockHash! || b == block() {

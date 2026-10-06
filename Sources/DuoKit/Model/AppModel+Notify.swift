@@ -29,7 +29,7 @@ extension AppModel {
 
     /// A notification was clicked: the project, with its card selected.
     func openFromNotification(sessionId: String, project: String) {
-        NSApp.activate(ignoringOtherApps: true)
+        DuoFocus.take()
         if let s = fixture.sessions.first(where: { $0.sessionId == sessionId }) { selectedActionSession = s.id }
         open(project: project)
     }
