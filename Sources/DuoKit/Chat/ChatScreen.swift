@@ -230,6 +230,7 @@ public enum ChatScreenReader {
         if ready >= 0, proceed > ready {
             var r = ChatScreen(kind: .plan, sig: "plan:" + t[proceed].chatTrim)
             r.title = "Ready to code?"
+            r.body = t[proceed].chatTrim
             r.rows = options(t, from: proceed + 1, to: t.count, cols: width, s)
             r.mode = mode
             return r

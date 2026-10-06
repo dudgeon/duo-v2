@@ -119,7 +119,9 @@ radius_use.update({"reviewCard": "A permission, plan or question card docked at 
                    "composer": "The chat composer field (chat-mode-handoff).",
                    "chatInlineCode": "Inline code's fill in chat Markdown (chat-mode-handoff `text`).",
                    "chatStepBody": "A tool step's diff, output or agent box (chat-mode-handoff `tools`).",
-                   "chatCodeBlock": "A code block in chat Markdown (chat-mode-handoff `text`)."})
+                   "chatCodeBlock": "A code block in chat Markdown (chat-mode-handoff `text`).",
+                   "chatCheckbox": "A question card's checkbox (chat-mode-handoff `question-multi`).",
+                   "chatPreviewCode": "An option's preview inside a question card (chat-mode-handoff `question-previews`)."})
 # A per-corner radius (chat-mode-handoff) reads as CSS: top-left, top-right, bottom-right, bottom-left.
 corners = lambda v: " ".join(px(v[c]) for c in ["topLeft", "topRight", "bottomRight", "bottomLeft"])
 radius = [{"name": "radius" + cap(k), "value": corners(v) if isinstance(v, dict) else px(v),

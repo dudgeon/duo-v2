@@ -40,6 +40,8 @@ public struct ChatYou: Equatable, Sendable {
     public var time: Date?
     /// Sent while Claude works: the TUI holds it until it's ready (composer board).
     public var queued = false
+    /// Sent in plan mode (`You · 10:30 · plan mode`).
+    public var planMode = false
     var fromHook = false
     var fromTranscript = false
 }
@@ -64,13 +66,20 @@ public enum ChatSegment: Identifiable, Equatable, Sendable {
     case tools(id: String, steps: [ChatToolStep])
     /// Markdown; `streaming` while MessageDisplay is still adding lines.
     case text(ChatText)
+    /// The questions Claude asked (AskUserQuestion): `Platforms · Which platforms …?`.
+    case asked(id: String, questions: [ChatAsked])
 
     public var id: String {
         switch self {
-        case .thinking(let id, _, _), .tools(let id, _): id
+        case .thinking(let id, _, _), .tools(let id, _), .asked(let id, _): id
         case .text(let t): t.id
         }
     }
+}
+
+public struct ChatAsked: Equatable, Sendable {
+    public var header: String
+    public var question: String
 }
 
 public struct ChatText: Equatable, Sendable {
@@ -154,6 +163,7 @@ public final class ChatLog {
     public internal(set) var earlierHidden = false
     @ObservationIgnored private var nextID = 0
     @ObservationIgnored private var agentsStarted: [String: String] = [:]
+    @ObservationIgnored private var askedIDs: Set<String> = []
 
     public init() {}
 
@@ -220,7 +230,7 @@ public final class ChatLog {
 
     /// A prompt, from the hook or the transcript. Injected prompts (task notifications, loop and
     /// schedule wakeups) are quiet notes, not your bubbles (F-103).
-    public func prompt(_ text: String, time: Date?, fromHook: Bool, injected: Bool = false) {
+    public func prompt(_ text: String, time: Date?, fromHook: Bool, injected: Bool = false, planMode: Bool = false) {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else { return }
         if injected || t.hasPrefix("<task-notification>") {
@@ -239,7 +249,7 @@ public final class ChatLog {
                 return
             }
         }
-        var y = ChatYou(id: newID("you"), text: t, time: time)
+        var y = ChatYou(id: newID("you"), text: t, time: time, planMode: planMode)
         if fromHook { y.fromHook = true } else { y.fromTranscript = true }
         items.append(.you(y))
         turnStarted = time ?? Date()
@@ -313,8 +323,21 @@ public final class ChatLog {
 
     /// A tool call: from PreToolUse, the transcript's tool_use, or PostToolUse when it's the first word of it.
     public func toolUse(id: String, name: String, input: ChatJSON, time: Date?) {
-        // AskUserQuestion and ExitPlanMode are review cards, answered as replies (phase 3).
-        if ["AskUserQuestion", "ExitPlanMode"].contains(name) { return }
+        // AskUserQuestion and ExitPlanMode are review cards, answered as replies. A question's list
+        // stays in the card (handoff `question-chat-decline`).
+        if name == "AskUserQuestion" {
+            let qs = (input["questions"] as? [ChatJSON] ?? []).map { ChatAsked(header: $0["header"] as? String ?? "", question: $0["question"] as? String ?? "") }
+            let shown = items.contains { item in
+                guard case .claude(let t) = item else { return false }
+                return t.segments.contains { if case .asked(_, let q) = $0 { return q == qs } else { return false } }
+            }
+            if !qs.isEmpty, !askedIDs.contains(id), !shown {
+                askedIDs.insert(id)
+                withTurn(time: time) { $0.segments.append(.asked(id: id, questions: qs)) }
+            }
+            return
+        }
+        if name == "ExitPlanMode" { return }
         if updateStep(id, { _ in }) { return }
         let step = ChatToolDescriber.step(id: id, name: name, input: input, cwd: cwd)
         withTurn(time: time) { t in

@@ -15,6 +15,12 @@ public final class ChatUIState {
     /// Bash outputs shown in full.
     public var fullOutput: Set<String> = []
     public var thinkingOpen: Set<String> = []
+    /// Plan option 3's feedback, the free-text answers by question, a preview's notes.
+    public var planFeedback = ""
+    public var other: [Int: String] = [:]
+    public var notes = ""
+    /// The composer's text (Claude's prompt, phase 4).
+    public var composer = ""
     public init() {}
 }
 
@@ -42,17 +48,24 @@ struct ChatPane: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     Color.clear.frame(height: 1).id(ChatPane.bottom)
                 }
-                .defaultScrollAnchor(.top, for: .alignment)
+                .defaultScrollAnchor(chat.cardUp ? .bottom : .top, for: .alignment)
                 .defaultScrollAnchor(.bottom, for: .initialOffset)
                 .defaultScrollAnchor(.bottom, for: .sizeChanges)
                 .onChange(of: chat.log.items) { proxy.scrollTo(ChatPane.bottom, anchor: .bottom) }
                 .onChange(of: chat.revealRequest) { if let id = chat.revealRequest { withAnimation { proxy.scrollTo(id, anchor: .top) } } }
             }
-            ChatComposerStandIn()
-                .padding(EdgeInsets(top: 0, leading: DuoSpace.chatColumnInset, bottom: 12, trailing: DuoSpace.chatColumnInset))
+            if chat.cardUp {
+                // While Claude waits on you, the review card takes the composer's place (DL-119 §3).
+                ChatReviewCard(chat: chat)
+                    .padding(EdgeInsets(top: 0, leading: 16, bottom: 14, trailing: 16))
+            } else {
+                ChatComposerStandIn()
+                    .padding(EdgeInsets(top: 0, leading: DuoSpace.chatColumnInset, bottom: 12, trailing: DuoSpace.chatColumnInset))
+            }
         }
         .background(DuoColor.chatGround)
         .tint(DuoColor.text)
+        .onAppear { model.installChatKeys() }
         .environment(\.openURL, OpenURLAction { url in
             model.openChatLink(url, cwd: chat.log.cwd)
             return .handled
@@ -88,7 +101,7 @@ struct ChatYouBubble: View {
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 4) {
-            if !you.queued { ChatWho(who: "You", time: you.time) }
+            if !you.queued { ChatWho(who: "You", time: you.time, tag: you.planMode ? "plan mode" : nil) }
             ChatMarkdownView(blocks: ChatMarkdown.parse(you.text), streaming: false)
                 .padding(EdgeInsets(top: 9, leading: 14, bottom: 9, trailing: 14))
                 .background(UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatBubble).fill(DuoColor.chatYou))
@@ -103,12 +116,33 @@ struct ChatYouBubble: View {
     }
 }
 
-/// Your answer to a review card, as a small reply of yours.
+/// The questions Claude asked, in its card: `Platforms · Which platforms …?`.
+struct ChatAskedBox: View {
+    let questions: [ChatAsked]
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(questions.enumerated()), id: \.offset) { _, q in
+                Text("\(Text(q.header).fontWeight(.semibold).foregroundStyle(DuoColor.text))\(Text(" · " + q.question).foregroundStyle(DuoColor.text2))")
+                    .duoText(.body).fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).strokeBorder(DuoColor.selected, lineWidth: DuoMetric.borderHairline))
+    }
+}
+
+/// Your answer to a review card, as a small reply of yours (`✓ You chose 1 · Yes for …`).
 struct ChatAnswerReply: View {
     let note: ChatNote
     var body: some View {
-        Text(ChatMarkdown.inline(note.text)).duoText(.chatMeta).foregroundStyle(DuoColor.text)
-            .padding(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+        HStack(spacing: 8) {
+            if note.text.hasPrefix("You chose **") {
+                Checkmark().stroke(DuoColor.text, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round)).frame(width: 10, height: 8)
+            }
+            Text(ChatInlineText.styled(note.text, style: .body)).duoText(.body).foregroundStyle(DuoColor.text)
+        }
+            .padding(EdgeInsets(top: 4, leading: 10, bottom: 4, trailing: 10))
             .background(UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatBubble).fill(DuoColor.chatYou))
             .frame(maxWidth: .infinity, alignment: .trailing)
     }
@@ -118,9 +152,10 @@ struct ChatAnswerReply: View {
 struct ChatWho: View {
     let who: String
     let time: Date?
+    var tag: String?
 
     var body: some View {
-        Text(time.map { "\(who) · \(ChatWho.clock.string(from: $0))" } ?? who)
+        Text([who, time.map { ChatWho.clock.string(from: $0) }, tag].compactMap { $0 }.joined(separator: " · "))
             .duoText(.chatMeta).foregroundStyle(DuoColor.text2)
     }
 
@@ -218,6 +253,11 @@ struct ChatClaudeCard: View {
                     case .thinking(let id, let secs, _): ChatThinkingRow(id: id, seconds: secs, chat: chat)
                     case .tools(_, let steps): ChatToolThread(steps: steps, chat: chat)
                     case .text(let t): ChatMarkdownView(blocks: ChatMarkdown.parse(t.markdown), streaming: t.streaming, faded: t.cut)
+                    case .asked(_, let qs):
+                        // While the question is up, its card shows it; the list stays once it closes.
+                        if !(chat.cardUp && [.question, .questionReview].contains(chat.screen.kind) && seg.id == turn.segments.last(where: { if case .asked = $0 { return true }; return false })?.id) {
+                            ChatAskedBox(questions: qs)
+                        }
                     }
                 }
             }

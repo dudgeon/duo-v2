@@ -113,6 +113,8 @@ public enum DuoMetric {
     public static let radiusChatInlineCode: CGFloat = 4.0
     public static let radiusChatStepBody: CGFloat = 8.0
     public static let radiusChatCodeBlock: CGFloat = 10.0
+    public static let radiusChatCheckbox: CGFloat = 3.0
+    public static let radiusChatPreviewCode: CGFloat = 6.0
     public static let borderHairline: CGFloat = 1.0
     public static let borderEmphasis: CGFloat = 1.5
     public static let borderFilesDivider: CGFloat = 2.0
@@ -264,6 +266,8 @@ public enum DuoTextStyle: CaseIterable, Sendable {
     case chatMeta
     case chatInlineCode
     case chatDiff
+    case chatPreview
+    case chatPlanHeading
 
     public var spec: DuoTextSpec {
         switch self {
@@ -287,6 +291,8 @@ public enum DuoTextStyle: CaseIterable, Sendable {
         case .chatMeta: DuoTextSpec(size: 12.0, lineHeight: 16.0, weight: .regular, mono: false, tracking: 0.0, uppercase: false)
         case .chatInlineCode: DuoTextSpec(size: 12.5, lineHeight: 22.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
         case .chatDiff: DuoTextSpec(size: 11.5, lineHeight: 18.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
+        case .chatPreview: DuoTextSpec(size: 10.5, lineHeight: 14.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
+        case .chatPlanHeading: DuoTextSpec(size: 15.0, lineHeight: 22.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
         }
     }
 }

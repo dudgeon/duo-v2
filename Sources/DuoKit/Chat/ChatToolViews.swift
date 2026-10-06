@@ -34,7 +34,8 @@ struct ChatToolStepView: View {
     let step: ChatToolStep
     let chat: ChatSession
 
-    var open: Bool { step.foldsByDefault == chat.ui.toggled.contains(step.id) }
+    /// A step waiting on you stays folded: the card below shows what's asked.
+    var open: Bool { step.status != .needsYou && step.foldsByDefault == chat.ui.toggled.contains(step.id) }
     var failed: Bool { if case .failed = step.status { return true }; return false }
 
     var body: some View {
@@ -87,6 +88,7 @@ struct ChatToolStepView: View {
         }
         a += obj
         if let d = step.detail { var x = AttributedString(" · " + d); x.foregroundColor = DuoColor.text2; a += x }
+        if step.status == .needsYou { return a }
         if let n = step.adds, n > 0 { var x = AttributedString(" +\(n)"); x.foregroundColor = DuoColor.diffAddText; a += x }
         if let n = step.dels, n > 0 { var x = AttributedString(" −\(n)"); x.foregroundColor = DuoColor.diffDelText; a += x }
         return a
@@ -129,7 +131,15 @@ struct ChatToolStepView: View {
 /// An edit's diff: line numbers, `diffDel` and `diffAdd` fills.
 struct ChatDiffView: View {
     let lines: [ChatDiffLine]
+    var framed = true
     var body: some View {
+        if framed {
+            rows.clipShape(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody))
+                .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).strokeBorder(DuoColor.selected, lineWidth: DuoMetric.borderHairline))
+        } else { rows }
+    }
+
+    var rows: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(lines.enumerated()), id: \.offset) { i, l in
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
@@ -144,8 +154,6 @@ struct ChatDiffView: View {
             }
         }
         .textSelection(.enabled)
-        .clipShape(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody))
-        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusChatStepBody).strokeBorder(DuoColor.selected, lineWidth: DuoMetric.borderHairline))
     }
 }
 

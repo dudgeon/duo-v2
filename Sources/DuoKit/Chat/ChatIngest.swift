@@ -180,6 +180,7 @@ public enum ChatIngest {
             log.permissionResolved()
         case "PermissionRequest":
             if let tool { log.permissionPending(name: tool, input: input) }
+            if tool == "AskUserQuestion" { log.toolUse(id: "ask-" + ChatToolDescriber.key("q", input), name: "AskUserQuestion", input: input, time: time) }
             chat?.pendingRequest = ChatRequest(tool: tool ?? "", input: input, at: time ?? Date())
         case "SubagentStart":
             if let id = e["agent_id"] as? String { log.agentStarted(id: id, agentType: e["agent_type"] as? String) }
@@ -210,7 +211,7 @@ public enum ChatIngest {
                 // Slash commands and their output are the TUI's own lines, not your messages.
                 if text.hasPrefix("<command-") || text.hasPrefix("<local-command") { return }
                 let origin = (r["origin"] as? ChatJSON)?["kind"] as? String
-                log.prompt(text, time: time, fromHook: false, injected: origin != nil && origin != "human")
+                log.prompt(text, time: time, fromHook: false, injected: origin != nil && origin != "human", planMode: r["permissionMode"] as? String == "plan")
                 return
             }
             for b in message?["content"] as? [ChatJSON] ?? [] {

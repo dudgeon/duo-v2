@@ -40,9 +40,21 @@ public enum ChatTargets {
             model.shellTabs[project] = keys
         }
         let chat = ChatSession(key: tab, mode: ChatViewMode(rawValue: meta["mode"] as? String ?? "chat") ?? .chat)
+        // Files a card reads (an edit's line numbers, a plan), as the board's project has them.
+        let files = meta["files"] as? [String: String] ?? [:]
+        chat.readFile = { files[$0] }
+        chat.answersToReplay = (meta["answers"] as? [[String: String]] ?? []).compactMap { a in
+            guard let at = a["at"].flatMap({ ChatIngest.iso.date(from: $0) }), let text = a["text"] else { return nil }
+            return (at, text)
+        }
         chat.setVersion(meta["version"] as? String ?? "2.1.291")
         ChatRecording.play(dir, into: chat, now: meta["now"] as? String)
         for id in meta["toggled"] as? [String] ?? [] { chat.ui.toggled.insert(id) }
+        if let d = meta["drafts"] as? [String: String] {
+            chat.ui.planFeedback = d["plan"] ?? ""
+            chat.ui.notes = d["notes"] ?? ""
+            chat.ui.composer = d["composer"] ?? ""
+        }
         // An interrupted reply ends on the screen, not a hook (F-105): the busy → idle the TUI drew.
         if meta["interruptAfterPlay"] as? Bool == true { chat.log.endStreaming(interrupted: true) }
         if let f = meta["fallback"] as? [String: String] {
@@ -68,7 +80,10 @@ public enum ChatRecording {
             all.append(((r["timestamp"] as? String).flatMap { ChatIngest.iso.date(from: $0) }?.timeIntervalSince1970 ?? 0, n, false, r))
         }
         for (n, r) in e.enumerated() { all.append(((r["at"] as? NSNumber)?.doubleValue ?? 0, t.count + n, true, r)) }
+        // Answers the card itself writes (`You chose …`), at the moment they were given.
+        for (n, a) in chat.answersToReplay.enumerated() { all.append((a.at.timeIntervalSince1970, t.count + e.count + n, true, ["answer": a.text])) }
         for x in all.sorted(by: { ($0.at, $0.n) < ($1.at, $1.n) }) {
+            if let text = x.obj["answer"] as? String { chat.log.answer(text, time: Date(timeIntervalSince1970: x.at)); continue }
             if x.hook, let p = x.obj["e"] as? ChatJSON { ChatIngest.hook(p, at: x.at, into: chat.log, chat: chat) }
             else if !x.hook { ChatIngest.record(x.obj, into: chat.log, chat: chat) }
         }

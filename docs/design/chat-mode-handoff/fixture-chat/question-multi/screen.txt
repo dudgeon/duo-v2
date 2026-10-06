@@ -1,0 +1,34 @@
+
+ ▐▛███▛█   Claude Code v2.1.291
+▝▜██████▀  Haiku 4.5 · API Usage Billing
+ ▝▝   ▝▝   /…/-Users-geoff-repos-duo-v2/94261998-0f3b-48c5-a090-dcb9920a297e/scratchpad/ws
+
+❯ Draft the rollout section. Ask me anything you need first.
+
+⏺ Two questions before I write it.
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☐ Platforms  ☐ Timing  ✔ Submit  →
+Which platforms should saved cards ship on first? Pick every one we can staff before the exec
+review; the rest move to the next PRD.
+❯ 1. [✔] iOS app
+         Native, behind the wallet sheet
+  2. [ ] Android app
+         Native
+  3. [✔] Web checkout
+         Browser, guest flow
+  4. [ ] Type something
+     Next
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  5. Chat about this
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel
+
+
+
+
+
+
+
+
+
+

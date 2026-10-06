@@ -112,6 +112,36 @@ public final class ChatSession {
     /// Fixture targets: the clock the Writing line counts from.
     public var fixedNow: Date?
     public var now: Date { fixedNow ?? Date() }
+    /// Bumped to put the keyboard in the composer (Chat about this).
+    public var focusComposer = 0
+    /// The plan Claude asks you to approve: the request's text, or its file before 2.1.285.
+    public var planPath: String? { pendingRequest?.tool == "ExitPlanMode" ? pendingRequest?.input["planFilePath"] as? String : nil }
+    public var planText: String? {
+        guard pendingRequest?.tool == "ExitPlanMode" else { return nil }
+        let fromHook = pendingRequest?.input["plan"] as? String
+        let stale = cliVersion.flatMap(ChatVersion.init).map { $0 < ChatVersion.freshPlanInHook } ?? false
+        if (stale || fromHook == nil), let p = planPath, let file = readFile(p) { return file }
+        return fromHook
+    }
+    /// Fixture targets: answers the card wrote, replayed in time order.
+    @ObservationIgnored public var answersToReplay: [(at: Date, text: String)] = []
+    /// Reads a file for a card (fixture targets stand in their own files).
+    @ObservationIgnored public var readFile: (String) -> String? = { try? String(contentsOfFile: $0, encoding: .utf8) }
+    /// An edit request's diff with the file's line numbers, when the file can be read.
+    public var requestDiff: [ChatDiffLine]? {
+        guard let r = pendingRequest, r.tool == "Edit", let path = r.input["file_path"] as? String,
+              let old = r.input["old_string"] as? String, let new = r.input["new_string"] as? String,
+              let text = readFile(path), let range = text.range(of: old) else { return nil }
+        let first = text[..<range.lowerBound].filter { $0 == "\n" }.count + 1
+        var lines: [ChatDiffLine] = []
+        // One line of context above, as the TUI shows it.
+        let before = text[..<range.lowerBound].components(separatedBy: "\n").dropLast()
+        if first > 1, let ctx = before.last { lines.append(ChatDiffLine(kind: .context, number: first - 1, text: ctx)) }
+        let olds = old.components(separatedBy: "\n"), news = new.components(separatedBy: "\n")
+        for (i, l) in olds.enumerated() { lines.append(ChatDiffLine(kind: .del, number: first + i, text: l)) }
+        for (i, l) in news.enumerated() { lines.append(ChatDiffLine(kind: .add, number: first + i, text: l)) }
+        return lines
+    }
     /// A message to scroll to (⌘[ / ⌘]).
     public var revealRequest: String?
     /// Keys are on their way: the screen is expected to change, nothing falls back meanwhile.
@@ -138,6 +168,26 @@ public final class ChatSession {
     /// How long `unknown` must last before the terminal shows: the screen is blank for a moment at
     /// start and while the external editor runs (F-105).
     public static let grace: TimeInterval = 0.5
+    /// How long a dialog may wait for its PermissionRequest before the terminal shows (rule 2).
+    public static let requestGrace: TimeInterval = 1.5
+    @ObservationIgnored private var disagreeSince: Date?
+
+    /// The dialog on screen and Claude's request tell the same story (fallback rule 2): a
+    /// permission for a tool, a plan for ExitPlanMode, a question Claude asked.
+    public var requestAgrees: Bool {
+        guard let r = pendingRequest else { return false }
+        switch screen.kind {
+        case .permission: return !["AskUserQuestion", "ExitPlanMode"].contains(r.tool)
+        case .plan: return r.tool == "ExitPlanMode"
+        case .question, .questionReview: return r.tool == "AskUserQuestion" && questionIndex(screen) != nil
+        default: return true
+        }
+    }
+
+    /// A review card is showing: a verified dialog that agrees with the request.
+    public var cardUp: Bool {
+        [.permission, .plan, .question, .questionReview].contains(screen.kind) && dialogsVerified && requestAgrees
+    }
 
     public init(key: String, mode: ChatViewMode) {
         self.key = key
@@ -223,9 +273,19 @@ public final class ChatSession {
             unknownSince = nil; unknownTimer?.invalidate()
             if !dialogsVerified {
                 fallBack(.automatic("Chat mode hasn’t been checked with this version of Claude Code’s dialogs (\(cliVersion ?? "unknown")), so here’s the terminal. Chat comes back when it closes."))
-            }
+            } else if !requestAgrees {
+                // The request comes by hook, a moment after the dialog draws: give it a second.
+                if disagreeSince == nil {
+                    disagreeSince = now
+                    unknownTimer = Timer.scheduledTimer(withTimeInterval: Self.requestGrace, repeats: false) { [weak self] _ in
+                        MainActor.assumeIsolated { self?.evaluateFallback() }
+                    }
+                } else if now.timeIntervalSince(disagreeSince!) >= Self.requestGrace - 0.01 {
+                    fallBack(.automatic("Chat mode can’t match this dialog to what Claude asked, so here’s the terminal. Chat comes back when it closes."))
+                }
+            } else { disagreeSince = nil }
         case .idle, .busy:
-            unknownSince = nil; unknownTimer?.invalidate()
+            unknownSince = nil; disagreeSince = nil; unknownTimer?.invalidate()
             if fallback != nil { fallback = nil; onChange?() }
         case .starting:
             break

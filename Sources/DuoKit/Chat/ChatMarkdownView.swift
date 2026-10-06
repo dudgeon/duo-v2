@@ -7,12 +7,14 @@ struct ChatMarkdownView: View {
     let blocks: [ChatBlock]
     let streaming: Bool
     var faded = false
+    /// The plan card's smaller scale: 13/20 text, 15/22 headings.
+    var compact = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             ForEach(Array(blocks.enumerated()), id: \.offset) { i, b in
                 // An interrupted reply's last paragraph is drawn faded; headings keep their weight.
-                ChatBlockView(block: b, caret: streaming && i == blocks.count - 1, faded: faded && i == blocks.count - 1)
+                ChatBlockView(block: b, caret: streaming && i == blocks.count - 1, faded: faded && i == blocks.count - 1, compact: compact)
             }
             if streaming, blocks.isEmpty { ChatCaret() }
         }
@@ -30,24 +32,25 @@ struct ChatBlockView: View {
     let block: ChatBlock
     var caret = false
     var faded = false
+    var compact = false
 
     var body: some View {
         switch block {
         case .heading(let level, let text):
-            ChatInlineText(text: text, style: level <= 1 ? .chatHeading1 : level == 2 ? .chatHeading : .chatHeading3, caret: caret)
+            ChatInlineText(text: text, style: compact ? .chatPlanHeading : level <= 1 ? .chatHeading1 : level == 2 ? .chatHeading : .chatHeading3, caret: caret)
                 .accessibilityAddTraits(.isHeader)
         case .paragraph(let text):
-            ChatInlineText(text: text, style: .chatBody, caret: caret, color: faded ? DuoColor.text2 : DuoColor.text)
+            ChatInlineText(text: text, style: compact ? .body : .chatBody, caret: caret, color: faded ? DuoColor.text2 : DuoColor.text)
         case .list(let ordered, let start, let items):
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Array(items.enumerated()), id: \.offset) { i, item in
                     HStack(alignment: .firstTextBaseline, spacing: 0) {
-                        Text(ordered ? "\(start + i)." : "•").duoText(.chatBody).foregroundStyle(DuoColor.text)
+                        Text(ordered ? "\(start + i)." : "•").duoText(compact ? .body : .chatBody).foregroundStyle(DuoColor.text)
                             .frame(width: 22, alignment: ordered ? .trailing : .center)
                             .padding(.trailing, ordered ? 6 : 2)
                         VStack(alignment: .leading, spacing: 4) {
                             ForEach(Array(item.enumerated()), id: \.offset) { j, b in
-                                ChatBlockView(block: b, caret: caret && i == items.count - 1 && j == item.count - 1)
+                                ChatBlockView(block: b, caret: caret && i == items.count - 1 && j == item.count - 1, compact: compact)
                             }
                         }
                     }
