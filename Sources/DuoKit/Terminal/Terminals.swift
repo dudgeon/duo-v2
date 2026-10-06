@@ -92,6 +92,15 @@ public enum ChildEnvironment {
         // scripted launch gets a temporary folder (F-89); an isolated instance keeps passing its own.
         if !SupportFolder.isIsolated { env.removeValue(forKey: SupportFolder.variable) }
         if let sessionID { env["DUO_SESSION_ID"] = sessionID }  // LR-20
+        // Chat mode's composer is Claude's external editor (Ctrl+G, F-104, F-112): `duo2 compose`
+        // hands over the composer's text, and opens the user's own editor for anything else.
+        if sessionID != nil, let bin = cliDirectory, let editor = ChatComposer.editorCommand(cli: bin + "/duo2") {
+            if let e = env["EDITOR"] { env[ChatCompose.userEditor] = e }
+            if let v = env["VISUAL"] { env[ChatCompose.userVisual] = v }
+            env["EDITOR"] = editor
+            env["VISUAL"] = editor
+            env[ChatCompose.dirVariable] = ChatComposer.dir.path
+        }
         // duo2 and how to reach the app (DL-15): on PATH and in the environment, never installed
         // globally (LR-55).
         if let c = control {
@@ -172,7 +181,9 @@ public final class TerminalSession {
         // DUO_NO_EDIT_HOOK (checks only) leaves the edit hook out, as a managed setting that
         // disables hooks would: the primer and the merge must hold on their own (DL-78).
         let editHook = ProcessInfo.processInfo.environment["DUO_NO_EDIT_HOOK"] == nil ? ChildEnvironment.cliDirectory.map { $0 + "/duo2" } : nil
-        let settings = (try? HookEvents.settingsFile(for: id, cli: editHook)).map { ["--settings", $0.path] } ?? []
+        // Chat mode's events, for a CLI that has them all (DL-118).
+        let chat = ClaudeLocator.resolve().flatMap(ClaudeVersion.known).flatMap(ChatVersion.init).map { $0 >= ChatVersion.messageDisplay } ?? false
+        let settings = (try? HookEvents.settingsFile(for: id, cli: editHook, chatEvents: chat)).map { ["--settings", $0.path] } ?? []
         return settings + ["--append-system-prompt", DuoAction.primer()]
     }
 

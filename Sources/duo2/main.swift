@@ -51,6 +51,19 @@ case .legacy:
             print("To turn them off (everything is backed up first, and can be restored): duo2 legacy disable --yes")
         }
     }
+case .compose:
+    // Claude Code runs this as $EDITOR / $VISUAL (chat mode's composer, F-104): a hand-over from
+    // Duo goes into Claude's prompt file; anything else opens the user's own editor.
+    let env = ProcessInfo.processInfo.environment
+    guard let file = rest.last else { fail("usage: duo2 compose <file>", code: 64) }
+    let outcome = ChatCompose.take(file: URL(fileURLWithPath: file), dir: env[ChatCompose.dirVariable].map { URL(fileURLWithPath: $0) },
+                                   session: env["DUO_SESSION_ID"])
+    if outcome != .notOurs { exit(0) }
+    let editor = ChatCompose.userEditorCommand(env)
+    let argv = ["/bin/sh", "-c", editor + " \"$@\"", "sh"] + rest
+    let cargs = argv.map { strdup($0) } + [nil]
+    execv("/bin/sh", cargs)
+    fail("couldn't open \(editor)")
 case .hook where rest.first == "context":
     // SessionStart and UserPromptSubmit in Duo's sessions (DL-116): the task(s) the session is
     // attributed to, in full at start (startup, resume, clear, compact) and, on a prompt, what

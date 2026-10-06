@@ -42,6 +42,11 @@ struct ConsoleTabStrip: View {
                         .accessibilityLabel("New session or shell")
                 }
                 Spacer(minLength: 0)
+                // Terminal / Chat, for the selected Claude tab (chat-mode-handoff `toggle`); 12 from the edge.
+                if let key = model.consoleTab, tabs.contains(where: { $0.id == key && $0.state != nil }),
+                   model.chat(for: key) != nil {
+                    ChatToggle(key: key).padding(.trailing, -4)
+                }
             }
             .padding(.horizontal, DuoSpace.panePadding)
             .frame(height: DuoMetric.tabStripHeight)
@@ -85,7 +90,8 @@ struct ConsoleTabStrip: View {
             (t.state == nil ? 11 : 9) + DuoSpace.gapGlyphToLabel
                 + ceil(((short ? Self.short(t.title) : t.title) as NSString).size(withAttributes: [.font: font]).width)
         }
-        let controls: CGFloat = 5 + 8 + 10 + 18          // + , chevron, and the gap before them
+        var controls: CGFloat = 5 + 8 + 10 + 18          // + , chevron, and the gap before them
+        if let key = model.consoleTab, model.chat(for: key) != nil { controls += 52 + 18 - 4 }   // the chat toggle
         let more: CGFloat = 11 + 4 + 16 + 18             // » n, when needed
         func total(_ ts: [Tab], _ short: Bool, _ withMore: Bool) -> CGFloat {
             ts.map { w($0, short) }.reduce(0, +) + CGFloat(max(0, ts.count - 1)) * 18 + controls + (withMore ? more : 0)

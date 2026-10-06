@@ -93,6 +93,9 @@ spacing = [
     {"name": "panePadding", "value": px(sp["panePadding"]), "usage": "Inset of every pane's content from its edges."},
     {"name": "selectionInset", "value": px(sp["selectionInset"]), "usage": "Selected rows' rounded fill is inset this far from the pane edges."},
     {"name": "threadRuleX", "value": px(sp["threadRuleX"]), "usage": "Where the vertical rule under an open group or thread sits."},
+    {"name": "chatColumnInset", "value": px(sp["chatColumnInset"]), "usage": "Chat transcript side padding (chat-mode-handoff)."},
+    {"name": "chatCardTrailing", "value": px(sp["chatCardTrailing"]), "usage": "Space kept to the right of Claude's reply card (chat-mode-handoff)."},
+    {"name": "chatBubbleMax", "value": px(sp["chatBubbleMax"]), "usage": "Your chat bubble's maximum width (chat-mode-handoff)."},
 ]
 for k in ["cardPadding", "pointerCardPadding", "questionBoxPadding", "buttonPadding", "popoverPadding", "documentPadding"]:
     for side, v in sp[k].items():
@@ -112,7 +115,17 @@ for k, v in sp["gap"].items():
 radius_use = {"control": "Buttons and fields.", "card": "Tiles and cards.", "selection": "Selected row fill.", "field": "Text fields.",
               "pill": "Count pills (fully rounded at 18 high).", "popover": "Popovers, the search modal, menus Duo draws.",
               "placeholderBar": "Placeholder bars in the design targets only."}
-radius = [{"name": "radius" + cap(k), "value": px(v), "usage": radius_use.get(k, k)} for k, v in t["radius"].items()]
+radius_use.update({"reviewCard": "A permission, plan or question card docked at the bottom of chat, with a 1.5 needsYou border (chat-mode-handoff).",
+                   "composer": "The chat composer field (chat-mode-handoff).",
+                   "chatInlineCode": "Inline code's fill in chat Markdown (chat-mode-handoff `text`).",
+                   "chatStepBody": "A tool step's diff, output or agent box (chat-mode-handoff `tools`).",
+                   "chatCodeBlock": "A code block in chat Markdown (chat-mode-handoff `text`).",
+                   "chatCheckbox": "A question card's checkbox (chat-mode-handoff `question-multi`).",
+                   "chatPreviewCode": "An option's preview inside a question card (chat-mode-handoff `question-previews`)."})
+# A per-corner radius (chat-mode-handoff) reads as CSS: top-left, top-right, bottom-right, bottom-left.
+corners = lambda v: " ".join(px(v[c]) for c in ["topLeft", "topRight", "bottomRight", "bottomLeft"])
+radius = [{"name": "radius" + cap(k), "value": corners(v) if isinstance(v, dict) else px(v),
+           "usage": v.get("use", k) if isinstance(v, dict) else radius_use.get(k, k)} for k, v in t["radius"].items()]
 border_use = {"hairline": "Pane dividers, card and field borders (`rule`).", "emphasis": "Group rule, focus outlines inside lists.",
               "filesDivider": "The divider above FILES in a project's left pane.", "tileFocusOutline": "Keyboard focus around a map tile."}
 border = [{"name": "border" + cap(k), "value": px(v), "usage": border_use.get(k, k)} for k, v in t["border"].items()

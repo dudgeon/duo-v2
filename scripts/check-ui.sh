@@ -33,6 +33,7 @@ capture() {
 for s in "${states[@]}"; do
   rm -f "$out/$s.png"
   capture "$s"
+  [ -n "${NO_COMPARE:-}" ] && continue   # check-chat.sh crops and compares its own
   bash docs/design/build-handoff/tools/compare.sh "$s" "$out/$s.png" "$out/$s-compare.png" --content-only >/dev/null
   echo "$s  →  build/ui/$s-compare.png"
 done

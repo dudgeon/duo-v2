@@ -1,0 +1,16 @@
+A readable view of a Claude session's real terminal in the console pane: the transcript, tool steps, review cards and a composer, over the same running Claude Code TUI.
+
+**Status:** Designed (DL-119, `chat-mode-handoff/`), built (F-108 to F-112). Stand-ins: Q-56 (dark appearance, heading levels other than H2, long history as the last 50 turns with Earlier turns, narrow panes, pasted images falling back). Open: Q-57 (Home pane; a file link's tooltip). **In code:** `Sources/DuoKit/Chat/`.
+
+**Anatomy:**
+- **Toggle:** a pill of two 26×20 icon segments (`>_`, chat bubble) at the right end of the console tab strip, 12 from the edge; 1 `tuiInputBorder`, radius `control`; the shown one on `consoleRule` in `consoleText`.
+- **Transcript** on `chatGround`, padding 18/`chatColumnInset` 24, 16 between items.
+  - Your message: `chatYou`, radius `chatBubble` (sharp bottom-right), padding 9/14, at most `chatBubbleMax` 440, right-aligned, Markdown rendered; `You · 9:41` in `chatMeta` above.
+  - Claude's reply: a `pane` card, radius `chatCard` (sharp bottom-left), padding 14 18 16, `chatCardTrailing` 36 kept free; `Claude · 9:42` above. Inside: `› Thought for 6s`; tool steps on a 1.5 dotted `controlEdge` thread with open dots; Markdown in `chatBody` 14/22, headings `chatHeading` 16/24 (Q-56 stand-ins H1 18/26, H3 14/22), inline code and file links `chatInlineCode`, code blocks on `chatGround` radius `chatCodeBlock` with Copy, tables ruled in `selected`.
+  - Tool step bodies: diffs in `chatDiff` with line numbers, `diffAddFill`/`diffAddText`, `diffDelFill`/`diffDelText`; Bash output on `toolOutputFill`, cut at 3 lines with Show n more lines; failures in `diffDelText` on a `toolErrorEdge` box; a background agent's message with Manage in Terminal….
+  - Status lines: the compaction divider, a background agent's quiet line, `Interrupted · What should Claude do instead?`, `○ Writing · 14s · Esc to interrupt` or Claude Code's own retry status.
+- **Review card**, docked in the composer's place: 1.5 `needsYou` border, radius `reviewCard`, `● NEEDS YOU · <kind>` in `sectionLabel`. Options are Claude Code's own labels from its screen, each with its key (18×18, mono 11), none pre-selected; Cancel esc and the hand-overs (Amend in Terminal…, Approve with Feedback in Terminal…). Plan: the whole plan in a 196 box, Open plan in Duo, option 3's field and Send. Questions: tabs with Back, checkboxes or radios with descriptions, Type something, Next, previews side by side (`chatPreview`) with Notes, the review page, Chat about this, Decline.
+- **Composer:** `pane`, radius `composer`, 1 `controlEdge` (1.5 `text` with focus), padding 11/14, "Reply to Claude"; dropped files as name chips; under it the mode chip, `⏎ send · ⇧⏎ new line · / commands · ⌘[ ⌘] your messages` and the model; the `/` menu shows Claude Code's own commands; Stop esc beside a queued message.
+- **Fallback bar** over the terminal: `ground`, 1 `rule` below, why in `body`, Back to Chat.
+
+**Behaviour:** answers are Claude Code's own keys, sent only after re-reading the screen (DL-118); the composer is Claude's prompt through Ctrl+G and `duo2 compose`; unknown screens, unverified CLI versions and mismatched requests show the terminal and come back by themselves. `duo2 session chat`.

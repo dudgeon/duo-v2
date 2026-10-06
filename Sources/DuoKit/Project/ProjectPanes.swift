@@ -364,10 +364,18 @@ struct ConsolePane: View {
             if let ended = model.fixtureEnded, model.consoleTab == ended.key {
                 Color.clear
                 ConsoleEndedBar(key: ended.key, message: ended.message)
+            } else if let tab = model.consoleTab, let chat = model.fixtureChats[tab] {
+                // Fixture mode: a chat-mode target (ChatTargets), drawn from recorded hooks and screens.
+                ConsoleChatBody(chat: chat, terminal: nil)
             } else if let project = model.currentProject, let tab = model.consoleTab, model.fixtureConsole == nil,
                let t = model.terminal(project: project.name, session: tab), !t.missingClaude {
-                TerminalSlot(session: t)
+                if let chat = model.chats.existing(t.key) {
+                    ConsoleChatBody(chat: chat, terminal: t)
+                } else {
+                    TerminalSlot(session: t)
+                }
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
+                Color.clear.frame(height: 0).task(id: t.key) { model.attachChat(t) }
             } else if let project = model.currentProject, model.terminalsMode == .live || model.fixtureConsole != nil,
                       let empty = model.consoleEmpty(project: project.name) {
                 ConsoleMessage(state: empty)

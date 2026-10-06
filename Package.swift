@@ -31,6 +31,6 @@ let package = Package(
                                                          "-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]),
         // Checks run as an executable (`swift run DuoChecks`): the Command Line Tools ship neither
         // XCTest nor the Swift Testing macro plugin. Move these to a test target once Xcode is installed.
-        .executableTarget(name: "DuoChecks", dependencies: ["DuoKit", "DuoControl", "DuoSearch"]),
+        .executableTarget(name: "DuoChecks", dependencies: ["DuoKit", "DuoControl", "DuoSearch", .product(name: "SwiftTerm", package: "SwiftTerm")]),
     ]
 )

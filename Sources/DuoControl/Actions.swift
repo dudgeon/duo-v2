@@ -29,6 +29,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
 public enum ActionID: String, CaseIterable, Sendable {
     // Duo
     case update
+    case compose
     case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup", settings, updateProbe = "update probe"
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
@@ -44,7 +45,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sessions, sessionShow = "session show", sessionNew = "session new", sessionOpen = "session open"
     case sessionClose = "session close", sessionMove = "session move"
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
-    case sessionLink = "session link", sessionTask = "session task"
+    case sessionLink = "session link", sessionTask = "session task", sessionChat = "session chat"
     case shellNew = "shell new", sessionFork = "session fork", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
     case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskSession = "task session", taskStatus = "task status"
     case taskRename = "task rename", taskArchive = "task archive", taskUnarchive = "task unarchive", taskDelete = "task delete"
@@ -125,6 +126,7 @@ extension DuoAction {
               ui: ["Choose…", "Use Found One"]),
         .init(.walkSetup, .setup, "<test id>", "Put Duo in the state an acceptance-walk test starts from (the walk page's Set up test button, or `duo2://walk-setup?id=…`). Steps come from ~/DuoAcceptance/walk-setups.json, never from the caller.",
               ui: ["Set up test"]),
+        .init(.compose, .setup, "<file>", "Claude Code's external editor in Duo's sessions (Ctrl+G; chat mode's composer, F-104, F-112): hands Claude the composer's text when chat mode asked for it, and otherwise opens your own editor ($VISUAL or $EDITOR as they were). Not for running by hand.", local: true),
         .init(.hook, .setup, "pre-edit | context", "Used by Duo's sessions. `pre-edit` (PreToolUse): Claude's Edit, MultiEdit and Write on a document open in Duo go through the editor instead of the file (DL-78). `context` (SessionStart, UserPromptSubmit): tells Claude the task(s) its session is attributed to, and on a prompt what changed since (DL-116).", local: true),
         .init(.legacy, .setup, "[disable --yes | restore <backup>]", "Find legacy Duo's instructions in ~/.claude; disable them (backed up first) or restore them.", ui: ["Disable…", "Restore"], local: true),
 
@@ -195,6 +197,9 @@ extension DuoAction {
         .init(.sessionUnarchive, .sessions, "<id>", "Bring an archived session back into its project's list.", ui: ["Unarchive Session", "Archived fold"]),
         .init(.sessionDelete, .sessions, "<id>", "Delete a session and its local logs for good (transcript, file history, environment; Duo's archived copy). The user confirms in Duo; never for a running session.",
               ui: ["Delete Session…"], timeout: 600),
+        .init(.sessionChat, .sessions, "[id] on|off|toggle | --default last|chat|terminal | answer [id] <option|cancel>",
+              "Chat mode (DL-118 to DL-120): show a Claude session as a readable chat over its real terminal, or as the terminal. Switching sends nothing to the session. --default sets the mode new sessions open in (last: the one used last). answer presses a review card's option key (1, 2, 3 …, or cancel for Esc) only after re-reading the screen; the same dialog must still be up. With no id, the session on screen.",
+              ui: ["Terminal", "Chat", "Back to Chat", "review card option", "Cancel esc", "Amend in Terminal…", "Approve with Feedback in Terminal…", "Manage in Terminal…", "Chat about this", "‹ Back"]),
         .init(.idle, .sessions, "", "Idle, resumable sessions, newest first, grouped by when (the map footer's list).", ui: ["idle footer"]),
         .init(.shellNew, .sessions, "", "Open a plain shell in the console (DL-8); typing `claude` in it makes it a session.", ui: ["New Shell"]),
         // Groups (DL-24): related threads, grouped by hand; Duo-owned facts in the project's .duo/sessions.json.

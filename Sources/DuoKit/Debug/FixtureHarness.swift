@@ -371,6 +371,51 @@ public enum FixtureHarness {
                 let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
                 if kv.count == 2 { model.askMoveTask(project: p, path: kv[0], to: kv[1]) }
             }
+        // Chat mode (DL-118): the visible Claude session's chat.
+        case "chat":   // chat:on|off
+            if let k = model.visibleSessionId { model.setChatMode(parts.count > 1 && parts[1] == "off" ? .terminal : .chat, for: k) }
+        case "chat-send":   // chat-send:<text>: the composer's Return
+            if let c = model.visibleSessionId.flatMap(model.chat(for:)), parts.count > 1 {
+                let text = parts[1]
+                Task { let r = await c.send(text); FileHandle.standardError.write(Data("chat-send: \(r.ok ? "ok" : "refused: \(r.why ?? "")")\n".utf8)) }
+            }
+        case "chat-answer":   // chat-answer:<n>: a permission or plan card's option
+            if let c = model.visibleSessionId.flatMap(model.chat(for:)), parts.count > 1, let n = Int(parts[1]),
+               let o = c.screen.options.first(where: { $0.n == n }) {
+                let sig = c.screen.sig
+                Task { let r = await c.answerOption(n, label: o.label, sig: sig); FileHandle.standardError.write(Data("chat-answer: \(r.ok ? "ok" : "refused: \(r.why ?? "")")\n".utf8)) }
+            }
+        case "chat-ask":   // chat-ask:pick=<label> | toggle=<label> | next | submit | decline
+            if let c = model.visibleSessionId.flatMap(model.chat(for:)), parts.count > 1 {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                let intent: ChatAskIntent? = switch kv[0] {
+                case "pick": .pick(kv.count > 1 ? kv[1] : ""); case "toggle": .toggle(kv.count > 1 ? kv[1] : "")
+                case "other": .other(kv.count > 1 ? kv[1] : ""); case "next": .next; case "submit": .submit; case "decline": .decline
+                default: nil
+                }
+                if let intent { let sig = c.screen.sig; Task { let r = await c.ask(intent, sig: sig); FileHandle.standardError.write(Data("chat-ask: \(r.ok ? "ok" : "refused: \(r.why ?? "")")\n".utf8)) } }
+            }
+        case "chat-state":   // what the chat shows, for a scripted run's log
+            if let k = model.visibleSessionId, let c = model.chat(for: k) {
+                var lines = ["chat-state: \(k.prefix(8)) mode=\(c.mode.rawValue) showing=\(c.showsChat ? "chat" : "terminal") screen=\(c.screen.kind.rawValue) card=\(c.cardUp) fallback=\(c.fallback?.message ?? "-") version=\(c.cliVersion ?? "-") hooks=\(c.log.hooksSeen) streams=\(c.log.streams) compose=\(c.usesExternalEditor)"]
+                for item in c.log.items {
+                    switch item {
+                    case .you(let y): lines.append("  you: \(y.text.prefix(80))\(y.queued ? " (queued)" : "")")
+                    case .claude(let t):
+                        for seg in t.segments {
+                            switch seg {
+                            case .text(let x): lines.append("  claude: \(x.markdown.replacingOccurrences(of: "\n", with: " ⏎ ").prefix(120))\(x.streaming ? " …" : "")")
+                            case .tools(_, let st): for s in st { lines.append("  step: \(s.verb) \(s.object.prefix(60)) [\(s.status)]\(s.detail.map { " · \($0)" } ?? "")") }
+                            case .thinking(_, let secs, _): lines.append("  thought \(secs ?? 0)s")
+                            case .asked(_, let q): lines.append("  asked: \(q.map(\.header))")
+                            }
+                        }
+                    case .answer(let n): lines.append("  answer: \(n.text)")
+                    case .note(let n), .divider(let n), .interrupted(let n): lines.append("  line: \(n.text)")
+                    }
+                }
+                FileHandle.standardError.write(Data((lines.joined(separator: "\n") + "\n").utf8))
+            }
         case "dump":
             for t in model.terminals.all.sorted(by: { $0.key < $1.key }) {
                 t.view.selectAll()
@@ -466,16 +511,20 @@ public enum FixtureHarness {
                              y: max(screen.minY, screen.maxY - height))
         window.setFrame(CGRect(origin: origin, size: CGSize(width: contentSize.width, height: height)), display: true)
 
-        // Scripted actions, one every 0.6 s, so each change renders before the next.
-        for (i, action) in options.thenActions.enumerated() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6 * Double(i + 1)) { perform(action, on: model) }
+        // Scripted actions, one every 0.6 s, so each change renders before the next; `wait:<s>`
+        // holds the rest (and the capture) back, for a session's turn to finish.
+        var at = 0.0
+        for action in options.thenActions {
+            if action.hasPrefix("wait:") { at += Double(action.dropFirst(5)) ?? 0; continue }
+            at += 0.6
+            DispatchQueue.main.asyncAfter(deadline: .now() + at) { perform(action, on: model) }
         }
 
         guard options.capturing else { return }
         // Give SwiftUI and the split view a moment to settle at the new size. When the peek
         // should be open, also wait for its popover to be on screen and done animating: a fixed
         // delay sometimes caught it half-drawn or not yet there (F-44).
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5 + 0.6 * Double(options.thenActions.count)) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5 + at) {
             whenPopoverSettled(model: model) { capture() }
         }
 

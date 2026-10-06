@@ -28,6 +28,8 @@ for a in "$@"; do
   esac
 done
 target="$root/screens/$screen.html"
+# <handoff>/<screen> names a target in another handoff outright (chat-mode-handoff/text: board names repeat).
+if [[ "$screen" == */* ]]; then root="$(cd "$root/../${screen%%/*}" && pwd)"; screen="${screen#*/}"; target="$root/screens/$screen.html"; fi
 # Search's targets live in their own handoff (search-handoff/screens); same renderer, same compare.
 for other in search-handoff surfaces-handoff slice2-handoff slice3-handoff many-projects-handoff stand-ins-handoff folder-handoff tables-handoff; do
   [ -f "$target" ] || { [ -f "$root/../$other/screens/$screen.html" ] && root="$(cd "$root/../$other" && pwd)" && target="$root/screens/$screen.html"; } || true

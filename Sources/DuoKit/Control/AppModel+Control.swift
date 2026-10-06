@@ -353,6 +353,8 @@ extension AppModel {
             let text = inv.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else { return done(.fail("usage: \(id.action.usage)")) }
             done(setNarration(sid, kind: id == .sessionNote ? "note" : "next", text: text) ? .ok("Noted.") : .fail("Duo doesn't know session \(sid.prefix(8)) yet"))
+        case .sessionChat:
+            chatVerb(inv, req, done)
         case .sessionCarryOn:
             guard let old = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             guard let new = carryOn(findSession(old, in: nil)?.sessionId ?? old) else { return done(.fail("no archived copy of session \(old)")) }
@@ -574,7 +576,7 @@ extension AppModel {
             walkSetup(t, done: done)
         case .searchRebuild:
             rebuildSearchIndex(); done(.ok("Rebuilding the search index; `duo2 search-status` shows progress."))
-        case .help, .doctor, .legacy, .install, .uninstall, .hook, .search, .searchStatus, .updateProbe:
+        case .help, .doctor, .legacy, .install, .uninstall, .hook, .compose, .search, .searchStatus, .updateProbe:
             done(.fail("`duo2 \(id.rawValue)` runs in the CLI, not the app"))
         }
     }

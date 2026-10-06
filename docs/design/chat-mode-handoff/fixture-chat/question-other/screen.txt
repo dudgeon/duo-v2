@@ -1,0 +1,34 @@
+
+ ▐▛███▛█   Claude Code v2.1.291
+▝▜██████▀  Haiku 4.5 · API Usage Billing
+ ▝▝   ▝▝   /…/-Users-geoff-repos-duo-v2/94261998-0f3b-48c5-a090-dcb9920a297e/scratchpad/ws
+
+❯ Draft the rollout section. Ask me anything you need first.
+
+⏺ Two questions before I write it.
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☒ Platforms  ☐ Timing  ✔ Submit  →
+When should this land?
+  1. This release
+     Ships with PRD v2
+  2. Next quarter
+     After the pricing test
+❯ 3. After the beta, if P5’s cohort agrees
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  4. Chat about this
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel
+
+
+
+
+
+
+
+
+
+
+
+
+
+

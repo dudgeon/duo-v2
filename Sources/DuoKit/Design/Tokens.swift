@@ -32,6 +32,22 @@ public enum DuoColor {
     public static let scrim = Color(nsColor: NSColor.duoDynamic(light: 0x1F2328, dark: 0x1F2328, name: "scrim").withAlphaComponent(0.32))
     /// Behind sessions that have a terminal open in Duo, so it's easy to jump back in (ENH-7). Provisional, Geoff 2026-10-04: a tint distinct from `selected`, until designed.
     public static let activeTint = Color(nsColor: NSColor.duoDynamic(light: 0xE8F0FA, dark: 0xE8F0FA, name: "activeTint"))
+    /// The chat transcript's ground, so chat mode stands apart from the white panes beside it (chat-mode-handoff, Sep 1b). Same value as ground.
+    public static let chatGround = Color(nsColor: NSColor.duoDynamic(light: 0xF3F4F6, dark: 0xF3F4F6, name: "chatGround"))
+    /// Your messages' bubble and your answers to review cards (You chose …); 12.6:1 with text. Not the accent: needsYou keeps its one meaning (chat-mode-handoff).
+    public static let chatYou = Color(nsColor: NSColor.duoDynamic(light: 0xDCE6F7, dark: 0xDCE6F7, name: "chatYou"))
+    /// Added lines in a diff (chat-mode-handoff)
+    public static let diffAddFill = Color(nsColor: NSColor.duoDynamic(light: 0xE6F4EA, dark: 0xE6F4EA, name: "diffAddFill"))
+    /// Added-line text and +n counts; 4.5:1 on diffAddFill, 5.1:1 on pane (chat-mode-handoff)
+    public static let diffAddText = Color(nsColor: NSColor.duoDynamic(light: 0x2F7D32, dark: 0x2F7D32, name: "diffAddText"))
+    /// Removed lines in a diff (chat-mode-handoff)
+    public static let diffDelFill = Color(nsColor: NSColor.duoDynamic(light: 0xFDECEA, dark: 0xFDECEA, name: "diffDelFill"))
+    /// Removed-line text, −n counts, a failed tool's status and error text; 5.7:1 on diffDelFill, 6.6:1 on pane (chat-mode-handoff)
+    public static let diffDelText = Color(nsColor: NSColor.duoDynamic(light: 0xB42318, dark: 0xB42318, name: "diffDelText"))
+    /// The border of a failed tool's output box; decoration, the text says failed (chat-mode-handoff)
+    public static let toolErrorEdge = Color(nsColor: NSColor.duoDynamic(light: 0xF4C7C1, dark: 0xF4C7C1, name: "toolErrorEdge"))
+    /// A Bash step's output box (chat-mode-handoff `tools`; read from the approved board, not in its token additions)
+    public static let toolOutputFill = Color(nsColor: NSColor.duoDynamic(light: 0xF8F9FA, dark: 0xF8F9FA, name: "toolOutputFill"))
 
     // Console chrome: the same in every appearance.
     /// Console pane, console tab strips, terminal background
@@ -64,6 +80,14 @@ public enum DuoNSColor {
     public static let placeholderBarOnSelected = NSColor.duoDynamic(light: 0xC3C8CE, dark: 0xC3C8CE, name: "placeholderBarOnSelected")
     public static let scrim = NSColor.duoDynamic(light: 0x1F2328, dark: 0x1F2328, name: "scrim").withAlphaComponent(0.32)
     public static let activeTint = NSColor.duoDynamic(light: 0xE8F0FA, dark: 0xE8F0FA, name: "activeTint")
+    public static let chatGround = NSColor.duoDynamic(light: 0xF3F4F6, dark: 0xF3F4F6, name: "chatGround")
+    public static let chatYou = NSColor.duoDynamic(light: 0xDCE6F7, dark: 0xDCE6F7, name: "chatYou")
+    public static let diffAddFill = NSColor.duoDynamic(light: 0xE6F4EA, dark: 0xE6F4EA, name: "diffAddFill")
+    public static let diffAddText = NSColor.duoDynamic(light: 0x2F7D32, dark: 0x2F7D32, name: "diffAddText")
+    public static let diffDelFill = NSColor.duoDynamic(light: 0xFDECEA, dark: 0xFDECEA, name: "diffDelFill")
+    public static let diffDelText = NSColor.duoDynamic(light: 0xB42318, dark: 0xB42318, name: "diffDelText")
+    public static let toolErrorEdge = NSColor.duoDynamic(light: 0xF4C7C1, dark: 0xF4C7C1, name: "toolErrorEdge")
+    public static let toolOutputFill = NSColor.duoDynamic(light: 0xF8F9FA, dark: 0xF8F9FA, name: "toolOutputFill")
     public static let console = NSColor.duoFixed(0x15171B)
     public static let consoleRule = NSColor.duoFixed(0x2B2F36)
     public static let consoleText = NSColor.duoFixed(0xE6E8EB)
@@ -82,6 +106,15 @@ public enum DuoMetric {
     public static let radiusPill: CGFloat = 9.0
     public static let radiusPopover: CGFloat = 10.0
     public static let radiusPlaceholderBar: CGFloat = 3.0
+    public static let radiusChatBubble = RectangleCornerRadii(topLeading: 14.0, bottomLeading: 14.0, bottomTrailing: 3.0, topTrailing: 14.0)
+    public static let radiusChatCard = RectangleCornerRadii(topLeading: 14.0, bottomLeading: 3.0, bottomTrailing: 14.0, topTrailing: 14.0)
+    public static let radiusReviewCard: CGFloat = 14.0
+    public static let radiusComposer: CGFloat = 12.0
+    public static let radiusChatInlineCode: CGFloat = 4.0
+    public static let radiusChatStepBody: CGFloat = 8.0
+    public static let radiusChatCodeBlock: CGFloat = 10.0
+    public static let radiusChatCheckbox: CGFloat = 3.0
+    public static let radiusChatPreviewCode: CGFloat = 6.0
     public static let borderHairline: CGFloat = 1.0
     public static let borderEmphasis: CGFloat = 1.5
     public static let borderFilesDivider: CGFloat = 2.0
@@ -178,6 +211,9 @@ public enum DuoSpace {
     public static let panePadding: CGFloat = 16.0
     public static let selectionInset: CGFloat = 8.0
     public static let threadRuleX: CGFloat = 21.0
+    public static let chatColumnInset: CGFloat = 24.0
+    public static let chatCardTrailing: CGFloat = 36.0
+    public static let chatBubbleMax: CGFloat = 440.0
     public static let cardPadding = EdgeInsets(top: 10.0, leading: 12.0, bottom: 12.0, trailing: 12.0)
     public static let pointerCardPadding = EdgeInsets(top: 8.0, leading: 12.0, bottom: 8.0, trailing: 12.0)
     public static let questionBoxPadding = EdgeInsets(top: 8.0, leading: 10.0, bottom: 8.0, trailing: 10.0)
@@ -222,6 +258,16 @@ public enum DuoTextStyle: CaseIterable, Sendable {
     case monoActiveTab
     case monoPath
     case searchField
+    case chatBody
+    case chatBodyEmphasis
+    case chatHeading
+    case chatHeading1
+    case chatHeading3
+    case chatMeta
+    case chatInlineCode
+    case chatDiff
+    case chatPreview
+    case chatPlanHeading
 
     public var spec: DuoTextSpec {
         switch self {
@@ -237,6 +283,16 @@ public enum DuoTextStyle: CaseIterable, Sendable {
         case .monoActiveTab: DuoTextSpec(size: 12.0, lineHeight: 19.0, weight: .medium, mono: true, tracking: 0.0, uppercase: false)
         case .monoPath: DuoTextSpec(size: 11.0, lineHeight: 20.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
         case .searchField: DuoTextSpec(size: 17.0, lineHeight: 24.0, weight: .regular, mono: false, tracking: 0.0, uppercase: false)
+        case .chatBody: DuoTextSpec(size: 14.0, lineHeight: 22.0, weight: .regular, mono: false, tracking: 0.0, uppercase: false)
+        case .chatBodyEmphasis: DuoTextSpec(size: 14.0, lineHeight: 22.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
+        case .chatHeading: DuoTextSpec(size: 16.0, lineHeight: 24.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
+        case .chatHeading1: DuoTextSpec(size: 18.0, lineHeight: 26.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
+        case .chatHeading3: DuoTextSpec(size: 14.0, lineHeight: 22.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
+        case .chatMeta: DuoTextSpec(size: 12.0, lineHeight: 16.0, weight: .regular, mono: false, tracking: 0.0, uppercase: false)
+        case .chatInlineCode: DuoTextSpec(size: 12.5, lineHeight: 22.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
+        case .chatDiff: DuoTextSpec(size: 11.5, lineHeight: 18.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
+        case .chatPreview: DuoTextSpec(size: 10.5, lineHeight: 14.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
+        case .chatPlanHeading: DuoTextSpec(size: 15.0, lineHeight: 22.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
         }
     }
 }

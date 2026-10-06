@@ -1,0 +1,34 @@
+     │ 2. Change foo            │
+     │ 3. Run the checks        │
+     ╰──────────────────────────╯
+
+✻ Churned for 0s · done 9:32 AM
+
+❯ SCENARIO:long                                                                                     
+     
+⏺ Line 1 of a long answer.      
+  Line 2 of a long answer.      
+  Line 3 of a long answer.      
+  Line 4 of a long answer.      
+  Line 5 of a long answer.
+  Line 6 of a long answer.
+  Line 7 of a long answer.
+  Line 8 of a long answer.
+  Line 9 of a long answer.
+  Lin
+  ⎿  Interrupted · What should Claude do instead?
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔ auto mode unavailable for this model ▔
+   Select model
+   Switch between Claude models. Your pick becomes the default for new sessions. For 
+   other/previous model names, specify with --model.
+ 
+     1. Default (recommended)  Use the default model (currently Opus 5.5) · $4/$20 per Mtok
+     2. Opus                   Opus 5.5 · Best for everyday, complex tasks · $4/$20 per Mtok
+     3. Fable                  Fable 5.1 · Most capable for your hardest and longest-running 
+                               tasks · $10/$50 per Mtok
+     4. Sonnet                 Sonnet 5.5 · Efficient for routine tasks · $2/$10 per Mtok
+   ❯ 5. Haiku ✔                Haiku 4.5 · Fastest for quick answers · $1/$5 per Mtok
+
+   ○ Effort not supported for Haiku
+
+   Enter to set as default · s to use this session only · Esc to cancel
