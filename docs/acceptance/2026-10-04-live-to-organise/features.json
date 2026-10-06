@@ -3601,6 +3601,39 @@
    }
   },
   {
+   "id": "task-new-session-hover",
+   "group": "After slice 3 (other sessions)",
+   "title": "New Session in Task: the hover + and a drafted prompt",
+   "what": "Hovering over a task row shows a + (tooltip \"New Session in Task\"). It starts a Claude session with `@tasks/<note>.md` typed into its prompt but not sent, so no turn is spent until you add words and press Return.",
+   "steps": [
+    "In `checkout`, open the Tasks fold and hover over the `exec-review-prep` task line: a + appears where its status sits.",
+    "Click the +. A new session opens in the console with `@tasks/exec-review-prep.md` in its prompt, and nothing is sent.",
+    "Open the task note: the new session is listed in its `sessions:`. Close the session with ⌘W if you don't want to use it.",
+    "Optional: `duo2 task session exec-review-prep --project checkout` does the same from a terminal."
+   ],
+   "expect": "The + matches the `q43-hover` board (stand-ins-handoff): on a task line it sits on the `selected` fill. On a group-style task row it sits at the trailing end without a fill, which is a stand-in (Q-46). The prompt isn't sent until you press Return.",
+   "ref": "DL-112, F-92, Q-46",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The build session (F-92) checked it: DuoChecks end to end with a stand-in claude. The terminal got exactly the bracketed paste `@tasks/exec-review-prep.md ` and no Return, and the note links the session.",
+     "Hover captures compared with `q43-hover` region by region; `duo2 task session` drafted the same way."
+    ],
+    "didnt": [
+     "The tooltip (it needs a real pointer).",
+     "Real Claude Code taking the paste at its prompt (Send to Claude already relies on this, DL-68)."
+    ],
+    "human": [
+     "Whether the + is easy to find and the drafted prompt feels right."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "f8a01101614503509f4b4850e4e8681a81582b2e"
+  },
+  {
    "id": "folder-files",
    "group": "After slice 3 (other sessions)",
    "title": "A folder that isn't a project lists its files",
