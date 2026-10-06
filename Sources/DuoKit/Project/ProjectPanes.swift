@@ -118,8 +118,14 @@ struct SidebarRowView: View {
                         CountPill(text: "group · \(count)", emphasised: true)
                     }
                     Spacer(minLength: 8)
-                    // A task row has no wait of its own: its sessions show theirs (S2-1).
-                    WaitLabel(text: row.task == nil ? row.wait : nil)
+                    if let task = row.task, let project = model.currentProject?.name, model.terminalsMode == .live,
+                       model.hoveredTaskRow == TaskRowHover.key(project: project, path: task) {
+                        // On hover, the + where a time would sit (DL-112, stand-ins-handoff q43-hover).
+                        NewSessionInTaskButton(project: project, path: task)
+                    } else {
+                        // A task row has no wait of its own: its sessions show theirs (S2-1).
+                        WaitLabel(text: row.task == nil ? row.wait : nil)
+                    }
                 }
                 .padding(.horizontal, 8)
                 .frame(height: DuoMetric.rowGroup)
@@ -134,6 +140,7 @@ struct SidebarRowView: View {
                     if let task = row.task { model.openDocument(task) } else { model.rightTab = row.name }
                 }
                 .modifier(GroupRowMenu(name: row.name, task: row.task))
+                .modifier(TaskRowHover(key: row.task.map { TaskRowHover.key(project: model.currentProject?.name ?? "", path: $0) } ?? ""))
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("\(row.name), \(row.task == nil ? "group" : "task") of \(count), \(row.state.spokenName)")
                 .accessibilityAddTraits(selected ? .isSelected : [])

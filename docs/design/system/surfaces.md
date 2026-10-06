@@ -18,7 +18,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Window, toolbar, counts | Designed; search field reads `Search all projects ⇧⌘A` (DL-80) | build `overview.html` | — | `Shell/DuoToolbar.swift` |
 | Home pane: terminal and session tabs | Designed | build `overview.html`, surfaces `home-none.html` | — | `AllProjects/AllProjectsPanes.swift` HomePane |
 | Home pane with no Home folder | Designed (DL-100): "Choose a Home folder", Choose Home Folder… and Not Now | slice2 `no-home.html` | — | HomePane, `ConsoleMessage(.noHome)` |
-| The map: columns, tiles | Designed (DL-100), changed by decision (DL-104): a filter and sort header, Home's ★ tile, folders outside Home as rows by parent folder with live ones as tiles; Home's unlabelled column alone flows its tiles three across (stand-in, Q-42) | slice2 `map-folders.html`, `no-home.html`; many-projects `map-many.html` | DB-38 (folder mark) | MapColumn, MapGrid, MapHeader, HomeTile, OutsideGroup, ProjectTile |
+| The map: columns, tiles | Designed (DL-100), changed by decision (DL-104): a filter and sort header, Home's ★ tile, folders outside Home as rows by parent folder with live ones as tiles; Home's unlabelled column alone flows its tiles three across, and two lists keep a third each (DL-111) | slice2 `map-folders.html`, `no-home.html`; many-projects `map-many.html`; stand-ins `q42-one-list.html`, `q42-two-lists.html` | DB-38 (folder mark) | MapColumn, MapGrid, MapHeader, HomeTile, OutsideGroup, ProjectTile |
 | Folder tiles ("No project file") | Stand-in (DL-63) | — | DB-12 | ProjectTile |
 | Inside a folder: `Folder · no project file`, the notice with Make a Project and Not Now, the Project tab's offer | Designed (DL-110) | folder `folder-not-project.html` | — | FolderNotice, FolderProjectTab |
 | Missing or moved folder tiles ("Folder not found", "Moved to …") | Designed (DL-101); "In the Trash" not built | slice3 `missing-folder.html` | — | ProjectTile, MissingNotice, `Live/MissingFolders.swift` |
@@ -36,7 +36,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 |---|---|---|---|---|
 | Breadcrumb `All projects › folder › project` | Changed by decision (DL-92) | build `project.html` | — | ProjectBreadcrumb |
 | Session list: Needs you, Open, Today, This week, Earlier, Tasks, Archived | Designed (DL-100) | slice2 `project-sessions.html`, `session-rows.html` | DB-33 (open tint) | `Project/ProjectPanes.swift` |
-| Task rows and group rows | Designed (DL-100): task box, "status · n", no wait; groups keep `group · n` | slice2 `session-rows.html` | — | SidebarRowView, GroupRowMenu, TaskBox |
+| Task rows and group rows | Designed (DL-100): task box, "status · n", no wait; groups keep `group · n`. On hover a task row (line or group style) shows a + where its status or time sits: New Session in Task, which drafts `@tasks/<note>.md` in the new session's prompt, unsent (DL-112) | slice2 `session-rows.html`; stand-ins `q43-hover.html`, `q43-menu.html`, `q43-drafted.html` | — | SidebarRowView, GroupRowMenu, TaskBox, TaskLine, NewSessionInTaskButton |
 | Untitled sessions (first words, start time) | Built (DL-90) | — | — | `Live/SessionTitles.swift` |
 | Files tree | Designed; open and closed folders and hidden files are stand-ins (DL-105) | build `project.html` | Q-40 | FileTreePane |
 | A tab for a file outside the project | Stand-in (DL-106): the file name, its path as the tooltip; File › Open File… (⌘O) or a drop from Finder | — | Q-39 | RightPane, `Model/AppModel+Files.swift` `openFile` |

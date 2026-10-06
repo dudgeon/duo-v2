@@ -99,6 +99,17 @@ func repoFixture() throws -> Fixture {
               "an emptied title: falls back to the heading")
     }
 
+    print("New Session in Task: the task drafted in the prompt, not sent (DL-112)")
+    do {
+        check(TaskNotes.draft(path: "tasks/exec-review-prep.md") == "@tasks/exec-review-prep.md ", "the draft is the note's @-reference and a space, as drawn")
+        check(TaskNotes.draft(path: "tasks/my task.md") == "@\"tasks/my task.md\" ", "a note with a space in its name is quoted")
+        let hostile = TaskNotes.draft(path: "tasks/a\rb\nc.md")
+        check(!hostile.contains("\r") && !hostile.contains("\n"), "no Return can reach the prompt from a note's name")
+        check(TerminalSession.bracketed(TaskNotes.draft(path: "tasks/exec-review-prep.md")) == "\u{1b}[200~@tasks/exec-review-prep.md \u{1b}[201~",
+              "typed as one bracketed paste: no Return after it")
+        check(TerminalSession.bracketed("x\u{1b}[201~\r") == "\u{1b}[200~x[201~\u{1b}[201~", "a paste can't end itself early or press Return")
+    }
+
     print("restore on relaunch (LR-58)")
     do {
         let tmp = FileManager.default.temporaryDirectory.appending(path: "duo-restore-\(UUID().uuidString).json")
@@ -1090,6 +1101,77 @@ func repoFixture() throws -> Fixture {
     check(tabsSaved.projects.first { $0.folder == treeDir.path }?.rightTab == outTab, "the restore file keeps each project's tabs, not only the one on screen")
     try? tfm.removeItem(at: treeDir)
     try? tfm.removeItem(at: outsideFile)
+
+    print("New Session in Task, end to end with a stand-in claude (DL-112; no model, no turn)")
+    do {
+        // Everything in a scratch folder: Duo's support folder (whose state names the stand-in as
+        // Settings' chosen claude), Claude's config folder (its beacon) and the project.
+        let root = URL(fileURLWithPath: "/tmp/duo-draft-\(UUID().uuidString.prefix(8))")
+        let support = root.appending(path: "s"), config = root.appending(path: "c"), proj = root.appending(path: "p")
+        let log = root.appending(path: "claude.log"), fake = root.appending(path: "claude")
+        for d in [support, config, proj.appending(path: "tasks")] { try tfm.createDirectory(at: d, withIntermediateDirectories: true) }
+        try Data("# p\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
+        try Data(TaskNotes.newNote(title: "Exec review prep", links: []).utf8).write(to: proj.appending(path: "tasks/exec-review-prep.md"))
+        // The stand-in: logs its arguments and every byte it is sent, writes an idle beacon, and
+        // shows what it's typed. It never answers anything.
+        let script = """
+        #!/usr/bin/python3
+        import os, sys, json, tty
+        log = open("\(log.path)", "a")
+        a = sys.argv[1:]
+        log.write("ARGS " + json.dumps(a) + "\\n"); log.flush()
+        d = os.path.join(os.environ["CLAUDE_CONFIG_DIR"], "sessions"); os.makedirs(d, exist_ok=True)
+        json.dump({"pid": os.getpid(), "sessionId": a[a.index("--session-id") + 1], "cwd": os.getcwd(), "status": "idle"}, open(os.path.join(d, "%d.json" % os.getpid()), "w"))
+        tty.setraw(0)
+        os.write(1, b"> ")
+        while True:
+            b = os.read(0, 4096)
+            if not b: break
+            log.write("IN " + b.hex() + "\\n"); log.flush()
+            os.write(1, b.replace(b"\\x1b[200~", b"").replace(b"\\x1b[201~", b""))
+        """
+        try Data(script.utf8).write(to: fake)
+        try tfm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: fake.path)
+        let saved = ["DUO_SUPPORT_DIR", "CLAUDE_CONFIG_DIR"].map { k in (k, ProcessInfo.processInfo.environment[k]) }
+        setenv("DUO_SUPPORT_DIR", support.path, 1)
+        setenv("CLAUDE_CONFIG_DIR", config.path, 1)
+        defer {
+            for (k, v) in saved { if let v { setenv(k, v, 1) } else { unsetenv(k) } }
+            ClaudeLocator.forget()
+            try? tfm.removeItem(at: root)
+        }
+        DuoState.update { $0.claudePath = fake.path }
+        ClaudeLocator.forget()
+        check(ClaudeLocator.resolve() == fake.path && DuoPaths.state.path.hasPrefix(root.path), "the stand-in claude, from the scratch support folder")
+
+        var fx = f
+        fx.projects.append(decoded(["name": "drafty", "topic": "Platform", "path": proj.path, "goal": "g"]))
+        let m = AppModel(fixture: fx)
+        m.terminalsMode = .live
+        m.liveFolders["drafty"] = proj
+        m.open(project: "drafty")
+        guard case .success(let id) = m.newSession(inTask: "tasks/exec-review-prep.md", project: "drafty") else {
+            check(false, "New Session in Task started a session"); return
+        }
+        let deadline = Date().addingTimeInterval(15)
+        while m.lastDrafted == nil && Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.1)) }
+        RunLoop.main.run(until: Date().addingTimeInterval(0.5))   // the stand-in logs what it got
+        let lines = ((try? String(contentsOf: log, encoding: .utf8)) ?? "").split(separator: "\n").map(String.init)
+        let args = lines.first { $0.hasPrefix("ARGS ") }.flatMap { try? JSONSerialization.jsonObject(with: Data($0.dropFirst(5).utf8)) as? [String] } ?? []
+        var got = [UInt8]()
+        for l in lines where l.hasPrefix("IN ") {
+            let hex = Array(l.dropFirst(3))
+            got += stride(from: 0, to: hex.count - 1, by: 2).compactMap { UInt8(String(hex[$0...$0 + 1]), radix: 16) }
+        }
+        let typed = String(decoding: got, as: UTF8.self)
+        check(args.contains(id) && !args.contains { $0.contains("exec-review-prep") }, "the session starts with no first message (nothing is sent as its prompt)")
+        check(m.lastDrafted?.key == id && m.lastDrafted?.text == "@tasks/exec-review-prep.md ", "once Claude's prompt is up, Duo drafts @tasks/exec-review-prep.md into it")
+        check(typed == "\u{1b}[200~@tasks/exec-review-prep.md \u{1b}[201~", "the terminal received exactly the bracketed draft (\(typed.debugDescription))")
+        check(!got.contains(13) && !got.contains(10), "no Return was sent: the draft waits for the user")
+        check(TaskNotes.load(project: proj).first?.sessionIds == [id], "the note's sessions: links the new session")
+        check(m.consoleTab == id, "the console shows it")
+        m.terminals.existing(id)?.terminate()
+    }
 }
 
 do { try MainActor.assumeIsolated { try run() } } catch { print("✘ setup: \(error)"); failures += 1 }

@@ -1,0 +1,51 @@
+{
+  "$note": "Stand-ins Q-42 and Q-43, approved 2026-10-06 (DL-111, DL-112). kind=board: a part of the window drawn on the Design canvas, exported as static HTML.",
+  "source": "https://claude.ai/artifact/JRX1VKzcgfTh5z3Da6eMqM",
+  "screens": [
+    {
+      "file": "screens/q42-one-list.html",
+      "board": "Main.dc.html",
+      "kind": "board",
+      "width": 1440,
+      "height": 680,
+      "decision": "DL-111",
+      "shows": "Every project directly in Home: one list filling the width in rows of three, Home's ★ tile first, + New project last."
+    },
+    {
+      "file": "screens/q42-two-lists.html",
+      "board": "Q42-B-two-slots.dc.html",
+      "kind": "board",
+      "width": 760,
+      "height": 640,
+      "decision": "DL-111",
+      "shows": "Projects in Home plus one topic folder: two lists, each a third wide, the right third blank."
+    },
+    {
+      "file": "screens/q43-hover.html",
+      "board": "Q43-B-hover.dc.html",
+      "kind": "board",
+      "width": 300,
+      "height": 520,
+      "decision": "DL-112",
+      "shows": "A task line under the pointer: the selected fill, a + where its status sits, the tooltip New Session in Task."
+    },
+    {
+      "file": "screens/q43-menu.html",
+      "board": "Q43-A-menu.dc.html",
+      "kind": "board",
+      "width": 300,
+      "height": 520,
+      "decision": "DL-112",
+      "shows": "The task row's right-click menu, which keeps New Session in Task."
+    },
+    {
+      "file": "screens/q43-drafted.html",
+      "board": "Q43-M1-draft.dc.html",
+      "kind": "board",
+      "width": 640,
+      "height": 240,
+      "decision": "DL-112",
+      "shows": "The new session's console: @tasks/<note>.md typed into Claude's prompt, not sent."
+    }
+  ]
+}
