@@ -1,0 +1,34 @@
+     
+✻ Worked for 0s · done 9:13 AM
+
+❯ SCENARIO:long                                                                                     
+
+⏺ Line 1 of a long answer.
+  Line 2 of a long answer.
+  Line 3 of a long answer.
+  Line 4 of a long answer.
+  Line 5 of a long answer.
+  Line 6 of a long answer.
+  Line 7 of a long answer.
+  Line 8 of a long answer.
+  ⎿  Interrupted · What should Claude do instead?
+  
+❯ line one\line two                                                                                 
+ 
+⏺ ok
+  
+✻ Sautéed for 0s · done 9:14 AM
+ 
+❯ /compact                                                                                          
+  ⎿  Compacted (ctrl+o to see full summary)
+     PreCompact [p=$(tr -d '\n'); printf '{"at":%s,"e":%s}\n' "$(perl -MTime::HiRes=time -e 'printf 
+     "%.3f",time')" "$p" >> /private/tmp/claude-501/-Users-geoff-repos-duo-v2/94261998-0f3b-48c5-a09
+     0-dcb9920a297e/scratchpad/ev/events.jsonl] completed successfully
+     PostCompact [p=$(tr -d '\n'); printf '{"at":%s,"e":%s}\n' "$(perl -MTime::HiRes=time -e 'printf
+     "%.3f",time')" "$p" >> /private/tmp/claude-501/-Users-geoff-repos-duo-v2/94261998-0f3b-48c5-a0
+     90-dcb9920a297e/scratchpad/ev/events.jsonl] completed successfully
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ accept edits on (shift+tab to cycle) · ← for agents

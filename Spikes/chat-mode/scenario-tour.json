@@ -1,0 +1,305 @@
+[
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*\u2190 for agents",
+"timeout": 150
+},
+{
+"type": "SCENARIO:md"
+},
+{
+"key": "enter"
+},
+{
+"wait": "more\\.",
+"timeout": 200
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*\u2190 for agents",
+"timeout": 150
+},
+{
+"dump": "01-markdown"
+},
+{
+"type": "SCENARIO:bash"
+},
+{
+"key": "enter"
+},
+{
+"wait": "Do you want",
+"timeout": 100
+},
+{
+"sleep": 500
+},
+{
+"dump": "02-bash-permission"
+},
+{
+"key": "1"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*\u2190 for agents",
+"timeout": 150
+},
+{
+"type": "SCENARIO:read"
+},
+{
+"key": "enter"
+},
+{
+"wait": "Do you want to make this edit",
+"timeout": 100
+},
+{
+"sleep": 500
+},
+{
+"dump": "03-edit-permission"
+},
+{
+"key": "3"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*\u2190 for agents",
+"timeout": 150
+},
+{
+"type": "SCENARIO:ask"
+},
+{
+"key": "enter"
+},
+{
+"wait": "Which colour",
+"timeout": 100
+},
+{
+"sleep": 500
+},
+{
+"dump": "04-question"
+},
+{
+"key": "down"
+},
+{
+"sleep": 200
+},
+{
+"key": "enter"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*\u2190 for agents",
+"timeout": 150
+},
+{
+"type": "SCENARIO:askmulti"
+},
+{
+"key": "enter"
+},
+{
+"wait": "Which platforms",
+"timeout": 100
+},
+{
+"sleep": 500
+},
+{
+"dump": "05-multi"
+},
+{
+"key": "space"
+},
+{
+"sleep": 150
+},
+{
+"key": "down"
+},
+{
+"sleep": 150
+},
+{
+"key": "down"
+},
+{
+"sleep": 150
+},
+{
+"key": "space"
+},
+{
+"sleep": 300
+},
+{
+"key": "right"
+},
+{
+"sleep": 400
+},
+{
+"key": "down"
+},
+{
+"sleep": 150
+},
+{
+"key": "down"
+},
+{
+"sleep": 150
+},
+{
+"type": "After the beta"
+},
+{
+"sleep": 300
+},
+{
+"key": "enter"
+},
+{
+"wait": "Review your answers",
+"timeout": 50
+},
+{
+"sleep": 300
+},
+{
+"dump": "06-review"
+},
+{
+"key": "enter"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*\u2190 for agents",
+"timeout": 150
+},
+{
+"type": "SCENARIO:agent"
+},
+{
+"key": "enter"
+},
+{
+"wait": "finished",
+"timeout": 100
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*\u2190 for agents",
+"timeout": 150
+},
+{
+"dump": "07-agent"
+},
+{
+"key": "shift-tab"
+},
+{
+"sleep": 300
+},
+{
+"key": "shift-tab"
+},
+{
+"sleep": 300
+},
+{
+"dump": "08-plan-mode"
+},
+{
+"type": "SCENARIO:plan"
+},
+{
+"key": "enter"
+},
+{
+"wait": "Ready to code",
+"timeout": 100
+},
+{
+"sleep": 800
+},
+{
+"dump": "09-plan"
+},
+{
+"key": "esc"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*\u2190 for agents",
+"timeout": 150
+},
+{
+"key": "shift-tab"
+},
+{
+"sleep": 300
+},
+{
+"type": "SCENARIO:long"
+},
+{
+"key": "enter"
+},
+{
+"sleep": 1800
+},
+{
+"dump": "10-streaming"
+},
+{
+"key": "esc"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*\u2190 for agents",
+"timeout": 150
+},
+{
+"dump": "11-interrupted"
+},
+{
+"type": "/model"
+},
+{
+"sleep": 400
+},
+{
+"key": "enter"
+},
+{
+"sleep": 800
+},
+{
+"dump": "12-unknown-model-picker"
+},
+{
+"key": "esc"
+},
+{
+"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*\u2190 for agents",
+"timeout": 150
+},
+{
+"type": "SCENARIO:err"
+},
+{
+"key": "enter"
+},
+{
+"sleep": 5000
+},
+{
+"dump": "13-retrying"
+},
+{
+"key": "esc"
+},
+{
+"sleep": 500
+}
+]

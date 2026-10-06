@@ -1,0 +1,97 @@
+// A stand-in for the Anthropic Messages API: scripted replies keyed by "SCENARIO:<name>" in the
+// prompt, so the real interactive TUI can be driven through every interaction with no credentials.
+import http from 'node:http';
+import fs from 'node:fs';
+const port = +(process.env.MOCK_PORT || 8765);
+const log = process.env.MOCK_LOG || 'mock.log';
+let n = 0;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function textOf(content) {
+  if (typeof content === 'string') return content;
+  return (content || []).map(b => b.type === 'text' ? b.text : b.type === 'tool_result' ? '[tool_result] ' + JSON.stringify(b.content) : '').join('\n');
+}
+const MD = `## Results\n\nHere is **bold**, *italic*, \`code\` and a [link](https://example.com).\n\n| Col | Value |\n|---|---|\n| a | 1 |\n| b | 2 |\n\n\`\`\`swift\nlet x = 1\nprint(x)\n\`\`\`\n\n- one\n- two\n  - nested\n\nSee /tmp/example.txt:12 for more.`;
+
+const scenarios = {
+  hello: () => [{ text: 'Hello from the mock. This is **Markdown**.' }],
+  md: () => [{ text: MD, slow: true }],
+  ask: () => [{ text: 'I need one choice from you.' }, { tool: 'AskUserQuestion', input: { questions: [{ question: 'Which colour should the button be?', header: 'Colour', multiSelect: false, options: [{ label: 'Blue', description: 'Matches the brand' }, { label: 'Green', description: 'Reads as go' }, { label: 'Grey', description: 'Quiet' }] }] } }],
+  askmulti: () => [{ tool: 'AskUserQuestion', input: { questions: [
+    { question: 'Which platforms should we ship?', header: 'Platforms', multiSelect: true, options: [{ label: 'macOS', description: 'Native' }, { label: 'iOS', description: 'Phone' }, { label: 'Web', description: 'Browser' }] },
+    { question: 'How soon?', header: 'Timing', multiSelect: false, options: [{ label: 'This week', description: 'Fast' }, { label: 'Next month', description: 'Careful' }] }] } }],
+  bash: () => [{ text: 'Running a command.' }, { tool: 'Bash', input: { command: 'echo hello > hello.txt && cat hello.txt', description: 'Write and read a file' } }],
+  edit: () => [{ tool: 'Write', input: { file_path: (process.env.MOCK_CWD || process.cwd()) + '/notes.md', content: '# Notes\n\nFirst line.\n' } }],
+  read: () => [{ tool: 'Read', input: { file_path: (process.env.MOCK_CWD || process.cwd()) + '/notes.md' } }],
+  edit2real: () => [{ tool: 'Edit', input: { file_path: (process.env.MOCK_CWD || process.cwd()) + '/notes.md', old_string: 'First line.', new_string: 'First line, edited.\nSecond line.' } }],
+  plan: (body) => { const m = JSON.stringify(body).match(/(\/[^\s"'`\\]*\/plans\/[\w.-]+\.md)/); return [{ text: 'Writing the plan.' }, { tool: 'Write', input: { file_path: m ? m[1] : '/tmp/plan.md', content: '# Plan\n\n1. Read the code\n2. Change `foo`\n3. Run the checks\n' } }]; },
+  agent: () => [{ tool: 'Agent', input: { description: 'Look around', prompt: 'SUBAGENT: summarise the folder', subagent_type: 'general-purpose' } }],
+  long: () => [{ text: Array.from({ length: 40 }, (_, i) => `Line ${i + 1} of a long answer.`).join('\n'), slow: true }],
+  err: () => 'error',
+};
+
+function plan(body) {
+  const msgs = body.messages || [];
+  const last = msgs[msgs.length - 1];
+  const all = msgs.map(m => textOf(m.content)).join('\n');
+  if (/SUBAGENT:/.test(textOf(msgs[0]?.content)) && last?.role === 'user' && !/tool_result/.test(textOf(last.content)))
+    return [{ text: 'Subagent: the folder holds a few notes.' }];
+  const prevTool = msgs.length > 1 && Array.isArray(msgs[msgs.length - 2].content) ? msgs[msgs.length - 2].content.find(b => b.type === 'tool_use') : null;
+  const lastText = Array.isArray(last?.content) ? last.content.filter(b => b.type === 'text').map(b => b.text).join('\n') : textOf(last?.content);
+  const sc = [...lastText.matchAll(/SCENARIO:(\w+)/g)].pop();
+  if (sc && scenarios[sc[1]]) return scenarios[sc[1]](body);
+  if (prevTool?.name === 'Write' && /\/plans\//.test(prevTool.input.file_path)) return [{ tool: 'ExitPlanMode', input: {} }];
+  if (prevTool?.name === 'Read' && /notes\.md/.test(JSON.stringify(prevTool.input))) return scenarios.edit2real();
+  if (!(body.tools || []).length) return [{ text: /summar/i.test(textOf(last?.content)) && !/SCENARIO:/.test(textOf(last?.content)) ? '<summary>Mock summary of the conversation.</summary>' : 'Mock title' }];
+  if (false) return [{ text: '<summary>Mock summary of the conversation.</summary>' }];
+  if (last && Array.isArray(last.content) && last.content.some(b => b.type === 'tool_result')) {
+    const tr = last.content.find(b => b.type === 'tool_result');
+    return [{ text: `Done. The tool said: ${JSON.stringify(tr.content).slice(0, 160)}` }];
+  }
+  const m = [...textOf(last?.content).matchAll(/SCENARIO:(\w+)/g)].pop();
+  if (m && scenarios[m[1]]) return scenarios[m[1]]();
+  return [{ text: 'ok' }];
+}
+
+async function stream(res, blocks, model) {
+  const send = (ev, data) => res.write(`event: ${ev}\ndata: ${JSON.stringify({ type: ev, ...data })}\n\n`);
+  res.writeHead(200, { 'content-type': 'text/event-stream', 'request-id': 'req_mock' + n });
+  send('message_start', { message: { id: 'msg_mock' + n + Date.now(), type: 'message', role: 'assistant', model, content: [], stop_reason: null, usage: { input_tokens: 10, output_tokens: 1 } } });
+  let stop = 'end_turn';
+  for (const [i, b] of blocks.entries()) {
+    if (b.text !== undefined) {
+      send('content_block_start', { index: i, content_block: { type: 'text', text: '' } });
+      const parts = b.slow ? b.text.match(/[\s\S]{1,12}/g) : [b.text];
+      for (const p of parts) { send('content_block_delta', { index: i, delta: { type: 'text_delta', text: p } }); if (b.slow) await sleep(120); }
+    } else {
+      stop = 'tool_use';
+      send('content_block_start', { index: i, content_block: { type: 'tool_use', id: 'toolu_mock' + n + i, name: b.tool, input: {} } });
+      send('content_block_delta', { index: i, delta: { type: 'input_json_delta', partial_json: JSON.stringify(b.input) } });
+    }
+    send('content_block_stop', { index: i });
+    await sleep(300);
+  }
+  send('message_delta', { delta: { stop_reason: stop, stop_sequence: null }, usage: { output_tokens: 20 } });
+  send('message_stop', {});
+  res.end();
+}
+
+http.createServer((req, res) => {
+  let raw = '';
+  req.on('data', d => raw += d);
+  req.on('end', async () => {
+    n++;
+    let body = {};
+    try { body = JSON.parse(raw || '{}'); } catch {}
+    const entry = { n, at: Date.now() / 1000, method: req.method, url: req.url, model: body.model, stream: body.stream, tools: (body.tools || []).map(t => t.name), lastUser: textOf(body.messages?.at(-1)?.content).slice(-300) };
+    fs.appendFileSync(log, JSON.stringify(entry) + '\n');
+    if ((!globalThis.dumped && (body.tools || []).length && (globalThis.dumped = true)) || process.env.MOCK_DUMP) fs.writeFileSync(log + '.req' + n + '.json', raw);
+    if (!req.url.startsWith('/v1/messages')) { res.writeHead(200, { 'content-type': 'application/json' }); return res.end('{}'); }
+    if (req.url.includes('count_tokens')) { res.writeHead(200, { 'content-type': 'application/json' }); return res.end('{"input_tokens":100}'); }
+    const blocks = plan(body);
+    if (blocks === 'error') { res.writeHead(529, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ type: 'error', error: { type: 'overloaded_error', message: 'Overloaded (mock)' } })); }
+    if (body.stream) return stream(res, blocks, body.model);
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ id: 'msg_mock' + n, type: 'message', role: 'assistant', model: body.model, content: blocks.map(b => b.text !== undefined ? { type: 'text', text: b.text } : { type: 'tool_use', id: 'toolu_x' + n, name: b.tool, input: b.input }), stop_reason: 'end_turn', usage: { input_tokens: 10, output_tokens: 5 } }));
+  });
+}).listen(port, '127.0.0.1', () => console.log('mock on', port));

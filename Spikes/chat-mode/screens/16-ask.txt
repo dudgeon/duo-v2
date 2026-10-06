@@ -1,0 +1,34 @@
+
+
+⏺ Write(/private/tmp/claude-501/-Users-geoff-repos-duo-v2/94261998-0f3b-48c5-a090-dcb9920…/notes.md)
+  ⎿  Wrote 3 lines to ../poc/notes.md
+      1 # Notes
+      2 
+      3 First line.
+
+❯ SCENARIO:edit2                                                                                    
+
+⏺ Done. The tool said: "File created successfully at: /private/tmp/claude-501/-Users-geoff-repos-duo
+  -v2/94261998-0f3b-48c5-a090-dcb9920a297e/scratchpad/poc/notes.md (file state is cur
+
+✻ Worked for 0s · done 9:11 AM
+
+❯ SCENARIO:ask                                                                                      
+
+⏺ I need one choice from you.
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ ☐ Colour 
+
+Which colour should the button be?
+
+❯ 1. Blue
+     Matches the brand
+  2. Green
+     Reads as go
+  3. Grey
+     Quiet
+  4. Type something.
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  5. Chat about this
+
+Enter to select · ↑/↓ to navigate · Esc to cancel
