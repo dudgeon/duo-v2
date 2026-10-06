@@ -7,18 +7,21 @@ import SwiftUI
 ///
 /// - `DUO_REDUCE_MOTION=1|0` overrides the system setting, for proof runs.
 /// - `DUO_MOTION_SCALE=<n>` stretches every duration n times, so a capture can take frames
-///   mid-motion at set times (Q-77). Delays (`rowHold`) stretch too.
+///   mid-motion at set times (Q-77). Delays (`rowHold`) stretch too, unless
+///   `DUO_MOTION_HOLD=<seconds>` sets them, so a slowed fade needn't wait out a slowed hold.
 @MainActor @Observable public final class MotionSettings {
     public static let shared = MotionSettings()
 
     public private(set) var reduce: Bool
     public let scale: Double
+    public let holdOverride: Double?
     @ObservationIgnored private let forced: Bool?
 
     init() {
         let env = ProcessInfo.processInfo.environment
         forced = env["DUO_REDUCE_MOTION"].map { $0 == "1" }
         scale = env["DUO_MOTION_SCALE"].flatMap(Double.init).map { max(0.01, $0) } ?? 1
+        holdOverride = env["DUO_MOTION_HOLD"].flatMap(Double.init)
         reduce = forced ?? NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil, queue: .main
@@ -38,7 +41,7 @@ public extension DuoMotionToken {
     }
 
     /// A delay (`rowHold`): scaled, but kept with Reduce Motion, which removes motion, not time.
-    @MainActor var delay: Double { seconds * MotionSettings.shared.scale }
+    @MainActor var delay: Double { MotionSettings.shared.holdOverride ?? seconds * MotionSettings.shared.scale }
 
     /// The SwiftUI animation for this token, or nil with Reduce Motion (the change happens at once).
     @MainActor var animation: Animation? {
@@ -80,5 +83,13 @@ extension AnyTransition {
         guard half > 0 else { return .identity }
         return .asymmetric(insertion: .opacity.animation(.easeOut(duration: half).delay(half)),
                            removal: .opacity.animation(.easeIn(duration: half)))
+    }
+}
+
+extension AnyTransition {
+    /// A row joining a list or leaving it (DL-130): `rowIn`, `rowOut`. At once with Reduce Motion.
+    @MainActor static var listRow: AnyTransition {
+        .asymmetric(insertion: .opacity.animation(DuoMotionToken.rowIn.animation),
+                    removal: .opacity.animation(DuoMotionToken.rowOut.animation))
     }
 }

@@ -54,6 +54,7 @@ extension AppModel {
             // Listed now, as the snapshot lists it (one directory read per open folder), so the
             // folder opens with its files instead of empty until the next refresh (Q-79, DL-130).
             if let root = liveFolders[p] {
+                localChange += 1
                 fixture.projectFiles[p] = LiveSnapshot.treeFiles(root, showHidden: showHiddenFiles, expanded: expandedFolders[p] ?? [])
             }
             refreshLive()

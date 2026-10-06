@@ -37,6 +37,11 @@ extension AppModel {
             try? index.save(project: folder)
             showGroups(project, index)
         }
+        // Shown now (Q-78): a task with no sessions yet joins the Tasks fold at once.
+        if sessionIds.isEmpty, group == nil {
+            let summary = Fixture.TaskSummary(project: project, path: "tasks/\(file.lastPathComponent)", title: title, status: "open", sessionIds: [])
+            showNow { fixture.tasks = (fixture.tasks ?? []) + [summary] }
+        }
         registerUndo("Make a Task") { model in
             try? FileManager.default.trashItem(at: file, resultingItemURL: nil)
             if group != nil {
@@ -100,7 +105,13 @@ extension AppModel {
         let file = folder.appending(path: path)
         guard let data = FileManager.default.contents(atPath: file.path), let text = String(data: data, encoding: .utf8) else { return "\(path) isn't readable" }
         do { try Data(TaskNotes.settingStatus(status, in: text).utf8).write(to: file, options: .atomic) } catch { return error.localizedDescription }
-        registerUndo("Set Task Status") { model in try? data.write(to: file, options: .atomic); model.refreshLive() }
+        registerUndo("Set Task Status") { model in
+            try? data.write(to: file, options: .atomic)
+            let was = TaskNotes.parse(text, path: path).status
+            model.showNow { model.setShownTask(project, path) { $0.status = was } }
+            model.refreshLive()
+        }
+        showNow { setShownTask(project, path) { $0.status = status } }
         refreshLive()
         return nil
     }
@@ -256,7 +267,7 @@ struct TasksFold: View {
 
     var body: some View {
         let listed = Set(model.fixture.sessions(inProject: project).compactMap(\.sessionId))
-        let tasks = (model.fixture.tasks ?? []).filter { $0.project == project && $0.isOpen && !$0.sessionIds.contains(where: listed.contains) }
+        let tasks = (model.fixture.tasks ?? []).filter { $0.project == project && model.listedTask($0) && !$0.sessionIds.contains(where: listed.contains) }
         if !tasks.isEmpty {
             let key = "\(project)/tasks-fold"
             let expanded = !model.expandedGroups.contains(key)   // open unless folded
@@ -274,8 +285,9 @@ struct TasksFold: View {
                 .padding(.top, 8)
                 if expanded {
                     VStack(alignment: .leading, spacing: 0) {
-                        ForEach(tasks) { t in TaskLine(task: t, showsProject: false, indented: true) }
+                        ForEach(tasks) { t in TaskLine(task: t, showsProject: false, indented: true).transition(.listRow) }
                     }
+                    .duoAnimation(.rowMove, value: tasks.map(\.id))
                     .transition(.foldRows)
                 }
             }
@@ -295,9 +307,11 @@ struct TaskLine: View {
         let key = TaskRowHover.key(project: task.project, path: task.path)
         let archived = task.archived == true
         let hovered = model.terminalsMode == .live && model.hoveredTaskRow == key && !archived
+        // Just marked complete (DL-130): checked, struck through and grey while it holds.
+        let completing = model.isCompleting(task)
         HStack(spacing: DuoSpace.gapRowItems) {
-            TaskBox()
-            Text(task.title).duoText(.body).lineLimit(1)
+            TaskBox(checked: completing)
+            Text(task.title).duoText(.body).strikethrough(completing).foregroundStyle(completing ? DuoColor.text2 : DuoColor.text).lineLimit(1)
             if showsProject { Text(task.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1) }
             Spacer(minLength: 8)
             // On hover the + takes the status's place (DL-112, stand-ins-handoff q43-hover).
@@ -323,6 +337,8 @@ struct TaskLine: View {
                     .padding(.trailing, DuoSpace.selectionInset)
             }
         }
+        // Opaque, so a line sliding past one that's leaving covers it (DL-130).
+        .background(DuoColor.pane)
         .contentShape(Rectangle())
         .modifier(TaskRowHover(key: key))
         .onActivate { model.openTask(project: task.project, path: task.path) }  // action: doc open
@@ -330,7 +346,7 @@ struct TaskLine: View {
             if model.terminalsMode == .live { TaskMenuItems(model: model, project: task.project, path: task.path) }   // DL-115
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(task.title), task, \(archived ? "archived" : task.status ?? "open")")
+        .accessibilityLabel("\(task.title), task, \(archived ? "archived" : completing ? "completed" : task.status ?? "open")")
     }
 }
 
@@ -371,13 +387,25 @@ struct NewSessionInTaskButton: View {
     }
 }
 
-/// A task's box: a 10 pt rounded square, stroke 1.3 (DL-100, slice2 `session-rows`).
+/// A task's box: a 10 pt rounded square, stroke 1.3 (DL-100, slice2 `session-rows`). Checked, it
+/// carries the editor's check mark (the properties block's checkbox icon), for a task just marked
+/// complete (DL-130).
 struct TaskBox: View {
     var color: Color = DuoColor.text2
+    var checked = false
 
     var body: some View {
         RoundedRectangle(cornerRadius: 2).strokeBorder(color, lineWidth: 1.3)
-            .frame(width: 8, height: 8).frame(width: 10, height: 10)
+            .frame(width: 8, height: 8)
+            .overlay {
+                if checked {
+                    Path { p in
+                        p.move(to: CGPoint(x: 2.1, y: 4.19)); p.addLine(to: CGPoint(x: 3.43, y: 5.52)); p.addLine(to: CGPoint(x: 5.9, y: 2.67))
+                    }
+                    .stroke(color, style: StrokeStyle(lineWidth: 1.3, lineCap: .round, lineJoin: .round))
+                }
+            }
+            .frame(width: 10, height: 10)
             .accessibilityHidden(true)
     }
 }
@@ -529,3 +557,16 @@ final class DatePickTarget: NSObject {
     @objc func changed(_ sender: NSDatePicker) { onPick(sender.dateValue) }
 }
 
+extension AppModel {
+    /// Changes a task as listed, before the snapshot reads its note (Q-78).
+    func setShownTask(_ project: String, _ path: String, _ change: (inout Fixture.TaskSummary) -> Void) {
+        guard let i = fixture.tasks?.firstIndex(where: { $0.project == project && $0.path == path }) else { return }
+        change(&fixture.tasks![i])
+    }
+
+    /// The task lists: open tasks, and ones just marked complete while they hold (DL-130).
+    func listedTask(_ t: Fixture.TaskSummary) -> Bool { t.isOpen || completingTasks.contains(t.id) && t.archived != true }
+
+    /// Whether a task shows as just completed: checked, struck through, grey (DL-130).
+    func isCompleting(_ t: Fixture.TaskSummary) -> Bool { completingTasks.contains(t.id) && t.status == "done" }
+}

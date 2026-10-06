@@ -766,13 +766,14 @@ struct ActionColumnPane: View {
                     ForEach(reviews) { s in ReviewCard(session: s) }
                 }
                 // Open tasks across projects (DL-93): what you're working on. Stand-in look (S2-5).
-                let tasks = (f.tasks ?? []).filter(\.isOpen)
+                let tasks = (f.tasks ?? []).filter(model.listedTask)
                 if !tasks.isEmpty {
                     SectionLabel(text: "Open tasks", count: tasks.count)
                         .padding(.top, needsYou.isEmpty && reviews.isEmpty ? 0 : 6)
                     VStack(alignment: .leading, spacing: 0) {
-                        ForEach(tasks) { t in TaskLine(task: t, showsProject: true) }
+                        ForEach(tasks) { t in TaskLine(task: t, showsProject: true).transition(.listRow) }
                     }
+                    .duoAnimation(.rowMove, value: tasks.map(\.id))
                     .padding(.horizontal, -(8 + DuoSpace.selectionInset))
                 }
             }

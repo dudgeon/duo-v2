@@ -1755,3 +1755,34 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - `tree`: live, `folder:research`; the files are listed 20 ms after the click and fade in once the rows have moved.
   - Reduce Motion: every change is at once.
 - **Unchanged at rest** against origin/main's build (0 pixels): overview, project, flow-zoom-1 to 4, the Archived fold open, idle-list, and a sheet. `collapse:` can't be compared: main's harness doesn't have it.
+
+## F-135 · Mark Complete holds for 5 s; changes show before the snapshot, without flicker (DL-130, Q-78, 2026-10-06)
+
+- **Mark Complete** (Geoff's change in DL-130):
+  - The task's line shows at once checked (the box takes the properties block's check mark), struck through and in `text2`, with status `done`.
+  - It stays for `rowHold` (5 s), then fades out (`rowOut`) while the lines below close up (`rowMove`).
+  - ⌘Z or Mark Open during the hold keeps the line, unchecked.
+  - `completingTasks` holds the line in the Tasks fold and in Home's open tasks (`listedTask`). Only a task that was listed open holds: one already done just stays done.
+  - With Reduce Motion, the 5 s hold is kept (it's time, not motion), and the line then goes at once.
+  - A task with sessions is a group row; it stays and reads `done · n`, as before.
+- **Shown at once (Q-78):** `showNow` applies Archive and Unarchive (session and task), Set Status (and its undo), Mark Complete and + New task to the listed model as soon as the file is written. The lists animate by their own row ids. Text and marks change at once.
+- **No flicker, and a gap fixed.** `refreshLive` does nothing while a snapshot is in flight, so the click's refresh was skipped, and the snapshot already in flight (read before the write) landed with the old state. Before this the click showed nothing until the next tick. With a change shown at once, the old state would have come back for a beat.
+  - Now every shown change bumps `localChange`. A snapshot started before the latest bump is dropped, and a new one is read at once.
+  - It logs `live: dropped a snapshot read before a change Duo had shown (Q-78)`.
+  - Opening a folder (Q-79) bumps it too.
+- **Proof** (live workspace, empty scratch `CLAUDE_CONFIG_DIR`, `build/motion/<name>/strip.png`):
+  - `new-task` (scale 2): the task is in the fold 100 ms after + New task, fading in.
+  - `complete` (scale 6): checked and struck through at 0 ms, held to 30 s (5 s × 6), gone after.
+  - `complete-out` (`DUO_MOTION_HOLD=3`, scale 20): the fade and the lines closing up. Task lines are now opaque on the pane, so a sliding line covers the one leaving.
+  - `complete-undo`: Mark Open 2 s in keeps the line, unchecked, past the hold.
+  - `flicker`: `refresh` then Mark Complete 20 ms later, with frames every 100 to 500 ms for 11.5 s. The snapshot in flight was dropped in both runs (the log). Every frame shows the task checked until it leaves; none shows it unchecked again.
+- **Session list polish** (the director, on slice 3): a row changing section is lifted above the rows it passes (`zIndex`, from `sidebarShown`), and every label and row is opaque on the pane, so no text overprints mid-move or mid-fold. Re-captured: `row-move`, `fold`.
+- **Harness:**
+  - `task-complete:<path>`, `task-open:<path>`, `archive-session:<name>` and `refresh`;
+  - `DUO_MOTION_HOLD=<s>` sets `rowHold` for proof runs;
+  - `BEFORE_EACH=<command>` in check-motion.sh puts a workspace's files back before each run.
+  - Fixed: `filmstrip.py`'s crop at 0,0 (sips centres it).
+- **DuoChecks:**
+  - One task check rebuilt the archived list from `fixture.sessions` alone. Archiving now moves the session out at once, so it reads both lists.
+  - Not verified by capture: archiving a session at once. The scratch workspace has no quiet session to archive without spending a turn; DuoChecks covers it.
+- **Unchanged at rest** against origin/main's build (0 pixels): the ten fixture states, and a live Tasks fold cropped to the sidebar.

@@ -23,6 +23,14 @@ extension AppModel {
             if consoleTab == s.tabKey { consoleTab = nil }
             if homeTab == s.tabKey { homeTab = nil }
         }
+        // Shown now: the row leaves its list for the Archived fold, or comes back (Q-78).
+        showNow {
+            if on, let i = fixture.sessions.firstIndex(where: { $0.sessionId == id }) {
+                fixture.archivedSessions = (fixture.archivedSessions ?? []) + [fixture.sessions.remove(at: i)]
+            } else if !on, let i = fixture.archivedSessions?.firstIndex(where: { $0.sessionId == id }) {
+                fixture.sessions.append(fixture.archivedSessions!.remove(at: i))
+            }
+        }
         registerUndo(on ? "Archive Session" : "Unarchive Session") { model in model.setSessionArchived(key, !on) }
         refreshLive()
         return nil

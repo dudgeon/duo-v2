@@ -11,6 +11,7 @@ struct ProjectSidebarPane: View {
         let project = model.currentProject
         let sections = model.sidebarSections()
         let items = SidebarItem.items(sections)
+        let movers = model.sidebarMovers(sections)
         VStack(alignment: .leading, spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -34,20 +35,26 @@ struct ProjectSidebarPane: View {
                     // Needs you, Open, then history by date, then the folds (DL-91). One flat list, so a
                     // row keeps its identity when it changes section and travels there (DL-130):
                     // `rowMove`; a new row fades in (`rowIn`), a row that goes fades out (`rowOut`).
+                    // Each item is opaque on the pane, and a row changing section travels above the rows
+                    // it passes, so no text overprints mid-move.
                     ForEach(items) { item in
                         switch item.kind {
                         case .label(let section):
                             SectionLabel(text: section.title, count: section.id == "needs" || section.id == "open" ? section.rows.count : nil,
                                          needsYou: section.needsYou)
                                 .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(DuoColor.pane)
                         case .gap:
                             Color.clear.frame(height: 8)
                         case .row(let row):
                             SidebarRowView(row: row)
-                                .transition(.asymmetric(insertion: .opacity.animation(DuoMotionToken.rowIn.animation),
-                                                        removal: .opacity.animation(DuoMotionToken.rowOut.animation)))
+                                .background(DuoColor.pane)
+                                .zIndex(movers.contains(row.id) ? 1 : 0)
+                                .transition(.listRow)
                         }
                     }
+                    .onChange(of: items.map(\.id), initial: true) { model.noteSidebar(sections) }
                     if let project, model.terminalsMode == .live { TasksFold(project: project.name) }
                     if let project { ArchivedSessionsFold(project: project.name) }
                     HStack(spacing: DuoSpace.gapButtonToButton) {

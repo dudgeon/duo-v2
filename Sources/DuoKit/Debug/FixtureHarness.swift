@@ -401,6 +401,16 @@ public enum FixtureHarness {
             model.fixture.sessions.append(s)
         case "session-remove":   // session-remove:<name>: gone from the list (archived), as a snapshot would bring it
             if parts.count > 1 { model.fixture.sessions.removeAll { $0.name == parts[1] } }
+        case "task-complete":   // task-complete:<path>: Mark Complete on a task in the open project (DL-130)
+            if parts.count > 1, let p = model.currentProject?.name { model.completeTask(project: p, path: parts[1]) }
+        case "task-open":   // task-open:<path>: Status ▸ Open, as Mark Open would (keeps a completing task)
+            if parts.count > 1, let p = model.currentProject?.name { model.setTaskStatus(project: p, path: parts[1], "open") }
+        case "archive-session":   // archive-session:<name>: Archive Session on its row
+            if parts.count > 1, let s = model.fixture.sessions.first(where: { $0.name == parts[1] }) {
+                if let why = model.setSessionArchived(s.tabKey, true) { FileHandle.standardError.write(Data("archive-session: \(why)\n".utf8)) }
+            }
+        case "refresh":   // refresh: start reading a snapshot now, as the 2 s timer would
+            model.refreshLive()
         case "sidebar-hover":   // sidebar-hover:on|off: the pointer in the session list or out of it (Q-80)
             model.hoverSidebar(parts.count > 1 && parts[1] == "on")
         case "task-archive", "task-delete":   // task-archive:<path>, task-delete:<path>: the task's question, up and waiting (board C)
