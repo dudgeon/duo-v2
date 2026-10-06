@@ -1,0 +1,7 @@
+body { margin: 0; font: 13px -apple-system, system-ui, sans-serif; background: #e9e9ec; }
+#host { margin-right: 340px; padding: 16px; }
+#duo-panel { position: fixed; top: 0; right: 0; width: 324px; bottom: 0; padding: 12px 8px; background: #fff; border-left: 1px solid #ccc; overflow: auto; }
+#duo-panel div { margin: 4px 0; }
+#duo-panel .lbl { margin-top: 12px; color: #555; }
+#duo-panel pre { white-space: pre-wrap; font: 11px ui-monospace, monospace; background: #f4f4f6; padding: 8px; border-radius: 6px; }
+.duo-picked { outline: 2px solid #2f6fed !important; outline-offset: 1px; }

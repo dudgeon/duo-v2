@@ -1,0 +1,35 @@
+<!doctype html>
+<meta charset="utf-8">
+<script>window.__errs = []; addEventListener("error", e => __errs.push(e.message + " @" + (e.filename || "").split("/").pop() + ":" + e.lineno));</script>
+<title>PPTX spike: PPTXjs</title>
+<link rel="stylesheet" href="vendor/pptxjs/pptxjs.css">
+<link rel="stylesheet" href="vendor/pptxjs/nv.d3.min.css">
+<link rel="stylesheet" href="style.css">
+<script src="vendor/pptxjs/jquery-1.11.3.min.js"></script>
+<script src="vendor/pptxjs/jszip.min.js"></script>
+<script src="vendor/pptxjs/filereader.js"></script>
+<script src="vendor/pptxjs/d3.min.js"></script>
+<script src="vendor/pptxjs/nv.d3.min.js"></script>
+<script src="vendor/pptxjs/pptxjs.js"></script>
+<div id="host"></div>
+<script type="module">
+import { setup } from './harness.js';
+const h = setup('PPTXjs 1.21.1 (meshesha, 2022)');
+const t0 = performance.now();
+const host = document.getElementById('host');
+$('#host').pptxToHtml({ pptxFileUrl: h.url, slideMode: false, keyBoardShortCut: false, mediaProcess: true });
+// PPTXjs has no done callback: wait until the slides stop arriving.
+const done = new Promise(res => { let n = -1; const t = setInterval(() => { const m = host.querySelectorAll('.slide').length; if (m && m === n) { clearInterval(t); res(); } n = m; }, 300); });
+await done;
+const slides = [...host.querySelectorAll('.slide')];
+h.rendered(performance.now() - t0 - 300, slides.length);
+h.trackSlides(slides, el => slides.indexOf(el) + 1);
+host.addEventListener('click', e => {
+  const el = e.target.closest('[_id]');
+  if (!el) return;
+  const groups = []; for (let p = el.parentElement?.closest('[_id]'); p; p = p.parentElement?.closest('[_id]')) groups.unshift(p.getAttribute('_name'));
+  h.picked({ slide: slides.indexOf(el.closest('.slide')) + 1, shapeId: +el.getAttribute('_id'), name: el.getAttribute('_name'),
+             type: el.getAttribute('_type'), inGroups: groups, text: el.innerText?.trim() ?? el.textContent.trim() }, el);
+  e.stopPropagation();
+});
+</script>

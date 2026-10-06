@@ -444,6 +444,9 @@ struct RightPane: View {
                     HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
                     PickerBar()
                 }
+            } else if let path = model.rightTab, let file = model.liveFile(path), FileKind.isBinary(file) {
+                // Never the editor for a file that isn't text (C-26): Quick Look, or a note (Q-52).
+                BinaryFileView(path: path, file: file)
             } else if let path = model.rightTab, path.contains("."), let file = model.liveFile(path) ?? model.keptFile(path) {
                 VStack(spacing: 0) {
                     DocumentStateBar()
