@@ -218,7 +218,10 @@ public enum ChatIngest {
             for b in message?["content"] as? [ChatJSON] ?? [] {
                 switch b["type"] as? String {
                 case "text":
-                    if let t = b["text"] as? String, !t.hasPrefix("<command-"), !t.hasPrefix("<local-command") {
+                    // Claude Code's record of an interrupt (Esc): the reply ends, it isn't your message.
+                    if let t = b["text"] as? String, t.hasPrefix("[Request interrupted by user") {
+                        log.endStreaming(interrupted: true)
+                    } else if let t = b["text"] as? String, !t.hasPrefix("<command-"), !t.hasPrefix("<local-command") {
                         log.prompt(t, time: time, fromHook: false)
                     }
                 case "tool_result":

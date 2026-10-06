@@ -170,6 +170,9 @@ func spikeScreen(_ name: String) -> String {
         check(log.writing, "a reply streaming is being written")
         log.endStreaming(interrupted: true)
         if case .interrupted? = log.items.last, !log.writing { check(true, "an interrupt (no hook) ends the reply, from the screen (F-105)") } else { check(false, "interrupt") }
+        ChatIngest.record(["type": "user", "message": ["content": [["type": "text", "text": "[Request interrupted by user]"]]]], into: log)
+        check(!log.items.contains { if case .you(let y) = $0 { return y.text.hasPrefix("[Request interrupted") } else { return false } },
+              "the transcript's interrupt record is not your message")
         ChatIngest.record(["type": "system", "subtype": "compact_boundary"], into: log)
         if case .divider? = log.items.last { check(true, "compaction is a divider") } else { check(false, "compaction") }
         let q = ChatLog()

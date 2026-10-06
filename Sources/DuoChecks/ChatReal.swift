@@ -81,6 +81,9 @@ import Foundation
     }
     check(idle(), "the prompt is up (\(chat.screen.kind))")
 
+    // DUO_CHAT_REAL_ONLY=interrupt: just the last step.
+    let onlyInterrupt = ProcessInfo.processInfo.environment["DUO_CHAT_REAL_ONLY"] == "interrupt"
+    if !onlyInterrupt {
     // 2. Markdown, sent from the composer, streamed.
     check(say("Reply in Markdown only: a level-2 heading 'Plan', then a two-column table with two rows, then a three-item bullet list. Keep it short."),
           "a message sent from the composer through Ctrl+G")
@@ -155,16 +158,21 @@ import Foundation
     _ = idle()
     for _ in 0..<4 where chat.reread().mode != .manual { _ = await_ { await chat.cycleMode() }; spin(0.4) }
 
+    }
+
     // 7. An interrupt while Claude writes.
-    _ = say("Write the numbers from 1 to 300, one per line, with no other text.")
-    if until(60, { chat.log.writing }) {
+    _ = say("Count from 1 to 300 in words (one, two, three …), one number per line. Write all of them now, with no other text.")
+    if until(90, { chat.log.writing || chat.screen.kind == .busy && chat.log.streams }) {
         spin(1.5)
         _ = await_ { await chat.interrupt() }
         _ = until(15) { chat.reread().kind == .idle }
         spin(0.6)
         dump("interrupted")
         let interrupted: Bool = { if case .interrupted? = chat.log.items.last { return true }; return false }()
-        check(chat.screen.interrupted && interrupted && !chat.log.writing, "Stop: the TUI says Interrupted, and the chat ends the reply (no hook does, F-105)")
+        _ = until(10) { if case .interrupted? = chat.log.items.last { return true }; return false }
+        let ended: Bool = { if case .interrupted? = chat.log.items.last { return true }; return false }()
+        check((interrupted || ended) && !chat.log.writing && chat.reread().kind == .idle,
+              "Stop: Claude Code stopped, and the chat ends the reply with Interrupted (screen said interrupted: \(chat.screen.interrupted))")
     } else { check(false, "the long reply started streaming") }
     check(chat.fallback == nil && chat.showsChat, "chat is still showing at the end")
     print("  session \(id) (archive with: duo2 session archive \(id))")

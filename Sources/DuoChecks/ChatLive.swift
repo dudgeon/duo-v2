@@ -97,7 +97,8 @@ struct AskCase {
         let dir = "/tmp/duo-chat-live-\(size.0)x\(size.1)"
         try? FileManager.default.removeItem(atPath: dir)
         _ = run("/bin/zsh", [spike.appending(path: "scratch.sh").path, dir])
-        let port = 8765 + i
+        // A free port of its own: other sessions run the spike's mock on 8765 (seen while testing).
+        let port = freePort() ?? (18765 + i)
         let mock = Process()
         mock.executableURL = URL(fileURLWithPath: node)
         mock.arguments = [spike.appending(path: "mock.mjs").path]
@@ -375,4 +376,18 @@ func which(_ tool: String) -> String? {
     guard (try? p.run()) != nil else { return "" }
     p.waitUntilExit()
     return String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+}
+
+/// A TCP port nothing is listening on.
+func freePort() -> Int? {
+    let fd = socket(AF_INET, SOCK_STREAM, 0)
+    guard fd >= 0 else { return nil }
+    defer { close(fd) }
+    var addr = sockaddr_in()
+    addr.sin_family = sa_family_t(AF_INET)
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1")
+    addr.sin_port = 0
+    var len = socklen_t(MemoryLayout<sockaddr_in>.size)
+    let bound = withUnsafeMutablePointer(to: &addr) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { bind(fd, $0, len) == 0 && getsockname(fd, $0, &len) == 0 } }
+    return bound ? Int(UInt16(bigEndian: addr.sin_port)) : nil
 }
