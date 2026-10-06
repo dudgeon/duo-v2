@@ -278,13 +278,22 @@ func spikeScreen(_ name: String) -> String {
         check((try? String(contentsOf: tmp.appending(path: "ran-code.txt"), encoding: .utf8))?.hasPrefix("--wait ") == true, "(b) VISUAL wins over EDITOR, as for git")
         let saved = ChildEnvironment.cliDirectory
         ChildEnvironment.cliDirectory = "/Applications/Duo.app/Contents/Helpers"
-        let shell = ChildEnvironment.make(sessionID: nil), claude = ChildEnvironment.make(sessionID: "abc")
+        // A fixed environment for Duo, with and without a user EDITOR: never this process's own, which
+        // inside a Duo session already has the compose helper as EDITOR.
+        let bare = ["HOME": "/Users/u", "PATH": "/usr/bin:/bin", "SHELL": "/bin/zsh"]
+        let withEditor = bare.merging(["EDITOR": "vim", "VISUAL": "code --wait"]) { $1 }
+        func value(_ env: [String], _ k: String) -> String? { env.first { $0.hasPrefix(k + "=") }.map { String($0.dropFirst(k.count + 1)) } }
+        let shell = ChildEnvironment.make(sessionID: nil, base: withEditor), bareShell = ChildEnvironment.make(sessionID: nil, base: bare)
+        let claude = ChildEnvironment.make(sessionID: "abc", base: withEditor), bareClaude = ChildEnvironment.make(sessionID: "abc", base: bare)
         ChildEnvironment.cliDirectory = saved
-        let userEditor = ProcessInfo.processInfo.environment["EDITOR"]
-        check(shell.first { $0.hasPrefix("EDITOR=") }.map { String($0.dropFirst(7)) } == userEditor && !shell.contains { $0.hasPrefix(ChatCompose.dirVariable) },
-              "(c) a plain shell tab keeps the user's EDITOR; only Claude sessions get the helper")
-        check(claude.contains("EDITOR=/Applications/Duo.app/Contents/Helpers/duo2 compose") && claude.contains("VISUAL=/Applications/Duo.app/Contents/Helpers/duo2 compose"),
-              "(c) Claude sessions do")
+        check(value(shell, "EDITOR") == "vim" && value(shell, "VISUAL") == "code --wait" && value(bareShell, "EDITOR") == nil
+              && !(shell + bareShell).contains { $0.hasPrefix(ChatCompose.dirVariable + "=") },
+              "(c) a plain shell tab keeps the user's EDITOR and VISUAL, or has none; only Claude sessions get the helper")
+        let helperCmd = "/Applications/Duo.app/Contents/Helpers/duo2 compose"
+        check(value(claude, "EDITOR") == helperCmd && value(claude, "VISUAL") == helperCmd && value(bareClaude, "EDITOR") == helperCmd
+              && value(claude, ChatCompose.userEditor) == "vim" && value(claude, ChatCompose.userVisual) == "code --wait"
+              && value(bareClaude, ChatCompose.userEditor) == nil && value(claude, ChatCompose.dirVariable) != nil,
+              "(c) Claude sessions do, and keep the user's EDITOR and VISUAL for the helper to hand on")
         // (d) git commit from Claude's Bash: no terminal, no hand-over, the real vi.
         let repo = tmp.appending(path: "repo")
         try FileManager.default.createDirectory(at: repo, withIntermediateDirectories: true)
