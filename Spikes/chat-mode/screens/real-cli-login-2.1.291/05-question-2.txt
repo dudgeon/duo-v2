@@ -1,0 +1,33 @@
+
+ 
+⏺ Done.
+
+✻ Baked for 4s · done 9:40 AM
+
+❯ Use the Bash tool to run exactly: echo hello > hello.txt && cat hello.txt                         
+     
+  Read 1 file 
+     
+⏺ Done. The file hello.txt was created with the content "hello" and displayed.
+
+✻ Brewed for 2s · done 9:41 AM
+
+❯ Use the AskUserQuestion tool to ask me two questions in one call: (1) "Which platforms should we  
+  ship?" multi-select with options macOS, iOS, Web; (2) "How soon?" single-select with options This 
+  week, Next month. Then just repeat my answers back.                                               
+────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☒ Platforms  ☐ Timeline  ✔ Submit  →
+
+How soon?
+
+❯ 1. This week
+     Ship this week
+  2. Next month
+     Ship next month
+  3. Type something.
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  4. Chat about this
+
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel
+  
+

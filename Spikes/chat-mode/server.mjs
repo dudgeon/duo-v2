@@ -34,7 +34,9 @@ const names = ['SessionStart', 'SessionEnd', 'UserPromptSubmit', 'PreToolUse', '
   'PermissionRequest', 'PermissionDenied', 'Notification', 'Stop', 'StopFailure', 'SubagentStart', 'SubagentStop',
   'PreCompact', 'PostCompact', 'MessageDisplay'];
 const q = s => `'${s.replace(/'/g, `'\\''`)}'`;
-const command = `p=$(tr -d '\\n'); printf '{"at":%s,"e":%s}\\n' "$(perl -MTime::HiRes=time -e 'printf "%.3f",time')" "$p" >> ${q(events)}`;
+// One write(2) per event, with O_APPEND: hooks fire concurrently (the last MessageDisplay and
+// Stop together), and printf from sh split ~1 KB payloads into pieces that interleaved (F-105).
+const command = `perl -MTime::HiRes=time -e 'local $/; my $p = <STDIN>; $p =~ s/\\n//g; open(my $f, ">>", $ARGV[0]) or exit 0; syswrite($f, sprintf("{\\"at\\":%.3f,\\"e\\":%s}\\n", time, $p))' ${q(events)}`;
 const settings = path.join(runDir, `${sessionId}.settings.json`);
 fs.writeFileSync(settings, JSON.stringify({ hooks: Object.fromEntries(names.map(n => [n, [{ hooks: [{ type: 'command', command }] }]])) }, null, 1));
 
@@ -56,11 +58,20 @@ const solidText = () => { const b = term.buffer.active; const L = []; const cell
 const read = () => classify(screenText(), solidText());
 
 let screen = { kind: 'starting' }, screenTimer = null, ptyLog = [];
+// Each new screen state, as text and as read, for comparing CLI versions and logins (F-105).
+let dumps = 0, lastDumped = null;
+const dumpDir = path.join(runDir, 'screens');
+fs.mkdirSync(dumpDir, { recursive: true });
+function dump(s) {
+  const name = `${String(++dumps).padStart(3, '0')}-${s.kind}`;
+  fs.writeFileSync(path.join(dumpDir, name + '.txt'), screenText());
+  fs.appendFileSync(path.join(dumpDir, 'states.jsonl'), JSON.stringify({ at: Date.now() / 1000, name, s }) + '\n');
+}
 p.onData(d => {
   term.write(d, () => {
     clearTimeout(screenTimer);
     // The TUI repaints in bursts; read the screen once it settles.
-    screenTimer = setTimeout(() => { const s = read(); if (JSON.stringify(s) !== JSON.stringify(screen)) { screen = s; broadcast({ t: 'screen', s, at: Date.now() / 1000 }); } }, 60);
+    screenTimer = setTimeout(() => { const s = read(); if (JSON.stringify(s) !== JSON.stringify(screen)) { screen = s; broadcast({ t: 'screen', s, at: Date.now() / 1000 }); if (s.kind !== lastDumped) { lastDumped = s.kind; dump(s); } } }, 60);
   });
   ptyLog.push(d); if (ptyLog.length > 4000) ptyLog = ptyLog.slice(-2000);
   broadcast({ t: 'pty', d });
