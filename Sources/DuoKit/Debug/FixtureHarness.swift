@@ -583,10 +583,13 @@ public enum FixtureHarness {
                     MainActor.assumeIsolated {
                         let path = "\(f[0])-\(ms).png"
                         let late = Int(((CACurrentMediaTime() - started) * 1000).rounded()) - ms
-                        do { try WindowCapture.content(of: window, to: URL(fileURLWithPath: path)) } catch {
-                            FileHandle.standardError.write(Data("film: \(path) failed: \(error.localizedDescription)\n".utf8))
+                        // Web views (the editor, the deck) draw from their own snapshots, as the capture does.
+                        WindowCapture.withWebSnapshots(in: window) {
+                            do { try WindowCapture.content(of: window, to: URL(fileURLWithPath: path)) } catch {
+                                FileHandle.standardError.write(Data("film: \(path) failed: \(error.localizedDescription)\n".utf8))
+                            }
+                            FileHandle.standardError.write(Data("film: \(path) (\(late) ms late)\n".utf8))
                         }
-                        FileHandle.standardError.write(Data("film: \(path) (\(late) ms late)\n".utf8))
                     }
                 }
             }

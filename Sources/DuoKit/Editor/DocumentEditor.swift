@@ -76,7 +76,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         let vars = [("pane", DuoNSColor.pane), ("text", DuoNSColor.text), ("text2", DuoNSColor.text2), ("selected", DuoNSColor.selected),
                     ("rule", DuoNSColor.rule), ("control-edge", DuoNSColor.controlEdge), ("ground", DuoNSColor.ground), ("needs-you", DuoNSColor.needsYou)]
             .map { "--duo-\($0.0): \(hex($0.1));" }.joined(separator: " ")
-        let css = ":root { \(vars) --duo-radius-card: \(Int(DuoMetric.radiusCard))px; --duo-heading-above: \(Int(DuoSpace.gapAboveDocumentHeading))px; }"
+        // Motion (DL-130): Claude's highlight fading in and out, in ms (zero with Reduce Motion).
+        let motion = "--duo-motion-highlight-in-ms: \(Int((DuoMotionToken.highlightIn.duration * 1000).rounded())); --duo-motion-highlight-out-ms: \(Int((DuoMotionToken.highlightOut.duration * 1000).rounded()));"
+        let css = ":root { \(vars) --duo-radius-card: \(Int(DuoMetric.radiusCard))px; --duo-heading-above: \(Int(DuoSpace.gapAboveDocumentHeading))px; \(motion) }"
         return "document.documentElement.setAttribute('style', \(String(reflecting: css)).replace(/^:root \\{ | \\}$/g, ''));"
     }
 
