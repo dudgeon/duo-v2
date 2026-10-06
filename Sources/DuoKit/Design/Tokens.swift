@@ -46,6 +46,8 @@ public enum DuoColor {
     public static let diffDelText = Color(nsColor: NSColor.duoDynamic(light: 0xB42318, dark: 0xB42318, name: "diffDelText"))
     /// The border of a failed tool's output box; decoration, the text says failed (chat-mode-handoff)
     public static let toolErrorEdge = Color(nsColor: NSColor.duoDynamic(light: 0xF4C7C1, dark: 0xF4C7C1, name: "toolErrorEdge"))
+    /// A Bash step's output box (chat-mode-handoff `tools`; read from the approved board, not in its token additions)
+    public static let toolOutputFill = Color(nsColor: NSColor.duoDynamic(light: 0xF8F9FA, dark: 0xF8F9FA, name: "toolOutputFill"))
 
     // Console chrome: the same in every appearance.
     /// Console pane, console tab strips, terminal background
@@ -85,6 +87,7 @@ public enum DuoNSColor {
     public static let diffDelFill = NSColor.duoDynamic(light: 0xFDECEA, dark: 0xFDECEA, name: "diffDelFill")
     public static let diffDelText = NSColor.duoDynamic(light: 0xB42318, dark: 0xB42318, name: "diffDelText")
     public static let toolErrorEdge = NSColor.duoDynamic(light: 0xF4C7C1, dark: 0xF4C7C1, name: "toolErrorEdge")
+    public static let toolOutputFill = NSColor.duoDynamic(light: 0xF8F9FA, dark: 0xF8F9FA, name: "toolOutputFill")
     public static let console = NSColor.duoFixed(0x15171B)
     public static let consoleRule = NSColor.duoFixed(0x2B2F36)
     public static let consoleText = NSColor.duoFixed(0xE6E8EB)
@@ -107,6 +110,9 @@ public enum DuoMetric {
     public static let radiusChatCard = RectangleCornerRadii(topLeading: 14.0, bottomLeading: 3.0, bottomTrailing: 14.0, topTrailing: 14.0)
     public static let radiusReviewCard: CGFloat = 14.0
     public static let radiusComposer: CGFloat = 12.0
+    public static let radiusChatInlineCode: CGFloat = 4.0
+    public static let radiusChatStepBody: CGFloat = 8.0
+    public static let radiusChatCodeBlock: CGFloat = 10.0
     public static let borderHairline: CGFloat = 1.0
     public static let borderEmphasis: CGFloat = 1.5
     public static let borderFilesDivider: CGFloat = 2.0
@@ -256,6 +262,8 @@ public enum DuoTextStyle: CaseIterable, Sendable {
     case chatHeading1
     case chatHeading3
     case chatMeta
+    case chatInlineCode
+    case chatDiff
 
     public var spec: DuoTextSpec {
         switch self {
@@ -277,6 +285,8 @@ public enum DuoTextStyle: CaseIterable, Sendable {
         case .chatHeading1: DuoTextSpec(size: 18.0, lineHeight: 26.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
         case .chatHeading3: DuoTextSpec(size: 14.0, lineHeight: 22.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
         case .chatMeta: DuoTextSpec(size: 12.0, lineHeight: 16.0, weight: .regular, mono: false, tracking: 0.0, uppercase: false)
+        case .chatInlineCode: DuoTextSpec(size: 12.5, lineHeight: 22.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
+        case .chatDiff: DuoTextSpec(size: 11.5, lineHeight: 18.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
         }
     }
 }

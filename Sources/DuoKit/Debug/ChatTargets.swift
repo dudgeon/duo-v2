@@ -42,6 +42,9 @@ public enum ChatTargets {
         let chat = ChatSession(key: tab, mode: ChatViewMode(rawValue: meta["mode"] as? String ?? "chat") ?? .chat)
         chat.setVersion(meta["version"] as? String ?? "2.1.291")
         ChatRecording.play(dir, into: chat, now: meta["now"] as? String)
+        for id in meta["toggled"] as? [String] ?? [] { chat.ui.toggled.insert(id) }
+        // An interrupted reply ends on the screen, not a hook (F-105): the busy → idle the TUI drew.
+        if meta["interruptAfterPlay"] as? Bool == true { chat.log.endStreaming(interrupted: true) }
         if let f = meta["fallback"] as? [String: String] {
             chat.fallback = ChatFallback(kind: f["kind"] == "handedOver" ? .handedOver : .automatic, message: f["message"] ?? ChatFallback.unknownScreen.message)
         }
@@ -53,6 +56,22 @@ public enum ChatTargets {
 @MainActor
 public enum ChatRecording {
     public static func play(_ dir: URL, into chat: ChatSession, now: String? = nil) {
+        // Board times are the boards' own (9:41): read and shown in UTC, whatever the Mac's zone.
+        ChatWho.clock.timeZone = TimeZone(identifier: "UTC")
+        if let now, let d = ChatIngest.iso.date(from: now) ?? ISO8601DateFormatter().date(from: now) { chat.fixedNow = d }
+        chat.log.cwd = "/Users/pm/work/payments/checkout-redesign"
+        // Both sources, in the order things happened (a transcript line before a hook at the same moment).
+        let t = (try? Data(contentsOf: dir.appending(path: "transcript.jsonl"))).map(ChatIngest.lines) ?? []
+        let e = (try? Data(contentsOf: dir.appending(path: "events.jsonl"))).map(ChatIngest.lines) ?? []
+        var all: [(at: Double, n: Int, hook: Bool, obj: ChatJSON)] = []
+        for (n, r) in t.enumerated() {
+            all.append(((r["timestamp"] as? String).flatMap { ChatIngest.iso.date(from: $0) }?.timeIntervalSince1970 ?? 0, n, false, r))
+        }
+        for (n, r) in e.enumerated() { all.append(((r["at"] as? NSNumber)?.doubleValue ?? 0, t.count + n, true, r)) }
+        for x in all.sorted(by: { ($0.at, $0.n) < ($1.at, $1.n) }) {
+            if x.hook, let p = x.obj["e"] as? ChatJSON { ChatIngest.hook(p, at: x.at, into: chat.log, chat: chat) }
+            else if !x.hook { ChatIngest.record(x.obj, into: chat.log, chat: chat) }
+        }
         if let text = try? String(contentsOf: dir.appending(path: "screen.txt"), encoding: .utf8) {
             chat.fixtureScreenText = text
             chat.apply(ChatScreenReader.read(text, table: chat.signatures))

@@ -116,7 +116,10 @@ radius_use = {"control": "Buttons and fields.", "card": "Tiles and cards.", "sel
               "pill": "Count pills (fully rounded at 18 high).", "popover": "Popovers, the search modal, menus Duo draws.",
               "placeholderBar": "Placeholder bars in the design targets only."}
 radius_use.update({"reviewCard": "A permission, plan or question card docked at the bottom of chat, with a 1.5 needsYou border (chat-mode-handoff).",
-                   "composer": "The chat composer field (chat-mode-handoff)."})
+                   "composer": "The chat composer field (chat-mode-handoff).",
+                   "chatInlineCode": "Inline code's fill in chat Markdown (chat-mode-handoff `text`).",
+                   "chatStepBody": "A tool step's diff, output or agent box (chat-mode-handoff `tools`).",
+                   "chatCodeBlock": "A code block in chat Markdown (chat-mode-handoff `text`)."})
 # A per-corner radius (chat-mode-handoff) reads as CSS: top-left, top-right, bottom-right, bottom-left.
 corners = lambda v: " ".join(px(v[c]) for c in ["topLeft", "topRight", "bottomRight", "bottomLeft"])
 radius = [{"name": "radius" + cap(k), "value": corners(v) if isinstance(v, dict) else px(v),

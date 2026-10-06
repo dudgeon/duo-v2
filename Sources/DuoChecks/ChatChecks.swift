@@ -112,4 +112,68 @@ func spikeScreen(_ name: String) -> String {
         p.set(.terminal, for: "b")
         check(p.mode(for: "a") == .chat && p.mode(for: "new") == .terminal, "each session keeps its own")
     }
+
+    print("chat mode: Markdown (handoff `text`)")
+    do {
+        let md = "## Refund flows\n\nBoth flows are in `docs/flows.md:42`.\nA second line.\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\n1. One\n2. Two\n   - nested\n\n```swift\nlet x = 1\n```\n\n> quoted\n\n---\n- **P2**, ops lead"
+        let b = ChatMarkdown.parse(md)
+        check(b.first == .heading(level: 2, text: "Refund flows"), "a heading")
+        check(b.dropFirst().first == .paragraph("Both flows are in `docs/flows.md:42`.\nA second line."), "soft breaks stay breaks, as the TUI shows them")
+        check(b.contains(.table(header: ["A", "B"], rows: [["1", "2"]])), "a table")
+        if case .list(true, 1, let items)? = b.first(where: { if case .list(true, _, _) = $0 { return true }; return false }) {
+            check(items.count == 2 && items[1].contains { if case .list(false, _, _) = $0 { return true }; return false }, "a numbered list with a nested bullet list")
+        } else { check(false, "a numbered list") }
+        check(b.contains(.code(language: "swift", text: "let x = 1")) && b.contains(.quote([.paragraph("quoted")])) && b.contains(.rule), "code, quote, rule")
+        check(b.last == .list(ordered: false, start: 1, items: [[.paragraph("**P2**, ops lead")]]), "bullets stay bullets")
+        let a = ChatMarkdown.inline("See `docs/refunds/flows.md:42`, notes.md and https://stripe.com/docs/refunds.")
+        let links = a.runs.compactMap(\.link)
+        check(links.contains { $0.scheme == "duo-file" && $0.path == "docs/refunds/flows.md" && $0.query == "line=42" }, "a path with :line is a link that opens at the line")
+        check(links.contains { $0.scheme == "duo-file" && $0.path == "notes.md" }, "a bare file name with a known extension is a link")
+        check(links.contains { $0.absoluteString == "https://stripe.com/docs/refunds" }, "a bare URL is a link, without its full stop")
+        check(ChatMarkdown.inline("Version 2.1.291 is e.g. fine").runs.compactMap(\.link).isEmpty, "version numbers and e.g. aren't files")
+    }
+
+    print("chat mode: the log from hooks and the transcript (F-103, F-105)")
+    do {
+        let log = ChatLog()
+        log.cwd = "/w"
+        ChatIngest.hook(["hook_event_name": "UserPromptSubmit", "prompt": "Fix it", "source": "user"], at: 1, into: log)
+        ChatIngest.record(["type": "user", "message": ["content": "Fix it"], "origin": ["kind": "human"]], into: log)
+        check(log.items.count == 1, "a prompt seen by the hook and the transcript shows once")
+        for (i, l) in ["# Done\n", "\n", "All **fixed**.\n"].enumerated() {
+            ChatIngest.hook(["hook_event_name": "MessageDisplay", "message_id": "m1", "index": i, "final": i == 2, "delta": l], at: 2, into: log)
+        }
+        ChatIngest.record(["type": "assistant", "message": ["content": [["type": "text", "text": "# Done\n\nAll **fixed**."]]]], into: log)
+        if case .claude(let t)? = log.items.last {
+            check(t.segments.count == 1, "streamed text and its transcript block show once (\(t.segments.count))")
+        } else { check(false, "a Claude card") }
+        ChatIngest.record(["type": "assistant", "message": ["content": [["type": "tool_use", "id": "t1", "name": "Edit", "input": ["file_path": "/w/a.md", "old_string": "x", "new_string": "y\nz"]]]]], into: log)
+        ChatIngest.hook(["hook_event_name": "PreToolUse", "tool_use_id": "t1", "tool_name": "Edit", "tool_input": ["file_path": "/w/a.md", "old_string": "x", "new_string": "y\nz"]], at: 3, into: log)
+        check(log.steps.count == 1 && log.steps[0].object == "a.md" && log.steps[0].adds == 2 && log.steps[0].dels == 1, "a tool call shows once, its path relative, +2 −1")
+        let chat = ChatSession(key: "k", mode: .chat)
+        ChatIngest.hook(["hook_event_name": "PermissionRequest", "tool_name": "Edit", "tool_input": ["file_path": "/w/a.md", "old_string": "x", "new_string": "y\nz"]], at: 4, into: log, chat: chat)
+        check(log.steps[0].status == .needsYou && chat.pendingRequest?.tool == "Edit", "a permission request marks its step (matched by input: it has no tool_use_id)")
+        ChatIngest.hook(["hook_event_name": "PostToolUse", "tool_use_id": "t1", "tool_name": "Edit", "tool_input": [:], "tool_response": ["structuredPatch": [["oldStart": 7, "newStart": 7, "lines": [" a", "-x", "+y", "+z"]]]]], at: 5, into: log)
+        check(log.steps[0].status == .done && log.steps[0].diff?.map(\.number) == [7, 8, 8, 9], "the patch gives the diff its line numbers")
+        ChatIngest.record(["type": "assistant", "message": ["content": [["type": "tool_use", "id": "t2", "name": "Bash", "input": ["command": "rg x old/"]]]]], into: log)
+        ChatIngest.record(["type": "user", "message": ["content": [["type": "tool_result", "tool_use_id": "t2", "is_error": true, "content": "Exit code 2\nrg: old/: No such file"]]]], into: log)
+        check(log.step("t2")?.status == .failed(exit: 2) && log.step("t2")?.error == "rg: old/: No such file", "a failed command: its exit code and error")
+        ChatIngest.record(["type": "assistant", "message": ["content": [["type": "tool_use", "id": "t3", "name": "AskUserQuestion", "input": [:]]]]], into: log)
+        ChatIngest.record(["type": "user", "toolDenialKind": "user-rejected", "message": ["content": [["type": "tool_result", "tool_use_id": "t3", "is_error": true, "content": "declined"]]]], into: log)
+        if case .answer(let n)? = log.items.last { check(n.text == "You declined Claude’s questions", "a declined question, which fires no hook, comes from the transcript (F-106)") }
+        else { check(false, "a declined question is shown") }
+        ChatIngest.hook(["hook_event_name": "UserPromptSubmit", "prompt": "<task-notification>done</task-notification>", "source": "system"], at: 6, into: log)
+        if case .note(let n)? = log.items.last { check(n.text == "Background task reported back", "an injected prompt is a quiet line, not your bubble") } else { check(false, "injected prompt") }
+        ChatIngest.hook(["hook_event_name": "UserPromptSubmit", "prompt": "Write more", "source": "user"], at: 7, into: log)
+        ChatIngest.hook(["hook_event_name": "MessageDisplay", "message_id": "m2", "index": 0, "final": false, "delta": "Line one\n"], at: 8, into: log)
+        check(log.writing, "a reply streaming is being written")
+        log.endStreaming(interrupted: true)
+        if case .interrupted? = log.items.last, !log.writing { check(true, "an interrupt (no hook) ends the reply, from the screen (F-105)") } else { check(false, "interrupt") }
+        ChatIngest.record(["type": "system", "subtype": "compact_boundary"], into: log)
+        if case .divider? = log.items.last { check(true, "compaction is a divider") } else { check(false, "compaction") }
+        check(ChatIngest.lines(Data("{\"a\":1}\n{\"b\":2}{\"c\":\n{\"d\":4}\n".utf8)).count == 2, "merged hook lines are skipped, the rest read")
+        var recs: [ChatJSON] = []
+        for i in 0..<120 { recs.append(["type": "user", "message": ["content": "p\(i)"]]); recs.append(["type": "assistant", "message": ["content": [["type": "text", "text": "r\(i)"]]]]) }
+        check(ChatFeedProbe.start(recs, turns: 50) == 140, "a long history opens on its last 50 turns (Q-56c)")
+    }
 }

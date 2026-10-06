@@ -1,0 +1,7 @@
+{"at": 1791284340.0, "e": {"session_id": "fixture", "cwd": "/Users/pm/work/payments/checkout-redesign", "hook_event_name": "SubagentStart", "agent_id": "a1", "agent_type": "Survey cross-check"}}
+{"at": 1791284370.0, "e": {"session_id": "fixture", "cwd": "/Users/pm/work/payments/checkout-redesign", "hook_event_name": "Stop", "last_assistant_message": "…"}}
+{"at": 1791284460.0, "e": {"session_id": "fixture", "cwd": "/Users/pm/work/payments/checkout-redesign", "hook_event_name": "SubagentStop", "agent_id": "a1", "agent_type": "Survey cross-check", "last_assistant_message": "31% …"}}
+{"at": 1791284520.0, "e": {"session_id": "fixture", "cwd": "/Users/pm/work/payments/checkout-redesign", "hook_event_name": "UserPromptSubmit", "prompt": "Actually, hold the rollout section.", "source": "user"}}
+{"at": 1791284522.0, "e": {"session_id": "fixture", "cwd": "/Users/pm/work/payments/checkout-redesign", "hook_event_name": "MessageDisplay", "message_id": "m-roll", "index": 0, "final": false, "delta": "## Rollout\n"}}
+{"at": 1791284523.0, "e": {"session_id": "fixture", "cwd": "/Users/pm/work/payments/checkout-redesign", "hook_event_name": "MessageDisplay", "message_id": "m-roll", "index": 1, "final": false, "delta": "\n"}}
+{"at": 1791284524.0, "e": {"session_id": "fixture", "cwd": "/Users/pm/work/payments/checkout-redesign", "hook_event_name": "MessageDisplay", "message_id": "m-roll", "index": 2, "final": false, "delta": "Phase one ships saved cards to the iOS app behind the wallet sh…"}}

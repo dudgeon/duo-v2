@@ -120,7 +120,9 @@ extension AppModel {
         default: break
         }
         let c = chats.session(t.key)
-        c.attach(LiveChatTerminal(t.view))
+        if (c.terminal as? LiveChatTerminal)?.view !== t.view { c.attach(LiveChatTerminal(t.view)) }
+        // Live sessions are keyed by their id; demo and fixture terminals have no hooks to read.
+        if terminalsMode == .live { c.follow(sessionId: t.key, cwd: t.cwd) }
         if c.cliVersion == nil, let path = ClaudeLocator.resolve() {
             ClaudeVersion.of(path) { [weak c] v in c?.setVersion(v) }
         }

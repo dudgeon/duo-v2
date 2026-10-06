@@ -107,12 +107,26 @@ public final class ChatSession {
     public private(set) var dialogsVerified = true
     /// The conversation, from hooks and the transcript.
     public let log = ChatLog()
+    /// Folds and long outputs the reader opened.
+    public let ui = ChatUIState()
+    /// Fixture targets: the clock the Writing line counts from.
+    public var fixedNow: Date?
+    public var now: Date { fixedNow ?? Date() }
+    /// A message to scroll to (⌘[ / ⌘]).
+    public var revealRequest: String?
     /// Keys are on their way: the screen is expected to change, nothing falls back meanwhile.
     public var sending = false
     /// Claude's external editor is open for the composer (F-104): a blank screen is expected.
     public var composing = false
+    /// The request Claude is waiting on, from PermissionRequest; cleared by the tool running or Stop.
+    @ObservationIgnored public var pendingRequest: ChatRequest?
+    /// How the last declined question should read (set when the card declines it).
+    @ObservationIgnored public var lastDeclined: String?
 
-    @ObservationIgnored weak var terminal: ChatTerminal?
+    /// Held strongly: the live adapter holds its view weakly, so there's no cycle.
+    @ObservationIgnored var terminal: ChatTerminal?
+    /// The hook and transcript reader, for a live session.
+    @ObservationIgnored var feed: ChatFeed?
     /// Fixture mode: the screen the stand-in terminal shows.
     public var fixtureScreenText: String?
     @ObservationIgnored private var unknownSince: Date?
@@ -148,6 +162,16 @@ public final class ChatSession {
         t.onOutput { [weak self] in self?.scheduleRead() }
         reread()
     }
+
+    /// Starts reading the session's hooks and transcript (live sessions).
+    func follow(sessionId: String, cwd: String) {
+        guard feed?.sessionId != sessionId else { return }
+        feed?.stop()
+        feed = ChatFeed(sessionId: sessionId, cwd: cwd, chat: self)
+    }
+
+    /// Earlier turns (Q-56c).
+    public func loadEarlier() { feed?.loadEarlier() }
 
     /// The TUI repaints in bursts: read once it settles (the spike's 60 ms).
     func scheduleRead() {
