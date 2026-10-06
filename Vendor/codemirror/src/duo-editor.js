@@ -62,12 +62,8 @@ const link = Decoration.mark({ class: "duo-link" });
 
 function buildDecorations(view) {
   const { state } = view;
-  // Lines with the caret or selection show raw markdown (Obsidian's live preview).
-  const active = new Set();
-  for (const r of state.selection.ranges) {
-    const a = state.doc.lineAt(r.from).number, b = state.doc.lineAt(r.to).number;
-    for (let n = a; n <= b; n++) active.add(n);
-  }
+  // The caret's line shows raw markdown (Obsidian's live preview).
+  const active = rawLines(state);
   const ranges = [];
   const codeLines = new Set();
   // The frontmatter is the properties block's (above); the Markdown parser reads it as text.
@@ -188,8 +184,16 @@ function buildDecorations(view) {
   return builder.finish();
 }
 
-// Which lines show raw markdown: rebuild only when that set changes, not on every caret move.
-const activeLines = (state) => state.selection.ranges.map((r) => `${state.doc.lineAt(r.from).number}-${state.doc.lineAt(r.to).number}`).join(",");
+// Which lines show raw markdown: the line each selection starts on (its anchor), not every line it
+// covers. Revealing the lines a drag or shift+arrow passes over moved the text under it (a blank
+// line grows from 10 to 20, a table turns into its source), so the selection landed lines away (C-25).
+function rawLines(state) {
+  const out = new Set();
+  for (const r of state.selection.ranges) out.add(state.doc.lineAt(r.anchor).number);
+  return out;
+}
+// Rebuild only when that set changes, not on every caret move.
+const activeLines = (state) => state.selection.ranges.map((r) => state.doc.lineAt(r.anchor).number).join(",");
 const livePreview = ViewPlugin.fromClass(class {
   constructor(view) { this.decorations = buildDecorations(view); this.lines = activeLines(view.state); }
   update(u) {
@@ -488,8 +492,7 @@ function propertiesDecorations(state) {
   if (!p) return Decoration.none;
   const doc = state.doc, ctx = state.field(contextField), task = ctx.task || p.isTask;
   const folded = state.field(foldField);
-  const active = new Set();
-  for (const r of state.selection.ranges) for (let n = doc.lineAt(r.from).number; n <= doc.lineAt(r.to).number; n++) active.add(n);
+  const active = rawLines(state);
   const claude = new Set();
   state.field(addedField).between(doc.line(p.fm[0]).from, doc.line(p.fm[1]).to, (f, t) => {
     for (let n = doc.lineAt(f).number; n <= doc.lineAt(Math.max(f, t - 1)).number; n++) claude.add(n);
@@ -1217,8 +1220,7 @@ class DeletionWidget extends WidgetType {
 
 function blockDecorations(state) {
   const out = [];
-  const active = new Set();
-  for (const r of state.selection.ranges) for (let n = state.doc.lineAt(r.from).number; n <= state.doc.lineAt(r.to).number; n++) active.add(n);
+  const active = rawLines(state);
   if (state.doc.length < 400000) {
     const fm = frontmatterLines(state.doc), fmEnd = fm ? state.doc.line(fm[1]).to : -1;
     syntaxTree(state).iterate({
@@ -1474,7 +1476,7 @@ const linkClicks = EditorView.domEventHandlers({
     const pos = view.posAtCoords({ x: e.clientX, y: e.clientY });
     if (pos == null) return false;
     const line = view.state.doc.lineAt(pos).number;
-    const raw = view.state.selection.ranges.some((r) => line >= view.state.doc.lineAt(r.from).number && line <= view.state.doc.lineAt(r.to).number);
+    const raw = rawLines(view.state).has(line);
     if (raw && !e.metaKey) return false;
     const url = linkAt(view.state, pos);
     if (!url) return false;
