@@ -1,6 +1,6 @@
 # Spike: a PowerPoint viewer in Duo (ENH-12)
 
-Status: research done, waiting on Geoff's choice · 2026-10-06 · F-102 · Not v1 (build plan §3a)
+Status: **decided (DL-121)**: pptx-renderer, built next (a slot after the work in flight; the OOXML reader starts now) · 2026-10-06 · F-102
 
 **What v1 of the viewer must do:**
 1. The user and the agent both see the deck.
