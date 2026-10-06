@@ -18,13 +18,19 @@ public enum DuoPaths {
 /// context` prints only additional context for Claude (DL-116).
 public enum HookEvents {
     static let names = ["SessionStart", "UserPromptSubmit", "PermissionRequest", "PostToolUse", "Notification", "Stop", "SessionEnd"]
+    /// What chat mode reads besides (DL-118, F-103): every tool call, failures and interrupts,
+    /// background agents, compaction, failed turns, and MessageDisplay's streamed Markdown. All
+    /// observe only; they print nothing (a printing MessageDisplay hook would change what the TUI
+    /// shows). Added only for a CLI that has them all (2.1.152, MessageDisplay's release): an
+    /// unknown hook name could make an older CLI reject the whole settings file.
+    static let chatNames = ["PreToolUse", "PostToolUseFailure", "SubagentStart", "SubagentStop", "PreCompact", "PostCompact", "StopFailure", "MessageDisplay"]
 
     public static func file(for sessionId: String, in dir: URL = DuoPaths.events) -> URL {
         dir.appending(path: "\(sessionId).jsonl")
     }
 
     /// Writes (or rewrites) the session's settings file and returns its path.
-    public static func settingsFile(for sessionId: String, in dir: URL = DuoPaths.events, cli: String? = nil) throws -> URL {
+    public static func settingsFile(for sessionId: String, in dir: URL = DuoPaths.events, cli: String? = nil, chatEvents: Bool = false) throws -> URL {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let folder = dir.path.replacingOccurrences(of: "'", with: "'\\''")
         // One write(2) per event, to a file opened O_APPEND (perl's syswrite): hooks fire together
@@ -39,13 +45,15 @@ public enum HookEvents {
             + #"open(my $f, ">>", "$ARGV[0]/$i.jsonl") or exit 0; syswrite($f, sprintf(qq({"at":%.3f,"e":%s}\n), time, $p));"#
         let command = "/usr/bin/perl -e '" + script + "' '" + folder + "' '" + sessionId.replacingOccurrences(of: "'", with: "'\\''") + "'"
         let hook: [String: Any] = ["hooks": [["type": "command", "command": command]]]
-        var hooks: [String: Any] = Dictionary(uniqueKeysWithValues: names.map { ($0, [hook]) })
+        var hooks: [String: Any] = Dictionary(uniqueKeysWithValues: (names + (chatEvents ? chatNames : [])).map { ($0, [hook]) })
         // Claude's own file edits on a document open in Duo go through the editor, so the user
         // sees them highlighted and nothing writes under their unsaved text (DL-78). The hook
         // answers only for open documents; anything else passes straight through.
         if let cli {
             let q = "'" + cli.replacingOccurrences(of: "'", with: "'\\''") + "'"
-            hooks["PreToolUse"] = [["matcher": "Edit|MultiEdit|Write", "hooks": [["type": "command", "command": q + " hook pre-edit", "timeout": 15]]]]
+            // Beside chat mode's logger for every tool, when there is one; never instead of it.
+            let preEdit: [String: Any] = ["matcher": "Edit|MultiEdit|Write", "hooks": [["type": "command", "command": q + " hook pre-edit", "timeout": 15]]]
+            hooks["PreToolUse"] = (hooks["PreToolUse"] as? [[String: Any]] ?? []) + [preEdit]
             // The task(s) the session is attributed to, at start and when they change (DL-116).
             let context: [String: Any] = ["type": "command", "command": q + " hook context", "timeout": 10]
             for e in ["SessionStart", "UserPromptSubmit"] { hooks[e] = [["hooks": [hook["hooks"] as! [[String: Any]], [context]].flatMap { $0 }]] }

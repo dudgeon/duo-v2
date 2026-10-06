@@ -176,4 +176,29 @@ func spikeScreen(_ name: String) -> String {
         for i in 0..<120 { recs.append(["type": "user", "message": ["content": "p\(i)"]]); recs.append(["type": "assistant", "message": ["content": [["type": "text", "text": "r\(i)"]]]]) }
         check(ChatFeedProbe.start(recs, turns: 50) == 140, "a long history opens on its last 50 turns (Q-56c)")
     }
+
+    print("chat mode: hook events (DL-118)")
+    do {
+        let dir = FileManager.default.temporaryDirectory.appending(path: "duo-chat-hooks-\(UUID().uuidString)")
+        let plain = try HookEvents.settingsFile(for: "a", in: dir, cli: "/x/duo2")
+        let chat = try HookEvents.settingsFile(for: "b", in: dir, cli: "/x/duo2", chatEvents: true)
+        let h0 = (try JSONSerialization.jsonObject(with: Data(contentsOf: plain)) as? [String: Any])?["hooks"] as? [String: Any] ?? [:]
+        let h1 = (try JSONSerialization.jsonObject(with: Data(contentsOf: chat)) as? [String: Any])?["hooks"] as? [String: Any] ?? [:]
+        check(h0["MessageDisplay"] == nil && h1["MessageDisplay"] != nil && h1["PostToolUseFailure"] != nil && h1["SubagentStart"] != nil,
+              "chat mode's events only for a CLI that has them")
+        let pre = h1["PreToolUse"] as? [[String: Any]] ?? []
+        check(pre.count == 2 && pre.contains { $0["matcher"] == nil } && pre.contains { $0["matcher"] as? String == "Edit|MultiEdit|Write" },
+              "PreToolUse logs every tool beside the pre-edit hook, never instead of it")
+        let ctx = ((h1["SessionStart"] as? [[String: Any]])?.first?["hooks"] as? [[String: Any]])?.compactMap { $0["command"] as? String } ?? []
+        check(ctx.contains { $0.hasSuffix("hook context") }, "SessionStart keeps duo2 hook context")
+        let cmd = (((h1["MessageDisplay"] as? [[String: Any]])?.first?["hooks"] as? [[String: Any]])?.first?["command"] as? String) ?? ""
+        let p = Process(); p.executableURL = URL(fileURLWithPath: "/bin/sh"); p.arguments = ["-c", cmd]
+        let inPipe = Pipe(), outPipe = Pipe(); p.standardInput = inPipe; p.standardOutput = outPipe
+        try p.run(); inPipe.fileHandleForWriting.write(Data(#"{"session_id":"b","hook_event_name":"MessageDisplay","delta":"x"}"#.utf8)); try inPipe.fileHandleForWriting.close(); p.waitUntilExit()
+        check(outPipe.fileHandleForReading.readDataToEndOfFile().isEmpty, "the MessageDisplay hook prints nothing (it would change what the TUI shows)")
+        let line = (try? String(contentsOf: dir.appending(path: "b.jsonl"), encoding: .utf8)) ?? ""
+        let obj = ChatIngest.lines(Data(line.utf8)).first
+        check(obj?["at"] is NSNumber && (obj?["e"] as? ChatJSON)?["delta"] as? String == "x", "and writes one whole line with a fractional time (\(line.prefix(30)))")
+        try? FileManager.default.removeItem(at: dir)
+    }
 }

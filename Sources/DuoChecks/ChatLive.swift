@@ -111,7 +111,7 @@ struct AskCase {
 
 @MainActor func askCases(size: (Int, Int), dir: String, port: Int, claude: String, version: String?) throws {
     let id = UUID().uuidString.lowercased()
-    let settings = try HookEvents.settingsFile(for: id)
+    let settings = try HookEvents.settingsFile(for: id, chatEvents: true)
     let ws = dir + "/ws"
     let env = ["HOME=\(NSHomeDirectory())", "PATH=\(ProcessInfo.processInfo.environment["PATH"] ?? "/usr/bin:/bin")", "TERM=xterm-256color", "LANG=en_US.UTF-8",
                "CLAUDE_CONFIG_DIR=\(dir)/cfg", "ANTHROPIC_BASE_URL=http://127.0.0.1:\(port)", "ANTHROPIC_API_KEY=sk-ant-mock-key-0000000000000000000",
@@ -192,6 +192,18 @@ struct AskCase {
         if chat.reread().kind != .idle { tui.sendKeys("\u{1b}"); _ = idle() }
     }
     guard only == nil, size.0 == 100 else { return }
+
+    // A streamed reply: MessageDisplay draws it as it comes; the transcript's block matches it.
+    prompt("md")
+    let streamed = until(20) { chat.log.streams && chat.log.writing }
+    _ = idle(); spin(2.5)
+    let texts = chat.log.items.compactMap { item -> [ChatText]? in
+        guard case .claude(let t) = item else { return nil }
+        return t.segments.compactMap { if case .text(let x) = $0 { return x } else { return nil } }
+    }.last ?? []
+    check(streamed, "MessageDisplay streams the reply while it's written")
+    check(texts.count == 1 && texts[0].markdown.contains("## Results") && !texts[0].streaming,
+          "the streamed reply shows once, whole, after the transcript catches up (\(texts.count) text blocks)")
 
     // Permissions and the plan (the tour's dialogs), answered from cards.
     func prompt(_ p: String) { tui.sendKeys("\u{1b}[200~SCENARIO:\(p)\u{1b}[201~"); spin(0.2); tui.sendKeys("\r") }

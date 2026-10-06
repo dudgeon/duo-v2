@@ -361,6 +361,28 @@ public enum ClaudeVersion {
     nonisolated(unsafe) private static var cache: [String: String] = [:]
     private static let lock = NSLock()
 
+    /// The version now: cached, or asked once (a fraction of a second) when a session starts.
+    public static func known(_ path: String) -> String? {
+        lock.lock(); let hit = cache[path]; lock.unlock()
+        if let hit { return hit }
+        let v = ask(path)
+        if let v { lock.lock(); cache[path] = v; lock.unlock() }
+        return v
+    }
+
+    static func ask(_ path: String) -> String? {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: path)
+        p.arguments = ["--version"]
+        let out = Pipe()
+        p.standardOutput = out
+        p.standardError = FileHandle.nullDevice
+        guard (try? p.run()) != nil else { return nil }
+        p.waitUntilExit()
+        let s = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        return s.split(separator: " ").first.map(String.init).flatMap { ChatVersion($0) != nil ? $0 : nil }
+    }
+
     @MainActor public static func of(_ path: String, done: @escaping @MainActor (String?) -> Void) {
         lock.lock(); let hit = cache[path]; lock.unlock()
         if let hit { return done(hit) }
