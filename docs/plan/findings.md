@@ -1441,7 +1441,7 @@ Built to `docs/design/docx-handoff/` (the canvas https://claude.ai/artifact/YRWy
   - A leftover `<name>-images` folder with no .md is never written into: the new folder gets " 2".
 - **The sheet's field:** `DuoQuestion.Field`, a class so the choices read what was typed, drawn with `SheetRow` and `SheetField`. A path-only `Item` with `detail` draws "edited 2d ago" at the right. Under `DUO_AUTOCONFIRM` the name-taken question takes the free name.
 - **A `Menu` styled as the default button** (`.menuStyle(.button)` with `DefaultSheetButtonStyle`) loses its chevron. The label draws `chevron.down` itself.
-- **Window captures now include the editor's web view.** D and E show the converted text, so F-25's "check the editor in a browser" wasn't needed here. Quick Look's preview is exempt.
+- **The editor's web view draws in window captures only sometimes** (F-25). The first D and E captures showed the converted text; after `main` was merged in, none did, even for a two-line file, though `editor-state` showed the right buffer each time. Editor text is exempt from the comparison; check it with `editor-state`, or in a browser at the pane's width. Board D's summary line was recaptured from `Spikes/DocxToMarkdown/make_board_d.py` (headings, typed bullets, tracked changes, a comment, pictures). The first D used the clean document, which had nothing to summarise.
 - **Checks:** 27 new, all passing. They cover:
   - golden output for the nine documents, stable on a second run, with no raw HTML;
   - headings by size and bold, never skipping a level; typed lists; nesting by indent; layout tables; tracked changes both ways; endnotes; pictures;
