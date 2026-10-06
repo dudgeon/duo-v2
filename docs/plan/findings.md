@@ -1546,3 +1546,10 @@ Spike: `docs/plan/spikes/browser-engine.md`.
 - **Seen on the way:**
   - **A `claude` that doesn't answer `--version` hangs Duo's main thread.** `ClaudeVersion.known` (chat mode) runs `claude --version` and waits for it to exit (`TerminalSession.hookArgs` → `ClaudeVersion.ask`, `waitUntilExit`). A stand-in claude that ignored `--version` hung a scripted instance at launch, and only killing the stand-in freed it. A real claude answers quickly, but a wedged one would freeze Duo. Stand-ins for scripted runs must answer `--version`.
   - **CLAUDE.md** still says web views don't draw in window captures (F-25). With this fix they do, editor included, whether or not the window is in front.
+
+## F-125 · `claude --version` is asked with a 2 s limit, never on the main thread at length (C-34, F-111, 2026-10-06)
+
+- Chat mode's hooks are added only for a CLI of 2.1.152 or later (F-111), so a session start needs the version. It was asked synchronously with `waitUntilExit()` and no timeout. A stand-in that hung on `--version` froze Duo.
+- Now `ClaudeVersion.ask` waits on the process's termination for at most 2 s (`ClaudeVersion.timeout`). Past that it sends SIGTERM, then SIGKILL after 0.5 s, and the version is unknown. Unknown means chat mode's hooks are off for that session: the safe default (chat mode then renders from the transcript, and its dialogs go to the terminal). Duo's own hooks stay on.
+- Each binary's answer is cached, including "none", so a hung or broken `claude` costs at most 2 s once per run. Duo asks at launch on a background queue (`ClaudeVersion.warm`), so the first session normally finds it cached. Choosing another `claude` in Settings clears it. The async path (`ClaudeVersion.of`) goes through the same bounded `ask`.
+- DuoChecks: a stand-in `claude` that sleeps forever is ended in 2.0 s with the version unknown; the second ask doesn't wait; the settings for that session have no MessageDisplay but keep Stop; a working stand-in still answers; no orphaned child remains.

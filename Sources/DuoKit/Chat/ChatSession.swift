@@ -363,18 +363,34 @@ public final class ChatStore {
 
 /// The installed CLI's version, asked once per binary (`claude --version`: "2.1.291 (Claude Code)").
 public enum ClaudeVersion {
+    /// Answers by path; "" records a claude that gave none (failed, hung, or printed no version).
     nonisolated(unsafe) private static var cache: [String: String] = [:]
     private static let lock = NSLock()
+    /// How long `claude --version` may take before it's ended and the version taken as unknown
+    /// (C-34): a broken install, a first-run prompt or a slow home must never freeze Duo.
+    nonisolated(unsafe) public static var timeout: TimeInterval = 2
 
-    /// The version now: cached, or asked once (a fraction of a second) when a session starts.
-    public static func known(_ path: String) -> String? {
-        lock.lock(); let hit = cache[path]; lock.unlock()
-        if let hit { return hit }
-        let v = ask(path)
-        if let v { lock.lock(); cache[path] = v; lock.unlock() }
-        return v
+    static func cached(_ path: String) -> String?? {
+        lock.lock(); defer { lock.unlock() }
+        return cache[path].map { $0.isEmpty ? nil : $0 }
     }
 
+    /// The version now, for a session starting (it decides chat mode's hooks, F-111). Cached; asked
+    /// at most once per binary, for at most `timeout` (Duo also warms the cache at launch with
+    /// `warm`, off the main thread). Unknown means chat mode's hooks stay off: the safe default.
+    public static func known(_ path: String) -> String? {
+        if let hit = cached(path) { return hit }
+        return ask(path)
+    }
+
+    /// Asks `claude --version` in the background at launch, so a session start finds it cached.
+    public static func warm(_ path: String) {
+        guard cached(path) == nil else { return }
+        DispatchQueue.global(qos: .utility).async { _ = ask(path) }
+    }
+
+    /// Runs `claude --version`, ending it after `timeout`, and caches the answer (or its absence).
+    @discardableResult
     static func ask(_ path: String) -> String? {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: path)
@@ -382,34 +398,34 @@ public enum ClaudeVersion {
         let out = Pipe()
         p.standardOutput = out
         p.standardError = FileHandle.nullDevice
-        guard (try? p.run()) != nil else { return nil }
-        p.waitUntilExit()
-        let s = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-        return s.split(separator: " ").first.map(String.init).flatMap { ChatVersion($0) != nil ? $0 : nil }
-    }
-
-    @MainActor public static func of(_ path: String, done: @escaping @MainActor (String?) -> Void) {
-        lock.lock(); let hit = cache[path]; lock.unlock()
-        if let hit { return done(hit) }
-        nonisolated(unsafe) let done = done
-        DispatchQueue.global(qos: .utility).async {
-            let p = Process()
-            p.executableURL = URL(fileURLWithPath: path)
-            p.arguments = ["--version"]
-            let out = Pipe()
-            p.standardOutput = out
-            p.standardError = FileHandle.nullDevice
-            var v: String?
-            if (try? p.run()) != nil {
-                p.waitUntilExit()
+        p.standardInput = FileHandle.nullDevice
+        let exited = DispatchSemaphore(value: 0)
+        p.terminationHandler = { _ in exited.signal() }
+        var v: String?
+        if (try? p.run()) != nil {
+            if exited.wait(timeout: .now() + timeout) == .timedOut {
+                p.terminate()
+                if exited.wait(timeout: .now() + 0.5) == .timedOut { kill(p.processIdentifier, SIGKILL) }
+            } else {
                 let s = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
                 v = s.split(separator: " ").first.map(String.init).flatMap { ChatVersion($0) != nil ? $0 : nil }
             }
-            if let v { lock.lock(); cache[path] = v; lock.unlock() }
-            let found = v
+        }
+        lock.lock(); cache[path] = v ?? ""; lock.unlock()
+        return v
+    }
+
+    @MainActor public static func of(_ path: String, done: @escaping @MainActor (String?) -> Void) {
+        if let hit = cached(path) { return done(hit) }
+        nonisolated(unsafe) let done = done
+        DispatchQueue.global(qos: .utility).async {
+            let found = ask(path)
             DispatchQueue.main.async { MainActor.assumeIsolated { done(found) } }
         }
     }
+
+    /// Forgets every answer (a different claude chosen in Settings, and the checks).
+    public static func forget() { lock.lock(); cache = [:]; lock.unlock() }
 }
 
 /// The live terminal, read and typed into for chat mode.

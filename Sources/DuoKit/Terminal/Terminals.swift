@@ -13,7 +13,7 @@ public enum ClaudeLocator {
     nonisolated(unsafe) private static var cached: String??
 
     /// Look again next time (DB-3's Look Again).
-    public static func forget() { cached = nil }
+    public static func forget() { cached = nil; ClaudeVersion.forget() }
 
     public static func resolve() -> String? {
         if let c = cached { return c }

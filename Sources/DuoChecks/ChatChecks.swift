@@ -335,4 +335,31 @@ func spikeScreen(_ name: String) -> String {
         c.stepYourMessages(1)
         check(c.revealRequest == ids[1], "⌘] forward")
     }
+
+    print("chat mode: a claude that hangs on --version never freezes a session start (C-34)")
+    do {
+        let dir = FileManager.default.temporaryDirectory.appending(path: "duo-hang-\(UUID().uuidString.prefix(8))")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let hang = dir.appending(path: "claude")
+        try "#!/bin/sh\nsleep 600\n".write(to: hang, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: hang.path)
+        ClaudeVersion.forget()
+        var t0 = Date()
+        let v = ClaudeVersion.known(hang.path)
+        let first = Date().timeIntervalSince(t0)
+        check(v == nil && first < ClaudeVersion.timeout + 1.5, "a hung claude --version is ended after \(Int(ClaudeVersion.timeout)) s: the version is unknown (\(String(format: "%.1f", first)) s)")
+        t0 = Date()
+        _ = ClaudeVersion.known(hang.path)
+        check(Date().timeIntervalSince(t0) < 0.2, "and asked once: the next session start doesn't wait again")
+        let hooks = HookEvents.self
+        let settings = try hooks.settingsFile(for: "h", in: dir, chatEvents: v.flatMap(ChatVersion.init).map { $0 >= ChatVersion.messageDisplay } ?? false)
+        let h = (try JSONSerialization.jsonObject(with: Data(contentsOf: settings)) as? [String: Any])?["hooks"] as? [String: Any] ?? [:]
+        check(h["MessageDisplay"] == nil && h["Stop"] != nil, "with the version unknown, chat mode's hooks are off and Duo's own stay on")
+        let ok = dir.appending(path: "claude-ok")
+        try "#!/bin/sh\necho '2.1.291 (Claude Code)'\n".write(to: ok, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: ok.path)
+        check(ClaudeVersion.known(ok.path) == "2.1.291", "a working claude still answers")
+        ClaudeVersion.forget()
+    }
 }

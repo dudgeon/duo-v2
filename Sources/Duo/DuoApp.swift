@@ -62,6 +62,9 @@ struct DuoApp: App {
         self.model = model
         // In-app updates (Sparkle) in release builds; the GitHub notice (F-69) where Sparkle isn't running.
         if !options.capturing, model.terminalsMode == .live { SparkleUpdater.start(model: model) }
+        // The CLI's version decides chat mode's hooks when a session starts (F-111): asked now, off the
+        // main thread, so the first session finds it cached (C-34).
+        if model.terminalsMode == .live, let claude = ClaudeLocator.resolve() { ClaudeVersion.warm(claude) }
         if !options.capturing, model.terminalsMode == .live {
             DispatchQueue.main.asyncAfter(deadline: .now() + 8) { MainActor.assumeIsolated { model.checkForUpdates(userInitiated: false) } }
         }
