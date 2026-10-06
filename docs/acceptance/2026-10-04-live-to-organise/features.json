@@ -3690,6 +3690,155 @@
     "human": [],
     "at": "2026-10-05"
    }
+  },
+  {
+   "id": "drag-files",
+   "title": "Drag files into Duo: onto a terminal, and onto the file tree",
+   "what": "Files dropped on a terminal type their paths at the cursor (shell-escaped, a trailing space, no Return). Files dropped on a folder in the tree move there, and dragging inside the tree moves too. All of it undoes.",
+   "steps": [
+    "In `checkout`, drag a file from Finder onto the console's terminal: its full path is typed at the prompt, quoted if needed, and nothing is sent.",
+    "Drag a file from Finder onto the `docs` folder in the file tree: the folder highlights and the file moves in. ⌘Z puts it back.",
+    "Drag `docs/research.md` onto `prototypes` in the tree, then ⌘Z.",
+    "Drop a file whose name is already in the folder: Duo asks Replace / Keep Both / Cancel."
+   ],
+   "expect": "The highlight is a stand-in: a selection fill with a dashed `controlEdge` border (Q-50). Option- or Command-dragging to copy isn't read yet (Q-51). Nothing outside the fixture moves.",
+   "ref": "DL-117, F-99, Q-50, Q-51",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-99): DuoChecks covers escaping (spaces, quotes, shell characters, unicode, several items), moves, undo, a clash with each answer, into itself, and a folder holding the source."
+    ],
+    "didnt": [
+     "A real drag from Finder with a pointer."
+    ],
+    "human": [
+     "How the drop highlight and the clash question feel."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "1f69c0f52fedab6851685fe3691da78338032e21",
+   "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "editor-selection",
+   "title": "Selecting text no longer shifts the document",
+   "what": "Dragging or shift-selecting in a document only shows raw Markdown on the line the selection starts on, so the text under the pointer stays still and the selection ends where you let go.",
+   "steps": [
+    "Open `docs/prd.md` in `checkout`. Drag from a heading down across a table and some paragraphs.",
+    "Shift+↓ a few times from the top of a paragraph."
+   ],
+   "expect": "Headings keep their look, blank lines stay 10 pt and tables stay drawn while you select; the selection ends exactly where you release.",
+   "ref": "C-25, F-101",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-101): `scripts/check-editor-selection.mjs` ran 108 clicks, 42 drags and 108 shift+down in Chromium at the pane's width; all pass (6 of the 42 drags failed before)."
+    ],
+    "didnt": [
+     "WebKit itself (Playwright's WebKit isn't installed); the fix is in CodeMirror's decorations."
+    ],
+    "human": [
+     "Whether selecting now feels steady in the app."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "41d4f506fba43b390d24442248690a58ec7cfea9",
+   "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "update-question",
+   "title": "Check for Updates… offers the releases page",
+   "what": "When a newer Duo exists, Duo asks Later, Install Now or Open Releases Page instead of going straight to Sparkle. Where installing would need an administrator password, it says so and Open Releases Page is the default.",
+   "steps": [
+    "Choose Duo › Check for Updates…. On this development build there's no Install Now; on a release build that's behind, the question appears.",
+    "In Terminal: `duo2 update` names the newest version, the releases page and whether installing needs a password; `duo2 update --open` opens the page."
+   ],
+   "expect": "The question is a stand-in in Duo's question look (Q-47). Up to date or offline: Sparkle as before.",
+   "ref": "DL-114, F-93, Q-47",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-93): DuoChecks covers writable, not writable, up to date, unreachable and development builds; captures of each state; `duo2 update` and `--json` against a scratch instance."
+    ],
+    "didnt": [
+     "A real update from a release build that's behind."
+    ],
+    "human": [
+     "The wording and which button should be the default for you."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "fa6b9e9fc49aef96a3745212da361bcfcb21ffe9",
+   "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "heading-spacing",
+   "title": "Space above headings, as designed",
+   "what": "Second- and third-level headings in a document now have 4 pt more space above them, as slice 3's document design draws it.",
+   "steps": [
+    "Open `docs/prd.md` in `checkout` and look at the gaps above its `##` headings."
+   ],
+   "expect": "Matches `slice3-handoff/editor-document`: headings sit a little apart from the paragraph above.",
+   "ref": "C-22, F-95",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-95): headings land on the target's positions, and `tables-bar` now matches pixel for pixel."
+    ],
+    "didnt": [
+     "The app's own web view (the fixture state doesn't load the editor); checked in the page and by DuoChecks."
+    ],
+    "human": [
+     "Whether the spacing reads right."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "8310b418a2f1829482b2633a72b25c2b766d08a0",
+   "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "task-menu",
+   "title": "The task right-click menu, and a task's file following its name",
+   "what": "One right-click menu wherever a task is listed: Open Task Note, New Session in Task, Add Session; Rename, Mark Complete, Set Status; Copy Link, Reveal in Finder, Move to Project; Archive Task…, Delete Task…. Renaming a task renames its file.",
+   "steps": [
+    "In `checkout`, right-click the `exec-review-prep` task in the Tasks fold and look through the menu.",
+    "Choose Rename and change the name: once you stop typing, the note's file follows the new name (check the file tree).",
+    "Choose Archive Task…: Duo asks whether its sessions go too. Answer either way, then find it in the Archived fold and Unarchive it (or ⌘Z)."
+   ],
+   "expect": "Matches `task-menu-handoff` (the menu, the archived line, the questions). A running session is never archived or deleted with the task.",
+   "ref": "DL-115, F-97, C-24",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-97): 28 new DuoChecks for rename and undo, the file following a retitle, archive and unarchive with and without sessions (a running one skipped), move, delete, and each question's default."
+    ],
+    "didnt": [
+     "Right-clicking with a real pointer."
+    ],
+    "human": [
+     "Whether the menu's order and the questions feel right."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "28123ad6fb41ade54a8cbb182e2373ee8aa179ef",
+   "group": "After slice 3 (other sessions)"
   }
  ],
  "decisions": []
