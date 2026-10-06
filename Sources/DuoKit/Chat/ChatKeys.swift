@@ -15,11 +15,24 @@ extension AppModel {
         ChatKeyMonitor.installed = true
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
             let chars = e.charactersIgnoringModifiers ?? "", escape = e.keyCode == 53
-            let plain = e.modifierFlags.intersection([.command, .control, .option]).isEmpty
+            let mods = e.modifierFlags.intersection([.command, .control, .option, .shift])
             let number = e.windowNumber
-            let used = MainActor.assumeIsolated { plain && self?.chatKey(chars, escape: escape, window: number) == true }
+            let used = MainActor.assumeIsolated { () -> Bool in
+                // ⌘[ / ⌘]: your previous and next message, only while the chat has the keyboard (Q-54).
+                if mods == .command, chars == "[" || chars == "]" { return self?.chatStep(chars == "[" ? -1 : 1, window: number) == true }
+                return mods.subtracting(.shift).isEmpty && self?.chatKey(chars, escape: escape, window: number) == true
+            }
             return used ? nil : e
         }
+    }
+
+    /// ⌘[ / ⌘] while the chat pane has the keyboard: the composer, or no field at all.
+    func chatStep(_ by: Int, window number: Int) -> Bool {
+        guard let chat = visibleChat, let w = NSApp.window(withWindowNumber: number), w.isKeyWindow else { return false }
+        let fr = w.firstResponder
+        guard fr is ComposerTextView || fr === w || fr == nil || !(fr is NSText || fr is GuardedTerminalView || String(describing: type(of: fr!)).contains("WKWebView")) else { return false }
+        chat.stepYourMessages(by)
+        return true
     }
 
     /// Handles a key for the chat on screen; true when it was used.
@@ -68,6 +81,15 @@ extension ChatSession {
         default: return false
         }
         return true
+    }
+
+    /// ⌘[ / ⌘]: scrolls to your previous or next message (DL-119 §4).
+    public func stepYourMessages(_ by: Int) {
+        let ids = log.yourMessageIDs
+        guard !ids.isEmpty else { return }
+        let here = revealRequest.flatMap { ids.firstIndex(of: $0) } ?? ids.count
+        let next = min(max(here + by, 0), ids.count - 1)
+        revealRequest = ids[next]
     }
 
     /// The mode chip: Shift+Tab, as the TUI cycles manual → accept edits → plan (F-104).

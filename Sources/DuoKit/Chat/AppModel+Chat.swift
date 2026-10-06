@@ -51,7 +51,8 @@ extension AppModel {
     func chatAnswer(_ chat: ChatSession, option: String, _ done: @escaping @MainActor (Reply) -> Void) {
         let s = chat.reread()
         guard chat.cardUp else {
-            return done(.fail(s.kind == .unknown || !chat.dialogsVerified || !chat.requestAgrees
+            let dialog: Set<ChatScreen.Kind> = [.permission, .plan, .question, .questionReview, .unknown]
+            return done(.fail(dialog.contains(s.kind)
                 ? "Claude Code's dialog isn't one chat mode can answer (\(s.kind.rawValue)); answer it in the terminal"
                 : "no dialog is waiting (\(s.kind.rawValue))"))
         }

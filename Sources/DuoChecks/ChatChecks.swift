@@ -232,4 +232,97 @@ func spikeScreen(_ name: String) -> String {
               && ChatComposer.editorCommand(cli: "/Users/x/Duo copy.app/duo2") == nil, "EDITOR unquoted (Claude splits it without a shell); a path with a space pastes instead")
         try? FileManager.default.removeItem(at: dir)
     }
+
+    print("chat mode: EDITOR in Duo's sessions, for everything that isn't the composer (F-112)")
+    do {
+        let bin = repoRoot().appending(path: ".build/out/Products/Debug/duo2").path
+        let tmp = URL(fileURLWithPath: "/tmp/duo-edcheck-\(UUID().uuidString.prefix(8))")
+        let spaced = tmp.appending(path: "My Editors")
+        try FileManager.default.createDirectory(at: spaced, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        // A stand-in editor that records its arguments.
+        func standIn(_ dir: URL, _ name: String) throws -> String {
+            let f = dir.appending(path: name)
+            try "#!/bin/sh\necho \"$@\" > '\(tmp.path)/ran-\(name).txt'\n".write(to: f, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: f.path)
+            return f.path
+        }
+        func helper(_ env: [String: String], _ file: String) -> Int32 {
+            let p = Process(); p.executableURL = URL(fileURLWithPath: bin); p.arguments = ["compose", file]
+            p.environment = env; p.standardInput = FileHandle.nullDevice; p.standardOutput = FileHandle.nullDevice; p.standardError = FileHandle.nullDevice
+            guard (try? p.run()) != nil else { return -1 }
+            p.waitUntilExit(); return p.terminationStatus
+        }
+        let base = ["PATH": tmp.path + ":/usr/bin:/bin", "DUO_SESSION_ID": "s", ChatCompose.dirVariable: tmp.appending(path: "compose").path]
+        _ = try standIn(tmp, "vi")
+        let msg = tmp.appending(path: "COMMIT_EDITMSG").path
+        _ = helper(base, msg)
+        check((try? String(contentsOf: tmp.appending(path: "ran-vi.txt"), encoding: .utf8))?.contains("COMMIT_EDITMSG") == true,
+              "(a) no EDITOR or VISUAL of the user's: the helper opens vi, as git would have")
+        let subl = try standIn(spaced, "subl")
+        _ = helper(base.merging([ChatCompose.userEditor: "'\(subl)' -w"]) { $1 }, msg)
+        check((try? String(contentsOf: tmp.appending(path: "ran-subl.txt"), encoding: .utf8))?.hasPrefix("-w ") == true,
+              "(b) the user's EDITOR with arguments and a space in its path (quoted, as git needs it) still runs, with its arguments")
+        _ = try standIn(tmp, "code")
+        _ = helper(base.merging([ChatCompose.userEditor: "vim", ChatCompose.userVisual: "code --wait"]) { $1 }, msg)
+        check((try? String(contentsOf: tmp.appending(path: "ran-code.txt"), encoding: .utf8))?.hasPrefix("--wait ") == true, "(b) VISUAL wins over EDITOR, as for git")
+        let saved = ChildEnvironment.cliDirectory
+        ChildEnvironment.cliDirectory = "/Applications/Duo.app/Contents/Helpers"
+        let shell = ChildEnvironment.make(sessionID: nil), claude = ChildEnvironment.make(sessionID: "abc")
+        ChildEnvironment.cliDirectory = saved
+        let userEditor = ProcessInfo.processInfo.environment["EDITOR"]
+        check(shell.first { $0.hasPrefix("EDITOR=") }.map { String($0.dropFirst(7)) } == userEditor && !shell.contains { $0.hasPrefix(ChatCompose.dirVariable) },
+              "(c) a plain shell tab keeps the user's EDITOR; only Claude sessions get the helper")
+        check(claude.contains("EDITOR=/Applications/Duo.app/Contents/Helpers/duo2 compose") && claude.contains("VISUAL=/Applications/Duo.app/Contents/Helpers/duo2 compose"),
+              "(c) Claude sessions do")
+        // (d) git commit from Claude's Bash: no terminal, no hand-over, the real vi.
+        let repo = tmp.appending(path: "repo")
+        try FileManager.default.createDirectory(at: repo, withIntermediateDirectories: true)
+        let git = Process(); git.executableURL = URL(fileURLWithPath: "/bin/sh")
+        git.arguments = ["-c", "cd '\(repo.path)' && git init -q && echo a > a && git add a && perl -e 'alarm 15; exec @ARGV' git commit -q"]
+        git.environment = ["PATH": "/usr/bin:/bin", "HOME": tmp.path, "GIT_CONFIG_GLOBAL": "/dev/null", "EDITOR": "\(bin) compose", "VISUAL": "\(bin) compose",
+                           "DUO_SESSION_ID": "s", ChatCompose.dirVariable: tmp.appending(path: "compose").path]
+        git.standardInput = FileHandle.nullDevice; git.standardOutput = FileHandle.nullDevice; git.standardError = FileHandle.nullDevice
+        let t0 = Date()
+        try git.run(); git.waitUntilExit()
+        let took = Date().timeIntervalSince(t0)
+        check(git.terminationStatus != 0 && git.terminationReason == .exit && took < 10,
+              "(d) git commit from Claude's Bash (no terminal, no hand-over) ends at once as it would without Duo: vi fails, git stops (\(String(format: "%.1f", took)) s)")
+    }
+
+    print("chat mode: duo2 session chat (DL-71, Q-53)")
+    do {
+        let m = AppModel(fixture: try repoFixture())
+        ChatTargets.apply("chat-text", to: m)
+        func cli(_ args: [String]) -> (ok: Bool, out: String) {
+            var r: ControlResponse?
+            m.handle(ControlRequest(token: "", command: args[0], args: Array(args.dropFirst()))) { r = $0 }
+            return (r?.ok ?? false, r?.output ?? "")
+        }
+        let tab = m.consoleTab ?? ""
+        let status = cli(["session", "chat"])
+        check(status.ok && status.out.contains("chat mode, showing chat"), "status: the session on screen, its mode and what shows (\(status.out))")
+        check(cli(["session", "chat", "off"]).ok && m.chat(for: tab)?.showsChat == false, "off: the terminal")
+        check(cli(["session", "chat", "toggle"]).ok && m.chat(for: tab)?.showsChat == true, "toggle: back to chat")
+        check(cli(["session", "chat", "PRD v2 edits", "off"]).ok && m.chat(for: tab)?.mode == .terminal, "a session by name")
+        let answer = cli(["session", "chat", "answer", "1"])
+        check(!answer.ok, "answer with no dialog waiting refuses, sending nothing (\(answer.out))")
+        check(cli(["session", "chat", "--default", "chat"]).ok && m.chats.prefs.fixedDefault == .chat && cli(["session", "chat", "--default", "last"]).ok && m.chats.prefs.fixedDefault == nil,
+              "--default chat|terminal|last")
+        check(!cli(["session", "chat", "nobody", "on"]).ok, "an unknown session is refused")
+        m.chats.setDefault(nil)
+    }
+
+    print("chat mode: ⌘[ / ⌘] between your messages (DL-119 §4, Q-54)")
+    do {
+        let c = ChatSession(key: "k", mode: .chat)
+        for t in ["one", "two", "three"] { c.log.sent(t, time: nil, queued: false); c.log.textBlock("reply to \(t)", time: nil) }
+        let ids = c.log.yourMessageIDs
+        c.stepYourMessages(-1)
+        check(c.revealRequest == ids[2], "⌘[ from the bottom: your latest message")
+        c.stepYourMessages(-1); c.stepYourMessages(-1); c.stepYourMessages(-1)
+        check(c.revealRequest == ids[0], "and back to your first, no further")
+        c.stepYourMessages(1)
+        check(c.revealRequest == ids[1], "⌘] forward")
+    }
 }
