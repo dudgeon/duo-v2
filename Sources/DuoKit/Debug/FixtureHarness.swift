@@ -46,6 +46,18 @@ public enum FixtureHarness {
     nonisolated(unsafe) public static var beforeExit: (@MainActor () -> Void)?
 
     /// Runs one scripted action (`--then`), as a click or chord would.
+    /// A key equivalent as the menu shows it.
+    static func keyName(_ k: String) -> String {
+        switch k.unicodeScalars.first.map({ Int($0.value) }) ?? 0 {
+        case NSUpArrowFunctionKey: "↑"
+        case NSDownArrowFunctionKey: "↓"
+        case NSLeftArrowFunctionKey: "←"
+        case NSRightArrowFunctionKey: "→"
+        case 13, 3: "↩"
+        default: k.uppercased()
+        }
+    }
+
     static func perform(_ action: String, on model: AppModel) {
         let parts = action.split(separator: ":", maxSplits: 1).map(String.init)
         switch parts[0] {
@@ -285,6 +297,27 @@ public enum FixtureHarness {
             let w = NSApp.windows.first(where: { $0.title == "Duo" })
             let fr = w?.firstResponder.map { String(describing: type(of: $0)) } ?? "-"
             FileHandle.standardError.write(Data("ui-state: renaming=\(model.renamingPath ?? "-") picking=\(model.visiblePage?.picking ?? false) picked=\(model.visiblePage?.picked?.selector ?? "-") send=\((try? model.sendTarget.get()).map { "ok \($0.key.prefix(12))" } ?? { if case .failure(let e) = model.sendTarget { return e.reason }; return "-" }()) key=\(w?.isKeyWindow ?? false) firstResponder=\(fr)\n".utf8))
+        case "menus":   // the menu bar as text, to compare with the walk's mockups (DL-108): window captures don't draw it
+            func walk(_ menu: NSMenu, _ depth: Int) -> [String] {
+                menu.delegate?.menuNeedsUpdate?(menu)
+                if ProcessInfo.processInfo.environment["DUO_MENU_UPDATE"] != nil { menu.update() }
+                return menu.items.flatMap { i -> [String] in
+                    if i.isHidden { return [] }
+                    if i.isSeparatorItem { return [String(repeating: "  ", count: depth) + "—"] }
+                    var mods = ""
+                    if !i.keyEquivalent.isEmpty {
+                        let m = i.keyEquivalentModifierMask
+                        if m.contains(.control) { mods += "⌃" }; if m.contains(.option) { mods += "⌥" }
+                        if m.contains(.shift) || i.keyEquivalent != i.keyEquivalent.lowercased() { mods += "⇧" }; if m.contains(.command) { mods += "⌘" }
+                    }
+                    let key = i.keyEquivalent.isEmpty ? "" : "  \(mods)\(Self.keyName(i.keyEquivalent))"
+                    let line = String(repeating: "  ", count: depth) + i.title + (i.submenu?.autoenablesItems == true ? " [auto]" : "") + key + (i.isEnabled ? "" : "  (dim)") + (i.state == .on ? "  ✓" : "")
+                    return [line] + (i.submenu.map { walk($0, depth + 1) } ?? [])
+                }
+            }
+            if let bar = NSApp.mainMenu {
+                FileHandle.standardError.write(Data(("---- menus ----\n" + walk(bar, 0).joined(separator: "\n") + "\n---- end menus ----\n").utf8))
+            }
         case "dump":
             for t in model.terminals.all.sorted(by: { $0.key < $1.key }) {
                 t.view.selectAll()

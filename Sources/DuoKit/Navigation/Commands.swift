@@ -30,6 +30,17 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case newBrowserTab      // ⌥⌘T: a browser tab in the right pane (ENH-8), beside ⌘T and ⇧⌘T
     case focusAddress       // ⌘L: the browser tab's address field, as in Safari and Chrome (ENH-8)
     case openFile           // ⌘O: any file on the Mac as a tab in this project (DL-106)
+    // DL-108 (the menu bar, walk decisions m2–m4)
+    case newTask            // File › New Task: a task note in this project, named first (DL-93)
+    case newProject         // File › New Project…: the New project sheet (DL-100)
+    case code               // Format › Code
+    case link               // ⌘K: Format › Link…, free since DL-80
+    case heading1, heading2, heading3  // Format › Heading ▸
+    case task               // Format › Task: a `- [ ]` line
+    case addProperties      // Format › Add Properties (frontmatter-handoff's frontmatter-none)
+    case duo2Reference      // Help: docs/cli/duo2.md on GitHub
+    case whatsNew           // Help: this version's release notes
+    case reportIssue        // Help: a new GitHub issue with the version and macOS filled in
 
     public var title: String {
         switch self {
@@ -58,6 +69,18 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .newBrowserTab: "New Browser Tab"
         case .focusAddress: "Open Location…"
         case .openFile: "Open File…"
+        case .newTask: "New Task"
+        case .newProject: "New Project…"
+        case .code: "Code"
+        case .link: "Link…"
+        case .heading1: "Heading 1"
+        case .heading2: "Heading 2"
+        case .heading3: "Heading 3"
+        case .task: "Task"
+        case .addProperties: "Add Properties"
+        case .duo2Reference: "duo2 Reference"
+        case .whatsNew: "What’s New in This Version"
+        case .reportIssue: "Report an Issue…"
         }
     }
 
@@ -80,7 +103,9 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeSession: KeyboardShortcut("w", modifiers: .command)
         case .closeWindow: KeyboardShortcut("w", modifiers: [.command, .shift])
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
-        case .revertChange, .revertAllChanges, .chooseHome: nil
+        case .link: KeyboardShortcut("k", modifiers: .command)  // DL-108
+        case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newProject, .code, .heading1, .heading2, .heading3,
+             .task, .addProperties, .duo2Reference, .whatsNew, .reportIssue: nil
         case .newBrowserTab: KeyboardShortcut("t", modifiers: [.command, .option])
         case .focusAddress: KeyboardShortcut("l", modifiers: .command)
         case .openFile: KeyboardShortcut("o", modifiers: .command)
@@ -101,7 +126,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeSession: model.visibleTerminal != nil || (model.webFocus == .editor && model.openDocuments.contains(model.rightTab ?? ""))
         case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
         case .save: model.terminalsMode == .live && model.editor.url != nil
-        case .bold, .italic: model.webFocus == .editor
+        case .bold, .italic, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties: model.webFocus == .editor
+        case .newTask: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
+        case .newProject: model.terminalsMode == .live && model.liveRoot != nil
+        case .duo2Reference, .whatsNew, .reportIssue: true
         case .sendSelection: model.canSendSelection
         case .newClaudeSession, .newShell: model.terminalsMode == .live
         case .chooseHome: model.terminalsMode == .live
@@ -110,6 +138,22 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .openFile: model.terminalsMode == .live && model.projectFolder != nil
         case .revertChange: model.webFocus == .editor && (model.editorIfLoaded?.atClaudeChange ?? false)
         case .revertAllChanges: (model.editorIfLoaded?.claudeChanges ?? 0) > 0
+        }
+    }
+
+    /// The editor's name for a Format item (`duo.exec`, `duo2 doc format`).
+    public var formatName: String? {
+        switch self {
+        case .bold: "bold"
+        case .italic: "italic"
+        case .code: "code"
+        case .link: "link"
+        case .heading1: "heading1"
+        case .heading2: "heading2"
+        case .heading3: "heading3"
+        case .task: "task"
+        case .addProperties: "properties"
+        default: nil
         }
     }
 
@@ -127,8 +171,13 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .newMarkdown: model.newMarkdownFile(near: model.selectedFile)
         case .newFolder: model.newFolder(near: model.selectedFile)
         case .save: model.editor.saveNow()
-        case .bold: model.editor.run("duo.exec('bold'); return 1") { _ in }
-        case .italic: model.editor.run("duo.exec('italic'); return 1") { _ in }
+        case .bold, .italic, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties:
+            model.editor.run("duo.exec(f); return 1", ["f": formatName!]) { _ in }
+        case .newTask: if let p = model.currentProject?.name { model.newTask(in: p) }
+        case .newProject: model.showNewProject()
+        case .duo2Reference: NSWorkspace.shared.open(DuoLinks.duo2Reference)
+        case .whatsNew: NSWorkspace.shared.open(DuoLinks.releaseNotes)
+        case .reportIssue: NSWorkspace.shared.open(DuoLinks.newIssue)
         case .closeWindow: NSApp.keyWindow?.performClose(nil)
         case .sendSelection: model.sendSelection()
         case .newClaudeSession: model.newSession()
@@ -156,27 +205,42 @@ public struct DuoCommands: Commands {
         CommandGroup(after: .appInfo) {
             Button("Check for Updates…") { model.checkForUpdates(userInitiated: true) }
         }
+        // File (DL-108, m2): new things, then opening, then saving and closing, then Home.
         CommandGroup(replacing: .newItem) {
             item(.newClaudeSession)
             item(.newShell)
             item(.newBrowserTab)
-            item(.focusAddress)
             Divider()
             item(.newMarkdown)
             item(.newFolder)
+            item(.newTask)
+            item(.newProject)
             Divider()
             item(.openFile)
-            Divider()
-            item(.chooseHome)
+            item(.focusAddress)
         }
         CommandGroup(replacing: .saveItem) {
             item(.save)
             item(.closeSession)
             item(.closeWindow)
+            Divider()
+            item(.chooseHome)
         }
-        CommandMenu("Format") {
+        // Format (DL-108, m3), in the system's Format menu so it sits between Edit and View.
+        CommandGroup(replacing: .textFormatting) {
             item(.bold)
             item(.italic)
+            item(.code)
+            item(.link)
+            Divider()
+            Menu("Heading") {
+                item(.heading1)
+                item(.heading2)
+                item(.heading3)
+            }
+            item(.task)
+            Divider()
+            item(.addProperties)
         }
         // The standard text items (Find, Spelling and Grammar, Substitutions, Transformations,
         // Speech) for the editor; Writing Tools joins them where the system supports it.
@@ -189,19 +253,28 @@ public struct DuoCommands: Commands {
             item(.revertChange)
             item(.revertAllChanges)
         }
+        // View (DL-108, m2): the items that aren't built (the right pane's toggle, moving between
+        // panes) are left out until they work; Enter Full Screen is the system's.
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)
-            item(.toggleRightPane)
             Divider()
             // Dotfiles in the project's tree (DL-105).
             Toggle("Show Hidden Files", isOn: Binding(get: { model.showHiddenFiles }, set: { model.setShowHiddenFiles($0) }))
-            Divider()
             // The map's order (DL-104), the same choice as its Sort popup.
             Picker("Sort Projects By", selection: Binding(get: { model.mapSort }, set: { model.setMapSort($0) })) {
                 Text("Recent Activity").tag(MapSort.recent)
                 Text("Name").tag(MapSort.name)
             }
+            Divider()
+            // The system's item, made here: AppKit's own isn't added to a SwiftUI View menu.
+            Button(model.fullScreen ? "Exit Full Screen" : "Enter Full Screen") {
+                (NSApp.windows.first { $0.title == "Duo" } ?? NSApp.keyWindow)?.toggleFullScreen(nil)
+            }
+            .keyboardShortcut("f", modifiers: [.command, .control])
         }
+        // What's in front of you (DL-108, m1).
+        CommandMenu("Project") { ProjectMenuItems(model: model) }
+        CommandMenu("Session") { SessionMenuItems(model: model) }
         CommandMenu("Go") {
             item(.search)
             Divider()
@@ -210,9 +283,13 @@ public struct DuoCommands: Commands {
             Divider()
             item(.togglePeek)
             item(.jumpToPeekSelection)
+        }
+        // Help (DL-108, m4); the system adds its search field.
+        CommandGroup(replacing: .help) {
+            item(.duo2Reference)
+            item(.whatsNew)
             Divider()
-            item(.nextPane)
-            item(.previousPane)
+            item(.reportIssue)
         }
     }
 

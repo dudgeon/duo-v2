@@ -1052,3 +1052,24 @@ Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and o
 - **Checked live on scratch data** (own `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`): the three states against the board, region by region (`build/ui/folder-*.png`); `duo2 project make tool --not-now` hid it and `duo2 undo` brought it back; `duo2 project make tool` wrote PROJECT.md.
 - **Not in DuoChecks:** Not Now writes Duo's `state.json`, and DuoChecks reads the real one, so it is checked live instead.
 
+
+## F-91 · The menu bar as drawn (2026-10-05)
+
+- **Built (DL-108):** the bar reads Duo, File, Edit, Format, View, Project, Session, Go, Window, Help.
+  - File, Go and View follow m2's mockup. New Task and New Project… join File. Toggle Right Pane and Next/Previous Pane are out of the menus until they're built.
+  - Format follows m3: Code, Link… ⌘K, Heading ▸ 1–3, Task and Add Properties.
+  - Project and Session follow m1 (`Navigation/ObjectMenus.swift`):
+    - Project acts on the project you're in, or the focused tile at All projects.
+    - Session acts on the console's Claude session, or else the selected row.
+    - The Merge Into, Add to Task and Move to Project submenus are shared with the right-click menus.
+  - Help follows m4: GitHub pages, with the new issue filled in but not sent.
+  - Every item has a `duo2` verb. `doc format` takes `code`, `link`, `heading1–3`, `task` and `properties`; `End Session` is `session close`. The Help pages and full screen are in `Parity.uiOnly`.
+- **SwiftUI's menu bar, learned:**
+  1. A `CommandMenu` lands after View. Format has to fill the system's own Format menu (`CommandGroup(replacing: .textFormatting)`) to sit between Edit and View.
+  2. `.disabled` on a `Menu` does nothing in the menu bar: AppKit auto-enables any item that has a submenu. With nothing to act on, Merge Into, Add to Task and Move to Project are plain dimmed items.
+  3. AppKit doesn't add Enter Full Screen to a SwiftUI View menu. Duo makes it (⌃⌘F), and the title follows the window's full-screen notifications.
+- **Link…** has no drawn popover. The selection becomes `[text]()` with the caret waiting for the address, or, with nothing selected, `[]()` with the caret waiting for the text. Heading and Task replace a line's leading mark; choosing the same one again takes it off.
+- **Checked:**
+  - Window captures don't draw the menu bar. A new harness action, `menus`, prints it as text (titles, chords, dimmed items, checkmarks). It was compared item by item with the walk's m1–m4 mockups at All projects, inside `checkout`, and with the editor focused: order, labels and chords all match.
+  - The editor commands were checked in the editor page in a browser. Add Properties leaves the same state as `frontmatter-none` (an empty block with the most-used names on offer).
+  - DuoChecks pass, including parity; `docs/cli/duo2.md` was regenerated.

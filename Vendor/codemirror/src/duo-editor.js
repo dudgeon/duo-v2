@@ -1404,10 +1404,53 @@ function wrap(marker) {
   });
 }
 
+// Format › Link… (⌘K, DL-108): the selection becomes a link's text and the caret waits for its
+// address; with nothing selected, the caret waits for the text.
+function insertLink() {
+  const r = view.state.selection.main;
+  const text = view.state.sliceDoc(r.from, r.to);
+  const at = r.empty ? r.from + 1 : r.from + text.length + 3;
+  view.dispatch({ changes: { from: r.from, to: r.to, insert: `[${text}]()` }, selection: { anchor: at }, userEvent: "input.format" });
+}
+
+// Format › Heading ▸ and Task (DL-108): each selected line's leading mark is replaced; choosing
+// the mark a line already has takes it off.
+function lineMark(mark, pattern, isOn = (t) => t.startsWith(mark)) {
+  const state = view.state, changes = [];
+  const lines = new Set();
+  for (const r of state.selection.ranges) {
+    for (let n = state.doc.lineAt(r.from).number; n <= state.doc.lineAt(r.to).number; n++) lines.add(n);
+  }
+  const all = [...lines].map((n) => state.doc.line(n));
+  const has = all.every((l) => isOn(l.text));
+  for (const l of all) {
+    const old = pattern.exec(l.text)?.[0] ?? "";
+    changes.push({ from: l.from, to: l.from + old.length, insert: has ? "" : mark });
+  }
+  view.dispatch({ changes, userEvent: "input.format" });
+}
+const HEADING_MARK = /^#{1,6}[ \t]+/;
+const LIST_MARK = /^\s*(?:[-*+][ \t]+(?:\[[ xX]\][ \t]+)?|\d+[.)][ \t]+)/;
+
+// Format › Add Properties (DL-108, frontmatter-handoff's `frontmatter-none`): starts the block on
+// the first line with the most-used names on offer; with a block already there, a new line in it.
+function addProperties() {
+  if (frontmatterLines(view.state.doc)) { addProperty(view); return; }
+  view.dispatch({ changes: { from: 0, insert: "---\n\n---\n" }, selection: { anchor: 4 }, userEvent: "input" });
+  view.focus();
+  startCompletion(view);
+}
+
 const commands = {
   bold: () => wrap("**"),
   italic: () => wrap("*"),
   code: () => wrap("`"),
+  link: insertLink,
+  heading1: () => lineMark("# ", HEADING_MARK),
+  heading2: () => lineMark("## ", HEADING_MARK),
+  heading3: () => lineMark("### ", HEADING_MARK),
+  task: () => lineMark("- [ ] ", LIST_MARK, (t) => /^\s*[-*+][ \t]+\[[ xX]\][ \t]/.test(t)),
+  properties: addProperties,
 };
 
 // Lines with their terminators, so joining the pieces gives the text back exactly.
