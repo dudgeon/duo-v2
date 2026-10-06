@@ -466,6 +466,13 @@ public enum FixtureHarness {
         case "html-pick": if parts.count > 1 { model.htmlViewer.pick(selector: parts[1]) }
         // The PowerPoint viewer (pptx-handoff): slide-go:<n>, slide-picking, slide-hover:<slide>/<id>
         // (the picker's dashed outline, B), slide-pick:<slide>/<id> (a shape picked, C).
+        case "right-width":   // right-width:<pt>: the right pane's width, as if its divider were dragged
+            if let w = Double(parts.count > 1 ? parts[1] : ""), let split = NSApp.windows.lazy.compactMap({ $0.contentView.flatMap(firstSplit) }).first,
+               split.arrangedSubviews.count >= 2 {
+                split.setPosition(split.bounds.width - w - split.dividerThickness, ofDividerAt: split.arrangedSubviews.count - 2)
+                split.adjustSubviews()
+                FileHandle.standardError.write(Data("right-width: \(split.arrangedSubviews.map { Int($0.frame.width) })\n".utf8))
+            } else { FileHandle.standardError.write(Data("right-width: no split\n".utf8)) }
         case "slide-go": model.deckViewer.go(Int(parts.count > 1 ? parts[1] : "1") ?? 1)
         case "slide-picking": model.deckViewer.startPicking()
         case "slide-hover": if parts.count > 1 { model.deckViewer.hover(parts[1]) }
@@ -590,4 +597,11 @@ public enum FixtureHarness {
             exit(failed ? 1 : 0)
         }
     }
+}
+
+/// The window's three-pane split (for `right-width:`).
+@MainActor func firstSplit(_ v: NSView) -> NSSplitView? {
+    if let s = v as? NSSplitView, s.arrangedSubviews.count >= 3 { return s }
+    for c in v.subviews { if let s = firstSplit(c) { return s } }
+    return nil
 }

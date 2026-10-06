@@ -1453,6 +1453,12 @@ func repoFixture() throws -> Fixture {
         check(duo2("slide", "pick", "2/7").ok && m.deckViewer.pickedShape?.name == "Diamond 6", "`slide pick 2/7` selects the diamond for the user")
         let element = duo2("slide", "element").output
         check(element.contains("slide 2 of 5, the shape \"Diamond 6\" (id 7):") && element.contains("\nscreenshot: "), "`slide element` describes it with a screenshot")
+        // The bars fit the narrowest right pane as well as the board's (Q-68: two rows of buttons there).
+        for w in [DuoMetric.paneProjectRight, DuoMetric.paneMinRight] {
+            let shot = FileManager.default.temporaryDirectory.appending(path: "duo-deck-bars-\(Int(w)).png")
+            let need = DeckChromeCheck.layout(m, width: w, png: shot)
+            check(need.width <= w + 0.5 && need.height > 0, "at \(Int(w)) pt the deck's bar and picker bar fit (\(Int(need.width))×\(Int(need.height)); \(shot.path))")
+        }
         check(!duo2("slide", "pick", "2/99").ok, "a shape that isn't there is refused")
         check(!duo2("doc", "read", "decks/Garden plan.pptx").ok && duo2("doc", "read", "decks/Garden plan.pptx").output.contains("isn't text"),
               "`doc read` never returns a deck's bytes (C-26)")
