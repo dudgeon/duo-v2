@@ -1174,6 +1174,12 @@ func repoFixture() throws -> Fixture {
               && held[1].rows[1].state == SessionState.needsYou, "a held list keeps rows in place with fresh state, adds new rows, drops gone ones (Q-80)")
     }
 
+    // DL-130: the editor page gets Claude's highlight timings from the tokens (zero with Reduce Motion).
+    check(EditorController.tokenCSS().contains("--duo-motion-highlight-in-ms: \(MotionSettings.shared.reduce ? 0 : 200)")
+          && EditorController.tokenCSS().contains("--duo-motion-highlight-out-ms: \(MotionSettings.shared.reduce ? 0 : 600)")
+          && editorSource.contains("--duo-motion-") && editorSource.contains("prefers-reduced-motion"),
+          "the editor's highlight fades from motion.highlightIn and highlightOut, and honours Reduce Motion")
+
     print("cli parity (DL-71, DL-72)")
     check(Set(DuoAction.all.map(\.id)) == Set(ActionID.allCases) && DuoAction.all.count == ActionID.allCases.count, "every action is in the registry once")
     let gaps = parityGaps()

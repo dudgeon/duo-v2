@@ -1824,3 +1824,24 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - `notice` (live, `user-type:` then `disk-write:` on the same line, 20 ms apart): the conflict bar slides down over 0.4 to 1.6 s, pushing the document.
   - With Reduce Motion, every frame is the end state.
 - **Unchanged at rest** against origin/main's build (0 pixels): overview, project, flow-zoom-1 to 4, shell-tab, the hover × on a console and a document tab, chat-window and narrow-project. DuoChecks 627 and the chat checks 96 pass.
+
+## F-138 · Claude's highlight fades in and out in the editor (DL-130, 2026-10-06)
+
+- **In:**
+  - A new highlight (`duo-added`) also gets `duo-added-new`, which animates its background from nothing to `selected` over `motion.highlightIn` (200 ms, ease-out).
+  - After that, a `settleAdded` effect gives the marks the plain class. CodeMirror recreates a mark's span whenever it redraws the line, so a class that kept the animation would fade in again on every redraw.
+- **Out:**
+  - The user's next edit clears the highlight at once, as before (DL-5): `addedField`, `changesField` and what Revert can put back are unchanged.
+  - A separate `fadingField` draws a copy of the cleared ranges as `duo-added-fading`, which animates from `selected` to nothing over `motion.highlightOut` (600 ms, ease-in-out), then is removed.
+- **Timings:**
+  - They reach the page with the token CSS: `--duo-motion-highlight-in-ms` and `--duo-motion-highlight-out-ms`, from `DuoMotionToken`, so zero with Reduce Motion or `DUO_REDUCE_MOTION=1`, and scaled by `DUO_MOTION_SCALE`.
+  - The page also checks `prefers-reduced-motion`, so a system change mid-session takes effect without a reload. The keyframes are added to the page once.
+- **Proof in Chromium, not window captures.**
+  - Duo's window captures snapshot the page (F-120), but WebKit doesn't advance page animations in a window that isn't on screen (F-102). The frames held the start colour, then jumped when the class changed.
+  - `node scripts/check-editor-motion.mjs` (playwright-core, as check-editor-selection.mjs) runs the built page at the pane's width and samples the highlight every 50 ms. Opacity goes 0, .38, .69, .91, 1 over 200 ms in, and 1, .98, … .04, 0 over 600 ms out. With `reducedMotion: reduce`, the highlight is there at once and goes at once.
+  - `film:` frames now snapshot web views too, as the final capture does: without it, the editor drew blank.
+- **Unchanged at rest:**
+  - project, flow-zoom-2 and flow-zoom-3 (0 pixels);
+  - a live document with a settled highlight, cropped to the editor, against origin/main's build (0 pixels).
+  - check-editor-selection passes (108 clicks, 42 drags, 108 shift+down). DuoChecks checks the page gets the timings.
+- `Vendor/codemirror/dist/cm6.js` rebuilt with `build.sh` (`npm ci` from the lockfile); only this change differs.

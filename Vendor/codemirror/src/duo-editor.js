@@ -888,18 +888,67 @@ const conflictField = StateField.define({
 });
 const markAdded = StateEffect.define();
 const clearAdded = StateEffect.define();
+// Motion (DL-130): a new highlight fades in (`motion.highlightIn`), then settles to the plain
+// class, so a line CodeMirror redraws later doesn't fade in again. Durations come from Duo's
+// tokens (`--duo-motion-*-ms`, zero with Reduce Motion) and honour prefers-reduced-motion.
+const settleAdded = StateEffect.define();
+function motionMs(name) {
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return 0;
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--duo-motion-" + name + "-ms")) || 0;
+}
+function addedRanges(deco) {
+  const out = [];
+  deco.between(0, 1e9, (f, t) => { out.push([f, t]); });
+  return out;
+}
 const addedField = StateField.define({
   create: () => Decoration.none,
   update(deco, tr) {
     deco = deco.map(tr.changes);
     for (const e of tr.effects) {
       // An empty insert marks nothing (a mark can't be empty).
-      if (e.is(markAdded)) deco = deco.update({ add: e.value.filter(([f, t]) => t > f).map(([f, t]) => Decoration.mark({ class: "duo-added" }).range(f, t)) });
+      if (e.is(markAdded)) {
+        const cls = motionMs("highlight-in") > 0 ? "duo-added duo-added-new" : "duo-added";
+        deco = deco.update({ add: e.value.filter(([f, t]) => t > f).map(([f, t]) => Decoration.mark({ class: cls }).range(f, t)) });
+      }
+      if (e.is(settleAdded)) deco = Decoration.set(addedRanges(deco).map(([f, t]) => Decoration.mark({ class: "duo-added" }).range(f, t)), true);
       if (e.is(clearAdded)) deco = Decoration.none;
     }
     return deco;
   },
   provide: (f) => EditorView.decorations.from(f),
+});
+// Cleared highlights fade out (`motion.highlightOut`) rather than blink off. Only the look: the
+// highlight itself (and what Revert can put back) is gone at once, as before (DL-5).
+const startFade = StateEffect.define();
+const endFade = StateEffect.define();
+const fadingField = StateField.define({
+  create: () => Decoration.none,
+  update(deco, tr) {
+    deco = deco.map(tr.changes);
+    for (const e of tr.effects) {
+      if (e.is(startFade)) deco = Decoration.set(e.value.map(([f, t]) => Decoration.mark({ class: "duo-added-fading" }).range(f, t)), true);
+      if (e.is(endFade)) deco = Decoration.none;
+    }
+    return deco;
+  },
+  provide: (f) => EditorView.decorations.from(f),
+});
+let settleTimer = null, fadeTimer = null;
+// The highlight's keyframes (from nothing to `selected`, and back), off with Reduce Motion.
+{
+  const st = document.createElement("style");
+  st.textContent = "@keyframes duo-highlight-in { from { background-color: transparent; } to { background-color: var(--duo-selected); } }"
+    + " @keyframes duo-highlight-out { from { background-color: var(--duo-selected); } to { background-color: transparent; } }"
+    + " @media (prefers-reduced-motion: reduce) { .duo-added-new, .duo-added-fading { animation: none !important; } .duo-added-fading { background-color: transparent; } }";
+  document.head.appendChild(st);
+}
+const highlightMotion = EditorView.updateListener.of((u) => {
+  if (!u.transactions.some((t) => t.effects.some((e) => e.is(markAdded)))) return;
+  const ms = motionMs("highlight-in");
+  if (ms <= 0) return;
+  clearTimeout(settleTimer);
+  settleTimer = setTimeout(() => u.view.dispatch({ effects: settleAdded.of(null) }), ms + 50);
 });
 
 // Claude's changes, revertable while they're highlighted (ENH-4): where each landed in the
@@ -942,7 +991,11 @@ function revert(ids) {
 const clearOnUserEdit = EditorView.updateListener.of((u) => {
   if (!u.docChanged || u.state.field(addedField).size === 0) return;
   if (u.transactions.some((t) => t.isUserEvent("input") || t.isUserEvent("delete") || t.isUserEvent("move"))) {
-    u.view.dispatch({ effects: clearAdded.of(null) });
+    const ms = motionMs("highlight-out");
+    const effects = [clearAdded.of(null)];
+    if (ms > 0) effects.push(startFade.of(addedRanges(u.state.field(addedField))));
+    u.view.dispatch({ effects });
+    if (ms > 0) { clearTimeout(fadeTimer); fadeTimer = setTimeout(() => u.view.dispatch({ effects: endFade.of(null) }), ms + 50); }
   }
 });
 
@@ -1377,6 +1430,8 @@ const duoTheme = EditorView.theme({
   ".duo-fs-first.duo-fs-last": { boxShadow: "inset 0 0 0 1.5px var(--duo-text)" },
   ".duo-fs-first::after": { content: "attr(data-label)", position: "absolute", right: "12px", top: "8px", color: "var(--duo-text2)", fontFamily: "-apple-system, sans-serif", fontSize: "13px" },
   ".duo-added": { backgroundColor: "var(--duo-selected)", borderRadius: "var(--duo-radius-card)" },
+  ".duo-added-new": { animation: "duo-highlight-in calc(var(--duo-motion-highlight-in-ms, 0) * 1ms) ease-out both" },
+  ".duo-added-fading": { borderRadius: "var(--duo-radius-card)", animation: "duo-highlight-out calc(var(--duo-motion-highlight-out-ms, 0) * 1ms) ease-in-out both" },
   ".duo-task": { display: "inline-flex", margin: "0 8px 0 0", verticalAlign: "-1px", cursor: "default", textIndent: "0" },
   // The properties block (frontmatter-handoff §2, slice2 task-note): sizes from tokens size.propertiesBlock.
   "&.duo-has-fm .cm-content, .cm-content.duo-has-fm": { paddingTop: "14px" },
@@ -1568,6 +1623,8 @@ function create(parent, text) {
           addToOptions: [{ position: 20, render: (c) => { const s = document.createElement("span"); s.className = "duo-sugg-icon";
             if (PROP_ICONS[c.type]) s.innerHTML = iconSvg(c.type); return s; } }] })]),
       addedField,
+      fadingField,
+      highlightMotion,
       conflictField,
       ...(window.duoFlags?.noPreview ? [] : [blocksField]),
       changesField,
