@@ -1405,3 +1405,12 @@ The spike's recommendation 1 and 2 (`docs/plan/spikes/scripted-instances.md`, F-
   - **Live:** a scratch Duo (own `DUO_SUPPORT_DIR`, scratch `CLAUDE_CONFIG_DIR`, `DUO_INSTALL_ROOT`, a clean environment) ran a stand-in `claude` that runs the real hook commands from Duo's settings file with sample payloads. No model was called.
   - The live run covered New Session in Task → start context; an unchanged prompt → nothing; `duo2 task add` + `task status` → told once; compact → full context; `/clear` → the new id linked into both notes and full context; unlinking by hand → told once.
 - **Scripted runs:** a launch without `DUO_INSTALL_ROOT` relinked Geoff's `~/.local/bin/duo2` (F-107, C-28). Set it, as well as `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`, until F-113's isolation is in the running build.
+
+## F-117 · Google calls Duo's browser unsupported because a bare WKWebView doesn't say it's Safari (C-32, Q-65, 2026-10-06)
+
+Spike: `docs/plan/spikes/browser-engine.md`.
+
+- **Cause:** a WKWebView's default user agent ends at `AppleWebKit/605.1.15 (KHTML, like Gecko)`, with no `Version/x Safari/605.1.15`. Google Docs and Sheets then show "This browser version is no longer supported". Measured signed out, on a public Doc and a public Sheet: the banner with the default user agent, none with the Safari token. Google sign-in also downgrades the bare user agent to its basic "WebLiteSignIn" page, while the token gets Safari's normal page.
+- **Fix (built):** `WebUserAgent.applicationName` is `Version/<installed Safari's major.minor> Safari/605.1.15`. On macOS 26 and later it falls back to the system's version, because Safari is numbered after the OS. `DuoWebView`'s initializer sets it, so the browser tabs, the HTML viewer and the editor all send it. DuoChecks checks the token and that no web view is made outside `DuoWebView`. Proved in a live isolated Duo: `duo2 browser read` on the Doc and the Sheet shows no banner.
+- **Not an engine problem:** the tabs already run Safari's WebKit. CEF would add about 200 MB and a rewrite of PageHost and the browser verbs, and would fix nothing more.
+- **Gaps that remain, Duo's own, not WebKit's:** no file chooser (`runOpenPanelWith`), no downloads, no print, and popups load in the same tab without their opener (Q-65). Sign-in past the email step, and editing, comments and paste in a doc, weren't tested without a scratch account.

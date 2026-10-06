@@ -81,7 +81,9 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
     init(id: String) {
         self.id = id
         let config = WKWebViewConfiguration()
-        config.websiteDataStore = .default()
+        // Tabs stay signed in to their sites, except in an isolated copy of Duo: the default store
+        // belongs to the app's bundle id, not its support folder, so it would be the user's (C-32).
+        config.websiteDataStore = SupportFolder.isIsolated ? .nonPersistent() : .default()
         config.userContentController.addUserScript(WKUserScript(source: HTMLPicker.script, injectionTime: .atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
         webView = DuoWebView(frame: .zero, configuration: config)
         super.init()
