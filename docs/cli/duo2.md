@@ -14,7 +14,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 status` | What Duo is showing: the view, the open project, session and document, and counts. | — |
 | `duo2 needs-you` | Sessions waiting for the user, with their questions. | Needs You Elsewhere |
 | `duo2 undo` | Undo Duo's last move, merge or Make a Project (Edit › Undo). | Undo |
-| `duo2 help [family \| --markdown]` | Families and everyday verbs; a family's verbs; or the full reference as Markdown. | — |
+| `duo2 help [family \| --markdown]` | Families and everyday verbs; a family's verbs; or the full reference as Markdown. | duo2 Reference |
 
 ## What's on screen
 
@@ -26,7 +26,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 peek [open\|close]` | Show or hide the sessions that need the user in other projects. | Needs You Elsewhere |
 | `duo2 peek jump` | Jump into the project selected in the peek. | Jump into Selected Project |
 | `duo2 view sidebar show\|hide\|toggle` | Show or hide the left pane. | Toggle Sidebar |
-| `duo2 view tab <Project \| document path \| group>` | Switch the right pane's tab. | right pane tab |
+| `duo2 view tab <Project \| document path \| group>` | Switch the right pane's tab. | right pane tab, Open Project File |
 | `duo2 view group <group> expand\|collapse` | Expand or collapse a group in the session list. | group row |
 | `duo2 view select <session id>` | Select a session's card (action column or peek) without opening it. | action card, peek card |
 | `duo2 view sort recent\|name` | Order All projects' map by newest activity or by name (View › Sort Projects By). | Sort Projects By, map sort popup |
@@ -47,7 +47,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 project move-into-home <project\|folder> [--into <topic folder>]` | Move a project or folder into Home (its top level, or a topic folder with --into) with every session filed under it (journaled; sessions stay its). The user confirms in Duo. Undo with `duo2 undo`. | Move into Home…, Move |
 | `duo2 project reconnect <project\|folder> [--to <folder>]` | A project or folder moved outside Duo (DB-8): its sessions follow it to where it is now (found by Duo, or --to), the way Claude's /cd moves them; journaled. The user confirms in Duo. Undo with `duo2 undo`. | Reconnect Sessions…, Use New Place, Locate Folder… |
 | `duo2 project forget <folder>` | Remove a missing folder's tile from Duo (DB-8); its sessions stay in Claude's storage and in search. Undo with `duo2 undo`. | Remove from Duo |
-| `duo2 project new <name> [--goal <text>] [--into <topic folder>] [--session]` | Make a new project in Home (or a topic folder in it): a folder with a starter PROJECT.md holding the goal. --session starts a Claude session in it. Undo with `duo2 undo`. | + New project, Create Project |
+| `duo2 project new <name> [--goal <text>] [--into <topic folder>] [--session]` | Make a new project in Home (or a topic folder in it): a folder with a starter PROJECT.md holding the goal. --session starts a Claude session in it. Undo with `duo2 undo`. | + New project, Create Project, New Project… |
 | `duo2 inventory` | Claude's session storage, read only: each folder's sessions, size, missing folders, collisions, duplicate ids, and what Claude's cleanup takes within 7 days (CONS FR-7.1). | — |
 | `duo2 evidence <project\|folder>` | For a catch-all folder, read only: the files each session edited, its candidate home, and date clusters (CONS FR-7.10). | — |
 | `duo2 migrations` | Storage migrations Duo planned or ran, newest first, with their state (CONS §6.3). | — |
@@ -64,7 +64,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 session show <id>` | A session's title, project, state, note, next step, transcript path and recent turns. | — |
 | `duo2 session new [--project <p>] [--prompt <text>]` | Start a Claude session in a project (the current one by default). | + New session, New Session, console +, New Claude Session, Start Claude here, Start Claude in Home, Start in |
 | `duo2 session open <id>` | Show a session's terminal, resuming it if needed. | session row, console tab, Home tab, Resume |
-| `duo2 session close [id]` | End a session's process and close its tab (it stays listed and resumable). | Close Tab |
+| `duo2 session close [id]` | End a session's process and close its tab (it stays listed and resumable). | Close Tab, End Session |
 | `duo2 session move <id> --to <project> [--new]` | File a session in another project, or with --new in a new project of that name made in Home; it moves there on its next resume. The user confirms in Duo. Undo with `duo2 undo`. | Move to Project, New Project…, drag a session onto a tile |
 | `duo2 session note <text>` | Tell the user what this session is doing (one line, shown in Duo). | — |
 | `duo2 session next <text>` | Tell the user what this session needs next (one line). | — |
@@ -78,7 +78,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 shell new` | Open a plain shell in the console (DL-8); typing `claude` in it makes it a session. | New Shell |
 | `duo2 tasks [--project <p>]` | Task notes (tasks/*.md in each project) with their status and how many sessions their `sessions:` frontmatter links (DL-93). | — |
 | `duo2 task make <session\|group> [--title <t>]` | Make a Task: writes tasks/<slug>.md whose `sessions:` links the session (or the group's sessions; the group becomes the task) and opens it. Undo with `duo2 undo`. | Make a Task |
-| `duo2 task new [title] [--project <p>]` | + New task: a task note with no sessions yet, opened to write. Undo with `duo2 undo`. | + New task |
+| `duo2 task new [title] [--project <p>]` | + New task: a task note with no sessions yet, opened to write. Undo with `duo2 undo`. | + New task, New Task |
 | `duo2 task session <task> [--project <p>]` | New Session in Task: starts a Claude session in the task's project with its link already in the note's `sessions:` list, and shows it when that project is open. | New Session in Task |
 | `duo2 task status <task> <open\|in-progress\|waiting\|review\|done\|dropped> [--project <p>]` | Set a task's status: rewrites only `status:` (and `completed:` when done or dropped). Done and dropped tasks leave the lists. Undo with `duo2 undo`. | Status |
 | `duo2 task add <task> <session>` | Add to Task: puts the session's link in the task note's `sessions:` list, touching nothing else in the note. Undo with `duo2 undo`. | Add to Task, Open Task Note |
@@ -118,7 +118,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 doc selection` | The text selected in the editor, with its file and lines. | — |
 | `duo2 doc select <line> [to-line]` | Select lines in the showing document. | — |
 | `duo2 doc save` | Save the showing document now (it also autosaves). | Save |
-| `duo2 doc format bold\|italic` | Make the selection bold or italic. | Bold, Italic |
+| `duo2 doc format bold\|italic\|code\|link\|heading1\|heading2\|heading3\|task\|properties` | Format the selection (bold, italic, code, a link waiting for its address), make its lines headings or tasks (again takes it off), or start the properties block. | Bold, Italic, Code, Link…, Heading 1, Heading 2, Heading 3, Task, Add Properties |
 | `duo2 doc find <text>` | Find text in the showing document and select the next match. | Find |
 | `duo2 doc prop list \| get <name> \| set <name> <value> \| remove <name> \| type <name> <text\|list\|number\|checkbox\|date\|datetime\|link>` | The showing document's properties (frontmatter): read them, or change one line through the editor, highlighted as Claude's (DB-16). Lists: `set tags "[a, b]"`. | Add a property, property type menu, Pick a date, property checkbox |
 | `duo2 doc insert <text> [--line <n>]` | Insert text into the showing document through the editor (highlighted as added by Claude), at a line or the caret. | — |
@@ -190,8 +190,11 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Add to .gitignore | a one-time question to the user (DL-50) |
 | Cancel | a step inside another action's dialog or picker |
 | Close Window | window management |
+| Enter Full Screen | window management |
+| Exit Full Screen | window management |
 | Format | a menu, not an action |
 | Go | a menu, not an action |
+| Heading | a submenu, not an action |
 | Look Again | re-reads what Duo already refreshes every 2 s; the CLI always reads fresh state |
 | Next Pane | not built yet |
 | No other sessions in | a disabled hint on + Add |
@@ -200,8 +203,12 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | OK | dismisses a notice |
 | Open Settings… | not built: Settings waits on its design (DB-10) |
 | Previous Pane | not built yet |
+| Project | a menu, not an action |
+| Report an Issue… | opens GitHub's new-issue form, filled in, for the user to edit and submit |
 | Resume a session | the debug gallery only (DL-59 removed it from the app) |
 | Save to Recreate | writes the user's own text back after the file was removed on disk; Claude can do the same with `duo2 doc edit` (content) once the user asks |
+| Session | a menu, not an action |
 | Show in Finder | reveals a file or folder in Finder (Settings, editor notices, launch sheets) |
 | Toggle Right Pane | not built yet |
+| What’s New in This Version | opens this version's release notes on GitHub; `duo2 status` names the version |
 | confirmation sheet | the user's own consent; Claude can't confirm for them |

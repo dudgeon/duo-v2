@@ -857,23 +857,9 @@ struct SessionOrganizeMenu: ViewModifier {
                     Divider()
                     // Tasks (DL-93): a note in tasks/ whose `sessions:` links this session.
                     Button("Make a Task") { model.makeTask(fromSession: sessionKey) }
-                    let tasks = model.taskNotes(in: s.project)
-                    if !tasks.isEmpty {
-                        Menu("Add to Task") {
-                            ForEach(tasks, id: \.path) { t in
-                                Button(t.title) { if let why = model.addToTask(sessionKey: sessionKey, task: t.path) { model.info(why) } }
-                                    .disabled(t.sessionIds.contains(id))
-                            }
-                        }
-                    }
+                    if !model.taskNotes(in: s.project).isEmpty { AddToTaskMenu(model: model, session: s, id: id) }
                     Divider()
-                    Menu("Move to Project") {
-                        Button("New Project…") { model.moveSessionsToNewProject([id]) }
-                        Divider()
-                        ForEach(model.moveTargets(excluding: s.project)) { p in
-                            Button(p.isFolderOnly ? "\(p.name) (folder)" : p.name) { model.moveSessions([id], to: p.name) }
-                        }
-                    }
+                    MoveToProjectMenu(model: model, session: s, id: id)
                     Divider()
                     // Filing (Geoff, 2026-10-04): out of the lists, kept, searchable; Unarchive from the Archived fold.
                     if model.isSessionArchived(id) {
@@ -922,11 +908,7 @@ struct ProjectOrganizeMenu: ViewModifier {
                     if model.liveRoot != nil, !model.isInHome(project.name), !project.isMissing {
                         Button("Move into Home…") { model.moveIntoHome(project.name) }
                     }
-                    Menu(project.isFolderOnly ? "Merge Sessions Into" : "Merge Into") {
-                        ForEach(model.moveTargets(excluding: project.name)) { p in
-                            Button(p.isFolderOnly ? "\(p.name) (folder)" : p.name) { model.mergeProject(project.name, into: p.name) }
-                        }
-                    }
+                    MergeIntoMenu(model: model, project: project)
                     Divider()
                     // Filing (ENH-6): the tile moves to the Archived rollup; nothing else changes.
                     Button("Archive Project") { model.setArchived(project.name, true) }

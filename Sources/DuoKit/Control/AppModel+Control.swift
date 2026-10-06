@@ -419,7 +419,7 @@ extension AppModel {
             guard editorIfLoaded?.url != nil else { return done(.fail("no document is open")) }
             editor.saveNow(); done(.ok("Saved."))
         case .docFormat:
-            guard let f = inv[0], ["bold", "italic"].contains(f), editorIfLoaded?.url != nil else { return done(.fail("usage: \(id.action.usage)")) }
+            guard let f = inv[0], DuoCommand.allCases.contains(where: { $0.formatName == f }), editorIfLoaded?.url != nil else { return done(.fail("usage: \(id.action.usage)")) }
             editor.run("duo.exec(f); return 1", ["f": f]) { _ in done(.ok("Done.")) }
         case .docFind:
             guard !inv.text.isEmpty, editorIfLoaded?.url != nil else { return done(.fail("usage: \(id.action.usage) (with a document showing)")) }

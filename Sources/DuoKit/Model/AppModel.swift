@@ -74,6 +74,8 @@ public final class AppModel {
     public var openDocumentsByProject: [String: [String]] = [:]
     /// The file tree (DL-105): hidden files on or off, and the folders open in each project's tree.
     public var showHiddenFiles = DuoState.load().showHiddenFiles
+    /// The main window is full screen (View › Enter / Exit Full Screen, DL-108).
+    public var fullScreen = false
     public var expandedFolders: [String: Set<String>] = [:]
     /// The console and right-pane tab each project showed when the user left it (DL-107).
     public var lastConsoleTab: [String: String] = [:]

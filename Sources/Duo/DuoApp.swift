@@ -203,6 +203,12 @@ final class MainWindow {
         w.center()
         w.setFrameAutosaveName("main")
         window = w
+        // View › Enter Full Screen (DL-108) says which way it goes.
+        for (name, on) in [(NSWindow.didEnterFullScreenNotification, true), (NSWindow.didExitFullScreenNotification, false)] {
+            NotificationCenter.default.addObserver(forName: name, object: w, queue: .main) { [model] _ in
+                MainActor.assumeIsolated { model.fullScreen = on }
+            }
+        }
         FixtureHarness.configure(w, model: model, options: options)
         w.makeKeyAndOrderFront(nil)
         NSApp.activate()
