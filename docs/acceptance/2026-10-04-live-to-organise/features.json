@@ -1056,6 +1056,43 @@
    "commit": "e03c7ecc49d39783b7011a651695af5329c38304"
   },
   {
+   "id": "tables-edit",
+   "group": "App",
+   "title": "Tables in documents",
+   "what": "Format › Table inserts a table and adds, deletes or aligns rows and columns. A bar over the table shows while the cursor is in it, and Tab moves between cells (Tab in the last cell adds a row). The Markdown stays plain and lined up.",
+   "steps": [
+    "In `checkout`, open `docs/prd.md`, put the cursor on an empty line and choose Format › Table › Insert Table: a 3-column table appears with `Column 1` selected. Type a name and press Tab to the next cell.",
+    "Tab through to the last cell and press Tab again: a row is added.",
+    "With the cursor in the table, use the bar: + Row, + Column, Align ▾ › Right, Delete ▾ › Delete Column. Each undoes with ⌘Z.",
+    "Copy a few lines of a bulleted list, click in a cell and paste: it stays on one line, with `<br>` between the lines.",
+    "Click outside the table: the bar goes and the table is drawn. Undo your changes, or close the file without keeping them."
+   ],
+   "expect": "Matches `tables-handoff` (the bar, the menu, the inserted table). The file reads the same in GitHub or Obsidian: one line per row, `|` in a cell escaped, a blank line around the table.",
+   "ref": "DL-113, F-94",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Every command and key in the editor page; Insert after a list and mid-paragraph.",
+     "A sample document written by the commands, rendered by GitHub's GFM renderer: both tables, escaped pipes, a code span with a pipe, <br> in a cell, and lists kept outside the tables.",
+     "Live on a scratch workspace: Format › Table enabled in a table; `duo2 doc table row-below`, `align-center` and `next` wrote the lined-up table.",
+     "The bar compared with `tables-bar`: same buttons and spacing."
+    ],
+    "didnt": [
+     "Clicking the bar with a real pointer.",
+     "Obsidian's renderer (not installed here)."
+    ],
+    "human": [
+     "Whether editing tables this way feels right."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "1bdd5d23588e516784f004b56c5b3bf6fb391f9b"
+  },
+  {
    "id": "app-clear",
    "group": "App",
    "title": "`/clear` keeps the tab with the session",
