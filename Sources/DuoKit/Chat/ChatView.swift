@@ -59,13 +59,20 @@ struct ChatPane: View {
             }
             if chat.cardUp {
                 // While Claude waits on you, the review card takes the composer's place (DL-119 §3).
+                // It rises out of the composer's place (`cardIn`) and sinks back once Claude has the
+                // answer (`cardOut`); the feed above gives way and stays pinned to the bottom (DL-130).
                 ChatReviewCard(chat: chat)
                     .padding(EdgeInsets(top: 0, leading: 16, bottom: 14, trailing: 16))
+                    // Opaque and above the composer while it moves, so their text never overprints.
+                    .zIndex(1)
+                    .transition(.move(edge: .bottom))
             } else {
                 ChatComposerArea(chat: chat)
                     .padding(EdgeInsets(top: 0, leading: DuoSpace.chatColumnInset, bottom: 12, trailing: DuoSpace.chatColumnInset))
+                    .transition(.opacity)
             }
         }
+        .animation((chat.cardUp ? DuoMotionToken.cardIn : .cardOut).animation, value: chat.cardUp)
         .background(DuoColor.chatGround)
         .tint(DuoColor.text)
         .onAppear { model.installChatKeys() }
