@@ -195,6 +195,7 @@ public enum DuoSpace {
     public static let gapToolbarOverview: CGFloat = 16.0
     public static let gapToolbarProject: CGFloat = 8.0
     public static let gapPaneTabs: CGFloat = 18.0
+    public static let gapAboveDocumentHeading: CGFloat = 4.0
 }
 
 /// The terminal's colours (surfaces-handoff DB-2): the 16 ANSI colours, an Increase Contrast set,
