@@ -1724,3 +1724,34 @@ Spike: `docs/plan/spikes/browser-engine.md`.
 - **Unchanged at rest** against origin/main's build (0 pixels differ):
   - overview, project and flow-zoom-1 to 4;
   - `sheet-move:`, `sheet-new:`, `ask-update:`, `task-archive:` and `ask-close:`.
+
+## F-134 · The session list moves; folds turn; the list holds still under the pointer; folders list at once (DL-130, Q-79, Q-80, 2026-10-06)
+
+- **One flat list.** The project's session list was a `ForEach` of sections, each with its own `ForEach` of rows, so a row that changed section was a different view: removed in one place, inserted in another.
+  - It is now one `ForEach` of `SidebarItem`s (labels, gaps and rows, keyed `row/<id>`), so a row travels to its new place.
+  - The animation is `.duoAnimation(.rowMove, value: <item ids>)` on the whole column, so the buttons and folds below move with it. Keyed to the ids, not the rows, it doesn't fire when only a wait time changes.
+  - Rows fade in (`rowIn`) and out (`rowOut`). Changes come on the 2 s snapshot, outside any click's transaction, so the animation keys on the result, not the action.
+  - Mid-move, a travelling row passes over the rows it crosses.
+- **Held under the pointer (Q-80).**
+  - `.onHover` on the list calls `AppModel.hoverSidebar`. Coming in, it notes each section's row ids (`sidebarHold`). While held, `SidebarRow.held(fresh, order:)` keeps listed rows in their noted section and place, with fresh state (glyph, wait). A new row joins its own section, so + New session shows at once, and a row that's gone, goes.
+  - Leaving, the hold drops inside `withDuoAnimation(.rowMove)`, and rows travel to where they now belong.
+  - A section's count follows the rows it lists while held.
+  - DuoChecks checks `held`.
+- **Folds turn.**
+  - `Chevron` is `Animatable` with a `turn` from 0 (right) to 1 (down). The down chevron is the right one turned 90° about its centre, so mid-turn draws that rotation, and the ends draw the two original paths: pixel-identical at rest.
+  - Every fold toggles inside `withDuoAnimation(.fold)`: groups, threads, Earlier and Older, Tasks, Archived, the map's archived projects, and file-tree folders.
+  - A fold's rows use `.foldRows`. They fade in over the second half of `fold`, once the rows around them have moved. The file tree grows upward from the bottom of the pane, and rows fading in at once overlapped the rows still sliding.
+- **Folders list at once (Q-79).** `toggleFolder` reads the tree the way the snapshot does (`LiveSnapshot.treeFiles` with the project's open folders) before asking for a refresh. The folder opens with its files, and the snapshot that follows finds nothing to change.
+- **Harness:**
+  - `session-state:<name>=<state>[@wait]`, `session-add:<name>=<state>@<wait>` and `session-remove:<name>` change the fixture as a snapshot would.
+  - `sidebar-hover:on|off`.
+  - `collapse:<key>`.
+  - `expand:` and `folder:` now animate as a click does.
+- **Proof** (scale 10; `build/motion/<name>/strip.png`, motion above and Reduce Motion below):
+  - `row-move`: Teardown research to Needs you; it travels up, Today's label fades, the button slides.
+  - `row-new`: a session added; it fades in while the row below slides down.
+  - `fold`: PRD v2 collapsing; the chevron is mid-turn at 900 ms.
+  - `hold`: the state changes with the pointer in; the row keeps its place with its new glyph, then travels when the pointer leaves.
+  - `tree`: live, `folder:research`; the files are listed 20 ms after the click and fade in once the rows have moved.
+  - Reduce Motion: every change is at once.
+- **Unchanged at rest** against origin/main's build (0 pixels): overview, project, flow-zoom-1 to 4, the Archived fold open, idle-list, and a sheet. `collapse:` can't be compared: main's harness doesn't have it.

@@ -7,6 +7,10 @@ public struct SidebarSection: Identifiable, Equatable, Sendable {
     public var title: String
     public var rows: [SidebarRow]
     public var needsYou = false
+
+    public init(id: String, title: String, rows: [SidebarRow], needsYou: Bool = false) {
+        self.id = id; self.title = title; self.rows = rows; self.needsYou = needsYou
+    }
 }
 
 /// The session list inside a project (handoff §3.3, DL-24): groups of threads, threads folding
@@ -27,6 +31,10 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
     public var kind: Kind
     /// For a task row (DL-93): the note's path in the project.
     public var task: String? = nil
+
+    public init(id: String, name: String, state: SessionState, wait: String?, kind: Kind, task: String? = nil) {
+        self.id = id; self.name = name; self.state = state; self.wait = wait; self.kind = kind; self.task = task
+    }
 
     /// The session a row stands for (its id when live, else its name): rows are keyed by identity.
     public var sessionKey: String { id.components(separatedBy: "/thread/").last ?? name }
@@ -100,6 +108,29 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
         if !week.isEmpty { out.append(.init(id: "week", title: "This week", rows: week)) }
         if !earlier.isEmpty {
             out.append(.init(id: "earlier", title: "", rows: [SidebarRow(id: "\(project)/earlier", name: "Earlier", state: .idle, wait: nil, kind: .older(rows: earlier))]))
+        }
+        return out
+    }
+
+    /// The sections as they stood when the pointer came into the list (Q-80, DL-130): while it's
+    /// there, a row that was already listed keeps its section and place, so nothing moves under a
+    /// click. Rows carry their fresh state (glyph, wait); a new row joins its own section; a row
+    /// that's gone, goes. `order` is each section's row ids when the hold began.
+    public static func held(_ fresh: [SidebarSection], order: [String: [String]]) -> [SidebarSection] {
+        let byID = Dictionary(fresh.flatMap(\.rows).map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let heldIDs = Set(order.values.joined())
+        let template = Dictionary(fresh.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let titles = ["needs": ("Needs you", true), "open": ("Open", false), "today": ("Today", false), "week": ("This week", false), "earlier": ("", false)]
+        var out: [SidebarSection] = []
+        for id in ["needs", "open", "today", "week", "earlier"] {
+            var rows = (order[id] ?? []).compactMap { byID[$0] }
+            // New rows join where the fresh list puts them, after the held rows before them.
+            for (i, r) in (template[id]?.rows ?? []).enumerated() where !heldIDs.contains(r.id) {
+                rows.insert(r, at: min(i, rows.count))
+            }
+            guard !rows.isEmpty else { continue }
+            let t = titles[id] ?? (template[id]?.title ?? "", false)
+            out.append(SidebarSection(id: id, title: template[id]?.title ?? t.0, rows: rows, needsYou: template[id]?.needsYou ?? t.1))
         }
         return out
     }

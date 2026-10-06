@@ -194,7 +194,7 @@ public enum FixtureHarness {
             }
         case "open-file": if parts.count > 1 { model.openFile(at: URL(fileURLWithPath: parts[1])) }   // open-file:<path>: Open File… (DL-106)
         case "hidden": model.setShowHiddenFiles(parts.count > 1 ? parts[1] == "on" : !model.showHiddenFiles)   // hidden:on|off (DL-105)
-        case "folder": if parts.count > 1 { model.toggleFolder(parts[1]) }   // folder:<path>: open or close it in the tree
+        case "folder": if parts.count > 1 { withDuoAnimation(.fold) { model.toggleFolder(parts[1]) } }   // folder:<path>: open or close it in the tree
         case "zoom-out": model.zoomOut()
         case "restore-save": model.saveRestoreState(force: true)
         case "restore-state":
@@ -377,8 +377,32 @@ public enum FixtureHarness {
                 menu.update()
                 FileHandle.standardError.write(Data(("---- task menu \(parts[1]) ----\n" + Self.walk(menu, 0).joined(separator: "\n") + "\n---- end menus ----\n").utf8))
             }
-        case "expand":   // expand:<key>: open a fold (`<project>/archived`, a group's name)
-            if parts.count > 1 { model.expandedGroups.insert(parts[1]) }
+        case "expand":   // expand:<key>: open a fold (`<project>/archived`, a group's name), as a click does
+            if parts.count > 1 { withDuoAnimation(.fold) { _ = model.expandedGroups.insert(parts[1]) } }
+        case "collapse":   // collapse:<key>: close it again
+            if parts.count > 1 { withDuoAnimation(.fold) { _ = model.expandedGroups.remove(parts[1]) } }
+        case "session-state":   // session-state:<name>=<needsYou|readyForReview|working|idle|resolved>[@<wait>]: as a snapshot would bring it
+            let f = parts.count > 1 ? parts[1].split(separator: "=", maxSplits: 1).map(String.init) : []
+            guard f.count == 2 else { break }
+            let sw = f[1].split(separator: "@", maxSplits: 1).map(String.init)
+            let states: [String: SessionState] = ["needsYou": .needsYou, "readyForReview": .readyForReview, "working": .working, "idle": .idle, "resolved": .resolved]
+            guard let st = states[sw[0]], let i = model.fixture.sessions.firstIndex(where: { $0.name == f[0] }) else {
+                FileHandle.standardError.write(Data("session-state: no session \(f[0]) or state \(sw[0])\n".utf8)); break
+            }
+            model.fixture.sessions[i].state = st
+            if sw.count > 1 { model.fixture.sessions[i].wait = sw[1] }
+        case "session-add":   // session-add:<name>=<state>@<wait>: a new session in the open project, as a snapshot would bring it
+            let f = parts.count > 1 ? parts[1].split(separator: "=", maxSplits: 1).map(String.init) : []
+            guard f.count == 2, let p = model.currentProject?.name, var s = model.fixture.sessions.first(where: { $0.project == p }) else { break }
+            let sw = f[1].split(separator: "@", maxSplits: 1).map(String.init)
+            s.name = f[0]; s.forkOf = nil; s.question = nil; s.options = nil; s.sessionId = nil; s.document = nil
+            s.state = ["needsYou": .needsYou, "working": .working, "idle": .idle][sw[0]] ?? .working
+            s.wait = sw.count > 1 ? sw[1] : "now"
+            model.fixture.sessions.append(s)
+        case "session-remove":   // session-remove:<name>: gone from the list (archived), as a snapshot would bring it
+            if parts.count > 1 { model.fixture.sessions.removeAll { $0.name == parts[1] } }
+        case "sidebar-hover":   // sidebar-hover:on|off: the pointer in the session list or out of it (Q-80)
+            model.hoverSidebar(parts.count > 1 && parts[1] == "on")
         case "task-archive", "task-delete":   // task-archive:<path>, task-delete:<path>: the task's question, up and waiting (board C)
             if parts.count > 1, let p = model.currentProject?.name {
                 if parts[0] == "task-archive" { model.askArchiveTask(project: p, path: parts[1]) } else { model.askDeleteTask(project: p, path: parts[1]) }

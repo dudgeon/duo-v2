@@ -84,25 +84,45 @@ struct WaitLabel: View {
 }
 
 /// The 8×10 chevron from tokens.json, drawn so it matches the targets' stroke.
-struct Chevron: View {
+struct Chevron: View, @preconcurrency Animatable {
     enum Direction { case right, down }
-    var direction: Direction = .right
     var color: Color = DuoColor.text2
+    /// 0 points right, 1 points down. A fold turns it over `motion.fold` (DL-130): the down
+    /// chevron is the right one turned 90° about its centre, so the turn ends exactly on it.
+    var turn: Double
+
+    init(direction: Direction = .right, color: Color = DuoColor.text2) {
+        self.turn = direction == .down ? 1 : 0
+        self.color = color
+    }
+
+    var animatableData: Double {
+        get { turn }
+        set { turn = newValue }
+    }
 
     var body: some View {
+        let t = min(max(turn, 0), 1)
+        let w = 8 + 2 * t, h = 10 - 2 * t
         Canvas { ctx, box in
             var p = Path()
-            switch direction {
-            case .right:
+            if t == 0 {
                 ctx.scaleBy(x: box.width / 8, y: box.height / 10)
                 p.move(to: CGPoint(x: 2, y: 1.5)); p.addLine(to: CGPoint(x: 6, y: 5)); p.addLine(to: CGPoint(x: 2, y: 8.5))
-            case .down:
+            } else if t == 1 {
                 ctx.scaleBy(x: box.width / 10, y: box.height / 8)
                 p.move(to: CGPoint(x: 1.5, y: 2)); p.addLine(to: CGPoint(x: 5, y: 6)); p.addLine(to: CGPoint(x: 8.5, y: 2))
+            } else {
+                // Mid-turn: the right chevron about the box's centre, rotated by t × 90°.
+                let a = t * .pi / 2, c = CGPoint(x: box.width / 2, y: box.height / 2)
+                let pts = [CGPoint(x: -2, y: -3.5), CGPoint(x: 2, y: 0), CGPoint(x: -2, y: 3.5)].map {
+                    CGPoint(x: c.x + $0.x * cos(a) - $0.y * sin(a), y: c.y + $0.x * sin(a) + $0.y * cos(a))
+                }
+                p.move(to: pts[0]); p.addLine(to: pts[1]); p.addLine(to: pts[2])
             }
             ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
         }
-        .frame(width: direction == .right ? 8 : 10, height: direction == .right ? 10 : 8)
+        .frame(width: w, height: h)
         .accessibilityHidden(true)
     }
 }

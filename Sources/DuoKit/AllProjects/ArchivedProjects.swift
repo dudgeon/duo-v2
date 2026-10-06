@@ -42,7 +42,7 @@ struct ArchivedRollup: View {
                         .frame(width: model.archivedOpen ? 10 : 8, height: model.archivedOpen ? 8 : 10)
                 }
                 .contentShape(Rectangle())
-                .onActivate { model.archivedOpen.toggle() }  // action: projects
+                .onActivate { withDuoAnimation(.fold) { model.archivedOpen.toggle() } }  // action: projects
                 .accessibilityLabel("\(archived.count) archived projects")
                 .accessibilityAddTraits(.isButton)
                 if model.archivedOpen {

@@ -51,16 +51,20 @@ struct ArchivedSessionsFold: View {
                 .padding(.horizontal, 8 + DuoSpace.selectionInset)
                 .frame(height: DuoMetric.rowGroup)
                 .contentShape(Rectangle())
-                .onActivate { if expanded { model.expandedGroups.remove(key) } else { model.expandedGroups.insert(key) } }  // action: view group
+                .onActivate { withDuoAnimation(.fold) { if expanded { model.expandedGroups.remove(key) } else { model.expandedGroups.insert(key) } } }  // action: view group
                 .accessibilityLabel(expanded ? "Hide archived sessions and tasks" : "Show \(count) archived sessions and tasks")
                 .padding(.top, 12)
                 if expanded {
-                    ForEach(archived, id: \.tabKey) { s in
-                        SidebarLeafRow(row: SidebarRow(id: "\(project)/thread/\(s.tabKey)", name: s.name, state: .idle, wait: s.wait, kind: .session), nested: false)
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(archived, id: \.tabKey) { s in
+                            SidebarLeafRow(row: SidebarRow(id: "\(project)/thread/\(s.tabKey)", name: s.name, state: .idle, wait: s.wait, kind: .session), nested: false)
+                        }
+                        ForEach(tasks) { t in TaskLine(task: t, showsProject: false, indented: true) }
                     }
-                    ForEach(tasks) { t in TaskLine(task: t, showsProject: false, indented: true) }
+                    .transition(.foldRows)
                 }
             }
+            .transition(.opacity)
         }
     }
 }
