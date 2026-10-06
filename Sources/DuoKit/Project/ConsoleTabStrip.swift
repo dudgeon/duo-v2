@@ -41,6 +41,8 @@ struct ConsoleTabStrip: View {
                         }
                         .accessibilityLabel("New session or shell")
                 }
+                // Opaque on the strip, so it covers a tab fading out as it slides (DL-130).
+                .background(DuoColor.console)
                 Spacer(minLength: 0)
                 // Terminal / Chat, for the selected Claude tab (chat-mode-handoff `toggle`); 12 from the edge.
                 if let key = model.consoleTab, tabs.contains(where: { $0.id == key && $0.state != nil }),
@@ -50,6 +52,7 @@ struct ConsoleTabStrip: View {
             }
             .padding(.horizontal, DuoSpace.panePadding)
             .frame(height: DuoMetric.tabStripHeight)
+            .duoAnimation(.tabMove, value: fit.shown.map(\.id))
         }
         .frame(height: DuoMetric.tabStripHeight)
     }
@@ -82,6 +85,8 @@ struct ConsoleTabStrip: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(t.state == nil ? "\(t.title), shell" : t.title)
         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+        .background(DuoColor.console)
+        .transition(.tab)
     }
 
     static func short(_ s: String) -> String {
