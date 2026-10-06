@@ -214,6 +214,22 @@ func repoFixture() throws -> Fixture {
         try? FileManager.default.removeItem(at: f)
     }
 
+    print("web views say they're Safari (F-117)")
+    do {
+        let os27 = OperatingSystemVersion(majorVersion: 27, minorVersion: 0, patchVersion: 0)
+        check(WebUserAgent.token(safariVersion: "27.0.1", os: os27) == "Version/27.0 Safari/605.1.15", "the token carries the installed Safari's major.minor")
+        check(WebUserAgent.token(safariVersion: nil, os: os27) == "Version/27.0 Safari/605.1.15"
+              && WebUserAgent.token(safariVersion: "junk", os: OperatingSystemVersion(majorVersion: 26, minorVersion: 1, patchVersion: 0)) == "Version/26.1 Safari/605.1.15",
+              "without Safari's version, macOS 26 and later name it after the system")
+        check(WebUserAgent.applicationName.hasPrefix("Version/") && WebUserAgent.applicationName.hasSuffix(" Safari/605.1.15"), "this Mac gets a Safari token")
+        let made = (try? FileManager.default.subpathsOfDirectory(atPath: repoRoot().appending(path: "Sources").path)) ?? []
+        let bare = made.filter { $0.hasSuffix(".swift") && !$0.hasPrefix("DuoChecks/") }.filter { p in
+            let s = (try? String(contentsOf: repoRoot().appending(path: "Sources/" + p), encoding: .utf8)) ?? ""
+            return s.contains("WKWebView(frame:") || s.contains("= WKWebView(")
+        }
+        check(bare.isEmpty, "every web view is a DuoWebView, so none sends the bare user agent\(bare.isEmpty ? "" : ": \(bare)")")
+    }
+
     print("ordering")
     check(WaitTime("1h") > WaitTime("12m") && WaitTime("3d") > WaitTime("1h") && WaitTime("now") < WaitTime("4m"), "wait times")
     check(SessionState.allCases.sorted() == [.needsYou, .readyForReview, .working, .idle, .resolved], "states most urgent first")
