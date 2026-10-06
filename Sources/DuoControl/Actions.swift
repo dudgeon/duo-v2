@@ -181,7 +181,7 @@ extension DuoAction {
         .init(.sessionNew, .sessions, "[--project <p>] [--prompt <text>]", "Start a Claude session in a project (the current one by default).",
               ui: ["+ New session", "New Session", "console +", "New Claude Session", "Start Claude here", "Start Claude in Home", "Start in"]),
         .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab", "Resume"]),
-        .init(.sessionClose, .sessions, "[id]", "End a session's process and close its tab (it stays listed and resumable).", ui: ["Close Tab", "End Session"]),
+        .init(.sessionClose, .sessions, "[id] [--force]", "End a session's process and close its tab (it stays listed and resumable). Refuses while Claude is working there, unless --force.", ui: ["Close Tab", "End Session"]),
         .init(.sessionMove, .sessions, "<id> --to <project> [--new]", "File a session in another project, or with --new in a new project of that name made in Home; it moves there on its next resume. The user confirms in Duo. Undo with `duo2 undo`.",
               ui: ["Move to Project", "New Project…", "drag a session onto a tile"], timeout: 600),
         .init(.sessionNote, .sessions, "<text>", "Tell the user what this session is doing (one line, shown in Duo).", everyday: true),
@@ -391,7 +391,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    static let switches: Set<String> = ["json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic"]
+    static let switches: Set<String> = ["json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "force"]
 
     public init(_ args: [String]) {
         var i = 0

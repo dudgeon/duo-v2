@@ -19,3 +19,7 @@ Canvas: https://claude.ai/artifact/BcUBs8KZcpEpPF3EhHt6GT. Geoff chose option A,
 ## Build
 
 `Project/TabClose.swift` (F-124). `build-compare.png` shows the project fixture's two strips: at rest, then `hover-tab:` on an unselected and the selected console tab, on the ×, pressed, then the same for `docs/prd-v2.md`, then over Project (no ×).
+
+## Closing a busy tab (DL-127)
+
+A stand-in, not drawn on a board (Q-71): Duo's question sheet, "Claude is still working in “‹name›”. Close it anyway?" or "“‹command›” is still running. Close it anyway?", with Cancel and Close Tab. Captures: `build-close-question-session.png` and `build-close-question-shell.png` (`ask-close:Teardown research`, `ask-close:shell=npm run dev`).

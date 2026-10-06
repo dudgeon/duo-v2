@@ -440,6 +440,11 @@ public final class AppModel {
     /// goes unless the session is still in a live state, and the next tab is selected.
     public func closeVisibleSession() {
         guard let key = visibleSessionId, terminals.existing(key) != nil else { return }
+        confirmClose(key) { [weak self] in self?.endVisibleSession(key) }   // asks first when busy (Q-71)
+    }
+
+    private func endVisibleSession(_ key: String) {
+        guard terminals.existing(key) != nil else { return }
         if isShell(key) { closeShell(key); return }
         let project: String? = altitude.isAllProjects ? fixture.home?.name : currentProject?.name
         terminals.close(key)

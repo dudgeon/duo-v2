@@ -165,6 +165,11 @@ public enum FixtureHarness {
                 model.open(project: s.project); model.consoleTab = id
                 _ = model.terminal(project: s.project, session: id)
             }
+        case "ask-close":   // ask-close:<tab key> | ask-close:shell=<command>: the question closing a busy tab asks (Q-71), always shown
+            if parts.count > 1 {
+                let why: AppModel.TabBusy? = parts[1].hasPrefix("shell=") ? .shellRunning(command: String(parts[1].dropFirst(6))) : model.busy(parts[1])
+                if let why { SheetCenter.shared.ask(model.closeQuestion(why) {}) }
+            }
         case "hover-tab":   // hover-tab:<tab key or document path>[=close|press]: the pointer over a tab, or on its × (DL-126)
             if parts.count > 1 {
                 let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
