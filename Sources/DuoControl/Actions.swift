@@ -64,6 +64,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case browserTabs = "browser tabs", browserRead = "browser read", browserClick = "browser click", browserFill = "browser fill"
     case browserWait = "browser wait", browserScreenshot = "browser screenshot", browserGo = "browser go", browserBack = "browser back"
     case browserForward = "browser forward", browserClose = "browser close"
+    case browserZoom = "browser zoom", browserPrint = "browser print", browserUpload = "browser upload", browserDownloads = "browser downloads"
     case htmlReload = "html reload", htmlPick = "html pick", htmlStop = "html stop", htmlElement = "html element", htmlSelection = "html selection"
     // Send to Claude
     case sendFile = "send file", sendSession = "send session", sendProject = "send project", sendSelection = "send selection"
@@ -280,14 +281,21 @@ extension DuoAction {
         .init(.browserSites, .html, "", "The allow list: sites Duo opens in its own browser tabs; everything else opens in the system browser (DL-3).", ui: ["Edit…"]),
         .init(.browserTabs, .html, "", "Browser tabs open in Duo: id, project, title, address."),
         .init(.browserRead, .html, "[selector] [--tab <id>]", "The page's text (or one element's), with its title and address (LR-45). Allowed sites only."),
-        .init(.browserClick, .html, "<selector> [--tab <id>]", "Click the element a CSS selector names, scrolled into view."),
+        .init(.browserClick, .html, "<selector> [--synthetic] [--tab <id>]", "Click the element a CSS selector names, scrolled into view: real mouse events at its centre, which apps like Google Docs need (DL-124). --synthetic sends element.click() instead (also used when the tab isn't on screen)."),
         .init(.browserFill, .html, "<selector> <text…> [--tab <id>]", "Type into an input, text area or editable element, as a person would (input and change events)."),
         .init(.browserWait, .html, "<selector> [--timeout <s>] [--tab <id>]", "Wait for an element to appear (default 10 s)."),
         .init(.browserScreenshot, .html, "[--tab <id>]", "Save a picture of the visible page as a PNG and print its path."),
         .init(.browserGo, .html, "<url> [--tab <id>]", "Go to an address in the tab; a site not on the allow list isn't loaded."),
         .init(.browserBack, .html, "[--tab <id>]", "Back in the tab's history.", ui: ["Back"]),
         .init(.browserForward, .html, "[--tab <id>]", "Forward in the tab's history.", ui: ["Forward"]),
-        .init(.browserClose, .html, "[--tab <id>]", "Close the browser tab."),
+        .init(.browserClose, .html, "[--tab <id>]", "Close the browser tab (a popup's tab hands back to the page that opened it)."),
+        .init(.browserZoom, .html, "[<percent> | in | out | reset] [--tab <id>]", "The page's zoom, or set it: remembered for the site (DL-124). ⌘+ ⌘- ⌘0 while the tab has the keyboard.",
+              ui: ["Zoom In", "Zoom Out", "Actual Size", "zoom percentage in the bar"]),
+        .init(.browserPrint, .html, "[--pdf <path>] [--tab <id>]", "Print the page: the print panel on the window for the user (⌘P, or the page's own print), or --pdf saves it as a PDF without one (DL-124).",
+              ui: ["Print…"]),
+        .init(.browserUpload, .html, "<selector> <file…> [--tab <id>]", "Choose files for a file input: the files answer its file chooser, then it's clicked as a person would (DL-124). The user's own click opens the open panel."),
+        .init(.browserDownloads, .html, "[--open [<n>]]", "Downloads from browser tabs since Duo started, numbered, to ~/Downloads with Finder's names for clashes (DL-124). --open opens one (the newest by default) with its app, as the tab's notice's Open does.",
+              ui: ["Open"]),
         .init(.htmlReload, .html, "", "Reload the HTML page showing (it also reloads when its files change).", ui: ["Reload Page"]),
         .init(.htmlPick, .html, "[selector]", "Start the element picker for the user, or select the element a CSS selector names.",
               ui: ["Select Element", "Pick Another"]),
@@ -376,7 +384,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    static let switches: Set<String> = ["json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions"]
+    static let switches: Set<String> = ["json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic"]
 
     public init(_ args: [String]) {
         var i = 0

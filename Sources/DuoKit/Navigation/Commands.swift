@@ -44,6 +44,11 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case duo2Reference      // Help: docs/cli/duo2.md on GitHub
     case whatsNew           // Help: this version's release notes
     case reportIssue        // Help: a new GitHub issue with the version and macOS filled in
+    // Browser tabs (DL-124): print and page zoom, as in Safari
+    case printPage          // ⌘P: File › Print…, the browser tab on screen
+    case zoomIn             // ⌘+ (⌘= too): View › Zoom In, while a browser tab has the keyboard
+    case zoomOut            // ⌘-
+    case actualSize         // ⌘0
 
     public var title: String {
         switch self {
@@ -94,6 +99,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .duo2Reference: "duo2 Reference"
         case .whatsNew: "What’s New in This Version"
         case .reportIssue: "Report an Issue…"
+        case .printPage: "Print…"
+        case .zoomIn: "Zoom In"
+        case .zoomOut: "Zoom Out"
+        case .actualSize: "Actual Size"
         }
     }
 
@@ -126,6 +135,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .openFile: KeyboardShortcut("o", modifiers: .command)
         case .newClaudeSession: KeyboardShortcut("t", modifiers: .command)
         case .newShell: KeyboardShortcut("t", modifiers: [.command, .shift])
+        case .printPage: KeyboardShortcut("p", modifiers: .command)
+        case .zoomIn: KeyboardShortcut("+", modifiers: .command)
+        case .zoomOut: KeyboardShortcut("-", modifiers: .command)
+        case .actualSize: KeyboardShortcut("0", modifiers: .command)
         }
     }
 
@@ -155,6 +168,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .openFile: model.terminalsMode == .live && model.projectFolder != nil
         case .revertChange: model.webFocus == .editor && (model.editorIfLoaded?.atClaudeChange ?? false)
         case .revertAllChanges: (model.editorIfLoaded?.claudeChanges ?? 0) > 0
+        case .printPage: model.visibleWebTab.map { $0.blocked == nil } ?? false
+        case .zoomIn, .zoomOut, .actualSize: model.webFocus == .html && model.visibleWebTab.map { $0.blocked == nil } == true
         }
     }
 
@@ -226,6 +241,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .openFile: model.chooseFilesToOpen()
         case .search: model.openSearch()
         case .toggleRightPane, .nextPane, .previousPane: break
+        case .printPage: model.visibleWebTab?.printPage()
+        case .zoomIn: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomIn(t.zoom)) }
+        case .zoomOut: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomOut(t.zoom)) }
+        case .actualSize: model.visibleWebTab?.zoom(1.0)
         }
     }
 }
@@ -261,6 +280,8 @@ public struct DuoCommands: Commands {
             item(.closeWindow)
             Divider()
             item(.chooseHome)
+            Divider()
+            item(.printPage)
         }
         // Format (DL-108, m3), in the system's Format menu so it sits between Edit and View.
         CommandGroup(replacing: .textFormatting) {
@@ -311,6 +332,11 @@ public struct DuoCommands: Commands {
         // panes) are left out until they work; Enter Full Screen is the system's.
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)
+            Divider()
+            // A browser tab's page zoom (DL-124), as Safari's View menu has it.
+            item(.zoomIn)
+            item(.zoomOut)
+            item(.actualSize)
             Divider()
             // Dotfiles in the project's tree (DL-105).
             Toggle("Show Hidden Files", isOn: Binding(get: { model.showHiddenFiles }, set: { model.setShowHiddenFiles($0) }))

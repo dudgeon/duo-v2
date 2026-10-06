@@ -51,7 +51,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Editor notices: conflict, removed, renamed, read only | Designed (DL-101) | slice3 `editor-notices.html` | — | DocumentStateBar, NoticeBar |
 | Properties (frontmatter) block | Designed and built (F-77): icons, controls, fold, Tab, suggestions, type menu, date picker, invalid, changed by Claude; task notes keep their S2-5 look (Q-33) | frontmatter `frontmatter*.html`; slice2 `task-note.html` | — | `Vendor/codemirror/src/duo-editor.js`, `Live/PropertyCorpus.swift` |
 | Local HTML page and element picker | Stand-in (DL-70) | — | DB-13 | `Editor/HTMLViewer.swift`, PickerBar |
-| Browser tab and its bar; not-allowed page | Stand-in (DL-3, DL-99) | — | DB-20 | `Browser/BrowserTabs.swift` |
+| Browser tab and its bar; not-allowed page; zoom level, download notice, popup tabs | Stand-in (DL-3, DL-99, DL-124; Q-66, Q-67) | — | DB-20 | `Browser/BrowserTabs.swift` |
 | Group page | Designed at low fidelity | build `wireframes/group-page.html` | DB-17 | right pane group tab |
 | Read-only session (from search) | Designed | search `search-open-session.html` | — | `Search/ReadOnlySession.swift` |
 

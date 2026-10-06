@@ -52,9 +52,10 @@ public enum AllowedSites {
 
 /// One browser tab in the right pane (Phase K, ENH-8): its own web view with the default website
 /// data store, so sites stay signed in. Pages from sites not on the allow list aren't loaded; the
-/// tab says so and offers to allow the site or open it in the system browser.
+/// tab says so and offers to allow the site or open it in the system browser. It has a browser's
+/// basics (DL-124): uploads, downloads, print, popups that keep their opener, and page zoom.
 @MainActor @Observable
-public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, PageHost {
+public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, WKDownloadDelegate, PageHost {
     public let id: String
     @ObservationIgnored public let webView: DuoWebView
     public var title = "New Tab"
@@ -65,8 +66,26 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
     public var loading = false
     /// Asks the address field for the keyboard (⌥⌘T on an empty tab, ⌘L).
     public var focusRequest = 0
+    /// The tab whose page opened this one (window.open, target=_blank): its web view came from
+    /// the opener's createWebViewWith, so window.opener and postMessage work (DL-124).
+    public let opener: String?
+    /// The page's zoom (pageZoom), remembered per site.
+    public private(set) var zoom = 1.0
+    /// The last download that finished or failed in this tab, for its notice.
+    public var download: DownloadRecord?
     /// Links to other sites from a page, when they aren't allowed here: the model sends them out.
     @ObservationIgnored var onLinkOut: ((URL) -> Void)?
+    /// A page opened a window: the model makes its tab around the web view WebKit configured.
+    @ObservationIgnored var onPopup: ((WKWebViewConfiguration) -> WebTab?)?
+    /// The page called window.close().
+    @ObservationIgnored var onClose: (() -> Void)?
+    /// Told when a download ends, so `duo2 browser downloads` can list it.
+    @ObservationIgnored var onDownload: ((DownloadRecord) -> Void)?
+    /// Files `duo2 browser upload` chose: the next file chooser takes them instead of the panel.
+    @ObservationIgnored var pendingUpload: [URL]?
+    /// What the file chooser took of them (one, when the input takes one).
+    @ObservationIgnored var uploaded: [URL] = []
+    @ObservationIgnored private var downloads: [ObjectIdentifier: URL] = [:]
     // The element picker and selection (LR-44), shared with local HTML (PageHost).
     public var picked: SendFormat.Element?
     @ObservationIgnored public var pickedViewRect: CGRect?
@@ -76,18 +95,39 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
     /// Duo's script runs apart from the site's own scripts, which can't see or imitate it.
     public var world: WKContentWorld { .defaultClient }
     public func reload() { webView.reload() }
-    public func userContentController(_ c: WKUserContentController, didReceive message: WKScriptMessage) { handlePageMessage(message) }
+    public func userContentController(_ c: WKUserContentController, didReceive message: WKScriptMessage) {
+        if message.name == "duoPrint" { return printPage() }
+        handlePageMessage(message)
+    }
 
-    init(id: String) {
+    /// The site's zoom levels, shared by every tab.
+    static var zoomStore = ZoomStore()
+
+    /// A popup passes WebKit's configuration (`createWebViewWith`), which ties its web view to the
+    /// opener's; it gets its own scripts, so the picker and print talk to this tab.
+    init(id: String, configuration: WKWebViewConfiguration? = nil, opener: String? = nil) {
         self.id = id
-        let config = WKWebViewConfiguration()
-        // Tabs stay signed in to their sites, except in an isolated copy of Duo: the default store
-        // belongs to the app's bundle id, not its support folder, so it would be the user's (C-32).
-        config.websiteDataStore = SupportFolder.isIsolated ? .nonPersistent() : .default()
+        self.opener = opener
+        let config = configuration ?? WKWebViewConfiguration()
+        if configuration == nil {
+            // Tabs stay signed in to their sites, except in an isolated copy of Duo: the default store
+            // belongs to the app's bundle id, not its support folder, so it would be the user's (C-32).
+            config.websiteDataStore = SupportFolder.isIsolated ? .nonPersistent() : .default()
+        }
+        config.userContentController = WKUserContentController()
         config.userContentController.addUserScript(WKUserScript(source: HTMLPicker.script, injectionTime: .atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
-        webView = DuoWebView(frame: .zero, configuration: config)
+        // window.print() does nothing in a WKWebView: the page's print asks Duo instead (DL-124).
+        config.userContentController.addUserScript(WKUserScript(source: "window.print = function () { window.webkit.messageHandlers.duoPrint.postMessage(1) };",
+                                                                injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page))
+        let view = BrowserWebView(frame: .zero, configuration: config)
+        webView = view
         super.init()
         config.userContentController.add(self, contentWorld: .defaultClient, name: "duoPage")
+        config.userContentController.add(self, contentWorld: .page, name: "duoPrint")
+        view.onZoomKey = { [weak self] key in
+            guard let self else { return }
+            self.zoom(key == "0" ? 1.0 : key == "-" ? ZoomStore.zoomOut(self.zoom) : ZoomStore.zoomIn(self.zoom))
+        }
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.allowsBackForwardNavigationGestures = true
@@ -138,23 +178,160 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
         guard let target = action.request.url else { return decisionHandler(.cancel) }
         // Frames inside an allowed page load as the page wants; only where the tab goes is checked.
         if action.targetFrame?.isMainFrame == false || target.scheme == "about" || target.scheme == "blob" || target.scheme == "data" || AllowedSites.allows(target) {
-            return decisionHandler(.allow)
+            return decisionHandler(action.shouldPerformDownload ? .download : .allow)
         }
         if action.navigationType == .linkActivated { onLinkOut?(target) } else { blocked = target; address = target.absoluteString; title = target.host ?? title }
         decisionHandler(.cancel)
     }
 
+    /// An attachment, or a type WebKit can't show, is downloaded rather than shown (DL-124).
+    public func webView(_ w: WKWebView, decidePolicyFor response: WKNavigationResponse, decisionHandler: @escaping @MainActor (WKNavigationResponsePolicy) -> Void) {
+        let disposition = (response.response as? HTTPURLResponse)?.value(forHTTPHeaderField: "Content-Disposition")?.lowercased() ?? ""
+        decisionHandler(!response.canShowMIMEType || disposition.hasPrefix("attachment") ? .download : .allow)
+    }
+
+    public func webView(_ w: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) { download.delegate = self }
+    public func webView(_ w: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) { download.delegate = self }
+
     public func webView(_ w: WKWebView, didStartProvisionalNavigation n: WKNavigation!) { refresh() }
-    public func webView(_ w: WKWebView, didCommit n: WKNavigation!) { refresh() }
+    public func webView(_ w: WKWebView, didCommit n: WKNavigation!) { refresh(); applySiteZoom() }
     public func webView(_ w: WKWebView, didFinish n: WKNavigation!) { refresh() }
     public func webView(_ w: WKWebView, didFail n: WKNavigation!, withError e: Error) { refresh() }
     public func webView(_ w: WKWebView, didFailProvisionalNavigation n: WKNavigation!, withError e: Error) { refresh() }
 
-    /// target=_blank and window.open load in this tab (one page per tab).
+    /// window.open and target=_blank open a tab beside this one, around the web view WebKit
+    /// configured, so the page keeps its opener (DL-124). A link to a site that isn't allowed
+    /// opens in the system browser, as any other link does (DL-3).
     public func webView(_ w: WKWebView, createWebViewWith c: WKWebViewConfiguration, for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        if let u = action.request.url { load(u) }
-        return nil
+        if let u = action.request.url, !["about", "blob", "data", ""].contains(u.scheme ?? ""), !AllowedSites.allows(u) {
+            onLinkOut?(u)
+            return nil
+        }
+        return onPopup?(c)?.webView
     }
+
+    public func webViewDidClose(_ w: WKWebView) { onClose?() }
+
+    // MARK: Uploads
+
+    /// `<input type=file>`: the native open panel, with multiple selection and folders where the
+    /// page asks (DL-124). Files chosen by `duo2 browser upload` answer it without a panel.
+    public func webView(_ w: WKWebView, runOpenPanelWith p: WKOpenPanelParameters, initiatedByFrame f: WKFrameInfo, completionHandler: @escaping @MainActor ([URL]?) -> Void) {
+        if let files = pendingUpload {
+            pendingUpload = nil
+            uploaded = p.allowsMultipleSelection ? files : Array(files.prefix(1))
+            return completionHandler(uploaded)
+        }
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = p.allowsMultipleSelection
+        panel.canChooseDirectories = p.allowsDirectories
+        panel.canChooseFiles = true
+        panel.prompt = "Choose"
+        guard let window = w.window else { return completionHandler(panel.runModal() == .OK ? panel.urls : nil) }
+        panel.beginSheetModal(for: window) { r in MainActor.assumeIsolated { completionHandler(r == .OK ? panel.urls : nil) } }
+    }
+
+    // MARK: Downloads
+
+    public func download(_ d: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String, completionHandler: @escaping @MainActor (URL?) -> Void) {
+        let folder = DownloadNaming.folder
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let dest = DownloadNaming.unique(suggestedFilename, in: folder)
+        downloads[ObjectIdentifier(d)] = dest
+        completionHandler(dest)
+    }
+
+    public func downloadDidFinish(_ d: WKDownload) {
+        guard let dest = downloads.removeValue(forKey: ObjectIdentifier(d)) else { return }
+        finish(DownloadRecord(file: dest, error: nil, tab: id))
+    }
+
+    public func download(_ d: WKDownload, didFailWithError error: Error, resumeData: Data?) {
+        let dest = downloads.removeValue(forKey: ObjectIdentifier(d)) ?? DownloadNaming.folder.appending(path: d.originalRequest?.url?.lastPathComponent ?? "download")
+        finish(DownloadRecord(file: dest, error: error.localizedDescription, tab: id))
+    }
+
+    private func finish(_ r: DownloadRecord) {
+        download = r
+        onDownload?(r)
+    }
+
+    // MARK: Print and zoom
+
+    /// ⌘P, File › Print…, the page's window.print() and `duo2 browser print`: the print panel on
+    /// the window. `pdf` saves to a file with no panel; a scripted run (DUO_AUTOCONFIRM) always does.
+    /// It runs as a sheet either way: WebKit's print view paginates without end under a plain
+    /// run(), so the window is required (F-118). `done` gets the PDF, when one was asked for.
+    public func printPage(pdf: URL? = nil, _ done: (@MainActor (URL?) -> Void)? = nil) {
+        guard let window = webView.window else { done?(nil); return }
+        let info = (NSPrintInfo.shared.copy() as? NSPrintInfo) ?? NSPrintInfo()
+        var target = pdf
+        if target == nil, ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {
+            target = DuoPaths.support.appending(path: "print-\(id.replacingOccurrences(of: ":", with: "-")).pdf")
+        }
+        if let target {
+            info.jobDisposition = .save
+            info.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = target
+        }
+        let op = webView.printOperation(with: info)
+        op.showsPrintPanel = target == nil
+        op.showsProgressPanel = false
+        // WebKit's print view has no size until it's given one; without it nothing prints.
+        op.view?.frame = webView.bounds
+        printDone = { ok in done?(ok ? target : nil) }
+        op.runModal(for: window, delegate: self, didRun: #selector(printOperationDidRun(_:success:contextInfo:)), contextInfo: nil)
+    }
+
+    @ObservationIgnored private var printDone: ((Bool) -> Void)?
+
+    /// AppKit calls this on the print operation's own thread when there's no panel.
+    @objc nonisolated private func printOperationDidRun(_ op: NSPrintOperation, success: Bool, contextInfo: UnsafeMutableRawPointer?) {
+        DispatchQueue.main.async { [weak self] in
+            MainActor.assumeIsolated {
+                let d = self?.printDone
+                self?.printDone = nil
+                d?(success)
+            }
+        }
+    }
+
+    /// Sets the page's zoom and remembers it for the site (⌘+ ⌘- ⌘0, `duo2 browser zoom`).
+    public func zoom(_ level: Double) {
+        let z = min(max(level, ZoomStore.range.lowerBound), ZoomStore.range.upperBound)
+        zoom = z
+        webView.pageZoom = z
+        Self.zoomStore.set(z, for: webView.url)
+    }
+
+    /// A page that loads takes its site's remembered zoom.
+    private func applySiteZoom() {
+        let z = Self.zoomStore.level(for: webView.url)
+        if abs(z - webView.pageZoom) > 0.001 { webView.pageZoom = z }
+        zoom = z
+    }
+}
+
+/// A browser tab's web view: ⌘+ (or ⌘=), ⌘- and ⌘0 zoom the page while it has the keyboard
+/// (DL-124). The View menu has the same items; handling them here also takes ⌘= without ⇧.
+final class BrowserWebView: DuoWebView {
+    var onZoomKey: ((String) -> Void)?
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.shift, .numericPad, .function, .capsLock])
+        if mods == .command, let key = event.charactersIgnoringModifiers, ["=", "+", "-", "0"].contains(key),
+           let r = window?.firstResponder as? NSView, r === self || r.isDescendant(of: self) {
+            onZoomKey?(key == "=" ? "+" : key)
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+}
+
+/// A download a browser tab saved, or failed to.
+public struct DownloadRecord: Sendable, Equatable {
+    public var file: URL
+    public var error: String?
+    public var tab: String
 }
 
 extension AppModel {
@@ -172,6 +349,32 @@ extension AppModel {
         rightTab = id
         if let url { tab.load(url) } else { tab.focusRequest += 1 }
         return id
+    }
+
+    /// A page opened a window (DL-124): a tab right after its opener, around the web view WebKit
+    /// configured, in the opener's project. It shows at once, as a browser shows a popup.
+    func newPopupTab(from opener: WebTab, configuration: WKWebViewConfiguration) -> WebTab? {
+        guard let project = openDocumentsByProject.first(where: { $0.value.contains(opener.id) })?.key else { return nil }
+        let id = "web:" + UUID().uuidString.prefix(8).lowercased()
+        let tab = WebTab(id: id, configuration: configuration, opener: opener.id)
+        wireWebTab(tab)
+        webTabs[id] = tab
+        var docs = openDocumentsByProject[project] ?? []
+        docs.insert(id, at: PopupPlacement.index(in: docs, opener: opener.id, openers: webTabs.compactMapValues(\.opener)))
+        openDocumentsByProject[project] = docs
+        if currentProject?.name == project { rightTab = id }
+        return tab
+    }
+
+    /// Closes a browser tab in whichever project holds it (window.close() can come from a tab
+    /// that isn't on screen); a popup hands the pane back to its opener.
+    public func closeWebTab(_ id: String) {
+        guard let project = openDocumentsByProject.first(where: { $0.value.contains(id) })?.key else { webTabs.removeValue(forKey: id); return }
+        let docs = openDocumentsByProject[project] ?? []
+        let next = PopupPlacement.after(closing: id, in: docs, openers: webTabs.compactMapValues(\.opener))
+        openDocumentsByProject[project] = docs.filter { $0 != id }
+        webTabs.removeValue(forKey: id)
+        if currentProject?.name == project, rightTab == id { rightTab = next ?? "Project" }
     }
 
     /// ⌘L in a browser tab: the address field takes the keyboard.
@@ -193,6 +396,15 @@ extension AppModel {
     /// Selection, and the right-click Send / Select Element items.
     func wireWebTab(_ tab: WebTab) {
         tab.onLinkOut = { [weak self] u in self?.openLink(u.absoluteString) }
+        tab.onPopup = { [weak self, weak tab] config in
+            guard let self, let tab else { return nil }
+            return self.newPopupTab(from: tab, configuration: config)
+        }
+        tab.onClose = { [weak self, weak tab] in
+            guard let self, let tab else { return }
+            self.closeWebTab(tab.id)
+        }
+        tab.onDownload = { [weak self] r in self?.downloads.append(r) }
         tab.onChange = { [weak self] in self?.pickerRevision += 1 }
         tab.webView.onFocusChange = { [weak self] on in
             guard let self else { return }
@@ -225,11 +437,20 @@ struct BrowserTabView: View {
                     if tab.loading { tab.webView.stopLoading() } else { tab.webView.reload() }
                 }
                 AddressField(tab: tab).frame(height: 22)
+                if abs(tab.zoom - 1) > 0.001 {
+                    // The page's zoom, as Safari shows it in its address field; a click is Actual Size.
+                    // A stand-in until it's designed (Q-66).
+                    Button { tab.zoom(1.0) } label: { Text(ZoomStore.percent(tab.zoom)).duoText(.body).foregroundStyle(DuoColor.text2) }
+                        .buttonStyle(.plain)
+                        .help("Actual Size (⌘0)")
+                        .accessibilityLabel("Zoom \(ZoomStore.percent(tab.zoom)), reset to actual size")
+                }
                 barItem("safari", "Open in Browser", enabled: tab.url != nil) { if let u = tab.url { NSWorkspace.shared.open(u) } }
             }
             .padding(.horizontal, 12)
             .frame(height: 34)
             DuoColor.rule.frame(height: 1)
+            if let d = tab.download { DownloadNotice(tab: tab, record: d) }
             if let blocked = tab.blocked {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("\(blocked.host ?? blocked.absoluteString) isn't on your allowed sites").duoText(.bodyEmphasis)
@@ -256,6 +477,33 @@ struct BrowserTabView: View {
             .disabled(!enabled)
             .help(label)
             .accessibilityLabel(label)
+    }
+}
+
+/// A download that finished or failed, in S3-4's notice bar under the browser bar (DL-124).
+/// The bar is the editor's notice; its place here and its words are a stand-in (Q-66).
+struct DownloadNotice: View {
+    let tab: WebTab
+    let record: DownloadRecord
+
+    var body: some View {
+        if let error = record.error {
+            NoticeBar(text: "Couldn’t download \(record.file.lastPathComponent): \(error)") {
+                Button("OK") { tab.download = nil }.buttonStyle(DefaultSheetButtonStyle())
+            }
+        } else {
+            NoticeBar(text: "Downloaded \(record.file.lastPathComponent) to \(Self.folderName(record.file)).") {
+                Button("Open") { NSWorkspace.shared.open(record.file) }.buttonStyle(DefaultSheetButtonStyle())
+                Button("Show in Finder") { FileActions.reveal(record.file) }.buttonStyle(.duo)
+                Button("OK") { tab.download = nil }.buttonStyle(.duo)
+            }
+        }
+    }
+
+    static func folderName(_ file: URL) -> String {
+        let folder = file.deletingLastPathComponent()
+        let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+        return folder.standardizedFileURL == downloads?.standardizedFileURL ? "Downloads" : AppModel.short(folder.path)
     }
 }
 
@@ -335,15 +583,67 @@ extension WebTab {
         }
     }
 
-    /// Clicks the element a selector names, scrolled into view first; returns what it was.
-    public func click(selector: String, _ done: @escaping @MainActor (String?) -> Void) {
+    /// Clicks the element a selector names, scrolled into view first; returns what it was. A real
+    /// click by default (DL-124): mouse events at the element's centre, which the page sees as
+    /// trusted, so apps that ignore element.click() (Google Docs) respond. `synthetic` is the old
+    /// element.click(), also used when the tab isn't on screen or the centre is outside the view.
+    public func click(selector: String, synthetic: Bool = false, _ done: @escaping @MainActor (String?) -> Void) {
         run("""
             const el = document.querySelector(sel);
             if (!el) return null;
-            el.scrollIntoView({block: 'center'});
-            el.click();
-            return '<' + el.tagName.toLowerCase() + '> ' + (el.innerText || el.value || el.getAttribute('aria-label') || '').trim().slice(0, 80);
-            """, ["sel": selector]) { done($0 as? String) }
+            el.scrollIntoView({block: 'center', inline: 'center'});
+            const what = '<' + el.tagName.toLowerCase() + '> ' + (el.innerText || el.value || el.getAttribute('aria-label') || '').trim().slice(0, 80);
+            if (synthetic) { el.click(); return {what}; }
+            const r = el.getBoundingClientRect();
+            return {what, x: r.left + r.width / 2, y: r.top + r.height / 2};
+            """, ["sel": selector, "synthetic": synthetic]) { [weak self] v in
+            guard let self, let d = v as? [String: Any], let what = d["what"] as? String else { return done(nil) }
+            guard !synthetic, let x = d["x"] as? Double, let y = d["y"] as? Double else { return done(what) }
+            if self.mouseClick(at: CGPoint(x: x, y: y)) { return done(what) }
+            // Off screen: a synthetic click is better than none, and says so.
+            self.click(selector: selector, synthetic: true) { w in done(w.map { $0 + " (synthetic: the page isn't on screen)" }) }
+        }
+    }
+
+    /// Mouse moved, down and up at a point in the page's viewport (CSS pixels), sent to the web
+    /// view as the window would send them. False when the point isn't on screen in the view.
+    func mouseClick(at css: CGPoint) -> Bool {
+        guard let window = webView.window else { return false }
+        let scale = webView.pageZoom * webView.magnification
+        var p = CGPoint(x: css.x * scale, y: css.y * scale)
+        if !webView.isFlipped { p.y = webView.bounds.height - p.y }
+        guard webView.bounds.contains(p) else { return false }
+        let at = webView.convert(p, to: nil)
+        func event(_ type: NSEvent.EventType) -> NSEvent? {
+            NSEvent.mouseEvent(with: type, location: at, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                               windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: type == .mouseMoved ? 0 : 1,
+                               pressure: type == .leftMouseDown ? 1 : 0)
+        }
+        guard let move = event(.mouseMoved), let down = event(.leftMouseDown) else { return false }
+        webView.mouseMoved(with: move)
+        webView.mouseDown(with: down)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            MainActor.assumeIsolated { if let up = event(.leftMouseUp) { self?.webView.mouseUp(with: up) } }
+        }
+        return true
+    }
+
+    /// `duo2 browser upload`: the files answer the next file chooser, then the element is clicked
+    /// for real, as a person would, so the page's own change handlers run.
+    public func upload(selector: String, files: [URL], _ done: @escaping @MainActor (String?, [URL]) -> Void) {
+        pendingUpload = files
+        uploaded = []
+        click(selector: selector) { [weak self] what in
+            guard let what else { self?.pendingUpload = nil; return done(nil, []) }
+            // Nothing asked for the files (not a file input, or the page blocked it): drop them.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                MainActor.assumeIsolated {
+                    let taken = self?.pendingUpload == nil
+                    self?.pendingUpload = nil
+                    done(taken ? what : "", self?.uploaded ?? [])
+                }
+            }
+        }
     }
 
     /// Types a value into an input, textarea or editable element, the way a framework notices.
@@ -385,11 +685,28 @@ extension AppModel {
         return visibleWebTab
     }
 
-    func browserVerb(_ id: ActionID, _ inv: Invocation, _ done: @escaping @MainActor (Reply) -> Void) {
+    func browserVerb(_ id: ActionID, _ inv: Invocation, cwd: String? = nil, _ done: @escaping @MainActor (Reply) -> Void) {
         if id == .browserTabs {
             let rows = openDocumentsByProject.flatMap { p, docs in docs.compactMap { d in webTabs[d].map { (p, $0) } } }
-            return done(.ok(rows.isEmpty ? "No browser tabs." : rows.map { p, t in "\(t.id)  \(p)  \(t.title)  \(t.url?.absoluteString ?? "")\(t.blocked != nil ? "  (not allowed)" : "")" }.joined(separator: "\n"),
-                            rows.map { p, t in ["tab": t.id, "project": p, "title": t.title, "url": t.url?.absoluteString ?? "", "allowed": t.blocked == nil] }))
+            func extra(_ t: WebTab) -> String {
+                (t.blocked != nil ? "  (not allowed)" : "") + (t.opener.map { "  (opened from \($0))" } ?? "") + (abs(t.zoom - 1) > 0.001 ? "  \(ZoomStore.percent(t.zoom))" : "")
+            }
+            return done(.ok(rows.isEmpty ? "No browser tabs." : rows.map { p, t in "\(t.id)  \(p)  \(t.title)  \(t.url?.absoluteString ?? "")\(extra(t))" }.joined(separator: "\n"),
+                            rows.map { p, t in ["tab": t.id, "project": p, "title": t.title, "url": t.url?.absoluteString ?? "", "allowed": t.blocked == nil,
+                                                "opener": t.opener ?? "", "zoom": t.zoom] }))
+        }
+        if id == .browserDownloads {
+            if inv.has("open") {
+                let n = inv[0].flatMap(Int.init) ?? downloads.count
+                guard downloads.indices.contains(n - 1) else { return done(.fail(downloads.isEmpty ? "no downloads yet" : "no download \(n) (1–\(downloads.count))")) }
+                let d = downloads[n - 1]
+                guard d.error == nil, FileManager.default.fileExists(atPath: d.file.path) else { return done(.fail("\(d.file.lastPathComponent) isn't there")) }
+                NSWorkspace.shared.open(d.file)
+                return done(.ok("Opened \(d.file.path)."))
+            }
+            return done(.ok(downloads.isEmpty ? "No downloads since Duo started. They go to \(DownloadNaming.folder.path)."
+                            : downloads.enumerated().map { i, d in "\(i + 1)  \(d.file.path)  \(d.error.map { "failed: \($0)" } ?? "done")  \(d.tab)" }.joined(separator: "\n"),
+                            downloads.map { ["file": $0.file.path, "error": $0.error ?? "", "tab": $0.tab] }))
         }
         guard let tab = browserTab(inv) else { return done(.fail("no browser tab is showing (open one with `duo2 browser open <url>`, or pass --tab)")) }
         if tab.blocked != nil, ![.browserGo, .browserClose].contains(id) {
@@ -400,7 +717,7 @@ extension AppModel {
             tab.read(selector: inv[0]) { t in done(t.map { .ok($0) } ?? .fail(inv[0].map { "nothing matches \($0)" } ?? "the page isn't readable yet")) }
         case .browserClick:
             guard let sel = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
-            tab.click(selector: sel) { what in done(what.map { .ok("Clicked \($0).") } ?? .fail("nothing matches \(sel)")) }
+            tab.click(selector: sel, synthetic: inv.has("synthetic")) { what in done(what.map { .ok("Clicked \($0).") } ?? .fail("nothing matches \(sel)")) }
         case .browserFill:
             guard let sel = inv[0], inv.positional.count > 1 else { return done(.fail("usage: \(id.action.usage)")) }
             tab.fill(selector: sel, text: inv.positional.dropFirst().joined(separator: " ")) { ok in done(ok ? .ok("Filled \(sel).") : .fail("nothing matches \(sel)")) }
@@ -420,7 +737,37 @@ extension AppModel {
             guard tab.webView.canGoForward else { return done(.fail("nothing to go forward to")) }
             tab.webView.goForward(); done(.ok("Forward."))
         case .browserClose:
-            closeDocument(tab.id); done(.ok("Closed \(tab.title)."))
+            closeWebTab(tab.id); done(.ok("Closed \(tab.title)."))
+        case .browserZoom:
+            guard let arg = inv[0] else { return done(.ok("\(ZoomStore.percent(tab.zoom))", ["zoom": tab.zoom])) }
+            guard let z = ZoomStore.parse(arg, current: tab.zoom) else { return done(.fail("usage: \(id.action.usage) (25–500%)")) }
+            tab.zoom(z)
+            let site = ZoomStore.site(tab.webView.url)
+            done(.ok("Zoomed to \(ZoomStore.percent(tab.zoom))\(site.map { ", remembered for \($0)" } ?? "").", ["zoom": tab.zoom]))
+        case .browserPrint:
+            if let pdf = inv.flags["pdf"] {
+                guard !pdf.isEmpty else { return done(.fail("usage: \(id.action.usage)")) }
+                let u = URL(fileURLWithPath: (pdf as NSString).expandingTildeInPath, relativeTo: cwd.map { URL(fileURLWithPath: $0, isDirectory: true) }).standardizedFileURL
+                return tab.printPage(pdf: u) { saved in
+                    done(saved.map { .ok("Saved the page as \($0.path).", ["path": $0.path]) } ?? .fail("couldn't print to \(u.path) (is the tab on screen?)"))
+                }
+            }
+            guard tab.webView.window != nil else { return done(.fail("the tab isn't on screen; show it first (duo2 view tab \(tab.id))")) }
+            if ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {
+                return tab.printPage { saved in done(saved.map { .ok("A scripted run: saved the page as \($0.path) instead of showing the print panel.", ["path": $0.path]) } ?? .fail("couldn't print")) }
+            }
+            tab.printPage()
+            done(.ok("The print panel is open on the page, for the user."))
+        case .browserUpload:
+            guard let sel = inv[0], inv.positional.count > 1 else { return done(.fail("usage: \(id.action.usage)")) }
+            let base = cwd.map { URL(fileURLWithPath: $0, isDirectory: true) }
+            let files = inv.positional.dropFirst().map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath, relativeTo: base).standardizedFileURL }
+            if let missing = files.first(where: { !FileManager.default.fileExists(atPath: $0.path) }) { return done(.fail("no file at \(missing.path)")) }
+            tab.upload(selector: sel, files: files) { what, taken in
+                guard let what else { return done(.fail("nothing matches \(sel)")) }
+                done(what.isEmpty ? .fail("clicked \(sel), but no file chooser opened (is it an <input type=file>, or a button that opens one?)")
+                                  : .ok("Chose \(taken.map(\.lastPathComponent).joined(separator: ", ")) for \(what)\(taken.count < files.count ? " (it takes one file)" : "")."))
+            }
         default: done(.fail("not a browser verb"))
         }
     }
