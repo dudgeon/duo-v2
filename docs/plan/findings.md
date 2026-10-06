@@ -1670,3 +1670,14 @@ Spike: `docs/plan/spikes/browser-engine.md`.
 - **A hidden pane remembers its width, not its divider position,** noted before the slide starts. Noting it after the slide caught a frame of about 0 and brought the pane back at nothing; a position would also go stale if the window is resized while the pane is hidden.
 - **Panes restored on launch** (`pendingCollapse`) snap into place without a slide, as does everything under Reduce Motion (`accessibilityDisplayShouldReduceMotion`).
 - **Not verified by capture:** that the 150 ms fade of a new tile (`.transition(.opacity.animation(…))`) runs when the map changes outside an animated transaction. The slide and the search fade can be seen in a live run, but a still capture can't show motion.
+
+## F-132 · The peek in captures: a transient popover closes when Duo loses focus (C-35, 2026-10-06)
+
+- **Cause:** the peek is SwiftUI's `.popover`, which AppKit shows as a transient NSPopover. A transient popover closes when its app resigns active, and SwiftUI then sets the binding to false (`model.peekOpen = false`), so the capture drew no popover. A test copy launched by `open` is often activated by LaunchServices, and it loses focus again when the user's own app takes it back. Hence missing in some runs and present in others. A copy that is never activated (`open -g`) keeps its popover; activation alone isn't the trigger, losing it is.
+- **Reproduced on demand:** the harness action `deactivate` (`NSApp.deactivate()`, as a click into another app). `--state flow-zoom-3 --then deactivate` lost the popover every time before the fix (687,352 pixels differ from a good capture).
+- **Fix:** in capture mode (`FixtureHarness.holdsPeek`), the popover's binding ignores the popover closing itself. `peekOpen` stays true and SwiftUI keeps the popover up. Esc, the chip and the scripted actions still close it through the model. No in-window stand-in is needed, so the capture still draws the real popover.
+- **Proved:** each run compared with a known-good capture (`scripts/samepng.py`):
+  - `--then deactivate` and `--then deactivate,wait:1,deactivate` (a second loss of focus after the popover settles): 0 pixels differ in 8 runs.
+  - `NO_BUILD=1 scripts/check-ui.sh flow-zoom-3`: 0 pixels differ in 5 runs in a row, with Duo (Geoff's) in front.
+  - DuoChecks passes.
+- **Tried and dropped:** a fallback that closed and reopened the peek if the popover was missing just before capture. It never fired once `peekOpen` was held, so it isn't shipped.

@@ -43,6 +43,9 @@ public enum FixtureHarness {
         height: DuoMetric.designWindow.height - designContentTop
     )
 
+    /// A capture keeps the peek open when its popover closes on its own (C-35).
+    public static var holdsPeek = false
+
     /// Cleanup the app registers for the capture path's direct exit.
     nonisolated(unsafe) public static var beforeExit: (@MainActor () -> Void)?
 
@@ -85,6 +88,7 @@ public enum FixtureHarness {
             let target = parts.count > 1 ? parts[1].split(separator: "/", maxSplits: 1).map(String.init) : []
             if let project = target.first { model.open(project: project, session: target.count > 1 ? target[1] : nil) }
         case "peek": model.togglePeek()
+        case "deactivate": NSApp.deactivate()   // as when the user clicks into another app (C-35)
         case "down": model.movePeekSelection(by: 1)
         case "up": model.movePeekSelection(by: -1)
         case "jump": model.jumpToPeekSelection()
@@ -559,6 +563,7 @@ public enum FixtureHarness {
         }
 
         guard options.capturing else { return }
+        holdsPeek = true
         // Give SwiftUI and the split view a moment to settle at the new size. When the peek
         // should be open, also wait for its popover to be on screen and done animating: a fixed
         // delay sometimes caught it half-drawn or not yet there (F-44).
@@ -566,6 +571,9 @@ public enum FixtureHarness {
             whenPopoverSettled(model: model) { capture() }
         }
 
+        // The peek is a transient popover: it closes when Duo stops being the active app, as when a
+        // background launch is activated and the user's own app takes focus back (C-35). A capture
+        // holds `peekOpen` (`holdsPeek`), so SwiftUI keeps it up.
         func whenPopoverSettled(model: AppModel, tries: Int = 0, then: @escaping @MainActor () -> Void) {
             let shown = NSApp.windows.contains { $0.isVisible && $0.className.contains("Popover") }
             if !model.peekOpen || (shown && tries > 0) || tries >= 30 {

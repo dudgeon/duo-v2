@@ -169,7 +169,9 @@ struct NeedsYouChip: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .popover(isPresented: Binding(get: { model.peekOpen }, set: { model.peekOpen = $0 }), arrowEdge: .bottom) {
+            // A capture ignores the popover closing itself on deactivation (C-35); the harness
+            // presents it again. Esc and the chip still close it through the model.
+            .popover(isPresented: Binding(get: { model.peekOpen }, set: { if $0 || !FixtureHarness.holdsPeek { model.peekOpen = $0 } }), arrowEdge: .bottom) {
                 PeekView().environment(model)
             }
             .accessibilityLabel("\(count) sessions need you in other projects")
