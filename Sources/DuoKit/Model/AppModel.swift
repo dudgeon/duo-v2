@@ -198,7 +198,9 @@ public final class AppModel {
             if let f = filed, f != folder.resolvingSymlinksInPath().path, !FileManager.default.fileExists(atPath: f),
                reconnectForResume(id, to: folder) { filed = folder.resolvingSymlinksInPath().path }
             let movedHere = filed.map { $0 != folder.resolvingSymlinksInPath().path && FileManager.default.fileExists(atPath: $0) } ?? false
-            let t = terminals.session(key, command: transcript != nil ? .resumeClaude(sessionID: id) : .newClaude(sessionID: id, prompt: nil),
+            // Remote Control stays on for a session started with it (DL-128).
+            let remote = SessionIndex.load(project: folder).sessions.first { $0.sessionId == id }?.remoteControl
+            let t = terminals.session(key, command: transcript != nil ? .resumeClaude(sessionID: id, remoteControl: remote) : .newClaude(sessionID: id, prompt: nil, remoteControl: remote),
                                       cwd: movedHere ? filed! : folder.path)
             if movedHere { relocate(t, to: folder) }
             return t
@@ -479,16 +481,18 @@ public final class AppModel {
     }
 
     @discardableResult
-    public func newSession(in project: String, prompt: String? = nil, provenance: String = "created-by-duo") -> String? {
+    public func newSession(in project: String, prompt: String? = nil, provenance: String = "created-by-duo",
+                           id: String = UUID().uuidString.lowercased(), remoteControl: String? = nil) -> String? {
         guard terminalsMode == .live, let folder = liveFolders[project] else { return nil }
-        let id = UUID().uuidString.lowercased()
         var index = SessionIndex.load(project: folder)
-        index.sessions.append(.init(sessionId: id, provenance: provenance))
+        var entry = SessionIndex.Entry(sessionId: id, provenance: provenance)
+        entry.remoteControl = remoteControl
+        index.sessions.append(entry)
         try? index.save(project: folder)
-        _ = terminals.session(id, command: .newClaude(sessionID: id, prompt: prompt), cwd: folder.path)
+        _ = terminals.session(id, command: .newClaude(sessionID: id, prompt: prompt, remoteControl: remoteControl), cwd: folder.path)
         fixture.sessions.append(Fixture.Session(name: LiveSnapshot.untitled(Date()), project: project, state: .working, wait: "now",
                                                 question: nil, options: nil, summary: nil, forkOf: nil, document: nil,
-                                                sessionId: id))
+                                                sessionId: id, remoteControl: remoteControl))
         return id
     }
 

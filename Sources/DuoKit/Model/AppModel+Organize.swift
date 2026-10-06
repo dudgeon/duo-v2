@@ -123,8 +123,10 @@ extension AppModel {
         let before = touched.map { ($0, SessionIndex.load(project: $0)) }
         for s in moving {
             guard let id = s.sessionId else { continue }
+            var remoteControl: String?
             if let from = liveFolders[s.project] {
                 var idx = SessionIndex.load(project: from)
+                remoteControl = idx.sessions.first { $0.sessionId == id }?.remoteControl
                 if idx.sessions.contains(where: { $0.sessionId == id }) {
                     idx.sessions.removeAll { $0.sessionId == id }
                     for i in idx.groups.indices { idx.groups[i].sessions.removeAll { $0 == id } }
@@ -133,7 +135,9 @@ extension AppModel {
             }
             var to = SessionIndex.load(project: targetFolder)
             to.sessions.removeAll { $0.sessionId == id }
-            to.sessions.append(.init(sessionId: id, provenance: "moved-by-user:\(s.project)"))
+            var entry = SessionIndex.Entry(sessionId: id, provenance: "moved-by-user:\(s.project)")
+            entry.remoteControl = remoteControl  // Remote Control follows it (DL-128)
+            to.sessions.append(entry)
             try? to.save(project: targetFolder)
         }
         registerUndo(action) { model in

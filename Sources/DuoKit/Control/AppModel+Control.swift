@@ -155,6 +155,7 @@ extension AppModel {
             guard let key = inv[0] ?? req.session, let s = findSession(key, in: nil), let sid = s.sessionId else { return done(.fail("no session '\(inv[0] ?? "")'")) }
             var j = sessionJSON(s)
             var text = sessionPayload(s.tabKey) ?? s.name
+            text += "\nRemote Control: " + (s.remoteControl.map { "on, as \"\($0)\"" } ?? "off")
             if let folder = liveFolders[s.project], let t = ClaudeStorage.transcript(sessionId: sid, cwd: folder.path) ?? (FileManager.default.fileExists(atPath: SessionArchive.copyURL(sid).path) ? SessionArchive.copyURL(sid) : nil) {
                 let turns = SessionSource.read(t.path).turns
                 let recent = turns.suffix(Int(inv.flags["turns"] ?? "3") ?? 3)
@@ -166,9 +167,24 @@ extension AppModel {
         case .sessionNew:
             let name = inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name ?? currentProject?.name ?? fixture.home?.name
             guard let name, let p = project(named: name) else { return done(.fail("no project '\(name ?? "")'")) }
-            guard let sid = newSession(in: p.name, prompt: inv.flags["prompt"]) else { return done(.fail("couldn't start a session in \(p.name)")) }
+            // Remote Control (DL-128): only for a claude that takes the flag; otherwise it starts without.
+            let sid = UUID().uuidString.lowercased()
+            var remote: String?, off: String?
+            if let asked = inv.flags["remote-control"] {
+                if let claude = ClaudeLocator.resolve(), RemoteControl.supported(claude) {
+                    remote = asked.isEmpty ? RemoteControl.defaultName(project: p.name, sessionID: sid) : asked
+                } else {
+                    let v = ClaudeLocator.resolve().flatMap(ClaudeVersion.known).map { "Claude Code \($0)" } ?? "This Claude Code"
+                    off = "\(v) doesn't take --remote-control, so the session started without Remote Control."
+                }
+            }
+            guard newSession(in: p.name, prompt: inv.flags["prompt"], id: sid, remoteControl: remote) != nil else { return done(.fail("couldn't start a session in \(p.name)")) }
             if p.isHome == true, altitude.isAllProjects { homeTab = sid } else if currentProject?.name == p.name { consoleTab = sid }
-            done(.ok("Started session \(sid) in \(p.name).", ["id": sid, "project": p.name]))
+            var j: [String: Any] = ["id": sid, "project": p.name]
+            var text = "Started session \(sid) in \(p.name)."
+            if let remote { j["remoteControl"] = remote; text += " Remote Control is on as \"\(remote)\"." }
+            if let off { j["remoteControlUnavailable"] = off; text += " " + off }
+            done(.ok(text, j))
         case .sessionOpen:
             guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail("no session '\(inv[0] ?? "")'")) }
             if s.project == fixture.home?.name, altitude.isAllProjects { homeTab = s.tabKey } else { open(project: s.project); openConsoleTab(s.tabKey) }
@@ -913,6 +929,7 @@ extension AppModel {
         if let v = s.options { j["options"] = v }
         if let v = s.summary { j["summary"] = v }
         j["running"] = terminals.existing(s.tabKey) != nil
+        j["remoteControl"] = s.remoteControl ?? NSNull()  // the name it was started with (DL-128)
         return j
     }
 

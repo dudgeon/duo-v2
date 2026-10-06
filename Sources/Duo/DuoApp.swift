@@ -64,7 +64,7 @@ struct DuoApp: App {
         if !options.capturing, model.terminalsMode == .live { SparkleUpdater.start(model: model) }
         // The CLI's version decides chat mode's hooks when a session starts (F-111): asked now, off the
         // main thread, so the first session finds it cached (C-34).
-        if model.terminalsMode == .live, let claude = ClaudeLocator.resolve() { ClaudeVersion.warm(claude) }
+        if model.terminalsMode == .live, let claude = ClaudeLocator.resolve() { ClaudeVersion.warm(claude); RemoteControl.warm(claude) }
         if !options.capturing, model.terminalsMode == .live {
             DispatchQueue.main.asyncAfter(deadline: .now() + 8) { MainActor.assumeIsolated { model.checkForUpdates(userInitiated: false) } }
         }

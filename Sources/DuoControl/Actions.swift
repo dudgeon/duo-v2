@@ -181,7 +181,7 @@ extension DuoAction {
         // Sessions
         .init(.sessions, .sessions, "[--project <p>]", "Sessions with id, state, title and project.", everyday: true),
         .init(.sessionShow, .sessions, "<id>", "A session's title, project, state, note, next step, transcript path and recent turns.", everyday: true),
-        .init(.sessionNew, .sessions, "[--project <p>] [--prompt <text>]", "Start a Claude session in a project (the current one by default).",
+        .init(.sessionNew, .sessions, "[--project <p>] [--prompt <text>] [--remote-control [name]]", "Start a Claude session in a project (the current one by default). --remote-control makes it reachable from the Claude app, named <name> or its project and a short id, and keeps it on when the session resumes; a claude without the flag starts without it and the reply says so.",
               ui: ["+ New session", "New Session", "console +", "New Claude Session", "Start Claude here", "Start Claude in Home", "Start in"]),
         .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab", "Resume"]),
         .init(.sessionClose, .sessions, "[id] [--force]", "End a session's process and close its tab (it stays listed and resumable). Refuses while Claude is working there, unless --force.", ui: ["Close Tab", "End Session"]),
@@ -406,6 +406,9 @@ public struct Invocation: Sendable {
     /// Flags that take no value.
     static let switches: Set<String> = ["json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "force"]
 
+    /// Flags whose value is optional: the next word is theirs unless it's another flag.
+    static let optionalValues: Set<String> = ["remote-control"]
+
     public init(_ args: [String]) {
         var i = 0
         while i < args.count {
@@ -414,7 +417,7 @@ public struct Invocation: Sendable {
                 let name = String(a.dropFirst(2))
                 if let eq = name.firstIndex(of: "=") {
                     flags[String(name[..<eq])] = String(name[name.index(after: eq)...])
-                } else if Self.switches.contains(name) || i + 1 >= args.count {
+                } else if Self.switches.contains(name) || i + 1 >= args.count || (Self.optionalValues.contains(name) && args[i + 1].hasPrefix("--")) {
                     flags[name] = ""
                 } else {
                     flags[name] = args[i + 1]; i += 1
