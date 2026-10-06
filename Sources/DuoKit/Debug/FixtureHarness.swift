@@ -430,6 +430,18 @@ public enum FixtureHarness {
             }
             if let l = model.lastSent { FileHandle.standardError.write(Data("---- lastSent to \(l.key.prefix(8)) ----\n\(l.text)\n----\n".utf8)) }
             if let l = model.lastDrafted { FileHandle.standardError.write(Data("---- lastDrafted into \(l.key.prefix(8)) ----\n\(l.text.debugDescription)\n----\n".utf8)) }
+        case "browser":   // browser:<url>: a browser tab on that address (duo2 browser open)
+            if parts.count > 1, let u = AllowedSites.url(from: parts[1]) { model.newBrowserTab(u) }
+        case "browser-click":   // browser-click:<css selector>: duo2 browser click, real mouse events (DL-124)
+            if parts.count > 1 { model.visibleWebTab?.click(selector: parts[1]) { FileHandle.standardError.write(Data("browser-click: \($0 ?? "no match")\n".utf8)) } }
+        case "browser-key":   // browser-key:=|-|0|p: ⌘ and the key, with the page holding the keyboard, as NSApp delivers it (no activation)
+            if parts.count > 1, let t = model.visibleWebTab, let w = t.webView.window,
+               let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: .command, timestamp: ProcessInfo.processInfo.systemUptime,
+                                        windowNumber: w.windowNumber, context: nil, characters: parts[1], charactersIgnoringModifiers: parts[1], isARepeat: false, keyCode: 0) {
+                w.makeFirstResponder(t.webView)
+                let handled = w.performKeyEquivalent(with: e) || NSApp.mainMenu?.performKeyEquivalent(with: e) == true
+                FileHandle.standardError.write(Data("browser-key: ⌘\(parts[1]) handled=\(handled) zoom=\(t.zoom)\n".utf8))
+            }
         case let a where a.hasPrefix("wait"): break
         default: FileHandle.standardError.write(Data("Unknown action '\(action)'\n".utf8))
         }

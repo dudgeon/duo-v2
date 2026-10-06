@@ -104,6 +104,8 @@ public final class AppModel {
     @ObservationIgnored public var htmlViewerIfLoaded: HTMLViewer?
     /// Browser tabs by id (`web:…`), kept alive while their tab is open (Phase K, ENH-8).
     @ObservationIgnored public var webTabs: [String: WebTab] = [:]
+    /// Downloads browser tabs saved since launch, oldest first (`duo2 browser downloads`, DL-124).
+    @ObservationIgnored public var downloads: [DownloadRecord] = []
     /// Bumped when the picker starts, freezes or ends, so the picker bar redraws.
     public var pickerRevision = 0
     /// Which web view has the keyboard (menus re-validate on change).

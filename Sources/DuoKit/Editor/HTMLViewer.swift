@@ -112,6 +112,14 @@ public class DuoWebView: WKWebView {
     /// Bold and Italic disabled while the editor had focus.
     var onFocusChange: ((Bool) -> Void)?
 
+    /// Every Duo web view says it's the installed Safari, whose engine it is (F-117).
+    public override init(frame: NSRect, configuration: WKWebViewConfiguration) {
+        configuration.applicationNameForUserAgent = WebUserAgent.applicationName
+        super.init(frame: frame, configuration: configuration)
+    }
+
+    required init?(coder: NSCoder) { fatalError("DuoWebView is made in code") }
+
     public override func becomeFirstResponder() -> Bool {
         let ok = super.becomeFirstResponder()
         if ok { onFocusChange?(true) }

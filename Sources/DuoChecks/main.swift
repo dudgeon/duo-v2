@@ -2,6 +2,7 @@ import DuoControl
 import DuoKit
 import DuoSearch
 import Foundation
+import SwiftUI
 
 // Plain assertions, run with `swift run DuoChecks`. Exit status is the number of failures.
 
@@ -212,6 +213,67 @@ func repoFixture() throws -> Fixture {
         let f = FileManager.default.temporaryDirectory.appending(path: "duo-sites-\(UUID().uuidString).txt")
         check(AllowedSites.add("www.Example.com", to: f) && !AllowedSites.add("example.com", to: f) && AllowedSites.load(f) == ["example.com"], "allow list adds once, without www")
         try? FileManager.default.removeItem(at: f)
+    }
+
+    print("browser basics (DL-124)")
+    do {
+        let dir = URL(fileURLWithPath: "/tmp/dl")
+        var taken: Set<String> = []
+        let exists = { (u: URL) in taken.contains(u.lastPathComponent) }
+        check(DownloadNaming.unique("report.pdf", in: dir, exists: exists).lastPathComponent == "report.pdf", "a download keeps its own name when it's free")
+        taken = ["report.pdf"]
+        check(DownloadNaming.unique("report.pdf", in: dir, exists: exists).lastPathComponent == "report 2.pdf", "a clash is named as Finder does: name 2.ext")
+        taken = ["report.pdf", "report 2.pdf", "report 3.pdf"]
+        check(DownloadNaming.unique("report.pdf", in: dir, exists: exists).lastPathComponent == "report 4.pdf", "and counts on past the names taken")
+        taken = ["a.tar.gz", "README"]
+        check(DownloadNaming.unique("a.tar.gz", in: dir, exists: exists).lastPathComponent == "a 2.tar.gz"
+              && DownloadNaming.unique("README", in: dir, exists: exists).lastPathComponent == "README 2", "a double extension stays together; no extension gets a bare number")
+        check(DownloadNaming.clean("../x/y:z") == "-x-y-z" && DownloadNaming.clean("  ") == "download" && DownloadNaming.clean(".env") == "env",
+              "a suggested name can't leave the folder, hide, or be empty")
+
+        let zf = FileManager.default.temporaryDirectory.appending(path: "duo-zoom-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: zf) }
+        var z = ZoomStore(file: zf)
+        check(z.level(for: URL(string: "https://docs.google.com/d/1")) == 1.0, "a site starts at 100%")
+        z.set(1.25, for: URL(string: "https://www.example.com/a"))
+        check(ZoomStore(file: zf).level(for: URL(string: "https://example.com/b")) == 1.25, "the zoom is remembered for the site, www or not, across launches")
+        check(ZoomStore(file: zf).level(for: URL(string: "http://localhost:8080/")) == 1.0 && ZoomStore.site(URL(string: "http://localhost:8080/x")) == "localhost:8080",
+              "localhost ports are separate sites")
+        z.set(1.0, for: URL(string: "https://example.com"))
+        check(ZoomStore(file: zf).levels.isEmpty, "back at 100% the site is forgotten")
+        check(ZoomStore.zoomIn(1.0) == 1.1 && ZoomStore.zoomOut(1.0) == 0.9 && ZoomStore.zoomIn(3.0) == 3.0 && ZoomStore.zoomOut(0.5) == 0.5
+              && ZoomStore.zoomIn(1.17) == 1.25, "⌘+ and ⌘- step through Safari's levels and stop at the ends")
+        check(ZoomStore.parse("125%", current: 1) == 1.25 && ZoomStore.parse("in", current: 1) == 1.1 && ZoomStore.parse("reset", current: 2) == 1.0
+              && ZoomStore.parse("900", current: 1) == nil && ZoomStore.parse("big", current: 1) == nil, "duo2 browser zoom reads percents, in, out and reset")
+
+        let openers = ["web:p1": "web:a", "web:p2": "web:a"]
+        check(PopupPlacement.index(in: ["x.md", "web:a", "web:b"], opener: "web:a", openers: [:]) == 2, "a popup's tab goes right after its opener")
+        check(PopupPlacement.index(in: ["web:a", "web:p1", "web:b"], opener: "web:a", openers: openers) == 2, "after the opener's other popups")
+        check(PopupPlacement.index(in: ["web:b"], opener: "web:gone", openers: [:]) == 1, "at the end if the opener is gone")
+        check(PopupPlacement.after(closing: "web:p2", in: ["web:a", "web:b", "web:p2"], openers: openers) == "web:a", "closing a popup shows its opener")
+        check(PopupPlacement.after(closing: "web:b", in: ["web:a", "web:b", "web:c"], openers: openers) == "web:c"
+              && PopupPlacement.after(closing: "web:c", in: ["web:a", "web:c"], openers: [:]) == "web:a"
+              && PopupPlacement.after(closing: "web:a", in: ["web:a"], openers: [:]) == nil, "closing another tab shows its neighbour, as before")
+        check(DuoCommand.printPage.shortcut == KeyboardShortcut("p", modifiers: .command) && DuoCommand.actualSize.shortcut == KeyboardShortcut("0", modifiers: .command)
+              && DuoCommand.allCases.filter { $0.shortcut == KeyboardShortcut("0", modifiers: .command) || $0.shortcut == KeyboardShortcut("p", modifiers: .command)
+                                                || $0.shortcut == KeyboardShortcut("-", modifiers: .command) || $0.shortcut == KeyboardShortcut("+", modifiers: .command) }.count == 4,
+              "⌘P ⌘+ ⌘- ⌘0 are the browser's alone in the chord map")
+    }
+
+    print("web views say they're Safari (F-117)")
+    do {
+        let os27 = OperatingSystemVersion(majorVersion: 27, minorVersion: 0, patchVersion: 0)
+        check(WebUserAgent.token(safariVersion: "27.0.1", os: os27) == "Version/27.0 Safari/605.1.15", "the token carries the installed Safari's major.minor")
+        check(WebUserAgent.token(safariVersion: nil, os: os27) == "Version/27.0 Safari/605.1.15"
+              && WebUserAgent.token(safariVersion: "junk", os: OperatingSystemVersion(majorVersion: 26, minorVersion: 1, patchVersion: 0)) == "Version/26.1 Safari/605.1.15",
+              "without Safari's version, macOS 26 and later name it after the system")
+        check(WebUserAgent.applicationName.hasPrefix("Version/") && WebUserAgent.applicationName.hasSuffix(" Safari/605.1.15"), "this Mac gets a Safari token")
+        let made = (try? FileManager.default.subpathsOfDirectory(atPath: repoRoot().appending(path: "Sources").path)) ?? []
+        let bare = made.filter { $0.hasSuffix(".swift") && !$0.hasPrefix("DuoChecks/") }.filter { p in
+            let s = (try? String(contentsOf: repoRoot().appending(path: "Sources/" + p), encoding: .utf8)) ?? ""
+            return s.contains("WKWebView(frame:") || s.contains("= WKWebView(")
+        }
+        check(bare.isEmpty, "every web view is a DuoWebView, so none sends the bare user agent\(bare.isEmpty ? "" : ": \(bare)")")
     }
 
     print("ordering")
