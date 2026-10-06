@@ -1,0 +1,33 @@
+
+
+⏺ Update(notes.md)
+  ⎿  File must be read first
+
+⏺ Done. The tool said: "<tool_use_error>File has not been read yet. Read it first before writing to
+  it.</tool_use_error>\n\n<system-reminder>\n<total_tokens>14999970 tokens left</tota
+
+✻ Baked for 0s · done 9:12 AM
+
+❯ use a shorter line                                                                                
+
+⏺ ok
+
+✻ Worked for 0s · done 9:12 AM
+
+❯ SCENARIO:askmulti                                                                                 
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☒ Platforms  ☒ Timing  ✔ Submit  →
+
+Review your answers
+  
+ ● Which platforms should we ship?
+   → macOS, Web
+ ● How soon?
+   → After the beta
+
+Ready to submit your answers?
+
+❯ 1. Submit answers
+  2. Cancel
+

@@ -1191,3 +1191,52 @@ Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and o
 - **Checks:** DuoChecks 335 passed (21 new: escaping with spaces, quotes, every shell character, unicode and emoji, several items, control characters; move, undo, clash with no answer, Keep Both, Replace and its undo, into itself, partial refusal, already there, the folder-holding-the-source case, cross-volume copy and its undo, the model's in-tree move with a tab following). `scripts/bundle.sh`; `NO_BUILD=1 scripts/check-ui.sh` unchanged (the fixture's tree has no live files, so no drag or drop). Live, on scratch folders under `/tmp` with their own support and config folders: drops from a stand-in Finder folder moved a file with a space and a folder; a clash asked and Keep Both made `a 2.md`; Cancel moved nothing; Replace and then Undo brought both files back; docs onto docs/sub was refused with a note; an open tab followed a move and came back on undo; two Undos put the disk back as it was. Into a shell, `drop-terminal:` typed `/tmp/dd-finder/Café\ 日本\ it\'s.md /tmp/dd-ws/proj/docs/b\ c.md /tmp/dd-ws/proj/docs/folder ` at the prompt and ran nothing. `duo2 file move` against that instance: clash refused with the hint, `--keep-both` made `a 2.md`, a folder into itself refused, a Finder folder moved, two `duo2 undo`s put both back.
 - **Harness:** `drop-files:<folder|root>=<path>|<path>`, `drop-terminal:<path>|…`, `drop-hover:<folder|root|off>`, and `answer:<label>` presses a button on Duo's own question sheet. They call what the drop delegates call; a real pointer drag (AppKit's drag session, SwiftUI picking the innermost drop target over the tree's) isn't scriptable here, so Geoff should try one by hand at the acceptance walk.
 - **Not done:** an outside file open as a `file:` tab (DL-106) that's dropped into the project keeps its old tab, which then shows the placeholder; Duo doesn't read ⌥ (copy) or ⌘ (move) during the drag as Finder does (Q-51).
+
+## F-103 · Chat mode spike: where a live session's structure comes from (ENH-13, DL-118, 2026-10-06)
+
+Verified on Claude Code 2.1.291. The real interactive TUI ran on a PTY with a headless screen mirror, pointed at a local mock of the Messages API (`ANTHROPIC_BASE_URL`, a dummy key pre-approved in a scratch `CLAUDE_CONFIG_DIR`). No credentials and no tokens; every dialog was produced on demand. Full write-up: `docs/plan/spikes/chat-mode.md`.
+
+- **`MessageDisplay` hook** (added 2.1.152, documented): fires per batch of newly completed lines while assistant text streams.
+  - Payload: `message_id` (not the transcript's uuid or the API id), `index`, `final`, `delta`: the **raw Markdown**.
+  - A 40-line answer: first flush at +0.30 s, one per line, final at +10.9 s.
+  - It can also transform or hide displayed text, so Duo's hook must keep printing nothing.
+- **The transcript lags by a whole content block.** One line per block, written when the block completes: the same answer landed at +10.99 s, all at once. In a normal session, assistant lines landed a median 2.9 s after their timestamp (max 126 s for a large tool call). Use it for history and for what hooks don't carry, not for streaming.
+- **`PermissionRequest`** carries the full `tool_input` and `permission_suggestions`, but **no `tool_use_id`**: match it to its `PreToolUse` by tool and input.
+  - For `ExitPlanMode` the input holds the plan text and `planFilePath`; the tool itself now takes no plan parameter (2.1.285 fixed hooks seeing a stale plan).
+  - **A refused plan or declined question fires no Post/Denied hook.** Only the transcript's `tool_result` (`is_error`, `toolDenialKind: user-rejected`, `userFeedback`) records it.
+- **Subagents** are backgrounded by default ("Backgrounded agent (↓ to manage)"). `SubagentStart`/`SubagentStop` give `agent_id` and `agent_transcript_path` (`<id>/subagents/agent-*.jsonl`). Claude's own side agents send `SubagentStop` with no start.
+- `UserPromptSubmit.source` separates the user's prompts from injected ones (task notifications, loop and schedule wakeups). `Notification` (`permission_prompt`) comes about 6 s after a dialog appears.
+- **The IDE bridge** (lock files, websocket MCP: `openDiff` → `FILE_SAVED`/`DIFF_REJECTED`/`TAB_CLOSED`, `selection_changed`, `at_mentioned`) is in the binary, but its protocol is undocumented. Not tried.
+- **Prior art** (summary in the spike): every rich chat GUI over Claude Code uses `-p`, stream-json or the SDK, which DL-118 rules out. Omnara v1 (PTY, JSONL tail, scraped prompts, removed 2026-08) is the only real overlay.
+
+## F-104 · Chat mode spike: answering the TUI with keys, and the composer (ENH-13, DL-118, 2026-10-06)
+
+- **Every dialog was answered with keys, from the PoC page, and the TUI took them**:
+  - permission prompts: digits 1–3, Esc;
+  - plan approval: 1, 2, or 3 plus typed feedback, which Claude received as "the user said: …";
+  - AskUserQuestion: arrows and Enter; Space toggles multi-select; → goes to the next question; type into "Type something"; then "Submit answers" on the review page. Esc = "declined";
+  - interrupt: Esc; mode: Shift+Tab.
+
+  The cards use the **screen's verbatim option labels**: they vary by tool and setting, e.g. "Yes, and always allow access to `<dir>` from this project", or for edits "Yes, and switch to accept edits …".
+- **Screen signatures for 2.1.291** (`Spikes/chat-mode/screen.mjs`):
+  - "Do you want to …?" + numbered options + "Esc to cancel" (permission);
+  - "Ready to code?" + "Would you like to proceed?" (plan);
+  - "Enter to select ·" with a ☐/☒ tab strip (question);
+  - "Review your answers" + "Ready to submit your answers?" (review);
+  - the input box between the last two full-width rules, with the footer under it (idle, busy via "esc to interrupt", mode).
+
+  Anything else is unknown → terminal. Checked: the API-key prompt, `/model`.
+- **Input desyncs reproduced:**
+  - after Esc, Esc the TUI kept `/mod` in its input, and the next paste became `/modSCENARIO:long`;
+  - Ctrl+U removes only one line of a multi-line input;
+  - the input's placeholder (`Try "fix lint errors"`) is dim text that reads as typed input unless cell attributes are checked;
+  - a digit sent after a dialog closed lands in the prompt (`2SCENARIO:plan`).
+
+  So: paste only into an input that's empty in non-dim cells, check the echo, and re-check a dialog's signature right before sending its keys.
+- **Ctrl+G is a desync-free composer** (`chat:externalEditor`; also `ctrl+x ctrl+e`). With `EDITOR` set to a stand-in:
+  - the TUI handed its current half-typed input over as `/tmp/claude-…/claude-prompt-<id>.md`;
+  - it took the replacement back exactly (multi-line), and Enter sent it.
+
+  Cautions: `EDITOR` is inherited by Claude's Bash tool, so a helper must act only on `claude-prompt-*.md`; the 2.1.269 redraw fix gates it.
+- **The mock-API tour is the version check.** `Spikes/chat-mode/tour.sh scenario-tour.json <out>` runs every dialog against the installed CLI in under 30 s and dumps each screen (the 2.1.291 baseline is `screens/tour-2.1.291/`). Running it on each new CLI (and on the work Mac's 2.1.219) is how dialog signatures stay verified (C-1).
+- **Not done:** no real-model turns (no login in a scratch config); the IDE bridge; Tab-to-amend, "Chat about this" and preview panes (fallback); fullscreen and Vim modes (fallback by rule, untested).

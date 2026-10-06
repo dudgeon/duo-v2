@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat mode PoC</title>
+<link rel="stylesheet" href="xterm.css">
+<script src="xterm.js"></script>
+<script src="marked.js"></script>
+<style>
+  /* A spike, not a design: neutral stand-ins until the design session draws chat mode. */
+  :root { --bg: #f7f6f3; --panel: #ffffff; --ink: #1f1e1c; --muted: #6b6862; --line: #e3e0da; --accent: #c2410c; --user: #efece6; --term: #1d1c1a; --ok: #15803d; --warn: #b45309; --mono: ui-monospace, Menlo, monospace; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #1b1a18; --panel: #232220; --ink: #ecebe8; --muted: #a29f99; --line: #3a3835; --user: #2d2b28; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 -apple-system, system-ui, sans-serif; height: 100vh; display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 13px; font-weight: 600; margin: 0; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+  .seg button { border: 0; background: transparent; color: var(--ink); padding: 4px 12px; font: inherit; font-size: 12px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  #state { font: 12px var(--mono); color: var(--muted); margin-left: auto; }
+  main { flex: 1; display: flex; min-height: 0; }
+  #termPane { background: var(--term); padding: 8px; overflow: auto; flex: 0 0 auto; }
+  #chatPane { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--panel); border-left: 1px solid var(--line); }
+  body.v-chat #termPane, body.v-term #chatPane { display: none; }
+  body.v-term #termPane { flex: 1; }
+  #banner { display: none; padding: 8px 16px; background: #fef3c7; color: #78350f; font-size: 13px; border-bottom: 1px solid #fcd34d; }
+  #banner.on { display: flex; gap: 12px; align-items: center; }
+  #log { flex: 1; overflow-y: auto; padding: 16px 20px 8px; }
+  .msg { margin: 0 0 14px; max-width: 760px; }
+  .user { background: var(--user); border-radius: 10px; padding: 8px 12px; white-space: pre-wrap; }
+  .user::before { content: "You"; display: block; font-size: 11px; color: var(--muted); font-weight: 600; }
+  .assistant :first-child { margin-top: 0; } .assistant :last-child { margin-bottom: 0; }
+  .assistant table { border-collapse: collapse; } .assistant td, .assistant th { border: 1px solid var(--line); padding: 2px 8px; }
+  .assistant pre { background: var(--bg); padding: 8px 10px; border-radius: 6px; overflow-x: auto; }
+  code { font-family: var(--mono); font-size: 12.5px; }
+  .assistant a { color: var(--accent); }
+  .streaming::after { content: " ▍"; color: var(--accent); }
+  .tool { border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
+  .tool summary { padding: 6px 10px; cursor: pointer; list-style: none; display: flex; gap: 8px; }
+  .tool summary b { font-weight: 600; } .tool summary span { color: var(--muted); font-family: var(--mono); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tool pre { margin: 0; padding: 8px 10px; border-top: 1px solid var(--line); font: 12px/1.45 var(--mono); white-space: pre-wrap; max-height: 240px; overflow: auto; }
+  .tool .st { margin-left: auto; color: var(--muted); } .tool.ok .st { color: var(--ok); } .tool.err .st { color: var(--accent); }
+  .del { background: #fde2e1; color: #7f1d1d; display: block; } .add { background: #dcfce7; color: #14532d; display: block; }
+  .note { color: var(--muted); font-size: 12px; text-align: center; }
+  .divider { border-top: 1px dashed var(--line); margin: 18px 0; text-align: center; } .divider span { position: relative; top: -10px; background: var(--panel); padding: 0 8px; color: var(--muted); font-size: 12px; }
+  #ask { border-top: 1px solid var(--line); padding: 12px 20px; display: none; background: var(--bg); }
+  #ask.on { display: block; }
+  #ask h3 { margin: 0 0 4px; font-size: 14px; } #ask .kind { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  #ask pre { font: 12px var(--mono); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; white-space: pre-wrap; max-height: 200px; overflow: auto; }
+  .opts { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .opts button { text-align: left; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 7px 10px; font: inherit; cursor: pointer; }
+  .opts button:hover { border-color: var(--ink); } .opts button small { display: block; color: var(--muted); }
+  .opts button.on { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+  .row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+  .row input { flex: 1; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
+  .ghost { border: 0; background: none; color: var(--muted); cursor: pointer; font: inherit; font-size: 12px; text-decoration: underline; }
+  #composer { border-top: 1px solid var(--line); padding: 10px 20px 14px; }
+  #status { font-size: 12px; color: var(--muted); min-height: 18px; display: flex; gap: 10px; }
+  #composer textarea { width: 100%; resize: none; font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); }
+  #composer textarea:disabled { opacity: .5; }
+</style>
+</head>
+<body class="v-both">
+<header>
+  <h1>Chat mode · proof of concept</h1>
+  <div class="seg" role="group" aria-label="View">
+    <button data-v="chat">Chat</button><button data-v="both" aria-pressed="true">Both</button><button data-v="term">Terminal</button>
+  </div>
+  <span id="state">connecting…</span>
+</header>
+<div id="banner"><span id="bannerText"></span><button class="ghost" id="bannerBack">Back to chat</button></div>
+<main>
+  <div id="termPane"><div id="term"></div></div>
+  <section id="chatPane" aria-label="Chat">
+    <div id="log" aria-live="polite"></div>
+    <div id="ask" aria-live="assertive"></div>
+    <div id="composer">
+      <div id="status"><span id="statusText"></span><button class="ghost" id="stop" hidden>Stop (Esc)</button><button class="ghost" id="modeBtn"></button></div>
+      <textarea id="input" rows="2" placeholder="Message Claude — Enter to send, Shift+Enter for a new line"></textarea>
+    </div>
+  </section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const ws = new WebSocket(`ws://${location.host}`);
+let term, screen = { kind: 'starting' }, view = 'both', autoFell = false, reqId = 0;
+const cards = new Map(), streams = new Map();
+let pendingPerm = null;
+const started = new Set();          // the latest PermissionRequest not yet followed by its tool running or failing
+
+// ---- view toggle (always one click back to the plain terminal) ----
+function setView(v, why) {
+  view = v; document.body.className = 'v-' + v;
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v));
+  $('#banner').classList.toggle('on', !!why); $('#bannerText').textContent = why || '';
+  if (v !== 'chat') setTimeout(() => term?.focus(), 0);
+}
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { autoFell = false; setView(b.dataset.v); });
+$('#bannerBack').onclick = () => { autoFell = false; setView('chat'); };
+addEventListener('keydown', e => { if (e.ctrlKey && e.key === '`') { e.preventDefault(); setView(view === 'term' ? 'chat' : 'term'); } });
+function fallBack(why) { if (view === 'chat' || view === 'both') { autoFell = true; setView('term', why + ' Showing the terminal.'); } }
+
+// ---- chat log ----
+const log = $('#log');
+const atBottom = () => log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+function add(el) { const stick = atBottom(); log.appendChild(el); if (stick) log.scrollTop = log.scrollHeight; return el; }
+function div(cls, html) { const d = document.createElement('div'); d.className = cls; if (html !== undefined) d.innerHTML = html; return d; }
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const md = s => marked.parse(s, { gfm: true, breaks: true });
+function linkify(el) { el.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; }); return el; }
+
+function toolSummary(name, i = {}) {
+  return i.command || i.file_path || i.description || i.pattern || i.url || i.prompt || (name === 'ExitPlanMode' ? 'plan' : '') || JSON.stringify(i).slice(0, 80);
+}
+function diffHTML(name, i) {
+  if (name === 'Edit') return (i.old_string || '').split('\n').map(l => `<span class="del">- ${esc(l)}</span>`).join('') + (i.new_string || '').split('\n').map(l => `<span class="add">+ ${esc(l)}</span>`).join('');
+  if (name === 'Write') return (i.content || '').split('\n').map(l => `<span class="add">+ ${esc(l)}</span>`).join('');
+  return null;
+}
+const byInput = new Map();     // PermissionRequest carries no tool_use_id: match it to its PreToolUse by tool and input
+function toolCard(e) {
+  const key = e.tool_name + JSON.stringify(e.tool_input);
+  if (!e.tool_use_id) e = { ...e, tool_use_id: byInput.get(key) };
+  else byInput.set(key, e.tool_use_id);
+  let c = cards.get(e.tool_use_id);
+  if (!c) {
+    c = document.createElement('details'); c.className = 'msg tool';
+    const d = diffHTML(e.tool_name, e.tool_input || {});
+    c.innerHTML = `<summary><b>${esc(e.tool_name)}</b><span>${esc(toolSummary(e.tool_name, e.tool_input))}</span><em class="st">running</em></summary>` + (d ? `<pre>${d}</pre>` : '') + `<pre class="out" hidden></pre>`;
+    if (d) c.open = true;
+    cards.set(e.tool_use_id, add(c));
+  }
+  return c;
+}
+
+function onHook(e) {
+  switch (e.hook_event_name) {
+    case 'UserPromptSubmit':
+      if (e.source && e.source !== 'user' || /^<task-notification>/.test(e.prompt)) add(div('msg note', 'Background task reported back'));
+      else add(div('msg user')).textContent = e.prompt;
+      break;
+    case 'MessageDisplay': {
+      let s = streams.get(e.message_id);
+      if (!s) { s = { text: '', el: add(div('msg assistant streaming')) }; streams.set(e.message_id, s); }
+      s.text += e.delta; s.el.innerHTML = md(s.text); linkify(s.el);
+      if (e.final) s.el.classList.remove('streaming');
+      if (atBottom()) log.scrollTop = log.scrollHeight;
+      break;
+    }
+    case 'PreToolUse': if (!['AskUserQuestion'].includes(e.tool_name)) toolCard(e); break;
+    case 'PermissionRequest': pendingPerm = e; if (e.tool_name !== 'AskUserQuestion' && e.tool_name !== 'ExitPlanMode') toolCard(e).querySelector('.st').textContent = 'needs you'; renderAsk(); break;
+    case 'PostToolUse': case 'PostToolUseFailure': case 'PermissionDenied': {
+      if (pendingPerm && pendingPerm.tool_name === e.tool_name && JSON.stringify(pendingPerm.tool_input) === JSON.stringify(e.tool_input)) pendingPerm = null;
+      if (e.tool_name === 'AskUserQuestion') { add(div('msg note', 'Answered: ' + esc(JSON.stringify(e.tool_response?.answers ?? '')))); break; }
+      if (e.tool_name === 'ExitPlanMode') { add(div('msg note', e.hook_event_name === 'PostToolUse' ? 'Plan approved' : 'Plan not approved')); break; }
+      const c = toolCard(e), out = c.querySelector('.out');
+      const failed = e.hook_event_name !== 'PostToolUse';
+      c.classList.add(failed ? 'err' : 'ok'); c.querySelector('.st').textContent = failed ? (e.is_interrupt ? 'interrupted' : 'not run') : 'done';
+      const r = failed ? (e.error || e.reason || 'denied') : e.tool_response;
+      if (!failed && r?.structuredPatch) { c.open = false; break; }   // the diff above already says it
+      if (!failed && r?.type === 'create') { c.open = false; break; }
+      const txt = typeof r === 'string' ? r : r?.stdout ?? r?.content ?? JSON.stringify(r, null, 1);
+      if (txt) { out.hidden = false; out.textContent = String(txt).slice(0, 4000); }
+      renderAsk(); break;
+    }
+    case 'SubagentStart': started.add(e.agent_id); add(div('msg note', `Agent started: ${esc(e.agent_type)}`)); break;
+    case 'SubagentStop': { if (!started.has(e.agent_id)) break;   // side agents Claude runs for itself stop without a start here
+      const c = add(document.createElement('details')); c.className = 'msg tool ok'; c.innerHTML = `<summary><b>Agent</b><span>${esc(e.agent_type)}</span><em class="st">finished</em></summary><pre>${esc(e.last_assistant_message || '')}</pre>`; break; }
+    case 'PreCompact': add(div('divider', '<span>Compacting…</span>')); break;
+    case 'PostCompact': add(div('divider', '<span>Conversation compacted</span>')); break;
+    case 'StopFailure': add(div('msg note', 'Turn failed: ' + esc(e.error || e.reason || ''))); break;
+    case 'Stop': pendingPerm = null; renderAsk(); break;
+  }
+}
+function onRecord(r) {
+  // The transcript is the record of what was said; MessageDisplay already streamed the text, so
+  // only what hooks don't carry is shown from here.
+  if (r.type === 'assistant') for (const b of r.message?.content || []) if (b.type === 'thinking' && b.thinking) { const c = add(document.createElement('details')); c.className = 'msg tool'; c.innerHTML = `<summary><b>Thinking</b></summary><pre>${esc(b.thinking)}</pre>`; }
+  // A rejected plan or question fires no hook: only the transcript's tool_result says so.
+  if (r.type === 'user' && Array.isArray(r.message?.content)) for (const b of r.message.content) if (b.type === 'tool_result' && b.is_error && r.toolDenialKind) {
+    const c = cards.get(b.tool_use_id); if (c) { c.classList.add('err'); c.querySelector('.st').textContent = 'not approved'; }
+    if (r.userFeedback) add(div("msg note", "Your feedback: " + esc(r.userFeedback)));
+  }
+  if (r.type === 'system' && r.subtype === 'compact_boundary') add(div('divider', '<span>Earlier messages summarised</span>'));
+}
+
+// ---- the dialog on screen, drawn from the screen and the pending PermissionRequest ----
+function answer(keys, extra = {}) { ws.send(JSON.stringify({ t: 'answer', id: ++reqId, sig: screen.sig, keys, ...extra })); }
+function moveTo(target) { const cur = screen.options.findIndex(o => o.cursor); const k = []; for (let i = cur; i < target; i++) k.push('down'); for (let i = cur; i > target; i--) k.push('up'); return k; }
+function optButtons(opts, onPick) {
+  const box = div('opts');
+  opts.forEach((o, i) => { const b = document.createElement('button'); b.innerHTML = `${o.checked !== undefined ? (o.checked ? '☑ ' : '☐ ') : ''}${esc(o.label)}${o.note ? `<small>${esc(o.note)}</small>` : ''}`; if (o.checked) b.classList.add('on'); b.onclick = () => onPick(o, i); box.appendChild(b); });
+  return box;
+}
+function renderAsk() {
+  const ask = $('#ask'); ask.innerHTML = ''; ask.classList.remove('on');
+  const s = screen, pr = pendingPerm;
+  if (s.kind === 'permission') {
+    // Only when the hook agrees that a tool is waiting on a permission: the two must tell the same story.
+    if (!pr || ['AskUserQuestion', 'ExitPlanMode'].includes(pr.tool_name)) return fallBack('Chat mode doesn\'t recognise this question.');
+    ask.classList.add('on');
+    ask.innerHTML = `<div class="kind">${esc(s.kindLabel || pr.tool_name)}</div><h3>${esc(s.title)}</h3>` + (s.body ? `<pre>${esc(s.body)}</pre>` : '');
+    ask.appendChild(optButtons(s.options, o => answer([String(o.n)])));
+    const r = div('row'); r.innerHTML = `<button class="ghost">Cancel (Esc)</button>` + (s.amend ? `<button class="ghost">Amend in the terminal…</button>` : '');
+    r.children[0].onclick = () => answer(['esc']); if (s.amend) r.children[1].onclick = () => setView('term');
+    ask.appendChild(r);
+  } else if (s.kind === 'plan') {
+    ask.classList.add('on');
+    ask.innerHTML = `<div class="kind">Plan</div><h3>${esc(s.title)}</h3>`;
+    const plan = div('assistant'); plan.innerHTML = md(pr?.tool_input?.plan || '(plan on screen)'); ask.appendChild(plan);
+    ask.appendChild(optButtons(s.options.slice(0, 2), o => answer([String(o.n)])));
+    const r = div('row'); r.innerHTML = `<input placeholder="Tell Claude what to change"><button class="ghost">Send feedback</button>`;
+    // Option 3 opens an inline field in the TUI: move to it, type, Enter.
+    r.children[1].onclick = () => { const t = r.children[0].value.trim(); if (t) answer(moveTo(2), { text: t, then: ['enter'] }); };
+    ask.appendChild(r);
+  } else if (s.kind === 'question') {
+    ask.classList.add('on');
+    const tabs = s.tabs.length > 1 ? `<div class="kind">${s.tabs.map(t => (t.done ? '☒ ' : '☐ ') + esc(t.label)).join(' · ')}</div>` : `<div class="kind">${esc(s.tabs[0]?.label || 'Question')}</div>`;
+    ask.innerHTML = `${tabs}<h3>${esc(s.question)}</h3>`;
+    const real = s.options.filter(o => !/^Type something|^Chat about this|^Next$/.test(o.label));
+    ask.appendChild(optButtons(real, (o) => { const i = s.options.indexOf(o); answer([...moveTo(i), s.multi ? 'space' : 'enter']); }));
+    const other = s.options.findIndex(o => /^Type something/.test(o.label) || (o.cursor && !real.includes(o) && !/^Chat about/.test(o.label)));
+    const r = div('row'); r.innerHTML = `<input placeholder="Other: type your own answer"><button class="ghost">Answer</button>${s.multi ? '<button class="ghost">Next →</button>' : ''}<button class="ghost">Chat about this in the terminal…</button>`;
+    r.children[1].onclick = () => { const t = r.children[0].value.trim(); if (t && other >= 0) answer(moveTo(other), { text: t, then: s.multi ? ['space'] : ['enter'] }); };
+    if (s.multi) r.children[2].onclick = () => answer(['right']);
+    r.lastChild.onclick = () => setView('term');
+    ask.appendChild(r);
+  } else if (s.kind === 'question-review') {
+    ask.classList.add('on');
+    ask.innerHTML = `<div class="kind">Review your answers</div><pre>${esc(s.answers)}</pre>`;
+    ask.appendChild(optButtons(s.options, (o, i) => answer([...moveTo(i), 'enter'])));
+  }
+}
+
+function onScreen(s) {
+  screen = s;
+  $('#state').textContent = s.kind + (s.mode ? ' · ' + s.mode : '');
+  const known = ['idle', 'busy', 'permission', 'plan', 'question', 'question-review', 'starting'].includes(s.kind);
+  if (!known) fallBack('Chat mode can\'t show this screen.');
+  else if (autoFell && (s.kind === 'idle' || s.kind === 'busy')) { autoFell = false; setView('both'); }
+  const typing = s.kind === 'idle' || s.kind === 'busy';
+  $('#input').disabled = !typing;
+  $('#stop').hidden = s.kind !== 'busy';
+  $('#statusText').textContent = s.kind === 'busy' ? (s.status || 'Claude is working…') : typing ? '' : 'Answer above, or in the terminal';
+  $('#modeBtn').textContent = s.mode ? `Mode: ${s.mode} (Shift+Tab)` : '';
+  renderAsk();
+}
+
+$('#input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); const t = e.target.value.trim(); if (!t) return; ws.send(JSON.stringify({ t: 'send', id: ++reqId, text: t })); e.target.dataset.sent = t; }
+});
+$('#stop').onclick = () => ws.send(JSON.stringify({ t: 'interrupt' }));
+$('#modeBtn').onclick = () => ws.send(JSON.stringify({ t: 'mode' }));
+
+ws.onmessage = ev => {
+  const m = JSON.parse(ev.data);
+  if (m.t === 'hello') {
+    term = new Terminal({ cols: m.cols, rows: m.rows, fontSize: 12, fontFamily: 'Menlo, monospace', theme: { background: '#1d1c1a' } });
+    term.open($('#term')); term.write(m.pty); term.onData(d => ws.send(JSON.stringify({ t: 'raw', d })));
+    for (const h of m.history) h.t === 'hook' ? onHook(h.e) : onRecord(h.r);
+    onScreen(m.screen);
+  }
+  if (m.t === 'pty') term?.write(m.d);
+  if (m.t === 'hook') onHook(m.e);
+  if (m.t === 'record') onRecord(m.r);
+  if (m.t === 'screen') onScreen(m.s);
+  if (m.t === 'result') {
+    if (m.ok && $('#input').dataset.sent) { $('#input').value = ''; delete $('#input').dataset.sent; }
+    if (!m.ok && m.fallback) fallBack(m.why[0].toUpperCase() + m.why.slice(1) + '.');
+  }
+  if (m.t === 'exit') $('#state').textContent = 'Claude exited';
+};
+</script>
+</body>
+</html>

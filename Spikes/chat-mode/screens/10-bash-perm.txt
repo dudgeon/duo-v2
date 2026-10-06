@@ -1,0 +1,33 @@
+
+ ▐▛███▛█   Claude Code v2.1.291
+▝▜██████▀  Haiku 4.5 · API Usage Billing
+ ▝▝   ▝▝   /…/-Users-geoff-repos-duo-v2/94261998-0f3b-48c5-a090-dcb9920a297e/scratchpad/ws
+
+
+❯ SCENARIO:bash                                                                                     
+
+⏺ Running a command.
+
+⏺ Writing and read a file
+  ⎿  $ echo hello > hello.txt && cat hello.txt
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ Bash command
+ Write and read a file
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ echo hello > hello.txt && cat hello.txt
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and always allow access to /private/tmp/claude-501/-Users-geoff-repos-duo-v2/94261998-0f3
+      b-48c5-a090-dcb9920a297e/scratchpad/ws from this project
+   3. No
+
+ Esc to cancel · Tab to amend
+
+
+
+
+
+
+
