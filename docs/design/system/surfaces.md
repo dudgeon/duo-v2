@@ -68,6 +68,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Move into Home… and New project sheets | Designed (DL-100): Duo's own sheets under the toolbar, the map dimmed to 55% | — | `Shell/Sheets.swift` |
 | Confirmations and launch questions (merge, move, delete, reconnect, install, legacy Duo, .gitignore) | Designed (DL-101): Duo's own sheets, one at a time | — | `Shell/DuoQuestion.swift` |
 | Drag a session or tile; drop targets | Built (Geoff's feel, F-51) | DB-12 | AllProjectsPanes DragCard |
+| Files dropped on the file tree (move, with a highlight and the clash question) and on a terminal (paths) | Stand-in (DL-117): selection fill with a dashed `controlEdge` border; DuoQuestion's look | Q-50, Q-51 | `Project/TreeDrop.swift`, `Model/AppModel+Drop.swift`, `Live/FileDrop.swift` |
 | First launch | Designed (DL-100): no welcome screen; the map is it | — | — |
 | Choose Home Folder… picker | System open panel | S2-3 | `Model/AppModel+Home.swift` |
 | Settings | Designed (DL-101) | — | `Shell/SettingsView.swift` |

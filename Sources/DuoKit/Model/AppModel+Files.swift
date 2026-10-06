@@ -194,11 +194,9 @@ extension AppModel {
 
     public func moveToFolder(_ path: String) {
         guard let folder = projectFolder, let dir = FileActions.chooseFolder(startingAt: folder) else { return }
-        run {
-            guard let url = Self.contained(path, in: folder) else { return }
-            let dest = try FileActions.move(url, into: dir)
-            if let rel = relative(dest) { moved(path, to: rel, url: dest) } else { closeDocumentsUnder(path); afterChange {} }
-        }
+        // The same move as a drop on the tree (DL-117): a taken name asks, and Edit › Undo puts it back.
+        guard let url = Self.contained(path, in: folder) else { return }
+        moveFiles([url], into: dir)
     }
 
     public func moveToTrash(_ path: String) {
