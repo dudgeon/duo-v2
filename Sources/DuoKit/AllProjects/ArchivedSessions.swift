@@ -33,25 +33,29 @@ struct ArchivedSessionsFold: View {
 
     var body: some View {
         let archived = model.fixture.archivedSessions(inProject: project)
-        if !archived.isEmpty {
+        // Archived tasks sit here too, after the sessions; the count is both (DL-115, board B).
+        let tasks = (model.fixture.tasks ?? []).filter { $0.project == project && $0.archived == true }
+        let count = archived.count + tasks.count
+        if count > 0 {
             let key = "\(project)/archived"
             let expanded = model.expandedGroups.contains(key)
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: DuoSpace.gapRowItems) {
                     Chevron(direction: expanded ? .down : .right).frame(width: 10)
-                    Text("Archived · \(archived.count)").duoText(.body).foregroundStyle(DuoColor.text2)
+                    Text("Archived · \(count)").duoText(.body).foregroundStyle(DuoColor.text2)
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 8 + DuoSpace.selectionInset)
                 .frame(height: DuoMetric.rowGroup)
                 .contentShape(Rectangle())
                 .onActivate { if expanded { model.expandedGroups.remove(key) } else { model.expandedGroups.insert(key) } }  // action: view group
-                .accessibilityLabel(expanded ? "Hide archived sessions" : "Show \(archived.count) archived sessions")
+                .accessibilityLabel(expanded ? "Hide archived sessions and tasks" : "Show \(count) archived sessions and tasks")
                 .padding(.top, 12)
                 if expanded {
                     ForEach(archived, id: \.tabKey) { s in
                         SidebarLeafRow(row: SidebarRow(id: "\(project)/thread/\(s.tabKey)", name: s.name, state: .idle, wait: s.wait, kind: .session), nested: false)
                     }
+                    ForEach(tasks) { t in TaskLine(task: t, showsProject: false, indented: true) }
                 }
             }
         }

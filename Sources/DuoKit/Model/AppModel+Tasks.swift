@@ -143,8 +143,8 @@ extension AppModel {
     }
 
     /// A task by path (`tasks/x.md`, `x.md`, `x`) or title, from disk: one made a moment ago is found too.
-    func findTask(_ t: String, project: String?) -> Fixture.TaskSummary? {
-        let all = liveFolders.keys.sorted().flatMap { p in taskNotes(in: p).map { Fixture.TaskSummary(project: p, path: $0.path, title: $0.title, status: $0.status, sessionIds: $0.sessionIds) } }
+    public func findTask(_ t: String, project: String?) -> Fixture.TaskSummary? {
+        let all = liveFolders.keys.sorted().flatMap { p in taskNotes(in: p).map { Fixture.TaskSummary(project: p, path: $0.path, title: $0.title, status: $0.status, sessionIds: $0.sessionIds, archived: $0.archived ? true : nil) } }
         return all.filter { $0.path == t || $0.path == "tasks/\(t)" || $0.path == "tasks/\(t).md" || $0.title.caseInsensitiveCompare(t) == .orderedSame }
             .first { project == nil || $0.project == project }
     }
@@ -155,8 +155,8 @@ extension AppModel {
             let projects = inv.flags["project"].map { [$0] } ?? liveFolders.keys.sorted()
             let rows = projects.flatMap { p in taskNotes(in: p).map { (p, $0) } }
             done(.ok(rows.isEmpty ? "No task notes." : rows.map { p, t in
-                "\(p)/\(t.path)  \(t.title)\(t.status.map { " (\($0))" } ?? "")  \(t.sessionIds.count) session\(t.sessionIds.count == 1 ? "" : "s")"
-            }.joined(separator: "\n"), rows.map { p, t in ["project": p, "path": t.path, "title": t.title, "status": t.status ?? "", "sessions": t.sessionIds] }))
+                "\(p)/\(t.path)  \(t.title)\(t.status.map { " (\($0))" } ?? "")\(t.archived ? " archived" : "")  \(t.sessionIds.count) session\(t.sessionIds.count == 1 ? "" : "s")"
+            }.joined(separator: "\n"), rows.map { p, t in ["project": p, "path": t.path, "title": t.title, "status": t.status ?? "", "sessions": t.sessionIds, "archived": t.archived] }))
         case .taskMake:
             guard let k = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             if let s = findSession(k, in: nil), let sid = s.sessionId {
@@ -202,12 +202,14 @@ extension AppModel {
             guard let path else { return done(.fail("no task '\(t)' in \(s.project)")) }
             if let why = addToTask(sessionKey: s.tabKey, task: path) { return done(.fail(why)) }
             done(.ok("Added \(s.name) to \(s.project)/\(path). Undo: duo2 undo"))
+        case .taskRename, .taskArchive, .taskUnarchive, .taskDelete, .taskMove, .taskLink, .taskReveal:
+            taskMenuVerb(id, inv, req, done)
         default: done(.fail("not a task verb"))
         }
     }
 }
 
-/// A group or task row's right-click menu (DL-93): a group can become a task; a task opens its note.
+/// A group or task row's right-click menu (DL-93): a group can become a task; a task has the task menu (DL-115).
 struct GroupRowMenu: ViewModifier {
     @Environment(AppModel.self) private var model
     let name: String
@@ -217,9 +219,7 @@ struct GroupRowMenu: ViewModifier {
         if model.terminalsMode == .live, let project = model.currentProject?.name {
             content.contextMenu {
                 if let task {
-                    Button("Open Task Note") { model.openDocument(task) }
-                    Button("New Session in Task") { model.startSession(inTask: task, project: project) }
-                    TaskStatusMenu(project: project, path: task)
+                    TaskMenuItems(model: model, project: project, path: task)   // DL-115
                 } else {
                     Button("Make a Task") { model.makeTask(fromGroup: name, project: project) }
                 }
@@ -230,7 +230,7 @@ struct GroupRowMenu: ViewModifier {
     }
 }
 
-/// Status ▸ open / in-progress / waiting / review / done / dropped, the current one checked.
+/// Set Status ▸ open / in-progress / waiting / review / done / dropped, the current one checked.
 struct TaskStatusMenu: View {
     @Environment(AppModel.self) private var model
     let project: String
@@ -238,11 +238,12 @@ struct TaskStatusMenu: View {
 
     var body: some View {
         let current = model.fixture.tasks?.first { $0.project == project && $0.path == path }?.status ?? "open"
-        Menu("Status") {
+        Menu("Set Status") {
+            // A toggle per status: the menu ticks the current one natively (board A draws "in progress").
             ForEach(TaskNotes.statuses, id: \.self) { st in
-                Button { if let why = model.setTaskStatus(project: project, path: path, st) { model.info(why) } } label: {
-                    if st == current { Label(st, systemImage: "checkmark") } else { Text(st) }
-                }
+                Toggle(st.replacingOccurrences(of: "-", with: " "), isOn: Binding(get: { st == current }, set: { _ in
+                    if let why = model.setTaskStatus(project: project, path: path, st) { model.info(why) }
+                }))
             }
         }
     }
@@ -289,7 +290,8 @@ struct TaskLine: View {
 
     var body: some View {
         let key = TaskRowHover.key(project: task.project, path: task.path)
-        let hovered = model.terminalsMode == .live && model.hoveredTaskRow == key
+        let archived = task.archived == true
+        let hovered = model.terminalsMode == .live && model.hoveredTaskRow == key && !archived
         HStack(spacing: DuoSpace.gapRowItems) {
             TaskBox()
             Text(task.title).duoText(.body).lineLimit(1)
@@ -298,6 +300,11 @@ struct TaskLine: View {
             // On hover the + takes the status's place (DL-112, stand-ins-handoff q43-hover).
             if hovered {
                 NewSessionInTaskButton(project: task.project, path: task.path)
+            } else if archived {
+                // In the Archived fold: how many sessions it links (task-menu-handoff board B).
+                if !task.sessionIds.isEmpty {
+                    Text("\(task.sessionIds.count) session\(task.sessionIds.count == 1 ? "" : "s")").duoText(.body).foregroundStyle(DuoColor.text2)
+                }
             } else if let st = task.status, st != "open" {
                 Text(st.replacingOccurrences(of: "-", with: " ")).duoText(.body).foregroundStyle(DuoColor.text2)
             }
@@ -317,12 +324,10 @@ struct TaskLine: View {
         .modifier(TaskRowHover(key: key))
         .onActivate { model.openTask(project: task.project, path: task.path) }  // action: doc open
         .contextMenu {
-            Button("Open Task Note") { model.openTask(project: task.project, path: task.path) }
-            Button("New Session in Task") { model.startSession(inTask: task.path, project: task.project) }
-            TaskStatusMenu(project: task.project, path: task.path)
+            if model.terminalsMode == .live { TaskMenuItems(model: model, project: task.project, path: task.path) }   // DL-115
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(task.title), task, \(task.status ?? "open")")
+        .accessibilityLabel("\(task.title), task, \(archived ? "archived" : task.status ?? "open")")
     }
 }
 

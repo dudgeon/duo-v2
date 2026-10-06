@@ -16,6 +16,8 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// saving now would overwrite the other writer's change on disk. The banner is Q-20.
     public private(set) var conflict = false { didSet { if oldValue != conflict { onStateChange?() } } }
     public private(set) var dirty = false
+    /// When the user last changed the text: a task's note moves to its new name only once typing pauses (C-24).
+    public private(set) var lastTyped = Date.distantPast
     private var pageReady = false
     private var pending: (() -> Void)?
     private var diskBytes = Data()                       // what's on disk as far as we know
@@ -269,6 +271,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         }
         dirty = body["dirty"] as? Bool == true
         guard dirty else { return }
+        lastTyped = Date()
         // Autosave a second after the last change (no "Save?" prompts; files are the truth).
         saveTask?.cancel()
         saveTask = Task { [weak self] in
@@ -445,6 +448,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         if let old = url, kept[old] != nil { kept[newURL] = kept.removeValue(forKey: old) }
         url = newURL
         watch(newURL)
+        reconcile(newURL)   // anything written just before the move (a rename's new title) comes in
     }
 
     /// The open file is gone (moved to the Trash): stop watching and never save it again.

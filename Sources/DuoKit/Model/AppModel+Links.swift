@@ -27,6 +27,7 @@ extension AppModel {
         let text = raw.trimmingCharacters(in: CharacterSet(charactersIn: "<> "))
         if let url = URL(string: text), url.scheme == "duo2" {
             if url.host == "session", let id = url.pathComponents.dropFirst().first { return openSessionLink(id) }
+            if url.host == "task", let id = url.pathComponents.dropFirst().first { return openTaskLink(id) }   // DL-115
             return info("Duo doesn't know the link \(text).")
         }
         if let url = URL(string: text), let scheme = url.scheme, !scheme.isEmpty {

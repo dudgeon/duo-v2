@@ -1,0 +1,12 @@
+{
+  "$note": "The task right-click menu, approved 2026-10-06 (DL-115). kind=board: a part of the window drawn on the Design canvas, exported as static HTML.",
+  "source": "https://claude.ai/artifact/6i7mSyfa771bvhcykczetN",
+  "screens": [
+    {"file": "screens/task-menu.html", "board": "Main.dc.html", "kind": "board", "width": 520, "height": 560, "decision": "DL-115",
+     "shows": "A task's right-click menu: Open Task Note, New Session in Task, Add Session ›; Rename, Mark Complete, Set Status › (open); Copy Link, Reveal in Finder, Move to Project ›; Archive Task…, Delete Task…."},
+    {"file": "screens/task-menu-archived.html", "board": "Archived.dc.html", "kind": "board", "width": 520, "height": 560, "decision": "DL-115",
+     "shows": "An archived task in the project's Archived fold, after the archived sessions, and its menu: Open Task Note; Copy Link, Reveal in Finder; Unarchive Task, Delete Task…."},
+    {"file": "screens/task-questions.html", "board": "Questions.dc.html", "kind": "board", "width": 2060, "height": 520, "decision": "DL-115",
+     "shows": "Archive, Archive with a session running, Delete and Move to Project as Duo questions: Cancel, the task only, the task and its sessions."}
+  ]
+}

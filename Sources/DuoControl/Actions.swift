@@ -47,6 +47,8 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sessionLink = "session link"
     case shellNew = "shell new", sessionFork = "session fork", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
     case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskSession = "task session", taskStatus = "task status"
+    case taskRename = "task rename", taskArchive = "task archive", taskUnarchive = "task unarchive", taskDelete = "task delete"
+    case taskMove = "task move", taskLink = "task link", taskReveal = "task reveal"
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
     case files, fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
@@ -201,9 +203,21 @@ extension DuoAction {
         .init(.taskSession, .sessions, "<task> [--project <p>]", "New Session in Task: starts a Claude session in the task's project with its link already in the note's `sessions:` list, and shows it when that project is open. Once Claude's prompt is up, Duo types `@tasks/<note>.md` into it and doesn't send it (DL-112): no turn is spent until someone adds a word and presses Return. Also the + on a task row's hover.",
               ui: ["New Session in Task"]),
         .init(.taskStatus, .sessions, "<task> <open|in-progress|waiting|review|done|dropped> [--project <p>]", "Set a task's status: rewrites only `status:` (and `completed:` when done or dropped). Done and dropped tasks leave the lists. Undo with `duo2 undo`.",
-              ui: ["Status"]),
+              ui: ["Set Status", "Mark Complete"]),
         .init(.taskAdd, .sessions, "<task> <session>", "Add to Task: puts the session's link in the task note's `sessions:` list, touching nothing else in the note. Undo with `duo2 undo`.",
-              ui: ["Add to Task", "Open Task Note"]),
+              ui: ["Add to Task", "Open Task Note", "Add Session"]),
+        .init(.taskRename, .sessions, "<task> <new title> [--project <p>]", "Rename a task: its `title:` and `# ` heading change, and the note moves to tasks/<slug of the new title>.md (-2, -3 when taken). Renaming in the note (heading or `title:`) moves the file too, once typing pauses. Undo with `duo2 undo`.",
+              ui: ["Rename"]),
+        .init(.taskArchive, .sessions, "<task> [--sessions|--keep-sessions] [--project <p>]", "Archive a task: `archived: true` in its note; it leaves the lists and counts, stays searchable, and sits in its project's Archived fold. With --sessions its linked sessions are archived too (never a running one); --keep-sessions leaves them. With neither, Duo asks the user. Undo with `duo2 undo`.",
+              ui: ["Archive Task…"], timeout: 600),
+        .init(.taskUnarchive, .sessions, "<task> [--project <p>]", "Bring an archived task back to the lists, with the sessions archived with it. Undo with `duo2 undo`.", ui: ["Unarchive Task"]),
+        .init(.taskDelete, .sessions, "<task> [--project <p>]", "Delete a task: the user picks in Duo whether its linked sessions are deleted too (never a running one). The note goes to the Trash (`duo2 undo` brings it back); deleted sessions can't be undone.",
+              ui: ["Delete Task…"], timeout: 600),
+        .init(.taskMove, .sessions, "<task> <project> [--sessions|--keep-sessions] [--project <p>]", "Move a task's note to another project's tasks/. With --sessions its sessions in this project move too; --keep-sessions leaves them. With neither and sessions to move, Duo asks the user. Undo with `duo2 undo`.",
+              ui: ["Move to Project"], timeout: 600),
+        .init(.taskLink, .sessions, "<task> [--project <p>]", "A Markdown link to a task: [title](duo2://task/<id>). The id is written once into the note's `id:`, so the link survives renames and moves. Clicking it in Duo opens the note.",
+              ui: ["Copy Link"]),
+        .init(.taskReveal, .sessions, "<task> [--project <p>]", "Show a task's note in Finder.", ui: ["Reveal in Finder"]),
         .init(.groups, .sessions, "[--project <p>]", "Groups and their sessions, with each group's most urgent state."),
         .init(.groupNew, .sessions, "<name> <session>…", "Group sessions of one project under a name."),
         .init(.groupAdd, .sessions, "<group> <session>…", "Add sessions to a group."),
@@ -361,7 +375,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    static let switches: Set<String> = ["json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open"]
+    static let switches: Set<String> = ["json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions"]
 
     public init(_ args: [String]) {
         var i = 0

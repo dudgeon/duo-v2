@@ -1340,6 +1340,145 @@ func repoFixture() throws -> Fixture {
         check(m.consoleTab == id, "the console shows it")
         m.terminals.existing(id)?.terminate()
     }
+
+    print("The task menu: rename, archive, delete, move, link, with sessions kept or included, and undo (DL-115, C-24)")
+    do {
+        // Pure parts first.
+        let note = TaskNotes.newNote(title: "Exec review prep", links: [])
+        let renamed = TaskNotes.renaming(to: #"Board "deck" prep"#, in: note)
+        check(TaskNotes.parse(renamed, path: "t.md").title == #"Board "deck" prep"# && renamed.contains(#"title: "Board \"deck\" prep""#)
+              && renamed.contains("\n# Board \"deck\" prep\n") && !renamed.contains("Exec"), "Rename writes title: and the heading")
+        let apart = "---\ntitle: \"A\"\n---\n\n# Something else\n"
+        check(TaskNotes.renaming(to: "B", in: apart).contains("# Something else"), "a heading that says something else is left alone (F-87)")
+        let taken: Set<String> = ["tasks/board-prep.md", "tasks/board-prep-2.md"]
+        check(TaskNotes.pathForTitle("Board prep", current: "tasks/exec.md", exists: taken.contains) == "tasks/board-prep-3.md", "a taken slug gets -2, -3…")
+        check(TaskNotes.pathForTitle("Board prep", current: "tasks/board-prep-2.md", exists: taken.contains) == "tasks/board-prep-2.md", "a note already at its name stays")
+        check(TaskNotes.parse("---\narchived: true\nid: abc\n---\n", path: "t.md").archived && TaskNotes.parse("---\nid: abc\n---\n", path: "t.md").id == "abc",
+              "archived: and id: read back")
+
+        let root = URL(fileURLWithPath: "/tmp/duo-tm-\(UUID().uuidString.prefix(8))")
+        let support = root.appending(path: "s"), config = root.appending(path: "c"), proj = root.appending(path: "p"), other = root.appending(path: "q")
+        for d in [support, config.appending(path: "projects"), proj.appending(path: "tasks"), other] { try tfm.createDirectory(at: d, withIntermediateDirectories: true) }
+        try Data("# p\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
+        try Data("# q\n".utf8).write(to: other.appending(path: "PROJECT.md"))
+        let saved = ["DUO_SUPPORT_DIR", "CLAUDE_CONFIG_DIR"].map { k in (k, ProcessInfo.processInfo.environment[k]) }
+        setenv("DUO_SUPPORT_DIR", support.path, 1)
+        setenv("CLAUDE_CONFIG_DIR", config.path, 1)
+        defer {
+            for (k, v) in saved { if let v { setenv(k, v, 1) } else { unsetenv(k) } }
+            try? tfm.removeItem(at: root)
+        }
+        let quiet = "aaaaaaaa-0000-4000-8000-000000000001", busy = "aaaaaaaa-0000-4000-8000-000000000002"
+        // The quiet session has a transcript on disk, filed the way Claude files it, so it can be deleted.
+        let bucket = config.appending(path: "projects/" + ClaudeStorage.encode(proj.path))
+        try tfm.createDirectory(at: bucket, withIntermediateDirectories: true)
+        try Data("{\"type\":\"user\",\"cwd\":\"\(proj.path)\",\"sessionId\":\"\(quiet)\"}\n".utf8).write(to: bucket.appending(path: "\(quiet).jsonl"))
+        let links = [TaskNotes.link(title: "Quiet one", id: quiet), TaskNotes.link(title: "Busy one", id: busy)]
+        func write(_ name: String) throws -> String {
+            try Data(TaskNotes.newNote(title: name, links: links).utf8).write(to: proj.appending(path: "tasks/\(TaskNotes.slug(name)).md"))
+            return "tasks/\(TaskNotes.slug(name)).md"
+        }
+        var fx = f
+        fx.projects.append(decoded(["name": "tasky", "topic": "Platform", "path": proj.path, "goal": "g"]))
+        fx.projects.append(decoded(["name": "elsewhere", "topic": "Platform", "path": other.path, "goal": "g"]))
+        fx.sessions += [decoded(["name": "Quiet one", "project": "tasky", "state": "idle", "sessionId": quiet]),
+                        decoded(["name": "Busy one", "project": "tasky", "state": "working", "sessionId": busy])]
+        let m = AppModel(fixture: fx)
+        m.terminalsMode = .live
+        m.liveFolders["tasky"] = proj
+        m.liveFolders["elsewhere"] = other
+        m.liveElsewhere = [busy]   // running in another app
+        var undos: [(String, @MainActor (AppModel) -> Void)] = []
+        m.undoRecorder = { name, u in undos.append((name, u)) }
+        func undoLast() { if let u = undos.popLast() { u.1(m) } }
+        func archivedIds() -> Set<String> { Set(DuoState.load().archivedSessions) }
+
+        // Rename: title, heading, file; one undo puts both back.
+        var path = try write("Exec review prep")
+        guard case .success(let newPath) = m.renameTask(project: "tasky", path: path, to: "Board prep") else { check(false, "Rename worked"); return }
+        let afterRename = m.loadTask("tasky", newPath)
+        check(newPath == "tasks/board-prep.md" && afterRename?.title == "Board prep" && !tfm.fileExists(atPath: proj.appending(path: path).path),
+              "Rename retitles the note and moves it to tasks/board-prep.md")
+        undoLast()
+        check(m.loadTask("tasky", path)?.title == "Exec review prep" && !tfm.fileExists(atPath: proj.appending(path: newPath).path), "undo puts the name and the file back")
+
+        // A name changed in the note (as the editor or an agent would) moves the file on the next refresh.
+        m.fixture.tasks = [.init(project: "tasky", path: path, title: "Exec review prep", status: "open", sessionIds: [quiet, busy])]
+        m.followTaskTitles()   // first look: remembers
+        let text = try String(contentsOf: proj.appending(path: path), encoding: .utf8)
+        try Data(TaskNotes.renaming(to: "Exec review final", in: text).utf8).write(to: proj.appending(path: path))
+        m.fixture.tasks = [.init(project: "tasky", path: path, title: "Exec review final", status: "open", sessionIds: [quiet, busy])]
+        m.followTaskTitles()
+        check(tfm.fileExists(atPath: proj.appending(path: "tasks/exec-review-final.md").path) && !tfm.fileExists(atPath: proj.appending(path: path).path),
+              "retitling the note moves it to its new slug once settled (C-24)")
+        path = "tasks/exec-review-final.md"
+        m.fixture.tasks = nil
+
+        // Archive, sessions kept.
+        guard case .success = m.archiveTask(project: "tasky", path: path, sessions: false) else { check(false, "Archive worked"); return }
+        check(m.loadTask("tasky", path)?.archived == true && archivedIds().isEmpty, "Archive Task Only marks the note archived and leaves its sessions")
+        undoLast()
+        check(m.loadTask("tasky", path)?.archived == false, "undo unarchives it")
+
+        // Archive with sessions: the quiet one goes, the running one stays; one undo for all.
+        let undoCount = undos.count
+        guard case .success(let skipped) = m.archiveTask(project: "tasky", path: path, sessions: true) else { check(false, "Archive with sessions worked"); return }
+        check(m.loadTask("tasky", path)?.archived == true && archivedIds() == [quiet] && skipped == ["Busy one"],
+              "Archive Task and Its Sessions archives the quiet session and never the running one")
+        check(undos.count == undoCount + 1, "it's one undo step")
+        undoLast()
+        check(m.loadTask("tasky", path)?.archived == false && archivedIds().isEmpty, "one undo brings the task and its session back")
+
+        // Unarchive brings back the sessions archived with it.
+        _ = m.archiveTask(project: "tasky", path: path, sessions: true)
+        m.fixture.archivedSessions = m.fixture.sessions.filter { $0.sessionId == quiet }
+        check(m.unarchiveTask(project: "tasky", path: path) == nil && m.loadTask("tasky", path)?.archived == false && archivedIds().isEmpty,
+              "Unarchive Task brings back the task and the sessions archived with it")
+        m.fixture.archivedSessions = nil
+
+        // Copy Link: an id is written once; the link opens the task wherever it is.
+        let link = m.taskLink(project: "tasky", path: path)
+        let id = m.loadTask("tasky", path)?.id
+        check(id != nil && link == "[Exec review final](duo2://task/\(id!))" && m.taskLink(project: "tasky", path: path) == link, "Copy Link writes id: once and links duo2://task/<id>")
+
+        // Move, sessions kept, then with sessions; undo puts the note back.
+        guard case .success(let moved) = m.moveTask(project: "tasky", path: path, to: "elsewhere", sessions: false) else { check(false, "Move worked"); return }
+        check(moved == "elsewhere/tasks/exec-review-final.md" && tfm.fileExists(atPath: other.appending(path: path).path)
+              && SessionIndex.load(project: other).sessions.isEmpty, "Move Task Only moves the note, not its sessions")
+        check(m.findTask(id!, project: nil) == nil && TaskNotes.load(project: other).first?.id == id, "its id (and so its link) moves with it")
+        undoLast()
+        check(tfm.fileExists(atPath: proj.appending(path: path).path) && !tfm.fileExists(atPath: other.appending(path: path).path), "undo moves it back")
+        _ = m.moveTask(project: "tasky", path: path, to: "elsewhere", sessions: true)
+        check(Set(SessionIndex.load(project: other).sessions.map(\.sessionId)) == [quiet, busy], "Move Task and Its Sessions files its sessions in the other project")
+        undoLast()
+        check(tfm.fileExists(atPath: proj.appending(path: path).path) && SessionIndex.load(project: other).sessions.isEmpty, "one undo moves the note and its sessions back")
+
+        // Delete, sessions kept: the note goes to the Trash; undo brings it back.
+        guard case .success = m.deleteTask(project: "tasky", path: path, sessions: false) else { check(false, "Delete worked"); return }
+        check(!tfm.fileExists(atPath: proj.appending(path: path).path) && tfm.fileExists(atPath: bucket.appending(path: "\(quiet).jsonl").path),
+              "Delete Task Only trashes the note and keeps its sessions")
+        undoLast()
+        check(tfm.fileExists(atPath: proj.appending(path: path).path), "undo brings the note back from the Trash")
+
+        // Delete with sessions: the quiet one's transcript goes; the running one is never deleted.
+        guard case .success(let said) = m.deleteTask(project: "tasky", path: path, sessions: true) else { check(false, "Delete with sessions worked"); return }
+        check(!tfm.fileExists(atPath: proj.appending(path: path).path) && !tfm.fileExists(atPath: bucket.appending(path: "\(quiet).jsonl").path)
+              && said.contains("Deleted 1 session: Quiet one") && said.contains("Kept Busy one"),
+              "Delete Task and Its Sessions deletes the quiet session and keeps the running one (\(said))")
+        undoLast()
+        check(tfm.fileExists(atPath: proj.appending(path: path).path), "undo still brings the note back (deleted sessions stay deleted)")
+
+        // The questions, answered by default in a scripted run: Archive's default takes the sessions,
+        // Delete's keeps them (board C).
+        setenv("DUO_AUTOCONFIRM", "1", 1)
+        defer { unsetenv("DUO_AUTOCONFIRM") }
+        var answer = ""
+        m.askArchiveTask(project: "tasky", path: path) { answer = $0 }
+        check(answer.hasPrefix("Archived Exec review final") && m.loadTask("tasky", path)?.archived == true, "Archive's default answer archives the task (\(answer))")
+        undoLast()
+        m.askDeleteTask(project: "tasky", path: path) { answer = $0 }
+        check(answer == "Moved Exec review final to the Trash." , "Delete's default is Delete Task Only (\(answer))")
+    }
 }
 
 do { try MainActor.assumeIsolated { try run() } } catch { print("✘ setup: \(error)"); failures += 1 }
