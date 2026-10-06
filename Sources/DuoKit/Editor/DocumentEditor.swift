@@ -90,6 +90,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// removed on disk, keeps its unsaved text in memory until it's shown again.
     public func open(_ file: URL) {
         guard file != url else { return }
+        // Never a file that isn't text (C-26): the right pane shows it another way, and nothing
+        // (a `duo2 doc` verb included) can load its bytes here as text.
+        if FileKind.isBinary(file) { DuoLog.write("editor: not opening \(file.lastPathComponent): it isn't text"); return }
         if let leaving = url, readOnlyReason == nil, dirty, conflict || removedOnDisk {
             let base = diskBytes, wasConflict = conflict
             // Runs before the next document's text is loaded: the page runs scripts in order.

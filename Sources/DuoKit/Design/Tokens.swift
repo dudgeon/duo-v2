@@ -121,6 +121,7 @@ public enum DuoMetric {
     public static let borderTileFocusOutline: CGFloat = 2.0
     public static let toolbarHeight: CGFloat = 38.0
     public static let tabStripHeight: CGFloat = 36.0
+    public static let deckBarHeight: CGFloat = 44.0
     public static let homeSessionTabsHeight: CGFloat = 32.0
     public static let overviewFooterHeight: CGFloat = 34.0
     public static let rowFile: CGFloat = 24.0

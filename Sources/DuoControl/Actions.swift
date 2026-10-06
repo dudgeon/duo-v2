@@ -7,7 +7,7 @@ import Foundation
 // menu item or click in the app isn't tied to an action here or listed in `Parity.uiOnly`.
 
 public enum ActionFamily: String, CaseIterable, Sendable {
-    case app, view, projects, sessions, files, docs, html, send, search, setup
+    case app, view, projects, sessions, files, docs, html, slides, send, search, setup
 
     public var title: String {
         switch self {
@@ -18,6 +18,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
         case .files: "Files"
         case .docs: "Documents"
         case .html: "HTML pages"
+        case .slides: "PowerPoint decks"
         case .send: "Send to Claude"
         case .search: "Search"
         case .setup: "Setup"
@@ -67,6 +68,8 @@ public enum ActionID: String, CaseIterable, Sendable {
     case browserForward = "browser forward", browserClose = "browser close"
     case browserZoom = "browser zoom", browserPrint = "browser print", browserUpload = "browser upload", browserDownloads = "browser downloads"
     case htmlReload = "html reload", htmlPick = "html pick", htmlStop = "html stop", htmlElement = "html element", htmlSelection = "html selection"
+    // PowerPoint decks
+    case slide, slideGo = "slide go", slideShapes = "slide shapes", slideNotes = "slide notes", slidePick = "slide pick", slideElement = "slide element"
     // Send to Claude
     case sendFile = "send file", sendSession = "send session", sendProject = "send project", sendSelection = "send selection"
     case sendElement = "send element", sendText = "send text", selection
@@ -310,13 +313,23 @@ extension DuoAction {
         .init(.htmlElement, .html, "[selector]", "Describe an element (the picked one by default): selector, text, attributes, styles, box, HTML."),
         .init(.htmlSelection, .html, "", "The text and images selected in the HTML page."),
 
+        // PowerPoint decks (ENH-12, DL-125)
+        .init(.slide, .slides, "", "The deck showing and the slide on screen, with that slide's shapes and text."),
+        .init(.slideGo, .slides, "<n> | next | previous", "Show a slide of the deck in the right pane (also ‹ ›, Page Up and Page Down).",
+              ui: ["Previous Slide", "Next Slide"]),
+        .init(.slideShapes, .slides, "[<file.pptx>] [<n>]", "A slide's shapes from the file: OOXML id, name, type, groups, text, box, tables, chart data, notes. The deck showing and its slide by default; a file without a slide gives every slide."),
+        .init(.slideNotes, .slides, "[<file.pptx>] [<n>]", "A slide's speaker notes (the slide on screen by default)."),
+        .init(.slidePick, .slides, "[<slide>/<shape id>]", "Start the shape picker for the user, or select the shape a slide and id name.",
+              ui: ["Select Shape", "Pick Another"]),
+        .init(.slideElement, .slides, "[<slide>/<shape id>]", "Describe a shape (the picked one by default): slide, id, name, groups, text, box, and a screenshot."),
+
         // Send to Claude (into a session's prompt; never pressing Enter)
         .init(.sendFile, .send, "<path> [--to <id> | --new]", "Put an @-reference to a file or folder into a session's prompt.", ui: ["Send to Claude", "Send To"]),
         .init(.sendSession, .send, "<id> [--to <id> | --new]", "Put a session's reference into a session's prompt.", ui: ["Send to Claude"]),
         .init(.sendProject, .send, "<project> [--to <id> | --new]", "Put a project's reference into a session's prompt.", ui: ["Send to Claude"]),
         .init(.sendSelection, .send, "[--to <id> | --new]", "Put the user's selection (document or HTML page) into a session's prompt.",
               ui: ["Send Selection to Claude", "Send Selection To", "Send Image to Claude", "Send Image To"]),
-        .init(.sendElement, .send, "[--to <id> | --new]", "Put the picked HTML element into a session's prompt.", ui: ["Send to Claude", "Send To", "New Session"]),
+        .init(.sendElement, .send, "[--to <id> | --new]", "Put the picked HTML element, or the shape picked on a slide, into a session's prompt.", ui: ["Send to Claude", "Send To", "New Session"]),
         .init(.sendText, .send, "<text> [--to <id> | --new]", "Type text into a session's prompt for the user to finish and send."),
         .init(.selection, .send, "", "What the user has selected or picked right now, in the editor or an HTML page.", everyday: true),
 

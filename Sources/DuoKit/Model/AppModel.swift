@@ -106,6 +106,9 @@ public final class AppModel {
     /// Local HTML pages in the right pane (created on first use).
     @ObservationIgnored public lazy var htmlViewer: HTMLViewer = { let v = HTMLViewer(); htmlViewerIfLoaded = v; wireHTMLViewer(v); return v }()
     @ObservationIgnored public var htmlViewerIfLoaded: HTMLViewer?
+    /// PowerPoint decks in the right pane (ENH-12, DL-125).
+    @ObservationIgnored public lazy var deckViewer: DeckViewer = { let v = DeckViewer(); deckViewerIfLoaded = v; wireDeckViewer(v); return v }()
+    @ObservationIgnored public var deckViewerIfLoaded: DeckViewer?
     /// Browser tabs by id (`web:…`), kept alive while their tab is open (Phase K, ENH-8).
     @ObservationIgnored public var webTabs: [String: WebTab] = [:]
     /// Downloads browser tabs saved since launch, oldest first (`duo2 browser downloads`, DL-124).

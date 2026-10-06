@@ -266,6 +266,18 @@ extension AppModel {
         }
     }
 
+    /// A deck in the right pane: changes redraw the bars; right-click offers Select Shape.
+    func wireDeckViewer(_ v: DeckViewer) {
+        v.onChange = { [weak self] in self?.pickerRevision += 1 }
+        v.webView.extraMenuItems = { [weak self] _, _ in
+            guard let self, self.terminalsMode == .live, v.state == .ready else { return [] }
+            return [ActionMenuItem("Select Shape") { v.startPicking() }]
+        }
+    }
+
+    /// PowerPoint decks open in the deck viewer (DL-125).
+    public static func isDeck(_ path: String) -> Bool { ["pptx", "pptm", "ppsx"].contains((path as NSString).pathExtension.lowercased()) }
+
     /// The HTML page's selected text and images.
     func htmlSelectionPayload(_ done: @escaping @MainActor (String?) -> Void) {
         guard let v = visiblePage, let url = v.pageURL else { return done(nil) }
@@ -278,6 +290,13 @@ extension AppModel {
 
     /// The picked element, with a screenshot saved for Claude to read.
     func pickedElementPayload(_ done: @escaping @MainActor (String?) -> Void) {
+        if let d = visiblePage as? DeckViewer {
+            guard let url = d.pageURL, let s = d.pickedShape else { return done(nil) }
+            return d.screenshot(rect: nil) { [weak self] shot in
+                guard let self else { return done(nil) }
+                done(SendFormat.shape(s, path: self.displayPath(url), screenshot: shot))
+            }
+        }
         guard let v = visiblePage, let url = v.pageURL, let e = v.picked else { return done(nil) }
         v.screenshot(rect: nil) { [weak self] shot in
             guard let self else { return done(nil) }

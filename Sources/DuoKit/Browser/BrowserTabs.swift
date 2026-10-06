@@ -389,6 +389,7 @@ extension AppModel {
     public var visiblePage: PageHost? {
         if let w = visibleWebTab { return w }
         if let path = rightTab, ["html", "htm"].contains((path as NSString).pathExtension.lowercased()) { return htmlViewerIfLoaded }
+        if let path = rightTab, Self.isDeck(path) { return deckViewerIfLoaded }
         return nil
     }
 

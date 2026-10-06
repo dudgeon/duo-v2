@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- A deck is someone else's file: nothing in it reaches the network or runs outside these scripts. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src duo-deck:; style-src 'unsafe-inline' duo-deck:; img-src blob: data: duo-deck:; font-src blob: data:; media-src blob: data:; connect-src duo-deck:">
+<title>Deck</title>
+<style>
+  /* The deck in the right pane (pptx-handoff A, B, C). Colours are Duo's tokens, set by the app. */
+  html, body { margin: 0; background: var(--duo-ground); color: var(--duo-text);
+    font: 13px/20px -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  /* The padding is the body's: the renderer fits slides to #host's width. */
+  body { padding: 16px 20px 0; }
+  #host { min-height: 100vh; }
+  /* The renderer's slide items: a number above each, a rule round it, no shadow (Duo has none). */
+  #host [data-slide-index] { margin: 0 0 16px 0 !important; width: auto !important; }
+  #host [data-slide-index] > div.deck-slide { box-shadow: none !important; outline: 1px solid var(--duo-rule); }
+  .deck-number { font-size: 11px; line-height: 16px; color: var(--duo-text2); margin-bottom: 6px; }
+  .deck-number.current { color: var(--duo-text); font-weight: 600; }
+  body.picking #host [data-duo-shape-id] { cursor: default; }
+  #outline { position: absolute; pointer-events: none; box-sizing: border-box; display: none; z-index: 10; }
+  #outline.hover { border: 1px dashed var(--duo-text); }
+  #outline.frozen { border: 1.5px solid var(--duo-text); }
+  #tag { position: absolute; pointer-events: none; display: none; z-index: 11; padding: 0 5px; border-radius: 3px;
+    background: var(--duo-text); color: var(--duo-pane); font-size: 11px; line-height: 18px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="host"></div>
+<div id="outline"></div>
+<div id="tag"></div>
+<script type="module" src="deck.js"></script>
+</body>
+</html>

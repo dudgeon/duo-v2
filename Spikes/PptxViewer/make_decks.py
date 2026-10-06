@@ -123,5 +123,42 @@ def shapes():
     img.unlink()
 
 
-basics(); data(); shapes()
-print("wrote", *(out / n for n in ["basics.pptx", "data.pptx", "shapes.pptx"]))
+def garden():
+    """The deck the viewer's boards draw (pptx-handoff): Garden plan, five slides."""
+    p = wide()
+    s = p.slides.add_slide(p.slide_layouts[0])
+    s.shapes.title.text = "Community garden plan"
+    s.placeholders[1].text = "Spring season"
+    s = p.slides.add_slide(p.slide_layouts[5])
+    s.shapes.title.text = "Beds and crops"
+    outer = s.shapes.add_group_shape()
+    a = outer.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.9), Inches(2.9), Inches(1.25))
+    a.text = "Prepare"
+    inner = outer.shapes.add_group_shape()
+    b = inner.shapes.add_shape(MSO_SHAPE.OVAL, Inches(5.2), Inches(1.9), Inches(2.9), Inches(1.25))
+    b.text = "Plant"
+    c = inner.shapes.add_shape(MSO_SHAPE.DIAMOND, Inches(9.6), Inches(1.6), Inches(2.6), Inches(1.9))
+    c.text = "Harvest?"
+    for x1, x2 in [(3.7, 5.2), (8.1, 9.6)]:
+        s.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, Inches(x1), Inches(2.52), Inches(x2), Inches(2.52)).line.width = Pt(2)
+    t = s.shapes.add_table(4, 3, Inches(0.8), Inches(4.3), Inches(11.6), Inches(2.4)).table
+    for r, row in enumerate([["Bed", "Crop", "Sown"], ["North", "Tomatoes", "April"], ["South", "Beans", "May"], ["West", "Squash", "May"]]):
+        for col, v in enumerate(row): t.cell(r, col).text = v
+    s.notes_slide.notes_text_frame.text = "Walk through the order: prepare, plant, then decide on the harvest."
+    s = p.slides.add_slide(p.slide_layouts[5])
+    s.shapes.title.text = "Harvest by month"
+    cd = CategoryChartData()
+    cd.categories = ["May", "June", "July", "August", "September"]
+    cd.add_series("Kilos", (40, 72, 118, 96, 58))
+    s.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Inches(1), Inches(1.6), Inches(11), Inches(5.4), cd)
+    s = p.slides.add_slide(p.slide_layouts[1])
+    s.shapes.title.text = "Volunteers"
+    s.placeholders[1].text = "Saturday mornings, two hours"
+    s = p.slides.add_slide(p.slide_layouts[1])
+    s.shapes.title.text = "Next steps"
+    s.placeholders[1].text = "Order seed by March"
+    p.save(out / "garden.pptx")
+
+
+basics(); data(); shapes(); garden()
+print("wrote", *(out / n for n in ["basics.pptx", "data.pptx", "shapes.pptx", "garden.pptx"]))

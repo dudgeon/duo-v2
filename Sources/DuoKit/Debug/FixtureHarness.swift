@@ -456,6 +456,12 @@ public enum FixtureHarness {
                 arguments: ["s": parts.count > 1 ? parts[1] : "a"], in: nil, in: .page, completionHandler: nil)
         case "send-html-selection": model.htmlSelectionPayload { if let p = $0 { model.send(p) } }
         case "html-pick": if parts.count > 1 { model.htmlViewer.pick(selector: parts[1]) }
+        // The PowerPoint viewer (pptx-handoff): slide-go:<n>, slide-picking, slide-hover:<slide>/<id>
+        // (the picker's dashed outline, B), slide-pick:<slide>/<id> (a shape picked, C).
+        case "slide-go": model.deckViewer.go(Int(parts.count > 1 ? parts[1] : "1") ?? 1)
+        case "slide-picking": model.deckViewer.startPicking()
+        case "slide-hover": if parts.count > 1 { model.deckViewer.hover(parts[1]) }
+        case "slide-pick": if parts.count > 1 { model.deckViewer.pick(selector: parts[1]) }
         case "html-snapshot":   // html-snapshot:<png path>: what the page web view draws
             let path = parts.count > 1 ? parts[1] : "/tmp/duo-html.png"
             model.htmlViewer.webView.takeSnapshot(with: nil) { image, _ in

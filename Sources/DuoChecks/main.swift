@@ -1356,6 +1356,110 @@ func repoFixture() throws -> Fixture {
     check((try? Pptx.outline(binDir.appending(path: "notes.md"))) == nil && (try? Pptx.outline(binDir.appending(path: "mystery.blob"))) == nil,
           "a file that isn't a deck is refused, not misread")
 
+    print("the PowerPoint viewer draws what the outline names (ENH-12, DL-125)")
+    do {
+        _ = NSApplication.shared
+        let viewer = DeckViewer(resources: repoRoot().appending(path: "Vendor/pptx-renderer"))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 800), styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = viewer.webView
+        func settle(_ deck: URL) -> Bool {
+            var done = false
+            viewer.open(deck)
+            viewer.whenSettled { done = true }
+            let until = Date().addingTimeInterval(30)
+            while !done, Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+            return done
+        }
+        for name in ["basics", "data", "shapes"] {
+            let deck = decks.appending(path: "\(name).pptx")
+            guard settle(deck), viewer.state == .ready else { check(false, "\(name).pptx is drawn (\(viewer.state))"); continue }
+            var drawn: [[String: Any]]?
+            viewer.drawnShapes { drawn = $0 }
+            while drawn == nil { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+            let outline = try Pptx.outline(deck)
+            // Every shape the file has, on its slide with its id, name and groups, is on screen with
+            // the same identity (placeholders the layout leaves empty draw nothing, as in PowerPoint).
+            let seen = Set(drawn!.map { "\($0["slide"] ?? "")/\($0["id"] ?? "")/\($0["name"] ?? "")/\(($0["groups"] as? [String] ?? []).joined(separator: ">"))" })
+            let want = outline.flatMap { s in s.shapes.map { "\(s.number)/\($0.id)/\($0.name)/\($0.inGroups.joined(separator: ">"))" } }
+            let missing = want.filter { !seen.contains($0) }
+            check(viewer.count == outline.count && missing.isEmpty && seen.count == Set(want).count,
+                  "\(name).pptx: \(viewer.count) slides, and all \(want.count) shapes drawn carry the outline's slide, id, name and groups\(missing.isEmpty ? "" : "; missing \(missing)")")
+        }
+        check(viewer.blocked.isEmpty, "the page's policy blocked nothing the renderer needs, charts included (\(viewer.blocked))")
+        // The picker: a shape frozen by its slide and id is described as the outline gives it.
+        var picked = false
+        viewer.pick(selector: "2/7") { picked = $0 }
+        let until = Date().addingTimeInterval(5)
+        while !picked, Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+        let s = viewer.pickedShape
+        check(s?.name == "Diamond 6" && s?.slide == 2 && s?.count == 2 && s?.groups == ["Group 2", "Group 4"] && s?.text == "Ship?",
+              "picking slide 2's shape 7 gives Diamond 6 in its two groups, with its text (\(String(describing: s)))")
+        if let b = s?.box, b.count == 4 {
+            check(abs(b[0] - 912) <= 2 && abs(b[1] - 173) <= 2 && abs(b[2] - 230) <= 2 && abs(b[3] - 154) <= 2, "its box matches the outline's 912,173 230×154 (\(b))")
+        } else { check(false, "the picked shape has a box") }
+        if let s {
+            let text = SendFormat.shape(s, path: "decks/Garden plan.pptx", screenshot: "/tmp/x.png")
+            check(text.hasPrefix("From decks/Garden plan.pptx, slide 2 of 2, the shape \"Diamond 6\" (id 7):\ntype: shape · in groups: Group 2 › Group 4\ntext: \"Ship?\"\nbox: ")
+                  && text.contains(" on a 1280×720 slide\nthe whole slide: duo2 slide shapes \"decks/Garden plan.pptx\" 2\nscreenshot: /tmp/x.png"),
+                  "what Claude receives reads as board D")
+        }
+        viewer.stopPicking()
+        // A deck Duo can't draw says why before trying (board E).
+        let locked = binDir.appending(path: "locked.pptx")
+        try Data([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1] + [UInt8](repeating: 0, count: 504)).write(to: locked)
+        _ = settle(locked)
+        check(viewer.state == .failed("it’s protected with a password"), "an encrypted deck is called password-protected (\(viewer.state))")
+        let broken = binDir.appending(path: "broken.pptx")
+        try Data("PK\u{3}\u{4} not really".utf8).write(to: broken)
+        _ = settle(broken)
+        check(viewer.state == .failed("it’s damaged, or isn’t a PowerPoint deck"), "a damaged deck is called damaged (\(viewer.state))")
+    }
+
+    print("duo2 slide … (ENH-12, DL-125)")
+    do {
+        let proj = FileManager.default.temporaryDirectory.appending(path: "duo-deck-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: proj.appending(path: "decks"), withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: proj) }
+        try FileManager.default.copyItem(at: decks.appending(path: "garden.pptx"), to: proj.appending(path: "decks/Garden plan.pptx"))
+        var fx = try repoFixture()
+        fx.projects.append(try JSONDecoder().decode(Fixture.Project.self, from: JSONSerialization.data(withJSONObject: ["name": "garden", "topic": "Platform", "path": proj.path, "goal": "g"])))
+        DeckViewer.defaultResources = repoRoot().appending(path: "Vendor/pptx-renderer")
+        let m = AppModel(fixture: fx)
+        m.terminalsMode = .live
+        m.liveFolders["garden"] = proj
+        m.altitude = .project("garden")
+        func duo2(_ args: String...) -> ControlResponse {
+            var out: ControlResponse?
+            m.handle(ControlRequest(token: "", command: args[0], args: Array(args.dropFirst()), cwd: proj.path)) { out = $0 }
+            let until = Date().addingTimeInterval(10)
+            while out == nil, Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+            return out ?? ControlResponse(ok: false, output: "timed out")
+        }
+        check(!duo2("slide").ok, "no deck showing: `slide` says so")
+        check(duo2("slide", "shapes", "decks/Garden plan.pptx", "2").output.contains("7  Diamond 6 (shape) 250×182 at (922, 154)\n          Harvest?"),
+              "`slide shapes <file> 2` lists slide 2's shapes by id, indented by group, without the app showing it")
+        m.openDocument("decks/Garden plan.pptx")
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 800), styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = m.deckViewer.webView
+        var ready = false
+        m.deckViewer.open(proj.appending(path: "decks/Garden plan.pptx"))
+        m.deckViewer.whenSettled { ready = true }
+        let until = Date().addingTimeInterval(30)
+        while !ready, Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+        check(duo2("slide").output.hasPrefix("decks/Garden plan.pptx, slide 1 of 5 on screen.") || duo2("slide").output.contains("slide 1 of 5 on screen."), "`slide`: the deck and the slide on screen (\(duo2("slide").output.prefix(80)))")
+        check(duo2("slide", "go", "3").output == "Slide 3 of 5." && m.deckViewer.slide == 3, "`slide go 3` shows slide 3")
+        check(duo2("slide", "go", "next").output == "Slide 4 of 5." && duo2("slide", "go", "9").output.hasPrefix("Slide 5 of 5."), "`slide go next` counts from there; past the end stops at the last")
+        check(duo2("slide", "notes", "2").output.hasSuffix("Walk through the order: prepare, plant, then decide on the harvest."), "`slide notes 2` gives the speaker notes")
+        check(duo2("slide", "pick", "2/7").ok && m.deckViewer.pickedShape?.name == "Diamond 6", "`slide pick 2/7` selects the diamond for the user")
+        let element = duo2("slide", "element").output
+        check(element.contains("slide 2 of 5, the shape \"Diamond 6\" (id 7):") && element.contains("\nscreenshot: "), "`slide element` describes it with a screenshot")
+        check(!duo2("slide", "pick", "2/99").ok, "a shape that isn't there is refused")
+        check(!duo2("doc", "read", "decks/Garden plan.pptx").ok && duo2("doc", "read", "decks/Garden plan.pptx").output.contains("isn't text"),
+              "`doc read` never returns a deck's bytes (C-26)")
+        m.editor.open(proj.appending(path: "decks/Garden plan.pptx"))
+        check(m.editor.url == nil, "the editor won't open a deck, whoever asks (C-26)")
+    }
+
     print("a Word document as Markdown (ENH-14, DL-123)")
     let wordDocs = repoRoot().appending(path: "Spikes/DocxToMarkdown/docs")
     let golden = repoRoot().appending(path: "Spikes/DocxToMarkdown/out/duo")

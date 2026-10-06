@@ -58,6 +58,8 @@ struct OpenWithMenu: View {
     let path: String
     let file: URL
     var isDefault = false
+    /// A bordered button with its chevron, as the deck's bar draws it (pptx-handoff A, E).
+    var bordered = false
 
     var body: some View {
         let menu = Menu {
@@ -69,7 +71,7 @@ struct OpenWithMenu: View {
             Divider()
             Button("Other…") { model.openWithChosenApp(path) }
         } label: {
-            if isDefault {
+            if isDefault || bordered {
                 // The button style hides the menu's own chevron; draw it, as on the boards (F, F2).
                 HStack(spacing: 4) { Text("Open With"); Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)) }
             } else {
@@ -78,6 +80,8 @@ struct OpenWithMenu: View {
         }
         if isDefault {
             menu.menuStyle(.button).buttonStyle(DefaultSheetButtonStyle()).fixedSize()
+        } else if bordered {
+            menu.menuStyle(.button).buttonStyle(.duo).fixedSize()
         } else {
             menu.menuStyle(.borderlessButton).fixedSize()
         }

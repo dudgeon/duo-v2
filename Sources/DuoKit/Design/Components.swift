@@ -20,6 +20,9 @@ struct SectionLabel: View {
 /// The target's button: 12/16 label, padding 4 10, 1 pt `controlEdge` border, radius 6, `pane`
 /// fill, 26 high (handoff §5 `Button`).
 struct DuoButtonStyle: ButtonStyle {
+    /// Shown pressed while its mode is on (Select Shape while picking, pptx-handoff B).
+    var on = false
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .duoText(.control)
@@ -29,7 +32,7 @@ struct DuoButtonStyle: ButtonStyle {
             .padding(.vertical, DuoSpace.buttonPadding.top + DuoMetric.borderHairline)
             .background(
                 RoundedRectangle(cornerRadius: DuoMetric.radiusControl)
-                    .fill(configuration.isPressed ? DuoColor.selected : DuoColor.pane)
+                    .fill(configuration.isPressed || on ? DuoColor.selected : DuoColor.pane)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DuoMetric.radiusControl)
