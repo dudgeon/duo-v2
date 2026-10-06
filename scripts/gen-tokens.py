@@ -74,7 +74,11 @@ def num(v):
 w("/// Radii, borders and fixed sizes (handoff §4.3), in points.")
 w("public enum DuoMetric {")
 for k, v in t["radius"].items():
-    w(f"    public static let radius{k[0].upper() + k[1:]}: CGFloat = {num(v)}")
+    if isinstance(v, dict):
+        # Per-corner radii (chat-mode-handoff): a speech bubble's sharp corner.
+        w(f"    public static let radius{k[0].upper() + k[1:]} = RectangleCornerRadii(topLeading: {num(v['topLeft'])}, bottomLeading: {num(v['bottomLeft'])}, bottomTrailing: {num(v['bottomRight'])}, topTrailing: {num(v['topRight'])})")
+    else:
+        w(f"    public static let radius{k[0].upper() + k[1:]}: CGFloat = {num(v)}")
 for k, v in t["border"].items():
     if k.startswith("$") or not isinstance(v, (int, float)):
         continue   # notes, and the dash pattern (DuoShadow.dashPattern)
@@ -137,6 +141,8 @@ sp = t["space"]
 w(f"    public static let panePadding: CGFloat = {num(sp['panePadding'])}")
 w(f"    public static let selectionInset: CGFloat = {num(sp['selectionInset'])}")
 w(f"    public static let threadRuleX: CGFloat = {num(sp['threadRuleX'])}")
+for k in ["chatColumnInset", "chatCardTrailing", "chatBubbleMax"]:   # chat-mode-handoff
+    w(f"    public static let {k}: CGFloat = {num(sp[k])}")
 for k in ["cardPadding", "pointerCardPadding", "questionBoxPadding", "buttonPadding", "popoverPadding", "documentPadding"]:
     p = sp[k]
     top = p.get("top", p.get("vertical"))

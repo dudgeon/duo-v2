@@ -352,6 +352,8 @@ extension AppModel {
             let text = inv.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else { return done(.fail("usage: \(id.action.usage)")) }
             done(setNarration(sid, kind: id == .sessionNote ? "note" : "next", text: text) ? .ok("Noted.") : .fail("Duo doesn't know session \(sid.prefix(8)) yet"))
+        case .sessionChat:
+            chatVerb(inv, req, done)
         case .sessionCarryOn:
             guard let old = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             guard let new = carryOn(findSession(old, in: nil)?.sessionId ?? old) else { return done(.fail("no archived copy of session \(old)")) }

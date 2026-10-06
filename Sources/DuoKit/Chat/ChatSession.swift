@@ -1,0 +1,322 @@
+import AppKit
+import Foundation
+import Observation
+
+// Chat mode (DL-118 to DL-120): a second, readable view of the real Claude Code TUI a session's
+// terminal is already running. Nothing here starts, restarts or answers for Claude: switching
+// only changes what the console pane shows, and every answer goes back as the TUI's own keys,
+// after re-reading the screen (DL-118 §2). Architecture: docs/plan/spikes/chat-mode.md.
+
+/// What a Claude tab shows.
+public enum ChatViewMode: String, Codable, Sendable { case terminal, chat }
+
+/// Chat mode's remembered choices (DL-119 §5): each session's mode, and the one used last, which
+/// a new session opens in. Kept in Duo's support folder (`chat.json`).
+public struct ChatPrefs: Codable, Sendable, Equatable {
+    public var modes: [String: ChatViewMode] = [:]
+    /// The mode last chosen, for new sessions; `terminal` until chat is first used (DL-120: a
+    /// session changes only when switched to chat).
+    public var last: ChatViewMode = .terminal
+    /// `--default`: nil follows `last`; otherwise new sessions always open in this mode.
+    public var fixedDefault: ChatViewMode?
+
+    public init() {}
+
+    public static var url: URL { DuoPaths.support.appending(path: "chat.json") }
+
+    public static func load(_ url: URL = ChatPrefs.url) -> ChatPrefs {
+        (try? Data(contentsOf: url)).flatMap { try? JSONDecoder().decode(ChatPrefs.self, from: $0) } ?? ChatPrefs()
+    }
+
+    public func save(_ url: URL = ChatPrefs.url) {
+        guard let data = try? JSONEncoder().encode(self) else { return }
+        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? data.write(to: url, options: .atomic)
+    }
+
+    /// A session's mode: its own once chosen, else the default for new sessions.
+    public func mode(for id: String) -> ChatViewMode { modes[id] ?? fixedDefault ?? last }
+
+    public mutating func set(_ mode: ChatViewMode, for id: String) {
+        modes[id] = mode
+        last = mode
+    }
+}
+
+/// Why the terminal is showing in a session set to chat (handoff `fallback`). Both kinds come
+/// back to chat by themselves once the TUI is back at its prompt; only the toggle stays.
+public struct ChatFallback: Equatable, Sendable {
+    public enum Kind: Sendable, Equatable { case automatic, handedOver }
+    public var kind: Kind
+    public var message: String
+
+    public static let unknownScreen = ChatFallback(kind: .automatic,
+        message: "Chat mode can’t show this screen, so here’s the terminal. Chat comes back when it closes.")
+    public static func automatic(_ m: String) -> ChatFallback { ChatFallback(kind: .automatic, message: m) }
+    public static func handedOver(_ m: String) -> ChatFallback { ChatFallback(kind: .handedOver, message: m) }
+}
+
+/// The terminal a chat reads and answers: the live SwiftTerm view, or a scripted stand-in.
+@MainActor
+public protocol ChatTerminal: AnyObject {
+    /// The visible rows, as text.
+    func screenLines() -> [String]
+    var columns: Int { get }
+    /// Bytes into the PTY, as if typed.
+    func sendKeys(_ text: String)
+    /// Called after each batch of output (debounced by the caller).
+    func onOutput(_ f: @escaping @MainActor () -> Void)
+}
+
+/// The keys chat mode sends, as the TUI reads them.
+public enum ChatKey: String, Sendable {
+    case enter, esc, up, down, left, right, tab, space, backspace, shiftTab, ctrlG, n
+
+    public var bytes: String {
+        switch self {
+        case .enter: "\r"
+        case .esc: "\u{1b}"
+        case .up: "\u{1b}[A"
+        case .down: "\u{1b}[B"
+        case .right: "\u{1b}[C"
+        case .left: "\u{1b}[D"
+        case .tab: "\t"
+        case .space: " "
+        case .backspace: "\u{7f}"
+        case .shiftTab: "\u{1b}[Z"
+        case .ctrlG: "\u{07}"
+        case .n: "n"
+        }
+    }
+}
+
+/// One Claude session's chat: its screen, its log, its mode and fallback.
+@MainActor
+@Observable
+public final class ChatSession {
+    /// The console tab key (the session id when live).
+    public let key: String
+    public var mode: ChatViewMode
+    /// Set while a session in chat mode shows the terminal by itself or by a handover.
+    public var fallback: ChatFallback?
+    public private(set) var screen: ChatScreen = .starting
+    /// The installed CLI's version, and the table its screens are read with.
+    public private(set) var cliVersion: String?
+    public private(set) var signatures: ChatSignatures = .v2_1_291
+    /// Dialogs are answered from chat only on a verified CLI (fallback rule 3).
+    public private(set) var dialogsVerified = true
+    /// The conversation, from hooks and the transcript.
+    public let log = ChatLog()
+    /// Keys are on their way: the screen is expected to change, nothing falls back meanwhile.
+    public var sending = false
+    /// Claude's external editor is open for the composer (F-104): a blank screen is expected.
+    public var composing = false
+
+    @ObservationIgnored weak var terminal: ChatTerminal?
+    /// Fixture mode: the screen the stand-in terminal shows.
+    public var fixtureScreenText: String?
+    @ObservationIgnored private var unknownSince: Date?
+    @ObservationIgnored private var unknownTimer: Timer?
+    @ObservationIgnored private var readPending = false
+    /// Told when chat comes back or leaves by itself, so the store can persist nothing (it isn't a choice).
+    @ObservationIgnored var onChange: (@MainActor () -> Void)?
+
+    /// How long `unknown` must last before the terminal shows: the screen is blank for a moment at
+    /// start and while the external editor runs (F-105).
+    public static let grace: TimeInterval = 0.5
+
+    public init(key: String, mode: ChatViewMode) {
+        self.key = key
+        self.mode = mode
+    }
+
+    /// What the console pane shows for this session.
+    public var showsChat: Bool { mode == .chat && fallback == nil }
+
+    public func setVersion(_ v: String?) {
+        cliVersion = v
+        let t = ChatSignatures.table(for: v)
+        signatures = t.table
+        dialogsVerified = t.verified
+        reread()
+    }
+
+    /// Attaches the terminal whose screen this chat reads.
+    public func attach(_ t: ChatTerminal) {
+        guard terminal !== t else { return }
+        terminal = t
+        t.onOutput { [weak self] in self?.scheduleRead() }
+        reread()
+    }
+
+    /// The TUI repaints in bursts: read once it settles (the spike's 60 ms).
+    func scheduleRead() {
+        guard !readPending else { return }
+        readPending = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) { [weak self] in
+            MainActor.assumeIsolated {
+                self?.readPending = false
+                self?.reread()
+            }
+        }
+    }
+
+    /// Reads the screen now.
+    @discardableResult
+    public func reread() -> ChatScreen {
+        guard let t = terminal else { return screen }
+        let s = ChatScreenReader.read(lines: t.screenLines(), cols: t.columns, table: signatures)
+        apply(s)
+        return s
+    }
+
+    /// A new screen state: fall back, come back, or close a reply the screen says ended.
+    public func apply(_ s: ChatScreen) {
+        let before = screen
+        if s != before { screen = s }
+        // An interrupted reply fires no hook: busy → idle ends it (F-105).
+        if before.kind == .busy, s.kind == .idle { log.endStreaming(interrupted: s.interrupted) }
+        evaluateFallback()
+    }
+
+    /// The fallback rules (spike): unknown for longer than the grace period; a dialog on a CLI
+    /// whose dialogs aren't verified; and, once the TUI is back at its prompt, coming back.
+    func evaluateFallback() {
+        let s = screen
+        switch s.kind {
+        case .unknown:
+            if composing || sending { return }
+            if unknownSince == nil {
+                unknownSince = Date()
+                unknownTimer?.invalidate()
+                unknownTimer = Timer.scheduledTimer(withTimeInterval: Self.grace, repeats: false) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.evaluateFallback() }
+                }
+            } else if Date().timeIntervalSince(unknownSince!) >= Self.grace - 0.01 {
+                fallBack(.unknownScreen)
+            }
+        case .permission, .plan, .question, .questionReview:
+            unknownSince = nil; unknownTimer?.invalidate()
+            if !dialogsVerified {
+                fallBack(.automatic("Chat mode hasn’t been checked with this version of Claude Code’s dialogs (\(cliVersion ?? "unknown")), so here’s the terminal. Chat comes back when it closes."))
+            }
+        case .idle, .busy:
+            unknownSince = nil; unknownTimer?.invalidate()
+            if fallback != nil { fallback = nil; onChange?() }
+        case .starting:
+            break
+        }
+    }
+
+    public func fallBack(_ f: ChatFallback) {
+        guard mode == .chat, fallback != f else { return }
+        fallback = f
+        onChange?()
+    }
+
+    /// "Back to Chat": shows chat now. If the screen still can't be shown, the terminal returns
+    /// after the grace period.
+    public func backToChat() {
+        fallback = nil
+        unknownSince = nil
+        evaluateFallback()
+    }
+}
+
+/// Every session's chat, and the choices to remember.
+@MainActor
+@Observable
+public final class ChatStore {
+    public private(set) var sessions: [String: ChatSession] = [:]
+    public var prefs: ChatPrefs
+    @ObservationIgnored let persist: Bool
+
+    public init(persist: Bool = true) {
+        self.persist = persist
+        prefs = persist ? ChatPrefs.load() : ChatPrefs()
+    }
+
+    /// A session's chat, made on first use in the mode it should open in.
+    public func session(_ key: String) -> ChatSession {
+        if let s = sessions[key] { return s }
+        let s = ChatSession(key: key, mode: prefs.mode(for: key))
+        sessions[key] = s
+        return s
+    }
+
+    public func existing(_ key: String) -> ChatSession? { sessions[key] }
+
+    /// The user's choice, kept for the session and as the default for new ones (DL-119 §5).
+    public func setMode(_ mode: ChatViewMode, for key: String) {
+        let s = session(key)
+        s.mode = mode
+        s.fallback = nil
+        if mode == .chat { s.backToChat() }
+        prefs.set(mode, for: key)
+        if persist { prefs.save() }
+    }
+
+    public func setDefault(_ mode: ChatViewMode?) {
+        prefs.fixedDefault = mode
+        if persist { prefs.save() }
+    }
+
+    /// The process now hosts another session (`/clear`, `/resume`, F-29): the chat follows it.
+    public func rekey(_ old: String, to new: String) {
+        guard old != new, let s = sessions.removeValue(forKey: old) else { return }
+        let moved = ChatSession(key: new, mode: s.mode)
+        if let t = s.terminal { moved.attach(t) }
+        sessions[new] = moved
+    }
+
+    public func forget(_ key: String) { sessions.removeValue(forKey: key) }
+}
+
+/// The installed CLI's version, asked once per binary (`claude --version`: "2.1.291 (Claude Code)").
+public enum ClaudeVersion {
+    nonisolated(unsafe) private static var cache: [String: String] = [:]
+    private static let lock = NSLock()
+
+    @MainActor public static func of(_ path: String, done: @escaping @MainActor (String?) -> Void) {
+        lock.lock(); let hit = cache[path]; lock.unlock()
+        if let hit { return done(hit) }
+        nonisolated(unsafe) let done = done
+        DispatchQueue.global(qos: .utility).async {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: path)
+            p.arguments = ["--version"]
+            let out = Pipe()
+            p.standardOutput = out
+            p.standardError = FileHandle.nullDevice
+            var v: String?
+            if (try? p.run()) != nil {
+                p.waitUntilExit()
+                let s = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+                v = s.split(separator: " ").first.map(String.init).flatMap { ChatVersion($0) != nil ? $0 : nil }
+            }
+            if let v { lock.lock(); cache[path] = v; lock.unlock() }
+            let found = v
+            DispatchQueue.main.async { MainActor.assumeIsolated { done(found) } }
+        }
+    }
+}
+
+/// The live terminal, read and typed into for chat mode.
+@MainActor
+final class LiveChatTerminal: ChatTerminal {
+    weak var view: GuardedTerminalView?
+    init(_ view: GuardedTerminalView) { self.view = view }
+
+    func screenLines() -> [String] {
+        guard let v = view else { return [] }
+        let rows = v.terminalStateSnapshot().dimensions.rows
+        return v.visibleRowsText(0..<rows)
+    }
+    var columns: Int { view?.terminalStateSnapshot().dimensions.cols ?? 80 }
+    func sendKeys(_ text: String) { view?.send(txt: text) }
+    func onOutput(_ f: @escaping @MainActor () -> Void) {
+        view?.setProcessOutputHandler {
+            DispatchQueue.main.async { MainActor.assumeIsolated { f() } }
+        }
+    }
+}

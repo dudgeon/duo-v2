@@ -43,7 +43,9 @@ struct DuoApp: App {
         try? server.start(privateIfTaken: options.capturing) { ChildEnvironment.control = $0 }
         options.state?.apply(to: model)
         if let screen = options.searchState {
-            if SurfaceTargets.screens.contains(screen) { SurfaceTargets.apply(screen, to: model) } else { SearchTargets.apply(screen, to: model) }
+            if SurfaceTargets.screens.contains(screen) { SurfaceTargets.apply(screen, to: model) }
+            else if ChatTargets.screens.contains(screen) { ChatTargets.apply(screen, to: model) }
+            else { SearchTargets.apply(screen, to: model) }
         }
         if options.collapseLeft { model.leftCollapsed = true }
         if let ws = options.workspace {

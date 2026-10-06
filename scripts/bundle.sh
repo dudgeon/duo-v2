@@ -31,6 +31,8 @@ for part in "$spk/Autoupdate" "$spk/Updater.app" "$app/Contents/Frameworks/Spark
 done
 cp "$root/docs/design/build-handoff/fixture.json" "$app/Contents/Resources/fixture.json"
 cp "$root/docs/design/many-projects-handoff/fixture.json" "$app/Contents/Resources/fixture-many.json"
+rm -rf "$app/Contents/Resources/chat-fixtures"
+cp -R "$root/docs/design/chat-mode-handoff/fixture-chat" "$app/Contents/Resources/chat-fixtures"   # chat-mode targets (ChatTargets)
 # The document editor: vendored CodeMirror bundle and its page (F-34).
 mkdir -p "$app/Contents/Resources/editor"
 cp "$root/Vendor/codemirror/dist/cm6.js" "$root/Vendor/codemirror/dist/editor.html" "$app/Contents/Resources/editor/"

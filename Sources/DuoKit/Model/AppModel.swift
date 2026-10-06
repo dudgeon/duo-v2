@@ -68,6 +68,8 @@ public final class AppModel {
     public var fixtureIdleBuckets: [(label: String, rows: [IdleRow])]?
     /// Fixture mode: a console tab whose session has ended, and the bar's text (console-ended).
     public var fixtureEnded: (key: String, message: String)?
+    /// Fixture mode: chats the chat-mode targets show, by console tab (ChatTargets).
+    public var fixtureChats: [String: ChatSession] = [:]
     /// Plain shells open in each project's console, by key, in the order opened (DB-4).
     public var shellTabs: [String: [String]] = [:]
     /// What each shell is running, for its tab's title.
@@ -96,6 +98,8 @@ public final class AppModel {
 
     public var terminalsMode: TerminalsMode = .off
     @ObservationIgnored public let terminals = TerminalStore()
+    /// Chat mode (DL-118 to DL-120): each Claude session's chat over its terminal.
+    @ObservationIgnored public lazy var chats = ChatStore()
     /// The one document editor (live mode; fixture mode keeps the placeholder the targets exempt).
     @ObservationIgnored public lazy var editor: EditorController = { let e = EditorController(); editorIfLoaded = e; wireEditor(e); return e }()
     /// Local HTML pages in the right pane (created on first use).
