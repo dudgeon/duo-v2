@@ -219,7 +219,8 @@ extension DuoAction {
         .init(.fileTemplates, .files, "", "The templates available here."),
         .init(.fileRename, .files, "<path> <new name>", "Rename a file or folder; open tabs follow.", ui: ["Rename"]),
         .init(.fileDuplicate, .files, "<path>", "Copy a file or folder next to itself.", ui: ["Duplicate"]),
-        .init(.fileMove, .files, "<path> <folder>", "Move a file or folder; open tabs follow.", ui: ["Move To…"]),
+        .init(.fileMove, .files, "<path>… <folder> [--replace | --keep-both]", "Move files or folders into a folder; open tabs follow. A path may be anywhere on the Mac (the same move as dropping it from Finder on the tree); from another volume it's copied, as Finder does. A taken name fails unless --replace (the one there goes to the Trash) or --keep-both (\"name 2\"). A folder can't go into itself. Undo with `duo2 undo`.",
+              ui: ["Move To…", "files dropped on the file tree"]),
         .init(.fileTrash, .files, "<path>", "Move to the Trash (never deleted outright).", ui: ["Move to Trash"]),
         .init(.fileReveal, .files, "<path>", "Show in Finder.", ui: ["Reveal in Finder"]),
         .init(.fileOpenWith, .files, "<path> [--app <name>]", "Open in another app (the default app if none named).", ui: ["Open With", "Other…"]),
@@ -347,6 +348,7 @@ public enum Parity {
         "OK": "dismisses a notice",
         "Install Now": "on the update question: hands to Sparkle's own window, which installs only once the user agrees there (and gives an administrator password where one is needed); `duo2 update` says whether one is (DL-114)",
         "Later": "the user's answer to the update question; it remembers the version so the launch and scheduled checks don't ask again (DL-114)",
+        "files dropped on a terminal": "types the dropped paths at the cursor, as Terminal.app does (DL-117); a session already has the paths, and `duo2 send` types text into a Claude session",
         "Save to Recreate": "writes the user's own text back after the file was removed on disk; Claude can do the same with `duo2 doc edit` (content) once the user asks",
     ]
 }
@@ -359,7 +361,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    static let switches: Set<String> = ["json", "yes", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open"]
+    static let switches: Set<String> = ["json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open"]
 
     public init(_ args: [String]) {
         var i = 0

@@ -641,13 +641,37 @@ extension AppModel {
                 let r = rel(try FileActions.duplicate(u)); after()
                 done(.ok("Duplicated as \(r) in \(p.name).", ["path": r, "project": p.name]))
             case .fileMove:
-                guard inv[1] != nil else { return done(.fail("usage: \(id.action.usage)")) }
-                guard let (u, old) = url(inv[0]) else { return done(missing(inv[0])) }
-                guard let (d, _) = url(inv[1]) else { return done(missing(inv[1])) }
-                let dest = try FileActions.move(u, into: d)
-                let new = rel(dest)
-                if isCurrent { moved(old, to: new, url: dest) } else { retab(p.name, old, new); after() }
-                done(.ok("Moved to \(new) in \(p.name).", ["path": new, "project": p.name]))
+                // <path>… <folder>: the same move as a drop on the tree (DL-117). A path may be
+                // anywhere on the Mac (a Finder drop); across volumes it's copied, as Finder does.
+                guard inv.positional.count >= 2 else { return done(.fail("usage: \(id.action.usage)")) }
+                let target = inv.positional.last!
+                guard let (d, _) = url(target) else { return done(missing(target)) }
+                var sources: [URL] = []
+                for a in inv.positional.dropLast() {
+                    if let (u, _) = url(a) { sources.append(u); continue }
+                    let abs = (a as NSString).expandingTildeInPath
+                    guard abs.hasPrefix("/"), FileManager.default.fileExists(atPath: abs) else { return done(missing(a)) }
+                    sources.append(URL(fileURLWithPath: abs))
+                }
+                let clash: FileDrop.Clash? = inv.has("replace") ? .replace : inv.has("keep-both") ? .keepBoth : nil
+                let (plans, refused) = FileDrop.plan(sources, into: d)
+                if let why = refused.first { return done(.fail(why)) }
+                if clash == nil, let c = plans.first(where: \.clashes) {
+                    return done(.fail("“\(c.dest.lastPathComponent)” already exists in \(rel(d)); pass --replace (the one there goes to the Trash) or --keep-both"))
+                }
+                guard !plans.isEmpty else { return done(.ok("Already there.")) }
+                let items = try plans.map { try FileDrop.perform($0, clash: clash) }
+                if isCurrent { followTabs(items, back: false) } else {
+                    for m in items where m.mode == .move { if let o = relativePathIn(m.source, folder: folder) { retab(p.name, o, rel(m.dest)) } }
+                    after()
+                }
+                registerUndo(items.allSatisfy { $0.mode == .copy } ? "Copy" : "Move") { model in
+                    let left = FileDrop.undo(items)
+                    if model.currentProject?.name == p.name { model.followTabs(items, back: true) } else { model.refreshLive() }
+                    if !left.isEmpty { model.info("Undo couldn't put everything back: " + left.joined(separator: "; ") + ".") }
+                }
+                let lines = items.map { "\($0.mode == .copy ? "Copied" : "Moved") to \(rel($0.dest))" + ($0.replaced != nil ? " (the one there is in the Trash)" : "") }
+                done(.ok(lines.joined(separator: "\n") + " in \(p.name). Undo: duo2 undo", ["path": rel(items[0].dest), "paths": items.map { rel($0.dest) }, "project": p.name] as [String: Any]))
             case .fileTrash:
                 guard let (u, r) = url(inv[0]) else { return done(missing(inv[0])) }
                 if isCurrent { closeDocumentsUnder(r) }

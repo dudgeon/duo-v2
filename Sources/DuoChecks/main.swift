@@ -1173,6 +1173,103 @@ func repoFixture() throws -> Fixture {
     try? tfm.removeItem(at: treeDir)
     try? tfm.removeItem(at: outsideFile)
 
+    print("drag and drop of files (DL-117)")
+    do {
+        // Paths into a terminal: Terminal.app's form.
+        check(FileDrop.terminalText([URL(fileURLWithPath: "/tmp/a b.md")]) == "/tmp/a\\ b.md ", "a space is backslashed, with a trailing space")
+        check(FileDrop.shellEscaped("/x/it's \"q\" (1) & $HOME;`x`*?[]!#{}|<>=~^") == "/x/it\\'s\\ \\\"q\\\"\\ \\(1\\)\\ \\&\\ \\$HOME\\;\\`x\\`\\*\\?\\[\\]\\!\\#\\{\\}\\|\\<\\>\\=\\~\\^",
+              "quotes, brackets and every shell character are backslashed")
+        check(FileDrop.shellEscaped("/Users/me/Café 日本 🙂/notes-v1.2_final+x@y:z%,.md") == "/Users/me/Café\\ 日本\\ 🙂/notes-v1.2_final+x@y:z%,.md", "letters beyond ASCII stay as they are; plain punctuation isn't escaped")
+        check(FileDrop.terminalText([URL(fileURLWithPath: "/a/one.md"), URL(fileURLWithPath: "/a/two words"), URL(fileURLWithPath: "/a/dir/")]) == "/a/one.md /a/two\\ words /a/dir ",
+              "several items: separated by spaces, one trailing space")
+        let nl = FileDrop.terminalText([URL(fileURLWithPath: "/a/line\nbreak\r.md"), URL(fileURLWithPath: "/a/tab\there")])
+        check(nl == "$'/a/line\\nbreak\\r.md' $'/a/tab\\there' " && !nl.contains("\n") && !nl.contains("\r"), "a control character in a name is written $'…', so nothing typed is a Return")
+        check(!FileDrop.terminalText([URL(fileURLWithPath: "/a/x\ny")]).unicodeScalars.contains { $0.value < 0x20 }, "no control character is ever typed")
+
+        // Moves into a folder: scratch folders, a scratch Trash.
+        let root = FileManager.default.temporaryDirectory.appending(path: "duo-drop-\(UUID().uuidString)")
+        let proj = root.appending(path: "proj"), finder = root.appending(path: "finder"), bin = root.appending(path: "trash")
+        let fm = FileManager.default
+        for d in ["proj/docs/sub", "proj/notes", "finder/folder/inner", "trash"] { try fm.createDirectory(at: root.appending(path: d), withIntermediateDirectories: true) }
+        for (f, t) in [("finder/a.md", "dropped a"), ("finder/folder/inner/x.md", "x"), ("proj/docs/a.md", "the one there"), ("proj/notes/n.md", "n"), ("finder/b c.md", "b")] {
+            try Data(t.utf8).write(to: root.appending(path: f))
+        }
+        let saved = FileDrop.trash
+        FileDrop.trash = { u in let to = bin.appending(path: UUID().uuidString + "-" + u.lastPathComponent); try fm.moveItem(at: u, to: to); return to }
+        defer { FileDrop.trash = saved }
+        func text(_ u: URL) -> String? { try? String(contentsOf: u, encoding: .utf8) }
+
+        let docs = proj.appending(path: "docs")
+        let p1 = FileDrop.plan([finder.appending(path: "b c.md"), finder.appending(path: "folder")], into: docs)
+        check(p1.refused.isEmpty && p1.plans.count == 2 && p1.plans.allSatisfy { $0.mode == .move && !$0.clashes }, "Finder items on the same volume plan as moves")
+        let d1 = try p1.plans.map { try FileDrop.perform($0, clash: nil) }
+        check(fm.fileExists(atPath: docs.appending(path: "b c.md").path) && fm.fileExists(atPath: docs.appending(path: "folder/inner/x.md").path)
+              && !fm.fileExists(atPath: finder.appending(path: "b c.md").path) && !fm.fileExists(atPath: finder.appending(path: "folder").path), "a drop moves files and folders on disk")
+        check(FileDrop.undo(d1).isEmpty && fm.fileExists(atPath: finder.appending(path: "b c.md").path) && fm.fileExists(atPath: finder.appending(path: "folder/inner/x.md").path)
+              && !fm.fileExists(atPath: docs.appending(path: "b c.md").path), "undo puts them back where they were")
+
+        // A taken name.
+        let clash = FileDrop.plan([finder.appending(path: "a.md")], into: docs).plans
+        check(clash.count == 1 && clash[0].clashes, "a taken name is a clash")
+        check((try? FileDrop.perform(clash[0], clash: nil)) == nil && text(docs.appending(path: "a.md")) == "the one there" && fm.fileExists(atPath: finder.appending(path: "a.md").path),
+              "a clash without an answer moves nothing and never overwrites")
+        let kept = try FileDrop.perform(clash[0], clash: .keepBoth)
+        check(kept.dest.lastPathComponent == "a 2.md" && text(docs.appending(path: "a.md")) == "the one there" && text(kept.dest) == "dropped a", "Keep Both names the dropped one “a 2.md”, like Finder")
+        FileDrop.undo([kept])
+        let rep = try FileDrop.perform(clash[0], clash: .replace)
+        check(text(docs.appending(path: "a.md")) == "dropped a" && rep.replaced.map { text($0) == "the one there" } == true, "Replace puts the one there in the Trash, not away for good")
+        check(FileDrop.undo([rep]).isEmpty && text(docs.appending(path: "a.md")) == "the one there" && text(finder.appending(path: "a.md")) == "dropped a",
+              "undoing a Replace brings both back")
+
+        // Into itself.
+        check(FileDrop.refusal(docs, into: docs) != nil && FileDrop.refusal(docs, into: docs.appending(path: "sub")) != nil && FileDrop.refusal(docs, into: proj.appending(path: "notes")) == nil,
+              "a folder can't go into itself or its own children")
+        let selfPlan = FileDrop.plan([docs, proj.appending(path: "notes")], into: docs.appending(path: "sub"))
+        check(selfPlan.refused.count == 1 && selfPlan.plans.map(\.source.lastPathComponent) == ["notes"], "the rest of a drop still goes when one item would go into itself")
+        check(FileDrop.plan([docs.appending(path: "a.md")], into: docs).plans.isEmpty, "an item dropped on its own folder stays put")
+        try fm.createDirectory(at: docs.appending(path: "sub/docs"), withIntermediateDirectories: true)
+        check(FileDrop.plan([docs.appending(path: "sub/docs")], into: proj).refused.count == 1, "nothing replaces the folder that holds it")
+
+        // Across volumes: a scratch disk image (the boot disk's volumes all report as one, as Finder sees them).
+        func hdiutil(_ args: [String]) -> Bool {
+            let p = Process(); p.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil"); p.arguments = args
+            p.standardOutput = FileHandle.nullDevice; p.standardError = FileHandle.nullDevice
+            guard (try? p.run()) != nil else { return false }
+            p.waitUntilExit(); return p.terminationStatus == 0
+        }
+        let mnt = root.appending(path: "mnt"), img = root.appending(path: "vol.dmg")
+        if hdiutil(["create", "-size", "2m", "-fs", "HFS+", "-volname", "DuoDrop", "-layout", "NONE", img.path]),
+           hdiutil(["attach", img.path, "-nobrowse", "-noverify", "-mountpoint", mnt.path]) {
+            let far = mnt.appending(path: "far.md")
+            try Data("far".utf8).write(to: far)
+            check(FileDrop.sameVolume(finder, docs) && !FileDrop.sameVolume(far, docs), "volumes are told apart")
+            let cross = FileDrop.plan([far], into: docs).plans
+            check(cross.first?.mode == .copy && FileDrop.plan([docs.appending(path: "a.md")], into: mnt).plans.first?.mode == .copy, "from another volume a drop copies, either way (Q-51)")
+            if let c = cross.first {
+                let done = try FileDrop.perform(c, clash: nil)
+                check(text(done.dest) == "far" && text(far) == "far", "the copy lands and the original stays")
+                check(FileDrop.undo([done]).isEmpty && !fm.fileExists(atPath: done.dest.path) && fm.fileExists(atPath: far.path), "undoing a copy puts the copy in the Trash")
+            }
+            _ = hdiutil(["detach", mnt.path, "-force"])
+        } else {
+            check(false, "a scratch disk image for the cross-volume checks")
+        }
+
+        // The model: a drop on a folder of the tree; open tabs follow an item moved inside the project.
+        var dropFixture = f
+        dropFixture.projects.append(decoded(["name": "dropproj", "topic": "Platform", "path": proj.path, "goal": "g"]))
+        let m = AppModel(fixture: dropFixture)
+        m.terminalsMode = .live
+        m.liveFolders["dropproj"] = proj
+        m.open(project: "dropproj")
+        m.openDocument("notes/n.md")
+        check(m.dropFolder("notes/n.md")?.lastPathComponent == "notes" && m.dropFolder(nil)?.path == proj.path, "a file row drops into its folder; the empty area into the root")
+        check(m.dropFiles([proj.appending(path: "notes/n.md")], onto: "docs") && fm.fileExists(atPath: docs.appending(path: "n.md").path), "dragging within the tree moves to the folder")
+        check(m.openDocuments.contains("docs/n.md") && !m.openDocuments.contains("notes/n.md"), "an open tab follows the moved file")
+        check(!m.dropFiles([docs], onto: "docs/sub") && fm.fileExists(atPath: docs.path), "the model refuses a folder into itself")
+        try? fm.removeItem(at: root)
+    }
+
     print("New Session in Task, end to end with a stand-in claude (DL-112; no model, no turn)")
     do {
         // Everything in a scratch folder: Duo's support folder (whose state names the stand-in as

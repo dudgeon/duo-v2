@@ -236,6 +236,11 @@ struct FileTreePane: View {
         .padding(.bottom, 12)
         .contentShape(Rectangle())
         .modifier(LiveContextMenu { NewItemsMenu(near: nil) })
+        // Files dropped on the empty area go to the project root (DL-117).
+        .background {
+            if model.treeDropTarget == "" { DropHighlight(radius: DuoMetric.radiusCard).padding(.horizontal, DuoSpace.selectionInset).padding(.top, DuoMetric.borderFilesDivider + 4) }
+        }
+        .modifier(TakesFileDrops(target: ""))
     }
 }
 
@@ -326,12 +331,16 @@ struct FileRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: DuoMetric.rowFile)
             .background {
-                if selected { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected) }
+                if node.children != nil && model.treeDropTarget == node.path { DropHighlight() }
+                else if selected { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected) }
             }
             .padding(.horizontal, DuoSpace.selectionInset)
             .contentShape(Rectangle())
             .onActivate { if node.children == nil { model.openDocument(node.path) } else { model.toggleFolder(node.path) } }  // action: doc open
             .modifier(LiveContextMenu { FileMenu(path: node.path, isFolder: node.children != nil, onTab: false) })
+            // Drag the file out (a terminal types its path); drop files on a folder, or on a file for its folder (DL-117).
+            .modifier(DragsFile(path: node.path, name: node.name))
+            .modifier(TakesFileDrops(target: node.children != nil ? node.path : (node.path as NSString).deletingLastPathComponent))
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(selected ? .isSelected : [])
             if let children = node.children, open {

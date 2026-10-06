@@ -122,6 +122,21 @@ public enum FixtureHarness {
             SheetCenter.shared.ask(UpdateCheck.question(o, openPage: say("Open Releases Page"), installNow: say("Install Now"), later: say("Later")))
         case "sheet-ok": if model.moveIntoHomeForm != nil { model.confirmMoveIntoHome() } else { model.commitNewProject() }
         case "sheet-cancel": model.cancelSheet()
+        // Drag and drop of files (DL-117), as the drop delegates hand them over. Paths are split on "|".
+        case "drop-files":   // drop-files:<folder or root>=<path>|<path>: files dropped on the tree
+            if parts.count > 1 {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                if kv.count == 2 { model.dropFiles(kv[1].split(separator: "|").map { URL(fileURLWithPath: String($0)) }, onto: kv[0] == "root" ? nil : kv[0]) }
+            }
+        case "drop-terminal":   // drop-terminal:<path>|<path>: files dropped on the visible terminal
+            if parts.count > 1 { model.visibleTerminal?.view.insertPaths(parts[1].split(separator: "|").map { URL(fileURLWithPath: String($0)) }) }
+        case "drop-hover":   // drop-hover:<folder>|root|off: a drag of files held over the tree
+            model.treeDropTarget = parts.count < 2 || parts[1] == "off" ? nil : parts[1] == "root" ? "" : parts[1]
+        case "answer":   // answer:<label>: press that button on Duo's own question sheet
+            if let q = SheetCenter.shared.current {
+                FileHandle.standardError.write(Data("answer: \(q.title) [\(q.choices.map(\.label).joined(separator: " | "))]\n".utf8))
+                if let c = q.choices.first(where: { $0.label == (parts.count > 1 ? parts[1] : "") }) { SheetCenter.shared.answer(c) }
+            } else { FileHandle.standardError.write(Data("answer: no question\n".utf8)) }
         case "undo": NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager?.undo()
         case "tabs":
             FileHandle.standardError.write(Data("tabs: \(model.openDocuments) right=\(model.rightTab ?? "-") renaming=\(model.renamingPath ?? "-") editor=\(model.editorIfLoaded?.url?.lastPathComponent ?? "-")\ntree: \(model.currentProject.flatMap { model.fixture.projectFiles[$0.name] } ?? [])\n".utf8))

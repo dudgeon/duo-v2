@@ -118,6 +118,7 @@ public final class TerminalSession {
         view.nativeBackgroundColor = DuoNSColor.console
         view.nativeForegroundColor = DuoNSColor.consoleText
         Self.applyPalette(view)
+        view.registerForDraggedTypes([.fileURL])  // files dropped in type their paths (DL-117)
         view.processDelegate = ProcessWatcher.shared
         ProcessWatcher.shared.sessions[ObjectIdentifier(view)] = self
         start()
@@ -232,6 +233,36 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
         selectAll()
         selectNone()
         needsDisplay = true
+    }
+
+    // MARK: Files dropped in (DL-117)
+
+    /// Dropped files and folders type their paths at the cursor, as Terminal.app does: absolute,
+    /// shell-escaped, space-separated, a trailing space, never a Return. From Finder or Duo's tree.
+    public override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { dropOperation(sender) }
+    public override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation { dropOperation(sender) }
+
+    public override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let urls = Self.fileURLs(sender.draggingPasteboard)
+        guard !urls.isEmpty, process?.running == true else { return false }
+        insertPaths(urls)
+        window?.makeFirstResponder(self)
+        return true
+    }
+
+    private func dropOperation(_ sender: NSDraggingInfo) -> NSDragOperation {
+        Self.fileURLs(sender.draggingPasteboard).isEmpty || process?.running != true ? [] : .copy
+    }
+
+    static func fileURLs(_ pb: NSPasteboard) -> [URL] {
+        (pb.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]) ?? []
+    }
+
+    /// Types the paths in. Bracketed when the program asked for it (zsh, Claude Code), so it reads
+    /// as a paste: Claude Code takes a dropped image path as the image.
+    func insertPaths(_ urls: [URL]) {
+        let text = FileDrop.terminalText(urls)
+        send(txt: terminalStateSnapshot().bracketedPasteMode ? "\u{1b}[200~" + text + "\u{1b}[201~" : text)
     }
 
     public override func setFrameSize(_ newSize: NSSize) {

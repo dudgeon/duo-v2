@@ -113,6 +113,8 @@ public final class AppModel {
     public var dropTarget: String?
     public var landed: String?
     public var landedNote = ""
+    /// The file tree's folder under a drag of files (DL-117): its path, "" for the project root.
+    public var treeDropTarget: String?
     /// Bumped when the editor's document goes into or out of conflict or removed-on-disk.
     public var editorRevision = 0
     /// The editor if it has been created (doc-status mustn't create one).

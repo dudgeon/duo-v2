@@ -100,7 +100,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 file templates` | The templates available here. | — |
 | `duo2 file rename <path> <new name>` | Rename a file or folder; open tabs follow. | Rename |
 | `duo2 file duplicate <path>` | Copy a file or folder next to itself. | Duplicate |
-| `duo2 file move <path> <folder>` | Move a file or folder; open tabs follow. | Move To… |
+| `duo2 file move <path>… <folder> [--replace \| --keep-both]` | Move files or folders into a folder; open tabs follow. A path may be anywhere on the Mac (the same move as dropping it from Finder on the tree); from another volume it's copied, as Finder does. A taken name fails unless --replace (the one there goes to the Trash) or --keep-both ("name 2"). A folder can't go into itself. Undo with `duo2 undo`. | Move To…, files dropped on the file tree |
 | `duo2 file trash <path>` | Move to the Trash (never deleted outright). | Move to Trash |
 | `duo2 file reveal <path>` | Show in Finder. | Reveal in Finder |
 | `duo2 file open-with <path> [--app <name>]` | Open in another app (the default app if none named). | Open With, Other… |
@@ -217,3 +217,4 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Toggle Right Pane | not built yet |
 | What’s New in This Version | opens this version's release notes on GitHub; `duo2 status` names the version |
 | confirmation sheet | the user's own consent; Claude can't confirm for them |
+| files dropped on a terminal | types the dropped paths at the cursor, as Terminal.app does (DL-117); a session already has the paths, and `duo2 send` types text into a Claude session |
