@@ -38,6 +38,8 @@ public final class AppModel {
     // Inside a project
     public var selectedSidebarItem: String?     // group name or Session.id
     public var expandedGroups: Set<String> = []
+    /// The task row under the pointer ("<project>/<note path>"), which shows its + (DL-112).
+    public var hoveredTaskRow: String?
     public var consoleTab: String?              // Session.tabKey (id when live, else name)
     public var rightTab: String?                // "Project", a group name, or a document path
     /// The search modal (DL-76, DL-80).
@@ -228,6 +230,8 @@ public final class AppModel {
     @ObservationIgnored public var extraProjects: [URL] = []
     /// The last context sent to a session (Send to Claude), for `duo2 selection` and checks.
     @ObservationIgnored public var lastSent: (key: String, text: String)?
+    /// The last task reference drafted into a new session's prompt (DL-112), for the harness and checks.
+    @ObservationIgnored public var lastDrafted: (key: String, text: String)?
 
     public var visibleTerminal: TerminalSession? { visibleSessionId.flatMap { terminals.existing($0) } }
 

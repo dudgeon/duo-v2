@@ -77,15 +77,29 @@ extension AppModel {
         }
     }
 
-    /// Runs `then` once the session's Claude prompt is idle (its beacon), for up to 20 s.
-    func whenPromptReady(_ t: TerminalSession, tries: Int = 0, then: @escaping @MainActor () -> Void) {
+    /// Types `text` into a new session's prompt once Claude is at it, and never presses Return
+    /// (DL-112, "drafted, not sent"). Unlike `send`, it doesn't switch project or take the
+    /// keyboard: `duo2 task session` may start it while the user works elsewhere. Waits up to two
+    /// minutes, so a folder-trust prompt can be answered first.
+    func draft(_ text: String, into key: String) {
+        guard let t = terminals.existing(key) else { return }
+        whenPromptReady(t, limit: 240) { [weak self] in
+            guard let self, t.isLiveClaude, t.notReadyReason == nil else { return }
+            t.paste(text)
+            self.lastDrafted = (key, text)
+        }
+    }
+
+    /// Runs `then` once the session's Claude prompt is idle (its beacon), polling every 0.5 s
+    /// `limit` times (20 s by default).
+    func whenPromptReady(_ t: TerminalSession, tries: Int = 0, limit: Int = 40, then: @escaping @MainActor () -> Void) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, !t.exited, let pid = t.view.process?.shellPid else { return }
                 if Beacon.readAll().contains(where: { $0.pid == pid && $0.status == "idle" }) {
                     then()
-                } else if tries < 40 {
-                    self.whenPromptReady(t, tries: tries + 1, then: then)
+                } else if tries < limit {
+                    self.whenPromptReady(t, tries: tries + 1, limit: limit, then: then)
                 }
             }
         }
@@ -160,7 +174,13 @@ extension TerminalSession {
     /// One paste, bracketed so newlines are text, not Return. Claude Code always turns bracketed
     /// paste on (SwiftTerm doesn't expose the mode, and only Claude sessions receive sends).
     func paste(_ text: String) {
-        view.send(txt: "\u{1b}[200~" + SendFormat.clean(text) + "\u{1b}[201~")
+        view.send(txt: Self.bracketed(text))
+    }
+
+    /// The bytes a paste sends: the cleaned text between the bracketed-paste markers, so nothing
+    /// in it is a Return (DL-68, DL-112).
+    public static func bracketed(_ text: String) -> String {
+        "\u{1b}[200~" + SendFormat.clean(text) + "\u{1b}[201~"
     }
 }
 

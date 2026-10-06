@@ -211,6 +211,10 @@ public enum FixtureHarness {
         case "new-task": if let p = model.currentProject?.name { model.newTask(in: p) }   // + New task in the open project
         case "task-session":   // task-session:<path>: New Session in Task on a task in the open project
             if parts.count > 1, let p = model.currentProject?.name { model.startSession(inTask: parts[1], project: p) }
+        case "hover-task":   // hover-task:<path>: the pointer over a task's row (its +, DL-112); in the open project, else the first with that note
+            if parts.count > 1, let p = model.currentProject?.name ?? model.fixture.tasks?.first(where: { $0.path == parts[1] })?.project {
+                model.hoveredTaskRow = TaskRowHover.key(project: p, path: parts[1])
+            }
         case "keys":   // keys:<text>: real key events to whatever has the keyboard (no focusing first)
             if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
                 NSApp.activate(ignoringOtherApps: true); w.makeKey()
@@ -376,6 +380,7 @@ public enum FixtureHarness {
                 FileHandle.standardError.write(Data("---- tail \(t.key) ----\n\(lines.suffix(30).joined(separator: "\n"))\n".utf8))
             }
             if let l = model.lastSent { FileHandle.standardError.write(Data("---- lastSent to \(l.key.prefix(8)) ----\n\(l.text)\n----\n".utf8)) }
+            if let l = model.lastDrafted { FileHandle.standardError.write(Data("---- lastDrafted into \(l.key.prefix(8)) ----\n\(l.text.debugDescription)\n----\n".utf8)) }
         case let a where a.hasPrefix("wait"): break
         default: FileHandle.standardError.write(Data("Unknown action '\(action)'\n".utf8))
         }

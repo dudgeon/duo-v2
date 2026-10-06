@@ -203,9 +203,10 @@ struct MapGrid: View {
         }
     }
 
-    /// Stand-in (Q-42, F-86): with every project directly in Home there is only the unlabelled column,
-    /// which a third of the width left as one tall stack with the rest empty. Its tiles flow three
-    /// across instead, as ACTIVE OUTSIDE HOME's do; the blank label row keeps Home's tile where it was.
+    /// As approved (DL-111, F-86; stand-ins-handoff `q42-one-list`): with every project directly in
+    /// Home there is only the unlabelled column, which a third of the width left as one tall stack
+    /// with the rest empty. Its tiles flow three across instead, as ACTIVE OUTSIDE HOME's do; the
+    /// blank label row keeps Home's tile where it was. Two lists keep a third each (`q42-two-lists`).
     var loneColumn: some View {
         let projects = columns[0].projects
         let count = (home == nil ? 0 : 1) + projects.count + (tileAtEnd ? 1 : 0)

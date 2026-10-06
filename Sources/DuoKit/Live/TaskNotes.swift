@@ -19,6 +19,11 @@ public struct TaskNote: Sendable, Equatable {
 public enum TaskNotes {
     static let idPattern = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 
+    /// What a session started in a task finds in its prompt (DL-112): the note as an @-reference
+    /// relative to the project folder, typed but never sent, so no turn is spent until the user
+    /// adds a word and presses Return. One line: nothing in it can submit.
+    public static func draft(path: String) -> String { SendFormat.file(path) }
+
     /// Every note in `<project>/tasks/`, by path.
     public static func load(project folder: URL) -> [TaskNote] {
         let dir = folder.appending(path: "tasks")

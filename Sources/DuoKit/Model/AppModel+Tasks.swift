@@ -63,15 +63,17 @@ extension AppModel {
     }
 
     /// New Session in Task: a Claude session in the task's project, linked from the note's
-    /// `sessions:` list from its start, shown in the console when that project is open. Returns
-    /// the session id, or why not.
+    /// `sessions:` list from its start, shown in the console when that project is open. It starts
+    /// with no first message; once Claude's prompt is up, Duo types `@tasks/<note>.md` into it
+    /// and doesn't send it (DL-112), so no turn is spent until the user adds a word and presses
+    /// Return. Returns the session id, or why not.
     @discardableResult
     public func newSession(inTask path: String, project: String) -> Result<String, Error> {
         struct Refused: Error, CustomStringConvertible { let description: String }
         guard let folder = liveFolders[project], FileManager.default.fileExists(atPath: folder.appending(path: path).path) else {
             return .failure(Refused(description: "no task '\(path)' in \(project)"))
         }
-        guard let id = newSession(in: project) else {
+        guard let id = newSession(in: project, prompt: nil) else {
             return .failure(Refused(description: "couldn't start a session in \(project)"))
         }
         // The note open with unsaved text takes the link in its buffer, as + Add does; otherwise on disk.
@@ -82,6 +84,7 @@ extension AppModel {
             return .failure(Refused(description: why))
         }
         if currentProject?.name == project { openConsoleTab(id) }
+        draft(TaskNotes.draft(path: path), into: id)
         return .success(id)
     }
 
@@ -187,7 +190,10 @@ extension AppModel {
             guard let t = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             guard let hit = findTask(t, project: inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name) ?? findTask(t, project: nil) else { return done(.fail("no task '\(t)'")) }
             switch newSession(inTask: hit.path, project: hit.project) {
-            case .success(let sid): done(.ok("Started session \(sid) in \(hit.project), linked from \(hit.path).", ["id": sid, "project": hit.project, "task": hit.path]))
+            case .success(let sid):
+                let draft = TaskNotes.draft(path: hit.path)
+                done(.ok("Started session \(sid) in \(hit.project), linked from \(hit.path). Its prompt will hold \(draft.trimmingCharacters(in: .whitespaces)), not sent.",
+                         ["id": sid, "project": hit.project, "task": hit.path, "draft": draft]))
             case .failure(let e): done(.fail("\(e)"))
             }
         case .taskAdd:
@@ -282,17 +288,33 @@ struct TaskLine: View {
     var indented = false
 
     var body: some View {
+        let key = TaskRowHover.key(project: task.project, path: task.path)
+        let hovered = model.terminalsMode == .live && model.hoveredTaskRow == key
         HStack(spacing: DuoSpace.gapRowItems) {
             TaskBox()
             Text(task.title).duoText(.body).lineLimit(1)
             if showsProject { Text(task.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1) }
             Spacer(minLength: 8)
-            if let st = task.status, st != "open" { Text(st.replacingOccurrences(of: "-", with: " ")).duoText(.body).foregroundStyle(DuoColor.text2) }
+            // On hover the + takes the status's place (DL-112, stand-ins-handoff q43-hover).
+            if hovered {
+                NewSessionInTaskButton(project: task.project, path: task.path)
+            } else if let st = task.status, st != "open" {
+                Text(st.replacingOccurrences(of: "-", with: " ")).duoText(.body).foregroundStyle(DuoColor.text2)
+            }
         }
         .padding(.horizontal, 8 + DuoSpace.selectionInset)
         .padding(.leading, indented ? 18 : 0)
         .frame(height: DuoMetric.rowSession)
+        // The hovered line's fill, inset like a selection and from the fold's indent (q43-hover).
+        .background {
+            if hovered {
+                RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected)
+                    .padding(.leading, (indented ? 18 : 0) + DuoSpace.selectionInset)
+                    .padding(.trailing, DuoSpace.selectionInset)
+            }
+        }
         .contentShape(Rectangle())
+        .modifier(TaskRowHover(key: key))
         .onActivate { model.openTask(project: task.project, path: task.path) }  // action: doc open
         .contextMenu {
             Button("Open Task Note") { model.openTask(project: task.project, path: task.path) }
@@ -301,6 +323,43 @@ struct TaskLine: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(task.title), task, \(task.status ?? "open")")
+    }
+}
+
+/// Tracks which task row is under the pointer, in the model (no view state, DL-30).
+struct TaskRowHover: ViewModifier {
+    @Environment(AppModel.self) private var model
+    let key: String
+
+    static func key(project: String, path: String) -> String { "\(project)/\(path)" }
+
+    func body(content: Content) -> some View {
+        if key.isEmpty {
+            content   // a group that isn't a task
+        } else {
+            content.onHover { inside in
+                if inside { model.hoveredTaskRow = key } else if model.hoveredTaskRow == key { model.hoveredTaskRow = nil }
+            }
+        }
+    }
+}
+
+/// New Session in Task's + on a hovered task row, line or group style (DL-112, stand-ins-handoff
+/// `q43-hover`): 18 pt, `text2`, no fill of its own; the system tooltip names it.
+struct NewSessionInTaskButton: View {
+    @Environment(AppModel.self) private var model
+    let project: String
+    let path: String
+
+    var body: some View {
+        Text("+")
+            .font(.system(size: DuoMetric.rowActionGlyph))
+            .foregroundStyle(DuoColor.text2)
+            .frame(width: DuoMetric.rowActionSize, height: DuoMetric.rowActionSize)
+            .contentShape(RoundedRectangle(cornerRadius: DuoMetric.rowActionRadius))
+            .onActivate { model.startSession(inTask: path, project: project) }  // action: task session
+            .help("New Session in Task")
+            .accessibilityLabel("New Session in Task")
     }
 }
 
