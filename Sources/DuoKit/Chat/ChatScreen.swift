@@ -203,7 +203,8 @@ public enum ChatScreenReader {
     }
 
     public static func read(lines raw: [String], cols: Int? = nil, table s: ChatSignatures = .v2_1_291) -> ChatScreen {
-        let t = raw.map(\.chatTrimEnd)
+        // A cell the TUI skipped over with a cursor move reads as NUL from a raw buffer; it's a space.
+        let t = raw.map { $0.replacingOccurrences(of: "\u{0}", with: " ").chatTrimEnd }
         let width = cols ?? max(t.map(\.count).max() ?? 0, 1)
         let rules = t.indices.filter { t[$0].chatTrim.chatIs(s.rule) }
         // The footer sits under the input box, which is not always at the bottom of the screen.

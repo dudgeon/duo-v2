@@ -26,6 +26,7 @@ func repoFixture() throws -> Fixture {
 @MainActor func run() throws {
     // `DUO_CHECKS=chat swift run DuoChecks`: chat mode's checks alone (ChatChecks.swift).
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat" { return try chatChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-live" { return try chatLiveChecks() }
     let f = try repoFixture()
 
     print("fixture")

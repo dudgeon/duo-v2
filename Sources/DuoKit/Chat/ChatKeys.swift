@@ -70,6 +70,12 @@ extension ChatSession {
         return true
     }
 
+    /// The mode chip: Shift+Tab, as the TUI cycles manual → accept edits → plan (F-104).
+    public func cycleMode() async {
+        guard [.idle, .busy].contains(reread().kind) else { return }
+        _ = await press(.shiftTab)
+    }
+
     /// Stop (esc) while Claude works.
     public func interrupt() async {
         guard reread().kind == .busy else { return }

@@ -49,6 +49,41 @@ extension AppModel {
     /// `duo2 session chat answer`: a review card's option, pressed only after the same screen check
     /// the card makes (phase 3).
     func chatAnswer(_ chat: ChatSession, option: String, _ done: @escaping @MainActor (Reply) -> Void) {
-        done(.fail("answering from the CLI comes with review cards"))
+        let s = chat.reread()
+        guard chat.cardUp else {
+            return done(.fail(s.kind == .unknown || !chat.dialogsVerified || !chat.requestAgrees
+                ? "Claude Code's dialog isn't one chat mode can answer (\(s.kind.rawValue)); answer it in the terminal"
+                : "no dialog is waiting (\(s.kind.rawValue))"))
+        }
+        let reply: @MainActor (ChatAnswerResult, String) -> Void = { r, what in
+            done(r.ok ? .ok("Pressed \(what) in Claude Code, after checking the same dialog was still up.") : .fail("Nothing sent: \(r.why ?? "refused")."))
+        }
+        if option == "cancel" || option == "esc" {
+            Task { reply(s.kind == .question || s.kind == .questionReview ? await chat.ask(.decline, sig: s.sig) : await chat.cancelDialog(sig: s.sig), "Esc") }
+            return
+        }
+        guard let n = Int(option) else { return done(.fail("usage: \(ActionID.sessionChat.action.usage)")) }
+        switch s.kind {
+        case .permission, .plan:
+            guard let o = s.options.first(where: { $0.n == n }) else { return done(.fail("there's no option \(n): \(s.options.map { "\($0.n ?? 0). \($0.label)" }.joined(separator: ", "))")) }
+            if o.label.hasPrefix("Tell Claude what to change") { return done(.fail("option \(n) takes text: answer it in Duo or the terminal")) }
+            Task { reply(await chat.answerOption(n, label: o.label, sig: s.sig), "\(n) (\(o.label))") }
+        case .questionReview:
+            guard let o = s.options.first(where: { $0.n == n }) else { return done(.fail("there's no option \(n)")) }
+            Task { reply(await chat.ask(o.label == "Cancel" ? .cancelReview : .submit, sig: s.sig), o.label) }
+        case .question:
+            let qs = chat.askedQuestions, qi = chat.questionIndex(s) ?? 0
+            let asked = qi < qs.count ? qs[qi]["options"] as? [ChatJSON] ?? [] : []
+            guard let row = s.rows.first(where: { $0.n == n }) else { return done(.fail("there's no option \(n)")) }
+            switch row.kind {
+            case .option:
+                let i = s.options.firstIndex(of: row) ?? 0
+                let label = i < asked.count ? asked[i]["label"] as? String ?? row.label : row.label
+                Task { reply(await chat.ask(s.multi ? .toggle(label) : .pick(label), sig: s.sig), label) }
+            case .chat: Task { reply(await chat.ask(.chat, sig: s.sig), "Chat about this") }
+            default: done(.fail("option \(n) takes text: answer it in Duo or the terminal"))
+            }
+        default: done(.fail("no dialog is waiting"))
+        }
     }
 }

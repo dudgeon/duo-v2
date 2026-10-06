@@ -196,7 +196,7 @@ extension DuoAction {
               ui: ["Delete Session…"], timeout: 600),
         .init(.sessionChat, .sessions, "[id] on|off|toggle | --default last|chat|terminal | answer [id] <option|cancel>",
               "Chat mode (DL-118 to DL-120): show a Claude session as a readable chat over its real terminal, or as the terminal. Switching sends nothing to the session. --default sets the mode new sessions open in (last: the one used last). answer presses a review card's option key (1, 2, 3 …, or cancel for Esc) only after re-reading the screen; the same dialog must still be up. With no id, the session on screen.",
-              ui: ["Terminal", "Chat", "Back to Chat", "review card option", "Cancel esc", "Amend in Terminal…", "Approve with Feedback in Terminal…", "Manage in Terminal…"]),
+              ui: ["Terminal", "Chat", "Back to Chat", "review card option", "Cancel esc", "Amend in Terminal…", "Approve with Feedback in Terminal…", "Manage in Terminal…", "Chat about this", "‹ Back"]),
         .init(.idle, .sessions, "", "Idle, resumable sessions, newest first, grouped by when (the map footer's list).", ui: ["idle footer"]),
         .init(.shellNew, .sessions, "", "Open a plain shell in the console (DL-8); typing `claude` in it makes it a session.", ui: ["New Shell"]),
         // Groups (DL-24): related threads, grouped by hand; Duo-owned facts in the project's .duo/sessions.json.

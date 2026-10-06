@@ -214,7 +214,7 @@ public final class ChatSession {
     }
 
     /// Starts reading the session's hooks and transcript (live sessions).
-    func follow(sessionId: String, cwd: String) {
+    public func follow(sessionId: String, cwd: String) {
         guard feed?.sessionId != sessionId else { return }
         feed?.stop()
         feed = ChatFeed(sessionId: sessionId, cwd: cwd, chat: self)
