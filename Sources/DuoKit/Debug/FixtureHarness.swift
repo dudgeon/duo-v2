@@ -540,6 +540,7 @@ public enum FixtureHarness {
         // The system toolbar may not be 38 high; the panes start below whatever it is (§0.4),
         // so size the area below it to exactly the design's.
         let chrome = window.frame.height - window.contentLayoutRect.height
+        let contentSize = options.windowSize.map { CGSize(width: $0.width, height: $0.height - designContentTop) } ?? contentSize
         let height = contentSize.height + chrome
         let screen = window.screen?.visibleFrame ?? .zero
         let origin = CGPoint(x: max(screen.minX, screen.midX - contentSize.width / 2),

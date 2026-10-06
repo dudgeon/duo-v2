@@ -7,6 +7,7 @@ import Foundation
 ///   Duo --capture-window out.png               capture the whole window (drawn; screencapture(1) only with DUO_SCREENCAPTURE=1)
 ///   Duo --fixture path/to/fixture.json         use another fixture file
 ///   Duo --left collapsed                       start with the left pane collapsed
+///   Duo --window 1280x800                      fixture mode at another window size (DB-25; default 1440x900)
 ///   Duo                                        every Claude session, live; Home from Duo's state (DL-82)
 ///   Duo --workspace ~/work                     the same, with ~/work as Home's folder for this run
 ///   Duo --terminals demo                       real claude terminals in scratch folders (.build/demo)
@@ -29,6 +30,8 @@ public struct LaunchOptions: Sendable {
     public var capturePath: String?
     public var captureWindowPath: String?
     public var collapseLeft = false
+    /// `--window <w>x<h>`: the whole window's size for a fixture run (the design size otherwise).
+    public var windowSize: CGSize?
     public var thenActions: [String] = []
     public var gallery = false
     /// `--terminals demo[:<root>]`: real claude sessions in scratch folders.
@@ -56,6 +59,9 @@ public struct LaunchOptions: Sendable {
             case "--capture": capturePath = it.next()
             case "--capture-window": captureWindowPath = it.next()
             case "--left": collapseLeft = it.next() == "collapsed"
+            case "--window":
+                let wh = (it.next() ?? "").split(separator: "x").compactMap { Double($0) }
+                if wh.count == 2 { windowSize = CGSize(width: wh[0], height: wh[1]) }
             case "--terminals": terminals = it.next()
             case "--workspace": workspace = it.next()
             case "--gallery": gallery = it.next() == "on"
