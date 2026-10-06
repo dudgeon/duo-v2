@@ -93,7 +93,11 @@ extension AppModel {
     /// A console or Home tab's ×: what ⌘W does for that tab when it's the one showing
     /// (`closeVisibleSession`), for any tab: a shell's process ends and its tab goes; a
     /// session's process ends, it stays filed and resumable, and the next tab is selected.
+    /// Asks first when Claude is working there or the shell is running a command (Q-71).
     public func closeConsoleTab(_ key: String) {
-        if isShell(key) { closeShell(key) } else { closeSession(key) }
+        confirmClose(key) { [weak self] in
+            guard let self else { return }
+            if self.isShell(key) { self.closeShell(key) } else { self.closeSession(key) }
+        }
     }
 }

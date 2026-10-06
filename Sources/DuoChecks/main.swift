@@ -994,6 +994,44 @@ func repoFixture() throws -> Fixture {
         check(!s.isOpen, "then closes")
     }
 
+    print("closing a busy tab asks first (Q-71, DL-127)")
+    do {
+        let m = AppModel(fixture: f)
+        let working = f.sessions.first { $0.state == .working }!, idle = f.sessions.first { $0.state == .idle }!
+        check(m.busy(working.tabKey) == .claudeWorking(name: working.name) && m.busy(idle.tabKey) == nil,
+              "Claude working in a session makes its tab busy; an idle one isn't")
+        var closed = 0
+        m.confirmClose(idle.tabKey) { closed += 1 }
+        check(closed == 1 && SheetCenter.shared.current == nil, "an idle tab closes at once, with no question")
+        m.confirmClose(working.tabKey) { closed += 1 }
+        let q = SheetCenter.shared.current
+        check(closed == 1 && q?.title == "Claude is still working in “\(working.name)”. Close it anyway?"
+              && q?.choices.map(\.label) == ["Cancel", "Close Tab"], "a working session asks first: Cancel, Close Tab")
+        SheetCenter.shared.cancelCurrent()
+        check(closed == 1 && SheetCenter.shared.current == nil, "Cancel leaves it open")
+        m.confirmClose(working.tabKey) { closed += 1 }
+        if let c = SheetCenter.shared.current?.choices.first(where: { $0.label == "Close Tab" }) { SheetCenter.shared.answer(c) }
+        check(closed == 2, "Close Tab closes it")
+        let inv = Invocation(["--force", "abc"])
+        check(inv.has("force") && inv[0] == "abc", "duo2 session close takes --force, which takes no value")
+
+        // A real shell: idle at its prompt, busy while a command runs.
+        let key = "shell:busy-check"
+        let t = m.terminals.session(key, command: .shell, cwd: NSTemporaryDirectory())
+        let until = Date().addingTimeInterval(5)
+        while Date() < until, t.view.process?.running != true { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
+        RunLoop.main.run(until: Date().addingTimeInterval(1))
+        check(m.busy(key) == nil, "a shell at its prompt isn't busy")
+        t.view.send(txt: "sleep 30\n")
+        let busyBy = Date().addingTimeInterval(5)
+        while Date() < busyBy, m.busy(key) == nil { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
+        check(m.busy(key) == .shellRunning(command: "sleep 30"), "a shell running a command is busy, named by the command (\(String(describing: m.busy(key))))")
+        m.confirmClose(key) { closed += 1 }
+        check(SheetCenter.shared.current?.title == "“sleep 30” is still running. Close it anyway?", "and asks first")
+        SheetCenter.shared.cancelCurrent()
+        m.terminals.close(key)
+    }
+
     print("launch options")
     let o = LaunchOptions(arguments: ["Duo", "--state", "flow-zoom-3", "--capture", "/tmp/x.png", "--left", "collapsed"])
     check(o.state == .flowZoom3 && o.capturePath == "/tmp/x.png" && o.collapseLeft && o.capturing, "flags parse")

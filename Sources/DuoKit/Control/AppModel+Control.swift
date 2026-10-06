@@ -176,6 +176,10 @@ extension AppModel {
         case .sessionClose:
             guard let k = inv[0] ?? visibleSessionId, let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }) else { return done(.fail("no session to close")) }
             guard terminals.existing(s.tabKey) != nil else { return done(.fail("\(s.name) isn't running in Duo")) }
+            // A working session isn't closed by surprise: the UI asks, duo2 needs --force (Q-71).
+            if !inv.has("force"), busy(s.tabKey) != nil {
+                return done(.fail("Claude is still working in \(s.name). Pass --force to close it anyway."))
+            }
             closeSession(s.tabKey)
             done(.ok("Closed \(s.name). It stays listed and resumable."))
         case .projectArchive, .projectUnarchive:

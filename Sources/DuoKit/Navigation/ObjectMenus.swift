@@ -86,7 +86,7 @@ struct SessionMenuItems: View {
         Button("Delete Session…") { model.deleteSession(key) }.disabled(id == nil)
         Divider()
         // Ends the process; the session stays listed and resumable (as ⌘W on its tab).
-        Button("End Session") { model.closeSession(key) }
+        Button("End Session") { model.confirmClose(key) { model.closeSession(key) } }   // asks first when Claude is working (Q-71)
             .disabled(s == nil || model.terminals.existing(key) == nil)
     }
 }

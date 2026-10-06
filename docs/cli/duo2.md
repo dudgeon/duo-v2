@@ -64,7 +64,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 session show <id>` | A session's title, project, state, note, next step, transcript path and recent turns. | — |
 | `duo2 session new [--project <p>] [--prompt <text>]` | Start a Claude session in a project (the current one by default). | + New session, New Session, console +, New Claude Session, Start Claude here, Start Claude in Home, Start in |
 | `duo2 session open <id>` | Show a session's terminal, resuming it if needed. | session row, console tab, Home tab, Resume |
-| `duo2 session close [id]` | End a session's process and close its tab (it stays listed and resumable). | Close Tab, End Session |
+| `duo2 session close [id] [--force]` | End a session's process and close its tab (it stays listed and resumable). Refuses while Claude is working there, unless --force. | Close Tab, End Session |
 | `duo2 session move <id> --to <project> [--new]` | File a session in another project, or with --new in a new project of that name made in Home; it moves there on its next resume. The user confirms in Duo. Undo with `duo2 undo`. | Move to Project, New Project…, drag a session onto a tile |
 | `duo2 session note <text>` | Tell the user what this session is doing (one line, shown in Duo). | — |
 | `duo2 session next <text>` | Tell the user what this session needs next (one line). | — |
