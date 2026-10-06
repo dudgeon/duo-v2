@@ -471,8 +471,10 @@ public enum FixtureHarness {
         case "html-pick": if parts.count > 1 { model.htmlViewer.pick(selector: parts[1]) }
         // The PowerPoint viewer (pptx-handoff): slide-go:<n>, slide-picking, slide-hover:<slide>/<id>
         // (the picker's dashed outline, B), slide-pick:<slide>/<id> (a shape picked, C).
+        case "right":   // right:hidden|shown, or toggle: the right pane (DL-129), as ⌥⌘0
+            model.rightCollapsed = parts.count > 1 ? parts[1] == "hidden" : !model.rightCollapsed
         case "right-width":   // right-width:<pt>: the right pane's width, as if its divider were dragged
-            if let w = Double(parts.count > 1 ? parts[1] : ""), let split = NSApp.windows.lazy.compactMap({ $0.contentView.flatMap(firstSplit) }).first,
+            if let w = Double(parts.count > 1 ? parts[1] : ""), let split = NSApp.windows.lazy.compactMap({ $0.contentView.map { paneSplits($0) } }).first(where: { !$0.isEmpty }).map({ $0[model.altitude.isAllProjects ? 0 : min(1, $0.count - 1)] }),
                split.arrangedSubviews.count >= 2 {
                 split.setPosition(split.bounds.width - w - split.dividerThickness, ofDividerAt: split.arrangedSubviews.count - 2)
                 split.adjustSubviews()
@@ -605,9 +607,9 @@ public enum FixtureHarness {
     }
 }
 
-/// The window's three-pane split (for `right-width:`).
-@MainActor func firstSplit(_ v: NSView) -> NSSplitView? {
-    if let s = v as? NSSplitView, s.arrangedSubviews.count >= 3 { return s }
-    for c in v.subviews { if let s = firstSplit(c) { return s } }
-    return nil
+/// The window's three-pane splits, All projects' then the project's (for `right-width:`). Both
+/// altitudes stay alive, so the first alone is often the wrong one (DL-129).
+@MainActor func paneSplits(_ v: NSView) -> [NSSplitView] {
+    if let s = v as? NSSplitView, s.arrangedSubviews.count >= 3 { return [s] }
+    return v.subviews.flatMap(paneSplits)
 }

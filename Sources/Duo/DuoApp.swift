@@ -45,6 +45,7 @@ struct DuoApp: App {
         if let screen = options.searchState {
             if SurfaceTargets.screens.contains(screen) { SurfaceTargets.apply(screen, to: model) }
             else if ChatTargets.screens.contains(screen) { ChatTargets.apply(screen, to: model) }
+            else if NarrowTargets.screens.contains(screen) { NarrowTargets.apply(screen, to: model) }
             else { SearchTargets.apply(screen, to: model) }
         }
         if options.collapseLeft { model.leftCollapsed = true }

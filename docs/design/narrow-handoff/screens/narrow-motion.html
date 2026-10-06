@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1280x800">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DB-25">
+<!--
+8 · Motion, with Reduce Motion (press the buttons)
+APPROVED BOARD. Geoff, 2026-10-06 (DL-129). Exported from the Design canvas
+https://claude.ai/artifact/Cn5T6UowtPnQR2Ezihnare (board Motion.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+Exempt, as in build-handoff: the traffic lights and toolbar material, everything inside a dark pane below its tab strip,
+grey placeholder bars, and the document's typography.
+-->
+<title>Duo · 8 · Motion, with Reduce Motion (press the buttons)</title>
+<style>
+body{margin:0}
+.b{width:1280px;height:800px;box-sizing:border-box;padding:24px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;display:flex;gap:28px}
+.b *{box-sizing:border-box}
+.btn{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font:12px/16px -apple-system,system-ui,sans-serif;color:#1F2328;cursor:pointer}
+.k{font-size:11px;line-height:16px;color:#5B636D}
+table{border-collapse:collapse;font-size:12px;line-height:17px;background:#FFFFFF}
+th,td{border:1px solid #C9CDD3;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#F3F4F6;font-weight:600}
+@keyframes dcTileIn{from{opacity:0}to{opacity:1}}
+.tile{border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;background:#FFFFFF;font-size:12px;line-height:16px}
+</style>
+</head>
+<body>
+<div class="b">
+<div style="width: 640px; flex: none; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 14px; font-weight: 600">[P] Try it</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<button type="button" class="btn">Hide Right Pane</button>
+<button type="button" class="btn">Open Search</button>
+<button type="button" class="btn">Add a project</button>
+<button type="button" class="btn">Reduce Motion: off</button>
+</div>
+<div style="position: relative; width: 640px; height: 400px; border: 1px solid #C9CDD3; background: #FFFFFF; overflow: hidden; display: flex; flex-direction: column">
+<div style="height: 24px; flex: none; background: #F3F4F6; border-bottom: 1px solid #C9CDD3"></div>
+<div style="flex: 1; display: flex; min-height: 0">
+<div style="width: 150px; flex: none; border-right: 1px solid #C9CDD3; padding: 10px; display: flex; flex-direction: column; gap: 6px"><div style="height: 6px; width: 80%; border-radius: 3px; background: #D5D9DE"></div><div style="height: 6px; width: 60%; border-radius: 3px; background: #D5D9DE"></div></div>
+<div style="flex: 1; min-width: 0; background: #15171B; padding: 10px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<div class="tile">checkout-redesign</div><div class="tile">refunds-api-spec</div><div class="tile">onboarding-v3</div>
+</div>
+<span style="margin-top: auto; color: #9AA1AB; font: 11px/16px ui-monospace, 'SF Mono', Menlo, monospace">Map: two across</span>
+</div>
+<div style="flex: none; overflow: hidden; border-left: 1px solid #C9CDD3; width: 200px"><div style="width: 200px; padding: 10px; display: flex; flex-direction: column; gap: 6px"><div style="height: 6px; width: 70%; border-radius: 3px; background: #D5D9DE"></div><div style="height: 6px; width: 90%; border-radius: 3px; background: #D5D9DE"></div><div style="height: 6px; width: 50%; border-radius: 3px; background: #D5D9DE"></div></div></div>
+</div>
+<div style="display: none"></div>
+<div style="display: none"><div style="height: 30px; border-bottom: 1px solid #C9CDD3; padding: 0 10px; display: flex; align-items: center; color: #5B636D; font-size: 12px">Search all projects</div></div>
+</div>
+<span class="k">The tiles stand in for the map, the dark area for the console. With Reduce Motion on, everything here changes at once.</span>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 14px; font-weight: 600">[P] Motion, beyond handoff §9</span>
+<table>
+<tr><th>What</th><th>Motion</th><th>Reduce Motion</th></tr>
+<tr><td>A pane hides or shows (button, chord, a document opening into a hidden right pane)</td><td>Its width, 200 ms ease-in-out; the middle pane follows. The terminal is resized once, at the end, never below 8×1 (LR-14).</td><td>At once</td></tr>
+<tr><td>Search opens / closes</td><td>Scrim and modal fade in together, 120 ms ease-out; out 100 ms. The modal doesn’t move or scale.</td><td>At once</td></tr>
+<tr><td>A tile appears on the map (new project, a folder found)</td><td>It fades in, 150 ms, in its place; the others move to theirs without animating.</td><td>At once</td></tr>
+<tr><td>Map order (Sort: Recent)</td><td>None. Tiles hold their places while the pointer is on the map (as built).</td><td>None</td></tr>
+<tr><td>Altitude change</td><td>Cross-fade, 150 ms, ease-out (§9, as proposed then).</td><td>At once</td></tr>
+<tr><td>Card leaving the action column</td><td>The system list removal (§9).</td><td>The system’s</td></tr>
+<tr><td>Peek, sheets, popovers, menus</td><td>The system’s.</td><td>The system’s</td></tr>
+<tr><td>State glyphs</td><td>Swap in place, never animated; working is a still ring.</td><td>Same</td></tr>
+</table>
+<span class="k">Tokens to add: motion.paneToggle 200 ms, motion.scrimIn 120 ms, motion.scrimOut 100 ms, motion.tileIn 150 ms, motion.altitude 150 ms.</span>
+</div>
+</div>
+</body>
+</html>

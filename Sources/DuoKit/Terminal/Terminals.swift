@@ -395,6 +395,16 @@ struct TerminalSlot: NSViewRepresentable {
 
         override var isFlipped: Bool { true }
 
+        override init(frame: NSRect) {
+            super.init(frame: frame)
+            clipsToBounds = true   // a terminal held at its size while a pane slides (DL-129)
+            NotificationCenter.default.addObserver(self, selector: #selector(paneMotionEnded), name: PaneMotion.endedNotification, object: nil)
+        }
+
+        required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+        @objc private func paneMotionEnded() { needsLayout = true }
+
         func show(_ view: NSView) {
             guard view !== current else { return }
             current?.removeFromSuperview()
@@ -412,7 +422,9 @@ struct TerminalSlot: NSViewRepresentable {
         override func layout() {
             super.layout()
             // The terminal fills the slot, inset like the targets' console body. GuardedTerminalView
-            // enforces the 8×1 floor if the slot gets smaller (LR-14).
+            // enforces the 8×1 floor if the slot gets smaller (LR-14). While a pane slides (DL-129)
+            // it keeps its size, clipped, and takes the new one when the slide ends.
+            guard PaneMotion.running == 0 || current?.frame.isEmpty != false else { return }
             current?.frame = bounds.insetBy(dx: 12, dy: 8)
         }
     }

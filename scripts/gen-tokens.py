@@ -185,6 +185,14 @@ w("        }")
 w("    }")
 w("}")
 w("")
+w("/// Motion (DL-129), in seconds. None of it runs with Reduce Motion.")
+w("public enum DuoMotion {")
+for k, v in t["motion"].items():
+    if k.startswith("$"):
+        continue
+    w(f"    public static let {k}: Double = {v!r}")
+w("}")
+w("")
 w("/// The popover shadow (handoff §4.5): search, the action menu, the idle list, drag cards.")
 w("public enum DuoShadow {")
 sh = t["shadow"]["popover"]

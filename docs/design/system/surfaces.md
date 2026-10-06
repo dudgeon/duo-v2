@@ -81,5 +81,5 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Update question (Open Releases Page, Install Now, Later) | Stand-in (DL-114): DuoQuestion's look; Open Releases Page is the default where installing needs an administrator password | Q-47 | `Model/AppModel+Update.swift` |
 | Install consent | Standard sheet | — | `Shell/InstallPrompt.swift` |
 | Menu bar | Designed (DL-108): the walk page's mockups m1–m4: Duo, File, Edit, Format (with Table ▸, DL-113), View, Project, Session, Go, Window, Help; ⌘K is Link… | — | `Navigation/Commands.swift`, `Navigation/ObjectMenus.swift` |
-| Narrow windows, collapsing the right pane, motion | Not designed | DB-25 | — |
+| Narrow windows, collapsing the right pane, motion | Designed (DL-129): side panes hold their width and the middle flexes; the right-pane button at the toolbar's trailing end (⌥⌘0); the map packs topics into columns; motion with Reduce Motion | narrow `narrow-*.html` | — | `Shell/PaneSplit.swift`, `Shell/DuoToolbar.swift` `RightPaneToggle`, `AllProjects/AllProjectsPanes.swift` `PackedColumns` |
 | Dark appearance | Not approved | DB-29 | — |

@@ -50,7 +50,7 @@ public struct LaunchOptions: Sendable {
             case "--fixture": fixturePath = it.next()
             case "--state":
                 let name = it.next() ?? ""
-                if SearchTargets.screens.contains(name) || SurfaceTargets.screens.contains(name) || ChatTargets.screens.contains(name) { state = .overview; searchState = name; continue }
+                if SearchTargets.screens.contains(name) || SurfaceTargets.screens.contains(name) || ChatTargets.screens.contains(name) || NarrowTargets.screens.contains(name) { state = .overview; searchState = name; continue }
                 guard let s = TargetState(rawValue: name) else {
                     FileHandle.standardError.write(Data("Unknown state '\(name)'. Known: \(TargetState.allCases.map(\.rawValue).joined(separator: ", "))\n".utf8))
                     exit(64)

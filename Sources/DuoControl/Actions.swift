@@ -34,7 +34,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup", settings, updateProbe = "update probe"
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
-    case viewSidebar = "view sidebar", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
+    case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
     case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFolder = "view folder"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
@@ -141,6 +141,7 @@ extension DuoAction {
         .init(.peek, .view, "[open|close]", "Show or hide the sessions that need the user in other projects.", ui: ["Needs You Elsewhere"]),
         .init(.peekJump, .view, "", "Jump into the project selected in the peek.", ui: ["Jump into Selected Project"]),
         .init(.viewSidebar, .view, "show|hide|toggle", "Show or hide the left pane.", ui: ["Toggle Sidebar"]),
+        .init(.viewRight, .view, "show|hide|toggle", "Show or hide the right pane: the action column at All projects, the documents in a project (⌥⌘0, DL-129).", ui: ["Toggle Right Pane", "right pane button"]),
         .init(.viewTab, .view, "<Project | document path | group>", "Switch the right pane's tab.", ui: ["right pane tab", "Open Project File"]),
         .init(.viewGroup, .view, "<group> expand|collapse", "Expand or collapse a group in the session list.", ui: ["group row"]),
         .init(.viewSelect, .view, "<session id>", "Select a session's card (action column or peek) without opening it.", ui: ["action card", "peek card"]),

@@ -142,6 +142,7 @@ public enum DuoMetric {
     public static let paneMinSessionsAndFiles: CGFloat = 240.0
     public static let paneMinRight: CGFloat = 360.0
     public static let paneMinConsole: CGFloat = 480.0
+    public static let paneMinMap: CGFloat = 440.0
     public static let peekPopoverWidth: CGFloat = 420.0
     public static let searchModalWidth: CGFloat = 960.0
     public static let searchModalTop: CGFloat = 92.0
@@ -186,6 +187,7 @@ public enum DuoMetric {
     public static let mapHeaderControlHeight: CGFloat = 22.0
     public static let mapFilterWidth: CGFloat = 200.0
     public static let mapOutsideRowWaitWidth: CGFloat = 34.0
+    public static let mapColumnMin: CGFloat = 220.0
     public static let rowActionSize: CGFloat = 18.0
     public static let rowActionRadius: CGFloat = 4.0
     public static let rowActionGlyph: CGFloat = 14.0
@@ -301,6 +303,15 @@ public enum DuoTextStyle: CaseIterable, Sendable {
         case .chatPlanHeading: DuoTextSpec(size: 15.0, lineHeight: 22.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
         }
     }
+}
+
+/// Motion (DL-129), in seconds. None of it runs with Reduce Motion.
+public enum DuoMotion {
+    public static let paneToggle: Double = 0.2
+    public static let scrimIn: Double = 0.12
+    public static let scrimOut: Double = 0.1
+    public static let tileIn: Double = 0.15
+    public static let altitude: Double = 0.15
 }
 
 /// The popover shadow (handoff §4.5): search, the action menu, the idle list, drag cards.

@@ -27,6 +27,30 @@ struct DuoToolbar: ToolbarContent {
             SearchField()
         }
         .sharedBackgroundVisibility(.hidden)
+
+        // The mirror of the sidebar button, at the trailing end (DL-129).
+        ToolbarItem(placement: .primaryAction) {
+            RightPaneToggle()
+        }
+        .sharedBackgroundVisibility(.hidden)
+    }
+}
+
+/// Hides and shows the right pane at either altitude, as ⌥⌘0 and `duo2 view right` do (DL-129).
+struct RightPaneToggle: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        Button {
+            model.rightCollapsed.toggle()  // action: view right
+        } label: {
+            Image(systemName: "sidebar.right")
+                .font(.system(size: 14))
+                .foregroundStyle(DuoColor.text2)
+        }
+        .buttonStyle(.plain)
+        .help(model.rightCollapsed ? "Show Right Pane ⌥⌘0" : "Hide Right Pane ⌥⌘0")
+        .accessibilityLabel(model.rightCollapsed ? "Show Right Pane" : "Hide Right Pane")
     }
 }
 

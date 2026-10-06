@@ -208,9 +208,13 @@ struct MapGrid: View {
         if columns.count == 1, columns[0].topic.isEmpty {
             loneColumn
         } else {
-            AdaptiveColumns(count: columns.count, rowSpacing: DuoSpace.gapMapColumns + 6) { i in
-                MapColumn(topic: columns[i].topic, projects: columns[i].projects, home: i == 0 ? home : nil,
-                          last: tileAtEnd && i == columns.count - 1)
+            // Packed (DL-129): each topic goes to the shortest column, in map order, so no hole
+            // opens beside a short one.
+            PackedColumns(rowSpacing: DuoSpace.gapMapColumns + 6) {
+                ForEach(columns.indices, id: \.self) { i in
+                    MapColumn(topic: columns[i].topic, projects: columns[i].projects, home: i == 0 ? home : nil,
+                              last: tileAtEnd && i == columns.count - 1)
+                }
             }
         }
     }
@@ -254,15 +258,73 @@ struct AdaptiveColumns<Cell: View>: View {
                     ForEach(Array(stride(from: 0, to: count, by: perRow)), id: \.self) { start in
                         HStack(alignment: .top, spacing: DuoSpace.gapMapColumns) {
                             ForEach(start..<min(start + perRow, count), id: \.self) { i in
-                                cell(i).frame(minWidth: perRow == 1 ? 0 : 220, idealWidth: 220, maxWidth: .infinity, alignment: .topLeading)
+                                cell(i).frame(minWidth: perRow == 1 ? 0 : DuoMetric.mapColumnMin, idealWidth: DuoMetric.mapColumnMin, maxWidth: .infinity, alignment: .topLeading)
                             }
                             ForEach(0..<(perRow - min(perRow, count - start)), id: \.self) { _ in
-                                Color.clear.frame(minWidth: 220, idealWidth: 220, maxWidth: .infinity, maxHeight: 0)
+                                Color.clear.frame(minWidth: DuoMetric.mapColumnMin, idealWidth: DuoMetric.mapColumnMin, maxWidth: .infinity, maxHeight: 0)
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+/// Topic columns as many across as fit at 220 (three at most, DL-83), each placed under the
+/// shortest column so far, in order (DL-129). One across below 2 × 220.
+struct PackedColumns: Layout {
+    var maxPerRow = 3
+    var minWidth: CGFloat = DuoMetric.mapColumnMin
+    var spacing: CGFloat = DuoSpace.gapMapColumns
+    var rowSpacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? CGFloat(maxPerRow) * minWidth + CGFloat(maxPerRow - 1) * spacing
+        let p = pack(width: width, subviews: subviews)
+        return CGSize(width: width, height: p.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let p = pack(width: bounds.width, subviews: subviews)
+        for (i, origin) in p.origins.enumerated() {
+            subviews[i].place(at: CGPoint(x: bounds.minX + origin.x, y: bounds.minY + origin.y), anchor: .topLeading,
+                              proposal: ProposedViewSize(width: p.columnWidth, height: nil))
+        }
+    }
+
+    /// Where each subview goes: the column count, its width, every origin, the tallest column.
+    func pack(width: CGFloat, subviews: Subviews) -> (columnWidth: CGFloat, origins: [CGPoint], height: CGFloat) {
+        let n = MapPacking.columnCount(width: width, items: subviews.count, minWidth: minWidth, spacing: spacing, maxPerRow: maxPerRow)
+        let columnWidth = max(0, (width - CGFloat(n - 1) * spacing) / CGFloat(n))
+        var heights = [CGFloat](repeating: 0, count: n)
+        var origins: [CGPoint] = []
+        for s in subviews {
+            let c = heights.indices.min { heights[$0] < heights[$1] } ?? 0   // the leftmost of the shortest
+            let h = s.sizeThatFits(ProposedViewSize(width: columnWidth, height: nil)).height
+            origins.append(CGPoint(x: CGFloat(c) * (columnWidth + spacing), y: heights[c] == 0 ? 0 : heights[c] + rowSpacing))
+            heights[c] = (heights[c] == 0 ? 0 : heights[c] + rowSpacing) + h
+        }
+        return (columnWidth, origins, heights.max() ?? 0)
+    }
+
+}
+
+/// The map's packing rule (DL-129), apart from SwiftUI so DuoChecks can check it.
+public enum MapPacking {
+    /// As many columns as fit at `minWidth`, never more than the items or `maxPerRow`, at least one.
+    public static func columnCount(width: CGFloat, items: Int, minWidth: CGFloat, spacing: CGFloat, maxPerRow: Int) -> Int {
+        let fit = Int(((width + spacing) / (minWidth + spacing)).rounded(.down))
+        return max(1, min(fit, maxPerRow, max(1, items)))
+    }
+
+    /// The column each item goes to, given its height: the leftmost of the shortest so far.
+    public static func columns(heights: [CGFloat], count: Int, rowSpacing: CGFloat) -> [Int] {
+        var tops = [CGFloat](repeating: 0, count: max(1, count))
+        return heights.map { h in
+            let c = tops.indices.min { tops[$0] < tops[$1] } ?? 0
+            tops[c] += (tops[c] == 0 ? 0 : rowSpacing) + h
+            return c
         }
     }
 }
@@ -470,6 +532,7 @@ struct MapColumn: View {
         return [parts[0], parts[1], "…", parts[parts.count - 1]].joined(separator: "/")
     }
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let topic: String
     let projects: [Fixture.Project]
     var home: Fixture.Project? = nil
@@ -489,6 +552,8 @@ struct MapColumn: View {
             if let home { HomeTile(home: home) }
             ForEach(projects) { p in
                 ProjectTile(project: p)
+                    // A new tile fades in where it lands, 150 ms; the others just move (DL-129).
+                    .transition(reduceMotion ? .identity : .opacity.animation(.easeOut(duration: DuoMotion.tileIn)))
             }
             if last { NewProjectTile() }
         }

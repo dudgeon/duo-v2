@@ -100,6 +100,8 @@ System faces only: `ui` (SF Pro) and `mono` (SF Mono). Don't bundle fonts, and n
 - **The window** is designed at 1440 × 900, with a minimum of 1280 × 800.
   - All projects: left `paneOverviewHome` 340 · flexible map · right `paneOverviewActionColumn` 340.
   - Inside a project: left `paneProjectSessionsAndFiles` 300 · flexible console · right `paneProjectRight` 460.
+  - **Narrower** (DL-129): side panes keep the width the user gave them; the middle takes the change (1280 wide: 300 · 520 · 460 and 340 · 600 · 340). Under the middle's minimum (console 480, map 440) the right pane gives way first, down to 360, then the left. Both side panes hide and show: the sidebar button and the right-pane button (`sidebar.right`, the toolbar's trailing end, ⌥⌘0).
+  - **The map** packs topic columns as many across as fit at `mapColumnMin` 220 (three at most), each under the shortest column so far.
 - **The toolbar** is native: the system draws it 40 high on macOS 27. Content sits below it.
 
 ## State glyphs
@@ -135,11 +137,13 @@ Duo has no logo yet. Set the name in plain type.
 
 ## Motion
 
-Minimal: state changes are noticeable but never animated for their own sake.
-- Glyphs swap in place.
-- Lists use the system's default insert and remove.
-- Popovers and sheets use the system's animations.
-- Honour Reduce Motion.
+Minimal: state changes are noticeable but never animated for their own sake (DL-129).
+- A side pane hiding or showing slides its width, `motionPaneToggle` 200 ms ease-in-out; a terminal is resized once, at the end.
+- Search's scrim and modal fade together, `motionScrimIn` 120 ms in, `motionScrimOut` 100 ms out, without moving.
+- A new tile fades in where it lands, `motionTileIn` 150 ms; the others just move. Map order never animates.
+- The altitude change cross-fades, `motionAltitude` 150 ms.
+- Glyphs swap in place. Lists use the system's default insert and remove. Popovers and sheets use the system's animations.
+- Reduce Motion makes all of Duo's own motion instant.
 
 ## Accessibility
 
@@ -176,4 +180,5 @@ All Duo shortcuts carry ⌘, so they never collide with keys typed into Claude C
 | ⌘S, ⌘B, ⌘I | Save, bold, italic in the editor |
 | ⌘D | Send selection to Claude |
 | ⌘W / ⇧⌘W | Close tab (never the window) / close window |
-| ⌥⌘0, ⌥⌘← → | Right pane, previous and next pane (not built) |
+| ⌥⌘0 | Hide or show the right pane (DL-129) |
+| ⌥⌘← → | Previous and next pane (not built) |

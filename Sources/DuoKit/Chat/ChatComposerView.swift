@@ -47,7 +47,12 @@ struct ChatComposerArea: View {
                     .help("Change mode (shift+tab)")
                     .accessibilityLabel("Mode: \(mode.chip). Change mode")
                 }
-                Text("⏎ send · ⇧⏎ new line · / commands · ⌘[ ⌘] your messages").duoText(.chatMeta).foregroundStyle(DuoColor.text2).lineLimit(1)
+                // Narrow (DL-129): hints drop from the right, ⌘[ ⌘] first, then / commands.
+                ViewThatFits(in: .horizontal) {
+                    ForEach(["⏎ send · ⇧⏎ new line · / commands · ⌘[ ⌘] your messages", "⏎ send · ⇧⏎ new line · / commands", "⏎ send · ⇧⏎ new line"], id: \.self) {
+                        Text($0).duoText(.chatMeta).foregroundStyle(DuoColor.text2).lineLimit(1).fixedSize()
+                    }
+                }
                 Spacer(minLength: 8)
                 if let m = chat.log.model { Text(m).duoText(.chatMeta).foregroundStyle(DuoColor.text2) }
             }

@@ -19,13 +19,15 @@ public struct RootView: View {
                 .allowsHitTesting(!model.altitude.isAllProjects)
                 .accessibilityHidden(model.altitude.isAllProjects)
         }
-        // Search (DL-76): over both altitudes, scrim and modal; a short fade, none with Reduce Motion.
+        // Search (DL-76): over both altitudes, scrim and modal fading together, 120 ms in and 100 ms
+        // out, without moving; none with Reduce Motion (DL-129).
         .overlay { if model.search.isOpen { SearchOverlay().transition(.opacity) } }
         // Duo's sheets (DL-100): Move into Home…, New project.
         .overlay { if model.sheetIsUp { SheetOverlay() } }
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: model.search.isOpen)
+        .animation(reduceMotion ? nil : model.search.isOpen ? .easeOut(duration: DuoMotion.scrimIn) : .easeIn(duration: DuoMotion.scrimOut),
+                   value: model.search.isOpen)
         // Altitude change: cross-fade, 150 ms, ease-out; none with Reduce Motion (handoff §9).
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: model.altitude)
+        .animation(reduceMotion ? nil : .easeOut(duration: DuoMotion.altitude), value: model.altitude)
         .background(DuoColor.pane)
         .toolbar { DuoToolbar() }
         .toolbar(removing: .title)
@@ -41,9 +43,9 @@ struct AllProjectsLayout: View {
             panes: [
                 .init(view: AnyView(HomePane()), width: DuoMetric.paneOverviewHome, minWidth: DuoMetric.paneMinHome,
                       collapsible: true, collapsed: model.leftCollapsedAllProjects),
-                .init(view: AnyView(ProjectMapPane().opacity(model.sheetIsUp ? DuoMetric.sheetDimmedOpacity : 1)), width: nil, minWidth: 400),
+                .init(view: AnyView(ProjectMapPane().opacity(model.sheetIsUp ? DuoMetric.sheetDimmedOpacity : 1)), width: nil, minWidth: DuoMetric.paneMinMap),
                 .init(view: AnyView(ActionColumnPane()), width: DuoMetric.paneOverviewActionColumn,
-                      minWidth: DuoMetric.paneMinActionColumn, collapsible: true),
+                      minWidth: DuoMetric.paneMinActionColumn, collapsible: true, collapsed: model.rightCollapsedAllProjects),
             ],
             dividerColors: [DuoNSColor.consoleRule, DuoNSColor.rule],
             paneBackgrounds: [DuoNSColor.console, DuoNSColor.pane, DuoNSColor.pane],
@@ -63,7 +65,7 @@ struct ProjectLayout: View {
                       minWidth: DuoMetric.paneMinSessionsAndFiles, collapsible: true, collapsed: model.leftCollapsedProject),
                 .init(view: AnyView(ConsolePane()), width: nil, minWidth: DuoMetric.paneMinConsole),
                 .init(view: AnyView(RightPane()), width: DuoMetric.paneProjectRight,
-                      minWidth: DuoMetric.paneMinRight, collapsible: true),
+                      minWidth: DuoMetric.paneMinRight, collapsible: true, collapsed: model.rightCollapsedProject),
             ],
             dividerColors: [DuoNSColor.rule, DuoNSColor.rule],
             paneBackgrounds: [DuoNSColor.pane, DuoNSColor.console, DuoNSColor.pane],

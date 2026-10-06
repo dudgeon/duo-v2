@@ -1,0 +1,96 @@
+{
+ "$note": "Narrow windows, the right-pane button and motion, approved 2026-10-06 (DL-129). kind=target: a whole window at 1280×800, compared with scripts/check-ui.sh (WINDOW=1280x800); kind=board: a spec sheet.",
+ "source": "https://claude.ai/artifact/Cn5T6UowtPnQR2Ezihnare",
+ "screens": [
+  {
+   "file": "screens/narrow-project.html",
+   "board": "Main.dc.html",
+   "kind": "target",
+   "width": 1280,
+   "height": 800,
+   "decision": "DL-129",
+   "shows": "Inside a project at 1280×800: side panes hold (300 | 520 | 460), the right-pane button at the toolbar's trailing end."
+  },
+  {
+   "file": "screens/narrow-project-hidden.html",
+   "board": "ProjectCollapsed.dc.html",
+   "kind": "target",
+   "width": 1280,
+   "height": 800,
+   "decision": "DL-129",
+   "shows": "The same with the right pane hidden: the console takes the width; the button's tooltip reads Show Right Pane ⌥⌘0."
+  },
+  {
+   "file": "screens/narrow-project-min.html",
+   "board": "ProjectMinimums.dc.html",
+   "kind": "target",
+   "width": 1280,
+   "height": 800,
+   "decision": "DL-129",
+   "shows": "The right pane dragged wide: the console stops at its 480 minimum (300 | 480 | 500)."
+  },
+  {
+   "file": "screens/narrow-overview.html",
+   "board": "Overview.dc.html",
+   "kind": "target",
+   "width": 1280,
+   "height": 800,
+   "decision": "DL-129",
+   "shows": "All projects at 1280×800 (340 | 600 | 340): six groups packed two across, shortest column first; vendor-review directly in Home under ★."
+  },
+  {
+   "file": "screens/narrow-overview-hidden.html",
+   "board": "OverviewCollapsed.dc.html",
+   "kind": "target",
+   "width": 1280,
+   "height": 800,
+   "decision": "DL-129",
+   "shows": "All projects with the action column hidden: the map packs three across."
+  },
+  {
+   "file": "screens/narrow-map-rows.html",
+   "board": "MapRows.dc.html",
+   "kind": "board",
+   "width": 640,
+   "height": 800,
+   "decision": "DL-129",
+   "shows": "NOT CHOSEN (DL-129 picked packing): topics wrapped in rows, as the build did before."
+  },
+  {
+   "file": "screens/narrow-search.html",
+   "board": "Search.dc.html",
+   "kind": "target",
+   "width": 1280,
+   "height": 800,
+   "decision": "DL-129",
+   "shows": "Search at 1280×800: centred, 92 from the top, 960 wide, 660 high (window − 140), list 420."
+  },
+  {
+   "file": "screens/narrow-surfaces.html",
+   "board": "NarrowSurfaces.dc.html",
+   "kind": "board",
+   "width": 1280,
+   "height": 800,
+   "decision": "DL-129",
+   "shows": "The newer surfaces at their minimums: right pane 360 (deck bar, browser bar, picker bar), console 480 (tabs, chat composer hints)."
+  },
+  {
+   "file": "screens/narrow-toggle-options.html",
+   "board": "ToggleAlternatives.dc.html",
+   "kind": "board",
+   "width": 1100,
+   "height": 560,
+   "decision": "DL-129",
+   "shows": "The right-pane button: A in the toolbar (chosen), B at the end of the tab strip, C a handle on the divider (not chosen)."
+  },
+  {
+   "file": "screens/narrow-motion.html",
+   "board": "Motion.dc.html",
+   "kind": "board",
+   "width": 1280,
+   "height": 800,
+   "decision": "DL-129",
+   "shows": "Motion and Reduce Motion: the spec table; the canvas board is interactive."
+  }
+ ]
+}
