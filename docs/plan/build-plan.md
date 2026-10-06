@@ -253,6 +253,7 @@ Geoff delegated scoping. The test for v1: **Geoff can use Duo all day instead of
 - **Groups by hand** and the group page (after design).
 - **Reconcile a moved project:** relocate transcripts the way `/cd` does, journaled and undoable. **Pulled into v1 (F-78):** the migrator already existed for Move into Home, and a moved project's sessions don't resume without it.
 - Developer ID signing, notarization and auto-update, if gate zero shows the work Mac accepts them.
+- **Open a Word document as Markdown** (ENH-14). **Pulled into v1 (DL-123):** Geoff asked for it on 2026-10-06; it's self-contained (a converter and a notice bar), and the reader it builds on already shipped with C-26.
 
 ### v1.2 and later
 
