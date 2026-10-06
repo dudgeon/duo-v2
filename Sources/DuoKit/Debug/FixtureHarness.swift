@@ -165,6 +165,14 @@ public enum FixtureHarness {
                 model.open(project: s.project); model.consoleTab = id
                 _ = model.terminal(project: s.project, session: id)
             }
+        case "hover-tab":   // hover-tab:<tab key or document path>[=close|press]: the pointer over a tab, or on its × (DL-126)
+            if parts.count > 1 {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                let key = kv[0], on = kv.count > 1 ? kv[1] : ""
+                model.hoveredTab = key
+                model.hoveredTabClose = on == "close" || on == "press" ? key : nil
+                model.pressedTabClose = on == "press" ? key : nil
+            }
         case "file": if parts.count > 1 { model.selectedFile = parts[1]; model.rightTab = parts[1] }
         case "doc": if parts.count > 1 { model.openDocument(parts[1]) }   // doc:<path>: a document tab, as the file tree opens it
         case "convert": if parts.count > 1 { model.convertToMarkdown(parts[1]) }   // convert:<docx>: the bar's Convert to Markdown (DL-123)
