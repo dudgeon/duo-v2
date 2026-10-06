@@ -170,6 +170,10 @@ Do we keep saved cards out of scope for v2? *Decision due Oct 10.*
     docx = pathlib.Path(__file__).resolve().parents[2] / "Spikes" / "DocxToMarkdown" / "docs" / "09-mixed.docx"
     if docx.exists():
         shutil.copy(docx, co / "docs" / "vendor-brief.docx")
+    # A PowerPoint deck for the viewer (DL-125): the PptxViewer spike's synthetic Garden deck.
+    deck = pathlib.Path(__file__).resolve().parents[2] / "Spikes" / "PptxViewer" / "decks" / "garden.pptx"
+    if deck.exists():
+        shutil.copy(deck, co / "docs" / "garden-review.pptx")
     write(co / "docs" / "mixed-endings.md", None, raw=b"# Mixed endings\r\nThis line ends in CRLF.\nThis one in LF.\r\nDuo must open this read-only.\n")
     write(co / "docs" / "legacy-export.txt", None, raw="Café résumé: exported in Latin-1, not UTF-8.\n".encode("latin-1"))
     write(co / "templates" / "meeting-notes.md", "# Meeting notes\n\n**Date:** \n**Attendees:** \n\n## Decisions\n\n## Actions\n- [ ] \n")
@@ -236,7 +240,7 @@ def recipe(name):
     co = WS / "payments" / "checkout"
     if name == "reset-checkout":
         # Anything a test added (new files, folders, duplicates, renames) goes to the Trash.
-        keep = {"docs": {"prd.md", "research.md", "windows-notes.md", "mixed-endings.md", "legacy-export.txt", "long-backlog.md", "vendor-brief.docx"},
+        keep = {"docs": {"prd.md", "research.md", "windows-notes.md", "mixed-endings.md", "legacy-export.txt", "long-backlog.md", "vendor-brief.docx", "garden-review.pptx"},
                 "prototypes": {"checkout.html", "checkout.css", "card.svg"}, "templates": {"meeting-notes.md"}}
         for folder, names in keep.items():
             for f in (co / folder).iterdir() if (co / folder).exists() else []:

@@ -4066,6 +4066,102 @@
    },
    "commit": "8974f5801f3ebc9995c8b50621bf03948d5f3dbe",
    "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "pptx-viewer",
+   "title": "PowerPoint decks in the right pane, with a shape picker",
+   "what": "A .pptx opens as its slides at the pane's width, numbered, with a bar: ‹ › Slide n of N, Select Shape, Open With. Select Shape picks a shape and sends it to Claude (text, box, slide, a screenshot), and `duo2 slide` verbs drive it. A deck that won't draw falls back to Quick Look.",
+   "steps": [
+    "In `checkout`, click `docs/garden-review.pptx` in the file tree: the slides draw in the right pane.",
+    "Use ‹ › and scroll: the bar's Slide n of N follows.",
+    "Click Select Shape and hover over a shape (dashed outline and name), click it (solid outline), then Send to Claude: it's pasted into the session's prompt without Return.",
+    "Optional: `duo2 slide shapes`, `duo2 slide go next`."
+   ],
+   "expect": "Matches `pptx-handoff` (A to E). Opening a binary file that isn't a deck shows a notice instead of garbage (C-26). In a narrow pane the bar shortens its count and wraps its buttons (Q-68).",
+   "ref": "DL-125, DL-121, F-121, F-122, C-26, Q-68",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-121, F-122): 26 new DuoChecks render the four synthetic decks in a real DeckViewer and find every outline shape drawn; slide verbs; the CSP blocks the network; fixture states unchanged."
+    ],
+    "didnt": [
+     "Picking a shape with a real pointer, and a real deck of yours."
+    ],
+    "human": [
+     "How your own decks render."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "50644b1f422effe74aa66d817f0c51aeb40b347e",
+   "alsoCommits": [
+    "0ef771e30501e36c5e92b69981f4e0676571778b"
+   ],
+   "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "tab-close",
+   "title": "A close button on tabs",
+   "what": "Hovering over a console, Home or right-pane tab shows a ×. It does exactly what ⌘W does: a session's process ends (it stays listed and resumable), a shell ends, a document is saved and closed.",
+   "steps": [
+    "In `checkout`, hover over a console tab: its state glyph turns into a ×. Click it.",
+    "Hover over a document tab in the right pane: a × appears before its title, and nothing moves. Click it.",
+    "Project and group tabs show no ×."
+   ],
+   "expect": "Matches `tab-close-handoff` (option A). The tooltip reads Close Tab.",
+   "ref": "DL-126, F-124",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-124): `hover-tab:` captures against the tab-close boards, the six fixture states byte-identical to main, and each close path calling the same function as ⌘W."
+    ],
+    "didnt": [
+     "Hovering with a real pointer."
+    ],
+    "human": [
+     "Whether the × is easy to hit."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "7737be3c8b7e62ca2a749fc3a535ad7f8a44ef51",
+   "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "close-busy-tab",
+   "title": "Closing a busy tab asks first",
+   "what": "⌘W, the tab's × and End Session ask before closing a tab where Claude is working or a shell is running a command. An idle tab closes at once, and documents never ask.",
+   "steps": [
+    "In `checkout`, open a shell (⇧⌘T) and run `sleep 30`. Press ⌘W: Duo asks whether to close it anyway. Cancel, then try again and choose Close Tab.",
+    "With Claude working in a session, click its tab's ×: the same question names the session.",
+    "Optional: `duo2 session close` refuses a working session unless given `--force`."
+   ],
+   "expect": "The question's wording is a stand-in (Q-71): \"Claude is still working in “name”. Close it anyway?\", with Cancel and Close Tab.",
+   "ref": "DL-127, F-124, Q-71",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-124): DuoChecks cover idle, working, Cancel, Close Tab and a real shell running sleep."
+    ],
+    "didnt": [
+     "A working Claude session in your Duo."
+    ],
+    "human": [
+     "The question's wording."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "5bbea477d7bcdbac18bedadac415c5a67f477995",
+   "group": "After slice 3 (other sessions)"
   }
  ],
  "decisions": []
