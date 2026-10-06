@@ -105,7 +105,13 @@ struct AskCase {
         mock.standardOutput = FileHandle.nullDevice; mock.standardError = FileHandle.nullDevice
         try mock.run()
         defer { mock.terminate() }
-        spin(0.5)
+        // Wait until it answers: a port the last run still holds would otherwise fail every case.
+        var up = false
+        for _ in 0..<40 where !up {
+            spin(0.15)
+            up = run("/usr/bin/curl", ["-s", "-o", "/dev/null", "-m", "1", "-w", "%{http_code}", "http://127.0.0.1:\(port)/"]).count == 3
+        }
+        guard up, mock.isRunning else { check(false, "the mock API answers on port \(port)"); continue }
         try askCases(size: size, dir: dir, port: port, claude: claude, version: version)
     }
 }
@@ -236,8 +242,10 @@ struct AskCase {
     check(chat.log.items.filter { if case .you(let y) = $0 { return y.text.contains("Hello from the composer") } else { return false } }.count == 1,
           "and shows once, matched to its echo")
     tui.sendKeys("half-typed in the terminal"); spin(0.6)
-    let carried = chat.reread().input
-    check(carried == "half-typed in the terminal", "text typed in the terminal is Claude's prompt, read for the composer (\(carried ?? "-"))")
+    let carried = await_ { await chat.peekPrompt() } ?? nil
+    spin(0.3)
+    check(carried == "half-typed in the terminal" && chat.reread().input == "half-typed in the terminal",
+          "Claude's real prompt is read through Ctrl+G and left as it was (\(carried ?? "-"))")
     chat.ui.composerBasis = carried
     from = transcriptSize()
     let finished = await_ { await chat.send("half-typed in the terminal, finished here SCENARIO:hello") }
@@ -252,6 +260,13 @@ struct AskCase {
     check(stale?.ok == false && chat.reread().input == "typed in the terminal meanwhile" && lastPrompt(after: from) == nil,
           "a prompt changed in the terminal is never overwritten; nothing sent (\(stale?.why ?? "-"))")
     for _ in 0..<40 { tui.sendKeys("\u{7f}") }; spin(0.5)
+    tui.sendKeys("left in the terminal "); spin(0.5)
+    chat.ui.composerBasis = nil
+    from = transcriptSize()
+    let peeked = await_ { await chat.send("left in the terminal, then sent from chat SCENARIO:hello") }
+    _ = idle(); spin(1)
+    check(peeked?.ok == true && lastPrompt(after: from) == "left in the terminal, then sent from chat SCENARIO:hello",
+          "with no basis known, sending asks Claude's prompt first and replaces what it holds (\(peeked?.why ?? "ok"))")
     let saved = chat.composeDir
     chat.composeDir = nil
     from = transcriptSize()

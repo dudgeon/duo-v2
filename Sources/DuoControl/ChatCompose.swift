@@ -17,8 +17,18 @@ public enum ChatCompose {
     public struct Handover: Codable, Equatable, Sendable {
         public var text: String
         public var basis: String
-        public init(text: String, basis: String) { self.text = text; self.basis = basis }
+        /// Read Claude's prompt into `<session>.peek` and change nothing: the screen can't tell a
+        /// dim suggestion or placeholder from typed text (F-108), so the composer asks the real buffer.
+        public var peek = false
+        public init(text: String, basis: String, peek: Bool = false) { self.text = text; self.basis = basis; self.peek = peek }
+        public init(from d: Decoder) throws {
+            let c = try d.container(keyedBy: CodingKeys.self)
+            text = try c.decode(String.self, forKey: .text); basis = try c.decode(String.self, forKey: .basis)
+            peek = try c.decodeIfPresent(Bool.self, forKey: .peek) ?? false
+        }
     }
+
+    public static func peekFile(_ dir: URL, _ session: String) -> URL { dir.appending(path: "\(session).peek") }
 
     public static func handoverFile(_ dir: URL, _ session: String) -> URL { dir.appending(path: "\(session).json") }
     public static func refusedFile(_ dir: URL, _ session: String) -> URL { dir.appending(path: "\(session).refused") }
@@ -27,6 +37,7 @@ public enum ChatCompose {
     public static func leave(_ h: Handover, in dir: URL, session: String) throws {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         try? FileManager.default.removeItem(at: refusedFile(dir, session))
+        try? FileManager.default.removeItem(at: peekFile(dir, session))
         try JSONEncoder().encode(h).write(to: handoverFile(dir, session), options: .atomic)
     }
 
@@ -45,6 +56,10 @@ public enum ChatCompose {
         guard let data = try? Data(contentsOf: hf), let h = try? JSONDecoder().decode(Handover.self, from: data) else { return .notOurs }
         try? FileManager.default.removeItem(at: hf)   // used once, whatever happens next
         let now = (try? String(contentsOf: file, encoding: .utf8)) ?? ""
+        if h.peek {
+            try? now.write(to: peekFile(dir, session), atomically: true, encoding: .utf8)
+            return .handedOver
+        }
         guard same(now, h.basis) else {
             try? now.write(to: refusedFile(dir, session), atomically: true, encoding: .utf8)
             return .refused

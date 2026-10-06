@@ -9,6 +9,8 @@ rm -f "$png"
 envargs=()
 [[ -n ${DUO_MODEL:-} ]] && envargs=(--env "ANTHROPIC_MODEL=$DUO_MODEL")
 [[ -n ${DUO_NO_EDIT_HOOK:-} ]] && envargs+=(--env "DUO_NO_EDIT_HOOK=1")   # sessions without the edit hook (DL-78)
+# More variables for the app and its sessions, space-separated KEY=value (the mock API for chat mode's checks).
+for kv in ${=DUO_EXTRA_ENV:-}; do envargs+=(--env "$kv"); done
 open -n $envargs --stderr "$err" build/Duo.app --args --workspace "$ws" --capture-window "$png" --then "$then"
 for i in {1..${DUO_TIMEOUT:-90}}; do
   [[ -f $png ]] && break

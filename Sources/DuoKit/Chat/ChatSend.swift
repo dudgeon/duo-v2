@@ -26,7 +26,11 @@ extension ChatSession {
         sending = true
         defer { sending = false; composing = false }
         if usesExternalEditor, let dir = composeDir {
-            let basis = ui.composerBasis ?? s.input ?? ""
+            // What Claude's prompt really holds: known when the composer opened on it; empty when the
+            // screen shows nothing there; otherwise asked (a dim suggestion reads as text, F-108).
+            var basis = ui.composerBasis ?? ((s.input ?? "").isEmpty ? "" : nil)
+            if basis == nil { basis = await peekPrompt() }
+            guard let basis else { return finish(.refused("couldn’t read Claude’s prompt")) }
             do { try ChatCompose.leave(.init(text: text, basis: basis), in: dir, session: key) } catch { return finish(.refused("couldn’t hand the text over (\(error.localizedDescription))")) }
             composing = true
             terminal?.sendKeys(ChatKey.ctrlG.bytes)
@@ -63,6 +67,25 @@ extension ChatSession {
         ui.composer = ""
         ui.composerBasis = nil
         return .done
+    }
+
+    /// Claude's real prompt text, through Ctrl+G with nothing changed (the helper copies it out).
+    public func peekPrompt() async -> String? {
+        guard usesExternalEditor, let dir = composeDir, [.idle, .busy].contains(reread().kind) else { return nil }
+        let wasSending = sending
+        sending = true; composing = true
+        defer { sending = wasSending; composing = false }
+        do { try ChatCompose.leave(.init(text: "", basis: "", peek: true), in: dir, session: key) } catch { return nil }
+        terminal?.sendKeys(ChatKey.ctrlG.bytes)
+        for _ in 0..<50 {
+            await pause(100_000_000)
+            if let text = try? String(contentsOf: ChatCompose.peekFile(dir, key), encoding: .utf8), [.idle, .busy].contains(reread().kind) {
+                try? FileManager.default.removeItem(at: ChatCompose.peekFile(dir, key))
+                return text.trimmingCharacters(in: .newlines)
+            }
+        }
+        try? FileManager.default.removeItem(at: ChatCompose.handoverFile(dir, key))
+        return nil
     }
 
     /// The prompt on screen shows the text: whole, or its start (a long input wraps or scrolls), or

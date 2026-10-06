@@ -177,6 +177,13 @@ func spikeScreen(_ name: String) -> String {
         if case .you(let y)? = q.items.last { check(y.queued, "a message sent while Claude works shows as Queued") } else { check(false, "queued bubble") }
         ChatIngest.hook(["hook_event_name": "UserPromptSubmit", "prompt": "Also check Android", "source": "user"], at: 1, into: q)
         if case .you(let y)? = q.items.last, q.items.count == 1 { check(!y.queued, "until Claude Code takes it (its prompt hook): then it's yours, once") } else { check(false, "queued taken") }
+        let o = ChatLog()
+        ChatIngest.hook(["hook_event_name": "UserPromptSubmit", "prompt": "Run it", "source": "user"], at: 1, into: o)
+        ChatIngest.hook(["hook_event_name": "PreToolUse", "tool_use_id": "b1", "tool_name": "Bash", "tool_input": ["command": "echo hi"]], at: 2, into: o)
+        ChatIngest.record(["type": "assistant", "message": ["content": [["type": "text", "text": "Running a command."]]]], into: o)
+        ChatIngest.record(["type": "assistant", "message": ["content": [["type": "tool_use", "id": "b1", "name": "Bash", "input": ["command": "echo hi"]]]]], into: o)
+        if case .claude(let t)? = o.items.last, case .text? = t.segments.first, t.segments.count == 2 { check(true, "text Claude wrote before a tool shows before it, though the tool's hook came first") }
+        else { check(false, "text before tool order") }
         check(ChatIngest.lines(Data("{\"a\":1}\n{\"b\":2}{\"c\":\n{\"d\":4}\n".utf8)).count == 2, "merged hook lines are skipped, the rest read")
         var recs: [ChatJSON] = []
         for i in 0..<120 { recs.append(["type": "user", "message": ["content": "p\(i)"]]); recs.append(["type": "assistant", "message": ["content": [["type": "text", "text": "r\(i)"]]]]) }

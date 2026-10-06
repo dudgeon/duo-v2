@@ -54,7 +54,7 @@ struct ChatComposerArea: View {
             .padding(.horizontal, 4)
             }
         }
-        .task(id: s.input) { chat.prefillComposer() }
+        .task(id: chat.ui.composerFocused) { if chat.ui.composerFocused { chat.prefillComposer() } }
     }
 }
 
@@ -281,10 +281,15 @@ final class ComposerTextView: NSTextView {
 
 extension ChatSession {
     /// Text typed in the terminal is Claude's prompt: the composer opens on it (handoff `composer`).
+    /// The screen can't tell typed text from a dim suggestion (F-108), so the real buffer is asked.
     func prefillComposer() {
-        guard let input = screen.input, ui.composer.isEmpty, ui.composerBasis == nil, !input.isEmpty, !input.hasPrefix("/") else { return }
-        ui.composer = input
-        ui.composerBasis = input
+        guard let input = screen.input, ui.composer.isEmpty, ui.composerBasis == nil, !input.isEmpty, !input.hasPrefix("/"), !sending else { return }
+        guard usesExternalEditor else { return }   // pasting needs an empty prompt anyway
+        Task {
+            guard let real = await peekPrompt(), ui.composer.isEmpty else { return }
+            ui.composer = real
+            ui.composerBasis = real
+        }
     }
 
     /// `/` in the composer: the same prefix in Claude's prompt, so its menu shows its own commands.

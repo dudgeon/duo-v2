@@ -174,6 +174,8 @@ public final class ChatLog {
     @ObservationIgnored private var nextID = 0
     @ObservationIgnored private var agentsStarted: [String: String] = [:]
     @ObservationIgnored private var askedIDs: Set<String> = []
+    /// Tool calls the transcript has reached: a hook can show one before the text that preceded it.
+    @ObservationIgnored var transcriptTools: Set<String> = []
 
     public init() {}
 
@@ -317,9 +319,23 @@ public final class ChatLog {
                 }
             }
         }
-        withTurn(time: time) { t in
-            t.segments.append(.text(ChatText(id: newID("text"), markdown: text, streaming: false, committed: true)))
+        // Text the transcript has before tool calls that hooks already drew goes in front of them,
+        // in the order Claude wrote it.
+        let seg = ChatSegment.text(ChatText(id: newID("text"), markdown: text, streaming: false, committed: true))
+        if let i = openTurnIndex, case .claude(var t) = items[i],
+           let first = t.segments.firstIndex(where: { if case .tools(_, let st) = $0 { return st.contains { !transcriptTools.contains($0.id) } } else { return false } }),
+           case .tools(let sid, let steps) = t.segments[first] {
+            let k = steps.firstIndex { !transcriptTools.contains($0.id) } ?? 0
+            if k == 0 { t.segments.insert(seg, at: first) }
+            else {
+                t.segments[first] = .tools(id: sid, steps: Array(steps[..<k]))
+                t.segments.insert(seg, at: first + 1)
+                t.segments.insert(.tools(id: newID("tools"), steps: Array(steps[k...])), at: first + 2)
+            }
+            items[i] = .claude(t)
+            return
         }
+        withTurn(time: time) { t in t.segments.append(seg) }
     }
 
     /// A final stream that repeats text the transcript already added (a replay, or a late hook).

@@ -130,7 +130,8 @@ enum ChatToolDescriber {
             }
         case "Bash":
             let out = [(r?["stdout"] as? String) ?? content ?? "", (r?["stderr"] as? String) ?? ""].filter { !$0.isEmpty }.joined(separator: "\n")
-            s.output = (s.output ?? []) + out.components(separatedBy: "\n").filter { !$0.isEmpty }
+            // The hook's result and the transcript's are the same output: set, never appended.
+            s.output = [s.output?.first ?? "$ " + s.object] + out.components(separatedBy: "\n").filter { !$0.isEmpty }
             if r?["interrupted"] as? Bool == true { s.status = .interrupted }
             if let bg = r?["backgroundTaskId"] as? String, !bg.isEmpty { s.detail = "in the background" }
         case "Task", "Agent":
@@ -249,7 +250,10 @@ public enum ChatIngest {
                 case "thinking", "redacted_thinking":
                     log.thinking(b["thinking"] as? String ?? "", durationMs: (r["thinkingDurationMs"] as? Double) ?? (r["thinkingDurationMs"] as? Int).map(Double.init), time: time)
                 case "tool_use":
-                    if let id = b["id"] as? String, let name = b["name"] as? String { log.toolUse(id: id, name: name, input: b["input"] as? ChatJSON ?? [:], time: time) }
+                    if let id = b["id"] as? String, let name = b["name"] as? String {
+                        log.toolUse(id: id, name: name, input: b["input"] as? ChatJSON ?? [:], time: time)
+                        log.transcriptTools.insert(id)
+                    }
                 default: break
                 }
             }
