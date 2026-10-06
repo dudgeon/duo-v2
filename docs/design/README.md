@@ -31,6 +31,7 @@ Start with the **design system**, `system/`. It's also published for Claude Desi
 | `pptx-handoff/` | The PowerPoint viewer (ENH-12, DL-121): the deck in the right pane, picking a shape, what Claude receives, a deck that won't draw; 6 canvas boards (A2 not chosen) | Target (DL-125); built (F-121) |
 | `narrow-handoff/` | Narrow windows, the right-pane button, motion (DB-25, DL-129): 1280×800 at both altitudes, the minimums, search below 1440×900, the map packed, the newer surfaces at 360/480, motion with Reduce Motion; 10 canvas boards (rows and B/C not chosen) | Target; built (F-128 to F-130) |
 | `tab-close-handoff/` | The close button a tab shows under the pointer (DL-126): console and Home tabs, right-pane tabs, 3 canvas boards | Target; built (F-124) |
+| `motion-handoff/` | Motion beyond DL-129 (DL-130): sheets, the session list, folds, Mark Complete, the chat review card, drag and drop, tabs, notices, the chip, the editor highlight, the deck; the audit and 8 canvas boards | Target (DL-130); not built |
 | `task-menu-handoff/` | The task right-click menu (DL-115): the menu, an archived task's menu in the Archived fold, and the Archive, Delete and Move questions, 3 canvas boards | Target; built (F-97) |
 | `build-handoff/` | The main handoff (overview, project, peek, look) and the canonical `tokens.json` | Target; parts superseded, see its banner |
 | `search-handoff/` | Search (⇧⌘A), 18 screens | Target; Jump and ⌘K superseded |

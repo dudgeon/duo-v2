@@ -185,12 +185,33 @@ w("        }")
 w("    }")
 w("}")
 w("")
-w("/// Motion (DL-129), in seconds. None of it runs with Reduce Motion.")
+w("/// Motion (DL-129, DL-130), in seconds. None of it runs with Reduce Motion; build it with `DuoMotionToken`.")
 w("public enum DuoMotion {")
-for k, v in t["motion"].items():
-    if k.startswith("$"):
-        continue
+motion = [(k, v) for k, v in t["motion"].items() if not k.startswith("$")]
+for k, v in motion:
     w(f"    public static let {k}: Double = {v!r}")
+w("}")
+w("")
+w("/// How a motion eases (DL-130): arriving eases out, leaving eases in, moving eases in and out.")
+w("public enum DuoEase: Sendable { case out, `in`, inOut, none }")
+w("")
+w("/// One motion token: its duration and its easing.")
+w("public enum DuoMotionToken: String, CaseIterable, Sendable {")
+w("    case " + ", ".join(k for k, _ in motion))
+w("    public var seconds: Double {")
+w("        switch self {")
+for k, _ in motion:
+    w(f"        case .{k}: DuoMotion.{k}")
+w("        }")
+w("    }")
+w("    public var ease: DuoEase {")
+w("        switch self {")
+eases = t["motionEase"]
+for k, _ in motion:
+    e = eases[k]
+    w(f"        case .{k}: .{'`in`' if e == 'in' else e}")
+w("        }")
+w("    }")
 w("}")
 w("")
 w("/// The popover shadow (handoff §4.5): search, the action menu, the idle list, drag cards.")

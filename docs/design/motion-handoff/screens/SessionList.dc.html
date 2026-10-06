@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Session list rows move</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.fr{width:180px;height:150px;border:1px solid #C9CDD3;border-radius:4px;background:#FFFFFF;position:relative;overflow:hidden;flex:none;font-size:9px;line-height:13px}
+.sl{position:absolute;left:8px;font-size:7px;font-weight:600;letter-spacing:.4px;color:#5B636D}
+.r{position:absolute;left:8px;right:8px;height:13px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.dn{width:6px;height:6px;border-radius:50%;background:#C2410C;flex:none}
+.dw{width:5px;height:5px;border-radius:50%;border:1.2px solid #1F2328;flex:none}
+.di{width:6px;height:1.4px;background:#5B636D;flex:none}
+.lab{font-size:11px;line-height:16px;color:#5B636D}
+.btn{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font:12px/16px -apple-system,system-ui,sans-serif;color:#1F2328;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 1280px; height: 600px; box-sizing: border-box; padding: 24px; background: #F3F4F6; color: #1F2328; font: 13px/20px -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; gap: 28px">
+<div style="width: 780px; flex: none; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 14px; font-weight: 600">Before (today): you answer “Refund copy”; it vanishes from Needs you and reappears under Open</span>
+<div style="display: flex; gap: 10px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<span class="sl" style="top: 6px">NEEDS YOU · 2</span>
+<div class="r" style="top: 19px"><span class="dn"></span>Refund copy</div>
+<div class="r" style="top: 32px"><span class="dn"></span>Webhook retries</div>
+<span class="sl" style="top: 52px">OPEN · 1</span>
+<div class="r" style="top: 65px"><span class="dw"></span>Checkout PRD</div>
+<span class="sl" style="top: 85px">TODAY · 2</span>
+<div class="r" style="top: 98px"><span class="di"></span>Pricing sweep</div>
+<div class="r" style="top: 111px"><span class="di"></span>Kickoff notes</div>
+</div><span class="lab">0 ms</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<span class="sl" style="top: 6px">NEEDS YOU · 1</span>
+<div class="r" style="top: 19px"><span class="dn"></span>Webhook retries</div>
+<span class="sl" style="top: 39px">OPEN · 2</span>
+<div class="r" style="top: 52px"><span class="dw"></span>Checkout PRD</div>
+<div class="r" style="top: 65px"><span class="dw"></span>Refund copy</div>
+<span class="sl" style="top: 85px">TODAY · 2</span>
+<div class="r" style="top: 98px"><span class="di"></span>Pricing sweep</div>
+<div class="r" style="top: 111px"><span class="di"></span>Kickoff notes</div>
+</div><span class="lab">next snapshot: everything jumped</span></div>
+</div>
+<span style="font-size: 14px; font-weight: 600; margin-top: 8px">[P] After: the row travels to its new place; the glyph swaps at once</span>
+<div style="display: flex; gap: 10px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<span class="sl" style="top: 6px">NEEDS YOU · 1</span>
+<div class="r" style="top: 19px; background: #E9ECEF"><span class="dw"></span>Refund copy</div>
+<div class="r" style="top: 32px"><span class="dn"></span>Webhook retries</div>
+<span class="sl" style="top: 52px">OPEN · 2</span>
+<div class="r" style="top: 65px"><span class="dw"></span>Checkout PRD</div>
+<span class="sl" style="top: 85px">TODAY · 2</span>
+<div class="r" style="top: 98px"><span class="di"></span>Pricing sweep</div>
+<div class="r" style="top: 111px"><span class="di"></span>Kickoff notes</div>
+</div><span class="lab">0 ms: glyph and counts change</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<span class="sl" style="top: 6px">NEEDS YOU · 1</span>
+<div class="r" style="top: 24px"><span class="dn"></span>Webhook retries</div>
+<span class="sl" style="top: 46px">OPEN · 2</span>
+<div class="r" style="top: 42px; background: #E9ECEF"><span class="dw"></span>Refund copy</div>
+<div class="r" style="top: 59px"><span class="dw"></span>Checkout PRD</div>
+<span class="sl" style="top: 85px">TODAY · 2</span>
+<div class="r" style="top: 98px"><span class="di"></span>Pricing sweep</div>
+<div class="r" style="top: 111px"><span class="di"></span>Kickoff notes</div>
+</div><span class="lab">100 ms: rows passing</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<span class="sl" style="top: 6px">NEEDS YOU · 1</span>
+<div class="r" style="top: 19px"><span class="dn"></span>Webhook retries</div>
+<span class="sl" style="top: 39px">OPEN · 2</span>
+<div class="r" style="top: 52px"><span class="dw"></span>Checkout PRD</div>
+<div class="r" style="top: 65px; background: #E9ECEF"><span class="dw"></span>Refund copy</div>
+<span class="sl" style="top: 85px">TODAY · 2</span>
+<div class="r" style="top: 98px"><span class="di"></span>Pricing sweep</div>
+<div class="r" style="top: 111px"><span class="di"></span>Kickoff notes</div>
+</div><span class="lab">200 ms · rowMove, ease-in-out</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 18px; margin-top: 6px">
+<span><b>A new session</b> fades in, rowIn 150 ms, and the rows below slide down (rowMove). <b>Archive</b>: the row fades out, rowOut 150 ms, and the gap closes; the Archived count changes.</span>
+<span><b>Held while the pointer is in the list</b> (Q-80), as the map holds its order: changes wait until the pointer leaves, so a row never moves under a click. Glyphs and counts still update in place.</span>
+<span><b>Reduce Motion:</b> rows are in their new places at once.</span>
+<span style="color: #5B636D">The grey fill on the moving row is only for this board: the eye follows it. It isn’t drawn in Duo.</span>
+</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; font-weight: 600">[P] Try it</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<button type="button" class="btn" onClick="{{answer}}">Answer “Refund copy”</button>
+<button type="button" class="btn" onClick="{{add}}">New session</button>
+<button type="button" class="btn" onClick="{{archive}}">Archive “Pricing sweep”</button>
+<button type="button" class="btn" onClick="{{reset}}">Reset</button>
+</div>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<button type="button" class="btn" onClick="{{toggleHold}}">{{holdLabel}}</button>
+<button type="button" class="btn" onClick="{{toggleSlow}}">{{slowLabel}}</button>
+<button type="button" class="btn" onClick="{{toggleRm}}">{{rmLabel}}</button>
+</div>
+<div style="position: relative; width: 300px; height: 300px; border: 1px solid #C9CDD3; background: #FFFFFF; overflow: hidden; font-size: 13px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+<div style="{{r.style}}">
+<sc-if value="{{r.isHead}}" hint-placeholder-val="{{false}}"><span style="font-size: 11px; font-weight: 600; letter-spacing: .66px; color: #5B636D">{{r.label}}</span></sc-if>
+<sc-if value="{{r.isRow}}" hint-placeholder-val="{{true}}"><span style="{{r.glyph}}"></span><span>{{r.label}}</span><span style="margin-left: auto; color: #5B636D; font-size: 12px">{{r.wait}}</span></sc-if>
+</div>
+</sc-for>
+<sc-if value="{{held}}" hint-placeholder-val="{{false}}"><div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 8px; background: #F3F4F6; border-top: 1px solid #C9CDD3; font-size: 11px; color: #5B636D">Pointer in the list: {{pending}} change(s) waiting</div></sc-if>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":600}}'>
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = this.fresh(); }
+fresh() {
+return { slow: false, rm: false, hold: false, queue: [], n: 0, leaving: {}, entering: {},
+items: [
+{ id: "a", name: "Refund copy", st: "needs", wait: "4m" },
+{ id: "b", name: "Webhook retries", st: "needs", wait: "12m" },
+{ id: "c", name: "Checkout PRD", st: "open", wait: "working" },
+{ id: "d", name: "Pricing sweep", st: "today", wait: "2h" },
+{ id: "e", name: "Kickoff notes", st: "today", wait: "5h" }
+], archived: 1 };
+}
+t(ms) { return this.state.rm ? 0 : ms * (this.state.slow ? 5 : 1); }
+apply(change) {
+if (this.state.hold) { this.setState({ queue: this.state.queue.concat([change]) }); return; }
+change();
+}
+renderVals() {
+const s = this.state;
+const secs = [["needs", "NEEDS YOU"], ["open", "OPEN"], ["today", "TODAY"]];
+const moveMs = this.t(200);
+const glyphs = { needs: "width: 9px; height: 9px; border-radius: 50%; background: #C2410C; flex: none", open: "width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid #1F2328; flex: none", today: "width: 9px; height: 1.6px; background: #5B636D; flex: none" };
+// Lay out first, then emit in a stable order (headers, then items by id) so each element keeps its node and its top animates.
+const top = {}; const heads = {}; let y = 8;
+for (const [k, title] of secs) {
+const its = s.items.filter(i => i.st === k && !i.gone);
+heads[k] = { y, n: its.length, title };
+if (!its.length) continue;
+y += 22;
+for (const it of its) { top[it.id] = y; y += 26; }
+y += 6;
+}
+const archY = y;
+const rows = [];
+for (const [k] of secs) {
+const h = heads[k];
+rows.push({ isHead: true, isRow: false, label: h.title + " · " + h.n, style: "position: absolute; left: 12px; right: 12px; height: 20px; display: flex; align-items: center; top: " + h.y + "px; opacity: " + (h.n ? 1 : 0) + "; transition: top " + moveMs + "ms ease-in-out, opacity " + this.t(150) + "ms" });
+}
+rows.push({ isHead: true, isRow: false, label: "› ARCHIVED · " + s.archived, style: "position: absolute; left: 12px; right: 12px; height: 20px; display: flex; align-items: center; top: " + archY + "px; transition: top " + moveMs + "ms ease-in-out" });
+for (const it of s.items) {
+const leaving = s.leaving[it.id], entering = s.entering[it.id];
+const op = it.gone || leaving || entering ? 0 : 1;
+const y0 = it.gone ? (it.lastTop || 0) : top[it.id];
+rows.push({ isHead: false, isRow: true, label: it.name, wait: it.wait, glyph: glyphs[it.st],
+style: (it.gone ? "display: none; " : "") + "position: absolute; left: 12px; right: 12px; height: 26px; display: flex; align-items: center; gap: 6px; top: " + y0 + "px; opacity: " + op + "; transition: top " + moveMs + "ms ease-in-out, opacity " + this.t(150) + "ms " + (leaving ? "ease-in" : "ease-out") });
+}
+return {
+rows, held: s.hold && s.queue.length > 0, pending: s.queue.length,
+holdLabel: s.hold ? "Pointer in list: yes (leave)" : "Pointer in list: no",
+slowLabel: s.slow ? "Slow ×5: on" : "Slow ×5: off",
+rmLabel: s.rm ? "Reduce Motion: on" : "Reduce Motion: off",
+answer: () => this.apply(() => this.setState({ items: this.state.items.map(i => i.id === "a" ? Object.assign({}, i, { st: "open", wait: "working" }) : i) })),
+add: () => this.apply(() => {
+const id = "n" + this.state.n;
+this.setState({ n: this.state.n + 1, entering: Object.assign({}, this.state.entering, { [id]: true }), items: this.state.items.concat([{ id, name: "Session 4:" + (12 + this.state.n) + " PM", st: "open", wait: "at prompt" }]) });
+setTimeout(() => { const e = Object.assign({}, this.state.entering); delete e[id]; this.setState({ entering: e }); }, 30);
+}),
+archive: () => this.apply(() => {
+if (!this.state.items.find(i => i.id === "d" && !i.gone)) return;
+this.setState({ leaving: Object.assign({}, this.state.leaving, { d: true }) });
+setTimeout(() => this.setState({ items: this.state.items.map(i => i.id === "d" ? Object.assign({}, i, { gone: true, lastTop: 0 }) : i), archived: this.state.archived + 1 }), this.t(150));
+}),
+reset: () => this.setState(Object.assign(this.fresh(), { slow: s.slow, rm: s.rm })),
+toggleHold: () => {
+if (s.hold) { const q = s.queue; this.setState({ hold: false, queue: [] }); setTimeout(() => q.forEach(f => f()), 0); }
+else this.setState({ hold: true });
+},
+toggleSlow: () => this.setState({ slow: !s.slow }),
+toggleRm: () => this.setState({ rm: !s.rm })
+};
+}
+}
+</script>
+</body>
+</html>

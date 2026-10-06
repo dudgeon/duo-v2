@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Medium motions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cell{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:14px 16px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;min-width:0}
+.h{font-size:14px;font-weight:600}
+.d{font-size:12px;line-height:17px;color:#5B636D}
+.btn{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font:12px/16px -apple-system,system-ui,sans-serif;color:#1F2328;cursor:pointer}
+.stage{position:relative;height:150px;border:1px solid #C9CDD3;overflow:hidden;background:#F3F4F6}
+</style>
+</helmet>
+<div style="width: 2640px; height: 640px; box-sizing: border-box; padding: 24px; background: #F3F4F6; color: #1F2328; font: 13px/20px -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; gap: 10px; align-items: center">
+<span class="h">[P] Medium priority, each optional</span>
+<button type="button" class="btn" onClick="{{toggleSlow}}">{{slowLabel}}</button>
+<button type="button" class="btn" onClick="{{toggleRm}}">{{rmLabel}}</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; flex: 1">
+
+<div class="cell">
+<div style="display: flex; gap: 8px; align-items: center"><span class="h">Tabs open and close</span><button type="button" class="btn" onClick="{{tabToggle}}">{{tabLabel}}</button></div>
+<div class="d">The new tab fades in, tabIn 150 ms; tabs to its right slide, tabMove 150 ms. Closing: fades out, tabOut 120 ms, the gap closes. No reorder exists. The hover × stays instant (DL-126).</div>
+<div class="stage" style="background: #15171B">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 30px; border-bottom: 1px solid #2B2F36; font: 12px/19px ui-monospace, 'SF Mono', monospace; color: #9AA1AB">
+<div style="{{tab1}}">Checkout PRD</div>
+<div style="{{tabNew}}">Session 4:12 PM</div>
+<div style="{{tab2}}">Refund copy</div>
+<div style="{{tab3}}">zsh</div>
+</div>
+</div>
+</div>
+
+<div class="cell">
+<div style="display: flex; gap: 8px; align-items: center"><span class="h">Notices</span><button type="button" class="btn" onClick="{{noticeToggle}}">{{noticeLabel}}</button></div>
+<div class="d">Download, docx summary, conversion failure, editor conflict, chat fallback (one NoticeBar). Slides down from under the tab strip, noticeIn 150 ms, pushing the content; OK slides it up, noticeOut 120 ms.</div>
+<div class="stage" style="background: #FFFFFF">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 28px; background: #F3F4F6; border-bottom: 1px solid #C9CDD3; z-index: 2; font-size: 12px; line-height: 28px; padding-left: 10px">pricing.docx</div>
+<div style="position: absolute; left: 0; right: 0; top: 29px; bottom: 0; overflow: hidden">
+<div style="{{noticeStyle}}"><span>Converted to pricing.md. 2 charts became images.</span><button type="button" class="btn" style="margin-left: auto; height: 22px" onClick="{{noticeToggle}}">OK</button></div>
+<div style="{{docStyle}}"><div style="height: 10px; width: 220px; border-radius: 5px; background: #D5D9DE"></div><div style="height: 10px; width: 300px; border-radius: 5px; background: #D5D9DE; margin-top: 8px"></div><div style="height: 10px; width: 260px; border-radius: 5px; background: #D5D9DE; margin-top: 8px"></div></div>
+</div>
+</div>
+</div>
+
+<div class="cell">
+<div style="display: flex; gap: 8px; align-items: center"><span class="h">The needs-you chip</span><button type="button" class="btn" onClick="{{chipMore}}">+1</button><button type="button" class="btn" onClick="{{chipLess}}">−1</button></div>
+<div class="d">Appears and goes with a fade, chipIn 150 ms, in a kept slot so the breadcrumb doesn’t jump. The count rolls up or down, count 200 ms (numeric text transition). The glyph never animates.</div>
+<div class="stage" style="background: #F3F4F6">
+<div style="position: absolute; left: 12px; top: 56px; display: flex; align-items: center; gap: 8px; font-size: 13px">
+<span style="color: #5B636D">All projects ›</span><span style="font-weight: 600">checkout-redesign</span>
+<div style="{{chipStyle}}"><span style="width: 9px; height: 9px; border-radius: 50%; background: #C2410C; flex: none"></span><span style="position: relative; display: inline-block; width: 9px; height: 20px; overflow: hidden"><span style="{{numStyle}}">{{numCol}}</span></span><span>need you</span></div>
+</div>
+</div>
+</div>
+
+<div class="cell">
+<div style="display: flex; gap: 8px; align-items: center"><span class="h">Claude’s edit in the editor</span><button type="button" class="btn" onClick="{{hlEdit}}">Claude edits</button><button type="button" class="btn" onClick="{{hlType}}">You type</button></div>
+<div class="d">The “selected” highlight fades in, highlightIn 200 ms, so the eye finds it; when your next edit clears it (DL-5) it fades out, highlightOut 600 ms, instead of blinking off. CSS in the editor page; follows prefers-reduced-motion.</div>
+<div class="stage" style="background: #FFFFFF; padding: 14px 18px; box-sizing: border-box; font-size: 14px; line-height: 22px">
+Refunds are accepted within <span style="{{hlStyle}}">{{hlText}}</span> of purchase, with the original receipt.
+</div>
+</div>
+
+<div class="cell">
+<div style="display: flex; gap: 8px; align-items: center"><span class="h">Deck: ‹ › slide change</span><button type="button" class="btn" onClick="{{slidePrev}}">‹</button><button type="button" class="btn" onClick="{{slideNext}}">›</button></div>
+<div class="d">A scripted smooth scroll to the slide, slide 250 ms ease-in-out (today: a jump). Trackpad scrolling is unchanged. The picker outline glides between shapes, outline 80 ms.</div>
+<div class="stage" style="background: #F3F4F6">
+<div style="{{deckStyle}}">
+<div style="height: 120px; margin: 15px 40px 30px; background: #FFFFFF; border: 1px solid #C9CDD3; display: flex; align-items: center; justify-content: center; font-weight: 600">Slide 1 · Refunds</div>
+<div style="height: 120px; margin: 0 40px 30px; background: #FFFFFF; border: 1px solid #C9CDD3; display: flex; align-items: center; justify-content: center; font-weight: 600">Slide 2 · Policy</div>
+<div style="height: 120px; margin: 0 40px 30px; background: #FFFFFF; border: 1px solid #C9CDD3; display: flex; align-items: center; justify-content: center; font-weight: 600">Slide 3 · Timeline</div>
+</div>
+</div>
+</div>
+
+<div class="cell">
+<div style="display: flex; gap: 8px; align-items: center"><span class="h">Project → project</span><button type="button" class="btn" onClick="{{projSwap}}">Jump (peek ⌘↩)</button></div>
+<div class="d">The same 150 ms cross-fade as the altitude change (DL-129), when the peek or a breadcrumb takes you from one project to another. Today the panes swap in one frame.</div>
+<div class="stage" style="background: #FFFFFF">
+<div style="{{projA}}"><div style="position: absolute; left: 0; top: 0; bottom: 0; width: 110px; border-right: 1px solid #C9CDD3; padding: 8px; font-size: 12px; box-sizing: border-box">checkout-redesign</div><div style="position: absolute; left: 111px; top: 0; bottom: 0; right: 0; background: #15171B"></div></div>
+<div style="{{projB}}"><div style="position: absolute; left: 0; top: 0; bottom: 0; width: 110px; border-right: 1px solid #C9CDD3; padding: 8px; font-size: 12px; box-sizing: border-box; background: #FFFFFF">refunds-api-spec</div><div style="position: absolute; left: 111px; top: 0; bottom: 0; right: 0; background: #15171B"></div></div>
+</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2640,"height":640}}'>
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { slow: false, rm: false, tab: false, notice: false, chip: 2, hl: "none", slide: 0, proj: false }; }
+t(ms) { return this.state.rm ? 0 : ms * (this.state.slow ? 5 : 1); }
+renderVals() {
+const s = this.state;
+const tb = (left, w, op, inMs) => "position: absolute; top: 0; height: 30px; line-height: 30px; padding: 0 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden; left: " + left + "px; width: " + w + "px; opacity: " + op + "; border-right: 1px solid #2B2F36; transition: left " + this.t(150) + "ms ease-in-out, opacity " + inMs + "ms";
+const w = 150;
+const hlBg = s.hl === "on" ? "#E9ECEF" : "rgba(233,236,239,0)";
+const hlMs = s.hl === "on" ? this.t(200) : this.t(600);
+const nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+return {
+slowLabel: s.slow ? "Slow ×5: on" : "Slow ×5: off",
+rmLabel: s.rm ? "Reduce Motion: on" : "Reduce Motion: off",
+toggleSlow: () => this.setState({ slow: !s.slow }),
+toggleRm: () => this.setState({ rm: !s.rm }),
+tabLabel: s.tab ? "Close the new tab" : "⌘T",
+tab1: tb(0, w, 1, 0) + "; color: #E6E8EB",
+tabNew: tb(w, w, s.tab ? 1 : 0, s.tab ? this.t(150) : this.t(120)),
+tab2: tb(s.tab ? 2 * w : w, w, 1, 0),
+tab3: tb(s.tab ? 3 * w : 2 * w, 90, 1, 0),
+tabToggle: () => this.setState({ tab: !s.tab }),
+noticeLabel: s.notice ? "OK" : "Convert",
+noticeStyle: "position: absolute; left: 0; right: 0; top: 0; height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 10px; background: #F3F4F6; border-bottom: 1px solid #C9CDD3; font-size: 12px; transform: translateY(" + (s.notice ? 0 : -100) + "%); transition: transform " + (s.notice ? this.t(150) + "ms ease-out" : this.t(120) + "ms ease-in"),
+docStyle: "position: absolute; left: 0; right: 0; top: " + (s.notice ? 36 : 0) + "px; padding: 14px; transition: top " + (s.notice ? this.t(150) + "ms ease-out" : this.t(120) + "ms ease-in"),
+noticeToggle: () => this.setState({ notice: !s.notice }),
+chipStyle: "display: flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border: 1.5px solid #C2410C; border-radius: 11px; color: #C2410C; font-size: 12px; font-weight: 600; opacity: " + (s.chip > 0 ? 1 : 0) + "; transition: opacity " + this.t(150) + "ms ease-out",
+numCol: nums.join("\n"),
+numStyle: "position: absolute; left: 0; top: 0; white-space: pre; line-height: 20px; transform: translateY(" + (-20 * Math.max(s.chip, 0)) + "px); transition: transform " + this.t(200) + "ms ease-out",
+chipMore: () => this.setState({ chip: Math.min(s.chip + 1, 9) }),
+chipLess: () => this.setState({ chip: Math.max(s.chip - 1, 0) }),
+hlText: s.hl === "none" ? "14 days" : "30 days",
+hlStyle: "background: " + hlBg + "; border-radius: 3px; transition: background " + hlMs + "ms " + (s.hl === "on" ? "ease-out" : "ease-in-out"),
+hlEdit: () => this.setState({ hl: "on" }),
+hlType: () => { if (s.hl === "on") this.setState({ hl: "off" }); },
+deckStyle: "position: absolute; left: 0; right: 0; top: " + (-150 * s.slide) + "px; transition: top " + this.t(250) + "ms ease-in-out",
+slidePrev: () => this.setState({ slide: Math.max(s.slide - 1, 0) }),
+slideNext: () => this.setState({ slide: Math.min(s.slide + 1, 2) }),
+projA: "position: absolute; inset: 0; opacity: " + (s.proj ? 0 : 1) + "; transition: opacity " + this.t(150) + "ms ease-out",
+projB: "position: absolute; inset: 0; opacity: " + (s.proj ? 1 : 0) + "; transition: opacity " + this.t(150) + "ms ease-out",
+projSwap: () => this.setState({ proj: !s.proj })
+};
+}
+}
+</script>
+</body>
+</html>

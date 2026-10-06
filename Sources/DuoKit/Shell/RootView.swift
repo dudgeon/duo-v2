@@ -4,7 +4,6 @@ import SwiftUI
 /// pane (and later its terminals). Only the active altitude is visible and hit-testable.
 public struct RootView: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init() {}
 
@@ -24,10 +23,9 @@ public struct RootView: View {
         .overlay { if model.search.isOpen { SearchOverlay().transition(.opacity) } }
         // Duo's sheets (DL-100): Move into Home…, New project.
         .overlay { if model.sheetIsUp { SheetOverlay() } }
-        .animation(reduceMotion ? nil : model.search.isOpen ? .easeOut(duration: DuoMotion.scrimIn) : .easeIn(duration: DuoMotion.scrimOut),
-                   value: model.search.isOpen)
+        .animation((model.search.isOpen ? DuoMotionToken.scrimIn : .scrimOut).animation, value: model.search.isOpen)
         // Altitude change: cross-fade, 150 ms, ease-out; none with Reduce Motion (handoff §9).
-        .animation(reduceMotion ? nil : .easeOut(duration: DuoMotion.altitude), value: model.altitude)
+        .duoAnimation(.altitude, value: model.altitude)
         .background(DuoColor.pane)
         .toolbar { DuoToolbar() }
         .toolbar(removing: .title)

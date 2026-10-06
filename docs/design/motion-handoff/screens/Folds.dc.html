@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Folds and the file tree</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.fr{width:170px;height:118px;border:1px solid #C9CDD3;border-radius:4px;background:#FFFFFF;position:relative;overflow:hidden;flex:none;font:9px/13px ui-monospace,'SF Mono',monospace}
+.r{position:absolute;left:8px;right:8px;height:13px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.cv{display:inline-block;width:8px;color:#5B636D;font-family:-apple-system,system-ui,sans-serif}
+.lab{font-size:11px;line-height:16px;color:#5B636D}
+.btn{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font:12px/16px -apple-system,system-ui,sans-serif;color:#1F2328;cursor:pointer}
+.row{display:flex;align-items:center;gap:6px;height:24px;font:12px/19px ui-monospace,'SF Mono',monospace;cursor:pointer;border:none;background:none;padding:0;color:#1F2328;width:100%;text-align:left}
+</style>
+</helmet>
+<div style="width: 1280px; height: 600px; box-sizing: border-box; padding: 24px; background: #F3F4F6; color: #1F2328; font: 13px/20px -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; gap: 28px">
+<div style="width: 780px; flex: none; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 14px; font-weight: 600">Before (today): the chevron flips, then up to 2 s later the files appear all at once</span>
+<div style="display: flex; gap: 10px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px"><span class="cv">›</span>docs</div>
+<div class="r" style="top: 22px"><span class="cv">›</span>tasks</div>
+<div class="r" style="top: 36px"><span class="cv"></span>PROJECT.md</div>
+</div><span class="lab">0 ms: click “docs”</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px"><span class="cv">⌄</span>docs</div>
+<div class="r" style="top: 22px"><span class="cv">›</span>tasks</div>
+<div class="r" style="top: 36px"><span class="cv"></span>PROJECT.md</div>
+</div><span class="lab">open, but empty</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px"><span class="cv">⌄</span>docs</div>
+<div class="r" style="top: 22px; padding-left: 12px"><span class="cv"></span>prd-v2.md</div>
+<div class="r" style="top: 36px; padding-left: 12px"><span class="cv"></span>research.md</div>
+<div class="r" style="top: 50px"><span class="cv">›</span>tasks</div>
+<div class="r" style="top: 64px"><span class="cv"></span>PROJECT.md</div>
+</div><span class="lab">next snapshot (≤ 2 s): jump</span></div>
+</div>
+<span style="font-size: 14px; font-weight: 600; margin-top: 8px">[P] After: listed at once (Q-79); the chevron turns while the rows below make room</span>
+<div style="display: flex; gap: 10px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px"><span class="cv" style="transform: rotate(0deg)">›</span>docs</div>
+<div class="r" style="top: 22px"><span class="cv">›</span>tasks</div>
+<div class="r" style="top: 36px"><span class="cv"></span>PROJECT.md</div>
+</div><span class="lab">0 ms</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px"><span class="cv" style="transform: rotate(45deg)">›</span>docs</div>
+<div class="r" style="top: 22px; padding-left: 12px; opacity: .45"><span class="cv"></span>prd-v2.md</div>
+<div class="r" style="top: 36px; padding-left: 12px; opacity: .45"><span class="cv"></span>research.md</div>
+<div class="r" style="top: 36px; background: #FFFFFF"><span class="cv">›</span>tasks</div>
+<div class="r" style="top: 50px; background: #FFFFFF"><span class="cv"></span>PROJECT.md</div>
+</div><span class="lab">90 ms</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px"><span class="cv" style="transform: rotate(90deg)">›</span>docs</div>
+<div class="r" style="top: 22px; padding-left: 12px"><span class="cv"></span>prd-v2.md</div>
+<div class="r" style="top: 36px; padding-left: 12px"><span class="cv"></span>research.md</div>
+<div class="r" style="top: 50px"><span class="cv">›</span>tasks</div>
+<div class="r" style="top: 64px"><span class="cv"></span>PROJECT.md</div>
+</div><span class="lab">180 ms · fold, ease-in-out</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 18px; margin-top: 6px">
+<span>The same motion for <b>every fold</b>: Archived, Earlier, a group or task’s sessions, a folder. And the properties block’s chevron turns too (its block swaps at once: it’s one CodeMirror widget).</span>
+<span><b>Q-79:</b> opening a folder lists it at once (a few ms), instead of waiting for the next snapshot, so the motion has something to show.</span>
+<span><b>Reduce Motion:</b> the chevron flips and the rows are there at once.</span>
+</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; font-weight: 600">[P] Try it (click a folder or the fold)</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<button type="button" class="btn" onClick="{{toggleSlow}}">{{slowLabel}}</button>
+<button type="button" class="btn" onClick="{{toggleRm}}">{{rmLabel}}</button>
+</div>
+<div style="width: 300px; border: 1px solid #C9CDD3; background: #FFFFFF; padding: 8px 12px; box-sizing: border-box">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: .66px; color: #5B636D">FILES</span>
+<sc-for list="{{folders}}" as="f" hint-placeholder-count="2">
+<div>
+<button type="button" class="row" onClick="{{f.toggle}}"><span style="{{f.chev}}">›</span>{{f.name}}</button>
+<div style="{{f.kids}}">
+<sc-for list="{{f.files}}" as="c" hint-placeholder-count="2"><div class="row" style="padding-left: 24px">{{c}}</div></sc-for>
+</div>
+</div>
+</sc-for>
+<div class="row" style="padding-left: 18px">PROJECT.md</div>
+<div style="height: 1px; background: #C9CDD3; margin: 8px 0"></div>
+<button type="button" class="row" onClick="{{toggleArch}}" style="font: 600 11px/16px -apple-system, system-ui, sans-serif; letter-spacing: .66px; color: #5B636D"><span style="{{archChev}}">›</span>ARCHIVED · 3</button>
+<div style="{{archKids}}">
+<div class="row" style="font-family: -apple-system, system-ui, sans-serif; font-size: 13px; padding-left: 18px; color: #5B636D">Old pricing notes</div>
+<div class="row" style="font-family: -apple-system, system-ui, sans-serif; font-size: 13px; padding-left: 18px; color: #5B636D">Kickoff</div>
+<div class="row" style="font-family: -apple-system, system-ui, sans-serif; font-size: 13px; padding-left: 18px; color: #5B636D">Spike: Stripe API</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":600}}'>
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { open: {}, arch: false, slow: false, rm: false }; }
+t(ms) { return this.state.rm ? 0 : ms * (this.state.slow ? 5 : 1); }
+chev(o) { return "display: inline-block; width: 12px; text-align: center; color: #5B636D; font-family: -apple-system, system-ui, sans-serif; transform: rotate(" + (o ? 90 : 0) + "deg); transition: transform " + this.t(180) + "ms ease-in-out"; }
+kids(o, n) { return "overflow: hidden; height: " + (o ? n * 24 : 0) + "px; opacity: " + (o ? 1 : 0) + "; transition: height " + this.t(180) + "ms ease-in-out, opacity " + this.t(180) + "ms ease-in-out"; }
+renderVals() {
+const s = this.state;
+const data = [["docs", ["prd-v2.md", "research.md", "launch-plan.md"]], ["tasks", ["refund-faq.md", "legal-review.md"]]];
+return {
+folders: data.map(([name, files]) => ({ name, files, chev: this.chev(s.open[name]), kids: this.kids(s.open[name], files.length),
+toggle: () => this.setState({ open: Object.assign({}, this.state.open, { [name]: !this.state.open[name] }) }) })),
+archChev: this.chev(s.arch), archKids: this.kids(s.arch, 3),
+toggleArch: () => this.setState({ arch: !s.arch }),
+slowLabel: s.slow ? "Slow ×5: on" : "Slow ×5: off",
+rmLabel: s.rm ? "Reduce Motion: on" : "Reduce Motion: off",
+toggleSlow: () => this.setState({ slow: !s.slow }),
+toggleRm: () => this.setState({ rm: !s.rm })
+};
+}
+}
+</script>
+</body>
+</html>

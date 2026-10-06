@@ -528,6 +528,30 @@ public enum FixtureHarness {
                 let handled = w.performKeyEquivalent(with: e) || NSApp.mainMenu?.performKeyEquivalent(with: e) == true
                 FileHandle.standardError.write(Data("browser-key: ⌘\(parts[1]) handled=\(handled) zoom=\(t.zoom)\n".utf8))
             }
+        case "drag-lift":   // drag-lift:<project>: a tile picked up on the map (it sinks), as a real drag starts
+            model.dragging = parts.count > 1 ? AppModel.dragPayload(project: parts[1]) : nil
+        case "drag-over":   // drag-over:<project>: the dragged tile held over another (it rises)
+            model.dropTarget = parts.count > 1 ? parts[1] : nil
+        case "drag-land":   // drag-land:<project>=<note>: the drag ends and that tile shows what arrived
+            let f = parts.count > 1 ? parts[1].split(separator: "=", maxSplits: 1).map(String.init) : []
+            model.dragging = nil; model.dropTarget = nil
+            if let name = f.first { model.landedNote = f.count > 1 ? f[1] : "2 sessions moved in"; model.landed = name }
+        case "film":   // film:<png prefix>:<ms>|<ms>|…: frames at those offsets from now, <prefix>-<ms>.png (Q-77)
+            let f = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
+            guard f.count == 2, let window = NSApp.windows.first(where: { $0.title == "Duo" }) else { break }
+            let started = CACurrentMediaTime()
+            for ms in f[1].split(separator: "|").compactMap({ Int($0) }) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(ms) / 1000) {
+                    MainActor.assumeIsolated {
+                        let path = "\(f[0])-\(ms).png"
+                        let late = Int(((CACurrentMediaTime() - started) * 1000).rounded()) - ms
+                        do { try WindowCapture.content(of: window, to: URL(fileURLWithPath: path)) } catch {
+                            FileHandle.standardError.write(Data("film: \(path) failed: \(error.localizedDescription)\n".utf8))
+                        }
+                        FileHandle.standardError.write(Data("film: \(path) (\(late) ms late)\n".utf8))
+                    }
+                }
+            }
         case let a where a.hasPrefix("wait"): break
         default: FileHandle.standardError.write(Data("Unknown action '\(action)'\n".utf8))
         }
@@ -558,8 +582,11 @@ public enum FixtureHarness {
         var at = 0.0
         for action in options.thenActions {
             if action.hasPrefix("wait:") { at += Double(action.dropFirst(5)) ?? 0; continue }
-            at += 0.6
-            DispatchQueue.main.asyncAfter(deadline: .now() + at) { perform(action, on: model) }
+            // `+<action>` runs a beat after the one before it, not 0.6 s later: `film:` right after its trigger.
+            let together = action.hasPrefix("+")
+            let act = together ? String(action.dropFirst()) : action
+            at += together ? 0.02 : 0.6
+            DispatchQueue.main.asyncAfter(deadline: .now() + at) { perform(act, on: model) }
         }
 
         guard options.capturing else { return }

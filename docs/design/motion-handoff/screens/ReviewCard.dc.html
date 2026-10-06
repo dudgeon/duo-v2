@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chat review card docks</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.fr{width:170px;height:130px;border:1px solid #C9CDD3;border-radius:4px;background:#F3F4F6;position:relative;overflow:hidden;flex:none;font-size:8px;line-height:11px}
+.bar{position:absolute;left:10px;height:6px;border-radius:3px;background:#D5D9DE}
+.cmp{position:absolute;left:8px;right:8px;height:22px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;box-sizing:border-box;padding:5px 6px;color:#5B636D}
+.card{position:absolute;left:8px;right:8px;height:52px;background:#FFFFFF;border:1.5px solid #C2410C;border-radius:6px;box-sizing:border-box;padding:5px 6px}
+.lab{font-size:11px;line-height:16px;color:#5B636D}
+.btn{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font:12px/16px -apple-system,system-ui,sans-serif;color:#1F2328;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 1280px; height: 600px; box-sizing: border-box; padding: 24px; background: #F3F4F6; color: #1F2328; font: 13px/20px -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; gap: 28px">
+<div style="width: 780px; flex: none; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 14px; font-weight: 600">Before (today): the composer is swapped for the card, and back, in one frame</span>
+<div style="display: flex; gap: 10px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="bar" style="top: 12px; width: 110px"></div><div class="bar" style="top: 24px; width: 80px"></div><div class="cmp" style="bottom: 8px">Reply…</div></div><span class="lab">Claude is working</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="bar" style="top: 12px; width: 110px"></div><div class="bar" style="top: 24px; width: 80px"></div><div class="card" style="bottom: 8px">Edit refunds.md?<br>1 Yes · 2 No</div></div><span class="lab">it asks: the card is just there</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="bar" style="top: 12px; width: 110px"></div><div class="bar" style="top: 24px; width: 80px"></div><div class="cmp" style="bottom: 8px">Reply…</div></div><span class="lab">answered: just gone</span></div>
+</div>
+<span style="font-size: 14px; font-weight: 600; margin-top: 8px">[P] After: the card rises out of the composer’s place, and sinks back into it</span>
+<div style="display: flex; gap: 10px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="bar" style="top: 12px; width: 110px"></div><div class="bar" style="top: 24px; width: 80px"></div><div class="cmp" style="bottom: 8px; opacity: .4">Reply…</div><div class="card" style="bottom: 8px; height: 22px; overflow: hidden">Edit refunds.md?</div></div><span class="lab">0 ms: composer fades, card at its height</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="bar" style="top: 12px; width: 110px"></div><div class="bar" style="top: 24px; width: 80px"></div><div class="card" style="bottom: 8px; height: 42px; overflow: hidden">Edit refunds.md?<br>1 Yes · 2 No</div></div><span class="lab">100 ms</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="bar" style="top: 12px; width: 110px"></div><div class="bar" style="top: 24px; width: 80px"></div><div class="card" style="bottom: 8px">Edit refunds.md?<br>1 Yes · 2 No</div></div><span class="lab">200 ms · cardIn, ease-out</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="bar" style="top: 12px; width: 110px"></div><div class="bar" style="top: 24px; width: 80px"></div><div class="cmp" style="bottom: 8px">Reply…</div></div><span class="lab">answered: sinks, cardOut 150 ms ease-in</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 18px; margin-top: 6px">
+<span>The card grows <b>upward from the composer’s top edge</b>; the feed above shrinks with it and stays pinned to the bottom, so the last line Claude wrote stays in view.</span>
+<span>It leaves when Claude has taken the answer (the screen changes), not on the click, so the sink also confirms the answer landed.</span>
+<span><b>Reduce Motion:</b> swapped at once, as today.</span>
+<span style="color: #5B636D">The card and composer here are outlines of the chat-mode handoff’s (DL-119); only the motion is new.</span>
+</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; font-weight: 600">[P] Try it</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<button type="button" class="btn" onClick="{{toggle}}">{{toggleLabel}}</button>
+<button type="button" class="btn" onClick="{{toggleSlow}}">{{slowLabel}}</button>
+<button type="button" class="btn" onClick="{{toggleRm}}">{{rmLabel}}</button>
+</div>
+<div style="position: relative; width: 380px; height: 320px; border: 1px solid #C9CDD3; background: #F3F4F6; overflow: hidden; display: flex; flex-direction: column">
+<div style="flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; padding: 12px 14px; overflow: hidden">
+<div style="height: 10px; width: 260px; border-radius: 5px; background: #D5D9DE; flex: none"></div>
+<div style="height: 10px; width: 300px; border-radius: 5px; background: #D5D9DE; flex: none"></div>
+<div style="height: 10px; width: 200px; border-radius: 5px; background: #D5D9DE; flex: none"></div>
+<div style="font-size: 12px; line-height: 17px; flex: none">I’ll update the refund window in refunds.md.</div>
+</div>
+<div style="{{dockStyle}}">
+<div style="{{composerStyle}}">Reply…</div>
+<div style="{{cardStyle}}">
+<div style="font-size: 13px; line-height: 18px; font-weight: 600">Edit refunds.md?</div>
+<div style="font-size: 12px; line-height: 17px; color: #5B636D; margin-top: 2px">Changes the refund window from 14 to 30 days.</div>
+<div style="display: flex; gap: 6px; margin-top: 10px"><button type="button" class="btn" onClick="{{toggle}}">1 Yes</button><button type="button" class="btn" onClick="{{toggle}}">2 No</button></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":600}}'>
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { up: false, slow: false, rm: false }; }
+t(ms) { return this.state.rm ? 0 : ms * (this.state.slow ? 5 : 1); }
+renderVals() {
+const s = this.state;
+const ms = s.up ? this.t(200) : this.t(150);
+const ease = s.up ? "ease-out" : "ease-in";
+return {
+toggleLabel: s.up ? "Answer" : "Claude asks",
+slowLabel: s.slow ? "Slow ×5: on" : "Slow ×5: off",
+rmLabel: s.rm ? "Reduce Motion: on" : "Reduce Motion: off",
+dockStyle: "flex: none; position: relative; margin: 0 12px 12px; height: " + (s.up ? 112 : 36) + "px; transition: height " + ms + "ms " + ease,
+composerStyle: "position: absolute; left: 0; right: 0; bottom: 0; height: 36px; box-sizing: border-box; padding: 8px 10px; background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px; font-size: 13px; color: #5B636D; opacity: " + (s.up ? 0 : 1) + "; transition: opacity " + this.t(120) + "ms ease-in-out",
+cardStyle: "position: absolute; left: 0; right: 0; bottom: 0; top: 0; overflow: hidden; box-sizing: border-box; padding: 10px 12px; background: #FFFFFF; border: 1.5px solid #C2410C; border-radius: 6px; opacity: " + (s.up ? 1 : 0) + "; transition: opacity " + this.t(120) + "ms ease-in-out",
+toggle: () => this.setState({ up: !s.up }),
+toggleSlow: () => this.setState({ slow: !s.slow }),
+toggleRm: () => this.setState({ rm: !s.rm })
+};
+}
+}
+</script>
+</body>
+</html>

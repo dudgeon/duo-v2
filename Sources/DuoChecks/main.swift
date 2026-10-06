@@ -1153,6 +1153,17 @@ func repoFixture() throws -> Fixture {
     check(EditorController.tokenCSS().contains("--duo-heading-above: \(Int(DuoSpace.gapAboveDocumentHeading))px")
           && editorSource.contains("paddingTop: \"var(--duo-heading-above)\""), "the editor's space above H2 and smaller comes from space.gap.aboveDocumentHeading")
 
+    print("motion (DL-129, DL-130)")
+    check(DuoMotionToken.allCases.count == 30 && DuoMotionToken.rowHold.seconds == 5 && DuoMotionToken.sheetIn.ease == .out
+          && DuoMotionToken.sheetOut.ease == .in && DuoMotionToken.rowMove.ease == .inOut, "motion tokens: durations and easings from tokens.json")
+    // One Reduce Motion flag: no view reads the system setting itself, and nothing springs.
+    let motionStrays = (FileManager.default.enumerator(at: repoRoot().appending(path: "Sources/DuoKit"), includingPropertiesForKeys: nil)?
+        .compactMap { $0 as? URL } ?? [])
+        .filter { $0.pathExtension == "swift" && $0.lastPathComponent != "Motion.swift" }
+        .filter { let t = (try? String(contentsOf: $0, encoding: .utf8)) ?? ""
+                  return t.contains("accessibilityReduceMotion") || t.contains("accessibilityDisplayShouldReduceMotion") || t.contains(".spring(") }
+    check(motionStrays.isEmpty, "motion reads Reduce Motion only through MotionSettings, with no springs (\(motionStrays.map(\.lastPathComponent)))")
+
     print("cli parity (DL-71, DL-72)")
     check(Set(DuoAction.all.map(\.id)) == Set(ActionID.allCases) && DuoAction.all.count == ActionID.allCases.count, "every action is in the registry once")
     let gaps = parityGaps()
