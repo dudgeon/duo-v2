@@ -7,7 +7,7 @@ Version 1 · 2026-10-04 · Owner: Geoff · Written by Claude from the build plan
 > - DB-5, DB-6, DB-7, DB-9, DB-33, DB-37 to DB-39: slice 2 (`slice2-handoff/`, DL-100, F-76). DB-5 ("choosing a workspace") is replaced by the no-Home pane; there is no workspace.
 > - DB-8, DB-10, DB-11, DB-12 (confirmations), DB-14, DB-15, DB-27, DB-36: slice 3 (`slice3-handoff/`, DL-101, F-84).
 > - The map with many projects (S4-1, not in this brief): `many-projects-handoff/` (DL-104, F-82).
-> - Still open: DB-13 (local HTML look), DB-34 (the Archived rollup's look), DB-35 (revert from the highlight itself; Claude's deletions got Show and Revert in S3-5), DB-17 to DB-24 (v1.1 and search follow-ons), DB-25 (narrow windows), DB-26 (the menu bar), DB-28 to DB-32 (later).
+> - Still open: DB-13 (local HTML look), DB-34 (the Archived rollup's look), DB-35 (revert from the highlight itself; Claude's deletions got Show and Revert in S3-5), DB-17 to DB-24 (v1.1 and search follow-ons), DB-26 (the menu bar), DB-28 to DB-32 (later).
 > - "Tasks anywhere: parked" no longer holds (DL-87, DL-93).
 >
 > Current state of every surface: `docs/design/system/surfaces.md`.
@@ -333,6 +333,8 @@ Priority: **v1** blocks Geoff using Duo all day (build plan §3a). **v1 look** i
 ## 7. Cross-cutting, Phase L and later
 
 ### DB-25 · Narrow windows, right-pane collapse, motion
+
+> Designed and built: DL-129, `narrow-handoff/`, F-128 to F-130.
 
 - **Where, when:** everywhere. Only 1440×900 was drawn; the window must hold at 1280×800 (§3.1, §7).
 - **Shows:**

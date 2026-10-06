@@ -13,6 +13,9 @@ public struct RestoreState: Codable, Equatable, Sendable {
     public var project: String?
     public var leftCollapsedAllProjects = false
     public var leftCollapsedProject = false
+    /// The right pane hidden (DL-129); absent in files from before it.
+    public var rightCollapsedAllProjects: Bool? = nil
+    public var rightCollapsedProject: Bool? = nil
     /// Home's session on screen.
     public var homeTab: String?
     public var projects: [Project] = []
@@ -54,6 +57,8 @@ extension AppModel {
         s.root = liveRoot?.path
         s.leftCollapsedAllProjects = leftCollapsedAllProjects
         s.leftCollapsedProject = leftCollapsedProject
+        s.rightCollapsedAllProjects = rightCollapsedAllProjects
+        s.rightCollapsedProject = rightCollapsedProject
         s.homeTab = homeTab
         let current = currentProject?.name
         s.project = current.flatMap { liveFolders[$0]?.path }
@@ -126,6 +131,8 @@ extension AppModel {
         if let h = s.homeTab, let home = fixture.home?.name, fixture.sessions(inProject: home).contains(where: { $0.tabKey == h }) { homeTab = h }
         leftCollapsedAllProjects = s.leftCollapsedAllProjects
         leftCollapsedProject = s.leftCollapsedProject
+        rightCollapsedAllProjects = s.rightCollapsedAllProjects ?? false
+        rightCollapsedProject = s.rightCollapsedProject ?? false
         if let folder = s.project, let project = name(folder), let p = s.projects.first(where: { resolve($0.folder) == resolve(folder) }) {
             open(project: project)
             if let tab = p.consoleTab, fixture.sessions(inProject: project).contains(where: { $0.tabKey == tab }) { consoleTab = tab }

@@ -31,6 +31,9 @@ public final class AppModel {
     /// The left pane is collapsed independently at each altitude (handoff §3.1).
     public var leftCollapsedAllProjects = false
     public var leftCollapsedProject = false
+    /// The right pane hidden (DL-129): the action column at All projects, the document pane in a project.
+    public var rightCollapsedAllProjects = false
+    public var rightCollapsedProject = false
 
     // All projects
     public var selectedActionSession: String?   // Session.id
@@ -514,6 +517,14 @@ public final class AppModel {
         get { altitude.isAllProjects ? leftCollapsedAllProjects : leftCollapsedProject }
         set {
             if altitude.isAllProjects { leftCollapsedAllProjects = newValue } else { leftCollapsedProject = newValue }
+        }
+    }
+
+    /// The toolbar's right-pane button, ⌥⌘0 and `duo2 view right` (DL-129), for the altitude on screen.
+    public var rightCollapsed: Bool {
+        get { altitude.isAllProjects ? rightCollapsedAllProjects : rightCollapsedProject }
+        set {
+            if altitude.isAllProjects { rightCollapsedAllProjects = newValue } else { rightCollapsedProject = newValue }
         }
     }
 

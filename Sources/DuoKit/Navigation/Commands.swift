@@ -146,7 +146,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     public func isEnabled(in model: AppModel) -> Bool {
         switch self {
         case .search: true
-        case .toggleRightPane, .nextPane, .previousPane: false  // not built yet
+        case .toggleRightPane: true
+        case .nextPane, .previousPane: false  // not built yet
         case .allProjects: !model.altitude.isAllProjects
         case .togglePeek: !model.altitude.isAllProjects && !model.needsYouElsewhere.isEmpty
         case .jumpToPeekSelection: model.peekOpen
@@ -240,7 +241,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .focusAddress: model.focusAddressField()
         case .openFile: model.chooseFilesToOpen()
         case .search: model.openSearch()
-        case .toggleRightPane, .nextPane, .previousPane: break
+        case .toggleRightPane: model.rightCollapsed.toggle()
+        case .nextPane, .previousPane: break
         case .printPage: model.visibleWebTab?.printPage()
         case .zoomIn: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomIn(t.zoom)) }
         case .zoomOut: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomOut(t.zoom)) }

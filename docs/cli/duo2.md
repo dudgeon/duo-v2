@@ -26,6 +26,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 peek [open\|close]` | Show or hide the sessions that need the user in other projects. | Needs You Elsewhere |
 | `duo2 peek jump` | Jump into the project selected in the peek. | Jump into Selected Project |
 | `duo2 view sidebar show\|hide\|toggle` | Show or hide the left pane. | Toggle Sidebar |
+| `duo2 view right show\|hide\|toggle` | Show or hide the right pane: the action column at All projects, the documents in a project (⌥⌘0, DL-129). | Toggle Right Pane, right pane button |
 | `duo2 view tab <Project \| document path \| group>` | Switch the right pane's tab. | right pane tab, Open Project File |
 | `duo2 view group <group> expand\|collapse` | Expand or collapse a group in the session list. | group row |
 | `duo2 view select <session id>` | Select a session's card (action column or peek) without opening it. | action card, peek card |

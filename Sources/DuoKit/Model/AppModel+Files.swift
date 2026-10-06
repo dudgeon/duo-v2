@@ -58,6 +58,7 @@ extension AppModel {
     /// Shows a document, adding its tab if it isn't open (one visible at a time, DL-11).
     public func openDocument(_ path: String) {
         if !openDocuments.contains(path) { openDocuments.append(path) }
+        rightCollapsedProject = false   // a document opened into a hidden right pane shows it (DL-129)
         // Its folders open in the tree, so the selection shows (DL-105).
         if !Self.isOutsideFile(path), !path.hasPrefix("web:"), let p = currentProject?.name {
             var dir = (path as NSString).deletingLastPathComponent

@@ -16,8 +16,11 @@ struct SearchOverlay: View {
                     .contentShape(Rectangle())
                     .onActivate { model.closeSearch() }  // action: search
                     .accessibilityLabel("Close search")
+                // Below 1440×900 (DL-129): width the smaller of 960 and the window less 96; height
+                // at most the window less 140 (92 above, 48 below), the list scrolling inside.
                 SearchPanel()
                     .frame(width: min(DuoMetric.searchModalWidth, box.size.width - 96))
+                    .frame(maxHeight: max(0, box.size.height - (DuoMetric.searchModalTop - FixtureHarness.designContentTop) - 48), alignment: .top)
                     // 92 from the window's top; this view starts under the toolbar.
                     .padding(.top, DuoMetric.searchModalTop - FixtureHarness.designContentTop)
             }

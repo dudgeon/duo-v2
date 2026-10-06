@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1280x800">
+<meta name="design-kind" content="target">
+<meta name="design-surface" content="DB-25">
+<!--
+6 · Search at 1280×800
+APPROVED TARGET. Geoff, 2026-10-06 (DL-129). Exported from the Design canvas
+https://claude.ai/artifact/Cn5T6UowtPnQR2Ezihnare (board Search.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+Exempt, as in build-handoff: the traffic lights and toolbar material, everything inside a dark pane below its tab strip,
+grey placeholder bars, and the document's typography.
+-->
+<title>Duo · 6 · Search at 1280×800</title>
+<style>
+body{margin:0}
+.w{width:1280px;height:800px;box-sizing:border-box;display:flex;flex-direction:column;background:#FFFFFF;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;overflow:hidden}
+.w *{box-sizing:border-box}
+.tb{display:flex;align-items:center;gap:8px;height:38px;flex:none;padding:0 12px 0 20px;border-bottom:1px solid #C9CDD3;background:#F3F4F6}
+.tl{display:flex;gap:8px;margin-right:4px}.tl i{width:12px;height:12px;border-radius:50%;display:block}
+.cnt{display:flex;gap:16px;margin-left:8px;align-items:center}.cnt span{display:flex;gap:6px;align-items:center}
+.srch{margin-left:auto;width:300px;height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;display:flex;align-items:center;gap:6px;padding:0 8px;color:#5B636D}
+.tgl{display:flex;padding:4px 6px;border:0;background:transparent}
+.home{width:340px;flex:none;background:#15171B;color:#E6E8EB;display:flex;flex-direction:column;font:12px/19px ui-monospace,'SF Mono',Menlo,monospace}
+.hd{height:36px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #2B2F36;font:600 13px/20px -apple-system,system-ui,sans-serif}
+.hd span{font:12px/19px ui-monospace,'SF Mono',Menlo,monospace;color:#9AA1AB}
+.tabs{height:32px;flex:none;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid #2B2F36;color:#9AA1AB}
+.tabs span{display:flex;gap:6px;align-items:center}
+.bar{height:6px;border-radius:3px;background:#2F333A}
+.mapcol{flex:1;min-width:0;display:flex;flex-direction:column;border-right:1px solid #C9CDD3}
+.map{flex:1;min-height:0;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:14px}
+.mh{display:flex;align-items:center;gap:10px;height:22px}
+.filter{display:inline-flex;align-items:center;gap:6px;height:22px;width:200px;padding:0 8px;border:1px solid #C9CDD3;border-radius:6px;color:#5B636D;font-size:12px}
+.popup{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 6px 0 8px;border:1px solid #C9CDD3;border-radius:6px;font-size:12px;line-height:16px}
+.cols{display:flex;gap:14px;align-items:flex-start}
+.col{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.sl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:6px;height:16px}
+.grp{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.tile{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;border:1px solid #C9CDD3;border-radius:6px;min-width:0}
+.tile.star{border-color:#1F2328}
+.nm{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.gl{white-space:normal}
+.t2{color:#5B636D}
+.sess{margin-top:6px;display:flex;flex-direction:column}
+.srow{height:24px;display:flex;align-items:center;gap:6px;min-width:0}
+.srow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.newp{height:38px;border:1px dashed #8B939C;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#5B636D}
+.foot{height:34px;flex:none;border-top:1px solid #C9CDD3;display:flex;align-items:center;gap:8px;padding:0 16px;color:#5B636D}
+.act{width:340px;flex:none;padding:16px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.card{border:1px solid #C9CDD3;border-radius:6px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;white-space:normal}
+.card.sel{border:1.5px solid #1F2328}
+.card .top{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.q{border:1.5px solid #C2410C;border-radius:6px;padding:6px 10px;margin:6px 0}
+.btn{align-self:flex-start;display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328}
+</style>
+</head>
+<body>
+<div class="w" style="position: relative">
+<div class="tb">
+<span class="tl"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i></span>
+<button type="button" class="tgl" aria-label="Hide Sidebar"><svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><rect x="1" y="1" width="16" height="12" rx="2.5" fill="none" stroke="#5B636D" stroke-width="1.3"></rect><path d="M6.5 1v12" stroke="#5B636D" stroke-width="1.3"></path></svg></button>
+<span style="font-weight: 600">All projects</span>
+<span class="cnt"><span style="font-weight: 600; color: #C2410C"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg>3 need you</span><span><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0 10 5 5 10 0 5z" fill="#1F2328"></path></svg>2 to review</span><span><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>4 working</span><span style="color: #5B636D"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg>14 idle</span></span>
+<span class="srch"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#5B636D" stroke-width="1.3"></circle><path d="M7.8 7.8 11 11" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round"></path></svg>Search all projects<span style="margin-left: auto">⇧⌘A</span></span>
+<button type="button" class="tgl" aria-label="Hide Right Pane" title="Hide Right Pane ⌥⌘0" style="margin-left: 4px"><svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><rect x="1" y="1" width="16" height="12" rx="2.5" fill="none" stroke="#5B636D" stroke-width="1.3"></rect><path d="M11.5 1v12" stroke="#5B636D" stroke-width="1.3"></path></svg></button>
+</div>
+<div style="display: flex; flex: 1; min-height: 0">
+
+<div class="home">
+<div class="hd">★ home <span>~/work/home</span></div>
+<div class="tabs"><span style="color: #E6E8EB; font-weight: 500"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#F97316"></circle></svg>Morning triage</span><span><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#9AA1AB" stroke-width="1.5"></circle></svg>Weekly status draft</span></div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 18px 16px 16px; white-space: normal">
+<div class="bar" style="width: 70%"></div><div class="bar" style="width: 88%"></div><div class="bar" style="width: 52%"></div>
+<div style="margin-top: auto">5 new asks this morning. Route 3 to projects?</div>
+<div style="display: flex; flex-direction: column"><span>❯ 1. Yes, route them</span><span style="padding-left: 15px; color: #9AA1AB">2. Show me first</span></div>
+<div style="height: 30px; border: 1px solid #4A4F57; border-radius: 6px; display: flex; align-items: center; gap: 8px; padding: 0 10px"><span style="color: #9AA1AB">&gt;</span><span style="width: 7px; height: 14px; background: #E6E8EB"></span></div>
+</div>
+</div>
+
+<div class="mapcol">
+<div class="map">
+<div class="mh"><span class="filter"><svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#5B636D" stroke-width="1.4"></circle><path d="M7.8 7.8 11 11" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round"></path></svg>Filter folders</span><span style="flex: 1"></span><span class="t2" style="font-size: 12px">Sort</span><span class="popup">Recent<svg width="7" height="10" viewBox="0 0 7 10" aria-hidden="true"><path d="M1 3.5 3.5 1 6 3.5M1 6.5 3.5 9 6 6.5" fill="none" stroke="#5B636D" stroke-width="1.2"></path></svg></span></div>
+<div class="cols">
+<div class="col">
+<div class="grp"><div class="sl"> </div>
+<div class="tile star"><span class="nm">★ home</span><span class="gl">Triage, dispatch, status, personal ops</span><span class="t2">Home · 2 sessions</span><div class="sess"><div class="srow"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span class="n">Morning triage</span><span class="t2">1h</span></div><div class="srow"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span class="n">Weekly status draft</span><span class="t2">2m</span></div></div></div>
+<div class="tile"><span class="nm">vendor-review</span><span class="gl">Pick a fraud-scoring vendor</span><span class="t2">On track</span><div class="sess"><div class="srow t2">Nothing running</div></div></div>
+</div>
+<div class="grp"><div class="sl"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.3l1.2 1.3h4.1c.7 0 1.2.5 1.2 1.2v4.3c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>growth /</div>
+<div class="tile"><span class="nm">onboarding-v3</span><span class="gl">Lift day-7 activation to 40%</span><span class="t2">On track · Copy freeze Oct 6</span><div class="sess"><div class="srow"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span class="n" style="font-weight: 600">Copy review pass 2</span><span class="t2">12m</span></div><div class="srow"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0 10 5 5 10 0 5z" fill="#1F2328"></path></svg><span class="n">Funnel SQL</span></div></div></div>
+<div class="tile"><span class="nm">pricing-experiment-q4</span><span class="gl">Decide Q4 pricing test</span><span class="t2">On track · Readout Oct 20</span><div class="sess"><div class="srow"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0 10 5 5 10 0 5z" fill="#1F2328"></path></svg><span class="n">Results readout</span></div></div></div>
+</div>
+<div class="grp"><div class="sl"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.3l1.2 1.3h4.1c.7 0 1.2.5 1.2 1.2v4.3c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>research /</div>
+<div class="tile"><span class="nm">buyer-interviews</span><span class="gl">Six buyer interviews, synthesised</span><span class="t2">On track</span></div>
+</div>
+</div>
+<div class="col">
+<div class="grp"><div class="sl"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.3l1.2 1.3h4.1c.7 0 1.2.5 1.2 1.2v4.3c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>payments /</div>
+<div class="tile"><span class="nm">checkout-redesign</span><span class="gl">Cut guest-checkout abandonment 15% by Q1</span><span class="t2">On track · Exec review Oct 14</span><div class="sess"><div class="srow"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span class="n">PRD v2 edits</span><span class="t2">4m</span></div><div class="srow"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span class="n">Teardown research</span><span class="t2">6m</span></div></div></div>
+<div class="tile"><span class="nm">refunds-api-spec</span><span class="gl">Ship refunds API spec to eng by Oct 10</span><span class="t2">At risk · Spec review Oct 8</span><div class="sess"><div class="srow"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span class="n">Edge-case matrix</span><span class="t2">14m</span></div></div></div>
+<div class="tile"><span class="nm">fraud-rules-review</span><span class="gl">Audit and simplify fraud rules</span><span class="t2">On track</span><div class="sess"><div class="srow"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span class="n">Rule audit</span><span class="t2">31m</span></div></div></div>
+</div>
+<div class="grp"><div class="sl"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.3l1.2 1.3h4.1c.7 0 1.2.5 1.2 1.2v4.3c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>platform /</div>
+<div class="tile"><span class="nm">api-deprecations</span><span class="gl">Comms plan for v1 API sunset</span><span class="t2">Off track</span><div class="sess"><div class="srow t2">Nothing running</div></div></div>
+</div>
+<div class="grp"><div class="sl"><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.3l1.2 1.3h4.1c.7 0 1.2.5 1.2 1.2v4.3c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="#5B636D" stroke-width="1.1"></path></svg>ops /</div>
+<div class="tile"><span class="nm">q4-planning</span><span class="gl">Q4 plan signed off by staff</span><span class="t2">At risk · Draft due Oct 9</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class="foot"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg>14 idle, resumable<svg width="8" height="10" viewBox="0 0 8 10" aria-hidden="true"><path d="M2 1.5 6 5 2 8.5" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+</div>
+
+<div class="act">
+<div class="sl" style="color: #C2410C">NEEDS YOU · 3</div>
+<div class="card" style="border-style: dashed"><div class="top"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span style="font-weight: 600">Morning triage</span><span class="t2">home</span><span class="t2" style="margin-left: auto">1h</span></div><span class="t2">← Waiting in the Home terminal</span></div>
+<div class="card sel"><div class="top"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span style="font-weight: 600">Copy review pass 2</span><span class="t2" style="margin-left: auto">12m</span></div><span class="t2">onboarding-v3 · permission</span><div class="q">Approve these 6 string changes?</div><span class="btn">Open project</span></div>
+<div class="card"><div class="top"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span style="font-weight: 600">PRD v2 edits</span><span class="t2" style="margin-left: auto">4m</span></div><span class="t2">checkout-redesign · question</span><span style="margin: 6px 0">Move saved cards into scope, or keep it out and log an open question?</span><span class="btn">Open project</span></div>
+<div class="sl" style="margin-top: 6px">READY FOR REVIEW · 2</div>
+<div class="card"><div class="top"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0 10 5 5 10 0 5z" fill="#1F2328"></path></svg><span style="font-weight: 600">Results readout</span></div><span class="t2">pricing-experiment-q4</span></div>
+</div>
+
+</div>
+<div style="position: absolute; inset: 0; background: rgba(31, 35, 40, 0.32)"></div>
+<div style="position: absolute; left: 160px; top: 92px; width: 960px; height: 660px; display: flex; flex-direction: column; background: #FFFFFF; border-radius: 10px; box-shadow: 0 12px 32px rgba(31, 35, 40, 0.22); overflow: hidden">
+<div style="height: 52px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 16px"><svg width="16" height="16" viewBox="0 0 12 12" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#5B636D" stroke-width="1.1"></circle><path d="M7.8 7.8 11 11" stroke="#5B636D" stroke-width="1.1" stroke-linecap="round"></path></svg><span style="font-size: 17px; line-height: 24px">where did we land on saved cards</span></div>
+<div style="height: 40px; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 16px 8px; border-bottom: 1px solid #C9CDD3"><span class="popup">All projects ⌄</span><span class="popup">Any kind ⌄</span><span class="popup">Any time ⌄</span><span class="t2" style="margin-left: 8px; font-size: 12px">Include archived</span></div>
+<div style="flex: 1; min-height: 0; display: flex">
+<div style="width: 420px; flex: none; border-right: 1px solid #C9CDD3; padding: 8px; display: flex; flex-direction: column; gap: 2px; overflow: hidden"><div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 10px 10px; border-radius: 6px; background: #E9ECEF;"><div style="display: flex; align-items: center; gap: 8px"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1h4l2.5 2.5V11H3z" fill="none" stroke="#5B636D" stroke-width="1.1" stroke-linejoin="round"></path></svg><span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; font-weight: 500">docs/prd-v2.md</span><span class="t2" style="margin-left: auto">today</span></div><div class="t2" style="padding-left: 20px">checkout-redesign · file · L40–58</div><div style="padding-left: 20px; white-space: normal">…two interviewees said <b>saved cards</b> are the main reason they abandon guest checkout…</div></div><div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 10px 10px; border-radius: 6px;"><div style="display: flex; align-items: center; gap: 8px"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2.5h8v5.5H5.5L3 10V8H2z" fill="none" stroke="#5B636D" stroke-width="1.1" stroke-linejoin="round"></path></svg><span style="font-weight: 600">PRD v2 edits</span><span class="t2" style="margin-left: auto">4m</span></div><div class="t2" style="padding-left: 20px">checkout-redesign · session · turn 6</div><div style="padding-left: 20px; white-space: normal">You: Move <b>saved cards</b> into scope, or keep it out and log an open question?</div></div><div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 10px 10px; border-radius: 6px;"><div style="display: flex; align-items: center; gap: 8px"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2.5h8v5.5H5.5L3 10V8H2z" fill="none" stroke="#5B636D" stroke-width="1.1" stroke-linejoin="round"></path></svg><span style="font-weight: 600">Interview synth</span><span class="t2" style="margin-left: auto">2d</span></div><div class="t2" style="padding-left: 20px">checkout-redesign · session · turn 11</div><div style="padding-left: 20px; white-space: normal">…P4 and P7 both mention re-typing card details on mobile…</div></div><div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 10px 10px; border-radius: 6px;"><div style="display: flex; align-items: center; gap: 8px"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1h4l2.5 2.5V11H3z" fill="none" stroke="#5B636D" stroke-width="1.1" stroke-linejoin="round"></path></svg><span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; font-weight: 500">docs/edge-cases.md</span><span class="t2" style="margin-left: auto">3d</span></div><div class="t2" style="padding-left: 20px">refunds-api-spec · file · L112–130</div><div style="padding-left: 20px; white-space: normal">…refunds to a <b>saved card</b> versus the original payment method…</div></div></div>
+<div style="flex: 1; min-width: 0; padding: 14px 20px 16px; display: flex; flex-direction: column; gap: 8px; white-space: normal"><div style="display: flex; gap: 8px; align-items: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1h4l2.5 2.5V11H3z" fill="none" stroke="#5B636D" stroke-width="1.1" stroke-linejoin="round"></path></svg><span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px">docs/prd-v2.md</span><span class="t2" style="margin-left: auto">today</span></div><span class="t2">checkout-redesign · lines 40–58</span><span style="font-size: 14px; font-weight: 600; margin-top: 6px">What we heard</span><div style="background: #E9ECEF; border-radius: 6px; padding: 8px 12px">…two interviewees said <b>saved cards</b> are the main reason they abandon guest checkout. Decision: keep <b>saved cards</b> out of v2 scope; log as open question Q3…</div></div>
+</div>
+<div style="height: 34px; flex: none; border-top: 1px solid #C9CDD3; display: flex; align-items: center; gap: 16px; padding: 0 16px; font-size: 12px"><span>↩ Open in checkout-redesign</span><span class="t2" style="margin-left: auto">tab Actions</span><span class="t2">⇧tab Filters</span><span class="t2">esc Close</span></div>
+</div>
+</div>
+</body>
+</html>

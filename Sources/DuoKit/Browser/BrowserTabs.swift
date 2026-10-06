@@ -347,6 +347,7 @@ extension AppModel {
         webTabs[id] = tab
         openDocumentsByProject[project, default: []].append(id)
         rightTab = id
+        rightCollapsedProject = false   // DL-129
         if let url { tab.load(url) } else { tab.focusRequest += 1 }
         return id
     }
@@ -443,6 +444,7 @@ struct BrowserTabView: View {
                     // A stand-in until it's designed (Q-66).
                     Button { tab.zoom(1.0) } label: { Text(ZoomStore.percent(tab.zoom)).duoText(.body).foregroundStyle(DuoColor.text2) }
                         .buttonStyle(.plain)
+                        .fixedSize()   // never truncates; the address gives way (DL-129)
                         .help("Actual Size (⌘0)")
                         .accessibilityLabel("Zoom \(ZoomStore.percent(tab.zoom)), reset to actual size")
                 }

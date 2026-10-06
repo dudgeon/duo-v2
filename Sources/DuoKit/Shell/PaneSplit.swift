@@ -84,6 +84,22 @@ struct PaneSplit: NSViewRepresentable {
             return min(proposed, right - minWidth(next) - splitView.dividerThickness)
         }
 
+        /// The window resized (DL-129): side panes keep the width they have and the middle pane
+        /// takes the change. Under the middle's minimum the right pane gives way first, down to its
+        /// own, then the left. A hidden pane stays hidden.
+        func splitView(_ splitView: NSSplitView, resizeSubviewsWithOldSize oldSize: NSSize) {
+            guard let split = splitView as? DuoSplitView, !split.isAnimatingPane,
+                  let flex = panes.firstIndex(where: { $0.width == nil }), panes.count == splitView.arrangedSubviews.count
+            else { splitView.adjustSubviews(); return }
+            let views = splitView.arrangedSubviews
+            let widths = PaneWidths.resized(
+                current: views.map { splitView.isSubviewCollapsed($0) ? 0 : $0.frame.width },
+                hidden: views.map { splitView.isSubviewCollapsed($0) },
+                total: splitView.bounds.width - CGFloat(views.count - 1) * splitView.dividerThickness,
+                flex: flex, minimums: panes.indices.map(minWidth))
+            split.place(widths)
+        }
+
         private func minWidth(_ i: Int) -> CGFloat {
             i < panes.count ? max(0, panes[i].minWidth - 1) : 0
         }
@@ -95,7 +111,9 @@ final class DuoSplitView: NSSplitView {
     var paneBackgrounds: [NSColor] = []
     var designWidths: [CGFloat?] = []
     private var placed = false
-    private var savedPositions: [Int: CGFloat] = [:]
+    /// A side pane is sliding in or out (DL-129): the window's resize rule waits for it.
+    private(set) var isAnimatingPane = false
+    private var savedWidths: [Int: CGFloat] = [:]
     /// Collapse requests that arrive before the view has a size are applied after first layout;
     /// collapsing a zero-sized split view leaves its panes in an inconsistent order.
     private var pendingCollapse: [Int: Bool] = [:]
@@ -130,7 +148,7 @@ final class DuoSplitView: NSSplitView {
         if !placed, bounds.width > 0 {
             placed = true
             placeAtDesignWidths()
-            for (i, collapsed) in pendingCollapse.sorted(by: { $0.key < $1.key }) { setCollapsed(collapsed, paneAt: i) }
+            for (i, collapsed) in pendingCollapse.sorted(by: { $0.key < $1.key }) where isSubviewCollapsed(arrangedSubviews[i]) != collapsed { snapCollapsed(collapsed, paneAt: i) }   // as restored, no slide
             pendingCollapse.removeAll()
         }
     }
@@ -151,18 +169,107 @@ final class DuoSplitView: NSSplitView {
         }
     }
 
-    /// Collapses or restores a side pane. The pane's view is kept, never torn down.
+    /// Sets each pane's frame from left to right; a hidden pane keeps its frame (it's hidden).
+    func place(_ widths: [CGFloat]) {
+        var x: CGFloat = 0
+        for (i, v) in arrangedSubviews.enumerated() {
+            if !isSubviewCollapsed(v) {
+                v.frame = NSRect(x: x, y: 0, width: max(0, widths[i]), height: bounds.height)
+                x += max(0, widths[i])
+            }
+            x += i < arrangedSubviews.count - 1 ? dividerThickness : 0
+        }
+        needsDisplay = true
+    }
+
+    /// Hides or shows a side pane: its width slides over `motion.paneToggle` (200 ms, ease-in-out),
+    /// at once with Reduce Motion (DL-129). Terminals keep their size until it ends, so a PTY is
+    /// resized once (LR-14).
     func setCollapsed(_ collapsed: Bool, paneAt i: Int) {
         guard placed else { pendingCollapse[i] = collapsed; return }
-        guard arrangedSubviews.indices.contains(i), isSubviewCollapsed(arrangedSubviews[i]) != collapsed else { return }
+        guard !isAnimatingPane, arrangedSubviews.indices.contains(i), isSubviewCollapsed(arrangedSubviews[i]) != collapsed,
+              let flex = designWidths.firstIndex(where: { $0 == nil }) else { return }
+        guard window != nil, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion, PaneMotion.enabled else {
+            snapCollapsed(collapsed, paneAt: i); return
+        }
+        let views = arrangedSubviews
+        let pane = views[i]
+        let open = collapsed ? pane.frame.width : openWidth(i)
+        if collapsed { savedWidths[i] = open }
+        if !collapsed { snapCollapsed(false, paneAt: i) }   // back in the split, then slide from nothing
+        let start = views.map { isSubviewCollapsed($0) ? 0 : $0.frame.width }
+        let duration = DuoMotion.paneToggle
+        isAnimatingPane = true
+        PaneMotion.began()
+        let began = CACurrentMediaTime()
+        func step(_ t: CGFloat) {
+            let e = t < 0.5 ? 2 * t * t : 1 - pow(-2 * t + 2, 2) / 2   // ease-in-out
+            var w = start
+            w[i] = collapsed ? open * (1 - e) : open * e
+            w[flex] = start[flex] + (start[i] - w[i])
+            place(w)
+        }
+        func tick() {
+            let t = min(1, CGFloat((CACurrentMediaTime() - began) / duration))
+            step(t)
+            if t < 1 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0 / 60) { MainActor.assumeIsolated { tick() } }
+                return
+            }
+            isAnimatingPane = false
+            if collapsed { snapCollapsed(true, paneAt: i, saving: false) }
+            PaneMotion.ended()
+        }
+        tick()
+    }
+
+    /// The width a hidden pane comes back at: where it was, else its design width.
+    private func openWidth(_ i: Int) -> CGFloat {
+        return savedWidths[i] ?? (designWidths[i] ?? 300) - 1
+    }
+
+    /// Collapses or restores a side pane at once. The pane's view is kept, never torn down.
+    /// `saving: false` when a slide already noted the width (the frame is nearly 0 by then).
+    private func snapCollapsed(_ collapsed: Bool, paneAt i: Int, saving: Bool = true) {
         let isLeading = i == 0
         let divider = isLeading ? 0 : i - 1
         if collapsed {
-            savedPositions[i] = isLeading ? arrangedSubviews[i].frame.maxX : arrangedSubviews[i].frame.minX - 1
+            if saving { savedWidths[i] = arrangedSubviews[i].frame.width }
             setPosition(isLeading ? minPossiblePositionOfDivider(at: divider) : maxPossiblePositionOfDivider(at: divider), ofDividerAt: divider)
         } else {
-            let fallback: CGFloat = isLeading ? (designWidths[i] ?? 300) - 1 : bounds.width - (designWidths[i] ?? 300)
-            setPosition(savedPositions[i] ?? fallback, ofDividerAt: divider)
+            // Back at the width it had, kept as a width so a window resized meanwhile still fits it.
+            let w = openWidth(i)
+            setPosition(isLeading ? w : bounds.width - w - dividerThickness, ofDividerAt: divider)
         }
+    }
+}
+
+/// The window's resize rule (DL-129), apart from AppKit so DuoChecks can check it.
+public enum PaneWidths {
+    /// New widths for `total` (dividers taken out): side panes keep `current`, the `flex` pane takes
+    /// the rest; under its minimum the last pane gives way first, then the first, each down to its
+    /// own. Hidden panes stay 0.
+    public static func resized(current: [CGFloat], hidden: [Bool], total: CGFloat, flex: Int, minimums: [CGFloat]) -> [CGFloat] {
+        var w = current.enumerated().map { hidden[$0.offset] ? 0 : $0.element }
+        w[flex] = total - w.indices.filter { $0 != flex }.map { w[$0] }.reduce(0, +)
+        for i in [w.count - 1, 0] where i != flex && !hidden[i] && w[flex] < minimums[flex] {
+            let give = min(minimums[flex] - w[flex], max(0, w[i] - minimums[i]))
+            w[i] -= give; w[flex] += give
+        }
+        return w
+    }
+}
+
+/// A pane sliding in or out (DL-129). Terminals hold their size while it runs and take the new one
+/// when it ends, so a PTY is resized once (LR-14).
+@MainActor public enum PaneMotion {
+    public static let endedNotification = Notification.Name("DuoPaneMotionEnded")
+    /// Off for captures, which must not catch a pane mid-slide.
+    public static var enabled = true
+    public private(set) static var running = 0
+    static func began() { running += 1 }
+    static func ended() {
+        running = max(0, running - 1)
+        if running == 0 { NotificationCenter.default.post(name: endedNotification, object: nil) }
     }
 }

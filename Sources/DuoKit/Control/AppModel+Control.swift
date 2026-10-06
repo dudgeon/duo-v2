@@ -75,6 +75,9 @@ extension AppModel {
         case .viewSidebar:
             switch inv[0] { case "show": leftCollapsed = false; case "hide": leftCollapsed = true; default: leftCollapsed.toggle() }
             done(.ok(leftCollapsed ? "Left pane hidden." : "Left pane showing."))
+        case .viewRight:
+            switch inv[0] { case "show": rightCollapsed = false; case "hide": rightCollapsed = true; default: rightCollapsed.toggle() }
+            done(.ok(rightCollapsed ? "Right pane hidden." : "Right pane showing."))
         case .viewSort:
             guard let s = inv[0].flatMap(MapSort.init(rawValue:)) else { return done(.fail("usage: \(id.action.usage)")) }
             setMapSort(s)

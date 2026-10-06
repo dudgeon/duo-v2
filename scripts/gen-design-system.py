@@ -200,6 +200,14 @@ surfaces += [{"name": "propertiesBlockMargin", "value": px(pb["block"]["marginHo
              {"name": "propertiesLineMinHeight", "value": px(pb["line"]["minHeight"]), "usage": "A property line's minimum height."},
              {"name": "propertiesSuggestionsWidth", "value": px(pb["suggestions"]["widthNames"]), "usage": "Property name suggestions popover."}]
 
+mo = t["motion"]
+surfaces += [{"name": "motion" + k[0].upper() + k[1:], "value": f"{int(round(v * 1000))}ms", "usage": u} for k, v, u in [
+    ("paneToggle", mo["paneToggle"], "A side pane hiding or showing: its width, ease-in-out (DL-129)."),
+    ("scrimIn", mo["scrimIn"], "Search's scrim and modal fading in, ease-out."),
+    ("scrimOut", mo["scrimOut"], "Search's scrim and modal fading out."),
+    ("tileIn", mo["tileIn"], "A new tile on the map fading in, in its place."),
+    ("altitude", mo["altitude"], "The cross-fade between All projects and a project.")]]
+
 source = {"source": "github", "repo": "dudgeon/duo-v2", "paths": {"tokens": ["docs/design/build-handoff/tokens.json"],
           "swift": ["Sources/DuoKit/Design/Tokens.swift"]}, "generator": "scripts/gen-design-system.py"}
 tokens = {

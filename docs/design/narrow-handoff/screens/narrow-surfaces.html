@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1280x800">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DB-25">
+<!--
+7 · Newer surfaces at their minimums: right pane 360, console 480
+APPROVED BOARD. Geoff, 2026-10-06 (DL-129). Exported from the Design canvas
+https://claude.ai/artifact/Cn5T6UowtPnQR2Ezihnare (board NarrowSurfaces.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+Exempt, as in build-handoff: the traffic lights and toolbar material, everything inside a dark pane below its tab strip,
+grey placeholder bars, and the document's typography.
+-->
+<title>Duo · 7 · Newer surfaces at their minimums: right pane 360, console 480</title>
+<style>
+body{margin:0}
+.b{width:1280px;height:800px;box-sizing:border-box;padding:24px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;display:flex;gap:24px;white-space:nowrap}
+.b *{box-sizing:border-box}
+.k{font-size:11px;line-height:16px;color:#5B636D;white-space:normal}
+.h{font-size:14px;font-weight:600}
+.colm{display:flex;flex-direction:column;gap:12px}
+.pane{background:#FFFFFF;border:1px solid #C9CDD3}
+.rt{display:flex;align-items:center;gap:18px;height:36px;padding:0 20px;border-bottom:1px solid #C9CDD3}
+.t2{color:#5B636D}
+.bar{display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-bottom:1px solid #C9CDD3;font-size:12px}
+.btn{display:inline-flex;align-items:center;height:22px;padding:0 8px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px}
+.con{background:#15171B;color:#E6E8EB;font:12px/19px ui-monospace,'SF Mono',Menlo,monospace}
+.ct{display:flex;align-items:center;gap:18px;height:36px;padding:0 16px;border-bottom:1px solid #2B2F36}
+.ct span{display:flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<div class="b">
+
+<div class="colm" style="width: 360px">
+<span class="h">[P] Right pane at 360</span>
+<span class="k">Tabs past the width go into » n (as built). Each bar keeps its controls and gives up text first.</span>
+<div class="pane">
+<div class="rt"><span class="t2">Project</span><span class="t2">PRD v2</span><span style="font-weight: 600">garden-review.pptx</span><span class="t2" style="margin-left: auto">» 2</span></div>
+<div class="bar"><span class="t2">‹</span><span class="t2">›</span><span>2/5</span><span style="flex: 1"></span><span class="btn">Select Shape</span><span class="btn">Open With ⌄</span></div>
+<div style="padding: 16px; display: flex; flex-direction: column; gap: 12px"><div style="height: 184px; border: 1px solid #C9CDD3; border-radius: 4px; background: #FFFFFF; display: flex; flex-direction: column; gap: 10px; padding: 18px"><span style="font-weight: 600; font-size: 16px">Garden review</span><div style="height: 6px; width: 70%; border-radius: 3px; background: #D5D9DE"></div><div style="height: 6px; width: 50%; border-radius: 3px; background: #D5D9DE"></div></div><span class="k">Slide bar: “Slide 2 of 5” shortens to 2/5 under 400 (F-121, as built).</span></div>
+</div>
+<div class="pane">
+<div class="rt"><span class="t2">Project</span><span class="t2">PRD v2</span><span style="font-weight: 600">Stripe docs</span><span class="t2" style="margin-left: auto">» 2</span></div>
+<div class="bar"><span class="t2">‹</span><span class="t2">›</span><span class="t2">↻</span><span style="flex: 1; min-width: 0; height: 22px; border: 1px solid #C9CDD3; border-radius: 6px; padding: 0 8px; display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis">docs.stripe.com/payments/sav…</span><span>125%</span></div>
+<div style="padding: 12px 16px" class="k">Browser bar: the address field shrinks and truncates its tail; the zoom % never truncates, and clicking it resets to 100% (DL-124's indicator, Q-66).</div>
+</div>
+<div class="pane" style="padding: 12px; display: flex; flex-direction: column; gap: 8px">
+<span class="k">Picker bar at 360: buttons wrap to two rows (F-121, as built).</span>
+<div style="display: flex; gap: 6px"><span class="btn" style="background: #1F2328; color: #FFFFFF; border-color: #1F2328">Send to Claude</span><span class="btn">Send To ⌄</span></div>
+<div style="display: flex; gap: 6px"><span class="btn">Pick Another</span><span class="btn">Cancel</span></div>
+</div>
+</div>
+
+<div class="colm" style="width: 480px">
+<span class="h">[P] Console at 480</span>
+<span class="k">Console tabs past the width go into » n (as built). The chat composer’s hint line drops hints from the right: first ⌘[ ⌘] your messages, then / commands. The mode pill and the model stay.</span>
+<div class="con">
+<div class="ct"><span style="font-weight: 500"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#F97316"></circle></svg>PRD v2 edits</span><span style="color: #9AA1AB"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#9AA1AB" stroke-width="1.5"></circle></svg>Teardown research</span><span style="color: #9AA1AB">» 2</span><span style="color: #9AA1AB">+ ⌄</span></div>
+</div>
+<div style="background: #F3F4F6; border: 1px solid #C9CDD3; padding: 16px; display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+<div style="height: 44px; border: 1px solid #8B939C; border-radius: 10px; background: #FFFFFF; display: flex; align-items: center; padding: 0 16px; color: #5B636D; font-size: 14px">Reply to Claude</div>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #5B636D"><span style="border: 1px solid #8B939C; border-radius: 9px; padding: 0 7px; font-size: 11px; line-height: 16px">manual mode</span><span>↩ send · ⇧↩ new line · / commands</span><span style="margin-left: auto">Opus</span></div>
+<span class="k">At 480: one hint dropped.</span>
+</div>
+<div style="background: #F3F4F6; border: 1px solid #C9CDD3; padding: 16px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; width: 400px">
+<div style="height: 44px; border: 1px solid #8B939C; border-radius: 10px; background: #FFFFFF; display: flex; align-items: center; padding: 0 16px; color: #5B636D; font-size: 14px">Reply to Claude</div>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #5B636D"><span style="border: 1px solid #8B939C; border-radius: 9px; padding: 0 7px; font-size: 11px; line-height: 16px">manual mode</span><span>↩ send · ⇧↩ new line</span><span style="margin-left: auto">Opus</span></div>
+<span class="k">Narrower still (the left pane wide, the right pane at its widest): two dropped.</span>
+</div>
+</div>
+
+<div class="colm" style="flex: 1; min-width: 0">
+<span class="h">[P] Rules</span>
+<div class="k" style="font-size: 13px; line-height: 20px; color: #1F2328; display: flex; flex-direction: column; gap: 10px">
+<span>Names truncate their tail, wait times never (handoff §8).</span>
+<span>Buttons never wrap their label; a bar that can’t fit its buttons wraps them to a second row.</span>
+<span>No surface scrolls sideways.</span>
+<span>A terminal is never resized below 8 columns by 1 row, even mid-animation (LR-14).</span>
+</div>
+</div>
+
+</div>
+</body>
+</html>

@@ -32,11 +32,11 @@ Measured against §3a's test: Geoff can use Duo all day instead of Terminal plus
 | Documents | Built: the editor with byte-faithful saves, collisions (DL-77), Claude's edits through the buffer (DL-78), the properties block (F-77), documents drawn as designed (F-84), local HTML. |
 | CLI | Built: `duo2` parity with every UI action (DL-71), install loop (DL-75). |
 | Delivery | Signed, notarized DMG releases (v0.1.0–v0.1.5). **Gate zero on the work Mac (§2, G1) is still to run.** |
-| Undesigned-but-required | Designed and built in slices 1–3 (F-58, F-76, F-84). Left: the menu bar (DB-26) and narrow windows / right-pane collapse (DB-25). |
+| Undesigned-but-required | Designed and built in slices 1–3 (F-58, F-76, F-84). Left: the menu bar (DB-26). Narrow windows and right-pane collapse (DB-25) are designed and built (DL-129, F-128 to F-130). |
 
 **Pulled forward from v1.1 and later** (each logged): chat mode (DL-118 to DL-120, ENH-13; Geoff, 2026-10-06), search with its full UI (F-56), browser tabs and page driving (F-71, F-72), reconciling a moved project (F-78).
 
-**Left for v1:** gate zero on the work Mac, now including whether in-app updates work there (`docs/plan/spikes/sparkle-work-mac.md`); the menu bar (DB-26, proposed as Q-41); narrow windows (DB-25); Geoff's acceptance walk (`docs/acceptance/`). In-app updates (Sparkle) are built (F-85).
+**Left for v1:** gate zero on the work Mac, now including whether in-app updates work there (`docs/plan/spikes/sparkle-work-mac.md`); the menu bar (DB-26, proposed as Q-41); Geoff's acceptance walk (`docs/acceptance/`). In-app updates (Sparkle) are built (F-85).
 
 ---
 

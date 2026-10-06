@@ -1038,6 +1038,30 @@ func repoFixture() throws -> Fixture {
     let o = LaunchOptions(arguments: ["Duo", "--state", "flow-zoom-3", "--capture", "/tmp/x.png", "--left", "collapsed"])
     check(o.state == .flowZoom3 && o.capturePath == "/tmp/x.png" && o.collapseLeft && o.capturing, "flags parse")
 
+    check(LaunchOptions(arguments: ["Duo", "--state", "narrow-project", "--window", "1280x800"]).windowSize == CGSize(width: 1280, height: 800), "--window takes <w>x<h> (DL-129)")
+    check(SupportFolder.scriptedFlags.contains("--window"), "--window marks a scripted run")
+
+    print("narrow windows (DL-129)")
+    do {
+        // Project at 1440 → 1280: sides hold at 300 and 460 (each less its divider), the console takes the change.
+        let mins: [CGFloat] = [239, 480, 359]
+        var w = PaneWidths.resized(current: [299, 679, 459], hidden: [false, false, false], total: 1278, flex: 1, minimums: mins)
+        check(w == [299, 520, 459], "1280 wide: 300 | 520 | 460, the console flexes (got \(w))")
+        w = PaneWidths.resized(current: [299, 520, 459], hidden: [false, false, false], total: 1218, flex: 1, minimums: mins)
+        check(w == [299, 480, 439], "under the console's minimum the right pane gives way first (got \(w))")
+        w = PaneWidths.resized(current: [299, 480, 359], hidden: [false, false, false], total: 1078, flex: 1, minimums: mins)
+        check(w == [239, 480, 359], "then the left, down to its minimum (got \(w))")
+        w = PaneWidths.resized(current: [299, 520, 0], hidden: [false, false, true], total: 1278, flex: 1, minimums: mins)
+        check(w == [299, 979, 0], "a hidden right pane stays hidden; the console takes its width (got \(w))")
+        check(MapPacking.columnCount(width: 568, items: 6, minWidth: 220, spacing: 14, maxPerRow: 3) == 2, "a 600 map packs two across")
+        check(MapPacking.columnCount(width: 908, items: 6, minWidth: 220, spacing: 14, maxPerRow: 3) == 3, "with the action column hidden, three")
+        check(MapPacking.columnCount(width: 1400, items: 2, minWidth: 220, spacing: 14, maxPerRow: 3) == 2, "never more columns than topics")
+        check(MapPacking.columnCount(width: 200, items: 6, minWidth: 220, spacing: 14, maxPerRow: 3) == 1, "at least one")
+        check(MapPacking.columns(heights: [300, 400, 200, 100], count: 2, rowSpacing: 20) == [0, 1, 0, 1], "each topic goes to the shortest column, in order")
+        check(DuoAction.resolve(["view", "right", "hide"]) != nil, "duo2 view right (DL-71)")
+        check(DuoCommand.toggleRightPane.isEnabled(in: AppModel(fixture: try repoFixture())), "⌥⌘0 is built")
+    }
+
     print("support folder: scripted runs never use the real one (C-21, F-89)")
     do {
         let none: [String: String] = ["HOME": NSHomeDirectory()]

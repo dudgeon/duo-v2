@@ -4,6 +4,7 @@
 #   scripts/check-ui.sh                    build, capture every state, compare each with its target
 #   scripts/check-ui.sh overview project   only these states
 #   NO_BUILD=1 scripts/check-ui.sh         reuse build/Duo.app
+#   WINDOW=1280x800 scripts/check-ui.sh …  at another window size (DB-25)
 #
 # Writes build/ui/<state>.png (the app) and build/ui/<state>-compare.png (TARGET | BUILD | DIFFERENCE).
 set -euo pipefail
@@ -15,6 +16,7 @@ mkdir -p "$out"
 states=("$@")
 [ ${#states[@]} -gt 0 ] || states=(overview flow-zoom-1 project flow-zoom-2 flow-zoom-3 flow-zoom-4)
 extra=()
+[ -z "${WINDOW:-}" ] || extra+=(--window "$WINDOW")
 
 # Run the app with a watchdog: a launch that never captures (findings F-8) fails instead of hanging.
 capture() {
