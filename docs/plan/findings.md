@@ -1301,3 +1301,18 @@ Geoff: "please be sure to test how askUserQuestions works in chat mode". Result:
   - Chat about this, then a composer follow-up;
   - a decline.
 - **No hook for declines:** a declined question and "Chat about this" fire no hook, not even `Stop`. Only the transcript's `tool_result` (`toolDenialKind: user-rejected`, no `userFeedback`) records it.
+
+## F-107 · Scripted instances re-ask the install question, and one installed into Geoff's home (C-28, 2026-10-06)
+
+Geoff: "many sessions are spawning fresh instances of duo -- each has no state and is reasking the installation questions". The detail is in `docs/plan/spikes/scripted-instances.md`.
+
+- **Why it re-asks:** install consent is kept in the support folder (`Duo/installed.json`). Since F-89 every scripted run starts with an empty one, so each **non-capturing** instance (`open -n build/Duo.app --args --workspace …`, no `--capture`) asks "Let Claude sessions outside Duo use it?" again, 1 s after launch.
+- **What's safe:** capture runs (`check-ui.sh`, `run-live.sh`, any `--capture`/`--capture-window`) never ask. The sheet doesn't block `--then` or `duo2`; it is a SwiftUI sheet (F-54 holds).
+- **What isn't:** the question's targets aren't in the support folder.
+  - `~/.local/bin/duo2` is always the real one, unless `DUO_INSTALL_ROOT` is set.
+  - CLAUDE.md and the skill follow `CLAUDE_CONFIG_DIR`, otherwise `~/.claude`.
+  - A fresh manifest also forgets the user-edit guards (`blockHash`, `skillHash`, `blockRemovedByUser`).
+- **It happened:** at 10:49 an instance from session `b04dc5aa` (session-task-context work tree) relinked Geoff's `~/.local/bin/duo2` into that work tree's build. Its scratch `CLAUDE_CONFIG_DIR` kept CLAUDE.md and the skill safe.
+- **Focus:** `SheetCenter.ask` activates the app over whatever Geoff is using, with **Install** as the default button, so one stray Return installs.
+- **Shared between instances:** `UserDefaults` (search recents), the bundle id's notifications, and the duo2 link. Sockets, endpoints and hooks are per folder.
+- **Rule for the fix:** whether an instance is isolated is decided by its support folder, not its flags. Geoff's acceptance Duo is `--workspace` with the real folder, and must stay his.
