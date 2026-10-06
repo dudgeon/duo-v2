@@ -1208,8 +1208,13 @@ Full note: `docs/plan/spikes/file-navigator-scope.md`. Checked in the code and o
   - Recommendation: `@aiden0z/pptx-renderer` (Apache-2.0, active) in a WKWebView, patched by four lines so every shape's element carries its OOXML id.
   - The agent reads the same ids from the XML (`Spikes/PptxViewer/pptx_outline.py`).
   - The proofs of concept are in `Spikes/PptxViewer/`.
-- **Driving WKWebView from a script:** an off-screen or ordered-back window counts as occluded, so requestAnimationFrame never runs and ECharts/nv.d3 charts stay blank. A 2%-alpha floating window that ignores the mouse renders them (`snap.swift`).
-- Checks: 340 pass (on main as of be41dea), including five for binary detection. `NO_BUILD=1 scripts/check-ui.sh` passes (its six states are unchanged). Live captures on scratch data (own `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`) are in `build/ui/c26-*.png`.
+- **The agent's reader, started before the viewer (DL-121):** `Pptx.outline` (`Sources/DuoSearch/Pptx.swift`, so `duo2` can use it without the app) gives each slide's shapes (OOXML id, name, type, groups, text, box in slide pixels), tables as tab-separated rows, charts with kind and series, and speaker notes.
+  - Foundation can't unzip, so it has a small zip reader: the central directory, then stored or raw DEFLATE through Compression's `COMPRESSION_ZLIB`. It refuses zip64, encryption and entries over 64 MB. The XML parser never resolves external entities.
+  - Tested on a real PowerPoint deck (PPTXjs's `Sample_12.pptx`): 12 slides with tables, charts, SmartArt and media in 9 ms, with the same shape counts as the Python spike.
+  - The Python spike's `.//a:ext` also matched an extension list's `a:ext` and crashed on that deck. Both versions now read only the shape's own `xfrm`.
+  - No `duo2` verbs yet: they come with the viewer's slot.
+ an off-screen or ordered-back window counts as occluded, so requestAnimationFrame never runs and ECharts/nv.d3 charts stay blank. A 2%-alpha floating window that ignores the mouse renders them (`snap.swift`).
+- Checks: 372 pass (on main as of 97ff92b), including five for binary detection and six for the deck reader. `NO_BUILD=1 scripts/check-ui.sh` passes (its six states are unchanged). Live captures on scratch data (own `DUO_SUPPORT_DIR` and `CLAUDE_CONFIG_DIR`) are in `build/ui/c26-*.png`.
 
 ## F-103 · Chat mode spike: where a live session's structure comes from (ENH-13, DL-118, 2026-10-06)
 

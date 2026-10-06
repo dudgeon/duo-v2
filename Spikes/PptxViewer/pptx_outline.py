@@ -39,7 +39,11 @@ def text_of(el):
 
 
 def box(el):
-    off, ext = el.find(".//a:off", NS), el.find(".//a:ext", NS)
+    # The shape's own transform only: `.//a:ext` would also match an extension list's a:ext.
+    xfrm = next((c.find("a:xfrm", NS) for c in el if c.tag.endswith("}spPr") or c.tag.endswith("}grpSpPr")), None)
+    xfrm = xfrm if xfrm is not None else el.find("p:xfrm", NS)
+    if xfrm is None: return None
+    off, ext = xfrm.find("a:off", NS), xfrm.find("a:ext", NS)
     if off is None or ext is None: return None
     return {k: round(int(v) / EMU_PX) for k, v in [("x", off.get("x")), ("y", off.get("y")), ("w", ext.get("cx")), ("h", ext.get("cy"))]}
 

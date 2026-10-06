@@ -1148,6 +1148,23 @@ func repoFixture() throws -> Fixture {
     check(FileKind.quickLookPreviews(binDir.appending(path: "deck.pptx")) && !FileKind.quickLookPreviews(binDir.appending(path: "raw.bin")),
           "Quick Look previews a deck; an unknown binary gets the note")
 
+    print("reading a PowerPoint deck for the agent (ENH-12, DL-121)")
+    let decks = repoRoot().appending(path: "Spikes/PptxViewer/decks")
+    let shapesDeck = try Pptx.outline(decks.appending(path: "shapes.pptx"))
+    let diamond = shapesDeck.last?.shapes.first { $0.name == "Diamond 6" }
+    check(shapesDeck.count == 2 && diamond?.id == 7 && diamond?.inGroups == ["Group 2", "Group 4"] && diamond?.text == "Ship?",
+          "a shape in a group in a group: its id, its groups outermost first, its text")
+    check(diamond?.box == Pptx.Box(x: 912, y: 173, w: 230, h: 154), "its box in slide pixels, the same the viewer reported (\(String(describing: diamond?.box)))")
+    let dataDeck = try Pptx.outline(decks.appending(path: "data.pptx"))
+    check(dataDeck[0].shapes.first { $0.type == "table" }?.text == "Region\tQ2\tQ3\nNorth\t1.2m\t1.4m\nSouth\t0.9m\t1.1m\nWest\t2.0m\t1.8m", "a table reads as tab-separated rows")
+    let bar = dataDeck[1].shapes.first { $0.type == "chart" }
+    check(bar?.chart == "bar" && bar?.series == [.init(name: "Q2", values: [1.2, 0.9, 2.0]), .init(name: "Q3", values: [1.4, 1.1, 1.8])], "a chart gives its kind and series")
+    let basics = try Pptx.outline(decks.appending(path: "basics.pptx"), slide: 2)
+    check(basics.count == 1 && basics[0].number == 2 && basics[0].notes == "Mention the churn number first."
+          && basics[0].shapes.contains { $0.text?.hasPrefix("Revenue up 12% on the quarter\nNew customers: 41") == true }, "one slide: its bullets as lines and its speaker notes")
+    check((try? Pptx.outline(binDir.appending(path: "notes.md"))) == nil && (try? Pptx.outline(binDir.appending(path: "mystery.blob"))) == nil,
+          "a file that isn't a deck is refused, not misread")
+
     print("files in and out of the project (C-20, DL-105, DL-106, DL-107)")
     let treeDir = FileManager.default.temporaryDirectory.appending(path: "duo-tree-\(UUID().uuidString)")
     let tfm = FileManager.default
