@@ -347,7 +347,7 @@ public final class AppModel {
             rememberedHome = folder
             DuoState.update { $0.home = folder }
         }
-        let mine = Set(terminals.all.compactMap { t -> Int32? in t.view.process?.shellPid })
+        let mine = Set(terminals.all.compactMap { t -> Int32? in t.view.process?.shellPid } + terminals.closingPids)
         // A Claude started by typing `claude` in a Duo shell is a child of that shell: still Duo's (DB-4).
         liveElsewhere = Set(beacons.filter { b in !mine.contains(b.pid) && !mine.contains { AppOwning.descends(b.pid, from: $0) } }.map(\.sessionId))
         // One row per session id, whatever the sources disagree on (seen once, F-29).

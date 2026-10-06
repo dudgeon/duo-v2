@@ -1547,6 +1547,33 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - **A `claude` that doesn't answer `--version` hangs Duo's main thread.** `ClaudeVersion.known` (chat mode) runs `claude --version` and waits for it to exit (`TerminalSession.hookArgs` → `ClaudeVersion.ask`, `waitUntilExit`). A stand-in claude that ignored `--version` hung a scripted instance at launch, and only killing the stand-in freed it. A real claude answers quickly, but a wedged one would freeze Duo. Stand-ins for scripted runs must answer `--version`.
   - **CLAUDE.md** still says web views don't draw in window captures (F-25). With this fix they do, editor included, whether or not the window is in front.
 
+## F-126 · A closed terminal is kept, and read, until its process ends: SwiftTerm's teardown left Claude exiting for good (C-30, 2026-10-06)
+
+- **What Geoff's Duo showed.** After the restart into pid 48703, restore resumed 6dc1c061, a622b677 and 1cb0e487 with their tabs, as LR-58 asks: they had terminals open when the old Duo quit, because the director had started them with `duo2 session new` and never closed them. Restore didn't start anything without a tab. Twenty seconds later the director ran `duo2 session close` on all three (its transcript, 20:03:10). Close ended them, and the second close said "isn't running in Duo" because the tab was already gone. They stayed in `?Es` (exiting, no tty), `kill -0` reached them, and archive refused.
+- **Why they never finished exiting.** `TerminalStore.close` sent SIGTERM and dropped the terminal at once. Dropping the view deinitializes SwiftTerm's `LocalProcess` while the child still runs. That stops its reader and closes the read fd, but keeps a dup'd write fd on the PTY master until a waiter thread has reaped the child ("keep the master open until the child reaps"). Claude, the session leader, writes its last frame and runs its exit hooks; it then enters the kernel's exit with output in the terminal that nobody will read, and waits there, past SIGKILL. So the master is never released, and the child is never reaped. Evidence:
+  - `lsof` on Geoff's Duo: one fd each on four PTYs (15,10 to 15,13), against two for every live terminal.
+  - `sample` of it: five `swiftterm-child-reaper` threads blocked in `waitid`, which is SwiftTerm's deinit path.
+  - The real `claude` (scratch config, not signed in, no turn spent), run in a bare PTY torn down as SwiftTerm does (stop reading, keep the master open, SIGTERM, SIGKILL 0.5 s later), sits in `?Es ??` for good. One read of the master and it becomes a zombie and is reaped.
+  - A process that exits with output unread waits even when it's small, if it was written from a second thread as Node does.
+- **Fix (built):**
+  - **`TerminalStore` never lets a running terminal go.** `close`, `forget`, and a `rekey` onto a key that already has a terminal all go through `release`. It sends SIGTERM when closing and keeps the terminal in `closing`, still read, until SwiftTerm reports the process ended and reaped (`processTerminated`, now also `onGone`). Then it drops it.
+  - **SIGKILL follows after `TerminalStore.killAfter`** (3 s) if the process is still there. Closing pids still count as Duo's, never "running elsewhere".
+  - **An exiting process has ended.** `ProcessLiveness.isRunning` is `kill -0` and not a zombie and not past exit (`P_WEXIT`, by `sysctl`). `Beacon.readAll` uses it, so a session whose Claude is stuck exiting isn't live: archive takes it, and it isn't "running elsewhere".
+  - **Close and Archive end a Duo child with no terminal** (`orphanPid`, `endOrphan`). This is a beacon whose process's parent is Duo but which isn't one of its terminals, so it shouldn't occur now. `duo2 session close` ends it ("which Duo was running without a tab") instead of "isn't running in Duo", and Archive ends it rather than refusing.
+- **`pgrep -P` doesn't list a process in state E.** To watch children through their exit, list their pids first.
+- **Proof:**
+  - **`scripts/check-reap.sh`** runs an isolated Duo with its own support folder and `CLAUDE_CONFIG_DIR`, three fixture sessions copied in, and a stand-in `claude` that exits like a signed-in one: its goodbye frame from a writer thread, then a second of exit hooks. A restore file lists the three idle sessions; `duo2 session close` ends them; then it watches for 5 s.
+    - On main, all three were exiting, with only SwiftTerm's write fd left on each PTY: Geoff's signature. In that run they were freed about a second later, by timing Geoff's didn't have.
+    - With the fix, none was ever exiting, every PTY was released once its process ended, and archive took all three.
+  - **DuoChecks** (`ReapChecks.swift`):
+    - A child exiting with its output unread is reached by `kill -0` but isn't running, and its beacon doesn't count.
+    - A closed terminal is held as closing, then reaped and let go.
+    - One that ignores SIGTERM gets SIGKILL.
+    - Re-keying onto a taken key closes the terminal there.
+  - `swift run DuoChecks`: 593 passed, 0 failed, 12 of them new. `scripts/bundle.sh` and `NO_BUILD=1 scripts/check-ui.sh` pass; nothing visible changed.
+- **Seen on the way: one chat check reads the environment it runs in.** "(c) a plain shell tab keeps the user's EDITOR" fails when DuoChecks runs from a session inside Duo: that session inherits `EDITOR`, `VISUAL` and `DUO_COMPOSE_DIR` from Duo's compose helper. Run DuoChecks with `env -u EDITOR -u VISUAL -u DUO_COMPOSE_DIR` there.
+- **Geoff's stuck three stay until his Duo next quits.** Their PTYs close then, and they end. With this build, archive takes them before that.
+
 ## F-125 · `claude --version` is asked with a 2 s limit, never on the main thread at length (C-34, F-111, 2026-10-06)
 
 - Chat mode's hooks are added only for a CLI of 2.1.152 or later (F-111), so a session start needs the version. It was asked synchronously with `waitUntilExit()` and no timeout. A stand-in that hung on `--version` froze Duo.

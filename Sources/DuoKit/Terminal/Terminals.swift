@@ -199,8 +199,15 @@ public final class TerminalSession {
     public private(set) var ended: (at: Date, status: Int32?)?
     /// Told when the process ends by itself, so the console can show its bar.
     var onEnded: (@MainActor (TerminalSession) -> Void)?
+    /// Told when the process has ended and been reaped, however it ended (the store lets a closed
+    /// terminal go then, F-126).
+    var onGone: (@MainActor (TerminalSession) -> Void)?
+
+    /// Whether the process is still there: running, or ended and not yet reaped.
+    var hasProcess: Bool { view.process?.running == true }
 
     fileprivate func processEnded(_ status: Int32?) {
+        onGone?(self)
         guard !exited else { return }
         exited = true
         ended = (Date(), status)
@@ -301,6 +308,13 @@ public final class TerminalStore {
         }
     }
 
+    /// Closed terminals whose process hasn't ended yet. Each is kept, and its terminal still read,
+    /// until it has: SwiftTerm stops reading a terminal it lets go of, and a Claude that exits with
+    /// output nobody reads waits in the kernel (state E) for good, never reaped (C-30, F-126).
+    private var closing: [ObjectIdentifier: TerminalSession] = [:]
+    /// How long a closed process has to end after SIGTERM before it gets SIGKILL.
+    nonisolated(unsafe) public static var killAfter: TimeInterval = 3
+
     public func session(_ key: String, command: @autoclosure () -> TerminalCommand, cwd: @autoclosure () -> String) -> TerminalSession {
         if let s = sessions[key] { return s }
         let s = TerminalSession(key: key, command: command(), cwd: cwd())
@@ -315,12 +329,39 @@ public final class TerminalStore {
     public var onEnded: (@MainActor (TerminalSession) -> Void)?
 
     /// Forgets an ended terminal without ending anything, so the next open starts it afresh.
-    public func forget(_ key: String) { sessions.removeValue(forKey: key) }
+    public func forget(_ key: String) {
+        if let s = sessions.removeValue(forKey: key) { release(s, ending: false) }
+    }
 
     /// Ends one session's process and forgets its terminal (explicit close only, LR-13).
     public func close(_ key: String) {
-        if let s = sessions.removeValue(forKey: key) { ProcessWatcher.shared.sessions[ObjectIdentifier(s.view)] = nil; s.terminate() }
+        if let s = sessions.removeValue(forKey: key) { release(s, ending: true) }
     }
+
+    /// Lets a terminal go once its process has ended and been reaped, never before (F-126).
+    private func release(_ s: TerminalSession, ending: Bool) {
+        let id = ObjectIdentifier(s.view)
+        if ending { s.terminate() }
+        guard s.hasProcess else { ProcessWatcher.shared.sessions[id] = nil; return }
+        closing[id] = s
+        s.onGone = { [weak self] t in
+            self?.closing[ObjectIdentifier(t.view)] = nil
+            ProcessWatcher.shared.sessions[ObjectIdentifier(t.view)] = nil
+        }
+        guard ending else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.killAfter) { [weak self] in
+            MainActor.assumeIsolated {
+                guard self?.closing[id] != nil, let pid = s.view.process?.shellPid, pid > 0 else { return }
+                kill(pid, SIGKILL)
+            }
+        }
+    }
+
+    /// Closed terminals still waiting for their process to end.
+    public var closingCount: Int { closing.count }
+    /// Their processes: still Duo's while they end, never "running elsewhere".
+    public var closingPids: [Int32] { closing.values.compactMap { $0.view.process?.shellPid }.filter { $0 > 0 } }
+
     public var all: [TerminalSession] { Array(sessions.values) }
 
     public func terminateAll() { sessions.values.forEach { $0.terminate() } }
@@ -329,6 +370,8 @@ public final class TerminalStore {
     /// new key (F-29).
     public func rekey(_ old: String, to new: String) {
         guard old != new, let s = sessions.removeValue(forKey: old) else { return }
+        // A terminal already under the new key is closed properly, not dropped (F-126).
+        if let displaced = sessions.removeValue(forKey: new) { release(displaced, ending: true) }
         s.key = new
         sessions[new] = s
     }
