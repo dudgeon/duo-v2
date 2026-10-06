@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Motion tokens and rules</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+table{border-collapse:collapse}
+th,td{border:1px solid #C9CDD3;padding:4px 8px;text-align:left;vertical-align:top}
+th{background:#F3F4F6;font-weight:600}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; padding: 24px; background: #F3F4F6; color: #1F2328; font: 13px/20px -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; gap: 28px">
+<div style="width: 700px; flex: none; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; font-weight: 600">[P] Motion tokens: DL-129’s block, extended</span>
+<table style="font-size: 12px; line-height: 17px; background: #FFFFFF">
+<tr><th>Token</th><th>ms</th><th>Easing</th><th>Used by</th></tr>
+<tr style="color: #5B636D"><td>paneToggle (DL-129)</td><td>200</td><td>in-out</td><td>a pane hides or shows</td></tr>
+<tr style="color: #5B636D"><td>scrimIn · scrimOut (DL-129)</td><td>120 · 100</td><td>out</td><td>search; now also Duo’s sheets</td></tr>
+<tr style="color: #5B636D"><td>tileIn (DL-129)</td><td>150</td><td>out</td><td>a new map tile</td></tr>
+<tr style="color: #5B636D"><td>altitude (DL-129)</td><td>150</td><td>out</td><td>zoom; now also project → project</td></tr>
+<tr><td>rowIn · rowOut</td><td>150 · 150</td><td>out · in</td><td>session and task rows</td></tr>
+<tr><td>rowMove</td><td>200</td><td>in-out</td><td>a row changing section; gaps closing</td></tr>
+<tr><td>rowHold</td><td>5000</td><td>a delay</td><td>Mark Complete: checked, struck through, grey; time to undo (Geoff)</td></tr>
+<tr><td>fold</td><td>180</td><td>in-out</td><td>chevrons, folds, the file tree, properties</td></tr>
+<tr><td>sheetIn · sheetOut · sheetSwap</td><td>200 · 150 · 120</td><td>out · in · in-out</td><td>Duo’s sheets and questions</td></tr>
+<tr><td>cardIn · cardOut</td><td>200 · 150</td><td>out · in</td><td>the chat review card</td></tr>
+<tr><td>lift · landed</td><td>200 · 400</td><td>out</td><td>drag and drop (today’s springs)</td></tr>
+<tr><td>tabIn · tabOut · tabMove</td><td>150 · 120 · 150</td><td>out · in · in-out</td><td>tab strips (medium)</td></tr>
+<tr><td>noticeIn · noticeOut</td><td>150 · 120</td><td>out · in</td><td>notice bars (medium)</td></tr>
+<tr><td>chipIn · count</td><td>150 · 200</td><td>out</td><td>the needs-you chip (medium)</td></tr>
+<tr><td>highlightIn · highlightOut</td><td>200 · 600</td><td>out · in-out</td><td>Claude’s edits in the editor (medium)</td></tr>
+<tr><td>slide · outline</td><td>250 · 80</td><td>in-out · out</td><td>the deck (medium)</td></tr>
+<tr><td>messageIn · dropIn</td><td>120 · 100</td><td>out</td><td>chat items; a tree drop target (low)</td></tr>
+</table>
+<span style="font-size: 11px; line-height: 16px; color: #5B636D">Grey rows are DL-129’s, as approved. Durations go in <code>motion</code> in seconds, as DL-129 does; easings go in a new <code>motionEase</code> map.</span>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 14px; font-weight: 600">[P] Rules</span>
+<div style="background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px">
+<span><b>Arriving</b> eases out, <b>leaving</b> eases in, <b>moving</b> eases in and out.</span>
+<span><b>Reduce Motion</b> makes all of Duo’s own motion instant: the change still happens, nothing moves (DL-129). The editor and deck pages follow it through <code>prefers-reduced-motion</code>.</span>
+<span>Motion shows <b>where</b> something went, <b>that</b> a click worked, or keeps your <b>place</b>. Never for its own sake.</span>
+<span>Nothing scales, fades or moves over a <b>terminal’s text</b>.</span>
+</div>
+<span style="font-size: 14px; font-weight: 600">[P] Stays still</span>
+<div style="background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 18px">
+<span>State glyphs and the needs-you dot (no pulse, no flash)</span>
+<span>The hover × on a tab and the hover + on a task: there the moment the pointer is</span>
+<span>Search results while typing, and the selection moving through them</span>
+<span>Chat text streaming in, and its scroll pinned to the bottom</span>
+<span>Switching Terminal ↔ Chat: an instant swap</span>
+<span>Map order (DL-129); the peek’s rows; the editor’s task box</span>
+<span>A tile growing into its project: it would blur the terminals</span>
+</div>
+<span style="font-size: 11px; line-height: 16px; color: #5B636D">The full audit, with every action, costs and platform limits, is in the repo as docs/design/motion-handoff/audit.md.</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

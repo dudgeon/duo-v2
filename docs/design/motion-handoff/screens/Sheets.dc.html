@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sheets hang from the toolbar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.fr{width:170px;height:120px;border:1px solid #C9CDD3;border-radius:4px;background:#FFFFFF;position:relative;overflow:hidden;flex:none}
+.tb{height:14px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;position:relative;z-index:2}
+.bd{position:absolute;left:0;right:0;top:15px;bottom:0;overflow:hidden}
+.side{position:absolute;left:0;top:0;bottom:0;width:44px;background:#FFFFFF;border-right:1px solid #C9CDD3}
+.con{position:absolute;left:45px;top:0;bottom:0;right:0;background:#15171B}
+.sh{position:absolute;left:35px;width:100px;height:56px;background:#FFFFFF;border:1px solid #C9CDD3;border-top:none;border-radius:0 0 6px 6px;box-shadow:0 6px 16px rgba(31,35,40,.22);box-sizing:border-box;padding:6px 8px;font-size:8px;line-height:11px}
+.lab{font-size:11px;line-height:16px;color:#5B636D}
+.btn{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font:12px/16px -apple-system,system-ui,sans-serif;color:#1F2328;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 1280px; height: 600px; box-sizing: border-box; padding: 24px; background: #F3F4F6; color: #1F2328; font: 13px/20px -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; gap: 28px">
+<div style="width: 780px; flex: none; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 14px; font-weight: 600">Before (today): the sheet pops in, all at once</span>
+<div style="display: flex; gap: 10px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="tb"></div><div class="bd"><div class="side"></div><div class="con"></div></div></div><span class="lab">0 ms: Archive Task… clicked</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="tb"></div><div class="bd"><div style="position: absolute; inset: 0; opacity: .55"><div class="side"></div><div class="con"></div></div><div class="sh" style="top: 0">Archive “Q4 pricing”?<br>Its 2 sessions too?</div></div></div><span class="lab">next frame: there</span></div>
+</div>
+<span style="font-size: 14px; font-weight: 600; margin-top: 8px">[P] After: it hangs down from the toolbar, as a system sheet does</span>
+<div style="display: flex; gap: 10px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="tb"></div><div class="bd"><div class="side"></div><div class="con"></div><div class="sh" style="top: -58px"></div></div></div><span class="lab">0 ms</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="tb"></div><div class="bd"><div style="position: absolute; inset: 0; opacity: .7"><div class="side"></div><div class="con"></div></div><div class="sh" style="top: -24px">Archive “Q4 pricing”?<br>Its 2 sessions too?</div></div></div><span class="lab">60 ms · dim 120 ms ease-out</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="tb"></div><div class="bd"><div style="position: absolute; inset: 0; opacity: .55"><div class="side"></div><div class="con"></div></div><div class="sh" style="top: -6px">Archive “Q4 pricing”?<br>Its 2 sessions too?</div></div></div><span class="lab">120 ms</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr"><div class="tb"></div><div class="bd"><div style="position: absolute; inset: 0; opacity: .55"><div class="side"></div><div class="con"></div></div><div class="sh" style="top: 0">Archive “Q4 pricing”?<br>Its 2 sessions too?</div></div></div><span class="lab">200 ms · sheetIn, ease-out</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 18px; margin-top: 6px">
+<span><b>Answered:</b> it slides back up, sheetOut 150 ms ease-in, and the dim lifts, scrimOut 100 ms.</span>
+<span><b>The next queued question</b> (SheetCenter): its text cross-fades in the same sheet, sheetSwap 120 ms; the sheet doesn’t drop again.</span>
+<span><b>Reduce Motion:</b> it is there at once, and gone at once.</span>
+<span style="color: #5B636D">Why: Duo draws its own sheets (DuoQuestion, Move into Home…, New project), so §9’s “system sheet animation” never applied. They are the one surface that looks like a system sheet but doesn’t move like one.</span>
+</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; font-weight: 600">[P] Try it</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<button type="button" class="btn" onClick="{{toggle}}">{{toggleLabel}}</button>
+<button type="button" class="btn" onClick="{{next}}">Next question</button>
+<button type="button" class="btn" onClick="{{toggleSlow}}">{{slowLabel}}</button>
+<button type="button" class="btn" onClick="{{toggleRm}}">{{rmLabel}}</button>
+</div>
+<div style="position: relative; width: 420px; height: 300px; border: 1px solid #C9CDD3; background: #FFFFFF; overflow: hidden">
+<div style="height: 28px; background: #F3F4F6; border-bottom: 1px solid #C9CDD3; position: relative; z-index: 2; display: flex; align-items: center; padding: 0 10px; font-size: 12px; color: #5B636D">checkout-redesign</div>
+<div style="position: absolute; left: 0; right: 0; top: 29px; bottom: 0; overflow: hidden">
+<div style="{{dimStyle}}">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 110px; border-right: 1px solid #C9CDD3; background: #FFFFFF"></div>
+<div style="position: absolute; left: 111px; top: 0; bottom: 0; right: 0; background: #15171B"></div>
+</div>
+<div style="{{sheetStyle}}">
+<div style="{{textStyle}}">
+<div style="font-weight: 600; font-size: 13px">{{q}}</div>
+<div style="font-size: 12px; line-height: 17px; color: #5B636D; margin-top: 4px">{{detail}}</div>
+</div>
+<div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px">
+<button type="button" class="btn" onClick="{{toggle}}">Cancel</button>
+<button type="button" class="btn" onClick="{{toggle}}">Archive</button>
+</div>
+</div>
+</div>
+</div>
+<span class="lab">Slow ×5 stretches every duration, as DUO_MOTION_SCALE will in the proof harness.</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":600}}'>
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { up: false, slow: false, rm: false, qi: 0, fade: 1 }; }
+renderVals() {
+const s = this.state;
+const t = (ms) => s.rm ? 0 : ms * (s.slow ? 5 : 1);
+const qs = [["Archive “Q4 pricing”?", "Its 2 sessions go to the Archived fold too. You can undo this."], ["Move “Refunds copy” into Home?", "It leaves refunds-api-spec. Its files stay where they are."]];
+const q = qs[s.qi % 2];
+const sheetMs = s.up ? t(200) : t(150);
+const sheetEase = s.up ? "ease-out" : "ease-in";
+const dimMs = s.up ? t(120) : t(100);
+return {
+q: q[0], detail: q[1],
+toggleLabel: s.up ? "Answer" : "Ask a question",
+slowLabel: s.slow ? "Slow ×5: on" : "Slow ×5: off",
+rmLabel: s.rm ? "Reduce Motion: on" : "Reduce Motion: off",
+dimStyle: "position: absolute; inset: 0; opacity: " + (s.up ? .55 : 1) + "; transition: opacity " + dimMs + "ms ease-out",
+sheetStyle: "position: absolute; left: 80px; width: 260px; top: 0; box-sizing: border-box; padding: 14px 16px 12px; background: #FFFFFF; border: 1px solid #C9CDD3; border-top: none; border-radius: 0 0 10px 10px; box-shadow: 0 8px 24px rgba(31,35,40,.22); transform: translateY(" + (s.up ? "0" : "-110%") + "); transition: transform " + sheetMs + "ms " + sheetEase,
+textStyle: "opacity: " + s.fade + "; transition: opacity " + t(60) + "ms ease-in-out",
+toggle: () => this.setState({ up: !s.up }),
+next: () => {
+if (!s.up) { this.setState({ up: true }); return; }
+this.setState({ fade: 0 });
+setTimeout(() => this.setState({ qi: this.state.qi + 1, fade: 1 }), t(60));
+},
+toggleSlow: () => this.setState({ slow: !s.slow }),
+toggleRm: () => this.setState({ rm: !s.rm })
+};
+}
+}
+</script>
+</body>
+</html>

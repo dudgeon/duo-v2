@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drag and drop on tokens</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+th,td{border:1px solid #C9CDD3;padding:5px 8px;text-align:left;vertical-align:top}
+th{background:#F3F4F6;font-weight:600}
+.btn{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font:12px/16px -apple-system,system-ui,sans-serif;color:#1F2328;cursor:pointer}
+.lab{font-size:11px;line-height:16px;color:#5B636D}
+</style>
+</helmet>
+<div style="width: 1280px; height: 600px; box-sizing: border-box; padding: 24px; background: #F3F4F6; color: #1F2328; font: 13px/20px -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; gap: 28px">
+<div style="width: 780px; flex: none; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 14px; font-weight: 600">The look stays as built (F-51); the timing moves onto tokens and honours Reduce Motion</span>
+<table style="border-collapse: collapse; font-size: 12px; line-height: 17px; background: #FFFFFF">
+<tr><th>Moment</th><th>Look (unchanged)</th><th>Today</th><th>[P] After</th><th>Reduce Motion</th></tr>
+<tr><td>The source sinks</td><td>35% opacity, 96% scale</td><td>spring 0.28 s, damping 0.72</td><td>lift 200 ms ease-out</td><td>at once (today: springs anyway)</td></tr>
+<tr><td>The target rises</td><td>103%, 2 pt outline, popover shadow</td><td>spring 0.28 s, damping 0.68 (overshoots)</td><td>lift 200 ms ease-out, no overshoot</td><td>outline and shadow at once, no scale</td></tr>
+<tr><td>It lands</td><td>fill, “2 sessions moved in” for 2.5 s</td><td>ease-out 0.4 s, capsule scales from 90%</td><td>landed 400 ms ease-out, capsule fades only</td><td>fill and capsule at once, still 2.5 s</td></tr>
+<tr><td>A tree folder under a drag</td><td>the dashed drop highlight (Q-50)</td><td>at once</td><td>dropIn 100 ms ease-out</td><td>at once</td></tr>
+</table>
+<div style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 18px">
+<span>Why drop the spring: it is the only spring in Duo. Ease-out matches every other motion here and has no overshoot. Keeping the springs, timed from tokens, is the alternative.</span>
+<span>This is mostly a fix: the springs ignore Reduce Motion today.</span>
+</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; font-weight: 600">[P] Try it</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<button type="button" class="btn" onClick="{{lift}}">1 Lift “scratch”</button>
+<button type="button" class="btn" onClick="{{over}}">2 Over “refunds”</button>
+<button type="button" class="btn" onClick="{{drop}}">3 Drop</button>
+<button type="button" class="btn" onClick="{{reset}}">Reset</button>
+</div>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<button type="button" class="btn" onClick="{{toggleSlow}}">{{slowLabel}}</button>
+<button type="button" class="btn" onClick="{{toggleRm}}">{{rmLabel}}</button>
+</div>
+<div style="position: relative; width: 400px; height: 220px; border: 1px solid #C9CDD3; background: #F3F4F6; display: flex; gap: 14px; padding: 20px; box-sizing: border-box; align-items: flex-start">
+<div style="{{srcStyle}}"><div style="font-weight: 600">scratch</div><div class="lab">2 sessions</div></div>
+<div style="{{tgtStyle}}"><div style="font-weight: 600">refunds-api-spec</div><div class="lab">1 working</div>
+<div style="{{capStyle}}">2 sessions moved in</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":600}}'>
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { phase: 0, slow: false, rm: false }; }
+t(ms) { return this.state.rm ? 0 : ms * (this.state.slow ? 5 : 1); }
+renderVals() {
+const s = this.state, p = s.phase;
+const base = "width: 160px; box-sizing: border-box; padding: 10px 12px; background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px; position: relative; ";
+const lift = this.t(200), land = this.t(400);
+const sunk = p >= 1 && p < 3;
+const hot = p === 2;
+const landed = p === 3;
+const gone = p === 3;
+return {
+srcStyle: base + "opacity: " + (gone ? 0 : sunk ? .35 : 1) + "; transform: scale(" + (sunk && !s.rm ? .96 : 1) + "); transition: opacity " + lift + "ms ease-out, transform " + lift + "ms ease-out",
+tgtStyle: base + "outline: " + (hot ? "2px solid #1F2328" : "0px solid transparent") + "; box-shadow: " + (hot ? "0 8px 24px rgba(31,35,40,.22)" : "none") + "; transform: scale(" + (hot && !s.rm ? 1.03 : 1) + "); background: " + (landed ? "#E9ECEF" : "#FFFFFF") + "; transition: transform " + lift + "ms ease-out, box-shadow " + lift + "ms ease-out, background " + land + "ms ease-out",
+capStyle: "margin-top: 8px; display: inline-block; padding: 0 8px; border-radius: 9px; border: 1px solid #8B939C; font-size: 11px; line-height: 16px; opacity: " + (landed ? 1 : 0) + "; transition: opacity " + land + "ms ease-out",
+slowLabel: s.slow ? "Slow ×5: on" : "Slow ×5: off",
+rmLabel: s.rm ? "Reduce Motion: on" : "Reduce Motion: off",
+lift: () => this.setState({ phase: 1 }),
+over: () => this.setState({ phase: 2 }),
+drop: () => { this.setState({ phase: 3 }); setTimeout(() => { if (this.state.phase === 3) this.setState({ phase: 4 }); }, 2500); },
+reset: () => this.setState({ phase: 0 }),
+toggleSlow: () => this.setState({ slow: !s.slow }),
+toggleRm: () => this.setState({ rm: !s.rm })
+};
+}
+}
+</script>
+</body>
+</html>

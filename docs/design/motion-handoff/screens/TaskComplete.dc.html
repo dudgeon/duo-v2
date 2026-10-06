@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mark Complete holds, then leaves</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.fr{width:180px;height:96px;border:1px solid #C9CDD3;border-radius:4px;background:#FFFFFF;position:relative;overflow:hidden;flex:none;font-size:9px;line-height:13px}
+.r{position:absolute;left:8px;right:8px;height:15px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.bx{width:7px;height:7px;border:1px solid #5B636D;border-radius:2px;flex:none}
+.st{margin-left:auto;color:#5B636D}
+.lab{font-size:11px;line-height:16px;color:#5B636D}
+.btn{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font:12px/16px -apple-system,system-ui,sans-serif;color:#1F2328;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 1280px; height: 600px; box-sizing: border-box; padding: 24px; background: #F3F4F6; color: #1F2328; font: 13px/20px -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; gap: 28px">
+<div style="width: 780px; flex: none; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 14px; font-weight: 600">Before (today): Mark Complete, then nothing, then the row is gone</span>
+<div style="display: flex; gap: 10px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px"><span class="bx"></span>Draft refund FAQ<span class="st">open</span></div>
+<div class="r" style="top: 24px"><span class="bx"></span>Legal review<span class="st">open</span></div>
+<div class="r" style="top: 40px"><span class="bx"></span>Pricing table<span class="st">open</span></div>
+</div><span class="lab">0 ms: Mark Complete</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px"><span class="bx"></span>Draft refund FAQ<span class="st">open</span></div>
+<div class="r" style="top: 24px"><span class="bx"></span>Legal review<span class="st">open</span></div>
+<div class="r" style="top: 40px"><span class="bx"></span>Pricing table<span class="st">open</span></div>
+</div><span class="lab">up to 2 s: unchanged (did it work?)</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px"><span class="bx"></span>Legal review<span class="st">open</span></div>
+<div class="r" style="top: 24px"><span class="bx"></span>Pricing table<span class="st">open</span></div>
+</div><span class="lab">next snapshot: gone</span></div>
+</div>
+<span style="font-size: 14px; font-weight: 600; margin-top: 8px">[P] After (Geoff, DL-130): checked, struck through and grey at once; 5 s to change your mind; then it leaves</span>
+<div style="display: flex; gap: 10px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px"><span class="bx" style="background: #5B636D; position: relative"><span style="position: absolute; left: 1px; top: -3px; color: #FFFFFF; font-size: 7px">✓</span></span><span style="color: #5B636D; text-decoration: line-through">Draft refund FAQ</span><span class="st">done</span></div>
+<div class="r" style="top: 24px"><span class="bx"></span>Legal review<span class="st">open</span></div>
+<div class="r" style="top: 40px"><span class="bx"></span>Pricing table<span class="st">open</span></div>
+</div><span class="lab">0 ms: done (applied at once, Q-78)</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px"><span class="bx" style="background: #5B636D; position: relative"><span style="position: absolute; left: 1px; top: -3px; color: #FFFFFF; font-size: 7px">✓</span></span><span style="color: #5B636D; text-decoration: line-through">Draft refund FAQ</span><span class="st">done</span></div>
+<div class="r" style="top: 24px"><span class="bx"></span>Legal review<span class="st">open</span></div>
+<div class="r" style="top: 40px"><span class="bx"></span>Pricing table<span class="st">open</span></div>
+</div><span class="lab">5 s · rowHold (Undo or Mark Open keeps it)</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px; opacity: .3"><span class="bx" style="background: #5B636D; position: relative"><span style="position: absolute; left: 1px; top: -3px; color: #FFFFFF; font-size: 7px">✓</span></span><span style="color: #5B636D; text-decoration: line-through">Draft refund FAQ</span><span class="st">done</span></div>
+<div class="r" style="top: 19px"><span class="bx"></span>Legal review<span class="st">open</span></div>
+<div class="r" style="top: 35px"><span class="bx"></span>Pricing table<span class="st">open</span></div>
+</div><span class="lab">5.1 s · rowOut, gap closing</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="fr">
+<div class="r" style="top: 8px"><span class="bx"></span>Legal review<span class="st">open</span></div>
+<div class="r" style="top: 24px"><span class="bx"></span>Pricing table<span class="st">open</span></div>
+</div><span class="lab">5.2 s</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 18px; margin-top: 6px">
+<span><b>Applied at once</b> (Q-78): Duo shows the new status the moment the note is written, and doesn’t wait for the 2 s snapshot. The same goes for archive, unarchive and + New task. If the snapshot disagrees (the write failed, or something else changed the note), the row goes back, and that is the one case where it can flicker.</span>
+<span><b>The 5 s hold</b> is there in case it was a mistake: ⌘Z or Mark Open during it keeps the row, and it never leaves. <b>Reduce Motion:</b> the same hold, then it goes at once.</span>
+<span style="color: #5B636D">While held, the row shows the task box checked, the title struck through, and the title and status in text2. Its status reads “done”.</span>
+</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; font-weight: 600">[P] Try it</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<button type="button" class="btn" onClick="{{complete}}">Mark Complete</button>
+<button type="button" class="btn" onClick="{{undo}}">⌘Z (during the hold)</button>
+<button type="button" class="btn" onClick="{{reset}}">Reset</button>
+<button type="button" class="btn" onClick="{{toggleSlow}}">{{slowLabel}}</button>
+<button type="button" class="btn" onClick="{{toggleRm}}">{{rmLabel}}</button>
+</div>
+<div style="position: relative; width: 300px; height: 140px; border: 1px solid #C9CDD3; background: #FFFFFF; overflow: hidden; font-size: 13px">
+<span style="position: absolute; left: 12px; top: 8px; font-size: 11px; font-weight: 600; letter-spacing: .66px; color: #5B636D">TASKS · {{count}}</span>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+<div style="{{r.style}}"><span style="{{r.box}}"></span><span style="{{r.nameStyle}}">{{r.name}}</span><span style="margin-left: auto; font-size: 12px; color: #5B636D">{{r.status}}</span></div>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":600}}'>
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { phase: "open", slow: false, rm: false }; }
+t(ms) { return this.state.rm ? 0 : ms * (this.state.slow ? 5 : 1); }
+renderVals() {
+const s = this.state;
+const k = s.slow ? 5 : 1;
+const done = s.phase !== "open", gone = s.phase === "gone";
+const names = ["Draft refund FAQ", "Legal review", "Pricing table"];
+const rows = names.map((n, i) => {
+const first = i === 0;
+const y = 30 + (gone && !first ? (i - 1) * 26 : i * 26);
+const op = first && gone ? 0 : 1;
+const box = "width: 10px; height: 10px; border: 1.2px solid #5B636D; border-radius: 2px; flex: none; background: " + (first && done ? "#5B636D" : "transparent");
+return { name: n, status: first && done ? "done" : "open", box,
+nameStyle: first && done ? "color: #5B636D; text-decoration: line-through" : "",
+style: "position: absolute; left: 12px; right: 12px; height: 26px; display: flex; align-items: center; gap: 6px; top: " + y + "px; opacity: " + op + "; transition: top " + this.t(200) + "ms ease-in-out, opacity " + this.t(150) + "ms ease-in" };
+});
+return { rows, count: gone ? 2 : 3,
+slowLabel: s.slow ? "Slow ×5: on" : "Slow ×5: off",
+rmLabel: s.rm ? "Reduce Motion: on" : "Reduce Motion: off",
+complete: () => { if (s.phase !== "open") return; this.setState({ phase: "done" }); this.timer = setTimeout(() => { if (this.state.phase === "done") this.setState({ phase: "gone" }); }, 5000 * k); },
+undo: () => { if (this.state.phase === "done") { clearTimeout(this.timer); this.setState({ phase: "open" }); } },
+reset: () => this.setState({ phase: "open" }),
+toggleSlow: () => this.setState({ slow: !s.slow }),
+toggleRm: () => this.setState({ rm: !s.rm })
+};
+}
+}
+</script>
+</body>
+</html>
