@@ -79,6 +79,7 @@ public enum FixtureHarness {
         case "merge":  // merge:<source>=<target>
             if parts.count > 1 { let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init); if kv.count == 2 { model.mergeProject(kv[0], into: kv[1]) } }
         case "makeproject": if parts.count > 1 { model.makeProject(parts[1]) }
+        case "notnow": if parts.count > 1 { model.notNowProject(parts[1]) }   // notnow:<folder>: Not Now on its Make a Project notice (DL-110)
         case "sheet-move":   // sheet-move:<project>: Move into Home…'s sheet, up and waiting
             if parts.count > 1 { model.moveIntoHome(parts[1]) }
         case "sheet-new":    // sheet-new[:<name>]: the New project sheet

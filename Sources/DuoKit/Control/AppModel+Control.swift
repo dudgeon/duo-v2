@@ -129,6 +129,10 @@ extension AppModel {
         case .projectMake:
             guard let name = inv[0], let p = project(named: name) else { return done(.fail("no folder '\(inv[0] ?? "")'")) }
             guard p.isFolderOnly else { return done(.fail("\(p.name) is already a project")) }
+            if inv.has("not-now") {
+                notNowProject(p.name)
+                return done(.ok("\(p.name)'s Make a Project notice is hidden; its Project tab still offers it. Undo: duo2 undo"))
+            }
             makeProject(p.name)
             done(.ok("\(p.name) is now a project (PROJECT.md written and opened). Undo: duo2 undo"))
         case .projectMerge:

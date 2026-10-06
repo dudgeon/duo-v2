@@ -22,6 +22,8 @@ public struct Fixture: Codable, Sendable, Equatable {
         /// A project whose sessions are still filed under the folder it moved from: that path, and how many.
         public var movedFrom: String? = nil
         public var staleSessions: Int? = nil
+        /// A folder whose Make a Project notice the user said Not Now to (DL-110).
+        public var notNow: Bool? = nil
         public var id: String { name }
         public var isFolderOnly: Bool { kind == "folder" || kind == "missing" }
         public var isMissing: Bool { kind == "missing" }

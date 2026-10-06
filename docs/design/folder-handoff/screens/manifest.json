@@ -1,0 +1,13 @@
+{
+  "$note": "Inside a folder that isn't a project (Q-44), approved 2026-10-05 (DL-110). kind=sheet: parts and states on one page.",
+  "source": "docs/design/explorations/folder-not-project.html",
+  "screens": [
+    {
+      "file": "screens/folder-not-project.html",
+      "kind": "sheet",
+      "width": 1500,
+      "height": 700,
+      "shows": "Inside a folder: the notice with Make a Project and Not Now; the folder after Not Now; the folder's Project tab; notes."
+    }
+  ]
+}

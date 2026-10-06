@@ -7,8 +7,8 @@ import SwiftUI
 public enum ConsoleEmpty: Equatable, Sendable {
     /// History exists: resume the last session first, or start fresh.
     case noneOpen(project: String, last: String?, lastKey: String?)
-    /// Nothing has run in this project.
-    case never(project: String)
+    /// Nothing has run in this project, or in this folder that isn't one (DL-110).
+    case never(project: String, isFolder: Bool)
     /// Claude Code isn't installed, or Duo couldn't find it.
     case notFound
     /// The session is live in another app (LR-8): explain, offer a fork, never end it.
@@ -23,7 +23,7 @@ public enum ConsoleEmpty: Equatable, Sendable {
     var title: String {
         switch self {
         case .noneOpen(let p, _, _): "No session open in \(p)"
-        case .never(let p): "No session in \(p)"
+        case .never(let p, _): "No session in \(p)"
         case .notFound: "Duo can't find Claude Code"
         case .elsewhere(let s, _, let app, _): "\(s) is open in \(app)"
         case .folderMissing: "This session's folder is missing"
@@ -35,7 +35,7 @@ public enum ConsoleEmpty: Equatable, Sendable {
     var body: String {
         switch self {
         case .noneOpen: "Pick up where you left off, or start fresh in this folder."
-        case .never: "Nothing has run in this project yet."
+        case .never(_, let isFolder): "Nothing has run in this \(isFolder ? "folder" : "project") yet."
         case .notFound: "It looked in the usual install folders and on your login shell's PATH. Install Claude Code, or point Duo at it in Settings."
         case .elsewhere(_, _, _, let since):
             "It has been running there\(since.map { " since \($0)" } ?? ""), so Duo won't start a second copy of it. Finish there and look again, or carry on here as a fork: a new session with the same history."
@@ -70,7 +70,7 @@ extension AppModel {
         if let last = past.first {
             return .noneOpen(project: project, last: last.name, lastKey: last.tabKey)
         }
-        return .never(project: project)
+        return .never(project: project, isFolder: fixture.projects.first { $0.name == project }?.isFolderOnly == true)
     }
 
     /// Resume as a Fork (DB-3): a new session with the same history, here, under a Duo-minted id.
@@ -176,7 +176,7 @@ struct ConsoleMessage: View {
                 Button("Resume \(last)") { model.openConsoleTab(key) }.keyboardShortcut(.defaultAction)
             }
             Button("Start Claude here") { model.open(project: project); model.newSession() }
-        case .never(let project):
+        case .never(let project, _):
             Button("Start Claude here") { model.open(project: project); model.newSession() }.keyboardShortcut(.defaultAction)
         case .notFound:
             Button("Open Settings…") { model.info("Settings isn't built yet: it's waiting on its design (DB-10). Install Claude Code, then Look Again.") }

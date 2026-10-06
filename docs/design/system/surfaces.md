@@ -20,7 +20,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Home pane with no Home folder | Designed (DL-100): "Choose a Home folder", Choose Home Folder… and Not Now | slice2 `no-home.html` | — | HomePane, `ConsoleMessage(.noHome)` |
 | The map: columns, tiles | Designed (DL-100), changed by decision (DL-104): a filter and sort header, Home's ★ tile, folders outside Home as rows by parent folder with live ones as tiles; Home's unlabelled column alone flows its tiles three across (stand-in, Q-42) | slice2 `map-folders.html`, `no-home.html`; many-projects `map-many.html` | DB-38 (folder mark) | MapColumn, MapGrid, MapHeader, HomeTile, OutsideGroup, ProjectTile |
 | Folder tiles ("No project file") | Stand-in (DL-63) | — | DB-12 | ProjectTile |
-| Inside a folder: "isn’t a project yet" notice with Make a Project | Stand-in (DL-63), in MissingNotice's look; the Project tab stays blank | — | Q-44 | FolderNotice |
+| Inside a folder: `Folder · no project file`, the notice with Make a Project and Not Now, the Project tab's offer | Designed (DL-110) | folder `folder-not-project.html` | — | FolderNotice, FolderProjectTab |
 | Missing or moved folder tiles ("Folder not found", "Moved to …") | Designed (DL-101); "In the Trash" not built | slice3 `missing-folder.html` | — | ProjectTile, MissingNotice, `Live/MissingFolders.swift` |
 | New project tile | Designed; opens the New project sheet (DL-100) | build `overview.html` | — | NewProjectTile |
 | Sessions open in Duo, tinted | Stand-in (ENH-7) | — | DB-33 | TileSessionRow, `activeTint` |
