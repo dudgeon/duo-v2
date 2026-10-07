@@ -2343,3 +2343,8 @@ Geoff (2026-10-07): "when in chat mode, shift tab should cycle ask permission, p
   - `/model`'s picker has the same layout with a new list: 2.1.293 offers Haiku 5.5 and shows Haiku 4.5 as "Newer version available". DL-33's test model, `claude-haiku-4-5-20251001`, still runs.
   - `DUO_CHECKS=chat-live`: 63 of 63 at 100×34, 60×34 and 80×20. The first run failed the 8 composer cases at 100×34 with "Claude Code didn't open its editor". The cause was the fresh work tree having no `duo2` build: the suite uses `.build/out/Products/Debug/duo2` as Claude's editor. After `scripts/bundle.sh` they pass, 35 of 35. Run `bundle.sh` before chat-live in a new work tree.
 - 2.1.293 is added to the table's `verified` list.
+- **Then DL-145: newer versions are trusted by their screens.**
+  - `ChatSignatures.trust(for:)` gives verified, newer or unverified (older or unknown). `ChatSession.dialogsVerified` is now worked out from the screen on show: true for a verified version; for a newer one only while `ChatScreenReader.wellFormed` holds (options numbered 1…n, one cursor row, a title or question); false otherwise.
+  - Every place that checked it already re-reads the screen first: the card, the answer's check before its keys, and the fallback rules.
+  - A newer version's dialog that doesn't read whole goes to the terminal with "This dialog in Claude Code <version> doesn't read like the versions chat mode was checked with…".
+  - Checks: the trust levels; 2.1.300 with a real permission screen is answered; the same screen without its cursor row, or numbered from 4, goes to the terminal; all 41 dialog screens captured from real TUIs (tours, AskUserQuestion shapes, the CLI login) read whole. The chat group passes 154 of 154.

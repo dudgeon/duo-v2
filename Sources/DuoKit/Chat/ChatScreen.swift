@@ -62,6 +62,16 @@ public struct ChatSignatures: Sendable, Equatable {
 
     public static let all: [ChatSignatures] = [.v2_1_291]
 
+    /// How far a CLI version's dialogs are trusted (DL-145): a verified version always; a newer
+    /// one while its dialogs read like the verified versions' (Claude Code updates about daily,
+    /// C-49); an older or unknown one never (its dialogs go to the terminal).
+    public static func trust(for version: String?) -> ChatVersionTrust {
+        guard let version, let v = ChatVersion(version) else { return .unverified }
+        if all.contains(where: { $0.verified.contains(version) }) { return .verified }
+        let newest = all.flatMap(\.verified).compactMap(ChatVersion.init).max()
+        return newest.map { v > $0 } == true ? .newer : .unverified
+    }
+
     /// The table for a CLI version: the newest at or below it (or the oldest), and whether this
     /// exact version was verified. An unverified version still renders; its dialogs go to the
     /// terminal (spike, fallback rule 3).
@@ -70,6 +80,16 @@ public struct ChatSignatures: Sendable, Equatable {
         let fit = all.filter { (ChatVersion($0.version) ?? v) <= v }.last ?? all.first!
         return (fit, fit.verified.contains(version))
     }
+}
+
+/// DL-145: how a CLI version's dialogs are answered from chat.
+public enum ChatVersionTrust: String, Sendable {
+    /// Checked dialog by dialog (the tour, chat-live).
+    case verified
+    /// Newer than every verified version: trusted while its dialogs read like theirs.
+    case newer
+    /// Older than the table, or unknown: dialogs go to the terminal.
+    case unverified
 }
 
 /// A dotted CLI version, comparable.
@@ -298,6 +318,24 @@ public enum ChatScreenReader {
             return r
         }
         return ChatScreen(kind: .unknown, sig: "unknown")
+    }
+
+    /// A dialog read whole by the signatures (DL-145): what a newer CLI's dialog must be before chat
+    /// answers it. Options numbered 1…n, one cursor, and the parts each kind has.
+    public static func wellFormed(_ s: ChatScreen) -> Bool {
+        func numbered(_ ns: [Int?]) -> Bool { !ns.isEmpty && ns == Array(1...ns.count).map(Optional.some) }
+        switch s.kind {
+        case .permission:
+            return numbered(s.options.map(\.n)) && s.rows.filter(\.cursor).count == 1 && s.title?.isEmpty == false
+        case .plan:
+            return numbered(s.options.map(\.n)) && s.rows.filter(\.cursor).count == 1
+        case .questionReview:
+            return numbered(s.options.map(\.n)) && s.rows.filter(\.cursor).count == 1
+        case .question:
+            return numbered(s.rows.map(\.n).filter { $0 != nil }) && s.question?.isEmpty == false && s.rows.filter(\.cursor).count == 1
+        default:
+            return true
+        }
     }
 
     /// Numbered options from `from`, with wrapped labels joined and description lines kept as notes.
