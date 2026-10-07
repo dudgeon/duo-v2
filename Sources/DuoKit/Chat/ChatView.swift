@@ -24,6 +24,11 @@ public final class ChatUIState {
     public var composer = ""
     public var composerBasis: String?
     public var composerFocused = false
+    /// `@` in the composer (ENH-3, DL-133): the word after it and its matches (nil: no menu), and
+    /// the row selected. Esc closes it until the caret leaves that `@` word.
+    public var mention: (query: String, matches: [FileMention.Match])?
+    public var mentionSelected = 0
+    var mentionDismissedAt: Int?
     public init() {}
 }
 

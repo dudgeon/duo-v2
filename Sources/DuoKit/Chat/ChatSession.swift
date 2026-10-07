@@ -114,6 +114,8 @@ public final class ChatSession {
     public var now: Date { fixedNow ?? Date() }
     /// Bumped to put the keyboard in the composer (Chat about this).
     public var focusComposer = 0
+    /// A click on a row of the composer's `@` menu (DL-133): the field puts that match in.
+    public var chooseMention = 0
     /// The plan Claude asks you to approve: the request's text, or its file before 2.1.285.
     public var planPath: String? { pendingRequest?.tool == "ExitPlanMode" ? pendingRequest?.input["planFilePath"] as? String : nil }
     public var planText: String? {

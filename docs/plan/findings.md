@@ -1925,3 +1925,23 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - DuoChecks: 4 new checks of the rule, 654 pass in all.
   - A capture of the overview fixture with four sessions open, compared with the board: `docs/design/small-features-handoff/build-compare-tile.png`.
   - `NO_BUILD=1 scripts/check-ui.sh`: the fixture states are unchanged, since no session is open in them.
+
+## F-148 · `@` for files and folders in chat's composer (ENH-3, DL-133, 2026-10-06)
+
+- **Why only the composer.** Claude Code's own prompt already completes `@` in the terminal (its own list, folders too), and Duo draws nothing over the TUI. Chat mode's composer had no `@` at all.
+- **Built:**
+  - `Chat/FileMention.swift`:
+    - the `@` word at the caret (at the start, or after white space or a dropped file's chip; an address like `geoff@example` isn't one);
+    - matching, case-insensitive, up to 8: names that start with the query, then names that contain it, then paths that contain it, shallower first, then A–Z; a bare `@` lists the top level, folders first;
+    - the project walk: Claude's folder at any depth, as the file tree lists it (no hidden files, `.git`, `node_modules`, `build`, `.duo`), capped at 5,000, off the main thread, cached for 10 s so typing doesn't walk again.
+  - `ChatMentionMenu`: the `/` menu's look. ↑↓, ⏎ or tab adds, esc closes until the caret leaves that word. A click on a row is `// action: session chat`, as the `/` menu's rows are.
+  - The chosen file goes in as `@path ` (relative; a folder ends in `/`), and every `@` mention in the field is set in mono, as the board draws it.
+  - The hint line adds `@ files` (it drops before `/ commands` when narrow).
+- **Claude Code expands a mention that comes through the composer.** Checked against 2.1.292 with no tokens: the real TUI ran on the spike's mock API with a scratch config, and the prompt was handed over through Ctrl+G with `EDITOR` writing the file, as `duo2 compose` does. Results:
+  - `Summarise … @docs/flow.md` reached the API with the file's contents attached (a Read result in a system reminder).
+  - `@docs/sub/` reached it with its listing (a Bash `ls` result).
+- **Harness:** `chat-cwd:<folder>` (the fixture chat's folder), `chat-type:<text>` (typed into the real field, so its menus follow), and `chat-key:up|down|tab|return|esc`.
+- **Checked:**
+  - DuoChecks: 13 new checks covering the word at the caret, ranking, case, path matches, a bare `@`, no match, the cap, rows, the inserted text, and the walk's skips. 667 pass in all.
+  - Live captures in the `chat-text` fixture against a scratch project: typing `@chec`, ↓ then tab, a folder with ⏎, no match, and esc. `docs/design/small-features-handoff/build-compare-composer.png` sets them beside the boards.
+  - `NO_BUILD=1 scripts/check-chat.sh`: the boards are unchanged apart from the composer hint's `@ files`. `NO_BUILD=1 scripts/check-ui.sh` passes.

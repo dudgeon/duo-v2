@@ -18,7 +18,7 @@ Click a session to open it. If it isn't running, Duo picks it up where it left o
 
 ## Chat mode
 
-A session runs in a terminal, Claude Code's own text window. If you'd rather read it as a conversation, click **Chat** in the pill on the session's tab bar. Claude's replies show as formatted text with clickable links, the files it edits show as changes, and its questions and permission requests show as cards with buttons. It is still the same Claude Code underneath: your answers go to the terminal as the keys you'd press, nothing is ever answered for you, and anything chat mode doesn't recognise drops back to the terminal by itself. Click **Terminal** to go back. Chat mode needs Claude Code 2.1.152 or later.
+A session runs in a terminal, Claude Code's own text window. If you'd rather read it as a conversation, click **Chat** in the pill on the session's tab bar. Claude's replies show as formatted text with clickable links, the files it edits show as changes, and its questions and permission requests show as cards with buttons. It is still the same Claude Code underneath: your answers go to the terminal as the keys you'd press, nothing is ever answered for you, and anything chat mode doesn't recognise drops back to the terminal by itself. Click **Terminal** to go back. In the reply box, `/` lists Claude Code's commands, and `@` lists the project's files and folders as you type: pick one and it goes in as `@docs/plan.md`, so Claude reads it, as when you type `@` in the terminal. Chat mode needs Claude Code 2.1.152 or later.
 
 ![A session in chat mode: your message, then Claude's reply with a table, a list and a code block, and the reply box below.](images/chat-mode.png)
 

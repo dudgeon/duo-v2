@@ -33,6 +33,12 @@ public struct WindowConfigurator: NSViewRepresentable {
 /// Sets the window up for fixture mode and, when asked, captures it and quits.
 @MainActor
 public enum FixtureHarness {
+    /// The chat composer's field in Duo's window, for `chat-type:` and `chat-key:`.
+    static func composerView() -> ComposerTextView? {
+        func find(_ v: NSView) -> ComposerTextView? { (v as? ComposerTextView) ?? v.subviews.lazy.compactMap(find).first }
+        return NSApp.windows.lazy.compactMap { $0.contentView.flatMap(find) }.first
+    }
+
     /// Where the panes start in the targets: the 38 pt toolbar plus its 1 pt bottom border, which
     /// CSS adds on top of the height (findings F-10).
     public static let designContentTop = DuoMetric.toolbarHeight + DuoMetric.borderHairline
@@ -431,6 +437,20 @@ public enum FixtureHarness {
         case "chat-screen":   // chat-screen:idle|permission|…: the fixture chat's screen, as if the dialog came or went
             if parts.count > 1, let k = ChatScreen.Kind(rawValue: parts[1]), let tab = model.consoleTab, let c = model.fixtureChats[tab] {
                 c.harnessScreenKind(k)
+            }
+        case "chat-cwd":   // chat-cwd:<folder>: the fixture chat's folder, for the composer's @ menu (DL-133)
+            if parts.count > 1, let c = model.consoleTab.flatMap({ model.fixtureChats[$0] }) { c.log.cwd = parts[1] }
+        case "chat-type":   // chat-type:<text>: typed into the composer, as keys would (its menus follow)
+            if parts.count > 1, let v = Self.composerView() {
+                v.window?.makeFirstResponder(v)
+                v.insertText(parts[1], replacementRange: v.selectedRange())
+            }
+        case "chat-key":   // chat-key:up|down|tab|return|esc: a key in the composer
+            let codes: [String: UInt16] = ["up": 126, "down": 125, "tab": 48, "return": 36, "esc": 53]
+            if parts.count > 1, let code = codes[parts[1]], let v = Self.composerView(),
+               let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: v.window?.windowNumber ?? 0,
+                                        context: nil, characters: "", charactersIgnoringModifiers: "", isARepeat: false, keyCode: code) {
+                v.keyDown(with: e)
             }
         case "chat":   // chat:on|off
             if let k = model.visibleSessionId { model.setChatMode(parts.count > 1 && parts[1] == "off" ? .terminal : .chat, for: k) }
