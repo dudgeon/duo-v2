@@ -1971,9 +1971,20 @@ Spike: `docs/plan/spikes/browser-engine.md`.
 - The boards in `screens/` are the canvas's `.dc.html` with their holes and loops expanded, so Chrome renders them without the canvas runtime.
 
 ## F-151 · Runs of tool calls, from real transcripts and the TUI (DL-135, 2026-10-07)
+
 - **How long runs are.** In the last 80 sessions on Geoff's Mac (read-only tally of their transcripts): 3,253 runs of tool calls between pieces of Claude's text; 70% have two or more calls, 41% mix tools, and Bash is 7,070 of about 11,000 calls. Thinking blocks (7,922) sat between most calls, and each split the old thread in two.
 - **The terminal's own words.** Claude Code's collapsed lines, as transcripts quote them: `Ran 4 shell commands`, `Read 3 files`, `Edited 2 files`, `Searched for 1 pattern, read 1 file, listed 1 directory, ran 1 shell command`: one combined line for a mixed run. The chat's run line copies that form (`ChatRuns.clauses`), with edits' file names and `+n −n` after a dot.
 - **The boards disagreed.** C1 and C2 drew a line per kind; C3 and the candidates drew one combined line. Geoff chose one line (2026-10-07); C1 and C2 were corrected on the canvas and in `chat-polish-handoff`.
 - **Grouping is a view of the log.** `ChatRuns.blocks` reads a turn's segments and never changes the log, so a step waiting on you leaves its run and rejoins it once answered, and a run keeps its first step's id (`run-<id>`) for its open state as steps arrive.
 - **Bash's `description`** (Claude's one-line summary of a command) is in nearly every recent call; a run line leads with it and falls back to the command.
 - **Built only when opened.** Outputs and diffs (a `Write` used to draw the whole file) build only when their step is opened, which helps chat's scrolling (fix/chat-perf).
+
+## F-152 · The thin strip over chat (DL-136, 2026-10-07)
+
+- **Which strip shows** follows `AppModel.consoleShowsChat`: the selected console tab is a Claude tab whose chat is showing. A chat that fell back to the terminal (or a shell tab) keeps the dark strip and `ConsoleRule`; so does the fallback bar's terminal.
+- **28 includes the rule.** The board's strip is `height: 28px` with `box-sizing: border-box` and a 1 bottom border, so the strip is 27 and the rule 1 (`chatStripHeight − borderHairline`). Measured with `scripts/pixels.py`: the underline and the rule land on the board's rows.
+- **The light toggle's border is outside its segments** (22×16 each inside a 1 border: 46×18), unlike the dark one's (26×20 with the border inside). Its right edge is 11 from the pane's edge, as drawn.
+- **The hover fill (DL-134) stays** on the thin strip, in `selected` (`ground` would vanish on a `ground` strip), and the × uses the right pane's light colours.
+- **Q-87's stand-in:** tabs keep their state glyphs in light colours (`StateGlyph(.light)`), so a waiting session's needs-you dot doesn't disappear while you chat. The board draws none.
+- **Tab fitting** measures titles in `control` on the thin strip, so `» n` and the 24-character cut work the same as on the dark one.
+- **Proof:** `docs/design/chat-polish-handoff/proof/chat-polish-bar-thin-compare.png`; the dark-strip boards (`toggle`, `fallback`) unchanged.

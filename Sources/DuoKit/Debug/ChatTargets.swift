@@ -12,7 +12,9 @@ public enum ChatTargets {
                                             "question-other", "question-review", "question-previews", "question-chat-decline", "composer", "status", "fallback",
                                             // chat-polish-handoff (DL-135): runs folded, and the candidates folded with them.
                                             "polish-collapsed", "polish-expanded", "polish-needs-you", "polish-output", "polish-edits", "polish-thinking",
-                                            "polish-agents", "polish-todos", "polish-tools", "polish-failed", "polish-paste"]
+                                            "polish-agents", "polish-todos", "polish-tools", "polish-failed", "polish-paste",
+                                            // DL-136: the thin light strip over chat.
+                                            "polish-bar-thin"]
     nonisolated public static let screens = boards.map { "chat-" + $0 }
 
     public static func folder(_ board: String) -> URL? {

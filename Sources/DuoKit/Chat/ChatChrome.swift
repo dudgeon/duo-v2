@@ -39,6 +39,8 @@ struct ChatBubbleMark: Shape {
 struct ChatToggle: View {
     @Environment(AppModel.self) private var model
     let key: String
+    /// On the thin light strip over chat (DL-136): white, `controlEdge`, the shown one on `selected`, 22×16.
+    var light = false
 
     var body: some View {
         let chat = model.chat(for: key)
@@ -51,8 +53,11 @@ struct ChatToggle: View {
                 ChatBubbleMark().stroke(style: StrokeStyle(lineWidth: 1.3, lineJoin: .round)).frame(width: 13, height: 11)
             }
         }
+        // The light one's border is outside its segments (`bar-thin`: 22×16 inside a 1 border).
+        .padding(light ? DuoMetric.borderHairline : 0)
+        .background(light ? DuoColor.pane : .clear)
         .clipShape(RoundedRectangle(cornerRadius: DuoMetric.radiusControl))
-        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(DuoColor.tuiInputBorder, lineWidth: DuoMetric.borderHairline))
+        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(light ? DuoColor.controlEdge : DuoColor.tuiInputBorder, lineWidth: DuoMetric.borderHairline))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Show session as")
     }
@@ -60,9 +65,9 @@ struct ChatToggle: View {
     func segment(_ mode: ChatViewMode, on: Bool, @ViewBuilder icon: () -> some View) -> some View {
         let title = mode == .chat ? "Chat" : "Terminal"
         return icon()
-            .foregroundStyle(on ? DuoColor.consoleText : DuoColor.consoleText2)
-            .frame(width: 26, height: 20)
-            .background(on ? DuoColor.consoleRule : .clear)
+            .foregroundStyle(light ? (on ? DuoColor.text : DuoColor.text2) : on ? DuoColor.consoleText : DuoColor.consoleText2)
+            .frame(width: light ? 22 : 26, height: light ? 16 : 20)
+            .background(on ? (light ? DuoColor.selected : DuoColor.consoleRule) : .clear)
             .contentShape(Rectangle())
             .onActivate { model.setChatMode(mode, for: key) }  // action: session chat
             .help(title)
@@ -93,6 +98,12 @@ struct ChatFallbackBar: View {
 }
 
 extension AppModel {
+    /// The selected console tab is a Claude tab showing chat: the strip over it is thin and light (DL-136).
+    var consoleShowsChat: Bool {
+        guard let key = consoleTab, !isShell(key), let c = chat(for: key) else { return false }
+        return c.showsChat
+    }
+
     /// A tab's chat, live or a fixture target's.
     public func chat(for key: String) -> ChatSession? { chats.existing(key) ?? fixtureChats[key] }
 

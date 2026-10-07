@@ -94,13 +94,15 @@ struct TabHoverFill: ViewModifier {
     @Environment(AppModel.self) private var model
     let key: String
     let onConsole: Bool
+    /// The thin strip over chat sits on `ground`, so its fill is `selected` (DL-136).
+    var fill: Color? = nil
     var leading = DuoMetric.tabHoverInset
 
     func body(content: Content) -> some View {
         content.background {
             if model.showsTabClose(key) {
                 RoundedRectangle(cornerRadius: DuoMetric.tabHoverRadius)
-                    .fill(onConsole ? DuoColor.consoleHover : DuoColor.ground)
+                    .fill(fill ?? (onConsole ? DuoColor.consoleHover : DuoColor.ground))
                     .padding(.leading, -leading)
                     .padding(.trailing, -DuoMetric.tabHoverInset)
                     .frame(height: DuoMetric.tabHoverHeight)

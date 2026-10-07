@@ -86,6 +86,7 @@ for k, v in t["border"].items():
 s = t["size"]
 w(f"    public static let toolbarHeight: CGFloat = {num(s['toolbarHeight'])}")
 w(f"    public static let tabStripHeight: CGFloat = {num(s['tabStripHeight'])}")
+w(f"    public static let chatStripHeight: CGFloat = {num(s['chatStripHeight'])}")   # the console tab strip over chat (DL-136)
 w(f"    public static let deckBarHeight: CGFloat = {num(s['deckBarHeight'])}")   # the PowerPoint viewer's bar (DL-125)
 w(f"    public static let homeSessionTabsHeight: CGFloat = {num(s['homeSessionTabsHeight'])}")
 w(f"    public static let overviewFooterHeight: CGFloat = {num(s['overviewFooterHeight'])}")
