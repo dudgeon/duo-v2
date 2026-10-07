@@ -25,6 +25,10 @@ Read `CONTRIBUTING.md` first for build commands and layout (`README.md` is for p
 - **Releases** use the `release` skill (`scripts/release.sh <version> --notes …`): it builds the committed HEAD, signs, notarizes and publishes. Before a release, merge finished work trees (`git worktree list`).
 - **v1 scope is in the build plan §3a.** Don't pull later features into v1 without logging why.
 
+## Director
+
+One session, `*DUO DIRECTOR*`, runs the other sessions as their engineering manager (Geoff is the PM): it delegates work to new Duo sessions, reviews and merges their branches, keeps records consistent and cuts releases Geoff approves. Its job description is `.claude/skills/director/SKILL.md`. A director that resumes (after compaction or a restart) starts there. Build sessions report to it by `SendMessage` to `DUO DIRECTOR` when their work is committed.
+
 ## Branches
 
 `main` is the trunk: branch from it, merge back to it, release from it. Work trees under `.claude/worktrees/` are other sessions' branches; merge them when their work is finished, renumbering records as above.
