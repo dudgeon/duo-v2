@@ -205,6 +205,17 @@ def repo_line(state="changed", button=True):
             f'<div class="repo" style="padding-left:16px"><span style="display:inline-flex;align-items:center;gap:4px" class="ell">{s[1]}</span>{btn}</div></div>')
 
 
+def files_head(state="changed"):
+    """B (DL-149): the repo state in the Files block's header [P]."""
+    rl = repo_line(state)
+    i = rl.index('<div class="repo" style="padding-left:16px">')
+    fact = rl[i:-len("</div>")]
+    fact = fact.replace('style="padding-left:16px"', 'style="padding-left:0"')
+    name = "main" if state == "protected" else BRANCH
+    return (f'<div style="display:flex;align-items:center;gap:6px"><span class="sl">Files</span><span style="flex:1"></span>'
+            f'<span class="repo" style="gap:4px;min-width:0">{br()}<b class="ell">{name}</b></span></div>{fact}')
+
+
 def srow(st, t, tm, tint=False):
     b = ' style="font-weight:600"' if st == "needs" else ""
     return (f'<div class="row{" tint" if tint else ""}">{g({"prompt": "idle"}.get(st, st))}'
@@ -229,9 +240,7 @@ def left_pane(status="A", state="changed", w=300, notice=""):
     rows = [sec("Needs you", 1, True), srow("needs", "Tighten the FAQ", "4m"), sec("Today"), srow("working", "Pricing headline options", "working", tint=True), srow("idle", "Plan table copy", "2h")]
     btn = f'<div style="display:flex;gap:8px;padding:10px 16px"><span class="btn">+ New session</span></div>'
     if status == "B":
-        fh = (f'<div style="display:flex;align-items:center;gap:6px"><span class="sl">Files</span><span style="flex:1"></span>'
-              f'<span class="repo" style="gap:4px">{br()}<b>{BRANCH}</b></span></div>'
-              f'<div class="repo" style="gap:6px">3 changed · {arrow(True)}2 to push<span class="b sm" style="margin-left:auto;height:20px;font-size:11px;padding:0 8px">Push…</span></div>')
+        fh = files_head(state)
     else:
         fh = '<div class="sl">Files</div>'
     files = (f'<div style="margin-top:auto;border-top:2px solid {EDGE};padding:10px 16px 8px;display:flex;flex-direction:column;gap:2px">{fh}<div class="mono t2" style="font-size:11px">~/claude-home/website/pricing-copy</div>'
@@ -340,6 +349,9 @@ def sheet_github(repo_field, found, branch_rows, name="Pricing copy", goal="New 
 
 
 FOUND_OK = fr("", f'<div class="found"><div><b style="font-weight:600">acme/website</b><span class="t2">private · you can push · main is protected</span></div><div class="hint">Signed in to GitHub as geoffd (GitHub CLI).</div></div>')
+FOUND_RO = (f'<div class="found"><div><b style="font-weight:600">acme/website</b><span class="t2">{lock()} you can read it, not push to it</span></div>'
+            f'<div class="hint" style="font-size:12px;color:{TEXT};display:block">Your work will go to your own copy of it, <b style="font-weight:600">geoffd/website</b> (a fork), when you first push. Nothing is made on your GitHub account until then.</div>'
+            f'<div class="hint">Signed in to GitHub as geoffd (GitHub CLI).</div></div>')
 BRANCH_A = (fr("Branch", f'<div style="display:flex;flex-direction:column;gap:6px"><span class="rb"><i class="on"></i>A new branch for this work</span>'
                f'<div style="display:flex;gap:8px;align-items:center;padding-left:22px"><div class="fld mono" style="flex:1;font-size:12px">{BRANCH}</div><span class="t2">from</span><span class="popup" style="height:24px">main{g("chevd")}</span></div>'
                f'<span class="rb"><i></i>A branch that’s already there</span></div>', top=True))
@@ -361,10 +373,11 @@ board("01-new-from-github", 2120, 1000, "1 · New project, From GitHub", "The CX
     "1 · New project, From GitHub: a third “Start from” in the CX study’s sheet",
     "The sheet is the CX study’s option A (its board 3). <b>From GitHub</b> swaps Folder for <b>Repository</b>: paste a link (any form: <code>https://github.com/acme/website</code>, <code>…/tree/branch</code>, <code>git@github.com:…</code>, <code>acme/website</code> with <code>gh</code>) or Choose… from the GitHub CLI’s list. Once Duo can see the repo it says what it found in one quiet box, including your access, before anything is copied. [P]",
     f'''<div style="display:flex;gap:28px;align-items:flex-start">{frame(sheet_over(1240, 800, sheet1), 1240, 800, "The sheet, a repo chosen", "Name comes from the repo until typed over; In defaults to a topic named after the repo (made if missing). Create Project copies the repo, makes the branch, writes _PROJECT.md and opens the project.")}
-<div style="display:flex;flex-direction:column;gap:14px;width:800px">{frame(f'<div style="padding:16px;background:{GROUND}">{picker}</div>', 460, None, "Choose… (with gh signed in)", "<code>gh repo list</code> for you and your organizations, newest push first; typing searches GitHub (<code>gh search repos</code>). A lock marks private repos.")}
+<div style="display:flex;flex-direction:column;gap:14px;width:800px">{frame(f'<div style="padding:16px;background:{GROUND}">{FOUND_RO}</div>', 640, None, "Read only: said now, forked at the first push (DL-149)", "Known when the repo is first copied, not only at Push. The project is set up for the fork (the brief tells Claude); Push says it again; nothing is made on your GitHub account until then.")}
+{frame(f'<div style="padding:16px;background:{GROUND}">{picker}</div>', 460, None, "Choose… (with gh signed in)", "<code>gh repo list</code> for you and your organizations, newest push first; typing searches GitHub (<code>gh search repos</code>). A lock marks private repos.")}
 {txt("""<h3>What the Found box can say [P]</h3><ul>
 <li><b>acme/website</b> · private · you can push · main is protected</li>
-<li><b>acme/website</b> · you can read it, not push · <i>Duo will push your work to your own copy (a fork) when you share it.</i></li>
+<li><b>acme/website</b> · you can read it, not push · <i>drawn above</i></li>
 <li><b>octo/docs</b> · public · Duo can’t tell what you can push until you share (no GitHub CLI)</li>
 <li><b>acme/website</b> is already on this Mac in <span class="mono">website/launch-plan</span>. <i>This project gets its own copy.</i></li></ul>
 <p class="note">Access is read with <code>gh repo view --json viewerPermission</code>; protection from <code>repos/:o/:r/branches/main</code> (<code>protected</code>, readable by anyone who can read the repo) plus its rulesets (<code>…/rules/branches/main</code>). The <code>…/protection</code> endpoint answers 404 to non-admins: that never means “unprotected”. Without <code>gh</code>, <code>git ls-remote</code> says only whether the repo is reachable.</p>""")}</div></div>'''))
@@ -416,7 +429,7 @@ board("03-landing", 2000, 1000, "3 · Where it lands, and getting it", "A clone 
     f'''<div style="display:flex;gap:28px;align-items:flex-start">
 <div style="display:flex;flex-direction:column;gap:18px">{frame(sheet_over(1080, 300, progress), 1080, 300, "Getting it: progress in the same sheet", "git’s own progress (<code>--progress</code>) as a bar and sizes. Cancel stops it and removes the half-made folder.")}
 {frame(f'<div style="padding:18px;background:{GROUND}">{notice_done}</div>', 1080, None, "Done: the project opens, with the notice (the CX study’s notice pattern)", "The first session is told the repo, the branch and your access in its brief (board 11).")}</div>
-{txt(f"<h3>Where it lands: three ways</h3>{landing}<p class=note>Claude Code’s own worktrees (<code>claude --worktree</code>, <code>.claude/worktrees/</code>) are untouched: they live inside a project and Duo shows their sessions as today.</p>", w=820)}</div>'''))
+{txt(f"<h3>Where it lands: three ways</h3>{landing}<p class=note><b>DL-149:</b> a clone per project; worktrees <i>inside</i> a cloned project may come later (ENH). Claude Code’s own worktrees (<code>claude --worktree</code>, <code>.claude/worktrees/</code>) are untouched: they live inside a project and Duo shows their sessions as today.</p>", w=820)}</div>'''))
 
 # ---------- 04 · repo status options ----------
 popC = f'''<div class="pop" style="width:330px;position:absolute;left:300px;top:44px;z-index:3">
@@ -428,13 +441,13 @@ wA = pwindow(1180, 640, left_pane("A") + console() + project_tab())
 wB = pwindow(1180, 640, left_pane("B") + console() + project_tab())
 wC = f'<div style="position:relative">{pwindow(1180, 640, left_pane("none") + console() + project_tab(), ptoolbar(chip=True))}{popC}</div>'
 board("04-status", 2600, 1640, "4 · The repo’s state on a project: A, B, C", "Where the branch, changes and push state show.", bd(2600, 1640,
-    "4 · The repo’s state on a project: where it shows",
+    "4 · The repo’s state on a project: where it shows (B chosen, DL-149)",
     "Only for a project whose folder is in a git repo with a GitHub remote; nothing shows otherwise. The words are the same in all three; only the place differs. The file tree marks changed and new files in every option. [P]",
     f'''<div style="display:flex;gap:40px;flex-wrap:wrap">
-{frame(wA, 1180, 640, "A · a line under the project’s status line <span class=rec>recommended</span>", "Where the project already says how it’s going. One button, the next useful action (Push…, Get Latest, Resolve…), or none. Click the line for the details popover (as C’s).")}
-{frame(wB, 1180, 640, "B · in the Files block", "Next to the files it describes, but at the bottom of a pane that is often short, and gone when Files is folded.")}
+{frame(wA, 1180, 640, "A · a line under the project’s status line", "Where the project already says how it’s going. One button, the next useful action (Push…, Get Latest, Resolve…), or none. Click the line for the details popover (as C’s).")}
+{frame(wB, 1180, 640, "B · in the Files block <span class=rec>chosen, DL-149</span>", "Geoff’s choice. The Files header names the branch at its right; the line under it gives one fact and at most one button; the file marks are right below. Folded, Files keeps its header and these two lines.")}
 {frame(wC, 1180, 640, "C · a chip in the toolbar, details in a popover", "Always visible, even at All projects’ altitude for the open project. Crowds the toolbar (the needs-you chip and search), and the toolbar so far shows place, not state.")}
-{txt("""<h3>Why A [P]</h3><ul><li>The project header is where the project says how it’s going (health, next); “3 files changed, 2 to push” is part of that.</li><li>It stays put while sessions scroll, at every window width (300 left pane).</li><li>The file marks (“changed”, “new”) are the existing “edited by Claude” label’s place, in <code>text2</code>.</li></ul>
+{txt("""<h3>B, chosen (DL-149)</h3><ul><li>The state sits with the files it describes; the marks (“changed”, “new”) are the existing “edited by Claude” label’s place, in <code>text2</code>.</li><li>Folding Files keeps its header and the two lines, so the state never disappears.</li><li>The study recommended A (the header, where the project says how it’s going); Geoff chose B.</li></ul>
 <h3>How it stays current</h3><ul><li>Local state (branch, changed, to push) from <code>git status --porcelain=v2 --branch</code> on file events, as the tree refreshes.</li><li>GitHub’s side (new commits, PR) from a quiet <code>git fetch</code> every 5 minutes while the project is open, and on Get Latest. Fetch never prompts (<code>GIT_TERMINAL_PROMPT=0</code>); if it can’t, the line says “can’t reach GitHub” and when it last could.</li><li>The PR number from <code>gh pr view --json number,state</code>, when <code>gh</code> is signed in.</li></ul>""", w=1180)}</div>'''))
 
 # ---------- 05 · every state ----------
@@ -452,10 +465,10 @@ states = [
     ("signedout", "Signed out", "A push or fetch needed a sign-in and had none. Sign In… (board 10)."),
     ("offline", "Can’t reach GitHub", "Quiet: <code>text2</code>, no button, the last time it could."),
 ]
-cells = "".join(f'<div style="display:flex;flex-direction:column;gap:6px;width:400px"><div class="cap">{c}</div><div style="background:{PANE};border:1px solid {RULE};border-radius:6px;padding:8px 12px;width:300px">{repo_line(k)}</div><div class="note">{n}</div></div>' for k, c, n in states)
-board("05-states", 1440, 940, "5 · Every state of the repo line", "Twelve states, their words and their one button.", bd(1440, 940,
-    "5 · Every state of the repo line (option A, 300 wide)",
-    "Two lines: the branch, then one fact and at most one button. When several facts hold, the line shows the most pressing (conflict › signed out › protected › behind › to push › changed › PR › clean) and the popover lists them all. Words are git’s own where people meet them on GitHub (branch, push, pull request, fork); “commit” stays out of the line. [P]",
+cells = "".join(f'<div style="display:flex;flex-direction:column;gap:6px;width:400px"><div class="cap">{c}</div><div style="background:{PANE};border:1px solid {RULE};border-radius:6px;width:300px;border-top:2px solid {EDGE};padding:10px 16px 8px;display:flex;flex-direction:column;gap:2px">{files_head(k)}<div class="mono t2" style="font-size:11px">~/claude-home/website/pricing-copy</div></div><div class="note">{n}</div></div>' for k, c, n in states)
+board("05-states", 1440, 1000, "5 · Every state of the repo line", "Twelve states, their words and their one button.", bd(1440, 1000,
+    "5 · Every state, in the Files block (B, DL-149; 300 wide)",
+    "The Files header names the branch at its right; the line under it gives one fact and at most one button. When several facts hold, the line shows the most pressing (conflict › signed out › protected › behind › to push › changed › PR › clean) and the popover lists them all. Words are git’s own where people meet them on GitHub (branch, push, pull request, fork); “commit” stays out of the line. [P]",
     f'<div style="display:flex;flex-wrap:wrap;gap:22px 30px">{cells}</div>'))
 
 # ---------- 06 · push / open PR ----------
@@ -497,7 +510,7 @@ ask7 = f'''<div class="ask2"><h3>Make your own copy of acme/website?</h3><p>You 
 <div class="btns"><span class="b">Cancel</span><span class="b def">Fork and Push</span></div></div>'''
 board("07-fork", 2000, 1040, "7 · Push / Open PR without write access: the fork", "Said before it happens, in the same sheet.", bd(2000, 1040,
     "7 · No write access: push to your fork, open the PR into theirs",
-    "Duo knows before the sheet opens (<code>viewerPermission</code> READ or TRIAGE), so it says it in the sheet rather than failing a push and asking after, as VS Code and <code>gh</code> do. Unlike legacy, Duo forks only when the access probe <i>says</i> read-only; when it can’t tell, it tries the push and asks (B) only if GitHub refuses with 403. Forking needs the GitHub CLI; without it, board 10’s explainer. [P]",
+    "Duo has known since the repo was copied (board 1; <code>viewerPermission</code> READ or TRIAGE), so it says it again in the sheet rather than failing a push and asking after, as VS Code and <code>gh</code> do. Unlike legacy, Duo forks only when the access probe <i>says</i> read-only; when it can’t tell, it tries the push and asks (B) only if GitHub refuses with 403. Forking needs the GitHub CLI; without it, board 10’s explainer. [P]",
     f'''<div style="display:flex;gap:28px;align-items:flex-start">
 {frame(sheet_over(1240, 800, s7, "All projects › website › pricing-copy"), 1240, 800, "A · the sheet says so first <span class=rec>recommended</span>", "One button, named for what it does: Fork, Push and Open PR. A fork that already exists is reused; its name is shown.")}
 <div style="display:flex;flex-direction:column;gap:18px;width:640px">{frame(f'<div style="padding:18px;background:{GROUND}">{ask7}</div>', 500, None, "B · a question after a refused push", "Used when the access probe couldn’t answer (no gh, or GitHub didn’t say). Same words.")}
@@ -639,12 +652,12 @@ rec = [
 ]
 trs = "".join(f"<tr><th style='color:{TEXT};width:60px'>{a}</th><td>{b}</td><td style='width:80px'>{c}</td><td style='width:120px'>{d}</td></tr>" for a, b, c, d in rec)
 board("13-recommendation", 1440, 900, "13 · Recommendation and the v1 slice", "What to build first, with effort.", bd(1440, 900,
-    "13 · Recommendation and a first slice",
+    "13 · Recommendation and what Geoff decided (DL-149)",
     "Effort: S = a day or less, M = a few days, L = a week or more. Boards are on this canvas. [P]",
     f'''{txt(f"<table class=cmp><thead><tr><th>#</th><th>Recommendation</th><th>Boards</th><th>Effort</th></tr></thead><tbody>{trs}</tbody></table>")}
-<div style="display:flex;gap:14px">{txt("""<h3>The first slice [P]</h3><p><b>R1, R2, R3, R4, R5, R8, R9, R10</b>: see where a repo stands; bring one in on a new branch; push and open a PR with or without <code>gh</code>; plain failures. About two weeks. Then <b>R6</b> (fork) and <b>R7</b> (Get Latest).</p><p class=note>Why R6 after: people at a company usually have write access and meet protected branches, which a new branch avoids. The fork serves open source and other teams’ repos.</p>""", flex=True)}
+<div style="display:flex;gap:14px">{txt("""<h3>Decided (DL-149)</h3><p><b>All of R1–R10 in v1</b> (build plan §3a). R1 with option <b>B</b> (the Files block); Duo’s sheet pushes (Q-126); the fork in v1, said when the repo is copied and made at the first push; a clone per project, worktrees inside a project later. About three weeks.</p>""", flex=True)}
 {txt("""<h3>Later (ENH)</h3><ul><li><b>ENH-37</b>: GitHub Enterprise and other hosts (GitLab, Bitbucket): the same line and push; the PR page differs.</li><li><b>ENH-38</b>: the PR on the project: checks, reviews, comments; a shallow first copy for big repos.</li><li><b>ENH-39</b>: git identity from GitHub; first-run setup for git and gh.</li><li>Worktrees per project; Claude Code’s own worktrees shown as branches.</li></ul>""", flex=True)}
-{txt("""<h3>Questions for Geoff</h3><ol><li>Where the repo state shows: A, B or C (Q-122).</li><li>Who pushes: Duo’s sheet, Claude writing the words; or Claude does it all (Q-126).</li><li>Fork in the first slice, or after (Q-123).</li><li>A clone per project, or worktrees (Q-124).</li><li>_PROJECT.md in a repo: out of git by a checkbox, on (Q-125).</li></ol>""", flex=True)}</div>'''))
+{txt("""<h3>Answers (DL-149)</h3><ol><li>Repo state: B, the Files block (Q-122).</li><li>Who pushes: Duo’s sheet (Q-126).</li><li>Fork: in v1, known at copy time (Q-123).</li><li>A clone per project; worktrees inside one later (Q-124).</li><li>_PROJECT.md: out of git by a checkbox, on (Q-125, as recommended).</li></ol>""", flex=True)}</div>'''))
 
 with open(os.path.join(OUT, "manifest.json"), "w") as f:
     json.dump(BOARDS, f, indent=1)

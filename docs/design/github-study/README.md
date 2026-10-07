@@ -1,6 +1,6 @@
 # Duo: GitHub in a project — design study
 
-Status: **study, not approved** (Q-122 to Q-126; DL-149 reserved for the decision). Every mark on these boards is a proposal [P]. Nothing here is a build target until Geoff approves. The approved boards then move to a `github-handoff/` with `screens/`.
+Status: **decided, DL-149** (Geoff, 2026-10-07, by buttons). Every mark on these boards was a proposal [P]; the approved boards are exported to `docs/design/github-handoff/screens/`, whose README names which option on each board to build.
 
 Geoff, 2026-10-07: "we should incorporate github primitives in many places; eg we should make it easy to add a project from remote (gh), as a new or existing branch, and make it easy to push and/or open a pr (anticipating that many users will not be admin)". The research, the options and the rules are in `docs/research/github-primitives.md`. The boards are drawn on the Design canvas https://claude.ai/artifact/76ZGzopVk1eLx9d2pnWA2i with the Duo design system.
 
