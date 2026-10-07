@@ -8,7 +8,7 @@ Geoff, 2026-10-07: "the cx of creating projects (from scratch or from legacy pro
 
 His standing rule for this work: keep files plain Markdown with YAML frontmatter that Obsidian (Properties, Templates, Bases; Templater, Tasks, Dataview, Kanban) and legacy Duo's OKF format read and write without loss. Duo never adds keys or syntax that break them, and never rewrites what it doesn't own. `docs/research/obsidian-compatible-task-format.md` is the contract.
 
-Coordinated with the **templates** session (it owns what PROJECT.md and task notes look like, through one `Templates.render(kind:title:folder:values:)` call that these flows feed) and the **task kanban research** session (its board uses the same verbs and drop as these flows; its empty-board copy comes from here).
+Coordinated with the **templates** session (it owns what PROJECT.md and task notes look like, through one `Templates.make(.project|.task, title:, project:, home:, values:)` call that these flows feed) and the **task kanban research** session (its board uses the same verbs and drop as these flows; its empty-board copy comes from here).
 
 ## 1. How the journeys were walked
 
@@ -128,7 +128,7 @@ Effort: S = a day or less, M = a few days, L = a week or more. Boards are on the
 | # | Recommendation | Board | Effort | Records |
 |---|---|---|---|---|
 | R1 | **The words, once each, where they appear**, with Learn more; Help › Duo Guide above duo2 Reference; the guide pages open with the same sentences. | 2 | S | — |
-| R2 | **Write the agreed format** (F-188): PROJECT.md with `type`, `title`, `aliases`, `status`, `goal`, empty `health` and `next`, `created`; a task omits `sessions` until it has one, then block lists; folder names as slugs with the name in `title`. Through the templates session's `render()`. | 3 | S | F-188 |
+| R2 | **Write the agreed format** (F-188): PROJECT.md with `type`, `title`, `aliases`, `status`, `goal`, empty `health` and `next`, `created`; a task omits `sessions` until it has one, then block lists; folder names as slugs with the name in `title`. Through the templates session's `Templates.make()`. | 3 | S | F-188 |
 | R3 | **New project, option A**: one sheet, "Start from: A new folder / A folder I have", the explainer, a Goal hint that says Claude reads it, and a "Will write" preview. Options B (a chooser first) and C (a separate File › Make a Project from Folder…) were drawn too. | 3–6 | M | Q-114 |
 | R4 | **Adopt any folder.** "A folder I have" takes any folder, listed or not; Duo says what it found (`.obsidian/`, an OKF `_index.md` with `okf_version`, a git repo, `CLAUDE.md`, sessions) and promises what it won't touch. A new PROJECT.md takes its name from the index's `title`, and its body opens with `Brief: [<title>](_index.md)` when linked. An existing PROJECT.md is adopted as is. `duo2 project make <path>` takes any folder; File › Make a Project from Folder… opens the same sheet. | 4 | M | Q-115, C-51 |
 | R5 | **+ New project on List** (the header, both views) and a one-time explainer over List while no project exists. | 7 | S | — |
