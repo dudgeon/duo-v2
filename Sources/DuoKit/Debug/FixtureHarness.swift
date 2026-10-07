@@ -451,10 +451,10 @@ public enum FixtureHarness {
                 v.window?.makeFirstResponder(v)
                 v.insertText(parts[1], replacementRange: v.selectedRange())
             }
-        case "chat-key":   // chat-key:up|down|tab|return|esc: a key in the composer
-            let codes: [String: UInt16] = ["up": 126, "down": 125, "tab": 48, "return": 36, "esc": 53]
+        case "chat-key":   // chat-key:up|down|tab|shift-tab|return|esc: a key in the composer
+            let codes: [String: UInt16] = ["up": 126, "down": 125, "tab": 48, "shift-tab": 48, "return": 36, "esc": 53]
             if parts.count > 1, let code = codes[parts[1]], let v = Self.composerView(for: model.visibleSessionId),
-               let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: v.window?.windowNumber ?? 0,
+               let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: parts[1] == "shift-tab" ? .shift : [], timestamp: 0, windowNumber: v.window?.windowNumber ?? 0,
                                         context: nil, characters: "", charactersIgnoringModifiers: "", isARepeat: false, keyCode: code) {
                 v.keyDown(with: e)
             }
@@ -504,7 +504,7 @@ public enum FixtureHarness {
         case "chat-state":   // what the chat shows, for a scripted run's log
             if let k = model.visibleSessionId, let c = model.chat(for: k) {
                 var lines = ["chat-state: \(k.prefix(8)) mode=\(c.mode.rawValue) showing=\(c.showsChat ? "chat" : "terminal") screen=\(c.screen.kind.rawValue) card=\(c.cardUp) fallback=\(c.fallback?.message ?? "-") version=\(c.cliVersion ?? "-") hooks=\(c.log.hooksSeen) streams=\(c.log.streams) compose=\(c.usesExternalEditor)",
-                             "  composer=\(c.ui.composer.debugDescription) input=\((c.screen.input ?? "-").debugDescription) menu=\(c.screen.commands.map { ($0.selected ? "❯" : "") + $0.name })"]
+                             "  mode=\(c.screen.mode?.rawValue ?? "-") composer=\(c.ui.composer.debugDescription) input=\((c.screen.input ?? "-").debugDescription) menu=\(c.screen.commands.map { ($0.selected ? "❯" : "") + $0.name })"]
                 for item in c.log.items {
                     switch item {
                     case .you(let y): lines.append("  you: \(y.text.prefix(80))\(y.queued ? " (queued)" : "")")

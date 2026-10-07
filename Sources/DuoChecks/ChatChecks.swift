@@ -73,7 +73,10 @@ func spikeScreen(_ name: String) -> String {
         let placeholder = ChatScreenReader.read(spikeScreen("tour-2.1.291/01-markdown.txt").replacingOccurrences(of: "❯  \n", with: "❯ Try \"fix lint errors\"\n"))
         check(placeholder.input == "", "the input's placeholder is not typed text (F-108)")
         check(ChatSignatures.table(for: "2.1.291").verified && !ChatSignatures.table(for: "2.1.219").verified && !ChatSignatures.table(for: "2.1.300").verified,
-              "only the verified version answers dialogs; 2.1.219 and newer CLIs render only")
+              "the table names the versions checked dialog by dialog")
+        check(ChatSignatures.trust(for: "2.1.293") == .verified && ChatSignatures.trust(for: "2.1.300") == .newer
+              && ChatSignatures.trust(for: "2.1.219") == .unverified && ChatSignatures.trust(for: nil) == .unverified,
+              "DL-145: verified versions, newer ones trusted by their screens, older or unknown ones not")
     }
 
     print("chat mode: falling back to the terminal (spike's fallback rules, DL-118 §3)")
@@ -99,6 +102,34 @@ func spikeScreen(_ name: String) -> String {
         old.setVersion("2.1.219")
         old.attach(FakeTUI(spikeScreen("10-bash-perm.txt")))
         check(!old.showsChat && old.fallback?.message.contains("2.1.219") == true, "a dialog on an unverified CLI (2.1.219) goes to the terminal")
+        // DL-145: a newer CLI (Claude Code updates itself about daily, C-49) is trusted while its
+        // dialog reads like the verified versions'; one that doesn't goes to the terminal.
+        let bashPerm = spikeScreen("10-bash-perm.txt")
+        let newer = ChatSession(key: "s2b", mode: .chat)
+        newer.setVersion("2.1.300")
+        newer.attach(FakeTUI(bashPerm))
+        check(newer.versionTrust == .newer && newer.dialogsVerified && newer.fallback?.message.contains("2.1.300") != true,
+              "a newer CLI whose permission dialog reads like the verified ones': answered from chat")
+        let odd = ChatSession(key: "s2c", mode: .chat)
+        odd.setVersion("2.1.300")
+        odd.attach(FakeTUI(bashPerm.replacingOccurrences(of: " ❯ 1. Yes", with: "   1. Yes")))
+        check(odd.screen.kind == .permission && !odd.dialogsVerified && !odd.showsChat && odd.fallback?.message.contains("doesn’t read like") == true,
+              "a newer CLI whose dialog reads differently (no cursor row): the terminal, saying why")
+        // Every dialog captured from a real TUI (tours, AskUserQuestion shapes, the CLI login) reads whole.
+        let screensDir = repoRoot().appending(path: "Spikes/chat-mode/screens")
+        var dialogs = 0, whole = 0, broken: [String] = []
+        for case let url as URL in FileManager.default.enumerator(at: screensDir, includingPropertiesForKeys: nil) ?? FileManager.default.enumerator(atPath: "/")!
+        where url.pathExtension == "txt" {
+            let r = ChatScreenReader.read((try? String(contentsOf: url, encoding: .utf8)) ?? "")
+            guard [.permission, .plan, .question, .questionReview].contains(r.kind) else { continue }
+            dialogs += 1
+            if ChatScreenReader.wellFormed(r) { whole += 1 } else { broken.append(url.deletingLastPathComponent().lastPathComponent + "/" + url.lastPathComponent) }
+        }
+        check(dialogs > 20 && broken.isEmpty, "every captured dialog reads whole, so a newer CLI with the same screens is trusted (\(whole)/\(dialogs); \(broken.prefix(4)))")
+        let renumbered = ChatSession(key: "s2d", mode: .chat)
+        renumbered.setVersion("2.1.300")
+        renumbered.attach(FakeTUI(bashPerm.replacingOccurrences(of: " ❯ 1. Yes", with: " ❯ 4. Yes")))
+        check(!renumbered.dialogsVerified && !renumbered.showsChat, "options not numbered 1…n: the terminal")
         let hand = ChatSession(key: "s3", mode: .chat)
         let t3 = FakeTUI(spikeScreen("10-bash-perm.txt")); hand.attach(t3)
         hand.fallBack(.handedOver("Amend Claude’s request here, then press Return. Chat comes back after."))
@@ -432,6 +463,29 @@ func spikeScreen(_ name: String) -> String {
         let took = Date().timeIntervalSince(t0)
         check(git.terminationStatus != 0 && git.terminationReason == .exit && took < 10,
               "(d) git commit from Claude's Bash (no terminal, no hand-over) ends at once as it would without Duo: vi fails, git stops (\(String(format: "%.1f", took)) s)")
+    }
+
+    print("chat mode: shift+tab cycles Claude Code's modes (F-179)")
+    do {
+        let base = spikeScreen("tour-2.1.291/01-markdown.txt")
+        let footers = ["⏸ manual mode on · ? for shortcuts", "⏵⏵ accept edits on (shift+tab to cycle)", "⏸ plan mode on (shift+tab to cycle)"]
+        func screen(_ i: Int) -> String { base.replacingOccurrences(of: #"⏸ manual mode on[^\n]*"#, with: footers[i], options: .regularExpression) }
+        check(ChatScreenReader.read(screen(2)).mode == .plan, "the footer's mode is read (plan)")
+        check(ChatScreenReader.read(base.replacingOccurrences(of: #"⏸ manual mode on[^\n]*"#, with: "⏵⏵ bypass permissions on (shift+tab to cycle)", options: .regularExpression)).mode == .bypass,
+              "bypass permissions, when this claude offers it")
+        var at = 0
+        let tui = FakeTUI(screen(0))
+        tui.react = { k, t in if k == ChatKey.shiftTab.bytes { at = (at + 1) % footers.count; t.show(screen(at)) } }
+        let c = ChatSession(key: "modes", mode: .chat)
+        c.attach(tui)
+        var got: ChatPermissionMode?
+        Task { got = await c.cycleMode(to: .plan) }
+        spin(1.5)
+        check(got == .plan && tui.keys == [ChatKey.shiftTab.bytes, ChatKey.shiftTab.bytes], "a mode by name: shift+tab until the footer shows it (\(tui.keys.count) presses)")
+        var none: ChatPermissionMode? = .manual
+        Task { none = await c.cycleMode(to: .auto) }
+        spin(3)
+        check(none == nil && tui.keys.count <= 2 + 6, "a mode this claude's cycle hasn't got: refused after one round, not forever")
     }
 
     print("chat mode: Return reaches the composer after the idle list (F-178)")

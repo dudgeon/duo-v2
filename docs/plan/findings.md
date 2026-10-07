@@ -2321,6 +2321,20 @@ Geoff (2026-10-07): "I had an issue with the chat mode in the home view study: t
 - **Also found:** Home's chat (DL-132 g) stays in the window under a project, so the window holds two composers (C-47). The harness's `chat-type` and `chat-key` typed into the first one found, Home's. They now pick the composer of the session on screen, and a `composers` action lists them all.
 - **Proof:** DuoChecks "Return reaches the composer after the idle list" (3 checks), 740 passing. Live runs RET6 (before: `abc` lost, Return resumed another session) and RET8 (after: `xabc` typed and sent).
 
+## F-179 · ⇧⇥ in chat's composer cycles Claude Code's modes (2026-10-07)
+
+Geoff (2026-10-07): "when in chat mode, shift tab should cycle ask permission, plan mode, auto mode, etc -- all modes".
+
+- **⇧⇥ in the composer goes to the TUI** as its own shift+tab, after the same screen check as the mode chip (the prompt is up: idle or busy). The chip follows what the TUI's footer shows, so the cycle is whatever the installed claude offers:
+  - on the mock with an API key, 2.1.292 cycles manual → accept edits → plan → manual;
+  - under a CLI login it adds auto (Geoff's session runs in auto);
+  - with permissions bypass allowed, bypass. The reader now knows `bypass permissions on`.
+- **The hint line** reads `⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files · ⌘[ ⌘] your messages`, dropping from the right as before. Its wording and place are a stand-in (Q-108).
+- **`duo2 session chat mode [id] [next|manual|accept-edits|plan|auto|bypass]`** (DL-71): `next` presses shift+tab once; a name presses it until the footer shows that mode, re-reading after each press, at most once round the cycle. A mode this claude doesn't offer is refused, with what it shows instead. `docs/cli/duo2.md` is regenerated.
+- **Proof:**
+  - DuoChecks "shift+tab cycles Claude Code's modes" (5 checks: the footer's plan and bypass, a mode by name in two presses, a mode the cycle hasn't got refused after one round), 744 passing.
+  - Live on an isolated Duo with the real 2.1.292 TUI on the mock: three ⇧⇥ in the composer gave accept-edits, plan, manual. Capture: `docs/design/chat-mode-handoff/proof/modes-shift-tab-plan.png`.
+
 ## F-180 · Building All projects' List (DL-142 slice 1, 2026-10-07)
 
 - **The list reuses a project's sections across projects** (`AllProjects/SessionList.swift`): Open in Duo first, most urgent then the longest wait (DL-93); the rest by last use (the session's timestamp when live, its wait text in the fixture) into Today, This week and Earlier; Archived from the archived sessions. One row per session, not per group or thread: a session's task says enough (the `rows` board). The task is a task note listing the session's id, else a task bundle holding it.
@@ -2329,6 +2343,20 @@ Geoff (2026-10-07): "I had an issue with the chat mode in the home view study: t
 - **The target states** are `list-1440`, `list-1280` (`WINDOW=1280x800`) and `board-1440` (`Debug/HomeListTargets.swift`): the design fixture with the boards' sessions, tasks, history and archive, five sessions open, and the clock at 18:00 so `5h` is still Today. The build handoff's states (`overview`, `flow-zoom-*`) and the narrow, search and surface states set the Board, as their targets draw; their header gains the toggle, an intended change in every map capture.
 - **Narrow:** under 520 the rows go two-line (the `rows` board, Q-101's default) and the header's filter field gives way from 200 to 96 so nothing is pushed off the pane. The `needs-you` board's N1 list, at about 560, draws no task column; the `rows` board says the task column goes only under 520. Built to `rows`.
 - **A new user sees List** because `DuoState.homeView` is nil until a choice; `duo2 view home`, the toggle and View › Show Board / Show List write it. The filter on the List matches every word against title, project and task until slice 2 brings search's ranking (F-170).
+
+## F-176 · Chat mode answers dialogs on Claude Code 2.1.293 (2026-10-07)
+
+- The installed claude auto-updated to 2.1.293 at 14:14 on 2026-10-07, a day after 2.1.292. Chat's table trusted 2.1.291 and 2.1.292 only, so every permission, plan and question in chat went to the terminal again ("Chat mode hasn't been checked with this version…"). Found during the DL-143 build's live run. Geoff's Duo runs the same claude. The risk is C-49.
+- **Verified the same way as 2.1.292 (F-175), on the mock, with no tokens:**
+  - The dialog tour (`scenario-tour.json`, all 13 screens): folding paths, ids and times, they're line for line 2.1.291's, apart from spinner verbs and the mock's port (`screens/tour-2.1.293/`).
+  - `/model`'s picker has the same layout with a new list: 2.1.293 offers Haiku 5.5 and shows Haiku 4.5 as "Newer version available". DL-33's test model, `claude-haiku-4-5-20251001`, still runs.
+  - `DUO_CHECKS=chat-live`: 63 of 63 at 100×34, 60×34 and 80×20. The first run failed the 8 composer cases at 100×34 with "Claude Code didn't open its editor". The cause was the fresh work tree having no `duo2` build: the suite uses `.build/out/Products/Debug/duo2` as Claude's editor. After `scripts/bundle.sh` they pass, 35 of 35. Run `bundle.sh` before chat-live in a new work tree.
+- 2.1.293 is added to the table's `verified` list.
+- **Then DL-145: newer versions are trusted by their screens.**
+  - `ChatSignatures.trust(for:)` gives verified, newer or unverified (older or unknown). `ChatSession.dialogsVerified` is now worked out from the screen on show: true for a verified version; for a newer one only while `ChatScreenReader.wellFormed` holds (options numbered 1…n, one cursor row, a title or question); false otherwise.
+  - Every place that checked it already re-reads the screen first: the card, the answer's check before its keys, and the fallback rules.
+  - A newer version's dialog that doesn't read whole goes to the terminal with "This dialog in Claude Code <version> doesn't read like the versions chat mode was checked with…".
+  - Checks: the trust levels; 2.1.300 with a real permission screen is answered; the same screen without its cursor row, or numbered from 4, goes to the terminal; all 41 dialog screens captured from real TUIs (tours, AskUserQuestion shapes, the CLI login) read whole. The chat group passes 154 of 154.
 
 ## F-181 · The List's filter: search's session hits fused with Duo's names (DL-142 slice 2, 2026-10-07)
 

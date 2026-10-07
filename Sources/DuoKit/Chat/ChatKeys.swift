@@ -98,6 +98,19 @@ extension ChatSession {
         _ = await press(.shiftTab)
     }
 
+    /// A mode by name (`duo2 session chat mode plan`): ⇧⇥ until the TUI's footer shows it, re-reading
+    /// after each press, at most once round the cycle. Nil when this claude's cycle hasn't got it.
+    public func cycleMode(to target: ChatPermissionMode) async -> ChatPermissionMode? {
+        for _ in 0..<6 {
+            let s = reread()
+            if s.mode == target { return target }
+            guard [.idle, .busy].contains(s.kind) else { return nil }
+            _ = await press(.shiftTab)
+            await pause(200_000_000)
+        }
+        return reread().mode == target ? target : nil
+    }
+
     /// Stop (esc) while Claude works.
     public func interrupt() async {
         guard reread().kind == .busy else { return }

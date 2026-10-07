@@ -2,7 +2,8 @@ import DuoControl
 import Foundation
 
 extension AppModel {
-    /// `duo2 session chat [id] on|off|toggle`, `--default last|chat|terminal`, `answer [id] <option|cancel>`
+    /// `duo2 session chat [id] on|off|toggle`, `--default last|chat|terminal`, `answer [id] <option|cancel>`,
+    /// `mode [id] [next|manual|accept-edits|plan|auto|bypass]`
     /// (Q-53, DL-120). With no id, the session on screen.
     func chatVerb(_ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
         let usage = "usage: \(ActionID.sessionChat.action.usage)"
@@ -22,10 +23,13 @@ extension AppModel {
         var words = inv.positional
         let answering = words.first == "answer"
         if answering { words.removeFirst() }
+        let moding = !answering && words.first == "mode"
+        if moding { words.removeFirst() }
         let verbs: Set<String> = ["on", "off", "toggle"]
         // The id comes first when given; the session on screen otherwise.
         var key = visibleSessionId
-        if let first = words.first, !verbs.contains(first), !(answering && words.count == 1) {
+        let modeWords = Set(["next"] + [ChatPermissionMode.manual, .acceptEdits, .plan, .auto, .bypass].map(\.rawValue))
+        if let first = words.first, !verbs.contains(first), !(answering && words.count == 1), !(moding && modeWords.contains(first)) {
             guard let s = findSession(first, in: nil) else { return done(.fail("no session '\(first)'")) }
             key = s.tabKey
             words.removeFirst()
@@ -36,6 +40,10 @@ extension AppModel {
             guard let option = words.first else { return done(.fail(usage)) }
             guard let chat = chats.existing(key) ?? fixtureChats[key] else { return done(.fail("\(name) has no chat yet: open it in Duo first")) }
             return chatAnswer(chat, option: option, done)
+        }
+        if moding {
+            guard let chat = chats.existing(key) ?? fixtureChats[key] else { return done(.fail("\(name) has no chat yet: open it in Duo first")) }
+            return chatMode(chat, name: name, to: words.first ?? "next", done)
         }
         guard let verb = words.first, verbs.contains(verb) else {
             let c = chats.existing(key) ?? fixtureChats[key]
@@ -50,6 +58,27 @@ extension AppModel {
         let mode: ChatViewMode = verb == "on" ? .chat : verb == "off" ? .terminal : (current == .chat ? .terminal : .chat)
         if let f = fixtureChats[key] { f.mode = mode; f.fallback = nil } else { setChatMode(mode, for: key) }
         done(.ok("\(name) shows as \(mode == .chat ? "chat" : "the terminal"). Nothing was sent to the session."))
+    }
+
+    /// `duo2 session chat mode`: Claude Code's ⇧⇥, once (`next`) or until the footer shows the mode
+    /// named (F-179). The cycle is the installed claude's own; chat only reads where it is.
+    func chatMode(_ chat: ChatSession, name: String, to word: String, _ done: @escaping @MainActor (Reply) -> Void) {
+        let s = chat.reread()
+        guard [.idle, .busy].contains(s.kind) else { return done(.fail("Claude Code isn't at its prompt (\(s.kind.rawValue)); nothing sent")) }
+        if word == "next" {
+            Task {
+                await chat.cycleMode()
+                try? await Task.sleep(nanoseconds: 200_000_000)
+                let now = chat.reread().mode
+                done(.ok("\(name): \(now?.chip ?? "mode unknown") (pressed shift+tab).", ["mode": now?.rawValue ?? "-"]))
+            }
+            return
+        }
+        guard let target = ChatPermissionMode(rawValue: word) else { return done(.fail("usage: \(ActionID.sessionChat.action.usage)")) }
+        Task {
+            if let got = await chat.cycleMode(to: target) { done(.ok("\(name): \(got.chip).", ["mode": got.rawValue])) }
+            else { done(.fail("\(name)'s Claude Code didn't reach \(target.chip) with shift+tab (it shows \(chat.reread().mode?.chip ?? "no mode")); this claude may not offer it")) }
+        }
     }
 
     /// `duo2 session chat answer`: a review card's option, pressed only after the same screen check

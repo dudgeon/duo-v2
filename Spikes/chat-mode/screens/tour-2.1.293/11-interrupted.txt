@@ -1,0 +1,34 @@
+
+⏺ Writing the plan.
+
+⏺ Updated plan
+  ⎿  /plan to preview
+  ⎿  User rejected Claude's plan:
+     ╭──────────────────────────╮
+     │ Plan                     │
+     │                          │
+     │ 1. Read the code         │
+     │ 2. Change foo            │
+     │ 3. Run the checks        │
+     ╰──────────────────────────╯
+     
+✻ Cooked for 0s · done 2:23 PM  
+     
+❯ SCENARIO:long                                                                                     
+
+⏺ Line 1 of a long answer.
+  Line 2 of a long answer.
+  Line 3 of a long answer.
+  Line 4 of a long answer.
+  Line 5 of a long answer.
+  Line 6 of a long answer.
+  Line 7 of a long answer.
+  Line 8 of a long answer.
+  Line 9 of a long answer.
+  Lin
+  ⎿  Interrupted · What should Claude do instead?
+                                                              auto mode unavailable for this model
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on · /tasks to see subagents · ← for agents

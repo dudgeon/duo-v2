@@ -53,8 +53,8 @@ struct ChatComposerArea: View {
                 // With the @ menu open, its keys (DL-133).
                 ViewThatFits(in: .horizontal) {
                     ForEach(chat.ui.mention?.matches.isEmpty == false ? ["↑↓ choose · ⏎ or tab adds it · esc closes"]
-                            : ["⏎ send · ⇧⏎ new line · / commands · @ files · ⌘[ ⌘] your messages", "⏎ send · ⇧⏎ new line · / commands · @ files",
-                               "⏎ send · ⇧⏎ new line · / commands", "⏎ send · ⇧⏎ new line"], id: \.self) {
+                            : ["⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files · ⌘[ ⌘] your messages", "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files",
+                               "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands", "⏎ send · ⇧⏎ new line · ⇧⇥ mode", "⏎ send · ⇧⏎ new line"], id: \.self) {
                         Text($0).duoText(.chatMeta).foregroundStyle(DuoColor.text2).lineLimit(1).fixedSize()
                     }
                 }
@@ -72,7 +72,7 @@ struct ChatComposerArea: View {
 struct ChatModeMark: View {
     let mode: ChatPermissionMode
     var body: some View {
-        Text(mode == .manual ? "⏸" : mode == .plan ? "⏸" : "⏵⏵").font(.system(size: 9))
+        Text(mode == .manual || mode == .plan ? "⏸" : "⏵⏵").font(.system(size: 9))
     }
 }
 
@@ -342,6 +342,12 @@ final class ComposerTextView: NSTextView {
     }
 
     override func keyDown(with e: NSEvent) {
+        // ⇧⇥: Claude Code's own mode cycle (manual, accept edits, plan, auto …, whatever this claude
+        // offers); the chip follows its footer (F-179).
+        if e.keyCode == 48, e.modifierFlags.intersection([.shift, .command, .option, .control]) == .shift, let c = coordinator?.chat {
+            Task { await c.cycleMode() }
+            return
+        }
         // The @ menu takes ↑↓, ⏎ and tab while it has matches, and esc while it's open (DL-133).
         if let c = coordinator, let m = c.chat.ui.mention {
             let any = !m.matches.isEmpty

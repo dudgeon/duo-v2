@@ -31,6 +31,7 @@ public struct ChatSignatures: Sendable, Equatable {
     public var modeAcceptEdits = #"accept edits on"#
     public var modeManual = #"manual mode on"#
     public var modeAuto = #"auto mode on"#
+    public var modeBypass = #"bypass permissions on"#
     /// The spinner line above the input box: `✻ Sautéed for 2s`, `✻ 529 Overloaded · Retrying …`.
     public var status = #"^[✻✽✶✳✢·*] \S"#
     public var interrupted = #"Interrupted · What should Claude do instead\?"#
@@ -56,10 +57,20 @@ public struct ChatSignatures: Sendable, Equatable {
 
     /// 2.1.291: every dialog verified with the mock tour and asktest (F-104, F-106) and with real
     /// turns under the CLI login (F-105).
-    /// 2.1.292: the same screens; chat-live (AskUserQuestion at three sizes) passed (F-175).
-    public static let v2_1_291 = ChatSignatures(version: "2.1.291", verified: ["2.1.291", "2.1.292"])
+    /// 2.1.292 and 2.1.293: the same screens; chat-live (AskUserQuestion at three sizes) and the dialog tour passed (F-175, F-176).
+    public static let v2_1_291 = ChatSignatures(version: "2.1.291", verified: ["2.1.291", "2.1.292", "2.1.293"])
 
     public static let all: [ChatSignatures] = [.v2_1_291]
+
+    /// How far a CLI version's dialogs are trusted (DL-145): a verified version always; a newer
+    /// one while its dialogs read like the verified versions' (Claude Code updates about daily,
+    /// C-49); an older or unknown one never (its dialogs go to the terminal).
+    public static func trust(for version: String?) -> ChatVersionTrust {
+        guard let version, let v = ChatVersion(version) else { return .unverified }
+        if all.contains(where: { $0.verified.contains(version) }) { return .verified }
+        let newest = all.flatMap(\.verified).compactMap(ChatVersion.init).max()
+        return newest.map { v > $0 } == true ? .newer : .unverified
+    }
 
     /// The table for a CLI version: the newest at or below it (or the oldest), and whether this
     /// exact version was verified. An unverified version still renders; its dialogs go to the
@@ -69,6 +80,16 @@ public struct ChatSignatures: Sendable, Equatable {
         let fit = all.filter { (ChatVersion($0.version) ?? v) <= v }.last ?? all.first!
         return (fit, fit.verified.contains(version))
     }
+}
+
+/// DL-145: how a CLI version's dialogs are answered from chat.
+public enum ChatVersionTrust: String, Sendable {
+    /// Checked dialog by dialog (the tour, chat-live).
+    case verified
+    /// Newer than every verified version: trusted while its dialogs read like theirs.
+    case newer
+    /// Older than the table, or unknown: dialogs go to the terminal.
+    case unverified
 }
 
 /// A dotted CLI version, comparable.
@@ -100,7 +121,7 @@ public struct ChatVersion: Comparable, Sendable, CustomStringConvertible {
 
 /// The Claude Code mode the footer names.
 public enum ChatPermissionMode: String, Sendable, Equatable {
-    case manual, acceptEdits = "accept-edits", plan, auto
+    case manual, acceptEdits = "accept-edits", plan, auto, bypass
 
     /// The chip's words, as the TUI's footer says them (composer board).
     public var chip: String {
@@ -109,6 +130,7 @@ public enum ChatPermissionMode: String, Sendable, Equatable {
         case .acceptEdits: "accept edits on"
         case .plan: "plan mode on"
         case .auto: "auto mode on"
+        case .bypass: "bypass permissions on"
         }
     }
 }
@@ -224,7 +246,7 @@ public enum ChatScreenReader {
         // The footer sits under the input box, which is not always at the bottom of the screen.
         let footer = (rules.last.map { Array(t[min($0 + 1, t.count)..<min($0 + 3, t.count)]) } ?? Array(t.suffix(3))).joined(separator: " ")
         let mode: ChatPermissionMode? = footer.chatIs(s.modePlan) ? .plan : footer.chatIs(s.modeAcceptEdits) ? .acceptEdits
-            : footer.chatIs(s.modeManual) ? .manual : footer.chatIs(s.modeAuto) ? .auto : nil
+            : footer.chatIs(s.modeManual) ? .manual : footer.chatIs(s.modeAuto) ? .auto : footer.chatIs(s.modeBypass) ? .bypass : nil
         // The input box: the last two full-width rules with "❯ " between them.
         var input: String?
         if rules.count >= 2 {
@@ -296,6 +318,24 @@ public enum ChatScreenReader {
             return r
         }
         return ChatScreen(kind: .unknown, sig: "unknown")
+    }
+
+    /// A dialog read whole by the signatures (DL-145): what a newer CLI's dialog must be before chat
+    /// answers it. Options numbered 1…n, one cursor, and the parts each kind has.
+    public static func wellFormed(_ s: ChatScreen) -> Bool {
+        func numbered(_ ns: [Int?]) -> Bool { !ns.isEmpty && ns == Array(1...ns.count).map(Optional.some) }
+        switch s.kind {
+        case .permission:
+            return numbered(s.options.map(\.n)) && s.rows.filter(\.cursor).count == 1 && s.title?.isEmpty == false
+        case .plan:
+            return numbered(s.options.map(\.n)) && s.rows.filter(\.cursor).count == 1
+        case .questionReview:
+            return numbered(s.options.map(\.n)) && s.rows.filter(\.cursor).count == 1
+        case .question:
+            return numbered(s.rows.map(\.n).filter { $0 != nil }) && s.question?.isEmpty == false && s.rows.filter(\.cursor).count == 1
+        default:
+            return true
+        }
     }
 
     /// Numbered options from `from`, with wrapped labels joined and description lines kept as notes.
