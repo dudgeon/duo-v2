@@ -622,6 +622,7 @@ public enum FixtureHarness {
                 }
             }
         case let a where a.hasPrefix("wait"): break
+        case let a where a.hasPrefix("perf-"): ChatPerf.perform(parts, on: model)   // chat mode's performance runs (F-157)
         default: FileHandle.standardError.write(Data("Unknown action '\(action)'\n".utf8))
         }
     }

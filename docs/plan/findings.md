@@ -1988,3 +1988,66 @@ Spike: `docs/plan/spikes/browser-engine.md`.
 - **Q-87's stand-in:** tabs keep their state glyphs in light colours (`StateGlyph(.light)`), so a waiting session's needs-you dot doesn't disappear while you chat. The board draws none.
 - **Tab fitting** measures titles in `control` on the thin strip, so `» n` and the 24-character cut work the same as on the dark one.
 - **Proof:** `docs/design/chat-polish-handoff/proof/chat-polish-bar-thin-compare.png`; the dark-strip boards (`toggle`, `fallback`) unchanged.
+
+## F-157 · Chat mode's scrolling, measured on a long session (2026-10-07)
+
+- **Why.** Geoff: "scroll performance for a long agent session in chat mode is really bad; very laggy with lots of spinning beach ball cursor." A beach ball is the main thread blocked for about 2 s, so this measures the main thread.
+- **Fixture, generated.** `scripts/make-long-chat.py` writes a transcript shaped like Geoff's longest sessions without any of their text (the repo is public). The real ones have about 95 prompts, 3,500 tool calls (70% Bash), thinking before most calls, short text blocks and the odd long one, and 33 to 150 MB of transcript. The default is 16 MB. `--heavy` makes command output as large as the real ones', which gives 82 MB, 95 turns and 3,601 tool calls. The feed shows the last 50 turns (Q-56c): 100 items and 1,945 tool steps.
+- **Harness.** `scripts/perf-chat.sh [out] [--heavy]` runs an isolated Duo (its own support and Claude config folders) in `chat-window`. The fixture chat follows the transcript through the real `ChatFeed`. `perf-*` actions (`Debug/ChatPerf.swift`) then:
+  - open it;
+  - scroll up from the bottom one step a frame, 40 pt (300 frames) and then 200 pt (a flick, 120 frames);
+  - append live replies at the bottom (more of the same turn);
+  - jump to the middle and append new turns.
+  
+  A background watchdog pings the main thread every 5 ms, so its waits are the stalls. `sample(1)` runs during each phase. Results are in `<out>/perf.log`.
+- **Caveat.** The test window is never frontmost, and is often covered (F-113), so AppKit lays it out but may skip drawing. On Geoff's screen, frames cost more than these numbers.
+- **Numbers, heavy fixture, two runs each:**
+
+| Build | Open: longest stall | Slow scroll: frames over 33 ms (of 300) | Flick: longest stall | Live replies at the bottom (1.4 s of them): stalls total / longest | A reply while scrolled up | AppKit views in the feed | Peak memory |
+|---|---|---|---|---|---|---|---|
+| main today | 2.9–3.5 s | 292–293 (median frame 37 ms) | 122–125 ms (≈115 of 120 frames late) | 2.4–2.8 s / 1.5–2.4 s | yanked to the bottom; 1.0–1.3 s stall | 6,024 | 640–830 MB |
+| chat polish's collapse (788ef16) | 2.3–2.9 s | 1 | 75 ms | 0.4–1.2 s / 0.18–0.41 s | yanked; 0.2–1.2 s | 184 | 355 MB |
+| collapse + the quick fixes (F-158 to F-160) | 0.5–0.7 s | 1 | 74–93 ms | 0.2–0.45 s / 0.08–0.19 s | stays put; 5–41 ms | 172 | 352 MB |
+| the quick fixes without the collapse | 0.6–1.2 s | 0–2 | 12–60 ms | 0.8 s / 0.21 s | stays put, but 2.0 s to tear down views (F-159) | 6,000+ | 500 MB |
+
+- **Four causes, in order of harm:**
+  1. **A whole-window Auto Layout pass every frame** (F-158).
+  2. **An AppKit text field for every selectable `Text`** (F-159).
+  3. **Opening parses the whole transcript on the main thread**, and the log's updates are quadratic (F-160).
+  4. **Every new item scrolls to the bottom** and compares the whole feed (F-160).
+- **The rows.** A `LazyVStack` row is a whole Claude turn. In a long agent turn that is hundreds of steps, so realizing or re-rendering one row is costly. The flick's remaining 75–93 ms hitches are this. The collapse makes these rows much smaller.
+
+## F-158 · SwiftUI sized the pane split with Auto Layout, walking every view in every pane (2026-10-07)
+
+- `PaneSplit` (`Shell/PaneSplit.swift`) is an `NSViewRepresentable` with no `sizeThatFits`. So on every layout pass of the window's hosting view, SwiftUI asks it `systemLayoutSizeFittingSize:`. That builds a temporary Auto Layout engine from the constraints of every view under the split, all panes included, and throws it away (`_populateEngineWithConstraintsForViewSubtree`).
+- **Cost.** With a long feed realized (6,000 AppKit views, F-159), it took 60% of the main thread while scrolling: 36 ms frames, 293 of 300 late.
+- **Fix.** `sizeThatFits` returns the proposal, since the split always fills what it's offered. The same run then has 1 late frame of 300, with a median of 16.7 ms.
+- Any representable that hosts SwiftUI content should say its size, or every view under it is walked on each layout pass.
+
+## F-159 · Every selectable `Text` is an AppKit text field (2026-10-07)
+
+- **What `.textSelection(.enabled)` costs.** On macOS it turns each `Text` into a `SelectionTextField` inside an `AppKitPlatformViewHost`. On today's main, two realized turns of the heavy fixture held 6,024 AppKit views: 2,167 text fields, their hosts, and 1,686 `_NSGraphicsView`s. Most were the lines of `Write` diffs, which drew the whole file, two text fields a line.
+- **Creating them costs.** Discarding them costs more: `-[NSView _removeFromKeyViewLoop]` is linear in the siblings, so tearing down a large row is quadratic. That was the 2.0 s stall when a reply arrived while scrolled up.
+- **The collapse fixes most of this.** It builds outputs and diffs only for opened steps, which cuts the realized feed to 172 views. With it, removing selection from every `Text` too gained little: 155 ms against 135 ms of stalls at the bottom. So selection stays as designed.
+
+## F-160 · Opening a long chat blocked the main thread; new items always scrolled to the bottom (2026-10-07)
+
+- **Open.** `ChatFeed.loadHistory` ran on the main thread, despite its comment. On the 82 MB fixture, a sample of the 1.3 s it took to read, parse and replay:
+  - JSON parsing of the whole file: 26%;
+  - `ChatLog.toolUse`/`updateStep`: 35%. They scanned every item for the step's id, and copied a turn's segments and steps on every change. That's quadratic in a long turn, and `toolUse` wrote the item back even when nothing changed.
+  - `ISO8601DateFormatter` for each record's timestamp: 14%.
+  - Drawing the first frame then took another 0.3–0.8 s.
+- **Prototyped fixes:**
+  - read and parse off the main thread, the tick leaving the transcript alone until then;
+  - an index from step id to item;
+  - changing turns in place (the item is lifted out first, so its arrays aren't shared);
+  - parsing timestamps by hand.
+  
+  The longest stall went from 2.3–3.5 s to 0.5–0.7 s. What's left is the replay itself, still on the main thread: mostly `ChatToolDescriber.finish` splitting long command output into lines that are never drawn.
+- **Memory.** The parsed history keeps every record for Earlier turns: about 350 MB for the 82 MB file. Keeping the lines unparsed until Earlier turns asks for them would save most of that.
+- **New items scrolled to the bottom.** `ChatPane` scrolled to the bottom on every change to `chat.log.items`. So:
+  - a reply that arrived while you read further up pulled you down;
+  - SwiftUI compared the old and new feeds in full, every step's diff and output included, on every hook event.
+  
+  The prototype keeps you where you are unless you're at the bottom (`onScrollGeometryChange`), and watches the item count instead.
+  - Open question: in one run of four, a jump to the middle that changed the content height at the same moment still counted as "at the bottom". The build needs a sturdier rule (scroll to the bottom once on load; otherwise decide from the offset alone), proved by the harness's scrolled-up phase.
