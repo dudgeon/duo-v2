@@ -60,7 +60,7 @@ Mark Complete still holds for 5 s with Reduce Motion on; it then goes at once.
 - **Session list:**
   - Rows keep one identity across sections, so they travel (`rowMove`). The state glyph and counts change at once.
   - New rows fade in (`rowIn`). Archived rows fade out (`rowOut`) and the rest close up (`rowMove`).
-  - While the pointer is in the list, changes in order wait until it leaves (Q-80). Glyphs, counts and wait times still update.
+  - While the pointer is in the list, changes in order wait until it leaves (Q-80). Glyphs and wait times still update; a section's count follows the rows it lists while held.
 - **Folds** (Archived, Earlier, a group or task's sessions, file-tree folders, the properties block's chevron):
   - The chevron turns 90° (`fold`). Children fade in while the rows below make room.
   - A folder is listed the moment it opens (Q-79).
@@ -105,6 +105,17 @@ Mark Complete still holds for 5 s with Reduce Motion on; it then goes at once.
 - the peek's rows;
 - the editor's task box;
 - a tile growing into its project.
+
+## Built
+
+F-131 to F-141. Each slice was proved with frames at set times (`scripts/check-motion.sh`, strips with `scripts/filmstrip.py`), with Reduce Motion on and off, and checked unchanged at rest against main's build. Page motion (the editor, the deck) is proved in Chromium (`scripts/check-editor-motion.mjs`, `scripts/check-deck-motion.mjs`), since WebKit runs no page animation in a window that isn't on screen.
+
+Where the build departs from the boards:
+- The chat fallback bar appears at once: it sits over a live terminal, and sliding it would resize the PTY on every frame.
+- Bars that come with their view (a binary file's) don't slide.
+- The chip's count roll keeps the toolbar's own short timing.
+- Rows, tabs and task lines are opaque on their pane, and a row changing section is lifted above the rows it passes, so text never overprints mid-move (the director's review).
+- A jump between projects replaces the session list and tab strips at once and fades the project up.
 
 ## Proof (Q-77)
 

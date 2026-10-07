@@ -10,3 +10,5 @@ A PowerPoint deck in the right pane: its slides drawn, the slide on screen, and 
 - **Can't draw** (E): the notice bar (DocumentStateBar's look) "Duo can’t draw <name>: <why>." / "Quick Look shows what it can, read only. Claude can’t read its slides either." with Open With ⌄ and Show in Finder, over Quick Look.
 
 **Behaviour:** what Claude receives is pasted into its prompt without Return (board D). Verbs: `duo2 slide`, `slide go`, `slide shapes`, `slide notes`, `slide pick`, `slide element`; `send element` sends the picked shape. Slide content is the renderer's, exempt from comparison.
+
+**Motion (DL-130):** ‹ › scrolls to the slide (`motionSlide` 250 ms). Opening a deck and a scripted pick jump instead. The picker's outline glides between shapes (`motionOutline` 80 ms). With Reduce Motion, it's at once.

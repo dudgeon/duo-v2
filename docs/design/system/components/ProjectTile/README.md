@@ -7,3 +7,5 @@ One project or folder on the map: what it's for, how it's going, and what's runn
 **NewProjectTile:** 38 high, dashed (`borderDash`) `controlEdge`, `+ New project` centred in `text2`.
 
 **Behaviour:** the whole tile opens the project; a session row opens it on that session. Right-click: Send to Claude, Make a Project (folders), Merge Into, Move into Home…, Archive Project. Tiles drag onto tiles to merge.
+
+**Motion (DL-130):** A new tile fades in (`motionTileIn`). Dragged, the source sinks and the target rises (`motionLift`, no spring), and the landed fill and capsule take `motionLanded`. With Reduce Motion, it's at once.

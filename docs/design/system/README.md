@@ -137,13 +137,35 @@ Duo has no logo yet. Set the name in plain type.
 
 ## Motion
 
-Minimal: state changes are noticeable but never animated for their own sake (DL-129).
-- A side pane hiding or showing slides its width, `motionPaneToggle` 200 ms ease-in-out; a terminal is resized once, at the end.
-- Search's scrim and modal fade together, `motionScrimIn` 120 ms in, `motionScrimOut` 100 ms out, without moving.
-- A new tile fades in where it lands, `motionTileIn` 150 ms; the others just move. Map order never animates.
-- The altitude change cross-fades, `motionAltitude` 150 ms.
-- Glyphs swap in place. Lists use the system's default insert and remove. Popovers and sheets use the system's animations.
-- Reduce Motion makes all of Duo's own motion instant.
+Minimal: motion shows where something went, that a click worked, or keeps your place; never for its own sake (DL-129, DL-130). Every duration is a `motion*` token. Easing follows one rule: arriving eases out, leaving eases in, and moving between two places eases in and out.
+- **Panes and altitude.**
+  - A side pane hiding or showing slides its width, `motionPaneToggle` 200 ms; a terminal is resized once, at the end.
+  - The altitude change cross-fades, `motionAltitude` 150 ms. A jump between projects fades the project up over the same time.
+- **Overlays.**
+  - Search's scrim and modal fade together: `motionScrimIn` 120 ms in, `motionScrimOut` 100 ms out.
+  - Duo's sheets and questions hang down from the toolbar, `motionSheetIn` 200 ms, and go back up, `motionSheetOut` 150 ms. The next queued question cross-fades in place, `motionSheetSwap`.
+- **Lists.**
+  - A row changing section travels there, `motionRowMove` 200 ms. New rows fade in, `motionRowIn`; rows that go fade out, `motionRowOut`.
+  - The session list holds its order while the pointer is in it.
+  - Folds turn their chevron and reveal their rows, `motionFold` 180 ms.
+  - Mark Complete shows the task checked, struck through and grey for `motionRowHold` (5 s), then it leaves.
+  - Rows and tabs are opaque on their pane, so nothing overprints mid-move. Another project's list replaces this one at once.
+- **Tabs and notices.**
+  - Tabs fade in, `motionTabIn`, and out, `motionTabOut`, while the strip slides, `motionTabMove`.
+  - Notice bars slide down from under the tab strip, `motionNoticeIn`, and up, `motionNoticeOut`.
+- **The map.** A new tile fades in where it lands, `motionTileIn`. Drag and drop sinks and raises tiles, `motionLift` and `motionLanded`, with no spring.
+- **Chat.** The review card rises in place of the composer, `motionCardIn`, and sinks after the answer, `motionCardOut`. New items fade in, `motionMessageIn`.
+- **The chip.** It fades, `motionChipIn`, and its count rolls, `motionCount`.
+- **Documents.**
+  - Claude's highlight fades in, `motionHighlightIn` 200 ms, and out on your next edit, `motionHighlightOut` 600 ms.
+  - The deck scrolls to a slide, `motionSlide` 250 ms, and the picker's outline glides, `motionOutline` 80 ms.
+- **Never animated:**
+  - state glyphs, the needs-you dot, and map order;
+  - the hover × and +;
+  - search results;
+  - chat streaming and its scroll;
+  - the Terminal/Chat swap, and anything over a terminal's text.
+- **Reduce Motion** makes all of Duo's own motion instant. Mark Complete still holds 5 s. Popovers use the system's animations.
 
 ## Accessibility
 

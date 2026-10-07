@@ -1878,3 +1878,20 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - the outline's top: 44, 57, 68, 77, 83, 85 over about 80 ms;
   - with `reducedMotion: reduce`, both are at their end from the first sample.
 - **Unchanged at rest** against origin/main's build, live, cropped to the right pane (0 pixels): `slide-go:3`, picking with a hovered shape, and a picked shape. DuoChecks 628 pass.
+
+## F-141 · Chat items fade in; drop targets light up; DL-130 closed out (2026-10-06)
+
+- **Chat items:** a new item (your prompt, a tool card, Claude's reply) fades in where it lands (`messageIn`, keyed on the item count). Streaming text grows in place. Proof: `chat-in` (`chat-prompt:` harness on `chat-text`).
+- **Drop targets:** a folder under a file drag, or the tree's empty area for the root, fades its highlight in (`dropIn`). Proof: `drop-in` (`drop-hover:docs`).
+- With Reduce Motion both are at once. Unchanged at rest against origin/main's build (0 pixels): project, overview, chat-window, chat-text, chat-tools, chat-status, chat-composer and `drop-hover:docs`. DuoChecks 628 and the chat checks 96 pass.
+- **DL-130 is built** (F-131, F-133 to F-141; F-132 is the peek-capture fix on main). The docs are updated:
+  - `docs/design/motion-handoff/README.md`: built, and where the build departs from the boards;
+  - `docs/design/README.md`: built;
+  - the design system's README Motion section, a Motion row in `surfaces.md`, and a Motion line in twelve component READMEs (ArchivedFold, ChatMode, DeckViewer, DocumentStateBar, FileTree, NeedsYouChip, PaneTabs, ProjectTile, SessionList, SessionRow, Sheet, TaskLine).
+  - The design-system artifact is for the walk session to republish.
+- **Tools left for later motion work:**
+  - `scripts/check-motion.sh` (with `FILM=filmw`, `BEFORE_EACH`, `live:`);
+  - `scripts/filmstrip.py`;
+  - `scripts/check-editor-motion.mjs` and `scripts/check-deck-motion.mjs`;
+  - `DUO_MOTION_SCALE`, `DUO_MOTION_HOLD` and `DUO_REDUCE_MOTION`;
+  - harness actions `film:`, `filmw:`, `+<action>`, `session-state:`, `session-add:`, `session-remove:`, `sidebar-hover:`, `collapse:`, `task-complete:`, `task-open:`, `archive-session:`, `refresh`, `chat-screen:`, `chat-prompt:`, `drag-lift:`, `drag-over:` and `drag-land:`.
