@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x860">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-135">
+<!--
+C3 · A mixed run: collapsed, running, opened [G]
+APPROVED BOARD. Geoff, 2026-10-07 (DL-135). Exported from the Design canvas
+https://claude.ai/artifact/SSkofLgbK2jdNCKonuXPT2 (board Mixed.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · Chat polish · a mixed run</title>
+<style>
+body{margin:0}
+a{color:#1F2328;text-decoration:underline;text-decoration-color:#8B939C;text-underline-offset:3px}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B636D}
+.who{font-size:12px;line-height:16px;color:#5B636D}
+.card{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px}
+.trail{display:flex;flex-direction:column;border-left:1.5px dotted #8B939C;margin-left:6px}
+.fold{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;min-height:24px;margin-left:-5px;font-size:12px;line-height:16px;color:#5B636D;cursor:pointer;width:calc(100% + 5px)}
+.fold b{font-weight:600;color:#1F2328}
+.dot{width:7px;height:7px;border-radius:4px;border:1.5px solid #8B939C;background:#FFFFFF;flex:none;margin-left:3px}
+.chev{margin-left:auto;color:#5B636D;flex:none}
+.inner{display:flex;flex-direction:column;margin:0 0 6px 18px}
+.inner .fold{margin-left:0;width:100%;gap:8px}
+.cmd{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.cmd .mono{color:#5B636D}
+</style>
+</head>
+<body>
+<div style="width: 680px; height: 860px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; padding: 24px 24px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+<div class="lbl">COLLAPSED</div>
+<div style="margin-right: 36px; display: flex; flex-direction: column; gap: 4px">
+<div class="who">Claude · 10:20</div>
+<div class="card">
+<div class="trail">
+<button type="button" class="fold"><span class="dot"></span><span><b>Searched</b> for 2 patterns, <b>read</b> 3 files, <b>ran</b> 1 shell command</span><span class="chev">›</span></button>
+</div>
+<div>Two of six interviewees named saved cards as the reason they abandon guest checkout.</div>
+</div>
+</div>
+
+<div class="lbl" style="padding-top: 6px">WHILE IT RUNS</div>
+<div style="margin-right: 36px; display: flex; flex-direction: column; gap: 4px">
+<div class="who">Claude · 10:20</div>
+<div class="card">
+<div class="trail">
+<div class="fold" style="cursor: default"><span class="dot"></span><span><b>Searched</b> for 1 pattern, <b>read</b> 2 files, <b>searching</b> for 1 pattern…</span><span class="chev">›</span></div>
+<div class="inner" style="margin-bottom: 0">
+<div class="fold" style="cursor: default"><span class="cmd"><span class="mono">“guest checkout” in research/</span></span></div>
+</div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding-left: 4px; font-size: 12px; line-height: 16px; color: #5B636D"><svg width="10" height="10" viewBox="0 0 10 10" aria-label="working"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Working · 9s · Esc to interrupt</div>
+</div>
+
+<div class="lbl" style="padding-top: 6px">OPENED</div>
+<div style="margin-right: 36px; display: flex; flex-direction: column; gap: 4px">
+<div class="who">Claude · 10:20</div>
+<div class="card">
+<div class="trail">
+<button type="button" class="fold" aria-expanded="true"><span class="dot"></span><span><b>Searched</b> for 2 patterns, <b>read</b> 3 files, <b>ran</b> 1 shell command</span><span class="chev">⌄</span></button>
+<div class="inner">
+<button type="button" class="fold"><span class="cmd"><b>Search</b> “saved card” · 6 matches in 2 files</span><span class="chev">›</span></button>
+<button type="button" class="fold"><span class="cmd"><b>Read</b> <a href="#">research/interviews.md</a>, <a href="#">research/survey.md</a></span><span class="chev">›</span></button>
+<button type="button" class="fold"><span class="cmd"><b>Search</b> “guest checkout” · 3 files</span><span class="chev">›</span></button>
+<button type="button" class="fold"><span class="cmd"><b>Read</b> <a href="#">docs/prd-v2.md</a> · 88 lines</span><span class="chev">›</span></button>
+<button type="button" class="fold"><span class="cmd"><b>Count interview mentions</b> <span class="mono">rg -c -i "saved card" research/interviews/</span></span><span class="chev">›</span></button>
+</div>
+</div>
+<div>Two of six interviewees named saved cards as the reason they abandon guest checkout.</div>
+</div>
+</div>
+</div>
+</body>
+</html>

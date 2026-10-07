@@ -2,6 +2,8 @@
 
 Status: approved by Geoff, 2026-10-06 (DL-119), not built. Chat mode is a readable view of the real Claude Code TUI in the console pane, under DL-118's rules: an overlay, never a replacement; human review stays the human's; the terminal is one click away, and Duo falls back to it by itself. The feasibility research is `docs/plan/spikes/chat-mode.md` (F-103 to F-106).
 
+**Changed by decision (DL-135, 2026-10-07):** tool steps no longer show one line each, open by default. Runs of tool calls fold to one line; see `chat-polish-handoff`. The threads in `window`, `tools`, `plan` and the permission boards are amended by it.
+
 The boards were drawn on the Design canvas https://claude.ai/artifact/FtWkK77NhsW5DAF8ZQ1KWd with the Duo design system. Geoff chose on the canvas, by comment and in one round of questions. The approved boards are exported here as static HTML, with PNGs in `screens/png/`; `screens/manifest.json` lists them. The canvas also keeps the directions not chosen: Feel A (dark), B, B2 (Paper), B3 (Rounded), C (all mono), toggles 2 and 3, and separations 1 to 4.
 
 ## What the boards settle

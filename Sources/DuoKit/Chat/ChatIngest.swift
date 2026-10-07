@@ -49,13 +49,26 @@ enum ChatToolDescriber {
         case "Bash":
             s.verb = "Bash"; s.object = str("command") ?? ""; s.objectKind = .code
             s.output = ["$ " + (str("command") ?? "")]
+            s.summary = str("description").flatMap { $0.isEmpty ? nil : $0 }
             if input["run_in_background"] as? Bool == true { s.detail = "in the background" }
         case "Task", "Agent":
             s.verb = "Agent"; s.object = str("description") ?? str("subagent_type") ?? "agent"
             let bg = input["run_in_background"] as? Bool ?? false
             s.detail = bg ? "in the background" : nil
             s.agent = ChatAgentResult(message: "", seconds: nil, toolUses: nil, background: bg, finished: false)
-        case "TodoWrite": s.verb = "Update"; s.object = "the to-do list"
+        case "TodoWrite":
+            s.verb = "Update"; s.object = "the to-do list"
+            s.todos = (input["todos"] as? [ChatJSON] ?? []).map {
+                ChatTodo(text: $0["content"] as? String ?? "", status: ChatTodo.Status(rawValue: $0["status"] as? String ?? "") ?? .pending)
+            }
+        case "ToolSearch":
+            // `select:mcp__claude-in-chrome__navigate,…` loads those tools by name; anything else is a search.
+            let q = str("query") ?? ""
+            if q.hasPrefix("select:") {
+                s.verb = "Load"
+                s.object = q.dropFirst("select:".count).split(separator: ",").map { $0.components(separatedBy: "__").last ?? String($0) }.joined(separator: ", ")
+            } else { s.verb = "Look up"; s.object = "tools for “\(q)”" }
+        case "SendMessage": s.verb = "Send"; s.object = "a message to " + (str("to") ?? "a session")
         default:
             // MCP and anything new: the tool's short name, and its first string input.
             s.verb = name.split(separator: "__").last.map(String.init) ?? name

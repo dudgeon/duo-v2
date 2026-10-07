@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x860">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-135">
+<!--
+C1 · Runs collapsed (default) [G]
+APPROVED BOARD. Geoff, 2026-10-07 (DL-135). Exported from the Design canvas
+https://claude.ai/artifact/SSkofLgbK2jdNCKonuXPT2 (board Main.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · Chat polish · runs collapsed</title>
+<style>
+body{margin:0}
+a{color:#1F2328;text-decoration:underline;text-decoration-color:#8B939C;text-underline-offset:3px}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.strip{display:flex;align-items:center;gap:18px;height:36px;flex:none;padding:0 12px 0 16px;background:#15171B}
+.tab{display:flex;align-items:center;gap:6px;white-space:nowrap;color:#9AA1AB}
+.seg{display:flex;margin-left:auto;border:1px solid #4A4F57;border-radius:6px;overflow:hidden}
+.seg span{width:26px;height:20px;display:flex;align-items:center;justify-content:center;color:#9AA1AB}
+.seg .on{background:#2B2F36;color:#E6E8EB}
+.who{font-size:12px;line-height:16px;color:#5B636D}
+.card{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:9px 14px}
+.trail{display:flex;flex-direction:column;border-left:1.5px dotted #8B939C;margin-left:6px}
+.step{display:flex;align-items:center;gap:10px;min-height:24px;color:#5B636D;font-size:12px;line-height:16px;margin-left:-5px}
+.dot{width:7px;height:7px;border-radius:4px;border:1.5px solid #8B939C;background:#FFFFFF;flex:none;margin-left:3px}
+.step b{font-weight:600;color:#1F2328}
+.chev{margin-left:auto;color:#5B636D}
+.composer{flex:none;margin:0 24px 12px;border:1px solid #8B939C;border-radius:10px;background:#FFFFFF;padding:11px 14px;color:#5B636D}
+</style>
+</head>
+<body>
+<div style="width: 680px; height: 860px; display: flex; flex-direction: column; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+<div class="strip mono">
+<span class="tab" style="color: #E6E8EB; font-weight: 500"><svg width="9" height="9" viewBox="0 0 10 10" aria-label="at prompt"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#E6E8EB" stroke-width="1.5"></circle></svg>PRD v2 edits</span>
+<span style="color: #9AA1AB">+ ⌄</span>
+<span class="seg"><span aria-label="Terminal"><svg width="13" height="10" viewBox="0 0 13 10"><path d="M1.5 2 5 5 1.5 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.5 8.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></span><span class="on" aria-label="Chat"><svg width="13" height="11" viewBox="0 0 13 11"><path d="M2.5 1h8A1.5 1.5 0 0 1 12 2.5v4A1.5 1.5 0 0 1 10.5 8H6L3.5 10V8h-1A1.5 1.5 0 0 1 1 6.5v-4A1.5 1.5 0 0 1 2.5 1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></span>
+</div>
+<div style="flex: 1; min-height: 0; padding: 18px 24px 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+<div style="align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 440px">
+<div class="who">You · 10:12</div>
+<div class="you">Run the docs lint and fix what it finds in the PRD.</div>
+</div>
+<div style="margin-right: 36px; display: flex; flex-direction: column; gap: 4px">
+<div class="who">Claude · 10:12</div>
+<div class="card">
+<div>I’ll run the lint first, then read what it flags.</div>
+<div class="trail">
+<button type="button" class="step" style="all: unset; display: flex; align-items: center; gap: 10px; min-height: 24px; margin-left: -5px; font-size: 12px; line-height: 16px; color: #5B636D; cursor: pointer"><span class="dot"></span><span><b style="font-weight: 600; color: #1F2328">Ran</b> 4 shell commands, <b style="font-weight: 600; color: #1F2328">read</b> 3 files</span><span class="chev">›</span></button>
+</div>
+<div>Two problems, both in the non-goals: an item repeated from the goals, and a link to <a href="#">flows.md</a> that points at a section that moved.</div>
+<div class="trail">
+<button type="button" class="step" style="all: unset; display: flex; align-items: center; gap: 10px; min-height: 24px; margin-left: -5px; font-size: 12px; line-height: 16px; color: #5B636D; cursor: pointer"><span class="dot"></span><span><b style="font-weight: 600; color: #1F2328">Edited</b> 2 files, <b style="font-weight: 600; color: #1F2328">ran</b> 1 shell command · <a href="#">prd-v2.md</a>, <a href="#">flows.md</a> <span style="color: #2F7D32">+6</span> <span style="color: #B42318">−3</span></span><span class="chev">›</span></button>
+</div>
+<div>The lint is clean now. I cut the repeated non-goal and pointed the link at <span class="mono">flows.md#refunds</span>.</div>
+</div>
+</div>
+</div>
+<div class="composer">Reply to Claude</div>
+</div>
+</body>
+</html>

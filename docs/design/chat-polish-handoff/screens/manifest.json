@@ -1,0 +1,123 @@
+{
+  "$note": "Chat polish, approved 2026-10-07 (DL-135, DL-136). kind=board: a part of the window drawn on the Design canvas, exported as static HTML.",
+  "source": "https://claude.ai/artifact/SSkofLgbK2jdNCKonuXPT2",
+  "screens": [
+    {
+      "file": "screens/collapsed.html",
+      "board": "Main.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-135",
+      "shows": "A turn whose tool calls fold to one line a run, in the terminal's words: Ran 4 shell commands, Read 3 files, Edited 2 files with their names and counts."
+    },
+    {
+      "file": "screens/expanded.html",
+      "board": "Expanded.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-135",
+      "shows": "The Ran 4 shell commands run opened in place: a line a command (Claude's description, then the command in mono, cut to one line); one command opened to its output."
+    },
+    {
+      "file": "screens/mixed.html",
+      "board": "Mixed.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-135",
+      "shows": "One mixed run three ways: collapsed; while it runs (counts so far, the kind still going with …, the step in progress beneath); opened. The section labels are the board's, not the app's."
+    },
+    {
+      "file": "screens/needs-you.html",
+      "board": "NeedsYou.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-135",
+      "shows": "A folded run, then the step waiting on you on its own line and the review card docked below. Nothing that asks for a decision is folded."
+    },
+    {
+      "file": "screens/output.html",
+      "board": "KOutput.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 560,
+      "decision": "DL-135",
+      "shows": "NOW: every command open in full. PROPOSED: a line a command; output on a click (3 lines + Show n more lines, as before)."
+    },
+    {
+      "file": "screens/edits.html",
+      "board": "KEdits.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 560,
+      "decision": "DL-135",
+      "shows": "NOW: every edit open to its diff. PROPOSED: folded, counts kept; one opened (a long diff shows 12 lines + Show n more lines)."
+    },
+    {
+      "file": "screens/thinking.html",
+      "board": "KThinking.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 560,
+      "decision": "DL-135",
+      "shows": "NOW: each thought splits the thread. PROPOSED: thoughts between calls go inside the run; the one before Claude's text stays a line."
+    },
+    {
+      "file": "screens/agents.html",
+      "board": "KAgents.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 560,
+      "decision": "DL-135",
+      "shows": "NOW: each agent open to its report. PROPOSED: a finished agent folds to one line; a running one keeps its own line with Manage in Terminal…."
+    },
+    {
+      "file": "screens/todos.html",
+      "board": "KTodos.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 560,
+      "decision": "DL-135",
+      "shows": "NOW: one step per update. PROPOSED: one To-dos · 3 of 5 done line, kept current; opened to the checklist."
+    },
+    {
+      "file": "screens/tools.html",
+      "board": "KTools.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 560,
+      "decision": "DL-135",
+      "shows": "NOW: raw tool names. PROPOSED: counted by their server or kind; opened, a line each."
+    },
+    {
+      "file": "screens/failed.html",
+      "board": "KFailed.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 560,
+      "decision": "DL-135",
+      "shows": "The run stays folded; its line ends · 1 failed in red. Opened, the failed step shows its error."
+    },
+    {
+      "file": "screens/paste.html",
+      "board": "KPaste.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 560,
+      "decision": "DL-135",
+      "shows": "Over 12 lines: the first 8 and Show all n lines."
+    },
+    {
+      "file": "screens/bar-thin.html",
+      "board": "BarThin.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 520,
+      "decision": "DL-136",
+      "shows": "The console tab strip while the selected tab is in chat mode: 28 high, ground, SF Pro 12, the selected tab underlined, a light toggle."
+    }
+  ]
+}
