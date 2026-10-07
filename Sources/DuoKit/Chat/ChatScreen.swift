@@ -57,8 +57,8 @@ public struct ChatSignatures: Sendable, Equatable {
 
     /// 2.1.291: every dialog verified with the mock tour and asktest (F-104, F-106) and with real
     /// turns under the CLI login (F-105).
-    /// 2.1.292: the same screens; chat-live (AskUserQuestion at three sizes) passed (F-175).
-    public static let v2_1_291 = ChatSignatures(version: "2.1.291", verified: ["2.1.291", "2.1.292"])
+    /// 2.1.292 and 2.1.293: the same screens; chat-live (AskUserQuestion at three sizes) and the dialog tour passed (F-175, F-176).
+    public static let v2_1_291 = ChatSignatures(version: "2.1.291", verified: ["2.1.291", "2.1.292", "2.1.293"])
 
     public static let all: [ChatSignatures] = [.v2_1_291]
 
