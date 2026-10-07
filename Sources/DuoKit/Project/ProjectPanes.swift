@@ -276,6 +276,8 @@ struct FileTreePane: View {
         .background {
             if model.treeDropTarget == "" { DropHighlight(radius: DuoMetric.radiusCard).padding(.horizontal, DuoSpace.selectionInset).padding(.top, DuoMetric.borderFilesDivider + 4) }
         }
+        // A drop target lights up (`dropIn`, DL-130).
+        .duoAnimation(.dropIn, value: model.treeDropTarget == "")
         .modifier(TakesFileDrops(target: ""))
     }
 }
@@ -370,6 +372,7 @@ struct FileRow: View {
                 if node.children != nil && model.treeDropTarget == node.path { DropHighlight() }
                 else if selected { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected) }
             }
+            .duoAnimation(.dropIn, value: model.treeDropTarget == node.path)   // the drop target lights up (DL-130)
             .padding(.horizontal, DuoSpace.selectionInset)
             .contentShape(Rectangle())
             .onActivate { if node.children == nil { model.openDocument(node.path) } else { withDuoAnimation(.fold) { model.toggleFolder(node.path) } } }  // action: doc open

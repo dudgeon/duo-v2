@@ -42,11 +42,14 @@ struct ChatPane: View {
                                 .frame(maxWidth: .infinity)
                                 .onActivate { chat.loadEarlier() }  // not an action: shows more of the transcript
                         }
+                        // A new item (your prompt, a tool card, Claude's reply) fades in where it lands
+                        // (`messageIn`, DL-130); streaming text grows in place, unanimated.
                         ForEach(chat.log.items) { item in
-                            ChatItemView(item: item, chat: chat).id(item.id)
+                            ChatItemView(item: item, chat: chat).id(item.id).transition(.opacity)
                         }
                         ChatWorkingLine(chat: chat)
                     }
+                    .duoAnimation(.messageIn, value: chat.log.items.count)
                     .padding(EdgeInsets(top: 18, leading: DuoSpace.chatColumnInset, bottom: 12, trailing: DuoSpace.chatColumnInset))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     Color.clear.frame(height: 1).id(ChatPane.bottom)

@@ -14,3 +14,5 @@ A readable view of a Claude session's real terminal in the console pane: the tra
 - **Fallback bar** over the terminal: `ground`, 1 `rule` below, why in `body`, Back to Chat.
 
 **Behaviour:** answers are Claude Code's own keys, sent only after re-reading the screen (DL-118); the composer is Claude's prompt through Ctrl+G and `duo2 compose`; unknown screens, unverified CLI versions and mismatched requests show the terminal and come back by themselves. `duo2 session chat`.
+
+**Motion (DL-130):** The review card rises in place of the composer (`motionCardIn`) and sinks once the answer lands (`motionCardOut`), opaque and above it. New items fade in (`motionMessageIn`). Streaming, the scroll pin, and the Terminal/Chat swap don't animate. With Reduce Motion, it's at once.

@@ -7,3 +7,5 @@ The toolbar chip that counts sessions needing you in other projects and opens th
 **Behaviour:** click or ⇧⌘P toggles the peek. It counts other projects only, never the one on screen.
 
 **Accessibility:** "2 sessions need you in other projects".
+
+**Motion (DL-130):** It fades in and out where it sits (`motionChipIn`). Its count rolls (`motionCount`); the toolbar keeps the roll short. With Reduce Motion, it's at once.

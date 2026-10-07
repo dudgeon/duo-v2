@@ -7,3 +7,5 @@ Tab strips: the console's (dark, mono), Home's session tabs, and the right pane'
 
 **Close button (DL-126):** under the pointer a closable tab shows a 7 pt × (`size.tabClose`): on the console and Home in place of the state glyph or prompt mark, on the right pane in the gap before a document or browser tab's title; nothing moves. `consoleText2` / `text2` (`consoleText` / `text` when selected or pointed at); on the × a 16 pt square, radius 4, `consoleRule` / `selected`; pressed `tuiInputBorder` / `rule`; tooltip Close Tab. It does what ⌘W or Close Tab does. Closing a console or Home tab while Claude is working there, or while its shell runs a command, asks first (DL-127; a stand-in question). Project, group pages and a read-only session have none; no unsaved dot (Duo saves as you type).
 **Behaviour:** ⌘W closes the focused tab, never the window. Right-click a document tab: Close Tab, Close Other Tabs, then the file verbs.
+
+**Motion (DL-130):** A tab fades in (`motionTabIn`) and out (`motionTabOut`) while the strip slides (`motionTabMove`). Tabs and + are opaque on the strip. The hover × is instant. With Reduce Motion, it's at once.
