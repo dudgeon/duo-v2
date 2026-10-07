@@ -26,6 +26,8 @@ scripts/bundle.sh
 open build/Duo.app
 ```
 
+Only the main checkout's build is Duo to macOS (DL-151, F-198): it is `com.dudgeon.duo`, owns `duo2://` links and is registered with Launch Services. A build in a work tree, a bisect or a scratch clone is `com.dudgeon.duo.test`: macOS never opens it for Duo or a link, and it uses a temporary support folder unless `DUO_SUPPORT_DIR` names one. `scripts/check-launch-services.sh` checks this (`--clean` unregisters strays).
+
 Opened plainly, Duo lists every Claude Code session on this Mac, from Claude's logs, grouped by folder; a Home folder (File › Choose Home Folder…, or `duo2 home set <folder>`) holds the projects you track (DL-82 to DL-85). The design fixture (`docs/design/build-handoff/fixture.json`) is for the design targets' states:
 
 ```bash

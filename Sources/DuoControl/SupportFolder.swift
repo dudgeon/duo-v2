@@ -6,8 +6,10 @@ import Foundation
 ///
 /// A scripted run (any launch flag in `scriptedFlags`) without `DUO_SUPPORT_DIR` gets a fresh
 /// temporary stand-in, `/tmp/duo-XXXXXX`, so it can never rewrite the user's state, archive or
-/// socket (C-21, F-89). An explicit `DUO_SUPPORT_DIR` always wins; a plain launch uses the real
-/// folder. The path stays short: the control socket's must be under 104 characters.
+/// socket (C-21, F-89). So does any launch of a test build (`testBundleID`: work trees, bisects,
+/// scratch clones; F-198, DL-151), however it was opened. An explicit `DUO_SUPPORT_DIR` always wins;
+/// a plain launch of the main build or a release uses the real folder. The path stays short: the
+/// control socket's must be under 104 characters.
 public enum SupportFolder {
     public static let variable = "DUO_SUPPORT_DIR"
 
@@ -18,10 +20,13 @@ public enum SupportFolder {
         "--fixture", "--terminals", "--gallery", "--left",
     ]
 
+    /// What scripts/bundle.sh calls every build but the main checkout's and a release's (F-198).
+    public static let testBundleID = "com.dudgeon.duo.test"
+
     public enum Choice: Equatable, Sendable {
         /// `DUO_SUPPORT_DIR` was set: that folder.
         case given(String)
-        /// A scripted run without it: a fresh temporary folder.
+        /// A scripted run or a test build without it: a fresh temporary folder.
         case temporary
         /// A plain launch: the user's Application Support.
         case real
@@ -32,9 +37,10 @@ public enum SupportFolder {
         arguments.dropFirst().contains { scriptedFlags.contains($0) }
     }
 
-    public static func choose(arguments: [String], environment: [String: String]) -> Choice {
+    public static func choose(arguments: [String], environment: [String: String],
+                              bundleID: String? = Bundle.main.bundleIdentifier) -> Choice {
         if let given = environment[variable], !given.isEmpty { return .given(given) }
-        return isScripted(arguments) ? .temporary : .real
+        return isScripted(arguments) || bundleID == testBundleID ? .temporary : .real
     }
 
     /// Application Support, or what stands in for it. Read from the process environment each
@@ -76,19 +82,21 @@ public enum SupportFolder {
     /// with `DUO_SUPPORT_DIR=<folder>` (or `DUO_SOCKET`/`DUO_TOKEN` from `<folder>/Duo/endpoint.json`).
     @discardableResult
     public static func prepareForLaunch(arguments: [String] = CommandLine.arguments,
-                                        environment: [String: String] = ProcessInfo.processInfo.environment) -> Choice {
-        let choice = choose(arguments: arguments, environment: environment)
+                                        environment: [String: String] = ProcessInfo.processInfo.environment,
+                                        bundleID: String? = Bundle.main.bundleIdentifier) -> Choice {
+        let choice = choose(arguments: arguments, environment: environment, bundleID: bundleID)
         guard choice == .temporary else { return choice }
         var template = Array("/tmp/duo-XXXXXX".utf8CString)
         let made = template.withUnsafeMutableBufferPointer { mkdtemp($0.baseAddress!) }
         guard made != nil else {
             // Never fall back to the real folder: a scripted run that can't isolate itself stops.
-            FileHandle.standardError.write(Data("Duo: scripted run without \(variable), and no temporary support folder could be made (errno \(errno)); not starting (C-21).\n".utf8))
+            FileHandle.standardError.write(Data("Duo: a scripted run or test build without \(variable), and no temporary support folder could be made (errno \(errno)); not starting (C-21).\n".utf8))
             exit(73)
         }
         let path = String(decoding: template.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
         setenv(variable, path, 1)
-        FileHandle.standardError.write(Data("Duo: scripted run without \(variable); using a temporary support folder, \(path) (C-21, F-89)\n".utf8))
+        let what = isScripted(arguments) ? "scripted run" : "test build (\(testBundleID), F-198)"
+        FileHandle.standardError.write(Data("Duo: \(what) without \(variable); using a temporary support folder, \(path) (C-21, F-89)\n".utf8))
         return choice
     }
 }

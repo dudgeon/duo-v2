@@ -63,12 +63,25 @@ if [ -d "$model" ]; then
   cp "$model/vocab.txt" "$model/PROVENANCE.json" "$dest/"
 fi
 version="$(git -C "$root" describe --tags --always --dirty 2>/dev/null || echo dev)"
+# Only the main checkout's build and releases are com.dudgeon.duo and own duo2:// links; every other build
+# (work trees, bisects, scratch clones) is com.dudgeon.duo.test, so Launch Services never opens one for
+# Geoff's Duo (F-198, scripts/bundle-kind.sh).
+kind="$("$root/scripts/bundle-kind.sh" "$root")"
+if [ "$kind" = test ]; then
+  bundle_id="com.dudgeon.duo.test"; url_types=""
+else
+  bundle_id="com.dudgeon.duo"
+  url_types="<key>CFBundleURLTypes</key><array><dict>
+    <key>CFBundleURLName</key><string>com.dudgeon.duo.walk</string>
+    <key>CFBundleURLSchemes</key><array><string>duo2</string></array>
+  </dict></array>"
+fi
 cat > "$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleIdentifier</key><string>com.dudgeon.duo</string>
+  <key>CFBundleIdentifier</key><string>${bundle_id}</string>
   <key>CFBundleName</key><string>${name}</string>
   <key>CFBundleDisplayName</key><string>${name}</string>
   <key>CFBundleExecutable</key><string>Duo</string>
@@ -76,10 +89,7 @@ cat > "$app/Contents/Info.plist" <<PLIST
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.0.1</string>
   <key>CFBundleVersion</key><string>${version}</string>
-  <key>CFBundleURLTypes</key><array><dict>
-    <key>CFBundleURLName</key><string>com.dudgeon.duo.walk</string>
-    <key>CFBundleURLSchemes</key><array><string>duo2</string></array>
-  </dict></array>
+  ${url_types}
   <key>LSMinimumSystemVersion</key><string>26.0</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSPrincipalClass</key><string>NSApplication</string>
@@ -92,6 +102,12 @@ cat > "$app/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 codesign --force --sign - "$app" >/dev/null 2>&1 || echo "warning: ad-hoc signing failed" >&2
-# duo2:// links (the acceptance walk's Set up test) open this build.
-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$app" >/dev/null 2>&1 || true
+# duo2:// links (the acceptance walk's Set up test) and Duo's bundle id open the main checkout's build; any
+# other build is taken out of Launch Services (an older bundle.sh registered it, and launching one adds it).
+lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+if [ "$kind" = main ]; then
+  "$lsregister" -f "$app" >/dev/null 2>&1 || true
+else
+  "$lsregister" -u "$app" >/dev/null 2>&1 || true
+fi
 echo "$app"

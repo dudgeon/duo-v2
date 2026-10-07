@@ -1115,6 +1115,18 @@ func repoFixture() throws -> Fixture {
         check(SupportFolder.choose(arguments: ["Duo"], environment: none) == .real, "a plain launch uses the real folder")
         check(SupportFolder.choose(arguments: ["Duo", "-NSDocumentRevisionsDebugMode", "YES"], environment: none) == .real, "AppKit's own flags aren't a scripted run")
         check(SupportFolder.choose(arguments: ["Duo", "--state", "overview"], environment: ["DUO_SUPPORT_DIR": ""]) == .temporary, "an empty DUO_SUPPORT_DIR counts as unset")
+        // A test build (work tree, bisect, scratch clone) never runs on the real folder, however it's opened (F-198, DL-151).
+        check(SupportFolder.choose(arguments: ["Duo"], environment: none, bundleID: SupportFolder.testBundleID) == .temporary, "a plain launch of a test build → a temporary folder")
+        check(SupportFolder.choose(arguments: ["Duo"], environment: given, bundleID: SupportFolder.testBundleID) == .given("/tmp/duo-given"), "a test build keeps an explicit DUO_SUPPORT_DIR")
+        check(SupportFolder.choose(arguments: ["Duo"], environment: none, bundleID: "com.dudgeon.duo") == .real, "a plain launch of the main build or a release uses the real folder")
+        // Only the main checkout's build and releases are com.dudgeon.duo, own duo2:// and register with Launch Services (F-198).
+        let bundle = (try? String(contentsOf: repoRoot().appending(path: "scripts/bundle.sh"), encoding: .utf8)) ?? ""
+        let plist = bundle.components(separatedBy: "<<PLIST").last?.components(separatedBy: "\nPLIST").first ?? ""
+        check(bundle.contains("bundle_id=\"\(SupportFolder.testBundleID)\"; url_types=\"\""), "bundle.sh names test builds \(SupportFolder.testBundleID), with no duo2:// scheme")
+        check(plist.contains("<string>${bundle_id}</string>") && !plist.contains("<string>com.dudgeon.duo</string>") && !plist.contains("<string>duo2</string>"), "bundle.sh's Info.plist takes its bundle id and URL scheme from the build's kind")
+        let registers = bundle.components(separatedBy: "\n").enumerated().filter { $0.element.contains("lsregister\" -f") }
+        let lines = bundle.components(separatedBy: "\n")
+        check(registers.count == 1 && registers.allSatisfy { $0.offset > 0 && lines[$0.offset - 1].contains("\"$kind\" = main") }, "bundle.sh registers only the main checkout's build with Launch Services")
         // Every flag LaunchOptions reads marks a scripted run.
         let src = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Debug/LaunchOptions.swift"), encoding: .utf8)) ?? ""
         let flags = Set(src.matches(of: /case "(--[a-z-]+)"/).map { String($0.1) })
