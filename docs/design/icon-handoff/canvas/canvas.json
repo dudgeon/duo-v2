@@ -7,7 +7,7 @@
 "title": "Duo v2 app icon",
 "launch": {
 "view": "canvas",
-"page": "r2"
+"page": "dev"
 },
 "pages": [
 {
@@ -21,6 +21,10 @@
 {
 "id": "motion",
 "name": "Motion: fourteen animations of 01"
+},
+{
+"id": "dev",
+"name": "Dev build: telling dev from release"
 }
 ],
 "boards": {
@@ -173,8 +177,24 @@
 "y": 1480,
 "w": 1040,
 "h": 640,
-"title": "2A\u2032 Refined, full bleed (recommended)",
+"title": "2A′ Refined, full bleed (recommended)",
 "page": "r2"
+},
+"Dev-Lineup.dc.html": {
+"x": 0,
+"y": 0,
+"w": 2160,
+"h": 1460,
+"title": "Dev build: six variants beside the release icon",
+"page": "dev"
+},
+"Dev-Dock.dc.html": {
+"x": 0,
+"y": 1580,
+"w": 2160,
+"h": 900,
+"title": "Dev build: both running in the Dock",
+"page": "dev"
 }
 },
 "order": [
@@ -196,7 +216,9 @@
 "R2-A-Refined.dc.html",
 "R2-A2-FullBleed.dc.html",
 "R2-Context.dc.html",
-"R2-Motion.dc.html"
+"R2-Motion.dc.html",
+"Dev-Lineup.dc.html",
+"Dev-Dock.dc.html"
 ],
 "notes": {},
 "designSystems": [

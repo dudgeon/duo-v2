@@ -1,9 +1,11 @@
-// Draws Duo's app icon (DL-131, docs/design/icon-handoff/) at every size and builds AppIcon.icns.
+// Draws Duo's app icon (DL-131, docs/design/icon-handoff/) at every size and builds AppIcon.icns, and the
+// dev build's icon (DL-140: the same art with a hazard stripe across the foot) as AppIconDev.icns.
 //
 //   swift scripts/gen-app-icon.swift
 //
-// Writes docs/design/icon-handoff/AppIcon.iconset/ and AppIcon.icns (iconutil). bundle.sh copies the
-// .icns into the app, so run this only when the icon's drawing changes, and commit both outputs.
+// Writes docs/design/icon-handoff/AppIcon.iconset/, AppIconDev.iconset/ and their .icns (iconutil). bundle.sh
+// copies AppIcon.icns into `release` builds and AppIconDev.icns into dev builds, so run this only when the
+// drawing changes, and commit the outputs.
 // The geometry is the canvas's 1024 grid (the squircle is 824 at 100,100, as macOS icons are). 16 and 32 pt, at
 // 1x and 2x, use the simplified small art; 128 pt and up use the full art.
 import CoreGraphics
@@ -36,7 +38,7 @@ func gradient(_ cg: CGContext, _ rect: CGRect, _ top: UInt32, _ bottom: UInt32) 
     cg.restoreGState()
 }
 
-func draw(_ cg: CGContext, small: Bool) {
+func draw(_ cg: CGContext, small: Bool, dev: Bool) {
     // Drop shadow under the squircle, as macOS icons carry.
     cg.saveGState()
     cg.setShadow(offset: CGSize(width: 0, height: 10), blur: 20, color: rgb(0x000000, 0.28))
@@ -81,6 +83,8 @@ func draw(_ cg: CGContext, small: Bool) {
         pill(cg, 556, 683, 240, 24, 12, rgb(0xc9cdd3))
     }
 
+    if dev { hazard(cg, small: small) }
+
     // A faint edge, so the white page holds its shape on white.
     cg.addPath(squircle(inset: small ? 4 : 3))
     cg.setStrokeColor(rgb(0x000000, 0.12))
@@ -88,7 +92,29 @@ func draw(_ cg: CGContext, small: Bool) {
     cg.strokePath()
 }
 
-func render(pixels: Int, small: Bool, to url: URL) {
+/// The dev build's mark (DL-140): yellow and black stripes across the foot of the squircle, taller and wider at
+/// 16 and 32 pt, under a 6 px shadow line.
+func hazard(_ cg: CGContext, small: Bool) {
+    let top: CGFloat = small ? 740 : 780, step: CGFloat = small ? 92 : 56, h = 924 - top
+    cg.saveGState()
+    cg.addPath(squircle())
+    cg.clip()
+    cg.setFillColor(rgb(0xf2c230))
+    cg.fill(CGRect(x: 100, y: top, width: 824, height: h))
+    cg.setFillColor(rgb(0x1f2328))
+    var x = 100 - h
+    while x < 924 {
+        cg.addLines(between: [CGPoint(x: x, y: 924), CGPoint(x: x + h, y: top), CGPoint(x: x + h + step, y: top), CGPoint(x: x + step, y: 924)])
+        cg.closePath()
+        x += step * 2
+    }
+    cg.fillPath()
+    cg.setFillColor(rgb(0x000000, 0.2))
+    cg.fill(CGRect(x: 100, y: top, width: 824, height: 6))
+    cg.restoreGState()
+}
+
+func render(pixels: Int, small: Bool, dev: Bool, to url: URL) {
     let cg = CGContext(data: nil, width: pixels, height: pixels, bitsPerComponent: 8, bytesPerRow: 0,
                        space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
     let s = CGFloat(pixels) / 1024
@@ -96,7 +122,7 @@ func render(pixels: Int, small: Bool, to url: URL) {
     cg.translateBy(x: 0, y: CGFloat(pixels))
     cg.scaleBy(x: s, y: -s)
     cg.interpolationQuality = .high
-    draw(cg, small: small)
+    draw(cg, small: small, dev: dev)
     let dest = CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil)!
     CGImageDestinationAddImage(dest, cg.makeImage()!, nil)
     guard CGImageDestinationFinalize(dest) else { fatalError("could not write \(url.path)") }
@@ -104,19 +130,21 @@ func render(pixels: Int, small: Bool, to url: URL) {
 
 let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
 let out = root.appendingPathComponent("docs/design/icon-handoff")
-let set = out.appendingPathComponent("AppIcon.iconset")
-try? FileManager.default.removeItem(at: set)
-try FileManager.default.createDirectory(at: set, withIntermediateDirectories: true)
-for pt in [16, 32, 128, 256, 512] {
-    for scale in [1, 2] {
-        let name = scale == 1 ? "icon_\(pt)x\(pt).png" : "icon_\(pt)x\(pt)@2x.png"
-        render(pixels: pt * scale, small: pt <= 32, to: set.appendingPathComponent(name))
+for (name, dev) in [("AppIcon", false), ("AppIconDev", true)] {
+    let set = out.appendingPathComponent("\(name).iconset")
+    try? FileManager.default.removeItem(at: set)
+    try FileManager.default.createDirectory(at: set, withIntermediateDirectories: true)
+    for pt in [16, 32, 128, 256, 512] {
+        for scale in [1, 2] {
+            let file = scale == 1 ? "icon_\(pt)x\(pt).png" : "icon_\(pt)x\(pt)@2x.png"
+            render(pixels: pt * scale, small: pt <= 32, dev: dev, to: set.appendingPathComponent(file))
+        }
     }
+    let iconutil = Process()
+    iconutil.executableURL = URL(fileURLWithPath: "/usr/bin/iconutil")
+    iconutil.arguments = ["-c", "icns", set.path, "-o", out.appendingPathComponent("\(name).icns").path]
+    try iconutil.run()
+    iconutil.waitUntilExit()
+    guard iconutil.terminationStatus == 0 else { fatalError("iconutil failed") }
+    print(out.appendingPathComponent("\(name).icns").path)
 }
-let iconutil = Process()
-iconutil.executableURL = URL(fileURLWithPath: "/usr/bin/iconutil")
-iconutil.arguments = ["-c", "icns", set.path, "-o", out.appendingPathComponent("AppIcon.icns").path]
-try iconutil.run()
-iconutil.waitUntilExit()
-guard iconutil.terminationStatus == 0 else { fatalError("iconutil failed") }
-print(out.appendingPathComponent("AppIcon.icns").path)
