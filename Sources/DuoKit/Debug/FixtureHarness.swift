@@ -583,6 +583,12 @@ public enum FixtureHarness {
             }
         case "browser-click":   // browser-click:<css selector>: duo2 browser click, real mouse events (DL-124)
             if parts.count > 1 { model.visibleWebTab?.click(selector: parts[1]) { FileHandle.standardError.write(Data("browser-click: \($0 ?? "no match")\n".utf8)) } }
+        case "download-notice":   // download-notice:<file name>[=<error>]: the visible tab's download notice, with nothing downloaded (Q-66)
+            if parts.count > 1, let t = model.visibleWebTab {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
+                t.download = DownloadRecord(file: downloads.appending(path: kv[0]), error: kv.count > 1 ? kv[1] : nil, tab: t.id)
+            }
         case "browser-key":   // browser-key:=|-|0|p: ⌘ and the key, with the page holding the keyboard, as NSApp delivers it (no activation)
             if parts.count > 1, let t = model.visibleWebTab, let w = t.webView.window,
                let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: .command, timestamp: ProcessInfo.processInfo.systemUptime,
