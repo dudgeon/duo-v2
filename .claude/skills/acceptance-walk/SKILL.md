@@ -39,7 +39,9 @@ So a rejected feature can be reverted on its own (Geoff, 2026-10-05), every feat
 Rules for steps:
 - Concrete and short: name the project, file and session to use, from the fixtures. Wrap commands, paths and things to type in backticks (the page shows them as code).
 - Say what's **not designed yet** in `expect` (with the Q-n), so a placeholder isn't rejected for its looks.
-- Group in the order he'd walk: workspace, attention, left pane, editor, right pane, files, organising, retention, CLI, app.
+- **Order the page as one test session Geoff walks top to bottom** (Geoff, 2026-10-06: "group in the order that will make the most sense for me to actually test, esp with the least fixture work"). Group by *where he is and what state is needed*, never by build order or slice: before opening a project (install, updates, settings); All projects (the map, what needs you, search, organising with every change undone); other projects; one project at a time (sessions and tasks, documents, outside changes, files, web, shells); a running Claude session (one `session-running`, reused); the command line; other launches; and last, cards that change the fixtures (moves, deletes, purge). Name groups by place and state ("In checkout: documents").
+- Within a group, each card's end state is the next one's start. Motion and other polish cards sit beside the feature they change, not in a group of their own. New cards go into the group where they're tested, not at the end.
+- Give each group a line in `groupNotes` (`{"<group>": "what it needs"}`, shown under its heading). Keep fixture resets to 3 or 4 in the whole walk, on the first card of the group that needs one, and say so in that group's note. Every card keeps cheap, idempotent navigation setups (`open checkout`, `doc open …`), so `duo2 walk setup <id>` still works mid-way.
 - Nothing destructive outside the fixtures. Anything touching Claude config uses `CLAUDE_CONFIG_DIR=~/DuoAcceptance/legacy-claude-config` or another fake.
 
 ### Decisions for Geoff

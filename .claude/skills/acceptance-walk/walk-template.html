@@ -96,6 +96,7 @@ a.setupbtn:hover { filter: brightness(1.08); }
 .pill.failed { background: var(--bad-bg); color: var(--bad); }
 .pill.partial { background: var(--later-bg); color: var(--later); }
 .cleared-note { font-size: 12.5px; color: var(--muted); margin: 6px 0; }
+.group-note { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
 /* Decisions */
 #decisions h2 .count { font-weight: 400; text-transform: none; letter-spacing: 0; }
 .decision { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 12px 14px; margin: 0 0 12px; }
@@ -276,7 +277,12 @@ function build() {
   const list = $("#list");
   let group = null;
   DATA.features.forEach(f => {
-    if (f.group !== group) { group = f.group; list.append(el("h2", null, group)); }
+    if (f.group !== group) {
+      group = f.group; list.append(el("h2", null, group));
+      // What the group needs, set up once for the cards under it (groupNotes in features.json).
+      const note = (DATA.groupNotes || {})[group];
+      if (note) list.append(rich(el("p", "group-note"), note));
+    }
     const c = el("section", "card"); c.id = "f-" + f.id;
     const top = el("div", "top");
     top.append(el("h3", null, f.title));

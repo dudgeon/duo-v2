@@ -109,11 +109,7 @@ def build():
 
     # Past sessions in projects (history in place, Older fold, same-name rows, purge test).
     synth = session(co, "Interview synthesis notes", [("Summarise the six buyer interviews.", "Two buyers left over saved cards; four over shipping costs.")], days_ago=3)
-    # A task is a plain note that links to the sessions working on it (DL-87).
-    write(co / "tasks" / "exec-review-prep.md",
-          "---\ntype: task\ntitle: Exec review prep\nstatus: in-progress\nsessions:\n  - \"[Interview synthesis notes](duo2://session/%s)\"\n---\n\n"
-          "# Exec review prep\n\nBuild the story for Oct 14 from the interviews.\n\n"
-          "- [ ] Pull the top three quotes\n- [ ] Draft the one-pager\n\nStarted from [Interview synthesis notes](duo2://session/%s).\n" % (synth, synth))
+    checkout_task(co, synth)
     for i in range(9):
         session(rd, "Reading note %d" % (i + 1), [("Note %d on the platform reading." % (i + 1), "Noted.")], days_ago=2 + i)
     session(rf, "Untitled scratch", [("First scratch thought about refunds.", "OK.")], days_ago=1)
@@ -138,8 +134,31 @@ def build():
     write(lg / "skills" / "duo" / "SKILL.md", "legacy skill\n")
     write(lg / "agents" / "duo.md", "legacy subagent\n")
 
-    PLANTED.write_text(json.dumps({"transcripts": planted, "purge_session": purge, "built": datetime.datetime.now().isoformat()}, indent=2))
+    PLANTED.write_text(json.dumps({"transcripts": planted, "purge_session": purge, "task_session": synth,
+                                   "built": datetime.datetime.now().isoformat()}, indent=2))
     print("Built %s\n  workspace: %s\n  planted %d sessions in %s" % (ROOT, WS, len(planted), CLAUDE))
+
+
+def checkout_task(co, synth):
+    """A task is a plain note that links to the sessions working on it (DL-87)."""
+    write(co / "tasks" / "exec-review-prep.md",
+          "---\ntype: task\ntitle: Exec review prep\nstatus: in-progress\nsessions:\n  - \"[Interview synthesis notes](duo2://session/%s)\"\n---\n\n"
+          "# Exec review prep\n\nBuild the story for Oct 14 from the interviews.\n\n"
+          "- [ ] Pull the top three quotes\n- [ ] Draft the one-pager\n\nStarted from [Interview synthesis notes](duo2://session/%s).\n" % (synth, synth))
+
+
+def task_session():
+    """The planted session the checkout task links to (older fixtures: found by its first message)."""
+    if not PLANTED.exists():
+        return None
+    info = json.loads(PLANTED.read_text())
+    if info.get("task_session"):
+        return info["task_session"]
+    for t in info.get("transcripts", []):
+        f = pathlib.Path(t)
+        if f.exists() and "Summarise the six buyer interviews." in f.read_text(errors="ignore"):
+            return f.stem
+    return None
 
 
 def checkout_docs(co):
@@ -246,10 +265,16 @@ def recipe(name):
             for f in (co / folder).iterdir() if (co / folder).exists() else []:
                 if f.name not in names and not f.name.startswith("."):
                     trash(f)
+        for f in (co / "tasks").iterdir() if (co / "tasks").exists() else []:
+            if f.name != "exec-review-prep.md" and not f.name.startswith("."):
+                trash(f)   # tasks a test made or renamed
         for f in co.iterdir():
-            if f.name not in {"PROJECT.md", "docs", "prototypes", "templates", ".duo"} and not f.name.startswith("."):
+            if f.name not in {"PROJECT.md", "docs", "prototypes", "templates", "tasks", ".duo"} and not f.name.startswith("."):
                 trash(f)
         checkout_docs(co)
+        synth = task_session()
+        if synth:
+            checkout_task(co, synth)   # the task the walk's task cards use, as built
         prototypes(co)
         # Sessions a test filed into checkout (cli-confirm, org-move) go back where they came from.
         reg = co / ".duo" / "sessions.json"
