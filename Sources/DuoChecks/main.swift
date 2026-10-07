@@ -75,6 +75,66 @@ func repoFixture() throws -> Fixture {
         try? FileManager.default.removeItem(at: dir)
     }
 
+    print("templates (DL-146)")
+    do {
+        let day = Date(timeIntervalSince1970: 1_791_400_000)   // 2026-10-07
+        let task = TaskNotes.newNote(title: "Draft PRD v2", links: [], date: day)
+        check(task.hasPrefix("---\ntype: task\ntitle: Draft PRD v2\nstatus: open\nsessions: []\ncreated: 2026-10-07\n---\n\n# Draft PRD v2\n\n## Done when\n"),
+              "the base task: type, title, status, sessions, created in that order; plain YAML; the heading")
+        let tParsed = TaskNotes.parse(task, path: "tasks/draft-prd-v2.md")
+        check(tParsed.title == "Draft PRD v2" && tParsed.status == "open" && tParsed.sessionIds.isEmpty, "and reads back as a task")
+        let linked = TaskNotes.newNote(title: "Q4: plan", links: [TaskNotes.link(title: "Draft", id: "aaaaaaaa-1111-4222-8333-444444444444")], date: day)
+        check(linked.contains("\ntitle: \"Q4: plan\"\n") && linked.contains("\nsessions:\n  - \"[Draft](duo2://session/aaaaaaaa-1111-4222-8333-444444444444)\"\ncreated:"),
+              "a title YAML can't hold plain is quoted; session links are a block list in place")
+        check(TaskNotes.parse(linked, path: "t.md").title == "Q4: plan", "and reads back as written")
+        let proj = Templates.make(.project, title: "Checkout redesign", project: nil, home: nil, values: [("goal", .scalar("Cut abandonment to 30%"))], date: day)
+        let pf = Frontmatter.parse(proj)
+        check(pf.string("type") == "project" && pf.string("title") == "Checkout redesign" && pf.list("aliases") == ["Checkout redesign"]
+              && pf.string("status") == "active" && pf.string("goal") == "Cut abandonment to 30%" && pf.string("created") == "2026-10-07",
+              "the base PROJECT.md: type, title, aliases, status, goal, created")
+        check(pf.string("health") == nil && pf.string("next") == nil && proj.contains("\nhealth:\nnext:\n"), "health and next stay empty: a new project hasn't earned a health")
+        check(proj.contains("# Checkout redesign\n\n## Why\n") && proj.contains("## Log\n\n- 2026-10-07 Started.\n"), "the body: heading, Why … Log, dated")
+        let noGoal = Templates.make(.project, title: "x", project: nil, home: nil, date: day)
+        check(noGoal.contains("\ngoal:\nhealth:"), "no goal given: the key stays empty, as Obsidian writes it")
+        let own = "---\ntype: task\ntitle: \"{{title}}\"\nstatus: open\nowner: Priya Shah\ntags:\n  - refunds\ncssclasses: [wide]\nwhen: \"{{date:dddd, MMMM D}} at {{time}}\"\n---\n\n# {{title}}\n\nTicket: <% tp.system.prompt(\"Ticket\") %>\nOn {{date:YYYY/MM/DD}}, {{ title }}.\n"
+        let r = Templates.render(own, title: "Refund FAQ", values: [("sessions", .list([])), ("status", .scalar("in-progress"))], date: day)
+        check(r.contains("\nowner: Priya Shah\ntags:\n  - refunds\ncssclasses: [wide]\n"), "a user's own keys stay byte for byte")
+        check(r.contains("<% tp.system.prompt(\"Ticket\") %>"), "Templater code is left as written")
+        check(r.contains("\nstatus: in-progress\n") && r.contains("\nsessions: []\n---"), "known values are set by key: in place, or added at the end of the block")
+        check(r.contains("On 2026/10/07, Refund FAQ.") && r.contains("\nwhen: Wednesday, October 7 at "), "Obsidian's placeholders with Moment formats, spaced or not")
+        let prefixed = Templates.render(Templates.baseProject, title: "Refunds", bodyPrefix: "Brief: [Old note](README.md)", date: day)
+        check(prefixed.contains("# Refunds\n\nBrief: [Old note](README.md)\n\n## Why"), "a creation flow's line goes under the heading")
+        check(Templates.scalar("true") == "\"true\"" && Templates.scalar("2026") == "\"2026\"" && Templates.scalar("[x](y)") == "\"[x](y)\"" && Templates.scalar("a #b") == "\"a #b\""
+              && Templates.scalar("Draft PRD v2") == "Draft PRD v2", "scalars are quoted only when YAML needs it")
+
+        // Which template: the project's own, then Home's, then the base; never a project's own new-project.md.
+        let tmp = FileManager.default.temporaryDirectory.appending(path: "duo-templates-\(UUID().uuidString)")
+        let home = tmp.appending(path: "home"), p = home.appending(path: "refunds")
+        try? FileManager.default.createDirectory(at: p.appending(path: "templates"), withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: home.appending(path: "templates"), withIntermediateDirectories: true)
+        check(Templates.text(.task, project: p, home: home).scope == .base, "no template files: the base")
+        try? Data("home task".utf8).write(to: Templates.path(.task, in: home))
+        try? Data("home project".utf8).write(to: Templates.path(.project, in: home))
+        try? Data("own project".utf8).write(to: Templates.path(.project, in: p))
+        check(Templates.text(.task, project: p, home: home).text == "home task", "Home's template when the project has none")
+        try? Data("own task".utf8).write(to: Templates.path(.task, in: p))
+        check(Templates.text(.task, project: p, home: home).text == "own task", "the project's own wins")
+        check(Templates.text(.project, project: p, home: home).text == "home project", "a project's own new-project.md is never used")
+        check(Templates.kind(ofRelativePath: "templates/new-task.md") == .task && Templates.kind(ofRelativePath: "notes/new-task.md") == nil, "which files get the template bar")
+        // Templates are never projects or tasks (F-186; the ENH-266d trap).
+        check(ProjectDiscovery.scan(root: home, depth: 4).allSatisfy { !$0.folder.path.hasSuffix("/templates") }, "a templates folder is never a project")
+        try? FileManager.default.createDirectory(at: p.appending(path: "tasks"), withIntermediateDirectories: true)
+        try? Data(Templates.baseTask.utf8).write(to: Templates.path(.task, in: p))
+        check(TaskNotes.load(project: p).isEmpty, "a task template is never listed as a task")
+        // New from Template: the kinds aren't listed; others are filled the way Obsidian fills them.
+        try? Data("---\ncreated: \"{{date}}\"\n---\n# {{title}}\n".utf8).write(to: p.appending(path: "templates/meeting.md"))
+        check(FileActions.templates(project: p, home: home).map(\.lastPathComponent) == ["meeting.md"], "New from Template lists neither new-project.md nor new-task.md")
+        if let made = try? FileActions.newFromTemplate(p.appending(path: "templates/meeting.md"), in: p, date: day) {
+            check((try? String(contentsOf: made, encoding: .utf8)) == "---\ncreated: 2026-10-07\n---\n# meeting\n", "New from Template fills {{title}} with the new file's name and {{date}}")
+        } else { check(false, "New from Template fills {{title}} with the new file's name and {{date}}") }
+        try? FileManager.default.removeItem(at: tmp)
+    }
+
     print("task notes (DL-93)")
     do {
         let id1 = "aaaaaaaa-1111-4222-8333-444444444444", id2 = "bbbbbbbb-1111-4222-8333-444444444444"
@@ -95,7 +155,7 @@ func repoFixture() throws -> Fixture {
         check(TaskNotes.slug("Exec review — prep (v2)!") == "exec-review-prep-v2", "slug filenames")
         let day = Date(timeIntervalSince1970: 1_791_000_000)
         let done = TaskNotes.settingStatus("done", in: fresh, today: day)
-        check(TaskNotes.parse(done, path: "t.md").status == "done" && done.contains("\ncompleted: 2026-") && done.hasSuffix("# Exec review prep\n\n"),
+        check(TaskNotes.parse(done, path: "t.md").status == "done" && done.contains("\ncompleted: 2026-") && Frontmatter.parse(done).body == Frontmatter.parse(fresh).body,
               "status done adds completed:, nothing else changes")
         check(TaskNotes.settingStatus("in-progress", in: done) == fresh.replacingOccurrences(of: "status: open", with: "status: in-progress"),
               "reopening removes completed: and puts the note back as it was")

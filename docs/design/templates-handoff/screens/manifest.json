@@ -1,0 +1,51 @@
+{
+  "$note": "Templates, approved 2026-10-07 (DL-146): option A, a template is a document; base templates as drawn. kind=board: drawn on the Design canvas, exported as static HTML.",
+  "source": "https://claude.ai/artifact/S2u648a8UTGxcj8uL7r4Td",
+  "screens": [
+    {
+      "file": "screens/base-templates.html",
+      "board": "Main.dc.html",
+      "kind": "board",
+      "width": 1180,
+      "height": 900,
+      "decision": "DL-146",
+      "shows": "Duo's base PROJECT.md and task templates: keys, body sections, and what Duo does when it makes a file."
+    },
+    {
+      "file": "screens/template-task.html",
+      "board": "A1-task-template.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 900,
+      "decision": "DL-146",
+      "shows": "The right pane with the template bar (title, scope, Insert ▾, Preview, Reset…, use and path line), the properties block with placeholder chips, \"set by Duo\" on sessions, the hint line, and the body with a placeholder chip heading."
+    },
+    {
+      "file": "screens/template-preview.html",
+      "board": "A2-preview.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 900,
+      "decision": "DL-146",
+      "shows": "Preview pressed: Insert disabled, placeholders filled with a sample title and today, the hint line replaced by the preview line, no + on properties."
+    },
+    {
+      "file": "screens/template-project-own.html",
+      "board": "A3-project-override.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 900,
+      "decision": "DL-146",
+      "shows": "A project-scoped template: scope \"· refunds\", Use Home's… in place of Reset…, extra user keys, and Templater code shown with a dashed chip and its note."
+    },
+    {
+      "file": "screens/template-entry.html",
+      "board": "A4-where.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 900,
+      "decision": "DL-146",
+      "shows": "Settings › Templates rows with Edit…, the TASKS fold right-click menu items, and the file-anywhere rule."
+    }
+  ]
+}

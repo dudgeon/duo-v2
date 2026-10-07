@@ -51,6 +51,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskSession = "task session", taskStatus = "task status"
     case taskRename = "task rename", taskArchive = "task archive", taskUnarchive = "task unarchive", taskDelete = "task delete"
     case taskMove = "task move", taskLink = "task link", taskReveal = "task reveal"
+    case templateShow = "template show", templateEdit = "template edit", templateCopy = "template copy", templateReset = "template reset", templatePreview = "template preview"
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
     case files, fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
@@ -232,6 +233,13 @@ extension DuoAction {
         .init(.taskLink, .sessions, "<task> [--project <p>]", "A Markdown link to a task: [title](duo2://task/<id>). The id is written once into the note's `id:`, so the link survives renames and moves. Clicking it in Duo opens the note.",
               ui: ["Copy Link"]),
         .init(.taskReveal, .sessions, "<task> [--project <p>]", "Show a task's note in Finder.", ui: ["Reveal in Finder"]),
+        .init(.templateShow, .projects, "<project|task> [--project <p>]", "The template new projects or tasks are made from (DL-146): its text and whose it is (a project's own templates/new-task.md, Home's templates/new-<kind>.md, or Duo's base)."),
+        .init(.templateEdit, .projects, "<project|task> [--project <p>]", "Open that template in the right pane with its template bar; with no file yet, Duo's base is written to Home's templates/ first.",
+              ui: ["Edit Task Template", "Edit…"]),
+        .init(.templateCopy, .projects, "task --project <p>", "Give a project its own task template: a copy of the one it uses now, in its templates/new-task.md, opened.", ui: ["Make a Template for"]),
+        .init(.templateReset, .projects, "<project|task> [--project <p>]", "Home's template back to Duo's base, or (with --project) a project's own removed so Home's is used again. The file goes to the Trash. Asks first.",
+              ui: ["Reset…", "Use Home's…", "Use Home's Template…"], timeout: 120),
+        .init(.templatePreview, .projects, "<project|task> [--project <p>] [--title <name>]", "The file that template would make now, filled for a name (Preview in the template bar).", ui: ["Preview"]),
         .init(.groups, .sessions, "[--project <p>]", "Groups and their sessions, with each group's most urgent state."),
         .init(.groupNew, .sessions, "<name> <session>…", "Group sessions of one project under a name."),
         .init(.groupAdd, .sessions, "<group> <session>…", "Add sessions to a group."),

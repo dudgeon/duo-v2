@@ -83,12 +83,10 @@ public enum TaskNotes {
         "\"" + title.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
     }
 
-    /// A new task note (DL-6's fields: type, title, status; DL-93's session links).
-    public static func newNote(title: String, links: [String]) -> String {
-        var s = "---\ntype: task\ntitle: \(quoted(title))\nstatus: open\n"
-        s += links.isEmpty ? "sessions: []\n" : "sessions:\n" + links.map { "  - \(item($0))\n" }.joined()
-        s += "---\n\n# \(title)\n\n"
-        return s
+    /// A new task note from a template (DL-146; the base one unless given): DL-6's fields, with
+    /// DL-93's session links set by key.
+    public static func newNote(title: String, links: [String], template: String = Templates.baseTask, date: Date = Date()) -> String {
+        Templates.render(template, title: title, values: [("sessions", .list(links))], date: date)
     }
 
     /// The note renamed (DL-115): `title:` and the `# ` heading that opens its text, wherever the
