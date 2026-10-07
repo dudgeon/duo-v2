@@ -18,6 +18,8 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     /// The slide on screen (from 1), and how many there are.
     public private(set) var slide = 0
     public private(set) var count = 0
+    /// The slides the deck lists, known before it draws (Pptx.slideCount), for the empty frames.
+    public private(set) var listed = 0
     /// The slide's size in slide pixels (96 per inch), for the box Claude is given.
     public private(set) var slideSize = CGSize(width: 1280, height: 720)
     public var picked: SendFormat.Element?
@@ -74,6 +76,7 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
             state = .failed(why); onChange?(); return
         }
         state = .loading
+        listed = Pptx.slideCount(file) ?? 0
         onChange?()
         let name = file.lastPathComponent
         let run = { [weak self] in

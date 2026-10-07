@@ -33,6 +33,8 @@ public final class ChatUIState {
     public var mention: (query: String, matches: [FileMention.Match])?
     public var mentionSelected = 0
     var mentionDismissedAt: Int?
+    /// The link under the pointer, for the status line at the transcript's bottom left (DL-132 g).
+    public var hoverLink: URL?
     public init() {}
 }
 
@@ -81,6 +83,11 @@ struct ChatPane: View {
                     if old == 0 || chat.followsBottom { proxy.scrollTo(ChatPane.bottom, anchor: .bottom) }
                 }
                 .onChange(of: chat.revealRequest) { if let id = chat.revealRequest { withAnimation { proxy.scrollTo(id, anchor: .top) } } }
+                // A link's target under the pointer, as Safari shows one (DL-132 g, q57-link-status).
+                .background(ChatLinkHover { chat.ui.hoverLink = $0 })
+                .overlay(alignment: .bottomLeading) {
+                    if let url = chat.ui.hoverLink { ChatLinkStatus(text: ChatLinkWords.words(url)) }
+                }
             }
             if chat.cardUp {
                 // While Claude waits on you, the review card takes the composer's place (DL-119 §3).
@@ -357,5 +364,102 @@ struct ChatComposerStandIn: View {
             .padding(EdgeInsets(top: 11, leading: 14, bottom: 11, trailing: 14))
             .background(RoundedRectangle(cornerRadius: DuoMetric.radiusComposer).fill(DuoColor.pane))
             .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusComposer).strokeBorder(DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline))
+    }
+}
+
+/// The status line for a link under the pointer (DL-132 g, q57-link-status): `pane` with a `rule`
+/// on its top and right, 12/16, at the transcript's bottom left. No fade (as the hover × and +).
+struct ChatLinkStatus: View {
+    let text: String
+    var body: some View {
+        Text(text).duoText(.control).foregroundStyle(DuoColor.text).lineLimit(1).truncationMode(.middle)
+            .padding(.horizontal, 10).padding(.vertical, 3)
+            .background(UnevenRoundedRectangle(topTrailingRadius: DuoMetric.radiusControl).fill(DuoColor.pane))
+            .overlay(UnevenRoundedRectangle(topTrailingRadius: DuoMetric.radiusControl).stroke(DuoColor.rule, lineWidth: DuoMetric.borderHairline).padding(.leading, -2).padding(.bottom, -2))
+            .clipped()
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+}
+
+/// Finds the link under the pointer in the transcript. Selectable `Text` is an AppKit text field
+/// (F-159) and SwiftUI says nothing about which run is hovered, so a mouse-moved monitor finds the
+/// field under the pointer, lays its string out as the field draws it and reads `.link` there.
+struct ChatLinkHover: NSViewRepresentable {
+    let changed: @MainActor (URL?) -> Void
+
+    func makeNSView(context: Context) -> Probe { let v = Probe(); v.changed = changed; return v }
+    func updateNSView(_ v: Probe, context: Context) { v.changed = changed }
+    static func dismantleNSView(_ v: Probe, coordinator: ()) { v.stop() }
+
+    final class Probe: NSView {
+        var changed: (@MainActor (URL?) -> Void)?
+        private var monitor: Any?
+        private var last: URL?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            stop()
+            guard let window else { return }
+            window.acceptsMouseMovedEvents = true
+            monitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .mouseExited, .scrollWheel]) { [weak self] e in
+                MainActor.assumeIsolated { self?.look(e) }
+                return e
+            }
+        }
+
+        func stop() { if let m = monitor { NSEvent.removeMonitor(m) }; monitor = nil }
+
+        private func look(_ e: NSEvent) {
+            guard let window, e.window === window else { return }
+            let p = e.locationInWindow
+            var url: URL?
+            if bounds.contains(convert(p, from: nil)) { url = Self.link(in: window, at: p) }
+            if url != last { last = url; changed?(url) }
+        }
+
+        /// The link under a point of the window (in window coordinates), if any.
+        static func link(in window: NSWindow, at p: NSPoint) -> URL? {
+            guard let hit = window.contentView?.hitTest(p) else { return nil }
+            var v: NSView? = hit
+            while let x = v, !(x is NSTextField) { v = x.superview }
+            guard let field = v as? NSTextField else { return nil }
+            return link(in: field, at: field.convert(p, from: nil))
+        }
+
+        /// The `.link` at a point in a text field, laid out at the field's width.
+        static func link(in field: NSTextField, at p: NSPoint) -> URL? {
+            let s = field.attributedStringValue
+            guard s.length > 0 else { return nil }
+            let storage = NSTextStorage(attributedString: s)
+            let layout = NSLayoutManager()
+            let container = NSTextContainer(size: NSSize(width: field.bounds.width, height: .greatestFiniteMagnitude))
+            container.lineFragmentPadding = 0
+            layout.addTextContainer(container)
+            storage.addLayoutManager(layout)
+            let y = field.isFlipped ? p.y : field.bounds.height - p.y
+            var fraction: CGFloat = 0
+            let i = layout.characterIndex(for: NSPoint(x: p.x, y: y), in: container, fractionOfDistanceBetweenInsertionPoints: &fraction)
+            guard i < s.length else { return nil }
+            let glyphs = layout.glyphRange(forCharacterRange: NSRange(location: i, length: 1), actualCharacterRange: nil)
+            guard layout.boundingRect(forGlyphRange: glyphs, in: container).insetBy(dx: -1, dy: -1).contains(NSPoint(x: p.x, y: y)) else { return nil }
+            switch s.attribute(.link, at: i, effectiveRange: nil) {
+            case let u as URL: return u
+            case let t as String: return URL(string: t)
+            default: return nil
+            }
+        }
+    }
+}
+
+/// The status line's words for a link (DL-132 g).
+public enum ChatLinkWords {
+    /// "Open flows.md at line 42 in Duo" for a file link; a web link's address.
+    public static func words(_ url: URL) -> String {
+        guard url.scheme == "duo-file" else { return url.absoluteString }
+        let c = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        let line = c?.queryItems?.first { $0.name == "line" }?.value
+        let name = ((c?.path ?? url.path) as NSString).lastPathComponent   // duo-file:docs/x.md is opaque: url.path is empty
+        return "Open \(name)\(line.map { " at line \($0)" } ?? "") in Duo"
     }
 }

@@ -2177,3 +2177,21 @@ Check by hand: in System Settings › Notifications › Duo, turn on Allow notif
 - **macOS draws both as targeted.** `scripts/icon-proof.swift` renders each bundle through `NSWorkspace.icon(forFile:)` beside its target, at 1024, 128, 32 and 16 pt, on light and dark (`icon-handoff/screens/build-proof-dev-icon.png`). Mean difference against the target at 1024, both on white: release 3.57, dev 3.49 (0–255 per channel; macOS's rim light). At 16 pt @2x both differ by about 35–38, from macOS drawing the squircle a little larger with its rim, not from the art: `build-proof-dev-icon-16pt.png` (target, render; release, dev) shows the same stripes, band height, chevron and bars.
 - **The dev targets are the canvas's own art**, rasterised from its SVG (qlmanage at 1024; the small one scaled down from 1024, since `qlmanage -t -s 32` drew it tiny in the corner). Those PNGs are opaque white outside the squircle, so `icon-proof.swift` compares on white.
 - **A running dev Duo keeps its old tile until it quits** (F-155): Geoff's acceptance Duo shows the stripes after its next `bundle.sh` and relaunch.
+
+## F-145 · Stand-ins batch 2, slice 3: the deck's stand-ins, chat in Home, link targets (DL-132 g, j; 2026-10-07)
+
+- **Built:**
+  - (j) While a deck draws, the bar reads "Drawing slides…" and `DeckDrawingFrames` lays an empty numbered 16:9 frame per slide over the web view. The count comes from `Pptx.slideCount` (the slide list in `presentation.xml`), read when the deck loads.
+  - Disabled buttons now draw at half strength in `DuoButtonStyle` and `DefaultSheetButtonStyle`: label in `text2` at 50%, border at 50%. Before, a disabled ‹ › or Select Shape looked live everywhere.
+  - With no session to send to, the picked bar's line ("<why>: use Send To.") sits above the buttons in `body`/`text2`, and Send To takes the default look. The narrow bar (`2/5`, the picker's buttons in two rows) was already built and matches its board.
+  - (g) Home's pane shows a Claude tab as chat or terminal through the console's `ConsoleChatBody`, with `ChatToggle` at the right end of Home's tab row. Chat's fallback works there too: a signed-out claude's first-run screen hands back to the terminal.
+  - A link under the pointer shows its target in `ChatLinkStatus` at the transcript's bottom left, in words from `ChatLinkWords` ("Open flows.md at line 42 in Duo", or a web address). A `duo-file:` URL is opaque, so its name comes from `URLComponents.path`, not `url.path`.
+- **How the link is found** (`ChatLinkHover`): SwiftUI reports no per-run hover, and selectable `Text` is an AppKit `NSTextField` (F-159). So a local mouse-moved monitor runs while the pane is in the window (the window's `acceptsMouseMovedEvents` turned on). It hit-tests the field under the pointer, lays its `attributedStringValue` out at the field's width (no line-fragment padding), and reads `.link` at that character, only inside the glyph's own rectangle.
+- **Not built:** the board's darker underline on the hovered link. The memoized attributed strings would need re-styling per hover; the status line and the pointer already say it's a link.
+- **Harness:** `chat-hover:<x>x<y>` reads the link at a content point (the content view includes the 39 pt toolbar). On the `chat-text` fixture, 545x288 finds `duo-file:docs/refunds/flows.md?line=42`, 460x567 the Stripe link, and plain text finds none.
+- **Proof:** `build/standins2/compare/q68-drawing-` (a film frame 30 ms after opening), `q68-no-session-` (bottom-aligned), `q68-narrow-`, `q57-home-pill-` and `q57-link-status-compare.png`. Each matches its board.
+  - The "why" wording is the existing send-target reason ("No session is showing"), not the board's sample.
+  - Slide content is exempt.
+  - The Home capture shows the fallback bar, because the scratch claude is signed out.
+- `docs/design/system`: surfaces.md (eight rows, plus a row for the busy-tab question), and the READMEs of BrowserBar, ChatMode, DeckViewer, PaneTabs, Sheet and TaskLine. The Toolbar preview draws DL-129's right-pane button.
+- DuoChecks: a link's status words.
