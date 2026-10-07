@@ -2320,3 +2320,17 @@ Geoff (2026-10-07): "I had an issue with the chat mode in the home view study: t
 - **Ruled out**, in the same runs: a resumed session (`--resume`) sends normally. The F-174 paths (the `/` menu's Return, the send-time fallback, the launch-id hand-over) behave on new and resumed sessions.
 - **Also found:** Home's chat (DL-132 g) stays in the window under a project, so the window holds two composers (C-47). The harness's `chat-type` and `chat-key` typed into the first one found, Home's. They now pick the composer of the session on screen, and a `composers` action lists them all.
 - **Proof:** DuoChecks "Return reaches the composer after the idle list" (3 checks), 740 passing. Live runs RET6 (before: `abc` lost, Return resumed another session) and RET8 (after: `xabc` typed and sent).
+
+## F-179 · ⇧⇥ in chat's composer cycles Claude Code's modes (2026-10-07)
+
+Geoff (2026-10-07): "when in chat mode, shift tab should cycle ask permission, plan mode, auto mode, etc -- all modes".
+
+- **⇧⇥ in the composer goes to the TUI** as its own shift+tab, after the same screen check as the mode chip (the prompt is up: idle or busy). The chip follows what the TUI's footer shows, so the cycle is whatever the installed claude offers:
+  - on the mock with an API key, 2.1.292 cycles manual → accept edits → plan → manual;
+  - under a CLI login it adds auto (Geoff's session runs in auto);
+  - with permissions bypass allowed, bypass. The reader now knows `bypass permissions on`.
+- **The hint line** reads `⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files · ⌘[ ⌘] your messages`, dropping from the right as before. Its wording and place are a stand-in (Q-108).
+- **`duo2 session chat mode [id] [next|manual|accept-edits|plan|auto|bypass]`** (DL-71): `next` presses shift+tab once; a name presses it until the footer shows that mode, re-reading after each press, at most once round the cycle. A mode this claude doesn't offer is refused, with what it shows instead. `docs/cli/duo2.md` is regenerated.
+- **Proof:**
+  - DuoChecks "shift+tab cycles Claude Code's modes" (5 checks: the footer's plan and bypass, a mode by name in two presses, a mode the cycle hasn't got refused after one round), 744 passing.
+  - Live on an isolated Duo with the real 2.1.292 TUI on the mock: three ⇧⇥ in the composer gave accept-edits, plan, manual. Capture: `docs/design/chat-mode-handoff/proof/modes-shift-tab-plan.png`.

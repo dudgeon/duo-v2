@@ -434,6 +434,29 @@ func spikeScreen(_ name: String) -> String {
               "(d) git commit from Claude's Bash (no terminal, no hand-over) ends at once as it would without Duo: vi fails, git stops (\(String(format: "%.1f", took)) s)")
     }
 
+    print("chat mode: shift+tab cycles Claude Code's modes (F-179)")
+    do {
+        let base = spikeScreen("tour-2.1.291/01-markdown.txt")
+        let footers = ["⏸ manual mode on · ? for shortcuts", "⏵⏵ accept edits on (shift+tab to cycle)", "⏸ plan mode on (shift+tab to cycle)"]
+        func screen(_ i: Int) -> String { base.replacingOccurrences(of: #"⏸ manual mode on[^\n]*"#, with: footers[i], options: .regularExpression) }
+        check(ChatScreenReader.read(screen(2)).mode == .plan, "the footer's mode is read (plan)")
+        check(ChatScreenReader.read(base.replacingOccurrences(of: #"⏸ manual mode on[^\n]*"#, with: "⏵⏵ bypass permissions on (shift+tab to cycle)", options: .regularExpression)).mode == .bypass,
+              "bypass permissions, when this claude offers it")
+        var at = 0
+        let tui = FakeTUI(screen(0))
+        tui.react = { k, t in if k == ChatKey.shiftTab.bytes { at = (at + 1) % footers.count; t.show(screen(at)) } }
+        let c = ChatSession(key: "modes", mode: .chat)
+        c.attach(tui)
+        var got: ChatPermissionMode?
+        Task { got = await c.cycleMode(to: .plan) }
+        spin(1.5)
+        check(got == .plan && tui.keys == [ChatKey.shiftTab.bytes, ChatKey.shiftTab.bytes], "a mode by name: shift+tab until the footer shows it (\(tui.keys.count) presses)")
+        var none: ChatPermissionMode? = .manual
+        Task { none = await c.cycleMode(to: .auto) }
+        spin(3)
+        check(none == nil && tui.keys.count <= 2 + 6, "a mode this claude's cycle hasn't got: refused after one round, not forever")
+    }
+
     print("chat mode: Return reaches the composer after the idle list (F-178)")
     do {
         let m = AppModel(fixture: try repoFixture())
