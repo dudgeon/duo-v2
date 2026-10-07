@@ -4,6 +4,7 @@
 #
 #   scripts/perf-chat.sh [out-dir] [make-long-chat.py args…]
 #
+# PERF_TRANSCRIPT=<file.jsonl> follows a copy of a real transcript instead of a generated one.
 # Isolated: its own support folder and Claude config folder under /tmp; never Geoff's Duo.
 # Writes <out>/perf.log (the `perf:` lines), <out>/sample-*.txt (sample(1) while opening,
 # scrolling and appending) and <out>/window.png. PERF_THEN replaces the actions.
@@ -19,7 +20,20 @@ sup=/tmp/d-perf-$$
 cfg=$(mktemp -d /tmp/c-perf-XXXX)
 proj=$cfg/projects/$(print -r -- $cwd | sed 's/[^A-Za-z0-9]/-/g')
 mkdir -p $sup $proj
-python3 scripts/make-long-chat.py $proj/$sid.jsonl "$@" | tee $out/fixture.txt
+if [[ -n ${PERF_TRANSCRIPT:-} ]]; then
+  # A real transcript instead (a copy, in the scratch folder; never committed): its own id and folder.
+  sid=${PERF_TRANSCRIPT:t:r}
+  cwd=$(python3 -c "import json,sys
+for l in open(sys.argv[1]):
+    c = json.loads(l).get('cwd')
+    if c: print(c); break" $PERF_TRANSCRIPT)
+  proj=$cfg/projects/$(print -r -- $cwd | sed 's/[^A-Za-z0-9]/-/g')
+  mkdir -p $proj
+  cp $PERF_TRANSCRIPT $proj/$sid.jsonl
+  echo "$PERF_TRANSCRIPT: $(wc -c < $PERF_TRANSCRIPT) bytes" > $out/fixture.txt
+else
+  python3 scripts/make-long-chat.py $proj/$sid.jsonl "$@" | tee $out/fixture.txt
+fi
 # Replies that arrive during the run: more of the same turn (no prompt first), then new turns.
 python3 scripts/make-long-chat.py $cfg/more.jsonl --turns 3 --tools 12 --seed 9 >/dev/null
 tail -n +2 $cfg/more.jsonl > $cfg/same-turn.jsonl
