@@ -157,23 +157,45 @@ struct ChatYouBubble: View {
         let cut = lines.count > Self.longer && !chat.ui.fullYou.contains(you.id)
         VStack(alignment: .trailing, spacing: 4) {
             if !you.queued { ChatWho(who: "You", time: you.time, tag: you.planMode ? "plan mode" : nil) }
-            VStack(alignment: .leading, spacing: 6) {
-                ChatMarkdownView(blocks: ChatMarkdown.parse(cut ? lines.prefix(Self.shown).joined(separator: "\n") : you.text), streaming: false)
-                if cut {
-                    Text("Show all \(lines.count) lines").duoText(.chatMeta).foregroundStyle(DuoColor.text).underline(color: DuoColor.controlEdge)
-                        .onActivate { chat.ui.fullYou.insert(you.id) }  // not an action: shows more of what's drawn
+            // The bubble hugs its text, at most 440 (chat-mode-handoff `text`, `composer`; F-184).
+            ChatHug(maxWidth: DuoSpace.chatBubbleMax) {
+                VStack(alignment: .leading, spacing: 6) {
+                    ChatMarkdownView(blocks: ChatMarkdown.parse(cut ? lines.prefix(Self.shown).joined(separator: "\n") : you.text), streaming: false)
+                    if cut {
+                        Text("Show all \(lines.count) lines").duoText(.chatMeta).foregroundStyle(DuoColor.text).underline(color: DuoColor.controlEdge)
+                            .onActivate { chat.ui.fullYou.insert(you.id) }  // not an action: shows more of what's drawn
+                    }
                 }
-            }
                 .padding(EdgeInsets(top: 9, leading: 14, bottom: 9, trailing: 14))
                 .background(UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatBubble).fill(DuoColor.chatYou))
-                .opacity(you.queued ? 0.6 : 1)
-                .frame(maxWidth: DuoSpace.chatBubbleMax, alignment: .trailing)
-                .fixedSize(horizontal: false, vertical: true)
+            }
+            .opacity(you.queued ? 0.6 : 1)
             if you.queued { Text("Queued · Claude reads it when it’s ready").duoText(.chatMeta).foregroundStyle(DuoColor.text2) }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("You: \(you.text)")
+    }
+}
+
+/// Its content at its own width, at most `maxWidth` (and what's offered): a bubble that hugs short
+/// text and wraps long text at the cap. Markdown's views take all the width offered, so the
+/// content is asked its ideal width first, then offered just that (F-184).
+struct ChatHug: Layout {
+    var maxWidth: CGFloat
+
+    func width(_ proposal: ProposedViewSize, _ s: Subviews) -> CGFloat {
+        let ideal = s.first?.sizeThatFits(.unspecified).width ?? 0
+        return ceil(min(ideal, maxWidth, proposal.width ?? .infinity))
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews s: Subviews, cache: inout ()) -> CGSize {
+        let w = width(proposal, s)
+        return CGSize(width: w, height: s.first?.sizeThatFits(ProposedViewSize(width: w, height: nil)).height ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews s: Subviews, cache: inout ()) {
+        s.first?.place(at: bounds.origin, anchor: .topLeading, proposal: ProposedViewSize(width: bounds.width, height: bounds.height))
     }
 }
 

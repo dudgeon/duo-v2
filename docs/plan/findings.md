@@ -2404,3 +2404,13 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
   - `narrow-1080-output.png`: the box's narrow layout in a 1080-wide window.
   - Live on an isolated Duo with the real 2.1.293 TUI on the mock: the `/context` box from its record; the `/model` card, where `2` moved the TUI's cursor to Opus (`live-2.1.293-model-card-cursor.png`) and Esc gave "Kept model as Haiku 4.5"; the `/effort` card, where Return gave its result; the `/permissions` named bar (`live-2.1.293-permissions-named-bar.png`) with the session idle while it was up.
   - DuoChecks: a "slash commands as designed (DL-143)" group (25 checks: the results, the real ANSI `/context` record, the picker screens of 2.1.292 and 2.1.293, the cursor keys and s, nothing sent once the picker has gone, the bar's words, the menu column). The chat group passes 177 of 177.
+
+## F-184 · Your bubbles hug their text, as the chat boards draw them (2026-10-07)
+
+- **What was wrong.** Your messages always took the full 440 pt cap (`chatBubbleMax`), whatever their length. The chat-mode boards (`text`, `composer`, `paste`) and DL-143's draw a bubble as wide as its text, up to 440. The cause: `ChatMarkdownView` takes all the width offered (`frame(maxWidth: .infinity)`), and the bubble offered it 440. Found while building DL-143 (F-177); it predates that work.
+- **Fix.** `ChatHug`, a SwiftUI `Layout` (a protocol, not a macro; DL-30), asks the bubble for its ideal width, then offers it the smaller of that, 440 and what the column has. Short text hugs; long text wraps at 440 exactly where the boards wrap it. Claude's cards, review cards and results don't change.
+- **Proof:**
+  - Against the boards: `docs/design/chat-mode-handoff/proof/bubbles-composer-compare.png` ("Tighten the non-goals." hugs, as the board's own "Also check the Android numbers." does; same 9/14 padding and corners) and `bubbles-text-compare.png` (the long bubble still wraps at 440, "…with a short / recommendation.").
+  - Every chat board diffed against main's captures (`samepng.py`): the 12 boards with no short bubble are identical; the 21 with one differ only in that bubble's rows (one 40 pt band each, the slash output board four).
+  - `check-chat-perf.sh` twice, 7 of 7 within budget both times. Replies at the bottom measured 525 and 467 ms against the 600 budget, the 0.4–0.5 s already recorded for the lazy stack (ENH-23a).
+  - DuoChecks 793, chat 177.
