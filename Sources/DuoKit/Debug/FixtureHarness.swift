@@ -381,6 +381,9 @@ public enum FixtureHarness {
             if parts.count > 1 { withDuoAnimation(.fold) { _ = model.expandedGroups.insert(parts[1]) } }
         case "collapse":   // collapse:<key>: close it again
             if parts.count > 1 { withDuoAnimation(.fold) { _ = model.expandedGroups.remove(parts[1]) } }
+        case "open-sessions":   // open-sessions:<name>+<name>: as if a terminal were open for each in Duo (ENH-7, DL-133)
+            let names = parts.count > 1 ? Set(parts[1].split(separator: "+").map(String.init)) : []
+            model.fixtureActive = Set(model.fixture.sessions.filter { names.contains($0.name) }.map(\.tabKey))
         case "session-state":   // session-state:<name>=<needsYou|readyForReview|working|idle|resolved>[@<wait>]: as a snapshot would bring it
             let f = parts.count > 1 ? parts[1].split(separator: "=", maxSplits: 1).map(String.init) : []
             guard f.count == 2 else { break }

@@ -691,8 +691,11 @@ struct ProjectTile: View {
 struct TileSessionRow: View {
     let session: Fixture.Session
     var selected = false
-    /// A terminal is open for it in Duo (ENH-7): a tint, so it's easy to jump back in.
+    /// A terminal is open for it in Duo (ENH-7, DL-133): it reads `at prompt` or `working` in place
+    /// of its time, and unselected it's tinted, so it's easy to jump back in.
     var active = false
+
+    var wait: String? { session.state.waitText(session.wait, open: active) }
 
     var body: some View {
         HStack(spacing: DuoSpace.gapRowItems) {
@@ -701,7 +704,7 @@ struct TileSessionRow: View {
                 .duoText(.body, weight: selected ? .semibold : nil)
                 .lineLimit(1)
             Spacer(minLength: 8)
-            if session.state != .readyForReview { WaitLabel(text: session.wait) }
+            if session.state != .readyForReview { WaitLabel(text: wait) }
         }
         .frame(height: DuoMetric.rowTileSession)
         .padding(.horizontal, selected || active ? 6 : 0)
@@ -711,7 +714,7 @@ struct TileSessionRow: View {
         }
         .padding(.horizontal, selected || active ? -6 : 0)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(session.name), \(session.state.spokenName)\(session.wait.map { ", waiting \($0)" } ?? "")")
+        .accessibilityLabel("\(session.name), \(session.state.spokenName)\(active ? ", open in Duo" : "")\(wait == session.wait ? session.wait.map { ", waiting \($0)" } ?? "" : "")")
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }

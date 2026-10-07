@@ -23,7 +23,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Inside a folder: `Folder · no project file`, the notice with Make a Project and Not Now, the Project tab's offer | Designed (DL-110) | folder `folder-not-project.html` | — | FolderNotice, FolderProjectTab |
 | Missing or moved folder tiles ("Folder not found", "Moved to …") | Designed (DL-101); "In the Trash" not built | slice3 `missing-folder.html` | — | ProjectTile, MissingNotice, `Live/MissingFolders.swift` |
 | New project tile | Designed; opens the New project sheet (DL-100) | build `overview.html` | — | NewProjectTile |
-| Sessions open in Duo, tinted | Stand-in (ENH-7) | — | DB-33 | TileSessionRow, `activeTint` |
+| Sessions open in Duo: `at prompt`/`working`, tinted | Designed (DL-133, ENH-7) | canvas https://claude.ai/artifact/2qhPnZG6qUpLWFsXKCYSzt `Tiles` (A) | — | TileSessionRow, `activeTint` |
 | Archived rollup under the map | Stand-in (ENH-6) | — | DB-34 | `AllProjects/ArchivedProjects.swift` |
 | Idle footer and idle list | Designed (DB-1) | surfaces `idle-list.html`, `idle-many.html` | — | `AllProjects/IdleList.swift` |
 | Action column: needs you, ready for review | Designed (no reply buttons, DL-29); the reason after the project, 6-line clamp with "… more", "Nothing needs you." (DL-100) | build `overview.html`, `flow-zoom-*.html`, slice2 `needs-you-states.html` | — | ActionColumnPane, NeedsYouCard, ReviewCard |
@@ -35,7 +35,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Surface | Status | Targets | Open | Code |
 |---|---|---|---|---|
 | Breadcrumb `All projects › folder › project` | Changed by decision (DL-92) | build `project.html` | — | ProjectBreadcrumb |
-| Session list: Needs you, Open, Today, This week, Earlier, Tasks, Archived | Designed (DL-100); archived tasks in the Archived fold (DL-115) | slice2 `project-sessions.html`, `session-rows.html` | DB-33 (open tint) | `Project/ProjectPanes.swift` |
+| Session list: Needs you, Open, Today, This week, Earlier, Tasks, Archived | Designed (DL-100); archived tasks in the Archived fold (DL-115) | slice2 `project-sessions.html`, `session-rows.html` | — | `Project/ProjectPanes.swift` |
 | Task rows and group rows | Designed (DL-100): task box, "status · n", no wait; groups keep `group · n`. On hover a task row (line or group style) shows a + where its status or time sits: New Session in Task, which drafts `@tasks/<note>.md` in the new session's prompt, unsent (DL-112). Right-click: the task menu, with Archive, Delete and Move asking whether the task's sessions go too (DL-115) | slice2 `session-rows.html`; stand-ins `q43-hover.html`, `q43-drafted.html`; task-menu `task-menu.html`, `task-menu-archived.html`, `task-questions.html` | — | SidebarRowView, GroupRowMenu, TaskBox, TaskLine, NewSessionInTaskButton, TaskMenuItems |
 | Untitled sessions (first words, start time) | Built (DL-90) | — | — | `Live/SessionTitles.swift` |
 | Files tree | Designed; open and closed folders and hidden files are stand-ins (DL-105) | build `project.html` | Q-40 | FileTreePane |

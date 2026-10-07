@@ -1325,6 +1325,15 @@ func repoFixture() throws -> Fixture {
     check(movedCtx.hasPrefix("Duo: The task “Launch” moved to the project other; its note is now /w/other/tasks/launch.md.") && !movedCtx.contains("removed"),
           "Move to Project: told the note's new place, not removed and added")
 
+    print("open sessions read what they're doing (ENH-7, DL-133)")
+    check(SessionState.idle.waitText("2d", open: true) == "at prompt" && SessionState.working.waitText("6m", open: true) == "working",
+          "open in Duo: idle reads “at prompt”, working reads “working”, in place of the time")
+    check(SessionState.needsYou.waitText("4m", open: true) == "4m", "open and needing you: keeps its wait (the longest wait leads)")
+    check(SessionState.allCases.allSatisfy { $0.waitText("3d", open: false) == "3d" } && SessionState.idle.waitText(nil, open: false) == nil,
+          "not open: the time as before, for every state")
+    check(SessionState.readyForReview.waitText(nil, open: true) == nil && SessionState.resolved.waitText("1h", open: true) == "1h",
+          "ready for review shows no time, open or not; resolved keeps its own")
+
     print("project context (ENH-16, F-146)")
     func brief(_ folder: URL, _ fm: String, claude: String? = nil) {
         try? Data("---\n\(fm)\n---\n\n# \(folder.lastPathComponent)\n".utf8).write(to: folder.appending(path: "PROJECT.md"))

@@ -30,7 +30,7 @@ public enum DuoColor {
     public static let placeholderBarOnSelected = Color(nsColor: NSColor.duoDynamic(light: 0xC3C8CE, dark: 0xC3C8CE, name: "placeholderBarOnSelected"))
     /// Dims the whole window behind the search modal. The text colour at 32% (search-handoff).
     public static let scrim = Color(nsColor: NSColor.duoDynamic(light: 0x1F2328, dark: 0x1F2328, name: "scrim").withAlphaComponent(0.32))
-    /// Behind sessions that have a terminal open in Duo, so it's easy to jump back in (ENH-7). Provisional, Geoff 2026-10-04: a tint distinct from `selected`, until designed.
+    /// Behind unselected sessions that have a terminal open in Duo, which also read `at prompt` or `working`, so it's easy to jump back in (ENH-7, DL-133).
     public static let activeTint = Color(nsColor: NSColor.duoDynamic(light: 0xE8F0FA, dark: 0xE8F0FA, name: "activeTint"))
     /// The chat transcript's ground, so chat mode stands apart from the white panes beside it (chat-mode-handoff, Sep 1b). Same value as ground.
     public static let chatGround = Color(nsColor: NSColor.duoDynamic(light: 0xF3F4F6, dark: 0xF3F4F6, name: "chatGround"))
