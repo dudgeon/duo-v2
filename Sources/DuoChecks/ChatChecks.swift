@@ -211,6 +211,8 @@ func spikeScreen(_ name: String) -> String {
             if off?.items == main.items { same += 1 } else { print("    differs: \(b)") }
         }
         check(all > 5 && same == all, "every board's transcript replays the same off the main thread (\(same)/\(all))")
+        // The log a chat draws asserts it's changed on the main thread; a scratch replay's doesn't.
+        check(ChatSession(key: "k", mode: .chat).log.drawn && !ChatLog().drawn, "only the drawn log is held to the main thread")
 
         // Steps are found by id across turns, after the turn they're in has closed.
         let log = ChatLog()

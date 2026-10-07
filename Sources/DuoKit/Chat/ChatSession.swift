@@ -106,7 +106,7 @@ public final class ChatSession {
     /// Dialogs are answered from chat only on a verified CLI (fallback rule 3).
     public private(set) var dialogsVerified = true
     /// The conversation, from hooks and the transcript.
-    public let log = ChatLog()
+    public let log: ChatLog = { let l = ChatLog(); l.drawn = true; return l }()
     /// Folds and long outputs the reader opened.
     public let ui = ChatUIState()
     /// Fixture targets: the clock the Writing line counts from.

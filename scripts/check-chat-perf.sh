@@ -30,9 +30,9 @@ rows = [
     ("slow scroll: frames over 33 ms, of 300", wheels and wheels[0]["hitches_over_33ms"], 10, ""),
     ("fast flick: longest stall", len(wheels) > 1 and wheels[1]["stall_max_ms"], 250, "ms"),
     ("replies at the bottom: longest stall", bottom and bottom["stall_max_ms"], 600, "ms"),
-    ("replies at the bottom: follows them (1 = yes)", bottom and (0 if bottom["follows_bottom"] else 1), 0, ""),
+    ("replies at the bottom: left behind (1 = stuck)", bottom and (0 if bottom["follows_bottom"] else 1), 0, ""),
     ("a reply while scrolled up: longest stall", up and up["stall_max_ms"], 250, "ms"),
-    ("a reply while scrolled up: follows it down (1 = yes)", up and (1 if up["follows_bottom"] else 0), 0, ""),
+    ("a reply while scrolled up: pulled down to it (1 = pulled)", up and (1 if up["follows_bottom"] else 0), 0, ""),
 ]
 bad = 0
 for name, got, budget, unit in rows:
