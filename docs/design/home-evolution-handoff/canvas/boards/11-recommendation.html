@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1200x880">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="home-evolution">
+<!--
+11 · Recommendation and the v1 slice
+STUDY BOARD [P], not approved. Drawn for the home-evolution study (2026-10-07) with the Duo design system.
+B with recency grouping, N1, Home in chat; D later.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · 11 · Recommendation and the v1 slice</title>
+<style>
+body{margin:0}
+.w{box-sizing:border-box;display:flex;flex-direction:column;background:#FFFFFF;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;overflow:hidden}
+.w *{box-sizing:border-box}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.tb{display:flex;align-items:center;gap:8px;height:38px;flex:none;padding:0 12px 0 20px;border-bottom:1px solid #C9CDD3;background:#F3F4F6}
+.tl{display:flex;gap:8px;margin-right:4px}.tl i{width:12px;height:12px;border-radius:50%;display:block}
+.cnt{display:flex;gap:16px;margin-left:8px;align-items:center}.cnt span{display:flex;gap:6px;align-items:center}
+.srch{margin-left:auto;width:300px;height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;display:flex;align-items:center;gap:6px;padding:0 8px;color:#5B636D}
+.tgl{display:flex;padding:4px 6px}
+.sl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:6px;height:16px}
+.t2{color:#5B636D}
+.ell{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.filter{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid #C9CDD3;border-radius:6px;color:#5B636D;font-size:12px;background:#FFFFFF}
+.popup{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 6px 0 8px;border:1px solid #C9CDD3;border-radius:6px;font-size:12px;line-height:16px;background:#FFFFFF}
+.segc{display:inline-flex;height:22px;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF;font-size:12px;line-height:16px}
+.segc span{display:flex;align-items:center;padding:0 10px;color:#5B636D}
+.segc span+span{border-left:1px solid #C9CDD3}
+.segc .on{background:#E9ECEF;color:#1F2328;font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid #C9CDD3;border-radius:11px;font-size:12px;line-height:16px;color:#5B636D;background:#FFFFFF}
+.chip.on{border-color:#1F2328;color:#1F2328;font-weight:600}
+.row{white-space:nowrap;display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row.tint{background:#E8F0FA}
+.row.sel{background:#E9ECEF}
+.row .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.row .pj{color:#5B636D;overflow:hidden;text-overflow:ellipsis;flex:none}
+.row .tk{display:flex;align-items:center;gap:5px;color:#5B636D;overflow:hidden;flex:none}
+.row .tm{color:#5B636D;flex:none;text-align:right}
+.row2{white-space:nowrap;display:flex;flex-direction:column;justify-content:center;gap:0;height:44px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row2.tint{background:#E8F0FA}
+.row2.sel{background:#E9ECEF}
+.row2 .l1,.row2 .l2{display:flex;align-items:center;gap:8px;min-width:0}
+.row2 .l2{padding-left:17px;font-size:12px;line-height:16px;color:#5B636D}
+.sec{padding:10px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;color:#5B636D}
+.sec.ny{color:#C2410C}
+.fold{display:flex;align-items:center;gap:8px;height:26px;padding:0 16px;color:#5B636D}
+.card{border:1px solid #C9CDD3;border-radius:6px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;white-space:normal}
+.card .top{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.q{border:1.5px solid #C2410C;border-radius:6px;padding:6px 10px;margin:6px 0}
+.btn{align-self:flex-start;display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328}
+.act{flex:none;padding:16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;border-left:1px solid #C9CDD3}
+.mapcol{flex:1;min-width:0;display:flex;flex-direction:column}
+.mh{display:flex;align-items:center;gap:10px;height:22px;flex:none}
+.tile{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;border:1px solid #C9CDD3;border-radius:6px;min-width:0}
+.tile.star{border-color:#1F2328}
+.nm{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.srow{height:24px;display:flex;align-items:center;gap:6px;min-width:0;border-radius:4px}
+.srow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.foot{height:34px;flex:none;border-top:1px solid #C9CDD3;display:flex;align-items:center;gap:8px;padding:0 16px;color:#5B636D}
+/* chat (chat-mode-handoff, chat-polish-handoff) */
+.chat{display:flex;flex-direction:column;background:#F3F4F6;min-width:0;min-height:0}
+.strip{white-space:nowrap;display:flex;align-items:stretch;gap:16px;height:28px;flex:none;padding:0 10px 0 16px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;font-size:12px;line-height:16px}
+.strip .tab{display:flex;align-items:center;gap:6px;color:#5B636D}
+.strip .tab.on{color:#1F2328;font-weight:600;box-shadow:inset 0 -2px 0 #1F2328}
+.pill{display:flex;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF}
+.pill span{width:22px;height:16px;display:flex;align-items:center;justify-content:center;color:#5B636D}
+.pill .on{background:#E9ECEF;color:#1F2328}
+.feed{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;overflow:hidden;font-size:14px;line-height:22px;white-space:normal}
+.who{font-size:12px;line-height:16px;color:#5B636D}
+.ccard{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:12px 16px 14px;display:flex;flex-direction:column;gap:8px}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:8px 14px}
+.trail{display:flex;flex-direction:column;border-left:1.5px dotted #8B939C;margin-left:6px}
+.step{display:flex;align-items:center;gap:10px;min-height:24px;margin-left:-5px;font-size:12px;line-height:16px;color:#5B636D}
+.step b{font-weight:600;color:#1F2328}
+.dot{width:7px;height:7px;border-radius:4px;border:1.5px solid #8B939C;background:#FFFFFF;flex:none;margin-left:3px}
+.composer{flex:none;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:7px 12px;color:#5B636D;font-size:14px;line-height:22px}
+.ask{background:#FFFFFF;border:1.5px solid #C2410C;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;white-space:normal}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em}
+.opt{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:20px;border:1px solid #8B939C;border-radius:8px;padding:5px 8px}
+.key{flex:none;width:18px;height:18px;margin-top:1px;border:1px solid #C9CDD3;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:16px;color:#5B636D;background:#F3F4F6}
+/* board furniture: not the app */
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:14px}
+.bd *{box-sizing:border-box}
+.bt{font:600 17px/24px -apple-system,system-ui,sans-serif}
+.bsub{color:#5B636D;font-size:13px;line-height:20px;white-space:normal;max-width:1100px}
+.note{color:#5B636D;font-size:12px;line-height:18px;white-space:normal}
+.note b{color:#1F2328;font-weight:600}
+.frame{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.rec{display:inline-block;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.4px;color:#1F2328;border:1px solid #1F2328;border-radius:9px;padding:0 7px;margin-left:6px;vertical-align:1px}
+.p{color:#5B636D;font-weight:500}
+.txt{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:16px 18px;white-space:normal;font-size:13px;line-height:20px}
+.txt h3{margin:0 0 6px;font-size:13px;line-height:20px;font-weight:600}
+.txt ul,.txt ol{margin:4px 0 8px;padding-left:18px}
+.txt li{margin:2px 0}
+.txt p{margin:4px 0 8px}
+.txt code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+</style>
+</head>
+<body>
+<div class="bd" style="width:1200px;height:880px;gap:14px"><div class="bt">11 · Recommendation and the v1 slice</div><div class="bsub">Recommended: <b>B</b> (Board | List in the middle), grouped <b>by recency</b> like a project’s list, Needs you <b>owned by the column</b> (N1), Home <b>in chat</b> by default. Then <b>D</b> as the next step, once the list has been used.</div><div style="display:flex;gap:16px;align-items:flex-start">
+<div class="txt" style="flex:1"><h3>Why B first</h3><ul>
+<li>Keeps the three things Geoff named: Home’s agent (left, now in chat), the board (one click away), and Needs you (right, unchanged).</li>
+<li>The list gets the middle’s width, so a row carries project and task on one line, and it fits the 1280×800 window without anything giving way.</li>
+<li>Everything in it exists: DL-91’s sections, the row, the tint, the filter field, the map header. It’s a new arrangement, not a new language.</li>
+<li>A click jumps into the project, as a tile’s session row does, so there’s no new navigation to learn.</li></ul>
+<h3>Why D next, not now</h3><ul>
+<li>D is the Claude app’s shape, and the most like Geoff’s note. It needs any session shown at All projects (Home’s pane hosting other projects’ sessions), which touches the multi-window study’s question of where Home lives.</li>
+<li>B’s list is D’s list: the same rows, grouping and filter. Building B builds most of D.</li></ul>
+<h3>Not recommended</h3><p>A (Home and the list fight over one pane) and C (four panes don’t fit at 1280; it duplicates a project’s own list).</p></div>
+<div class="txt" style="width:520px;flex:none"><h3>v1 slice [P]</h3><ol>
+<li><b>Home opens in chat</b>: new Home sessions in chat; the light strip and header (board 10). <code>duo2 session chat --home</code>.</li>
+<li><b>Board | List</b> in the map’s header, remembered; first launch shows List. <code>duo2 view home board|list|toggle</code>; View › Show Board / Show List (⌘1 / ⌘2 [P]).</li>
+<li><b>The list</b>, compact rows (board 1), grouped by recency (DL-91 sections across projects), Earlier and Archived folded.</li>
+<li><b>Filter sessions</b> field (board 3 A): title, project, folder, task. <code>duo2 view filter</code> applies to whichever is showing.</li>
+<li><b>N1</b>: needs-you sessions in the column only; the list’s “3 need you” line; opens into rows when the right pane is hidden.</li>
+<li><b>Click jumps</b> into the project with the session selected; right-click is the session menu; Return / ⌘↩ as board 4.</li></ol>
+<h3>Later</h3><ul><li>ENH-28: D, a Sessions view with sessions opened in place.</li><li>ENH-29: Group By state and project; chips; the session’s note as a third line.</li></ul>
+<h3>Open (Q-100 to Q-104)</h3><ul><li>Q-100 Home’s strip in chat: light (this study) or Q-57’s dark row.</li><li>Q-101 Default view on first launch: List or Board.</li><li>Q-102 Narrow (two-line) rows: when the middle is under 520.</li></ul></div>
+</div></div>
+</body>
+</html>
