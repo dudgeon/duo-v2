@@ -2114,3 +2114,12 @@ Spike: `docs/plan/spikes/browser-engine.md`.
 | A reply while scrolled up | pulled to the bottom; 206–393 ms | stays; 12–49 ms |
 
   The open freeze and the pull to the bottom are gone. What's left matches the generated session: about 0.5–0.8 s right after a jump to the bottom, from the lazy stack (ENH-23b).
+
+## F-143 · Stand-ins batch 2, slice 1: the questions and the task row (DL-132 a to c, k; 2026-10-07)
+
+- **Built:** (a) a group-style task row under the pointer takes the `selected` fill, keeps its status whole (fixed size) and shows the + after it; the name gives way. (b) The update question carries the release's notes (`Release.notes`, from the GitHub release's `body`; `UpdateCheck.notesLines` turns the Markdown into plain lines: headings, rules and blank lines dropped, list items as `•`, emphasis, code marks and link targets taken out) in `NotesBox` under "You have …", a `WHAT’S NEW` label over the lines, up to 160 high, then it scrolls. `DuoQuestion.leadingCancel` puts Later apart at the left. Later is unchanged (F-69). (c) The clash question's rows: the name in mono, `from <folder>` in `text2`, and "the one there: edited 2h ago" at the right. They sit 6 apart with a `rule` between, which is `DuoQuestion.Item` with both `what` and `detail`. (k) The busy-tab question's new words. `TabBusy.claudeWorking` now carries the session's project.
+- **Proof** (live on `~/DuoAcceptance` with an isolated `DUO_SUPPORT_DIR`, a scratch `CLAUDE_CONFIG_DIR` and nothing answered): `build/standins2/compare/q46-hover-`, `q47-writable-`, `q47-admin-`, `q50-clash-` and `close-busy-compare.png`. The update question was tested only through the harness's `ask-update:` (now with sample notes, or `no-notes`), never against GitHub or the appcast. Region by region:
+  - The notes box, its label and lines, and Later's place match the board. The sheets' paragraphs sit 10 apart (`gapCardToCard`, as every built question since S3-3), where the boards copied the .docx board's 12. So the build runs 2 to 6 pt higher further down; that is a board inaccuracy, not a change.
+  - The group row keeps slice 2's approved 8 pt gaps (`project-sessions`), where the board drew 6 (copied from `q43-hover`). With the sample title at 300 wide, the name gives way ("Exec revie…"), as DL-132 says a long title does.
+  - The tooltip is the system's (exempt).
+- DuoChecks: the notes become plain lines, and the question puts Later first, apart from the rest.

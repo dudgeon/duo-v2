@@ -1,0 +1,159 @@
+{
+  "$note": "Stand-ins batch 2, approved 2026-10-07 (DL-132). kind=board: a part of the window drawn on the Design canvas, exported as static HTML.",
+  "source": "https://claude.ai/artifact/3TTPpMG5scibGpopR14afr",
+  "screens": [
+    {
+      "file": "screens/q46-hover.html",
+      "board": "Q46-B.dc.html",
+      "kind": "board",
+      "width": 300,
+      "height": 240,
+      "decision": "DL-132 (a)",
+      "shows": "A group-style task row under the pointer: selected fill, status whole, + after it."
+    },
+    {
+      "file": "screens/q47-writable.html",
+      "board": "Q47-A-writable.dc.html",
+      "kind": "board",
+      "width": 480,
+      "height": 440,
+      "decision": "DL-132 (b)",
+      "shows": "The update question where Duo can replace itself: the release's notes in a box, Later apart at the left, Install Now default."
+    },
+    {
+      "file": "screens/q47-admin.html",
+      "board": "Q47-A-admin.dc.html",
+      "kind": "board",
+      "width": 480,
+      "height": 440,
+      "decision": "DL-132 (b)",
+      "shows": "The same where installing needs an administrator password: Open Releases Page default."
+    },
+    {
+      "file": "screens/q50-highlight.html",
+      "board": "Q50-A.dc.html",
+      "kind": "board",
+      "width": 620,
+      "height": 300,
+      "decision": "DL-132 (c)",
+      "shows": "The drop highlight as built: over a folder, and over the tree's empty area (the root)."
+    },
+    {
+      "file": "screens/q50-clash.html",
+      "board": "Q50-clash.dc.html",
+      "kind": "board",
+      "width": 480,
+      "height": 300,
+      "decision": "DL-132 (c)",
+      "shows": "Several taken names: the count in the title, where each came from, when the one there was edited."
+    },
+    {
+      "file": "screens/q51-copy.html",
+      "board": "Q51.dc.html",
+      "kind": "board",
+      "width": 300,
+      "height": 300,
+      "decision": "DL-132 (d)",
+      "shows": "From another volume Duo copies; the + badge is the system's."
+    },
+    {
+      "file": "screens/q52-preview.html",
+      "board": "Q52-A-preview.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 440,
+      "decision": "DL-132 (e)",
+      "shows": "A file Duo can't show, with Quick Look's preview: the quiet strip."
+    },
+    {
+      "file": "screens/q52-none.html",
+      "board": "Q52-A-none.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 440,
+      "decision": "DL-132 (e)",
+      "shows": "A file Duo can't show and Quick Look can't preview: centred name, line, buttons."
+    },
+    {
+      "file": "screens/q39-hover.html",
+      "board": "Q39-A.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 120,
+      "decision": "DL-132 (f)",
+      "shows": "A tab for a file outside the project, at rest and under the pointer (its folder in text2)."
+    },
+    {
+      "file": "screens/q57-home-pill.html",
+      "board": "Q57-A.dc.html",
+      "kind": "board",
+      "width": 340,
+      "height": 260,
+      "decision": "DL-132 (g)",
+      "shows": "Home's session tab row with the Terminal / Chat pill, in chat."
+    },
+    {
+      "file": "screens/q57-link-status.html",
+      "board": "Q57-b.dc.html",
+      "kind": "board",
+      "width": 560,
+      "height": 260,
+      "decision": "DL-132 (g)",
+      "shows": "A chat file link under the pointer: its target in a status line at the bottom left."
+    },
+    {
+      "file": "screens/q66-downloading.html",
+      "board": "Q66-A.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 360,
+      "decision": "DL-132 (h)",
+      "shows": "A download running in a browser tab: the notice with a progress line, size and Cancel."
+    },
+    {
+      "file": "screens/q67-popup.html",
+      "board": "Q67-A.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 140,
+      "decision": "DL-132 (i)",
+      "shows": "A popup's tab: ↳ before its title, tooltip Opened from ‹opener›."
+    },
+    {
+      "file": "screens/q68-drawing.html",
+      "board": "Q68-A.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 440,
+      "decision": "DL-132 (j)",
+      "shows": "A deck while drawing: Drawing slides…, controls dimmed, empty numbered frames."
+    },
+    {
+      "file": "screens/q68-no-session.html",
+      "board": "Q68-B.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 440,
+      "decision": "DL-132 (j)",
+      "shows": "A shape picked with no session: use Send To, Send to Claude dimmed."
+    },
+    {
+      "file": "screens/q68-narrow.html",
+      "board": "Q68-C.dc.html",
+      "kind": "board",
+      "width": 360,
+      "height": 440,
+      "decision": "DL-132 (j)",
+      "shows": "The deck under 460: 2/5, the picker's buttons in two rows."
+    },
+    {
+      "file": "screens/close-busy.html",
+      "board": "Close-A.dc.html",
+      "kind": "board",
+      "width": 480,
+      "height": 380,
+      "decision": "DL-132 (k)",
+      "shows": "Closing a busy tab: a working Claude session, then a shell running a command."
+    }
+  ]
+}

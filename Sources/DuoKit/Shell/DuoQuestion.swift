@@ -10,6 +10,8 @@ public struct DuoQuestion: Identifiable {
         public var what: String
         public var path: String
         /// With no `what`: the path alone in `text`, this at its right in `text2` ("edited 2d ago").
+        /// With a `what`: the clash row of `standins2-handoff/q50-clash` (DL-132 c): `what` in mono,
+        /// `path` under it in `text2` ("from ~/Downloads"), this at the right in `text2`.
         public var detail: String? = nil
     }
     /// A name to type, filled in with a suggestion (B of the .docx boards, DL-123). A class, so
@@ -34,6 +36,12 @@ public struct DuoQuestion: Identifiable {
     public var items: [Item] = []
     public var field: Field? = nil
     public var note: String? = nil
+    /// Lines under the first paragraph in a `WHAT’S NEW` box, up to 160 high, then it scrolls
+    /// (the update question, DL-132 b).
+    public var notes: [String] = []
+    /// The cancel button sits apart at the left, as macOS sheets put the one that dismisses
+    /// (the update question's Later, DL-132 b).
+    public var leadingCancel = false
     public var choices: [Choice]
 }
 
@@ -71,6 +79,30 @@ public struct DuoQuestion: Identifiable {
     }
 }
 
+/// The update question's notes (DL-132 b, standins2-handoff q47-writable): `WHAT’S NEW` over the
+/// release's lines in a `pane` box like the items', up to 160 high, then it scrolls.
+struct NotesBox: View {
+    let lines: [String]
+    var body: some View {
+        ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("WHAT’S NEW").duoText(.sectionLabel).foregroundStyle(DuoColor.text2)
+                ForEach(Array(lines.enumerated()), id: \.offset) { _, l in
+                    Text(l).duoText(.body).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(.horizontal, DuoSpace.cardPadding.leading)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxHeight: 160)
+        .fixedSize(horizontal: false, vertical: true)
+        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
+        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+        .accessibilityLabel("What’s new: " + lines.joined(separator: " "))
+    }
+}
+
 /// A question as a sheet (S3-3, S3-7): 460 wide on `ground`, open at the top, a title, its
 /// paragraphs, a `pane` box listing what it changes with their paths, a `text2` note, the buttons.
 struct QuestionSheet: View {
@@ -79,12 +111,16 @@ struct QuestionSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DuoSpace.gapCardToCard) {
             Text(q.title).duoText(.bodyEmphasis).fixedSize(horizontal: false, vertical: true)
-            ForEach(Array(q.paragraphs.enumerated()), id: \.offset) { _, p in
+            ForEach(Array(q.paragraphs.enumerated()), id: \.offset) { n, p in
                 Text(Self.rich(p)).duoText(.body).fixedSize(horizontal: false, vertical: true)
+                if n == 0 && !q.notes.isEmpty { NotesBox(lines: q.notes) }
             }
             if !q.items.isEmpty {
-                VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
-                    ForEach(Array(q.items.enumerated()), id: \.offset) { _, i in
+                // Clash rows (with a detail) sit 6 apart in their own padding, a rule between (q50-clash).
+                let rowed = q.items.contains { !$0.what.isEmpty && $0.detail != nil }
+                VStack(alignment: .leading, spacing: rowed ? 0 : DuoSpace.gapGlyphToLabel) {
+                    ForEach(Array(q.items.enumerated()), id: \.offset) { n, i in
+                        if rowed && n > 0 { DuoColor.rule.frame(height: DuoMetric.borderHairline).padding(.horizontal, -DuoSpace.cardPadding.leading) }
                         if i.what.isEmpty {
                             HStack(spacing: DuoSpace.gapCardToCard) {
                                 Text(i.path).duoText(.mono, lineHeight: DuoTextStyle.body.spec.lineHeight)
@@ -92,6 +128,16 @@ struct QuestionSheet: View {
                                 Spacer(minLength: 0)
                                 if let d = i.detail { Text(d).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize() }
                             }
+                        } else if let d = i.detail {
+                            HStack(alignment: .top, spacing: DuoSpace.gapCardToCard) {
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Text(i.what).duoText(.mono, lineHeight: DuoTextStyle.body.spec.lineHeight).lineLimit(1).truncationMode(.middle)
+                                    Text(i.path).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.middle)
+                                }
+                                Spacer(minLength: 0)
+                                Text(d).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize()
+                            }
+                            .padding(.vertical, 6)
                         } else {
                             VStack(alignment: .leading, spacing: 0) {
                                 Text(i.what).duoText(.body).fixedSize(horizontal: false, vertical: true)
@@ -104,7 +150,7 @@ struct QuestionSheet: View {
                     }
                 }
                 .padding(.horizontal, DuoSpace.cardPadding.leading)
-                .padding(.vertical, DuoSpace.gapRowItems)
+                .padding(.vertical, rowed ? 0 : DuoSpace.gapRowItems)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
                 .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
@@ -121,8 +167,9 @@ struct QuestionSheet: View {
                 Text(Self.rich(n)).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
             }
             HStack(spacing: DuoSpace.gapButtonToButton) {
-                Spacer(minLength: 0)
-                ForEach(Array(q.choices.enumerated()), id: \.offset) { _, c in
+                if !q.leadingCancel { Spacer(minLength: 0) }
+                ForEach(Array(q.choices.enumerated()), id: \.offset) { n, c in
+                    if q.leadingCancel && n == 1 { Spacer(minLength: 0) }
                     if c.isDefault {
                         Button(action: { SheetCenter.shared.answer(c) }) { Text(c.label) }   // not an action: the user's answer to Duo's question
                             .buttonStyle(DefaultSheetButtonStyle()).keyboardShortcut(.defaultAction)

@@ -144,10 +144,11 @@ public enum FixtureHarness {
                 }
             }
         case "ask-legacy": LegacyPrompt.run()
-        case "ask-update":   // ask-update:writable|admin|no-sparkle: the update question (DL-114) for 0.1.9 over 0.1.8, its buttons only logged
+        case "ask-update":   // ask-update:writable|admin|no-sparkle|no-notes: the update question (DL-114) for 0.1.9 over 0.1.8, its buttons only logged
             let form = parts.count > 1 ? parts[1] : "writable"
             let o = UpdateCheck.Offer(version: "0.1.9", current: "0.1.8", page: UpdateCheck.releasePage("0.1.9"), needsAdmin: form == "admin",
-                                      canInstallNow: form != "no-sparkle", folder: "/Applications")
+                                      canInstallNow: form != "no-sparkle", folder: "/Applications",
+                                      notes: form == "no-notes" ? "" : "## What's new\n\n- Closing a tab where Claude is working asks first.\n- Files dropped on the tree move there, with Undo.\n- PowerPoint decks open in the right pane.\n- Narrow windows keep the side panes’ widths.\n")
             func say(_ s: String) -> @MainActor () -> Void { { FileHandle.standardError.write(Data("ask-update: \(s)\n".utf8)) } }
             SheetCenter.shared.ask(UpdateCheck.question(o, openPage: say("Open Releases Page"), installNow: say("Install Now"), later: say("Later")))
         case "sheet-ok": if model.moveIntoHomeForm != nil { model.confirmMoveIntoHome() } else { model.commitNewProject() }
@@ -583,6 +584,12 @@ public enum FixtureHarness {
             }
         case "browser-click":   // browser-click:<css selector>: duo2 browser click, real mouse events (DL-124)
             if parts.count > 1 { model.visibleWebTab?.click(selector: parts[1]) { FileHandle.standardError.write(Data("browser-click: \($0 ?? "no match")\n".utf8)) } }
+        case "download-notice":   // download-notice:<file name>[=<error>]: the visible tab's download notice, with nothing downloaded (Q-66)
+            if parts.count > 1, let t = model.visibleWebTab {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
+                t.download = DownloadRecord(file: downloads.appending(path: kv[0]), error: kv.count > 1 ? kv[1] : nil, tab: t.id)
+            }
         case "browser-key":   // browser-key:=|-|0|p: ⌘ and the key, with the page holding the keyboard, as NSApp delivers it (no activation)
             if parts.count > 1, let t = model.visibleWebTab, let w = t.webView.window,
                let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: .command, timestamp: ProcessInfo.processInfo.systemUptime,

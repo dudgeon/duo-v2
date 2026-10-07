@@ -133,6 +133,9 @@ struct SidebarRowView: View {
         case .group(let threads, let count):
             let expanded = model.expandedGroups.contains(row.name)
             let selected = model.selectedSidebarItem == row.name
+            // A task row under the pointer (DL-132 a, standins2-handoff q46-hover): the selected fill,
+            // its status kept whole and the + after it; the name gives way instead.
+            let hovered = row.task.map { task in model.terminalsMode == .live && model.currentProject.map { model.hoveredTaskRow == TaskRowHover.key(project: $0.name, path: task) } == true } ?? false
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: DuoSpace.gapRowItems) {
                     Chevron(direction: expanded ? .down : .right).frame(width: 10)
@@ -144,18 +147,18 @@ struct SidebarRowView: View {
                     StateGlyph(row.state)
                     // A task leads with its box and reads "status · n"; a group keeps its pill (DL-100).
                     if row.task != nil { TaskBox(color: DuoColor.text) }
-                    Text(row.name).duoText(.bodyEmphasis).lineLimit(1).layoutPriority(1)   // the name keeps its room; status gives way
+                    Text(row.name).duoText(.bodyEmphasis).lineLimit(1).layoutPriority(1)   // the name keeps its room; status gives way, except under the pointer (fixed below)
                     if let task = row.task {
                         let st = model.fixture.tasks?.first(where: { $0.path == task && $0.project == model.currentProject?.name })?.status ?? "open"
                         Text(st == "open" ? "\(count) session\(count == 1 ? "" : "s")" : "\(st.replacingOccurrences(of: "-", with: " ")) · \(count)")
-                            .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).layoutPriority(-1)
+                            .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+                            .fixedSize(horizontal: hovered, vertical: false).layoutPriority(hovered ? 0 : -1)
                     } else {
                         CountPill(text: "group · \(count)", emphasised: true)
                     }
                     Spacer(minLength: 8)
-                    if let task = row.task, let project = model.currentProject?.name, model.terminalsMode == .live,
-                       model.hoveredTaskRow == TaskRowHover.key(project: project, path: task) {
-                        // On hover, the + where a time would sit (DL-112, stand-ins-handoff q43-hover).
+                    if hovered, let task = row.task, let project = model.currentProject?.name {
+                        // On hover, the + after the status (DL-112, DL-132 a).
                         NewSessionInTaskButton(project: project, path: task)
                     } else {
                         // A task row has no wait of its own: its sessions show theirs (S2-1).
@@ -165,7 +168,7 @@ struct SidebarRowView: View {
                 .padding(.horizontal, 8)
                 .frame(height: DuoMetric.rowGroup)
                 .background {
-                    if selected { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected) }
+                    if selected || hovered { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected) }
                 }
                 .padding(.horizontal, DuoSpace.selectionInset)
                 .contentShape(Rectangle())

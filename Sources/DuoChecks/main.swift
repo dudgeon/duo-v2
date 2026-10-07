@@ -137,6 +137,17 @@ func repoFixture() throws -> Fixture {
     check(UpdateCheck.isNewer("0.1.10", than: "0.1.9") && UpdateCheck.isNewer("v0.2.0", than: "0.1.2") && !UpdateCheck.isNewer("0.1.2", than: "0.1.2"), "versions compare by number")
     check(UpdateCheck.isNewer("0.2.0", than: "0.2.0-rc.1") && !UpdateCheck.isNewer("0.2.0-rc.1", than: "0.2.0"), "a pre-release sorts below its release")
 
+    print("update question: the release's notes in a box, Later at the left (DL-132 b)")
+    do {
+        let md = "## What's new\n\n- **Closing** a busy tab asks first.\n* Drops use `Undo`.\n1. See [the guide](https://x.y).\n\n---\n"
+        check(UpdateCheck.notesLines(md) == ["• Closing a busy tab asks first.", "• Drops use Undo.", "• See the guide."], "notes become plain lines (\(UpdateCheck.notesLines(md)))")
+        let r = UpdateCheck.Release(version: "0.1.9", page: URL(string: "https://example.com")!, notes: md)
+        if case .offer(let o) = UpdateCheck.plan(latest: r, current: "0.1.8", installWritable: true, sparkle: true, folder: "/Applications") {
+            let q = UpdateCheck.question(o, openPage: {}, installNow: {}, later: {})
+            check(q.notes.count == 3 && q.leadingCancel && q.choices.first?.label == "Later", "the question carries the notes and puts Later first, apart")
+        } else { check(false, "a newer release is offered") }
+    }
+
     print("update question: Open Releases Page, Install Now, Later (DL-114)")
     do {
         let page = URL(string: "https://github.com/dudgeon/duo-v2/releases/tag/v0.1.9")!
@@ -1000,14 +1011,14 @@ func repoFixture() throws -> Fixture {
     do {
         let m = AppModel(fixture: f)
         let working = f.sessions.first { $0.state == .working }!, idle = f.sessions.first { $0.state == .idle }!
-        check(m.busy(working.tabKey) == .claudeWorking(name: working.name) && m.busy(idle.tabKey) == nil,
+        check(m.busy(working.tabKey) == .claudeWorking(name: working.name, project: working.project) && m.busy(idle.tabKey) == nil,
               "Claude working in a session makes its tab busy; an idle one isn't")
         var closed = 0
         m.confirmClose(idle.tabKey) { closed += 1 }
         check(closed == 1 && SheetCenter.shared.current == nil, "an idle tab closes at once, with no question")
         m.confirmClose(working.tabKey) { closed += 1 }
         let q = SheetCenter.shared.current
-        check(closed == 1 && q?.title == "Claude is still working in “\(working.name)”. Close it anyway?"
+        check(closed == 1 && q?.title == "Stop Claude and close “\(working.name)”?"
               && q?.choices.map(\.label) == ["Cancel", "Close Tab"], "a working session asks first: Cancel, Close Tab")
         SheetCenter.shared.cancelCurrent()
         check(closed == 1 && SheetCenter.shared.current == nil, "Cancel leaves it open")
@@ -1029,7 +1040,7 @@ func repoFixture() throws -> Fixture {
         while Date() < busyBy, m.busy(key) == nil { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
         check(m.busy(key) == .shellRunning(command: "sleep 30"), "a shell running a command is busy, named by the command (\(String(describing: m.busy(key))))")
         m.confirmClose(key) { closed += 1 }
-        check(SheetCenter.shared.current?.title == "“sleep 30” is still running. Close it anyway?", "and asks first")
+        check(SheetCenter.shared.current?.title == "Stop “sleep 30” and close the tab?", "and asks first")
         SheetCenter.shared.cancelCurrent()
         m.terminals.close(key)
     }

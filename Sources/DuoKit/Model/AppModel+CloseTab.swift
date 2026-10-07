@@ -6,7 +6,7 @@ import Foundation
 /// unless given --force.
 extension AppModel {
     public enum TabBusy: Equatable {
-        case claudeWorking(name: String)
+        case claudeWorking(name: String, project: String)
         case shellRunning(command: String)
     }
 
@@ -19,22 +19,23 @@ extension AppModel {
             return .shellRunning(command: ForegroundCommand.title(ptyFD: proc.childfd, shellPid: proc.shellPid) ?? consoleTitle(key))
         }
         guard let s = fixture.sessions.first(where: { $0.tabKey == key }), s.state == .working else { return nil }
-        return .claudeWorking(name: s.name)
+        return .claudeWorking(name: s.name, project: s.project)
     }
 
-    /// The question for a busy tab. The words are a stand-in: no board draws them (Q-71).
+    /// The question for a busy tab, as `standins2-handoff/close-busy` words it (DL-132 k): the title
+    /// asks the real question, the line says what stops and what's kept.
     func closeQuestion(_ why: TabBusy, close: @escaping @MainActor () -> Void) -> DuoQuestion {
         var q = DuoQuestion(title: "", choices: [
             .init(label: "Cancel", isCancel: true) {},
             .init(label: "Close Tab", isDefault: true, action: close),
         ])
         switch why {
-        case .claudeWorking(let name):
-            q.title = "Claude is still working in “\(name)”. Close it anyway?"
-            q.paragraphs = ["Closing the tab stops Claude’s reply. The session stays listed, and you can resume it."]
+        case .claudeWorking(let name, let project):
+            q.title = "Stop Claude and close “\(name)”?"
+            q.paragraphs = ["Claude is working on a reply. The session stays in \(project); resume it any time."]
         case .shellRunning(let command):
-            q.title = "“\(command)” is still running. Close it anyway?"
-            q.paragraphs = ["Closing the tab ends the shell and stops the command."]
+            q.title = "Stop “\(command)” and close the tab?"
+            q.paragraphs = ["The command is still running. Closing the tab stops it."]
         }
         return q
     }

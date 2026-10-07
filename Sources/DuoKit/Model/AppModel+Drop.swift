@@ -45,16 +45,21 @@ extension AppModel {
         return true
     }
 
-    /// The clash question (stand-in in DuoQuestion's look, Q-50): Keep Both is the default, as
-    /// the answer that loses nothing.
+    /// The clash question, as `standins2-handoff/q50-clash` draws it (DL-132 c): a count in the
+    /// title when several clash, and each row says where the dropped one came from and when the
+    /// one there was edited. Keep Both is the default, as the answer that loses nothing.
     func askClash(_ clashes: [FileDrop.Plan], in dir: URL, then: @escaping @MainActor (FileDrop.Clash?) -> Void) {
         let place = relative(dir) ?? currentProject?.name ?? dir.lastPathComponent
         let title = clashes.count == 1 ? "“\(clashes[0].dest.lastPathComponent)” already exists in \(place)."
                                        : "\(clashes.count) items already exist in \(place)."
         let q = DuoQuestion(
             title: title,
-            paragraphs: ["Replace puts \(clashes.count == 1 ? "the one" : "the ones") there in the Trash. Keep Both gives \(clashes.count == 1 ? "the dropped one" : "each dropped one") a new name, like Finder."],
-            items: clashes.map { .init(what: $0.dest.lastPathComponent, path: $0.source.path) },
+            paragraphs: ["Replace puts \(clashes.count == 1 ? "the one" : "the ones") there in the Trash. Keep Both gives \(clashes.count == 1 ? "the dropped one a new name" : "the dropped ones new names"), like Finder."],
+            items: clashes.map { c in
+                let edited = (try? c.dest.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate)
+                    .map { d -> String in let a = Self.ago(d); return a == "now" ? "the one there: edited just now" : "the one there: edited \(a) ago" }
+                return .init(what: c.dest.lastPathComponent, path: "from " + Self.short(c.source.deletingLastPathComponent().path), detail: edited ?? "")
+            },
             choices: [
                 .init(label: "Cancel", isCancel: true) { then(nil) },
                 .init(label: "Replace") { then(.replace) },
