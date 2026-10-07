@@ -146,6 +146,8 @@ public final class ChatSession {
     }
     /// A message to scroll to (⌘[ / ⌘]).
     public var revealRequest: String?
+    /// The feed is scrolled to its end, so new items keep it there (F-160).
+    @ObservationIgnored public var followsBottom = true
     /// Keys are on their way: the screen is expected to change, nothing falls back meanwhile.
     public var sending = false
     /// Claude's external editor is open for the composer (F-104): a blank screen is expected.

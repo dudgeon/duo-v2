@@ -16,9 +16,14 @@ public indirect enum ChatBlock: Equatable, Sendable {
 }
 
 public enum ChatMarkdown {
+    /// Parsed once per text: views ask on every redraw, and a long reply's parse and its inline
+    /// attributed strings were most of a redraw (F-160). Streaming text misses once per flush.
     public static func parse(_ md: String) -> [ChatBlock] {
-        parse(lines: md.replacingOccurrences(of: "\r\n", with: "\n").components(separatedBy: "\n"))
+        blockMemo.value(md) { parse(lines: md.replacingOccurrences(of: "\r\n", with: "\n").components(separatedBy: "\n")) }
     }
+
+    static let blockMemo = ChatMemo<[ChatBlock]>(limit: 4000)
+    static let inlineMemo = ChatMemo<AttributedString>(limit: 8000)
 
     static func indent(_ l: String) -> Int { l.prefix { $0 == " " }.count + l.prefix { $0 == "\t" }.count * 4 }
 
@@ -119,6 +124,10 @@ public enum ChatMarkdown {
     /// URLs and file paths (`docs/prd-v2.md`, `flows.md:42`) become links. File links use the
     /// `duo-file:` scheme, which the chat opens in Duo's editor.
     public static func inline(_ text: String) -> AttributedString {
+        inlineMemo.value(text) { inlineUncached(text) }
+    }
+
+    static func inlineUncached(_ text: String) -> AttributedString {
         let opts = AttributedString.MarkdownParsingOptions(allowsExtendedAttributes: false, interpretedSyntax: .inlineOnlyPreservingWhitespace,
                                                            failurePolicy: .returnPartiallyParsedIfPossible)
         var a = (try? AttributedString(markdown: text, options: opts)) ?? AttributedString(text)
@@ -167,5 +176,19 @@ public enum ChatMarkdown {
             c.path = token
         }
         return c.url
+    }
+}
+
+/// A cache of values made from a text, by the text (NSCache: thread-safe, and it gives memory back).
+final class ChatMemo<Value>: @unchecked Sendable {
+    private final class Box { let value: Value; init(_ v: Value) { value = v } }
+    private let cache = NSCache<NSString, Box>()
+    init(limit: Int) { cache.countLimit = limit }
+
+    func value(_ key: String, _ make: () -> Value) -> Value {
+        if let b = cache.object(forKey: key as NSString) { return b.value }
+        let v = make()
+        cache.setObject(Box(v), forKey: key as NSString)
+        return v
     }
 }

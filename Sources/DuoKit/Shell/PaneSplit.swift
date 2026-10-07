@@ -60,6 +60,12 @@ struct PaneSplit: NSViewRepresentable {
         }
     }
 
+    /// The split fills what it's offered. Without this SwiftUI sizes it with Auto Layout, which
+    /// walks every view in every pane (a long chat's thousands) on each layout pass (F-157).
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: DuoSplitView, context: Context) -> CGSize? {
+        proposal.replacingUnspecifiedDimensions(by: nsView.frame.size)
+    }
+
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     final class Coordinator: NSObject, NSSplitViewDelegate {

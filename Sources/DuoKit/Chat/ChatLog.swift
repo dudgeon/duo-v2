@@ -165,9 +165,11 @@ public struct ChatAgentResult: Equatable, Sendable {
 /// A JSON object from a hook or the transcript.
 public typealias ChatJSON = [String: Any]
 
-@MainActor
+/// Not tied to the main thread: a history replay builds a scratch log in the background, used by
+/// that one task only, and `adopt` hands it over on the main thread (F-160). The log the chat
+/// draws is only ever changed on the main thread.
 @Observable
-public final class ChatLog {
+public final class ChatLog: @unchecked Sendable {
     public internal(set) var items: [ChatItem] = []
     /// The session's folder, for showing paths relative to it.
     public var cwd: String?
@@ -186,13 +188,29 @@ public final class ChatLog {
     @ObservationIgnored private var askedIDs: Set<String> = []
     /// Tool calls the transcript has reached: a hook can show one before the text that preceded it.
     @ObservationIgnored var transcriptTools: Set<String> = []
+    /// Which item holds each tool step: items are only appended or replaced, so this stays true (F-157).
+    @ObservationIgnored private var stepItem: [String: Int] = [:]
+    private static let hole = ChatItem.note(ChatNote(id: "", text: ""))
 
     public init() {}
 
     /// Empties the log (before a history replay).
     func reset() {
         items = []
+        stepItem = [:]
         turnStarted = nil
+    }
+
+    /// Takes over a log built elsewhere (a replay): everything it holds, in one change.
+    func adopt(_ o: ChatLog) {
+        nextID = o.nextID; agentsStarted = o.agentsStarted; askedIDs = o.askedIDs
+        transcriptTools = o.transcriptTools; stepItem = o.stepItem
+        if o.model != nil { model = o.model }
+        if o.streams { streams = true }
+        if o.hooksSeen { hooksSeen = true }
+        earlierHidden = o.earlierHidden
+        turnStarted = o.turnStarted
+        items = o.items
     }
 
     func newID(_ p: String) -> String { nextID += 1; return "\(p)-\(nextID)" }
@@ -207,6 +225,7 @@ public final class ChatLog {
 
     private func withTurn(time: Date?, _ change: (inout ChatTurn) -> Void) {
         if let i = openTurnIndex, case .claude(var t) = items[i] {
+            items[i] = Self.hole   // t's arrays are now uniquely held: changed in place, not copied
             change(&t)
             items[i] = .claude(t)
         } else {
@@ -220,21 +239,22 @@ public final class ChatLog {
     /// Updates every turn's step with this id; true when one was found.
     @discardableResult
     private func updateStep(_ id: String, _ change: (inout ChatToolStep) -> Void) -> Bool {
-        for i in items.indices.reversed() {
-            guard case .claude(var t) = items[i] else { continue }
-            for s in t.segments.indices {
-                guard case .tools(let sid, var steps) = t.segments[s], let k = steps.firstIndex(where: { $0.id == id }) else { continue }
-                change(&steps[k])
-                t.segments[s] = .tools(id: sid, steps: steps)
-                items[i] = .claude(t)
-                return true
-            }
+        guard let i = stepItem[id], i < items.count, case .claude(var t) = items[i] else { return false }
+        for s in t.segments.indices {
+            guard case .tools(let sid, var steps) = t.segments[s], let k = steps.firstIndex(where: { $0.id == id }) else { continue }
+            items[i] = Self.hole
+            t.segments[s] = .tools(id: sid, steps: [])
+            change(&steps[k])
+            t.segments[s] = .tools(id: sid, steps: steps)
+            items[i] = .claude(t)
+            return true
         }
         return false
     }
 
     public func step(_ id: String) -> ChatToolStep? {
-        for case .claude(let t) in items.reversed() {
+        guard let i = stepItem[id], i < items.count else { return nil }
+        for case .claude(let t) in [items[i]] {
             for case .tools(_, let steps) in t.segments { if let s = steps.first(where: { $0.id == id }) { return s } }
         }
         return nil
@@ -389,16 +409,18 @@ public final class ChatLog {
             return
         }
         if name == "ExitPlanMode" { return }
-        if updateStep(id, { _ in }) { return }
+        if stepItem[id] != nil { return }
         let step = ChatToolDescriber.step(id: id, name: name, input: input, cwd: cwd)
         withTurn(time: time) { t in
             if case .tools(let sid, var steps)? = t.segments.last {
+                t.segments[t.segments.count - 1] = .tools(id: sid, steps: [])
                 steps.append(step)
                 t.segments[t.segments.count - 1] = .tools(id: sid, steps: steps)
             } else {
                 t.segments.append(.tools(id: newID("tools"), steps: [step]))
             }
         }
+        stepItem[id] = items.count - 1
     }
 
     /// A tool finished. `result` is the hook's tool_response or the transcript's toolUseResult;

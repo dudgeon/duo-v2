@@ -165,6 +165,27 @@ enum ChatToolDescriber {
 public enum ChatIngest {
     static let iso: ISO8601DateFormatter = { let f = ISO8601DateFormatter(); f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]; return f }()
 
+    /// A transcript timestamp, `2026-10-06T09:41:07.123Z`, read by hand: the formatter took a
+    /// fifth of a long session's open (F-157). Anything else goes to the formatter.
+    nonisolated static func date(_ s: String) -> Date? {
+        let u = Array(s.utf8)
+        func n(_ a: Int, _ b: Int) -> Int? {
+            var v = 0
+            for i in a..<b { let c = Int(u[i]) - 48; guard (0...9).contains(c) else { return nil }; v = v * 10 + c }
+            return v
+        }
+        guard u.count >= 20, u[4] == 45, u[7] == 45, u[10] == 84, u[13] == 58, u[16] == 58, u.last == 90,
+              let y = n(0, 4), let mo = n(5, 7), let d = n(8, 10), let h = n(11, 13), let mi = n(14, 16), let sec = n(17, 19) else {
+            let f = ISO8601DateFormatter(); f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            return f.date(from: s)
+        }
+        var frac = 0.0
+        if u[19] == 46, u.count > 21, let f = n(20, u.count - 1) { frac = Double(f) / pow(10, Double(u.count - 21)) }
+        var t = tm(tm_sec: Int32(sec), tm_min: Int32(mi), tm_hour: Int32(h), tm_mday: Int32(d), tm_mon: Int32(mo - 1), tm_year: Int32(y - 1900),
+                   tm_wday: 0, tm_yday: 0, tm_isdst: 0, tm_gmtoff: 0, tm_zone: nil)
+        return Date(timeIntervalSince1970: Double(timegm(&t)) + frac)
+    }
+
     /// A hook payload (`e` in `{"at": …, "e": …}`, HookEvents' format).
     public static func hook(_ e: ChatJSON, at: Double?, into log: ChatLog, chat: ChatSession? = nil) {
         guard let name = e["hook_event_name"] as? String else { return }
@@ -213,9 +234,14 @@ public enum ChatIngest {
 
     /// One transcript line.
     public static func record(_ r: ChatJSON, into log: ChatLog, chat: ChatSession? = nil) {
+        record(r, into: log, lastDeclined: chat?.lastDeclined)
+    }
+
+    /// The same, anywhere: a history replay builds a scratch log off the main thread (F-160).
+    nonisolated public static func record(_ r: ChatJSON, into log: ChatLog, lastDeclined: String?) {
         guard let type = r["type"] as? String else { return }
         if r["isSidechain"] as? Bool == true { return }
-        let time = (r["timestamp"] as? String).flatMap { iso.date(from: $0) }
+        let time = (r["timestamp"] as? String).flatMap(date)
         if let cwd = r["cwd"] as? String, log.cwd == nil { log.cwd = cwd }
         let message = r["message"] as? ChatJSON
         switch type {
@@ -248,7 +274,7 @@ public enum ChatIngest {
                         log.answer(q.map { "\($0.key) → \($0.value)" }.sorted().joined(separator: "\n"), time: time)
                     } else if denial != nil, log.step(id) == nil {
                         if let fb = r["userFeedback"] as? String, !fb.isEmpty { log.answer("You asked Claude to change the plan: \(fb)", time: time) }
-                        else { log.answer(chat?.lastDeclined ?? "You declined Claude’s questions", time: time) }
+                        else { log.answer(lastDeclined ?? "You declined Claude’s questions", time: time) }
                     }
                     log.toolResult(id: id, name: nil, input: nil, result: result, content: content, isError: b["is_error"] as? Bool ?? false,
                                    denial: denial, time: time)
@@ -280,7 +306,7 @@ public enum ChatIngest {
     }
 
     /// JSON lines, skipping any that don't parse (two hooks writing at once can merge lines, F-105).
-    public static func lines(_ data: Data) -> [ChatJSON] {
+    nonisolated public static func lines(_ data: Data) -> [ChatJSON] {
         data.split(separator: UInt8(ascii: "\n")).compactMap { try? JSONSerialization.jsonObject(with: Data($0)) as? ChatJSON }
     }
 }
