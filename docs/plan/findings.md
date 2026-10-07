@@ -2304,3 +2304,19 @@ Geoff (2026-10-07): "test if the chat view works with all of Claude code's slash
 - **Search already indexes sessions** (`Sources/DuoSearch/SessionSource.swift`): each turn's prompt and Claude's prose, plus the session's title; no tool calls, results or thinking. `duo2 search --kind session` ranks them by meaning and words (F-36's fusion).
 - **It doesn't index a session's project, folder or task names.** DL-142's filter matches those too, so the list fuses two candidate sets: search's session hits, and a word match on the names Duo already holds for every row. One ranking, best first, one row per session (search groups per file the same way).
 - **The canvas came late.** The study started in a background session with no Artifact tool, so its 18 boards were drawn as static HTML first (`canvas/make.py`) and put on the Design canvas once the session was resumed in Duo (`canvas/to-canvas.py`); canvas comments failed for Geoff, so the decisions came by buttons, one at a time.
+
+## F-178 · Return did nothing in chat: the idle list's keys outlived the list (2026-10-07)
+
+Geoff (2026-10-07): "I had an issue with the chat mode in the home view study: the return key was a no op -- did not send my messages to claude." Seen in his Duo, on main's build (v0.2.3-27-gcdb9c80, as 0.2.4), in the session "home view study".
+
+- **Cause.**
+  - All projects' idle list ("n idle, resumable", DB-1) installs an app-wide key monitor while it's open. It takes ↑↓, Return, Esc and letters, which jump to a title.
+  - Only Return, Esc, a click on a row, or its footer closed the list. Reaching a project any other way left `idleOpen` set and the monitor installed: a tile, the sidebar, Jump, Needs you, `duo2 session open`.
+  - In chat's composer, Return then resumed the idle row the list had selected (in the background, so it looked like nothing happened), and letters moved its selection instead of typing. Pasted text (⌘V passes) then Return reads as "Return does nothing".
+- **Reproduced** on an isolated Duo: idle list opened, then `open:Notes/<session>`, focus in the composer. Real key events: `abc` didn't type, and Return resumed another idle session. The control, without the idle list, typed `abc` and Return sent it.
+- **Fix.**
+  - Leaving All projects closes the idle list and removes its monitor (`AppModel.altitude`'s `didSet`).
+  - The monitor acts only while the list is on screen: open, and at All projects.
+- **Ruled out**, in the same runs: a resumed session (`--resume`) sends normally. The F-174 paths (the `/` menu's Return, the send-time fallback, the launch-id hand-over) behave on new and resumed sessions.
+- **Also found:** Home's chat (DL-132 g) stays in the window under a project, so the window holds two composers (C-47). The harness's `chat-type` and `chat-key` typed into the first one found, Home's. They now pick the composer of the session on screen, and a `composers` action lists them all.
+- **Proof:** DuoChecks "Return reaches the composer after the idle list" (3 checks), 740 passing. Live runs RET6 (before: `abc` lost, Return resumed another session) and RET8 (after: `xabc` typed and sent).

@@ -34,9 +34,12 @@ public struct WindowConfigurator: NSViewRepresentable {
 @MainActor
 public enum FixtureHarness {
     /// The chat composer's field in Duo's window, for `chat-type:` and `chat-key:`.
-    static func composerView() -> ComposerTextView? {
-        func find(_ v: NSView) -> ComposerTextView? { (v as? ComposerTextView) ?? v.subviews.lazy.compactMap(find).first }
-        return NSApp.windows.lazy.compactMap { $0.contentView.flatMap(find) }.first
+    /// The composer of the session on screen: Home's chat stays in the window under a project
+    /// (DL-132 g), so the first composer found isn't always the one you see.
+    static func composerView(for key: String? = nil) -> ComposerTextView? {
+        func all(_ v: NSView) -> [ComposerTextView] { ((v as? ComposerTextView).map { [$0] } ?? []) + v.subviews.flatMap(all) }
+        let found = NSApp.windows.flatMap { $0.contentView.map(all) ?? [] }
+        return found.first { key != nil && $0.coordinator?.chat.key == key } ?? found.first
     }
 
     /// Where the panes start in the targets: the 38 pt toolbar plus its 1 pt bottom border, which
@@ -444,13 +447,13 @@ public enum FixtureHarness {
         case "chat-cwd":   // chat-cwd:<folder>: the fixture chat's folder, for the composer's @ menu (DL-133)
             if parts.count > 1, let c = model.consoleTab.flatMap({ model.fixtureChats[$0] }) { c.log.cwd = parts[1] }
         case "chat-type":   // chat-type:<text>: typed into the composer, as keys would (its menus follow)
-            if parts.count > 1, let v = Self.composerView() {
+            if parts.count > 1, let v = Self.composerView(for: model.visibleSessionId) {
                 v.window?.makeFirstResponder(v)
                 v.insertText(parts[1], replacementRange: v.selectedRange())
             }
         case "chat-key":   // chat-key:up|down|tab|return|esc: a key in the composer
             let codes: [String: UInt16] = ["up": 126, "down": 125, "tab": 48, "return": 36, "esc": 53]
-            if parts.count > 1, let code = codes[parts[1]], let v = Self.composerView(),
+            if parts.count > 1, let code = codes[parts[1]], let v = Self.composerView(for: model.visibleSessionId),
                let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: v.window?.windowNumber ?? 0,
                                         context: nil, characters: "", charactersIgnoringModifiers: "", isARepeat: false, keyCode: code) {
                 v.keyDown(with: e)
@@ -463,6 +466,14 @@ public enum FixtureHarness {
                     let p = c.convert(NSPoint(x: xy[0], y: c.isFlipped ? xy[1] : c.bounds.height - xy[1]), to: nil)
                     chat.ui.hoverLink = ChatLinkHover.Probe.link(in: w, at: p)
                     FileHandle.standardError.write(Data("chat-hover: \(chat.ui.hoverLink?.absoluteString ?? "no link")\n".utf8))
+                }
+            }
+        case "composers":   // every composer in the windows: its session, whether it's on screen, and which has the keyboard
+            func all(_ v: NSView) -> [ComposerTextView] { ((v as? ComposerTextView).map { [$0] } ?? []) + v.subviews.flatMap(all) }
+            for w in NSApp.windows {
+                for c in w.contentView.map(all) ?? [] {
+                    let shown = !c.isHiddenOrHasHiddenAncestor && c.visibleRect.width > 0
+                    FileHandle.standardError.write(Data("composer: chat=\(c.coordinator?.chat.key.prefix(8) ?? "-") shown=\(shown) first=\(w.firstResponder === c) text=\(c.string.debugDescription) frame=\(c.convert(c.bounds, to: nil))\n".utf8))
                 }
             }
         case "chat-clear":   // the composer emptied, as select-all and delete would

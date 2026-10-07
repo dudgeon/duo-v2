@@ -85,8 +85,10 @@ extension AppModel {
 
 /// ↑↓ move, Return resumes, ⌘↩ opens the project, Esc closes, letters jump to a title (DB-1).
 @MainActor
-enum IdleKeys {
+public enum IdleKeys {
     nonisolated(unsafe) static var monitor: Any?
+    /// For the checks: the monitor is in place.
+    public static var installed: Bool { monitor != nil }
     static func install(_ model: AppModel) {
         remove()
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak model] e in
@@ -97,8 +99,9 @@ enum IdleKeys {
         }
     }
 
-    static func handle(_ model: AppModel, code: UInt16, flags: NSEvent.ModifierFlags, chars: String?) -> Bool {
-        guard model.idleOpen else { return false }
+    public static func handle(_ model: AppModel, code: UInt16, flags: NSEvent.ModifierFlags, chars: String?) -> Bool {
+        // Only while the list is on screen: its keys must never reach past it (F-178).
+        guard model.idleOpen, model.altitude == .allProjects else { return false }
         let rows = model.idleGroups().flatMap(\.rows)
         switch code {
         case 125: model.idleSelection = min(rows.count - 1, model.idleSelection + 1)
@@ -114,7 +117,7 @@ enum IdleKeys {
         }
         return true
     }
-    static func remove() { if let m = monitor { NSEvent.removeMonitor(m) }; monitor = nil }
+    public static func remove() { if let m = monitor { NSEvent.removeMonitor(m) }; monitor = nil }
 }
 
 /// The map's footer: a button that opens the list (DB-1).
