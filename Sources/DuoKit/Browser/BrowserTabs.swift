@@ -73,6 +73,21 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
     public private(set) var zoom = 1.0
     /// The last download that finished or failed in this tab, for its notice.
     public var download: DownloadRecord?
+    /// A download in progress, for its notice (DL-132 h): its name, bytes so far and in all
+    /// (`total` is 0 when the server doesn't say).
+    public struct RunningDownload: Equatable {
+        public var name: String; public var done: Int64; public var total: Int64
+        public init(name: String, done: Int64, total: Int64) { self.name = name; self.done = done; self.total = total }
+        /// "2.1 of 8.4 MB", both in the total's unit.
+        public var count: String {
+            let units: [(Double, String)] = [(1e9, "GB"), (1e6, "MB"), (1e3, "KB")]
+            let (d, u) = units.first { Double(total) >= $0.0 } ?? (1, "bytes")
+            return u == "bytes" ? "\(done) of \(total) bytes" : String(format: "%.1f of %.1f %@", Double(done) / d, Double(total) / d, u)
+        }
+    }
+    public var running: RunningDownload?
+    @ObservationIgnored private var active: (download: WKDownload, dest: URL)?
+    @ObservationIgnored private var progressTimer: Timer?
     /// Links to other sites from a page, when they aren't allowed here: the model sends them out.
     @ObservationIgnored var onLinkOut: ((URL) -> Void)?
     /// A page opened a window: the model makes its tab around the web view WebKit configured.
@@ -238,7 +253,34 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let dest = DownloadNaming.unique(suggestedFilename, in: folder)
         downloads[ObjectIdentifier(d)] = dest
+        download = nil
+        active = (d, dest)
+        running = RunningDownload(name: dest.lastPathComponent, done: 0, total: max(0, response.expectedContentLength))
+        progressTimer?.invalidate()
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, let (d, _) = self.active, var r = self.running else { return }
+                r.done = d.progress.completedUnitCount
+                if d.progress.totalUnitCount > 0 { r.total = d.progress.totalUnitCount }
+                if r != self.running { self.running = r }
+            }
+        }
         completionHandler(dest)
+    }
+
+    /// The running download's Cancel (`duo2 browser downloads --cancel`): stops it and takes the
+    /// partial file away; no failure notice follows.
+    public func cancelDownload() {
+        guard let (d, dest) = active else { return }
+        downloads.removeValue(forKey: ObjectIdentifier(d))
+        stopRunning()
+        d.cancel { _ in MainActor.assumeIsolated { try? FileManager.default.removeItem(at: dest) } }
+    }
+
+    private func stopRunning() {
+        progressTimer?.invalidate(); progressTimer = nil
+        active = nil
+        running = nil
     }
 
     public func downloadDidFinish(_ d: WKDownload) {
@@ -247,11 +289,14 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
     }
 
     public func download(_ d: WKDownload, didFailWithError error: Error, resumeData: Data?) {
+        // A cancelled download has already left (cancelDownload).
+        if active == nil || active?.download !== d, downloads[ObjectIdentifier(d)] == nil { return }
         let dest = downloads.removeValue(forKey: ObjectIdentifier(d)) ?? DownloadNaming.folder.appending(path: d.originalRequest?.url?.lastPathComponent ?? "download")
         finish(DownloadRecord(file: dest, error: error.localizedDescription, tab: id))
     }
 
     private func finish(_ r: DownloadRecord) {
+        stopRunning()
         download = r
         onDownload?(r)
     }
@@ -454,6 +499,7 @@ struct BrowserTabView: View {
             .frame(height: 34)
             DuoColor.rule.frame(height: 1)
             if let d = tab.download { DownloadNotice(tab: tab, record: d).transition(.notice) }
+            else if let r = tab.running { RunningDownloadNotice(tab: tab, running: r).transition(.notice) }
             if let blocked = tab.blocked {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("\(blocked.host ?? blocked.absoluteString) isn't on your allowed sites").duoText(.bodyEmphasis)
@@ -471,7 +517,7 @@ struct BrowserTabView: View {
                 WebTabHost(tab: tab)
             }
         }
-        .modifier(NoticeMotion(key: tab.download != nil ? "download" : nil))
+        .modifier(NoticeMotion(key: tab.download != nil || tab.running != nil ? "download" : nil))
     }
 
     private func barItem(_ symbol: String, _ label: String, enabled: Bool, _ action: @escaping () -> Void) -> some View {
@@ -484,8 +530,46 @@ struct BrowserTabView: View {
     }
 }
 
-/// A download that finished or failed, in S3-4's notice bar under the browser bar (DL-124).
-/// The bar is the editor's notice; its place here and its words are a stand-in (Q-66).
+/// A download running (DL-132 h, standins2-handoff q66-downloading): in the notice's place under
+/// the browser bar, "Downloading report.pdf…", the converting bar's progress line, "2.1 of 8.4 MB"
+/// and Cancel. With no size from the server the line moves and there's no count.
+struct RunningDownloadNotice: View {
+    let tab: WebTab
+    let running: WebTab.RunningDownload
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
+            Text("Downloading \(running.name)…").duoText(.body)
+            HStack(spacing: DuoSpace.gapCardToCard) {
+                GeometryReader { g in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(DuoColor.rule)
+                        if running.total > 0 {
+                            Capsule().fill(DuoColor.text2).frame(width: g.size.width * min(1, Double(running.done) / Double(running.total)))
+                        } else {
+                            TimelineView(.animation(paused: MotionSettings.shared.reduce)) { t in
+                                let phase = MotionSettings.shared.reduce ? 0 : t.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.5) / 1.5
+                                Capsule().fill(DuoColor.text2).frame(width: g.size.width * 0.3).offset(x: g.size.width * 0.7 * phase)
+                            }
+                        }
+                    }
+                }
+                .frame(height: 4)
+                if running.total > 0 { Text(running.count).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize() }
+                Button("Cancel") { tab.cancelDownload() }.buttonStyle(.duo)
+            }
+        }
+        .padding(.vertical, DuoMetric.noticePaddingY)
+        .padding(.horizontal, DuoMetric.noticePaddingX)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DuoColor.ground)
+        .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// A download that finished or failed, in S3-4's notice bar under the browser bar (DL-124; place
+/// and words kept by DL-132 h).
 struct DownloadNotice: View {
     let tab: WebTab
     let record: DownloadRecord
@@ -700,6 +784,11 @@ extension AppModel {
                                                 "opener": t.opener ?? "", "zoom": t.zoom] }))
         }
         if id == .browserDownloads {
+            if inv.has("cancel") {
+                guard let t = webTabs.values.first(where: { $0.running != nil }), let r = t.running else { return done(.fail("no download is running")) }
+                t.cancelDownload()
+                return done(.ok("Cancelled \(r.name)."))
+            }
             if inv.has("open") {
                 let n = inv[0].flatMap(Int.init) ?? downloads.count
                 guard downloads.indices.contains(n - 1) else { return done(.fail(downloads.isEmpty ? "no downloads yet" : "no download \(n) (1–\(downloads.count))")) }

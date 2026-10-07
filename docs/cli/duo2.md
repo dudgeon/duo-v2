@@ -160,7 +160,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 browser zoom [<percent> \| in \| out \| reset] [--tab <id>]` | The page's zoom, or set it: remembered for the site (DL-124). ⌘+ ⌘- ⌘0 while the tab has the keyboard. | Zoom In, Zoom Out, Actual Size, zoom percentage in the bar |
 | `duo2 browser print [--pdf <path>] [--tab <id>]` | Print the page: the print panel on the window for the user (⌘P, or the page's own print), or --pdf saves it as a PDF without one (DL-124). | Print… |
 | `duo2 browser upload <selector> <file…> [--tab <id>]` | Choose files for a file input: the files answer its file chooser, then it's clicked as a person would (DL-124). The user's own click opens the open panel. | — |
-| `duo2 browser downloads [--open [<n>]]` | Downloads from browser tabs since Duo started, numbered, to ~/Downloads with Finder's names for clashes (DL-124). --open opens one (the newest by default) with its app, as the tab's notice's Open does. | Open |
+| `duo2 browser downloads [--open [<n>] \| --cancel]` | Downloads from browser tabs since Duo started, numbered, to ~/Downloads with Finder's names for clashes (DL-124). --open opens one (the newest by default) with its app, as the tab's notice's Open does. --cancel stops the one running and takes its partial file away, as the notice's Cancel does (DL-132). | Open |
 | `duo2 html reload` | Reload the HTML page showing (it also reloads when its files change). | Reload Page |
 | `duo2 html pick [selector]` | Start the element picker for the user, or select the element a CSS selector names. | Select Element, Pick Another |
 | `duo2 html stop` | Close the element picker. | Cancel picking |

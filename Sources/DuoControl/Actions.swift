@@ -305,7 +305,7 @@ extension DuoAction {
         .init(.browserPrint, .html, "[--pdf <path>] [--tab <id>]", "Print the page: the print panel on the window for the user (⌘P, or the page's own print), or --pdf saves it as a PDF without one (DL-124).",
               ui: ["Print…"]),
         .init(.browserUpload, .html, "<selector> <file…> [--tab <id>]", "Choose files for a file input: the files answer its file chooser, then it's clicked as a person would (DL-124). The user's own click opens the open panel."),
-        .init(.browserDownloads, .html, "[--open [<n>]]", "Downloads from browser tabs since Duo started, numbered, to ~/Downloads with Finder's names for clashes (DL-124). --open opens one (the newest by default) with its app, as the tab's notice's Open does.",
+        .init(.browserDownloads, .html, "[--open [<n>] | --cancel]", "Downloads from browser tabs since Duo started, numbered, to ~/Downloads with Finder's names for clashes (DL-124). --open opens one (the newest by default) with its app, as the tab's notice's Open does. --cancel stops the one running and takes its partial file away, as the notice's Cancel does (DL-132).",
               ui: ["Open"]),
         .init(.htmlReload, .html, "", "Reload the HTML page showing (it also reloads when its files change).", ui: ["Reload Page"]),
         .init(.htmlPick, .html, "[selector]", "Start the element picker for the user, or select the element a CSS selector names.",

@@ -2123,3 +2123,21 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - The group row keeps slice 2's approved 8 pt gaps (`project-sessions`), where the board drew 6 (copied from `q43-hover`). With the sample title at 300 wide, the name gives way ("Exec revie…"), as DL-132 says a long title does.
   - The tooltip is the system's (exempt).
 - DuoChecks: the notes become plain lines, and the question puts Later first, apart from the rest.
+
+## F-144 · Stand-ins batch 2, slice 2: files Duo can't show, outside tabs, downloads, popups (DL-132 e, f, h, i; 2026-10-07)
+
+- **Built:**
+  - (e) `ReadOnlyStrip` sits over Quick Look. It is 36 high on `ground`, reads "PDF · read only" in `text2`, then a bordered Open With ⌄ and Show in Finder. When Quick Look can't preview the file, the pane shows the name in `title`, "A ZIP archive. Duo can’t show it; open it in another app." and the two buttons, centred in the pane (the board's 440 is only its height).
+  - `FileKind.plainName` gives the kind in plain words: by type id for the iWork and Office formats, then PDF, ZIP archive, archive, disk image, app, image, video, audio file, font and database, and the system's name otherwise. `FileKind.withArticle` adds "a" or "an".
+  - Word documents keep their own bars (DL-123).
+  - (f) A tab for a file outside the project adds its folder in `text2` while it shows its × (`showsTabClose`), inside DL-134's hover fill.
+  - (h) `WebTab.running` holds a download from its destination to its end. A 0.25 s timer reads `WKDownload.progress`. `RunningDownloadNotice` is drawn in the download notice's place, with the converting bar's line, `RunningDownload.count` ("2.1 of 8.4 MB") and Cancel. With no size from the server, a third of the line moves (still under Reduce Motion, through `MotionSettings`).
+  - Cancel (`WebTab.cancelDownload`, `duo2 browser downloads --cancel`) cancels the download and removes the partial file. The failure WebKit then reports is ignored, so no "Couldn't download" follows.
+  - (i) A popup's tab leads with `↳` in `text2`, and its tooltip is "Opened from ‹opener›". Both go when the opener's tab closes.
+- **Harness:** `download-running:<name>=<done>/<total>` and `download-notice:<name>[=<error>]` set a tab's notices without downloading anything into ~/Downloads.
+- **Proof** (live, isolated as F-143; a local page on 127.0.0.1 for the browser): `build/standins2/compare/q52-preview-`, `q52-none-`, `q39-hover-`, `q66-downloading-` and `q67-popup-compare.png`.
+  - The strip, the notice and the ↳ tab match their boards.
+  - Quick Look's preview is blank in captures (its own layer), and page content differs (both exempt).
+  - The no-preview block is centred in the full pane.
+  - Q-39's board drew the folder without DL-134's fill, which came later; the build has both.
+- DuoChecks: plain kind names and their articles, and the download count's units.
