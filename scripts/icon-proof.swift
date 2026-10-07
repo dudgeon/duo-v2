@@ -4,8 +4,8 @@
 //   swift scripts/icon-proof.swift <out.png> <label>=<app>=<target-1024.png>=<target-small.png> ...
 //
 // Each row: the target art, then the system's render at each size on light, then on dark, then the difference
-// between the target and the render at 1024 (black is identical; macOS adds its own rim light). Prints each
-// row's mean difference at 1024 and at 32 pt @2x against the small target.
+// between the target and the render at 1024, both on white (black is identical; macOS adds its own rim light). Prints each
+// row's mean difference at 1024 and at 16 pt @2x against the small target.
 import AppKit
 
 func cgImage(_ image: NSImage, pixels: Int) -> CGImage {
@@ -28,6 +28,9 @@ func pixels(_ image: CGImage, _ n: Int) -> [UInt8] {
     var data = [UInt8](repeating: 0, count: n * n * 4)
     let cg = CGContext(data: &data, width: n, height: n, bitsPerComponent: 8, bytesPerRow: n * 4,
                        space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    // On white, so a target saved without transparency compares like one with it.
+    cg.setFillColor(.white)
+    cg.fill(CGRect(x: 0, y: 0, width: n, height: n))
     cg.interpolationQuality = .high
     cg.draw(image, in: CGRect(x: 0, y: 0, width: n, height: n))
     return data
@@ -45,7 +48,6 @@ func diffImage(_ a: CGImage, _ b: CGImage, _ n: Int) -> CGImage {
     for i in stride(from: 0, to: x.count, by: 4) {
         for c in 0..<3 { x[i + c] = UInt8(min(255, abs(Int(x[i + c]) - Int(y[i + c])) * 3)) }
         x[i + 3] = 255
-        _ = y
     }
     let cg = CGContext(data: &x, width: n, height: n, bitsPerComponent: 8, bytesPerRow: n * 4,
                        space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
@@ -100,8 +102,8 @@ for (i, r) in rows.enumerated() {
     }
     let sys1024 = cgImage(icon, pixels: 1024)
     cg.draw(diffImage(t, sys1024, 1024), in: CGRect(x: 360 + 256 + 24 + sizesW * 2 + 24, y: y0, width: 256, height: 256))
-    let sys64 = cgImage(icon, pixels: 64)
-    print(String(format: "%@: mean difference %.2f at 1024, %.2f at 32 pt @2x (0-255 per channel)", label, meanDiff(t, sys1024, 1024), meanDiff(s, sys64, 64)))
+    let sys32 = cgImage(icon, pixels: 32)
+    print(String(format: "%@: mean difference %.2f at 1024, %.2f at 16 pt @2x (0-255 per channel)", label, meanDiff(t, sys1024, 1024), meanDiff(s, sys32, 32)))
 }
 let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: out) as CFURL, "public.png" as CFString, 1, nil)!
 CGImageDestinationAddImage(dest, cg.makeImage()!, nil)

@@ -39,7 +39,7 @@ Start with the **design system**, `system/`. It's also published for Claude Desi
 | `search-handoff/` | Search (⇧⌘A), 18 screens | Target; Jump and ⌘K superseded |
 | `surfaces-handoff/` | Slice 1: idle list, terminal palette, console states, shell tabs | Target; built and accepted |
 | `frontmatter-handoff/` | The properties block (DB-16), 13 screens | Target; built (F-77) |
-| `icon-handoff/` | The app icon (DL-131): 2A′ two panes, full bleed; the generated `.icns`, the 1024 target, the built app's system render, and the canvas (12 directions, 8 variants, 14 animations) | Target; built (F-142) |
+| `icon-handoff/` | The app icon (DL-131): 2A′ two panes, full bleed; the generated `.icns`, the 1024 target, the built app's system render, and the canvas (12 directions, 8 variants, 14 animations); the dev build's hazard-stripe icon (DL-140) | Target; built (F-142, F-165) |
 | `claude-design-handoff.md` | The first brief for Claude Design | Historical |
 | `search-design-brief.md` | The search brief | Historical: answered by `search-handoff/` |
 | `legacy-requirements.md` | Requirements carried from legacy Duo (LR-n) | Reference; some revised by DL-n |

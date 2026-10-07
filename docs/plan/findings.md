@@ -2114,3 +2114,12 @@ Spike: `docs/plan/spikes/browser-engine.md`.
 | A reply while scrolled up | pulled to the bottom; 206–393 ms | stays; 12–49 ms |
 
   The open freeze and the pull to the bottom are gone. What's left matches the generated session: about 0.5–0.8 s right after a jump to the bottom, from the lazy stack (ENH-23b).
+
+## F-165 · The dev build's icon, built and proved on both paths (DL-140, 2026-10-07)
+
+- **Two icons from one script.** `scripts/gen-app-icon.swift` draws `AppIcon.icns` and `AppIconDev.icns` (the same art plus `hazard()`). The release `.icns` came out byte-identical to the one before, so nothing about release builds moved.
+- **`bundle.sh` picks by configuration.** `release` copies `AppIcon.icns` and names the app Duo; anything else copies `AppIconDev.icns` and names it "Duo Dev". Both land as `Contents/Resources/AppIcon.icns`, so `CFBundleIconFile` stays `AppIcon`. The bundle id is unchanged (ENH-25).
+- **The release path keeps the release icon.** A clean work tree of the commit, `bundle.sh release`, then release.sh's own steps up to signing (`ditto --norsrc`, PlistBuddy, `xattr -cr`, Developer ID with Hardened Runtime, inside out), without tag, notarizing or publishing: `codesign --verify --deep --strict` passes, the app's `AppIcon.icns` is byte-identical to the handoff's and sealed in `CodeResources`, and the name is Duo.
+- **macOS draws both as targeted.** `scripts/icon-proof.swift` renders each bundle through `NSWorkspace.icon(forFile:)` beside its target, at 1024, 128, 32 and 16 pt, on light and dark (`icon-handoff/screens/build-proof-dev-icon.png`). Mean difference against the target at 1024, both on white: release 3.57, dev 3.49 (0–255 per channel; macOS's rim light). At 16 pt @2x both differ by about 35–38, from macOS drawing the squircle a little larger with its rim, not from the art: `build-proof-dev-icon-16pt.png` (target, render; release, dev) shows the same stripes, band height, chevron and bars.
+- **The dev targets are the canvas's own art**, rasterised from its SVG (qlmanage at 1024; the small one scaled down from 1024, since `qlmanage -t -s 32` drew it tiny in the corner). Those PNGs are opaque white outside the squircle, so `icon-proof.swift` compares on white.
+- **A running dev Duo keeps its old tile until it quits** (F-155): Geoff's acceptance Duo shows the stripes after its next `bundle.sh` and relaunch.
