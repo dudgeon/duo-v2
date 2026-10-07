@@ -445,6 +445,8 @@ struct RightPane: View {
                     // A document waiting in conflict says so on its tab (S3-4).
                     let conflicted = !active && tab.isDocument && (model.liveFile(tab.id).map { model.editorIfLoaded?.keptInConflict($0) == true } ?? false)
                     let closeSlot = tab.isDocument ? DuoMetric.tabCloseSize + DuoMetric.tabCloseTitleGap : 0
+                    let outside = AppModel.isOutsideFile(tab.id)
+                    let opener = model.webTabs[tab.id]?.opener.flatMap { o in tabs.first(where: { $0.id == o })?.title }   // gone with its opener
                     HStack(spacing: DuoMetric.tabCloseTitleGap) {
                         if tab.isDocument {
                             if model.showsTabClose(tab.id) {
@@ -453,9 +455,17 @@ struct RightPane: View {
                                 Color.clear.frame(width: DuoMetric.tabCloseSize, height: DuoMetric.tabCloseSize)
                             }
                         }
+                        // A popup's tab leads with ↳ (DL-132 i, standins2-handoff q67-popup).
+                        if opener != nil { Text("↳").duoText(.body).foregroundStyle(DuoColor.text2).padding(.trailing, 3) }
                         Text("\(Text(tab.title).foregroundStyle(active ? DuoColor.text : DuoColor.text2))\(conflicted ? Text(" · conflict").foregroundStyle(DuoColor.text) : Text(""))")
                             .duoText(active ? .bodyEmphasis : .body)
                             .lineLimit(1)
+                        // A file outside the project shows its folder under the pointer (DL-132 f, q39-hover).
+                        if outside, model.showsTabClose(tab.id) {
+                            Text(AppModel.short(URL(fileURLWithPath: String(tab.id.dropFirst(AppModel.outsideFilePrefix.count))).deletingLastPathComponent().path))
+                                .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.head)
+                                .padding(.leading, DuoSpace.gapGlyphToLabel - DuoMetric.tabCloseTitleGap)
+                        }
                     }
                         .modifier(TabHoverFill(key: tab.id, onConsole: false, leading: 3))   // 3 past the × box, as drawn (DL-134)
                         .padding(.leading, (i == 0 ? 0 : DuoSpace.gapPaneTabs) - closeSlot)
@@ -463,8 +473,8 @@ struct RightPane: View {
                         .modifier(TabHover(key: tab.id, enabled: tab.isDocument) { model.closeDocument(tab.id) })
                         .accessibilityElement(children: .combine)
                         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
-                        // A file outside the project shows its name; its path is the tooltip (DL-106, look: Q-39).
-                        .help(AppModel.isOutsideFile(tab.id) ? String(tab.id.dropFirst(AppModel.outsideFilePrefix.count)) : "")
+                        // A file outside the project: its path is the tooltip (DL-106); a popup: its opener (DL-132 i).
+                        .help(outside ? String(tab.id.dropFirst(AppModel.outsideFilePrefix.count)) : opener.map { "Opened from \($0)" } ?? "")
                         .onActivate { model.rightTab = tab.id; if tab.isDocument { model.selectedFile = tab.id } }  // action: view tab
                         .modifier(LiveContextMenu(enabled: tab.isDocument) {
                             Button("Close Tab") { model.closeDocument(tab.id) }

@@ -3,16 +3,18 @@ import DuoSearch
 import Quartz
 import SwiftUI
 
-/// A file that isn't text (C-26, F-102). Stand-in (Q-52): no screen draws this state, so it is
-/// built from drawn parts: the notice bar (S3-4) with Open With and Show in Finder, over Quick
-/// Look's own preview when it has one (PDF, Office, Keynote, images, video), or a short note on
-/// `pane` when it hasn't. Duo never puts the bytes in its editor.
+/// A file that isn't text (C-26, F-102), as `standins2-handoff/q52-preview` and `q52-none` draw it
+/// (DL-132 e): a quiet strip under the tabs (the kind in plain words, "read only", Open With,
+/// Show in Finder) over Quick Look's own preview, or, when Quick Look can't show it, the name,
+/// a line and the two buttons, centred. Word documents keep their own bars (DL-123). Duo never
+/// puts the bytes in its editor.
 struct BinaryFileView: View {
     @Environment(AppModel.self) private var model
     let path: String
     let file: URL
 
     var body: some View {
+        let word = AppModel.isWordDocument(file) || AppModel.isOldWordDocument(file)
         VStack(spacing: 0) {
             if AppModel.isWordDocument(file) {
                 WordDocumentBar(path: path, file: file)
@@ -23,16 +25,12 @@ struct BinaryFileView: View {
                     OpenWithMenu(path: path, file: file)
                     Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
                 }
-            } else {
-                NoticeBar(text: "Read only: Duo can’t edit \(Self.article(FileKind.description(file))).") {
-                    OpenWithMenu(path: path, file: file)
-                    Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
-                }
             }
             // Quick Look can't open a locked or damaged .docx either: say so, as F draws it.
             if FileKind.quickLookPreviews(file), ![.passwordProtected, .damaged].contains(model.conversionFailures[path]) {
+                if !word { ReadOnlyStrip(path: path, file: file) }
                 QuickLookPane(file: file)
-            } else {
+            } else if word {
                 VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
                     Text("No preview").duoText(.bodyEmphasis)
                     Text("\(file.lastPathComponent) isn’t text, and Quick Look can’t show it. Open it in another app, or show it in Finder.")
@@ -40,16 +38,46 @@ struct BinaryFileView: View {
                 }
                 .padding(DuoSpace.documentPadding)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            } else {
+                VStack(spacing: DuoSpace.gapGlyphToLabel) {
+                    Text(file.lastPathComponent).duoText(.title).lineLimit(1).truncationMode(.middle)
+                    Text("\(FileKind.withArticle(FileKind.plainName(file), capital: true)). Duo can’t show it; open it in another app.")
+                        .duoText(.body).foregroundStyle(DuoColor.text2).multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: DuoSpace.gapButtonToButton) {
+                        OpenWithMenu(path: path, file: file, bordered: true)
+                        Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
+                    }
+                    .padding(.top, 8)
+                }
+                .padding(.horizontal, 40)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
     }
+}
 
-    /// "a PowerPoint presentation", "an Xcode project".
-    static func article(_ s: String) -> String {
-        let lower = s.prefix(1).lowercased()
-        return (["a", "e", "i", "o", "u"].contains(lower) ? "an " : "a ") + s
+/// The quiet strip over Quick Look (DL-132 e, q52-preview): 36 high on `ground` with a `rule` under
+/// it, "PDF · read only" in `text2`, then Open With ⌄ and Show in Finder.
+struct ReadOnlyStrip: View {
+    let path: String
+    let file: URL
+
+    var body: some View {
+        HStack(spacing: DuoSpace.gapButtonToButton) {
+            Text("\(FileKind.plainName(file)) · read only").duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+            Spacer(minLength: DuoSpace.gapRowItems)
+            OpenWithMenu(path: path, file: file, bordered: true)
+            Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
+        }
+        .padding(.leading, DuoMetric.noticePaddingX)
+        .padding(.trailing, 12)
+        .frame(height: DuoMetric.tabStripHeight)
+        .background(DuoColor.ground)
+        .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
     }
 }
+
 
 /// Open With: the apps that open the file, the default first, then Other… (C-26). As the default
 /// button when nothing else on the bar is (F, F2).

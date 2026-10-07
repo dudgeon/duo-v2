@@ -38,6 +38,32 @@ public enum FileKind {
         UTType(filenameExtension: url.pathExtension)?.localizedDescription ?? "binary file"
     }
 
+    /// The kind in plain words (DL-132 e): "PDF", "ZIP archive", "Keynote deck"; the system's own
+    /// name for anything else ("Xcode project").
+    public static func plainName(_ url: URL) -> String {
+        guard let type = UTType(filenameExtension: url.pathExtension) else { return "binary file" }
+        let byID: [(String, String)] = [
+            ("com.apple.iwork.keynote.key", "Keynote deck"), ("com.apple.iwork.keynote.sffkey", "Keynote deck"),
+            ("com.apple.iwork.numbers.numbers", "Numbers sheet"), ("com.apple.iwork.numbers.sffnumbers", "Numbers sheet"),
+            ("com.apple.iwork.pages.pages", "Pages document"), ("com.apple.iwork.pages.sffpages", "Pages document"),
+            ("org.openxmlformats.presentationml.presentation", "PowerPoint deck"), ("com.microsoft.powerpoint.ppt", "PowerPoint deck"),
+            ("org.openxmlformats.spreadsheetml.sheet", "Excel sheet"), ("com.microsoft.excel.xls", "Excel sheet"),
+            ("org.openxmlformats.wordprocessingml.document", "Word document"), ("com.microsoft.word.doc", "Word document"),
+        ]
+        if let n = byID.first(where: { $0.0 == type.identifier }) { return n.1 }
+        let byKind: [(UTType, String)] = [
+            (.pdf, "PDF"), (.zip, "ZIP archive"), (.archive, "archive"), (.diskImage, "disk image"), (.application, "app"),
+            (.image, "image"), (.movie, "video"), (.audio, "audio file"), (.font, "font"), (.database, "database"),
+        ]
+        return byKind.first(where: { type.conforms(to: $0.0) })?.1 ?? type.localizedDescription ?? "binary file"
+    }
+
+    /// "a PowerPoint deck", "an archive"; "A ZIP archive" with `capital`.
+    public static func withArticle(_ s: String, capital: Bool = false) -> String {
+        let a = ["a", "e", "i", "o", "u"].contains(s.prefix(1).lowercased()) ? "an " : "a "
+        return (capital ? a.prefix(1).uppercased() + a.dropFirst() : a) + s
+    }
+
     /// Types Quick Look draws more than an icon for. Anything else gets the note instead.
     public static func quickLookPreviews(_ url: URL) -> Bool {
         guard let type = UTType(filenameExtension: url.pathExtension) else { return false }

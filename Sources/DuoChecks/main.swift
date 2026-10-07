@@ -137,6 +137,13 @@ func repoFixture() throws -> Fixture {
     check(UpdateCheck.isNewer("0.1.10", than: "0.1.9") && UpdateCheck.isNewer("v0.2.0", than: "0.1.2") && !UpdateCheck.isNewer("0.1.2", than: "0.1.2"), "versions compare by number")
     check(UpdateCheck.isNewer("0.2.0", than: "0.2.0-rc.1") && !UpdateCheck.isNewer("0.2.0-rc.1", than: "0.2.0"), "a pre-release sorts below its release")
 
+    print("stand-ins batch 2: plain kind names, download counts (DL-132 e, h)")
+    check(FileKind.plainName(URL(fileURLWithPath: "/x/brief.pdf")) == "PDF" && FileKind.plainName(URL(fileURLWithPath: "/x/a.zip")) == "ZIP archive"
+          && FileKind.plainName(URL(fileURLWithPath: "/x/d.key")) == "Keynote deck", "a file Duo can't show is named in plain words")
+    check(FileKind.withArticle("ZIP archive", capital: true) == "A ZIP archive" && FileKind.withArticle("archive") == "an archive", "with its article")
+    check(WebTab.RunningDownload(name: "r", done: 2_100_000, total: 8_400_000).count == "2.1 of 8.4 MB" && WebTab.RunningDownload(name: "r", done: 500, total: 900).count == "500 of 900 bytes",
+          "a running download counts in the total's unit")
+
     print("update question: the release's notes in a box, Later at the left (DL-132 b)")
     do {
         let md = "## What's new\n\n- **Closing** a busy tab asks first.\n* Drops use `Undo`.\n1. See [the guide](https://x.y).\n\n---\n"

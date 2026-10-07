@@ -590,6 +590,12 @@ public enum FixtureHarness {
                 let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
                 t.download = DownloadRecord(file: downloads.appending(path: kv[0]), error: kv.count > 1 ? kv[1] : nil, tab: t.id)
             }
+        case "download-running":   // download-running:<file name>=<done>/<total bytes>: the visible tab's running-download notice (DL-132 h)
+            if parts.count > 1, let t = model.visibleWebTab {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                let n = (kv.count > 1 ? kv[1] : "0/0").split(separator: "/").map { Int64($0) ?? 0 }
+                t.running = .init(name: kv[0], done: n.first ?? 0, total: n.count > 1 ? n[1] : 0)
+            }
         case "browser-key":   // browser-key:=|-|0|p: ⌘ and the key, with the page holding the keyboard, as NSApp delivers it (no activation)
             if parts.count > 1, let t = model.visibleWebTab, let w = t.webView.window,
                let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: .command, timestamp: ProcessInfo.processInfo.systemUptime,
