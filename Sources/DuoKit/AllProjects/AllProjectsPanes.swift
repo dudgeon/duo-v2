@@ -96,6 +96,10 @@ struct HomePane: View {
                     }
                 }
                 Spacer(minLength: 0)
+                // Terminal / Chat for the selected Claude tab, as on the console (DL-132 g, q57-home-pill).
+                if let key = model.homeTab, tabs.contains(where: { $0.tabKey == key }), model.chat(for: key) != nil {
+                    ChatToggle(key: key).padding(.trailing, -4)
+                }
             }
             .padding(.horizontal, DuoSpace.panePadding)
             .frame(height: DuoMetric.homeSessionTabsHeight)
@@ -106,8 +110,10 @@ struct HomePane: View {
             let _ = model.endedRevision
             if let home, let tab = model.homeTab, model.fixtureConsole != .homeNone,
                let t = model.terminal(project: home.name, session: tab), !t.missingClaude {
-                TerminalSlot(session: t)
+                // Home's sessions read as chat too (DL-132 g), the same body as the console's.
+                if let chat = model.chats.existing(t.key) { ConsoleChatBody(chat: chat, terminal: t) } else { TerminalSlot(session: t) }
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
+                Color.clear.frame(height: 0).task(id: t.key) { model.attachChat(t) }
             } else if noHome {
                 // No Home folder chosen (DL-84, S2-3): sessions are listed anyway (DL-82).
                 ConsoleMessage(state: .noHome, inHome: true)

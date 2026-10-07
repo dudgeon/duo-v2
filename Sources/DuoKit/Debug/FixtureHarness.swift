@@ -453,6 +453,16 @@ public enum FixtureHarness {
                                         context: nil, characters: "", charactersIgnoringModifiers: "", isARepeat: false, keyCode: code) {
                 v.keyDown(with: e)
             }
+        case "chat-hover":   // chat-hover:<x>x<y>: the pointer at that point of the content (top-left origin), as the link monitor reads it (DL-132 g)
+            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }), let c = w.contentView,
+               let k = model.visibleSessionId, let chat = model.chat(for: k) {
+                let xy = parts[1].split(separator: "x").compactMap { Double($0) }
+                if xy.count == 2 {
+                    let p = c.convert(NSPoint(x: xy[0], y: c.isFlipped ? xy[1] : c.bounds.height - xy[1]), to: nil)
+                    chat.ui.hoverLink = ChatLinkHover.Probe.link(in: w, at: p)
+                    FileHandle.standardError.write(Data("chat-hover: \(chat.ui.hoverLink?.absoluteString ?? "no link")\n".utf8))
+                }
+            }
         case "chat":   // chat:on|off
             if let k = model.visibleSessionId { model.setChatMode(parts.count > 1 && parts[1] == "off" ? .terminal : .chat, for: k) }
         case "chat-send":   // chat-send:<text>: the composer's Return

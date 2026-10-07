@@ -12,3 +12,5 @@ Tab strips: the console's (dark, mono), Home's session tabs, and the right pane'
 **Behaviour:** ⌘W closes the focused tab, never the window. Right-click a document tab: Close Tab, Close Other Tabs, then the file verbs.
 
 **Motion (DL-130):** A tab fades in (`motionTabIn`) and out (`motionTabOut`) while the strip slides (`motionTabMove`). Tabs and + are opaque on the strip. The hover × and its fill are instant. With Reduce Motion, it's at once.
+
+**Right-pane tabs (DL-132):** a tab for a file outside the project adds its folder in `text2` while under the pointer (`standins2-handoff/q39-hover`); a browser popup's tab leads with `↳` in `text2`, its tooltip "Opened from ‹opener›" (`q67-popup`). Home's session tab row ends with the Terminal / Chat pill for the selected Claude tab (`q57-home-pill`).

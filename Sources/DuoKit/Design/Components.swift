@@ -24,9 +24,20 @@ struct DuoButtonStyle: ButtonStyle {
     var on = false
 
     func makeBody(configuration: Configuration) -> some View {
+        DuoButtonBody(configuration: configuration, on: on)
+    }
+}
+
+/// A disabled button is drawn at half strength, label and border (DL-132 j, q68-drawing).
+private struct DuoButtonBody: View {
+    let configuration: ButtonStyleConfiguration
+    let on: Bool
+    @Environment(\.isEnabled) private var enabled
+
+    var body: some View {
         configuration.label
             .duoText(.control)
-            .foregroundStyle(DuoColor.text)
+            .foregroundStyle(enabled ? DuoColor.text : DuoColor.text2.opacity(0.5))
             .lineLimit(1)
             .padding(.horizontal, DuoSpace.buttonPadding.leading + DuoMetric.borderHairline)
             .padding(.vertical, DuoSpace.buttonPadding.top + DuoMetric.borderHairline)
@@ -36,7 +47,7 @@ struct DuoButtonStyle: ButtonStyle {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DuoMetric.radiusControl)
-                    .strokeBorder(DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline)
+                    .strokeBorder(DuoColor.controlEdge.opacity(enabled ? 1 : 0.5), lineWidth: DuoMetric.borderHairline)
             )
             .contentShape(Rectangle())
     }

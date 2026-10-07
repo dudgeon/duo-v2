@@ -40,6 +40,13 @@ public enum Pptx {
     public struct Failure: Error, CustomStringConvertible { public let description: String }
 
     /// Every slide, or only `slide` (counted from 1).
+    /// How many slides the deck lists, read from its slide list alone: the viewer draws an empty
+    /// frame per slide while it renders (DL-132 j).
+    public static func slideCount(_ url: URL) -> Int? {
+        guard let zip = try? Zip(url), let pres = try? zip.xml("ppt/presentation.xml") else { return nil }
+        return pres.all("sldId").count
+    }
+
     public static func outline(_ url: URL, slide only: Int? = nil) throws -> [Slide] {
         let zip = try Zip(url)
         guard let pres = try zip.xml("ppt/presentation.xml") else { throw Failure(description: "not a PowerPoint deck: no ppt/presentation.xml") }

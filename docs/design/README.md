@@ -35,7 +35,7 @@ Start with the **design system**, `system/`. It's also published for Claude Desi
 | `tab-hover-handoff/` | The fill behind a hovered tab's × and name (DL-134): A chosen, B and C not; console and right-pane strips | Target; built (F-149) |
 | `motion-handoff/` | Motion beyond DL-129 (DL-130): sheets, the session list, folds, Mark Complete, the chat review card, drag and drop, tabs, notices, the chip, the editor highlight, the deck; the audit and 8 canvas boards | Target (DL-130); built (F-131 to F-141) |
 | `task-menu-handoff/` | The task right-click menu (DL-115): the menu, an archived task's menu in the Archived fold, and the Archive, Delete and Move questions, 3 canvas boards | Target; built (F-97) |
-| `standins2-handoff/` | Stand-ins, batch 2 (DL-132): Q-46 task row hover, Q-47 update question notes, Q-50/51 drops, Q-52 files Duo can't show, Q-39 outside tabs, Q-57 Home chat pill and link status line, Q-66 running downloads, Q-67 popup mark, Q-68 the deck's stand-ins, the busy-tab question; 17 canvas boards | Target; building |
+| `standins2-handoff/` | Stand-ins, batch 2 (DL-132): Q-46 task row hover, Q-47 update question notes, Q-50/51 drops, Q-52 files Duo can't show, Q-39 outside tabs, Q-57 Home chat pill and link status line, Q-66 running downloads, Q-67 popup mark, Q-68 the deck's stand-ins, the busy-tab question; 17 canvas boards | Target; built (F-143 to F-145) |
 | `build-handoff/` | The main handoff (overview, project, peek, look) and the canonical `tokens.json` | Target; parts superseded, see its banner |
 | `search-handoff/` | Search (⇧⌘A), 18 screens | Target; Jump and ⌘K superseded |
 | `surfaces-handoff/` | Slice 1: idle list, terminal palette, console states, shell tabs | Target; built and accepted |
