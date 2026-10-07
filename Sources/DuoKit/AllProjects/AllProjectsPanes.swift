@@ -381,6 +381,13 @@ struct MapHeader: View {
                 if let layout, !model.mapFilter.isEmpty {
                     Text("\(layout.shown) of \(layout.total)").duoText(.control).foregroundStyle(DuoColor.text2).fixedSize()
                 }
+                if list, !model.listFilter.isEmpty {
+                    // `filter`: a × clears it, as Esc does.
+                    Text("×").duoText(.control).foregroundStyle(DuoColor.text2)
+                        .contentShape(Rectangle())
+                        .onActivate { model.listFilter = "" }  // action: view filter
+                        .accessibilityLabel("Clear the filter")
+                }
             }
             .padding(.horizontal, 8)
             .frame(minWidth: 96, maxWidth: DuoMetric.mapFilterWidth, minHeight: DuoMetric.mapHeaderControlHeight, maxHeight: DuoMetric.mapHeaderControlHeight)   // 200; it gives way in a narrow middle (Q-101)

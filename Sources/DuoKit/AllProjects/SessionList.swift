@@ -94,16 +94,6 @@ public struct SessionList: Sendable, Equatable {
         (showsNeedsYou ? needsYou : []) + sections.flatMap(\.rows) + (earlierOpen ? earlier : []) + (archivedOpen ? archived : [])
     }
 
-    /// Rows whose title, project or task has every word of the filter (case and accents aside).
-    public func filtered(_ text: String) -> [Row] {
-        let words = text.lowercased().split(whereSeparator: \.isWhitespace).map(String.init)
-        guard !words.isEmpty else { return [] }
-        let all = needsYou + sections.flatMap(\.rows) + earlier
-        return all.filter { r in
-            let hay = [r.session.name, r.project, r.task ?? ""].joined(separator: " ").folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
-            return words.allSatisfy { hay.contains($0.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)) }
-        }
-    }
 }
 
 @MainActor
@@ -121,13 +111,10 @@ extension AppModel {
         DuoState.update { $0.homeView = v.rawValue }
     }
 
-    /// The list shows needs-you rows itself only while the column is hidden (N1).
-    public var listShowsNeedsYou: Bool { rightCollapsedAllProjects || !listFilter.isEmpty }
-
     /// The rows the arrow keys move through, as drawn.
     public var listRows: [SessionList.Row] {
         let l = sessionList
-        if !listFilter.trimmingCharacters(in: .whitespaces).isEmpty { return l.filtered(listFilter) }
+        if !listFilter.trimmingCharacters(in: .whitespaces).isEmpty { return listMatches.map(\.row) }
         return l.visibleRows(showsNeedsYou: rightCollapsedAllProjects, earlierOpen: expandedGroups.contains(SessionListKeys.earlier),
                              archivedOpen: listShowsArchived && expandedGroups.contains(SessionListKeys.archived))
     }

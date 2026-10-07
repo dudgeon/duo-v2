@@ -18,9 +18,17 @@ struct SessionListPane: View {
                     MapHeader(layout: nil)
                         .padding(EdgeInsets(top: DuoSpace.panePadding, leading: DuoSpace.panePadding, bottom: 8, trailing: DuoSpace.panePadding))
                     if filtering {
-                        let rows = list.filtered(model.listFilter)
-                        SessionListSectionLabel(text: "Matches", count: rows.count)
-                        ForEach(rows) { r in SessionListRow(row: r, twoLine: twoLine) }
+                        // The filter (DL-142 (4), `filter`): best first, each with the passage that matched.
+                        let matches = model.listMatches
+                        if matches.isEmpty {
+                            if !model.listSearching { NothingMatches(text: model.listFilter.trimmingCharacters(in: .whitespaces)) }
+                        } else {
+                            SessionListSectionLabel(text: "Matches", count: matches.count)
+                            ForEach(matches) { m in
+                                SessionListRow(row: m.row, twoLine: twoLine)
+                                if let p = m.passage { MatchPassage(who: m.who, text: p, words: SessionList.words(model.listFilter)) }
+                            }
+                        }
                     } else {
                         if model.rightCollapsedAllProjects {
                             // N1 with the column hidden: the line opens into the rows themselves.
@@ -60,9 +68,83 @@ struct SessionListPane: View {
                 model.openListRow(id)
                 return .handled
             }
+            // ⌘F in the list focuses its filter (`filter`, A).
+            .onKeyPress(keys: ["f"]) { press in
+                guard press.modifiers == .command else { return .ignored }
+                model.focusListFilter()
+                return .handled
+            }
         }
         .foregroundStyle(DuoColor.text)
         .background(DuoColor.pane)
+    }
+}
+
+/// The passage under a match (`filter`): 12/18 `text2`, 41 in, who and when first in `controlEdge`,
+/// the filter's words semibold; one line, truncated.
+struct MatchPassage: View {
+    let who: String?
+    let text: String
+    let words: [String]
+
+    var body: some View {
+        Text(Self.styled(who: who, text: text, words: words))
+            .duoText(.control, lineHeight: 18)
+            .foregroundStyle(DuoColor.text2)
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .padding(EdgeInsets(top: -4, leading: 41, bottom: 4, trailing: DuoSpace.panePadding))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityLabel("\(who.map { "\($0): " } ?? "")\(text)")
+    }
+
+    /// The passage, starting near its first matched word so it shows, with each word that contains
+    /// one of the filter's words semibold.
+    static func styled(who: String?, text: String, words: [String]) -> AttributedString {
+        var out = AttributedString()
+        if let who {
+            var w = AttributedString("\(who) · ")
+            w.foregroundColor = DuoColor.controlEdge
+            out += w
+        }
+        let fold: (Substring) -> String = { $0.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil) }
+        var tokens = text.split(separator: " ", omittingEmptySubsequences: false)
+        // A long passage starts a few words before its first match, as search's snippets do.
+        if let first = tokens.firstIndex(where: { t in words.contains { fold(t).contains($0) } }), first > 10 {
+            tokens = ["…"] + tokens[(first - 4)...]
+        }
+        for (i, t) in tokens.enumerated() {
+            var a = AttributedString((i == 0 ? "" : " ") + t)
+            if words.contains(where: { fold(t).contains($0) }) {
+                a = AttributedString(i == 0 ? "" : " ")
+                var b = AttributedString(t)
+                b.font = .system(size: DuoTextStyle.control.spec.size, weight: .semibold)
+                a += b
+            }
+            out += a
+        }
+        return out
+    }
+}
+
+/// Nothing found (`filter`): one sentence and a link that searches files and notes with the same words.
+struct NothingMatches: View {
+    @Environment(AppModel.self) private var model
+    let text: String
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("Nothing in your sessions is about “\(text)”.").foregroundStyle(DuoColor.text2)
+            Text("Search files and notes too ⇧⌘A")
+                .foregroundStyle(DuoColor.text)
+                .underline(color: DuoColor.controlEdge)
+                .contentShape(Rectangle())
+                .onActivate { model.searchFromListFilter() }  // action: search
+        }
+        .duoText(.body)
+        .multilineTextAlignment(.center)
+        .padding(EdgeInsets(top: 28, leading: DuoSpace.panePadding, bottom: 28, trailing: DuoSpace.panePadding))
+        .frame(maxWidth: .infinity)
     }
 }
 

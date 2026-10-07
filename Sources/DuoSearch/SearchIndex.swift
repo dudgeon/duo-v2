@@ -301,7 +301,7 @@ extension SearchIndex {
         return out
     }
 
-    static let rrfK = 10.0
+    public static let rrfK = 10.0
     static let projectBoost = 1.08
     /// Semantic candidates must score within this much of the best match: relative, never an
     /// absolute cutoff (FR-7.4.7). Keeps weak "nearest" passages out of small corpora.
