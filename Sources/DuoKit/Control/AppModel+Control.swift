@@ -260,10 +260,13 @@ extension AppModel {
             func show() -> String {
                 let c = ClaudeLocator.resolve()
                 return ["claude-path: \(st.claudePath ?? "auto") (runs \(c ?? "nothing found"))",
-                        "notify: \(DuoState.load().notifyNeedsYou ? "on" : "off")", "dock-badge: \(DuoState.load().dockBadge ? "on" : "off")",
+                        "notify: \(DuoState.load().notifyNeedsYou ? "on" : "off")",
+                        "dock-badge: \(DuoState.load().dockBadge ? "on" : "off") (showing \(NSApp.dockTile.badgeLabel ?? "nothing"))",
                         "home: \(liveRoot.map { Self.short($0.path) } ?? "none")"].joined(separator: "\n")
             }
-            guard let key = inv[0] else { return done(.ok(show())) }
+            // What macOS allows decides whether the badge is drawn at all (DL-138).
+            func reply() { Task { @MainActor in done(.ok(([show()] + [await Notifier.shared.permission()].compactMap { $0 }).joined(separator: "\n"))) } }
+            guard let key = inv[0] else { return reply() }
             guard let value = inv[1] else { return done(.fail("usage: \(id.action.usage)")) }
             switch key {
             case "claude-path":
@@ -280,7 +283,7 @@ extension AppModel {
                 SettingsInfo.shared.revision += 1
             default: return done(.fail("no setting '\(key)'. Settings: claude-path, notify, dock-badge"))
             }
-            done(.ok(show()))
+            reply()
         case .projectReconnect:
             guard let name = inv[0], let p = project(named: name) else { return done(.fail(inv[0].map { "no project or folder '\($0)'" } ?? "usage: \(id.action.usage)")) }
             let to = inv.flags["to"].map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) }

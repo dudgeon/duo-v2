@@ -2114,3 +2114,13 @@ Spike: `docs/plan/spikes/browser-engine.md`.
 | A reply while scrolled up | pulled to the bottom; 206–393 ms | stays; 12–49 ms |
 
   The open freeze and the pull to the bottom are gone. What's left matches the generated session: about 0.5–0.8 s right after a jump to the bottom, from the lazy stack (ENH-23b).
+
+## F-161 · macOS draws a Dock badge only for an app allowed badges in Notification Center (2026-10-07)
+
+`NSApp.dockTile.badgeLabel` was set to the right count, but macOS never drew it. Once an app is known to Notification Center, the Dock shows its `badgeLabel` only if its **Badge application icon** setting is on, and that setting exists only for an app that asked for `.badge`. Duo asked for `[.alert, .sound]` (S3-6), so it never had one.
+
+Read from an isolated test build, which shares Geoff's bundle id (`com.dudgeon.duo`, C-40) and so reads the same settings, read-only through `duo2 settings`: **notifications off (denied), badges not asked yet.** So on this Mac nothing about Duo's attention signals reaches him: no badge and no notifications, however `dockBadge` and `notifyNeedsYou` are set. Geoff runs the ad-hoc-signed `build/Duo.app` here; the work Mac's Developer ID install has its own settings.
+
+`requestAuthorization` prompts only while the status is not determined; afterwards it returns the earlier answer without a prompt and registers any new options, so asking again with `.badge` is quiet (Apple: "Asking permission to use notifications"). DL-138 asks again once per run, at the moment Duo would notify. Whether macOS turns a newly registered Badges switch on for an already-allowed app couldn't be tested without a prompt on Geoff's Mac: the manual check below settles it.
+
+Check by hand: in System Settings › Notifications › Duo, turn on Allow notifications and Badge application icon; with a session waiting and Duo in the background, the Dock icon shows the count `duo2 needs-you` lists.

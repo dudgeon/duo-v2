@@ -143,6 +143,13 @@ public struct Fixture: Codable, Sendable, Equatable {
     public var needsYou: [Session] {
         sessions.filter { $0.state == .needsYou }.sorted { WaitTime($0.wait) > WaitTime($1.wait) }
     }
+
+    /// The Dock badge (S3-6, DL-138): how many sessions need you, every project and Home counted,
+    /// the one on screen too, the same list `duo2 needs-you` prints; nothing at 0 or when it's off.
+    public func dockBadgeLabel(enabled: Bool) -> String? {
+        let n = needsYou.count
+        return enabled && n > 0 ? "\(n)" : nil
+    }
 }
 
 /// A wait time as the targets print it: `now`, `4m`, `1h`, `3d` (handoff §8).
