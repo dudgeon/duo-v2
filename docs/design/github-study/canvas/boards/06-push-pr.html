@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="2000x1020">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="github-study">
+<!--
+6 · Push / Open PR, with write access
+STUDY BOARD [P], not approved. Drawn for the GitHub study (2026-10-07) with the Duo design system.
+One sheet: what goes, the message, the pull request.
+It is a picture written in HTML: match what it draws, do not port its markup. Names, repos and data are illustrative.
+-->
+<title>Duo · 6 · Push / Open PR, with write access</title>
+<style>
+body{margin:0}
+.w{box-sizing:border-box;display:flex;flex-direction:column;background:#FFFFFF;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;overflow:hidden}
+.w *{box-sizing:border-box}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.tb{display:flex;align-items:center;gap:8px;height:38px;flex:none;padding:0 12px 0 20px;border-bottom:1px solid #C9CDD3;background:#F3F4F6}
+.tl{display:flex;gap:8px;margin-right:4px}.tl i{width:12px;height:12px;border-radius:50%;display:block}
+.cnt{display:flex;gap:16px;margin-left:8px;align-items:center}.cnt span{display:flex;gap:6px;align-items:center}
+.srch{margin-left:auto;width:300px;height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;display:flex;align-items:center;gap:6px;padding:0 8px;color:#5B636D}
+.tgl{display:flex;padding:4px 6px}
+.sl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:6px;height:16px}
+.t2{color:#5B636D}
+.ell{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.filter{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid #C9CDD3;border-radius:6px;color:#5B636D;font-size:12px;background:#FFFFFF}
+.popup{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 6px 0 8px;border:1px solid #C9CDD3;border-radius:6px;font-size:12px;line-height:16px;background:#FFFFFF}
+.segc{display:inline-flex;height:22px;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF;font-size:12px;line-height:16px}
+.segc span{display:flex;align-items:center;padding:0 10px;color:#5B636D}
+.segc span+span{border-left:1px solid #C9CDD3}
+.segc .on{background:#E9ECEF;color:#1F2328;font-weight:600}
+.chip{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid #C9CDD3;border-radius:11px;font-size:12px;line-height:16px;color:#5B636D;background:#FFFFFF}
+.chip.on{border-color:#1F2328;color:#1F2328;font-weight:600}
+.row{white-space:nowrap;display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row.tint{background:#E8F0FA}
+.row.sel{background:#E9ECEF}
+.row .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.row .pj{color:#5B636D;overflow:hidden;text-overflow:ellipsis;flex:none}
+.row .tk{display:flex;align-items:center;gap:5px;color:#5B636D;overflow:hidden;flex:none}
+.row .tm{color:#5B636D;flex:none;text-align:right}
+.row2{white-space:nowrap;display:flex;flex-direction:column;justify-content:center;gap:0;height:44px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row2.tint{background:#E8F0FA}
+.row2.sel{background:#E9ECEF}
+.row2 .l1,.row2 .l2{display:flex;align-items:center;gap:8px;min-width:0}
+.row2 .l2{padding-left:17px;font-size:12px;line-height:16px;color:#5B636D}
+.sec{padding:10px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;color:#5B636D}
+.sec.ny{color:#C2410C}
+.fold{display:flex;align-items:center;gap:8px;height:26px;padding:0 16px;color:#5B636D}
+.card{border:1px solid #C9CDD3;border-radius:6px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;white-space:normal}
+.card .top{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.q{border:1.5px solid #C2410C;border-radius:6px;padding:6px 10px;margin:6px 0}
+.btn{align-self:flex-start;display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328}
+.act{flex:none;padding:16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;border-left:1px solid #C9CDD3}
+.mapcol{flex:1;min-width:0;display:flex;flex-direction:column}
+.mh{display:flex;align-items:center;gap:10px;height:22px;flex:none}
+.tile{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;border:1px solid #C9CDD3;border-radius:6px;min-width:0}
+.tile.star{border-color:#1F2328}
+.nm{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.srow{height:24px;display:flex;align-items:center;gap:6px;min-width:0;border-radius:4px}
+.srow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.foot{height:34px;flex:none;border-top:1px solid #C9CDD3;display:flex;align-items:center;gap:8px;padding:0 16px;color:#5B636D}
+/* chat (chat-mode-handoff, chat-polish-handoff) */
+.chat{display:flex;flex-direction:column;background:#F3F4F6;min-width:0;min-height:0}
+.strip{white-space:nowrap;display:flex;align-items:stretch;gap:16px;height:28px;flex:none;padding:0 10px 0 16px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;font-size:12px;line-height:16px}
+.strip .tab{display:flex;align-items:center;gap:6px;color:#5B636D}
+.strip .tab.on{color:#1F2328;font-weight:600;box-shadow:inset 0 -2px 0 #1F2328}
+.pill{display:flex;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF}
+.pill span{width:22px;height:16px;display:flex;align-items:center;justify-content:center;color:#5B636D}
+.pill .on{background:#E9ECEF;color:#1F2328}
+.feed{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;overflow:hidden;font-size:14px;line-height:22px;white-space:normal}
+.who{font-size:12px;line-height:16px;color:#5B636D}
+.ccard{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:12px 16px 14px;display:flex;flex-direction:column;gap:8px}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:8px 14px}
+.trail{display:flex;flex-direction:column;border-left:1.5px dotted #8B939C;margin-left:6px}
+.step{display:flex;align-items:center;gap:10px;min-height:24px;margin-left:-5px;font-size:12px;line-height:16px;color:#5B636D}
+.step b{font-weight:600;color:#1F2328}
+.dot{width:7px;height:7px;border-radius:4px;border:1.5px solid #8B939C;background:#FFFFFF;flex:none;margin-left:3px}
+.composer{flex:none;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:7px 12px;color:#5B636D;font-size:14px;line-height:22px}
+.ask{background:#FFFFFF;border:1.5px solid #C2410C;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;white-space:normal}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em}
+.opt{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:20px;border:1px solid #8B939C;border-radius:8px;padding:5px 8px}
+.key{flex:none;width:18px;height:18px;margin-top:1px;border:1px solid #C9CDD3;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:16px;color:#5B636D;background:#F3F4F6}
+/* board furniture: not the app */
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:14px}
+.bd *{box-sizing:border-box}
+.bt{font:600 17px/24px -apple-system,system-ui,sans-serif}
+.bsub{color:#5B636D;font-size:13px;line-height:20px;white-space:normal;max-width:1100px}
+.note{color:#5B636D;font-size:12px;line-height:18px;white-space:normal}
+.note b{color:#1F2328;font-weight:600}
+.frame{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.rec{display:inline-block;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.4px;color:#1F2328;border:1px solid #1F2328;border-radius:9px;padding:0 7px;margin-left:6px;vertical-align:1px}
+.p{color:#5B636D;font-weight:500}
+.txt{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:16px 18px;white-space:normal;font-size:13px;line-height:20px}
+.txt h3{margin:0 0 6px;font-size:13px;line-height:20px;font-weight:600}
+.txt ul,.txt ol{margin:4px 0 8px;padding-left:18px}
+.txt li{margin:2px 0}
+.txt p{margin:4px 0 8px}
+.txt code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+
+.sheetwrap{position:relative;flex:1;min-height:0;display:flex;justify-content:center;background:rgba(31,35,40,.32)}
+.sheet{width:600px;background:#F3F4F6;border:1px solid #C9CDD3;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:18px 24px 18px;display:flex;flex-direction:column;gap:12px;white-space:normal;align-self:flex-start}
+.sheet h2{margin:0;font-size:13px;line-height:20px;font-weight:600}
+.fr{display:grid;grid-template-columns:96px 1fr;column-gap:12px;align-items:center}
+.fr>label{text-align:right;color:#1F2328}
+.fr.top{align-items:start}.fr.top>label{padding-top:2px}
+.fld{height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;padding:0 8px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.fld.ph{color:#5B636D}
+.fld.focus{border-color:#0A64D2;box-shadow:0 0 0 3px rgba(10,100,210,.18)}
+.hint{font-size:12px;line-height:16px;color:#5B636D}
+.btns{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.b{display:inline-flex;align-items:center;height:24px;padding:0 12px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:13px;white-space:nowrap}
+.b.def{border:1.5px solid #1F2328;font-weight:600}
+.b.sm{height:22px;font-size:12px;padding:0 9px}
+.b.dim{color:#8B939C;border-color:#C9CDD3}
+.cb{display:inline-flex;align-items:center;gap:8px}
+.cb i{width:14px;height:14px;border-radius:4px;background:#0A64D2;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.cb i.off{background:#FFFFFF;border:1px solid #8B939C}
+.rb{display:inline-flex;align-items:center;gap:8px}
+.rb i{width:14px;height:14px;border-radius:7px;border:1px solid #8B939C;background:#FFFFFF;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.rb i.on{border:4px solid #0A64D2}
+.pre{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:17px;color:#1F2328;white-space:pre-wrap}
+.pre .k{color:#5B636D}
+.found{display:flex;flex-direction:column;gap:4px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px}
+.found div{display:flex;gap:8px;align-items:baseline}
+.notice{display:flex;align-items:center;gap:10px;background:#FFFFFF;border:1px solid #8B939C;border-radius:8px;padding:6px 8px 6px 12px;box-shadow:0 4px 14px rgba(31,35,40,.12);white-space:normal}
+.expl{background:#F3F4F6;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;white-space:normal}
+.expl b{font-weight:600}
+.menu{background:rgba(246,246,247,.98);border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 10px 30px rgba(31,35,40,.2);padding:5px 0;font-size:13px;line-height:20px;white-space:nowrap;display:flex;flex-direction:column}
+.menu div{padding:1px 14px 1px 22px;display:flex;align-items:center;gap:8px}
+.menu .sep{height:1px;background:#C9CDD3;margin:5px 0;padding:0}
+.menu .hi{background:#0A64D2;color:#fff;border-radius:5px;margin:0 5px;padding-left:17px}
+.menu .hd{font-size:11px;font-weight:600;color:#5B636D;letter-spacing:.3px;padding-left:14px}
+.menu .dim{color:#8B939C}
+.pP{display:inline-block;font:600 10px/14px -apple-system,system-ui,sans-serif;color:#5B636D;border:1px solid #8B939C;border-radius:7px;padding:0 5px;margin-left:6px;vertical-align:1px}
+
+.repo{display:flex;align-items:center;gap:6px;min-height:22px;font-size:12px;line-height:16px;color:#5B636D;white-space:nowrap;min-width:0}
+.repo b{color:#1F2328;font-weight:600}
+.repo .bad{color:#1F2328;font-weight:600}
+.badge{display:inline-flex;align-items:center;height:18px;padding:0 7px;border:1px solid #C9CDD3;border-radius:9px;font-size:11px;line-height:16px;color:#5B636D;background:#FFFFFF;white-space:nowrap}
+.badge.dk{border-color:#1F2328;color:#1F2328;font-weight:600}
+.pop{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 10px 30px rgba(31,35,40,.2);padding:10px 12px;display:flex;flex-direction:column;gap:6px;white-space:normal;font-size:12px;line-height:17px}
+.lrow{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;border-radius:5px;font-size:13px;white-space:nowrap}
+.lrow.hi{background:#E9ECEF}
+.lrow .r{margin-left:auto;color:#5B636D;font-size:12px}
+.ask2{background:#F3F4F6;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:18px 22px;display:flex;flex-direction:column;gap:8px;white-space:normal;width:460px}
+.ask2 h3{margin:0;font-size:13px;line-height:20px;font-weight:600}
+.ask2 p{margin:0;font-size:12px;line-height:17px}
+.mark{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:#5B636D;margin-left:auto}
+.ft{display:flex;align-items:center;gap:6px;height:22px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+table.cmp{border-collapse:collapse;width:100%;font-size:12px;line-height:17px;white-space:normal}
+table.cmp th,table.cmp td{border-top:1px solid #C9CDD3;padding:7px 10px 7px 0;text-align:left;vertical-align:top}
+table.cmp th{font-weight:600;color:#5B636D;width:150px}
+table.cmp thead th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#1F2328;border-top:none}
+.cl{color:#E6E8EB}
+</style>
+</head>
+<body>
+<div class="bd" style="width:2000px;height:1020px;gap:14px"><div class="bt">6 · Push… and Open PR, when you can push</div><div class="bsub">Push… on the repo line (or Project › Push to GitHub…, ⇧⌘P [P]) opens one sheet. Duo commits the ticked files with the message, pushes the branch, and opens the pull request: with <code>gh pr create</code>, or GitHub’s own page without <code>gh</code> (board 8). The message and description start from the project’s goal and the sessions’ titles; <b>Ask Claude to Write These</b> hands the project’s session a drafted instruction and Claude fills them in with <code>duo2 repo draft</code> (board 11). [P]</div><div style="display:flex;gap:28px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none"><div class="cap">The sheet: three changed files, two commits, a new branch</div><div class="frame" style="width:1240px;height:760px;"><div class="w" style="width:1240px;height:760px"><div class="tb">
+<span class="tl"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i></span>
+<span class="tgl"><svg width="18" height="14" viewBox="0 0 18 14"><rect x="1" y="1" width="16" height="12" rx="2.5" fill="none" stroke="#5B636D" stroke-width="1.3"/><path d="M6.5 1v12" stroke="#5B636D" stroke-width="1.3"/></svg></span><span style="font-weight:600">All projects › website › pricing-copy</span>
+<span class="srch"><svg width="11" height="11" viewBox="0 0 12 12" style="flex:none"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#5B636D" stroke-width="1.3"/><path d="M7.8 7.8 11 11" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round"/></svg>Search all projects<span style="margin-left:auto">⇧⌘A</span></span>
+<span class="tgl" style="margin-left:4px"><svg width="18" height="14" viewBox="0 0 18 14"><rect x="1" y="1" width="16" height="12" rx="2.5" fill="none" stroke="#5B636D" stroke-width="1.3"/><path d="M11.5 1v12" stroke="#5B636D" stroke-width="1.3"/></svg></span></div><div class="sheetwrap"><div class="sheet" style="width:660px"><h2>Push to GitHub</h2>
+<div class="hint" style="font-size:13px;line-height:19px">To <b style="color:#1F2328">acme/website</b>, branch <span class="mono">geoff/pricing-copy</span> (new on GitHub).</div>
+<div class="fr top"><label>Changes</label><div><div class="found" style="gap:2px"><div><span class="cb"><i><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l2.6 2.6L9 1" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></i><span class="mono" style="font-size:12px">content/pricing.md</span></span><span class="t2" style="margin-left:auto">+18 −9</span></div><div><span class="cb"><i><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l2.6 2.6L9 1" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></i><span class="mono" style="font-size:12px">content/faq.md</span></span><span class="t2" style="margin-left:auto">+31 −22</span></div><div><span class="cb"><i><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l2.6 2.6L9 1" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></i><span class="mono" style="font-size:12px">content/plans.json</span></span><span class="t2" style="margin-left:auto">new</span></div><div class="hint" style="margin-top:2px">Plus 2 commits already made here. _PROJECT.md stays out.</div></div></div></div>
+<div class="fr top"><label>Message</label><div><div class="fld">Pricing page: new headline, plan table and FAQ</div></div></div>
+<div class="fr top"><label>Pull request</label><div><div style="display:flex;flex-direction:column;gap:6px"><span class="cb"><i><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l2.6 2.6L9 1" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Open a pull request into <b style="font-weight:600">acme/website</b> <span class="popup" style="height:22px">main<svg width="10" height="8" viewBox="0 0 10 8" style="flex:none"><path d="M1.5 2 5 6 8.5 2" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><div class="fld" style="height:auto;min-height:64px;align-items:flex-start;padding:5px 8px;white-space:normal;font-size:12px;line-height:17px">Rewrites the pricing page for the October launch: a shorter headline, the plan table moved to plans.json, and three FAQ answers about annual billing.</div><span class="cb"><i class="off"></i>As a draft</span></div></div></div>
+<div class="btns"><span class="b" style="margin-right:auto">Ask Claude to Write These</span><span class="b">Cancel</span><span class="b def">Push and Open PR</span></div></div></div></div></div><div class="note" style="width:1240px">With a PR already open the sheet has no Pull request row and the button is Push; with nothing to commit, Changes lists the commits only.</div></div>
+<div style="display:flex;flex-direction:column;gap:18px;width:640px"><div style="display:flex;flex-direction:column;gap:8px;flex:none"><div class="cap">Done</div><div class="frame" style="width:640px;"><div style="padding:18px;background:#F3F4F6"><div class="notice" style="width:620px"><span style="flex:1">Pushed <span class="mono">geoff/pricing-copy</span> and opened <b style="font-weight:600">PR #482</b> into acme/website main. The session “Tighten the FAQ” is told.</span><span class="b" style="height:22px;font-size:12px">Open PR</span></div></div></div></div>
+<div class="txt" style=""><h3>What Duo runs [P]</h3><ol><li><code>git add -- &lt;ticked files&gt;</code>, <code>git commit -m …</code> (skipped when nothing is ticked).</li><li><code>git push -u origin geoff/pricing-copy</code>, never <code>--force</code>.</li><li><code>gh pr create --repo acme/website --base main --head geoff/pricing-copy --title … --body …</code> (non-interactive, <code>GH_PROMPT_DISABLED=1</code>), or the compare page (board 8).</li></ol>
+<p class="note">The commit is made under the user’s own git name and email; with none set, the sheet asks for them once (Duo writes <code>user.name</code>/<code>user.email</code> to the repo’s config only if told to, ENH-39). Nothing is ever pushed without this sheet, from the UI or <code>duo2</code> (which needs <code>--yes</code>, as legacy’s did).</p></div></div></div></div>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1600x1360">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="github-study">
+<!--
+10 · When it fails: the words
+STUDY BOARD [P], not approved. Drawn for the GitHub study (2026-10-07) with the Duo design system.
+Every failure, in Duo’s question look; what triggers it and what each button does.
+It is a picture written in HTML: match what it draws, do not port its markup. Names, repos and data are illustrative.
+-->
+<title>Duo · 10 · When it fails: the words</title>
+<style>
+body{margin:0}
+.w{box-sizing:border-box;display:flex;flex-direction:column;background:#FFFFFF;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;overflow:hidden}
+.w *{box-sizing:border-box}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.tb{display:flex;align-items:center;gap:8px;height:38px;flex:none;padding:0 12px 0 20px;border-bottom:1px solid #C9CDD3;background:#F3F4F6}
+.tl{display:flex;gap:8px;margin-right:4px}.tl i{width:12px;height:12px;border-radius:50%;display:block}
+.cnt{display:flex;gap:16px;margin-left:8px;align-items:center}.cnt span{display:flex;gap:6px;align-items:center}
+.srch{margin-left:auto;width:300px;height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;display:flex;align-items:center;gap:6px;padding:0 8px;color:#5B636D}
+.tgl{display:flex;padding:4px 6px}
+.sl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:6px;height:16px}
+.t2{color:#5B636D}
+.ell{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.filter{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid #C9CDD3;border-radius:6px;color:#5B636D;font-size:12px;background:#FFFFFF}
+.popup{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 6px 0 8px;border:1px solid #C9CDD3;border-radius:6px;font-size:12px;line-height:16px;background:#FFFFFF}
+.segc{display:inline-flex;height:22px;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF;font-size:12px;line-height:16px}
+.segc span{display:flex;align-items:center;padding:0 10px;color:#5B636D}
+.segc span+span{border-left:1px solid #C9CDD3}
+.segc .on{background:#E9ECEF;color:#1F2328;font-weight:600}
+.chip{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid #C9CDD3;border-radius:11px;font-size:12px;line-height:16px;color:#5B636D;background:#FFFFFF}
+.chip.on{border-color:#1F2328;color:#1F2328;font-weight:600}
+.row{white-space:nowrap;display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row.tint{background:#E8F0FA}
+.row.sel{background:#E9ECEF}
+.row .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.row .pj{color:#5B636D;overflow:hidden;text-overflow:ellipsis;flex:none}
+.row .tk{display:flex;align-items:center;gap:5px;color:#5B636D;overflow:hidden;flex:none}
+.row .tm{color:#5B636D;flex:none;text-align:right}
+.row2{white-space:nowrap;display:flex;flex-direction:column;justify-content:center;gap:0;height:44px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row2.tint{background:#E8F0FA}
+.row2.sel{background:#E9ECEF}
+.row2 .l1,.row2 .l2{display:flex;align-items:center;gap:8px;min-width:0}
+.row2 .l2{padding-left:17px;font-size:12px;line-height:16px;color:#5B636D}
+.sec{padding:10px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;color:#5B636D}
+.sec.ny{color:#C2410C}
+.fold{display:flex;align-items:center;gap:8px;height:26px;padding:0 16px;color:#5B636D}
+.card{border:1px solid #C9CDD3;border-radius:6px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;white-space:normal}
+.card .top{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.q{border:1.5px solid #C2410C;border-radius:6px;padding:6px 10px;margin:6px 0}
+.btn{align-self:flex-start;display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328}
+.act{flex:none;padding:16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;border-left:1px solid #C9CDD3}
+.mapcol{flex:1;min-width:0;display:flex;flex-direction:column}
+.mh{display:flex;align-items:center;gap:10px;height:22px;flex:none}
+.tile{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;border:1px solid #C9CDD3;border-radius:6px;min-width:0}
+.tile.star{border-color:#1F2328}
+.nm{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.srow{height:24px;display:flex;align-items:center;gap:6px;min-width:0;border-radius:4px}
+.srow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.foot{height:34px;flex:none;border-top:1px solid #C9CDD3;display:flex;align-items:center;gap:8px;padding:0 16px;color:#5B636D}
+/* chat (chat-mode-handoff, chat-polish-handoff) */
+.chat{display:flex;flex-direction:column;background:#F3F4F6;min-width:0;min-height:0}
+.strip{white-space:nowrap;display:flex;align-items:stretch;gap:16px;height:28px;flex:none;padding:0 10px 0 16px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;font-size:12px;line-height:16px}
+.strip .tab{display:flex;align-items:center;gap:6px;color:#5B636D}
+.strip .tab.on{color:#1F2328;font-weight:600;box-shadow:inset 0 -2px 0 #1F2328}
+.pill{display:flex;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF}
+.pill span{width:22px;height:16px;display:flex;align-items:center;justify-content:center;color:#5B636D}
+.pill .on{background:#E9ECEF;color:#1F2328}
+.feed{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;overflow:hidden;font-size:14px;line-height:22px;white-space:normal}
+.who{font-size:12px;line-height:16px;color:#5B636D}
+.ccard{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:12px 16px 14px;display:flex;flex-direction:column;gap:8px}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:8px 14px}
+.trail{display:flex;flex-direction:column;border-left:1.5px dotted #8B939C;margin-left:6px}
+.step{display:flex;align-items:center;gap:10px;min-height:24px;margin-left:-5px;font-size:12px;line-height:16px;color:#5B636D}
+.step b{font-weight:600;color:#1F2328}
+.dot{width:7px;height:7px;border-radius:4px;border:1.5px solid #8B939C;background:#FFFFFF;flex:none;margin-left:3px}
+.composer{flex:none;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:7px 12px;color:#5B636D;font-size:14px;line-height:22px}
+.ask{background:#FFFFFF;border:1.5px solid #C2410C;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;white-space:normal}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em}
+.opt{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:20px;border:1px solid #8B939C;border-radius:8px;padding:5px 8px}
+.key{flex:none;width:18px;height:18px;margin-top:1px;border:1px solid #C9CDD3;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:16px;color:#5B636D;background:#F3F4F6}
+/* board furniture: not the app */
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:14px}
+.bd *{box-sizing:border-box}
+.bt{font:600 17px/24px -apple-system,system-ui,sans-serif}
+.bsub{color:#5B636D;font-size:13px;line-height:20px;white-space:normal;max-width:1100px}
+.note{color:#5B636D;font-size:12px;line-height:18px;white-space:normal}
+.note b{color:#1F2328;font-weight:600}
+.frame{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.rec{display:inline-block;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.4px;color:#1F2328;border:1px solid #1F2328;border-radius:9px;padding:0 7px;margin-left:6px;vertical-align:1px}
+.p{color:#5B636D;font-weight:500}
+.txt{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:16px 18px;white-space:normal;font-size:13px;line-height:20px}
+.txt h3{margin:0 0 6px;font-size:13px;line-height:20px;font-weight:600}
+.txt ul,.txt ol{margin:4px 0 8px;padding-left:18px}
+.txt li{margin:2px 0}
+.txt p{margin:4px 0 8px}
+.txt code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+
+.sheetwrap{position:relative;flex:1;min-height:0;display:flex;justify-content:center;background:rgba(31,35,40,.32)}
+.sheet{width:600px;background:#F3F4F6;border:1px solid #C9CDD3;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:18px 24px 18px;display:flex;flex-direction:column;gap:12px;white-space:normal;align-self:flex-start}
+.sheet h2{margin:0;font-size:13px;line-height:20px;font-weight:600}
+.fr{display:grid;grid-template-columns:96px 1fr;column-gap:12px;align-items:center}
+.fr>label{text-align:right;color:#1F2328}
+.fr.top{align-items:start}.fr.top>label{padding-top:2px}
+.fld{height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;padding:0 8px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.fld.ph{color:#5B636D}
+.fld.focus{border-color:#0A64D2;box-shadow:0 0 0 3px rgba(10,100,210,.18)}
+.hint{font-size:12px;line-height:16px;color:#5B636D}
+.btns{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.b{display:inline-flex;align-items:center;height:24px;padding:0 12px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:13px;white-space:nowrap}
+.b.def{border:1.5px solid #1F2328;font-weight:600}
+.b.sm{height:22px;font-size:12px;padding:0 9px}
+.b.dim{color:#8B939C;border-color:#C9CDD3}
+.cb{display:inline-flex;align-items:center;gap:8px}
+.cb i{width:14px;height:14px;border-radius:4px;background:#0A64D2;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.cb i.off{background:#FFFFFF;border:1px solid #8B939C}
+.rb{display:inline-flex;align-items:center;gap:8px}
+.rb i{width:14px;height:14px;border-radius:7px;border:1px solid #8B939C;background:#FFFFFF;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.rb i.on{border:4px solid #0A64D2}
+.pre{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:17px;color:#1F2328;white-space:pre-wrap}
+.pre .k{color:#5B636D}
+.found{display:flex;flex-direction:column;gap:4px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px}
+.found div{display:flex;gap:8px;align-items:baseline}
+.notice{display:flex;align-items:center;gap:10px;background:#FFFFFF;border:1px solid #8B939C;border-radius:8px;padding:6px 8px 6px 12px;box-shadow:0 4px 14px rgba(31,35,40,.12);white-space:normal}
+.expl{background:#F3F4F6;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;white-space:normal}
+.expl b{font-weight:600}
+.menu{background:rgba(246,246,247,.98);border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 10px 30px rgba(31,35,40,.2);padding:5px 0;font-size:13px;line-height:20px;white-space:nowrap;display:flex;flex-direction:column}
+.menu div{padding:1px 14px 1px 22px;display:flex;align-items:center;gap:8px}
+.menu .sep{height:1px;background:#C9CDD3;margin:5px 0;padding:0}
+.menu .hi{background:#0A64D2;color:#fff;border-radius:5px;margin:0 5px;padding-left:17px}
+.menu .hd{font-size:11px;font-weight:600;color:#5B636D;letter-spacing:.3px;padding-left:14px}
+.menu .dim{color:#8B939C}
+.pP{display:inline-block;font:600 10px/14px -apple-system,system-ui,sans-serif;color:#5B636D;border:1px solid #8B939C;border-radius:7px;padding:0 5px;margin-left:6px;vertical-align:1px}
+
+.repo{display:flex;align-items:center;gap:6px;min-height:22px;font-size:12px;line-height:16px;color:#5B636D;white-space:nowrap;min-width:0}
+.repo b{color:#1F2328;font-weight:600}
+.repo .bad{color:#1F2328;font-weight:600}
+.badge{display:inline-flex;align-items:center;height:18px;padding:0 7px;border:1px solid #C9CDD3;border-radius:9px;font-size:11px;line-height:16px;color:#5B636D;background:#FFFFFF;white-space:nowrap}
+.badge.dk{border-color:#1F2328;color:#1F2328;font-weight:600}
+.pop{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 10px 30px rgba(31,35,40,.2);padding:10px 12px;display:flex;flex-direction:column;gap:6px;white-space:normal;font-size:12px;line-height:17px}
+.lrow{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;border-radius:5px;font-size:13px;white-space:nowrap}
+.lrow.hi{background:#E9ECEF}
+.lrow .r{margin-left:auto;color:#5B636D;font-size:12px}
+.ask2{background:#F3F4F6;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:18px 22px;display:flex;flex-direction:column;gap:8px;white-space:normal;width:460px}
+.ask2 h3{margin:0;font-size:13px;line-height:20px;font-weight:600}
+.ask2 p{margin:0;font-size:12px;line-height:17px}
+.mark{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:#5B636D;margin-left:auto}
+.ft{display:flex;align-items:center;gap:6px;height:22px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+table.cmp{border-collapse:collapse;width:100%;font-size:12px;line-height:17px;white-space:normal}
+table.cmp th,table.cmp td{border-top:1px solid #C9CDD3;padding:7px 10px 7px 0;text-align:left;vertical-align:top}
+table.cmp th{font-weight:600;color:#5B636D;width:150px}
+table.cmp thead th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#1F2328;border-top:none}
+.cl{color:#E6E8EB}
+</style>
+</head>
+<body>
+<div class="bd" style="width:1600px;height:1360px;gap:14px"><div class="bt">10 · When it fails: one question each, in plain words, never git’s raw output</div><div class="bsub">In Duo’s own question look (DuoQuestion, never a system alert). Each names what happened, what was and wasn’t changed, and one way forward. git’s and gh’s own words are kept behind a Details disclosure for whoever helps, not shown first (legacy showed raw stderr). Duo classifies by exit code and known messages; anything unknown says “GitHub refused the push” with the details. [P]</div><div style="display:flex;flex-wrap:wrap;gap:24px 30px"><div style="display:flex;flex-direction:column;gap:6px;width:460px"><div class="ask2" style="width:460px;box-shadow:none"><h3>Duo needs the GitHub CLI for this</h3><p>Listing your repos and making a fork use GitHub’s own command-line tool, <span class=mono>gh</span>. It isn’t on this Mac. You can still paste a repo’s link: Duo copies and pushes with git.</p><div class="btns"><span class="b">Paste a Link</span><span class="b def">Install in a Shell…</span></div></div><div class="note"><b>No gh</b> (only when a step needs it). Install in a Shell opens a Duo shell tab with <code>brew install gh</code> typed, not run; without Homebrew, the GitHub CLI’s download page.</div></div><div style="display:flex;flex-direction:column;gap:6px;width:460px"><div class="ask2" style="width:460px;box-shadow:none"><h3>Sign in to GitHub</h3><p>Duo never sees your password or keeps a token. The GitHub CLI signs you in through your browser and keeps the sign-in in your Mac’s keychain, where git uses it too.</p><div class="btns"><span class="b">Cancel</span><span class="b def">Sign In in a Shell…</span></div></div><div class="note"><b>Signed out</b> (gh signed out, or git had no credential). Opens a shell tab running <code>gh auth login --web --git-protocol https</code>, then <code>gh auth setup-git</code>; Duo retries when it ends.</div></div><div style="display:flex;flex-direction:column;gap:6px;width:460px"><div class="ask2" style="width:460px;box-shadow:none"><h3>Duo can’t see acme/website</h3><p>It may be private, the link may be wrong, or your GitHub account (geoffd) hasn’t been given access. Ask the repo’s owner to add you, or sign in with another account.</p><div class="btns"><span class="b">Switch Account…</span><span class="b def">Open on GitHub</span></div></div><div class="note"><b>No access or not found</b>: GitHub answers the same for both, on purpose. Signed out, the title is “Sign in to see acme/website” and the button is Sign In.</div></div><div style="display:flex;flex-direction:column;gap:6px;width:460px"><div class="ask2" style="width:460px;box-shadow:none"><h3>acme needs you to authorize single sign-on</h3><p>Your organization requires single sign-on for the GitHub CLI. Authorize it on GitHub once, then try again.</p><div class="btns"><span class="b">Cancel</span><span class="b def">Open GitHub</span></div></div><div class="note"><b>SAML SSO</b>: GitHub’s “Resource protected by organization SAML enforcement”. Common at companies; legacy’s research flagged it.</div></div><div style="display:flex;flex-direction:column;gap:6px;width:460px"><div class="ask2" style="width:460px;box-shadow:none"><h3>main is protected on acme/website</h3><p>Changes to main go in through a pull request. Duo can move your 2 commits to a new branch, geoff/pricing-copy, push that and open the pull request. main here goes back to match GitHub.</p><div class="btns"><span class="b">Cancel</span><span class="b def">Move to a Branch and Push</span></div></div><div class="note"><b>Protected branch</b> (<code>GH006</code>, or a rule found ahead). Rare: projects from GitHub start on a branch. <code>git switch -c</code>, then main reset to <code>origin/main</code> only after the new branch holds every commit.</div></div><div style="display:flex;flex-direction:column;gap:6px;width:460px"><div class="ask2" style="width:460px;box-shadow:none"><h3>GitHub has newer work on geoff/pricing-copy</h3><p>Someone pushed to this branch (or you did from another Mac). Get it first, then push.</p><div class="btns"><span class="b">Cancel</span><span class="b def">Get Latest and Push</span></div></div><div class="note"><b>Rejected, not fast-forward</b> (“fetch first”). Never a force push.</div></div><div style="display:flex;flex-direction:column;gap:6px;width:460px"><div class="ask2" style="width:460px;box-shadow:none"><h3>You can’t push to acme/website</h3><p>GitHub says your account, geoffd, can read it but not push to it. If you should be able to, check with the repo’s owner. Or Duo can push to your own copy (a fork) and open the pull request from there.</p><div class="btns"><span class="b">Cancel</span><span class="b def">Fork and Push</span></div></div><div class="note"><b>403 on push</b> when access wasn’t known ahead (board 7 B). Names the account git used: a stale keychain account is a common cause. Without gh: “…Install the GitHub CLI to make a fork, or ask the owner for write access.”</div></div><div style="display:flex;flex-direction:column;gap:6px;width:460px"><div class="ask2" style="width:460px;box-shadow:none"><h3>Duo couldn’t reach GitHub</h3><p>Check you’re online and try again. Nothing was changed.</p><div class="btns"><span class="b">OK</span><span class="b def">Try Again</span></div></div><div class="note"><b>Offline or timed out</b> (every network step has a time limit). For the background fetch, never a question: the line says “can’t reach GitHub”.</div></div><div style="display:flex;flex-direction:column;gap:6px;width:460px"><div class="ask2" style="width:460px;box-shadow:none"><h3>GitHub refused files that look like secrets</h3><p>GitHub’s secret scanning found something like a password or key in content/plans.json and refused the push. Nothing was pushed. Remove it (Claude can help), then push again.</p><div class="btns"><span class="b">Show Details</span><span class="b def">Ask Claude to Remove It</span></div></div><div class="note"><b>Push protection</b> (<code>GH009</code>). Files Claude wrote can trip it. Never offer to bypass.</div></div><div style="display:flex;flex-direction:column;gap:6px;width:460px"><div class="ask2" style="width:460px;box-shadow:none"><h3>Tell git who you are</h3><p>Commits carry a name and email, and this Mac has none set for git. They show on GitHub next to your changes.</p><div class="btns"><span class="b">Cancel</span><span class="b def">Save for This Repo</span></div></div><div class="note"><b>No git identity</b>. Name and email fields (prefilled from GitHub when gh is signed in). ENH-39.</div></div></div></div>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1440x980">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="github-study">
+<!--
+0 · GitHub in Duo: the study
+STUDY BOARD [P], not approved. Drawn for the GitHub study (2026-10-07) with the Duo design system.
+The ask, what changes from the legacy call, the principles, legacy and the landscape in short.
+It is a picture written in HTML: match what it draws, do not port its markup. Names, repos and data are illustrative.
+-->
+<title>Duo · 0 · GitHub in Duo: the study</title>
+<style>
+body{margin:0}
+.w{box-sizing:border-box;display:flex;flex-direction:column;background:#FFFFFF;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;overflow:hidden}
+.w *{box-sizing:border-box}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.tb{display:flex;align-items:center;gap:8px;height:38px;flex:none;padding:0 12px 0 20px;border-bottom:1px solid #C9CDD3;background:#F3F4F6}
+.tl{display:flex;gap:8px;margin-right:4px}.tl i{width:12px;height:12px;border-radius:50%;display:block}
+.cnt{display:flex;gap:16px;margin-left:8px;align-items:center}.cnt span{display:flex;gap:6px;align-items:center}
+.srch{margin-left:auto;width:300px;height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;display:flex;align-items:center;gap:6px;padding:0 8px;color:#5B636D}
+.tgl{display:flex;padding:4px 6px}
+.sl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:6px;height:16px}
+.t2{color:#5B636D}
+.ell{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.filter{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid #C9CDD3;border-radius:6px;color:#5B636D;font-size:12px;background:#FFFFFF}
+.popup{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 6px 0 8px;border:1px solid #C9CDD3;border-radius:6px;font-size:12px;line-height:16px;background:#FFFFFF}
+.segc{display:inline-flex;height:22px;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF;font-size:12px;line-height:16px}
+.segc span{display:flex;align-items:center;padding:0 10px;color:#5B636D}
+.segc span+span{border-left:1px solid #C9CDD3}
+.segc .on{background:#E9ECEF;color:#1F2328;font-weight:600}
+.chip{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid #C9CDD3;border-radius:11px;font-size:12px;line-height:16px;color:#5B636D;background:#FFFFFF}
+.chip.on{border-color:#1F2328;color:#1F2328;font-weight:600}
+.row{white-space:nowrap;display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row.tint{background:#E8F0FA}
+.row.sel{background:#E9ECEF}
+.row .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.row .pj{color:#5B636D;overflow:hidden;text-overflow:ellipsis;flex:none}
+.row .tk{display:flex;align-items:center;gap:5px;color:#5B636D;overflow:hidden;flex:none}
+.row .tm{color:#5B636D;flex:none;text-align:right}
+.row2{white-space:nowrap;display:flex;flex-direction:column;justify-content:center;gap:0;height:44px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row2.tint{background:#E8F0FA}
+.row2.sel{background:#E9ECEF}
+.row2 .l1,.row2 .l2{display:flex;align-items:center;gap:8px;min-width:0}
+.row2 .l2{padding-left:17px;font-size:12px;line-height:16px;color:#5B636D}
+.sec{padding:10px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;color:#5B636D}
+.sec.ny{color:#C2410C}
+.fold{display:flex;align-items:center;gap:8px;height:26px;padding:0 16px;color:#5B636D}
+.card{border:1px solid #C9CDD3;border-radius:6px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;white-space:normal}
+.card .top{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.q{border:1.5px solid #C2410C;border-radius:6px;padding:6px 10px;margin:6px 0}
+.btn{align-self:flex-start;display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328}
+.act{flex:none;padding:16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;border-left:1px solid #C9CDD3}
+.mapcol{flex:1;min-width:0;display:flex;flex-direction:column}
+.mh{display:flex;align-items:center;gap:10px;height:22px;flex:none}
+.tile{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;border:1px solid #C9CDD3;border-radius:6px;min-width:0}
+.tile.star{border-color:#1F2328}
+.nm{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.srow{height:24px;display:flex;align-items:center;gap:6px;min-width:0;border-radius:4px}
+.srow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.foot{height:34px;flex:none;border-top:1px solid #C9CDD3;display:flex;align-items:center;gap:8px;padding:0 16px;color:#5B636D}
+/* chat (chat-mode-handoff, chat-polish-handoff) */
+.chat{display:flex;flex-direction:column;background:#F3F4F6;min-width:0;min-height:0}
+.strip{white-space:nowrap;display:flex;align-items:stretch;gap:16px;height:28px;flex:none;padding:0 10px 0 16px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;font-size:12px;line-height:16px}
+.strip .tab{display:flex;align-items:center;gap:6px;color:#5B636D}
+.strip .tab.on{color:#1F2328;font-weight:600;box-shadow:inset 0 -2px 0 #1F2328}
+.pill{display:flex;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF}
+.pill span{width:22px;height:16px;display:flex;align-items:center;justify-content:center;color:#5B636D}
+.pill .on{background:#E9ECEF;color:#1F2328}
+.feed{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;overflow:hidden;font-size:14px;line-height:22px;white-space:normal}
+.who{font-size:12px;line-height:16px;color:#5B636D}
+.ccard{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:12px 16px 14px;display:flex;flex-direction:column;gap:8px}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:8px 14px}
+.trail{display:flex;flex-direction:column;border-left:1.5px dotted #8B939C;margin-left:6px}
+.step{display:flex;align-items:center;gap:10px;min-height:24px;margin-left:-5px;font-size:12px;line-height:16px;color:#5B636D}
+.step b{font-weight:600;color:#1F2328}
+.dot{width:7px;height:7px;border-radius:4px;border:1.5px solid #8B939C;background:#FFFFFF;flex:none;margin-left:3px}
+.composer{flex:none;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:7px 12px;color:#5B636D;font-size:14px;line-height:22px}
+.ask{background:#FFFFFF;border:1.5px solid #C2410C;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;white-space:normal}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em}
+.opt{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:20px;border:1px solid #8B939C;border-radius:8px;padding:5px 8px}
+.key{flex:none;width:18px;height:18px;margin-top:1px;border:1px solid #C9CDD3;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:16px;color:#5B636D;background:#F3F4F6}
+/* board furniture: not the app */
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:14px}
+.bd *{box-sizing:border-box}
+.bt{font:600 17px/24px -apple-system,system-ui,sans-serif}
+.bsub{color:#5B636D;font-size:13px;line-height:20px;white-space:normal;max-width:1100px}
+.note{color:#5B636D;font-size:12px;line-height:18px;white-space:normal}
+.note b{color:#1F2328;font-weight:600}
+.frame{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.rec{display:inline-block;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.4px;color:#1F2328;border:1px solid #1F2328;border-radius:9px;padding:0 7px;margin-left:6px;vertical-align:1px}
+.p{color:#5B636D;font-weight:500}
+.txt{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:16px 18px;white-space:normal;font-size:13px;line-height:20px}
+.txt h3{margin:0 0 6px;font-size:13px;line-height:20px;font-weight:600}
+.txt ul,.txt ol{margin:4px 0 8px;padding-left:18px}
+.txt li{margin:2px 0}
+.txt p{margin:4px 0 8px}
+.txt code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+
+.sheetwrap{position:relative;flex:1;min-height:0;display:flex;justify-content:center;background:rgba(31,35,40,.32)}
+.sheet{width:600px;background:#F3F4F6;border:1px solid #C9CDD3;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:18px 24px 18px;display:flex;flex-direction:column;gap:12px;white-space:normal;align-self:flex-start}
+.sheet h2{margin:0;font-size:13px;line-height:20px;font-weight:600}
+.fr{display:grid;grid-template-columns:96px 1fr;column-gap:12px;align-items:center}
+.fr>label{text-align:right;color:#1F2328}
+.fr.top{align-items:start}.fr.top>label{padding-top:2px}
+.fld{height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;padding:0 8px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.fld.ph{color:#5B636D}
+.fld.focus{border-color:#0A64D2;box-shadow:0 0 0 3px rgba(10,100,210,.18)}
+.hint{font-size:12px;line-height:16px;color:#5B636D}
+.btns{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.b{display:inline-flex;align-items:center;height:24px;padding:0 12px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:13px;white-space:nowrap}
+.b.def{border:1.5px solid #1F2328;font-weight:600}
+.b.sm{height:22px;font-size:12px;padding:0 9px}
+.b.dim{color:#8B939C;border-color:#C9CDD3}
+.cb{display:inline-flex;align-items:center;gap:8px}
+.cb i{width:14px;height:14px;border-radius:4px;background:#0A64D2;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.cb i.off{background:#FFFFFF;border:1px solid #8B939C}
+.rb{display:inline-flex;align-items:center;gap:8px}
+.rb i{width:14px;height:14px;border-radius:7px;border:1px solid #8B939C;background:#FFFFFF;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.rb i.on{border:4px solid #0A64D2}
+.pre{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:17px;color:#1F2328;white-space:pre-wrap}
+.pre .k{color:#5B636D}
+.found{display:flex;flex-direction:column;gap:4px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px}
+.found div{display:flex;gap:8px;align-items:baseline}
+.notice{display:flex;align-items:center;gap:10px;background:#FFFFFF;border:1px solid #8B939C;border-radius:8px;padding:6px 8px 6px 12px;box-shadow:0 4px 14px rgba(31,35,40,.12);white-space:normal}
+.expl{background:#F3F4F6;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;white-space:normal}
+.expl b{font-weight:600}
+.menu{background:rgba(246,246,247,.98);border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 10px 30px rgba(31,35,40,.2);padding:5px 0;font-size:13px;line-height:20px;white-space:nowrap;display:flex;flex-direction:column}
+.menu div{padding:1px 14px 1px 22px;display:flex;align-items:center;gap:8px}
+.menu .sep{height:1px;background:#C9CDD3;margin:5px 0;padding:0}
+.menu .hi{background:#0A64D2;color:#fff;border-radius:5px;margin:0 5px;padding-left:17px}
+.menu .hd{font-size:11px;font-weight:600;color:#5B636D;letter-spacing:.3px;padding-left:14px}
+.menu .dim{color:#8B939C}
+.pP{display:inline-block;font:600 10px/14px -apple-system,system-ui,sans-serif;color:#5B636D;border:1px solid #8B939C;border-radius:7px;padding:0 5px;margin-left:6px;vertical-align:1px}
+
+.repo{display:flex;align-items:center;gap:6px;min-height:22px;font-size:12px;line-height:16px;color:#5B636D;white-space:nowrap;min-width:0}
+.repo b{color:#1F2328;font-weight:600}
+.repo .bad{color:#1F2328;font-weight:600}
+.badge{display:inline-flex;align-items:center;height:18px;padding:0 7px;border:1px solid #C9CDD3;border-radius:9px;font-size:11px;line-height:16px;color:#5B636D;background:#FFFFFF;white-space:nowrap}
+.badge.dk{border-color:#1F2328;color:#1F2328;font-weight:600}
+.pop{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 10px 30px rgba(31,35,40,.2);padding:10px 12px;display:flex;flex-direction:column;gap:6px;white-space:normal;font-size:12px;line-height:17px}
+.lrow{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;border-radius:5px;font-size:13px;white-space:nowrap}
+.lrow.hi{background:#E9ECEF}
+.lrow .r{margin-left:auto;color:#5B636D;font-size:12px}
+.ask2{background:#F3F4F6;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:18px 22px;display:flex;flex-direction:column;gap:8px;white-space:normal;width:460px}
+.ask2 h3{margin:0;font-size:13px;line-height:20px;font-weight:600}
+.ask2 p{margin:0;font-size:12px;line-height:17px}
+.mark{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:#5B636D;margin-left:auto}
+.ft{display:flex;align-items:center;gap:6px;height:22px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+table.cmp{border-collapse:collapse;width:100%;font-size:12px;line-height:17px;white-space:normal}
+table.cmp th,table.cmp td{border-top:1px solid #C9CDD3;padding:7px 10px 7px 0;text-align:left;vertical-align:top}
+table.cmp th{font-weight:600;color:#5B636D;width:150px}
+table.cmp thead th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#1F2328;border-top:none}
+.cl{color:#E6E8EB}
+</style>
+</head>
+<body>
+<div class="bd" style="width:1440px;height:980px;gap:14px"><div class="bt">0 · GitHub in Duo: bring a repo in, see where it stands, share it back</div><div class="bsub">Geoff, 2026-10-07: “claude <i>can</i> perform cli tasks to operate github, but we should incorporate github primitives in many places; eg we should make it easy to add a project from remote (gh), as a new or existing branch, and make it easy to push and/or open a pr (anticipating that many users will not be admin).” Every mark on these boards is a proposal [P]. The research is in <code>docs/research/github-primitives.md</code>.</div><div style="display:flex;gap:14px;align-items:flex-start">
+<div class="txt" style="flex:1;min-width:0"><h3>What changes from the legacy call</h3>
+<p><code>legacy-requirements.md</code> dropped “Git for PMs: worktrees UI, clone, pull, propose-changes PR, repo chips” from v1 as code-shaped. <b>This study brings back four of the five, reshaped</b>: getting a repo (as a new project), its state on the project, Push / Open PR (with the fork path), and Get Latest. The worktrees UI stays out. Kept from the call: the vanished-folder recovery and fail-closed probes.</p>
+<h3>Principles [P]</h3><ul>
+<li><b>Duo does the mechanics, Claude does the words.</b> Duo runs the network and permission steps the same way every time and explains their failures; Claude writes commit messages and PR descriptions and resolves conflicts, from an instruction Duo drafts.</li>
+<li><b>Never a token.</b> Duo uses the user’s own <code>gh auth</code> or git’s credential helper (the macOS keychain). It never asks for, stores or reads a token.</li>
+<li><b>Works without <code>gh</code>.</b> Paste a link, push with git, and open the pull request on GitHub’s own page. <code>gh</code> adds the repo picker, the fork path and PRs opened from Duo.</li>
+<li><b>Assume no admin, maybe no write.</b> A project from GitHub starts on its own branch, so a protected main never blocks it; no write access means a fork, said plainly before it happens.</li>
+<li><b>Not a git client.</b> No staging area, history graph, rebase or branch manager. One branch per project, set when it’s made.</li>
+<li>Every action has a <code>duo2 repo</code> verb (DL-71). Nothing here shows a system alert.</li></ul></div>
+<div class="txt" style="width:520px;flex:none"><h3>The boards</h3><ol start="0">
+<li>This page.</li>
+<li><b>New project, From GitHub</b>: inside the CX study’s sheet; the repo field and its picker.</li>
+<li><b>The branch</b>: a new branch or one that’s there; A in the sheet, B one combined field.</li>
+<li><b>Where it lands, and getting it</b>: a copy per project inside Home; progress, done.</li>
+<li><b>The repo’s state on a project</b>: A under the status line, B in Files, C a toolbar chip.</li>
+<li><b>Every state</b> of the line.</li>
+<li><b>Push / Open PR</b> with write access.</li>
+<li><b>No write access</b>: the fork, said before it happens.</li>
+<li><b>No <code>gh</code></b>: push with git, open the PR on GitHub’s page.</li>
+<li><b>Get Latest</b> and a conflict.</li>
+<li><b>When it fails</b>: every failure with its words.</li>
+<li><b>Duo and Claude</b>: who does what; the instructions Duo drafts.</li>
+<li><b><code>duo2 repo</code></b>: the verbs.</li>
+<li><b>Recommendation</b> and the v1 slice.</li></ol>
+<h3>Shared with the CX study</h3><p class="note">The New project sheet, its Start from segment and its Name, Goal, In and Will write rows are the project &amp; task CX study’s (R3, R4). This study adds “From GitHub” and owns what shows when it’s picked.</p></div>
+</div>
+<div style="display:flex;gap:14px;align-items:flex-start">
+<div class="txt" style="flex:1;min-width:0"><h3>Legacy Duo, in short (docs/research/github-primitives.md §1)</h3><ul>
+<li><b>Repo chips</b> (branch, ahead/behind, modified): Geoff called v1 “very bad” for hiding when clean; took five rounds. Kept as an idea, redrawn.</li>
+<li><b>Clone</b> from File, the tree and ⌘O; <code>gh repo clone</code> with a <code>git clone</code> fallback; raw stderr on failure.</li>
+<li><b>Pull</b>: fetch, fast-forward or merge, abort on conflict; a red “Discard my changes and pull”. Shipped with no live walk.</li>
+<li><b>Propose changes</b>: commit, push, auto-fork when not WRITE, <code>gh pr create</code>. Worked end to end; failures were raw stderr; forked even when the probe failed.</li>
+<li><b>Worktrees UI</b>: Geoff’s favourite, but its sessions broke when a worktree was removed.</li></ul></div>
+<div class="txt" style="flex:1;min-width:0"><h3>What others do (§2)</h3><ul>
+<li><b>GitHub Desktop</b>: one button that becomes Publish, Push, Pull or Fetch; asks before forking (“contribute to the parent” or “for my own purposes”).</li>
+<li><b>VS Code</b>: Sync Changes; offers to fork when a push is refused.</li>
+<li><b><code>gh pr create</code></b> offers to fork when you can’t push; <code>gh repo fork</code> renames your <code>origin</code> to <code>upstream</code> unless told not to.</li>
+<li><b>Claude Code</b> already commits and runs <code>gh pr create</code> when asked; it doesn’t know your permissions until a push fails.</li>
+<li><b>GitHub’s web editor</b> forks for you when you edit a repo you can’t write to: “Propose changes”.</li></ul></div>
+</div></div>
+</body>
+</html>
