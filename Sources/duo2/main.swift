@@ -118,6 +118,17 @@ case .install:
     }
     Installer.recordConsent(true, cli: cli)
     print(Installer.install(cli: cli).lines.joined(separator: "\n"))
+case .hangs:
+    if rest.contains("--clear") { HangLog.clear(); print("Cleared the hang log."); exit(0) }
+    var records = HangLog.read()
+    if let i = rest.firstIndex(of: "--since"), i + 1 < rest.count, let h = Double(rest[i + 1]) {
+        records = records.filter { $0.at >= Date().addingTimeInterval(-h * 3600) }
+    }
+    if rest.contains("--json") {
+        let e = JSONEncoder(); e.dateEncodingStrategy = .iso8601; e.outputFormatting = [.prettyPrinted, .sortedKeys]
+        print(String(decoding: (try? e.encode(records)) ?? Data(), as: UTF8.self)); exit(0)
+    }
+    print(HangLog.report(records, stacks: rest.contains("--stacks"), symbolicate: symbolicateHang))
 case .updateProbe:
     exit(probeUpdates())
 case .uninstall:
@@ -231,5 +242,31 @@ func probeUpdates() -> Int32 {
     }
     print(ok ? "Verdict: in-app updates should work here." : "Verdict: in-app updates are blocked here at the step marked ✗; Duo's update notice (Duo › Check for Updates…) still points to the DMG.")
     return ok ? 0 : 1
+}
+
+/// A sample's `Duo@0xoffset` frames named with atos against the binary that recorded them
+/// (`path@0xload`), as `name (Duo)`; frames atos can't name stay as they are.
+func symbolicateHang(_ frames: [String], _ binary: String?) -> [String] {
+    guard let binary, let at = binary.range(of: "@0x", options: .backwards),
+          let load = UInt(binary[at.upperBound...], radix: 16) else { return frames }
+    let path = String(binary[..<at.lowerBound])
+    let duo = frames.enumerated().compactMap { i, f -> (Int, UInt)? in
+        f.hasPrefix("Duo@0x") ? UInt(f.dropFirst(6), radix: 16).map { (i, $0) } : nil
+    }
+    guard !duo.isEmpty, FileManager.default.fileExists(atPath: path) else { return frames }
+    let p = Process()
+    p.executableURL = URL(fileURLWithPath: "/usr/bin/atos")
+    p.arguments = ["-o", path, "-l", "0x" + String(load, radix: 16)] + duo.map { "0x" + String(load + $0.1, radix: 16) }
+    let pipe = Pipe(); p.standardOutput = pipe; p.standardError = FileHandle.nullDevice
+    guard (try? p.run()) != nil else { return frames }
+    let out = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self).split(separator: "\n").map(String.init)
+    p.waitUntilExit()
+    var named = frames
+    for (k, (i, _)) in duo.enumerated() where k < out.count && !out[k].hasPrefix("0x") {
+        // `ChatFeed.tick() (in Duo) (ChatFeed.swift:120)` → `ChatFeed.tick() (Duo) ChatFeed.swift:120`
+        named[i] = out[k].replacingOccurrences(of: " (in Duo) (", with: " (Duo) ").replacingOccurrences(of: #"\)$"#, with: "", options: .regularExpression)
+        if !named[i].contains("(Duo)") { named[i] += " (Duo)" }
+    }
+    return named
 }
 

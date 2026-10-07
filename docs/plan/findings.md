@@ -2151,3 +2151,21 @@ Read from an isolated test build, which shares Geoff's bundle id (`com.dudgeon.d
 `requestAuthorization` prompts only while the status is not determined; afterwards it returns the earlier answer without a prompt and registers any new options, so asking again with `.badge` is quiet (Apple: "Asking permission to use notifications"). DL-138 asks again once per run, at the moment Duo would notify. Whether macOS turns a newly registered Badges switch on for an already-allowed app couldn't be tested without a prompt on Geoff's Mac: the manual check below settles it.
 
 Check by hand: in System Settings › Notifications › Duo, turn on Allow notifications and Badge application icon; with a session waiting and Duo in the background, the Dock icon shows the count `duo2 needs-you` lists.
+
+## F-163 · The hang log: how Duo catches its own stalls (DL-139, 2026-10-07)
+
+- **Why.** The chat measurements (F-157 to F-160) came from a generated session in a window that was never in front (C-39). This records what Geoff actually hits.
+- **How (`Live/HangMonitor.swift`).**
+  - A utility thread posts an empty block to the main queue every 100 ms (a 50 ms wait, then a 50 ms rest) and waits for it to run.
+  - A late answer is a stall. Once it's 500 ms late, the thread samples the main thread every 50 ms (at most 30 samples, 64 frames each): it suspends the thread, reads its registers, walks the frame pointers within the main thread's stack bounds into a buffer allocated at start, and resumes it. Nothing allocates or takes a lock while the thread is suspended.
+  - Frames are named only after the resume. Frames in Duo's own binary are kept as `Duo@0xoffset`; others are named with `dladdr`.
+  - A stall of 250 ms or more becomes one line in `Duo/logs/hangs.jsonl` (`HangLog`, in DuoControl). The line is appended on a utility queue. Past 512 KB, the older half of the file goes.
+- **What's on screen** (`AppModel.hangScreen`): where you are, what the console shows (a chat with its items and steps, a terminal, a shell), the right pane's kind and the number of terminals. No titles and no text.
+- **Reading it.** `duo2 hangs [--since <hours>] [--stacks] [--clear] [--json]` works without the app. `--stacks` names Duo's frames with `atos`, against the binary path and load address recorded with the stall, and lists them most often first, then innermost first. The `in:` line is the innermost frame, often AppKit or SwiftUI: what Duo was waiting on.
+- **Release builds keep their local symbols** (`nm` lists 106 `ChatFeed` symbols, 7 of them global). `dladdr` only sees the global ones, so it can't name Duo's internal Swift functions. `atos` reads the full symbol table and names them, with file and line.
+- **Cost.** Idle in a release build, a copy with the monitor used 0.02 s more CPU per 30 s than one without (0.25–0.28 s against 0.24–0.29 s over 40 s): about 0.07%. `check-chat-perf.sh` stays 7 within budget with it running. Opening the long chat measured 154 and 279 ms in two runs, within the earlier 136–285 ms spread.
+- **Proof.**
+  - An isolated copy (`DUO_SUPPORT_DIR=/tmp/d-hang`) with `perf-stall:300`, `perf-stall:900` and `perf-stall:2500` logged 275, 891 and 2,379 ms in its own folder. A stall reads up to 100 ms short, since a ping can go out after it began.
+  - `duo2 hangs --stacks` named `ChatPerf.stall(ms:) ChatPerf.swift:141` in 18 of 18 samples.
+  - DuoChecks: 8 checks for the log (lines, report, `--stacks`, empty, the 512 KB cap, the folder, local, `--clear`), 694 passing. `docs/cli/duo2.md` is regenerated.
+

@@ -29,6 +29,8 @@ struct DuoApp: App {
             exit(66)
         }
         let model = AppModel(fixture: fixture)
+        // Stalls of the main thread, logged on this Mac for `duo2 hangs` (DL-139). DUO_HANG_LOG=0 turns it off.
+        if ProcessInfo.processInfo.environment["DUO_HANG_LOG"] != "0" { HangMonitor.shared.start { model.hangScreen() } }
         model.interactivePrompts = !options.capturing
         // Scripted runs restore only when asked (DUO_RESTORE=1), on their own workspace's file.
         model.restoreEnabled = (!options.capturing && options.thenActions.isEmpty) || ProcessInfo.processInfo.environment["DUO_RESTORE"] == "1"

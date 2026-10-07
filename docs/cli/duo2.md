@@ -11,6 +11,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 ping` | Check that Duo is running and reachable. | — |
 | `duo2 update [--open]` | Whether a newer Duo is on GitHub, its releases page, and whether installing it in place needs an administrator password (Duo › Check for Updates…, DL-114). --open opens the releases page, as the question's Open Releases Page does, to download the DMG and install it by hand. | Check for Updates…, Open Releases Page |
 | `duo2 update probe` | Whether in-app updates can work on this Mac, without Duo running: the update feed and the DMG reachable from here, and Duo installed where it can be replaced. | — |
+| `duo2 hangs [--since <hours>] [--stacks] [--clear]` | Times Duo froze: each stall of its main thread of 250 ms or more (2 s shows a beach ball), when, how long and what was on screen; --stacks adds where Duo was stuck, for stalls of half a second or more. Kept on this Mac only (Duo/logs/hangs.jsonl, DL-139). --clear empties it. | — |
 | `duo2 status` | What Duo is showing: the view, the open project, session and document, and counts. | — |
 | `duo2 needs-you` | Sessions waiting for the user, with their questions. | Needs You Elsewhere |
 | `duo2 undo` | Undo Duo's last move, merge or Make a Project (Edit › Undo). | Undo, Undo Conversion |

@@ -31,7 +31,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Duo
     case update
     case compose
-    case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup", settings, updateProbe = "update probe"
+    case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup", settings, updateProbe = "update probe", hangs
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
     case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
@@ -116,6 +116,7 @@ extension DuoAction {
         .init(.update, .app, "[--open]", "Whether a newer Duo is on GitHub, its releases page, and whether installing it in place needs an administrator password (Duo › Check for Updates…, DL-114). --open opens the releases page, as the question's Open Releases Page does, to download the DMG and install it by hand.",
               ui: ["Check for Updates…", "Open Releases Page"], timeout: 30),
         .init(.updateProbe, .app, "", "Whether in-app updates can work on this Mac, without Duo running: the update feed and the DMG reachable from here, and Duo installed where it can be replaced.", local: true),
+        .init(.hangs, .app, "[--since <hours>] [--stacks] [--clear]", "Times Duo froze: each stall of its main thread of 250 ms or more (2 s shows a beach ball), when, how long and what was on screen; --stacks adds where Duo was stuck, for stalls of half a second or more. Kept on this Mac only (Duo/logs/hangs.jsonl, DL-139). --clear empties it.", local: true),
         .init(.status, .app, "", "What Duo is showing: the view, the open project, session and document, and counts.", everyday: true),
         .init(.needsYou, .app, "", "Sessions waiting for the user, with their questions.", ui: ["Needs You Elsewhere"]),
         .init(.undo, .app, "", "Undo Duo's last move, merge or Make a Project (Edit › Undo).", ui: ["Undo", "Undo Conversion"]),
