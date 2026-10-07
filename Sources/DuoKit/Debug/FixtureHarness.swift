@@ -519,6 +519,7 @@ public enum FixtureHarness {
                         }
                     case .answer(let n): lines.append("  answer: \(n.text)")
                     case .note(let n), .divider(let n), .interrupted(let n): lines.append("  line: \(n.text)")
+                    case .result(let r): lines.append("  result: \(r.summary.replacingOccurrences(of: "\n", with: " ⏎ ").prefix(140))")
                     }
                 }
                 FileHandle.standardError.write(Data((lines.joined(separator: "\n") + "\n").utf8))

@@ -42,6 +42,7 @@ cp "$root/docs/design/many-projects-handoff/fixture.json" "$app/Contents/Resourc
 rm -rf "$app/Contents/Resources/chat-fixtures"
 cp -R "$root/docs/design/chat-mode-handoff/fixture-chat" "$app/Contents/Resources/chat-fixtures"   # chat-mode targets (ChatTargets)
 cp -R "$root/docs/design/chat-polish-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and chat polish's (polish-<board>)
+cp -R "$root/docs/design/chat-slash-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and slash commands' (slash-<board>, DL-143)
 # The document editor: vendored CodeMirror bundle and its page (F-34).
 mkdir -p "$app/Contents/Resources/editor"
 cp "$root/Vendor/codemirror/dist/cm6.js" "$root/Vendor/codemirror/dist/editor.html" "$app/Contents/Resources/editor/"

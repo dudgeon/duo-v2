@@ -42,6 +42,11 @@ public struct ChatSignatures: Sendable, Equatable {
     public var otherPlaceholder = #"^Type something\.?$"#
     /// The slash-command menu under the input.
     public var commandMenu = #"^\s{2}❯ /\S+\s{2,}"#
+    /// `/model`'s and `/effort`'s screens (DL-143): a card in chat when both ends are on screen.
+    public var modelTitle = #"^\s*Select model\s*$"#
+    public var modelFooter = #"Enter to set as default · s to use this session only · Esc to cancel"#
+    public var effortTitle = #"^\s*Effort\s*$"#
+    public var effortFooter = #"←/→ to adjust · Enter to confirm · s for this session only · Esc to cancel"#
     /// Chat about this, Next and Submit in a question.
     public var chatAbout = "Chat about this"
     /// A row of the `/` command menu: `  ❯ /add-dir      Add a new working directory`.
@@ -49,10 +54,11 @@ public struct ChatSignatures: Sendable, Equatable {
     /// Commands with a screen of their own: they open in the terminal (handoff `composer`). Each was
     /// run from chat on 2.1.292 (F-173); `/doctor` and `/statusline` are turns now, and `/agents`,
     /// `/mcp` and `/output-style` print a line.
-    public var terminalCommands: Set<String> = ["/help", "/model", "/config", "/permissions", "/resume", "/tasks", "/login", "/logout",
+    /// `/model` and `/effort` open as cards in chat instead (DL-143).
+    public var terminalCommands: Set<String> = ["/help", "/config", "/permissions", "/resume", "/tasks", "/login", "/logout",
                                                 "/hooks", "/memory", "/theme", "/status", "/terminal-setup", "/install-github-app",
                                                 "/ide", "/export", "/rewind", "/plugin", "/usage", "/cost", "/release-notes", "/skills",
-                                                "/effort", "/btw", "/fast", "/sandbox", "/scroll-speed", "/add-dir", "/powerup", "/workflows",
+                                                "/btw", "/fast", "/sandbox", "/scroll-speed", "/add-dir", "/powerup", "/workflows",
                                                 "/autocompact", "/keybindings", "/mobile"]
 
     /// 2.1.291: every dialog verified with the mock tour and asktest (F-104, F-106) and with real
@@ -135,6 +141,38 @@ public enum ChatPermissionMode: String, Sendable, Equatable {
     }
 }
 
+/// `/model` or `/effort` as its screen draws it (DL-143). Every word is Claude Code's own.
+public struct ChatPicker: Sendable, Equatable {
+    public enum Kind: String, Sendable { case model, effort }
+    public struct Row: Sendable, Equatable {
+        public var n: Int
+        public var name: String
+        public var note: String
+        /// The TUI's ❯.
+        public var cursor: Bool
+        /// The TUI's ✔: the one in use.
+        public var selected: Bool
+    }
+    public var kind: Kind
+    public var description = ""
+    public var rows: [Row] = []
+    /// Lines under the list (`○ Effort not supported for Haiku`).
+    public var footnotes: [String] = []
+    /// `/effort`: its levels, the ▲'s, and the words at either end.
+    public var levels: [String] = []
+    public var level: Int?
+    public var ends: (String, String)?
+
+    public init(kind: Kind) { self.kind = kind }
+
+    public var cursor: Int? { rows.firstIndex { $0.cursor } }
+
+    public static func == (a: ChatPicker, b: ChatPicker) -> Bool {
+        a.kind == b.kind && a.description == b.description && a.rows == b.rows && a.footnotes == b.footnotes && a.levels == b.levels
+            && a.level == b.level && a.ends?.0 == b.ends?.0 && a.ends?.1 == b.ends?.1
+    }
+}
+
 /// One row of a dialog, in screen order.
 public struct ChatScreenRow: Sendable, Equatable {
     public enum Kind: String, Sendable { case option, other, next, submit, chat }
@@ -155,7 +193,7 @@ public struct ChatScreenRow: Sendable, Equatable {
 /// What the screen shows, read.
 public struct ChatScreen: Sendable, Equatable {
     public enum Kind: String, Sendable {
-        case starting, idle, busy, permission, plan, question, questionReview = "question-review", unknown
+        case starting, idle, busy, permission, plan, question, questionReview = "question-review", picker, unknown
         /// Chat mode can draw this (or it is about to settle): no fallback.
         public var known: Bool { self != .unknown }
     }
@@ -185,6 +223,8 @@ public struct ChatScreen: Sendable, Equatable {
     public var why: String?
     /// The `/` menu Claude Code shows under what's typed, with its own descriptions.
     public var commands: [(name: String, description: String, selected: Bool)] = []
+    /// `/model` or `/effort` (DL-143).
+    public var picker: ChatPicker?
 
     public var options: [ChatScreenRow] { rows.filter { $0.kind == .option } }
     public var other: ChatScreenRow? { rows.first { $0.kind == .other } }
@@ -200,6 +240,7 @@ public struct ChatScreen: Sendable, Equatable {
             && a.menu == b.menu && a.tabs.map(\.label) == b.tabs.map(\.label) && a.tabs.map(\.done) == b.tabs.map(\.done)
             && a.question == b.question && a.multi == b.multi && a.preview == b.preview && a.notes == b.notes && a.answers == b.answers
             && a.commands.map(\.name) == b.commands.map(\.name) && a.commands.map(\.selected) == b.commands.map(\.selected)
+            && a.picker == b.picker
     }
 }
 
@@ -299,6 +340,11 @@ public enum ChatScreenReader {
         }
         let nav = find(s.questionNav)
         if nav >= 0 { return question(t, nav: nav, s) }
+        if let p = picker(t, s) {
+            var r = ChatScreen(kind: .picker, sig: "picker:" + p.kind.rawValue)
+            r.picker = p
+            return r
+        }
         if let input {
             var r = ChatScreen(kind: busy ? .busy : .idle, sig: "input")
             r.input = input
@@ -333,9 +379,65 @@ public enum ChatScreenReader {
             return numbered(s.options.map(\.n)) && s.rows.filter(\.cursor).count == 1
         case .question:
             return numbered(s.rows.map(\.n).filter { $0 != nil }) && s.question?.isEmpty == false && s.rows.filter(\.cursor).count == 1
+        case .picker:
+            guard let p = s.picker else { return false }
+            switch p.kind {
+            case .model: return numbered(p.rows.map { Optional($0.n) }) && p.rows.filter(\.cursor).count == 1
+            case .effort: return p.levels.count >= 2 && p.level != nil
+            }
         default:
             return true
         }
+    }
+
+    /// `/model`'s list or `/effort`'s slider, when its title and its footer are both on screen.
+    static func picker(_ t: [String], _ s: ChatSignatures) -> ChatPicker? {
+        if let top = t.lastIndex(where: { $0.chatIs(s.modelTitle) }), let end = t.indices.last(where: { $0 > top && t[$0].chatIs(s.modelFooter) }) {
+            var p = ChatPicker(kind: .model)
+            var description: [String] = []
+            for l in t[(top + 1)..<end] {
+                let x = l.chatTrim
+                if x.isEmpty { continue }
+                if let m = l.chatMatch(#"^\s*(❯)?\s*(\d+)\.\s(.*)$"#) {
+                    let rest = (m[3] ?? "").chatTrimEnd
+                    let parts = rest.components(separatedBy: "  ").filter { !$0.chatTrim.isEmpty }
+                    var name = parts.first?.chatTrim ?? rest
+                    let selected = name.hasSuffix(" ✔") || name.hasSuffix("✔")
+                    if selected { name = name.replacingOccurrences(of: #"\s*✔$"#, with: "", options: .regularExpression) }
+                    p.rows.append(ChatPicker.Row(n: Int(m[2] ?? "") ?? p.rows.count + 1, name: name,
+                                                 note: parts.dropFirst().map(\.chatTrim).joined(separator: " "), cursor: m[1] != nil, selected: selected))
+                } else if p.rows.isEmpty {
+                    description.append(x)
+                } else if l.hasPrefix("        ") || l.prefix(while: { $0 == " " }).count > 10 {
+                    p.rows[p.rows.count - 1].note += (p.rows[p.rows.count - 1].note.isEmpty ? "" : " ") + x   // a wrapped description
+                } else {
+                    p.footnotes.append(x)
+                }
+            }
+            p.description = description.joined(separator: " ")
+            return p.rows.isEmpty ? nil : p
+        }
+        if let top = t.lastIndex(where: { $0.chatIs(s.effortTitle) }), let end = t.indices.last(where: { $0 > top && t[$0].chatIs(s.effortFooter) }) {
+            var p = ChatPicker(kind: .effort)
+            let lines = Array(t[(top + 1)..<end])
+            guard let marker = lines.first(where: { $0.contains("▲") }), let labels = lines.last(where: { !$0.chatTrim.isEmpty && !$0.contains("▲") && !$0.contains("─") }) else { return nil }
+            if let ends = lines.first(where: { !$0.chatTrim.isEmpty && !$0.contains("▲") && $0 != labels })?.split(separator: " ", omittingEmptySubsequences: true), ends.count == 2 {
+                p.ends = (String(ends[0]), String(ends[1]))
+            }
+            // Each level's centre column; the ▲'s column picks the nearest.
+            let at = marker.distance(from: marker.startIndex, to: marker.firstIndex(of: "▲")!)
+            var col = 0, best = Int.max
+            for word in labels.split(separator: " ", omittingEmptySubsequences: false) {
+                if !word.isEmpty {
+                    let centre = col + word.count / 2
+                    if abs(centre - at) < best { best = abs(centre - at); p.level = p.levels.count }
+                    p.levels.append(String(word))
+                }
+                col += word.count + 1
+            }
+            return p.levels.isEmpty ? nil : p
+        }
+        return nil
     }
 
     /// Numbered options from `from`, with wrapped labels joined and description lines kept as notes.

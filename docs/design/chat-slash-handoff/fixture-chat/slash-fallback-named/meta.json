@@ -1,0 +1,10 @@
+{
+ "mode": "chat",
+ "tab": "PRD v2 edits",
+ "now": "2026-10-06T11:30:20.000Z",
+ "fallback": {
+  "kind": "automatic",
+  "command": "/permissions",
+  "message": "/permissions opens in Claude Code’s own screen. Esc closes it and brings chat back."
+ }
+}

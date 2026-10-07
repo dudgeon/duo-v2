@@ -238,8 +238,8 @@ public enum ChatIngest {
     }
 
     /// A slash command's own records (F-174): the command is your message, as the composer showed
-    /// it when sent (`/rename notes`); its printed output is a quiet line (a stand-in, Q-105);
-    /// the caveat Claude Code adds is nobody's. True when the text was one of these.
+    /// it when sent (`/rename notes`); its printed output is its result under it (DL-143); the
+    /// caveat Claude Code adds is nobody's. True when the text was one of these.
     nonisolated static func command(_ text: String, time: Date?, into log: ChatLog) -> Bool {
         if text.hasPrefix("<command-") {
             if let name = text.chatMatch(#"<command-name>\s*([^<\s]+)\s*</command-name>"#)?[1] {
@@ -249,10 +249,7 @@ public enum ChatIngest {
             return true
         }
         if let out = text.chatMatch(#"^<local-command-stdout>([\s\S]*?)</local-command-stdout>"#)?[1] {
-            let first = out.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.first { !$0.isEmpty } ?? ""
-            if !first.isEmpty, first != "(no content)" {
-                log.items.append(.note(ChatNote(id: log.newID("note"), text: first.count > 160 ? String(first.prefix(159)) + "…" : first, time: time)))
-            }
+            log.commandResult(out, time: time)
             return true
         }
         return text.hasPrefix("<local-command")

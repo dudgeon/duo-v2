@@ -63,6 +63,7 @@ extension ChatSession {
         // Shown before Return: the prompt's hook can arrive within the pause after it, and must
         // find this bubble to match.
         log.sent(text, time: now, queued: wasBusy, planMode: s.mode == .plan)
+        lastCommand = text.hasPrefix("/") ? (String(text.prefix { !$0.isWhitespace }), Date()) : nil
         _ = await press(.enter)
         ui.composer = ""
         ui.composerBasis = nil
