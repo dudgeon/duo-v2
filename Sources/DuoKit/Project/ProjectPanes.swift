@@ -453,6 +453,7 @@ struct RightPane: View {
                             .duoText(active ? .bodyEmphasis : .body)
                             .lineLimit(1)
                     }
+                        .modifier(TabHoverFill(key: tab.id, onConsole: false, leading: 3))   // 3 past the × box, as drawn (DL-134)
                         .padding(.leading, (i == 0 ? 0 : DuoSpace.gapPaneTabs) - closeSlot)
                         .contentShape(Rectangle())
                         .modifier(TabHover(key: tab.id, enabled: tab.isDocument) { model.closeDocument(tab.id) })
@@ -473,6 +474,7 @@ struct RightPane: View {
                             }
                         })
                         .background(DuoColor.pane)
+                        .zIndex(model.showsTabClose(tab.id) ? 1 : 0)   // its fill reaches over the next tab's padding (DL-134)
                         .transition(.tab)
                 }
                 // New Markdown file, the same treatment as the console's + (DL-61).

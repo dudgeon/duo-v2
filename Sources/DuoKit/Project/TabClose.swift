@@ -86,6 +86,29 @@ struct TabHover: ViewModifier {
     }
 }
 
+/// The fill behind a closable tab while it shows its × (DL-134, canvas
+/// https://claude.ai/artifact/PEPNt2XyjyuWxYjG3ZofKN, A): radius 5, 24 high, `consoleHover` on
+/// the console and `ground` on the right pane, reaching 7 past the glyph or × and the name.
+/// Drawn behind the tab, so nothing moves; it comes and goes with the ×, without a fade (DL-130).
+struct TabHoverFill: ViewModifier {
+    @Environment(AppModel.self) private var model
+    let key: String
+    let onConsole: Bool
+    var leading = DuoMetric.tabHoverInset
+
+    func body(content: Content) -> some View {
+        content.background {
+            if model.showsTabClose(key) {
+                RoundedRectangle(cornerRadius: DuoMetric.tabHoverRadius)
+                    .fill(onConsole ? DuoColor.consoleHover : DuoColor.ground)
+                    .padding(.leading, -leading)
+                    .padding(.trailing, -DuoMetric.tabHoverInset)
+                    .frame(height: DuoMetric.tabHoverHeight)
+            }
+        }
+    }
+}
+
 extension AppModel {
     /// Whether a tab shows its × now: under the pointer, or the pointer is on the × itself.
     func showsTabClose(_ key: String) -> Bool { hoveredTab == key || hoveredTabClose == key || pressedTabClose == key }

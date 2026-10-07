@@ -49,6 +49,7 @@ struct HomePane: View {
                             .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2)
                             .lineLimit(1)
                     }
+                    .modifier(TabHoverFill(key: s.tabKey, onConsole: true))   // DL-134
                     .contentShape(Rectangle())
                     .onActivate { model.homeTab = s.tabKey }  // action: session open
                     .modifier(SessionOrganizeMenu(sessionKey: s.tabKey))
@@ -71,6 +72,7 @@ struct HomePane: View {
                         Text(model.consoleTitle(key)).duoText(active ? .monoActiveTab : .mono)
                             .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2).lineLimit(1)
                     }
+                    .modifier(TabHoverFill(key: key, onConsole: true))
                     .contentShape(Rectangle())
                     .onActivate { model.homeTab = key }  // action: session open
                     .modifier(TabHover(key: key) { model.closeConsoleTab(key) })
