@@ -104,7 +104,17 @@ public final class ChatSession {
     public private(set) var cliVersion: String?
     public private(set) var signatures: ChatSignatures = .v2_1_291
     /// Dialogs are answered from chat only on a verified CLI (fallback rule 3).
-    public private(set) var dialogsVerified = true
+    /// How this CLI's dialogs are trusted (DL-145).
+    public private(set) var versionTrust: ChatVersionTrust = .verified
+    /// Dialogs are answered from chat: on a verified CLI, or a newer one while the dialog on screen
+    /// reads whole by the verified signatures (DL-145).
+    public var dialogsVerified: Bool {
+        switch versionTrust {
+        case .verified: true
+        case .newer: ChatScreenReader.wellFormed(screen)
+        case .unverified: false
+        }
+    }
     /// The conversation, from hooks and the transcript.
     public let log: ChatLog = { let l = ChatLog(); l.drawn = true; return l }()
     /// Folds and long outputs the reader opened.
@@ -216,7 +226,7 @@ public final class ChatSession {
         cliVersion = v
         let t = ChatSignatures.table(for: v)
         signatures = t.table
-        dialogsVerified = t.verified
+        versionTrust = ChatSignatures.trust(for: v)
         reread()
     }
 
@@ -290,7 +300,9 @@ public final class ChatSession {
         case .permission, .plan, .question, .questionReview:
             unknownSince = nil; unknownTimer?.invalidate()
             if !dialogsVerified {
-                fallBack(.automatic("Chat mode hasn’t been checked with this version of Claude Code’s dialogs (\(cliVersion ?? "unknown")), so here’s the terminal. Chat comes back when it closes."))
+                fallBack(versionTrust == .newer
+                    ? .automatic("This dialog in Claude Code \(cliVersion ?? "") doesn’t read like the versions chat mode was checked with, so here’s the terminal. Chat comes back when it closes.")
+                    : .automatic("Chat mode hasn’t been checked with this version of Claude Code’s dialogs (\(cliVersion ?? "unknown")), so here’s the terminal. Chat comes back when it closes."))
             } else if !requestAgrees {
                 // The request comes by hook, a moment after the dialog draws: give it a second.
                 if disagreeSince == nil {
