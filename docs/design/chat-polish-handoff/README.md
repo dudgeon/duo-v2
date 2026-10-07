@@ -27,7 +27,7 @@ Each board draws NOW and PROPOSED; build the PROPOSED half. The NOW half and the
 
 ## The bar (DL-136): `bar-thin`
 
-While the selected tab is in chat mode, the console tab strip is 28 high on `ground` with a 1 `rule` under it. Tabs are SF Pro 12; the selected one is semibold in `text`, underlined 2 in `text`; the others are `text2`. The toggle is light: white, 1 `controlEdge`, the shown segment on `selected`, 22×16 segments. A terminal tab keeps today's dark strip.
+While the selected tab is in chat mode, the console tab strip is 28 high on `ground` with a 1 `rule` under it. Tabs are SF Pro 12, 16 apart; the selected one is semibold in `text`, underlined 2 in `text`; the others are `text2`. The toggle is light: white, 1 `controlEdge`, the shown segment on `selected`, 22×16 segments. A terminal tab keeps today's dark strip.
 
 ## Behaviour a picture can't show
 

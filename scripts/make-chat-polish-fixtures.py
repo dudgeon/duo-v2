@@ -120,6 +120,21 @@ perm = perm.replace('rg -n -i "saved card" research/', cmd).replace("Search the 
 perm = perm.replace("   2. Yes, and always allow access to /Users/geoff/work/payments/checkout-redesign/research from\n      this project", "   2. Yes, and always allow access to ~/work/payments/research from this project")
 r.write("needs-you", {"states": {"PRD v2 edits": "needsYou"}}, perm)
 
+# bar-thin (DL-136): the thin light strip over chat, a turn under it.
+r = Rec()
+r.you("10:12", "Run the docs lint and fix what it finds in the PRD.")
+r.say("10:12", "I’ll run the lint first, then read what it flags.")
+r.bash("10:12", "toolu_c1", "npm run lint:docs", "Run the docs lint", "\n".join(LINT))
+r.bash("10:12", "toolu_c2", "ls docs/", "List the docs folder", "prd-v2.md")
+r.bash("10:12", "toolu_c3", "rg -n flows docs/", "Find links to flows.md", "docs/prd-v2.md:58")
+r.bash("10:12", "toolu_c4", "git log --oneline -5 -- docs/refunds/flows.md", None, "a41c2e9")
+r.read("10:12", "toolu_c5", "research/interviews.md", 214)
+r.read("10:12", "toolu_c6", "docs/prd-v2.md", 88)
+r.read("10:12", "toolu_c7", "docs/refunds/flows.md", 40)
+r.say("10:12", "Two problems, both in the non-goals: an item repeated from the goals, and a link to [flows.md](docs/refunds/flows.md) that points at a section that moved.")
+r.hook("10:12", 30, hook_event_name="Stop", last_assistant_message="Two problems")
+r.write("bar-thin", {})
+
 # candidates (K1–K8), each its PROPOSED card.
 r = Rec()
 r.you("10:20", "Lint the docs and find when the flows section moved.")

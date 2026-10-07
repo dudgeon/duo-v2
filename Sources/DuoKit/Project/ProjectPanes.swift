@@ -397,7 +397,8 @@ struct ConsolePane: View {
     var body: some View {
         VStack(spacing: 0) {
             ConsoleTabStrip(project: model.currentProject?.name)
-            ConsoleRule()
+            // Under the thin light strip over chat, the light chrome's rule (DL-136).
+            if model.consoleShowsChat { DuoColor.rule.frame(height: DuoMetric.borderHairline) } else { ConsoleRule() }
             let _ = model.endedRevision
             if let ended = model.fixtureEnded, model.consoleTab == ended.key {
                 Color.clear
