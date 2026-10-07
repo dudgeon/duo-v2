@@ -31,6 +31,7 @@ public struct ChatSignatures: Sendable, Equatable {
     public var modeAcceptEdits = #"accept edits on"#
     public var modeManual = #"manual mode on"#
     public var modeAuto = #"auto mode on"#
+    public var modeBypass = #"bypass permissions on"#
     /// The spinner line above the input box: `✻ Sautéed for 2s`, `✻ 529 Overloaded · Retrying …`.
     public var status = #"^[✻✽✶✳✢·*] \S"#
     public var interrupted = #"Interrupted · What should Claude do instead\?"#
@@ -100,7 +101,7 @@ public struct ChatVersion: Comparable, Sendable, CustomStringConvertible {
 
 /// The Claude Code mode the footer names.
 public enum ChatPermissionMode: String, Sendable, Equatable {
-    case manual, acceptEdits = "accept-edits", plan, auto
+    case manual, acceptEdits = "accept-edits", plan, auto, bypass
 
     /// The chip's words, as the TUI's footer says them (composer board).
     public var chip: String {
@@ -109,6 +110,7 @@ public enum ChatPermissionMode: String, Sendable, Equatable {
         case .acceptEdits: "accept edits on"
         case .plan: "plan mode on"
         case .auto: "auto mode on"
+        case .bypass: "bypass permissions on"
         }
     }
 }
@@ -224,7 +226,7 @@ public enum ChatScreenReader {
         // The footer sits under the input box, which is not always at the bottom of the screen.
         let footer = (rules.last.map { Array(t[min($0 + 1, t.count)..<min($0 + 3, t.count)]) } ?? Array(t.suffix(3))).joined(separator: " ")
         let mode: ChatPermissionMode? = footer.chatIs(s.modePlan) ? .plan : footer.chatIs(s.modeAcceptEdits) ? .acceptEdits
-            : footer.chatIs(s.modeManual) ? .manual : footer.chatIs(s.modeAuto) ? .auto : nil
+            : footer.chatIs(s.modeManual) ? .manual : footer.chatIs(s.modeAuto) ? .auto : footer.chatIs(s.modeBypass) ? .bypass : nil
         // The input box: the last two full-width rules with "❯ " between them.
         var input: String?
         if rules.count >= 2 {
