@@ -1,12 +1,12 @@
 # Duo: a project's task board — design study
 
-Status: **study, not approved** (Q-119, Q-120, Q-121; DL-148 reserved for the decision). Every mark on these boards is a proposal [P]. Nothing here is a build target until Geoff approves. The approved boards then move to a `task-board-handoff/` with `screens/`.
+Status: **decided** (DL-148, DL-150, 2026-10-07): C, computed order, the pinned Obsidian base, session rows (board 11), `lanes:` (board 12) and `references:` (board 13). Not built. Before a build, export the boards it needs to a `task-board-handoff/` with `screens/`. Each board's [P] marks are accepted only as far as DL-148 and DL-150 say.
 
 Geoff, 2026-10-07: "projects would benefit from a visual way of tracking tasks besides the left column — do some research into the obsidian kanban feature". He also asked for maximum compatibility with Obsidian and OKF. The research, the options and the rules are in `docs/research/task-board.md`. The boards are drawn on the Design canvas https://claude.ai/artifact/1yVhqtQsaXow8GGRQsUaYN with the Duo design system.
 
 ## Files
 
-- `canvas/make.py` draws the 12 boards as static HTML into `canvas/boards/`. `canvas/render.sh` renders them to `canvas/boards/png/<name>@2x.png`. `canvas/to-canvas.py <root>` writes them as canvas artboards.
+- `canvas/make.py` draws the 15 boards as static HTML into `canvas/boards/`. `canvas/render.sh` renders them to `canvas/boards/png/<name>@2x.png`. `canvas/to-canvas.py <root>` writes them as canvas artboards.
 - The shared CSS and glyphs are copied from `home-evolution-handoff/canvas/make.py`. Colours are tokens by value.
 
 ## Boards
@@ -24,9 +24,12 @@ Geoff, 2026-10-07: "projects would benefit from a visual way of tracking tasks b
 | `08-empty-narrow` | No tasks, an empty lane, widths |
 | `09-obsidian` | The files: a task note, the `tasks.base` Duo would write, a Kanban-plugin note for contrast |
 | `10-recommendation` | The recommendation and a first slice |
+| `11-sessions` | Sessions on a card: S1 rows (chosen) |
+| `12-columns` | Adding and removing columns; `lanes:` in the project's brief (`_PROJECT.md`, `PROJECT.md` or the `project_brief` note, DL-147) |
+| `13-documents` | A task's `references:` (documents, folders, links) |
 
 ## Owned elsewhere
 
-- **The explainer copy for "No tasks yet"** belongs to the project & task CX study.
+- **The explainer copy for "No tasks yet"** belongs to the project & task CX study, and its approved line is on board 8.
 - **Dragging a session onto a task** is that study's flow too. The board only accepts the same drop (`duo2 task add`).
 - **The task template** belongs to the templates session. The board adds no keys to it.

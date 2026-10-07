@@ -1,0 +1,121 @@
+[
+ {
+  "name": "00-study",
+  "w": 1200,
+  "h": 860,
+  "title": "0 \u00b7 Projects and tasks: the study",
+  "kind": "board"
+ },
+ {
+  "name": "01-journeys",
+  "w": 1440,
+  "h": 760,
+  "title": "1 \u00b7 Today\u2019s journeys",
+  "kind": "board"
+ },
+ {
+  "name": "02-words",
+  "w": 1200,
+  "h": 720,
+  "title": "2 \u00b7 The words, in one sentence each",
+  "kind": "board"
+ },
+ {
+  "name": "03-new-a-fresh",
+  "w": 1200,
+  "h": 900,
+  "title": "3 \u00b7 New project, A: one sheet, start fresh",
+  "kind": "board"
+ },
+ {
+  "name": "04-new-a-existing",
+  "w": 1200,
+  "h": 900,
+  "title": "4 \u00b7 New project, A: a folder I have",
+  "kind": "board"
+ },
+ {
+  "name": "05-new-b-chooser",
+  "w": 1200,
+  "h": 640,
+  "title": "5 \u00b7 New project, B: choose first",
+  "kind": "board"
+ },
+ {
+  "name": "06-new-c-menu",
+  "w": 1200,
+  "h": 560,
+  "title": "6 \u00b7 New project, C: a second command",
+  "kind": "board"
+ },
+ {
+  "name": "07-empty-all-projects",
+  "w": 1200,
+  "h": 760,
+  "title": "7 \u00b7 All projects before the first project",
+  "kind": "board"
+ },
+ {
+  "name": "08-first-project",
+  "w": 1200,
+  "h": 800,
+  "title": "8 \u00b7 The first project: a checklist that ticks",
+  "kind": "board"
+ },
+ {
+  "name": "08b-guided-task",
+  "w": 1200,
+  "h": 860,
+  "title": "8b \u00b7 Making a task, guided",
+  "kind": "board"
+ },
+ {
+  "name": "11b-new-session-in-task",
+  "w": 1200,
+  "h": 560,
+  "title": "11b \u00b7 Starting a session for a task",
+  "kind": "board"
+ },
+ {
+  "name": "09-sample-project",
+  "w": 1200,
+  "h": 560,
+  "title": "9 \u00b7 Alternative: a sample project",
+  "kind": "board"
+ },
+ {
+  "name": "10-tasks-empty",
+  "w": 1200,
+  "h": 780,
+  "title": "10 \u00b7 No tasks yet, and a new task",
+  "kind": "board"
+ },
+ {
+  "name": "11-assign-drag",
+  "w": 1200,
+  "h": 720,
+  "title": "11 \u00b7 Put a session in a task: drag",
+  "kind": "board"
+ },
+ {
+  "name": "12-assign-menu-picker",
+  "w": 1200,
+  "h": 660,
+  "title": "12 \u00b7 Put a session in a task: menu and picker",
+  "kind": "board"
+ },
+ {
+  "name": "13-notices",
+  "w": 1200,
+  "h": 600,
+  "title": "13 \u00b7 Saying what changed",
+  "kind": "board"
+ },
+ {
+  "name": "14-recommendation",
+  "w": 1200,
+  "h": 940,
+  "title": "14 \u00b7 Decisions and the v1 slice",
+  "kind": "board"
+ }
+]

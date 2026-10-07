@@ -248,12 +248,13 @@ Sources: `~/repos/duo/core/vault/**`, `.claude/rules/vault.md`, `docs/prd/enh-20
 |---|---|---|---|---|
 | `type` | Text | yes | `task` | The typing key (legacy convention). Bases filter: `type == "task"`. For TaskNotes, set property identification `type`=`task`. |
 | `title` | Text | yes | free text, one line | Human name. Changing it does **not** rename the file. |
-| `status` | Text | yes | `open` \| `in-progress` \| `waiting` \| `review` \| `done` \| `dropped` | Matches the design's "Open → in progress → done" plus three PM states. `review` means the agent proposes done and the human must accept (`agent-harness-landscape.md` §Tasks). `open`, `in-progress` and `done` are TaskNotes' defaults. Kanban columns = status. |
+| `status` | Text | yes | `open` \| `in-progress` \| `waiting` \| `review` \| `done` \| `dropped`, or a project lane from `PROJECT.md` `lanes:` (DL-150) | Matches the design's "Open → in progress → done" plus three PM states. `review` means the agent proposes done and the human must accept (`agent-harness-landscape.md` §Tasks). `open`, `in-progress` and `done` are TaskNotes' defaults. Kanban columns = status. |
 | `owner` | Text | no (default: the user's configured name) | entity-ref (§4.3), single | A person's **display name**, e.g. `Geoff`. Not the token `me`, which means someone else when a file is shared; "mine" is computed by comparing with a Duo setting. |
 | `waiting_on` | List | no; omit when empty | list of entity-refs | People, teams or free text ("Legal sign-off"). Soft lint: non-empty ⇒ `status: waiting`. "Needs you" = `waiting_on` contains the user's name. |
 | `done_when` | Text | no | one line | Longer criteria go in a `## Done when` body section; Properties can't render markdown. |
 | `due` | Date | no | `YYYY-MM-DD` | Never write a datetime into `due`. |
 | `depends_on` | List | no | quoted relative markdown links to tasks, e.g. `"[Competitor scan](competitor-scan.md)"` | Real file references, so real links: graph edges, renamed along with the target by Obsidian and by Duo. Not TaskNotes' nested `blockedBy`. |
+| `references` | List | no; omit when empty | quoted relative markdown links to files, folders (trailing `/`) or URLs, e.g. `"[PRD v2](../docs/prd-v2.md)"` | A task's documents, folders and links (DL-150). Real links: backlinks and rename tracking in Obsidian 1.11+; a folder link may be unresolved there [U]. Duo edits only this key. |
 | `milestone` | Text | no | entity-ref, single | Plain text until milestone notes exist. |
 | `project` | Text | **reserved; Duo does not write it** for tasks under `<project>/tasks/` | quoted markdown link to a `PROJECT.md` | It would duplicate the location and drift when a task moves. If present (hand-written, or a future cross-project task), the location wins and Duo shows a lint warning. Duo never rewrites it. |
 | `sessions` | List | no; omit when empty | bare Claude Code session UUIDs | See §4.4. |
@@ -262,7 +263,7 @@ Sources: `~/repos/duo/core/vault/**`, `.claude/rules/vault.md`, `docs/prd/enh-20
 | `tags` | Tags | user-owned | YAML list, no `#` | Duo preserves and reads tags; it never adds or removes them. |
 | `aliases`, `cssclasses`, anything else | — | — | — | Preserved byte-faithfully. |
 
-**Canonical key order** for keys Duo writes: `type, title, status, owner, waiting_on, done_when, due, depends_on, milestone, sessions, created, completed`.
+**Canonical key order** for keys Duo writes: `type, title, status, owner, waiting_on, done_when, due, depends_on, references, milestone, sessions, created, completed`.
 
 - Duo never moves an existing key. It inserts a missing key just after the nearest preceding canonical key that is present, or at the end of the block.
 - If that turns out to be awkward to implement, appending at the end is acceptable.
@@ -351,6 +352,7 @@ Sources: `~/repos/duo/core/vault/**`, `.claude/rules/vault.md`, `docs/prd/enh-20
 | `owner` | Text | no | entity-ref |
 | `milestone` | Text | no | entity-ref (the next milestone) |
 | `due` | Date | no | `YYYY-MM-DD` (target date). Same name and type as in tasks. |
+| `lanes` | List | no; written only when the board's columns change from the default | status values in board order, e.g. `open`, `in-progress`, `blocked`, `review`, `done` (DL-150). Absent = the default five. |
 | `tags` | Tags | user-owned | — |
 
 ### 4.7 Examples

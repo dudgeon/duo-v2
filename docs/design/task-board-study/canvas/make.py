@@ -253,7 +253,51 @@ T = {
 LANES = [("open", "Open"), ("in-progress", "In progress"), ("waiting", "Waiting"), ("review", "Review"), ("done", "Done")]
 
 
-def card(c, sel=False, cls="", compact=False, hover=False):
+def doc_icon(kind="md", color=None):
+    c = color or TEXT2
+    if kind == "url":
+        return f'<svg width="11" height="11" viewBox="0 0 12 12" style="flex:none"><circle cx="6" cy="6" r="4.8" fill="none" stroke="{c}" stroke-width="1.1"/><path d="M1.2 6h9.6M6 1.2c1.6 1.4 1.6 8.2 0 9.6M6 1.2c-1.6 1.4-1.6 8.2 0 9.6" fill="none" stroke="{c}" stroke-width="1.1"/></svg>'
+    return f'<svg width="10" height="12" viewBox="0 0 10 12" style="flex:none"><path d="M1.5 1.5h4.5l2.5 2.5v6.5H1.5z" fill="none" stroke="{c}" stroke-width="1.1" stroke-linejoin="round"/><path d="M6 1.5V4h2.5" fill="none" stroke="{c}" stroke-width="1.1"/></svg>'
+
+
+def sess_mark():
+    return f'<span style="display:inline-flex;color:{TEXT2};flex:none">{g("bubble")}</span>'
+
+
+def sess_rows(ss, hover_i=None, maxn=3):
+    out = []
+    for i, (st, t, tm) in enumerate(ss[:maxn]):
+        t = t or ["Scope notes", "Draft outline", "Kickoff"][i % 3]
+        tm = tm or "3d"
+        bg = SELECTED if i == hover_i else GROUND
+        col = f'color:{NEEDS};font-weight:600' if st == "needs" else f'color:{TEXT}'
+        jump = f'<span style="display:inline-flex;margin-left:4px">{g("jump", TEXT)}</span>' if i == hover_i else ""
+        out.append(f'<div style="display:flex;align-items:center;gap:6px;height:22px;padding:0 6px;border-radius:4px;background:{bg};font-size:12px;line-height:16px;white-space:nowrap;min-width:0">'
+                   f'{g(GLYPH_FOR[st])}<span class="ell" style="flex:1;{col}">{e(t)}</span><span class="t2" style="flex:none">{e(tm)}</span>{jump}</div>')
+    if len(ss) > maxn:
+        out.append(f'<div class="t2" style="font-size:12px;line-height:16px;padding:2px 6px">+{len(ss) - maxn} more</div>')
+    return f'<div style="display:flex;flex-direction:column;gap:3px;margin-top:5px;padding-top:6px;border-top:1px solid {SELECTED}"><div style="display:flex;align-items:center;gap:5px;font-size:11px;line-height:14px;color:{TEXT2};padding-left:2px">{sess_mark()}<span>Sessions</span></div>{"".join(out)}</div>'
+
+
+def sess_chips(ss):
+    out = []
+    for i, (st, t, tm) in enumerate(ss):
+        t = t or ["Scope notes", "Draft outline", "Kickoff"][i % 3]
+        col = f'color:{NEEDS};border-color:{NEEDS};font-weight:600' if st == "needs" else f'color:{TEXT}'
+        out.append(f'<span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border:1px solid {EDGE};border-radius:10px;font-size:12px;line-height:16px;max-width:100%;{col}">'
+                   f'{g(GLYPH_FOR[st])}<span class="ell">{e(t)}</span></span>')
+    return f'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;padding-left:17px">{"".join(out)}</div>'
+
+
+def sess_strip(ss):
+    glyphs = "".join(g(GLYPH_FOR[s[0]]) for s in ss)
+    lead_needs = ss[0][0] == "needs"
+    col = f'color:{NEEDS};font-weight:600' if lead_needs else f'color:{TEXT}'
+    return (f'<div style="display:flex;align-items:center;gap:6px;margin-top:5px;padding:4px 6px;border-radius:4px;background:{GROUND};font-size:12px;line-height:16px">'
+            f'{sess_mark()}<span style="display:flex;gap:3px">{glyphs}</span><span style="{col}">{len(ss)} session{"s" if len(ss) > 1 else ""}</span><span style="margin-left:auto">{g("chev")}</span></div>')
+
+
+def card(c, sel=False, cls="", compact=False, hover=False, sess="lead", sess_hover=None, docs=False):
     k = "tc" + (" sel" if sel else "") + (f" {cls}" if cls else "")
     done = "done" in c
     title = f'<div class="tt">{box(done)}<span style="flex:1;min-width:0">{e(c["t"])}</span>'
@@ -273,13 +317,17 @@ def card(c, sel=False, cls="", compact=False, hover=False):
     if c.get("done"):
         meta.append(f'<span>done {e(c["done"])}</span>')
     ss0 = c.get("ss") or []
-    if len(ss0) > 1 and not c.get("done") and not compact:
+    if len(ss0) > 1 and not c.get("done") and not compact and sess == "lead":
         meta.append(f'<span>{len(ss0)} sessions</span>')
+    if docs and c.get("docs"):
+        meta.append(f'<span>{doc_icon()}{c["docs"]}</span>')
     out = title
     if meta:
         out += f'<div class="mt">{"".join(meta)}</div>'
     ss = c.get("ss") or []
-    if ss and not compact:
+    if ss and not compact and sess != "lead":
+        out += {"rows": lambda: sess_rows(ss, sess_hover), "chips": lambda: sess_chips(ss), "strip": lambda: sess_strip(ss)}[sess]()
+    elif ss and not compact:
         lead = ss[0]
         glyphs = "".join(g(GLYPH_FOR[s[0]]) for s in ss)
         if lead[1] and not done:
@@ -575,7 +623,7 @@ target_card = card(T['open'][0]).replace('class="tc"', f'class="tc" style="outli
 sess_drop = (f'<div style="display:flex;gap:16px;align-items:flex-start"><div style="width:220px;display:flex;flex-direction:column;gap:6px">'
              f'<div class="row sel" style="margin:0;box-shadow:0 12px 32px rgba(31,35,40,0.22)">{g("idle")}<span class="ti">Pricing research</span><span class="tm t2">2h</span></div>'
              f'<div class="note">A session dragged from the list (B) or a session tab</div></div>'
-             f'<div style="width:220px">{target_card}<div class="note" style="margin-top:6px">Drop on a card: <code>duo2 task add</code>, the same as Add to Task (CX study owns this flow)</div></div></div>')
+             f'<div style="width:220px;display:flex;flex-direction:column;gap:6px">{target_card}<span style="align-self:flex-start;background:{TEXT};color:{PANE};border-radius:4px;padding:1px 6px;font-size:12px;line-height:16px">Add to “Pricing page copy”</span><div class="note">Drop on a card: <code>duo2 task add</code>. Label, ⌥ Move to, Already in, and the Undo notice as the CX study draws them (its boards 11–12).</div></div></div>')
 board("07-drag", 1500, 1060, "7 · Drag", "Between lanes, onto Done, a session onto a card; what is written.", bd(1500, 1060,
     "7 · Drag: what moves and what gets written",
     "A drag between lanes is Set Status (<code>duo2 task status</code>). It rewrites one line of one note, through the editor’s buffer if the note is open (DL-13), and ⌘Z undoes it. [P]",
@@ -591,13 +639,13 @@ board("07-drag", 1500, 1060, "7 · Drag", "Between lanes, onto Done, a session o
 # ---------- 8 · empty and narrow ----------
 empty_win = pwindow(980, 560, f'''<div style="flex:1;display:flex;flex-direction:column">{board_header().replace("Tasks · 11", "Tasks · 0")}
 <div style="flex:1;display:flex;align-items:center;justify-content:center"><div style="width:420px;text-align:center;white-space:normal;display:flex;flex-direction:column;gap:10px;align-items:center">
-<div style="font-weight:600;font-size:14px">No tasks yet</div><div class="t2">[Explainer copy from the project &amp; task CX study]</div>
-<div style="display:flex;gap:8px"><span class="btn">+ New task</span><span class="btn">Make a Task from a session…</span></div></div></div></div>''', ptoolbar(toggle="board"))
-empty_lane = lane("review", "Review", '<div class="drop">Nothing to review</div>', 0)
+<div style="font-weight:600;font-size:14px">No tasks yet</div><div class="t2">Most sessions are for a task or a goal. Put them in a task and Duo keeps them together, so you can come back to the work by what it’s for. A task can have many sessions; a session doesn’t need one.</div>
+<div style="display:flex;gap:8px"><span class="btn">+ New task</span></div><div class="t2" style="font-size:12px">or drag a session here</div></div></div></div>''', ptoolbar(toggle="board"))
+empty_lane = lane("review", "Review", '<div class="drop" style="height:56px;padding:0 10px;text-align:center;white-space:normal">Drop a task here to mark it review</div>', 0)
 board("08-empty-narrow", 1500, 960, "8 · Empty and narrow", "No tasks, an empty lane, and widths.", bd(1500, 960,
     "8 · Empty states and narrow widths",
     "The minimum window is 1280×800 (DL-129), but the board’s share of it shrinks when the right pane opens. Lanes keep at least 150; below that the board gives way in steps. [P]",
-    f'''<div style="display:flex;gap:20px;align-items:flex-start">{frame(empty_win, 980, 560, "A project with no tasks", "Centred in the board: a title, the CX study’s explainer (its copy, not drawn here), + New task and Make a Task from a session…. The lanes don’t show until there is a task.")}
+    f'''<div style="display:flex;gap:20px;align-items:flex-start">{frame(empty_win, 980, 560, "A project with no tasks", "Centred in the board: a title, the CX study’s explainer and hint (its approved copy, DL-147), and + New task. The lanes don’t show until there is a task.")}
 <div style="display:flex;flex-direction:column;gap:8px;width:220px"><div class="cap">An empty lane</div><div style="height:180px;display:flex">{empty_lane}</div><div class="note">The lane stays, so it is a drop target: a dashed box (<code>controlEdge</code>, the dash token) saying what isn’t there. All five lanes always show (Bases’ “Hide empty columns” is off for the same reason).</div></div>
 <div class="txt" style="flex:1"><h3>Widths, in steps [P]</h3><ol>
 <li><b>900 and up</b>: five lanes, flexing from 240 down to about 170.</li>
@@ -686,7 +734,7 @@ board("09-obsidian", 1500, 960, "9 · The same board in Obsidian", "The files: a
 # ---------- 10 · recommendation ----------
 board("10-recommendation", 1200, 820, "10 · Recommendation", "a + c data, C placement, computed order.", bd(1200, 820,
     "10 · Recommendation and a first slice",
-    "<b>Data: (a) + (c).</b> The board is computed from the task notes, a drag writes only <code>status</code>, and “Add Obsidian Board” writes a <code>tasks.base</code> with the same Kanban view. <b>Placement: C</b>, the board over the left and middle with the note beside it, switched by <b>Sessions | Tasks</b>. <b>Order: computed.</b> [P]",
+    "<b>Approved by Geoff, 2026-10-07 (DL-148, DL-150):</b> C; computed order; the Obsidian base with pinned lanes; session rows on cards (S1, board 11); columns kept as <code>lanes:</code> in <code>PROJECT.md</code> (board 12); a task’s <code>references:</code> in frontmatter, folders included (board 13). <b>Data: (a) + (c).</b> The board is computed from the task notes, a drag writes only <code>status</code>, and “Add Obsidian Board” writes a <code>tasks.base</code> with the same Kanban view. <b>Placement: C</b>, the board over the left and middle with the note beside it, switched by <b>Sessions | Tasks</b>. <b>Order: computed.</b> [P]",
     f'''<div style="display:flex;gap:16px;align-items:flex-start">
 <div class="txt" style="flex:1"><h3>Why</h3><ul>
 <li><b>One truth.</b> <code>status</code> in each note is the lane, in Duo, in Bases, in TaskNotes. Nothing to sync, nothing to drift, no new key.</li>
@@ -696,12 +744,12 @@ board("10-recommendation", 1200, 820, "10 · Recommendation", "a + c data, C pla
 <h3>Not recommended</h3><p>(b) a Kanban-plugin note: two truths, whole-file rewrites, an unmaintained plugin. A: two lanes in 460. B is the second choice if the session list must stay visible.</p></div>
 <div class="txt" style="width:520px;flex:none"><h3>First slice [P]</h3><ol>
 <li><b>Sessions | Tasks</b> in the toolbar of a project; the board as C; Board link on the Tasks fold. <code>duo2 task board [show|hide|toggle]</code>.</li>
-<li>Five lanes, cards as board 6, unknown statuses as extra lanes, Done’s Earlier and Dropped folds.</li>
+<li>Lanes from <code>PROJECT.md</code> <code>lanes:</code> (default five), + Add Column and the lane menu (board 12); cards as board 6 with session rows (board 11); unknown statuses as extra lanes; Done’s Earlier and Dropped folds.</li><li>A task’s <code>references:</code> in its note’s properties, with file and folder completion (board 13).</li>
 <li>Drag between lanes = <code>duo2 task status</code>; drop a session = <code>duo2 task add</code>; ⌘Z.</li>
 <li>Empty and narrow as board 8.</li>
 <li>“Add Obsidian Board” writes board 9’s <code>tasks.base</code> (DL-20’s action, extended).</li></ol>
 <h3>Later</h3><ul><li>ENH-35: a board across all projects, and the Tasks fold grouped by status as the narrow board.</li><li>ENH-36: choose card properties; import a Kanban-plugin note once.</li></ul>
-<h3>Open (Q-119 to Q-121)</h3><ul><li>Q-119 where it lives (A, B, C).</li><li>Q-120 card order (computed, or manual with a key).</li><li>Q-121 the base’s <code>groupOrder</code>.</li></ul></div></div>'''))
+<h3>Answered</h3><p class="note">Q-119 C · Q-120 computed · Q-121 pinned · Q-127 <code>lanes:</code> · Q-128 <code>references:</code>.</p></div></div>'''))
 
 # ---------- 2 to 5 · where the board lives ----------
 WW, WH = 1440, 900
@@ -782,6 +830,140 @@ board("05-where-1280", 2720, 1060, "5 · B and C at 1280×800 (the smallest wind
       "B and C at the minimum window size.", bd(2720, 1060, "5 · B and C at 1280×800, the smallest window (DL-129)",
       "Side panes keep their width; the board flexes. C with the note open has 820: below 900 the Done lane folds into a 34-wide strip (click to open it), so four lanes keep about 190. [P]",
       f'<div style="display:flex;gap:40px">{frame(b1280, 1280, 800, "B · 980 for five lanes", "Five lanes of about 180. With a note open it is 520: two lanes and a sideways scroll.")}{frame(c1280, 1280, 800, "C · note open, Done folded", "Four lanes of about 190 and Done as a strip. With the right pane hidden (⌥⌘0) all five lanes come back at full width.")}</div>'))
+
+# ---------- 11 · sessions on a card (Geoff, round 1: "clearer iconography to show that a session is a session") ----------
+T["in-progress"][0]["docs"] = 4
+T["in-progress"][1]["docs"] = 2
+S_CARDS = [T["in-progress"][0], T["in-progress"][1], T["waiting"][1]]
+
+
+def sess_col(cap, style, note, rec=False, hover=None, extra=""):
+    cs = "".join(card(c, sess=style, sess_hover=(hover if i == 0 else None)) for i, c in enumerate(S_CARDS))
+    r = '<span class="rec">Recommended</span>' if rec else ""
+    return (f'<div style="display:flex;flex-direction:column;gap:8px;width:300px;flex:none"><div class="cap">{cap}{r}</div>'
+            f'<div class="lb" style="flex:none;gap:8px">{cs}</div>{extra}<div class="note">{note}</div></div>')
+
+
+pop = (f'<div style="margin-left:40px;width:260px;background:{PANE};border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,0.22);padding:8px 0;font-size:12px;line-height:16px">'
+       f'<div class="sl" style="padding:2px 12px 4px;display:flex;gap:5px">{sess_mark()}Sessions · 3</div>'
+       + "".join(f'<div style="display:flex;align-items:center;gap:6px;height:24px;padding:0 12px;{"background:" + SELECTED if i == 0 else ""}">{g(st)}<span style="flex:1;{"color:" + NEEDS + ";font-weight:600" if st == "needs" else ""}">{n}</span><span class="t2">{tm}</span></div>'
+                 for i, (st, n, tm) in enumerate([("needs", "PRD v2 edits", "4m"), ("working", "Scope notes", "working"), ("idle", "Draft outline", "3d")]))
+       + '</div>')
+board("11-sessions", 1500, 980, "11 · Sessions on a card: clearer marks", "Three ways to show a card's sessions so they read as sessions you can open.", bd(1500, 980,
+    "11 · Sessions on a card: which lines are sessions, and that a click opens one",
+    "Geoff, on board 4: “we need clearer iconography to show that a session is a session (which clicking on will open)”. The card from board 6 drew one session line with only its state glyph, which reads as a bullet. Three ways to make sessions read as sessions [P]; the session mark is the chat bubble Duo already uses for a session’s chat mode.",
+    f'''<div style="display:flex;gap:28px;align-items:flex-start">
+{sess_col("S1 · Session rows", "rows", "Under a hairline, a <b>Sessions</b> label with the session mark, then one row per session (up to 3, then “+n more”): state glyph, title, wait, on a <code>ground</code> fill so each row is plainly a button. Hover: <code>selected</code> and the open arrow. Every session is one click away.", rec=True, hover=0)}
+{sess_col("S2 · Session chips", "chips", "Each session a pill (<code>controlEdge</code>, radius 10): glyph and title, wrapping. Compact, but chips read as tags and the wait is lost.")}
+{sess_col("S3 · A count that opens a list", "strip", "One strip: the session mark, every session’s glyph, “3 sessions”, a chevron. A click opens a popover listing them; a second click opens one. Tidiest, but two clicks.", extra=pop)}
+<div class="txt" style="flex:1"><h3>A click on a session [P]</h3><ul>
+<li><b>Opens it.</b> The board switches to Sessions with that session selected and its tab in front, resumed if it was closed (as a session link does, DL-87). The task’s note stays in the right pane.</li>
+<li>Right-click: the session menu (DL-108), so Remove from “<i>task</i>” is there (CX study board 12).</li>
+<li>A click anywhere else on the card selects it and opens its note on the right.</li>
+<li>The + on hover is still New Session in Task (DL-112).</li></ul>
+<h3>Why S1 (approved, DL-148)</h3><p>It answers both parts of the note: the mark and the label say “session”, and a filled row with a hover arrow says “click to open”. Cards get taller (22 per session, at most 3 rows), which C’s 980 has room for.</p>
+<h3>Same rows elsewhere</h3><p>The task note’s properties already list sessions (DL-102). S1 gives the card the same order and glyphs, so a session looks the same on the card and in the note.</p></div></div>'''))
+
+# ---------- 12 · columns (Geoff, round 1: "we need a way to add/remove columns") ----------
+def col_card(t, extra=""):
+    return f'<div class="tc"><div class="tt">{box()}<span style="flex:1">{e(t)}</span></div>{extra}</div>'
+
+
+def hdr(label, n, menu=False, muted=False):
+    dots = f'<span style="margin-left:auto;width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;background:{SELECTED if menu else "transparent"};color:{TEXT}">⋯</span>'
+    return f'<div class="lh" style="{"color:" + TEXT2 if muted else ""}"><span>{e(label)} · {n}</span>{dots if menu else ""}</div>'
+
+
+lane_menu = (f'<div style="position:absolute;left:680px;top:136px;width:220px;background:{PANE};border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,0.22);padding:6px 0;font-size:13px;line-height:20px;z-index:2">'
+             + "".join(f'<div style="height:24px;display:flex;align-items:center;padding:0 14px;{st}">{x}</div>' if x != "—" else f'<div style="height:1px;background:{RULE};margin:5px 0"></div>'
+                       for x, st in [("Move Left", ""), ("Move Right", ""), ("—", ""), ("Add Column After…", ""), ("—", ""), ("Remove Column…", "")])
+             + '</div>')
+cols_html = (f'<div style="display:flex;gap:10px;flex:1;min-height:0;padding:10px 16px 16px;position:relative">'
+             f'<div class="lane">{hdr("Open", 3)}<div class="lb">{col_card("Pricing page copy")}{col_card("Refund flow edge cases")}{col_card("Pull the top three quotes")}</div></div>'
+             f'<div class="lane">{hdr("In progress", 2)}<div class="lb">{col_card("PRD v2")}{col_card("Exec review prep")}</div></div>'
+             f'<div class="lane">{hdr("Blocked", 1)}<div class="lb">{col_card("Analytics events spec", f"<div class=mt><span>waiting on Data team</span></div>")}</div></div>'
+             f'<div class="lane">{hdr("Review", 1, menu=True)}<div class="lb">{col_card("Checkout copy audit")}</div></div>'
+             f'<div class="lane">{hdr("Done", 2)}<div class="lb">{col_card("Interview synthesis")}</div></div>'
+             f'<div style="width:150px;flex:none;display:flex;flex-direction:column;gap:6px"><div class="lh" style="color:{TEXT}">&nbsp;</div>'
+             f'<div style="border:1px dashed {EDGE};border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:6px"><span class="filter" style="width:100%">Column name</span><span class="note">Return adds it · Esc</span></div>'
+             f'<div style="display:flex;align-items:center;gap:6px;color:{TEXT2};font-size:12px;padding:0 4px">{plus()}Add Column</div></div>'
+             f'{lane_menu}</div>')
+cols_win = pwindow(1200, 560, f'<div style="flex:1;display:flex;flex-direction:column">{board_header()}{cols_html}</div>', ptoolbar(toggle="board"))
+question = (f'<div style="width:420px;background:{PANE};border:1px solid {RULE};border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,0.22);padding:16px 18px;display:flex;flex-direction:column;gap:10px;white-space:normal">'
+            f'<div style="font-weight:600">Remove the Review column?</div><div class="t2">Its task moves to the column you choose. Nothing else in the note changes.</div>'
+            f'<div style="background:{GROUND};border-radius:6px;padding:6px 10px;font-size:12px">{box()} Checkout copy audit</div>'
+            f'<div style="display:flex;align-items:center;gap:8px">Move it to <span class="popup">In progress{g("updown")}</span></div>'
+            f'<div style="display:flex;gap:8px;justify-content:flex-end"><span class="btn">Cancel</span><span class="btn" style="font-weight:600;border-color:{TEXT}">Remove Column</span></div></div>')
+proj_diff = (f'<div class="diffl"><span class="ctx">type: project</span><span class="ctx">title: Checkout redesign</span><span class="ctx">status: active</span><span class="ctx">health: on-track</span>'
+             f'<span class="add">+lanes:</span><span class="add">+  - open</span><span class="add">+  - in-progress</span><span class="add">+  - blocked</span><span class="add">+  - review</span><span class="add">+  - done</span></div>')
+board("12-columns", 1760, 1120, "12 · Adding and removing columns", "Columns are status values; the project's list of them lives in PROJECT.md.", bd(1760, 1120,
+    "12 · Adding and removing columns",
+    "Geoff, on board 4: “we need a way to add/remove columns”. A column <i>is</i> a <code>status</code> value, so adding “Blocked” means tasks dropped there get <code>status: blocked</code>: plain text that Obsidian, Bases and TaskNotes read. The project’s list of columns is a <code>lanes</code> list in the project’s brief (<code>_PROJECT.md</code>, <code>PROJECT.md</code> or the <code>project_brief</code> note, DL-147), written only once you change the default five (DL-150).",
+    f'''<div style="display:flex;gap:20px;align-items:flex-start">{frame(cols_win, 1200, 560, "A project with a Blocked column; the Review column’s menu open; + Add Column", "<b>+ Add Column</b> at the end of the lanes: a name field; Return adds the lane (the status is the name’s slug: Blocked → <code>blocked</code>). Each lane header has ⋯ on hover: Move Left, Move Right, Add Column After…, Remove Column…. Lane headers also drag to reorder. Open and Done can’t be removed: new tasks start in Open and Mark Complete needs Done (their Remove item is dimmed).")}
+<div style="display:flex;flex-direction:column;gap:14px;flex:1;min-width:0">{question}<div class="note">Removing a column that holds tasks asks where they go (a Duo question, never an alert), then writes each task’s <code>status</code>. An empty column just goes (⌘Z brings it back).</div>
+<div class="txt"><h3>The brief (<code>_PROJECT.md</code>), after adding Blocked</h3>{proj_diff}<p class="note">Absent means the default five. Duo adds the key the first time you change columns, and edits only its lines afterwards.</p></div></div></div>
+<div style="display:flex;gap:14px">
+<div class="txt" style="flex:1"><h3>Rules [P]</h3><ul>
+<li><b>A column is a status.</b> No column exists only in Duo’s view state. Set Status ▸ (DL-115) lists the project’s columns, then dropped.</li>
+<li><b>Unlisted statuses still show</b>, as an extra lane at the end in <code>text2</code> with <b>Keep as Column</b> in its menu (that adds it to <code>lanes</code>). Nothing is ever hidden or rewritten silently.</li>
+<li><b>Renaming</b> a column would rewrite every task in it, so it isn’t offered now. Remove then add does the same, and asks first (ENH).</li>
+<li>Duo’s meanings stay with the words: <code>done</code> and <code>dropped</code> close a task (<code>completed</code> written); <code>waiting</code> takes <code>waiting_on</code>; anything else counts as open work.</li></ul></div>
+<div class="txt" style="flex:1"><h3>Obsidian [P]</h3><ul>
+<li>“Add Obsidian Board” writes <code>groupOrder</code> from <code>lanes</code> (Q-121 as answered: pinned).</li>
+<li>When the columns change afterwards, the board header shows “Obsidian board is out of date · <u>Update</u>”. <b>Update Obsidian Board</b> rewrites only the <code>groupOrder</code> lines Duo wrote; everything else in the base stays the user’s.</li>
+<li>A user who reorders columns in Obsidian changes only the base. Duo doesn’t read it back (one-way: <code>lanes</code> is Duo’s list).</li></ul></div>
+<div class="txt" style="flex:1"><h3>Where else could the list live?</h3><ul>
+<li><b><code>PROJECT.md</code> <code>lanes:</code></b> (proposed): travels with the folder, visible in Obsidian’s Properties, one plain list.</li>
+<li><b><code>.duo/</code></b>: invisible to Obsidian and git-ignorable, but the project’s workflow would live outside its files (against ENH-228’s “files are the schema”).</li>
+<li><b>The <code>.base</code> file</b>: only exists when asked for (DL-20), and is Obsidian’s.</li></ul><p class="note">Geoff, round 2: <b><code>PROJECT.md</code> <code>lanes:</code></b> (Q-127, DL-150).</p></div></div>'''))
+
+# ---------- 13 · documents and links on a task (Geoff, 2026-10-07) ----------
+docs_fm = '''---
+type: task
+title: PRD v2
+status: in-progress
+owner: Geoff
+due: 2026-10-10
+references:
+  - "[PRD v2](../docs/prd-v2.md)"
+  - "[research](../research/)"
+  - "[Funnel data](../data/q3-funnel.csv)"
+  - "[Figma: checkout flow](https://figma.com/file/…)"
+sessions:
+  - "[PRD v2 edits](duo2://session/3f2c…)"
+created: 2026-10-01
+---
+
+Rewrite the checkout PRD around the abandonment data.
+See also [Shopify teardown](../research/shopify.md).'''
+doc_rows = [("md", "PRD v2", "docs/prd-v2.md"), ("folder", "research", "research/"), ("md", "Funnel data", "data/q3-funnel.csv"), ("url", "Figma: checkout flow", "figma.com")]
+dl = "".join(f'<div class="pl"><span class="k">{"references" if i == 0 else ""}</span><span style="display:flex;align-items:center;gap:6px;min-width:0">{(g("folder") if k == "folder" else doc_icon(k))}<span style="text-decoration:underline;text-decoration-color:{EDGE}">{e(n)}</span><span class="t2 mono" style="font-size:11px">{e(p)}</span></span></div>' for i, (k, n, p) in enumerate(doc_rows))
+dl += f'<div class="pl"><span class="k"></span><span style="display:flex;align-items:center;gap:6px;border:1px solid {TEXT};border-radius:4px;padding:0 6px;height:20px;width:230px;background:{PANE}">prd|</span></div>'
+ac = (f'<div style="margin:-4px 0 0 106px;width:300px;background:{PANE};border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,0.22);padding:6px 0;font-size:12px;line-height:16px">'
+      + "".join(f'<div style="display:flex;align-items:center;gap:7px;height:26px;padding:0 12px;{"background:" + SELECTED if i == 0 else ""}">{(g("folder") if k == "folder" else doc_icon(k))}<span><b>{a}</b>{b}</span><span class="t2 mono" style="margin-left:auto;font-size:11px">{p}</span></div>'
+                for i, (k, a, b, p) in enumerate([("md", "prd", "-v1.md", "docs/"), ("md", "prd", "-review-notes.md", "docs/"), ("folder", "prd", "-archive/", "docs/"), ("md", "prd", "-v2-exec.md", "~/work/q4-planning/")]))
+      + f'<div style="height:1px;background:{RULE};margin:5px 0"></div><div style="display:flex;align-items:center;gap:7px;height:24px;padding:0 12px;color:{TEXT2}">{doc_icon("url")}Paste a link, or drag a file here</div></div>')
+sess_l = "".join(f'<div class="pl"><span class="k">{"sessions" if i == 0 else ""}</span><span style="display:flex;align-items:center;gap:6px">{g(st)}<span style="{"font-weight:600;color:" + NEEDS if st == "needs" else ""}">{n}</span><span class="t2">{tm}</span></span></div>' for i, (st, n, tm) in enumerate([("needs", "PRD v2 edits", "4m")]))
+note13 = (f'<div style="padding:18px 24px;white-space:normal"><div class="pb"><div class="sl" style="margin-bottom:2px">Properties</div>'
+          f'<div class="pl"><span class="k">status</span><span>in-progress {g("chevd")}</span></div><div class="pl"><span class="k">due</span><span>2026-10-10</span></div>{dl}</div>'
+          f'{ac}<div class="pb" style="margin-top:10px">{sess_l}</div>'
+          f'<div style="font-weight:600;font-size:18px;line-height:24px;margin:6px 0 10px">PRD v2</div><div>Rewrite the checkout PRD around the abandonment data.</div>'
+          f'<div>See also <span style="text-decoration:underline;text-decoration-color:{EDGE}">Shopify teardown</span>. <span class="t2" style="font-size:12px">← a body link: just a link</span></div>'
+          f'<div style="margin-top:14px;display:flex;align-items:center;gap:6px"><span class="mono">[[sho</span><span class="t2" style="font-size:12px">typing <code>[[</code> or <code>@</code> anywhere in a note completes files too, and writes a relative markdown link (DL-17)</span></div></div>')
+note_frame = f'<div style="display:flex;flex-direction:column;height:100%"><div class="ltab"><span>Project</span><span class="on">PRD v2</span><span>+</span></div>{note13}</div>'
+board("13-documents", 1500, 1120, "13 · References on a task: documents, folders, links", "Frontmatter references list, shown and edited in the note's properties, with file autocomplete.", bd(1500, 1120,
+    "13 · A task’s references: documents, folders and links",
+    "Geoff, 2026-10-07: “tasks should have a way to associate documents and links to them; this can be vanilla markdown on disk, but the ui should help organize and present it, and add autocomplete for local files.” <b>Geoff, round 2: frontmatter, named <code>references</code>, and folders count too.</b> A <code>references:</code> list of quoted markdown links in the task’s frontmatter, the same shape as <code>depends_on</code> and <code>sessions</code> (format doc §4.2, DL-93). Duo shows it as rows in the note’s properties, with a field that completes local files and accepts links.",
+    f'''<div style="display:flex;gap:20px;align-items:flex-start">{frame(note_frame, 470, 760, "The task note in the right pane", "<b>references</b> rows: a file, folder or globe mark, the link’s text, its path or domain in mono <code>text2</code>. A click opens a document in a right-pane tab, reveals a folder in the file tree, and opens a URL per DL-3. Typing in the field below the rows completes files and folders: the project’s first, then the topic folder, matched words in bold; Return adds the link, relative to the note. Paste a URL to add it (the title is fetched when it’s a page Duo may open, else the domain). Drag a file or folder from the file tree onto the note or onto its card to add it too. Rows reorder by drag; right-click: Open, Reveal in Finder, Copy Link, Remove from Task.")}
+<div class="txt" style="width:430px;flex:none"><h3>On disk: <code>tasks/prd-v2.md</code></h3><pre class="mono" style="margin:0;white-space:pre;font-size:11.5px;line-height:17px">{e(docs_fm)}</pre>
+<p class="note">Plain Markdown. Obsidian (1.11+) shows each entry as a clickable link in Properties, makes it a backlink, and rewrites it when the file is renamed or moved. Bases can put <code>references</code> on a card. A folder link (trailing <code>/</code>) is plain Markdown, but Obsidian has no note to open for it [U]: it may show as unresolved there. Duo edits only this key’s lines, as it does <code>sessions</code>.</p></div>
+<div style="display:flex;flex-direction:column;gap:14px;flex:1">
+<div class="txt"><h3>On the card</h3><div style="width:250px">{card(T["in-progress"][0], sess="rows", docs=True)}</div><p class="note">A page mark and the count on line 2. Hover it for the names; a click opens the note scrolled to them.</p></div>
+<div class="txt"><h3>Why frontmatter (approved)</h3><ul>
+<li>It’s a list Duo can present and edit without parsing prose, the same way it does sessions.</li>
+<li>Obsidian treats it as links (backlinks, rename tracking) and as a property Bases can show.</li>
+<li>Body links stay “just links” (DL-93), and Duo never moves them. A body link’s menu offers <b>Add to References</b>.</li></ul>
+<p class="note">Not chosen: a <code>## Documents</code> body section (Q-128, DL-150).</p></div></div></div>'''))
 
 with open(os.path.join(OUT, "manifest.json"), "w") as f:
     json.dump(BOARDS, f, indent=1)

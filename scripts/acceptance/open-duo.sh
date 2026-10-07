@@ -2,6 +2,13 @@
 # Opens Duo on the acceptance workspace (rebuilding the app first if the sources changed).
 set -e
 cd "${0:A:h:h:h}"
+# This quits every running Duo and opens Geoff's own (the real support folder). Only the main
+# checkout may run it: a session's work tree that ran it once quit Geoff's Duo and every session in it.
+if [[ "$PWD" == */.claude/worktrees/* && -z "${DUO_OPEN_FROM_WORKTREE:-}" ]]; then
+  echo "open-duo.sh opens Geoff's own Duo and quits any other; it refuses to run from a work tree."
+  echo "For a test instance use scripts/run-live.sh, or launch Duo with your own DUO_SUPPORT_DIR (CLAUDE.md)."
+  exit 1
+fi
 if [[ -d "$HOME/DuoAcceptance/workspace" ]]; then python3 scripts/acceptance/fixtures.py --add; else python3 scripts/acceptance/fixtures.py; fi
 if [[ ! -x build/Duo.app/Contents/MacOS/Duo || -n "$(find Sources -newer build/Duo.app/Contents/MacOS/Duo -name '*.swift' | head -1)" ]]; then
   scripts/bundle.sh >/dev/null
