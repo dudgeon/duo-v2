@@ -1,6 +1,6 @@
 # A task board for a project
 
-Research date: 2026-10-07 · Status: **study, waiting for Geoff** (Q-119 to Q-121) · Canvas: https://claude.ai/artifact/1yVhqtQsaXow8GGRQsUaYN · Boards: `docs/design/task-board-study/`
+Research date: 2026-10-07 · Status: **decided** (DL-148, DL-150; Q-119 to Q-121, Q-127, Q-128 closed); not built · Canvas: https://claude.ai/artifact/1yVhqtQsaXow8GGRQsUaYN · Boards: `docs/design/task-board-study/`
 
 **The ask.** Geoff, 2026-10-07: "projects would benefit from a visual way of tracking tasks besides the left column — do some research into the obsidian kanban feature". His standing rule for this work: "For everything we build, I want to maximize backwards compatibility with existing obsidian handling and/or OKF."
 
@@ -9,6 +9,16 @@ Research date: 2026-10-07 · Status: **study, waiting for Geoff** (Q-119 to Q-12
 ---
 
 ## 0. The answer in one screen
+
+**Decided by Geoff, 2026-10-07 (DL-148, DL-150), in two rounds of buttons:**
+- placement **C**, with a card's note shown in the right pane;
+- **computed** card order;
+- the Obsidian base with **pinned lanes**;
+- **session rows** on cards (S1, board 11);
+- columns as status values, listed in **`PROJECT.md` `lanes:`** (board 12);
+- a task's documents, folders and links as a frontmatter **`references:`** list (board 13).
+
+The rest of this section is the study's recommendation as it went to him.
 
 - **Data: compute the board from the task notes, and on request write a Bases board for Obsidian (options a + c).**
   - A lane is a task's `status`. A drag in Duo writes the `status:` line only, plus `completed:` when the task closes, exactly as Set Status does today.
@@ -182,7 +192,10 @@ The boards are drawn with the Duo design system. Source: `docs/design/task-board
 | `07-drag` | A drag between lanes; what is written; onto Done; a session onto a card; keys |
 | `08-empty-narrow` | No tasks; an empty lane; widths in steps |
 | `09-obsidian` | A task note, the `tasks.base` Duo writes, and a Kanban-plugin note for contrast |
-| `10-recommendation` | a + c, C, computed order, and a first slice |
+| `10-recommendation` | a + c, C, computed order, and a first slice (marked approved) |
+| `11-sessions` | Sessions on a card: S1 rows (chosen), S2 chips, S3 a count with a list |
+| `12-columns` | + Add Column, the lane menu, removing a column that holds tasks, `PROJECT.md` `lanes:` |
+| `13-documents` | A task's `references:`: rows in the note's properties, file and folder completion, the card's count |
 
 **A card** (`06-cards`) is read entirely from the note and its sessions' live state. Nothing is stored for the card.
 - **Line 1:** the task box and the title, semibold.
@@ -278,7 +291,9 @@ Before this ships, check in a real Obsidian 1.14.4 (about 10 minutes, extending 
 - **C-52**: An unlisted status is hidden in Obsidian's board while Duo shows it.
 - **ENH-35**: A board across projects, and the Tasks fold grouped by status.
 - **ENH-36**: Choosing card properties, and importing a Kanban-plugin note once.
-- **DL-148**: Reserved for Geoff's decision.
+- **DL-148**: The board: (a) + (c), C, computed order, the pinned base, session rows.
+- **DL-150**: Columns as `PROJECT.md` `lanes:`; a task's `references:`.
+- **Q-127**, **Q-128**: Where columns live; how references are kept. Both closed.
 
 ## Sources
 

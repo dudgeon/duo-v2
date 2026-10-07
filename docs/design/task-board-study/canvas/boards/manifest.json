@@ -82,5 +82,26 @@
   "h": 1060,
   "title": "5 \u00b7 B and C at 1280\u00d7800 (the smallest window)",
   "kind": "board"
+ },
+ {
+  "name": "11-sessions",
+  "w": 1500,
+  "h": 980,
+  "title": "11 \u00b7 Sessions on a card: clearer marks",
+  "kind": "board"
+ },
+ {
+  "name": "12-columns",
+  "w": 1760,
+  "h": 1120,
+  "title": "12 \u00b7 Adding and removing columns",
+  "kind": "board"
+ },
+ {
+  "name": "13-documents",
+  "w": 1500,
+  "h": 1120,
+  "title": "13 \u00b7 References on a task: documents, folders, links",
+  "kind": "board"
  }
 ]
