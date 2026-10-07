@@ -194,7 +194,7 @@ sheetA = f'''<div class="sheet">{SHEET_HEAD}
 {fr("Goal", '<div class="fld">Q4 plan signed off by staff</div><div class="hint" style="margin-top:4px">One line: what done looks like. It shows on the tile and Claude reads it.</div>')}
 {fr("In", f'<span class="popup" style="height:24px;font-size:13px">{g("folder")} Home (top level){g("chevd")}</span> <span class="mono t2" style="margin-left:8px">~/claude-home/q4-plan</span>')}
 {fr("", '<span class="cb"><i>' + TICK + '</i>Start a Claude session in it</span>')}
-{fr("Will write", f'<div class="hint mono" style="margin-bottom:4px">q4-plan/_PROJECT.md</div><div class="pre">{PREVIEW_NEW}</div><div class="hint" style="margin-top:4px">From your template (Home’s templates/project.md, else Duo’s). Plain Markdown: Obsidian reads it as is.</div>')}
+{fr("Will write", f'<div class="hint mono" style="margin-bottom:4px">q4-plan/_PROJECT.md</div><div class="pre">{PREVIEW_NEW}</div><div class="hint" style="margin-top:4px">From your template (Home’s templates/new-project.md, else Duo’s). Plain Markdown: Obsidian reads it as is.</div>')}
 <div class="btns"><span class="b">Cancel</span><span class="b def">Create Project</span></div></div>'''
 board("03-new-a-fresh", 1200, 900, "3 · New project, A: one sheet, start fresh", "Option A: the New project sheet gains Start from, an explainer and a preview.", bd(1200, 900,
     "3 · New project, option A: one sheet with “Start from” <span class=\"rec\">recommended</span>",
@@ -288,7 +288,7 @@ sheetT = f'''<div class="sheet" style="width:620px"><h2>New task</h2>
 <div class="btns"><span class="b">Cancel</span><span class="b def">Make Task</span></div></div>'''
 board("08b-guided-task", 1200, 860, "8b · Making a task, guided", "Geoff: a guided flow for task creation; all fields but the name optional.", bd(1200, 860,
     "8b · Making a task, guided: one sheet that says why, asks the name, and puts sessions in",
-    "Geoff asked for a guided flow for making a task. <b>Make a Task…</b> (Getting started, the Tasks fold’s explainer, File › New Task) opens this sheet; + New task on a project that already has tasks keeps today’s inline note (DL-62). The sheet opens with the why, in Geoff’s terms. Only the name is needed. <b>Sessions</b> defaults to the project’s recent sessions, the selected or newest ones ticked, so the commonest case, “these sessions were all for this”, is one click; Start a new session runs New Session in Task (DL-112). Done when goes to <code>done_when</code> (the format doc’s key). The note is written by the templates session’s render(); <code>duo2 task new &lt;title&gt; [--done-when …] [--session …]… [--start]</code>.",
+    "Geoff asked for a guided flow for making a task. <b>Make a Task…</b> (Getting started, the Tasks fold’s explainer, File › New Task) opens this sheet; + New task on a project that already has tasks keeps today’s inline note (DL-62). The sheet opens with the why, in Geoff’s terms. Only the name is needed. <b>Sessions</b> defaults to the project’s recent sessions, the selected or newest ones ticked, so the commonest case, “these sessions were all for this”, is one click; Start a new session runs New Session in Task (DL-112). Done when goes to <code>done_when</code> (the format doc’s key). The note is written by the templates session’s Templates.make(); <code>duo2 task new &lt;title&gt; [--done-when …] [--session …]… [--start]</code>.",
     frame(sheet_over(1140, 660, sheetT, "All projects › payments › q4-plan"), 1140, 660)))
 
 # ---------------------------------------------------------------- 11b new session in a task
@@ -380,7 +380,7 @@ board("14-recommendation", 1200, 940, "14 · Decisions and the v1 slice", "Geoff
 <div class="txt" style="flex:1"><h3>v1 slice</h3><ol>
 <li><b>Words where they appear</b> (board 2) and Help › Duo Guide. Small.</li>
 <li><b><code>_PROJECT.md</code> and <code>_HOME.md</code></b> for new projects and Homes; PROJECT.md and HOME.md still read, never renamed. Small–Medium (discovery, watchers, search, duo2, docs).</li>
-<li><b>Write the agreed format</b> (F-188) through the templates session’s render(). Small.</li>
+<li><b>Write the agreed format</b> (F-188) through the templates session’s Templates.make(). Small.</li>
 <li><b>New project, A</b> (boards 3–4): Start from, the preview, “A folder I have” for any folder with detection, and the brief question with <code>project_brief: true</code>. Medium.</li>
 <li><b>+ New project on List</b> and the one-time explainer (board 7). Small.</li>
 <li><b>Getting started</b>, all optional (board 8), and <b>Make a Task…</b>, guided (board 8b). Medium.</li>
