@@ -1334,6 +1334,40 @@ func repoFixture() throws -> Fixture {
     check(SessionState.readyForReview.waitText(nil, open: true) == nil && SessionState.resolved.waitText("1h", open: true) == "1h",
           "ready for review shows no time, open or not; resolved keeps its own")
 
+    print("@ in chat's composer (ENH-3, DL-133)")
+    func tok(_ t: String) -> String? { FileMention.token(in: t, caret: (t as NSString).length)?.query }
+    check(tok("Summarise @chec") == "chec" && tok("@") == "" && tok("@docs/che") == "docs/che" && tok("line one\n@x") == "x",
+          "the @ word at the caret: after a space, a new line, or at the start; slashes are part of it")
+    check(tok("mail me at geoff@example") == nil && tok("@done next") == nil && tok("plain") == nil,
+          "not a mention: an @ inside a word (an address), or the caret past a space")
+    check(tok("\u{FFFC}@pr") == "pr", "after a dropped file's chip")
+    let mid = FileMention.token(in: "Summarise @chec and more", caret: 15)
+    check(mid?.range == NSRange(location: 10, length: 5) && mid?.query == "chec", "mid-text: the range covers the @ and the query, up to the caret")
+    let tree = ["checklist.md", "data/", "data/guest-checkout.csv", "docs/", "docs/checkout-flow.md", "docs/notes.md", "README.md",
+                "research/", "research/checkout-interviews.md", "src/", "src/checkout/", "src/checkout/cart.ts", "src/pay.ts"]
+    let chec = FileMention.matches("chec", in: tree).map(\.path)
+    print("    @chec: " + chec.joined(separator: ", "))
+    check(chec.first == "checklist.md" && chec.prefix(4).allSatisfy { ($0 as NSString).lastPathComponent.lowercased().hasPrefix("chec") || $0.hasSuffix("checkout/") }
+          && chec.firstIndex(of: "data/guest-checkout.csv")! > chec.firstIndex(of: "docs/checkout-flow.md")!,
+          "a name that starts with it first (shallower, then A–Z), then one that contains it")
+    check(FileMention.matches("CHEC", in: tree).map(\.path) == chec, "case doesn't matter")
+    check(FileMention.matches("src/c", in: tree).map(\.path) == ["src/checkout/", "src/checkout/cart.ts"], "a path matches too, after names")
+    check(FileMention.matches("", in: tree).map(\.path) == ["data/", "docs/", "research/", "src/", "checklist.md", "README.md"],
+          "just @: the top level, folders first")
+    check(FileMention.matches("zzq", in: tree).isEmpty, "nothing matches: no rows (the menu says so)")
+    check(FileMention.matches("", in: (0..<20).map { "f\($0).md" }).count == 8, "eight at most")
+    let folderMatch = FileMention.Match(path: "src/checkout/"), fileMatch = FileMention.Match(path: "docs/checkout-flow.md"), top = FileMention.Match(path: "README.md")
+    check(folderMatch.isFolder && folderMatch.name == "checkout/" && folderMatch.folder == "src/" && fileMatch.name == "checkout-flow.md"
+          && fileMatch.folder == "docs/" && top.folder == "", "a row: the name (a folder keeps its /), and the folder it's in")
+    check(fileMatch.inserted == "@docs/checkout-flow.md " && folderMatch.inserted == "@src/checkout/ ", "what goes in: Claude Code's own mention, relative, then a space")
+    let mroot = FileManager.default.temporaryDirectory.appending(path: "duo-mention-\(UUID().uuidString)")
+    for d in ["docs", ".git", "node_modules/x", "build", ".hidden", "src/deep/er"] { try? FileManager.default.createDirectory(at: mroot.appending(path: d), withIntermediateDirectories: true) }
+    for f in ["docs/a.md", ".git/HEAD", "node_modules/x/i.js", "build/out.o", ".hidden/s.md", ".env", "src/deep/er/z.swift", "README.md"] { try? Data().write(to: mroot.appending(path: f)) }
+    let walked = Set(FileMention.paths(in: mroot))
+    check(walked == ["docs/", "docs/a.md", "src/", "src/deep/", "src/deep/er/", "src/deep/er/z.swift", "README.md"],
+          "the project's files and folders at any depth, as the tree lists them: no hidden files, .git, node_modules or build")
+    try? FileManager.default.removeItem(at: mroot)
+
     print("project context (ENH-16, F-146)")
     func brief(_ folder: URL, _ fm: String, claude: String? = nil) {
         try? Data("---\n\(fm)\n---\n\n# \(folder.lastPathComponent)\n".utf8).write(to: folder.appending(path: "PROJECT.md"))

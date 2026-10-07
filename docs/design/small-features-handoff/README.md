@@ -15,4 +15,5 @@ Canvas: https://claude.ai/artifact/2qhPnZG6qUpLWFsXKCYSzt. Geoff chose A for bot
 
 ## Build
 
+- ENH-3: `Chat/FileMention.swift` (the `@` word, matching, the project walk) and `ChatMentionMenu` in `Chat/ChatComposerView.swift` (F-148). `build-compare-composer.png`: TARGET `composer-at` beside the `chat-text` fixture with `chat-cwd:<scratch project>` and `chat-type:…@chec`, then `@zzq`; TARGET `composer-at-chosen` (A) beside ↓ then tab. The rows' order is DL-133's rule, not the board's (its rows are illustrative).
 - ENH-7: `SessionState.waitText(_:open:)`, used by `TileSessionRow` and the session list (F-147). `build-compare-tile.png`: TARGET (A, middle) beside the overview fixture with `open-sessions:PRD v2 edits+Teardown research+Interview synth+Copy review pass 2`.
