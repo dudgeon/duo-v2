@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x560">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-133">
+<!--
+After choosing a file: A is chosen, B is not (ENH-3)
+APPROVED BOARD. Geoff, 2026-10-06 (DL-133). Exported from the Design canvas
+https://claude.ai/artifact/2qhPnZG6qUpLWFsXKCYSzt (board AtChosen.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · After choosing a file</title>
+<style>
+body{margin:0}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B636D}
+.field{background:#FFFFFF;border:1.5px solid #1F2328;border-radius:12px;padding:10px 14px;min-height:44px;box-sizing:border-box}
+.hint{display:flex;align-items:center;gap:8px;font-size:12px;line-height:16px;color:#5B636D;padding:0 4px}
+.caret{display:inline-block;width:1.5px;height:15px;background:#1F2328;vertical-align:-3px;margin-left:1px}
+.file{display:inline-flex;align-items:center;gap:4px;vertical-align:1px;border:1px solid #C9CDD3;border-radius:6px;padding:0 6px;background:#F3F4F6;font-size:12px;line-height:18px}
+.snip{display:flex;flex-direction:column;gap:6px}
+.sent{font-size:12px;line-height:16px;color:#5B636D;padding:0 4px}
+</style>
+</head>
+<body>
+<div style="width: 680px; height: 560px; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 22px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+
+<div class="snip">
+<div class="lbl">A · AS CLAUDE CODE’S OWN @ MENTION, IN TEXT</div>
+<div class="field">Summarise the open questions in <span class="mono">@docs/checkout-flow.md</span> <span class="caret"></span></div>
+<div class="hint"><span>⏎ send · ⇧⏎ new line · / commands · @ files</span><span style="margin-left: auto">Opus</span></div>
+<div class="sent">Sent as typed. Claude Code reads the file into the conversation, as when you type @ in the terminal. The path is relative to the project, and can be edited like any text.</div>
+</div>
+
+<div class="snip">
+<div class="lbl">B · AS A FILE CHIP, LIKE A DROPPED FILE</div>
+<div class="field">Summarise the open questions in <span class="file"><svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M1.5.5h4.5l2.5 2.5v8H1.5Z" fill="none" stroke="#5B636D" stroke-width="1.1" stroke-linejoin="round"></path></svg>checkout-flow.md</span> <span class="caret"></span></div>
+<div class="hint"><span>⏎ send · ⇧⏎ new line · / commands · @ files</span><span style="margin-left: auto">Opus</span></div>
+<div class="sent">Sent as the file’s full path, as a dropped file is (DL-117). Claude opens it when it decides to. Shown by name; one backspace removes it.</div>
+</div>
+
+<div class="snip">
+<div class="lbl">A FOLDER, EITHER WAY</div>
+<div class="field">What’s in <span class="mono">@src/checkout/</span> <span class="caret"></span></div>
+<div class="sent">A folder ends in /. Claude Code lists a folder it’s given, rather than reading every file.</div>
+</div>
+
+</div>
+</body>
+</html>

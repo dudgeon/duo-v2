@@ -405,7 +405,7 @@ Priority: **v1** blocks Geoff using Duo all day (build plan §3a). **v1 look** i
 
 | Id | Surface | Blocks | Priority |
 |---|---|---|---|
-| DB-33 | Active sessions: a session with a terminal open in Duo, on tiles and in the project's session list (ENH-7). Built with a provisional tint distinct from `selected`; needs its own treatment that still reads when the row is also selected. | — | v1 look |
+| DB-33 | Active sessions: a session with a terminal open in Duo, on tiles and in the project's session list (ENH-7). Built with a provisional tint distinct from `selected`; needs its own treatment that still reads when the row is also selected. **Closed by DL-133:** open rows read `at prompt` or `working`, and keep the tint. | — | v1 look |
 | DB-34 | The Archived rollup at the bottom of the project map (ENH-6): folded and open, how archived tiles look, how Unarchive is offered. Built as a section label with a chevron and plain rows. Today it sits at the end of the map's scroll; decide whether it stays visible above the footer. | — | v1 look |
 | DB-35 | Revert Claude's change from the highlight itself (ENH-4). Built as menu items (right-click, Edit); the highlight has no affordance of its own yet. | — | v1 look |
 | DB-36 | Delete Session… confirmation: today a standard sheet listing the paths and bytes. Whether a typed confirmation is wanted for many at once (CONS FR-7.6.2) when bulk delete arrives. | — | later |

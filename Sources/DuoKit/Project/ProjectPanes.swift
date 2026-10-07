@@ -214,8 +214,7 @@ struct SidebarLeafRow: View {
             if case .thread(let n) = row.kind { CountPill(text: "thread · \(n)", emphasised: false) }
             Spacer(minLength: 8)
             // Open in Duo (DL-91): say what it's doing rather than how long ago.
-            WaitLabel(text: model.hasOpenTerminal(row.sessionKey) && row.state == .idle ? "at prompt"
-                      : model.hasOpenTerminal(row.sessionKey) && row.state == .working ? "working" : row.wait)
+            WaitLabel(text: row.state.waitText(row.wait, open: model.hasOpenTerminal(row.sessionKey)))
         }
         // Nested rows sit 11 pt from the group's rule (which is 1.5 wide at x 21).
         .padding(.leading, nested ? 11 + DuoMetric.borderEmphasis : DuoSpace.panePadding)

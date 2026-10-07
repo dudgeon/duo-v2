@@ -1915,3 +1915,13 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - **DuoChecks:** 650 pass. 23 new checks cover start, an unchanged prompt, a subfolder, a session filed under the project, resume and compact, health and next changed (told once), goal cleared, imported (`@`, `@./`, a mention isn't an import), a change while imported, a new brief, never told, leaving, joining, moving, and joined with a task.
   - **Live:** `scripts/check-context.sh` runs an isolated Duo (its own support folder and `CLAUDE_CONFIG_DIR`) with a stand-in `claude` that runs the real hooks from Duo's settings file with Claude Code's payloads; no model was called. It checks startup, an unchanged prompt, an edit to `PROJECT.md` told once, compact, and resume with `@PROJECT.md`: 7 pass. Home's session, started at launch, is told nothing.
   - `scripts/bundle.sh` and `NO_BUILD=1 scripts/check-ui.sh` pass (nothing visible changed).
+
+## F-147 · Open sessions say so on their tile (ENH-7, DL-133, 2026-10-06)
+
+- **What was already there** (F-61): an open session (a terminal in Duo) is listed on its tile and tinted (`activeTint`), and the project's session list already said `at prompt` or `working` for one (DL-91). DB-33, the tint's look, was the open item. The director folded DB-33 into ENH-7, so DL-133 closes it.
+- **Built:** one rule, `SessionState.waitText(_:open:)`, now drawn by both the session list and `TileSessionRow`. Open and idle reads `at prompt`; open and working reads `working`; needs you keeps its wait; ready for review shows no time. The tint stays on unselected open rows. The tile row's accessibility label says "open in Duo", and keeps "waiting ‹time›" only where the time still shows.
+- **Harness:** `open-sessions:<name>+<name>` marks fixture sessions open (`fixtureActive`). Names are joined with `+` because `--then` splits on commas.
+- **Checked:**
+  - DuoChecks: 4 new checks of the rule, 654 pass in all.
+  - A capture of the overview fixture with four sessions open, compared with the board: `docs/design/small-features-handoff/build-compare-tile.png`.
+  - `NO_BUILD=1 scripts/check-ui.sh`: the fixture states are unchanged, since no session is open in them.

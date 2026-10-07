@@ -58,7 +58,7 @@ Write the way a knowledgeable colleague talks: plain, short, specific. Sentence 
 
 Light chrome, from `tokens.json`:
 - **Grounds:** `ground` for the toolbar and sheet backgrounds; `pane` for panes, cards, popovers and buttons.
-- **Selection:** `selected` for the selected row and for Claude's additions to a document. `activeTint` marks sessions with a tab open in Duo (provisional, DB-33).
+- **Selection:** `selected` for the selected row and for Claude's additions to a document. `activeTint` is behind unselected sessions with a tab open in Duo, which also read `at prompt` or `working` (DL-133).
 - **Text:** `text` for primary text, and the review and working glyphs. `text2` for secondary text, the idle and resolved glyphs, and chevrons.
 - **Lines:** `rule` for pane dividers and card or field borders. `controlEdge` for button and pill borders, dashed borders and the group rule.
 - **The accent:** `needsYou` only (above). `onNeedsYou` is text on the filled chip.
