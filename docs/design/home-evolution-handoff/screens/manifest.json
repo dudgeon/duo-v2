@@ -1,0 +1,65 @@
+[
+ {
+  "name": "list-1440",
+  "from": "06-where-b-1440.dc.html",
+  "size": "1440x900",
+  "kind": "target",
+  "title": "6 \u00b7 B \u00b7 Board | List in the middle \u00b7 1440\u00d7900"
+ },
+ {
+  "name": "list-1280",
+  "from": "06-where-b-1280.dc.html",
+  "size": "1280x800",
+  "kind": "target",
+  "title": "6 \u00b7 B \u00b7 Board | List in the middle \u00b7 1280\u00d7800"
+ },
+ {
+  "name": "board-1440",
+  "from": "06-where-b-board-1440.dc.html",
+  "size": "1440x900",
+  "kind": "target",
+  "title": "6 \u00b7 B \u00b7 Board | List in the middle, Board chosen \u00b7 1440\u00d7900"
+ },
+ {
+  "name": "rows",
+  "from": "01-rows.dc.html",
+  "size": "1200x700",
+  "kind": "board",
+  "title": "1 \u00b7 A session row, two densities"
+ },
+ {
+  "name": "grouping",
+  "from": "02-grouping.dc.html",
+  "size": "1200x860",
+  "kind": "board",
+  "title": "2 \u00b7 Grouping: by recency, by state, by project"
+ },
+ {
+  "name": "filter",
+  "from": "03-filter.dc.html",
+  "size": "1640x700",
+  "kind": "board",
+  "title": "3 \u00b7 Filtering and search"
+ },
+ {
+  "name": "needs-you",
+  "from": "09-needs-you.dc.html",
+  "size": "1620x1240",
+  "kind": "board",
+  "title": "9 \u00b7 Needs you beside the list, without counting twice"
+ },
+ {
+  "name": "home-chat",
+  "from": "10-home-chat.dc.html",
+  "size": "1880x900",
+  "kind": "board",
+  "title": "10 \u00b7 Home's agent in chat by default"
+ },
+ {
+  "name": "slice",
+  "from": "11-recommendation.dc.html",
+  "size": "1200x880",
+  "kind": "board",
+  "title": "11 \u00b7 Recommendation and the v1 slice"
+ }
+]

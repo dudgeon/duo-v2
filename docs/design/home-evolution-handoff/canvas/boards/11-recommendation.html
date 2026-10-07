@@ -30,7 +30,7 @@ body{margin:0}
 .segc span{display:flex;align-items:center;padding:0 10px;color:#5B636D}
 .segc span+span{border-left:1px solid #C9CDD3}
 .segc .on{background:#E9ECEF;color:#1F2328;font-weight:600}
-.chip{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid #C9CDD3;border-radius:11px;font-size:12px;line-height:16px;color:#5B636D;background:#FFFFFF}
+.chip{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid #C9CDD3;border-radius:11px;font-size:12px;line-height:16px;color:#5B636D;background:#FFFFFF}
 .chip.on{border-color:#1F2328;color:#1F2328;font-weight:600}
 .row{white-space:nowrap;display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
 .row.tint{background:#E8F0FA}
@@ -101,11 +101,11 @@ body{margin:0}
 </style>
 </head>
 <body>
-<div class="bd" style="width:1200px;height:880px;gap:14px"><div class="bt">11 · Recommendation and the v1 slice</div><div class="bsub">Recommended: <b>B</b> (Board | List in the middle), grouped <b>by recency</b> like a project’s list, Needs you <b>owned by the column</b> (N1), Home <b>in chat</b> by default. Then <b>D</b> as the next step, once the list has been used.</div><div style="display:flex;gap:16px;align-items:flex-start">
+<div class="bd" style="width:1200px;height:880px;gap:14px"><div class="bt">11 · Recommendation and the v1 slice</div><div class="bsub"><b>Approved by Geoff, 2026-10-07 (DL-142):</b> <b>B</b> now (Board | List in the middle, List first), grouped <b>by recency</b> with no open tint, Needs you <b>owned by the column</b> (N1), the filter <b>by search’s hybrid ranking</b>, a click <b>jumps</b> into the project, Home <b>in chat</b> with board 10’s light strip. <b>D</b> later (ENH-28).</div><div style="display:flex;gap:16px;align-items:flex-start">
 <div class="txt" style="flex:1"><h3>Why B first</h3><ul>
 <li>Keeps the three things Geoff named: Home’s agent (left, now in chat), the board (one click away), and Needs you (right, unchanged).</li>
 <li>The list gets the middle’s width, so a row carries project and task on one line, and it fits the 1280×800 window without anything giving way.</li>
-<li>Everything in it exists: DL-91’s sections, the row, the tint, the filter field, the map header. It’s a new arrangement, not a new language.</li>
+<li>Everything in it exists: DL-91’s sections, the row, the filter field, search’s index, the map header. It’s a new arrangement, not a new language.</li>
 <li>A click jumps into the project, as a tile’s session row does, so there’s no new navigation to learn.</li></ul>
 <h3>Why D next, not now</h3><ul>
 <li>D is the Claude app’s shape, and the most like Geoff’s note. It needs any session shown at All projects (Home’s pane hosting other projects’ sessions), which touches the multi-window study’s question of where Home lives.</li>
@@ -114,12 +114,12 @@ body{margin:0}
 <div class="txt" style="width:520px;flex:none"><h3>v1 slice [P]</h3><ol>
 <li><b>Home opens in chat</b>: new Home sessions in chat; the light strip and header (board 10). <code>duo2 session chat --home</code>.</li>
 <li><b>Board | List</b> in the map’s header, remembered; first launch shows List. <code>duo2 view home board|list|toggle</code>; View › Show Board / Show List (⌘1 / ⌘2 [P]).</li>
-<li><b>The list</b>, compact rows (board 1), grouped by recency (DL-91 sections across projects), Earlier and Archived folded.</li>
-<li><b>Filter sessions</b> field (board 3 A): title, project, folder, task. <code>duo2 view filter</code> applies to whichever is showing.</li>
+<li><b>The list</b>, compact rows (board 1) with no open tint, grouped by recency (DL-91 sections across projects), Earlier and Archived folded.</li>
+<li><b>Filter sessions</b> field (board 3 A), ranked by search’s hybrid of meaning and words over title, project, folder, task and transcript. <code>duo2 view filter</code> applies to whichever is showing.</li>
 <li><b>N1</b>: needs-you sessions in the column only; the list’s “3 need you” line; opens into rows when the right pane is hidden.</li>
 <li><b>Click jumps</b> into the project with the session selected; right-click is the session menu; Return / ⌘↩ as board 4.</li></ol>
 <h3>Later</h3><ul><li>ENH-28: D, a Sessions view with sessions opened in place.</li><li>ENH-29: Group By state and project; chips; the session’s note as a third line.</li></ul>
-<h3>Open (Q-100 to Q-104)</h3><ul><li>Q-100 Home’s strip in chat: light (this study) or Q-57’s dark row.</li><li>Q-101 Default view on first launch: List or Board.</li><li>Q-102 Narrow (two-line) rows: when the middle is under 520.</li></ul></div>
+<h3>Open</h3><ul><li>Q-100 Shortcuts for Show Board / Show List (⌘1 / ⌘2 proposed; DL-34 locks the map).</li><li>Q-101 Two-line rows when the middle is under 520 (a stand-in until seen).</li><li>Home across windows stays with the multi-window study (Q-98).</li></ul></div>
 </div></div>
 </body>
 </html>

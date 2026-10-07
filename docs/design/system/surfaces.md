@@ -16,7 +16,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Surface | Status | Targets | Open | Code |
 |---|---|---|---|---|
 | Window, toolbar, counts | Designed; search field reads `Search all projects ⇧⌘A` (DL-80) | build `overview.html` | — | `Shell/DuoToolbar.swift` |
-| Home pane: terminal and session tabs | Designed (DL-126 the hover ×; DL-134 its fill) | build `overview.html`, surfaces `home-none.html`, tab-close `console-tabs-close.html`, tab-hover `hover-fill-a.html` | — | `AllProjects/AllProjectsPanes.swift` HomePane |
+| Home pane: terminal and session tabs | Designed (DL-126 the hover ×; DL-134 its fill); changed by decision (DL-142): Home opens in chat, with the light header and strip while chat shows, not built | build `overview.html`, surfaces `home-none.html`, tab-close `console-tabs-close.html`, tab-hover `hover-fill-a.html` | — | `AllProjects/AllProjectsPanes.swift` HomePane |
 | Home pane with no Home folder | Designed (DL-100): "Choose a Home folder", Choose Home Folder… and Not Now | slice2 `no-home.html` | — | HomePane, `ConsoleMessage(.noHome)` |
 | The map: columns, tiles | Designed (DL-100), changed by decision (DL-104): a filter and sort header, Home's ★ tile, folders outside Home as rows by parent folder with live ones as tiles; Home's unlabelled column alone flows its tiles three across, and two lists keep a third each (DL-111) | slice2 `map-folders.html`, `no-home.html`; many-projects `map-many.html`; stand-ins `q42-one-list.html`, `q42-two-lists.html` | DB-38 (folder mark) | MapColumn, MapGrid, MapHeader, HomeTile, OutsideGroup, ProjectTile |
 | Folder tiles ("No project file") | Stand-in (DL-63) | — | DB-12 | ProjectTile |
@@ -26,6 +26,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Sessions open in Duo: `at prompt`/`working`, tinted | Designed (DL-133, ENH-7) | canvas https://claude.ai/artifact/2qhPnZG6qUpLWFsXKCYSzt `Tiles` (A) | — | TileSessionRow, `activeTint` |
 | Archived rollup under the map | Stand-in (ENH-6) | — | DB-34 | `AllProjects/ArchivedProjects.swift` |
 | Idle footer and idle list | Designed (DB-1) | surfaces `idle-list.html`, `idle-many.html` | — | `AllProjects/IdleList.swift` |
+| The session list: Board \| List in the map's header, every session across projects by recency, the `3 need you ›` line, `Filter sessions` by search's hybrid ranking | Designed, not built (DL-142) | home-evolution `list-1440`, `list-1280`, `board-1440`, `rows`, `grouping`, `filter`, `needs-you` | Q-100, Q-101 | — |
 | Action column: needs you, ready for review | Designed (no reply buttons, DL-29); the reason after the project, 6-line clamp with "… more", "Nothing needs you." (DL-100) | build `overview.html`, `flow-zoom-*.html`, slice2 `needs-you-states.html` | — | ActionColumnPane, NeedsYouCard, ReviewCard |
 | Action column: Open tasks | Designed (DL-100) | slice2 `map-folders.html` | — | ActionColumnPane, TaskLine |
 | Peek (needs you elsewhere) | Designed | build `flow-zoom-*.html` | — | `Navigation/PeekView.swift` |

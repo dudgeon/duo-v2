@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
-<meta name="design-size" content="1200x700">
+<meta name="design-size" content="1200x880">
 <meta name="design-kind" content="board">
 <meta name="design-surface" content="home-evolution">
 <!--
-4 · What a click does
-STUDY BOARD [P], not approved. Drawn for the home-evolution study (2026-10-07) with the Duo design system.
-Jump to the project, or open the session in place.
+11 · Recommendation and the v1 slice
+APPROVED. Geoff, 2026-10-07 (DL-142), by buttons. Exported from the Design canvas
+https://claude.ai/artifact/UmuuYZdzroUbBDmY2UYRBY (board 11-recommendation.dc.html), drawn from canvas/make.py.
+B with recency grouping, N1, Home in chat; D later.
 It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
 -->
-<title>Duo · 4 · What a click does</title>
+<title>Duo · 11 · Recommendation and the v1 slice</title>
 <style>
 body{margin:0}
 .w{box-sizing:border-box;display:flex;flex-direction:column;background:#FFFFFF;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;overflow:hidden}
@@ -101,14 +102,25 @@ body{margin:0}
 </style>
 </head>
 <body>
-<div class="bd" style="width:1200px;height:700px;gap:14px"><div class="bt">4 · What a row does on click</div><div class="bsub">Two ways, both kept: the click picks one, the other is on hover, the right-click menu and a key. The right-click menu is the session menu as everywhere (DL-108). Return opens, ⌘↩ jumps.</div><div style="display:flex;gap:24px;align-items:flex-start">
-<div style="display:flex;flex-direction:column;gap:16px">
-<div style="display:flex;flex-direction:column;gap:8px;flex:none"><div class="cap">Hover · the row’s two actions</div><div class="frame" style="width:600px;"><div style="padding:6px 0"><div class="row"><svg width="9" height="9" viewBox="0 0 10 10" style="flex:none"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"/></svg><span class="ti">Edge-case matrix</span><span class="pj" style="width:150px">refunds-api-spec</span><span class="tk" style="width:150px"></span><span class="tm" style="width:64px">working</span></div><div class="row sel"><svg width="9" height="9" viewBox="0 0 10 10" style="flex:none"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"/></svg><span class="ti">Buyer synthesis</span><span class="pj" style="width:150px">buyer-interviews</span><span style="display:flex;gap:6px;flex:none"><span class="btn" style="height:20px;padding:0 6px;gap:4px"><svg width="13" height="11" viewBox="0 0 13 11"><path d="M2.5 1h8A1.5 1.5 0 0 1 12 2.5v4A1.5 1.5 0 0 1 10.5 8H6L3.5 10V8h-1A1.5 1.5 0 0 1 1 6.5v-4A1.5 1.5 0 0 1 2.5 1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Open here</span><span class="btn" style="height:20px;padding:0 6px;gap:4px"><svg width="10" height="10" viewBox="0 0 10 10" style="flex:none"><path d="M3.5 1.5h5v5M8.5 1.5 1.5 8.5" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Project</span></span></div><div class="row"><svg width="9" height="9" viewBox="0 0 10 10" style="flex:none"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"/></svg><span class="ti">Q4 plan outline</span><span class="pj" style="width:150px">q4-planning</span><span class="tk" style="width:150px"><svg width="10" height="10" viewBox="0 0 10 10" style="flex:none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#5B636D" stroke-width="1.3"/></svg><span class="ell">Draft plan</span></span><span class="tm" style="width:64px">3h</span></div></div></div><div class="note" style="width:600px">Open here shows the session beside the list (D, or the middle in B); Project jumps into its project with the session selected, as a tile’s session row does today (ENH-5’s way in).</div></div>
-<div class="txt" style="width:600px"><h3>Which is the click? [P]</h3><ul>
-<li><b>Jump to the project</b>: what a session on a tile does today. Simple; leaves All projects. Right for B (the list replaces the board in the middle, so there’s nowhere to open it).</li>
-<li><b>Open in place</b>: the Claude-app way. The session shows in chat beside the list without leaving All projects; ⌘↩ or <i>Open in Project</i> goes in. Right for D. A session that isn’t running resumes only when you send something.</li></ul>
-<p class="note">Verbs: <code>duo2 session open &lt;id&gt; --here</code> (open in place), <code>duo2 open &lt;project&gt; &lt;session&gt;</code> (jump, exists).</p></div></div>
-<div style="display:flex;flex-direction:column;gap:8px;flex:none"><div class="cap">Open in place · the session in chat, the list kept</div><div class="frame" style="width:540px;"><div class="chat" style="height:360px"><div class="strip"><span class="tab" style="color:#1F2328">‹ List</span><span class="tab on"><svg width="9" height="9" viewBox="0 0 10 10" style="flex:none"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"/></svg>Buyer synthesis</span><span class="tab">buyer-interviews</span><span style="display:flex;align-items:center;gap:8px;margin-left:auto"><span class="btn" style="height:20px;padding:0 8px;gap:5px"><svg width="10" height="10" viewBox="0 0 10 10" style="flex:none"><path d="M3.5 1.5h5v5M8.5 1.5 1.5 8.5" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Open in Project</span><span class="pill"><span><svg width="13" height="10" viewBox="0 0 13 10"><path d="M1.5 2 5 5 1.5 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 8.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><span class="on"><svg width="13" height="11" viewBox="0 0 13 11"><path d="M2.5 1h8A1.5 1.5 0 0 1 12 2.5v4A1.5 1.5 0 0 1 10.5 8H6L3.5 10V8h-1A1.5 1.5 0 0 1 1 6.5v-4A1.5 1.5 0 0 1 2.5 1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span></span></span></div><div class="feed" style="padding:14px 20px 12px"><div style="margin-right:36px;display:flex;flex-direction:column;gap:4px"><div class="who">Claude · 2h</div><div class="ccard"><div>The memo’s draft is in <u>synthesis/memo.md</u>: four themes, each with two quotes. The pricing theme is the weakest; one more interview would settle it.</div></div></div></div><div style="flex:none;padding:0 16px 12px"><div class="composer">Reply to Claude · resumes the session</div></div></div></div><div class="note" style="width:540px">The strip: ‹ List (narrow windows only), the session, its project as a link, Open in Project, and the Terminal / Chat pill. Its mode is the session’s own (DL-119 (5)).</div></div>
+<div class="bd" style="width:1200px;height:880px;gap:14px"><div class="bt">11 · Recommendation and the v1 slice</div><div class="bsub"><b>Approved by Geoff, 2026-10-07 (DL-142):</b> <b>B</b> now (Board | List in the middle, List first), grouped <b>by recency</b> with no open tint, Needs you <b>owned by the column</b> (N1), the filter <b>by search’s hybrid ranking</b>, a click <b>jumps</b> into the project, Home <b>in chat</b> with board 10’s light strip. <b>D</b> later (ENH-28).</div><div style="display:flex;gap:16px;align-items:flex-start">
+<div class="txt" style="flex:1"><h3>Why B first</h3><ul>
+<li>Keeps the three things Geoff named: Home’s agent (left, now in chat), the board (one click away), and Needs you (right, unchanged).</li>
+<li>The list gets the middle’s width, so a row carries project and task on one line, and it fits the 1280×800 window without anything giving way.</li>
+<li>Everything in it exists: DL-91’s sections, the row, the filter field, search’s index, the map header. It’s a new arrangement, not a new language.</li>
+<li>A click jumps into the project, as a tile’s session row does, so there’s no new navigation to learn.</li></ul>
+<h3>Why D next, not now</h3><ul>
+<li>D is the Claude app’s shape, and the most like Geoff’s note. It needs any session shown at All projects (Home’s pane hosting other projects’ sessions), which touches the multi-window study’s question of where Home lives.</li>
+<li>B’s list is D’s list: the same rows, grouping and filter. Building B builds most of D.</li></ul>
+<h3>Not recommended</h3><p>A (Home and the list fight over one pane) and C (four panes don’t fit at 1280; it duplicates a project’s own list).</p></div>
+<div class="txt" style="width:520px;flex:none"><h3>v1 slice [P]</h3><ol>
+<li><b>Home opens in chat</b>: new Home sessions in chat; the light strip and header (board 10). <code>duo2 session chat --home</code>.</li>
+<li><b>Board | List</b> in the map’s header, remembered; first launch shows List. <code>duo2 view home board|list|toggle</code>; View › Show Board / Show List (⌘1 / ⌘2 [P]).</li>
+<li><b>The list</b>, compact rows (board 1) with no open tint, grouped by recency (DL-91 sections across projects), Earlier and Archived folded.</li>
+<li><b>Filter sessions</b> field (board 3 A), ranked by search’s hybrid of meaning and words over title, project, folder, task and transcript. <code>duo2 view filter</code> applies to whichever is showing.</li>
+<li><b>N1</b>: needs-you sessions in the column only; the list’s “3 need you” line; opens into rows when the right pane is hidden.</li>
+<li><b>Click jumps</b> into the project with the session selected; right-click is the session menu; Return / ⌘↩ as board 4.</li></ol>
+<h3>Later</h3><ul><li>ENH-28: D, a Sessions view with sessions opened in place.</li><li>ENH-29: Group By state and project; chips; the session’s note as a third line.</li></ul>
+<h3>Open</h3><ul><li>Q-100 Shortcuts for Show Board / Show List (⌘1 / ⌘2 proposed; DL-34 locks the map).</li><li>Q-101 Two-line rows when the middle is under 520 (a stand-in until seen).</li><li>Home across windows stays with the multi-window study (Q-98).</li></ul></div>
 </div></div>
 </body>
 </html>

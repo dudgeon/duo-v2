@@ -36,7 +36,7 @@ body{{margin:0}}
 .segc span{{display:flex;align-items:center;padding:0 10px;color:{TEXT2}}}
 .segc span+span{{border-left:1px solid {RULE}}}
 .segc .on{{background:{SELECTED};color:{TEXT};font-weight:600}}
-.chip{{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid {RULE};border-radius:11px;font-size:12px;line-height:16px;color:{TEXT2};background:{PANE}}}
+.chip{{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid {RULE};border-radius:11px;font-size:12px;line-height:16px;color:{TEXT2};background:{PANE}}}
 .chip.on{{border-color:{TEXT};color:{TEXT};font-weight:600}}
 .row{{white-space:nowrap;display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}}
 .row.tint{{background:{TINT}}}
@@ -180,7 +180,7 @@ def e(s):
 
 def row(s, cols="full", sel=False, w_proj=150, w_task=150, w_tm=64, hover=None):
     """A one-line session row. cols: full (glyph, title, project, task, time) | proj (no task column) | bare."""
-    cls = "row" + (" sel" if sel else (" tint" if s.get("open") and s["st"] != "needs" else ""))
+    cls = "row" + (" sel" if sel else "")
     bold = ' style="font-weight:600"' if s["st"] == "needs" else ""
     parts = [g(GLYPH_FOR[s["st"]]), f'<span class="ti"{bold}>{e(s["t"])}</span>']
     if cols in ("full", "proj"):
@@ -197,7 +197,7 @@ def row(s, cols="full", sel=False, w_proj=150, w_task=150, w_tm=64, hover=None):
 
 def row2(s, sel=False, reason=False):
     """A two-line row for narrow lists: title and time, then project › task (or the reason)."""
-    cls = "row2" + (" sel" if sel else (" tint" if s.get("open") and s["st"] != "needs" else ""))
+    cls = "row2" + (" sel" if sel else "")
     bold = ' style="font-weight:600"' if s["st"] == "needs" else ""
     l2 = e(s["p"])
     if s.get("task"):
@@ -458,7 +458,7 @@ board("00-study", 1200, 820, "0 · Home's evolution: the study", "board", "The m
 <li><b>Home in chat</b> (10): the default, the strip, a question docked, falling back.</li>
 <li><b>Recommendation and the v1 slice</b> (11).</li></ol>
 <h3>What stays as decided</h3><ul>
-<li>The five states and their glyphs, most urgent first (model.md); DL-91’s sections for a session list; DL-133’s words and tint for open sessions.</li>
+<li>The five states and their glyphs, most urgent first (model.md); DL-91’s sections for a session list; DL-133’s words for open sessions (its tint stays on tiles and a project’s list, not this one).</li>
 <li>The action column’s cards (DL-100), the peek (DL-28), the toolbar’s counts.</li>
 <li>Chat mode as decided (DL-118 to DL-120, DL-135, DL-136), the Home pill (DL-132 g).</li>
 <li>Side panes keep their width and the middle flexes (DL-129).</li></ul></div>
@@ -477,12 +477,12 @@ two_rows = "".join(row2(BY[i]) for i in SAMPLE)
 home_row = (f'<div class="row" style="height:28px">{g("needs")}<span class="ti" style="font-weight:600">★ Home</span><span class="t2">Morning triage · 1h</span></div>')
 board("01-rows", 1200, 700, "1 · A session row, two densities", "board", "Compact (one line) for the middle; two lines for a side pane.", bd(1200, 700,
     "1 · A session row: compact and two-line",
-    "Every row is one session (a thread folds its forks, DL-24). Left to right: its state glyph, its title (bold while it needs you), its project, its task when it has one, and its wait, or <i>working</i> / <i>at prompt</i> while it’s open in Duo, on the open tint (DL-133). Groups don’t get rows here: a session’s task says enough, and its group shows in the project.",
+    "Every row is one session (a thread folds its forks, DL-24). Left to right: its state glyph, its title (bold while it needs you), its project, its task when it has one, and its wait, or <i>working</i> / <i>at prompt</i> while it’s open in Duo (DL-133), with no tint: the Open section already says it (Geoff, 2026-10-07). Groups don’t get rows here: a session’s task says enough, and its group shows in the project.",
     f'''<div style="display:flex;gap:24px;align-items:flex-start">
 {frame('<div style="padding:6px 0">' + full_rows + '</div>', 620, None, "Compact · 26 high · a list 520 or wider", "Columns: project 150, task 150, time 64; the title takes the rest and gives way first. A session with no task leaves the column empty. Under 520 the task column goes, then the project moves under the title (two-line).")}
 {frame('<div style="padding:6px 0">' + two_rows + '</div>', 320, None, "Two-line · 44 high · a side pane under 520", "Line two: project › task, in text2 12. The project name is the folder’s, ★ home for Home. Hover shows the full path and task as a tooltip.")}
 <div style="display:flex;flex-direction:column;gap:14px;width:180px;flex:none">
-<div class="txt"><h3>States, as built</h3>{g("needs")} needs you<br>{g("review")} ready for review<br>{g("working")} working<br>{g("idle")} idle or at prompt<br><span class="note">Open sessions sit on the tint and read <i>working</i> or <i>at prompt</i>.</span></div>
+<div class="txt"><h3>States, as built</h3>{g("needs")} needs you<br>{g("review")} ready for review<br>{g("working")} working<br>{g("idle")} idle or at prompt<br><span class="note">Open sessions read <i>working</i> or <i>at prompt</i>; no tint here.</span></div>
 <div class="txt"><h3>Not shown [P]</h3><span class="note">Health, goal and next step stay on the board: the list is about sessions. The session’s own <code>duo2 session note</code> line could be a third line later (ENH).</span></div></div>
 </div>'''))
 
@@ -524,20 +524,29 @@ board("02-grouping", 1200, 860, "2 · Grouping: by recency, by state, by project
 # 3 · filter and search
 hdrA = list_header(220)
 hdrB = list_header(160, chips=True)
-filtered = (f'<div style="display:flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-bottom:1px solid {RULE}"><span class="filter" style="width:220px;color:{TEXT}">{g("search")}checkout<span style="margin-left:auto" class="t2">×</span></span><span style="flex:1"></span><span class="popup">Recent{g("updown")}</span></div>'
-            + sec("Needs you", 1, True) + row(BY["prd"], "full") + sec("Open", 1) + row(BY["teardown"], "full") + sec("This week") + row(BY["audit"], "full")
-            + f'<div class="note" style="padding:8px 16px">Matches titles, projects, folders and tasks. For words inside sessions: <b>Search all projects ⇧⌘A</b>.</div>')
-empty = (f'<div style="display:flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-bottom:1px solid {RULE}"><span class="filter" style="width:220px;color:{TEXT}">{g("search")}stripe<span style="margin-left:auto" class="t2">×</span></span><span style="flex:1"></span><span class="popup">Recent{g("updown")}</span></div>'
-         + f'<div style="padding:28px 16px;text-align:center;white-space:normal" class="t2">No session’s title, project or task has “stripe”.<br><span style="color:{TEXT};text-decoration:underline;text-decoration-color:{EDGE}">Search inside sessions for “stripe” ⇧⌘A</span></div>')
-board("03-filter", 1200, 640, "3 · Filtering and search", "board", "A filter field in the list's header; chips as the alternative.", bd(1200, 640,
+def hit(sid, where, snip):
+    r = row(BY[sid], "full")
+    return r + f'<div class="note" style="margin:-4px 16px 4px 41px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="color:{EDGE}">{where} ·</span> {snip}</div>'
+
+
+fhdr = lambda q: f'<div style="display:flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-bottom:1px solid {RULE}"><span class="filter" style="width:260px;color:{TEXT}">{g("search")}{q}<span style="margin-left:auto" class="t2">×</span></span><span style="flex:1"></span><span class="popup">Recent{g("updown")}</span></div>'
+filtered = (fhdr("saved cards in scope")
+            + sec("Matches · 3")
+            + hit("prd", "question", "Move <b>saved cards</b> into <b>scope</b>, or keep it out and log an open question?")
+            + hit("teardown", "Claude, 6m", "Three of the five teardowns let guests <b>save a card</b> at checkout…")
+            + hit("audit", "you, 2d", "Leave <b>saved-card</b> copy until legal says it’s in <b>scope</b>")
+            + f'<div class="note" style="padding:8px 16px">Best first, by meaning and by words, as search ranks (F-36). For files and notes too: <b>Search all projects ⇧⌘A</b>.</div>')
+empty = (fhdr("stripe webhooks")
+         + f'<div style="padding:28px 16px;text-align:center;white-space:normal" class="t2">Nothing in your sessions is about “stripe webhooks”.<br><span style="color:{TEXT};text-decoration:underline;text-decoration-color:{EDGE}">Search files and notes too ⇧⌘A</span></div>')
+board("03-filter", 1640, 700, "3 · Filtering and search", "board", "A filter field in the list's header; chips as the alternative.", bd(1640, 700,
     "3 · Filtering and search",
-    "The list filters itself; search stays search. Typing narrows by title, project, folder and task, as the map’s Filter folders does (<code>duo2 view filter</code> grows a list form). Words inside a session are search’s job (⇧⌘A), one click away.",
+    "The field filters with Duo’s own search: hybrid, by meaning and by words (F-36, the index <code>duo2 search --kind session</code> reads), over each session’s title, project, folder, task and what was said in it, not only the title (Geoff, 2026-10-07). While it has text, the sections give way to one list of matches, best first, each with the line that matched; Esc clears it and the sections come back.",
     f'''<div style="display:flex;gap:20px;align-items:flex-start">
 {frame(hdrA + '<div style="padding:4px 0">' + "".join(row(BY[i], "full") for i in ["teardown", "edge", "rules"]) + '</div>', 560, None, "A · a field and the Group popup <span class=rec>RECOMMENDED</span>", "As the map’s header (DL-104). ⌘F in the list focuses it; Esc clears. The popup holds Group By and, under a rule, Show Archived.")}
 {frame(hdrB + '<div style="padding:4px 0">' + "".join(row2(BY[i]) for i in ["prd", "copy", "teardown"]) + '</div>', 340, None, "B · chips under the field", "All, Needs you, Open, Tasks (sessions with a task), Project ⌄. Faster for one-click views; costs a row, and Needs you is already a section and a column.")}
 <div style="display:flex;flex-direction:column;gap:16px">
-{frame(filtered, 560, None, "Typed: “checkout”")}
-{frame(empty, 560, None, "Nothing matches")}</div></div>'''))
+{frame(filtered, 560, None, "Typed: “saved cards in scope”", "A needs-you session matches too: a filter is a search, so N1 doesn’t hide it here. The line under each row is the passage that matched, its matched words semibold; who said it and when lead it.")}
+{frame(empty, 560, None, "Nothing matches", "The link opens search (⇧⌘A) with the same words.")}</div></div>'''))
 
 # 4 · click
 hover_actions = f'<span style="display:flex;gap:6px;flex:none"><span class="btn" style="height:20px;padding:0 6px;gap:4px">{g("bubble")}Open here</span><span class="btn" style="height:20px;padding:0 6px;gap:4px">{g("jump")}Project</span></span>'
@@ -713,12 +722,12 @@ board("10-home-chat", 1880, 900, "10 · Home's agent in chat by default", "board
 # 11 · recommendation
 board("11-recommendation", 1200, 880, "11 · Recommendation and the v1 slice", "board", "B with recency grouping, N1, Home in chat; D later.", bd(1200, 880,
     "11 · Recommendation and the v1 slice",
-    "Recommended: <b>B</b> (Board | List in the middle), grouped <b>by recency</b> like a project’s list, Needs you <b>owned by the column</b> (N1), Home <b>in chat</b> by default. Then <b>D</b> as the next step, once the list has been used.",
+    "<b>Approved by Geoff, 2026-10-07 (DL-142):</b> <b>B</b> now (Board | List in the middle, List first), grouped <b>by recency</b> with no open tint, Needs you <b>owned by the column</b> (N1), the filter <b>by search’s hybrid ranking</b>, a click <b>jumps</b> into the project, Home <b>in chat</b> with board 10’s light strip. <b>D</b> later (ENH-28).",
     f'''<div style="display:flex;gap:16px;align-items:flex-start">
 <div class="txt" style="flex:1"><h3>Why B first</h3><ul>
 <li>Keeps the three things Geoff named: Home’s agent (left, now in chat), the board (one click away), and Needs you (right, unchanged).</li>
 <li>The list gets the middle’s width, so a row carries project and task on one line, and it fits the 1280×800 window without anything giving way.</li>
-<li>Everything in it exists: DL-91’s sections, the row, the tint, the filter field, the map header. It’s a new arrangement, not a new language.</li>
+<li>Everything in it exists: DL-91’s sections, the row, the filter field, search’s index, the map header. It’s a new arrangement, not a new language.</li>
 <li>A click jumps into the project, as a tile’s session row does, so there’s no new navigation to learn.</li></ul>
 <h3>Why D next, not now</h3><ul>
 <li>D is the Claude app’s shape, and the most like Geoff’s note. It needs any session shown at All projects (Home’s pane hosting other projects’ sessions), which touches the multi-window study’s question of where Home lives.</li>
@@ -727,12 +736,12 @@ board("11-recommendation", 1200, 880, "11 · Recommendation and the v1 slice", "
 <div class="txt" style="width:520px;flex:none"><h3>v1 slice [P]</h3><ol>
 <li><b>Home opens in chat</b>: new Home sessions in chat; the light strip and header (board 10). <code>duo2 session chat --home</code>.</li>
 <li><b>Board | List</b> in the map’s header, remembered; first launch shows List. <code>duo2 view home board|list|toggle</code>; View › Show Board / Show List (⌘1 / ⌘2 [P]).</li>
-<li><b>The list</b>, compact rows (board 1), grouped by recency (DL-91 sections across projects), Earlier and Archived folded.</li>
-<li><b>Filter sessions</b> field (board 3 A): title, project, folder, task. <code>duo2 view filter</code> applies to whichever is showing.</li>
+<li><b>The list</b>, compact rows (board 1) with no open tint, grouped by recency (DL-91 sections across projects), Earlier and Archived folded.</li>
+<li><b>Filter sessions</b> field (board 3 A), ranked by search’s hybrid of meaning and words over title, project, folder, task and transcript. <code>duo2 view filter</code> applies to whichever is showing.</li>
 <li><b>N1</b>: needs-you sessions in the column only; the list’s “3 need you” line; opens into rows when the right pane is hidden.</li>
 <li><b>Click jumps</b> into the project with the session selected; right-click is the session menu; Return / ⌘↩ as board 4.</li></ol>
 <h3>Later</h3><ul><li>ENH-28: D, a Sessions view with sessions opened in place.</li><li>ENH-29: Group By state and project; chips; the session’s note as a third line.</li></ul>
-<h3>Open (Q-100 to Q-104)</h3><ul><li>Q-100 Home’s strip in chat: light (this study) or Q-57’s dark row.</li><li>Q-101 Default view on first launch: List or Board.</li><li>Q-102 Narrow (two-line) rows: when the middle is under 520.</li></ul></div>
+<h3>Open</h3><ul><li>Q-100 Shortcuts for Show Board / Show List (⌘1 / ⌘2 proposed; DL-34 locks the map).</li><li>Q-101 Two-line rows when the middle is under 520 (a stand-in until seen).</li><li>Home across windows stays with the multi-window study (Q-98).</li></ul></div>
 </div>'''))
 
 with open(os.path.join(OUT, "manifest.json"), "w") as f:
