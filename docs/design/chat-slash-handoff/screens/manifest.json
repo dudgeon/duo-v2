@@ -1,0 +1,18 @@
+{
+  "$note": "Chat slash commands, approved 2026-10-07 (DL-143). kind=board: a part of the console pane drawn on the Design canvas, exported as static HTML. Options B, C, G and M2 were drawn and not chosen; they stay on the canvas only.",
+  "source": "https://claude.ai/artifact/EGcF7Qx5ga6EXwkKZVh44a",
+  "screens": [
+    {"file": "screens/output.html", "board": "OutA.dc.html", "kind": "board", "width": 680, "height": 900, "decision": "DL-143", "question": "Q-105",
+     "shows": "A: a one-line result as a quiet line under your bubble led by the ⎿ elbow (Session renamed to: notes; Kept model as Haiku 4.5); a few lines as an output block on toolOutputFill; /context as a bar and legend."},
+    {"file": "screens/context.html", "board": "OutContext.dc.html", "kind": "board", "width": 680, "height": 900, "decision": "DL-143", "question": "Q-105",
+     "shows": "A's /context: a fresh session with 2.1.292's real numbers (small categories kept at 2 wide), the 480 console with a one-column legend, and a reopened chat where Claude Code didn't keep the grid."},
+    {"file": "screens/model-card.html", "board": "ScrE.dc.html", "kind": "board", "width": 680, "height": 900, "decision": "DL-143", "question": "Q-106",
+     "shows": "E: /model as a picker card docked in the composer's place, 1.5 text border (not the accent), options keyed 1 to 5 with the TUI's cursor row highlighted, Set as Default ⏎, This Session Only s, Cancel esc."},
+    {"file": "screens/effort-card.html", "board": "ScrE2.dc.html", "kind": "board", "width": 680, "height": 900, "decision": "DL-143", "question": "Q-106",
+     "shows": "E: /effort as five segments (Faster to Smarter) with Confirm ⏎, This Session Only s, Cancel esc; the result line after the card sinks; which commands get a card and which fall back."},
+    {"file": "screens/fallback-named.html", "board": "ScrD.dc.html", "kind": "board", "width": 680, "height": 900, "decision": "DL-143", "question": "Q-106",
+     "shows": "Every other screen: DL-119's fallback bar, now naming the command (/permissions opens…, /usage shows…) and how to leave it."},
+    {"file": "screens/menu.html", "board": "MenuM1.dc.html", "kind": "board", "width": 680, "height": 900, "decision": "DL-143", "question": "Q-106",
+     "shows": "M1: the / menu's name column fits the longest name shown (122 to 280), a plugin's prefix in text2 and cut first, ↑↓ for more · tab completes; /model and /effort lose the terminal mark."}
+  ]
+}
