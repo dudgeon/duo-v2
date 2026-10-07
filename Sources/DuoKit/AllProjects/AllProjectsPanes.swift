@@ -138,6 +138,11 @@ struct ProjectMapPane: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
+        // Board | List (DL-142): the List is every session by recency; the Board is the map.
+        if model.homeView == .list { SessionListPane() } else { board }
+    }
+
+    @ViewBuilder var board: some View {
         let map = model.mapLayout
         VStack(spacing: 0) {
             ScrollView {
@@ -351,42 +356,56 @@ struct TileFlow: View {
     }
 }
 
-/// The map's header (DL-104): `Filter folders` on the left, `Sort` and its popup on the right.
+/// The map's header (DL-104), with Board | List first (DL-142): the filter (`Filter folders` on the
+/// Board, `Filter sessions` on the List), then at the right `Sort` (Board) or `Group` (List) and its popup.
 struct MapHeader: View {
     @Environment(AppModel.self) private var model
-    let layout: MapLayout
+    /// The map, for the filter's `n of m`; nil on the List.
+    let layout: MapLayout?
 
     var body: some View {
         @Bindable var model = model
+        let list = layout == nil
+        let text = list ? $model.listFilter : $model.mapFilter
         HStack(spacing: 10) {
+            HomeViewToggle()
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass").font(.system(size: 10, weight: .medium)).foregroundStyle(DuoColor.text2)
                     .accessibilityHidden(true)
-                TextField("Filter folders", text: $model.mapFilter)
+                TextField(list ? "Filter sessions" : "Filter folders", text: text)
                     .textFieldStyle(.plain)
                     .duoText(.control)
                     .foregroundStyle(DuoColor.text)
-                    .onExitCommand { model.mapFilter = "" }
-                    .accessibilityLabel("Filter projects and folders")
-                if !model.mapFilter.isEmpty {
+                    .onExitCommand { text.wrappedValue = "" }
+                    .accessibilityLabel(list ? "Filter sessions" : "Filter projects and folders")
+                if let layout, !model.mapFilter.isEmpty {
                     Text("\(layout.shown) of \(layout.total)").duoText(.control).foregroundStyle(DuoColor.text2).fixedSize()
                 }
             }
             .padding(.horizontal, 8)
-            .frame(width: DuoMetric.mapFilterWidth, height: DuoMetric.mapHeaderControlHeight)
+            .frame(minWidth: 96, maxWidth: DuoMetric.mapFilterWidth, minHeight: DuoMetric.mapHeaderControlHeight, maxHeight: DuoMetric.mapHeaderControlHeight)   // 200; it gives way in a narrow middle (Q-101)
             .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusField)
-                .strokeBorder(model.mapFilter.isEmpty ? DuoColor.rule : DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline))
+                .strokeBorder(text.wrappedValue.isEmpty ? DuoColor.rule : DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline))
             Spacer(minLength: 8)
-            Text("Sort").duoText(.control).foregroundStyle(DuoColor.text2)
+            Text(list ? "Group" : "Sort").duoText(.control).foregroundStyle(DuoColor.text2)
             Menu {
-                ForEach(MapSort.allCases, id: \.self) { s in
-                    Button { model.setMapSort(s) } label: {
-                        if s == model.mapSort { Label(s.title, systemImage: "checkmark") } else { Text(s.title) }
+                if list {
+                    // The Group popup's menu isn't drawn (home-evolution-handoff, Not drawn): a system menu.
+                    Button { } label: { Label("Group By Recent", systemImage: "checkmark") }
+                    Divider()
+                    Button { model.listShowsArchived.toggle() } label: {
+                        if model.listShowsArchived { Label("Show Archived", systemImage: "checkmark") } else { Text("Show Archived") }
+                    }
+                } else {
+                    ForEach(MapSort.allCases, id: \.self) { s in
+                        Button { model.setMapSort(s) } label: {
+                            if s == model.mapSort { Label(s.title, systemImage: "checkmark") } else { Text(s.title) }
+                        }
                     }
                 }
             } label: {
                 HStack(spacing: 6) {
-                    Text(model.mapSort.title).duoText(.control).foregroundStyle(DuoColor.text)
+                    Text(list ? "Recent" : model.mapSort.title).duoText(.control).foregroundStyle(DuoColor.text)
                     Image(systemName: "chevron.up.chevron.down").font(.system(size: 8, weight: .semibold)).foregroundStyle(DuoColor.text2)
                 }
                 .padding(.leading, 8).padding(.trailing, 6)
@@ -398,7 +417,7 @@ struct MapHeader: View {
             .buttonStyle(.plain)
             .menuIndicator(.hidden)
             .fixedSize()
-            .accessibilityLabel("Sort projects by \(model.mapSort.title)")
+            .accessibilityLabel(list ? "Group sessions by recent" : "Sort projects by \(model.mapSort.title)")
         }
         .frame(height: DuoMetric.mapHeaderControlHeight)
     }

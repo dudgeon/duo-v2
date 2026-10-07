@@ -49,6 +49,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case zoomIn             // ⌘+ (⌘= too): View › Zoom In, while a browser tab has the keyboard
     case zoomOut            // ⌘-
     case actualSize         // ⌘0
+    // All projects' middle (DL-142): no chords until Q-100 is decided
+    case showBoard, showList
 
     public var title: String {
         switch self {
@@ -103,6 +105,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .zoomIn: "Zoom In"
         case .zoomOut: "Zoom Out"
         case .actualSize: "Actual Size"
+        case .showBoard: "Show Board"
+        case .showList: "Show List"
         }
     }
 
@@ -129,7 +133,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newProject, .code, .heading1, .heading2, .heading3,
              .task, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .tableInsert, .tableRowAbove, .tableRowBelow,
              .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft, .tableAlignCenter,
-             .tableAlignRight: nil
+             .tableAlignRight, .showBoard, .showList: nil  // Show Board / Show List: Q-100
         case .newBrowserTab: KeyboardShortcut("t", modifiers: [.command, .option])
         case .focusAddress: KeyboardShortcut("l", modifiers: .command)
         case .openFile: KeyboardShortcut("o", modifiers: .command)
@@ -171,6 +175,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .revertAllChanges: (model.editorIfLoaded?.claudeChanges ?? 0) > 0
         case .printPage: model.visibleWebTab.map { $0.blocked == nil } ?? false
         case .zoomIn, .zoomOut, .actualSize: model.webFocus == .html && model.visibleWebTab.map { $0.blocked == nil } == true
+        case .showBoard: !(model.altitude.isAllProjects && model.homeView == .board)
+        case .showList: !(model.altitude.isAllProjects && model.homeView == .list)
         }
     }
 
@@ -247,6 +253,9 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .zoomIn: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomIn(t.zoom)) }
         case .zoomOut: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomOut(t.zoom)) }
         case .actualSize: model.visibleWebTab?.zoom(1.0)
+        case .showBoard, .showList:
+            model.setHomeView(self == .showBoard ? .board : .list)
+            if !model.altitude.isAllProjects { model.zoomOut() }
         }
     }
 }
@@ -334,6 +343,10 @@ public struct DuoCommands: Commands {
         // panes) are left out until they work; Enter Full Screen is the system's.
         CommandGroup(after: .sidebar) {
             item(.toggleSidebar)
+            Divider()
+            // All projects' middle (DL-142), the same choice as the map header's Board | List.
+            item(.showBoard)
+            item(.showList)
             Divider()
             // A browser tab's page zoom (DL-124), as Safari's View menu has it.
             item(.zoomIn)

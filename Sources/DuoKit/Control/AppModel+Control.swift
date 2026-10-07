@@ -83,9 +83,28 @@ extension AppModel {
             setMapSort(s)
             done(.ok("All projects sorted by \(s.title.lowercased())."))
         case .viewFilter:
-            mapFilter = inv.positional.joined(separator: " ")
+            let text = inv.positional.joined(separator: " ")
+            if altitude.isAllProjects, homeView == .list {
+                listFilter = text
+                let n = sessionList.filtered(text).count
+                return done(.ok(text.isEmpty ? "Filter cleared." : "\(n) session\(n == 1 ? " matches" : "s match") '\(text)'."))
+            }
+            mapFilter = text
             let m = mapLayout
             done(.ok(mapFilter.isEmpty ? "Filter cleared." : "\(m.shown) of \(m.total) match '\(mapFilter)'."))
+        case .viewHome:
+            switch inv[0] {
+            case "board": setHomeView(.board)
+            case "list": setHomeView(.list)
+            case "toggle": setHomeView(homeView == .list ? .board : .list)
+            case nil: break
+            default: return done(.fail("usage: \(id.action.usage)"))
+            }
+            if let a = inv.flags["archived"] {
+                guard a == "on" || a == "off" else { return done(.fail("usage: \(id.action.usage)")) }
+                listShowsArchived = a == "on"
+            }
+            done(.ok("All projects shows the \(homeView.title)\(homeView == .list && !listShowsArchived ? ", archived sessions hidden" : "")."))
         case .viewHidden:
             switch inv[0] { case "on": setShowHiddenFiles(true); case "off": setShowHiddenFiles(false); default: setShowHiddenFiles(!showHiddenFiles) }
             done(.ok(showHiddenFiles ? "Hidden files showing." : "Hidden files hidden."))
