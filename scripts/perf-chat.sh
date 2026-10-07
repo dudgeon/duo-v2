@@ -25,7 +25,11 @@ python3 scripts/make-long-chat.py $cfg/more.jsonl --turns 3 --tools 12 --seed 9 
 tail -n +2 $cfg/more.jsonl > $cfg/same-turn.jsonl
 t=$proj/$sid.jsonl
 
-then=${PERF_THEN:-"perf-follow:$sid|$cwd,wait:4,perf-report,perf-views,+perf-sample:4|$out/sample-scroll.txt,perf-wheel:300|40,wait:14,perf-wheel:120|200,wait:7,perf-bottom,wait:1,perf-sample:3|$out/sample-append.txt,+perf-append:$cfg/same-turn.jsonl|$t|60|at-bottom,wait:5,perf-middle,wait:2,perf-report,perf-sample:3|$out/sample-up.txt,+perf-append:$cfg/more.jsonl|$t|60|scrolled-up,wait:5,perf-report"}
+# PERF_PROFILE=live: only replies arriving at the bottom, four rounds.
+live="perf-follow:$sid|$cwd,wait:4"
+for i in 1 2 3 4; do live+=",perf-bottom,wait:1,perf-append:$cfg/same-turn.jsonl|$t|28|at-bottom-$i,wait:3"; done
+full="perf-follow:$sid|$cwd,wait:4,perf-report,perf-views,+perf-sample:4|$out/sample-scroll.txt,perf-wheel:300|40,wait:14,perf-wheel:120|200,wait:7,perf-bottom,wait:4,perf-sample:3|$out/sample-append.txt,+perf-append:$cfg/same-turn.jsonl|$t|60|at-bottom,wait:5,perf-middle,wait:2,perf-report,perf-sample:3|$out/sample-up.txt,+perf-append:$cfg/more.jsonl|$t|60|scrolled-up,wait:5,perf-report"
+[[ ${PERF_PROFILE:-full} == live ]] && then=$live || then=${PERF_THEN:-$full}
 env -u DUO_SUPPORT_DIR ${=PERF_ENV:-} DUO_SUPPORT_DIR=$sup CLAUDE_CONFIG_DIR=$cfg DUO_AUTOCONFIRM=1 \
   build/Duo.app/Contents/MacOS/Duo --state chat-window --capture-window $out/window.png --then "$then" 2>$out/stderr.txt &
 pid=$!

@@ -66,7 +66,20 @@ struct ChatPane: View {
                 .defaultScrollAnchor(chat.cardUp ? .bottom : .top, for: .alignment)
                 .defaultScrollAnchor(.bottom, for: .initialOffset)
                 .defaultScrollAnchor(.bottom, for: .sizeChanges)
-                .onChange(of: chat.log.items) { proxy.scrollTo(ChatPane.bottom, anchor: .bottom) }
+                // New items follow you down only while you're at the bottom; scrolled up, you stay
+                // where you are. Only your scrolling decides: the lazy stack re-estimating its height
+                // can clamp the offset to the end, which isn't you arriving there. So a change of
+                // offset alone decides; one with the height can only say you've left. The history
+                // landing (0 → n items) always shows the end. Counted, not compared: comparing every
+                // item was a walk of the whole feed per event (F-160).
+                .onScrollGeometryChange(for: [CGFloat].self, of: { g in [g.contentOffset.y, g.containerSize.height, g.contentSize.height] }) { old, g in
+                    let atBottom = g[0] + g[1] >= g[2] - 60
+                    if old.count == 3, old[2] != g[2] || old[1] != g[1] { if !atBottom { chat.followsBottom = false }; return }
+                    if old.count == 3, old[0] != g[0] { chat.followsBottom = atBottom }
+                }
+                .onChange(of: chat.log.items.count) { old, _ in
+                    if old == 0 || chat.followsBottom { proxy.scrollTo(ChatPane.bottom, anchor: .bottom) }
+                }
                 .onChange(of: chat.revealRequest) { if let id = chat.revealRequest { withAnimation { proxy.scrollTo(id, anchor: .top) } } }
             }
             if chat.cardUp {

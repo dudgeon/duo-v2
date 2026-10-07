@@ -94,6 +94,7 @@ enum ChatPerf {
             watchdog.start()
             let before = chatScroll().map { Int($0.contentView.bounds.minY) } ?? -1
             let beforeHeight = chatScroll()?.documentView.map { Int($0.bounds.height) } ?? -1
+            let follows = model.consoleTab.flatMap { model.fixtureChats[$0] }?.followsBottom
             for i in 0..<count {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05 * Double(i)) {
                     h.seekToEndOfFile(); h.write(Data((lines[i] + "\n").utf8))
@@ -104,7 +105,7 @@ enum ChatPerf {
                     try? h.close()
                     var r = watchdog.take(label: args.count > 3 ? args[3] : "append")
                     let sv = chatScroll()
-                    r.merge(["event": "append", "lines": count, "y_before": before, "height_before": beforeHeight,
+                    r.merge(["event": "append", "lines": count, "follows_bottom": follows ?? false, "y_before": before, "height_before": beforeHeight,
                              "y_after": sv.map { Int($0.contentView.bounds.minY) } ?? -1,
                              "height_after": sv?.documentView.map { Int($0.bounds.height) } ?? -1, "footprint_mb": footprintMB()]) { a, _ in a }
                     say(r)

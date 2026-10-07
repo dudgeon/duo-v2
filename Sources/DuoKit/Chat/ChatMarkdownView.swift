@@ -117,6 +117,12 @@ struct ChatInlineText: View {
     }
 
     static func styled(_ text: String, style: DuoTextStyle) -> AttributedString {
+        memo.value("\(style)\u{1}" + text) { styledUncached(text, style: style) }
+    }
+
+    static let memo = ChatMemo<AttributedString>(limit: 8000)
+
+    static func styledUncached(_ text: String, style: DuoTextStyle) -> AttributedString {
         var a = ChatMarkdown.inline(text)
         let mono = Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.chatInlineCode.spec.size, weight: .regular))
         for run in a.runs {

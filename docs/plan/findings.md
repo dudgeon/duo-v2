@@ -2017,6 +2017,31 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   4. **Every new item scrolls to the bottom** and compares the whole feed (F-160).
 - **The rows.** A `LazyVStack` row is a whole Claude turn. In a long agent turn that is hundreds of steps, so realizing or re-rendering one row is costly. The flick's remaining 75–93 ms hitches are this. The collapse makes these rows much smaller.
 
+- **Built (DL-137, quick + deeper).** All of F-158 and F-160, and also:
+  - the replay runs off the main thread too: `ChatLog` is no longer tied to the main actor, a scratch log is built in the background and `adopt`ed in one change, and `ChatIngest.record` has a nonisolated form;
+  - Markdown blocks and inline attributed strings are cached by text (`ChatMemo`);
+  - the follow-bottom rule is decided by your scrolling only: a change of offset alone decides, and one that comes with a height change can only say you've left (the lazy stack's re-estimate can clamp the offset to the end).
+  
+  Heavy fixture, on main with the collapse (e1b5635) and then with this build:
+
+| Phase | main | this build |
+|---|---|---|
+| Open: longest stall | 2.0–2.9 s | 142–176 ms |
+| Slow scroll: late frames | 1 of 300 | 1 of 300 |
+| Flick: longest stall | 75 ms | 86–92 ms |
+| New replies at the bottom (steady): longest stall | 62–78 ms | 64–71 ms |
+| A reply while scrolled up | pulled to the bottom | stays |
+
+- **What's left is the lazy stack's rows** (ENH-23a):
+  - right after a jump to the bottom, appending can stall 0.4–0.5 s while SwiftUI re-estimates a giant row;
+  - in 1 run of 3, a reply arriving while scrolled far up moved the view up to 13,000 pt, because the stack's estimate of the whole feed collapsed (138k to 333k pt between two moments).
+  
+  Both come from one row being a whole turn.
+- **Proof:**
+  - `scripts/check-chat-perf.sh`, the budget: open 600 ms, slow scroll 10 late frames, flick and replies 250 and 600 ms, and the follow decision. It passed 3 of 3.
+  - DuoChecks: 685 pass. The off-main replay matches the main-thread one on all 13 boards.
+  - `check-chat.sh` and `check-ui.sh`: all 33 captures are pixel-identical to main's.
+
 ## F-158 · SwiftUI sized the pane split with Auto Layout, walking every view in every pane (2026-10-07)
 
 - `PaneSplit` (`Shell/PaneSplit.swift`) is an `NSViewRepresentable` with no `sizeThatFits`. So on every layout pass of the window's hosting view, SwiftUI asks it `systemLayoutSizeFittingSize:`. That builds a temporary Auto Layout engine from the constraints of every view under the split, all panes included, and throws it away (`_populateEngineWithConstraintsForViewSubtree`).

@@ -193,6 +193,50 @@ func spikeScreen(_ name: String) -> String {
         check(ChatFeedProbe.start(recs, turns: 50) == 140, "a long history opens on its last 50 turns (Q-56c)")
     }
 
+    print("chat mode: a long chat opens off the main thread (F-160)")
+    do {
+        // Every board's recording, replayed off the main thread, gives the log the main thread's replay gives.
+        let boards = repoRoot().appending(path: "docs/design/chat-mode-handoff/fixture-chat")
+        var same = 0, all = 0
+        for b in ((try? FileManager.default.contentsOfDirectory(atPath: boards.path)) ?? []).sorted() {
+            guard let data = try? Data(contentsOf: boards.appending(path: "\(b)/transcript.jsonl")) else { continue }
+            let recs = ChatIngest.lines(data)
+            let main = ChatLog()
+            for r in recs { ChatIngest.record(r, into: main) }
+            var off: ChatLog?
+            Task { off = await ChatFeedProbe.replayOffMain(data) }
+            let until = Date().addingTimeInterval(5)
+            while off == nil, Date() < until { spin(0.01) }
+            all += 1
+            if off?.items == main.items { same += 1 } else { print("    differs: \(b)") }
+        }
+        check(all > 5 && same == all, "every board's transcript replays the same off the main thread (\(same)/\(all))")
+
+        // Steps are found by id across turns, after the turn they're in has closed.
+        let log = ChatLog()
+        log.prompt("one", time: nil, fromHook: false)
+        log.toolUse(id: "a", name: "Bash", input: ["command": "ls"], time: nil)
+        log.prompt("two", time: nil, fromHook: false)
+        log.toolUse(id: "b", name: "Read", input: ["file_path": "/x/y.md"], time: nil)
+        log.toolUse(id: "a", name: "Bash", input: ["command": "ls"], time: nil)
+        log.toolResult(id: "a", name: nil, input: nil, result: ["stdout": "x\ny"], content: nil, isError: false, time: nil)
+        check(log.step("a")?.status == .done && log.step("a")?.output?.count == 3 && log.step("b")?.status == .running,
+              "a result reaches its step in an earlier turn; a repeated call adds nothing")
+        check(log.steps.map(\.id) == ["a", "b"] && log.items.count == 4, "each step once, in its own turn")
+
+        // Timestamps read by hand agree with the formatter, and odd ones still parse.
+        let iso = ISO8601DateFormatter(); iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let plain = ISO8601DateFormatter()
+        check(ChatFeedProbe.date("2026-10-06T09:41:07.123Z") == iso.date(from: "2026-10-06T09:41:07.123Z")
+              && ChatFeedProbe.date("2026-02-28T23:59:59.5Z") == iso.date(from: "2026-02-28T23:59:59.500Z"), "transcript timestamps, read by hand")
+        check(ChatFeedProbe.date("2026-10-06T09:41:07Z") == plain.date(from: "2026-10-06T09:41:07Z") && ChatFeedProbe.date("not a date") == nil,
+              "a timestamp without a fraction, and none at all")
+
+        // Markdown is parsed once per text and the copy is the same.
+        let md = "## Plan\n\n- one\n- two\n\n```swift\nlet a = 1\n```"
+        check(ChatMarkdown.parse(md) == ChatMarkdown.parse(md) && ChatMarkdown.parse(md).count == 3, "a cached parse is the parse")
+    }
+
     print("chat mode: hook events (DL-118)")
     do {
         let dir = FileManager.default.temporaryDirectory.appending(path: "duo-chat-hooks-\(UUID().uuidString)")

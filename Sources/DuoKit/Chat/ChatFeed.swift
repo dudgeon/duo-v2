@@ -18,7 +18,7 @@ final class ChatFeed {
     /// Every transcript record read at attach, for Earlier turns.
     private var history: [ChatJSON] = []
     private(set) var historyStart = 0
-    static let turnsShown = 50
+    nonisolated static let turnsShown = 50
 
     init(sessionId: String, cwd: String, chat: ChatSession) {
         self.sessionId = sessionId
@@ -34,20 +34,50 @@ final class ChatFeed {
 
     var eventsURL: URL { HookEvents.file(for: sessionId) }
 
-    /// The transcript so far, read off the main thread; the last 50 turns go into the log.
+    /// The transcript so far: read, parsed and replayed off the main thread (a long session's is
+    /// 100 MB and more, seconds of work, F-160); the last 50 turns go into the log. Until it's in,
+    /// the tick reads nothing, so hooks and the transcript resume where the history ends.
     private func loadHistory() {
         guard let url = ClaudeStorage.transcript(sessionId: sessionId, cwd: cwd) else { return }
         transcript = url
-        let data = (try? Data(contentsOf: url)) ?? Data()
-        let cut = data.lastIndex(of: UInt8(ascii: "\n")).map { $0 + 1 } ?? 0
-        transcriptPos = UInt64(cut)
-        history = ChatIngest.lines(data.prefix(cut))
-        historyStart = Self.start(of: history, turns: Self.turnsShown)
-        replayHistory()
+        loading = true
+        let cwd = cwd, declined = chat?.lastDeclined
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let data = (try? Data(contentsOf: url)) ?? Data()
+            let cut = data.lastIndex(of: UInt8(ascii: "\n")).map { $0 + 1 } ?? 0
+            let records = ChatIngest.lines(data.prefix(cut))
+            let start = ChatFeed.start(of: records, turns: ChatFeed.turnsShown)
+            let built = Built(records: records, start: start, log: ChatFeed.replay(records, from: start, cwd: cwd, lastDeclined: declined))
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                self.transcriptPos = UInt64(cut)
+                self.land(built)
+            }
+        }
+    }
+
+    private struct Records: @unchecked Sendable { let all: [ChatJSON] }
+    private struct Built: @unchecked Sendable { let records: [ChatJSON]; let start: Int; let log: ChatLog }
+    private var loading = false
+
+    /// A scratch log of the records from `start` on, built wherever it's called.
+    nonisolated static func replay(_ records: [ChatJSON], from start: Int, cwd: String?, lastDeclined: String?) -> ChatLog {
+        let log = ChatLog()
+        log.cwd = cwd
+        log.earlierHidden = start > 0
+        for r in records[start...] { ChatIngest.record(r, into: log, lastDeclined: lastDeclined) }
+        return log
+    }
+
+    private func land(_ built: Built) {
+        history = built.records
+        historyStart = built.start
+        chat?.log.adopt(built.log)
+        loading = false
     }
 
     /// Where the last `turns` of your prompts begin.
-    static func start(of records: [ChatJSON], turns: Int) -> Int {
+    nonisolated static func start(of records: [ChatJSON], turns: Int) -> Int {
         var n = 0
         for i in records.indices.reversed() {
             let r = records[i]
@@ -59,19 +89,18 @@ final class ChatFeed {
         return 0
     }
 
-    private func replayHistory() {
-        guard let chat else { return }
-        chat.log.reset()
-        chat.log.earlierHidden = historyStart > 0
-        for r in history[historyStart...] { ChatIngest.record(r, into: chat.log, chat: chat) }
-    }
-
-    /// Earlier turns: 50 more.
+    /// Earlier turns: 50 more, replayed off the main thread like the first 50.
     func loadEarlier() {
-        guard historyStart > 0 else { return }
+        guard historyStart > 0, !loading else { return }
         let shown = history[historyStart...].filter { $0["type"] as? String == "user" && ($0["message"] as? ChatJSON)?["content"] is String }.count
-        historyStart = Self.start(of: Array(history), turns: shown + Self.turnsShown)
-        replayHistory()
+        let held = Records(all: history), cwd = cwd, declined = chat?.lastDeclined
+        loading = true
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let records = held.all
+            let start = ChatFeed.start(of: records, turns: shown + ChatFeed.turnsShown)
+            let built = Built(records: records, start: start, log: ChatFeed.replay(records, from: start, cwd: cwd, lastDeclined: declined))
+            await MainActor.run { [weak self] in self?.land(built) }
+        }
     }
 
     /// Hook events from the start of the turn in progress (after the last Stop), so a reply already
@@ -100,6 +129,7 @@ final class ChatFeed {
 
     private func tick() {
         guard let chat else { return stop() }
+        guard !loading else { return }
         for e in read(eventsURL, &eventsPos, &eventsRest) {
             if let p = e["e"] as? ChatJSON {
                 if p["hook_event_name"] as? String == "SessionStart", let t = p["transcript_path"] as? String, transcript == nil {
@@ -135,4 +165,13 @@ final class ChatFeed {
 /// For the checks: where the last `turns` prompts begin.
 public enum ChatFeedProbe {
     @MainActor public static func start(_ records: [ChatJSON], turns: Int) -> Int { ChatFeed.start(of: records, turns: turns) }
+    /// A replay built off the main thread, as opening a chat builds it (F-160).
+    public static func replayOffMain(_ transcript: Data) async -> ChatLog {
+        await Task.detached { Held(log: ChatFeed.replay(ChatIngest.lines(transcript), from: 0, cwd: nil, lastDeclined: nil)) }.value.log!
+    }
+    /// A transcript timestamp, read as the replay reads it.
+    public static func date(_ s: String) -> Date? { ChatIngest.date(s) }
+    private struct Held: @unchecked Sendable {
+        let log: ChatLog?
+    }
 }
