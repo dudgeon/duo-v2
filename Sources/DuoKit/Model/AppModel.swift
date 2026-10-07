@@ -48,6 +48,9 @@ public final class AppModel {
     public var sidebarHold: (project: String, order: [String: [String]])?
     /// Tasks just marked complete, still listed (checked, struck through) for `rowHold` (DL-130).
     public var completingTasks: Set<String> = []
+    /// The project's layout fading up after a jump from another project (DL-130): the panes are
+    /// the same views (terminals live in them), so the new content shows at once and fades up.
+    public var projectShown: Double = 1
     /// Counts changes Duo shows before the snapshot does (Q-78). A snapshot started before the
     /// latest one is stale: it would put the old state back for a beat, so it's dropped.
     @ObservationIgnored var localChange = 0
@@ -566,6 +569,10 @@ public final class AppModel {
             ?? returning.flatMap { k in tabSessions(inProject: name).first { $0.tabKey == k } }
             ?? (returningShell == nil ? SidebarRow.mostUrgent(live) : nil)
             ?? (returningShell == nil ? tabSessions(inProject: name).first { terminals.existing($0.tabKey) != nil } : nil)
+        if case .project(let was) = altitude, was != name, !MotionSettings.shared.reduce {
+            projectShown = 0
+            DispatchQueue.main.async { [weak self] in withDuoAnimation(.altitude) { self?.projectShown = 1 } }
+        }
         altitude = .project(name)
         peekOpen = false
         consoleTab = returningShell ?? target?.tabKey

@@ -69,6 +69,9 @@ struct ProjectSidebarPane: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 // Everything under a row that moves goes with it, the buttons and folds too.
                 .duoAnimation(.rowMove, value: items.map(\.id))
+                // Another project is another list: it replaces this one at once, rather than its
+                // rows fading in over these (DL-130).
+                .id(project?.name)
             }
             .onHover { model.hoverSidebar($0) }
             FileTreePane()
@@ -488,6 +491,7 @@ struct RightPane: View {
             .padding(.horizontal, 20)
             .frame(height: DuoMetric.tabStripHeight)
             .duoAnimation(.tabMove, value: tabs.map(\.id))
+            .id(model.currentProject?.name)   // another project's tabs replace these at once
             DuoColor.rule.frame(height: 1)
             if let id = model.rightTab, let web = model.webTabs[id] {
                 // A browser tab (Phase K, ENH-8): allowed sites in Duo, the rest in the browser (DL-3).

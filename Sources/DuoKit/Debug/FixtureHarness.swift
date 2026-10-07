@@ -574,7 +574,7 @@ public enum FixtureHarness {
             let f = parts.count > 1 ? parts[1].split(separator: "=", maxSplits: 1).map(String.init) : []
             model.dragging = nil; model.dropTarget = nil
             if let name = f.first { model.landedNote = f.count > 1 ? f[1] : "2 sessions moved in"; model.landed = name }
-        case "film":   // film:<png prefix>:<ms>|<ms>|…: frames at those offsets from now, <prefix>-<ms>.png (Q-77)
+        case "film", "filmw":   // film:<png prefix>:<ms>|<ms>|…: frames at those offsets from now, <prefix>-<ms>.png (Q-77); filmw: with the toolbar
             let f = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
             guard f.count == 2, let window = NSApp.windows.first(where: { $0.title == "Duo" }) else { break }
             let started = CACurrentMediaTime()
@@ -585,7 +585,10 @@ public enum FixtureHarness {
                         let late = Int(((CACurrentMediaTime() - started) * 1000).rounded()) - ms
                         // Web views (the editor, the deck) draw from their own snapshots, as the capture does.
                         WindowCapture.withWebSnapshots(in: window) {
-                            do { try WindowCapture.content(of: window, to: URL(fileURLWithPath: path)) } catch {
+                            do {
+                                if parts[0] == "filmw" { try WindowCapture.window(window, to: URL(fileURLWithPath: path)) }
+                                else { try WindowCapture.content(of: window, to: URL(fileURLWithPath: path)) }
+                            } catch {
                                 FileHandle.standardError.write(Data("film: \(path) failed: \(error.localizedDescription)\n".utf8))
                             }
                             FileHandle.standardError.write(Data("film: \(path) (\(late) ms late)\n".utf8))

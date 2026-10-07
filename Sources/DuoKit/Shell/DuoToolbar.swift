@@ -136,6 +136,8 @@ struct ProjectBreadcrumb: View {
                 .padding(.leading, 8)
         }
         .fixedSize()
+        // The chip fades in and out where it sits (DL-130); nothing before it moves.
+        .duoAnimation(.chipIn, value: model.needsYouElsewhere.isEmpty)
     }
 }
 
@@ -154,7 +156,10 @@ struct NeedsYouChip: View {
                     Circle()
                         .fill(open ? DuoColor.onNeedsYou : DuoColor.needsYou)
                         .frame(width: DuoMetric.glyph, height: DuoMetric.glyph)
+                    // The count rolls to its new value (`count`, DL-130).
                     Text("\(count) need you").duoText(.chip)
+                        .contentTransition(.numericText(value: Double(count)))
+                        .duoAnimation(.count, value: count)
                 }
                 .foregroundStyle(open ? DuoColor.onNeedsYou : DuoColor.needsYou)
                 .padding(.horizontal, 8)
@@ -175,6 +180,7 @@ struct NeedsYouChip: View {
                 PeekView().environment(model)
             }
             .accessibilityLabel("\(count) sessions need you in other projects")
+            .transition(.opacity)
         }
     }
 }
