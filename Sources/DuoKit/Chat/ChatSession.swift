@@ -49,11 +49,24 @@ public struct ChatFallback: Equatable, Sendable {
     public enum Kind: Sendable, Equatable { case automatic, handedOver }
     public var kind: Kind
     public var message: String
+    /// The command that opened the screen, set in mono at the start of the message (DL-143).
+    public var command: String?
 
     public static let unknownScreen = ChatFallback(kind: .automatic,
         message: "Chat mode can’t show this screen, so here’s the terminal. Chat comes back when it closes.")
     public static func automatic(_ m: String) -> ChatFallback { ChatFallback(kind: .automatic, message: m) }
     public static func handedOver(_ m: String) -> ChatFallback { ChatFallback(kind: .handedOver, message: m) }
+
+    /// A command sent from chat opened a screen of its own (chat-slash-handoff `fallback-named`):
+    /// the bar names it and the way out. "Shows" for a screen that only shows, "opens" for one
+    /// that takes a choice; `/config` and `/resume` take two Escs (F-173).
+    public static func command(_ name: String) -> ChatFallback {
+        let shows: Set<String> = ["/usage", "/cost", "/status", "/help", "/skills", "/release-notes"]
+        let twoEscs: Set<String> = ["/config", "/resume"]
+        let rest = (shows.contains(name) ? " shows" : " opens") + " in Claude Code’s own screen. "
+            + (twoEscs.contains(name) ? "Esc clears the search, then closes it." : "Esc closes it and brings chat back.")
+        return ChatFallback(kind: .automatic, message: name + rest, command: name)
+    }
 }
 
 /// The terminal a chat reads and answers: the live SwiftTerm view, or a scripted stand-in.
@@ -210,6 +223,12 @@ public final class ChatSession {
     /// For the harness: the screen as if Claude's dialog had come up or gone (DL-130's proofs).
     func harnessScreenKind(_ kind: ChatScreen.Kind) { screen.kind = kind }
 
+    /// A screen you opened from chat is up: a picker card, or a command's own screen in the terminal.
+    public var ownScreenUp: Bool { pickerUp || (fallback?.command != nil && screen.kind == .unknown) }
+
+    /// `/model` or `/effort` shows as a card in the composer's place (DL-143).
+    public var pickerUp: Bool { screen.kind == .picker && screen.picker != nil && dialogsVerified }
+
     public var cardUp: Bool {
         [.permission, .plan, .question, .questionReview].contains(screen.kind) && dialogsVerified && requestAgrees
     }
@@ -295,7 +314,7 @@ public final class ChatSession {
                     MainActor.assumeIsolated { self?.evaluateFallback() }
                 }
             } else if Date().timeIntervalSince(unknownSince!) >= Self.grace - 0.01 {
-                fallBack(.unknownScreen)
+                fallBack(commandScreen() ?? .unknownScreen)
             }
         case .permission, .plan, .question, .questionReview:
             unknownSince = nil; unknownTimer?.invalidate()
@@ -317,9 +336,25 @@ public final class ChatSession {
         case .idle, .busy:
             unknownSince = nil; disagreeSince = nil; unknownTimer?.invalidate()
             if fallback != nil { fallback = nil; onChange?() }
+        case .picker:
+            // `/model` and `/effort` as a card (DL-143), only on a CLI whose screens were checked.
+            unknownSince = nil; disagreeSince = nil; unknownTimer?.invalidate()
+            if !dialogsVerified {
+                fallBack(.automatic("Chat mode hasn’t been checked with this version of Claude Code’s screens (\(cliVersion ?? "unknown")), so here’s the terminal. Chat comes back when it closes."))
+            } else if fallback?.kind == .automatic { fallback = nil; onChange?() }
         case .starting:
             break
         }
+    }
+
+    /// The last command sent from chat, and when: a screen that comes up just after it is its own.
+    @ObservationIgnored var lastCommand: (name: String, at: Date)?
+
+    /// The named bar, when the unknown screen came from a command sent from chat moments ago; the
+    /// generic sentence stays for screens chat didn't start (sign-in, folder trust …).
+    func commandScreen() -> ChatFallback? {
+        guard let c = lastCommand, Date().timeIntervalSince(c.at) < 20 else { return nil }
+        return .command(c.name)
     }
 
     public func fallBack(_ f: ChatFallback) {

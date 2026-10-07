@@ -395,6 +395,14 @@ public final class AppModel {
         // One row per session id, whatever the sources disagree on (seen once, F-29).
         var ids = Set<String>()
         merged.sessions = merged.sessions.filter { s in s.sessionId.map { ids.insert($0).inserted } ?? true }
+        // Claude Code reports "waiting" while any screen of its own is up. One you opened from chat
+        // (/model, /help …) isn't Claude waiting on you: no needs-you dot while it's up (DL-143).
+        for i in merged.sessions.indices where merged.sessions[i].state == .needsYou {
+            guard let id = merged.sessions[i].sessionId, chats.existing(id)?.ownScreenUp == true else { continue }
+            merged.sessions[i].state = .idle
+            merged.sessions[i].reason = nil
+            merged.counts.needsYou = max(0, merged.counts.needsYou - 1)
+        }
         if merged != fixture { fixture = merged }
         followTaskTitles()
         // The map's order settles on the first scan, then on each arrival at All projects (DL-104).

@@ -12,7 +12,8 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 boards=("$@")
 [ ${#boards[@]} -gt 0 ] || boards=(window toggle text tools permission-edit permission-bash plan question-multi question-other question-review question-previews question-chat-decline composer status fallback
-  polish-collapsed polish-expanded polish-needs-you polish-output polish-edits polish-thinking polish-agents polish-todos polish-tools polish-failed polish-paste polish-bar-thin)
+  polish-collapsed polish-expanded polish-needs-you polish-output polish-edits polish-thinking polish-agents polish-todos polish-tools polish-failed polish-paste polish-bar-thin
+  slash-output slash-context slash-model-card slash-effort-card slash-fallback-named slash-menu)
 states=()
 for b in "${boards[@]}"; do states+=("chat-$b"); done
 NO_COMPARE=1 scripts/check-ui.sh "${states[@]}" >/dev/null
@@ -24,6 +25,8 @@ for b in "${boards[@]}"; do
     polish-collapsed|polish-expanded|polish-needs-you) box=(300 0 680 860); target="chat-polish-handoff/${b#polish-}" ;;
     polish-bar-thin) box=(300 0 680 520); target="chat-polish-handoff/bar-thin" ;;
     polish-*) box=(300 36 680 560); target="chat-polish-handoff/${b#polish-}" ;;
+    # chat-slash-handoff (DL-143): boards of the console pane, compared region by region.
+    slash-*) box=(300 0 680 860); target="chat-slash-handoff/${b#slash-}" ;;
     *) box=(300 0 680 860) ;;
   esac
   python3 scripts/chat-crop.py "build/ui/chat-$b.png" "build/ui/chat-$b-board.png" "${box[@]}" >/dev/null

@@ -83,26 +83,57 @@ struct ChatCommandMenu: View {
 
     var body: some View {
         let terminal = chat.signatures.terminalCommands
-        // The board's column is 122; a longer name (a plugin's skill) widens it rather than wrapping (stand-in, Q-106).
-        let longest = CGFloat(commands.prefix(8).map(\.name.count).max() ?? 0)
-        let column = max(122, ceil(longest * DuoTextStyle.mono.spec.size * 0.6) + 12)
+        let rows = Array(commands.prefix(8))
+        let column = Self.column(rows.map(\.name))
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(commands.prefix(8).enumerated()), id: \.offset) { _, c in
-                HStack(spacing: 0) {
-                    Text(c.name).duoText(.mono).foregroundStyle(DuoColor.text).lineLimit(1).frame(width: column, alignment: .leading)
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, c in
+                HStack(spacing: 12) {
+                    Self.name(c.name, column: column).duoText(.mono).lineLimit(1).truncationMode(.tail).frame(width: column, alignment: .leading)
                     Text(terminal.contains(c.name) ? "Opens in the terminal" : c.description).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
-                    Spacer(minLength: 8)
-                    if terminal.contains(c.name) { TerminalMark().stroke(DuoColor.text, style: StrokeStyle(lineWidth: 1.3, lineCap: .round, lineJoin: .round)).frame(width: 13, height: 10) }
+                    Spacer(minLength: 0)
+                    if terminal.contains(c.name) { TerminalMark().stroke(DuoColor.text2, style: StrokeStyle(lineWidth: 1.3, lineCap: .round, lineJoin: .round)).frame(width: 13, height: 10) }
                 }
-                .padding(EdgeInsets(top: 4, leading: 10, bottom: 4, trailing: 10))
+                .padding(EdgeInsets(top: 3, leading: 10, bottom: 3, trailing: 10))
                 .background(RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(c.selected ? DuoColor.selected : .clear))
                 .contentShape(Rectangle())
+                .help(c.name)
                 .onActivate { chat.ui.composer = c.name + " "; chat.focusComposer += 1 }  // action: session chat
+            }
+            // The TUI shows a page of its list; ↑↓ scroll it (F-174). Under a full page, say so.
+            if rows.count >= Self.page {
+                Text("↑↓ for more · tab completes").duoText(.control).foregroundStyle(DuoColor.text2)
+                    .padding(EdgeInsets(top: 3, leading: 10, bottom: 2, trailing: 10))
             }
         }
         .padding(5)
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).fill(DuoColor.pane))
         .duoPopoverShadow()
+    }
+
+    /// The TUI's page of commands (4 at the sizes measured, F-173): a full one has more under it.
+    static let page = 4
+    static let font = NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)
+
+    static func column(_ names: [String]) -> CGFloat { ChatCommandColumn.width(names) }
+
+    /// A plugin's prefix (`/design:`) in `text2`, the skill's name in `text`. Past 280 the prefix
+    /// goes first (`/cowork-plugin-man…:`); the name's tail is cut after it.
+    static func name(_ full: String, column: CGFloat) -> Text {
+        guard let colon = full.firstIndex(of: ":") else { return Text(full).foregroundStyle(DuoColor.text) }
+        var prefix = String(full[...colon])
+        let rest = String(full[full.index(after: colon)...])
+        if (full as NSString).size(withAttributes: [.font: font]).width > column, prefix.count > 20 { prefix = String(prefix.prefix(18)) + "…:" }
+        return Text("\(Text(prefix).foregroundStyle(DuoColor.text2))\(Text(rest).foregroundStyle(DuoColor.text))")
+    }
+}
+
+/// The `/` menu's name column (chat-slash-handoff `menu`, DL-143): the longest name shown and 36
+/// to spare, at least the approved 122, at most 280.
+public enum ChatCommandColumn {
+    public static func width(_ names: [String]) -> CGFloat {
+        let font = NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)
+        let longest = names.map { ($0 as NSString).size(withAttributes: [.font: font]).width }.max() ?? 0
+        return min(280, max(122, ceil(longest + 36)))
     }
 }
 

@@ -81,10 +81,19 @@ struct ChatFallbackBar: View {
     @Environment(AppModel.self) private var model
     let chat: ChatSession
     let message: String
+    var command: String?
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
-            Text(message).duoText(.body).foregroundStyle(DuoColor.text)
+            Group {
+                // The command in mono (`mono` 12 in the bar's 13/20), the rest as it reads (DL-143).
+                if let command, message.hasPrefix(command) {
+                    Text("\(Text(command).font(Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular))))\(Text(String(message.dropFirst(command.count))))")
+                } else {
+                    Text(message)
+                }
+            }
+            .duoText(.body).foregroundStyle(DuoColor.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
             Button("Back to Chat") { model.backToChat(chat.key) }  // action: session chat
@@ -162,7 +171,7 @@ struct ConsoleChatBody: View {
             ChatPane(chat: chat)
         } else {
             VStack(spacing: 0) {
-                if chat.mode == .chat, let f = chat.fallback { ChatFallbackBar(chat: chat, message: f.message) }
+                if chat.mode == .chat, let f = chat.fallback { ChatFallbackBar(chat: chat, message: f.message, command: f.command) }
                 if let terminal { TerminalSlot(session: terminal) } else { ChatTerminalStandIn(chat: chat) }
             }
         }

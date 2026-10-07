@@ -14,13 +14,15 @@ public enum ChatTargets {
                                             "polish-collapsed", "polish-expanded", "polish-needs-you", "polish-output", "polish-edits", "polish-thinking",
                                             "polish-agents", "polish-todos", "polish-tools", "polish-failed", "polish-paste",
                                             // DL-136: the thin light strip over chat.
-                                            "polish-bar-thin"]
+                                            "polish-bar-thin",
+                                            // chat-slash-handoff (DL-143): command results, the picker cards, the named bar, the / menu.
+                                            "slash-output", "slash-context", "slash-model-card", "slash-effort-card", "slash-fallback-named", "slash-menu"]
     nonisolated public static let screens = boards.map { "chat-" + $0 }
 
     public static func folder(_ board: String) -> URL? {
         if let r = Bundle.main.url(forResource: "chat-fixtures", withExtension: nil) { return r.appending(path: board) }
         var dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : "chat-mode-handoff"
+        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : board.hasPrefix("slash-") ? "chat-slash-handoff" : "chat-mode-handoff"
         for _ in 0..<6 {
             let c = dir.appending(path: "docs/design/\(handoff)/fixture-chat/\(board)")
             if FileManager.default.fileExists(atPath: c.path) { return c }
@@ -56,6 +58,8 @@ public enum ChatTargets {
             return (at, text)
         }
         chat.setVersion(meta["version"] as? String ?? "2.1.291")
+        // A command sent from chat a moment ago (DL-143): its screen's bar names it.
+        if let c = (meta["fallback"] as? [String: String])?["command"] { chat.lastCommand = (c, Date()) }
         ChatRecording.play(dir, into: chat, now: meta["now"] as? String)
         for id in meta["toggled"] as? [String] ?? [] { chat.ui.toggled.insert(id) }
         for id in meta["openRuns"] as? [String] ?? [] { chat.ui.openRuns.insert(id) }
@@ -67,7 +71,7 @@ public enum ChatTargets {
         // An interrupted reply ends on the screen, not a hook (F-105): the busy → idle the TUI drew.
         if meta["interruptAfterPlay"] as? Bool == true { chat.log.endStreaming(interrupted: true) }
         if let f = meta["fallback"] as? [String: String] {
-            chat.fallback = ChatFallback(kind: f["kind"] == "handedOver" ? .handedOver : .automatic, message: f["message"] ?? ChatFallback.unknownScreen.message)
+            chat.fallback = ChatFallback(kind: f["kind"] == "handedOver" ? .handedOver : .automatic, message: f["message"] ?? ChatFallback.unknownScreen.message, command: f["command"])
         }
         model.fixtureChats[tab] = chat
     }

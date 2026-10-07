@@ -33,7 +33,7 @@ extension AppModel {
         if answering {
             guard let option = words.first else { return done(.fail(usage)) }
             guard let chat = chats.existing(key) ?? fixtureChats[key] else { return done(.fail("\(name) has no chat yet: open it in Duo first")) }
-            return chatAnswer(chat, option: option, done)
+            return chatAnswer(chat, option: option, sessionOnly: inv.has("session-only"), done)
         }
         if moding {
             guard let chat = chats.existing(key) ?? fixtureChats[key] else { return done(.fail("\(name) has no chat yet: open it in Duo first")) }
@@ -75,10 +75,42 @@ extension AppModel {
         }
     }
 
+    /// `/model` and `/effort` (DL-143): a row's number or a level's name moves the TUI's own cursor or
+    /// marker, then ⏎ (or s, `--session-only`) chooses; `cancel` is Esc. Each key after the screen check.
+    func pickerAnswer(_ chat: ChatSession, _ p: ChatPicker, option: String, sessionOnly: Bool, _ done: @escaping @MainActor (Reply) -> Void) {
+        let usage = "usage: \(ActionID.sessionChat.action.usage)"
+        if option == "cancel" || option == "esc" {
+            Task { let r = await chat.pickerFinish(.cancel); done(r.ok ? .ok("Pressed Esc on /\(p.kind.rawValue), after checking it was still up.") : .fail("Nothing sent: \(r.why ?? "refused").")) }
+            return
+        }
+        let finish: ChatSession.PickerFinish = sessionOnly ? .sessionOnly : .confirm
+        switch p.kind {
+        case .model:
+            guard let n = Int(option), let row = p.rows.first(where: { $0.n == n }) else {
+                return done(.fail("there's no option \(option): \(p.rows.map { "\($0.n). \($0.name)" }.joined(separator: ", "))"))
+            }
+            Task {
+                var r = await chat.pickerMove(to: n)
+                if r.ok { r = await chat.pickerFinish(finish) }
+                done(r.ok ? .ok("Chose \(row.name)\(sessionOnly ? " for this session only" : "") in /model, after checking it was still up.") : .fail("Nothing more sent: \(r.why ?? "refused")."))
+            }
+        case .effort:
+            guard let i = p.levels.firstIndex(of: option) ?? Int(option).map({ $0 - 1 }), p.levels.indices.contains(i) else {
+                return done(.fail("\(usage); /effort's levels are \(p.levels.joined(separator: ", "))"))
+            }
+            Task {
+                var r = await chat.pickerLevel(to: i)
+                if r.ok { r = await chat.pickerFinish(finish) }
+                done(r.ok ? .ok("Set effort to \(p.levels[i])\(sessionOnly ? " for this session only" : "") in /effort, after checking it was still up.") : .fail("Nothing more sent: \(r.why ?? "refused")."))
+            }
+        }
+    }
+
     /// `duo2 session chat answer`: a review card's option, pressed only after the same screen check
     /// the card makes (phase 3).
-    func chatAnswer(_ chat: ChatSession, option: String, _ done: @escaping @MainActor (Reply) -> Void) {
+    func chatAnswer(_ chat: ChatSession, option: String, sessionOnly: Bool = false, _ done: @escaping @MainActor (Reply) -> Void) {
         let s = chat.reread()
+        if chat.pickerUp, let p = s.picker { return pickerAnswer(chat, p, option: option, sessionOnly: sessionOnly, done) }
         guard chat.cardUp else {
             let dialog: Set<ChatScreen.Kind> = [.permission, .plan, .question, .questionReview, .unknown]
             return done(.fail(dialog.contains(s.kind)
