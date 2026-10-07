@@ -587,6 +587,7 @@ func repoFixture() throws -> Fixture {
     store.terminateAll()
     try? FileManager.default.removeItem(at: ev)
     reapChecks()
+    dockBadgeChecks()
 
     print("titles")
     func rec(_ json: String) -> [String: Any] { try! JSONSerialization.jsonObject(with: Data(json.utf8)) as! [String: Any] }

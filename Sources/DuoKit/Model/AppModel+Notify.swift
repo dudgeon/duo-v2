@@ -7,10 +7,11 @@ import UserNotifications
 /// subtitle: project · reason; text: Claude's question as asked. Clicking opens the project with
 /// the card selected. Permission is asked the first time Duo would notify, never at launch and
 /// never in a scripted run (F-54). The badge counts sessions that need you. Both switch off in Settings.
+/// macOS draws the badge only for an app allowed badges in Notification Center, so Duo asks for
+/// badges with alerts (DL-138, F-161).
 extension AppModel {
     public func updateDockBadge() {
-        let n = fixture.sessions.filter { $0.state == .needsYou }.count
-        NSApp.dockTile.badgeLabel = DuoState.load().dockBadge && n > 0 ? "\(n)" : nil
+        NSApp.dockTile.badgeLabel = fixture.dockBadgeLabel(enabled: DuoState.load().dockBadge)
     }
 
     /// Called with each snapshot: notifies for sessions that started needing you since the last one.
@@ -20,7 +21,10 @@ extension AppModel {
         // A session that stopped waiting can notify again next time it waits.
         notified = notified.filter { waiting[$0] != nil }
         guard interactivePrompts, terminalsMode == .live, ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] == nil,
-              !NSApp.isActive, DuoState.load().notifyNeedsYou, Bundle.main.bundleIdentifier != nil else { return }
+              !NSApp.isActive, Bundle.main.bundleIdentifier != nil, !waiting.isEmpty else { return }
+        // The badge is allowed at the moment Duo would first notify, even with notifications off (DL-138).
+        if DuoState.load().dockBadge { Notifier.shared.authorize { _ in } }
+        guard DuoState.load().notifyNeedsYou else { return }
         for (id, s) in waiting where !notified.contains(id) && id != visibleSessionId {
             notified.insert(id)
             Notifier.shared.post(id: id, title: s.name, subtitle: s.project + (s.reason.map { " · \($0)" } ?? ""), body: s.question ?? "Needs you", project: s.project)
@@ -40,22 +44,57 @@ extension AppModel {
 final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     static let shared = Notifier()
     weak var model: AppModel?
-    private var asked = false
+    private var allowed = false
+
+    /// Asked the first time Duo would notify or badge (S3-6), not at launch. Badges come with
+    /// alerts (DL-138): an install that allowed alerts before Duo asked for badges asks again,
+    /// which macOS answers without a prompt once the user has answered (F-161).
+    func authorize(_ then: @escaping @MainActor (Bool) -> Void) {
+        if allowed { return then(true) }   // once allowed, asked no more this run; a refusal is read again
+        Task { @MainActor in
+            let center = UNUserNotificationCenter.current()
+            let settings = await center.notificationSettings()
+            let ok: Bool
+            switch settings.authorizationStatus {
+            case .notDetermined:
+                ok = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) == true
+            default:
+                // Answered before badges were asked for: asking again adds the Badges switch to
+                // System Settings › Notifications › Duo, quietly, even where notifications are off.
+                if settings.badgeSetting == .notSupported { _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge]) }
+                ok = settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
+            }
+            allowed = ok
+            NSApp.dockTile.display()
+            then(ok)
+        }
+    }
+
+    /// What macOS allows Duo, for `duo2 settings` (DL-138). Nil outside an app bundle.
+    func permission() async -> String? {
+        guard Bundle.main.bundleIdentifier != nil else { return nil }
+        let s = await UNUserNotificationCenter.current().notificationSettings()
+        let status = switch s.authorizationStatus {
+            case .notDetermined: "not asked yet"; case .denied: "off"; case .authorized, .provisional: "on"; @unknown default: "unknown"
+        }
+        let badges = switch s.badgeSetting {
+            case .enabled: "on"; case .disabled: "off (System Settings › Notifications › Duo › Badge application icon)"
+            case .notSupported: "not asked yet"; @unknown default: "unknown"
+        }
+        return "macOS: notifications \(status), badges \(badges)"
+    }
 
     func post(id: String, title: String, subtitle: String, body: String, project: String) {
+        authorize { ok in
+            guard ok else { return }
+            self.deliver(id: id, title: title, subtitle: subtitle, body: body, project: project)
+        }
+    }
+
+    private func deliver(id: String, title: String, subtitle: String, body: String, project: String) {
         Task { @MainActor in
             let center = UNUserNotificationCenter.current()
             center.delegate = self
-            if !asked {
-                let status = await center.notificationSettings().authorizationStatus
-                asked = true
-                // Asked the first time Duo would notify (S3-6), not at launch.
-                if status == .notDetermined {
-                    guard (try? await center.requestAuthorization(options: [.alert, .sound])) == true else { return }
-                } else if status != .authorized && status != .provisional {
-                    return
-                }
-            }
             let c = UNMutableNotificationContent()
             c.title = title
             c.subtitle = subtitle
