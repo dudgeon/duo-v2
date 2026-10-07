@@ -1607,6 +1607,32 @@ func repoFixture() throws -> Fixture {
         check(viewer.state == .failed("it’s damaged, or isn’t a PowerPoint deck"), "a damaged deck is called damaged (\(viewer.state))")
     }
 
+    print("duo2 hangs: the hang log (DL-139)")
+    do {
+        let f = FileManager.default.temporaryDirectory.appending(path: "duo-hangs-\(UUID().uuidString)/hangs.jsonl")
+        let t0 = Date(timeIntervalSince1970: 1_791_000_000)
+        HangLog.append(.init(at: t0, ms: 300, screen: "project a · chat, 10 items, 40 steps · right: md · 1 terminals", version: "0.2.4 (1)"), to: f)
+        HangLog.append(.init(at: t0.addingTimeInterval(60), ms: 2400, screen: "all projects · terminal · 2 terminals", version: "0.2.4 (1)",
+                             samples: [["Duo@0x10", "objc_msgSend (libobjc.A.dylib)"], ["Duo@0x10", "Duo@0x20"]], binary: "/x/Duo@0x100000000"), to: f)
+        let back = HangLog.read(from: f)
+        check(back.count == 2 && back[1].ms == 2400 && back[1].samples?.count == 2 && back[0].at == t0, "stalls are written as lines and read back whole")
+        let named = HangLog.report(back, stacks: true) { frames, _ in frames.map { $0 == "Duo@0x10" ? "ChatFeed.tick() (Duo)" : $0 == "Duo@0x20" ? "main (Duo)" : $0 } }
+        check(named.hasPrefix("2 stalls, 1 of 2 s or more") && named.contains("2/2  ChatFeed.tick() (Duo)") && named.contains("1/2  main (Duo)")
+              && named.contains("in: ChatFeed.tick() (Duo)"), "the report counts beach balls and names where Duo was stuck, most often first")
+        check(!HangLog.report(back, stacks: false).contains("ChatFeed"), "stacks only with --stacks")
+        check(HangLog.report([], stacks: false) == "No stalls of 250 ms or more logged.", "an empty log says so")
+        // Capped: past 512 KB only the newer half stays, in whole lines.
+        let big = HangLog.Record(at: t0, ms: 999, screen: String(repeating: "x", count: 4000), version: "v")
+        for _ in 0..<200 { HangLog.append(big, to: f) }
+        let size = (try? FileManager.default.attributesOfItem(atPath: f.path)[.size] as? Int) ?? 0
+        let after = HangLog.read(from: f)
+        check(size <= HangLog.cap && size > HangLog.cap / 4 && !after.isEmpty && after.allSatisfy { $0.ms == 999 }, "the log keeps under 512 KB, newest kept (\(size) bytes, \(after.count) lines)")
+        check(HangLog.file.path.hasPrefix(SupportFolder.duo.path), "it lives in Duo's own folder, so an isolated copy writes its own")
+        check(ActionID.hangs.action.local && ActionID.hangs.action.family == .app, "duo2 hangs reads the log without the app")
+        HangLog.clear(f)
+        check(HangLog.read(from: f).isEmpty, "--clear empties it")
+    }
+
     print("duo2 slide … (ENH-12, DL-125)")
     do {
         let proj = FileManager.default.temporaryDirectory.appending(path: "duo-deck-\(UUID().uuidString)")

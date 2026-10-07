@@ -123,6 +123,9 @@ enum ChatPerf {
             guard let sv = chatScroll(), let doc = sv.documentView else { return }
             doc.scroll(NSPoint(x: 0, y: max(0, doc.bounds.height - sv.contentView.bounds.height)))
             sv.reflectScrolledClipView(sv.contentView)
+        case "perf-stall":
+            // perf-stall:<ms>: blocks the main thread that long, for the hang log's checks (DL-139).
+            stall(ms: Double(args.first ?? "") ?? 500)
         case "perf-report":
             var r: [String: Any] = ["event": "report", "footprint_mb": footprintMB()]
             if let tab = model.consoleTab, let c = model.fixtureChats[tab] { r["items"] = c.log.items.count; r["steps"] = c.log.steps.count }
@@ -130,6 +133,13 @@ enum ChatPerf {
             say(r)
         default: break
         }
+    }
+
+    @inline(never) static func stall(ms: Double) {
+        let end = CACurrentMediaTime() + ms / 1000
+        var x = 0.0
+        while CACurrentMediaTime() < end { x += sin(x) }
+        if x == .infinity { say(["x": x]) }
     }
 
     /// The chat's scroll view: the one with the tallest document in Duo's window.
