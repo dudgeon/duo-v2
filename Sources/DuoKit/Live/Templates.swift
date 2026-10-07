@@ -49,7 +49,7 @@ public enum Templates {
 
     ## Done when
 
-    - [ ]
+    - [ ]\u{20}
 
     ## Notes
 
@@ -72,7 +72,7 @@ public enum Templates {
 
     ## Done when
 
-    - [ ]
+    - [ ]\u{20}
 
     ## Notes
 

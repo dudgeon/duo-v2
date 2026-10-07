@@ -537,6 +537,8 @@ struct RightPane: View {
             } else if let path = model.rightTab, path.contains("."), let file = model.liveFile(path) ?? model.keptFile(path) {
                 VStack(spacing: 0) {
                     DocumentStateBar()
+                    // A template (DL-146): what it's for, Preview and Reset over it.
+                    if let info = model.templateInfo(forFile: file) { TemplateBar(info: info) }
                     DocumentEditorView(editor: model.editor, file: file)
                 }
                 .modifier(NoticeMotion(key: DocumentStateBar.key(model)))
@@ -572,7 +574,9 @@ struct RightPane: View {
             tabs.append((id: group, title: group, isDocument: false))
         }
         for doc in model.openDocuments where doc != model.projectFile {
-            let title = model.webTabs[doc].map { $0.title } ?? (doc as NSString).lastPathComponent
+            let title = model.webTabs[doc].map { $0.title }
+                ?? model.templateInfo(forTab: doc).map { $0.kind == .task ? "Task template" : "Project template" }   // DL-146, board A1
+                ?? (doc as NSString).lastPathComponent
             tabs.append((id: doc, title: title, isDocument: true))
         }
         if let ro = model.readOnlySession { tabs.append((id: ReadOnlySession.tabKey, title: ro.title, isDocument: false)) }

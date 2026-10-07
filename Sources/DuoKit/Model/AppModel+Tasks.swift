@@ -282,6 +282,7 @@ struct TasksFold: View {
                 .contentShape(Rectangle())
                 .onActivate { withDuoAnimation(.fold) { if expanded { model.expandedGroups.insert(key) } else { model.expandedGroups.remove(key) } } }  // action: view group
                 .accessibilityLabel(expanded ? "Hide tasks without sessions" : "Show \(tasks.count) tasks without sessions")
+                .contextMenu { TaskTemplateItems(project: project) }
                 .padding(.top, 8)
                 if expanded {
                     VStack(alignment: .leading, spacing: 0) {
@@ -291,6 +292,23 @@ struct TasksFold: View {
                     .transition(.foldRows)
                 }
             }
+        }
+    }
+}
+
+/// The TASKS fold's menu (DL-146, templates-handoff A4): New Task, then the project's task template.
+struct TaskTemplateItems: View {
+    @Environment(AppModel.self) private var model
+    let project: String
+
+    var body: some View {
+        Button("New Task") { model.newTask(in: project) }
+        Divider()
+        Button("Edit Task Template") { model.editTemplate(.task, project: project) }
+        if let own = model.liveFolders[project].map({ Templates.path(.task, in: $0) }), FileManager.default.fileExists(atPath: own.path) {
+            Button("Use Home's Template…") { model.resetTemplate(.init(kind: .task, project: project, file: own)) }
+        } else {
+            Button("Make a Template for \(project)") { model.copyTemplate(toProject: project) }
         }
     }
 }

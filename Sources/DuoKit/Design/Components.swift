@@ -22,9 +22,11 @@ struct SectionLabel: View {
 struct DuoButtonStyle: ButtonStyle {
     /// Shown pressed while its mode is on (Select Shape while picking, pptx-handoff B).
     var on = false
+    /// The label semibold while on (the template bar's Preview, templates-handoff A2).
+    var boldWhenOn = false
 
     func makeBody(configuration: Configuration) -> some View {
-        DuoButtonBody(configuration: configuration, on: on)
+        DuoButtonBody(configuration: configuration, on: on, bold: on && boldWhenOn)
     }
 }
 
@@ -32,11 +34,12 @@ struct DuoButtonStyle: ButtonStyle {
 private struct DuoButtonBody: View {
     let configuration: ButtonStyleConfiguration
     let on: Bool
+    var bold = false
     @Environment(\.isEnabled) private var enabled
 
     var body: some View {
         configuration.label
-            .duoText(.control)
+            .duoText(.control, weight: bold ? .semibold : nil)
             .foregroundStyle(enabled ? DuoColor.text : DuoColor.text2.opacity(0.5))
             .lineLimit(1)
             .padding(.horizontal, DuoSpace.buttonPadding.leading + DuoMetric.borderHairline)
