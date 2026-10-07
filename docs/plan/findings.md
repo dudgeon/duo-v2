@@ -2102,3 +2102,15 @@ Spike: `docs/plan/spikes/browser-engine.md`.
 | A reply while scrolled up | pulled to the bottom; 260–281 ms | stays; 0–74 ms |
 
 - **Guard.** The log a chat draws (`ChatSession.log`, `drawn`) asserts that it's only changed on the main thread. A scratch log for a replay isn't held to that. DuoChecks checks which log is which.
+
+- **On Geoff's longest real session** (2026-10-07, C-39): a 155 MB transcript, 95 prompts, with the last 50 turns showing 135 items and 1,943 steps. `PERF_TRANSCRIPT=<copy> scripts/perf-chat.sh` followed a copy in the scratch folder, which was deleted afterwards; nothing of it was committed. Release builds, two runs each:
+
+| Phase | e1b5635 | with DL-137 |
+|---|---|---|
+| Open: longest stall | 1.50–1.59 s | 95–116 ms (the chat fills in 1.0–1.2 s) |
+| Slow scroll: late frames | 2 of 300 | 2 of 300 |
+| Flick: longest stall | 54–55 ms | 41–42 ms |
+| Replies right after a jump to the bottom: longest stall | 524–749 ms | 707–776 ms |
+| A reply while scrolled up | pulled to the bottom; 206–393 ms | stays; 12–49 ms |
+
+  The open freeze and the pull to the bottom are gone. What's left matches the generated session: about 0.5–0.8 s right after a jump to the bottom, from the lazy stack (ENH-23b).
