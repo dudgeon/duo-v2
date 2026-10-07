@@ -125,7 +125,12 @@ enum ChatPerf {
             sv.reflectScrolledClipView(sv.contentView)
         case "perf-report":
             var r: [String: Any] = ["event": "report", "footprint_mb": footprintMB()]
-            if let tab = model.consoleTab, let c = model.fixtureChats[tab] { r["items"] = c.log.items.count; r["steps"] = c.log.steps.count }
+            if let tab = model.consoleTab, let c = model.fixtureChats[tab] {
+                r["items"] = c.log.items.count; r["steps"] = c.log.steps.count
+                let t0 = CACurrentMediaTime()
+                let rows = ChatFeedRow.rows(c.log.items, chat: c, leadingGap: c.log.earlierHidden)
+                r["rows"] = rows.count; r["rows_ms"] = ms(CACurrentMediaTime() - t0)
+            }
             if let sv = chatScroll(), let doc = sv.documentView { r["height"] = Int(doc.bounds.height); r["y"] = Int(sv.contentView.bounds.minY) }
             say(r)
         default: break

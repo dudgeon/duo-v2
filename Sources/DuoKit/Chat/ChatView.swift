@@ -44,7 +44,7 @@ struct ChatPane: View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
                 ScrollView(.vertical) {
-                    LazyVStack(alignment: .leading, spacing: 16) {
+                    LazyVStack(alignment: .leading, spacing: 0) {
                         // Q-56c's stand-in: the last 50 turns, and more on request.
                         if chat.log.earlierHidden {
                             Text("Earlier turns").duoText(.chatMeta).foregroundStyle(DuoColor.text).underline(color: DuoColor.controlEdge)
@@ -52,11 +52,12 @@ struct ChatPane: View {
                                 .onActivate { chat.loadEarlier() }  // not an action: shows more of the transcript
                         }
                         // A new item (your prompt, a tool card, Claude's reply) fades in where it lands
-                        // (`messageIn`, DL-130); streaming text grows in place, unanimated.
-                        ForEach(chat.log.items) { item in
-                            ChatItemView(item: item, chat: chat).id(item.id).transition(.opacity)
+                        // (`messageIn`, DL-130); streaming text grows in place, unanimated. Claude's
+                        // turns are several rows, so only what's on screen is built (ChatRows.swift).
+                        ForEach(ChatFeedRow.rows(chat.log.items, chat: chat, leadingGap: chat.log.earlierHidden)) { row in
+                            ChatFeedRowView(row: row, chat: chat).id(row.id).transition(.opacity)
                         }
-                        ChatWorkingLine(chat: chat)
+                        ChatWorkingLine(chat: chat, gap: chat.log.items.isEmpty && !chat.log.earlierHidden ? 0 : 16)
                     }
                     .duoAnimation(.messageIn, value: chat.log.items.count)
                     .padding(EdgeInsets(top: 18, leading: DuoSpace.chatColumnInset, bottom: 12, trailing: DuoSpace.chatColumnInset))
@@ -258,6 +259,8 @@ struct ChatInterruptedLine: View {
 /// own retry status (`529 Overloaded · Retrying in 2s · attempt 4/10`).
 struct ChatWorkingLine: View {
     let chat: ChatSession
+    /// The feed's 16 above it, when anything is above it.
+    var gap: CGFloat = 0
 
     var body: some View {
         if currentText != nil {
@@ -268,6 +271,7 @@ struct ChatWorkingLine: View {
                 }
                 .padding(.leading, 4)
             }
+            .padding(.top, gap)
         }
     }
 
@@ -298,20 +302,7 @@ struct ChatClaudeCard: View {
                 let blocks = ChatRuns.blocks(turn.segments)
                 let lastAsked = blocks.last { if case .asked = $0 { return true } else { return false } }?.id
                 ForEach(Self.sections(blocks), id: \.first!.id) { section in
-                    if section.first!.onThread {
-                        ChatThread(blocks: section, chat: chat)
-                    } else {
-                        switch section.first! {
-                        case .thinking(let id, let secs): ChatThinkingRow(id: id, seconds: secs, chat: chat)
-                        case .text(let t): ChatMarkdownView(blocks: ChatMarkdown.parse(t.markdown), streaming: t.streaming, faded: t.cut)
-                        case .asked(let id, let qs):
-                            // While the question is up, its card shows it; the list stays once it closes.
-                            if !(chat.cardUp && [.question, .questionReview].contains(chat.screen.kind) && id == lastAsked) {
-                                ChatAskedBox(questions: qs)
-                            }
-                        default: EmptyView()
-                        }
-                    }
+                    ChatCardSection(section: section, lastAsked: lastAsked, chat: chat)
                 }
             }
             .padding(EdgeInsets(top: 14, leading: 18, bottom: 16, trailing: 18))
@@ -328,6 +319,30 @@ struct ChatClaudeCard: View {
             if b.onThread, let last = out.last?.last, last.onThread { out[out.count - 1].append(b) } else { out.append([b]) }
         }
         return out
+    }
+}
+
+/// One section of Claude's card: a thread of runs and steps, a thought, a reply, or the questions asked.
+struct ChatCardSection: View {
+    let section: [ChatCardRow]
+    let lastAsked: String?
+    let chat: ChatSession
+
+    var body: some View {
+        if section.first!.onThread {
+            ChatThread(blocks: section, chat: chat)
+        } else {
+            switch section.first! {
+            case .thinking(let id, let secs): ChatThinkingRow(id: id, seconds: secs, chat: chat)
+            case .text(let t): ChatMarkdownView(blocks: ChatMarkdown.parse(t.markdown), streaming: t.streaming, faded: t.cut)
+            case .asked(let id, let qs):
+                // While the question is up, its card shows it; the list stays once it closes.
+                if !(chat.cardUp && [.question, .questionReview].contains(chat.screen.kind) && id == lastAsked) {
+                    ChatAskedBox(questions: qs)
+                }
+            default: EmptyView()
+            }
+        }
     }
 }
 
