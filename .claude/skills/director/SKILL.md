@@ -43,7 +43,7 @@ You may merge without asking when a branch builds, passes the checks and leaves 
 
 For each branch:
 1. **Look at the evidence yourself:** open its compare and strip PNGs (`Read`), and the diff for risky areas (core data paths, hooks, anything touching Geoff's real files). For anything that publishes to a public repo, check for personal details.
-2. **Take a baseline:** `cp build/ui/{overview,project,flow-zoom-1,flow-zoom-2,flow-zoom-3,flow-zoom-4}.png /tmp/dir-base/`.
+2. **Take a baseline:** `cp build/ui/{overview,project,flow-zoom-1,flow-zoom-2,flow-zoom-3,flow-zoom-4}.png /tmp/dir-base/`, and when chat is touched, every `build/ui/chat-*.png` capture (not `-compare`/`-board`) to `/tmp/dir-chatbase/`. After the merge, rerun `check-chat.sh` and `samepng.py` each one: an existing board that changes is a regression until explained (2026-10-07: a lost composer caret revealed a focus bug).
 3. **Merge:** `git merge --no-ff -m "Merge <branch>: <what> (<records>)" <branch-or-sha>`.
 4. **Record-file conflicts** (findings, concerns-and-questions, decisions, enhancements): **keep both sides, never one.** When both sides edited the same row, keep the newer content. A conflict hunk can hold many records from main (c6aa7c8 once dropped F-114 to F-119).
 5. **Check:**

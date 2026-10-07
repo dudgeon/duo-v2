@@ -46,8 +46,32 @@ extension AppModel {
 @MainActor enum ChatKeyMonitor { static var installed = false }
 
 extension ChatSession {
+    /// A picker card's keys (DL-143): a number or ↑↓ moves the TUI's cursor, ←/→ its marker; ⏎, s and
+    /// Esc finish. Each goes after the same check as the card's buttons.
+    func pickerKey(_ p: ChatPicker, _ chars: String, escape: Bool) -> Bool {
+        let up = String(UnicodeScalar(NSUpArrowFunctionKey)!), down = String(UnicodeScalar(NSDownArrowFunctionKey)!)
+        let left = String(UnicodeScalar(NSLeftArrowFunctionKey)!), right = String(UnicodeScalar(NSRightArrowFunctionKey)!)
+        if escape { Task { await pickerFinish(.cancel) }; return true }
+        switch chars {
+        case "\r": Task { await pickerFinish(.confirm) }
+        case "s": Task { await pickerFinish(.sessionOnly) }
+        case up, down:
+            guard p.kind == .model, let at = p.cursor else { return false }
+            let to = min(max(at + (chars == up ? -1 : 1), 0), p.rows.count - 1)
+            Task { await pickerMove(to: p.rows[to].n) }
+        case left, right:
+            guard p.kind == .effort, let at = p.level else { return false }
+            Task { await pickerLevel(to: min(max(at + (chars == left ? -1 : 1), 0), p.levels.count - 1)) }
+        default:
+            guard p.kind == .model, let n = Int(chars), p.rows.contains(where: { $0.n == n }) else { return false }
+            Task { await pickerMove(to: n) }
+        }
+        return true
+    }
+
     /// A key pressed with the chat in front: a digit answers the card, Esc cancels it.
     public func key(_ chars: String, escape: Bool) -> Bool {
+        if pickerUp, let p = screen.picker { return pickerKey(p, chars, escape: escape) }
         guard cardUp else {
             if escape, screen.kind == .busy { Task { await interrupt() }; return true }
             return false
@@ -110,6 +134,50 @@ extension ChatSession {
         }
         return reread().mode == target ? target : nil
     }
+
+    // MARK: `/model` and `/effort` (DL-143)
+
+    /// The same picker is still up, or nothing is sent and the terminal shows (as review cards do).
+    func pickerCheck(_ kind: ChatPicker.Kind) -> ChatPicker? {
+        let s = reread()
+        guard dialogsVerified, s.kind == .picker, let p = s.picker, p.kind == kind else { return nil }
+        return p
+    }
+
+    /// Moves the TUI's own cursor to row `n` (↑↓, re-reading after each key). Nothing is chosen.
+    public func pickerMove(to n: Int) async -> ChatAnswerResult {
+        for _ in 0..<12 {
+            guard let p = pickerCheck(.model), let at = p.cursor else { return finish(.refused("the model picker isn’t up any more")) }
+            guard let want = p.rows.firstIndex(where: { $0.n == n }) else { return .refused("there's no option \(n)") }
+            if at == want { return .done }
+            _ = await press(want > at ? .down : .up)
+        }
+        return finish(.refused("the picker's cursor didn't move"))
+    }
+
+    /// Moves `/effort`'s marker to a level (←/→, re-reading after each key). Nothing is chosen.
+    public func pickerLevel(to i: Int) async -> ChatAnswerResult {
+        for _ in 0..<8 {
+            guard let p = pickerCheck(.effort), let at = p.level else { return finish(.refused("the effort picker isn’t up any more")) }
+            guard p.levels.indices.contains(i) else { return .refused("there's no level \(i + 1)") }
+            if at == i { return .done }
+            _ = await press(i > at ? .right : .left)
+        }
+        return finish(.refused("the marker didn't move"))
+    }
+
+    /// ⏎ (set as default, confirm), s (this session only) or Esc, on the picker that's up.
+    public func pickerFinish(_ how: PickerFinish) async -> ChatAnswerResult {
+        guard let p = reread().picker, pickerCheck(p.kind) != nil else { return finish(.refused("the picker isn’t up any more")) }
+        switch how {
+        case .confirm: _ = await press(.enter)
+        case .sessionOnly: terminal?.sendKeys("s"); await pause(); _ = reread()
+        case .cancel: _ = await press(.esc)
+        }
+        return .done
+    }
+
+    public enum PickerFinish: Sendable { case confirm, sessionOnly, cancel }
 
     /// Stop (esc) while Claude works.
     public func interrupt() async {

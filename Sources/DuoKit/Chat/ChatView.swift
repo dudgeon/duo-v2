@@ -98,6 +98,12 @@ struct ChatPane: View {
                     // Opaque and above the composer while it moves, so their text never overprints.
                     .zIndex(1)
                     .transition(.move(edge: .bottom))
+            } else if chat.pickerUp, let p = chat.screen.picker {
+                // `/model` and `/effort` (DL-143): a card in the composer's place, as a review card.
+                ChatPickerCard(chat: chat, picker: p)
+                    .padding(EdgeInsets(top: 0, leading: DuoSpace.chatColumnInset, bottom: 14, trailing: DuoSpace.chatColumnInset))
+                    .zIndex(1)
+                    .transition(.move(edge: .bottom))
             } else {
                 ChatComposerArea(chat: chat)
                     .padding(EdgeInsets(top: 0, leading: DuoSpace.chatColumnInset, bottom: 12, trailing: DuoSpace.chatColumnInset))
@@ -105,6 +111,7 @@ struct ChatPane: View {
             }
         }
         .animation((chat.cardUp ? DuoMotionToken.cardIn : .cardOut).animation, value: chat.cardUp)
+        .animation((chat.pickerUp ? DuoMotionToken.cardIn : .cardOut).animation, value: chat.pickerUp)
         .background(DuoColor.chatGround)
         .tint(DuoColor.text)
         .onAppear { model.installChatKeys() }
@@ -130,6 +137,7 @@ struct ChatItemView: View {
         case .note(let n): ChatQuietLine(text: n.text)
         case .divider(let n): ChatDivider(text: n.text)
         case .interrupted(let n): ChatInterruptedLine(text: n.text)
+        case .result(let r): ChatResultView(result: r, chat: chat)
         }
     }
 }

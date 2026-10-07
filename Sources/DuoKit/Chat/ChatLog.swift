@@ -24,12 +24,15 @@ public enum ChatItem: Identifiable, Equatable, Sendable {
     case divider(ChatNote)
     /// `Interrupted · What should Claude do instead?`
     case interrupted(ChatNote)
+    /// What a slash command printed, under your bubble (chat-slash-handoff `output`, DL-143).
+    case result(ChatResult)
 
     public var id: String {
         switch self {
         case .you(let y): y.id
         case .claude(let t): t.id
         case .answer(let n), .note(let n), .divider(let n), .interrupted(let n): n.id
+        case .result(let r): r.id
         }
     }
 }

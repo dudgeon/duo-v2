@@ -2366,6 +2366,45 @@ Geoff (2026-10-07): "when in chat mode, shift tab should cycle ask permission, p
 - **Fixture mode has no index**, so it filters by names only; the `list-filter` target state gives the two hits the board draws (`Debug/HomeListTargets.swift`). DuoChecks runs the filter on a real session index when the search model is present (the golden-set block): a session found by meaning ("why the sea rises with the moon" finds "spring tides … new moon") with its passage, a session found only by its name, and nothing for one that matches neither.
 - `duo2 view filter <text>` on the List answers once search has, with the matches best first and their passages. ⌘F in the list focuses the field (SwiftUI's field is an NSTextField underneath; no `@FocusState`). The × clears it, as Esc does. The board's line under the matches ("Best first … (F-36). For files and notes too: Search all projects ⇧⌘A") cites a finding, so it's read as the board's note and not built; "Nothing in your sessions is about …" and its link are.
 
+## F-177 · Slash commands in chat, built to DL-143 (2026-10-07)
+
+Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai/artifact/EGcF7Qx5ga6EXwkKZVh44a). It replaces F-174's stand-ins.
+
+- **A, what a command prints** (`ChatCommandOutput`, `ChatCommandViews`):
+  - Each `<local-command-stdout>` becomes a `ChatResult` under your bubble, led by Claude Code's ⎿ drawn as an elbow (10×10, stroke 1.4, `text2`), right-aligned.
+  - **One line** is a quiet line (12/16 `text2`). Claude Code's backticks are dropped, so "Kept model as Haiku 4.5" reads plain.
+  - **Several lines** are an output block: 440 wide with the elbow (less in a narrow console), `toolOutputFill`, a 1 pt `rule` border, radius 6, padding 8/12, mono, verbatim. Over 8 lines it shows 6 and "Show n more lines".
+  - **`/context`** is a box: "Context usage", the model (its id as the tooltip) and the total; an 8 pt bar of the used categories in `text` / `text2` / `controlEdge`, each at least 2 wide; a legend filled down then across; and the skills line. In a narrow console (about 480) it drops the model and the word "tokens", and the legend goes to one column (`ViewThatFits`).
+  - A `/context` that doesn't parse is an output block.
+  - **The transcript keeps `/context`** (a correction to F-173). Its output is a `system`/`local_command` record with colour codes, which are now stripped (the F-174 stand-in showed `[1mContext Usage`). So the box comes back on replay; the board's "was shown here" line is Q-107.
+- **E, the pickers** (`ChatScreenReader.picker`, `ChatPickerCard`):
+  - `/model`'s "Select model" screen and `/effort`'s slider are read when the title and the footer are both on screen.
+  - `/model`: its description, numbered rows with the TUI's names and descriptions (wrapped lines joined), ✔ for the one in use, ❯ for the cursor, and the footnotes.
+  - `/effort`: Faster/Smarter, five levels, and the ▲'s level (the nearest label to its column).
+  - The card docks in the composer's place, bordered 1.5 in `text` (not needs-you), radius 14, 24 in from each side.
+  - A number, ↑↓ or a click moves the TUI's own cursor (↑/↓, re-reading after each); ←/→ or a click moves `/effort`'s marker. Nothing is chosen until ⏎ (Set as Default, Confirm), s (This Session Only) or Esc (Cancel). Every key goes after re-checking that the same picker is up; otherwise nothing more is sent.
+  - On an unverified CLI the picker falls back; on a newer one it shows only while it reads whole (DL-145, `wellFormed` covers pickers).
+  - `duo2 session chat answer [id] <n|low|medium|high|xhigh|max|cancel> [--session-only]` (DL-71) moves, then presses ⏎ or s.
+  - `/model` and `/effort` leave `ChatSignatures.terminalCommands`, so they lose the "Opens in the terminal" mark.
+- **E, the named bar:** a screen that comes up within 20 s of a command sent from chat gets a bar that names it: "`/permissions` opens in Claude Code's own screen. Esc closes it and brings chat back." ("shows" for /usage, /cost, /status, /help, /skills and /release-notes; "Esc clears the search, then closes it." for /config and /resume). The command is in mono, and the generic sentence stays for screens chat didn't start.
+- **E, no needs-you dot:** Claude Code reports "waiting" while any of its screens is up. While a screen you opened from chat is up (a picker card, or a named bar), the session's row and counts show it idle (`AppModel.apply`, `ChatSession.ownScreenUp`).
+- **M1, the `/` menu:**
+  - The name column is the longest name shown plus 36, at least 122 and at most 280. In AppKit's mono that's 207 where the board's browser mono gives 202.
+  - A plugin's prefix (`/design:`) is in `text2`. Past 280 the prefix is cut first (`/cowork-plugin-man…:`), then the name's tail, as the board draws it (the README's "the skill's name stays whole" loses to the screen).
+  - The full name is the tooltip.
+  - "↑↓ for more · tab completes" shows under a full page of the TUI's list (4 rows). The board shows it only under its four-row menu, so that rule is a reading of the board.
+  - Rows are 3/10 at 13/20, and the terminal mark is `text2`.
+- **Proof** (`docs/design/chat-slash-handoff/proof/`):
+  - The six boards compared (`scripts/check-chat.sh slash-…`, from `scripts/make-chat-slash-fixtures.py` recordings), looked at region by region:
+    - the output board's line, block and box match in width, elbow, bar and legend;
+    - the model and effort cards match row for row, with text metrics a pixel or two off;
+    - the named bar's words and mono command match;
+    - the menu's prefix, column, hint and selection match, its descriptions about 5 pt right (AppKit's mono).
+  - Known, not from this work: your bubbles span 440 instead of hugging their text (also in the approved `composer` and `text` comparisons).
+  - `narrow-1080-output.png`: the box's narrow layout in a 1080-wide window.
+  - Live on an isolated Duo with the real 2.1.293 TUI on the mock: the `/context` box from its record; the `/model` card, where `2` moved the TUI's cursor to Opus (`live-2.1.293-model-card-cursor.png`) and Esc gave "Kept model as Haiku 4.5"; the `/effort` card, where Return gave its result; the `/permissions` named bar (`live-2.1.293-permissions-named-bar.png`) with the session idle while it was up.
+  - DuoChecks: a "slash commands as designed (DL-143)" group (25 checks: the results, the real ANSI `/context` record, the picker screens of 2.1.292 and 2.1.293, the cursor keys and s, nothing sent once the picker has gone, the bar's words, the menu column). The chat group passes 177 of 177.
+
 ## F-182 · Home opens in chat, with the light strip (DL-142 slice 3, 2026-10-07)
 
 - **The default** (`Chat/ChatSession.swift`): `ChatPrefs.mode(for:home:)`. A session's own mode wins, as before. A new Home session opens in chat unless `home` (from `duo2 session chat --home`, or Settings' stand-in "Home opens in", Q-109) says terminal, or last to follow `--default` and the mode used last. Other sessions are unchanged (DL-119 (5)). A `chat.json` from before has no `home` field and reads as chat.

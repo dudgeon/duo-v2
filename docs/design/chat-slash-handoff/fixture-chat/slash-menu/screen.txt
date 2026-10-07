@@ -1,0 +1,28 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ❯ /design:design-critique     Get structured design feedback on usability, hierarchy, and consistency.
+    /design:design-handoff      Generate developer handoff specs from a design.
+    /design:design-system       Audit, document, or extend your design system.
+    /deep-research              [dynamic workflow] Deep research harness — fan-out
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ /de 
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on

@@ -1,3 +1,4 @@
+import AppKit
 import DuoControl
 import DuoKit
 import Foundation
@@ -53,7 +54,8 @@ func spikeScreen(_ name: String) -> String {
         check(multi.options.first?.note == "Native", "descriptions kept as notes")
         let review = ChatScreenReader.read(spikeScreen("tour-2.1.291/06-review.txt"))
         check(review.kind == .questionReview && review.options.map(\.label) == ["Submit answers", "Cancel"], "the review page")
-        check(ChatScreenReader.read(spikeScreen("tour-2.1.291/12-unknown-model-picker.txt")).kind == .unknown, "/model reads as unknown: the terminal")
+        check(ChatScreenReader.read(spikeScreen("tour-2.1.291/12-unknown-model-picker.txt")).kind == .picker, "/model reads as its picker (a card, DL-143)")
+        check(ChatScreenReader.read(spikeScreen("slash-2.1.292/help.txt")).kind == .unknown, "/help reads as unknown: the terminal")
         check(ChatScreenReader.read(spikeScreen("real-cli-login-2.1.291/01-trust-folder-unknown.txt")).kind == .unknown, "the trust prompt reads as unknown")
         check(ChatScreenReader.read(spikeScreen("unknown-api-key-prompt.txt")).kind == .unknown, "the API-key prompt reads as unknown")
         let named = ChatScreenReader.read(spikeScreen("real-cli-login-2.1.291/08-named-rule-was-unknown.txt"))
@@ -86,13 +88,13 @@ func spikeScreen(_ name: String) -> String {
         let c = ChatSession(key: "s1", mode: .chat)
         c.attach(tui)
         check(c.showsChat && c.screen.kind == .idle, "chat shows at the prompt")
-        tui.show(spikeScreen("tour-2.1.291/12-unknown-model-picker.txt")); spin(0.15)
+        tui.show(spikeScreen("slash-2.1.292/help.txt")); spin(0.15)
         check(c.showsChat, "an unknown screen waits out the grace period (a blank flash isn't a reason)")
         spin(0.6)
         check(!c.showsChat && c.fallback == .unknownScreen, "unknown for 500 ms: the terminal, with why")
         tui.show(idleText); spin(0.15)
         check(c.showsChat && c.fallback == nil, "back at the prompt: chat returns by itself")
-        tui.show(spikeScreen("tour-2.1.291/12-unknown-model-picker.txt")); spin(0.1)
+        tui.show(spikeScreen("slash-2.1.292/help.txt")); spin(0.1)
         tui.show(idleText); spin(0.6)
         check(c.showsChat, "a brief unknown never falls back")
         c.mode = .terminal
@@ -164,14 +166,14 @@ func spikeScreen(_ name: String) -> String {
         Task { await c.moveCommandMenu(.down) }
         spin(0.3)
         check(tui.keys == [ChatKey.down.bytes], "↓ in the composer goes to the TUI's menu")
-        for f in ["help", "usage", "model", "config", "permissions", "resume", "skills", "btw", "sandbox", "effort"] {
+        for f in ["help", "usage", "config", "permissions", "resume", "skills", "btw", "sandbox"] {
             check(ChatScreenReader.read(spikeScreen(dir + f + ".txt")).kind == .unknown, "/\(f)'s screen reads as unknown: the terminal")
         }
         let plan = ChatScreenReader.read(spikeScreen(dir + "plan-output.txt"))
         check(plan.kind == .idle && plan.mode == .plan, "/plan prints a line and stays at the prompt, in plan mode")
         check(ChatScreenReader.read(spikeScreen(dir + "rename-output.txt")).kind == .idle, "/rename's name in the input box's rule still reads")
         let marked = ChatSignatures.v2_1_291.terminalCommands
-        check(["/help", "/model", "/usage", "/effort", "/btw", "/sandbox"].allSatisfy(marked.contains) && !["/doctor", "/agents", "/mcp", "/context", "/plan"].contains(where: marked.contains),
+        check(["/help", "/usage", "/btw", "/sandbox"].allSatisfy(marked.contains) && !["/doctor", "/agents", "/mcp", "/context", "/plan", "/model", "/effort"].contains(where: marked.contains),
               "the menu marks what opens in the terminal on 2.1.292")
 
         // A command that opens a screen while its keys are still going: judged once they've gone.
@@ -200,10 +202,10 @@ func spikeScreen(_ name: String) -> String {
         ChatIngest.record(["type": "user", "message": ["content": "<local-command-stdout>Enabled plan mode</local-command-stdout>"]], into: log)
         func shown(_ l: ChatLog) -> [String] {
             l.items.compactMap { i -> String? in
-                switch i { case .you(let y): "you: \(y.text)"; case .note(let n): "note: \(n.text)"; default: nil }
+                switch i { case .you(let y): "you: \(y.text)"; case .note(let n): "note: \(n.text)"; case .result(let r): "result: \(r.summary)"; default: nil }
             }
         }
-        check(shown(log) == ["you: /rename notes", "note: Session renamed to: notes", "you: /plan", "note: Enabled plan mode"], "the sent command is matched, not doubled; its output a quiet line (\(shown(log)))")
+        check(shown(log) == ["you: /rename notes", "result: Session renamed to: notes", "you: /plan", "result: Enabled plan mode"], "the sent command is matched, not doubled; its output its result under it (\(shown(log)))")
         let replay = ChatLog()
         ChatIngest.record(["type": "user", "message": ["content": "<command-message>init is analyzing your codebase…</command-message>\n<command-name>/init</command-name>"]], into: replay)
         ChatIngest.record(["type": "user", "isMeta": true, "message": ["content": "Please analyze this codebase…"]], into: replay)
@@ -222,6 +224,95 @@ func spikeScreen(_ name: String) -> String {
         check(store.prefs.mode(for: "quiet2") == .chat, "a session whose chat was never opened keeps its mode too")
         check(TerminalCommand.newClaude(sessionID: "launch", prompt: nil).launchId == "launch" && TerminalCommand.shell.launchId == nil,
               "the hand-over is named by the id the process started with: duo2 compose knows no other")
+    }
+
+    print("chat mode: slash commands as designed (DL-143)")
+    do {
+        let dir = "slash-2.1.292/"
+        // A: what a command prints.
+        guard case .line(let one)? = ChatCommandOutput.body("Session renamed to: notes") else { check(false, "one line"); return }
+        check(one == "Session renamed to: notes", "one line: a quiet line")
+        check(ChatCommandOutput.body("(no content)") == nil && ChatCommandOutput.body("  \n") == nil, "(no content) and nothing: nothing shown")
+        if case .block(let lines)? = ChatCommandOutput.body(spikeScreen(dir + "output-style-stdout.txt")) {
+            check(lines.first == "Output style: default" && lines.count >= 8, "several lines: an output block, verbatim (\(lines.count) lines)")
+        } else { check(false, "/output-style is a block") }
+        let raw = spikeScreen(dir + "context-stdout.txt")
+        check(raw.contains("\u{1B}[") && !ChatCommandOutput.plain(raw).contains("\u{1B}"), "/context's colour codes are stripped")
+        if case .context(let c)? = ChatCommandOutput.body(raw) {
+            check(c.model == "Haiku 4.5" && c.modelId == "claude-haiku-4-5-20251001" && c.used == "3k" && c.total == "200k" && c.percent == "1",
+                  "/context's model, id and total from its record (\(c.model ?? "-") \(c.used)/\(c.total) \(c.percent)%)")
+            check(c.categories.map(\.name) == ["System prompt", "Skills", "Messages", "Free space"] && c.categories.last?.free == true
+                  && c.categories.first?.amount == "1.3k" && abs((c.categories.first?.share ?? 0) - 0.7) < 0.001,
+                  "its categories in the screen's order, Free space last (\(c.categories.map(\.name)))")
+            check(c.skills == "15 skills · 1.6k tokens", "the skills line (\(c.skills ?? "-"))")
+        } else { check(false, "/context reads as the box") }
+        check(ChatCommandOutput.context("Context Usage\nnothing parseable") == nil, "a /context that doesn't parse isn't drawn as the box (it's a block)")
+        let elog = ChatLog()
+        ChatIngest.record(["type": "system", "subtype": "local_command", "content": "<command-name>/context</command-name>\n<command-args></command-args>"], into: elog)
+        ChatIngest.record(["type": "system", "subtype": "local_command", "content": "<local-command-stdout>" + raw + "</local-command-stdout>"], into: elog)
+        if case .result(let r)? = elog.items.last, case .context = r.body { check(true, "replayed, /context is the box again: Claude Code keeps it (Q-107)") } else { check(false, "/context replay") }
+
+        // E: /model's and /effort's screens.
+        let model = ChatScreenReader.read(spikeScreen(dir + "model.txt"))
+        check(model.kind == .picker && model.picker?.kind == .model, "/model's screen is a picker (\(model.kind))")
+        if let p = model.picker {
+            check(p.rows.map(\.n) == [1, 2, 3, 4, 5] && p.rows.map(\.name) == ["Default (recommended)", "Opus", "Fable", "Sonnet", "Haiku"],
+                  "its rows, numbered, with Claude Code's names (\(p.rows.map(\.name)))")
+            check(p.rows[2].note.hasSuffix("tasks · $10/$50 per Mtok") && p.rows[4].selected && p.rows[4].cursor && p.cursor == 4,
+                  "a wrapped description joined; ✔ in use; the cursor on it")
+            check(p.description.hasPrefix("Switch between Claude models.") && p.footnotes == ["○ Effort not supported for Haiku"], "its description and footnote")
+        }
+        let effort = ChatScreenReader.read(spikeScreen(dir + "effort.txt"))
+        check(effort.kind == .picker && effort.picker?.levels == ["low", "medium", "high", "xhigh", "max"] && effort.picker?.level == 2
+              && effort.picker?.ends?.0 == "Faster" && effort.picker?.ends?.1 == "Smarter",
+              "/effort: five levels, the ▲ on high, Faster … Smarter (\(effort.picker?.levels ?? []) \(effort.picker?.level ?? -1))")
+        check(ChatScreenReader.wellFormed(model) && ChatScreenReader.wellFormed(effort), "both read whole: a newer CLI with these screens gets the card (DL-145)")
+        let m293 = ChatScreenReader.read(spikeScreen("tour-2.1.293/12-unknown-model-picker.txt"))
+        check(m293.kind == .picker && m293.picker?.rows.count == 6 && m293.picker?.cursor == 5, "2.1.293's longer list reads too (\(m293.picker?.rows.count ?? 0) rows)")
+
+        // E: keys go to the TUI's own cursor, after the check.
+        var at = 4
+        func modelScreen(_ i: Int) -> String {
+            spikeScreen(dir + "model.txt").components(separatedBy: "\n").map { l in
+                guard let m = l.firstMatch(of: /^(\s*)(❯ )?(\s*)(\d)\. (.*)$/), let n = Int(m.4) else { return l }
+                return String(m.1) + (n == i + 1 ? "❯ " : "  ") + String(m.3) + "\(n). " + String(m.5)
+            }.joined(separator: "\n")
+        }
+        let tui = FakeTUI(modelScreen(at))
+        tui.react = { k, t in
+            if k == ChatKey.up.bytes { at = max(0, at - 1); t.show(modelScreen(at)) }
+            if k == ChatKey.down.bytes { at = min(4, at + 1); t.show(modelScreen(at)) }
+        }
+        let c = ChatSession(key: "picker", mode: .chat)
+        c.attach(tui)
+        check(c.pickerUp && c.showsChat, "the /model card is up in chat")
+        var moved: ChatAnswerResult?
+        Task { moved = await c.pickerMove(to: 2) }
+        spin(1.2)
+        check(moved?.ok == true && at == 1 && tui.keys == Array(repeating: ChatKey.up.bytes, count: 3), "2 moves the TUI's cursor up three rows; nothing chosen (\(tui.keys.count) keys)")
+        var finished: ChatAnswerResult?
+        Task { finished = await c.pickerFinish(.sessionOnly) }
+        spin(0.5)
+        check(finished?.ok == true && tui.keys.last == "s", "This Session Only presses s")
+        tui.show(spikeScreen("tour-2.1.291/01-markdown.txt")); spin(0.2)
+        var gone: ChatAnswerResult?
+        Task { gone = await c.pickerFinish(.confirm) }
+        spin(0.5)
+        check(gone?.ok == false && tui.keys.last == "s", "once the picker has gone, nothing more is sent")
+
+        // E: the bar names the command you opened.
+        check(ChatFallback.command("/permissions").message == "/permissions opens in Claude Code’s own screen. Esc closes it and brings chat back."
+              && ChatFallback.command("/usage").message == "/usage shows in Claude Code’s own screen. Esc closes it and brings chat back."
+              && ChatFallback.command("/config").message.hasSuffix("Esc clears the search, then closes it."),
+              "the named bar's words: opens, shows, and two Escs for /config and /resume")
+
+        // M1: the / menu's name column.
+        check(ChatCommandColumn.width(["/model", "/mobile"]) == 122, "short names: the approved 122")
+        let mono = NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)
+        let longest = ("/design:design-critique" as NSString).size(withAttributes: [.font: mono]).width
+        check(ChatCommandColumn.width(["/design:design-critique", "/deep-research"]) == ceil(longest + 36),
+              "the longest name shown and 36 (the board's 202 in a browser's mono; \(ChatCommandColumn.width(["/design:design-critique"])) in AppKit's)")
+        check(ChatCommandColumn.width(["/cowork-plugin-management:cowork-plugin-customizer"]) == 280, "at most 280")
     }
 
     print("chat mode: Markdown (handoff `text`)")
