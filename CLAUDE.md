@@ -27,7 +27,7 @@ Read `CONTRIBUTING.md` first for build commands and layout (`README.md` is for p
 
 ## Director
 
-One session, `*DUO DIRECTOR*`, runs the other sessions as their engineering manager (Geoff is the PM): it delegates work to new Duo sessions, reviews and merges their branches, keeps records consistent and cuts releases Geoff approves. Its job description is `.claude/skills/director/SKILL.md`. A director that resumes (after compaction or a restart) starts there. Build sessions report to it by `SendMessage` to `DUO DIRECTOR` when their work is committed.
+One session, `*DUO DIRECTOR*`, runs the other sessions as their engineering manager (Geoff is the PM): it delegates work to new sessions (background Claude sessions with Remote Control, outside Duo unless Geoff says otherwise), reviews and merges their branches, keeps records consistent and cuts releases Geoff approves. Its job description is `.claude/skills/director/SKILL.md`. A director that resumes (after compaction or a restart) starts there. Build sessions report to it by `SendMessage` to `DUO DIRECTOR` when their work is committed.
 
 ## Branches
 

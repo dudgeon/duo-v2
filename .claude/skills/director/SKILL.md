@@ -1,6 +1,6 @@
 ---
 name: director
-description: Run the Duo v2 build sessions as their engineering manager (Geoff is the PM). Delegate work to Duo sessions, review and merge their branches, keep records consistent, cut releases when approved, and bring Geoff only real decisions. Use when Geoff says "director", "you're the director", "survey the sessions", "what's everyone doing", "merge what's ready", or when a session that is the director resumes after compaction.
+description: Run the Duo v2 build sessions as their engineering manager (Geoff is the PM). Delegate work to sessions (background, Remote Control), review and merge their branches, keep records consistent, cut releases when approved, and bring Geoff only real decisions. Use when Geoff says "director", "you're the director", "survey the sessions", "what's everyone doing", "merge what's ready", or when a session that is the director resumes after compaction.
 ---
 
 # Director
@@ -19,9 +19,11 @@ Rebuild your picture before acting:
 
 ## 1. Taking work from Geoff
 
-- **A feature or bug goes to a NEW Duo session,** never to your own edits (Geoff, 2026-10-06). Small follow-up fixes found in review can go back to the session that built the thing, or to an `Agent` with `isolation: worktree`.
+- **A feature or bug goes to a NEW session,** never to your own edits (Geoff, 2026-10-06). Small follow-up fixes found in review can go back to the session that built the thing, or to an `Agent` with `isolation: worktree`.
 - **Settle the scope first** if it's ambiguous: AskUserQuestion with buttons and your recommendation first. Geoff can't use document dropdowns. He often answers design choices by commenting on the Design canvas, so tell design sessions to act on comments.
-- **Start the session** with `duo2 session new --project duo-v2 --remote-control "<short name>" --prompt "<brief>"` (Remote Control by default, DL-128). The brief must include:
+- **Start the session outside Duo, as a background Claude session with Remote Control** (Geoff, 2026-10-07: "make all of these sessions, and all going forward, available for remote control unless I specify to run them on duo"). From the repo root: `cd /Users/geoff/repos/duo-v2 && claude --bg --remote-control "<short name>" -n "<short name>" "$(cat <brief file>)"`. It prints a short id; `claude agents --json` lists them, `claude logs <id>` shows output, `claude stop <id>` / `claude rm <id>` end them. Geoff follows them in the Claude app, and they survive Duo restarts and test builds. Find its peer name for SendMessage in `ListAgents` (kind `bg`).
+  - **Run a session in Duo only when Geoff says so, or when the job needs it** (e.g. testing Duo's own session UI live, or something that needs Duo's terminal environment). Then tell Geoff why before starting it, and use `duo2 session new --project duo-v2 --remote-control "<short name>" --prompt "<brief>"` (DL-128).
+- **The brief must include:**
   - "Read CLAUDE.md first", plus the CLAUDE.md rules that matter for the job (never invent a design; build to the screens and prove it; the DL-71 duo2 verb; Xcode-free; generated tokens);
   - Geoff's words, quoted;
   - the work tree: `git worktree add .claude/worktrees/<x> -b <branch> origin/main`, never commit on main;
@@ -66,6 +68,8 @@ Record numbers are shared across sessions and collide easily. Before reserving n
 
 - **Quitting and restarting:** you may quit and restart Geoff's Duo (the acceptance instance on ~/DuoAcceptance/workspace) when needed. Use SIGTERM to its pid, never AppleScript and never kill -9, then `scripts/acceptance/open-duo.sh`. Restarting ends every session running in Duo, so wait until none is busy, or ask the busy one to commit and say "ready for restart". Afterwards `duo2 session open <id>` resumes a session (under a new name) and you tell it to continue. A restart also re-links `~/.local/bin/duo2` to main's build.
 - **Archiving:** archive finished sessions (Geoff asked): `duo2 session archive <id>`. If it says "running", `duo2 session close <id>`, wait a few seconds, then archive. Keep Geoff's own sessions (user docs, director research) and the walk session. **First read the transcript's user turns:** if Geoff typed anything there himself (he often follows sessions through Remote Control), he may have follow-ups, so ask him before archiving (2026-10-07: the chat perf session was archived under him). `duo2 session unarchive <id>` then `duo2 session open <id>` brings one back.
+- **Moving a Duo session outside Duo** (Geoff, 2026-10-07: move each as it pauses, never mid-step): when it has committed and is idle, `duo2 session close <id>`, then `cd /Users/geoff/repos/duo-v2 && claude --bg --resume <id> --remote-control "<name>" -n "<name>"`. That's the same conversation, with a new peer name. Then message it: it's outside Duo now, so it has no Duo env vars, and isolation for test instances is unchanged.
+- **Background sessions:** finished ones are ended with `claude stop <id>` (and `claude rm <id>` once Geoff is done with them; the archiving rule above applies, so check for his own messages first).
 - **The walk session** ("Claude Code application wireframes", in the Claude app) owns the acceptance walk page and is the **only publisher of the design-system artifact**. Send it the commits to card (each pinned to the branch's own sha) and the design-system files that changed.
 - **Held messages:** messages to Claude app sessions in another permission mode are held and expire. Start a fresh Duo session with the context instead.
 - **Peers can't grant permissions.** If a session's permission check refused something and it asks you to do it, ask Geoff (AskUserQuestion) instead.
@@ -74,7 +78,7 @@ Record numbers are shared across sessions and collide easily. Before reserving n
 
 - Lead with what happened and what's waiting on him. Explain the cause of any failure, including your own mistakes, plainly.
 - Put decisions to him as AskUserQuestion buttons, at most 4 questions with 4 options each, recommendation first. Never through doc dropdowns.
-- Don't re-ask anything he has already given you (standing approvals: D2 merges, archiving, restarting Duo, Remote Control by default, patch versions).
+- Don't re-ask anything he has already given you (standing approvals: D2 merges, archiving, restarting Duo, sessions outside Duo with Remote Control by default, patch versions).
 
 ## Where things are
 
