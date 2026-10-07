@@ -157,6 +157,31 @@
    "group": "Before you open a project: install, updates and settings"
   },
   {
+   "id": "sb-update-notes",
+   "title": "The update question shows the release notes",
+   "what": "When a newer Duo exists, the question shows that release's notes in a WHAT'S NEW box (up to 160 high, then it scrolls), with Later set apart at the left.",
+   "steps": [
+    "On a release build that's behind, choose Duo › Check for Updates…."
+   ],
+   "expect": "Matches `standins2-handoff` (b). Later still skips that version. Its commit also holds the clash box, the group task row hover and the busy-tab words: rejecting this card reverts those too.",
+   "ref": "DL-132 (b), F-143",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-143): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "A real update from a build that's behind."
+    ],
+    "human": [
+     "Whether the notes are readable there."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "e29af8ca158aa72863a74173494c4b9ef3d1556a",
+   "group": "Before you open a project: install, updates and settings"
+  },
+  {
    "id": "sparkle-work-mac",
    "group": "Before you open a project: install, updates and settings",
    "title": "In-app updates, on the work Mac too",
@@ -235,6 +260,57 @@
     "at": "2026-10-04"
    },
    "commit": "79b7c30bf3b3a6fa2dc597d052b02673444603ff"
+  },
+  {
+   "id": "app-icon",
+   "title": "The app icon",
+   "what": "Duo's icon is two panes, full bleed: the graphite console on the left and a white page on the right (2A′).",
+   "steps": [
+    "Look at Duo in the Dock, ⌘Tab and Finder, at large and small sizes."
+   ],
+   "expect": "Matches `icon-handoff`. 16 and 32 pt use simplified art. No orange.",
+   "ref": "DL-131, F-142",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-142): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether you like it in your Dock."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "e29c7c4adb94c353cbb47f9daa1e199149bf0052",
+   "group": "Before you open a project: install, updates and settings"
+  },
+  {
+   "id": "dev-icon",
+   "title": "Dev builds look different: Duo Dev, with a hazard stripe",
+   "what": "A dev build (`scripts/bundle.sh`) is named Duo Dev and its icon has yellow and black stripes at the foot; release builds keep the plain icon.",
+   "steps": [
+    "Open a dev build (`build/Duo.app`) beside your released Duo.",
+    "Compare them in the Dock and ⌘Tab: the dev one is striped and named Duo Dev."
+   ],
+   "expect": "Matches the Dev build section of `icon-handoff`. Both keep the bundle id com.dudgeon.duo (a separate id is ENH-25).",
+   "ref": "DL-140, F-165",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-165): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether you can tell them apart at a glance."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "0aea4dcd278dd0173c1e18e4333db819a7e8d171",
+   "group": "Before you open a project: install, updates and settings"
   },
   {
    "id": "ws-projects",
@@ -639,6 +715,35 @@
    ]
   },
   {
+   "id": "dock-badge",
+   "title": "The Dock badge shows the needs-you count",
+   "what": "Duo's Dock icon shows the number of sessions waiting on you, as macOS's red badge.",
+   "steps": [
+    "Once: System Settings › Notifications › Duo › Allow notifications, and Badge application icon on.",
+    "Ask a session something that needs you, then look at the Dock."
+   ],
+   "expect": "The count is `duo2 needs-you`'s list, the session on screen included; nothing at 0. `duo2 settings` says what macOS allows.",
+   "ref": "DL-138, F-161, Q-93",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-161): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "macOS's own permission switches."
+    ],
+    "human": [
+     "Whether the badge shows on your Mac."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "a5514fa9159df43d594fa6aa4a740e65b1e1239d",
+   "setup": [
+    "go all"
+   ],
+   "group": "All projects: what needs you"
+  },
+  {
    "id": "home-open-tasks",
    "group": "All projects: what needs you",
    "title": "Open tasks across projects at All projects",
@@ -726,6 +831,36 @@
     "at": "2026-10-04"
    },
    "commit": "01d09741fd29316a3e78db2a8a7387ea2ce85e46"
+  },
+  {
+   "id": "tile-states",
+   "title": "Open sessions read “at prompt” or “working” on their tile",
+   "what": "At All projects, a session open in Duo reads `working` or `at prompt` in place of its time on its project's tile, as in the project's own list; the tint stays.",
+   "steps": [
+    "Open checkout, start or resume a session, then go back to All projects (⌘↑).",
+    "Find it on checkout's tile."
+   ],
+   "expect": "Matches `small-features-handoff`. A session that needs you keeps its wait.",
+   "ref": "DL-133 (ENH-7), F-147",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-147): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether the words read right on tiles."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "6cb2447229d740d01b650762bc54dafb20530045",
+   "setup": [
+    "open checkout",
+    "go all"
+   ],
+   "group": "All projects: what needs you"
   },
   {
    "id": "search-open",
@@ -1735,6 +1870,34 @@
     "at": "2026-10-06"
    },
    "commit": "f8a01101614503509f4b4850e4e8681a81582b2e"
+  },
+  {
+   "id": "sb-task-hover",
+   "title": "A group-style task row's hover",
+   "what": "Under the pointer a group-style task row takes the selected fill; its status stays whole and the + follows it; a long title gives way instead.",
+   "steps": [
+    "In checkout, hover over the `Exec review prep` row (the group style, with its sessions folded under it)."
+   ],
+   "expect": "Matches `standins2-handoff` (a). Its commit also holds the update notes, the clash box and the busy-tab words: rejecting this card reverts those too.",
+   "ref": "DL-132 (a), F-143",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-143): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether it's clear what the + does."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "e29af8ca158aa72863a74173494c4b9ef3d1556a",
+   "setup": [
+    "open checkout"
+   ],
+   "group": "In checkout: sessions and tasks"
   },
   {
    "id": "task-menu",
@@ -2772,6 +2935,35 @@
    "group": "In checkout: files"
   },
   {
+   "id": "sb-clash-box",
+   "title": "The clash question when a dropped file's name is taken",
+   "what": "Dropping files whose names are taken asks once, counting them in the title (“2 items already exist in docs.”); each row says where the dropped item came from and when the one there was edited. Keep Both is the default.",
+   "steps": [
+    "Copy `docs/prd.md` and `docs/research.md` to your Desktop, then drag both from Finder onto `docs` in the file tree.",
+    "Read the question, then Cancel."
+   ],
+   "expect": "Matches `standins2-handoff` (c). From another volume Duo copies, as Finder does (d). Its commit also holds the update notes, the task row hover and the busy-tab words: rejecting this card reverts those too.",
+   "ref": "DL-132 (c, d), F-143",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-143): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether the rows help you decide."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "e29af8ca158aa72863a74173494c4b9ef3d1556a",
+   "setup": [
+    "open checkout"
+   ],
+   "group": "In checkout: files"
+  },
+  {
    "id": "docx-markdown",
    "title": "Open a Word document as Markdown",
    "what": "Opening a .docx offers a clean Markdown copy beside it: headings, lists and tables inferred, comments as endnotes, tracked changes accepted. The .docx is never changed, and Undo removes the copy.",
@@ -2836,6 +3028,35 @@
    "group": "In checkout: files"
   },
   {
+   "id": "sb-no-preview",
+   "title": "Files Duo can't show: a quiet strip, or no preview",
+   "what": "A file Duo can only preview gets a quiet strip under the tabs (its kind in plain words, read only, Open With ⌄, Show in Finder) over Quick Look; one with no preview says so, centred, with the two buttons.",
+   "steps": [
+    "In checkout, click `docs/exports.zip` in the file tree.",
+    "Click a PDF or Keynote file of your own, if one is handy (File › Open File…)."
+   ],
+   "expect": "Matches `standins2-handoff` (e). Its commit also holds the outside tab's folder, running downloads and the popup mark: rejecting this card reverts those too.",
+   "ref": "DL-132 (e), Q-52, F-144",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-144): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether the words are plain enough."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "1c8e72e79b0b9abff3fd1e63a41da51abcee76e2",
+   "setup": [
+    "open checkout"
+   ],
+   "group": "In checkout: files"
+  },
+  {
    "id": "motion-deck",
    "group": "In checkout: files",
    "title": "Motion: the deck scrolls and the picker glides",
@@ -2862,6 +3083,36 @@
     "at": "2026-10-06"
    },
    "commit": "7b278330500d378f417d6e81a237542f60d6eec3"
+  },
+  {
+   "id": "sb-deck",
+   "title": "The deck while drawing, and picking with no session",
+   "what": "While a deck draws: “Drawing slides…” with ‹ › and Select Shape dimmed and an empty numbered frame per slide. A shape picked with no Claude session says why and makes Send To the default. Under 460 wide the count reads `2/5` and the picker's buttons wrap.",
+   "steps": [
+    "In checkout with no session running, open `docs/garden-review.pptx` and watch it draw.",
+    "Select Shape, pick a shape: the bar says there's no session and offers Send To.",
+    "Narrow the right pane under 460."
+   ],
+   "expect": "Matches `standins2-handoff` (j). Its commit also holds chat in Home and the link status line: rejecting this card reverts those too.",
+   "ref": "DL-132 (j), Q-68, F-145",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-145): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether the drawing state feels right."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "5cf2aec77f094d0c8b226683c71e9b721be2de0e",
+   "setup": [
+    "open checkout"
+   ],
+   "group": "In checkout: files"
   },
   {
    "id": "html-view",
@@ -2984,6 +3235,35 @@
    "group": "In checkout: HTML pages and the browser"
   },
   {
+   "id": "sb-downloads-popups",
+   "title": "Running downloads, and the popup mark",
+   "what": "A running download shows “Downloading report.pdf…” with progress, “2.1 of 8.4 MB” and Cancel in the notice's place. A popup's tab has `↳` before its title, with the tooltip “Opened from ‹opener›”.",
+   "steps": [
+    "In a browser tab, download a larger file and watch the notice; try Cancel on another.",
+    "Click a link that opens a new window: its tab shows ↳."
+   ],
+   "expect": "Matches `standins2-handoff` (h, i). Its commit also holds the no-preview strip and the outside tab's folder: rejecting this card reverts those too.",
+   "ref": "DL-132 (h, i), Q-66, Q-67, F-144",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-144): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether the progress reads clearly."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "1c8e72e79b0b9abff3fd1e63a41da51abcee76e2",
+   "setup": [
+    "open checkout"
+   ],
+   "group": "In checkout: HTML pages and the browser"
+  },
+  {
    "id": "s1-shells",
    "group": "In checkout: shells and tabs",
    "title": "Plain shells in the console",
@@ -3074,6 +3354,64 @@
    "group": "In checkout: shells and tabs"
   },
   {
+   "id": "tab-hover",
+   "title": "A fill behind the hovered tab",
+   "what": "When a tab shows its ×, a subtle rounded fill sits behind the × and the name, so it's plain which tab will close. Right-pane tabs sit 24 apart.",
+   "steps": [
+    "In checkout, hover over console tabs and right-pane tabs."
+   ],
+   "expect": "Matches `tab-hover-handoff` (A). Nothing moves; no fade.",
+   "ref": "DL-134, F-149",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-149): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether it's now obvious which tab closes."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "f03047e41d4b713279bacc13255b97bd8b45e2d8",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "group": "In checkout: shells and tabs"
+  },
+  {
+   "id": "sb-outside-tab",
+   "title": "An outside file's tab shows its folder on hover",
+   "what": "A tab for a file outside the project adds its folder in grey while under the pointer.",
+   "steps": [
+    "File › Open File… (⌘O) and open any file outside checkout.",
+    "Hover over its tab."
+   ],
+   "expect": "Matches `standins2-handoff` (f). Its commit also holds the no-preview strip, running downloads and the popup mark: rejecting this card reverts those too.",
+   "ref": "DL-132 (f), Q-39, F-144",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-144): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether the folder helps."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "1c8e72e79b0b9abff3fd1e63a41da51abcee76e2",
+   "setup": [
+    "open checkout"
+   ],
+   "group": "In checkout: shells and tabs"
+  },
+  {
    "id": "restore-relaunch",
    "group": "In checkout: shells and tabs",
    "title": "What you had open comes back",
@@ -3139,6 +3477,35 @@
    "group": "Claude running in checkout: chat mode"
   },
   {
+   "id": "chat-strip",
+   "title": "A thin light strip over chat",
+   "what": "While the selected tab is in chat mode, the console's tab strip is a thin light bar (28 high on ground, tabs in SF Pro 12, the selected one underlined) with a light Terminal/Chat toggle; a terminal tab keeps the dark strip.",
+   "steps": [
+    "Switch a session to chat and look at the strip; switch back to the terminal."
+   ],
+   "expect": "Matches the `bar-thin` board (B3). Tabs keep their state glyphs (Q-87's stand-in).",
+   "ref": "DL-136, F-152",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-152): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether it looks right now."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "43c320d9955ffbe648210132a0ec5f331d06f20d",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "group": "Claude running in checkout: chat mode"
+  },
+  {
    "id": "chat-composer",
    "title": "Chat mode: the composer, Stop, and moving between messages",
    "what": "Chat's composer is Claude's own prompt (handed over through Ctrl+G), so what you type is exactly what Claude gets. Stop interrupts, the mode chip changes mode, `/` opens the command menu, and ⌘[ / ⌘] move between your messages.",
@@ -3177,6 +3544,35 @@
    "group": "Claude running in checkout: chat mode"
   },
   {
+   "id": "chat-at-files",
+   "title": "@ for the project's files in chat's composer",
+   "what": "Typing @ in chat's composer lists the project's files and folders, filtered as you type; ⏎ or tab puts in Claude Code's own mention, `@docs/prd.md`.",
+   "steps": [
+    "In chat mode, type `@prd` in the composer, pick `docs/prd.md` and send a short question about it."
+   ],
+   "expect": "Matches `small-features-handoff` (ENH-3). Nothing matching says so. Over the terminal, Claude Code's own @ does this.",
+   "ref": "DL-133 (ENH-3), F-148",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-148): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether picking a file feels quick."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "25b66b3b0696d210cb40d664c73ed3e4aadc0e7b",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "group": "Claude running in checkout: chat mode"
+  },
+  {
    "id": "chat-review",
    "title": "Chat mode: permission, plan and question cards",
    "what": "When Claude asks for permission, a plan approval or an AskUserQuestion, chat shows it as a card where the composer was, with everything Claude Code shows. Your choice goes back as keys to the real terminal; chat never answers or pre-selects for you.",
@@ -3207,6 +3603,96 @@
    "commit": "023f0fe16a70347fe309c87a47e749d05482f7b7",
    "alsoCommits": [
     "149006eb5f7f08fbfcb7ebe63b43e6c1438719e5"
+   ],
+   "group": "Claude running in checkout: chat mode"
+  },
+  {
+   "id": "chat-fold",
+   "title": "Tool calls fold to one line in chat",
+   "what": "Every run of tool calls between two pieces of Claude's text is one line in the terminal's words (“Ran 4 shell commands, read 3 files”), opened in place to a line a step; a step opens to its output or diff. A step waiting on you never folds.",
+   "steps": [
+    "Ask Claude for something that runs several commands and reads files.",
+    "Click the folded line, then a step."
+   ],
+   "expect": "Matches the chat-polish board (C1 to C4, K1 to K8). Failures fold flagged `· 1 failed`.",
+   "ref": "DL-135, F-151",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-151): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether the fold hides the right amount."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "72a63ed54a025a0351fdb1b9470430381a2dea16",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "group": "Claude running in checkout: chat mode"
+  },
+  {
+   "id": "chat-perf",
+   "title": "Long chats open fast and keep your place",
+   "what": "A long session opens in chat mode without a beach ball; scrolling is smooth; a reply that arrives while you're scrolled up doesn't move you.",
+   "steps": [
+    "Switch one of your own long sessions to chat mode and scroll through it.",
+    "Scroll up while Claude is replying: you stay where you are."
+   ],
+   "expect": "`scripts/perf-chat.sh` is the budget check. Stalls you do see are logged (`duo2 hangs`).",
+   "ref": "DL-137, F-157 to F-160",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-157 to F-160): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "How it feels on your longest session."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "b392d7c63d52004ad4c1a3bb6152c234e5a38f82",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "group": "Claude running in checkout: chat mode"
+  },
+  {
+   "id": "sb-chat-home-links",
+   "title": "Chat in Home, and link targets on hover",
+   "what": "Home's session tab row has the Terminal/Chat pill too. Under the pointer, a chat file link shows its target in a status line at the transcript's bottom left (“Open flows.md at line 42 in Duo”).",
+   "steps": [
+    "At All projects, switch Home's session to chat with its pill.",
+    "Hover over a file link in a chat reply."
+   ],
+   "expect": "Matches `standins2-handoff` (g). Its commit also holds the deck's drawing frames and no-session picker: rejecting this card reverts those too.",
+   "ref": "DL-132 (g), Q-57, F-145",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-145): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether the status line is easy to notice."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "5cf2aec77f094d0c8b226683c71e9b721be2de0e",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
    ],
    "group": "Claude running in checkout: chat mode"
   },
@@ -3298,6 +3784,36 @@
     "at": "2026-10-06"
    },
    "commit": "8974f5801f3ebc9995c8b50621bf03948d5f3dbe",
+   "group": "Claude running in checkout: chat mode"
+  },
+  {
+   "id": "project-brief",
+   "title": "Each session knows its project's brief",
+   "what": "At start (and after resume, /clear or compaction) a session is told its project's name, folder, goal, health and next step from PROJECT.md; later only what changed.",
+   "steps": [
+    "Start a session in checkout and ask “what project am I in and what's its goal?”.",
+    "Change `next:` in PROJECT.md, then ask again."
+   ],
+   "expect": "A project whose CLAUDE.md imports @PROJECT.md gets the name only.",
+   "ref": "ENH-16, F-146",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-146): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether that's the right amount of context."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "7c421a5da943f2d1ce11fa53120ba858c629d43f",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
    "group": "Claude running in checkout: chat mode"
   },
   {
@@ -3901,6 +4417,36 @@
    "group": "Claude running: closing and ending"
   },
   {
+   "id": "sb-busy-words",
+   "title": "The busy-tab question's words",
+   "what": "Closing a busy tab asks “Stop Claude and close “‹name›”?” (the session stays in its project) or “Stop “‹command›” and close the tab?”, with Cancel and Close Tab.",
+   "steps": [
+    "With Claude working, press ⌘W on its tab; read and Cancel.",
+    "In a shell run `sleep 30` and press ⌘W; read and Cancel."
+   ],
+   "expect": "Matches `standins2-handoff` (k). Its commit also holds the update notes, the clash box and the task row hover: rejecting this card reverts those too.",
+   "ref": "DL-132 (k), DL-127, F-143",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-143): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether the words are right."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "e29af8ca158aa72863a74173494c4b9ef3d1556a",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "group": "Claude running: closing and ending"
+  },
+  {
    "id": "rp-close",
    "group": "Claude running: closing and ending",
    "title": "⌘W closes the focused tab",
@@ -4227,6 +4773,31 @@
     "at": "2026-10-06"
    },
    "commit": "f331a237213c4646ad302a66c819309b0e6f600f"
+  },
+  {
+   "id": "hang-log",
+   "title": "A log of Duo's stalls: duo2 hangs",
+   "what": "Duo logs every stall of its main thread of 250 ms or more on this Mac (when, how long, what was on screen), and `duo2 hangs` reads it. Nothing is sent anywhere.",
+   "steps": [
+    "After using Duo for a while: `duo2 hangs`, then `duo2 hangs --stacks`."
+   ],
+   "expect": "`DUO_HANG_LOG=0` turns it off. The log is capped at 512 KB.",
+   "ref": "DL-139, F-163, C-41",
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-163): DuoChecks and captures against its handoff."
+    ],
+    "didnt": [
+     "Trying it in your own Duo."
+    ],
+    "human": [
+     "Whether it catches the lag you notice."
+    ],
+    "at": "2026-10-07"
+   },
+   "commit": "600f811230578e9a853b3915f34b892ea52820b4",
+   "group": "The command line"
   },
   {
    "id": "cli-legacy",
