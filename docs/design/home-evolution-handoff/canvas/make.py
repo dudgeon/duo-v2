@@ -687,11 +687,17 @@ def home_states():
 
 
 ha, hb, hf = home_states()
-board("10-home-chat", 1500, 900, "10 · Home's agent in chat by default", "board", "Home in chat at 340: talking, a question docked, falling back.", bd(1500, 900,
+# Q-57 as built (fa3d70c, F-145): the pill on Home's dark tab row, chat below
+hq = (f'<div class="chat" style="width:340px;height:100%">{home_header(dark=True)}'
+      f'<div class="strip mono" style="height:36px;background:{CONSOLE};border-color:{CRULE};font-family:-apple-system,system-ui,sans-serif;font-size:13px"><span class="tab" style="color:{CTEXT};font-weight:500">{g("needs", "#F97316")}Morning triage</span><span class="tab" style="color:{CTEXT2}">{g("idle", CTEXT2)}Weekly status</span>'
+      f'<span style="display:flex;align-items:center;margin-left:auto"><span class="pill" style="background:{CONSOLE};border-color:#4A4F57"><span style="color:{CTEXT2};width:26px;height:20px">{g("term")}</span><span style="background:{CRULE};color:{CTEXT};width:26px;height:20px">{g("bubble")}</span></span></span></div>'
+      + home_feed() + '</div>')
+board("10-home-chat", 1880, 900, "10 · Home's agent in chat by default", "board", "Home in chat at 340: talking, a question docked, falling back.", bd(1880, 900,
     "10 · Home’s agent opens in chat",
-    "Home’s pane follows the console: in chat its strip is DL-136’s thin light strip, with the Terminal / Chat pill at the right (DL-132 (g)), and its header turns light to match. A terminal tab keeps today’s dark strip.",
+    "<b>A choice:</b> keep Q-57 as built (Home’s dark row with the pill, first frame) or board 10 (Home follows the console: DL-136’s thin light strip and a light header while chat shows; the next three frames). A terminal tab keeps the dark strip either way.",
     f'''<div style="display:flex;gap:20px;align-items:flex-start">
-{frame(ha, 340, 700, "Talking", "Claude’s cards keep 24 free on the right at this width (the Q-57 board); hints are dropped from the composer below 480 (DL-129).")}
+{frame(hq, 340, 700, "Choice 1 · Q-57 as built (F-145)", "The pill on Home’s dark tab row, dark header; chat below. Built and merged (fa3d70c).")}
+{frame(ha, 340, 700, "Choice 2 · board 10: talking", "Claude’s cards keep 24 free on the right at this width (the Q-57 board); hints are dropped from the composer below 480 (DL-129).")}
 {frame(hb, 340, 700, "A question docked", "Review cards dock in the composer’s place (DL-119 (3)), full width; Home’s tab shows the needs-you glyph, and the column’s dashed card points here.")}
 {frame(hf, 340, 700, "Fallen back", "Anything chat can’t show goes to the terminal with the bar (DL-119 (6)); the strip turns dark with it.")}
 <div class="txt" style="flex:1"><h3>What changes for the Home session [P]</h3><ul>
@@ -701,7 +707,7 @@ board("10-home-chat", 1500, 900, "10 · Home's agent in chat by default", "board
 <li>At 280 (Home’s minimum, DL-129) previews in a question stack and the review card’s footer wraps (Q-56 d).</li>
 <li><code>duo2 session chat --default</code> gains a Home form: <code>--home chat|terminal|last</code>; Settings › General gets “Home opens in: Chat / Terminal”.</li>
 <li>With no Home folder, the pane is unchanged: “Choose a Home folder” (DL-84, DL-100).</li></ul>
-<h3>Changed from the Q-57 board</h3><p class="note">Q-57’s board drew the pill on Home’s dark tab row. DL-136 came after it for the console; this proposes the same light strip for Home while chat shows. Flagged to the stand-ins session.</p></div>
+<h3>Q-57 as built, or board 10? [P]</h3><p class="note">Q-57 (DL-132 g) drew the pill on Home’s dark row, and that is built. DL-136 then gave the console a light strip in chat; board 10 proposes the same for Home, so a chat looks the same wherever it is. Recommended: board 10.</p></div>
 </div>'''))
 
 # 11 · recommendation
