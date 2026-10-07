@@ -1,96 +1,69 @@
 # Duo v2
 
-A native macOS workspace for product managers who work with Claude Code. Projects, sessions and documents stay organized in plain files you can read, every session keeps a live terminal running Claude Code's own TUI, and one screen shows what needs you across all of them.
+A Mac app for working with Claude Code across many pieces of work at once. It keeps your projects, your Claude conversations and the documents they make in one place, and shows which conversation is waiting on you.
 
-Status: in daily use toward v1. Duo lists every Claude Code session on the Mac, runs them in live terminals beside their documents, and shows what needs you; most of v1 is built (see the [build plan](docs/plan/build-plan.md) §3a and its "Where v1 stands"). Releases are signed and notarized.
+> **Duo v2 is an early beta and an experiment.** Things will change and some will break. Try it, and tell us what you find: open an [issue](https://github.com/dudgeon/duo-v2/issues), or use Help › Report an Issue… in Duo. Legacy Duo is in maintenance mode: it gets fixes, not new features.
+
+![All projects: Home's Claude session on the left, a map of projects in the middle, and what needs you on the right.](docs/guide/images/all-projects.png)
+
+Duo runs Claude Code itself, the same interactive Claude, signed in with your own Claude account. It doesn't need an API key.
+
+## Why Duo
+
+Claude Code can research, write and analyse with you. Once it's how you work, though, you don't have one conversation. You have a dozen: a PRD edit, competitor research, a status draft for Friday, a quick question about tax rules. They're spread across terminal windows and folders, and:
+
+- one of them is waiting for your answer, and you can't tell which;
+- you closed a window yesterday, and now you can't find that conversation;
+- you started Claude on the Desktop by accident, so its files landed there too;
+- Claude finished a document, and you have to go and find it to read it;
+- after 30 days, Claude Code clears old conversations away for good.
+
+## What Duo v2 is exploring
+
+Duo v2 tests one idea: once Claude is part of how you work, organise around your pieces of work, not around chat windows and terminal tabs. Each part below is a guess, and some of them will turn out wrong. That's what the beta is for.
+
+| What Duo tries | What we want to learn |
+|---|---|
+| **Every conversation in one list.** Duo reads Claude Code's own records, lists every session on your Mac by where it ran, and keeps a copy past the 30-day cleanup. | Does seeing all of them help you pick work back up, or is it noise? |
+| **A folder per piece of work.** A project is a folder with a one-page `PROJECT.md`: the goal, how it's going, the next step. | Will people keep a short brief current if it's what they see every day? |
+| **Context, once.** A `CLAUDE.md` at the top of your Home folder is read by every session in the projects inside it. | How much re-explaining does it save? |
+| **What needs you, first.** Every question and permission Claude is waiting on, across projects, longest wait first. | Does one queue beat checking tabs? |
+| **Documents beside the conversation.** Claude in the middle, the document on the right, Claude's additions highlighted. | Is reviewing Claude's work here better than in your usual editor? |
+| **Two views, one click apart.** All your projects, or one of them, and search across everything. | Is a map of projects the right way to see your work? |
+| **Plain files.** Projects, Home and tasks are ordinary Markdown files you can open anywhere. | Does this hold up as projects pile up? |
+
+Tried it? Tell us what you found, good or bad.
 
 ## Install
 
-Download the newest DMG from [Releases](https://github.com/dudgeon/duo-v2/releases), open it and drag Duo to Applications. Requires macOS 26 or later, Apple Silicon, and Claude Code. The `duo2` command is at `Duo.app/Contents/Helpers/duo2`; Duo offers to put it on your PATH.
+You need a Mac with Apple silicon, macOS 26 or later, and [Claude Code](https://code.claude.com/docs/en/setup) installed and signed in.
 
-## Build and run
+1. Download the newest `Duo-x.y.z.dmg` from [Releases](https://github.com/dudgeon/duo-v2/releases), open it, and drag Duo into Applications.
+2. Open Duo. Every Claude Code session on this Mac is already there.
 
-Requires macOS 26 or later and the Xcode Command Line Tools (`xcode-select --install`). Xcode is not needed ([ADR-0001](docs/adr/0001-xcode-free-swift-package.md)).
+**Have Legacy Duo?** Duo v2 installs as `Duo.app` too, so it replaces Legacy Duo's app. To keep both, rename the old one first (for example to `Duo Legacy.app`). See [Coming from Legacy Duo](docs/guide/coming-from-legacy-duo.md).
 
-```bash
-scripts/bundle.sh
-```
+## Learn Duo
 
-```bash
-open build/Duo.app
-```
+The [guide](docs/guide/README.md) explains Duo one idea at a time:
 
-Opened plainly, Duo lists every Claude Code session on this Mac, from Claude's logs, grouped by folder; a Home folder (File › Choose Home Folder…, or `duo2 home set <folder>`) holds the projects you track (DL-82 to DL-85). The design fixture (`docs/design/build-handoff/fixture.json`) is for the design targets' states:
+1. [Sessions](docs/guide/sessions.md): every conversation, found, and kept
+2. [Projects](docs/guide/projects.md): one folder per piece of work
+3. [Tasks](docs/guide/tasks.md) (optional): to-dos that collect their sessions
+4. [Where a session belongs](docs/guide/where-a-session-belongs.md), and moving one that started in the wrong place
+5. [Home](docs/guide/home.md): your projects, and a chief of staff
+6. [Topics](docs/guide/topics.md): one folder per area you own
+7. [Documents](docs/guide/documents.md): what Claude makes, beside the conversation
+8. [What needs you](docs/guide/what-needs-you.md)
+9. [Getting around](docs/guide/getting-around.md): all projects, one project, and search
+10. [Plain files, and Claude driving Duo](docs/guide/plain-files.md)
 
-```bash
-build/Duo.app/Contents/MacOS/Duo --state project
-```
+Coming from Legacy Duo? Start with [Coming from Legacy Duo](docs/guide/coming-from-legacy-duo.md).
 
-States: `overview`, `flow-zoom-1`, `project`, `flow-zoom-2`, `flow-zoom-3`, `flow-zoom-4`.
+## Building Duo
 
-To run on real folders instead, point Duo at a workspace. A project is a folder with `PROJECT.md`, Home is the folder with `HOME.md`, and a topic is a project's parent folder. Sessions are real Claude Code sessions:
-
-```bash
-scripts/make-demo-workspace.py
-```
-
-```bash
-open -n build/Duo.app --args --workspace "$PWD/.build/ws"
-```
-
-The script builds `.build/ws`, mirroring the fixture's projects. Duo keeps its facts about each project's sessions in `<project>/.duo/sessions.json`.
-
-## Check
-
-Logic checks:
-
-```bash
-swift run DuoChecks
-```
-
-Visual comparison against the design targets, writing `build/ui/<state>-compare.png` (target, build, difference):
-
-```bash
-scripts/check-ui.sh
-```
-
-Inside Claude's sandbox, `duo2` must reach the app through one allowed socket. This runs it under macOS Seatbelt the way Claude Code does, with no tokens spent:
-
-```bash
-scripts/check-sandbox.sh
-```
-
-Design reference PNGs need Google Chrome to re-render ([ADR-0002](docs/adr/0002-visual-target-harness.md)).
-
-## Where things are
-
-| Path | What |
-|---|---|
-| `Sources/Duo/` | The app entry point |
-| `Sources/DuoKit/` | Views, model, live state, editor host, design tokens, fixture harness |
-| `Sources/DuoControl/` | The app ↔ `duo2` protocol and the action registry (Foundation only) |
-| `Sources/duo2/` | The `duo2` command line, bundled in `Duo.app/Contents/Helpers` |
-| `Sources/DuoSearch/` | Cross-project search: index, Core ML embedder, hybrid ranking (shared by the app and `duo2`) |
-| `Sources/DuoChecks/` | Logic checks (`swift run DuoChecks`) |
-| `Vendor/codemirror/` | CodeMirror 6 and Duo's editor module (`src/duo-editor.js`), bundled into a checked-in `dist/cm6.js` by `build.sh` |
-| `Models/` | The search model, committed in checksummed parts (DL-40) |
-| `Spikes/` | Throwaway packages from the spike track (`swift run` inside each) |
-| `scripts/` | Bundle, release, token and design-system generation, UI comparison, pixel sampling, acceptance fixtures |
-| `docs/design/decisions.md` | Owner decisions (DL-n); these win over other docs |
-| `docs/design/README.md` | Index of every design doc and handoff, with its status |
-| `docs/design/system/` | The design system: tokens, components, surfaces, as built |
-| `docs/design/*-handoff/` | Approved design targets: screens, manifests, READMEs |
-| `docs/design/legacy-requirements.md` | Requirements carried from legacy Duo (LR-n) |
-| `docs/design/stack-recommendation.md` | Stack choices and spikes |
-| `docs/plan/` | Build plan and roadmap, findings (F-n), concerns and questions (C-n, Q-n), enhancements (ENH-n), spikes |
-| `docs/prd/` | Product requirements for consolidation (CONS) and cross-project search (SRCH) |
-| `docs/cli/duo2.md` | The `duo2` reference, generated from the action registry |
-| `docs/features/` | Guides to larger features (`duo2`, Send to Claude) |
-| `docs/acceptance/` | Acceptance walks: features, verdict pages, ledgers |
-| `docs/adr/` | Architecture decision records |
-| `docs/research/` | Research behind the decisions |
-| `.claude/skills/` | The acceptance-walk and release skills |
+See [CONTRIBUTING.md](CONTRIBUTING.md) for building from source, the checks, and where the design and planning docs are.
 
 ## Licence
 
-MIT (DL-12).
+MIT.
