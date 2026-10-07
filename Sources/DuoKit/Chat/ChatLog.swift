@@ -170,7 +170,12 @@ public typealias ChatJSON = [String: Any]
 /// draws is only ever changed on the main thread.
 @Observable
 public final class ChatLog: @unchecked Sendable {
-    public internal(set) var items: [ChatItem] = []
+    public internal(set) var items: [ChatItem] = [] {
+        didSet { assert(!drawn || Thread.isMainThread, "the log a chat draws changes only on the main thread (F-160)") }
+    }
+    /// The log a chat draws (ChatSession's): changed only on the main thread. A scratch log for a
+    /// replay isn't, and is built anywhere (F-160).
+    @ObservationIgnored public internal(set) var drawn = false
     /// The session's folder, for showing paths relative to it.
     public var cwd: String?
     /// When the turn being written started (the Writing line's clock).

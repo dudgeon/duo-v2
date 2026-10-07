@@ -2076,3 +2076,29 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   
   The prototype keeps you where you are unless you're at the bottom (`onScrollGeometryChange`), and watches the item count instead.
   - Open question: in one run of four, a jump to the middle that changed the content height at the same moment still counted as "at the bottom". The build needs a sturdier rule (scroll to the bottom once on load; otherwise decide from the offset alone), proved by the harness's scrolled-up phase.
+
+- **Finer rows were tried, and didn't pay off (ENH-23a, Geoff: "if we should do the finer-rows approach, do it").** The prototype made each Claude turn a `Claude · 9:42` row plus one lazy row per card section, drawn on pieces of the card. All 33 captures were pixel-identical to main's. It is parked on `proto/chat-finer-rows` (88dd122). Heavy fixture, three runs of the budget check:
+
+| Phase | slice 1 | finer rows |
+|---|---|---|
+| Flick: longest stall | 86–92 ms | 44–61 ms |
+| Replies right after a jump to the bottom: longest stall | 184–470 ms | 279–808 ms |
+| A reply while scrolled up: longest stall | 35–224 ms | 1.07–1.31 s |
+| …and where the view ended | stays (decided by your scrolling) | at the bottom: the estimate collapsed under the view (624k to 312k pt), 3 of 3 |
+| AppKit views realized | 172 | 50 |
+
+  - **Why it lost.** About 1,850 rows are rebuilt on each event (18–20 ms in a debug build). SwiftUI then compares the realized rows' card sections deeply, and invalidates their subgraphs.
+  - **The bigger problem is the estimate.** With small rows and very large ones mixed, the lazy stack's estimate of the feed's height swings harder, so the view lands somewhere else after a jump.
+  - A SwiftUI lazy stack can't be given row heights. A container that caches measured heights (ENH-23b, NSTableView/NSCollectionView) is the way to remove the jump stalls and the shifting.
+- **Release builds** (what Geoff runs; everything above was a debug build). Heavy fixture, two runs each, main with the collapse (e1b5635) and then with slice 1:
+
+| Phase | e1b5635 | slice 1 |
+|---|---|---|
+| Open: longest stall | 1.06–1.14 s | 133–169 ms |
+| Slow scroll: late frames | 1 of 300 | 1 of 300 |
+| Flick: longest stall | 80–86 ms | 84–86 ms |
+| Replies at the bottom (steady): longest stall | 63–70 ms | 66–72 ms |
+| Replies right after a jump to the bottom: longest stall | 544–677 ms | 410–690 ms |
+| A reply while scrolled up | pulled to the bottom; 260–281 ms | stays; 0–74 ms |
+
+- **Guard.** The log a chat draws (`ChatSession.log`, `drawn`) asserts that it's only changed on the main thread. A scratch log for a replay isn't held to that. DuoChecks checks which log is which.
