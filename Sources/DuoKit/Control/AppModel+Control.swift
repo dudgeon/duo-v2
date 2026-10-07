@@ -85,9 +85,13 @@ extension AppModel {
         case .viewFilter:
             let text = inv.positional.joined(separator: " ")
             if altitude.isAllProjects, homeView == .list {
+                // Answered once search has: the matches, best first, as the List shows them.
                 listFilter = text
-                let n = sessionList.filtered(text).count
-                return done(.ok(text.isEmpty ? "Filter cleared." : "\(n) session\(n == 1 ? " matches" : "s match") '\(text)'."))
+                return listFilterChanged { m in
+                    guard !text.isEmpty else { return done(.ok("Filter cleared.")) }
+                    let lines = m.prefix(20).map { "  \($0.row.session.name) · \($0.row.project)" + ($0.passage.map { " — \($0.prefix(100))" } ?? "") }
+                    done(.ok((["\(m.count) session\(m.count == 1 ? " matches" : "s match") '\(text)'."] + lines).joined(separator: "\n")))
+                }
             }
             mapFilter = text
             let m = mapLayout

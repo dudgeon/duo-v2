@@ -5,7 +5,7 @@ import Foundation
 /// `WINDOW=1280x800`.
 @MainActor
 public enum HomeListTargets {
-    nonisolated public static let screens = ["list-1440", "list-1280", "board-1440"]
+    nonisolated public static let screens = ["list-1440", "list-1280", "board-1440", "list-filter", "list-nothing"]
 
     public static func apply(_ screen: String, to model: AppModel) {
         TargetState.overview.apply(to: model)
@@ -16,7 +16,21 @@ public enum HomeListTargets {
         // The boards' clock: late enough in the day that 5h ago is still Today.
         let cal = Calendar.current
         model.listClock = cal.date(bySettingHour: 18, minute: 0, second: 0, of: Date())
+        // The `filter` board's typed examples. Fixture mode has no index, so search's two session
+        // hits are given here, as the index would answer them.
+        if screen == "list-filter" {
+            model.listFilter = "saved cards in scope"
+            model.listMatches = model.sessionList.matches(model.listFilter, search: searchHits, in: model.fixture)
+        } else if screen == "list-nothing" {
+            model.listFilter = "stripe webhooks"
+        }
     }
+
+    /// What search's session index would find for "saved cards in scope" on the boards' sessions.
+    static let searchHits = [
+        SessionList.SearchMatch(sessionId: "fixture-teardown", snippet: "You: What do the teardowns do at checkout?\n\nClaude: Three of the five teardowns let guests save a card at checkout, and two of them ask after the order."),
+        SessionList.SearchMatch(sessionId: "fixture-copy-audit", snippet: "You: Leave saved-card copy until legal says it’s in scope\n\nClaude: Noted; I’ve left those strings alone."),
+    ]
 
     /// Open in Duo on the boards: three working, two at their prompt.
     static let open: Set<String> = ["Teardown research", "Edge-case matrix", "Rule audit", "Weekly status draft", "Fix footer links"]
@@ -47,6 +61,9 @@ public enum HomeListTargets {
         set("Results readout", wait: "25m")
         set("Funnel SQL", wait: "40m")
         set("Interview synth", wait: "2d", rename: "Checkout copy audit")
+        // Session ids for the two the `filter` board's search finds (fixture sessions have none).
+        if let i = f.sessions.firstIndex(where: { $0.name == "Teardown research" }) { f.sessions[i].sessionId = "fixture-teardown" }
+        if let i = f.sessions.firstIndex(where: { $0.name == "Checkout copy audit" }) { f.sessions[i].sessionId = "fixture-copy-audit" }
         set("quick q about tax rules", wait: "9d")
         if outsideFolder {
             f.topics.append("~/repos")

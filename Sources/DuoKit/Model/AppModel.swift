@@ -247,7 +247,12 @@ public final class AppModel {
     /// user sees List; after that the last choice (`setHomeView`).
     public var homeView: HomeView = HomeView(rawValue: DuoState.load().homeView ?? "") ?? .list
     /// The list's filter, its selected row (a session's `id`), and Group › Show Archived.
-    public var listFilter = ""
+    public var listFilter = "" { didSet { if listFilter != oldValue { listFilterChanged() } } }
+    /// The filter's answer (DL-142 (4)): sessions best first, each with the passage that matched;
+    /// `listSearching` while search's index hasn't answered yet.
+    public var listMatches: [SessionList.Match] = []
+    public var listSearching = false
+    @ObservationIgnored var listGeneration = 0
     public var listSelection: String?
     public var listShowsArchived = true
     /// Target states only: the clock the list's Today and This week are cut by.

@@ -26,8 +26,15 @@ import Foundation
     check(byName["Weekly status draft"]?.project == "★ home" && byName["Fix footer links"]?.project == "~/repos/site" && byName["Rule audit"]?.project == "fraud-rules-review",
           "project column: ★ home, a folder outside Home by its path, else the name")
     check(byName["Teardown research"]?.task == "Exec review prep" && byName["Edge-case matrix"]?.task == nil, "the task when there is one, else nothing")
-    check(l.filtered("synthesis").map(\.session.name) == ["Buyer synthesis"] && l.filtered("home").contains { $0.session.name == "Morning triage" },
-          "the filter reads title, project and task, needs-you sessions too")
+    let hits = [SessionList.SearchMatch(sessionId: "fixture-teardown", snippet: "You: What do the teardowns do at checkout?\n\nClaude: Three of the five teardowns let guests save a card at checkout.")]
+    let fl = l
+    let m = fl.matches("saved cards in scope", search: hits, in: f)
+    check(m.first?.row.session.name == "PRD v2 edits" && m.first?.who == "question", "a needs-you session matches too, by the question it waits on (N1 doesn't hide it)")
+    check(m.contains { $0.row.session.name == "Teardown research" && $0.who == "Claude, 40m" }, "a search hit shows Claude's part when the words are there, who and when first")
+    check(fl.matches("synthesis", search: [], in: f).map(\.row.session.name) == ["Buyer synthesis"] && fl.matches("Exec review", search: [], in: f).first?.row.session.name == "Teardown research",
+          "the word match reads title, project, folder and task names")
+    check(fl.matches("   ", search: hits, in: f).isEmpty, "an empty filter matches nothing (the sections come back)")
+    check(SessionList.words("saved cards in scope") == ["save", "card", "scop"], "the filter's words: three letters or more, lightly stemmed")
     check(l.visibleRows(showsNeedsYou: true, earlierOpen: false, archivedOpen: false).first?.session.name == "Morning triage"
           && l.visibleRows(showsNeedsYou: false, earlierOpen: true, archivedOpen: false).count == listed.count, "arrow keys walk the rows as drawn")
     check(HomeView(rawValue: DuoState().homeView ?? "") == nil, "a new user has no choice yet, so sees List")

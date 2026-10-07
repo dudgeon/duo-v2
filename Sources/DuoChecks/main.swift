@@ -750,6 +750,23 @@ func repoFixture() throws -> Fixture {
         check(sh.first?.title == "Tides and pricing" && sh.first?.project == "fx" && sh.first?.locator == "turn 1", "session found by meaning, titled, attributed, at its turn")
         var pq = SearchQuery(text: "quarterly pricing readout outline"); pq.kinds = ["session"]
         check(try reader.search(pq, embedder: queryEmbedder).first?.locator == "turn 2", "second turn located")
+        do {
+            // All projects' List filter on the real index (DL-142 (4), F-170): search's session hits by
+            // meaning and words, fused with the names Duo holds, one row per session.
+            var dict = try JSONSerialization.jsonObject(with: JSONEncoder().encode(f)) as! [String: Any]
+            dict["projects"] = [["name": "fx", "path": proj.path, "goal": ""]]
+            dict["groups"] = [[String: Any]]()
+            dict["sessions"] = [["name": "Tides and pricing", "project": "fx", "state": "idle", "wait": "2h", "sessionId": "11111111-aaaa"],
+                                ["name": "Moon phase notes", "project": "fx", "state": "idle", "wait": "1d"],
+                                ["name": "Grocery list", "project": "fx", "state": "idle", "wait": "3h", "sessionId": "33333333-cccc"]]
+            let lf = try JSONDecoder().decode(Fixture.self, from: JSONSerialization.data(withJSONObject: dict))
+            var fq = SearchQuery(text: "why the sea rises with the moon"); fq.kinds = ["session"]; fq.passagesPerItem = 1
+            let found = try reader.search(fq, embedder: queryEmbedder).map { SessionList.SearchMatch(sessionId: URL(fileURLWithPath: $0.path).deletingPathExtension().lastPathComponent, snippet: $0.snippet) }
+            let m = SessionList.build(lf, isOpen: { _ in false }).matches("why the sea rises with the moon", search: found, in: lf)
+            check(m.first?.row.session.name == "Tides and pricing" && m.first?.passage != nil, "the List's filter finds a session by what was said in it, with the passage (meaning, not words)")
+            check(m.contains { $0.row.session.name == "Moon phase notes" && $0.passage == nil } && !m.contains { $0.row.session.name == "Grocery list" },
+                  "and by its name, which search doesn't index (F-170); nothing for a session that matches neither")
+        }
         for leak in ["SECRET THOUGHT", "TOOLCALL", "TOOLOUTPUT"] {
             var lq = SearchQuery(text: leak); lq.exactOnly = true
             check(try reader.search(lq, embedder: nil).isEmpty, "\(leak.lowercased()) not indexed (conversation text only)")
