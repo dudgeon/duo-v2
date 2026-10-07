@@ -1,0 +1,319 @@
+<title>Duo Multi-Window Spec</title>
+<style>
+/* Layout: one reading column; a sticky decision tally on wide screens, stacked on phones. Duo's own light tokens. */
+:root {
+  --ground: #F3F4F6; --pane: #FFFFFF; --selected: #E9ECEF; --rule: #C9CDD3; --edge: #8B939C;
+  --text: #1F2328; --text2: #5B636D; --needs: #C2410C; --chosen: #DCE6F7;
+  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  --mono: "SF Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #15171B; --pane: #1D2025; --selected: #2B2F36; --rule: #2F333A; --edge: #6B737D;
+  --text: #E6E8EB; --text2: #9AA1AB; --needs: #F97316; --chosen: #24324A; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #15171B; --pane: #1D2025; --selected: #2B2F36; --rule: #2F333A; --edge: #6B737D;
+  --text: #E6E8EB; --text2: #9AA1AB; --needs: #F97316; --chosen: #24324A; color-scheme: dark }
+body { background: var(--ground); color: var(--text); font: 14px/1.55 var(--ui); padding-inline: 16px; padding-block: 32px 64px }
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 32px; align-items: start }
+@media (max-width: 860px) { .wrap { grid-template-columns: minmax(0, 1fr) } aside { position: static !important } }
+main { display: flex; flex-direction: column; gap: 28px; min-width: 0 }
+h1 { font-size: 26px; line-height: 1.25; margin: 0; text-wrap: balance }
+h2 { font-size: 17px; margin: 0 0 8px; text-wrap: balance }
+h3 { font-size: 15px; margin: 0; text-wrap: balance }
+p { margin: 0 0 10px; max-width: 68ch }
+.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text2) }
+.lede { color: var(--text2); max-width: 68ch }
+section.block { background: var(--pane); border: 1px solid var(--rule); border-radius: 8px; padding: 20px 22px }
+ul { margin: 0; padding-left: 20px } li { margin: 4px 0; max-width: 68ch }
+code { font: 12px var(--mono); background: var(--selected); padding: 1px 5px; border-radius: 4px }
+.tablebox { overflow-x: auto }
+table { border-collapse: collapse; width: 100%; font-size: 13px }
+th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-top: 1px solid var(--rule) }
+th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text2); border-top: 0 }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap }
+.decision { display: flex; flex-direction: column; gap: 12px; padding: 18px 0; border-top: 1px solid var(--rule) }
+.decision:first-of-type { border-top: 0; padding-top: 4px }
+.dhead { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap }
+.dhead .id { font: 600 12px var(--mono); color: var(--text2) }
+.dhead a { font-size: 12px; color: var(--text2) }
+.opts { display: grid; gap: 8px }
+.opt { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; cursor: pointer; background: var(--pane) }
+.opt:hover { border-color: var(--edge) }
+.opt.on { background: var(--chosen); border-color: var(--text) }
+.opt input { margin: 3px 0 0 }
+.opt b { font-weight: 600 }
+.rec { display: inline-block; margin-left: 6px; padding: 0 7px; border: 1px solid var(--edge); border-radius: 9px; font-size: 11px; line-height: 16px; color: var(--text2); vertical-align: 1px }
+.trade { display: block; color: var(--text2); font-size: 13px; margin-top: 2px }
+textarea { width: 100%; box-sizing: border-box; min-height: 44px; font: 13px/1.45 var(--ui); color: var(--text); background: var(--pane); border: 1px solid var(--rule); border-radius: 6px; padding: 7px 9px; resize: vertical }
+textarea:focus-visible, button:focus-visible, .opt:focus-within { outline: 2px solid var(--text); outline-offset: 1px }
+aside { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: flex; flex-direction: column; gap: 12px; background: var(--pane); border: 1px solid var(--rule); border-radius: 8px; padding: 16px }
+.tally { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 8px; font-size: 12.5px }
+.tally .k { font: 600 11.5px var(--mono); color: var(--text2) }
+.tally .v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.tally .m { color: var(--text2) }
+button { font: 13px var(--ui); padding: 5px 12px; border: 1px solid var(--edge); border-radius: 6px; background: var(--pane); color: var(--text); cursor: pointer }
+button.primary { border: 1.5px solid var(--text); font-weight: 600 }
+button:disabled { opacity: .5; cursor: default }
+.status { font-size: 12.5px; color: var(--text2); min-height: 18px }
+.row { display: flex; gap: 8px; flex-wrap: wrap }
+.model { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px }
+.model div { border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px }
+@media (prefers-reduced-motion: no-preference) { .opt { transition: background-color .12s, border-color .12s } }
+</style>
+
+<div class="wrap">
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="eyebrow">Duo v2 · research · 2026-10-07</span>
+    <h1>Multi-window Duo</h1>
+    <p class="lede">The spec for Geoff's direction: independent windows, each optionally pinned to one project and tinted. It covers what changes, the tradeoffs and the size, then the decisions still open. Pick an option on each decision, add a note if you like, and press Send to Claude. The boards are on the <a href="https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1">studies canvas</a>.</p>
+  </header>
+
+  <section class="block">
+    <h2>The model</h2>
+    <div class="model">
+      <div><h3>Independent windows</h3><p class="trade">Every window is a whole Duo: All projects and inside a project, any project. File › New Window ⌥⌘N.</p></div>
+      <div><h3>Pinned to a project</h3><p class="trade">Optional. A pinned window shows one project, has no All projects, and keeps it through relaunch.</p></div>
+      <div><h3>Tinted</h3><p class="trade">Optional. The window's light chrome takes a tint so you can tell windows apart. The console and the needs-you orange never change.</p></div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>What has to change</h2>
+    <p>Duo today is one window. One <code>AppModel</code> holds both the app's data and about 45 properties of that window's state. There is one shared editor, HTML viewer and deck viewer. Each terminal and browser tab is a single view that moves between panes. 24 places look up "the window", 16 of them by its title.</p>
+    <div class="tablebox"><table>
+      <thead><tr><th>Area</th><th>Today</th><th>With independent windows</th></tr></thead>
+      <tbody>
+        <tr><td>State</td><td>One model for everything</td><td>An app model (sessions, projects, hooks, the snapshot, settings) plus a window model per window (altitude, project, tabs, panes, search, peek, pin, tint, undo)</td></tr>
+        <tr><td>Terminals</td><td>One view per session, moved between panes</td><td>The process is the session's and is shared. Its terminal view is live in one window; other windows show the session in chat mode (decision 6). Chat already types through the session's view, wherever that view is drawn.</td></tr>
+        <tr><td>Documents</td><td>One editor for the app</td><td>An editor per window. A file being edited in one window is read-only elsewhere, with Edit Here (decision 7).</td></tr>
+        <tr><td>Browser tabs</td><td>One web view per tab</td><td>Live in one window, stand-in elsewhere with Show Here. Screenshots need the tab on screen in some window.</td></tr>
+        <tr><td>The visible session</td><td>One value</td><td>One per window. It counts as seen, and isn't notified, if it's visible in any window. Keyboard and search go to the key window's.</td></tr>
+        <tr><td>duo2</td><td>Acts on "the project on screen"</td><td>Acts on the window that holds the caller's session, then the key window. New: <code>duo2 window list|new|focus|close|pin|tint</code> and <code>--window</code> on on-screen verbs.</td></tr>
+        <tr><td>Needs-you</td><td>A chip counts other projects</td><td>Each window's chip counts sessions not shown in that window. The Dock badge is unchanged. The Window menu marks windows (decisions 8 and 9).</td></tr>
+        <tr><td>Sheets</td><td>One queue, drawn in the window</td><td>A question about a project goes to a window showing it, else the key window. Never in two windows.</td></tr>
+        <tr><td>Menus</td><td>Capture the one model</td><td>Routed to the key window's model.</td></tr>
+        <tr><td>Motion</td><td>A global pane-slide counter</td><td>Scoped per window, or a slide in one window freezes terminal resizing in all of them.</td></tr>
+        <tr><td>Restore</td><td>One project on screen, frame by autosave</td><td>A window list: altitude, project, pin, tint, panes and frame for each.</td></tr>
+        <tr><td>Tests</td><td>One window per capture</td><td>The harness opens windows (<code>window-new:</code>) and captures one by number. check-ui gets multi-window states.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="block">
+    <h2>Tradeoffs and risks</h2>
+    <ul>
+      <li><b>This is the model legacy Duo took three releases to land</b>, because anything could appear anywhere. The rules below give every live view one home: a terminal, an editor, a web view. That removes most of the cost, but not all of it.</li>
+      <li><b>A document edited in two windows</b> is the costliest part if both must be editable. Read-only plus Edit Here (decision 7) keeps one writer and needs no merging.</li>
+      <li><b>Typing at once.</b> The terminal in window 1 and chat's composer in window 2 both write to one prompt. Chat already mirrors the prompt line; the build must test both at once.</li>
+      <li><b>Tints and the one accent.</b> The needs-you orange falls to about 4.2:1 on a full tint, so the chip gets a white fill on tinted toolbars. No tint may be orange or red. Tints are new tokens.</li>
+      <li><b>Pinned windows and jumps.</b> Search, the peek, notifications and duo2 open have to respect a pin (decision 3), or the pin breaks the first time you search.</li>
+      <li><b>Splitting the model</b> touches 300 or more references. It is done in one slice with no visible change, proven by DuoChecks and every check-ui state unchanged.</li>
+      <li><b>Scope.</b> The build plan's §3a lists multi-window as deferred past v1. Building it now needs a logged reason.</li>
+    </ul>
+  </section>
+
+  <section class="block">
+    <h2>Size: build slices</h2>
+    <div class="tablebox"><table>
+      <thead><tr><th>#</th><th>Slice</th><th>Shows</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>Split the model: window model, per-window viewers, identity routing, sheets, motion and undo per window, menus by key window</td><td>Nothing, by design</td></tr>
+        <tr><td class="n">2</td><td>Windows: New Window ⌥⌘N, Open in New Window, terminal-in-one / chat-elsewhere, read-only editor, browser stand-ins, restore</td><td>Boards 1, 6, 7</td></tr>
+        <tr><td class="n">3</td><td>Pin and tint: the Pin button, the pinned-jump rule, tint tokens, View and Window menu items</td><td>Boards 2 to 5, 9</td></tr>
+        <tr><td class="n">4</td><td>Needs-you per window, Home in every window, notifications, <code>duo2 window</code> verbs, harness and check-ui states</td><td>Boards 8, 10</td></tr>
+        <tr><td class="n">later</td><td>Two-way document sync; dragging a tab out into a window</td><td>—</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="block" id="decisions">
+    <h2>Decisions</h2>
+    <p class="lede">Each option names the board it's drawn on. The recommendation is marked; nothing is chosen until you choose it.</p>
+    <div id="dlist"></div>
+  </section>
+</main>
+
+<aside aria-label="Your decisions">
+  <span class="eyebrow">Your picks</span>
+  <div class="tally" id="tally"></div>
+  <div class="row">
+    <button id="takeRec" type="button">Choose the rest as recommended</button>
+  </div>
+  <div class="row" id="sendbox">
+    <button id="send" class="primary" type="button">Send to Claude</button>
+  </div>
+  <div class="status" id="status" role="status">Picks save as you make them.</div>
+</aside>
+</div>
+
+<script>
+const BOARD = "https://claude.ai/artifact/46yWPpDZn16Qtfrfhbuaw1";
+const D = [
+  { id: "D1", board: 1, q: "How a new window opens, and what it shows", opts: [
+    ["A", "File › New Window (⌥⌘N) opens a fresh window at All projects; Project › Open in New Window opens that project pinned", "Two clear ways in, one for each case. Recommended.", true],
+    ["B", "A, plus dragging a project tile out of the window", "Quick once known, but hidden. Polish on top of A."],
+    ["C", "New Window copies the current window", "The Safari and Finder habit, but everything starts shown twice."]]},
+  { id: "D2", board: 2, q: "How a window is pinned, and how you can tell", opts: [
+    ["A", "A Pin button after the project's name: Pin in text2, Pinned with a filled glyph; also View › Pin Window", "Visible and one click. Recommended.", true],
+    ["B", "Pinned only when opened that way; Window › Unpin", "Fewer controls, but you can't pin the window you're in."],
+    ["C", "Window menu and title only", "Nothing new in the toolbar, but nothing explains why ⌘↑ won't go up."]]},
+  { id: "D3", board: 3, q: "Asking for another project from a pinned window", opts: [
+    ["A", "It opens in the most recent window that isn't pinned (a new one if all are)", "A pin never breaks under you; works for duo2 too. Recommended.", true],
+    ["B", "A sheet asks where", "Clear, but a question on every jump, and scripts can't answer it."],
+    ["C", "It opens here and the window unpins", "Lands where you are, but pins break constantly."]]},
+  { id: "D4", board: 4, q: "How much of the window a tint covers", opts: [
+    ["A", "The toolbar only", "Quiet, but easy to miss."],
+    ["B", "The whole light chrome: toolbar and grounds full, panes at half; console untouched", "What you asked for; tells windows apart at a glance. Recommended.", true],
+    ["C", "A coloured strip on top and a swatch", "Leaves the look alone; colour only, at the edge."]]},
+  { id: "D5", board: 5, q: "What a tint belongs to", opts: [
+    ["A", "The window: View › Window Tint ▸, remembered with the window", "Matches 'a tint for the window'. Recommended.", true],
+    ["B", "The project, in PROJECT.md (tint: sage)", "A project looks the same everywhere, but a free window changes colour as you move."],
+    ["C", "Assigned automatically to pinned windows", "Nothing to choose; the colours mean nothing you chose."]]},
+  { id: "D6", board: 6, q: "A session open in two windows", opts: [
+    ["A", "Terminal live in one; chat mode in the others, with Show Terminal Here", "Never blank, and you can answer from any window. Recommended.", true],
+    ["B", "A stand-in with Show Here", "Simple, but the pane is empty until you click."],
+    ["C", "The window that has it comes forward", "Never two copies, but you can't show the project twice."]]},
+  { id: "D7", board: 7, q: "A document open in two windows", opts: [
+    ["A", "Read-only where it isn't being edited, live as you type, with Edit Here", "One writer, so no merging. Recommended.", true],
+    ["B", "Editable in both, kept in step", "What you'd expect; a sync layer of its own, the costliest part."],
+    ["C", "The window that has it comes forward", "Simple, but no document on a second screen."]]},
+  { id: "D8", board: 8, q: "Needs-you across windows", opts: [
+    ["A", "Each window's chip counts sessions not shown in it; ⌘↩ goes to a window showing the session", "The chip never nags about what you can see. Recommended.", true],
+    ["B", "Every chip counts everything", "Matches the Dock badge; counts what's in front of you."],
+    ["C", "Pinned windows show no chip", "Focused, but easy to miss a session."]]},
+  { id: "D9", board: 9, q: "The Window menu", opts: [
+    ["A", "The system's items, then Duo's windows with tint swatch, pin and 'needs you'", "Native, and shows which window waits on you. Recommended.", true],
+    ["B", "A, plus New Window, Unpin, Window Tint and Merge into Another Window", "All window actions in one place; repeats View."],
+    ["C", "The system's default", "Nothing to build; shows nothing of Duo's."]]},
+  { id: "D10", board: 10, q: "What happens to Home", opts: [
+    ["A", "Every free window's All projects has Home: terminal live in one, chat in the others", "The same rule as D6. Recommended.", true],
+    ["B", "A stand-in with Show Here", "Honest, but the pane you talk to is empty in all windows but one."],
+    ["C", "Home only in the first window", "Clear, but makes window 1 special."]]},
+  { id: "D11", board: null, q: "The four proposed tints (Sky, Sage, Lilac, Sand) and None", opts: [
+    ["A", "Approve them as drawn; add them as tokens", "Each keeps text2 above 4.7:1. Recommended.", true],
+    ["B", "Draw more choices (six to eight)", "More windows told apart; harder to keep distinct and legible."],
+    ["C", "Redraw them", "Say how in the note."]]},
+  { id: "D12", board: null, q: "When to build it", opts: [
+    ["A", "Slice 1 now (split the model, no visible change), the rest after the v1 walk", "Pays off the identity rule now; the visible slices wait. Recommended.", true],
+    ["B", "All four slices now, pulling multi-window into v1", "Soonest, and needs a logged reason (build plan §3a)."],
+    ["C", "Nothing until after v1", "No risk to v1; the model split waits too."]]}
+];
+const picks = {};
+let db = null;
+const $ = (s) => document.querySelector(s);
+const status = (t) => { $("#status").textContent = t; };
+
+function render() {
+  const host = $("#dlist");
+  host.textContent = "";
+  for (const d of D) {
+    const p = picks[d.id] || {};
+    const card = document.createElement("div");
+    card.className = "decision";
+    card.id = d.id;
+    const head = document.createElement("div");
+    head.className = "dhead";
+    const id = document.createElement("span"); id.className = "id"; id.textContent = d.id;
+    const h = document.createElement("h3"); h.textContent = d.q;
+    head.append(id, h);
+    if (d.board) { const a = document.createElement("a"); a.href = BOARD; a.textContent = "board " + d.board; head.append(a); }
+    const opts = document.createElement("div"); opts.className = "opts"; opts.setAttribute("role", "radiogroup"); opts.setAttribute("aria-label", d.q);
+    for (const [key, label, trade, rec] of d.opts) {
+      const lab = document.createElement("label");
+      lab.className = "opt" + (p.option === key ? " on" : "");
+      const inp = document.createElement("input");
+      inp.type = "radio"; inp.name = "r-" + d.id; inp.id = "r-" + d.id + "-" + key; inp.checked = p.option === key;
+      inp.addEventListener("change", () => save(d.id, { option: key }));
+      const txt = document.createElement("span");
+      const b = document.createElement("b"); b.textContent = key + " · ";
+      txt.append(b, document.createTextNode(label));
+      if (rec) { const r = document.createElement("span"); r.className = "rec"; r.textContent = "recommended"; txt.append(r); }
+      const t = document.createElement("span"); t.className = "trade"; t.textContent = trade;
+      txt.append(t);
+      lab.append(inp, txt);
+      opts.append(lab);
+    }
+    const note = document.createElement("textarea");
+    note.id = "n-" + d.id; note.placeholder = "Note (optional)"; note.maxLength = 300; note.value = p.note || "";
+    note.setAttribute("aria-label", d.id + " note");
+    let timer = null;
+    note.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(() => save(d.id, { note: note.value }), 600); });
+    card.append(head, opts, note);
+    host.append(card);
+  }
+  tally();
+}
+
+function tally() {
+  const t = $("#tally"); t.textContent = "";
+  let n = 0;
+  for (const d of D) {
+    const p = picks[d.id] || {};
+    if (p.option) n++;
+    const k = document.createElement("span"); k.className = "k"; k.textContent = d.id;
+    const v = document.createElement("span"); v.className = "v"; v.textContent = d.q;
+    const m = document.createElement("span"); m.className = "m"; m.textContent = p.option || "—";
+    t.append(k, v, m);
+  }
+  $("#send").textContent = n === D.length ? "Send to Claude" : "Send to Claude (" + n + " of " + D.length + ")";
+}
+
+async function save(id, patch) {
+  picks[id] = { ...(picks[id] || {}), ...patch, at: new Date().toISOString() };
+  if ("option" in patch) render(); else tally();
+  if (!db) { status("Not saved: this view can't reach the store. Send to Claude still works."); return; }
+  try { await db.doc("picks/" + id).set(picks[id]); status("Saved."); }
+  catch (e) { status("Couldn't save (" + (e && e.code || "error") + "). Try again."); }
+}
+
+function summary() {
+  const lines = ["Multi-window decisions (spec page):"];
+  for (const d of D) {
+    const p = picks[d.id] || {};
+    const o = d.opts.find((x) => x[0] === p.option);
+    lines.push(d.id + " " + d.q + ": " + (o ? p.option + " (" + o[1] + ")" : "no pick"));
+    if (p.note) lines.push("  note: " + p.note);
+  }
+  let s = lines.join("\n");
+  while (new TextEncoder().encode(s).length > 4000) s = s.slice(0, -200);
+  return s;
+}
+
+$("#takeRec").addEventListener("click", async () => {
+  for (const d of D) {
+    if ((picks[d.id] || {}).option) continue;
+    const r = d.opts.find((x) => x[3]);
+    if (r) await save(d.id, { option: r[0] });
+  }
+});
+
+$("#send").addEventListener("click", async () => {
+  const text = summary();
+  if (db) { try { await db.doc("submissions/latest").set({ text, at: new Date().toISOString() }); } catch (e) {} }
+  const comments = await claude.use("comments");
+  if (!comments) { status("Saved. Tell the session \"decisions sent\" and it will read them."); return; }
+  try {
+    const can = await comments.canSendToClaude();
+    if (can !== "available") { status("Saved. Sending isn't available here (" + can + "); tell the session \"decisions sent\"."); return; }
+    $("#send").disabled = true;
+    const anchor = await comments.anchorFor($("#decisions"));
+    await comments.sendToClaude({ anchor, text });
+    status("Sent to Claude. The reply will appear in the comment thread.");
+  } catch (e) {
+    status("Saved, but sending failed (" + (e && e.code || "error") + "). Tell the session \"decisions sent\".");
+  } finally { $("#send").disabled = false; }
+});
+
+render();
+(async () => {
+  if (!window.claude || !claude.use) return;
+  db = await claude.use("db");
+  if (!db) return;
+  db.collection("picks").onSnapshot((snap) => {
+    for (const doc of snap.docs) { const v = doc.data(); if (v) picks[doc.id] = v; }
+    const focused = document.activeElement && document.activeElement.tagName === "TEXTAREA";
+    if (!focused) render(); else tally();
+  }, () => status("Live updates stopped; reload to see the latest picks."));
+})();
+</script>

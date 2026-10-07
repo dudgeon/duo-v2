@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>How a window is pinned</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1720px; height: 700px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 24px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">DECISION 2</span>
+<span style="font-size: 22px; line-height: 28px; font-weight: 600">How a window is pinned to a project, and how you can tell</span>
+<span style="color: #5B636D">A pinned window shows one project. It has no All projects altitude, and it keeps the project through relaunches.</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px">
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="display: flex; gap: 8px; align-items: center"><span style="font-weight: 600">A · A Pin button beside the project's name</span><span style="padding: 0 7px; border: 1px solid #8B939C; border-radius: 9px; font-size: 11px; line-height: 16px; background: #FFFFFF">recommended</span></span>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="width: 312px; height: 195px"><div style="transform: scale(0.6); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="refunds" pin="off" s1="Refund rules" s2="Policy diff" s3="Ops notes" doc="rules.md" hint-size="520px,325px"></dc-import></div></div>
+<div style="width: 312px; height: 195px"><div style="transform: scale(0.6); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="refunds" pin="on" s1="Refund rules" s2="Policy diff" s3="Ops notes" doc="rules.md" hint-size="520px,325px"></dc-import></div></div>
+</div>
+<span style="color: #5B636D; white-space: normal">Not pinned: a quiet Pin in text2 after the project's name. Pinned: the glyph fills, it reads Pinned, and All projects leaves the breadcrumb. Click to toggle; also View › Pin Window to Project and duo2 window pin.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">B · Pinned only when it opens</span>
+<div style="width: 494px; height: 309px"><div style="transform: scale(0.95); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="refunds" pin="on" s1="Refund rules" s2="Policy diff" s3="Ops notes" doc="rules.md" hint-size="520px,325px"></dc-import></div></div>
+<span style="color: #5B636D; white-space: normal">Open in New Window makes a pinned window; New Window makes a free one. The mark shows only when pinned, and Window › Unpin frees it. Fewer controls, but you can't pin a window you're already in.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">C · Only in the Window menu and the title</span>
+<div style="width: 494px; height: 309px"><div style="transform: scale(0.95); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="refunds" s1="Refund rules" s2="Policy diff" s3="Ops notes" doc="rules.md" hint-size="520px,325px"></dc-import></div></div>
+<span style="color: #5B636D; white-space: normal">Window › Pin to refunds, and the window's title reads "refunds (pinned)". Nothing in the toolbar, so nothing to learn, but nothing tells you why ⌘↑ won't go up.</span>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1720,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
