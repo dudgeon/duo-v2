@@ -76,6 +76,7 @@ Status: **open** (needs Geoff or a spike) · **defaulted** (Claude chose a defau
 | Q-78 | **Apply archive, unarchive, Mark Complete and + New task at once?** Today they show on the next 2 s snapshot. Risk: if the snapshot disagrees (a failed write, an outside change), the row goes back, a flicker. | Motion build (DL-130) | closed | **Yes** (Geoff, DL-130). |
 | Q-79 | **List a folder the moment it opens?** Today the chevron turns and the children arrive on the next snapshot. | Motion build (DL-130) | closed | **Yes** (Geoff, DL-130). |
 | Q-80 | **Hold the session list's order while the pointer is in it**, as the map does? Glyphs and counts still update. | Motion build (DL-130) | closed | **Yes** (Geoff, DL-130). |
+| Q-81 | **Dark, tinted and clear variants of the app icon?** macOS 26 and later can show an icon dark, tinted or clear, but only from an Icon Composer `.icon` compiled by `actool`, which comes with Xcode (DL-30). The `.icns` gives one look everywhere: macOS adds its rim light, and in dark and tinted modes the system adjusts the icon itself. | App icon (DL-131, F-142) | open | Keep the `.icns` until there's an Xcode-free way to compile `.icon`, or until Geoff wants the variants enough to add `actool` to the release path only. |
 
 ## Concerns
 
