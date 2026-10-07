@@ -2431,3 +2431,18 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - **Check**: `scripts/check-composer-focus.sh` runs every chat board twice, as is and with `home-chat`, plus `list-1440`. Each run asks the harness's new `focus-check`, which fails if any composer in the window belongs to a chat that isn't on screen (the console's tab under a project, Home's at All projects). It failed on the unfixed build (`Morning triage (has the keyboard)`) and passes on the fix, 0 of 67 failing.
 - **Every chat board diffed against main** (a detached main worktree, built and captured with check-chat in the same session): all 33 crops pixel-identical. In this environment the capture windows weren't key (`ui-state`: `key=false`, `active=false`), so neither build drew a caret, and the plain boards' caret difference itself didn't reproduce. In both builds those two boards had one composer, the visible one, holding the keyboard.
 - **Not changed: where a short chat sits.** Home's short chat sits at the top of its pane, as chat mode puts every short conversation (bottom only while a card is up, F-136); the home boards draw it at the bottom. That's Q-110.
+
+
+## F-191 · Obsidian's Bases Kanban is public (task board study, 2026-10-07)
+
+- Obsidian **1.14.4, public 2026-10-05** (desktop and mobile), has the Bases Kanban layout added in 1.14.0 early access: a `.base` view `type: kanban`, columns from `groupBy` (required), `groupOrder` fixing the order *and visibility* of columns, and a drag that writes the grouped property into the note. Sources: obsidian.md/changelog.xml, obsidian.md/help/bases/views/kanban.
+- The format doc's Q1 default (decisions.md "Not asked": "the early-access Kanban is a bonus, not a promise") predates it. Duo's flat task notes (DL-6) group by `status` with nothing added.
+
+## F-192 · The Kanban plugin can't hold Duo's tasks (task board study, 2026-10-07)
+
+- The plugin (now `community-archive/obsidian-kanban`; last release 2.0.51, 2024-05-31; its author asks for maintainers in `MAINTAINERS.md`) keeps a whole board in one note: `kanban-plugin: board` frontmatter, `##` lanes, `- [ ]` cards, an archive after `***`, and a `%% kanban:settings %%` JSON footer.
+- `boardToMd()` rewrites the whole note on every change (prose between lanes and YAML comments are lost), and it can't read one-note-per-task (issues #467, #405). So Duo can't keep a Kanban-plugin note in step surgically; the study recommends never writing one (`docs/research/task-board.md` §2 (b)).
+
+## F-193 · Where kanban tools keep card order (task board study, 2026-10-07)
+
+- Bases core stores none (the view's sort decides); TaskNotes writes a LexoRank `tasknotes_manual_order` into each note; the Kanban Bases View plugin keeps file paths in the `.base`; the Kanban plugin uses line order in its note; Tasks has none. A manual order in Duo would need a key in every task note (Q-120).
