@@ -460,6 +460,7 @@ public final class AppModel {
             }
             if consoleTab == t.key { consoleTab = b.sessionId }
             if homeTab == t.key { homeTab = b.sessionId }
+            chats.rekey(t.key, to: b.sessionId)
             terminals.rekey(t.key, to: b.sessionId)
         }
     }

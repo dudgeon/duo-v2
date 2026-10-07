@@ -14,7 +14,7 @@ struct ChatComposerArea: View {
     var body: some View {
         let s = chat.screen
         VStack(alignment: .leading, spacing: 6) {
-            if chat.ui.composer.hasPrefix("/"), !chat.ui.composer.contains(" "), !s.commands.isEmpty {
+            if chat.commandMenuShown {
                 ChatCommandMenu(chat: chat, commands: s.commands)
             } else if let m = chat.ui.mention {
                 ChatMentionMenu(chat: chat, query: m.query, matches: m.matches)
@@ -83,10 +83,13 @@ struct ChatCommandMenu: View {
 
     var body: some View {
         let terminal = chat.signatures.terminalCommands
+        // The board's column is 122; a longer name (a plugin's skill) widens it rather than wrapping (stand-in, Q-106).
+        let longest = CGFloat(commands.prefix(8).map(\.name.count).max() ?? 0)
+        let column = max(122, ceil(longest * DuoTextStyle.mono.spec.size * 0.6) + 12)
         VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(commands.prefix(8).enumerated()), id: \.offset) { _, c in
                 HStack(spacing: 0) {
-                    Text(c.name).duoText(.mono).foregroundStyle(DuoColor.text).frame(width: 122, alignment: .leading)
+                    Text(c.name).duoText(.mono).foregroundStyle(DuoColor.text).lineLimit(1).frame(width: column, alignment: .leading)
                     Text(terminal.contains(c.name) ? "Opens in the terminal" : c.description).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
                     Spacer(minLength: 8)
                     if terminal.contains(c.name) { TerminalMark().stroke(DuoColor.text, style: StrokeStyle(lineWidth: 1.3, lineCap: .round, lineJoin: .round)).frame(width: 13, height: 10) }
@@ -241,7 +244,8 @@ struct ChatComposerField: NSViewRepresentable {
         }
 
         func send() {
-            let text = chat.ui.composer
+            // A part-typed command runs the one the menu has selected, as Return does in the TUI.
+            let text = chat.commandMenuShown ? chat.selectedCommand ?? chat.ui.composer : chat.ui.composer
             Task { _ = await chat.send(text) }
         }
     }
@@ -350,6 +354,18 @@ final class ComposerTextView: NSTextView {
             default: break
             }
         }
+        // The `/` menu is Claude Code's own: ↑↓ move its selection and tab completes, as in the
+        // TUI; ⏎ runs the selected command (F-173).
+        if let c = coordinator?.chat, c.commandMenuShown, e.modifierFlags.intersection([.shift, .command, .option, .control]).isEmpty {
+            switch e.keyCode {
+            case 126: Task { await c.moveCommandMenu(.up) }; return
+            case 125: Task { await c.moveCommandMenu(.down) }; return
+            case 48:
+                if let n = c.selectedCommand { c.ui.composer = n + " "; Task { await c.mirrorSlash(n + " ") } }
+                return
+            default: break
+            }
+        }
         switch e.keyCode {
         case 36, 76:   // Return: send; ⇧Return: a new line
             if e.modifierFlags.contains(.shift) { insertNewlineIgnoringFieldEditor(nil) } else { coordinator?.send() }
@@ -427,6 +443,20 @@ extension ChatSession {
             ui.composer = real
             ui.composerBasis = real
         }
+    }
+
+    /// The composer holds a part-typed command and Claude Code's `/` menu is up under it.
+    public var commandMenuShown: Bool {
+        ui.composer.hasPrefix("/") && !ui.composer.contains(" ") && !ui.composer.contains("\n") && !screen.commands.isEmpty
+    }
+
+    /// The command the TUI's menu has selected.
+    public var selectedCommand: String? { screen.commands.first { $0.selected }?.name }
+
+    /// ↑ or ↓ in the composer moves the TUI's own menu selection.
+    public func moveCommandMenu(_ k: ChatKey) async {
+        guard commandMenuShown, !sending, screen.kind == .idle else { return }
+        _ = await press(k)
     }
 
     /// `/` in the composer: the same prefix in Claude's prompt, so its menu shows its own commands.

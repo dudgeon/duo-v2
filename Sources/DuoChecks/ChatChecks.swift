@@ -114,6 +114,85 @@ func spikeScreen(_ name: String) -> String {
         check(p.mode(for: "a") == .chat && p.mode(for: "new") == .terminal, "each session keeps its own")
     }
 
+    print("chat mode: slash commands from the composer (2.1.292, F-173, F-174)")
+    do {
+        let dir = "slash-2.1.292/"
+        let menu = ChatScreenReader.read(spikeScreen(dir + "menu-he.txt"))
+        check(menu.kind == .idle && menu.input == "/he" && menu.commands.map(\.name) == ["/help", "/theme", "/doctor", "/rewind"],
+              "the TUI's / menu under a part-typed command, its own rows (\(menu.commands.map(\.name)))")
+        check(menu.commands.first?.selected == true && menu.commands.dropFirst().allSatisfy { !$0.selected }, "its selected row")
+        check(ChatScreenReader.read(spikeScreen(dir + "menu-he-down.txt")).commands.first { $0.selected }?.name == "/theme", "↓ moves the TUI's selection")
+        let tui = FakeTUI(spikeScreen(dir + "menu-he.txt"))
+        let c = ChatSession(key: "slash", mode: .chat)
+        c.attach(tui)
+        c.ui.composer = "/he"
+        check(c.commandMenuShown && c.selectedCommand == "/help", "a part-typed /he: Return runs /help, the selected row, as the TUI does")
+        c.ui.composer = "/help me"
+        check(!c.commandMenuShown, "a command with arguments: no menu, the text is sent as typed")
+        c.ui.composer = "/he"
+        Task { await c.moveCommandMenu(.down) }
+        spin(0.3)
+        check(tui.keys == [ChatKey.down.bytes], "↓ in the composer goes to the TUI's menu")
+        for f in ["help", "usage", "model", "config", "permissions", "resume", "skills", "btw", "sandbox", "effort"] {
+            check(ChatScreenReader.read(spikeScreen(dir + f + ".txt")).kind == .unknown, "/\(f)'s screen reads as unknown: the terminal")
+        }
+        let plan = ChatScreenReader.read(spikeScreen(dir + "plan-output.txt"))
+        check(plan.kind == .idle && plan.mode == .plan, "/plan prints a line and stays at the prompt, in plan mode")
+        check(ChatScreenReader.read(spikeScreen(dir + "rename-output.txt")).kind == .idle, "/rename's name in the input box's rule still reads")
+        let marked = ChatSignatures.v2_1_291.terminalCommands
+        check(["/help", "/model", "/usage", "/effort", "/btw", "/sandbox"].allSatisfy(marked.contains) && !["/doctor", "/agents", "/mcp", "/context", "/plan"].contains(where: marked.contains),
+              "the menu marks what opens in the terminal on 2.1.292")
+
+        // A command that opens a screen while its keys are still going: judged once they've gone.
+        let idleText = spikeScreen("tour-2.1.291/01-markdown.txt")
+        let t2 = FakeTUI(idleText)
+        let s = ChatSession(key: "slash2", mode: .chat)
+        s.attach(t2)
+        s.sending = true
+        t2.show(spikeScreen(dir + "help.txt")); spin(0.7)
+        check(s.showsChat, "while keys are going, an unknown screen waits")
+        s.sending = false
+        spin(0.7)
+        check(!s.showsChat && s.fallback == .unknownScreen, "once sent, /help's screen (which never redraws) shows the terminal")
+        t2.show(idleText); spin(0.15)
+        check(s.showsChat, "Esc closes it: chat comes back")
+
+        // The transcript's records of a command.
+        let log = ChatLog()
+        log.sent("/rename notes", time: Date(), queued: false)
+        // 2.1.292 records /rename as `system` / `local_command`; others as your message.
+        ChatIngest.record(["type": "system", "subtype": "local_command", "content": "<command-name>/rename</command-name>\n            <command-message>rename</command-message>\n            <command-args>notes</command-args>"], into: log)
+        ChatIngest.record(["type": "system", "subtype": "local_command", "content": "<local-command-stdout>Session renamed to: notes</local-command-stdout>"], into: log)
+        ChatIngest.record(["type": "user", "message": ["content": "<local-command-caveat>The command below was run directly in Claude Code…</local-command-caveat>"]], into: log)
+        ChatIngest.record(["type": "user", "message": ["content": "<local-command-stdout>(no content)</local-command-stdout>"]], into: log)
+        ChatIngest.record(["type": "user", "message": ["content": "<command-name>/plan</command-name>\n<command-args></command-args>"]], into: log)
+        ChatIngest.record(["type": "user", "message": ["content": "<local-command-stdout>Enabled plan mode</local-command-stdout>"]], into: log)
+        func shown(_ l: ChatLog) -> [String] {
+            l.items.compactMap { i -> String? in
+                switch i { case .you(let y): "you: \(y.text)"; case .note(let n): "note: \(n.text)"; default: nil }
+            }
+        }
+        check(shown(log) == ["you: /rename notes", "note: Session renamed to: notes", "you: /plan", "note: Enabled plan mode"], "the sent command is matched, not doubled; its output a quiet line (\(shown(log)))")
+        let replay = ChatLog()
+        ChatIngest.record(["type": "user", "message": ["content": "<command-message>init is analyzing your codebase…</command-message>\n<command-name>/init</command-name>"]], into: replay)
+        ChatIngest.record(["type": "user", "isMeta": true, "message": ["content": "Please analyze this codebase…"]], into: replay)
+        check(shown(replay) == ["you: /init"], "a replayed /init shows the command above Claude's reply, not the skill's prompt (\(shown(replay)))")
+
+        // /clear, /branch, /resume: a new id in the same process.
+        let store = ChatStore(persist: false)
+        store.prefs.set(.terminal, for: "other")   // the mode used last is the terminal
+        let old = store.session("before")
+        old.mode = .chat
+        old.launchId = "before"
+        store.rekey("before", to: "after")
+        check(store.existing("before") == nil && store.session("after").mode == .chat, "the new session keeps chat, whatever was used last")
+        store.prefs.modes["quiet"] = .chat
+        store.rekey("quiet", to: "quiet2")
+        check(store.prefs.mode(for: "quiet2") == .chat, "a session whose chat was never opened keeps its mode too")
+        check(TerminalCommand.newClaude(sessionID: "launch", prompt: nil).launchId == "launch" && TerminalCommand.shell.launchId == nil,
+              "the hand-over is named by the id the process started with: duo2 compose knows no other")
+    }
+
     print("chat mode: Markdown (handoff `text`)")
     do {
         let md = "## Refund flows\n\nBoth flows are in `docs/flows.md:42`.\nA second line.\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\n1. One\n2. Two\n   - nested\n\n```swift\nlet x = 1\n```\n\n> quoted\n\n---\n- **P2**, ops lead"

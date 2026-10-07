@@ -453,6 +453,8 @@ public enum FixtureHarness {
                                         context: nil, characters: "", charactersIgnoringModifiers: "", isARepeat: false, keyCode: code) {
                 v.keyDown(with: e)
             }
+        case "chat-clear":   // the composer emptied, as select-all and delete would
+            if let c = model.visibleSessionId.flatMap(model.chat(for:)) { c.ui.composer = "" }
         case "chat":   // chat:on|off
             if let k = model.visibleSessionId { model.setChatMode(parts.count > 1 && parts[1] == "off" ? .terminal : .chat, for: k) }
         case "chat-send":   // chat-send:<text>: the composer's Return
@@ -478,7 +480,8 @@ public enum FixtureHarness {
             }
         case "chat-state":   // what the chat shows, for a scripted run's log
             if let k = model.visibleSessionId, let c = model.chat(for: k) {
-                var lines = ["chat-state: \(k.prefix(8)) mode=\(c.mode.rawValue) showing=\(c.showsChat ? "chat" : "terminal") screen=\(c.screen.kind.rawValue) card=\(c.cardUp) fallback=\(c.fallback?.message ?? "-") version=\(c.cliVersion ?? "-") hooks=\(c.log.hooksSeen) streams=\(c.log.streams) compose=\(c.usesExternalEditor)"]
+                var lines = ["chat-state: \(k.prefix(8)) mode=\(c.mode.rawValue) showing=\(c.showsChat ? "chat" : "terminal") screen=\(c.screen.kind.rawValue) card=\(c.cardUp) fallback=\(c.fallback?.message ?? "-") version=\(c.cliVersion ?? "-") hooks=\(c.log.hooksSeen) streams=\(c.log.streams) compose=\(c.usesExternalEditor)",
+                             "  composer=\(c.ui.composer.debugDescription) input=\((c.screen.input ?? "-").debugDescription) menu=\(c.screen.commands.map { ($0.selected ? "❯" : "") + $0.name })"]
                 for item in c.log.items {
                     switch item {
                     case .you(let y): lines.append("  you: \(y.text.prefix(80))\(y.queued ? " (queued)" : "")")

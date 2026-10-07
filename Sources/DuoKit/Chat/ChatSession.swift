@@ -149,9 +149,11 @@ public final class ChatSession {
     /// The feed is scrolled to its end, so new items keep it there (F-160).
     @ObservationIgnored public var followsBottom = true
     /// Keys are on their way: the screen is expected to change, nothing falls back meanwhile.
-    public var sending = false
+    /// Once they've gone, the screen is judged again: a command that opened a screen of its own
+    /// (`/help`, `/model`) may not draw again, so nothing else would (F-173).
+    public var sending = false { didSet { if oldValue, !sending, !composing { evaluateFallback() } } }
     /// Claude's external editor is open for the composer (F-104): a blank screen is expected.
-    public var composing = false
+    public var composing = false { didSet { if oldValue, !composing, !sending { evaluateFallback() } } }
     /// The request Claude is waiting on, from PermissionRequest; cleared by the tool running or Stop.
     @ObservationIgnored public var pendingRequest: ChatRequest?
     /// How the last declined question should read (set when the card declines it).
@@ -161,6 +163,10 @@ public final class ChatSession {
     @ObservationIgnored var terminal: ChatTerminal?
     /// Where `duo2 compose` finds the composer's text; nil: paste instead (no helper in this build).
     @ObservationIgnored public var composeDir: URL?
+    /// The id the process was started with (`DUO_SESSION_ID`), which names the hand-over file:
+    /// `duo2 compose` knows no other, and keeps it after `/clear`, `/branch` or `/resume` (F-174).
+    @ObservationIgnored public var launchId: String?
+    var composeKey: String { launchId ?? key }
     /// The hook and transcript reader, for a live session.
     @ObservationIgnored var feed: ChatFeed?
     /// Fixture mode: the screen the stand-in terminal shows.
@@ -358,9 +364,19 @@ public final class ChatStore {
     }
 
     /// The process now hosts another session (`/clear`, `/resume`, F-29): the chat follows it.
+    /// The new session keeps the mode it was in (F-174); its chat starts empty, as the TUI does.
     public func rekey(_ old: String, to new: String) {
-        guard old != new, let s = sessions.removeValue(forKey: old) else { return }
+        guard old != new else { return }
+        if let m = sessions[old]?.mode ?? prefs.modes[old] {
+            prefs.modes[new] = m
+            if persist { prefs.save() }
+        }
+        guard let s = sessions.removeValue(forKey: old) else { return }
+        s.feed?.stop()
         let moved = ChatSession(key: new, mode: s.mode)
+        moved.launchId = s.launchId ?? old
+        moved.composeDir = s.composeDir
+        if let v = s.cliVersion { moved.setVersion(v) }
         if let t = s.terminal { moved.attach(t) }
         sessions[new] = moved
     }

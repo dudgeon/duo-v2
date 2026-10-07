@@ -237,6 +237,27 @@ public enum ChatIngest {
         record(r, into: log, lastDeclined: chat?.lastDeclined)
     }
 
+    /// A slash command's own records (F-174): the command is your message, as the composer showed
+    /// it when sent (`/rename notes`); its printed output is a quiet line (a stand-in, Q-105);
+    /// the caveat Claude Code adds is nobody's. True when the text was one of these.
+    nonisolated static func command(_ text: String, time: Date?, into log: ChatLog) -> Bool {
+        if text.hasPrefix("<command-") {
+            if let name = text.chatMatch(#"<command-name>\s*([^<\s]+)\s*</command-name>"#)?[1] {
+                let args = (text.chatMatch(#"<command-args>([\s\S]*?)</command-args>"#)?[1] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                log.prompt((name.hasPrefix("/") ? name : "/" + name) + (args.isEmpty ? "" : " " + args), time: time, fromHook: false)
+            }
+            return true
+        }
+        if let out = text.chatMatch(#"^<local-command-stdout>([\s\S]*?)</local-command-stdout>"#)?[1] {
+            let first = out.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.first { !$0.isEmpty } ?? ""
+            if !first.isEmpty, first != "(no content)" {
+                log.items.append(.note(ChatNote(id: log.newID("note"), text: first.count > 160 ? String(first.prefix(159)) + "…" : first, time: time)))
+            }
+            return true
+        }
+        return text.hasPrefix("<local-command")
+    }
+
     /// The same, anywhere: a history replay builds a scratch log off the main thread (F-160).
     nonisolated public static func record(_ r: ChatJSON, into log: ChatLog, lastDeclined: String?) {
         guard let type = r["type"] as? String else { return }
@@ -248,8 +269,7 @@ public enum ChatIngest {
         case "user":
             if r["isMeta"] as? Bool == true || r["isCompactSummary"] as? Bool == true { return }
             if let text = message?["content"] as? String {
-                // Slash commands and their output are the TUI's own lines, not your messages.
-                if text.hasPrefix("<command-") || text.hasPrefix("<local-command") { return }
+                if command(text, time: time, into: log) { return }
                 let origin = (r["origin"] as? ChatJSON)?["kind"] as? String
                 log.prompt(text, time: time, fromHook: false, injected: origin != nil && origin != "human", planMode: r["permissionMode"] as? String == "plan")
                 return
@@ -260,7 +280,7 @@ public enum ChatIngest {
                     // Claude Code's record of an interrupt (Esc): the reply ends, it isn't your message.
                     if let t = b["text"] as? String, t.hasPrefix("[Request interrupted by user") {
                         log.endStreaming(interrupted: true)
-                    } else if let t = b["text"] as? String, !t.hasPrefix("<command-"), !t.hasPrefix("<local-command") {
+                    } else if let t = b["text"] as? String, !command(t, time: time, into: log) {
                         log.prompt(t, time: time, fromHook: false)
                     }
                 case "tool_result":
@@ -301,6 +321,8 @@ public enum ChatIngest {
             }
         case "system":
             if r["subtype"] as? String == "compact_boundary" { log.compacted(time: time) }
+            // Some commands (`/rename`, …) are recorded here rather than as your message.
+            if r["subtype"] as? String == "local_command", let text = r["content"] as? String { _ = command(text, time: time, into: log) }
         default: break
         }
     }
