@@ -1953,3 +1953,11 @@ Spike: `docs/plan/spikes/browser-engine.md`.
 - **macOS keeps the icon as it is.** `NSWorkspace.icon(forFile:)` on the built app returns the new icon at 1024, 128, 32 and 16, with the small art at 32 and 16. macOS adds its own rim light and doesn't put it in a grey box. The render is `docs/design/icon-handoff/screens/build-proof-system-icon.png`.
 - **`qlmanage -t` on the `.app` hung** (more than 2 min, killed). Use NSWorkspace for icon proofs instead.
 - **No dark or tinted variants:** those need an Icon Composer `.icon` and `actool` (Q-81).
+
+## F-151 · Runs of tool calls, from real transcripts and the TUI (DL-135, 2026-10-07)
+- **How long runs are.** In the last 80 sessions on Geoff's Mac (read-only tally of their transcripts): 3,253 runs of tool calls between pieces of Claude's text; 70% have two or more calls, 41% mix tools, and Bash is 7,070 of about 11,000 calls. Thinking blocks (7,922) sat between most calls, and each split the old thread in two.
+- **The terminal's own words.** Claude Code's collapsed lines, as transcripts quote them: `Ran 4 shell commands`, `Read 3 files`, `Edited 2 files`, `Searched for 1 pattern, read 1 file, listed 1 directory, ran 1 shell command`: one combined line for a mixed run. The chat's run line copies that form (`ChatRuns.clauses`), with edits' file names and `+n −n` after a dot.
+- **The boards disagreed.** C1 and C2 drew a line per kind; C3 and the candidates drew one combined line. Geoff chose one line (2026-10-07); C1 and C2 were corrected on the canvas and in `chat-polish-handoff`.
+- **Grouping is a view of the log.** `ChatRuns.blocks` reads a turn's segments and never changes the log, so a step waiting on you leaves its run and rejoins it once answered, and a run keeps its first step's id (`run-<id>`) for its open state as steps arrive.
+- **Bash's `description`** (Claude's one-line summary of a command) is in nearly every recent call; a run line leads with it and falls back to the command.
+- **Built only when opened.** Outputs and diffs (a `Write` used to draw the whole file) build only when their step is opened, which helps chat's scrolling (fix/chat-perf).

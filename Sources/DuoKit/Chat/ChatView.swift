@@ -12,8 +12,12 @@ import SwiftUI
 public final class ChatUIState {
     /// Steps opened (folded ones) or closed (open ones) by a click.
     public var toggled: Set<String> = []
-    /// Bash outputs shown in full.
+    /// Runs opened (DL-135).
+    public var openRuns: Set<String> = []
+    /// Bash outputs and diffs shown in full.
     public var fullOutput: Set<String> = []
+    /// Your long messages shown in full.
+    public var fullYou: Set<String> = []
     public var thinkingOpen: Set<String> = []
     /// Plan option 3's feedback, the free-text answers by question, a preview's notes.
     public var planFeedback = ""
@@ -100,7 +104,7 @@ struct ChatItemView: View {
 
     var body: some View {
         switch item {
-        case .you(let y): ChatYouBubble(you: y)
+        case .you(let y): ChatYouBubble(you: y, chat: chat)
         case .claude(let t): ChatClaudeCard(turn: t, chat: chat)
         case .answer(let n): ChatAnswerReply(note: n)
         case .note(let n): ChatQuietLine(text: n.text)
@@ -116,11 +120,22 @@ struct ChatItemView: View {
 /// Markdown is rendered.
 struct ChatYouBubble: View {
     let you: ChatYou
+    let chat: ChatSession
+    /// Over 12 lines, the first 8 and `Show all n lines` (DL-135, handoff `paste`).
+    static let longer = 12, shown = 8
 
     var body: some View {
+        let lines = you.text.components(separatedBy: "\n")
+        let cut = lines.count > Self.longer && !chat.ui.fullYou.contains(you.id)
         VStack(alignment: .trailing, spacing: 4) {
             if !you.queued { ChatWho(who: "You", time: you.time, tag: you.planMode ? "plan mode" : nil) }
-            ChatMarkdownView(blocks: ChatMarkdown.parse(you.text), streaming: false)
+            VStack(alignment: .leading, spacing: 6) {
+                ChatMarkdownView(blocks: ChatMarkdown.parse(cut ? lines.prefix(Self.shown).joined(separator: "\n") : you.text), streaming: false)
+                if cut {
+                    Text("Show all \(lines.count) lines").duoText(.chatMeta).foregroundStyle(DuoColor.text).underline(color: DuoColor.controlEdge)
+                        .onActivate { chat.ui.fullYou.insert(you.id) }  // not an action: shows more of what's drawn
+                }
+            }
                 .padding(EdgeInsets(top: 9, leading: 14, bottom: 9, trailing: 14))
                 .background(UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatBubble).fill(DuoColor.chatYou))
                 .opacity(you.queued ? 0.6 : 1)
@@ -266,15 +281,22 @@ struct ChatClaudeCard: View {
         VStack(alignment: .leading, spacing: 4) {
             ChatWho(who: "Claude", time: turn.time)
             VStack(alignment: .leading, spacing: 10) {
-                ForEach(turn.segments) { seg in
-                    switch seg {
-                    case .thinking(let id, let secs, _): ChatThinkingRow(id: id, seconds: secs, chat: chat)
-                    case .tools(_, let steps): ChatToolThread(steps: steps, chat: chat)
-                    case .text(let t): ChatMarkdownView(blocks: ChatMarkdown.parse(t.markdown), streaming: t.streaming, faded: t.cut)
-                    case .asked(_, let qs):
-                        // While the question is up, its card shows it; the list stays once it closes.
-                        if !(chat.cardUp && [.question, .questionReview].contains(chat.screen.kind) && seg.id == turn.segments.last(where: { if case .asked = $0 { return true }; return false })?.id) {
-                            ChatAskedBox(questions: qs)
+                // Runs fold to one line (DL-135); consecutive thread rows share one dotted thread.
+                let blocks = ChatRuns.blocks(turn.segments)
+                let lastAsked = blocks.last { if case .asked = $0 { return true } else { return false } }?.id
+                ForEach(Self.sections(blocks), id: \.first!.id) { section in
+                    if section.first!.onThread {
+                        ChatThread(blocks: section, chat: chat)
+                    } else {
+                        switch section.first! {
+                        case .thinking(let id, let secs): ChatThinkingRow(id: id, seconds: secs, chat: chat)
+                        case .text(let t): ChatMarkdownView(blocks: ChatMarkdown.parse(t.markdown), streaming: t.streaming, faded: t.cut)
+                        case .asked(let id, let qs):
+                            // While the question is up, its card shows it; the list stays once it closes.
+                            if !(chat.cardUp && [.question, .questionReview].contains(chat.screen.kind) && id == lastAsked) {
+                                ChatAskedBox(questions: qs)
+                            }
+                        default: EmptyView()
                         }
                     }
                 }
@@ -284,6 +306,15 @@ struct ChatClaudeCard: View {
             .background(UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatCard).fill(DuoColor.pane))
         }
         .padding(.trailing, DuoSpace.chatCardTrailing)
+    }
+
+    /// Thread rows in a row go together; everything else stands alone.
+    static func sections(_ blocks: [ChatCardRow]) -> [[ChatCardRow]] {
+        var out: [[ChatCardRow]] = []
+        for b in blocks {
+            if b.onThread, let last = out.last?.last, last.onThread { out[out.count - 1].append(b) } else { out.append([b]) }
+        }
+        return out
     }
 }
 

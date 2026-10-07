@@ -124,17 +124,27 @@ public struct ChatToolStep: Identifiable, Equatable, Sendable {
     public var others: [(String, String?)] = []
     /// A folded step's first lines of output (Read, Search), shown when opened.
     public var preview: [String]?
+    /// What the command does, in Claude's words (Bash's `description`), shown before it in a run (DL-135).
+    public var summary: String?
+    /// The to-do list as this update left it (TodoWrite).
+    public var todos: [ChatTodo]?
     /// The input, canonical, to match a PermissionRequest (which has no tool_use_id, F-103).
     var inputKey: String
 
     public static func == (a: ChatToolStep, b: ChatToolStep) -> Bool {
         a.id == b.id && a.verb == b.verb && a.object == b.object && a.detail == b.detail && a.status == b.status && a.adds == b.adds && a.dels == b.dels
             && a.diff == b.diff && a.output == b.output && a.error == b.error && a.agent == b.agent && a.preview == b.preview
-            && a.others.map(\.0) == b.others.map(\.0)
+            && a.others.map(\.0) == b.others.map(\.0) && a.summary == b.summary && a.todos == b.todos
     }
 
     /// Folded to one line until opened (Read, Search, Fetch); the others open.
     public var foldsByDefault: Bool { diff == nil && output == nil && error == nil && agent == nil }
+}
+
+public struct ChatTodo: Equatable, Sendable {
+    public enum Status: String, Sendable { case pending, inProgress = "in_progress", completed }
+    public var text: String
+    public var status: Status
 }
 
 public struct ChatDiffLine: Equatable, Sendable {
