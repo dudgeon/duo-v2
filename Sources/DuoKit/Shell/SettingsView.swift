@@ -10,9 +10,14 @@ import SwiftUI
     public var version: String?
     public var archive: (bytes: Int64, sessions: Int)?
     public var revision = 0   // bumps when a setting changes, so the view rereads state.json
+    public var macOSHides: MacOSHides?   // Q-93: read from Notification Center on refresh
+    public var macOSHidesOverride: MacOSHides??   // the harness's notify-hidden: action
 
     public func refresh() {
         revision += 1
+        if let o = macOSHidesOverride { macOSHides = o } else {
+            Task { @MainActor in self.macOSHides = await Notifier.shared.hidden(dockBadge: DuoState.load().dockBadge) }
+        }
         let path = ClaudeLocator.resolve()
         let root = SessionArchive.root
         Task.detached(priority: .utility) {
@@ -101,7 +106,13 @@ public struct SettingsView: View {
                     row("When a session needs you", value: VStack(alignment: .leading, spacing: 2) {
                         Toggle("Notify me while Duo is in the background", isOn: binding(\.notifyNeedsYou)).toggleStyle(.checkbox)
                         Toggle("Show the count on the Dock icon", isOn: binding(\.dockBadge)).toggleStyle(.checkbox)
-                    }) { EmptyView() }
+                        if let hidden = shownHidden {
+                            Text(hidden.line).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
+                                .padding(.leading, DuoMetric.settingsCheckboxIndent)
+                        }
+                    }) {
+                        if shownHidden != nil { Button("Open Notification Settings…") { model.openNotificationSettings() }.buttonStyle(.duo) }
+                    }
                 }
                 group("Claude outside Duo") {
                     let installed = Installer.manifest().consented
@@ -168,9 +179,16 @@ public struct SettingsView: View {
         }
     }
 
+    /// Q-93: the badge line goes when the Dock count is unticked (nothing to explain).
+    var shownHidden: MacOSHides? {
+        _ = info.revision
+        guard let h = info.macOSHides else { return nil }
+        return h == .badges && !DuoState.load().dockBadge ? nil : h
+    }
+
     func binding(_ key: WritableKeyPath<DuoState, Bool>) -> Binding<Bool> {
         Binding(get: { DuoState.load()[keyPath: key] },
-                set: { v in DuoState.update { $0[keyPath: key] = v }; info.revision += 1; model.updateDockBadge() })
+                set: { v in DuoState.update { $0[keyPath: key] = v }; info.refresh(); model.updateDockBadge() })
     }
 
     func mono(_ s: String) -> Text { Text(s).font(Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular))) }

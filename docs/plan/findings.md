@@ -2177,3 +2177,124 @@ Check by hand: in System Settings › Notifications › Duo, turn on Allow notif
 - **macOS draws both as targeted.** `scripts/icon-proof.swift` renders each bundle through `NSWorkspace.icon(forFile:)` beside its target, at 1024, 128, 32 and 16 pt, on light and dark (`icon-handoff/screens/build-proof-dev-icon.png`). Mean difference against the target at 1024, both on white: release 3.57, dev 3.49 (0–255 per channel; macOS's rim light). At 16 pt @2x both differ by about 35–38, from macOS drawing the squircle a little larger with its rim, not from the art: `build-proof-dev-icon-16pt.png` (target, render; release, dev) shows the same stripes, band height, chevron and bars.
 - **The dev targets are the canvas's own art**, rasterised from its SVG (qlmanage at 1024; the small one scaled down from 1024, since `qlmanage -t -s 32` drew it tiny in the corner). Those PNGs are opaque white outside the squircle, so `icon-proof.swift` compares on white.
 - **A running dev Duo keeps its old tile until it quits** (F-155): Geoff's acceptance Duo shows the stripes after its next `bundle.sh` and relaunch.
+
+## F-145 · Stand-ins batch 2, slice 3: the deck's stand-ins, chat in Home, link targets (DL-132 g, j; 2026-10-07)
+
+- **Built:**
+  - (j) While a deck draws, the bar reads "Drawing slides…" and `DeckDrawingFrames` lays an empty numbered 16:9 frame per slide over the web view. The count comes from `Pptx.slideCount` (the slide list in `presentation.xml`), read when the deck loads.
+  - Disabled buttons now draw at half strength in `DuoButtonStyle` and `DefaultSheetButtonStyle`: label in `text2` at 50%, border at 50%. Before, a disabled ‹ › or Select Shape looked live everywhere.
+  - With no session to send to, the picked bar's line ("<why>: use Send To.") sits above the buttons in `body`/`text2`, and Send To takes the default look. The narrow bar (`2/5`, the picker's buttons in two rows) was already built and matches its board.
+  - (g) Home's pane shows a Claude tab as chat or terminal through the console's `ConsoleChatBody`, with `ChatToggle` at the right end of Home's tab row. Chat's fallback works there too: a signed-out claude's first-run screen hands back to the terminal.
+  - A link under the pointer shows its target in `ChatLinkStatus` at the transcript's bottom left, in words from `ChatLinkWords` ("Open flows.md at line 42 in Duo", or a web address). A `duo-file:` URL is opaque, so its name comes from `URLComponents.path`, not `url.path`.
+- **How the link is found** (`ChatLinkHover`): SwiftUI reports no per-run hover, and selectable `Text` is an AppKit `NSTextField` (F-159). So a local mouse-moved monitor runs while the pane is in the window (the window's `acceptsMouseMovedEvents` turned on). It hit-tests the field under the pointer, lays its `attributedStringValue` out at the field's width (no line-fragment padding), and reads `.link` at that character, only inside the glyph's own rectangle.
+- **Not built:** the board's darker underline on the hovered link. The memoized attributed strings would need re-styling per hover; the status line and the pointer already say it's a link.
+- **Harness:** `chat-hover:<x>x<y>` reads the link at a content point (the content view includes the 39 pt toolbar). On the `chat-text` fixture, 545x288 finds `duo-file:docs/refunds/flows.md?line=42`, 460x567 the Stripe link, and plain text finds none.
+- **Proof:** `build/standins2/compare/q68-drawing-` (a film frame 30 ms after opening), `q68-no-session-` (bottom-aligned), `q68-narrow-`, `q57-home-pill-` and `q57-link-status-compare.png`. Each matches its board.
+  - The "why" wording is the existing send-target reason ("No session is showing"), not the board's sample.
+  - Slide content is exempt.
+  - The Home capture shows the fallback bar, because the scratch claude is signed out.
+- `docs/design/system`: surfaces.md (eight rows, plus a row for the busy-tab question), and the READMEs of BrowserBar, ChatMode, DeckViewer, PaneTabs, Sheet and TaskLine. The Toolbar preview draws DL-129's right-pane button.
+- DuoChecks: a link's status words.
+
+## F-167 · Duo assumes one window in about 25 places, and one model holds that window's state (2026-10-07)
+
+- **One `AppModel`** holds the app's data and about 45 properties of the one window's state: altitude, `homeTab`, `consoleTab`, `rightTab`, selection, pane collapse, search, the peek, hover and drag. References: `currentProject` 93, `rightTab` 63, `consoleTab` 61, `altitude` 56, `homeTab` 36.
+- **Single views moved between panes:**
+  - one editor, one HTML viewer and one deck viewer for the whole app;
+  - one terminal view per session (`TerminalSlot` moves it);
+  - one web view per browser tab.
+- **24 lookups of "the window"** (`NSApp.windows`, `keyWindow`, `mainWindow`), 16 of them by `title == "Duo"`. They are used for undo, alerts, the walk, full screen, and about ten harness actions.
+- **Global singletons:**
+  - `SheetCenter.shared` (one question queue);
+  - `PaneMotion` (C-44);
+  - `visibleSessionId` (one visible session);
+  - the menus capture one model, with no `FocusedValue`.
+- **Restore** saves one on-screen project and no window list or frames.
+- **What already fits:**
+  - Per-project memory: documents, last tabs and browser tabs.
+  - Every `duo2` request carries the caller's session and cwd.
+  - `ChatKeys` already finds the window from the key event.
+- The full map, with file references: `docs/research/multi-window.md`, "What assumes one window today". It is the basis of DL-141's spec.
+
+## F-168 · Chat mode types through the session's terminal view, wherever that view is drawn (2026-10-07)
+
+- `ChatComposerView` sends with `terminal?.sendKeys`, which is `TerminalSession.sendKeys` → `view.send(txt:)` (`Chat/ChatSession.swift:457`). The view exists for the session's whole life, on screen or not.
+- `attachChat` reads the terminal's buffer offscreen.
+- So a second window can show a session in chat mode and answer it while the terminal is drawn in another window. That is the basis of the recommended options in Q-97 (D6) and Q-98 (Home).
+- Not yet tested: typing in the terminal and in the composer at the same moment (C-43).
+
+## F-169 · On a full window tint, text2 keeps AA but the needs-you orange doesn't (2026-10-07)
+
+Measured for the four proposed tints (DL-141, Q-96):
+
+| Colour | On a full tint (toolbar) | On a half-strength tint (panes) |
+|---|---|---|
+| text2 | 4.78–5.12:1 | 5.59–5.69:1 |
+| text | 12.4:1 or better | 12.4:1 or better |
+| needs-you `#C2410C` | 4.07–4.35:1 (fails 4.5) | 4.76–4.84:1 |
+| controlEdge | 2.4–2.6:1 | — |
+
+- On a tinted toolbar, the needs-you chip gets a white (`pane`) fill: 5.2:1, as on white today. The boards draw it so.
+- No tint may be orange or red, so the accent keeps its one meaning.
+
+## F-173 · Every slash command through chat mode, on 2.1.292 (ENH-13, DL-119, 2026-10-07)
+
+Geoff (2026-10-07): "test if the chat view works with all of Claude code's slash commands; if this is an area that needs design exploration, please surface it."
+
+- **How it was tested.**
+  - An isolated Duo (`DUO_SUPPORT_DIR=/tmp/d-cs`, scratch `CLAUDE_CONFIG_DIR`, a scratch Home with one project), the real `claude` 2.1.292 TUI, on the spike's mock Messages API. No credentials and no tokens.
+  - Each command was typed into the composer with the harness (`chat-type:`, `chat-key:return`), then read back: `chat-state` (what chat shows), `dump-tail` (the terminal), a `film:` frame, Esc into the terminal, and `chat-state` again.
+  - The scratch config's menu has 79 commands. **Under Geoff's CLI login it has 152** (approved by Geoff, 2026-10-07: a scratch folder in `/tmp`, Haiku, two short turns).
+    - The extra commands are his plugin skills (`/engineering:*`, `/design:*`, `/product-management:*`, `/productivity:*`, `/anthropic-skills:*`), his own skills (`/duo2`, `/morning`, …), and built-ins that need a claude.ai login: `/advisor`, `/artifacts`, `/auto-mode-setup`, `/autofix-pr`, `/chrome`, `/desktop`, `/design`, `/design-login`, `/import`, `/install-slack-app`, `/passes`, `/privacy-settings`, `/rate-limit-options`, `/remote-control`, `/remote-env`, `/teleport`, `/ultrareview`, `/upgrade`, `/usage-credits`, `/voice` and `/web-setup`.
+    - Through chat under that login (an isolated Duo, the default Claude config), the composer's menu reads the `:` names (`/design:ux-copy`, `/design:design-system`). `/usage`, `/passes` and `/rate-limit-options` fall back to the terminal and return after Esc. `/design:ux-copy …` ran a turn and its reply streamed into chat.
+    - Seen once and not reproduced: in the first run, Claude answered the skill with an AskUserQuestion. `chat-state` read the question card as up, but the capture 1.5 s later showed the composer, not the docked card. The second run got a plain reply.
+    - The real-login runs left three test sessions under `~/.claude/projects/-private-tmp-cs-ws-Notes` and `-private-tmp-cs-real-ws`, and trust entries for those `/tmp` folders in `~/.claude.json`, as F-105's run did.
+  - MCP prompts (`/mcp__server__prompt`) start turns like skills; no MCP server was configured, so none was run.
+  - Runs: `A` to `E` (info, pickers, settings and turns, session changes); screens for the checks in `Spikes/chat-mode/screens/slash-2.1.292/`.
+- **The `/` menu** shows what the TUI's own menu shows, 3 to 5 rows at a time, with Claude Code's descriptions.
+  - Before this work, ↑↓ moved the caret, not the menu. Return on a part-typed `/he` sent `/he`: the TUI ran its selected `/help`, but chat's bubble said `/he`. Now ↑↓ move the TUI's selection, tab completes, and Return runs the selected command, so the bubble shows what ran (F-174).
+  - The "Opens in the terminal" marks were 2.1.291's guess. 2.1.292 turned `/doctor` and `/statusline` into turns, and `/agents`, `/mcp` and `/output-style` into one-line outputs. `/help`, `/skills`, `/btw`, `/effort` and others open screens. The list now matches what was run.
+  - Long names (`/fewer-permission-prompts`, plugin skills) don't fit the 122 pt name column.
+- **Results, by what a command does to the screen.** "Falls back" means chat shows the terminal with the fallback bar, and returns by itself after Esc. ✓ means it works; ✗ means it didn't, before F-174's fixes.
+
+| Kind | Commands | Menu | Sent from chat | What chat shows | Finish from chat? | In step after? |
+|---|---|---|---|---|---|---|
+| **Own screen: picker, panel or dialog** | `/help` `/model` `/config` `/permissions` `/hooks` `/memory` `/resume` `/theme` `/effort` `/tasks` `/plugin` `/export` `/rewind` `/usage` `/cost` (opens `/usage`) `/status` `/release-notes` `/skills` `/btw <q>` `/fast` `/sandbox` `/scroll-speed` `/add-dir` `/powerup` `/workflows` `/autocompact` `/goal` (bare) `/mobile` | ✓ marked "Opens in the terminal" | ✓ | Falls back to the terminal. ✗ before F-174: a screen that drew while the keys were still going (`/help`, `/sandbox`, …) never fell back, and chat sat blank with "needs you" in the list. | No: answered in the terminal (by design, DL-119). `/config` and `/resume` take two Escs (the first clears the search). | ✓ chat returns at the prompt |
+| **Prints in the terminal** (`⎿` lines) | `/context` (grid), `/mcp`, `/agents` (the wizard is gone), `/output-style` (list), `/diff` (outside git), `/plan` (Enabled plan mode), `/rename <n>`, `/color`, `/focus`, `/tui` (bare), `/reload-plugins`, `/reload-skills`, `/list-agents`, `/debug` | ✓ | ✓ | Only your bubble. The output is on the TUI's screen; the transcript keeps most of it (`<local-command-stdout>`, some as `system`/`local_command` records), but chat skipped those records. `/context`'s grid isn't in the transcript at all. Stand-in now: the output's first line as the existing quiet line (✓ Session renamed to: notes; F-174, Q-105). | n/a | ✓ (`/plan`'s chip turns to plan mode; `/rename`'s name in the input rule still reads) |
+| **Starts a turn** | `/init`, `/compact`, `/recap`, `/security-review`, `/doctor`, `/statusline`, every skill (`/simplify`, `/code-review`, `/verify`, plugin skills), `/insights`, `/team-onboarding` | ✓ | ✓ | Your bubble and Claude's reply; `/compact` gives the "Conversation compacted" divider. ✗ before F-174: on replay (reopening, or after a re-key) the command vanished and Claude's reply had no prompt above it. | ✓ | ✓ |
+| **Changes the session** | `/clear`, `/branch`, `/resume <id>` | ✓ | ✓ | A new id in the same process; Duo re-keys the tab (F-29). ✗ before F-174: the new session opened in the mode used last, not its own; and **the next message from the composer opened the user's own editor (vim) in the terminal**, because `duo2 compose` looks for the hand-over under the id the process started with. | ✓ | ✓ after F-174 |
+| **Ends or leaves** | `/exit`, `/background` | ✓ | ✓ | The process ends; the tab closes as with any exit. | n/a | n/a |
+| **Not run** (they change the account or send data) | `/login` `/logout` `/upgrade` `/privacy-settings` `/terminal-setup` `/install-github-app` `/bug` `/feedback` `/stickers`; `/copy` (writes the clipboard); `/radio` (plays audio); `/keybindings` (opens `$EDITOR` in the terminal); `/loop`, `/schedule`, `/fork`, `/subtask` (start more sessions) | `/login` `/logout` `/terminal-setup` `/install-github-app` marked | — | Expected: their own screen (falls back) or an editor in the terminal | — | — |
+
+- **Proof:** `docs/design/chat-mode-handoff/proof/slash-live-2.1.292.png` (after: `/rename`, `/plan` with their quiet lines, `/init`'s reply, the `/fe` menu with a long name), `slash-help-blank-before.png` (`/he` sent, `/help` up in the terminal, chat blank), `slash-context-before.png` (`/context`: bubbles only), `slash-composer-compare.png` (the composer board against the fixture, unchanged by this work; the menu was compared region by region with the live capture: same look, with the name column widened only for a long name).
+- **Home.** Home's pane shows only a terminal today (chat is in a project's console), so no command behaves differently there yet. If Home gets chat (design/home-evolution), the same rules apply: the re-key fix covers `homeTab` too.
+- **Chat stays honest.** No command made chat answer anything. Every screen chat can't draw goes to the terminal, and chat comes back at the prompt.
+- **What needs design (Q-105, Q-106):** how a command's output shows in chat (`/context`'s grid, lists, one-liners), and whether the common pickers (`/model`, `/effort`) and panels (`/usage`, `/status`) get a chat form or stay in the terminal.
+
+## F-174 · Slash commands from chat: what was fixed (F-173, 2026-10-07)
+
+- **A command's own screen now hands over.** `ChatSession` skipped the fallback rules while `sending` or `composing`, and nothing judged the screen again once the keys had gone. `/help`, `/sandbox` and other screens that draw once and then sit still left chat blank, with the session showing "needs you". Now clearing either flag runs the rules (`didSet`), so after the grace period the terminal shows with its bar.
+- **The `/` menu follows the TUI's keys.** While a part-typed command has the menu up, ↑↓ go to Claude Code's own menu (its selection moves, and chat reads it back), tab completes the selected command, and Return sends the selected command. Before, Return sent the part-typed text: the TUI ran its selection anyway, and chat's bubble showed `/he`. These are the TUI's keys, which the `@` menu (DL-133) also uses; nothing new is drawn.
+- **The menu's "Opens in the terminal" marks match 2.1.292** (`ChatSignatures.terminalCommands`, F-173's table). A long name widens the name column (at least the board's 122 pt) instead of wrapping onto three lines. That's a stand-in (Q-106).
+- **`/clear`, `/branch` and `/resume <id>` keep the chat working.**
+  - `ChatStore.rekey` existed but nothing called it. `AppModel.followSessionChanges` now calls it with the terminal's re-key. The new id gets the old session's mode, even when the mode used last differs, and the chat moves with its compose folder and CLI version. The new chat starts empty, as the TUI does.
+  - **The composer's hand-over is named by the launch id.** `duo2 compose` runs as Claude's `$EDITOR`. Claude Code gives its editor `DUO_SESSION_ID` (the id the process started with) but not `CLAUDE_CODE_SESSION_ID`, checked with an `$EDITOR` that recorded its environment across a `/clear`. Duo wrote the hand-over under the session's new id, so the helper found nothing and opened the user's own editor: vim, full screen, in the terminal. `ChatSession.launchId` (from `TerminalCommand.launchId`) now names every hand-over, peek and refusal file. Verified live: `/clear`, then a message from the composer, answered.
+- **The transcript's command records are read** (`ChatIngest.command`).
+  - `<command-name>` is your message: `/rename notes`, `/init`. It matches the bubble the composer showed, so it isn't doubled, and a replay keeps the command above Claude's reply.
+  - `<local-command-stdout>` becomes a quiet line with the output's first line. That's a stand-in (Q-105). `(no content)` and the `<local-command-caveat>` show nothing.
+  - 2.1.292 records some commands (`/rename`) as `type: system`, `subtype: local_command`; both shapes are read.
+- **The harness** gained `chat-clear`, and `chat-state` prints the composer, Claude's input and the menu.
+- **Checks:** a new DuoChecks group, "slash commands from the composer", 27 checks. It covers the menu read from 2.1.292 screens (`Spikes/chat-mode/screens/slash-2.1.292/`), the selection, the keys, ten command screens reading as unknown, `/plan` and `/rename` staying at the prompt, the marks, the fallback once a send ends, the transcript records, the re-key's mode and the launch id. 731 passing. The chat boards (`check-chat.sh composer fallback toggle text window`) are unchanged.
+
+## F-175 · Chat mode answers dialogs on Claude Code 2.1.292 (2026-10-07)
+
+- Geoff's CLI is 2.1.292. The signature table trusted only 2.1.291's dialogs (fallback rule 3), so in chat mode every permission, plan and question went to the terminal.
+- 2.1.292's screens read the same: the `/` menu, the input box and its named rule, the footer and the command screens (F-173). `DUO_CHECKS=chat-live`, the AskUserQuestion suite run end to end through Duo's own code against the real 2.1.292 TUI and the mock API, passed 63 of 63 at 100×34, 60×34 and 80×20. 2.1.292 is now in the table's `verified` list.
+- The spike's dialog tour (`scenario-tour.json` through `drive.mjs`, on the mock at a private port) gave all 13 screens: markdown, Bash and edit permissions, questions, review, agent, plan mode, plan approval, streaming, interrupt, the `/model` picker and a retry. Folding paths, ids and times, they are line for line 2.1.291's (`tour-2.1.291/`). Only the spinner's verbs ("Cooked", "Crunched") and the mock's port differ.
+
+## F-162 · Building the Dock menu and the Settings hint (2026-10-07)
+
+- **The boards have no Design canvas.** This build session was moved out of Duo into a background session, which has no Artifact tool, so the boards were drawn as static HTML in the handoff shape, rendered with the build-handoff renderer, and approved by buttons on the PNGs. If a canvas is wanted for the design system, the walk session can publish them.
+- **The Dock menu comes from `applicationDockMenu(_:)`**, built fresh each time it opens from `Fixture.dockMenuItems`. Its items are `NSMenuItem`s with a closure (`DockMenuAction`); the delegate method has to be `@MainActor` to hand an `NSMenu` back under Swift 6 (it isn't `Sendable`).
+- **System Settings opens at Duo's notifications** with `x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=<bundle id>`.
+- **The Settings captures** use a harness action, `notify-hidden:notifications|badges|none`, because a test instance shares Geoff's bundle id and would otherwise read his real Notification Center state (C-40). Compared with the boards region by region (`build/ui/dock/settings-*.png`): the line starts within 1 pt of the checkbox label, and the button sits where the board draws it.

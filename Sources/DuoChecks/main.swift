@@ -144,6 +144,9 @@ func repoFixture() throws -> Fixture {
     check(WebTab.RunningDownload(name: "r", done: 2_100_000, total: 8_400_000).count == "2.1 of 8.4 MB" && WebTab.RunningDownload(name: "r", done: 500, total: 900).count == "500 of 900 bytes",
           "a running download counts in the total's unit")
 
+    check(ChatLinkWords.words(URL(string: "duo-file:docs/refunds/flows.md?line=42")!) == "Open flows.md at line 42 in Duo"
+          && ChatLinkWords.words(URL(string: "https://stripe.com/docs")!) == "https://stripe.com/docs", "a chat link's status line names its file and line, or its address (DL-132 g)")
+
     print("update question: the release's notes in a box, Later at the left (DL-132 b)")
     do {
         let md = "## What's new\n\n- **Closing** a busy tab asks first.\n* Drops use `Undo`.\n1. See [the guide](https://x.y).\n\n---\n"
@@ -588,6 +591,7 @@ func repoFixture() throws -> Fixture {
     try? FileManager.default.removeItem(at: ev)
     reapChecks()
     dockBadgeChecks()
+    dockMenuChecks()
 
     print("titles")
     func rec(_ json: String) -> [String: Any] { try! JSONSerialization.jsonObject(with: Data(json.utf8)) as! [String: Any] }

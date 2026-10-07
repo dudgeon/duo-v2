@@ -1,0 +1,12 @@
+{
+  "$note": "Dock badge slice 2, approved by Geoff 2026-10-07 as drawn (DL-144). kind=board: a part of a window or a macOS surface, exported as static HTML. Drawn in a background session without the Artifact tool, so there is no canvas (F-162); approval was by buttons on these PNGs.",
+  "source": null,
+  "screens": [
+    { "file": "screens/q93-notifications-off.html", "kind": "board", "width": 680, "height": 860, "decision": "DL-144 (a), Q-93",
+      "shows": "Settings with macOS's notifications off for Duo: a text2 line under Show the count on the Dock icon, and Open Notification Settings… on the row's right." },
+    { "file": "screens/q93-badges-off.html", "kind": "board", "width": 680, "height": 860, "decision": "DL-144 (a), Q-93",
+      "shows": "Settings with notifications allowed but Badge application icon off: the same line and button, worded for the badge." },
+    { "file": "screens/dock-menu.html", "kind": "board", "width": 720, "height": 420, "decision": "DL-144 (b), ENH-24",
+      "shows": "The Dock menu with three sessions waiting (Needs you header, one item each, longest wait first) and with none (macOS's menu only)." }
+  ]
+}

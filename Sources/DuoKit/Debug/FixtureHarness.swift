@@ -131,6 +131,8 @@ public enum FixtureHarness {
             if let p = model.homePlaces().first(where: { $0.folder.lastPathComponent == (parts.count > 1 ? parts[1] : "") }) {
                 model.moveIntoHomeForm?.into = p; model.newProjectForm?.into = p
             }
+        case "notify-hidden":   // notify-hidden:notifications|badges|none: what macOS hides, for Settings (Q-93)
+            SettingsInfo.shared.macOSHidesOverride = .some(parts.count > 1 ? MacOSHides(rawValue: parts[1]) : nil)
         case "render-settings":   // render-settings:<png>: the Settings view, drawn to an image at 2x
             if parts.count > 1 {
                 SettingsInfo.shared.refresh()
@@ -453,6 +455,18 @@ public enum FixtureHarness {
                                         context: nil, characters: "", charactersIgnoringModifiers: "", isARepeat: false, keyCode: code) {
                 v.keyDown(with: e)
             }
+        case "chat-hover":   // chat-hover:<x>x<y>: the pointer at that point of the content (top-left origin), as the link monitor reads it (DL-132 g)
+            if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }), let c = w.contentView,
+               let k = model.visibleSessionId, let chat = model.chat(for: k) {
+                let xy = parts[1].split(separator: "x").compactMap { Double($0) }
+                if xy.count == 2 {
+                    let p = c.convert(NSPoint(x: xy[0], y: c.isFlipped ? xy[1] : c.bounds.height - xy[1]), to: nil)
+                    chat.ui.hoverLink = ChatLinkHover.Probe.link(in: w, at: p)
+                    FileHandle.standardError.write(Data("chat-hover: \(chat.ui.hoverLink?.absoluteString ?? "no link")\n".utf8))
+                }
+            }
+        case "chat-clear":   // the composer emptied, as select-all and delete would
+            if let c = model.visibleSessionId.flatMap(model.chat(for:)) { c.ui.composer = "" }
         case "chat":   // chat:on|off
             if let k = model.visibleSessionId { model.setChatMode(parts.count > 1 && parts[1] == "off" ? .terminal : .chat, for: k) }
         case "chat-send":   // chat-send:<text>: the composer's Return
@@ -478,7 +492,8 @@ public enum FixtureHarness {
             }
         case "chat-state":   // what the chat shows, for a scripted run's log
             if let k = model.visibleSessionId, let c = model.chat(for: k) {
-                var lines = ["chat-state: \(k.prefix(8)) mode=\(c.mode.rawValue) showing=\(c.showsChat ? "chat" : "terminal") screen=\(c.screen.kind.rawValue) card=\(c.cardUp) fallback=\(c.fallback?.message ?? "-") version=\(c.cliVersion ?? "-") hooks=\(c.log.hooksSeen) streams=\(c.log.streams) compose=\(c.usesExternalEditor)"]
+                var lines = ["chat-state: \(k.prefix(8)) mode=\(c.mode.rawValue) showing=\(c.showsChat ? "chat" : "terminal") screen=\(c.screen.kind.rawValue) card=\(c.cardUp) fallback=\(c.fallback?.message ?? "-") version=\(c.cliVersion ?? "-") hooks=\(c.log.hooksSeen) streams=\(c.log.streams) compose=\(c.usesExternalEditor)",
+                             "  composer=\(c.ui.composer.debugDescription) input=\((c.screen.input ?? "-").debugDescription) menu=\(c.screen.commands.map { ($0.selected ? "❯" : "") + $0.name })"]
                 for item in c.log.items {
                     switch item {
                     case .you(let y): lines.append("  you: \(y.text.prefix(80))\(y.queued ? " (queued)" : "")")

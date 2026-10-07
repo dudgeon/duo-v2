@@ -136,6 +136,7 @@ extension AppModel {
         if terminalsMode == .live { c.follow(sessionId: t.key, cwd: t.cwd) }
         // The composer hands over through `duo2 compose` when this build has it (F-112).
         if let bin = ChildEnvironment.cliDirectory, ChatComposer.editorCommand(cli: bin + "/duo2") != nil { c.composeDir = ChatComposer.dir }
+        c.launchId = t.command.launchId
         if c.cliVersion == nil, let path = ClaudeLocator.resolve() {
             ClaudeVersion.of(path) { [weak c] v in c?.setVersion(v) }
         }

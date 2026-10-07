@@ -1,0 +1,18 @@
+{"v":3,"attachments":{},"createdOnFiles":{"at":"2026-10-07T18:30:00Z","v":1},"title":"Duo multi-window studies","launch":{"view":"canvas"},"pages":[],
+"boards":{
+"Main.dc.html":{"x":0,"y":0,"w":1720,"h":620,"title":"0 · The model: independent windows, pinnable, tinted (Geoff)"},
+"Win.dc.html":{"x":1800,"y":0,"w":520,"h":325,"title":"Mini window (component)"},
+"Open.dc.html":{"x":0,"y":740,"w":1720,"h":640,"title":"1 · How a new window opens"},
+"Pin.dc.html":{"x":0,"y":1500,"w":1720,"h":700,"title":"2 · Pinning a window to a project"},
+"PinLeave.dc.html":{"x":0,"y":2320,"w":1720,"h":640,"title":"3 · Leaving a pinned window's project"},
+"Tint.dc.html":{"x":0,"y":3080,"w":1720,"h":640,"title":"4 · How much of the window a tint covers"},
+"TintWhere.dc.html":{"x":0,"y":3840,"w":1720,"h":640,"title":"5 · Choosing a tint, and what it belongs to"},
+"Session.dc.html":{"x":0,"y":4600,"w":1720,"h":640,"title":"6 · A session open in two windows"},
+"Doc.dc.html":{"x":0,"y":5360,"w":1720,"h":640,"title":"7 · A document open in two windows"},
+"NeedsYou.dc.html":{"x":0,"y":6120,"w":1720,"h":640,"title":"8 · Needs-you across windows"},
+"WindowMenu.dc.html":{"x":0,"y":6880,"w":1720,"h":640,"title":"9 · The Window menu"},
+"Home.dc.html":{"x":0,"y":7640,"w":1720,"h":640,"title":"10 · What happens to Home"}
+},
+"order":["Main.dc.html","Win.dc.html","Open.dc.html","Pin.dc.html","PinLeave.dc.html","Tint.dc.html","TintWhere.dc.html","Session.dc.html","Doc.dc.html","NeedsYou.dc.html","WindowMenu.dc.html","Home.dc.html"],
+"notes":{"t1":{"kind":"title1","maxW":1720,"text":"Multi-window: ten decisions, 2–3 options each","w":240,"x":0,"y":-300}},
+"designSystems":[{"artifact":"https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH","copiedAt":"2026-10-07T18:30:00Z","namespace":"duo","title":"Duo","version":null}]}

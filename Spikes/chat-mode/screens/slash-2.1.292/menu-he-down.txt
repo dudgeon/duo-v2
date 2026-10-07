@@ -1,0 +1,34 @@
+
+ ▐▛███▛█   Claude Code v2.1.292
+▝▜██████▀  Haiku 4.5 · API Usage Billing
+ ▝▝   ▝▝   /private/tmp/cs-tour/ws
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /help                       Show help and available commands
+  ❯ /theme                      Change the theme
+    /doctor                     Health-check the user's Claude Code setup and fix issues: diagnose
+                                installation health — what the `claude doctor` terminal diagnosti…
+    /rewind                     Restore the code and/or conversation to a previous point
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ /he 
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on

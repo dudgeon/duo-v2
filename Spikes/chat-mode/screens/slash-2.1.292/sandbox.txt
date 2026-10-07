@@ -1,0 +1,34 @@
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ 
+
+     Skills · /skills
+     └ 13 skills · 1.5k tokens
+     
+     /context all to expand
+     
+❯ /model 
+  ⎿  Kept model as Haiku 4.5
+     
+❯ /resume 
+  ⎿  Resume cancelled
+
+❯ /plan                                                                                             
+  ⎿  Enabled plan mode
+
+❯ /rename slash 
+  ⎿  Session renamed to: slash
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+   Sandbox  Mode   Overrides   Config
+
+   Configure mode
+
+     1. Sandbox BashTool, with auto-allow
+     2. Sandbox BashTool, with regular permissions
+     3. No Sandbox ✔
+
+   Auto-allow mode: Commands will try to run in the sandbox automatically, and attempts to run 
+   outside of the sandbox fallback to regular permissions. Explicit ask/deny rules are always 
+   respected.
+
+   Learn more: https://code.claude.com/docs/en/sandboxing
+
+   ←/→ to switch · ↑/↓ to navigate · Enter to select · Esc to close

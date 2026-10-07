@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>How much of the window a tint covers</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1720px; height: 640px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 24px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">DECISION 4</span>
+<span style="font-size: 22px; line-height: 28px; font-weight: 600">How much of the window a tint covers</span>
+<span style="color: #5B636D">In every option: no tint uses the needs-you orange, and the dark console and terminals never change. text2 stays above 4.7:1 on every tint, but the orange falls to about 4.2:1 on a full tint, so on a tinted toolbar the needs-you chip gets a white fill.</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px">
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">A · The toolbar only</span>
+<div style="width: 494px; height: 309px"><div style="transform: scale(0.95); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="refunds" pin="on" chip="1 needs you" tint="sky" tint-style="toolbar" s1="Refund rules" s2="Policy diff" s3="Ops notes" doc="rules.md" hint-size="520px,325px"></dc-import></div></div>
+<span style="color: #5B636D; white-space: normal">The toolbar's ground takes the tint. Quiet, and it shows in Mission Control, but a thin band is easy to miss across two screens.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="display: flex; gap: 8px; align-items: center"><span style="font-weight: 600">B · The whole window's light chrome</span><span style="padding: 0 7px; border: 1px solid #8B939C; border-radius: 9px; font-size: 11px; line-height: 16px; background: #FFFFFF">recommended</span></span>
+<div style="width: 494px; height: 309px"><div style="transform: scale(0.95); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="refunds" pin="on" chip="1 needs you" tint="sky" tint-style="window" s1="Refund rules" s2="Policy diff" s3="Ops notes" doc="rules.md" hint-size="520px,325px"></dc-import></div></div>
+<span style="color: #5B636D; white-space: normal">What you asked for: the toolbar and grounds at full tint, light panes at half. Cards, fields, the editor's page and the selected row stay as they are. Tells windows apart from across the room.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">C · A coloured edge and a swatch</span>
+<div style="width: 494px; height: 309px"><div style="transform: scale(0.95); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="refunds" pin="on" chip="1 needs you" tint="sky" tint-style="edge" s1="Refund rules" s2="Policy diff" s3="Ops notes" doc="rules.md" hint-size="520px,325px"></dc-import></div></div>
+<span style="color: #5B636D; white-space: normal">A 3 pt strip across the top in a stronger shade, and a swatch after the project's name. Leaves Duo's look alone, but colour only, at the edge.</span>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1720,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -189,6 +189,10 @@ Do we keep saved cards out of scope for v2? *Decision due Oct 10.*
     docx = pathlib.Path(__file__).resolve().parents[2] / "Spikes" / "DocxToMarkdown" / "docs" / "09-mixed.docx"
     if docx.exists():
         shutil.copy(docx, co / "docs" / "vendor-brief.docx")
+    # A file Duo can't show (DL-132 e): a ZIP archive, for the quiet strip and no-preview.
+    import zipfile
+    with zipfile.ZipFile(co / "docs" / "exports.zip", "w") as z:
+        z.writestr("readme.txt", "Exported receipts for the checkout research.\n")
     # A PowerPoint deck for the viewer (DL-125): the PptxViewer spike's synthetic Garden deck.
     deck = pathlib.Path(__file__).resolve().parents[2] / "Spikes" / "PptxViewer" / "decks" / "garden.pptx"
     if deck.exists():
@@ -259,7 +263,7 @@ def recipe(name):
     co = WS / "payments" / "checkout"
     if name == "reset-checkout":
         # Anything a test added (new files, folders, duplicates, renames) goes to the Trash.
-        keep = {"docs": {"prd.md", "research.md", "windows-notes.md", "mixed-endings.md", "legacy-export.txt", "long-backlog.md", "vendor-brief.docx", "garden-review.pptx"},
+        keep = {"docs": {"prd.md", "research.md", "windows-notes.md", "mixed-endings.md", "legacy-export.txt", "long-backlog.md", "vendor-brief.docx", "garden-review.pptx", "exports.zip"},
                 "prototypes": {"checkout.html", "checkout.css", "card.svg"}, "templates": {"meeting-notes.md"}}
         for folder, names in keep.items():
             for f in (co / folder).iterdir() if (co / folder).exists() else []:

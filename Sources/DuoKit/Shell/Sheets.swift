@@ -157,15 +157,23 @@ struct SheetButtons: View {
 
 /// The sheet's default button: the Duo button with a `text` border and a semibold label.
 struct DefaultSheetButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
+    func makeBody(configuration: Configuration) -> some View { DefaultSheetButtonBody(configuration: configuration) }
+}
+
+/// Disabled: the label and border at half strength, as DuoButtonStyle (DL-132 j).
+private struct DefaultSheetButtonBody: View {
+    let configuration: ButtonStyleConfiguration
+    @Environment(\.isEnabled) private var enabled
+
+    var body: some View {
         configuration.label
             .duoText(.control, weight: .semibold)
-            .foregroundStyle(DuoColor.text)
+            .foregroundStyle(enabled ? DuoColor.text : DuoColor.text2.opacity(0.5))
             .lineLimit(1)
             .padding(.horizontal, DuoSpace.buttonPadding.leading + DuoMetric.borderHairline)
             .padding(.vertical, DuoSpace.buttonPadding.top + DuoMetric.borderHairline)
             .background(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).fill(configuration.isPressed ? DuoColor.selected : DuoColor.pane))
-            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(DuoColor.text, lineWidth: DuoMetric.borderHairline))
+            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(enabled ? DuoColor.text : DuoColor.controlEdge.opacity(0.5), lineWidth: DuoMetric.borderHairline))
             .contentShape(Rectangle())
     }
 }

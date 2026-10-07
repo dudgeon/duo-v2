@@ -21,3 +21,22 @@ import Foundation
     for i in f.sessions.indices where f.sessions[i].state == .needsYou { f.sessions[i].state = .working }
     check(f.dockBadgeLabel(enabled: true) == nil, "at 0 the badge clears")
 }
+
+// ENH-24, DL-144: the Dock menu lists what `duo2 needs-you` lists, longest wait first, and says
+// how many more wait past nine; nothing waiting, Duo adds nothing to macOS's menu.
+@MainActor func dockMenuChecks() {
+    print("dock menu: the sessions that need you (ENH-24, DL-144)")
+    guard var f = try? repoFixture() else { return check(false, "fixture loads") }
+    let (items, more) = f.dockMenuItems()
+    check(items.map(\.session.id) == f.needsYou.map(\.id) && more == 0, "one item per waiting session, in needs-you's order")
+    check(items.first.map { $0.title == "\($0.session.name) · \($0.session.project) · \($0.session.wait ?? "now")" } == true, "titled session · project · wait")
+    let menu = AppModel(fixture: f).dockMenu()
+    check(menu?.items.map(\.title) == ["Needs you"] + items.map(\.title) && menu?.items.first?.isEnabled == false,
+          "the menu: a disabled Needs you, then the items")
+    let template = f.needsYou[0]
+    f.sessions += (0..<10).map { i in var s = template; s.name = "Extra \(i)"; s.sessionId = "extra-\(i)"; return s }
+    let big = f.dockMenuItems()
+    check(big.items.count == 9 && big.more == f.needsYou.count - 9, "past nine: the first nine, then how many more")
+    for i in f.sessions.indices where f.sessions[i].state == .needsYou { f.sessions[i].state = .idle }
+    check(f.dockMenuItems().items.isEmpty && AppModel(fixture: f).dockMenu() == nil, "nothing waiting: no items, macOS's menu only")
+}

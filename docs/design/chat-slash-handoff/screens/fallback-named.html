@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x900">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-143">
+<!--
+D's bar, used by E for every other screen: names the command and the way out [G]
+APPROVED BOARD. Geoff, 2026-10-07 (DL-143). Exported from the Design canvas
+https://claude.ai/artifact/EGcF7Qx5ga6EXwkKZVh44a (board ScrD.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative;
+every label, option and number from Claude Code is read from its screen or transcript at run time, never from this file.
+-->
+<title>Duo · Chat slash commands · D's bar, used by E for every other screen: names the command and the way out</title>
+<style>
+body{margin:0}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B636D}
+.pane{display:flex;flex-direction:column;border-radius:6px;background:#15171B;color:#E6E8EB;overflow:hidden}
+.strip{display:flex;align-items:center;gap:18px;height:36px;flex:none;padding:0 12px 0 16px;border-bottom:1px solid #2B2F36}
+.tab{display:flex;align-items:center;gap:6px;white-space:nowrap;color:#E6E8EB;font-weight:500}
+.seg{display:flex;margin-left:auto;border:1px solid #4A4F57;border-radius:6px;overflow:hidden}
+.seg span{width:26px;height:20px;display:flex;align-items:center;justify-content:center;color:#9AA1AB}
+.seg .on{background:#2B2F36;color:#E6E8EB}
+.bar{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 16px;background:#F3F4F6;color:#1F2328;font-size:13px;line-height:20px;border-bottom:1px solid #C9CDD3}
+.btn{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;white-space:nowrap}
+.d{color:#9AA1AB}
+.cap{color:#5B636D;font-size:12px;line-height:16px}
+.cmd{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px}
+</style>
+</head>
+<body>
+<div style="width: 680px; height: 900px; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+<div class="lbl">A PICKER YOU OPENED · THE BAR NAMES IT AND THE WAY OUT [G]</div>
+<div class="pane">
+<div class="strip mono"><span class="tab">PRD v2 edits</span>
+<span class="seg"><span class="on" aria-label="Terminal"><svg width="13" height="10" viewBox="0 0 13 10"><path d="M1.5 2 5 5 1.5 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.5 8.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></span><span aria-label="Chat"><svg width="13" height="11" viewBox="0 0 13 11"><path d="M2.5 1h8A1.5 1.5 0 0 1 12 2.5v4A1.5 1.5 0 0 1 10.5 8H6L3.5 10V8h-1A1.5 1.5 0 0 1 1 6.5v-4A1.5 1.5 0 0 1 2.5 1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"></path></svg></span></span></div>
+<div class="bar"><span style="flex: 1"><span class="cmd">/permissions</span> opens in Claude Code’s own screen. Esc closes it and brings chat back.</span><button type="button" class="btn">Back to Chat</button></div>
+<div class="mono" style="padding: 12px 16px; white-space: pre; height: 170px; box-sizing: border-box"> <span style="font-weight: 700">Permissions</span>  Recently denied   <span style="font-weight: 700; text-decoration: underline">Allow</span>   Ask   Deny   Workspace
+ <span class="d">Claude Code won’t ask before using allowed tools.</span>
+ ╭───────────────────────────────────────────╮
+ │ ⌕ Search…                                 │
+ ╰───────────────────────────────────────────╯
+   1. Add a new rule…
+ <span class="d">←/→ to switch · ↓ to select · Esc to cancel</span></div>
+</div>
+
+<div class="lbl" style="margin-top: 10px">A PANEL THAT ONLY SHOWS · SAME BAR, ITS OWN WORDS [G]</div>
+<div class="pane">
+<div class="bar"><span style="flex: 1"><span class="cmd">/usage</span> shows in Claude Code’s own screen. Esc closes it and brings chat back.</span><button type="button" class="btn">Back to Chat</button></div>
+<div class="mono" style="padding: 12px 16px; white-space: pre; height: 170px; box-sizing: border-box"> Settings  Status   Config   <span style="font-weight: 700; text-decoration: underline">Usage</span>   Stats
+ Session
+ Total cost:            $0.0000
+ Total duration (API):  0s
+ Total duration (wall): 42s
+ Total code changes:    0 lines added, 0 lines removed
+ <span class="d">Esc to cancel</span></div>
+</div>
+<div class="cap">“Opens” when the screen takes a choice, “shows” when it only shows (/usage, /status, /help, /skills, /release-notes). Two Escs for /config and /resume: their bar says “Esc clears the search, then closes it.” Today’s generic sentence stays for screens chat didn’t start (sign-in, folder trust).</div>
+<div class="cap">The tab shows no needs-you dot while a screen you opened from chat is up: you’re on it, Claude isn’t waiting. The result comes back to chat as a quiet line (A or C).</div>
+</div>
+</body>
+</html>
