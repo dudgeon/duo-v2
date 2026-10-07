@@ -66,6 +66,14 @@ public enum TerminalCommand: Sendable, Equatable {
     case forkClaude(from: String, sessionID: String)
     /// A plain shell (DL-8). Auto-promotion of `claude` typed in it comes later.
     case shell
+
+    /// The id the process was started with: its `DUO_SESSION_ID`, whatever the session is now.
+    public var launchId: String? {
+        switch self {
+        case .newClaude(let id, _, _), .resumeClaude(let id, _), .forkClaude(_, let id): id
+        case .shell: nil
+        }
+    }
 }
 
 /// The environment for every child process.

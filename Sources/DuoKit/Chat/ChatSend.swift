@@ -31,24 +31,24 @@ extension ChatSession {
             var basis = ui.composerBasis ?? ((s.input ?? "").isEmpty ? "" : nil)
             if basis == nil { basis = await peekPrompt() }
             guard let basis else { return finish(.refused("couldn’t read Claude’s prompt")) }
-            do { try ChatCompose.leave(.init(text: text, basis: basis), in: dir, session: key) } catch { return finish(.refused("couldn’t hand the text over (\(error.localizedDescription))")) }
+            do { try ChatCompose.leave(.init(text: text, basis: basis), in: dir, session: composeKey) } catch { return finish(.refused("couldn’t hand the text over (\(error.localizedDescription))")) }
             composing = true
             terminal?.sendKeys(ChatKey.ctrlG.bytes)
             // The TUI runs the editor (its screen goes blank), then redraws with the new input.
             var back = false
             for _ in 0..<50 {
                 await pause(100_000_000)
-                let gone = !FileManager.default.fileExists(atPath: ChatCompose.handoverFile(dir, key).path)
+                let gone = !FileManager.default.fileExists(atPath: ChatCompose.handoverFile(dir, composeKey).path)
                 let now = reread()
                 if gone, now.kind == .idle || now.kind == .busy { back = true; break }
             }
             composing = false
-            if let held = try? String(contentsOf: ChatCompose.refusedFile(dir, key), encoding: .utf8) {
-                try? FileManager.default.removeItem(at: ChatCompose.refusedFile(dir, key))
+            if let held = try? String(contentsOf: ChatCompose.refusedFile(dir, composeKey), encoding: .utf8) {
+                try? FileManager.default.removeItem(at: ChatCompose.refusedFile(dir, composeKey))
                 return finish(.refused("Claude’s prompt changed in the terminal (it holds “\(held.prefix(40))”), so your text wasn’t put in"))
             }
             guard back else {
-                try? FileManager.default.removeItem(at: ChatCompose.handoverFile(dir, key))
+                try? FileManager.default.removeItem(at: ChatCompose.handoverFile(dir, composeKey))
                 return finish(.refused("Claude Code didn’t open its editor"))
             }
         } else {
@@ -75,16 +75,16 @@ extension ChatSession {
         let wasSending = sending
         sending = true; composing = true
         defer { sending = wasSending; composing = false }
-        do { try ChatCompose.leave(.init(text: "", basis: "", peek: true), in: dir, session: key) } catch { return nil }
+        do { try ChatCompose.leave(.init(text: "", basis: "", peek: true), in: dir, session: composeKey) } catch { return nil }
         terminal?.sendKeys(ChatKey.ctrlG.bytes)
         for _ in 0..<50 {
             await pause(100_000_000)
-            if let text = try? String(contentsOf: ChatCompose.peekFile(dir, key), encoding: .utf8), [.idle, .busy].contains(reread().kind) {
-                try? FileManager.default.removeItem(at: ChatCompose.peekFile(dir, key))
+            if let text = try? String(contentsOf: ChatCompose.peekFile(dir, composeKey), encoding: .utf8), [.idle, .busy].contains(reread().kind) {
+                try? FileManager.default.removeItem(at: ChatCompose.peekFile(dir, composeKey))
                 return text.trimmingCharacters(in: .newlines)
             }
         }
-        try? FileManager.default.removeItem(at: ChatCompose.handoverFile(dir, key))
+        try? FileManager.default.removeItem(at: ChatCompose.handoverFile(dir, composeKey))
         return nil
     }
 

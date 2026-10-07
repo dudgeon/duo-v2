@@ -45,14 +45,19 @@ public struct ChatSignatures: Sendable, Equatable {
     public var chatAbout = "Chat about this"
     /// A row of the `/` command menu: `  ❯ /add-dir      Add a new working directory`.
     public var commandRow = #"^\s{2}(❯ )?\s*(/[\w:.-]+)\s{2,}(\S.*)$"#
-    /// Commands with a screen of their own: they open in the terminal (spike; handoff `composer`).
-    public var terminalCommands: Set<String> = ["/model", "/config", "/permissions", "/resume", "/agents", "/mcp", "/tasks", "/login", "/logout",
-                                                "/doctor", "/hooks", "/memory", "/theme", "/status", "/vim", "/terminal-setup", "/install-github-app",
-                                                "/output-style", "/statusline", "/ide", "/export", "/rewind", "/plugin", "/usage", "/cost"]
+    /// Commands with a screen of their own: they open in the terminal (handoff `composer`). Each was
+    /// run from chat on 2.1.292 (F-173); `/doctor` and `/statusline` are turns now, and `/agents`,
+    /// `/mcp` and `/output-style` print a line.
+    public var terminalCommands: Set<String> = ["/help", "/model", "/config", "/permissions", "/resume", "/tasks", "/login", "/logout",
+                                                "/hooks", "/memory", "/theme", "/status", "/terminal-setup", "/install-github-app",
+                                                "/ide", "/export", "/rewind", "/plugin", "/usage", "/cost", "/release-notes", "/skills",
+                                                "/effort", "/btw", "/fast", "/sandbox", "/scroll-speed", "/add-dir", "/powerup", "/workflows",
+                                                "/autocompact", "/keybindings", "/mobile"]
 
     /// 2.1.291: every dialog verified with the mock tour and asktest (F-104, F-106) and with real
     /// turns under the CLI login (F-105).
-    public static let v2_1_291 = ChatSignatures(version: "2.1.291", verified: ["2.1.291"])
+    /// 2.1.292: the same screens; chat-live (AskUserQuestion at three sizes) passed (F-175).
+    public static let v2_1_291 = ChatSignatures(version: "2.1.291", verified: ["2.1.291", "2.1.292"])
 
     public static let all: [ChatSignatures] = [.v2_1_291]
 
