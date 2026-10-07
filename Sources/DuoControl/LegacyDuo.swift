@@ -11,7 +11,7 @@ public enum LegacyDuo {
     }
 
     public static var claudeDir: URL {
-        if let d = ProcessInfo.processInfo.environment["CLAUDE_CONFIG_DIR"], !d.isEmpty { return URL(fileURLWithPath: d) }
+        if let d = Env.value("CLAUDE_CONFIG_DIR") { return URL(fileURLWithPath: d) }
         return FileManager.default.homeDirectoryForCurrentUser.appending(path: ".claude")
     }
 

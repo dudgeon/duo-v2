@@ -19,7 +19,7 @@ public struct ModelIdentity: Codable, Sendable, Equatable {
 public enum SearchPaths {
     /// `DUO_SEARCH_ROOT` moves everything (tests, scratch indexes).
     public static var root: URL {
-        if let r = ProcessInfo.processInfo.environment["DUO_SEARCH_ROOT"] { return URL(fileURLWithPath: r) }
+        if let r = Env.value("DUO_SEARCH_ROOT") { return URL(fileURLWithPath: r) }
         return SupportFolder.duo.appending(path: "search")
     }
     public static var index: URL { root.appending(path: "index.sqlite") }

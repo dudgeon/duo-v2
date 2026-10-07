@@ -25,7 +25,7 @@ public enum SessionArchive {
     }
 
     public static var root: URL {
-        if let r = ProcessInfo.processInfo.environment["DUO_ARCHIVE_ROOT"] { return URL(fileURLWithPath: r) }
+        if let r = Env.value("DUO_ARCHIVE_ROOT") { return URL(fileURLWithPath: r) }
         return SupportFolder.duo.appending(path: "archive")
     }
     static var manifestURL: URL { root.appending(path: "manifest.json") }
@@ -102,7 +102,7 @@ public enum SessionArchive {
     @discardableResult
     public static func restore(_ id: String) throws -> URL? {
         guard let e = manifest().sessions[id], FileManager.default.fileExists(atPath: copyURL(id).path) else { return nil }
-        let dir = ClaudeStorage.projects.appending(path: ClaudeStorage.encode(URL(fileURLWithPath: e.cwd).resolvingSymlinksInPath().path))
+        let dir = ClaudeStorage.projects.appending(path: ClaudeStorage.encode(URL(fileURLWithPath: e.cwd).realPath))
         let dest = dir.appending(path: "\(id).jsonl")
         if FileManager.default.fileExists(atPath: dest.path) { return dest }
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

@@ -132,6 +132,7 @@ public struct Migrator: Sendable {
 
     /// Relocate one session to `target` (FR-7.4.1): it shows up in that folder's picker and leaves its old one.
     public func planRelocate(_ id: String, to target: String, live: Set<String> = []) throws -> Journal {
+        let target = URL.realPath(target)   // Claude's spelling (LR-24, F-200)
         if live.contains(id) { throw Refusal("\(id.prefix(8)) is running; relocation waits until it isn't (§6.3 liveness)") }
         guard let from = bucket(holding: id) else { throw Refusal("no transcript for \(id.prefix(8))") }
         try requireCalibrated()
@@ -153,6 +154,7 @@ public struct Migrator: Sendable {
     /// moves them, without moving the folder again. Same journal, verify and undo as a folder move.
     public func planReconnect(_ old: String, to new: String, live: Set<String> = []) throws -> Journal {
         let fm = FileManager.default
+        let old = URL.realPath(old), new = URL.realPath(new)   // Claude's spelling (LR-24, F-200)
         var isDir: ObjCBool = false
         guard fm.fileExists(atPath: new, isDirectory: &isDir), isDir.boolValue else { throw Refusal("\(new) isn't a folder") }
         if old == new { throw Refusal("that's the same folder") }
@@ -160,7 +162,7 @@ public struct Migrator: Sendable {
         var steps: [Step] = []
         for b in (try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil)) ?? [] {
             for t in ((try? fm.contentsOfDirectory(at: b, includingPropertiesForKeys: nil)) ?? []) where t.pathExtension == "jsonl" {
-                guard let cwd = Self.currentCwd(t), cwd == old || cwd.hasPrefix(old + "/") else { continue }
+                guard let cwd = Self.currentCwd(t).map(URL.realPath), cwd == old || cwd.hasPrefix(old + "/") else { continue }
                 let id = t.deletingPathExtension().lastPathComponent
                 if live.contains(id) { throw Refusal("\(id.prefix(8)) is running in \(cwd); end it first (FR-7.5.3)") }
                 let mapped = new + cwd.dropFirst(old.count)
@@ -182,6 +184,10 @@ public struct Migrator: Sendable {
     /// Move a folder and, in the same transaction, every session filed under it (FR-7.5).
     public func planFolderMove(_ folder: String, to dest: String, live: Set<String> = [], openFolders: [String] = []) throws -> Journal {
         let fm = FileManager.default
+        // Claude files a session under its folder's real path (/private/tmp, not /tmp): match and
+        // map in that spelling, or the sessions stay behind in a folder that's gone (LR-24, F-200).
+        let folder = URL.realPath(folder), dest = URL.realPath(dest)
+        let openFolders = openFolders.map(URL.realPath)
         var isDir: ObjCBool = false
         guard fm.fileExists(atPath: folder, isDirectory: &isDir), isDir.boolValue else { throw Refusal("\(folder) isn't a folder") }
         if fm.fileExists(atPath: dest), ((try? fm.contentsOfDirectory(atPath: dest)) ?? []).isEmpty == false {
@@ -195,7 +201,7 @@ public struct Migrator: Sendable {
         var warnings: [String] = []
         for b in (try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil)) ?? [] {
             for t in ((try? fm.contentsOfDirectory(at: b, includingPropertiesForKeys: nil)) ?? []) where t.pathExtension == "jsonl" {
-                guard let cwd = Self.currentCwd(t), cwd == folder || cwd.hasPrefix(folder + "/") else { continue }
+                guard let cwd = Self.currentCwd(t).map(URL.realPath), cwd == folder || cwd.hasPrefix(folder + "/") else { continue }
                 let id = t.deletingPathExtension().lastPathComponent
                 if live.contains(id) { throw Refusal("\(id.prefix(8)) is running in \(cwd); end it first (FR-7.5.3)") }
                 let mapped = dest + cwd.dropFirst(folder.count)
@@ -206,7 +212,7 @@ public struct Migrator: Sendable {
                 }
                 steps.append(Step(n: steps.count + 1, op: .appendRelocated, from: target.appending(path: "\(id).jsonl").path,
                                   to: target.appending(path: "\(id).jsonl").path, sessionId: id, relocatedCwd: String(mapped)))
-                if let first = Self.firstCwd(t), first != cwd { warnings.append("\(id.prefix(8)) started in \(first)") }
+                if let first = Self.firstCwd(t), URL.realPath(first) != cwd { warnings.append("\(id.prefix(8)) started in \(first)") }
             }
         }
         warnings.append("Claude will ask to trust \(dest) on the first resume there (its trust entry stays under the old path).")

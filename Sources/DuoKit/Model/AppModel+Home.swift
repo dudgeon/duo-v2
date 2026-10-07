@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import DuoControl
 
 /// Home is optional (DL-82): Duo lists every Claude session without one. Choosing a folder makes it
 /// Home, the container of the projects you track (DL-85); Move into Home brings a project or folder
@@ -63,7 +64,7 @@ extension AppModel {
 
     /// Whether a project or folder already sits in Home's folder.
     public func isInHome(_ project: String) -> Bool {
-        guard let root = liveRoot?.standardizedFileURL.path, let folder = liveFolders[project]?.standardizedFileURL.path else { return false }
+        guard let root = liveRoot?.realPath, let folder = liveFolders[project]?.realPath else { return false }
         return folder == root || folder.hasPrefix(root + "/")
     }
 
@@ -79,12 +80,12 @@ extension AppModel {
         guard Migrator.cliUnderstandsRelocation(ClaudeLocator.resolve()) else {
             return fail("This Claude Code doesn't understand moved sessions, so Duo can't move \(project)'s folder without losing them (FR-7.4.8).")
         }
-        let from = folder.resolvingSymlinksInPath().path
+        let from = folder.realPath
         let places = homePlaces()
         let m = Migrator()
         let live = { Set(Beacon.readAll().map(\.sessionId)) }
         func plan(_ place: HomePlace) throws -> Migrator.Journal {
-            let dest = place.folder.resolvingSymlinksInPath().appending(path: folder.lastPathComponent).path
+            let dest = place.folder.realURL.appending(path: folder.lastPathComponent).path
             let p = try m.planFolderMove(from, to: dest, live: live(), openFolders: terminals.all.map(\.cwd))
             try m.save(p)
             return p
@@ -96,7 +97,7 @@ extension AppModel {
             guard let self else { return }
             do {
                 let journal = place == (into ?? places[0]) ? first : try plan(place)
-                let dest = place.folder.resolvingSymlinksInPath().appending(path: folder.lastPathComponent).path
+                let dest = place.folder.realURL.appending(path: folder.lastPathComponent).path
                 let r = try m.apply(journal, live: live())
                 Self.repointState(from: from, to: dest)
                 self.extraProjects = DuoState.load().projects.map { URL(fileURLWithPath: $0) }
@@ -114,7 +115,7 @@ extension AppModel {
                 done?(.success("Moved \(project) to \(Self.short(dest)) with \(sessions) session\(sessions == 1 ? "" : "s"). Undo: duo2 undo"))
             } catch { fail("Stopped and put back: \(error)") }
         }
-        if ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {   // scripted checks only
+        if Env.autoconfirm {   // scripted checks only
             FileHandle.standardError.write(Data("confirm: Move \(project) into Home? | \(sessions) session(s)\n".utf8))
             return run(into ?? places[0])
         }
@@ -128,9 +129,14 @@ extension AppModel {
         moveIntoHomeForm = form
     }
 
-    /// Duo's own records name folders by path: follow a moved folder.
+    /// Duo's own records name folders by path: follow a moved folder. A record may spell the
+    /// folder either way (/tmp or /private/tmp), so they're compared by real path (F-200).
     static func repointState(from: String, to: String) {
-        func map(_ p: String) -> String { p == from ? to : p.hasPrefix(from + "/") ? to + p.dropFirst(from.count) : p }
+        let from = URL.realPath(from)
+        func map(_ p: String) -> String {
+            let r = URL.realPath(p)
+            return r == from ? to : r.hasPrefix(from + "/") ? to + r.dropFirst(from.count) : p
+        }
         DuoState.update { s in
             s.projects = s.projects.map(map)
             s.archivedProjects = s.archivedProjects.map(map)

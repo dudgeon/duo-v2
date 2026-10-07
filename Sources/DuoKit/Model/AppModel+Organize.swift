@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import DuoControl
 
 /// Cleaning up projects and sessions (DL-63–DL-66): move sessions into a project, merge one
 /// project's sessions into another, make a folder a project. Only Duo's session indexes change;
@@ -240,7 +241,7 @@ extension AppModel {
     /// finished: an alert started inside a drop came up as a loose window with the drag image
     /// frozen over it, so a drop looked like it did nothing (F-51).
     func confirm(title: String, detail: String, button: String, then: @escaping @MainActor (Bool) -> Void) {
-        if ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {   // scripted checks only
+        if Env.autoconfirm {   // scripted checks only
             FileHandle.standardError.write(Data("confirm: \(title) | \(detail.replacingOccurrences(of: "\n", with: " / "))\n".utf8))
             return then(true)
         }
@@ -251,7 +252,7 @@ extension AppModel {
     }
 
     func info(_ text: String) {
-        if ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {
+        if Env.autoconfirm {
             FileHandle.standardError.write(Data("info: \(text)\n".utf8)); return
         }
         SheetCenter.shared.ask(DuoQuestion(title: text, choices: [.init(label: "OK", isDefault: true, isCancel: true) {}]))

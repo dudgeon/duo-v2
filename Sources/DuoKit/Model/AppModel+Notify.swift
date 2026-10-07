@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import DuoControl
 import UserNotifications
 
 /// Notifications and the Dock badge (S3-6, DL-101; DB-27). Needs you only: one notification per
@@ -20,7 +21,7 @@ extension AppModel {
         let waiting = Dictionary(fixture.sessions.compactMap { s in s.state == .needsYou ? s.sessionId.map { ($0, s) } : nil }, uniquingKeysWith: { a, _ in a })
         // A session that stopped waiting can notify again next time it waits.
         notified = notified.filter { waiting[$0] != nil }
-        guard interactivePrompts, terminalsMode == .live, ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] == nil,
+        guard interactivePrompts, terminalsMode == .live, !Env.autoconfirm,
               !NSApp.isActive, Bundle.main.bundleIdentifier != nil, !waiting.isEmpty else { return }
         // The badge is allowed at the moment Duo would first notify, even with notifications off (DL-138).
         if DuoState.load().dockBadge { Notifier.shared.authorize { _ in } }
