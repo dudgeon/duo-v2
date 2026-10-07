@@ -131,12 +131,16 @@ struct HomePane: View {
             if let home, let tab = model.homeTab, model.fixtureConsole != .homeNone,
                let t = model.terminal(project: home.name, session: tab), !t.missingClaude {
                 // Home's sessions read as chat too (DL-132 g), the same body as the console's.
-                if let chat = model.chat(for: t.key) { ConsoleChatBody(chat: chat, terminal: t) } else { TerminalSlot(session: t) }
+                // Home's chat draws only at All projects: this pane stays in the window under a project, and
+                // its composer, out of sight, took the keyboard from the project's (C-47, F-183).
+                if let chat = model.chat(for: t.key) {
+                    if model.altitude.isAllProjects || !chat.showsChat { ConsoleChatBody(chat: chat, terminal: t) } else { Color.clear }
+                } else { TerminalSlot(session: t) }
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
                 Color.clear.frame(height: 0).task(id: t.key) { model.attachChat(t) }
             } else if let tab = model.homeTab, let chat = model.fixtureChats[tab] {
-                // A target state's Home chat (no terminal in fixture mode).
-                ConsoleChatBody(chat: chat, terminal: nil)
+                // A target state's Home chat (no terminal in fixture mode); at All projects only, as above.
+                if model.altitude.isAllProjects { ConsoleChatBody(chat: chat, terminal: nil) } else { Color.clear }
             } else if noHome {
                 // No Home folder chosen (DL-84, S2-3): sessions are listed anyway (DL-82).
                 ConsoleMessage(state: .noHome, inHome: true)

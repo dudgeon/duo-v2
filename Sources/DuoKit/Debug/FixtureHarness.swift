@@ -468,6 +468,20 @@ public enum FixtureHarness {
                     FileHandle.standardError.write(Data("chat-hover: \(chat.ui.hoverLink?.absoluteString ?? "no link")\n".utf8))
                 }
             }
+        case "home-chat":   // Home's session in chat (DL-142 (6)), as the boards draw it, whatever is on screen: C-47's two composers
+            model.fixtureChats["Morning triage"] = HomeListTargets.homeChat()
+            model.homeTab = "Morning triage"
+            model.fixtureChats["Morning triage"]?.focusComposer += 1   // as an interrupted turn does (ChatSession): Home's composer asks for the keyboard
+        case "focus-check":   // C-47, F-183: only the chat on screen has a composer that can hold the keyboard
+            func all(_ v: NSView) -> [ComposerTextView] { ((v as? ComposerTextView).map { [$0] } ?? []) + v.subviews.flatMap(all) }
+            let visible = model.altitude.isAllProjects ? model.homeTab : model.consoleTab
+            var bad: [String] = []
+            for w in NSApp.windows {
+                for c in w.contentView.map(all) ?? [] where c.coordinator?.chat.key != visible {
+                    bad.append("\(c.coordinator?.chat.key ?? "-")\(w.firstResponder === c ? " (has the keyboard)" : " (in the window)")")
+                }
+            }
+            FileHandle.standardError.write(Data("focus-check: \(bad.isEmpty ? "ok" : "FAIL: composers of chats not on screen: \(bad.joined(separator: ", "))")\n".utf8))
         case "composers":   // every composer in the windows: its session, whether it's on screen, and which has the keyboard
             func all(_ v: NSView) -> [ComposerTextView] { ((v as? ComposerTextView).map { [$0] } ?? []) + v.subviews.flatMap(all) }
             for w in NSApp.windows {
