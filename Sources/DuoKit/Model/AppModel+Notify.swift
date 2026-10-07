@@ -31,11 +31,64 @@ extension AppModel {
         }
     }
 
+    /// Duo's Dock menu (ENH-24, DL-144): "Needs you", then each waiting session; clicking one opens
+    /// it as `duo2 open <project> <session>` does. Nothing waiting: macOS's own menu only.
+    public func dockMenu() -> NSMenu? {
+        let (items, more) = fixture.dockMenuItems()
+        guard !items.isEmpty else { return nil }
+        let menu = NSMenu()
+        let header = NSMenuItem(title: "Needs you", action: nil, keyEquivalent: "")
+        header.isEnabled = false
+        menu.addItem(header)
+        for (title, s) in items {
+            menu.addItem(DockMenuAction(title) { [weak self] in self?.openWaiting(s) })   // action: open
+        }
+        if more > 0 {
+            menu.addItem(DockMenuAction("\(more) more need you…") { [weak self] in DuoFocus.take(); self?.zoomOut() })   // action: go all
+        }
+        return menu
+    }
+
+    func openWaiting(_ s: Fixture.Session) {
+        DuoFocus.take()
+        selectedActionSession = s.id
+        open(project: s.project)
+    }
+
+    /// Settings › Notifications › Open Notification Settings… (Q-93, DL-144): System Settings at Duo.
+    public func openNotificationSettings() {
+        let id = Bundle.main.bundleIdentifier ?? "com.dudgeon.duo"
+        if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=\(id)") { NSWorkspace.shared.open(url) }
+    }
+
     /// A notification was clicked: the project, with its card selected.
     func openFromNotification(sessionId: String, project: String) {
         DuoFocus.take()
         if let s = fixture.sessions.first(where: { $0.sessionId == sessionId }) { selectedActionSession = s.id }
         open(project: project)
+    }
+}
+
+/// A Dock menu item that runs a closure.
+@MainActor final class DockMenuAction: NSMenuItem {
+    private let run: @MainActor () -> Void
+    init(_ title: String, _ run: @escaping @MainActor () -> Void) {
+        self.run = run
+        super.init(title: title, action: #selector(fire), keyEquivalent: "")
+        target = self
+    }
+    required init(coder: NSCoder) { fatalError("not used") }
+    @objc private func fire() { run() }
+}
+
+/// What macOS hides of Duo's attention (Q-93, DL-144): notifications off, or badges off while
+/// Duo's Dock count is on. Nil when nothing is hidden or outside an app bundle.
+public enum MacOSHides: String, Sendable { case notifications, badges
+    public var line: String {
+        switch self {
+        case .notifications: "macOS has notifications off for Duo, so neither of these shows."
+        case .badges: "macOS has Badge application icon off for Duo, so the Dock shows no count."
+        }
     }
 }
 
@@ -82,6 +135,14 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
             case .notSupported: "not asked yet"; @unknown default: "unknown"
         }
         return "macOS: notifications \(status), badges \(badges)"
+    }
+
+    /// Which of Duo's signals macOS hides, for the Settings line (Q-93).
+    func hidden(dockBadge: Bool) async -> MacOSHides? {
+        guard Bundle.main.bundleIdentifier != nil else { return nil }
+        let s = await UNUserNotificationCenter.current().notificationSettings()
+        if s.authorizationStatus == .denied { return .notifications }
+        return dockBadge && s.badgeSetting == .disabled ? .badges : nil
     }
 
     func post(id: String, title: String, subtitle: String, body: String, project: String) {

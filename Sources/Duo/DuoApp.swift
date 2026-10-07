@@ -88,6 +88,7 @@ struct DuoApp: App {
         // sometimes finished launching with no window, and reopening didn't bring one back.
         let mainWindow = MainWindow(model: model, options: options)
         AppDelegate.reopen = { mainWindow.show() }
+        AppDelegate.dockMenu = { model.dockMenu() }
         AppDelegate.openURL = { url in
             // Session links from notes or other apps (DL-87).
             if url.scheme == "duo2", url.host == "session" { mainWindow.show(); model.openLink(url.absoluteString); return }
@@ -168,6 +169,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         return .terminateLater
     }
+
+    /// The Dock menu of sessions that need you (ENH-24).
+    nonisolated(unsafe) static var dockMenu: (@MainActor () -> NSMenu?)?
+    @MainActor func applicationDockMenu(_ sender: NSApplication) -> NSMenu? { Self.dockMenu?() }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag { MainActor.assumeIsolated { Self.reopen?() } }

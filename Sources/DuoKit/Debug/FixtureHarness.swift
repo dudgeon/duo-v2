@@ -131,6 +131,8 @@ public enum FixtureHarness {
             if let p = model.homePlaces().first(where: { $0.folder.lastPathComponent == (parts.count > 1 ? parts[1] : "") }) {
                 model.moveIntoHomeForm?.into = p; model.newProjectForm?.into = p
             }
+        case "notify-hidden":   // notify-hidden:notifications|badges|none: what macOS hides, for Settings (Q-93)
+            SettingsInfo.shared.macOSHidesOverride = .some(parts.count > 1 ? MacOSHides(rawValue: parts[1]) : nil)
         case "render-settings":   // render-settings:<png>: the Settings view, drawn to an image at 2x
             if parts.count > 1 {
                 SettingsInfo.shared.refresh()
