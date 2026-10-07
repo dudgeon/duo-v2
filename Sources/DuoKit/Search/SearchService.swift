@@ -1,5 +1,6 @@
 import DuoSearch
 import Foundation
+import DuoControl
 import PDFKit
 
 /// The app's side of search (Phase M1): installs the model, registers PDF extraction, and keeps
@@ -68,7 +69,7 @@ public final class SearchService {
                     try? await Task.sleep(for: .milliseconds(busy ? 500 : 15))
                 }
             }
-            let claude = (ProcessInfo.processInfo.environment["CLAUDE_CONFIG_DIR"].map { URL(fileURLWithPath: $0) }
+            let claude = (Env.value("CLAUDE_CONFIG_DIR").map { URL(fileURLWithPath: $0) }
                 ?? FileManager.default.homeDirectoryForCurrentUser.appending(path: ".claude")).appending(path: "projects")
             out["sessions"] = try await index.indexSessions(projects: projects, claudeProjects: claude, embedder: embedder,
                                                             archived: SessionArchive.purged()) {

@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import DuoControl
 
 /// DL-50: in a git repository, Duo offers once to add `.duo/` to `.gitignore`, so its session
 /// index stays out of commits that engineers see. Never silent; the answer is remembered.
@@ -47,7 +48,7 @@ enum GitIgnoreOffer {
     }
 
     static func ask(project: String, repo: URL, interactive: Bool) {
-        if let auto = ProcessInfo.processInfo.environment["DUO_GITIGNORE_ANSWER"] {
+        if let auto = Env.value("DUO_GITIGNORE_ANSWER") {
             record(auto == "add", repo: repo)   // scripted runs and checks
         } else if interactive {
             showing = true

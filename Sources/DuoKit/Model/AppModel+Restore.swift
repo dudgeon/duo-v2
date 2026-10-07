@@ -1,4 +1,5 @@
 import Foundation
+import DuoControl
 
 /// Restore on relaunch (LR-58): what was open when Duo quit comes back. Written on quit and every
 /// few seconds while live (so a crash loses little), to its own versioned file; a file Duo can't
@@ -101,7 +102,7 @@ extension AppModel {
     func applyRestore() {
         defer { restoreApplied = true }
         guard restoreEnabled, let s = RestoreState.load(RestoreState.file(root: liveRoot?.path)), s.root == liveRoot?.path else { return }
-        let resolve = { (p: String) in URL(fileURLWithPath: p).resolvingSymlinksInPath().path }
+        let resolve = { (p: String) in URL(fileURLWithPath: p).realPath }
         func name(_ folder: String) -> String? { liveFolders.first { resolve($0.value.path) == resolve(folder) }?.key }
         var reopened = 0
         for p in s.projects {

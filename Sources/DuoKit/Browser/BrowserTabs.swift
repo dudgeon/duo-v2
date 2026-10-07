@@ -311,7 +311,7 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
         guard let window = webView.window else { done?(nil); return }
         let info = (NSPrintInfo.shared.copy() as? NSPrintInfo) ?? NSPrintInfo()
         var target = pdf
-        if target == nil, ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {
+        if target == nil, Env.autoconfirm {
             target = DuoPaths.support.appending(path: "print-\(id.replacingOccurrences(of: ":", with: "-")).pdf")
         }
         if let target {
@@ -846,7 +846,7 @@ extension AppModel {
                 }
             }
             guard tab.webView.window != nil else { return done(.fail("the tab isn't on screen; show it first (duo2 view tab \(tab.id))")) }
-            if ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {
+            if Env.autoconfirm {
                 return tab.printPage { saved in done(saved.map { .ok("A scripted run: saved the page as \($0.path) instead of showing the print panel.", ["path": $0.path]) } ?? .fail("couldn't print")) }
             }
             tab.printPage()

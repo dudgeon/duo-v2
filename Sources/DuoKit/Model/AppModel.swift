@@ -212,12 +212,12 @@ public final class AppModel {
             // A session moved here from another folder (DL-64) resumes where it was, then /cd moves
             // it (and its transcript) to this folder, as Claude does itself. /cd to the folder it's
             // already in moves nothing (F-45), hence starting in the old one.
-            var filed = transcript.flatMap(ClaudeStorage.filedCwd).map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path }
+            var filed = transcript.flatMap(ClaudeStorage.filedCwd).map { URL(fileURLWithPath: $0).realPath }
             // Still filed under a folder that's gone (the project was moved outside Duo): it follows
             // the project first, or Claude wouldn't find it here (DB-8, F-78).
-            if let f = filed, f != folder.resolvingSymlinksInPath().path, !FileManager.default.fileExists(atPath: f),
-               reconnectForResume(id, to: folder) { filed = folder.resolvingSymlinksInPath().path }
-            let movedHere = filed.map { $0 != folder.resolvingSymlinksInPath().path && FileManager.default.fileExists(atPath: $0) } ?? false
+            if let f = filed, f != folder.realPath, !FileManager.default.fileExists(atPath: f),
+               reconnectForResume(id, to: folder) { filed = folder.realPath }
+            let movedHere = filed.map { $0 != folder.realPath && FileManager.default.fileExists(atPath: $0) } ?? false
             // Remote Control stays on for a session started with it (DL-128).
             let remote = SessionIndex.load(project: folder).sessions.first { $0.sessionId == id }?.remoteControl
             let t = terminals.session(key, command: transcript != nil ? .resumeClaude(sessionID: id, remoteControl: remote) : .newClaude(sessionID: id, prompt: nil, remoteControl: remote),

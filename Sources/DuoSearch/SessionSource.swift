@@ -1,4 +1,5 @@
 import Foundation
+import DuoControl
 
 /// Claude Code sessions and memory for search (SRCH L1, L7, FR-7.1.3–7.1.5, FR-7.2).
 /// Conversation text only: user prompts and assistant prose, plus the session's title. No tool
@@ -107,9 +108,9 @@ extension SearchIndex {
                               archived: [(id: String, copy: URL, cwd: String)] = [],
                               pause: () async -> Void = {}) async throws -> IndexStats {
         var stats = IndexStats()
-        let roots = projects.map { (name: $0.key, path: $0.value.resolvingSymlinksInPath().path) }
+        let roots = projects.map { (name: $0.key, path: $0.value.realPath) }
         func owner(_ cwd: String?) -> String {
-            guard let c = cwd.map({ URL(fileURLWithPath: $0).resolvingSymlinksInPath().path }) else { return Self.unfiled }
+            guard let c = cwd.map({ URL(fileURLWithPath: $0).realPath }) else { return Self.unfiled }
             return roots.filter { c == $0.path || c.hasPrefix($0.path + "/") }.max { $0.path.count < $1.path.count }?.name ?? Self.unfiled
         }
         let transcripts = SessionSource.transcripts(in: claudeProjects).sorted { $0.modified > $1.modified }

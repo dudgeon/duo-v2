@@ -651,6 +651,7 @@ func repoFixture() throws -> Fixture {
     store.terminateAll()
     try? FileManager.default.removeItem(at: ev)
     reapChecks()
+    try pathChecks()
     dockBadgeChecks()
     dockMenuChecks()
 
@@ -960,7 +961,7 @@ func repoFixture() throws -> Fixture {
     print("migrator (CONS §6.3, §7.4, §7.5; DL-41) on a throwaway Claude config")
     do {
         let fm = FileManager.default
-        let root = fm.temporaryDirectory.appending(path: "duo-mig-\(UUID().uuidString)").resolvingSymlinksInPath()
+        let root = fm.temporaryDirectory.appending(path: "duo-mig-\(UUID().uuidString)").realURL   // Claude's spelling, /private/var (F-200)
         let claude = root.appending(path: "claude"), work = root.appending(path: "work")
         let a = work.appending(path: "a").path, b = work.appending(path: "b").path
         try fm.createDirectory(atPath: a + "/sub", withIntermediateDirectories: true)

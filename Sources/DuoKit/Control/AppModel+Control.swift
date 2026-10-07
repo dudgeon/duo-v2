@@ -351,7 +351,7 @@ extension AppModel {
             guard let name = inv[0], let folder = liveFolders[name] ?? (FileManager.default.fileExists(atPath: (name as NSString).expandingTildeInPath) ? URL(fileURLWithPath: (name as NSString).expandingTildeInPath) : nil) else {
                 return done(.fail("usage: \(id.action.usage)"))
             }
-            let cwd = folder.resolvingSymlinksInPath().path
+            let cwd = folder.realPath
             let ids = Set(fixture.sessions.filter { $0.project == name }.compactMap(\.sessionId))
             let titles = Dictionary(fixture.sessions.compactMap { s in s.sessionId.map { ($0, s.name) } }, uniquingKeysWith: { a, _ in a })
             Task.detached(priority: .userInitiated) {
@@ -908,9 +908,9 @@ extension AppModel {
     /// The project whose folder holds `cwd` (deepest wins).
     func projectFor(cwd: String?) -> Fixture.Project? {
         guard let cwd else { return nil }
-        let c = URL(fileURLWithPath: cwd).resolvingSymlinksInPath().path
+        let c = URL(fileURLWithPath: cwd).realPath
         return fixture.projects.compactMap { p -> (Fixture.Project, Int)? in
-            guard let f = liveFolders[p.name]?.resolvingSymlinksInPath().path, c == f || c.hasPrefix(f + "/") else { return nil }
+            guard let f = liveFolders[p.name]?.realPath, c == f || c.hasPrefix(f + "/") else { return nil }
             return (p, f.count)
         }.max { $0.1 < $1.1 }?.0
     }
@@ -962,7 +962,7 @@ extension AppModel {
         let expanded = (s as NSString).expandingTildeInPath
         let url: URL
         if expanded.hasPrefix("/") { url = URL(fileURLWithPath: expanded) }
-        else if let cwd, let inside = relativePathIn(URL(fileURLWithPath: cwd), folder: folder) ?? (URL(fileURLWithPath: cwd).resolvingSymlinksInPath().path == folder.resolvingSymlinksInPath().path ? "" : nil) {
+        else if let cwd, let inside = relativePathIn(URL(fileURLWithPath: cwd), folder: folder) ?? (URL(fileURLWithPath: cwd).realPath == folder.realPath ? "" : nil) {
             url = folder.appending(path: inside.isEmpty ? expanded : inside + "/" + expanded)
         } else { url = folder.appending(path: expanded) }
         guard let r = relativePathIn(url, folder: folder), FileManager.default.fileExists(atPath: folder.appending(path: r).path) else { return nil }
@@ -970,8 +970,8 @@ extension AppModel {
     }
 
     func relativePathIn(_ url: URL, folder: URL) -> String? {
-        let f = folder.resolvingSymlinksInPath().standardizedFileURL.path
-        let u = url.resolvingSymlinksInPath().standardizedFileURL.path
+        let f = folder.realPath
+        let u = url.realPath
         return u.hasPrefix(f + "/") ? String(u.dropFirst(f.count + 1)) : nil
     }
 

@@ -1,3 +1,4 @@
+import DuoControl
 import AppKit
 import DuoSearch
 import SwiftUI
@@ -61,7 +62,7 @@ public enum FixtureHarness {
     /// A menu as indented text: separators as —, submenus nested, dimmed and checked items marked.
     static func walk(_ menu: NSMenu, _ depth: Int) -> [String] {
         menu.delegate?.menuNeedsUpdate?(menu)
-        if ProcessInfo.processInfo.environment["DUO_MENU_UPDATE"] != nil { menu.update() }
+        if Env.isSet("DUO_MENU_UPDATE") { menu.update() }
         return menu.items.flatMap { i -> [String] in
             if i.isHidden { return [] }
             if i.isSeparatorItem { return [String(repeating: "  ", count: depth) + "—"] }

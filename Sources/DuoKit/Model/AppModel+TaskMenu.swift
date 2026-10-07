@@ -331,7 +331,7 @@ extension AppModel {
 
     /// Asks in Duo; a scripted run (DUO_AUTOCONFIRM) logs the question and takes its default.
     func ask(_ q: DuoQuestion) {
-        if ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {
+        if Env.autoconfirm {
             FileHandle.standardError.write(Data("question: \(q.title) | \(q.choices.map(\.label).joined(separator: " / "))\n".utf8))
             return q.choices.first(where: \.isDefault)?.action() ?? ()
         }

@@ -1,5 +1,6 @@
 import DuoSearch
 import Foundation
+import DuoControl
 
 /// Builds the same snapshot the fixture provides from real sources (Phase E): projects found on
 /// disk, each project's session index, and the beacons of live Claude sessions. The views don't
@@ -70,7 +71,7 @@ public enum LiveSnapshot {
     }
 
     public static func build(_ ctx: Context, beacons: [Beacon] = Beacon.readAll()) -> (Fixture, folders: [String: URL], moves: [Move]) {
-        let resolve = { (p: String) in URL(fileURLWithPath: p).resolvingSymlinksInPath().path }
+        let resolve = { (p: String) in URL(fileURLWithPath: p).realPath }
         // Claude's history, plus sessions only Duo's archive still has (Claude's cleanup removed the
         // transcript, DL-44): they stay listed by title and resume from the copy.
         let history = ctx.historyOverride ?? (ctx.includeHistory

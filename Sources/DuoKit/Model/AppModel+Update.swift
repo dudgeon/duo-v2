@@ -228,7 +228,7 @@ extension AppModel {
         let q = UpdateCheck.question(o, openPage: { NSWorkspace.shared.open(o.page) },
                                      installNow: { [weak self] in self?.sparkleCheck?() },
                                      later: { DuoState.update { $0.skippedUpdate = o.version } })
-        if ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {   // scripted checks: say it, open nothing
+        if Env.autoconfirm {   // scripted checks: say it, open nothing
             let buttons = q.choices.map { $0.isDefault ? "[\($0.label)]" : $0.label }.joined(separator: ", ")
             FileHandle.standardError.write(Data("question: \(q.title) | \(q.paragraphs.joined(separator: " / ")) | \(buttons)\n".utf8))
             return

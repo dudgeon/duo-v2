@@ -1,6 +1,7 @@
 import AppKit
 import DuoSearch
 import Foundation
+import DuoControl
 
 /// A Markdown copy just made from a Word document (DL-123): what its bar says, and what Undo
 /// Conversion takes away again.
@@ -86,7 +87,7 @@ extension AppModel {
                 self.startConversion(tab, docx: docx, md: target, replace: false, allowEmpty: false, show: true) { _ in }
             },
         ]
-        if ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {
+        if Env.autoconfirm {
             // A scripted run takes the default: the free name (F-54).
             FileHandle.standardError.write(Data("confirm: \(q.title) | Convert as \(suggest)\n".utf8))
             return q.choices.last!.action()

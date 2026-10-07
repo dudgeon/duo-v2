@@ -1,11 +1,12 @@
 import Foundation
+import DuoControl
 
 /// Claude Code's on-disk layout under `~/.claude` (DL-14: Duo shares it). Reverse-engineered
 /// from CLI 2.1.288 (docs/research/claude-code-session-path-binding.md); every rule here is
 /// checked against the real folders on launch (`calibrate`) before Duo relies on it.
 public enum ClaudeStorage {
     public static var root: URL {
-        if let dir = ProcessInfo.processInfo.environment["CLAUDE_CONFIG_DIR"] { return URL(fileURLWithPath: dir) }
+        if let dir = Env.value("CLAUDE_CONFIG_DIR") { return URL(fileURLWithPath: dir) }
         return FileManager.default.homeDirectoryForCurrentUser.appending(path: ".claude")
     }
 
@@ -18,7 +19,7 @@ public enum ClaudeStorage {
     public static func transcript(sessionId: String, cwd: String) -> URL? {
         let fm = FileManager.default
         let name = sessionId + ".jsonl"
-        let direct = projects.appending(path: encode(URL(fileURLWithPath: cwd).resolvingSymlinksInPath().path)).appending(path: name)
+        let direct = projects.appending(path: encode(URL(fileURLWithPath: cwd).realPath)).appending(path: name)
         if fm.fileExists(atPath: direct.path) { return direct }
         let dirs = (try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil)) ?? []
         return dirs.map { $0.appending(path: name) }.first { fm.fileExists(atPath: $0.path) }

@@ -19,7 +19,7 @@ enum SparkleUpdater {
 
     static func start(model: AppModel) {
         guard !UpdateCheck.isDevelopmentBuild, Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") != nil,
-              model.interactivePrompts, ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] == nil else { return }
+              model.interactivePrompts, !Env.autoconfirm else { return }
         let d = Delegate(model: model)
         delegate = d
         let c = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: d, userDriverDelegate: nil)

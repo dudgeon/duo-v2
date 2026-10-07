@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import DuoControl
 
 /// A project's folder moved or missing (DB-8, LR-23). Duo never drops the sessions: a folder that's
 /// gone keeps its tile and says what happened; a moved one is found again by its `.duo` list or
@@ -14,7 +15,7 @@ extension AppModel {
         guard Migrator.cliUnderstandsRelocation(ClaudeLocator.resolve()) else {
             return fail("This Claude Code doesn't understand moved sessions, so Duo can't reconnect them (FR-7.4.8).")
         }
-        let oldPath = (old as NSString).expandingTildeInPath, newPath = new.resolvingSymlinksInPath().path
+        let oldPath = (old as NSString).expandingTildeInPath, newPath = new.realPath
         let m = Migrator()
         let plan: Migrator.Journal
         do {
@@ -85,7 +86,7 @@ extension AppModel {
     func reconnectForResume(_ id: String, to folder: URL) -> Bool {
         let m = Migrator()
         guard Migrator.cliUnderstandsRelocation(ClaudeLocator.resolve()),
-              let plan = try? m.planRelocate(id, to: folder.resolvingSymlinksInPath().path, live: Set(Beacon.readAll().map(\.sessionId))) else { return false }
+              let plan = try? m.planRelocate(id, to: folder.realPath, live: Set(Beacon.readAll().map(\.sessionId))) else { return false }
         do {
             try m.save(plan)
             _ = try m.apply(plan, live: [])

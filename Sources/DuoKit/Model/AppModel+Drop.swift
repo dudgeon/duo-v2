@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import DuoControl
 
 /// Files dropped on the file tree (DL-117): from Finder, or from another folder of the tree, they
 /// move into the folder under the pointer (the project root from its empty area). The same move
@@ -65,7 +66,7 @@ extension AppModel {
                 .init(label: "Replace") { then(.replace) },
                 .init(label: "Keep Both", isDefault: true) { then(.keepBoth) },
             ])
-        if ProcessInfo.processInfo.environment["DUO_AUTOCONFIRM"] != nil {   // scripted checks answer with `answer:<label>`
+        if Env.autoconfirm {   // scripted checks answer with `answer:<label>`
             FileHandle.standardError.write(Data("question: \(title) [\(q.choices.map(\.label).joined(separator: " | "))]\n".utf8))
         }
         // After the drag has finished, as for the map's drops (F-51).

@@ -190,7 +190,7 @@ public final class TerminalSession {
     private static func hookArgs(_ id: String) -> [String] {
         // DUO_NO_EDIT_HOOK (checks only) leaves the edit hook out, as a managed setting that
         // disables hooks would: the primer and the merge must hold on their own (DL-78).
-        let editHook = ProcessInfo.processInfo.environment["DUO_NO_EDIT_HOOK"] == nil ? ChildEnvironment.cliDirectory.map { $0 + "/duo2" } : nil
+        let editHook = !Env.isSet("DUO_NO_EDIT_HOOK") ? ChildEnvironment.cliDirectory.map { $0 + "/duo2" } : nil
         // Chat mode's events, for a CLI that has them all (DL-118).
         let chat = ClaudeLocator.resolve().flatMap(ClaudeVersion.known).flatMap(ChatVersion.init).map { $0 >= ChatVersion.messageDisplay } ?? false
         let settings = (try? HookEvents.settingsFile(for: id, cli: editHook, chatEvents: chat)).map { ["--settings", $0.path] } ?? []

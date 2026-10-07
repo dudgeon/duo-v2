@@ -1,5 +1,6 @@
 import DuoSearch
 import Foundation
+import DuoControl
 
 /// Finds projects on disk (Phase E). A project is a folder with `PROJECT.md`; Home is a folder
 /// with `HOME.md` (DL-42), the container of its projects (DL-85); a topic is the folder a project
@@ -133,7 +134,7 @@ public enum ProjectDiscovery {
     public static func chooseHome(_ found: [Found], remembered: String?) -> (home: Found?, contested: Bool) {
         let candidates = found.filter(\.isHomeCandidate)
         // Compare resolved paths: /var vs /private/var, symlinked folders (LR-24).
-        let resolved = { (p: String) in URL(fileURLWithPath: p).resolvingSymlinksInPath().path }
+        let resolved = { (p: String) in URL(fileURLWithPath: p).realPath }
         if let r = remembered, let hit = candidates.first(where: { resolved($0.folder.path) == resolved(r) }) {
             return (hit, candidates.count > 1)
         }
