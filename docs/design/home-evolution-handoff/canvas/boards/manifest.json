@@ -1,0 +1,128 @@
+[
+ {
+  "name": "00-study",
+  "w": 1200,
+  "h": 820,
+  "title": "0 \u00b7 Home's evolution: the study",
+  "kind": "board"
+ },
+ {
+  "name": "01-rows",
+  "w": 1200,
+  "h": 700,
+  "title": "1 \u00b7 A session row, two densities",
+  "kind": "board"
+ },
+ {
+  "name": "02-grouping",
+  "w": 1200,
+  "h": 860,
+  "title": "2 \u00b7 Grouping: by recency, by state, by project",
+  "kind": "board"
+ },
+ {
+  "name": "03-filter",
+  "w": 1640,
+  "h": 700,
+  "title": "3 \u00b7 Filtering and search",
+  "kind": "board"
+ },
+ {
+  "name": "04-click",
+  "w": 1200,
+  "h": 700,
+  "title": "4 \u00b7 What a click does",
+  "kind": "board"
+ },
+ {
+  "name": "05-where-a-1440",
+  "w": 1440,
+  "h": 900,
+  "title": "5 \u00b7 A \u00b7 The list in Home\u2019s place \u00b7 1440\u00d7900",
+  "kind": "target"
+ },
+ {
+  "name": "05-where-a-1280",
+  "w": 1280,
+  "h": 800,
+  "title": "5 \u00b7 A \u00b7 The list in Home\u2019s place \u00b7 1280\u00d7800",
+  "kind": "target"
+ },
+ {
+  "name": "06-where-b-1440",
+  "w": 1440,
+  "h": 900,
+  "title": "6 \u00b7 B \u00b7 Board | List in the middle \u00b7 1440\u00d7900",
+  "kind": "target"
+ },
+ {
+  "name": "06-where-b-1280",
+  "w": 1280,
+  "h": 800,
+  "title": "6 \u00b7 B \u00b7 Board | List in the middle \u00b7 1280\u00d7800",
+  "kind": "target"
+ },
+ {
+  "name": "07-where-c-1440",
+  "w": 1440,
+  "h": 900,
+  "title": "7 \u00b7 C \u00b7 A sessions sidebar beside everything \u00b7 1440\u00d7900",
+  "kind": "target"
+ },
+ {
+  "name": "07-where-c-1280",
+  "w": 1280,
+  "h": 800,
+  "title": "7 \u00b7 C \u00b7 A sessions sidebar beside everything \u00b7 1280\u00d7800",
+  "kind": "target"
+ },
+ {
+  "name": "08-where-d-1440",
+  "w": 1440,
+  "h": 900,
+  "title": "8 \u00b7 D \u00b7 A Sessions view, like the Claude app \u00b7 1440\u00d7900",
+  "kind": "target"
+ },
+ {
+  "name": "08-where-d-1280",
+  "w": 1280,
+  "h": 800,
+  "title": "8 \u00b7 D \u00b7 A Sessions view, like the Claude app \u00b7 1280\u00d7800",
+  "kind": "target"
+ },
+ {
+  "name": "06-where-b-board-1440",
+  "w": 1440,
+  "h": 900,
+  "title": "6 \u00b7 B \u00b7 Board | List in the middle, Board chosen \u00b7 1440\u00d7900",
+  "kind": "target"
+ },
+ {
+  "name": "05-where-summary",
+  "w": 1200,
+  "h": 560,
+  "title": "5\u20138 \u00b7 Where it lives, side by side",
+  "kind": "board"
+ },
+ {
+  "name": "09-needs-you",
+  "w": 1620,
+  "h": 1240,
+  "title": "9 \u00b7 Needs you beside the list, without counting twice",
+  "kind": "board"
+ },
+ {
+  "name": "10-home-chat",
+  "w": 1880,
+  "h": 900,
+  "title": "10 \u00b7 Home's agent in chat by default",
+  "kind": "board"
+ },
+ {
+  "name": "11-recommendation",
+  "w": 1200,
+  "h": 880,
+  "title": "11 \u00b7 Recommendation and the v1 slice",
+  "kind": "board"
+ }
+]

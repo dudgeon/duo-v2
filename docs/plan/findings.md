@@ -2298,3 +2298,9 @@ Geoff (2026-10-07): "test if the chat view works with all of Claude code's slash
 - **The Dock menu comes from `applicationDockMenu(_:)`**, built fresh each time it opens from `Fixture.dockMenuItems`. Its items are `NSMenuItem`s with a closure (`DockMenuAction`); the delegate method has to be `@MainActor` to hand an `NSMenu` back under Swift 6 (it isn't `Sendable`).
 - **System Settings opens at Duo's notifications** with `x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=<bundle id>`.
 - **The Settings captures** use a harness action, `notify-hidden:notifications|badges|none`, because a test instance shares Geoff's bundle id and would otherwise read his real Notification Center state (C-40). Compared with the boards region by region (`build/ui/dock/settings-*.png`): the line starts within 1 pt of the checkbox label, and the button sits where the board draws it.
+
+## F-170 · The session list's filter needs search's session index plus the names around it (DL-142, 2026-10-07)
+
+- **Search already indexes sessions** (`Sources/DuoSearch/SessionSource.swift`): each turn's prompt and Claude's prose, plus the session's title; no tool calls, results or thinking. `duo2 search --kind session` ranks them by meaning and words (F-36's fusion).
+- **It doesn't index a session's project, folder or task names.** DL-142's filter matches those too, so the list fuses two candidate sets: search's session hits, and a word match on the names Duo already holds for every row. One ranking, best first, one row per session (search groups per file the same way).
+- **The canvas came late.** The study started in a background session with no Artifact tool, so its 18 boards were drawn as static HTML first (`canvas/make.py`) and put on the Design canvas once the session was resumed in Duo (`canvas/to-canvas.py`); canvas comments failed for Geoff, so the decisions came by buttons, one at a time.
