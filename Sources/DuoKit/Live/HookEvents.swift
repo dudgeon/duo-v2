@@ -54,7 +54,7 @@ public enum HookEvents {
             // Beside chat mode's logger for every tool, when there is one; never instead of it.
             let preEdit: [String: Any] = ["matcher": "Edit|MultiEdit|Write", "hooks": [["type": "command", "command": q + " hook pre-edit", "timeout": 15]]]
             hooks["PreToolUse"] = (hooks["PreToolUse"] as? [[String: Any]] ?? []) + [preEdit]
-            // The task(s) the session is attributed to, at start and when they change (DL-116).
+            // The project's brief (ENH-16) and the task(s) the session is attributed to, at start and when they change (DL-116).
             let context: [String: Any] = ["type": "command", "command": q + " hook context", "timeout": 10]
             for e in ["SessionStart", "UserPromptSubmit"] { hooks[e] = [["hooks": [hook["hooks"] as! [[String: Any]], [context]].flatMap { $0 }]] }
         }

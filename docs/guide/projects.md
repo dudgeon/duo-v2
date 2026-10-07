@@ -23,15 +23,17 @@ Give each piece of work its own folder, with a short `PROJECT.md` in it: the goa
 - A project can be anywhere on your Mac. Projects in your [Home](home.md) folder come first on the map.
 - Health and next step are your own words. Write what you'd say in a status meeting.
 
-### Claude doesn't read `PROJECT.md` by itself
+### Claude is told the brief
 
-Claude reads `CLAUDE.md` files on its own, but not `PROJECT.md`. So today the brief on the tile is for you; Claude sees it only when you ask it to read it. If you want every session in a project to know its goal, add a `CLAUDE.md` to the project's folder with this line in it:
+Claude reads `CLAUDE.md` files on its own, but not `PROJECT.md`, so Duo tells it. When a session in a project starts, resumes, is cleared or compacts, Claude is given the project's name and folder and the goal, health and next step from `PROJECT.md`, in a few lines. If you change them while a session runs, Claude is told what changed with your next message, once. Only the properties are passed, not the rest of the note.
+
+If you want Claude to have the whole of `PROJECT.md`, add a `CLAUDE.md` to the project's folder with this line in it:
 
 ```
 @PROJECT.md
 ```
 
-Claude Code reads the file that line names whenever it starts in that folder.
+Claude Code reads the file that line names whenever it starts in that folder, and Duo then doesn't repeat the brief.
 
 ## For power users
 

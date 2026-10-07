@@ -65,9 +65,9 @@ case .compose:
     execv("/bin/sh", cargs)
     fail("couldn't open \(editor)")
 case .hook where rest.first == "context":
-    // SessionStart and UserPromptSubmit in Duo's sessions (DL-116): the task(s) the session is
-    // attributed to, in full at start (startup, resume, clear, compact) and, on a prompt, what
-    // changed since Duo last told it. Duo works out the text; this wraps it as the hook's
+    // SessionStart and UserPromptSubmit in Duo's sessions (DL-116): the project's brief (ENH-16)
+    // and the task(s) the session is attributed to, in full at start (startup, resume, clear,
+    // compact) and, on a prompt, what changed since Duo last told it. Duo works out the text; this wraps it as the hook's
     // additionalContext. Nothing to say, or Duo out of reach: no output, exit 0, so the prompt
     // always goes through (exit 2 would block it).
     guard let hook = (try? JSONSerialization.jsonObject(with: FileHandle.standardInput.readDataToEndOfFile())) as? [String: Any],
