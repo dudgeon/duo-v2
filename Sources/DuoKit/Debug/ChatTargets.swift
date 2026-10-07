@@ -9,14 +9,18 @@ import Foundation
 @MainActor
 public enum ChatTargets {
     nonisolated public static let boards = ["window", "toggle", "text", "tools", "permission-edit", "permission-bash", "plan", "question-multi",
-                                            "question-other", "question-review", "question-previews", "question-chat-decline", "composer", "status", "fallback"]
+                                            "question-other", "question-review", "question-previews", "question-chat-decline", "composer", "status", "fallback",
+                                            // chat-polish-handoff (DL-135): runs folded, and the candidates folded with them.
+                                            "polish-collapsed", "polish-expanded", "polish-needs-you", "polish-output", "polish-edits", "polish-thinking",
+                                            "polish-agents", "polish-todos", "polish-tools", "polish-failed", "polish-paste"]
     nonisolated public static let screens = boards.map { "chat-" + $0 }
 
     public static func folder(_ board: String) -> URL? {
         if let r = Bundle.main.url(forResource: "chat-fixtures", withExtension: nil) { return r.appending(path: board) }
         var dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : "chat-mode-handoff"
         for _ in 0..<6 {
-            let c = dir.appending(path: "docs/design/chat-mode-handoff/fixture-chat/\(board)")
+            let c = dir.appending(path: "docs/design/\(handoff)/fixture-chat/\(board)")
             if FileManager.default.fileExists(atPath: c.path) { return c }
             dir.deleteLastPathComponent()
         }
@@ -52,6 +56,7 @@ public enum ChatTargets {
         chat.setVersion(meta["version"] as? String ?? "2.1.291")
         ChatRecording.play(dir, into: chat, now: meta["now"] as? String)
         for id in meta["toggled"] as? [String] ?? [] { chat.ui.toggled.insert(id) }
+        for id in meta["openRuns"] as? [String] ?? [] { chat.ui.openRuns.insert(id) }
         if let d = meta["drafts"] as? [String: String] {
             chat.ui.planFeedback = d["plan"] ?? ""
             chat.ui.notes = d["notes"] ?? ""

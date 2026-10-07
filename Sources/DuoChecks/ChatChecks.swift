@@ -371,4 +371,52 @@ func spikeScreen(_ name: String) -> String {
         check(ClaudeVersion.known(ok.path) == "2.1.291", "a working claude still answers")
         ClaudeVersion.forget()
     }
+
+    print("chat mode: runs of tool calls fold to one line (DL-135, chat-polish-handoff)")
+    do {
+        /// A polish board's recording, played as the targets play it; the last Claude turn's rows.
+        func rows(_ board: String) -> [ChatCardRow] {
+            let c = ChatSession(key: "polish-" + board, mode: .chat)
+            ChatRecording.play(repoRoot().appending(path: "docs/design/chat-polish-handoff/fixture-chat/polish-\(board)"), into: c)
+            guard case .claude(let t)? = c.log.items.last(where: { if case .claude = $0 { return true } else { return false } }) else { return [] }
+            return ChatRuns.blocks(t.segments)
+        }
+        func lines(_ r: [ChatCardRow]) -> [String] {
+            r.compactMap { if case .run(let x) = $0 { return ChatRuns.line(x) } else { return nil } }
+        }
+        let c1 = rows("collapsed")
+        check(lines(c1) == ["Ran 4 shell commands, read 3 files", "Edited 2 files, ran 1 shell command · prd-v2.md, flows.md +6 −3"],
+              "a run is one line in the terminal's words, edits named (\(lines(c1)))")
+        check(c1.map { if case .text = $0 { "text" } else if case .run = $0 { "run" } else { "other" } } == ["text", "run", "text", "run", "text"],
+              "Claude's text between runs stays out of the folds")
+        if case .run(let r)? = c1.first(where: { if case .run = $0 { return true } else { return false } }) {
+            check(r.id == "run-toolu_c1" && r.steps.count == 5 && r.steps[0].summary == "Run the docs lint", "a run keeps its first step's id; a command keeps Claude's description; reads in a row are one step")
+        }
+        let ny = rows("needs-you")
+        let kinds = ny.map { r -> String in
+            switch r { case .run: "run"; case .step(let s): s.status == .needsYou ? "needs-you" : "step"; default: "other" }
+        }
+        check(kinds == ["run", "needs-you"] && lines(ny) == ["Ran 2 shell commands, read 1 file"], "a step waiting on you is never folded (\(kinds))")
+        let th = rows("thinking")
+        let thKinds = th.map { r -> String in switch r { case .run: "run"; case .thinking: "thought"; case .text: "text"; default: "other" } }
+        check(thKinds == ["run", "thought", "text"], "thinking between calls is inside the run; the last before the text stays a line (\(thKinds))")
+        if case .run(let r) = th[0] { check(r.entries.count == 6, "the run holds its three thoughts and three steps (\(r.entries.count))") }
+        let ag = rows("agents")
+        check(ag.filter { if case .step(let s) = $0 { return s.agent != nil } else { return false } }.count == 2 && lines(ag).isEmpty, "agents keep their own lines")
+        let td = rows("todos")
+        let todoRows = td.compactMap { r -> ChatToolStep? in if case .todos(let s) = r { return s } else { return nil } }
+        check(todoRows.count == 1 && ChatRuns.todoLine(todoRows[0].todos ?? []) == "3 of 5 done", "to-do updates are one line, the latest (\(todoRows.count))")
+        check(lines(td) == ["Ran 1 shell command, edited 1 file · prd-v2.md +2 −1"], "and the run around them stays one run (\(lines(td)))")
+        check(lines(rows("tools")) == ["Loaded 2 tools, used claude-in-chrome 5 times, sent 1 message"], "MCP and housekeeping tools counted by server and kind (\(lines(rows("tools"))))")
+        check(lines(rows("failed")) == ["Ran 4 shell commands · 1 failed"], "a failure is counted on the run's line")
+        // While a run is going: the kinds done, then the one still going.
+        let log = ChatLog()
+        log.toolUse(id: "g1", name: "Grep", input: ["pattern": "saved card"], time: nil)
+        log.toolResult(id: "g1", name: "Grep", input: nil, result: ["numFiles": 2], content: nil, isError: false, time: nil)
+        log.toolUse(id: "g2", name: "Read", input: ["file_path": "/a.md"], time: nil)
+        log.toolResult(id: "g2", name: "Read", input: nil, result: nil, content: "x", isError: false, time: nil)
+        log.toolUse(id: "g3", name: "Grep", input: ["pattern": "guest checkout"], time: nil)
+        guard case .claude(let turn)? = log.items.last, case .run(let r)? = ChatRuns.blocks(turn.segments).first else { return check(false, "a running run") }
+        check(ChatRuns.line(r) == "Searched for 1 pattern, read 1 file, searching for 1 pattern…", "a running run counts up (\(ChatRuns.line(r)))")
+    }
 }

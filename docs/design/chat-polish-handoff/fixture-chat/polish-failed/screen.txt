@@ -1,0 +1,34 @@
+ ▐▛███▛█   Claude Code v2.1.291
+▝▜██████▀  Haiku 4.5 · API Usage Billing
+ ▝▝   ▝▝   ~/repos/duo-v2/.claude/worktrees/chat-mode-research/Spikes/chat-mode/scratch/ws
+
+
+❯ SCENARIO:md                                                                                       
+
+⏺ Results
+
+  Here is bold, italic, code and a link (https://example.com).
+
+  ┌─────┬───────┐
+  │ Col │ Value │
+  ├─────┼───────┤
+  │ a   │ 1     │
+  ├─────┼───────┤
+  │ b   │ 2     │
+  └─────┴───────┘
+
+  let x = 1
+  print(x)
+
+  - one
+  - two
+    - nested
+
+  See /tmp/example.txt:12 for more.
+
+✻ Sautéed for 2s · done 9:32 AM
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on · ? for shortcuts · ← for agents

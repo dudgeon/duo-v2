@@ -11,13 +11,21 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 boards=("$@")
-[ ${#boards[@]} -gt 0 ] || boards=(window toggle text tools permission-edit permission-bash plan question-multi question-other question-review question-previews question-chat-decline composer status fallback)
+[ ${#boards[@]} -gt 0 ] || boards=(window toggle text tools permission-edit permission-bash plan question-multi question-other question-review question-previews question-chat-decline composer status fallback
+  polish-collapsed polish-expanded polish-needs-you polish-output polish-edits polish-thinking polish-agents polish-todos polish-tools polish-failed polish-paste)
 states=()
 for b in "${boards[@]}"; do states+=("chat-$b"); done
 NO_COMPARE=1 scripts/check-ui.sh "${states[@]}" >/dev/null
 for b in "${boards[@]}"; do
-  if [ "$b" = window ]; then box=(0 0 1440 860); else box=(300 0 680 860); fi
+  target="chat-mode-handoff/$b"
+  case "$b" in
+    window) box=(0 0 1440 860) ;;
+    # chat-polish-handoff (DL-135): the run boards are the pane; the candidate boards are its feed, below the tab strip.
+    polish-collapsed|polish-expanded|polish-needs-you) box=(300 0 680 860); target="chat-polish-handoff/${b#polish-}" ;;
+    polish-*) box=(300 36 680 560); target="chat-polish-handoff/${b#polish-}" ;;
+    *) box=(300 0 680 860) ;;
+  esac
   python3 scripts/chat-crop.py "build/ui/chat-$b.png" "build/ui/chat-$b-board.png" "${box[@]}" >/dev/null
-  bash docs/design/build-handoff/tools/compare.sh "chat-mode-handoff/$b" "build/ui/chat-$b-board.png" "build/ui/chat-$b-compare.png" >/dev/null
+  bash docs/design/build-handoff/tools/compare.sh "$target" "build/ui/chat-$b-board.png" "build/ui/chat-$b-compare.png" >/dev/null
   echo "$b  →  build/ui/chat-$b-compare.png"
 done
