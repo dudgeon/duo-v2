@@ -1864,3 +1864,17 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - overview, project, flow-zoom-1 to 4, a jump to onboarding-v3, idle-list and chat-window;
   - window captures, with the toolbar and chip, of project and flow-zoom-3.
   - DuoChecks 628 pass.
+
+## F-140 · The deck scrolls to a slide and the picker's outline glides (DL-130, 2026-10-06)
+
+- **‹ › and Slide n:**
+  - `go()` scrolls by script over `motion.slide` (250 ms, ease-in-out). CSS's smooth scroll has no duration.
+  - Opening a deck at a remembered slide, and a scripted pick (`slide pick`, which reports where the shape is for its screenshot, F-121), jump at once.
+- **A page with no animation frames still lands.** WebKit gives a page that isn't on screen no `requestAnimationFrame` (F-102), so the scroll would never finish there; a capture showed "Slide 3 of 5" over slide 1. A timer lands on the slide `slide + 150 ms` after the jump whatever happened. Re-captured in a live window: on slide 3 by 3 s at scale 10.
+- **The outline** (picking) glides to the next shape: left, top, width and height over `motion.outline` (80 ms, ease-out), with its name tag. It appears where it lands, with no glide from where it last was.
+- **Timings:** they reach the page through the same token script as the editor (`--duo-motion-slide-ms`, `--duo-motion-outline-ms`): zero with Reduce Motion. The page also honours `prefers-reduced-motion`.
+- **Proof in Chromium:** `node scripts/check-deck-motion.mjs` serves the page with `Spikes/PptxViewer/decks/garden.pptx`. The test's copy of the page lets its policy name the local origin instead of `duo-deck:`.
+  - scrollY from slide 1 to 3: 0, 6, 21, 81, 180, 245, 378, 474, 507, 544, 549 over about 250 ms;
+  - the outline's top: 44, 57, 68, 77, 83, 85 over about 80 ms;
+  - with `reducedMotion: reduce`, both are at their end from the first sample.
+- **Unchanged at rest** against origin/main's build, live, cropped to the right pane (0 pixels): `slide-go:3`, picking with a hovered shape, and a picked shape. DuoChecks 628 pass.
