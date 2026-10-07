@@ -25,11 +25,11 @@ Geoff, 2026-10-07: "projects would benefit from a visual way of tracking tasks b
 | `09-obsidian` | The files: a task note, the `tasks.base` Duo would write, a Kanban-plugin note for contrast |
 | `10-recommendation` | The recommendation and a first slice |
 | `11-sessions` | Sessions on a card: S1 rows (chosen) |
-| `12-columns` | Adding and removing columns; `PROJECT.md` `lanes:` |
+| `12-columns` | Adding and removing columns; `lanes:` in the project's brief (`_PROJECT.md`, `PROJECT.md` or the `project_brief` note, DL-147) |
 | `13-documents` | A task's `references:` (documents, folders, links) |
 
 ## Owned elsewhere
 
-- **The explainer copy for "No tasks yet"** belongs to the project & task CX study.
+- **The explainer copy for "No tasks yet"** belongs to the project & task CX study, and its approved line is on board 8.
 - **Dragging a session onto a task** is that study's flow too. The board only accepts the same drop (`duo2 task add`).
 - **The task template** belongs to the templates session. The board adds no keys to it.
