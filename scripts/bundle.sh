@@ -29,8 +29,14 @@ spk="$app/Contents/Frameworks/Sparkle.framework/Versions/B"
 for part in "$spk/Autoupdate" "$spk/Updater.app" "$app/Contents/Frameworks/Sparkle.framework"; do
   codesign --force --sign - "$part" >/dev/null 2>&1 || echo "warning: ad-hoc signing $part failed" >&2
 done
-# The app icon (DL-131): drawn by scripts/gen-app-icon.swift, committed in the icon handoff.
-cp "$root/docs/design/icon-handoff/AppIcon.icns" "$app/Contents/Resources/AppIcon.icns"
+# The app icon (DL-131): drawn by scripts/gen-app-icon.swift, committed in the icon handoff. Dev builds carry
+# the hazard-striped one and the name "Duo Dev", so they can be told from a release in the Dock (DL-140).
+if [ "$config" = release ]; then
+  icon="AppIcon"; name="Duo"
+else
+  icon="AppIconDev"; name="Duo Dev"
+fi
+cp "$root/docs/design/icon-handoff/$icon.icns" "$app/Contents/Resources/AppIcon.icns"
 cp "$root/docs/design/build-handoff/fixture.json" "$app/Contents/Resources/fixture.json"
 cp "$root/docs/design/many-projects-handoff/fixture.json" "$app/Contents/Resources/fixture-many.json"
 rm -rf "$app/Contents/Resources/chat-fixtures"
@@ -62,8 +68,8 @@ cat > "$app/Contents/Info.plist" <<PLIST
 <plist version="1.0">
 <dict>
   <key>CFBundleIdentifier</key><string>com.dudgeon.duo</string>
-  <key>CFBundleName</key><string>Duo</string>
-  <key>CFBundleDisplayName</key><string>Duo</string>
+  <key>CFBundleName</key><string>${name}</string>
+  <key>CFBundleDisplayName</key><string>${name}</string>
   <key>CFBundleExecutable</key><string>Duo</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
