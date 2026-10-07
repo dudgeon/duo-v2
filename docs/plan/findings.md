@@ -2195,3 +2195,44 @@ Check by hand: in System Settings › Notifications › Duo, turn on Allow notif
   - The Home capture shows the fallback bar, because the scratch claude is signed out.
 - `docs/design/system`: surfaces.md (eight rows, plus a row for the busy-tab question), and the READMEs of BrowserBar, ChatMode, DeckViewer, PaneTabs, Sheet and TaskLine. The Toolbar preview draws DL-129's right-pane button.
 - DuoChecks: a link's status words.
+
+## F-167 · Duo assumes one window in about 25 places, and one model holds that window's state (2026-10-07)
+
+- **One `AppModel`** holds the app's data and about 45 properties of the one window's state: altitude, `homeTab`, `consoleTab`, `rightTab`, selection, pane collapse, search, the peek, hover and drag. References: `currentProject` 93, `rightTab` 63, `consoleTab` 61, `altitude` 56, `homeTab` 36.
+- **Single views moved between panes:**
+  - one editor, one HTML viewer and one deck viewer for the whole app;
+  - one terminal view per session (`TerminalSlot` moves it);
+  - one web view per browser tab.
+- **24 lookups of "the window"** (`NSApp.windows`, `keyWindow`, `mainWindow`), 16 of them by `title == "Duo"`. They are used for undo, alerts, the walk, full screen, and about ten harness actions.
+- **Global singletons:**
+  - `SheetCenter.shared` (one question queue);
+  - `PaneMotion` (C-44);
+  - `visibleSessionId` (one visible session);
+  - the menus capture one model, with no `FocusedValue`.
+- **Restore** saves one on-screen project and no window list or frames.
+- **What already fits:**
+  - Per-project memory: documents, last tabs and browser tabs.
+  - Every `duo2` request carries the caller's session and cwd.
+  - `ChatKeys` already finds the window from the key event.
+- The full map, with file references: `docs/research/multi-window.md`, "What assumes one window today". It is the basis of DL-141's spec.
+
+## F-168 · Chat mode types through the session's terminal view, wherever that view is drawn (2026-10-07)
+
+- `ChatComposerView` sends with `terminal?.sendKeys`, which is `TerminalSession.sendKeys` → `view.send(txt:)` (`Chat/ChatSession.swift:457`). The view exists for the session's whole life, on screen or not.
+- `attachChat` reads the terminal's buffer offscreen.
+- So a second window can show a session in chat mode and answer it while the terminal is drawn in another window. That is the basis of the recommended options in Q-97 (D6) and Q-98 (Home).
+- Not yet tested: typing in the terminal and in the composer at the same moment (C-43).
+
+## F-169 · On a full window tint, text2 keeps AA but the needs-you orange doesn't (2026-10-07)
+
+Measured for the four proposed tints (DL-141, Q-96):
+
+| Colour | On a full tint (toolbar) | On a half-strength tint (panes) |
+|---|---|---|
+| text2 | 4.78–5.12:1 | 5.59–5.69:1 |
+| text | 12.4:1 or better | 12.4:1 or better |
+| needs-you `#C2410C` | 4.07–4.35:1 (fails 4.5) | 4.76–4.84:1 |
+| controlEdge | 2.4–2.6:1 | — |
+
+- On a tinted toolbar, the needs-you chip gets a white (`pane`) fill: 5.2:1, as on white today. The boards draw it so.
+- No tint may be orange or red, so the accent keeps its one meaning.

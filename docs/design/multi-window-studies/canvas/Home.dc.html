@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>What happens to Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1720px; height: 640px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 24px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">DECISION 10</span>
+<span style="font-size: 22px; line-height: 28px; font-weight: 600">What happens to Home</span>
+<span style="color: #5B636D">Home is one Claude session, shown beside the map at All projects. Window 1 is at All projects; you take window 2 (free, sky tint) up to All projects as well.</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px">
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="display: flex; gap: 8px; align-items: center"><span style="font-weight: 600">A · Home in chat mode where its terminal isn't</span><span style="padding: 0 7px; border: 1px solid #8B939C; border-radius: 9px; font-size: 11px; line-height: 16px; background: #FFFFFF">recommended</span></span>
+<div style="width: 494px; height: 309px"><div style="transform: scale(0.95); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="all" tint="sky" home="chat" in-window="refunds" hint-size="520px,325px"></dc-import></div></div>
+<span style="color: #5B636D; white-space: normal">The same rule as decision 6: every window's All projects has Home, its terminal live in one and chat in the rest. ⇧⌘H focuses Home in the window you're in. Pinned windows have no All projects, so ⇧⌘H goes to a free window.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">B · A stand-in, Show Here</span>
+<div style="width: 494px; height: 309px"><div style="transform: scale(0.95); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="all" tint="sky" home="standin" home-standin-text="Home is showing in window 1" in-window="refunds" hint-size="520px,325px"></dc-import></div></div>
+<span style="color: #5B636D; white-space: normal">Home says where it is, and Show Here moves its terminal. Honest, but the dark pane you talk to is empty in every window but one.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600">C · Home only in the first window</span>
+<div style="position: relative; width: 494px; height: 309px">
+<div style="position: absolute; left: 78px; top: 0; width: 416px; height: 260px"><div style="transform: scale(0.8); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="project" project="refunds" tint="sky" key="no" s1="Refund rules" s2="Policy diff" s3="Ops notes" doc="rules.md" hint-size="520px,325px"></dc-import></div></div>
+<div style="position: absolute; left: 0; top: 49px; width: 416px; height: 260px"><div style="transform: scale(0.8); transform-origin: top left; width: 520px; height: 325px"><dc-import name="Win" altitude="all" in-window="refunds" hint-size="520px,325px"></dc-import></div></div>
+</div>
+<span style="color: #5B636D; white-space: normal">Window 1 is the home window; ⌘↑ and ⇧⌘H anywhere bring it forward. Clear, but window 1 becomes special, which independent windows meant to avoid.</span>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1720,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
