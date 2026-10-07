@@ -54,6 +54,8 @@ public enum DuoColor {
     public static let console = Color(nsColor: .duoFixed(0x15171B))
     /// Rules on the console
     public static let consoleRule = Color(nsColor: .duoFixed(0x2B2F36))
+    /// Behind a console or Home tab under the pointer, holding its × and name (DL-134)
+    public static let consoleHover = Color(nsColor: .duoFixed(0x202329))
     /// Text on the console, terminal foreground
     public static let consoleText = Color(nsColor: .duoFixed(0xE6E8EB))
     /// Secondary text and inactive tabs on the console
@@ -90,6 +92,7 @@ public enum DuoNSColor {
     public static let toolOutputFill = NSColor.duoDynamic(light: 0xF8F9FA, dark: 0xF8F9FA, name: "toolOutputFill")
     public static let console = NSColor.duoFixed(0x15171B)
     public static let consoleRule = NSColor.duoFixed(0x2B2F36)
+    public static let consoleHover = NSColor.duoFixed(0x202329)
     public static let consoleText = NSColor.duoFixed(0xE6E8EB)
     public static let consoleText2 = NSColor.duoFixed(0x9AA1AB)
     public static let needsYouOnConsole = NSColor.duoFixed(0xF97316)
@@ -196,6 +199,9 @@ public enum DuoMetric {
     public static let tabCloseGlyph: CGFloat = 10.0
     public static let tabCloseStroke: CGFloat = 1.5
     public static let tabCloseTitleGap: CGFloat = 1.0
+    public static let tabHoverRadius: CGFloat = 5.0
+    public static let tabHoverHeight: CGFloat = 24.0
+    public static let tabHoverInset: CGFloat = 7.0
     public static let idlePopoverWidth: CGFloat = 460.0
     public static let idlePopoverPadding = EdgeInsets(top: 12.0, leading: 8.0, bottom: 12.0, trailing: 8.0)
     public static let idleRowHeight: CGFloat = 26.0
@@ -238,7 +244,7 @@ public enum DuoSpace {
     public static let gapMapColumns: CGFloat = 14.0
     public static let gapToolbarOverview: CGFloat = 16.0
     public static let gapToolbarProject: CGFloat = 8.0
-    public static let gapPaneTabs: CGFloat = 18.0
+    public static let gapPaneTabs: CGFloat = 24.0
     public static let gapAboveDocumentHeading: CGFloat = 4.0
 }
 

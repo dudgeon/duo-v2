@@ -79,6 +79,7 @@ struct ConsoleTabStrip: View {
                 .lineLimit(1)
         }
         .fixedSize()
+        .modifier(TabHoverFill(key: t.id, onConsole: true))
         .contentShape(Rectangle())
         .onActivate { model.openConsoleTab(t.id) }  // action: session open
         .modifier(SessionOrganizeMenu(sessionKey: t.id))
