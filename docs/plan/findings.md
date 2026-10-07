@@ -2462,3 +2462,19 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - **Method:** `HOME=/private/tmp/ptx CLAUDE_CONFIG_DIR=/private/tmp/ptx/claude scripts/acceptance/fixtures.py` builds the fixtures in a scratch home (planted sessions go to the scratch config), so ~/DuoAcceptance is never touched. Runs used `scripts/run-live.sh` with `env -u DUO_SUPPORT_DIR DUO_SUPPORT_DIR=/tmp/d-ptx`. Captures: `docs/design/project-task-cx/journey/`.
 - **Trap:** `DUO_AUTOCONFIRM=` (set but empty) counts as set, so a run meant to show a sheet confirms it (the Move into Home capture). Pass the variable only when wanted.
 - **Missing, found by the walk:** no way to make a project from a folder Duo doesn't list (UI or `duo2 project make <path>`: "no folder"); no `task remove`, so a session can't leave a task except by editing YAML; no + New project on List; Help has no link to the guide. All are in DL-147's slice.
+
+## F-194 · Signed out, a private repo and a missing one look the same (GitHub study, 2026-10-07)
+
+- With no credential, `GIT_TERMINAL_PROMPT=0 git -c credential.helper= ls-remote https://github.com/<o>/<r>` fails at once with "fatal: could not read Username for 'https://github.com': terminal prompts disabled", for a private repo and for one that doesn't exist alike; a public repo answers. GitHub does this on purpose. So Duo's "can't see it" words cover both ("It may be private, the link may be wrong, or your account hasn't been given access"), and signed out they ask for a sign-in first. `docs/research/github-primitives.md` §2.1.
+
+## F-195 · Branch protection is readable by anyone who can read the repo, but not where it looks (GitHub study, 2026-10-07)
+
+- As a READ user on `cli/cli`: `gh api repos/<o>/<r>/branches/<b>` returns `"protected": true`; `…/branches/<b>/protection` returns 404 (admins only), which never means unprotected; `…/rules/branches/<b>` lists rulesets only (and leaves out rules in evaluate or disabled mode), not classic protection. `gh repo view --json viewerPermission` returns ADMIN, MAINTAIN, WRITE, TRIAGE or READ. So Duo can know before a push whether the user can push and whether the default branch is protected, as GitHub Desktop does. §2.1.
+
+## F-196 · gh's fork and PR behaviour, for a GUI (GitHub study, 2026-10-07)
+
+- `gh repo fork` makes the fork `origin` and renames the old origin `upstream` unless `--remote-name` is given; Duo should pass `--remote --remote-name fork` so `origin` keeps meaning the original. `gh pr create` offers to fork only interactively, its fork copies only the default branch, and `--head user:branch` works for users, not orgs (cli/cli#10093). `--dry-run` "May still push git changes". With `GH_PROMPT_DISABLED=1`, a signed-out `gh pr create` printed the login hint and **exited 0**; `gh auth status` exits 1 signed out but always 0 with `--json`; `gh repo view` exits 4 (auth required). Duo must read the output, not trust exit codes. gh 2.101.0. §2.1.
+
+## F-197 · git's defaults on a Mac, and what a refused push says (GitHub study, 2026-10-07)
+
+- Apple's git sets `credential.helper=osxkeychain` system-wide (`/Library/Developer/CommandLineTools/usr/share/git-core/gitconfig`), so a push without gh can use the keychain. Against a local bare repo with a `pre-receive` hook: a protected branch reads `remote: error: GH006: Protected branch update failed for refs/heads/main.` and `! [remote rejected] main -> main`; a branch someone else moved reads `! [rejected] feat -> feat (fetch first)`; a merge conflict shows in `git status --porcelain=v2 --branch` as `u UU …` rows, with `# branch.ab +1 -1`. GH009 is secret scanning (VS Code matches it). These tokens are what Duo classifies on. §2.1, §4.
