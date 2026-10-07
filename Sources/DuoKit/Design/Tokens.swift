@@ -193,6 +193,15 @@ public enum DuoMetric {
     public static let mapFilterWidth: CGFloat = 200.0
     public static let mapOutsideRowWaitWidth: CGFloat = 34.0
     public static let mapColumnMin: CGFloat = 220.0
+    public static let sessionListProjectWidth: CGFloat = 150.0
+    public static let sessionListTaskWidth: CGFloat = 150.0
+    public static let sessionListWaitWidth: CGFloat = 64.0
+    public static let sessionListNeedsLineHeight: CGFloat = 28.0
+    public static let sessionListTwoLineHeight: CGFloat = 44.0
+    public static let sessionListTwoLineBelow: CGFloat = 520.0
+    public static let sessionListRowInset: CGFloat = 8.0
+    public static let sessionListToggleSegmentPadding: CGFloat = 10.0
+    public static let sessionListToggleIconGap: CGFloat = 5.0
     public static let rowActionSize: CGFloat = 18.0
     public static let rowActionRadius: CGFloat = 4.0
     public static let rowActionGlyph: CGFloat = 14.0

@@ -243,6 +243,15 @@ public final class AppModel {
     public var mapFilter = ""
     public var openOutsideGroups: Set<String> = []
     @ObservationIgnored public var mapSettled: [String: Double] = [:]
+    /// The middle at All projects (DL-142): Board (the map) or List (every session by recency). A new
+    /// user sees List; after that the last choice (`setHomeView`).
+    public var homeView: HomeView = HomeView(rawValue: DuoState.load().homeView ?? "") ?? .list
+    /// The list's filter, its selected row (a session's `id`), and Group › Show Archived.
+    public var listFilter = ""
+    public var listSelection: String?
+    public var listShowsArchived = true
+    /// Target states only: the clock the list's Today and This week are cut by.
+    @ObservationIgnored public var listClock: Date?
 
     /// Home's folder (DL-85); nil until one is chosen. Live mode runs either way (DL-82).
     public var liveRoot: URL?

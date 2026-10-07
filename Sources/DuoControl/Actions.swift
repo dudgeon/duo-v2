@@ -35,7 +35,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
     case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
-    case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFolder = "view folder"
+    case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFolder = "view folder", viewHome = "view home"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
     case projectArchive = "project archive", projectUnarchive = "project unarchive"
@@ -147,7 +147,9 @@ extension DuoAction {
         .init(.viewGroup, .view, "<group> expand|collapse", "Expand or collapse a group in the session list.", ui: ["group row"]),
         .init(.viewSelect, .view, "<session id>", "Select a session's card (action column or peek) without opening it.", ui: ["action card", "peek card"]),
         .init(.viewSort, .view, "recent|name", "Order All projects' map by newest activity or by name (View › Sort Projects By).", ui: ["Sort Projects By", "map sort popup"]),
-        .init(.viewFilter, .view, "[text]", "Narrow All projects' map to projects and folders whose name or path has the text; no text clears it.", ui: ["Filter folders"]),
+        .init(.viewFilter, .view, "[text]", "Narrow All projects' middle, whichever shows: the Board to projects and folders whose name or path has the text, the List to sessions about it; no text clears it.", ui: ["Filter folders", "Filter sessions"]),
+        .init(.viewHome, .view, "board|list|toggle [--archived on|off]", "All projects' middle (DL-142): the Board (the map) or the List, every session across projects by recency (View › Show Board / Show List). Duo remembers the choice. --archived shows or hides the List's Archived fold (its Group popup's Show Archived).",
+              ui: ["Board", "List", "Show Board", "Show List", "Group By Recent", "Show Archived", "list group popup"]),
         .init(.viewHidden, .view, "on|off|toggle", "Show or hide dotfiles in the project's file tree (View › Show Hidden Files).", ui: ["Show Hidden Files"]),
         .init(.viewFolder, .view, "<folder> open|close", "Open or close a folder in the project's file tree.", ui: ["folder row"]),
 

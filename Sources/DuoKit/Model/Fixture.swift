@@ -172,6 +172,7 @@ public struct WaitTime: Comparable, Sendable {
         case "m": seconds = n * 60
         case "h": seconds = n * 3600
         case "d": seconds = n * 86400
+        case "w": seconds = n * 7 * 86400   // a session from 2w ago is Earlier, not Today
         default: seconds = 0
         }
     }

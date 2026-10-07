@@ -50,6 +50,7 @@ func repoFixture() throws -> Fixture {
         check(secs.dropFirst().first?.id == "open" && secs.dropFirst().first?.rows.map(\.id) == [quiet?.id].compactMap { $0 }, "then what's open in Duo")
         check(secs.dropFirst(2).allSatisfy { ["today", "week", "earlier"].contains($0.id) }, "then history by date")
     }
+    homeListChecks(f)
 
     print("properties (DB-16)")
     do {

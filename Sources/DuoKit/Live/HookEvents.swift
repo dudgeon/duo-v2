@@ -229,6 +229,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var archivedSessions: [String] = []
     /// The map's order (DL-104): "recent" (the default) or "name".
     public var mapSort: String?
+    /// All projects' middle (DL-142): "board" or "list"; nil until the user chooses (a new user sees List).
+    public var homeView: String?
     /// View › Show Hidden Files (DL-105).
     public var showHiddenFiles = false
 
@@ -253,6 +255,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         archivedProjects = try c.decodeIfPresent([String].self, forKey: .archivedProjects) ?? []
         archivedSessions = try c.decodeIfPresent([String].self, forKey: .archivedSessions) ?? []
         mapSort = try c.decodeIfPresent(String.self, forKey: .mapSort)
+        homeView = try c.decodeIfPresent(String.self, forKey: .homeView)
         showHiddenFiles = try c.decodeIfPresent(Bool.self, forKey: .showHiddenFiles) ?? false
     }
 

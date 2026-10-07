@@ -32,7 +32,8 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 view group <group> expand\|collapse` | Expand or collapse a group in the session list. | group row |
 | `duo2 view select <session id>` | Select a session's card (action column or peek) without opening it. | action card, peek card |
 | `duo2 view sort recent\|name` | Order All projects' map by newest activity or by name (View › Sort Projects By). | Sort Projects By, map sort popup |
-| `duo2 view filter [text]` | Narrow All projects' map to projects and folders whose name or path has the text; no text clears it. | Filter folders |
+| `duo2 view filter [text]` | Narrow All projects' middle, whichever shows: the Board to projects and folders whose name or path has the text, the List to sessions about it; no text clears it. | Filter folders, Filter sessions |
+| `duo2 view home board\|list\|toggle [--archived on\|off]` | All projects' middle (DL-142): the Board (the map) or the List, every session across projects by recency (View › Show Board / Show List). Duo remembers the choice. --archived shows or hides the List's Archived fold (its Group popup's Show Archived). | Board, List, Show Board, Show List, Group By Recent, Show Archived, list group popup |
 | `duo2 view hidden on\|off\|toggle` | Show or hide dotfiles in the project's file tree (View › Show Hidden Files). | Show Hidden Files |
 | `duo2 view folder <folder> open\|close` | Open or close a folder in the project's file tree. | folder row |
 
