@@ -146,6 +146,13 @@ public struct Fixture: Codable, Sendable, Equatable {
 
     /// The Dock badge (S3-6, DL-138): how many sessions need you, every project and Home counted,
     /// the one on screen too, the same list `duo2 needs-you` prints; nothing at 0 or when it's off.
+    /// The Dock menu (ENH-24, DL-144): one item per waiting session, longest wait first, titled
+    /// "session · project · wait"; past `limit`, how many more wait.
+    public func dockMenuItems(limit: Int = 9) -> (items: [(title: String, session: Session)], more: Int) {
+        let list = needsYou
+        return (list.prefix(limit).map { ("\($0.name) · \($0.project) · \($0.wait ?? "now")", $0) }, max(0, list.count - limit))
+    }
+
     public func dockBadgeLabel(enabled: Bool) -> String? {
         let n = needsYou.count
         return enabled && n > 0 ? "\(n)" : nil

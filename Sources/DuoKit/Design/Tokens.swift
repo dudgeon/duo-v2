@@ -188,6 +188,7 @@ public enum DuoMetric {
     public static let settingsLabelColumn: CGFloat = 150.0
     public static let settingsRowPaddingX: CGFloat = 12.0
     public static let settingsRowPaddingY: CGFloat = 10.0
+    public static let settingsCheckboxIndent: CGFloat = 22.0
     public static let mapHeaderControlHeight: CGFloat = 22.0
     public static let mapFilterWidth: CGFloat = 200.0
     public static let mapOutsideRowWaitWidth: CGFloat = 34.0

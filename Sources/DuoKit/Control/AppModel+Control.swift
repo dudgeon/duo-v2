@@ -267,6 +267,7 @@ extension AppModel {
             // What macOS allows decides whether the badge is drawn at all (DL-138).
             func reply() { Task { @MainActor in done(.ok(([show()] + [await Notifier.shared.permission()].compactMap { $0 }).joined(separator: "\n"))) } }
             guard let key = inv[0] else { return reply() }
+            if key == "macos" { openNotificationSettings(); return done(.ok("Opened System Settings › Notifications › Duo.")) }
             guard let value = inv[1] else { return done(.fail("usage: \(id.action.usage)")) }
             switch key {
             case "claude-path":

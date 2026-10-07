@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=720">
+<meta name="design-size" content="720x420">
+<meta name="design-kind" content="target">
+<meta name="design-surface" content="ENH-24">
+<title>Duo · ENH-24 · Dock menu</title>
+<!--
+ENH-24 · The Dock menu of sessions that need you. DESIGN TARGET. Approved by Geoff 2026-10-07, as drawn (DL-144); drawn outside the Design canvas because this background session had no Artifact tool (F-162).
+macOS draws the menu (exempt from pixel match, as in build-handoff); this board settles its items and order.
+[G] Items: one per waiting session, longest wait first (Fixture.needsYou, the list duo2 needs-you prints), titled "session · project · wait", e.g. "PRD v2 edits · checkout-redesign · 4m".
+[G] A disabled header "Needs you" above them; a separator; then what macOS adds (Options, Show All Windows, Hide, Quit).
+[G] Clicking one opens its project with the session selected, as duo2 open <project> <session> (DL-71), and brings Duo to the front.
+[G] Nothing waiting: no header, no items; the menu is macOS's own.
+[G] More than 9: the first 9, then "4 more need you…", which opens All projects.
+-->
+<style>
+body{margin:0}
+.board{width:720px;height:420px;background:#F3F4F6;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;font-size:13px;line-height:20px;color:#1F2328;display:flex;gap:40px;padding:24px;box-sizing:border-box}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.cap{font-size:11px;font-weight:600;letter-spacing:.06em;color:#5B636D}
+.menu{width:300px;background:rgba(246,246,246,.96);border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:5px 0}
+.it{padding:2px 14px;white-space:nowrap}
+.it.hd{color:#8B939C;font-size:12px}
+.it.on{background:#2F6FEB;color:#fff;border-radius:4px;margin:0 5px;padding:2px 9px}
+.sep{height:1px;background:#D6D9DE;margin:5px 0}
+.dim{color:#5B636D}
+.P{font-size:10px;font-weight:700;color:#C2410C;margin-left:4px}
+.dock{width:64px;height:64px;border-radius:14px;background:#1F2328;position:relative}
+.badge{position:absolute;top:-6px;right:-6px;min-width:22px;height:22px;border-radius:11px;background:#FF3B30;color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+<div class="board">
+  <div class="col">
+    <div class="cap">THREE SESSIONS NEED YOU</div>
+    <div class="menu">
+      <div class="it hd">Needs you<span class="P">[G]</span></div>
+      <div class="it">Morning triage · claude-home · 1h<span class="P">[G]</span></div>
+      <div class="it on">Copy review pass 2 · onboarding-v3 · 12m</div>
+      <div class="it">PRD v2 edits · checkout-redesign · 4m</div>
+      <div class="sep"></div>
+      <div class="it dim">Options ▸</div>
+      <div class="it dim">Show All Windows</div>
+      <div class="it dim">Hide</div>
+      <div class="it dim">Quit</div>
+    </div>
+    <div class="dock"><div class="badge">3</div></div>
+  </div>
+  <div class="col">
+    <div class="cap">NOTHING WAITS</div>
+    <div class="menu">
+      <div class="it dim">Options ▸</div>
+      <div class="it dim">Show All Windows</div>
+      <div class="it dim">Hide</div>
+      <div class="it dim">Quit</div>
+    </div>
+    <div style="font-size:12px;color:#5B636D;width:300px">macOS’s own menu; no header, no items.<span class="P">[G]</span><br>More than 9 waiting: the first 9, then “4 more need you…”, which opens All projects.<span class="P">[G]</span></div>
+    <div class="dock"></div>
+  </div>
+</div>
+</body>
+</html>

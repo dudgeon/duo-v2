@@ -77,7 +77,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | First launch | Designed (DL-100): no welcome screen; the map is it | — | — |
 | Choose Home Folder… picker | System open panel | S2-3 | `Model/AppModel+Home.swift` |
 | Settings | Designed (DL-101) | — | `Shell/SettingsView.swift` |
-| Notifications and the Dock badge | Designed (DL-101); drawn by macOS | — | `Model/AppModel+Notify.swift` |
+| Notifications and the Dock badge | Designed (DL-101); drawn by macOS. Badges asked for with alerts (DL-138); the Dock menu of sessions that need you, and Settings' line when macOS hides them, designed and built (DL-144) | dock-badge `screens/dock-menu.html`, `q93-*.html` | `Model/AppModel+Notify.swift`, `Shell/SettingsView.swift`, `Duo/DuoApp.swift` (`applicationDockMenu`) |
 | Update question (Open Releases Page, Install Now, Later) | Designed (DL-132): the release's notes in a box, Later apart at the left; Open Releases Page is the default where installing needs an administrator password (DL-114) (standins2 `q47-writable`, `q47-admin`) | — | `Model/AppModel+Update.swift` |
 | Closing a busy tab | Designed (DL-127; words DL-132): Stop Claude and close “‹name›”? / Stop “‹command›” and close the tab? (standins2 `close-busy`) | — | `Model/AppModel+CloseTab.swift` |
 | Install consent | Standard sheet | — | `Shell/InstallPrompt.swift` |
