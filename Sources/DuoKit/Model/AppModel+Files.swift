@@ -172,8 +172,11 @@ extension AppModel {
 
     public var templates: [URL] {
         guard let folder = projectFolder else { return [] }
-        return FileActions.templates(project: folder, home: fixture.home.flatMap { liveFolders[$0.name] })
+        return FileActions.templates(project: folder, home: homeFolder)
     }
+
+    /// Home's folder, when there is one (DL-42).
+    public var homeFolder: URL? { fixture.home.flatMap { liveFolders[$0.name] } }
 
     public func commitRename(_ path: String, to name: String) {
         renamingPath = nil

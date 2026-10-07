@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="design-size" content="1180x900">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-146">
+<!--
+T0 · The base templates, as files
+APPROVED BOARD. Geoff, 2026-10-07 (DL-146). Exported from the Design canvas
+https://claude.ai/artifact/S2u648a8UTGxcj8uL7r4Td (board Main.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · Templates · T0 · The base templates, as files</title>
+<style>
+body{margin:0}
+a{color:#5B636D}a:hover{color:#1F2328}
+</style>
+</head>
+<body>
+<div style="width: 1180px; height: 900px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 24px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 14px; line-height: 20px; font-weight: 600">[P] Duo's base templates</h1>
+<div style="color: #5B636D">Plain Markdown with properties: the same file works as an Obsidian Templates-plugin template. Placeholders are only Obsidian's own.</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; flex-grow: 1">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span style="font-weight: 600">New project</span><span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; color: #5B636D">templates/project.md → PROJECT.md</span></div>
+<pre style="margin: 0; flex-grow: 1; padding: 16px 18px; background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 19px; white-space: pre-wrap; color: #1F2328"><span style="color: #5B636D">---</span>
+<span style="color: #5B636D">type:</span> project
+<span style="color: #5B636D">title:</span> "<span style="background: #E9ECEF; border-radius: 4px; padding: 0 3px">{{title}}</span>"
+<span style="color: #5B636D">aliases:</span>
+  - "<span style="background: #E9ECEF; border-radius: 4px; padding: 0 3px">{{title}}</span>"
+<span style="color: #5B636D">status:</span> active
+<span style="color: #5B636D">goal:</span>              <span style="font-family: -apple-system, system-ui, sans-serif; font-size: 11px; color: #5B636D">← New Project's goal, if given</span>
+<span style="color: #5B636D">health:</span>
+<span style="color: #5B636D">next:</span>
+<span style="color: #5B636D">created:</span> "<span style="background: #E9ECEF; border-radius: 4px; padding: 0 3px">{{date}}</span>"
+<span style="color: #5B636D">---</span>
+
+# <span style="background: #E9ECEF; border-radius: 4px; padding: 0 3px">{{title}}</span>
+
+## Why
+
+## Done when
+
+- [ ]
+
+## Notes
+
+## Log
+
+- <span style="background: #E9ECEF; border-radius: 4px; padding: 0 3px">{{date}}</span> Started.</pre>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span style="font-weight: 600">New task</span><span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; color: #5B636D">templates/task.md → tasks/&lt;slug&gt;.md</span></div>
+<pre style="margin: 0; padding: 16px 18px; background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 19px; white-space: pre-wrap; color: #1F2328"><span style="color: #5B636D">---</span>
+<span style="color: #5B636D">type:</span> task
+<span style="color: #5B636D">title:</span> "<span style="background: #E9ECEF; border-radius: 4px; padding: 0 3px">{{title}}</span>"
+<span style="color: #5B636D">status:</span> open
+<span style="color: #5B636D">sessions:</span> []          <span style="font-family: -apple-system, system-ui, sans-serif; font-size: 11px; color: #5B636D">← Make a Task's session links</span>
+<span style="color: #5B636D">created:</span> "<span style="background: #E9ECEF; border-radius: 4px; padding: 0 3px">{{date}}</span>"
+<span style="color: #5B636D">---</span>
+
+# <span style="background: #E9ECEF; border-radius: 4px; padding: 0 3px">{{title}}</span>
+
+## Done when
+
+- [ ]
+
+## Notes</pre>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px">
+<div style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">WHAT DUO DOES WHEN IT MAKES THE FILE</div>
+<div>1. Picks the template: the project's <span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px">templates/</span>, then Home's, then this base.</div>
+<div>2. Fills <span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px">{{title}}</span>, <span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px">{{date}}</span>, <span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px">{{time}}</span>, <span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px">{{date:YYYY-MM-DD}}</span>; leaves <span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px">&lt;% … %&gt;</span> as written.</div>
+<div>3. Sets the keys it knows (goal, status, sessions) by name, touching nothing else.</div>
+<div>4. Never writes over a file that's there.</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

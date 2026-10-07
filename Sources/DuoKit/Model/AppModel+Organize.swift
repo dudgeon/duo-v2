@@ -35,8 +35,8 @@ extension AppModel {
         showNewProject(moving: ids)
     }
 
-    /// Makes a project folder in Home (or one of its topic folders) with a starter PROJECT.md
-    /// carrying the goal, files any sessions given in it, and starts a session there if asked: one
+    /// Makes a project folder in Home (or one of its topic folders) with a PROJECT.md from the
+    /// template (DL-146) carrying the goal, files any sessions given in it, and starts a session there if asked: one
     /// undo step. Returns why it couldn't, or nil.
     @discardableResult
     public func createProject(named raw: String, goal: String = "", in parent: URL? = nil, moving ids: [String], startSession: Bool = false) -> String? {
@@ -47,8 +47,8 @@ extension AppModel {
         let fm = FileManager.default
         let moving = fixture.sessions.filter { s in s.sessionId.map(ids.contains) ?? false }
         guard ids.isEmpty || !moving.isEmpty else { return "No session to move." }
-        let g = goal.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\"", with: "\\\"")
-        let starter = "---\ngoal: \"\(g)\"\nhealth: on-track\nnext: \"\"\n---\n\n# \(name)\n\n"
+        let g = goal.trimmingCharacters(in: .whitespacesAndNewlines)
+        let starter = Templates.make(.project, title: name, project: nil, home: homeFolder, values: g.isEmpty ? [] : [("goal", .scalar(g))])
         do {
             try fm.createDirectory(at: folder, withIntermediateDirectories: false)
             try Data(starter.utf8).write(to: folder.appending(path: "PROJECT.md"), options: .withoutOverwriting)
@@ -148,13 +148,13 @@ extension AppModel {
         refreshLive()
     }
 
-    /// Makes a folder a documented project (DL-63): writes a starter PROJECT.md (until Geoff's
-    /// template, G-1), remembers the folder if it's outside the workspace, and opens the file.
+    /// Makes a folder a documented project (DL-63): writes PROJECT.md from the template (DL-146)
+    /// unless the folder has one, remembers the folder if it's outside the workspace, and opens the file.
     public func makeProject(_ name: String) {
         guard let folder = liveFolders[name] else { return }
         let file = folder.appending(path: "PROJECT.md")
         if !FileManager.default.fileExists(atPath: file.path) {
-            let starter = "---\ngoal: \"\"\nhealth: on-track\nnext: \"\"\n---\n\n# \(folder.lastPathComponent)\n\n"
+            let starter = Templates.make(.project, title: folder.lastPathComponent, project: nil, home: homeFolder)
             do { try Data(starter.utf8).write(to: file, options: .withoutOverwriting) } catch { info(error.localizedDescription); return }
         }
         DuoState.update { s in if !s.projects.contains(folder.path) { s.projects.append(folder.path) } }

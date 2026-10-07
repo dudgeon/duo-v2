@@ -418,6 +418,10 @@ extension AppModel {
             guard let new = carryOn(findSession(old, in: nil)?.sessionId ?? old) else { return done(.fail("no archived copy of session \(old)")) }
             done(.ok("Started session \(new.prefix(8)), carrying on from \(old.prefix(8)).", ["id": new]))
 
+        // MARK: Templates (DL-146)
+        case .templateShow, .templateEdit, .templateCopy, .templateReset, .templatePreview:
+            templateVerb(id, inv, done)
+
         // MARK: Files
         case .files, .fileNew, .fileNewFolder, .fileTemplate, .fileTemplates, .fileRename, .fileDuplicate, .fileMove, .fileTrash,
              .fileReveal, .fileOpenWith, .filePath, .fileConvert:
@@ -647,6 +651,44 @@ extension AppModel {
         }
     }
 
+    // MARK: Templates
+
+    private func templateVerb(_ id: ActionID, _ inv: Invocation, _ done: @escaping @MainActor (Reply) -> Void) {
+        guard let k = inv[0], let kind = Templates.Kind(rawValue: k) else { return done(.fail("usage: \(id.action.usage)")) }
+        let projectName = inv.flags["project"]
+        if let projectName, project(named: projectName) == nil { return done(.fail("no project '\(projectName)'")) }
+        let pname = projectName.flatMap { project(named: $0)?.name }
+        switch id {
+        case .templateShow:
+            let t = templateText(kind, project: pname)
+            let file = t.whose == "base" ? nil : templateFile(kind, project: pname)
+            done(.ok("The \(t.whose) template for new \(kind.rawValue)s" + (file.map { " (\($0.path))" } ?? "") + ":\n\n" + t.text,
+                     ["kind": kind.rawValue, "whose": t.whose, "text": t.text, "path": Templates.file(kind, project: pname.flatMap { liveFolders[$0] }, home: homeFolder)?.url.path ?? ""]))
+        case .templatePreview:
+            let text = previewTemplate(templateText(kind, project: pname).text, title: inv.flags["title"] ?? "Draft PRD v2")
+            done(.ok(text, ["text": text]))
+        case .templateEdit:
+            switch editTemplate(kind, project: pname) {
+            case .success(let u): done(.ok("Opened \(u.path).", ["path": u.path]))
+            case .failure(let e): done(.fail("\(e)"))
+            }
+        case .templateCopy:
+            guard kind == .task, let pname else { return done(.fail("usage: \(id.action.usage) (a project's own template is for tasks)")) }
+            switch copyTemplate(toProject: pname) {
+            case .success(let u): done(.ok("\(pname) has its own task template: \(u.path).", ["path": u.path]))
+            case .failure(let e): done(.fail("\(e)"))
+            }
+        default:
+            let file: URL? = pname.flatMap { liveFolders[$0] }.map { Templates.path(kind, in: $0) } ?? homeFolder.map { Templates.path(kind, in: $0) }
+            guard let file, FileManager.default.fileExists(atPath: file.path) else {
+                return done(.ok(pname == nil ? "Home has no \(kind.rawValue) template: the base is in use." : "\(pname!) has no task template of its own."))
+            }
+            resetTemplate(TemplateInfo(kind: kind, project: pname, file: file)) { yes in
+                done(yes ? .ok(pname == nil ? "Reset to Duo's base; your version is in the Trash." : "\(pname!) uses Home's template again; its own is in the Trash.") : .fail("cancelled"))
+            }
+        }
+    }
+
     // MARK: Files
 
     private func fileVerb(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
@@ -690,7 +732,7 @@ extension AppModel {
                 done(.ok("Created \(r) in \(p.name).", ["path": r, "project": p.name]))
             case .fileTemplate:
                 guard let name = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
-                let home = fixture.home.flatMap { liveFolders[$0.name] }
+                let home = homeFolder
                 guard let t = FileActions.templates(project: folder, home: home).first(where: { $0.deletingPathExtension().lastPathComponent == name || $0.lastPathComponent == name }) else {
                     return done(.fail("no template '\(name)'. `duo2 file templates` lists them."))
                 }
@@ -699,7 +741,7 @@ extension AppModel {
                 after { if isCurrent { self.openDocument(r) } }
                 done(.ok("Created \(r) in \(p.name) from \(t.lastPathComponent).", ["path": r, "project": p.name]))
             case .fileTemplates:
-                let ts = FileActions.templates(project: folder, home: fixture.home.flatMap { liveFolders[$0.name] })
+                let ts = FileActions.templates(project: folder, home: homeFolder)
                 done(.ok(ts.isEmpty ? "No templates: add .md files to a templates folder." : ts.map { $0.deletingPathExtension().lastPathComponent }.joined(separator: "\n"), ts.map(\.path)))
             case .fileRename:
                 guard let name = inv[1] else { return done(.fail("usage: \(id.action.usage)")) }

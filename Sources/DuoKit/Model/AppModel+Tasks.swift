@@ -28,7 +28,7 @@ extension AppModel {
         }
         do {
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-            try Data(TaskNotes.newNote(title: title, links: links).utf8).write(to: file, options: .withoutOverwriting)
+            try Data(TaskNotes.newNote(title: title, links: links, template: Templates.text(.task, project: folder, home: homeFolder).text).utf8).write(to: file, options: .withoutOverwriting)
         } catch { return .failure(error) }
         let before = SessionIndex.load(project: folder)
         if let group {

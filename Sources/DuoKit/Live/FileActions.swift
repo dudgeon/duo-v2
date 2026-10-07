@@ -122,22 +122,26 @@ public enum FileActions {
 
     // MARK: Templates
 
-    /// Markdown files in the project's `templates/` folder, then Home's.
+    /// Markdown files in the project's `templates/` folder, then Home's. `new-project.md` and `new-task.md`
+    /// are the templates New Project and New Task use (DL-146), so they're not listed here.
     public static func templates(project: URL, home: URL?) -> [URL] {
         let dirs = [project.appending(path: "templates")] + (home.map { [$0.appending(path: "templates")] } ?? [])
         var seen = Set<String>()
         return dirs.flatMap { dir in
             ((try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? [])
-                .filter { $0.pathExtension.lowercased() == "md" }
+                .filter { f in f.pathExtension.lowercased() == "md" && !Templates.Kind.allCases.contains { $0.fileName == f.lastPathComponent } }
                 .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
         }.filter { seen.insert($0.lastPathComponent).inserted }
     }
 
-    /// A new file from a template: named after it, never over an existing file.
-    public static func newFromTemplate(_ template: URL, in dir: URL) throws -> URL {
+    /// A new file from a template: named after it, never over an existing file, with Obsidian's
+    /// placeholders filled as its Templates plugin would (`{{title}}` is the new file's name; DL-146).
+    public static func newFromTemplate(_ template: URL, in dir: URL, date: Date = Date()) throws -> URL {
         let stem = template.deletingPathExtension().lastPathComponent
         let dest = dir.appending(path: freeName(stem, ext: "md", in: dir))
-        try FileManager.default.copyItem(at: template, to: dest)
+        let text = try String(contentsOf: template, encoding: .utf8)
+        let filled = Templates.fill(text, title: dest.deletingPathExtension().lastPathComponent, date: date)
+        try Data(filled.utf8).write(to: dest, options: .withoutOverwriting)
         return dest
     }
 }

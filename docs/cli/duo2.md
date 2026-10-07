@@ -58,6 +58,11 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 migrate apply <migration>` | Run a planned migration: journaled, verified, undoable. The user confirms in Duo. | — |
 | `duo2 migrate undo <migration>` | Undo a migration by replaying its journal in reverse. | — |
 | `duo2 project merge <source> --into <target>` | Move every session of one project or folder into another. Files stay. The user confirms in Duo. | Merge Into, Merge Sessions Into, drag a tile onto a tile |
+| `duo2 template show <project\|task> [--project <p>]` | The template new projects or tasks are made from (DL-146): its text and whose it is (a project's own templates/new-task.md, Home's templates/new-<kind>.md, or Duo's base). | — |
+| `duo2 template edit <project\|task> [--project <p>]` | Open that template in the right pane with its template bar; with no file yet, Duo's base is written to Home's templates/ first. | Edit Task Template, Edit… |
+| `duo2 template copy task --project <p>` | Give a project its own task template: a copy of the one it uses now, in its templates/new-task.md, opened. | Make a Template for |
+| `duo2 template reset <project\|task> [--project <p>]` | Home's template back to Duo's base, or (with --project) a project's own removed so Home's is used again. The file goes to the Trash. Asks first. | Reset…, Use Home's…, Use Home's Template… |
+| `duo2 template preview <project\|task> [--project <p>] [--title <name>]` | The file that template would make now, filled for a name (Preview in the template bar). | Preview |
 
 ## Sessions
 
