@@ -2446,3 +2446,19 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 ## F-193 · Where kanban tools keep card order (task board study, 2026-10-07)
 
 - Bases core stores none (the view's sort decides); TaskNotes writes a LexoRank `tasknotes_manual_order` into each note; the Kanban Bases View plugin keeps file paths in the `.base`; the Kanban plugin uses line order in its note; Tasks has none. A manual order in Duo would need a key in every task note (Q-120).
+
+## F-188 · What Duo writes for a new project or task isn't the agreed format (project-task CX study, 2026-10-07)
+
+- **Observed** on build c463b79, in an isolated Duo on the fixtures: `duo2 project new "Q4 plan" --goal …`, Make a Project and New project's sheet write `PROJECT.md` with only `goal: "…"`, `health: on-track` and `next: ""`, then `# Name`. The format doc (`docs/research/obsidian-compatible-task-format.md` §4.6) has `type: project`, `title`, `aliases`, `status` too, and no health nobody chose. The folder keeps the typed name with its spaces (`Q4 plan/`) where OKF used slugs. + New task writes `type: task`, a quoted `title`, `status: open` and `sessions: []`: flow style, which §4.1 rules out (block lists, the key omitted while empty).
+- **Changes:** the templates session's `Templates.render()` writes new files (DL-147 names them `_PROJECT.md` / `_HOME.md`). Health and next start empty.
+
+## F-189 · Move into Home lost a folder's session from every list (project-task CX study, 2026-10-07)
+
+- **Observed:** on the scratch fixtures under `/private/tmp/ptx` (reached as `/tmp/ptx`, a symlink), Move into Home on `elsewhere/side-project` moved the folder and journaled `rename-dir` from `/tmp/…/elsewhere/side-project` to `/tmp/…/workspace/side-project`. Its one session ("Plan the side-project landing page", transcript under `-private-tmp-ptx-DuoAcceptance-elsewhere-side-project`) then showed in no list (`duo2 sessions`), and the tile read "0 past sessions". No `.duo/sessions.json` was written in the moved folder.
+- **Likely cause, not verified:** the move's mapping used the symlinked path while the transcript's bucket is the real path (LR-24: realpath before mapping). Real Homes rarely sit behind a symlink, but `~/Documents` under iCloud or a symlinked repos folder could. Needs a check with a non-symlinked path and a fix; R11 of the study.
+
+## F-190 · Walking the project and task journeys: method and what's missing (2026-10-07)
+
+- **Method:** `HOME=/private/tmp/ptx CLAUDE_CONFIG_DIR=/private/tmp/ptx/claude scripts/acceptance/fixtures.py` builds the fixtures in a scratch home (planted sessions go to the scratch config), so ~/DuoAcceptance is never touched. Runs used `scripts/run-live.sh` with `env -u DUO_SUPPORT_DIR DUO_SUPPORT_DIR=/tmp/d-ptx`. Captures: `docs/design/project-task-cx/journey/`.
+- **Trap:** `DUO_AUTOCONFIRM=` (set but empty) counts as set, so a run meant to show a sheet confirms it (the Move into Home capture). Pass the variable only when wanted.
+- **Missing, found by the walk:** no way to make a project from a folder Duo doesn't list (UI or `duo2 project make <path>`: "no folder"); no `task remove`, so a session can't leave a task except by editing YAML; no + New project on List; Help has no link to the guide. All are in DL-147's slice.
