@@ -29,6 +29,6 @@ In the session list a task is one row. It shows the state of its most urgent ses
 
 ## For power users
 
-A task is `tasks/<name>.md` with `type: task`, a `status`, and a `sessions:` list of session links. It's plain Markdown, so Obsidian shows it too. Duo only ever edits the status and sessions lines (and the title, when you rename it). `duo2 tasks`, `duo2 task new`, `duo2 task add <task> <session>`, `duo2 task status <task> <status>`, `duo2 session task` (what a session is told about its tasks). Groups are a lighter, Duo-only bundle of sessions (`duo2 group new`).
+A task is `tasks/<name>.md` with `type: task`, a `status`, and a `sessions:` list of session links. New tasks come from a template: Home's `templates/new-task.md`, or a project's own. Right-click the Tasks fold for **Edit Task Template** and **Make a Template for <project>**. The same file works with Obsidian's Templates plugin; `duo2 template show|edit|copy|reset|preview` does it from the command line. It's plain Markdown, so Obsidian shows it too. Duo only ever edits the status and sessions lines (and the title, when you rename it). `duo2 tasks`, `duo2 task new`, `duo2 task add <task> <session>`, `duo2 task status <task> <status>`, `duo2 session task` (what a session is told about its tasks). Groups are a lighter, Duo-only bundle of sessions (`duo2 group new`).
 
 Next: [Where a session belongs](where-a-session-belongs.md)

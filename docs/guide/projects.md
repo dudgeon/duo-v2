@@ -37,6 +37,8 @@ Claude Code reads the file that line names whenever it starts in that folder, an
 
 ## For power users
 
-`PROJECT.md` starts with a few properties (`goal`, `health`, `next`) and is a normal note after that. Duo keeps its notes about the project's sessions in `.duo/sessions.json`, and offers once to add `.duo/` to `.gitignore` in a git repository. `duo2 project new <name>`, `duo2 project make <folder>`, `duo2 project archive <project>`.
+`PROJECT.md` starts with a few properties (`type`, `title`, `status`, `goal`, `health`, `next`, `created`) and is a normal note after that.
+
+New projects are made from a template: Duo's own, or yours. **Settings › Templates › Edit…** opens it as a document. It's `templates/new-project.md` in your Home folder, plain Markdown, and Obsidian's Templates plugin can use the same file. `{{title}}` becomes the project's name and `{{date}}` today's date. **Preview** shows what a new project would get, and **Reset…** goes back to Duo's. A template never changes a file that's already there. Duo keeps its notes about the project's sessions in `.duo/sessions.json`, and offers once to add `.duo/` to `.gitignore` in a git repository. `duo2 project new <name>`, `duo2 project make <folder>`, `duo2 project archive <project>`.
 
 Next: [Tasks](tasks.md)

@@ -42,6 +42,11 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// The properties block's controls (S2-5): `propertyMenu` (status popup), `propertyAdd` (+ Add).
     var onPropertyAction: ((String, [String: Any]) -> Void)?
     private var noteContext = ""
+    /// Whether a file is a template, and which kind (DL-146): its placeholders show as chips.
+    var templateKindFor: ((URL) -> String?)?
+    /// A template's Preview is showing (board A2): the filled file, read-only. The document under
+    /// it is untouched; saves still save the document, never the preview.
+    public private(set) var previewing = false { didSet { if oldValue != previewing { onStateChange?() } } }
     /// Lines of the last conflict (1-based, in the base), for the bar and `duo2 doc status`.
     public private(set) var conflictLines: [[Int]] = []
     /// Unsaved text of documents left while in conflict or removed, kept until they're shown
@@ -110,6 +115,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         conflict = false
         renamedTo = nil
         removedOnDisk = false
+        previewing = false
         url = file
         readOnlyReason = nil
         let go: () -> Void = { [weak self] in self?.load(file) }
@@ -201,6 +207,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             webView.callAsyncJavaScript("window.__folded = f; const r = duo.create(t); duo.setBaseText(b); return r", arguments: ["t": k.text, "b": baseText, "f": Self.folded(file)], in: nil, in: .page) { [weak self] _ in
                 guard let self else { return }
                 self.lastEvent = "reopened with unsaved edits"
+                self.applyTemplateMode(file)
                 self.reconcile(file)
             }
             watch(file)
@@ -211,6 +218,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             if case .success(let info) = result, let d = info as? [String: Any], (d["mixedLineEndings"] as? Bool) == true {
                 self.readOnlyReason = "mixed line endings"
             }
+            self.applyTemplateMode(file)
             self.lastEvent = self.readOnlyReason == nil ? "opened" : "read-only"
         }
         watch(file)
@@ -406,7 +414,39 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
 
     /// Brings what's on disk into the editor: merged by line with unsaved edits, or a conflict
     /// (DL-77). A missing file marks the document removed on disk; its return clears that.
+    // MARK: Templates (DL-146)
+
+    /// Placeholder chips and the template's look on, for a template file; off for any other.
+    func applyTemplateMode(_ file: URL) {
+        let kind = templateKindFor?(file)
+        webView.callAsyncJavaScript("return duo.setTemplate(t)", arguments: ["t": kind.map { ["kind": $0] as Any } ?? NSNull()], in: nil, in: .page, completionHandler: nil)
+    }
+
+    /// Preview (board A2): shows `text`, read-only, over the template.
+    public func startPreview(_ text: String, done: (@MainActor () -> Void)? = nil) {
+        previewing = true
+        run("return duo.preview(t)", ["t": text]) { _ in done?() }
+    }
+
+    /// Back to the template, as it was.
+    public func endPreview(done: (@MainActor () -> Void)? = nil) {
+        guard previewing else { done?(); return }
+        previewing = false
+        run("return duo.endPreview()") { _ in done?() }
+    }
+
+    /// The template bar's Insert ▾: text typed at the caret, as the user would type it.
+    public func insertAtCaret(_ text: String) {
+        run("return duo.insertAtCaret(t)", ["t": text]) { _ in }
+    }
+
+    /// The template the editor shows now, as text (the document, never the preview).
+    public func currentText(_ done: @escaping @MainActor (String?) -> Void) {
+        run("return duo.text()") { v in done(v as? String) }
+    }
+
     private func reconcile(_ file: URL, then: (@MainActor () -> Void)? = nil) {
+        if previewing { endPreview() }   // the document takes the change, not the preview
         guard let data = FileManager.default.contents(atPath: file.path) else {
             if !FileManager.default.fileExists(atPath: file.path), !removedOnDisk {
                 removedOnDisk = true

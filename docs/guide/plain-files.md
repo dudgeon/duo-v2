@@ -11,6 +11,7 @@ Projects are `PROJECT.md`, Home is `HOME.md`, tasks are notes in `tasks/`. Open 
 | `PROJECT.md` | A project's brief: `goal`, `health`, `next`, then any notes. See [Projects](projects.md). |
 | `HOME.md` | Marks your Home folder. See [Home](home.md). |
 | `tasks/<name>.md` | A task: `status`, the `sessions` linked to it, your notes. See [Tasks](tasks.md). |
+| `templates/new-project.md`, `templates/new-task.md` | The templates new projects and tasks are made from: Home's, or a project's own task template. Also usable by Obsidian's Templates plugin. See [Projects](projects.md). |
 | `CLAUDE.md` | Claude Code's own file, not Duo's: Claude reads it in the folder it starts in and every folder above. |
 | `<project>/.duo/` | Duo's notes about the project's sessions. |
 | `~/.claude/projects/` | Claude Code's own transcripts. Duo reads them and never rewrites them. |

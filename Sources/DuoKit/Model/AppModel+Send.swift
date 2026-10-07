@@ -219,6 +219,7 @@ extension AppModel {
 
     func wireEditor(_ e: EditorController) {
         e.onStateChange = { [weak self] in self?.editorRevision += 1 }
+        e.templateKindFor = { [weak self] url in self?.templateInfo(forFile: url)?.kind.rawValue }
         e.onOpenLink = { [weak self, weak e] link in self?.openLink(link, from: e?.url) }
         e.onRenamed = { [weak self] old, new in
             // A rename seen on disk (S3-4): tabs and the tree follow, as for one made in Duo.

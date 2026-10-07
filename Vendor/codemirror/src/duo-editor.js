@@ -189,6 +189,7 @@ function buildDecorations(view) {
 // line grows from 10 to 20, a table turns into its source), so the selection landed lines away (C-25).
 function rawLines(state) {
   const out = new Set();
+  if (tmpl?.preview) return out;   // a template's preview is read, not edited: no line is raw (board A2)
   for (const r of state.selection.ranges) out.add(state.doc.lineAt(r.anchor).number);
   return out;
 }
@@ -256,8 +257,17 @@ const KEY_RE = /^([^\s#:\-][^:#]*?):(?=\s|$)/;
 const ITEM_RE = /^(\s*)-(\s+|$)(.*)$/;
 const MD_LINK = /^["']?\[([^\]]*)\]\(([^)\s]+)\)["']?$/;
 // The type, read from how the value is written: nothing is stored outside the file (DL-20).
+// A template open in the editor (DL-146, templates-handoff): { kind: "task"|"project", preview }.
+// Placeholders show as chips, the task look (status popup, session lines) is off, and a value
+// that is a placeholder takes the type of what it becomes ({{date}} is a date).
+let tmpl = null;
+const setTemplate = StateEffect.define();
+const PLACEHOLDER = /\{\{\s*(title|date|time)\s*(?::[^}\n]*)?\}\}/g;
+const TEMPLATER = /<%[^\n]*?%>/g;
+const asFilled = (v) => v.replace(/^(["']?)\{\{\s*date\s*\}\}\1$/, "2026-01-01").replace(/^(["']?)\{\{\s*time\s*\}\}\1$/, "09:00");
+
 function valueType(key, value, hasItems) {
-  const v = value.trim();
+  const v = tmpl ? asFilled(value.trim()) : value.trim();
   if (hasItems || /^(aliases|tags|cssclasses)$/.test(key) || /^\[.*\]$/.test(v)) return "list";
   if (/^(true|false)$/i.test(v)) return "checkbox";
   if (/^-?\d+(\.\d+)?$/.test(v)) return "number";
@@ -349,15 +359,51 @@ class HeadingWidget extends WidgetType {
   ignoreEvent() { return true; }
 }
 class RuleWidget extends WidgetType {
-  constructor(message) { super(); this.message = message || ""; }
-  eq(o) { return o.message === this.message; }
+  constructor(message, hint) { super(); this.message = message || ""; this.hint = hint || null; }
+  eq(o) { return o.message === this.message && JSON.stringify(o.hint) === JSON.stringify(this.hint); }
   toDOM() {
     const box = document.createElement("div");
     if (this.message) { const m = document.createElement("div"); m.className = "duo-fm-message"; m.textContent = this.message; box.appendChild(m); }
+    if (this.hint) {
+      // A template's hint (board A1): its placeholders in mono.
+      const m = document.createElement("div"); m.className = "duo-fm-message duo-tmpl-hint";
+      for (const [text, mono] of this.hint) { const s = document.createElement("span"); if (mono) s.className = "duo-tmpl-code"; s.textContent = text; m.appendChild(s); }
+      box.appendChild(m);
+    }
     const r = document.createElement("div"); r.className = "duo-fm-rule"; box.appendChild(r);
     return box;
   }
 }
+// A quiet note at the right of a property line: "set by Duo" on a template's sessions (board A1).
+class NoteWidget extends WidgetType {
+  constructor(text) { super(); this.text = text; }
+  eq(o) { return o.text === this.text; }
+  toDOM() { const s = document.createElement("span"); s.className = "duo-fm-note"; s.textContent = this.text; return s; }
+  ignoreEvent() { return true; }
+}
+const templateHint = (kind) => [[`When a ${kind} is made, `, false], ["{{title}}", true], [" becomes its name and ", false], ["{{date}}", true], [" today's date, as in Obsidian's Templates.", false]];
+
+// Placeholders as chips (board A1): {{…}} framed, Templater's <% … %> dashed (board A3).
+function placeholderDecorations(state) {
+  if (!tmpl || tmpl.preview) return Decoration.none;
+  const out = [], doc = state.doc;
+  for (let n = 1; n <= doc.lines; n++) {
+    const line = doc.line(n);
+    if (!line.text.includes("{{") && !line.text.includes("<%")) continue;
+    const heading = /^#{1,6}\s/.test(line.text) ? " duo-ph-h" : "";
+    for (const [re, cls] of [[PLACEHOLDER, "duo-ph"], [TEMPLATER, "duo-ph duo-ph-tp"]]) {
+      re.lastIndex = 0;
+      for (let m; (m = re.exec(line.text));) out.push(Decoration.mark({ class: cls + heading }).range(line.from + m.index, line.from + m.index + m[0].length));
+    }
+  }
+  return Decoration.set(out, true);
+}
+const placeholderField = StateField.define({
+  create: (state) => placeholderDecorations(state),
+  update(deco, tr) { return tr.docChanged || tr.effects.some((e) => e.is(setTemplate)) ? placeholderDecorations(tr.state) : deco.map(tr.changes); },
+  provide: (f) => EditorView.decorations.from(f),
+});
+
 // The type icon in the gutter; a button that opens the type menu (§3).
 class IconWidget extends WidgetType {
   constructor(type, line, key) { super(); Object.assign(this, { type, line, key }); }
@@ -490,7 +536,7 @@ const caretLine = (state) => state.doc.lineAt(state.selection.main.head).number;
 function propertiesDecorations(state) {
   const p = parseFrontmatter(state.doc, caretLine(state));
   if (!p) return Decoration.none;
-  const doc = state.doc, ctx = state.field(contextField), task = ctx.task || p.isTask;
+  const doc = state.doc, ctx = state.field(contextField), task = !tmpl && (ctx.task || p.isTask);
   const folded = state.field(foldField);
   const active = rawLines(state);
   const claude = new Set();
@@ -528,6 +574,8 @@ function propertiesDecorations(state) {
     if (claude.has(L.n) && !active.has(L.n)) out.push(Decoration.widget({ widget: new ClaudeLabelWidget(), side: 2 }).range(L.to));
     if (broken) continue;
     out.push(Decoration.widget({ widget: new IconWidget(L.type, L.n, L.key), side: -1 }).range(L.from));
+    if (tmpl && !tmpl.preview && tmpl.kind === "task" && L.key === "sessions") out.push(Decoration.widget({ widget: new NoteWidget("set by Duo"), side: 2 }).range(L.to));
+    if (tmpl && (tmpl.preview || L.value.includes("{{"))) continue;   // no controls on a placeholder, or in a preview (A2)
     if (task) {
       if (L.key === "status" && L.value) { out.push(Decoration.replace({ widget: new StatusWidget(L.value.replace(/^["']|["']$/g, "")) }).range(L.vFrom, L.vTo)); continue; }
       if (L.key === "sessions" && L.value === "") { out.push(Decoration.widget({ widget: new AddWidget(L.key), side: 1 }).range(L.to)); continue; }
@@ -549,15 +597,17 @@ function propertiesDecorations(state) {
       out.push(Decoration.line({ class: `duo-fm duo-fm-fence ${f === open ? "duo-fm-first" : "duo-fm-last"}${active.has(f.number) ? " duo-fm-active" : ""}` }).range(f.from));
       out.push(Decoration.mark({ class: "duo-fm-key" }).range(f.from, f.to));
     }
-    if (blankAfter) out.push(Decoration.replace({ widget: new RuleWidget(p.invalid ? p.why + " Keep typing: it is saved as it is, and the icons and suggestions come back once it reads correctly." : ""), block: true }).range(next.from, next.to));
-    else out.push(Decoration.widget({ widget: new RuleWidget(p.invalid ? p.why + " Keep typing: it is saved as it is, and the icons and suggestions come back once it reads correctly." : ""), block: true, side: 1 }).range(close.to));
+    const hint = !p.invalid && tmpl && !tmpl.preview ? templateHint(tmpl.kind) : null;
+    const msg = p.invalid ? p.why + " Keep typing: it is saved as it is, and the icons and suggestions come back once it reads correctly." : "";
+    if (blankAfter) out.push(Decoration.replace({ widget: new RuleWidget(msg, hint), block: true }).range(next.from, next.to));
+    else out.push(Decoration.widget({ widget: new RuleWidget(msg, hint), block: true, side: 1 }).range(close.to));
   }
   return Decoration.set(out, true);
 }
 const propertiesField = StateField.define({
   create: (state) => propertiesDecorations(state),
   update(deco, tr) {
-    if (tr.docChanged || tr.selection || tr.effects.some((e) => e.is(setContext) || e.is(setFolded) || e.is(markAdded) || e.is(clearAdded))) return propertiesDecorations(tr.state);
+    if (tr.docChanged || tr.selection || tr.effects.some((e) => e.is(setContext) || e.is(setFolded) || e.is(markAdded) || e.is(clearAdded) || e.is(setTemplate))) return propertiesDecorations(tr.state);
     return deco;
   },
   provide: (f) => [
@@ -1438,6 +1488,13 @@ const duoTheme = EditorView.theme({
   ".duo-fm-head": { display: "flex", alignItems: "center", gap: "6px", margin: "0 -8px", paddingBottom: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px", lineHeight: "20px", color: "var(--duo-text2)" },
   ".duo-fm-label": { fontSize: "11px", lineHeight: "16px", fontWeight: "600", letterSpacing: "0.06em" },
   ".duo-fm-plus": { marginLeft: "auto", cursor: "default" },
+  ".duo-fm-note": { float: "right", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "11px", color: "var(--duo-text2)" },
+  ".duo-tmpl-code": { fontFamily: "ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace", fontSize: "11px" },
+  ".duo-ph": { padding: "0 4px", border: "1px solid var(--duo-rule)", borderRadius: "4px", backgroundColor: "var(--duo-pane)" },
+  ".duo-ph-h": { backgroundColor: "var(--duo-ground)", fontFamily: "ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace", fontSize: "0.8em", fontWeight: "400" },
+  ".cm-line:not(.duo-fm) .duo-ph:not(.duo-ph-h)": { fontFamily: "ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace", fontSize: "12px" },
+  ".duo-ph.duo-ph-tp": { border: "1px dashed var(--duo-control-edge)", backgroundColor: "transparent" },
+  "&.duo-tmpl-preview .duo-fm-plus, .duo-tmpl-preview .duo-fm-plus": { display: "none" },
   ".cm-line.duo-fm": { position: "relative", zIndex: "0", margin: "0 -12px", padding: "1.5px 12px 1.5px 32px", minHeight: "19px", backgroundColor: "var(--duo-ground)", fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px", lineHeight: "19px" },
   ".cm-line.duo-fm-first": { paddingTop: "9.5px", borderTopLeftRadius: "var(--duo-radius-card)", borderTopRightRadius: "var(--duo-radius-card)" },
   ".cm-line.duo-fm-last": { paddingBottom: "9.5px", borderBottomLeftRadius: "var(--duo-radius-card)", borderBottomRightRadius: "var(--duo-radius-card)" },
@@ -1504,7 +1561,8 @@ const setBase = (t) => { base = t; baseDoc = Text.of(t.split("\n")); };
 const canon = (t) => t.replace(/\r\n?/g, "\n");
 // The document as the file should be written: CodeMirror's toString() always joins with "\n";
 // sliceDoc() uses the file's own separator.
-const fileText = () => view.state.sliceDoc();
+// The document, even while a template preview shows (DL-146): never the preview.
+const fileText = () => (stash || view.state).sliceDoc();
 let sepInfo = { sep: "\n", mixed: false };
 
 function post(kind, body) {
@@ -1604,11 +1662,37 @@ const titleFollowsHeading = EditorState.transactionFilter.of((tr) => {
 function create(parent, text) {
   sepInfo = lineSeparatorOf(text);
   setBase(canon(text));
-  const state = EditorState.create({
-    doc: text,
-    extensions: [
+  stash = null;
+  const state = EditorState.create({ doc: text, extensions: extensions(sepInfo.mixed) });
+  if (view) view.destroy();
+  view = new EditorView({ state, parent });
+  // Duo's context for the note (its sessions' states) outlives the document: apply it again.
+  if (window.__ctx) view.dispatch({ effects: setContext.of(window.__ctx) });
+  return { mixedLineEndings: sepInfo.mixed, separator: JSON.stringify(sepInfo.sep) };
+}
+
+// Preview (board A2): the file a template would make, read-only, over the template, which comes
+// back exactly as it was (its history too). Nothing is posted while it shows, so nothing saves it.
+let stash = null;
+function preview(text) {
+  if (!stash) stash = view.state;
+  view.setState(EditorState.create({ doc: text, extensions: extensions(true) }));
+  if (window.__ctx) view.dispatch({ effects: setContext.of(window.__ctx) });
+  return true;
+}
+function endPreview() {
+  if (!stash) return false;
+  view.setState(stash);
+  stash = null;
+  return true;
+}
+
+function extensions(readOnly) {
+    return [
       EditorState.lineSeparator.of(sepInfo.sep),
-      readOnlyCompartment.of([EditorState.readOnly.of(sepInfo.mixed), EditorView.editable.of(!sepInfo.mixed)]),
+      readOnlyCompartment.of([EditorState.readOnly.of(readOnly), EditorView.editable.of(!readOnly)]),
+      EditorView.editorAttributes.compute([placeholderField], () => (tmpl?.preview ? { class: "duo-tmpl-preview" } : {})),
+      placeholderField,
       duoTheme,
       EditorView.lineWrapping,
       history(),
@@ -1637,6 +1721,7 @@ function create(parent, text) {
       keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap].filter((b) => !DUO_CHORDS.has(b.key))),
       EditorView.contentAttributes.of({ spellcheck: "true", autocorrect: "on", autocapitalize: "on" }),
       EditorView.updateListener.of((u) => {
+        if (stash) return;   // a preview: not the document
         if (u.selectionSet || u.docChanged) {
           const r = u.state.selection.main;
           // Never stringify the document per keystroke: 1.2 MB × every edit was 280 MB of garbage (F-34).
@@ -1646,13 +1731,7 @@ function create(parent, text) {
                               inTable: !!tableAt(u.state, r.head) });
         }
       }),
-    ],
-  });
-  if (view) view.destroy();
-  view = new EditorView({ state, parent });
-  // Duo's context for the note (its sessions' states) outlives the document: apply it again.
-  if (window.__ctx) view.dispatch({ effects: setContext.of(window.__ctx) });
-  return { mixedLineEndings: sepInfo.mixed, separator: JSON.stringify(sepInfo.sep) };
+    ];
 }
 
 function wrap(marker) {
@@ -1936,6 +2015,16 @@ window.duo = {
   setPropertyLine,
   setFolded: (f) => { view.dispatch({ effects: setFolded.of(!!f) }); return true; },
   properties: () => { const fm = frontmatterLines(view.state.doc); return fm ? document.querySelectorAll(".duo-fm").length : 0; },
+  // A template (DL-146): { kind, preview } or null; preview(text) shows the file it makes.
+  setTemplate: (t) => { tmpl = t || null; view.dispatch({ effects: setTemplate.of(tmpl) }); return true; },
+  preview: (t) => { tmpl = { ...(tmpl || {}), preview: true }; preview(t); view.dispatch({ effects: setTemplate.of(tmpl) }); return true; },
+  endPreview: () => { if (tmpl) tmpl = { ...tmpl, preview: false }; const r = endPreview(); view.dispatch({ effects: setTemplate.of(tmpl) }); return r; },
+  insertAtCaret: (t) => {
+    const r = view.state.selection.main;
+    view.dispatch({ changes: { from: r.from, to: r.to, insert: t }, selection: { anchor: r.from + t.length }, userEvent: "input.type" });
+    view.focus();
+    return true;
+  },
   setReadOnly: (ro) => view.dispatch({ effects: readOnlyCompartment.reconfigure([EditorState.readOnly.of(ro), EditorView.editable.of(!ro)]) }),
   focus: () => view.focus(),
   // + New task: the heading's name selected, so typing names the task.

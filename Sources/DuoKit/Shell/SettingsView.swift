@@ -104,6 +104,14 @@ public struct SettingsView: View {
                         Text("The mode used last").tag(HomeChatDefault.last)
                     }.labelsHidden().fixedSize(), sub: "New Home sessions, the one Duo starts at launch too. Each keeps its own once switched.") { EmptyView() }
                 }
+                // DL-146 (templates-handoff A4, 1): the templates new projects and tasks are made from.
+                if model.homeFolder != nil {
+                    group("Templates") {
+                        templateRow(.project, label: "New projects")
+                        ruleLine
+                        templateRow(.task, label: "New tasks")
+                    }
+                }
                 group("Sessions") {
                     let a = info.archive
                     row("Archive", value: Text(a.map { "\(ByteCountFormatter.string(fromByteCount: $0.bytes, countStyle: .file)) · \($0.sessions) session\($0.sessions == 1 ? "" : "s")" } ?? "…"),
@@ -203,6 +211,18 @@ public struct SettingsView: View {
     func mono(_ s: String) -> Text { Text(s).font(Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular))) }
 
     var ruleLine: some View { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
+
+    /// A template's row: whose it is, where, and Edit… (which writes the base first when there's no file).
+    func templateRow(_ kind: Templates.Kind, label: String) -> some View {
+        let file = Templates.file(kind, project: nil, home: model.homeFolder)?.url
+        let home = model.homeFolder?.standardizedFileURL
+        let own = kind == .task ? model.liveFolders.values.filter { $0.standardizedFileURL != home && FileManager.default.fileExists(atPath: Templates.path(.task, in: $0).path) }.count : 0
+        var sub = file.map { AppModel.short($0.path) } ?? "Plain Markdown in Home's templates folder. Obsidian's Templates plugin can use the same files."
+        if own > 0 { sub += own == 1 ? " · 1 project has its own" : " · \(own) projects have their own" }
+        return row(label, value: Text(file == nil ? "Duo's base template" : "Yours"), sub: sub) {
+            Button("Edit…") { model.editTemplate(kind, project: nil); NSApp.keyWindow?.close() }.buttonStyle(.duo)
+        }
+    }
 
     func group<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {

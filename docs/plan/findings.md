@@ -2534,3 +2534,30 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - `Env.isSet` / `Env.value` / `Env.autoconfirm` (`DuoControl/Env.swift`) treat `NAME=` as unset. Every `DUO_AUTOCONFIRM` read (12 places) uses it, as do `DUO_NO_EDIT_HOOK`, `DUO_MENU_UPDATE`, `DUO_SESSION_ID` in `duo2`, and the folder variables, where an empty value meant the current directory: `CLAUDE_CONFIG_DIR` (ClaudeStorage, search, LegacyDuo), `DUO_ARCHIVE_ROOT`, `DUO_SEARCH_ROOT`, and `DUO_GITIGNORE_ANSWER`. `DUO_SUPPORT_DIR`, `DUO_INSTALL_ROOT` and `DUO_DOWNLOADS_DIR` already ignored an empty value. `0` still counts as set, as before.
 - A DuoChecks scan fails if a Duo variable is tested for presence (`environment["DUO_…"] != nil`) outside `Env`.
 - **Live:** Move into Home with `DUO_AUTOCONFIRM=` (empty) now shows the sheet and moves nothing (no `confirm:` line in stderr); the capture against the slice 2 board `move-into-home` is in the fix's report.
+
+## F-187 · The template editor, built to the boards (DL-146 slice 2, 2026-10-07)
+
+- **The template bar** (`Project/TemplateBar.swift`): over `templates/new-task.md` or `templates/new-project.md` in Home or a project, however it was opened. The tab reads `Task template`. When the pane is too narrow for one line, the title wraps (a project's own: `Use Home's…` is wider).
+- **The editor** (`duo-editor.js`): `duo.setTemplate({kind})`, set by `EditorController.applyTemplateMode` on every load.
+  - Placeholders are marked as chips; Templater code gets a dashed chip.
+  - The task look (status popup, session lines) is off.
+  - A value that is a placeholder takes the type of what it becomes, and gets no control.
+  - `set by Duo` sits on the task template's `sessions:` line, and the hint goes in the properties block's rule widget.
+- **Preview** keeps the template's `EditorState` aside and shows the filled file in a read-only state.
+  - Nothing is posted while it shows, so nothing saves it. `duo.text()` returns the template, not the preview, so a save during a preview saves the template.
+  - Showing another file, or a change on disk, ends it.
+  - In a preview, no line is raw and no control is drawn (board A2).
+- **Insert ▾** types `{{title}}`, `{{date}}` or `{{time}}` at the caret, as a user edit.
+- **Reached from:**
+  - Settings › TEMPLATES, after Home: `New projects` and `New tasks`, whose they are, and Edit…;
+  - the Tasks fold's right-click menu: New Task, Edit Task Template, then Make a Template for <project> or Use Home's Template…;
+  - `duo2 template …`.
+- **A bug found on the way:** an empty task box `- [ ] ` lost its trailing space in the Swift source, and rendered as a bullet with `[]`. It's now written `\u{20}`.
+- **Proof** (an isolated instance on the demo workspace, `build/ui/tpl/`, each TARGET | BUILD | DIFFERENCE for the right pane):
+  - `a1-compare.png` against `template-task`: the bar, the chips, `set by Duo`, the hint and the heading chip all line up. Two rows sit lower only because the worktree's long path wraps line 2 to two lines; the board's has one.
+  - `a2-compare.png` against `template-preview`: the same within a point. The disabled Insert is drawn at half strength, as DL-132 j decided for every disabled Duo button, a shade lighter than the board's `rule` border.
+  - `a3-compare.png` against `template-project-own`: in the bar, the board's static export wraps `Insert ▾` and `Use Home's…` inside their buttons, a canvas artefact; the build keeps buttons on one line and wraps the title.
+  - Two board differences are Q-111: the hint under the properties (A3 omits it; the build shows it as A1 does), and the Templater note (A3 draws it in `text2`; it's text in the user's template, so it reads as body text).
+  - Settings: `settings.png` (render-settings).
+  - Harness: `template-preview`. A `render-settings:` in live mode needs a `wait:` after it, or the window capture quits Duo before the image is drawn; it now says on stderr when nothing is drawn.
+- **Checks:** DuoChecks (the parity scan covers the new menu items, buttons and Settings row), `bundle.sh`, `check-ui.sh`.

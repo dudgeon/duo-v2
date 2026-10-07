@@ -16,7 +16,11 @@ extension AppModel {
     /// The template bar for a right-pane tab, if the tab is a template: `templates/new-task.md`
     /// or `templates/new-project.md` in Home or a project, opened from anywhere (board A4, 3).
     public func templateInfo(forTab tab: String) -> TemplateInfo? {
-        guard let url = liveFile(tab), let kind = Templates.Kind.allCases.first(where: { $0.fileName == url.lastPathComponent }),
+        liveFile(tab).flatMap(templateInfo(forFile:))
+    }
+
+    public func templateInfo(forFile url: URL) -> TemplateInfo? {
+        guard let kind = Templates.Kind.allCases.first(where: { $0.fileName == url.lastPathComponent }),
               url.deletingLastPathComponent().lastPathComponent == "templates" else { return nil }
         let owner = url.deletingLastPathComponent().deletingLastPathComponent().standardizedFileURL
         if let home = homeFolder, owner == home.standardizedFileURL { return TemplateInfo(kind: kind, project: nil, file: url) }
