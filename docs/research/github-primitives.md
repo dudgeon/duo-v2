@@ -1,6 +1,6 @@
 # GitHub in Duo: what legacy offered, what others do, what v2 should do
 
-Research date: 2026-10-07 · Status: **study, waiting for Geoff** (Q-122 to Q-126; DL-149 reserved for the decision) · Canvas: https://claude.ai/artifact/76ZGzopVk1eLx9d2pnWA2i · Boards: `docs/design/github-study/`
+Research date: 2026-10-07 · Status: **decided, DL-149** (Geoff, 2026-10-07: all of it in v1; repo state in the Files block; Duo's sheet pushes; the fork in v1, known at copy time; a clone per project) · Target: `docs/design/github-handoff/` · Canvas: https://claude.ai/artifact/76ZGzopVk1eLx9d2pnWA2i · Boards: `docs/design/github-study/`
 
 Geoff, 2026-10-07: "claude _can_ perform cli tasks to operate github, but we should incorporate github primitives in many places; eg we should make it easy to add a project from remote (gh), as a new or existing branch, and make it easy to push and/or open a pr (anticipating that many users will not be admin); do research on what legacy duo offered and what we should do".
 
@@ -267,15 +267,14 @@ S = a day or less, M = a few days, L = a week or more.
 
 **v1 scope.** The build plan's §3a doesn't hold any of this. If Geoff approves, the slice needs a line there with why (CLAUDE.md: "Don't pull later features into v1 without logging why"); the director decides where it sits.
 
-## 8. Questions for Geoff
+## 8. Questions for Geoff, and his answers (DL-149)
 
-1. **Where the repo state shows** (Q-122): A under the status line (recommended), B in Files, C a toolbar chip.
-2. **Who pushes** (Q-126): Duo's sheet does commit, push and PR, with Claude writing the words on request (recommended); or every button hands Claude an instruction and Claude does it all.
-3. **Fork in the first slice, or after** (Q-123). Recommended: after.
-4. **A clone per project, or worktrees** (Q-124). Recommended: a clone per project.
-5. **`_PROJECT.md` in a repo** (Q-125): kept out of git by a visible checkbox, on by default (recommended, agreed with the CX study); or off by default; or always committed.
-
-Answers become DL-149.
+1. **Where the repo state shows** (Q-122): A under the status line (recommended), B in Files, C a toolbar chip. **Geoff: B, the Files block.**
+2. **Who pushes** (Q-126): Duo's sheet, Claude writing the words on request (recommended); or Claude does it all. **Geoff: Duo's sheet.**
+3. **Fork in the first slice, or after** (Q-123). Recommended after. **Geoff: in v1, and "we should know when they do the initial clone that they will need to fork in the future".** So the From GitHub sheet's Found box says it when the repo is chosen; asked when the fork is made, **Geoff: at the first push** (nothing made on the account until then).
+4. **A clone per project, or worktrees** (Q-124). **Geoff: a clone per project, "but want to support worktrees w/in a cloned project in the future".**
+5. **`_PROJECT.md` in a repo** (Q-125): the visible checkbox, on, as recommended (not asked separately; agreed with the CX study).
+6. **v1 scope** (the director's question): **Geoff: all of it in v1** (R1–R10, Get Latest and conflicts included). Build plan §3a has the line.
 
 ## 9. Records
 
@@ -283,4 +282,4 @@ Answers become DL-149.
 - **Questions:** Q-122 to Q-126.
 - **Concerns:** C-53 (a GUI driving git and gh must never block on a prompt or dialog), C-54 (Duo publishing under the user's name: forks, pushes, PRs).
 - **Enhancements:** ENH-37, ENH-38, ENH-39.
-- **Decision:** DL-149 reserved for Geoff's answers.
+- **Decision:** DL-149.

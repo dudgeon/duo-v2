@@ -243,6 +243,7 @@ Geoff delegated scoping. The test for v1: **Geoff can use Duo all day instead of
 | Documents | CM6 live-preview markdown editing with byte-faithful saves, the reconciliation primitive, the "added by Claude" highlight (DL-5); **local HTML viewing** in the right pane (read-only WKWebView, auto-reload on change) | I, part of K |
 | CLI | New name (Q-1), app commands over loopback: status, needs-you list, open project / session / file, group / ungroup, session note / next; `doctor`; legacy-instructions notice (Q-5) | F (minimal) |
 | Delivery | Clone-and-build (DL-30) with a launch validator; work-Mac probe passes (gate zero); MIT licence | L |
+| GitHub | From GitHub in New project (new or existing branch, a clone per project), the repo state in the Files block, Push / Open PR with the fork and without gh, Get Latest and conflicts, plain failures, `duo2 repo`. **Pulled into v1 by DL-149** (Geoff, 2026-10-07): PMs work in repos they can't administer, and Claude alone doesn't know their access or explain failures. | DL-149, `docs/design/github-handoff/` |
 | Undesigned but required | `⌘K` jump palette, Project tab, empty states (first run, no Home, nothing needs you, empty console), create-project flow, project-moved notice, idle tier / resume list, minimal Settings, terminal ANSI palette | design queue below |
 
 ### v1.1 — next
