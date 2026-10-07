@@ -18,6 +18,8 @@ Research date: 2026-10-07 · Status: **decided** (DL-148, DL-150; Q-119 to Q-121
 - columns as status values, listed in **`PROJECT.md` `lanes:`** (board 12);
 - a task's documents, folders and links as a frontmatter **`references:`** list (board 13).
 
+"`PROJECT.md`" in this doc means **the project's brief** (DL-147): `_PROJECT.md` for new projects, `PROJECT.md`, or a note marked `project_brief: true`. `lanes:` and `tasks.base` go beside or in that note.
+
 The rest of this section is the study's recommendation as it went to him.
 
 - **Data: compute the board from the task notes, and on request write a Bases board for Obsidian (options a + c).**
