@@ -135,7 +135,7 @@ table.cmp thead th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-
 </style>
 </head>
 <body>
-<div class="bd" style="width:1200px;height:820px;gap:14px"><div class="bt">10 · Recommendation and a first slice</div><div class="bsub"><b>Data: (a) + (c).</b> The board is computed from the task notes, a drag writes only <code>status</code>, and “Add Obsidian Board” writes a <code>tasks.base</code> with the same Kanban view. <b>Placement: C</b>, the board over the left and middle with the note beside it, switched by <b>Sessions | Tasks</b>. <b>Order: computed.</b> [P]</div><div style="display:flex;gap:16px;align-items:flex-start">
+<div class="bd" style="width:1200px;height:820px;gap:14px"><div class="bt">10 · Recommendation and a first slice</div><div class="bsub"><b>Approved by Geoff, 2026-10-07 (DL-148, DL-150):</b> C; computed order; the Obsidian base with pinned lanes; session rows on cards (S1, board 11); columns kept as <code>lanes:</code> in <code>PROJECT.md</code> (board 12); a task’s <code>references:</code> in frontmatter, folders included (board 13). <b>Data: (a) + (c).</b> The board is computed from the task notes, a drag writes only <code>status</code>, and “Add Obsidian Board” writes a <code>tasks.base</code> with the same Kanban view. <b>Placement: C</b>, the board over the left and middle with the note beside it, switched by <b>Sessions | Tasks</b>. <b>Order: computed.</b> [P]</div><div style="display:flex;gap:16px;align-items:flex-start">
 <div class="txt" style="flex:1"><h3>Why</h3><ul>
 <li><b>One truth.</b> <code>status</code> in each note is the lane, in Duo, in Bases, in TaskNotes. Nothing to sync, nothing to drift, no new key.</li>
 <li><b>Obsidian caught up this week.</b> Bases Kanban (1.14.4, public 2026-10-05) is the same model, so “the same board in Obsidian” is one generated file, not a plugin dependency.</li>
@@ -144,11 +144,11 @@ table.cmp thead th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-
 <h3>Not recommended</h3><p>(b) a Kanban-plugin note: two truths, whole-file rewrites, an unmaintained plugin. A: two lanes in 460. B is the second choice if the session list must stay visible.</p></div>
 <div class="txt" style="width:520px;flex:none"><h3>First slice [P]</h3><ol>
 <li><b>Sessions | Tasks</b> in the toolbar of a project; the board as C; Board link on the Tasks fold. <code>duo2 task board [show|hide|toggle]</code>.</li>
-<li>Five lanes, cards as board 6, unknown statuses as extra lanes, Done’s Earlier and Dropped folds.</li>
+<li>Lanes from <code>PROJECT.md</code> <code>lanes:</code> (default five), + Add Column and the lane menu (board 12); cards as board 6 with session rows (board 11); unknown statuses as extra lanes; Done’s Earlier and Dropped folds.</li><li>A task’s <code>references:</code> in its note’s properties, with file and folder completion (board 13).</li>
 <li>Drag between lanes = <code>duo2 task status</code>; drop a session = <code>duo2 task add</code>; ⌘Z.</li>
 <li>Empty and narrow as board 8.</li>
 <li>“Add Obsidian Board” writes board 9’s <code>tasks.base</code> (DL-20’s action, extended).</li></ol>
 <h3>Later</h3><ul><li>ENH-35: a board across all projects, and the Tasks fold grouped by status as the narrow board.</li><li>ENH-36: choose card properties; import a Kanban-plugin note once.</li></ul>
-<h3>Open (Q-119 to Q-121)</h3><ul><li>Q-119 where it lives (A, B, C).</li><li>Q-120 card order (computed, or manual with a key).</li><li>Q-121 the base’s <code>groupOrder</code>.</li></ul></div></div></div>
+<h3>Answered</h3><p class="note">Q-119 C · Q-120 computed · Q-121 pinned · Q-127 <code>lanes:</code> · Q-128 <code>references:</code>.</p></div></div></div>
 </body>
 </html>

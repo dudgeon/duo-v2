@@ -39,9 +39,11 @@ renderVals() {{ return {{}}; }}
 rows = [["00-study", "01-data", "10-recommendation"],
         ["02-where-a", "03-where-b", "03b-where-b-note", "04-where-c"],
         ["05-where-1280"],
-        ["06-cards", "07-drag", "08-empty-narrow", "09-obsidian"]]
+        ["06-cards", "07-drag", "08-empty-narrow", "09-obsidian"],
+        ["11-sessions", "12-columns", "13-documents"]]
 heads = ["The study, where the data lives, and the recommendation", "2–4 · Where the board lives, 1440×900",
-         "5 · B and C at 1280×800 (DL-129)", "6–9 · A card, drag, empty and narrow, the same board in Obsidian"]
+         "5 · B and C at 1280×800 (DL-129)", "6–9 · A card, drag, empty and narrow, the same board in Obsidian",
+         "11–13 · Round 2: sessions on a card, columns, a task’s documents"]
 boards, order, notes, y = {}, [], {}, 0
 for i, r in enumerate(rows):
     y += 260; x = 0; mh = 0

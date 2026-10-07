@@ -108,10 +108,12 @@ notarize() {
 
 step "Build $tag from a clean worktree"
 git worktree add --detach --quiet "$work/src" "$commit"
-(cd "$work/src" && scripts/bundle.sh release >/dev/null)
+# DUO_RELEASE_BUILD: Duo's own bundle id and duo2:// scheme from this temporary work tree, unregistered (F-198).
+(cd "$work/src" && DUO_RELEASE_BUILD=1 scripts/bundle.sh release >/dev/null)
 built="$work/src/build/Duo.app"
 [ -x "$built/Contents/MacOS/Duo" ] || die "the release build failed"
-# bundle.sh registers its app for duo2:// links; don't leave that pointing into a temporary folder.
+[ "$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$built/Contents/Info.plist")" = com.dudgeon.duo ] \
+  || die "the release build isn't com.dudgeon.duo"
 "$lsregister" -u "$built" >/dev/null 2>&1 || true
 
 app="$out/Duo.app"

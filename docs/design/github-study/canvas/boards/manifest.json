@@ -1,0 +1,100 @@
+[
+ {
+  "name": "00-study",
+  "w": 1440,
+  "h": 980,
+  "title": "0 \u00b7 GitHub in Duo: the study",
+  "kind": "board"
+ },
+ {
+  "name": "01-new-from-github",
+  "w": 2120,
+  "h": 1000,
+  "title": "1 \u00b7 New project, From GitHub",
+  "kind": "board"
+ },
+ {
+  "name": "02-branch",
+  "w": 2000,
+  "h": 1000,
+  "title": "2 \u00b7 The branch: new, or one that\u2019s there",
+  "kind": "board"
+ },
+ {
+  "name": "03-landing",
+  "w": 2000,
+  "h": 1000,
+  "title": "3 \u00b7 Where it lands, and getting it",
+  "kind": "board"
+ },
+ {
+  "name": "04-status",
+  "w": 2600,
+  "h": 1640,
+  "title": "4 \u00b7 The repo\u2019s state on a project: A, B, C",
+  "kind": "board"
+ },
+ {
+  "name": "05-states",
+  "w": 1440,
+  "h": 940,
+  "title": "5 \u00b7 Every state of the repo line",
+  "kind": "board"
+ },
+ {
+  "name": "06-push-pr",
+  "w": 2000,
+  "h": 1020,
+  "title": "6 \u00b7 Push / Open PR, with write access",
+  "kind": "board"
+ },
+ {
+  "name": "07-fork",
+  "w": 2000,
+  "h": 1040,
+  "title": "7 \u00b7 Push / Open PR without write access: the fork",
+  "kind": "board"
+ },
+ {
+  "name": "08-no-gh",
+  "w": 2000,
+  "h": 960,
+  "title": "8 \u00b7 Push / Open PR without the GitHub CLI",
+  "kind": "board"
+ },
+ {
+  "name": "09-get-latest",
+  "w": 2000,
+  "h": 900,
+  "title": "9 \u00b7 Get Latest, and a conflict",
+  "kind": "board"
+ },
+ {
+  "name": "10-failures",
+  "w": 1600,
+  "h": 1360,
+  "title": "10 \u00b7 When it fails: the words",
+  "kind": "board"
+ },
+ {
+  "name": "11-duo-and-claude",
+  "w": 1600,
+  "h": 1000,
+  "title": "11 \u00b7 Duo and Claude: who does what",
+  "kind": "board"
+ },
+ {
+  "name": "12-duo2",
+  "w": 1440,
+  "h": 760,
+  "title": "12 \u00b7 duo2 repo: the verbs",
+  "kind": "board"
+ },
+ {
+  "name": "13-recommendation",
+  "w": 1440,
+  "h": 900,
+  "title": "13 \u00b7 Recommendation and the v1 slice",
+  "kind": "board"
+ }
+]
