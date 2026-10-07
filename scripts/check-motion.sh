@@ -9,7 +9,7 @@
 # real milliseconds: at scale 10 a 200 ms motion runs 2000 ms. NO_BUILD=1 skips the bundle.
 # A <state> of `live:<workspace>` runs on real folders (`--workspace`) with an empty scratch
 # CLAUDE_CONFIG_DIR, so sessions start signed out and spend nothing. BEFORE_EACH="<command>" runs
-# before each of the two runs (to put a workspace's files back).
+# before each of the two runs (to put a workspace's files back). FILM=filmw takes the toolbar too.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
@@ -26,7 +26,7 @@ trap 'rm -rf "$support"' EXIT
 run() {
   local mode="$1" reduce="$2" actions="" last i pid
   [ -z "$setup" ] || actions="$setup,"
-  actions+="$trigger,+film:$out/$mode:$offsets"
+  actions+="$trigger,+${FILM:-film}:$out/$mode:$offsets"
   last="${offsets##*|}"
   actions+=",wait:$(awk "BEGIN{print $last/1000}")"
   [ -z "${BEFORE_EACH:-}" ] || bash -c "$BEFORE_EACH"

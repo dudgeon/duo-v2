@@ -15,6 +15,9 @@ public struct RootView: View {
                 .accessibilityHidden(!model.altitude.isAllProjects)
             ProjectLayout()
                 .opacity(model.altitude.isAllProjects ? 0 : 1)
+                // Project to project (DL-130): down at once, then up over `altitude`.
+                .opacity(model.projectShown)
+                .transaction(value: model.projectShown) { t in if model.projectShown == 0 { t.animation = nil } }
                 .allowsHitTesting(!model.altitude.isAllProjects)
                 .accessibilityHidden(model.altitude.isAllProjects)
         }
@@ -25,7 +28,9 @@ public struct RootView: View {
         .overlay { SheetOverlay() }
         .animation((model.search.isOpen ? DuoMotionToken.scrimIn : .scrimOut).animation, value: model.search.isOpen)
         // Altitude change: cross-fade, 150 ms, ease-out; none with Reduce Motion (handoff §9).
-        .duoAnimation(.altitude, value: model.altitude)
+        // Keyed on the altitude alone: a jump between projects fades the project up (projectShown)
+        // and doesn't cross-fade one project's names into another's (DL-130).
+        .duoAnimation(.altitude, value: model.altitude.isAllProjects)
         .background(DuoColor.pane)
         .toolbar { DuoToolbar() }
         .toolbar(removing: .title)

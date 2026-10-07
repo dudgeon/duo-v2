@@ -53,6 +53,7 @@ struct ConsoleTabStrip: View {
             .padding(.horizontal, DuoSpace.panePadding)
             .frame(height: DuoMetric.tabStripHeight)
             .duoAnimation(.tabMove, value: fit.shown.map(\.id))
+            .id(project)   // another project's tabs replace these at once
         }
         .frame(height: DuoMetric.tabStripHeight)
     }

@@ -1845,3 +1845,22 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - a live document with a settled highlight, cropped to the editor, against origin/main's build (0 pixels).
   - check-editor-selection passes (108 clicks, 42 drags, 108 shift+down). DuoChecks checks the page gets the timings.
 - `Vendor/codemirror/dist/cm6.js` rebuilt with `build.sh` (`npm ci` from the lockfile); only this change differs.
+
+## F-139 · The needs-you chip fades and its count rolls; a jump between projects fades the project up (DL-130, 2026-10-06)
+
+- **The chip:**
+  - It fades in and out in place (`chipIn`, keyed on whether anything needs you elsewhere); nothing before it in the breadcrumb moves.
+  - Its count uses `.contentTransition(.numericText(value:))` with `motion.count`.
+  - Captured (`FILM=filmw`, the whole window, since the chip is in the toolbar): `chip-out` fades over about 1.2 s at scale 10. `chip-count` shows the digit mid-roll at 150 ms, but the roll ends by 300 ms even at scale 10: the toolbar's numeric text transition appears to keep its own timing. It's short either way, and with Reduce Motion it's instant.
+- **Project to project** (the peek's ⌘↩, the breadcrumb, search):
+  - The project layout is one set of views, holding the terminals, so it can't cross-fade with itself. It drops to 0 at once and fades up over `altitude` (`projectShown`).
+  - RootView's altitude animation is now keyed on All projects ↔ project alone. Keyed on the whole altitude, a jump between projects animated every change under it.
+- **No cross-fade of one project into another:**
+  - The first capture showed the old project's names and rows under the new ones. The list and tab animations (slices 3 and 6, keyed on row and tab ids) took a project switch for a mass of rows leaving and arriving.
+  - The session column, the console strip and the right pane's strip now take the project as their identity (`.id`), so another project replaces them at once.
+  - Re-captured `p2p`: blank at 0 ms, then only onboarding-v3, fading up. With Reduce Motion, at once.
+- **Harness:** `filmw:` (and `FILM=filmw` for check-motion.sh) captures with the toolbar.
+- **Unchanged at rest** against origin/main's build (0 pixels):
+  - overview, project, flow-zoom-1 to 4, a jump to onboarding-v3, idle-list and chat-window;
+  - window captures, with the toolbar and chip, of project and flow-zoom-3.
+  - DuoChecks 628 pass.
