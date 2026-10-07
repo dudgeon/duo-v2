@@ -26,7 +26,10 @@ public enum TerminalsMode: Sendable, Equatable {
 @Observable
 public final class AppModel {
     public var fixture: Fixture
-    public var altitude: Altitude = .allProjects
+    public var altitude: Altitude = .allProjects {
+        // The idle list belongs to All projects: leaving closes it, so its keys go with it (F-178).
+        didSet { if altitude != .allProjects, idleOpen { idleOpen = false; IdleKeys.remove() } }
+    }
 
     /// The left pane is collapsed independently at each altitude (handoff §3.1).
     public var leftCollapsedAllProjects = false

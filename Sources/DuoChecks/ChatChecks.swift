@@ -434,6 +434,20 @@ func spikeScreen(_ name: String) -> String {
               "(d) git commit from Claude's Bash (no terminal, no hand-over) ends at once as it would without Duo: vi fails, git stops (\(String(format: "%.1f", took)) s)")
     }
 
+    print("chat mode: Return reaches the composer after the idle list (F-178)")
+    do {
+        let m = AppModel(fixture: try repoFixture())
+        m.toggleIdleList()
+        check(m.idleOpen && IdleKeys.installed, "the idle list open on All projects takes the keys")
+        let project = m.fixture.projects.first { !($0.isHome ?? false) }?.name ?? m.fixture.projects[0].name
+        m.open(project: project)
+        check(!m.idleOpen && !IdleKeys.installed, "opening a project another way closes it, and its keys go")
+        m.idleOpen = true   // as if it had stayed open
+        check(!IdleKeys.handle(m, code: 36, flags: [], chars: "\r") && !IdleKeys.handle(m, code: 0, flags: [], chars: "a"),
+              "even so, away from All projects Return and letters pass to the composer")
+        IdleKeys.remove()
+    }
+
     print("chat mode: duo2 session chat (DL-71, Q-53)")
     do {
         let m = AppModel(fixture: try repoFixture())
