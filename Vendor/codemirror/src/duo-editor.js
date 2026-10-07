@@ -189,6 +189,7 @@ function buildDecorations(view) {
 // line grows from 10 to 20, a table turns into its source), so the selection landed lines away (C-25).
 function rawLines(state) {
   const out = new Set();
+  if (tmpl?.preview) return out;   // a template's preview is read, not edited: no line is raw (board A2)
   for (const r of state.selection.ranges) out.add(state.doc.lineAt(r.anchor).number);
   return out;
 }
@@ -574,7 +575,7 @@ function propertiesDecorations(state) {
     if (broken) continue;
     out.push(Decoration.widget({ widget: new IconWidget(L.type, L.n, L.key), side: -1 }).range(L.from));
     if (tmpl && !tmpl.preview && tmpl.kind === "task" && L.key === "sessions") out.push(Decoration.widget({ widget: new NoteWidget("set by Duo"), side: 2 }).range(L.to));
-    if (tmpl && L.value.includes("{{")) continue;
+    if (tmpl && (tmpl.preview || L.value.includes("{{"))) continue;   // no controls on a placeholder, or in a preview (A2)
     if (task) {
       if (L.key === "status" && L.value) { out.push(Decoration.replace({ widget: new StatusWidget(L.value.replace(/^["']|["']$/g, "")) }).range(L.vFrom, L.vTo)); continue; }
       if (L.key === "sessions" && L.value === "") { out.push(Decoration.widget({ widget: new AddWidget(L.key), side: 1 }).range(L.to)); continue; }

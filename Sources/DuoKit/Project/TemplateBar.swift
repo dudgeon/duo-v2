@@ -12,8 +12,9 @@ struct TemplateBar: View {
         let previewing = model.editorIfLoaded?.previewing ?? false
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: DuoSpace.gapButtonToButton) {
-                Text("Template for new \(info.kind.rawValue)s").duoText(.bodyEmphasis).lineLimit(1)
-                Text("· \(info.project ?? "Home")").duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+                // Too narrow for one line (a project's own: Use Home's… is wider), the title wraps (board A3).
+                Text("Template for new \(info.kind.rawValue)s").duoText(.bodyEmphasis).fixedSize(horizontal: false, vertical: true)
+                Text("· \(info.project ?? "Home")").duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).layoutPriority(1)
                 Spacer(minLength: DuoSpace.gapButtonToButton)
                 Menu {
                     ForEach(["{{title}}", "{{date}}", "{{time}}"], id: \.self) { p in
@@ -23,9 +24,9 @@ struct TemplateBar: View {
                     .menuStyle(.button).buttonStyle(.duo).menuIndicator(.hidden).fixedSize()
                     .disabled(previewing)
                 Button("Preview") { model.toggleTemplatePreview() }
-                    .buttonStyle(DuoButtonStyle(on: previewing, boldWhenOn: true))
+                    .buttonStyle(DuoButtonStyle(on: previewing, boldWhenOn: true)).fixedSize()
                 Button(info.project == nil ? "Reset…" : "Use Home's…") { model.resetTemplate(info) }
-                    .buttonStyle(.duo)
+                    .buttonStyle(.duo).fixedSize()
             }
             line(previewing)
         }

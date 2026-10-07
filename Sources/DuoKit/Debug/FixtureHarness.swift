@@ -145,6 +145,7 @@ public enum FixtureHarness {
                         r.scale = 2
                         if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
                            let png = rep.representation(using: .png, properties: [:]) { try? png.write(to: URL(fileURLWithPath: parts[1])) }
+                        else { FileHandle.standardError.write(Data("render-settings: nothing drawn (image \(r.nsImage == nil ? "nil" : "\(r.nsImage!.size)"))\n".utf8)) }
                     }
                 }
             }
@@ -286,6 +287,7 @@ public enum FixtureHarness {
                     }
                 }
             }
+        case "template-preview": model.toggleTemplatePreview()   // the template bar's Preview (DL-146, board A2)
         case "new-task": if let p = model.currentProject?.name { model.newTask(in: p) }   // + New task in the open project
         case "task-session":   // task-session:<path>: New Session in Task on a task in the open project
             if parts.count > 1, let p = model.currentProject?.name { model.startSession(inTask: parts[1], project: p) }

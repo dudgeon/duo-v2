@@ -215,7 +215,8 @@ public struct SettingsView: View {
     /// A template's row: whose it is, where, and Edit… (which writes the base first when there's no file).
     func templateRow(_ kind: Templates.Kind, label: String) -> some View {
         let file = Templates.file(kind, project: nil, home: model.homeFolder)?.url
-        let own = kind == .task ? model.liveFolders.values.filter { FileManager.default.fileExists(atPath: Templates.path(.task, in: $0).path) }.count : 0
+        let home = model.homeFolder?.standardizedFileURL
+        let own = kind == .task ? model.liveFolders.values.filter { $0.standardizedFileURL != home && FileManager.default.fileExists(atPath: Templates.path(.task, in: $0).path) }.count : 0
         var sub = file.map { AppModel.short($0.path) } ?? "Plain Markdown in Home's templates folder. Obsidian's Templates plugin can use the same files."
         if own > 0 { sub += own == 1 ? " · 1 project has its own" : " · \(own) projects have their own" }
         return row(label, value: Text(file == nil ? "Duo's base template" : "Yours"), sub: sub) {

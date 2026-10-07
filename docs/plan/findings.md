@@ -2519,3 +2519,30 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
   - the 16 release outputs `build/release/<v>/Duo.app`, 0.1.0 to 0.1.9 and 0.2.0 to 0.2.5;
   - 54 work trees under `.claude/worktrees/`: `agent-a35421bd90be07f03`, `agent-a80399bf82c5ee430`, `agent-aba8694356980549d`, `agent-adf880304972f4eea`, `agent-ae16ce096be57c3ee`, `browser-basics`, `browser-engine`, `c30-reap`, `chat-293`, `chat-bubbles`, `chat-mode`, `chat-perf-base`, `chat-perf-before`, `chat-perf-polish`, `chat-perf-retest`, `chat-perf`, `chat-polish`, `chat-return`, `chat-slash-2`, `chat-slash`, `close-ask`, `dev-icon`, `dock-badge-2`, `dock-badge`, `docs`, `docx-md`, `drag-drop`, `editor-selection`, `folder-not-project`, `hang-log`, `home-list`, `home-many-projects`, `icon-ship`, `icon`, `isolated-instances`, `map-lone-column`, `menu-bar`, `motion`, `narrow`, `peek-capture`, `pptx-spike`, `pptx-viewer`, `project-task-cx`, `remote-control`, `search-claude-folders`, `session-move-new-project-cb9d6d`, `session-task-context`, `small`, `standins2`, `tab-close`, `tab-hover`, `tables`, `task-menu`, `task-name-focus-rename`;
   - and 16 elsewhere: `/private/tmp/bis-61be782/build/Duo.app`, `/private/tmp/bis-67b2df6/build/Duo.app`, `/private/tmp/bis-7253064/build/Duo.app`, `/private/tmp/bis-97ff92b/build/Duo.app`, `/private/tmp/bis-c967072/build/Duo.app`, `/private/tmp/bis-f79ea3b/build/Duo.app`, `/private/tmp/bis-main/build/Duo.app`, `/private/tmp/claude-501/-Users-geoff-repos-duo-v2/08dceb97-87f8-4c2b-bc45-31f72bad16ea/scratchpad/bisect/build/Duo.app`, `/private/tmp/claude-501/-Users-geoff-repos-duo-v2/1cb0e487-1151-4c51-8a93-489944af4821/scratchpad/base/build/Duo.app`, `/private/tmp/claude-501/-Users-geoff-repos-duo-v2/1cb0e487-1151-4c51-8a93-489944af4821/scratchpad/base2/build/Duo.app`, `/private/tmp/claude-501/-Users-geoff-repos-duo-v2/85331dc8-3f8d-434e-86e7-3ecdc3e9a171/scratchpad/main-base/build/Duo.app`, `/private/tmp/claude-501/-Users-geoff-repos-duo-v2/e5f6bb20-58a0-421b-92eb-5a7d55775a3b/scratchpad/base/build/Duo.app`, `/private/tmp/claude-501/-Users-geoff-repos-duo-v2/fac4d611-eb3a-4275-b4b4-d55f76579441/scratchpad/apps/dev/Duo.app`, `/private/tmp/claude-501/-Users-geoff-repos-duo-v2/fac4d611-eb3a-4275-b4b4-d55f76579441/scratchpad/apps/release/Duo.app`, `/private/tmp/duo-base/build/Duo.app`, `/Users/geoff/.claude/jobs/80ec6734/tmp/mainwt/build/Duo.app`.
+
+## F-187 · The template editor, built to the boards (DL-146 slice 2, 2026-10-07)
+
+- **The template bar** (`Project/TemplateBar.swift`): over `templates/new-task.md` or `templates/new-project.md` in Home or a project, however it was opened. The tab reads `Task template`. When the pane is too narrow for one line, the title wraps (a project's own: `Use Home's…` is wider).
+- **The editor** (`duo-editor.js`): `duo.setTemplate({kind})`, set by `EditorController.applyTemplateMode` on every load.
+  - Placeholders are marked as chips; Templater code gets a dashed chip.
+  - The task look (status popup, session lines) is off.
+  - A value that is a placeholder takes the type of what it becomes, and gets no control.
+  - `set by Duo` sits on the task template's `sessions:` line, and the hint goes in the properties block's rule widget.
+- **Preview** keeps the template's `EditorState` aside and shows the filled file in a read-only state.
+  - Nothing is posted while it shows, so nothing saves it. `duo.text()` returns the template, not the preview, so a save during a preview saves the template.
+  - Showing another file, or a change on disk, ends it.
+  - In a preview, no line is raw and no control is drawn (board A2).
+- **Insert ▾** types `{{title}}`, `{{date}}` or `{{time}}` at the caret, as a user edit.
+- **Reached from:**
+  - Settings › TEMPLATES, after Home: `New projects` and `New tasks`, whose they are, and Edit…;
+  - the Tasks fold's right-click menu: New Task, Edit Task Template, then Make a Template for <project> or Use Home's Template…;
+  - `duo2 template …`.
+- **A bug found on the way:** an empty task box `- [ ] ` lost its trailing space in the Swift source, and rendered as a bullet with `[]`. It's now written `\u{20}`.
+- **Proof** (an isolated instance on the demo workspace, `build/ui/tpl/`, each TARGET | BUILD | DIFFERENCE for the right pane):
+  - `a1-compare.png` against `template-task`: the bar, the chips, `set by Duo`, the hint and the heading chip all line up. Two rows sit lower only because the worktree's long path wraps line 2 to two lines; the board's has one.
+  - `a2-compare.png` against `template-preview`: the same within a point. The disabled Insert is drawn at half strength, as DL-132 j decided for every disabled Duo button, a shade lighter than the board's `rule` border.
+  - `a3-compare.png` against `template-project-own`: in the bar, the board's static export wraps `Insert ▾` and `Use Home's…` inside their buttons, a canvas artefact; the build keeps buttons on one line and wraps the title.
+  - Two board differences are Q-111: the hint under the properties (A3 omits it; the build shows it as A1 does), and the Templater note (A3 draws it in `text2`; it's text in the user's template, so it reads as body text).
+  - Settings: `settings.png` (render-settings).
+  - Harness: `template-preview`. A `render-settings:` in live mode needs a `wait:` after it, or the window capture quits Duo before the image is drawn; it now says on stderr when nothing is drawn.
+- **Checks:** DuoChecks (the parity scan covers the new menu items, buttons and Settings row), `bundle.sh`, `check-ui.sh`.
