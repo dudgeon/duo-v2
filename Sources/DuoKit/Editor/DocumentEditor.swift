@@ -77,7 +77,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
                     ("rule", DuoNSColor.rule), ("control-edge", DuoNSColor.controlEdge), ("ground", DuoNSColor.ground), ("needs-you", DuoNSColor.needsYou)]
             .map { "--duo-\($0.0): \(hex($0.1));" }.joined(separator: " ")
         // Motion (DL-130): Claude's highlight fading in and out, in ms (zero with Reduce Motion).
-        let motion = "--duo-motion-highlight-in-ms: \(Int((DuoMotionToken.highlightIn.duration * 1000).rounded())); --duo-motion-highlight-out-ms: \(Int((DuoMotionToken.highlightOut.duration * 1000).rounded()));"
+        // The deck (same token script): a slide change's scroll and the picker outline's glide.
+        let motion = [("highlight-in", DuoMotionToken.highlightIn), ("highlight-out", .highlightOut), ("slide", .slide), ("outline", .outline)]
+            .map { "--duo-motion-\($0.0)-ms: \(Int(($0.1.duration * 1000).rounded()));" }.joined(separator: " ")
         let css = ":root { \(vars) --duo-radius-card: \(Int(DuoMetric.radiusCard))px; --duo-heading-above: \(Int(DuoSpace.gapAboveDocumentHeading))px; \(motion) }"
         return "document.documentElement.setAttribute('style', \(String(reflecting: css)).replace(/^:root \\{ | \\}$/g, ''));"
     }

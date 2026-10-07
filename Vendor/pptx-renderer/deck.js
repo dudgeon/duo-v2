@@ -69,11 +69,23 @@ function describe(el) {
   };
 }
 
+// Motion (DL-130): durations from Duo's tokens (`--duo-motion-*-ms`, zero with Reduce Motion),
+// and none when the system asks for reduced motion.
+function motionMs(name) {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 0;
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--duo-motion-' + name + '-ms')) || 0;
+}
+
 // The outline: dashed under the pointer while picking, solid once picked, with the name above.
+// It glides from shape to shape (`motion.outline`), and appears where it lands.
 function place(el) {
   if (!el || hidden) { outline.style.display = 'none'; tag.style.display = 'none'; return; }
   const r = el.getBoundingClientRect();
   const pad = el === frozen ? 0 : 3;
+  const ms = outline.style.display === 'block' ? motionMs('outline') : 0;
+  const glide = ms > 0 ? ['left', 'top', 'width', 'height'].map((p) => `${p} ${ms}ms ease-out`).join(', ') : 'none';
+  outline.style.transition = glide;
+  tag.style.transition = ms > 0 ? `left ${ms}ms ease-out, top ${ms}ms ease-out` : 'none';
   Object.assign(outline.style, { display: 'block', left: `${r.left + scrollX - pad}px`, top: `${r.top + scrollY - pad}px`,
     width: `${r.width + 2 * pad}px`, height: `${r.height + 2 * pad}px` });
   outline.className = el === frozen ? 'frozen' : 'hover';
@@ -104,14 +116,29 @@ document.addEventListener('keydown', (e) => {
 
 function start() { picking = true; frozen = null; hovered = null; document.body.classList.add('picking'); place(null); }
 function stop() { picking = false; frozen = null; hovered = null; document.body.classList.remove('picking'); place(null); }
-function go(n) {
+function go(n, instant) {
   if (!viewer) return false;
   n = Math.max(1, Math.min(count(), n));
-  items()[n - 1]?.scrollIntoView({ block: 'start' });
-  scrollBy(0, -16);
-  track();
+  const it = items()[n - 1];
+  if (!it) return false;
+  const to = Math.max(0, it.getBoundingClientRect().top + scrollY - 16), from = scrollY;
+  const ms = instant ? 0 : motionMs('slide');
+  // A smooth scroll to the slide (`motion.slide`, ease-in-out): CSS's smooth scroll has no duration.
+  cancelAnimationFrame(glideFrame);
+  if (ms <= 0 || Math.abs(to - from) < 1) { scrollTo(0, to); track(); return true; }
+  const t0 = performance.now();
+  const step = (now) => {
+    const t = Math.min(1, (now - t0) / ms), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    scrollTo(0, from + (to - from) * e);
+    if (t < 1) glideFrame = requestAnimationFrame(step); else { clearTimeout(glideSafety); track(); }
+  };
+  glideFrame = requestAnimationFrame(step);
+  // A page that isn't on screen gets no animation frames (F-102): land on the slide anyway.
+  clearTimeout(glideSafety);
+  glideSafety = setTimeout(() => { cancelAnimationFrame(glideFrame); scrollTo(0, to); track(); }, ms + 150);
   return true;
 }
+let glideFrame = 0, glideSafety = 0;
 
 window.__duo = {
   // Opens the deck DeckViewer serves at deck.pptx (`v` defeats caching); shows `slide` (from 1).
@@ -128,7 +155,7 @@ window.__duo = {
         onSlideRendered: (_, el) => decorate(el.closest?.('[data-slide-index]') || el),
       });
       items().forEach(decorate);
-      if (slide > 1) go(slide); else track();
+      if (slide > 1) go(slide, true); else track();   // opening lands on the slide, no scroll
       post({ kind: 'ready', count: count(), slide: current, width: viewer.slideWidth, height: viewer.slideHeight });
       return { count: count() };
     } catch (err) {
@@ -138,7 +165,7 @@ window.__duo = {
   },
   go, current: () => current, count,
   start, stop, unfreeze: () => { frozen = null; place(null); },
-  freeze: (sel) => { const [s, id] = String(sel).split('/'); const el = shapeAt(+s, id); if (el) { picking = true; frozen = el; go(+s); place(el); post({ kind: 'picked', element: describe(el) }); } return !!el; },
+  freeze: (sel) => { const [s, id] = String(sel).split('/'); const el = shapeAt(+s, id); if (el) { picking = true; frozen = el; go(+s, true); place(el); post({ kind: 'picked', element: describe(el) }); } return !!el; },
   describe: (sel) => { const [s, id] = String(sel).split('/'); const el = shapeAt(+s, id); return el ? describe(el) : null; },
   // Every shape the renderer drew, for checks: slide, id, name, type, groups.
   shapes: () => [...host.querySelectorAll('[data-duo-shape-id]')].map((el) => { const d = describe(el).shape; return { slide: d.slide, id: d.id, name: d.name, type: d.type, groups: d.groups }; }),
