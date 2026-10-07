@@ -133,7 +133,7 @@ Duo uses SF Symbols where the system has the right one, and a few drawn icons wh
   - `square`, for a task line's box (stand-in);
   - `safari`, `chevron.left` and `chevron.right` in a browser tab's bar (stand-in, DB-20).
 
-Duo has no logo yet. Set the name in plain type.
+Duo's app icon is two panes, full bleed (DL-131, `icon-handoff/`): the dark console beside a white page. It is the app icon only; inside Duo, set the name in plain type.
 
 ## Motion
 

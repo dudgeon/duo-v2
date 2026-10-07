@@ -29,6 +29,8 @@ spk="$app/Contents/Frameworks/Sparkle.framework/Versions/B"
 for part in "$spk/Autoupdate" "$spk/Updater.app" "$app/Contents/Frameworks/Sparkle.framework"; do
   codesign --force --sign - "$part" >/dev/null 2>&1 || echo "warning: ad-hoc signing $part failed" >&2
 done
+# The app icon (DL-131): drawn by scripts/gen-app-icon.swift, committed in the icon handoff.
+cp "$root/docs/design/icon-handoff/AppIcon.icns" "$app/Contents/Resources/AppIcon.icns"
 cp "$root/docs/design/build-handoff/fixture.json" "$app/Contents/Resources/fixture.json"
 cp "$root/docs/design/many-projects-handoff/fixture.json" "$app/Contents/Resources/fixture-many.json"
 rm -rf "$app/Contents/Resources/chat-fixtures"
@@ -62,6 +64,7 @@ cat > "$app/Contents/Info.plist" <<PLIST
   <key>CFBundleName</key><string>Duo</string>
   <key>CFBundleDisplayName</key><string>Duo</string>
   <key>CFBundleExecutable</key><string>Duo</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.0.1</string>
   <key>CFBundleVersion</key><string>${version}</string>

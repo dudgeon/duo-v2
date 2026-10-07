@@ -1,0 +1,211 @@
+{
+"v": 3,
+"createdOnFiles": {
+"v": 1,
+"at": "2026-10-07T02:00:03Z"
+},
+"title": "Duo v2 app icon",
+"launch": {
+"view": "canvas",
+"page": "r2"
+},
+"pages": [
+{
+"id": "r1",
+"name": "Round 1: twelve directions"
+},
+{
+"id": "r2",
+"name": "Round 2: two panes"
+},
+{
+"id": "motion",
+"name": "Motion: fourteen animations of 01"
+}
+],
+"boards": {
+"Main.dc.html": {
+"x": 0,
+"y": 0,
+"w": 1040,
+"h": 640,
+"title": "Brief: the legacy loop, and what to keep",
+"page": "r1"
+},
+"Lineup.dc.html": {
+"x": 1120,
+"y": 0,
+"w": 2160,
+"h": 640,
+"title": "All twelve, side by side at 128, 32 and 16",
+"page": "r1"
+},
+"C01-TwoPanes.dc.html": {
+"x": 0,
+"y": 760,
+"w": 1040,
+"h": 640,
+"title": "01 Two panes",
+"page": "r1"
+},
+"C02-OneLine.dc.html": {
+"x": 1120,
+"y": 760,
+"w": 1040,
+"h": 640,
+"title": "02 One line, two panes",
+"page": "r1"
+},
+"C03-Monogram.dc.html": {
+"x": 2240,
+"y": 760,
+"w": 1040,
+"h": 640,
+"title": "03 Monogram",
+"page": "r1"
+},
+"C04-TalkAndPage.dc.html": {
+"x": 0,
+"y": 1520,
+"w": 1040,
+"h": 640,
+"title": "04 Talk and page",
+"page": "r1"
+},
+"C05-Pair.dc.html": {
+"x": 1120,
+"y": 1520,
+"w": 1040,
+"h": 640,
+"title": "05 Pair",
+"page": "r1"
+},
+"C06-Character.dc.html": {
+"x": 2240,
+"y": 1520,
+"w": 1040,
+"h": 640,
+"title": "06 Character",
+"page": "r1"
+},
+"C07-Folder.dc.html": {
+"x": 0,
+"y": 2280,
+"w": 1040,
+"h": 640,
+"title": "07 Folder with a prompt",
+"page": "r1"
+},
+"C08-Wordmark.dc.html": {
+"x": 1120,
+"y": 2280,
+"w": 1040,
+"h": 640,
+"title": "08 Wordmark",
+"page": "r1"
+},
+"C09-Glass.dc.html": {
+"x": 2240,
+"y": 2280,
+"w": 1040,
+"h": 640,
+"title": "09 Glass",
+"page": "r1"
+},
+"C10-Prompt.dc.html": {
+"x": 0,
+"y": 3040,
+"w": 1040,
+"h": 640,
+"title": "10 Minimal line",
+"page": "r1"
+},
+"C11-Constellation.dc.html": {
+"x": 1120,
+"y": 3040,
+"w": 1040,
+"h": 640,
+"title": "11 Constellation",
+"page": "r1"
+},
+"C12-Links.dc.html": {
+"x": 2240,
+"y": 3040,
+"w": 1040,
+"h": 640,
+"title": "12 Two links",
+"page": "r1"
+},
+"R2-Lineup.dc.html": {
+"x": 0,
+"y": 0,
+"w": 2160,
+"h": 600,
+"title": "Round 2: eight two-pane variants side by side",
+"page": "r2"
+},
+"R2-A-Refined.dc.html": {
+"x": 0,
+"y": 720,
+"w": 1040,
+"h": 640,
+"title": "2A Refined",
+"page": "r2"
+},
+"R2-Context.dc.html": {
+"x": 1120,
+"y": 720,
+"w": 2160,
+"h": 900,
+"title": "Round 2: all eight in Finder and the Dock, light and dark",
+"page": "r2"
+},
+"R2-Motion.dc.html": {
+"x": 0,
+"y": 0,
+"w": 2160,
+"h": 820,
+"title": "Fourteen animations of the two-pane icon",
+"page": "motion"
+},
+"R2-A2-FullBleed.dc.html": {
+"x": 0,
+"y": 1480,
+"w": 1040,
+"h": 640,
+"title": "2A\u2032 Refined, full bleed (recommended)",
+"page": "r2"
+}
+},
+"order": [
+"Main.dc.html",
+"Lineup.dc.html",
+"C01-TwoPanes.dc.html",
+"C02-OneLine.dc.html",
+"C03-Monogram.dc.html",
+"C04-TalkAndPage.dc.html",
+"C05-Pair.dc.html",
+"C06-Character.dc.html",
+"C07-Folder.dc.html",
+"C08-Wordmark.dc.html",
+"C09-Glass.dc.html",
+"C10-Prompt.dc.html",
+"C11-Constellation.dc.html",
+"C12-Links.dc.html",
+"R2-Lineup.dc.html",
+"R2-A-Refined.dc.html",
+"R2-A2-FullBleed.dc.html",
+"R2-Context.dc.html",
+"R2-Motion.dc.html"
+],
+"notes": {},
+"designSystems": [
+{
+"title": "Duo",
+"namespace": "duo",
+"artifact": "https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH",
+"version": "1791332099-f9ff",
+"copiedAt": "2026-10-07T02:00:03Z"
+}
+]
+}

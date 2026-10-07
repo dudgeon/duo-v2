@@ -1945,3 +1945,11 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - DuoChecks: 13 new checks covering the word at the caret, ranking, case, path matches, a bare `@`, no match, the cap, rows, the inserted text, and the walk's skips. 667 pass in all.
   - Live captures in the `chat-text` fixture against a scratch project: typing `@chec`, ↓ then tab, a folder with ⏎, no match, and esc. `docs/design/small-features-handoff/build-compare-composer.png` sets them beside the boards.
   - `NO_BUILD=1 scripts/check-chat.sh`: the boards are unchanged apart from the composer hint's `@ files`. `NO_BUILD=1 scripts/check-ui.sh` passes.
+
+## F-142 · The app icon, built without Xcode (DL-131, 2026-10-07)
+
+- **Drawn in code.** `scripts/gen-app-icon.swift` draws 2A′ with CoreGraphics on the canvas's 1024 grid. It writes `docs/design/icon-handoff/AppIcon.iconset/` (16 to 512 pt at 1x and 2x) and builds `AppIcon.icns` with `iconutil`. 16 and 32 pt use the small art; 128 pt and up the full art. The outputs are committed, so `bundle.sh` only copies them: `Contents/Resources/AppIcon.icns` and `CFBundleIconFile` = `AppIcon`. `release.sh` builds through `bundle.sh release`, so release DMGs carry it too.
+- **Use the canvas's rounded squircle, not a superellipse.** A superellipse (n = 5) made the sides bulge and left a dot where the path closed. A rounded rect, radius 185 on 824, matches the approved board.
+- **macOS keeps the icon as it is.** `NSWorkspace.icon(forFile:)` on the built app returns the new icon at 1024, 128, 32 and 16, with the small art at 32 and 16. macOS adds its own rim light and doesn't put it in a grey box. The render is `docs/design/icon-handoff/screens/build-proof-system-icon.png`.
+- **`qlmanage -t` on the `.app` hung** (more than 2 min, killed). Use NSWorkspace for icon proofs instead.
+- **No dark or tinted variants:** those need an Icon Composer `.icon` and `actool` (Q-81).

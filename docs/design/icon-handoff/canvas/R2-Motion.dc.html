@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Two panes in motion</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.fb{transform-box:fill-box}
+.m1t{transform-box:fill-box;transform-origin:left center;animation:m1t 4.5s ease-out infinite both}
+.m1p{animation:m1p 4.5s ease-out infinite both}
+.blink{animation:blink 1s steps(1) infinite}
+@keyframes m1t{0%{transform:scaleX(0)}12%{transform:scaleX(1);opacity:1}80%{transform:scaleX(1);opacity:1}92%,100%{transform:scaleX(1);opacity:0}}
+@keyframes m1p{0%{opacity:0;transform:translateY(14px)}10%{opacity:1;transform:none}75%{opacity:1}90%,100%{opacity:0}}
+@keyframes blink{50%{opacity:0}}
+.m2{animation:m2 4s ease-in-out infinite both}
+@keyframes m2{0%,10%{transform:translateX(-300px);opacity:0}35%,80%{transform:none;opacity:1}95%,100%{transform:translateX(-300px);opacity:0}}
+.m3a{animation:m3a 4s ease-in-out infinite both}
+.m3b{animation:m3b 4s ease-in-out infinite both}
+@keyframes m3a{0%,15%{transform:none;opacity:1}45%{transform:translate(316px,-62px);opacity:1}52%,100%{transform:translate(316px,-62px);opacity:0}}
+@keyframes m3b{0%,45%{opacity:0}55%,85%{opacity:1}100%{opacity:0}}
+.m4c{animation:m4c 2.4s ease-in-out infinite}
+.m4p{animation:m4p 2.4s ease-in-out infinite both}
+@keyframes m4c{0%,100%{transform:none;opacity:1}50%{transform:translateX(16px);opacity:0.5}}
+@keyframes m4p{0%,100%{opacity:1}50%{opacity:0.4}}
+.m5a{transform-origin:176px 216px;animation:m5a 5s cubic-bezier(.65,0,.35,1) infinite}
+.m5b{transform-box:fill-box;transform-origin:center;animation:m5b 5s ease-in-out infinite both}
+@keyframes m5a{0%,18%{transform:none}40%,68%{transform:scale(0.42)}90%,100%{transform:none}}
+@keyframes m5b{0%,25%{opacity:0;transform:scale(0.8)}45%,63%{opacity:1;transform:none}83%,100%{opacity:0;transform:scale(0.8)}}
+.m6a{animation:m6a 5s ease-in-out infinite}
+.m6b{animation:m6b 5s ease-in-out infinite}
+.m6c{animation:m6c 5s ease-in-out infinite}
+.m6d{animation:m6d 5s ease-in-out infinite}
+.m6e{animation:m6e 5s ease-in-out infinite}
+@keyframes m6a{0%,35%,100%{fill:#15171b}50%,85%{fill:#ffffff}}
+@keyframes m6b{0%,35%,100%{fill:#ffffff}50%,85%{fill:#15171b}}
+@keyframes m6c{0%,35%,100%{stroke:#e6e8eb}50%,85%{stroke:#1f2328}}
+@keyframes m6d{0%,35%,100%{fill:#1f2328}50%,85%{fill:#e6e8eb}}
+@keyframes m6e{0%,35%,100%{fill:#e9ecef}50%,85%{fill:#2b2f36}}
+.m7l{transform-box:fill-box;transform-origin:50% 100%;animation:m7l 4.5s cubic-bezier(.65,0,.35,1) infinite}
+.m7r{transform-box:fill-box;transform-origin:50% 100%;animation:m7r 4.5s cubic-bezier(.65,0,.35,1) infinite}
+@keyframes m7l{0%,15%,90%,100%{transform:none}40%,70%{transform:translateX(-40px) rotate(-14deg)}}
+@keyframes m7r{0%,15%,90%,100%{transform:none}40%,70%{transform:translateX(40px) rotate(14deg)}}
+.m8s{transform-box:fill-box;transform-origin:center;animation:m8s 4.5s ease-out infinite both}
+.m8w{animation:m8w 4.5s cubic-bezier(.34,1.56,.64,1) infinite both}
+.m8l{animation:m8l 4.5s ease-out infinite both}
+@keyframes m8s{0%{transform:scale(0.7);opacity:0}15%,85%{transform:none;opacity:1}100%{transform:scale(0.7);opacity:0}}
+@keyframes m8w{0%,10%{transform:translateY(-170px);opacity:0}30%,85%{transform:none;opacity:1}100%{opacity:0}}
+@keyframes m8l{0%,32%{opacity:0}42%,85%{opacity:1}100%{opacity:0}}
+.m9c{transform-box:fill-box;transform-origin:left center;animation:m9c 5s cubic-bezier(.65,0,.35,1) infinite}
+.m9d{animation:m9d 5s cubic-bezier(.65,0,.35,1) infinite}
+@keyframes m9c{0%,100%{transform:none}25%{transform:scaleX(0.72)}65%{transform:scaleX(1.25)}}
+@keyframes m9d{0%,100%{transform:none}25%{transform:translateX(-91px)}65%{transform:translateX(81px)}}
+.m10l{animation:m10l 5s ease-out infinite both}
+.m10t{animation:m10t 5s ease-out infinite both}
+@keyframes m10l{0%{opacity:0}8%,85%{opacity:1}95%,100%{opacity:0}}
+@keyframes m10t{0%{opacity:0}8%{opacity:1}40%,100%{opacity:0}}
+.m11{transform-box:fill-box;transform-origin:center;animation:m11 5s ease-in-out infinite}
+.m11f{animation:m11f 5s infinite}
+.m11b{animation:m11b 5s infinite}
+@keyframes m11{0%,20%,40%,70%,90%,100%{transform:none}30%,80%{transform:scaleX(0.02)}}
+@keyframes m11f{0%,29.9%{opacity:1}30%,79.9%{opacity:0}80%,100%{opacity:1}}
+@keyframes m11b{0%,29.9%{opacity:0}30%,79.9%{opacity:1}80%,100%{opacity:0}}
+.m12{transform-box:fill-box;transform-origin:50% 100%;animation:m12 2.8s ease-in-out infinite}
+.m12s{transform-box:fill-box;transform-origin:center;animation:m12s 2.8s ease-in-out infinite}
+.m12d{animation:m12d 2.8s ease-in-out infinite}
+@keyframes m12{0%{transform:none}8%{transform:scale(1.06,0.92)}22%{transform:translateY(-190px) scale(0.97,1.04)}36%{transform:scale(1.05,0.94)}46%{transform:translateY(-80px)}56%{transform:scale(1.02,0.98)}62%,100%{transform:none}}
+@keyframes m12s{0%,8%,36%,56%,62%,100%{transform:none;opacity:0.18}22%{transform:scale(0.6);opacity:0.07}46%{transform:scale(0.8);opacity:0.12}}
+@keyframes m12d{0%,55%{opacity:0}65%,95%{opacity:1}100%{opacity:0}}
+.m13{animation:m13 3.6s ease-in-out infinite}
+@keyframes m13{0%,25%{transform:translateX(-520px)}75%,100%{transform:translateX(1320px)}}
+.m14w{transform-origin:512px 860px;animation:m14w 5s cubic-bezier(.65,0,.35,1) infinite}
+.m14p{animation:m14p 5s ease-in-out infinite}
+@keyframes m14w{0%,15%{transform:none;opacity:1}40%,60%{transform:scale(0.12);opacity:0}85%,100%{transform:none;opacity:1}}
+@keyframes m14p{0%,30%{opacity:0}40%,60%{opacity:0.85}72%,100%{opacity:0}}
+</style>
+</helmet>
+<div style="width: 2160px; height: 820px; box-sizing: border-box; padding: 28px 36px; background: #ffffff; color: #1f2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif; display: flex; flex-direction: column; gap: 18px; position: relative">
+<svg width="0" height="0" style="position: absolute" aria-hidden="true"><defs>
+<linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef1f4"></stop><stop offset="1" stop-color="#c3cad3"></stop></linearGradient>
+<linearGradient id="mshine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff" stop-opacity="0"></stop><stop offset="0.5" stop-color="#ffffff" stop-opacity="0.6"></stop><stop offset="1" stop-color="#ffffff" stop-opacity="0"></stop></linearGradient>
+<clipPath id="mq"><rect x="100" y="100" width="824" height="824" rx="185"></rect></clipPath>
+<clipPath id="mwin"><rect x="176" y="216" width="672" height="592" rx="60"></rect></clipPath>
+</defs></svg>
+<div style="display: flex; align-items: baseline; gap: 12px">
+<h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">Two panes in motion</h1>
+<span style="font-size: 13px; line-height: 20px; color: #5b636d">Fourteen loops built only from the icon's own parts, for launch, About, the website, onboarding or a loading state. [P] all. Inside the app, Reduce Motion would show the still icon.</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 14px">
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="Typing: the console fills, then the page"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><rect x="176" y="232" width="672" height="592" rx="60" fill="#000" fill-opacity="0.12"></rect><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path><path class="blink" d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect class="m1t" x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect class="m1t" style="animation-delay: 0.35s" x="240" y="584" width="140" height="24" rx="12" fill="#9aa1ab"></rect><rect class="m1t" style="animation-delay: 0.7s" x="240" y="638" width="170" height="24" rx="12" fill="#9aa1ab"></rect><rect class="m1p" style="animation-delay: 1.2s" x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect class="m1p" style="animation-delay: 1.4s" x="556" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect class="m1p" style="animation-delay: 1.6s" x="556" y="440" width="200" height="22" rx="11" fill="#c9cdd3"></rect><g class="m1p" style="animation-delay: 1.8s"><rect x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect><rect x="556" y="522" width="220" height="22" rx="11" fill="#8b939c"></rect><rect x="556" y="566" width="160" height="22" rx="11" fill="#8b939c"></rect></g><rect class="m1p" style="animation-delay: 2s" x="556" y="660" width="210" height="22" rx="11" fill="#c9cdd3"></rect></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">1 Talk, then work</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">The prompt blinks, the console types, and the page fills.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="The page slides out from behind the console"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><g class="m2"><path d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path><rect x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect x="556" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect x="556" y="440" width="200" height="22" rx="11" fill="#c9cdd3"></rect><rect x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect><rect x="556" y="522" width="220" height="22" rx="11" fill="#8b939c"></rect><rect x="556" y="660" width="210" height="22" rx="11" fill="#c9cdd3"></rect></g><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="584" width="140" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="638" width="170" height="24" rx="12" fill="#9aa1ab"></rect></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">2 Opens beside</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">The document slides out from behind the conversation.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="A line crosses from console to page and becomes a highlight"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><rect x="176" y="232" width="672" height="592" rx="60" fill="#000" fill-opacity="0.12"></rect><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path><path d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="584" width="140" height="24" rx="12" fill="#9aa1ab" fill-opacity="0.35"></rect><rect x="240" y="638" width="170" height="24" rx="12" fill="#9aa1ab"></rect><rect x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect x="556" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect x="556" y="440" width="200" height="22" rx="11" fill="#c9cdd3"></rect><g class="m3b"><rect x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect><rect x="556" y="522" width="220" height="22" rx="11" fill="#8b939c"></rect><rect x="556" y="566" width="160" height="22" rx="11" fill="#8b939c"></rect></g><rect x="556" y="660" width="210" height="22" rx="11" fill="#c9cdd3"></rect><rect class="m3a" x="240" y="584" width="140" height="24" rx="12" fill="#e6e8eb"></rect></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">3 Handoff</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">A line leaves the conversation and lands on the page as Claude's highlight.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="The prompt breathes, waiting"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><rect x="176" y="232" width="672" height="592" rx="60" fill="#000" fill-opacity="0.12"></rect><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path><path class="m4c" d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="584" width="140" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="638" width="170" height="24" rx="12" fill="#9aa1ab"></rect><rect x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect class="m4p" x="556" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect class="m4p" style="animation-delay: 0.3s" x="556" y="440" width="200" height="22" rx="11" fill="#c9cdd3"></rect><g class="m4p" style="animation-delay: 0.6s"><rect x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect><rect x="556" y="522" width="220" height="22" rx="11" fill="#8b939c"></rect><rect x="556" y="566" width="160" height="22" rx="11" fill="#8b939c"></rect></g><rect class="m4p" style="animation-delay: 0.9s" x="556" y="660" width="210" height="22" rx="11" fill="#c9cdd3"></rect></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">4 At prompt</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">The chevron leans in and out; the page breathes. An idle or loading loop.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="The window shrinks into a grid of projects and back"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><g class="m5b"><rect x="566" y="216" width="282" height="249" rx="26" fill="#fff"></rect><path d="M566 242a26 26 0 0 1 26-26H702V465H592a26 26 0 0 1-26-26Z" fill="#15171b"></path></g><g class="m5b"><rect x="176" y="559" width="282" height="249" rx="26" fill="#fff"></rect><path d="M176 585a26 26 0 0 1 26-26H312V808H202a26 26 0 0 1-26-26Z" fill="#15171b"></path></g><g class="m5b"><rect x="566" y="559" width="282" height="249" rx="26" fill="#fff"></rect><path d="M566 585a26 26 0 0 1 26-26H702V808H592a26 26 0 0 1-26-26Z" fill="#15171b"></path></g><g class="m5a"><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path><path d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="584" width="140" height="24" rx="12" fill="#9aa1ab"></rect><rect x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect x="556" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect></g></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">5 All projects</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">⌘↑ as motion: one window becomes four, then zooms back in.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="Dark and light trade places"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><rect x="176" y="232" width="672" height="592" rx="60" fill="#000" fill-opacity="0.12"></rect><path class="m6a" d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path class="m6b" d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path><path class="m6c" d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="584" width="140" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="638" width="170" height="24" rx="12" fill="#9aa1ab"></rect><rect class="m6d" x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect x="556" y="392" width="236" height="22" rx="11" fill="#8b939c"></rect><rect x="556" y="440" width="200" height="22" rx="11" fill="#8b939c"></rect><rect class="m6e" x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect><rect x="556" y="522" width="220" height="22" rx="11" fill="#8b939c"></rect><rect x="556" y="566" width="160" height="22" rx="11" fill="#8b939c"></rect></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">6 Whoever you're talking to</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">The dark pane moves to the other side, as it does between Home and a project.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="Windows fan out from behind"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><g class="m7l"><rect x="176" y="216" width="672" height="592" rx="60" fill="#f7f8fa" stroke="#c9cdd3" stroke-width="6"></rect><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#3a3f47"></path></g><g class="m7r"><rect x="176" y="216" width="672" height="592" rx="60" fill="#f7f8fa" stroke="#c9cdd3" stroke-width="6"></rect><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#3a3f47"></path></g><rect x="176" y="232" width="672" height="592" rx="60" fill="#000" fill-opacity="0.12"></rect><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path><path d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="584" width="140" height="24" rx="12" fill="#9aa1ab"></rect><rect x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect x="556" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">7 Every session kept</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">Earlier sessions fan out from behind the one you're in, then tuck back.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="The icon assembles"><rect class="m8s" x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><g class="m8w"><rect x="176" y="232" width="672" height="592" rx="60" fill="#000" fill-opacity="0.12"></rect><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path></g><path class="m8l" d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect class="m8l" style="animation-delay: 0.1s" x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect class="m8l" style="animation-delay: 0.2s" x="240" y="584" width="140" height="24" rx="12" fill="#9aa1ab"></rect><rect class="m8l" style="animation-delay: 0.3s" x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect class="m8l" style="animation-delay: 0.4s" x="556" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect class="m8l" style="animation-delay: 0.5s" x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect><rect class="m8l" style="animation-delay: 0.6s" x="556" y="660" width="210" height="22" rx="11" fill="#c9cdd3"></rect></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">8 Comes together</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">The squircle grows, the window drops in with a little overshoot, and the detail follows.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="The divider slides, resizing the panes"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><rect x="176" y="232" width="672" height="592" rx="60" fill="#000" fill-opacity="0.12"></rect><g clip-path="url(#mwin)"><rect x="176" y="216" width="672" height="592" fill="#fff"></rect><g class="m9d"><rect x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect x="556" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect x="556" y="440" width="200" height="22" rx="11" fill="#c9cdd3"></rect><rect x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect><rect x="556" y="660" width="210" height="22" rx="11" fill="#c9cdd3"></rect></g><rect class="m9c" x="176" y="216" width="324" height="592" fill="#15171b"></rect></g><path d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="240" y="530" width="150" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="584" width="110" height="24" rx="12" fill="#9aa1ab"></rect><rect class="m9d" x="490" y="466" width="20" height="92" rx="10" fill="#8b939c"></rect></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">9 Make room</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">The divider drags left and right; the page follows it.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="Lines arrive on the page with a fading highlight"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><rect x="176" y="232" width="672" height="592" rx="60" fill="#000" fill-opacity="0.12"></rect><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path><path d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="584" width="140" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="638" width="170" height="24" rx="12" fill="#9aa1ab"></rect><rect class="m10t" x="540" y="306" width="252" height="58" rx="10" fill="#e9ecef"></rect><rect class="m10l" x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect class="m10t" style="animation-delay: 0.5s" x="540" y="380" width="268" height="46" rx="10" fill="#e9ecef"></rect><rect class="m10l" style="animation-delay: 0.5s" x="556" y="392" width="236" height="22" rx="11" fill="#8b939c"></rect><rect class="m10t" style="animation-delay: 1s" x="540" y="452" width="268" height="46" rx="10" fill="#e9ecef"></rect><rect class="m10l" style="animation-delay: 1s" x="556" y="464" width="200" height="22" rx="11" fill="#8b939c"></rect><rect class="m10t" style="animation-delay: 1.5s" x="540" y="524" width="268" height="46" rx="10" fill="#e9ecef"></rect><rect class="m10l" style="animation-delay: 1.5s" x="556" y="536" width="226" height="22" rx="11" fill="#8b939c"></rect><rect class="m10t" style="animation-delay: 2s" x="540" y="596" width="268" height="46" rx="10" fill="#e9ecef"></rect><rect class="m10l" style="animation-delay: 2s" x="556" y="608" width="170" height="22" rx="11" fill="#8b939c"></rect></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">10 Claude's additions</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">Each new line arrives in Duo's highlight, which fades, as it does in the editor.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="The window flips to show its other side"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><g class="m11"><g class="m11f"><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path><path d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect x="556" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect></g><g class="m11b"><path d="M176 276a60 60 0 0 1 60-60H524V808H236a60 60 0 0 1-60-60Z" fill="#fff"></path><path d="M524 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H524Z" fill="#15171b"></path><rect x="232" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect x="232" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect x="216" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect><path d="M588 360L648 410L588 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="588" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect></g></g></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">11 Two sides</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">The window turns like a card: talk on one face, work on the other.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" overflow="visible" role="img" aria-label="Dock launch bounce"><ellipse class="m12s" cx="512" cy="950" rx="300" ry="24" fill="#000" fill-opacity="0.18"></ellipse><circle class="m12d" cx="512" cy="1000" r="12" fill="#1f2328"></circle><g class="m12"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><rect x="176" y="232" width="672" height="592" rx="60" fill="#000" fill-opacity="0.12"></rect><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path><path d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect x="556" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect></g></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">12 Launch</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">A Dock bounce with squash and stretch; the running dot appears when it lands.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="A glass sheen sweeps across"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><rect x="176" y="232" width="672" height="592" rx="60" fill="#000" fill-opacity="0.12"></rect><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path><path d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect x="240" y="584" width="140" height="24" rx="12" fill="#9aa1ab"></rect><rect x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect x="556" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect><g clip-path="url(#mq)"><g transform="rotate(20 512 512)"><rect class="m13" x="0" y="-300" width="200" height="1600" fill="url(#mshine)"></rect></g></g></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">13 Glass light</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">A soft sheen crosses the squircle, macOS 26 style. Good for the website or About.</div>
+</div>
+
+<div style="border: 1px solid #c9cdd3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<svg width="240" height="240" viewBox="0 0 1024 1024" role="img" aria-label="The window tucks away and comes back"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#mg)"></rect><rect class="m14p" x="432" y="842" width="160" height="30" rx="15" fill="#1f2328"></rect><g class="m14w"><rect x="176" y="232" width="672" height="592" rx="60" fill="#000" fill-opacity="0.12"></rect><path d="M176 276a60 60 0 0 1 60-60H500V808H236a60 60 0 0 1-60-60Z" fill="#15171b"></path><path d="M500 216H788a60 60 0 0 1 60 60V748a60 60 0 0 1-60 60H500Z" fill="#fff"></path><path d="M240 360L300 410L240 460" fill="none" stroke="#e6e8eb" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path><rect x="240" y="530" width="190" height="24" rx="12" fill="#9aa1ab"></rect><rect x="556" y="320" width="220" height="30" rx="15" fill="#1f2328"></rect><rect x="556" y="392" width="236" height="22" rx="11" fill="#c9cdd3"></rect><rect x="540" y="496" width="268" height="116" rx="14" fill="#e9ecef"></rect></g></svg>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">14 Pick up where you left off</div>
+<div style="font-size: 12px; line-height: 16px; color: #5b636d; text-align: center">The window tucks into a small tab, then comes back exactly as it was.</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2160,"height":820}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
