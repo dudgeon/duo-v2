@@ -1,6 +1,6 @@
 # Duo v2 — notes for Claude
 
-Read `README.md` first for build commands and layout. Releases are on GitHub (`gh release list`); the newest tag is what Geoff runs.
+Read `CONTRIBUTING.md` first for build commands and layout (`README.md` is for people using Duo). Releases are on GitHub (`gh release list`); the newest tag is what Geoff runs.
 
 ## Precedence
 
