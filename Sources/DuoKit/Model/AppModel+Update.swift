@@ -12,8 +12,10 @@ public enum UpdateCheck {
     public struct Release: Sendable, Equatable {
         public var version: String
         public var page: URL
+        /// The release's own notes on GitHub (its body, which `release.sh --notes` writes), as Markdown.
+        public var notes: String
 
-        public init(version: String, page: URL) { self.version = version; self.page = page }
+        public init(version: String, page: URL, notes: String = "") { self.version = version; self.page = page; self.notes = notes }
     }
 
     /// This build's version; development builds say 0.0.1 (bundle.sh).
@@ -41,7 +43,7 @@ public enum UpdateCheck {
         guard let (data, resp) = try? await URLSession.shared.data(for: req), (resp as? HTTPURLResponse)?.statusCode == 200,
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let tag = json["tag_name"] as? String, let page = (json["html_url"] as? String).flatMap(URL.init(string:)) else { return nil }
-        return Release(version: tag.hasPrefix("v") ? String(tag.dropFirst()) : tag, page: page)
+        return Release(version: tag.hasPrefix("v") ? String(tag.dropFirst()) : tag, page: page, notes: json["body"] as? String ?? "")
     }
 }
 
@@ -74,10 +76,12 @@ extension UpdateCheck {
         public var canInstallNow: Bool
         /// The folder Duo is installed in, for the question's wording.
         public var folder: String
+        /// The release's notes, as Markdown (DL-132 b).
+        public var notes: String
 
-        public init(version: String, current: String, page: URL, needsAdmin: Bool, canInstallNow: Bool, folder: String) {
+        public init(version: String, current: String, page: URL, needsAdmin: Bool, canInstallNow: Bool, folder: String, notes: String = "") {
             self.version = version; self.current = current; self.page = page
-            self.needsAdmin = needsAdmin; self.canInstallNow = canInstallNow; self.folder = folder
+            self.needsAdmin = needsAdmin; self.canInstallNow = canInstallNow; self.folder = folder; self.notes = notes
         }
 
         /// Install Now is the default only when it can install without a password; otherwise
@@ -93,16 +97,19 @@ extension UpdateCheck {
         let dev = current == "0.0.1"
         guard isNewer(r.version, than: current) || (userInitiated && dev) else { return .upToDate(current: current, page: r.page) }
         return .offer(Offer(version: r.version, current: current, page: r.page, needsAdmin: !installWritable,
-                            canInstallNow: sparkle && !dev, folder: folder))
+                            canInstallNow: sparkle && !dev, folder: folder, notes: r.notes))
     }
 
-    /// The question: a stand-in in DuoQuestion's look (Q-47), since nothing draws it. Buttons
-    /// left to right: Later, the other way to install, the default.
+    /// The question, as `standins2-handoff/q47-writable` and `q47-admin` draw it (DL-132 b): the
+    /// release's notes in a box under "You have …", Later apart at the left, then the other way
+    /// to install and the default. Later skips the version until the next launch (F-69).
     @MainActor public static func question(_ o: Offer, openPage: @escaping @MainActor () -> Void,
                                            installNow: @escaping @MainActor () -> Void,
                                            later: @escaping @MainActor () -> Void) -> DuoQuestion {
         let have = o.current == "0.0.1" ? "a development build" : o.current
         var q = DuoQuestion(title: "Duo \(o.version) is available.", paragraphs: ["You have \(have)."], choices: [])
+        q.notes = notesLines(o.notes)
+        q.leadingCancel = true
         let place = o.folder.isEmpty ? "" : " in `\(o.folder)`"
         if o.needsAdmin {
             q.paragraphs.append("Installing it here needs an administrator password: this account can't replace Duo\(place). Open Releases Page to download the DMG from GitHub and install it by hand.")
@@ -120,6 +127,20 @@ extension UpdateCheck {
             q.choices.append(open)
         }
         return q
+    }
+
+    /// A release's Markdown notes as the question's lines: headings and blank lines dropped,
+    /// list items as `•`, emphasis and code marks taken out.
+    public static func notesLines(_ md: String) -> [String] {
+        md.components(separatedBy: .newlines).compactMap { raw -> String? in
+            var l = raw.trimmingCharacters(in: .whitespaces)
+            if l.isEmpty || l.hasPrefix("#") || l.hasPrefix("---") { return nil }
+            for m in ["- ", "* ", "+ "] where l.hasPrefix(m) { l = "• " + l.dropFirst(2) }
+            if let r = l.range(of: #"^\d+[.)] "#, options: .regularExpression) { l = "• " + l[r.upperBound...] }
+            l = l.replacingOccurrences(of: "**", with: "").replacingOccurrences(of: "__", with: "").replacingOccurrences(of: "`", with: "")
+            l = l.replacingOccurrences(of: #"\[([^\]]+)\]\([^)]+\)"#, with: "$1", options: .regularExpression)
+            return l
+        }
     }
 
     /// `duo2 update`'s answer: what's newest, its releases page, and whether installing in place
