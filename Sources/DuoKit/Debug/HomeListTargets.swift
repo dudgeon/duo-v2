@@ -16,6 +16,8 @@ public enum HomeListTargets {
         // The boards' clock: late enough in the day that 5h ago is still Today.
         let cal = Calendar.current
         model.listClock = cal.date(bySettingHour: 18, minute: 0, second: 0, of: Date())
+        // Home opens in chat (DL-142 (6), (7)): the boards' Home conversation, in chat.
+        model.fixtureChats["Morning triage"] = homeChat()
         // The `filter` board's typed examples. Fixture mode has no index, so search's two session
         // hits are given here, as the index would answer them.
         if screen == "list-filter" {
@@ -24,6 +26,31 @@ public enum HomeListTargets {
         } else if screen == "list-nothing" {
             model.listFilter = "stripe webhooks"
         }
+    }
+
+    /// The boards' Home chat (`list-1440`, `home-chat`): one question, Claude's answer after six reads
+    /// and two shell commands, then its own question. Times are the boards' (8:02, 8:03), in UTC.
+    static func homeChat() -> ChatSession {
+        let chat = ChatSession(key: "Morning triage", mode: .chat)
+        ChatWho.clock.timeZone = TimeZone(identifier: "UTC")
+        chat.setVersion("2.1.291")
+        chat.log.cwd = "/Users/pm/work/home"
+        let day = "2026-10-07T08:"
+        var lines: [ChatJSON] = [["type": "user", "timestamp": day + "02:00Z", "message": ["role": "user", "content": "What came in overnight?"]]]
+        let reads = ["inbox/slack.md", "inbox/email.md", "inbox/granola.md", "HOME.md", "projects.md", "asks.md"]
+        for (i, f) in reads.enumerated() {
+            lines.append(["type": "assistant", "timestamp": day + "02:1\(i)Z", "message": ["content": [["type": "tool_use", "id": "r\(i)", "name": "Read", "input": ["file_path": "/Users/pm/work/home/" + f]]]]])
+            lines.append(["type": "user", "timestamp": day + "02:1\(i)Z", "message": ["content": [["type": "tool_result", "tool_use_id": "r\(i)", "content": "…"]]]])
+        }
+        for i in 0..<2 {
+            lines.append(["type": "assistant", "timestamp": day + "02:3\(i)Z", "message": ["content": [["type": "tool_use", "id": "b\(i)", "name": "Bash", "input": ["command": "ls ~/work"]]]]])
+            lines.append(["type": "user", "timestamp": day + "02:3\(i)Z", "message": ["content": [["type": "tool_result", "tool_use_id": "b\(i)", "content": "…"]]]])
+        }
+        lines.append(["type": "assistant", "timestamp": day + "03:00Z", "message": ["content": [["type": "text", "text": "Five new asks. Three belong to projects: the refunds edge cases, the onboarding copy and the pricing readout. Two are yours."]]]])
+        lines.append(["type": "assistant", "timestamp": day + "03:01Z", "message": ["content": [["type": "text", "text": "Route the three to their projects as tasks?"]]]])
+        chat.fixedNow = ChatIngest.iso.date(from: day + "05:00.000Z")
+        for l in lines { ChatIngest.record(l, into: chat.log, chat: chat) }
+        return chat
     }
 
     /// What search's session index would find for "saved cards in scope" on the boards' sessions.

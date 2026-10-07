@@ -94,6 +94,15 @@ public struct SettingsView: View {
                             Button("Choose Home Folder…") { model.chooseHomeFolder() }.buttonStyle(.duo)
                         }
                     }
+                    // DL-142 (6): new Home sessions open in chat. A stand-in row: Settings has no General
+                    // group and the row isn't drawn (Q-109). `duo2 session chat --home`.
+                    DuoColor.rule.frame(height: DuoMetric.borderHairline)
+                    row("Home opens in", value: Picker("", selection: Binding(get: { model.chats.prefs.home ?? .chat },
+                                                                               set: { model.chats.setHomeDefault($0) })) {
+                        Text("Chat").tag(HomeChatDefault.chat)
+                        Text("Terminal").tag(HomeChatDefault.terminal)
+                        Text("The mode used last").tag(HomeChatDefault.last)
+                    }.labelsHidden().fixedSize(), sub: "New Home sessions, the one Duo starts at launch too. Each keeps its own once switched.") { EmptyView() }
                 }
                 group("Sessions") {
                     let a = info.archive

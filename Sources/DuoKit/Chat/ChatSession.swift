@@ -10,6 +10,9 @@ import Observation
 /// What a Claude tab shows.
 public enum ChatViewMode: String, Codable, Sendable { case terminal, chat }
 
+/// What new Home sessions open in (`duo2 session chat --home`, Settings › General "Home opens in").
+public enum HomeChatDefault: String, Codable, Sendable, CaseIterable { case chat, terminal, last }
+
 /// Chat mode's remembered choices (DL-119 §5): each session's mode, and the one used last, which
 /// a new session opens in. Kept in Duo's support folder (`chat.json`).
 public struct ChatPrefs: Codable, Sendable, Equatable {
@@ -19,6 +22,8 @@ public struct ChatPrefs: Codable, Sendable, Equatable {
     public var last: ChatViewMode = .terminal
     /// `--default`: nil follows `last`; otherwise new sessions always open in this mode.
     public var fixedDefault: ChatViewMode?
+    /// `--home` (DL-142 (6)): what new Home sessions open in. nil is chat; `last` follows the rest.
+    public var home: HomeChatDefault?
 
     public init() {}
 
@@ -34,8 +39,17 @@ public struct ChatPrefs: Codable, Sendable, Equatable {
         try? data.write(to: url, options: .atomic)
     }
 
-    /// A session's mode: its own once chosen, else the default for new sessions.
-    public func mode(for id: String) -> ChatViewMode { modes[id] ?? fixedDefault ?? last }
+    /// A session's mode: its own once chosen, else the default for new sessions. New Home sessions
+    /// open in chat unless `--home` says otherwise (DL-142 (6)); each keeps its own mode once switched.
+    public func mode(for id: String, home isHome: Bool = false) -> ChatViewMode {
+        if let m = modes[id] { return m }
+        guard isHome else { return fixedDefault ?? last }
+        switch home ?? .chat {
+        case .chat: return .chat
+        case .terminal: return .terminal
+        case .last: return fixedDefault ?? last
+        }
+    }
 
     public mutating func set(_ mode: ChatViewMode, for id: String) {
         modes[id] = mode
@@ -385,10 +399,10 @@ public final class ChatStore {
         prefs = persist ? ChatPrefs.load() : ChatPrefs()
     }
 
-    /// A session's chat, made on first use in the mode it should open in.
-    public func session(_ key: String) -> ChatSession {
+    /// A session's chat, made on first use in the mode it should open in (Home's: DL-142 (6)).
+    public func session(_ key: String, home: Bool = false) -> ChatSession {
         if let s = sessions[key] { return s }
-        let s = ChatSession(key: key, mode: prefs.mode(for: key))
+        let s = ChatSession(key: key, mode: prefs.mode(for: key, home: home))
         sessions[key] = s
         return s
     }
@@ -407,6 +421,11 @@ public final class ChatStore {
 
     public func setDefault(_ mode: ChatViewMode?) {
         prefs.fixedDefault = mode
+        if persist { prefs.save() }
+    }
+
+    public func setHomeDefault(_ d: HomeChatDefault) {
+        prefs.home = d == .chat ? nil : d
         if persist { prefs.save() }
     }
 
