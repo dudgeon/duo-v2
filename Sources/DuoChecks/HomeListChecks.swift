@@ -31,5 +31,14 @@ import Foundation
     check(l.visibleRows(showsNeedsYou: true, earlierOpen: false, archivedOpen: false).first?.session.name == "Morning triage"
           && l.visibleRows(showsNeedsYou: false, earlierOpen: true, archivedOpen: false).count == listed.count, "arrow keys walk the rows as drawn")
     check(HomeView(rawValue: DuoState().homeView ?? "") == nil, "a new user has no choice yet, so sees List")
+    do {
+        let m = AppModel(fixture: base)
+        m.altitude = .allProjects
+        m.homeView = .board
+        m.idleOpen = true
+        m.homeView = .list   // not setHomeView: it writes Duo's state file
+        check(!IdleKeys.handle(m, code: 36, flags: [], chars: "\r"), "the idle list's keys stop on the List, which has no idle footer (F-178)")
+        m.idleOpen = false
+    }
     check(DuoAction.resolve(["view", "home", "list"]) != nil && ActionID.viewHome.action.ui.contains("Show List"), "duo2 view home (DL-71)")
 }

@@ -115,6 +115,8 @@ extension AppModel {
 
     /// Board or List (`duo2 view home`, View › Show Board / Show List); remembered from then on.
     public func setHomeView(_ v: HomeView) {
+        // The List has no idle footer: its list closes, keys and all (F-178).
+        if v == .list, idleOpen { idleOpen = false; IdleKeys.remove() }
         homeView = v
         DuoState.update { $0.homeView = v.rawValue }
     }

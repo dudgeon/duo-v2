@@ -101,7 +101,7 @@ public enum IdleKeys {
 
     public static func handle(_ model: AppModel, code: UInt16, flags: NSEvent.ModifierFlags, chars: String?) -> Bool {
         // Only while the list is on screen: its keys must never reach past it (F-178).
-        guard model.idleOpen, model.altitude == .allProjects else { return false }
+        guard model.idleOpen, model.altitude == .allProjects, model.homeView == .board else { return false }
         let rows = model.idleGroups().flatMap(\.rows)
         switch code {
         case 125: model.idleSelection = min(rows.count - 1, model.idleSelection + 1)
