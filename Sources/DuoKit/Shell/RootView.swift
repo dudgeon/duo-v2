@@ -51,8 +51,9 @@ struct AllProjectsLayout: View {
                 .init(view: AnyView(ActionColumnPane()), width: DuoMetric.paneOverviewActionColumn,
                       minWidth: DuoMetric.paneMinActionColumn, collapsible: true, collapsed: model.rightCollapsedAllProjects),
             ],
-            dividerColors: [DuoNSColor.consoleRule, DuoNSColor.rule],
-            paneBackgrounds: [DuoNSColor.console, DuoNSColor.pane, DuoNSColor.pane],
+            // Home in chat is light, its divider too (DL-142 (7), `home-chat` board 10).
+            dividerColors: [model.homeShowsChat ? DuoNSColor.rule : DuoNSColor.consoleRule, DuoNSColor.rule],
+            paneBackgrounds: [model.homeShowsChat ? DuoNSColor.ground : DuoNSColor.console, DuoNSColor.pane, DuoNSColor.pane],
             model: model
         )
     }

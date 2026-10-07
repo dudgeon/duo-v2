@@ -13,6 +13,12 @@ extension AppModel {
             default: return done(.fail(usage))
             }
         }
+        // DL-142 (6): new Home sessions open in chat by default.
+        if let h = inv.flags["home"] {
+            guard let d = HomeChatDefault(rawValue: h) else { return done(.fail(usage)) }
+            chats.setHomeDefault(d)
+            return done(.ok(d == .last ? "New Home sessions open in the mode used last, as other sessions do." : "New Home sessions open in \(d == .chat ? "chat" : "the terminal")."))
+        }
         var words = inv.positional
         let answering = words.first == "answer"
         if answering { words.removeFirst() }

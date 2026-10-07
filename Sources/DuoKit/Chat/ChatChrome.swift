@@ -130,7 +130,7 @@ extension AppModel {
         case .shell: return nil
         default: break
         }
-        let c = chats.session(t.key)
+        let c = chats.session(t.key, home: isHomeTerminal(t))
         if (c.terminal as? LiveChatTerminal)?.view !== t.view { c.attach(LiveChatTerminal(t.view)) }
         // Live sessions are keyed by their id; demo and fixture terminals have no hooks to read.
         if terminalsMode == .live { c.follow(sessionId: t.key, cwd: t.cwd) }
@@ -141,6 +141,15 @@ extension AppModel {
             ClaudeVersion.of(path) { [weak c] v in c?.setVersion(v) }
         }
         return c
+    }
+
+    /// A Home session's terminal (DL-142 (6)): it runs in Home's folder, or is one of Home's tabs. The
+    /// folder decides for one just started, before any snapshot lists it.
+    func isHomeTerminal(_ t: TerminalSession) -> Bool {
+        guard let h = fixture.home else { return false }
+        let folder = liveFolders[h.name]?.path ?? (h.path as NSString).expandingTildeInPath
+        let std: (String) -> String = { URL(fileURLWithPath: $0).standardizedFileURL.path }
+        return std(t.cwd) == std(folder) || tabSessions(inProject: h.name).contains { $0.tabKey == t.key }
     }
 
     /// The terminal takes the keyboard again, at its latest line (Q-53).

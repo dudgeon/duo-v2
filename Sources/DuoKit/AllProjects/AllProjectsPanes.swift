@@ -6,30 +6,39 @@ import SwiftUI
 
 /// The Home terminal pane: header, one tab per live Home session, then the terminal. The body is
 /// Claude Code's own TUI (handoff §0.4), so it stays empty until terminals exist (Phase D).
+/// While the selected Home tab shows chat, the header and tab strip are DL-136's thin light strip,
+/// as the console's (DL-142 (7), home-evolution `home-chat` board 10); a terminal keeps them dark.
 struct HomePane: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
         let home = model.fixture.home
         let tabs = home.map { model.tabSessions(inProject: $0.name) } ?? []
+        let light = model.homeShowsChat
+        let text = light ? DuoColor.text : DuoColor.consoleText
+        let text2 = light ? DuoColor.text2 : DuoColor.consoleText2
+        let ground = light ? DuoColor.ground : DuoColor.console
         VStack(spacing: 0) {
-            HStack(spacing: DuoSpace.gapRowItems) {
+            HStack(spacing: light ? 10 : DuoSpace.gapRowItems) {
                 Text("★ \(home?.name ?? "Home")")
                     .duoText(.bodyEmphasis)
-                    .foregroundStyle(DuoColor.consoleText)
+                    .foregroundStyle(text)
                     .contentShape(Rectangle())
                     // Home's heading opens Home as a project, like any tile's name (Geoff, 2026-10-04).
                     .onActivate { if let h = home?.name { model.open(project: h) } }  // action: open
                     .accessibilityLabel("Open \(home?.name ?? "home")")
-                Spacer(minLength: 8)
+                // Light, the path follows the name (`home-chat` board 10); dark, it sits at the right.
+                if !light { Spacer(minLength: 8) }
                 Text(home?.path ?? "")
                     .duoText(.mono)
-                    .foregroundStyle(DuoColor.consoleText2)
+                    .foregroundStyle(text2)
                     .lineLimit(1)
+                if light { Spacer(minLength: 0) }
             }
             .padding(.horizontal, DuoSpace.panePadding)
-            .frame(height: DuoMetric.tabStripHeight)
-            ConsoleRule()
+            .frame(height: light ? DuoMetric.tabStripHeight - DuoMetric.borderHairline : DuoMetric.tabStripHeight)
+            .background(ground)
+            HomeRule(light: light)
 
             // No Home yet: no session row, the message sits under the heading (S2-3).
             let noHome = model.fixtureConsole == .noHome || (model.terminalsMode == .live && home == nil)
@@ -39,24 +48,34 @@ struct HomePane: View {
                     let active = s.tabKey == model.homeTab
                     HStack(spacing: DuoSpace.gapGlyphToLabel) {
                         if model.showsTabClose(s.tabKey) {   // DL-126
-                            TabCloseButton(key: s.tabKey, onConsole: true, active: active) { model.closeConsoleTab(s.tabKey) }  // action: session close
+                            TabCloseButton(key: s.tabKey, onConsole: !light, active: active) { model.closeConsoleTab(s.tabKey) }  // action: session close
                                 .frame(width: DuoMetric.glyph, height: DuoMetric.glyph)
                         } else {
-                            StateGlyph(s.state, on: .console(active: active))
+                            StateGlyph(s.state, on: light ? .light : .console(active: active))
                         }
-                        Text(s.name)
-                            .duoText(active ? .monoActiveTab : .mono)
-                            .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2)
-                            .lineLimit(1)
+                        if light {
+                            Text(s.name)
+                                .duoText(.control, weight: active ? .semibold : nil)
+                                .foregroundStyle(active ? DuoColor.text : DuoColor.text2)
+                                .lineLimit(1)
+                        } else {
+                            Text(s.name)
+                                .duoText(active ? .monoActiveTab : .mono)
+                                .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2)
+                                .lineLimit(1)
+                        }
                     }
-                    .modifier(TabHoverFill(key: s.tabKey, onConsole: true))   // DL-134
+                    .modifier(TabHoverFill(key: s.tabKey, onConsole: !light, fill: light ? DuoColor.selected : nil))   // DL-134
+                    .frame(maxHeight: light ? .infinity : nil)
+                    // The selected tab is underlined at the strip's foot (DL-136).
+                    .overlay(alignment: .bottom) { if light && active { DuoColor.text.frame(height: 2) } }
                     .contentShape(Rectangle())
                     .onActivate { model.homeTab = s.tabKey }  // action: session open
                     .modifier(SessionOrganizeMenu(sessionKey: s.tabKey))
                     .modifier(TabHover(key: s.tabKey) { model.closeConsoleTab(s.tabKey) })
                     .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
-                    .background(DuoColor.console)
+                    .background(ground)
                     .transition(.tab)
                 }
                 // Home's shells (DB-4), after its sessions.
@@ -64,29 +83,29 @@ struct HomePane: View {
                     let active = key == model.homeTab
                     HStack(spacing: DuoSpace.gapGlyphToLabel) {
                         if model.showsTabClose(key) {
-                            TabCloseButton(key: key, onConsole: true, active: active) { model.closeConsoleTab(key) }  // action: session close
+                            TabCloseButton(key: key, onConsole: !light, active: active) { model.closeConsoleTab(key) }  // action: session close
                                 .frame(width: 11, height: 9)
                         } else {
-                            ShellPromptMark(active: active).frame(width: 11, height: 9)
+                            ShellPromptMark(active: active, light: light).frame(width: 11, height: 9)
                         }
-                        Text(model.consoleTitle(key)).duoText(active ? .monoActiveTab : .mono)
-                            .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2).lineLimit(1)
+                        Text(model.consoleTitle(key)).duoText(light ? .control : active ? .monoActiveTab : .mono)
+                            .foregroundStyle(active ? text : text2).lineLimit(1)
                     }
-                    .modifier(TabHoverFill(key: key, onConsole: true))
+                    .modifier(TabHoverFill(key: key, onConsole: !light, fill: light ? DuoColor.selected : nil))
                     .contentShape(Rectangle())
                     .onActivate { model.homeTab = key }  // action: session open
                     .modifier(TabHover(key: key) { model.closeConsoleTab(key) })
                     .accessibilityLabel("\(model.consoleTitle(key)), shell")
-                    .background(DuoColor.console)
+                    .background(ground)
                     .transition(.tab)
                 }
                 // With no tabs, a way to start one (home-none).
                 if home != nil, tabs.isEmpty && (home.map { model.shells(inProject: $0.name).isEmpty } ?? true) {
                     HStack(spacing: 5) {
-                        Text("+").duoText(.mono).foregroundStyle(DuoColor.consoleText2)
+                        Text("+").duoText(light ? .control : .mono).foregroundStyle(text2)
                             .onActivate { if let h = home?.name { model.homeTab = model.newSession(in: h) } }  // action: session new
                             .accessibilityLabel("New Claude session")
-                        Chevron(direction: .down, color: DuoColor.consoleText2).frame(width: 8, height: 6).scaleEffect(0.8)
+                        Chevron(direction: .down, color: text2).frame(width: 8, height: 6).scaleEffect(0.8)
                             .frame(height: 16).contentShape(Rectangle())
                             .onActivate {  // action: session new
                                 PopUp.show([("New Claude Session", { if let h = home?.name { model.homeTab = model.newSession(in: h) } }),
@@ -98,22 +117,26 @@ struct HomePane: View {
                 Spacer(minLength: 0)
                 // Terminal / Chat for the selected Claude tab, as on the console (DL-132 g, q57-home-pill).
                 if let key = model.homeTab, tabs.contains(where: { $0.tabKey == key }), model.chat(for: key) != nil {
-                    ChatToggle(key: key).padding(.trailing, -4)
+                    ChatToggle(key: key, light: light).padding(.trailing, light ? -6 : -4)   // 11 from the edge on the thin strip
                 }
             }
             .padding(.horizontal, DuoSpace.panePadding)
-            .frame(height: DuoMetric.homeSessionTabsHeight)
+            .frame(height: light ? DuoMetric.chatStripHeight - DuoMetric.borderHairline : DuoMetric.homeSessionTabsHeight)
+            .background(ground)
             .duoAnimation(.tabMove, value: tabs.map(\.tabKey) + (home.map { model.shells(inProject: $0.name) } ?? []))
-            ConsoleRule()
+            HomeRule(light: light)
             }
 
             let _ = model.endedRevision
             if let home, let tab = model.homeTab, model.fixtureConsole != .homeNone,
                let t = model.terminal(project: home.name, session: tab), !t.missingClaude {
                 // Home's sessions read as chat too (DL-132 g), the same body as the console's.
-                if let chat = model.chats.existing(t.key) { ConsoleChatBody(chat: chat, terminal: t) } else { TerminalSlot(session: t) }
+                if let chat = model.chat(for: t.key) { ConsoleChatBody(chat: chat, terminal: t) } else { TerminalSlot(session: t) }
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
                 Color.clear.frame(height: 0).task(id: t.key) { model.attachChat(t) }
+            } else if let tab = model.homeTab, let chat = model.fixtureChats[tab] {
+                // A target state's Home chat (no terminal in fixture mode).
+                ConsoleChatBody(chat: chat, terminal: nil)
             } else if noHome {
                 // No Home folder chosen (DL-84, S2-3): sessions are listed anyway (DL-82).
                 ConsoleMessage(state: .noHome, inHome: true)
@@ -124,12 +147,26 @@ struct HomePane: View {
                 Color.clear
             }
         }
-        .background(DuoColor.console)
+        .background(light ? DuoColor.ground : DuoColor.console)
     }
 }
 
 struct ConsoleRule: View {
     var body: some View { DuoColor.consoleRule.frame(height: 1) }
+}
+
+/// Home's rules: the console's on the dark strip, `rule` on the light one (DL-136).
+struct HomeRule: View {
+    let light: Bool
+    var body: some View { (light ? DuoColor.rule : DuoColor.consoleRule).frame(height: DuoMetric.borderHairline) }
+}
+
+extension AppModel {
+    /// Home's selected tab is a Claude tab showing chat: its header and strip are light (DL-142 (7)).
+    var homeShowsChat: Bool {
+        guard let key = homeTab, !isShell(key), let c = chat(for: key) else { return false }
+        return c.showsChat
+    }
 }
 
 // MARK: - Project map

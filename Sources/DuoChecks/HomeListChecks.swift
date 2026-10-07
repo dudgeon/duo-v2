@@ -47,5 +47,20 @@ import Foundation
         check(!IdleKeys.handle(m, code: 36, flags: [], chars: "\r"), "the idle list's keys stop on the List, which has no idle footer (F-178)")
         m.idleOpen = false
     }
+    do {
+        // Home opens in chat (DL-142 (6)): new Home sessions in chat; each keeps its own once switched;
+        // other sessions still the mode used last; --home terminal|last.
+        var p = ChatPrefs()
+        check(p.mode(for: "h1", home: true) == .chat && p.mode(for: "s1") == .terminal, "a new Home session opens in chat; others in the mode used last (terminal until chat is used)")
+        p.set(.terminal, for: "h1")
+        check(p.mode(for: "h1", home: true) == .terminal, "a Home session keeps its own mode once switched")
+        p.home = .terminal
+        check(p.mode(for: "h2", home: true) == .terminal, "--home terminal")
+        p.home = .last; p.last = .chat
+        check(p.mode(for: "h3", home: true) == .chat && { var q = p; q.fixedDefault = .terminal; return q.mode(for: "h3", home: true) == .terminal }(), "--home last follows --default, else the mode used last")
+        let old = try? JSONDecoder().decode(ChatPrefs.self, from: Data(#"{"modes":{},"last":"terminal"}"#.utf8))
+        check(old?.home == nil && old?.mode(for: "x", home: true) == .chat, "a chat.json from before reads, and Home opens in chat")
+        check(DuoAction.resolve(["session", "chat"]).map { $0.0.args.contains("--home chat|terminal|last") } == true, "duo2 session chat --home (DL-71)")
+    }
     check(DuoAction.resolve(["view", "home", "list"]) != nil && ActionID.viewHome.action.ui.contains("Show List"), "duo2 view home (DL-71)")
 }
