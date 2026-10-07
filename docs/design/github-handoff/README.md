@@ -35,4 +35,4 @@ The research and the reasoning are in `docs/research/github-primitives.md`; the 
 
 ## Owned elsewhere
 
-The New project sheet, `_PROJECT.md` and the notice pattern belong to the project & task CX study (DL-147). Worktrees inside a cloned project come later (DL-149).
+The New project sheet, `_PROJECT.md` and the notice pattern belong to the project & task CX study (DL-147). Worktrees inside a cloned project come later (DL-149, ENH-47).
