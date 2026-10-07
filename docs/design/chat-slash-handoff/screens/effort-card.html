@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x900">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-143">
+<!--
+E · /effort, the result line after, which commands get a card [G]
+APPROVED BOARD. Geoff, 2026-10-07 (DL-143). Exported from the Design canvas
+https://claude.ai/artifact/EGcF7Qx5ga6EXwkKZVh44a (board ScrE2.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative;
+every label, option and number from Claude Code is read from its screen or transcript at run time, never from this file.
+-->
+<title>Duo · Chat slash commands · E · /effort, the result line after, which commands get a card</title>
+<style>
+body{margin:0}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B636D}
+.who{font-size:12px;line-height:16px;color:#5B636D}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:9px 14px}
+.sys{display:flex;align-items:center;gap:8px;font-size:12px;line-height:16px;color:#5B636D}
+.pick{background:#FFFFFF;border:1.5px solid #1F2328;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.seg{display:grid;grid-template-columns:repeat(5, minmax(0, 1fr));border:1px solid #8B939C;border-radius:6px;overflow:hidden}
+.seg button{font:inherit;font-size:12px;line-height:16px;padding:5px 0;border:0;border-left:1px solid #C9CDD3;background:#FFFFFF;color:#1F2328}
+.seg button:first-child{border-left:0}
+.seg .on{background:#E9ECEF;font-weight:600}
+.btn{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;white-space:nowrap}
+.k{color:#5B636D}
+.cap{color:#5B636D;font-size:12px;line-height:16px}
+.row{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;font-size:13px;line-height:20px;padding:5px 0;border-top:1px solid #C9CDD3}
+</style>
+</head>
+<body>
+<div style="width: 680px; height: 900px; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+
+<div class="lbl">/EFFORT · CLAUDE CODE’S SLIDER AS FIVE SEGMENTS [G]</div>
+<div style="align-self: flex-end" class="you">/effort</div>
+<div class="pick">
+<div style="display: flex; align-items: center; gap: 8px"><span class="lbl" style="color: #1F2328">EFFORT</span><span class="lbl">· /EFFORT</span></div>
+<div style="display: flex; justify-content: space-between; font-size: 12px; line-height: 16px; color: #5B636D"><span>Faster</span><span>Smarter</span></div>
+<div class="seg" role="group" aria-label="Effort">
+<button type="button">low</button><button type="button">medium</button><button type="button" class="on">high</button><button type="button">xhigh</button><button type="button">max</button>
+</div>
+<div style="display: flex; align-items: center; gap: 6px">
+<button type="button" class="btn">Confirm <span class="k">⏎</span></button>
+<button type="button" class="btn">This Session Only <span class="k">s</span></button>
+<button type="button" class="btn">Cancel <span class="k">esc</span></button>
+<span style="margin-left: auto; font-size: 12px; line-height: 16px; color: #5B636D">←/→ to adjust</span>
+</div>
+</div>
+<div class="cap">The marked segment is the TUI’s ▲. A click sends ← or → until the TUI’s marker is there (re-reading after each), then waits for Confirm. Words are the screen’s: “Enter to confirm · s for this session only · Esc to cancel”.</div>
+
+<div class="lbl" style="margin-top: 10px">AFTER · THE CARD SINKS, THE RESULT IS A QUIET LINE (A) [G]</div>
+<div style="align-self: flex-end" class="you">/model</div>
+<div class="sys" style="align-self: flex-end; padding-right: 4px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1v5.5h6" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Kept model as Haiku 4.5</span></div>
+<div class="cap">The composer’s model label updates from the TUI, as now.</div>
+
+<div class="lbl" style="margin-top: 10px">WHICH COMMANDS GET A CARD [G]</div>
+<div>
+<div class="row"><span style="font-weight: 600">A card</span><span>/model and /effort: one list or one slider, a key a choice, and the two most used.</span></div>
+<div class="row"><span style="font-weight: 600">The terminal (D)</span><span>Every other screen: /config, /permissions, /resume, /help, /usage, /status, /skills, /btw, /fast, /sandbox, /hooks, /memory, /plugin, /rewind … Searches, tabs and nested screens stay where they’re drawn.</span></div>
+<div class="row" style="border-bottom: 1px solid #C9CDD3"><span style="font-weight: 600">If the screen differs</span><span>A card only for a screen chat recognises on a verified CLI version; anything else falls back, as review cards do.</span></div>
+</div>
+<div class="cap">More cards later (/fast, read-only /usage and /status) would be ENH-30.</div>
+</div>
+</body>
+</html>
