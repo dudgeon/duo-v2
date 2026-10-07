@@ -4162,6 +4162,358 @@
    },
    "commit": "5bbea477d7bcdbac18bedadac415c5a67f477995",
    "group": "After slice 3 (other sessions)"
+  },
+  {
+   "id": "narrow-windows",
+   "group": "After slice 3 (other sessions)",
+   "title": "Narrow windows and the right-pane button",
+   "what": "Making the window narrower keeps the side panes' widths and squeezes the middle; below its minimum the right pane hides first, then the left. A right-pane button at the toolbar's end (and ⌥⌘0) hides and shows it; opening a document shows it again. The map packs its columns.",
+   "steps": [
+    "In `checkout`, drag the window narrower: the console narrows, then the right pane slides away, then the left.",
+    "Click the right-pane button at the toolbar's right end (or ⌥⌘0) to hide and show it.",
+    "At All projects, narrow the window: columns pack under the shortest one."
+   ],
+   "expect": "Matches `narrow-handoff`. With System Settings › Accessibility › Display › Reduce Motion on, all of it happens at once.",
+   "ref": "DL-129, DB-25, F-128 to F-130",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-128 to F-130): DuoChecks, and captures or film frames mid-motion against `motion-handoff` / `narrow-handoff`; unchanged at rest against main's build."
+    ],
+    "didnt": [
+     "Watching it live in your Duo at full speed."
+    ],
+    "human": [
+     "How narrowing feels at your usual window sizes."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "86d69afa68b13b33c755eb4f1472b2d7174ec0cd"
+  },
+  {
+   "id": "motion-base",
+   "group": "After slice 3 (other sessions)",
+   "title": "Motion: the foundation, Reduce Motion and drag and drop",
+   "what": "One Reduce Motion setting governs all of Duo's motion, timed by design tokens; dragging a session or tile uses them.",
+   "steps": [
+    "Drag a session onto a project tile at All projects: the card lifts and lands on the motion tokens.",
+    "Turn on Reduce Motion and drag again: it moves without animation."
+   ],
+   "expect": "Matches `motion-handoff`'s tokens. With System Settings › Accessibility › Display › Reduce Motion on, all of it happens at once.",
+   "ref": "DL-130, F-131, Q-77",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-131): DuoChecks, and captures or film frames mid-motion against `motion-handoff` / `narrow-handoff`; unchanged at rest against main's build."
+    ],
+    "didnt": [
+     "Watching it live in your Duo at full speed."
+    ],
+    "human": [
+     "Whether the drag feels right."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "a63ecf88043c6bfe669f5d4975deae84e824bb3d"
+  },
+  {
+   "id": "motion-sheets",
+   "group": "After slice 3 (other sessions)",
+   "title": "Motion: sheets hang from the toolbar",
+   "what": "Duo's sheets and questions drop from under the toolbar; the next queued question cross-fades in place; the map's dimming fades.",
+   "steps": [
+    "At All projects, click + New project: the sheet drops from the toolbar and the map dims.",
+    "Cancel: it rises back."
+   ],
+   "expect": "With System Settings › Accessibility › Display › Reduce Motion on, all of it happens at once.",
+   "ref": "DL-130, F-133",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-133): DuoChecks, and captures or film frames mid-motion against `motion-handoff` / `narrow-handoff`; unchanged at rest against main's build."
+    ],
+    "didnt": [
+     "Watching it live in your Duo at full speed."
+    ],
+    "human": [
+     "Speed and feel."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "eeae1651eae021f4634f6daa90eae0126f20e396"
+  },
+  {
+   "id": "motion-rows",
+   "group": "After slice 3 (other sessions)",
+   "title": "Motion: session rows move, folds turn, the list holds still",
+   "what": "Rows travel between sections (Needs you, Open, Today…), appear and leave; the list holds still while the pointer is over it; fold chevrons turn; folders in the tree list at once.",
+   "steps": [
+    "In `checkout`, start a session and watch its row move into Open.",
+    "Keep the pointer over the list while something changes: nothing jumps until you move away.",
+    "Open and close the Tasks fold: the chevron turns."
+   ],
+   "expect": "With System Settings › Accessibility › Display › Reduce Motion on, all of it happens at once.",
+   "ref": "DL-130, Q-79, Q-80, F-134",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-134): DuoChecks, and captures or film frames mid-motion against `motion-handoff` / `narrow-handoff`; unchanged at rest against main's build."
+    ],
+    "didnt": [
+     "Watching it live in your Duo at full speed."
+    ],
+    "human": [
+     "Whether the hold under the pointer feels right."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "acc38ae1efa6271aabe4a172e361b846d11c067f"
+  },
+  {
+   "id": "motion-complete",
+   "group": "After slice 3 (other sessions)",
+   "title": "Motion: Mark Complete holds 5 seconds",
+   "what": "Mark Complete on a task shows it checked, struck through and grey for 5 s before it leaves, so ⌘Z or Mark Open can catch it. Changes show at once, without flicker.",
+   "steps": [
+    "In `checkout`, right-click `exec-review-prep` and choose Mark Complete: it stays 5 s, checked and struck through, then leaves.",
+    "Do it again and press ⌘Z during the hold: it stays, unchecked."
+   ],
+   "expect": "With System Settings › Accessibility › Display › Reduce Motion on, all of it happens at once.",
+   "ref": "DL-130, Q-78, F-135",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-135): DuoChecks, and captures or film frames mid-motion against `motion-handoff` / `narrow-handoff`; unchanged at rest against main's build."
+    ],
+    "didnt": [
+     "Watching it live in your Duo at full speed."
+    ],
+    "human": [
+     "Whether 5 seconds is right."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "fabba888c0c1fa3c65311d4ac33a27965d9c2b22"
+  },
+  {
+   "id": "motion-chat-card",
+   "group": "After slice 3 (other sessions)",
+   "title": "Motion: the chat review card rises and sinks",
+   "what": "In chat mode, a permission or question card rises in place of the composer and sinks after you answer.",
+   "steps": [
+    "In chat mode, ask Claude for something that needs permission; watch the card rise, answer it, watch it sink."
+   ],
+   "expect": "With System Settings › Accessibility › Display › Reduce Motion on, all of it happens at once. One real turn.",
+   "ref": "DL-130, F-136",
+   "setup": [
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-136): DuoChecks, and captures or film frames mid-motion against `motion-handoff` / `narrow-handoff`; unchanged at rest against main's build."
+    ],
+    "didnt": [
+     "Watching it live in your Duo at full speed."
+    ],
+    "human": [
+     "Speed and feel."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "027010c8a0713dd0c26a3453ecc82fe2494246bb"
+  },
+  {
+   "id": "motion-tabs",
+   "group": "After slice 3 (other sessions)",
+   "title": "Motion: tabs and notice bars",
+   "what": "Tabs fade in and out while the strip slides; notice bars (conflict, removed, downloads) slide down from under the tabs.",
+   "steps": [
+    "In `checkout`, open and close a few documents: tabs fade and the strip slides.",
+    "Open a shell (⇧⌘T) and close it."
+   ],
+   "expect": "With System Settings › Accessibility › Display › Reduce Motion on, all of it happens at once.",
+   "ref": "DL-130, F-137",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-137): DuoChecks, and captures or film frames mid-motion against `motion-handoff` / `narrow-handoff`; unchanged at rest against main's build."
+    ],
+    "didnt": [
+     "Watching it live in your Duo at full speed."
+    ],
+    "human": [
+     "Speed and feel."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "ff9caf4e0b538e651ef3fac089fb1d211927671f"
+  },
+  {
+   "id": "motion-highlight",
+   "group": "After slice 3 (other sessions)",
+   "title": "Motion: Claude's highlight fades",
+   "what": "When Claude edits an open document, its highlight fades in; reverting or accepting fades it out.",
+   "steps": [
+    "Open `docs/prd.md` and ask a session to change a line in it: the highlight fades in.",
+    "Edit → Revert Claude's Change: it fades out."
+   ],
+   "expect": "With System Settings › Accessibility › Display › Reduce Motion on, all of it happens at once.",
+   "ref": "DL-130, F-138",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-138): DuoChecks, and captures or film frames mid-motion against `motion-handoff` / `narrow-handoff`; unchanged at rest against main's build."
+    ],
+    "didnt": [
+     "Watching it live in your Duo at full speed."
+    ],
+    "human": [
+     "Whether the fade reads clearly."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "6a1279668d7f0deee25c46da44ca25bede0be055"
+  },
+  {
+   "id": "motion-chip-jump",
+   "group": "After slice 3 (other sessions)",
+   "title": "Motion: the needs-you chip, and project to project",
+   "what": "The needs-you chip fades and its count rolls; jumping between projects fades the new project up instead of cross-fading rows.",
+   "steps": [
+    "When a session starts needing you, watch the toolbar chip fade in and its count roll.",
+    "Jump from `checkout` to `refunds` with the peek (⇧⌘P, ⌘↩): the project fades up."
+   ],
+   "expect": "With System Settings › Accessibility › Display › Reduce Motion on, all of it happens at once.",
+   "ref": "DL-130, F-139",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-139): DuoChecks, and captures or film frames mid-motion against `motion-handoff` / `narrow-handoff`; unchanged at rest against main's build."
+    ],
+    "didnt": [
+     "Watching it live in your Duo at full speed."
+    ],
+    "human": [
+     "Speed and feel."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "b4a7d811184523a5082a0b911412ece1e6aed1ed"
+  },
+  {
+   "id": "motion-deck",
+   "group": "After slice 3 (other sessions)",
+   "title": "Motion: the deck scrolls and the picker glides",
+   "what": "In a PowerPoint deck, ‹ › scroll to the slide and the shape picker's outline glides between shapes.",
+   "steps": [
+    "Open `docs/garden-review.pptx`, press › a few times, then Select Shape and move between shapes."
+   ],
+   "expect": "With System Settings › Accessibility › Display › Reduce Motion on, all of it happens at once.",
+   "ref": "DL-130, F-140",
+   "setup": [
+    "fixture reset-checkout",
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-140): DuoChecks, and captures or film frames mid-motion against `motion-handoff` / `narrow-handoff`; unchanged at rest against main's build."
+    ],
+    "didnt": [
+     "Watching it live in your Duo at full speed."
+    ],
+    "human": [
+     "Speed and feel."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "7b278330500d378f417d6e81a237542f60d6eec3"
+  },
+  {
+   "id": "motion-chat-drop",
+   "group": "After slice 3 (other sessions)",
+   "title": "Motion: chat items fade in, drop targets light up",
+   "what": "New items in chat fade in; a folder in the tree lights up as you drag files over it.",
+   "steps": [
+    "In chat mode, send a short message and watch the reply fade in.",
+    "Drag a file from Finder over a folder in the tree: it lights up."
+   ],
+   "expect": "With System Settings › Accessibility › Display › Reduce Motion on, all of it happens at once.",
+   "ref": "DL-130, F-141",
+   "setup": [
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-141): DuoChecks, and captures or film frames mid-motion against `motion-handoff` / `narrow-handoff`; unchanged at rest against main's build."
+    ],
+    "didnt": [
+     "Watching it live in your Duo at full speed."
+    ],
+    "human": [
+     "Speed and feel."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "9aff34eafdc07075b7d20c0c82e8e84b87934852"
+  },
+  {
+   "id": "remote-control",
+   "group": "After slice 3 (other sessions)",
+   "title": "Remote Control for sessions Duo starts",
+   "what": "`duo2 session new --remote-control [name]` starts a session you can open from the Claude app; the name is kept when it's resumed.",
+   "steps": [
+    "In Terminal: `duo2 session new --project checkout --remote-control walk-test`.",
+    "Open the Claude app on your phone or Mac: the session is listed as walk-test and you can talk to it.",
+    "Close it in Duo and resume it: it's still reachable."
+   ],
+   "expect": "Needs a claude whose --help lists --remote-control; otherwise the session starts without it and duo2 says so. Uses real turns.",
+   "ref": "DL-128, F-127, Q-72",
+   "setup": [
+    "open checkout"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "The building session checked it (F-127): DuoChecks, and captures or film frames mid-motion against `motion-handoff` / `narrow-handoff`; unchanged at rest against main's build."
+    ],
+    "didnt": [
+     "Watching it live in your Duo at full speed."
+    ],
+    "human": [
+     "Whether it shows up in the Claude app as you expect."
+    ],
+    "at": "2026-10-06"
+   },
+   "commit": "f331a237213c4646ad302a66c819309b0e6f600f"
   }
  ],
  "decisions": []
