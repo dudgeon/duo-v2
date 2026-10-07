@@ -1895,3 +1895,23 @@ Spike: `docs/plan/spikes/browser-engine.md`.
   - `scripts/check-editor-motion.mjs` and `scripts/check-deck-motion.mjs`;
   - `DUO_MOTION_SCALE`, `DUO_MOTION_HOLD` and `DUO_REDUCE_MOTION`;
   - harness actions `film:`, `filmw:`, `+<action>`, `session-state:`, `session-add:`, `session-remove:`, `sidebar-hover:`, `collapse:`, `task-complete:`, `task-open:`, `archive-session:`, `refresh`, `chat-screen:`, `chat-prompt:`, `drag-lift:`, `drag-over:` and `drag-land:`.
+
+## F-146 · A session is told its project's brief (ENH-16, 2026-10-06)
+
+- **Built on DL-116's hook, nothing new installed.** `duo2 hook context` (SessionStart, UserPromptSubmit) now returns the project's lines first, then the task's, one blank line apart, as one `additionalContext`. `ProjectContext` (`Sources/DuoKit/Live/ProjectContext.swift`) reads `PROJECT.md` at each hook, never cached, and records what it told in `events/<id>.project.json`, beside the task's `<id>.task.json`, so a prompt is told about a change once.
+- **Which project:** the one Duo files the session under, if it has a `PROJECT.md`; otherwise the nearest folder at or above Claude's folder with one (DL-82). A Home session, or one outside every project, is told nothing.
+- **What Claude reads** at startup, resume, clear and compact (empty fields are left out):
+
+      Duo: This session is in the project “checkout” (/Users/…/checkout). Its brief, from PROJECT.md (the user sees it on the project's tile in Duo):
+      - Goal: Ship the new checkout by November
+      - Health: at risk
+      - Next step: Fix the tax rounding bug
+
+  - A brand-new `PROJECT.md` (only `health: on-track`) gets one line: "Its PROJECT.md has no goal or next step yet."
+  - **When the project's `CLAUDE.md`, `.claude/CLAUDE.md` or `CLAUDE.local.md` imports it** (a line with `@PROJECT.md` or `@./PROJECT.md`; a mention without the `@` doesn't count), the guide's workaround, it's the name and folder only: "Its CLAUDE.md imports PROJECT.md, so you already have its goal, health and next step."
+  - On a prompt after `PROJECT.md` changed, one line per field: "The project's health is now “on track” (was “at risk”).", "The project's goal was cleared (was “…”)." It's told even when CLAUDE.md imports the brief, since Claude read CLAUDE.md at start. A session that leaves the project, joins one or moves to another is told so once. A session started before this build hears it all on its next prompt.
+- Only the three properties are passed, never the note's body; the guide (`docs/guide/projects.md`, "Claude is told the brief") keeps `@PROJECT.md` as the way to give Claude the whole note.
+- **Checked:**
+  - **DuoChecks:** 650 pass. 23 new checks cover start, an unchanged prompt, a subfolder, a session filed under the project, resume and compact, health and next changed (told once), goal cleared, imported (`@`, `@./`, a mention isn't an import), a change while imported, a new brief, never told, leaving, joining, moving, and joined with a task.
+  - **Live:** `scripts/check-context.sh` runs an isolated Duo (its own support folder and `CLAUDE_CONFIG_DIR`) with a stand-in `claude` that runs the real hooks from Duo's settings file with Claude Code's payloads; no model was called. It checks startup, an unchanged prompt, an edit to `PROJECT.md` told once, compact, and resume with `@PROJECT.md`: 7 pass. Home's session, started at launch, is told nothing.
+  - `scripts/bundle.sh` and `NO_BUILD=1 scripts/check-ui.sh` pass (nothing visible changed).

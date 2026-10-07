@@ -2,7 +2,8 @@ import DuoControl
 import Foundation
 
 /// A session attributed to a task knows it (DL-116): `duo2 session task`, and the `context` hook
-/// that Duo's sessions run at SessionStart and UserPromptSubmit (`duo2 hook context`).
+/// that Duo's sessions run at SessionStart and UserPromptSubmit (`duo2 hook context`). The same
+/// hook tells every session its project's brief (ENH-16, F-146).
 extension AppModel {
     /// `duo2 session task [id]`; with `--hook start|prompt` (from `duo2 hook context`), the text
     /// for Claude's context, empty for none, and what was told is recorded per session.
@@ -21,8 +22,12 @@ extension AppModel {
             ids.append(before)  // a note open with unsaved text takes the link in its buffer, not yet on disk
         }
         let now = TaskContext.entries(for: ids, folders: liveFolders)
-        let text = TaskContext.hook(event, sessionId: sid, now: now, cwd: req.cwd)
-        done(.ok(text, ["context": text, "tasks": now.map(Self.taskJSON)]))
+        let task = TaskContext.hook(event, sessionId: sid, now: now, cwd: req.cwd)
+        // The project's brief comes first (ENH-16, F-146).
+        let brief = ProjectContext.folder(project: findSession(key, in: nil)?.project, cwd: req.cwd, folders: liveFolders)
+            .flatMap { ProjectContext.brief(name: $0.name, folder: $0.folder) }
+        let text = ProjectContext.joined(ProjectContext.hook(event, sessionId: sid, now: brief), task)
+        done(.ok(text, ["context": text, "tasks": now.map(Self.taskJSON), "project": brief?.name ?? ""]))
     }
 
     static func taskJSON(_ t: TaskContext.Entry) -> [String: Any] {
