@@ -209,18 +209,30 @@ struct ChatComposerField: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(chat: chat) }
 
-    func makeNSView(context: Context) -> ComposerTextView {
+    func makeNSView(context: Context) -> NSScrollView {
         let v = ComposerTextView()
         v.delegate = context.coordinator
         v.coordinator = context.coordinator
+        v.isVerticallyResizable = true; v.isHorizontallyResizable = false
+        v.autoresizingMask = [.width]
+        v.minSize = .zero; v.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         chat.composerView = v
-        return v
+        // The field scrolls past its 8 lines and the caret is followed; no scroller is drawn (Q-148b).
+        let s = NSScrollView()
+        s.hasVerticalScroller = false; s.hasHorizontalScroller = false; s.drawsBackground = false; s.borderType = .noBorder
+        s.automaticallyAdjustsContentInsets = false
+        s.documentView = v
+        return s
     }
 
-    func updateNSView(_ v: ComposerTextView, context: Context) {
+    func updateNSView(_ s: NSScrollView, context: Context) {
+        guard let v = s.documentView as? ComposerTextView else { return }
         context.coordinator.chat = chat
         chat.composerView = v
-        if v.plainText != chat.ui.composer { v.setPlain(chat.ui.composer) }
+        if let fb = chat.ui.fixtureBlock {
+            chat.ui.fixtureBlock = nil
+            DispatchQueue.main.async { v.setFixture(fb) }
+        } else if v.plainText != chat.ui.composer { v.setPlain(chat.ui.composer) }
         if context.coordinator.chooseSeen != chat.chooseMention {
             context.coordinator.chooseSeen = chat.chooseMention
             context.coordinator.chooseMention(in: v)
@@ -232,9 +244,9 @@ struct ChatComposerField: NSViewRepresentable {
         v.needsDisplay = true
     }
 
-    func sizeThatFits(_ proposal: ProposedViewSize, nsView v: ComposerTextView, context: Context) -> CGSize? {
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView s: NSScrollView, context: Context) -> CGSize? {
         let w = proposal.width ?? 400
-        return CGSize(width: w, height: v.height(for: w))
+        return CGSize(width: w, height: (s.documentView as? ComposerTextView)?.height(for: w) ?? 44)
     }
 
     @MainActor final class Coordinator: NSObject, NSTextViewDelegate {
@@ -247,7 +259,7 @@ struct ChatComposerField: NSViewRepresentable {
             chat.ui.composer = v.plainText
             chat.ui.pasteNotice = nil
             v.styleMentions()
-            v.invalidateIntrinsicContentSize()
+            v.contentChanged()
             Task { await chat.mirrorSlash(v.plainText) }
             updateMention(v)
         }
@@ -305,7 +317,7 @@ final class ComposerChip: NSTextAttachment {
     var path = ""
 }
 
-final class ComposerTextView: NSTextView {
+final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegate {
     weak var coordinator: ChatComposerField.Coordinator?
     static let font = NSFont.systemFont(ofSize: DuoTextStyle.chatBody.spec.size)
     static let inset = NSSize(width: 14, height: 11)
@@ -316,6 +328,7 @@ final class ComposerTextView: NSTextView {
         layout.addTextContainer(container)
         storage.addLayoutManager(layout)
         super.init(frame: .zero, textContainer: container)
+        layout.delegate = self
         isRichText = true
         importsGraphics = false
         allowsUndo = true
@@ -341,7 +354,8 @@ final class ComposerTextView: NSTextView {
     var plainText: String {
         var out = ""
         textStorage?.enumerateAttributes(in: NSRange(location: 0, length: textStorage?.length ?? 0)) { attrs, range, _ in
-            if let chip = attrs[.attachment] as? ComposerChip { out += FileDrop.terminalText([URL(fileURLWithPath: chip.path)]).trimmingCharacters(in: .whitespaces) }
+            if let block = attrs[.attachment] as? ComposerPasteBlock { out += block.text }
+            else if let chip = attrs[.attachment] as? ComposerChip { out += FileDrop.terminalText([URL(fileURLWithPath: chip.path)]).trimmingCharacters(in: .whitespaces) }
             else { out += (string as NSString).substring(with: range) }
         }
         return out
@@ -375,7 +389,112 @@ final class ComposerTextView: NSTextView {
         tc.containerSize = NSSize(width: max(40, width - Self.inset.width * 2), height: .greatestFiniteMagnitude)
         lm.ensureLayout(for: tc)
         let lines = max(DuoTextStyle.chatBody.spec.lineHeight, ceil(lm.usedRect(for: tc).height))
-        return min(lines, DuoTextStyle.chatBody.spec.lineHeight * 8) + Self.inset.height * 2
+        // Eight lines, past which the field scrolls; an opened block shows whole (chat-paste-handoff `text`).
+        let cap = DuoTextStyle.chatBody.spec.lineHeight * 8 + (hasOpenBlock ? 64 : 0)
+        return min(lines, cap) + Self.inset.height * 2
+    }
+
+    var hasOpenBlock: Bool {
+        var open = false
+        textStorage?.enumerateAttribute(.attachment, in: NSRange(location: 0, length: textStorage?.length ?? 0)) { a, _, stop in
+            if (a as? ComposerPasteBlock)?.isOpen == true { open = true; stop.pointee = true }
+        }
+        return open
+    }
+
+    /// The text changed, or a block did: the field's height is asked again.
+    func contentChanged() {
+        invalidateIntrinsicContentSize()
+        enclosingScrollView?.invalidateIntrinsicContentSize()
+        syncBlocks()
+    }
+
+    // MARK: Pasted-text blocks
+
+    /// A paste over 12 lines, folded where the caret is.
+    /// A fixture board's composer: a block, then the words after it.
+    func setFixture(_ fb: ChatUIState.FixtureBlock) {
+        window?.makeFirstResponder(self)
+        insertBlock(fb.text)
+        insertText(fb.typed, replacementRange: selectedRange())
+        guard fb.open, let b = (textStorage?.attribute(.attachment, at: 0, effectiveRange: nil)) as? ComposerPasteBlock else { return }
+        toggle(b)
+        if let line = fb.caretLine { DispatchQueue.main.async { b.view?.focusEditor(afterLine: line) } }
+    }
+
+    func insertBlock(_ text: String) {
+        let s = NSMutableAttributedString(attachment: ComposerPasteBlock(text: text))
+        insertText(s, replacementRange: selectedRange())
+        // The paragraph holding it has no maximum line height: the box is taller than a line.
+        if let ts = textStorage {
+            let at = max(0, selectedRange().location - 1)
+            let para = (ts.string as NSString).paragraphRange(for: NSRange(location: at, length: 0))
+            let ps = NSMutableParagraphStyle()
+            ps.minimumLineHeight = DuoTextStyle.chatBody.spec.lineHeight
+            ts.addAttribute(.paragraphStyle, value: ps, range: para)
+        }
+        contentChanged()
+    }
+
+    func blockRange(_ b: ComposerPasteBlock) -> NSRange? {
+        var found: NSRange?
+        textStorage?.enumerateAttribute(.attachment, in: NSRange(location: 0, length: textStorage?.length ?? 0)) { a, r, stop in
+            if a as AnyObject === b { found = r; stop.pointee = true }
+        }
+        return found
+    }
+
+    func remove(_ b: ComposerPasteBlock) {
+        guard let r = blockRange(b) else { return }
+        insertText("", replacementRange: r)
+        window?.makeFirstResponder(self)
+        contentChanged()
+    }
+
+    func toggle(_ b: ComposerPasteBlock) {
+        b.isOpen.toggle()
+        b.view?.syncOpen()
+        if let r = blockRange(b) { layoutManager?.invalidateLayout(forCharacterRange: r, actualCharacterRange: nil) }
+        contentChanged()
+        needsDisplay = true
+    }
+
+    /// Its text was edited in place: what's sent follows.
+    func blockEdited(_ b: ComposerPasteBlock) {
+        b.preview = ChatPaste.blockPreview(b.text)
+        b.view?.needsDisplay = true
+        coordinator?.chat.ui.composer = plainText
+        coordinator?.chat.ui.pasteNotice = nil
+        contentChanged()
+    }
+
+    /// Puts each block's view over the box its attachment reserved; drops the views of blocks that are gone.
+    func syncBlocks() {
+        guard let ts = textStorage, let lm = layoutManager, let tc = textContainer else { return }
+        var seen = Set<ObjectIdentifier>()
+        ts.enumerateAttribute(.attachment, in: NSRange(location: 0, length: ts.length)) { a, r, _ in
+            guard let b = a as? ComposerPasteBlock else { return }
+            seen.insert(ObjectIdentifier(b))
+            let v = b.view ?? PasteBlockView(block: b, host: self)
+            b.view = v
+            if v.superview !== self { addSubview(v) }
+            let g = lm.glyphRange(forCharacterRange: r, actualCharacterRange: nil)
+            guard g.length > 0, lm.isValidGlyphIndex(g.location) else { return }
+            let line = lm.lineFragmentRect(forGlyphAt: g.location, effectiveRange: nil)
+            let x = lm.location(forGlyphAt: g.location).x
+            v.frame = NSRect(x: textContainerOrigin.x + line.minX + x, y: textContainerOrigin.y + line.minY,
+                             width: max(40, tc.size.width - 2 * tc.lineFragmentPadding), height: b.boxHeight)
+        }
+        for v in subviews.compactMap({ $0 as? PasteBlockView }) where !seen.contains(ObjectIdentifier(v.block)) { v.removeFromSuperview() }
+    }
+
+    func layoutManager(_ lm: NSLayoutManager, didCompleteLayoutFor tc: NSTextContainer?, atEnd: Bool) {
+        if tc != nil, atEnd { syncBlocks() }
+    }
+
+    override func setFrameSize(_ size: NSSize) {
+        super.setFrameSize(size)
+        syncBlocks()
     }
 
     override func becomeFirstResponder() -> Bool {
@@ -441,7 +560,8 @@ final class ComposerTextView: NSTextView {
         for route in ChatPaste.routes(NSPasteboard.general) {
             switch route {
             case .chip(let u): insertChip(u)
-            case .text: pasteAsPlainText(sender)
+            case .text:
+                if let t = NSPasteboard.general.string(forType: .string), ChatPaste.isLongPaste(t) { insertBlock(t) } else { pasteAsPlainText(sender) }
             case .image(let image):
                 guard let chat = coordinator?.chat else { break }
                 Task { if await !chat.attachClipboardImage(image).ok { NSSound.beep() } }

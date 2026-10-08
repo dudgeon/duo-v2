@@ -828,4 +828,23 @@ func spikeScreen(_ name: String) -> String {
         guard case .you(let m2)? = sent.items.last else { return check(false, "the transcript's echo") }
         check(sent.items.count == 1 && m2.images.map(\.data) == [Data("png".utf8)], "the transcript's own picture replaces the composer's, once")
     }
+
+    print("chat mode: a long paste folds to a block in the composer (chat-paste-handoff `text`)")
+    do {
+        let lines = { (n: Int) in (1...n).map { "line \($0)" }.joined(separator: "\n") }
+        check(!ChatPaste.isLongPaste(lines(12)) && ChatPaste.isLongPaste(lines(13)) && ChatPaste.isLongPaste(lines(12) + "\n"), "over 12 lines folds, 12 doesn't (a trailing newline counts, as K8's rule does)")
+        check(!ChatPaste.isLongPaste(String(repeating: "x", count: 5000)), "a long single line is plain text")
+        check(ChatPaste.blockLabel(lines(42)) == "42 lines", "a block names its lines (\(ChatPaste.blockLabel(lines(42))))")
+        let big = (0..<12_480).map { _ in String(repeating: "x", count: 95) }.joined(separator: "\n")
+        check(ChatPaste.blockLabel(big) == "12,480 lines · 1.2 MB", "a big paste adds its size (\(ChatPaste.blockLabel(big)))")
+        check(ChatPaste.blockPreview("Review notes, 8 October\n1. Guest checkout keeps it.\n\n2. Saved cards need an account") == "Review notes, 8 October. 1. Guest checkout keeps it. 2. Saved cards need an account", "the preview is the paste's start on one line")
+        let t = (["Review notes"] + (1...41).map { "note \($0)" }).joined(separator: "\n"), u = lines(20)
+        let ms = ComposerProbe.keystrokeMillis(afterBlock: big)
+        print("    a keystroke after a 12,480-line paste: \(String(format: "%.1f", ms)) ms")
+        check(ms < 30, "typing after a 12,480-line paste stays responsive (\(String(format: "%.1f", ms)) ms a key)")
+        check(ComposerProbe.sent([.block(t)]) == t, "a collapsed block sends its text")
+        check(ComposerProbe.sent([.type("Compare: "), .block(t), .type(" and why?")]) == "Compare: " + t + " and why?", "a block between typed text sends exactly what a plain paste would")
+        check(ComposerProbe.sent([.block(t), .open(0), .edit(0, "edited\ntext")]) == "edited\ntext" && ComposerProbe.sent([.block(t), .open(0), .edit(0, "edited"), .fold(0), .type("!")]) == "edited!", "an opened block's edits are what's sent, and folding keeps them")
+        check(ComposerProbe.sent([.block(t), .type("\n"), .block(u)]) == t + "\n" + u && ComposerProbe.sent([.block(t), .block(u), .type("x")]) == t + u + "x", "two blocks, in order")
+    }
 }

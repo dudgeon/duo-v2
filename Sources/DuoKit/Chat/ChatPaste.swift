@@ -191,3 +191,56 @@ extension ChatSession {
     func forgetImages() { ui.images = [:]; ui.attachedTokens = []; ui.heldTokens = []; ui.hoveredPicture = nil }
 }
 
+
+/// For DuoChecks: the composer's field driven by steps, and what it would send.
+@MainActor public enum ComposerProbe {
+    public enum Step { case type(String), block(String), open(Int), fold(Int), edit(Int, String) }
+
+    /// The text sent after the steps (blocks counted from the first, in order).
+    public static func sent(_ steps: [Step]) -> String {
+        let chat = ChatSession(key: "probe", mode: .chat)
+        let v = ComposerTextView()
+        v.coordinator = ChatComposerField.Coordinator(chat: chat)
+        let host = NSScrollView(frame: NSRect(x: 0, y: 0, width: 600, height: 300))
+        host.documentView = v
+        v.frame = NSRect(x: 0, y: 0, width: 600, height: 300)
+        func blocks() -> [ComposerPasteBlock] {
+            var out: [ComposerPasteBlock] = []
+            v.textStorage?.enumerateAttribute(.attachment, in: NSRange(location: 0, length: v.textStorage?.length ?? 0)) { a, _, _ in if let b = a as? ComposerPasteBlock { out.append(b) } }
+            return out
+        }
+        for step in steps {
+            switch step {
+            case .type(let t): v.insertText(t, replacementRange: v.selectedRange())
+            case .block(let t): v.insertBlock(t)
+            case .open(let i): if !blocks()[i].isOpen { v.toggle(blocks()[i]) }
+            case .fold(let i): if blocks()[i].isOpen { v.toggle(blocks()[i]) }
+            case .edit(let i, let t):
+                let b = blocks()[i]
+                b.view?.editorForChecks?.string = t
+                b.text = t; v.blockEdited(b)
+            }
+        }
+        return v.plainText
+    }
+
+    /// Milliseconds a keystroke costs after the paste (insert, read the text back, ask the height), averaged over 20.
+    public static func keystrokeMillis(afterBlock text: String) -> Double {
+        let chat = ChatSession(key: "probe", mode: .chat)
+        let v = ComposerTextView()
+        v.coordinator = ChatComposerField.Coordinator(chat: chat)
+        let host = NSScrollView(frame: NSRect(x: 0, y: 0, width: 632, height: 200))
+        host.documentView = v
+        v.frame = NSRect(x: 0, y: 0, width: 632, height: 200)
+        v.insertBlock(text)
+        _ = v.height(for: 632)
+        let start = Date()
+        for _ in 0..<20 {
+            v.insertText("a", replacementRange: v.selectedRange())
+            chat.ui.composer = v.plainText
+            _ = v.plainText != chat.ui.composer
+            _ = v.height(for: 632)
+        }
+        return Date().timeIntervalSince(start) * 1000 / 20
+    }
+}

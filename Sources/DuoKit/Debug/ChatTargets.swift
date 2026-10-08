@@ -19,7 +19,8 @@ public enum ChatTargets {
                                             // chat-slash-handoff (DL-143): command results, the picker cards, the named bar, the / menu.
                                             "slash-output", "slash-context", "slash-model-card", "slash-effort-card", "slash-fallback-named", "slash-menu",
                                             // chat-paste-handoff (DL-161): pictures in the composer and your bubble, and why one wasn't taken.
-                                            "paste-picture", "paste-adding", "paste-sent", "paste-edges", "paste-failed", "paste-keys"]
+                                            "paste-picture", "paste-adding", "paste-sent", "paste-edges", "paste-failed", "paste-keys",
+                                            "paste-text", "paste-text-open", "paste-huge"]
     nonisolated public static let screens = boards.map { "chat-" + $0 }
 
     public static func folder(_ board: String) -> URL? {
@@ -83,6 +84,11 @@ public enum ChatTargets {
         chat.ui.pasteNotice = (meta["notice"] as? String).flatMap { $0 == "keysMoved" ? .keysMoved : .notTaken }
         for spec in meta["bubblePictures"] as? [[String: Any]] ?? [] {
             if let png = ChatImage(ChatTargetPicture.draw(spec)) { chat.log.addImage(png) }
+        }
+        if let b = meta["block"] as? [String: Any] {
+            chat.ui.fixtureBlock = ChatUIState.FixtureBlock(text: ChatTargetPicture.pasted(b["kind"] as? String ?? "review"), open: b["open"] as? Bool == true,
+                                                            caretLine: b["caretLine"] as? Int, typed: chat.ui.composer)
+            chat.ui.composer = ""
         }
         // An interrupted reply ends on the screen, not a hook (F-105): the busy → idle the TUI drew.
         if meta["interruptAfterPlay"] as? Bool == true { chat.log.endStreaming(interrupted: true) }
@@ -160,5 +166,19 @@ enum ChatTargetPicture {
             }
             return true
         }
+    }
+}
+
+extension ChatTargetPicture {
+    /// A long paste for the boards: the review notes (42 lines), or a 12,480-line log of about 1.2 MB.
+    static func pasted(_ kind: String) -> String {
+        if kind == "log" {
+            let pad = String(repeating: "x", count: 40)
+            return (0..<12_480).map { i in i == 0 ? "2026-10-08T09:14:02Z INFO checkout: session started id=8f1c…" : String(format: "2026-10-08T09:14:%02dZ INFO checkout: step %05d ok id=8f1c %@", i % 60, i, pad) }.joined(separator: "\n")
+        }
+        let notes = ["Review notes, 8 October", "1. Guest checkout keeps the card form on one page.", "2. Saved cards need an account; no guest vault in v1.",
+                     "3. Apple Pay ships with the redesign, Google Pay after.", "4. Address autocomplete stays behind the flag.", "5. Error copy goes to content design by Friday.",
+                     "6. Refund flows are out of scope; see flows.md.", "7. Open: who owns the fraud rules in the new flow…"]
+        return (notes + (8..<42).map { "\($0). Follow-up note \($0)." }).joined(separator: "\n")
     }
 }

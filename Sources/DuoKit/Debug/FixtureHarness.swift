@@ -557,7 +557,7 @@ public enum FixtureHarness {
             if let visible, model.chat(for: visible)?.focusComposer ?? 0 > 0 {
                 let shown = NSApp.windows.flatMap { w in (w.contentView.map(all) ?? []).filter { $0.coordinator?.chat.key == visible }.map { (w, $0) } }
                 if let (w, c) = shown.first {
-                    if w.firstResponder !== c { bad.append("the composer on screen asked for the keyboard; \(w.firstResponder.map { String(describing: type(of: $0)) } ?? "nothing") has it") }
+                    if w.firstResponder !== c, (w.firstResponder as? PasteBlockEditor)?.owner?.host !== c { bad.append("the composer on screen asked for the keyboard; \(w.firstResponder.map { String(describing: type(of: $0)) } ?? "nothing") has it") }
                 } else { bad.append("the chat on screen asked for the keyboard but has no composer") }
             }
             FileHandle.standardError.write(Data("focus-check: \(bad.isEmpty ? "ok" : "FAIL: \(bad.joined(separator: "; "))")\n".utf8))

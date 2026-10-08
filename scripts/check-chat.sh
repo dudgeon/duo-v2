@@ -14,7 +14,7 @@ boards=("$@")
 [ ${#boards[@]} -gt 0 ] || boards=(window toggle text tools permission-edit permission-bash plan question-multi question-other question-review question-previews question-chat-decline composer status fallback
   polish-collapsed polish-expanded polish-needs-you polish-output polish-edits polish-thinking polish-agents polish-todos polish-tools polish-failed polish-paste polish-bar-thin
   slash-output slash-context slash-model-card slash-effort-card slash-fallback-named slash-menu
-  paste-picture paste-adding paste-sent paste-edges paste-failed paste-keys)
+  paste-picture paste-adding paste-sent paste-edges paste-failed paste-keys paste-text paste-text-open paste-huge)
 states=()
 for b in "${boards[@]}"; do states+=("chat-$b"); done
 NO_COMPARE=1 scripts/check-ui.sh "${states[@]}" >/dev/null
@@ -31,7 +31,8 @@ for b in "${boards[@]}"; do
     # chat-paste-handoff (DL-161): a board shows several snippets, so these compare whole boards for the record; the numbers come from the cropped snippets (docs/design/chat-paste-handoff/proof/).
     paste-picture|paste-adding) box=(300 0 680 860); target="chat-paste-handoff/picture" ;;
     paste-sent) box=(300 0 680 860); target="chat-paste-handoff/sent" ;;
-    paste-edges) box=(300 0 680 860); target="chat-paste-handoff/edges" ;;
+    paste-edges|paste-huge) box=(300 0 680 860); target="chat-paste-handoff/edges" ;;
+    paste-text|paste-text-open) box=(300 0 680 860); target="chat-paste-handoff/text" ;;
     paste-failed|paste-keys) box=(300 0 680 860); target="chat-paste-handoff/replay" ;;
     *) box=(300 0 680 860) ;;
   esac
