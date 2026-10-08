@@ -68,7 +68,9 @@ version="$(git -C "$root" describe --tags --always --dirty 2>/dev/null || echo d
 # Geoff's Duo (F-198, scripts/bundle-kind.sh).
 kind="$("$root/scripts/bundle-kind.sh" "$root")"
 if [ "$kind" = test ]; then
-  bundle_id="com.dudgeon.duo.test"; url_types=""
+  # A test build starts as an accessory, so a background test launch never shows in the Dock, not even for
+  # the moment before Duo's code runs; Duo makes itself a regular app when it's not one (F-227).
+  bundle_id="com.dudgeon.duo.test"; url_types="<key>LSUIElement</key><true/>"
 else
   bundle_id="com.dudgeon.duo"
   url_types="<key>CFBundleURLTypes</key><array><dict>

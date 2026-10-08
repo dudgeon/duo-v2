@@ -77,7 +77,7 @@ trap cleanup EXIT
 launch_check() {
   local app="$1" png="$out/launch-$2.png" pid i
   rm -f "$png"
-  open -W -n --stdout /dev/null --stderr "$out/launch-$2.log" "$app" --args --state overview --capture "$png" &
+  open -g -W -n --stdout /dev/null --stderr "$out/launch-$2.log" "$app" --args --state overview --capture "$png" &
   pid=$!
   for ((i = 0; i < 120; i++)); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done
   if kill -0 "$pid" 2>/dev/null; then kill "$pid"; die "launch check ($2): no window after 30 s (see $out/launch-$2.log)"; fi

@@ -290,7 +290,7 @@ public enum FixtureHarness {
         case "event":  // event:esc|return: a real key event through the app's queue (local monitors, key window, field editor)
             let codes: [String: (UInt16, String)] = ["esc": (53, "\u{1b}"), "return": (36, "\r")]
             if parts.count > 1, let (code, chars) = codes[parts[1]], let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
-                NSApp.activate(ignoringOtherApps: true); w.makeKey()
+                if !TestBackground.isOn { NSApp.activate(ignoringOtherApps: true) }; w.makeKey()   // a background launch never activates (F-227)
                 for type in [NSEvent.EventType.keyDown, .keyUp] {
                     guard let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
                                                    windowNumber: w.windowNumber, context: nil, characters: chars,
@@ -340,7 +340,7 @@ public enum FixtureHarness {
             }
         case "keys":   // keys:<text>: real key events to whatever has the keyboard (no focusing first)
             if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
-                NSApp.activate(ignoringOtherApps: true); w.makeKey()
+                if !TestBackground.isOn { NSApp.activate(ignoringOtherApps: true) }; w.makeKey()   // a background launch never activates (F-227)
                 for ch in parts[1] {
                     for type in [NSEvent.EventType.keyDown, .keyUp] {
                         guard let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
@@ -797,7 +797,7 @@ public enum FixtureHarness {
         // Web views are drawn from their own snapshots, so they show even when the window is
         // covered or the screen is locked (F-120). The trace says whether the window was on screen.
         func capture() {
-            FileHandle.standardError.write(Data("trace capture onScreen=\(window.occlusionState.contains(.visible)) active=\(NSApp.isActive) editorReady=\(model.editor.isPageReady)\n".utf8))
+            FileHandle.standardError.write(Data("trace capture onScreen=\(window.occlusionState.contains(.visible)) active=\(NSApp.isActive) background=\(TestBackground.isOn) editorReady=\(model.editor.isPageReady)\n".utf8))
             WindowCapture.withWebSnapshots(in: window) { captureNow() }
         }
 

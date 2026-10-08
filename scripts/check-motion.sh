@@ -35,7 +35,7 @@ run() {
     where=(--workspace "${state#live:}")
     mkdir -p "$support/claude-$mode"; envs=(--env CLAUDE_CONFIG_DIR="$support/claude-$mode")
   fi
-  open -W -n --env DUO_SUPPORT_DIR="$support/$mode" --env DUO_MOTION_SCALE="$scale" --env DUO_REDUCE_MOTION="$reduce" ${DUO_MOTION_HOLD:+--env DUO_MOTION_HOLD=$DUO_MOTION_HOLD} ${envs[@]+"${envs[@]}"} \
+  open -g -W -n --env DUO_SUPPORT_DIR="$support/$mode" --env DUO_MOTION_SCALE="$scale" --env DUO_REDUCE_MOTION="$reduce" ${DUO_MOTION_HOLD:+--env DUO_MOTION_HOLD=$DUO_MOTION_HOLD} ${envs[@]+"${envs[@]}"} \
     --stdout /dev/null --stderr "$out/$mode.log" build/Duo.app --args "${where[@]}" --then "$actions" --capture "$out/$mode-rest.png" &
   pid=$!
   for ((i = 0; i < 240; i++)); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done

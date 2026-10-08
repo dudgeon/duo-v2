@@ -14,7 +14,12 @@ struct DuoApp: App {
     init() {
         // Before anything reads Duo's folder: a scripted run without DUO_SUPPORT_DIR gets a
         // temporary one, never the user's (C-21, F-89).
+        let launchEnvironment = ProcessInfo.processInfo.environment
         SupportFolder.prepareForLaunch()
+        // A test launch a script started runs in the background: never in the user's way (F-227).
+        TestBackground.isOn = TestBackground.decide(arguments: CommandLine.arguments, environment: launchEnvironment,
+                                                    isolated: SupportFolder.isIsolated)
+        DuoFocus.startBackground()
         let options = LaunchOptions()
         self.options = options
         // Light only until a dark appearance is approved (handoff §12 Q4).
@@ -194,7 +199,7 @@ final class MainWindow {
     }
 
     func show() {
-        if let window { window.makeKeyAndOrderFront(nil); return }
+        if let window { DuoFocus.hide(window); window.makeKeyAndOrderFront(nil); return }
         let content = Group {
             if options.gallery { AnyView(GalleryView()) } else { AnyView(RootView()) }
         }
@@ -224,6 +229,7 @@ final class MainWindow {
             }
         }
         FixtureHarness.configure(w, model: model, options: options)
+        DuoFocus.hide(w)   // a background test launch draws its window without showing it (F-227)
         w.makeKeyAndOrderFront(nil)
         if !SupportFolder.isIsolated { NSApp.activate() }   // an isolated instance never takes focus (C-28)
     }

@@ -23,7 +23,7 @@ capture() {
   local s="$1" i
   # Launched through LaunchServices: once the bundle has been opened with `open`, executing its
   # binary directly can leave the app without a window (findings F-19).
-  open -W -n --stdout /dev/null --stderr "$out/$s.log" "$root/build/Duo.app" --args --state "$s" --capture "$out/$s.png" ${extra[@]+"${extra[@]}"} &
+  open -g -W -n --stdout /dev/null --stderr "$out/$s.log" "$root/build/Duo.app" --args --state "$s" --capture "$out/$s.png" ${extra[@]+"${extra[@]}"} &
   local pid=$!
   for ((i = 0; i < 120; i++)); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done
   if kill -0 "$pid" 2>/dev/null; then

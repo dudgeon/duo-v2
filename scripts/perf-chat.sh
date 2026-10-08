@@ -44,6 +44,13 @@ live="perf-follow:$sid|$cwd,wait:4"
 for i in 1 2 3 4; do live+=",perf-bottom,wait:1,perf-append:$cfg/same-turn.jsonl|$t|28|at-bottom-$i,wait:3"; done
 full="perf-follow:$sid|$cwd,wait:4,perf-report,perf-views,+perf-sample:4|$out/sample-scroll.txt,perf-wheel:300|40,wait:14,perf-wheel:120|200,wait:7,perf-bottom,wait:4,perf-sample:3|$out/sample-append.txt,+perf-append:$cfg/same-turn.jsonl|$t|60|at-bottom,wait:5,perf-middle,wait:2,perf-report,perf-sample:3|$out/sample-up.txt,+perf-append:$cfg/more.jsonl|$t|60|scrolled-up,wait:5,perf-report"
 [[ ${PERF_PROFILE:-full} == live ]] && then=$live || then=${PERF_THEN:-$full}
+# Background by default (F-227): drawn but not shown, so the numbers may understate drawing.
+# DUO_TEST_FOREGROUND=1 shows the window for the numbers that count: only with Geoff's OK (CLAUDE.md).
+if [[ ${DUO_TEST_FOREGROUND:-} == 1 ]]; then
+  echo "⚠ DUO_TEST_FOREGROUND=1: this run shows a Duo window and may take focus for up to 180 s (Geoff's OK first)"
+else
+  echo "background run (F-227): the window isn't shown, so drawing costs may read low; DUO_TEST_FOREGROUND=1 for the visible run (Geoff's OK first)"
+fi
 env -u DUO_SUPPORT_DIR ${=PERF_ENV:-} DUO_SUPPORT_DIR=$sup CLAUDE_CONFIG_DIR=$cfg DUO_AUTOCONFIRM=1 \
   build/Duo.app/Contents/MacOS/Duo --state chat-window --capture-window $out/window.png --then "$then" 2>$out/stderr.txt &
 pid=$!
