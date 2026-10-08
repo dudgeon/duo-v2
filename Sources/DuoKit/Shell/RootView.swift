@@ -50,10 +50,15 @@ struct AllProjectsLayout: View {
                 .init(view: AnyView(ActionColumnPane()), width: DuoMetric.paneOverviewActionColumn,
                       minWidth: DuoMetric.paneMinActionColumn, collapsible: true, collapsed: model.rightCollapsedAllProjects),
             ],
-            // Home in chat is light, its divider too (DL-142 (7), `home-chat` board 10).
-            dividerColors: [model.homeShowsChat ? DuoNSColor.rule : DuoNSColor.consoleRule, DuoNSColor.rule],
-            paneBackgrounds: [model.homeShowsChat ? DuoNSColor.ground : DuoNSColor.console, DuoNSColor.pane, DuoNSColor.pane],
-            model: model
+            dividerColors: [DuoNSColor.consoleRule, DuoNSColor.rule],
+            paneBackgrounds: [DuoNSColor.console, DuoNSColor.pane, DuoNSColor.pane],
+            model: model,
+            // Home in chat is light, its divider too (DL-142 (7), `home-chat` board 10): watched by
+            // the split, never read here (F-208).
+            liveColors: { m in
+                let light = m.homeShowsChat
+                return ([light ? DuoNSColor.rule : DuoNSColor.consoleRule, DuoNSColor.rule], [light ? DuoNSColor.ground : DuoNSColor.console, DuoNSColor.pane, DuoNSColor.pane])
+            }
         )
     }
 }

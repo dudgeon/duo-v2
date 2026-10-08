@@ -1745,6 +1745,7 @@ func repoFixture() throws -> Fixture {
         check(ActionID.hangs.action.local && ActionID.hangs.action.family == .app, "duo2 hangs reads the log without the app")
         HangLog.clear(f)
         check(HangLog.read(from: f).isEmpty, "--clear empties it")
+
         // F-208: a stall is written while it goes on, so a freeze that never ends leaves stacks.
         let t1 = t0.addingTimeInterval(500.37)
         HangLog.append(.init(at: t1, ms: 2050, screen: "all projects · chat", version: "v", samples: [["Duo@0x10"]], binary: "/x", ongoing: true), to: f)
@@ -1757,6 +1758,27 @@ func repoFixture() throws -> Fixture {
         ongoing = HangLog.read(from: f)
         check(ongoing.map(\.ms) == [15000, 300] && ongoing[0].ongoing == nil, "once it ends, the whole stall replaces it")
         HangLog.clear(f)
+    }
+
+    print("the window's root reads no session's state (F-208, ENH-46)")
+    do {
+        // A root-level view that reads a session's chat state re-lays out the whole window when that
+        // session changes; at work, many times a second (F-208). Panes read it; the root never does.
+        let src = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Shell/RootView.swift"), encoding: .utf8)) ?? ""
+        let forbidden = #"model\.(homeShowsChat|consoleShowsChat|chats|chat\(|fixtureChats|terminals)|\.fallback\b|\.showsChat\b|\.screen\b"#
+        var found: [String] = []
+        for name in ["RootView", "AllProjectsLayout", "ProjectLayout"] {
+            guard let start = src.range(of: "struct \(name)") else { found.append("\(name) missing"); continue }
+            let rest = src[start.upperBound...]
+            let body = rest.range(of: "\nstruct ").map { rest[..<$0.lowerBound] } ?? rest
+            for line in body.split(separator: "\n") where line.range(of: forbidden, options: .regularExpression) != nil && !line.trimmingCharacters(in: .whitespaces).hasPrefix("//") {
+                found.append("\(name): \(line.trimmingCharacters(in: .whitespaces))")
+            }
+        }
+        check(found.isEmpty, "RootView, AllProjectsLayout and ProjectLayout read no chat or terminal state (\(found))")
+        let split = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Shell/PaneSplit.swift"), encoding: .utf8)) ?? ""
+        let update = split.range(of: "func updateNSView").map { String(split[$0.lowerBound...].prefix(400)) } ?? ""
+        check(!update.isEmpty && !update.contains("rootView ="), "PaneSplit never replaces a pane's root view on update")
     }
 
     print("duo2 slide … (ENH-12, DL-125)")
