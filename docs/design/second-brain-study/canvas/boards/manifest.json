@@ -1,0 +1,79 @@
+[
+ {
+  "name": "00-study",
+  "w": 1280,
+  "h": 900,
+  "title": "0 \u00b7 Knowledge bases in Duo: the study",
+  "kind": "board"
+ },
+ {
+  "name": "01-blueprint",
+  "w": 1600,
+  "h": 1000,
+  "title": "1 \u00b7 The journeys: a service blueprint",
+  "kind": "board"
+ },
+ {
+  "name": "02-ranking",
+  "w": 1280,
+  "h": 860,
+  "title": "2 \u00b7 Candidates, ranked",
+  "kind": "board"
+ },
+ {
+  "name": "03-mark",
+  "w": 1960,
+  "h": 800,
+  "title": "3 \u00b7 Marking a knowledge base",
+  "kind": "board"
+ },
+ {
+  "name": "04-kb-in-duo",
+  "w": 1440,
+  "h": 1060,
+  "title": "4 \u00b7 A knowledge base in Duo",
+  "kind": "board"
+ },
+ {
+  "name": "05-capture",
+  "w": 1680,
+  "h": 1000,
+  "title": "5 \u00b7 Capture: one chord, no decisions",
+  "kind": "board"
+ },
+ {
+  "name": "06-process",
+  "w": 1680,
+  "h": 1640,
+  "title": "6 \u00b7 Process with Claude",
+  "kind": "board"
+ },
+ {
+  "name": "07-index-log",
+  "w": 1280,
+  "h": 820,
+  "title": "7 \u00b7 Index and log",
+  "kind": "board"
+ },
+ {
+  "name": "08-search",
+  "w": 1280,
+  "h": 760,
+  "title": "8 \u00b7 Search, narrowed to the knowledge base",
+  "kind": "board"
+ },
+ {
+  "name": "09-reading-a-vault",
+  "w": 1280,
+  "h": 760,
+  "title": "9 \u00b7 Reading a vault right (for everyone)",
+  "kind": "board"
+ },
+ {
+  "name": "10-slice",
+  "w": 1280,
+  "h": 900,
+  "title": "10 \u00b7 The v1 slice, what Claude is told, the questions",
+  "kind": "board"
+ }
+]

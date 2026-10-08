@@ -2534,3 +2534,32 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - `Env.isSet` / `Env.value` / `Env.autoconfirm` (`DuoControl/Env.swift`) treat `NAME=` as unset. Every `DUO_AUTOCONFIRM` read (12 places) uses it, as do `DUO_NO_EDIT_HOOK`, `DUO_MENU_UPDATE`, `DUO_SESSION_ID` in `duo2`, and the folder variables, where an empty value meant the current directory: `CLAUDE_CONFIG_DIR` (ClaudeStorage, search, LegacyDuo), `DUO_ARCHIVE_ROOT`, `DUO_SEARCH_ROOT`, and `DUO_GITIGNORE_ANSWER`. `DUO_SUPPORT_DIR`, `DUO_INSTALL_ROOT` and `DUO_DOWNLOADS_DIR` already ignored an empty value. `0` still counts as set, as before.
 - A DuoChecks scan fails if a Duo variable is tested for presence (`environment["DUO_…"] != nil`) outside `Env`.
 - **Live:** Move into Home with `DUO_AUTOCONFIRM=` (empty) now shows the sheet and moves nothing (no `confirm:` line in stderr); the capture against the slice 2 board `move-into-home` is in the fix's report.
+
+## F-202 · The editor doesn't read a vault's links (knowledge-base study, 2026-10-07)
+
+- **Wikilinks are plain text.** `Vendor/codemirror/src/duo-editor.js` has no `[[` handling: `[[Note]]`, `[[Note|text]]`, `[[Note#Heading]]` aren't marked as links or clickable, and `![[image.png]]` isn't drawn (only `![](relative.png)` is, `Editor/DocumentEditor.swift:220-232`). DL-17 says Duo reads wikilinks; the editor doesn't yet. DL-150's `[[` completion is decided, not built.
+- **A markdown link resolves only against the note's own folder** (`Model/AppModel+Links.swift:43-46`), so Obsidian's default "shortest path" links (`[x](Note.md)` for a note in another folder) say "Note.md isn't there". Relative-path vaults work.
+- Proposed fix (board `09` of the study canvas, [P]): draw and follow wikilinks, resolve by file name across the project (nearest first), dashed `text2` for a note that doesn't exist with Make <name>.md on hover, draw `![[image]]`; never write a wikilink. `openLink` is the one place for the resolver.
+
+## F-203 · Every note in `tasks/` is a task, by folder name alone (knowledge-base study, 2026-10-07)
+
+- `TaskNotes.load` (`Live/TaskNotes.swift:31-38`) reads every `.md` in `<project>/tasks/` with no `type: task` check; a missing `status` reads as open. On a case-insensitive disk a vault's own `Tasks/` (Tasks-plugin or TaskNotes notes) matches, so its notes become open Duo tasks, and a task verb would write `status`/`sessions`/`id` into them.
+- Proposed: a note in `tasks/` is a task only with `type: task` or no `type`. Format doc §4.8 rule 12 already says non-task files with `type: task` don't belong in a vault; this is the other direction.
+
+## F-204 · The file tree's 2000-entry cap is applied before it sorts (knowledge-base study, 2026-10-07)
+
+- `LiveSnapshot.treeFiles` (`Live/LiveSnapshot.swift:374-394`) stops listing at the cap and sorts afterwards, so in a folder of more than 2000 notes (daily notes, a Zettelkasten) which ones show depends on directory order. Rows are an eager `ForEach` in a `VStack` (`Project/ProjectPanes.swift:272, 388`); there's no filter or newest-first order.
+- Proposed: list, sort, then cap (and say "n more"); newest-first for an inbox (the study's INBOX fold).
+
+## F-205 · What the templates engine lacks for notes (knowledge-base study, 2026-10-07)
+
+- **Moment tokens:** `Templates.dateFormat(fromMoment:)` (`Live/Templates.swift:187-207`) has no `g`, `w`, `W`, `Q`, `E`, `X` or `dd`, so a weekly format like `{{date:gggg-[W]ww}}` comes out as the literal `gggg-Www`.
+- **The vault's own settings aren't read:** Obsidian's Templates date and time formats, its template folder (often `Templates/`, `_templates/`, `99 Templates/`; only `templates/` matches, and `Templates/` only on a case-insensitive disk).
+- **New from Template names the file after the template** (`FileActions.swift:139-147`: `inbox.md`, `inbox 2.md`) and `duo2 file template` takes no name, body or keys. `Templates.make`'s `title:`, `values:` and `bodyPrefix:` already do this for projects and tasks, so a `note` kind (`templates/new-note.md`) is a small change.
+
+## F-206 · What the research changes for Duo's file formats (knowledge-base study, 2026-10-07)
+
+- **OKF is at v0.2** (2026-07-24), now in `GoogleCloudPlatform/open-knowledge-format`; the `knowledge-catalog/okf` copy is frozen [V]. `type` is the only required key; `index.md` and `log.md` are reserved at every level; links are standard markdown (bundle-absolute `/x.md` recommended), and **wikilinks are not OKF**. v0.2 adds optional nested `sources`, `generated`, `verified`, which Obsidian's Properties panel doesn't show (they survive as YAML). The spec never names Karpathy.
+- **Two log orders:** OKF's `log.md` is newest first under `## YYYY-MM-DD`; Karpathy's is append-only with `## [YYYY-MM-DD] op | title`. Anything Duo shows of a log must handle both; Duo should write neither.
+- **Legacy's `_index.md` isn't the spec's name** (`index.md`); a bare-OKF reader won't find `okf_version` there. Detection should accept both (DL-147 already does).
+- Sources and every claim, verified or not: `docs/research/second-brain-sources/` (`llm-wiki.md`, `second-brain-tools.md`, `legacy-okf.md`, `duo-today.md`).
