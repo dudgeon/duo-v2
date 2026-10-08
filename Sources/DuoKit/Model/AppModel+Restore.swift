@@ -64,8 +64,9 @@ extension AppModel {
         let current = currentProject?.name
         s.project = current.flatMap { liveFolders[$0]?.path }
         var byProject: [String: [String]] = [:]
-        for t in terminals.all where t.isLiveClaude && !t.exited {
-            guard let session = fixture.sessions.first(where: { $0.tabKey == t.key }), let id = session.sessionId,
+        let parkedNow = parkedTabs.filter { terminals.existing($0) == nil }
+        for key in terminals.all.filter({ $0.isLiveClaude && !$0.exited }).map(\.key) + parkedNow.sorted() {
+            guard let session = fixture.sessions.first(where: { $0.tabKey == key }), let id = session.sessionId,
                   session.project != fixture.home?.name else { continue }
             byProject[session.project, default: []].append(id)
         }
@@ -124,9 +125,12 @@ extension AppModel {
             // The tabs it showed, for coming back to it (DL-107).
             if let t = p.consoleTab { lastConsoleTab[project] = t }
             if let r = p.rightTab, r == "Project" || docs.contains(r) { lastRightTab[project] = r }
+            // Parked, not resumed (DL-156): each resumes when its tab is shown, so a launch starts
+            // what's on screen, not one sign-in per tab at once (F-208).
             for id in p.sessions where !liveElsewhere.contains(id) {
                 guard let key = fixture.sessions(inProject: project).first(where: { $0.sessionId == id })?.tabKey else { continue }
-                if terminal(project: project, session: key) != nil { reopened += 1 }
+                parkedTabs.insert(key)
+                reopened += 1
             }
         }
         if let h = s.homeTab, let home = fixture.home?.name, fixture.sessions(inProject: home).contains(where: { $0.tabKey == h }) { homeTab = h }
@@ -142,6 +146,6 @@ extension AppModel {
                 if right != "Project" { selectedFile = right }
             }
         }
-        FileHandle.standardError.write(Data("restore: reopened \(reopened) session(s) in \(s.projects.count) project(s)\n".utf8))
+        FileHandle.standardError.write(Data("restore: parked \(reopened) session(s) in \(s.projects.count) project(s)\n".utf8))
     }
 }

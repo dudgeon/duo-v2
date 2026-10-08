@@ -1964,6 +1964,23 @@ func repoFixture() throws -> Fixture {
     check(wasConsole != nil && tabsModel.consoleTab == wasConsole, "coming back shows the console tab it was on, not the most urgent (DL-107)")
     let tabsSaved = tabsModel.currentRestoreState()
     check(tabsSaved.projects.first { $0.folder == treeDir.path }?.rightTab == outTab, "the restore file keeps each project's tabs, not only the one on screen")
+    // DL-156: a tab restored at launch is parked: listed and kept, not resumed until shown.
+    if var idle = tabsFixture.sessions.first(where: { $0.state == .idle && $0.project != tabsFixture.home?.name }) {
+        // Live sessions have ids (restore keeps them by id): give this one an id.
+        if let i = tabsModel.fixture.sessions.firstIndex(where: { $0.tabKey == idle.tabKey }) {
+            tabsModel.fixture.sessions[i].sessionId = "5e55f00d-0000-4000-8000-0000000000aa"; idle = tabsModel.fixture.sessions[i]
+        }
+        let key = idle.tabKey
+        tabsModel.parkedTabs.insert(key)
+        check(tabsModel.tabSessions(inProject: idle.project).contains { $0.tabKey == key } && tabsModel.terminals.existing(key) == nil,
+              "a parked tab is listed with no process running")
+        tabsModel.liveFolders[idle.project] = tabsModel.liveFolders[idle.project] ?? treeDir
+        let saved = tabsModel.currentRestoreState().projects.flatMap(\.sessions)
+        check(idle.sessionId.map(saved.contains) == true || idle.project == tabsFixture.home?.name, "and the restore file keeps it, still parked, for the next launch")
+        tabsModel.closeSession(key)
+        check(!tabsModel.parkedTabs.contains(key) && !tabsModel.tabSessions(inProject: idle.project).contains { $0.tabKey == key && $0.state == .idle },
+              "closing a parked tab forgets it")
+    } else { check(false, "the fixture has an idle session with an id to park") }
     try? tfm.removeItem(at: treeDir)
     try? tfm.removeItem(at: outsideFile)
 

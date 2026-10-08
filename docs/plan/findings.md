@@ -2560,3 +2560,10 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - `HangMonitor` writes a record (`ongoing: true`) once a stall passes 2 s, and again every 10 s while it lasts, with the samples so far (every 50 ms for 1.5 s, then one a second, up to 60) and the screen as it was last read (every 2 s while Duo answers). When the stall ends, the whole record replaces it (`HangLog.append` drops the ongoing line for the same start; times are kept to the second). A freeze that ends in a force quit leaves its stacks; `duo2 hangs` marks it "still stuck when last written".
 - **Live:** the harness's `freeze:9` (new; blocks the main thread) wrote a 2,127 ms record with 14 samples while frozen; when it ended, one 8,948 ms record with 34 samples replaced it.
 - Still local only: nothing leaves the Mac (crash reporting, proposal (c), is ENH-46's note).
+
+## F-210 · Restored tabs park until shown (DL-156)
+
+- `applyRestore` adds each restored session's tab to `AppModel.parkedTabs` instead of starting it. `tabSessions` lists parked tabs, so the tab strip is as it was at quit. The console and Home create a tab's terminal when they show it (as before), so the tab on screen resumes at once and the rest when opened. `currentRestoreState` keeps parked tabs for the next launch, and `closeSession` forgets one.
+- `duo2`: `session open` resumes it by showing it. A send to a parked session wakes it and answers "it's resuming now. Send again once it's at its prompt." `session close` closes a parked tab. `sessions --json` marks it `"parked": true`.
+- **Live:** on F-208's fixture (16 tabs restored, a stand-in 2.1.219 TUI), the launch says "restore: parked 14 session(s) in 7 project(s)". 1 session started (the tab on screen); before this, 14 started at once. CPU after launch was 3.2% mean, with no stalls.
+- **Not changed:** a parked tab looks like any idle tab (Q-136). A session that was waiting on you at quit shows the state its transcript gives, as before.

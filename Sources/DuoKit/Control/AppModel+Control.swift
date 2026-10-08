@@ -217,6 +217,10 @@ extension AppModel {
             done(.ok("Showing \(s.name)."))
         case .sessionClose:
             guard let k = inv[0] ?? visibleSessionId, let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }) else { return done(.fail("no session to close")) }
+            if parkedTabs.contains(s.tabKey), terminals.existing(s.tabKey) == nil {
+                closeSession(s.tabKey)
+                return done(.ok("Closed \(s.name)'s tab; it hadn't resumed since launch. It stays listed and resumable."))
+            }
             guard terminals.existing(s.tabKey) != nil else {
                 // Duo's own child with no terminal (C-30): end it.
                 if let id = s.sessionId, let pid = orphanPid(id) {
@@ -865,6 +869,10 @@ extension AppModel {
         let deliver: @MainActor (String?) -> Void = { [weak self] text in
             guard let self, let text else { return done(.fail("nothing to send")) }
             if toNew { self.sendToNewSession(text); return done(.ok("Starting a new session; the context goes into its prompt when it's ready.")) }
+            // A tab parked since launch (DL-156) resumes now; Claude takes a moment to be ready.
+            if let key, self.wakeParked(key) {
+                return done(.fail("\(self.fixture.sessions.first { $0.tabKey == key }?.name ?? key) hadn't resumed since launch; it's resuming now. Send again once it's at its prompt."))
+            }
             guard let key, self.send(text, to: key) else {
                 return done(.fail(key.flatMap { self.terminals.existing($0)?.notReadyReason } ?? "that session isn't running in Duo"))
             }
@@ -1001,6 +1009,7 @@ extension AppModel {
         if let v = s.options { j["options"] = v }
         if let v = s.summary { j["summary"] = v }
         j["running"] = terminals.existing(s.tabKey) != nil
+        if parkedTabs.contains(s.tabKey), terminals.existing(s.tabKey) == nil { j["parked"] = true }  // DL-156
         j["remoteControl"] = s.remoteControl ?? NSNull()  // the name it was started with (DL-128)
         return j
     }
@@ -1042,10 +1051,19 @@ extension AppModel {
     }
 
     /// Ends one session's process and moves its pane to the next tab (⌘W, `duo2 session close`).
+    /// Resumes a tab parked since launch (DL-156); false if it wasn't parked or is already running.
+    @discardableResult
+    public func wakeParked(_ key: String) -> Bool {
+        guard parkedTabs.contains(key), terminals.existing(key) == nil,
+              let s = fixture.sessions.first(where: { $0.tabKey == key }) else { return false }
+        return terminal(project: s.project, session: key) != nil
+    }
+
     public func closeSession(_ key: String) {
-        guard terminals.existing(key) != nil else { return }
+        let parked = parkedTabs.remove(key) != nil
+        guard terminals.existing(key) != nil || parked else { return }
         let s = fixture.sessions.first { $0.tabKey == key }
-        terminals.close(key)
+        if terminals.existing(key) != nil { terminals.close(key) }
         if let s {
             let next = tabSessions(inProject: s.project).first { $0.tabKey != key }?.tabKey
             if homeTab == key { homeTab = next }
