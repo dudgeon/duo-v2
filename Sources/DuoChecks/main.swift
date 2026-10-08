@@ -1779,6 +1779,9 @@ func repoFixture() throws -> Fixture {
         let split = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Shell/PaneSplit.swift"), encoding: .utf8)) ?? ""
         let update = split.range(of: "func updateNSView").map { String(split[$0.lowerBound...].prefix(400)) } ?? ""
         check(!update.isEmpty && !update.contains("rootView ="), "PaneSplit never replaces a pane's root view on update")
+        // F-225: SwiftUI re-anchoring the chat feed on size changes looped for good at work.
+        let feed = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Chat/ChatView.swift"), encoding: .utf8)) ?? ""
+        check(!feed.isEmpty && !feed.contains("for: .sizeChanges)"), "the chat feed never asks SwiftUI to re-anchor on size changes")
     }
 
     print("the console's tab strip measures each title once (F-224)")
