@@ -277,6 +277,8 @@ public final class AppModel {
     public var repos: [String: RepoView] = [:]
     /// The Push sheet (board 6), when it's up.
     public var pushForm: PushForm?
+    /// New project from GitHub (board 1), when it's up.
+    public var gitHubProjectForm: GitHubProjectForm?
     /// The notice after a push (board 6), until it's used or 8 s pass.
     public var repoNotice: RepoNotice?
     /// The repo line's details popover (board 4).

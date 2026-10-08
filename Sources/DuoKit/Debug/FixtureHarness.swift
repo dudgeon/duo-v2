@@ -101,6 +101,8 @@ public enum FixtureHarness {
         case "repo":   // repo:push|latest|update|putback|details|refresh|dump: the Files block's repo state (DL-149)
             switch parts.count > 1 ? parts[1] : "dump" {
             case "push": model.showPush()
+            case "new": model.showGitHubProject("acme/website")
+            case "create": model.commitGitHubProject()
             case "latest": model.getLatest(from: nil)
             case "update": model.getLatest(from: model.currentRepo?.base)
             case "putback": model.putBack()

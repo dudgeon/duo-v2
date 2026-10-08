@@ -33,6 +33,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     // DL-108 (the menu bar, walk decisions m2–m4)
     case newTask            // File › New Task: a task note in this project, named first (DL-93)
     case newProject         // File › New Project…: the New project sheet (DL-100)
+    case newProjectFromGitHub // File › New Project from GitHub… (DL-149; a stand-in entry point until DL-147's Start from, Q-139)
     case code               // Format › Code
     case link               // ⌘K: Format › Link…, free since DL-80
     case heading1, heading2, heading3  // Format › Heading ▸
@@ -81,6 +82,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .openFile: "Open File…"
         case .newTask: "New Task"
         case .newProject: "New Project…"
+        case .newProjectFromGitHub: "New Project from GitHub…"
         case .code: "Code"
         case .link: "Link…"
         case .heading1: "Heading 1"
@@ -130,7 +132,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .closeWindow: KeyboardShortcut("w", modifiers: [.command, .shift])
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
         case .link: KeyboardShortcut("k", modifiers: .command)  // DL-108
-        case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newProject, .code, .heading1, .heading2, .heading3,
+        case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newProject, .newProjectFromGitHub, .code, .heading1, .heading2, .heading3,
              .task, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .tableInsert, .tableRowAbove, .tableRowBelow,
              .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft, .tableAlignCenter,
              .tableAlignRight, .showBoard, .showList: nil  // Show Board / Show List: Q-100
@@ -163,7 +165,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .tableRowAbove, .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn,
              .tableAlignLeft, .tableAlignCenter, .tableAlignRight: model.webFocus == .editor && (model.editorIfLoaded?.inTable ?? false)
         case .newTask: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
-        case .newProject: model.terminalsMode == .live && model.liveRoot != nil
+        case .newProject, .newProjectFromGitHub: model.terminalsMode == .live && model.liveRoot != nil
         case .duo2Reference, .whatsNew, .reportIssue: true
         case .sendSelection: model.canSendSelection
         case .newClaudeSession, .newShell: model.terminalsMode == .live
@@ -233,6 +235,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
             model.editor.run("duo.exec(f); return 1", ["f": (formatName ?? tableName)!]) { _ in }
         case .newTask: if let p = model.currentProject?.name { model.newTask(in: p) }
         case .newProject: model.showNewProject()
+        case .newProjectFromGitHub: model.showGitHubProject()
         case .duo2Reference: NSWorkspace.shared.open(DuoLinks.duo2Reference)
         case .whatsNew: NSWorkspace.shared.open(DuoLinks.releaseNotes)
         case .reportIssue: NSWorkspace.shared.open(DuoLinks.newIssue)
@@ -281,6 +284,7 @@ public struct DuoCommands: Commands {
             item(.newFolder)
             item(.newTask)
             item(.newProject)
+            item(.newProjectFromGitHub)
             Divider()
             item(.openFile)
             item(.focusAddress)

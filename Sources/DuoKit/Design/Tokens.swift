@@ -175,6 +175,7 @@ public enum DuoMetric {
     public static let sheetMoveWidth: CGFloat = 460.0
     public static let sheetNewProjectWidth: CGFloat = 520.0
     public static let sheetPushWidth: CGFloat = 660.0
+    public static let sheetGithubWidth: CGFloat = 640.0
     public static let sheetPushBodyHeight: CGFloat = 64.0
     public static let sheetLabelColumn: CGFloat = 96.0
     public static let sheetRowGap: CGFloat = 12.0

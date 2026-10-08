@@ -175,8 +175,8 @@ extension DuoAction {
               ui: ["Reconnect Sessions…", "Use New Place", "Locate Folder…"], timeout: 600),
         .init(.projectForget, .projects, "<folder>", "Remove a missing folder's tile from Duo (DB-8); its sessions stay in Claude's storage and in search. Undo with `duo2 undo`.",
               ui: ["Remove from Duo"]),
-        .init(.projectNew, .projects, "<name> [--goal <text>] [--into <topic folder>] [--session]", "Make a new project in Home (or a topic folder in it): a folder with a starter PROJECT.md holding the goal. --session starts a Claude session in it. Undo with `duo2 undo`.",
-              ui: ["+ New project", "Create Project", "New Project…"]),
+        .init(.projectNew, .projects, "<name> [--goal <text>] [--into <topic folder>] [--session] | --from-github <link|owner/repo> [<name>] [--new-branch <b> [--from <base>] | --branch <existing>] [--keep-in-git] [--sheet]", "Make a new project in Home (or a topic folder in it): a folder with a starter PROJECT.md holding the goal. --session starts a Claude session in it. --from-github copies a repository into it instead, on a new branch of its own (or --branch), with PROJECT.md kept out of git unless --keep-in-git (DL-149); nothing changes on GitHub. --sheet opens New project from GitHub filled in, for the user. Undo with `duo2 undo`.",
+              ui: ["+ New project", "Create Project", "New Project…", "New Project from GitHub…"]),
         .init(.inventory, .projects, "", "Claude's session storage, read only: each folder's sessions, size, missing folders, collisions, duplicate ids, and what Claude's cleanup takes within 7 days (CONS FR-7.1).", timeout: 180),
         .init(.evidence, .projects, "<project|folder>", "For a catch-all folder, read only: the files each session edited, its candidate home, and date clusters (CONS FR-7.10).", timeout: 300),
         .init(.migrations, .projects, "", "Storage migrations Duo planned or ran, newest first, with their state (CONS §6.3)."),
@@ -448,7 +448,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    static let switches: Set<String> = ["fork", "draft", "browser", "pr", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "force", "session-only"]
+    static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "force", "session-only"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     static let optionalValues: Set<String> = ["remote-control"]

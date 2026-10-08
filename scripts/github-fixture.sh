@@ -73,6 +73,7 @@ case "\$1 \$2" in
   "api repos/acme/website/branches/main") echo 'true' ;;
   "api repos/acme/website/rules/branches/main") echo '' ;;
   "repo fork") git remote add fork https://github.com/tester/website.git ;;
+  "repo clone") r=\$3; d=\$4; shift 4; [ "\$1" = "--" ] && shift; git clone -q "\$@" "https://github.com/\$r.git" "\$d" ;;
   "pr list") echo '[]' ;;
   "pr create") echo 'https://github.com/acme/website/pull/482' ;;
   "auth login") echo 'stub: would open the browser' ;;

@@ -68,6 +68,37 @@ extension AppModel {
         }
     }
 
+    /// `duo2 project new --from-github <link>` (board 1–3): copies it into Home on a new branch (or
+    /// `--branch`), writes the brief, opens the project. `--sheet` opens the sheet prefilled instead.
+    func projectFromGitHub(_ inv: Invocation, _ done: @escaping @MainActor (Reply) -> Void) {
+        let link = inv.flags["from-github"] ?? ""
+        guard RemoteRepo.parse(link) != nil else { return done(.fail("'\(link)' isn't a GitHub link: use https://github.com/owner/repo or owner/repo")) }
+        guard let place = homePlace(named: inv.flags["into"] ?? inv.flags["in"]) else { return done(.fail("There's no Home folder yet (duo2 home set <folder>), or no such topic.")) }
+        showGitHubProject(link)
+        guard let f = gitHubProjectForm else { return done(.fail("Couldn't open New project from GitHub.")) }
+        if inv.has("sheet") { return done(.ok("Opened New project from GitHub in Duo, filled in, for the user to check and create.")) }
+        f.into = place
+        if let n = inv[0] ?? inv.flags["name"] { f.name = n; f.nameTouched = true }
+        if let g = inv.flags["goal"] { f.goal = g }
+        f.startSession = inv.has("session")
+        f.keepOutOfGit = !inv.has("keep-in-git")
+        // Wait for the lookup (the Found box), then create.
+        func attempt(_ tries: Int) {
+            guard let f = gitHubProjectForm else { return done(.fail("Cancelled.")) }
+            if case .looking = f.found, tries < 120 { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { MainActor.assumeIsolated { attempt(tries + 1) } }; return }
+            if case .problem(let t, let b) = f.found { gitHubProjectForm = nil; return done(.fail("\(t). \(b)")) }
+            if let b = inv.flags["branch"] { f.useExisting = true; f.existing = b }
+            if let b = inv.flags["new-branch"] { f.useExisting = false; f.newBranch = b }
+            if let b = inv.flags["from"] { f.base = b }
+            commitGitHubProject { why in
+                if let why { done(.fail(why)) } else {
+                    done(.ok("Copied \(f.repo?.slug ?? link) into \(Self.short(f.path)) on \(f.useExisting ? (f.existing ?? "") : "a new branch, " + f.newBranch), and made it a project. Nothing changed on GitHub. Undo: duo2 undo"))
+                }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { MainActor.assumeIsolated { attempt(0) } }
+    }
+
     private func pushFromCLI(_ id: ActionID, _ inv: Invocation, _ v: RepoView, _ done: @escaping @MainActor (Reply) -> Void) {
         guard let origin = v.status.origin, let branch = v.status.branch else { return done(.fail("No GitHub remote or no branch: nothing to push.")) }
         var files = v.userChanges.filter { $0.kind != .conflict }.map(\.path)

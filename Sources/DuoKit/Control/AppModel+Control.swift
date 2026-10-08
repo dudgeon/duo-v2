@@ -326,6 +326,8 @@ extension AppModel {
             guard p.isMissing else { return done(.fail("\(p.name)'s folder is there; only a missing folder can be removed from Duo")) }
             forgetFolder(p.name)
             done(.ok("Removed \(p.name) from Duo; its sessions stay in Claude's storage and search. Undo: duo2 undo"))
+        case .projectNew where inv.flags["from-github"] != nil:
+            projectFromGitHub(inv, done)
         case .projectNew:
             guard let name = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             let into = inv.flags["into"]
