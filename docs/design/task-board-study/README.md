@@ -1,6 +1,6 @@
 # Duo: a project's task board — design study
 
-Status: **decided** (DL-148, DL-150, 2026-10-07): C, computed order, the pinned Obsidian base, session rows (board 11), `lanes:` (board 12) and `references:` (board 13). Not built. Before a build, export the boards it needs to a `task-board-handoff/` with `screens/`. Each board's [P] marks are accepted only as far as DL-148 and DL-150 say.
+Status: **decided** (DL-148, DL-150, 2026-10-07): C, computed order, the pinned Obsidian base, session rows (board 11), `lanes:` (board 12) and `references:` (board 13). Exported to `task-board-handoff/` for the build (DL-158). Each board's [P] marks are accepted only as far as DL-148 and DL-150 say.
 
 Geoff, 2026-10-07: "projects would benefit from a visual way of tracking tasks besides the left column — do some research into the obsidian kanban feature". He also asked for maximum compatibility with Obsidian and OKF. The research, the options and the rules are in `docs/research/task-board.md`. The boards are drawn on the Design canvas https://claude.ai/artifact/1yVhqtQsaXow8GGRQsUaYN with the Duo design system.
 

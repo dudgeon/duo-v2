@@ -1,0 +1,65 @@
+[
+ {
+  "name": "06-cards",
+  "w": 1200,
+  "h": 940,
+  "title": "6 \u00b7 A card",
+  "kind": "board"
+ },
+ {
+  "name": "07-drag",
+  "w": 1500,
+  "h": 1060,
+  "title": "7 \u00b7 Drag",
+  "kind": "board"
+ },
+ {
+  "name": "08-empty-narrow",
+  "w": 1500,
+  "h": 960,
+  "title": "8 \u00b7 Empty and narrow",
+  "kind": "board"
+ },
+ {
+  "name": "09-obsidian",
+  "w": 1500,
+  "h": 960,
+  "title": "9 \u00b7 The same board in Obsidian",
+  "kind": "board"
+ },
+ {
+  "name": "04-where-c",
+  "w": 1520,
+  "h": 1260,
+  "title": "4 \u00b7 C: the board takes the left and middle",
+  "kind": "board"
+ },
+ {
+  "name": "05-where-1280",
+  "w": 2720,
+  "h": 1060,
+  "title": "5 \u00b7 B and C at 1280\u00d7800 (the smallest window)",
+  "kind": "board"
+ },
+ {
+  "name": "11-sessions",
+  "w": 1500,
+  "h": 980,
+  "title": "11 \u00b7 Sessions on a card: clearer marks",
+  "kind": "board"
+ },
+ {
+  "name": "12-columns",
+  "w": 1760,
+  "h": 1120,
+  "title": "12 \u00b7 Adding and removing columns",
+  "kind": "board"
+ },
+ {
+  "name": "13-documents",
+  "w": 1500,
+  "h": 1120,
+  "title": "13 \u00b7 References on a task: documents, folders, links",
+  "kind": "board"
+ }
+]
