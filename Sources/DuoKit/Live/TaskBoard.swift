@@ -207,3 +207,100 @@ extension TaskNotes {
         return lines.joined(separator: nl)
     }
 }
+
+/// The files and folders a task's references field completes (DL-150, board 13): the project's,
+/// relative to it, folders with a trailing `/`. Hidden ones, `.git`, `node_modules` and build
+/// folders are skipped; at most `limit`.
+public enum ReferenceIndex {
+    static let skipped: Set<String> = ["node_modules", ".build", "build", "dist", "DerivedData", "Pods", "__pycache__"]
+
+    public static func scan(_ folder: URL, limit: Int = 3000) -> [String] {
+        let fm = FileManager.default
+        guard let e = fm.enumerator(at: folder, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles, .skipsPackageDescendants]) else { return [] }
+        let base = folder.standardizedFileURL.path
+        var out: [String] = []
+        for case let url as URL in e {
+            let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+            if isDir, skipped.contains(url.lastPathComponent) { e.skipDescendants(); continue }
+            let path = url.standardizedFileURL.path
+            guard path.hasPrefix(base + "/") else { continue }
+            out.append(String(path.dropFirst(base.count + 1)) + (isDir ? "/" : ""))
+            if out.count >= limit { break }
+        }
+        return out.sorted()
+    }
+}
+
+/// A task's `references:` (DL-150): quoted markdown links to files, folders (trailing `/`) and
+/// URLs, written only when one is added; Duo edits only that key's lines.
+public enum TaskReferences {
+    /// `[title](link)` for a project path, relative to the note at `notePath` (`tasks/x.md`).
+    public static func link(projectPath path: String, notePath: String, title: String? = nil) -> String {
+        let from = (notePath as NSString).deletingLastPathComponent.split(separator: "/").map(String.init)
+        let to = path.split(separator: "/").map(String.init)
+        var i = 0
+        while i < from.count, i < to.count - 1, from[i] == to[i] { i += 1 }
+        let rel = String(repeating: "../", count: from.count - i) + to[i...].joined(separator: "/") + (path.hasSuffix("/") ? "/" : "")
+        let name = to.last ?? path
+        // A note by its name, any other file with its extension (as the references field writes them).
+        let t = title ?? (name.lowercased().hasSuffix(".md") ? String(name.dropLast(3)) : name)
+        return "[\(escape(t))](\(rel.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? rel))"
+    }
+
+    /// `[domain](url)` for a web link.
+    public static func link(url: String, title: String? = nil) -> String {
+        let host = URL(string: url)?.host.map { $0.hasPrefix("www.") ? String($0.dropFirst(4)) : $0 } ?? url
+        return "[\(escape(title ?? host))](\(url))"
+    }
+
+    static func escape(_ t: String) -> String { t.replacingOccurrences(of: "[", with: "\\[").replacingOccurrences(of: "]", with: "\\]") }
+
+    /// The link's target: `../docs/a.md` from `[A](../docs/a.md)`.
+    public static func target(_ item: String) -> String {
+        let t = item.trimmingCharacters(in: .whitespaces)
+        if let open = t.range(of: "]("), t.hasSuffix(")") { return String(t[open.upperBound..<t.index(before: t.endIndex)]) }
+        return t
+    }
+
+    /// The note with `link` added to `references:` (a block list, created before the fence the
+    /// first time); nil if a reference to the same target is there.
+    public static func adding(_ link: String, to text: String) -> String? {
+        let existing = Frontmatter.parse(text).list("references").map(target)
+        if existing.contains(target(link)) { return nil }
+        let nl = text.contains("\r\n") ? "\r\n" : "\n"
+        var lines = text.components(separatedBy: nl)
+        let entry = "  - " + TaskNotes.item(link)
+        guard lines.first == "---", let close = lines.dropFirst().firstIndex(of: "---") else {
+            return (["---", "references:", entry, "---"] + lines).joined(separator: nl)
+        }
+        if let k = (1..<close).first(where: { lines[$0].hasPrefix("references:") }) {
+            let value = lines[k].dropFirst("references:".count).trimmingCharacters(in: .whitespaces)
+            if value.isEmpty || value == "[]" {
+                var end = k + 1
+                while end < close, lines[end].hasPrefix("  - ") || lines[end].hasPrefix("- ") { end += 1 }
+                if value == "[]" { lines[k] = "references:" }
+                lines.insert(entry, at: end)
+            } else {
+                let old = value.hasPrefix("[") && value.hasSuffix("]") ? Frontmatter.splitInlineList(String(value.dropFirst().dropLast())) : [value]
+                lines.replaceSubrange(k...k, with: ["references:"] + old.filter { !$0.isEmpty }.map { "  - \($0)" } + [entry])
+            }
+        } else {
+            lines.insert(contentsOf: ["references:", entry], at: close)
+        }
+        return lines.joined(separator: nl)
+    }
+
+    /// The note without the reference to `target`; the key goes when it was the last. Nil if absent.
+    public static func removing(target t: String, from text: String) -> String? {
+        let nl = text.contains("\r\n") ? "\r\n" : "\n"
+        var lines = text.components(separatedBy: nl)
+        guard lines.first == "---", let close = lines.dropFirst().firstIndex(of: "---"),
+              let k = (1..<close).first(where: { lines[$0].hasPrefix("references:") }) else { return nil }
+        var end = k + 1
+        while end < close, lines[end].hasPrefix("  - ") || lines[end].hasPrefix("- ") { end += 1 }
+        let items = (k + 1)..<end
+        guard let hit = items.first(where: { target(Frontmatter.unquote(lines[$0].trimmingCharacters(in: .whitespaces).dropFirst(2).trimmingCharacters(in: .whitespaces))) == t }) else { return nil }
+        if items.count == 1 { lines.removeSubrange(k..<end) } else { lines.remove(at: hit) }
+        return lines.joined(separator: nl)
+    }
+}

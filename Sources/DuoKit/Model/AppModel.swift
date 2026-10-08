@@ -295,6 +295,9 @@ public final class AppModel {
     /// Property names and values for the properties block's suggestions, per project (PropertyCorpus).
     @ObservationIgnored var propertyCorpus: (project: String, at: Date, json: [String: Any])?
     @ObservationIgnored var scanningCorpus = false
+    /// The project's files and folders for a task's references field (DL-150), rescanned at most once a minute.
+    @ObservationIgnored var referenceFiles: (project: String, at: Date, files: [String])?
+    @ObservationIgnored var scanningReferences = false
     /// Sessions already notified for their current wait (S3-6).
     @ObservationIgnored var notified = Set<String>()
     /// Sparkle's "Check for Updates", when the app started it (release builds).

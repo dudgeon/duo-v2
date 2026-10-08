@@ -154,6 +154,85 @@ extension AppModel {
         }
     }
 
+    // MARK: References (DL-150, board 13)
+
+    /// Adds a reference to a task: a file or folder (a URL in or outside the project) or a web
+    /// link. Through the editor's buffer when the note is open; otherwise the file, undoable.
+    @discardableResult
+    public func addReference(project: String, path: String, file: URL? = nil, url: String? = nil, title: String? = nil) -> String? {
+        guard let folder = liveFolders[project] else { return "no project '\(project)'" }
+        let link: String
+        if let url { link = TaskReferences.link(url: url, title: title) }
+        else if let file {
+            var isDir: ObjCBool = false
+            FileManager.default.fileExists(atPath: file.path, isDirectory: &isDir)
+            let base = folder.standardizedFileURL.path, p = file.standardizedFileURL.path
+            if p.hasPrefix(base + "/") {
+                link = TaskReferences.link(projectPath: String(p.dropFirst(base.count + 1)) + (isDir.boolValue ? "/" : ""), notePath: path, title: title)
+            } else {
+                // Outside the project: a link from the note's folder all the same (relative, as Obsidian keeps them).
+                let note = folder.appending(path: path).deletingLastPathComponent().standardizedFileURL.pathComponents
+                let to = file.standardizedFileURL.pathComponents
+                var i = 0; while i < note.count, i < to.count - 1, note[i] == to[i] { i += 1 }
+                let rel = String(repeating: "../", count: note.count - i) + to[i...].joined(separator: "/") + (isDir.boolValue ? "/" : "")
+                let name = file.lastPathComponent
+                link = "[\(TaskReferences.escape(title ?? (name.lowercased().hasSuffix(".md") ? String(name.dropLast(3)) : name)))](\(rel.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? rel))"
+            }
+        } else { return "nothing to add" }
+        let note = folder.appending(path: path)
+        if let e = editorIfLoaded, e.url?.standardizedFileURL == note.standardizedFileURL {
+            e.run("duo.addListItem('references', i); return 1", ["i": TaskNotes.item(link)]) { _ in }
+            return nil
+        }
+        guard let data = FileManager.default.contents(atPath: note.path), let text = String(data: data, encoding: .utf8) else { return "\(path) isn't readable" }
+        guard let updated = TaskReferences.adding(link, to: text) else { return "that's already a reference of \(path)" }
+        do { try Data(updated.utf8).write(to: note, options: .atomic) } catch { return error.localizedDescription }
+        registerUndo("Add Reference") { model in try? data.write(to: note, options: .atomic); model.refreshLive() }
+        refreshLive()
+        return nil
+    }
+
+    /// Remove from Task on a reference: its line goes (the key too, if it was the last).
+    @discardableResult
+    public func removeReference(project: String, path: String, target: String) -> String? {
+        guard let folder = liveFolders[project] else { return "no project '\(project)'" }
+        let note = folder.appending(path: path)
+        if let e = editorIfLoaded, e.url?.standardizedFileURL == note.standardizedFileURL {
+            e.run("return duo.removeListItem('references', u)", ["u": target]) { _ in }
+            return nil
+        }
+        guard let data = FileManager.default.contents(atPath: note.path), let text = String(data: data, encoding: .utf8) else { return "\(path) isn't readable" }
+        guard let updated = TaskReferences.removing(target: target, from: text) else { return "\(path) has no reference to \(target)" }
+        do { try Data(updated.utf8).write(to: note, options: .atomic) } catch { return error.localizedDescription }
+        registerUndo("Remove Reference") { model in try? data.write(to: note, options: .atomic); model.refreshLive() }
+        refreshLive()
+        return nil
+    }
+
+    func referenceVerb(_ id: ActionID, _ inv: Invocation, _ project: String, _ done: @escaping @MainActor (Reply) -> Void) {
+        guard let verb = inv[0], let t = inv[1], let what = inv[2] else { return done(.fail("usage: \(id.action.usage)")) }
+        guard let hit = findTask(t, project: project) else { return done(.fail("no task '\(t)' in \(project)")) }
+        let web = URL(string: what)?.scheme.map { ["http", "https"].contains($0.lowercased()) } ?? false
+        var why: String?
+        switch verb {
+        case "add":
+            if web { why = addReference(project: hit.project, path: hit.path, url: what, title: inv.flags["title"]) }
+            else {
+                let base = liveFolders[hit.project]
+                let file = what.hasPrefix("/") || what.hasPrefix("~") ? URL(fileURLWithPath: (what as NSString).expandingTildeInPath) : base?.appending(path: what)
+                guard let file, FileManager.default.fileExists(atPath: file.path) else { return done(.fail("\(what) isn't there")) }
+                why = addReference(project: hit.project, path: hit.path, file: file, title: inv.flags["title"])
+            }
+        case "remove":
+            let note = loadTask(hit.project, hit.path)
+            let target = note?.references.map(TaskReferences.target).first { $0 == what || $0.hasSuffix(what) || ($0.removingPercentEncoding ?? $0).hasSuffix(what) } ?? what
+            why = removeReference(project: hit.project, path: hit.path, target: target)
+        default: return done(.fail("usage: \(id.action.usage)"))
+        }
+        if let why { return done(.fail(why)) }
+        done(.ok("\(verb == "add" ? "Added" : "Removed") \(what) \(verb == "add" ? "to" : "from") \(hit.title)'s references. Undo: duo2 undo"))
+    }
+
     // MARK: Columns (DL-150, board 12)
 
     /// Writes the project's lanes to its brief's `lanes:` list (added the first time, then edited
@@ -266,6 +345,7 @@ extension AppModel {
         guard let name, project(named: name) != nil else { return done(.fail("which project? --project <p>")) }
         guard terminalsMode == .live else { return done(.fail("the task board needs live projects")) }
         if id == .taskColumn { return columnVerb(id, inv, name, done) }
+        if id == .taskReference { return referenceVerb(id, inv, name, done) }
         switch inv[0] {
         case "show"?: showBoard(true, project: name)
         case "hide"?: showBoard(false, project: name)

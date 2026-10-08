@@ -84,4 +84,19 @@ import Foundation
     check(ProjectBrief.url(in: root)?.lastPathComponent == "PROJECT.md", "PROJECT.md wins over a marked note")
     try Data("# p\n".utf8).write(to: root.appending(path: "_PROJECT.md"))
     check(ProjectBrief.url(in: root)?.lastPathComponent == "_PROJECT.md", "_PROJECT.md wins")
+
+    // References (DL-150): links relative to the note, written only in their key.
+    check(TaskReferences.link(projectPath: "docs/prd-v2.md", notePath: "tasks/prd-v2.md") == "[prd-v2](../docs/prd-v2.md)", "a file reference is relative to the note")
+    check(TaskReferences.link(projectPath: "research/", notePath: "tasks/prd-v2.md") == "[research](../research/)", "a folder reference keeps its trailing /")
+    check(TaskReferences.link(projectPath: "tasks/other.md", notePath: "tasks/prd-v2.md", title: "Other") == "[Other](other.md)", "a note beside it")
+    check(TaskReferences.link(projectPath: "docs/Q3 funnel.csv", notePath: "tasks/a.md") == "[Q3 funnel.csv](../docs/Q3%20funnel.csv)", "spaces are encoded, as Obsidian writes them; a file that isn't a note keeps its extension")
+    check(TaskReferences.link(url: "https://www.figma.com/file/x") == "[figma.com](https://www.figma.com/file/x)", "a web link is titled by its domain")
+    let bare = "---\ntype: task\ntitle: A\nstatus: open\nsessions: []\ncreated: 2026-10-01\n---\n\n# A\n"
+    let one = TaskReferences.adding("[prd-v2](../docs/prd-v2.md)", to: bare)
+    check(one == bare.replacingOccurrences(of: "created: 2026-10-01\n---", with: "created: 2026-10-01\nreferences:\n  - \"[prd-v2](../docs/prd-v2.md)\"\n---"), "the first reference adds the key before the fence, nothing else changes")
+    let two = one.flatMap { TaskReferences.adding("[research](../research/)", to: $0) }
+    check(two.map { TaskNotes.parse($0, path: "tasks/a.md").references.count } == 2, "a second reference joins the list")
+    check(two.flatMap { TaskReferences.adding("[PRD](../docs/prd-v2.md)", to: $0) } == nil, "the same target isn't added twice")
+    check(two.flatMap { TaskReferences.removing(target: "../research/", from: $0) } == one, "removing one leaves the rest")
+    check(one.flatMap { TaskReferences.removing(target: "../docs/prd-v2.md", from: $0) } == bare, "removing the last takes the key too")
 }

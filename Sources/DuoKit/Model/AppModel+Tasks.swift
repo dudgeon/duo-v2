@@ -468,6 +468,26 @@ extension AppModel {
                 }
             }
         }
+        // A task note's references field (DL-150): its folder, and the project's files to complete.
+        if let u = e.url, let folder = liveFolders[project], let rel = relativePathIn(u, folder: folder) {
+            ctx["noteDir"] = (rel as NSString).deletingLastPathComponent
+            ctx["noteName"] = (rel as NSString).lastPathComponent
+            if rel.hasPrefix("tasks/") {
+                if let r = referenceFiles, r.project == project { ctx["files"] = r.files }
+                if referenceFiles?.project != project || (referenceFiles?.at.timeIntervalSinceNow ?? -999) < -60, !scanningReferences {
+                    scanningReferences = true
+                    Task.detached(priority: .utility) { [weak self] in
+                        let files = ReferenceIndex.scan(folder)
+                        await MainActor.run {
+                            guard let self else { return }
+                            self.referenceFiles = (project, Date(), files)
+                            self.scanningReferences = false
+                            self.pushNoteContext()
+                        }
+                    }
+                }
+            }
+        }
         guard let data = try? JSONSerialization.data(withJSONObject: ctx, options: [.sortedKeys]),
               let json = String(data: data, encoding: .utf8) else { return }
         e.setNoteContext(json)
@@ -501,6 +521,21 @@ extension AppModel {
                 item.state = t == current ? .on : .off
                 menu.addItem(item)
             }
+            menu.popUp(positioning: nil, at: at, in: e.webView)
+            return
+        }
+        if kind == "propertyReference", let url = body["url"] as? String {
+            // A task's reference (DL-150, board 13): Open, Reveal in Finder, Copy Link, Remove from Task.
+            let web = URL(string: url)?.scheme.map { !$0.isEmpty } ?? false
+            let file = web ? nil : e.url.map { URL(fileURLWithPath: url.removingPercentEncoding ?? url, relativeTo: $0.deletingLastPathComponent()).standardizedFileURL }
+            menu.addItem(ActionMenuItem("Open") { [weak self, weak e] in self?.openLink(url, from: e?.url) })   // action: doc open
+            menu.addItem(ActionMenuItem("Reveal in Finder") { if let file { NSWorkspace.shared.activateFileViewerSelecting([file]) } })   // action: file reveal
+            menu.items.last?.isEnabled = file != nil
+            menu.addItem(ActionMenuItem("Copy Link") {   // action: doc prop
+                NSPasteboard.general.clearContents(); NSPasteboard.general.setString(url, forType: .string)
+            })
+            menu.addItem(.separator())
+            menu.addItem(ActionMenuItem("Remove from Task") { [weak e] in e?.run("return duo.removeListItem('references', u)", ["u": url]) { _ in } })   // action: task reference
             menu.popUp(positioning: nil, at: at, in: e.webView)
             return
         }

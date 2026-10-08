@@ -519,6 +519,155 @@ class SessionLineWidget extends WidgetType {
   }
   ignoreEvent(e) { return e.type === "mousedown" && e.target.closest?.(".duo-fm-session-name") != null; }
 }
+// A task's references (DL-150, task-board board 13): a file, folder or globe mark, the link's text
+// (underlined, opens it), then its path in the project or its domain, mono text2.
+const REF_ICONS = {
+  file: '<svg width="10" height="12" viewBox="0 0 10 12"><path d="M1.5 1.5h4.5l2.5 2.5v6.5H1.5z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><path d="M6 1.5V4h2.5" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>',
+  folder: '<svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 2.2c0-.7.5-1.2 1.2-1.2h2.3l1.2 1.3h4.1c.7 0 1.2.5 1.2 1.2v4.3c0 .7-.5 1.2-1.2 1.2H2.2C1.5 9 1 8.5 1 7.8z" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>',
+  url: '<svg width="11" height="11" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.8" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M1.2 6h9.6M6 1.2c1.6 1.4 1.6 8.2 0 9.6M6 1.2c-1.6 1.4-1.6 8.2 0 9.6" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>',
+};
+const isURL = (u) => /^[a-z][a-z0-9+.-]*:\/\//i.test(u);
+function refKind(url) { return isURL(url) ? "url" : url.endsWith("/") ? "folder" : "file"; }
+// A link relative to the note, as a path in the project: tasks/ + ../docs/a.md → docs/a.md.
+function projectPath(noteDir, rel) {
+  const out = noteDir ? noteDir.split("/").filter(Boolean) : [];
+  for (const part of decodeURI(rel).split("/")) {
+    if (part === "..") out.pop(); else if (part !== "." && part !== "") out.push(part);
+  }
+  return out.join("/") + (rel.endsWith("/") ? "/" : "");
+}
+// The other way: a project path as a link from the note's folder.
+function relativeTo(noteDir, path) {
+  const from = noteDir ? noteDir.split("/").filter(Boolean) : [], to = path.split("/").filter(Boolean);
+  let i = 0;
+  while (i < from.length && i < to.length - 1 && from[i] === to[i]) i++;
+  const rel = "../".repeat(from.length - i) + to.slice(i).join("/") + (path.endsWith("/") ? "/" : "");
+  return encodeURI(rel);
+}
+function refDetail(ctx, url) {
+  if (isURL(url)) { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; } }
+  return projectPath(ctx.noteDir ?? "", url);
+}
+class ReferenceLineWidget extends WidgetType {
+  constructor(url, title, detail) { super(); this.url = url; this.title = title; this.detail = detail; }
+  eq(o) { return o.url === this.url && o.title === this.title && o.detail === this.detail; }
+  toDOM() {
+    const d = document.createElement("span");
+    d.className = "duo-fm-ref";
+    const i = document.createElement("span");
+    i.className = "duo-fm-ref-icon";
+    i.innerHTML = REF_ICONS[refKind(this.url)];
+    d.appendChild(i);
+    const n = document.createElement("span");
+    n.className = "duo-fm-ref-name";
+    n.textContent = this.title || this.detail;
+    d.appendChild(n);
+    const w = document.createElement("span");
+    w.className = "duo-fm-ref-path";
+    w.textContent = this.detail;
+    d.appendChild(w);
+    // A document opens in a right-pane tab, a folder is revealed, a URL opens per DL-3.
+    n.addEventListener("mousedown", (e) => { e.preventDefault(); post("openLink", { url: this.url }); });
+    d.addEventListener("contextmenu", (e) => { e.preventDefault(); post("propertyReference", { url: this.url, x: e.clientX, y: e.clientY }); });
+    return d;
+  }
+  ignoreEvent(e) { return (e.type === "mousedown" && e.target.closest?.(".duo-fm-ref-name") != null) || e.type === "contextmenu"; }
+}
+// The field under a task's references (board 13): completes the project's files and folders as
+// you type (matched words in bold, the folder at the right), takes a pasted URL; Return adds the
+// link, relative to the note. With no references yet, it sits on its own `references` row.
+class ReferenceFieldWidget extends WidgetType {
+  constructor(labelled) { super(); this.labelled = labelled; }
+  eq(o) { return o.labelled === this.labelled; }
+  toDOM(view) {
+    const row = document.createElement("div");
+    row.className = "duo-fm-reffield-row" + (this.labelled ? " duo-fm-reffield-labelled" : "");
+    if (this.labelled) {
+      const k = document.createElement("span");
+      k.className = "duo-fm-reffield-key";
+      k.textContent = "references";
+      row.appendChild(k);
+    }
+    const box = document.createElement("span");
+    box.className = "duo-fm-reffield";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = "Add a file, folder or link";
+    input.spellcheck = false;
+    box.appendChild(input);
+    const list = document.createElement("div");
+    list.className = "duo-fm-refmenu";
+    list.hidden = true;
+    box.appendChild(list);
+    row.appendChild(box);
+    let hits = [], sel = 0;
+    const ctx = () => view.state.field(contextField);
+    const render = () => {
+      list.innerHTML = "";
+      const q = input.value.trim();
+      if (!q) { list.hidden = true; return; }
+      const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+      const self = projectPath(ctx().noteDir ?? "", "./" + (view.state.field(contextField).noteName ?? ""));
+      const files = (ctx().files ?? []).filter((f) => f !== self);
+      hits = isURL(q) ? [] : files.filter((f) => { const l = f.toLowerCase(); return words.every((w) => l.includes(w)); })
+        .sort((a, b) => {
+          const an = a.split("/").filter(Boolean).pop().toLowerCase(), bn = b.split("/").filter(Boolean).pop().toLowerCase();
+          const as = an.startsWith(words[0]) ? 0 : 1, bs = bn.startsWith(words[0]) ? 0 : 1;
+          return as - bs || a.length - b.length || a.localeCompare(b);
+        }).slice(0, 8);
+      sel = Math.min(sel, Math.max(0, hits.length - 1));
+      hits.forEach((f, n) => {
+        const it = document.createElement("div");
+        it.className = "duo-fm-refitem" + (n === sel ? " duo-fm-refitem-on" : "");
+        const parts = f.split("/").filter(Boolean), name = parts.pop() + (f.endsWith("/") ? "/" : "");
+        const ic = document.createElement("span"); ic.className = "duo-fm-ref-icon"; ic.innerHTML = REF_ICONS[f.endsWith("/") ? "folder" : "file"]; it.appendChild(ic);
+        const nm = document.createElement("span"); nm.className = "duo-fm-refitem-name";
+        const lower = name.toLowerCase(), w = words.find((x) => lower.includes(x));
+        if (w) { const at = lower.indexOf(w); nm.append(name.slice(0, at)); const b = document.createElement("b"); b.textContent = name.slice(at, at + w.length); nm.append(b, name.slice(at + w.length)); }
+        else nm.textContent = name;
+        it.appendChild(nm);
+        const dir = document.createElement("span"); dir.className = "duo-fm-refitem-dir"; dir.textContent = parts.length ? parts.join("/") + "/" : ""; it.appendChild(dir);
+        it.addEventListener("mousedown", (e) => { e.preventDefault(); choose(f); });
+        list.appendChild(it);
+      });
+      const hint = document.createElement("div");
+      hint.className = "duo-fm-refhint";
+      hint.innerHTML = REF_ICONS.url + "<span>" + (isURL(q) ? "Return adds this link" : "Paste a link, or drag a file here") + "</span>";
+      list.appendChild(hint);
+      list.hidden = false;
+    };
+    const quote = (s) => '"' + s.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+    const esc = (t) => t.replace(/[\[\]]/g, (m) => "\\" + m);
+    const choose = (f) => {
+      const noteDir = ctx().noteDir ?? "";
+      const name = f.split("/").filter(Boolean).pop();
+      const title = f.endsWith("/") ? name : name.replace(/\.md$/i, "");
+      addListItem("references", quote(`[${esc(title)}](${relativeTo(noteDir, f)})`));
+      input.value = ""; render();
+    };
+    const addURL = (u) => {
+      let title = u;
+      try { title = new URL(u).hostname.replace(/^www\./, ""); } catch {}
+      addListItem("references", quote(`[${esc(title)}](${u})`));
+      input.value = ""; render();
+    };
+    input.addEventListener("input", () => { sel = 0; render(); });
+    input.addEventListener("blur", () => { setTimeout(() => { list.hidden = true; }, 100); });
+    input.addEventListener("keydown", (e) => {
+      e.stopPropagation();
+      if (e.key === "ArrowDown") { e.preventDefault(); sel = Math.min(sel + 1, hits.length - 1); render(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); sel = Math.max(sel - 1, 0); render(); }
+      else if (e.key === "Escape") { e.preventDefault(); input.value = ""; render(); input.blur(); view.focus(); }
+      else if (e.key === "Enter") {
+        e.preventDefault();
+        const q = input.value.trim();
+        if (isURL(q)) addURL(q); else if (hits[sel]) choose(hits[sel]);
+      }
+    });
+    return row;
+  }
+  ignoreEvent() { return true; }
+}
 class GlyphWidget extends WidgetType {
   constructor(state) { super(); this.state = state; }
   eq(o) { return o.state === this.state; }
@@ -545,6 +694,9 @@ function propertiesDecorations(state) {
   });
   const out = [];
   const open = doc.line(p.fm[0]), close = doc.line(p.fm[1]);
+  // The references field (DL-150) goes under the last reference, or on its own row before the fence.
+  const refs = p.lines.filter((L) => L.key === "references");
+  const lastRef = task && !tmpl && !p.invalid ? (refs.length ? refs[refs.length - 1].n : -1) : null;
   const next = p.fm[1] < doc.lines ? doc.line(p.fm[1] + 1) : null;
   const blankAfter = next && next.text.trim() === "" && p.fm[1] + 1 < doc.lines;
   if (folded) {
@@ -559,6 +711,14 @@ function propertiesDecorations(state) {
     if (p.invalid === L.n) cls.push("duo-fm-error");
     const broken = p.invalid != null && L.n >= p.invalid;  // from the error on: no icons or controls
     if (L.kind === "item") cls.push("duo-fm-item");
+    if (L.kind === "item" && L.key === "references" && task && !active.has(L.n)) {
+      const lm = MD_LINK.exec(L.value.trim());
+      out.push(Decoration.line({ class: cls.join(" ") }).range(L.from));
+      const url = lm ? lm[2] : L.value.trim().replace(/^["']|["']$/g, "");
+      if (url) out.push(Decoration.replace({ widget: new ReferenceLineWidget(url, lm ? lm[1].replace(/\\([\[\]])/g, "$1") : "", refDetail(ctx, url)) }).range(L.from, L.to));
+      if (L.n === lastRef) out.push(Decoration.widget({ widget: new ReferenceFieldWidget(false), block: true, side: 1 }).range(L.to));
+      continue;
+    }
     if (L.kind === "item" && L.key === "sessions" && task && !active.has(L.n)) {
       const lm = MD_LINK.exec(L.value.trim());
       out.push(Decoration.line({ class: cls.join(" ") }).range(L.from));
@@ -570,6 +730,7 @@ function propertiesDecorations(state) {
     }
     out.push(Decoration.line({ class: cls.join(" ") }).range(L.from));
     if (L.kind !== "key") continue;
+    if (L.key === "references" && L.n === lastRef && !active.has(L.n)) out.push(Decoration.widget({ widget: new ReferenceFieldWidget(false), block: true, side: 1 }).range(L.to));
     out.push(Decoration.mark({ class: "duo-fm-key" }).range(L.from, L.keyEnd));
     if (claude.has(L.n) && !active.has(L.n)) out.push(Decoration.widget({ widget: new ClaudeLabelWidget(), side: 2 }).range(L.to));
     if (broken) continue;
@@ -593,6 +754,7 @@ function propertiesDecorations(state) {
   }
   {
     out.push(Decoration.widget({ widget: new HeadingWidget(p.count, true, false, p.invalid, false), block: true, side: -1 }).range(open.from));
+    if (lastRef === -1) out.push(Decoration.widget({ widget: new ReferenceFieldWidget(true), block: true, side: -1 }).range(close.from));
     for (const f of [open, close]) {
       out.push(Decoration.line({ class: `duo-fm duo-fm-fence ${f === open ? "duo-fm-first" : "duo-fm-last"}${active.has(f.number) ? " duo-fm-active" : ""}` }).range(f.from));
       out.push(Decoration.mark({ class: "duo-fm-key" }).range(f.from, f.to));
@@ -798,7 +960,8 @@ function addListItem(key, item) {
   const p = parseFrontmatter(view.state.doc);
   if (!p) return setProperty(key, "") && addListItem(key, item);
   const L = p.lines.find((l) => l.kind === "key" && l.key === key);
-  if (!L) return setProperty(key, "") && addListItem(key, item);
+  // A new list: the key and its first item before the closing fence, no trailing space.
+  if (!L) { view.dispatch({ changes: { from: view.state.doc.line(p.fm[1]).from, insert: `${key}:\n  - ${item}\n` }, userEvent: "input" }); return true; }
   const v = L.value.trim();
   if (v) {
     // `sessions: []` (a new task) or `key: a`: the line becomes a block list with what it held
@@ -811,6 +974,20 @@ function addListItem(key, item) {
   let at = L.to;
   for (const o of p.lines) if (o.n > L.n) { if (o.kind === "item" && o.key === key) at = o.to; else if (o.kind === "key") break; }
   view.dispatch({ changes: { from: at, insert: `\n  - ${item}` }, userEvent: "input" });
+  return true;
+}
+
+// Removes the item of a list property whose value links to `url` (Remove from Task on a
+// reference, DL-150); the key goes too when it was the last item. Nothing else changes.
+function removeListItem(key, url) {
+  const p = parseFrontmatter(view.state.doc);
+  if (!p) return false;
+  const items = p.lines.filter((l) => l.kind === "item" && l.key === key);
+  const it = items.find((l) => { const m = MD_LINK.exec(l.value.trim()); return (m ? m[2] : l.value.trim().replace(/^["']|["']$/g, "")) === url; });
+  if (!it) return false;
+  if (items.length === 1) return setProperty(key, null);
+  const line = view.state.doc.line(it.n);
+  view.dispatch({ changes: { from: line.from - 1, to: line.to }, userEvent: "delete" });
   return true;
 }
 
@@ -1533,6 +1710,22 @@ const duoTheme = EditorView.theme({
   ".cm-completionMatchedText": { textDecoration: "none", fontWeight: "600" },
   ".cm-completionDetail": { marginLeft: "auto", fontStyle: "normal", fontSize: "12px", color: "var(--duo-text2)" },
   ".duo-sugg-icon": { display: "inline-flex", width: "14px", justifyContent: "center", flex: "none" },
+  ".duo-fm-ref": { display: "inline-flex", alignItems: "center", gap: "6px", maxWidth: "100%", verticalAlign: "top", color: "var(--duo-text)" },
+  ".duo-fm-ref-icon": { display: "inline-flex", flex: "none", color: "var(--duo-text2)" },
+  ".duo-fm-ref-name": { textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", whiteSpace: "nowrap", cursor: "default" },
+  ".duo-fm-ref-path": { color: "var(--duo-text2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  ".duo-fm-reffield-row": { display: "flex", alignItems: "center", gap: "10px", margin: "0 -12px", padding: "2px 12px 4px 32px", position: "relative", zIndex: "1", backgroundColor: "var(--duo-ground)", fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px", lineHeight: "19px" },
+  ".duo-fm-reffield-key": { color: "var(--duo-text2)", flex: "none" },
+  ".duo-fm-reffield": { position: "relative", display: "block", flex: "1", maxWidth: "340px", minWidth: "0" },
+  ".duo-fm-reffield input": { width: "100%", height: "22px", boxSizing: "border-box", border: "1px solid var(--duo-rule)", borderRadius: "6px", padding: "0 8px", font: "12px -apple-system, BlinkMacSystemFont, sans-serif", color: "var(--duo-text)", background: "var(--duo-pane)", outline: "none" },
+  ".duo-fm-reffield input:focus": { borderColor: "var(--duo-text)" },
+  ".duo-fm-refmenu": { position: "absolute", top: "26px", left: "0", right: "0", zIndex: "20", backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "0 12px 32px rgba(31, 35, 40, 0.22)", padding: "6px", font: "13px -apple-system, BlinkMacSystemFont, sans-serif" },
+  ".duo-fm-refitem": { display: "flex", alignItems: "center", gap: "8px", height: "26px", padding: "0 8px", borderRadius: "6px", color: "var(--duo-text)" },
+  ".duo-fm-refitem-on": { backgroundColor: "var(--duo-selected)" },
+  ".duo-fm-refitem-name": { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  ".duo-fm-refitem-name b": { fontWeight: "600" },
+  ".duo-fm-refitem-dir": { marginLeft: "auto", flex: "none", fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: "12px", color: "var(--duo-text2)" },
+  ".duo-fm-refhint": { display: "flex", alignItems: "center", gap: "8px", height: "26px", padding: "0 8px", marginTop: "4px", borderTop: "1px solid var(--duo-rule)", color: "var(--duo-text2)", fontSize: "12px" },
   ".duo-fm-session": { display: "inline-flex", alignItems: "center", gap: "6px", width: "100%", verticalAlign: "top" },
   ".duo-fm-session-name": { textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", cursor: "default" },
   ".duo-fm-wait": { marginLeft: "auto", flex: "none", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", color: "var(--duo-text2)" },
@@ -2008,6 +2201,7 @@ window.duo = {
   markConflict: (lines) => { view.dispatch({ effects: setConflict.of(lines && lines.length ? lines : null) }); return true; },
   setProperty,
   addListItem,
+  removeListItem,
   listProperties,
   agentSetProperty: (k, v) => setProperty(k, v, true),
   propertyLine: (k) => parseFrontmatter(view.state.doc)?.lines.find((l) => l.kind === "key" && l.key === k)?.n ?? null,

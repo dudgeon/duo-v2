@@ -537,6 +537,17 @@ struct TaskCard: View {
             if inside { model.hoveredCard = t.id } else if model.hoveredCard == t.id { model.hoveredCard = nil }
         }
         .onActivate { model.selectCard(project: t.project, path: t.path) }  // action: doc open
+        // Files or folders dropped on a card become its references (DL-150, board 13).
+        // File URLs only, so a card dragged over it still lands on the lane.
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in  // action: task reference
+            for p in providers {
+                _ = p.loadObject(ofClass: URL.self) { url, _ in
+                    guard let url, url.isFileURL else { return }
+                    DispatchQueue.main.async { MainActor.assumeIsolated { if let why = model.addReference(project: t.project, path: t.path, file: url) { model.info(why) } } }
+                }
+            }
+            return !providers.isEmpty
+        }
         .contextMenu { TaskMenuItems(model: model, project: t.project, path: t.path) }   // DL-115
         .accessibilityElement(children: .contain)
         .accessibilityLabel(CardMeta.spoken(t, user: model.fixture.user))
