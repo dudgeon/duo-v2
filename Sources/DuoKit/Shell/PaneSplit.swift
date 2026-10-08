@@ -39,10 +39,13 @@ struct PaneSplit: NSViewRepresentable {
         return split
     }
 
+    /// The panes' views are set once, in `makeNSView`: each reads the model itself, so it updates
+    /// by observation. Replacing a hosting view's root view here re-ran every pane's whole layout
+    /// from the root whenever anything the layout reads changed (Home's chat state since DL-142
+    /// (7)); with a long chat in a pane that pinned the main thread (F-208). A pane's view must
+    /// therefore capture nothing that changes: wrap such state in a view of its own
+    /// (`DimmedUnderSheet`).
     func updateNSView(_ split: DuoSplitView, context: Context) {
-        for (pane, host) in zip(panes, split.arrangedSubviews) {
-            (host as? NSHostingView<AnyView>)?.rootView = AnyView(pane.view.environment(model))
-        }
         apply(to: split, coordinator: context.coordinator)
     }
 

@@ -2534,3 +2534,23 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - `Env.isSet` / `Env.value` / `Env.autoconfirm` (`DuoControl/Env.swift`) treat `NAME=` as unset. Every `DUO_AUTOCONFIRM` read (12 places) uses it, as do `DUO_NO_EDIT_HOOK`, `DUO_MENU_UPDATE`, `DUO_SESSION_ID` in `duo2`, and the folder variables, where an empty value meant the current directory: `CLAUDE_CONFIG_DIR` (ClaudeStorage, search, LegacyDuo), `DUO_ARCHIVE_ROOT`, `DUO_SEARCH_ROOT`, and `DUO_GITIGNORE_ANSWER`. `DUO_SUPPORT_DIR`, `DUO_INSTALL_ROOT` and `DUO_DOWNLOADS_DIR` already ignored an empty value. `0` still counts as set, as before.
 - A DuoChecks scan fails if a Duo variable is tested for presence (`environment["DUO_…"] != nil`) outside `Env`.
 - **Live:** Move into Home with `DUO_AUTOCONFIRM=` (empty) now shows the sheet and moves nothing (no `confirm:` line in stderr); the capture against the slice 2 board `move-into-home` is in the fix's report.
+
+## F-208 · 0.2.5 froze at launch at work: Home's chat state re-laid out the whole window, and sign-in screens flipped it (fixed)
+
+- **Symptom (Geoff's work Mac, 0.2.5 (374)):** 100% CPU from launch, "Recent hangs: 25", 3.1 GB footprint. Every sample on the main thread was in `NSHostingView.beginTransaction` → `RootGeometry.value.getter` → `sizeThatFits` from the root (65% of 2,098 samples), under it nested `_HStackLayout` alignment queries down to the composer's hint line (`ViewThatFits` over five strings, each re-measured and its dynamic colours resolved on every pass), and `ChatHug`.
+- **Trigger:** Claude Code is pinned months behind at work (2.1.2xx). Every restored session resumed at once at launch, and each showed a sign-in or MCP OAuth screen. On a CLI chat doesn't trust, those screens read as unknown, then as the prompt, then unknown again: each chat fell back to the terminal and came back, many times a second across 12–24 tabs.
+- **Amplifiers new in 0.2.5:**
+  - DL-142 (7) made All projects' split read `homeShowsChat` (Home's chat mode and fallback). Each flip re-ran `PaneSplit.updateNSView`, which replaced the root view of all three panes' hosting views: a whole-window layout per flip.
+  - Home opened in chat (DL-142 (6)).
+  - `ChatHug` (F-184) measured each bubble's Markdown twice per pass.
+- **Also:** a terminal shown by two slots (Home's pane, and the console when Home's project is on screen) was sized by both in turn, and each new size made Claude Code redraw.
+- **Reproduction:** `scripts/make-scale-fixture.py` writes the work Mac's shape: 42 sessions, 16 tabs restored in chat, Home in chat, long transcripts. A stand-in TUI reports 2.1.219 and alternates a sign-in screen (0.8 s) with the prompt (0.4 s). On v0.2.5 the main thread reached 99.9% CPU, with 30% mean after launch and 10 stalls logged in 60 s.
+- **Fixed:**
+  - PaneSplit sets each pane's root view once; a pane's view captures nothing that changes (`DimmedUnderSheet`).
+  - A slot sizes only a terminal it still holds.
+  - After a fallback by itself, chat comes back at once the first time. Then the prompt must hold 1, 2, 4 … up to 30 s per return in the last two minutes; Back to Chat resets this.
+  - `setVersion` with the same answer changes nothing.
+  - `ChatHug` keeps its ideal width until the bubble's text changes.
+  On the same fixture: 3.1% mean CPU (8.2% max), no stalls. A faster flip (0.55 s / 0.15 s) went from 37.5% mean and 2 stalls to 11.2% and none.
+- **Trap:** Claude Code 2.1.219 can't resume a transcript it didn't write (it throws reading `o.idx`). A generated fixture's tabs all die at once, which hides any storm; generate the restored sessions' transcripts with the CLI (`claude -p … --session-id`) or use a stand-in TUI.
+- **Trap:** an isolated Duo's window never takes focus and may be occluded, which can skip layout. A run that measures layout cost needs the window unoccluded.

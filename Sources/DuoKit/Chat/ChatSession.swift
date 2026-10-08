@@ -220,6 +220,20 @@ public final class ChatSession {
     /// How long a dialog may wait for its PermissionRequest before the terminal shows (rule 2).
     public static let requestGrace: TimeInterval = 1.5
     @ObservationIgnored private var disagreeSince: Date?
+    /// Since when the prompt has shown while the terminal is up by itself, and when chat last came
+    /// back by itself (F-208).
+    @ObservationIgnored private var promptSince: Date?
+    @ObservationIgnored private var versionKnown = false
+    @ObservationIgnored public var returns: [Date] = []
+    /// Returns counted for the hold: those in the last two minutes.
+    static let returnWindow: TimeInterval = 120
+
+    /// How long the prompt must hold before chat comes back: none the first time, then 1, 2, 4 …
+    /// up to 30 s for each return in the window (F-208).
+    public var returnHold: TimeInterval {
+        let n = returns.filter { Date().timeIntervalSince($0) < Self.returnWindow }.count
+        return n == 0 ? 0 : min(30, pow(2, Double(n - 1)))
+    }
 
     /// The dialog on screen and Claude's request tell the same story (fallback rule 2): a
     /// permission for a tool, a plan for ExitPlanMode, a question Claude asked.
@@ -256,6 +270,9 @@ public final class ChatSession {
     public var showsChat: Bool { mode == .chat && fallback == nil }
 
     public func setVersion(_ v: String?) {
+        // Asked on every attach: the same answer changes nothing and reads nothing (F-208).
+        guard !versionKnown || v != cliVersion else { return }
+        versionKnown = true
         cliVersion = v
         let t = ChatSignatures.table(for: v)
         signatures = t.table
@@ -318,6 +335,7 @@ public final class ChatSession {
     /// whose dialogs aren't verified; and, once the TUI is back at its prompt, coming back.
     func evaluateFallback() {
         let s = screen
+        if s.kind != .idle, s.kind != .busy { promptSince = nil }
         switch s.kind {
         case .unknown:
             if composing || sending { return }
@@ -349,7 +367,25 @@ public final class ChatSession {
             } else { disagreeSince = nil }
         case .idle, .busy:
             unknownSince = nil; disagreeSince = nil; unknownTimer?.invalidate()
-            if fallback != nil { fallback = nil; onChange?() }
+            guard fallback != nil else { promptSince = nil; return }
+            // Back to chat once the prompt has held for `returnHold` (F-208): at once the first
+            // time, then longer after each recent return, so a screen that keeps changing kind
+            // (a sign-in, a redraw at a new size) can't swap chat and the terminal many times a second.
+            let hold = returnHold
+            if hold > 0 {
+                if promptSince == nil {
+                    promptSince = Date()
+                    unknownTimer = Timer.scheduledTimer(withTimeInterval: hold, repeats: false) { [weak self] _ in
+                        MainActor.assumeIsolated { self?.evaluateFallback() }
+                    }
+                    return
+                }
+                if Date().timeIntervalSince(promptSince!) < hold - 0.01 { return }
+            }
+            promptSince = nil
+            returns = returns.filter { Date().timeIntervalSince($0) < Self.returnWindow } + [Date()]
+            fallback = nil
+            onChange?()
         case .picker:
             // `/model` and `/effort` as a card (DL-143), only on a CLI whose screens were checked.
             unknownSince = nil; disagreeSince = nil; unknownTimer?.invalidate()
@@ -382,6 +418,9 @@ public final class ChatSession {
     public func backToChat() {
         fallback = nil
         unknownSince = nil
+        // Your choice: chat comes back at once next time too.
+        returns = []
+        promptSince = nil
         evaluateFallback()
     }
 }

@@ -46,8 +46,7 @@ struct AllProjectsLayout: View {
             panes: [
                 .init(view: AnyView(HomePane()), width: DuoMetric.paneOverviewHome, minWidth: DuoMetric.paneMinHome,
                       collapsible: true, collapsed: model.leftCollapsedAllProjects),
-                .init(view: AnyView(ProjectMapPane().opacity(model.sheetIsUp ? DuoMetric.sheetDimmedOpacity : 1)
-                    .animation((model.sheetIsUp ? DuoMotionToken.scrimIn : .scrimOut).animation, value: model.sheetIsUp)), width: nil, minWidth: DuoMetric.paneMinMap),
+                .init(view: AnyView(DimmedUnderSheet { ProjectMapPane() }), width: nil, minWidth: DuoMetric.paneMinMap),
                 .init(view: AnyView(ActionColumnPane()), width: DuoMetric.paneOverviewActionColumn,
                       minWidth: DuoMetric.paneMinActionColumn, collapsible: true, collapsed: model.rightCollapsedAllProjects),
             ],
@@ -56,6 +55,18 @@ struct AllProjectsLayout: View {
             paneBackgrounds: [model.homeShowsChat ? DuoNSColor.ground : DuoNSColor.console, DuoNSColor.pane, DuoNSColor.pane],
             model: model
         )
+    }
+}
+
+/// A pane dimmed while a Duo sheet is up. Its own view, so the split's panes capture nothing that
+/// changes: PaneSplit sets each pane's root view once (F-208).
+struct DimmedUnderSheet<Content: View>: View {
+    @Environment(AppModel.self) private var model
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        content.opacity(model.sheetIsUp ? DuoMetric.sheetDimmedOpacity : 1)
+            .animation((model.sheetIsUp ? DuoMotionToken.scrimIn : .scrimOut).animation, value: model.sheetIsUp)
     }
 }
 

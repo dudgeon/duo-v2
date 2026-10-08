@@ -433,7 +433,11 @@ struct TerminalSlot: NSViewRepresentable {
             // enforces the 8×1 floor if the slot gets smaller (LR-14). While a pane slides (DL-129)
             // it keeps its size, clipped, and takes the new one when the slide ends.
             guard PaneMotion.running == 0 || current?.frame.isEmpty != false else { return }
-            current?.frame = bounds.insetBy(dx: 12, dy: 8)
+            // Only a terminal this slot still holds: one another slot took keeps that slot's size.
+            // Sizing it from here too made two slots resize one terminal by turns, and each size
+            // made Claude Code redraw (F-208).
+            guard let current, current.superview === self else { return }
+            current.frame = bounds.insetBy(dx: 12, dy: 8)
         }
     }
 }
