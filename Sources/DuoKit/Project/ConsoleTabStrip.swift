@@ -114,27 +114,59 @@ struct ConsoleTabStrip: View {
         s.count > DuoMetric.consoleTabTitleMax ? String(s.prefix(DuoMetric.consoleTabTitleMax - 1)) + "…" : s
     }
 
-    /// Which tabs show, and whether titles are shortened, for the strip's width.
+    /// Which tabs show, and whether titles are shortened, for the strip's width. Runs on every pass
+    /// of the strip's body: each title is measured once (`TextWidth`, F-224), and the fit is one walk.
     func layout(_ tabs: [Tab], width: CGFloat) -> (shown: [Tab], hidden: [Tab], short: Bool) {
         let font = (light ? DuoTextStyle.control : DuoTextStyle.mono).spec.nsFont
         func w(_ t: Tab, _ short: Bool) -> CGFloat {
-            (t.state == nil ? 11 : 9) + DuoSpace.gapGlyphToLabel
-                + ceil(((short ? Self.short(t.title) : t.title) as NSString).size(withAttributes: [.font: font]).width)
+            (t.state == nil ? 11 : 9) + DuoSpace.gapGlyphToLabel + TextWidth.of(short ? Self.short(t.title) : t.title, font: font)
         }
         var controls: CGFloat = 5 + 8 + 10 + 18          // + , chevron, and the gap before them
         if let key = model.consoleTab, model.chat(for: key) != nil { controls += light ? 46 + 16 - 6 : 52 + 18 - 4 }   // the chat toggle
         let more: CGFloat = 11 + 4 + 16 + 18             // » n, when needed
-        func total(_ ts: [Tab], _ short: Bool, _ withMore: Bool) -> CGFloat {
-            ts.map { w($0, short) }.reduce(0, +) + CGFloat(max(0, ts.count - 1)) * 18 + controls + (withMore ? more : 0)
+        let r = TabStripFit.fit(full: tabs.map { w($0, false) }, short: tabs.map { w($0, true) }, selected: tabs.firstIndex { $0.id == model.consoleTab },
+                         width: width, controls: controls, more: more)
+        return (tabs.indices.filter { r.keep[$0] }.map { tabs[$0] }, tabs.indices.filter { !r.keep[$0] }.map { tabs[$0] }, r.short)
+    }
+
+}
+
+public enum TabStripFit {
+    /// The fit, from each tab's width full and shortened: all full, all short, or short with tabs
+    /// dropped from the right (never the selected one) until the rest and `» n` fit. One walk.
+    public static func fit(full: [CGFloat], short: [CGFloat], selected: Int?, width: CGFloat, controls: CGFloat, more: CGFloat) -> (keep: [Bool], short: Bool) {
+        func total(_ ws: [CGFloat]) -> CGFloat { ws.reduce(0, +) + CGFloat(max(0, ws.count - 1)) * 18 + controls }
+        if total(full) <= width { return (Array(repeating: true, count: full.count), false) }
+        if total(short) <= width { return (Array(repeating: true, count: full.count), true) }
+        var keep = Array(repeating: true, count: full.count)
+        var sum = short.reduce(0, +), count = full.count
+        var i = full.count - 1
+        while i >= 0, sum + CGFloat(max(0, count - 1)) * 18 + controls + more > width {
+            if i != selected { keep[i] = false; sum -= short[i]; count -= 1 }
+            i -= 1
         }
-        if total(tabs, false, false) <= width { return (tabs, [], false) }
-        if total(tabs, true, false) <= width { return (tabs, [], true) }
-        var shown = tabs
-        var hidden: [Tab] = []
-        while total(shown, true, true) > width, let i = shown.lastIndex(where: { $0.id != model.consoleTab }) {
-            hidden.insert(shown.remove(at: i), at: 0)
-        }
-        return (shown, hidden, true)
+        return (keep, true)
+    }
+}
+
+/// A string's width in a font, measured once and kept (F-224). Measuring a title with glyphs the
+/// font lacks (emoji, CJK, symbols) builds CoreText's fallback cascade, which on a cold cache opened
+/// font files from disk: 905 ms on the work Mac, from a tab strip measuring every title on every pass.
+public enum TextWidth {
+    nonisolated(unsafe) private static var cache: [String: CGFloat] = [:]
+    /// Measurements made (for the checks).
+    nonisolated(unsafe) public private(set) static var measured = 0
+    private static let lock = NSLock()
+
+    public static func of(_ s: String, font: NSFont) -> CGFloat {
+        let key = "\(font.fontName)\u{1}\(font.pointSize)\u{1}\(s)"
+        lock.lock(); defer { lock.unlock() }
+        if let w = cache[key] { return w }
+        if cache.count > 4000 { cache.removeAll() }
+        measured += 1
+        let w = ceil((s as NSString).size(withAttributes: [.font: font]).width)
+        cache[key] = w
+        return w
     }
 }
 

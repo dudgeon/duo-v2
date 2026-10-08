@@ -127,7 +127,7 @@ struct ChatCommandMenu: View {
         guard let colon = full.firstIndex(of: ":") else { return Text(full).foregroundStyle(DuoColor.text) }
         var prefix = String(full[...colon])
         let rest = String(full[full.index(after: colon)...])
-        if (full as NSString).size(withAttributes: [.font: font]).width > column, prefix.count > 20 { prefix = String(prefix.prefix(18)) + "…:" }
+        if TextWidth.of(full, font: font) > column, prefix.count > 20 { prefix = String(prefix.prefix(18)) + "…:" }
         return Text("\(Text(prefix).foregroundStyle(DuoColor.text2))\(Text(rest).foregroundStyle(DuoColor.text))")
     }
 }
@@ -137,7 +137,7 @@ struct ChatCommandMenu: View {
 public enum ChatCommandColumn {
     public static func width(_ names: [String]) -> CGFloat {
         let font = NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)
-        let longest = names.map { ($0 as NSString).size(withAttributes: [.font: font]).width }.max() ?? 0
+        let longest = names.map { TextWidth.of($0, font: font) }.max() ?? 0
         return min(280, max(122, ceil(longest + 36)))
     }
 }

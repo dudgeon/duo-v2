@@ -2637,3 +2637,10 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
   - v0.2.5: mean 30.1% CPU after launch, peaks to 75%, 16 stalls of 278–595 ms; fails 2 of 4.
   - fix/hang-0.2.5: mean 2.6%, no stalls, 14 tabs parked and 1 session running; passes 4 of 4.
 - **The scan:** DuoChecks fails if `RootView`, `AllProjectsLayout` or `ProjectLayout` reads a session's chat or terminal state (`model.homeShowsChat`, `.fallback`, `.screen` …), or if `PaneSplit.updateNSView` sets a pane's `rootView`. Home's light divider (DL-142 (7)) is now set by the split itself, through Observation (`PaneSplit.liveColors`). The Home-in-chat capture (`list-1440` + `home-chat`) is pixel-identical to the build before.
+
+## F-224 · The console's tab strip measured every title on every pass (fixed)
+
+- Geoff's 0.2.5 hang log at work had a 905 ms stall in `ConsoleTabStrip.layout(_:width:)`, called from the strip's `GeometryReader` body. The time went to `NSString.size(withAttributes:)` → CoreText building a fallback-font cascade → `CGFontCreateWithPathAndName` → `open()`, for a title with glyphs SF Mono lacks (emoji, CJK, symbols). `layout` measured every title on each pass, and again on each step of its shortening loop (O(N²)).
+- Measured on this Mac: an emoji, CJK or symbol title costs 0.7–10 ms the first time and about 0.01 ms after, once CoreText's fallback cache is warm. So the cost is the cold loads, which a work Mac's managed fonts or memory pressure may repeat. It's a real stall, but the 0.2.6 freeze happened with this unchanged, on a chat screen (0.2.6's record 27), so it is not the freeze's cause.
+- **Fixed:** `TextWidth.of(_:font:)` measures each (string, font) once and keeps it (capped at 4,000). The strip's fit (`TabStripFit.fit`) is one walk from the right over cached widths. The idle list's project column and the `/` menu's column measure through `TextWidth` too. Inserting a file chip still measures, but once per insertion, not in a body.
+- **Checks:** 50 passes over 5 titles measure each once. The one-walk fit chooses what the old loop chose on 500 random strips.
