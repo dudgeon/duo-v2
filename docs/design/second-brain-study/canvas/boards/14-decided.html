@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1280x900">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="second-brain-study">
+<!--
+14 · The v1 slice, as decided
+STUDY BOARD [P], not approved. Drawn for the knowledge-base study (2026-10-07) with the Duo design system.
+DL-152: what's in, what's out, what Claude is told.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · 14 · The v1 slice, as decided</title>
+<style>
+body{margin:0}
+.w{box-sizing:border-box;display:flex;flex-direction:column;background:#FFFFFF;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;overflow:hidden}
+.w *{box-sizing:border-box}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.tb{display:flex;align-items:center;gap:8px;height:38px;flex:none;padding:0 12px 0 20px;border-bottom:1px solid #C9CDD3;background:#F3F4F6}
+.tl{display:flex;gap:8px;margin-right:4px}.tl i{width:12px;height:12px;border-radius:50%;display:block}
+.cnt{display:flex;gap:16px;margin-left:8px;align-items:center}.cnt span{display:flex;gap:6px;align-items:center}
+.srch{margin-left:auto;width:300px;height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;display:flex;align-items:center;gap:6px;padding:0 8px;color:#5B636D}
+.tgl{display:flex;padding:4px 6px}
+.sl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:6px;height:16px}
+.t2{color:#5B636D}
+.ell{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.filter{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid #C9CDD3;border-radius:6px;color:#5B636D;font-size:12px;background:#FFFFFF}
+.popup{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 6px 0 8px;border:1px solid #C9CDD3;border-radius:6px;font-size:12px;line-height:16px;background:#FFFFFF}
+.segc{display:inline-flex;height:22px;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF;font-size:12px;line-height:16px}
+.segc span{display:flex;align-items:center;padding:0 10px;color:#5B636D}
+.segc span+span{border-left:1px solid #C9CDD3}
+.segc .on{background:#E9ECEF;color:#1F2328;font-weight:600}
+.chip{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid #C9CDD3;border-radius:11px;font-size:12px;line-height:16px;color:#5B636D;background:#FFFFFF}
+.chip.on{border-color:#1F2328;color:#1F2328;font-weight:600}
+.row{white-space:nowrap;display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row.tint{background:#E8F0FA}
+.row.sel{background:#E9ECEF}
+.row .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.row .pj{color:#5B636D;overflow:hidden;text-overflow:ellipsis;flex:none}
+.row .tk{display:flex;align-items:center;gap:5px;color:#5B636D;overflow:hidden;flex:none}
+.row .tm{color:#5B636D;flex:none;text-align:right}
+.row2{white-space:nowrap;display:flex;flex-direction:column;justify-content:center;gap:0;height:44px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row2.tint{background:#E8F0FA}
+.row2.sel{background:#E9ECEF}
+.row2 .l1,.row2 .l2{display:flex;align-items:center;gap:8px;min-width:0}
+.row2 .l2{padding-left:17px;font-size:12px;line-height:16px;color:#5B636D}
+.sec{padding:10px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;color:#5B636D}
+.sec.ny{color:#C2410C}
+.fold{display:flex;align-items:center;gap:8px;height:26px;padding:0 16px;color:#5B636D}
+.card{border:1px solid #C9CDD3;border-radius:6px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;white-space:normal}
+.card .top{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.q{border:1.5px solid #C2410C;border-radius:6px;padding:6px 10px;margin:6px 0}
+.btn{align-self:flex-start;display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328}
+.act{flex:none;padding:16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;border-left:1px solid #C9CDD3}
+.mapcol{flex:1;min-width:0;display:flex;flex-direction:column}
+.mh{display:flex;align-items:center;gap:10px;height:22px;flex:none}
+.tile{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;border:1px solid #C9CDD3;border-radius:6px;min-width:0}
+.tile.star{border-color:#1F2328}
+.nm{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.srow{height:24px;display:flex;align-items:center;gap:6px;min-width:0;border-radius:4px}
+.srow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.foot{height:34px;flex:none;border-top:1px solid #C9CDD3;display:flex;align-items:center;gap:8px;padding:0 16px;color:#5B636D}
+/* chat (chat-mode-handoff, chat-polish-handoff) */
+.chat{display:flex;flex-direction:column;background:#F3F4F6;min-width:0;min-height:0}
+.strip{white-space:nowrap;display:flex;align-items:stretch;gap:16px;height:28px;flex:none;padding:0 10px 0 16px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;font-size:12px;line-height:16px}
+.strip .tab{display:flex;align-items:center;gap:6px;color:#5B636D}
+.strip .tab.on{color:#1F2328;font-weight:600;box-shadow:inset 0 -2px 0 #1F2328}
+.pill{display:flex;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF}
+.pill span{width:22px;height:16px;display:flex;align-items:center;justify-content:center;color:#5B636D}
+.pill .on{background:#E9ECEF;color:#1F2328}
+.feed{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;overflow:hidden;font-size:14px;line-height:22px;white-space:normal}
+.who{font-size:12px;line-height:16px;color:#5B636D}
+.ccard{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:12px 16px 14px;display:flex;flex-direction:column;gap:8px}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:8px 14px}
+.trail{display:flex;flex-direction:column;border-left:1.5px dotted #8B939C;margin-left:6px}
+.step{display:flex;align-items:center;gap:10px;min-height:24px;margin-left:-5px;font-size:12px;line-height:16px;color:#5B636D}
+.step b{font-weight:600;color:#1F2328}
+.dot{width:7px;height:7px;border-radius:4px;border:1.5px solid #8B939C;background:#FFFFFF;flex:none;margin-left:3px}
+.composer{flex:none;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:7px 12px;color:#5B636D;font-size:14px;line-height:22px}
+.ask{background:#FFFFFF;border:1.5px solid #C2410C;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;white-space:normal}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em}
+.opt{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:20px;border:1px solid #8B939C;border-radius:8px;padding:5px 8px}
+.key{flex:none;width:18px;height:18px;margin-top:1px;border:1px solid #C9CDD3;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:16px;color:#5B636D;background:#F3F4F6}
+/* board furniture: not the app */
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:14px}
+.bd *{box-sizing:border-box}
+.bt{font:600 17px/24px -apple-system,system-ui,sans-serif}
+.bsub{color:#5B636D;font-size:13px;line-height:20px;white-space:normal;max-width:1100px}
+.note{color:#5B636D;font-size:12px;line-height:18px;white-space:normal}
+.note b{color:#1F2328;font-weight:600}
+.frame{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.rec{display:inline-block;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.4px;color:#1F2328;border:1px solid #1F2328;border-radius:9px;padding:0 7px;margin-left:6px;vertical-align:1px}
+.p{color:#5B636D;font-weight:500}
+.txt{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:16px 18px;white-space:normal;font-size:13px;line-height:20px}
+.txt h3{margin:0 0 6px;font-size:13px;line-height:20px;font-weight:600}
+.txt ul,.txt ol{margin:4px 0 8px;padding-left:18px}
+.txt li{margin:2px 0}
+.txt p{margin:4px 0 8px}
+.txt code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+
+.sheetwrap{position:relative;flex:1;min-height:0;display:flex;justify-content:center;background:rgba(31,35,40,.32)}
+.sheet{width:600px;background:#F3F4F6;border:1px solid #C9CDD3;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:18px 24px 18px;display:flex;flex-direction:column;gap:12px;white-space:normal;align-self:flex-start}
+.sheet h2{margin:0;font-size:13px;line-height:20px;font-weight:600}
+.fr{display:grid;grid-template-columns:96px 1fr;column-gap:12px;align-items:center}
+.fr>label{text-align:right;color:#1F2328}
+.fld{height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;padding:0 8px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.fld.ph{color:#5B636D}
+.hint{font-size:12px;line-height:16px;color:#5B636D}
+.btns{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.b{display:inline-flex;align-items:center;height:24px;padding:0 12px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:13px;white-space:nowrap}
+.b.def{border:1.5px solid #1F2328;font-weight:600}
+.cb{display:inline-flex;align-items:center;gap:8px}
+.cb i{width:14px;height:14px;border-radius:4px;background:#0A64D2;display:inline-flex;align-items:center;justify-content:center}
+.cb i.off{background:#FFFFFF;border:1px solid #8B939C}
+.rb{display:inline-flex;align-items:center;gap:8px}
+.rb i{width:14px;height:14px;border-radius:7px;border:1px solid #8B939C;background:#FFFFFF;display:inline-flex;align-items:center;justify-content:center}
+.rb i.on{border:4px solid #0A64D2}
+.pre{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:17px;color:#1F2328;white-space:pre}
+.pre .k{color:#5B636D}
+.found{display:flex;flex-direction:column;gap:4px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px}
+.found div{display:flex;gap:8px;align-items:baseline}
+.pP{display:inline-block;font:600 10px/14px -apple-system,system-ui,sans-serif;color:#5B636D;border:1px solid #8B939C;border-radius:7px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.notice{display:flex;align-items:center;gap:10px;background:#FFFFFF;border:1px solid #8B939C;border-radius:8px;padding:6px 8px 6px 12px;box-shadow:0 4px 14px rgba(31,35,40,.12);white-space:normal}
+.expl{background:#F3F4F6;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;white-space:normal}
+.expl b{font-weight:600}
+.menu{background:rgba(246,246,247,.98);border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 10px 30px rgba(31,35,40,.2);padding:5px 0;font-size:13px;line-height:20px;white-space:nowrap;display:flex;flex-direction:column}
+.menu div{padding:1px 14px 1px 22px;display:flex;align-items:center;gap:8px}
+.menu .sep{height:1px;background:#C9CDD3;margin:5px 0;padding:0}
+.menu .hi{background:#0A64D2;color:#fff;border-radius:5px;margin:0 5px;padding-left:17px}
+.menu .new{font-weight:600}
+.menu .dim{color:#8B939C}
+.ck{display:flex;align-items:center;gap:10px;min-height:26px}
+.ck .bx{width:16px;height:16px;border-radius:8px;border:1.3px solid #8B939C;flex:none;display:flex;align-items:center;justify-content:center}
+.ck .bx.done{background:#1F2328;border-color:#1F2328}
+.drop{background:#E9ECEF;outline:1.5px dashed #1F2328;outline-offset:-1.5px}
+table.j{border-collapse:collapse;width:100%;font-size:12px;line-height:17px;white-space:normal}
+table.j td,table.j th{border:1px solid #C9CDD3;padding:6px 8px;vertical-align:top;text-align:left;background:#FFFFFF}
+table.j th{background:#F3F4F6;font-weight:600}
+.pain{color:#C2410C;font-weight:600}
+
+.rp{flex:1;min-width:0;background:#FFFFFF;display:flex;flex-direction:column;white-space:normal}
+.rtabs{height:36px;flex:none;border-bottom:1px solid #C9CDD3;display:flex;align-items:stretch;padding:0 16px;gap:18px;white-space:nowrap}
+.rtabs span{display:flex;align-items:center;color:#5B636D}
+.rtabs .on{color:#1F2328;font-weight:600;box-shadow:inset 0 -2px 0 #1F2328}
+.doc{padding:16px 22px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:22px}
+.doc h1{margin:0 0 4px;font-size:20px;line-height:28px;font-weight:600}
+.doc h2{margin:8px 0 0;font-size:15px;line-height:22px;font-weight:600}
+.doc p{margin:0}
+.lk{text-decoration:underline;text-decoration-color:#8B939C;text-underline-offset:3px}
+.unres{color:#5B636D;text-decoration:underline dashed;text-decoration-color:#8B939C;text-underline-offset:3px}
+.br{color:#8B939C;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+.tip{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;box-shadow:0 6px 18px rgba(31,35,40,.16);padding:6px 10px;font-size:12px;line-height:16px;white-space:nowrap}
+.left{width:300px;flex:none;border-right:1px solid #C9CDD3;display:flex;flex-direction:column;background:#FFFFFF;white-space:nowrap}
+.irow{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px}
+.irow .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.sb{display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1px solid #8B939C;border-radius:5px;background:#FFFFFF;font-size:11px;line-height:16px;font-weight:600;letter-spacing:0;text-transform:none;color:#1F2328}
+.desk{background:linear-gradient(160deg,#B9C3CE,#8E9AA8);position:relative;overflow:hidden}
+.panel{position:absolute;background:rgba(250,250,251,.97);border:1px solid #C9CDD3;border-radius:12px;box-shadow:0 18px 50px rgba(31,35,40,.32);display:flex;flex-direction:column;white-space:normal}
+.ta{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:8px 10px;font-size:14px;line-height:22px;min-height:96px}
+.caret{display:inline-block;width:1.5px;height:17px;background:#1F2328;vertical-align:-3px}
+.kbd{font-size:12px;line-height:16px;color:#5B636D}
+.kbd b{font-weight:600;color:#1F2328}
+.lane{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.5px;color:#5B636D;text-transform:uppercase}
+table.bp{border-collapse:collapse;width:100%;font-size:12px;line-height:17px;white-space:normal;table-layout:fixed}
+table.bp td,table.bp th{border:1px solid #C9CDD3;padding:7px 8px;vertical-align:top;text-align:left;background:#FFFFFF}
+table.bp th{background:#F3F4F6;font-weight:600}
+table.bp td.v1{box-shadow:inset 3px 0 0 #1F2328}
+.tag{display:inline-block;font:600 10px/14px -apple-system,system-ui,sans-serif;border:1px solid #8B939C;border-radius:7px;padding:0 5px;color:#5B636D;vertical-align:1px}
+.tag.v1{border-color:#1F2328;color:#1F2328}
+</style>
+</head>
+<body>
+<div class="bd" style="width:1280px;height:900px;gap:14px"><div class="bt">14 · The v1 slice, as Geoff decided it (DL-152)</div><div class="bsub">An alpha power-user feature: set up in Settings, invisible to everyone else, writing nothing in the folder but the notes people make. Boards 3 to 8 were the options; boards 11 to 13 are the slice.</div><div style="display:flex;gap:14px;align-items:flex-start">
+<div class="txt" style="flex:1"><h3>In v1</h3><ol>
+<li><b>Read a vault right, for everyone</b> (board 9): wikilinks drawn and followed, shortest-path links, embeds; <code>tasks/</code> by <code>type</code>; the tree sorts before it caps. F-202 to F-204. With DL-147’s adopt flow.</li>
+<li><b>Settings › Knowledge bases (alpha)</b> (board 11): any project or Home (Q-129 A); kept in Duo’s own state, nothing in the folder (Q-130 A).</li>
+<li><b>⇧⌘N, New Note in Inbox</b> (board 12): a note from <code>templates/new-note.md</code> opened in the right-pane editor; in Duo only; <b>New Folder moves to ⌥⇧⌘N</b> (Q-131).</li>
+<li><b>The Knowledge base tab</b>, only where added (board 13; Q-132).</li>
+<li><b>What Claude is told</b> in a knowledge base: where the inbox, index, log and schema are, and the inbox’s count; said once and on change.</li></ol>
+<div class="pre" style="white-space:pre-wrap;margin-top:6px">This folder is a knowledge base. Its schema is AGENTS.md.
+index.md lists the pages; log.md records changes.
+The inbox is inbox/ (12 notes, oldest 9 days).</div></div>
+<div class="txt" style="width:470px;flex:none"><h3>Not in v1</h3><ul>
+<li><b>Process with Claude</b> and any Duo-written instruction (Q-133): “the user will define their own skills for maintaining the wiki and we don’t want to limit their ability to do this.” A button that runs a skill the person names is part of ENH-42.</li>
+<li><b>Search narrowed by default</b> (Q-134): as today; ⇧⌘A again narrows.</li>
+<li><b>A system-wide capture hotkey</b>: in Duo only for now (ENH-43).</li>
+<li><b>Menus, a tile count, an INBOX fold, prompts on adopting a vault</b>: discoverability comes after the alpha (ENH-43).</li>
+<li>Today’s note (ENH-40), backlinks (ENH-41), more actions and schedules (ENH-42), search scale (ENH-44).</li></ul>
+<h3>duo2 (DL-71)</h3><p class="mono" style="font-size:12px;line-height:18px">duo2 kb add|edit|remove|list<br>duo2 note new [--kb &lt;p&gt;] [--stdin]<br>duo2 kb show [&lt;p&gt;]</p></div></div></div>
+</body>
+</html>
