@@ -4,6 +4,7 @@ import pty from 'node-pty';
 import xh from '@xterm/headless';
 import fs from 'node:fs';
 const [steps, out, ...args] = process.argv.slice(2);
+if (!args.includes('--model')) args.push('--model', process.env.DUO_MODEL || 'claude-haiku-5-5');   // Haiku 5.5 unless asked (DL-153)
 const cols = 100, rows = 34;
 const term = new xh.Terminal({ cols, rows, allowProposedApi: true, scrollback: 2000 });
 fs.mkdirSync(out, { recursive: true });

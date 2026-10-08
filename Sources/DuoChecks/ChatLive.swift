@@ -131,7 +131,7 @@ struct AskCase {
                "\(ChatCompose.dirVariable)=\(composeDir)", "\(ChatCompose.userEditor)=/usr/bin/true"]
     let tui = HeadlessTUI(cols: size.0, rows: size.1)
     setenv("CLAUDE_CONFIG_DIR", dir + "/cfg", 1)   // where ChatFeed finds the transcript
-    tui.process.startProcess(executable: claude, args: ["--session-id", id, "--settings", settings.path, "--model", "claude-haiku-4-5-20251001"],
+    tui.process.startProcess(executable: claude, args: ["--session-id", id, "--settings", settings.path, "--model", TestModel.model(environment: ProcessInfo.processInfo.environment, isolated: true, bundleID: nil)!],
                              environment: env, execName: nil, currentDirectory: ws)
     defer { tui.process.terminate(); unsetenv("CLAUDE_CONFIG_DIR") }
     let chat = ChatSession(key: id, mode: .chat)

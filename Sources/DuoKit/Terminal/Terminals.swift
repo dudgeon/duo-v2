@@ -167,17 +167,18 @@ public final class TerminalSession {
         switch command {
         case .newClaude(let id, let prompt, let remote):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
-            var args = ["--session-id", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude)
+            // A test instance's sessions run on Haiku 5.5 unless DUO_MODEL says otherwise (DL-153).
+            var args = ["--session-id", id] + Self.hookArgs(id) + TestModel.args() + RemoteControl.args(remote, claude: claude)
             if let prompt { args.append(prompt) }
             view.startProcess(executable: claude, args: args, environment: ChildEnvironment.make(sessionID: id),
                               execName: nil, currentDirectory: cwd)
         case .resumeClaude(let id, let remote):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
-            view.startProcess(executable: claude, args: ["--resume", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude), environment: ChildEnvironment.make(sessionID: id),
+            view.startProcess(executable: claude, args: ["--resume", id] + Self.hookArgs(id) + TestModel.args() + RemoteControl.args(remote, claude: claude), environment: ChildEnvironment.make(sessionID: id),
                               execName: nil, currentDirectory: cwd)
         case .forkClaude(let from, let id):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
-            view.startProcess(executable: claude, args: ["--resume", from, "--fork-session", "--session-id", id] + Self.hookArgs(id),
+            view.startProcess(executable: claude, args: ["--resume", from, "--fork-session", "--session-id", id] + Self.hookArgs(id) + TestModel.args(),
                               environment: ChildEnvironment.make(sessionID: id), execName: nil, currentDirectory: cwd)
         case .shell:
             let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
