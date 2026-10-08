@@ -37,7 +37,7 @@ import Foundation
     env[ChatCompose.dirVariable] = composeDir
     env[ChatCompose.userEditor] = "/usr/bin/true"
     let tui = HeadlessTUI(cols: 100, rows: 34)
-    tui.process.startProcess(executable: claude, args: ["--session-id", id, "--settings", settings.path, "--model", TestModel.model(environment: ProcessInfo.processInfo.environment, isolated: true, bundleID: nil)!],
+    tui.process.startProcess(executable: claude, args: ["--session-id", id, "--settings", settings.path, "--model", devModel()],
                              environment: env.map { "\($0.key)=\($0.value)" }, execName: nil, currentDirectory: ws)
     defer { tui.process.terminate() }
     let chat = ChatSession(key: id, mode: .chat)

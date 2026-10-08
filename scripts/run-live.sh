@@ -2,13 +2,12 @@
 # Runs Duo once against a workspace with scripted actions, waits for the capture, then quits.
 # Never hangs: gives up after $DUO_TIMEOUT seconds (default 90) and quits the app.
 #   scripts/run-live.sh <workspace> <capture.png> <then-actions> [stderr-file]
-# Sessions run on Haiku 5.5 (DL-153); set DUO_MODEL to run them on another model.
+# Its sessions run on Haiku 5.5 (DL-153, a rule for test tooling); set DUO_MODEL for another model.
 set -u
 ws=$1 png=$2 then=$3 err=${4:-/dev/null}
 rm -f "$png"
-model=${DUO_MODEL:-claude-haiku-5-5}
-# Duo passes DUO_MODEL as --model in a test instance; ANTHROPIC_MODEL covers a build from before DL-153.
-envargs=(--env "DUO_MODEL=$model" --env "ANTHROPIC_MODEL=$model")
+# Claude reads ANTHROPIC_MODEL from the environment it inherits through Duo; Duo itself picks no model.
+envargs=(--env "ANTHROPIC_MODEL=${DUO_MODEL:-claude-haiku-5-5}")
 [[ -n ${DUO_NO_EDIT_HOOK:-} ]] && envargs+=(--env "DUO_NO_EDIT_HOOK=1")   # sessions without the edit hook (DL-78)
 # More variables for the app and its sessions, space-separated KEY=value (the mock API for chat mode's checks).
 for kv in ${=DUO_EXTRA_ENV:-}; do envargs+=(--env "$kv"); done

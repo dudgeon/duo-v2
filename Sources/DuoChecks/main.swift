@@ -1231,20 +1231,11 @@ func repoFixture() throws -> Fixture {
         setenv("DUO_SUPPORT_DIR", real.path, 1)
         check(!SupportFolder.isIsolated && Installer.refusal == nil, "with the real folder, the Installer installs as before")
         check(!ChildEnvironment.make(sessionID: nil).contains { $0.hasPrefix("DUO_SUPPORT_DIR=") }, "the real folder isn't handed to terminals, so a test Duo a session launches is isolated")
-        // DL-153: the user's own Duo leaves the model to Claude Code, even with DUO_MODEL set.
-        check(TestModel.args(environment: [:], bundleID: "com.dudgeon.duo").isEmpty && TestModel.args(environment: ["DUO_MODEL": "claude-opus-5-5"], bundleID: "com.dudgeon.duo").isEmpty,
-              "with the real folder, a session's launch arguments carry no --model (DL-153)")
         unsetenv("DUO_SUPPORT_DIR")
         check(!SupportFolder.isIsolated && Installer.refusal == nil, "a plain launch (no DUO_SUPPORT_DIR) installs as before")
         // An isolated instance: the Installer refuses before touching anything, and the prompt doesn't ask.
         let temp = FileManager.default.temporaryDirectory.appending(path: "duo-iso-\(UUID().uuidString)")
         setenv("DUO_SUPPORT_DIR", temp.path, 1)
-        check(TestModel.args(environment: [:], bundleID: "com.dudgeon.duo") == ["--model", "claude-haiku-5-5"]
-              && TestModel.args(environment: ["DUO_MODEL": ""], bundleID: "com.dudgeon.duo") == ["--model", "claude-haiku-5-5"]
-              && TestModel.args(environment: ["DUO_MODEL": "claude-sonnet-5-5"], bundleID: "com.dudgeon.duo") == ["--model", "claude-sonnet-5-5"],
-              "isolated: sessions start on Haiku 5.5; DUO_MODEL picks another (DL-153)")
-        check(TestModel.args(environment: [:], isolated: false, bundleID: SupportFolder.testBundleID) == ["--model", "claude-haiku-5-5"],
-              "a test build (DL-151) starts sessions on Haiku 5.5 whatever its folder (DL-153)")
         let linkBefore = try? FileManager.default.destinationOfSymbolicLink(atPath: Installer.link.path)
         let mdBefore = try? Data(contentsOf: Installer.claudeMD)
         let ins = Installer.install(cli: "/tmp/elsewhere/Duo.app/Contents/Helpers/duo2"), un = Installer.uninstall()
@@ -2217,7 +2208,7 @@ func repoFixture() throws -> Fixture {
         let saved = ["DUO_SUPPORT_DIR", "CLAUDE_CONFIG_DIR", "DUO_MODEL"].map { k in (k, ProcessInfo.processInfo.environment[k]) }
         setenv("DUO_SUPPORT_DIR", support.path, 1)
         setenv("CLAUDE_CONFIG_DIR", config.path, 1)
-        unsetenv("DUO_MODEL")
+        setenv("DUO_MODEL", "claude-sonnet-5-5", 1)   // a test's model is for its own drivers, never Duo's (DL-153)
         defer {
             for (k, v) in saved { if let v { setenv(k, v, 1) } else { unsetenv(k) } }
             ClaudeLocator.forget()
@@ -2249,8 +2240,14 @@ func repoFixture() throws -> Fixture {
         }
         let typed = String(decoding: got, as: UTF8.self)
         check(args.contains(id) && !args.contains { $0.contains("exec-review-prep") }, "the session starts with no first message (nothing is sent as its prompt)")
-        let model = args.firstIndex(of: "--model").map { args.indices.contains($0 + 1) ? args[$0 + 1] : "" }
-        check(model == TestModel.haiku, "an isolated instance starts its claude with --model claude-haiku-5-5 (DL-153; got \(model ?? "no --model"))")
+        // Resumes and forks too: no app source names the flag.
+        let appSources = ["Duo", "DuoKit", "DuoControl"].flatMap { dir in
+            (tfm.enumerator(atPath: repoRoot().appending(path: "Sources/\(dir)").path)?.allObjects as? [String] ?? [])
+                .filter { $0.hasSuffix(".swift") }.map { repoRoot().appending(path: "Sources/\(dir)/\($0)") }
+        }
+        let naming = appSources.filter { ((try? String(contentsOf: $0, encoding: .utf8)) ?? "").contains("\"--model\"") }.map(\.lastPathComponent)
+        check(!args.contains("--model") && !appSources.isEmpty && naming.isEmpty,
+              "Duo never picks a model: no --model in claude's arguments, even in a test instance with DUO_MODEL set, and no app source passes one (DL-153; got \(args.filter { $0.hasPrefix("--") }), sources \(naming))")
         check(m.lastDrafted?.key == id && m.lastDrafted?.text == "@tasks/exec-review-prep.md ", "once Claude's prompt is up, Duo drafts @tasks/exec-review-prep.md into it")
         check(typed == "\u{1b}[200~@tasks/exec-review-prep.md \u{1b}[201~", "the terminal received exactly the bracketed draft (\(typed.debugDescription))")
         check(!got.contains(13) && !got.contains(10), "no Return was sent: the draft waits for the user")
