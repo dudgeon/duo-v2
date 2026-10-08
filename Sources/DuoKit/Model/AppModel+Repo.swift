@@ -180,7 +180,7 @@ extension AppModel {
 
     /// Install in a Shell…: `brew install gh` typed, not run; without Homebrew, the download page.
     public func offerInstallGH() {
-        guard GitTool.brewPath != nil else { NSWorkspace.shared.open(URL(string: "https://cli.github.com")!); return }
+        guard GitTool.brewPath != nil else { AppModel.openOutside(URL(string: "https://cli.github.com")!); return }
         newShell()
         typeInShell("brew install gh", run: false)
     }
@@ -217,10 +217,10 @@ extension AppModel {
 
     public func openRepoOnGitHub(pr: Bool = false) {
         guard let v = currentRepo, let origin = v.status.origin else { return }
-        if pr, let u = v.prURL { NSWorkspace.shared.open(u); return }
+        if pr, let u = v.prURL { AppModel.openOutside(u); return }
         var u = origin.webURL
         if let b = v.status.branch, v.status.upstream != nil { u = u.appending(path: "tree/\(b)") }
-        NSWorkspace.shared.open(u)
+        AppModel.openOutside(u)
     }
 
     public func copyBranchName() {
@@ -249,7 +249,7 @@ extension AppModel {
         case .noGH: choices = [.init(label: "Cancel", isCancel: true) {}, .init(label: "Install in a Shell…", isDefault: true) { self.offerInstallGH() }]
         case .signedOut: choices = [.init(label: "Cancel", isCancel: true) {}, .init(label: "Sign In in a Shell…", isDefault: true) { self.signInToGitHub() }]
         case .notFound: choices = [.init(label: "Switch Account…", isCancel: true) { self.signInToGitHub() }, .init(label: "Open on GitHub", isDefault: true) { self.openRepoOnGitHub() }]
-        case .sso: choices = [.init(label: "Cancel", isCancel: true) {}, .init(label: "Open GitHub", isDefault: true) { NSWorkspace.shared.open(URL(string: "https://github.com/settings/applications")!) }]
+        case .sso: choices = [.init(label: "Cancel", isCancel: true) {}, .init(label: "Open GitHub", isDefault: true) { AppModel.openOutside(URL(string: "https://github.com/settings/applications")!) }]
         case .protected: return offerMoveToBranch()
         case .notFastForward: choices = [.init(label: "Cancel", isCancel: true) {}, .init(label: "Get Latest and Push", isDefault: true) { self.getLatest(from: nil) { r in if case .success = r { self.showPush(sendNow: false) } } }]
         case .noWrite: choices = [.init(label: "Cancel", isCancel: true) {}, .init(label: "Fork and Push", isDefault: true) { self.showPush(sendNow: false, fork: true) }]
@@ -260,5 +260,16 @@ extension AppModel {
         case .noTools, .unknown: choices = [.init(label: "OK", isDefault: true, isCancel: true) {}]
         }
         SheetCenter.shared.ask(DuoQuestion(title: w.title, paragraphs: [w.body], note: f.details.isEmpty ? nil : "Details: " + f.details, choices: choices))
+    }
+}
+
+extension AppModel {
+    /// Opens a GitHub page in the user's browser; an isolated (test) instance only says which (C-53, F-113).
+    static func openOutside(_ url: URL) {
+        if SupportFolder.isIsolated {
+            FileHandle.standardError.write(Data("open: \(url.absoluteString)\n".utf8))
+        } else {
+            NSWorkspace.shared.open(url)
+        }
     }
 }

@@ -135,7 +135,7 @@ extension AppModel {
                 switch r {
                 case .success(let p):
                     if let n = p.prNumber { self.repos[project]?.pr = n; self.repos[project]?.prURL = p.prURL }
-                    if let u = p.compareURL { NSWorkspace.shared.open(u) }
+                    if let u = p.compareURL { AppModel.openOutside(u) }
                     self.repoNotice = Self.pushNotice(p, repo: f.repo, base: f.base, session: self.fixture.sessions(inProject: project).first?.name)
                 case .failure(let e):
                     self.showRepoFailure(e)

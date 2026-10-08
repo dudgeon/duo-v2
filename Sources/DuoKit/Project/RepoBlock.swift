@@ -132,7 +132,7 @@ struct RepoNoticeView: View {
         HStack(spacing: DuoSpace.gapRowItems) {
             Text(notice.text).duoText(.control).fixedSize(horizontal: false, vertical: true)
             if let b = notice.button, let u = notice.url {
-                Button(b) { NSWorkspace.shared.open(u); model.repoNotice = nil }.buttonStyle(.duo).fixedSize()   // action: repo open
+                Button(b) { AppModel.openOutside(u); model.repoNotice = nil }.buttonStyle(.duo).fixedSize()   // action: repo open
             }
         }
         .padding(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 8))
