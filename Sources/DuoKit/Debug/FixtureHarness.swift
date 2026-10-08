@@ -496,10 +496,20 @@ public enum FixtureHarness {
             var bad: [String] = []
             for w in NSApp.windows {
                 for c in w.contentView.map(all) ?? [] where c.coordinator?.chat.key != visible {
-                    bad.append("\(c.coordinator?.chat.key ?? "-")\(w.firstResponder === c ? " (has the keyboard)" : " (in the window)")")
+                    bad.append("composer of a chat not on screen: \(c.coordinator?.chat.key ?? "-")\(w.firstResponder === c ? " (has the keyboard)" : " (in the window)")")
                 }
             }
-            FileHandle.standardError.write(Data("focus-check: \(bad.isEmpty ? "ok" : "FAIL: composers of chats not on screen: \(bad.joined(separator: ", "))")\n".utf8))
+            // And the other way round: a chat on screen that asked for the keyboard (an interrupted
+            // turn, Chat about this, a board's `focusComposer`) has it, so its caret shows.
+            if let visible, model.chat(for: visible)?.focusComposer ?? 0 > 0 {
+                let shown = NSApp.windows.flatMap { w in (w.contentView.map(all) ?? []).filter { $0.coordinator?.chat.key == visible }.map { (w, $0) } }
+                if let (w, c) = shown.first {
+                    if w.firstResponder !== c { bad.append("the composer on screen asked for the keyboard; \(w.firstResponder.map { String(describing: type(of: $0)) } ?? "nothing") has it") }
+                } else { bad.append("the chat on screen asked for the keyboard but has no composer") }
+            }
+            FileHandle.standardError.write(Data("focus-check: \(bad.isEmpty ? "ok" : "FAIL: \(bad.joined(separator: "; "))")\n".utf8))
+        case "focus-away":   // the window's keyboard to nothing, as a control that takes it would: focus-check must fail
+            NSApp.windows.first(where: { $0.title == "Duo" })?.makeFirstResponder(nil)
         case "composers":   // every composer in the windows: its session, whether it's on screen, and which has the keyboard
             func all(_ v: NSView) -> [ComposerTextView] { ((v as? ComposerTextView).map { [$0] } ?? []) + v.subviews.flatMap(all) }
             for w in NSApp.windows {
