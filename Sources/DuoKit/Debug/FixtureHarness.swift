@@ -300,6 +300,17 @@ public enum FixtureHarness {
                     model.hoveredCardSession = "\(p)/\(kv[0])#\(s.sessionId ?? "")"
                 }
             }
+        case "move-card":   // move-card:<path>=<status>: a card dropped on that lane
+            if parts.count > 1, let p = model.currentProject?.name {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                if kv.count == 2 { _ = model.moveCard(project: p, path: kv[0], to: kv[1]) }
+            }
+        case "drag-card":   // drag-card:<path>=<lane>: hold a card over a lane, mid-drag (board 7)
+            if parts.count > 1, let p = model.currentProject?.name {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                model.dragging = AppModel.dragPayload(card: p, path: kv[0])
+                model.boardDropLane = kv.count > 1 ? kv[1] : nil
+            }
         case "board-filter": model.boardFilter = parts.count > 1 ? parts[1] : ""
         case "task-session":   // task-session:<path>: New Session in Task on a task in the open project
             if parts.count > 1, let p = model.currentProject?.name { model.startSession(inTask: parts[1], project: p) }

@@ -76,6 +76,10 @@ public final class AppModel {
     /// A card being dragged ("<project>/<note path>") and the lane it's over (DL-148, board 7).
     public var boardDrag: String?
     public var boardDropLane: String?
+    /// Cards just dropped on Done, held ticked in the lane they left for Mark Complete's hold
+    /// (DL-130): "<project>/<note path>" → that lane's status.
+    public var boardHeld: [String: String] = [:]
+    @ObservationIgnored var boardKeyMonitor: Any?
     /// Each project's lanes as read from its brief, until the brief changes.
     @ObservationIgnored var briefLanesCache: [String: (url: URL, stamp: Date?, lanes: [String])] = [:]
     /// The tab under the pointer (a console or Home tab's key, or a right-pane document path),

@@ -195,7 +195,8 @@ extension AppModel {
                 return done(.fail("usage: \(id.action.usage) (\(TaskNotes.statuses.joined(separator: " | ")))"))
             }
             guard let hit = findTask(t, project: inv.flags["project"]) else { return done(.fail("no task '\(t)'")) }
-            if let why = setTaskStatus(project: hit.project, path: hit.path, status) { return done(.fail(why)) }
+            // As a drag on the board does: through the editor's buffer when the note is open (DL-148).
+            if let why = moveCard(project: hit.project, path: hit.path, to: status) { return done(.fail(why)) }
             done(.ok("\(hit.title) is \(status). Undo: duo2 undo"))
         case .taskSession:
             guard let t = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }

@@ -243,10 +243,19 @@ struct LaneView: View {
             }
             .padding(.horizontal, 4)
             .frame(height: DuoMetric.taskBoardLaneHeaderHeight)
+            let hot = model.boardDropLane == lane.status && model.dragging?.hasPrefix("duo-card:\(project)/") == true
+            let moving = hot ? model.dragging.flatMap { model.card(fromPayload: $0, project: project) } : nil
+            let incoming = moving.flatMap { p in model.fixture.tasks?.first { $0.project == project && $0.path == p } }
+            let comesFrom = incoming.map { TaskBoard.key($0.status) == lane.status } ?? true
+            let slot = (incoming != nil && !comesFrom) ? TaskBoard.slot(of: .init(task: incoming!, urgent: nil), in: lane) : nil
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: DuoMetric.taskBoardCardGap) {
-                    ForEach(lane.cards) { c in TaskCard(card: c) }
-                    if lane.cards.isEmpty && lane.earlier.isEmpty && lane.dropped.isEmpty {
+                    ForEach(Array(lane.cards.enumerated()), id: \.element.id) { i, c in
+                        if i == slot { DropSlot(task: incoming!) }
+                        TaskCard(card: c)
+                    }
+                    if let slot, slot >= lane.cards.count { DropSlot(task: incoming!) }
+                    if lane.cards.isEmpty && lane.earlier.isEmpty && lane.dropped.isEmpty && slot == nil {
                         Text("Drop a task here to mark it \(lane.title.lowercased())")
                             .duoText(.control).foregroundStyle(DuoColor.text2).multilineTextAlignment(.center)
                             .padding(.horizontal, 8).padding(.vertical, 6)
@@ -262,10 +271,87 @@ struct LaneView: View {
                 .padding(DuoMetric.taskBoardLaneBodyPadding)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.ground))
+            // The lane under a dragged card: `selected` with a dashed edge (board 7).
+            .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(hot && !comesFrom ? DuoColor.selected : DuoColor.ground))
+            .overlay {
+                if hot && !comesFrom {
+                    RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.controlEdge, style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                }
+            }
         }
+        .onDrop(of: [.plainText, .utf8PlainText], delegate: LaneDrop(model: model, project: project, status: lane.status))  // action: task status
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(lane.title), \(lane.count) tasks")
+    }
+}
+
+/// Takes a card dropped on a lane: Set Status to the lane's (board 7). Dragging within a lane does
+/// nothing: order is computed (DL-148 (3)).
+struct LaneDrop: DropDelegate {
+    let model: AppModel
+    let project: String
+    let status: String
+
+    @MainActor func validateDrop(info: DropInfo) -> Bool { model.dragging?.hasPrefix("duo-card:\(project)/") == true }
+    @MainActor func dropEntered(info: DropInfo) { model.boardDropLane = status }
+    @MainActor func dropExited(info: DropInfo) { if model.boardDropLane == status { model.boardDropLane = nil } }
+    @MainActor func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
+
+    @MainActor func performDrop(info: DropInfo) -> Bool {
+        let payload = model.dragging
+        model.boardDropLane = nil
+        model.dragging = nil
+        guard let payload, let path = model.card(fromPayload: payload, project: project) else { return false }
+        if let why = model.moveCard(project: project, path: path, to: status) { model.info(why) }
+        return true
+    }
+}
+
+/// Makes a view a drop target for cards, as `status`; nil leaves it alone.
+struct DropsAs: ViewModifier {
+    @Environment(AppModel.self) private var model
+    let project: String
+    let status: String?
+
+    func body(content: Content) -> some View {
+        if let status {
+            content.onDrop(of: [.plainText, .utf8PlainText], delegate: LaneDrop(model: model, project: project, status: status))  // action: task status
+        } else {
+            content
+        }
+    }
+}
+
+/// Where a dragged card will land: a dashed slot at its computed place in the lane (board 7).
+struct DropSlot: View {
+    let task: Fixture.TaskSummary
+
+    var body: some View {
+        Text(task.due.flatMap(TaskBoard.short).map { "lands here: due \($0)" } ?? "lands here")
+            .duoText(.control).foregroundStyle(DuoColor.text2)
+            .padding(.horizontal, 10)
+            .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.controlEdge, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
+    }
+}
+
+/// The lifted card under the pointer (board 7): the popover shadow, tilted 1.5°.
+struct CardDragImage: View {
+    let title: String
+    let width: CGFloat
+
+    var body: some View {
+        HStack(alignment: .top, spacing: DuoMetric.taskBoardTitleGap) {
+            TaskBox().padding(.top, 4)
+            Text(title).duoText(.cardTitle).foregroundStyle(DuoColor.text).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(DuoMetric.taskBoardCardPadding)
+        .frame(width: width, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
+        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: 1))
+        .duoPopoverShadow()
+        .rotationEffect(.degrees(MotionSettings.shared.reduce ? 0 : -1.5))
+        .padding(24)
     }
 }
 
@@ -292,6 +378,8 @@ struct BoardFold: View {
                 .contentShape(Rectangle())
                 .onActivate { withDuoAnimation(.fold) { if open { model.expandedGroups.remove(key) } else { model.expandedGroups.insert(key) } } }  // action: view group
                 .accessibilityLabel(open ? "Hide \(label.lowercased()) tasks" : "Show \(cards.count) \(label.lowercased()) tasks")
+                // Dropped has no lane: a card dropped on its fold is dropped (board 7).
+                .modifier(DropsAs(project: project, status: name == "dropped" ? "dropped" : nil))
                 if open { ForEach(cards) { c in TaskCard(card: c) } }
             }
         }
@@ -309,7 +397,10 @@ struct TaskCard: View {
 
     var body: some View {
         let t = card.task
-        let closed = ["done", "dropped"].contains(TaskBoard.key(t.status))
+        // Just dropped on Done: ticked, struck through and grey while it holds (DL-130).
+        let completing = model.boardHeld[t.id] != nil
+        let closed = ["done", "dropped"].contains(TaskBoard.key(t.status)) || completing
+        let dragged = model.dragging == AppModel.dragPayload(card: t.project, path: t.path)
         let selected = model.rightTab == t.path && !model.rightCollapsed
         let hovered = model.hoveredCard == t.id
         let sessions = model.cardSessions(t)
@@ -321,6 +412,7 @@ struct TaskCard: View {
                 Text(GreedyLines.wrap(t.title, width: room, font: DuoTextStyle.cardTitle.spec.withWeight(closed ? .regular : nil).nsFont))
                     .duoText(.cardTitle, weight: closed ? .regular : nil)
                     .foregroundStyle(closed ? DuoColor.text2 : DuoColor.text)
+                    .strikethrough(completing)
                     .lineLimit(3).frame(maxWidth: .infinity, alignment: .leading)
                 if hovered && !closed {
                     NewSessionInTaskButton(project: t.project, path: t.path).frame(height: 18)
@@ -331,9 +423,22 @@ struct TaskCard: View {
         }
         .padding(DuoMetric.taskBoardCardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
-        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(selected ? DuoColor.text : DuoColor.rule, lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(dragged ? Color.clear : DuoColor.pane))
+        .overlay {
+            // Its place while it's dragged: a dashed ghost (board 7).
+            if dragged {
+                RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.controlEdge, style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+            } else {
+                RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(selected ? DuoColor.text : DuoColor.rule, lineWidth: 1)
+            }
+        }
+        .opacity(dragged ? 0.55 : 1)
         .contentShape(Rectangle())
+        .onDrag({  // action: task status
+            let payload = AppModel.dragPayload(card: t.project, path: t.path)
+            model.beginDrag(payload)
+            return NSItemProvider(object: payload as NSString)
+        }, preview: { CardDragImage(title: t.title, width: max(laneWidth - 2 * DuoMetric.taskBoardLaneBodyPadding, 160)) })
         .onHover { inside in
             if inside { model.hoveredCard = t.id } else if model.hoveredCard == t.id { model.hoveredCard = nil }
         }
