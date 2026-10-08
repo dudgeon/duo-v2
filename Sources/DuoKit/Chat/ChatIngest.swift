@@ -280,6 +280,10 @@ public enum ChatIngest {
                     } else if let t = b["text"] as? String, !command(t, time: time, into: log) {
                         log.prompt(t, time: time, fromHook: false)
                     }
+                case "image":
+                    if let src = b["source"] as? ChatJSON, let b64 = src["data"] as? String, let data = Data(base64Encoded: b64) {
+                        log.addImage(ChatImage(mediaType: src["media_type"] as? String ?? "image/png", data: data))
+                    }
                 case "tool_result":
                     guard let id = b["tool_use_id"] as? String else { continue }
                     let content: String? = (b["content"] as? String)

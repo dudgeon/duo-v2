@@ -76,6 +76,7 @@ public enum SessionTitles {
     /// title on a word boundary.
     public static func clean(_ text: String, limit: Int = 60) -> String? {
         var s = text.replacingOccurrences(of: #"<([a-zA-Z][\w-]*)[^>]*>[\s\S]*?</\1>"#, with: " ", options: .regularExpression)
+        s = s.replacingOccurrences(of: #"\[Image #\d+\]"#, with: " ", options: .regularExpression)   // a pasted picture's token (DL-161)
         s = s.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression).trimmingCharacters(in: .whitespaces)
         guard !s.isEmpty else { return nil }
         guard s.count > limit else { return s }

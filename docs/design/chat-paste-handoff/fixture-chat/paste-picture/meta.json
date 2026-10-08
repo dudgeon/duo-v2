@@ -1,0 +1,22 @@
+{
+ "mode": "chat",
+ "tab": "PRD v2 edits",
+ "focusComposer": true,
+ "drafts": {
+  "composer": "Why does the checkout button wrap on the second one?"
+ },
+ "pictures": [
+  {
+   "kind": "chart",
+   "w": 128,
+   "h": 128
+  },
+  {
+   "kind": "phone",
+   "w": 128,
+   "h": 128,
+   "fill": "chatYou"
+  }
+ ],
+ "hoverPicture": 1
+}

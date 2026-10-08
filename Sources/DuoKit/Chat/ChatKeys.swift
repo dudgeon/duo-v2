@@ -20,6 +20,8 @@ extension AppModel {
             let used = MainActor.assumeIsolated { () -> Bool in
                 // ⌘[ / ⌘]: your previous and next message, only while the chat has the keyboard (Q-54).
                 if mods == .command, chars == "[" || chars == "]" { return self?.chatStep(chars == "[" ? -1 : 1, window: number) == true }
+                // ⌘V with a chat showing and nothing holding the keyboard: the composer takes it.
+                if mods == .command, chars == "v" { return self?.chatPaste(window: number) == true }
                 return mods.subtracting(.shift).isEmpty && self?.chatKey(chars, escape: escape, window: number) == true
             }
             return used ? nil : e
@@ -32,6 +34,17 @@ extension AppModel {
         let fr = w.firstResponder
         guard fr is ComposerTextView || fr === w || fr == nil || !(fr is NSText || fr is GuardedTerminalView || String(describing: type(of: fr!)).contains("WKWebView")) else { return false }
         chat.stepYourMessages(by)
+        return true
+    }
+
+    /// ⌘V while a chat shows and no field has the keyboard (as in the TUI, the prompt always does).
+    func chatPaste(window number: Int) -> Bool {
+        guard let chat = visibleChat, let w = NSApp.window(withWindowNumber: number), w.isKeyWindow else { return false }
+        let fr = w.firstResponder
+        guard fr === w || fr == nil || !(fr is NSText || fr is GuardedTerminalView || String(describing: type(of: fr!)).contains("WKWebView")) else { return false }
+        guard let v = chat.composerView, v.window === w else { return false }
+        w.makeFirstResponder(v)
+        v.paste(nil)
         return true
     }
 

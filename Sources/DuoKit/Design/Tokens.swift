@@ -124,6 +124,7 @@ public enum DuoMetric {
     public static let radiusChatCodeBlock: CGFloat = 10.0
     public static let radiusChatCheckbox: CGFloat = 3.0
     public static let radiusChatPreviewCode: CGFloat = 6.0
+    public static let radiusChatThumb: CGFloat = 8.0
     public static let borderHairline: CGFloat = 1.0
     public static let borderEmphasis: CGFloat = 1.5
     public static let borderFilesDivider: CGFloat = 2.0
@@ -278,6 +279,11 @@ public enum DuoSpace {
     public static let chatColumnInset: CGFloat = 24.0
     public static let chatCardTrailing: CGFloat = 36.0
     public static let chatBubbleMax: CGFloat = 440.0
+    public static let chatPasteThumb: CGFloat = 64.0
+    public static let chatSentThumbWidth: CGFloat = 120.0
+    public static let chatSentThumbHeight: CGFloat = 90.0
+    public static let chatSentThumbGridWidth: CGFloat = 100.0
+    public static let chatSentThumbGridHeight: CGFloat = 75.0
     public static let cardPadding = EdgeInsets(top: 10.0, leading: 12.0, bottom: 12.0, trailing: 12.0)
     public static let pointerCardPadding = EdgeInsets(top: 8.0, leading: 12.0, bottom: 8.0, trailing: 12.0)
     public static let questionBoxPadding = EdgeInsets(top: 8.0, leading: 10.0, bottom: 8.0, trailing: 10.0)

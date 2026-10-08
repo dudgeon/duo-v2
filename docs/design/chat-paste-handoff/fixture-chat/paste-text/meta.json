@@ -1,0 +1,11 @@
+{
+ "mode": "chat",
+ "tab": "PRD v2 edits",
+ "focusComposer": true,
+ "drafts": {
+  "composer": "Fold the decisions into the PRD and list what’s still open."
+ },
+ "block": {
+  "kind": "review"
+ }
+}

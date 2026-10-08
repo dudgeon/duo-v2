@@ -1,0 +1,18 @@
+{
+ "mode": "chat",
+ "tab": "PRD v2 edits",
+ "now": "2026-10-08T11:05:00.000Z",
+ "bubblePictures": [
+  {
+   "kind": "chart",
+   "w": 240,
+   "h": 180
+  },
+  {
+   "kind": "phone",
+   "w": 240,
+   "h": 180,
+   "fill": "ground"
+  }
+ ]
+}

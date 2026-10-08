@@ -96,6 +96,11 @@ spacing = [
     {"name": "chatColumnInset", "value": px(sp["chatColumnInset"]), "usage": "Chat transcript side padding (chat-mode-handoff)."},
     {"name": "chatCardTrailing", "value": px(sp["chatCardTrailing"]), "usage": "Space kept to the right of Claude's reply card (chat-mode-handoff)."},
     {"name": "chatBubbleMax", "value": px(sp["chatBubbleMax"]), "usage": "Your chat bubble's maximum width (chat-mode-handoff)."},
+    {"name": "chatPasteThumb", "value": px(sp["chatPasteThumb"]), "usage": "A pasted picture's square in the composer (chat-paste-handoff `picture`, DL-161)."},
+    {"name": "chatSentThumbWidth", "value": px(sp["chatSentThumbWidth"]), "usage": "A picture in your bubble, up to three in a row, width (chat-paste-handoff `sent`); 90 high."},
+    {"name": "chatSentThumbHeight", "value": px(sp["chatSentThumbHeight"]), "usage": "A picture in your bubble, up to three in a row, height."},
+    {"name": "chatSentThumbGridWidth", "value": px(sp["chatSentThumbGridWidth"]), "usage": "A picture in your bubble's grid of four or more, width (chat-paste-handoff `edges`); 75 high."},
+    {"name": "chatSentThumbGridHeight", "value": px(sp["chatSentThumbGridHeight"]), "usage": "A picture in your bubble's grid of four or more, height."},
 ]
 for k in ["cardPadding", "pointerCardPadding", "questionBoxPadding", "buttonPadding", "popoverPadding", "documentPadding"]:
     for side, v in sp[k].items():
@@ -121,7 +126,8 @@ radius_use.update({"reviewCard": "A permission, plan or question card docked at 
                    "chatStepBody": "A tool step's diff, output or agent box (chat-mode-handoff `tools`).",
                    "chatCodeBlock": "A code block in chat Markdown (chat-mode-handoff `text`).",
                    "chatCheckbox": "A question card's checkbox (chat-mode-handoff `question-multi`).",
-                   "chatPreviewCode": "An option's preview inside a question card (chat-mode-handoff `question-previews`)."})
+                   "chatPreviewCode": "An option's preview inside a question card (chat-mode-handoff `question-previews`).",
+                   "chatThumb": "A pasted picture's thumbnail in the composer and in your bubble (chat-paste-handoff, DL-161)."})
 # A per-corner radius (chat-mode-handoff) reads as CSS: top-left, top-right, bottom-right, bottom-left.
 corners = lambda v: " ".join(px(v[c]) for c in ["topLeft", "topRight", "bottomRight", "bottomLeft"])
 radius = [{"name": "radius" + cap(k), "value": corners(v) if isinstance(v, dict) else px(v),

@@ -18,20 +18,23 @@ extension ChatSession {
     /// Sends the composer's text as your message.
     public func send(_ raw: String) async -> ChatAnswerResult {
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return .refused("nothing to send") }
+        // Pictures first, then the words, as Claude Code's own prompt reads (F-233).
+        let plan = ChatPaste.sendPlan(held: ui.heldTokens, kept: ui.attachedTokens, text: text)
+        guard !plan.message.isEmpty else { return .refused("nothing to send") }
         guard terminal != nil else { return finish(.refused("the terminal isn't running")) }
         let s = reread()
         guard s.kind == .idle || s.kind == .busy else { return finish(.refused("the terminal is showing \(s.kind == .unknown ? "a screen chat mode can’t show" : "a dialog")")) }
         let wasBusy = s.kind == .busy
         sending = true
         defer { sending = false; composing = false }
+        let echo = plan.message
         if usesExternalEditor, let dir = composeDir {
             // What Claude's prompt really holds: known when the composer opened on it; empty when the
             // screen shows nothing there; otherwise asked (a dim suggestion reads as text, F-108).
             var basis = ui.composerBasis ?? ((s.input ?? "").isEmpty ? "" : nil)
             if basis == nil { basis = await peekPrompt() }
             guard let basis else { return finish(.refused("couldn’t read Claude’s prompt")) }
-            do { try ChatCompose.leave(.init(text: text, basis: basis), in: dir, session: composeKey) } catch { return finish(.refused("couldn’t hand the text over (\(error.localizedDescription))")) }
+            do { try ChatCompose.leave(.init(text: plan.message, basis: basis), in: dir, session: composeKey) } catch { return finish(.refused("couldn’t hand the text over (\(error.localizedDescription))")) }
             composing = true
             terminal?.sendKeys(ChatKey.ctrlG.bytes)
             // The TUI runs the editor (its screen goes blank), then redraws with the new input.
@@ -52,21 +55,30 @@ extension ChatSession {
                 return finish(.refused("Claude Code didn’t open its editor"))
             }
         } else {
-            guard (s.input ?? "").isEmpty else { return finish(.refused("Claude’s prompt already holds “\((s.input ?? "").prefix(40))”")) }
-            terminal?.sendKeys("\u{1b}[200~" + text + "\u{1b}[201~")
+            // Pictures this composer attached are in the prompt as tokens: the removed ones are deleted,
+            // the rest stay, and the text goes in after them.
+            let prompt = s.input ?? ""
+            if ui.heldTokens.isEmpty {
+                guard prompt.isEmpty else { return finish(.refused("Claude’s prompt already holds “\(prompt.prefix(40))”")) }
+            } else {
+                guard ChatPaste.promptHoldsOnly(prompt, ui.heldTokens) else { return finish(.refused("Claude’s prompt already holds “\(prompt.prefix(40))”")) }
+                if let why = await removeImageTokens(plan.remove, from: prompt) { return finish(.refused(why)) }
+            }
+            if !plan.paste.isEmpty { terminal?.sendKeys("\u{1b}[200~" + plan.paste + "\u{1b}[201~") }
             await pause(250_000_000)
         }
         let echoed = reread()
-        guard echoed.kind == .idle || echoed.kind == .busy, Self.echoMatches(echoed.input ?? "", text) else {
+        guard echoed.kind == .idle || echoed.kind == .busy, Self.echoMatches(echoed.input ?? "", echo) else {
             return finish(.refused("your text didn’t appear in Claude’s prompt as sent"))
         }
         // Shown before Return: the prompt's hook can arrive within the pause after it, and must
         // find this bubble to match.
-        log.sent(text, time: now, queued: wasBusy, planMode: s.mode == .plan)
+        log.sent(plan.paste, images: plan.keep.compactMap { ui.images[$0].flatMap(ChatImage.init) }, time: now, queued: wasBusy, planMode: s.mode == .plan)
         lastCommand = text.hasPrefix("/") ? (String(text.prefix { !$0.isWhitespace }), Date()) : nil
         _ = await press(.enter)
         ui.composer = ""
         ui.composerBasis = nil
+        forgetImages()
         return .done
     }
 

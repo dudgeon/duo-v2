@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 
@@ -45,8 +46,26 @@ public struct ChatYou: Equatable, Sendable {
     public var queued = false
     /// Sent in plan mode (`You · 10:30 · plan mode`).
     public var planMode = false
+    /// Pictures sent with it (the transcript's image blocks); its text has no `[Image #N]`.
+    public var images: [ChatImage] = []
+    /// The pictures came from the composer; the transcript's own replace them.
+    var imagesSent = false
     var fromHook = false
     var fromTranscript = false
+}
+
+/// A picture sent with your message. Equal when it's the same picture (by `id`: comparing bytes on every diff is too much).
+public struct ChatImage: Equatable, Sendable, Identifiable {
+    public let id = UUID()
+    public var mediaType: String
+    public var data: Data
+    public init(mediaType: String, data: Data) { self.mediaType = mediaType; self.data = data }
+    /// A picture from the composer, as PNG.
+    public init?(_ image: NSImage) {
+        guard let tiff = image.tiffRepresentation, let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) else { return nil }
+        self.init(mediaType: "image/png", data: png)
+    }
+    public static func == (a: ChatImage, b: ChatImage) -> Bool { a.id == b.id }
 }
 
 public struct ChatNote: Equatable, Sendable {
@@ -281,8 +300,9 @@ public final class ChatLog: @unchecked Sendable {
     /// A prompt, from the hook or the transcript. Injected prompts (task notifications, loop and
     /// schedule wakeups) are quiet notes, not your bubbles (F-103).
     public func prompt(_ text: String, time: Date?, fromHook: Bool, injected: Bool = false, planMode: Bool = false) {
-        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !t.isEmpty else { return }
+        // The pictures stand for `[Image #N]`: the text keeps none of it (chat-paste-handoff `sent`).
+        let t = ChatPaste.stripTokens(text)
+        guard !t.isEmpty || !ChatPaste.tokens(in: text).isEmpty else { return }
         if injected || t.hasPrefix("<task-notification>") {
             let line = "Background task reported back"
             if case .note(let n)? = items.last, n.text == line { return }
@@ -312,9 +332,20 @@ public final class ChatLog: @unchecked Sendable {
         turnStarted = time ?? Date()
     }
 
+    /// A picture of your latest message (from its transcript record: they replace the composer's).
+    public func addImage(_ image: ChatImage) {
+        guard let i = items.indices.reversed().prefix(12).first(where: { if case .you = items[$0] { return true } else { return false } }),
+              case .you(var y) = items[i] else { return }
+        if y.imagesSent { y.images = []; y.imagesSent = false }
+        y.images.append(image)
+        items[i] = .you(y)
+    }
+
     /// Your message, sent from the composer: shown now, matched when the hook and transcript echo it.
-    public func sent(_ text: String, time: Date?, queued: Bool, planMode: Bool = false) {
+    public func sent(_ text: String, images: [ChatImage] = [], time: Date?, queued: Bool, planMode: Bool = false) {
         var y = ChatYou(id: newID("you"), text: text, time: time, queued: queued, planMode: planMode)
+        y.images = images
+        y.imagesSent = !images.isEmpty
         y.fromHook = false
         items.append(.you(y))
         if !queued { turnStarted = time ?? Date() }

@@ -101,7 +101,7 @@ public protocol ChatTerminal: AnyObject {
 
 /// The keys chat mode sends, as the TUI reads them.
 public enum ChatKey: String, Sendable {
-    case enter, esc, up, down, left, right, tab, space, backspace, shiftTab, ctrlG, n
+    case enter, esc, up, down, left, right, tab, space, backspace, shiftTab, ctrlA, ctrlE, ctrlG, ctrlV, n
 
     public var bytes: String {
         switch self {
@@ -115,7 +115,10 @@ public enum ChatKey: String, Sendable {
         case .space: " "
         case .backspace: "\u{7f}"
         case .shiftTab: "\u{1b}[Z"
+        case .ctrlA: "\u{01}"
+        case .ctrlE: "\u{05}"
         case .ctrlG: "\u{07}"
+        case .ctrlV: "\u{16}"
         case .n: "n"
         }
     }
@@ -205,6 +208,8 @@ public final class ChatSession {
 
     /// Held strongly: the live adapter holds its view weakly, so there's no cycle.
     @ObservationIgnored var terminal: ChatTerminal?
+    /// The composer's field while it's on screen, for ⌘V when nothing has the keyboard.
+    @ObservationIgnored weak var composerView: ComposerTextView?
     /// Where `duo2 compose` finds the composer's text; nil: paste instead (no helper in this build).
     @ObservationIgnored public var composeDir: URL?
     /// The id the process was started with (`DUO_SESSION_ID`), which names the hand-over file:

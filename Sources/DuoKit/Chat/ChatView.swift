@@ -28,6 +28,19 @@ public final class ChatUIState {
     public var composer = ""
     public var composerBasis: String?
     public var composerFocused = false
+    /// Images pasted into the composer, by Claude Code's `[Image #N]` token, and the tokens in attach order.
+    public var images: [String: NSImage] = [:]
+    /// The pictures the composer shows, in order; `heldTokens` is every token it put in Claude's prompt
+    /// (a removed picture's stays there until the send deletes it).
+    public var attachedTokens: [String] = []
+    var heldTokens: [String] = []
+    /// The picture under the pointer (its ×), Claude Code taking one (the dashed tile), and why one wasn't taken.
+    public var hoveredPicture: String?
+    public var addingPicture = false
+    public var pasteNotice: ChatPasteNotice?
+    /// Fixture boards: a long paste to fold into the composer when it first shows, and the text typed after it.
+    public struct FixtureBlock { public var text: String; public var open: Bool; public var caretLine: Int?; public var typed: String }
+    public var fixtureBlock: FixtureBlock?
     /// `@` in the composer (ENH-3, DL-133): the word after it and its matches (nil: no menu), and
     /// the row selected. Esc closes it until the caret leaves that `@` word.
     public var mention: (query: String, matches: [FileMention.Match])?
@@ -37,6 +50,9 @@ public final class ChatUIState {
     public var hoverLink: URL?
     public init() {}
 }
+
+/// Why a pasted picture didn't go in (chat-paste-handoff `replay`): the hint row says so until you type or paste again.
+public enum ChatPasteNotice: Equatable, Sendable { case notTaken, keysMoved }
 
 public enum ChatFeedShape {
     /// Whether the feed is lazy (F-226). Measured on the heavy generated session: a plain stack
@@ -209,12 +225,17 @@ struct ChatYouBubble: View {
         VStack(alignment: .trailing, spacing: 4) {
             if !you.queued { ChatWho(who: "You", time: you.time, tag: you.planMode ? "plan mode" : nil) }
             // The bubble hugs its text, at most 440 (chat-mode-handoff `text`, `composer`; F-184).
-            ChatHug(maxWidth: DuoSpace.chatBubbleMax, content: you.text.hashValue ^ (cut ? 1 : 0)) {
-                VStack(alignment: .leading, spacing: 6) {
+            ChatHug(maxWidth: DuoSpace.chatBubbleMax, content: you.text.hashValue ^ (cut ? 1 : 0) ^ (you.images.count << 4)) {
+                VStack(alignment: .leading, spacing: 8) {
+                    if !you.images.isEmpty { ChatSentPictures(pictures: you.images) }
+                    if !you.text.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
                     ChatMarkdownView(blocks: ChatMarkdown.parse(cut ? lines.prefix(Self.shown).joined(separator: "\n") : you.text), streaming: false)
                     if cut {
                         Text("Show all \(lines.count) lines").duoText(.chatMeta).foregroundStyle(DuoColor.text).underline(color: DuoColor.controlEdge)
                             .onActivate { chat.ui.fullYou.insert(you.id) }  // not an action: shows more of what's drawn
+                    }
+                    }
                     }
                 }
                 .padding(EdgeInsets(top: 9, leading: 14, bottom: 9, trailing: 14))
@@ -225,7 +246,7 @@ struct ChatYouBubble: View {
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("You: \(you.text)")
+        .accessibilityLabel("You: \(you.text)\(you.images.isEmpty ? "" : ", \(you.images.count) picture\(you.images.count == 1 ? "" : "s")")")
     }
 }
 

@@ -1,0 +1,11 @@
+{
+ "mode": "chat",
+ "tab": "PRD v2 edits",
+ "focusComposer": true,
+ "drafts": {
+  "composer": "Find the first error in this log."
+ },
+ "block": {
+  "kind": "log"
+ }
+}

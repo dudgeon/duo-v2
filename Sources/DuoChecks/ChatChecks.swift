@@ -759,4 +759,92 @@ func spikeScreen(_ name: String) -> String {
         guard case .claude(let turn)? = log.items.last, case .run(let r)? = ChatRuns.blocks(turn.segments).first else { return check(false, "a running run") }
         check(ChatRuns.line(r) == "Searched for 1 pattern, read 1 file, searching for 1 pattern…", "a running run counts up (\(ChatRuns.line(r)))")
     }
+
+    print("chat mode: paste in the composer (images through Claude Code's Ctrl+V)")
+    do {
+        func board(_ fill: (NSPasteboard) -> Void) -> NSPasteboard { let pb = NSPasteboard.withUniqueName(); pb.clearContents(); fill(pb); return pb }
+        let png: Data = {
+            let img = NSImage(size: NSSize(width: 8, height: 8), flipped: false) { r in NSColor.red.setFill(); r.fill(); return true }
+            return NSBitmapImageRep(data: img.tiffRepresentation!)!.representation(using: .png, properties: [:])!
+        }()
+        let text = board { $0.setString("hello", forType: .string) }
+        let image = board { $0.setData(png, forType: .png) }
+        let dir = FileManager.default.temporaryDirectory.appending(path: "duo-paste-\(getpid())")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let pic = dir.appending(path: "a.png"), doc = dir.appending(path: "b.txt")
+        try png.write(to: pic); try Data("x".utf8).write(to: doc)
+        let file = board { $0.writeObjects([doc as NSURL]) }
+        let pics = board { $0.writeObjects([pic as NSURL, doc as NSURL]) }
+        check(!ChatPaste.canPaste(board { _ in }), "paste is off for an empty pasteboard")
+        check(ChatPaste.canPaste(text) && ChatPaste.canPaste(image) && ChatPaste.canPaste(file), "paste is on for text, an image and a copied file")
+        func shape(_ pb: NSPasteboard) -> String {
+            ChatPaste.routes(pb).map { r -> String in switch r { case .text: "text"; case .chip(let u): "chip:" + u.lastPathComponent; case .image(let i): i == nil ? "image?" : "image" } }.joined(separator: ",")
+        }
+        check(shape(text) == "text" && shape(image) == "image", "text pastes as text, an image alone as the image route (\(shape(text)) \(shape(image)))")
+        check(shape(file) == "chip:b.txt" && shape(pics) == "chip:b.txt,image", "a copied file is a chip; an image file goes the image route (\(shape(file)) \(shape(pics)))")
+        check(shape(board { $0.setString("a.png", forType: .string); $0.setData(png, forType: .png) }) == "text", "text with an image is text")
+        try? FileManager.default.removeItem(at: dir)
+
+        check(ChatKey.ctrlV.bytes == "\u{16}", "Ctrl+V is byte 0x16")
+        check(ChatPaste.newToken(before: "", after: "[Image #1] ") == "[Image #1]" && ChatPaste.newToken(before: "[Image #1] ", after: "[Image #1] [Image #2] ") == "[Image #2]"
+              && ChatPaste.newToken(before: "[Image #1] hi", after: "[Image #1] hi") == nil && ChatPaste.newToken(before: "[Image #2] ", after: "[Image #3] ") == "[Image #3]", "a new [Image #N] token is read from the prompt before and after")
+
+        let a = ["[Image #1]", "[Image #2]", "[Image #3]"]
+        let keepAll = ChatPaste.sendPlan(held: a, kept: a, text: " what are these ")
+        check(keepAll == .init(remove: [], keep: a, paste: "what are these") && keepAll.message == "[Image #1] [Image #2] [Image #3] what are these", "send plan: pictures first, a space, then the words (\(keepAll.message))")
+        let drop = ChatPaste.sendPlan(held: a, kept: ["[Image #2]"], text: "see only")
+        check(drop == .init(remove: ["[Image #1]", "[Image #3]"], keep: ["[Image #2]"], paste: "see only") && drop.message == "[Image #2] see only", "send plan: a removed picture's token is deleted, the rest stay (\(drop))")
+        check(ChatPaste.sendPlan(held: a, kept: [], text: "plain").message == "plain" && ChatPaste.sendPlan(held: [], kept: [], text: " ").message.isEmpty
+              && ChatPaste.sendPlan(held: ["[Image #4]"], kept: ["[Image #4]"], text: "").message == "[Image #4]", "send plan: no pictures, nothing to send, pictures alone")
+        check(ChatPaste.stripTokens("[Image #1] [Image #2]why is this") == "why is this" && ChatPaste.stripTokens("see [Image #1] now") == "see now" && ChatPaste.stripTokens("[Image #1]") == "", "a bubble's text keeps no [Image #N] and no space it leaves (\(ChatPaste.stripTokens("see [Image #1] now")))")
+        check(ChatPaste.promptHoldsOnly("[Image #1] [Image #2]", a) && !ChatPaste.promptHoldsOnly("[Image #1] typed", a) && !ChatPaste.promptHoldsOnly("[Image #7]", a), "the prompt may hold only the tokens this composer put there")
+        // F-232: Ctrl+A, Right once per unit from the start up to and including the token, Backspace.
+        var units = ChatPaste.units("[Image #1] [Image #2] [Image #3]"), keys: [[ChatKey]] = []
+        check(units == ["[Image #1]", " ", "[Image #2]", " ", "[Image #3]"], "a prompt's units: a token is one, no space is assumed after the last")
+        for t in ["[Image #1]", "[Image #3]"] {
+            let step = ChatPaste.deleteStep(units: units, token: t)!
+            keys.append(step.keys); units = step.units
+        }
+        check(keys == [[.ctrlA, .right, .backspace], [.ctrlA, .right, .right, .right, .right, .backspace]] && units == [" ", "[Image #2]", " "],
+              "deleting tokens: Ctrl+A, Right to just after it counted from the start, Backspace (\(keys))")
+        check(ChatKey.ctrlA.bytes == "\u{01}" && ChatKey.ctrlE.bytes == "\u{05}", "Ctrl+A and Ctrl+E are bytes 1 and 5")
+        check(ChatPaste.deleteStep(units: units, token: "[Image #5]") == nil, "a token the prompt lacks is refused")
+    }
+    do {
+        let log = ChatLog()
+        let b64 = Data("png".utf8).base64EncodedString()
+        let rec: ChatJSON = ["type": "user", "timestamp": "2026-10-08T10:00:00.000Z", "message": ["role": "user", "content": [
+            ["type": "text", "text": "[Image #1]what is this"], ["type": "image", "source": ["type": "base64", "media_type": "image/png", "data": b64]]]]]
+        ChatIngest.record(rec, into: log, lastDeclined: nil)
+        guard case .you(let y)? = log.items.last else { return check(false, "a message with an image") }
+        check(y.text == "what is this" && y.images.map(\.data) == [Data("png".utf8)] && y.images[0].mediaType == "image/png", "an image block is kept on your message, its token is out of the text")
+        // A message sent from the composer: its pictures show at once; the hook's text (with tokens) finds the same bubble.
+        let sent = ChatLog()
+        sent.sent("why", images: [ChatImage(mediaType: "image/png", data: Data("mine".utf8))], time: nil, queued: false)
+        sent.prompt("[Image #1] why", time: nil, fromHook: true)
+        guard case .you(let m)? = sent.items.last else { return check(false, "a sent message") }
+        check(sent.items.count == 1 && m.images.count == 1 && m.text == "why", "a hook's prompt with tokens finds the bubble sent from the composer")
+        ChatIngest.record(["type": "user", "message": ["role": "user", "content": [["type": "text", "text": "[Image #1] why"], ["type": "image", "source": ["type": "base64", "media_type": "image/png", "data": b64]]]]], into: sent, lastDeclined: nil)
+        guard case .you(let m2)? = sent.items.last else { return check(false, "the transcript's echo") }
+        check(sent.items.count == 1 && m2.images.map(\.data) == [Data("png".utf8)], "the transcript's own picture replaces the composer's, once")
+    }
+
+    print("chat mode: a long paste folds to a block in the composer (chat-paste-handoff `text`)")
+    do {
+        let lines = { (n: Int) in (1...n).map { "line \($0)" }.joined(separator: "\n") }
+        check(!ChatPaste.isLongPaste(lines(12)) && ChatPaste.isLongPaste(lines(13)) && ChatPaste.isLongPaste(lines(12) + "\n"), "over 12 lines folds, 12 doesn't (a trailing newline counts, as K8's rule does)")
+        check(!ChatPaste.isLongPaste(String(repeating: "x", count: 5000)), "a long single line is plain text")
+        check(ChatPaste.blockLabel(lines(42)) == "42 lines", "a block names its lines (\(ChatPaste.blockLabel(lines(42))))")
+        let big = (0..<12_480).map { _ in String(repeating: "x", count: 95) }.joined(separator: "\n")
+        check(ChatPaste.blockLabel(big) == "12,480 lines · 1.2 MB", "a big paste adds its size (\(ChatPaste.blockLabel(big)))")
+        check(ChatPaste.blockPreview("Review notes, 8 October\n1. Guest checkout keeps it.\n\n2. Saved cards need an account") == "Review notes, 8 October. 1. Guest checkout keeps it. 2. Saved cards need an account", "the preview is the paste's start on one line")
+        let t = (["Review notes"] + (1...41).map { "note \($0)" }).joined(separator: "\n"), u = lines(20)
+        let ms = ComposerProbe.keystrokeMillis(afterBlock: big)
+        print("    a keystroke after a 12,480-line paste: \(String(format: "%.1f", ms)) ms")
+        check(ms < 30, "typing after a 12,480-line paste stays responsive (\(String(format: "%.1f", ms)) ms a key)")
+        check(ComposerProbe.sent([.block(t)]) == t + "\n", "a collapsed block sends its text, and is a line of its own")
+        check(ComposerProbe.sent([.type("Compare: "), .block(t), .type("and why?")]) == "Compare: \n" + t + "\nand why?", "a block between typed text sends its text on lines of its own, as the box shows it")
+        check(ComposerProbe.sent([.block(t), .open(0), .edit(0, "edited\ntext")]) == "edited\ntext\n" && ComposerProbe.sent([.block(t), .open(0), .edit(0, "edited"), .fold(0), .type("!")]) == "edited\n!", "an opened block's edits are what's sent, and folding keeps them")
+        check(ComposerProbe.sent([.block(t), .type("\n"), .block(u)]) == t + "\n\n" + u + "\n" && ComposerProbe.sent([.block(t), .block(u), .type("x")]) == t + "\n" + u + "\nx", "two blocks, in order")
+    }
 }

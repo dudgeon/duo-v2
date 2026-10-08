@@ -1,5 +1,6 @@
 import DuoControl
 import AppKit
+import ObjectiveC
 import DuoSearch
 import SwiftUI
 
@@ -287,12 +288,12 @@ public enum FixtureHarness {
         case "key":   // key:down|up|esc|tab: one key into the visible terminal (menus such as the trust prompt)
             let codes = ["down": "\u{1b}[B", "up": "\u{1b}[A", "esc": "\u{1b}", "tab": "\t"]
             if parts.count > 1, let c = codes[parts[1]] { model.visibleTerminal?.view.send(txt: c) }
-        case "event":  // event:esc|return: a real key event through the app's queue (local monitors, key window, field editor)
-            let codes: [String: (UInt16, String)] = ["esc": (53, "\u{1b}"), "return": (36, "\r")]
+        case "event":  // event:esc|return|cmd-v: a real key event through the app's queue (local monitors, key window, field editor); cmd-v reads the real clipboard
+            let codes: [String: (UInt16, String)] = ["esc": (53, "\u{1b}"), "return": (36, "\r"), "cmd-v": (9, "v")]
             if parts.count > 1, let (code, chars) = codes[parts[1]], let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
                 if !TestBackground.isOn { NSApp.activate(ignoringOtherApps: true) }; w.makeKey()   // a background launch never activates (F-227)
                 for type in [NSEvent.EventType.keyDown, .keyUp] {
-                    guard let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                    guard let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: parts[1] == "cmd-v" ? .command : [], timestamp: ProcessInfo.processInfo.systemUptime,
                                                    windowNumber: w.windowNumber, context: nil, characters: chars,
                                                    charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code) else { continue }
                     NSApp.postEvent(e, atStart: false)
@@ -496,6 +497,31 @@ public enum FixtureHarness {
                 v.window?.makeFirstResponder(v)
                 v.insertText(parts[1], replacementRange: v.selectedRange())
             }
+        case "chat-paste":   // chat-paste:text=<s>|lines=<n>|image|file=<path>: ⌘V in the composer through the menu, from a private pasteboard (never the user's)
+            if parts.count > 1, let v = Self.composerView(for: model.visibleSessionId), let w = v.window {
+                let pb = HarnessPasteboard.take()
+                pb.clearContents()
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                switch kv[0] {
+                case "text": pb.setString(kv.count > 1 ? kv[1] : "", forType: .string)
+                case "lines": pb.setString((1...(Int(kv.count > 1 ? kv[1] : "20") ?? 20)).map { "line \($0) of the pasted text" }.joined(separator: "\n"), forType: .string)
+                case "image": pb.setData(HarnessPasteboard.png, forType: .png)
+                case "file": pb.writeObjects([URL(fileURLWithPath: kv.count > 1 ? kv[1] : "/tmp/x.png") as NSURL])
+                default: break
+                }
+                w.makeFirstResponder(v)
+                w.makeKey()
+                let item = NSApp.mainMenu?.items.compactMap(\.submenu).flatMap(\.items).first { $0.action == #selector(NSText.paste(_:)) && $0.keyEquivalent == "v" }
+                let enabled = item.map { v.validateUserInterfaceItem($0) }
+                let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: .command, timestamp: 0, windowNumber: w.windowNumber,
+                                         context: nil, characters: "v", charactersIgnoringModifiers: "v", isARepeat: false, keyCode: 9)!
+                var byMenu = NSApp.mainMenu?.performKeyEquivalent(with: e) ?? false
+                // A window drawn in the background is never key, so the menu finds no target: send
+                // the item's action to the window's first responder, as it would in the key window.
+                if !w.isKeyWindow, let item, enabled == true { byMenu = NSApp.sendAction(item.action!, to: w.firstResponder, from: item) }
+                let chat = v.coordinator?.chat
+                FileHandle.standardError.write(Data("chat-paste: \(kv[0]) key=\(w.isKeyWindow) firstResponder=\(w.firstResponder.map { String(describing: type(of: $0)) } ?? "nil") pasteItem=\(item != nil) enabled=\(enabled.map(String.init) ?? "-") menuHandled=\(byMenu) composer=\(v.plainText.prefix(40).debugDescription) chatComposer=\((chat?.ui.composer ?? "").prefix(40).debugDescription) fallback=\(chat?.fallback.map { "\($0)" } ?? "nil")\n".utf8))
+            }
         case "chat-key":   // chat-key:up|down|tab|shift-tab|return|esc: a key in the composer
             let codes: [String: UInt16] = ["up": 126, "down": 125, "tab": 48, "shift-tab": 48, "return": 36, "esc": 53]
             if parts.count > 1, let code = codes[parts[1]], let v = Self.composerView(for: model.visibleSessionId),
@@ -531,7 +557,7 @@ public enum FixtureHarness {
             if let visible, model.chat(for: visible)?.focusComposer ?? 0 > 0 {
                 let shown = NSApp.windows.flatMap { w in (w.contentView.map(all) ?? []).filter { $0.coordinator?.chat.key == visible }.map { (w, $0) } }
                 if let (w, c) = shown.first {
-                    if w.firstResponder !== c { bad.append("the composer on screen asked for the keyboard; \(w.firstResponder.map { String(describing: type(of: $0)) } ?? "nothing") has it") }
+                    if w.firstResponder !== c, (w.firstResponder as? PasteBlockEditor)?.owner?.host !== c { bad.append("the composer on screen asked for the keyboard; \(w.firstResponder.map { String(describing: type(of: $0)) } ?? "nothing") has it") }
                 } else { bad.append("the chat on screen asked for the keyboard but has no composer") }
             }
             FileHandle.standardError.write(Data("focus-check: \(bad.isEmpty ? "ok" : "FAIL: \(bad.joined(separator: "; "))")\n".utf8))
@@ -829,4 +855,31 @@ public enum FixtureHarness {
 @MainActor func paneSplits(_ v: NSView) -> [NSSplitView] {
     if let s = v as? NSSplitView, s.arrangedSubviews.count >= 3 { return [s] }
     return v.subviews.flatMap(paneSplits)
+}
+
+/// A private pasteboard standing in for the general one in harness runs, so a scripted paste never
+/// reads or changes the user's clipboard.
+@MainActor enum HarnessPasteboard {
+    static let name = NSPasteboard.Name("com.dudgeon.duo.harness-paste")
+    /// By name, never through the swapped method (after the swap that one is the general board).
+    static var board: NSPasteboard { NSPasteboard(name: name) }
+    private static var swapped = false
+    static func take() -> NSPasteboard {
+        if !swapped, let a = class_getClassMethod(NSPasteboard.self, #selector(getter: NSPasteboard.general)),
+           let b = class_getClassMethod(NSPasteboard.self, #selector(NSPasteboard.duoHarnessGeneral)) {
+            method_exchangeImplementations(a, b); swapped = true
+        }
+        precondition(NSPasteboard.general.name == name, "the harness paste must never reach the user's clipboard")
+        return board
+    }
+    /// A 64×48 red PNG.
+    static var png: Data {
+        let img = NSImage(size: NSSize(width: 64, height: 48), flipped: false) { r in NSColor.systemRed.setFill(); r.fill(); return true }
+        let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
+        return rep.representation(using: .png, properties: [:])!
+    }
+}
+
+extension NSPasteboard {
+    @objc class func duoHarnessGeneral() -> NSPasteboard { NSPasteboard(name: NSPasteboard.Name("com.dudgeon.duo.harness-paste")) }   // HarnessPasteboard.name
 }

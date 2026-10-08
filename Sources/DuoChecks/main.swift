@@ -671,6 +671,8 @@ func repoFixture() throws -> Fixture {
     check(SessionTitles.title(head: [prompt, ai], tail: []) == "Refunds FAQ draft", "AI title beats the prompt")
     check(SessionTitles.title(head: [prompt, ai], tail: [custom]) == "FAQ v2", "custom title beats all")
     check(SessionTitles.clean(String(repeating: "word ", count: 30))?.hasSuffix("word…") == true, "long prompts shorten on a word")
+    check(SessionTitles.clean("[Image #1] What colour is this picture?") == "What colour is this picture?", "a pasted picture's token stays out of a session's first words (DL-161)")
+    check(SessionTitles.clean("[Image #1] [Image #2]") == nil, "a message of pictures alone has no first words")
     let tdir = FileManager.default.temporaryDirectory.appending(path: "duo-t-\(UUID().uuidString).jsonl")
     let big = String(repeating: #"{"type":"assistant","message":{"content":"x"}}"# + "\n", count: 9000)
     try (#"{"type":"user","message":{"content":"Plan the launch"}}"# + "\n" + big + #"{"type":"ai-title","aiTitle":"Launch plan"}"# + "\n").write(to: tdir, atomically: true, encoding: .utf8)
