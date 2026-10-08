@@ -51,6 +51,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskSession = "task session", taskStatus = "task status"
     case taskRename = "task rename", taskArchive = "task archive", taskUnarchive = "task unarchive", taskDelete = "task delete"
     case taskMove = "task move", taskLink = "task link", taskReveal = "task reveal"
+    case taskBoard = "task board"
     case templateShow = "template show", templateEdit = "template edit", templateCopy = "template copy", templateReset = "template reset", templatePreview = "template preview"
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
@@ -188,7 +189,7 @@ extension DuoAction {
         .init(.sessionShow, .sessions, "<id>", "A session's title, project, state, note, next step, transcript path and recent turns.", everyday: true),
         .init(.sessionNew, .sessions, "[--project <p>] [--prompt <text>] [--remote-control [name]]", "Start a Claude session in a project (the current one by default). --remote-control makes it reachable from the Claude app, named <name> or its project and a short id, and keeps it on when the session resumes; a claude without the flag starts without it and the reply says so.",
               ui: ["+ New session", "New Session", "console +", "New Claude Session", "Start Claude here", "Start Claude in Home", "Start in"]),
-        .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab", "Resume"]),
+        .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab", "Resume", "Open Session"]),
         .init(.sessionClose, .sessions, "[id] [--force]", "End a session's process and close its tab (it stays listed and resumable). Refuses while Claude is working there, unless --force.", ui: ["Close Tab", "End Session"]),
         .init(.sessionMove, .sessions, "<id> --to <project> [--new]", "File a session in another project, or with --new in a new project of that name made in Home; it moves there on its next resume. The user confirms in Duo. Undo with `duo2 undo`.",
               ui: ["Move to Project", "New Project…", "drag a session onto a tile"], timeout: 600),
@@ -233,6 +234,8 @@ extension DuoAction {
         .init(.taskLink, .sessions, "<task> [--project <p>]", "A Markdown link to a task: [title](duo2://task/<id>). The id is written once into the note's `id:`, so the link survives renames and moves. Clicking it in Duo opens the note.",
               ui: ["Copy Link"]),
         .init(.taskReveal, .sessions, "<task> [--project <p>]", "Show a task's note in Finder.", ui: ["Reveal in Finder"]),
+        .init(.taskBoard, .sessions, "[show|hide|toggle] [--project <p>]", "The task board (DL-148): a project's Sessions | Tasks switch. Tasks shows the board over the session list and console, lanes by `status`, and a card's note in the right pane. With no argument, says which is showing and lists the board's lanes and cards. Drag between lanes is `duo2 task status`.",
+              ui: ["Sessions", "Tasks", "Board"]),
         .init(.templateShow, .projects, "<project|task> [--project <p>]", "The template new projects or tasks are made from (DL-146): its text and whose it is (a project's own templates/new-task.md, Home's templates/new-<kind>.md, or Duo's base)."),
         .init(.templateEdit, .projects, "<project|task> [--project <p>]", "Open that template in the right pane with its template bar; with no file yet, Duo's base is written to Home's templates/ first.",
               ui: ["Edit Task Template", "Edit…"]),
@@ -376,6 +379,8 @@ extension DuoAction {
 public enum Parity {
     public static let uiOnly: [String: String] = [
         "Close Window": "window management",
+        "Anyone": "the task board's owner filter: view state; `duo2 task board` lists every card",
+        "Me": "the task board's owner filter: view state; `duo2 task board` lists every card",
         "Enter Full Screen": "window management",
         "Exit Full Screen": "window management",
         "Toggle Right Pane": "not built yet",

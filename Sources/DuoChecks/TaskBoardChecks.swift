@@ -35,7 +35,7 @@ import Foundation
     check(board[3].cards.isEmpty, "an empty lane still shows")
     let done = board[4]
     check(done.cards.map(\.task.title) == ["F"] && done.earlier.map(\.task.title) == ["G"] && done.dropped.map(\.task.title) == ["H"], "Done: the last 7 days, then Earlier, then Dropped")
-    check(done.count == 2, "Done's count includes Earlier, not Dropped")
+    check(done.count == 1, "Done's count is its shown cards; Earlier and Dropped count in their folds")
 
     // Order: needs you, then due, then oldest created.
     let order = [

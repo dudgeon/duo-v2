@@ -62,6 +62,22 @@ public final class AppModel {
     @ObservationIgnored var sidebarShown: [String: String] = [:]
     /// The task row under the pointer ("<project>/<note path>"), which shows its + (DL-112).
     public var hoveredTaskRow: String?
+    /// Projects showing their task board in place of the session list and console (DL-148, C):
+    /// the toolbar's Sessions | Tasks switch.
+    public var boardProjects: Set<String> = []
+    /// The board's Filter tasks field and Anyone ▾ popup (nil: anyone; "" : you).
+    public var boardFilter = ""
+    public var boardOwner: String?
+    /// The card under the pointer ("<project>/<note path>"), the session row under it, and a lane
+    /// header under it (for its ⋯).
+    public var hoveredCard: String?
+    public var hoveredCardSession: String?
+    public var hoveredLane: String?
+    /// A card being dragged ("<project>/<note path>") and the lane it's over (DL-148, board 7).
+    public var boardDrag: String?
+    public var boardDropLane: String?
+    /// Each project's lanes as read from its brief, until the brief changes.
+    @ObservationIgnored var briefLanesCache: [String: (url: URL, stamp: Date?, lanes: [String])] = [:]
     /// The tab under the pointer (a console or Home tab's key, or a right-pane document path),
     /// which shows its close button (DL-126); `hoveredTabClose` when the pointer is on the button,
     /// `pressedTabClose` a press held for a capture (FixtureHarness `hover-tab`).

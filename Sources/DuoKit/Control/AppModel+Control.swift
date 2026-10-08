@@ -263,6 +263,8 @@ extension AppModel {
         case .tasks, .taskMake, .taskAdd, .taskNew, .taskSession, .taskStatus,
              .taskRename, .taskArchive, .taskUnarchive, .taskDelete, .taskMove, .taskLink, .taskReveal:
             taskVerb(id, inv, req, done)
+        case .taskBoard:
+            boardVerb(id, inv, req, done)
         case .sessionTask:
             sessionTaskVerb(inv, req, done)
         case .sessionLink:

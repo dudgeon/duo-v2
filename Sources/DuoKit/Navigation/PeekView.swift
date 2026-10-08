@@ -92,11 +92,13 @@ struct PeekCard: View {
 /// Lays children out left to right and wraps, like a CSS `flex-wrap: wrap` row with `gap`.
 struct FlowRow: Layout {
     var spacing: CGFloat
+    /// Between lines, when it differs from `spacing` (CSS `gap: 4px 10px`).
+    var lineSpacing: CGFloat? = nil
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = proposal.width ?? .infinity
         let lines = arrange(subviews, width: width)
-        let height = lines.map(\.height).reduce(0, +) + spacing * CGFloat(max(0, lines.count - 1))
+        let height = lines.map(\.height).reduce(0, +) + (lineSpacing ?? spacing) * CGFloat(max(0, lines.count - 1))
         return CGSize(width: proposal.width ?? lines.map(\.width).max() ?? 0, height: height)
     }
 
@@ -109,7 +111,7 @@ struct FlowRow: Layout {
                 subviews[i].place(at: CGPoint(x: x, y: y), anchor: .topLeading, proposal: ProposedViewSize(size))
                 x += size.width + spacing
             }
-            y += line.height + spacing
+            y += line.height + (lineSpacing ?? spacing)
         }
     }
 

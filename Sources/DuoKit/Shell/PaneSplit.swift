@@ -26,6 +26,10 @@ struct PaneSplit: NSViewRepresentable {
     /// Colours that follow the model (Home in chat is light, DL-142 (7)): watched by the split
     /// itself, so the SwiftUI view holding it reads no session's state (F-208, ENH-46's scan).
     var liveColors: (@MainActor (AppModel) -> (dividers: [NSColor], backgrounds: [NSColor]))?
+    /// A view laid over every pane but the last (the task board, DL-148 C), shown while `shown`
+    /// says so. The panes under it are kept, never torn down (terminals keep running). Watched by
+    /// the split, so the layout holding it reads nothing that changes (F-208).
+    var cover: (view: AnyView, shown: @MainActor (AppModel) -> Bool)?
 
     func makeNSView(context: Context) -> DuoSplitView {
         let split = DuoSplitView()
@@ -40,6 +44,16 @@ struct PaneSplit: NSViewRepresentable {
         }
         apply(to: split, coordinator: context.coordinator)
         if let liveColors { context.coordinator.watch(split, model: model, colors: liveColors) }
+        if let cover {
+            let host = NSHostingView(rootView: AnyView(cover.view.environment(model)))
+            host.sizingOptions = []
+            host.translatesAutoresizingMaskIntoConstraints = true
+            host.isHidden = true
+            split.arrangesAllSubviews = false
+            split.addSubview(host)
+            split.cover = host
+            context.coordinator.watch(split, model: model, cover: cover.shown)
+        }
         return split
     }
 
@@ -94,6 +108,28 @@ struct PaneSplit: NSViewRepresentable {
             }
         }
 
+        /// Shows or hides the cover now and again whenever what `shown` reads changes.
+        func watch(_ split: DuoSplitView, model: AppModel, cover shown: @escaping @MainActor (AppModel) -> Bool) {
+            let on = withObservationTracking { shown(model) } onChange: { [weak self, weak split, weak model] in
+                Task { @MainActor in
+                    guard let self, let split, let model else { return }
+                    self.watch(split, model: model, cover: shown)
+                }
+            }
+            if split.cover?.isHidden == on {
+                split.cover?.isHidden = !on
+                split.layoutCover()
+                // The panes under it: out of the key view loop, so Tab doesn't reach a hidden terminal.
+                if on, let w = split.window, let r = w.firstResponder as? NSView, split.arrangedSubviews.dropLast().contains(where: { r.isDescendant(of: $0) }) {
+                    w.makeFirstResponder(nil)
+                }
+            }
+        }
+
+        func splitViewDidResizeSubviews(_ notification: Notification) {
+            (notification.object as? DuoSplitView)?.layoutCover()
+        }
+
         func splitView(_ splitView: NSSplitView, canCollapseSubview subview: NSView) -> Bool {
             guard let i = splitView.arrangedSubviews.firstIndex(of: subview), i < panes.count else { return false }
             return panes[i].collapsible
@@ -139,6 +175,8 @@ final class DuoSplitView: NSSplitView {
     var dividerColors: [NSColor] = [] { didSet { needsDisplay = true } }
     var paneBackgrounds: [NSColor] = []
     var designWidths: [CGFloat?] = []
+    /// Laid over every pane but the last (`PaneSplit.cover`).
+    var cover: NSView?
     private var placed = false
     /// A side pane is sliding in or out (DL-129): the window's resize rule waits for it.
     private(set) var isAnimatingPane = false
@@ -172,8 +210,19 @@ final class DuoSplitView: NSSplitView {
         rect.fill()
     }
 
+    /// The cover spans from the leading edge to the last divider (the whole width when the last
+    /// pane is hidden), so that divider still shows beside it.
+    func layoutCover() {
+        guard let cover, !cover.isHidden, let last = arrangedSubviews.last else { return }
+        let end = isSubviewCollapsed(last) ? bounds.width : last.frame.minX - dividerThickness
+        let frame = NSRect(x: 0, y: 0, width: max(0, end), height: bounds.height)
+        if cover.frame != frame { cover.frame = frame }
+        if subviews.last !== cover { addSubview(cover, positioned: .above, relativeTo: nil) }
+    }
+
     override func layout() {
         super.layout()
+        defer { layoutCover() }
         if !placed, bounds.width > 0 {
             placed = true
             placeAtDesignWidths()
@@ -208,6 +257,7 @@ final class DuoSplitView: NSSplitView {
             }
             x += i < arrangedSubviews.count - 1 ? dividerThickness : 0
         }
+        layoutCover()
         needsDisplay = true
     }
 

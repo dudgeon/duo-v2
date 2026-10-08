@@ -213,6 +213,31 @@ public enum DuoMetric {
     public static let tabHoverRadius: CGFloat = 5.0
     public static let tabHoverHeight: CGFloat = 24.0
     public static let tabHoverInset: CGFloat = 7.0
+    public static let taskBoardHeaderHeight: CGFloat = 38.0
+    public static let taskBoardHeaderPaddingX: CGFloat = 16.0
+    public static let taskBoardFilterWidth: CGFloat = 180.0
+    public static let taskBoardControlHeight: CGFloat = 22.0
+    public static let taskBoardLanesPadding = EdgeInsets(top: 10.0, leading: 16.0, bottom: 16.0, trailing: 16.0)
+    public static let taskBoardLaneGap: CGFloat = 10.0
+    public static let taskBoardLaneHeaderHeight: CGFloat = 22.0
+    public static let taskBoardLaneBodyPadding: CGFloat = 6.0
+    public static let taskBoardCardGap: CGFloat = 6.0
+    public static let taskBoardLaneMin: CGFloat = 150.0
+    public static let taskBoardLaneScrollWidth: CGFloat = 200.0
+    public static let taskBoardFoldsBelow: CGFloat = 900.0
+    public static let taskBoardScrollsBelow: CGFloat = 640.0
+    public static let taskBoardDoneStripWidth: CGFloat = 34.0
+    public static let taskBoardCardPadding = EdgeInsets(top: 8.0, leading: 10.0, bottom: 9.0, trailing: 10.0)
+    public static let taskBoardCardLineGap: CGFloat = 3.0
+    public static let taskBoardMetaIndent: CGFloat = 17.0
+    public static let taskBoardTitleGap: CGFloat = 7.0
+    public static let taskBoardSessionRowHeight: CGFloat = 22.0
+    public static let taskBoardSessionRowGap: CGFloat = 3.0
+    public static let taskBoardSessionRowsMax: CGFloat = 3.0
+    public static let taskBoardSessionsTop: CGFloat = 5.0
+    public static let taskBoardSessionsRule: CGFloat = 6.0
+    public static let taskBoardSwitchHeight: CGFloat = 22.0
+    public static let taskBoardSwitchPaddingX: CGFloat = 10.0
     public static let idlePopoverWidth: CGFloat = 460.0
     public static let idlePopoverPadding = EdgeInsets(top: 12.0, leading: 8.0, bottom: 12.0, trailing: 8.0)
     public static let idleRowHeight: CGFloat = 26.0
@@ -293,6 +318,7 @@ public enum DuoTextStyle: CaseIterable, Sendable {
     case chatDiff
     case chatPreview
     case chatPlanHeading
+    case cardTitle
 
     public var spec: DuoTextSpec {
         switch self {
@@ -318,6 +344,7 @@ public enum DuoTextStyle: CaseIterable, Sendable {
         case .chatDiff: DuoTextSpec(size: 11.5, lineHeight: 18.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
         case .chatPreview: DuoTextSpec(size: 10.5, lineHeight: 14.0, weight: .regular, mono: true, tracking: 0.0, uppercase: false)
         case .chatPlanHeading: DuoTextSpec(size: 15.0, lineHeight: 22.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
+        case .cardTitle: DuoTextSpec(size: 13.0, lineHeight: 18.0, weight: .semibold, mono: false, tracking: 0.0, uppercase: false)
         }
     }
 }

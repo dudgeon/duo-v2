@@ -66,7 +66,8 @@ public enum TaskBoard {
         public var earlier: [Card] = []
         public var dropped: [Card] = []
         public var id: String { status }
-        public var count: Int { cards.count + earlier.count }
+        /// The header's count (board 4): the cards shown; Earlier and Dropped count in their folds.
+        public var count: Int { cards.count }
     }
 
     /// The board: one lane per project lane, then one per status found that isn't listed. Archived
