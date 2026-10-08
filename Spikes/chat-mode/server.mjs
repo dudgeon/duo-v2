@@ -43,7 +43,7 @@ fs.writeFileSync(settings, JSON.stringify({ hooks: Object.fromEntries(names.map(
 
 const env = { ...process.env, TERM: 'xterm-256color' };
 for (const k of Object.keys(env)) if (k === 'CLAUDECODE' || (k.startsWith('CLAUDE_') && k !== 'CLAUDE_CONFIG_DIR')) delete env[k];
-const args = ['--session-id', sessionId, '--settings', settings, ...extra];
+const args = ['--session-id', sessionId, '--settings', settings, ...extra, ...(extra.includes('--model') ? [] : ['--model', process.env.DUO_MODEL || 'claude-haiku-5-5'])];   // Haiku 5.5 unless asked (DL-153)
 const term = new xh.Terminal({ cols, rows, allowProposedApi: true, scrollback: 5000 });
 const p = pty.spawn(process.env.CLAUDE_BIN || 'claude', args, { name: 'xterm-256color', cols, rows, cwd, env });
 const clients = new Set();

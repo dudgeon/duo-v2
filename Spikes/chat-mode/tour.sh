@@ -13,4 +13,4 @@ cd $dir/ws
 env -i HOME=$HOME PATH=$PATH ${EDITOR:+EDITOR=$EDITOR} TERM=xterm-256color LANG=en_US.UTF-8 \
   CLAUDE_CONFIG_DIR=$dir/cfg ANTHROPIC_BASE_URL=http://127.0.0.1:8765 ANTHROPIC_API_KEY=sk-ant-mock-key-0000000000000000000 \
   CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 DISABLE_AUTOUPDATER=1 \
-  node $here/drive.mjs $steps $out --model claude-haiku-4-5-20251001 --session-id $(uuidgen | tr A-Z a-z)
+  node $here/drive.mjs $steps $out --model ${DUO_MODEL:-claude-haiku-5-5} --session-id $(uuidgen | tr A-Z a-z)
