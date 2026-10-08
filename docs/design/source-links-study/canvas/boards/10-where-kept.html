@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1700x960">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="source-links-study">
+<!--
+10 · Where the link is kept
+STUDY BOARD [P], not approved. Drawn for the source-links study (2026-10-08) with the Duo design system.
+Q-154: A, a note beside each file; B, one list per folder; C, Duo’s own state. The file itself is never written.
+It is a picture written in HTML: match what it draws, do not port its markup. Names, links and data are illustrative.
+-->
+<title>Duo · 10 · Where the link is kept</title>
+<style>
+body{margin:0}
+.w{box-sizing:border-box;display:flex;flex-direction:column;background:#FFFFFF;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;overflow:hidden}
+.w *{box-sizing:border-box}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.tb{display:flex;align-items:center;gap:8px;height:38px;flex:none;padding:0 12px 0 20px;border-bottom:1px solid #C9CDD3;background:#F3F4F6}
+.tl{display:flex;gap:8px;margin-right:4px}.tl i{width:12px;height:12px;border-radius:50%;display:block}
+.cnt{display:flex;gap:16px;margin-left:8px;align-items:center}.cnt span{display:flex;gap:6px;align-items:center}
+.srch{margin-left:auto;width:300px;height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;display:flex;align-items:center;gap:6px;padding:0 8px;color:#5B636D}
+.tgl{display:flex;padding:4px 6px}
+.sl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:6px;height:16px}
+.t2{color:#5B636D}
+.ell{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.filter{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid #C9CDD3;border-radius:6px;color:#5B636D;font-size:12px;background:#FFFFFF}
+.popup{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 6px 0 8px;border:1px solid #C9CDD3;border-radius:6px;font-size:12px;line-height:16px;background:#FFFFFF}
+.segc{display:inline-flex;height:22px;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF;font-size:12px;line-height:16px}
+.segc span{display:flex;align-items:center;padding:0 10px;color:#5B636D}
+.segc span+span{border-left:1px solid #C9CDD3}
+.segc .on{background:#E9ECEF;color:#1F2328;font-weight:600}
+.chip{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid #C9CDD3;border-radius:11px;font-size:12px;line-height:16px;color:#5B636D;background:#FFFFFF}
+.chip.on{border-color:#1F2328;color:#1F2328;font-weight:600}
+.row{white-space:nowrap;display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row.tint{background:#E8F0FA}
+.row.sel{background:#E9ECEF}
+.row .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.row .pj{color:#5B636D;overflow:hidden;text-overflow:ellipsis;flex:none}
+.row .tk{display:flex;align-items:center;gap:5px;color:#5B636D;overflow:hidden;flex:none}
+.row .tm{color:#5B636D;flex:none;text-align:right}
+.row2{white-space:nowrap;display:flex;flex-direction:column;justify-content:center;gap:0;height:44px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row2.tint{background:#E8F0FA}
+.row2.sel{background:#E9ECEF}
+.row2 .l1,.row2 .l2{display:flex;align-items:center;gap:8px;min-width:0}
+.row2 .l2{padding-left:17px;font-size:12px;line-height:16px;color:#5B636D}
+.sec{padding:10px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;color:#5B636D}
+.sec.ny{color:#C2410C}
+.fold{display:flex;align-items:center;gap:8px;height:26px;padding:0 16px;color:#5B636D}
+.card{border:1px solid #C9CDD3;border-radius:6px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;white-space:normal}
+.card .top{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.q{border:1.5px solid #C2410C;border-radius:6px;padding:6px 10px;margin:6px 0}
+.btn{align-self:flex-start;display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328}
+.act{flex:none;padding:16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;border-left:1px solid #C9CDD3}
+.mapcol{flex:1;min-width:0;display:flex;flex-direction:column}
+.mh{display:flex;align-items:center;gap:10px;height:22px;flex:none}
+.tile{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;border:1px solid #C9CDD3;border-radius:6px;min-width:0}
+.tile.star{border-color:#1F2328}
+.nm{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.srow{height:24px;display:flex;align-items:center;gap:6px;min-width:0;border-radius:4px}
+.srow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.foot{height:34px;flex:none;border-top:1px solid #C9CDD3;display:flex;align-items:center;gap:8px;padding:0 16px;color:#5B636D}
+/* chat (chat-mode-handoff, chat-polish-handoff) */
+.chat{display:flex;flex-direction:column;background:#F3F4F6;min-width:0;min-height:0}
+.strip{white-space:nowrap;display:flex;align-items:stretch;gap:16px;height:28px;flex:none;padding:0 10px 0 16px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;font-size:12px;line-height:16px}
+.strip .tab{display:flex;align-items:center;gap:6px;color:#5B636D}
+.strip .tab.on{color:#1F2328;font-weight:600;box-shadow:inset 0 -2px 0 #1F2328}
+.pill{display:flex;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF}
+.pill span{width:22px;height:16px;display:flex;align-items:center;justify-content:center;color:#5B636D}
+.pill .on{background:#E9ECEF;color:#1F2328}
+.feed{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;overflow:hidden;font-size:14px;line-height:22px;white-space:normal}
+.who{font-size:12px;line-height:16px;color:#5B636D}
+.ccard{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:12px 16px 14px;display:flex;flex-direction:column;gap:8px}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:8px 14px}
+.trail{display:flex;flex-direction:column;border-left:1.5px dotted #8B939C;margin-left:6px}
+.step{display:flex;align-items:center;gap:10px;min-height:24px;margin-left:-5px;font-size:12px;line-height:16px;color:#5B636D}
+.step b{font-weight:600;color:#1F2328}
+.dot{width:7px;height:7px;border-radius:4px;border:1.5px solid #8B939C;background:#FFFFFF;flex:none;margin-left:3px}
+.composer{flex:none;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:7px 12px;color:#5B636D;font-size:14px;line-height:22px}
+.ask{background:#FFFFFF;border:1.5px solid #C2410C;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;white-space:normal}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em}
+.opt{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:20px;border:1px solid #8B939C;border-radius:8px;padding:5px 8px}
+.key{flex:none;width:18px;height:18px;margin-top:1px;border:1px solid #C9CDD3;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:16px;color:#5B636D;background:#F3F4F6}
+/* board furniture: not the app */
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:14px}
+.bd *{box-sizing:border-box}
+.bt{font:600 17px/24px -apple-system,system-ui,sans-serif}
+.bsub{color:#5B636D;font-size:13px;line-height:20px;white-space:normal;max-width:1100px}
+.note{color:#5B636D;font-size:12px;line-height:18px;white-space:normal}
+.note b{color:#1F2328;font-weight:600}
+.frame{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.rec{display:inline-block;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.4px;color:#1F2328;border:1px solid #1F2328;border-radius:9px;padding:0 7px;margin-left:6px;vertical-align:1px}
+.p{color:#5B636D;font-weight:500}
+.txt{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:16px 18px;white-space:normal;font-size:13px;line-height:20px}
+.txt h3{margin:0 0 6px;font-size:13px;line-height:20px;font-weight:600}
+.txt ul,.txt ol{margin:4px 0 8px;padding-left:18px}
+.txt li{margin:2px 0}
+.txt p{margin:4px 0 8px}
+.txt code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+
+.sheetwrap{position:relative;flex:1;min-height:0;display:flex;justify-content:center;background:rgba(31,35,40,.32)}
+.sheet{width:600px;background:#F3F4F6;border:1px solid #C9CDD3;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:18px 24px 18px;display:flex;flex-direction:column;gap:12px;white-space:normal;align-self:flex-start}
+.sheet h2{margin:0;font-size:13px;line-height:20px;font-weight:600}
+.fr{display:grid;grid-template-columns:96px 1fr;column-gap:12px;align-items:center}
+.fr>label{text-align:right;color:#1F2328}
+.fr.top{align-items:start}.fr.top>label{padding-top:2px}
+.fld{height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;padding:0 8px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.fld.ph{color:#5B636D}
+.fld.focus{border-color:#0A64D2;box-shadow:0 0 0 3px rgba(10,100,210,.18)}
+.hint{font-size:12px;line-height:16px;color:#5B636D}
+.btns{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.b{display:inline-flex;align-items:center;height:24px;padding:0 12px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:13px;white-space:nowrap}
+.b.def{border:1.5px solid #1F2328;font-weight:600}
+.b.sm{height:22px;font-size:12px;padding:0 9px}
+.b.dim{color:#8B939C;border-color:#C9CDD3}
+.cb{display:inline-flex;align-items:center;gap:8px}
+.cb i{width:14px;height:14px;border-radius:4px;background:#0A64D2;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.cb i.off{background:#FFFFFF;border:1px solid #8B939C}
+.rb{display:inline-flex;align-items:center;gap:8px}
+.rb i{width:14px;height:14px;border-radius:7px;border:1px solid #8B939C;background:#FFFFFF;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.rb i.on{border:4px solid #0A64D2}
+.pre{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:17px;color:#1F2328;white-space:pre-wrap}
+.pre .k{color:#5B636D}
+.found{display:flex;flex-direction:column;gap:4px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px}
+.found div{display:flex;gap:8px;align-items:baseline}
+.notice{display:flex;align-items:center;gap:10px;background:#FFFFFF;border:1px solid #8B939C;border-radius:8px;padding:6px 8px 6px 12px;box-shadow:0 4px 14px rgba(31,35,40,.12);white-space:normal}
+.expl{background:#F3F4F6;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;white-space:normal}
+.expl b{font-weight:600}
+.menu{background:rgba(246,246,247,.98);border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 10px 30px rgba(31,35,40,.2);padding:5px 0;font-size:13px;line-height:20px;white-space:nowrap;display:flex;flex-direction:column}
+.menu div{padding:1px 14px 1px 22px;display:flex;align-items:center;gap:8px}
+.menu .sep{height:1px;background:#C9CDD3;margin:5px 0;padding:0}
+.menu .hi{background:#0A64D2;color:#fff;border-radius:5px;margin:0 5px;padding-left:17px}
+.menu .hd{font-size:11px;font-weight:600;color:#5B636D;letter-spacing:.3px;padding-left:14px}
+.menu .dim{color:#8B939C}
+.pP{display:inline-block;font:600 10px/14px -apple-system,system-ui,sans-serif;color:#5B636D;border:1px solid #8B939C;border-radius:7px;padding:0 5px;margin-left:6px;vertical-align:1px}
+
+.repo{display:flex;align-items:center;gap:6px;min-height:22px;font-size:12px;line-height:16px;color:#5B636D;white-space:nowrap;min-width:0}
+.repo b{color:#1F2328;font-weight:600}
+.repo .bad{color:#1F2328;font-weight:600}
+.badge{display:inline-flex;align-items:center;height:18px;padding:0 7px;border:1px solid #C9CDD3;border-radius:9px;font-size:11px;line-height:16px;color:#5B636D;background:#FFFFFF;white-space:nowrap}
+.badge.dk{border-color:#1F2328;color:#1F2328;font-weight:600}
+.pop{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 10px 30px rgba(31,35,40,.2);padding:10px 12px;display:flex;flex-direction:column;gap:6px;white-space:normal;font-size:12px;line-height:17px}
+.lrow{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;border-radius:5px;font-size:13px;white-space:nowrap}
+.lrow.hi{background:#E9ECEF}
+.lrow .r{margin-left:auto;color:#5B636D;font-size:12px}
+.ask2{background:#F3F4F6;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:18px 22px;display:flex;flex-direction:column;gap:8px;white-space:normal;width:460px}
+.ask2 h3{margin:0;font-size:13px;line-height:20px;font-weight:600}
+.ask2 p{margin:0;font-size:12px;line-height:17px}
+.mark{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:#5B636D;margin-left:auto}
+.ft{display:flex;align-items:center;gap:6px;height:22px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+table.cmp{border-collapse:collapse;width:100%;font-size:12px;line-height:17px;white-space:normal}
+table.cmp th,table.cmp td{border-top:1px solid #C9CDD3;padding:7px 10px 7px 0;text-align:left;vertical-align:top}
+table.cmp th{font-weight:600;color:#5B636D;width:150px}
+table.cmp thead th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#1F2328;border-top:none}
+.cl{color:#E6E8EB}
+
+.vbar{display:flex;align-items:center;gap:6px;height:44px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.vb{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;display:inline-flex;align-items:center;gap:5px}
+.srcl{display:flex;align-items:center;gap:6px;height:28px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;background:#F3F4F6;font-size:12px;line-height:16px;color:#5B636D;white-space:nowrap}
+.srcl a,.lnk{color:#1F2328;text-decoration:underline;text-decoration-color:#8B939C;text-underline-offset:2px}
+.slide{position:relative;background:#FFFFFF;border:1px solid #C9CDD3;flex:none}
+.slide .h{position:absolute;left:8%;top:9%;font-weight:600}
+.chg{outline:2px solid #1F2328;outline-offset:2px}
+.tag{display:inline-flex;align-items:center;height:16px;padding:0 6px;border-radius:8px;font-size:10px;line-height:14px;font-weight:600;letter-spacing:.3px;border:1px solid #8B939C;color:#5B636D;background:#FFFFFF}
+.tag.dk{border-color:#1F2328;color:#1F2328}
+.del{text-decoration:line-through;color:#5B636D}
+.ins{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.lane{display:grid;grid-template-columns:150px repeat(7,minmax(0,1fr));gap:8px;align-items:stretch}
+.lane>div{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;font-size:12px;line-height:17px;white-space:normal}
+.lane>div.lh{background:transparent;border:none;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;padding:8px 0}
+.lane>div.ch{background:transparent;border:none;font-weight:600;padding:0 2px}
+.lane>div.no{background:transparent;border:1px dashed #C9CDD3;color:#5B636D}
+.fm{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:17px;white-space:pre;color:#1F2328}
+.obs{background:#1E1E1E;color:#DADADA;border-radius:8px;overflow:hidden;display:flex;font-size:12px;line-height:18px}
+</style>
+</head>
+<body>
+<div class="bd" style="width:1700px;height:960px;gap:14px"><div class="bt">10 · Where the link is kept (Q-154)</div><div class="bsub">Never inside the file: that changes it, git sees it, and Google drops it anyway. The choice is between a note beside the file, one list, or Duo’s memory. In every case Duo reads “Where from” as a fallback while nothing’s kept.</div><div style="display:flex;gap:30px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:10px;width:600px"><div class="cap">A · A note beside each file<span class="rec">recommended</span></div>
+<div class="txt"><div class="mono t2" style="font-size:11px;margin-bottom:6px">inputs/Q3 plan.pptx.md</div><div class="fm">---
+type: snapshot
+title: Q3 plan
+source: https://docs.google.com/presentation/d/1EAYk18WDj…/edit
+snapshot_of: "[Q3 plan.pptx](./Q3%20plan.pptx)"
+downloaded: 2026-09-30T09:12
+snapshots:
+  - 2026-09-30T09:12
+  - 2026-09-12T16:40
+---
+
+Snapshot of [Q3 plan](https://docs.google.com/…/edit)
+in Google Slides, downloaded 30 Sep 2026.</div></div>
+<div class="cap">The same note in Obsidian</div><div class="obs" style="width:560px;height:300px"><div style="width:190px;background:#262626;padding:10px 8px;display:flex;flex-direction:column;gap:2px;color:#BBB"><div>▾ inputs</div><div style="padding-left:14px">Launch brief.docx</div><div style="padding-left:14px">Launch brief.docx</div><div style="padding-left:14px">Q3 plan.pptx</div><div style="padding-left:14px;background:#3A3A3A;border-radius:4px;color:#EEE">Q3 plan.pptx</div><div style="padding-left:14px">survey.csv</div></div><div style="flex:1;padding:12px 16px;white-space:normal"><div style="font-size:16px;font-weight:600;color:#EEE;margin-bottom:8px">Q3 plan.pptx</div><div style="display:grid;grid-template-columns:96px 1fr;gap:3px 8px;font-size:12px"><span style="color:#999">type</span><span>snapshot</span><span style="color:#999">source</span><span style="color:#8AB4F8;text-decoration:underline">docs.google.com/pres…</span><span style="color:#999">snapshot_of</span><span style="color:#8AB4F8;text-decoration:underline">Q3 plan.pptx</span><span style="color:#999">downloaded</span><span>30/09/2026 09:12</span><span style="color:#999">snapshots</span><span>2 items</span></div><div style="margin-top:10px">Snapshot of <span style="color:#8AB4F8;text-decoration:underline">Q3 plan</span> in Google Slides, downloaded 30 Sep 2026.</div></div></div>
+<div class="note"><b>Travels</b> with git, zip, Drive and a copy to another Mac. <b>Obsidian and OKF</b> read it: type and title (OKF), source (Web Clipper’s and Duo’s capture key), links in Markdown form. <b>Claude</b> reads it like any file. <b>Cost:</b> one more file per download; a rename in Finder leaves it behind until Duo next sees the folder and pairs them again.</div></div>
+<div style="display:flex;flex-direction:column;gap:10px;width:440px"><div class="cap">B · One list per folder</div>
+<div class="txt"><div class="mono t2" style="font-size:11px;margin-bottom:6px">inputs/SOURCES.md</div><div class="fm" style="white-space:pre-wrap">| File | Source | Downloaded |
+|---|---|---|
+| Q3 plan.pptx | [Q3 plan](https://docs.google.com/…) | 2026-09-30 |
+| Launch brief.docx | [Launch brief](https://…) | 2026-10-02 |</div></div>
+<div class="note">One file, readable at a glance; but a table isn’t Properties, two sessions writing it at once conflict, and a renamed file loses its row.</div></div>
+<div style="display:flex;flex-direction:column;gap:10px;width:440px"><div class="cap">C · Duo only</div>
+<div class="txt"><p>Kept in Duo’s support folder, keyed by the file’s path and contents.</p><p class="note">Invisible: no clutter. But lost on another Mac, in a clone, for Obsidian, and for Claude except through duo2.</p></div>
+<div class="cap" style="margin-top:12px">Not proposed: inside the file</div>
+<div class="txt"><p>A custom property <span class="mono" style="font-size:12px">Source</span> in docProps/custom.xml shows in Word’s File › Properties › Custom. Later, as an explicit “Write Link into File” for someone who sends the file on (ENH-56).</p></div></div>
+</div></div>
+</body>
+</html>

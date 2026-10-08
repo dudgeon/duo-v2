@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="2100x900">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="source-links-study">
+<!--
+6 · Get Latest
+STUDY BOARD [P], not approved. Drawn for the source-links study (2026-10-08) with the Duo design system.
+Duo opens the export link in the browser; Spotlight spots the download; the line offers Compare.
+It is a picture written in HTML: match what it draws, do not port its markup. Names, links and data are illustrative.
+-->
+<title>Duo · 6 · Get Latest</title>
+<style>
+body{margin:0}
+.w{box-sizing:border-box;display:flex;flex-direction:column;background:#FFFFFF;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;overflow:hidden}
+.w *{box-sizing:border-box}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.tb{display:flex;align-items:center;gap:8px;height:38px;flex:none;padding:0 12px 0 20px;border-bottom:1px solid #C9CDD3;background:#F3F4F6}
+.tl{display:flex;gap:8px;margin-right:4px}.tl i{width:12px;height:12px;border-radius:50%;display:block}
+.cnt{display:flex;gap:16px;margin-left:8px;align-items:center}.cnt span{display:flex;gap:6px;align-items:center}
+.srch{margin-left:auto;width:300px;height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;display:flex;align-items:center;gap:6px;padding:0 8px;color:#5B636D}
+.tgl{display:flex;padding:4px 6px}
+.sl{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:6px;height:16px}
+.t2{color:#5B636D}
+.ell{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.filter{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid #C9CDD3;border-radius:6px;color:#5B636D;font-size:12px;background:#FFFFFF}
+.popup{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 6px 0 8px;border:1px solid #C9CDD3;border-radius:6px;font-size:12px;line-height:16px;background:#FFFFFF}
+.segc{display:inline-flex;height:22px;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF;font-size:12px;line-height:16px}
+.segc span{display:flex;align-items:center;padding:0 10px;color:#5B636D}
+.segc span+span{border-left:1px solid #C9CDD3}
+.segc .on{background:#E9ECEF;color:#1F2328;font-weight:600}
+.chip{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid #C9CDD3;border-radius:11px;font-size:12px;line-height:16px;color:#5B636D;background:#FFFFFF}
+.chip.on{border-color:#1F2328;color:#1F2328;font-weight:600}
+.row{white-space:nowrap;display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row.tint{background:#E8F0FA}
+.row.sel{background:#E9ECEF}
+.row .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.row .pj{color:#5B636D;overflow:hidden;text-overflow:ellipsis;flex:none}
+.row .tk{display:flex;align-items:center;gap:5px;color:#5B636D;overflow:hidden;flex:none}
+.row .tm{color:#5B636D;flex:none;text-align:right}
+.row2{white-space:nowrap;display:flex;flex-direction:column;justify-content:center;gap:0;height:44px;padding:0 8px;margin:0 8px;border-radius:6px;min-width:0}
+.row2.tint{background:#E8F0FA}
+.row2.sel{background:#E9ECEF}
+.row2 .l1,.row2 .l2{display:flex;align-items:center;gap:8px;min-width:0}
+.row2 .l2{padding-left:17px;font-size:12px;line-height:16px;color:#5B636D}
+.sec{padding:10px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;color:#5B636D}
+.sec.ny{color:#C2410C}
+.fold{display:flex;align-items:center;gap:8px;height:26px;padding:0 16px;color:#5B636D}
+.card{border:1px solid #C9CDD3;border-radius:6px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;white-space:normal}
+.card .top{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.q{border:1.5px solid #C2410C;border-radius:6px;padding:6px 10px;margin:6px 0}
+.btn{align-self:flex-start;display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328}
+.act{flex:none;padding:16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;border-left:1px solid #C9CDD3}
+.mapcol{flex:1;min-width:0;display:flex;flex-direction:column}
+.mh{display:flex;align-items:center;gap:10px;height:22px;flex:none}
+.tile{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;border:1px solid #C9CDD3;border-radius:6px;min-width:0}
+.tile.star{border-color:#1F2328}
+.nm{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.srow{height:24px;display:flex;align-items:center;gap:6px;min-width:0;border-radius:4px}
+.srow .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.foot{height:34px;flex:none;border-top:1px solid #C9CDD3;display:flex;align-items:center;gap:8px;padding:0 16px;color:#5B636D}
+/* chat (chat-mode-handoff, chat-polish-handoff) */
+.chat{display:flex;flex-direction:column;background:#F3F4F6;min-width:0;min-height:0}
+.strip{white-space:nowrap;display:flex;align-items:stretch;gap:16px;height:28px;flex:none;padding:0 10px 0 16px;background:#F3F4F6;border-bottom:1px solid #C9CDD3;font-size:12px;line-height:16px}
+.strip .tab{display:flex;align-items:center;gap:6px;color:#5B636D}
+.strip .tab.on{color:#1F2328;font-weight:600;box-shadow:inset 0 -2px 0 #1F2328}
+.pill{display:flex;border:1px solid #8B939C;border-radius:6px;overflow:hidden;background:#FFFFFF}
+.pill span{width:22px;height:16px;display:flex;align-items:center;justify-content:center;color:#5B636D}
+.pill .on{background:#E9ECEF;color:#1F2328}
+.feed{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;overflow:hidden;font-size:14px;line-height:22px;white-space:normal}
+.who{font-size:12px;line-height:16px;color:#5B636D}
+.ccard{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:12px 16px 14px;display:flex;flex-direction:column;gap:8px}
+.you{background:#DCE6F7;border-radius:14px 14px 3px 14px;padding:8px 14px}
+.trail{display:flex;flex-direction:column;border-left:1.5px dotted #8B939C;margin-left:6px}
+.step{display:flex;align-items:center;gap:10px;min-height:24px;margin-left:-5px;font-size:12px;line-height:16px;color:#5B636D}
+.step b{font-weight:600;color:#1F2328}
+.dot{width:7px;height:7px;border-radius:4px;border:1.5px solid #8B939C;background:#FFFFFF;flex:none;margin-left:3px}
+.composer{flex:none;background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:7px 12px;color:#5B636D;font-size:14px;line-height:22px}
+.ask{background:#FFFFFF;border:1.5px solid #C2410C;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;white-space:normal}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em}
+.opt{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:20px;border:1px solid #8B939C;border-radius:8px;padding:5px 8px}
+.key{flex:none;width:18px;height:18px;margin-top:1px;border:1px solid #C9CDD3;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:16px;color:#5B636D;background:#F3F4F6}
+/* board furniture: not the app */
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:14px}
+.bd *{box-sizing:border-box}
+.bt{font:600 17px/24px -apple-system,system-ui,sans-serif}
+.bsub{color:#5B636D;font-size:13px;line-height:20px;white-space:normal;max-width:1100px}
+.note{color:#5B636D;font-size:12px;line-height:18px;white-space:normal}
+.note b{color:#1F2328;font-weight:600}
+.frame{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.rec{display:inline-block;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.4px;color:#1F2328;border:1px solid #1F2328;border-radius:9px;padding:0 7px;margin-left:6px;vertical-align:1px}
+.p{color:#5B636D;font-weight:500}
+.txt{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:16px 18px;white-space:normal;font-size:13px;line-height:20px}
+.txt h3{margin:0 0 6px;font-size:13px;line-height:20px;font-weight:600}
+.txt ul,.txt ol{margin:4px 0 8px;padding-left:18px}
+.txt li{margin:2px 0}
+.txt p{margin:4px 0 8px}
+.txt code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+
+.sheetwrap{position:relative;flex:1;min-height:0;display:flex;justify-content:center;background:rgba(31,35,40,.32)}
+.sheet{width:600px;background:#F3F4F6;border:1px solid #C9CDD3;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:18px 24px 18px;display:flex;flex-direction:column;gap:12px;white-space:normal;align-self:flex-start}
+.sheet h2{margin:0;font-size:13px;line-height:20px;font-weight:600}
+.fr{display:grid;grid-template-columns:96px 1fr;column-gap:12px;align-items:center}
+.fr>label{text-align:right;color:#1F2328}
+.fr.top{align-items:start}.fr.top>label{padding-top:2px}
+.fld{height:24px;border:1px solid #C9CDD3;border-radius:6px;background:#FFFFFF;padding:0 8px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.fld.ph{color:#5B636D}
+.fld.focus{border-color:#0A64D2;box-shadow:0 0 0 3px rgba(10,100,210,.18)}
+.hint{font-size:12px;line-height:16px;color:#5B636D}
+.btns{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.b{display:inline-flex;align-items:center;height:24px;padding:0 12px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:13px;white-space:nowrap}
+.b.def{border:1.5px solid #1F2328;font-weight:600}
+.b.sm{height:22px;font-size:12px;padding:0 9px}
+.b.dim{color:#8B939C;border-color:#C9CDD3}
+.cb{display:inline-flex;align-items:center;gap:8px}
+.cb i{width:14px;height:14px;border-radius:4px;background:#0A64D2;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.cb i.off{background:#FFFFFF;border:1px solid #8B939C}
+.rb{display:inline-flex;align-items:center;gap:8px}
+.rb i{width:14px;height:14px;border-radius:7px;border:1px solid #8B939C;background:#FFFFFF;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.rb i.on{border:4px solid #0A64D2}
+.pre{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:17px;color:#1F2328;white-space:pre-wrap}
+.pre .k{color:#5B636D}
+.found{display:flex;flex-direction:column;gap:4px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px}
+.found div{display:flex;gap:8px;align-items:baseline}
+.notice{display:flex;align-items:center;gap:10px;background:#FFFFFF;border:1px solid #8B939C;border-radius:8px;padding:6px 8px 6px 12px;box-shadow:0 4px 14px rgba(31,35,40,.12);white-space:normal}
+.expl{background:#F3F4F6;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;white-space:normal}
+.expl b{font-weight:600}
+.menu{background:rgba(246,246,247,.98);border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 10px 30px rgba(31,35,40,.2);padding:5px 0;font-size:13px;line-height:20px;white-space:nowrap;display:flex;flex-direction:column}
+.menu div{padding:1px 14px 1px 22px;display:flex;align-items:center;gap:8px}
+.menu .sep{height:1px;background:#C9CDD3;margin:5px 0;padding:0}
+.menu .hi{background:#0A64D2;color:#fff;border-radius:5px;margin:0 5px;padding-left:17px}
+.menu .hd{font-size:11px;font-weight:600;color:#5B636D;letter-spacing:.3px;padding-left:14px}
+.menu .dim{color:#8B939C}
+.pP{display:inline-block;font:600 10px/14px -apple-system,system-ui,sans-serif;color:#5B636D;border:1px solid #8B939C;border-radius:7px;padding:0 5px;margin-left:6px;vertical-align:1px}
+
+.repo{display:flex;align-items:center;gap:6px;min-height:22px;font-size:12px;line-height:16px;color:#5B636D;white-space:nowrap;min-width:0}
+.repo b{color:#1F2328;font-weight:600}
+.repo .bad{color:#1F2328;font-weight:600}
+.badge{display:inline-flex;align-items:center;height:18px;padding:0 7px;border:1px solid #C9CDD3;border-radius:9px;font-size:11px;line-height:16px;color:#5B636D;background:#FFFFFF;white-space:nowrap}
+.badge.dk{border-color:#1F2328;color:#1F2328;font-weight:600}
+.pop{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;box-shadow:0 10px 30px rgba(31,35,40,.2);padding:10px 12px;display:flex;flex-direction:column;gap:6px;white-space:normal;font-size:12px;line-height:17px}
+.lrow{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;border-radius:5px;font-size:13px;white-space:nowrap}
+.lrow.hi{background:#E9ECEF}
+.lrow .r{margin-left:auto;color:#5B636D;font-size:12px}
+.ask2{background:#F3F4F6;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:18px 22px;display:flex;flex-direction:column;gap:8px;white-space:normal;width:460px}
+.ask2 h3{margin:0;font-size:13px;line-height:20px;font-weight:600}
+.ask2 p{margin:0;font-size:12px;line-height:17px}
+.mark{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:#5B636D;margin-left:auto}
+.ft{display:flex;align-items:center;gap:6px;height:22px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+table.cmp{border-collapse:collapse;width:100%;font-size:12px;line-height:17px;white-space:normal}
+table.cmp th,table.cmp td{border-top:1px solid #C9CDD3;padding:7px 10px 7px 0;text-align:left;vertical-align:top}
+table.cmp th{font-weight:600;color:#5B636D;width:150px}
+table.cmp thead th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#1F2328;border-top:none}
+.cl{color:#E6E8EB}
+
+.vbar{display:flex;align-items:center;gap:6px;height:44px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.vb{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;display:inline-flex;align-items:center;gap:5px}
+.srcl{display:flex;align-items:center;gap:6px;height:28px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;background:#F3F4F6;font-size:12px;line-height:16px;color:#5B636D;white-space:nowrap}
+.srcl a,.lnk{color:#1F2328;text-decoration:underline;text-decoration-color:#8B939C;text-underline-offset:2px}
+.slide{position:relative;background:#FFFFFF;border:1px solid #C9CDD3;flex:none}
+.slide .h{position:absolute;left:8%;top:9%;font-weight:600}
+.chg{outline:2px solid #1F2328;outline-offset:2px}
+.tag{display:inline-flex;align-items:center;height:16px;padding:0 6px;border-radius:8px;font-size:10px;line-height:14px;font-weight:600;letter-spacing:.3px;border:1px solid #8B939C;color:#5B636D;background:#FFFFFF}
+.tag.dk{border-color:#1F2328;color:#1F2328}
+.del{text-decoration:line-through;color:#5B636D}
+.ins{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.lane{display:grid;grid-template-columns:150px repeat(7,minmax(0,1fr));gap:8px;align-items:stretch}
+.lane>div{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;font-size:12px;line-height:17px;white-space:normal}
+.lane>div.lh{background:transparent;border:none;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;padding:8px 0}
+.lane>div.ch{background:transparent;border:none;font-weight:600;padding:0 2px}
+.lane>div.no{background:transparent;border:1px dashed #C9CDD3;color:#5B636D}
+.fm{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;line-height:17px;white-space:pre;color:#1F2328}
+.obs{background:#1E1E1E;color:#DADADA;border-radius:8px;overflow:hidden;display:flex;font-size:12px;line-height:18px}
+</style>
+</head>
+<body>
+<div class="bd" style="width:2100px;height:900px;gap:14px"><div class="bt">6 · Get Latest: your browser downloads, Duo spots it (Q-155)</div><div class="bsub">Get Latest opens …/export/pptx (or ?format=docx) in the default browser, which is signed in to Google. Duo never reads Downloads to find it: it asks Spotlight for files downloaded from that document’s id, for 5 minutes.</div><div style="display:flex;gap:40px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none"><div class="cap">1 · Waiting</div><div class="frame" style="width:420px;"><div style="width:420px;height:380px;flex:none;display:flex;flex-direction:column;background:#FFFFFF;border:1px solid #C9CDD3;overflow:hidden;font-size:13px;line-height:20px;white-space:nowrap"><div style="display:flex;align-items:center;gap:18px;height:36px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap"><span class="t2">Project</span><span style="font-weight:600">Q3 plan.pptx</span><span class="t2">+</span></div><div class="vbar"><span class="vb" style="padding:4px 7px">‹</span><span class="vb" style="padding:4px 7px">›</span><span style="margin-left:4px">Slide 2 of 5</span><span style="flex:1"></span><span class="vb">Select Shape</span><span class="vb">Open With ⌄</span></div><div class="srcl"><svg width="12" height="12" viewBox="0 0 12 12" style="flex:none"><path d="M5 7 7 5M4.2 5.3 2.9 6.6a2 2 0 0 0 2.8 2.8l1.3-1.3M7.8 6.7l1.3-1.3a2 2 0 0 0-2.8-2.8L5 3.9" fill="none" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round"/></svg><span>Waiting for the download from your browser…</span><span style="flex:1"></span><span class="vb" style="padding:2px 8px;font-size:11px">Cancel</span></div><div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;padding:10px 20px 0;background:#F3F4F6;overflow:hidden;position:relative"><span style="font-size:11px;line-height:16px;font-weight:600">2</span><div class="slide" style="width:380px;height:213px"><div class="h" style="font-size:17px;line-height:1.25">Revenue by quarter</div><div style="position:absolute;left:12%;bottom:12%;width:70%;height:117px;border-left:1px solid #8B939C;border-bottom:1px solid #8B939C;display:flex;align-items:flex-end;gap:13px;padding:0 6px"><div style="width:23px;height:40%;background:#6E93C9"></div><div style="width:23px;height:55%;background:#6E93C9"></div><div style="width:23px;height:72%;background:#6E93C9"></div><div style="width:23px;height:64%;background:#6E93C9"></div></div></div><span style="font-size:11px;line-height:16px;color:#5B636D;margin-top:10px">3</span><div class="slide" style="width:380px;height:213px"><div class="h" style="font-size:17px;line-height:1.25">What we ship in Q3</div><div style="position:absolute;left:8%;top:30%;right:8%;font-size:11px;line-height:1.5;white-space:normal"><div>• Billing v2 to every plan</div><div>• Usage alerts</div><div>• SSO for teams</div></div></div></div></div></div><div class="note" style="width:420px">Chrome downloads as usual (into ~/Downloads, or wherever it saves). Duo’s line says what it’s doing; Cancel stops watching.</div></div>
+<div style="display:flex;flex-direction:column;gap:8px;flex:none"><div class="cap">2 · It arrived</div><div class="frame" style="width:420px;"><div style="width:420px;height:380px;flex:none;display:flex;flex-direction:column;background:#FFFFFF;border:1px solid #C9CDD3;overflow:hidden;font-size:13px;line-height:20px;white-space:nowrap"><div style="display:flex;align-items:center;gap:18px;height:36px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap"><span class="t2">Project</span><span style="font-weight:600">Q3 plan.pptx</span><span class="t2">+</span></div><div class="vbar"><span class="vb" style="padding:4px 7px">‹</span><span class="vb" style="padding:4px 7px">›</span><span style="margin-left:4px">Slide 2 of 5</span><span style="flex:1"></span><span class="vb">Select Shape</span><span class="vb">Open With ⌄</span></div><div class="srcl"><svg width="12" height="12" viewBox="0 0 12 12" style="flex:none"><path d="M5 7 7 5M4.2 5.3 2.9 6.6a2 2 0 0 0 2.8 2.8l1.3-1.3M7.8 6.7l1.3-1.3a2 2 0 0 0-2.8-2.8L5 3.9" fill="none" stroke="#1F2328" stroke-width="1.3" stroke-linecap="round"/></svg><span style="color:#1F2328"><b style="font-weight:600">A newer Q3 plan</b> arrived · today 15:24 · 2 slides changed</span><span style="flex:1"></span><span class="vb" style="padding:2px 8px;font-size:11px">Compare</span></div><div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;padding:10px 20px 0;background:#F3F4F6;overflow:hidden;position:relative"><span style="font-size:11px;line-height:16px;font-weight:600">2</span><div class="slide" style="width:380px;height:213px"><div class="h" style="font-size:17px;line-height:1.25">Revenue by quarter</div><div style="position:absolute;left:12%;bottom:12%;width:70%;height:117px;border-left:1px solid #8B939C;border-bottom:1px solid #8B939C;display:flex;align-items:flex-end;gap:13px;padding:0 6px"><div style="width:23px;height:40%;background:#6E93C9"></div><div style="width:23px;height:55%;background:#6E93C9"></div><div style="width:23px;height:72%;background:#6E93C9"></div><div style="width:23px;height:64%;background:#6E93C9"></div></div></div><span style="font-size:11px;line-height:16px;color:#5B636D;margin-top:10px">3</span><div class="slide" style="width:380px;height:213px"><div class="h" style="font-size:17px;line-height:1.25">What we ship in Q3</div><div style="position:absolute;left:8%;top:30%;right:8%;font-size:11px;line-height:1.5;white-space:normal"><div>• Billing v2 to every plan</div><div>• Usage alerts</div><div>• SSO for teams</div></div></div></div></div></div><div class="note" style="width:420px">The download is matched by its id. Duo compares contents, not bytes (two downloads always differ). Compare opens board 7; Replace is in it.</div></div>
+<div style="display:flex;flex-direction:column;gap:8px;flex:none"><div class="cap">3 · Nothing changed</div><div class="frame" style="width:420px;"><div style="width:420px;height:380px;flex:none;display:flex;flex-direction:column;background:#FFFFFF;border:1px solid #C9CDD3;overflow:hidden;font-size:13px;line-height:20px;white-space:nowrap"><div style="display:flex;align-items:center;gap:18px;height:36px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap"><span class="t2">Project</span><span style="font-weight:600">Q3 plan.pptx</span><span class="t2">+</span></div><div class="vbar"><span class="vb" style="padding:4px 7px">‹</span><span class="vb" style="padding:4px 7px">›</span><span style="margin-left:4px">Slide 2 of 5</span><span style="flex:1"></span><span class="vb">Select Shape</span><span class="vb">Open With ⌄</span></div><div class="srcl"><svg width="12" height="12" viewBox="0 0 12 12" style="flex:none"><path d="M5 7 7 5M4.2 5.3 2.9 6.6a2 2 0 0 0 2.8 2.8l1.3-1.3M7.8 6.7l1.3-1.3a2 2 0 0 0-2.8-2.8L5 3.9" fill="none" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round"/></svg><span>Snapshot of <a class="lnk">Q3 plan</a> in Google Slides · 30 Sep</span><span style="flex:1"></span><span class="vb" style="padding:2px 8px;font-size:11px"><svg width="11" height="11" viewBox="0 0 12 12" style="flex:none"><path d="M10 6a4 4 0 1 1-1.2-2.85M10 1.8v2.6H7.4" fill="none" stroke="#1F2328" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Get Latest</span></div><div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;padding:10px 20px 0;background:#F3F4F6;overflow:hidden;position:relative"><span style="font-size:11px;line-height:16px;font-weight:600">2</span><div class="slide" style="width:380px;height:213px"><div class="h" style="font-size:17px;line-height:1.25">Revenue by quarter</div><div style="position:absolute;left:12%;bottom:12%;width:70%;height:117px;border-left:1px solid #8B939C;border-bottom:1px solid #8B939C;display:flex;align-items:flex-end;gap:13px;padding:0 6px"><div style="width:23px;height:40%;background:#6E93C9"></div><div style="width:23px;height:55%;background:#6E93C9"></div><div style="width:23px;height:72%;background:#6E93C9"></div><div style="width:23px;height:64%;background:#6E93C9"></div></div></div><span style="font-size:11px;line-height:16px;color:#5B636D;margin-top:10px">3</span><div class="slide" style="width:380px;height:213px"><div class="h" style="font-size:17px;line-height:1.25">What we ship in Q3</div><div style="position:absolute;left:8%;top:30%;right:8%;font-size:11px;line-height:1.5;white-space:normal"><div>• Billing v2 to every plan</div><div>• Usage alerts</div><div>• SSO for teams</div></div></div><div style="position:absolute;left:20px;right:20px;bottom:16px"><div class="notice" style=""><span style="flex:1;font-size:12px;line-height:17px">No changes since 30 Sep. Your copy is current.</span><span class="b" style="height:22px;font-size:12px">OK</span></div></div></div></div></div><div class="note" style="width:420px">Said once, and the download is left where it was. The note’s date is updated, since the copy was checked.</div></div>
+<div style="display:flex;flex-direction:column;gap:8px;flex:none"><div class="cap">4 · Nothing seen</div><div class="frame" style="width:420px;"><div style="width:420px;height:380px;flex:none;display:flex;flex-direction:column;background:#FFFFFF;border:1px solid #C9CDD3;overflow:hidden;font-size:13px;line-height:20px;white-space:nowrap"><div style="display:flex;align-items:center;gap:18px;height:36px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap"><span class="t2">Project</span><span style="font-weight:600">Q3 plan.pptx</span><span class="t2">+</span></div><div class="vbar"><span class="vb" style="padding:4px 7px">‹</span><span class="vb" style="padding:4px 7px">›</span><span style="margin-left:4px">Slide 2 of 5</span><span style="flex:1"></span><span class="vb">Select Shape</span><span class="vb">Open With ⌄</span></div><div class="srcl"><svg width="12" height="12" viewBox="0 0 12 12" style="flex:none"><path d="M5 7 7 5M4.2 5.3 2.9 6.6a2 2 0 0 0 2.8 2.8l1.3-1.3M7.8 6.7l1.3-1.3a2 2 0 0 0-2.8-2.8L5 3.9" fill="none" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round"/></svg><span>Snapshot of <a class="lnk">Q3 plan</a> in Google Slides · 30 Sep</span><span style="flex:1"></span><span class="vb" style="padding:2px 8px;font-size:11px"><svg width="11" height="11" viewBox="0 0 12 12" style="flex:none"><path d="M10 6a4 4 0 1 1-1.2-2.85M10 1.8v2.6H7.4" fill="none" stroke="#1F2328" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Get Latest</span></div><div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;padding:10px 20px 0;background:#F3F4F6;overflow:hidden;position:relative"><span style="font-size:11px;line-height:16px;font-weight:600">2</span><div class="slide" style="width:380px;height:213px"><div class="h" style="font-size:17px;line-height:1.25">Revenue by quarter</div><div style="position:absolute;left:12%;bottom:12%;width:70%;height:117px;border-left:1px solid #8B939C;border-bottom:1px solid #8B939C;display:flex;align-items:flex-end;gap:13px;padding:0 6px"><div style="width:23px;height:40%;background:#6E93C9"></div><div style="width:23px;height:55%;background:#6E93C9"></div><div style="width:23px;height:72%;background:#6E93C9"></div><div style="width:23px;height:64%;background:#6E93C9"></div></div></div><span style="font-size:11px;line-height:16px;color:#5B636D;margin-top:10px">3</span><div class="slide" style="width:380px;height:213px"><div class="h" style="font-size:17px;line-height:1.25">What we ship in Q3</div><div style="position:absolute;left:8%;top:30%;right:8%;font-size:11px;line-height:1.5;white-space:normal"><div>• Billing v2 to every plan</div><div>• Usage alerts</div><div>• SSO for teams</div></div></div><div style="position:absolute;left:20px;right:20px;bottom:16px"><div class="notice" style=""><span style="flex:1;font-size:12px;line-height:17px">No download seen in 5 minutes.</span><span class="b" style="height:22px;font-size:12px">Choose File…</span><span class="t2" style="padding:0 4px">✕</span></div></div></div></div></div><div class="note" style="width:420px">Spotlight off, the download saved somewhere unindexed, or the browser asked where to save. Choose File… opens an Open panel at Downloads, filtered to .pptx; picking a file is the user’s own choice, so no prompt is expected.</div></div>
+</div>
+<div class="note" style="max-width:1500px"><b>Not drawn, for later (ENH-57):</b> an opt-in “Watch Downloads” in Settings for files you download without Get Latest. Turning it on is the user’s click, which is when macOS asks for Downloads access. <b>Also not drawn:</b> a manual “Check Downloads”, which would ask the first time it’s clicked.</div></div>
+</body>
+</html>
