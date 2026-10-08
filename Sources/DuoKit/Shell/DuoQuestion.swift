@@ -61,8 +61,35 @@ public struct DuoQuestion: Identifiable {
 /// answer its questions. Its windows still show, behind whatever has focus.
 @MainActor public enum DuoFocus {
     public static func take() {
-        guard !SupportFolder.isIsolated else { return }
+        guard !SupportFolder.isIsolated, !TestBackground.isOn else { return }
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// A background test launch (F-227): an accessory app (no Dock icon, no menu bar) that never
+    /// activates, with every window it shows transparent and click-through. Windows are still
+    /// ordered in and drawn, so captures (drawn from the views, F-120), terminals, web views and
+    /// the first responder work as on screen. Called before the app finishes launching.
+    /// A test build is an accessory from its Info.plist (`LSUIElement`, scripts/bundle.sh); one that
+    /// isn't a background launch (opened from Finder, or `DUO_TEST_FOREGROUND=1`) becomes a regular app.
+    public static func startBackground() {
+        let app = NSApplication.shared   // NSApp is still nil while the App initialises
+        guard TestBackground.isOn else {
+            if Bundle.main.object(forInfoDictionaryKey: "LSUIElement") as? Bool == true { app.setActivationPolicy(.regular) }
+            return
+        }
+        app.setActivationPolicy(.accessory)
+        FileHandle.standardError.write(Data("Duo: background test launch (F-227): no Dock icon, windows drawn but not shown; \(TestBackground.foregroundVariable)=1 shows them\n".utf8))
+        // Popovers, sheets and the Settings window are windows too: hide each as it appears.
+        NotificationCenter.default.addObserver(forName: NSApplication.didUpdateNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { NSApp.windows.forEach(hide) }
+        }
+    }
+
+    /// Makes a window invisible in a background launch; nothing otherwise.
+    public static func hide(_ window: NSWindow) {
+        guard TestBackground.isOn, window.alphaValue != 0 else { return }
+        window.alphaValue = 0
+        window.ignoresMouseEvents = true
     }
 }
 

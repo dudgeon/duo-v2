@@ -11,7 +11,12 @@ envargs=(--env "ANTHROPIC_MODEL=${DUO_MODEL:-claude-haiku-5-5}")
 [[ -n ${DUO_NO_EDIT_HOOK:-} ]] && envargs+=(--env "DUO_NO_EDIT_HOOK=1")   # sessions without the edit hook (DL-78)
 # More variables for the app and its sessions, space-separated KEY=value (the mock API for chat mode's checks).
 for kv in ${=DUO_EXTRA_ENV:-}; do envargs+=(--env "$kv"); done
-open -n $envargs --stderr "$err" build/Duo.app --args --workspace "$ws" --capture-window "$png" --then "$then"
+# Background by default (F-227). DUO_TEST_FOREGROUND=1 shows the window and may take focus: Geoff's OK first.
+if [[ ${DUO_TEST_FOREGROUND:-} == 1 ]]; then
+  envargs+=(--env DUO_TEST_FOREGROUND=1)
+  echo "⚠ DUO_TEST_FOREGROUND=1: this run shows a Duo window and may take focus for up to ${DUO_TIMEOUT:-90} s (Geoff's OK first)"
+fi
+open -g -n $envargs --stderr "$err" build/Duo.app --args --workspace "$ws" --capture-window "$png" --then "$then"
 for i in {1..${DUO_TIMEOUT:-90}}; do
   [[ -f $png ]] && break
   sleep 1

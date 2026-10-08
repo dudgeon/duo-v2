@@ -14,7 +14,7 @@ duo2="$root/build/Duo.app/Contents/Helpers/duo2"
 sock="$HOME/Library/Application Support/Duo/duo.sock"
 work=$(mktemp -d)
 pgrep -xq Duo && { echo "quit Duo first"; exit 2; }
-open -n build/Duo.app --args --state overview
+open -g -n build/Duo.app --args --state overview
 for i in {1..20}; do [[ -S $sock ]] && break; sleep 0.5; done
 duo_pid=$(pgrep -nx Duo)
 sleep 0.5

@@ -10,8 +10,10 @@
 #   SECONDS_RUN=60 (default)                     how long each launch runs
 #
 # Isolated: its own support and Claude config folders under /tmp, a stand-in claude, no login, no
-# network; never the user's Duo. The window never takes focus; macOS may skip drawing it when it's
-# covered, so a covered run understates layout cost (F-208's trap).
+# network; never the user's Duo. It runs in the background (F-227): the window is drawn but never
+# shown and never takes focus, and macOS may skip drawing a window that isn't on screen, so a
+# background run understates layout cost (F-208's trap). The visible gate, DUO_TEST_FOREGROUND=1,
+# shows the window and may take focus: a release gate, run only with Geoff's OK (CLAUDE.md).
 set -u
 root=${0:A:h:h}
 cd $root
@@ -22,6 +24,11 @@ fx=$(mktemp -d /tmp/d-scale-XXXX); fx=${fx:A}   # realpath: restore matches Home
 stub=$fx/claude
 printf '#!/bin/sh\nexec /usr/bin/python3 -I %s "$@"\n' "$root/scripts/scale-tui.py" > $stub; chmod +x $stub
 python3 scripts/make-scale-fixture.py $fx --projects 6 --sessions 42 --long 3 --tabs 16 --chat --modes-chat --on-home --home-view board --claude $stub >/dev/null || exit 1
+if [[ ${DUO_TEST_FOREGROUND:-} == 1 ]]; then
+  echo "⚠ DUO_TEST_FOREGROUND=1: this run shows a Duo window and may take focus for about $secs s (Geoff's OK first)"
+else
+  echo "background run (F-227): the window is drawn but not shown, so CPU may understate drawing; the visible gate is DUO_TEST_FOREGROUND=1 (Geoff's OK first)"
+fi
 env -u DUO_SUPPORT_DIR -u DUO_SOCKET -u DUO_TOKEN DUO_SUPPORT_DIR=$fx/sup CLAUDE_CONFIG_DIR=$fx/cfg DUO_AUTOCONFIRM=1 \
   $app/Contents/MacOS/Duo --workspace $fx/ws 2>$fx/stderr.txt &
 pid=$!

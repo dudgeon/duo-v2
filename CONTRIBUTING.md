@@ -62,6 +62,12 @@ Visual comparison against the design targets, writing `build/ui/<state>-compare.
 scripts/check-ui.sh
 ```
 
+Test launches run in the background (F-227): a scripted launch with its own support folder has no Dock icon, never takes focus and draws its window without showing it. `DUO_TEST_FOREGROUND=1` shows it, for the rare visible gate. This proves the front app stays in front while the checks run:
+
+```bash
+scripts/check-background.sh
+```
+
 Inside Claude's sandbox, `duo2` must reach the app through one allowed socket. This runs it under macOS Seatbelt the way Claude Code does, with no tokens spent:
 
 ```bash

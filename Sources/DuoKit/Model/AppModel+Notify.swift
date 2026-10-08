@@ -105,6 +105,8 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     /// which macOS answers without a prompt once the user has answered (F-161).
     func authorize(_ then: @escaping @MainActor (Bool) -> Void) {
         if allowed { return then(true) }   // once allowed, asked no more this run; a refusal is read again
+        // A background test launch never raises the system's permission prompt (F-227).
+        if TestBackground.isOn { return then(false) }
         Task { @MainActor in
             let center = UNUserNotificationCenter.current()
             let settings = await center.notificationSettings()

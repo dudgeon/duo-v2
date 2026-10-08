@@ -1186,7 +1186,7 @@ func repoFixture() throws -> Fixture {
         // Only the main checkout's build and releases are com.dudgeon.duo, own duo2:// and register with Launch Services (F-198).
         let bundle = (try? String(contentsOf: repoRoot().appending(path: "scripts/bundle.sh"), encoding: .utf8)) ?? ""
         let plist = bundle.components(separatedBy: "<<PLIST").last?.components(separatedBy: "\nPLIST").first ?? ""
-        check(bundle.contains("bundle_id=\"\(SupportFolder.testBundleID)\"; url_types=\"\""), "bundle.sh names test builds \(SupportFolder.testBundleID), with no duo2:// scheme")
+        check(bundle.contains("bundle_id=\"\(SupportFolder.testBundleID)\"; url_types=\"<key>LSUIElement</key><true/>\""), "bundle.sh names test builds \(SupportFolder.testBundleID), with no duo2:// scheme, an accessory until Duo decides (F-227)")
         check(plist.contains("<string>${bundle_id}</string>") && !plist.contains("<string>com.dudgeon.duo</string>") && !plist.contains("<string>duo2</string>"), "bundle.sh's Info.plist takes its bundle id and URL scheme from the build's kind")
         let registers = bundle.components(separatedBy: "\n").enumerated().filter { $0.element.contains("lsregister\" -f") }
         let lines = bundle.components(separatedBy: "\n")
@@ -1259,6 +1259,33 @@ func repoFixture() throws -> Fixture {
         check(activators.isEmpty, "only DuoFocus takes focus (\(activators.map(\.lastPathComponent)))")
         let app = (try? String(contentsOf: repoRoot().appending(path: "Sources/Duo/DuoApp.swift"), encoding: .utf8)) ?? ""
         check(app.contains("if !SupportFolder.isIsolated { NSApp.activate() }"), "the window opens without taking focus when isolated")
+
+        // F-227: a test launch a script started runs in the background; the user's own Duo never does.
+        let bg = TestBackground.decide
+        check(!bg(["Duo"], [:], false) && !bg(["Duo", "--workspace", "/tmp/ws"], ["DUO_SUPPORT_DIR": real.path], false),
+              "the user's own Duo (the real folder, plain or --workspace): never background")
+        check(bg(["Duo", "--state", "overview", "--capture", "/tmp/x.png"], [:], true), "a scripted run (temporary folder): background")
+        check(bg(["Duo"], ["DUO_SUPPORT_DIR": "/tmp/d-x"], true) && bg(["Duo", "--workspace", "/tmp/ws"], ["DUO_SUPPORT_DIR": "/tmp/d-x"], true),
+              "a launch with its own DUO_SUPPORT_DIR: background")
+        check(!bg(["Duo"], [:], true), "a test build opened plainly (Finder): shows as before")
+        check(!bg(["Duo", "--state", "overview"], ["DUO_TEST_FOREGROUND": "1"], true) && bg(["Duo", "--state", "overview"], ["DUO_TEST_FOREGROUND": "0"], true),
+              "DUO_TEST_FOREGROUND=1 (and only 1) brings a test launch forward")
+        check(app.contains("DuoFocus.hide(w)") && app.contains("TestBackground.decide(") && app.contains("DuoFocus.startBackground()"),
+              "a background launch hides the main window and runs as an accessory")
+        let harness = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Debug/FixtureHarness.swift"), encoding: .utf8)) ?? ""
+        check(harness.components(separatedBy: "NSApp.activate(").count == harness.components(separatedBy: "if !TestBackground.isOn { NSApp.activate(").count,
+              "the harness's key events never activate a background launch")
+        let notify = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Model/AppModel+Notify.swift"), encoding: .utf8)) ?? ""
+        check(notify.contains("if TestBackground.isOn { return then(false) }"), "a background launch never asks for notification permission")
+        // Every script that launches Duo through LaunchServices does it in the background (open -g).
+        let scripts = (try? FileManager.default.contentsOfDirectory(at: repoRoot().appending(path: "scripts"), includingPropertiesForKeys: nil)) ?? []
+        let foreground = scripts.filter { $0.pathExtension == "sh" }.filter { url in
+            ((try? String(contentsOf: url, encoding: .utf8)) ?? "").split(separator: "\n").contains { line in
+                let l = line.trimmingCharacters(in: .whitespaces)
+                return !l.hasPrefix("#") && l.range(of: #"(^|[ ;&(])open (-[A-Za-z]+ )*-n "#, options: .regularExpression) != nil && !l.contains("open -g ")
+            }
+        }
+        check(foreground.isEmpty, "scripts open test instances in the background, open -g (\(foreground.map(\.lastPathComponent)))")
     }
 
     print("tokens")
