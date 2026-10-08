@@ -1,0 +1,6 @@
+# Record files are append-mostly logs: keep both sides' lines on merge, never a conflict.
+# A row both sides edited comes out twice; scripts/check-records.sh flags duplicate ids, so keep the newer one.
+docs/plan/findings.md merge=union
+docs/plan/concerns-and-questions.md merge=union
+docs/plan/enhancements.md merge=union
+docs/design/decisions.md merge=union
