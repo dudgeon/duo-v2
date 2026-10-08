@@ -132,6 +132,7 @@ Status: **open** (needs Geoff or a spike) · **defaulted** (Claude chose a defau
 | Q-155 | **Does Spotlight hand Duo a ~/Downloads item without macOS's privacy prompt, and does an Open-panel pick read without one?** Get Latest relies on the first; Choose File… on the second. A test changes the privacy grants of the shared bundle id (com.dudgeon.duo, ENH-25), so it needs Geoff's OK or a test bundle id. | Get Latest (second slice) | Open | F-241. 2026-10-08 |
 | Q-156 | **What a replaced snapshot leaves** (board 9): A, Trash only, dates in the note; B, dated copies in a `snapshots/` folder; C, ask each time. | Replace (second slice) | Open: recommended A; for Geoff | 2026-10-08 |
 | Q-157 | **Record the link on arrival, or offer it** (board 2): A, recorded at once with an Undo notice when Duo moved the file in, offered otherwise; B, always offered in the viewer's line. | v1 slice | Open: recommended A; for Geoff | 2026-10-08 |
+| Q-158 | **Where the List's `+ New project` sits**: no board draws it. Stand-in: a dashed-outline `+ New project` in the List's header row, right-aligned beside the Group popup (the Board's tile style, header-control height, no new tokens); same sheet, `duo2 project new`. Alternatives: a ＋ at the end of the filter, or a row at the foot of the list. | v1 slice | Open: stand-in built; for Geoff | 2026-10-08 |
 
 ## Concerns
 

@@ -2819,3 +2819,8 @@ Measured on the real TUI with the spike's mock API (no tokens), both versions id
 
 - `kMDItemWhereFroms` is indexed. `mdfind -onlyin <dir> 'kMDItemWhereFroms == "*<ID>*"'` found the deck in a scratch folder under home (removed afterwards). `/private/tmp` isn't indexed.
 - So Get Latest can spot the browser's new download without Duo listing ~/Downloads. Whether an `NSMetadataQuery` from Duo returns items in ~/Downloads without the privacy prompt, and whether reading them asks, is Q-155.
+
+## F-242 · The List had no way to make a project (2026-10-08)
+
+- The Board's `+ New project` tile was the only door to the New project sheet from All projects. The List's header (`MapHeader`, list mode) now carries the same action (`model.showNewProject()`, `duo2 project new`) as a dashed `+ New project` beside Group (Q-158, a stand-in: no board draws it).
+- Proof: DuoChecks counts both call sites on the verb; list-1440, list-1280, list-filter and list-nothing differ from main only in the header's box (x 866–961 pt, y 16–38 pt); overview, project, flow-zoom-1…4 and board-1440 are byte-identical to main.
