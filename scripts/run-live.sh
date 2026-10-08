@@ -16,7 +16,7 @@ if [[ ${DUO_TEST_FOREGROUND:-} == 1 ]]; then
   envargs+=(--env DUO_TEST_FOREGROUND=1)
   echo "⚠ DUO_TEST_FOREGROUND=1: this run shows a Duo window and may take focus for up to ${DUO_TIMEOUT:-90} s (Geoff's OK first)"
 fi
-open -g -n $envargs --stderr "$err" build/Duo.app --args --workspace "$ws" --capture-window "$png" --then "$then"
+open -g -n $envargs --stderr "$err" "${DUO_APP:-build/Duo.app}" --args --workspace "$ws" --capture-window "$png" --then "$then"
 for i in {1..${DUO_TIMEOUT:-90}}; do
   [[ -f $png ]] && break
   sleep 1

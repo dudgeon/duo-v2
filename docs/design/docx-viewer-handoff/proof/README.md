@@ -51,3 +51,22 @@ The board's own document has no comment card, so its paragraphs sit higher than 
 The picker bar is **not** a match to the pixel, and the numbers say so. The scratch workspace has no Claude session showing, so the bar carries the deck's "No session is showing: use Send To." line and Send To in the default look (DL-132 q68-no-session); the board has a session, so its buttons sit 20 pt higher and Send to Claude is the default. The wording, order, spacing (8 between lines, padding 10 20 12), weights and buttons are the board's. The terminal box at the bottom of the board is the terminal: the paste text is compared by content, in DuoChecks (`Send to Claude's text for a paragraph is the README's`). The board's paste says `(page 1)` after the heading; the README's text and the coordinator's do not, so the build follows them.
 
 The bar's right edge: the board's four buttons run to 10 pt from the pane's edge (not the 20 the bar's padding says), because they need it; Duo's are a few points wider, so `docxBarTrailing` is 6.
+
+## The picker bar with a session showing, and the deck after the refactor
+
+**Picker bar, session showing** (`scripts/check-docx.sh picked-session`; `picked-session-compare.png`). The run starts the app's own session (no turn is sent) and a watcher writes the idle beacon Claude would, so `sendTarget` is a success and Send to Claude is the default button, as on the board. The board has the terminal box under its bar and ours is the pane's bottom edge, so the bar sits lower; `regions.py` finds the same bar at a shift of 158 to 160 pt in each region, and the numbers are the bar's own (`SHIFT=170`):
+
+| Region (board image, pt) | Best | Shift |
+|---|---|---|
+| bar's top rule | 0.11 | (+1, +160) |
+| line 1 | 8.42 | (0, +159) |
+| line 2 (12/16, `text2`) | 7.84 | (0, +158) |
+| the button row | 12.89 | (-1, +158) |
+| Send to Claude (default) | 15.76 | (-1, +158) |
+| Send To | 4.94 | (-1, +158) |
+| Pick Another | 7.65 | (+2, +158) |
+| Cancel | 5.27 | (+2, +158) |
+
+All eight sit within 2 pt of each other in the shift, so the spacing and order are the board's. Text anti-aliasing and the document-independent glyphs account for the rest; Send to Claude is highest because its 1.5 border and semibold label are drawn by `DefaultSheetButtonStyle`, as on the deck. The one text difference is line 1: the board's "replaced three four words" is All Markup's text, ours is the accepted text ("replaced four words"), which is what the paste says.
+
+**The deck, before and after `PickerButtonRow`** (`scripts/check-deck.sh`). Four states (viewer on slide 3, picking with the outline on shape 2/7, picked with the picker bar, and a password-protected deck's fallback), captured from an isolated live run, cropped to the right pane (460×860), on this branch's build and on a build of 2c9c753 (the HEAD before either slice): `scripts/check-deck.sh compare build/deck /tmp/d-dx-deck-base` says 4 identical, 0 different. `deck-picked-after-refactor.png` is the picked state: it shows the same bar the deck has always had ("No session is showing: use Send To.", Send To default).
