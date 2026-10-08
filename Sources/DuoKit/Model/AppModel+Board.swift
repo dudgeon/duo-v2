@@ -154,10 +154,118 @@ extension AppModel {
         }
     }
 
+    // MARK: Columns (DL-150, board 12)
+
+    /// Writes the project's lanes to its brief's `lanes:` list (added the first time, then edited
+    /// in place); one undo puts the brief's bytes back.
+    @discardableResult
+    func setLanes(_ lanes: [String], project: String) -> String? {
+        guard let folder = liveFolders[project] else { return "no project '\(project)'" }
+        let brief = ProjectBrief.url(in: folder) ?? folder.appending(path: "PROJECT.md")
+        let data = FileManager.default.contents(atPath: brief.path)
+        let text = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+        do { try Data(ProjectBrief.settingLanes(lanes, in: text).utf8).write(to: brief, options: .atomic) } catch { return error.localizedDescription }
+        briefLanesCache[project] = nil
+        registerUndo("Change Columns") { model in
+            if let data { try? data.write(to: brief, options: .atomic) } else { try? FileManager.default.removeItem(at: brief) }
+            model.briefLanesCache[project] = nil
+            model.refreshLive()
+        }
+        refreshLive()
+        return nil
+    }
+
+    /// + Add Column, or Add Column After…: the name's slug is the status (Blocked → `blocked`).
+    @discardableResult
+    public func addColumn(_ name: String, after: String? = nil, project: String) -> String? {
+        guard let status = TaskBoard.status(forColumn: name) else { return "a column needs a name" }
+        var lanes = boardLanes(project)
+        guard status != "dropped" else { return "dropped isn't a column: it's the fold under Done" }
+        guard !lanes.contains(status) else { return "\(TaskBoard.title(status)) is already a column" }
+        if let after, let i = lanes.firstIndex(of: after) { lanes.insert(status, at: i + 1) } else { lanes.append(status) }
+        return setLanes(lanes, project: project)
+    }
+
+    /// Keep as Column, on a lane for a status that isn't listed: it joins the list where it shows.
+    @discardableResult
+    public func keepColumn(_ status: String, project: String) -> String? {
+        var lanes = boardLanes(project)
+        guard !lanes.contains(status) else { return nil }
+        lanes.append(status)
+        return setLanes(lanes, project: project)
+    }
+
+    /// Move Left / Move Right on a lane's ⋯ menu.
+    @discardableResult
+    public func moveColumn(_ status: String, by step: Int, project: String) -> String? {
+        var lanes = boardLanes(project)
+        guard let i = lanes.firstIndex(of: status) else { return "no column '\(status)'" }
+        let j = i + step
+        guard lanes.indices.contains(j) else { return nil }
+        lanes.swapAt(i, j)
+        return setLanes(lanes, project: project)
+    }
+
+    /// The tasks a column holds (not archived ones).
+    func tasks(inLane status: String, project: String) -> [Fixture.TaskSummary] {
+        (fixture.tasks ?? []).filter { $0.project == project && $0.archived != true && TaskBoard.key($0.status) == status }
+    }
+
+    /// Remove Column…: Open and Done can't go. A column holding tasks asks where they go (a Duo
+    /// question, never an alert) and writes each one's `status`; one undo puts it all back.
+    public func askRemoveColumn(_ status: String, project: String, answered: (@MainActor (String) -> Void)? = nil) {
+        guard !TaskBoard.fixedLanes.contains(status) else { return info("\(TaskBoard.title(status)) can't be removed: new tasks start in Open, and Mark Complete needs Done.") }
+        let lanes = boardLanes(project)
+        guard let i = lanes.firstIndex(of: status) else { return }
+        let held = tasks(inLane: status, project: project)
+        if held.isEmpty {
+            var rest = lanes; rest.remove(at: i)
+            if let why = setLanes(rest, project: project) { info(why) }
+            answered?("Removed"); return
+        }
+        let others = lanes.filter { $0 != status }
+        let fallback = i > 0 ? lanes[i - 1] : "open"
+        let pick = DuoQuestion.Pick(label: "Move \(held.count == 1 ? "it" : "them") to", options: others.map { ($0, TaskBoard.title($0)) }, selected: fallback)
+        let n = held.count
+        let q = DuoQuestion(
+            title: "Remove the \(TaskBoard.title(status)) column?",
+            paragraphs: [n == 1 ? "Its task moves to the column you choose. Nothing else in the note changes."
+                               : "Its \(n) tasks move to the column you choose. Nothing else in their notes changes."],
+            items: held.map { .init(what: $0.title, path: "") },
+            pick: pick,
+            choices: [
+                .init(label: "Cancel", isCancel: true) { answered?("Cancel") },
+                .init(label: "Remove Column", isDefault: true) { [weak self] in
+                    self?.removeColumn(status, movingTo: pick.selected, project: project)
+                    answered?("Remove Column")
+                },
+            ])
+        if Env.autoconfirm { FileHandle.standardError.write(Data("question: \(q.title) [\(q.choices.map(\.label).joined(separator: " | "))] → \(fallback)\n".utf8)) }
+        SheetCenter.shared.ask(q)
+    }
+
+    /// Removes a column, its tasks moving to `target` first.
+    @discardableResult
+    public func removeColumn(_ status: String, movingTo target: String, project: String) -> String? {
+        guard !TaskBoard.fixedLanes.contains(status) else { return "\(TaskBoard.title(status)) can't be removed" }
+        var lanes = boardLanes(project)
+        guard let i = lanes.firstIndex(of: status), target != status else { return "no column '\(status)'" }
+        var failed: String?
+        asOneUndo("Remove Column") {
+            for t in tasks(inLane: status, project: project) {
+                if let why = setTaskStatus(project: project, path: t.path, target) { failed = why }
+            }
+            lanes.remove(at: i)
+            if let why = setLanes(lanes, project: project) { failed = why }
+        }
+        return failed
+    }
+
     func boardVerb(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
         let name = inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name ?? currentProject?.name
         guard let name, project(named: name) != nil else { return done(.fail("which project? --project <p>")) }
         guard terminalsMode == .live else { return done(.fail("the task board needs live projects")) }
+        if id == .taskColumn { return columnVerb(id, inv, name, done) }
         switch inv[0] {
         case "show"?: showBoard(true, project: name)
         case "hide"?: showBoard(false, project: name)
@@ -174,5 +282,37 @@ extension AppModel {
         done(.ok(text, ["project": name, "board": shown, "lanes": lanes.map { l in
             ["status": l.status, "title": l.title, "extra": l.extra, "cards": l.cards.map(\.task.path), "earlier": l.earlier.map(\.task.path), "dropped": l.dropped.map(\.task.path)] as [String: Any]
         }]))
+    }
+
+    /// `duo2 task column add|remove|move|keep <name>`.
+    func columnVerb(_ id: ActionID, _ inv: Invocation, _ project: String, _ done: @escaping @MainActor (Reply) -> Void) {
+        guard let verb = inv[0], inv.positional.count > 1 else { return done(.fail("usage: \(id.action.usage)")) }
+        let name = inv.positional.dropFirst().joined(separator: " ")
+        let status = TaskBoard.status(forColumn: name) ?? name
+        let after = inv.flags["after"].map { TaskBoard.status(forColumn: $0) ?? $0 }
+        var why: String?
+        switch verb {
+        case "add": why = addColumn(name, after: after, project: project)
+        case "keep": why = keepColumn(status, project: project)
+        case "move":
+            guard let dir = inv.has("left") ? "left" : inv.has("right") ? "right" : nil else { return done(.fail("move needs --left or --right")) }
+            why = moveColumn(status, by: dir == "left" ? -1 : 1, project: project)
+        case "remove":
+            if TaskBoard.fixedLanes.contains(status) { return done(.fail("\(TaskBoard.title(status)) can't be removed")) }
+            let held = tasks(inLane: status, project: project)
+            if !held.isEmpty {
+                guard let to = inv.flags["to"].map({ TaskBoard.status(forColumn: $0) ?? $0 }) else {
+                    askRemoveColumn(status, project: project) { answer in done(.ok(answer == "Cancel" ? "Kept the \(TaskBoard.title(status)) column." : "Removed the \(TaskBoard.title(status)) column. Undo: duo2 undo")) }
+                    return
+                }
+                why = removeColumn(status, movingTo: to, project: project)
+            } else {
+                var lanes = boardLanes(project); lanes.removeAll { $0 == status }
+                why = setLanes(lanes, project: project)
+            }
+        default: return done(.fail("usage: \(id.action.usage)"))
+        }
+        if let why { return done(.fail(why)) }
+        done(.ok("\(project)'s columns: \(boardLanes(project).map(TaskBoard.title).joined(separator: ", ")). Undo: duo2 undo", ["lanes": boardLanes(project)]))
     }
 }

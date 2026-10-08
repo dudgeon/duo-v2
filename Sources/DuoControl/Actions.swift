@@ -51,7 +51,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskSession = "task session", taskStatus = "task status"
     case taskRename = "task rename", taskArchive = "task archive", taskUnarchive = "task unarchive", taskDelete = "task delete"
     case taskMove = "task move", taskLink = "task link", taskReveal = "task reveal"
-    case taskBoard = "task board"
+    case taskBoard = "task board", taskColumn = "task column"
     case templateShow = "template show", templateEdit = "template edit", templateCopy = "template copy", templateReset = "template reset", templatePreview = "template preview"
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
@@ -236,6 +236,8 @@ extension DuoAction {
         .init(.taskReveal, .sessions, "<task> [--project <p>]", "Show a task's note in Finder.", ui: ["Reveal in Finder"]),
         .init(.taskBoard, .sessions, "[show|hide|toggle] [--project <p>]", "The task board (DL-148): a project's Sessions | Tasks switch. Tasks shows the board over the session list and console, lanes by `status`, and a card's note in the right pane. With no argument, says which is showing and lists the board's lanes and cards. Drag between lanes is `duo2 task status`.",
               ui: ["Sessions", "Tasks", "Board"]),
+        .init(.taskColumn, .sessions, "<add|remove|move|keep> <name> [--after <column>] [--to <column>] [--left|--right] [--project <p>]", "A board's columns (DL-150): each is a `status` value, listed in the project brief's `lanes:` (written the first time the default five change, then edited in place). add: the name's slug is the status (Blocked → blocked), at the end or --after a column. remove: Open and Done can't go; a column holding tasks moves them --to another (without --to, Duo asks the user). move --left|--right. keep: an unlisted status found on tasks becomes a column. Undo with `duo2 undo`.",
+              ui: ["+ Add Column", "Add Column After…", "Remove Column…", "Move Left", "Move Right", "Keep as Column", "Remove Column"], timeout: 600),
         .init(.templateShow, .projects, "<project|task> [--project <p>]", "The template new projects or tasks are made from (DL-146): its text and whose it is (a project's own templates/new-task.md, Home's templates/new-<kind>.md, or Duo's base)."),
         .init(.templateEdit, .projects, "<project|task> [--project <p>]", "Open that template in the right pane with its template bar; with no file yet, Duo's base is written to Home's templates/ first.",
               ui: ["Edit Task Template", "Edit…"]),
@@ -421,7 +423,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    static let switches: Set<String> = ["json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "force", "session-only"]
+    static let switches: Set<String> = ["json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "force", "session-only", "left", "right"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     static let optionalValues: Set<String> = ["remote-control"]

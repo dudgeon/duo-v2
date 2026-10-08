@@ -191,10 +191,16 @@ extension AppModel {
             case .failure(let e): done(.fail("\(e)"))
             }
         case .taskStatus:
-            guard let t = inv[0], let status = inv[1], TaskNotes.statuses.contains(status) else {
+            guard let t = inv[0], let raw = inv[1] else {
                 return done(.fail("usage: \(id.action.usage) (\(TaskNotes.statuses.joined(separator: " | ")))"))
             }
             guard let hit = findTask(t, project: inv.flags["project"]) else { return done(.fail("no task '\(t)'")) }
+            // The project's columns and dropped (DL-150), matched as the board matches them.
+            let allowed = Set(TaskNotes.statuses + boardLanes(hit.project))
+            let status = TaskBoard.key(raw)
+            guard allowed.contains(status) else {
+                return done(.fail("\(hit.project) has no column '\(raw)': \((boardLanes(hit.project) + ["dropped"]).joined(separator: " | "))"))
+            }
             // As a drag on the board does: through the editor's buffer when the note is open (DL-148).
             if let why = moveCard(project: hit.project, path: hit.path, to: status) { return done(.fail(why)) }
             done(.ok("\(hit.title) is \(status). Undo: duo2 undo"))
@@ -249,10 +255,13 @@ struct TaskStatusMenu: View {
     let path: String
 
     var body: some View {
-        let current = model.fixture.tasks?.first { $0.project == project && $0.path == path }?.status ?? "open"
+        let current = TaskBoard.key(model.fixture.tasks?.first { $0.project == project && $0.path == path }?.status)
+        // The project's columns, then dropped (DL-150); a status that isn't a column stays listed.
+        let lanes = model.boardLanes(project)
+        let items = lanes + (lanes.contains(current) || current == "dropped" ? [] : [current]) + ["dropped"]
         Menu("Set Status") {
             // A toggle per status: the menu ticks the current one natively (board A draws "in progress").
-            ForEach(TaskNotes.statuses, id: \.self) { st in
+            ForEach(items, id: \.self) { st in
                 Toggle(st.replacingOccurrences(of: "-", with: " "), isOn: Binding(get: { st == current }, set: { _ in
                     if let why = model.setTaskStatus(project: project, path: path, st) { model.info(why) }
                 }))

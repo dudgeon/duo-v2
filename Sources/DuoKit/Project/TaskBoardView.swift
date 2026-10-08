@@ -165,7 +165,10 @@ struct BoardLanes: View {
             let doneKey = "\(project)/board-done-open"
             let folds = geo.size.width < DuoMetric.taskBoardFoldsBelow && lanes.count > 1 && lanes.contains { $0.status == "done" }
             let shown = folds ? lanes.filter { $0.status != "done" } : lanes
-            let stripRoom = folds ? DuoMetric.taskBoardDoneStripWidth + gap : 0
+            let adding = model.addingColumn
+            // + Add Column after the lanes (board 12): a + until it's clicked, then the name field.
+            let addRoom = (adding != nil ? DuoMetric.taskBoardAddColumnWidth : DuoMetric.taskBoardAddColumnIdle) + gap
+            let stripRoom = (folds ? DuoMetric.taskBoardDoneStripWidth + gap : 0) + addRoom
             let n = CGFloat(max(1, shown.count))
             let even = (inner - stripRoom - gap * (n - 1)) / n
             let scrolls = geo.size.width < DuoMetric.taskBoardScrollsBelow || even < DuoMetric.taskBoardLaneMin
@@ -175,6 +178,7 @@ struct BoardLanes: View {
                 if folds, let done = lanes.first(where: { $0.status == "done" }) {
                     DoneStrip(lane: done) { model.expandedGroups.insert(doneKey) }
                 }
+                AddColumn(project: project)
             }
             .padding(pad)
             .frame(minWidth: geo.size.width, maxHeight: .infinity, alignment: .topLeading)
@@ -196,6 +200,47 @@ struct BoardLanes: View {
                         .duoPopoverShadow()
                         .padding(.top, pad.top - 6).padding(.trailing, pad.trailing - 6).padding(.bottom, pad.bottom - 6)
                 }
+            }
+        }
+    }
+}
+
+/// + Add Column (board 12): a + after the lanes; clicked (or Add Column After…), a dashed box
+/// with the name field. Return adds the column, Esc or an empty name doesn't.
+struct AddColumn: View {
+    @Environment(AppModel.self) private var model
+    let project: String
+
+    var body: some View {
+        if model.addingColumn != nil {
+            VStack(alignment: .leading, spacing: 6) {
+                Color.clear.frame(height: DuoMetric.taskBoardLaneHeaderHeight)
+                VStack(alignment: .leading, spacing: 6) {
+                    InlineNameField(name: "", font: DuoTextStyle.control.spec.nsFont, placeholder: "Column name") { name in
+                        let after = model.addingColumn
+                        model.addingColumn = nil
+                        guard let name, !name.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+                        if let why = model.addColumn(name, after: after?.isEmpty == false ? after : nil, project: project) { model.info(why) }  // action: task column
+                    }
+                    .padding(.horizontal, 6)
+                    .frame(height: DuoMetric.taskBoardControlHeight)
+                    .background(RoundedRectangle(cornerRadius: DuoMetric.radiusField).fill(DuoColor.pane))
+                    .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusField).strokeBorder(DuoColor.rule, lineWidth: 1))
+                    Text("Return adds it · Esc").duoText(.control).foregroundStyle(DuoColor.text2)
+                }
+                .padding(10)
+                .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.controlEdge, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
+            }
+            .frame(width: DuoMetric.taskBoardAddColumnWidth)
+        } else {
+            VStack(spacing: 0) {
+                Color.clear.frame(height: DuoMetric.taskBoardLaneHeaderHeight + DuoMetric.taskBoardCardGap)
+                Text("+").font(.system(size: DuoMetric.rowActionGlyph)).foregroundStyle(DuoColor.text2)
+                    .frame(width: DuoMetric.taskBoardAddColumnIdle, height: DuoMetric.rowActionSize)
+                    .contentShape(Rectangle())
+                    .onActivate { model.addingColumn = "" }  // action: task column
+                    .help("Add Column")
+                    .accessibilityLabel("Add Column")
             }
         }
     }
@@ -236,13 +281,21 @@ struct LaneView: View {
                 Text("\(lane.title) · \(lane.count)").duoText(.sectionLabel)
                     .foregroundStyle(DuoColor.text2).lineLimit(1)
                 Spacer(minLength: 0)
+                if model.hoveredLane == lane.status || lane.extra {
+                    LaneMenu(project: project, lane: lane)
+                }
                 if let onClose {
-                    Chevron(direction: .down).frame(width: 10, height: 8).contentShape(Rectangle()).onActivate(onClose)
+                    Chevron(direction: .down).frame(width: 10, height: 8).contentShape(Rectangle()).onActivate(onClose)  // action: task board
                         .accessibilityLabel("Fold \(lane.title)")
                 }
             }
             .padding(.horizontal, 4)
             .frame(height: DuoMetric.taskBoardLaneHeaderHeight)
+            .contentShape(Rectangle())
+            .onHover { inside in
+                if inside { model.hoveredLane = lane.status } else if model.hoveredLane == lane.status { model.hoveredLane = nil }
+            }
+            .contextMenu { LaneMenuItems(project: project, lane: lane) }
             let hot = model.boardDropLane == lane.status && model.dragging?.hasPrefix("duo-card:\(project)/") == true
             let moving = hot ? model.dragging.flatMap { model.card(fromPayload: $0, project: project) } : nil
             let incoming = moving.flatMap { p in model.fixture.tasks?.first { $0.project == project && $0.path == p } }
@@ -282,6 +335,47 @@ struct LaneView: View {
         .onDrop(of: [.plainText, .utf8PlainText], delegate: LaneDrop(model: model, project: project, status: lane.status))  // action: task status
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(lane.title), \(lane.count) tasks")
+    }
+}
+
+/// A lane's ⋯ (board 12): Move Left, Move Right, Add Column After…, Remove Column…; Keep as
+/// Column on a lane for a status that isn't a column.
+struct LaneMenu: View {
+    let project: String
+    let lane: TaskBoard.Lane
+
+    var body: some View {
+        Menu { LaneMenuItems(project: project, lane: lane) } label: {
+            Text("···").font(.system(size: 11, weight: .bold)).foregroundStyle(DuoColor.text2)
+                .frame(width: 22, height: 18)
+                .background(RoundedRectangle(cornerRadius: 4).fill(DuoColor.selected))
+        }
+        .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+        .accessibilityLabel("\(lane.title) column menu")
+    }
+}
+
+struct LaneMenuItems: View {
+    @Environment(AppModel.self) private var model
+    let project: String
+    let lane: TaskBoard.Lane
+
+    var body: some View {
+        if lane.extra {
+            Button("Keep as Column") { if let why = model.keepColumn(lane.status, project: project) { model.info(why) } }  // action: task column
+        } else {
+            let lanes = model.boardLanes(project)
+            let i = lanes.firstIndex(of: lane.status) ?? 0
+            Button("Move Left") { if let why = model.moveColumn(lane.status, by: -1, project: project) { model.info(why) } }  // action: task column
+                .disabled(i == 0)
+            Button("Move Right") { if let why = model.moveColumn(lane.status, by: 1, project: project) { model.info(why) } }  // action: task column
+                .disabled(i >= lanes.count - 1)
+            Divider()
+            Button("Add Column After…") { model.addingColumn = lane.status }  // action: task column
+            Divider()
+            Button("Remove Column…") { model.askRemoveColumn(lane.status, project: project) }  // action: task column
+                .disabled(TaskBoard.fixedLanes.contains(lane.status))
+        }
     }
 }
 

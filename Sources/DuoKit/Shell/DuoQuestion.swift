@@ -21,6 +21,16 @@ public struct DuoQuestion: Identifiable {
         public var text: String
         public init(label: String, text: String) { self.label = label; self.text = text }
     }
+    /// A choice from a short list, as a popup (`Move it to [In progress ▾]`, task-board board 12).
+    /// A class, so the choices read what was picked when they run.
+    public final class Pick {
+        public let label: String
+        public let options: [(value: String, title: String)]
+        public var selected: String
+        public init(label: String, options: [(value: String, title: String)], selected: String) {
+            self.label = label; self.options = options; self.selected = selected
+        }
+    }
     public struct Choice {
         public var label: String
         public var isDefault = false
@@ -35,6 +45,7 @@ public struct DuoQuestion: Identifiable {
     /// What it changes, each with its path, in a box (launch questions, merges, deletes).
     public var items: [Item] = []
     public var field: Field? = nil
+    public var pick: Pick? = nil
     public var note: String? = nil
     /// Lines under the first paragraph in a `WHAT’S NEW` box, up to 160 high, then it scrolls
     /// (the update question, DL-132 b).
@@ -60,6 +71,8 @@ public struct DuoQuestion: Identifiable {
 @MainActor @Observable public final class SheetCenter {
     public static let shared = SheetCenter()
     public private(set) var queue: [DuoQuestion] = []
+    /// Bumped when a question's popup changes.
+    public var pickRevision = 0
     public var current: DuoQuestion? { queue.first }
 
     public func ask(_ q: DuoQuestion) {
@@ -163,6 +176,7 @@ struct QuestionSheet: View {
                                changed: { f.text = $0 })
                 }
             }
+            if let p = q.pick { PickRow(pick: p) }
             if let n = q.note {
                 Text(Self.rich(n)).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
             }
@@ -206,5 +220,23 @@ struct QuestionSheet: View {
             out += a
         }
         return out
+    }
+}
+
+/// A question's popup: its label, then the options as a pop-up button.
+struct PickRow: View {
+    let pick: DuoQuestion.Pick
+
+    var body: some View {
+        let center = SheetCenter.shared
+        let _ = center.pickRevision   // redrawn when the pick changes (the Pick is a class)
+        HStack(spacing: 8) {
+            Text(pick.label).duoText(.body)
+            Picker("", selection: Binding(get: { pick.selected }, set: { pick.selected = $0; center.pickRevision += 1 })) {
+                ForEach(pick.options, id: \.value) { o in Text(o.title).tag(o.value) }
+            }
+            .labelsHidden().pickerStyle(.menu).fixedSize()
+            Spacer(minLength: 0)
+        }
     }
 }

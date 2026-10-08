@@ -311,6 +311,11 @@ public enum FixtureHarness {
                 model.dragging = AppModel.dragPayload(card: p, path: kv[0])
                 model.boardDropLane = kv.count > 1 ? kv[1] : nil
             }
+        case "ask-remove-column":   // ask-remove-column:<status>: Remove Column… on that lane (its question)
+            if parts.count > 1, let p = model.currentProject?.name { model.askRemoveColumn(parts[1], project: p) }
+        case "add-column":   // add-column[:<after>]: the name field, as + Add Column or Add Column After… opens it
+            model.addingColumn = parts.count > 1 ? parts[1] : ""
+        case "hover-lane": model.hoveredLane = parts.count > 1 ? parts[1] : nil   // hover-lane:<status>: its ⋯
         case "board-filter": model.boardFilter = parts.count > 1 ? parts[1] : ""
         case "task-session":   // task-session:<path>: New Session in Task on a task in the open project
             if parts.count > 1, let p = model.currentProject?.name { model.startSession(inTask: parts[1], project: p) }
