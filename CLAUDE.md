@@ -31,7 +31,12 @@ One session, `*DUO DIRECTOR*`, runs the other sessions as their engineering mana
 
 ## Model efficiency
 
-DL-153, a rule for agents, not app behaviour: use the lightest model that does the job. Test turns and test drivers run on `claude-haiku-5-5` (through `DUO_MODEL`/`ANTHROPIC_MODEL`); subagents for sweeps, measurement loops, bisects and mechanical edits run on Haiku or Sonnet; keep the large model for design, judgement and root-causing. Never put model choice into Duo's code.
+A rule for how we work, not app behaviour (DL-153; Geoff, 2026-10-08). Use the model the job needs:
+- **Opus 5.5** (`claude-opus-5-5`) for planning: design studies, research, root-causing, reviews, and deciding what to build.
+- **Sonnet 5.5** (`claude-sonnet-5-5`) for executing well-scoped tasks: a build against an approved handoff, a fix with a known cause, mechanical edits. Background build sessions start with `--model claude-sonnet-5-5`; subagents for scoped work use `model: sonnet`.
+- **Haiku 5.5** (`claude-haiku-5-5`) for test execution and validation: test turns and drivers (`DUO_MODEL`/`ANTHROPIC_MODEL`, run-live.sh's default), check runs, sweeps and measurement loops (subagents with `model: haiku`).
+
+A session doing a mix plans on Opus and hands the scoped parts and the test loops to Sonnet and Haiku subagents. Never put model choice into Duo's code.
 
 ## Visible test runs
 
