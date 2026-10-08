@@ -1788,7 +1788,7 @@ func repoFixture() throws -> Fixture {
         let before = TextWidth.measured
         for _ in 0..<50 { for t in titles { _ = TextWidth.of(t, font: font) } }
         check(TextWidth.measured - before == titles.count, "50 passes over 5 titles measure each once (\(TextWidth.measured - before))")
-        check(TextWidth.of("plain", font: font) == ceil(("plain" as NSString).size(withAttributes: [.font: font]).width), "the width is the string's own")
+        check(TextWidth.of("plain", font: font) == ("plain" as NSString).size(withAttributes: [.font: font]).width, "the width is the string's own")
         // The fit matches the old loop: full, short, then drop from the right, never the selected.
         func old(_ full: [CGFloat], _ short: [CGFloat], _ sel: Int?, _ width: CGFloat) -> ([Bool], Bool) {
             let c: CGFloat = 41, m: CGFloat = 49
