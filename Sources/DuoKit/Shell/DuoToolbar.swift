@@ -132,6 +132,8 @@ struct ProjectBreadcrumb: View {
                     .accessibilityHidden(true)
             }
             Text(model.currentProject?.name ?? "").duoText(.bodyEmphasis).foregroundStyle(DuoColor.text)
+            // Sessions | Tasks (DL-148, board 4), live projects only.
+            BoardSwitch().padding(.leading, 2)
             NeedsYouChip()
                 .padding(.leading, 8)
         }

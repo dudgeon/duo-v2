@@ -106,9 +106,22 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var sessionIds: [String]
         /// Archived (DL-115): out of the lists and counts, in the project's Archived fold.
         public var archived: Bool? = nil
+        /// What a board card shows (DL-148); absent in the design fixture.
+        public var owner: String? = nil
+        public var waitingOn: String? = nil
+        public var due: String? = nil
+        public var created: String? = nil
+        public var completed: String? = nil
+        public var references: Int? = nil
         public var id: String { project + "/" + path }
         public init(project: String, path: String, title: String, status: String?, sessionIds: [String], archived: Bool? = nil) {
             self.project = project; self.path = path; self.title = title; self.status = status; self.sessionIds = sessionIds; self.archived = archived
+        }
+        /// A task note as the lists and the board see it.
+        public init(project: String, note t: TaskNote) {
+            self.init(project: project, path: t.path, title: t.title, status: t.status, sessionIds: t.sessionIds, archived: t.archived ? true : nil)
+            owner = t.owner; waitingOn = t.waitingOn; due = t.due; created = t.created; completed = t.completed
+            references = t.references.isEmpty ? nil : t.references.count
         }
         /// Done and dropped tasks leave the lists (they stay notes), and so do archived ones.
         public var isOpen: Bool { !["done", "dropped"].contains(status ?? "") && archived != true }

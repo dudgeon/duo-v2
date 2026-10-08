@@ -43,7 +43,15 @@ extension AppModel {
         let path = text.split(separator: "#", maxSplits: 1).first.map(String.init)?.removingPercentEncoding ?? text
         guard let base = document?.deletingLastPathComponent() ?? projectFolder else { return }
         let target = URL(fileURLWithPath: path, relativeTo: base).standardizedFileURL
-        guard FileManager.default.fileExists(atPath: target.path) else { return info("\(path) isn't there.") }
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: target.path, isDirectory: &isDir) else { return info("\(path) isn't there.") }
+        // A folder (a task's reference, DL-150): revealed in the project's file tree, else in Finder.
+        if isDir.boolValue {
+            if let folder = projectFolder?.standardizedFileURL.path, target.path.hasPrefix(folder + "/") {
+                return revealInTree(String(target.path.dropFirst(folder.count + 1)))
+            }
+            return NSWorkspace.shared.activateFileViewerSelecting([target])
+        }
         if let folder = projectFolder?.standardizedFileURL.path, target.path.hasPrefix(folder + "/") {
             openDocument(String(target.path.dropFirst(folder.count + 1)))
         } else {
@@ -64,5 +72,20 @@ extension AppModel {
         // Within the project already (a link in one of its notes): keep the note on screen.
         if currentProject?.name != s.project { open(project: s.project) }
         openConsoleTab(s.tabKey)
+    }
+
+    /// Shows a folder in the project's file tree: the board steps aside (it covers the tree), the
+    /// folder and the ones above it open, and it's selected.
+    public func revealInTree(_ path: String) {
+        guard let p = currentProject?.name else { return }
+        if boardProjects.contains(p) { showBoard(false, project: p) }
+        if leftCollapsed { leftCollapsed = false }
+        let parts = path.split(separator: "/").map(String.init)
+        for i in parts.indices { expandedFolders[p, default: []].insert(parts[0...i].joined(separator: "/")) }
+        if let root = liveFolders[p] {
+            localChange += 1
+            fixture.projectFiles[p] = LiveSnapshot.treeFiles(root, showHidden: showHiddenFiles, expanded: expandedFolders[p] ?? [])
+        }
+        selectedFile = path.hasSuffix("/") ? path : path + "/"
     }
 }

@@ -132,9 +132,10 @@ extension AppModel {
         c.backToChat()
     }
 
-    /// A chat on screen (ENH-45): Home's tab at All projects, or the console's tab in a project.
+    /// A chat on screen (ENH-45): Home's tab at All projects, or the console's tab in a project
+    /// that isn't showing its task board (DL-148: the board covers the console).
     func chatIsShown(_ key: String) -> Bool {
-        altitude.isAllProjects ? homeTab == key : consoleTab == key
+        altitude.isAllProjects ? homeTab == key : consoleTab == key && !boardShown
     }
 
     /// The chat for a Claude terminal: made on first use, reading that terminal's screen.

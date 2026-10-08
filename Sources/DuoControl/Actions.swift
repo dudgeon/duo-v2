@@ -52,6 +52,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskSession = "task session", taskStatus = "task status"
     case taskRename = "task rename", taskArchive = "task archive", taskUnarchive = "task unarchive", taskDelete = "task delete"
     case taskMove = "task move", taskLink = "task link", taskReveal = "task reveal"
+    case taskBoard = "task board", taskColumn = "task column", taskReference = "task reference", taskBase = "task base"
     case templateShow = "template show", templateEdit = "template edit", templateCopy = "template copy", templateReset = "template reset", templatePreview = "template preview"
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
@@ -192,7 +193,7 @@ extension DuoAction {
         .init(.sessionShow, .sessions, "<id>", "A session's title, project, state, note, next step, transcript path and recent turns.", everyday: true),
         .init(.sessionNew, .sessions, "[--project <p>] [--prompt <text>] [--remote-control [name]]", "Start a Claude session in a project (the current one by default). --remote-control makes it reachable from the Claude app, named <name> or its project and a short id, and keeps it on when the session resumes; a claude without the flag starts without it and the reply says so.",
               ui: ["+ New session", "New Session", "console +", "New Claude Session", "Start Claude here", "Start Claude in Home", "Start in"]),
-        .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab", "Resume"]),
+        .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab", "Resume", "Open Session"]),
         .init(.sessionClose, .sessions, "[id] [--force]", "End a session's process and close its tab (it stays listed and resumable). Refuses while Claude is working there, unless --force.", ui: ["Close Tab", "End Session"]),
         .init(.sessionMove, .sessions, "<id> --to <project> [--new]", "File a session in another project, or with --new in a new project of that name made in Home; it moves there on its next resume. The user confirms in Duo. Undo with `duo2 undo`.",
               ui: ["Move to Project", "New Project…", "drag a session onto a tile"], timeout: 600),
@@ -237,6 +238,14 @@ extension DuoAction {
         .init(.taskLink, .sessions, "<task> [--project <p>]", "A Markdown link to a task: [title](duo2://task/<id>). The id is written once into the note's `id:`, so the link survives renames and moves. Clicking it in Duo opens the note.",
               ui: ["Copy Link"]),
         .init(.taskReveal, .sessions, "<task> [--project <p>]", "Show a task's note in Finder.", ui: ["Reveal in Finder"]),
+        .init(.taskBoard, .sessions, "[show|hide|toggle] [--project <p>]", "The task board (DL-148): a project's Sessions | Tasks switch. Tasks shows the board over the session list and console, lanes by `status`, and a card's note in the right pane. With no argument, says which is showing and lists the board's lanes and cards. Drag between lanes is `duo2 task status`.",
+              ui: ["Sessions", "Tasks", "Board"]),
+        .init(.taskColumn, .sessions, "<add|remove|move|keep> <name> [--after <column>] [--to <column>] [--left|--right] [--project <p>]", "A board's columns (DL-150): each is a `status` value, listed in the project brief's `lanes:` (written the first time the default five change, then edited in place). add: the name's slug is the status (Blocked → blocked), at the end or --after a column. remove: Open and Done can't go; a column holding tasks moves them --to another (without --to, Duo asks the user). move --left|--right. keep: an unlisted status found on tasks becomes a column. Undo with `duo2 undo`.",
+              ui: ["+ Add Column", "Add Column After…", "Remove Column…", "Move Left", "Move Right", "Keep as Column", "Remove Column"], timeout: 600),
+        .init(.taskReference, .sessions, "<add|remove> <task> <file|folder|url> [--title <t>] [--project <p>]", "A task's references (DL-150): its `references:` frontmatter, a list of quoted markdown links to files, folders (trailing /) and web links, relative to the note. Written only when one is added; nothing else in the note changes. With the note open in Duo, the change goes through the editor. Undo with `duo2 undo`.",
+              ui: ["Remove from Task", "references field", "file dropped on a card"]),
+        .init(.taskBase, .sessions, "[show|add|update] [--project <p>]", "The Obsidian board (DL-20, DL-148): add writes tasks.base beside the project's brief, a Bases kanban view grouped by `status` with groupOrder pinned to the project's columns (sorted by due, then created) and a table view; Obsidian 1.14.4+ shows the same board, and a drag there writes `status`. Never written unless asked, never over a base that's there. update rewrites only its groupOrder lines when the columns change. show: where it is and whether it's out of date. Undo with `duo2 undo`.",
+              ui: ["Add Obsidian Board", "Update Obsidian Board", "Update"]),
         .init(.templateShow, .projects, "<project|task> [--project <p>]", "The template new projects or tasks are made from (DL-146): its text and whose it is (a project's own templates/new-task.md, Home's templates/new-<kind>.md, or Duo's base)."),
         .init(.templateEdit, .projects, "<project|task> [--project <p>]", "Open that template in the right pane with its template bar; with no file yet, Duo's base is written to Home's templates/ first.",
               ui: ["Edit Task Template", "Edit…"]),
@@ -403,6 +412,8 @@ extension DuoAction {
 public enum Parity {
     public static let uiOnly: [String: String] = [
         "Close Window": "window management",
+        "Anyone": "the task board's owner filter: view state; `duo2 task board` lists every card",
+        "Me": "the task board's owner filter: view state; `duo2 task board` lists every card",
         "Enter Full Screen": "window management",
         "Exit Full Screen": "window management",
         "Toggle Right Pane": "not built yet",
@@ -448,7 +459,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "force", "session-only"]
+    static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "force", "session-only", "left", "right"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     static let optionalValues: Set<String> = ["remote-control"]

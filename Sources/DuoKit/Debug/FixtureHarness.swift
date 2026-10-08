@@ -305,6 +305,33 @@ public enum FixtureHarness {
             }
         case "template-preview": model.toggleTemplatePreview()   // the template bar's Preview (DL-146, board A2)
         case "new-task": if let p = model.currentProject?.name { model.newTask(in: p) }   // + New task in the open project
+        case "board": model.showBoard(parts.count < 2 || parts[1] != "off")   // board[:off]: Sessions | Tasks (DL-148)
+        case "card": if parts.count > 1, let p = model.currentProject?.name { model.selectCard(project: p, path: parts[1]) }   // card:<path>: a click on a card
+        case "hover-card":   // hover-card:<path>[=<session title>]: the pointer over a card, or one of its session rows
+            if parts.count > 1, let p = model.currentProject?.name {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                model.hoveredCard = TaskRowHover.key(project: p, path: kv[0])
+                if kv.count > 1, let s = model.fixture.sessions.first(where: { $0.project == p && $0.name == kv[1] }) {
+                    model.hoveredCardSession = "\(p)/\(kv[0])#\(s.sessionId ?? "")"
+                }
+            }
+        case "move-card":   // move-card:<path>=<status>: a card dropped on that lane
+            if parts.count > 1, let p = model.currentProject?.name {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                if kv.count == 2 { _ = model.moveCard(project: p, path: kv[0], to: kv[1]) }
+            }
+        case "drag-card":   // drag-card:<path>=<lane>: hold a card over a lane, mid-drag (board 7)
+            if parts.count > 1, let p = model.currentProject?.name {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                model.dragging = AppModel.dragPayload(card: p, path: kv[0])
+                model.boardDropLane = kv.count > 1 ? kv[1] : nil
+            }
+        case "ask-remove-column":   // ask-remove-column:<status>: Remove Column… on that lane (its question)
+            if parts.count > 1, let p = model.currentProject?.name { model.askRemoveColumn(parts[1], project: p) }
+        case "add-column":   // add-column[:<after>]: the name field, as + Add Column or Add Column After… opens it
+            model.addingColumn = parts.count > 1 ? parts[1] : ""
+        case "hover-lane": model.hoveredLane = parts.count > 1 ? parts[1] : nil   // hover-lane:<status>: its ⋯
+        case "board-filter": model.boardFilter = parts.count > 1 ? parts[1] : ""
         case "task-session":   // task-session:<path>: New Session in Task on a task in the open project
             if parts.count > 1, let p = model.currentProject?.name { model.startSession(inTask: parts[1], project: p) }
         case "hover-task":   // hover-task:<path>: the pointer over a task's row (its +, DL-112); in the open project, else the first with that note

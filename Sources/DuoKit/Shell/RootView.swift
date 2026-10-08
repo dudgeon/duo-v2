@@ -90,7 +90,9 @@ struct ProjectLayout: View {
             ],
             dividerColors: [DuoNSColor.rule, DuoNSColor.rule],
             paneBackgrounds: [DuoNSColor.pane, DuoNSColor.console, DuoNSColor.pane],
-            model: model
+            model: model,
+            // The task board (DL-148, C): over the session list and console; watched by the split.
+            cover: (AnyView(TaskBoardPane()), { $0.boardShown })
         )
     }
 }

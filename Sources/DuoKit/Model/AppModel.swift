@@ -62,6 +62,29 @@ public final class AppModel {
     @ObservationIgnored var sidebarShown: [String: String] = [:]
     /// The task row under the pointer ("<project>/<note path>"), which shows its + (DL-112).
     public var hoveredTaskRow: String?
+    /// Projects showing their task board in place of the session list and console (DL-148, C):
+    /// the toolbar's Sessions | Tasks switch.
+    public var boardProjects: Set<String> = []
+    /// The board's Filter tasks field and Anyone ▾ popup (nil: anyone; "" : you).
+    public var boardFilter = ""
+    public var boardOwner: String?
+    /// The card under the pointer ("<project>/<note path>"), the session row under it, and a lane
+    /// header under it (for its ⋯).
+    public var hoveredCard: String?
+    public var hoveredCardSession: String?
+    public var hoveredLane: String?
+    /// A card being dragged ("<project>/<note path>") and the lane it's over (DL-148, board 7).
+    public var boardDrag: String?
+    public var boardDropLane: String?
+    /// Cards just dropped on Done, held ticked in the lane they left for Mark Complete's hold
+    /// (DL-130): "<project>/<note path>" → that lane's status.
+    public var boardHeld: [String: String] = [:]
+    /// A column being named: "" at the end of the lanes, or the status it goes after.
+    public var addingColumn: String?
+    @ObservationIgnored var boardKeyMonitor: Any?
+    /// Each project's lanes as read from its brief, until the brief changes.
+    @ObservationIgnored var baseOrderCache: [String: (url: URL, stamp: Date?, order: [String]?)] = [:]
+    @ObservationIgnored var briefLanesCache: [String: (url: URL, stamp: Date?, lanes: [String])] = [:]
     /// The tab under the pointer (a console or Home tab's key, or a right-pane document path),
     /// which shows its close button (DL-126); `hoveredTabClose` when the pointer is on the button,
     /// `pressedTabClose` a press held for a capture (FixtureHarness `hover-tab`).
@@ -273,6 +296,9 @@ public final class AppModel {
     /// Property names and values for the properties block's suggestions, per project (PropertyCorpus).
     @ObservationIgnored var propertyCorpus: (project: String, at: Date, json: [String: Any])?
     @ObservationIgnored var scanningCorpus = false
+    /// The project's files and folders for a task's references field (DL-150), rescanned at most once a minute.
+    @ObservationIgnored var referenceFiles: (project: String, at: Date, files: [String])?
+    @ObservationIgnored var scanningReferences = false
     /// Sessions already notified for their current wait (S3-6).
     @ObservationIgnored var notified = Set<String>()
     /// Sparkle's "Check for Updates", when the app started it (release builds).

@@ -71,7 +71,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 sessions [--project <p>]` | Sessions with id, state, title and project. | — |
 | `duo2 session show <id>` | A session's title, project, state, note, next step, transcript path and recent turns. | — |
 | `duo2 session new [--project <p>] [--prompt <text>] [--remote-control [name]]` | Start a Claude session in a project (the current one by default). --remote-control makes it reachable from the Claude app, named <name> or its project and a short id, and keeps it on when the session resumes; a claude without the flag starts without it and the reply says so. | + New session, New Session, console +, New Claude Session, Start Claude here, Start Claude in Home, Start in |
-| `duo2 session open <id>` | Show a session's terminal, resuming it if needed. | session row, console tab, Home tab, Resume |
+| `duo2 session open <id>` | Show a session's terminal, resuming it if needed. | session row, console tab, Home tab, Resume, Open Session |
 | `duo2 session close [id] [--force]` | End a session's process and close its tab (it stays listed and resumable). Refuses while Claude is working there, unless --force. | Close Tab, End Session |
 | `duo2 session move <id> --to <project> [--new]` | File a session in another project, or with --new in a new project of that name made in Home; it moves there on its next resume. The user confirms in Duo. Undo with `duo2 undo`. | Move to Project, New Project…, drag a session onto a tile |
 | `duo2 session note <text>` | Tell the user what this session is doing (one line, shown in Duo). | — |
@@ -99,6 +99,10 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 task move <task> <project> [--sessions\|--keep-sessions] [--project <p>]` | Move a task's note to another project's tasks/. With --sessions its sessions in this project move too; --keep-sessions leaves them. With neither and sessions to move, Duo asks the user. Undo with `duo2 undo`. | Move to Project |
 | `duo2 task link <task> [--project <p>]` | A Markdown link to a task: [title](duo2://task/<id>). The id is written once into the note's `id:`, so the link survives renames and moves. Clicking it in Duo opens the note. | Copy Link |
 | `duo2 task reveal <task> [--project <p>]` | Show a task's note in Finder. | Reveal in Finder |
+| `duo2 task board [show\|hide\|toggle] [--project <p>]` | The task board (DL-148): a project's Sessions \| Tasks switch. Tasks shows the board over the session list and console, lanes by `status`, and a card's note in the right pane. With no argument, says which is showing and lists the board's lanes and cards. Drag between lanes is `duo2 task status`. | Sessions, Tasks, Board |
+| `duo2 task column <add\|remove\|move\|keep> <name> [--after <column>] [--to <column>] [--left\|--right] [--project <p>]` | A board's columns (DL-150): each is a `status` value, listed in the project brief's `lanes:` (written the first time the default five change, then edited in place). add: the name's slug is the status (Blocked → blocked), at the end or --after a column. remove: Open and Done can't go; a column holding tasks moves them --to another (without --to, Duo asks the user). move --left\|--right. keep: an unlisted status found on tasks becomes a column. Undo with `duo2 undo`. | + Add Column, Add Column After…, Remove Column…, Move Left, Move Right, Keep as Column, Remove Column |
+| `duo2 task reference <add\|remove> <task> <file\|folder\|url> [--title <t>] [--project <p>]` | A task's references (DL-150): its `references:` frontmatter, a list of quoted markdown links to files, folders (trailing /) and web links, relative to the note. Written only when one is added; nothing else in the note changes. With the note open in Duo, the change goes through the editor. Undo with `duo2 undo`. | Remove from Task, references field, file dropped on a card |
+| `duo2 task base [show\|add\|update] [--project <p>]` | The Obsidian board (DL-20, DL-148): add writes tasks.base beside the project's brief, a Bases kanban view grouped by `status` with groupOrder pinned to the project's columns (sorted by due, then created) and a table view; Obsidian 1.14.4+ shows the same board, and a drag there writes `status`. Never written unless asked, never over a base that's there. update rewrites only its groupOrder lines when the columns change. show: where it is and whether it's out of date. Undo with `duo2 undo`. | Add Obsidian Board, Update Obsidian Board, Update |
 | `duo2 groups [--project <p>]` | Groups and their sessions, with each group's most urgent state. | — |
 | `duo2 group new <name> <session>…` | Group sessions of one project under a name. | — |
 | `duo2 group add <group> <session>…` | Add sessions to a group. | — |
@@ -240,6 +244,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 |---|---|
 | Add to .gitignore | a one-time question to the user (DL-50) |
 | Align Column | a submenu, not an action |
+| Anyone | the task board's owner filter: view state; `duo2 task board` lists every card |
 | Ask Claude to Combine | drafts the conflict's instruction into the project's Claude session, unsent (DL-149 board 11) |
 | Ask Claude to Remove It | drafts an instruction about the refused secret into the project's Claude session, unsent (DL-149 board 10) |
 | Cancel | a step inside another action's dialog or picker |
@@ -252,6 +257,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Install Now | on the update question: hands to Sparkle's own window, which installs only once the user agrees there (and gives an administrator password where one is needed); `duo2 update` says whether one is (DL-114) |
 | Later | the user's answer to the update question; it remembers the version so the launch and scheduled checks don't ask again (DL-114) |
 | Look Again | re-reads what Duo already refreshes every 2 s; the CLI always reads fresh state |
+| Me | the task board's owner filter: view state; `duo2 task board` lists every card |
 | Next Pane | not built yet |
 | No other sessions in | a disabled hint on + Add |
 | No templates yet: add .md files to a templates folder | a disabled hint |

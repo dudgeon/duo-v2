@@ -674,12 +674,16 @@ struct FileMenu: View {
 /// Return confirms, Esc cancels.
 struct InlineNameField: NSViewRepresentable {
     let name: String
+    /// Another font and a placeholder (a board's Column name field, DL-150); the tree's mono otherwise.
+    var font: NSFont? = nil
+    var placeholder: String? = nil
     let done: (String?) -> Void
 
     func makeNSView(context: Context) -> NSTextField {
         let f = EscapableField(string: name)
         f.onEscape = { [weak coordinator = context.coordinator] in coordinator?.cancel() }
-        f.font = NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)
+        f.font = font ?? NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)
+        f.placeholderString = placeholder
         f.focusRingType = .none
         f.isBezeled = false
         f.drawsBackground = true

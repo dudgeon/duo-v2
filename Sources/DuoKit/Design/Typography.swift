@@ -28,6 +28,11 @@ public struct DuoTextSpec: Sendable {
         return f.ascender - f.descender + f.leading
     }
 
+    /// The same style at another weight (emphasis), for measuring.
+    public func withWeight(_ w: Font.Weight?) -> DuoTextSpec {
+        DuoTextSpec(size: size, lineHeight: lineHeight, weight: w ?? weight, mono: mono, tracking: tracking, uppercase: uppercase)
+    }
+
     public var extraLeading: CGFloat { max(0, lineHeight - naturalLineHeight) }
 
     /// CoreText's exact line height puts all the extra leading below the glyphs; CSS splits it
