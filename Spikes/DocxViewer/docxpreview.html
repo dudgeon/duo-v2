@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8">
+<script>window.__errs = []; addEventListener("error", e => __errs.push(e.message + " @" + (e.filename || "").split("/").pop() + ":" + e.lineno));</script>
+<title>DOCX spike: docx-preview</title>
+<link rel="stylesheet" href="style.css">
+<script src="vendor/jszip/jszip.min.js"></script>
+<script type="importmap">{ "imports": { "jszip": "./vendor/jszip/shim.mjs" } }</script>
+<div id="host"></div>
+<script type="module">
+import { renderAsync } from './vendor/docx-preview/docx-preview.mjs';
+import { setup } from './harness.js';
+const h = setup('docx-preview 0.4.1 (patched: data-para-id)', ['markup', 'clean']);
+const t0 = performance.now();
+const buf = await (await fetch(h.url)).arrayBuffer();
+const host = document.getElementById('host');
+const markup = h.mode !== 'clean';
+await renderAsync(buf, host, null, { renderComments: markup, renderChanges: markup, experimental: true, breakPages: true });
+h.rendered(performance.now() - t0, host.querySelectorAll('section.docx').length);
+h.pickParagraphs(host, 'data-para-id', id => ({ paraId: id }));
+</script>
