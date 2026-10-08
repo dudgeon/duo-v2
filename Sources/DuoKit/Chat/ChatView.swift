@@ -38,6 +38,13 @@ public final class ChatUIState {
     public init() {}
 }
 
+public enum ChatFeedShape {
+    /// Whether the feed is lazy (F-226). Measured on the heavy generated session: a plain stack
+    /// keeps every check-chat-perf budget up to 48 items and 238 steps (open 465 ms, a reply while
+    /// scrolled up 218 ms); at 24 items and 567 steps a reply while scrolled up took 355 ms.
+    public static func isLazy(items: Int, steps: Int) -> Bool { items > 48 || steps > 250 }
+}
+
 struct ChatPane: View {
     @Environment(AppModel.self) private var model
     let chat: ChatSession
@@ -46,19 +53,15 @@ struct ChatPane: View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
                 ScrollView(.vertical) {
-                    LazyVStack(alignment: .leading, spacing: 16) {
-                        // Q-56c's stand-in: the last 50 turns, and more on request.
-                        if chat.log.earlierHidden {
-                            Text("Earlier turns").duoText(.chatMeta).foregroundStyle(DuoColor.text).underline(color: DuoColor.controlEdge)
-                                .frame(maxWidth: .infinity)
-                                .onActivate { chat.loadEarlier() }  // not an action: shows more of the transcript
+                    // A chat of up to 48 items and 250 steps is a plain stack: every item laid out, its
+                    // height known, nothing estimated, so SwiftUI's lazy-layout loop that froze 0.2.6
+                    // at work can't arise (F-226). A longer one stays lazy, as F-157 built it.
+                    Group {
+                        if ChatFeedShape.isLazy(items: chat.log.items.count, steps: chat.log.steps.count) {
+                            LazyVStack(alignment: .leading, spacing: 16) { rows }
+                        } else {
+                            VStack(alignment: .leading, spacing: 16) { rows }
                         }
-                        // A new item (your prompt, a tool card, Claude's reply) fades in where it lands
-                        // (`messageIn`, DL-130); streaming text grows in place, unanimated.
-                        ForEach(chat.log.items) { item in
-                            ChatItemView(item: item, chat: chat).id(item.id).transition(.opacity)
-                        }
-                        ChatWorkingLine(chat: chat)
                     }
                     .duoAnimation(.messageIn, value: chat.log.items.count)
                     .padding(EdgeInsets(top: 18, leading: DuoSpace.chatColumnInset, bottom: 12, trailing: DuoSpace.chatColumnInset))
@@ -134,6 +137,22 @@ struct ChatPane: View {
     }
 
     static let bottom = "chat-bottom"
+
+
+    @ViewBuilder var rows: some View {
+        // Q-56c's stand-in: the last 50 turns, and more on request.
+        if chat.log.earlierHidden {
+            Text("Earlier turns").duoText(.chatMeta).foregroundStyle(DuoColor.text).underline(color: DuoColor.controlEdge)
+                .frame(maxWidth: .infinity)
+                .onActivate { chat.loadEarlier() }  // not an action: shows more of the transcript
+        }
+        // A new item (your prompt, a tool card, Claude's reply) fades in where it lands
+        // (`messageIn`, DL-130); streaming text grows in place, unanimated.
+        ForEach(chat.log.items) { item in
+            ChatItemView(item: item, chat: chat).id(item.id).transition(.opacity)
+        }
+        ChatWorkingLine(chat: chat)
+    }
 
     /// Back to the end of the feed, at most once per turn of the run loop, and never more than 20
     /// times in a second: content that keeps changing size can't scroll it for ever (F-225). Past
