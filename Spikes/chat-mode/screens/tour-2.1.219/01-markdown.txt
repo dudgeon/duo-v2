@@ -1,0 +1,33 @@
+▝▜█████▛▘  Haiku 4.5 · API Usage Billing
+  ▘▘ ▝▝    /private/tmp/d-sc/cap219/scratch/ws
+
+
+❯ SCENARIO:md                                                                                       
+
+⏺ Results
+
+  Here is bold, italic, code and a link (https://example.com).
+
+  ┌─────┬───────┐
+  │ Col │ Value │
+  ├─────┼───────┤
+  │ a   │ 1     │
+  ├─────┼───────┤
+  │ b   │ 2     │
+  └─────┴───────┘
+
+  let x = 1
+  print(x)
+
+  - one
+  - two
+    - nested
+
+  See /tmp/example.txt:12 for more.
+
+✻ Worked for 2s
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on · ? for shortcuts · ← for agents

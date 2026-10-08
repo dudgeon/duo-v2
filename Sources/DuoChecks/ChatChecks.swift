@@ -83,6 +83,21 @@ func spikeScreen(_ name: String) -> String {
               "DL-145, DL-155: verified versions; any other 2.1.x, older or newer, by its screens; another version or none, not")
     }
 
+    print("chat mode: Claude Code 2.1.219, the version work pins (DL-155, F-208)")
+    do {
+        // The 2.1.291 tour run on the real 2.1.219 against the mock (Spikes/chat-mode/screens/tour-2.1.219).
+        let expect: [(String, ChatScreen.Kind)] = [("01-markdown", .idle), ("02-bash-permission", .permission), ("03-edit-permission", .permission),
+            ("04-question", .question), ("05-multi", .question), ("06-review", .questionReview), ("07-agent", .idle), ("08-plan-mode", .idle),
+            ("09-plan", .plan), ("10-streaming", .busy), ("11-interrupted", .idle), ("12-unknown-model-picker", .picker), ("13-retrying", .busy)]
+        let read = expect.map { ($0.0, $0.1, ChatScreenReader.read(spikeScreen("tour-2.1.219/\($0.0).txt"))) }
+        let wrong = read.filter { $0.2.kind != $0.1 }.map { "\($0.0): \($0.2.kind)" }
+        check(wrong.isEmpty, "each 2.1.219 screen reads as its kind (\(wrong))")
+        let broken = read.filter { !ChatScreenReader.wellFormed($0.2) }.map(\.0)
+        check(broken.isEmpty, "and every dialog reads whole, so chat answers it (\(broken))")
+        check(read[1].2.options.map(\.label) == ["Yes", "Yes, and always allow access to ws/ from this project", "No"]
+              && read[8].2.options.count == 3 && read[7].2.mode == .plan, "2.1.219's own words: a Bash permission's options, plan approval, plan mode")
+    }
+
     print("chat mode: falling back to the terminal (spike's fallback rules, DL-118 §3)")
     do {
         let idleText = spikeScreen("tour-2.1.291/01-markdown.txt")
