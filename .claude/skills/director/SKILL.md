@@ -32,6 +32,7 @@ Rebuild your picture before acting:
   - which other sessions are working where (stay out of their files);
   - how to prove it (DuoChecks, `scripts/bundle.sh`, `NO_BUILD=1 scripts/check-ui.sh`, captures against the boards, the relevant check scripts);
   - isolation for every scripted run (its own short `DUO_SUPPORT_DIR`, a scratch `CLAUDE_CONFIG_DIR`, no Google account, no real Claude turns except an approved real-login test, and any that run use Haiku 5.5, the default for test instances (DL-153));
+  - **model efficiency** (Geoff, 2026-10-08; DL-153 is a dev rule, never app behaviour): test turns and drivers on claude-haiku-5-5 (DUO_MODEL/ANTHROPIC_MODEL); subagents for sweeps, measurement loops, bisects and mechanical edits on Haiku or Sonnet; the big model only for design, judgement and root-causing. Never put model choice into Duo's code;
   - for design work: a Design canvas with the Duo design system, every mark [P], one AskUserQuestion round, and a handoff exported to `docs/design/<x>-handoff/`;
   - "Don't publish the design-system artifact" (the walk session is its only publisher);
   - "Message DUO DIRECTOR (SendMessage) with the branch, the full shas, the records and the checks when it's committed." For big jobs, ask for it in slices, so each merge is small.
