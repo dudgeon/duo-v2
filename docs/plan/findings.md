@@ -2653,3 +2653,23 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - **Proof:**
   - All 66 chat-board captures are pixel-identical to 0.2.6's, apart from the blinking caret (rows 794–815 of two boards, each identical on a second run).
   - check-chat-perf: 7 of 7 within budget. Opening a long chat took 86 ms (229 before); a reply while scrolled up took 6 ms (77 before) and didn't pull the view down; replies at the bottom are followed.
+
+## F-226 · A chat of up to 48 items and 250 steps is a plain stack, so the lazy-layout loop can't happen there
+
+- 0.2.6's freeze was inside `LazyLayoutViewCache` itself (F-225). Geoff gets one test a day at work, so as well as F-225's fix, the feed avoids the lazy stack where it can afford to: `ChatFeedShape.isLazy(items:steps:)` is false up to 48 items and 250 steps, and ChatPane draws those as a `VStack`. The chat that froze, at 24 items and 86 steps, has no lazy stack.
+- **Measured** (release build, `scripts/perf-chat.sh --heavy` at several sizes, every feed plain; budgets are open 600 ms, flick 250, replies at the bottom 600, a reply while scrolled up 250):
+
+  | Items / steps | Open | Flick | Replies at the bottom | Reply while scrolled up | Memory |
+  |---|---|---|---|---|---|
+  | 24 / 101 | 208 ms | 8 | 139 | 46 | 149 MB |
+  | 48 / 119 | 341 ms | 12 | 247 | 218 | 218 MB |
+  | 48 / 238 | 465 ms | 20 | 206 | 93 | 288 MB |
+  | 24 / 567 | 432 ms | 36 | 465 | **355** | 362 MB |
+  | 100 / 1,945 | **1,843 ms** | 75 | **1,084** | **800** | 1,046 MB |
+
+  Hence the cut at 48 items and 250 steps. Past either, the feed is lazy as F-157 built it, with F-225's bounded follow.
+- **Proof:**
+  - check-chat-perf on the heavy session (100 items, so lazy): 7 of 7 within budget. Open 75 ms, replies at the bottom 85 ms, a reply while scrolled up 35 ms.
+  - All 33 chat boards (all plain now) are pixel-identical to 0.2.6's.
+  - The extreme-heights chat (2,000-line outputs, a 40×6 table, a 300-line paste, /context and /mcp results) is idle.
+  - DuoChecks checks the rule and that ChatPane uses it.

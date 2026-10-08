@@ -1782,6 +1782,12 @@ func repoFixture() throws -> Fixture {
         // F-225: SwiftUI re-anchoring the chat feed on size changes looped for good at work.
         let feed = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Chat/ChatView.swift"), encoding: .utf8)) ?? ""
         check(!feed.isEmpty && !feed.contains("for: .sizeChanges)"), "the chat feed never asks SwiftUI to re-anchor on size changes")
+        // F-226: a chat the size of the one that froze (24 items, 86 steps) has no lazy stack at all.
+        check(!ChatFeedShape.isLazy(items: 24, steps: 86) && !ChatFeedShape.isLazy(items: 48, steps: 250)
+              && ChatFeedShape.isLazy(items: 49, steps: 10) && ChatFeedShape.isLazy(items: 10, steps: 251) && ChatFeedShape.isLazy(items: 100, steps: 1945),
+              "the feed is a plain stack up to 48 items and 250 steps, lazy past either")
+        check(feed.contains("ChatFeedShape.isLazy(items: chat.log.items.count, steps: chat.log.steps.count)") && feed.contains("VStack(alignment: .leading, spacing: 16) { rows }"),
+              "and ChatPane chooses its stack by that rule")
     }
 
     print("the console's tab strip measures each title once (F-224)")
