@@ -108,6 +108,7 @@ Status: **open** (needs Geoff or a spike) · **defaulted** (Claude chose a defau
 | Q-116 | **Does the Find a Task… picker come in v1, and with which chord?** Board 12 draws it (search's modal look, this project's tasks first, New task last) with ⌥⌘K as a stand-in (DL-80 freed ⌘K). Geoff chose drag for v1 and didn't pick the picker. Stand-in: later. | Nothing in v1 | open | DL-147 (5). |
 | Q-117 | **What does a drop on a task do to the session's other tasks?** Stand-in (board 11): a drop adds; ⌥ while dropping moves (takes it out of the others); a drop on a task in another project asks first, as Move to Project does (DL-66); a session already there shows "Already in …". The task board study uses the same labels. | The drag build | defaulted | DL-147 (5). |
 | Q-118 | **Which projects show Getting started, and where is its progress kept?** Stand-in: every project made or adopted in Duo, until all four steps are ticked or Hide is pressed; kept in Duo's state (Application Support), never in the brief; `duo2 project getting-started <p> show\|hide`. Projects that existed before the build don't show it. | The card's build | open | DL-147 (4). |
+| Q-135 | **The fallback bar's words once the terminal stays (DL-154).** The boards' bar says "Chat mode can’t show this screen, so here’s the terminal. Chat comes back when it closes." with Back to Chat. Built as a stand-in: the same bar without the last sentence. Should it say more ("Back to Chat when you’re done")? | Nothing (the stand-in ships) | open | F-208. 2026-10-07. |
 
 ## Concerns
 

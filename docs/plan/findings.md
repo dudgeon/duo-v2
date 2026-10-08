@@ -2548,7 +2548,7 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - **Fixed:**
   - PaneSplit sets each pane's root view once; a pane's view captures nothing that changes (`DimmedUnderSheet`).
   - A slot sizes only a terminal it still holds.
-  - After a fallback by itself, chat comes back at once the first time. Then the prompt must hold 1, 2, 4 … up to 30 s per return in the last two minutes; Back to Chat resets this.
+  - A screen chat can't handle leaves the terminal up until Back to Chat (DL-154; at first a growing hold, 1–30 s, replaced the same day). A blank screen reads as starting, so a session loading never falls back.
   - `setVersion` with the same answer changes nothing.
   - `ChatHug` keeps its ideal width until the bubble's text changes.
   On the same fixture: 3.1% mean CPU (8.2% max), no stalls. A faster flip (0.55 s / 0.15 s) went from 37.5% mean and 2 stalls to 11.2% and none.

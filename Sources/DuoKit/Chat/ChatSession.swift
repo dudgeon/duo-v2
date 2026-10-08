@@ -67,7 +67,11 @@ public struct ChatFallback: Equatable, Sendable {
     public var command: String?
 
     public static let unknownScreen = ChatFallback(kind: .automatic,
-        message: "Chat mode can’t show this screen, so here’s the terminal. Chat comes back when it closes.")
+        message: "Chat mode can’t show this screen, so here’s the terminal.")
+
+    /// Chat comes back by itself once the TUI is back at its prompt: after a screen you opened
+    /// from chat, or a handover. Any other fallback stays until Back to Chat (DL-154).
+    public var returnsByItself: Bool { command != nil || kind == .handedOver }
     public static func automatic(_ m: String) -> ChatFallback { ChatFallback(kind: .automatic, message: m) }
     public static func handedOver(_ m: String) -> ChatFallback { ChatFallback(kind: .handedOver, message: m) }
 
@@ -220,20 +224,7 @@ public final class ChatSession {
     /// How long a dialog may wait for its PermissionRequest before the terminal shows (rule 2).
     public static let requestGrace: TimeInterval = 1.5
     @ObservationIgnored private var disagreeSince: Date?
-    /// Since when the prompt has shown while the terminal is up by itself, and when chat last came
-    /// back by itself (F-208).
-    @ObservationIgnored private var promptSince: Date?
     @ObservationIgnored private var versionKnown = false
-    @ObservationIgnored public var returns: [Date] = []
-    /// Returns counted for the hold: those in the last two minutes.
-    static let returnWindow: TimeInterval = 120
-
-    /// How long the prompt must hold before chat comes back: none the first time, then 1, 2, 4 …
-    /// up to 30 s for each return in the window (F-208).
-    public var returnHold: TimeInterval {
-        let n = returns.filter { Date().timeIntervalSince($0) < Self.returnWindow }.count
-        return n == 0 ? 0 : min(30, pow(2, Double(n - 1)))
-    }
 
     /// The dialog on screen and Claude's request tell the same story (fallback rule 2): a
     /// permission for a tool, a plan for ExitPlanMode, a question Claude asked.
@@ -335,7 +326,6 @@ public final class ChatSession {
     /// whose dialogs aren't verified; and, once the TUI is back at its prompt, coming back.
     func evaluateFallback() {
         let s = screen
-        if s.kind != .idle, s.kind != .busy { promptSince = nil }
         switch s.kind {
         case .unknown:
             if composing || sending { return }
@@ -352,8 +342,8 @@ public final class ChatSession {
             unknownSince = nil; unknownTimer?.invalidate()
             if !dialogsVerified {
                 fallBack(versionTrust == .newer
-                    ? .automatic("This dialog in Claude Code \(cliVersion ?? "") doesn’t read like the versions chat mode was checked with, so here’s the terminal. Chat comes back when it closes.")
-                    : .automatic("Chat mode hasn’t been checked with this version of Claude Code’s dialogs (\(cliVersion ?? "unknown")), so here’s the terminal. Chat comes back when it closes."))
+                    ? .automatic("This dialog in Claude Code \(cliVersion ?? "") doesn’t read like the versions chat mode was checked with, so here’s the terminal.")
+                    : .automatic("Chat mode hasn’t been checked with this version of Claude Code’s dialogs (\(cliVersion ?? "unknown")), so here’s the terminal."))
             } else if !requestAgrees {
                 // The request comes by hook, a moment after the dialog draws: give it a second.
                 if disagreeSince == nil {
@@ -362,36 +352,24 @@ public final class ChatSession {
                         MainActor.assumeIsolated { self?.evaluateFallback() }
                     }
                 } else if now.timeIntervalSince(disagreeSince!) >= Self.requestGrace - 0.01 {
-                    fallBack(.automatic("Chat mode can’t match this dialog to what Claude asked, so here’s the terminal. Chat comes back when it closes."))
+                    fallBack(.automatic("Chat mode can’t match this dialog to what Claude asked, so here’s the terminal."))
                 }
             } else { disagreeSince = nil }
         case .idle, .busy:
             unknownSince = nil; disagreeSince = nil; unknownTimer?.invalidate()
-            guard fallback != nil else { promptSince = nil; return }
-            // Back to chat once the prompt has held for `returnHold` (F-208): at once the first
-            // time, then longer after each recent return, so a screen that keeps changing kind
-            // (a sign-in, a redraw at a new size) can't swap chat and the terminal many times a second.
-            let hold = returnHold
-            if hold > 0 {
-                if promptSince == nil {
-                    promptSince = Date()
-                    unknownTimer = Timer.scheduledTimer(withTimeInterval: hold, repeats: false) { [weak self] _ in
-                        MainActor.assumeIsolated { self?.evaluateFallback() }
-                    }
-                    return
-                }
-                if Date().timeIntervalSince(promptSince!) < hold - 0.01 { return }
-            }
-            promptSince = nil
-            returns = returns.filter { Date().timeIntervalSince($0) < Self.returnWindow } + [Date()]
+            // DL-154: a screen chat couldn't show leaves the terminal up until you choose Back to
+            // Chat; it never comes back by itself, so a screen that keeps changing kind (a sign-in
+            // at every resume) can't swap chat and the terminal (F-208). A screen you opened from
+            // chat (`/help`, F-173) or a handover still returns when it closes.
+            guard let f = fallback, f.returnsByItself else { return }
             fallback = nil
             onChange?()
         case .picker:
             // `/model` and `/effort` as a card (DL-143), only on a CLI whose screens were checked.
             unknownSince = nil; disagreeSince = nil; unknownTimer?.invalidate()
             if !dialogsVerified {
-                fallBack(.automatic("Chat mode hasn’t been checked with this version of Claude Code’s screens (\(cliVersion ?? "unknown")), so here’s the terminal. Chat comes back when it closes."))
-            } else if fallback?.kind == .automatic { fallback = nil; onChange?() }
+                fallBack(.automatic("Chat mode hasn’t been checked with this version of Claude Code’s screens (\(cliVersion ?? "unknown")), so here’s the terminal."))
+            } else if fallback?.command != nil { fallback = nil; onChange?() }
         case .starting:
             break
         }
@@ -418,9 +396,6 @@ public final class ChatSession {
     public func backToChat() {
         fallback = nil
         unknownSince = nil
-        // Your choice: chat comes back at once next time too.
-        returns = []
-        promptSince = nil
         evaluateFallback()
     }
 }
