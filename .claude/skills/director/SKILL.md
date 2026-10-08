@@ -51,6 +51,7 @@ For each branch:
    - `scripts/bundle.sh`;
    - `swift run DuoChecks` (and `DUO_CHECKS=chat` when chat is touched);
    - `NO_BUILD=1 scripts/check-ui.sh`, then `python3 scripts/samepng.py /tmp/dir-base/<s>.png build/ui/<s>.png` for the six states. A difference must be explained (an intended change) or it's a regression; check main without the merge before blaming the branch.
+   - `scripts/check-launch-services.sh` after every merge (and `--clean` if it fails): only main's build may be registered as Duo (DL-151). Branches made before 76fb3e6 must merge main before their next bundle.sh (C-55).
    - The editor and deck checks when relevant: `NODE_PATH=/tmp/pwc/node_modules node scripts/check-editor-selection.mjs` (also check-editor-motion and check-deck-motion). playwright-core lives in /tmp/pwc; `npm i playwright-core` there if it's missing.
 6. **Push,** then remove the work tree and branch (local and origin), message the session ("merged, you're done"), and add a Log row to the reviews doc.
 7. **Never push a merge you haven't checked.** If you find a problem, `git reset --hard origin/main` (only for an unpushed local merge) and send it back with specifics.

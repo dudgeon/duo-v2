@@ -1,0 +1,33 @@
+  ⎿  User rejected Claude's plan:
+     ╭──────────────────────────╮
+     │ Plan                     │
+     │                          │
+     │ 1. Read the code         │
+     │ 2. Change foo            │
+     │ 3. Run the checks        │
+     ╰──────────────────────────╯
+
+✻ Cooked for 1s
+ 
+❯ SCENARIO:long                                                                                     
+
+⏺ Line 1 of a long answer.
+  Line 2 of a long answer.
+  Line 3 of a long answer.
+  Line 4 of a long answer.
+  Line 5 of a long answer.
+  Line 6 of a long answer.
+  Line 7 of a long answer.
+  Line 8 of a long answer.
+  Line 9 of a long answer.
+  Lin
+  ⎿  Interrupted · What should Claude do instead?
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on · ? for shortcuts · ← for agents · ↓ to manage
+                                                              auto mode unavailable for this model
+
+  ⏺ main
+  ◯ general-purpose  Look around                                                    0s · ↑ 11 tokens

@@ -127,9 +127,14 @@ final class ChatFeed {
         eventsPos = openTurn ? from : size
     }
 
+    private var ticks = 0
+
     private func tick() {
         guard let chat else { return stop() }
         guard !loading else { return }
+        // Off screen, every 2 s (ENH-45); on screen, every tick, after reading what it skipped.
+        ticks += 1
+        if chat.isShown() { chat.wake() } else if ticks % 13 != 0 { return }
         for e in read(eventsURL, &eventsPos, &eventsRest) {
             if let p = e["e"] as? ChatJSON {
                 if p["hook_event_name"] as? String == "SessionStart", let t = p["transcript_path"] as? String, transcript == nil {

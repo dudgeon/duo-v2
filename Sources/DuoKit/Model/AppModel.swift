@@ -232,8 +232,13 @@ public final class AppModel {
     public func tabSessions(inProject project: String) -> [Fixture.Session] {
         fixture.sessions(inProject: project).filter {
             [.needsYou, .readyForReview, .working].contains($0.state) || terminals.existing($0.tabKey) != nil || fixtureEnded?.key == $0.tabKey
+                || parkedTabs.contains($0.tabKey)
         }
     }
+
+    /// Tabs restored at launch whose sessions haven't resumed yet (DL-156): each resumes when its tab
+    /// is shown (the console or Home creates its terminal then), or when `duo2` or a send needs it.
+    /// So a launch resumes only what's on screen, not every tab at once (F-208).
 
     // MARK: - Live workspace (Phase E)
 
@@ -287,6 +292,8 @@ public final class AppModel {
     @ObservationIgnored var repoRefreshing: Set<String> = []
     /// Restore on relaunch (LR-58): off for scripted and capture runs.
     @ObservationIgnored public var restoreEnabled = false
+    /// DL-156: see `tabSessions`.
+    public var parkedTabs: Set<String> = []
     @ObservationIgnored var restoreApplied = false
     @ObservationIgnored var lastRestoreSave = Date.distantPast
     @ObservationIgnored var lastRestoreData: Data?

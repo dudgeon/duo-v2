@@ -23,6 +23,9 @@ struct PaneSplit: NSViewRepresentable {
     /// Each pane's background, used to hide a divider beside a collapsed pane.
     var paneBackgrounds: [NSColor]
     var model: AppModel
+    /// Colours that follow the model (Home in chat is light, DL-142 (7)): watched by the split
+    /// itself, so the SwiftUI view holding it reads no session's state (F-208, ENH-46's scan).
+    var liveColors: (@MainActor (AppModel) -> (dividers: [NSColor], backgrounds: [NSColor]))?
 
     func makeNSView(context: Context) -> DuoSplitView {
         let split = DuoSplitView()
@@ -36,20 +39,26 @@ struct PaneSplit: NSViewRepresentable {
             split.addArrangedSubview(host)
         }
         apply(to: split, coordinator: context.coordinator)
+        if let liveColors { context.coordinator.watch(split, model: model, colors: liveColors) }
         return split
     }
 
+    /// The panes' views are set once, in `makeNSView`: each reads the model itself, so it updates
+    /// by observation. Replacing a hosting view's root view here re-ran every pane's whole layout
+    /// from the root whenever anything the layout reads changed (Home's chat state since DL-142
+    /// (7)); with a long chat in a pane that pinned the main thread (F-208). A pane's view must
+    /// therefore capture nothing that changes: wrap such state in a view of its own
+    /// (`DimmedUnderSheet`).
     func updateNSView(_ split: DuoSplitView, context: Context) {
-        for (pane, host) in zip(panes, split.arrangedSubviews) {
-            (host as? NSHostingView<AnyView>)?.rootView = AnyView(pane.view.environment(model))
-        }
         apply(to: split, coordinator: context.coordinator)
     }
 
     private func apply(to split: DuoSplitView, coordinator: Coordinator) {
         coordinator.panes = panes
-        split.dividerColors = dividerColors
-        split.paneBackgrounds = paneBackgrounds
+        if liveColors == nil {
+            split.dividerColors = dividerColors
+            split.paneBackgrounds = paneBackgrounds
+        }
         split.designWidths = panes.map(\.width)
         for (i, pane) in panes.enumerated() where pane.collapsible {
             split.setCollapsed(pane.collapsed, paneAt: i)
@@ -68,8 +77,22 @@ struct PaneSplit: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    final class Coordinator: NSObject, NSSplitViewDelegate {
+    @MainActor final class Coordinator: NSObject, NSSplitViewDelegate {
         var panes: [Pane] = []
+
+        /// Applies `colors` now and again whenever what they read changes.
+        func watch(_ split: DuoSplitView, model: AppModel, colors: @escaping @MainActor (AppModel) -> (dividers: [NSColor], backgrounds: [NSColor])) {
+            let c = withObservationTracking { colors(model) } onChange: { [weak self, weak split, weak model] in
+                Task { @MainActor in
+                    guard let self, let split, let model else { return }
+                    self.watch(split, model: model, colors: colors)
+                }
+            }
+            if split.dividerColors != c.dividers || split.paneBackgrounds != c.backgrounds {
+                split.dividerColors = c.dividers
+                split.paneBackgrounds = c.backgrounds
+            }
+        }
 
         func splitView(_ splitView: NSSplitView, canCollapseSubview subview: NSView) -> Bool {
             guard let i = splitView.arrangedSubviews.firstIndex(of: subview), i < panes.count else { return false }

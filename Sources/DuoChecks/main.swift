@@ -1747,6 +1747,73 @@ func repoFixture() throws -> Fixture {
         check(ActionID.hangs.action.local && ActionID.hangs.action.family == .app, "duo2 hangs reads the log without the app")
         HangLog.clear(f)
         check(HangLog.read(from: f).isEmpty, "--clear empties it")
+
+        // F-208: a stall is written while it goes on, so a freeze that never ends leaves stacks.
+        let t1 = t0.addingTimeInterval(500.37)
+        HangLog.append(.init(at: t1, ms: 2050, screen: "all projects · chat", version: "v", samples: [["Duo@0x10"]], binary: "/x", ongoing: true), to: f)
+        HangLog.append(.init(at: t1, ms: 12100, screen: "all projects · chat", version: "v", samples: [["Duo@0x10"], ["Duo@0x20"]], binary: "/x", ongoing: true), to: f)
+        var ongoing = HangLog.read(from: f)
+        check(ongoing.count == 1 && ongoing[0].ms == 12100 && ongoing[0].ongoing == true, "a stall still going is one record, rewritten as it goes on")
+        check(HangLog.report(ongoing, stacks: false).contains("12100 ms+ (still stuck when last written)"), "the report says a stall was still going")
+        HangLog.append(.init(at: t1, ms: 15000, screen: "all projects · chat", version: "v"), to: f)
+        HangLog.append(.init(at: t1.addingTimeInterval(30), ms: 300, screen: "s", version: "v"), to: f)
+        ongoing = HangLog.read(from: f)
+        check(ongoing.map(\.ms) == [15000, 300] && ongoing[0].ongoing == nil, "once it ends, the whole stall replaces it")
+        HangLog.clear(f)
+    }
+
+    print("the window's root reads no session's state (F-208, ENH-46)")
+    do {
+        // A root-level view that reads a session's chat state re-lays out the whole window when that
+        // session changes; at work, many times a second (F-208). Panes read it; the root never does.
+        let src = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Shell/RootView.swift"), encoding: .utf8)) ?? ""
+        let forbidden = #"model\.(homeShowsChat|consoleShowsChat|chats|chat\(|fixtureChats|terminals)|\.fallback\b|\.showsChat\b|\.screen\b"#
+        var found: [String] = []
+        for name in ["RootView", "AllProjectsLayout", "ProjectLayout"] {
+            guard let start = src.range(of: "struct \(name)") else { found.append("\(name) missing"); continue }
+            let rest = src[start.upperBound...]
+            let body = rest.range(of: "\nstruct ").map { rest[..<$0.lowerBound] } ?? rest
+            for line in body.split(separator: "\n") where line.range(of: forbidden, options: .regularExpression) != nil && !line.trimmingCharacters(in: .whitespaces).hasPrefix("//") {
+                found.append("\(name): \(line.trimmingCharacters(in: .whitespaces))")
+            }
+        }
+        check(found.isEmpty, "RootView, AllProjectsLayout and ProjectLayout read no chat or terminal state (\(found))")
+        let split = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Shell/PaneSplit.swift"), encoding: .utf8)) ?? ""
+        let update = split.range(of: "func updateNSView").map { String(split[$0.lowerBound...].prefix(400)) } ?? ""
+        check(!update.isEmpty && !update.contains("rootView ="), "PaneSplit never replaces a pane's root view on update")
+    }
+
+    print("the console's tab strip measures each title once (F-224)")
+    do {
+        let font = DuoTextStyle.mono.spec.nsFont
+        let titles = ["✳ Fix 🚀 deploy — cora…", "風險分析 review", "∑ totals ┌─┐", "risk-imperative-and-cora 🧭", "plain"]
+        let before = TextWidth.measured
+        for _ in 0..<50 { for t in titles { _ = TextWidth.of(t, font: font) } }
+        check(TextWidth.measured - before == titles.count, "50 passes over 5 titles measure each once (\(TextWidth.measured - before))")
+        check(TextWidth.of("plain", font: font) == ceil(("plain" as NSString).size(withAttributes: [.font: font]).width), "the width is the string's own")
+        // The fit matches the old loop: full, short, then drop from the right, never the selected.
+        func old(_ full: [CGFloat], _ short: [CGFloat], _ sel: Int?, _ width: CGFloat) -> ([Bool], Bool) {
+            let c: CGFloat = 41, m: CGFloat = 49
+            func total(_ ws: [CGFloat], _ more: Bool) -> CGFloat { ws.reduce(0, +) + CGFloat(max(0, ws.count - 1)) * 18 + c + (more ? m : 0) }
+            if total(full, false) <= width { return (full.map { _ in true }, false) }
+            if total(short, false) <= width { return (full.map { _ in true }, true) }
+            var shown = Array(full.indices)
+            while total(shown.map { short[$0] }, true) > width, let i = shown.lastIndex(where: { $0 != sel }) { shown.remove(at: i) }
+            return (full.indices.map(shown.contains), true)
+        }
+        var same = true
+        var rng = SystemRandomNumberGenerator()
+        for _ in 0..<500 {
+            let n = Int.random(in: 0...16, using: &rng)
+            let full = (0..<n).map { _ in CGFloat(Int.random(in: 40...300, using: &rng)) }
+            let short = full.map { min($0, 180) }
+            let sel = n == 0 ? nil : Int.random(in: 0..<n, using: &rng)
+            let width = CGFloat(Int.random(in: 200...2000, using: &rng))
+            let new = TabStripFit.fit(full: full, short: short, selected: sel, width: width, controls: 41, more: 49)
+            let o = old(full, short, sel, width)
+            if new.keep != o.0 || new.short != o.1 { same = false }
+        }
+        check(same, "the one-walk fit chooses what the old loop chose (500 random strips)")
     }
 
     print("duo2 slide … (ENH-12, DL-125)")
@@ -1954,6 +2021,23 @@ func repoFixture() throws -> Fixture {
     check(wasConsole != nil && tabsModel.consoleTab == wasConsole, "coming back shows the console tab it was on, not the most urgent (DL-107)")
     let tabsSaved = tabsModel.currentRestoreState()
     check(tabsSaved.projects.first { $0.folder == treeDir.path }?.rightTab == outTab, "the restore file keeps each project's tabs, not only the one on screen")
+    // DL-156: a tab restored at launch is parked: listed and kept, not resumed until shown.
+    if var idle = tabsFixture.sessions.first(where: { $0.state == .idle && $0.project != tabsFixture.home?.name }) {
+        // Live sessions have ids (restore keeps them by id): give this one an id.
+        if let i = tabsModel.fixture.sessions.firstIndex(where: { $0.tabKey == idle.tabKey }) {
+            tabsModel.fixture.sessions[i].sessionId = "5e55f00d-0000-4000-8000-0000000000aa"; idle = tabsModel.fixture.sessions[i]
+        }
+        let key = idle.tabKey
+        tabsModel.parkedTabs.insert(key)
+        check(tabsModel.tabSessions(inProject: idle.project).contains { $0.tabKey == key } && tabsModel.terminals.existing(key) == nil,
+              "a parked tab is listed with no process running")
+        tabsModel.liveFolders[idle.project] = tabsModel.liveFolders[idle.project] ?? treeDir
+        let saved = tabsModel.currentRestoreState().projects.flatMap(\.sessions)
+        check(idle.sessionId.map(saved.contains) == true || idle.project == tabsFixture.home?.name, "and the restore file keeps it, still parked, for the next launch")
+        tabsModel.closeSession(key)
+        check(!tabsModel.parkedTabs.contains(key) && !tabsModel.tabSessions(inProject: idle.project).contains { $0.tabKey == key && $0.state == .idle },
+              "closing a parked tab forgets it")
+    } else { check(false, "the fixture has an idle session with an id to park") }
     try? tfm.removeItem(at: treeDir)
     try? tfm.removeItem(at: outsideFile)
 

@@ -67,7 +67,11 @@ public struct ChatFallback: Equatable, Sendable {
     public var command: String?
 
     public static let unknownScreen = ChatFallback(kind: .automatic,
-        message: "Chat mode can’t show this screen, so here’s the terminal. Chat comes back when it closes.")
+        message: "Chat mode can’t show this screen, so here’s the terminal.")
+
+    /// Chat comes back by itself once the TUI is back at its prompt: after a screen you opened
+    /// from chat, or a handover. Any other fallback stays until Back to Chat (DL-154).
+    public var returnsByItself: Bool { command != nil || kind == .handedOver }
     public static func automatic(_ m: String) -> ChatFallback { ChatFallback(kind: .automatic, message: m) }
     public static func handedOver(_ m: String) -> ChatFallback { ChatFallback(kind: .handedOver, message: m) }
 
@@ -220,6 +224,7 @@ public final class ChatSession {
     /// How long a dialog may wait for its PermissionRequest before the terminal shows (rule 2).
     public static let requestGrace: TimeInterval = 1.5
     @ObservationIgnored private var disagreeSince: Date?
+    @ObservationIgnored private var versionKnown = false
 
     /// The dialog on screen and Claude's request tell the same story (fallback rule 2): a
     /// permission for a tool, a plan for ExitPlanMode, a question Claude asked.
@@ -256,6 +261,9 @@ public final class ChatSession {
     public var showsChat: Bool { mode == .chat && fallback == nil }
 
     public func setVersion(_ v: String?) {
+        // Asked on every attach: the same answer changes nothing and reads nothing (F-208).
+        guard !versionKnown || v != cliVersion else { return }
+        versionKnown = true
         cliVersion = v
         let t = ChatSignatures.table(for: v)
         signatures = t.table
@@ -281,8 +289,23 @@ public final class ChatSession {
     /// Earlier turns (Q-56c).
     public func loadEarlier() { feed?.loadEarlier() }
 
+    /// Whether this chat is on screen (ENH-45): Home's tab at All projects, the console's tab in its
+    /// project. Off screen a chat is dormant: its screen isn't read as the TUI repaints, and its
+    /// feed reads hooks and the transcript every 2 s instead of every 0.15 s. Shown again, it reads
+    /// at once (`wake`). Set by the app; a chat on its own (checks, targets) is always shown.
+    @ObservationIgnored public var isShown: @MainActor () -> Bool = { true }
+    @ObservationIgnored private var readSkipped = false
+
+    /// A dormant chat shown again: read the screen it skipped.
+    public func wake() {
+        guard readSkipped else { return }
+        readSkipped = false
+        reread()
+    }
+
     /// The TUI repaints in bursts: read once it settles (the spike's 60 ms).
     func scheduleRead() {
+        guard isShown() else { readSkipped = true; return }
         guard !readPending else { return }
         readPending = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) { [weak self] in
@@ -334,8 +357,8 @@ public final class ChatSession {
             unknownSince = nil; unknownTimer?.invalidate()
             if !dialogsVerified {
                 fallBack(versionTrust == .newer
-                    ? .automatic("This dialog in Claude Code \(cliVersion ?? "") doesn’t read like the versions chat mode was checked with, so here’s the terminal. Chat comes back when it closes.")
-                    : .automatic("Chat mode hasn’t been checked with this version of Claude Code’s dialogs (\(cliVersion ?? "unknown")), so here’s the terminal. Chat comes back when it closes."))
+                    ? .automatic("This dialog in Claude Code \(cliVersion ?? "") doesn’t read like the versions chat mode was checked with, so here’s the terminal.")
+                    : .automatic("Chat mode hasn’t been checked with this version of Claude Code’s dialogs (\(cliVersion ?? "unknown")), so here’s the terminal."))
             } else if !requestAgrees {
                 // The request comes by hook, a moment after the dialog draws: give it a second.
                 if disagreeSince == nil {
@@ -344,18 +367,24 @@ public final class ChatSession {
                         MainActor.assumeIsolated { self?.evaluateFallback() }
                     }
                 } else if now.timeIntervalSince(disagreeSince!) >= Self.requestGrace - 0.01 {
-                    fallBack(.automatic("Chat mode can’t match this dialog to what Claude asked, so here’s the terminal. Chat comes back when it closes."))
+                    fallBack(.automatic("Chat mode can’t match this dialog to what Claude asked, so here’s the terminal."))
                 }
             } else { disagreeSince = nil }
         case .idle, .busy:
             unknownSince = nil; disagreeSince = nil; unknownTimer?.invalidate()
-            if fallback != nil { fallback = nil; onChange?() }
+            // DL-154: a screen chat couldn't show leaves the terminal up until you choose Back to
+            // Chat; it never comes back by itself, so a screen that keeps changing kind (a sign-in
+            // at every resume) can't swap chat and the terminal (F-208). A screen you opened from
+            // chat (`/help`, F-173) or a handover still returns when it closes.
+            guard let f = fallback, f.returnsByItself else { return }
+            fallback = nil
+            onChange?()
         case .picker:
             // `/model` and `/effort` as a card (DL-143), only on a CLI whose screens were checked.
             unknownSince = nil; disagreeSince = nil; unknownTimer?.invalidate()
             if !dialogsVerified {
-                fallBack(.automatic("Chat mode hasn’t been checked with this version of Claude Code’s screens (\(cliVersion ?? "unknown")), so here’s the terminal. Chat comes back when it closes."))
-            } else if fallback?.kind == .automatic { fallback = nil; onChange?() }
+                fallBack(.automatic("Chat mode hasn’t been checked with this version of Claude Code’s screens (\(cliVersion ?? "unknown")), so here’s the terminal."))
+            } else if fallback?.command != nil { fallback = nil; onChange?() }
         case .starting:
             break
         }

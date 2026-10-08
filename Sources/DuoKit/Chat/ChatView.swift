@@ -158,7 +158,7 @@ struct ChatYouBubble: View {
         VStack(alignment: .trailing, spacing: 4) {
             if !you.queued { ChatWho(who: "You", time: you.time, tag: you.planMode ? "plan mode" : nil) }
             // The bubble hugs its text, at most 440 (chat-mode-handoff `text`, `composer`; F-184).
-            ChatHug(maxWidth: DuoSpace.chatBubbleMax) {
+            ChatHug(maxWidth: DuoSpace.chatBubbleMax, content: you.text.hashValue ^ (cut ? 1 : 0)) {
                 VStack(alignment: .leading, spacing: 6) {
                     ChatMarkdownView(blocks: ChatMarkdown.parse(cut ? lines.prefix(Self.shown).joined(separator: "\n") : you.text), streaming: false)
                     if cut {
@@ -183,18 +183,26 @@ struct ChatYouBubble: View {
 /// content is asked its ideal width first, then offered just that (F-184).
 struct ChatHug: Layout {
     var maxWidth: CGFloat
+    /// What the bubble shows (its text, and whether it is cut): a change re-measures (F-208).
+    var content: Int
 
-    func width(_ proposal: ProposedViewSize, _ s: Subviews) -> CGFloat {
-        let ideal = s.first?.sizeThatFits(.unspecified).width ?? 0
+    /// The content's ideal width, measured once and kept until the content or the layout changes:
+    /// it was measured afresh on every pass, twice per bubble (F-208).
+    struct Cache { var ideal: CGFloat? }
+    func makeCache(subviews: Subviews) -> Cache { Cache() }
+
+    func width(_ proposal: ProposedViewSize, _ s: Subviews, _ cache: inout Cache) -> CGFloat {
+        let ideal = cache.ideal ?? s.first?.sizeThatFits(.unspecified).width ?? 0
+        cache.ideal = ideal
         return ceil(min(ideal, maxWidth, proposal.width ?? .infinity))
     }
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews s: Subviews, cache: inout ()) -> CGSize {
-        let w = width(proposal, s)
+    func sizeThatFits(proposal: ProposedViewSize, subviews s: Subviews, cache: inout Cache) -> CGSize {
+        let w = width(proposal, s, &cache)
         return CGSize(width: w, height: s.first?.sizeThatFits(ProposedViewSize(width: w, height: nil)).height ?? 0)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews s: Subviews, cache: inout ()) {
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews s: Subviews, cache: inout Cache) {
         s.first?.place(at: bounds.origin, anchor: .topLeading, proposal: ProposedViewSize(width: bounds.width, height: bounds.height))
     }
 }

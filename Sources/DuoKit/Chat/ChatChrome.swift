@@ -132,6 +132,11 @@ extension AppModel {
         c.backToChat()
     }
 
+    /// A chat on screen (ENH-45): Home's tab at All projects, or the console's tab in a project.
+    func chatIsShown(_ key: String) -> Bool {
+        altitude.isAllProjects ? homeTab == key : consoleTab == key
+    }
+
     /// The chat for a Claude terminal: made on first use, reading that terminal's screen.
     @discardableResult
     public func attachChat(_ t: TerminalSession) -> ChatSession? {
@@ -140,6 +145,7 @@ extension AppModel {
         default: break
         }
         let c = chats.session(t.key, home: isHomeTerminal(t))
+        c.isShown = { [weak self, key = t.key] in self?.chatIsShown(key) ?? true }
         if (c.terminal as? LiveChatTerminal)?.view !== t.view { c.attach(LiveChatTerminal(t.view)) }
         // Live sessions are keyed by their id; demo and fixture terminals have no hooks to read.
         if terminalsMode == .live { c.follow(sessionId: t.key, cwd: t.cwd) }

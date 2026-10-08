@@ -556,6 +556,8 @@ public enum FixtureHarness {
                 }
                 FileHandle.standardError.write(Data((lines.joined(separator: "\n") + "\n").utf8))
             }
+        // Blocks the main thread for n seconds: the hang log's own check (F-208).
+        case "freeze": Thread.sleep(forTimeInterval: Double(parts.count > 1 ? parts[1] : "5") ?? 5)
         case "dump":
             for t in model.terminals.all.sorted(by: { $0.key < $1.key }) {
                 t.view.selectAll()

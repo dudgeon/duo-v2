@@ -1,0 +1,33 @@
+  │ b   │ 2     │
+  └─────┴───────┘
+
+  let x = 1
+  print(x)
+
+  - one
+  - two
+    - nested
+
+  See /tmp/example.txt:12 for more.
+
+✻ Worked for 2s
+
+❯ SCENARIO:bash                                                                                     
+
+⏺ Running a command.
+
+  Reading 1 file… (ctrl+o to expand)
+  ⎿  $ echo hello > hello.txt && cat hello.txt
+     
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ Bash command
+
+   echo hello > hello.txt && cat hello.txt
+   Write and read a file
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and always allow access to ws/ from this project
+   3. No
+
+ Esc to cancel · Tab to amend · ctrl+e to explain
