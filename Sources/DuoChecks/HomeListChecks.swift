@@ -63,4 +63,8 @@ import Foundation
         check(DuoAction.resolve(["session", "chat"]).map { $0.0.args.contains("--home chat|terminal|last") } == true, "duo2 session chat --home (DL-71)")
     }
     check(DuoAction.resolve(["view", "home", "list"]) != nil && ActionID.viewHome.action.ui.contains("Show List"), "duo2 view home (DL-71)")
+    // The List's header carries the Board tile's action (Q-158): same sheet call, same verb.
+    let panes = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/AllProjects/AllProjectsPanes.swift"), encoding: .utf8)) ?? ""
+    let calls = panes.split(separator: "\n").filter { $0.contains("model.showNewProject()") && $0.contains("// action: project new") }
+    check(calls.count == 2 && ActionID.projectNew.action.ui.contains("+ New project"), "the Board tile and the List header's + New project both run `duo2 project new` (Q-158)")
 }

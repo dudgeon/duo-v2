@@ -435,6 +435,18 @@ struct MapHeader: View {
             .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusField)
                 .strokeBorder(text.wrappedValue.isEmpty ? DuoColor.rule : DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline))
             Spacer(minLength: 8)
+            if list {
+                // The List's way to the Board tile's action (Q-158, stand-in): same sheet, same verb.
+                Text("+ New project").duoText(.control).foregroundStyle(DuoColor.text2)
+                    .padding(.horizontal, 8)
+                    .frame(height: DuoMetric.mapHeaderControlHeight)
+                    .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl)
+                        .strokeBorder(DuoColor.controlEdge, style: StrokeStyle(lineWidth: DuoMetric.borderHairline, dash: DuoShadow.dashPattern)))
+                    .contentShape(Rectangle())
+                    .fixedSize()
+                    .onActivate { model.showNewProject() }  // action: project new
+                    .accessibilityAddTraits(.isButton)
+            }
             Text(list ? "Group" : "Sort").duoText(.control).foregroundStyle(DuoColor.text2)
             Menu {
                 if list {
