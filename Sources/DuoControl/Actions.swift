@@ -51,7 +51,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskSession = "task session", taskStatus = "task status"
     case taskRename = "task rename", taskArchive = "task archive", taskUnarchive = "task unarchive", taskDelete = "task delete"
     case taskMove = "task move", taskLink = "task link", taskReveal = "task reveal"
-    case taskBoard = "task board", taskColumn = "task column", taskReference = "task reference"
+    case taskBoard = "task board", taskColumn = "task column", taskReference = "task reference", taskBase = "task base"
     case templateShow = "template show", templateEdit = "template edit", templateCopy = "template copy", templateReset = "template reset", templatePreview = "template preview"
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
@@ -240,6 +240,8 @@ extension DuoAction {
               ui: ["+ Add Column", "Add Column After…", "Remove Column…", "Move Left", "Move Right", "Keep as Column", "Remove Column"], timeout: 600),
         .init(.taskReference, .sessions, "<add|remove> <task> <file|folder|url> [--title <t>] [--project <p>]", "A task's references (DL-150): its `references:` frontmatter, a list of quoted markdown links to files, folders (trailing /) and web links, relative to the note. Written only when one is added; nothing else in the note changes. With the note open in Duo, the change goes through the editor. Undo with `duo2 undo`.",
               ui: ["Remove from Task", "references field", "file dropped on a card"]),
+        .init(.taskBase, .sessions, "[show|add|update] [--project <p>]", "The Obsidian board (DL-20, DL-148): add writes tasks.base beside the project's brief, a Bases kanban view grouped by `status` with groupOrder pinned to the project's columns (sorted by due, then created) and a table view; Obsidian 1.14.4+ shows the same board, and a drag there writes `status`. Never written unless asked, never over a base that's there. update rewrites only its groupOrder lines when the columns change. show: where it is and whether it's out of date. Undo with `duo2 undo`.",
+              ui: ["Add Obsidian Board", "Update Obsidian Board", "Update"]),
         .init(.templateShow, .projects, "<project|task> [--project <p>]", "The template new projects or tasks are made from (DL-146): its text and whose it is (a project's own templates/new-task.md, Home's templates/new-<kind>.md, or Duo's base)."),
         .init(.templateEdit, .projects, "<project|task> [--project <p>]", "Open that template in the right pane with its template bar; with no file yet, Duo's base is written to Home's templates/ first.",
               ui: ["Edit Task Template", "Edit…"]),

@@ -313,6 +313,8 @@ struct TaskTemplateItems: View {
 
     var body: some View {
         Button("New Task") { model.newTask(in: project) }
+        Button("Show Board") { model.showBoard(true, project: project) }  // action: task board
+        ObsidianBoardItems(project: project)
         Divider()
         Button("Edit Task Template") { model.editTemplate(.task, project: project) }
         if let own = model.liveFolders[project].map({ Templates.path(.task, in: $0) }), FileManager.default.fileExists(atPath: own.path) {

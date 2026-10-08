@@ -233,6 +233,68 @@ extension AppModel {
         done(.ok("\(verb == "add" ? "Added" : "Removed") \(what) \(verb == "add" ? "to" : "from") \(hit.title)'s references. Undo: duo2 undo"))
     }
 
+    // MARK: The Obsidian board (DL-20, DL-148 (1))
+
+    /// `tasks.base` beside the brief, if there is one.
+    public func obsidianBoard(_ project: String) -> URL? {
+        guard let folder = liveFolders[project] else { return nil }
+        let base = (ProjectBrief.url(in: folder)?.deletingLastPathComponent() ?? folder).appending(path: ObsidianBoard.fileName)
+        return FileManager.default.fileExists(atPath: base.path) ? base : nil
+    }
+
+    /// The base's columns differ from the project's (the board says so, with Update).
+    public func obsidianBoardOutOfDate(_ project: String) -> Bool {
+        guard let base = obsidianBoard(project) else { return false }
+        // Read when the base changes, not on every pass of the board's header.
+        let stamp = (try? base.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+        let order: [String]?
+        if let hit = baseOrderCache[project], hit.url == base, hit.stamp == stamp { order = hit.order } else {
+            order = (try? String(contentsOf: base, encoding: .utf8)).flatMap(ObsidianBoard.groupOrder)
+            baseOrderCache[project] = (base, stamp, order)
+        }
+        guard let order else { return false }
+        return order.map(TaskBoard.key) != boardLanes(project)
+    }
+
+    /// Add Obsidian Board: writes `tasks.base` (never over one that's there). Undo removes it.
+    @discardableResult
+    public func addObsidianBoard(_ project: String) -> String? {
+        guard let folder = liveFolders[project] else { return "no project '\(project)'" }
+        if obsidianBoard(project) != nil { return "\(project) already has \(ObsidianBoard.fileName); Update Obsidian Board sets its columns" }
+        let base = (ProjectBrief.url(in: folder)?.deletingLastPathComponent() ?? folder).appending(path: ObsidianBoard.fileName)
+        do { try Data(ObsidianBoard.text(lanes: boardLanes(project)).utf8).write(to: base, options: .withoutOverwriting) } catch { return error.localizedDescription }
+        registerUndo("Add Obsidian Board") { model in try? FileManager.default.trashItem(at: base, resultingItemURL: nil); model.refreshLive() }
+        refreshLive()
+        return nil
+    }
+
+    /// Update Obsidian Board: rewrites only the base's `groupOrder` lines, to the project's lanes.
+    @discardableResult
+    public func updateObsidianBoard(_ project: String) -> String? {
+        guard let base = obsidianBoard(project), let data = FileManager.default.contents(atPath: base.path),
+              let text = String(data: data, encoding: .utf8) else { return "\(project) has no \(ObsidianBoard.fileName): Add Obsidian Board writes one" }
+        guard let updated = ObsidianBoard.updating(text, lanes: boardLanes(project)) else { return "\(ObsidianBoard.fileName) has no groupOrder for Duo to set" }
+        do { try Data(updated.utf8).write(to: base, options: .atomic) } catch { return error.localizedDescription }
+        registerUndo("Update Obsidian Board") { model in try? data.write(to: base, options: .atomic); model.refreshLive() }
+        refreshLive()
+        return nil
+    }
+
+    func baseVerb(_ id: ActionID, _ inv: Invocation, _ project: String, _ done: @escaping @MainActor (Reply) -> Void) {
+        switch inv[0] {
+        case "add"?:
+            if let why = addObsidianBoard(project) { return done(.fail(why)) }
+            done(.ok("Wrote \(project)/\(ObsidianBoard.fileName): open it in Obsidian 1.14.4 or later for the same board. Undo: duo2 undo"))
+        case "update"?:
+            if let why = updateObsidianBoard(project) { return done(.fail(why)) }
+            done(.ok("\(ObsidianBoard.fileName)'s columns are now \(boardLanes(project).joined(separator: ", ")). Undo: duo2 undo"))
+        case nil, "show"?:
+            guard let base = obsidianBoard(project) else { return done(.ok("\(project) has no Obsidian board. duo2 task base add writes one.")) }
+            done(.ok("\(base.path)\(obsidianBoardOutOfDate(project) ? " (out of date: duo2 task base update)" : "")", ["path": base.path, "outOfDate": obsidianBoardOutOfDate(project)]))
+        default: done(.fail("usage: \(id.action.usage)"))
+        }
+    }
+
     // MARK: Columns (DL-150, board 12)
 
     /// Writes the project's lanes to its brief's `lanes:` list (added the first time, then edited
@@ -346,6 +408,7 @@ extension AppModel {
         guard terminalsMode == .live else { return done(.fail("the task board needs live projects")) }
         if id == .taskColumn { return columnVerb(id, inv, name, done) }
         if id == .taskReference { return referenceVerb(id, inv, name, done) }
+        if id == .taskBase { return baseVerb(id, inv, name, done) }
         switch inv[0] {
         case "show"?: showBoard(true, project: name)
         case "hide"?: showBoard(false, project: name)

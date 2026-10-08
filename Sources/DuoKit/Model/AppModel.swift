@@ -83,6 +83,7 @@ public final class AppModel {
     public var addingColumn: String?
     @ObservationIgnored var boardKeyMonitor: Any?
     /// Each project's lanes as read from its brief, until the brief changes.
+    @ObservationIgnored var baseOrderCache: [String: (url: URL, stamp: Date?, order: [String]?)] = [:]
     @ObservationIgnored var briefLanesCache: [String: (url: URL, stamp: Date?, lanes: [String])] = [:]
     /// The tab under the pointer (a console or Home tab's key, or a right-pane document path),
     /// which shows its close button (DL-126); `hoveredTabClose` when the pointer is on the button,

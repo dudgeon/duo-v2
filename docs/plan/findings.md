@@ -2667,3 +2667,10 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - **Checked:** an isolated instance's `duo2 task reference add` ×3 (a note, a URL, a folder) wrote exactly four lines; remove and four undos restored the note byte for byte; Return in the field on an open note saved `references:` + one quoted, relative link. The capture matches board 13's rows and list (`build/ui/task-board-13-compare.png`).
 - **Not built (Q-145):** typing `[[` or `@` in a note's text to complete files; Add to References on a body link's menu; files dragged from the tree onto the note (in C the board covers the tree anyway).
 
+## F-223 · Add Obsidian Board writes `tasks.base`; the board says when it's out of date (DL-20, DL-148)
+
+- **Add Obsidian Board** (the board header's and the Tasks fold's right-click; `duo2 task base add`) writes `tasks.base` beside the brief, as the research doc's §4 YAML: a `kanban` view grouped by `status`, `groupOrder` as a block list of the project's lanes, `order`, sorted by due then created, and the table view. Never over a base that's there, never `.obsidian/`; undo moves it to the Trash.
+- **Out of date:** when the base's `groupOrder` (block or inline) differs from the lanes, the board header says "Obsidian board is out of date · Update" (board 12). **Update Obsidian Board** (`duo2 task base update`) rewrites only the `groupOrder` lines, keeping their indentation; everything else in the base stays the user's (DuoChecks: a user's own `order` survives). The base is read when its modification date changes, not on every pass of the header.
+- **Checked against an isolated instance:** show → none; add wrote the file; add again refused; after adding a Blocked column, show said out of date; update added exactly one line (`      - blocked`); no `.obsidian/` folder appeared. Header capture matches board 12's notice. Not checked in Obsidian itself: C-64.
+- The Tasks fold's menu also has **Show Board** (DL-148 (2)'s "Board link on the Tasks fold").
+

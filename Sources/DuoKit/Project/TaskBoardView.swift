@@ -93,12 +93,37 @@ struct BoardHeader: View {
             .padding(.leading, 8)
             OwnerPopup(project: project)
             Spacer(minLength: 0)
+            // The Obsidian base's columns differ from the board's (board 12): say so, with Update.
+            if model.obsidianBoardOutOfDate(project) {
+                HStack(spacing: 4) {
+                    Text("Obsidian board is out of date ·").foregroundStyle(DuoColor.text2)
+                    Text("Update").underline(color: DuoColor.controlEdge).foregroundStyle(DuoColor.text)
+                        .onActivate { if let why = model.updateObsidianBoard(project) { model.info(why) } }  // action: task base
+                }
+                .duoText(.control).fixedSize()
+            }
             SmallButton("+ New task") { model.newTask(in: project) }  // action: task new
         }
         .padding(.horizontal, DuoMetric.taskBoardHeaderPaddingX)
+        .contextMenu { ObsidianBoardItems(project: project) }
         .frame(height: DuoMetric.taskBoardHeaderHeight - 1)
         .overlay(alignment: .bottom) { Rectangle().fill(DuoColor.rule).frame(height: 1).offset(y: 1) }
         .padding(.bottom, 1)
+    }
+}
+
+/// Add Obsidian Board / Update Obsidian Board (DL-20): on the board header's and the Tasks fold's menus.
+struct ObsidianBoardItems: View {
+    @Environment(AppModel.self) private var model
+    let project: String
+
+    var body: some View {
+        if model.obsidianBoard(project) == nil {
+            Button("Add Obsidian Board") { if let why = model.addObsidianBoard(project) { model.info(why) } }  // action: task base
+        } else {
+            Button("Update Obsidian Board") { if let why = model.updateObsidianBoard(project) { model.info(why) } }  // action: task base
+                .disabled(!model.obsidianBoardOutOfDate(project))
+        }
     }
 }
 

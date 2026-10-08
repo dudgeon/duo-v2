@@ -304,3 +304,72 @@ public enum TaskReferences {
         return lines.joined(separator: nl)
     }
 }
+
+/// The Obsidian board (DL-20, DL-148 (1), research doc §4): `tasks.base` beside the brief, a Bases
+/// `kanban` view grouped by `status` with `groupOrder` pinned to the project's lanes, sorted by due
+/// then created, and the table view. Written only when asked; afterwards Duo rewrites only the
+/// `groupOrder` lines it wrote (Update Obsidian Board). Never `.obsidian/`.
+public enum ObsidianBoard {
+    public static let fileName = "tasks.base"
+
+    public static func text(lanes: [String]) -> String {
+        """
+        filters:
+          and:
+            - type == "task"
+            - 'file.folder == if(this.file.folder == "/", "tasks", this.file.folder + "/tasks")'
+        views:
+          - type: kanban
+            name: Board
+            groupBy:
+              property: status
+              direction: ASC
+            groupOrder:
+        \(lanes.map { "      - \($0)" }.joined(separator: "\n"))
+            order: [title, owner, waiting_on, due]
+            sort:
+              - property: due
+                direction: ASC
+              - property: created
+                direction: ASC
+          - type: table
+            name: By status
+            groupBy:
+              property: status
+              direction: ASC
+            order: [title, owner, waiting_on, due]
+
+        """
+    }
+
+    /// The `groupOrder` list of the base's first kanban view, as written; nil when it has none.
+    public static func groupOrder(in text: String) -> [String]? {
+        let lines = text.components(separatedBy: "\n")
+        guard let k = lines.firstIndex(where: { $0.trimmingCharacters(in: .whitespaces) == "groupOrder:" }) else {
+            if let inline = lines.first(where: { $0.trimmingCharacters(in: .whitespaces).hasPrefix("groupOrder: [") }) {
+                let v = inline.trimmingCharacters(in: .whitespaces).dropFirst("groupOrder: [".count).dropLast()
+                return Frontmatter.splitInlineList(String(v)).map { Frontmatter.unquote($0) }
+            }
+            return nil
+        }
+        var out: [String] = []
+        var i = k + 1
+        while i < lines.count, lines[i].trimmingCharacters(in: .whitespaces).hasPrefix("- ") {
+            out.append(Frontmatter.unquote(lines[i].trimmingCharacters(in: .whitespaces).dropFirst(2).trimmingCharacters(in: .whitespaces)))
+            i += 1
+        }
+        return out
+    }
+
+    /// The base with its `groupOrder` list set to `lanes`, its indentation kept, nothing else changed.
+    public static func updating(_ text: String, lanes: [String]) -> String? {
+        var lines = text.components(separatedBy: "\n")
+        guard let k = lines.firstIndex(where: { $0.trimmingCharacters(in: .whitespaces).hasPrefix("groupOrder:") }) else { return nil }
+        let indent = String(lines[k].prefix { $0 == " " })
+        var end = k + 1
+        while end < lines.count, lines[end].trimmingCharacters(in: .whitespaces).hasPrefix("- ") { end += 1 }
+        let itemIndent = end > k + 1 ? String(lines[k + 1].prefix { $0 == " " }) : indent + "  "
+        lines.replaceSubrange(k..<end, with: [indent + "groupOrder:"] + lanes.map { itemIndent + "- " + $0 })
+        return lines.joined(separator: "\n")
+    }
+}

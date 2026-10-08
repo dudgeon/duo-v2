@@ -99,4 +99,16 @@ import Foundation
     check(two.flatMap { TaskReferences.adding("[PRD](../docs/prd-v2.md)", to: $0) } == nil, "the same target isn't added twice")
     check(two.flatMap { TaskReferences.removing(target: "../research/", from: $0) } == one, "removing one leaves the rest")
     check(one.flatMap { TaskReferences.removing(target: "../docs/prd-v2.md", from: $0) } == bare, "removing the last takes the key too")
+
+    // The Obsidian board (DL-20, DL-148): groupOrder pinned to the lanes; Update rewrites only it.
+    let base = ObsidianBoard.text(lanes: ["open", "in-progress", "blocked", "review", "done"])
+    check(base.contains("    type: kanban") == false && base.contains("  - type: kanban\n    name: Board\n    groupBy:\n      property: status"), "a kanban view grouped by status")
+    check(ObsidianBoard.groupOrder(in: base) == ["open", "in-progress", "blocked", "review", "done"], "groupOrder is the project's lanes, as a block list")
+    check(base.contains("    sort:\n      - property: due\n        direction: ASC\n      - property: created"), "sorted by due, then created")
+    check(base.contains("'file.folder == if(this.file.folder == \"/\", \"tasks\", this.file.folder + \"/tasks\")'"), "the format doc's folder filter")
+    let users = base.replacingOccurrences(of: "    order: [title, owner, waiting_on, due]\n    sort:", with: "    order: [title, due, priority]\n    sort:")
+    let updated = ObsidianBoard.updating(users, lanes: ["open", "in-progress", "done"])
+    check(updated.flatMap(ObsidianBoard.groupOrder) == ["open", "in-progress", "done"], "Update sets groupOrder")
+    check(updated?.replacingOccurrences(of: "      - open\n      - in-progress\n      - done\n", with: "") == users.replacingOccurrences(of: "      - open\n      - in-progress\n      - blocked\n      - review\n      - done\n", with: ""), "and nothing else: the user's own changes stay")
+    check(ObsidianBoard.groupOrder(in: "views:\n  - type: kanban\n    groupOrder: [open, \"in-progress\", done]\n") == ["open", "in-progress", "done"], "an inline groupOrder is read too")
 }
