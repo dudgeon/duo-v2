@@ -109,10 +109,13 @@ def src_line(state="snap", w=None):
         body = (f'{link_g(TEXT)}<span style="color:{TEXT}"><b style="font-weight:600">A newer Q3 plan</b> arrived · today 15:24 · 2 slides changed</span><span style="flex:1"></span>'
                 f'<span class="vb" style="padding:2px 8px;font-size:11px">Compare</span>')
     elif state == "offer":
-        body = (f'{link_g()}<span>Downloaded from <a class="lnk">Q3 plan</a> in Google Slides</span><span style="flex:1"></span>'
-                f'<span class="vb" style="padding:2px 8px;font-size:11px">Keep the Link</span><span class="t2" style="text-decoration:underline">Not now</span>')
+        body = (f'{link_g()}<span>From <a class="lnk">Q3 plan</a> in Google Slides</span><span style="flex:1"></span>'
+                f'<span class="vb" style="padding:2px 8px;font-size:11px">Add Source</span><span class="t2" style="text-decoration:underline">Other…</span>')
     elif state == "none":
-        body = f'{link_g()}<span>No source</span><span style="flex:1"></span><span class="vb" style="padding:2px 8px;font-size:11px">Set Source…</span>'
+        body = f'{link_g()}<span>No source</span><span style="flex:1"></span><span class="vb" style="padding:2px 8px;font-size:11px">Add Source…</span>'
+    elif state == "newer-nosrc":
+        body = (f'{link_g(TEXT)}<span style="color:{TEXT}"><b style="font-weight:600">A newer download</b> · Q3 plan (1).pptx · today 15:24</span><span style="flex:1"></span>'
+                f'<span class="vb" style="padding:2px 8px;font-size:11px">Compare</span>')
     return f'<div class="srcl">{body}</div>'
 
 
@@ -236,7 +239,7 @@ def menu(items, w=230):
 # ======================================================================
 # 00 · the study
 board("00-study", 1440, 900, "0 · Source links: the study", "The ask, what the research found, the principles.", bd(1440, 900,
-    "0 · Where did this file come from? Source links for downloaded Google files",
+    "0 · Where did this file come from? Source links for downloaded Google files (decided: DL-163)",
     "Geoff, 2026-10-08: at work it’s Google Docs and Slides, which neither Duo nor Claude can reach, so he downloads a .pptx or .docx. He wants Duo to know the canonical link, open it in the browser, replace a snapshot with a newer download, perhaps watch Downloads and offer a side-by-side compare. Every mark on these boards is a proposal [P]. The research is in docs/research/source-links.md.",
     f'''<div style="display:flex;gap:14px;align-items:flex-start">
 <div class="txt" style="flex:1"><h3>What the research found</h3><ul>
@@ -249,18 +252,18 @@ board("00-study", 1440, 900, "0 · Source links: the study", "The ask, what the 
 <li><b>Writing the link into the file</b> works by the spec, and Word shows it, but it changes the file, and Google drops it on the way back [V for export].</li></ul></div>
 <div class="txt" style="width:540px;flex:none"><h3>The boards</h3><ol start="0">
 <li>This page. 1 · The journey, moment by moment.</li>
-<li>2 · A file arrives: the link recorded, or offered.</li>
+<li>2 · The thin bar: Add Source, the link, a newer download.</li>
 <li>3 · Seeing the source in the viewer’s bar: A, a line; B, a button.</li>
-<li>4 · The source popover; Set Source… when there’s none.</li>
+<li>4 · The source popover; Add Source… by hand.</li>
 <li>5 · In Files and the right-click menu.</li>
-<li>6 · Get Latest: the browser downloads, Duo spots it.</li>
+<li>6 · Newer downloads, with or without a source; Get Latest. 13 · How a download is matched.</li>
 <li>7 · Compare a deck, side by side. 8 · Compare a document.</li>
 <li>9 · Replace, Undo, and history.</li>
-<li>10 · Where the link is kept: A, a note beside the file; B, one list; C, Duo only.</li>
+<li>10 · Where the link is kept: one _sources.md per folder.</li>
 <li>11 · What Claude sees; <span class="mono" style="font-size:12px">duo2 file source</span>.</li>
 <li>12 · The recommendation and a first slice.</li></ol>
 <h3>Principles</h3><ul>
-<li>Never change the downloaded file (DL-162’s view-only rule).</li>
+<li>Never change the downloaded file (DL-162’s view-only rule).</li><li>Newer downloads, compare and replace work for any file, with or without a source (Geoff).</li>
 <li>Never look in Downloads on Duo’s own; never a system alert.</li>
 <li>Store only the clean link, never the raw download address (it holds tokens).</li>
 <li>Plain Markdown that Obsidian and OKF read (Geoff, 2026-10-07).</li></ul></div></div>'''))
@@ -268,11 +271,11 @@ board("00-study", 1440, 900, "0 · Source links: the study", "The ask, what the 
 # 01 · journey
 cols = ["Arrives", "Link kept", "Seen", "Opened", "Newer exists", "Compared", "Replaced"]
 lanes = [
-    ("Geoff", ["Downloads the deck in Chrome; drags it into the project", "—", "Opens the deck in Duo", "Clicks the link", "Clicks Get Latest", "Looks at what changed", "Replaces; can Undo"]),
-    ("Duo, on screen", ["Notice: “Kept the link to Q3 plan in Google Slides”, Undo", "A link mark on the file in Files", "The bar’s line: Snapshot of Q3 plan · 30 Sep", "Opens the /edit link in the default browser", "Opens the export link in the browser; the line says Waiting…, then A newer Q3 plan arrived", "Two columns of slides, changes marked; Changed only", "Notice: Replaced · old copy in the Trash · Undo"]),
-    ("Duo, behind", ["Reads “Where from” before anything rewrites the file; rebuilds the /edit link from the id", "Writes Q3 plan.pptx.md beside it (source:, downloaded:)", "Reads the note; falls back to “Where from”", "—", "A Spotlight query for downloads of that id, for a few minutes", "Matches slides by Google’s slide ids; text by paragraphs", "Moves the new file to the old name; adds the date to snapshots:"]),
+    ("Geoff", ["Downloads the deck in Chrome; drags it into the project", "Opens it; clicks Add Source in the thin bar", "Sees the link in the bar in a later session", "Clicks the link", "Downloads it again (or clicks Get Latest)", "Looks at what changed", "Replaces; can Undo"]),
+    ("Duo, on screen", ["The thin bar: From Q3 plan in Google Slides · Add Source", "A link mark on the file in Files", "The bar: Snapshot of Q3 plan · 30 Sep", "Opens the /edit link in the default browser", "The bar: A newer download · today 15:24 · Compare (source or not)", "Two columns of slides, changes marked; Changed only", "Notice: Replaced · old copy in the Trash · Undo"]),
+    ("Duo, behind", ["Reads “Where from”; rebuilds the /edit link from the id, to offer", "Adds a line to the folder’s _sources.md (creates it if needed)", "Reads _sources.md", "—", "A live Spotlight query: downloads with the same name or Google id, newer than the copy", "Matches slides by Google’s slide ids; text by paragraphs", "Moves the new file to the old name; updates the line’s date"]),
     ("macOS, browser", ["Chrome writes “Where from” and quarantine", "—", "—", "The browser, already signed in to Google", "Chrome downloads to ~/Downloads; Spotlight indexes it", "Reading the download may ask for Downloads access, once (Q-155)", "The old copy goes to the Trash"]),
-    ("Claude", ["—", "Can read the note", "Told: “a snapshot of …, downloaded 30 Sep”", "Can’t open it; can say where it came from", "Can run duo2 file latest", "Can read both copies", "Told the file was replaced"]),
+    ("Claude", ["—", "Can read _sources.md", "Told: “a snapshot of …, downloaded 30 Sep”", "Can’t open it; can say where it came from", "Can run duo2 file latest", "Can read both copies", "Told the file was replaced"]),
 ]
 lane_html = '<div class="lane"><div class="lh"></div>' + "".join(f'<div class="ch">{i + 1} · {c}</div>' for i, c in enumerate(cols)) + "</div>"
 for ln, cells in lanes:
@@ -281,17 +284,21 @@ board("01-journey", 1680, 900, "1 · The journey", "A service blueprint: what Ge
     "1 · The journey, moment by moment",
     "From the download to the replaced snapshot. Lanes are who acts; columns are the moments. The boards that follow draw each moment.",
     f'<div style="display:flex;flex-direction:column;gap:8px">{lane_html}</div>'
-    f'<div class="note" style="max-width:1300px"><b>Other ways in:</b> a file Claude fetched, a file from git or a zip, a file from a colleague: no “Where from”, so no link until someone sets it (board 4). <b>Other kinds:</b> the same note works for any file from any web page (a PDF, a CSV from a dashboard). Only Google files get Get Latest, compare and the slide links.</div>'))
+    f'<div class="note" style="max-width:1300px"><b>Other ways in:</b> a file Claude fetched, a file from git or a zip, a file from a colleague: no “Where from”, so the bar offers Add Source… with an empty field (board 4). Newer downloads are still found by name (board 13). <b>Other kinds:</b> the same note works for any file from any web page (a PDF, a CSV from a dashboard). Only Google files get Get Latest, compare and the slide links.</div>'))
 
-# 02 · arrival
-win_a = qwindow(1180, 640, lpane(notice=pnotice(f'Kept the link: <b style="font-weight:600">Q3 plan</b> in Google Slides', ["Undo"], close=True), files=files_block(sel=DECK)) + qconsole() + deck_pane(460, 604, line="snap"))
-win_b = qwindow(1180, 640, lpane(files=files_block(sel=DECK, mark=False)) + qconsole("I read inputs/Q3 plan.pptx (5 slides).") + deck_pane(460, 604, line="offer"))
-board("02-arrival", 2560, 1000, "2 · A file arrives", "Q-157: A records the link at once and says so with Undo; B offers it in the viewer’s line.", bd(2560, 1000,
-    "2 · A file arrives: recorded, or offered (Q-157)",
-    "Dropped on the project, moved in with Duo, or saved there by the browser. Duo reads macOS’s “Where from” on arrival. Nothing is asked when there’s no link to find.",
+# 02 · the thin bar
+st_a = deck_pane(420, 330, line="offer")
+st_b = deck_pane(420, 330, line="none")
+st_c = deck_pane(420, 330, line="snap")
+st_d = deck_pane(420, 330, line="newer-nosrc")
+board("02-thin-bar", 2100, 820, "2 · The thin bar", "Under the viewer’s bar, on every .pptx and .docx: Add Source, the link, a newer download.", bd(2100, 820,
+    "2 · The thin bar under the viewer’s bar (DL-163)",
+    "Every .pptx and .docx shows it. Nothing is written until the user adds a source: then a line goes into the folder’s _sources.md (created if needed), and in a later session the bar carries the link.",
     f'''<div style="display:flex;gap:40px;align-items:flex-start">
-{frame(win_a, cap="A · Recorded at once, with Undo" + '<span class="rec">recommended</span>', note="<b>When Duo moved the file in</b> (a drop, Move to Project, Duo’s own Downloads), it writes the note beside the file and the notice says so, with Undo. A file that appears by any other way (Finder, Claude, the browser saving into the project) gets B’s offer the first time it’s opened, because nobody asked Duo to touch it.", w=1180)}
-{frame(win_b, cap="B · Offered in the bar, every time", note="Nothing written until Keep the Link. Quieter; one click every time; a link that isn’t kept is gone once the file goes through git or a Save.", w=1180)}
+{frame(st_a, cap="1 · The browser knows the link", note="From the download’s “Where from”, cleaned to its /edit form. <b>Add Source</b> writes the line in one click; <b>Other…</b> opens Add Source… (board 4) to type a different link.", w=420)}
+{frame(st_b, cap="2 · No link known", note="A file from git, a zip, Claude or a colleague. Add Source… opens the field empty.", w=420)}
+{frame(st_c, cap="3 · Source added", note="The title opens the link in the default browser; a click elsewhere on the line opens the popover (board 4). Get Latest only for Google links.", w=420)}
+{frame(st_d, cap="4 · A newer download, no source needed", note="Found by name in what the browser downloaded (board 13). With a source, the line names it instead: “A newer Q3 plan arrived”. Compare opens board 7.", w=420)}
 </div>'''))
 
 # 03 · the bar
@@ -313,48 +320,47 @@ board("03-bar", 1300, 760, "3 · Seeing the source", "A: a line under the deck�
 
 # 04 · popover + set source
 set_sheet = f'''<div class="sheet" style="width:520px">
-<h2>Set the source of “Launch brief.docx”</h2>
-<div class="hint" style="font-size:12px">Where this file came from. Duo opens it in your browser and uses it to get a newer copy. The file itself isn’t changed.</div>
+<h2>Add a source for “Launch brief.docx”</h2>
+<div class="hint" style="font-size:12px">Where this file came from. It’s kept in this folder’s <span class="mono">_sources.md</span>; the file itself isn’t changed.</div>
 {fr("Link", '<div class="fld focus mono" style="font-size:12px">https://docs.google.com/document/d/1hK…Qe4/edit?tab=t.0</div>')}
 {fr("", f'<div class="found" style="font-size:12px"><div>{link_g(TEXT)}<b style="font-weight:600">Google Docs</b><span class="t2">document 1hK…Qe4</span></div><div class="t2">Get Latest will download it as Word (.docx).</div></div>')}
-<div class="btns"><span class="b">Cancel</span><span class="b def">Set Source</span></div></div>'''
+<div class="btns"><span class="b">Cancel</span><span class="b def">Add Source</span></div></div>'''
 set_win = f'<div class="w" style="width:640px;height:330px">{tb_quiet("All projects › q3-planning")}<div class="sheetwrap">{set_sheet}</div></div>'
-board("04-popover", 1300, 740, "4 · The source popover; Set Source…", "Everything about the link in one place; setting one by hand.", bd(1300, 740,
-    "4 · The source popover, and Set Source… for a file with none",
-    "The popover opens from the bar’s line (A) or button (B), and from Files’ right-click menu. Set Source… takes any link; Google links are recognised and cleaned to their /edit form.",
+board("04-popover", 1300, 740, "4 · The source popover; Add Source…", "Everything about the link in one place; adding one by hand.", bd(1300, 740,
+    "4 · The source popover, and Add Source… for a file with none",
+    "The popover opens from the bar’s line (A) or button (B), and from Files’ right-click menu. Add Source… takes any link; Google links are recognised and cleaned to their /edit form.",
     f'''<div style="display:flex;gap:60px;align-items:flex-start">
-{frame(f'<div style="padding:16px;background:{GROUND}">{popover(380)}</div>', cap="The popover", note="<b>Open in Google Slides</b> is the default. <b>Slide 2 in Slides</b> opens the slide on screen (from Google’s slide id). <b>Snapshots</b> lists earlier downloads from the note’s snapshots: (Q-156). Change Source… and Remove Source edit only the note.", w=412)}
-{frame(set_win, cap="Set Source…", note="Pasting a link fills the found box. A link that isn’t Google’s is kept as it is (“example.com”); Get Latest is then hidden. An export or googleusercontent link is turned into its /edit form; tokens never kept.", w=640)}
+{frame(f'<div style="padding:16px;background:{GROUND}">{popover(380)}</div>', cap="The popover", note="<b>Open in Google Slides</b> is the default. <b>Slide 2 in Slides</b> opens the slide on screen (from Google’s slide id). <b>Snapshots</b> lists the dates this file was replaced, kept in its line. Change Source… and Remove Source edit only the file’s line in _sources.md.", w=412)}
+{frame(set_win, cap="Add Source…", note="Pasting a link fills the found box. A link that isn’t Google’s is kept as it is (“example.com”); Get Latest is then hidden. An export or googleusercontent link is turned into its /edit form; tokens never kept.", w=640)}
 </div>'''))
 
 # 05 · files + menu
-mn = menu(["Open", "Open With", "Reveal in Finder", "-", "#Source", f"*Open Q3 plan in Google Slides", "Get Latest", "Copy Source Link", "Change Source…", "Remove Source", "-", "Send to Claude", "Rename…", "Move to…", "Move to Trash"], 260)
-fl_a = f'<div style="width:300px;background:{PANE};position:relative">{files_block(sel=DECK)}</div>'
-fl_b = f'<div style="width:300px;background:{PANE}">{files_block(show_sidecar=True)}</div>'
-board("05-files", 1300, 700, "5 · In Files, and the right-click menu", "A link mark on the file; the note folded under it; Source items in the menu.", bd(1300, 700,
+mn = menu(["Open", "Open With", "Reveal in Finder", "-", "#Source", f"*Open Q3 plan in Google Slides", "Get Latest", "Copy Source Link", "Change Source…", "Remove Source", "-", "Compare with Newer Download", "Replace with File…", "-", "Send to Claude", "Rename…", "Move to…", "Move to Trash"], 270)
+SRC_ROW = '<div class="ft" style="padding-left:18px">_sources.md</div>'
+fl_a = f'<div style="width:300px;background:{PANE};position:relative">{files_block(sel=DECK, extra_rows=SRC_ROW)}</div>'
+board("05-files", 1300, 760, "5 · In Files, and the right-click menu", "A link mark on files with a source; _sources.md as an ordinary file; Source and compare items in the menu.", bd(1300, 760,
     "5 · In Files, and the right-click menu",
-    "A file with a source shows the link mark. Duo folds its note away (it’s Duo’s, shown as the mark); Obsidian and Finder show it beside the file.",
+    "A file with a line in its folder’s _sources.md shows the link mark. _sources.md itself is an ordinary Markdown file: it opens in the editor like any other.",
     f'''<div style="display:flex;gap:40px;align-items:flex-start">
-{frame(fl_a, cap="Files, as Duo shows it" + '<span class="rec">recommended</span>', note="The note is folded into the mark. ⌥ shows hidden files, the notes included.", w=300)}
-{frame(fl_b, cap="Files, with the notes shown", note="If Geoff would rather see them (Q-154).", w=300)}
-{frame(f'<div style="padding:14px;background:{GROUND}">{mn}</div>', cap="Right-click on the deck", note="The Source group appears only on a file with a source; on one without, a single Set Source… item.", w=288)}
+{frame(fl_a, cap="Files", note="The link mark comes from _sources.md. A renamed file keeps its mark when Duo did the rename (it rewrites the line); after a Finder rename, the line is matched again by name and Google id when Duo next reads the folder.", w=300)}
+{frame(f'<div style="padding:14px;background:{GROUND}">{mn}</div>', cap="Right-click on the deck", note="The Source group appears only on a file with a source; on one without, a single Add Source… item. Compare with Newer Download and Replace with File… are there for every .pptx and .docx.", w=298)}
 </div>'''))
 
-# 06 · get latest
-p1 = deck_pane(420, 380, line="waiting")
-p2 = deck_pane(420, 380, line="newer")
+# 06 · newer downloads
+p1 = deck_pane(420, 380, line="newer-nosrc")
+p2 = deck_pane(420, 380, line="waiting")
 p3 = deck_pane(420, 380, line="snap", notice=pnotice("No changes since 30 Sep. Your copy is current.", ["OK"], close=False))
 p4 = deck_pane(420, 380, line="snap", notice=pnotice("No download seen in 5 minutes.", ["Choose File…"]))
-board("06-get-latest", 2100, 900, "6 · Get Latest", "Duo opens the export link in the browser; Spotlight spots the download; the line offers Compare.", bd(2100, 900,
-    "6 · Get Latest: your browser downloads, Duo spots it (Q-155)",
-    "Get Latest opens …/export/pptx (or ?format=docx) in the default browser, which is signed in to Google. Duo never reads Downloads to find it: it asks Spotlight for files downloaded from that document’s id, for 5 minutes.",
+board("06-newer", 2100, 920, "6 · Newer downloads, with or without a source", "Duo notices a newer download of any .pptx or .docx in a project; Get Latest adds the browser trip for Google links.", bd(2100, 920,
+    "6 · Newer downloads, with or without a source (Q-155)",
+    "Duo keeps a live Spotlight query for downloaded files that match a project’s .pptx and .docx (board 13). It never lists ~/Downloads: Spotlight answers. A source only adds Get Latest, which opens the export link in the default browser so the user needn’t find File › Download.",
     f'''<div style="display:flex;gap:40px;align-items:flex-start">
-{frame(p1, cap="1 · Waiting", note="Chrome downloads as usual (into ~/Downloads, or wherever it saves). Duo’s line says what it’s doing; Cancel stops watching.", w=420)}
-{frame(p2, cap="2 · It arrived", note="The download is matched by its id. Duo compares contents, not bytes (two downloads always differ). Compare opens board 7; Replace is in it.", w=420)}
-{frame(p3, cap="3 · Nothing changed", note="Said once, and the download is left where it was. The note’s date is updated, since the copy was checked.", w=420)}
-{frame(p4, cap="4 · Nothing seen", note="Spotlight off, the download saved somewhere unindexed, or the browser asked where to save. Choose File… opens an Open panel at Downloads, filtered to .pptx; picking a file is the user’s own choice, so no prompt is expected.", w=420)}
+{frame(p1, cap="1 · Found, no source needed", note="You downloaded “Q3 plan” again; Chrome saved it as Q3 plan (1).pptx. The bar says so the next time the deck is on screen, and Files marks the deck. Compare opens board 7.", w=420)}
+{frame(p2, cap="2 · Get Latest (Google links only)", note="Opens …/export/pptx (or ?format=docx) in the default browser, signed in to Google. The bar waits up to 5 minutes, then shows 1 or 4.", w=420)}
+{frame(p3, cap="3 · Nothing changed", note="Contents compared, not bytes (two downloads always differ). Said once; the download is left where it was.", w=420)}
+{frame(p4, cap="4 · Nothing seen", note="Spotlight off, or the browser saved somewhere unindexed. Choose File… opens an Open panel at Downloads, filtered to .pptx; picking a file is the user’s own choice.", w=420)}
 </div>
-<div class="note" style="max-width:1500px"><b>Not drawn, for later (ENH-57):</b> an opt-in “Watch Downloads” in Settings for files you download without Get Latest. Turning it on is the user’s click, which is when macOS asks for Downloads access. <b>Also not drawn:</b> a manual “Check Downloads”, which would ask the first time it’s clicked.</div>'''))
+<div class="note" style="max-width:1600px"><b>On by default</b> [P]: the query reads only Spotlight’s index, so Duo opens a downloaded file only when the user clicks Compare. If that click is when macOS asks for Downloads access (Q-155), it’s asked at the user’s own action, never on Duo’s. Settings can turn it off.</div>'''))
 
 # 07 · compare deck
 def cmp_row(n, ta, tb, state, ba="", bb_="", w=250):
@@ -427,43 +433,38 @@ board("09-replace", 1500, 760, "9 · Replace, Undo, history", "Replace keeps the
 </div>'''))
 
 # 10 · where the link is kept
-sidecar = """---
-type: snapshot
-title: Q3 plan
-source: https://docs.google.com/presentation/d/1EAYk18WDj…/edit
-snapshot_of: "[Q3 plan.pptx](./Q3%20plan.pptx)"
-downloaded: 2026-09-30T09:12
-snapshots:
-  - 2026-09-30T09:12
-  - 2026-09-12T16:40
+sources_md = """---
+type: sources
 ---
 
-Snapshot of [Q3 plan](https://docs.google.com/…/edit)
-in Google Slides, downloaded 30 Sep 2026."""
-sources_md = """| File | Source | Downloaded |
-|---|---|---|
-| Q3 plan.pptx | [Q3 plan](https://docs.google.com/…) | 2026-09-30 |
-| Launch brief.docx | [Launch brief](https://…) | 2026-10-02 |"""
-obs = (f'<div class="obs" style="width:560px;height:300px"><div style="width:190px;background:#262626;padding:10px 8px;display:flex;flex-direction:column;gap:2px;color:#BBB">'
-       f'<div>▾ inputs</div><div style="padding-left:14px">Launch brief.docx</div><div style="padding-left:14px">Launch brief.docx</div><div style="padding-left:14px">Q3 plan.pptx</div><div style="padding-left:14px;background:#3A3A3A;border-radius:4px;color:#EEE">Q3 plan.pptx</div><div style="padding-left:14px">survey.csv</div></div>'
-       f'<div style="flex:1;padding:12px 16px;white-space:normal"><div style="font-size:16px;font-weight:600;color:#EEE;margin-bottom:8px">Q3 plan.pptx</div>'
-       f'<div style="display:grid;grid-template-columns:96px 1fr;gap:3px 8px;font-size:12px"><span style="color:#999">type</span><span>snapshot</span><span style="color:#999">source</span><span style="color:#8AB4F8;text-decoration:underline">docs.google.com/pres…</span><span style="color:#999">snapshot_of</span><span style="color:#8AB4F8;text-decoration:underline">Q3 plan.pptx</span><span style="color:#999">downloaded</span><span>30/09/2026 09:12</span><span style="color:#999">snapshots</span><span>2 items</span></div>'
-       f'<div style="margin-top:10px">Snapshot of <span style="color:#8AB4F8;text-decoration:underline">Q3 plan</span> in Google Slides, downloaded 30 Sep 2026.</div></div></div>')
-board("10-where-kept", 1700, 960, "10 · Where the link is kept", "Q-154: A, a note beside each file; B, one list per folder; C, Duo’s own state. The file itself is never written.", bd(1700, 960,
-    "10 · Where the link is kept (Q-154)",
-    "Never inside the file: that changes it, git sees it, and Google drops it anyway. The choice is between a note beside the file, one list, or Duo’s memory. In every case Duo reads “Where from” as a fallback while nothing’s kept.",
+# Sources
+
+- [Q3 plan.pptx](./Q3%20plan.pptx): [Q3 plan](https://docs.google.com/presentation/d/1EAY…/edit) · Google Slides · downloaded 2026-09-30
+- [Launch brief.docx](./Launch%20brief.docx): [Launch brief](https://docs.google.com/document/d/1hK…/edit) · Google Docs · downloaded 2026-10-02
+- [vendor-terms.pdf](./vendor-terms.pdf): [Vendor terms](https://example.com/terms) · example.com · added 2026-10-05"""
+obs = (f'<div class="obs" style="width:620px;height:300px"><div style="width:180px;background:#262626;padding:10px 8px;display:flex;flex-direction:column;gap:2px;color:#BBB">'
+       f'<div>▾ inputs</div><div style="padding-left:14px;background:#3A3A3A;border-radius:4px;color:#EEE">_sources</div><div style="padding-left:14px">Launch brief.docx</div><div style="padding-left:14px">Q3 plan.pptx</div><div style="padding-left:14px">survey.csv</div><div style="padding-left:14px">vendor-terms.pdf</div></div>'
+       f'<div style="flex:1;padding:12px 16px;white-space:normal"><div style="font-size:16px;font-weight:600;color:#EEE;margin-bottom:6px">Sources</div>'
+       f'<div style="display:grid;grid-template-columns:60px 1fr;gap:3px 8px;font-size:12px;margin-bottom:8px"><span style="color:#999">type</span><span>sources</span></div>'
+       f'<div style="display:flex;flex-direction:column;gap:6px">'
+       f'<div>• <span style="color:#8AB4F8;text-decoration:underline">Q3 plan.pptx</span>: <span style="color:#8AB4F8;text-decoration:underline">Q3 plan</span> · Google Slides · downloaded 2026-09-30</div>'
+       f'<div>• <span style="color:#8AB4F8;text-decoration:underline">Launch brief.docx</span>: <span style="color:#8AB4F8;text-decoration:underline">Launch brief</span> · Google Docs · downloaded 2026-10-02</div>'
+       f'<div>• <span style="color:#8AB4F8;text-decoration:underline">vendor-terms.pdf</span>: <span style="color:#8AB4F8;text-decoration:underline">Vendor terms</span> · example.com · added 2026-10-05</div></div></div></div>')
+rules = """<ul>
+<li><b>One file per folder</b>, beside the files it describes: <span class="mono">_sources.md</span>. The first Add Source in a folder creates it; later ones add a line.</li>
+<li><b>One line per file</b>: a Markdown link to the file, a link to its source, the kind (Google Slides, Google Docs, or the site’s name), and the date. A Markdown list, so two sessions adding lines rarely conflict in git.</li>
+<li><b>Duo owns only its lines</b>: it rewrites a file’s line on Change Source, Remove Source, Rename, Move and Replace, and leaves anything else in the file (a heading, notes the user wrote) alone.</li>
+<li><b>Never the raw download address</b>, only the clean link.</li>
+<li><b>Obsidian and OKF</b>: <span class="mono">type: sources</span> for OKF; Markdown links, which both read; no new syntax.</li>
+<li><b>Never inside the .pptx or .docx</b>; writing the link into the file’s own properties stays a possible later action (ENH-56).</li></ul>"""
+board("10-where-kept", 1500, 820, "10 · Where the link is kept: _sources.md", "Decided (DL-163): one _sources.md per folder, one line per file, created on the first Add Source.", bd(1500, 820,
+    "10 · Where the link is kept: one _sources.md per folder (DL-163)",
+    "Geoff, 2026-10-08: “if they add source, a source file is created in same folder (or appended to if one exists); thin bar carries a link so the user can click on it in a future session”.",
     f'''<div style="display:flex;gap:30px;align-items:flex-start">
-<div style="display:flex;flex-direction:column;gap:10px;width:600px"><div class="cap">A · A note beside each file<span class="rec">recommended</span></div>
-<div class="txt"><div class="mono t2" style="font-size:11px;margin-bottom:6px">inputs/Q3 plan.pptx.md</div><div class="fm">{e(sidecar)}</div></div>
-<div class="cap">The same note in Obsidian</div>{obs}
-<div class="note"><b>Travels</b> with git, zip, Drive and a copy to another Mac. <b>Obsidian and OKF</b> read it: type and title (OKF), source (Web Clipper’s and Duo’s capture key), links in Markdown form. <b>Claude</b> reads it like any file. <b>Cost:</b> one more file per download; a rename in Finder leaves it behind until Duo next sees the folder and pairs them again.</div></div>
-<div style="display:flex;flex-direction:column;gap:10px;width:440px"><div class="cap">B · One list per folder</div>
-<div class="txt"><div class="mono t2" style="font-size:11px;margin-bottom:6px">inputs/SOURCES.md</div><div class="fm" style="white-space:pre-wrap">{e(sources_md)}</div></div>
-<div class="note">One file, readable at a glance; but a table isn’t Properties, two sessions writing it at once conflict, and a renamed file loses its row.</div></div>
-<div style="display:flex;flex-direction:column;gap:10px;width:440px"><div class="cap">C · Duo only</div>
-<div class="txt"><p>Kept in Duo’s support folder, keyed by the file’s path and contents.</p><p class="note">Invisible: no clutter. But lost on another Mac, in a clone, for Obsidian, and for Claude except through duo2.</p></div>
-<div class="cap" style="margin-top:12px">Not proposed: inside the file</div>
-<div class="txt"><p>A custom property <span class="mono" style="font-size:12px">Source</span> in docProps/custom.xml shows in Word’s File › Properties › Custom. Later, as an explicit “Write Link into File” for someone who sends the file on (ENH-56).</p></div></div>
+<div style="display:flex;flex-direction:column;gap:10px;width:680px"><div class="cap">inputs/_sources.md</div>
+<div class="txt"><div class="fm" style="white-space:pre-wrap">{e(sources_md)}</div></div>
+<div class="cap">The same file in Obsidian</div>{obs}</div>
+<div class="txt" style="width:700px"><h3>The rules</h3>{rules}</div>
 </div>'''))
 
 # 11 · Claude and duo2
@@ -471,13 +472,14 @@ claude_txt = (f'<span style="color:{CTEXT2}">&gt;</span> where did the Q3 deck c
               f'inputs/Q3 plan.pptx is a snapshot of the Google Slides deck “Q3 plan”<br>'
               f'(docs.google.com/presentation/d/1EAYk18WDj…/edit), downloaded 30 Sep.<br>'
               f'I can’t open Google Slides myself. If you want the latest, I can ask Duo<br>to fetch it: <span style="color:{CTEXT}">duo2 file latest "inputs/Q3 plan.pptx"</span>, then you download it in your browser.')
-verbs = [("duo2 file source &lt;path&gt;", "The link, title, kind and snapshot dates (JSON with --json)", "the bar’s line, the popover"),
-         ("duo2 file source &lt;path&gt; --set &lt;url&gt; | --clear", "Set or remove it (the note only)", "Set Source…, Remove Source"),
+verbs = [("duo2 file source &lt;path&gt;", "The link, title, kind and date, from _sources.md (JSON with --json)", "the bar’s line, the popover"),
+         ("duo2 file source &lt;path&gt; --set &lt;url&gt; | --clear", "Add or remove the file’s line in _sources.md", "Add Source, Remove Source"),
          ("duo2 file source &lt;path&gt; --open [--slide n]", "Open it in the default browser", "the title link, Slide n in Slides"),
          ("duo2 file latest &lt;path&gt;", "Open the export link and watch for the download", "Get Latest"),
+         ("duo2 file newer [&lt;path&gt;]", "Newer downloads of a file (or of every .pptx and .docx in the project), source or not", "the bar’s “A newer download”"),
          ("duo2 file compare &lt;path&gt; [&lt;newer&gt;]", "Open the compare (newest matching download by default)", "Compare"),
          ("duo2 file replace &lt;path&gt; &lt;newer&gt; [--keep-old]", "Replace; old copy to the Trash (or dated)", "Replace, Undo"),
-         ("duo2 file snapshots &lt;path&gt;", "The snapshot dates", "the popover’s Snapshots")]
+         ("duo2 file snapshots &lt;path&gt;", "The dates it was replaced", "the popover’s Snapshots")]
 vt = "".join(f'<tr><td class="mono" style="font-size:11px;white-space:nowrap">{a}</td><td>{b}</td><td class="t2">{c}</td></tr>' for a, b, c in verbs)
 sent = f'''<div class="pre" style="width:560px">{e("inputs/Q3 plan.pptx, slide 2, “Revenue by quarter”, shape “Chart 3” (id 27)")}
 <span class="k">Source: Google Slides “Q3 plan”, docs.google.com/presentation/d/1EAYk18WDj…/edit (snapshot, downloaded 30 Sep)
@@ -488,7 +490,7 @@ board("11-claude", 1700, 820, "11 · What Claude sees, and duo2", "The source in
     "Claude can’t reach Google, but it can say where a file came from, and ask Duo for a newer copy. Duo’s teaching text (cli-teaching.md) gains one line about duo2 file source.",
     f'''<div style="display:flex;gap:40px;align-items:flex-start">
 <div style="display:flex;flex-direction:column;gap:14px">
-{frame(qconsole(claude_txt, w=640) , cap="Asked in a session", note="Claude finds the note beside the file (or runs duo2 file source), and says it can’t open the link itself.", w=640)}
+{frame(qconsole(claude_txt, w=640) , cap="Asked in a session", note="Claude reads the folder’s _sources.md (or runs duo2 file source), and says it can’t open the link itself.", w=640)}
 <div class="cap">A picked shape, as pasted into Claude’s prompt (DL-125 D, one line added)</div>{sent}
 </div>
 <div style="display:flex;flex-direction:column;gap:8px;width:900px"><div class="cap">New verbs</div>
@@ -496,29 +498,47 @@ board("11-claude", 1700, 820, "11 · What Claude sees, and duo2", "The source in
 <div class="note">Send to Claude, the docx reader and duo2 doc read add a <b>Source:</b> line for a file that has one. <span class="mono">duo2 files</span> marks files with a source.</div></div>
 </div>'''))
 
-# 12 · recommendation
-board("12-recommendation", 1440, 860, "12 · The recommendation and a first slice", "What to build first, and what waits.", bd(1440, 860,
-    "12 · The recommendation, and a first slice",
-    "One rule underneath: the download is never changed, and Duo never looks in Downloads on its own.",
+# 12 · decided
+board("12-recommendation", 1440, 860, "12 · What’s decided, and a first slice", "Geoff’s choices (DL-163) and the slices.", bd(1440, 860,
+    "12 · What’s decided (DL-163), and a first slice",
+    "One rule underneath: the downloaded file is never changed, and Duo never looks in Downloads on its own.",
     f'''<div style="display:flex;gap:14px;align-items:flex-start">
-<div class="txt" style="flex:1"><h3>Recommended</h3><ul>
-<li><b>Keep the link in a note beside the file</b> (10 A): Q3 plan.pptx.md, with type, title, source, downloaded and snapshots. Folded into a link mark in Duo’s Files (5).</li>
-<li><b>Record it on arrival</b> when Duo moves the file in, with Undo; offer it in the bar otherwise (2 A).</li>
-<li><b>Show it as a line under the viewer’s bar</b> (3 A): Snapshot of Q3 plan in Google Slides · 30 Sep, the title opening the link, Get Latest at the end; the popover for the rest (4).</li>
-<li><b>Get Latest through the browser and Spotlight</b> (6): no folder watching; Choose File… as the fallback.</li>
-<li><b>Compare</b> in a right-pane tab: a deck in two columns paired by slide id (7 A), a document as a redline (8).</li>
+<div class="txt" style="flex:1"><h3>Decided (Geoff, 2026-10-08)</h3><ul>
+<li><b>A thin bar under the viewer’s bar</b> on every .pptx and .docx (2, 3 A). It offers Add Source, prefilled in one click when the browser’s “Where from” knows the link; nothing is written until then.</li>
+<li><b>One _sources.md per folder</b> (10): created by the first Add Source, a line added by each after; <span class="mono">type: sources</span>, one Markdown list line per file.</li>
+<li><b>The bar carries the link</b> in later sessions: the title opens it in the default browser; the popover for the rest (4).</li>
+<li><b>Newer downloads, compare and replace work with or without a source</b> (6, 13). Get Latest is the extra for Google links.</li>
 <li><b>Replace</b> keeps the name; the old copy goes to the Trash with Undo (9 A).</li>
-<li><b>Claude</b> is told the source wherever Duo hands it the file; duo2 file source, latest, compare, replace, snapshots (11).</li></ul></div>
-<div class="txt" style="width:560px;flex:none"><h3>v1 slice</h3><ol>
-<li>Read “Where from” on arrival; rebuild the /edit link; write the note (Undo); Set Source… and Remove Source.</li>
-<li>The bar’s line on the deck viewer, and on the docx viewer once DL-162 lands; the popover without Snapshots.</li>
-<li>Open in Google Slides / Docs, Slide n in Slides; Copy Link.</li>
+<li><b>Claude</b> reads _sources.md and is told the source wherever Duo hands it the file (11).</li></ul></div>
+<div class="txt" style="width:560px;flex:none"><h3>Slice 1</h3><ol>
+<li>The thin bar on the deck viewer (and the docx viewer when DL-162 lands): Add Source with the “Where from” prefill, Add Source…, the link, the popover.</li>
+<li>_sources.md: create, add, change, remove; rename and move keep lines.</li>
+<li>Open in Google Slides / Docs, Slide n in Slides, Copy Link; the link mark in Files.</li>
 <li>Claude: the Source line in Send to Claude and slide pick; duo2 file source.</li></ol>
-<h3>Second slice</h3><ol start="5">
-<li>Get Latest with Spotlight, Choose File…, “no changes”.</li>
-<li>Compare (deck, then document), Replace with Undo, Snapshots.</li></ol>
-<h3>Later</h3><ul><li>Watch Downloads, opt-in (ENH-57); Write Link into File (ENH-56); Sheets once there’s an xlsx viewer (ENH-55).</li></ul>
-<h3>Before building</h3><ul><li>Q-155: Spotlight and the Open panel without a privacy prompt, tested with Geoff’s OK or a test bundle id.</li></ul></div></div>'''))
+<h3>Slice 2</h3><ol start="5">
+<li>Newer downloads by Spotlight (13), the bar’s notice, duo2 file newer; Get Latest; Choose File….</li>
+<li>Compare (deck, then document), Replace with Undo.</li></ol>
+<h3>Later</h3><ul><li>Write Link into File (ENH-56); Sheets with an xlsx viewer (ENH-55).</li></ul>
+<h3>Before slice 2</h3><ul><li>Q-155: does opening a download from Spotlight ask for Downloads access, tested with Geoff’s OK or a test bundle id.</li></ul></div></div>'''))
+
+# 13 · matching
+mt = [("The name", "The project file’s name without its extension, matched to a download’s name with the browser’s copy marks stripped: “Q3 plan (1).pptx”, “Q3 plan-2.pptx”, “Q3 plan (2026-10-08).pptx” all match “Q3 plan”. Same extension. Case ignored.", "always"),
+      ("A download", "Spotlight’s “Where from” is set (it came through a browser, Mail or AirDrop), so files the user saved by hand elsewhere aren’t candidates.", "always"),
+      ("Newer", "Downloaded (quarantine time, else created) after the project copy’s date: its _sources.md date, else when the file arrived in the project.", "always"),
+      ("The Google id", "When either side knows one (the source line, or the download’s “Where from”), the ids must agree; a different id is a different document even with the same name.", "when known"),
+      ("Not already seen", "A download the user compared and kept theirs over isn’t offered again.", "always")]
+mt_rows = "".join(f'<tr><th>{a}</th><td>{b}</td><td class="t2" style="width:110px">{c}</td></tr>' for a, b, c in mt)
+board("13-matching", 1300, 700, "13 · How a download is matched", "Name, a real download, newer, the Google id when known: no source needed.", bd(1300, 700,
+    "13 · How Duo knows a download is a newer copy (no source needed)",
+    "Geoff, 2026-10-08: “download monitoring and updating should be agnostic of whether the source url exists”. Google names a download after the document’s title, so the name is the common key; the id, when either side has one, settles it.",
+    f'''<div style="display:flex;gap:30px;align-items:flex-start">
+<div class="txt" style="flex:1"><table class="cmp"><thead><tr><th>Rule</th><th>What</th><th>Applies</th></tr></thead><tbody>{mt_rows}</tbody></table></div>
+<div class="txt" style="width:420px"><h3>Verified (F-241)</h3><ul>
+<li>A Spotlight query on the name finds “Baby album (1).pptx” for “Baby album.pptx”, and the “Where from” filter keeps only downloads [V].</li>
+<li>Spotlight can find by Google id inside “Where from” [V].</li>
+<li>Chrome leaves Spotlight’s “Downloaded date” empty; the quarantine stamp has the time [V].</li></ul>
+<h3>When the name changed</h3><p>If the document was renamed in Google, its next download has a new name: only the id finds it, so a file with a Google source is also matched by id alone.</p></div>
+</div>'''))
 
 with open(os.path.join(OUT, "manifest.json"), "w") as f:
     import json

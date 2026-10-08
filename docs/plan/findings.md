@@ -2818,4 +2818,5 @@ Measured on the real TUI with the spike's mock API (no tokens), both versions id
 ## F-241 · Spotlight finds downloads by document id (source links, 2026-10-08)
 
 - `kMDItemWhereFroms` is indexed. `mdfind -onlyin <dir> 'kMDItemWhereFroms == "*<ID>*"'` found the deck in a scratch folder under home (removed afterwards). `/private/tmp` isn't indexed.
-- So Get Latest can spot the browser's new download without Duo listing ~/Downloads. Whether an `NSMetadataQuery` from Duo returns items in ~/Downloads without the privacy prompt, and whether reading them asks, is Q-155.
+- **By name, too:** `kMDItemFSName == "Baby album*.pptx"c && kMDItemWhereFroms == "*"` found `Baby album (1).pptx` (a Chrome download) and skipped a same-named file with no "Where from". So a newer download is found with or without a source (DL-163). Chrome leaves `kMDItemDownloadedDate` empty; the download time is in the quarantine stamp.
+- So newer downloads and Get Latest can be spotted without Duo listing ~/Downloads. Whether an `NSMetadataQuery` from Duo returns items in ~/Downloads without the privacy prompt, and whether reading them asks, is Q-155.

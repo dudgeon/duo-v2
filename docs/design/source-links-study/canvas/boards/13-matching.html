@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
-<meta name="design-size" content="1300x760">
+<meta name="design-size" content="1300x700">
 <meta name="design-kind" content="board">
 <meta name="design-surface" content="source-links-study">
 <!--
-5 · In Files, and the right-click menu
+13 · How a download is matched
 STUDY BOARD [P], not approved. Drawn for the source-links study (2026-10-08) with the Duo design system.
-A link mark on files with a source; _sources.md as an ordinary file; Source and compare items in the menu.
+Name, a real download, newer, the Google id when known: no source needed.
 It is a picture written in HTML: match what it draws, do not port its markup. Names, links and data are illustrative.
 -->
-<title>Duo · 5 · In Files, and the right-click menu</title>
+<title>Duo · 13 · How a download is matched</title>
 <style>
 body{margin:0}
 .w{box-sizing:border-box;display:flex;flex-direction:column;background:#FFFFFF;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;overflow:hidden}
@@ -176,9 +176,13 @@ table.cmp thead th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-
 </style>
 </head>
 <body>
-<div class="bd" style="width:1300px;height:760px;gap:14px"><div class="bt">5 · In Files, and the right-click menu</div><div class="bsub">A file with a line in its folder’s _sources.md shows the link mark. _sources.md itself is an ordinary Markdown file: it opens in the editor like any other.</div><div style="display:flex;gap:40px;align-items:flex-start">
-<div style="display:flex;flex-direction:column;gap:8px;flex:none"><div class="cap">Files</div><div class="frame" style="width:300px;"><div style="width:300px;background:#FFFFFF;position:relative"><div style="border-top:2px solid #8B939C;padding:10px 16px 8px;display:flex;flex-direction:column;gap:2px"><div class="sl">Files</div><div class="mono t2" style="font-size:11px">~/claude-home/q3-planning</div><div style="margin-top:4px"><div class="ft" style="padding-left:0px;">_PROJECT.md</div><div class="ft" style="padding-left:0px;"><svg width="10" height="8" viewBox="0 0 10 8" style="flex:none"><path d="M1.5 2 5 6 8.5 2" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>inputs/</div><div class="ft" style="padding-left:18px;background:#E9ECEF;border-radius:4px;">Q3 plan.pptx<span style="margin-left:6px;display:inline-flex"><svg width="12" height="12" viewBox="0 0 12 12" style="flex:none"><path d="M5 7 7 5M4.2 5.3 2.9 6.6a2 2 0 0 0 2.8 2.8l1.3-1.3M7.8 6.7l1.3-1.3a2 2 0 0 0-2.8-2.8L5 3.9" fill="none" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round"/></svg></span></div><div class="ft" style="padding-left:18px;">Launch brief.docx<span style="margin-left:6px;display:inline-flex"><svg width="12" height="12" viewBox="0 0 12 12" style="flex:none"><path d="M5 7 7 5M4.2 5.3 2.9 6.6a2 2 0 0 0 2.8 2.8l1.3-1.3M7.8 6.7l1.3-1.3a2 2 0 0 0-2.8-2.8L5 3.9" fill="none" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round"/></svg></span></div><div class="ft" style="padding-left:18px;">survey.csv</div><div class="ft" style="padding-left:18px">_sources.md</div><div class="ft" style="padding-left:0px;"><svg width="8" height="10" viewBox="0 0 8 10" style="flex:none"><path d="M2 1.5 6 5 2 8.5" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>drafts/</div><div class="ft" style="padding-left:0px;">plan.md</div></div></div></div></div><div class="note" style="width:300px">The link mark comes from _sources.md. A renamed file keeps its mark when Duo did the rename (it rewrites the line); after a Finder rename, the line is matched again by name and Google id when Duo next reads the folder.</div></div>
-<div style="display:flex;flex-direction:column;gap:8px;flex:none"><div class="cap">Right-click on the deck</div><div class="frame" style="width:298px;"><div style="padding:14px;background:#F3F4F6"><div class="menu" style="width:270px"><div>Open</div><div>Open With</div><div>Reveal in Finder</div><div class="sep"></div><div class="hd">Source</div><div class="hi">Open Q3 plan in Google Slides</div><div>Get Latest</div><div>Copy Source Link</div><div>Change Source…</div><div>Remove Source</div><div class="sep"></div><div>Compare with Newer Download</div><div>Replace with File…</div><div class="sep"></div><div>Send to Claude</div><div>Rename…</div><div>Move to…</div><div>Move to Trash</div></div></div></div><div class="note" style="width:298px">The Source group appears only on a file with a source; on one without, a single Add Source… item. Compare with Newer Download and Replace with File… are there for every .pptx and .docx.</div></div>
+<div class="bd" style="width:1300px;height:700px;gap:14px"><div class="bt">13 · How Duo knows a download is a newer copy (no source needed)</div><div class="bsub">Geoff, 2026-10-08: “download monitoring and updating should be agnostic of whether the source url exists”. Google names a download after the document’s title, so the name is the common key; the id, when either side has one, settles it.</div><div style="display:flex;gap:30px;align-items:flex-start">
+<div class="txt" style="flex:1"><table class="cmp"><thead><tr><th>Rule</th><th>What</th><th>Applies</th></tr></thead><tbody><tr><th>The name</th><td>The project file’s name without its extension, matched to a download’s name with the browser’s copy marks stripped: “Q3 plan (1).pptx”, “Q3 plan-2.pptx”, “Q3 plan (2026-10-08).pptx” all match “Q3 plan”. Same extension. Case ignored.</td><td class="t2" style="width:110px">always</td></tr><tr><th>A download</th><td>Spotlight’s “Where from” is set (it came through a browser, Mail or AirDrop), so files the user saved by hand elsewhere aren’t candidates.</td><td class="t2" style="width:110px">always</td></tr><tr><th>Newer</th><td>Downloaded (quarantine time, else created) after the project copy’s date: its _sources.md date, else when the file arrived in the project.</td><td class="t2" style="width:110px">always</td></tr><tr><th>The Google id</th><td>When either side knows one (the source line, or the download’s “Where from”), the ids must agree; a different id is a different document even with the same name.</td><td class="t2" style="width:110px">when known</td></tr><tr><th>Not already seen</th><td>A download the user compared and kept theirs over isn’t offered again.</td><td class="t2" style="width:110px">always</td></tr></tbody></table></div>
+<div class="txt" style="width:420px"><h3>Verified (F-241)</h3><ul>
+<li>A Spotlight query on the name finds “Baby album (1).pptx” for “Baby album.pptx”, and the “Where from” filter keeps only downloads [V].</li>
+<li>Spotlight can find by Google id inside “Where from” [V].</li>
+<li>Chrome leaves Spotlight’s “Downloaded date” empty; the quarantine stamp has the time [V].</li></ul>
+<h3>When the name changed</h3><p>If the document was renamed in Google, its next download has a new name: only the id finds it, so a file with a Google source is also matched by id alone.</p></div>
 </div></div>
 </body>
 </html>
