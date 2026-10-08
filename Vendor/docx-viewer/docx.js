@@ -163,6 +163,7 @@ const byIdChange = (id) => changes.find((c) => String(c.id) === String(id));
 
 let hovered = null;
 function showLabel(el) {
+  if (picking) return;
   if (!el || host.dataset.docxReviewMode !== 'all' || el.classList.contains('duo-muted')) return hideLabel();
   const ch = byIdChange(el.dataset.docxChangeId);
   const author = el.dataset.docxChangeAuthor, kind = ch?.kind || el.dataset.docxChangeKind || 'format';
@@ -237,6 +238,104 @@ window.__duo = {
   // the DOM changes under it since the last draw finished (a layout loop would make these grow).
   stats: () => ({ opens, sections: renders(), height: document.documentElement.scrollHeight, sheetResizes, mutations }),
 };
+
+// ---- Select Text (docx-viewer-handoff W5): the deck's picker, for paragraphs and comment cards -----
+// Selectors: a paragraph's w14:paraId, or `c:<comment id>` for a comment's card. Messages and calls are
+// the HTML picker's (PageHost): start, stop, unfreeze, freeze, describe, hideOutline, showOutline.
+const outline = document.getElementById('outline');
+const tag = document.getElementById('tag');
+let picking = false, hot = null, frozen = null, hidden = false;
+
+const targetOf = (node) => node.closest?.('.duo-resolved, .duo-card, p[data-office-target]');
+const paraIdOf = (p) => (p.dataset.officeTarget || '').split('#p:')[1] || '';
+function cardParagraph(card) {
+  let el = card.closest('.duo-resolved') || card;
+  for (let n = el.previousElementSibling; n; n = n.previousElementSibling) if (n.matches('p[data-office-target]')) return n;
+  return null;
+}
+function paragraphFor(sel) {
+  const s = String(sel);
+  if (s.startsWith('c:')) {
+    const t = threads.find((x) => x.id === s.slice(2) || (window.__duo_comments || []).some((c) => c.id === s.slice(2) && c.thread === x.id));
+    return t ? { el: t.el.classList.contains('duo-resolved') ? t.el : t.el, comment: s.slice(2) } : null;
+  }
+  const p = [...host.querySelectorAll('p[data-office-target]')].find((q) => paraIdOf(q) === s);
+  return p ? { el: p } : null;
+}
+function counts(p) {
+  const ids = new Set([...p.querySelectorAll('[data-docx-change-id]:not(.docx-comment-anchor)')].map((e) => e.dataset.docxChangeId));
+  let comments = 0;
+  for (let n = p.nextElementSibling; n && n.matches('.duo-card, .duo-resolved'); n = n.nextElementSibling) comments++;
+  return { changes: ids.size, comments };
+}
+function tagText(el) {
+  if (el.matches('.duo-card, .duo-resolved')) return 'Comment';
+  const { changes, comments } = counts(el);
+  const parts = [];
+  if (comments) parts.push(`${comments} comment${comments === 1 ? '' : 's'}`);
+  if (changes) parts.push(`${changes} change${changes === 1 ? '' : 's'}`);
+  return ['Paragraph', ...parts].join(' · ');
+}
+function describePick(el, comment) {
+  const isCard = el.matches('.duo-card, .duo-resolved');
+  const p = isCard ? cardParagraph(el) : el;
+  const paraId = p ? paraIdOf(p) : '';
+  let heading = '';
+  for (const q of host.querySelectorAll('p[data-office-target]')) { if (q === p) break; if (/docx_heading/.test(q.className)) heading = q.textContent.trim(); }
+  const thread = isCard ? threads.find((t) => t.el === el || t.el.contains(el)) : null;
+  const cid = comment ?? thread?.id ?? '';
+  const r = el.getBoundingClientRect();
+  const text = (isCard ? el.textContent : [...el.childNodes].map((n) => n.textContent).join('')).trim();
+  return {
+    tag: isCard ? 'comment' : 'paragraph', label: isCard ? `comment ${cid}` : `paragraph ${paraId}`, selector: isCard ? `c:${cid}` : paraId, trail: heading ? [heading] : [],
+    text, attributes: { kind: isCard ? 'comment' : 'paragraph', paraId, ...(isCard ? { comment: String(cid) } : {}) }, styles: {},
+    rect: [Math.round(r.left), Math.round(r.top + scrollY), Math.round(r.width), Math.round(r.height)], html: '', url: location.href, title,
+    viewRect: [r.left, r.top, r.width, r.height],
+  };
+}
+function motionMs(name) {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return 0;
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--duo-motion-' + name + '-ms')) || 0;
+}
+function place(el) {
+  if (!el || hidden) { outline.style.display = 'none'; tag.style.display = 'none'; return; }
+  const r = el.getBoundingClientRect(), pad = 3;
+  const ms = outline.style.display === 'block' ? motionMs('outline') : 0;
+  outline.style.transition = ms > 0 ? ['left', 'top', 'width', 'height'].map((q) => `${q} ${ms}ms ease-out`).join(', ') : 'none';
+  Object.assign(outline.style, { display: 'block', left: `${r.left + scrollX - pad}px`, top: `${r.top + scrollY - pad}px`, width: `${r.width + 2 * pad}px`, height: `${r.height + 2 * pad}px` });
+  outline.className = el === frozen ? 'frozen' : 'hover';
+  tag.textContent = tagText(el);
+  tag.style.display = 'block';
+  tag.style.left = `${r.left + scrollX - pad}px`;
+  tag.style.top = `${r.top + scrollY - 24}px`;   // the board: 3 left of the paragraph, 24 above its top (16 high, 8 clear)
+}
+document.addEventListener('mousemove', (e) => {
+  if (!picking || frozen) return;
+  const el = targetOf(e.target);
+  if (el !== hot) { hot = el; place(el); }
+}, true);
+document.addEventListener('click', (e) => {
+  if (!picking) return;
+  e.preventDefault(); e.stopPropagation();
+  if (frozen) return;
+  const el = targetOf(e.target);
+  if (!el) return;
+  frozen = el; place(el);
+  post({ kind: 'picked', element: describePick(el) });
+}, true);
+document.addEventListener('keydown', (e) => { if (picking && e.key === 'Escape') { e.preventDefault(); stopPick(); post({ kind: 'pickEnded' }); } }, true);
+function startPick() { picking = true; frozen = null; hot = null; document.body.classList.add('picking'); hideLabel(); place(null); }
+function stopPick() { picking = false; frozen = null; hot = null; document.body.classList.remove('picking'); place(null); }
+Object.assign(window.__duo, {
+  start: startPick, stop: stopPick, unfreeze: () => { frozen = null; hot = null; place(null); },
+  freeze(sel) { const t = paragraphFor(sel); if (!t) return false; picking = true; document.body.classList.add('picking'); frozen = t.el; t.el.scrollIntoView({ block: 'nearest' }); place(t.el); post({ kind: 'picked', element: describePick(t.el, t.comment) }); return true; },
+  describe(sel) { const t = paragraphFor(sel); return t ? describePick(t.el, t.comment) : null; },
+  hoverPara(sel) { const t = paragraphFor(sel); if (t && picking && !frozen) { hot = t.el; place(t.el); } return !!t; },
+  hideOutline() { hidden = true; place(null); },
+  showOutline() { hidden = false; place(frozen); },
+  selection: () => null,
+});
+
 const renders = () => host.querySelectorAll('section.docx').length;
 let opens = 0, sheetResizes = 0, mutations = 0, settled = false;
 new ResizeObserver(() => { if (settled) sheetResizes++; }).observe(document.getElementById('sheet'));

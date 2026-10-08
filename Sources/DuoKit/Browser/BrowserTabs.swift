@@ -436,6 +436,7 @@ extension AppModel {
         if let w = visibleWebTab { return w }
         if let path = rightTab, ["html", "htm"].contains((path as NSString).pathExtension.lowercased()) { return htmlViewerIfLoaded }
         if let path = rightTab, Self.isDeck(path) { return deckViewerIfLoaded }
+        if let path = rightTab, Self.isWordViewable(path) { return docxViewerIfLoaded }
         return nil
     }
 

@@ -145,7 +145,7 @@ extension AppModel {
 
     /// A file's path as Claude should see it: relative to the visible session's folder when
     /// inside it, else absolute.
-    func displayPath(_ url: URL) -> String {
+    public func displayPath(_ url: URL) -> String {
         if !url.isFileURL { return url.absoluteString }   // a web page: its address
         let abs = url.standardizedFileURL.path
         if let cwd = visibleSessionId.flatMap(cwd(of:)).map({ URL(fileURLWithPath: $0).standardizedFileURL.path }), abs.hasPrefix(cwd + "/") {
@@ -298,13 +298,17 @@ extension AppModel {
     }
 
     /// The picked element, with a screenshot saved for Claude to read.
-    func pickedElementPayload(_ done: @escaping @MainActor (String?) -> Void) {
+    public func pickedElementPayload(_ done: @escaping @MainActor (String?) -> Void) {
         if let d = visiblePage as? DeckViewer {
             guard let url = d.pageURL, let s = d.pickedShape else { return done(nil) }
             return d.screenshot(rect: nil) { [weak self] shot in
                 guard let self else { return done(nil) }
                 done(SendFormat.shape(s, path: self.displayPath(url), screenshot: shot))
             }
+        }
+        if let d = visiblePage as? DocxViewer {
+            guard let url = d.pageURL, let p = d.pickedParagraph else { return done(nil) }
+            return done(SendFormat.paragraph(p, path: displayPath(url), thread: d.pickedThread))
         }
         guard let v = visiblePage, let url = v.pageURL, let e = v.picked else { return done(nil) }
         v.screenshot(rect: nil) { [weak self] shot in

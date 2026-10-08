@@ -90,6 +90,7 @@ w(f"    public static let chatStripHeight: CGFloat = {num(s['chatStripHeight'])}
 w(f"    public static let deckBarHeight: CGFloat = {num(s['deckBarHeight'])}")   # the PowerPoint viewer's bar (DL-125)
 w(f"    public static let docxMenuWidth: CGFloat = {num(s['docxMenuWidth'])}")   # the Word viewer's Markup menu (docx-viewer-handoff W4)
 w(f"    public static let docxMenuTop: CGFloat = {num(s['docxMenuTop'])}")
+w(f"    public static let docxBarTrailing: CGFloat = {num(s['docxBarTrailing'])}")   # the Word viewer's bar runs close to the right edge, as the board draws it
 w(f"    public static let docxMenuRowPaddingX: CGFloat = {num(s['docxMenuRowPaddingX'])}")
 w(f"    public static let homeSessionTabsHeight: CGFloat = {num(s['homeSessionTabsHeight'])}")
 w(f"    public static let overviewFooterHeight: CGFloat = {num(s['overviewFooterHeight'])}")

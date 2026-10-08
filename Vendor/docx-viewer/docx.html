@@ -74,11 +74,21 @@
     background: var(--duo-pane); border-radius: 10px; padding: 4px 10px;
     box-shadow: 0 8px 24px color-mix(in srgb, var(--duo-text) 18%, transparent), 0 0 0 1px color-mix(in srgb, var(--duo-text) 8%, transparent); }
   #label b { font-weight: 600; }
+
+  /* Select Text (W5): a dashed outline 3 outside what's under the pointer, solid 1.5 once picked, a tag above it. */
+  body.picking #host p[data-office-target], body.picking .duo-card, body.picking .duo-resolved { cursor: default; }
+  #outline { position: absolute; pointer-events: none; box-sizing: border-box; display: none; z-index: 10; }
+  #outline.hover { border: 1px dashed var(--duo-text); }
+  #outline.frozen { border: 1.5px solid var(--duo-text); }
+  #tag { position: absolute; pointer-events: none; display: none; z-index: 11; padding: 0 6px; border-radius: 3px; background: var(--duo-text); color: var(--duo-pane);
+    font: 11px/16px -apple-system, BlinkMacSystemFont, system-ui, sans-serif; white-space: nowrap; }
 </style>
 </head>
 <body>
 <div id="sheet"><div id="host"></div></div>
 <div id="label"></div>
+<div id="outline"></div>
+<div id="tag"></div>
 <script type="module" src="docx.js"></script>
 </body>
 </html>

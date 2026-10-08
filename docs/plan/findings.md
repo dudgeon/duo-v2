@@ -2834,3 +2834,19 @@ Measured on the real TUI with the spike's mock API (no tokens), both versions id
 - **Its `original` view keeps formatting changes applied** (old bold, italic, colour and alignment aren't restored). Duo restores the common properties itself (DL-162).
 - **Pagination is slow on files without Word's saved page breaks**: a 73-page document drew in 63 ms, then re-paginated for 112 s. With Word's markers, 1.75 s. Unpaginated (`breakPages: false`), 67 ms. DL-162 renders unpaginated at the pane's width.
 - One maintainer; the bundle calls a no-op `assertViewerLicense` hook. Pinned and vendored at 0.3.33; the fallback is upstream docx-preview with a two-line paraId patch.
+
+## F-235 · The Word viewer, slice 1 as built (DL-162, 2026-10-08)
+
+- Built in 2d6fd8b: a .docx opens read only in `@file-viewer/docx` 0.3.33 (pinned, with JSZip, in `Vendor/docx-viewer/`, sha256s in its README; `vendor.sh` rewrites the bundle's bare `import "jszip"` to the vendored file, so no import map is needed) on a `duo-docx:` scheme with a CSP and a non-persistent store, hosted as the deck is.
+- The renderer's four review modes share one DOM, switched by `data-docx-review-mode`, so the Markup menu changes the view without drawing again. Duo's review layer (`docx.js`) draws the colours (`reviewAuthor1…5`, injected as CSS variables), the marks, the hover label and the comment cards; Original puts back bold, italic, underline and colour (F-234).
+- **No layout loop:** the web view's frame is the pane's and nothing observes the content's height. A 73-section document with no saved page breaks (117,814 px tall) drew once in 97–122 ms; over 10 s, no mutations, no resizes and one draw. A viewer off screen is dormant, its file watcher stopped.
+- **Read only:** a check opens and draws the fixture and compares the file's bytes and modified time; the viewer's Swift and page have no write call on the document.
+- Every existing board (check-ui and check-chat, 90 captures) stayed byte-identical; check-scale and check-chat-perf within budget. Region comparisons: `docs/design/docx-viewer-handoff/proof/`.
+
+## F-236 · The Word viewer, slice 2 as built: Select Text and the outline (DL-162 W5, 2026-10-08)
+
+- Built in b563c7b and proved in 64e4947. The Word viewer adopts the deck's `PageHost` picker: start, stop, Pick Another and the screenshot are shared, and `send element` and `duo2 selection` see the picked paragraph. The deck's three picker buttons became a shared `PickerButtonRow`; `scripts/check-deck.sh` (new) shows the deck's four states byte-identical before and after.
+- `Docx.outline` (`DocxOutline.swift`) reads the file with no renderer: each paragraph's `w14:paraId`, style, heading, accepted text, changes and the comments ending in it. DuoChecks proves every outline paragraph is drawn in the page under the same id, so a picked paragraph and `duo2 doc outline` name the same one. A trap on the way: a dictionary mutated inside a closure that also read it (Swift's exclusivity check).
+- The picker bar's line 1 shows the paragraph's accepted text (as pasted), where the board read "three four" with the markup.
+- The four buttons fit the 460-pt pane only at their natural widths (`docxBarTrailing` 6); below 460 the bar clips (Q-152).
+- Proofs: `docs/design/docx-viewer-handoff/proof/` (picked, picked-hover, picked-session with a session showing, deck-picked-after-refactor). The 73-section document still draws once.

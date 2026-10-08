@@ -679,6 +679,10 @@ public enum FixtureHarness {
         case "docx-markup": model.setMarkup(mode: parts.count > 1 ? parts[1] : "all")
         case "docx-person": model.setMarkup(person: .some(parts.count > 1 ? parts[1] : nil))
         case "docx-hover": if parts.count > 1 { model.docxViewer.hover(parts[1]) }
+        case "docx-picking": model.docxViewer.startPicking()   // Select Text on
+        case "docx-pick-hover": if parts.count > 1 { model.docxViewer.hoverPicker(parts[1]) }   // docx-pick-hover:<paraId or c:id>
+        case "docx-pick": if parts.count > 1 { model.docxViewer.pick(selector: parts[1]) }   // a paragraph or comment picked
+        case "docx-send-picked": if let d = model.visiblePage as? DocxViewer, let p = d.pickedParagraph { FileHandle.standardError.write(Data("docx payload:\n\(SendFormat.paragraph(p, path: d.url?.path ?? "", thread: d.pickedThread))\n".utf8)) }
         case "docx-ask-convert": if let t = model.rightTab { model.askConvertToMarkdown(t) }
         case "docx-dump":
             let v = model.docxViewer
