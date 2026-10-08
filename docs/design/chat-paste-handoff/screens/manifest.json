@@ -1,0 +1,51 @@
+{
+  "$note": "Chat paste, approved 2026-10-08 (DL-161). kind=board: the console pane drawn on the Design canvas, exported as static HTML.",
+  "source": "https://claude.ai/artifact/9XConwuo9RTSvgzvd4njAj",
+  "screens": [
+    {
+      "file": "screens/picture.html",
+      "board": "Main.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-161",
+      "shows": "Composer: A (built) — pictures as 64 px thumbnails in a row above your text, × removes, click previews; B and C not chosen; the Adding… tile while Claude Code takes it."
+    },
+    {
+      "file": "screens/text.html",
+      "board": "PasteText.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-161",
+      "shows": "Composer: A (built) — a paste over 12 lines folds to a Pasted text · n lines block, and opened in place, editable; B and C not chosen."
+    },
+    {
+      "file": "screens/sent.html",
+      "board": "Feed.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-161",
+      "shows": "Feed: A (built) — pictures at the top of your bubble, Quick Look on click; a long paste folds by K8; B not chosen."
+    },
+    {
+      "file": "screens/edges.html",
+      "board": "Edges.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-161",
+      "shows": "Six pictures in the composer and the bubble; a huge paste's block; a picture file vs another file vs a path."
+    },
+    {
+      "file": "screens/replay.html",
+      "board": "Replay.dc.html",
+      "kind": "board",
+      "width": 680,
+      "height": 860,
+      "decision": "DL-161",
+      "shows": "A replayed message with its picture; the failure lines; ⌘V with nothing focused goes to the composer."
+    }
+  ]
+}

@@ -2759,3 +2759,24 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - The director saw no caret in check-chat's `slash-menu` and `question-chat-decline` boards with feature/github merged. Rebuilt here, `staging/github-merge` (3cef623) and the branch merged with today's main both draw it on every run (three runs each, caret at x 62 and x 350). The harness's `composers` action shows the visible composer holding the keyboard in both boards.
 - Those two are the only chat boards whose composer asks for the keyboard (`focusComposer`), so they're the only ones that draw a caret. NSTextView draws the caret only while Duo is the active app. The capture log's trace says which (`trace capture … active=`), and earlier runs in the main checkout logged `active=false`, so a capture made while another app had focus or the screen was locked has no caret, whatever has the keyboard. `check-chat.sh` now says "(Duo wasn't active: no caret)" next to such a board.
 - **Check:** `focus-check` (and `check-composer-focus.sh`) now also fails when the chat on screen asked for the keyboard and its composer doesn't have it. The script proves it can fail: `focus-away` takes the keyboard from the composer and the check must report it.
+
+## F-231 · Paste was a no-op in chat for three reasons (chat paste, 2026-10-08)
+
+- **A picture:** the composer is an `NSTextView` with `importsGraphics = false`, so with only an image on the clipboard AppKit disables Edit › Paste for it: ⌘V never reached `paste(_:)`, and its fall-back to the terminal (Q-56e) never ran. Shown with a standalone AppKit test on a private pasteboard and with the harness's `chat-paste:image` (`enabled=false`).
+- **Text:** in a live session the terminal view leaves the hierarchy when chat shows, and the composer isn't made first responder (every chat board reports `first=false`), so the window holds the keyboard and ⌘V has no target until you click the field. In the TUI the prompt always has it. A Finder-copied file had Paste enabled but `pasteAsPlainText` inserted nothing.
+- **Long text, once in:** the field caps its height at 8 lines but has no scroller, so a long paste draws past it, under the hint row and out of the pane, caret and all (`chat-paste:lines=20`): Geoff's "the chat view just literally hides it".
+- **Fixed** (269698e and the slice after it): ⌘V with nothing focused pastes into the composer; Paste is enabled for text, a picture or a file; a picture goes through Claude Code's own image paste (F-232); a copied file becomes a file chip as a drop does (DL-117); a long paste folds (DL-161) and the field scrolls (Q-148b).
+
+## F-232 · How Claude Code takes a picture, on 2.1.293 and 2.1.219 alike (chat paste, 2026-10-08)
+
+Measured on the real TUI with the spike's mock API (no tokens), both versions identical unless said:
+- **Ctrl+V** (`chat:imagePaste`, `ctrl+v` on the Mac, `alt+v` on Windows) makes Claude Code read the Mac's general pasteboard itself (a native NSPasteboard read on 2.1.293, osascript on older code paths): a PNG or TIFF, or a copied file's path. It puts `[Image #N]` at its caret; N counts up through the session and isn't reused.
+- A **bracketed paste of an image file's path** also becomes `[Image #N]` (and a meta record `[Image: source: <path>]`, which chat already skips). Duo doesn't use it for clipboard pictures: that would mean writing image files Claude didn't ask for.
+- **Ctrl+G's editor file** shows a picture as the literal token (pasted text appears expanded). Writing it back with the token keeps the picture; without it the picture is dropped for good: typing or pasting the token again later doesn't bring it back.
+- **The transcript**: one user record, content `[{text: "…[Image #1]…"}, {image: {base64, media_type}}]` and `imagePasteIds: [1]`. Pasted text is stored expanded and unmarked.
+- **Paste mode's keys** (below 2.1.269, or Ctrl+G rebound): a token is one unit for Left, Right and Backspace, but 2.1.219 keeps a space after the last token and 2.1.293 doesn't, so counting from the end deletes the wrong thing on one of them. **Ctrl+A, Right × (the token's place + 1), Backspace, then Ctrl+E** removes the right token and leaves the caret at the end on both; text pasted then follows the kept tokens (`[Image #1]  [Image #3]which is bigger`, images 1 and 3 sent).
+
+## F-233 · Pictures go first in your message on every version (chat paste, 2026-10-08)
+
+- In paste mode Duo can't put a picture back in the middle of your words (a token can't be re-typed, F-232), so its pictures lead the message there. DL-161's row above the text shows exactly that, so the hand-over (Ctrl+G) sends the same order: the kept tokens, a space, then your text. Claude gets the same message from either path.
+- Your bubble takes its pictures from the transcript's image blocks and drops the `[Image #N]` tokens from its text; a picture removed from the composer before sending was never sent and doesn't show.
