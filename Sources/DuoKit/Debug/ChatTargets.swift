@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// The chat-mode-handoff boards as window states (`--state chat-<board>`), each drawn from a
@@ -16,13 +17,15 @@ public enum ChatTargets {
                                             // DL-136: the thin light strip over chat.
                                             "polish-bar-thin",
                                             // chat-slash-handoff (DL-143): command results, the picker cards, the named bar, the / menu.
-                                            "slash-output", "slash-context", "slash-model-card", "slash-effort-card", "slash-fallback-named", "slash-menu"]
+                                            "slash-output", "slash-context", "slash-model-card", "slash-effort-card", "slash-fallback-named", "slash-menu",
+                                            // chat-paste-handoff (DL-161): pictures in the composer and your bubble, and why one wasn't taken.
+                                            "paste-picture", "paste-adding", "paste-sent", "paste-edges", "paste-failed", "paste-keys"]
     nonisolated public static let screens = boards.map { "chat-" + $0 }
 
     public static func folder(_ board: String) -> URL? {
         if let r = Bundle.main.url(forResource: "chat-fixtures", withExtension: nil) { return r.appending(path: board) }
         var dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : board.hasPrefix("slash-") ? "chat-slash-handoff" : "chat-mode-handoff"
+        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : board.hasPrefix("slash-") ? "chat-slash-handoff" : board.hasPrefix("paste-") ? "chat-paste-handoff" : "chat-mode-handoff"
         for _ in 0..<6 {
             let c = dir.appending(path: "docs/design/\(handoff)/fixture-chat/\(board)")
             if FileManager.default.fileExists(atPath: c.path) { return c }
@@ -68,6 +71,19 @@ public enum ChatTargets {
             chat.ui.notes = d["notes"] ?? ""
             chat.ui.composer = d["composer"] ?? ""
         }
+        // Pictures (chat-paste-handoff): in the composer's row, on your last bubble, the dashed tile, the failure line.
+        for (i, spec) in (meta["pictures"] as? [[String: Any]] ?? []).enumerated() {
+            let token = "[Image #\(i + 1)]"
+            chat.ui.images[token] = ChatTargetPicture.draw(spec)
+            chat.ui.attachedTokens.append(token)
+            chat.ui.heldTokens.append(token)
+        }
+        if let h = meta["hoverPicture"] as? Int, h < chat.ui.attachedTokens.count { chat.ui.hoveredPicture = chat.ui.attachedTokens[h] }
+        chat.ui.addingPicture = meta["adding"] as? Bool == true
+        chat.ui.pasteNotice = (meta["notice"] as? String).flatMap { $0 == "keysMoved" ? .keysMoved : .notTaken }
+        for spec in meta["bubblePictures"] as? [[String: Any]] ?? [] {
+            if let png = ChatImage(ChatTargetPicture.draw(spec)) { chat.log.addImage(png) }
+        }
         // An interrupted reply ends on the screen, not a hook (F-105): the busy → idle the TUI drew.
         if meta["interruptAfterPlay"] as? Bool == true { chat.log.endStreaming(interrupted: true) }
         if let f = meta["fallback"] as? [String: String] {
@@ -103,6 +119,46 @@ public enum ChatRecording {
         if let text = try? String(contentsOf: dir.appending(path: "screen.txt"), encoding: .utf8) {
             chat.fixtureScreenText = text
             chat.apply(ChatScreenReader.read(text, table: chat.signatures))
+        }
+    }
+}
+
+/// Stand-in pictures for the paste boards, drawn from the tokens in the shapes the boards show.
+@MainActor
+enum ChatTargetPicture {
+    static func draw(_ spec: [String: Any]) -> NSImage {
+        let w = CGFloat(spec["w"] as? Int ?? 128), h = CGFloat(spec["h"] as? Int ?? 128)
+        let fill: NSColor = switch spec["fill"] as? String {
+        case "chatYou": DuoNSColor.chatYou
+        case "ground": DuoNSColor.ground
+        case "selected": DuoNSColor.selected
+        default: DuoNSColor.pane
+        }
+        let kind = spec["kind"] as? String ?? "plain"
+        return NSImage(size: NSSize(width: w, height: h), flipped: true) { r in
+            let u = (kind == "chart" || kind == "phone" ? r.height : r.width) / 64   // the boards' 64-point square, scaled
+            func bar(_ x: CGFloat, _ y: CGFloat, _ bw: CGFloat, _ bh: CGFloat, _ c: NSColor) { c.setFill(); NSBezierPath(roundedRect: NSRect(x: x * u, y: y * u, width: bw * u, height: bh * u), xRadius: 1.5 * u, yRadius: 1.5 * u).fill() }
+            fill.setFill(); r.fill()
+            switch kind {
+            case "chart":
+                let top = CGFloat(0), left = CGFloat(0)
+                bar(left + 7.5, top + 7.5, 30, 6, DuoNSColor.text)
+                bar(left + 7.5, top + 17.5, 46, 4, DuoNSColor.rule)
+                bar(left + 7.5, top + 25.5, 36, 4, DuoNSColor.rule)
+                bar(left + 7.5, top + 45.5, 7, 9, DuoNSColor.controlEdge); bar(left + 17.5, top + 39.5, 7, 15, DuoNSColor.controlEdge)
+                bar(left + 27.5, top + 33.5, 7, 21, DuoNSColor.text); bar(left + 37.5, top + 42.5, 7, 12, DuoNSColor.controlEdge)
+            case "phone":
+                DuoNSColor.controlEdge.setFill()
+                let cx = r.midX, rad = 20 * u
+                NSBezierPath(ovalIn: NSRect(x: cx - rad, y: r.maxY - rad * 1.2, width: rad * 2, height: rad * 2)).fill()
+            case "frame":
+                let f = NSRect(x: r.midX - r.width * 0.34, y: r.midY - r.height * 0.28, width: r.width * 0.68, height: r.height * 0.56)
+                let box = NSBezierPath(roundedRect: f, xRadius: 3 * u, yRadius: 3 * u)
+                DuoNSColor.ground.setFill(); box.fill()
+                DuoNSColor.rule.setStroke(); box.lineWidth = u; box.stroke()
+            default: break
+            }
+            return true
         }
     }
 }

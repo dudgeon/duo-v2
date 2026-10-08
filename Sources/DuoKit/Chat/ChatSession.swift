@@ -101,7 +101,7 @@ public protocol ChatTerminal: AnyObject {
 
 /// The keys chat mode sends, as the TUI reads them.
 public enum ChatKey: String, Sendable {
-    case enter, esc, up, down, left, right, tab, space, backspace, shiftTab, ctrlG, ctrlV, n
+    case enter, esc, up, down, left, right, tab, space, backspace, shiftTab, ctrlA, ctrlE, ctrlG, ctrlV, n
 
     public var bytes: String {
         switch self {
@@ -115,6 +115,8 @@ public enum ChatKey: String, Sendable {
         case .space: " "
         case .backspace: "\u{7f}"
         case .shiftTab: "\u{1b}[Z"
+        case .ctrlA: "\u{01}"
+        case .ctrlE: "\u{05}"
         case .ctrlG: "\u{07}"
         case .ctrlV: "\u{16}"
         case .n: "n"

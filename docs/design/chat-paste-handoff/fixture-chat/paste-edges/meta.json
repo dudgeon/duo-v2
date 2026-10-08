@@ -1,0 +1,61 @@
+{
+ "mode": "chat",
+ "tab": "PRD v2 edits",
+ "focusComposer": true,
+ "now": "2026-10-08T11:12:00.000Z",
+ "drafts": {
+  "composer": "Which of these screens is the odd one out?"
+ },
+ "pictures": [
+  {
+   "kind": "plain",
+   "fill": "pane"
+  },
+  {
+   "kind": "plain",
+   "fill": "chatYou"
+  },
+  {
+   "kind": "plain",
+   "fill": "selected"
+  },
+  {
+   "kind": "plain",
+   "fill": "pane"
+  },
+  {
+   "kind": "plain",
+   "fill": "chatYou"
+  },
+  {
+   "kind": "plain",
+   "fill": "selected"
+  }
+ ],
+ "bubblePictures": [
+  {
+   "kind": "plain",
+   "fill": "pane"
+  },
+  {
+   "kind": "plain",
+   "fill": "ground"
+  },
+  {
+   "kind": "plain",
+   "fill": "selected"
+  },
+  {
+   "kind": "plain",
+   "fill": "pane"
+  },
+  {
+   "kind": "plain",
+   "fill": "ground"
+  },
+  {
+   "kind": "plain",
+   "fill": "selected"
+  }
+ ]
+}

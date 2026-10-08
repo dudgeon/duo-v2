@@ -789,25 +789,26 @@ func spikeScreen(_ name: String) -> String {
         check(ChatPaste.newToken(before: "", after: "[Image #1] ") == "[Image #1]" && ChatPaste.newToken(before: "[Image #1] ", after: "[Image #1] [Image #2] ") == "[Image #2]"
               && ChatPaste.newToken(before: "[Image #1] hi", after: "[Image #1] hi") == nil && ChatPaste.newToken(before: "[Image #2] ", after: "[Image #3] ") == "[Image #3]", "a new [Image #N] token is read from the prompt before and after")
 
-        let img = NSImage(size: NSSize(width: 4, height: 4))
-        check(ComposerProbe.sent(setting: "look [Image #2] and [Image #9] please", images: [:], adding: "[Image #3]") == "look [Image #2] and [Image #9] please[Image #3] ", "an image chip yields its token (after the text, a space after it)")
-        check(ComposerProbe.sent(setting: "look [Image #2] ok ", images: ["[Image #2]": img], adding: "[Image #3]") == "look [Image #2] ok [Image #3] ", "a token with its image comes back as a chip that yields the same token")
         let a = ["[Image #1]", "[Image #2]", "[Image #3]"]
-        let keepAll = ChatPaste.sendPlan(attached: a, composer: "[Image #1] [Image #2] [Image #3] what are these")
-        check(keepAll == .init(remove: [], keep: a, paste: "what are these"), "send plan: all chips kept, text pasted after them (\(keepAll))")
-        let drop = ChatPaste.sendPlan(attached: a, composer: "see [Image #2] only")
-        check(drop == .init(remove: ["[Image #1]", "[Image #3]"], keep: ["[Image #2]"], paste: "see only"), "send plan: removed chips' tokens are deleted, the text keeps no tokens (\(drop))")
-        check(ChatPaste.sendPlan(attached: a, composer: "plain").remove == a && ChatPaste.sendPlan(attached: [], composer: " hi ").paste == "hi", "send plan: no chips left, or none attached")
-        check(ChatPaste.promptHoldsOnly("[Image #1] [Image #2]", a) && !ChatPaste.promptHoldsOnly("[Image #1] typed", a) && !ChatPaste.promptHoldsOnly("[Image #7]", a), "the prompt may hold only the attached tokens")
-        // Deleting #1 and #3 from "[Image #1] [Image #2] [Image #3] " with the caret at the end.
-        var units = ChatPaste.units("[Image #1] [Image #2] [Image #3]"), cursor = units.count, keys: [[ChatKey]] = []
+        let keepAll = ChatPaste.sendPlan(held: a, kept: a, text: " what are these ")
+        check(keepAll == .init(remove: [], keep: a, paste: "what are these") && keepAll.message == "[Image #1] [Image #2] [Image #3] what are these", "send plan: pictures first, a space, then the words (\(keepAll.message))")
+        let drop = ChatPaste.sendPlan(held: a, kept: ["[Image #2]"], text: "see only")
+        check(drop == .init(remove: ["[Image #1]", "[Image #3]"], keep: ["[Image #2]"], paste: "see only") && drop.message == "[Image #2] see only", "send plan: a removed picture's token is deleted, the rest stay (\(drop))")
+        check(ChatPaste.sendPlan(held: a, kept: [], text: "plain").message == "plain" && ChatPaste.sendPlan(held: [], kept: [], text: " ").message.isEmpty
+              && ChatPaste.sendPlan(held: ["[Image #4]"], kept: ["[Image #4]"], text: "").message == "[Image #4]", "send plan: no pictures, nothing to send, pictures alone")
+        check(ChatPaste.stripTokens("[Image #1] [Image #2]why is this") == "why is this" && ChatPaste.stripTokens("see [Image #1] now") == "see now" && ChatPaste.stripTokens("[Image #1]") == "", "a bubble's text keeps no [Image #N] and no space it leaves (\(ChatPaste.stripTokens("see [Image #1] now")))")
+        check(ChatPaste.promptHoldsOnly("[Image #1] [Image #2]", a) && !ChatPaste.promptHoldsOnly("[Image #1] typed", a) && !ChatPaste.promptHoldsOnly("[Image #7]", a), "the prompt may hold only the tokens this composer put there")
+        // F-232: Ctrl+A, Right once per unit from the start up to and including the token, Backspace.
+        var units = ChatPaste.units("[Image #1] [Image #2] [Image #3]"), keys: [[ChatKey]] = []
+        check(units == ["[Image #1]", " ", "[Image #2]", " ", "[Image #3]"], "a prompt's units: a token is one, no space is assumed after the last")
         for t in ["[Image #1]", "[Image #3]"] {
-            let step = ChatPaste.deleteStep(units: units, cursor: cursor, token: t)!
-            keys.append(step.keys); units = step.units; cursor = step.cursor
+            let step = ChatPaste.deleteStep(units: units, token: t)!
+            keys.append(step.keys); units = step.units
         }
-        check(units == [" ", "[Image #2]", " ", " "] && keys == [[.left, .left, .left, .left, .left, .backspace], [.right, .right, .right, .right, .backspace]] && cursor == 3,
-              "deleting tokens: Left to just after, Backspace; then back (\(keys) \(units) \(cursor))")
-        check(ChatPaste.deleteStep(units: units, cursor: cursor, token: "[Image #5]") == nil, "a token the prompt lacks is refused")
+        check(keys == [[.ctrlA, .right, .backspace], [.ctrlA, .right, .right, .right, .right, .backspace]] && units == [" ", "[Image #2]", " "],
+              "deleting tokens: Ctrl+A, Right to just after it counted from the start, Backspace (\(keys))")
+        check(ChatKey.ctrlA.bytes == "\u{01}" && ChatKey.ctrlE.bytes == "\u{05}", "Ctrl+A and Ctrl+E are bytes 1 and 5")
+        check(ChatPaste.deleteStep(units: units, token: "[Image #5]") == nil, "a token the prompt lacks is refused")
     }
     do {
         let log = ChatLog()
@@ -816,6 +817,15 @@ func spikeScreen(_ name: String) -> String {
             ["type": "text", "text": "[Image #1]what is this"], ["type": "image", "source": ["type": "base64", "media_type": "image/png", "data": b64]]]]]
         ChatIngest.record(rec, into: log, lastDeclined: nil)
         guard case .you(let y)? = log.items.last else { return check(false, "a message with an image") }
-        check(y.text == "[Image #1]what is this" && y.images == [ChatImage(mediaType: "image/png", data: Data("png".utf8))], "an image block is kept on your message, its token stays in the text")
+        check(y.text == "what is this" && y.images.map(\.data) == [Data("png".utf8)] && y.images[0].mediaType == "image/png", "an image block is kept on your message, its token is out of the text")
+        // A message sent from the composer: its pictures show at once; the hook's text (with tokens) finds the same bubble.
+        let sent = ChatLog()
+        sent.sent("why", images: [ChatImage(mediaType: "image/png", data: Data("mine".utf8))], time: nil, queued: false)
+        sent.prompt("[Image #1] why", time: nil, fromHook: true)
+        guard case .you(let m)? = sent.items.last else { return check(false, "a sent message") }
+        check(sent.items.count == 1 && m.images.count == 1 && m.text == "why", "a hook's prompt with tokens finds the bubble sent from the composer")
+        ChatIngest.record(["type": "user", "message": ["role": "user", "content": [["type": "text", "text": "[Image #1] why"], ["type": "image", "source": ["type": "base64", "media_type": "image/png", "data": b64]]]]], into: sent, lastDeclined: nil)
+        guard case .you(let m2)? = sent.items.last else { return check(false, "the transcript's echo") }
+        check(sent.items.count == 1 && m2.images.map(\.data) == [Data("png".utf8)], "the transcript's own picture replaces the composer's, once")
     }
 }

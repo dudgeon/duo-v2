@@ -21,7 +21,13 @@ struct ChatComposerArea: View {
             }
             HStack(alignment: .bottom, spacing: 10) {
                 let focused = chat.ui.composerFocused
-                ChatComposerField(chat: chat)
+                // Pictures sit in a row above the text, inside the field; the text's own inset leaves the 8 between.
+                VStack(alignment: .leading, spacing: -2.5) {
+                    if !chat.ui.attachedTokens.isEmpty || chat.ui.addingPicture {
+                        ChatPictureRow(chat: chat).padding(EdgeInsets(top: 11.5, leading: 15.5, bottom: 0, trailing: 14))
+                    }
+                    ChatComposerField(chat: chat)
+                }
                     .background(RoundedRectangle(cornerRadius: DuoMetric.radiusComposer).fill(DuoColor.pane))
                     .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusComposer)
                         .strokeBorder(focused ? DuoColor.text : DuoColor.controlEdge, lineWidth: focused ? 1.5 : DuoMetric.borderHairline))
@@ -55,6 +61,9 @@ struct ChatComposerArea: View {
                 let hints = chat.ui.mention?.matches.isEmpty == false ? ["↑↓ choose · ⏎ or tab adds it · esc closes"]
                     : ["⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files · ⌘[ ⌘] your messages", "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files",
                        "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands", "⏎ send · ⇧⏎ new line · ⇧⇥ mode", "⏎ send · ⇧⏎ new line"]
+                if let notice = chat.ui.pasteNotice {
+                    ChatPasteNoticeLine(chat: chat, notice: notice)
+                } else {
                 FirstFit {
                     ForEach(hints, id: \.self) {
                         Text($0).duoText(.chatMeta).foregroundStyle(DuoColor.text2).lineLimit(1).fixedSize()
@@ -63,6 +72,7 @@ struct ChatComposerArea: View {
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(hints[0])
+                }
                 Spacer(minLength: 8)
                 if let m = chat.log.model { Text(m).duoText(.chatMeta).foregroundStyle(DuoColor.text2) }
             }
@@ -235,6 +245,7 @@ struct ChatComposerField: NSViewRepresentable {
         func textDidChange(_ n: Notification) {
             guard let v = n.object as? ComposerTextView else { return }
             chat.ui.composer = v.plainText
+            chat.ui.pasteNotice = nil
             v.styleMentions()
             v.invalidateIntrinsicContentSize()
             Task { await chat.mirrorSlash(v.plainText) }
@@ -294,12 +305,6 @@ final class ComposerChip: NSTextAttachment {
     var path = ""
 }
 
-/// An image pasted in: Claude Code's `[Image #N]` token is what's sent; the picture is kept for the design.
-final class ComposerImageChip: NSTextAttachment {
-    var token = ""
-    var pasted: NSImage?
-}
-
 final class ComposerTextView: NSTextView {
     weak var coordinator: ChatComposerField.Coordinator?
     static let font = NSFont.systemFont(ofSize: DuoTextStyle.chatBody.spec.size)
@@ -336,26 +341,15 @@ final class ComposerTextView: NSTextView {
     var plainText: String {
         var out = ""
         textStorage?.enumerateAttributes(in: NSRange(location: 0, length: textStorage?.length ?? 0)) { attrs, range, _ in
-            if let chip = attrs[.attachment] as? ComposerImageChip { out += chip.token }
-            else if let chip = attrs[.attachment] as? ComposerChip { out += FileDrop.terminalText([URL(fileURLWithPath: chip.path)]).trimmingCharacters(in: .whitespaces) }
+            if let chip = attrs[.attachment] as? ComposerChip { out += FileDrop.terminalText([URL(fileURLWithPath: chip.path)]).trimmingCharacters(in: .whitespaces) }
             else { out += (string as NSString).substring(with: range) }
         }
         return out
     }
 
-    /// Sets the text; a `[Image #N]` token whose image this chat holds comes back as its chip.
     func setPlain(_ s: String) {
-        let out = NSMutableAttributedString(), ns = s as NSString
-        var at = 0
-        for m in ChatPaste.tokenPattern.matches(in: s, range: NSRange(location: 0, length: ns.length)) {
-            let token = ns.substring(with: m.range)
-            guard let image = coordinator?.chat.ui.images[token] else { continue }
-            out.append(NSAttributedString(string: ns.substring(with: NSRange(location: at, length: m.range.location - at)), attributes: typingAttributes))
-            out.append(imageChip(token, image)); at = m.range.upperBound
-        }
-        out.append(NSAttributedString(string: ns.substring(from: at), attributes: typingAttributes))
-        textStorage?.setAttributedString(out)
-        setSelectedRange(NSRange(location: out.length, length: 0))
+        textStorage?.setAttributedString(NSAttributedString(string: s, attributes: typingAttributes))
+        setSelectedRange(NSRange(location: (s as NSString).length, length: 0))
         styleMentions()
     }
 
@@ -427,6 +421,11 @@ final class ComposerTextView: NSTextView {
             default: break
             }
         }
+        // Backspace in an empty field takes the last picture off (chat-paste-handoff `picture`).
+        if e.keyCode == 51, e.modifierFlags.intersection([.shift, .command, .option, .control]).isEmpty, string.isEmpty, let c = coordinator?.chat, let last = c.ui.attachedTokens.last {
+            c.removePicture(last)
+            return
+        }
         switch e.keyCode {
         case 36, 76:   // Return: send; ⇧Return: a new line
             if e.modifierFlags.contains(.shift) { insertNewlineIgnoringFieldEditor(nil) } else { coordinator?.send() }
@@ -445,10 +444,7 @@ final class ComposerTextView: NSTextView {
             case .text: pasteAsPlainText(sender)
             case .image(let image):
                 guard let chat = coordinator?.chat else { break }
-                Task { [weak self] in
-                    let r = await chat.attachClipboardImage(image)
-                    if r.ok, let token = chat.ui.attachedTokens.last, let image = chat.ui.images[token] { self?.insertImageChip(token, image) } else { NSSound.beep() }
-                }
+                Task { if await !chat.attachClipboardImage(image).ok { NSSound.beep() } }
             }
         }
     }
@@ -462,21 +458,6 @@ final class ComposerTextView: NSTextView {
     override func validateMenuItem(_ item: NSMenuItem) -> Bool {
         if item.action == #selector(paste(_:)) || item.action == #selector(pasteAsPlainText(_:)) { return ChatPaste.canPaste(NSPasteboard.general) }
         return super.validateMenuItem(item)
-    }
-
-    func imageChip(_ token: String, _ image: NSImage) -> NSAttributedString {
-        let chip = ComposerImageChip()
-        chip.token = token
-        chip.pasted = image
-        chip.image = Self.chipImage(String(token.dropFirst().dropLast()))   // stand-in look until the design lands
-        chip.bounds = NSRect(x: 0, y: -6, width: chip.image!.size.width, height: chip.image!.size.height)
-        return NSAttributedString(attachment: chip)
-    }
-
-    func insertImageChip(_ token: String, _ image: NSImage) {
-        let s = NSMutableAttributedString(attributedString: imageChip(token, image))
-        s.append(NSAttributedString(string: " ", attributes: typingAttributes))
-        insertText(s, replacementRange: NSRange(location: min(selectedRange().location, textStorage?.length ?? 0), length: 0))
     }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { GuardedTerminalView.fileURLs(sender.draggingPasteboard).isEmpty ? super.draggingEntered(sender) : .copy }
@@ -530,7 +511,7 @@ extension ChatSession {
     /// Text typed in the terminal is Claude's prompt: the composer opens on it (handoff `composer`).
     /// The screen can't tell typed text from a dim suggestion (F-108), so the real buffer is asked.
     func prefillComposer() {
-        guard let input = screen.input, ui.composer.isEmpty, ui.composerBasis == nil, ui.attachedTokens.isEmpty, !input.isEmpty, !input.hasPrefix("/"), !sending else { return }
+        guard let input = screen.input, ui.composer.isEmpty, ui.composerBasis == nil, ui.heldTokens.isEmpty, !input.isEmpty, !input.hasPrefix("/"), !sending else { return }
         guard usesExternalEditor else { return }   // pasting needs an empty prompt anyway
         Task {
             guard let real = await peekPrompt(), ui.composer.isEmpty else { return }

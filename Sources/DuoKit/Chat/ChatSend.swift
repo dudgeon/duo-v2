@@ -18,21 +18,23 @@ extension ChatSession {
     /// Sends the composer's text as your message.
     public func send(_ raw: String) async -> ChatAnswerResult {
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return .refused("nothing to send") }
+        // Pictures first, then the words, as Claude Code's own prompt reads (F-233).
+        let plan = ChatPaste.sendPlan(held: ui.heldTokens, kept: ui.attachedTokens, text: text)
+        guard !plan.message.isEmpty else { return .refused("nothing to send") }
         guard terminal != nil else { return finish(.refused("the terminal isn't running")) }
         let s = reread()
         guard s.kind == .idle || s.kind == .busy else { return finish(.refused("the terminal is showing \(s.kind == .unknown ? "a screen chat mode can’t show" : "a dialog")")) }
         let wasBusy = s.kind == .busy
         sending = true
         defer { sending = false; composing = false }
-        var echo = text, bubble = text
+        let echo = plan.message
         if usesExternalEditor, let dir = composeDir {
             // What Claude's prompt really holds: known when the composer opened on it; empty when the
             // screen shows nothing there; otherwise asked (a dim suggestion reads as text, F-108).
             var basis = ui.composerBasis ?? ((s.input ?? "").isEmpty ? "" : nil)
             if basis == nil { basis = await peekPrompt() }
             guard let basis else { return finish(.refused("couldn’t read Claude’s prompt")) }
-            do { try ChatCompose.leave(.init(text: text, basis: basis), in: dir, session: composeKey) } catch { return finish(.refused("couldn’t hand the text over (\(error.localizedDescription))")) }
+            do { try ChatCompose.leave(.init(text: plan.message, basis: basis), in: dir, session: composeKey) } catch { return finish(.refused("couldn’t hand the text over (\(error.localizedDescription))")) }
             composing = true
             terminal?.sendKeys(ChatKey.ctrlG.bytes)
             // The TUI runs the editor (its screen goes blank), then redraws with the new input.
@@ -53,21 +55,16 @@ extension ChatSession {
                 return finish(.refused("Claude Code didn’t open its editor"))
             }
         } else {
+            // Pictures this composer attached are in the prompt as tokens: the removed ones are deleted,
+            // the rest stay, and the text goes in after them.
             let prompt = s.input ?? ""
-            var pasted = text
-            if ui.attachedTokens.isEmpty {
+            if ui.heldTokens.isEmpty {
                 guard prompt.isEmpty else { return finish(.refused("Claude’s prompt already holds “\(prompt.prefix(40))”")) }
             } else {
-                // Images this composer attached are in the prompt as tokens; they stay there and the text
-                // goes in after them (a token can't be typed back where it was in the text).
-                guard ChatPaste.promptHoldsOnly(prompt, ui.attachedTokens) else { return finish(.refused("Claude’s prompt already holds “\(prompt.prefix(40))”")) }
-                let plan = ChatPaste.sendPlan(attached: ui.attachedTokens, composer: text)
+                guard ChatPaste.promptHoldsOnly(prompt, ui.heldTokens) else { return finish(.refused("Claude’s prompt already holds “\(prompt.prefix(40))”")) }
                 if let why = await removeImageTokens(plan.remove, from: prompt) { return finish(.refused(why)) }
-                pasted = plan.paste
-                echo = (plan.keep + [plan.paste]).filter { !$0.isEmpty }.joined(separator: " ")
-                bubble = plan.keep.joined() + plan.paste
             }
-            if !pasted.isEmpty { terminal?.sendKeys("\u{1b}[200~" + pasted + "\u{1b}[201~") }
+            if !plan.paste.isEmpty { terminal?.sendKeys("\u{1b}[200~" + plan.paste + "\u{1b}[201~") }
             await pause(250_000_000)
         }
         let echoed = reread()
@@ -76,7 +73,7 @@ extension ChatSession {
         }
         // Shown before Return: the prompt's hook can arrive within the pause after it, and must
         // find this bubble to match.
-        log.sent(bubble, time: now, queued: wasBusy, planMode: s.mode == .plan)
+        log.sent(plan.paste, images: plan.keep.compactMap { ui.images[$0].flatMap(ChatImage.init) }, time: now, queued: wasBusy, planMode: s.mode == .plan)
         lastCommand = text.hasPrefix("/") ? (String(text.prefix { !$0.isWhitespace }), Date()) : nil
         _ = await press(.enter)
         ui.composer = ""

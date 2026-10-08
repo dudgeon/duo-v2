@@ -143,7 +143,7 @@ sp = t["space"]
 w(f"    public static let panePadding: CGFloat = {num(sp['panePadding'])}")
 w(f"    public static let selectionInset: CGFloat = {num(sp['selectionInset'])}")
 w(f"    public static let threadRuleX: CGFloat = {num(sp['threadRuleX'])}")
-for k in ["chatColumnInset", "chatCardTrailing", "chatBubbleMax"]:   # chat-mode-handoff
+for k in ["chatColumnInset", "chatCardTrailing", "chatBubbleMax", "chatPasteThumb", "chatSentThumbWidth", "chatSentThumbHeight", "chatSentThumbGridWidth", "chatSentThumbGridHeight"]:   # chat-mode-handoff, chat-paste-handoff
     w(f"    public static let {k}: CGFloat = {num(sp[k])}")
 for k in ["cardPadding", "pointerCardPadding", "questionBoxPadding", "buttonPadding", "popoverPadding", "documentPadding"]:
     p = sp[k]

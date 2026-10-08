@@ -13,7 +13,8 @@ cd "$root"
 boards=("$@")
 [ ${#boards[@]} -gt 0 ] || boards=(window toggle text tools permission-edit permission-bash plan question-multi question-other question-review question-previews question-chat-decline composer status fallback
   polish-collapsed polish-expanded polish-needs-you polish-output polish-edits polish-thinking polish-agents polish-todos polish-tools polish-failed polish-paste polish-bar-thin
-  slash-output slash-context slash-model-card slash-effort-card slash-fallback-named slash-menu)
+  slash-output slash-context slash-model-card slash-effort-card slash-fallback-named slash-menu
+  paste-picture paste-adding paste-sent paste-edges paste-failed paste-keys)
 states=()
 for b in "${boards[@]}"; do states+=("chat-$b"); done
 NO_COMPARE=1 scripts/check-ui.sh "${states[@]}" >/dev/null
@@ -27,6 +28,11 @@ for b in "${boards[@]}"; do
     polish-*) box=(300 36 680 560); target="chat-polish-handoff/${b#polish-}" ;;
     # chat-slash-handoff (DL-143): boards of the console pane, compared region by region.
     slash-*) box=(300 0 680 860); target="chat-slash-handoff/${b#slash-}" ;;
+    # chat-paste-handoff (DL-161): a board shows several snippets, so these compare whole boards for the record; the numbers come from the cropped snippets (docs/design/chat-paste-handoff/proof/).
+    paste-picture|paste-adding) box=(300 0 680 860); target="chat-paste-handoff/picture" ;;
+    paste-sent) box=(300 0 680 860); target="chat-paste-handoff/sent" ;;
+    paste-edges) box=(300 0 680 860); target="chat-paste-handoff/edges" ;;
+    paste-failed|paste-keys) box=(300 0 680 860); target="chat-paste-handoff/replay" ;;
     *) box=(300 0 680 860) ;;
   esac
   python3 scripts/chat-crop.py "build/ui/chat-$b.png" "build/ui/chat-$b-board.png" "${box[@]}" >/dev/null

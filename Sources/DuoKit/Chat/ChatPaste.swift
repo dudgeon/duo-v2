@@ -63,26 +63,30 @@ public enum ChatPaste {
     // MARK: Sending with tokens
 
     public struct SendPlan: Equatable {
-        /// Attached tokens whose chips were removed: deleted from the TUI's prompt.
+        /// Tokens put in Claude's prompt whose pictures were removed: deleted from it.
         public var remove: [String]
-        /// Attached tokens still in the composer: left in the prompt.
+        /// Pictures still in the composer: left in the prompt, first in the message.
         public var keep: [String]
-        /// The text to paste after them: the composer's, with every attached token taken out.
+        /// The composer's text, pasted after them.
         public var paste: String
         public init(remove: [String], keep: [String], paste: String) { self.remove = remove; self.keep = keep; self.paste = paste }
+        /// The message as Claude gets it: the kept tokens, a space, then the text (F-233).
+        public var message: String { (keep + [paste]).filter { !$0.isEmpty }.joined(separator: " ") }
     }
 
-    public static func sendPlan(attached: [String], composer: String) -> SendPlan {
-        let here = Set(tokens(in: composer))
-        var text = composer
-        for t in attached { text = text.replacingOccurrences(of: t + " ", with: "").replacingOccurrences(of: t, with: "") }
-        return SendPlan(remove: attached.filter { !here.contains($0) }, keep: attached.filter { here.contains($0) },
-                        paste: text.trimmingCharacters(in: .whitespacesAndNewlines))
+    /// `held`: every token this composer put in Claude's prompt; `kept`: the pictures it still shows.
+    public static func sendPlan(held: [String], kept: [String], text: String) -> SendPlan {
+        SendPlan(remove: held.filter { !kept.contains($0) }, keep: held.filter(kept.contains), paste: text.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
-    /// The TUI's prompt holds nothing but tokens this composer attached.
-    public static func promptHoldsOnly(_ prompt: String, _ attached: [String]) -> Bool {
-        let set = Set(attached)
+    /// A message's text without `[Image #N]` and the space each leaves (the pictures stand for them).
+    public static func stripTokens(_ s: String) -> String {
+        s.replacingOccurrences(of: #"\[Image #\d+\]\s*"#, with: "", options: .regularExpression).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// The TUI's prompt holds nothing but tokens this composer put there.
+    public static func promptHoldsOnly(_ prompt: String, _ held: [String]) -> Bool {
+        let set = Set(held)
         guard tokens(in: prompt).allSatisfy(set.contains) else { return false }
         var rest = prompt
         for t in tokens(in: prompt) { rest = rest.replacingOccurrences(of: t, with: "") }
@@ -90,7 +94,6 @@ public enum ChatPaste {
     }
 
     /// The prompt as the TUI moves through it: a token is one unit, any other character one each.
-    /// The TUI puts a space after a token, which the screen trims: a prompt ending in one has it.
     public static func units(_ prompt: String) -> [String] {
         let ns = prompt as NSString
         var out: [String] = [], at = 0
@@ -98,19 +101,17 @@ public enum ChatPaste {
             out += ns.substring(with: NSRange(location: at, length: m.range.location - at)).map(String.init)
             out.append(ns.substring(with: m.range)); at = m.range.upperBound
         }
-        out += ns.substring(from: at).map(String.init)
-        if let last = out.last, tokenPattern.firstMatch(in: last, range: NSRange(location: 0, length: (last as NSString).length)) != nil { out.append(" ") }
-        return out
+        return out + ns.substring(from: at).map(String.init)
     }
 
-    /// The keys that delete one token from a prompt with the caret at `cursor` (in units): move to
-    /// just after it, Backspace. Leaves the caret where the token was.
-    public static func deleteStep(units: [String], cursor: Int, token: String) -> (keys: [ChatKey], units: [String], cursor: Int)? {
+    /// The keys that delete one token (F-232, measured on 2.1.219 and 2.1.293): Ctrl+A, Right once
+    /// per unit up to and including it (counted from the start: 2.1.293 leaves no space after the
+    /// last token), Backspace.
+    public static func deleteStep(units: [String], token: String) -> (keys: [ChatKey], units: [String])? {
         guard let i = units.firstIndex(of: token) else { return nil }
-        let move = cursor - (i + 1)
         var rest = units
         rest.remove(at: i)
-        return ((move > 0 ? Array(repeating: ChatKey.left, count: move) : Array(repeating: .right, count: -move)) + [.backspace], rest, i)
+        return ([.ctrlA] + Array(repeating: ChatKey.right, count: i + 1) + [.backspace], rest)
     }
 }
 
@@ -126,19 +127,21 @@ extension ChatSession {
     /// on success the token is the last of `ui.attachedTokens`, its picture in `ui.images`.
     public func attachClipboardImage(_ image: NSImage?) async -> ChatAnswerResult {
         guard !sending else { return .refused("Claude’s prompt is busy") }
+        ui.pasteNotice = nil
         if terminal == nil, fixtureScreenText != nil {   // a fixture chat has no TUI: the next number
             note(token: "[Image #\(ui.attachedTokens.count + 1)]", image)
             return .done
         }
-        guard terminal != nil else { return .refused("the terminal isn't running") }
+        guard terminal != nil else { ui.pasteNotice = .notTaken; return .refused("the terminal isn't running") }
         let s = reread()
         guard s.kind == .idle || s.kind == .busy else {
-            fallBack(.handedOver("Claude is asking something in the terminal; paste the image there."))
+            fallBack(.handedOver("Claude is asking something in the terminal; paste the picture there."))
             return .refused("the terminal is showing a dialog")
         }
-        guard Self.ctrlVIsImagePaste else { return .refused("Ctrl+V isn’t Claude Code’s image paste in your keybindings") }
+        guard Self.ctrlVIsImagePaste else { ui.pasteNotice = .keysMoved; return .refused("Ctrl+V isn’t Claude Code’s image paste in your keybindings") }
         sending = true
-        defer { sending = false }
+        ui.addingPicture = true
+        defer { sending = false; ui.addingPicture = false }
         let before = s.input ?? ""
         terminal?.sendKeys(ChatKey.ctrlV.bytes)
         for _ in 0..<30 {
@@ -150,44 +153,41 @@ extension ChatSession {
                 return .done
             }
         }
-        return .refused("Claude Code didn’t take the image")
+        ui.pasteNotice = .notTaken
+        return .refused("Claude Code didn’t take the picture")
     }
 
     private func note(token: String, _ image: NSImage?) {
         ui.images[token] = image ?? NSImage(size: NSSize(width: 1, height: 1))
         ui.attachedTokens.append(token)
+        ui.heldTokens.append(token)
     }
 
-    /// Paste mode, before the text goes in: deletes from Claude's prompt the tokens whose chips are
-    /// gone, then puts the caret at the end. Re-reads the screen after each; nil when it reads as
-    /// expected, else why not. Not exercised against a real TUI (the work Mac's 2.1.219 is the one that pastes).
+    /// Paste mode, before the text goes in: deletes from Claude's prompt the tokens whose pictures were
+    /// removed (Ctrl+A, Right to it, Backspace; the screen is re-read after each), then Ctrl+E puts the
+    /// caret at the end. Nil when it reads as expected, else why not. Keys as measured on the real TUIs (F-232).
     func removeImageTokens(_ remove: [String], from prompt: String) async -> String? {
-        var units = ChatPaste.units(prompt), cursor = units.count
+        var units = ChatPaste.units(prompt)
         for t in remove {
-            guard let step = ChatPaste.deleteStep(units: units, cursor: cursor, token: t) else { return "Claude’s prompt doesn’t hold \(t)" }
+            guard let step = ChatPaste.deleteStep(units: units, token: t) else { return "Claude’s prompt doesn’t hold \(t)" }
             for k in step.keys { _ = await press(k) }
-            units = step.units; cursor = step.cursor
-            let shown = reread().input ?? ""
-            guard ChatPaste.tokens(in: shown) == units.filter({ ChatPaste.tokens(in: $0).count == 1 }) else { return "Claude’s prompt didn’t read as expected after removing \(t)" }
+            units = step.units
+            guard ChatPaste.tokens(in: reread().input ?? "") == units.filter({ ChatPaste.tokenPattern.firstMatch(in: $0, range: NSRange(location: 0, length: ($0 as NSString).length)) != nil }) else {
+                return "Claude’s prompt didn’t read as expected after removing \(t)"
+            }
         }
-        for _ in cursor..<units.count { _ = await press(.right) }
+        if !remove.isEmpty { _ = await press(.ctrlE) }
         return nil
     }
 
+    /// The × on a picture: it leaves the composer; its token stays in Claude's prompt until the send deletes it.
+    public func removePicture(_ token: String) {
+        ui.attachedTokens.removeAll { $0 == token }
+        ui.images[token] = nil
+        if ui.hoveredPicture == token { ui.hoveredPicture = nil }
+    }
+
     /// Everything about attached images is forgotten (sent, or the chat is cleared).
-    func forgetImages() { ui.images = [:]; ui.attachedTokens = [] }
+    func forgetImages() { ui.images = [:]; ui.attachedTokens = []; ui.heldTokens = []; ui.hoveredPicture = nil }
 }
 
-/// For DuoChecks: the composer's text as it would be sent, for a text with image chips.
-@MainActor public enum ComposerProbe {
-    /// Sets `text` (tokens turn to chips for the images given), then adds a chip at the caret; returns what would be sent.
-    public static func sent(setting text: String, images: [String: NSImage], adding token: String) -> String {
-        let chat = ChatSession(key: "probe", mode: .chat)
-        chat.ui.images = images
-        let v = ComposerTextView()
-        v.coordinator = ChatComposerField.Coordinator(chat: chat)
-        v.setPlain(text)
-        v.insertImageChip(token, NSImage(size: NSSize(width: 4, height: 4)))
-        return v.plainText
-    }
-}
