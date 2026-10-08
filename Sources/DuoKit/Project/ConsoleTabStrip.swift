@@ -101,7 +101,7 @@ struct ConsoleTabStrip: View {
         .overlay(alignment: .bottom) { if light && active { DuoColor.text.frame(height: 2) } }
         .contentShape(Rectangle())
         .onActivate { model.openConsoleTab(t.id) }  // action: session open
-        .modifier(SessionOrganizeMenu(sessionKey: t.id))
+        .modifier(SessionOrganizeMenu(sessionKey: t.id, radius: DuoMetric.tabHoverRadius, onConsole: !light))
         .modifier(TabHover(key: t.id) { model.closeConsoleTab(t.id) })
         .accessibilityElement(children: .combine)
         .accessibilityLabel(t.state == nil ? "\(t.title), shell" : t.title)

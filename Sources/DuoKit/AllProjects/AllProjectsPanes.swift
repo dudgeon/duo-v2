@@ -928,7 +928,7 @@ struct NeedsYouCard: View {
         // Clicking a session resumes it (Geoff, 2026-10-04): its project opens with it in the console.
         // Arrow keys still move the selection without opening.
         .onActivate { model.selectedActionSession = session.id; model.open(project: session.project, session: session.name) }  // action: open
-        .modifier(SessionOrganizeMenu(sessionKey: session.tabKey))
+        .modifier(SessionOrganizeMenu(sessionKey: session.tabKey, radius: DuoMetric.radiusCard))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(session.name), needs you, waiting \(session.wait ?? ""), \(session.project)")
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -991,7 +991,7 @@ struct ReviewCard: View {
         .contentShape(Rectangle())
         // Clicking the card resumes the session, as Review does (Geoff, 2026-10-04).
         .onActivate { model.open(project: session.project, session: session.name, document: session.document) }  // action: open
-        .modifier(SessionOrganizeMenu(sessionKey: session.tabKey))
+        .modifier(SessionOrganizeMenu(sessionKey: session.tabKey, radius: DuoMetric.radiusCard))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(session.name), ready for review, \(session.project)")
     }
@@ -1004,8 +1004,13 @@ struct ReviewCard: View {
 struct SessionOrganizeMenu: ViewModifier {
     @Environment(AppModel.self) private var model
     let sessionKey: String
+    /// The fill's corner radius: the row's own.
+    var radius = DuoMetric.radiusSelection
+    /// A console tab sits on the dark console, so its fill is the console's.
+    var onConsole = false
 
-    func body(content: Content) -> some View {
+    func body(content base: Content) -> some View {
+        let content = base.modifier(MenuTargetFill(sessionKey: sessionKey, radius: radius, onConsole: onConsole))
         if model.terminalsMode == .live, let s = (model.fixture.sessions + (model.fixture.archivedSessions ?? [])).first(where: { $0.tabKey == sessionKey }),
            let id = s.sessionId {
             let payload = AppModel.dragPayload(session: id)
@@ -1028,7 +1033,9 @@ struct SessionOrganizeMenu: ViewModifier {
                     } else {
                         Button("Archive Session") { if let why = model.setSessionArchived(sessionKey, true) { model.info(why) } }
                     }
-                    Button("Delete Session…") { model.deleteSession(sessionKey) }
+                    Button("Delete Session…") {  // action: session delete
+                        model.deleteSession(sessionKey) { if case .failure(let e) = $0, !"\(e)".hasPrefix("Not deleted") { model.info("\(e)") } }
+                    }
                 }
                 .modifier(Lifted(active: model.dragging == payload))
                 .onDrag({  // action: session move
@@ -1037,6 +1044,70 @@ struct SessionOrganizeMenu: ViewModifier {
                 }, preview: { DragCard(title: s.name, detail: s.project) })
         } else {
             content
+        }
+    }
+}
+
+/// While a session's context menu is open, its row is darker than hover or selected, as Finder marks
+/// the right-clicked item (Q-147). SwiftUI has no "menu open" signal, so a probe view watches for the
+/// right-click (or control-click) landing on the row and AppKit's menu-tracking notifications end it.
+struct MenuTargetFill: ViewModifier {
+    @Environment(AppModel.self) private var model
+    let sessionKey: String
+    let radius: CGFloat
+    let onConsole: Bool
+
+    func body(content: Content) -> some View {
+        let on = model.contextMenuSession == sessionKey
+        content
+            .background(MenuProbe { [model, sessionKey] in MenuTargetFill.begin(model, sessionKey) })
+            .overlay {
+                if on {
+                    // Light rows multiply the fill over their own (selected or not), so text stays;
+                    // a console tab has no fill of its own and is drawn on.
+                    RoundedRectangle(cornerRadius: radius)
+                        .fill(onConsole ? DuoColor.consoleMenuTarget : DuoColor.menuTarget)
+                        .blendMode(onConsole ? .normal : .multiply)
+                        .allowsHitTesting(false)
+                }
+            }
+    }
+
+    @MainActor static func begin(_ model: AppModel, _ key: String) {
+        model.contextMenuSession = key
+        guard !watching else { return }
+        watching = true
+        // AppKit says when any menu closes; the row stays marked until then.
+        NotificationCenter.default.addObserver(forName: NSMenu.didEndTrackingNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { model.contextMenuSession = nil }
+        }
+    }
+    @MainActor private static var watching = false
+}
+
+/// Reports a right-click or control-click inside its bounds (a local event monitor; the event still goes on).
+private struct MenuProbe: NSViewRepresentable {
+    let onMenu: @MainActor () -> Void
+    func makeNSView(context: Context) -> ProbeView { let v = ProbeView(); v.onMenu = onMenu; return v }
+    func updateNSView(_ v: ProbeView, context: Context) { v.onMenu = onMenu }
+
+    final class ProbeView: NSView {
+        var onMenu: (@MainActor () -> Void)?
+        private var monitor: Any?
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+        override func viewWillMove(toWindow newWindow: NSWindow?) {
+            if let monitor { NSEvent.removeMonitor(monitor); self.monitor = nil }
+        }
+        override func viewDidMoveToWindow() {
+            guard window != nil else { return }
+            monitor = NSEvent.addLocalMonitorForEvents(matching: [.rightMouseDown, .leftMouseDown]) { [weak self] e in
+                guard let self, e.window === self.window else { return e }
+                if e.type == .leftMouseDown, !e.modifierFlags.contains(.control) { return e }
+                if self.bounds.contains(self.convert(e.locationInWindow, from: nil)) {
+                    MainActor.assumeIsolated { self.onMenu?() }
+                }
+                return e
+            }
         }
     }
 }
