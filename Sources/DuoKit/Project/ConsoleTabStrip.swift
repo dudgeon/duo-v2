@@ -119,7 +119,7 @@ struct ConsoleTabStrip: View {
     func layout(_ tabs: [Tab], width: CGFloat) -> (shown: [Tab], hidden: [Tab], short: Bool) {
         let font = (light ? DuoTextStyle.control : DuoTextStyle.mono).spec.nsFont
         func w(_ t: Tab, _ short: Bool) -> CGFloat {
-            (t.state == nil ? 11 : 9) + DuoSpace.gapGlyphToLabel + TextWidth.of(short ? Self.short(t.title) : t.title, font: font)
+            (t.state == nil ? 11 : 9) + DuoSpace.gapGlyphToLabel + ceil(TextWidth.of(short ? Self.short(t.title) : t.title, font: font))
         }
         var controls: CGFloat = 5 + 8 + 10 + 18          // + , chevron, and the gap before them
         if let key = model.consoleTab, model.chat(for: key) != nil { controls += light ? 46 + 16 - 6 : 52 + 18 - 4 }   // the chat toggle
@@ -164,7 +164,7 @@ public enum TextWidth {
         if let w = cache[key] { return w }
         if cache.count > 4000 { cache.removeAll() }
         measured += 1
-        let w = ceil((s as NSString).size(withAttributes: [.font: font]).width)
+        let w = (s as NSString).size(withAttributes: [.font: font]).width
         cache[key] = w
         return w
     }

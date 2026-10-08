@@ -1779,6 +1779,9 @@ func repoFixture() throws -> Fixture {
         let split = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Shell/PaneSplit.swift"), encoding: .utf8)) ?? ""
         let update = split.range(of: "func updateNSView").map { String(split[$0.lowerBound...].prefix(400)) } ?? ""
         check(!update.isEmpty && !update.contains("rootView ="), "PaneSplit never replaces a pane's root view on update")
+        // F-225: SwiftUI re-anchoring the chat feed on size changes looped for good at work.
+        let feed = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Chat/ChatView.swift"), encoding: .utf8)) ?? ""
+        check(!feed.isEmpty && !feed.contains("for: .sizeChanges)"), "the chat feed never asks SwiftUI to re-anchor on size changes")
     }
 
     print("the console's tab strip measures each title once (F-224)")
@@ -1788,7 +1791,7 @@ func repoFixture() throws -> Fixture {
         let before = TextWidth.measured
         for _ in 0..<50 { for t in titles { _ = TextWidth.of(t, font: font) } }
         check(TextWidth.measured - before == titles.count, "50 passes over 5 titles measure each once (\(TextWidth.measured - before))")
-        check(TextWidth.of("plain", font: font) == ceil(("plain" as NSString).size(withAttributes: [.font: font]).width), "the width is the string's own")
+        check(TextWidth.of("plain", font: font) == ("plain" as NSString).size(withAttributes: [.font: font]).width, "the width is the string's own")
         // The fit matches the old loop: full, short, then drop from the right, never the selected.
         func old(_ full: [CGFloat], _ short: [CGFloat], _ sel: Int?, _ width: CGFloat) -> ([Bool], Bool) {
             let c: CGFloat = 41, m: CGFloat = 49

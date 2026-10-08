@@ -65,9 +65,14 @@ struct ChatPane: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     Color.clear.frame(height: 1).id(ChatPane.bottom)
                 }
-                .defaultScrollAnchor(chat.cardUp ? .bottom : .top, for: .alignment)
+                // Only the first offset is SwiftUI's (the end). It no longer re-anchors on size
+                // changes: on a lazy stack whose height is an estimate, re-anchoring to the bottom
+                // realised other items, their heights moved the estimate, and it re-anchored again,
+                // with no Duo code running: 0.2.5 and 0.2.6 froze that way at work (F-225).
                 .defaultScrollAnchor(.bottom, for: .initialOffset)
-                .defaultScrollAnchor(.bottom, for: .sizeChanges)
+                // A feed shorter than the pane sits at its foot while a card is up (DL-130); this
+                // places short content only, so it can't re-anchor a long one.
+                .defaultScrollAnchor(chat.cardUp ? .bottom : .top, for: .alignment)
                 // New items follow you down only while you're at the bottom; scrolled up, you stay
                 // where you are. Only your scrolling decides: the lazy stack re-estimating its height
                 // can clamp the offset to the end, which isn't you arriving there. So a change of
@@ -76,12 +81,19 @@ struct ChatPane: View {
                 // item was a walk of the whole feed per event (F-160).
                 .onScrollGeometryChange(for: [CGFloat].self, of: { g in [g.contentOffset.y, g.containerSize.height, g.contentSize.height] }) { old, g in
                     let atBottom = g[0] + g[1] >= g[2] - 60
-                    if old.count == 3, old[2] != g[2] || old[1] != g[1] { if !atBottom { chat.followsBottom = false }; return }
+                    if old.count == 3, old[2] != g[2] || old[1] != g[1] {
+                        // Grown or the pane resized while following: back to the end, once, by us
+                        // (what the size-change anchor did). Otherwise you've left the end.
+                        if chat.followsBottom, !atBottom { follow(proxy) } else if !atBottom { chat.followsBottom = false }
+                        return
+                    }
                     if old.count == 3, old[0] != g[0] { chat.followsBottom = atBottom }
                 }
                 .onChange(of: chat.log.items.count) { old, _ in
                     if old == 0 || chat.followsBottom { proxy.scrollTo(ChatPane.bottom, anchor: .bottom) }
                 }
+                // A card rising in the composer's place (DL-130): the feed gives way, still at its end.
+                .onChange(of: chat.cardUp || chat.pickerUp) { if chat.followsBottom { follow(proxy) } }
                 .onChange(of: chat.revealRequest) { if let id = chat.revealRequest { withAnimation { proxy.scrollTo(id, anchor: .top) } } }
                 // A link's target under the pointer, as Safari shows one (DL-132 g, q57-link-status).
                 .background(ChatLinkHover { chat.ui.hoverLink = $0 })
@@ -122,6 +134,26 @@ struct ChatPane: View {
     }
 
     static let bottom = "chat-bottom"
+
+    /// Back to the end of the feed, at most once per turn of the run loop, and never more than 20
+    /// times in a second: content that keeps changing size can't scroll it for ever (F-225). Past
+    /// that, the feed stops following until you scroll to the end.
+    func follow(_ proxy: ScrollViewProxy) {
+        guard !chat.followPending else { return }
+        let now = Date()
+        chat.follows = chat.follows.filter { now.timeIntervalSince($0) < 1 } + [now]
+        if chat.follows.count > 20 {
+            chat.followsBottom = false
+            chat.follows = []
+            FileHandle.standardError.write(Data("chat: \(chat.key) kept changing size; stopped following the end (F-225)\n".utf8))
+            return
+        }
+        chat.followPending = true
+        DispatchQueue.main.async {
+            chat.followPending = false
+            proxy.scrollTo(ChatPane.bottom, anchor: .bottom)
+        }
+    }
 }
 
 /// One transcript entry.

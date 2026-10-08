@@ -189,6 +189,9 @@ public final class ChatSession {
     public var revealRequest: String?
     /// The feed is scrolled to its end, so new items keep it there (F-160).
     @ObservationIgnored public var followsBottom = true
+    /// The feed's own scrolls to the end: one queued, and those in the last second (F-225).
+    @ObservationIgnored var followPending = false
+    @ObservationIgnored var follows: [Date] = []
     /// Keys are on their way: the screen is expected to change, nothing falls back meanwhile.
     /// Once they've gone, the screen is judged again: a command that opened a screen of its own
     /// (`/help`, `/model`) may not draw again, so nothing else would (F-173).
