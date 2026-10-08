@@ -278,6 +278,18 @@ public final class AppModel {
     /// Sparkle's "Check for Updates", when the app started it (release builds).
     @ObservationIgnored public var sparkleCheck: (() -> Void)?
     public var newProjectForm: NewProjectForm?
+    /// Each project's repository, when its folder is in one (DL-149, DL-157), by project name.
+    public var repos: [String: RepoView] = [:]
+    /// The Push sheet (board 6), when it's up.
+    public var pushForm: PushForm?
+    /// New project from GitHub (board 1), when it's up.
+    public var gitHubProjectForm: GitHubProjectForm?
+    /// The notice after a push (board 6), until it's used or 8 s pass.
+    public var repoNotice: RepoNotice?
+    /// The repo line's details popover (board 4).
+    public var repoDetailsShown = false
+    @ObservationIgnored var repoChecked: [String: Date] = [:]
+    @ObservationIgnored var repoRefreshing: Set<String> = []
     /// Restore on relaunch (LR-58): off for scripted and capture runs.
     @ObservationIgnored public var restoreEnabled = false
     /// DL-156: see `tabSessions`.
@@ -419,6 +431,7 @@ public final class AppModel {
         notifyNeedsYou()
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts && !SupportFolder.isIsolated)   // C-28: no first-run questions in an isolated instance
+        refreshRepo()   // the open project's repository state (DL-149, DL-157)
         // What was open when Duo last quit comes back once the sessions are known (LR-58).
         if !restoreApplied, !fixture.sessions.isEmpty || !folders.isEmpty { applyRestore() }
         defer { saveRestoreState() }

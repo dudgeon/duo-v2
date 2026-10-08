@@ -2673,3 +2673,31 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
   - All 33 chat boards (all plain now) are pixel-identical to 0.2.6's.
   - The extreme-heights chat (2,000-line outputs, a 40×6 table, a 300-line paste, /context and /mcp results) is idle.
   - DuoChecks checks the rule and that ChatPane uses it.
+
+## F-213 · `git remote get-url` hides a remote's real URL (GitHub build, 2026-10-07)
+
+- With `url.<x>.insteadOf` in git's config, `git remote get-url origin` prints the rewritten URL, not the one configured. Duo reads `git config --get remote.<name>.url` instead, so a remote rewritten to a mirror or a local test repo still names its GitHub repository. The checks and `scripts/github-fixture.sh` rely on this: `https://github.com/acme/website.git` is redirected to a local bare repo, and every code path runs with no network.
+
+## F-214 · The repo state and Push, built and checked live (GitHub build, 2026-10-07)
+
+- **Built:** `Sources/DuoKit/Git/` (engine), the Files block's repo state (B: branch at the header's right, one fact and one compact button, `changed`/`new`/`kept out of git` marks in 11 pt mono), its popover and menu, the Push sheet (write, fork, browser), the notice, the failure questions, what Claude is told at start, and `duo2 repo status|check|latest|update|put-back|push|pr|draft|move-to-branch|signin|open`. Tokens `sheet.pushWidth`, `sheet.pushBodyHeight`, `repoLine.*`.
+- **Live, isolated** (`scripts/github-fixture.sh`, a stub gh, `scripts/run-live.sh`): the line reads "3 files changed · Push…"; Push opened PR #482 through the stub and the line became "PR #482 open · up to date"; READ access reads "read only · 3 to push to your fork" and the sheet says the fork first; a project inside a repo with no remote (DL-157) reads "1 file changed · no GitHub remote" with its untracked PROJECT.md left out. Comparisons: `build/ui/github-files-compare.png`, `github-readonly-compare.png`, `github-push-compare.png`, `github-fork-compare.png`.
+- **Checks:** `DUO_CHECKS=git` (53): links, porcelain v2, every failure's classification, copy on a new branch, push and the compare page, not-fast-forward, a conflict and Put Back, GH006 and Move to a Branch, the fork with `--remote-name fork`, gh exiting 0 with no PR, and the line's twelve states.
+
+## F-215 · New project from GitHub, built and checked live (GitHub build, 2026-10-07)
+
+- **Built:** `GitHubProjectForm` and its sheet (board 1, 2 A): the Repository field (any link form; Choose… lists the user's and their organizations' repos through gh), the Found box (access, protection, read-only's fork sentence, "already on this Mac", who's signed in, or the failure's words), Branch (a new one, default `<login>/<slug>` from the default branch, or one that's there), Name, Goal, In (defaults to a topic named after the repo, made if missing), Start a Claude session, Keep PROJECT.md out of git. Create copies with `gh repo clone` when signed in, else `git clone`, then writes the brief, registers Undo, opens the project and says what it did. `duo2 project new --from-github <link> [<name>] [--new-branch|--branch] [--from] [--keep-in-git] [--sheet]`. When gh can see a private repo git has no credential for yet, branches come from gh.
+- **Live, isolated:** acme/website (READ) shows the fork sentence; Create (WRITE) copied into `website/website` on `tester/website` with PROJECT.md, `.duo/` and `_PROJECT.md` in `.git/info/exclude`, opened it, and the Files block read "not on GitHub yet · Push…". Comparison: `build/ui/github-new-compare.png`.
+
+## F-216 · Get Latest, the conflict, no gh and duo2 repo, live (GitHub build, 2026-10-07)
+
+- **Get Latest into a conflict:** with a commit on GitHub and a clashing one here, the line read "1 new on GitHub · Get Latest"; Get Latest stopped at the conflict, asked board 9's question (Show the File, Put Back, Ask Claude to Combine) and the line became "1 file in conflict · Resolve…" with `content/faq.md` marked `conflict`. `build/ui/github-live-conflict.png`.
+- **No gh:** the sheet says Duo pushes with git and the keychain and opens GitHub's page (board 8); the push went through and the compare URL was handed to the browser. `build/ui/github-live-nogh.png`.
+- **An isolated (test) instance never opens a browser:** GitHub pages go to stderr as `open: <url>` instead (`AppModel.openOutside`), so scripted runs can't reach Geoff's browser.
+- **duo2 against the test instance** (`DUO_SOCKET` and `DUO_TOKEN` from its `endpoint.json`): `repo status` and `--json`, `repo check` (also for an `owner/repo` not open), `repo push` without `--yes` opens the sheet and says so, `repo draft` fills it, `repo pr --yes --draft` on READ access forked (`--remote-name fork`) and opened PR #482 through the stub.
+
+## F-217 · The composer's caret in a capture follows whether Duo is active, not the GitHub merge (2026-10-07)
+
+- The director saw no caret in check-chat's `slash-menu` and `question-chat-decline` boards with feature/github merged. Rebuilt here, `staging/github-merge` (3cef623) and the branch merged with today's main both draw it on every run (three runs each, caret at x 62 and x 350). The harness's `composers` action shows the visible composer holding the keyboard in both boards.
+- Those two are the only chat boards whose composer asks for the keyboard (`focusComposer`), so they're the only ones that draw a caret. NSTextView draws the caret only while Duo is the active app. The capture log's trace says which (`trace capture … active=`), and earlier runs in the main checkout logged `active=false`, so a capture made while another app had focus or the screen was locked has no caret, whatever has the keyboard. `check-chat.sh` now says "(Duo wasn't active: no caret)" next to such a board.
+- **Check:** `focus-check` (and `check-composer-focus.sh`) now also fails when the chat on screen asked for the keyboard and its composer doesn't have it. The script proves it can fail: `focus-away` takes the keyboard from the composer and the check must report it.

@@ -31,5 +31,8 @@ for b in "${boards[@]}"; do
   esac
   python3 scripts/chat-crop.py "build/ui/chat-$b.png" "build/ui/chat-$b-board.png" "${box[@]}" >/dev/null
   bash docs/design/build-handoff/tools/compare.sh "$target" "build/ui/chat-$b-board.png" "build/ui/chat-$b-compare.png" >/dev/null
-  echo "$b  →  build/ui/chat-$b-compare.png"
+  # A composer draws its caret only while Duo is the active app: a capture made while another app
+  # had focus (or the screen was locked) shows none, whatever has the keyboard.
+  note=""; grep 'trace capture' "build/ui/chat-$b.log" 2>/dev/null | tail -1 | grep -q 'active=false' && note="  (Duo wasn't active: no caret)"
+  echo "$b  →  build/ui/chat-$b-compare.png$note"
 done

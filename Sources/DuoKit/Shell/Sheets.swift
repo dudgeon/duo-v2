@@ -19,6 +19,8 @@ struct SheetOverlay: View {
                 ZStack(alignment: .top) {
                     if let m = model.moveIntoHomeForm { MoveIntoHomeSheet(form: m) }
                     else if let n = model.newProjectForm { NewProjectSheet(form: n) }
+                    else if let p = model.pushForm { PushSheet(form: p) }
+                    else if let g = model.gitHubProjectForm { GitHubProjectSheet(form: g) }
                     else if let q = SheetCenter.shared.current { QuestionSheet(q: q).id(q.id).transition(.opacity) }
                 }
                 .duoAnimation(.sheetSwap, value: SheetCenter.shared.current?.id)

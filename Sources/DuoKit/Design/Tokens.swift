@@ -174,6 +174,9 @@ public enum DuoMetric {
     public static let sheetPadding: CGFloat = 20.0
     public static let sheetMoveWidth: CGFloat = 460.0
     public static let sheetNewProjectWidth: CGFloat = 520.0
+    public static let sheetPushWidth: CGFloat = 660.0
+    public static let sheetGithubWidth: CGFloat = 640.0
+    public static let sheetPushBodyHeight: CGFloat = 64.0
     public static let sheetLabelColumn: CGFloat = 96.0
     public static let sheetRowGap: CGFloat = 12.0
     public static let sheetFieldHeight: CGFloat = 24.0
@@ -213,6 +216,9 @@ public enum DuoMetric {
     public static let tabHoverRadius: CGFloat = 5.0
     public static let tabHoverHeight: CGFloat = 24.0
     public static let tabHoverInset: CGFloat = 7.0
+    public static let repoLineButtonHeight: CGFloat = 20.0
+    public static let repoLineButtonFont: CGFloat = 11.0
+    public static let repoLineButtonPaddingX: CGFloat = 8.0
     public static let idlePopoverWidth: CGFloat = 460.0
     public static let idlePopoverPadding = EdgeInsets(top: 12.0, leading: 8.0, bottom: 12.0, trailing: 8.0)
     public static let idleRowHeight: CGFloat = 26.0

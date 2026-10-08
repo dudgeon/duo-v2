@@ -51,6 +51,12 @@ struct ProjectMenuItems: View {
             // with nothing to act on it's a plain dimmed item.
             Button("Merge Into") {}.disabled(true)
         }
+        // GitHub (DL-149, DL-157): the open project's repository.
+        let repo = p != nil && p?.name == model.currentProject?.name ? model.currentRepo : nil
+        Divider()
+        Button("Push to GitHub…") { model.showPush() }.disabled(repo?.status.origin == nil)   // action: repo push
+        Button("Get Latest") { model.getLatest(from: nil) }.disabled(repo?.status.upstream == nil)   // action: repo latest
+        Button("Open on GitHub") { model.openRepoOnGitHub() }.disabled(repo?.status.origin == nil)   // action: repo open
         Divider()
         Button("Archive Project") { if let p { model.setArchived(p.name, true) } }
             .disabled(!organisable || (p.map { model.isArchived($0.name) } ?? true))

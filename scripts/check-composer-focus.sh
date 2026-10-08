@@ -2,6 +2,8 @@
 # Only the chat on screen has a composer (C-47, F-183): every chat board, and each again with Home's
 # session in chat underneath (`home-chat`), must report no composer of a chat that isn't showing, so
 # a hidden composer can never take the keyboard. Also Home's own chat at All projects (list-1440).
+# And the other way round: a chat on screen that asked for the keyboard (slash-menu,
+# question-chat-decline, an interrupted turn) must have it, or its caret never shows.
 #
 #   scripts/check-composer-focus.sh          reuse build/Duo.app (run scripts/bundle.sh first)
 #
@@ -30,6 +32,12 @@ for s in $boards; do
   run "$s" "home-chat,wait:1,focus-check"
 done
 run list-1440 "wait:1,focus-check"
+# The check itself: with the keyboard taken from the composer, a board that asks for it must fail.
+log="$out/self.log"
+env -u DUO_SUPPORT_DIR DUO_SUPPORT_DIR="$support" open -W -n --stdout /dev/null --stderr "$log" "$root/build/Duo.app" \
+  --args --state chat-slash-menu --then "wait:1,focus-away,focus-check" --capture "$out/self.png"
+if grep -q '^focus-check: FAIL' "$log"; then echo "✔ the check fails when the visible composer loses the keyboard"
+else echo "✘ the check passed with the keyboard taken away"; fails=$((fails + 1)); fi
 echo "$fails failed"
 rm -rf "$out"
 exit "$fails"

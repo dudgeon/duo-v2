@@ -98,6 +98,21 @@ public enum FixtureHarness {
             let target = parts.count > 1 ? parts[1].split(separator: "/", maxSplits: 1).map(String.init) : []
             if let project = target.first { model.open(project: project, session: target.count > 1 ? target[1] : nil) }
         case "peek": model.togglePeek()
+        case "repo":   // repo:push|latest|update|putback|details|refresh|dump: the Files block's repo state (DL-149)
+            switch parts.count > 1 ? parts[1] : "dump" {
+            case "push": model.showPush()
+            case "new": model.showGitHubProject("acme/website")
+            case "create": model.commitGitHubProject()
+            case "latest": model.getLatest(from: nil)
+            case "update": model.getLatest(from: model.currentRepo?.base)
+            case "putback": model.putBack()
+            case "details": model.repoDetailsShown = true
+            case "refresh": model.refreshRepo(force: true, fetch: true)
+            default:
+                let v = model.currentRepo
+                let line = v.map { RepoLine.of($0) }
+                FileHandle.standardError.write(Data("repo: \(v?.status.branch ?? "-") | \(line?.fact ?? "no repo") | \(line?.action?.rawValue ?? "-") | marks \(v?.marks ?? [:])\n".utf8))
+            }
         case "deactivate": NSApp.deactivate()   // as when the user clicks into another app (C-35)
         case "down": model.movePeekSelection(by: 1)
         case "up": model.movePeekSelection(by: -1)
@@ -481,10 +496,20 @@ public enum FixtureHarness {
             var bad: [String] = []
             for w in NSApp.windows {
                 for c in w.contentView.map(all) ?? [] where c.coordinator?.chat.key != visible {
-                    bad.append("\(c.coordinator?.chat.key ?? "-")\(w.firstResponder === c ? " (has the keyboard)" : " (in the window)")")
+                    bad.append("composer of a chat not on screen: \(c.coordinator?.chat.key ?? "-")\(w.firstResponder === c ? " (has the keyboard)" : " (in the window)")")
                 }
             }
-            FileHandle.standardError.write(Data("focus-check: \(bad.isEmpty ? "ok" : "FAIL: composers of chats not on screen: \(bad.joined(separator: ", "))")\n".utf8))
+            // And the other way round: a chat on screen that asked for the keyboard (an interrupted
+            // turn, Chat about this, a board's `focusComposer`) has it, so its caret shows.
+            if let visible, model.chat(for: visible)?.focusComposer ?? 0 > 0 {
+                let shown = NSApp.windows.flatMap { w in (w.contentView.map(all) ?? []).filter { $0.coordinator?.chat.key == visible }.map { (w, $0) } }
+                if let (w, c) = shown.first {
+                    if w.firstResponder !== c { bad.append("the composer on screen asked for the keyboard; \(w.firstResponder.map { String(describing: type(of: $0)) } ?? "nothing") has it") }
+                } else { bad.append("the chat on screen asked for the keyboard but has no composer") }
+            }
+            FileHandle.standardError.write(Data("focus-check: \(bad.isEmpty ? "ok" : "FAIL: \(bad.joined(separator: "; "))")\n".utf8))
+        case "focus-away":   // the window's keyboard to nothing, as a control that takes it would: focus-check must fail
+            NSApp.windows.first(where: { $0.title == "Duo" })?.makeFirstResponder(nil)
         case "composers":   // every composer in the windows: its session, whether it's on screen, and which has the keyboard
             func all(_ v: NSView) -> [ComposerTextView] { ((v as? ComposerTextView).map { [$0] } ?? []) + v.subviews.flatMap(all) }
             for w in NSApp.windows {

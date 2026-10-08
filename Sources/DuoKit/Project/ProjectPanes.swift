@@ -262,8 +262,21 @@ struct FileTreePane: View {
         let tree = FileNode.tree(from: files)
         VStack(alignment: .leading, spacing: 0) {
             DuoColor.controlEdge.frame(height: DuoMetric.borderFilesDivider)
-            SectionLabel(text: "Files")
-                .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 0, trailing: DuoSpace.panePadding))
+            let repo = model.currentRepo
+            if let n = model.repoNotice {
+                RepoNoticeView(notice: n).padding(.horizontal, DuoSpace.panePadding).padding(.top, 8)
+            }
+            HStack(spacing: DuoSpace.gapRowItems) {
+                SectionLabel(text: "Files")
+                Spacer(minLength: 8)
+                // The repo state (B, DL-149; any repo project, DL-157): the branch at the right.
+                if let repo { RepoBranchLabel(view: repo) }
+            }
+            .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 0, trailing: DuoSpace.panePadding))
+            if let repo {
+                RepoFactLine(view: repo)
+                    .padding(.horizontal, DuoSpace.panePadding)
+            }
             Text(project?.path ?? "")
                 .duoText(.monoPath)
                 .foregroundStyle(DuoColor.text2)
@@ -343,6 +356,8 @@ struct FileRow: View {
     var body: some View {
         let selected = model.selectedFile == node.path
         let edited = model.fixture.focusDocument.path == node.path
+        // changed / new / conflict / kept out of git (DL-149), where "edited by Claude" sits.
+        let mark = edited ? "edited by Claude" : model.currentRepo?.marks[node.children == nil ? node.path : node.path + "/"]
         VStack(alignment: .leading, spacing: 0) {
             let open = node.children != nil && model.isFolderOpen(node.path)
             HStack(spacing: node.children == nil ? DuoSpace.gapRowItems : DuoSpace.gapGlyphToLabel) {
@@ -359,9 +374,10 @@ struct FileRow: View {
                         .foregroundStyle(node.path.split(separator: "/").contains { $0.hasPrefix(".") } ? DuoColor.text2 : DuoColor.text)
                         .lineLimit(1)
                 }
-                if edited {
+                if let mark {
                     Spacer(minLength: 8)
-                    Text("edited by Claude").font(.system(size: 12)).lineHeight(.exact(points: 20)).offset(y: 2)
+                    // git's marks are 11 pt mono (github-handoff 04-status B); "edited by Claude" stays as built.
+                    Text(mark).font(edited ? .system(size: 12) : Font(NSFont.monospacedSystemFont(ofSize: 11, weight: .regular))).lineHeight(.exact(points: 20)).offset(y: 2)
                         .foregroundStyle(DuoColor.text2).fixedSize()
                 }
             }
