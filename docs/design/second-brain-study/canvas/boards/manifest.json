@@ -75,5 +75,33 @@
   "h": 900,
   "title": "10 \u00b7 The v1 slice, what Claude is told, the questions",
   "kind": "board"
+ },
+ {
+  "name": "11-settings",
+  "w": 1440,
+  "h": 760,
+  "title": "11 \u00b7 Settings \u203a Knowledge bases (alpha)",
+  "kind": "board"
+ },
+ {
+  "name": "12-new-note",
+  "w": 1640,
+  "h": 900,
+  "title": "12 \u00b7 \u21e7\u2318N: a new note in the inbox, in the editor",
+  "kind": "board"
+ },
+ {
+  "name": "13-kb-tab",
+  "w": 1240,
+  "h": 820,
+  "title": "13 \u00b7 The Knowledge base tab, when added",
+  "kind": "board"
+ },
+ {
+  "name": "14-decided",
+  "w": 1280,
+  "h": 900,
+  "title": "14 \u00b7 The v1 slice, as decided",
+  "kind": "board"
  }
 ]

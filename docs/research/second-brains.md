@@ -1,6 +1,6 @@
 # LLM wikis and second brains in Duo: research and service design
 
-Status: **study, every proposal [P]**; nothing here is decided until Geoff answers (Q-129 to Q-134, then DL-152). No product code. The boards are on the Design canvas named in `docs/design/second-brain-study/README.md`.
+Status: **decided by Geoff, 2026-10-07 (DL-152)**, by buttons in three rounds; the slice he chose is narrower than §6 proposed (see **Decided** below). No product code. The boards are on the Design canvas https://claude.ai/artifact/PPh9UPgT3fd9NSvgbcEz38 (boards 11 to 14 are the slice; `docs/design/second-brain-study/README.md`).
 
 Geoff, 2026-10-07: "many users will have a project (or more) that contain LLM wiki and or OKF second brains. Please do research on these implementations and think about what features we could add (not just a pile of features but thoughtful service design) to better support these uses without getting in others' way." His standing rule for this work: "For everything we build, I want to maximize backwards compatibility with existing obsidian handling and/or OKF."
 
@@ -12,6 +12,18 @@ Marks: **[V]** verified against a primary source in this study (fetched docs, re
 | `second-brain-tools.md` | PARA/BASB, Zettelkasten, evergreen notes, GTD, MOCs; Obsidian's Daily notes, Unique notes, Templates, Properties, Bases, Web Clipper, links; QuickAdd, Templater, Dataview, Tasks, Kanban, Periodic Notes, Readwise; Logseq, Tana, Reflect, Mem, Notion AI, Apple Quick Note, Drafts, Claude Projects, NotebookLM |
 | `legacy-okf.md` | Legacy Duo's OKF vault (`~/repos/duo`, read only): format, rollups, relinking, what shipped, what was reverted |
 | `duo-today.md` | Duo v2 at `adfcd74` through a vault user's eyes, with `file:line` references |
+
+
+## Decided (DL-152)
+
+Geoff made it **an alpha power-user feature, set up in Settings**, with discoverability later ("this is like an alpha power user feature"). Where the sections below say otherwise, this wins.
+
+- **Any project or Home** can be a knowledge base (Q-129 A), added in **Settings › Knowledge bases (alpha)**; the mark is **Duo's own state**, nothing in the folder (Q-130 A).
+- **⇧⌘N, New Note in Inbox**: a note from `templates/new-note.md` (Duo's base: `type: note`, `created`), named `YYYY-MM-DD-HHmm.md`, **opened in the right-pane editor, not a modal** ("this should be a new note in the existing right pane markdown editor, not some new modal"); in Duo only for now; **New Folder moves to ⌥⇧⌘N** (Q-131). So capture is not the global panel of §6.3 / board 5.
+- **One Knowledge base tab, only where added** (Q-132): the inbox, the log's latest entries, the index's size. No INBOX fold or tile count (my reading of "alpha": nothing shows unless added; ENH-43 keeps them for later).
+- **No processing prompt** (Q-133): "you may be overreaching for v1 -- the user will define their own skills for maintaining the wiki and we don't want to limit their ability to do this." Claude is still told where the inbox, index, log and schema are. A button that runs a skill the person names is ENH-42.
+- **Search as today** (Q-134).
+- **For everyone**: reading a vault right (§5 #1, #2) stays first.
 
 ---
 
@@ -112,7 +124,7 @@ Lanes: what the person does; what Duo shows (front stage); what Claude does; the
 | **3. Process the inbox** | Clicks **Process with Claude**, reads the drafted instruction, presses Return | A new session in the knowledge base, in chat, with the instruction drafted (the folder's `/process-inbox` command if it has one, else Duo's, Q-133); the session is linked to the inbox; when done it's Ready for review | Reads the schema, proposes per note: merge into a page, a new page, a task, or discard; waits; then edits, moves with links updated, appends to the log | Notes moved out of the inbox, pages edited, `log.md` appended (all Claude's, visible in the session) | Every decision: Claude proposes, the person confirms |
 | **4. Ingest a source** (wiki) | Drops a PDF or clip into `raw/`, or right-clicks it | **Ingest with Claude** on the file's menu drafts "/ingest raw/x.pdf" or Duo's instruction (ENH-42) | Summarises, asks what to emphasise, updates 10–15 pages, the index and the log | `wiki/` pages, `index.md`, `log.md` | The source (immutable), what matters |
 | **5. Ask** | Asks a question | Search scoped to the knowledge base (Q-134), and a chat session started in it reads the schema and index first | Answers with links to the pages; files a good answer back as a page when asked | Optional new page | Whether an answer is worth keeping |
-| **6. Look after it** | Opens the Index or Log tab; occasionally asks for a check | Index and Log as tabs beside the Project tab (Q-132); **Check with Claude** drafts a lint instruction (ENH-42); a schedule is Claude Code's (ENH-43) | Lints: contradictions, orphans, missing pages, broken links, stale claims; writes a dated report | A report page; fixes only after a yes | What to fix |
+| **6. Look after it** | Opens the Index or Log tab; occasionally asks for a check | Index and Log as tabs beside the Project tab (Q-132); **Check with Claude** drafts a lint instruction (ENH-42); a schedule is Claude Code's (ENH-42) | Lints: contradictions, orphans, missing pages, broken links, stale claims; writes a dated report | A report page; fixes only after a yes | What to fix |
 | **7. Daily note** | Opens today's note, or captures into it | **Today** opens or makes today's note from Obsidian's Daily notes settings; capture can append a line to it (ENH-40) | Can summarise the day into it on request | `Daily/2026-10-07.md` from the vault's own template | The journal |
 | **8. Rollups** | Wants a view across notes | Duo doesn't render rollups: Claude writes a `.base` (Obsidian shows it) or a Markdown/HTML page (Duo shows it) | Writes the query or page from a description | `.base`, `rollups/*.md` | Which views exist |
 
@@ -141,7 +153,7 @@ Value: how much it helps the three kinds of people. Fit: how well it keeps the p
 | 10 | **Today's note** from Obsidian's settings, and capture into it | Keeper | Medium | High once the settings are verified | M | **Next** (ENH-40) |
 | 11 | **Ingest, Check, File this answer** actions; a "pages this session changed" list | Wiki operator | Medium | High | S each | **Next** (ENH-42) |
 | 12 | **Backlinks and unresolved links** under a note; make a page from an unresolved link | Keeper, wiki operator | Medium | High | M | **Next** (ENH-41) |
-| 13 | **Scheduled checks** through Claude Code's own scheduling; the report shows in the Log | Wiki operator | Low–medium | Medium | S on Duo's side | **Later** (ENH-43) |
+| 13 | **Scheduled checks** through Claude Code's own scheduling; the report shows in the Log | Wiki operator | Low–medium | Medium | S on Duo's side | **Later** (ENH-42) |
 | 14 | **Search for big and non-English vaults** (multilingual model, an approximate index), and indexing a folder Duo doesn't list | Big vaults | Medium | High | M–L | **Later** (ENH-44) |
 | — | AI at capture (auto-title, auto-file) | — | Low | Low (speed, decisions at capture) | — | **Drop**: capture must not wait |
 | — | Duo generating `index.md`/`log.md` | — | Low | Low (shared state, two formats: OKF newest-first vs Karpathy append-only) | — | **Drop**: Claude or the user's tools own them |
@@ -179,7 +191,7 @@ Then, behind the opt-in:
 6. **Scoped search.** Inside a knowledge base, ⇧⌘A opens with an **In <name>** scope token; ⌫ widens to everything (Q-134). `duo2 search --project <p>` already scopes.
 7. **What Claude is told** (§4), through the hook beside `ProjectContext`; the primer lists the new verbs (DL-71).
 
-Out of v1: Today's note (ENH-40), backlinks (ENH-41), Ingest/Check/File-this-answer (ENH-42), schedules (ENH-43), search scale (ENH-44).
+Out of v1: Today's note (ENH-40), backlinks (ENH-41), Ingest/Check/File-this-answer and schedules (ENH-42), discoverability (ENH-43), search scale (ENH-44).
 
 Proof when it's built: the boards for the slice (once approved and exported), captures compared region by region; DuoChecks for the template (`type: note` first, quoted title, no Duo-only keys), for "a knowledge base writes nothing" (a fixture vault's bytes unchanged after marking), and for `tasks/` ignoring `type:` other than task; a round-trip of a captured note through Obsidian's Properties UI with no meaningful diff [U until run].
 
@@ -201,6 +213,6 @@ Proof when it's built: the boards for the slice (once approved and exported), ca
 - **C-57 — Other tools write into the same folders.** A note Duo creates in a folder with a Templater folder template may get template code injected while Obsidian is open; Readwise recreates files that are moved; Obsidian Sync and iCloud can conflict with Claude's bulk edits. Mitigation: atomic writes (LR-35), never capture into machine-owned folders (`Readwise/`), document the Templater interaction, reconcile on open (LR-31).
 - **C-58 — Parallel sessions collide on index.md and log.md.** Mitigation: the warning in §4; Duo's instruction says "one batch at a time"; LR-31 for open files.
 
-**Later** (`enhancements.md`): ENH-40 Today's note; ENH-41 backlinks and unresolved links; ENH-42 Ingest, Check, File this answer, and the changed-pages list; ENH-43 scheduled checks; ENH-44 search for big and non-English vaults.
+**Later** (`enhancements.md`): ENH-40 Today's note; ENH-41 backlinks and unresolved links; ENH-42 buttons that run the person's own skills (process, ingest, check, file this answer), scheduled runs, and the changed-pages list; ENH-43 discoverability and a system-wide capture chord; ENH-44 search for big and non-English vaults.
 
 **Findings** (`findings.md`): F-202 links (wikilinks, shortest path, embeds); F-203 `tasks/` claimed by folder name; F-204 the tree's cap before sort; F-205 the templates engine's gaps for notes (Moment tokens, the vault's own date settings and template folder, no name for New from Template); F-206 the research facts that change Duo's format work (OKF v0.2 and its new home, reserved `index.md`/`log.md`, the two log orders, wikilinks not OKF, nested v0.2 keys unseen in Properties).

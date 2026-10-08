@@ -36,13 +36,14 @@ renderVals() {{ return {{}}; }}
 </body>
 </html>
 ''')
-rows = [["00-study", "01-blueprint", "02-ranking"],
+rows = [["14-decided", "11-settings", "12-new-note", "13-kb-tab"],
+        ["00-study", "01-blueprint", "02-ranking"],
         ["09-reading-a-vault", "03-mark"],
         ["04-kb-in-duo", "05-capture"],
         ["06-process", "07-index-log", "08-search"],
         ["10-slice"]]
-heads = ["The study, the service blueprint, the candidates ranked", "First for everyone: reading a vault right; then marking a knowledge base",
-         "The knowledge base in Duo, and capture", "Process with Claude, the index and log, search", "The v1 slice and the questions"]
+heads = ["As decided (DL-152): an alpha in Settings, ⇧⌘N, the Knowledge base tab", "The study, the service blueprint, the candidates ranked", "First for everyone: reading a vault right; then marking a knowledge base",
+         "Options: the knowledge base in Duo, and capture (not chosen as drawn)", "Options: Process with Claude (not in v1), the index and log, search (as today)", "The slice as first proposed"]
 boards, order, notes, y = {}, [], {}, 0
 for i, r in enumerate(rows):
     y += 260; x = 0; mh = 0

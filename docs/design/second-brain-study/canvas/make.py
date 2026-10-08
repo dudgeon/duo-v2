@@ -173,7 +173,7 @@ BP = [
     ("3 · Process", True, "Clicks Process with Claude, reads the drafted instruction, presses Return", "A chat session in the knowledge base with /process-inbox or Duo’s text drafted (Q-133); Ready for review when done", "Reads the schema; proposes per note: merge, new page, task or discard; waits; then edits, moves with links updated, appends to the log", "Pages edited, notes moved out of the inbox, log.md appended", "Every decision"),
     ("4 · Ingest a source", False, "Drops a PDF or clip in raw/, or right-clicks it", "Ingest with Claude on the file’s menu drafts the instruction (ENH-42)", "Summarises, asks what to emphasise, updates 10–15 pages, the index and the log", "wiki/ pages, index.md, log.md", "The source stays as it was"),
     ("5 · Ask", True, "Asks a question", "Search opens narrowed to the knowledge base (Q-134); a chat session in it is told the schema and index", "Answers with links to pages; files a good answer back as a page when asked", "Optional new page", "Whether an answer is worth keeping"),
-    ("6 · Look after it", True, "Reads the Index or Log tab; asks for a check now and then", "Index and Log as tabs (Q-132); Check with Claude drafts a lint (ENH-42); schedules are Claude Code’s (ENH-43)", "Contradictions, orphans, missing pages, broken links, stale claims; a dated report", "A report page; fixes after a yes", "What to fix"),
+    ("6 · Look after it", True, "Reads the Index or Log tab; asks for a check now and then", "Index and Log as tabs (Q-132); Check with Claude drafts a lint (ENH-42); schedules are Claude Code’s (ENH-42)", "Contradictions, orphans, missing pages, broken links, stale claims; a dated report", "A report page; fixes after a yes", "What to fix"),
     ("7 · Daily note", False, "Opens today’s note, or captures into it", "Today opens or makes it from Obsidian’s Daily notes settings (ENH-40)", "Summarises the day on request", "Daily/2026-10-07.md from the vault’s template", "The journal"),
     ("8 · Rollups", False, "Wants a view across notes", "Shows what Claude wrote; renders no queries", "Writes a .base (Obsidian shows it) or a Markdown page", ".base, rollups/*.md", "Which views exist"),
 ]
@@ -198,7 +198,7 @@ RK = [
     ("10", "Today’s note from Obsidian’s Daily notes settings; capture into it", "keeper", "Medium", "M", "next · ENH-40"),
     ("11", "Ingest, Check, File this answer; a pages-changed list for a session", "wiki", "Medium", "S each", "next · ENH-42"),
     ("12", "Backlinks and unresolved links under a note", "keeper, wiki", "Medium", "M", "next · ENH-41"),
-    ("13", "Scheduled checks through Claude Code’s scheduling", "wiki", "Low–med", "S", "later · ENH-43"),
+    ("13", "Scheduled checks through Claude Code’s scheduling", "wiki", "Low–med", "S", "later · ENH-42"),
     ("14", "Search for big and non-English vaults", "big vaults", "Medium", "M–L", "later · ENH-44"),
 ]
 DROP = [("AI at capture (auto-title, auto-file)", "Capture must not wait or ask"), ("Duo generating index.md / log.md", "Shared state; two log orders; Claude or the user’s tools own them"),
@@ -373,8 +373,9 @@ The inbox is inbox/ (12 notes, oldest 9 days).</div>
 <li><b>Q-132, index and log.</b> A: tabs <span class="rec">rec</span>. B: one Knowledge base tab. C: nothing special.</li>
 <li><b>Q-133, the instruction.</b> A: the folder’s command, else Duo’s with Save as Command… <span class="rec">rec</span>. B: Duo’s only, edited in Settings. C: always a command, written on first use.</li>
 <li><b>Q-134, search.</b> A: opens narrowed inside a knowledge base <span class="rec">rec</span>. B: as today.</li></ol>
-<h3>Later</h3><p class="note">ENH-40 Today’s note · ENH-41 backlinks · ENH-42 Ingest, Check, File this answer, changed pages · ENH-43 scheduled checks · ENH-44 big and non-English vaults. Concerns: C-57 other tools writing the same folders; C-58 parallel sessions and index/log.</p></div>
+<h3>Later</h3><p class="note">ENH-40 Today’s note · ENH-41 backlinks · ENH-42 Ingest, Check, File this answer, changed pages, scheduled checks · ENH-43 discoverability · ENH-44 big and non-English vaults. Concerns: C-57 other tools writing the same folders; C-58 parallel sessions and index/log.</p></div>
 </div>'''))
 
+exec(open(os.path.join(HERE, "decided.py")).read())
 json.dump(BOARDS, open(os.path.join(OUT, "manifest.json"), "w"), indent=1)
 print(len(BOARDS), "boards")
