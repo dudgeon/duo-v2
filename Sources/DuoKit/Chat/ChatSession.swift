@@ -289,8 +289,23 @@ public final class ChatSession {
     /// Earlier turns (Q-56c).
     public func loadEarlier() { feed?.loadEarlier() }
 
+    /// Whether this chat is on screen (ENH-45): Home's tab at All projects, the console's tab in its
+    /// project. Off screen a chat is dormant: its screen isn't read as the TUI repaints, and its
+    /// feed reads hooks and the transcript every 2 s instead of every 0.15 s. Shown again, it reads
+    /// at once (`wake`). Set by the app; a chat on its own (checks, targets) is always shown.
+    @ObservationIgnored public var isShown: @MainActor () -> Bool = { true }
+    @ObservationIgnored private var readSkipped = false
+
+    /// A dormant chat shown again: read the screen it skipped.
+    public func wake() {
+        guard readSkipped else { return }
+        readSkipped = false
+        reread()
+    }
+
     /// The TUI repaints in bursts: read once it settles (the spike's 60 ms).
     func scheduleRead() {
+        guard isShown() else { readSkipped = true; return }
         guard !readPending else { return }
         readPending = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) { [weak self] in

@@ -2567,3 +2567,9 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - `duo2`: `session open` resumes it by showing it. A send to a parked session wakes it and answers "it's resuming now. Send again once it's at its prompt." `session close` closes a parked tab. `sessions --json` marks it `"parked": true`.
 - **Live:** on F-208's fixture (16 tabs restored, a stand-in 2.1.219 TUI), the launch says "restore: parked 14 session(s) in 7 project(s)". 1 session started (the tab on screen); before this, 14 started at once. CPU after launch was 3.2% mean, with no stalls.
 - **Not changed:** a parked tab looks like any idle tab (Q-136). A session that was waiting on you at quit shows the state its transcript gives, as before.
+
+## F-211 · Off-screen chats are dormant; the hint line measures once (ENH-45)
+
+- `ChatSession.isShown` (set at attach: Home's tab at All projects, the console's tab in a project). Off screen, `scheduleRead` records that it skipped a read instead of reading, and `ChatFeed.tick` runs one tick in 13 (every ~2 s). The first tick once it is shown calls `wake()`, which reads the skipped screen, so the chat catches up within 0.15 s. `duo2`'s chat answers and sends read the screen themselves, so they work on a dormant chat.
+- The composer's hint line was a `ViewThatFits` over five strings, each `fixedSize`. Geoff's work sample showed it re-measuring them on every pass (Text resolution and dynamic colours). `FirstFit` (ChatComposerView.swift) measures each once per change of strings and places only the one that fits; the others get no width and are clipped. Accessibility reads the longest.
+- **Captures:** chat boards `window`, `composer`, `text`, `fallback` and `slash-fallback-named` are pixel-identical (`scripts/samepng.py`: 0 pixels differ) between this build and the build before the change.

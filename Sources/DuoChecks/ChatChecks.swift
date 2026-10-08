@@ -131,6 +131,17 @@ func spikeScreen(_ name: String) -> String {
         check(f.showsChat && f.fallback == nil, "Back to Chat: chat")
         flip.show(""); spin(0.8)
         check(f.showsChat && f.screen.kind == .starting, "a blank screen (a session loading) is still starting: no fallback")
+        // ENH-45: a chat off screen is dormant: the TUI repainting reads nothing until it's shown.
+        let quiet = FakeTUI(idleText)
+        let q = ChatSession(key: "s-dormant", mode: .chat)
+        var shown = false
+        q.isShown = { shown }
+        q.attach(quiet)
+        quiet.show(helpText); spin(0.8)
+        check(q.screen.kind == .idle && q.showsChat, "off screen, a repaint isn't read (still \(q.screen.kind))")
+        shown = true
+        q.wake(); spin(0.8)
+        check(q.screen.kind == .unknown && !q.showsChat, "shown again, it reads what it skipped at once (\(q.screen.kind))")
         let v = ChatSession(key: "s-version", mode: .chat)
         v.setVersion(nil)
         check(v.versionTrust == .unverified, "a claude that gave no version: unverified, not the verified default")
