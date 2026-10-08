@@ -28,6 +28,7 @@ struct DocxView: View {
                     VStack(spacing: 0) {
                         DocxBar(viewer: viewer, path: path, file: file)
                         DocxWebHost(viewer: viewer)
+                        DocxPickerBar(viewer: viewer)
                     }
                     if model.docxMenuOpen {
                         // A click anywhere else closes the menu, as a menu does.
@@ -47,7 +48,7 @@ struct DocxView: View {
 }
 
 /// The bar: Markup ⌄ at the left (pressed while its menu is open); Convert to Markdown… and Open
-/// With ⌄ at the right. 44 high with a `rule` below, as the deck's. (Select Text is slice 2: W5.)
+/// With ⌄ at the right. 44 high with a `rule` below, as the deck's. 
 struct DocxBar: View {
     @Environment(AppModel.self) private var model
     let viewer: DocxViewer
@@ -58,14 +59,17 @@ struct DocxBar: View {
         let _ = model.pickerRevision
         HStack(spacing: DuoSpace.gapButtonToButton) {
             Button { model.docxMenuOpen.toggle() } label: {   // action: doc markup
-                HStack(spacing: 4) { Text("Markup"); Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)) }
+                HStack(spacing: 1) { Text("Markup"); Image(systemName: "chevron.down").font(.system(size: 8, weight: .semibold)) }
             }
-            .buttonStyle(DuoButtonStyle(on: model.docxMenuOpen)).disabled(viewer.state != .ready)
-            Spacer(minLength: 8)
-            Button("Convert to Markdown…") { model.askConvertToMarkdown(path) }.buttonStyle(.duo)
+            .buttonStyle(DuoButtonStyle(on: model.docxMenuOpen)).fixedSize().disabled(viewer.state != .ready)
+            Spacer(minLength: 0)
+            Button("Select Text") { viewer.picking ? viewer.stopPicking() : viewer.startPicking() }   // action: doc pick
+                .buttonStyle(DuoButtonStyle(on: viewer.picking)).fixedSize().disabled(viewer.state != .ready)
+            Button("Convert to Markdown…") { model.askConvertToMarkdown(path) }.buttonStyle(.duo).fixedSize()
             OpenWithMenu(path: path, file: file, bordered: true)
         }
-        .padding(.horizontal, DuoMetric.noticePaddingX)
+        // The board's four buttons run to 10 from the pane's right edge, not 20; Duo's are a little wider, so 6 here: that is what fits them at 460.
+        .padding(.leading, DuoMetric.noticePaddingX).padding(.trailing, DuoMetric.docxBarTrailing)
         .frame(height: DuoMetric.deckBarHeight)
         .overlay(alignment: .bottom) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
     }
@@ -153,4 +157,49 @@ struct DocxWebHost: NSViewRepresentable {
 
     func makeNSView(context: Context) -> DocumentEditorView.EditorHost { DocumentEditorView.EditorHost() }
     func updateNSView(_ host: DocumentEditorView.EditorHost, context: Context) { host.show(viewer.webView) }
+}
+
+/// W5: the picker at the bottom of the pane (on `ground`, a `rule` above, padding 10 20 12): what is
+/// picked, its changes and comments in `text2`, then the deck's buttons (Send to Claude, Send To ⌄,
+/// Pick Another, Cancel).
+struct DocxPickerBar: View {
+    @Environment(AppModel.self) private var model
+    let viewer: DocxViewer
+
+    var body: some View {
+        let _ = model.pickerRevision
+        if viewer.picking {
+            VStack(alignment: .leading, spacing: 8) {
+                if let e = viewer.picked {
+                    let p = viewer.pickedParagraph
+                    let isComment = viewer.pickedKind == "comment"
+                    let c = isComment ? p?.comments.first { $0.id == e.attributes["comment"] } : nil
+                    let quote = SendFormat.line(isComment ? (c?.text ?? e.text) : (p?.text ?? e.text))
+                    let shown = quote.count > 80 ? String(quote.prefix(80)) + "…" : quote
+                    let under = p?.heading.map { " under “\(SendFormat.line($0))”" } ?? ""
+                    ((isComment ? Text("A comment").fontWeight(.semibold) : Text("A paragraph").fontWeight(.semibold))
+                        + Text(isComment ? " by \(c?.author ?? "") on a paragraph\(under)" + (shown.isEmpty ? "" : " · “\(shown)”") : under + (shown.isEmpty ? "" : " · “\(shown)”")))
+                        .duoText(.body).lineLimit(2)
+                    if let p {
+                        Text(isComment ? "In the paragraph “\(String(SendFormat.line(p.text).prefix(60)))”. Its changes and comments go with it." : SendFormat.paragraphSummary(p))
+                            .duoText(.control).foregroundStyle(DuoColor.text2).lineLimit(3)
+                    }
+                    if case .failure(let why) = model.sendTarget {
+                        Text("\(why.reason): use Send To.").duoText(.control).foregroundStyle(DuoColor.text2)
+                    }
+                    PickerButtonRow(viewer: viewer)
+                } else {
+                    HStack(spacing: DuoSpace.gapButtonToButton) {
+                        Text("Click a paragraph or a comment to select it. Esc to stop.").duoText(.body).fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 8)
+                        Button("Cancel") { viewer.stopPicking() }.buttonStyle(.duo).keyboardShortcut(.cancelAction)
+                    }
+                }
+            }
+            .padding(EdgeInsets(top: 10, leading: DuoMetric.noticePaddingX, bottom: 12, trailing: DuoMetric.noticePaddingX))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(DuoColor.ground)
+            .overlay(alignment: .top) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
+        }
+    }
 }

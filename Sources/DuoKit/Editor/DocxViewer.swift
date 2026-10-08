@@ -58,7 +58,11 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     public private(set) var draws = 0
     /// How many times the web view's frame changed size since the document opened (the layout-loop check).
     public private(set) var frameChanges = 0
+    public var picked: SendFormat.Element?
+    public var pickedViewRect: CGRect?
+    public var picking = false
     public var onChange: (() -> Void)?
+    private var outlineCache: (stamp: Date?, paragraphs: [Docx.Paragraph])?
     /// What the page's content security policy blocked (logged; checks expect none).
     public private(set) var blocked: [String] = []
     let resources: URL
@@ -149,6 +153,7 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         guard let file = url else { return }
         stamp = Self.modified(file)
         stale = false
+        picked = nil; picking = false; outlineCache = nil
         people = []; comments = []; changeCount = 0
         if let why = Self.problem(file) {
             claudeCanRead = false
@@ -211,6 +216,12 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     /// A change under the pointer, as a capture needs it: its id or a bit of its text.
     public func hover(_ what: String) {
         webView.callAsyncJavaScript("return __duo.hover(w)", arguments: ["w": what], in: nil, in: .page, completionHandler: nil)
+    }
+
+    /// The picker's dashed outline on a paragraph or comment, as if the pointer were over it (captures).
+    public func hoverPicker(_ selector: String) {
+        if !picking { startPicking() }
+        webView.callAsyncJavaScript("return __duo.hoverPara(s)", arguments: ["s": selector], in: nil, in: .page, completionHandler: nil)
     }
 
     /// Calls `then` once the document is drawn or has failed (for `duo2` and checks).
@@ -290,6 +301,9 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
             claudeCanRead = url.map { Docx.readability($0) == nil } ?? false
             state = .failed("it uses something the viewer can’t read")
             settle()
+        case "picked", "pickEnded":
+            handlePageMessage(message)
+            return
         case "blocked":
             let what = body["what"] as? String ?? ""
             blocked.append(what)
@@ -355,4 +369,33 @@ private final class SchemeProxy: NSObject, WKURLSchemeHandler {
         MainActor.assumeIsolated { if let owner { owner.serve(task) } else { task.didFailWithError(URLError(.cancelled)) } }
     }
     func webView(_ w: WKWebView, stop task: WKURLSchemeTask) {}
+}
+
+extension DocxViewer: PageHost {
+    public var pageURL: URL? { url }
+    public var world: WKContentWorld { .page }
+
+    /// The document's paragraphs from the file (`Docx.outline`), read once per version of the file.
+    public func paragraphs() -> [Docx.Paragraph] {
+        guard let url else { return [] }
+        let stamp = Self.modified(url)
+        if let c = outlineCache, c.stamp == stamp { return c.paragraphs }
+        let p = (try? Docx.outline(url)) ?? []
+        outlineCache = (stamp, p)
+        return p
+    }
+
+    /// The paragraph the picker holds (a picked comment's is the one it's on).
+    public var pickedParagraph: Docx.Paragraph? {
+        guard let id = picked?.attributes["paraId"] else { return nil }
+        return paragraphs().first { $0.id == id }
+    }
+
+    /// A picked comment's thread (its root id), or nil for a paragraph.
+    public var pickedThread: String? {
+        guard picked?.attributes["kind"] == "comment", let c = picked?.attributes["comment"], let p = pickedParagraph else { return nil }
+        return p.comments.first { $0.id == c }?.thread ?? c
+    }
+
+    public var pickedKind: String { picked?.attributes["kind"] ?? "paragraph" }
 }

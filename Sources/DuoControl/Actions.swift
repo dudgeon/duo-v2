@@ -66,7 +66,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
     case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docTable = "doc table", docFind = "doc find"
     case docProp = "doc prop"
-    case docMarkup = "doc markup", docComments = "doc comments"
+    case docMarkup = "doc markup", docComments = "doc comments", docOutline = "doc outline", docPick = "doc pick", docElement = "doc element"
     case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history", docRevert = "doc revert"
     // HTML pages
     case browserOpen = "browser open", browserAllow = "browser allow", browserSites = "browser sites"
@@ -325,6 +325,13 @@ extension DuoAction {
         .init(.docMarkup, .docs, "[all|simple|none|original] [--comments on|off] [--show-resolved on|off] [--person <name>|everyone]",
               "The Word document showing: which markup its viewer draws, and change it, as the Markup menu does (DL-162). All Markup draws every change in its person's colour with the comments; simple accepts the changes and marks the margin where one was; none accepts them with no marks; original shows the text before them. --person shows only that person's marks. Kept per document while Duo runs. With nothing, says what it shows now and who is in the document.",
               ui: ["Markup", "All Markup", "Simple Markup", "No Markup", "Original", "Show Comments", "Show Resolved Comments"]),
+        .init(.docOutline, .docs, "<file.docx> [--json]",
+              "A Word document's paragraphs, read from the file (no viewer needed): each with its w14:paraId (the id the viewer draws it under), style and heading level, its text with the tracked changes accepted, its tracked changes (kind, author, date, text) and the comments that end in it (thread, resolved). Then every comment thread. A picked paragraph's Send to Claude names the same ids."),
+        .init(.docPick, .docs, "[<paragraph id> | c:<comment id>]",
+              "Start Select Text in the Word document showing, for the user to click a paragraph or a comment, or select the paragraph (its w14:paraId from `doc outline`) or comment (`c:<id>`) named.",
+              ui: ["Select Text"]),
+        .init(.docElement, .docs, "[<paragraph id> | c:<comment id>]",
+              "Describe a paragraph or comment of the Word document showing (the picked one by default) as Send to Claude would send it: where it is, its text with changes accepted, its tracked changes and comments."),
         .init(.docComments, .docs, "[--resolved]",
               "The comments of the Word document showing, from what its viewer drew: author, date, text, replies and whether each is resolved (--resolved: only those)."),
         .init(.docInsert, .docs, "<text> [--line <n>]", "Insert text into the showing document through the editor (highlighted as added by Claude), at a line or the caret."),

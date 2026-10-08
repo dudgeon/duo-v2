@@ -5,14 +5,15 @@ region by region (the document's own text and fonts are exempt, so those regions
   python3 regions.py <board@2x.png> <capture-pane.png> <name>:<x>,<y>,<w>,<h>[:<shiftY>] ...
 
 Coordinates are design points on the board (460x800, with its own 1 pt outer border; the capture is the pane
-without it, so the capture is read 1 pt up and left). Each region is compared at the shift (0 to 8 pt down
-or up, 0 to 2 across) that fits best, and reported as the mean absolute difference per channel (0 to 255)
+without it, so the capture is read 1 pt up and left). Each region is compared at the shift (up to SHIFT pt down or up, default 8, and 2 across) that fits best, and reported as the mean absolute difference per channel (0 to 255)
 at that shift, and the shift: a region the same but placed 2 pt differently reads as 0.0 at shift 2.
 """
 import pathlib, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[4] / "scripts"))
 from pixels import read_png
 
+import os
+RANGE = int(os.environ.get("SHIFT", "8"))   # points of vertical shift to search: SHIFT=60 for a region the document's own text moved
 bw, bh, bb, brows = read_png(sys.argv[1])
 cw, ch, cb, crows = read_png(sys.argv[2])
 
@@ -32,5 +33,5 @@ def diff(x, y, w, h, dx, dy):
 for spec in sys.argv[3:]:
     name, box, *rest = spec.split(":")
     x, y, w, h = (float(v) for v in box.split(","))
-    best = min(((diff(x, y, w, h, dx, dy), dx, dy) for dx in (-2, -1, 0, 1, 2) for dy in range(-8, 9)), key=lambda t: t[0])
+    best = min(((diff(x, y, w, h, dx, dy), dx, dy) for dx in (-2, -1, 0, 1, 2) for dy in range(-RANGE, RANGE + 1)), key=lambda t: t[0])
     print(f"{name:28s} at 0: {diff(x, y, w, h, 0, 0):6.2f}   best {best[0]:6.2f} at shift ({best[1]:+d}, {best[2]:+d}) pt")

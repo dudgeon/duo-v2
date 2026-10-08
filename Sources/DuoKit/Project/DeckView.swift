@@ -89,19 +89,12 @@ struct DeckPickerBar: View {
                     if case .failure(let why) = model.sendTarget {
                         Text("\(why.reason): use Send To.").duoText(.body).foregroundStyle(DuoColor.text2)
                     }
-                    // One row as drawn; two in a pane too narrow for it (DL-132 j, q68-narrow).
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: DuoSpace.gapButtonToButton) { send; another; Spacer(minLength: 0); cancel }
-                        VStack(alignment: .leading, spacing: DuoSpace.gapButtonToButton) {
-                            HStack(spacing: DuoSpace.gapButtonToButton) { send }
-                            HStack(spacing: DuoSpace.gapButtonToButton) { another; Spacer(minLength: 0); cancel }
-                        }
-                    }
+                    PickerButtonRow(viewer: viewer)
                 } else {
                     HStack(spacing: DuoSpace.gapButtonToButton) {
                         Text("Click a shape on a slide to select it. Esc to stop.").duoText(.body).fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 8)
-                        cancel
+                        Button("Cancel") { viewer.stopPicking() }.buttonStyle(.duo).keyboardShortcut(.cancelAction)
                     }
                 }
             }
@@ -110,6 +103,24 @@ struct DeckPickerBar: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(DuoColor.ground)
             .overlay(alignment: .top) { DuoColor.rule.frame(height: DuoMetric.borderHairline) }
+        }
+    }
+}
+
+/// Send to Claude (default), Send To ⌄, Pick Another and Cancel (DL-125 B, C; DL-132 j): the picker
+/// bar's buttons, for the deck's and the Word viewer's alike. One row as drawn; two in a pane too
+/// narrow for it (q68-narrow).
+struct PickerButtonRow: View {
+    @Environment(AppModel.self) private var model
+    let viewer: any PageHost
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: DuoSpace.gapButtonToButton) { send; another; Spacer(minLength: 0); cancel }
+            VStack(alignment: .leading, spacing: DuoSpace.gapButtonToButton) {
+                HStack(spacing: DuoSpace.gapButtonToButton) { send }
+                HStack(spacing: DuoSpace.gapButtonToButton) { another; Spacer(minLength: 0); cancel }
+            }
         }
     }
 

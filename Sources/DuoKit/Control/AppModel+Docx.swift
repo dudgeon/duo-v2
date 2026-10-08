@@ -29,6 +29,7 @@ extension AppModel {
     }
 
     func docxVerb(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
+        if id == .docOutline { return outlineVerb(inv, req, done) }
         guard let v = visibleDocx, let url = v.url else { return done(.fail("no Word document is showing (open a .docx with `duo2 doc open`)")) }
         guard v.state == .ready else {
             let why: String
@@ -41,6 +42,23 @@ extension AppModel {
         }
         let path = displayPath(url)
         switch id {
+        case .docPick:
+            if let sel = inv[0] {
+                v.pick(selector: sel) { ok in done(ok ? .ok("Picked \(sel). `duo2 doc element` describes it; the user sees it outlined.") : .fail("no paragraph or comment \(sel): use an id from `duo2 doc outline` or c:<comment id>")) }
+            } else { v.startPicking(); done(.ok("Select Text is on: the user clicks a paragraph or a comment.")) }
+        case .docElement:
+            let finish: @MainActor (Docx.Paragraph?, String?) -> Void = { p, thread in
+                guard let p else { return done(.fail("nothing is picked (pick one, or pass a paragraph id or c:<comment id>)")) }
+                done(.ok(SendFormat.paragraph(p, path: path, thread: thread), ["file": path, "paragraph": p.id as Any, "heading": p.heading as Any, "text": p.text,
+                                                                       "changes": p.changes.count, "comments": p.comments.count] as [String: Any]))
+            }
+            if let sel = inv[0] {
+                v.describe(selector: sel) { e, _ in
+                    guard let e, let pid = e.attributes["paraId"] else { return finish(nil, nil) }
+                    let p = v.paragraphs().first { $0.id == pid }
+                    finish(p, e.attributes["kind"] == "comment" ? p?.comments.first { $0.id == e.attributes["comment"] }?.thread : nil)
+                }
+            } else { finish(v.pickedParagraph, v.pickedThread) }
         case .docMarkup:
             func onOff(_ flag: String) -> Bool?? {
                 guard let value = inv.flags[flag] else { return .none }
@@ -82,5 +100,42 @@ extension AppModel {
                      list.map { ["id": $0.id, "author": $0.author, "date": $0.date, "text": $0.text, "resolved": $0.resolved, "reply": $0.reply, "paragraph": $0.paragraph] as [String: Any] }))
         default: done(.fail("not a Word verb"))
         }
+    }
+}
+
+extension AppModel {
+    /// `duo2 doc outline <file.docx>`: from the file, so it works on any document, showing or not.
+    func outlineVerb(_ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
+        guard let arg = inv[0] else { return done(.fail("usage: \(ActionID.docOutline.action.usage)")) }
+        guard let url = deckFile(arg, req: req) else { return done(.fail("no document '\(arg)' here (a path from the project's folder, or absolute)")) }
+        do {
+            let ps = try Docx.outline(url)
+            let path = SendFormat.tilde(displayPath(url))
+            if inv.json {
+                let json = (try? JSONSerialization.jsonObject(with: JSONEncoder().encode(ps))) ?? []
+                return done(.ok(path, json))
+            }
+            let changes = ps.reduce(0) { $0 + $1.changes.count }
+            var comments: [Docx.Comment] = []
+            var lines = ["\(path): \(ps.count) paragraphs, \(changes) tracked changes, \(ps.reduce(0) { $0 + $1.comments.count }) comments"]
+            for p in ps {
+                let id = (p.id ?? "#\(p.index)").padding(toLength: 9, withPad: " ", startingAt: 0)
+                let tag = p.level.map { $0 == 0 ? "Title " : "H\($0)    " } ?? "      "
+                var line = "\(id) \(tag) " + SendFormat.line(p.text)
+                if !p.changes.isEmpty { line += "   [changes: " + SendFormat.changeLines(p.changes) + "]" }
+                if !p.comments.isEmpty { line += "   [comments: " + p.comments.filter { $0.parent == nil }.map { "c\($0.id)\($0.resolved ? " resolved" : "")" }.joined(separator: ", ") + "]" }
+                lines.append(line)
+                comments += p.comments
+            }
+            if !comments.isEmpty {
+                lines.append("")
+                for c in comments {
+                    let at = ps.first { $0.comments.contains(c) }?.id ?? ""
+                    lines.append("\(c.parent == nil ? "" : "  ↳ ")c\(c.id) [\(c.resolved ? "resolved" : "open")] on \(at): \(c.author), \(SendFormat.day(c.date)): \(SendFormat.line(c.text))")
+                }
+            }
+            let json = (try? JSONSerialization.jsonObject(with: JSONEncoder().encode(ps))) ?? []
+            done(.ok(lines.joined(separator: "\n"), json))
+        } catch { done(.fail("\(displayPath(url)): \(error)")) }
     }
 }

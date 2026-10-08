@@ -2011,6 +2011,54 @@ func repoFixture() throws -> Fixture {
         check(viewer.markup.mode == "simple" || viewer.markup.mode == "original" || viewer.markup.mode == "all", "markup is kept per document")
         check(viewer.markup(for: docs.appending(path: "Garden full.docx")).mode == "none" && viewer.markup.mode != "none", "…each its own: the full plan keeps No Markup")
 
+        // Select Text (W5): the outline reads the file, and names paragraphs as the page does.
+        for name in ["Garden plan.docx", "Garden full.docx"] {
+            let file = docs.appending(path: name)
+            let outline = try Docx.outline(file)
+            guard settle(file), viewer.state == .ready else { check(false, "\(name) is drawn again"); continue }
+            var drawn: [[String: Any]]?
+            viewer.drawnParagraphs { drawn = $0 }
+            while drawn == nil { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+            let seen = Set(drawn!.compactMap { ($0["target"] as? String)?.components(separatedBy: "#p:").last })
+            let want = outline.compactMap(\.id)
+            check(!want.isEmpty && want.count == outline.count && Set(want).isSubset(of: seen), "\(name): all \(outline.count) paragraphs of `doc outline` are drawn under the same w14:paraId (missing \(Set(want).subtracting(seen)))")
+        }
+        let ol = try Docx.outline(board)
+        let casey = ol.first { $0.text.hasPrefix("Casey ") }
+        check(casey?.text == "Casey (a third author) added text, and Blake replaced four words." && casey?.heading == "Beds and crops" && casey?.changes.count == 3
+              && casey?.changes.map(\.kind) == ["insert", "delete", "insert"] && casey?.level == nil, "the outline: accepted text, the heading it's under, and its three changes (\(String(describing: casey?.changes.map(\.kind))))")
+        let forty = ol.first { $0.text.contains("forty") }
+        check(forty?.comments.map(\.author) == ["Avery Reviewer", "Blake Editor"] && forty?.comments.last?.parent == "0" && forty?.comments.allSatisfy { !$0.resolved } == true, "a comment and its reply end in the paragraph they cover, open")
+        check(ol.first { $0.comments.contains { $0.resolved } }?.comments.first?.text == "Typo here, fixed." && ol.first?.level == 0 && ol.first?.style == "Title", "a resolved comment, and a Title is level 0")
+        check(ol.contains { $0.changes.first?.kind == "move-from" && $0.text.isEmpty } && ol.last?.changes.first?.kind == "move-to", "a move is a move-from and a move-to")
+        let home = NSHomeDirectory()
+        let sendText = SendFormat.paragraph(casey!, path: home + "/garden/Garden plan.docx")
+        check(sendText == "From ~/garden/Garden plan.docx, paragraph \(casey!.id!) under “Beds and crops”:\n"
+              + "text: Casey (a third author) added text, and Blake replaced four words.\n"
+              + "tracked changes: Casey Counsel inserted “(a third author)” 7 Sep; Blake Editor deleted “three” and inserted “four” 6 Sep\n"
+              + "the whole document: duo2 doc outline \"~/garden/Garden plan.docx\"\n", "Send to Claude's text for a paragraph is the README's (\(sendText.debugDescription))")
+        let withComments = SendFormat.paragraph(forty!, path: "/tmp/x.docx")
+        check(withComments.contains("\ncomments: Avery Reviewer 1 Sep: “Is “forty” right? The spreadsheet says forty-two.” (reply Blake Editor: “Checked: forty-two. I'll fix it.”)\n") && !withComments.contains("tracked changes:"),
+              "a paragraph's comments with their reply, and no line for changes it hasn't")
+        check(SendFormat.paragraphSummary(casey!) == "3 tracked changes: Casey Counsel inserted, Blake Editor deleted and inserted", "the picker bar's second line (\(SendFormat.paragraphSummary(casey!)))")
+        // The picker, driven as `duo2 doc pick` and `doc element` drive it.
+        _ = settle(docs.appending(path: "Garden plan.docx"))
+        m.openDocument("docs/Garden plan.docx")
+        check(duo2("doc", "pick", casey!.id!).ok && viewer.picking && viewer.pickedParagraph?.id == casey!.id && viewer.pickedKind == "paragraph", "`doc pick <paragraph id>` selects it for the user")
+        let element = duo2("doc", "element").output
+        check(element.hasPrefix("From ") && element.contains("paragraph \(casey!.id!) under “Beds and crops”:") && element.contains("tracked changes: Casey Counsel inserted “(a third author)” 7 Sep"), "`doc element` describes the picked paragraph as it would be sent")
+        var payload: String?? = .none
+        m.pickedElementPayload { payload = .some($0) }
+        while payload == nil { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+        check(payload! == SendFormat.paragraph(casey!, path: m.displayPath(proj.appending(path: "docs/Garden plan.docx"))), "the payload `send element` pastes is the same text")
+        check(duo2("doc", "pick", "c:0").ok && viewer.pickedKind == "comment" && viewer.pickedThread == "0" && viewer.pickedParagraph?.id == forty!.id, "a picked comment card is its thread, on the paragraph it's on")
+        check(!duo2("doc", "pick", "NOSUCH").ok, "an id that isn't there is refused")
+        viewer.stopPicking()
+        check(!viewer.picking && viewer.picked == nil, "Cancel stops picking")
+        let outlineOut = duo2("doc", "outline", docs.appending(path: "Garden full.docx").path)
+        check(outlineOut.ok && outlineOut.output.contains("paragraphs, 12 tracked changes, 4 comments"), "`doc outline <file>` summarises a document from the file (\(outlineOut.output.prefix(80)))")
+        check(duo2("doc", "outline", "docs/Garden plan.docx", "--json").ok, "`doc outline --json`")
+
         // The fallback.
         check(settle(docs.appending(path: "Contract draft.docx")) && viewer.state == .failed("it’s protected with a password") && viewer.failureExtra == "Claude can’t read it either.",
               "a password-protected document falls back, and says Claude can't read it either (\(viewer.state))")
@@ -2054,6 +2102,7 @@ func repoFixture() throws -> Fixture {
         let started = Date()
         guard settle(docs.appending(path: "Long plan.docx"), limit: 60), viewer.state == .ready else { check(false, "the 73-section document is drawn (\(viewer.state))"); return }
         let first = Date().timeIntervalSince(started)
+        wait(1.5)   // the page counts layout changes from half a second after it draws; let any late one (a font) land first
         var stats1: [String: Any] = [:]
         viewer.pageStats { stats1 = $0 }
         while stats1.isEmpty { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
@@ -2063,8 +2112,8 @@ func repoFixture() throws -> Fixture {
         viewer.pageStats { stats2 = $0 }
         while stats2.isEmpty { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
         print("  the 73-section document: drawn in \(viewer.drawMillis) ms (page said ready; \(Int(first * 1000)) ms with the check's loop), \(stats2["height"] ?? 0) px tall; after 10 s: \(stats2)")
-        check(stats2["opens"] as? Int == (statsBefore["opens"] as? Int ?? -9) + 1 && stats2["mutations"] as? Int == 0 && stats2["sheetResizes"] as? Int == 0 && stats2["height"] as? Int == stats1["height"] as? Int && viewer.frameChanges == frames0 && viewer.draws >= 1,
-              "a 73-section document draws once: one draw, no DOM change, no resize of the sheet and no change of the web view's frame in 10 s")
+        check(stats2["opens"] as? Int == (statsBefore["opens"] as? Int ?? -9) + 1 && stats2["mutations"] as? Int == stats1["mutations"] as? Int && stats2["sheetResizes"] as? Int == stats1["sheetResizes"] as? Int && stats2["height"] as? Int == stats1["height"] as? Int && viewer.frameChanges == frames0 && viewer.draws >= 1,
+              "a 73-section document draws once: one draw, then no DOM change, no resize of the sheet and no change of the web view's frame in 10 s")
         check(viewer.drawMillis < 15_000, "…in \(viewer.drawMillis) ms")
         try? FileManager.default.removeItem(at: copy)
     }

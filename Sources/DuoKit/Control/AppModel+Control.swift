@@ -609,7 +609,7 @@ extension AppModel {
         // MARK: HTML pages
         case .slide, .slideGo, .slideShapes, .slideNotes, .slidePick, .slideElement:
             slideVerb(id, inv, req, done)
-        case .docMarkup, .docComments:
+        case .docMarkup, .docComments, .docOutline, .docPick, .docElement:
             docxVerb(id, inv, req, done)
         case .htmlReload:
             guard let v = visiblePage, v.pageURL != nil else { return done(.fail("no web page is showing")) }
@@ -647,6 +647,8 @@ extension AppModel {
                     guard let self else { return }
                     if let d = self.visiblePage as? DeckViewer, let s = d.pickedShape, let url = d.pageURL {
                         parts.append(SendFormat.shape(s, path: self.displayPath(url), screenshot: nil))
+                    } else if let d = self.visiblePage as? DocxViewer, let p = d.pickedParagraph, let url = d.pageURL {
+                        parts.append(SendFormat.paragraph(p, path: self.displayPath(url), thread: d.pickedThread))
                     } else if let v = self.visiblePage, let e = v.picked, let url = v.pageURL { parts.append(SendFormat.element(e, path: self.displayPath(url), screenshot: nil)) }
                     if let f = self.selectedFile, self.terminalsMode == .live { parts.append("Selected in Files: \(f)") }
                     done(parts.isEmpty ? .fail("nothing is selected") : .ok(parts.joined(separator: "\n")))

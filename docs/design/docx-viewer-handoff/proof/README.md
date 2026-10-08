@@ -1,4 +1,4 @@
-# Word viewer, slice 1: proof (viewer, markup, fallback)
+# Word viewer: proof (slice 1: viewer, markup, fallback; slice 2: picked)
 
 Live captures of an isolated build on a scratch workspace (own `DUO_SUPPORT_DIR`, scratch `CLAUDE_CONFIG_DIR`, `open -g`, no Claude turn), the right pane cropped to the board's 460×800 (`scripts/chat-crop.py … 980 40 460 800`) and compared with `docs/design/build-handoff/tools/compare.sh docx-viewer-handoff/<board>`. The test documents are `../fixture/` (`python3 ../fixture/make_garden.py`). The document's own text and fonts, and Quick Look's preview, are exempt.
 
@@ -24,4 +24,30 @@ Live captures of an isolated build on a scratch workspace (own `DUO_SUPPORT_DIR`
 | menu, the four modes | 3.66 | 3.66 | |
 | menu, people | 18.84 | 18.84 | dots and counts: text anti-aliasing and 1 pt of row height |
 
-Stood in or different from the boards: Select Text is not in the bar (slice 2); the question is Duo's standard sheet over the window (459 wide), not drawn at the board's 418 inside the pane; the Markup button's pressed fill; the reviewAuthor4 and reviewAuthor5 colours are not on a board.
+Stood in or different from the boards: the question is Duo's standard sheet over the window (459 wide), not drawn at the board's 418 inside the pane; the Markup button's pressed fill; the reviewAuthor4 and reviewAuthor5 colours are not on a board.
+
+## Slice 2: Select Text (`picked`)
+
+`scripts/check-docx.sh picked-hover picked` captures one state at a time (the board draws a hovered paragraph and a picked one together):
+
+| File | What it shows |
+|---|---|
+| `picked-hover-compare.png` | Select Text on, the pointer over the first paragraph: dashed outline 3 out, tag `Paragraph · 1 comment` |
+| `picked-compare.png` | Casey's paragraph picked: solid 1.5 outline, tag `Paragraph · 3 changes`, the picker bar (top-aligned crop: the bar is below the crop) |
+| `picked-bottom-compare.png` | the same, the crop aligned to the bottom of the pane so the picker bar shows |
+
+The board's own document has no comment card, so its paragraphs sit higher than the fixture's; `regions.py` is run with `SHIFT=160`, which finds the same element wherever the document put it. The tag is placed as the board's HTML places it (3 left of the paragraph, its 16 high box 8 clear above it).
+
+| Region | At 0 | Best (shift) | Note |
+|---|---|---|---|
+| hover tag | 148.59 | 6.17 (0, +40) pt | the paragraph is 40 pt lower in the fixture |
+| picked tag | 166.63 | 8.04 (0, +132) pt | 132 pt lower: the fixture's card and the extra lines |
+| hover outline | 47.18 | 20.77 (0, +40) pt | the text inside is the document's own |
+| picked outline | 33.24 | 23.90 (0, +132) pt | likewise |
+| Select Text, pressed | 19.82 | 10.79 (+1, 0) pt | label anti-aliasing and the chevron buttons beside it |
+| Open With | 29.31 | 13.30 (+1, 0) pt | |
+| picker bar: rule, text, buttons | 23 to 54 | 21 to 43 | not matched: see below |
+
+The picker bar is **not** a match to the pixel, and the numbers say so. The scratch workspace has no Claude session showing, so the bar carries the deck's "No session is showing: use Send To." line and Send To in the default look (DL-132 q68-no-session); the board has a session, so its buttons sit 20 pt higher and Send to Claude is the default. The wording, order, spacing (8 between lines, padding 10 20 12), weights and buttons are the board's. The terminal box at the bottom of the board is the terminal: the paste text is compared by content, in DuoChecks (`Send to Claude's text for a paragraph is the README's`). The board's paste says `(page 1)` after the heading; the README's text and the coordinator's do not, so the build follows them.
+
+The bar's right edge: the board's four buttons run to 10 pt from the pane's edge (not the 20 the bar's padding says), because they need it; Duo's are a few points wider, so `docxBarTrailing` is 6.
