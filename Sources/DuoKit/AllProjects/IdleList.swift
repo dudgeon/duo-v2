@@ -168,7 +168,7 @@ struct IdleListPopover: View {
                                 IdleRowView(row: r, selected: i == model.idleSelection)
                                     .id(r.id)
                                     .onActivate { model.idleSelection = i; model.resumeIdle(r) }  // action: session open
-                                    .modifier(SessionOrganizeMenu(sessionKey: r.id))
+                                    .modifier(SessionOrganizeMenu(sessionKey: r.id, radius: DuoMetric.idleRowRadius))
                             }
                         }
                     }

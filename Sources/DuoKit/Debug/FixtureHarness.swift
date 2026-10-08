@@ -732,6 +732,7 @@ public enum FixtureHarness {
                     }
                 }
             }
+        case "menu-open": model.contextMenuSession = parts.count > 1 ? parts[1] : nil   // a session row as its context menu leaves it (Q-147)
         case let a where a.hasPrefix("wait"): break
         case let a where a.hasPrefix("perf-"): ChatPerf.perform(parts, on: model)   // chat mode's performance runs (F-157)
         default: FileHandle.standardError.write(Data("Unknown action '\(action)'\n".utf8))

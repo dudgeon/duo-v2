@@ -12,6 +12,8 @@ public enum DuoColor {
     public static let pane = Color(nsColor: NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x16181C, name: "pane"))
     /// Selected row, Claude's-additions block
     public static let selected = Color(nsColor: NSColor.duoDynamic(light: 0xE9ECEF, dark: 0x23262B, name: "selected"))
+    /// Behind a session row, card or tab while its right-click menu is open, darker than selected so it's clear which item the menu acts on (Q-147, undrawn stand-in)
+    public static let menuTarget = Color(nsColor: NSColor.duoDynamic(light: 0xD8DCE1, dark: 0x2E3238, name: "menuTarget"))
     /// Pane dividers, card borders, field border
     public static let rule = Color(nsColor: NSColor.duoDynamic(light: 0xC9CDD3, dark: 0x2B2F36, name: "rule"))
     /// Button and pill borders, dashed borders, group rule, files rule
@@ -54,6 +56,8 @@ public enum DuoColor {
     public static let console = Color(nsColor: .duoFixed(0x15171B))
     /// Rules on the console
     public static let consoleRule = Color(nsColor: .duoFixed(0x2B2F36))
+    /// Behind a console tab while its right-click menu is open, stronger than consoleHover (Q-147, undrawn stand-in)
+    public static let consoleMenuTarget = Color(nsColor: .duoFixed(0x2D3138))
     /// Behind a console or Home tab under the pointer, holding its × and name (DL-134)
     public static let consoleHover = Color(nsColor: .duoFixed(0x202329))
     /// Text on the console, terminal foreground
@@ -72,6 +76,7 @@ public enum DuoNSColor {
     public static let ground = NSColor.duoDynamic(light: 0xF3F4F6, dark: 0x16181C, name: "ground")
     public static let pane = NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x16181C, name: "pane")
     public static let selected = NSColor.duoDynamic(light: 0xE9ECEF, dark: 0x23262B, name: "selected")
+    public static let menuTarget = NSColor.duoDynamic(light: 0xD8DCE1, dark: 0x2E3238, name: "menuTarget")
     public static let rule = NSColor.duoDynamic(light: 0xC9CDD3, dark: 0x2B2F36, name: "rule")
     public static let controlEdge = NSColor.duoDynamic(light: 0x8B939C, dark: 0x4A4F57, name: "controlEdge")
     public static let text = NSColor.duoDynamic(light: 0x1F2328, dark: 0xE6E8EB, name: "text")
@@ -92,6 +97,7 @@ public enum DuoNSColor {
     public static let toolOutputFill = NSColor.duoDynamic(light: 0xF8F9FA, dark: 0xF8F9FA, name: "toolOutputFill")
     public static let console = NSColor.duoFixed(0x15171B)
     public static let consoleRule = NSColor.duoFixed(0x2B2F36)
+    public static let consoleMenuTarget = NSColor.duoFixed(0x2D3138)
     public static let consoleHover = NSColor.duoFixed(0x202329)
     public static let consoleText = NSColor.duoFixed(0xE6E8EB)
     public static let consoleText2 = NSColor.duoFixed(0x9AA1AB)

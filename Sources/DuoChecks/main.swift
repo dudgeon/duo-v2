@@ -52,6 +52,7 @@ func repoFixture() throws -> Fixture {
         check(secs.dropFirst(2).allSatisfy { ["today", "week", "earlier"].contains($0.id) }, "then history by date")
     }
     homeListChecks(f)
+    sessionRowChecks(f)
     try taskBoardChecks()
 
     print("properties (DB-16)")

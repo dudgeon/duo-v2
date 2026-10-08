@@ -170,6 +170,8 @@ public final class AppModel {
     /// Drag and drop on the map (F-51): what's being dragged, the tile under it, the tile that
     /// just took a drop (it pulses).
     public var dragging: String?
+    /// The session whose right-click menu is open (Q-147): its row shows the `menuTarget` fill until the menu closes.
+    public var contextMenuSession: String?
     public var dropTarget: String?
     public var landed: String?
     public var landedNote = ""

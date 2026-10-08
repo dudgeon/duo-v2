@@ -76,21 +76,41 @@ extension AppModel {
         }
         let m = Migrator()
         let plan: Migrator.Journal
+        // Running in one of Duo's own terminals: Duo ends it after the user confirms. Running anywhere else
+        // (a Terminal window, another Duo) is refused: Duo can't end that.
+        let inDuo = terminals.existing(s.tabKey).map { !$0.exited } ?? false
+        let beaconPids = Beacon.readAll().filter { $0.sessionId == id }.map(\.pid)
+        let ownPids = Set(terminals.existing(s.tabKey)?.view.process.map { [$0.shellPid] } ?? [])
+        let elsewhere = beaconPids.contains { !ownPids.contains($0) && !Self.isDescendant($0, of: ownPids) }
+        if elsewhere || (!inDuo && !beaconPids.isEmpty) {
+            done?(.failure(Migrator.Refusal("“\(s.name)” is running outside Duo. End it there first, then delete it."))); return
+        }
         do {
-            plan = try m.planDelete(id, live: Set(Beacon.readAll().map(\.sessionId)).union(terminals.existing(key).map { $0.exited ? [] : [id] } ?? []),
-                                    extra: [SessionArchive.copyURL(id), SessionArchive.sidecarURL(id)])
+            plan = try m.planDelete(id, live: [], extra: [SessionArchive.copyURL(id), SessionArchive.sidecarURL(id)])
         } catch { done?(.failure(error)); return }
         let bytes = ByteCountFormatter.string(fromByteCount: Int64(plan.steps.compactMap(\.bytesBefore).reduce(0, +)), countStyle: .file)
         let list = plan.steps.prefix(8).map { "• " + Self.short($0.from) }.joined(separator: "\n") + (plan.steps.count > 8 ? "\n• and \(plan.steps.count - 8) more" : "")
         confirm(title: "Delete “\(s.name)”?",
-                detail: "Its transcript goes to the Trash, and Duo’s archived copy with it (\(plan.steps.count) item\(plan.steps.count == 1 ? "" : "s"), \(bytes)). You can put it back from the Trash, but Duo can’t undo this.\n\n\(list)",
+                detail: "Its transcript goes to the Trash, and Duo’s archived copy with it (\(plan.steps.count) item\(plan.steps.count == 1 ? "" : "s"), \(bytes)). \(inDuo ? "It is running: Duo ends it first. " : "")You can put it back from the Trash, but Duo can’t undo this.\n\n\(list)",
                 button: "Move to Trash") { [weak self] ok in
             guard let self else { return }
             guard ok else { done?(.failure(Migrator.Refusal("Not deleted: the user clicked Cancel in Duo. Nothing changed."))); return }
-            do {
-                try self.applyDelete(plan, id: id, key: key)
-                done?(.success("Deleted \(s.name) and its local logs (\(bytes))."))
-            } catch { done?(.failure(error)) }
+            let pids = ownPids
+            if inDuo { self.terminals.close(s.tabKey) }
+            if self.consoleTab == s.tabKey { self.consoleTab = nil }
+            if self.homeTab == s.tabKey { self.homeTab = nil }
+            // Wait (up to 8 s) for the process to end and its beacon to go before the files do; a session with no turn yet has no beacon.
+            @MainActor func attempt(_ left: Int) {
+                if left > 0, Beacon.readAll().contains(where: { $0.sessionId == id }) || pids.contains(where: { ProcessLiveness.isRunning($0) }) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { MainActor.assumeIsolated { attempt(left - 1) } }
+                    return
+                }
+                do {
+                    try self.applyDelete(plan, id: id, key: key)
+                    done?(.success("Deleted \(s.name) and its local logs (\(bytes))."))
+                } catch { done?(.failure(error)) }
+            }
+            attempt(40)
         }
     }
 
@@ -102,6 +122,17 @@ extension AppModel {
         let plan = try Migrator().planDelete(id, live: live, extra: [SessionArchive.copyURL(id), SessionArchive.sidecarURL(id)])
         try applyDelete(plan, id: id, key: s.tabKey)
         return "Deleted \(s.name)."
+    }
+
+    /// Whether `pid` runs under any of `parents` (Claude is a child of the terminal's shell).
+    public static func isDescendant(_ pid: Int32, of parents: Set<Int32>) -> Bool {
+        var p = pid
+        for _ in 0..<8 {
+            p = ProcessLiveness.parent(p)
+            if p <= 1 { return false }
+            if parents.contains(p) { return true }
+        }
+        return false
     }
 
     /// Applies a session's delete and forgets it everywhere Duo files it.
