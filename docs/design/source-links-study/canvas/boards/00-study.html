@@ -176,7 +176,7 @@ table.cmp thead th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-
 </style>
 </head>
 <body>
-<div class="bd" style="width:1440px;height:900px;gap:14px"><div class="bt">0 · Where did this file come from? Source links for downloaded Google files</div><div class="bsub">Geoff, 2026-10-08: at work it’s Google Docs and Slides, which neither Duo nor Claude can reach, so he downloads a .pptx or .docx. He wants Duo to know the canonical link, open it in the browser, replace a snapshot with a newer download, perhaps watch Downloads and offer a side-by-side compare. Every mark on these boards is a proposal [P]. The research is in docs/research/source-links.md.</div><div style="display:flex;gap:14px;align-items:flex-start">
+<div class="bd" style="width:1440px;height:900px;gap:14px"><div class="bt">0 · Where did this file come from? Source links for downloaded Google files (decided: DL-163)</div><div class="bsub">Geoff, 2026-10-08: at work it’s Google Docs and Slides, which neither Duo nor Claude can reach, so he downloads a .pptx or .docx. He wants Duo to know the canonical link, open it in the browser, replace a snapshot with a newer download, perhaps watch Downloads and offer a side-by-side compare. Every mark on these boards is a proposal [P]. The research is in docs/research/source-links.md.</div><div style="display:flex;gap:14px;align-items:flex-start">
 <div class="txt" style="flex:1"><h3>What the research found</h3><ul>
 <li><b>Google’s download carries nothing.</b> The .docx and .pptx have no properties at all: no title, no id, no link [V].</li>
 <li><b>The browser records it.</b> Chrome writes the download’s address on the file (macOS’s “Where from”). It ends in the document’s id, so Duo can rebuild <span class="mono" style="font-size:12px">docs.google.com/presentation/d/&lt;id&gt;/edit</span> [V].</li>
@@ -187,18 +187,18 @@ table.cmp thead th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-
 <li><b>Writing the link into the file</b> works by the spec, and Word shows it, but it changes the file, and Google drops it on the way back [V for export].</li></ul></div>
 <div class="txt" style="width:540px;flex:none"><h3>The boards</h3><ol start="0">
 <li>This page. 1 · The journey, moment by moment.</li>
-<li>2 · A file arrives: the link recorded, or offered.</li>
+<li>2 · The thin bar: Add Source, the link, a newer download.</li>
 <li>3 · Seeing the source in the viewer’s bar: A, a line; B, a button.</li>
-<li>4 · The source popover; Set Source… when there’s none.</li>
+<li>4 · The source popover; Add Source… by hand.</li>
 <li>5 · In Files and the right-click menu.</li>
-<li>6 · Get Latest: the browser downloads, Duo spots it.</li>
+<li>6 · Newer downloads, with or without a source; Get Latest. 13 · How a download is matched.</li>
 <li>7 · Compare a deck, side by side. 8 · Compare a document.</li>
 <li>9 · Replace, Undo, and history.</li>
-<li>10 · Where the link is kept: A, a note beside the file; B, one list; C, Duo only.</li>
+<li>10 · Where the link is kept: one _sources.md per folder.</li>
 <li>11 · What Claude sees; <span class="mono" style="font-size:12px">duo2 file source</span>.</li>
 <li>12 · The recommendation and a first slice.</li></ol>
 <h3>Principles</h3><ul>
-<li>Never change the downloaded file (DL-162’s view-only rule).</li>
+<li>Never change the downloaded file (DL-162’s view-only rule).</li><li>Newer downloads, compare and replace work for any file, with or without a source (Geoff).</li>
 <li>Never look in Downloads on Duo’s own; never a system alert.</li>
 <li>Store only the clean link, never the raw download address (it holds tokens).</li>
 <li>Plain Markdown that Obsidian and OKF read (Geoff, 2026-10-07).</li></ul></div></div></div>

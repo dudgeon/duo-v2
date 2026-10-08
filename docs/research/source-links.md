@@ -1,6 +1,8 @@
 # Source links for downloaded Google files
 
-Status: **study, not decided.** Research sprint, 2026-10-08. The designs are on the canvas listed in `docs/design/source-links-study/README.md`. Records: F-238 to F-241, Q-154 to Q-157, C-70, ENH-55 to ENH-57. DL-163 is kept for Geoff's choices.
+Status: **decided, DL-163** (Geoff, 2026-10-08). Research sprint, 2026-10-08. The designs are on the canvas listed in `docs/design/source-links-study/README.md`. Records: F-238 to F-241, Q-154 to Q-157, C-70, ENH-55 to ENH-57.
+
+**What Geoff decided (DL-163).** A thin bar under the viewer's bar offers Add Source (one click when the browser's record knows the Google link). The first source in a folder creates `_sources.md` there, and later ones add a line. In later sessions the bar carries the link. Newer downloads, compare and replace work for any file, with or without a source. Replace sends the old copy to the Trash, with Undo. Where this page's proposals differ (§4's note beside each file, recording on arrival), DL-163 wins.
 
 Geoff, 2026-10-08: "at work, we are primarily a google apps shop; but duo and claude cannot access google docs (not allowed by browser, not possible by mcp); so I will often download slides or a google doc as a pptx or docx; but it is useful to know where that file came from (ie the canonical url) … adding the url, clicking the url to open it in the default browser; replacing one snapshot of a file with a more recent download, etc; maybe even watching the downloads folder for recent downloads of an existing snapshot, and duo offering a visual side-by side and offering to replace the existing in-project file with the freshly downloaded one".
 
@@ -12,7 +14,7 @@ Marks: **[V]** verified here, either by an experiment on this Mac (macOS 27.0, C
 2. **The browser records it.** Chrome sets `com.apple.metadata:kMDItemWhereFroms` on the download. The first entry is the final export URL on `googleusercontent.com`, and it ends in the document's id (`…/*/<ID>?format=docx`). The second entry is only the referrer's origin, `https://docs.google.com/` [V]. The canonical link, `https://docs.google.com/<kind>/d/<ID>/edit`, follows from that id and the host [V]. Spotlight indexes the attribute, so one query finds every download of the same document [V].
 3. **That record is fragile.** It survives `cp`, `mv`, `ditto`, `FileManager.copyItem`, tar and Finder's Compress. It is lost through git, `zip`/`unzip`, `cp -X` and any app save that writes a new file and renames it over the old one [V]. So Duo should read it once, when the file arrives, and keep it somewhere sturdier.
 4. **Writing it into the file works by the spec but mutates the file.** OPC allows `dc:identifier`. `custom.xml` can carry a named text property that Word and PowerPoint show. But the file's hash changes, git sees a change, Google's re-import probably drops it [U], and the view-only paths (DL-121, DL-162) must never write.
-5. **Recommendation [P]:** read WhereFroms when a file arrives. Keep the link in a small Markdown sidecar next to the file, with the `source:` key that Obsidian Web Clipper and Duo's knowledge-base capture already use. Show it in the viewer's bar as "Snapshot of … · Open in Google Slides". Offer **Get Latest**: Duo opens the export link in the default browser, Spotlight spots the new download by its id, and Duo offers a side-by-side compare and Replace with Undo. Duo never lists ~/Downloads by itself.
+5. **Decided (DL-163):** read WhereFroms to *offer* the link in a thin bar under the viewer's bar. When the user adds it, write a line to the folder's `_sources.md`. Spot newer downloads of any .pptx or .docx through Spotlight, by name, and by Google id when known; offer a side-by-side compare and Replace with Undo. **Get Latest** opens the export link in the default browser for files with a Google source. Duo never lists ~/Downloads by itself.
 
 ## 1. What OOXML can hold
 
@@ -118,9 +120,21 @@ The test file was a Chrome download carrying WhereFroms.
 | Clutter | one note per snapshot | one file per folder | none | none | none |
 | Allowed in view-only paths | yes | yes | yes | **no** (DL-162) | yes |
 
-**A**: read WhereFroms on arrival, write the sidecar, and fall back to E while no sidecar exists. D is an explicit, later action ("Write Source into File", ENH-56) for someone who sends the file on and wants the link to travel inside it.
+**Decided: B** (DL-163): one `_sources.md` per folder, as one Markdown list line per file, written only when the user adds a source:
 
-### The sidecar [P]
+```markdown
+---
+type: sources
+---
+
+# Sources
+
+- [Q3 plan.pptx](./Q3%20plan.pptx): [Q3 plan](https://docs.google.com/presentation/d/1EAY…/edit) · Google Slides · downloaded 2026-09-30
+```
+
+E (WhereFroms) only feeds the bar's one-click offer. The recommendation was A: D is an explicit, later action ("Write Source into File", ENH-56) for someone who sends the file on and wants the link to travel inside it.
+
+### The sidecar (proposed, not chosen)
 
 The name is `<file name>.md`, e.g. `Q3 plan.pptx.md`. Obsidian lists it as a note called "Q3 plan.pptx" beside the deck, and a plain sort keeps the two together.
 
@@ -146,6 +160,14 @@ Snapshot of [Q3 plan](https://docs.google.com/presentation/d/1EAYk18WDjIG-zp_0vL
 - **Folders that aren't Google files:** the same note works for any file with any `source:` (a PDF from a web page, a CSV from a dashboard). Google files get the extras: the slide links, Get Latest and compare.
 
 ## 5. Getting the newer download
+
+**Decided (DL-163): with or without a source.** A download is a newer copy of a project file when all of these hold:
+- its name matches, once the browser's copy marks (` (1)`, `-2`) are stripped;
+- it has a "Where from", so it really was downloaded;
+- it is newer than the project copy;
+- where either side knows a Google id, the ids agree.
+
+Spotlight finds such downloads by name [V, F-241]. The rows below are how Get Latest and the fallbacks work.
 
 Reading ~/Downloads asks macOS's privacy question the first time (F-28). Duo never walks into it on its own (`ProtectedFolders`), and never raises a system alert on its own. Four ways:
 
@@ -176,6 +198,7 @@ Get Latest is the one move that skips the hunt entirely: the user never goes to 
 | Verb | Does | UI |
 |---|---|---|
 | `duo2 file source <path> [--set <url> \| --clear \| --open]` | show, set or clear the link; `--open` opens it in the default browser | the bar's link, Set Source…, Remove Source |
+| `duo2 file newer [<path>]` | lists newer downloads of one file, or of every .pptx and .docx in the project; works without a source | the bar's "A newer download" |
 | `duo2 file latest <path>` | opens the export link in the default browser and watches for the download | Get Latest |
 | `duo2 file compare <path> [<newer>]` | opens the compare, with the newest matching download by default | Compare |
 | `duo2 file replace <path> <newer> [--keep-old]` | replaces, sending the old copy to the Trash (or keeping a dated copy) | Replace |
@@ -184,10 +207,10 @@ Get Latest is the one move that skips the hunt entirely: the user never goes to 
 ## 8. Risks and open questions
 
 - **C-70:** WhereFroms is fragile (§3), so a file that reaches the project through git, a zip, Claude's `curl` or an app's Save As arrives with no link. Set Source… is the fallback. The arrival rule must read the attribute before anything rewrites the file.
-- **Q-154:** sidecar vs one sources file vs Duo's state (§4).
+- **Q-154:** answered by DL-163: one `_sources.md` per folder.
 - **Q-155:** does Spotlight return a ~/Downloads item to Duo without the privacy prompt, and does an Open-panel pick read without one? Testing either changes Duo's privacy grants, which belong to the shared bundle id (com.dudgeon.duo), so it needs Geoff's OK, or a test bundle id (ENH-25).
-- **Q-156:** history: Trash only, dated copies, or git only.
-- **Q-157:** capture on arrival without asking (a notice with Undo), or offer it in the bar?
+- **Q-156:** answered by DL-163: the Trash, with Undo.
+- **Q-157:** answered by DL-163: offered in the bar in one click; nothing is written until then.
 - **Untested [U]:** Safari, Firefox, Edge and Arc on this Mac; Pages, Keynote and Office round trips; iCloud Drive; Sheets (`docs.google.com/spreadsheets/d/<ID>/export?format=xlsx` is the same pattern, but there's no xlsx viewer yet); multi-account `…/u/1/…` links (the canonical link opens in the browser's current account, which may be the wrong one).
 
 ## Sources

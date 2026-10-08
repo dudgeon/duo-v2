@@ -47,7 +47,7 @@ Ideas Geoff wants that aren't scheduled yet (ENH-n). Each says what and why; whe
 | ENH-53 | **Open a pasted picture in the right pane** (Geoff, 2026-10-08: "click to open in the right pane or Quick Look"). DL-161 opens it in Quick Look; a right-pane image viewer would also let a picture be kept beside the chat. | Needs a right-pane image tab (none exists) and a duo2 verb. | 2026-10-08 |
 | ENH-55 | **Source links for Google Sheets.** `…/spreadsheets/d/<ID>/export?format=xlsx` follows the same pattern as Docs and Slides (source links study). | Needs an xlsx viewer for the bar's line and compare; the note and Open in Google Sheets work without one. | 2026-10-08 |
 | ENH-56 | **Write Link into File**: an explicit action that puts the source into the .docx/.pptx itself (`docProps/custom.xml` `Source`, plus `dc:identifier`), so the link travels to someone who opens it in Word or PowerPoint. | Changes the file (hash, git); never automatic and never from a view-only path (DL-162). Google drops it on the way back (F-238). | 2026-10-08 |
-| ENH-57 | **Watch Downloads, opt-in**: notice newer downloads of a project's snapshots without Get Latest. | Turning it on in Settings is the user's click, which is when macOS asks for Downloads access; Duo never asks on its own. After Get Latest (Spotlight) proves out (Q-155). | 2026-10-08 |
+| ENH-57 | **A folder watch on Downloads, opt-in**: FSEvents on ~/Downloads, for when Spotlight is off or misses a download. DL-163 finds newer downloads through Spotlight. | Turning it on in Settings is the user's click, which is when macOS asks for Downloads access; Duo never asks on its own. Only if Spotlight proves short (Q-155). | 2026-10-08 |
 
 ## Geoff's to-dos
 

@@ -14,10 +14,10 @@
   "kind": "board"
  },
  {
-  "name": "02-arrival",
-  "w": 2560,
-  "h": 1000,
-  "title": "2 \u00b7 A file arrives",
+  "name": "02-thin-bar",
+  "w": 2100,
+  "h": 820,
+  "title": "2 \u00b7 The thin bar",
   "kind": "board"
  },
  {
@@ -31,21 +31,21 @@
   "name": "04-popover",
   "w": 1300,
   "h": 740,
-  "title": "4 \u00b7 The source popover; Set Source\u2026",
+  "title": "4 \u00b7 The source popover; Add Source\u2026",
   "kind": "board"
  },
  {
   "name": "05-files",
   "w": 1300,
-  "h": 700,
+  "h": 760,
   "title": "5 \u00b7 In Files, and the right-click menu",
   "kind": "board"
  },
  {
-  "name": "06-get-latest",
+  "name": "06-newer",
   "w": 2100,
-  "h": 900,
-  "title": "6 \u00b7 Get Latest",
+  "h": 920,
+  "title": "6 \u00b7 Newer downloads, with or without a source",
   "kind": "board"
  },
  {
@@ -71,9 +71,9 @@
  },
  {
   "name": "10-where-kept",
-  "w": 1700,
-  "h": 960,
-  "title": "10 \u00b7 Where the link is kept",
+  "w": 1500,
+  "h": 820,
+  "title": "10 \u00b7 Where the link is kept: _sources.md",
   "kind": "board"
  },
  {
@@ -87,7 +87,14 @@
   "name": "12-recommendation",
   "w": 1440,
   "h": 860,
-  "title": "12 \u00b7 The recommendation and a first slice",
+  "title": "12 \u00b7 What\u2019s decided, and a first slice",
+  "kind": "board"
+ },
+ {
+  "name": "13-matching",
+  "w": 1300,
+  "h": 700,
+  "title": "13 \u00b7 How a download is matched",
   "kind": "board"
  }
 ]

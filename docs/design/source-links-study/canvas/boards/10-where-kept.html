@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
-<meta name="design-size" content="1700x960">
+<meta name="design-size" content="1500x820">
 <meta name="design-kind" content="board">
 <meta name="design-surface" content="source-links-study">
 <!--
-10 · Where the link is kept
+10 · Where the link is kept: _sources.md
 STUDY BOARD [P], not approved. Drawn for the source-links study (2026-10-08) with the Duo design system.
-Q-154: A, a note beside each file; B, one list per folder; C, Duo’s own state. The file itself is never written.
+Decided (DL-163): one _sources.md per folder, one line per file, created on the first Add Source.
 It is a picture written in HTML: match what it draws, do not port its markup. Names, links and data are illustrative.
 -->
-<title>Duo · 10 · Where the link is kept</title>
+<title>Duo · 10 · Where the link is kept: _sources.md</title>
 <style>
 body{margin:0}
 .w{box-sizing:border-box;display:flex;flex-direction:column;background:#FFFFFF;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;overflow:hidden}
@@ -176,33 +176,25 @@ table.cmp thead th{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-
 </style>
 </head>
 <body>
-<div class="bd" style="width:1700px;height:960px;gap:14px"><div class="bt">10 · Where the link is kept (Q-154)</div><div class="bsub">Never inside the file: that changes it, git sees it, and Google drops it anyway. The choice is between a note beside the file, one list, or Duo’s memory. In every case Duo reads “Where from” as a fallback while nothing’s kept.</div><div style="display:flex;gap:30px;align-items:flex-start">
-<div style="display:flex;flex-direction:column;gap:10px;width:600px"><div class="cap">A · A note beside each file<span class="rec">recommended</span></div>
-<div class="txt"><div class="mono t2" style="font-size:11px;margin-bottom:6px">inputs/Q3 plan.pptx.md</div><div class="fm">---
-type: snapshot
-title: Q3 plan
-source: https://docs.google.com/presentation/d/1EAYk18WDj…/edit
-snapshot_of: "[Q3 plan.pptx](./Q3%20plan.pptx)"
-downloaded: 2026-09-30T09:12
-snapshots:
-  - 2026-09-30T09:12
-  - 2026-09-12T16:40
+<div class="bd" style="width:1500px;height:820px;gap:14px"><div class="bt">10 · Where the link is kept: one _sources.md per folder (DL-163)</div><div class="bsub">Geoff, 2026-10-08: “if they add source, a source file is created in same folder (or appended to if one exists); thin bar carries a link so the user can click on it in a future session”.</div><div style="display:flex;gap:30px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:10px;width:680px"><div class="cap">inputs/_sources.md</div>
+<div class="txt"><div class="fm" style="white-space:pre-wrap">---
+type: sources
 ---
 
-Snapshot of [Q3 plan](https://docs.google.com/…/edit)
-in Google Slides, downloaded 30 Sep 2026.</div></div>
-<div class="cap">The same note in Obsidian</div><div class="obs" style="width:560px;height:300px"><div style="width:190px;background:#262626;padding:10px 8px;display:flex;flex-direction:column;gap:2px;color:#BBB"><div>▾ inputs</div><div style="padding-left:14px">Launch brief.docx</div><div style="padding-left:14px">Launch brief.docx</div><div style="padding-left:14px">Q3 plan.pptx</div><div style="padding-left:14px;background:#3A3A3A;border-radius:4px;color:#EEE">Q3 plan.pptx</div><div style="padding-left:14px">survey.csv</div></div><div style="flex:1;padding:12px 16px;white-space:normal"><div style="font-size:16px;font-weight:600;color:#EEE;margin-bottom:8px">Q3 plan.pptx</div><div style="display:grid;grid-template-columns:96px 1fr;gap:3px 8px;font-size:12px"><span style="color:#999">type</span><span>snapshot</span><span style="color:#999">source</span><span style="color:#8AB4F8;text-decoration:underline">docs.google.com/pres…</span><span style="color:#999">snapshot_of</span><span style="color:#8AB4F8;text-decoration:underline">Q3 plan.pptx</span><span style="color:#999">downloaded</span><span>30/09/2026 09:12</span><span style="color:#999">snapshots</span><span>2 items</span></div><div style="margin-top:10px">Snapshot of <span style="color:#8AB4F8;text-decoration:underline">Q3 plan</span> in Google Slides, downloaded 30 Sep 2026.</div></div></div>
-<div class="note"><b>Travels</b> with git, zip, Drive and a copy to another Mac. <b>Obsidian and OKF</b> read it: type and title (OKF), source (Web Clipper’s and Duo’s capture key), links in Markdown form. <b>Claude</b> reads it like any file. <b>Cost:</b> one more file per download; a rename in Finder leaves it behind until Duo next sees the folder and pairs them again.</div></div>
-<div style="display:flex;flex-direction:column;gap:10px;width:440px"><div class="cap">B · One list per folder</div>
-<div class="txt"><div class="mono t2" style="font-size:11px;margin-bottom:6px">inputs/SOURCES.md</div><div class="fm" style="white-space:pre-wrap">| File | Source | Downloaded |
-|---|---|---|
-| Q3 plan.pptx | [Q3 plan](https://docs.google.com/…) | 2026-09-30 |
-| Launch brief.docx | [Launch brief](https://…) | 2026-10-02 |</div></div>
-<div class="note">One file, readable at a glance; but a table isn’t Properties, two sessions writing it at once conflict, and a renamed file loses its row.</div></div>
-<div style="display:flex;flex-direction:column;gap:10px;width:440px"><div class="cap">C · Duo only</div>
-<div class="txt"><p>Kept in Duo’s support folder, keyed by the file’s path and contents.</p><p class="note">Invisible: no clutter. But lost on another Mac, in a clone, for Obsidian, and for Claude except through duo2.</p></div>
-<div class="cap" style="margin-top:12px">Not proposed: inside the file</div>
-<div class="txt"><p>A custom property <span class="mono" style="font-size:12px">Source</span> in docProps/custom.xml shows in Word’s File › Properties › Custom. Later, as an explicit “Write Link into File” for someone who sends the file on (ENH-56).</p></div></div>
+# Sources
+
+- [Q3 plan.pptx](./Q3%20plan.pptx): [Q3 plan](https://docs.google.com/presentation/d/1EAY…/edit) · Google Slides · downloaded 2026-09-30
+- [Launch brief.docx](./Launch%20brief.docx): [Launch brief](https://docs.google.com/document/d/1hK…/edit) · Google Docs · downloaded 2026-10-02
+- [vendor-terms.pdf](./vendor-terms.pdf): [Vendor terms](https://example.com/terms) · example.com · added 2026-10-05</div></div>
+<div class="cap">The same file in Obsidian</div><div class="obs" style="width:620px;height:300px"><div style="width:180px;background:#262626;padding:10px 8px;display:flex;flex-direction:column;gap:2px;color:#BBB"><div>▾ inputs</div><div style="padding-left:14px;background:#3A3A3A;border-radius:4px;color:#EEE">_sources</div><div style="padding-left:14px">Launch brief.docx</div><div style="padding-left:14px">Q3 plan.pptx</div><div style="padding-left:14px">survey.csv</div><div style="padding-left:14px">vendor-terms.pdf</div></div><div style="flex:1;padding:12px 16px;white-space:normal"><div style="font-size:16px;font-weight:600;color:#EEE;margin-bottom:6px">Sources</div><div style="display:grid;grid-template-columns:60px 1fr;gap:3px 8px;font-size:12px;margin-bottom:8px"><span style="color:#999">type</span><span>sources</span></div><div style="display:flex;flex-direction:column;gap:6px"><div>• <span style="color:#8AB4F8;text-decoration:underline">Q3 plan.pptx</span>: <span style="color:#8AB4F8;text-decoration:underline">Q3 plan</span> · Google Slides · downloaded 2026-09-30</div><div>• <span style="color:#8AB4F8;text-decoration:underline">Launch brief.docx</span>: <span style="color:#8AB4F8;text-decoration:underline">Launch brief</span> · Google Docs · downloaded 2026-10-02</div><div>• <span style="color:#8AB4F8;text-decoration:underline">vendor-terms.pdf</span>: <span style="color:#8AB4F8;text-decoration:underline">Vendor terms</span> · example.com · added 2026-10-05</div></div></div></div></div>
+<div class="txt" style="width:700px"><h3>The rules</h3><ul>
+<li><b>One file per folder</b>, beside the files it describes: <span class="mono">_sources.md</span>. The first Add Source in a folder creates it; later ones add a line.</li>
+<li><b>One line per file</b>: a Markdown link to the file, a link to its source, the kind (Google Slides, Google Docs, or the site’s name), and the date. A Markdown list, so two sessions adding lines rarely conflict in git.</li>
+<li><b>Duo owns only its lines</b>: it rewrites a file’s line on Change Source, Remove Source, Rename, Move and Replace, and leaves anything else in the file (a heading, notes the user wrote) alone.</li>
+<li><b>Never the raw download address</b>, only the clean link.</li>
+<li><b>Obsidian and OKF</b>: <span class="mono">type: sources</span> for OKF; Markdown links, which both read; no new syntax.</li>
+<li><b>Never inside the .pptx or .docx</b>; writing the link into the file’s own properties stays a possible later action (ENH-56).</li></ul></div>
 </div></div>
 </body>
 </html>

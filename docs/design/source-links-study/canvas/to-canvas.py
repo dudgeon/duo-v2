@@ -38,13 +38,13 @@ renderVals() {{ return {{}}; }}
 ''')
 rows = [["00-study", "12-recommendation"],
         ["01-journey"],
-        ["02-arrival"],
+        ["02-thin-bar"],
         ["03-bar", "04-popover", "05-files"],
-        ["06-get-latest"],
+        ["06-newer", "13-matching"],
         ["07-compare-deck", "08-compare-doc", "09-replace"],
         ["10-where-kept", "11-claude"]]
-heads = ["The study and the recommendation", "1 · The journey", "2 · A file arrives",
-         "3–5 · Seeing the source; the popover; Files", "6 · Get Latest",
+heads = ["The study and the recommendation", "1 · The journey", "2 · The thin bar",
+         "3–5 · Seeing the source; the popover; Files", "6, 13 · Newer downloads, with or without a source",
          "7–9 · Compare and replace", "10–11 · Where it’s kept; Claude and duo2"]
 boards, order, notes, y = {}, [], {}, 0
 for i, r in enumerate(rows):
