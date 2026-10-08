@@ -77,8 +77,10 @@ func spikeScreen(_ name: String) -> String {
         check(ChatSignatures.table(for: "2.1.291").verified && !ChatSignatures.table(for: "2.1.219").verified && !ChatSignatures.table(for: "2.1.300").verified,
               "the table names the versions checked dialog by dialog")
         check(ChatSignatures.trust(for: "2.1.293") == .verified && ChatSignatures.trust(for: "2.1.300") == .newer
-              && ChatSignatures.trust(for: "2.1.219") == .unverified && ChatSignatures.trust(for: nil) == .unverified,
-              "DL-145: verified versions, newer ones trusted by their screens, older or unknown ones not")
+              && ChatSignatures.trust(for: "2.1.219") == .newer && ChatSignatures.trust(for: "2.1.2") == .newer
+              && ChatSignatures.trust(for: "2.0.77") == .unverified && ChatSignatures.trust(for: "3.0.1") == .unverified
+              && ChatSignatures.trust(for: nil) == .unverified && ChatSignatures.trust(for: "garbage") == .unverified,
+              "DL-145, DL-155: verified versions; any other 2.1.x, older or newer, by its screens; another version or none, not")
     }
 
     print("chat mode: falling back to the terminal (spike's fallback rules, DL-118 §3)")
@@ -122,9 +124,14 @@ func spikeScreen(_ name: String) -> String {
         v.setVersion(nil)
         check(v.versionTrust == .unverified && v.cliVersion == nil, "asked again with the same answer: unchanged")
         let old = ChatSession(key: "s2", mode: .chat)
-        old.setVersion("2.1.219")
+        old.setVersion("2.0.77")
         old.attach(FakeTUI(spikeScreen("10-bash-perm.txt")))
-        check(!old.showsChat && old.fallback?.message.contains("2.1.219") == true, "a dialog on an unverified CLI (2.1.219) goes to the terminal")
+        check(!old.showsChat && old.fallback?.message.contains("2.0.77") == true, "a dialog on an unverified CLI (2.0.77) goes to the terminal")
+        // DL-155: the work Mac's pinned 2.1.219, its dialog reading whole: answered from chat.
+        let pinned = ChatSession(key: "s2-pinned", mode: .chat)
+        pinned.setVersion("2.1.219")
+        pinned.attach(FakeTUI(spikeScreen("10-bash-perm.txt")))
+        check(pinned.versionTrust == .newer && pinned.dialogsVerified && pinned.fallback == nil, "an older 2.1.x (2.1.219) whose dialog reads whole: answered from chat")
         // DL-145: a newer CLI (Claude Code updates itself about daily, C-49) is trusted while its
         // dialog reads like the verified versions'; one that doesn't goes to the terminal.
         let bashPerm = spikeScreen("10-bash-perm.txt")

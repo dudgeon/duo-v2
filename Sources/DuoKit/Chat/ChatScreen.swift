@@ -68,14 +68,15 @@ public struct ChatSignatures: Sendable, Equatable {
 
     public static let all: [ChatSignatures] = [.v2_1_291]
 
-    /// How far a CLI version's dialogs are trusted (DL-145): a verified version always; a newer
-    /// one while its dialogs read like the verified versions' (Claude Code updates about daily,
-    /// C-49); an older or unknown one never (its dialogs go to the terminal).
+    /// How far a CLI version's dialogs are trusted (DL-145, DL-155): a verified version always;
+    /// any other 2.1.x, newer (Claude Code updates about daily, C-49) or older (work Macs pin it
+    /// months behind), while its dialogs read like the verified versions'; another major or minor,
+    /// or an unknown one, never (its dialogs go to the terminal).
     public static func trust(for version: String?) -> ChatVersionTrust {
         guard let version, let v = ChatVersion(version) else { return .unverified }
         if all.contains(where: { $0.verified.contains(version) }) { return .verified }
-        let newest = all.flatMap(\.verified).compactMap(ChatVersion.init).max()
-        return newest.map { v > $0 } == true ? .newer : .unverified
+        let family = all.flatMap(\.verified).compactMap(ChatVersion.init).map { Array($0.parts.prefix(2)) }
+        return family.contains(Array(v.parts.prefix(2))) ? .newer : .unverified
     }
 
     /// The table for a CLI version: the newest at or below it (or the oldest), and whether this
@@ -92,9 +93,9 @@ public struct ChatSignatures: Sendable, Equatable {
 public enum ChatVersionTrust: String, Sendable {
     /// Checked dialog by dialog (the tour, chat-live).
     case verified
-    /// Newer than every verified version: trusted while its dialogs read like theirs.
+    /// Another 2.1.x, newer or older (DL-155): trusted while its dialogs read like theirs.
     case newer
-    /// Older than the table, or unknown: dialogs go to the terminal.
+    /// Another major or minor version, or unknown: dialogs go to the terminal.
     case unverified
 }
 
