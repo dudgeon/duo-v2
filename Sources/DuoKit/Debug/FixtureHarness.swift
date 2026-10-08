@@ -288,12 +288,12 @@ public enum FixtureHarness {
         case "key":   // key:down|up|esc|tab: one key into the visible terminal (menus such as the trust prompt)
             let codes = ["down": "\u{1b}[B", "up": "\u{1b}[A", "esc": "\u{1b}", "tab": "\t"]
             if parts.count > 1, let c = codes[parts[1]] { model.visibleTerminal?.view.send(txt: c) }
-        case "event":  // event:esc|return: a real key event through the app's queue (local monitors, key window, field editor)
-            let codes: [String: (UInt16, String)] = ["esc": (53, "\u{1b}"), "return": (36, "\r")]
+        case "event":  // event:esc|return|cmd-v: a real key event through the app's queue (local monitors, key window, field editor); cmd-v reads the real clipboard
+            let codes: [String: (UInt16, String)] = ["esc": (53, "\u{1b}"), "return": (36, "\r"), "cmd-v": (9, "v")]
             if parts.count > 1, let (code, chars) = codes[parts[1]], let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
                 if !TestBackground.isOn { NSApp.activate(ignoringOtherApps: true) }; w.makeKey()   // a background launch never activates (F-227)
                 for type in [NSEvent.EventType.keyDown, .keyUp] {
-                    guard let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                    guard let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: parts[1] == "cmd-v" ? .command : [], timestamp: ProcessInfo.processInfo.systemUptime,
                                                    windowNumber: w.windowNumber, context: nil, characters: chars,
                                                    charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code) else { continue }
                     NSApp.postEvent(e, atStart: false)

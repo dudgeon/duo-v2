@@ -842,9 +842,9 @@ func spikeScreen(_ name: String) -> String {
         let ms = ComposerProbe.keystrokeMillis(afterBlock: big)
         print("    a keystroke after a 12,480-line paste: \(String(format: "%.1f", ms)) ms")
         check(ms < 30, "typing after a 12,480-line paste stays responsive (\(String(format: "%.1f", ms)) ms a key)")
-        check(ComposerProbe.sent([.block(t)]) == t, "a collapsed block sends its text")
-        check(ComposerProbe.sent([.type("Compare: "), .block(t), .type(" and why?")]) == "Compare: " + t + " and why?", "a block between typed text sends exactly what a plain paste would")
-        check(ComposerProbe.sent([.block(t), .open(0), .edit(0, "edited\ntext")]) == "edited\ntext" && ComposerProbe.sent([.block(t), .open(0), .edit(0, "edited"), .fold(0), .type("!")]) == "edited!", "an opened block's edits are what's sent, and folding keeps them")
-        check(ComposerProbe.sent([.block(t), .type("\n"), .block(u)]) == t + "\n" + u && ComposerProbe.sent([.block(t), .block(u), .type("x")]) == t + u + "x", "two blocks, in order")
+        check(ComposerProbe.sent([.block(t)]) == t + "\n", "a collapsed block sends its text, and is a line of its own")
+        check(ComposerProbe.sent([.type("Compare: "), .block(t), .type("and why?")]) == "Compare: \n" + t + "\nand why?", "a block between typed text sends its text on lines of its own, as the box shows it")
+        check(ComposerProbe.sent([.block(t), .open(0), .edit(0, "edited\ntext")]) == "edited\ntext\n" && ComposerProbe.sent([.block(t), .open(0), .edit(0, "edited"), .fold(0), .type("!")]) == "edited\n!", "an opened block's edits are what's sent, and folding keeps them")
+        check(ComposerProbe.sent([.block(t), .type("\n"), .block(u)]) == t + "\n\n" + u + "\n" && ComposerProbe.sent([.block(t), .block(u), .type("x")]) == t + "\n" + u + "\nx", "two blocks, in order")
     }
 }

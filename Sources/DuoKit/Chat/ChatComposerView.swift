@@ -423,12 +423,19 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
     }
 
     func insertBlock(_ text: String) {
-        let s = NSMutableAttributedString(attachment: ComposerPasteBlock(text: text))
-        insertText(s, replacementRange: selectedRange())
+        // The block is a line of its own, as drawn: what's before it and what you type after it are
+        // on other lines, so a line break is sent where the box shows one.
+        let sel = selectedRange(), all = (textStorage?.string ?? "") as NSString
+        let before = sel.location > 0 && all.character(at: sel.location - 1) != 10
+        let after = NSMaxRange(sel) >= all.length || all.character(at: NSMaxRange(sel)) != 10
+        let s = NSMutableAttributedString(string: before ? "\n" : "", attributes: typingAttributes)
+        let blockAt = sel.location + s.length
+        s.append(NSAttributedString(attachment: ComposerPasteBlock(text: text)))
+        if after { s.append(NSAttributedString(string: "\n", attributes: typingAttributes)) }
+        insertText(s, replacementRange: sel)
         // The paragraph holding it has no maximum line height: the box is taller than a line.
         if let ts = textStorage {
-            let at = max(0, selectedRange().location - 1)
-            let para = (ts.string as NSString).paragraphRange(for: NSRange(location: at, length: 0))
+            let para = (ts.string as NSString).paragraphRange(for: NSRange(location: blockAt, length: 0))
             let ps = NSMutableParagraphStyle()
             ps.minimumLineHeight = DuoTextStyle.chatBody.spec.lineHeight
             ts.addAttribute(.paragraphStyle, value: ps, range: para)
