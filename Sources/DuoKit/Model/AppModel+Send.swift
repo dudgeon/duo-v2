@@ -276,6 +276,14 @@ extension AppModel {
         }
     }
 
+    /// A Word document in the right pane: changes redraw the bar and the menu.
+    func wireDocxViewer(_ v: DocxViewer) {
+        v.onChange = { [weak self] in self?.pickerRevision += 1 }
+    }
+
+    /// Word documents open in the Word viewer (DL-162); the old .doc format opens it too, to say why it can't draw.
+    public static func isWordViewable(_ path: String) -> Bool { ["docx", "doc"].contains((path as NSString).pathExtension.lowercased()) }
+
     /// PowerPoint decks open in the deck viewer (DL-125).
     public static func isDeck(_ path: String) -> Bool { ["pptx", "pptm", "ppsx"].contains((path as NSString).pathExtension.lowercased()) }
 

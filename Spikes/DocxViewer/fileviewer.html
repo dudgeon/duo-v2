@@ -1,0 +1,35 @@
+<!doctype html>
+<meta charset="utf-8">
+<script>window.__errs = []; addEventListener("error", e => __errs.push(e.message + " @" + (e.filename || "").split("/").pop() + ":" + e.lineno));</script>
+<script>
+// The snapshot window is nearly transparent, so WebKit runs requestAnimationFrame at about 1 fps
+// there (measured: 60 frames in 45 s). A visible Duo pane runs it at full rate; ?raf=16 stands in
+// for that with a 16 ms timer so timings mean something.
+if (new URLSearchParams(location.search).get('raf')) { const ms = +new URLSearchParams(location.search).get('raf');
+  window.requestAnimationFrame = cb => setTimeout(() => cb(performance.now()), ms); window.cancelAnimationFrame = id => clearTimeout(id); }
+</script>
+<title>DOCX spike: @file-viewer/docx</title>
+<link rel="stylesheet" href="style.css">
+<script src="vendor/jszip/jszip.min.js"></script>
+<script type="importmap">{ "imports": { "jszip": "./vendor/jszip/shim.mjs" } }</script>
+<div id="host"></div>
+<script type="module">
+import { renderAsync, collectDocxReviewChanges } from './vendor/file-viewer/docx-preview.mjs';
+import { setup } from './harness.js';
+import { reviewLayer } from './duo-review.js';
+const h = setup('@file-viewer/docx 0.3.33 (unpatched)', ['all', 'simple', 'final', 'original']);
+const t0 = performance.now();
+const buf = await (await fetch(h.url)).arrayBuffer();
+const host = document.getElementById('host');
+const doc = await renderAsync(buf, host, null, { reviewMode: h.mode, renderComments: true, exposeDisplayTargets: true,
+                                                 useWorker: false, awaitLayout: true, progress: ev => (window.__phases ??= []).push([Math.round(performance.now() - t0), ev.phase, ev.current, ev.total, ev.message]), externalLinkPolicy: 'block',
+                                                 ...JSON.parse(new URLSearchParams(location.search).get('opts') || '{}') });  // ?opts={...} for timing runs
+const changes = collectDocxReviewChanges(doc);
+window.__duo_changes = changes; window.__duo_doc = doc;
+// ?layer=0 shows the renderer alone; otherwise Duo's review layer draws the markup and the margin.
+if (h.mode === 'all' && new URLSearchParams(location.search).get('layer') !== '0') { host.classList.add('duo-review'); window.__duo_review = reviewLayer(host, doc, changes); }
+h.rendered(performance.now() - t0, host.querySelectorAll('section.docx').length);
+h.extra(`collectDocxReviewChanges(): ${changes.length} items`, changes.map(c => `${c.kind} · ${c.author ?? ''} · ${(c.date ?? '').slice(0, 10)} · ${JSON.stringify(c.text).slice(0, 60)}`).join('\n'));
+// data-office-target="word/document.xml#p:1A2B0008"
+h.pickParagraphs(host, 'data-office-target', v => { const [part, id] = v.split('#'); return { part, paraId: id.replace(/^p:/, '') }; });
+</script>

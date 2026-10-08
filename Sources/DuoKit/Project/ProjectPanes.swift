@@ -547,6 +547,9 @@ struct RightPane: View {
             } else if let path = model.rightTab, AppModel.isDeck(path), let file = model.liveFile(path) {
                 // A PowerPoint deck: drawn, with its slide and the shape picker (DL-125).
                 DeckView(viewer: model.deckViewer, path: path, file: file)
+            } else if let path = model.rightTab, AppModel.isWordViewable(path), let file = model.liveFile(path) {
+                // A Word document: drawn read only with its comments and tracked changes (DL-162).
+                DocxView(viewer: model.docxViewer, path: path, file: file)
             } else if let path = model.rightTab, let file = model.liveFile(path), FileKind.isBinary(file) {
                 // Never the editor for a file that isn't text (C-26): Quick Look, or a note (Q-52).
                 BinaryFileView(path: path, file: file)
@@ -915,11 +918,13 @@ struct NoticeBar<Buttons: View>: View {
     var sub: String? = nil
     /// A second `text2` line (a converted document's gaps, then what was done: DL-123, E).
     var sub2: String? = nil
+    /// The first line semibold (the Word viewer's fallback notice, docx-viewer-handoff `fallback`).
+    var emphasis = false
     @ViewBuilder let buttons: () -> Buttons
 
     var body: some View {
         VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
-            Text(text).duoText(.body).fixedSize(horizontal: false, vertical: true)
+            Text(text).duoText(.body, weight: emphasis ? .semibold : nil).fixedSize(horizontal: false, vertical: true)
             if let sub { Text(sub).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true) }
             if let sub2 { Text(sub2).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true) }
             HStack(spacing: DuoSpace.gapButtonToButton) { buttons() }

@@ -1,0 +1,3 @@
+# Fetched and generated: ./fetch-vendor.sh rebuilds vendor/ and out/ql; snap/compose write out/.
+vendor/
+out/

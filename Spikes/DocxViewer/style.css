@@ -1,0 +1,26 @@
+body { margin: 0; font: 13px -apple-system, system-ui, sans-serif; background: #e9e9ec; }
+#host { margin-right: 300px; padding: 16px 0; min-height: 100vh; }
+#duo-panel { position: fixed; top: 0; right: 0; width: 284px; bottom: 0; padding: 12px 8px; background: #fff; border-left: 1px solid #ccc; overflow: auto; }
+#duo-panel div { margin: 4px 0; }
+#duo-panel .lbl { margin-top: 12px; color: #555; }
+#duo-panel pre { white-space: pre-wrap; font: 11px ui-monospace, monospace; background: #f4f4f6; padding: 8px; border-radius: 6px; }
+.duo-picked { outline: 2px solid #2f6fed !important; outline-offset: 1px; }
+/* The Duo review layer (duo-review.js) over @file-viewer/docx in "all" mode. */
+#host.duo-review { position: relative; }
+#host.duo-review .docx-wrapper { align-items: flex-start; padding-left: 24px; padding-right: 260px; }
+#host.duo-review [data-docx-review-mode="all"] del[data-docx-change-kind], #host.duo-review[data-docx-review-mode="all"] del[data-docx-change-kind] {
+  display: inline !important; width: auto !important; max-width: none !important; height: auto !important; line-height: inherit !important; overflow: visible !important;
+  color: var(--duo-author) !important; text-decoration: line-through !important; }
+#host.duo-review[data-docx-review-mode="all"] [data-docx-change-kind="move-from"] { text-decoration: line-through double !important; color: #2f8a3b !important; }
+#host.duo-review[data-docx-review-mode="all"] ins[data-docx-change-kind="move-to"] { --docx-review-color: #2f8a3b; text-decoration-style: double !important; }
+#host.duo-review[data-docx-review-mode="all"] span[data-docx-format-change] { text-decoration: underline dotted var(--duo-author); text-underline-offset: .2em; }
+#host.duo-review[data-docx-review-mode="all"] p.duo-changed { box-shadow: -14px 0 0 -12px #555; }
+#host.duo-review[data-docx-review-mode="all"] mark.duo-comment { background: #fde7a8; color: inherit; }
+#host.duo-review[data-docx-review-mode="all"] mark.duo-comment.duo-done { background: #eee; }
+.duo-card { position: absolute; width: 230px; background: #fff; border: 1px solid #d6d6db; border-left: 3px solid #e5b400; border-radius: 6px; padding: 6px 8px; font: 11.5px -apple-system, system-ui, sans-serif; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.duo-card.duo-format, .duo-card.duo-move-from { border-left-color: #888; }
+.duo-card.duo-done { opacity: .6; border-left-color: #aaa; }
+.duo-card .duo-c + .duo-c { margin-top: 6px; }
+.duo-card .duo-reply { margin-left: 10px; padding-left: 6px; border-left: 2px solid #eee; }
+.duo-card .duo-date { color: #888; }
+.duo-card .duo-tag { float: right; font-size: 10px; background: #eee; border-radius: 3px; padding: 0 4px; }

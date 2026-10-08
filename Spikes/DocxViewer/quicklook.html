@@ -1,0 +1,15 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>DOCX spike: Quick Look</title>
+<link rel="stylesheet" href="style.css">
+<style>#host iframe { display: block; width: 100%; height: 3000px; border: 0; background: #fff; }</style>
+<div id="host"></div>
+<script type="module">
+// What QLPreviewView shows for a .docx is HTML that OfficeImport writes (qlmanage -p -o out/ql).
+import { setup } from './harness.js';
+const h = setup('Quick Look (OfficeImport HTML)');
+const f = document.createElement('iframe');
+f.src = `out/ql/${h.doc}.docx.qlpreview/Preview.html`;
+f.onload = () => { f.style.height = f.contentDocument.documentElement.scrollHeight + 'px'; h.rendered(0); };
+document.getElementById('host').append(f);
+</script>

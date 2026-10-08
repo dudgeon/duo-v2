@@ -672,6 +672,18 @@ public enum FixtureHarness {
                 split.adjustSubviews()
                 FileHandle.standardError.write(Data("right-width: \(split.arrangedSubviews.map { Int($0.frame.width) })\n".utf8))
             } else { FileHandle.standardError.write(Data("right-width: no split\n".utf8)) }
+        // The Word viewer (docx-viewer-handoff): docx-menu:open|close, docx-markup:<all|simple|none|original>,
+        // docx-person:<name>, docx-hover:<change id or text> (the label above a change), docx-ask-convert
+        // (the question Convert to Markdown… asks), docx-dump (the viewer's state on stderr).
+        case "docx-menu": model.docxMenuOpen = parts.count > 1 ? parts[1] == "open" : !model.docxMenuOpen
+        case "docx-markup": model.setMarkup(mode: parts.count > 1 ? parts[1] : "all")
+        case "docx-person": model.setMarkup(person: .some(parts.count > 1 ? parts[1] : nil))
+        case "docx-hover": if parts.count > 1 { model.docxViewer.hover(parts[1]) }
+        case "docx-ask-convert": if let t = model.rightTab { model.askConvertToMarkdown(t) }
+        case "docx-dump":
+            let v = model.docxViewer
+            FileHandle.standardError.write(Data("docx: \(v.url?.lastPathComponent ?? "-") state=\(v.state) people=\(v.people.map { "\($0.name):\($0.count)" }) changes=\(v.changeCount) comments=\(v.comments.count) drawMillis=\(v.drawMillis) frameChanges=\(v.frameChanges) blocked=\(v.blocked)\n".utf8))
+            v.pageStats { st in FileHandle.standardError.write(Data("docx page: \(st)\n".utf8)) }
         case "slide-go": model.deckViewer.go(Int(parts.count > 1 ? parts[1] : "1") ?? 1)
         case "slide-picking": model.deckViewer.startPicking()
         case "slide-hover": if parts.count > 1 { model.deckViewer.hover(parts[1]) }

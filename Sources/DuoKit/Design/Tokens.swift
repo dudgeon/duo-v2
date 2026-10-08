@@ -50,6 +50,18 @@ public enum DuoColor {
     public static let toolErrorEdge = Color(nsColor: NSColor.duoDynamic(light: 0xF4C7C1, dark: 0xF4C7C1, name: "toolErrorEdge"))
     /// A Bash step's output box (chat-mode-handoff `tools`; read from the approved board, not in its token additions)
     public static let toolOutputFill = Color(nsColor: NSColor.duoDynamic(light: 0xF8F9FA, dark: 0xF8F9FA, name: "toolOutputFill"))
+    /// The first person in a Word document's tracked changes and comments (docx-viewer-handoff): their marks, name and dot. Assigned in the order people first appear, then repeating after five.
+    public static let reviewAuthor1 = Color(nsColor: NSColor.duoDynamic(light: 0xB0244F, dark: 0xB0244F, name: "reviewAuthor1"))
+    /// The second person in a Word document's review (docx-viewer-handoff).
+    public static let reviewAuthor2 = Color(nsColor: NSColor.duoDynamic(light: 0x1D5FA8, dark: 0x1D5FA8, name: "reviewAuthor2"))
+    /// The third person in a Word document's review (docx-viewer-handoff).
+    public static let reviewAuthor3 = Color(nsColor: NSColor.duoDynamic(light: 0x2E7A3A, dark: 0x2E7A3A, name: "reviewAuthor3"))
+    /// The fourth person in a Word document's review. Not on a board: picked to stay 4.5:1 or more on pane and apart from the first three (docx-viewer slice 1, a stand-in).
+    public static let reviewAuthor4 = Color(nsColor: NSColor.duoDynamic(light: 0x7B3FB5, dark: 0x7B3FB5, name: "reviewAuthor4"))
+    /// The fifth person in a Word document's review. Not on a board: a darker amber, 4.5:1 or more on pane (docx-viewer slice 1, a stand-in).
+    public static let reviewAuthor5 = Color(nsColor: NSColor.duoDynamic(light: 0x9A5A00, dark: 0x9A5A00, name: "reviewAuthor5"))
+    /// The range a Word comment covers in the viewer (docx-viewer-handoff).
+    public static let commentHighlight = Color(nsColor: NSColor.duoDynamic(light: 0xFBE7A1, dark: 0xFBE7A1, name: "commentHighlight"))
 
     // Console chrome: the same in every appearance.
     /// Console pane, console tab strips, terminal background
@@ -95,6 +107,12 @@ public enum DuoNSColor {
     public static let diffDelText = NSColor.duoDynamic(light: 0xB42318, dark: 0xB42318, name: "diffDelText")
     public static let toolErrorEdge = NSColor.duoDynamic(light: 0xF4C7C1, dark: 0xF4C7C1, name: "toolErrorEdge")
     public static let toolOutputFill = NSColor.duoDynamic(light: 0xF8F9FA, dark: 0xF8F9FA, name: "toolOutputFill")
+    public static let reviewAuthor1 = NSColor.duoDynamic(light: 0xB0244F, dark: 0xB0244F, name: "reviewAuthor1")
+    public static let reviewAuthor2 = NSColor.duoDynamic(light: 0x1D5FA8, dark: 0x1D5FA8, name: "reviewAuthor2")
+    public static let reviewAuthor3 = NSColor.duoDynamic(light: 0x2E7A3A, dark: 0x2E7A3A, name: "reviewAuthor3")
+    public static let reviewAuthor4 = NSColor.duoDynamic(light: 0x7B3FB5, dark: 0x7B3FB5, name: "reviewAuthor4")
+    public static let reviewAuthor5 = NSColor.duoDynamic(light: 0x9A5A00, dark: 0x9A5A00, name: "reviewAuthor5")
+    public static let commentHighlight = NSColor.duoDynamic(light: 0xFBE7A1, dark: 0xFBE7A1, name: "commentHighlight")
     public static let console = NSColor.duoFixed(0x15171B)
     public static let consoleRule = NSColor.duoFixed(0x2B2F36)
     public static let consoleMenuTarget = NSColor.duoFixed(0x2D3138)
@@ -133,6 +151,9 @@ public enum DuoMetric {
     public static let tabStripHeight: CGFloat = 36.0
     public static let chatStripHeight: CGFloat = 28.0
     public static let deckBarHeight: CGFloat = 44.0
+    public static let docxMenuWidth: CGFloat = 246.0
+    public static let docxMenuTop: CGFloat = 39.0
+    public static let docxMenuRowPaddingX: CGFloat = 8.0
     public static let homeSessionTabsHeight: CGFloat = 32.0
     public static let overviewFooterHeight: CGFloat = 34.0
     public static let rowFile: CGFloat = 24.0

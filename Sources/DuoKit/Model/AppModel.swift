@@ -158,6 +158,11 @@ public final class AppModel {
     /// PowerPoint decks in the right pane (ENH-12, DL-125).
     @ObservationIgnored public lazy var deckViewer: DeckViewer = { let v = DeckViewer(); deckViewerIfLoaded = v; wireDeckViewer(v); return v }()
     @ObservationIgnored public var deckViewerIfLoaded: DeckViewer?
+    /// Word documents in the right pane (DL-162).
+    @ObservationIgnored public lazy var docxViewer: DocxViewer = { let v = DocxViewer(); docxViewerIfLoaded = v; wireDocxViewer(v); return v }()
+    @ObservationIgnored public var docxViewerIfLoaded: DocxViewer?
+    /// The Markup menu is open (W4); the viewer's bar shows Markup pressed while it is.
+    public var docxMenuOpen = false
     /// Browser tabs by id (`web:…`), kept alive while their tab is open (Phase K, ENH-8).
     @ObservationIgnored public var webTabs: [String: WebTab] = [:]
     /// Downloads browser tabs saved since launch, oldest first (`duo2 browser downloads`, DL-124).

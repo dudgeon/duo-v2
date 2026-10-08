@@ -6,7 +6,7 @@ import SwiftUI
 /// A file that isn't text (C-26, F-102), as `standins2-handoff/q52-preview` and `q52-none` draw it
 /// (DL-132 e): a quiet strip under the tabs (the kind in plain words, "read only", Open With,
 /// Show in Finder) over Quick Look's own preview, or, when Quick Look can't show it, the name,
-/// a line and the two buttons, centred. Word documents keep their own bars (DL-123). Duo never
+/// a line and the two buttons, centred. Word documents have their own viewer (DL-162). Duo never
 /// puts the bytes in its editor.
 struct BinaryFileView: View {
     @Environment(AppModel.self) private var model
@@ -14,30 +14,10 @@ struct BinaryFileView: View {
     let file: URL
 
     var body: some View {
-        let word = AppModel.isWordDocument(file) || AppModel.isOldWordDocument(file)
         VStack(spacing: 0) {
-            if AppModel.isWordDocument(file) {
-                WordDocumentBar(path: path, file: file)
-            } else if AppModel.isOldWordDocument(file) {
-                // F2: the older format can't be converted; say how to get a .docx.
-                NoticeBar(text: "Read only: Duo can’t edit a Word 97–2004 document, or convert one.",
-                          sub: "Save it as .docx in Word or Pages, and Duo can make a Markdown copy.") {
-                    OpenWithMenu(path: path, file: file)
-                    Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
-                }
-            }
-            // Quick Look can't open a locked or damaged .docx either: say so, as F draws it.
-            if FileKind.quickLookPreviews(file), ![.passwordProtected, .damaged].contains(model.conversionFailures[path]) {
-                if !word { ReadOnlyStrip(path: path, file: file) }
+            if FileKind.quickLookPreviews(file) {
+                ReadOnlyStrip(path: path, file: file)
                 QuickLookPane(file: file)
-            } else if word {
-                VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
-                    Text("No preview").duoText(.bodyEmphasis)
-                    Text("\(file.lastPathComponent) isn’t text, and Quick Look can’t show it. Open it in another app, or show it in Finder.")
-                        .duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(DuoSpace.documentPadding)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             } else {
                 VStack(spacing: DuoSpace.gapGlyphToLabel) {
                     Text(file.lastPathComponent).duoText(.title).lineLimit(1).truncationMode(.middle)
@@ -116,8 +96,8 @@ struct OpenWithMenu: View {
     }
 }
 
-/// A .docx (DL-123; canvas https://claude.ai/artifact/YRWyEm4MHbxYYtnRVr55xp): the offer to make a
-/// Markdown copy (A), its progress (C), or why it couldn't (F, F2). Quick Look's preview stays below.
+/// A conversion in progress (C) or why it couldn't (F, F2), under the Word viewer's tab (DL-123,
+/// DL-162): nothing at all otherwise: the viewer's bar offers Convert to Markdown….
 struct WordDocumentBar: View {
     @Environment(AppModel.self) private var model
     let path: String
@@ -151,13 +131,6 @@ struct WordDocumentBar: View {
                     Button("Convert Anyway") { model.convertAnyway(path) }.buttonStyle(.duo)
                 }
                 OpenWithMenu(path: path, file: file, isDefault: true)
-                Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
-            }
-        } else {
-            NoticeBar(text: "\(name) is a Word document. Duo can make a Markdown copy of it to read and edit here, with Claude.",
-                      sub: "The copy goes beside it as \(file.deletingPathExtension().lastPathComponent).md. The Word document isn’t changed.") {
-                Button("Convert to Markdown") { model.convertToMarkdown(path) }.buttonStyle(DefaultSheetButtonStyle())
-                OpenWithMenu(path: path, file: file)
                 Button("Show in Finder") { FileActions.reveal(file) }.buttonStyle(.duo)
             }
         }

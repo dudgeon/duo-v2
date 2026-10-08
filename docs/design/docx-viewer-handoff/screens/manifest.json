@@ -1,0 +1,66 @@
+{
+  "$note": "Word viewer, approved 2026-10-08 (DL-162). kind=board: the right pane (460×800) drawn on the Design canvas, exported as static HTML.",
+  "source": "https://claude.ai/artifact/F8PWth7cidMZvWjgh28ye4",
+  "screens": [
+    {
+      "file": "screens/ask.html",
+      "board": "Main.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 800,
+      "decision": "DL-162",
+      "chosen": false,
+      "shows": "NOT CHOSEN. A page in the pane on open: View it / Convert to Markdown."
+    },
+    {
+      "file": "screens/viewer.html",
+      "board": "Viewer.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 800,
+      "decision": "DL-162",
+      "chosen": true,
+      "shows": "CHOSEN. The bar (Markup, Select Text, Convert to Markdown…, Open With), the text at the pane's width, changes in each person's colour, comment cards under their paragraph, a resolved comment folded, a change's hover label."
+    },
+    {
+      "file": "screens/pages.html",
+      "board": "Pages.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 800,
+      "decision": "DL-162",
+      "chosen": false,
+      "shows": "NOT CHOSEN. Pages scaled to fit with comments in a margin."
+    },
+    {
+      "file": "screens/markup.html",
+      "board": "Markup.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 800,
+      "decision": "DL-162",
+      "chosen": true,
+      "shows": "The Markup menu open: the four views, the comment toggles, the people with colours and counts. The text under it is the board's note."
+    },
+    {
+      "file": "screens/picked.html",
+      "board": "Picked.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 800,
+      "decision": "DL-162",
+      "chosen": true,
+      "shows": "Picking: a dashed outline and tag under the pointer, a solid one picked; the picker bar; what's pasted into Claude's prompt (dark box, the terminal)."
+    },
+    {
+      "file": "screens/fallback.html",
+      "board": "Fallback.dc.html",
+      "kind": "board",
+      "width": 460,
+      "height": 800,
+      "decision": "DL-162",
+      "chosen": true,
+      "shows": "Convert to Markdown… asks first, saying what's lost; Quick Look with a notice for a document Duo can't draw. Section labels and the grey note are the board's."
+    }
+  ]
+}

@@ -2826,3 +2826,11 @@ Measured on the real TUI with the spike's mock API (no tokens), both versions id
 
 - The Board's `+ New project` tile was the only door to the New project sheet from All projects. The List's header (`MapHeader`, list mode) now carries the same action (`model.showNewProject()`, `duo2 project new`) as a dashed `+ New project` beside Group (Q-158, a stand-in: no board draws it).
 - Proof: DuoChecks counts both call sites on the verb; list-1440, list-1280, list-filter and list-nothing differ from main only in the header's box (x 866–961 pt, y 16–38 pt); overview, project, flow-zoom-1…4 and board-1440 are byte-identical to main.
+
+## F-234 · Rendering a .docx view-only: what the spike found (Word viewer, 2026-10-08)
+
+- `@file-viewer/docx` 0.3.33 (Apache-2.0, a maintained fork of docx-preview; 279 KB plus JSZip, no network calls) draws the test documents best: floating pictures, a text box, two columns, merged cells, footnotes and fields. Its `exposeDisplayTargets` stamps each paragraph with its `w14:paraId`, in the body, cells, headers and notes, so a picked paragraph and `Docx.swift`'s outline name the same one without a patch. Every `<ins>`, `<del>`, move and formatting change carries author, date and id. Quick Look shows no comments and no tracked changes, and drops footnotes; mammoth flattens the layout; docx-preview loses moves and has no authors on changes. Full comparison: `docs/plan/spikes/docx-viewer.md`.
+- **Its review display is left to the host**: its own colours collided (two of three authors the same teal) and its formatting-change notes are in Chinese. Duo draws the review layer itself (per-author colours, comment cards, threads, resolved state, English descriptions).
+- **Its `original` view keeps formatting changes applied** (old bold, italic, colour and alignment aren't restored). Duo restores the common properties itself (DL-162).
+- **Pagination is slow on files without Word's saved page breaks**: a 73-page document drew in 63 ms, then re-paginated for 112 s. With Word's markers, 1.75 s. Unpaginated (`breakPages: false`), 67 ms. DL-162 renders unpaginated at the pane's width.
+- One maintainer; the bundle calls a no-op `assertViewerLicense` hook. Pinned and vendored at 0.3.33; the fallback is upstream docx-preview with a two-line paraId patch.

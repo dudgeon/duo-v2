@@ -91,6 +91,47 @@ public enum Docx {
         }
     }
 
+    /// Whether a .docx can be read at all (the viewer's fallback and what it tells the user:
+    /// DL-162): nil when its zip and `word/document.xml` read; otherwise why not. Read only.
+    public static func readability(_ url: URL) -> Failure? {
+        let zip: Pptx.Zip
+        do { zip = try Pptx.Zip(url) } catch { return classify(url) }
+        guard let doc = try? zip.xml("word/document.xml"), doc.first("body") != nil else {
+            return zip.entries.isEmpty ? .damaged : .notWord
+        }
+        return nil
+    }
+
+    /// What a document holds that a Markdown copy can't keep whole (the question Convert asks
+    /// first, DL-162): its tracked changes, comments, columns and text boxes. Read only.
+    public struct Inventory: Equatable, Sendable {
+        public var changes = 0, comments = 0, columns = 0, textBoxes = 0
+        public init(changes: Int = 0, comments: Int = 0, columns: Int = 0, textBoxes: Int = 0) { self.changes = changes; self.comments = comments; self.columns = columns; self.textBoxes = textBoxes }
+        /// True when there is nothing the copy would lose.
+        public var isLossless: Bool { changes + comments + columns + textBoxes == 0 }
+    }
+
+    public static func inventory(_ url: URL) -> Inventory {
+        var inv = Inventory()
+        guard let zip = try? Pptx.Zip(url), let body = (try? zip.xml("word/document.xml"))?.first("body") else { return inv }
+        // A run-level revision is a change; a paragraph or row mark's revision (inside rPr or trPr) rides along with one.
+        func walk(_ n: Pptx.Node, in mark: Bool) {
+            for c in n.children {
+                let inMark = mark || (c.name == "rPr" && n.name == "pPr") || c.name == "trPr"
+                if !inMark, ["ins", "del", "moveFrom", "moveTo", "rPrChange", "pPrChange"].contains(c.name) { inv.changes += 1 }
+                if c.name == "cols", let k = c.attr("w:num").flatMap(Int.init), k > 1 { inv.columns += 1 }
+                // Word writes a text box twice: its DrawingML and a VML fallback. Only the first counts.
+                if c.name == "Fallback" { continue }
+                if c.name == "txbxContent" { inv.textBoxes += 1 }
+                if c.name == "rPrChange" || c.name == "pPrChange" { continue }   // the old properties inside aren't changes
+                walk(c, in: inMark)
+            }
+        }
+        walk(body, in: false)
+        if let c = try? zip.xml("word/comments.xml") { inv.comments = c.all("comment").count }
+        return inv
+    }
+
     public static func convert(_ url: URL, options: Options) throws -> Result {
         let zip: Pptx.Zip
         do { zip = try Pptx.Zip(url) } catch { throw classify(url) }
