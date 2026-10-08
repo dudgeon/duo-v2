@@ -18,7 +18,49 @@ cd "$root"
 bin="$root/build/Duo.app/Contents/MacOS/Duo"
 out="$(mktemp -d /tmp/duo-bg.XXXXXX)"
 touch "$out/start"
+# Only judge what this run starts (F-227): the Duos already running (Geoff's own, from this same build
+# path) are written down now and never judged; so are logs from earlier runs (counted from their appended part).
+baseline="$out/baseline-pids"; logs_before="$out/logs-before"
+pgrep -f "^$bin" > "$baseline" 2>/dev/null || true
+mkdir -p "$logs_before"; cp -p build/ui/*.log "$logs_before"/ 2>/dev/null || true
 mode=set; [ "${1:-}" = "--" ] && mode=cmd
+
+# <check-functions> (the pure helpers; tested in isolation by extracting this block)
+proc_args() { ps -o command= -p "$1" 2>/dev/null; }   # a process's arguments (empty when unreadable or gone)
+
+# is_test_duo <pid> <baseline-file>: succeeds only for a Duo this run started. Not one that was already
+# running at the start, not one whose arguments can't be read, and not Geoff's workspace Duo (--workspace on
+# ~/DuoAcceptance/workspace with no --state / --capture): when in doubt it is not judged.
+is_test_duo() {
+  local p="$1" base="$2" args
+  grep -qx "$p" "$base" 2>/dev/null && return 1
+  args=$(proc_args "$p") || return 1
+  [ -n "$args" ] || return 1
+  case "$args" in
+    *"--workspace $HOME/DuoAcceptance/workspace"*)
+      case "$args" in *--state*|*--capture*) ;; *) return 1 ;; esac ;;
+  esac
+  return 0
+}
+
+# new_trace_lines <log-dir> <snapshot-dir>: the 'trace capture' lines written since the snapshot. A log
+# whose snapshot is a byte-for-byte prefix of it is read from the appended part only; a log that is new, or
+# was recreated (the snapshot is not its prefix), is read whole.
+new_trace_lines() {
+  local f old osz nsz
+  for f in "$1"/*.log; do
+    [ -f "$f" ] || continue
+    old="$2/$(basename "$f")"; nsz=$(wc -c < "$f" | tr -d ' ')
+    if [ -f "$old" ]; then
+      osz=$(wc -c < "$old" | tr -d ' ')
+      if [ "$osz" -le "$nsz" ] && head -c "$osz" "$f" | cmp -s - "$old"; then
+        tail -c +$((osz + 1)) "$f"; continue
+      fi
+    fi
+    cat "$f"
+  done | grep 'trace capture' || true
+}
+# </check-functions>
 
 front() {   # pid bundle-id of the front app
   local asn info
@@ -40,6 +82,7 @@ echo "front before: $before"
     f=$(front)
     duos=""
     for p in $(pgrep -f "^$bin" 2>/dev/null); do
+      is_test_duo "$p" "$baseline" || continue
       t=$(lsappinfo info -only applicationtype "$(lsappinfo find pid=$p)" 2>/dev/null | sed -n 's/.*type="\([^"]*\)".*/\1/p' | head -1)
       duos+=" $p:${t:-?}"
     done
@@ -73,7 +116,7 @@ in_dock="" flashed=""
 for p in $(grep -v ':UIElement$' <<<"$types" | cut -d: -f1 | sort -u); do
   if grep -qx "$p:UIElement" <<<"$types"; then flashed+=" $p"; else in_dock+=" $p"; fi
 done
-active=$(find build/ui -name '*.log' -newer "$out/start" -exec grep -h 'trace capture' {} + 2>/dev/null | grep -c 'active=true' || true)
+active=$(new_trace_lines build/ui "$logs_before" | grep -c 'active=true' || true)
 if [ -n "$duo_front" ]; then echo "✘ a test Duo became the front app:"; echo "$duo_front" | head -5; fails=1
 else echo "✔ no test Duo became the front app ($n samples, $launched Duo launches seen)"; fi
 if [ -n "$in_dock" ]; then echo "✘ a test Duo ran as a Dock app (pids$in_dock)"; fails=1
