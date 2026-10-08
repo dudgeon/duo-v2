@@ -124,6 +124,22 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 file convert <docx> [--as <name.md>] [--replace] [--anyway]` | Make a Markdown copy of a Word document beside it (<name>.md, pictures in <name>-images); the .docx isn't changed (DL-123). Headings, lists and layout tables are inferred and cleaned; tracked changes are accepted; comments become endnotes. Prints what it inferred and what didn't come over. A taken name fails unless --as or --replace (the one there goes to the Trash); --anyway converts a document with no text. Undo with `duo2 undo`. | Convert to Markdown, Convert Anyway |
 | `duo2 file path <path> [--relative \| --link] [--copy]` | Print a file's path, relative path or Markdown link; --copy puts it on the clipboard. | Copy Path, Copy Relative Path, Copy as Link |
 
+## GitHub
+
+| Command | What it does | In the app |
+|---|---|---|
+| `duo2 repo status [--project <name>] [--copy] [--json]` | Where the project's repository stands, as the Files block shows it: branch, base, ahead and behind, changed files, the pull request, your access and whether the default branch is protected, and the line's one fact. Local state, plus what GitHub said at the last quiet fetch. --copy copies the branch name. | Copy Branch Name |
+| `duo2 repo check [--project <name> \| <owner/repo>]` | Whether the GitHub CLI is here and signed in (as whom), and what you can do in a repository: push, or read only (then pushes go to your fork), and whether its default branch is protected. Reads only. | Try Again |
+| `duo2 repo latest [--project <name>]` | Get Latest: bring in new commits on this branch from GitHub (merge, never rebase; your uncommitted files ride along). Stops at a conflict and says so. | Get Latest, Get Latest and Push |
+| `duo2 repo update [--project <name>] [--from <branch>]` | Bring In Changes from the default branch (or --from), as GitHub's Update branch does: a merge, never a rebase. | Bring In Changes from |
+| `duo2 repo put-back [--project <name>]` | Put Back: undo a Get Latest that stopped at a conflict (git merge --abort). Your own changes are as they were. | Put Back |
+| `duo2 repo push [--project <name>] [--message <m>] [--files <f,…>] [--fork] --yes` | Commit the changed files (all, or --files) with the message, then push the branch (never forced). Publishes under the user's name, so without --yes it opens Duo's Push sheet for the user to confirm. --fork pushes to the user's fork (read-only access). | Push…, Push, Push to GitHub…, Fork and Push |
+| `duo2 repo pr [--project <name>] [--message <m>] [--title <t>] [--body <b>] [--draft] [--browser] [--fork] --yes` | Push and open a pull request into the default branch: with the GitHub CLI, or GitHub's own page filled in (--browser, or no CLI). Without --yes it opens Duo's Push sheet for the user to confirm. | Push and Open PR, Fork, Push and Open PR, Push and Open in Browser |
+| `duo2 repo draft [--message <m>] [--title <t>] [--body <b>]` | Fill in the open Push sheet's message, pull request title and description: how Claude answers Ask Claude to Write These. Doesn't push. | Ask Claude to Write These |
+| `duo2 repo move-to-branch <new branch> [--project <name>] --yes` | Move commits made on a protected branch to a new branch; the old one goes back to GitHub's only once the new one holds every commit. Then push it with `duo2 repo pr`. | Move to a Branch…, Move to a Branch and Push |
+| `duo2 repo signin` | Sign in to GitHub: a shell tab running the GitHub CLI's browser sign-in (`gh auth login --web`, then `gh auth setup-git`). Duo never sees or keeps a token. Without the CLI, a shell tab with `brew install gh` typed. | Sign In…, Sign In in a Shell…, Install in a Shell…, Switch Account… |
+| `duo2 repo open [--project <name>] [--pr]` | Open the repository (its branch) or the branch's pull request on GitHub. | Open on GitHub, Open Pull Request #, Open PR, Open GitHub |
+
 ## Documents
 
 | Command | What it does | In the app |
@@ -224,6 +240,8 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 |---|---|
 | Add to .gitignore | a one-time question to the user (DL-50) |
 | Align Column | a submenu, not an action |
+| Ask Claude to Combine | drafts the conflict's instruction into the project's Claude session, unsent (DL-149 board 11) |
+| Ask Claude to Remove It | drafts an instruction about the refused secret into the project's Claude session, unsent (DL-149 board 10) |
 | Cancel | a step inside another action's dialog or picker |
 | Close Window | window management |
 | Enter Full Screen | window management |
@@ -243,10 +261,13 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Previous Pane | not built yet |
 | Project | a menu, not an action |
 | Report an Issue… | opens GitHub's new-issue form, filled in, for the user to edit and submit |
+| Resolve… | drafts the conflict's instruction into the project's Claude session, unsent (DL-149 board 11); the user presses Return. Claude is already the one resolving |
 | Resume a session | the debug gallery only (DL-59 removed it from the app) |
 | Save to Recreate | writes the user's own text back after the file was removed on disk; Claude can do the same with `duo2 doc edit` (content) once the user asks |
 | Session | a menu, not an action |
+| Show Details | dismisses a failure question whose details are already shown |
 | Show in Finder | reveals a file or folder in Finder (Settings, editor notices, launch sheets) |
+| Show the File | opens the conflicted file, as `duo2 doc open` does |
 | Table | a submenu, not an action |
 | Toggle Right Pane | not built yet |
 | What’s New in This Version | opens this version's release notes on GitHub; `duo2 status` names the version |

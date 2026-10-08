@@ -14,6 +14,10 @@ public struct GitHubAccess: Equatable, Sendable {
     public var found = true               // false: GitHub says not found (or no access, F-194)
     public var parent: RemoteRepo?         // set when the repo is itself a fork
 
+    public init(sign: Sign, permission: Permission? = nil, defaultBranch: String? = nil, protectedDefault: Bool? = nil) {
+        self.sign = sign; self.permission = permission; self.defaultBranch = defaultBranch; self.protectedDefault = protectedDefault
+    }
+
     public var login: String? { if case .signedIn(let l) = sign { return l }; return nil }
     public var canPush: Bool? { permission.map { [.admin, .maintain, .write].contains($0) } }
     /// Read only only when GitHub *says* so: a failed probe is unknown, never read only (legacy forked anyway).

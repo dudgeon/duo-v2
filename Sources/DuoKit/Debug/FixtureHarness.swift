@@ -98,6 +98,19 @@ public enum FixtureHarness {
             let target = parts.count > 1 ? parts[1].split(separator: "/", maxSplits: 1).map(String.init) : []
             if let project = target.first { model.open(project: project, session: target.count > 1 ? target[1] : nil) }
         case "peek": model.togglePeek()
+        case "repo":   // repo:push|latest|update|putback|details|refresh|dump: the Files block's repo state (DL-149)
+            switch parts.count > 1 ? parts[1] : "dump" {
+            case "push": model.showPush()
+            case "latest": model.getLatest(from: nil)
+            case "update": model.getLatest(from: model.currentRepo?.base)
+            case "putback": model.putBack()
+            case "details": model.repoDetailsShown = true
+            case "refresh": model.refreshRepo(force: true, fetch: true)
+            default:
+                let v = model.currentRepo
+                let line = v.map { RepoLine.of($0) }
+                FileHandle.standardError.write(Data("repo: \(v?.status.branch ?? "-") | \(line?.fact ?? "no repo") | \(line?.action?.rawValue ?? "-") | marks \(v?.marks ?? [:])\n".utf8))
+            }
         case "deactivate": NSApp.deactivate()   // as when the user clicks into another app (C-35)
         case "down": model.movePeekSelection(by: 1)
         case "up": model.movePeekSelection(by: -1)

@@ -2561,3 +2561,13 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
   - Settings: `settings.png` (render-settings).
   - Harness: `template-preview`. A `render-settings:` in live mode needs a `wait:` after it, or the window capture quits Duo before the image is drawn; it now says on stderr when nothing is drawn.
 - **Checks:** DuoChecks (the parity scan covers the new menu items, buttons and Settings row), `bundle.sh`, `check-ui.sh`.
+
+## F-213 · `git remote get-url` hides a remote's real URL (GitHub build, 2026-10-07)
+
+- With `url.<x>.insteadOf` in git's config, `git remote get-url origin` prints the rewritten URL, not the one configured. Duo reads `git config --get remote.<name>.url` instead, so a remote rewritten to a mirror or a local test repo still names its GitHub repository. The checks and `scripts/github-fixture.sh` rely on this: `https://github.com/acme/website.git` is redirected to a local bare repo, and every code path runs with no network.
+
+## F-214 · The repo state and Push, built and checked live (GitHub build, 2026-10-07)
+
+- **Built:** `Sources/DuoKit/Git/` (engine), the Files block's repo state (B: branch at the header's right, one fact and one compact button, `changed`/`new`/`kept out of git` marks in 11 pt mono), its popover and menu, the Push sheet (write, fork, browser), the notice, the failure questions, what Claude is told at start, and `duo2 repo status|check|latest|update|put-back|push|pr|draft|move-to-branch|signin|open`. Tokens `sheet.pushWidth`, `sheet.pushBodyHeight`, `repoLine.*`.
+- **Live, isolated** (`scripts/github-fixture.sh`, a stub gh, `scripts/run-live.sh`): the line reads "3 files changed · Push…"; Push opened PR #482 through the stub and the line became "PR #482 open · up to date"; READ access reads "read only · 3 to push to your fork" and the sheet says the fork first; a project inside a repo with no remote (DL-157) reads "1 file changed · no GitHub remote" with its untracked PROJECT.md left out. Comparisons: `build/ui/github-files-compare.png`, `github-readonly-compare.png`, `github-push-compare.png`, `github-fork-compare.png`.
+- **Checks:** `DUO_CHECKS=git` (53): links, porcelain v2, every failure's classification, copy on a new branch, push and the compare page, not-fast-forward, a conflict and Put Back, GH006 and Move to a Branch, the fork with `--remote-name fork`, gh exiting 0 with no PR, and the line's twelve states.

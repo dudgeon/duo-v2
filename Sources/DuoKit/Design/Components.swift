@@ -24,9 +24,11 @@ struct DuoButtonStyle: ButtonStyle {
     var on = false
     /// The label semibold while on (the template bar's Preview, templates-handoff A2).
     var boldWhenOn = false
+    /// The repo line's smaller button: 20 high, 11 pt, padding 8 (DL-149, `repoLine` tokens).
+    var compact = false
 
     func makeBody(configuration: Configuration) -> some View {
-        DuoButtonBody(configuration: configuration, on: on, bold: on && boldWhenOn)
+        DuoButtonBody(configuration: configuration, on: on, bold: on && boldWhenOn, compact: compact)
     }
 }
 
@@ -35,15 +37,23 @@ private struct DuoButtonBody: View {
     let configuration: ButtonStyleConfiguration
     let on: Bool
     var bold = false
+    var compact = false
     @Environment(\.isEnabled) private var enabled
 
     var body: some View {
-        configuration.label
-            .duoText(.control, weight: bold ? .semibold : nil)
+        Group {
+            if compact {
+                configuration.label.font(.system(size: DuoMetric.repoLineButtonFont))
+                    .padding(.horizontal, DuoMetric.repoLineButtonPaddingX)
+                    .frame(height: DuoMetric.repoLineButtonHeight)
+            } else {
+                configuration.label.duoText(.control, weight: bold ? .semibold : nil)
+                    .padding(.horizontal, DuoSpace.buttonPadding.leading + DuoMetric.borderHairline)
+                    .padding(.vertical, DuoSpace.buttonPadding.top + DuoMetric.borderHairline)
+            }
+        }
             .foregroundStyle(enabled ? DuoColor.text : DuoColor.text2.opacity(0.5))
             .lineLimit(1)
-            .padding(.horizontal, DuoSpace.buttonPadding.leading + DuoMetric.borderHairline)
-            .padding(.vertical, DuoSpace.buttonPadding.top + DuoMetric.borderHairline)
             .background(
                 RoundedRectangle(cornerRadius: DuoMetric.radiusControl)
                     .fill(configuration.isPressed || on ? DuoColor.selected : DuoColor.pane)

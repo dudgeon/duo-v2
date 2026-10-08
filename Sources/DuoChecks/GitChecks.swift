@@ -62,6 +62,32 @@ private func stubGH(_ dir: URL, login: String?, permission: String, protected: B
     let w = GitFailure(kind: .noWrite, details: "").words(repo: "acme/website", branch: "b", login: "geoffd")
     check(w.title == "You can’t push to acme/website" && w.body.contains("your account, geoffd,"), "the 403 words name the account")
 
+    print("GitHub: the Files block's line, every state (board 5)")
+    let origin = RemoteRepo(host: "github.com", owner: "acme", name: "website")
+    func view(_ edit: (inout RepoView) -> Void) -> RepoView {
+        var st = RepoStatus(root: URL(fileURLWithPath: "/r")); st.branch = "geoff/pricing-copy"; st.upstream = "origin/geoff/pricing-copy"; st.origin = origin
+        var v = RepoView(status: st, projectPrefix: ""); v.access = GitHubAccess(sign: .signedIn(login: "geoffd"), permission: .write, defaultBranch: "main", protectedDefault: true)
+        edit(&v); return v
+    }
+    let changed = [FileChange(path: "content/pricing.md", kind: .changed, staged: false), FileChange(path: "content/faq.md", kind: .changed, staged: false), FileChange(path: "content/plans.json", kind: .new, staged: false)]
+    func line(_ e: (inout RepoView) -> Void) -> RepoLine { RepoLine.of(view(e)) }
+    check(line { _ in }.fact == "up to date with GitHub" && line { _ in }.action == nil, "up to date: no button")
+    check(line { $0.status.changes = changed } == RepoLine(fact: "3 files changed", action: .push, all: ["3 files changed"]), "3 files changed · Push…")
+    check(line { $0.status.ahead = 2 }.fact == "2 to push" && line { $0.status.ahead = 2 }.glyph == .up, "↑2 to push")
+    check(line { $0.status.upstream = nil }.fact == "not on GitHub yet", "a new branch: not on GitHub yet")
+    check(line { $0.pr = 482 }.fact == "PR #482 open · up to date" && line { $0.pr = 482 }.prLink == 482, "a PR open: its number links")
+    check(line { $0.pr = 482; $0.status.ahead = 1 }.action == .pushNow, "PR open, more to push: Push sends straight away")
+    check(line { $0.status.behind = 4 }.fact == "4 new on GitHub" && line { $0.status.behind = 4 }.action == .latest, "↓4 new on GitHub · Get Latest")
+    check(line { $0.status.changes = [FileChange(path: "content/faq.md", kind: .conflict, staged: false)]; $0.status.behind = 4 }.fact == "1 file in conflict", "a conflict wins over behind")
+    check(line { $0.access?.permission = .read; $0.status.ahead = 2 }.fact == "read only · 2 to push to your fork", "read only: to your fork")
+    check(line { $0.status.branch = "main"; $0.status.upstream = "origin/main"; $0.status.ahead = 1 }.action == .moveToBranch, "on a protected main: Move to a Branch…")
+    check(line { $0.lastFailure = .signedOut; $0.status.ahead = 1 }.action == .signIn, "signed out: Sign In…")
+    check(line { $0.unreachable = true; $0.lastReach = Date().addingTimeInterval(-7200) }.fact == "can’t reach GitHub · checked 2 h ago", "can't reach GitHub, quietly")
+    check(line { $0.status.changes = [FileChange(path: "_PROJECT.md", kind: .new, staged: false)] }.fact == "up to date with GitHub", "Duo's own untracked files aren't the user's changes (DL-157)")
+    let inDocs = view { $0.projectPrefix = "docs/"; $0.status.changes = [FileChange(path: "docs/a.md", kind: .changed, staged: false), FileChange(path: "src/b.c", kind: .changed, staged: false)]; $0.duoFilesIgnored = true }
+    check(inDocs.marks == ["a.md": "changed", "_PROJECT.md": "kept out of git", "PROJECT.md": "kept out of git"], "marks are the project's files only, relative to it")
+    check(AppModel.repoContext(view { $0.access?.permission = .read })?.contains("pushes go to the user's fork geoffd/website (remote `fork`)") == true, "Claude is told to push to the fork")
+
     // A sandbox: upstream (bare), a fork (bare), and Duo's copy.
     let sand = FileManager.default.temporaryDirectory.appending(path: "duo-git-\(getpid())").resolvingSymlinksInPath()
     try? FileManager.default.removeItem(at: sand)

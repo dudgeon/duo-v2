@@ -55,6 +55,7 @@ public struct FileChange: Equatable, Sendable {
     public var path: String       // relative to the repository's root
     public var kind: Kind
     public var staged: Bool
+    public init(path: String, kind: Kind, staged: Bool) { self.path = path; self.kind = kind; self.staged = staged }
 }
 
 /// Where a repository stands: what `git status --porcelain=v2 --branch -z` says, plus the remote.
@@ -70,6 +71,8 @@ public struct RepoStatus: Equatable, Sendable {
     public var defaultBranch: String?   // origin's HEAD, when known locally
     public var merging = false
     public var forkRemote: String?      // "fork" when Duo set one up (DL-149)
+
+    public init(root: URL) { self.root = root }
 
     public var conflicts: [FileChange] { changes.filter { $0.kind == .conflict } }
     public var hasConflict: Bool { !conflicts.isEmpty }
