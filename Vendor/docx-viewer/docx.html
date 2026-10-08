@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- A Word document is someone else's file: nothing in it reaches the network or runs outside these scripts. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src duo-docx:; style-src 'unsafe-inline' duo-docx:; img-src blob: data:; font-src blob: data:; media-src blob: data:; connect-src duo-docx:">
+<title>Document</title>
+<style>
+  /* The Word viewer in the right pane (docx-viewer-handoff W2, W4). Colours are Duo's tokens, set by the app. */
+  html, body { margin: 0; background: var(--duo-ground); color: var(--duo-text);
+    font: 13px/20px -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  body { padding: 16px 20px 16px; }
+  /* The sheet: on `pane`, a 1 `rule` edge, 28 24 padding. Never paginated: the renderer's pages become
+     one flow at the pane's width, so its page box, margins, shadow and grey ground are all undone here. */
+  #sheet { position: relative; background: var(--duo-pane); border: 1px solid var(--duo-rule); padding: 28px 24px; }
+  #host .docx-wrapper { background: none !important; padding: 0 !important; display: block !important; }
+  #host .docx-wrapper > section.docx, #host section.docx { width: auto !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important;
+    box-shadow: none !important; background: none !important; overflow-wrap: anywhere; }
+  #host section.docx > article { width: auto !important; }
+  #host img, #host svg { max-width: 100%; height: auto; }
+  #host table { max-width: 100%; }
+
+  /* Tracked changes, in each person's colour (--duo-author, set on each mark). All Markup only. */
+  #host[data-docx-review-mode="all"] ins[data-docx-change-kind="insert"], #host[data-docx-review-mode="all"] ins[data-docx-change-kind="move-to"] {
+    color: var(--duo-author); background: none !important; text-decoration: underline; text-decoration-color: var(--duo-author); text-underline-offset: 3px; }
+  #host[data-docx-review-mode="all"] ins[data-docx-change-kind="move-to"] { text-decoration-style: double; }
+  #host[data-docx-review-mode="all"] del[data-docx-change-kind] {
+    display: inline !important; width: auto !important; max-width: none !important; height: auto !important; margin: 0 !important; padding: 0 !important;
+    overflow: visible !important; line-height: inherit !important; color: var(--duo-author) !important; text-decoration: line-through; text-decoration-color: var(--duo-author); }
+  #host[data-docx-review-mode="all"] del[data-docx-change-kind="move-from"] { text-decoration: line-through; }
+  #host[data-docx-review-mode="all"] [data-docx-format-change="true"] { border-bottom: 2px dotted var(--duo-author); }
+  /* Another person's marks, while one person is chosen in the menu, read as plain accepted text. */
+  #host[data-docx-review-mode="all"] .duo-muted ins, #host[data-docx-review-mode="all"] ins.duo-muted { color: inherit !important; text-decoration: none !important; }
+  #host[data-docx-review-mode="all"] del.duo-muted { display: none !important; }
+  #host[data-docx-review-mode="all"] span.duo-muted[data-docx-format-change] { border-bottom: 0; }
+  .duo-hover { outline: 1px solid var(--duo-author); outline-offset: 1px; }
+  /* Paragraphs that vanish when changes are accepted (or, in Original, were never there). */
+  #host[data-docx-review-mode="final"] p.duo-gone-accepted, #host[data-docx-review-mode="simple"] p.duo-gone-accepted, #host[data-docx-review-mode="original"] p.duo-gone-original { display: none !important; }
+  #host[data-docx-review-mode="simple"] p.duo-changed { position: relative; }
+  #host[data-docx-review-mode="simple"] p.duo-changed::before { content: ""; position: absolute; left: -12px; top: 0; bottom: 0; width: 2px; background: var(--duo-text2); }
+
+  /* Comments: the range on commentHighlight, the thread as a card under its last paragraph. */
+  mark.duo-comment { background: var(--duo-comment-highlight); color: inherit; }
+  mark.duo-comment.duo-done { background: none; }
+  body.no-comments mark.duo-comment { background: none; }
+  body.no-comments .duo-card, body.no-comments .duo-resolved { display: none !important; }
+  #host[data-docx-review-mode="final"] mark.duo-comment, #host[data-docx-review-mode="original"] mark.duo-comment { background: none; }
+  #host[data-docx-review-mode="final"] .duo-resolved, #host[data-docx-review-mode="original"] .duo-resolved { display: none !important; }
+  #host[data-docx-review-mode="final"] .duo-card, #host[data-docx-review-mode="original"] .duo-card { display: none !important; }
+  #host .duo-card, #host .duo-fold { box-sizing: border-box; font: 12px/16px -apple-system, BlinkMacSystemFont, system-ui, sans-serif; color: var(--duo-text); font-style: normal; font-weight: 400;
+    text-indent: 0; text-align: left; letter-spacing: 0; background: var(--duo-pane); border: 1px solid var(--duo-rule); border-radius: 6px; }
+  .duo-card { margin: 0 0 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+  #host .duo-card > div { display: flex; flex-direction: column; gap: 6px; }
+  #host .duo-card > .duo-reply { padding-left: 12px; gap: 2px; }
+  #host .duo-card *, #host .duo-fold * { font-family: inherit !important; font-size: inherit !important; line-height: inherit !important; }
+  #host .duo-card, #host .duo-fold { font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important; font-size: 12px !important; line-height: 16px !important; }
+  .duo-card .duo-who { font-weight: 600; }
+  .duo-card .duo-date { color: var(--duo-text2); }
+  .duo-card .duo-head { cursor: default; }
+  .duo-resolved { margin: 0 0 10px; }
+  .duo-resolved .duo-card { margin: 0; }
+  #host .duo-fold { padding: 4px 10px; color: var(--duo-text2); display: flex; align-items: center; gap: 6px; cursor: default; }
+  .duo-fold svg { flex: none; }
+  .duo-fold .duo-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .duo-resolved .duo-full { display: none; }
+  .duo-resolved.open .duo-fold { display: none; }
+  .duo-resolved.open .duo-full { display: flex; }
+  body.show-resolved .duo-resolved .duo-fold { display: none; }
+  body.show-resolved .duo-resolved .duo-full { display: flex; }
+  .duo-hidden { display: none !important; }
+
+  /* The label above a change under the pointer: `pane`, radius 10, padding 4 10, 12/16. */
+  #label { position: absolute; z-index: 20; display: none; pointer-events: none; white-space: nowrap; font: 12px/16px -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: var(--duo-pane); border-radius: 10px; padding: 4px 10px;
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--duo-text) 18%, transparent), 0 0 0 1px color-mix(in srgb, var(--duo-text) 8%, transparent); }
+  #label b { font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="sheet"><div id="host"></div></div>
+<div id="label"></div>
+<script type="module" src="docx.js"></script>
+</body>
+</html>

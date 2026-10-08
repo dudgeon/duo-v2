@@ -50,6 +50,9 @@ cp "$root/Vendor/codemirror/dist/cm6.js" "$root/Vendor/codemirror/dist/editor.ht
 # The PowerPoint viewer (DL-125): the vendored renderer and Duo's page around it.
 mkdir -p "$app/Contents/Resources/deck"
 cp "$root/Vendor/pptx-renderer/deck.html" "$root/Vendor/pptx-renderer/deck.js" "$root/Vendor/pptx-renderer/pptx-renderer.js" "$app/Contents/Resources/deck/"
+mkdir -p "$app/Contents/Resources/docx"
+cp "$root/Vendor/docx-viewer/docx.html" "$root/Vendor/docx-viewer/docx.js" "$root/Vendor/docx-viewer/docx-preview.mjs" "$root/Vendor/docx-viewer/jszip.mjs" "$app/Contents/Resources/docx/"
+cp "$root/Vendor/docx-viewer/LICENSE" "$root/Vendor/docx-viewer/LICENSE-jszip.md" "$root/Vendor/docx-viewer/NOTICE" "$app/Contents/Resources/docx/"
 # The search model (DL-40, F-35): committed in parts, reassembled and verified here.
 model="$root/Models/bge-small-fp16"
 if [ -d "$model" ]; then

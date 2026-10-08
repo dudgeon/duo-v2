@@ -1,0 +1,5 @@
+Duo's Word viewer includes:
+
+@file-viewer/docx 0.3.33, Apache License 2.0 (LICENSE). Derived from docx-preview / docxjs by
+Volodymyr Baydalka (Apache-2.0), maintained by Flyfish.
+JSZip 3.10.1, MIT License (LICENSE-jszip.md), Copyright (c) 2009-2016 Stuart Knightley, David Duponchel, Franz Buchinger, António Afonso.

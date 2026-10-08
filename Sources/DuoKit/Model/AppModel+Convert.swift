@@ -42,14 +42,53 @@ extension AppModel {
         md.deletingLastPathComponent().appending(path: md.deletingPathExtension().lastPathComponent + "-images")
     }
 
-    /// The bar's Convert to Markdown (A). When `<name>.md` is taken, asks first (B).
-    public func convertToMarkdown(_ tab: String) {
+    /// The viewer's Convert to Markdown… (DL-162, fallback board): asks first, saying what won't come
+    /// over, with the document's own counts and only the parts it has. A document with no changes,
+    /// comments, columns or text boxes skips the question. `yes` skips it too (`duo2 file convert --yes`),
+    /// and so does a scripted run (DUO_AUTOCONFIRM=1).
+    public func askConvertToMarkdown(_ tab: String, yes: Bool = false) {
+        guard let docx = fileURL(tab), FileManager.default.fileExists(atPath: docx.path) else { return }
+        let inv = Docx.inventory(docx)
+        if yes || inv.isLossless { return convertToMarkdown(tab, beside: true) }
+        let stem = docx.deletingPathExtension().lastPathComponent
+        var q = DuoQuestion(title: "Convert \(docx.lastPathComponent) to Markdown?", choices: [])
+        q.paragraphs = ["Duo makes an editable copy, \(stem).md, beside it. The Word document isn’t changed."]
+        q.note = Self.lossNote(inv)
+        q.choices = [
+            .init(label: "Cancel", isCancel: true) {},
+            .init(label: "Convert", isDefault: true) { [weak self] in self?.convertToMarkdown(tab, beside: true) },
+        ]
+        if Env.autoconfirm {
+            FileHandle.standardError.write(Data("confirm: \(q.title) | Convert\n".utf8))
+            return q.choices.last!.action()
+        }
+        SheetCenter.shared.ask(q)
+    }
+
+    /// "Not everything comes over: its 12 tracked changes are accepted, its 4 comments become notes
+    /// at the end, and page layout, columns and text boxes are left out." Only what the document has.
+    public static func lossNote(_ inv: Docx.Inventory) -> String {
+        var parts: [String] = []
+        if inv.changes > 0 { parts.append(inv.changes == 1 ? "its 1 tracked change is accepted" : "its \(inv.changes) tracked changes are accepted") }
+        if inv.comments > 0 { parts.append(inv.comments == 1 ? "its 1 comment becomes a note at the end" : "its \(inv.comments) comments become notes at the end") }
+        var left = ["page layout"]
+        if inv.columns > 0 { left.append("columns") }
+        if inv.textBoxes > 0 { left.append("text boxes") }
+        let list = left.count == 1 ? left[0] : left.dropLast().joined(separator: ", ") + " and " + left.last!
+        parts.append("\(list) \(left.count == 1 ? "is" : "are") left out")
+        let body = parts.count == 1 ? parts[0] : parts.dropLast().joined(separator: ", ") + (parts.count > 2 ? ", and " : " and ") + parts.last!
+        return "Not everything comes over: " + body + "."
+    }
+
+    /// The bar's Convert to Markdown (A). When `<name>.md` is taken, asks first (B). `beside` puts the
+    /// copy in a tab of its own next to the viewer, instead of in the .docx's tab.
+    public func convertToMarkdown(_ tab: String, beside: Bool = false) {
         guard let docx = fileURL(tab), FileManager.default.fileExists(atPath: docx.path) else { return }
         let md = docx.deletingPathExtension().appendingPathExtension("md")
         guard FileManager.default.fileExists(atPath: md.path) else {
-            return startConversion(tab, docx: docx, md: md, replace: false, allowEmpty: false, show: true) { _ in }
+            return startConversion(tab, docx: docx, md: md, replace: false, allowEmpty: false, show: true, beside: beside) { _ in }
         }
-        askNameTaken(tab, docx: docx, md: md, suggest: Self.freeMarkdownName(md).lastPathComponent)
+        askNameTaken(tab, docx: docx, md: md, suggest: Self.freeMarkdownName(md).lastPathComponent, beside: beside)
     }
 
     /// F2's Convert Anyway: a document with only pictures, converted all the same.
@@ -57,11 +96,11 @@ extension AppModel {
         guard let docx = fileURL(tab) else { return }
         var md = docx.deletingPathExtension().appendingPathExtension("md")
         if FileManager.default.fileExists(atPath: md.path) { md = Self.freeMarkdownName(md) }
-        startConversion(tab, docx: docx, md: md, replace: false, allowEmpty: true, show: true) { _ in }
+        startConversion(tab, docx: docx, md: md, replace: false, allowEmpty: true, show: true, beside: tab.hasSuffix(".docx")) { _ in }
     }
 
     /// Board B: the name's taken. A free name is offered in a field the user can change.
-    func askNameTaken(_ tab: String, docx: URL, md: URL, suggest: String) {
+    func askNameTaken(_ tab: String, docx: URL, md: URL, suggest: String, beside: Bool = false) {
         let field = DuoQuestion.Field(label: "Save new as", text: suggest)
         let stem = (suggest as NSString).deletingPathExtension
         var q = DuoQuestion(title: "\(md.lastPathComponent) already exists", choices: [])
@@ -72,7 +111,7 @@ extension AppModel {
         q.note = "Duo suggests a free name; change it if you like. Its images go in \(stem)-images. Replace moves the old copy to the Trash."
         q.choices = [
             .init(label: "Cancel", isCancel: true) {},
-            .init(label: "Replace") { [weak self] in self?.startConversion(tab, docx: docx, md: md, replace: true, allowEmpty: false, show: true) { _ in } },
+            .init(label: "Replace") { [weak self] in self?.startConversion(tab, docx: docx, md: md, replace: true, allowEmpty: false, show: true, beside: beside) { _ in } },
             .init(label: "Open Existing") { [weak self] in self?.openFile(at: md) },
             .init(label: "Convert", isDefault: true) { [weak self] in
                 guard let self else { return }
@@ -82,9 +121,9 @@ extension AppModel {
                 if name.contains("/") || name == ".md" || FileManager.default.fileExists(atPath: target.path) {
                     // Taken too, or not a name: ask again with a free one.
                     return self.askNameTaken(tab, docx: docx, md: name.contains("/") || name == ".md" ? md : target,
-                                             suggest: Self.freeMarkdownName(md).lastPathComponent)
+                                             suggest: Self.freeMarkdownName(md).lastPathComponent, beside: beside)
                 }
-                self.startConversion(tab, docx: docx, md: target, replace: false, allowEmpty: false, show: true) { _ in }
+                self.startConversion(tab, docx: docx, md: target, replace: false, allowEmpty: false, show: true, beside: beside) { _ in }
             },
         ]
         if Env.autoconfirm {
@@ -103,7 +142,7 @@ extension AppModel {
 
     /// Converts off the main thread, writes the copy, and (with `show`) puts it in the .docx's tab
     /// with its notice. The progress bar (C) shows only once it has taken half a second.
-    public func startConversion(_ tab: String, docx: URL, md: URL, replace: Bool, allowEmpty: Bool, show: Bool,
+    public func startConversion(_ tab: String, docx: URL, md: URL, replace: Bool, allowEmpty: Bool, show: Bool, beside: Bool = false,
                          completion: @escaping @MainActor (Result<DocxConversion, Error>) -> Void) {
         conversionFailures[tab] = nil
         var images = Self.imagesFolder(for: md)
@@ -140,7 +179,7 @@ extension AppModel {
             case .success(let r):
                 do {
                     let c = try self.write(r, docx: docx, md: md, images: images, replace: replace, options: opts)
-                    if show { self.showConversion(c, from: tab) } else { self.refreshLive() }
+                    if show { self.showConversion(c, from: tab, beside: beside) } else { self.refreshLive() }
                     self.registerUndo("Convert to Markdown") { model in model.undoConversion(c) }
                     completion(.success(c))
                 } catch {
@@ -183,11 +222,14 @@ extension AppModel {
                               written: r.markdown, replaced: replaced)
     }
 
-    /// D, E: the copy takes the .docx's tab, with its notice.
-    func showConversion(_ c: DocxConversion, from tab: String) {
+    /// D, E: the copy takes the .docx's tab, with its notice; or, with `beside` (the Word viewer, DL-162),
+    /// opens in a tab of its own right after the viewer's, which stays.
+    func showConversion(_ c: DocxConversion, from tab: String, beside: Bool = false) {
         let new = relative(c.markdown) ?? Self.outsideFilePrefix + c.markdown.standardizedFileURL.path
         var docs = openDocuments.filter { $0 != new }
-        if let i = docs.firstIndex(of: tab) { docs[i] = new } else { docs.append(new) }
+        if let i = docs.firstIndex(of: tab) {
+            if beside { docs.insert(new, at: i + 1) } else { docs[i] = new }
+        } else { docs.append(new) }
         openDocuments = docs
         conversions[new] = c
         refreshLive()
@@ -207,10 +249,16 @@ extension AppModel {
         let source = relative(c.source) ?? Self.outsideFilePrefix + c.source.standardizedFileURL.path
         if let i = openDocuments.firstIndex(of: tab) {
             if let e = editorIfLoaded, e.url?.standardizedFileURL == c.markdown.standardizedFileURL { e.closeFile() }
-            var docs = openDocuments.filter { $0 != source }
-            if let j = docs.firstIndex(of: tab) { docs[j] = source } else { docs.insert(source, at: min(i, docs.count)) }
-            openDocuments = docs
-            if rightTab == tab { rightTab = source; selectedFile = source }
+            if openDocuments.contains(source) {
+                // The viewer's tab is still there (the copy opened beside it): the copy's tab just goes.
+                openDocuments = openDocuments.filter { $0 != tab }
+                if rightTab == tab { rightTab = source; selectedFile = source }
+            } else {
+                var docs = openDocuments.filter { $0 != source }
+                if let j = docs.firstIndex(of: tab) { docs[j] = source } else { docs.insert(source, at: min(i, docs.count)) }
+                openDocuments = docs
+                if rightTab == tab { rightTab = source; selectedFile = source }
+            }
         }
         conversions[tab] = nil
         for u in [c.markdown, c.images].compactMap({ $0 }) where fm.fileExists(atPath: u.path) { try? fm.trashItem(at: u, resultingItemURL: nil) }

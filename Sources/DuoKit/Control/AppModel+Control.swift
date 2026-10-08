@@ -609,6 +609,8 @@ extension AppModel {
         // MARK: HTML pages
         case .slide, .slideGo, .slideShapes, .slideNotes, .slidePick, .slideElement:
             slideVerb(id, inv, req, done)
+        case .docMarkup, .docComments:
+            docxVerb(id, inv, req, done)
         case .htmlReload:
             guard let v = visiblePage, v.pageURL != nil else { return done(.fail("no web page is showing")) }
             v.reload(); done(.ok("Reloaded."))
@@ -818,7 +820,7 @@ extension AppModel {
                 if inv.has("copy") { FileActions.copy(out) }
                 done(.ok(out))
             case .fileConvert:
-                // The bar's Convert to Markdown (DL-123), without its question: a taken name fails
+                // The viewer's Convert to Markdown… (DL-123, DL-162), without its question (--yes is always so here): a taken name fails
                 // unless --as names another or --replace sends the old copy to the Trash.
                 guard let (u, r) = url(inv[0]) else { return done(missing(inv[0])) }
                 guard AppModel.isWordDocument(u) else { return done(.fail("\(r) isn't a Word document (.docx)")) }
@@ -830,7 +832,7 @@ extension AppModel {
                 if FileManager.default.fileExists(atPath: md.path), !inv.has("replace") {
                     return done(.fail("“\(md.lastPathComponent)” already exists beside it; pass --as \"\(AppModel.freeMarkdownName(md).lastPathComponent)\" or --replace (the one there goes to the Trash)"))
                 }
-                startConversion(isCurrent ? r : u.path, docx: u, md: md, replace: inv.has("replace"), allowEmpty: inv.has("anyway"), show: isCurrent) { result in
+                startConversion(isCurrent ? r : u.path, docx: u, md: md, replace: inv.has("replace"), allowEmpty: inv.has("anyway"), show: isCurrent, beside: true) { result in
                     switch result {
                     case .success(let c):
                         var lines = ["Converted \(r) to \(rel(c.markdown))" + (c.images.map { " (pictures in \(rel($0))/)" } ?? "") + " in \(p.name). The .docx is unchanged."]

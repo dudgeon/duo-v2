@@ -1907,6 +1907,168 @@ func repoFixture() throws -> Fixture {
         check(m.editor.url == nil, "the editor won't open a deck, whoever asks (C-26)")
     }
 
+    print("the Word viewer (DL-162, docx-viewer-handoff)")
+    do {
+        let fx = repoRoot().appending(path: "docs/design/docx-viewer-handoff/fixture")
+        let board = fx.appending(path: "board/Garden plan.docx"), full = fx.appending(path: "full/Garden plan.docx"), long = fx.appending(path: "long/Long plan.docx")
+        let locked = fx.appending(path: "locked/Contract draft.docx"), damaged = fx.appending(path: "damaged/Broken plan.docx")
+        // What the question counts: the document's own parts.
+        let invFull = Docx.inventory(full), invBoard = Docx.inventory(board)
+        check(invFull.changes == 12 && invFull.comments == 4 && invFull.columns == 0 && invFull.textBoxes == 0, "the full Garden plan has 12 tracked changes and 4 comments (\(invFull))")
+        check(invBoard.changes == 8 && invBoard.comments == 3, "the board's Garden plan has 8 tracked changes and 3 comments (\(invBoard))")
+        check(AppModel.lossNote(invFull) == "Not everything comes over: its 12 tracked changes are accepted, its 4 comments become notes at the end, and page layout is left out.",
+              "the question says what's lost, with the document's counts (\(AppModel.lossNote(invFull)))")
+        check(AppModel.lossNote(.init(changes: 1, comments: 0, columns: 2, textBoxes: 1)) == "Not everything comes over: its 1 tracked change is accepted and page layout, columns and text boxes are left out.",
+              "only the parts it has, and the README's wording for all three")
+        let lossless = (try FileManager.default.contentsOfDirectory(at: repoRoot().appending(path: "Spikes/DocxToMarkdown/docs"), includingPropertiesForKeys: nil)).filter { $0.pathExtension == "docx" }.contains { Docx.inventory($0).isLossless }
+        check(lossless, "a document with no changes, comments, columns or text boxes has nothing lost (the question is skipped)")
+        check(Docx.readability(board) == nil && Docx.readability(locked) == .passwordProtected && Docx.readability(damaged) == .damaged,
+              "a readable document, a password-protected one and a damaged one are told apart")
+        check(DocxViewer.problem(URL(fileURLWithPath: "/x/Old.doc")) == "it’s a Word 97–2004 document", "the old .doc format is a reason to fall back")
+
+        _ = NSApplication.shared
+        let proj = FileManager.default.temporaryDirectory.appending(path: "duo-docx-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: proj.appending(path: "docs"), withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: proj) }
+        for (name, src) in [("Garden plan.docx", board), ("Garden full.docx", full), ("Long plan.docx", long), ("Contract draft.docx", locked)] {
+            try FileManager.default.copyItem(at: src, to: proj.appending(path: "docs/\(name)"))
+        }
+        DocxViewer.defaultResources = repoRoot().appending(path: "Vendor/docx-viewer")
+        var fixture = try repoFixture()
+        fixture.projects.append(try JSONDecoder().decode(Fixture.Project.self, from: JSONSerialization.data(withJSONObject: ["name": "garden", "topic": "Platform", "path": proj.path, "goal": "g"])))
+        let m = AppModel(fixture: fixture)
+        m.terminalsMode = .live
+        m.liveFolders["garden"] = proj
+        m.altitude = .project("garden")
+        func duo2(_ args: String...) -> ControlResponse {
+            var out: ControlResponse?
+            m.handle(ControlRequest(token: "", command: args[0], args: Array(args.dropFirst()), cwd: proj.path)) { out = $0 }
+            let until = Date().addingTimeInterval(10)
+            while out == nil, Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+            return out ?? ControlResponse(ok: false, output: "timed out")
+        }
+        let viewer = m.docxViewer
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 800), styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = viewer.webView
+        func settle(_ file: URL, limit: TimeInterval = 40) -> Bool {
+            var done = false
+            viewer.open(file)
+            viewer.whenSettled { done = true }
+            let until = Date().addingTimeInterval(limit)
+            while !done, Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+            return done
+        }
+        func wait(_ s: TimeInterval) { let until = Date().addingTimeInterval(s); while Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) } }
+        func bytesAndStamp(_ u: URL) -> (Data, Date?) { ((try? Data(contentsOf: u)) ?? Data(), DocxViewer.modified(u)) }
+
+        // Read only: draw each document and the file is the same bytes with the same modification time.
+        let docs = proj.appending(path: "docs")
+        let before = ["Garden plan.docx", "Garden full.docx"].map { bytesAndStamp(docs.appending(path: $0)) }
+        for name in ["Garden plan.docx", "Garden full.docx"] {
+            let file = docs.appending(path: name)
+            guard settle(file), viewer.state == .ready else { check(false, "\(name) is drawn (\(viewer.state))"); continue }
+            var drawn: [[String: Any]]?
+            viewer.drawnParagraphs { drawn = $0 }
+            while drawn == nil { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+            // Every paragraph the file names is on screen under the same w14:paraId.
+            let unzip = Process()
+            unzip.executableURL = URL(fileURLWithPath: "/usr/bin/unzip"); unzip.arguments = ["-p", file.path, "word/document.xml"]
+            let pipe = Pipe(); unzip.standardOutput = pipe
+            try unzip.run()
+            let xml = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+            unzip.waitUntilExit()
+            let ids = xml.matches(of: /<w:p w14:paraId="([0-9A-F]+)"/).map { String($0.1) }
+            let want = Set(ids), seen = Set(drawn!.compactMap { ($0["target"] as? String)?.components(separatedBy: "#p:").last })
+            check(!want.isEmpty && want.isSubset(of: seen), "\(name): all \(want.count) paragraphs are drawn with the file's own w14:paraId (missing \(want.subtracting(seen)))")
+            check(viewer.people.map(\.name) == ["Avery Reviewer", "Blake Editor", "Casey Counsel"], "\(name): people in the order they first appear (\(viewer.people.map(\.name)))")
+        }
+        check(viewer.people.map(\.count) == [5, 9, 2] && viewer.changeCount == 12 && viewer.comments.count == 4, "the full document: Avery 5, Blake 9, Casey 2; 12 changes, 4 comments (\(viewer.people.map(\.count)))")
+        check(viewer.blocked.isEmpty, "the page's policy blocked nothing the renderer needs (\(viewer.blocked))")
+        let after = ["Garden plan.docx", "Garden full.docx"].map { bytesAndStamp(docs.appending(path: $0)) }
+        check(before.map(\.0) == after.map(\.0) && before.map(\.1) == after.map(\.1), "drawing a document leaves its bytes and its modification time alone")
+        // And nothing in the viewer's own code can write: no write API on a document URL, none in the page.
+        let swiftSrc = try String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Editor/DocxViewer.swift"), encoding: .utf8)
+        let pageSrc = try String(contentsOf: repoRoot().appending(path: "Vendor/docx-viewer/docx.js"), encoding: .utf8) + (try String(contentsOf: repoRoot().appending(path: "Vendor/docx-viewer/docx.html"), encoding: .utf8))
+        let writes = ["forWritingAtPath", "forUpdatingAtPath", ".write(to", "atomically", "createFile", "removeItem", "trashItem", "moveItem", "copyItem", "O_WRONLY", "O_RDWR", "truncate(", "setAttributes", "FileHandle(forWriting"]
+        check(writes.allSatisfy { !swiftSrc.contains($0) }, "DocxViewer.swift has no write API (\(writes.filter { swiftSrc.contains($0) }))")
+        check(!pageSrc.contains("method:") && !pageSrc.contains("XMLHttpRequest") && !pageSrc.contains("sendBeacon") && pageSrc.components(separatedBy: "fetch(").count == 2, "the page's one fetch is a plain GET of the document")
+
+        // The verbs.
+        _ = settle(docs.appending(path: "Garden plan.docx"))
+        m.openDocument("docs/Garden plan.docx")
+        check(duo2("doc", "markup").output.contains("All Markup, comments shown, resolved comments folded, everyone’s marks"), "`doc markup` says what the viewer shows (\(duo2("doc", "markup").output.prefix(120)))")
+        check(duo2("doc", "markup", "simple").ok && viewer.markup.mode == "simple", "`doc markup simple` switches the view")
+        check(duo2("doc", "markup", "original", "--person", "blake").ok && viewer.markup.person == "Blake Editor", "--person picks one person by part of the name")
+        check(!duo2("doc", "markup", "sideways").ok && !duo2("doc", "markup", "--person", "nobody").ok, "a mode or person that isn't there is refused")
+        check(duo2("doc", "markup", "all", "--person", "everyone", "--comments", "off", "--show-resolved", "on").ok && !viewer.markup.comments && viewer.markup.resolved && viewer.markup.person == nil, "the toggles and everyone again")
+        _ = duo2("doc", "markup", "all", "--comments", "on", "--show-resolved", "off")
+        check(duo2("doc", "comments").output.contains("[resolved] Blake Editor") && duo2("doc", "comments").output.contains("↳"), "`doc comments` lists threads with replies and the resolved state")
+        check(duo2("doc", "comments", "--resolved").output.contains("Typo here, fixed.") && !duo2("doc", "comments", "--resolved").output.contains("forty"), "`doc comments --resolved` lists only those")
+        _ = settle(docs.appending(path: "Garden full.docx"))
+        check(viewer.markup.mode == "all", "another document starts at All Markup")
+        _ = duo2("doc", "markup", "none")
+        _ = settle(docs.appending(path: "Garden plan.docx"))
+        check(viewer.markup.mode == "simple" || viewer.markup.mode == "original" || viewer.markup.mode == "all", "markup is kept per document")
+        check(viewer.markup(for: docs.appending(path: "Garden full.docx")).mode == "none" && viewer.markup.mode != "none", "…each its own: the full plan keeps No Markup")
+
+        // The fallback.
+        check(settle(docs.appending(path: "Contract draft.docx")) && viewer.state == .failed("it’s protected with a password") && viewer.failureExtra == "Claude can’t read it either.",
+              "a password-protected document falls back, and says Claude can't read it either (\(viewer.state))")
+
+        // Convert asks first, then makes the copy in a tab of its own beside the viewer.
+        m.openDocument("docs/Garden full.docx")
+        m.askConvertToMarkdown("docs/Garden full.docx")
+        let q = SheetCenter.shared.current
+        check(q?.title == "Convert Garden full.docx to Markdown?" && q?.paragraphs == ["Duo makes an editable copy, Garden full.md, beside it. The Word document isn’t changed."]
+              && q?.note?.hasPrefix("Not everything comes over: its 12 tracked changes") == true && q?.choices.map(\.label) == ["Cancel", "Convert"], "Convert to Markdown… asks first, in the README's words")
+        if let c = q?.choices.last { SheetCenter.shared.answer(c) }
+        let until = Date().addingTimeInterval(20)
+        while m.conversions.isEmpty, Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
+        check(m.openDocuments.contains("docs/Garden full.docx") && m.openDocuments.contains("docs/Garden full.md") && m.rightTab == "docs/Garden full.md"
+              && (m.openDocuments.firstIndex(of: "docs/Garden full.md") ?? 0) == (m.openDocuments.firstIndex(of: "docs/Garden full.docx") ?? -9) + 1,
+              "the copy opens in a tab of its own right after the viewer's (\(m.openDocuments))")
+        if let c = m.conversions.values.first { m.undoConversion(c) }
+        check(!FileManager.default.fileExists(atPath: docs.appending(path: "Garden full.md").path) && m.openDocuments.contains("docs/Garden full.docx") && !m.openDocuments.contains("docs/Garden full.md"),
+              "Undo Conversion takes the copy's tab and files away and leaves the viewer's tab")
+        check(DuoAction.resolve(["doc", "markup"]) != nil && DuoAction.resolve(["doc", "comments"]) != nil, "the verbs are in the registry")
+        check(duo2("file", "convert", "docs/Garden plan.docx", "--yes").ok, "`file convert --yes` still converts, without asking")
+        if let c = m.conversions.values.first { m.undoConversion(c) }
+
+        // Dormant when not on screen: a changed file isn't drawn again until the viewer wakes.
+        let copy = docs.appending(path: "Copy.docx")
+        try FileManager.default.copyItem(at: board, to: copy)
+        _ = settle(copy)
+        let drawsBefore = viewer.draws
+        viewer.sleep()
+        try Data(contentsOf: full).write(to: copy)
+        wait(2.5)
+        check(viewer.draws == drawsBefore, "a viewer that isn't on screen doesn't redraw when the file changes")
+        viewer.wake()
+        wait(1.0)
+        check(viewer.draws == drawsBefore + 1, "…and redraws once, when it is shown again")
+
+        // A long document draws once, never lays out again (F-225, F-226).
+        var statsBefore: [String: Any] = [:]
+        viewer.pageStats { statsBefore = $0 }
+        while statsBefore.isEmpty { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+        let started = Date()
+        guard settle(docs.appending(path: "Long plan.docx"), limit: 60), viewer.state == .ready else { check(false, "the 73-section document is drawn (\(viewer.state))"); return }
+        let first = Date().timeIntervalSince(started)
+        var stats1: [String: Any] = [:]
+        viewer.pageStats { stats1 = $0 }
+        while stats1.isEmpty { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+        let frames0 = viewer.frameChanges
+        wait(10)
+        var stats2: [String: Any] = [:]
+        viewer.pageStats { stats2 = $0 }
+        while stats2.isEmpty { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+        print("  the 73-section document: drawn in \(viewer.drawMillis) ms (page said ready; \(Int(first * 1000)) ms with the check's loop), \(stats2["height"] ?? 0) px tall; after 10 s: \(stats2)")
+        check(stats2["opens"] as? Int == (statsBefore["opens"] as? Int ?? -9) + 1 && stats2["mutations"] as? Int == 0 && stats2["sheetResizes"] as? Int == 0 && stats2["height"] as? Int == stats1["height"] as? Int && viewer.frameChanges == frames0 && viewer.draws >= 1,
+              "a 73-section document draws once: one draw, no DOM change, no resize of the sheet and no change of the web view's frame in 10 s")
+        check(viewer.drawMillis < 15_000, "…in \(viewer.drawMillis) ms")
+        try? FileManager.default.removeItem(at: copy)
+    }
+
     print("a Word document as Markdown (ENH-14, DL-123)")
     let wordDocs = repoRoot().appending(path: "Spikes/DocxToMarkdown/docs")
     let golden = repoRoot().appending(path: "Spikes/DocxToMarkdown/out/duo")

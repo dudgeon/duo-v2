@@ -66,6 +66,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
     case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docTable = "doc table", docFind = "doc find"
     case docProp = "doc prop"
+    case docMarkup = "doc markup", docComments = "doc comments"
     case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history", docRevert = "doc revert"
     // HTML pages
     case browserOpen = "browser open", browserAllow = "browser allow", browserSites = "browser sites"
@@ -273,8 +274,8 @@ extension DuoAction {
         .init(.fileTrash, .files, "<path>", "Move to the Trash (never deleted outright).", ui: ["Move to Trash"]),
         .init(.fileReveal, .files, "<path>", "Show in Finder.", ui: ["Reveal in Finder"]),
         .init(.fileOpenWith, .files, "<path> [--app <name>]", "Open in another app (the default app if none named).", ui: ["Open With", "Other…", "Open Original"]),
-        .init(.fileConvert, .files, "<docx> [--as <name.md>] [--replace] [--anyway]", "Make a Markdown copy of a Word document beside it (<name>.md, pictures in <name>-images); the .docx isn't changed (DL-123). Headings, lists and layout tables are inferred and cleaned; tracked changes are accepted; comments become endnotes. Prints what it inferred and what didn't come over. A taken name fails unless --as or --replace (the one there goes to the Trash); --anyway converts a document with no text. Undo with `duo2 undo`.",
-              ui: ["Convert to Markdown", "Convert Anyway"]),
+        .init(.fileConvert, .files, "<docx> [--as <name.md>] [--replace] [--anyway] [--yes]", "Make a Markdown copy of a Word document beside it (<name>.md, pictures in <name>-images); the .docx isn't changed (DL-123). Headings, lists and layout tables are inferred and cleaned; tracked changes are accepted; comments become endnotes. Prints what it inferred and what didn't come over. A taken name fails unless --as or --replace (the one there goes to the Trash); --anyway converts a document with no text. The copy opens in a tab of its own beside the Word viewer. The bar's Convert to Markdown… asks first, saying what won't come over; this verb never asks, and --yes (accepted for scripts) says so. Undo with `duo2 undo`.",
+              ui: ["Convert to Markdown", "Convert to Markdown…", "Convert", "Convert Anyway"]),
         .init(.filePath, .files, "<path> [--relative | --link] [--copy]", "Print a file's path, relative path or Markdown link; --copy puts it on the clipboard.",
               ui: ["Copy Path", "Copy Relative Path", "Copy as Link"]),
 
@@ -321,6 +322,11 @@ extension DuoAction {
         .init(.docProp, .docs, "list | get <name> | set <name> <value> | remove <name> | type <name> <text|list|number|checkbox|date|datetime|link>",
               "The showing document's properties (frontmatter): read them, or change one line through the editor, highlighted as Claude's (DB-16). Lists: `set tags \"[a, b]\"`.",
               ui: ["Add a property", "property type menu", "Pick a date", "property checkbox"]),
+        .init(.docMarkup, .docs, "[all|simple|none|original] [--comments on|off] [--show-resolved on|off] [--person <name>|everyone]",
+              "The Word document showing: which markup its viewer draws, and change it, as the Markup menu does (DL-162). All Markup draws every change in its person's colour with the comments; simple accepts the changes and marks the margin where one was; none accepts them with no marks; original shows the text before them. --person shows only that person's marks. Kept per document while Duo runs. With nothing, says what it shows now and who is in the document.",
+              ui: ["Markup", "All Markup", "Simple Markup", "No Markup", "Original", "Show Comments", "Show Resolved Comments"]),
+        .init(.docComments, .docs, "[--resolved]",
+              "The comments of the Word document showing, from what its viewer drew: author, date, text, replies and whether each is resolved (--resolved: only those)."),
         .init(.docInsert, .docs, "<text> [--line <n>]", "Insert text into the showing document through the editor (highlighted as added by Claude), at a line or the caret."),
         .init(.docReplace, .docs, "<find> <replacement>", "Replace text in the showing document through the editor (highlighted as added by Claude)."),
 
@@ -459,7 +465,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "force", "session-only", "left", "right"]
+    static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     static let optionalValues: Set<String> = ["remote-control"]
