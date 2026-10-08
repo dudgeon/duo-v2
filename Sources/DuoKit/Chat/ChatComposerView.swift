@@ -203,11 +203,13 @@ struct ChatComposerField: NSViewRepresentable {
         let v = ComposerTextView()
         v.delegate = context.coordinator
         v.coordinator = context.coordinator
+        chat.composerView = v
         return v
     }
 
     func updateNSView(_ v: ComposerTextView, context: Context) {
         context.coordinator.chat = chat
+        chat.composerView = v
         if v.plainText != chat.ui.composer { v.setPlain(chat.ui.composer) }
         if context.coordinator.chooseSeen != chat.chooseMention {
             context.coordinator.chooseSeen = chat.chooseMention
@@ -292,6 +294,12 @@ final class ComposerChip: NSTextAttachment {
     var path = ""
 }
 
+/// An image pasted in: Claude Code's `[Image #N]` token is what's sent; the picture is kept for the design.
+final class ComposerImageChip: NSTextAttachment {
+    var token = ""
+    var pasted: NSImage?
+}
+
 final class ComposerTextView: NSTextView {
     weak var coordinator: ChatComposerField.Coordinator?
     static let font = NSFont.systemFont(ofSize: DuoTextStyle.chatBody.spec.size)
@@ -328,15 +336,26 @@ final class ComposerTextView: NSTextView {
     var plainText: String {
         var out = ""
         textStorage?.enumerateAttributes(in: NSRange(location: 0, length: textStorage?.length ?? 0)) { attrs, range, _ in
-            if let chip = attrs[.attachment] as? ComposerChip { out += FileDrop.terminalText([URL(fileURLWithPath: chip.path)]).trimmingCharacters(in: .whitespaces) }
+            if let chip = attrs[.attachment] as? ComposerImageChip { out += chip.token }
+            else if let chip = attrs[.attachment] as? ComposerChip { out += FileDrop.terminalText([URL(fileURLWithPath: chip.path)]).trimmingCharacters(in: .whitespaces) }
             else { out += (string as NSString).substring(with: range) }
         }
         return out
     }
 
+    /// Sets the text; a `[Image #N]` token whose image this chat holds comes back as its chip.
     func setPlain(_ s: String) {
-        textStorage?.setAttributedString(NSAttributedString(string: s, attributes: typingAttributes))
-        setSelectedRange(NSRange(location: (s as NSString).length, length: 0))
+        let out = NSMutableAttributedString(), ns = s as NSString
+        var at = 0
+        for m in ChatPaste.tokenPattern.matches(in: s, range: NSRange(location: 0, length: ns.length)) {
+            let token = ns.substring(with: m.range)
+            guard let image = coordinator?.chat.ui.images[token] else { continue }
+            out.append(NSAttributedString(string: ns.substring(with: NSRange(location: at, length: m.range.location - at)), attributes: typingAttributes))
+            out.append(imageChip(token, image)); at = m.range.upperBound
+        }
+        out.append(NSAttributedString(string: ns.substring(from: at), attributes: typingAttributes))
+        textStorage?.setAttributedString(out)
+        setSelectedRange(NSRange(location: out.length, length: 0))
         styleMentions()
     }
 
@@ -417,14 +436,47 @@ final class ComposerTextView: NSTextView {
         }
     }
 
-    /// Text only; an image pasted goes to the terminal, as chat mode can't send one (Q-56e).
+    /// Text pastes; a copied file becomes a chip; an image goes into Claude's prompt through Claude
+    /// Code's own image paste and shows as a chip (ChatPaste).
     override func paste(_ sender: Any?) {
-        let pb = NSPasteboard.general
-        if pb.string(forType: .string) == nil, pb.canReadObject(forClasses: [NSImage.self], options: nil), let c = coordinator?.chat {
-            c.fallBack(.handedOver("Paste images into Claude’s prompt here; chat mode can’t send them yet. Chat comes back after."))
-            return
+        for route in ChatPaste.routes(NSPasteboard.general) {
+            switch route {
+            case .chip(let u): insertChip(u)
+            case .text: pasteAsPlainText(sender)
+            case .image(let image):
+                guard let chat = coordinator?.chat else { break }
+                Task { [weak self] in
+                    let r = await chat.attachClipboardImage(image)
+                    if r.ok, let token = chat.ui.attachedTokens.last, let image = chat.ui.images[token] { self?.insertImageChip(token, image) } else { NSSound.beep() }
+                }
+            }
         }
-        pasteAsPlainText(sender)
+    }
+
+    /// Paste is on for text, an image or a file (an image alone would leave it off: no graphics).
+    override func validateUserInterfaceItem(_ item: any NSValidatedUserInterfaceItem) -> Bool {
+        if item.action == #selector(paste(_:)) || item.action == #selector(pasteAsPlainText(_:)) { return ChatPaste.canPaste(NSPasteboard.general) }
+        return super.validateUserInterfaceItem(item)
+    }
+
+    override func validateMenuItem(_ item: NSMenuItem) -> Bool {
+        if item.action == #selector(paste(_:)) || item.action == #selector(pasteAsPlainText(_:)) { return ChatPaste.canPaste(NSPasteboard.general) }
+        return super.validateMenuItem(item)
+    }
+
+    func imageChip(_ token: String, _ image: NSImage) -> NSAttributedString {
+        let chip = ComposerImageChip()
+        chip.token = token
+        chip.pasted = image
+        chip.image = Self.chipImage(String(token.dropFirst().dropLast()))   // stand-in look until the design lands
+        chip.bounds = NSRect(x: 0, y: -6, width: chip.image!.size.width, height: chip.image!.size.height)
+        return NSAttributedString(attachment: chip)
+    }
+
+    func insertImageChip(_ token: String, _ image: NSImage) {
+        let s = NSMutableAttributedString(attributedString: imageChip(token, image))
+        s.append(NSAttributedString(string: " ", attributes: typingAttributes))
+        insertText(s, replacementRange: NSRange(location: min(selectedRange().location, textStorage?.length ?? 0), length: 0))
     }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { GuardedTerminalView.fileURLs(sender.draggingPasteboard).isEmpty ? super.draggingEntered(sender) : .copy }
@@ -478,7 +530,7 @@ extension ChatSession {
     /// Text typed in the terminal is Claude's prompt: the composer opens on it (handoff `composer`).
     /// The screen can't tell typed text from a dim suggestion (F-108), so the real buffer is asked.
     func prefillComposer() {
-        guard let input = screen.input, ui.composer.isEmpty, ui.composerBasis == nil, !input.isEmpty, !input.hasPrefix("/"), !sending else { return }
+        guard let input = screen.input, ui.composer.isEmpty, ui.composerBasis == nil, ui.attachedTokens.isEmpty, !input.isEmpty, !input.hasPrefix("/"), !sending else { return }
         guard usesExternalEditor else { return }   // pasting needs an empty prompt anyway
         Task {
             guard let real = await peekPrompt(), ui.composer.isEmpty else { return }

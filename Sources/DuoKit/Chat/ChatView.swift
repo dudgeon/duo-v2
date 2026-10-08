@@ -28,6 +28,9 @@ public final class ChatUIState {
     public var composer = ""
     public var composerBasis: String?
     public var composerFocused = false
+    /// Images pasted into the composer, by Claude Code's `[Image #N]` token, and the tokens in attach order.
+    public var images: [String: NSImage] = [:]
+    public var attachedTokens: [String] = []
     /// `@` in the composer (ENH-3, DL-133): the word after it and its matches (nil: no menu), and
     /// the row selected. Esc closes it until the caret leaves that `@` word.
     public var mention: (query: String, matches: [FileMention.Match])?

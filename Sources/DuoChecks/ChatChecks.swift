@@ -759,4 +759,63 @@ func spikeScreen(_ name: String) -> String {
         guard case .claude(let turn)? = log.items.last, case .run(let r)? = ChatRuns.blocks(turn.segments).first else { return check(false, "a running run") }
         check(ChatRuns.line(r) == "Searched for 1 pattern, read 1 file, searching for 1 pattern…", "a running run counts up (\(ChatRuns.line(r)))")
     }
+
+    print("chat mode: paste in the composer (images through Claude Code's Ctrl+V)")
+    do {
+        func board(_ fill: (NSPasteboard) -> Void) -> NSPasteboard { let pb = NSPasteboard.withUniqueName(); pb.clearContents(); fill(pb); return pb }
+        let png: Data = {
+            let img = NSImage(size: NSSize(width: 8, height: 8), flipped: false) { r in NSColor.red.setFill(); r.fill(); return true }
+            return NSBitmapImageRep(data: img.tiffRepresentation!)!.representation(using: .png, properties: [:])!
+        }()
+        let text = board { $0.setString("hello", forType: .string) }
+        let image = board { $0.setData(png, forType: .png) }
+        let dir = FileManager.default.temporaryDirectory.appending(path: "duo-paste-\(getpid())")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let pic = dir.appending(path: "a.png"), doc = dir.appending(path: "b.txt")
+        try png.write(to: pic); try Data("x".utf8).write(to: doc)
+        let file = board { $0.writeObjects([doc as NSURL]) }
+        let pics = board { $0.writeObjects([pic as NSURL, doc as NSURL]) }
+        check(!ChatPaste.canPaste(board { _ in }), "paste is off for an empty pasteboard")
+        check(ChatPaste.canPaste(text) && ChatPaste.canPaste(image) && ChatPaste.canPaste(file), "paste is on for text, an image and a copied file")
+        func shape(_ pb: NSPasteboard) -> String {
+            ChatPaste.routes(pb).map { r -> String in switch r { case .text: "text"; case .chip(let u): "chip:" + u.lastPathComponent; case .image(let i): i == nil ? "image?" : "image" } }.joined(separator: ",")
+        }
+        check(shape(text) == "text" && shape(image) == "image", "text pastes as text, an image alone as the image route (\(shape(text)) \(shape(image)))")
+        check(shape(file) == "chip:b.txt" && shape(pics) == "chip:b.txt,image", "a copied file is a chip; an image file goes the image route (\(shape(file)) \(shape(pics)))")
+        check(shape(board { $0.setString("a.png", forType: .string); $0.setData(png, forType: .png) }) == "text", "text with an image is text")
+        try? FileManager.default.removeItem(at: dir)
+
+        check(ChatKey.ctrlV.bytes == "\u{16}", "Ctrl+V is byte 0x16")
+        check(ChatPaste.newToken(before: "", after: "[Image #1] ") == "[Image #1]" && ChatPaste.newToken(before: "[Image #1] ", after: "[Image #1] [Image #2] ") == "[Image #2]"
+              && ChatPaste.newToken(before: "[Image #1] hi", after: "[Image #1] hi") == nil && ChatPaste.newToken(before: "[Image #2] ", after: "[Image #3] ") == "[Image #3]", "a new [Image #N] token is read from the prompt before and after")
+
+        let img = NSImage(size: NSSize(width: 4, height: 4))
+        check(ComposerProbe.sent(setting: "look [Image #2] and [Image #9] please", images: [:], adding: "[Image #3]") == "look [Image #2] and [Image #9] please[Image #3] ", "an image chip yields its token (after the text, a space after it)")
+        check(ComposerProbe.sent(setting: "look [Image #2] ok ", images: ["[Image #2]": img], adding: "[Image #3]") == "look [Image #2] ok [Image #3] ", "a token with its image comes back as a chip that yields the same token")
+        let a = ["[Image #1]", "[Image #2]", "[Image #3]"]
+        let keepAll = ChatPaste.sendPlan(attached: a, composer: "[Image #1] [Image #2] [Image #3] what are these")
+        check(keepAll == .init(remove: [], keep: a, paste: "what are these"), "send plan: all chips kept, text pasted after them (\(keepAll))")
+        let drop = ChatPaste.sendPlan(attached: a, composer: "see [Image #2] only")
+        check(drop == .init(remove: ["[Image #1]", "[Image #3]"], keep: ["[Image #2]"], paste: "see only"), "send plan: removed chips' tokens are deleted, the text keeps no tokens (\(drop))")
+        check(ChatPaste.sendPlan(attached: a, composer: "plain").remove == a && ChatPaste.sendPlan(attached: [], composer: " hi ").paste == "hi", "send plan: no chips left, or none attached")
+        check(ChatPaste.promptHoldsOnly("[Image #1] [Image #2]", a) && !ChatPaste.promptHoldsOnly("[Image #1] typed", a) && !ChatPaste.promptHoldsOnly("[Image #7]", a), "the prompt may hold only the attached tokens")
+        // Deleting #1 and #3 from "[Image #1] [Image #2] [Image #3] " with the caret at the end.
+        var units = ChatPaste.units("[Image #1] [Image #2] [Image #3]"), cursor = units.count, keys: [[ChatKey]] = []
+        for t in ["[Image #1]", "[Image #3]"] {
+            let step = ChatPaste.deleteStep(units: units, cursor: cursor, token: t)!
+            keys.append(step.keys); units = step.units; cursor = step.cursor
+        }
+        check(units == [" ", "[Image #2]", " ", " "] && keys == [[.left, .left, .left, .left, .left, .backspace], [.right, .right, .right, .right, .backspace]] && cursor == 3,
+              "deleting tokens: Left to just after, Backspace; then back (\(keys) \(units) \(cursor))")
+        check(ChatPaste.deleteStep(units: units, cursor: cursor, token: "[Image #5]") == nil, "a token the prompt lacks is refused")
+    }
+    do {
+        let log = ChatLog()
+        let b64 = Data("png".utf8).base64EncodedString()
+        let rec: ChatJSON = ["type": "user", "timestamp": "2026-10-08T10:00:00.000Z", "message": ["role": "user", "content": [
+            ["type": "text", "text": "[Image #1]what is this"], ["type": "image", "source": ["type": "base64", "media_type": "image/png", "data": b64]]]]]
+        ChatIngest.record(rec, into: log, lastDeclined: nil)
+        guard case .you(let y)? = log.items.last else { return check(false, "a message with an image") }
+        check(y.text == "[Image #1]what is this" && y.images == [ChatImage(mediaType: "image/png", data: Data("png".utf8))], "an image block is kept on your message, its token stays in the text")
+    }
 }

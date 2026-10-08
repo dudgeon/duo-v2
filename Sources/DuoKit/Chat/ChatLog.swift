@@ -45,8 +45,16 @@ public struct ChatYou: Equatable, Sendable {
     public var queued = false
     /// Sent in plan mode (`You · 10:30 · plan mode`).
     public var planMode = false
+    /// Pictures sent with it (the transcript's image blocks); its text keeps `[Image #N]`.
+    public var images: [ChatImage] = []
     var fromHook = false
     var fromTranscript = false
+}
+
+public struct ChatImage: Equatable, Sendable {
+    public var mediaType: String
+    public var data: Data
+    public init(mediaType: String, data: Data) { self.mediaType = mediaType; self.data = data }
 }
 
 public struct ChatNote: Equatable, Sendable {
@@ -310,6 +318,14 @@ public final class ChatLog: @unchecked Sendable {
         if fromHook { y.fromHook = true } else { y.fromTranscript = true }
         items.append(.you(y))
         turnStarted = time ?? Date()
+    }
+
+    /// A picture of your latest message (from its transcript record).
+    public func addImage(_ image: ChatImage) {
+        guard let i = items.indices.reversed().prefix(12).first(where: { if case .you = items[$0] { return true } else { return false } }),
+              case .you(var y) = items[i] else { return }
+        y.images.append(image)
+        items[i] = .you(y)
     }
 
     /// Your message, sent from the composer: shown now, matched when the hook and transcript echo it.

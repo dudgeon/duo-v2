@@ -25,6 +25,7 @@ extension ChatSession {
         let wasBusy = s.kind == .busy
         sending = true
         defer { sending = false; composing = false }
+        var echo = text, bubble = text
         if usesExternalEditor, let dir = composeDir {
             // What Claude's prompt really holds: known when the composer opened on it; empty when the
             // screen shows nothing there; otherwise asked (a dim suggestion reads as text, F-108).
@@ -52,21 +53,35 @@ extension ChatSession {
                 return finish(.refused("Claude Code didn’t open its editor"))
             }
         } else {
-            guard (s.input ?? "").isEmpty else { return finish(.refused("Claude’s prompt already holds “\((s.input ?? "").prefix(40))”")) }
-            terminal?.sendKeys("\u{1b}[200~" + text + "\u{1b}[201~")
+            let prompt = s.input ?? ""
+            var pasted = text
+            if ui.attachedTokens.isEmpty {
+                guard prompt.isEmpty else { return finish(.refused("Claude’s prompt already holds “\(prompt.prefix(40))”")) }
+            } else {
+                // Images this composer attached are in the prompt as tokens; they stay there and the text
+                // goes in after them (a token can't be typed back where it was in the text).
+                guard ChatPaste.promptHoldsOnly(prompt, ui.attachedTokens) else { return finish(.refused("Claude’s prompt already holds “\(prompt.prefix(40))”")) }
+                let plan = ChatPaste.sendPlan(attached: ui.attachedTokens, composer: text)
+                if let why = await removeImageTokens(plan.remove, from: prompt) { return finish(.refused(why)) }
+                pasted = plan.paste
+                echo = (plan.keep + [plan.paste]).filter { !$0.isEmpty }.joined(separator: " ")
+                bubble = plan.keep.joined() + plan.paste
+            }
+            if !pasted.isEmpty { terminal?.sendKeys("\u{1b}[200~" + pasted + "\u{1b}[201~") }
             await pause(250_000_000)
         }
         let echoed = reread()
-        guard echoed.kind == .idle || echoed.kind == .busy, Self.echoMatches(echoed.input ?? "", text) else {
+        guard echoed.kind == .idle || echoed.kind == .busy, Self.echoMatches(echoed.input ?? "", echo) else {
             return finish(.refused("your text didn’t appear in Claude’s prompt as sent"))
         }
         // Shown before Return: the prompt's hook can arrive within the pause after it, and must
         // find this bubble to match.
-        log.sent(text, time: now, queued: wasBusy, planMode: s.mode == .plan)
+        log.sent(bubble, time: now, queued: wasBusy, planMode: s.mode == .plan)
         lastCommand = text.hasPrefix("/") ? (String(text.prefix { !$0.isWhitespace }), Date()) : nil
         _ = await press(.enter)
         ui.composer = ""
         ui.composerBasis = nil
+        forgetImages()
         return .done
     }
 
