@@ -17,13 +17,19 @@ states=("$@")
 [ ${#states[@]} -gt 0 ] || states=(overview flow-zoom-1 project flow-zoom-2 flow-zoom-3 flow-zoom-4)
 extra=()
 [ -z "${WINDOW:-}" ] || extra+=(--window "$WINDOW")
+# Background by default (F-227): drawn, never shown. DUO_TEST_FOREGROUND=1 shows each window: Geoff's OK first.
+fg=()
+if [ "${DUO_TEST_FOREGROUND:-}" = 1 ]; then
+  fg=(--env DUO_TEST_FOREGROUND=1)
+  echo "⚠ DUO_TEST_FOREGROUND=1: this run shows a Duo window, about 5 s for each of ${#states[@]} state(s) (Geoff's OK first)" >&2
+fi
 
 # Run the app with a watchdog: a launch that never captures (findings F-8) fails instead of hanging.
 capture() {
   local s="$1" i
   # Launched through LaunchServices: once the bundle has been opened with `open`, executing its
   # binary directly can leave the app without a window (findings F-19).
-  open -g -W -n --stdout /dev/null --stderr "$out/$s.log" "$root/build/Duo.app" --args --state "$s" --capture "$out/$s.png" ${extra[@]+"${extra[@]}"} &
+  open -g -W -n ${fg[@]+"${fg[@]}"} --stdout /dev/null --stderr "$out/$s.log" "$root/build/Duo.app" --args --state "$s" --capture "$out/$s.png" ${extra[@]+"${extra[@]}"} &
   local pid=$!
   for ((i = 0; i < 120; i++)); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done
   if kill -0 "$pid" 2>/dev/null; then
