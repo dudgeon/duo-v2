@@ -18,6 +18,14 @@ public struct TaskNote: Sendable, Equatable {
     public var archived = false
     /// The note's `id:` (DL-115): what a `duo2://task/<id>` link names, so it survives renames and moves.
     public var id: String? = nil
+    /// What a card shows (DL-148, board 6), read as written.
+    public var owner: String? = nil
+    public var waitingOn: String? = nil
+    public var due: String? = nil
+    public var created: String? = nil
+    public var completed: String? = nil
+    /// The `references:` list (DL-150): quoted markdown links to files, folders and URLs.
+    public var references: [String] = []
 }
 
 public enum TaskNotes {
@@ -46,7 +54,14 @@ public enum TaskNotes {
         let title = [fm.string("title"), heading].compactMap { $0?.trimmingCharacters(in: .whitespaces) }.first { !$0.isEmpty }
         return TaskNote(path: path, title: title ?? stem, status: fm.string("status"),
                         sessionIds: sessionIds(fm.list("sessions")), archived: fm.string("archived")?.lowercased() == "true",
-                        id: fm.string("id").flatMap { $0.isEmpty ? nil : $0 })
+                        id: fm.string("id").flatMap { $0.isEmpty ? nil : $0 },
+                        owner: nonEmpty(fm.string("owner")), waitingOn: nonEmpty(fm.string("waiting_on")),
+                        due: nonEmpty(fm.string("due")), created: nonEmpty(fm.string("created")),
+                        completed: nonEmpty(fm.string("completed")), references: fm.list("references").filter { !$0.isEmpty })
+    }
+
+    static func nonEmpty(_ s: String?) -> String? {
+        s.flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 }
     }
 
     /// The session ids in `sessions:` items: `duo2://session/<id>` links, or bare ids.

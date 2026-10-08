@@ -193,7 +193,7 @@ public enum LiveSnapshot {
             }
             // Tasks (DL-93): a note's `sessions:` links make its bundle, beside the groups (DL-88).
             for t in TaskNotes.load(project: f.folder) {
-                allTasks.append(.init(project: name, path: t.path, title: t.title, status: t.status, sessionIds: t.sessionIds, archived: t.archived ? true : nil))
+                allTasks.append(.init(project: name, note: t))
                 guard !t.archived else { continue }   // filed away: its sessions list as themselves (DL-115)
                 let names = t.sessionIds.compactMap { id in sessions.first { $0.sessionId == id && $0.project == name }?.name }
                 guard !names.isEmpty else { continue }
