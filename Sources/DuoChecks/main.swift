@@ -1745,6 +1745,18 @@ func repoFixture() throws -> Fixture {
         check(ActionID.hangs.action.local && ActionID.hangs.action.family == .app, "duo2 hangs reads the log without the app")
         HangLog.clear(f)
         check(HangLog.read(from: f).isEmpty, "--clear empties it")
+        // F-208: a stall is written while it goes on, so a freeze that never ends leaves stacks.
+        let t1 = t0.addingTimeInterval(500.37)
+        HangLog.append(.init(at: t1, ms: 2050, screen: "all projects · chat", version: "v", samples: [["Duo@0x10"]], binary: "/x", ongoing: true), to: f)
+        HangLog.append(.init(at: t1, ms: 12100, screen: "all projects · chat", version: "v", samples: [["Duo@0x10"], ["Duo@0x20"]], binary: "/x", ongoing: true), to: f)
+        var ongoing = HangLog.read(from: f)
+        check(ongoing.count == 1 && ongoing[0].ms == 12100 && ongoing[0].ongoing == true, "a stall still going is one record, rewritten as it goes on")
+        check(HangLog.report(ongoing, stacks: false).contains("12100 ms+ (still stuck when last written)"), "the report says a stall was still going")
+        HangLog.append(.init(at: t1, ms: 15000, screen: "all projects · chat", version: "v"), to: f)
+        HangLog.append(.init(at: t1.addingTimeInterval(30), ms: 300, screen: "s", version: "v"), to: f)
+        ongoing = HangLog.read(from: f)
+        check(ongoing.map(\.ms) == [15000, 300] && ongoing[0].ongoing == nil, "once it ends, the whole stall replaces it")
+        HangLog.clear(f)
     }
 
     print("duo2 slide … (ENH-12, DL-125)")

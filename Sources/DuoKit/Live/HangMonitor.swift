@@ -22,6 +22,12 @@ public final class HangMonitor: @unchecked Sendable {
     static let interval: TimeInterval = 0.05
     static let sampleAfter: TimeInterval = 0.5
     static let maxSamples = 30
+    /// A stall this long is written while it goes on.
+    static let writeOngoingAfter: TimeInterval = 2
+    private var pings = 0
+    private var screenNow = ""
+    private var lastScreen: String { lock.lock(); defer { lock.unlock() }; return screenNow }
+    private func setLastScreen(_ s: String) { lock.lock(); screenNow = s; lock.unlock() }
 
     /// Starts watching; call on the main thread. `screen` describes what Duo shows.
     @MainActor public func start(screen: @escaping @MainActor () -> String) {
@@ -47,15 +53,31 @@ public final class HangMonitor: @unchecked Sendable {
         let answered = DispatchSemaphore(value: 0)
         while isRunning {
             let sent = Date()
-            DispatchQueue.main.async { answered.signal() }
+            pings += 1
+            // What's on screen, every 2 s while the main thread answers: a stall still going can't ask.
+            if pings % 40 == 1 { DispatchQueue.main.async { [self] in let s = screen(); setLastScreen(s); answered.signal() } }
+            else { DispatchQueue.main.async { answered.signal() } }
             if answered.wait(timeout: .now() + Self.interval) == .success {
                 Thread.sleep(forTimeInterval: Self.interval)
                 continue
             }
-            // Late: keep waiting, sampling once it's past half a second.
+            // Late: keep waiting, sampling once it's past half a second: every 50 ms for 1.5 s, then
+            // once a second. Past 2 s the stall is written while it goes on, and again every 10 s,
+            // so a freeze that never ends still leaves its stacks (F-208).
             var samples: [[String]] = []
+            var lastSample = Date.distantPast, written: Date?
             while answered.wait(timeout: .now() + Self.interval) == .timedOut {
-                if Date().timeIntervalSince(sent) >= Self.sampleAfter, samples.count < Self.maxSamples, let s = sampleMain() { samples.append(s) }
+                let now = Date(), stuck = now.timeIntervalSince(sent)
+                if stuck >= Self.sampleAfter, samples.count < Self.maxSamples
+                    || (samples.count < Self.maxSamples * 2 && now.timeIntervalSince(lastSample) >= 1), let s = sampleMain() {
+                    samples.append(s); lastSample = now
+                }
+                if stuck >= Self.writeOngoingAfter, written.map({ now.timeIntervalSince($0) >= 10 }) ?? true {
+                    written = now
+                    let r = HangLog.Record(at: sent, ms: Int(stuck * 1000), screen: lastScreen, version: Self.version,
+                                           samples: samples.isEmpty ? nil : samples, binary: samples.isEmpty ? nil : Self.binary, ongoing: true)
+                    DispatchQueue.global(qos: .utility).async { HangLog.append(r) }
+                }
             }
             let ms = Int(Date().timeIntervalSince(sent) * 1000)
             guard Double(ms) / 1000 >= HangLog.threshold else { continue }

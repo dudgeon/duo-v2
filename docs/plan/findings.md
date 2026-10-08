@@ -2554,3 +2554,9 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
   On the same fixture: 3.1% mean CPU (8.2% max), no stalls. A faster flip (0.55 s / 0.15 s) went from 37.5% mean and 2 stalls to 11.2% and none.
 - **Trap:** Claude Code 2.1.219 can't resume a transcript it didn't write (it throws reading `o.idx`). A generated fixture's tabs all die at once, which hides any storm; generate the restored sessions' transcripts with the CLI (`claude -p … --session-id`) or use a stand-in TUI.
 - **Trap:** an isolated Duo's window never takes focus and may be occluded, which can skip layout. A run that measures layout cost needs the window unoccluded.
+
+## F-209 · The hang log writes a stall while it's still going (F-208's proposal (b))
+
+- `HangMonitor` writes a record (`ongoing: true`) once a stall passes 2 s, and again every 10 s while it lasts, with the samples so far (every 50 ms for 1.5 s, then one a second, up to 60) and the screen as it was last read (every 2 s while Duo answers). When the stall ends, the whole record replaces it (`HangLog.append` drops the ongoing line for the same start; times are kept to the second). A freeze that ends in a force quit leaves its stacks; `duo2 hangs` marks it "still stuck when last written".
+- **Live:** the harness's `freeze:9` (new; blocks the main thread) wrote a 2,127 ms record with 14 samples while frozen; when it ended, one 8,948 ms record with 34 samples replaced it.
+- Still local only: nothing leaves the Mac (crash reporting, proposal (c), is ENH-46's note).

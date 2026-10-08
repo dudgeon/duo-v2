@@ -23,9 +23,12 @@ public enum HangLog {
         public var samples: [[String]]?
         /// The app's executable and where it was loaded, to read the samples' Duo frames.
         public var binary: String?
+        /// Written while the stall was still going (F-208): a stall that never ends (a freeze, then
+        /// a force quit) leaves this record; one that ends replaces it with the whole stall.
+        public var ongoing: Bool?
 
-        public init(at: Date, ms: Int, screen: String, version: String, samples: [[String]]? = nil, binary: String? = nil) {
-            self.at = at; self.ms = ms; self.screen = screen; self.version = version; self.samples = samples; self.binary = binary
+        public init(at: Date, ms: Int, screen: String, version: String, samples: [[String]]? = nil, binary: String? = nil, ongoing: Bool? = nil) {
+            self.at = at; self.ms = ms; self.screen = screen; self.version = version; self.samples = samples; self.binary = binary; self.ongoing = ongoing
         }
     }
 
@@ -33,10 +36,18 @@ public enum HangLog {
     static let decoder: JSONDecoder = { let d = JSONDecoder(); d.dateDecodingStrategy = .iso8601; return d }()
 
     /// One line at the end; past the cap, only the newer half of the file is kept.
+    /// A record for a stall already written while it went on replaces that one.
     public static func append(_ r: Record, to url: URL = file) {
         guard let line = try? encoder.encode(r) else { return }
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         var data = (try? Data(contentsOf: url)) ?? Data()
+        // The same stall, written earlier while it was going: drop that line.
+        let lines = data.split(separator: 0x0A, omittingEmptySubsequences: true)
+        let kept = lines.filter { l in
+            guard let old = try? decoder.decode(Record.self, from: Data(l)) else { return true }
+            return !(old.ongoing == true && abs(old.at.timeIntervalSince(r.at)) < 1)   // times are kept to the second
+        }
+        if kept.count != lines.count { data = Data(kept.joined(separator: [0x0A])); if !data.isEmpty { data.append(0x0A) } }
         data.append(line); data.append(0x0A)
         if data.count > cap {
             let half = data.count - cap / 2
@@ -61,7 +72,7 @@ public enum HangLog {
         let long = records.filter { $0.ms >= 2000 }.count
         out.append("\(records.count) stall\(records.count == 1 ? "" : "s"), \(long) of 2 s or more (a beach ball); longest \(records.map(\.ms).max() ?? 0) ms.")
         for r in records {
-            out.append("\(f.string(from: r.at))  \(String(r.ms).leftPad(6)) ms  \(r.screen)")
+            out.append("\(f.string(from: r.at))  \(String(r.ms).leftPad(6)) ms\(r.ongoing == true ? "+ (still stuck when last written)" : "")  \(r.screen)")
             if stacks, let s = r.samples, !s.isEmpty {
                 // Where the main thread was most often: its innermost frames in Duo, counted over the samples.
                 var counts: [String: Int] = [:], depth: [String: Int] = [:]
