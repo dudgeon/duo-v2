@@ -2590,3 +2590,50 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - **Two log orders:** OKF's `log.md` is newest first under `## YYYY-MM-DD`; Karpathy's is append-only with `## [YYYY-MM-DD] op | title`. Anything Duo shows of a log must handle both; Duo should write neither.
 - **Legacy's `_index.md` isn't the spec's name** (`index.md`); a bare-OKF reader won't find `okf_version` there. Detection should accept both (DL-147 already does).
 - Sources and every claim, verified or not: `docs/research/second-brain-sources/` (`llm-wiki.md`, `second-brain-tools.md`, `legacy-okf.md`, `duo-today.md`).
+
+## F-208 · 0.2.5 froze at launch at work: Home's chat state re-laid out the whole window, and sign-in screens flipped it (fixed)
+
+- **Symptom (Geoff's work Mac, 0.2.5 (374)):** 100% CPU from launch, "Recent hangs: 25", 3.1 GB footprint. Every sample on the main thread was in `NSHostingView.beginTransaction` → `RootGeometry.value.getter` → `sizeThatFits` from the root (65% of 2,098 samples), under it nested `_HStackLayout` alignment queries down to the composer's hint line (`ViewThatFits` over five strings, each re-measured and its dynamic colours resolved on every pass), and `ChatHug`.
+- **Trigger:** Claude Code is pinned months behind at work (2.1.2xx). Every restored session resumed at once at launch, and each showed a sign-in or MCP OAuth screen. On a CLI chat doesn't trust, those screens read as unknown, then as the prompt, then unknown again: each chat fell back to the terminal and came back, many times a second across 12–24 tabs.
+- **Amplifiers new in 0.2.5:**
+  - DL-142 (7) made All projects' split read `homeShowsChat` (Home's chat mode and fallback). Each flip re-ran `PaneSplit.updateNSView`, which replaced the root view of all three panes' hosting views: a whole-window layout per flip.
+  - Home opened in chat (DL-142 (6)).
+  - `ChatHug` (F-184) measured each bubble's Markdown twice per pass.
+- **Also:** a terminal shown by two slots (Home's pane, and the console when Home's project is on screen) was sized by both in turn, and each new size made Claude Code redraw.
+- **Reproduction:** `scripts/make-scale-fixture.py` writes the work Mac's shape: 42 sessions, 16 tabs restored in chat, Home in chat, long transcripts. A stand-in TUI reports 2.1.219 and alternates a sign-in screen (0.8 s) with the prompt (0.4 s). On v0.2.5 the main thread reached 99.9% CPU, with 30% mean after launch and 10 stalls logged in 60 s.
+- **Fixed:**
+  - PaneSplit sets each pane's root view once; a pane's view captures nothing that changes (`DimmedUnderSheet`).
+  - A slot sizes only a terminal it still holds.
+  - A screen chat can't handle leaves the terminal up until Back to Chat (DL-154; at first a growing hold, 1–30 s, replaced the same day). A blank screen reads as starting, so a session loading never falls back.
+  - `setVersion` with the same answer changes nothing.
+  - `ChatHug` keeps its ideal width until the bubble's text changes.
+  On the same fixture: 3.1% mean CPU (8.2% max), no stalls. A faster flip (0.55 s / 0.15 s) went from 37.5% mean and 2 stalls to 11.2% and none.
+- **Trap:** Claude Code 2.1.219 can't resume a transcript it didn't write (it throws reading `o.idx`). A generated fixture's tabs all die at once, which hides any storm; generate the restored sessions' transcripts with the CLI (`claude -p … --session-id`) or use a stand-in TUI.
+- **Trap:** an isolated Duo's window never takes focus and may be occluded, which can skip layout. A run that measures layout cost needs the window unoccluded.
+
+## F-209 · The hang log writes a stall while it's still going (F-208's proposal (b))
+
+- `HangMonitor` writes a record (`ongoing: true`) once a stall passes 2 s, and again every 10 s while it lasts, with the samples so far (every 50 ms for 1.5 s, then one a second, up to 60) and the screen as it was last read (every 2 s while Duo answers). When the stall ends, the whole record replaces it (`HangLog.append` drops the ongoing line for the same start; times are kept to the second). A freeze that ends in a force quit leaves its stacks; `duo2 hangs` marks it "still stuck when last written".
+- **Live:** the harness's `freeze:9` (new; blocks the main thread) wrote a 2,127 ms record with 14 samples while frozen; when it ended, one 8,948 ms record with 34 samples replaced it.
+- Still local only: nothing leaves the Mac (crash reporting, proposal (c), is ENH-46's note).
+
+## F-210 · Restored tabs park until shown (DL-156)
+
+- `applyRestore` adds each restored session's tab to `AppModel.parkedTabs` instead of starting it. `tabSessions` lists parked tabs, so the tab strip is as it was at quit. The console and Home create a tab's terminal when they show it (as before), so the tab on screen resumes at once and the rest when opened. `currentRestoreState` keeps parked tabs for the next launch, and `closeSession` forgets one.
+- `duo2`: `session open` resumes it by showing it. A send to a parked session wakes it and answers "it's resuming now. Send again once it's at its prompt." `session close` closes a parked tab. `sessions --json` marks it `"parked": true`.
+- **Live:** on F-208's fixture (16 tabs restored, a stand-in 2.1.219 TUI), the launch says "restore: parked 14 session(s) in 7 project(s)". 1 session started (the tab on screen); before this, 14 started at once. CPU after launch was 3.2% mean, with no stalls.
+- **Not changed:** a parked tab looks like any idle tab (Q-136). A session that was waiting on you at quit shows the state its transcript gives, as before.
+
+## F-211 · Off-screen chats are dormant; the hint line measures once (ENH-45)
+
+- `ChatSession.isShown` (set at attach: Home's tab at All projects, the console's tab in a project). Off screen, `scheduleRead` records that it skipped a read instead of reading, and `ChatFeed.tick` runs one tick in 13 (every ~2 s). The first tick once it is shown calls `wake()`, which reads the skipped screen, so the chat catches up within 0.15 s. `duo2`'s chat answers and sends read the screen themselves, so they work on a dormant chat.
+- The composer's hint line was a `ViewThatFits` over five strings, each `fixedSize`. Geoff's work sample showed it re-measuring them on every pass (Text resolution and dynamic colours). `FirstFit` (ChatComposerView.swift) measures each once per change of strings and places only the one that fits; the others get no width and are clipped. Accessibility reads the longest.
+- **Captures:** chat boards `window`, `composer`, `text`, `fallback` and `slash-fallback-named` are pixel-identical (`scripts/samepng.py`: 0 pixels differ) between this build and the build before the change.
+
+## F-212 · The scale check and the root scan (ENH-46)
+
+- `scripts/check-scale.sh` builds F-208's fixture in a fresh `/tmp/d-scale-…`, resolved to its real path: the restore file matches Home by real path, and a `/tmp` workspace silently restored nothing, so the first run passed on v0.2.5. The fixture has 42 sessions, 16 tabs restored in chat, Home in chat with its project on screen, and `scripts/scale-tui.py` as claude: it reports 2.1.219 and flips a sign-in screen with its prompt. The check launches `APP` (default `build/Duo.app`) for 60 s and fails on any of: mean CPU after 15 s over 10%, a stall of a second or more, more than 2 stalls of 250 ms, or no restore. The release skill runs it before every release.
+- **Before/after (release builds, the window not focused and possibly covered):**
+  - v0.2.5: mean 30.1% CPU after launch, peaks to 75%, 16 stalls of 278–595 ms; fails 2 of 4.
+  - fix/hang-0.2.5: mean 2.6%, no stalls, 14 tabs parked and 1 session running; passes 4 of 4.
+- **The scan:** DuoChecks fails if `RootView`, `AllProjectsLayout` or `ProjectLayout` reads a session's chat or terminal state (`model.homeShowsChat`, `.fallback`, `.screen` …), or if `PaneSplit.updateNSView` sets a pane's `rootView`. Home's light divider (DL-142 (7)) is now set by the split itself, through Observation (`PaneSplit.liveColors`). The Home-in-chat capture (`list-1440` + `home-chat`) is pixel-identical to the build before.

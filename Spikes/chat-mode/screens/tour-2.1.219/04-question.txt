@@ -1,0 +1,33 @@
+❯ SCENARIO:read                                                                                     
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Update(notes.md)
+  ⎿  User rejected update to notes.md
+      1  # Notes
+      2  
+      3 -First line.                                                                         
+      3 +First line, edited.                                                                 
+      4 +Second line.                                                                        
+
+✻ Brewed for 1s
+
+❯ SCENARIO:ask                                                                                      
+
+⏺ I need one choice from you.
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ ☐ Colour 
+
+Which colour should the button be?
+
+❯ 1. Blue
+     Matches the brand
+  2. Green
+     Reads as go
+  3. Grey
+     Quiet
+  4. Type something.
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  5. Chat about this
+
+Enter to select · ↑/↓ to navigate · Esc to cancel

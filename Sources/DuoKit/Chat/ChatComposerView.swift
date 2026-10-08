@@ -51,13 +51,18 @@ struct ChatComposerArea: View {
                 }
                 // Narrow (DL-129): hints drop from the right, ⌘[ ⌘] first, then @ files, then / commands.
                 // With the @ menu open, its keys (DL-133).
-                ViewThatFits(in: .horizontal) {
-                    ForEach(chat.ui.mention?.matches.isEmpty == false ? ["↑↓ choose · ⏎ or tab adds it · esc closes"]
-                            : ["⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files · ⌘[ ⌘] your messages", "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files",
-                               "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands", "⏎ send · ⇧⏎ new line · ⇧⇥ mode", "⏎ send · ⇧⏎ new line"], id: \.self) {
+                // Measured once, not on every pass as ViewThatFits did (F-208, ENH-45).
+                let hints = chat.ui.mention?.matches.isEmpty == false ? ["↑↓ choose · ⏎ or tab adds it · esc closes"]
+                    : ["⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files · ⌘[ ⌘] your messages", "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files",
+                       "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands", "⏎ send · ⇧⏎ new line · ⇧⇥ mode", "⏎ send · ⇧⏎ new line"]
+                FirstFit {
+                    ForEach(hints, id: \.self) {
                         Text($0).duoText(.chatMeta).foregroundStyle(DuoColor.text2).lineLimit(1).fixedSize()
+                            .frame(minWidth: 0, alignment: .leading).clipped()
                     }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(hints[0])
                 Spacer(minLength: 8)
                 if let m = chat.log.model { Text(m).duoText(.chatMeta).foregroundStyle(DuoColor.text2) }
             }
@@ -509,5 +514,43 @@ extension ChatSession {
         ui.composerBasis = want
         await pause(150_000_000)
         _ = reread()
+    }
+}
+
+/// The first of its subviews that fits the width offered, as `ViewThatFits(in: .horizontal)` picks,
+/// but each subview's own width is measured once and kept until the subviews change: ViewThatFits
+/// measured every candidate on every layout pass, and with many composers on screen that was most of
+/// a frame (F-208). The others are placed at no width (each clips itself).
+struct FirstFit: Layout {
+    struct Cache { var widths: [CGFloat]?; var height: CGFloat = 0 }
+    func makeCache(subviews: Subviews) -> Cache { Cache() }
+
+    private func measure(_ s: Subviews, _ cache: inout Cache) -> [CGFloat] {
+        if let w = cache.widths { return w }
+        let sizes = s.map { $0.sizeThatFits(.unspecified) }
+        cache.widths = sizes.map(\.width)
+        cache.height = sizes.map(\.height).max() ?? 0
+        return cache.widths!
+    }
+
+    private func chosen(_ width: CGFloat?, _ widths: [CGFloat]) -> Int? {
+        guard !widths.isEmpty else { return nil }
+        guard let width else { return 0 }
+        return widths.firstIndex { $0 <= width } ?? widths.count - 1
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews s: Subviews, cache: inout Cache) -> CGSize {
+        let widths = measure(s, &cache)
+        guard let i = chosen(proposal.width, widths) else { return .zero }
+        return CGSize(width: min(widths[i], proposal.width ?? widths[i]), height: cache.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews s: Subviews, cache: inout Cache) {
+        let widths = measure(s, &cache)
+        let pick = chosen(bounds.width, widths)
+        for (i, v) in s.enumerated() {
+            v.place(at: bounds.origin, anchor: .topLeading,
+                    proposal: i == pick ? ProposedViewSize(width: bounds.width, height: bounds.height) : ProposedViewSize(width: 0, height: bounds.height))
+        }
     }
 }

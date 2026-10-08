@@ -1,0 +1,33 @@
+❯ SCENARIO:bash                                                                                     
+
+⏺ Running a command.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Done. The tool said: "hello"
+
+✻ Baked for 0s
+
+❯ SCENARIO:read                                                                                     
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Update(notes.md)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ Edit file
+ notes.md
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ 1  # Notes
+ 2  
+ 3 -First line.                                                                                     
+ 3 +First line, edited.                                                                             
+ 4 +Second line.                                                                                    
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ Do you want to make this edit to notes.md?
+ ❯ 1. Yes
+   2. Yes, allow all edits during this session (shift+tab)
+   3. No
+
+ Esc to cancel · Tab to amend
+

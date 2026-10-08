@@ -1,0 +1,33 @@
+
+✻ Brewed for 1s
+
+❯ SCENARIO:ask                                                                                      
+
+⏺ I need one choice from you.
+
+⏺ User answered Claude's questions:
+  ⎿  · Which colour should the button be? → Green
+
+⏺ Done. The tool said: "Your questions have been answered: \"Which colour should the button
+  be?\"=\"Green\". You can now continue with these answers in mind."
+     
+✻ Baked for 0s
+
+❯ SCENARIO:askmulti                                                                                 
+────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☐ Platforms  ☐ Timing  ✔ Submit  →
+
+Which platforms should we ship?
+
+❯ 1. [ ] macOS
+  Native
+  2. [ ] iOS
+  Phone
+  3. [ ] Web
+  Browser
+  4. [ ] Type something
+     Next
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  5. Chat about this
+
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel

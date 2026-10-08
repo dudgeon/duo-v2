@@ -1,0 +1,33 @@
+
+⏺ Line 1 of a long answer.
+  Line 2 of a long answer.
+  Line 3 of a long answer.
+  Line 4 of a long answer.
+  Line 5 of a long answer.
+  Line 6 of a long answer.
+  Line 7 of a long answer.
+  Line 8 of a long answer.
+  Line 9 of a long answer.
+  Lin
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ /model 
+  ⎿  Kept model as Haiku 4.5
+
+❯ SCENARIO:err                                                                                      
+
+✻ 529 Overloaded (mock) · Retrying in 3s · attempt 4/10
+  ⎿  If it persists, check your inference gateway (127.0.0.1:8797).
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on · esc to interrupt · ← for agents · ↓ to manage
+
+  ⏺ main
+  ◯ general-purpose  Look around                                                    0s · ↑ 11 tokens
+
+
+
+
+

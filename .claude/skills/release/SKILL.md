@@ -30,6 +30,7 @@ The script ships `git rev-parse HEAD` of the current checkout, committed files o
 - Run `git status` and `git log -1`. If the work Geoff expects in this release isn't committed, say so and ask; don't release a different commit silently.
 - Another agent may be working in this checkout. Never commit, stash, reset or check out over its changes to cut a release. If the release needs a different commit, run the script from a worktree of that commit instead.
 - The commit should be on origin. The script warns if it isn't, and pushing the tag uploads it anyway.
+- **Scale gate (ENH-46, F-208):** before running the script, `scripts/check-scale.sh` must pass on a release build of that commit (`scripts/bundle.sh release`, then `NO_BUILD=1 APP=build/Duo.app scripts/check-scale.sh`, about a minute). It launches the shape that froze 0.2.5 at work (16 tabs restored in chat on a stand-in old CLI whose sign-in flips) and fails if CPU doesn't settle or the main thread stalls. A failure blocks the release; tell the director and Geoff.
 
 ## 3. Release notes
 

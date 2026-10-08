@@ -77,8 +77,25 @@ func spikeScreen(_ name: String) -> String {
         check(ChatSignatures.table(for: "2.1.291").verified && !ChatSignatures.table(for: "2.1.219").verified && !ChatSignatures.table(for: "2.1.300").verified,
               "the table names the versions checked dialog by dialog")
         check(ChatSignatures.trust(for: "2.1.293") == .verified && ChatSignatures.trust(for: "2.1.300") == .newer
-              && ChatSignatures.trust(for: "2.1.219") == .unverified && ChatSignatures.trust(for: nil) == .unverified,
-              "DL-145: verified versions, newer ones trusted by their screens, older or unknown ones not")
+              && ChatSignatures.trust(for: "2.1.219") == .newer && ChatSignatures.trust(for: "2.1.2") == .newer
+              && ChatSignatures.trust(for: "2.0.77") == .unverified && ChatSignatures.trust(for: "3.0.1") == .unverified
+              && ChatSignatures.trust(for: nil) == .unverified && ChatSignatures.trust(for: "garbage") == .unverified,
+              "DL-145, DL-155: verified versions; any other 2.1.x, older or newer, by its screens; another version or none, not")
+    }
+
+    print("chat mode: Claude Code 2.1.219, the version work pins (DL-155, F-208)")
+    do {
+        // The 2.1.291 tour run on the real 2.1.219 against the mock (Spikes/chat-mode/screens/tour-2.1.219).
+        let expect: [(String, ChatScreen.Kind)] = [("01-markdown", .idle), ("02-bash-permission", .permission), ("03-edit-permission", .permission),
+            ("04-question", .question), ("05-multi", .question), ("06-review", .questionReview), ("07-agent", .idle), ("08-plan-mode", .idle),
+            ("09-plan", .plan), ("10-streaming", .busy), ("11-interrupted", .idle), ("12-unknown-model-picker", .picker), ("13-retrying", .busy)]
+        let read = expect.map { ($0.0, $0.1, ChatScreenReader.read(spikeScreen("tour-2.1.219/\($0.0).txt"))) }
+        let wrong = read.filter { $0.2.kind != $0.1 }.map { "\($0.0): \($0.2.kind)" }
+        check(wrong.isEmpty, "each 2.1.219 screen reads as its kind (\(wrong))")
+        let broken = read.filter { !ChatScreenReader.wellFormed($0.2) }.map(\.0)
+        check(broken.isEmpty, "and every dialog reads whole, so chat answers it (\(broken))")
+        check(read[1].2.options.map(\.label) == ["Yes", "Yes, and always allow access to ws/ from this project", "No"]
+              && read[8].2.options.count == 3 && read[7].2.mode == .plan, "2.1.219's own words: a Bash permission's options, plan approval, plan mode")
     }
 
     print("chat mode: falling back to the terminal (spike's fallback rules, DL-118 §3)")
@@ -93,17 +110,54 @@ func spikeScreen(_ name: String) -> String {
         spin(0.6)
         check(!c.showsChat && c.fallback == .unknownScreen, "unknown for 500 ms: the terminal, with why")
         tui.show(idleText); spin(0.15)
-        check(c.showsChat && c.fallback == nil, "back at the prompt: chat returns by itself")
+        check(!c.showsChat && c.fallback == .unknownScreen, "back at the prompt: the terminal stays until Back to Chat (DL-154)")
+        c.backToChat()
         tui.show(spikeScreen("slash-2.1.292/help.txt")); spin(0.1)
         tui.show(idleText); spin(0.6)
         check(c.showsChat, "a brief unknown never falls back")
         c.mode = .terminal
         tui.show(idleText); spin(0.15)
         check(!c.showsChat && c.fallback == nil, "chosen terminal stays the terminal")
+        // DL-154 (F-208): a screen chat couldn't show leaves the terminal up until Back to Chat, so a
+        // screen that keeps changing kind (a sign-in at every resume) can't swap the two.
+        let helpText = spikeScreen("slash-2.1.292/help.txt")
+        let flip = FakeTUI(idleText)
+        let f = ChatSession(key: "s-flip", mode: .chat)
+        f.attach(flip)
+        for _ in 0..<3 { flip.show(helpText); spin(0.7); flip.show(idleText); spin(0.2) }
+        check(!f.showsChat && f.fallback == .unknownScreen, "back at the prompt after a screen chat couldn't show: the terminal stays")
+        check(f.fallback?.message.contains("comes back") == false, "and the bar doesn't promise chat comes back by itself")
+        f.backToChat()
+        check(f.showsChat && f.fallback == nil, "Back to Chat: chat")
+        flip.show(""); spin(0.8)
+        check(f.showsChat && f.screen.kind == .starting, "a blank screen (a session loading) is still starting: no fallback")
+        // ENH-45: a chat off screen is dormant: the TUI repainting reads nothing until it's shown.
+        let quiet = FakeTUI(idleText)
+        let q = ChatSession(key: "s-dormant", mode: .chat)
+        var shown = false
+        q.isShown = { shown }
+        q.attach(quiet)
+        quiet.show(helpText); spin(0.8)
+        check(q.screen.kind == .idle && q.showsChat, "off screen, a repaint isn't read (still \(q.screen.kind))")
+        shown = true
+        q.wake(); spin(0.8)
+        check(q.screen.kind == .unknown && !q.showsChat, "shown again, it reads what it skipped at once (\(q.screen.kind))")
+        let v = ChatSession(key: "s-version", mode: .chat)
+        v.setVersion(nil)
+        check(v.versionTrust == .unverified, "a claude that gave no version: unverified, not the verified default")
+        let reads = FakeTUI(idleText)
+        v.attach(reads)
+        v.setVersion(nil)
+        check(v.versionTrust == .unverified && v.cliVersion == nil, "asked again with the same answer: unchanged")
         let old = ChatSession(key: "s2", mode: .chat)
-        old.setVersion("2.1.219")
+        old.setVersion("2.0.77")
         old.attach(FakeTUI(spikeScreen("10-bash-perm.txt")))
-        check(!old.showsChat && old.fallback?.message.contains("2.1.219") == true, "a dialog on an unverified CLI (2.1.219) goes to the terminal")
+        check(!old.showsChat && old.fallback?.message.contains("2.0.77") == true, "a dialog on an unverified CLI (2.0.77) goes to the terminal")
+        // DL-155: the work Mac's pinned 2.1.219, its dialog reading whole: answered from chat.
+        let pinned = ChatSession(key: "s2-pinned", mode: .chat)
+        pinned.setVersion("2.1.219")
+        pinned.attach(FakeTUI(spikeScreen("10-bash-perm.txt")))
+        check(pinned.versionTrust == .newer && pinned.dialogsVerified && pinned.fallback == nil, "an older 2.1.x (2.1.219) whose dialog reads whole: answered from chat")
         // DL-145: a newer CLI (Claude Code updates itself about daily, C-49) is trusted while its
         // dialog reads like the verified versions'; one that doesn't goes to the terminal.
         let bashPerm = spikeScreen("10-bash-perm.txt")
@@ -188,7 +242,9 @@ func spikeScreen(_ name: String) -> String {
         spin(0.7)
         check(!s.showsChat && s.fallback == .unknownScreen, "once sent, /help's screen (which never redraws) shows the terminal")
         t2.show(idleText); spin(0.15)
-        check(s.showsChat, "Esc closes it: chat comes back")
+        check(!s.showsChat, "a screen not named as a command you sent stays in the terminal when it closes (DL-154)")
+        s.backToChat()
+        check(s.showsChat, "until Back to Chat")
 
         // The transcript's records of a command.
         let log = ChatLog()
