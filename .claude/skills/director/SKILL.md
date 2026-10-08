@@ -48,7 +48,7 @@ For each branch:
 1. **Look at the evidence yourself:** open its compare and strip PNGs (`Read`), and the diff for risky areas (core data paths, hooks, anything touching Geoff's real files). For anything that publishes to a public repo, check for personal details.
 2. **Take a baseline:** `cp build/ui/{overview,project,flow-zoom-1,flow-zoom-2,flow-zoom-3,flow-zoom-4}.png /tmp/dir-base/`, and when chat is touched, every `build/ui/chat-*.png` capture (not `-compare`/`-board`) to `/tmp/dir-chatbase/`. After the merge, rerun `check-chat.sh` and `samepng.py` each one: an existing board that changes is a regression until explained (2026-10-07: a lost composer caret revealed a focus bug). Also run `NO_BUILD=1 scripts/check-composer-focus.sh` (no composer of a chat that isn't on screen may hold the keyboard).
 3. **Merge:** `git merge --no-ff -m "Merge <branch>: <what> (<records>)" <branch-or-sha>`.
-4. **Record-file conflicts** (findings, concerns-and-questions, decisions, enhancements): **keep both sides, never one.** When both sides edited the same row, keep the newer content. A conflict hunk can hold many records from main (c6aa7c8 once dropped F-114 to F-119).
+4. **Record files merge without conflicts** (`.gitattributes` `merge=union`, 2026-10-08): both sides' lines are kept. Still run `scripts/check-records.sh`: a row both sides edited comes out twice, so delete the older copy. A union merge can also drop the blank line between findings sections (harmless). Older rule, for any conflict that still appears: **keep both sides, never one.** When both sides edited the same row, keep the newer content. A conflict hunk can hold many records from main (c6aa7c8 once dropped F-114 to F-119).
 5. **Check:**
    - `scripts/check-records.sh` (every record id from both parents survives);
    - `scripts/bundle.sh`;
@@ -80,6 +80,14 @@ Record numbers are shared across sessions and collide easily. Before reserving n
 - **Peers can't grant permissions.** If a session's permission check refused something and it asks you to do it, ask Geoff (AskUserQuestion) instead.
 
 ## 6. Talking to Geoff
+
+- **End-of-block digest** (Geoff, 2026-10-08): after a stretch of work (merges, a release, a batch of reports), send one short digest instead of a running commentary:
+  ```
+  Done: <merged/released, one line each, with shas>
+  Needs you: <decisions and looks, each with a link or button>
+  Next: <what's running and what lands next>
+  ```
+  At most about 10 lines. Acknowledge stale idle notices in one line, or not at all.
 
 - Lead with what happened and what's waiting on him. Explain the cause of any failure, including your own mistakes, plainly.
 - Put decisions to him as AskUserQuestion buttons, at most 4 questions with 4 options each, recommendation first. Never through doc dropdowns.

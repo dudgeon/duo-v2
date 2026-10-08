@@ -2795,3 +2795,28 @@ Measured on the real TUI with the spike's mock API (no tokens), both versions id
 - **Proven live, 2026-10-08** (Geoff's OK for a visible run; his clipboard, empty, saved and restored byte for byte): an isolated Duo in front, its session the real TUI on the mock API. A real ⌘V of a PNG in chat: on 2.1.294, Claude Code took it as `[Image #1]` and the API got `[Image #1] What colour is this picture?` and the PNG; on 2.1.219 (paste mode), a picture then a 40-line paste then a question went as `[Image #2]line 1 … line 40` + the question, with the picture. The bubbles show the picture on top and K8's fold, with no token and no duplicate bubble.
 - **Two things the live run caught**, fixed: an untitled session's first words showed the token (`“[Image #1] What colour…”`; `SessionTitles.clean` drops it now), and words typed after a folded paste were sent glued to its last line (`…line 40 of the pasted textWhich line…`) though the box shows them on the next line. A block is now a line of its own: a line break goes before it (after other text) and after it.
 
+## F-238 · What Google's .docx and .pptx exports carry (source links, 2026-10-08)
+
+- **No document properties at all.** A public Doc exported with `…/export?format=docx` has 9 parts and a Slides deck exported with `…/export/pptx` has 76, and neither has `docProps/core.xml`, `app.xml` or `custom.xml`. Nothing in either package names the document, its id, its owner or Google. The download's name is the title (`Content-Disposition`).
+- **A deck names its shapes after Google's slide ids.** Each notes page's shapes are `Google Shape;<n>;<pageId>:notes`, and `slideN.xml.rels` links slide N to `notesSlideN.xml`. The page id (`ge63a4b4_1_0`) is the one in Slides' own link (`…/edit?slide=id.ge63a4b4_1_0`), so a slide can be opened in Slides and matched across downloads.
+- **Two downloads of an unchanged document differ byte for byte.** Zip entries carry the export time, and in a deck the media numbering and slide rels shuffle. A comparison has to look at each part's contents, with images compared as a set of hashes.
+- Public samples, no sign-in: the Docs API quickstart document and the Slides API sample deck. `docs/research/source-links.md` §2.
+
+## F-239 · Chrome's "Where from" on a Google export, and the canonical link (source links, 2026-10-08)
+
+- Chrome 155, headless, with a scratch profile and download folder, writes `com.apple.metadata:kMDItemWhereFroms`. The first entry is the **final** URL after the 307, `https://doc-…-docstext.googleusercontent.com/export/<token>/<token>/<time>/<number>/*/<ID>?format=docx`, and for decks `…-slides.googleusercontent.com/…/*/<ID>?exportFormat=pptx`. Downloaded from the document's page, the second entry is only the referrer's origin, `https://docs.google.com/`.
+- The canonical link is rebuilt from the id and the kind: `https://docs.google.com/{document|presentation}/d/<ID>/edit`. The raw URL holds short-lived tokens and an account-like number, and is never stored or shown.
+- A download driven through DevTools `Browser.setDownloadBehavior` gets quarantine but **no** WhereFroms. Tests must use the profile's download folder instead.
+- Firefox skips both attributes in private windows (`DownloadPlatform.cpp`, `!aIsPrivate`). Safari, Edge and Arc were not tested.
+
+## F-240 · What keeps "Where from" (source links, 2026-10-08)
+
+- Kept: `cp`, `mv`, `ditto`, `FileManager.copyItem` (Duo's own moves and copies), bsdtar, and Finder's Compress then expand (`ditto -c -k --sequesterRsrc`).
+- Lost: `zip`/`unzip`, `cp -X`, git (commit then clone, and delete then checkout), and an app-style save that writes a temp file and renames it over the original.
+- So the link has to be read when the file arrives and kept somewhere sturdier (C-70).
+
+## F-241 · Spotlight finds downloads by document id (source links, 2026-10-08)
+
+- `kMDItemWhereFroms` is indexed. `mdfind -onlyin <dir> 'kMDItemWhereFroms == "*<ID>*"'` found the deck in a scratch folder under home (removed afterwards). `/private/tmp` isn't indexed.
+- **By name, too:** `kMDItemFSName == "Baby album*.pptx"c && kMDItemWhereFroms == "*"` found `Baby album (1).pptx` (a Chrome download) and skipped a same-named file with no "Where from". So a newer download is found with or without a source (DL-163). Chrome leaves `kMDItemDownloadedDate` empty; the download time is in the quarantine stamp.
+- So newer downloads and Get Latest can be spotted without Duo listing ~/Downloads. Whether an `NSMetadataQuery` from Duo returns items in ~/Downloads without the privacy prompt, and whether reading them asks, is Q-155.
