@@ -2674,3 +2674,9 @@ Built to `docs/design/chat-slash-handoff/` (DL-143, the canvas https://claude.ai
 - **Checked against an isolated instance:** show → none; add wrote the file; add again refused; after adding a Blocked column, show said out of date; update added exactly one line (`      - blocked`); no `.obsidian/` folder appeared. Header capture matches board 12's notice. Not checked in Obsidian itself: C-64.
 - The Tasks fold's menu also has **Show Board** (DL-148 (2)'s "Board link on the Tasks fold").
 
+## F-224 · The console's tab strip measured every title on every pass (fixed)
+
+- Geoff's 0.2.5 hang log at work had a 905 ms stall in `ConsoleTabStrip.layout(_:width:)`, called from the strip's `GeometryReader` body. The time went to `NSString.size(withAttributes:)` → CoreText building a fallback-font cascade → `CGFontCreateWithPathAndName` → `open()`, for a title with glyphs SF Mono lacks (emoji, CJK, symbols). `layout` measured every title on each pass, and again on each step of its shortening loop (O(N²)).
+- Measured on this Mac: an emoji, CJK or symbol title costs 0.7–10 ms the first time and about 0.01 ms after, once CoreText's fallback cache is warm. So the cost is the cold loads, which a work Mac's managed fonts or memory pressure may repeat. It's a real stall, but the 0.2.6 freeze happened with this unchanged, on a chat screen (0.2.6's record 27), so it is not the freeze's cause.
+- **Fixed:** `TextWidth.of(_:font:)` measures each (string, font) once and keeps it (capped at 4,000). The strip's fit (`TabStripFit.fit`) is one walk from the right over cached widths. The idle list's project column and the `/` menu's column measure through `TextWidth` too. Inserting a file chip still measures, but once per insertion, not in a body.
+- **Checks:** 50 passes over 5 titles measure each once. The one-walk fit chooses what the old loop chose on 500 random strips.

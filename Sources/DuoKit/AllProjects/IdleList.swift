@@ -224,7 +224,7 @@ struct IdleRowView: View {
                 else if let p = row.project { Text(p).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.tail) }
             }
             .frame(maxWidth: DuoMetric.idleProjectColumnMax, alignment: .trailing)
-            .fixedSize(horizontal: row.project.map { ($0 as NSString).size(withAttributes: [.font: DuoTextStyle.body.spec.nsFont]).width <= DuoMetric.idleProjectColumnMax } ?? true, vertical: false)
+            .fixedSize(horizontal: row.project.map { TextWidth.of($0, font: DuoTextStyle.body.spec.nsFont) <= DuoMetric.idleProjectColumnMax } ?? true, vertical: false)
             Text(row.openIn.map { "open in \($0)" } ?? row.age).duoText(.body).foregroundStyle(DuoColor.text2)
                 .frame(minWidth: DuoMetric.idleAgeColumn, alignment: .trailing)
                 .fixedSize()
