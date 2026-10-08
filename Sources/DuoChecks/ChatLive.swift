@@ -131,7 +131,7 @@ struct AskCase {
                "\(ChatCompose.dirVariable)=\(composeDir)", "\(ChatCompose.userEditor)=/usr/bin/true"]
     let tui = HeadlessTUI(cols: size.0, rows: size.1)
     setenv("CLAUDE_CONFIG_DIR", dir + "/cfg", 1)   // where ChatFeed finds the transcript
-    tui.process.startProcess(executable: claude, args: ["--session-id", id, "--settings", settings.path, "--model", TestModel.model(environment: ProcessInfo.processInfo.environment, isolated: true, bundleID: nil)!],
+    tui.process.startProcess(executable: claude, args: ["--session-id", id, "--settings", settings.path, "--model", devModel()],
                              environment: env, execName: nil, currentDirectory: ws)
     defer { tui.process.terminate(); unsetenv("CLAUDE_CONFIG_DIR") }
     let chat = ChatSession(key: id, mode: .chat)
@@ -390,4 +390,10 @@ func freePort() -> Int? {
     var len = socklen_t(MemoryLayout<sockaddr_in>.size)
     let bound = withUnsafeMutablePointer(to: &addr) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { bind(fd, $0, len) == 0 && getsockname(fd, $0, &len) == 0 } }
     return bound ? Int(UInt16(bigEndian: addr.sin_port)) : nil
+}
+
+/// The model a check that spends real turns runs on: DUO_MODEL, or Haiku 5.5 (DL-153, a rule for
+/// development, not app behaviour; F-207 has the id).
+func devModel() -> String {
+    ProcessInfo.processInfo.environment["DUO_MODEL"].flatMap { $0.isEmpty ? nil : $0 } ?? "claude-haiku-5-5"
 }
