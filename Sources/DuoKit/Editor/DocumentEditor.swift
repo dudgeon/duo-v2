@@ -22,6 +22,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// Whether the editor page has finished loading (scripted captures report it).
     public var isPageReady: Bool { pageReady }
     private var pending: (() -> Void)?
+    /// The document asked for while the one on screen merges an outside write before its save
+    /// (BUG-085 in legacy Duo): the latest ask wins.
+    private var switchingTo: URL?
     private var diskBytes = Data()                       // what's on disk as far as we know
     private var watcher: DispatchSourceFileSystemObject?
     private var folderWatcher: DispatchSourceFileSystemObject?
@@ -98,10 +101,23 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// Shows a file. The current document is saved first if it changed; one in conflict, or
     /// removed on disk, keeps its unsaved text in memory until it's shown again.
     public func open(_ file: URL) {
+        if switchingTo != nil { switchingTo = file; return }
         guard file != url else { return }
         // Never a file that isn't text (C-26): the right pane shows it another way, and nothing
         // (a `duo2 doc` verb included) can load its bytes here as text.
         if FileKind.isBinary(file) { DuoLog.write("editor: not opening \(file.lastPathComponent): it isn't text"); return }
+        if let leaving = url, readOnlyReason == nil, dirty, !conflict, !removedOnDisk, !FileKind.isBinary(file),
+           let now = FileManager.default.contents(atPath: leaving.path), now != diskBytes {
+            // An outside write the watcher hasn't delivered yet. Merge it into this document and
+            // save before switching: the merge needs this document's text in the page, and
+            // loading the next one first threw the typing away (legacy BUG-085).
+            switchingTo = file
+            reconcile(leaving) { [weak self] in
+                guard let self else { return }
+                if self.conflict { self.finishSwitch() } else { self.saveNow { [weak self] in self?.finishSwitch() } }
+            }
+            return
+        }
         if let leaving = url, readOnlyReason == nil, dirty, conflict || removedOnDisk {
             let base = diskBytes, wasConflict = conflict
             // Runs before the next document's text is loaded: the page runs scripts in order.
@@ -120,6 +136,12 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         readOnlyReason = nil
         let go: () -> Void = { [weak self] in self?.load(file) }
         if pageReady { go() } else { pending = go }
+    }
+
+    private func finishSwitch() {
+        guard let next = switchingTo else { return }
+        switchingTo = nil
+        open(next)
     }
 
     /// Ends a conflict (DL-77). Mine: the user's text is saved over the file (the file's version
@@ -326,11 +348,19 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             let data = Data(text.utf8)
             let stillOpen = self.url == file
             // Last look before writing: an outside write that landed while the text came back.
-            if let now = FileManager.default.contents(atPath: file.path), now != baseline, stillOpen {
-                self.reconcile(file) { [weak self] in
-                    guard let self, !self.conflict else { completion?(); return }
-                    self.saveNow(completion: completion)
+            if let now = FileManager.default.contents(atPath: file.path), now != baseline {
+                if stillOpen {
+                    self.reconcile(file) { [weak self] in
+                        guard let self, !self.conflict else { completion?(); return }
+                        self.saveNow(completion: completion)
+                    }
+                } else if data != baseline {
+                    // Switched away while the text came back, and the file changed meanwhile:
+                    // never write blind over it. Keep the text; it merges when the file is shown again.
+                    self.kept[file] = (text, baseline, false)
+                    self.lastEvent = "kept unsaved edits: \(file.lastPathComponent) changed on disk"
                 }
+                if !stillOpen { completion?() }
                 return
             }
             if data != baseline {
