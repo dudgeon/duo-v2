@@ -160,6 +160,29 @@ public enum TaskNotes {
         return setting("completed", closed ? f.string(from: today) : nil, in: setting("status", status, in: text))
     }
 
+    /// One edit to a task note's properties: the only description of such a write. Swift is the one
+    /// writer (DL-167 step 4): a closed note gets the result written to its file, an open note gets
+    /// it as a plain transaction in the editor (`EditorController.applyNoteEdit`).
+    public enum NoteEdit: Sendable, Equatable {
+        /// `status:` and `completed:` set together by key (nil removes the key), as Status ▸ writes them (F-70).
+        case status(String?, completed: String?)
+        case addSession(link: String)
+        case addReference(link: String)
+        case removeReference(target: String)
+    }
+
+    /// The note after `edit`, or nil when it would change nothing (already linked, no such reference).
+    public static func apply(_ edit: NoteEdit, to text: String) -> String? {
+        let out: String?
+        switch edit {
+        case .status(let s, let c): out = setting("completed", c, in: setting("status", s, in: text))
+        case .addSession(let link): out = adding(link, to: text)
+        case .addReference(let link): out = TaskReferences.adding(link, to: text)
+        case .removeReference(let t): out = TaskReferences.removing(target: t, from: text)
+        }
+        return out == text ? nil : out
+    }
+
     /// The note with `link` added to its `sessions:` list, touching only that key; nil if the
     /// session is already listed.
     public static func adding(_ link: String, to text: String) -> String? {

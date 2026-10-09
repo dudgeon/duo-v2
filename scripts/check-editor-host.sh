@@ -84,5 +84,16 @@ fresh quit
 run quit "${open}$A,wait:2,user-type:alpha=>alpha EDITED,quit"
 expect "quit: the typing is saved" $A has "alpha EDITED"
 
+# 7. A property edit on an open task note: Swift's writer, applied to the buffer as one plain change
+# beside unsaved typing. The saved bytes are exactly what the writer makes of the typed text.
+fresh note
+T=$ws/work/garden/tasks/t.md; mkdir -p ${T:h}
+printf -- '---\ntitle: "T"\nstatus: open\nsessions: []\n---\n\n# T\n\nalpha\n' > $T
+run note "open:garden,open-file:$T,wait:2,user-type:alpha=>alpha EDITED,note-edit:status=done@2026-10-09,note-edit:session=[Draft](duo2://session/bbbbbbbb-1111-4222-8333-444444444444),note-edit:addref=[Plan](../docs/plan.md),wait:4,note-edit:rmref=../docs/plan.md,wait:3,editor-state"
+printf -- '---\ntitle: "T"\nstatus: done\nsessions:\n  - "[Draft](duo2://session/bbbbbbbb-1111-4222-8333-444444444444)"\ncompleted: 2026-10-09\n---\n\n# T\n\nalpha EDITED\n' > $out/note-expected.md
+total=$((total+1))
+if cmp -s $T $out/note-expected.md; then echo "ok   note: the open note's bytes are the writer's, with the typing kept"
+else fails=$((fails+1)); echo "FAIL note: bytes differ from the writer's"; diff $T $out/note-expected.md | sed 's/^/       | /'; fi
+
 echo "$((total-fails)) of $total checks passed (logs and captures in $out)"
 [[ $fails == 0 ]]

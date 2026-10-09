@@ -107,9 +107,9 @@ extension AppModel {
             let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
             let closes = ["done", "dropped"].contains(status)
             let oldStatus = task?.status, oldCompleted = task?.completed
-            e.run("duo.setProperty('status', s); duo.setProperty('completed', c); return 1", ["s": status, "c": closes ? f.string(from: Date()) : NSNull()]) { _ in }
+            e.applyNoteEdit(.status(status, completed: closes ? f.string(from: Date()) : nil))
             registerUndo("Set Task Status") { model in
-                e.run("duo.setProperty('status', s); duo.setProperty('completed', c); return 1", ["s": oldStatus ?? NSNull(), "c": oldCompleted ?? NSNull()]) { _ in }
+                e.applyNoteEdit(.status(oldStatus, completed: oldCompleted))
                 model.showNow { model.setShownTask(project, path) { $0.status = oldStatus; $0.completed = oldCompleted } }
             }
             showNow { setShownTask(project, path) { $0.status = status; $0.completed = closes ? f.string(from: Date()) : nil } }
@@ -188,7 +188,7 @@ extension AppModel {
         } else { return "nothing to add" }
         let note = folder.appending(path: path)
         if let e = editorIfLoaded, e.url?.standardizedFileURL == note.standardizedFileURL {
-            e.run("duo.addListItem('references', i); return 1", ["i": TaskNotes.item(link)]) { _ in }
+            e.applyNoteEdit(.addReference(link: link))
             return nil
         }
         guard let data = FileManager.default.contents(atPath: note.path), let text = String(data: data, encoding: .utf8) else { return "\(path) isn't readable" }
@@ -205,7 +205,7 @@ extension AppModel {
         guard let folder = liveFolders[project] else { return "no project '\(project)'" }
         let note = folder.appending(path: path)
         if let e = editorIfLoaded, e.url?.standardizedFileURL == note.standardizedFileURL {
-            e.run("return duo.removeListItem('references', u)", ["u": target]) { _ in }
+            e.applyNoteEdit(.removeReference(target: target))
             return nil
         }
         guard let data = FileManager.default.contents(atPath: note.path), let text = String(data: data, encoding: .utf8) else { return "\(path) isn't readable" }

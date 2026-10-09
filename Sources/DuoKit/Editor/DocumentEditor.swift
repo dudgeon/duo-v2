@@ -348,6 +348,18 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         if let body = m.body as? [String: Any], body["kind"] as? String == "tableMenu" {
             tableMenu(body["menu"] as? String ?? "", at: NSPoint(x: body["x"] as? Double ?? 0, y: (body["y"] as? Double ?? 0) + 2)); return
         }
+        if let body = m.body as? [String: Any], body["kind"] as? String == "noteEdit" {
+            // The properties block's own controls (the references field) ask Swift to write (DL-167 step 4).
+            let link = body["link"] as? String ?? "", target = body["target"] as? String ?? ""
+            switch body["op"] as? String {
+            case "addReference": applyNoteEdit(.addReference(link: link))
+            case "removeReference": applyNoteEdit(.removeReference(target: target))
+            case "addSession": applyNoteEdit(.addSession(link: link))
+            case "status": applyNoteEdit(.status(body["status"] as? String, completed: body["completed"] as? String))
+            default: break
+            }
+            return
+        }
         if let body = m.body as? [String: Any], let kind = body["kind"] as? String, kind.hasPrefix("property") {
             onPropertyAction?(kind, body); return
         }
@@ -519,6 +531,25 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         guard previewing else { done?(); return }
         previewing = false
         run("return duo.endPreview()") { _ in done?() }
+    }
+
+    /// A property or list edit to the open task note (DL-167 step 4). The text comes from Swift's
+    /// writers (`TaskNotes.apply`) and lands as one plain, undoable change that keeps the caret, not
+    /// highlighted as Claude's. The page applies it only if the document is still the text Swift
+    /// worked from (typing in between asks for another go).
+    public func applyNoteEdit(_ edit: TaskNotes.NoteEdit, attempts: Int = 3, done: (@MainActor (Bool) -> Void)? = nil) {
+        guard readOnlyReason == nil, phase == .open || phase == .conflict || phase == .removed else { done?(false); return }
+        let gen = generation
+        run("return duo.text()") { [weak self] v in
+            guard let self, self.generation == gen, let text = v as? String else { done?(false); return }
+            guard let new = TaskNotes.apply(edit, to: text) else { done?(false); return }
+            self.run("return duo.applyPlain(b, t)", ["b": text, "t": new]) { [weak self] ok in
+                guard let self, self.generation == gen else { done?(false); return }
+                if ok as? Bool == true { done?(true) }
+                else if attempts > 1 { self.applyNoteEdit(edit, attempts: attempts - 1, done: done) }
+                else { self.lastEvent = "note edit not applied: the text kept changing"; done?(false) }
+            }
+        }
     }
 
     /// The template bar's Insert ▾: text typed at the caret, as the user would type it.
