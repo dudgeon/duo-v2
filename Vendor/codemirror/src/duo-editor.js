@@ -639,13 +639,14 @@ class ReferenceFieldWidget extends WidgetType {
       list.appendChild(hint);
       list.hidden = false;
     };
-    const quote = (s) => '"' + s.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+    // Swift writes the line (TaskNotes, one writer for open and closed notes, DL-167): the page only says which link.
+    const addReference = (link) => post("noteEdit", { op: "addReference", link });
     const esc = (t) => t.replace(/[\[\]]/g, (m) => "\\" + m);
     const choose = (f) => {
       const noteDir = ctx().noteDir ?? "";
       const name = f.split("/").filter(Boolean).pop();
       const title = f.endsWith("/") ? name : name.replace(/\.md$/i, "");
-      addListItem("references", quote(`[${esc(title)}](${relativeTo(noteDir, f)})`));
+      addReference(`[${esc(title)}](${relativeTo(noteDir, f)})`);
       finish();
     };
     // A pasted path (absolute, ~/, file:// or ./ ../ from the note) becomes a link relative to the
@@ -666,12 +667,12 @@ class ReferenceFieldWidget extends WidgetType {
       const rel = noteAbs ? relativeTo(noteAbs, abs.replace(/\/?$/, folder ? "/" : "")) : encodeURI(abs);
       return { title: folder ? name : name.replace(/\.md$/i, ""), rel };
     };
-    const addPath = (l) => { addListItem("references", quote(`[${esc(l.title)}](${l.rel})`)); finish(); };
+    const addPath = (l) => { addReference(`[${esc(l.title)}](${l.rel})`); finish(); };
     const finish = () => { input.value = ""; render(); input.blur(); view.focus(); };
     const addURL = (u) => {
       let title = u;
       try { title = new URL(u).hostname.replace(/^www\./, ""); } catch {}
-      addListItem("references", quote(`[${esc(title)}](${u})`));
+      addReference(`[${esc(title)}](${u})`);
       finish();
     };
     input.addEventListener("input", () => { sel = 0; render(); });
@@ -936,9 +937,11 @@ function applyPropChange(change, agent, userEvent = "input") {
   view.dispatch({ changes: change, effects, userEvent: "agent" });
 }
 
-// Sets one property's value in the buffer, or removes it (null), touching only that line (LR-37).
-// A new property goes on the end, before the closing fence.
-function setProperty(key, value, agent = false) {
+// Claude's property write through duo2 (`doc prop set|remove`, highlighted and revertable): one value in the buffer, or
+// removed (null), touching only that line (LR-37); a new property goes before the closing fence. Duo's own
+// property and list edits are Swift's (TaskNotes, applied by applyPlain), not written here.
+function agentSetProperty(key, value) {
+  const agent = true;
   const p = parseFrontmatter(view.state.doc);
   if (!p) {
     if (value == null) return true;
@@ -965,62 +968,12 @@ function setProperty(key, value, agent = false) {
   return true;
 }
 
-// Adds an item to a list property, one per line, after its last item (DL-93).
-// `a, "b, c", d` split on commas outside quotes (Frontmatter.splitInlineList), blanks dropped.
-function splitInline(s) {
-  const out = [];
-  let cur = "", q = null;
-  for (const ch of s) {
-    if (q) { if (ch === q) q = null; cur += ch; }
-    else if (ch === "\"" || ch === "'") { q = ch; cur += ch; }
-    else if (ch === ",") { out.push(cur.trim()); cur = ""; }
-    else cur += ch;
-  }
-  out.push(cur.trim());
-  return out.filter(Boolean);
-}
-
 // A change from the properties block's own controls: the caret stays where it was, mapped before
 // an insert at its place. Mapped after, it would land on the new line, which then shows as raw text
 // and not as the link it is (F-250).
 function dispatchKeepingCaret(spec) {
   const cs = view.state.changes(spec.changes), sel = view.state.selection.main;
   view.dispatch({ ...spec, changes: cs, selection: { anchor: cs.mapPos(sel.anchor, -1), head: cs.mapPos(sel.head, -1) } });
-}
-
-function addListItem(key, item) {
-  const p = parseFrontmatter(view.state.doc);
-  if (!p) return setProperty(key, "") && addListItem(key, item);
-  const L = p.lines.find((l) => l.kind === "key" && l.key === key);
-  // A new list: the key and its first item before the closing fence, no trailing space.
-  if (!L) { dispatchKeepingCaret({ changes: { from: view.state.doc.line(p.fm[1]).from, insert: `${key}:\n  - ${item}\n` }, userEvent: "input" }); return true; }
-  const v = L.value.trim();
-  if (v) {
-    // `sessions: []` (a new task) or `key: a`: the line becomes a block list with what it held
-    // first, as TaskNotes.adding writes it. An item under an inline list isn't YAML.
-    const inline = /^\[.*\]$/.test(v), old = inline ? splitInline(v.slice(1, -1)) : [v];
-    const insert = `${key}:` + [...old, item].map((x) => `\n  - ${x}`).join("");
-    dispatchKeepingCaret({ changes: { from: L.from, to: L.to, insert }, userEvent: "input" });
-    return true;
-  }
-  let at = L.to;
-  for (const o of p.lines) if (o.n > L.n) { if (o.kind === "item" && o.key === key) at = o.to; else if (o.kind === "key") break; }
-  dispatchKeepingCaret({ changes: { from: at, insert: `\n  - ${item}` }, userEvent: "input" });
-  return true;
-}
-
-// Removes the item of a list property whose value links to `url` (Remove from Task on a
-// reference, DL-150); the key goes too when it was the last item. Nothing else changes.
-function removeListItem(key, url) {
-  const p = parseFrontmatter(view.state.doc);
-  if (!p) return false;
-  const items = p.lines.filter((l) => l.kind === "item" && l.key === key);
-  const it = items.find((l) => { const m = MD_LINK.exec(l.value.trim()); return (m ? m[2] : l.value.trim().replace(/^["']|["']$/g, "")) === url; });
-  if (!it) return false;
-  if (items.length === 1) return setProperty(key, null);
-  const line = view.state.doc.line(it.n);
-  view.dispatch({ changes: { from: line.from - 1, to: line.to }, userEvent: "delete" });
-  return true;
 }
 
 // The properties as Duo and duo2 read them: name, type, value (lists as arrays), line.
@@ -1884,8 +1837,8 @@ function post(kind, body) {
 }
 
 // Chords Duo's menus own (Commands.swift); the editor must not consume them.
-// Duo generates the set from its menus (Resources/editor/chords.json) and injects it as window.__duoChords; this list is the fallback.
-const DUO_CHORDS = new Set(window.__duoChords || ["Mod-d", "Mod-i", "Mod-b", "Mod-s", "Mod-w", "Mod-n", "Shift-Mod-n", "Mod-k", "Shift-Mod-a", "Shift-Mod-p", "Shift-Mod-h", "Mod-Enter"]);
+// The chords Duo's menus own, generated from Commands.swift (EditorChords) and injected as window.__duoChords at document start.
+const DUO_CHORDS = new Set(window.__duoChords || []);
 
 // Links (DL-87): a click on a rendered link (its line not showing raw markdown) opens it, as in
 // Obsidian's live preview; ⌘-click opens it from anywhere. Duo decides what opening means
@@ -2390,11 +2343,8 @@ window.duo = {
   insertImage,
   imageLoaded: (id, url) => { const f = imageWaiters.get(id); imageWaiters.delete(id); if (f) f(url); return true; },
   markConflict: (lines) => { view.dispatch({ effects: setConflict.of(lines && lines.length ? lines : null) }); return true; },
-  setProperty,
-  addListItem,
-  removeListItem,
   listProperties,
-  agentSetProperty: (k, v) => setProperty(k, v, true),
+  agentSetProperty,
   propertyLine: (k) => parseFrontmatter(view.state.doc)?.lines.find((l) => l.kind === "key" && l.key === k)?.n ?? null,
   convertProperty,
   setPropertyLine,
@@ -2423,15 +2373,6 @@ window.duo = {
   create: (text) => create(document.getElementById("editor"), text, !!window.duoFlags?.noPreview),
   // Per-document states (DL-167): show(id, diskText, {folded}) → { restored, dirty, mixedLineEndings, separator };
   // close(id) frees a closed document's state; rename(old, new) re-keys it; heldIds() for checks.
-  // Swift's result of a property or list edit lands as one plain transaction: not highlighted as
-  // Claude's, undoable, and not a user edit (it leaves Claude's highlights alone).
-  applyExternalEdit: (text) => {
-    const cur = view.state.sliceDoc(), t = canon(text);
-    if (t === canon(cur)) return false;
-    const d = diffOne(canon(cur), t);
-    view.dispatch({ changes: { from: d.from, to: d.to, insert: d.insert }, userEvent: "duo.apply" });
-    return true;
-  },
   show,
   // Source mode: setSource(on) for the shown document; sourceModes(ids) is Duo's remembered set, sent
   // when the page loads and whenever it changes; source() says what shows now.

@@ -201,6 +201,28 @@ for (const t of targets) {
   if (mid < before.y - 1) fails.push(`shift+down from ${await ctx(t.p)} went up/stayed: head ${await ctx(s.h)}`);
   else if (mid - before.y > 36) fails.push(`shift+down from ${await ctx(t.p)} skipped a line: head ${await ctx(s.h)} (${(mid - before.y).toFixed(1)} below)`);
 }
+// IME composition (DL-167): text composed in the editor lands at the caret, once, with the caret after it, and
+// the composition is the editor's (no chord or key handling mid-composition). Chromium only: Playwright's
+// WebKit has no IME API, so there the case is reported as skipped.
+if (name === "chromium") {
+  const cdp = await page.context().newCDPSession(page);
+  const para = await page.evaluate(() => { const d = V.state.doc; for (let n = 1; n <= d.lines; n++) if (d.line(n).text.startsWith("Paragraph after the rule")) return d.line(n).to; return 0; });
+  await page.evaluate((p) => { V.focus(); V.dispatch({ selection: { anchor: p } }); }, para);
+  const before = await page.evaluate(() => V.state.doc.toString());
+  await cdp.send("Input.imeSetComposition", { text: "に", selectionStart: 1, selectionEnd: 1 });
+  await cdp.send("Input.imeSetComposition", { text: "日本", selectionStart: 2, selectionEnd: 2 });
+  const during = await page.evaluate(() => ({ composing: V.composing, view: V.compositionStarted }));
+  if (!during.composing && !during.view) fails.push("IME: the editor didn't see the composition start");
+  await cdp.send("Input.insertText", { text: "日本" });
+  await page.waitForTimeout(100);
+  const after = await page.evaluate(() => ({ text: V.state.doc.toString(), head: V.state.selection.main.head }));
+  if (after.text !== before.slice(0, para) + "日本" + before.slice(para)) fails.push(`IME: the composed text didn't land once at the caret: ${JSON.stringify(after.text.slice(para - 6, para + 8))}`);
+  if (after.head !== para + 2) fails.push(`IME: the caret should follow the composed text (${para + 2}), is ${after.head}`);
+  // The same composition, undone as one step.
+  await page.keyboard.press("Meta+z"); await page.keyboard.press("Control+z");
+  if ((await page.evaluate(() => V.state.doc.toString())) !== before) fails.push("IME: undo didn't take the composed text out in one step");
+  console.log("chromium: IME composition checked");
+} else console.log(`${name}: IME composition skipped (no IME API in Playwright's WebKit)`);
 console.log(`${name}: ${targets.length} clicks, ${pairs.length} drags, ${targets.length} shift+down`);
 console.log(fails.length ? fails.map((f) => `${name}: ${f}`).join("\n") : `${name}: PASS`);
 await b.close();
