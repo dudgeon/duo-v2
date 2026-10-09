@@ -84,7 +84,7 @@ extension AppModel {
         // The note open with unsaved text takes the link in its buffer, as + Add does; otherwise on disk.
         if let e = editorIfLoaded, e.url?.standardizedFileURL == folder.appending(path: path).standardizedFileURL {
             let title = fixture.sessions.first { $0.sessionId == id }?.name ?? id
-            e.run("duo.addListItem('sessions', i); return 1", ["i": "\"" + TaskNotes.link(title: title, id: id) + "\""]) { _ in }
+            e.applyNoteEdit(.addSession(link: TaskNotes.link(title: title, id: id)))
         } else if let why = addToTask(sessionKey: id, task: path) {
             return .failure(Refused(description: why))
         }
@@ -539,7 +539,7 @@ extension AppModel {
                 NSPasteboard.general.clearContents(); NSPasteboard.general.setString(url, forType: .string)
             })
             menu.addItem(.separator())
-            menu.addItem(ActionMenuItem("Remove from Task") { [weak e] in e?.run("return duo.removeListItem('references', u)", ["u": url]) { _ in } })   // action: task reference
+            menu.addItem(ActionMenuItem("Remove from Task") { [weak e] in e?.applyNoteEdit(.removeReference(target: url)) })   // action: task reference
             menu.popUp(positioning: nil, at: at, in: e.webView)
             return
         }
@@ -554,7 +554,7 @@ extension AppModel {
                     let closed = st == "done" || st == "dropped"
                     let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
                     // Status, plus `completed:` when it's done or dropped, as Status ▸ writes it (F-70).
-                    e?.run("duo.setProperty('status', s); duo.setProperty('completed', c); return 1", ["s": st, "c": closed ? f.string(from: Date()) : NSNull()]) { _ in }
+                    e?.applyNoteEdit(.status(st, completed: closed ? f.string(from: Date()) : nil))
                 }
                 item.state = st == current ? .on : .off
                 menu.addItem(item)
@@ -574,7 +574,7 @@ extension AppModel {
                     guard let id = s.sessionId else { continue }
                     let title = s.name.trimmingCharacters(in: CharacterSet(charactersIn: "“”\""))
                     menu.addItem(ActionMenuItem(title) { [weak e] in   // action: task add
-                        e?.run("duo.addListItem('sessions', i); return 1", ["i": "\"" + TaskNotes.link(title: title, id: id) + "\""]) { _ in }
+                        e?.applyNoteEdit(.addSession(link: TaskNotes.link(title: title, id: id)))
                     })
                 }
                 if candidates.isEmpty { menu.addItem(ActionMenuItem("No other sessions in \(project)", enabled: false) {}) }

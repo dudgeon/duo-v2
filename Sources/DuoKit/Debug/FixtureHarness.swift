@@ -253,6 +253,21 @@ public enum FixtureHarness {
                 let lines = text.components(separatedBy: "\n")
                 try? (["# PRD v3, renamed outside"] + lines.dropFirst()).joined(separator: "\n").write(to: url, atomically: false, encoding: .utf8)
             }
+        case "resolve":   // resolve:mine|theirs: ends a conflict as the bar's buttons do (DL-77)
+            model.editor.resolve(keepMine: parts.count > 1 ? parts[1] == "mine" : true) { ok in
+                FileHandle.standardError.write(Data("resolve: \(ok ? "done" : "failed")\n".utf8)) }
+        case "note-edit":   // note-edit:status=done@2026-10-09 | session=<link> | addref=<link> | rmref=<target>: a property edit on the open task note (DL-167 step 4)
+            let arg = parts.count > 1 ? parts[1] : ""
+            let kv = arg.split(separator: "=", maxSplits: 1).map(String.init), val = kv.count > 1 ? kv[1] : ""
+            let edit: TaskNotes.NoteEdit?
+            switch kv.first ?? "" {
+            case "status": let v = val.components(separatedBy: "@"); edit = .status(v[0], completed: v.count > 1 ? v[1] : nil)
+            case "session": edit = .addSession(link: val)
+            case "addref": edit = .addReference(link: val)
+            case "rmref": edit = .removeReference(target: val)
+            default: edit = nil
+            }
+            if let edit { model.editor.applyNoteEdit(edit) { ok in FileHandle.standardError.write(Data("note-edit: \(ok ? "applied" : "not applied")\n".utf8)) } }
         case "doc-status":
             if let url = model.editor.url { FileHandle.standardError.write(Data("doc-status: \(model.editor.status(of: url))\n".utf8)) }
         // Collisions (DL-77): a person typing, and another writer on disk, at the same time.

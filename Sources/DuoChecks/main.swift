@@ -664,6 +664,8 @@ func repoFixture() throws -> Fixture {
     try? FileManager.default.removeItem(at: ev)
     reapChecks()
     try pathChecks()
+    try noteEditChecks()
+    try editorChordChecks()
     taskPaneKeyChecks()
     dockBadgeChecks()
     try paneFocusChecks()

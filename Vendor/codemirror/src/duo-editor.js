@@ -2332,6 +2332,24 @@ function agentEdit(edits, content) {
   return { result: "applied", changes: changes.length, line: first };
 }
 
+// A property or list edit written by Duo's Swift writers (TaskNotes, DL-167 step 4): `next` replaces
+// `base` as small plain changes (not highlighted as Claude's), the caret kept, one undo step. Refused
+// (false) when the document is no longer `base`, so the host asks again from the new text.
+function applyPlain(base, next) {
+  const before = view.state.doc.toString();
+  if (stash || before !== canon(base)) return false;
+  const text = canon(next);
+  if (text === before) return true;
+  const a = chunks(before), b = chunks(text);
+  const starts = [0]; for (const l of a) starts.push(starts[starts.length - 1] + l.length);
+  const changes = diffLines(a, b).map((h) => {
+    const d = diffOne(a.slice(h.aFrom, h.aTo).join(""), b.slice(h.bFrom, h.bTo).join(""));
+    return { from: starts[h.aFrom] + d.from, to: starts[h.aFrom] + d.to, insert: d.insert };
+  });
+  dispatchKeepingCaret({ changes, userEvent: "input" });
+  return true;
+}
+
 // Agent edits go through the buffer (LR-34) and are highlighted until accepted (DL-5).
 function agentInsert(at, text) {
   view.dispatch({ changes: { from: at, insert: text }, effects: [markAdded.of([[at, at + text.length]]), recordChanges.of([{ id: ++changeSeq, from: at, to: at + text.length, removed: "" }])] });
@@ -2440,6 +2458,7 @@ window.duo = {
   setBaseText: (t) => setBase(canon(t)),
   agentInsert,
   agentEdit,
+  applyPlain,
   // Checks only: a person's typing (not highlighted, makes the buffer dirty).
   userReplace: (find, text) => {
     const doc = view.state.doc.toString(), at = doc.indexOf(find);

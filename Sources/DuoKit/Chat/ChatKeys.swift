@@ -7,7 +7,7 @@ import WebKit
 /// Whether a responder takes typed text itself: a text view or field, a terminal, or any web view.
 /// The editor's `EditorWebView` and the viewer's `DuoWebView` subclass WKWebView, so their class
 /// names don't say "WKWebView" and a name test missed them (F-249).
-@MainActor public func holdsTyping(_ r: NSResponder?) -> Bool { r is NSText || r is GuardedTerminalView || r is WKWebView }
+@MainActor public func holdsTyping(_ r: NSResponder?) -> Bool { r is NSText || r is GuardedTerminalView || isInsideWebView(r) }
 
 extension AppModel {
     /// The chat on screen, when it shows chat (not its terminal).
