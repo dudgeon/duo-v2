@@ -146,7 +146,7 @@ A private claude.ai page Geoff opens on his phone or desktop: https://claude.ai/
 
 **Keeping it current.** After every merge, release, delegation or report: update the thread row, add a `done` row, set the answered need's `status: "closed"` (pin writes with `if_version`), bump `meta/console.updated`. Batch the writes (`ArtifactData batch`). Then the digest in chat is one line plus the console link.
 
-**Phone links.** Every session you start has Remote Control on, so it has a `https://claude.ai/code/session_…` URL. `session-links.py` reads it from each transcript's `bridge_status` / `remote_session_change` line; put it in the thread's `link`. What a phone does with it: see F-259.
+**Phone links.** Every session you start has Remote Control on, so it has a `https://claude.ai/code/session_…` URL. `session-links.py` reads it from each transcript's `bridge_status` / `remote_session_change` line; put it in the thread's `link`. On Geoff's phone it opens in the browser, where the session works (F-259).
 
 **Peer name.** Sessions reach the director by its peer name (its Remote Control name, `duo-v2-ef`), not by "DUO DIRECTOR" (F-259).
 
