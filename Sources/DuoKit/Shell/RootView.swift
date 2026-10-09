@@ -44,10 +44,10 @@ struct AllProjectsLayout: View {
     var body: some View {
         PaneSplit(
             panes: [
-                .init(view: AnyView(HomePane()), width: DuoMetric.paneOverviewHome, minWidth: DuoMetric.paneMinHome,
+                .init(view: AnyView(HomePane().paneFocusRule(.left, onConsole: true)), width: DuoMetric.paneOverviewHome, minWidth: DuoMetric.paneMinHome,
                       collapsible: true, collapsed: model.leftCollapsedAllProjects),
-                .init(view: AnyView(DimmedUnderSheet { ProjectMapPane() }), width: nil, minWidth: DuoMetric.paneMinMap),
-                .init(view: AnyView(ActionColumnPane()), width: DuoMetric.paneOverviewActionColumn,
+                .init(view: AnyView(DimmedUnderSheet { ProjectMapPane() }.paneFocusRule(.middle)), width: nil, minWidth: DuoMetric.paneMinMap),
+                .init(view: AnyView(ActionColumnPane().paneFocusRule(.right)), width: DuoMetric.paneOverviewActionColumn,
                       minWidth: DuoMetric.paneMinActionColumn, collapsible: true, collapsed: model.rightCollapsedAllProjects),
             ],
             dividerColors: [DuoNSColor.consoleRule, DuoNSColor.rule],
@@ -58,7 +58,8 @@ struct AllProjectsLayout: View {
             liveColors: { m in
                 let light = m.homeShowsChat
                 return ([light ? DuoNSColor.rule : DuoNSColor.consoleRule, DuoNSColor.rule], [light ? DuoNSColor.ground : DuoNSColor.console, DuoNSColor.pane, DuoNSColor.pane])
-            }
+            },
+            onActivePane: { [weak model] i in model?.panePicked(DuoPane.allCases[i], allProjects: true) }
         )
     }
 }
@@ -82,17 +83,21 @@ struct ProjectLayout: View {
     var body: some View {
         PaneSplit(
             panes: [
-                .init(view: AnyView(ProjectSidebarPane()), width: DuoMetric.paneProjectLeft,
+                .init(view: AnyView(ProjectSidebarPane().paneFocusRule(.left)), width: DuoMetric.paneProjectLeft,
                       minWidth: DuoMetric.paneMinSessionsAndFiles, collapsible: true, collapsed: model.leftCollapsedProject),
-                .init(view: AnyView(ConsolePane()), width: nil, minWidth: DuoMetric.paneMinConsole),
-                .init(view: AnyView(RightPane()), width: DuoMetric.paneProjectRight,
+                .init(view: AnyView(ConsolePane().paneFocusRule(.middle, onConsole: true)), width: nil, minWidth: DuoMetric.paneMinConsole),
+                .init(view: AnyView(RightPane().paneFocusRule(.right)), width: DuoMetric.paneProjectRight,
                       minWidth: DuoMetric.paneMinRight, collapsible: true, collapsed: model.rightCollapsedProject),
             ],
             dividerColors: [DuoNSColor.rule, DuoNSColor.rule],
             paneBackgrounds: [DuoNSColor.pane, DuoNSColor.console, DuoNSColor.pane],
             model: model,
             // The task board (DL-148, C): over the session list and console; watched by the split.
-            cover: (AnyView(TaskBoardPane()), { $0.boardShown })
+            cover: (AnyView(TaskBoardPane().paneFocusRule(.middle)), { $0.boardShown }),
+            onActivePane: { [weak model] i in
+                guard let model else { return }
+                model.panePicked(i == 0 && model.boardShown ? .middle : DuoPane.allCases[i], allProjects: false)   // the board covers the left
+            }
         )
     }
 }

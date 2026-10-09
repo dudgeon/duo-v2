@@ -28,7 +28,8 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 peek jump` | Jump into the project selected in the peek. | Jump into Selected Project |
 | `duo2 view sidebar show\|hide\|toggle` | Show or hide the left pane. | Toggle Sidebar |
 | `duo2 view right show\|hide\|toggle` | Show or hide the right pane: the action column at All projects, the documents in a project (⌥⌘0, DL-129). | Toggle Right Pane, right pane button |
-| `duo2 view tab <Project \| document path \| group>` | Switch the right pane's tab. | right pane tab, Open Project File |
+| `duo2 view tab <Project \| document path \| group \| next \| previous>` | Switch the right pane's tab; next and previous step through the active pane's tabs instead (⌃Tab, ⌃⇧Tab, DL-165). | right pane tab, Open Project File, Show Next Tab, Show Previous Tab |
+| `duo2 view pane next\|previous\|left\|middle\|right` | Make a pane active and give it the keyboard: the next or previous one (⌥⌘→, ⌥⌘←), or one by name; a hidden pane can't be chosen. | Next Pane, Previous Pane |
 | `duo2 view group <group> expand\|collapse` | Expand or collapse a group in the session list. | group row |
 | `duo2 view select <session id>` | Select a session's card (action column or peek) without opening it. | action card, peek card |
 | `duo2 view sort recent\|name` | Order All projects' map by newest activity or by name (View › Sort Projects By). | Sort Projects By, map sort popup |
@@ -264,13 +265,11 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Later | the user's answer to the update question; it remembers the version so the launch and scheduled checks don't ask again (DL-114) |
 | Look Again | re-reads what Duo already refreshes every 2 s; the CLI always reads fresh state |
 | Me | the task board's owner filter: view state; `duo2 task board` lists every card |
-| Next Pane | not built yet |
 | No other sessions in | a disabled hint on + Add |
 | No templates yet: add .md files to a templates folder | a disabled hint |
 | Not Now | the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later |
 | OK | dismisses a notice |
 | Open Settings… | not built: Settings waits on its design (DB-10) |
-| Previous Pane | not built yet |
 | Project | a menu, not an action |
 | Report an Issue… | opens GitHub's new-issue form, filled in, for the user to edit and submit |
 | Resolve… | drafts the conflict's instruction into the project's Claude session, unsent (DL-149 board 11); the user presses Return. Claude is already the one resolving |

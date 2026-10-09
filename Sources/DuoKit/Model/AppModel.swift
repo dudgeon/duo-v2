@@ -149,6 +149,9 @@ public final class AppModel {
     public var lastVisitedSession: String?
     /// Asks the Home terminal to take keyboard focus (consumed by the Home pane).
     public var focusHomeRequest = 0
+    /// The pane that has the keyboard's attention at each altitude (DL-165); `activePane` reads the one on screen.
+    public var activePaneProject: DuoPane = .middle
+    public var activePaneAllProjects: DuoPane = .left
 
     public var terminalsMode: TerminalsMode = .off
     @ObservationIgnored public let terminals = TerminalStore()

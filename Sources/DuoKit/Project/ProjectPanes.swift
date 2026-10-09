@@ -674,24 +674,7 @@ struct RightPane: View {
         }
     }
 
-    private var rightTabs: [(id: String, title: String, isDocument: Bool)] {
-        var tabs: [(id: String, title: String, isDocument: Bool)] = [(id: "Project", title: "Project", isDocument: false)]
-        if let group = model.selectedSidebarItem, model.fixture.groups.contains(where: { $0.name == group }) {
-            tabs.append((id: group, title: group, isDocument: false))
-        }
-        for doc in model.openDocuments where doc != model.projectFile {
-            let title = model.webTabs[doc].map { $0.title }
-                ?? model.templateInfo(forTab: doc).map { $0.kind == .task ? "Task template" : "Project template" }   // DL-146, board A1
-                ?? (doc as NSString).lastPathComponent
-            tabs.append((id: doc, title: title, isDocument: true))
-        }
-        if let ro = model.readOnlySession { tabs.append((id: ReadOnlySession.tabKey, title: ro.title, isDocument: false)) }
-        // Fixture mode keeps its single document tab (the targets).
-        if let doc = model.rightTab, doc.contains("."), !tabs.contains(where: { $0.id == doc }), doc != model.projectFile {
-            tabs.append((id: doc, title: (doc as NSString).lastPathComponent, isDocument: true))
-        }
-        return tabs
-    }
+    private var rightTabs: [(id: String, title: String, isDocument: Bool)] { model.rightTabItems() }
 }
 
 /// The "new" verbs: for the tree's background, folders and files (DL-61).

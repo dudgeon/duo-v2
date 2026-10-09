@@ -298,17 +298,18 @@ public enum FixtureHarness {
             let codes = ["down": "\u{1b}[B", "up": "\u{1b}[A", "esc": "\u{1b}", "tab": "\t"]
             if parts.count > 1, let c = codes[parts[1]] { model.visibleTerminal?.view.send(txt: c) }
         case "event":  // event:esc|return|cmd-v: a real key event through the app's queue (local monitors, key window, field editor); cmd-v reads the real clipboard
-            let codes: [String: (UInt16, String)] = ["esc": (53, "\u{1b}"), "return": (36, "\r"), "cmd-v": (9, "v")]
+            let codes: [String: (UInt16, String)] = ["esc": (53, "\u{1b}"), "return": (36, "\r"), "cmd-v": (9, "v"), "ctrl-tab": (48, "\t"), "ctrl-shift-tab": (48, "\t")]
             if parts.count > 1, let (code, chars) = codes[parts[1]], let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
                 if !TestBackground.isOn { NSApp.activate(ignoringOtherApps: true) }; w.makeKey()   // a background launch never activates (F-227)
                 for type in [NSEvent.EventType.keyDown, .keyUp] {
-                    guard let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: parts[1] == "cmd-v" ? .command : [], timestamp: ProcessInfo.processInfo.systemUptime,
+                    guard let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: parts[1] == "cmd-v" ? .command : parts[1] == "ctrl-tab" ? .control : parts[1] == "ctrl-shift-tab" ? [.control, .shift] : [], timestamp: ProcessInfo.processInfo.systemUptime,
                                                    windowNumber: w.windowNumber, context: nil, characters: chars,
                                                    charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code) else { continue }
                     NSApp.postEvent(e, atStart: false)
                     // With the screen locked the window can't become key and the queue drops key events after
                     // the monitors; deliver keyDown as NSApp would: key equivalents first, then the first responder.
-                    if type == .keyDown, !w.isKeyWindow {
+                    // ⌃Tab is Duo's own monitor's (DL-165), which sees posted events; replaying it here would step twice.
+                    if type == .keyDown, !w.isKeyWindow, !parts[1].hasPrefix("ctrl-") {
                         DispatchQueue.main.async { if !w.performKeyEquivalent(with: e) { w.sendEvent(e) } }
                     }
                 }
@@ -784,6 +785,17 @@ public enum FixtureHarness {
                 }
             }
         case "menu-open": model.contextMenuSession = parts.count > 1 ? parts[1] : nil   // a session row as its context menu leaves it (Q-147)
+        case "pane":   // pane:left|middle|right|next|previous: the active pane (DL-165)
+            switch parts.count > 1 ? parts[1] : "" {
+            case "next": model.nextPane()
+            case "previous": model.previousPane()
+            case let n: if let pane = DuoPane(rawValue: n) { model.activate(pane) }
+            }
+        case "tab":   // tab:next|previous: the active pane's tabs (⌃Tab, ⌃⇧Tab)
+            if parts.count > 1, ["next", "previous"].contains(parts[1]) { model.cycleTab(forward: parts[1] == "next") }
+        case "pane-state":   // one line on stderr: the active pane, the tabs, and what has the keyboard
+            let r = NSApp.windows.first(where: { $0.title == "Duo" })?.firstResponder
+            FileHandle.standardError.write(Data("pane=\(model.activePane.rawValue) console=\(model.consoleTab ?? "-") right=\(model.rightTab ?? "-") home=\(model.homeTab ?? "-") responder=\(r.map { String(describing: type(of: $0)) } ?? "nil")\n".utf8))
         case let a where a.hasPrefix("wait"): break
         case let a where a.hasPrefix("perf-"): ChatPerf.perform(parts, on: model)   // chat mode's performance runs (F-157)
         default: FileHandle.standardError.write(Data("Unknown action '\(action)'\n".utf8))

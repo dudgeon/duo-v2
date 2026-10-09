@@ -35,7 +35,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup", settings, updateProbe = "update probe", hangs
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
-    case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewGroup = "view group", viewSelect = "view select"
+    case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewPane = "view pane", viewGroup = "view group", viewSelect = "view select"
     case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFolder = "view folder", viewHome = "view home"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
@@ -150,7 +150,9 @@ extension DuoAction {
         .init(.peekJump, .view, "", "Jump into the project selected in the peek.", ui: ["Jump into Selected Project"]),
         .init(.viewSidebar, .view, "show|hide|toggle", "Show or hide the left pane.", ui: ["Toggle Sidebar"]),
         .init(.viewRight, .view, "show|hide|toggle", "Show or hide the right pane: the action column at All projects, the documents in a project (⌥⌘0, DL-129).", ui: ["Toggle Right Pane", "right pane button"]),
-        .init(.viewTab, .view, "<Project | document path | group>", "Switch the right pane's tab.", ui: ["right pane tab", "Open Project File"]),
+        .init(.viewTab, .view, "<Project | document path | group | next | previous>", "Switch the right pane's tab; next and previous step through the active pane's tabs instead (⌃Tab, ⌃⇧Tab, DL-165).",
+              ui: ["right pane tab", "Open Project File", "Show Next Tab", "Show Previous Tab"]),
+        .init(.viewPane, .view, "next|previous|left|middle|right", "Make a pane active and give it the keyboard: the next or previous one (⌥⌘→, ⌥⌘←), or one by name; a hidden pane can't be chosen.", ui: ["Next Pane", "Previous Pane"]),
         .init(.viewGroup, .view, "<group> expand|collapse", "Expand or collapse a group in the session list.", ui: ["group row"]),
         .init(.viewSelect, .view, "<session id>", "Select a session's card (action column or peek) without opening it.", ui: ["action card", "peek card"]),
         .init(.viewSort, .view, "recent|name", "Order All projects' map by newest activity or by name (View › Sort Projects By).", ui: ["Sort Projects By", "map sort popup"]),
@@ -432,8 +434,6 @@ public enum Parity {
         "Enter Full Screen": "window management",
         "Exit Full Screen": "window management",
         "Toggle Right Pane": "not built yet",
-        "Next Pane": "not built yet",
-        "Previous Pane": "not built yet",
         "Cancel": "a step inside another action's dialog or picker",
         "Look Again": "re-reads what Duo already refreshes every 2 s; the CLI always reads fresh state",
         "Open Settings…": "not built: Settings waits on its design (DB-10)",

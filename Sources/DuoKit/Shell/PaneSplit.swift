@@ -30,9 +30,13 @@ struct PaneSplit: NSViewRepresentable {
     /// says so. The panes under it are kept, never torn down (terminals keep running). Watched by
     /// the split, so the layout holding it reads nothing that changes (F-208).
     var cover: (view: AnyView, shown: @MainActor (AppModel) -> Bool)?
+    /// A click in a pane, or the keyboard landing in one, says which (0, 1, 2; the cover is the middle's, 1): the
+    /// active pane follows (DL-165). Both altitudes' splits report; the layout passes it on if it is on screen.
+    var onActivePane: ((Int) -> Void)?
 
     func makeNSView(context: Context) -> DuoSplitView {
         let split = DuoSplitView()
+        split.onActivePane = onActivePane
         split.isVertical = true
         split.dividerStyle = .thin
         split.delegate = context.coordinator
@@ -68,6 +72,7 @@ struct PaneSplit: NSViewRepresentable {
     }
 
     private func apply(to split: DuoSplitView, coordinator: Coordinator) {
+        split.onActivePane = onActivePane
         coordinator.panes = panes
         if liveColors == nil {
             split.dividerColors = dividerColors
@@ -186,6 +191,46 @@ final class DuoSplitView: NSSplitView {
     private var pendingCollapse: [Int: Bool] = [:]
 
     override var dividerThickness: CGFloat { 1 }
+
+    /// Set by `PaneSplit`: told which pane (by index) was clicked or took the keyboard.
+    var onActivePane: ((Int) -> Void)?
+    private var clickMonitor: Any?
+    private var responderObservation: NSKeyValueObservation?
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if let m = clickMonitor { NSEvent.removeMonitor(m); clickMonitor = nil }
+        responderObservation = nil
+        guard let window else { return }
+        clickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] e in
+            if let self, e.window === self.window, !self.isHiddenOrHasHiddenAncestor {
+                let p = self.convert(e.locationInWindow, from: nil)
+                if let i = self.paneIndex(at: p) { self.reportPane(i) }
+            }
+            return e
+        }
+        // The keyboard moving into a pane (a Tab, a command, a terminal taking focus). The window itself
+        // or nothing is not a pane: the active pane stays.
+        responderObservation = window.observe(\.firstResponder, options: [.new]) { [weak self] w, _ in
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let self, self.window === w, !self.isHiddenOrHasHiddenAncestor,
+                          let r = w.firstResponder as? NSView, r !== self else { return }
+                    if let i = self.arrangedSubviews.firstIndex(where: { r.isDescendant(of: $0) }) { self.reportPane(i) }
+                }
+            }
+        }
+    }
+
+
+    /// The pane under a point in this view's coordinates: the cover counts as the middle.
+    private func paneIndex(at p: NSPoint) -> Int? {
+        guard bounds.contains(p) else { return nil }
+        if let cover, !cover.isHidden, cover.frame.contains(p) { return 1 }
+        return arrangedSubviews.indices.first { !isSubviewCollapsed(arrangedSubviews[$0]) && arrangedSubviews[$0].frame.contains(p) }
+    }
+
+    private func reportPane(_ i: Int) { onActivePane?(i) }
 
     override func drawDivider(in rect: NSRect) {
         // A collapsed subview keeps its old frame (it is hidden, not shrunk), so find the divider

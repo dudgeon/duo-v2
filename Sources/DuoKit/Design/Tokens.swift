@@ -147,6 +147,7 @@ public enum DuoMetric {
     public static let borderEmphasis: CGFloat = 1.5
     public static let borderFilesDivider: CGFloat = 2.0
     public static let borderTileFocusOutline: CGFloat = 2.0
+    public static let borderPaneFocusRule: CGFloat = 2.0
     public static let toolbarHeight: CGFloat = 38.0
     public static let tabStripHeight: CGFloat = 36.0
     public static let chatStripHeight: CGFloat = 28.0
