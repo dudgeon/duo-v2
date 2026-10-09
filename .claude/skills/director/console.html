@@ -145,18 +145,21 @@ const sorted = obj => Object.entries(obj).map(([id, d]) => ({ id, ...d })).sort(
 let threadsKept = {};
 try { threadsKept = JSON.parse(localStorage.getItem("director-threads") || "{}"); } catch (e) {}
 const keep = () => { try { localStorage.setItem("director-threads", JSON.stringify(threadsKept)); } catch (e) {} };
+async function diag(key, outcome, e) { if (!db) return; try { await db.doc("diag/" + Date.now()).set({ key, outcome, canSend, hasComments: !!comments, code: (e && e.code) || null, message: (e && (e.message || String(e))) || null, at: new Date().toISOString(), ua: navigator.userAgent.slice(0, 160) }); } catch (x) {} }
 async function send(key, anchorEl, text, statusEl) {
-  if (!comments || canSend !== "available") { statusEl.className = "status err"; statusEl.textContent = canSend === "no_session" ? "The director isn't listening right now; your answer is saved and it reads it on return." : "Can't reach the director from this view; your answer is saved."; return false; }
+  if (comments && canSend !== "available") { try { canSend = await comments.canSendToClaude(); } catch (e) {} }
+  if (!comments || canSend !== "available") { diag(key, "blocked"); statusEl.className = "status err"; statusEl.textContent = canSend === "no_session" ? "The director isn't listening right now; your answer is saved and it reads it on return." : "Can't reach the director from this view; your answer is saved."; return false; }
   statusEl.className = "status"; statusEl.textContent = "Sending…";
   const msg = text.length > 3900 ? text.slice(0, 3900) + "\n…(cut; the full text is saved in the console)" : text;
   try {
     let r;
     if (threadsKept[key]) { try { r = await comments.sendToClaude({ threadId: threadsKept[key], text: msg }); } catch (e) { if (e && e.code === "not_found") delete threadsKept[key]; else throw e; } }
     if (!r) r = await comments.sendToClaude({ anchor: await comments.anchorFor(anchorEl), text: msg });
-    threadsKept[key] = r.threadId; keep();
+    threadsKept[key] = r.threadId; keep(); diag(key, "sent:" + r.threadId);
     statusEl.className = "status ok"; statusEl.textContent = "Sent. The director's reply appears as a comment here.";
     return true;
   } catch (e) {
+    diag(key, "error", e);
     const c = e && e.code; statusEl.className = "status err";
     statusEl.textContent = c === "consent_required" ? "Allow comments for this page, then send again." : c === "rate_limited" ? "Too fast; wait a moment." : c === "claude_unavailable" ? "The director couldn't take it; it's saved." : "Couldn't send (" + (c || "error") + "); it's saved.";
     return false;
