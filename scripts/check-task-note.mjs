@@ -26,6 +26,8 @@ Notes
 `;
 const b = await chromium.launch({ executablePath: `${cache}/${shell}/chrome-headless-shell-mac-arm64/chrome-headless-shell` });
 const page = await b.newPage({ viewport: { width: 460, height: 900 } });
+// The page posts to Swift through WebKit's message handler; here it lands in a list.
+await page.addInitScript(() => { window.__posts = []; window.webkit = { messageHandlers: { duo: { postMessage: (m) => window.__posts.push(m) } } }; });
 await page.goto("file://" + dist + "/editor.html");
 await page.evaluate((t) => {
   document.documentElement.setAttribute("style", "--duo-pane:#fff;--duo-text:#1f2328;--duo-text2:#59636e;--duo-selected:#ddf;--duo-rule:#ddd;--duo-control-edge:#ccc;--duo-ground:#f6f8fa;--duo-needs-you:#c00;--duo-radius-card:8px;--duo-heading-above:4px;");
@@ -61,26 +63,24 @@ for (const needle of ["Third bullet", "First bullet", "Notes"]) {
   await page.mouse.click(r.x, r.y); await page.waitForTimeout(100);
   if (!(await line()).includes(needle)) fails.push(`click on "${needle}" landed on: ` + (await line()));
 }
-// The field: a pasted path, a file:// URL and a web link, each saved with Return as a drawn link.
-const add = async (text, expectDoc, expectName) => {
-  const refs = () => page.evaluate(() => document.querySelectorAll(".duo-fm-ref").length);
-  const before = await refs();
+// The field: a pasted path, a file:// URL and a web link, each taken with Return: the page asks Swift to
+// write the link (TaskNotes is the one writer, DL-167), clears the field and leaves edit mode.
+const add = async (text, expectLink) => {
+  await page.evaluate(() => { window.__posts.length = 0; });
   await page.evaluate((p) => { V.dispatch({ selection: { anchor: p } }); }, await at("Third bullet"));
   await page.click(".duo-fm-reffield input");
   await page.keyboard.insertText(text);   // a paste: one input event
   await page.keyboard.press("Enter"); await page.waitForTimeout(150);
-  const t = await page.evaluate(() => V.state.doc.toString());
-  if (!t.includes(expectDoc)) fails.push(`"${text}" was not saved as ${expectDoc}`);
-  if ((await refs()) !== before + 1) fails.push(`"${text}" does not draw as a link (${before} -> ${await refs()})`);
-  const names = await page.evaluate(() => [...document.querySelectorAll(".duo-fm-ref-name")].map((e) => e.textContent));
-  if (!names.includes(expectName)) fails.push(`"${text}": link name missing, have ${JSON.stringify(names)}`);
+  const edits = (await page.evaluate(() => window.__posts)).filter((m) => m.kind === "noteEdit");
+  if (edits.length !== 1 || edits[0].op !== "addReference" || edits[0].link !== expectLink) fails.push(`"${text}" asked for ${JSON.stringify(edits)}, not an addReference of ${expectLink}`);
   if (await page.evaluate(() => document.activeElement?.tagName === "INPUT")) fails.push(`"${text}": the field is still in edit mode`);
   if (await page.evaluate(() => document.querySelector(".duo-fm-reffield input").value !== "")) fails.push(`"${text}": the field kept its text`);
+  if ((await page.evaluate(() => V.state.doc.toString())).includes(expectLink)) fails.push(`"${text}": the page wrote the line itself`);
 };
-await add("/Users/me/proj/docs/specs/design.md", "[design](../docs/specs/design.md)", "design");
-await add("~/Desktop/notes.txt", "[notes.txt](../../Desktop/notes.txt)", "notes.txt");
-await add("file:///Users/me/proj/docs/a%20b.md", "[a b](../docs/a%20b.md)", "a b");
-await add("https://example.com/x", "[example.com](https://example.com/x)", "example.com");
+await add("/Users/me/proj/docs/specs/design.md", "[design](../docs/specs/design.md)");
+await add("~/Desktop/notes.txt", "[notes.txt](../../Desktop/notes.txt)");
+await add("file:///Users/me/proj/docs/a%20b.md", "[a b](../docs/a%20b.md)");
+await add("https://example.com/x", "[example.com](https://example.com/x)");
 await b.close();
 if (fails.length) { console.log(fails.join("\n")); process.exit(1); }
-console.log("task note: ok (arrows and clicks land on the right line; paths and links save, draw and leave edit mode)");
+console.log("task note: ok (arrows and clicks land on the right line; paths and links are handed to Swift's writer and leave edit mode)");
