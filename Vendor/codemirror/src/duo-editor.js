@@ -114,7 +114,7 @@ function buildDecorations(view) {
           for (let n = first; n <= last; n++) {
             const l = state.doc.line(n), fence = (n === first || n === last) && /^\s*(```|~~~)/.test(l.text);
             const fenceRaw = active.has(n);
-            ranges.push([l.from, l.from, Decoration.line({ class: "duo-codeblock" + (n === first ? " duo-codeblock-first" : "") + (n === last ? " duo-codeblock-last" : "") + (fence && !fenceRaw ? " duo-codeblock-fence" : "") })]);
+            ranges.push([l.from, l.from, Decoration.line({ class: "duo-codeblock" + (n === first ? " duo-codeblock-first" : "") + (n === last ? " duo-codeblock-last" : "") + (fence ? " duo-codeblock-fence" + (fenceRaw ? " duo-codeblock-fence-raw" : "") : "") })]);
             if (fence && !fenceRaw && l.to > l.from) ranges.push([l.from, l.to, hide]);
           }
           if (info && !active.has(first)) {
@@ -165,11 +165,12 @@ function buildDecorations(view) {
       },
     });
   }
-  // Blocks sit 10 apart, as the design draws them (S3-5): a blank line away from the caret is 10 high.
+  // Blocks sit 10 apart, as the design draws them (S3-5). A blank line is 10 high with the caret on it
+  // or not: a line keeps its height when the caret arrives (DL-167), so nothing below it moves.
   for (const { from, to } of view.visibleRanges) {
     for (let pos = from; pos <= to;) {
       const l = state.doc.lineAt(pos);
-      if (l.length === 0 && !active.has(l.number) && !codeLines.has(l.number) && l.from > fmEnd) ranges.push([l.from, l.from, Decoration.line({ class: "duo-blank" })]);
+      if (l.length === 0 && !codeLines.has(l.number) && l.from > fmEnd) ranges.push([l.from, l.from, Decoration.line({ class: "duo-blank" })]);
       pos = l.to + 1;
     }
   }
@@ -1261,12 +1262,19 @@ const clearOnUserEdit = EditorView.updateListener.of((u) => {
 
 // A table away from the caret is drawn as a table: `rule` borders, the header on `ground`, a
 // wide one scrolling in its box. On the caret's lines it's its Markdown.
+// A table keeps its drawn height while you edit its source (DL-167): the bar (28) and the source lines
+// (n of them, one more than the rows for the `---` line) together fill what the widget was, and a table
+// too short for that is padded to it, so nothing below moves when the caret enters or leaves.
+// A row draws 29 (4 + 20 + 4 + its rule) and the table one more for the last rule, in Chromium and WebKit alike.
+const TABLE_BAR = 28;
+const tableHeight = (rows) => Math.max(29 * rows + 1, 20 * (rows + 1) + TABLE_BAR);
 class TableWidget extends WidgetType {
   constructor(rows, align) { super(); this.rows = rows; this.align = align; }
   eq(o) { return JSON.stringify(o.rows) === JSON.stringify(this.rows) && o.align.join() === this.align.join(); }
   toDOM() {
     const box = document.createElement("div");
     box.className = "duo-table";
+    box.style.minHeight = tableHeight(this.rows.length) + "px";
     const t = document.createElement("table");
     this.rows.forEach((r, i) => {
       const tr = document.createElement("tr");
@@ -1598,6 +1606,8 @@ function blockDecorations(state) {
           const a = state.doc.lineAt(node.from), b = state.doc.lineAt(node.to);
           for (let n = a.number; n <= b.number; n++) if (active.has(n)) {
             out.push(Decoration.widget({ widget: new TableBarWidget(), block: true, side: -1 }).range(a.from));
+            const per = (tableHeight(b.number - a.number) - TABLE_BAR) / (b.number - a.number + 1);
+            for (let n = a.number; n <= b.number; n++) out.push(Decoration.line({ class: "duo-table-src", attributes: { style: `min-height:${per}px` } }).range(state.doc.line(n).from));
             return false;
           }
           const t = parseTable(state.sliceDoc(a.from, b.to));
@@ -1713,24 +1723,27 @@ const duoTheme = EditorView.theme({
   ".cm-line.duo-codeblock": { position: "relative", padding: "0 12px", backgroundColor: "var(--duo-ground)", fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px", lineHeight: "19px", whiteSpace: "pre-wrap" },
   ".cm-line.duo-codeblock-first": { borderTopLeftRadius: "6px", borderTopRightRadius: "6px" },
   ".cm-line.duo-codeblock-last": { borderBottomLeftRadius: "6px", borderBottomRightRadius: "6px" },
+  // A fence line is 8 high; with the caret on it the marker shrinks to 11, it doesn't grow the line (DL-167).
   ".cm-line.duo-codeblock-fence": { height: "8px", lineHeight: "8px", fontSize: "0", overflow: "visible" },
+  ".cm-line.duo-codeblock-fence.duo-codeblock-fence-raw": { fontSize: "11px" },
   // No margin: the blank lines around it give the 10 between blocks, as the target draws it (C-22).
   ".duo-table": { overflowX: "auto" },
+  ".duo-table-src": { boxSizing: "border-box" },
   ".duo-table table": { borderCollapse: "collapse", width: "100%", fontSize: "13px", lineHeight: "20px" },
   ".cm-line.duo-blank": { height: "10px", lineHeight: "10px" },
   ".duo-hr": { display: "inline-block", width: "100%", height: "1px", verticalAlign: "middle", backgroundColor: "var(--duo-rule)" },
   ".duo-table th, .duo-table td": { padding: "4px 8px", border: "1px solid var(--duo-rule)", whiteSpace: "nowrap" },
-  ".duo-table-bar": { display: "flex", gap: "6px", margin: "0 0 6px" },
+  ".duo-table-bar": { display: "flow-root", boxSizing: "border-box", height: `${TABLE_BAR}px`, paddingBottom: "6px" },
   ".duo-table-bar button": { font: "inherit", fontSize: "12px", lineHeight: "16px", padding: "2px 8px", border: "1px solid var(--duo-control-edge)",
                              borderRadius: "6px", background: "var(--duo-pane)", color: "var(--duo-text)", cursor: "default", whiteSpace: "nowrap" },
   ".duo-table th": { backgroundColor: "var(--duo-ground)", fontWeight: "600" },
-  ".duo-figure": { display: "flex", flexDirection: "column", gap: "4px", margin: "4px 0" },
+  ".duo-figure": { display: "flow-root", padding: "4px 0" },
   ".duo-img": { maxWidth: "100%", borderRadius: "6px", border: "1px solid var(--duo-rule)" },
   ".duo-caption": { fontSize: "12px", color: "var(--duo-text2)" },
   ".duo-img-missing": { display: "flex", alignItems: "center", justifyContent: "center", height: "72px", border: "1px dashed var(--duo-control-edge)", borderRadius: "6px", color: "var(--duo-text2)" },
   ".duo-img-missing code": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px" },
   ".duo-deleted": { display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "12px", lineHeight: "16px", color: "var(--duo-text2)", flexWrap: "wrap" },
-  ".duo-deleted-block": { display: "flex", margin: "2px 0" },
+  ".duo-deleted-block": { display: "flex", padding: "2px 0" },
   ".duo-deleted-rule": { flex: "1", minWidth: "12px", height: "1px", backgroundColor: "var(--duo-rule)" },
   ".duo-deleted a": { color: "var(--duo-text2)", textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px", cursor: "default" },
   ".duo-deleted-body": { flexBasis: "100%", whiteSpace: "pre-wrap", textDecoration: "line-through", fontSize: "13px", lineHeight: "20px" },
