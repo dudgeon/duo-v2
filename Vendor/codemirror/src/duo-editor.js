@@ -1865,7 +1865,8 @@ function post(kind, body) {
 }
 
 // Chords Duo's menus own (Commands.swift); the editor must not consume them.
-const DUO_CHORDS = new Set(["Mod-d", "Mod-i", "Mod-b", "Mod-s", "Mod-w", "Mod-n", "Shift-Mod-n", "Mod-k", "Shift-Mod-a", "Shift-Mod-p", "Shift-Mod-h", "Mod-Enter"]);
+// Duo generates the set from its menus (Resources/editor/chords.json) and injects it as window.__duoChords; this list is the fallback.
+const DUO_CHORDS = new Set(window.__duoChords || ["Mod-d", "Mod-i", "Mod-b", "Mod-s", "Mod-w", "Mod-n", "Shift-Mod-n", "Mod-k", "Shift-Mod-a", "Shift-Mod-p", "Shift-Mod-h", "Mod-Enter"]);
 
 // Links (DL-87): a click on a rendered link (its line not showing raw markdown) opens it, as in
 // Obsidian's live preview; ⌘-click opens it from anywhere. Duo decides what opening means
@@ -1957,12 +1958,63 @@ function create(parent, text) {
   sepInfo = lineSeparatorOf(text);
   setBase(canon(text));
   stash = null;
+  shownId = null;
   const state = EditorState.create({ doc: text, extensions: extensions(sepInfo.mixed) });
   if (view) view.destroy();
   view = new EditorView({ state, parent });
   // Duo's context for the note (its sessions' states) outlives the document: apply it again.
   if (window.__ctx) view.dispatch({ effects: setContext.of(window.__ctx) });
   return { mixedLineEndings: sepInfo.mixed, separator: JSON.stringify(sepInfo.sep) };
+}
+
+// One editor state per open document (DL-167): undo history, caret, scroll, Claude's highlights and
+// folds live in the document's EditorState, so the page keeps each open document's state under the
+// id Duo gives it (the file's standardized path) and sets it back when its tab is shown, instead of
+// building a new one. Memory is bounded by the open tabs: Duo says when one closes.
+const held = new Map();   // id → { state, scroll, base, sepInfo }
+let shownId = null;
+const selectionReport = (state) => {
+  const r = state.selection.main, claude = state.field(changesField);
+  return { doc: shownId, from: r.from, to: r.to, empty: r.empty, dirty: !state.doc.eq(baseDoc),
+           claudeChanges: claude.length, atClaudeChange: claude.some((c) => r.head >= c.from && r.head <= c.to), inTable: !!tableAt(state, r.head) };
+};
+function show(id, diskText, opts) {
+  const parent = document.getElementById("editor");
+  if (view && shownId != null) {
+    if (stash) { view.setState(stash); stash = null; }   // a template preview isn't the document
+    held.set(shownId, { state: view.state, scroll: view.scrollSnapshot(), top: view.scrollDOM.scrollTop, base, sepInfo });
+  }
+  const h = held.get(id);
+  if (!h || !view) {
+    if (opts && opts.folded != null) window.__folded = !!opts.folded;
+    const r = create(parent, diskText);
+    shownId = id;
+    return { ...r, restored: false, dirty: false };
+  }
+  shownId = id;
+  held.delete(id);   // the shown document's state is the view's own
+  stash = null;
+  base = h.base; baseDoc = Text.of(base.split("\n")); sepInfo = h.sepInfo;
+  view.setState(h.state);
+  // The snapshot anchors on a line; the pixel offset is exact once the lines have been measured again.
+  view.dispatch({ effects: h.scroll });
+  const settle = (n) => { if (shownId !== id) return; if (Math.abs(view.scrollDOM.scrollTop - h.top) > 1) view.scrollDOM.scrollTop = h.top; if (n) requestAnimationFrame(() => settle(n - 1)); };
+  requestAnimationFrame(() => requestAnimationFrame(() => settle(3)));
+  if (opts && opts.folded != null) view.dispatch({ effects: setFolded.of(!!opts.folded) });
+  const sel = selectionReport(h.state);
+  post("selection", sel);
+  return { mixedLineEndings: sepInfo.mixed, separator: JSON.stringify(sepInfo.sep), restored: true, dirty: sel.dirty };
+}
+function closeDoc(id) {
+  const had = held.delete(id);
+  if (id === shownId) shownId = null;   // its state stays on screen until the next show; nothing is kept for it
+  return had;
+}
+function renameDoc(from, to) {
+  if (from === to) return false;
+  if (held.has(from)) { held.set(to, held.get(from)); held.delete(from); }
+  if (shownId === from) shownId = to;
+  return true;
 }
 
 // Preview (board A2): the file a template would make, read-only, over the template, which comes
@@ -2017,12 +2069,8 @@ function extensions(readOnly) {
       EditorView.updateListener.of((u) => {
         if (stash) return;   // a preview: not the document
         if (u.selectionSet || u.docChanged) {
-          const r = u.state.selection.main;
           // Never stringify the document per keystroke: 1.2 MB × every edit was 280 MB of garbage (F-34).
-          const claude = u.state.field(changesField);
-          post("selection", { from: r.from, to: r.to, empty: r.empty, dirty: !u.state.doc.eq(baseDoc),
-                              claudeChanges: claude.length, atClaudeChange: claude.some((c) => r.head >= c.from && r.head <= c.to),
-                              inTable: !!tableAt(u.state, r.head) });
+          post("selection", selectionReport(u.state));
         }
       }),
     ];
@@ -2332,6 +2380,21 @@ window.duo = {
     return true;
   },
   create: (text) => create(document.getElementById("editor"), text),
+  // Per-document states (DL-167): show(id, diskText, {folded}) → { restored, dirty, mixedLineEndings, separator };
+  // close(id) frees a closed document's state; rename(old, new) re-keys it; heldIds() for checks.
+  // Swift's result of a property or list edit lands as one plain transaction: not highlighted as
+  // Claude's, undoable, and not a user edit (it leaves Claude's highlights alone).
+  applyExternalEdit: (text) => {
+    const cur = view.state.sliceDoc(), t = canon(text);
+    if (t === canon(cur)) return false;
+    const d = diffOne(canon(cur), t);
+    view.dispatch({ changes: { from: d.from, to: d.to, insert: d.insert }, userEvent: "duo.apply" });
+    return true;
+  },
+  show,
+  close: closeDoc,
+  rename: renameDoc,
+  heldIds: () => [...held.keys()],
   text: fileText,
   markSaved: () => setBase(view.state.doc.toString()),
   exec: (name) => { commands[name]?.(); return view.state.doc.length; },
