@@ -10,7 +10,9 @@ import WebKit
 public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     public let webView: DuoWebView
     public private(set) var url: URL?
-    public private(set) var readOnlyReason: String?
+    /// Notifies like the other bar states: a read-only reason left from a file that vanished mid-switch
+    /// kept its bar over the next document, which open() had already cleared (F-262).
+    public private(set) var readOnlyReason: String? { didSet { if oldValue != readOnlyReason { onStateChange?() } } }
     public private(set) var lastEvent: String = "idle"   // for the harness and logs
     /// An outside change overlapped unsaved edits. Autosave pauses until it's resolved (LR-32):
     /// saving now would overwrite the other writer's change on disk. The banner is Q-20.

@@ -250,6 +250,10 @@ extension AppModel {
 
     func closeDocumentsUnder(_ path: String) {
         for p in openDocuments where p == path || p.hasPrefix(path + "/") {
+            // Let go of a file still on disk without saving: callers trash or move it next, and
+            // closeDocument's save would land after that and write it back (F-262). A file already
+            // gone has no liveFile; closeDocument lets go of it (its save is paused, removed on disk).
+            if liveFile(p) == editorIfLoaded?.url { editorIfLoaded?.closeFile() }
             closeDocument(p)
         }
     }
