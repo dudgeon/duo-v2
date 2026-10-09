@@ -698,10 +698,12 @@ struct RightPane: View {
     /// Which tabs show and whether titles shorten, by the console's rule (`TabStripFit`): titles
     /// shorten to 24 characters, then the tabs furthest right go into `» n`; the active one stays.
     private func layout(_ tabs: [(id: String, title: String, isDocument: Bool)], width: CGFloat) -> (keep: [Bool], short: Bool) {
-        let font = DuoTextStyle.body.spec.nsFont
+        // A document's × box sits inside the gap before its title (the tab's padding is the gap less
+        // the box), so it adds no width; the active title is drawn in the emphasis weight.
         func w(_ t: (id: String, title: String, isDocument: Bool), _ short: Bool) -> CGFloat {
             let title = short ? ConsoleTabStrip.short(t.title) : t.title
-            return ceil(TextWidth.of(title, font: font)) + (t.isDocument ? DuoMetric.tabCloseSize + DuoMetric.tabCloseTitleGap : 0) + (model.webTabs[t.id]?.opener != nil ? 14 : 0)
+            let font = (t.id == model.rightTab ? DuoTextStyle.bodyEmphasis : DuoTextStyle.body).spec.nsFont
+            return ceil(TextWidth.of(title, font: font)) + (model.webTabs[t.id]?.opener != nil ? 14 : 0)
         }
         let plus: CGFloat = model.terminalsMode == .live && model.projectFolder != nil ? 10 : 0
         let controls = plus + (plus > 0 ? DuoSpace.gapPaneTabs : 0)
