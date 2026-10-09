@@ -20,7 +20,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public private(set) var dirty = false
     /// When the user last changed the text: a task's note moves to its new name only once typing pauses (C-24).
     public private(set) var lastTyped = Date.distantPast
-    private var pageReady = false
+    var pageReady = false
+    /// Documents Duo remembers in Source mode (DL-167), sent to the page when it loads and when the set changes.
+    var sourceModes: [String] = []
     /// Whether the editor page has finished loading (scripted captures report it).
     public var isPageReady: Bool { pageReady }
     private var pending: (() -> Void)?
@@ -97,6 +99,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public func webView(_ w: WKWebView, didFinish n: WKNavigation!) {
         pageReady = true
         pending?(); pending = nil
+        sendSourceModes()
         if !noteContext.isEmpty { webView.evaluateJavaScript("window.__ctx = \(noteContext); window.duo && duo.setContext(window.__ctx)") }
     }
 

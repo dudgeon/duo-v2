@@ -114,7 +114,7 @@ function buildDecorations(view) {
           for (let n = first; n <= last; n++) {
             const l = state.doc.line(n), fence = (n === first || n === last) && /^\s*(```|~~~)/.test(l.text);
             const fenceRaw = active.has(n);
-            ranges.push([l.from, l.from, Decoration.line({ class: "duo-codeblock" + (n === first ? " duo-codeblock-first" : "") + (n === last ? " duo-codeblock-last" : "") + (fence && !fenceRaw ? " duo-codeblock-fence" : "") })]);
+            ranges.push([l.from, l.from, Decoration.line({ class: "duo-codeblock" + (n === first ? " duo-codeblock-first" : "") + (n === last ? " duo-codeblock-last" : "") + (fence ? " duo-codeblock-fence" + (fenceRaw ? " duo-codeblock-fence-raw" : "") : "") })]);
             if (fence && !fenceRaw && l.to > l.from) ranges.push([l.from, l.to, hide]);
           }
           if (info && !active.has(first)) {
@@ -165,11 +165,12 @@ function buildDecorations(view) {
       },
     });
   }
-  // Blocks sit 10 apart, as the design draws them (S3-5): a blank line away from the caret is 10 high.
+  // Blocks sit 10 apart, as the design draws them (S3-5). A blank line is 10 high with the caret on it
+  // or not: a line keeps its height when the caret arrives (DL-167), so nothing below it moves.
   for (const { from, to } of view.visibleRanges) {
     for (let pos = from; pos <= to;) {
       const l = state.doc.lineAt(pos);
-      if (l.length === 0 && !active.has(l.number) && !codeLines.has(l.number) && l.from > fmEnd) ranges.push([l.from, l.from, Decoration.line({ class: "duo-blank" })]);
+      if (l.length === 0 && !codeLines.has(l.number) && l.from > fmEnd) ranges.push([l.from, l.from, Decoration.line({ class: "duo-blank" })]);
       pos = l.to + 1;
     }
   }
@@ -1261,12 +1262,19 @@ const clearOnUserEdit = EditorView.updateListener.of((u) => {
 
 // A table away from the caret is drawn as a table: `rule` borders, the header on `ground`, a
 // wide one scrolling in its box. On the caret's lines it's its Markdown.
+// A table keeps its drawn height while you edit its source (DL-167): the bar (28) and the source lines
+// (n of them, one more than the rows for the `---` line) together fill what the widget was, and a table
+// too short for that is padded to it, so nothing below moves when the caret enters or leaves.
+// A row draws 29 (4 + 20 + 4 + its rule) and the table one more for the last rule, in Chromium and WebKit alike.
+const TABLE_BAR = 28;
+const tableHeight = (rows) => Math.max(29 * rows + 1, 20 * (rows + 1) + TABLE_BAR);
 class TableWidget extends WidgetType {
   constructor(rows, align) { super(); this.rows = rows; this.align = align; }
   eq(o) { return JSON.stringify(o.rows) === JSON.stringify(this.rows) && o.align.join() === this.align.join(); }
   toDOM() {
     const box = document.createElement("div");
     box.className = "duo-table";
+    box.style.minHeight = tableHeight(this.rows.length) + "px";
     const t = document.createElement("table");
     this.rows.forEach((r, i) => {
       const tr = document.createElement("tr");
@@ -1598,6 +1606,8 @@ function blockDecorations(state) {
           const a = state.doc.lineAt(node.from), b = state.doc.lineAt(node.to);
           for (let n = a.number; n <= b.number; n++) if (active.has(n)) {
             out.push(Decoration.widget({ widget: new TableBarWidget(), block: true, side: -1 }).range(a.from));
+            const per = (tableHeight(b.number - a.number) - TABLE_BAR) / (b.number - a.number + 1);
+            for (let n = a.number; n <= b.number; n++) out.push(Decoration.line({ class: "duo-table-src", attributes: { style: `min-height:${per}px` } }).range(state.doc.line(n).from));
             return false;
           }
           const t = parseTable(state.sliceDoc(a.from, b.to));
@@ -1690,6 +1700,25 @@ function diffOne(a, b) {
 // Read-only when a file can't round-trip byte for byte (mixed line endings, LR-30).
 const readOnlyCompartment = new Compartment();
 
+// Source mode, per document (DL-167, Q3): the live preview's pieces (decorations, properties block,
+// tables and images, block widgets) are taken out and the text shows as typed: Obsidian's escape
+// hatch when a rendering case is wrong. Three compartments keep the extensions where they were in
+// the list, and a reconfigure keeps the document's history, caret and scroll.
+const previewLive = new Compartment(), previewProps = new Compartment(), previewBlocks = new Compartment();
+let sourceMode = !!window.duoFlags?.noPreview;   // the next state's mode (checks start a page in source with the flag)
+const sourceIds = new Set();                      // documents Duo remembers in source mode, by id
+const sourceEffects = (on) => [previewLive.reconfigure(on ? [] : [livePreview]), previewProps.reconfigure(on ? [] : previewPropsList), previewBlocks.reconfigure(on ? [] : [blocksField])];
+const isSource = (state) => previewLive.get(state).length === 0;
+function setSource(on) {
+  on = !!on;
+  sourceMode = on;
+  if (shownId != null) { if (on) sourceIds.add(shownId); else sourceIds.delete(shownId); }
+  if (!view || isSource(view.state) === on) return on;
+  if (stash) stash = stash.update({ effects: sourceEffects(on) }).state;
+  view.dispatch({ effects: sourceEffects(on) });
+  return on;
+}
+
 // Duo's look (handoff §3.4: body 13/20, headings 14 semibold, padding 22 28, pane background).
 // Colours and sizes come from Duo's tokens as CSS variables set by the app; nothing is hard-coded.
 const duoTheme = EditorView.theme({
@@ -1713,24 +1742,27 @@ const duoTheme = EditorView.theme({
   ".cm-line.duo-codeblock": { position: "relative", padding: "0 12px", backgroundColor: "var(--duo-ground)", fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px", lineHeight: "19px", whiteSpace: "pre-wrap" },
   ".cm-line.duo-codeblock-first": { borderTopLeftRadius: "6px", borderTopRightRadius: "6px" },
   ".cm-line.duo-codeblock-last": { borderBottomLeftRadius: "6px", borderBottomRightRadius: "6px" },
+  // A fence line is 8 high; with the caret on it the marker shrinks to 11, it doesn't grow the line (DL-167).
   ".cm-line.duo-codeblock-fence": { height: "8px", lineHeight: "8px", fontSize: "0", overflow: "visible" },
+  ".cm-line.duo-codeblock-fence.duo-codeblock-fence-raw": { fontSize: "11px" },
   // No margin: the blank lines around it give the 10 between blocks, as the target draws it (C-22).
   ".duo-table": { overflowX: "auto" },
+  ".duo-table-src": { boxSizing: "border-box" },
   ".duo-table table": { borderCollapse: "collapse", width: "100%", fontSize: "13px", lineHeight: "20px" },
   ".cm-line.duo-blank": { height: "10px", lineHeight: "10px" },
   ".duo-hr": { display: "inline-block", width: "100%", height: "1px", verticalAlign: "middle", backgroundColor: "var(--duo-rule)" },
   ".duo-table th, .duo-table td": { padding: "4px 8px", border: "1px solid var(--duo-rule)", whiteSpace: "nowrap" },
-  ".duo-table-bar": { display: "flex", gap: "6px", margin: "0 0 6px" },
+  ".duo-table-bar": { display: "flow-root", boxSizing: "border-box", height: `${TABLE_BAR}px`, paddingBottom: "6px" },
   ".duo-table-bar button": { font: "inherit", fontSize: "12px", lineHeight: "16px", padding: "2px 8px", border: "1px solid var(--duo-control-edge)",
                              borderRadius: "6px", background: "var(--duo-pane)", color: "var(--duo-text)", cursor: "default", whiteSpace: "nowrap" },
   ".duo-table th": { backgroundColor: "var(--duo-ground)", fontWeight: "600" },
-  ".duo-figure": { display: "flex", flexDirection: "column", gap: "4px", margin: "4px 0" },
+  ".duo-figure": { display: "flow-root", padding: "4px 0" },
   ".duo-img": { maxWidth: "100%", borderRadius: "6px", border: "1px solid var(--duo-rule)" },
   ".duo-caption": { fontSize: "12px", color: "var(--duo-text2)" },
   ".duo-img-missing": { display: "flex", alignItems: "center", justifyContent: "center", height: "72px", border: "1px dashed var(--duo-control-edge)", borderRadius: "6px", color: "var(--duo-text2)" },
   ".duo-img-missing code": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px" },
   ".duo-deleted": { display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "12px", lineHeight: "16px", color: "var(--duo-text2)", flexWrap: "wrap" },
-  ".duo-deleted-block": { display: "flex", margin: "2px 0" },
+  ".duo-deleted-block": { display: "flex", padding: "2px 0" },
   ".duo-deleted-rule": { flex: "1", minWidth: "12px", height: "1px", backgroundColor: "var(--duo-rule)" },
   ".duo-deleted a": { color: "var(--duo-text2)", textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px", cursor: "default" },
   ".duo-deleted-body": { flexBasis: "100%", whiteSpace: "pre-wrap", textDecoration: "line-through", fontSize: "13px", lineHeight: "20px" },
@@ -1852,7 +1884,8 @@ function post(kind, body) {
 }
 
 // Chords Duo's menus own (Commands.swift); the editor must not consume them.
-const DUO_CHORDS = new Set(["Mod-d", "Mod-i", "Mod-b", "Mod-s", "Mod-w", "Mod-n", "Shift-Mod-n", "Mod-k", "Shift-Mod-a", "Shift-Mod-p", "Shift-Mod-h", "Mod-Enter"]);
+// Duo generates the set from its menus (Resources/editor/chords.json) and injects it as window.__duoChords; this list is the fallback.
+const DUO_CHORDS = new Set(window.__duoChords || ["Mod-d", "Mod-i", "Mod-b", "Mod-s", "Mod-w", "Mod-n", "Shift-Mod-n", "Mod-k", "Shift-Mod-a", "Shift-Mod-p", "Shift-Mod-h", "Mod-Enter"]);
 
 // Links (DL-87): a click on a rendered link (its line not showing raw markdown) opens it, as in
 // Obsidian's live preview; ⌘-click opens it from anywhere. Duo decides what opening means
@@ -1940,16 +1973,70 @@ const titleFollowsHeading = EditorState.transactionFilter.of((tr) => {
   return tr;
 });
 
-function create(parent, text) {
+function create(parent, text, source) {
+  if (source != null) sourceMode = !!source;
   sepInfo = lineSeparatorOf(text);
   setBase(canon(text));
   stash = null;
+  shownId = null;
   const state = EditorState.create({ doc: text, extensions: extensions(sepInfo.mixed) });
   if (view) view.destroy();
   view = new EditorView({ state, parent });
   // Duo's context for the note (its sessions' states) outlives the document: apply it again.
   if (window.__ctx) view.dispatch({ effects: setContext.of(window.__ctx) });
   return { mixedLineEndings: sepInfo.mixed, separator: JSON.stringify(sepInfo.sep) };
+}
+
+// One editor state per open document (DL-167): undo history, caret, scroll, Claude's highlights and
+// folds live in the document's EditorState, so the page keeps each open document's state under the
+// id Duo gives it (the file's standardized path) and sets it back when its tab is shown, instead of
+// building a new one. Memory is bounded by the open tabs: Duo says when one closes.
+const held = new Map();   // id → { state, scroll, base, sepInfo }
+let shownId = null;
+const selectionReport = (state) => {
+  const r = state.selection.main, claude = state.field(changesField);
+  return { doc: shownId, from: r.from, to: r.to, empty: r.empty, dirty: !state.doc.eq(baseDoc),
+           claudeChanges: claude.length, atClaudeChange: claude.some((c) => r.head >= c.from && r.head <= c.to), inTable: !!tableAt(state, r.head) };
+};
+function show(id, diskText, opts) {
+  const parent = document.getElementById("editor");
+  if (view && shownId != null) {
+    if (stash) { view.setState(stash); stash = null; }   // a template preview isn't the document
+    held.set(shownId, { state: view.state, scroll: view.scrollSnapshot(), top: view.scrollDOM.scrollTop, base, sepInfo });
+  }
+  const h = held.get(id);
+  if (!h || !view) {
+    if (opts && opts.folded != null) window.__folded = !!opts.folded;
+    const r = create(parent, diskText, opts && opts.source != null ? opts.source : sourceIds.has(id));
+    shownId = id;
+    return { ...r, restored: false, dirty: false };
+  }
+  shownId = id;
+  sourceMode = isSource(h.state);
+  held.delete(id);   // the shown document's state is the view's own
+  stash = null;
+  base = h.base; baseDoc = Text.of(base.split("\n")); sepInfo = h.sepInfo;
+  view.setState(h.state);
+  if (opts && opts.source != null && !!opts.source !== isSource(h.state)) setSource(opts.source);
+  // The snapshot anchors on a line; the pixel offset is exact once the lines have been measured again.
+  view.dispatch({ effects: h.scroll });
+  const settle = (n) => { if (shownId !== id) return; if (Math.abs(view.scrollDOM.scrollTop - h.top) > 1) view.scrollDOM.scrollTop = h.top; if (n) requestAnimationFrame(() => settle(n - 1)); };
+  requestAnimationFrame(() => requestAnimationFrame(() => settle(3)));
+  if (opts && opts.folded != null) view.dispatch({ effects: setFolded.of(!!opts.folded) });
+  const sel = selectionReport(h.state);
+  post("selection", sel);
+  return { mixedLineEndings: sepInfo.mixed, separator: JSON.stringify(sepInfo.sep), restored: true, dirty: sel.dirty };
+}
+function closeDoc(id) {
+  const had = held.delete(id);
+  if (id === shownId) shownId = null;   // its state stays on screen until the next show; nothing is kept for it
+  return had;
+}
+function renameDoc(from, to) {
+  if (from === to) return false;
+  if (held.has(from)) { held.set(to, held.get(from)); held.delete(from); }
+  if (shownId === from) shownId = to;
+  return true;
 }
 
 // Preview (board A2): the file a template would make, read-only, over the template, which comes
@@ -1968,6 +2055,11 @@ function endPreview() {
   return true;
 }
 
+const previewPropsList = [propertiesField, propertiesKeymap, tableKeymap, EditorView.domEventHandlers({ paste: (e, v) => pasteImage(e, v) || pasteIntoCell(e, v), drop: dropImage }), trackPendingImages, suggestionKeys,
+        autocompletion({ override: [propertyCompletions], icons: false, activateOnTyping: true,
+          tooltipClass: (st) => (inBlock(st) && !st.sliceDoc(st.doc.lineAt(st.selection.main.head).from, st.selection.main.head).includes(":") ? "duo-sugg-names" : "duo-sugg-values"),
+          addToOptions: [{ position: 20, render: (c) => { const s = document.createElement("span"); s.className = "duo-sugg-icon";
+            if (PROP_ICONS[c.type]) s.innerHTML = iconSvg(c.type); return s; } }] })];
 function extensions(readOnly) {
     return [
       EditorState.lineSeparator.of(sepInfo.sep),
@@ -1979,19 +2071,15 @@ function extensions(readOnly) {
       history(),
       markdown({ base: markdownLanguage }),  // GitHub-flavoured: task lists, tables, strikethrough
       search({ top: true, createPanel: findPanel }),
-      ...(window.duoFlags?.noPreview ? [] : [livePreview]),
+      previewLive.of(sourceMode ? [] : [livePreview]),
       contextField,
       foldField,
-      ...(window.duoFlags?.noPreview ? [] : [propertiesField, propertiesKeymap, tableKeymap, EditorView.domEventHandlers({ paste: (e, v) => pasteImage(e, v) || pasteIntoCell(e, v), drop: dropImage }), trackPendingImages, suggestionKeys,
-        autocompletion({ override: [propertyCompletions], icons: false, activateOnTyping: true,
-          tooltipClass: (st) => (inBlock(st) && !st.sliceDoc(st.doc.lineAt(st.selection.main.head).from, st.selection.main.head).includes(":") ? "duo-sugg-names" : "duo-sugg-values"),
-          addToOptions: [{ position: 20, render: (c) => { const s = document.createElement("span"); s.className = "duo-sugg-icon";
-            if (PROP_ICONS[c.type]) s.innerHTML = iconSvg(c.type); return s; } }] })]),
+      previewProps.of(sourceMode ? [] : previewPropsList),
       addedField,
       fadingField,
       highlightMotion,
       conflictField,
-      ...(window.duoFlags?.noPreview ? [] : [blocksField]),
+      previewBlocks.of(sourceMode ? [] : [blocksField]),
       changesField,
       searchField,
       clearOnUserEdit,
@@ -2004,12 +2092,8 @@ function extensions(readOnly) {
       EditorView.updateListener.of((u) => {
         if (stash) return;   // a preview: not the document
         if (u.selectionSet || u.docChanged) {
-          const r = u.state.selection.main;
           // Never stringify the document per keystroke: 1.2 MB × every edit was 280 MB of garbage (F-34).
-          const claude = u.state.field(changesField);
-          post("selection", { from: r.from, to: r.to, empty: r.empty, dirty: !u.state.doc.eq(baseDoc),
-                              claudeChanges: claude.length, atClaudeChange: claude.some((c) => r.head >= c.from && r.head <= c.to),
-                              inTable: !!tableAt(u.state, r.head) });
+          post("selection", selectionReport(u.state));
         }
       }),
     ];
@@ -2318,7 +2402,27 @@ window.duo = {
     view.focus();
     return true;
   },
-  create: (text) => create(document.getElementById("editor"), text),
+  create: (text) => create(document.getElementById("editor"), text, !!window.duoFlags?.noPreview),
+  // Per-document states (DL-167): show(id, diskText, {folded}) → { restored, dirty, mixedLineEndings, separator };
+  // close(id) frees a closed document's state; rename(old, new) re-keys it; heldIds() for checks.
+  // Swift's result of a property or list edit lands as one plain transaction: not highlighted as
+  // Claude's, undoable, and not a user edit (it leaves Claude's highlights alone).
+  applyExternalEdit: (text) => {
+    const cur = view.state.sliceDoc(), t = canon(text);
+    if (t === canon(cur)) return false;
+    const d = diffOne(canon(cur), t);
+    view.dispatch({ changes: { from: d.from, to: d.to, insert: d.insert }, userEvent: "duo.apply" });
+    return true;
+  },
+  show,
+  // Source mode: setSource(on) for the shown document; sourceModes(ids) is Duo's remembered set, sent
+  // when the page loads and whenever it changes; source() says what shows now.
+  setSource,
+  source: () => (view ? isSource(view.state) : sourceMode),
+  sourceModes: (ids) => { sourceIds.clear(); for (const i of ids) sourceIds.add(i); return true; },
+  close: closeDoc,
+  rename: renameDoc,
+  heldIds: () => [...held.keys()],
   text: fileText,
   markSaved: () => setBase(view.state.doc.toString()),
   exec: (name) => { commands[name]?.(); return view.state.doc.length; },

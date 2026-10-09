@@ -65,7 +65,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Documents
     case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
     case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docTable = "doc table", docFind = "doc find"
-    case docProp = "doc prop"
+    case docProp = "doc prop", docMode = "doc mode"
     case docMarkup = "doc markup", docComments = "doc comments", docOutline = "doc outline", docPick = "doc pick", docElement = "doc element"
     case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history", docRevert = "doc revert"
     // HTML pages
@@ -323,6 +323,9 @@ extension DuoAction {
               ui: ["Insert Table", "Add Row Above", "Add Row Below", "Add Column Before", "Add Column After", "Delete Row", "Delete Column",
                    "Left", "Center", "Right", "+ Row", "+ Column", "Align", "Delete"]),
         .init(.docFind, .docs, "<text>", "Find text in the showing document and select the next match.", ui: ["Find"]),
+        .init(.docMode, .docs, "[source|preview|toggle]",
+              "Show the document as its text (source) or rendered (preview), as View › Source Mode does; remembered per document. With nothing, says which it shows now (DL-167).",
+              ui: ["Source Mode"]),
         .init(.docProp, .docs, "list | get <name> | set <name> <value> | remove <name> | type <name> <text|list|number|checkbox|date|datetime|link>",
               "The showing document's properties (frontmatter): read them, or change one line through the editor, highlighted as Claude's (DB-16). Lists: `set tags \"[a, b]\"`.",
               ui: ["Add a property", "property type menu", "Pick a date", "property checkbox"]),

@@ -129,6 +129,8 @@ public final class AppModel {
     public var openDocumentsByProject: [String: [String]] = [:]
     /// The file tree (DL-105): hidden files on or off, and the folders open in each project's tree.
     public var showHiddenFiles = DuoState.load().showHiddenFiles
+    /// Documents shown in Source mode (DL-167), by standardized path; remembered.
+    public var sourceDocuments = Set(DuoState.load().sourceDocuments)
     /// The main window is full screen (View › Enter / Exit Full Screen, DL-108).
     public var fullScreen = false
     public var expandedFolders: [String: Set<String>] = [:]
