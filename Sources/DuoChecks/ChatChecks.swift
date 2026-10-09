@@ -187,6 +187,37 @@ func spikeScreen(_ name: String) -> String {
         renumbered.setVersion("2.1.300")
         renumbered.attach(FakeTUI(bashPerm.replacingOccurrences(of: " ❯ 1. Yes", with: " ❯ 4. Yes")))
         check(!renumbered.dialogsVerified && !renumbered.showsChat, "options not numbered 1…n: the terminal")
+        // DL-164: the verified versions (2.1.291 to 293) are checked too: a dialog that reads whole is
+        // answered from chat, one that doesn't goes to the terminal (DL-154, sticky) like any other version.
+        func askScreen(_ rows: [String]) -> String {
+            ([" ☐ Q", "", "Pick one?", ""] + rows + ["───────────────────────────────────────────────────────────────────────────────────────",
+                "  Chat about this", "", "Enter to select · ↑/↓ to navigate · Esc to cancel"]).joined(separator: "\n")
+        }
+        for version in ["2.1.291", "2.1.292", "2.1.293"] {
+            let whole = ChatSession(key: "v-whole-\(version)", mode: .chat)
+            whole.setVersion(version)
+            whole.attach(FakeTUI(askScreen(["❯ 1. A", "  2. B", "  3. Type something."])))
+            check(whole.versionTrust == .verified && whole.screen.kind == .question && whole.dialogsVerified && whole.fallback?.message.contains("doesn’t read like") != true,
+                  "\(version): a question that reads whole is still answered from chat")
+            let skipped = ChatSession(key: "v-skip-\(version)", mode: .chat)
+            skipped.setVersion(version)
+            skipped.attach(FakeTUI(bashPerm.replacingOccurrences(of: "   3. No", with: "   4. No")))
+            check(skipped.versionTrust == .verified && skipped.screen.kind == .permission && !skipped.dialogsVerified && !skipped.showsChat
+                  && skipped.fallback?.message.contains("doesn’t read like") == true,
+                  "\(version): a permission dialog with a skipped option number falls back to the terminal, not answered by number")
+            let twoAsk = ChatSession(key: "v-ask-cursors-\(version)", mode: .chat)
+            twoAsk.setVersion(version)
+            twoAsk.attach(FakeTUI(askScreen(["❯ 1. A", "❯ 2. B", "  3. Type something."])))
+            check(twoAsk.versionTrust == .verified && twoAsk.screen.kind == .question && !twoAsk.dialogsVerified && !twoAsk.showsChat
+                  && twoAsk.fallback?.message.contains("doesn’t read like") == true,
+                  "\(version): a question with two cursors falls back to the terminal")
+            let twoCursors = ChatSession(key: "v-cursors-\(version)", mode: .chat)
+            twoCursors.setVersion(version)
+            twoCursors.attach(FakeTUI(bashPerm.replacingOccurrences(of: "   3. No", with: " ❯ 3. No")))
+            check(twoCursors.versionTrust == .verified && twoCursors.screen.kind == .permission && !twoCursors.dialogsVerified && !twoCursors.showsChat
+                  && twoCursors.fallback?.message.contains("doesn’t read like") == true,
+                  "\(version): a permission dialog with two cursors falls back to the terminal")
+        }
         let hand = ChatSession(key: "s3", mode: .chat)
         let t3 = FakeTUI(spikeScreen("10-bash-perm.txt")); hand.attach(t3)
         hand.fallBack(.handedOver("Amend Claude’s request here, then press Return. Chat comes back after."))

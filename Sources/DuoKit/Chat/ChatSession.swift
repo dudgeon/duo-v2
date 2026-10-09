@@ -140,12 +140,11 @@ public final class ChatSession {
     /// Dialogs are answered from chat only on a verified CLI (fallback rule 3).
     /// How this CLI's dialogs are trusted (DL-145).
     public private(set) var versionTrust: ChatVersionTrust = .verified
-    /// Dialogs are answered from chat: on a verified CLI, or a newer one while the dialog on screen
-    /// reads whole by the verified signatures (DL-145).
+    /// Dialogs are answered from chat: on a verified CLI or another 2.1.x, while the dialog on screen
+    /// reads whole by the verified signatures (DL-145, DL-164: the verified versions are checked too).
     public var dialogsVerified: Bool {
         switch versionTrust {
-        case .verified: true
-        case .newer: ChatScreenReader.wellFormed(screen)
+        case .verified, .newer: ChatScreenReader.wellFormed(screen)
         case .unverified: false
         }
     }
@@ -364,7 +363,7 @@ public final class ChatSession {
         case .permission, .plan, .question, .questionReview:
             unknownSince = nil; unknownTimer?.invalidate()
             if !dialogsVerified {
-                fallBack(versionTrust == .newer
+                fallBack(versionTrust != .unverified
                     ? .automatic("This dialog in Claude Code \(cliVersion ?? "") doesn’t read like the versions chat mode was checked with, so here’s the terminal.")
                     : .automatic("Chat mode hasn’t been checked with this version of Claude Code’s dialogs (\(cliVersion ?? "unknown")), so here’s the terminal."))
             } else if !requestAgrees {
