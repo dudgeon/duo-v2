@@ -20,7 +20,10 @@ public struct ChatSignatures: Sendable, Equatable {
     public var optionsEnd = #"^\s*(ctrl\+g|Enter to|Esc to)"#
     public var planTitle = #"^\s*Ready to code\?"#
     public var planQuestion = #"Would you like to proceed\?"#
-    public var permissionQuestion = #"^\s*Do you want to .*\?\s*$"#
+    /// The permission dialog's question. "Do you want to …?" (2.1.219 to 2.1.293); 2.1.295 adds "Allow this read
+    /// outside the working directories?" (F-244), and its binary has "Allow external CLAUDE.md file imports?",
+    /// "Trust this directory?", "Would you like to install …?". The dialog also needs numbered options and "Esc to cancel".
+    public var permissionQuestion = #"^\s*(Do you want to|Allow|Trust|Would you like to) .*\?\s*$"#
     public var permissionCancel = #"Esc to cancel"#
     public var amend = #"Tab to amend"#
     public var reviewTitle = #"^Review your answers"#
@@ -481,6 +484,14 @@ public enum ChatScreenReader {
     //   chat    "Chat about this", below the rule (numbered, or not in the preview layout)
     // The preview layout draws the focused option's preview in a box to the right of the list, has
     // no free-text row, and takes notes with "n".
+    static func isOptionRow(_ line: String, n: Int?, have: [Int], column: inout Int?) -> Bool {
+        guard let n, n == (have.last ?? 0) + 1 else { return false }
+        let at = line.prefix { !$0.isNumber }.count   // the number's column: only spaces and ❯ come before it
+        if let c = column { return at == c }
+        column = at
+        return true
+    }
+
     static func question(_ t: [String], nav: Int, _ s: ChatSignatures) -> ChatScreen {
         let tabsAt = t.firstIndex { $0.contains("☐") || $0.contains("☒") } ?? -1
         var r = ChatScreen(kind: .question, sig: "")
@@ -493,6 +504,7 @@ public enum ChatScreenReader {
             guard let m = ChatRegex.get(box).firstMatch(in: l, range: NSRange(location: 0, length: (l as NSString).length)) else { return l }
             return (l as NSString).substring(to: m.range.location)
         }
+        var optionColumn: Int?
         var i = tabsAt + 1
         while i < nav {
             defer { i += 1 }
@@ -506,7 +518,11 @@ public enum ChatScreenReader {
             }
             if raw.chatIs(box) { r.preview = true }
             let l = left(raw)
-            if let m = l.chatMatch(#"^\s*(❯)?\s*(\d+)\.\s(\[([ ✔])\]\s)?(.*?)\s*$"#) {
+            // An option row is at the option column (the first row's number; the ❯ cursor sits two columns
+            // left of it) and counts up from 1 with no gap. A numbered line in an option's description is
+            // indented deeper or breaks the count, so it is a note (F-243).
+            if let m = l.chatMatch(#"^\s*(❯)?\s*(\d+)\.\s(\[([ ✔])\]\s)?(.*?)\s*$"#),
+               isOptionRow(l, n: Int(m[2] ?? ""), have: r.rows.filter { $0.n != nil }.compactMap(\.n), column: &optionColumn) {
                 var label = m[5] ?? "", selected = false
                 if label.hasSuffix(" ✔") { selected = true; label = String(label.dropLast(2)) }
                 r.rows.append(ChatScreenRow(kind: afterRule && label == s.chatAbout ? .chat : .option, n: Int(m[2] ?? ""), label: label,

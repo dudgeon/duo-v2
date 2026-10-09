@@ -411,7 +411,20 @@ public final class ChatSession {
     public func fallBack(_ f: ChatFallback) {
         guard mode == .chat, fallback != f else { return }
         fallback = f
+        traceFallback(f)
         onChange?()
+    }
+
+    /// Diagnostics (test branch, askq-fallback): what chat saw when it fell back, to stderr. One header
+    /// line, then the terminal's rows as chat read them, so a run's log shows the screen at that moment.
+    func traceFallback(_ f: ChatFallback) {
+        guard let t = terminal else { return }
+        let lines = t.screenLines()
+        var out = "chat-fallback: \(f.message) | screen=\(screen.kind.rawValue) sig=\(screen.sig) why=\(screen.why ?? "-") "
+        out += "cols=\(t.columns) rows=\(lines.count) shown=\(isShown()) version=\(cliVersion ?? "-") trust=\(versionTrust.rawValue) "
+        out += "pending=\(pendingRequest?.tool ?? "-") unknownSince=\(unknownSince.map { String(format: "%.2f", now.timeIntervalSince($0)) } ?? "-")\n"
+        out += lines.map { "| " + $0 }.joined(separator: "\n") + "\n"
+        FileHandle.standardError.write(Data(out.utf8))
     }
 
     /// "Back to Chat": shows chat now. If the screen still can't be shown, the terminal returns
