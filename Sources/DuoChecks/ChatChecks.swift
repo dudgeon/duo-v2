@@ -31,6 +31,7 @@ func spikeScreen(_ name: String) -> String {
 @MainActor func spin(_ s: TimeInterval) { RunLoop.main.run(until: Date().addingTimeInterval(s)) }
 
 @MainActor func chatChecks() throws {
+    defer { try? askqFallbackChecks() }
     print("chat mode: reading the TUI screen (2.1.291, F-104, F-105, F-106)")
     do {
         let idle = ChatScreenReader.read(spikeScreen("tour-2.1.291/01-markdown.txt"))
