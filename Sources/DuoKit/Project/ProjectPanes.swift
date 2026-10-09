@@ -542,9 +542,14 @@ struct RightPane: View {
         VStack(alignment: .leading, spacing: 0) {
             // Spacing is laid out by hand so a document tab's × (DL-126) sits in the gap before its
             // title: the gap is the 1 left over, the × box and the 1 before the title.
+            GeometryReader { box in
+            let fit = layout(tabs, width: box.size.width - 40)
+            let shownTabs = tabs.indices.filter { fit.keep[$0] }.map { tabs[$0] }
+            let hiddenTabs = tabs.indices.filter { !fit.keep[$0] }.map { tabs[$0] }
             HStack(spacing: 0) {
-                ForEach(Array(tabs.enumerated()), id: \.element.id) { i, tab in
+                ForEach(Array(shownTabs.enumerated()), id: \.element.id) { i, tab in
                     let active = tab.id == model.rightTab
+                    let title = fit.short ? ConsoleTabStrip.short(tab.title) : tab.title
                     // A document waiting in conflict says so on its tab (S3-4).
                     let conflicted = !active && tab.isDocument && (model.liveFile(tab.id).map { model.editorIfLoaded?.keptInConflict($0) == true } ?? false)
                     let closeSlot = tab.isDocument ? DuoMetric.tabCloseSize + DuoMetric.tabCloseTitleGap : 0
@@ -560,7 +565,7 @@ struct RightPane: View {
                         }
                         // A popup's tab leads with ↳ (DL-132 i, standins2-handoff q67-popup).
                         if opener != nil { Text("↳").duoText(.body).foregroundStyle(DuoColor.text2).padding(.trailing, 3) }
-                        Text("\(Text(tab.title).foregroundStyle(active ? DuoColor.text : DuoColor.text2))\(conflicted ? Text(" · conflict").foregroundStyle(DuoColor.text) : Text(""))")
+                        Text("\(Text(title).foregroundStyle(active ? DuoColor.text : DuoColor.text2))\(conflicted ? Text(" · conflict").foregroundStyle(DuoColor.text) : Text(""))")
                             .duoText(active ? .bodyEmphasis : .body)
                             .lineLimit(1)
                         // A file outside the project shows its folder under the pointer (DL-132 f, q39-hover).
@@ -594,6 +599,18 @@ struct RightPane: View {
                         .zIndex(model.showsTabClose(tab.id) ? 1 : 0)   // its fill reaches over the next tab's padding (DL-134)
                         .transition(.tab)
                 }
+                // Tabs that don't fit wait in a `» n` menu before the +, as on the console (BUG-068, Q-167).
+                if !hiddenTabs.isEmpty {
+                    HStack(spacing: 4) {
+                        MoreTabsMark(color: DuoColor.text2).frame(width: 11, height: 9)
+                        Text("\(hiddenTabs.count)").duoText(.body).foregroundStyle(DuoColor.text2)
+                    }
+                    .padding(.leading, DuoSpace.gapPaneTabs)
+                    .contentShape(Rectangle())
+                    .onActivate { PopUp.show(hiddenTabs.map { t in (t.title, { model.rightTab = t.id; if t.isDocument { model.selectedFile = t.id } }) }) }  // action: view tab
+                    .accessibilityLabel("\(hiddenTabs.count) more tabs")
+                    .background(DuoColor.pane)
+                }
                 // New Markdown file, the same treatment as the console's + (DL-61).
                 if model.terminalsMode == .live, model.projectFolder != nil {
                     Text("+").duoText(.body).foregroundStyle(DuoColor.text2)
@@ -611,8 +628,10 @@ struct RightPane: View {
             }
             .padding(.horizontal, 20)
             .frame(height: DuoMetric.tabStripHeight)
-            .duoAnimation(.tabMove, value: tabs.map(\.id))
+            .duoAnimation(.tabMove, value: shownTabs.map(\.id))
             .id(model.currentProject?.name)   // another project's tabs replace these at once
+            }
+            .frame(height: DuoMetric.tabStripHeight)
             DuoColor.rule.frame(height: 1)
             if let id = model.rightTab, let web = model.webTabs[id] {
                 // A browser tab (Phase K, ENH-8): allowed sites in Duo, the rest in the browser (DL-3).
@@ -675,6 +694,21 @@ struct RightPane: View {
     }
 
     private var rightTabs: [(id: String, title: String, isDocument: Bool)] { model.rightTabItems() }
+
+    /// Which tabs show and whether titles shorten, by the console's rule (`TabStripFit`): titles
+    /// shorten to 24 characters, then the tabs furthest right go into `» n`; the active one stays.
+    private func layout(_ tabs: [(id: String, title: String, isDocument: Bool)], width: CGFloat) -> (keep: [Bool], short: Bool) {
+        let font = DuoTextStyle.body.spec.nsFont
+        func w(_ t: (id: String, title: String, isDocument: Bool), _ short: Bool) -> CGFloat {
+            let title = short ? ConsoleTabStrip.short(t.title) : t.title
+            return ceil(TextWidth.of(title, font: font)) + (t.isDocument ? DuoMetric.tabCloseSize + DuoMetric.tabCloseTitleGap : 0) + (model.webTabs[t.id]?.opener != nil ? 14 : 0)
+        }
+        let plus: CGFloat = model.terminalsMode == .live && model.projectFolder != nil ? 10 : 0
+        let controls = plus + (plus > 0 ? DuoSpace.gapPaneTabs : 0)
+        return TabStripFit.fit(full: tabs.map { w($0, false) }, short: tabs.map { w($0, true) },
+                               selected: tabs.firstIndex { $0.id == model.rightTab }, width: width,
+                               controls: controls, more: 11 + 4 + 16 + DuoSpace.gapPaneTabs, gap: DuoSpace.gapPaneTabs)
+    }
 }
 
 /// The "new" verbs: for the tree's background, folders and files (DL-61).
