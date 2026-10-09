@@ -27,7 +27,9 @@ Read `CONTRIBUTING.md` first for build commands and layout (`README.md` is for p
 
 ## Director
 
-One session, `*DUO DIRECTOR*`, runs the other sessions as their engineering manager (Geoff is the PM): it delegates work to new sessions (background Claude sessions with Remote Control, outside Duo unless Geoff says otherwise), reviews and merges their branches, keeps records consistent and cuts releases Geoff approves. Its job description is `.claude/skills/director/SKILL.md`. A director that resumes (after compaction or a restart) starts there. Build sessions report to it by `SendMessage` to `DUO DIRECTOR` when their work is committed.
+One session, the **DUO DIRECTOR** (in Duo, with Remote Control and Artifact tools; DL-166), runs the other sessions as their engineering manager (Geoff is the PM): it delegates work to new sessions (background Claude sessions with Remote Control, outside Duo unless Geoff says otherwise), reviews and merges their branches, keeps records consistent, cuts releases Geoff approves, and is the only publisher of the acceptance walk page and the design-system artifact. Its job description is `.claude/skills/director/SKILL.md`. A director that resumes (after compaction or a restart) starts there. Build sessions report to it by `SendMessage` to its **peer name** (its Remote Control name, given in their brief; `duo-v2-ef` since 2026-10-09, F-259) when their work is committed.
+
+Geoff talks to the director through the **director console**, https://claude.ai/artifact/MMmJ9BjomsKq9f9HpHK1ka (skill §7): decisions as buttons with the recommendation first, release and delegation calls, what's in flight with links that open each session on his phone, and what's done. Its buttons message the director session directly. The console is the default channel; chat and AskUserQuestion are the fallback.
 
 ## Model efficiency
 

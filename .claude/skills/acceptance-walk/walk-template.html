@@ -155,6 +155,51 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
 dialog textarea { min-height: 320px; font: 12.5px "SF Mono", ui-monospace, Menlo, monospace; }
 .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap; align-items: center; }
 .row .note { margin-right: auto; color: var(--muted); font-size: 12.5px; }
+/* Work Mac rating chip */
+.wm { font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); white-space: nowrap; cursor: help; }
+.wm.as-is { background: var(--ok-bg); color: var(--ok); }
+.wm.small { background: var(--later-bg); color: var(--later); }
+.wm.home { background: var(--chip); color: var(--muted); }
+.wmwhy { font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+.filters button[data-toggle][aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.mobile-only { display: none; }
+.desk-only { display: inline-block; }
+pre, code, .card, .decision, .what, .expect, ol.steps, .commit { overflow-wrap: anywhere; }
+.mock, .tablewrap, .card table, .decision table { max-width: 100%; }
+.card table, .decision table { display: block; overflow-x: auto; }
+@media (max-width: 760px) {
+  body { font-size: 15px; }
+  .bar { padding: 8px 16px; gap: 6px 8px; }
+  h1 { font-size: 15px; flex: 1 1 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .counts { font-size: 11px; line-height: 1.25; flex: 1 1 80px; min-width: 0; }
+  .bar button { padding: 8px 10px; }
+  .long { display: none; }
+  details.aboutwalk { margin: 12px 0; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 0 12px; }
+  details.aboutwalk summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+  details.aboutwalk .intro { margin-top: 0; }
+  .progress { height: 4px; order: 5; }
+  .chan { flex: 1 1 100%; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; order: 4; }
+  .filters { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 2px; order: 6; -webkit-overflow-scrolling: touch; }
+  .filters button { flex: 0 0 auto; white-space: nowrap; }
+  button { min-height: 44px; min-width: 44px; padding: 8px 14px; }
+  a.setupbtn { min-height: 44px; display: inline-flex; align-items: center; padding: 8px 14px; }
+  main { padding: 4px 16px 80px; }
+  .card, .decision { padding: 12px; }
+  .actions { gap: 8px; }
+  .actions button.accept, .actions button.reject, .actions button.defer { flex: 1 1 28%; }
+  .saved { margin-left: 0; flex: 1 1 100%; }
+  .option { padding: 12px; min-height: 44px; grid-template-columns: 28px 1fr; align-items: center; }
+  .option input { width: 22px; height: 22px; margin: 0; }
+  .option .odesc, .option .mock { grid-column: 1 / -1; }
+  textarea { font-size: 16px; min-height: 80px; }
+  .commit code { display: inline-block; padding: 8px 4px; }
+  .mock { overflow-x: auto; }
+  .mk-menu, .mk-modal { max-width: none; }
+  .mobile-only { display: inline-block; }
+  .desk-only { display: none; }
+  dialog { padding: 12px; }
+  dialog textarea { min-height: 50vh; font-size: 13px; }
+}
 </style>
 </head>
 <body>
@@ -162,8 +207,8 @@ dialog textarea { min-height: 320px; font: 12.5px "SF Mono", ui-monospace, Menlo
   <div class="bar">
     <h1 id="title"></h1>
     <span class="counts" id="counts"></span>
-    <button class="primary" id="sendall" disabled title="Sends the whole summary to the Claude session watching this page">Send all to Claude</button>
-    <button id="copy">Copy feedback</button>
+    <button class="primary" id="sendall" disabled title="Sends the whole summary to the Claude session watching this page">Send all<span class="long"> to Claude</span></button>
+    <button id="copy">Copy<span class="long"> feedback</span></button>
     <span class="chan" id="chan" aria-live="polite">Checking for Claude…</span>
     <div class="progress" id="progress" aria-hidden="true"></div>
     <div class="filters" role="group" aria-label="Show">
@@ -172,15 +217,19 @@ dialog textarea { min-height: 320px; font: 12.5px "SF Mono", ui-monospace, Menlo
       <button data-f="accepted" aria-pressed="false">Accepted</button>
       <button data-f="rejected" aria-pressed="false">Rejected</button>
       <button data-f="deferred" aria-pressed="false">Not now</button>
+      <button id="onlyasis" data-toggle="1" aria-pressed="false" class="desk-only" title="Show only features walkable on the work Mac with a stock install">Work Mac: as-is</button>
+      <button id="mobileorder" data-toggle="1" aria-pressed="false" class="desk-only" title="Order the page the way it appears on a phone: decisions, then as-is, small setup, home only">Mobile order</button>
       <button id="clear" title="Hide accepted tests and answered decisions (they stay recorded)">Clear done</button>
       <button id="showcleared" aria-pressed="false">Show cleared</button>
     </div>
   </div>
 </header>
 <main>
+  <div id="about">
   <p class="intro" id="intro"></p>
   <div class="setup"><div class="label">Before you start</div><ol id="setup"></ol>
     <p class="store" id="store">Connecting to saved verdicts…</p></div>
+  </div>
   <section id="decisions" class="hidden"></section>
   <div id="list"></div>
 </main>
@@ -197,7 +246,12 @@ const KEY = "acceptance:" + DATA.sprint;
 const LABEL = { accepted: "Accepted", rejected: "Rejected", deferred: "Not now", "": "To do" };
 let verdicts = {};   // id -> {status, comment, at}
 let answers = {};    // decision id -> {choice, other, comment, at}
-let db = null, filter = "all", showCleared = false;
+let db = null, filter = "all", showCleared = false, onlyAsIs = false, forceMobile = false;
+const WM_LABEL = { "as-is": "Work Mac: as-is", small: "Work Mac: small setup", home: "Home Mac only" };
+const WM_ORDER = ["as-is", "small", "home"];
+const WM_SHORT = { "as-is": "Work Mac, as-is", small: "Work Mac, small setup", home: "Home Mac only" };
+const mq = window.matchMedia ? window.matchMedia("(max-width: 760px)") : { matches: false };
+const mobileOrder = () => mq.matches || forceMobile;
 // Send to Claude (comments capability): reaches the Claude session watching this page; its reply
 // arrives as a comment in the thread. Each card keeps one thread, so later sends reply into it.
 let comments = null, canSend = "off";
@@ -230,7 +284,7 @@ async function sendToClaude(key, anchorEl, text, statusEl) {
 }
 function featureText(f) {
   const v = verdicts[f.id] || {};
-  return `Walk ${DATA.sprint} · test \`${f.id}\`: ${f.title}${f.ref ? " (" + f.ref + ")" : ""}; ${commitText(f)}\nVerdict: ${LABEL[v.status || ""]}` + ((v.comment || "").trim() ? `\nComment: ${v.comment.trim()}` : "");
+  return `Walk ${DATA.sprint} · test \`${f.id}\`: ${f.title}${f.ref ? " (" + f.ref + ")" : ""}; ${commitText(f)}; ${WM_LABEL[f.workMac] || f.workMac}\nVerdict: ${LABEL[v.status || ""]}` + ((v.comment || "").trim() ? `\nComment: ${v.comment.trim()}` : "");
 }
 function decisionText(d) {
   const a = answers[d.id] || {}, o = (d.options || []).find(x => x.id === a.choice);
@@ -275,20 +329,15 @@ rich($("#intro"), DATA.intro || "");
 const cards = {};
 function build() {
   const list = $("#list");
-  let group = null;
   DATA.features.forEach(f => {
-    if (f.group !== group) {
-      group = f.group; list.append(el("h2", null, group));
-      // What the group needs, set up once for the cards under it (groupNotes in features.json).
-      const note = (DATA.groupNotes || {})[group];
-      if (note) list.append(rich(el("p", "group-note"), note));
-    }
     const c = el("section", "card"); c.id = "f-" + f.id;
     const top = el("div", "top");
     top.append(el("h3", null, f.title));
     if (f.ref) top.append(el("span", "ref", f.ref));
     const pill = el("span", "pill"); top.append(pill);
+    const wm = el("span", "wm " + f.workMac, WM_LABEL[f.workMac] || f.workMac); wm.title = f.workMacWhy || WM_LABEL[f.workMac] || ""; top.append(wm);
     c.append(top);
+    if (f.workMacWhy) c.append(el("p", "wmwhy", f.workMacWhy));
     if (f.what) c.append(rich(el("p", "what"), f.what));
     c.append(commitLine(f));
     if (f.setup && f.setup.length) {
@@ -332,10 +381,58 @@ function build() {
     ta.oninput = () => { clearTimeout(timer); saved.textContent = "…"; timer = setTimeout(() => setComment(f.id, ta.value), 700); };
     ta.onblur = () => { clearTimeout(timer); if ((verdicts[f.id]?.comment || "") !== ta.value) setComment(f.id, ta.value); };
     c.append(ta);
-    list.append(c);
     cards[f.id] = { c, pill, btns, ta, saved };
   });
+  layout();
 }
+
+// Order: walk order on desktop; on a phone (or with "Mobile order") decisions, then as-is, small, home.
+let sections = [];
+let lastMode = null;
+function layout() {
+  const mobile = mobileOrder();
+  lastMode = mobile;
+  placeAbout(mobile);
+  const list = $("#list"); list.textContent = "";
+  sections = [];
+  const groups = [];
+  DATA.features.forEach(f => {
+    let g = groups.find(x => x.name === f.group);
+    if (!g) groups.push(g = { name: f.group, fs: [] });
+    g.fs.push(f);
+  });
+  const add = (title, fs, group) => {
+    if (!fs.length) return;
+    const h = el("h2", null, title);
+    const note = (DATA.groupNotes || {})[group];
+    const n = note ? rich(el("p", "group-note"), note) : null;
+    list.append(h); if (n) list.append(n);
+    fs.forEach(f => list.append(cards[f.id].c));
+    sections.push({ h, n, fs });
+  };
+  if (!mobile) {
+    // consecutive runs, as the walk is written
+    const runs = [];
+    DATA.features.forEach(f => { let r = runs[runs.length - 1]; if (!r || r.name !== f.group) runs.push(r = { name: f.group, fs: [] }); r.fs.push(f); });
+    runs.forEach(r => add(r.name, r.fs, r.name));
+  } else {
+    WM_ORDER.forEach(r => groups.forEach(g => add(WM_SHORT[r] + " · " + g.name, g.fs.filter(f => f.workMac === r), g.name)));
+  }
+}
+let aboutDetails = null;
+function placeAbout(mobile) {
+  const about = $("#about"), ds = $("#decisions");
+  if (mobile) {
+    if (!aboutDetails) { aboutDetails = el("details", "aboutwalk"); aboutDetails.append(el("summary", null, "About this walk and setup")); }
+    aboutDetails.append(about);
+    ds.after(aboutDetails);
+  } else {
+    ds.before(about);
+    if (aboutDetails) aboutDetails.remove();
+  }
+}
+function relayout() { layout(); render(); }
+if (mq.addEventListener) mq.addEventListener("change", relayout); else if (mq.addListener) mq.addListener(relayout);
 
 // The commit that built the feature, so a rejected one can be reverted (Geoff, 2026-10-05).
 const short = (sha) => sha.slice(0, 7);
@@ -363,14 +460,16 @@ function render() {
     k.pill.className = "pill " + s; k.pill.textContent = LABEL[s];
     for (const [st, b] of Object.entries(k.btns)) b.setAttribute("aria-pressed", String(s === st));
     if (document.activeElement !== k.ta && k.ta.value !== (v.comment || "")) k.ta.value = v.comment || "";
-    const show = (filter === "all" || (filter === "todo" ? !s : s === filter)) && (showCleared || !v.cleared);
+    const show = (filter === "all" || (filter === "todo" ? !s : s === filter)) && (showCleared || !v.cleared) && (!onlyAsIs || f.workMac === "as-is");
     k.c.classList.toggle("hidden", !show);
   });
-  document.querySelectorAll("#list h2").forEach(h => {
-    let e = h.nextElementSibling, any = false;
-    while (e && e.tagName !== "H2") { if (!e.classList.contains("hidden")) any = true; e = e.nextElementSibling; }
-    h.classList.toggle("hidden", !any);
+  sections.forEach(s => {
+    const any = s.fs.some(f => !cards[f.id].c.classList.contains("hidden"));
+    s.h.classList.toggle("hidden", !any);
+    if (s.n) s.n.classList.toggle("hidden", !any);
   });
+  $("#mobileorder").setAttribute("aria-pressed", String(forceMobile));
+  $("#onlyasis").setAttribute("aria-pressed", String(onlyAsIs));
   const total = DATA.features.length;
   sendable();
   $("#counts").textContent = `${n.accepted} accepted · ${n.rejected} rejected · ${n.deferred} not now · ${n[""]} to do (${total})`;
@@ -397,9 +496,11 @@ function setStatus(id, status) {
 }
 function setComment(id, comment) { write(id, { comment }); }
 
-document.querySelectorAll(".filters button").forEach(b => b.onclick = () => {
+$("#onlyasis").onclick = () => { onlyAsIs = !onlyAsIs; render(); };
+$("#mobileorder").onclick = () => { forceMobile = !forceMobile; relayout(); };
+document.querySelectorAll(".filters button[data-f]").forEach(b => b.onclick = () => {
   filter = b.dataset.f;
-  document.querySelectorAll(".filters button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  document.querySelectorAll(".filters button[data-f]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
   render();
 });
 
@@ -407,7 +508,7 @@ function feedback() {
   const by = s => DATA.features.filter(f => (verdicts[f.id]?.status || "") === s);
   const line = f => {
     const c = (verdicts[f.id]?.comment || "").trim();
-    return `- **${f.title}** (\`${f.id}\`${f.ref ? ", " + f.ref : ""}; ${commitText(f)})` + (c ? `\n  ${c.replace(/\n/g, "\n  ")}` : "");
+    return `- **${f.title}** (\`${f.id}\`${f.ref ? ", " + f.ref : ""}; ${commitText(f)}; ${WM_LABEL[f.workMac] || f.workMac})` + (c ? `\n  ${c.replace(/\n/g, "\n  ")}` : "");
   };
   const out = [`# Acceptance feedback: ${DATA.title}`, `Sprint \`${DATA.sprint}\` · built at ${(DATA.builtAt || "").slice(0, 7)} · ${new Date().toLocaleString()}`, ""];
   const sec = (name, list, all) => {

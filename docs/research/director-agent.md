@@ -405,6 +405,25 @@ That gives a CLI user one command for something close to Projects.
 
 ---
 
+## 9a. As practised: the director console (2026-10-09, DL-166)
+
+Duo v2 runs this pattern for real (the `director` skill). After four days the weak spot was the PM's side, not the workers': Geoff answered from his phone, decisions sat in chat scrollback, AskUserQuestion only reached him while he watched that one session, and the reviews doc's controls didn't work for him. So the director now publishes a **console**: a private claude.ai page that is Geoff's default way to talk to it (https://claude.ai/artifact/MMmJ9BjomsKq9f9HpHK1ka).
+
+**What it is made of.** One HTML page published by the director session with two runtime capabilities:
+- `db`: a small shared store. The director writes the content (`needs`, `threads`, `done`, `release/current`, `meta/console`) with `ArtifactData`, so the page updates live without a republish. The page writes Geoff's answers to `answers`.
+- `comments`: every button press calls `comments.sendToClaude`, which posts a comment thread "sent to Claude". The service delivers it to **the session that published the page**, which wakes with the text, replies in the thread and acts. That's what makes the buttons messages rather than form fields, and it's why one session (the director) publishes the console, the walk page and the design system.
+
+**What it shows.** Mobile first, one column, big tap targets; two columns on a desktop:
+- **Needs you**: decisions, release go/hold and delegation calls (start, stop, merge a thread), each with the director's recommendation first and a free-text answer.
+- **Director needs guidance**: where it's unsure or blocked.
+- **In flight**: each delegated session's state, branch and model, with **Open thread**, its Remote Control link (`https://claude.ai/code/session_…`), so Geoff can jump into a worker from his phone.
+- **Release** and **Recently done** (merges and releases, linked to their commits).
+- **Tell the director**: a free message, and a "Test the line" ping.
+
+**Compared with Projects.** Projects puts the conversation with the coordinator in its own UI. Here the coordinator is an ordinary session, and the "project view" is a page it publishes and keeps current. The ledger on disk (records, the reviews doc) stays the source of truth; the console is the working surface. Chat and AskUserQuestion remain the fallback when no session is listening (the page says "Director away" and keeps the answers for later).
+
+**What we learned building it** is in F-259: the peer name a session answers to is its Remote Control name, not its title; Remote Control links are in each transcript; and a typed artifact (the design system) refuses a publish until its page has been read.
+
 ## 10. Open questions / unverified
 
 - How Projects' coordinator and threads talk is undocumented. The `claude-code-remote` link is inferred.
