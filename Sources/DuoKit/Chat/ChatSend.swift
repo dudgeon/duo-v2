@@ -27,14 +27,20 @@ extension ChatSession {
         let wasBusy = s.kind == .busy
         sending = true
         defer { sending = false; composing = false }
-        let echo = plan.message
+        var echo = plan.message
+        var shown = plan.paste   // the words as your bubble shows them: with whatever was carried ahead of them
+        let composerShowedPrompt = ui.composerBasis != nil
         if usesExternalEditor, let dir = composeDir {
             // What Claude's prompt really holds: known when the composer opened on it; empty when the
             // screen shows nothing there; otherwise asked (a dim suggestion reads as text, F-108).
             var basis = ui.composerBasis ?? ((s.input ?? "").isEmpty ? "" : nil)
             if basis == nil { basis = await peekPrompt() }
             guard let basis else { return finish(.refused("couldn’t read Claude’s prompt")) }
-            do { try ChatCompose.leave(.init(text: plan.message, basis: basis), in: dir, session: composeKey) } catch { return finish(.refused("couldn’t hand the text over (\(error.localizedDescription))")) }
+            // The composer opened on this prompt, or it holds words the composer never showed (the task
+            // path drafted into a New Session in Task, DL-112): those stay ahead of the text (F-254).
+            let carried = composerShowedPrompt ? "" : ChatPaste.carried(prompt: basis, text: plan.paste)
+            if !carried.isEmpty { echo = carried + " " + echo; shown = carried + " " + shown }
+            do { try ChatCompose.leave(.init(text: echo, basis: basis), in: dir, session: composeKey) } catch { return finish(.refused("couldn’t hand the text over (\(error.localizedDescription))")) }
             composing = true
             terminal?.sendKeys(ChatKey.ctrlG.bytes)
             // The TUI runs the editor (its screen goes blank), then redraws with the new input.
@@ -56,15 +62,21 @@ extension ChatSession {
             }
         } else {
             // Pictures this composer attached are in the prompt as tokens: the removed ones are deleted,
-            // the rest stay, and the text goes in after them.
+            // the rest stay, and the text goes in after them. Other words in the prompt (the drafted
+            // task path, DL-112) stay too, ahead of the text (F-254); anything else there is refused.
             let prompt = s.input ?? ""
-            if ui.heldTokens.isEmpty {
-                guard prompt.isEmpty else { return finish(.refused("Claude’s prompt already holds “\(prompt.prefix(40))”")) }
-            } else {
-                guard ChatPaste.promptHoldsOnly(prompt, ui.heldTokens) else { return finish(.refused("Claude’s prompt already holds “\(prompt.prefix(40))”")) }
-                if let why = await removeImageTokens(plan.remove, from: prompt) { return finish(.refused(why)) }
+            guard !prompt.hasPrefix("/"), Set(ChatPaste.tokens(in: prompt)).isSubset(of: Set(ui.heldTokens)) else { return finish(.refused("Claude’s prompt already holds “\(prompt.prefix(40))”")) }
+            if !ui.heldTokens.isEmpty, let why = await removeImageTokens(plan.remove, from: prompt) { return finish(.refused(why)) }
+            let left = ui.heldTokens.isEmpty ? prompt : reread().input ?? ""
+            let carried = ChatPaste.carried(prompt: left, text: "")
+            var pasted = plan.paste
+            if !carried.isEmpty {
+                // The prompt as it will read: what it holds, a space, then the text.
+                echo = left + " " + plan.paste
+                shown = carried + " " + plan.paste
+                pasted = " " + plan.paste
             }
-            if !plan.paste.isEmpty { terminal?.sendKeys("\u{1b}[200~" + plan.paste + "\u{1b}[201~") }
+            if !plan.paste.isEmpty { terminal?.sendKeys("\u{1b}[200~" + pasted + "\u{1b}[201~") }
             await pause(250_000_000)
         }
         let echoed = reread()
@@ -73,7 +85,7 @@ extension ChatSession {
         }
         // Shown before Return: the prompt's hook can arrive within the pause after it, and must
         // find this bubble to match.
-        log.sent(plan.paste, images: plan.keep.compactMap { ui.images[$0].flatMap(ChatImage.init) }, time: now, queued: wasBusy, planMode: s.mode == .plan)
+        log.sent(shown, images: plan.keep.compactMap { ui.images[$0].flatMap(ChatImage.init) }, time: now, queued: wasBusy, planMode: s.mode == .plan)
         lastCommand = text.hasPrefix("/") ? (String(text.prefix { !$0.isWhitespace }), Date()) : nil
         _ = await press(.enter)
         ui.composer = ""
@@ -101,12 +113,13 @@ extension ChatSession {
         return nil
     }
 
-    /// The prompt on screen shows the text: whole, or its start (a long input wraps or scrolls), or
-    /// the TUI's placeholder for long pasted text.
+    /// The prompt on screen shows the text: whole, or its start, or (a long input scrolls inside the
+    /// box, showing only its last lines, F-254) a stretch of it; or the TUI's placeholder for long
+    /// pasted text.
     static func echoMatches(_ shown: String, _ text: String) -> Bool {
         let a = shown.chatNorm, b = text.chatNorm
         if a.isEmpty { return false }
         if a.contains("[Pasted text") { return true }
-        return b.hasPrefix(a) || a.hasPrefix(b) || b.hasPrefix(String(a.prefix(40)))
+        return b.hasPrefix(a) || a.hasPrefix(b) || b.hasPrefix(String(a.prefix(40))) || (a.count >= 40 && b.contains(a))
     }
 }

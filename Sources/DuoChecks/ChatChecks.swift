@@ -830,6 +830,11 @@ func spikeScreen(_ name: String) -> String {
               && ChatPaste.sendPlan(held: ["[Image #4]"], kept: ["[Image #4]"], text: "").message == "[Image #4]", "send plan: no pictures, nothing to send, pictures alone")
         check(ChatPaste.stripTokens("[Image #1] [Image #2]why is this") == "why is this" && ChatPaste.stripTokens("see [Image #1] now") == "see now" && ChatPaste.stripTokens("[Image #1]") == "", "a bubble's text keeps no [Image #N] and no space it leaves (\(ChatPaste.stripTokens("see [Image #1] now")))")
         check(ChatPaste.promptHoldsOnly("[Image #1] [Image #2]", a) && !ChatPaste.promptHoldsOnly("[Image #1] typed", a) && !ChatPaste.promptHoldsOnly("[Image #7]", a), "the prompt may hold only the tokens this composer put there")
+        let path = "@tasks/exec-review-prep.md"
+        check(ChatPaste.carried(prompt: path + " ", text: "Please summarise.") == path, "a task's drafted path in Claude's prompt is carried ahead of the composer's text (F-254)")
+        check(ChatPaste.carried(prompt: path + " [Image #1]", text: "[Image #1] words") == path, "and so is words beside a picture's token, never the token")
+        check(ChatPaste.carried(prompt: path, text: path + " Please summarise.").isEmpty, "not when the composer opened on it and already starts with it")
+        check(ChatPaste.carried(prompt: "", text: "words").isEmpty && ChatPaste.carried(prompt: "/mo", text: "words").isEmpty && ChatPaste.carried(prompt: "[Image #1]", text: "words").isEmpty, "nothing is carried from an empty prompt, a `/` command or a lone token")
         // F-232: Ctrl+A, Right once per unit from the start up to and including the token, Backspace.
         var units = ChatPaste.units("[Image #1] [Image #2] [Image #3]"), keys: [[ChatKey]] = []
         check(units == ["[Image #1]", " ", "[Image #2]", " ", "[Image #3]"], "a prompt's units: a token is one, no space is assumed after the last")

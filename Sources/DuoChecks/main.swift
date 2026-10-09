@@ -28,7 +28,8 @@ func repoFixture() throws -> Fixture {
     // `DUO_CHECKS=chat swift run DuoChecks`: chat mode's checks alone (ChatChecks.swift).
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat" { return try chatChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-live" { return try chatLiveChecks() }
-    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-real" { return try chatRealChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "task-send" { return try chatTaskSendChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-real"{ return try chatRealChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "askq-fallback" { return try askqFallbackChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "remote-control" { return try remoteControlChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "git" { return try gitChecks() }
