@@ -538,6 +538,53 @@ public enum FixtureHarness {
                                         context: nil, characters: "", charactersIgnoringModifiers: "", isARepeat: false, keyCode: code) {
                 v.keyDown(with: e)
             }
+        // C-73: real key events through the app's own key monitor, into a task note's references field.
+        case "proof-task":   // proof-task:<root>: <root>/tasks/t.md opened as the open project's task note, the root its folder
+            if parts.count > 1, let p = model.currentProject?.name {
+                let root = URL(fileURLWithPath: parts[1])
+                model.liveFolders[p] = root
+                model.terminalsMode = .live   // the editor only opens a project's files in live mode
+                model.openDocument("tasks/t.md")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { MainActor.assumeIsolated { model.pushNoteContext() } }
+            }
+        case "ref-focus":   // the references field takes the keyboard, as a click in it would
+            // The window has to be key for the menu's Paste to have a target: this takes the focus (an approved, visible run).
+            if let w = model.editor.webView.window { NSApp.setActivationPolicy(.regular); NSRunningApplication.current.activate(options: [.activateAllWindows]); if !TestBackground.isOn { NSApp.activate(ignoringOtherApps: true) }; w.makeKeyAndOrderFront(nil); w.makeFirstResponder(model.editor.webView) }
+            model.editor.run("document.querySelector('.duo-fm-reffield input').focus(); return 1") { _ in }
+        case "real-key":   // real-key:cmd-v=<text> (the text on the private pasteboard, then ⌘V) or key:return: a real keyDown through NSApp.sendEvent, so the local key monitor sees it as a typed key
+            if parts.count > 1, let w = model.editor.webView.window ?? NSApp.windows.first(where: { $0.title == "Duo" }) {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                let (chars, code, mods): (String, UInt16, NSEvent.ModifierFlags) = kv[0] == "return" ? ("\r", 36, []) : ("v", 9, .command)
+                if kv[0] == "cmd-v" {
+                    // WebKit reads the clipboard in its own process, by the general pasteboard's name, so the harness's
+                    // private board is never seen by a web view's paste. Use the real one: every item and type is saved
+                    // first and put back a second later (the paste has been read by then), whatever it held.
+                    let pb = NSPasteboard.general
+                    let saved = (pb.pasteboardItems ?? []).map { item in item.types.compactMap { t in item.data(forType: t).map { (t, $0) } } }
+                    pb.clearContents(); pb.setString(kv.count > 1 ? kv[1] : "", forType: .string)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        MainActor.assumeIsolated {
+                            pb.clearContents()
+                            let items = saved.map { entries -> NSPasteboardItem in
+                                let i = NSPasteboardItem(); for (t, d) in entries { i.setData(d, forType: t) }; return i
+                            }
+                            if !items.isEmpty { pb.writeObjects(items) }
+                            FileHandle.standardError.write(Data("key: pasteboard restored (\(saved.count) item\(saved.count == 1 ? "" : "s"))\n".utf8))
+                        }
+                    }
+                }
+                if let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: mods, timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: w.windowNumber,
+                                            context: nil, characters: chars, charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code) {
+                    FileHandle.standardError.write(Data("real-key: \(kv[0]) key=\(w.isKeyWindow) active=\(NSApp.isActive) firstResponder=\(w.firstResponder.map { String(describing: type(of: $0)) } ?? "nil")\n".utf8))
+                    NSApp.sendEvent(e)
+                }
+            }
+        case "proof-report":   // where the paste went: the note's references, the field, the chat composer
+            let key = model.visibleSessionId, chat = key.flatMap { model.chat(for: $0) }
+            let w = model.editor.webView.window
+            model.editor.run("return JSON.stringify({refs: [...document.querySelectorAll('.duo-fm-ref-name')].map(e => e.textContent), field: document.querySelector('.duo-fm-reffield input')?.value, editing: document.activeElement?.tagName, text: duo.text().split('---')[1]})") { v in
+                FileHandle.standardError.write(Data("proof-report: composer=\((chat?.ui.composer ?? "").debugDescription) composerView=\((Self.composerView(for: key)?.plainText ?? "").debugDescription) firstResponder=\(w?.firstResponder.map { String(describing: type(of: $0)) } ?? "nil") note=\(v as? String ?? "?")\n".utf8))
+            }
         case "chat-hover":   // chat-hover:<x>x<y>: the pointer at that point of the content (top-left origin), as the link monitor reads it (DL-132 g)
             if parts.count > 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }), let c = w.contentView,
                let k = model.visibleSessionId, let chat = model.chat(for: k) {
