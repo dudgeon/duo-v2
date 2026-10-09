@@ -1,0 +1,72 @@
+[
+ {
+  "name": "00-study",
+  "w": 1440,
+  "h": 1000,
+  "title": "0 \u00b7 GitHub issues in Duo: the study",
+  "kind": "board"
+ },
+ {
+  "name": "02-model",
+  "w": 1500,
+  "h": 980,
+  "title": "2 \u00b7 How issues relate to task notes",
+  "kind": "board"
+ },
+ {
+  "name": "03-link",
+  "w": 1500,
+  "h": 1060,
+  "title": "3 \u00b7 The link on disk, and in the note",
+  "kind": "board"
+ },
+ {
+  "name": "04-lane",
+  "w": 2260,
+  "h": 1180,
+  "title": "4 \u00b7 W-A: an Issues lane on the board",
+  "kind": "board"
+ },
+ {
+  "name": "05-where",
+  "w": 2260,
+  "h": 1180,
+  "title": "5 \u00b7 W-B and W-C: a third segment, or a picker only",
+  "kind": "board"
+ },
+ {
+  "name": "06-bridge",
+  "w": 2000,
+  "h": 640,
+  "title": "6 \u00b7 Bridging a task and its issue: offers, never automatic",
+  "kind": "board"
+ },
+ {
+  "name": "07-cards",
+  "w": 2000,
+  "h": 780,
+  "title": "7 \u00b7 Cards, and dragging an issue onto the board",
+  "kind": "board"
+ },
+ {
+  "name": "08-projects",
+  "w": 2260,
+  "h": 1180,
+  "title": "8 \u00b7 Later: a GitHub Project as a board source",
+  "kind": "board"
+ },
+ {
+  "name": "09-claude",
+  "w": 1600,
+  "h": 1000,
+  "title": "9 \u00b7 Duo and Claude: what Claude is told, drafted instructions, duo2",
+  "kind": "board"
+ },
+ {
+  "name": "10-recommendation",
+  "w": 1440,
+  "h": 860,
+  "title": "10 \u00b7 Recommendation and slices",
+  "kind": "board"
+ }
+]
