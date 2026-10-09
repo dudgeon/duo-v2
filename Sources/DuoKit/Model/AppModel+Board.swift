@@ -1,4 +1,5 @@
 import AppKit
+import WebKit
 import DuoControl
 import Foundation
 
@@ -149,7 +150,7 @@ extension AppModel {
         boardKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self, self.boardShown, event.modifierFlags.intersection([.option, .command, .shift, .control]) == [.option, .command],
                   [123, 124].contains(event.keyCode) else { return event }
-            if let r = event.window?.firstResponder, r is NSTextView || String(describing: type(of: r)).contains("WKWebView") { return event }
+            if let r = event.window?.firstResponder, r is NSTextView || r is WKWebView { return event }
             return self.moveSelectedCard(by: event.keyCode == 123 ? -1 : 1) ? nil : event
         }
     }
