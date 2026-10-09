@@ -1,0 +1,306 @@
+<title>Duo Paper Cuts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one card per legacy finding, one column on a phone, a grid from 760px. Groups in triage order: reproduced, likely, wanted features, then the rest folded. */
+:root {
+  --bg: #f3f4f1; --panel: #ffffff; --ink: #1d2320; --muted: #5d6762; --line: #d9ddd7;
+  --accent: #1f6f5c; --accent-ink: #ffffff; --accent-soft: #e2efe9;
+  --warn: #a5560b; --warn-soft: #fbeedd; --bad: #a83232; --bad-soft: #f8e4e4; --good: #2c7a3f; --info: #3b5b9a; --info-soft: #e5ebf6;
+  --display: "Fraunces", Georgia, serif; --body: "Atkinson Hyperlegible", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141816; --panel: #1c211f; --ink: #e6ebe7; --muted: #9aa59f; --line: #2f3733;
+  --accent: #5cc0a2; --accent-ink: #0d1a15; --accent-soft: #1f3a31;
+  --warn: #f0a85a; --warn-soft: #3a2a18; --bad: #f08080; --bad-soft: #3a1f1f; --good: #7fd18f; --info: #9db6ea; --info-soft: #1f2a40; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #141816; --panel: #1c211f; --ink: #e6ebe7; --muted: #9aa59f; --line: #2f3733;
+  --accent: #5cc0a2; --accent-ink: #0d1a15; --accent-soft: #1f3a31;
+  --warn: #f0a85a; --warn-soft: #3a2a18; --bad: #f08080; --bad-soft: #3a1f1f; --good: #7fd18f; --info: #9db6ea; --info-soft: #1f2a40; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); }
+.wrap { max-width: 1400px; margin: 0 auto; padding-inline: 16px; padding-block: 12px 64px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding-block: 8px 14px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+h1 { font: 600 1.6rem/1.1 var(--display); margin: 0; letter-spacing: -.01em; }
+.sub { color: var(--muted); font-size: .9rem; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.pill.ok { color: var(--good); border-color: currentColor; }
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.headline { flex-basis: 100%; margin: 4px 0 0; font-size: 1rem; max-width: 70ch; }
+.tally { display: flex; flex-wrap: wrap; gap: 6px; flex-basis: 100%; }
+.tally span { font: .78rem var(--mono); padding: 3px 8px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 18px; }
+.bar select, .bar label { font: inherit; font-size: .9rem; color: var(--ink); }
+.bar select { background: var(--panel); border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 10px; min-height: 44px; }
+.bar label { display: inline-flex; gap: 6px; align-items: center; min-height: 44px; }
+.bulk { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; display: grid; gap: 6px; }
+section { margin-bottom: 26px; }
+section > h2, details.group > summary { font: 700 .8rem/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; display: flex; gap: 8px; align-items: center; }
+details.group > summary { cursor: pointer; min-height: 40px; }
+.gdesc { font-size: .9rem; color: var(--muted); margin: -4px 0 12px; max-width: 70ch; }
+.count { background: var(--line); color: var(--ink); border-radius: 999px; padding: 2px 8px; font-size: .75rem; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.cards { display: grid; gap: 12px; }
+@media (min-width: 760px) { .cards { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); align-items: start; } }
+.empty { color: var(--muted); font-size: .95rem; padding: 14px; border: 1px dashed var(--line); border-radius: 10px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; display: grid; gap: 8px; }
+.card.answered { border-color: var(--accent); }
+.top { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.lid { font: 600 .78rem/1 var(--mono); color: var(--muted); }
+.chip { font: 600 .7rem/1 var(--mono); text-transform: uppercase; letter-spacing: .04em; padding: 4px 7px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); }
+.chip.high { color: var(--bad); border-color: currentColor; background: var(--bad-soft); }
+.chip.medium { color: var(--warn); border-color: currentColor; background: var(--warn-soft); }
+.chip.low { color: var(--info); border-color: currentColor; background: var(--info-soft); }
+.chip.state { color: var(--good); border-color: currentColor; }
+.card h3 { font: 700 1.05rem/1.3 var(--body); margin: 0; text-wrap: balance; }
+.rec { background: var(--accent-soft); border-radius: 8px; padding: 8px 10px; font-size: .92rem; }
+.rec b { color: var(--accent); }
+.fact { font-size: .92rem; margin: 0; }
+.fact > b { display: block; font: 700 .72rem/1.4 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ev { font: .8rem/1.45 var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+code { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.opt { text-align: left; font: inherit; font-size: .9rem; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 10px; min-height: 48px; cursor: pointer; display: grid; gap: 1px; align-content: center; }
+.opt:hover { border-color: var(--accent); }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.opt .r { font: 600 .64rem var(--mono); color: var(--accent); text-transform: uppercase; letter-spacing: .05em; }
+textarea { width: 100%; font: inherit; font-size: .92rem; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 10px; min-height: 44px; resize: vertical; }
+textarea:focus, select:focus, .opt:focus-visible, .btn:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn { font: 700 .95rem var(--body); border-radius: 10px; padding: 10px 16px; min-height: 48px; border: 1.5px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.status { font-size: .85rem; color: var(--muted); }
+.status.ok { color: var(--good); } .status.err { color: var(--bad); }
+.answer { font-size: .88rem; border-top: 1px solid var(--line); padding-top: 8px; }
+.reply { font-size: .9rem; background: var(--info-soft); border-radius: 8px; padding: 8px 10px; }
+details.more summary { cursor: pointer; color: var(--muted); font-size: .85rem; min-height: 32px; display: flex; align-items: center; }
+a { color: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { .opt, .btn { transition: border-color .12s, background .12s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Duo Paper Cuts</h1>
+    <span class="pill" id="chan"><span class="dot"></span><span id="chantext">Connecting…</span></span>
+    <span class="sub" id="updated"></span>
+    <p class="headline" id="headline">Every legacy Duo bug and enhancement, checked against v2. Tap a disposition on a card and it goes straight to the paper-cuts session. Loading findings…</p>
+    <div class="tally" id="tally"></div>
+  </header>
+
+  <div class="bar">
+    <select id="area" aria-label="Area"><option value="">All areas</option></select>
+    <label><input type="checkbox" id="hideAnswered"> Hide answered</label>
+  </div>
+
+  <div class="bulk" id="bulk" hidden>
+    <div><b>Fix all reproduced bugs</b> <span class="sub" id="bulkdesc"></span></div>
+    <div class="row"><button class="btn" id="bulkbtn" type="button">Fix all reproduced bugs</button><span class="status" id="s-bulk"></span></div>
+  </div>
+
+  <div id="groups"><div class="empty">Findings appear here once the audit is loaded: reproduced bugs first, then likely bugs, then features to decide on.</div></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const GROUPS = [
+  { key: "reproduced", title: "Reproduced in v2", desc: "The legacy bug happens in v2 too. These almost certainly need a fix.", open: true },
+  { key: "likely", title: "Likely in v2", desc: "The code path exists in v2 and nothing guards it; not yet reproduced.", open: true },
+  { key: "feature-wanted", title: "Features to decide", desc: "Legacy features v2 lacks. Fix later files an ENH; Won't do records your reason.", open: true },
+  { key: "handled", title: "Already handled in v2", desc: "A v2 record or the code covers it.", open: false },
+  { key: "not-by-construction", title: "Not in v2, by construction", desc: "v2's architecture removes the cause.", open: false },
+  { key: "not-applicable", title: "Not applicable", desc: "The surface doesn't exist in v2 and isn't planned.", open: false },
+];
+const DISP = [
+  { id: "fix-now", label: "Fix now" },
+  { id: "fix-later", label: "Fix later (ENH)" },
+  { id: "wont-do", label: "Won't do" },
+  { id: "need-info", label: "Need more info" },
+];
+const STATE_LABEL = { answered: "Answered", working: "Working", branch: "On a branch", fixed: "Fixed", merged: "Merged", recorded: "Recorded" };
+const store = { findings: {}, answers: {}, meta: null };
+const drafts = {}, opened = {};
+let db = null, comments = null, canSend = "off";
+
+const ago = iso => { if (!iso) return ""; const s = (Date.now() - new Date(iso)) / 1000; if (isNaN(s)) return iso;
+  return s < 90 ? "just now" : s < 5400 ? Math.round(s / 60) + " min ago" : s < 129600 ? Math.round(s / 3600) + " h ago" : new Date(iso).toLocaleDateString(); };
+function rich(target, text) {
+  const re = /(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\((https?:\/\/[^)\s]+)\))/g;
+  let last = 0, m; text = String(text || "");
+  while ((m = re.exec(text))) {
+    if (m.index > last) target.append(text.slice(last, m.index));
+    const t = m[0];
+    if (t[0] === "`") target.append(el("code", "", t.slice(1, -1)));
+    else if (t[0] === "*") target.append(el("b", "", t.slice(2, -2)));
+    else { const a = el("a", "", t.slice(1, t.indexOf("]"))); a.href = m[2]; a.target = "_blank"; a.rel = "noopener"; target.append(a); }
+    last = m.index + t.length;
+  }
+  if (last < text.length) target.append(text.slice(last));
+  return target;
+}
+
+// ---- Sending (comments capability → the session that published this page) ----
+let threadsKept = {};
+try { threadsKept = JSON.parse(localStorage.getItem("papercuts-threads") || "{}"); } catch (e) {}
+const keep = () => { try { localStorage.setItem("papercuts-threads", JSON.stringify(threadsKept)); } catch (e) {} };
+async function diag(key, outcome, e) { if (!db) return; try { await db.doc("diag/" + Date.now() + "-" + Math.floor(Math.random() * 1000)).set({ key, outcome, canSend, hasComments: !!comments, code: (e && e.code) || null, message: (e && (e.message || String(e))) || null, at: new Date().toISOString(), ua: navigator.userAgent.slice(0, 160) }); } catch (x) {} }
+const statusMsgs = {};
+// The card re-renders when its answer saves, so look the anchor and status line up again by id at send time.
+function setStatus(id, cls, text) { statusMsgs[id] = { cls, text }; const s = document.getElementById("s-" + id); if (s) { s.className = "status" + (cls ? " " + cls : ""); s.textContent = text; } }
+function liveAnchor(anchorEl) { if (anchorEl && anchorEl.isConnected) return anchorEl; const again = anchorEl && anchorEl.id && document.getElementById(anchorEl.id); return again || document.querySelector("header"); }
+async function send(key, anchorEl, text, statusId) {
+  // Re-check at send time: the session may have come or gone since load (F-259).
+  if (comments) { try { canSend = await comments.canSendToClaude(); } catch (e) {} }
+  if (!comments || canSend !== "available") { diag(key, "blocked"); setStatus(statusId, "err", canSend === "no_session" ? "The paper-cuts session isn't listening; your call is saved and it reads it on return." : "Can't reach the session from this view; your call is saved."); return false; }
+  setStatus(statusId, "", "Sending…");
+  const msg = text.length > 3900 ? text.slice(0, 3900) + "\n…(cut; the full text is saved on the page)" : text;
+  try {
+    let r;
+    if (threadsKept[key]) { try { r = await comments.sendToClaude({ threadId: threadsKept[key], text: msg }); } catch (e) { if (e && e.code === "not_found") delete threadsKept[key]; else throw e; } }
+    if (!r) r = await comments.sendToClaude({ anchor: await comments.anchorFor(liveAnchor(anchorEl)), text: msg });
+    threadsKept[key] = r.threadId; keep(); diag(key, "sent:" + r.threadId);
+    setStatus(statusId, "ok", "Saved and sent.");
+    return true;
+  } catch (e) {
+    diag(key, "error", e);
+    const c = e && e.code;
+    setStatus(statusId, "err", c === "consent_required" ? "Allow comments for this page, then tap again." : c === "rate_limited" ? "Saved; sending too fast, tap again in a moment." : c === "claude_unavailable" ? "Saved; the session couldn't take it right now." : "Saved; couldn't send (" + (c || "error") + ").");
+    return false;
+  }
+}
+async function saveAnswer(id, a) { store.answers[id] = a; if (db) { try { await db.doc("answers/" + id).set(a); } catch (e) { return false; } } return true; }
+
+// ---- Cards ----
+function card(f) {
+  const ans = store.answers[f.id];
+  const c = el("article", "card" + (ans ? " answered" : "")); c.id = "c-" + f.id;
+  const top = el("div", "top");
+  top.append(el("span", "lid", f.id), el("span", "chip", f.area || ""));
+  if (f.severity && f.severity !== "n/a") top.append(el("span", "chip " + f.severity, f.severity));
+  if (f.v1_scope === "in") top.append(el("span", "chip", "v1 scope"));
+  if (f.state && STATE_LABEL[f.state]) top.append(el("span", "chip state", STATE_LABEL[f.state] + (f.sha ? " " + String(f.sha).slice(0, 7) : "")));
+  c.append(top, el("h3", "", f.title || f.id));
+  const recLabel = (DISP.find(d => d.id === f.recommendation) || {}).label;
+  if (recLabel) { const r = el("div", "rec"); r.append(el("b", "", "Recommend: " + recLabel + ". ")); rich(r, f.rec_why || ""); c.append(r); }
+  const fact = (k, v) => { if (!v) return; const p = el("p", "fact"); p.append(el("b", "", k)); rich(p, v); c.append(p); };
+  fact("In v2", f.v2_summary || f.evidence_short || "");
+  fact("In legacy", f.legacy_what);
+  const more = el("details", "more"); more.open = !!opened["m:" + f.id]; more.ontoggle = () => { opened["m:" + f.id] = more.open; }; more.append(el("summary", "", "Legacy fix and v2 evidence"));
+  const mb = el("div"); mb.style.display = "grid"; mb.style.gap = "6px";
+  const add = (k, v, cls) => { if (!v) return; const p = el("p", "fact"); p.append(el("b", "", k)); const s = el("span", cls || ""); rich(s, v); p.append(s); mb.append(p); };
+  add("Legacy cause and fix", f.legacy_fix); add("Evidence", f.evidence, "ev"); add("v2 records", f.v2_record, "ev"); add("How to reproduce", f.repro_idea, "ev");
+  more.append(mb); c.append(more);
+  if (f.reply) { const r = el("div", "reply"); r.append(el("b", "", "From the session: ")); rich(r, f.reply); c.append(r); }
+
+  const ta = el("textarea"); ta.id = "t-" + f.id; ta.placeholder = "Note (needed for Won't do: why)"; ta.value = drafts[f.id] ?? (ans && ans.text) ?? "";
+  ta.oninput = () => { drafts[f.id] = ta.value; };
+  const og = el("div", "opts"); og.setAttribute("role", "group"); og.setAttribute("aria-label", "Disposition");
+  const st = el("span", "status"); st.id = "s-" + f.id;
+  if (statusMsgs[f.id]) { st.className = "status" + (statusMsgs[f.id].cls ? " " + statusMsgs[f.id].cls : ""); st.textContent = statusMsgs[f.id].text || ""; }
+  const order = DISP.slice().sort((a, b) => (b.id === f.recommendation) - (a.id === f.recommendation));
+  order.forEach(d => {
+    const b = el("button", "opt"); b.type = "button"; b.setAttribute("aria-pressed", String(!!ans && ans.choice === d.id));
+    if (d.id === f.recommendation) b.append(el("span", "r", "Recommended"));
+    b.append(el("b", "", d.label));
+    b.onclick = async () => {
+      const note = ta.value.trim();
+      if (d.id === "wont-do" && !note) { setStatus(f.id, "err", "Say why in the note, then tap Won't do again."); ta.focus(); return; }
+      if (d.id === "need-info" && !note) { setStatus(f.id, "err", "Write your question in the note, then tap again."); ta.focus(); return; }
+      og.querySelectorAll(".opt").forEach(x => x.setAttribute("aria-pressed", "false")); b.setAttribute("aria-pressed", "true");
+      const a = { choice: d.id, label: d.label, text: note, at: new Date().toISOString(), handled: false };
+      await saveAnswer(f.id, a);
+      await send("c:" + f.id, c, `Paper cuts · ${f.id}: ${f.title}\nChoice: ${d.label}` + (note ? `\nNote: ${note}` : ""), f.id);
+    };
+    og.append(b);
+  });
+  c.append(og, ta);
+  const row = el("div", "row"); row.append(st); c.append(row);
+  if (ans) { const p = el("div", "answer"); p.append(el("b", "", "Your call: "), (ans.label || "") + (ans.text ? " · " + ans.text : "") + " · " + ago(ans.at)); c.append(p); }
+  return c;
+}
+
+function visible(f) {
+  if ($("#area").value && f.area !== $("#area").value) return false;
+  if ($("#hideAnswered").checked && store.answers[f.id]) return false;
+  return true;
+}
+function render() {
+  const all = Object.values(store.findings);
+  const box = $("#groups");
+  if (!all.length) return;
+  const focusId = document.activeElement && document.activeElement.id;
+  const areas = [...new Set(all.map(f => f.area).filter(Boolean))].sort();
+  const sel = $("#area"), cur = sel.value;
+  if (sel.options.length !== areas.length + 1) { sel.replaceChildren(el("option", "", "All areas")); sel.options[0].value = ""; areas.forEach(a => { const o = el("option", "", a); o.value = a; sel.append(o); }); sel.value = cur; }
+  const tally = $("#tally"); tally.replaceChildren();
+  GROUPS.forEach(g => { const n = all.filter(f => f.verdict === g.key).length; if (n) tally.append(el("span", "", g.title + " " + n)); });
+  tally.append(el("span", "", "Answered " + all.filter(f => store.answers[f.id]).length + "/" + all.length));
+  const out = [];
+  GROUPS.forEach(g => {
+    const list = all.filter(f => f.verdict === g.key).sort((a, b) => sevRank(a) - sevRank(b) || (a.order ?? 0) - (b.order ?? 0) || a.id.localeCompare(b.id, undefined, { numeric: true }));
+    if (!list.length) return;
+    const shown = list.filter(visible);
+    const cards = el("div", "cards");
+    const fill = () => cards.replaceChildren(...(shown.length ? shown.map(card) : [el("div", "empty", "Nothing here matches the filter.")]));
+    const head = el(g.open ? "h2" : "summary", "", g.title); const cnt = el("span", "count", String(list.length)); head.append(cnt);
+    if (g.open) { const s = el("section"); s.append(head, el("p", "gdesc", g.desc), cards); fill(); out.push(s); }
+    else {
+      const d = el("details", "group"); d.append(head, el("p", "gdesc", g.desc), cards);
+      if (opened[g.key]) { d.open = true; fill(); }
+      d.ontoggle = () => { opened[g.key] = d.open; if (d.open && !cards.childElementCount) fill(); };
+      out.push(d);
+    }
+  });
+  box.replaceChildren(...out);
+  const repro = all.filter(f => f.verdict === "reproduced");
+  const todo = repro.filter(f => !store.answers[f.id]);
+  $("#bulk").hidden = !repro.length;
+  $("#bulkdesc").textContent = todo.length ? `Saves Fix now on the ${todo.length} reproduced bug${todo.length === 1 ? "" : "s"} you haven't answered, one answer per card, and sends one message.` : "Every reproduced bug has an answer.";
+  $("#bulkbtn").disabled = !todo.length;
+  if (focusId) { const f = document.getElementById(focusId); if (f) f.focus(); }
+}
+const sevRank = f => ({ high: 0, medium: 1, low: 2 })[f.severity] ?? 3;
+$("#area").onchange = render; $("#hideAnswered").onchange = render;
+// Answers saved while a send failed are re-sent in one message from the bulk bar.
+$("#bulkbtn").onclick = async () => {
+  const todo = Object.values(store.findings).filter(f => f.verdict === "reproduced" && !store.answers[f.id]);
+  if (!todo.length) return;
+  setStatus("bulk", "", "Saving " + todo.length + "…");
+  const at = new Date().toISOString();
+  for (const f of todo) await saveAnswer(f.id, { choice: "fix-now", label: "Fix now", text: "(bulk: fix all reproduced bugs)", at, handled: false, bulk: true });
+  render();
+  await send("bulk-fix-reproduced", $("#bulk"), `Paper cuts · bulk: Fix now on ${todo.length} reproduced bugs:\n` + todo.map(f => f.id).join(", "), "bulk");
+};
+
+function renderMeta() {
+  const m = store.meta; if (!m) return;
+  if (m.headline) $("#headline").replaceChildren(rich(document.createDocumentFragment(), m.headline));
+  if (m.updated) $("#updated").textContent = "Updated " + ago(m.updated);
+}
+
+// ---- Connect ----
+(async () => {
+  try { comments = await window.claude?.use?.("comments"); } catch (e) { comments = null; }
+  const check = async () => {
+    try { canSend = comments ? await comments.canSendToClaude() : "off"; } catch (e) { canSend = "off"; }
+    $("#chan").className = "pill" + (canSend === "available" ? " ok" : "");
+    $("#chantext").textContent = canSend === "available" ? "Paper-cuts session listening" : canSend === "no_session" ? "Session away; your calls are saved" : canSend === "writers_only" ? "Only editors can send" : "Your calls are saved for the session";
+  };
+  await check(); setInterval(check, 30000);
+})();
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  if (!db) { $("#headline").textContent = "Couldn't load the findings in this view. Sign in to claude.ai and reopen the link."; return; }
+  let t = null; const soon = () => { clearTimeout(t); t = setTimeout(render, 120); };
+  const watch = (name) => db.collection(name).onSnapshot(s => { const o = {}; s.docs.forEach(d => o[d.id] = { id: d.id, ...d.data() }); store[name] = o; soon(); }, () => {});
+  // Findings arrive in chunk docs (findings/<chunk>.rows[]) so Claude can rewrite them in a few writes;
+  // per-card progress (state, branch, sha, reply) lives in status/<id>.
+  let chunks = {}, status = {};
+  const merge = () => { const o = {}; Object.values(chunks).forEach(rows => (rows || []).forEach(r => { o[r.id] = { ...r, ...(status[r.id] || {}) }; })); store.findings = o; soon(); };
+  db.collection("findings").onSnapshot(s => { chunks = {}; s.docs.forEach(d => chunks[d.id] = d.data().rows); merge(); }, () => {});
+  db.collection("status").onSnapshot(s => { status = {}; s.docs.forEach(d => status[d.id] = d.data()); merge(); }, () => {});
+  watch("answers");
+  db.doc("meta/page").onSnapshot(d => { store.meta = d.exists ? d.data() : null; renderMeta(); }, () => {});
+})();
+setInterval(renderMeta, 60000);
+</script>
