@@ -475,6 +475,8 @@ extension AppModel {
             ctx["noteDir"] = (rel as NSString).deletingLastPathComponent
             ctx["noteName"] = (rel as NSString).lastPathComponent
             if rel.hasPrefix("tasks/") {
+                ctx["root"] = folder.path   // a pasted path becomes a link relative to the note (F-250)
+                ctx["home"] = NSHomeDirectory()
                 if let r = referenceFiles, r.project == project { ctx["files"] = r.files }
                 if referenceFiles?.project != project || (referenceFiles?.at.timeIntervalSinceNow ?? -999) < -60, !scanningReferences {
                     scanningReferences = true

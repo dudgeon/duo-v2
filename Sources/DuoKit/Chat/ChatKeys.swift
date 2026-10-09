@@ -1,8 +1,14 @@
 import AppKit
+import WebKit
 
 // Keys while a chat shows (DL-119 §3, Q-54): number keys answer a review card, as in the TUI;
 // Esc cancels or declines. Return does nothing until an option is chosen. They act only while the
 // chat pane is on screen and no text field has the keyboard (a field's own keys win).
+/// Whether a responder takes typed text itself: a text view or field, a terminal, or any web view.
+/// The editor's `EditorWebView` and the viewer's `DuoWebView` subclass WKWebView, so their class
+/// names don't say "WKWebView" and a name test missed them (F-249).
+@MainActor public func holdsTyping(_ r: NSResponder?) -> Bool { r is NSText || r is GuardedTerminalView || r is WKWebView }
+
 extension AppModel {
     /// The chat on screen, when it shows chat (not its terminal).
     public var visibleChat: ChatSession? {
@@ -32,7 +38,7 @@ extension AppModel {
     func chatStep(_ by: Int, window number: Int) -> Bool {
         guard let chat = visibleChat, let w = NSApp.window(withWindowNumber: number), w.isKeyWindow else { return false }
         let fr = w.firstResponder
-        guard fr is ComposerTextView || fr === w || fr == nil || !(fr is NSText || fr is GuardedTerminalView || String(describing: type(of: fr!)).contains("WKWebView")) else { return false }
+        guard fr is ComposerTextView || fr === w || fr == nil || !holdsTyping(fr) else { return false }
         chat.stepYourMessages(by)
         return true
     }
@@ -41,7 +47,7 @@ extension AppModel {
     func chatPaste(window number: Int) -> Bool {
         guard let chat = visibleChat, let w = NSApp.window(withWindowNumber: number), w.isKeyWindow else { return false }
         let fr = w.firstResponder
-        guard fr === w || fr == nil || !(fr is NSText || fr is GuardedTerminalView || String(describing: type(of: fr!)).contains("WKWebView")) else { return false }
+        guard fr === w || fr == nil || !holdsTyping(fr) else { return false }
         guard let v = chat.composerView, v.window === w else { return false }
         w.makeFirstResponder(v)
         v.paste(nil)
@@ -51,7 +57,7 @@ extension AppModel {
     /// Handles a key for the chat on screen; true when it was used.
     func chatKey(_ chars: String, escape: Bool, window number: Int) -> Bool {
         guard let chat = visibleChat, let w = NSApp.window(withWindowNumber: number), w.isKeyWindow else { return false }
-        if w.firstResponder is NSText || w.firstResponder is GuardedTerminalView { return false }
+        if holdsTyping(w.firstResponder) { return false }
         return chat.key(chars, escape: escape)
     }
 }

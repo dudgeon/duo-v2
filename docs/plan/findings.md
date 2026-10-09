@@ -2904,3 +2904,19 @@ Builds DL-164 (Q-160). DL-154 (a fallback is sticky) and the rest of DL-155 are 
 - **Why.** Every tree verb, tab and the live snapshot key on paths relative to the project folder, with `contained()` refusing anything above it (C-20). Re-rooting would loosen that for every verb. `AppModel+Browse.swift` keeps a `browseRoots`/`browseExpanded` pair per project and lists with `LiveSnapshot.treeFiles`; `BrowseRow` hands its rows the outside-file menu (`file:` + absolute path), and a file opens through `openFile(at:)`.
 - **Checks.** DuoChecks: up one folder, the listing (closed, then opened), `back`, `browse(to:)` takes folders only. `file path .` / absolute outside path proven in the reveal/path code only by reading (a live run would start Claude); the six boards are byte-identical to main (`cmp` against a build of origin/main).
 
+## F-249 · ⌘V in the task note's fields went to the chat composer (task pane, 2026-10-09)
+
+- **Cause.** The key monitor's "does a field hold the keyboard?" test (`chatPaste`, `chatStep`, `AppModel+Board`'s ⌥⌘← test) matched the first responder's class *name* against "WKWebView". The editor's web view is `EditorWebView` (a `DuoWebView`, a `WKWebView` subclass), so the name never matched, the chat took ⌘V and pasted into the composer. Right-click Paste worked because it never passes the monitor.
+- **Fixed.** `holdsTyping(_:)` (`ChatKeys.swift`) tests `is WKWebView`, `NSText` or the terminal; `chatPaste`, `chatStep`, `chatKey` and the board's key test use it. A DuoChecks case ("who holds typing") covers it. ChatSend.swift and the composer's send path are untouched.
+
+## F-250 · Return in the references field did nothing for a path, and a saved link showed as raw text (task pane, 2026-10-09)
+
+- **Return.** The field handled a URL (`://`) or a listed match; a pasted path was neither, so Return was a no-op and the field stayed in edit mode. It now takes an absolute, `~/`, `file://` or `./` path (Q-161), saves a link relative to the note, clears the field and leaves it (blur, editor focus). The context carries `root` and `home` for that.
+- **Raw text.** `addListItem` inserted at the caret's own position when it sat at the end of the references line; the caret mapped after the insert, onto the new line, and the active line shows raw. `dispatchKeepingCaret` maps it before the insert.
+- **Check.** `scripts/check-task-note.mjs` (Chromium, 460 wide): a path, `~/`, `file://` and a URL each save as the right link, draw as a link, leave edit mode and clear the field. It fails on main's bundle.
+
+## F-251 · Clicks and arrows in a task note's notes landed lines away (task pane, 2026-10-09)
+
+- **Cause.** The properties block's closing rule (`.duo-fm-rule`, margin 14 above and 22 below) sits in a block widget whose wrapper `div` let the margins collapse out of it. CodeMirror measures a block widget's box, not margins, so every line after it was drawn 36px lower than CodeMirror thought: ArrowUp from the second bullet reached `---` and the references line, and a click landed a line above where it was aimed. Geoff's "cannot click on prev line / cannot click and select text" is the same drift.
+- **Fixed.** The `HeadingWidget` and `RuleWidget` wrappers are `display: flow-root`, which keeps their margins inside the measured height with no change to the drawing (the six boards are byte-identical).
+- **Check.** `scripts/check-task-note.mjs`: heightmap below the block within 0.5px, ArrowUp from bullet 3 reaches 2 then 1, a click on each line puts the caret there.

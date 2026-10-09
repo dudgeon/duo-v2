@@ -338,6 +338,7 @@ class HeadingWidget extends WidgetType {
   eq(o) { return o.count === this.count && o.chevron === this.chevron && o.folded === this.folded && o.invalid === this.invalid && o.rule === this.rule; }
   toDOM(view) {
     const box = document.createElement("div");
+    box.style.display = "flow-root";   // keeps the rule's margins inside the height CodeMirror measures (F-249)
     const d = document.createElement("div");
     d.className = this.chevron ? "duo-fm-head duo-fm-head-chev" : "duo-fm-head";  // with a chevron the row is 16 high (frontmatter.html), else 20 (task-note.html)
     const label = this.invalid ? "PROPERTIES" : `PROPERTIES · ${this.count}`;
@@ -363,6 +364,7 @@ class RuleWidget extends WidgetType {
   eq(o) { return o.message === this.message && JSON.stringify(o.hint) === JSON.stringify(this.hint); }
   toDOM() {
     const box = document.createElement("div");
+    box.style.display = "flow-root";   // the rule's 14 above and 22 below count in the block's height, or clicks and arrows land lines away (F-249)
     if (this.message) { const m = document.createElement("div"); m.className = "duo-fm-message"; m.textContent = this.message; box.appendChild(m); }
     if (this.hint) {
       // A template's hint (board A1): its placeholders in mono.
@@ -643,13 +645,33 @@ class ReferenceFieldWidget extends WidgetType {
       const name = f.split("/").filter(Boolean).pop();
       const title = f.endsWith("/") ? name : name.replace(/\.md$/i, "");
       addListItem("references", quote(`[${esc(title)}](${relativeTo(noteDir, f)})`));
-      input.value = ""; render();
+      finish();
     };
+    // A pasted path (absolute, ~/, file:// or ./ ../ from the note) becomes a link relative to the
+    // note, wherever the file is; null when it isn't one.
+    const pathLink = (raw) => {
+      let q = raw.replace(/^["']|["']$/g, "").trim();
+      if (/^file:\/\//i.test(q)) { try { q = decodeURI(q.replace(/^file:\/\//i, "")); } catch { return null; } }
+      const c = ctx(), root = (c.root ?? "").replace(/\/$/, ""), noteDir = c.noteDir ?? "";
+      let abs = null;
+      if (q.startsWith("~/") && c.home) abs = c.home.replace(/\/$/, "") + q.slice(1);
+      else if (q.startsWith("/")) abs = q;
+      else if (/^\.\.?\//.test(q) && root) abs = "/" + projectPath(noteDir ? root.slice(1) + "/" + noteDir : root.slice(1), q).replace(/^\//, "");
+      if (!abs || abs === "/") return null;
+      let folder = abs.endsWith("/");
+      if (root && abs.startsWith(root + "/") && (c.files ?? []).includes(abs.slice(root.length + 1).replace(/\/?$/, "/"))) folder = true;
+      const noteAbs = root ? root + (noteDir ? "/" + noteDir : "") : "";
+      const name = abs.split("/").filter(Boolean).pop();
+      const rel = noteAbs ? relativeTo(noteAbs, abs.replace(/\/?$/, folder ? "/" : "")) : encodeURI(abs);
+      return { title: folder ? name : name.replace(/\.md$/i, ""), rel };
+    };
+    const addPath = (l) => { addListItem("references", quote(`[${esc(l.title)}](${l.rel})`)); finish(); };
+    const finish = () => { input.value = ""; render(); input.blur(); view.focus(); };
     const addURL = (u) => {
       let title = u;
       try { title = new URL(u).hostname.replace(/^www\./, ""); } catch {}
       addListItem("references", quote(`[${esc(title)}](${u})`));
-      input.value = ""; render();
+      finish();
     };
     input.addEventListener("input", () => { sel = 0; render(); });
     input.addEventListener("blur", () => { setTimeout(() => { list.hidden = true; }, 100); });
@@ -661,7 +683,8 @@ class ReferenceFieldWidget extends WidgetType {
       else if (e.key === "Enter") {
         e.preventDefault();
         const q = input.value.trim();
-        if (isURL(q)) addURL(q); else if (hits[sel]) choose(hits[sel]);
+        const pl = isURL(q) && !/^file:\/\//i.test(q) ? null : pathLink(q);
+        if (isURL(q) && !pl) addURL(q); else if (hits[sel]) choose(hits[sel]); else if (pl) addPath(pl);
       }
     });
     return row;
@@ -956,24 +979,32 @@ function splitInline(s) {
   return out.filter(Boolean);
 }
 
+// A change from the properties block's own controls: the caret stays where it was, mapped before
+// an insert at its place. Mapped after, it would land on the new line, which then shows as raw text
+// and not as the link it is (F-250).
+function dispatchKeepingCaret(spec) {
+  const cs = view.state.changes(spec.changes), sel = view.state.selection.main;
+  view.dispatch({ ...spec, changes: cs, selection: { anchor: cs.mapPos(sel.anchor, -1), head: cs.mapPos(sel.head, -1) } });
+}
+
 function addListItem(key, item) {
   const p = parseFrontmatter(view.state.doc);
   if (!p) return setProperty(key, "") && addListItem(key, item);
   const L = p.lines.find((l) => l.kind === "key" && l.key === key);
   // A new list: the key and its first item before the closing fence, no trailing space.
-  if (!L) { view.dispatch({ changes: { from: view.state.doc.line(p.fm[1]).from, insert: `${key}:\n  - ${item}\n` }, userEvent: "input" }); return true; }
+  if (!L) { dispatchKeepingCaret({ changes: { from: view.state.doc.line(p.fm[1]).from, insert: `${key}:\n  - ${item}\n` }, userEvent: "input" }); return true; }
   const v = L.value.trim();
   if (v) {
     // `sessions: []` (a new task) or `key: a`: the line becomes a block list with what it held
     // first, as TaskNotes.adding writes it. An item under an inline list isn't YAML.
     const inline = /^\[.*\]$/.test(v), old = inline ? splitInline(v.slice(1, -1)) : [v];
     const insert = `${key}:` + [...old, item].map((x) => `\n  - ${x}`).join("");
-    view.dispatch({ changes: { from: L.from, to: L.to, insert }, userEvent: "input" });
+    dispatchKeepingCaret({ changes: { from: L.from, to: L.to, insert }, userEvent: "input" });
     return true;
   }
   let at = L.to;
   for (const o of p.lines) if (o.n > L.n) { if (o.kind === "item" && o.key === key) at = o.to; else if (o.kind === "key") break; }
-  view.dispatch({ changes: { from: at, insert: `\n  - ${item}` }, userEvent: "input" });
+  dispatchKeepingCaret({ changes: { from: at, insert: `\n  - ${item}` }, userEvent: "input" });
   return true;
 }
 
