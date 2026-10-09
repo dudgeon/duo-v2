@@ -109,11 +109,12 @@ public enum PopupPlacement {
         return i + 1
     }
 
-    /// The tab to show when `closing` goes: its opener if it's still open, else the neighbour.
+    /// The tab to show when `closing` goes: its opener if it's still open, else the left neighbour
+    /// (the new first tab if the first one closes; ENH-144).
     public static func after(closing: String, in docs: [String], openers: [String: String]) -> String? {
         if let o = openers[closing], docs.contains(o) { return o }
         guard let i = docs.firstIndex(of: closing) else { return docs.last }
         let rest = docs.filter { $0 != closing }
-        return rest.isEmpty ? nil : rest[min(i, rest.count - 1)]
+        return rest.isEmpty ? nil : rest[max(0, i - 1)]
     }
 }

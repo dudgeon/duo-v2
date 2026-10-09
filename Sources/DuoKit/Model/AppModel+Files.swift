@@ -98,7 +98,7 @@ extension AppModel {
         return tab
     }
 
-    /// Closes a document tab; its file is saved first if it changed. The neighbour, or Project, shows.
+    /// Closes a document tab; its file is saved first if it changed. The left neighbour, or Project, shows.
     public func closeDocument(_ path: String) {
         guard let i = openDocuments.firstIndex(of: path) else { return }
         if path.hasPrefix("web:") { return closeWebTab(path) }
@@ -108,9 +108,10 @@ extension AppModel {
             e.saveNow(force: true)
             e.closeFile()
         }
+        let next = PopupPlacement.after(closing: path, in: openDocuments, openers: [:])   // the left neighbour (ENH-144)
         openDocuments.remove(at: i)
         if rightTab == path {
-            rightTab = openDocuments.indices.contains(i) ? openDocuments[i] : openDocuments.last ?? "Project"
+            rightTab = next ?? "Project"
             selectedFile = rightTab == "Project" ? nil : rightTab
         }
     }

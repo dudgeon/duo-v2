@@ -137,14 +137,14 @@ struct ConsoleTabStrip: View {
 public enum TabStripFit {
     /// The fit, from each tab's width full and shortened: all full, all short, or short with tabs
     /// dropped from the right (never the selected one) until the rest and `» n` fit. One walk.
-    public static func fit(full: [CGFloat], short: [CGFloat], selected: Int?, width: CGFloat, controls: CGFloat, more: CGFloat) -> (keep: [Bool], short: Bool) {
-        func total(_ ws: [CGFloat]) -> CGFloat { ws.reduce(0, +) + CGFloat(max(0, ws.count - 1)) * 18 + controls }
+    public static func fit(full: [CGFloat], short: [CGFloat], selected: Int?, width: CGFloat, controls: CGFloat, more: CGFloat, gap: CGFloat = 18) -> (keep: [Bool], short: Bool) {
+        func total(_ ws: [CGFloat]) -> CGFloat { ws.reduce(0, +) + CGFloat(max(0, ws.count - 1)) * gap + controls }
         if total(full) <= width { return (Array(repeating: true, count: full.count), false) }
         if total(short) <= width { return (Array(repeating: true, count: full.count), true) }
         var keep = Array(repeating: true, count: full.count)
         var sum = short.reduce(0, +), count = full.count
         var i = full.count - 1
-        while i >= 0, sum + CGFloat(max(0, count - 1)) * 18 + controls + more > width {
+        while i >= 0, sum + CGFloat(max(0, count - 1)) * gap + controls + more > width {
             if i != selected { keep[i] = false; sum -= short[i]; count -= 1 }
             i -= 1
         }

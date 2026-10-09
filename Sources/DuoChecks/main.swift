@@ -344,9 +344,15 @@ func repoFixture() throws -> Fixture {
         check(PopupPlacement.index(in: ["web:a", "web:p1", "web:b"], opener: "web:a", openers: openers) == 2, "after the opener's other popups")
         check(PopupPlacement.index(in: ["web:b"], opener: "web:gone", openers: [:]) == 1, "at the end if the opener is gone")
         check(PopupPlacement.after(closing: "web:p2", in: ["web:a", "web:b", "web:p2"], openers: openers) == "web:a", "closing a popup shows its opener")
-        check(PopupPlacement.after(closing: "web:b", in: ["web:a", "web:b", "web:c"], openers: openers) == "web:c"
+        check(PopupPlacement.after(closing: "web:b", in: ["web:a", "web:b", "web:c"], openers: openers) == "web:a"
               && PopupPlacement.after(closing: "web:c", in: ["web:a", "web:c"], openers: [:]) == "web:a"
-              && PopupPlacement.after(closing: "web:a", in: ["web:a"], openers: [:]) == nil, "closing another tab shows its neighbour, as before")
+              && PopupPlacement.after(closing: "web:a", in: ["web:a", "web:b", "web:c"], openers: [:]) == "web:b"
+              && PopupPlacement.after(closing: "web:a", in: ["web:a"], openers: [:]) == nil, "closing a tab shows its left neighbour, the new first tab if the first closes (ENH-144)")
+        do {   // 15 documents overflow: the selected tab stays, the + is outside the fit (BUG-068)
+            let ws = [CGFloat](repeating: 90, count: 15)
+            let r = TabStripFit.fit(full: ws, short: ws, selected: 14, width: 700, controls: 34, more: 55, gap: 24)
+            check(r.keep[14] && r.keep.contains(false) && r.keep.filter { $0 }.count * 90 + (r.keep.filter { $0 }.count - 1) * 24 + 34 + 55 <= 700, "an overflowing right strip keeps the active tab and leaves room for » n and +")
+        }
         check(DuoCommand.printPage.shortcut == KeyboardShortcut("p", modifiers: .command) && DuoCommand.actualSize.shortcut == KeyboardShortcut("0", modifiers: .command)
               && DuoCommand.allCases.filter { $0.shortcut == KeyboardShortcut("0", modifiers: .command) || $0.shortcut == KeyboardShortcut("p", modifiers: .command)
                                                 || $0.shortcut == KeyboardShortcut("-", modifiers: .command) || $0.shortcut == KeyboardShortcut("+", modifiers: .command) }.count == 4,
