@@ -84,6 +84,16 @@ public enum FileActions {
         try FileManager.default.trashItem(at: url, resultingItemURL: nil)
     }
 
+    /// Trashes the item if it is there; false when it is already gone (a dangling symlink still counts as there).
+    /// Move to Trash on a file that vanished from disk just closes its tab (legacy Duo BUG-098).
+    @discardableResult
+    public static func trashIfPresent(_ url: URL) throws -> Bool {
+        var st = stat()
+        guard lstat(url.path, &st) == 0 else { return false }
+        try trash(url)
+        return true
+    }
+
     // MARK: Copy, reveal, open
 
     public static func copy(_ text: String) {
