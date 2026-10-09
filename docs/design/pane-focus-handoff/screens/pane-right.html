@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440">
+<meta name="design-size" content="1440x900">
+<meta name="design-kind" content="target">
+<meta name="design-surface" content="pane-focus">
+<title>Duo · Pane focus: the document has the keyboard</title>
+<!--
+DESIGN TARGET (pane-focus-handoff, DL-165, provisional). The build-handoff target with option A of the
+canvas https://claude.ai/artifact/QgL8pHUtYL8KqK2mUmqiEb: a 2 pt rule across the top edge of the pane that
+has the keyboard (text on a light pane, consoleText on the console). Everything else is the build-handoff
+target unchanged, with its exemptions (README there).
+-->
+<style>
+body{margin:0}
+button{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;cursor:default}
+a{color:#5B636D;text-decoration:underline;text-decoration-color:#8B939C;text-underline-offset:3px}a:hover{color:#1F2328;text-decoration-color:#1F2328}
+</style>
+</head>
+<body>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #FFFFFF; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px; white-space: nowrap; overflow: hidden">
+
+<div style="display: flex; align-items: center; gap: 8px; height: 38px; flex: none; padding: 0 12px 0 20px; border-bottom: 1px solid #C9CDD3; background: #F3F4F6">
+<span style="display: flex; gap: 8px; margin-right: 4px"><span style="width: 12px; height: 12px; border-radius: 50%; background: #FF5F57"></span><span style="width: 12px; height: 12px; border-radius: 50%; background: #FEBC2E"></span><span style="width: 12px; height: 12px; border-radius: 50%; background: #28C840"></span></span><button type="button" aria-label="Toggle sidebar" style="display: flex; padding: 4px 6px; border: 0; background: transparent"><svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="16" height="12" rx="2.5" fill="none" stroke="#5B636D" stroke-width="1.3"></rect><path d="M6.5 1v12" fill="none" stroke="#5B636D" stroke-width="1.3"></path></svg></button>
+<a href="overview.html">All projects</a><svg width="8" height="10" viewBox="0 0 8 10" aria-hidden="true" style="flex: none"><path d="M2 1.5 6 5 2 8.5" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="font-weight: 600">checkout-redesign</span><span style="display: flex; align-items: center; gap: 6px; margin-left: 8px; padding: 0 8px; border: 1.5px solid #C2410C; border-radius: 6px; font-size: 12px; font-weight: 600; color: #C2410C"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg>2 need you</span>
+<button type="button" style="display: flex; align-items: center; gap: 6px; width: 300px; height: 24px; box-sizing: border-box; margin-left: auto; padding: 0 8px; border: 1px solid #C9CDD3; border-radius: 6px; background: #FFFFFF; color: #5B636D; font-size: 13px"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style="flex: none"><circle cx="5" cy="5" r="3.6" fill="none" stroke="#5B636D" stroke-width="1.3"></circle><path d="M7.8 7.8 11 11" fill="none" stroke="#5B636D" stroke-width="1.3" stroke-linecap="round"></path></svg>Jump to a project, group or session<span style="margin-left: auto">⌘K</span></button>
+</div>
+
+<div style="display: flex; flex: 1; min-height: 0">
+
+<div style="width: 300px; flex: none; box-sizing: border-box; display: flex; flex-direction: column; border-right: 1px solid #C9CDD3">
+<div style="display: flex; flex-direction: column; padding: 14px 16px 4px"><span style="font-size: 14px; font-weight: 600">checkout-redesign</span><span style="color: #5B636D">On track · Exec review Oct 14</span></div>
+<div style="padding: 12px 16px 4px; font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #C2410C">NEEDS YOU · 1</div>
+<div style="display: flex; align-items: center; gap: 8px; height: 28px; margin: 0 8px; padding: 0 8px; border-radius: 6px; background: #E9ECEF"><span style="display: flex; width: 10px"><svg width="10" height="8" viewBox="0 0 10 8" aria-hidden="true" style="flex: none"><path d="M1.5 2 5 6 8.5 2" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span style="font-weight: 600">PRD v2</span><span style="padding: 0 7px; border: 1px solid #8B939C; border-radius: 9px; font-size: 11px; line-height: 16px; background: #FFFFFF">group · 3</span><span style="margin-left: auto; color: #5B636D">4m</span></div>
+<div style="display: flex; flex-direction: column; margin-left: 21px; border-left: 1.5px solid #8B939C">
+<div style="display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 16px 0 11px"><span style="display: flex; width: 10px"><svg width="8" height="10" viewBox="0 0 8 10" aria-hidden="true" style="flex: none"><path d="M2 1.5 6 5 2 8.5" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><circle cx="5" cy="5" r="5" fill="#C2410C"></circle></svg><span>PRD v2 edits</span><span style="padding: 0 7px; border: 1px solid #C9CDD3; border-radius: 9px; font-size: 11px; line-height: 16px">thread · 2</span><span style="margin-left: auto; color: #5B636D">4m</span></div>
+<div style="display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 16px 0 11px"><span style="width: 10px"></span><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M1 5h8" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span>quick q about tax rules</span><span style="margin-left: auto; color: #5B636D">3d</span></div>
+</div>
+<div style="padding: 12px 16px 4px; font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">WORKING · 1</div>
+<div style="display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 16px"><span style="width: 10px"></span><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg><span>Teardown research</span><span style="margin-left: auto; color: #5B636D">6m</span></div>
+<div style="display: flex; gap: 6px; padding: 14px 16px"><button type="button">Resume a session</button><button type="button">+ New session</button></div>
+<div style="margin-top: auto; display: flex; flex-direction: column; padding-bottom: 12px; border-top: 2px solid #8B939C">
+<div style="padding: 12px 16px 0; font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; color: #5B636D">FILES</div>
+<div style="padding: 0 16px 6px; font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 11px; color: #5B636D">~/work/payments/checkout-redesign</div>
+<div style="display: flex; align-items: center; height: 24px; padding: 0 16px; font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 12px">PROJECT.md</div>
+<div style="display: flex; align-items: center; height: 24px; padding: 0 16px; font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 12px; gap: 6px"><svg width="10" height="8" viewBox="0 0 10 8" aria-hidden="true" style="flex: none"><path d="M1.5 2 5 6 8.5 2" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>docs/</div>
+<div style="display: flex; align-items: center; gap: 8px; height: 24px; margin: 0 8px; padding: 0 8px 0 26px; border-radius: 6px; background: #E9ECEF; font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 12px"><span style="font-weight: 500">prd-v2.md</span><span style="margin-left: auto; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #5B636D">edited by Claude</span></div>
+</div>
+</div>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: #15171B; color: #E6E8EB; font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 19px">
+<div style="display: flex; align-items: center; gap: 18px; height: 36px; flex: none; padding: 0 16px; border-bottom: 1px solid #2B2F36"><span style="display: flex; align-items: center; gap: 6px; font-weight: 500"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><circle cx="5" cy="5" r="5" fill="#F97316"></circle></svg>PRD v2 edits</span><span style="display: flex; align-items: center; gap: 6px; color: #9AA1AB"><svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#9AA1AB" stroke-width="1.5"></circle></svg>Teardown research</span><span style="color: #9AA1AB">+</span></div>
+<div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 18px 16px 16px; white-space: normal">
+<div style="height: 6px; width: 62%; border-radius: 3px; background: #2F333A"></div>
+<div style="height: 6px; width: 84%; border-radius: 3px; background: #2F333A"></div>
+<div style="height: 6px; width: 48%; border-radius: 3px; background: #2F333A"></div>
+<div style="display: flex; flex-direction: column; margin-top: 6px"><span>Read docs/prd-v2.md</span><span>Update docs/prd-v2.md</span><span style="color: #9AA1AB">Added “What we heard” after Goals</span></div>
+<div style="height: 6px; width: 76%; border-radius: 3px; background: #2F333A; margin-top: 6px"></div>
+<div style="height: 6px; width: 58%; border-radius: 3px; background: #2F333A"></div>
+<div style="margin-top: auto">Two interviewees said saved cards are the main reason they abandon guest checkout; that conflicts with non-goal #2. Move saved cards into scope, or keep it out and log an open question?</div>
+<div style="display: flex; flex-direction: column"><span>❯ 1. Move saved cards into scope</span><span style="padding-left: 15px; color: #9AA1AB">2. Keep it out and log an open question</span><span style="padding-left: 15px; color: #9AA1AB">3. Something else</span></div>
+<div style="display: flex; align-items: center; gap: 8px; height: 30px; flex: none; box-sizing: border-box; padding: 0 10px; border: 1px solid #4A4F57; border-radius: 6px"><span style="color: #9AA1AB">&gt;</span><span style="width: 7px; height: 14px; background: #E6E8EB"></span></div>
+</div>
+</div>
+
+<div style="position: relative; width: 460px; flex: none; box-sizing: border-box; display: flex; flex-direction: column; border-left: 1px solid #C9CDD3">
+<div aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: #1F2328"></div>
+<div style="display: flex; align-items: center; gap: 18px; height: 36px; flex: none; padding: 0 20px; border-bottom: 1px solid #C9CDD3"><span style="color: #5B636D">Project</span><span style="color: #5B636D">PRD v2</span><span style="font-weight: 600">prd-v2.md</span></div>
+<div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 22px 28px; white-space: normal">
+<div style="font-size: 14px; font-weight: 600">Problem</div>
+<div style="height: 6px; width: 94%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 88%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 61%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="margin-top: 10px; font-size: 14px; font-weight: 600">Goals</div>
+<div>Cut guest-checkout abandonment 15% by Q1</div>
+<div style="height: 6px; width: 72%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="display: flex; flex-direction: column; gap: 8px; margin: 8px -12px 0; padding: 10px 12px 12px; border-radius: 6px; background: #E9ECEF">
+<div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 14px; font-weight: 600">What we heard</span><span style="color: #5B636D">added by Claude</span></div>
+<div>Two interviewees said saved cards are the main reason they abandon guest checkout.</div>
+<div style="height: 6px; width: 82%; border-radius: 3px; background: #C3C8CE"></div>
+<div style="height: 6px; width: 56%; border-radius: 3px; background: #C3C8CE"></div>
+</div>
+<div style="margin-top: 10px; font-size: 14px; font-weight: 600">Requirements</div>
+<div style="height: 6px; width: 90%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 78%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 84%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 47%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="margin-top: 10px; font-size: 14px; font-weight: 600">Non-goals</div>
+<div style="height: 6px; width: 70%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 64%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 52%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="margin-top: 10px; font-size: 14px; font-weight: 600">Open questions</div>
+<div style="height: 6px; width: 86%; border-radius: 3px; background: #D5D9DE"></div>
+<div style="height: 6px; width: 44%; border-radius: 3px; background: #D5D9DE"></div>
+</div>
+</div>
+
+</div>
+</div>
+</body>
+</html>

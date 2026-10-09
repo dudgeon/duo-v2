@@ -117,8 +117,26 @@ extension AppModel {
             let path = f.hasSuffix("/") ? String(f.dropLast()) : f
             if (inv[1] == "open") != isFolderOpen(path) { toggleFolder(path) }
             done(.ok("\(path)/ \(isFolderOpen(path) ? "open" : "closed")."))
+        case .viewPane:
+            guard let arg = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
+            switch arg {
+            case "next": nextPane()
+            case "previous": previousPane()
+            default:
+                guard let pane = DuoPane(rawValue: arg) else { return done(.fail("usage: \(id.action.usage)")) }
+                guard visiblePanes().contains(pane) else { return done(.fail("The \(pane.rawValue) pane is hidden. Panes showing: \(visiblePanes().map(\.rawValue).joined(separator: ", ")).")) }
+                activate(pane)
+            }
+            done(.ok("Active pane: \(activePane.rawValue).", ["pane": activePane.rawValue]))
         case .viewTab:
             guard let tab = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
+            if tab == "next" || tab == "previous" {
+                let pane = activePane
+                guard tabCount(in: pane) > 0 else { return done(.fail("The \(pane.rawValue) pane has no tabs.")) }
+                cycleTab(forward: tab == "next")
+                let title = currentTabTitle(in: pane) ?? ""
+                return done(.ok("Showing \(title) in the \(pane.rawValue) pane.", ["pane": pane.rawValue, "tab": currentTabKey(in: pane) ?? "", "title": title]))
+            }
             guard currentProject != nil else { return done(.fail("no project is open")) }
             if tab == "Project" { rightTab = "Project" } else if openDocuments.contains(tab) || fixture.groups.contains(where: { $0.name == tab }) {
                 rightTab = tab; if openDocuments.contains(tab) { selectedFile = tab }
@@ -1079,6 +1097,8 @@ extension AppModel {
             lines.append("Right pane: \(tab)" + (openDocuments.isEmpty ? "" : " (open: \(openDocuments.joined(separator: ", ")))"))
             if let v = visiblePage, v.picking { lines.append("Element picker on" + (v.picked.map { ": <\($0.label)> picked" } ?? "")) }
         }
+        j["pane"] = activePane.rawValue
+        lines.append("pane: \(activePane.rawValue)")
         let c = fixture.counts
         j["counts"] = ["needsYou": c.needsYou, "review": c.readyForReview, "working": c.working, "idle": c.idle]
         lines.append("\(c.needsYou) need you · \(c.readyForReview) to review · \(c.working) working · \(c.idle) idle")

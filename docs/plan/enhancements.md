@@ -49,6 +49,7 @@ Ideas Geoff wants that aren't scheduled yet (ENH-n). Each says what and why; whe
 | ENH-55 | **Source links for Google Sheets.** `…/spreadsheets/d/<ID>/export?format=xlsx` follows the same pattern as Docs and Slides (source links study). | Needs an xlsx viewer for the bar's line and compare; the note and Open in Google Sheets work without one. | 2026-10-08 |
 | ENH-56 | **Write Link into File**: an explicit action that puts the source into the .docx/.pptx itself (`docProps/custom.xml` `Source`, plus `dc:identifier`), so the link travels to someone who opens it in Word or PowerPoint. | Changes the file (hash, git); never automatic and never from a view-only path (DL-162). Google drops it on the way back (F-238). | 2026-10-08 |
 | ENH-57 | **A folder watch on Downloads, opt-in**: FSEvents on ~/Downloads, for when Spotlight is off or misses a download. DL-163 finds newer downloads through Spotlight. | Turning it on in Settings is the user's click, which is when macOS asks for Downloads access; Duo never asks on its own. Only if Spotlight proves short (Q-155). | 2026-10-08 |
+| ENH-58 | **Keyboard paths in the panes that have none**: ↑↓ and Return in the project's session list and file tree, and arrows in the action column, so a pane reached with ⌥⌘→ (DL-165) can be used from the keyboard. Today the list, map and action column become active, but keys do nothing there. | Needs a design for the selection a keyboard moves (the list's selected row today means "open in the right pane"). | 2026-10-09 |
 
 ## Geoff's to-dos
 

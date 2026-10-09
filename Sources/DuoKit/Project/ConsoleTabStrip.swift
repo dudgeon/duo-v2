@@ -69,8 +69,11 @@ struct ConsoleTabStrip: View {
 
     var allTabs: [Tab] {
         guard let project else { return [] }
-        let sessions = model.tabSessions(inProject: project).map { Tab(id: $0.tabKey, title: $0.name, state: $0.state) }
-        return sessions + model.shells(inProject: project).map { Tab(id: $0, title: model.consoleTitle($0), state: nil) }
+        let sessions = model.tabSessions(inProject: project)
+        return model.consoleTabKeys(inProject: project).map { key in
+            if let s = sessions.first(where: { $0.tabKey == key }) { return Tab(id: key, title: s.name, state: s.state) }
+            return Tab(id: key, title: model.consoleTitle(key), state: nil)
+        }
     }
 
     @ViewBuilder func tab(_ t: Tab, short: Bool) -> some View {

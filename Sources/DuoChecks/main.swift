@@ -33,6 +33,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "askq-fallback" { return try askqFallbackChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "remote-control" { return try remoteControlChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "git" { return try gitChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pane" { return try paneFocusChecks() }
     let f = try repoFixture()
 
     print("fixture")
@@ -659,6 +660,7 @@ func repoFixture() throws -> Fixture {
     try pathChecks()
     taskPaneKeyChecks()
     dockBadgeChecks()
+    try paneFocusChecks()
     try gitChecks()
     dockMenuChecks()
 

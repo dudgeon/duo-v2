@@ -1,0 +1,10 @@
+{
+  "$note": "Pane focus (DL-165, provisional). Each screen is a build-handoff target plus option A's rule on the pane that has the keyboard. kind=target: a window to build to.",
+  "canvas": "https://claude.ai/artifact/QgL8pHUtYL8KqK2mUmqiEb",
+  "screens": [
+    {"file": "screens/pane-console.html", "kind": "target", "width": 1440, "height": 900, "base": "build-handoff/project", "shows": "Inside a project, the console's terminal has the keyboard: a 2 pt consoleText rule over the top of the console. Fixture state: project (the default).", "canvasBoard": "OptA-light.dc.html"},
+    {"file": "screens/pane-right.html", "kind": "target", "width": 1440, "height": 900, "base": "build-handoff/project", "shows": "The document has the keyboard: a 2 pt text rule over the top of the right pane. Fixture: project, then pane:right.", "canvasBoard": "A-right.dc.html"},
+    {"file": "screens/pane-left.html", "kind": "target", "width": 1440, "height": 900, "base": "build-handoff/project", "shows": "The session list is active: a 2 pt text rule over the top of the left pane. Fixture: project, then pane:left.", "canvasBoard": "A-left.dc.html"},
+    {"file": "screens/pane-home.html", "kind": "target", "width": 1440, "height": 900, "base": "build-handoff/overview", "shows": "All projects, Home's terminal has the keyboard (the default): a 2 pt consoleText rule over the top of Home. Fixture state: overview.", "canvasBoard": "A-home.dc.html"}
+  ]
+}

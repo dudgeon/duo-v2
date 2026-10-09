@@ -3,7 +3,8 @@ import SwiftUI
 
 /// Every Duo chord in one table (LR-60). Menus are generated from it, so a chord is changed in
 /// exactly one place. The map is locked (DL-34); changing a chord needs a decision-log entry. All carry ⌘ so they can't collide with keys typed into Claude Code's TUI
-/// (handoff §6.3), and none is on LR-60's avoid list (⌘\, ⌘⌥L, ⌘⌥;, ⌘⌥').
+/// (handoff §6.3), except ⌃Tab and ⌃⇧Tab (Show Next / Previous Tab, DL-165): the macOS tab chord, which
+/// a key monitor also catches in terminals and web views (`installPaneKeys`), and none is on LR-60's avoid list (⌘\, ⌘⌥L, ⌘⌥;, ⌘⌥').
 public enum DuoCommand: String, CaseIterable, Sendable {
     case search             // ⇧⌘A: search everything, names first (DL-46, DL-80: Jump merged in; ⌘K is free)
     case allProjects        // ⌘↑, "up a level", as in Finder
@@ -14,6 +15,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case toggleRightPane    // ⌥⌘0, as Xcode's inspector
     case nextPane           // ⌥⌘→
     case previousPane       // ⌥⌘←
+    case nextTab            // ⌃Tab: the next tab of the active pane (DL-165), the one non-⌘ chord
+    case previousTab        // ⌃⇧Tab
     case newMarkdown        // ⌘N: a new Markdown file in the project, named inline (DL-61, DL-62)
     case newFolder          // ⇧⌘N
     case save               // ⌘S saves the open document now (it also autosaves)
@@ -64,6 +67,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .toggleRightPane: "Toggle Right Pane"
         case .nextPane: "Next Pane"
         case .previousPane: "Previous Pane"
+        case .nextTab: "Show Next Tab"
+        case .previousTab: "Show Previous Tab"
         case .newMarkdown: "New Markdown File"
         case .newFolder: "New Folder"
         case .save: "Save"
@@ -123,6 +128,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .toggleRightPane: KeyboardShortcut("0", modifiers: [.command, .option])
         case .nextPane: KeyboardShortcut(.rightArrow, modifiers: [.command, .option])
         case .previousPane: KeyboardShortcut(.leftArrow, modifiers: [.command, .option])
+        case .nextTab: KeyboardShortcut(.tab, modifiers: .control)
+        case .previousTab: KeyboardShortcut(.tab, modifiers: [.control, .shift])
         case .newMarkdown: KeyboardShortcut("n", modifiers: .command)
         case .newFolder: KeyboardShortcut("n", modifiers: [.command, .shift])
         case .save: KeyboardShortcut("s", modifiers: .command)
@@ -153,7 +160,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         switch self {
         case .search: true
         case .toggleRightPane: true
-        case .nextPane, .previousPane: false  // not built yet
+        case .nextPane, .previousPane: model.visiblePanes().count > 1
+        case .nextTab, .previousTab: model.tabCount(in: model.activePane) > 1
         case .allProjects: !model.altitude.isAllProjects
         case .togglePeek: !model.altitude.isAllProjects && !model.needsYouElsewhere.isEmpty
         case .jumpToPeekSelection: model.peekOpen
@@ -251,7 +259,10 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .openFile: model.chooseFilesToOpen()
         case .search: model.openSearch()
         case .toggleRightPane: model.rightCollapsed.toggle()
-        case .nextPane, .previousPane: break
+        case .nextPane: model.nextPane()
+        case .previousPane: model.previousPane()
+        case .nextTab: model.cycleTab(forward: true)
+        case .previousTab: model.cycleTab(forward: false)
         case .printPage: model.visibleWebTab?.printPage()
         case .zoomIn: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomIn(t.zoom)) }
         case .zoomOut: if let t = model.visibleWebTab { t.zoom(ZoomStore.zoomOut(t.zoom)) }
@@ -380,8 +391,17 @@ public struct DuoCommands: Commands {
             item(.allProjects)
             item(.goHome)
             Divider()
+            item(.nextPane)
+            item(.previousPane)
+            Divider()
             item(.togglePeek)
             item(.jumpToPeekSelection)
+        }
+        // Window: tab stepping through the active pane (DL-165), Previous then Next as macOS orders its own.
+        CommandGroup(after: .windowArrangement) {
+            Divider()
+            item(.previousTab)
+            item(.nextTab)
         }
         // Help (DL-108, m4); the system adds its search field.
         CommandGroup(replacing: .help) {

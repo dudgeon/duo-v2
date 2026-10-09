@@ -143,12 +143,18 @@ extension AppModel {
         return true
     }
 
-    /// The board's keys, while it shows: ⌥⌘← / ⌥⌘→ move the selected card a lane, unless a text
-    /// field or the editor has the keyboard.
+    /// The board shows and a card is selected (its note is the right pane's tab).
+    var boardCardSelected: Bool {
+        guard boardShown, let project = currentProject?.name, let path = rightTab else { return false }
+        return fixture.tasks?.contains { $0.project == project && $0.path == path } == true
+    }
+
+    /// The board's keys, while it shows with a card selected: ⌥⌘← / ⌥⌘→ move the card a lane, unless a text
+    /// field or the editor has the keyboard. Otherwise they pass on to Next / Previous Pane (DL-165).
     func watchBoardKeys() {
         guard boardKeyMonitor == nil else { return }
         boardKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self, self.boardShown, event.modifierFlags.intersection([.option, .command, .shift, .control]) == [.option, .command],
+            guard let self, self.boardShown, self.boardCardSelected, event.modifierFlags.intersection([.option, .command, .shift, .control]) == [.option, .command],
                   [123, 124].contains(event.keyCode) else { return event }
             if let r = event.window?.firstResponder, r is NSTextView || r is WKWebView { return event }
             return self.moveSelectedCard(by: event.keyCode == 123 ? -1 : 1) ? nil : event

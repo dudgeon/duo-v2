@@ -133,7 +133,8 @@ corners = lambda v: " ".join(px(v[c]) for c in ["topLeft", "topRight", "bottomRi
 radius = [{"name": "radius" + cap(k), "value": corners(v) if isinstance(v, dict) else px(v),
            "usage": v.get("use", k) if isinstance(v, dict) else radius_use.get(k, k)} for k, v in t["radius"].items()]
 border_use = {"hairline": "Pane dividers, card and field borders (`rule`).", "emphasis": "Group rule, focus outlines inside lists.",
-              "filesDivider": "The divider above FILES in a project's left pane.", "tileFocusOutline": "Keyboard focus around a map tile."}
+              "filesDivider": "The divider above FILES in a project's left pane.", "tileFocusOutline": "Keyboard focus around a map tile.",
+              "paneFocusRule": "The rule across the top edge of the active pane (DL-165)."}
 border = [{"name": "border" + cap(k), "value": px(v), "usage": border_use.get(k, k)} for k, v in t["border"].items()
           if not k.startswith("$") and isinstance(v, (int, float))]
 border.append({"name": "borderDash", "value": " ".join(px(x) for x in t["border"]["dash"]),
