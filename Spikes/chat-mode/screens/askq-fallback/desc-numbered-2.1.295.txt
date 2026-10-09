@@ -1,0 +1,53 @@
+
+ ▐▛███▛█   Claude Code v2.1.295
+▝▜██████▀  Haiku 5.5 · API Usage Billing
+ ▝▝   ▝▝   ~/.claude/jobs/8180d34c/tmp/askq/scratch/ws/askq
+
+  Updated to latest. Got 48 features, 441 bugfixes, and 163 other changes.
+  code.claude.com/docs/en/changelog for details
+
+
+❯ SCENARIO:askdesc                                                                     
+───────────────────────────────────────────────────────────────────────────────────────
+ ☐ Rollout 
+
+Which rollout plan do you want?
+
+❯ 1. Phased
+     3. Third-party integrations come last, after the core is stable.
+  2. All at once
+     One release for everything
+  3. Type something.
+───────────────────────────────────────────────────────────────────────────────────────
+  4. Chat about this
+
+Enter to select · ↑/↓ to navigate · Esc to cancel
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

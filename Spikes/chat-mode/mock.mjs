@@ -42,6 +42,22 @@ const scenarios = {
   edit: () => [{ tool: 'Write', input: { file_path: (process.env.MOCK_CWD || process.cwd()) + '/notes.md', content: '# Notes\n\nFirst line.\n' } }],
   read: () => [{ tool: 'Read', input: { file_path: (process.env.MOCK_CWD || process.cwd()) + '/notes.md' } }],
   edit2real: () => [{ tool: 'Edit', input: { file_path: (process.env.MOCK_CWD || process.cwd()) + '/notes.md', old_string: 'First line.', new_string: 'First line, edited.\nSecond line.' } }],
+  // Questions that follow a tool (F-245): the question comes on the reply to the tool's result.
+  readask: () => [{ text: 'Reading a file first.' }, { tool: 'Read', input: { file_path: (process.env.MOCK_CWD || process.cwd()) + '/data.txt' } }],
+  permask: () => [{ text: 'Running a command first.' }, { tool: 'Bash', input: { command: 'echo hi', description: 'Say hi' } }],
+  // Awkward but realistic content: markdown and backticks in labels, wide characters and emoji, a multi-line
+  // question, numbered lines inside a description, a long wrapping description.
+  askodd: () => [{ tool: 'AskUserQuestion', input: { questions: [{ question: 'Which parser should we use for `config.toml`?\n\nPick one; the choice is hard to undo.', header: 'Parser', multiSelect: false, options: [
+    { label: '`tomli` (Recommended)', description: 'Fast and small. Steps:\n1. install it\n2. import it' },
+    { label: 'serde — 日本語 ✅', description: 'Wide characters and an emoji in the label' },
+    { label: 'Roll our own', description: 'A very long description that goes on and on past the width of the pane so that it has to wrap onto at least two lines, perhaps three, in a narrow terminal window, to check the wrapping logic.' }] }] } }],
+  // A description line that starts with "N. " (a wrapped numbered list, "Phase 1. … 2. …") reads as an option row.
+  askdesc: () => [{ tool: 'AskUserQuestion', input: { questions: [{ question: 'Which rollout plan do you want?', header: 'Rollout', multiSelect: false, options: [
+    { label: 'Phased', description: '3. Third-party integrations come last, after the core is stable.' },
+    { label: 'All at once', description: 'One release for everything' }] }] } }],
+  ask2: () => [{ tool: 'AskUserQuestion', input: { questions: [Q('Ship it now?', 'Ship', false, ['Yes', 'No'])] } }],
+  askmulti4: () => [{ tool: 'AskUserQuestion', input: { questions: [Q('Which checks should run?', 'Checks', true, ['Lint', 'Unit tests', 'Type check', 'Build']), Q('Which environments?', 'Envs', true, ['Dev', 'Staging', 'Prod', 'Canary'])] } }],
+  slowask: () => [{ text: 'Thinking it over before one question, and writing a few lines while I do: the reply streams.', slow: true }, { tool: 'AskUserQuestion', input: { questions: [Q('Which database should we use?', 'Database', false, ['Postgres', 'SQLite', 'MySQL'])] } }],
   plan: (body) => { const m = JSON.stringify(body).match(/(\/[^\s"'`\\]*\/plans\/[\w.-]+\.md)/); return [{ text: 'Writing the plan.' }, { tool: 'Write', input: { file_path: m ? m[1] : '/tmp/plan.md', content: '# Plan\n\n1. Read the code\n2. Change `foo`\n3. Run the checks\n' } }]; },
   agent: () => [{ tool: 'Agent', input: { description: 'Look around', prompt: 'SUBAGENT: summarise the folder', subagent_type: 'general-purpose' } }],
   long: () => [{ text: Array.from({ length: 40 }, (_, i) => `Line ${i + 1} of a long answer.`).join('\n'), slow: true }],
@@ -56,7 +72,17 @@ function plan(body) {
     return [{ text: 'Subagent: the folder holds a few notes.' }];
   const prevTool = msgs.length > 1 && Array.isArray(msgs[msgs.length - 2].content) ? msgs[msgs.length - 2].content.find(b => b.type === 'tool_use') : null;
   const lastText = Array.isArray(last?.content) ? last.content.filter(b => b.type === 'text').map(b => b.text).join('\n') : textOf(last?.content);
-  const sc = [...lastText.matchAll(/SCENARIO:(\w+)/g)].pop();
+  // Duo appends its own reminder blocks after the prompt, so the scenario is read from the latest prompt
+  // (not the last message), and a tool that ran since the prompt counts whatever the last message is.
+  const promptIdx = msgs.findLastIndex(m => m.role === 'user' && !(Array.isArray(m.content) && m.content.some(b => b.type === 'tool_result')) && /SCENARIO:/.test(textOf(m.content)));
+  const after = promptIdx >= 0 ? msgs.slice(promptIdx + 1) : [];
+  const ranTool = after.some(m => Array.isArray(m.content) && m.content.some(b => b.type === 'tool_result'));
+  const asked = after.some(m => Array.isArray(m.content) && m.content.some(b => b.type === 'tool_use' && b.name === 'AskUserQuestion'));
+  const sname = promptIdx >= 0 ? [...textOf(msgs[promptIdx].content).matchAll(/SCENARIO:(\w+)/g)].pop()?.[1] : null;
+  // readask and permask: the question comes once their tool has run, and only once.
+  if ((body.tools || []).length && (sname === 'readask' || sname === 'permask') && ranTool && !asked) return scenarios.ask1();
+  // Title requests (no tools) and anything after a tool result skip the scenario.
+  const sc = ranTool || !(body.tools || []).length || !sname ? null : ['SCENARIO', sname];
   if (sc && scenarios[sc[1]]) return scenarios[sc[1]](body);
   if (prevTool?.name === 'Write' && /\/plans\//.test(prevTool.input.file_path)) return [{ tool: 'ExitPlanMode', input: {} }];
   if (prevTool?.name === 'Read' && /notes\.md/.test(JSON.stringify(prevTool.input))) return scenarios.edit2real();

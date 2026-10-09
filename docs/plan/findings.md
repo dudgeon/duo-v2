@@ -2850,3 +2850,24 @@ Measured on the real TUI with the spike's mock API (no tokens), both versions id
 - The picker bar's line 1 shows the paragraph's accepted text (as pasted), where the board read "three four" with the markup.
 - The four buttons fit the 460-pt pane only at their natural widths (`docxBarTrailing` 6); below 460 the bar clips (Q-152).
 - Proofs: `docs/design/docx-viewer-handoff/proof/` (picked, picked-hover, picked-session with a session showing, deck-picked-after-refactor). The 73-section document still draws once.
+
+## F-243 · A question whose option description has a line starting "N. " sends chat to the terminal (askq-fallback, 2026-10-08)
+
+Geoff: "askUserQuestions force-trigger terminal mode." Reproduced on the installed 2.1.295 and on the work Mac's pinned 2.1.219, in a live Duo, with the real `claude` against the spike's scripted API.
+- **Trigger.** `question()` (`ChatScreen.swift`) takes any line matching `^\s*(❯)?\s*(\d+)\.\s…` as an option, so a description line that starts `3. Third-party …` (or `1. install it` on its own line, as 2.1.219 draws a description's newlines) becomes an extra option row. The numbers are then 1,3,2,3,4 instead of 1…n.
+- **Why it leaves chat.** `ChatScreenReader.wellFormed` (`ChatScreen.swift`) fails, `dialogsVerified` is false for trust `.newer` (every 2.1.x but 291 to 293, `ChatSession.swift:145`), and `evaluateFallback` (`ChatSession.swift:366`) calls `fallBack` with "This dialog in Claude Code <v> doesn’t read like the versions chat mode was checked with". Sticky (DL-154).
+- **Not triggered:** 1 to 4 questions, single and multi-select, 2 to 4 options, long wrapping labels and descriptions, previews, backticks, a wide-character and emoji label, a multi-line question (2.1.295 draws it with a `│` margin), a question after a Read tool call, after a Bash permission, mid-stream; all on 2.1.295, the layout ones also on 2.1.219.
+- On 2.1.291 to 293 (`.verified`) the dialog is not gated by `wellFormed`, so the extra rows are answered by their number: a wrong answer, not a fallback (not run; read from the code).
+- Real screens: `Spikes/chat-mode/screens/askq-fallback/desc-numbered-2.1.295.txt`, `desc-numbered-2.1.219.txt`; failing checks: `DUO_CHECKS=askq-fallback swift run DuoChecks`.
+
+## F-244 · 2.1.295's "Allow this read outside the working directories?" dialog reads as unknown (askq-fallback, 2026-10-08)
+
+A Read of a file outside the session's folder draws a permission dialog titled "Read outside the working directories", asking "Allow this read outside the working directories?" with four options ("Yes, and keep allowing …", "No, and block …", "No, and ask again next time", "Yes, but ask again next time"). `permissionQuestion` is `^\s*Do you want to .*\?\s*$`, so the reader says `unknown`, and after the 0.5 s grace chat falls back with "Chat mode can’t show this screen" (`ChatSession.swift:362`). Found by accident: it was not an AskUserQuestion. A question that follows such a Read is stuck behind it. Screen: `askq-fallback/read-outside-2.1.295.txt`.
+
+## F-245 · How the askq-fallback runs were done, and what a background Duo can't do (2026-10-08)
+
+- **The scripted API (`Spikes/chat-mode/mock.mjs`)** read `SCENARIO:` from the last message only, but Duo's hooks append a reminder block after the prompt, so no scenario ran in Duo. It now reads the latest prompt, and has `readask`, `permask`, `slowask`, `askodd`, `ask2`, `askmulti4`, `askdesc`.
+- **Only the shown console tab is read** (`chatIsShown`, `ChatChrome.swift:137`): in a background Duo, start sessions one at a time (the newest is shown) or `duo2 open <project> <session>`; a parallel batch is not evaluated.
+- **Duo picks its own `claude`**, not the PATH: `duo2 settings claude-path <path|auto>` in the scratch instance to run another version.
+- **`duo2 session chat answer` takes a number, so a multi-select can be ticked but not submitted, and "Other" text can't be typed**; those run only in the headless chat-live harness.
+- `ChatSession.fallBack` now logs one `chat-fallback:` line to stderr (reason, screen kind, cols, rows, shown, version, trust, pending tool) and the screen's rows. A diagnostic worth keeping.

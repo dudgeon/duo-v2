@@ -1,0 +1,53 @@
+
+╭─── Claude Code v2.1.219 ────────────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting started       │
+│                    Welcome back!                   │ Run /init to create a CLAUDE.… │
+│                                                    │ ────────────────────────────── │
+│                       ▐▛███▜▌                      │ What's new                     │
+│                      ▝▜█████▛▘                     │ Added `onFailure: "block"` fo… │
+│                        ▘▘ ▝▝                       │ Added Program Status Protocol… │
+│                                                    │ Added quoted text to the `/co… │
+│        claude-haiku-5-5 · API Usage Billing        │ /release-notes for more        │
+│  ~/.claude/jobs/8180d34c/tmp/askq/scratch/ws/askq  │                                │
+╰─────────────────────────────────────────────────────────────────────────────────────╯
+
+
+❯ SCENARIO:askodd                                                                      
+───────────────────────────────────────────────────────────────────────────────────────
+ ☐ Parser 
+
+Which parser should we use for `config.toml`?
+
+Pick one; the choice is hard to undo.
+
+❯ 1. `tomli` (Recommended)
+     Fast and small. Steps:
+     1. install it
+     2. import it
+  2. serde — 日本語 ✅
+     Wide characters and an emoji in the label
+  3. Roll our own
+     A very long description that goes on and on past the width of the pane so that it 
+     has to wrap onto at least two lines, perhaps three, in a narrow terminal window, 
+     to check the wrapping logic.
+  4. Type something.
+───────────────────────────────────────────────────────────────────────────────────────
+  5. Chat about this
+
+Enter to select · ↑/↓ to navigate · Esc to cancel
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
