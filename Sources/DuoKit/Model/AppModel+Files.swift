@@ -108,6 +108,8 @@ extension AppModel {
         if let e = editorIfLoaded, let u = liveFile(path) ?? keptFile(path), u.standardizedFileURL == e.url?.standardizedFileURL {
             e.saveNow(force: true)
             e.closeFile()
+        } else if let e = editorIfLoaded, let u = liveFile(path) ?? keptFile(path) {
+            e.forget(u)   // a tab that wasn't showing: the page lets go of its editor state
         }
         let next = PopupPlacement.after(closing: path, in: openDocuments, openers: [:])   // the left neighbour (ENH-144)
         openDocuments.remove(at: i)
