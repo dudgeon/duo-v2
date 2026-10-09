@@ -3,7 +3,7 @@
 // save writes back exactly what was read plus the user's edits (LR-30).
 import { EditorState, ChangeSet, StateField, StateEffect, RangeSetBuilder, Text, Compartment, Prec } from "@codemirror/state";
 import { EditorView, ViewPlugin, Decoration, WidgetType, keymap } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap, undo, undoDepth } from "@codemirror/commands";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { syntaxTree } from "@codemirror/language";
 import { autocompletion, startCompletion, completionStatus, acceptCompletion } from "@codemirror/autocomplete";
@@ -2446,6 +2446,8 @@ window.duo = {
   exec: (name) => { commands[name]?.(); return view.state.doc.length; },
   select: (from, to) => view.dispatch({ selection: { anchor: from, head: to ?? from } }),
   caret: () => view.state.selection.main.head,
+  undo: () => undo(view),
+  undoDepth: () => undoDepth(view.state),
   // The selected text and its lines (1-based), for Send to Claude; null when nothing is selected.
   selection: () => {
     const { from, to } = view.state.selection.main;

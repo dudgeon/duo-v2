@@ -102,5 +102,14 @@ total=$((total+1))
 if grep -q 'Mod-s' $out/chords.log && grep -q 'Shift-Mod-n' $out/chords.log; then echo "ok   chords: the page has window.__duoChords"
 else fails=$((fails+1)); echo "FAIL chords: no window.__duoChords in the page"; grep editor-js $out/chords.log | sed 's/^/       | /'; fi
 
+# 9. One editor state per document (DL-167 step 3): leave A for B and come back; the caret, the undo
+# history are still there, and the page held A's state while B showed.
+fresh held
+run held "${open}$A,wait:2,user-type:alpha=>alpha EDITED,editor-js:duo.select(7)⸴1,wait:1,+open-file:$B,wait:3,editor-js:return JSON.stringify({held:duo.heldIds()⸴text:duo.text()}),+open-file:$A,wait:3,editor-js:return JSON.stringify({caret:duo.caret()⸴depth:duo.undoDepth()⸴held:duo.heldIds()}),editor-js:duo.undo()⸴1,wait:1,editor-js:return duo.text(),wait:2"
+expect "held: the page held A's state while B showed" $out/held.log has "garden/A.md"
+expect "held: back in A, the caret is where it was" $out/held.log has '"caret":7'
+expect "held: back in A, the undo history is there" $out/held.log lacks '"depth":0'
+expect "held: Undo after coming back takes the typing out" $out/held.log has "editor-js: # A"
+
 echo "$((total-fails)) of $total checks passed (logs and captures in $out)"
 [[ $fails == 0 ]]

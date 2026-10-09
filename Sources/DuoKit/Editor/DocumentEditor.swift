@@ -148,11 +148,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             return
         }
         if let leaving = url, readOnlyReason == nil, dirty, conflict || removedOnDisk {
-            let base = diskBytes, wasConflict = conflict
-            // Runs before the next document's text is loaded: the page runs scripts in order.
-            webView.callAsyncJavaScript("return duo.text()", arguments: [:], in: nil, in: .page) { [weak self] r in
-                if case .success(let v) = r, let text = v as? String { self?.kept[leaving] = (text, base, wasConflict) }
-            }
+            // The page keeps its text, undo and caret under the file's id (duo.show below); what is
+            // kept here is the base it was edited from, for the merge when it is shown again.
+            kept[leaving] = ("", diskBytes, conflict)
         } else {
             saveNow(force: true)
         }
@@ -193,7 +191,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
                 guard let self, self.generation == gen else { done?(false); return }
                 if case .success(let t) = r, let t = t as? String { FileHistory.snapshot(file, Data(t.utf8), source: "resolve-theirs") }
                 self.diskBytes = data
-                self.webView.callAsyncJavaScript("const r = duo.create(t); duo.markSaved(); return r", arguments: ["t": text], in: nil, in: .page) { _ in
+                self.webView.callAsyncJavaScript("duo.close(id); const r = duo.show(id, t, {folded: f}); duo.markSaved(); return r", arguments: ["id": Self.docID(file), "t": text, "f": Self.folded(file)], in: nil, in: .page) { _ in
                     guard self.generation == gen else { done?(false); return }
                     self.phase = .open
                     self.dirty = false
@@ -225,8 +223,8 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     }
 
     /// Shows text that will never be saved (a file that isn't UTF-8, or can't be read).
-    private func showReadOnly(_ text: String) {
-        webView.callAsyncJavaScript("const r = duo.create(t); duo.markSaved(); duo.setReadOnly(true); return r", arguments: ["t": text], in: nil, in: .page, completionHandler: nil)
+    private func showReadOnly(_ text: String, _ file: URL) {
+        webView.callAsyncJavaScript("duo.close(id); const r = duo.show(id, t, {folded: false}); duo.markSaved(); duo.setReadOnly(true); return r", arguments: ["id": Self.docID(file), "t": text], in: nil, in: .page, completionHandler: nil)
     }
 
     /// Saves now if it safely can (quit, closing the window). Calls back when done.
@@ -238,11 +236,11 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     private func load(_ file: URL) {
         let gen = generation
         guard url == file else { return }
-        // diskBytes is set below, in this same turn: from here on a save compares with this file.
-        defer { if phase == .opening { phase = .open } }
+        // The document stays `.opening` (nothing saves, nothing merges) until the page has shown it.
         guard let data = FileManager.default.contents(atPath: file.path) else {
             readOnlyReason = "can't read the file"; lastEvent = "unreadable"
-            showReadOnly("")
+            showReadOnly("", file)
+            phase = .open
             return
         }
         diskBytes = data
@@ -252,33 +250,45 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             // the editor alone showed the previous document under this one's tab.
             readOnlyReason = "not UTF-8"
             lastEvent = "read-only"
-            showReadOnly(String(data: data, encoding: .windowsCP1252) ?? String(data: data, encoding: .isoLatin1) ?? "")
+            showReadOnly(String(data: data, encoding: .windowsCP1252) ?? String(data: data, encoding: .isoLatin1) ?? "", file)
+            phase = .open
             watch(file)
             return
         }
-        if let k = kept.removeValue(forKey: file), let baseText = String(data: k.base, encoding: .utf8) {
-            // Back to a document left with unsaved text: show that text over the base it was
-            // edited from, then reconcile with what's on disk now (it may merge cleanly now).
-            diskBytes = k.base
-            dirty = true
-            webView.callAsyncJavaScript("window.__folded = f; const r = duo.create(t); duo.setBaseText(b); return r", arguments: ["t": k.text, "b": baseText, "f": Self.folded(file)], in: nil, in: .page) { [weak self] _ in
-                guard let self, self.generation == gen else { return }
-                self.lastEvent = "reopened with unsaved edits"
+        // One editor state per document (DL-167 step 3): the page sets back the state it holds for this
+        // file (undo, caret, scroll, Claude's highlights, Source mode) or builds one from the disk text.
+        let k = kept.removeValue(forKey: file)
+        webView.callAsyncJavaScript("return duo.show(id, t, {folded: f})", arguments: ["id": Self.docID(file), "t": text, "f": Self.folded(file)], in: nil, in: .page) { [weak self] result in
+            guard let self, self.generation == gen else { return }
+            var info: [String: Any] = [:]
+            if case .success(let v) = result, let d = v as? [String: Any] { info = d }
+            if info["restored"] as? Bool == true {
+                // Back to a document the page kept, maybe with unsaved edits, maybe from before the file
+                // changed on disk: its base is what it was edited from, so the merge runs against that.
+                self.diskBytes = k?.base ?? (data.isEmpty ? data : Data())
+                self.dirty = info["dirty"] as? Bool == true
+                self.phase = .open
+                self.lastEvent = self.dirty ? "reopened with unsaved edits" : "reopened"
                 self.applyTemplateMode(file)
                 self.reconcile(file)
+                if k?.conflict == true, !self.conflict { self.lastEvent = "reopened; conflict gone" }
+            } else {
+                if info["mixedLineEndings"] as? Bool == true { self.readOnlyReason = "mixed line endings" }
+                self.phase = .open
+                self.applyTemplateMode(file)
+                self.lastEvent = self.readOnlyReason == nil ? "opened" : "read-only"
             }
-            watch(file)
-            return
-        }
-        webView.callAsyncJavaScript("window.__folded = f; const r = duo.create(t); duo.markSaved(); return r", arguments: ["t": text, "f": Self.folded(file)], in: nil, in: .page) { [weak self] result in
-            guard let self, self.generation == gen else { return }
-            if case .success(let info) = result, let d = info as? [String: Any], (d["mixedLineEndings"] as? Bool) == true {
-                self.readOnlyReason = "mixed line endings"
-            }
-            self.applyTemplateMode(file)
-            self.lastEvent = self.readOnlyReason == nil ? "opened" : "read-only"
         }
         watch(file)
+    }
+
+    /// The id the page keeps a document's editor state under: the file's standardized path.
+    static func docID(_ file: URL) -> String { file.standardizedFileURL.path }
+
+    /// A document's tab closed: the page lets go of its editor state, and nothing is kept for it.
+    public func forget(_ file: URL) {
+        kept[file] = nil
+        webView.callAsyncJavaScript("return window.duo ? duo.close(id) : false", arguments: ["id": Self.docID(file)], in: nil, in: .page, completionHandler: nil)
     }
 
     /// An image beside the document, as a data URL (10 MB at most), or nil if it isn't there.
@@ -620,6 +630,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// The open file was renamed or moved on purpose: follow it, no reload.
     public func fileMoved(to newURL: URL) {
         if let old = url, kept[old] != nil { kept[newURL] = kept.removeValue(forKey: old) }
+        if let old = url {
+            webView.callAsyncJavaScript("return window.duo ? duo.rename(a, b) : false", arguments: ["a": Self.docID(old), "b": Self.docID(newURL)], in: nil, in: .page, completionHandler: nil)
+        }
         url = newURL
         watch(newURL)
         reconcile(newURL)   // anything written just before the move (a rename's new title) comes in
@@ -629,7 +642,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     public func closeFile() {
         watcher?.cancel(); watcher = nil
         folderWatcher?.cancel(); folderWatcher = nil
-        if let u = url { kept[u] = nil }
+        if let u = url { forget(u) }
         saveTask?.cancel()
         url = nil
         generation += 1
