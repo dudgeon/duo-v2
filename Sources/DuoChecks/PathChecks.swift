@@ -6,13 +6,20 @@ import Foundation
 // and Foundation's resolvingSymlinksInPath() strips /private, so a folder move under /tmp or /var
 // left its sessions behind. F-201: an empty DUO_AUTOCONFIRM (or any Duo variable) counts as unset.
 
-func pathChecks() throws {
+@MainActor func pathChecks() throws {
     print("real paths (LR-24, F-200)")
     let fm = FileManager.default
     check(URL.realPath("/tmp") == "/private/tmp" && URL.realPath("/private/tmp") == "/private/tmp", "/tmp is /private/tmp, as Claude spells it")
     check(URL(fileURLWithPath: "/private/tmp").realPath == "/private/tmp", "a /private path keeps /private (Foundation's resolvingSymlinksInPath drops it)")
     check(URL.realPath("/tmp/duo-no-such-\(getpid())/a/b") == "/private/tmp/duo-no-such-\(getpid())/a/b", "a path that isn't there yet resolves its deepest existing folder")
     check(URL.realPath("/") == "/" && URL.realPath("/tmp/") == "/private/tmp", "the root and a trailing slash")
+
+    // BUG-098 (F-262): Move to Trash on a file already gone from disk is not an error.
+    let gone = URL(fileURLWithPath: "/tmp/duo-trash-\(UUID().uuidString.prefix(8)).md")
+    check((try? FileActions.trashIfPresent(gone)) == false, "trashing a file that is already gone is a quiet no-op, not a throw")
+    let there = URL(fileURLWithPath: "/tmp/duo-trash-\(UUID().uuidString.prefix(8)).md")
+    try? Data("x".utf8).write(to: there)
+    check((try? FileActions.trashIfPresent(there)) == true && !fm.fileExists(atPath: there.path), "a file that is there still goes to the Trash")
 
     // A folder reached through /tmp and through a symlink of the user's own: a move maps its
     // sessions in Claude's spelling whichever way the folder was named, and undo brings them back.

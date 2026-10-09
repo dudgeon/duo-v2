@@ -744,6 +744,16 @@ extension AppModel {
         let projectName = inv[0].flatMap { a in candidates.first { relativePath(a, project: $0, cwd: req.cwd) != nil } } ?? candidates.first
         guard let projectName, let p = project(named: projectName), let folder = liveFolders[p.name] else { return done(.fail("no project here (use --project)")) }
         let isCurrent = currentProject?.name == p.name
+        /// A path that is no longer on disk but still has a tab (a document "removed on disk"): its project-relative form.
+        func goneRelative(_ s: String?) -> String? {
+            guard let s else { return nil }
+            let expanded = (s as NSString).expandingTildeInPath
+            let abs = expanded.hasPrefix("/") ? URL(fileURLWithPath: expanded) : folder.appending(path: expanded)
+            guard let r = relativePathIn(abs.deletingLastPathComponent(), folder: folder).map({ $0.isEmpty ? abs.lastPathComponent : $0 + "/" + abs.lastPathComponent })
+                    ?? (abs.deletingLastPathComponent().realPath == folder.realPath ? abs.lastPathComponent : nil),
+                  (openDocumentsByProject[p.name] ?? []).contains(r) else { return nil }
+            return r
+        }
         func url(_ s: String?) -> (URL, String)? {
             guard let s, let rel = relativePath(s, project: p.name, cwd: req.cwd) else { return nil }
             return (folder.appending(path: rel), rel)
@@ -844,6 +854,12 @@ extension AppModel {
                 let lines = items.map { "\($0.mode == .copy ? "Copied" : "Moved") to \(rel($0.dest))" + ($0.replaced != nil ? " (the one there is in the Trash)" : "") }
                 done(.ok(lines.joined(separator: "\n") + " in \(p.name). Undo: duo2 undo", ["path": rel(items[0].dest), "paths": items.map { rel($0.dest) }, "project": p.name] as [String: Any]))
             case .fileTrash:
+                // A file already gone from disk is a success too: its tab closes (BUG-098, F-262).
+                if url(inv[0]) == nil, let gone = goneRelative(inv[0]) {
+                    if isCurrent { closeDocumentsUnder(gone) } else { openDocumentsByProject[p.name]?.removeAll { $0 == gone || $0.hasPrefix(gone + "/") } }
+                    after()
+                    return done(.ok("\(gone) (in \(p.name)) was already gone from the disk; its tab is closed."))
+                }
                 guard let (u, r) = url(inv[0]) else { return done(missing(inv[0])) }
                 if isCurrent { closeDocumentsUnder(r) }
                 try FileActions.trash(u); after()

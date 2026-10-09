@@ -222,8 +222,10 @@ public final class AppModel {
     /// made inside the project are theirs to follow, so only the path itself is checked.
     public static func contained(_ path: String, in folder: URL) -> URL? {
         guard !path.hasPrefix("/") else { return nil }
-        let root = folder.standardizedFileURL.path
-        let url = folder.appending(path: path).standardizedFileURL
+        // Lexical on both sides: standardizedFileURL drops /private from a path that exists but not
+        // from one that doesn't, so a file gone from a folder under /tmp was "outside" it (F-262).
+        let root = folder.standardized.path
+        let url = folder.appending(path: path).standardized
         return url.path == root || url.path.hasPrefix(root.hasSuffix("/") ? root : root + "/") ? url : nil
     }
 

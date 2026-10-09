@@ -104,7 +104,8 @@ extension AppModel {
         if path.hasPrefix("web:") { return closeWebTab(path) }
         // Save, then let go of the file: the editor kept it after its tab closed, so doc status
         // still said "open in Duo" and Claude's edits went into a buffer nobody could see (F-52).
-        if let e = editorIfLoaded, let u = liveFile(path), u.standardizedFileURL == e.url?.standardizedFileURL {
+        // A file gone from disk has no liveFile, but its tab still holds the editor (BUG-098): let go of it too.
+        if let e = editorIfLoaded, let u = liveFile(path) ?? keptFile(path), u.standardizedFileURL == e.url?.standardizedFileURL {
             e.saveNow(force: true)
             e.closeFile()
         }
@@ -210,7 +211,9 @@ extension AppModel {
             guard let url = fileURL(path) else { return }
             closeDocumentsUnder(path)
             if let r = renamingPath, r == path || r.hasPrefix(path + "/") { renamingPath = nil }
-            try FileActions.trash(url)
+            // Already gone from disk (a tab showing "removed on disk"): closing its tab is all there is
+            // to do, not an error (legacy Duo BUG-098, F-262).
+            try FileActions.trashIfPresent(url)
             afterChange {}
         }
     }
@@ -248,6 +251,9 @@ extension AppModel {
 
     func closeDocumentsUnder(_ path: String) {
         for p in openDocuments where p == path || p.hasPrefix(path + "/") {
+            // Let go of a file still on disk without saving: callers trash or move it next, and
+            // closeDocument's save would land after that and write it back (F-262). A file already
+            // gone has no liveFile; closeDocument lets go of it (its save is paused, removed on disk).
             if liveFile(p) == editorIfLoaded?.url { editorIfLoaded?.closeFile() }
             closeDocument(p)
         }
