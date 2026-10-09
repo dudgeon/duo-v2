@@ -429,6 +429,7 @@ extension DuoAction {
 public enum Parity {
     public static let uiOnly: [String: String] = [
         "Close Window": "window management",
+        "Paste or drop a picture in the editor": "a gesture, not a menu item: the picture is saved beside the document and linked (LR-39); `duo2 doc insert` adds the same `![](name)` text, and `duo2 file move` puts a picture beside a note",
         "Anyone": "the task board's owner filter: view state; `duo2 task board` lists every card",
         "Me": "the task board's owner filter: view state; `duo2 task board` lists every card",
         "Enter Full Screen": "window management",

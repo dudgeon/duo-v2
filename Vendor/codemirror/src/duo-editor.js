@@ -1452,6 +1452,63 @@ function pasteIntoCell(e, v) {
   return true;
 }
 
+// Pasting or dropping a picture (LR-39): Duo saves the file beside the document and `insertImage`
+// puts a relative link on its own line. Never a blob or absolute URL.
+const IMAGE_TYPES = /^image\/(png|jpe?g|gif|webp)$/;
+// Where each picture goes, by id, kept mapped through edits while Duo saves the file: typing, or
+// an earlier picture of the same drop landing first, would otherwise leave a stale offset (the
+// link could split a line, and several pictures came out in reverse order).
+const pendingImages = new Map();
+let nextImageId = 0;
+const trackPendingImages = EditorView.updateListener.of((u) => {
+  if (!u.docChanged || !pendingImages.size) return;
+  for (const [k, p] of pendingImages) pendingImages.set(k, u.changes.mapPos(p, 1));
+});
+function sendImages(files, pos) {
+  let any = false;
+  for (const f of files) {
+    if (!IMAGE_TYPES.test(f.type)) continue;
+    any = true;
+    const id = ++nextImageId;
+    pendingImages.set(id, pos);
+    const r = new FileReader();
+    r.onload = () => post("pasteImage", { mime: f.type, data: String(r.result).split(",")[1] || "", id });
+    r.onerror = () => pendingImages.delete(id);
+    r.readAsDataURL(f);
+  }
+  return any;
+}
+function pasteImage(e, v) {
+  const files = [...(e.clipboardData?.files || [])];
+  if (!files.some((f) => IMAGE_TYPES.test(f.type))) return false;
+  e.preventDefault();
+  return sendImages(files, v.state.selection.main.head);
+}
+function dropImage(e, v) {
+  const files = [...(e.dataTransfer?.files || [])];
+  if (!files.some((f) => IMAGE_TYPES.test(f.type))) return false;
+  e.preventDefault();
+  const at = v.posAtCoords({ x: e.clientX, y: e.clientY }) ?? v.state.selection.main.head;
+  return sendImages(files, at);
+}
+function insertImage(md, id) {
+  const pos = pendingImages.has(id) ? pendingImages.get(id) : -1;
+  pendingImages.delete(id);
+  const st = view.state;
+  let at = Math.max(0, Math.min(pos >= 0 ? pos : st.selection.main.head, st.doc.length));
+  let line = st.doc.lineAt(at);
+  if (/^!\[[^\]]*\]\([^)]*\)\s*$/.test(line.text)) at = line.to; // a drop on a picture's own line goes after it
+  const before = st.sliceDoc(line.from, at).trim() !== "", after = st.sliceDoc(at, line.to).trim() !== "";
+  const prevBlank = line.number === 1 || st.doc.line(line.number - 1).text.trim() === "";
+  const lead = before ? "\n\n" : (prevBlank ? "" : "\n");
+  const nextBlank = line.number === st.doc.lines || st.doc.line(line.number + 1).text.trim() === "";
+  // On the empty last line, end with a newline again so the file keeps its final one.
+  const tail = after ? "\n\n" : !nextBlank ? "\n" : (line.number === st.doc.lines && line.text === "" ? "\n" : "");
+  const ins = lead + md + tail;
+  view.dispatch({ changes: { from: at, insert: ins }, selection: { anchor: at + lead.length + md.length }, userEvent: "input.paste", scrollIntoView: true });
+  return true;
+}
+
 // The bar over a table while the caret is in it (DL-113, tables-handoff `tables-bar`).
 class TableBarWidget extends WidgetType {
   eq() { return true; }
@@ -1925,7 +1982,7 @@ function extensions(readOnly) {
       ...(window.duoFlags?.noPreview ? [] : [livePreview]),
       contextField,
       foldField,
-      ...(window.duoFlags?.noPreview ? [] : [propertiesField, propertiesKeymap, tableKeymap, EditorView.domEventHandlers({ paste: pasteIntoCell }), suggestionKeys,
+      ...(window.duoFlags?.noPreview ? [] : [propertiesField, propertiesKeymap, tableKeymap, EditorView.domEventHandlers({ paste: (e, v) => pasteImage(e, v) || pasteIntoCell(e, v), drop: dropImage }), trackPendingImages, suggestionKeys,
         autocompletion({ override: [propertyCompletions], icons: false, activateOnTyping: true,
           tooltipClass: (st) => (inBlock(st) && !st.sliceDoc(st.doc.lineAt(st.selection.main.head).from, st.selection.main.head).includes(":") ? "duo-sugg-names" : "duo-sugg-values"),
           addToOptions: [{ position: 20, render: (c) => { const s = document.createElement("span"); s.className = "duo-sugg-icon";
@@ -2228,6 +2285,7 @@ function bench(n) {
 window.duo = {
   // The note's context from Duo: { task, sessions: { id: { state, name, wait } } } (S2-5).
   setContext: (c) => { view.dispatch({ effects: setContext.of(c) }); return true; },
+  insertImage,
   imageLoaded: (id, url) => { const f = imageWaiters.get(id); imageWaiters.delete(id); if (f) f(url); return true; },
   markConflict: (lines) => { view.dispatch({ effects: setConflict.of(lines && lines.length ? lines : null) }); return true; },
   setProperty,

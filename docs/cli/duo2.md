@@ -270,6 +270,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Not Now | the user's answer to the install question; `duo2 install` and `duo2 uninstall` change it later |
 | OK | dismisses a notice |
 | Open Settings… | not built: Settings waits on its design (DB-10) |
+| Paste or drop a picture in the editor | a gesture, not a menu item: the picture is saved beside the document and linked (LR-39); `duo2 doc insert` adds the same `![](name)` text, and `duo2 file move` puts a picture beside a note |
 | Project | a menu, not an action |
 | Report an Issue… | opens GitHub's new-issue form, filled in, for the user to edit and submit |
 | Resolve… | drafts the conflict's instruction into the project's Claude session, unsent (DL-149 board 11); the user presses Return. Claude is already the one resolving |
