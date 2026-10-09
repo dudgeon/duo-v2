@@ -28,4 +28,4 @@ acts="open:garden,open-file:$doc,freeze:2,editor-js:$paste,freeze:2,editor-js:$d
 env -u DUO_SUPPORT_DIR DUO_EXTRA_ENV="DUO_SUPPORT_DIR=/private/tmp/pcf-editor-1/sup CLAUDE_CONFIG_DIR=/private/tmp/pcf-editor-1/cc" DUO_TIMEOUT=60 \
   scripts/run-live.sh $ws "$out/window.png" "$acts" "$out/run.log" >/dev/null
 grep -E "editor-js|editor-state|buffer|disk" "$out/run.log"
-ls -l "${doc:h}"
+sleep 2; echo "--- on disk:"; cat "$doc"; ls -l "${doc:h}"
