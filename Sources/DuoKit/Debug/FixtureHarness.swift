@@ -253,6 +253,9 @@ public enum FixtureHarness {
                 let lines = text.components(separatedBy: "\n")
                 try? (["# PRD v3, renamed outside"] + lines.dropFirst()).joined(separator: "\n").write(to: url, atomically: false, encoding: .utf8)
             }
+        case "resolve":   // resolve:mine|theirs: ends a conflict as the bar's buttons do (DL-77)
+            model.editor.resolve(keepMine: parts.count > 1 ? parts[1] == "mine" : true) { ok in
+                FileHandle.standardError.write(Data("resolve: \(ok ? "done" : "failed")\n".utf8)) }
         case "doc-status":
             if let url = model.editor.url { FileHandle.standardError.write(Data("doc-status: \(model.editor.status(of: url))\n".utf8)) }
         // Collisions (DL-77): a person typing, and another writer on disk, at the same time.
