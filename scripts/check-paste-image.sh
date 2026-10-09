@@ -1,7 +1,7 @@
 #!/bin/zsh
 # Pasting and dropping a picture into the editor (LR-39, legacy ENH-108). Background run on a
 # scratch workspace: a synthetic paste event (a DataTransfer holding a PNG File; the real
-# pasteboard is never touched), then the file on disk, the text, and an editor snapshot.
+# pasteboard is never touched) and a drop of two pictures at once, then the files on disk, the text, and an editor snapshot.
 #   scripts/check-paste-image.sh [out-dir]
 set -u
 cd "${0:A:h}/.."
@@ -23,7 +23,7 @@ PY
 # mk(): build a File, put it in a DataTransfer; `,` is written ⸴ because --then splits on commas.
 mk="const b=atob('$png');const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const dt=new DataTransfer();dt.items.add(new File([u]⸴'x.png'⸴{type:'image/png'}));const c=document.querySelector('.cm-content');"
 paste="${mk}duo.select(30);const ev=new ClipboardEvent('paste'⸴{clipboardData:dt⸴bubbles:true⸴cancelable:true});c.dispatchEvent(ev);return 'paste prevented='+ev.defaultPrevented"
-drop="${mk}const r=c.getBoundingClientRect();const ev=new DragEvent('drop'⸴{dataTransfer:dt⸴bubbles:true⸴cancelable:true⸴clientX:r.left+20⸴clientY:r.bottom-4});c.dispatchEvent(ev);return 'drop prevented='+ev.defaultPrevented"
+drop="${mk}dt.items.add(new File([u]⸴'y.png'⸴{type:'image/png'}));const r=c.getBoundingClientRect();const ev=new DragEvent('drop'⸴{dataTransfer:dt⸴bubbles:true⸴cancelable:true⸴clientX:r.left+20⸴clientY:r.bottom-4});c.dispatchEvent(ev);return 'drop prevented='+ev.defaultPrevented"
 acts="open:garden,open-file:$doc,freeze:2,editor-js:$paste,freeze:2,editor-js:$drop,freeze:2,editor-js:return 1,freeze:2,editor-js:return 1,freeze:1,editor-js:duo.select(0)⸴1,freeze:2,editor-js:return 1,freeze:2,editor-js:return 1,freeze:2,editor-snapshot:$out/editor.png,freeze:3,editor-js:return 1,freeze:2,editor-js:return 1,freeze:2,editor-js:return 1,freeze:2,editor-state"
 env -u DUO_SUPPORT_DIR DUO_EXTRA_ENV="DUO_SUPPORT_DIR=/private/tmp/pcf-editor-1/sup CLAUDE_CONFIG_DIR=/private/tmp/pcf-editor-1/cc" DUO_TIMEOUT=60 \
   scripts/run-live.sh $ws "$out/window.png" "$acts" "$out/run.log" >/dev/null

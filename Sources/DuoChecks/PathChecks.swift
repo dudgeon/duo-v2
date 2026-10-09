@@ -16,6 +16,7 @@ func pathChecks() throws {
     let n2 = ImagePaste.fileName(docStem: "My Note", date: d, ext: "png") { $0 == n1 }
     check(n2 == n1.replacingOccurrences(of: ".png", with: "-2.png"), "a taken name gets -2, never overwritten")
     check(ImagePaste.link(fileName: n1) == "![](\(n1))" && !ImagePaste.link(fileName: "a b.png").contains(" ") && !ImagePaste.link(fileName: n1).contains("/"), "link is relative and encoded")
+    check(ImagePaste.link(fileName: "Plan: v2 (draft).png") == "![](Plan%3A%20v2%20%28draft%29.png)", "a colon or bracket in the name can't break the link")
 
     print("real paths (LR-24, F-200)")
     let fm = FileManager.default

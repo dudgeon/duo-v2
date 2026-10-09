@@ -277,8 +277,8 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             fm.fileExists(atPath: dir.appending(path: $0).path)
         }
         do { try data.write(to: dir.appending(path: name), options: .atomic) } catch { lastEvent = "image not saved: \(error.localizedDescription)"; return }
-        let pos = body["pos"] as? Int ?? -1
-        webView.callAsyncJavaScript("return duo.insertImage(m, p)", arguments: ["m": ImagePaste.link(fileName: name), "p": pos], in: nil, in: .page) { _ in }
+        let id = body["id"] as? Int ?? -1
+        webView.callAsyncJavaScript("return duo.insertImage(m, i)", arguments: ["m": ImagePaste.link(fileName: name), "i": id], in: nil, in: .page) { _ in }
         lastEvent = "image saved: \(name)"
     }
 

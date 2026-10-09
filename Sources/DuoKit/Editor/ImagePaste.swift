@@ -30,7 +30,9 @@ public enum ImagePaste {
 
     /// The markdown for a file beside the document: a relative, percent-encoded name.
     public static func link(fileName: String) -> String {
-        let enc = fileName.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? fileName
+        // `:` would read as a URL scheme and an unmatched `(` `)` would end the link early.
+        var safe = CharacterSet.urlPathAllowed; safe.remove(charactersIn: ":()")
+        let enc = fileName.addingPercentEncoding(withAllowedCharacters: safe) ?? fileName
         return "![](\(enc))"
     }
 }
