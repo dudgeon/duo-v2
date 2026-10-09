@@ -56,7 +56,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case templateShow = "template show", templateEdit = "template edit", templateCopy = "template copy", templateReset = "template reset", templatePreview = "template preview"
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
     // Files
-    case files, fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
+    case files, filesBrowse = "files browse", fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
     case fileRename = "file rename", fileDuplicate = "file duplicate", fileMove = "file move", fileTrash = "file trash"
     case fileReveal = "file reveal", fileOpenWith = "file open-with", filePath = "file path", fileConvert = "file convert"
     // GitHub (DL-149, DL-157)
@@ -263,6 +263,8 @@ extension DuoAction {
 
         // Files (paths are relative to the project, or absolute)
         .init(.files, .files, "[folder] [--project <p>] [--hidden]", "The project's files and folders, three levels deep; --hidden includes dotfiles."),
+        .init(.filesBrowse, .files, "[up | back | <folder>] [--project <p>]", "Go up from the project's folder in the Files block (DL-106): `up` shows the parent folder, again for the next; `back` returns to the project's folder; a folder path shows that folder. Read-only: files there open as tabs, and can't be moved or trashed from the tree. With none, says what the tree shows.",
+              ui: ["Show Parent Folder", "Back to Project Folder", "the Files path row"]),
         .init(.fileNew, .files, "[--in <folder>] [--name <name>]", "Create a Markdown file and open it.", ui: ["New Markdown File", "right pane +"]),
         .init(.fileNewFolder, .files, "[--in <folder>] [--name <name>]", "Create a folder.", ui: ["New Folder"]),
         .init(.fileTemplate, .files, "<template> [--in <folder>]", "Create a file from a template (the project's templates/, then Home's).", ui: ["New from Template"]),

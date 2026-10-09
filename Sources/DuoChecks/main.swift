@@ -2266,6 +2266,19 @@ func repoFixture() throws -> Fixture {
     tabsModel.zoomOut()
     tabsModel.open(project: "treeproj")
     check(tabsModel.rightTab == outTab && tabsModel.openDocuments.contains(outTab ?? ""), "coming back to a project shows the tab it was on, an outside file too (DL-107)")
+    // Going up from the project's folder (DL-106, Q-162): read-only, and back.
+    check(tabsModel.browsingFolder == nil && tabsModel.browseUp() && tabsModel.browsingFolder?.standardizedFileURL.path == treeDir.standardizedFileURL.deletingLastPathComponent().path,
+          "the tree goes up one folder from the project's")
+    let upDir = FileManager.default.temporaryDirectory.appending(path: "duo-up-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: upDir.appending(path: "inner"), withIntermediateDirectories: true)
+    try Data("x".utf8).write(to: upDir.appending(path: "inner/x.md"))
+    check(tabsModel.browse(to: upDir) && tabsModel.browseListing() == ["inner/"], "a browsed folder lists its entries, folders closed")
+    tabsModel.toggleBrowseFolder("inner")
+    check(tabsModel.browseListing() == ["inner/", "inner/x.md"], "a folder opened above the root lists what's in it")
+    tabsModel.browseBack()
+    check(tabsModel.browsingFolder == nil && tabsModel.browse(to: treeDir) && tabsModel.browsingFolder == nil && tabsModel.browse(to: outsideFile.deletingLastPathComponent()) && tabsModel.browsingFolder != nil && !tabsModel.browse(to: outsideFile),
+          "back returns to the project's folder; browse(to:) takes folders only, the project's own meaning back")
+    tabsModel.browseBack()
     tabsModel.open(project: "checkout-redesign", session: "Teardown research")
     let wasConsole = tabsModel.consoleTab
     tabsModel.open(project: "treeproj")

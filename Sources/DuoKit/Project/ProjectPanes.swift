@@ -277,12 +277,23 @@ struct FileTreePane: View {
                 RepoFactLine(view: repo)
                     .padding(.horizontal, DuoSpace.panePadding)
             }
-            Text(project?.path ?? "")
+            // The root path row (Q-162): right-click for Reveal in Finder and Copy Path; click goes up a folder (live).
+            let browsing = model.browsingFolder
+            Text(browsing?.path ?? project?.path ?? "")
                 .duoText(.monoPath)
                 .foregroundStyle(DuoColor.text2)
                 .lineLimit(1)
                 .padding(EdgeInsets(top: 0, leading: DuoSpace.panePadding, bottom: 6, trailing: DuoSpace.panePadding))
-            ForEach(tree) { node in FileRow(node: node, depth: 0) }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .help(model.terminalsMode == .live ? "Click to show the parent folder" : "")
+                .onActivate { if model.terminalsMode == .live { withDuoAnimation(.fold) { _ = model.browseUp() } } }   // action: files browse
+                .modifier(LiveContextMenu { RootPathMenu() })
+            if let browsing {
+                BrowseTree(root: browsing)
+            } else {
+                ForEach(tree) { node in FileRow(node: node, depth: 0) }
+            }
         }
         .padding(.bottom, 12)
         .contentShape(Rectangle())
@@ -294,6 +305,82 @@ struct FileTreePane: View {
         // A drop target lights up (`dropIn`, DL-130).
         .duoAnimation(.dropIn, value: model.treeDropTarget == "")
         .modifier(TakesFileDrops(target: ""))
+    }
+}
+
+/// The root path row's menu: Reveal in Finder and Copy Path as a folder's has, plus the way up
+/// and back (Q-162; DL-106's browsing up).
+struct RootPathMenu: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let shown = model.browsingFolder ?? model.projectFolder
+        Button("Reveal in Finder") { shown.map { FileActions.reveal($0) } }   // action: file reveal
+        Divider()
+        Button("Copy Path") { shown.map { FileActions.copy($0.path) } }   // action: file path
+        if model.terminalsMode == .live {
+            Divider()
+            Button("Show Parent Folder") { _ = model.browseUp() }   // action: files browse
+            if model.browsingFolder != nil { Button("Back to Project Folder") { model.browseBack() } }   // action: files browse
+        }
+    }
+}
+
+/// The tree above the project's folder (Q-162): read-only rows listed from disk, each a folder
+/// to open or a file to open as a tab; their menu is the outside-file one (no move, rename or trash).
+struct BrowseTree: View {
+    @Environment(AppModel.self) private var model
+    let root: URL
+
+    var body: some View {
+        let tree = FileNode.tree(from: model.browseListing())
+        if let own = model.projectFolder {
+            Text("← Back to \(own.lastPathComponent)/")
+                .duoText(.mono)
+                .foregroundStyle(DuoColor.text2)
+                .lineLimit(1)
+                .padding(.horizontal, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: DuoMetric.rowFile)
+                .padding(.horizontal, DuoSpace.selectionInset)
+                .contentShape(Rectangle())
+                .onActivate { withDuoAnimation(.fold) { model.browseBack() } }   // action: files browse
+        }
+        ForEach(tree) { node in BrowseRow(node: node, root: root, depth: 0) }
+    }
+}
+
+struct BrowseRow: View {
+    @Environment(AppModel.self) private var model
+    let node: FileNode
+    let root: URL
+    let depth: Int
+
+    var body: some View {
+        let url = root.appending(path: node.path)
+        let isFolder = node.children != nil
+        let open = isFolder && (model.browseExpanded[model.currentProject?.name ?? ""]?.contains(node.path) ?? false)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: isFolder ? DuoSpace.gapGlyphToLabel : DuoSpace.gapRowItems) {
+                if isFolder { Chevron(direction: open ? .down : .right) }
+                Text(isFolder ? "\(node.name)/" : node.name)
+                    .duoText(.mono)
+                    .foregroundStyle(node.name.hasPrefix(".") ? DuoColor.text2 : DuoColor.text)
+                    .lineLimit(1)
+            }
+            .padding(.leading, CGFloat(depth) * (26 - 8))
+            .padding(.horizontal, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: DuoMetric.rowFile)
+            .padding(.horizontal, DuoSpace.selectionInset)
+            .contentShape(Rectangle())
+            .onActivate { if isFolder { withDuoAnimation(.fold) { model.toggleBrowseFolder(node.path) } } else { model.openBrowsed(url) } }   // action: doc open
+            .modifier(LiveContextMenu { FileMenu(path: AppModel.outsideFilePrefix + url.standardizedFileURL.path, isFolder: isFolder, onTab: false) })
+            .accessibilityElement(children: .combine)
+            if let children = node.children, open {
+                ForEach(children) { c in BrowseRow(node: c, root: root, depth: depth + 1) }.transition(.foldRows)
+            }
+        }
     }
 }
 

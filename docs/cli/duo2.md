@@ -115,6 +115,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Command | What it does | In the app |
 |---|---|---|
 | `duo2 files [folder] [--project <p>] [--hidden]` | The project's files and folders, three levels deep; --hidden includes dotfiles. | — |
+| `duo2 files browse [up \| back \| <folder>] [--project <p>]` | Go up from the project's folder in the Files block (DL-106): `up` shows the parent folder, again for the next; `back` returns to the project's folder; a folder path shows that folder. Read-only: files there open as tabs, and can't be moved or trashed from the tree. With none, says what the tree shows. | Show Parent Folder, Back to Project Folder, the Files path row |
 | `duo2 file new [--in <folder>] [--name <name>]` | Create a Markdown file and open it. | New Markdown File, right pane + |
 | `duo2 file new-folder [--in <folder>] [--name <name>]` | Create a folder. | New Folder |
 | `duo2 file template <template> [--in <folder>]` | Create a file from a template (the project's templates/, then Home's). | New from Template |

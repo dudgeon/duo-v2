@@ -225,6 +225,15 @@ public enum FixtureHarness {
         case "open-file": if parts.count > 1 { model.openFile(at: URL(fileURLWithPath: parts[1])) }   // open-file:<path>: Open File… (DL-106)
         case "hidden": model.setShowHiddenFiles(parts.count > 1 ? parts[1] == "on" : !model.showHiddenFiles)   // hidden:on|off (DL-105)
         case "folder": if parts.count > 1 { withDuoAnimation(.fold) { model.toggleFolder(parts[1]) } }   // folder:<path>: open or close it in the tree
+        case "browse":   // browse:up|back|<folder>|open=<path from the browse root>: the Files block above the project's folder (Q-162)
+            if parts.count > 1 {
+                switch parts[1] {
+                case "up": _ = model.browseUp()
+                case "back": model.browseBack()
+                case let p where p.hasPrefix("open="): model.toggleBrowseFolder(String(p.dropFirst(5)))
+                default: _ = model.browse(to: URL(fileURLWithPath: parts[1]))
+                }
+            }
         case "zoom-out": model.zoomOut()
         case "restore-save": model.saveRestoreState(force: true)
         case "restore-state":

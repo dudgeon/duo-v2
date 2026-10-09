@@ -132,6 +132,10 @@ public final class AppModel {
     /// The main window is full screen (View › Enter / Exit Full Screen, DL-108).
     public var fullScreen = false
     public var expandedFolders: [String: Set<String>] = [:]
+    /// The folder the tree shows when it has gone up from the project's (DL-106, Q-162), by project; none = the project's own.
+    public var browseRoots: [String: URL] = [:]
+    /// Folders opened while browsing up, as paths from that browse root.
+    public var browseExpanded: [String: Set<String>] = [:]
     /// The console and right-pane tab each project showed when the user left it (DL-107).
     public var lastConsoleTab: [String: String] = [:]
     public var lastRightTab: [String: String] = [:]

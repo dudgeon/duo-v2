@@ -433,6 +433,20 @@ extension AppModel {
             templateVerb(id, inv, done)
 
         // MARK: Files
+        case .filesBrowse:
+            guard let p = inv.flags["project"].flatMap({ project(named: $0) }) ?? currentProject, p.name == currentProject?.name else {
+                return done(.fail("browsing is for the project on screen: open it, or pass its --project"))
+            }
+            switch inv[0] {
+            case nil: break
+            case "up": if !browseUp() { return done(.fail("can't go higher")) }
+            case "back": browseBack()
+            case let f?:
+                guard browse(to: URL(fileURLWithPath: (f as NSString).expandingTildeInPath)) else { return done(.fail("no folder '\(f)'")) }
+            }
+            let showing = browsingFolder ?? liveFolders[p.name]
+            done(.ok("The Files block shows \(showing?.path ?? "the project") (" + (browsingFolder == nil ? "the project's folder" : "above it, read-only") + ").",
+                     ["path": showing?.path ?? "", "browsing": browsingFolder != nil] as [String: Any]))
         case .files, .fileNew, .fileNewFolder, .fileTemplate, .fileTemplates, .fileRename, .fileDuplicate, .fileMove, .fileTrash,
              .fileReveal, .fileOpenWith, .filePath, .fileConvert:
             fileVerb(id, inv, req, done)
@@ -716,6 +730,17 @@ extension AppModel {
             guard let s, let rel = relativePath(s, project: p.name, cwd: req.cwd) else { return nil }
             return (folder.appending(path: rel), rel)
         }
+        /// Reveal and path also take the project's own folder ("." or its path) and any existing path
+        /// on the Mac: the tree's root row and the rows above it (browsing up, Q-162) offer both.
+        func viewable(_ s: String?) -> (URL, String)? {
+            if let hit = url(s) { return hit }
+            guard let s else { return nil }
+            let abs = (s as NSString).expandingTildeInPath
+            if s == "." || s == "./" { return (folder, "") }
+            guard abs.hasPrefix("/"), FileManager.default.fileExists(atPath: abs) else { return nil }
+            let u = URL(fileURLWithPath: abs)
+            return (u, u.realPath == folder.realPath ? "" : u.path)
+        }
         func dir() -> URL? {
             guard let d = inv.flags["in"] else { return folder }
             guard let (u, _) = url(d) else { return nil }
@@ -806,7 +831,7 @@ extension AppModel {
                 try FileActions.trash(u); after()
                 done(.ok("Moved \(r) (in \(p.name)) to the Trash."))
             case .fileReveal:
-                guard let (u, _) = url(inv[0]) else { return done(missing(inv[0])) }
+                guard let (u, _) = viewable(inv[0]) else { return done(missing(inv[0])) }
                 FileActions.reveal(u); done(.ok("Shown in Finder."))
             case .fileOpenWith:
                 guard let (u, _) = url(inv[0]) else { return done(missing(inv[0])) }
@@ -817,7 +842,7 @@ extension AppModel {
                     done(.ok("Opened in \(FileManager.default.displayName(atPath: app.path))."))
                 } else { FileActions.openInDefaultApp(u); done(.ok("Opened in the default app.")) }
             case .filePath:
-                guard let (u, r) = url(inv[0]) else { return done(missing(inv[0])) }
+                guard let (u, r) = viewable(inv[0]) else { return done(missing(inv[0])) }
                 let out = inv.has("link") ? FileActions.markdownLink(name: u.lastPathComponent, relative: r) : inv.has("relative") ? r : u.path
                 if inv.has("copy") { FileActions.copy(out) }
                 done(.ok(out))
