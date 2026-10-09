@@ -665,6 +665,7 @@ func repoFixture() throws -> Fixture {
     reapChecks()
     try pathChecks()
     try noteEditChecks()
+    try editorChordChecks()
     taskPaneKeyChecks()
     dockBadgeChecks()
     try paneFocusChecks()

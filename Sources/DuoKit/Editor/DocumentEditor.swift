@@ -90,6 +90,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         webView.configuration.userContentController.add(self, name: "duo")  // the view copied `config`
         webView.configuration.userContentController.addUserScript(WKUserScript(
             source: Self.tokenCSS(), injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        // The chords the menus own, from the command registry (DL-167 step 6): the page keeps none of its own.
+        webView.configuration.userContentController.addUserScript(WKUserScript(
+            source: EditorChords.script(), injectionTime: .atDocumentStart, forMainFrameOnly: true))
         webView.navigationDelegate = self
         webView.setValue(false, forKey: "drawsBackground")
         if let dir = Bundle.main.resourceURL?.appending(path: "editor"),

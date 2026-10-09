@@ -95,5 +95,12 @@ total=$((total+1))
 if cmp -s $T $out/note-expected.md; then echo "ok   note: the open note's bytes are the writer's, with the typing kept"
 else fails=$((fails+1)); echo "FAIL note: bytes differ from the writer's"; diff $T $out/note-expected.md | sed 's/^/       | /'; fi
 
+# 8. The page is handed the registry's chords at document start (DL-167 step 6)
+fresh chords
+run chords "${open}$A,wait:2,editor-js:return JSON.stringify(window.__duoChords)"
+total=$((total+1))
+if grep -q 'Mod-s' $out/chords.log && grep -q 'Shift-Mod-n' $out/chords.log; then echo "ok   chords: the page has window.__duoChords"
+else fails=$((fails+1)); echo "FAIL chords: no window.__duoChords in the page"; grep editor-js $out/chords.log | sed 's/^/       | /'; fi
+
 echo "$((total-fails)) of $total checks passed (logs and captures in $out)"
 [[ $fails == 0 ]]
