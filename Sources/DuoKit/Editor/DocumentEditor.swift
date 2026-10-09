@@ -266,6 +266,22 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         return "data:\(type);base64," + data.base64EncodedString()
     }
 
+    /// A picture pasted or dropped in the editor (LR-39): written beside the document under a
+    /// fresh name, then linked on its own line at the caret or drop point.
+    func savePastedImage(_ body: [String: Any]) {
+        guard let doc = url, readOnlyReason == nil,
+              let mime = body["mime"] as? String, let ext = ImagePaste.fileExtension(mime: mime),
+              let b64 = body["data"] as? String, let data = Data(base64Encoded: b64), data.count < 25_000_000 else { return }
+        let dir = doc.deletingLastPathComponent(), fm = FileManager.default
+        let name = ImagePaste.fileName(docStem: doc.deletingPathExtension().lastPathComponent, date: Date(), ext: ext) {
+            fm.fileExists(atPath: dir.appending(path: $0).path)
+        }
+        do { try data.write(to: dir.appending(path: name), options: .atomic) } catch { lastEvent = "image not saved: \(error.localizedDescription)"; return }
+        let pos = body["pos"] as? Int ?? -1
+        webView.callAsyncJavaScript("return duo.insertImage(m, p)", arguments: ["m": ImagePaste.link(fileName: name), "p": pos], in: nil, in: .page) { _ in }
+        lastEvent = "image saved: \(name)"
+    }
+
     /// Whether this document's properties block was left folded.
     static func folded(_ file: URL) -> Bool { DuoState.load().foldedProperties.contains(file.standardizedFileURL.path) }
 
@@ -296,6 +312,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             // An image in the document (S3-5): the page can't read the project, so Duo hands it over.
             webView.callAsyncJavaScript("return duo.imageLoaded(i, u)", arguments: ["i": id, "u": imageDataURL(src) ?? NSNull()], in: nil, in: .page) { _ in }
             return
+        }
+        if let body = m.body as? [String: Any], body["kind"] as? String == "pasteImage" {
+            savePastedImage(body); return
         }
         if let body = m.body as? [String: Any], body["kind"] as? String == "tableMenu" {
             tableMenu(body["menu"] as? String ?? "", at: NSPoint(x: body["x"] as? Double ?? 0, y: (body["y"] as? Double ?? 0) + 2)); return

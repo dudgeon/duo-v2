@@ -7,6 +7,16 @@ import Foundation
 // left its sessions behind. F-201: an empty DUO_AUTOCONFIRM (or any Duo variable) counts as unset.
 
 func pathChecks() throws {
+    print("pasted pictures (LR-39, legacy ENH-108)")
+    let d = Date(timeIntervalSince1970: 1_800_000_000)
+    check(ImagePaste.fileExtension(mime: "image/png") == "png" && ImagePaste.fileExtension(mime: "image/jpeg") == "jpg" && ImagePaste.fileExtension(mime: "image/webp") == "webp" && ImagePaste.fileExtension(mime: "image/gif") == "gif", "png, jpeg, gif and webp are saved")
+    check(ImagePaste.fileExtension(mime: "image/heic") == nil && ImagePaste.fileExtension(mime: "text/plain") == nil, "other types are left alone")
+    let n1 = ImagePaste.fileName(docStem: "My Note", date: d, ext: "png") { _ in false }
+    check(n1.hasPrefix("My-Note-") && n1.hasSuffix(".png") && !n1.contains(" ") && !n1.contains("/"), "name is <stem>-<date>.<ext> with no spaces")
+    let n2 = ImagePaste.fileName(docStem: "My Note", date: d, ext: "png") { $0 == n1 }
+    check(n2 == n1.replacingOccurrences(of: ".png", with: "-2.png"), "a taken name gets -2, never overwritten")
+    check(ImagePaste.link(fileName: n1) == "![](\(n1))" && !ImagePaste.link(fileName: "a b.png").contains(" ") && !ImagePaste.link(fileName: n1).contains("/"), "link is relative and encoded")
+
     print("real paths (LR-24, F-200)")
     let fm = FileManager.default
     check(URL.realPath("/tmp") == "/private/tmp" && URL.realPath("/private/tmp") == "/private/tmp", "/tmp is /private/tmp, as Claude spells it")
