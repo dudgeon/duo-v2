@@ -23,8 +23,18 @@ Write `docs/acceptance/<YYYY-MM-DD>-<slug>/features.json`:
 { "sprint": "<folder name>", "title": "Duo acceptance: <what>", "intro": "…", "setup": ["…"],
   "features": [ { "id": "kebab-id", "group": "Editor", "title": "…", "what": "one line: what it does",
                   "steps": ["…"], "expect": "what he should see", "ref": "DL-n, F-n",
-                  "commit": "<full sha of the commit that built it>", "alsoCommits": ["<later commits that changed it>"] } ] }
+                  "commit": "<full sha of the commit that built it>", "alsoCommits": ["<later commits that changed it>"],
+                  "workMac": "as-is | small | home", "workMacWhy": "short reason" } ] }
 ```
+
+### Every feature is rated for the work Mac (required)
+
+Geoff often walks on his phone and on his work Mac (DL-166): a stock Duo from the DMG, his own folders, Claude Code with CLI login pinned months old, and no scripts or fixtures. `workMac` says how much of the card he can do there:
+- `as-is`: in his own projects with no prep (menus, views, settings, search, his own docs, read-only `duo2`).
+- `small`: a state he makes by hand in Duo in a minute or two (a task, a second session, a file changed outside the editor, a running Claude session).
+- `home`: needs the fixtures, scripts, `duo2 walk setup`, legacy config, GitHub setup, a newer Claude Code, or destructive steps.
+
+`build-page.py` refuses a card without it. The page shows it as a chip. On a phone (≤ 760 px) the page puts open decisions first, then `as-is` cards, then `small`, then `home`, each in walk order, with the intro folded under them; on a desktop it keeps walk order and offers a "Work Mac: as-is" filter and a "Mobile order" toggle. Decisions take an optional `workMac` too.
 
 ### Every feature is tied to its commit (required)
 
@@ -91,7 +101,7 @@ Before Geoff sees a test, run it yourself and record what happened in the featur
 python3 scripts/acceptance/build-page.py docs/acceptance/<walk>
 ```
 
-Preview `walk.html` in the browser pane once (one card, a click, Copy feedback). Then publish with the Artifact tool: `file_path` = the `walk.html`, `capabilities: {"db": {}, "comments": {}}` (comments carries the cards' Send to Claude buttons to this session), an `icon` of `checklist` and a one-line `description`. The page template is `walk-template.html` in this skill folder; change it there, not in a walk's `walk.html`.
+Preview `walk.html` in the browser pane once (one card, a click, Copy feedback). Then publish with the Artifact tool, **from the director session only** (DL-166: the director is the one publisher of the walk page and of the design-system artifact, so Send to Claude reaches it): `file_path` = the `walk.html`, `capabilities: {"db": {}, "comments": {}}` (comments carries the cards' Send to Claude buttons to this session), an `icon` of `checklist` and a one-line `description`. The page template is `walk-template.html` in this skill folder; change it there, not in a walk's `walk.html`.
 
 Check the store answers: `ArtifactData` (load with ToolSearch) `list`, collection `verdicts`, on the URL. It should be empty.
 

@@ -1,0 +1,289 @@
+<title>Duo Director</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column on a phone (Needs you first); two columns from 900px: decisions left, the floor right. */
+:root {
+  --bg: #f3f4f1; --panel: #ffffff; --ink: #1d2320; --muted: #5d6762; --line: #d9ddd7;
+  --accent: #1f6f5c; --accent-ink: #ffffff; --accent-soft: #e2efe9;
+  --warn: #a5560b; --warn-soft: #fbeedd; --bad: #a83232; --good: #2c7a3f;
+  --display: "Fraunces", Georgia, serif; --body: "Atkinson Hyperlegible", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141816; --panel: #1c211f; --ink: #e6ebe7; --muted: #9aa59f; --line: #2f3733;
+  --accent: #5cc0a2; --accent-ink: #0d1a15; --accent-soft: #1f3a31;
+  --warn: #f0a85a; --warn-soft: #3a2a18; --bad: #f08080; --good: #7fd18f; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #141816; --panel: #1c211f; --ink: #e6ebe7; --muted: #9aa59f; --line: #2f3733;
+  --accent: #5cc0a2; --accent-ink: #0d1a15; --accent-soft: #1f3a31;
+  --warn: #f0a85a; --warn-soft: #3a2a18; --bad: #f08080; --good: #7fd18f; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 12px 48px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding-block: 8px 14px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+h1 { font: 600 1.6rem/1.1 var(--display); margin: 0; letter-spacing: -.01em; }
+.sub { color: var(--muted); font-size: .9rem; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.pill.ok { color: var(--good); border-color: currentColor; }
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.headline { flex-basis: 100%; margin: 4px 0 0; font-size: 1rem; }
+.grid { display: grid; gap: 24px; }
+@media (min-width: 900px) { .grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; } }
+.col { display: grid; gap: 24px; min-width: 0; }
+section > h2 { font: 700 .78rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; display: flex; gap: 8px; align-items: center; }
+.count { background: var(--warn); color: var(--panel); border-radius: 999px; padding: 2px 8px; font-size: .75rem; letter-spacing: 0; }
+.empty { color: var(--muted); font-size: .95rem; padding: 14px; border: 1px dashed var(--line); border-radius: 10px; }
+.stack { display: grid; gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; }
+.card.need { border-left: 4px solid var(--warn); }
+.card.need.answered { border-left-color: var(--good); }
+.kind { font: 600 .72rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--warn); }
+.card.answered .kind { color: var(--good); }
+.card h3 { font: 700 1.08rem/1.3 var(--body); margin: 6px 0 6px; text-wrap: balance; }
+.card p { margin: 0 0 8px; color: var(--ink); }
+.card ul { margin: 0 0 8px; padding-left: 20px; }
+.refs { font: .78rem var(--mono); color: var(--muted); }
+code, .mono { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.opts { display: grid; gap: 8px; margin: 10px 0; }
+.opt { text-align: left; font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 14px; min-height: 52px; cursor: pointer; display: grid; gap: 2px; }
+.opt:hover { border-color: var(--accent); }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.opt b { font-weight: 700; }
+.opt .rec { font: 600 .7rem var(--mono); color: var(--accent); text-transform: uppercase; letter-spacing: .05em; }
+.opt small { color: var(--muted); font-size: .88rem; }
+textarea, input[type=text] { width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 48px; }
+textarea { min-height: 72px; resize: vertical; }
+textarea:focus, input:focus, .opt:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.btn { font: 700 .95rem var(--body); border-radius: 10px; padding: 10px 16px; min-height: 48px; border: 1.5px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+.status { font-size: .85rem; color: var(--muted); }
+.status.ok { color: var(--good); } .status.err { color: var(--bad); }
+.answer { font-size: .9rem; background: var(--accent-soft); border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+.thread { display: grid; gap: 6px; }
+.thread .top { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.thread h3 { margin: 0; font-size: 1rem; }
+.state { font: 600 .72rem/1 var(--mono); text-transform: uppercase; padding: 4px 8px; border-radius: 6px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.state.working { color: var(--accent); border-color: currentColor; }
+.state.waiting, .state.needs-you { color: var(--warn); border-color: currentColor; background: var(--warn-soft); }
+.state.review { color: var(--good); border-color: currentColor; }
+.meta { font-size: .82rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.rel dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.rel dt { color: var(--muted); font-size: .85rem; } .rel dd { margin: 0; min-width: 0; }
+.done li { padding: 8px 0; border-top: 1px solid var(--line); list-style: none; display: grid; gap: 2px; }
+.done ul { margin: 0; padding: 0; } .done li:first-child { border-top: 0; }
+.done time { font: .78rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+details summary { cursor: pointer; color: var(--muted); font-size: .9rem; min-height: 32px; }
+@media (prefers-reduced-motion: no-preference) { .opt, .btn { transition: border-color .12s, background .12s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Duo Director</h1>
+    <span class="pill" id="chan"><span class="dot"></span><span id="chantext">Connecting…</span></span>
+    <span class="sub" id="updated"></span>
+    <p class="headline" id="headline">The director's console: decisions, threads in flight and releases. Loading…</p>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+      <section id="needs-sec"><h2>Needs you <span class="count" id="needs-count" hidden></span></h2><div class="stack" id="needs"><div class="empty">Decisions, release calls and delegation calls appear here, with my recommendation first.</div></div></section>
+      <section id="help-sec"><h2>Director needs guidance</h2><div class="stack" id="help"><div class="empty">Places I'm unsure or blocked show up here.</div></div></section>
+      <section id="msg-sec"><h2>Tell the director</h2>
+        <div class="card" id="msgcard">
+          <label for="msgtext" class="sub">Anything: a new job, a change of plan, a question. It goes straight to the director session.</label>
+          <textarea id="msgtext" placeholder="e.g. Start the multi-window build with my picks"></textarea>
+          <div class="row"><button class="btn" id="msgsend">Send to director</button><button class="btn ghost" id="ping">Test the line</button><span class="status" id="msgstatus"></span></div>
+        </div>
+      </section>
+    </div>
+    <div class="col">
+      <section id="rel-sec" class="rel"><h2>Release</h2><div class="card" id="release"><div class="sub">Release status appears here.</div></div></section>
+      <section id="threads-sec"><h2>In flight</h2><div class="stack" id="threads"><div class="empty">Each delegated session appears here with its state, branch and a link that opens it on your phone.</div></div></section>
+      <section id="done-sec" class="done"><h2>Recently done</h2><div class="card"><ul id="done"><li class="sub">Merges and releases appear here.</li></ul></div></section>
+    </div>
+  </div>
+</div>
+
+<script>
+const REPO = "https://github.com/dudgeon/duo-v2";
+const $ = s => document.querySelector(s);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const store = { needs: {}, answers: {}, threads: {}, done: {}, release: null, meta: null };
+let db = null, comments = null, canSend = "off";
+const picks = {}; // need id -> option id (this view only)
+
+// Inline formatting for text the director writes: `code`, **bold**, [label](url).
+function rich(target, text) {
+  const re = /(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\((https?:\/\/[^)\s]+)\))/g;
+  let last = 0, m; text = String(text || "");
+  while ((m = re.exec(text))) {
+    if (m.index > last) target.append(text.slice(last, m.index));
+    const t = m[0];
+    if (t[0] === "`") target.append(el("code", "", t.slice(1, -1)));
+    else if (t[0] === "*") target.append(el("b", "", t.slice(2, -2)));
+    else { const a = el("a", "", t.slice(1, t.indexOf("]"))); a.href = m[2]; a.target = "_blank"; a.rel = "noopener"; target.append(a); }
+    last = m.index + t.length;
+  }
+  if (last < text.length) target.append(text.slice(last));
+  return target;
+}
+function body(target, parts) {
+  (parts || []).forEach(p => {
+    if (Array.isArray(p)) { const ul = el("ul"); p.forEach(x => ul.append(rich(el("li"), x))); target.append(ul); }
+    else target.append(rich(el("p"), p));
+  });
+}
+const ago = iso => { if (!iso) return ""; const s = (Date.now() - new Date(iso)) / 1000; if (isNaN(s)) return iso;
+  return s < 90 ? "just now" : s < 5400 ? Math.round(s / 60) + " min ago" : s < 129600 ? Math.round(s / 3600) + " h ago" : new Date(iso).toLocaleDateString(); };
+const sorted = obj => Object.entries(obj).map(([id, d]) => ({ id, ...d })).sort((a, b) => (a.order ?? 99) - (b.order ?? 99) || String(b.at || "").localeCompare(String(a.at || "")));
+
+// ---- Sending to the director (comments capability → the publishing Claude session) ----
+let threadsKept = {};
+try { threadsKept = JSON.parse(localStorage.getItem("director-threads") || "{}"); } catch (e) {}
+const keep = () => { try { localStorage.setItem("director-threads", JSON.stringify(threadsKept)); } catch (e) {} };
+async function send(key, anchorEl, text, statusEl) {
+  if (!comments || canSend !== "available") { statusEl.className = "status err"; statusEl.textContent = canSend === "no_session" ? "The director isn't listening right now; your answer is saved and it reads it on return." : "Can't reach the director from this view; your answer is saved."; return false; }
+  statusEl.className = "status"; statusEl.textContent = "Sending…";
+  const msg = text.length > 3900 ? text.slice(0, 3900) + "\n…(cut; the full text is saved in the console)" : text;
+  try {
+    let r;
+    if (threadsKept[key]) { try { r = await comments.sendToClaude({ threadId: threadsKept[key], text: msg }); } catch (e) { if (e && e.code === "not_found") delete threadsKept[key]; else throw e; } }
+    if (!r) r = await comments.sendToClaude({ anchor: await comments.anchorFor(anchorEl), text: msg });
+    threadsKept[key] = r.threadId; keep();
+    statusEl.className = "status ok"; statusEl.textContent = "Sent. The director's reply appears as a comment here.";
+    return true;
+  } catch (e) {
+    const c = e && e.code; statusEl.className = "status err";
+    statusEl.textContent = c === "consent_required" ? "Allow comments for this page, then send again." : c === "rate_limited" ? "Too fast; wait a moment." : c === "claude_unavailable" ? "The director couldn't take it; it's saved." : "Couldn't send (" + (c || "error") + "); it's saved.";
+    return false;
+  }
+}
+async function saveAnswer(id, a) { store.answers[id] = a; if (db) { try { await db.doc("answers/" + id).set(a); } catch (e) {} } }
+
+// ---- Needs you / guidance ----
+function needCard(n) {
+  const ans = store.answers[n.id];
+  const c = el("article", "card need" + (ans ? " answered" : "")); c.id = "n-" + n.id;
+  const kinds = { decision: "Decision", release: "Release", delegation: "Delegation", help: "Guidance", look: "Look at this" };
+  c.append(el("div", "kind", (kinds[n.kind] || "Decision") + (ans ? " · answered" : "")));
+  c.append(el("h3", "", n.title || n.id));
+  body(c, n.body);
+  if (n.links && n.links.length) { const l = el("div", "links"); n.links.forEach(x => { const a = el("a", "btn ghost", x.label); a.href = x.url; a.target = "_blank"; a.rel = "noopener"; l.append(a); }); c.append(l); }
+  const opts = (n.options || []).slice().sort((a, b) => (b.recommended ? 1 : 0) - (a.recommended ? 1 : 0));
+  if (picks[n.id] == null && ans && ans.choice) picks[n.id] = ans.choice;
+  const og = el("div", "opts"); og.setAttribute("role", "group");
+  opts.forEach(o => {
+    const b = el("button", "opt"); b.type = "button"; b.setAttribute("aria-pressed", String(picks[n.id] === o.id));
+    if (o.recommended) b.append(el("span", "rec", "Recommended"));
+    b.append(el("b", "", o.label)); if (o.desc) b.append(rich(el("small"), o.desc));
+    b.onclick = () => { picks[n.id] = picks[n.id] === o.id ? null : o.id; og.querySelectorAll(".opt").forEach(x => x.setAttribute("aria-pressed", "false")); if (picks[n.id]) b.setAttribute("aria-pressed", "true"); sendBtn.disabled = !(picks[n.id] || ta.value.trim()); };
+    og.append(b);
+  });
+  if (opts.length) c.append(og);
+  const ta = el("textarea"); ta.id = "t-" + n.id; ta.placeholder = opts.length ? "Add a note, or answer in your own words" : "Your answer"; ta.value = ans && ans.text || "";
+  ta.oninput = () => { sendBtn.disabled = !(picks[n.id] || ta.value.trim()); };
+  c.append(ta);
+  const row = el("div", "row"), sendBtn = el("button", "btn", ans ? "Send again" : "Send answer"), st = el("span", "status");
+  sendBtn.disabled = !(picks[n.id] || ta.value.trim());
+  sendBtn.onclick = async () => {
+    const o = opts.find(x => x.id === picks[n.id]);
+    const a = { choice: o ? o.id : "", label: o ? o.label : "", text: ta.value.trim(), at: new Date().toISOString() };
+    await saveAnswer(n.id, a);
+    const txt = `Console · ${kinds[n.kind] || "Decision"} \`${n.id}\`: ${n.title}${n.refs ? " (" + n.refs + ")" : ""}\nChoice: ${a.label || "(own words)"}` + (a.text ? `\nNote: ${a.text}` : "");
+    await send("n:" + n.id, c, txt, st);
+  };
+  row.append(sendBtn, st); c.append(row);
+  if (ans) { const p = el("div", "answer"); p.append(el("b", "", "Your answer: "), (ans.label || "own words") + (ans.text ? " · " + ans.text : "") + " · " + ago(ans.at)); c.append(p); }
+  if (n.refs) c.append(el("div", "refs", n.refs));
+  return c;
+}
+function renderNeeds() {
+  const open = sorted(store.needs).filter(n => n.status !== "closed");
+  const needs = open.filter(n => n.kind !== "help"), help = open.filter(n => n.kind === "help");
+  const box = $("#needs"), hbox = $("#help");
+  const focusId = document.activeElement && document.activeElement.id;
+  box.replaceChildren(...(needs.length ? needs.map(needCard) : [el("div", "empty", "Nothing needs you right now.")]));
+  hbox.replaceChildren(...(help.length ? help.map(needCard) : [el("div", "empty", "I'm not stuck on anything.")]));
+  const unanswered = needs.filter(n => !store.answers[n.id]).length + help.filter(n => !store.answers[n.id]).length;
+  const cnt = $("#needs-count"); cnt.hidden = !unanswered; cnt.textContent = unanswered;
+  if (focusId) { const f = document.getElementById(focusId); if (f) f.focus(); }
+}
+
+// ---- In flight ----
+function renderThreads() {
+  const list = sorted(store.threads).filter(t => t.state !== "gone");
+  const box = $("#threads");
+  if (!list.length) { box.replaceChildren(el("div", "empty", "No delegated sessions running.")); return; }
+  box.replaceChildren(...list.map(t => {
+    const c = el("article", "card thread"); c.id = "t-" + t.id;
+    const top = el("div", "top"); top.append(el("h3", "", t.name || t.id), el("span", "state " + (t.state || "").replace(/\s+/g, "-"), t.state || "?")); c.append(top);
+    if (t.summary) c.append(rich(el("p"), t.summary));
+    const m = el("div", "meta");
+    if (t.branch) m.append(el("span", "mono", t.branch));
+    if (t.model) m.append(el("span", "", t.model));
+    if (t.where) m.append(el("span", "", t.where));
+    if (t.updated) m.append(el("span", "", ago(t.updated)));
+    c.append(m);
+    const l = el("div", "links");
+    if (t.link) { const a = el("a", "btn", "Open thread"); a.href = t.link; a.target = "_blank"; a.rel = "noopener"; l.append(a); }
+    (t.extra || []).forEach(x => { const a = el("a", "btn ghost", x.label); a.href = x.url; a.target = "_blank"; a.rel = "noopener"; l.append(a); });
+    const ask = el("button", "btn ghost", "Note to director"); ask.type = "button"; l.append(ask); c.append(l);
+    ask.onclick = () => {
+      if (c.querySelector("textarea")) return;
+      const ta = el("textarea"); ta.id = "tn-" + t.id; ta.placeholder = "About " + (t.name || t.id) + "…";
+      const row = el("div", "row"), b = el("button", "btn", "Send"), st = el("span", "status");
+      b.onclick = () => ta.value.trim() && send("t:" + t.id, c, `Console · about thread \`${t.id}\` (${t.name || ""}${t.branch ? ", " + t.branch : ""}):\n${ta.value.trim()}`, st);
+      row.append(b, st); c.append(ta, row); ta.focus();
+    };
+    return c;
+  }));
+}
+function renderRelease() {
+  const r = store.release, box = $("#release");
+  if (!r) return;
+  box.replaceChildren();
+  const dl = el("dl");
+  const add = (k, v) => { if (!v || (Array.isArray(v) && !v.length)) return; dl.append(el("dt", "", k)); const dd = el("dd"); if (Array.isArray(v)) { const ul = el("ul"); ul.style.margin = "0"; ul.style.paddingLeft = "18px"; v.forEach(x => ul.append(rich(el("li"), x))); dd.append(ul); } else rich(dd, v); dl.append(dd); };
+  add("Current", r.current); add("On main, unreleased", r.unreleased); add("Next", r.next); add("Gate", r.gate);
+  box.append(dl);
+}
+function renderDone() {
+  const list = Object.entries(store.done).map(([id, d]) => ({ id, ...d })).sort((a, b) => String(b.at || "").localeCompare(String(a.at || ""))).slice(0, 15);
+  const ul = $("#done");
+  if (!list.length) { ul.replaceChildren(el("li", "sub", "Nothing yet.")); return; }
+  ul.replaceChildren(...list.map(d => { const li = el("li"); const t = el("time", "", d.at ? new Date(d.at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""); li.append(t, rich(el("span"), d.title)); if (d.sha) { const a = el("a", "mono", d.sha.slice(0, 7)); a.href = REPO + "/commit/" + d.sha; a.target = "_blank"; a.rel = "noopener"; li.append(a); } return li; }));
+}
+function renderMeta() {
+  const m = store.meta; if (!m) return;
+  if (m.headline) $("#headline").replaceChildren(rich(document.createDocumentFragment(), m.headline));
+  if (m.updated) $("#updated").textContent = "Updated " + ago(m.updated);
+}
+function renderAll() { renderMeta(); renderNeeds(); renderThreads(); renderRelease(); renderDone(); }
+
+$("#msgsend").onclick = async () => { const t = $("#msgtext").value.trim(); if (!t) return; const id = "msg-" + Date.now(); await saveAnswer(id, { text: t, at: new Date().toISOString(), kind: "message" }); if (await send("msg", $("#msgcard"), "Console · message to the director:\n" + t, $("#msgstatus"))) $("#msgtext").value = ""; };
+$("#ping").onclick = () => send("ping", $("#msgcard"), "Console · test the line (ping at " + new Date().toLocaleTimeString() + ")", $("#msgstatus"));
+
+// ---- Connect ----
+(async () => {
+  try { comments = await window.claude?.use?.("comments"); } catch (e) { comments = null; }
+  const check = async () => {
+    try { canSend = comments ? await comments.canSendToClaude() : "off"; } catch (e) { canSend = "off"; }
+    $("#chan").className = "pill" + (canSend === "available" ? " ok" : "");
+    $("#chantext").textContent = canSend === "available" ? "Director listening" : canSend === "no_session" ? "Director away; answers are saved" : canSend === "writers_only" ? "Only editors can send" : "Answers are saved for the director";
+  };
+  await check(); setInterval(check, 30000);
+})();
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  if (!db) { $("#headline").textContent = "Couldn't load the console's data in this view. Sign in to claude.ai and reopen the link."; return; }
+  const watch = (name, into) => db.collection(name).onSnapshot(s => { const o = {}; s.docs.forEach(d => o[d.id] = d.data()); store[into] = o; renderAll(); }, () => {});
+  watch("needs", "needs"); watch("answers", "answers"); watch("threads", "threads"); watch("done", "done");
+  db.doc("release/current").onSnapshot(d => { store.release = d.exists ? d.data() : null; renderRelease(); }, () => {});
+  db.doc("meta/console").onSnapshot(d => { store.meta = d.exists ? d.data() : null; renderMeta(); }, () => {});
+})();
+setInterval(renderMeta, 60000);
+</script>

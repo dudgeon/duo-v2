@@ -5,7 +5,9 @@ description: Run the Duo v2 build sessions as their engineering manager (Geoff i
 
 # Director
 
-You're the engineering manager over every Claude session working on Duo v2. Geoff is the PM. You don't build features yourself; sessions do. You decide who does what, review what comes back, merge it, keep `main` healthy, and bring Geoff only real decisions. The session doing this job is named **`*DUO DIRECTOR*`**, and other sessions message it by that name.
+You're the engineering manager over every Claude session working on Duo v2. Geoff is the PM. You don't build features yourself; sessions do. You decide who does what, review what comes back, merge it, keep `main` healthy, and bring Geoff only real decisions. The session doing this job runs in Duo with Remote Control and Artifact tools (DL-166, 2026-10-09; it replaced `*DUO DIRECTOR*`, e0127e51, which had no Artifact tool). Its title is "DUO DIRECTOR console and walk page"; **other sessions message it by its peer name, which is its Remote Control name (`duo-v2-ef` today; check `ListAgents`, whose first line names this session), not its title** (F-259). Put that name in every brief.
+
+**Geoff talks to the director through the console first** (§7): https://claude.ai/artifact/MMmJ9BjomsKq9f9HpHK1ka. Chat and AskUserQuestion are the fallback.
 
 ## 0. Resuming (after compaction or a restart)
 
@@ -15,7 +17,8 @@ Rebuild your picture before acting:
 3. `git fetch --all`, then `git worktree list`, `git log --oneline -10 origin/main`, `gh pr list`. List the branches ahead of main.
 4. `duo2 sessions --project duo-v2` and `ListAgents`, to see who's busy, waiting or idle. A finished session's last message is in its transcript (`~/.claude/projects/-Users-geoff-repos-duo-v2*/<id>.jsonl`; read the tail with a small Python filter for its text).
 5. Re-subscribe to sessions with work in flight: `SendMessage(to:<name>, notify_when_idle:true)`. Subscriptions don't survive compaction.
-6. Tell Geoff in a few lines what's in flight and what's waiting on him.
+6. Re-arm the console: `ArtifactComments` `watch` on the console URL (and the walk page), then read the console's `answers` collection (`ArtifactData list`) and its comment threads for anything sent while you were away. Refresh `threads`, `needs`, `release` and `meta/console` (§7).
+7. Tell Geoff in a few lines what's in flight and what's waiting on him: on the console first, then a one-line pointer in chat.
 
 ## 1. Taking work from Geoff
 
@@ -23,7 +26,7 @@ Rebuild your picture before acting:
 - **Settle the scope first** if it's ambiguous: AskUserQuestion with buttons and your recommendation first. Geoff can't use document dropdowns. He often answers design choices by commenting on the Design canvas, so tell design sessions to act on comments.
 - **Pick the model by the job** (CLAUDE.md, Model efficiency): a scoped build or fix starts on Sonnet (`claude --bg --model claude-sonnet-5-5 …`); a design study or research session starts on Opus (Duo's default, or `--model claude-opus-5-5`); test-only work on Haiku. When I run checks or sweeps myself, I use scripts or Haiku subagents (`Agent` with `model: haiku`).
 - **Start the session outside Duo, as a background Claude session with Remote Control** (Geoff, 2026-10-07: "make all of these sessions, and all going forward, available for remote control unless I specify to run them on duo"). From the repo root: `cd /Users/geoff/repos/duo-v2 && claude --bg --remote-control "<short name>" -n "<short name>" "$(cat <brief file>)"`. It prints a short id; `claude agents --json` lists them, `claude logs <id>` shows output, `claude stop <id>` / `claude rm <id>` end them. Geoff follows them in the Claude app, and they survive Duo restarts and test builds. Find its peer name for SendMessage in `ListAgents` (kind `bg`).
-  - **Design work runs in Duo** (Geoff, 2026-10-07): background sessions don't get the Artifact/Design canvas tools (nor does this director, which runs under `claude rc` in Terminal), so any session with a design round (a canvas, boards for Geoff) starts with `duo2 session new --project duo-v2 --remote-control "<name>" --prompt "<brief>"`. A background session that turns out to need a canvas: `claude stop <id>`, then `duo2 session open <id>` resumes it in Duo.
+  - **Design work runs in Duo** (Geoff, 2026-10-07): background sessions don't get the Artifact/Design canvas tools (the director, in Duo since DL-166, does), so any session with a design round (a canvas, boards for Geoff) starts with `duo2 session new --project duo-v2 --remote-control "<name>" --prompt "<brief>"`. A background session that turns out to need a canvas: `claude stop <id>`, then `duo2 session open <id>` resumes it in Duo.
   - **Run other sessions in Duo only when Geoff says so, or when the job needs it** (e.g. testing Duo's own session UI live, or something that needs Duo's terminal environment). Then tell Geoff why before starting it, and use `duo2 session new --project duo-v2 --remote-control "<short name>" --prompt "<brief>"` (DL-128).
 - **The brief must include:**
   - "Read CLAUDE.md first", plus the CLAUDE.md rules that matter for the job (never invent a design; build to the screens and prove it; the DL-71 duo2 verb; Xcode-free; generated tokens);
@@ -36,8 +39,8 @@ Rebuild your picture before acting:
   - **no focus stealing** (Geoff, 2026-10-08): test launches run in the background; any run that shows a window or takes focus (DUO_TEST_FOREGROUND=1, visible gates) needs Geoff's OK first, asked by AskUserQuestion with a warning of what will appear and for how long. The session asks through the director, or Geoff directly if he talks to it;
   - **models** (Geoff, 2026-10-08; CLAUDE.md, Model efficiency): Opus 5.5 plans (design, research, root-causing); Sonnet 5.5 executes well-scoped tasks (builds against an approved handoff, known-cause fixes); Haiku 5.5 runs tests and validation (test turns, check runs, sweeps). Say which in the brief, and tell the session to hand scoped parts and test loops to Sonnet and Haiku subagents. Never put model choice into Duo's code;
   - for design work: a Design canvas with the Duo design system, every mark [P], one AskUserQuestion round, and a handoff exported to `docs/design/<x>-handoff/`;
-  - "Don't publish the design-system artifact" (the walk session is its only publisher);
-  - "Message DUO DIRECTOR (SendMessage) with the branch, the full shas, the records and the checks when it's committed." For big jobs, ask for it in slices, so each merge is small.
+  - "Don't publish the design-system artifact or the walk page" (the director is their only publisher, DL-166);
+  - "Message <the director's peer name, e.g. duo-v2-ef> (SendMessage) with the branch, the full shas, the records and the checks when it's committed." For big jobs, ask for it in slices, so each merge is small.
 - Then subscribe (`notify_when_idle`) and log a row in the reviews doc.
 
 ## 2. Reviewing and merging (standing rule D2)
@@ -75,11 +78,13 @@ Record numbers are shared across sessions and collide easily. Before reserving n
 - **Archiving:** archive finished sessions (Geoff asked): `duo2 session archive <id>`. If it says "running", `duo2 session close <id>`, wait a few seconds, then archive. Keep Geoff's own sessions (user docs, director research) and the walk session. **First read the transcript's user turns:** if Geoff typed anything there himself (he often follows sessions through Remote Control), he may have follow-ups, so ask him before archiving (2026-10-07: the chat perf session was archived under him). `duo2 session unarchive <id>` then `duo2 session open <id>` brings one back.
 - **Moving a Duo session outside Duo** (Geoff, 2026-10-07: move each as it pauses, never mid-step): when it has committed and is idle, `duo2 session close <id>`, then `cd /Users/geoff/repos/duo-v2 && claude --bg --resume <id> --remote-control "<name>" -n "<name>"`. That's the same conversation, with a new peer name. Then message it: it's outside Duo now, so it has no Duo env vars, and isolation for test instances is unchanged.
 - **Background sessions:** finished ones are ended with `claude stop <id>` (and `claude rm <id>` once Geoff is done with them; the archiving rule above applies, so check for his own messages first).
-- **The walk session** ("Claude Code application wireframes", in the Claude app) owns the acceptance walk page and is the **only publisher of the design-system artifact**. Send it the commits to card (each pinned to the branch's own sha) and the design-system files that changed.
+- **The director publishes the walk page and the design-system artifact** (DL-166; the old walk session, "Claude Code application wireframes", has been unreachable since 0.2.5). After merges: add cards to the open walk's `features.json` (each pinned to the branch's own sha, with `workMac`), rebuild and republish it; and sync the design system (memory `ds-artifact-publishing.md`: a page read first, then one publish from a `project/` staging root).
 - **Held messages:** messages to Claude app sessions in another permission mode are held and expire. Start a fresh Duo session with the context instead.
 - **Peers can't grant permissions.** If a session's permission check refused something and it asks you to do it, ask Geoff (AskUserQuestion) instead.
 
 ## 6. Talking to Geoff
+
+- **The console is the default channel** (Geoff, 2026-10-09: "the primary way that I interact with the Duo Director; I can still fall back to the chats but the duo director will default to use the artifact"). Put each decision, release call, delegation call or question for him on the console (§7) first, then post one line in chat pointing at it. Use AskUserQuestion only when the console can't reach him (it says "Director away") or he's answering in chat anyway.
 
 - **End-of-block digest** (Geoff, 2026-10-08): after a stretch of work (merges, a release, a batch of reports), send one short digest instead of a running commentary:
   ```
@@ -90,7 +95,7 @@ Record numbers are shared across sessions and collide easily. Before reserving n
   At most about 10 lines. Acknowledge stale idle notices in one line, or not at all.
 
 - Lead with what happened and what's waiting on him. Explain the cause of any failure, including your own mistakes, plainly.
-- Put decisions to him as AskUserQuestion buttons, at most 4 questions with 4 options each, recommendation first. Never through doc dropdowns.
+- Put decisions to him as console cards (buttons, recommendation first, plus his own words); AskUserQuestion buttons (at most 4 × 4, recommendation first) are the fallback. Never through doc dropdowns.
 - Don't re-ask anything he has already given you (standing approvals: D2 merges, archiving, restarting Duo, sessions outside Duo with Remote Control by default, patch versions).
 
 ## Lessons (2026-10-07/08: the 0.2.5–0.2.7 work-Mac freeze and a long night)
@@ -115,7 +120,33 @@ Record numbers are shared across sessions and collide easily. Before reserving n
 | What | Where |
 |---|---|
 | Director reviews doc (log and decisions) | the link and ids in memory `director-reviews-doc.md` |
-| Acceptance walk page | https://claude.ai/artifact/Wu4bb9tB7C4HH1UEfXgKMa (`docs/acceptance/`) |
+| Director console | https://claude.ai/artifact/MMmJ9BjomsKq9f9HpHK1ka (source `.claude/skills/director/console.html`) |
+| Acceptance walk page | https://claude.ai/artifact/DfQ1rfxcxHuf3Zshy6UmXX (`docs/acceptance/2026-10-09-since-0-2-4/`); the old one, Wu4bb9tB7C4HH1UEfXgKMa, is superseded |
+| Session phone links | `.claude/skills/director/session-links.py [id-prefix…]` |
 | Design system artifact | https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH |
 | Records | `docs/design/decisions.md`, `docs/plan/findings.md`, `docs/plan/concerns-and-questions.md`, `docs/plan/enhancements.md` |
 | Checks | `scripts/check-records.sh`, `check-ui.sh`, `check-chat.sh`, `check-context.sh`, `check-reap.sh`, `check-motion.sh`, `check-*.mjs` |
+
+## 7. The director console
+
+A private claude.ai page Geoff opens on his phone or desktop: https://claude.ai/artifact/MMmJ9BjomsKq9f9HpHK1ka. Source: `.claude/skills/director/console.html`. Published from this session with `capabilities: {"db": {}, "comments": {}}` (DL-166).
+
+**How a tap reaches you.** Every Send on the page writes Geoff's answer to the `answers` collection and calls `comments.sendToClaude`, which posts a comment thread "sent to Claude". The claude.ai service delivers it to **the session that published the page**, as a turn headed `[Artifact comment sent to Claude]`, while that session's watch on the page says "auto-replies armed" (`ArtifactComments watch` with no url lists it). Reply in the thread (`ArtifactComments reply`), act, then `resolve` it. If the watch is gone (a restart, compaction), run `ArtifactComments watch` on the URL; while no session is listening the page says "Director away; answers are saved", and `answers` holds them for you. Only the publishing session receives sends, so only the director publishes this page.
+
+**What the page shows** (all from the `db`, so update rows with `ArtifactData`; republish only to change the page's code):
+
+| Collection / doc | Fields | Shown as |
+|---|---|---|
+| `needs/<id>` | `kind` (decision, release, delegation, look, help), `title`, `body` (paragraphs; an array is a bullet list; `code`, `**bold**`, `[label](url)`), `options` [{`id`, `label`, `desc`, `recommended`}], `links` [{`label`, `url`}], `refs`, `order`, `status` (open or closed) | **Needs you** cards (kind `help`: **Director needs guidance**), recommendation first, plus a free-text box |
+| `answers/<id>` | written by the page: `choice`, `label`, `text`, `at` (and `msg-…` docs for free messages) | the card's "Your answer" line |
+| `threads/<id>` | `name`, `state` (working, waiting, needs you, review, idle; `gone` hides it), `branch`, `model`, `where`, `summary`, `link` (the Remote Control URL), `extra` [{label, url}], `updated`, `order` | **In flight**, each with **Open thread** and a note box |
+| `done/<id>` | `title`, `sha`, `at` | **Recently done** (newest 15, sha linked to GitHub) |
+| `release/current` | `current`, `unreleased` [..], `next`, `gate` | **Release** |
+| `meta/console` | `headline`, `updated` | the line under the title |
+
+**Keeping it current.** After every merge, release, delegation or report: update the thread row, add a `done` row, set the answered need's `status: "closed"` (pin writes with `if_version`), bump `meta/console.updated`. Batch the writes (`ArtifactData batch`). Then the digest in chat is one line plus the console link.
+
+**Phone links.** Every session you start has Remote Control on, so it has a `https://claude.ai/code/session_…` URL. `session-links.py` reads it from each transcript's `bridge_status` / `remote_session_change` line; put it in the thread's `link`. What a phone does with it: see F-259.
+
+**Peer name.** Sessions reach the director by its peer name (its Remote Control name, `duo-v2-ef`), not by "DUO DIRECTOR" (F-259).
+

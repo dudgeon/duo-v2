@@ -29,6 +29,17 @@ def main():
         missing = {"id", "group", "title", "steps", "expect"} - f.keys()
         if missing:
             sys.exit(f"{f.get('id', '?')}: missing {sorted(missing)}")
+    # Where each feature can be walked (Geoff, 2026-10-09): on his work Mac with a stock install and
+    # his own folders ("as-is"), after a minute of by-hand setup ("small"), or only with the fixtures,
+    # scripts or the home Mac ("home"). The page puts as-is cards first on a phone.
+    RATINGS = ("as-is", "small", "home")
+    for f in data["features"]:
+        if "workMac" not in f:
+            sys.exit(f"{f['id']}: no `workMac` (one of {', '.join(RATINGS)}; see the acceptance-walk skill)")
+        if f["workMac"] not in RATINGS:
+            sys.exit(f"{f['id']}: `workMac` is {f['workMac']!r}, expected one of {', '.join(RATINGS)}")
+        if "workMacWhy" in f and not isinstance(f["workMacWhy"], str):
+            sys.exit(f"{f['id']}: `workMacWhy` must be a string")
     # Every feature is tied to the commit that built it, so a rejected one can be reverted
     # (Geoff, 2026-10-05). `commit`: a full sha in HEAD's history; `alsoCommits`: later commits
     # that changed it; or `commit: null` with `noCommit` saying why there's nothing to revert.
@@ -67,7 +78,7 @@ def main():
                                      "repo": str(ROOT), "walk": sprint.name, "setups": setups}, indent=1))
     out = sprint / "walk.html"
     out.write_text(html)
-    print(f"{out}  ({len(ids)} features, {len(setups)} with setup, {sum(1 for f in data['features'] if f.get('claude'))} tried by Claude)")
+    print(f"{out}  ({len(ids)} features, {len(setups)} with setup, {sum(1 for f in data['features'] if f.get('claude'))} tried by Claude; work Mac: {', '.join(str(sum(1 for f in data['features'] if f['workMac'] == r)) + ' ' + r for r in RATINGS)})")
 
 
 if __name__ == "__main__":
