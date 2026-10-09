@@ -219,6 +219,7 @@ extension AppModel {
 
     func wireEditor(_ e: EditorController) {
         e.onStateChange = { [weak self] in self?.editorRevision += 1 }
+        e.sourceModes = sourceDocuments.sorted()
         e.templateKindFor = { [weak self] url in self?.templateInfo(forFile: url)?.kind.rawValue }
         e.onOpenLink = { [weak self, weak e] link in self?.openLink(link, from: e?.url) }
         e.onRenamed = { [weak self] old, new in

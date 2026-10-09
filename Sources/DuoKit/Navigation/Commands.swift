@@ -370,6 +370,9 @@ public struct DuoCommands: Commands {
             Divider()
             // Dotfiles in the project's tree (DL-105).
             Toggle("Show Hidden Files", isOn: Binding(get: { model.showHiddenFiles }, set: { model.setShowHiddenFiles($0) }))
+            // The document's own mode (DL-167): its text as typed, the live preview off. Remembered per document.
+            Toggle("Source Mode", isOn: Binding(get: { model.showingSourceMode }, set: { model.setSourceMode($0) }))
+                .disabled(model.terminalsMode != .live || model.editorIfLoaded?.url == nil)
             // The map's order (DL-104), the same choice as its Sort popup.
             Picker("Sort Projects By", selection: Binding(get: { model.mapSort }, set: { model.setMapSort($0) })) {
                 Text("Recent Activity").tag(MapSort.recent)

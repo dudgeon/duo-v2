@@ -201,6 +201,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var homePromptDismissed = false
     /// Documents whose properties block is folded (frontmatter-handoff §2), by path.
     public var foldedProperties: [String] = []
+    /// Documents shown in Source mode (View › Source Mode, DL-167), by path.
+    public var sourceDocuments: [String] = []
     /// Missing folders the user removed from Duo (DB-8): their sessions stay in Claude's storage.
     public var forgottenFolders: [String] = []
     /// Folders whose Make a Project notice the user said Not Now to (DL-110), by path.
@@ -243,6 +245,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         skippedUpdate = try c.decodeIfPresent(String.self, forKey: .skippedUpdate)
         homePromptDismissed = try c.decodeIfPresent(Bool.self, forKey: .homePromptDismissed) ?? false
         foldedProperties = try c.decodeIfPresent([String].self, forKey: .foldedProperties) ?? []
+        sourceDocuments = try c.decodeIfPresent([String].self, forKey: .sourceDocuments) ?? []
         forgottenFolders = try c.decodeIfPresent([String].self, forKey: .forgottenFolders) ?? []
         notNowFolders = try c.decodeIfPresent([String].self, forKey: .notNowFolders) ?? []
         legacyDismissed = try c.decodeIfPresent(String.self, forKey: .legacyDismissed)

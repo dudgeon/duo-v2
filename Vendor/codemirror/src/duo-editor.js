@@ -1700,6 +1700,25 @@ function diffOne(a, b) {
 // Read-only when a file can't round-trip byte for byte (mixed line endings, LR-30).
 const readOnlyCompartment = new Compartment();
 
+// Source mode, per document (DL-167, Q3): the live preview's pieces (decorations, properties block,
+// tables and images, block widgets) are taken out and the text shows as typed: Obsidian's escape
+// hatch when a rendering case is wrong. Three compartments keep the extensions where they were in
+// the list, and a reconfigure keeps the document's history, caret and scroll.
+const previewLive = new Compartment(), previewProps = new Compartment(), previewBlocks = new Compartment();
+let sourceMode = !!window.duoFlags?.noPreview;   // the next state's mode (checks start a page in source with the flag)
+const sourceIds = new Set();                      // documents Duo remembers in source mode, by id
+const sourceEffects = (on) => [previewLive.reconfigure(on ? [] : [livePreview]), previewProps.reconfigure(on ? [] : previewPropsList), previewBlocks.reconfigure(on ? [] : [blocksField])];
+const isSource = (state) => previewLive.get(state).length === 0;
+function setSource(on) {
+  on = !!on;
+  sourceMode = on;
+  if (shownId != null) { if (on) sourceIds.add(shownId); else sourceIds.delete(shownId); }
+  if (!view || isSource(view.state) === on) return on;
+  if (stash) stash = stash.update({ effects: sourceEffects(on) }).state;
+  view.dispatch({ effects: sourceEffects(on) });
+  return on;
+}
+
 // Duo's look (handoff §3.4: body 13/20, headings 14 semibold, padding 22 28, pane background).
 // Colours and sizes come from Duo's tokens as CSS variables set by the app; nothing is hard-coded.
 const duoTheme = EditorView.theme({
@@ -1954,7 +1973,8 @@ const titleFollowsHeading = EditorState.transactionFilter.of((tr) => {
   return tr;
 });
 
-function create(parent, text) {
+function create(parent, text, source) {
+  if (source != null) sourceMode = !!source;
   sepInfo = lineSeparatorOf(text);
   setBase(canon(text));
   stash = null;
@@ -1987,15 +2007,17 @@ function show(id, diskText, opts) {
   const h = held.get(id);
   if (!h || !view) {
     if (opts && opts.folded != null) window.__folded = !!opts.folded;
-    const r = create(parent, diskText);
+    const r = create(parent, diskText, opts && opts.source != null ? opts.source : sourceIds.has(id));
     shownId = id;
     return { ...r, restored: false, dirty: false };
   }
   shownId = id;
+  sourceMode = isSource(h.state);
   held.delete(id);   // the shown document's state is the view's own
   stash = null;
   base = h.base; baseDoc = Text.of(base.split("\n")); sepInfo = h.sepInfo;
   view.setState(h.state);
+  if (opts && opts.source != null && !!opts.source !== isSource(h.state)) setSource(opts.source);
   // The snapshot anchors on a line; the pixel offset is exact once the lines have been measured again.
   view.dispatch({ effects: h.scroll });
   const settle = (n) => { if (shownId !== id) return; if (Math.abs(view.scrollDOM.scrollTop - h.top) > 1) view.scrollDOM.scrollTop = h.top; if (n) requestAnimationFrame(() => settle(n - 1)); };
@@ -2033,6 +2055,11 @@ function endPreview() {
   return true;
 }
 
+const previewPropsList = [propertiesField, propertiesKeymap, tableKeymap, EditorView.domEventHandlers({ paste: (e, v) => pasteImage(e, v) || pasteIntoCell(e, v), drop: dropImage }), trackPendingImages, suggestionKeys,
+        autocompletion({ override: [propertyCompletions], icons: false, activateOnTyping: true,
+          tooltipClass: (st) => (inBlock(st) && !st.sliceDoc(st.doc.lineAt(st.selection.main.head).from, st.selection.main.head).includes(":") ? "duo-sugg-names" : "duo-sugg-values"),
+          addToOptions: [{ position: 20, render: (c) => { const s = document.createElement("span"); s.className = "duo-sugg-icon";
+            if (PROP_ICONS[c.type]) s.innerHTML = iconSvg(c.type); return s; } }] })];
 function extensions(readOnly) {
     return [
       EditorState.lineSeparator.of(sepInfo.sep),
@@ -2044,19 +2071,15 @@ function extensions(readOnly) {
       history(),
       markdown({ base: markdownLanguage }),  // GitHub-flavoured: task lists, tables, strikethrough
       search({ top: true, createPanel: findPanel }),
-      ...(window.duoFlags?.noPreview ? [] : [livePreview]),
+      previewLive.of(sourceMode ? [] : [livePreview]),
       contextField,
       foldField,
-      ...(window.duoFlags?.noPreview ? [] : [propertiesField, propertiesKeymap, tableKeymap, EditorView.domEventHandlers({ paste: (e, v) => pasteImage(e, v) || pasteIntoCell(e, v), drop: dropImage }), trackPendingImages, suggestionKeys,
-        autocompletion({ override: [propertyCompletions], icons: false, activateOnTyping: true,
-          tooltipClass: (st) => (inBlock(st) && !st.sliceDoc(st.doc.lineAt(st.selection.main.head).from, st.selection.main.head).includes(":") ? "duo-sugg-names" : "duo-sugg-values"),
-          addToOptions: [{ position: 20, render: (c) => { const s = document.createElement("span"); s.className = "duo-sugg-icon";
-            if (PROP_ICONS[c.type]) s.innerHTML = iconSvg(c.type); return s; } }] })]),
+      previewProps.of(sourceMode ? [] : previewPropsList),
       addedField,
       fadingField,
       highlightMotion,
       conflictField,
-      ...(window.duoFlags?.noPreview ? [] : [blocksField]),
+      previewBlocks.of(sourceMode ? [] : [blocksField]),
       changesField,
       searchField,
       clearOnUserEdit,
@@ -2379,7 +2402,7 @@ window.duo = {
     view.focus();
     return true;
   },
-  create: (text) => create(document.getElementById("editor"), text),
+  create: (text) => create(document.getElementById("editor"), text, !!window.duoFlags?.noPreview),
   // Per-document states (DL-167): show(id, diskText, {folded}) → { restored, dirty, mixedLineEndings, separator };
   // close(id) frees a closed document's state; rename(old, new) re-keys it; heldIds() for checks.
   // Swift's result of a property or list edit lands as one plain transaction: not highlighted as
@@ -2392,6 +2415,11 @@ window.duo = {
     return true;
   },
   show,
+  // Source mode: setSource(on) for the shown document; sourceModes(ids) is Duo's remembered set, sent
+  // when the page loads and whenever it changes; source() says what shows now.
+  setSource,
+  source: () => (view ? isSource(view.state) : sourceMode),
+  sourceModes: (ids) => { sourceIds.clear(); for (const i of ids) sourceIds.add(i); return true; },
   close: closeDoc,
   rename: renameDoc,
   heldIds: () => [...held.keys()],
