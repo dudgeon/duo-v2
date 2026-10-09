@@ -84,6 +84,18 @@ public enum ChatPaste {
         s.replacingOccurrences(of: #"\[Image #\d+\]\s*"#, with: "", options: .regularExpression).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Words already in Claude's prompt that the composer never showed: the task path New Session in
+    /// Task drafts (DL-112), or text typed in the terminal. They stay, ahead of the composer's text
+    /// (F-254), unless that text already starts with them (it was opened on them) or it is a `/`
+    /// command in the prompt. Empty when there is nothing to carry.
+    public static func carried(prompt: String, text: String) -> String {
+        var rest = prompt
+        for t in tokens(in: prompt) { rest = rest.replacingOccurrences(of: t, with: " ") }
+        let c = rest.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !c.isEmpty, !c.hasPrefix("/"), !text.chatNorm.hasPrefix(c.chatNorm) else { return "" }
+        return c
+    }
+
     /// The TUI's prompt holds nothing but tokens this composer put there.
     public static func promptHoldsOnly(_ prompt: String, _ held: [String]) -> Bool {
         let set = Set(held)
