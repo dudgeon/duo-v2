@@ -4183,6 +4183,28 @@
    "new": true
   },
   {
+   "id": "pane-focus",
+   "group": "In checkout: shells and tabs",
+   "title": "The active pane shows a top rule; ⌥⌘←/→ move between panes, ⌃Tab through its tabs",
+   "what": "A 2 pt rule marks the pane that has the keyboard; chords move between panes and through the active pane's tabs.",
+   "steps": [
+    "Click in the console, then in the right pane, then in the session list: watch the 2 pt rule move to the pane you clicked.",
+    "Press `⌥⌘→` and `⌥⌘←`: the rule steps between panes and wraps.",
+    "With two or more console tabs, click the console and press `⌃Tab` and `⌃⇧Tab`: the tabs step and wrap, also while a terminal has the keyboard.",
+    "Do the same in the right pane with two documents open, and at All projects in Home's tabs."
+   ],
+   "expect": "Option A from the pane-focus canvas: a `consoleText` rule on the dark console, a `text` rule on light panes and over chat's light strip. Provisional (DL-165): say if the look or the chords should change (Q-165).",
+   "ref": "DL-165, F-256, F-257, F-258, Q-165",
+   "setup": [
+    "open checkout"
+   ],
+   "commit": "1a908479144aef563df0cecc2f738423b340d235",
+   "alsoCommits": [],
+   "workMac": "as-is",
+   "workMacWhy": "Any project with two tabs open",
+   "new": true
+  },
+  {
    "id": "chat-toggle",
    "title": "Chat mode: the toggle and a readable transcript",
    "what": "A pill at the right end of the console's tab strip switches a Claude session between the terminal and chat: the same session, shown as a transcript with Markdown, links and tool steps on a thread. Switching sends nothing to Claude.",
