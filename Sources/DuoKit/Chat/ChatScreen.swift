@@ -54,6 +54,9 @@ public struct ChatSignatures: Sendable, Equatable {
     public var chatAbout = "Chat about this"
     /// A row of the `/` command menu: `  ❯ /add-dir      Add a new working directory`.
     public var commandRow = #"^\s{2}(❯ )?\s*(/[\w:.-]+)\s{2,}(\S.*)$"#
+    /// 2.1.219 draws the menu under the input box, from column 0, and marks the selected row by colour only
+    /// (which a host can't read, F-108): `/model      Set the AI model for Claude Code`.
+    public var commandRowBelow = #"^(/[\w:.-]+)\s{2,}(\S.*)$"#
     /// Commands with a screen of their own: they open in the terminal (handoff `composer`). Each was
     /// run from chat on 2.1.292 (F-173); `/doctor` and `/statusline` are turns now, and `/agents`,
     /// `/mcp` and `/output-style` print a line.
@@ -366,6 +369,11 @@ public enum ChatScreenReader {
             if rules.count >= 2 {
                 r.commands = t[0..<rules[rules.count - 2]].compactMap { l in
                     l.chatMatch(s.commandRow).map { m in (m[2] ?? "", (m[3] ?? "").chatTrim, m[1] != nil) }
+                }
+                if r.commands.isEmpty {
+                    r.commands = t[(rules[rules.count - 1] + 1)...].compactMap { l in
+                        l.chatMatch(s.commandRowBelow).map { m in (m[1] ?? "", (m[2] ?? "").chatTrim, false) }
+                    }
                 }
             }
             return r

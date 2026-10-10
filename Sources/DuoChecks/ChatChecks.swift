@@ -252,6 +252,20 @@ func spikeScreen(_ name: String) -> String {
         Task { await c.moveCommandMenu(.down) }
         spin(0.3)
         check(tui.keys == [ChatKey.down.bytes], "↓ in the composer goes to the TUI's menu")
+        // 2.1.219 draws the menu under the input box from column 0, the selected row by colour only.
+        let m219 = ChatScreenReader.read(spikeScreen("slash-2.1.219/menu-mo.txt"))
+        check(m219.kind == .idle && m219.input == "/mo" && m219.commands.prefix(3).map(\.name) == ["/model", "/mobile", "/memory"] && m219.commands.count == 12,
+              "2.1.219's / menu under /mo, rows from column 0 (\(m219.commands.count): \(m219.commands.prefix(3).map(\.name)))")
+        check(m219.commands.first?.description == "Set the AI model for Claude Code (currently claude-haiku-5-5)" && m219.commands.allSatisfy { !$0.selected }, "its description; no selected row (colour only)")
+        let s219 = ChatScreenReader.read(spikeScreen("slash-2.1.219/menu-slash.txt"))
+        check(s219.input == "/" && s219.commands.first?.name == "/add-dir" && s219.commands.allSatisfy { $0.name.hasPrefix("/") && $0.description.first != " " }, "2.1.219's / menu under a bare `/` (\(s219.commands.count) rows)")
+        check(ChatScreenReader.read(spikeScreen("tour-2.1.219/01-markdown.txt")).commands.isEmpty, "2.1.219's prompt, rules and footer are no command rows")
+        check(ChatScreenReader.read(spikeScreen("tour-2.1.292/01-markdown.txt")).commands.isEmpty, "nor 2.1.292's")
+        // 2.1.219's preview question: Return inside the notes field sends "(notes only)"; Esc leaves it with the notes kept.
+        let typed = ChatScreenReader.read(spikeScreen("preview-notes-2.1.219/04-typed.txt"), cols: 100)
+        let left = ChatScreenReader.read(spikeScreen("preview-notes-2.1.219/05-esc-notes-kept.txt"), cols: 100)
+        check(typed.kind == .question && typed.preview && typed.notes == "keep it short" && left.kind == .question && left.preview && left.notes == "keep it short"
+              && left.cursor == typed.cursor && left.options[left.cursor].label == "Side by side", "2.1.219: after Esc the notes stay and the cursor is on the chosen option")
         for f in ["help", "usage", "config", "permissions", "resume", "skills", "btw", "sandbox"] {
             check(ChatScreenReader.read(spikeScreen(dir + f + ".txt")).kind == .unknown, "/\(f)'s screen reads as unknown: the terminal")
         }

@@ -231,6 +231,10 @@ extension ChatSession {
             await pause(200_000_000)
             s = reread()
             guard s.notes?.chatNorm == text.chatNorm else { return .refused("the notes did not appear as typed") }
+            // Return inside the notes field sends them with no option on 2.1.219 ("(notes only)"). Esc leaves the
+            // field with the notes kept and the cursor on the option; Return there sends both (same on 2.1.296).
+            await step(.esc)
+            guard s.kind == .question, s.preview, s.notes?.chatNorm == text.chatNorm, await goTo(optionRow(label)) else { return .refused("couldn’t leave the notes on “\(label)”") }
             await step(.enter)
             return .done
         case .chat:

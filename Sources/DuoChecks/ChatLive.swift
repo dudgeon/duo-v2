@@ -11,7 +11,8 @@ import SwiftTerm
 //
 //   DUO_SUPPORT_DIR=/tmp/duo-chat-live DUO_CHECKS=chat-live swift run DuoChecks
 //
-// Needs node and claude on PATH. Runs at 100×34, 60×34 and 80×20, as asktest.sh did.
+// Needs node and claude on PATH (DUO_CHAT_LIVE_CLAUDE=/path/to/claude picks another binary). Runs at
+// 100×34, 60×34 and 80×20, as asktest.sh did (DUO_CHAT_LIVE_SIZES=100x34 for one).
 
 /// A terminal with no view: the PTY's bytes go into SwiftTerm's own Terminal.
 @MainActor final class HeadlessTUI: ChatTerminal, LocalProcessDelegate {
@@ -87,7 +88,8 @@ struct AskCase {
 
 @MainActor func chatLiveChecks() throws {
     let spike = repoRoot().appending(path: "Spikes/chat-mode")
-    guard let claude = which("claude"), let node = which("node") else { print("chat-live: needs claude and node on PATH; skipped"); return }
+    let claude = ProcessInfo.processInfo.environment["DUO_CHAT_LIVE_CLAUDE"].flatMap { $0.isEmpty ? nil : $0 } ?? which("claude")
+    guard let claude, let node = which("node") else { print("chat-live: needs claude and node on PATH; skipped"); return }
     guard ProcessInfo.processInfo.environment["DUO_SUPPORT_DIR"] != nil else { print("chat-live: set DUO_SUPPORT_DIR to a scratch folder"); failures += 1; return }
     let version = run(claude, ["--version"]).split(separator: " ").first.map(String.init)
     print("chat mode, live: AskUserQuestion end to end against Claude Code \(version ?? "?") and the mock API (F-106)")
@@ -242,32 +244,44 @@ struct AskCase {
           "the composer's text reached Claude through Ctrl+G and duo2 compose (\(sent?.why ?? "ok"))")
     check(chat.log.items.filter { if case .you(let y) = $0 { return y.text.contains("Hello from the composer") } else { return false } }.count == 1,
           "and shows once, matched to its echo")
-    tui.sendKeys("half-typed in the terminal"); spin(0.6)
-    let carried = await_ { await chat.peekPrompt() } ?? nil
-    spin(0.3)
-    check(carried == "half-typed in the terminal" && chat.reread().input == "half-typed in the terminal",
-          "Claude's real prompt is read through Ctrl+G and left as it was (\(carried ?? "-"))")
-    chat.ui.composerBasis = carried
-    from = transcriptSize()
-    let finished = await_ { await chat.send("half-typed in the terminal, finished here SCENARIO:hello") }
-    _ = idle(); spin(1)
-    check(finished?.ok == true && lastPrompt(after: from) == "half-typed in the terminal, finished here SCENARIO:hello", "carried over and finished in the composer")
-    tui.sendKeys("typed in the terminal meanwhile"); spin(0.6)
-    chat.ui.composerBasis = ""
-    from = transcriptSize()
-    let stale = await_ { await chat.send("This must not replace it") }
-    chat.fallback = nil
-    spin(0.5)
-    check(stale?.ok == false && chat.reread().input == "typed in the terminal meanwhile" && lastPrompt(after: from) == nil,
-          "a prompt changed in the terminal is never overwritten; nothing sent (\(stale?.why ?? "-"))")
-    for _ in 0..<40 { tui.sendKeys("\u{7f}") }; spin(0.5)
-    tui.sendKeys("left in the terminal "); spin(0.5)
-    chat.ui.composerBasis = nil
-    from = transcriptSize()
-    let peeked = await_ { await chat.send("left in the terminal, then sent from chat SCENARIO:hello") }
-    _ = idle(); spin(1)
-    check(peeked?.ok == true && lastPrompt(after: from) == "left in the terminal, then sent from chat SCENARIO:hello",
-          "with no basis known, sending asks Claude's prompt first and replaces what it holds (\(peeked?.why ?? "ok"))")
+    // Ctrl+G hands the text over from 2.1.269 (usesExternalEditor); older CLIs paste, and text already in Claude's prompt stays ahead (F-254).
+    if chat.usesExternalEditor {
+        tui.sendKeys("half-typed in the terminal"); spin(0.6)
+        let carried = await_ { await chat.peekPrompt() } ?? nil
+        spin(0.3)
+        check(carried == "half-typed in the terminal" && chat.reread().input == "half-typed in the terminal",
+              "Claude's real prompt is read through Ctrl+G and left as it was (\(carried ?? "-"))")
+        chat.ui.composerBasis = carried
+        from = transcriptSize()
+        let finished = await_ { await chat.send("half-typed in the terminal, finished here SCENARIO:hello") }
+        _ = idle(); spin(1)
+        check(finished?.ok == true && lastPrompt(after: from) == "half-typed in the terminal, finished here SCENARIO:hello", "carried over and finished in the composer")
+        tui.sendKeys("typed in the terminal meanwhile"); spin(0.6)
+        chat.ui.composerBasis = ""
+        from = transcriptSize()
+        let stale = await_ { await chat.send("This must not replace it") }
+        chat.fallback = nil
+        spin(0.5)
+        check(stale?.ok == false && chat.reread().input == "typed in the terminal meanwhile" && lastPrompt(after: from) == nil,
+              "a prompt changed in the terminal is never overwritten; nothing sent (\(stale?.why ?? "-"))")
+        for _ in 0..<40 { tui.sendKeys("\u{7f}") }; spin(0.5)
+        tui.sendKeys("left in the terminal "); spin(0.5)
+        chat.ui.composerBasis = nil
+        from = transcriptSize()
+        let peeked = await_ { await chat.send("left in the terminal, then sent from chat SCENARIO:hello") }
+        _ = idle(); spin(1)
+        check(peeked?.ok == true && lastPrompt(after: from) == "left in the terminal, then sent from chat SCENARIO:hello",
+              "with no basis known, sending asks Claude's prompt first and replaces what it holds (\(peeked?.why ?? "ok"))")
+    } else {
+        print("  - the Ctrl+G cases (real prompt read, carried over, never overwritten, no basis) are skipped below \(ChatVersion.externalEditor)")
+        tui.sendKeys("typed in the terminal"); spin(0.6)
+        chat.ui.composerBasis = nil
+        from = transcriptSize()
+        let after = await_ { await chat.send("then sent from chat SCENARIO:hello") }
+        _ = idle(); spin(1)
+        check(after?.ok == true && lastPrompt(after: from) == "typed in the terminal then sent from chat SCENARIO:hello",
+              "paste-on-send keeps the terminal's text ahead of the composer's, one space between (F-254; \(after?.why ?? "ok"))")
+    }
     let saved = chat.composeDir
     chat.composeDir = nil
     from = transcriptSize()
@@ -303,6 +317,11 @@ struct AskCase {
             .last { (($0["message"] as? [String: Any])?["content"] as? [[String: Any]])?.contains { $0["type"] as? String == "tool_result" } == true }
     }
 
+    // Since Claude Code 2.1.284 a session with no configured mode starts in auto mode, where nothing asks;
+    // older ones start in manual. The dialogs below need manual.
+    for _ in 0..<8 where chat.reread().mode != .manual { _ = await_ { await chat.cycleMode() }; spin(0.3) }
+    check(chat.screen.mode == .manual, "the mode chip's Shift+Tab reaches manual mode (\(String(describing: chat.screen.mode)))")
+
     var start = transcriptSize()
     prompt("bash")
     if until(20, { chat.reread().kind == .permission && chat.cardUp }) {
@@ -330,7 +349,7 @@ struct AskCase {
         check(r?.ok == true && tr?["toolDenialKind"] != nil, "No from the card: Claude was refused (\(tr?["toolDenialKind"] ?? "-"))")
     } else { check(false, "the edit permission appears (\(chat.screen.kind))") }
 
-    for _ in 0..<4 where chat.reread().mode != .plan { _ = await_ { await chat.cycleMode() }; spin(0.3) }
+    for _ in 0..<8 where chat.reread().mode != .plan { _ = await_ { await chat.cycleMode() }; spin(0.3) }
     check(chat.screen.mode == .plan, "the mode chip's Shift+Tab reaches plan mode")
     start = transcriptSize()
     prompt("plan")

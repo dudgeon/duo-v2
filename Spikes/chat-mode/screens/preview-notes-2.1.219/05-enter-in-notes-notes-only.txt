@@ -1,0 +1,33 @@
+ ▐▛███▜▌   Claude Code v2.1.219
+▝▜█████▛▘  claude-haiku-5-5 · API Usage Billing
+  ▘▘ ▝▝    /private/tmp/cm/scratch/ws
+
+
+❯ Show me SCENARIO:askpreview                                                                       
+
+⏺ User answered Claude's questions:
+  ⎿  · Which layout should the card use? → (notes only)
+
+⏺ Done. The tool said: "The user answered: \"Which layout should the card use?\"=(no option
+  selected) notes: keep it short. Read the answers carefully — they may request clarification
+
+✻ Baked for 0s
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on · ? for shortcuts · ← for agents                               ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
