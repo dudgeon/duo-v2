@@ -11,7 +11,8 @@ import SwiftTerm
 //
 //   DUO_SUPPORT_DIR=/tmp/duo-chat-live DUO_CHECKS=chat-live swift run DuoChecks
 //
-// Needs node and claude on PATH. Runs at 100×34, 60×34 and 80×20, as asktest.sh did.
+// Needs node and claude on PATH (DUO_CHAT_LIVE_CLAUDE=/path/to/claude picks another binary). Runs at
+// 100×34, 60×34 and 80×20, as asktest.sh did (DUO_CHAT_LIVE_SIZES=100x34 for one).
 
 /// A terminal with no view: the PTY's bytes go into SwiftTerm's own Terminal.
 @MainActor final class HeadlessTUI: ChatTerminal, LocalProcessDelegate {
@@ -87,7 +88,8 @@ struct AskCase {
 
 @MainActor func chatLiveChecks() throws {
     let spike = repoRoot().appending(path: "Spikes/chat-mode")
-    guard let claude = which("claude"), let node = which("node") else { print("chat-live: needs claude and node on PATH; skipped"); return }
+    let claude = ProcessInfo.processInfo.environment["DUO_CHAT_LIVE_CLAUDE"].flatMap { $0.isEmpty ? nil : $0 } ?? which("claude")
+    guard let claude, let node = which("node") else { print("chat-live: needs claude and node on PATH; skipped"); return }
     guard ProcessInfo.processInfo.environment["DUO_SUPPORT_DIR"] != nil else { print("chat-live: set DUO_SUPPORT_DIR to a scratch folder"); failures += 1; return }
     let version = run(claude, ["--version"]).split(separator: " ").first.map(String.init)
     print("chat mode, live: AskUserQuestion end to end against Claude Code \(version ?? "?") and the mock API (F-106)")
@@ -303,6 +305,11 @@ struct AskCase {
             .last { (($0["message"] as? [String: Any])?["content"] as? [[String: Any]])?.contains { $0["type"] as? String == "tool_result" } == true }
     }
 
+    // Since Claude Code 2.1.284 a session with no configured mode starts in auto mode, where nothing asks;
+    // older ones start in manual. The dialogs below need manual.
+    for _ in 0..<8 where chat.reread().mode != .manual { _ = await_ { await chat.cycleMode() }; spin(0.3) }
+    check(chat.screen.mode == .manual, "the mode chip's Shift+Tab reaches manual mode (\(String(describing: chat.screen.mode)))")
+
     var start = transcriptSize()
     prompt("bash")
     if until(20, { chat.reread().kind == .permission && chat.cardUp }) {
@@ -330,7 +337,7 @@ struct AskCase {
         check(r?.ok == true && tr?["toolDenialKind"] != nil, "No from the card: Claude was refused (\(tr?["toolDenialKind"] ?? "-"))")
     } else { check(false, "the edit permission appears (\(chat.screen.kind))") }
 
-    for _ in 0..<4 where chat.reread().mode != .plan { _ = await_ { await chat.cycleMode() }; spin(0.3) }
+    for _ in 0..<8 where chat.reread().mode != .plan { _ = await_ { await chat.cycleMode() }; spin(0.3) }
     check(chat.screen.mode == .plan, "the mode chip's Shift+Tab reaches plan mode")
     start = transcriptSize()
     prompt("plan")

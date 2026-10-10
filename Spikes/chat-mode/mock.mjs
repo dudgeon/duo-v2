@@ -65,7 +65,9 @@ const scenarios = {
 };
 
 function plan(body) {
-  const msgs = body.messages || [];
+  // Claude Code 2.1.29x ends every request with a "system"-role message (a token count, the plan-mode
+  // reminder); only the conversation's own turns count here.
+  const msgs = (body.messages || []).filter(m => m.role === 'user' || m.role === 'assistant');
   const last = msgs[msgs.length - 1];
   const all = msgs.map(m => textOf(m.content)).join('\n');
   if (/SUBAGENT:/.test(textOf(msgs[0]?.content)) && last?.role === 'user' && !/tool_result/.test(textOf(last.content)))
@@ -74,11 +76,20 @@ function plan(body) {
   const lastText = Array.isArray(last?.content) ? last.content.filter(b => b.type === 'text').map(b => b.text).join('\n') : textOf(last?.content);
   // Duo appends its own reminder blocks after the prompt, so the scenario is read from the latest prompt
   // (not the last message), and a tool that ran since the prompt counts whatever the last message is.
-  const promptIdx = msgs.findLastIndex(m => m.role === 'user' && !(Array.isArray(m.content) && m.content.some(b => b.type === 'tool_result')) && /SCENARIO:/.test(textOf(m.content)));
-  const after = promptIdx >= 0 ? msgs.slice(promptIdx + 1) : [];
-  const ranTool = after.some(m => Array.isArray(m.content) && m.content.some(b => b.type === 'tool_result'));
-  const asked = after.some(m => Array.isArray(m.content) && m.content.some(b => b.type === 'tool_use' && b.name === 'AskUserQuestion'));
-  const sname = promptIdx >= 0 ? [...textOf(msgs[promptIdx].content).matchAll(/SCENARIO:(\w+)/g)].pop()?.[1] : null;
+  // After an interrupted tool use the next prompt is merged into the rejected tool_result's message, so
+  // the prompt is found by its text blocks (never a tool_result's content) and only what comes after
+  // that block, later in the message or in later messages, counts as "since the prompt".
+  const blocks = m => typeof m.content === 'string' ? [{ type: 'text', text: m.content }] : (m.content || []);
+  let promptIdx = -1, blockIdx = -1;
+  for (let i = msgs.length - 1; i >= 0 && promptIdx < 0; i--) {
+    if (msgs[i].role !== 'user') continue;
+    const bi = blocks(msgs[i]).findLastIndex(b => b.type === 'text' && /SCENARIO:/.test(b.text));
+    if (bi >= 0) { promptIdx = i; blockIdx = bi; }
+  }
+  const after = promptIdx >= 0 ? [...blocks(msgs[promptIdx]).slice(blockIdx + 1), ...msgs.slice(promptIdx + 1).flatMap(blocks)] : [];
+  const ranTool = after.some(b => b.type === 'tool_result');
+  const asked = after.some(b => b.type === 'tool_use' && b.name === 'AskUserQuestion');
+  const sname = promptIdx >= 0 ? [...blocks(msgs[promptIdx])[blockIdx].text.matchAll(/SCENARIO:(\w+)/g)].pop()?.[1] : null;
   // readask and permask: the question comes once their tool has run, and only once.
   if ((body.tools || []).length && (sname === 'readask' || sname === 'permask') && ranTool && !asked) return scenarios.ask1();
   // Title requests (no tools) and anything after a tool result skip the scenario.
