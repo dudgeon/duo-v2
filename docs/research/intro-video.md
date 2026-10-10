@@ -252,23 +252,32 @@ A capture that **changed** doesn't fail the build. It's reported with before and
 1. **Renderer:** Remotion (recommended), or plain HTML with `seek(t)` and Playwright.
 2. **Voice:** Qwen3-TTS with a house voice we design (recommended), Qwen3-TTS cloned from a clip of Geoff, or Kokoro preset voices.
 3. **Where the code lives:** `video/` in this repo, so app and video change together and a build can use `build/Duo.app` (recommended). Or a separate repo.
-4. **The outline below.** Agreeing it lets me make the script Doc.
+4. **The outline.**
 
-### Proposed outline (about 2:30)
+**Decided 2026-10-10 (DL-169):** Remotion; Qwen3-TTS with a designed voice, moving later to Geoff's own voice (ENH-69, kept in a separate private project); `video/` in this repo; the outline.
 
-**Why Duo exists (about 70 s)**
-- **S1 · Cold open.** You started with one Claude session. Now there are eleven, across six folders. Terminal windows multiply on screen.
-- **S2 · The pain.** Which one is waiting for you? Which one finished? The document Claude wrote is somewhere in a scrollback.
-- **S3 · The turn.** Duo is a Mac app for working with Claude Code across many pieces of work at once. Reveal: a wide flyover of All projects.
+### The outline (agreed 2026-10-10, DL-169; the script Doc now holds it)
 
-**A walk through (about 80 s)**
-- **S4 · Every session, found.** Duo lists every Claude Code session on your Mac and keeps them. Push in on the session list.
-- **S5 · Projects.** A project is something you're trying to finish, in its own folder: its sessions on the left, the conversation in the middle, documents beside it.
-- **S6 · What needs you.** The states, and the Needs you count. Answer a question without hunting for the terminal (chat mode).
-- **S7 · Documents.** What Claude writes opens beside the conversation, with its additions highlighted ("added by Claude").
-- **S8 · Search and getting around.** ⌘K, and search across every project.
-- **S9 · Claude drives Duo.** Plain files and `duo2`: Claude can open the document it just wrote.
-- **S10 · Close.** Duo v2 is an early beta preview. Where to get it, and how to report issues.
+The script lives in the Claude Doc https://claude.ai/code/artifact/05fbb2a2-d608-44e0-a930-de837a440d17.
+
+**Part 1 · Why Duo exists.** It follows [About Duo](https://github.com/dudgeon/duo/blob/main/docs/about-duo.md)'s framing: working with Claude Code outside a code editor means juggling windows from several apps. Geoff added two notes on 2026-10-10:
+- show a cluttered desktop;
+- what's new in v2 is its focus on projects: it makes it easier to manage several and pick up where you left off in any of them, so Duo helps you move your own work forward with Claude.
+
+The scenes:
+- **S1 · The desk:** the cluttered desktop.
+- **S2 · Many projects:** a desk per project; where were you?
+- **S3 · The turn:** Duo v2 is built around your projects.
+
+**Part 2 · A walk through.** Scenes S4 to S10: sessions found, projects (with goal and what's next), what needs you, documents, getting around, plain files and Claude driving Duo, and the close.
+
+**The desk scene is drawn, not captured.** Its windows are HTML in the renderer, filled from the sample project:
+- Terminal windows running Claude Code, with text replayed from a cast;
+- a raw Markdown file;
+- Finder;
+- a browser showing a sample HTML page.
+
+That keeps it deterministic, and no real desktop, path or name ever appears. Legacy Duo's About picture is a reference for its look only; it shows a real home-folder path, so it isn't used. Geoff's OK on this approach is still open.
 
 ### Open questions (to log as Q-n when the records land)
 
