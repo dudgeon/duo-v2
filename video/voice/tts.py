@@ -20,10 +20,10 @@ def load(mode):
     return load_model(str(MODELS / MODEL_FOR[mode]))
 
 
-def synth(model, voice, text):
+def synth(model, voice, text, seed):
     import mlx.core as mx
     import numpy as np
-    mx.random.seed(int(voice.get("seed", 0)))
+    mx.random.seed(int(seed))
     if voice["mode"] == "design":
         kw = dict(instruct=voice["description"])
     else:
@@ -44,12 +44,13 @@ def main(job_path):
     print(f"model load {load_s:.1f}s", file=sys.stderr)
     for line in job["lines"]:
         t = time.time()
-        audio, sr = synth(model, voice, line["text"])
+        seed = int(line.get("seed", voice.get("seed", 0)))
+        audio, sr = synth(model, voice, line["text"], seed)
         synth_s = time.time() - t
         sf.write(out / f"{line['id']}.wav", audio, sr, subtype="PCM_16")
         dur = len(audio) / sr
-        meta = dict(id=line["id"], text=line["text"], duration_s=round(dur, 3), sample_rate=sr,
-                    seed=int(voice.get("seed", 0)), mode=voice["mode"],
+        meta = dict(id=line["id"], text=line["text"], expect=line.get("expect", line["text"]),
+                    duration_s=round(dur, 3), sample_rate=sr, seed=seed, mode=voice["mode"],
                     synth_s=round(synth_s, 2), rtf=round(synth_s / dur, 3), load_s=round(load_s, 2))
         json.dump(meta, open(out / f"{line['id']}.json", "w"), indent=2)
         print(f"{line['id']}: {dur:.2f}s audio in {synth_s:.1f}s (RTF {synth_s/dur:.2f})", file=sys.stderr)

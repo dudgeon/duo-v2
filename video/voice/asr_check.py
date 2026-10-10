@@ -2,7 +2,7 @@
 """Check TTS WAVs against expected text with parakeet-mlx.
 Usage (from video/voice/): .venv/bin/python -I asr_check.py <dir-with-wavs-and-json> [id ...]
 Reads <id>.json (needs "text"), writes <id>.asr.json. Exit 1 if any line fails.
-Pass: WER <= 0.05, no content word missing/added, 2 <= words/sec <= 3.5, no internal gap > 1.5 s.
+Pass: WER <= 0.05, no content word missing/added, 2 <= words/sec <= DUO_MAX_WPS (default 4.0), no internal gap > 1.5 s.
 """
 import json, os, re, sys
 from pathlib import Path
@@ -24,6 +24,7 @@ def num_words(n):
 
 def norm(text):
     t = text.lower().replace("&", " and ").replace("%", " percent")
+    t = re.sub(r"(?<=[a-z0-9])\.(?=[a-z0-9])", " dot ", t)  # "prd.md" is said "prd dot md"
     t = re.sub(r"(\d+)", lambda m: " " + num_words(int(m.group(1))) + " ", t)
     t = re.sub(r"[^a-z' ]", " ", t.replace("-", " ")).replace("'", "")
     return t.split()
@@ -76,7 +77,7 @@ def main(d, ids):
         meta = json.load(open(jp)); wav = jp.with_suffix(".wav")
         dur = sf.info(wav).duration
         words = words_from(model.transcribe(wav))
-        ref, hyp = norm(meta["text"]), canon(norm(" ".join(w["word"] for w in words)))
+        ref, hyp = canon(norm(meta.get("expect", meta["text"]))), canon(norm(" ".join(w["word"] for w in words)))
         errs, miss, extra = edit_ops(ref, hyp)
         wer = errs / max(1, len(ref))
         cmiss = [w for w in miss if w not in STOP]; cextra = [w for w in extra if w not in STOP]
@@ -88,9 +89,10 @@ def main(d, ids):
         reasons = []
         if wer > 0.05: reasons.append(f"WER {wer:.3f}")
         if cmiss or cextra: reasons.append(f"content words missing {cmiss} / added {cextra}")
-        if not 2 <= wps <= 3.5: reasons.append(f"words/sec {wps:.2f} outside 2-3.5")
+        max_wps = float(os.environ.get("DUO_MAX_WPS", "4.0"))
+        if not 2 <= wps <= max_wps: reasons.append(f"words/sec {wps:.2f} outside 2-{max_wps}")
         if gaps and max(gaps) > 1.5: reasons.append(f"internal silence {max(gaps)}s")
-        out = dict(id=meta["id"], expected=meta["text"], heard=" ".join(w["word"] for w in words), wer=round(wer, 4),
+        out = dict(id=meta["id"], expected=meta.get("expect", meta["text"]), seed=meta.get("seed"), heard=" ".join(w["word"] for w in words), wer=round(wer, 4),
                    words_per_sec=round(wps, 2), leading_silence_s=round(lead, 2), trailing_silence_s=round(trail, 2),
                    max_internal_gap_s=max(gaps) if gaps else 0, missing_content=cmiss, added_content=cextra,
                    duration_s=round(dur, 2), words=words, passed=not reasons, fail_reasons=reasons)

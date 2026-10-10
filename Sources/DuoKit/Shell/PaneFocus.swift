@@ -27,6 +27,8 @@ extension View {
     /// The active-pane rule over this pane's top edge.
     func paneFocusRule(_ pane: DuoPane, onConsole: Bool = false) -> some View {
         overlay(alignment: .top) { PaneFocusRule(pane: pane, onConsole: onConsole) }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("video.pane.\(pane.rawValue)")   // anchors: the video camera's fixed target (H2)
     }
 }
 

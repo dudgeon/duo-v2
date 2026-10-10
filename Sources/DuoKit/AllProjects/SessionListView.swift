@@ -34,11 +34,13 @@ struct SessionListPane: View {
                             // N1 with the column hidden: the line opens into the rows themselves.
                             if !list.needsYou.isEmpty {
                                 SessionListSectionLabel(text: "Needs you", count: list.needsYou.count, needsYou: true)
+                                    .accessibilityIdentifier("video.needs-you-header")
                                 ForEach(list.needsYou) { r in SessionListRow(row: r, twoLine: twoLine) }
                             }
                         } else if !list.needsYou.isEmpty {
                             NeedsYouLine(count: list.needsYou.count, first: list.needsYou[0].id)
                                 .padding(.top, 8)
+                                .accessibilityIdentifier("video.needs-you-line")
                         }
                         ForEach(list.sections) { s in
                             SessionListSectionLabel(text: s.title, count: s.id == "open" ? s.rows.count : nil)

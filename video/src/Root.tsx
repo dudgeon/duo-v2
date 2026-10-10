@@ -1,21 +1,26 @@
 import {Composition, staticFile} from 'remotion';
-import {M0, type Timeline} from './scenes/M0';
+import {Film, type FilmTimeline} from './scenes/Film';
+import tokens from '../style/tokens.json';
+import {WallpaperSvg} from './lib/Desk';
 
-const FPS = 30;
-
-// The timeline is written by build.mjs; the composition's length comes from it.
+// build.mjs writes build/public/timeline.json; the film's length comes from it.
 export const Root = () => (
+  <>
+  {/* Rendered once as a still (at --scale=4) into build/public/wallpaper.png. */}
+  <Composition id="Wallpaper" component={() => <WallpaperSvg w={tokens.frame.width} h={tokens.frame.height} />}
+    width={tokens.frame.width} height={tokens.frame.height} fps={tokens.frame.fps} durationInFrames={1} />
   <Composition
-    id="M0"
-    component={M0}
-    width={1920}
-    height={1080}
-    fps={FPS}
-    durationInFrames={FPS * 20}
-    defaultProps={{timeline: null as Timeline | null}}
+    id="Intro"
+    component={Film}
+    width={tokens.frame.width}
+    height={tokens.frame.height}
+    fps={tokens.frame.fps}
+    durationInFrames={tokens.frame.fps * 10}
+    defaultProps={{timeline: null as FilmTimeline | null}}
     calculateMetadata={async () => {
-      const timeline: Timeline = await fetch(staticFile('timeline.json')).then((r) => r.json());
-      return {durationInFrames: Math.ceil(timeline.duration * FPS), props: {timeline}};
+      const timeline: FilmTimeline = await fetch(staticFile('timeline.json')).then((r) => r.json());
+      return {durationInFrames: timeline.frames, props: {timeline}};
     }}
   />
+  </>
 );

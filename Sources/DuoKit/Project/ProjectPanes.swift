@@ -650,9 +650,11 @@ struct RightPane: View {
                     HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
                     PickerBar()
                 }
+                .accessibilityIdentifier("video.right.document")
             } else if let path = model.rightTab, AppModel.isDeck(path), let file = model.liveFile(path) {
                 // A PowerPoint deck: drawn, with its slide and the shape picker (DL-125).
                 DeckView(viewer: model.deckViewer, path: path, file: file)
+                    .accessibilityIdentifier("video.right.document")
             } else if let path = model.rightTab, AppModel.isWordViewable(path), let file = model.liveFile(path) {
                 // A Word document: drawn read only with its comments and tracked changes (DL-162).
                 DocxView(viewer: model.docxViewer, path: path, file: file)
@@ -667,6 +669,7 @@ struct RightPane: View {
                     DocumentEditorView(editor: model.editor, file: file)
                 }
                 .modifier(NoticeMotion(key: DocumentStateBar.key(model)))
+                .accessibilityIdentifier("video.right.document")
             } else if model.rightTab == "Project" || model.rightTab == nil, let own = model.projectFile, let file = model.liveFile(own) {
                 // The Project tab is the project's own file (DL-60).
                 VStack(spacing: 0) {
@@ -674,6 +677,7 @@ struct RightPane: View {
                     DocumentEditorView(editor: model.editor, file: file)
                 }
                 .modifier(NoticeMotion(key: DocumentStateBar.key(model)))
+                .accessibilityIdentifier("video.right.document")
             } else if let path = model.rightTab, path.contains(".") {
                 DocumentPlaceholder(path: path)
             } else if model.rightTab == "Project" || model.rightTab == nil, let p = model.currentProject, p.kind == "folder" {

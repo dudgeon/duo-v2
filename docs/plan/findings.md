@@ -3117,3 +3117,28 @@ Built to `chat-model-chip-handoff/` (the approved boards `chip` and `confirm`). 
 - **What M0 showed is still missing.**
   - In fixture mode the terminal is an empty dark pane (F-25), and `prd-v2.md` shows only its headings. A video fixture with real text (H3) and terminal replay (H4) are needed before the walkthrough looks like work.
   - `DuoChecks`: 1224 passed and 1 failed, "a process under a Duo terminal's shell is Duo's". That check fails when it runs from a session inside a Duo terminal, which is environmental and not from H1.
+
+## F-277 · The intro video's milestone 1: the script drives the build, the camera follows named anchors (DL-169, video/pipeline, 2026-10-10)
+
+- **`anchors:<json>` (H2).**
+  - The accessibility tree of a window drawn in the background is **empty** until Duo says an assistive client is present. `Anchors.write` sets `AXEnhancedUserInterface` and `AXManualAccessibility` on `NSApp` first. After that, `accessibilityFrame` is correct even though the window is never shown.
+  - SwiftUI's nodes answer by selector, not by casting to `NSAccessibilityProtocol`.
+  - Frames are given in window points with the origin at top left, the same as `--capture-window` PNGs.
+  - `video.*` identifiers mark the panes, the needs-you chip and line, the map and the document area. With them on, captures are byte-identical.
+  - The anchors action needs a `--capture` alongside, or the run never quits.
+- **`open(1)` doesn't hand its environment to the app.** Pass it with `open --env`.
+  - Scripted launches were still isolated, because a scripted flag gets a temporary support folder (F-113).
+  - Scripts that set `DUO_SUPPORT_DIR` on `open` itself never reached the app.
+- **The build.**
+  - **Parsing:** the script Doc's markdown export (`video/script.md`) is parsed into scenes, voiceover lines and the pronunciation table.
+  - **Shots:** `shots.json` gives each scene a fixture state and camera moves. Each move targets an anchor by identifier or label, and lands on a word of its line, timed by speech recognition.
+  - **Missing anchors:** a missing anchor fails the build, naming the anchor and the state.
+  - **Result:** 10 scenes and 28 lines, 2:24.
+- **The voice.**
+  - **Respelling backfired:** writing "Duo" as "DOO-oh" made Qwen3-TTS stumble ("Dou, OV2"); plain "Duo" is said right.
+  - **What the check compares:** the speech check compares against the written text, with the names it mishears mapped back.
+  - **Re-rolls:** a failed line is re-rolled with the next seed, up to four seeds.
+  - **Fast lines:** this voice reads some short lines at 3.8 to 4.2 words a second. The ceiling is now 4.0 words/s, because the check is for looping and truncation, not pace. A line just over is slowed with `atempo`, by 15% at most.
+- **Render time.**
+  - The wallpaper as a blurred SVG, redrawn at 4x on every frame, made a 2:24 film take **20 min**.
+  - Rendered once to a PNG (cached on its tokens), the whole build takes **2:28**.
