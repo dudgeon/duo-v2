@@ -1,0 +1,12 @@
+{
+  "$note": "The house voice (DL-169): candidate a, designed with Qwen3-TTS VoiceDesign and frozen as a reference clip. Every line is cloned from it with the Base model. Geoff, 2026-10-10: \"use voice a\" (first picked c, then changed after listening).",
+  "mode": "clone",
+  "ref_wav": "house/reference.wav",
+  "ref_text": "Duo is a Mac app for working with Claude Code across many pieces of work at once.",
+  "seed": 11,
+  "designed_from": {
+    "description": "A warm, calm, mid-pitched woman narrator in her thirties, unhurried but not slow, plain-spoken and friendly; a colleague showing you something useful, not an advert.",
+    "seed": 11,
+    "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16"
+  }
+}

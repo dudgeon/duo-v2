@@ -1,0 +1,7 @@
+{
+  "$note": "Tokens only the video uses. Edit here, then run python3 scripts/gen-video-tokens.py.",
+  "frame": {"width": 1920, "height": 1080, "fps": 30, "safe": 96},
+  "title": {"size": 120, "weight": 600, "tracking": -2, "subSize": 40},
+  "camera": {"hold": 1.2, "ease": "smootherstep", "zoomSpace": "log", "maxMagnification": 1.0},
+  "voice": {"gap": 0.35, "leadIn": 0.4}
+}

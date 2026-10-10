@@ -1,0 +1,21 @@
+{
+  "name": "duo-intro-video",
+  "private": true,
+  "description": "The Duo v2 intro video, rebuilt from the script, fresh app captures and TTS (DL-169)",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "studio": "remotion studio src/index.ts --public-dir=build/public",
+    "lint": "node lint.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.529",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.529"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "typescript": "7.0.2"
+  }
+}

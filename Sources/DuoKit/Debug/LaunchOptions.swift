@@ -5,6 +5,7 @@ import Foundation
 ///   Duo --state overview                       open in a target state
 ///   Duo --state overview --capture out.png     ...capture the content below the toolbar, then quit
 ///   Duo --capture-window out.png               capture the whole window (drawn; screencapture(1) only with DUO_SCREENCAPTURE=1)
+///   Duo --capture-scale 4 ...                  capture at 4 pixels per point, drawn at that size (default 2; or DUO_CAPTURE_SCALE)
 ///   Duo --fixture path/to/fixture.json         use another fixture file
 ///   Duo --left collapsed                       start with the left pane collapsed
 ///   Duo --window 1280x800                      fixture mode at another window size (DB-25; default 1440x900)
@@ -29,6 +30,9 @@ public struct LaunchOptions: Sendable {
     public var searchState: String?
     public var capturePath: String?
     public var captureWindowPath: String?
+    /// `--capture-scale N` (1–8, decimals ok) or `DUO_CAPTURE_SCALE`: the capture's pixels per point,
+    /// drawn at that scale (not upsampled). The flag wins; 2 is the default.
+    public var captureScale: Double = LaunchOptions.captureScale(arguments: CommandLine.arguments)
     public var collapseLeft = false
     /// `--window <w>x<h>`: the whole window's size for a fixture run (the design size otherwise).
     public var windowSize: CGSize?
@@ -42,6 +46,13 @@ public struct LaunchOptions: Sendable {
     public var capturing: Bool { capturePath != nil || captureWindowPath != nil }
     /// The design fixture is for target states, captures and the gallery; a plain launch is live (DL-82).
     public var usesFixture: Bool { state != nil || searchState != nil || fixturePath != nil || gallery || capturing || thenActions.isEmpty == false }
+
+    /// The capture scale from `--capture-scale`, else `DUO_CAPTURE_SCALE`, else 2; values outside 1–8 are ignored.
+    public static func captureScale(arguments: [String], environment: [String: String] = ProcessInfo.processInfo.environment) -> Double {
+        func valid(_ s: String?) -> Double? { s.flatMap(Double.init).flatMap { $0 >= 1 && $0 <= 8 ? $0 : nil } }
+        if let i = arguments.firstIndex(of: "--capture-scale"), i + 1 < arguments.count, let v = valid(arguments[i + 1]) { return v }
+        return valid(environment["DUO_CAPTURE_SCALE"]) ?? 2
+    }
 
     public init(arguments: [String] = CommandLine.arguments) {
         var it = arguments.dropFirst().makeIterator()
@@ -58,6 +69,7 @@ public struct LaunchOptions: Sendable {
                 state = s
             case "--capture": capturePath = it.next()
             case "--capture-window": captureWindowPath = it.next()
+            case "--capture-scale": _ = it.next()   // read by `captureScale(arguments:)`
             case "--left": collapseLeft = it.next() == "collapsed"
             case "--window":
                 let wh = (it.next() ?? "").split(separator: "x").compactMap { Double($0) }
