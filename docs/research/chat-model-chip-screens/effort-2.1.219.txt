@@ -1,0 +1,33 @@
+ ▐▛███▜▌   Claude Code v2.1.219
+▝▜█████▛▘  Sonnet 5 · API Usage Billing
+  ▘▘ ▝▝    ~/scratch/ws
+
+
+❯ /effort                                                                                           
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  Effort
+
+                   Faster                                                 Smarter
+                   ────────────────────▲──────────────────────┆──────────────────
+                   low     medium     high     xhigh      max       ultracode
+                                                                xhigh + workflows
+
+  ←/→ to adjust · Enter to confirm · Esc to cancel
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

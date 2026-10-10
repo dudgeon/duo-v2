@@ -1,0 +1,10 @@
+{
+  "$note": "Chat model chip, approved 2026-10-10 (DL-168). kind=board: parts of the console pane in chat, drawn on the Design canvas and exported as static HTML. Options B (a menu from the chip) and C (chips in the tab strip) were drawn and not chosen; they stay on the canvas only.",
+  "source": "https://claude.ai/artifact/RTgimxmSpPHxuUw4gMu7wJ",
+  "screens": [
+    {"file": "screens/chip.html", "board": "Main.dc.html", "kind": "board", "width": 680, "height": 1180, "decision": "DL-168",
+     "shows": "A: the effort and model chips at the right of the hint row (at rest, pointer over, after a switch, while Claude works, not known yet), and the /model card a click opens."},
+    {"file": "screens/confirm.html", "board": "Confirm.dc.html", "kind": "board", "width": 680, "height": 700, "decision": "DL-168",
+     "shows": "Claude Code's Switch model? as a card in the picker's frame, with its own words, keyed options, nothing pre-selected, and Cancel esc."}
+  ]
+}

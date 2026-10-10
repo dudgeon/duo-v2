@@ -1,0 +1,33 @@
+
+ ▐▛███▛█   Claude Code v2.1.296
+▝▜██████▀  Haiku 5.5 · API Usage Billing
+ ▝▝   ▝▝   ~/scratch/ws
+
+▎ Auto mode is now Claude Code's default permission mode.
+▎ Auto mode lets Claude handle permission prompts automatically. Claude checks each tool call for 
+▎ risky actions and prompt injection before executing, runs the ones it assesses as lower-risk, and 
+▎ blocks the rest.
+▎ https://code.claude.com/docs/en/permission-modes
+
+❯ hello                                                                                             
+
+⏺ ok
+
+✻ Sautéed for 0s · done 10:31 AM
+
+
+
+
+
+
+
+
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔ ◐ medium · /effort ▔
+   Switch model?
+   Your next response will be slower and use more tokens
+
+   This conversation is cached for the current model. Switching to Sonnet 5.5 means the full
+   history gets re-read on your next message.
+
+   ❯ 1. Yes, switch to Sonnet 5.5
+     2. No, go back

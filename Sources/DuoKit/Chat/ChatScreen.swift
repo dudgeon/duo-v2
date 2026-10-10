@@ -49,7 +49,15 @@ public struct ChatSignatures: Sendable, Equatable {
     public var modelTitle = #"^\s*Select model\s*$"#
     public var modelFooter = #"Enter to set as default · s to use this session only · Esc to cancel"#
     public var effortTitle = #"^\s*Effort\s*$"#
-    public var effortFooter = #"←/→ to adjust · Enter to confirm · s for this session only · Esc to cancel"#
+    /// 2.1.219's footer has no `s for this session only`, and its slider has an `ultracode` stop (DL-168).
+    public var effortFooter = #"←/→ to adjust · Enter to confirm(?: · s for this session only)? · Esc to cancel"#
+    public var effortSessionOnly = #"s for this session only"#
+    /// The levels the slider's `low … max` row names; `ultracode` (2.1.219) and `Tab to toggle` (2.1.296) are not levels.
+    public var effortLevels = ["low", "medium", "high", "xhigh", "max"]
+    /// "Switch model?" and 2.1.219's "Change effort level?", asked after a pick on a session with history (DL-168).
+    public var confirmTitle = #"^\s*(Switch model\?|Change effort level\?)\s*$"#
+    /// The effort the TUI draws: `◐ medium · /effort` in the input box's top rule (2.1.296) or at the right end of the footer (2.1.219).
+    public var effort = #"(\S) ([a-z]+) · /effort(?: ▔+)?\s*$"#
     /// Chat about this, Next and Submit in a question.
     public var chatAbout = "Chat about this"
     /// A row of the `/` command menu: `  ❯ /add-dir      Add a new working directory`.
@@ -148,9 +156,18 @@ public enum ChatPermissionMode: String, Sendable, Equatable {
     }
 }
 
-/// `/model` or `/effort` as its screen draws it (DL-143). Every word is Claude Code's own.
+/// The effort the TUI shows, glyph and word: `◐ medium`.
+public struct ChatEffort: Sendable, Equatable {
+    public var glyph: String
+    public var word: String
+    public init(glyph: String, word: String) { self.glyph = glyph; self.word = word }
+    public var text: String { glyph.isEmpty ? word : glyph + " " + word }
+}
+
+/// `/model` or `/effort` as its screen draws it (DL-143), or the question that follows a pick
+/// (`confirm`, DL-168). Every word is Claude Code's own.
 public struct ChatPicker: Sendable, Equatable {
-    public enum Kind: String, Sendable { case model, effort }
+    public enum Kind: String, Sendable { case model, effort, confirm }
     public struct Row: Sendable, Equatable {
         public var n: Int
         public var name: String
@@ -169,6 +186,11 @@ public struct ChatPicker: Sendable, Equatable {
     public var levels: [String] = []
     public var level: Int?
     public var ends: (String, String)?
+    /// `/effort`: the footer offers `s for this session only` (2.1.219's doesn't).
+    public var sessionOnly = true
+    /// `confirm`: the question ("Switch model?"), its first line, and the rest as the screen wraps it.
+    public var title = ""
+    public var heading = ""
 
     public init(kind: Kind) { self.kind = kind }
 
@@ -176,7 +198,8 @@ public struct ChatPicker: Sendable, Equatable {
 
     public static func == (a: ChatPicker, b: ChatPicker) -> Bool {
         a.kind == b.kind && a.description == b.description && a.rows == b.rows && a.footnotes == b.footnotes && a.levels == b.levels
-            && a.level == b.level && a.ends?.0 == b.ends?.0 && a.ends?.1 == b.ends?.1
+            && a.level == b.level && a.ends?.0 == b.ends?.0 && a.ends?.1 == b.ends?.1 && a.sessionOnly == b.sessionOnly
+            && a.title == b.title && a.heading == b.heading
     }
 }
 
@@ -232,6 +255,8 @@ public struct ChatScreen: Sendable, Equatable {
     public var commands: [(name: String, description: String, selected: Bool)] = []
     /// `/model` or `/effort` (DL-143).
     public var picker: ChatPicker?
+    /// The effort the TUI draws on an idle or busy screen; nil when it draws none (DL-168).
+    public var effort: ChatEffort?
 
     public var options: [ChatScreenRow] { rows.filter { $0.kind == .option } }
     public var other: ChatScreenRow? { rows.first { $0.kind == .other } }
@@ -247,7 +272,7 @@ public struct ChatScreen: Sendable, Equatable {
             && a.menu == b.menu && a.tabs.map(\.label) == b.tabs.map(\.label) && a.tabs.map(\.done) == b.tabs.map(\.done)
             && a.question == b.question && a.multi == b.multi && a.preview == b.preview && a.notes == b.notes && a.answers == b.answers
             && a.commands.map(\.name) == b.commands.map(\.name) && a.commands.map(\.selected) == b.commands.map(\.selected)
-            && a.picker == b.picker
+            && a.picker == b.picker && a.effort == b.effort
     }
 }
 
@@ -311,6 +336,8 @@ public enum ChatScreenReader {
             }
         }
         let busy = footer.chatIs(s.busy)
+        // Drawn for a few seconds after a start or a change (both versions), and in the rule over a dialog (2.1.296).
+        let effort = t.last { $0.chatIs(s.effort) }.flatMap { $0.chatMatch(s.effort) }.map { ChatEffort(glyph: $0[1] ?? "", word: $0[2] ?? "") }
         func find(_ p: String) -> Int { t.firstIndex { $0.chatIs(p) } ?? -1 }
 
         // Plan approval.
@@ -353,12 +380,14 @@ public enum ChatScreenReader {
         if let p = picker(t, s) {
             var r = ChatScreen(kind: .picker, sig: "picker:" + p.kind.rawValue)
             r.picker = p
+            r.effort = effort
             return r
         }
         if let input {
             var r = ChatScreen(kind: busy ? .busy : .idle, sig: "input")
             r.input = input
             r.mode = mode
+            r.effort = effort
             let above = rules.count >= 2 ? Array(t[0..<rules[rules.count - 2]]) : []
             r.status = above.reversed().first { $0.chatIs(s.status) }?.chatTrim
             // "Interrupted · What should Claude do instead?" under the last reply, with nothing after it.
@@ -399,6 +428,7 @@ public enum ChatScreenReader {
             switch p.kind {
             case .model: return numbered(p.rows.map { Optional($0.n) }) && p.rows.filter(\.cursor).count == 1
             case .effort: return p.levels.count >= 2 && p.level != nil
+            case .confirm: return numbered(p.rows.map { Optional($0.n) }) && p.rows.count >= 2 && p.rows.filter(\.cursor).count == 1 && !p.heading.isEmpty
             }
         default:
             return true
@@ -407,6 +437,7 @@ public enum ChatScreenReader {
 
     /// `/model`'s list or `/effort`'s slider, when its title and its footer are both on screen.
     static func picker(_ t: [String], _ s: ChatSignatures) -> ChatPicker? {
+        if let top = t.lastIndex(where: { $0.chatIs(s.confirmTitle) }), let p = confirm(t, top: top, s) { return p }
         if let top = t.lastIndex(where: { $0.chatIs(s.modelTitle) }), let end = t.indices.last(where: { $0 > top && t[$0].chatIs(s.modelFooter) }) {
             var p = ChatPicker(kind: .model)
             var description: [String] = []
@@ -435,7 +466,9 @@ public enum ChatScreenReader {
         if let top = t.lastIndex(where: { $0.chatIs(s.effortTitle) }), let end = t.indices.last(where: { $0 > top && t[$0].chatIs(s.effortFooter) }) {
             var p = ChatPicker(kind: .effort)
             let lines = Array(t[(top + 1)..<end])
-            guard let marker = lines.first(where: { $0.contains("▲") }), let labels = lines.last(where: { !$0.chatTrim.isEmpty && !$0.contains("▲") && !$0.contains("─") }) else { return nil }
+            // The row of level names: 2.1.219 puts `xhigh + workflows` under its `ultracode` stop, 2.1.296 `Tab to toggle` beside max.
+            guard let marker = lines.first(where: { $0.contains("▲") }), let labels = lines.first(where: { $0.chatIs(#"\blow\b.*\bmedium\b"#) }) else { return nil }
+            p.sessionOnly = t[end].chatIs(s.effortSessionOnly)
             if let ends = lines.first(where: { !$0.chatTrim.isEmpty && !$0.contains("▲") && $0 != labels })?.split(separator: " ", omittingEmptySubsequences: true), ends.count == 2 {
                 p.ends = (String(ends[0]), String(ends[1]))
             }
@@ -443,7 +476,7 @@ public enum ChatScreenReader {
             let at = marker.distance(from: marker.startIndex, to: marker.firstIndex(of: "▲")!)
             var col = 0, best = Int.max
             for word in labels.split(separator: " ", omittingEmptySubsequences: false) {
-                if !word.isEmpty {
+                if !word.isEmpty, s.effortLevels.contains(String(word)) {
                     let centre = col + word.count / 2
                     if abs(centre - at) < best { best = abs(centre - at); p.level = p.levels.count }
                     p.levels.append(String(word))
@@ -453,6 +486,26 @@ public enum ChatScreenReader {
             return p.levels.isEmpty ? nil : p
         }
         return nil
+    }
+
+    /// "Switch model?": its first line, the lines wrapped under it, and the numbered answers; the TUI's ❯ is a default, not a choice.
+    static func confirm(_ t: [String], top: Int, _ s: ChatSignatures) -> ChatPicker? {
+        var p = ChatPicker(kind: .confirm)
+        p.title = t[top].chatTrim
+        var body: [String] = []
+        for l in t[(top + 1)...] {
+            let x = l.chatTrim
+            if x.isEmpty { continue }
+            if let m = l.chatMatch(s.option) {
+                p.rows.append(ChatPicker.Row(n: Int(m[2] ?? "") ?? p.rows.count + 1, name: (m[4] ?? "").chatTrim, note: "", cursor: m[1] != nil, selected: false))
+            } else if p.rows.isEmpty {
+                body.append(x)
+            } else { break }
+        }
+        guard !p.rows.isEmpty, !body.isEmpty else { return nil }
+        p.heading = body[0]
+        p.description = body.dropFirst().joined(separator: " ")
+        return p
     }
 
     /// Numbered options from `from`, with wrapped labels joined and description lines kept as notes.

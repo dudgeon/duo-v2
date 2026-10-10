@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x700">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-168">
+<!--
+Switch model? (and 2.1.219's Change effort level?) as a card in the picker's frame
+APPROVED BOARD. Geoff, 2026-10-10 (DL-168). Exported from the Design canvas
+https://claude.ai/artifact/RTgimxmSpPHxuUw4gMu7wJ (board Confirm.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative;
+every model name, effort word, option and result line is read from Claude Code's screen, transcript or hooks at run time.
+-->
+<title>Duo · Chat model chip · Switch model? as a card</title>
+<style>
+body{margin:0}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B636D}
+.who{font-size:12px;line-height:16px;color:#5B636D}
+.card{background:#FFFFFF;border-radius:14px 14px 14px 3px;padding:14px 18px 16px}
+.pick{background:#FFFFFF;border:1.5px solid #1F2328;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:20px;color:#1F2328;background:#FFFFFF;border:1px solid #8B939C;border-radius:8px;padding:5px 10px}
+.on{background:#E9ECEF;border-color:#1F2328}
+.key{flex:none;width:18px;height:18px;margin-top:1px;border:1px solid #C9CDD3;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:11px;line-height:16px;color:#5B636D;background:#F3F4F6}
+.btn{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;white-space:nowrap}
+.cap{color:#5B636D;font-size:12px;line-height:16px}
+</style>
+</head>
+<body>
+<div style="width: 680px; height: 700px; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+<div class="lbl">AFTER THIS SESSION ONLY OR SET AS DEFAULT, ON A SESSION WITH HISTORY [P]</div>
+<div style="margin-right: 36px; display: flex; flex-direction: column; gap: 4px">
+<div class="who">Claude · 11:29</div>
+<div class="card">Both drafts are in docs/prd-v2.md. The rollout section still needs the beta numbers.</div>
+</div>
+<div style="flex: 1"></div>
+<div class="pick">
+<div style="display: flex; align-items: center; gap: 8px"><span class="lbl" style="color: #1F2328">MODEL</span><span class="lbl">· SWITCH MODEL?</span><span style="margin-left: auto; font-size: 12px; line-height: 16px; color: #5B636D">Claude Code’s own question, answered with its keys</span></div>
+<div style="font-size: 13px; line-height: 20px; font-weight: 600">Your next response will be slower and use more tokens</div>
+<div style="font-size: 13px; line-height: 20px; color: #5B636D">This conversation is cached for the current model. Switching to Sonnet 5.5 means the full history gets re-read on your next message.</div>
+<div style="display: flex; flex-direction: column; gap: 5px">
+<div class="opt"><span class="key">1</span><span>Yes, switch to Sonnet 5.5</span></div>
+<div class="opt"><span class="key">2</span><span>No, go back</span></div>
+</div>
+<div style="display: flex; align-items: center; gap: 6px"><button type="button" class="btn">Cancel <span style="color: #5B636D">esc</span></button></div>
+</div>
+<div class="cap">Today chat has no reading for this screen, so the /model card drops to the terminal here on any session that has a conversation (probe on 2.1.296 and 2.1.219). Drawn as a review card in the picker’s frame: Claude Code’s own words, nothing pre-selected (DL-118), number keys answer. 2 goes back to the /model card. Esc keeps the model. /effort’s “Change effort level?” on 2.1.219 is the same card.</div>
+</div>
+</body>
+</html>

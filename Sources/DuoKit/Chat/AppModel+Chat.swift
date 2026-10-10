@@ -25,6 +25,9 @@ extension AppModel {
         if answering { words.removeFirst() }
         let moding = !answering && words.first == "mode"
         if moding { words.removeFirst() }
+        // DL-168: the chips' verbs, `model` and `effort`.
+        let chipping = !answering && !moding && (words.first == "model" || words.first == "effort") ? words.first : nil
+        if chipping != nil { words.removeFirst() }
         let verbs: Set<String> = ["on", "off", "toggle"]
         // The id comes first when given; the session on screen otherwise.
         var key = visibleSessionId
@@ -40,6 +43,14 @@ extension AppModel {
             guard let option = words.first else { return done(.fail(usage)) }
             guard let chat = chats.existing(key) ?? fixtureChats[key] else { return done(.fail("\(name) has no chat yet: open it in Duo first")) }
             return chatAnswer(chat, option: option, sessionOnly: inv.has("session-only"), done)
+        }
+        if let chip = chipping {
+            guard let chat = chats.existing(key) ?? fixtureChats[key] else { return done(.fail("\(name) has no chat yet: open it in Duo first")) }
+            Task {
+                let r = await chat.openPicker(chip == "model" ? .model : .effort)
+                done(r.ok ? .ok("Sent /\(chip) to \(name)'s Claude Code, as the chip does; its card is up.") : .fail("Nothing sent: \(r.why ?? "refused")."))
+            }
+            return
         }
         if moding {
             guard let chat = chats.existing(key) ?? fixtureChats[key] else { return done(.fail("\(name) has no chat yet: open it in Duo first")) }
@@ -91,6 +102,14 @@ extension AppModel {
         }
         let finish: ChatSession.PickerFinish = sessionOnly ? .sessionOnly : .confirm
         switch p.kind {
+        case .confirm:
+            guard let n = Int(option), let row = p.rows.first(where: { $0.n == n }) else {
+                return done(.fail("there's no option \(option): \(p.rows.map { "\($0.n). \($0.name)" }.joined(separator: ", ")), or cancel"))
+            }
+            Task {
+                let r = await chat.confirmAnswer(n)
+                done(r.ok ? .ok("Answered \(p.title) with \(n) (\(row.name)), after checking it was still up.") : .fail("Nothing more sent: \(r.why ?? "refused")."))
+            }
         case .model:
             guard let n = Int(option), let row = p.rows.first(where: { $0.n == n }) else {
                 return done(.fail("there's no option \(option): \(p.rows.map { "\($0.n). \($0.name)" }.joined(separator: ", "))"))

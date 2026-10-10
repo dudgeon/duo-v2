@@ -71,6 +71,12 @@ extension ChatSession {
         let up = String(UnicodeScalar(NSUpArrowFunctionKey)!), down = String(UnicodeScalar(NSDownArrowFunctionKey)!)
         let left = String(UnicodeScalar(NSLeftArrowFunctionKey)!), right = String(UnicodeScalar(NSRightArrowFunctionKey)!)
         if escape { Task { await pickerFinish(.cancel) }; return true }
+        // Switch model?'s ❯ is the TUI's default, not a choice: only a number answers it (DL-168).
+        if p.kind == .confirm {
+            guard let n = Int(chars), p.rows.contains(where: { $0.n == n }) else { return false }
+            Task { await confirmAnswer(n) }
+            return true
+        }
         switch chars {
         case "\r": Task { await pickerFinish(.confirm) }
         case "s": Task { await pickerFinish(.sessionOnly) }
@@ -197,6 +203,19 @@ extension ChatSession {
     }
 
     public enum PickerFinish: Sendable { case confirm, sessionOnly, cancel }
+
+    /// An answer to Switch model? / Change effort level? (DL-168): its number, after re-reading that the same
+    /// question is up. A number picks at once in the TUI; if the screen still shows the question, ⏎ takes the row the number moved to.
+    public func confirmAnswer(_ n: Int) async -> ChatAnswerResult {
+        guard let p = pickerCheck(.confirm) else { return finish(.refused("Claude Code’s question isn’t up any more")) }
+        guard p.rows.contains(where: { $0.n == n }) else { return .refused("there's no option \(n)") }
+        let title = p.title
+        terminal?.sendKeys(String(n))
+        await pause()
+        let s = reread()
+        if let q = s.picker, q.kind == .confirm, q.title == title, q.rows.first(where: { $0.cursor })?.n == n { _ = await press(.enter) }
+        return .done
+    }
 
     /// Stop (esc) while Claude works.
     public func interrupt() async {

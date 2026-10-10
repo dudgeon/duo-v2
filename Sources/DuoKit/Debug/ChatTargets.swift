@@ -20,13 +20,15 @@ public enum ChatTargets {
                                             "slash-output", "slash-context", "slash-model-card", "slash-effort-card", "slash-fallback-named", "slash-menu",
                                             // chat-paste-handoff (DL-161): pictures in the composer and your bubble, and why one wasn't taken.
                                             "paste-picture", "paste-adding", "paste-sent", "paste-edges", "paste-failed", "paste-keys",
-                                            "paste-text", "paste-text-open", "paste-huge"]
+                                            "paste-text", "paste-text-open", "paste-huge",
+                                            // chat-model-chip-handoff (DL-168): the chips at rest, under the pointer, after a switch, while Claude works, not known; the /model card; Switch model?.
+                                            "chip-rest", "chip-hover", "chip-card", "chip-after", "chip-working", "chip-unknown", "chip-confirm"]
     nonisolated public static let screens = boards.map { "chat-" + $0 }
 
     public static func folder(_ board: String) -> URL? {
         if let r = Bundle.main.url(forResource: "chat-fixtures", withExtension: nil) { return r.appending(path: board) }
         var dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : board.hasPrefix("slash-") ? "chat-slash-handoff" : board.hasPrefix("paste-") ? "chat-paste-handoff" : "chat-mode-handoff"
+        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : board.hasPrefix("slash-") ? "chat-slash-handoff" : board.hasPrefix("paste-") ? "chat-paste-handoff" : board.hasPrefix("chip-") ? "chat-model-chip-handoff" : "chat-mode-handoff"
         for _ in 0..<6 {
             let c = dir.appending(path: "docs/design/\(handoff)/fixture-chat/\(board)")
             if FileManager.default.fileExists(atPath: c.path) { return c }
@@ -80,6 +82,7 @@ public enum ChatTargets {
             chat.ui.heldTokens.append(token)
         }
         if let h = meta["hoverPicture"] as? Int, h < chat.ui.attachedTokens.count { chat.ui.hoveredPicture = chat.ui.attachedTokens[h] }
+        chat.ui.hoverChip = meta["hoverChip"] as? String
         chat.ui.addingPicture = meta["adding"] as? Bool == true
         chat.ui.pasteNotice = (meta["notice"] as? String).flatMap { $0 == "keysMoved" ? .keysMoved : .notTaken }
         for spec in meta["bubblePictures"] as? [[String: Any]] ?? [] {

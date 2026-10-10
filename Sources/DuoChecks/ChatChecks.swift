@@ -898,4 +898,6 @@ func spikeScreen(_ name: String) -> String {
         check(ComposerProbe.sent([.block(t), .open(0), .edit(0, "edited\ntext")]) == "edited\ntext\n" && ComposerProbe.sent([.block(t), .open(0), .edit(0, "edited"), .fold(0), .type("!")]) == "edited\n!", "an opened block's edits are what's sent, and folding keeps them")
         check(ComposerProbe.sent([.block(t), .type("\n"), .block(u)]) == t + "\n\n" + u + "\n" && ComposerProbe.sent([.block(t), .block(u), .type("x")]) == t + "\n" + u + "\nx", "two blocks, in order")
     }
+
+    chatChipChecks()
 }

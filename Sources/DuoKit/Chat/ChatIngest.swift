@@ -194,10 +194,15 @@ public enum ChatIngest {
         if let cwd = e["cwd"] as? String, log.cwd == nil { log.cwd = cwd }
         let tool = e["tool_name"] as? String
         let input = e["tool_input"] as? ChatJSON ?? [:]
+        // PostToolUse, Stop and others carry the effort in use, which the TUI draws only for a moment (DL-168, F-275).
+        if let level = (e["effort"] as? ChatJSON)?["level"] as? String { chat?.effortFromHook(level) }
         switch name {
         case "UserPromptSubmit":
             let source = e["source"] as? String
             log.prompt(e["prompt"] as? String ?? "", time: time, fromHook: true, injected: source != nil && source != "user")
+        case "SessionStart":
+            // A new session's model before its first reply; a resumed one keeps what the transcript says (DL-168).
+            if log.model == nil, let id = e["model"] as? String { log.model = ChatModelName.display(id) }
         case "MessageDisplay":
             log.display(message: "\(e["message_id"] ?? "m")", delta: e["delta"] as? String ?? "", final: e["final"] as? Bool ?? false, time: time)
         case "PreToolUse":
@@ -244,11 +249,18 @@ public enum ChatIngest {
         if text.hasPrefix("<command-") {
             if let name = text.chatMatch(#"<command-name>\s*([^<\s]+)\s*</command-name>"#)?[1] {
                 let args = (text.chatMatch(#"<command-args>([\s\S]*?)</command-args>"#)?[1] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                // A chip sent it (DL-168): no bubble, the result line still shows.
+                let full = name.hasPrefix("/") ? name : "/" + name
+                if args.isEmpty, let i = log.quietCommands.firstIndex(where: { $0.name == full && $0.until > Date() }) {
+                    log.quietCommands.remove(at: i)
+                    return true
+                }
                 log.prompt((name.hasPrefix("/") ? name : "/" + name) + (args.isEmpty ? "" : " " + args), time: time, fromHook: false)
             }
             return true
         }
         if let out = text.chatMatch(#"^<local-command-stdout>([\s\S]*?)</local-command-stdout>"#)?[1] {
+            if let m = ChatModelName.fromResult(out) { log.model = m }   // the chip follows a /model result at once (DL-168)
             log.commandResult(out, time: time)
             return true
         }
@@ -303,9 +315,7 @@ public enum ChatIngest {
                 }
             }
         case "assistant":
-            if let m = message?["model"] as? String, let family = ["opus", "sonnet", "haiku", "fable"].first(where: { m.contains($0) }) {
-                if log.model != family.capitalized { log.model = family.capitalized }
-            }
+            if let id = message?["model"] as? String, let name = ChatModelName.display(id), log.model != name { log.model = name }
             for b in message?["content"] as? [ChatJSON] ?? [] {
                 switch b["type"] as? String {
                 case "text":
