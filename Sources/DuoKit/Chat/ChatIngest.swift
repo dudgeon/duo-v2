@@ -194,6 +194,8 @@ public enum ChatIngest {
         if let cwd = e["cwd"] as? String, log.cwd == nil { log.cwd = cwd }
         let tool = e["tool_name"] as? String
         let input = e["tool_input"] as? ChatJSON ?? [:]
+        // PostToolUse, Stop and others carry the effort in use, which the TUI draws only for a moment (DL-168, F-275).
+        if let level = (e["effort"] as? ChatJSON)?["level"] as? String { chat?.effortFromHook(level) }
         switch name {
         case "UserPromptSubmit":
             let source = e["source"] as? String

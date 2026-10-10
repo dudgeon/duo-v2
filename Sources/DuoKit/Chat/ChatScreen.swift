@@ -161,7 +161,7 @@ public struct ChatEffort: Sendable, Equatable {
     public var glyph: String
     public var word: String
     public init(glyph: String, word: String) { self.glyph = glyph; self.word = word }
-    public var text: String { glyph + " " + word }
+    public var text: String { glyph.isEmpty ? word : glyph + " " + word }
 }
 
 /// `/model` or `/effort` as its screen draws it (DL-143), or the question that follows a pick

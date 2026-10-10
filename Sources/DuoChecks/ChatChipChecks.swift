@@ -52,6 +52,12 @@ func chipPrompt(_ text: String, screen: String = "idle-2.1.296.txt") -> String {
     check(i296.kind == .idle && i296.effort == ChatEffort(glyph: "◐", word: "medium"), "2.1.296's idle screen: ◐ medium (\(i296.effort?.text ?? "-"))")
     check(i219.kind == .idle && i219.effort == ChatEffort(glyph: "●", word: "high"), "2.1.219's idle screen: ● high at the footer's right end (\(i219.effort?.text ?? "-"))")
     check(ChatScreenReader.read(spikeScreen("tour-2.1.291/01-markdown.txt")).effort == nil, "a screen that draws no effort has no chip")
+    // Between the TUI's brief draws, hooks name the effort (PostToolUse, Stop: `effort.level`).
+    let ch = ChatSession(key: "chip-hook", mode: .chat)
+    ChatIngest.hook(["hook_event_name": "Stop", "effort": ["level": "high"]], at: 1, into: ch.log, chat: ch)
+    let afterStop = ch.effort?.text
+    ChatIngest.hook(["hook_event_name": "PostToolUse", "tool_use_id": "t", "effort": ["level": "xhigh"]], at: 2, into: ch.log, chat: ch)
+    check(afterStop == "● high" && ch.effort?.text == "xhigh", "a hook's effort.level keeps the effort chip (● high; a level never drawn shows its word: \(ch.effort?.text ?? "-"))")
 
     // Switch model?, on both versions.
     for v in ["2.1.296", "2.1.219"] {

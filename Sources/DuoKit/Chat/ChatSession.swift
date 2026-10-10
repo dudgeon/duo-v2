@@ -136,6 +136,14 @@ public final class ChatSession {
     public private(set) var screen: ChatScreen = .starting
     /// The effort the TUI last drew (DL-168). Claude Code shows it for a few seconds after a start or a change (F-275), so it is kept until a screen draws another; nil until one has.
     public internal(set) var effort: ChatEffort?
+    /// The glyph the TUI drew for each level, so an effort learnt from a hook reads as the screen did (○ low, ◐ medium, ● high seen, F-275).
+    @ObservationIgnored var effortGlyphs = ["low": "○", "medium": "◐", "high": "●"]
+
+    /// The effort a hook payload names (`effort.level`): the chip follows it between the TUI's brief draws.
+    func effortFromHook(_ level: String) {
+        guard !level.isEmpty, effort?.word != level else { return }
+        effort = ChatEffort(glyph: effortGlyphs[level] ?? "", word: level)
+    }
     /// The installed CLI's version, and the table its screens are read with.
     public private(set) var cliVersion: String?
     public private(set) var signatures: ChatSignatures = .v2_1_291
@@ -338,7 +346,7 @@ public final class ChatSession {
     public func apply(_ s: ChatScreen) {
         let before = screen
         if s != before { screen = s }
-        if let e = s.effort, e != effort { effort = e }
+        if let e = s.effort, e != effort { effort = e; effortGlyphs[e.word] = e.glyph }
         // An interrupted reply fires no hook: busy → idle ends it (F-105).
         if before.kind == .busy, s.kind == .idle {
             log.endStreaming(interrupted: s.interrupted)
