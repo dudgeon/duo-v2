@@ -282,11 +282,30 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         watch(file)
     }
 
+    /// Files under `oldPath` were renamed or moved: the page's held states and the kept bases follow them.
+    func moveHeld(from oldPath: String, to newPath: String) {
+        // A path that no longer exists keeps its /private prefix under /tmp and /var, where one that
+        // does has it standardized away: compare both without it.
+        let plain = Self.plainPath, old = plain(oldPath), new = plain(newPath)
+        for k in kept.keys where plain(k.standardizedFileURL.path) == old || plain(k.standardizedFileURL.path).hasPrefix(old + "/") {
+            kept[URL(fileURLWithPath: new + plain(k.standardizedFileURL.path).dropFirst(old.count))] = kept.removeValue(forKey: k)
+        }
+        webView.callAsyncJavaScript("if (!window.duo) return 0; for (const id of duo.heldIds()) if (id === a || id.startsWith(a + '/')) duo.rename(id, b + id.slice(a.length)); return 1",
+                                    arguments: ["a": old, "b": new], in: nil, in: .page, completionHandler: nil)
+    }
+
     /// The id the page keeps a document's editor state under: the file's standardized path.
-    static func docID(_ file: URL) -> String { file.standardizedFileURL.path }
+    static func docID(_ file: URL) -> String { plainPath(file.standardizedFileURL.path) }
+
+    /// A path without the `/private` that standardizing keeps for a file that is gone but strips for one
+    /// that exists (/tmp, /var): a renamed file's old and new ids must be written the same way.
+    static func plainPath(_ p: String) -> String { p.hasPrefix("/private/") ? String(p.dropFirst("/private".count)) : p }
 
     /// A document's tab closed: the page lets go of its editor state, and nothing is kept for it.
     public func forget(_ file: URL) {
+        // Unsaved text left in a conflict, or because the file changed under it, is not dropped by a
+        // tab closing (DL-77): its state stays until the file is shown again.
+        guard kept[file] == nil || file == url else { return }
         kept[file] = nil
         webView.callAsyncJavaScript("return window.duo ? duo.close(id) : false", arguments: ["id": Self.docID(file)], in: nil, in: .page, completionHandler: nil)
     }
@@ -381,7 +400,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         }
         guard let body = m.body as? [String: Any], body["kind"] as? String == "selection" else { return }
         // A report from a page state that is no longer on screen (the page tags reports with the document it shows).
-        if let doc = body["doc"] as? String, let shown = url?.standardizedFileURL.path, doc != shown { return }
+        if let doc = body["doc"] as? String, let shown = url.map(Self.docID), doc != shown { return }
         let count = body["claudeChanges"] as? Int ?? 0, atCaret = body["atClaudeChange"] as? Bool == true, table = body["inTable"] as? Bool == true
         if count != claudeChanges || atCaret != atClaudeChange || table != inTable {
             claudeChanges = count; atClaudeChange = atCaret; inTable = table; onStateChange?()

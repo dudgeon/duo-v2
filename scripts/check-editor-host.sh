@@ -111,5 +111,41 @@ expect "held: back in A, the caret is where it was" $out/held.log has '"caret":7
 expect "held: back in A, the undo history is there" $out/held.log lacks '"depth":0'
 expect "held: Undo after coming back takes the typing out" $out/held.log has "editor-js: # A"
 
+# 10. Scroll position across A to B to A (DL-167 step 3)
+fresh scroll
+{ print '# A\n'; for i in {1..160}; do print "line $i of a long paragraph that wraps well past a short pane, to make the page tall\n"; done } > $A
+run scroll "${open}$A,wait:2,editor-js:const s=document.querySelector('.cm-scroller'); s.scrollTop=1500; return 'scrolled '+s.scrollTop+' vis='+document.visibilityState,wait:1,+open-file:$B,wait:3,+open-file:$A,freeze:3,editor-js:return 'back '+document.querySelector('.cm-scroller').scrollTop"
+sc=$(grep -o 'scrolled [0-9]*' $out/scroll.log | head -1 | grep -o '[0-9]*$'); bk=$(grep -o 'back [0-9]*' $out/scroll.log | head -1 | grep -o '[0-9]*$')
+total=$((total+1))
+if grep -q 'vis=hidden' $out/scroll.log; then
+  # A background window is hidden to the page: no animation frames, so CodeMirror never re-measures and
+  # a restored scroll cannot land. It is proved in a visible run (DUO_TEST_FOREGROUND=1, Geoff's OK first).
+  total=$((total-1)); echo "skip scroll: the page is hidden in a background run (needs DUO_TEST_FOREGROUND=1)"
+elif [[ -n $sc && -n $bk && $sc -gt 500 && $((bk - sc)) -ge -2 && $((bk - sc)) -le 2 ]]; then echo "ok   scroll: A is back at $bk (left at $sc)"
+else fails=$((fails+1)); echo "FAIL scroll: left at '$sc', back at '$bk'"; grep editor-js $out/scroll.log | sed 's/^/       | /'; fi
+
+# 11. Source mode per document, held across switches: on in A, off in B
+fresh source
+run source "${open}$A,wait:2,source:on,wait:1,editor-js:return 'A '+duo.source(),+open-file:$B,wait:3,editor-js:return 'B '+duo.source(),+open-file:$A,wait:3,editor-js:return 'A again '+duo.source(),+open-file:$B,wait:3,editor-js:return 'B again '+duo.source()"
+expect "source: A is in Source mode when turned on" $out/source.log has "editor-js: A true"
+expect "source: B is not" $out/source.log has "editor-js: B false"
+expect "source: A is still in Source mode when shown again" $out/source.log has "editor-js: A again true"
+expect "source: B is still not" $out/source.log has "editor-js: B again false"
+
+# 12. A tab closed while its held state has unsaved text (a conflict left behind): nothing is lost
+fresh closeheld
+run closeheld "${open}$A,wait:2,user-type:alpha=>alpha MINE,disk-write:alpha=>alpha THEIRS,wait:4,+open-file:$B,wait:3,close-doc:A.md,wait:2,+open-file:$A,wait:4,editor-js:return 'buffer '+JSON.stringify(duo.text()),doc-status"
+expect "closeheld: the file keeps the outside version" $A has "alpha THEIRS"
+expect "closeheld: and nothing of mine was written over it" $A lacks "MINE"
+expect "closeheld: my text is back in the buffer after closing the tab" $out/closeheld.log has "alpha MINE"
+expect "closeheld: still a conflict" $out/closeheld.log has "in conflict"
+
+# 13. A file renamed while its held state has unsaved text: the text follows the new name
+fresh renameheld
+run renameheld "${open}$A,wait:2,user-type:alpha=>alpha MINE,disk-write:alpha=>alpha THEIRS,wait:4,+open-file:$B,wait:3,rename:A.md=A2.md,wait:2,+open-file:$ws/work/garden/A2.md,wait:4,editor-js:return 'buffer '+JSON.stringify(duo.text()),doc-status"
+expect "renameheld: the renamed file has the outside version" $ws/work/garden/A2.md has "alpha THEIRS"
+expect "renameheld: and nothing of mine was written over it" $ws/work/garden/A2.md lacks "MINE"
+expect "renameheld: my text is in the buffer under the new name" $out/renameheld.log has "alpha MINE"
+
 echo "$((total-fails)) of $total checks passed (logs and captures in $out)"
 [[ $fails == 0 ]]

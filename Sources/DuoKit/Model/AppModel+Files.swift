@@ -242,6 +242,9 @@ extension AppModel {
         }
         if let tab = rightTab, tab == old || tab.hasPrefix(old + "/") { rightTab = new + tab.dropFirst(old.count) }
         if let sel = selectedFile, sel == old || sel.hasPrefix(old + "/") { selectedFile = new + sel.dropFirst(old.count) }
+        if let e = editorIfLoaded, let folder = projectFolder {
+            e.moveHeld(from: folder.appending(path: old).standardizedFileURL.path, to: folder.appending(path: new).standardizedFileURL.path)
+        }
         if let e = editorIfLoaded, let open = e.url, let folder = projectFolder {
             let oldURL = folder.appending(path: old).standardizedFileURL.path
             if open.standardizedFileURL.path == oldURL || open.standardizedFileURL.path.hasPrefix(oldURL + "/") {
