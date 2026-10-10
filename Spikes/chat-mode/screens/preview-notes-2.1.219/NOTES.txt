@@ -1,0 +1,3 @@
+preview question, 2.1.219, mock API (scenario askpreview), 100x34. 04-typed: n then "keep it short" in the notes field.
+Return there (05-enter-in-notes-notes-only) or Tab then Return (05-tab-then-enter-notes-only): Claude is told "(no option selected) notes: keep it short".
+Esc (05-esc-notes-kept) leaves the field with the notes kept and the cursor on the option; Return then (06-...) answers "Side by side" with the notes. 2.1.296 does the same.

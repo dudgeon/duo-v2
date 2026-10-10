@@ -1,0 +1,3 @@
+2.1.219 marks the selected row of the / menu by colour only (xterm 256-colour fg 153 on the selected row, 246 on the others);
+the text of menu-mo.txt and menu-mo-down.txt (after one Down) is identical, so a text reader cannot tell which row is selected.
+The menu is drawn under the input box, from column 0; 2.1.292 draws it above the box, indented, with a "❯ " on the selected row.

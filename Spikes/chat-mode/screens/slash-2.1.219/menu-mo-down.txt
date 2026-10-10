@@ -1,0 +1,33 @@
+ ▐▛███▜▌   Claude Code v2.1.219
+▝▜█████▛▘  claude-haiku-5-5 · API Usage Billing
+  ▘▘ ▝▝    /private/tmp/cm/scratch/ws
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ /mo 
+────────────────────────────────────────────────────────────────────────────────────────────────────
+/model                        Set the AI model for Claude Code (currently claude-haiku-5-5)
+/mobile                       Show QR code to download the Claude mobile app
+/memory                       Open a memory file in your editor
+/update-config                Use this skill to configure the Claude Code harness via
+                              settings.json. Automated behaviors ("from now on when X", "each t…
+/claude-api                   Reference for the Claude API / Anthropic SDK — model ids, pricing,
+                              params, streaming, tool use, MCP, agents, caching, token counting…
+/doctor                       Health-check the user's Claude Code setup and fix issues: diagnose
+                              installation health — what the `claude doctor` terminal diagnosti…
+/cd                           Move this session to a new working directory
+/effort                       Set effort level for model usage
+/fast                         Toggle fast mode (Opus 5)
+/status                       Show Claude Code status including version, model, account, API
+                              connectivity, and tool statuses
+/plan                         Enable plan mode or view the current session plan
+/agents                       (removed) Ask Claude to create/manage subagents, or edit
+                              .claude/agents/
+
+
+
+
+
+
+
+
