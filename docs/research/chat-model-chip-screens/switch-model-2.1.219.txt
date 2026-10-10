@@ -1,0 +1,33 @@
+ ▐▛███▜▌   Claude Code v2.1.219
+▝▜█████▛▘  claude-haiku-5-5 · API Usage Billing
+  ▘▘ ▝▝    ~/scratch/ws
+
+
+❯ hello                                                                                             
+
+⏺ ok
+
+✻ Churned for 0s
+
+❯ /model sonnet                                                                                     
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  Switch model?
+  Your next response will be slower and use more tokens
+
+  This conversation is cached for the current model. Switching to Sonnet 5 means the full history
+  gets re-read on your next message.
+
+  ❯ 1. Yes, switch to Sonnet 5
+    2. No, go back
+
+
+
+
+
+
+
+
+
+
+
