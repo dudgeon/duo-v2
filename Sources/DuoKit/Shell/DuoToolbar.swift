@@ -80,7 +80,7 @@ struct AllProjectsTitle: View {
         HStack(spacing: DuoSpace.gapToolbarOverview) {
             Text("All projects").duoText(.bodyEmphasis).foregroundStyle(DuoColor.text)
             // Nothing needs you: not drawn (handoff §8). The accent only ever means "needs you".
-            if c.needsYou > 0 { Count(state: .needsYou, text: "\(c.needsYou) need you") }
+            if c.needsYou > 0 { Count(state: .needsYou, text: "\(c.needsYou) need you").accessibilityIdentifier("video.needs-you-chip") }
             Count(state: .readyForReview, text: "\(c.readyForReview) to review")
             Count(state: .working, text: "\(c.working) working")
             Count(state: .idle, text: "\(c.idle) idle")
@@ -182,6 +182,7 @@ struct NeedsYouChip: View {
                 PeekView().environment(model)
             }
             .accessibilityLabel("\(count) sessions need you in other projects")
+            .accessibilityIdentifier("video.needs-you-chip")
             .transition(.opacity)
         }
     }

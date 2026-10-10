@@ -216,6 +216,7 @@ struct ProjectMapPane: View {
                 ArchivedRollup()
             }
             .scrollIndicators(.automatic)
+            .accessibilityIdentifier("video.map")
             // Arrow keys move between tiles, Enter opens the focused one (handoff §6.3).
             .focusable()
             .focusEffectDisabled()

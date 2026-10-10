@@ -827,6 +827,11 @@ public enum FixtureHarness {
             let f = parts.count > 1 ? parts[1].split(separator: "=", maxSplits: 1).map(String.init) : []
             model.dragging = nil; model.dropTarget = nil
             if let name = f.first { model.landedNote = f.count > 1 ? f[1] : "2 sessions moved in"; model.landed = name }
+        case "anchors":   // anchors:<path.json>: every named element's frame in window points (H2)
+            if parts.count > 1, let window = NSApp.windows.first(where: { $0.title == "Duo" }) {
+                do { try Anchors.write(window: window, to: URL(fileURLWithPath: parts[1])) }
+                catch { FileHandle.standardError.write(Data("anchors: failed: \(error.localizedDescription)\n".utf8)) }
+            }
         case "film", "filmw":   // film:<png prefix>:<ms>|<ms>|…: frames at those offsets from now, <prefix>-<ms>.png (Q-77); filmw: with the toolbar
             let f = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
             guard f.count == 2, let window = NSApp.windows.first(where: { $0.title == "Duo" }) else { break }
