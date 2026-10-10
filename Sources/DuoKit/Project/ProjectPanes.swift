@@ -892,6 +892,12 @@ struct DocumentPlaceholder: View {
                         } else {
                             Text(section).duoText(.title).padding(.top, i == 0 ? 0 : 10)
                         }
+                        // Demo text only when a video fixture supplies it (`focusDocument.markdownFile`).
+                        if let text = doc.body?[section], text.isEmpty == false {
+                            Text(text).duoText(.body).foregroundStyle(DuoColor.text2)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
                 }
             }

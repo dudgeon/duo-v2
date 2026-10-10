@@ -1,0 +1,708 @@
+{
+  "$note": "Sample data shown on every reference screen. From the design brief §6 plus the group and thread drawn on the canvas. For previews and tests only; this is not a schema.",
+  "now": "2026-10-03T09:40:00",
+  "user": "Geoff",
+  "topics": [
+    "Payments",
+    "Growth",
+    "Platform"
+  ],
+  "projects": [
+    {
+      "name": "checkout-redesign",
+      "topic": "Payments",
+      "path": "~/work/payments/checkout-redesign",
+      "goal": "Cut guest-checkout abandonment 15% by Q1",
+      "health": "On track",
+      "next": "Exec review Oct 14"
+    },
+    {
+      "name": "refunds-api-spec",
+      "topic": "Payments",
+      "path": "~/work/payments/refunds-api-spec",
+      "goal": "Ship refunds API spec to eng by Oct 10",
+      "health": "At risk",
+      "next": "Spec review Oct 8"
+    },
+    {
+      "name": "fraud-rules-review",
+      "topic": "Payments",
+      "path": "~/work/payments/fraud-rules-review",
+      "goal": "Audit and simplify fraud rules",
+      "health": "On track",
+      "next": null
+    },
+    {
+      "name": "onboarding-v3",
+      "topic": "Growth",
+      "path": "~/work/growth/onboarding-v3",
+      "goal": "Lift day-7 activation to 40%",
+      "health": "On track",
+      "next": "Copy freeze Oct 6"
+    },
+    {
+      "name": "pricing-experiment-q4",
+      "topic": "Growth",
+      "path": "~/work/growth/pricing-experiment-q4",
+      "goal": "Decide Q4 pricing test",
+      "health": "Done pending readout",
+      "next": "Readout Oct 7"
+    },
+    {
+      "name": "api-deprecations",
+      "topic": "Platform",
+      "path": "~/work/platform/api-deprecations",
+      "goal": "Comms plan for v1 API sunset",
+      "health": "Off track",
+      "next": null
+    },
+    {
+      "name": "home",
+      "topic": null,
+      "path": "~/work/home",
+      "isHome": true,
+      "goal": "Triage, dispatch, status, personal ops",
+      "health": null,
+      "next": "Weekly status due 4pm"
+    }
+  ],
+  "sessions": [
+    {
+      "name": "Morning triage",
+      "project": "home",
+      "state": "needsYou",
+      "wait": "1h",
+      "question": "5 new asks — route 3 to projects?",
+      "options": [
+        "Yes, route 3",
+        "No",
+        "Something else"
+      ]
+    },
+    {
+      "name": "Copy review pass 2",
+      "project": "onboarding-v3",
+      "state": "needsYou",
+      "wait": "12m",
+      "question": "Approve these 6 string changes?"
+    },
+    {
+      "name": "PRD v2 edits",
+      "project": "checkout-redesign",
+      "state": "needsYou",
+      "wait": "4m",
+      "forkOf": "Interview synth",
+      "question": "Two interviewees said saved cards are the main reason they abandon guest checkout; that conflicts with non-goal #2. Move saved cards into scope, or keep it out and log an open question?",
+      "options": [
+        "Move saved cards into scope",
+        "Keep it out and log an open question",
+        "Something else"
+      ],
+      "document": "docs/prd-v2.md"
+    },
+    {
+      "name": "Results readout",
+      "project": "pricing-experiment-q4",
+      "state": "readyForReview",
+      "summary": "wrote readout.md, 1.2k words"
+    },
+    {
+      "name": "Funnel SQL",
+      "project": "onboarding-v3",
+      "state": "readyForReview",
+      "summary": "3 files"
+    },
+    {
+      "name": "Teardown research",
+      "project": "checkout-redesign",
+      "state": "working",
+      "wait": "6m",
+      "summary": "Reading stripe.com/docs/checkout"
+    },
+    {
+      "name": "Edge-case matrix",
+      "project": "refunds-api-spec",
+      "state": "working",
+      "wait": "14m",
+      "summary": "Writing tables in spec.md"
+    },
+    {
+      "name": "Rule audit",
+      "project": "fraud-rules-review",
+      "state": "working",
+      "wait": "31m"
+    },
+    {
+      "name": "Weekly status draft",
+      "project": "home",
+      "state": "working",
+      "wait": "2m",
+      "summary": "due 4pm"
+    },
+    {
+      "name": "Interview synth",
+      "project": "checkout-redesign",
+      "state": "idle",
+      "wait": "2d"
+    },
+    {
+      "name": "quick q about tax rules",
+      "project": "checkout-redesign",
+      "state": "idle",
+      "wait": "3d"
+    }
+  ],
+  "otherIdleSessions": 12,
+  "groups": [
+    {
+      "name": "PRD v2",
+      "project": "checkout-redesign",
+      "sessions": [
+        "Interview synth",
+        "PRD v2 edits",
+        "quick q about tax rules"
+      ],
+      "threads": [
+        [
+          "Interview synth",
+          "PRD v2 edits"
+        ],
+        [
+          "quick q about tax rules"
+        ]
+      ]
+    }
+  ],
+  "counts": {
+    "needsYou": 3,
+    "readyForReview": 2,
+    "working": 4,
+    "idle": 14
+  },
+  "homeInbox": [
+    {
+      "title": "Legal wants a call re: saved cards",
+      "source": "Slack · Priya · 8:12",
+      "status": "suggested → checkout-redesign"
+    },
+    {
+      "title": "1:1 notes with Dana",
+      "source": "Granola · 9:00",
+      "status": "suggested → home/personal-ops"
+    },
+    {
+      "title": "Refund SLA question",
+      "status": "routed → refunds-api-spec, session started"
+    },
+    {
+      "title": "Q4 pricing numbers?",
+      "status": "routed → pricing-experiment-q4, resumed Results readout"
+    },
+    {
+      "title": "1 duplicate, ignored"
+    }
+  ],
+  "focusDocument": {
+    "project": "checkout-redesign",
+    "path": "docs/prd-v2.md",
+    "sections": [
+      "Problem",
+      "Goals",
+      "What we heard",
+      "Requirements",
+      "Non-goals",
+      "Open questions"
+    ],
+    "addedByClaude": [
+      "What we heard"
+    ],
+    "markdownFile": "prd-v2.md"
+  },
+  "projectFiles": {
+    "checkout-redesign": [
+      "PROJECT.md",
+      "docs/prd-v2.md"
+    ]
+  },
+  "search": {
+    "coverage": "Indexing: refunds-api-spec 212 of 340 files · sessions before Aug 12 not yet indexed",
+    "firstRun": "Building the index for the first time. Newest first: 2 of 7 projects done · sessions before Sep 20 not yet indexed.",
+    "recent": [
+      {
+        "query": "where did we land on saved cards",
+        "when": "today"
+      },
+      {
+        "query": "customers charged twice",
+        "when": "yesterday"
+      },
+      {
+        "query": "ERR_REFUND_409",
+        "when": "3d"
+      }
+    ],
+    "sendTarget": {
+      "allProjects": "Morning triage",
+      "insideProject": "PRD v2 edits"
+    },
+    "queries": [
+      {
+        "query": "where did we land on saved cards",
+        "mode": "meaning and words",
+        "currentProject": "checkout-redesign",
+        "screens": [
+          "search-overview",
+          "search-project",
+          "search-project-narrowed",
+          "search-typing",
+          "search-first-run",
+          "search-actions-file",
+          "search-actions-session",
+          "search-multi"
+        ],
+        "results": [
+          {
+            "project": "checkout-redesign",
+            "kind": "file",
+            "title": "docs/prd-v2.md",
+            "where": "L40–58",
+            "matchedBy": [
+              "meaning",
+              "words"
+            ],
+            "date": "today",
+            "snippet": "…two interviewees said saved cards are the main reason they abandon guest checkout. Decision: keep saved cards out of v2 scope; log as open question Q3…",
+            "matchedWords": [
+              "saved cards"
+            ],
+            "alsoIn": [
+              "research-notes/docs/prd-v2-copy.md"
+            ],
+            "passages": [
+              {
+                "where": "L40–58",
+                "heading": "What we heard",
+                "snippet": "…two interviewees said saved cards are the main reason they abandon guest checkout. Decision: keep saved cards out of v2 scope; log as open question Q3…"
+              },
+              {
+                "where": "L71–73",
+                "heading": "Non-goals",
+                "snippet": "…2. Saved cards and other stored payment methods…"
+              },
+              {
+                "where": "L88–90",
+                "heading": "Open questions",
+                "snippet": "…Q3. Saved cards: in scope for a later version?…"
+              }
+            ]
+          },
+          {
+            "project": "checkout-redesign",
+            "kind": "session",
+            "title": "PRD v2 edits",
+            "where": "turn 6",
+            "matchedBy": [
+              "meaning"
+            ],
+            "date": "4m",
+            "snippet": "You: Move saved cards into scope, or keep it out and log an open question? Claude: Keeping it out is consistent with non-goal #2…"
+          },
+          {
+            "project": "checkout-redesign",
+            "kind": "session",
+            "title": "Interview synth",
+            "where": "turn 11",
+            "matchedBy": [
+              "meaning"
+            ],
+            "date": "2d",
+            "snippet": "…P4 and P7 both mention re-typing card details on mobile as the moment they gave up…"
+          },
+          {
+            "project": "refunds-api-spec",
+            "kind": "file",
+            "title": "docs/edge-cases.md",
+            "where": "L112–130",
+            "matchedBy": [
+              "words"
+            ],
+            "date": "3d",
+            "snippet": "…refunds to a saved card versus the original payment method…",
+            "matchedWords": [
+              "saved card"
+            ]
+          },
+          {
+            "project": null,
+            "unfiled": true,
+            "kind": "session",
+            "title": "quick q about card vaulting",
+            "where": "turn 2",
+            "matchedBy": [
+              "meaning"
+            ],
+            "date": "3w",
+            "snippet": "…PCI scope for storing card tokens…"
+          }
+        ]
+      },
+      {
+        "query": "customers charged twice",
+        "mode": "meaning and words",
+        "screens": [
+          "search-none (with Kind: Memory and Date: Past week set, which hide all three)"
+        ],
+        "results": [
+          {
+            "project": "refunds-api-spec",
+            "kind": "file",
+            "title": "data/tickets.jsonl",
+            "where": "record 418",
+            "snippet": "duplicate billing after retry, two captures on one order"
+          },
+          {
+            "project": "refunds-api-spec",
+            "kind": "session",
+            "title": "Edge-case matrix",
+            "where": "turn 3"
+          },
+          {
+            "project": "fraud-rules-review",
+            "kind": "file",
+            "title": "notes/velocity-rules.md",
+            "where": "L9–20"
+          }
+        ]
+      },
+      {
+        "query": "ERR_REFUND_409",
+        "mode": "exact",
+        "screens": [
+          "search-exact"
+        ],
+        "results": [
+          {
+            "project": "refunds-api-spec",
+            "kind": "file",
+            "title": "spec/errors.md",
+            "where": "L77",
+            "matchedBy": [
+              "exact"
+            ],
+            "date": "5d"
+          },
+          {
+            "project": "refunds-api-spec",
+            "kind": "session",
+            "title": "Edge-case matrix",
+            "where": "turn 9",
+            "matchedBy": [
+              "exact"
+            ],
+            "date": "14m"
+          },
+          {
+            "project": "api-deprecations",
+            "kind": "file",
+            "title": "comms/v1-sunset.md",
+            "where": "L31",
+            "matchedBy": [
+              "exact"
+            ],
+            "date": "2w"
+          }
+        ]
+      }
+    ],
+    "similar": {
+      "source": {
+        "project": "checkout-redesign",
+        "kind": "file",
+        "title": "docs/prd-v2.md",
+        "where": "L40–58"
+      },
+      "returnsTo": "where did we land on saved cards",
+      "results": "results 2 to 5 of that query, in the same order",
+      "screens": [
+        "search-similar"
+      ]
+    },
+    "jump": {
+      "query": "prd",
+      "screens": [
+        "search-jump"
+      ],
+      "results": [
+        {
+          "kind": "group",
+          "title": "PRD v2",
+          "project": "checkout-redesign",
+          "sessions": 3,
+          "state": "needsYou",
+          "wait": "4m"
+        },
+        {
+          "kind": "session",
+          "title": "PRD v2 edits",
+          "project": "checkout-redesign",
+          "state": "needsYou",
+          "wait": "4m"
+        }
+      ],
+      "always": [
+        "New project “prd”",
+        "Search contents for “prd”"
+      ]
+    },
+    "archivedExample": {
+      "project": "checkout-redesign",
+      "kind": "session",
+      "title": "Kickoff deck notes",
+      "where": "turn 4",
+      "matchedBy": [
+        "words"
+      ],
+      "date": "4mo",
+      "archived": true,
+      "snippet": "…saved cards came up once in kickoff and was parked…"
+    },
+    "$additions": [
+      "search.queries[0].results[0].passages (count 3, and the L71–73 and L88–90 passages)",
+      "dates on the ERR_REFUND_409 results",
+      "search.recent",
+      "search.firstRun",
+      "search.archivedExample (used only on the sheet)",
+      "matchedWords (which words the snippets show in semibold)"
+    ]
+  },
+  "surfaces": {
+    "$note": "Sample data the surfaces screens add to the fixture's world. Not a schema. Grows with each slice.",
+    "$additions": [
+      "Twelve named idle sessions (the fixture said only '12 more idle')",
+      "idleMany: a larger set for the long list",
+      "consoleStates and shells: what the DB-3 and DB-4 screens show",
+      "api-deprecations gains two files and two idle sessions"
+    ],
+    "idleSessions": {
+      "$surface": "DB-1",
+      "count": 14,
+      "buckets": [
+        {
+          "label": "This week",
+          "sessions": [
+            {
+              "name": "Error catalogue",
+              "project": "refunds-api-spec",
+              "age": "1d"
+            },
+            {
+              "name": "Interview synth",
+              "project": "checkout-redesign",
+              "age": "2d",
+              "group": "PRD v2"
+            },
+            {
+              "name": "quick q about tax rules",
+              "project": "checkout-redesign",
+              "age": "3d",
+              "group": "PRD v2"
+            },
+            {
+              "name": "Monday triage",
+              "project": "home",
+              "age": "3d"
+            },
+            {
+              "name": "SLA wording",
+              "project": "refunds-api-spec",
+              "age": "4d"
+            }
+          ]
+        },
+        {
+          "label": "Last week",
+          "sessions": [
+            {
+              "name": "Copy review pass 1",
+              "project": "onboarding-v3",
+              "age": "5d"
+            },
+            {
+              "name": "Variant sizing",
+              "project": "pricing-experiment-q4",
+              "age": "6d"
+            },
+            {
+              "name": "Velocity rules notes",
+              "project": "fraud-rules-review",
+              "age": "7d"
+            },
+            {
+              "name": "Activation metric check",
+              "project": "onboarding-v3",
+              "age": "8d"
+            },
+            {
+              "name": "Readout outline",
+              "project": "pricing-experiment-q4",
+              "age": "9d"
+            }
+          ]
+        },
+        {
+          "label": "Earlier",
+          "sessions": [
+            {
+              "name": "v1 sunset comms",
+              "project": "api-deprecations",
+              "age": "12d"
+            },
+            {
+              "name": "Customer list pull",
+              "project": "api-deprecations",
+              "age": "2w"
+            },
+            {
+              "name": "quick q about card vaulting",
+              "project": null,
+              "unfiled": true,
+              "age": "3w"
+            },
+            {
+              "name": "Kickoff deck notes",
+              "project": "checkout-redesign",
+              "age": "4mo",
+              "archived": true
+            }
+          ]
+        }
+      ]
+    },
+    "idleMany": {
+      "$surface": "DB-1",
+      "count": 312,
+      "firstBuckets": [
+        {
+          "label": "This week",
+          "count": 9
+        },
+        {
+          "label": "Last week",
+          "count": 14
+        }
+      ],
+      "laterBuckets": "by month: September, August, …",
+      "awkwardRows": [
+        {
+          "name": "Synthesis of the eleven customer interviews about guest checkout and saved cards, second pass",
+          "project": "checkout-redesign",
+          "age": "1d",
+          "why": "a title too long for its row"
+        },
+        {
+          "name": "Refund policy rewrite",
+          "project": "refunds-api-spec",
+          "openIn": "Terminal",
+          "why": "live outside Duo, so not resumable (LR-8)"
+        },
+        {
+          "name": "scratch notes on webhooks",
+          "project": null,
+          "unfiled": true,
+          "age": "3d",
+          "why": "from a folder that is not a project"
+        }
+      ],
+      "otherRows": [
+        "Deprecation FAQ draft · api-deprecations · 4d",
+        "Chargeback rule 14 review · fraud-rules-review · 9d",
+        "Friday triage · home · 9d"
+      ]
+    },
+    "consoleStates": {
+      "$surface": "DB-3",
+      "none": {
+        "project": "api-deprecations",
+        "lastSession": "v1 sunset comms",
+        "files": [
+          "PROJECT.md",
+          "comms/v1-sunset.md"
+        ],
+        "path": "~/work/platform/api-deprecations",
+        "needYouElsewhere": 3
+      },
+      "ended": {
+        "project": "checkout-redesign",
+        "session": "Teardown research",
+        "at": "10:42",
+        "crashVariant": "exit 1"
+      },
+      "elsewhere": {
+        "session": "PRD v2 edits",
+        "app": "Terminal",
+        "since": "9:12"
+      },
+      "folderMissing": {
+        "path": "~/work/payments/refunds-api-spec",
+        "nearest": "~/work/payments"
+      },
+      "homeNone": {
+        "counts": {
+          "needsYou": 2,
+          "readyForReview": 2,
+          "working": 3,
+          "idle": 16
+        },
+        "why": "Morning triage and Weekly status draft are closed, so they count as idle and the Home pointer card is gone"
+      }
+    },
+    "shells": {
+      "$surface": "DB-4",
+      "project": "checkout-redesign",
+      "tabs": [
+        {
+          "kind": "session",
+          "name": "PRD v2 edits",
+          "state": "needsYou"
+        },
+        {
+          "kind": "session",
+          "name": "Teardown research",
+          "state": "working"
+        },
+        {
+          "kind": "shell",
+          "name": "zsh",
+          "selected": true
+        },
+        {
+          "kind": "shell",
+          "name": "./export-funnel.sh",
+          "running": true
+        }
+      ],
+      "transcript": [
+        "git status",
+        "ls"
+      ],
+      "untrackedFile": "docs/teardown-notes.md",
+      "promoted": {
+        "before": "claude",
+        "after": "New session"
+      },
+      "failed": {
+        "name": "./export-funnel.sh",
+        "exit": 1
+      },
+      "narrow": {
+        "window": "1280x800",
+        "visible": [
+          "PRD v2 edits",
+          "Teardown research",
+          "zsh"
+        ],
+        "hidden": 2
+      }
+    }
+  }
+}

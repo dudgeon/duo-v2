@@ -44,7 +44,7 @@ try {
 
   // 3. Captures
   const states = [...new Set(Object.values(shots).filter((s) => s.kind === 'desk').map((s) => s.state))];
-  const captures = captureStates(states, {repo, cache, pub, scale: style.capture.scale, force: args.has('--force-capture'), log});
+  const captures = captureStates(states, {repo, cache, pub, scale: style.capture.scale, fixture: style.capture.fixture, force: args.has('--force-capture'), log});
 
   // 4. Timeline
   const timeline = plan({scenes, shots, voiced, captures, style});

@@ -1,47 +1,207 @@
 {
   "$note": "One shot per scene in script.md, keyed by scene id (DL-169). Claude keeps these in step with the script's Shot: notes. kind 'desk' films a fixture state's window on the desk; 'card' is a title or stand-in on the wallpaper. A move's 'to' is 'wide', 'window', or {anchor: text in the element's label or identifier, pad, width}; it lands at the start of line N's word 'land' (or line N's start + dur).",
-  "S1": {"kind": "card", "standIn": true, "title": "The desk", "sub": "A cluttered Mac desktop, drawn from sample data (milestone 2)"},
-  "S2": {"kind": "card", "standIn": true, "title": "Many projects", "sub": "A cluttered desk per project (milestone 2)"},
+  "S1": {
+    "kind": "drawn",
+    "scene": "desk",
+    "events": {
+      "term1": {
+        "line": 1,
+        "word": "juggling",
+        "offset": -0.2
+      },
+      "term2": {
+        "line": 2,
+        "word": "every"
+      },
+      "markdown": {
+        "line": 2,
+        "word": "Markdown"
+      },
+      "finder": {
+        "line": 3,
+        "word": "Finder"
+      },
+      "hunt": {
+        "line": 3,
+        "word": "hunt"
+      },
+      "term3": {
+        "line": 3,
+        "word": "type",
+        "offset": -0.5
+      },
+      "path": {
+        "line": 3,
+        "word": "type"
+      },
+      "browser": {
+        "line": 4,
+        "word": "browser"
+      },
+      "ask": {
+        "line": 5,
+        "word": "third",
+        "offset": -0.3
+      }
+    }
+  },
+  "S2": {
+    "kind": "drawn",
+    "scene": "many",
+    "events": {
+      "pullStart": {
+        "line": 1,
+        "word": "multiply",
+        "offset": -0.2
+      },
+      "pullEnd": {
+        "line": 1,
+        "word": "project",
+        "offset": 0.6
+      },
+      "dim": {
+        "line": 3,
+        "word": "tomorrow"
+      }
+    }
+  },
   "S3": {
-    "kind": "desk", "state": "board-1440", "appear": true,
+    "kind": "desk",
+    "state": "board-1440",
+    "appear": true,
     "moves": [
-      {"to": "window", "line": 2, "dur": 2.6}
+      {
+        "to": "window",
+        "line": 2,
+        "dur": 2.6
+      }
     ]
   },
   "S4": {
-    "kind": "desk", "state": "list-1440",
+    "kind": "desk",
+    "state": "list-1440",
     "moves": [
-      {"to": {"anchor": "Teardown research", "width": 900, "align": "left"}, "line": 1, "land": "grouped", "dur": 2.4}
+      {
+        "to": {
+          "anchor": "Teardown research",
+          "width": 900,
+          "align": "left"
+        },
+        "line": 1,
+        "land": "grouped",
+        "dur": 2.4
+      }
     ]
   },
   "S5": {
-    "kind": "desk", "state": "chat-window",
+    "kind": "desk",
+    "state": "chat-window",
     "moves": [
-      {"to": {"anchor": "checkout-redesign", "width": 600, "align": "left"}, "line": 2, "land": "goal", "dur": 1.8},
-      {"to": {"anchor": "video.pane.left", "width": 480, "align": "left", "pad": 0}, "line": 3, "land": "left", "dur": 1.6},
-      {"to": {"anchor": "video.pane.middle", "width": 900}, "line": 3, "land": "middle", "dur": 1.6},
-      {"to": {"anchor": "video.pane.right", "width": 480, "align": "left", "pad": 0}, "line": 4, "land": "beside", "dur": 1.6}
+      {
+        "to": {
+          "anchor": "checkout-redesign",
+          "width": 600,
+          "align": "left"
+        },
+        "line": 2,
+        "land": "goal",
+        "dur": 1.8
+      },
+      {
+        "to": {
+          "anchor": "video.pane.left",
+          "width": 480,
+          "align": "left",
+          "pad": 0
+        },
+        "line": 3,
+        "land": "left",
+        "dur": 1.6
+      },
+      {
+        "to": {
+          "anchor": "video.pane.middle",
+          "width": 900
+        },
+        "line": 3,
+        "land": "middle",
+        "dur": 1.6
+      },
+      {
+        "to": {
+          "anchor": "video.pane.right",
+          "width": 480,
+          "align": "left",
+          "pad": 0
+        },
+        "line": 4,
+        "land": "beside",
+        "dur": 1.6
+      }
     ]
   },
   "S6": {
-    "kind": "desk", "state": "board-1440",
+    "kind": "desk",
+    "state": "board-1440",
     "moves": [
-      {"to": {"anchor": "video.needs-you-chip", "width": 520}, "line": 1, "land": "waiting", "dur": 2.0},
-      {"to": {"anchor": "Approve these 6 string changes?", "width": 600}, "line": 2, "land": "question", "dur": 2.0}
+      {
+        "to": {
+          "anchor": "video.needs-you-chip",
+          "width": 520
+        },
+        "line": 1,
+        "land": "waiting",
+        "dur": 2.0
+      },
+      {
+        "to": {
+          "anchor": "Approve these 6 string changes?",
+          "width": 600
+        },
+        "line": 2,
+        "land": "question",
+        "dur": 2.0
+      }
     ]
   },
   "S7": {
-    "kind": "desk", "state": "chat-window",
+    "kind": "desk",
+    "state": "chat-window",
     "moves": [
-      {"to": {"anchor": "What we heard", "width": 560}, "line": 2, "land": "highlighted", "dur": 2.2}
+      {
+        "to": {
+          "anchor": "What we heard",
+          "width": 560
+        },
+        "line": 2,
+        "land": "highlighted",
+        "dur": 2.2
+      }
     ]
   },
   "S8": {
-    "kind": "desk", "state": "search-overview",
+    "kind": "desk",
+    "state": "search-overview",
     "moves": [
-      {"to": {"anchor": "where did we land on saved cards", "width": 1000}, "line": 2, "land": "search", "dur": 2.2}
+      {
+        "to": {
+          "anchor": "where did we land on saved cards",
+          "width": 1000
+        },
+        "line": 2,
+        "land": "search",
+        "dur": 2.2
+      }
     ]
   },
-  "S9": {"kind": "desk", "state": "chat-window", "moves": []},
-  "S10": {"kind": "card", "title": "Duo v2", "sub": "Early beta preview · github.com/dudgeon/duo-v2 · Help › Report an Issue…"}
+  "S9": {
+    "kind": "desk",
+    "state": "chat-window",
+    "moves": []
+  },
+  "S10": {
+    "kind": "card",
+    "title": "Duo v2",
+    "sub": "Early beta preview \u00b7 github.com/dudgeon/duo-v2 \u00b7 Help \u203a Report an Issue\u2026"
+  }
 }

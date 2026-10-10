@@ -3,12 +3,14 @@ import {cameraAt, smootherstep, type Key} from '../lib/camera';
 import {DeskShot, type DeskLayout} from '../lib/Desk';
 import {Wallpaper} from '../lib/Desk';
 import tokens from '../../style/tokens.json';
+import {DeskScene, ManyDesksScene, type ClutterEvents} from '../lib/Clutter';
 
 type Line = {id: string; text: string; src: string; start: number; duration: number};
 type Scene = {
-  id: string; title: string; kind: 'desk' | 'card'; start: number; duration: number; lines: Line[];
+  id: string; title: string; kind: 'desk' | 'card' | 'drawn'; start: number; duration: number; lines: Line[];
   card?: {title: string; sub: string; standIn: boolean};
   capture?: {src: string; scale: number}; desk?: DeskLayout; camera?: Key[]; appear?: boolean;
+  drawn?: {scene: 'desk' | 'many'; events: ClutterEvents};
 };
 export type FilmTimeline = {fps: number; duration: number; frames: number; fade: number; scenes: Scene[]};
 
@@ -38,6 +40,8 @@ const SceneView = ({scene, fade}: {scene: Scene; fade: number}) => {
   return (
     <AbsoluteFill style={{opacity}}>
       {scene.kind === 'card' && scene.card && <Card card={scene.card} />}
+      {scene.kind === 'drawn' && scene.drawn?.scene === 'desk' && <DeskScene t={t} ev={scene.drawn.events} />}
+      {scene.kind === 'drawn' && scene.drawn?.scene === 'many' && <ManyDesksScene t={t} ev={scene.drawn.events} />}
       {scene.kind === 'desk' && scene.capture && scene.desk && scene.camera && (
         <DeskShot src={scene.capture.src} layout={scene.desk} scale={scene.capture.scale} camera={cameraAt(scene.camera, t)} appear={appear} />
       )}
