@@ -336,6 +336,8 @@ public enum ChatScreenReader {
             }
         }
         let busy = footer.chatIs(s.busy)
+        // Drawn for a few seconds after a start or a change (both versions), and in the rule over a dialog (2.1.296).
+        let effort = t.last { $0.chatIs(s.effort) }.flatMap { $0.chatMatch(s.effort) }.map { ChatEffort(glyph: $0[1] ?? "", word: $0[2] ?? "") }
         func find(_ p: String) -> Int { t.firstIndex { $0.chatIs(p) } ?? -1 }
 
         // Plan approval.
@@ -378,13 +380,14 @@ public enum ChatScreenReader {
         if let p = picker(t, s) {
             var r = ChatScreen(kind: .picker, sig: "picker:" + p.kind.rawValue)
             r.picker = p
+            r.effort = effort
             return r
         }
         if let input {
             var r = ChatScreen(kind: busy ? .busy : .idle, sig: "input")
             r.input = input
             r.mode = mode
-            r.effort = t.last { $0.chatIs(s.effort) }.flatMap { $0.chatMatch(s.effort) }.map { ChatEffort(glyph: $0[1] ?? "", word: $0[2] ?? "") }
+            r.effort = effort
             let above = rules.count >= 2 ? Array(t[0..<rules[rules.count - 2]]) : []
             r.status = above.reversed().first { $0.chatIs(s.status) }?.chatTrim
             // "Interrupted · What should Claude do instead?" under the last reply, with nothing after it.

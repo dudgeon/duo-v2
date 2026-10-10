@@ -247,6 +247,12 @@ public enum ChatIngest {
         if text.hasPrefix("<command-") {
             if let name = text.chatMatch(#"<command-name>\s*([^<\s]+)\s*</command-name>"#)?[1] {
                 let args = (text.chatMatch(#"<command-args>([\s\S]*?)</command-args>"#)?[1] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                // A chip sent it (DL-168): no bubble, the result line still shows.
+                let full = name.hasPrefix("/") ? name : "/" + name
+                if args.isEmpty, let i = log.quietCommands.firstIndex(where: { $0.name == full && $0.until > Date() }) {
+                    log.quietCommands.remove(at: i)
+                    return true
+                }
                 log.prompt((name.hasPrefix("/") ? name : "/" + name) + (args.isEmpty ? "" : " " + args), time: time, fromHook: false)
             }
             return true

@@ -123,6 +123,7 @@ extension ChatSession {
             return finish(.refused("\(command) didn’t appear in Claude’s prompt as sent"))
         }
         lastCommand = (command, Date())
+        log.quietCommands.append((command, Date().addingTimeInterval(120)))
         _ = await press(.enter)
         for _ in 0..<30 {
             if reread().kind == .picker { return .done }

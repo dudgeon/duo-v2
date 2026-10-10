@@ -134,7 +134,7 @@ public final class ChatSession {
     /// Set while a session in chat mode shows the terminal by itself or by a handover.
     public var fallback: ChatFallback?
     public private(set) var screen: ChatScreen = .starting
-    /// The effort the TUI last drew at its prompt (DL-168): kept while Claude works, when a screen may not draw it; nil when an idle prompt draws none.
+    /// The effort the TUI last drew (DL-168). Claude Code shows it for a few seconds after a start or a change (F-275), so it is kept until a screen draws another; nil until one has.
     public internal(set) var effort: ChatEffort?
     /// The installed CLI's version, and the table its screens are read with.
     public private(set) var cliVersion: String?
@@ -338,7 +338,7 @@ public final class ChatSession {
     public func apply(_ s: ChatScreen) {
         let before = screen
         if s != before { screen = s }
-        if s.kind == .idle || s.kind == .busy, s.effort != nil || s.kind == .idle, effort != s.effort { effort = s.effort }
+        if let e = s.effort, e != effort { effort = e }
         // An interrupted reply fires no hook: busy → idle ends it (F-105).
         if before.kind == .busy, s.kind == .idle {
             log.endStreaming(interrupted: s.interrupted)

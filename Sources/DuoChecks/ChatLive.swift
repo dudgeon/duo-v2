@@ -310,6 +310,55 @@ struct AskCase {
     spin(0.4)
     check(chat.reread().input == "", "leaving `/` clears what it typed into Claude's prompt")
 
+    // The model chip and the effort chip (DL-168): a click opens Claude Code's own /model, with no bubble.
+    _ = idle(); spin(0.5)
+    let bubblesBefore = chat.log.items.filter { if case .you = $0 { return true } else { return false } }.count
+    let opened = await_ { await chat.openPicker(.model) }
+    spin(0.3)
+    check(opened?.ok == true && chat.pickerUp && chat.screen.picker?.kind == .model, "the model chip's click opens /model's card (\(opened?.why ?? "ok"))")
+    if let p = chat.screen.picker, let row = p.rows.first(where: { !$0.selected && $0.name.hasPrefix("Sonnet") }) ?? p.rows.first(where: { !$0.selected && $0.n > 1 }) {
+        let want = row.note.components(separatedBy: " · ").first ?? row.name
+        let moved = await_ { await chat.pickerMove(to: row.n) }
+        let done = await_ { await chat.pickerFinish(.sessionOnly) }
+        check(moved?.ok == true && done?.ok == true, "This Session Only on \(row.name) (\(done?.why ?? "ok"))")
+        // A session with history asks "Switch model?" next: a card, not the terminal.
+        check(until(10) { chat.reread().picker?.kind == .confirm }, "Switch model? comes up (\(chat.screen.kind))")
+        check(chat.pickerUp && chat.showsChat && chat.screen.picker?.rows.count == 2, "as a card in chat, not the terminal (\(chat.screen.picker?.rows.map(\.name) ?? []))")
+        let answered = await_ { await chat.confirmAnswer(1) }
+        check(answered?.ok == true && until(15, { chat.reread().kind == .idle }), "1 answers it (\(answered?.why ?? "ok"))")
+        let followed = until(10) { chat.log.model == want }
+        check(followed, "the chip reads the result line: \(want) (\(chat.log.model ?? "-"))")
+        spin(1.5)
+        check(chat.log.items.filter { if case .you = $0 { return true } else { return false } }.count == bubblesBefore
+              && chat.log.items.contains { if case .result(let r) = $0 { return r.summary.contains("Set model to") } else { return false } },
+              "the click added no bubble; the result line shows")
+    } else { check(false, "/model's card has a row to switch to") }
+    _ = idle()
+    chat.fallback = nil
+    tui.sendKeys("typed in the terminal"); spin(0.6)
+    let refusedClick = await_ { await chat.openPicker(.model) }
+    chat.fallback = nil
+    check(refusedClick?.ok == false && chat.reread().input == "typed in the terminal", "text in Claude's prompt: the chip sends nothing (\(refusedClick?.why ?? "-"))")
+    for _ in 0..<40 { tui.sendKeys("\u{7f}") }; spin(0.5)
+    _ = idle()
+    let effortOpened = await_ { await chat.openPicker(.effort) }
+    spin(0.3)
+    check(effortOpened?.ok == true && chat.pickerUp && chat.screen.picker?.kind == .effort && chat.screen.picker?.levels.count == 5,
+          "the effort chip's click opens /effort's card with its five levels (\(chat.screen.picker?.levels ?? []), session-only \(chat.screen.picker?.sessionOnly ?? true))")
+    // A change of effort: 2.1.296 takes s (this session only); 2.1.219 has no such key, and asks "Change effort level?" with history.
+    if let p = chat.screen.picker, p.kind == .effort {
+        let low = await_ { await chat.pickerLevel(to: 0) }
+        let fin = await_ { await chat.pickerFinish(p.sessionOnly ? .sessionOnly : .confirm) }
+        check(low?.ok == true && fin?.ok == true, "the lowest level is chosen (\(fin?.why ?? "ok"))")
+        if until(4, { chat.reread().picker?.kind == .confirm }) {
+            check(chat.screen.picker?.title == "Change effort level?" && chat.pickerUp, "Change effort level? is a card too (\(chat.screen.picker?.heading ?? "-"))")
+            _ = await_ { await chat.confirmAnswer(1) }
+        }
+        _ = idle(); spin(1)
+        check(until(5) { chat.effort?.word == "low" }, "the effort chip follows the TUI's own redraw: \(chat.effort?.text ?? "none")")
+    }
+    chat.fallback = nil
+
     // Permissions and the plan (the tour's dialogs), answered from cards.
     func lastResult(after offset: Int) -> [String: Any]? {
         guard let url = ClaudeStorage.transcript(sessionId: id, cwd: ws), let data = try? Data(contentsOf: url), data.count > offset else { return nil }
