@@ -18,15 +18,15 @@
     "kind": "desk", "state": "chat-window",
     "moves": [
       {"to": {"anchor": "checkout-redesign", "width": 600, "align": "left"}, "line": 2, "land": "goal", "dur": 1.8},
-      {"to": {"anchor": "video.pane.left", "width": 700}, "line": 3, "land": "left", "dur": 1.6},
-      {"to": {"anchor": "video.pane.console", "width": 900}, "line": 3, "land": "middle", "dur": 1.6},
-      {"to": {"anchor": "video.pane.right", "width": 800}, "line": 4, "land": "beside", "dur": 1.6}
+      {"to": {"anchor": "video.pane.left", "width": 480, "align": "left", "pad": 0}, "line": 3, "land": "left", "dur": 1.6},
+      {"to": {"anchor": "video.pane.middle", "width": 900}, "line": 3, "land": "middle", "dur": 1.6},
+      {"to": {"anchor": "video.pane.right", "width": 480, "align": "left", "pad": 0}, "line": 4, "land": "beside", "dur": 1.6}
     ]
   },
   "S6": {
     "kind": "desk", "state": "board-1440",
     "moves": [
-      {"to": {"anchor": "need you", "width": 520}, "line": 1, "land": "waiting", "dur": 2.0},
+      {"to": {"anchor": "video.needs-you-chip", "width": 520}, "line": 1, "land": "waiting", "dur": 2.0},
       {"to": {"anchor": "Approve these 6 string changes?", "width": 600}, "line": 2, "land": "question", "dur": 2.0}
     ]
   },

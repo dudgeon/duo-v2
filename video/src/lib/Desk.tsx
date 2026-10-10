@@ -15,7 +15,7 @@ export const deskLayout = (winW: number, winH: number, aspect: number): DeskLayo
   return {deskW, deskH, winX: (deskW - winW) / 2, winY: (deskH - winH) / 2, winW, winH};
 };
 
-export const Wallpaper = ({w, h}: {w: number; h: number}) => {
+export const WallpaperSvg = ({w, h}: {w: number; h: number}) => {
   const wp = d.wallpaper;
   const blur = wp.blur * Math.max(w, h);
   return (
@@ -40,6 +40,11 @@ export const Wallpaper = ({w, h}: {w: number; h: number}) => {
     </svg>
   );
 };
+
+/** The wallpaper as drawn: a PNG rendered once from WallpaperSvg by the build (it's slow to blur per frame). */
+export const Wallpaper = ({w, h}: {w: number; h: number}) => (
+  <Img src={staticFile('wallpaper.png')} style={{position: 'absolute', left: 0, top: 0, width: w, height: h}} />
+);
 
 /** The desk at `scale` px per point. Place it with a transform; don't scale it up. */
 export const Desk = ({src, layout, scale, appear = 1}: {src: string; layout: DeskLayout; scale: number; appear?: number}) => {

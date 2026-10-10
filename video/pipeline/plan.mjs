@@ -14,13 +14,14 @@ function wordTime(line, phrase) {
 }
 
 function findAnchor(cap, text, state) {
-  const els = cap.anchors?.elements ?? [];
+  const els = cap.anchors?.anchors ?? [];
   const t = text.toLowerCase();
   const hit = els.find((e) => (e.identifier ?? '').toLowerCase() === t)
     ?? els.find((e) => (e.label ?? '').toLowerCase() === t)
     ?? els.find((e) => [e.label, e.value, e.identifier].some((v) => (v ?? '').toLowerCase().includes(t)));
   if (!hit) throw new BuildError(`anchor: "${text}" is not in ${state}'s anchors (${els.length} elements). Renamed or removed?`);
-  return hit.frame;
+  const f = hit.frame;
+  return {x: f.x, y: f.y, w: f.width, h: f.height};
 }
 
 export function plan({scenes, shots, voiced, captures, style}) {
@@ -59,7 +60,8 @@ export function plan({scenes, shots, voiced, captures, style}) {
         const w = Math.max(to.width ?? 600, minW, (f.w + 2 * (to.pad ?? 24)));
         const h = w / aspect;
         let x = to.align === 'left' ? f.x - (to.pad ?? 24) : f.x + f.w / 2 - w / 2;
-        let y = f.y + f.h / 2 - h / 2;
+        // An anchor taller than the frame (a pane) is framed from its top, where its content starts.
+        let y = f.h + 2 * (to.pad ?? 24) > h ? f.y - (to.pad ?? 24) / 2 : f.y + f.h / 2 - h / 2;
         x = Math.min(Math.max(x, 0), desk.winW - w); y = Math.min(Math.max(y, 0), desk.winH - h);
         return {x: x + desk.winX, y: y + desk.winY, w, h};
       };

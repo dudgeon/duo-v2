@@ -7,13 +7,13 @@
 //   node build.mjs --stills     no video: one still per scene, where its camera lands
 //   --force-voice / --force-capture  redo those stages anyway
 import {spawnSync} from 'node:child_process';
-import {mkdirSync, readFileSync, writeFileSync} from 'node:fs';
+import {copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {captureStates} from './pipeline/capture.mjs';
 import {plan} from './pipeline/plan.mjs';
 import {parseScript, said} from './pipeline/script.mjs';
-import {BuildError} from './pipeline/util.mjs';
+import {BuildError, sha} from './pipeline/util.mjs';
 import {voiceLines} from './pipeline/voice.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -51,18 +51,28 @@ try {
   writeFileSync(join(pub, 'timeline.json'), JSON.stringify(timeline, null, 2));
   log(`timeline: ${fmt(timeline.duration)} (${timeline.scenes.map((s) => `${s.id} ${s.duration.toFixed(1)}s`).join(', ')})`);
 
-  // 5. Lint
+  // 5. Wallpaper: rendered once per look, at the capture scale so it stays smooth at any zoom
+  const wpKey = sha(style.desk.wallpaper, style.frame, style.capture.scale);
+  const wpPng = join(cache, `wallpaper-${wpKey}.png`);
+  if (!existsSync(wpPng)) {
+    if (remotion('still', 'src/index.ts', 'Wallpaper', wpPng, `--scale=${style.capture.scale}`).status !== 0) throw new BuildError('wallpaper');
+    log(`wallpaper: rendered (${wpKey})`);
+  }
+  copyFileSync(wpPng, join(pub, 'wallpaper.png'));
+
+  // 6. Lint
   if (spawnSync('node', [join(here, 'lint.mjs')], {stdio: 'inherit'}).status !== 0) throw new BuildError('lint');
 
-  // 6. Stills: each scene where its camera has landed, or its middle
+  // 7. Stills: each scene where its camera has landed, or its middle
   const stillAt = (s) => s.start + Math.min(s.duration - 0.1, s.camera?.length > 1 ? s.camera[s.camera.length - 1].t + 0.3 : s.duration / 2);
   for (const s of timeline.scenes) {
     remotion('still', 'src/index.ts', 'Intro', join(out, `still-${s.id}.png`), `--frame=${Math.round(stillAt(s) * timeline.fps)}`);
   }
+  const n = timeline.scenes.length;
   spawnSync('/bin/sh', ['-c', `ffmpeg -v error -y ${timeline.scenes.map((s) => `-i "${join(out, `still-${s.id}.png`)}"`).join(' ')} ` +
-    `-filter_complex "${timeline.scenes.map((_, i) => `[${i}]scale=640:-1[s${i}]`).join(';')};${timeline.scenes.map((_, i) => `[s${i}]`).join('')}xstack=inputs=${timeline.scenes.length}:grid=4x${Math.ceil(timeline.scenes.length / 4)}:fill=black" "${join(out, 'stills.png')}"`]);
+    `-filter_complex "${timeline.scenes.map((_, i) => `[${i}]scale=640:360,setsar=1[s${i}]`).join(';')};${timeline.scenes.map((_, i) => `[s${i}]`).join('')}concat=n=${n}:v=1:a=0,tile=4x${Math.ceil(n / 4)}:padding=6" -frames:v 1 "${join(out, 'stills.png')}"`]);
 
-  // 7. Render
+  // 8. Render
   if (!args.has('--stills')) {
     const mp4 = join(out, args.has('--draft') ? 'intro-draft.mp4' : 'intro.mp4');
     if (remotion('render', 'src/index.ts', 'Intro', mp4, ...(args.has('--draft') ? ['--scale=0.5'] : [])).status !== 0) throw new BuildError('render');
