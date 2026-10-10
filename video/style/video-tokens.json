@@ -1,7 +1,83 @@
 {
   "$note": "Tokens only the video uses. Edit here, then run python3 scripts/gen-video-tokens.py.",
-  "frame": {"width": 1920, "height": 1080, "fps": 30, "safe": 96},
-  "title": {"size": 120, "weight": 600, "tracking": -2, "subSize": 40},
-  "camera": {"hold": 1.2, "ease": "smootherstep", "zoomSpace": "log", "maxMagnification": 1.0},
-  "voice": {"gap": 0.35, "leadIn": 0.4}
+  "frame": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "safe": 96
+  },
+  "title": {
+    "size": 120,
+    "weight": 600,
+    "tracking": -2,
+    "subSize": 40
+  },
+  "camera": {
+    "hold": 1.2,
+    "ease": "smootherstep",
+    "zoomSpace": "log",
+    "maxMagnification": 1.0
+  },
+  "voice": {
+    "gap": 0.35,
+    "leadIn": 0.4
+  },
+  "desk": {
+    "$note": "Wide shots show Duo's window on a Mac desktop (Geoff, 2026-10-10). The wallpaper is our own macOS-style look-alike, never Apple's image.",
+    "windowWidthShare": 0.78,
+    "windowRadius": 16,
+    "shadow": "0 22pt 70pt rgba(0,0,0,0.38), 0 0 0 0.5pt rgba(0,0,0,0.28)",
+    "trafficLights": {
+      "diameter": 14,
+      "centersX": [
+        19,
+        42,
+        65
+      ],
+      "centerY": 20,
+      "colors": [
+        "#FF5F57",
+        "#FEBC2E",
+        "#28C840"
+      ],
+      "ring": "rgba(0,0,0,0.12)"
+    },
+    "wallpaper": {
+      "base": "#0B1F4A",
+      "stops": [
+        {
+          "x": 0.18,
+          "y": 0.22,
+          "r": 0.55,
+          "color": "#2E6BD6"
+        },
+        {
+          "x": 0.82,
+          "y": 0.3,
+          "r": 0.5,
+          "color": "#5B8CFF"
+        },
+        {
+          "x": 0.55,
+          "y": 0.85,
+          "r": 0.6,
+          "color": "#1BA7C9"
+        },
+        {
+          "x": 0.3,
+          "y": 0.78,
+          "r": 0.4,
+          "color": "#7A5CE0"
+        },
+        {
+          "x": 0.62,
+          "y": 0.48,
+          "r": 0.3,
+          "color": "#BFD7FF"
+        }
+      ],
+      "blur": 0.06,
+      "grain": 0.0
+    }
+  }
 }

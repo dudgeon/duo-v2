@@ -31,10 +31,9 @@ const spec = {
   line: {id: 'M0-1', text: 'Each project keeps its sessions, its documents, and what needs you, together.'},
   title: {text: 'Duo v2', sub: 'Claude Code, around your projects'},
   capture: {state: 'project', scale: 4, windowWidthPt: 1440},
-  // Points in the content capture (below the toolbar). Wide = whole window; then the Needs you rows.
-  // M1 replaces these numbers with named anchors (H2).
-  wide: {x: 0, y: 0, w: 1440, h: 810},
-  target: {x: 0, y: 40, w: 480, h: 270},
+  // Points in the window capture (frame and toolbar included). The camera starts on the whole desk
+  // (wallpaper and window) and lands on the Needs you rows. M1 replaces these numbers with anchors (H2).
+  target: {x: 0, y: 79, w: 480, h: 270},
 };
 const style = JSON.parse(readFileSync(join(here, 'style/tokens.json'), 'utf8'));
 
@@ -66,7 +65,7 @@ const app = join(repo, 'build/Duo.app');
 const bin = join(app, 'Contents/MacOS/Duo');
 if (!existsSync(bin)) fail(`capture: no app at ${app}; run scripts/bundle.sh`);
 const fixture = join(app, 'Contents/Resources');
-const captureKey = sha(fileSha(bin), spec.capture,
+const captureKey = sha('window', fileSha(bin), spec.capture,
   execFileSync('/bin/sh', ['-c', `find "${fixture}" -name '*.json' -type f | sort | xargs shasum`]).toString());
 const cPng = join(cache, 'capture', `${captureKey}.png`);
 if (!existsSync(cPng) || args.has('--force-capture')) {
@@ -74,7 +73,7 @@ if (!existsSync(cPng) || args.has('--force-capture')) {
   const env = {...process.env, DUO_SUPPORT_DIR: support};
   for (const k of ['DUO_SOCKET', 'DUO_TOKEN']) delete env[k];
   const r = spawnSync('/usr/bin/open', ['-g', '-W', '-n', app, '--args', '--state', spec.capture.state,
-    '--capture-scale', String(spec.capture.scale), '--capture', cPng], {env, timeout: 60000});
+    '--capture-scale', String(spec.capture.scale), '--capture-window', cPng], {env, timeout: 60000});
   rmSync(support, {recursive: true, force: true});
   if (r.status !== 0 || !existsSync(cPng)) fail(`capture: ${spec.capture.state} produced no PNG`);
   log(`capture: ${spec.capture.state} at ${spec.capture.scale}x (${captureKey})`);
@@ -87,14 +86,21 @@ copyFileSync(cPng, join(pub, 'capture', `${spec.capture.state}.png`));
 
 // ---- 3. Timeline (voice timing is the beat map) ----
 const titleUntil = 2.0;
-const vStart = titleUntil + style.voice.leadIn;
-const moveStart = vStart + 0.3, moveEnd = moveStart + 2.4; // the push-in lands before "what needs you"
+const appear = {start: titleUntil - 0.3, end: titleUntil + 0.5};
+const vStart = appear.end + style.voice.leadIn;
+const moveStart = vStart + 0.6, moveEnd = moveStart + 2.4; // the push-in lands before "what needs you"
 const duration = Math.max(vStart + asr.duration_s + 1.6, moveEnd + style.camera.hold + 1);
+const aspect = style.frame.width / style.frame.height;
+const deskW = Math.round(widthPt / style.desk.windowWidthShare), deskH = Math.round(deskW / aspect);
+const desk = {deskW, deskH, winX: (deskW - widthPt) / 2, winY: (deskH - heightPt) / 2, winW: widthPt, winH: heightPt};
+const wide = {x: 0, y: 0, w: deskW, h: deskH};
+const target = {...spec.target, x: spec.target.x + desk.winX, y: spec.target.y + desk.winY};
 const timeline = {
   duration: +duration.toFixed(3),
   title: {...spec.title, until: titleUntil},
-  capture: {src: `capture/${spec.capture.state}.png`, widthPt, heightPt, scale: spec.capture.scale},
-  camera: [{t: 0, rect: spec.wide}, {t: moveStart, rect: spec.wide}, {t: moveEnd, rect: spec.target}],
+  capture: {src: `capture/${spec.capture.state}.png`, scale: spec.capture.scale},
+  desk, appear,
+  camera: [{t: 0, rect: wide}, {t: moveStart, rect: wide}, {t: moveEnd, rect: target}],
   voice: {src: `voice/${spec.line.id}.wav`, start: vStart, duration: asr.duration_s},
 };
 // Fail before rendering if any camera rect would magnify the capture past 1:1 at the output size.
@@ -103,7 +109,7 @@ for (const k of timeline.camera) {
   if (mag > style.camera.maxMagnification + 1e-9) fail(`zoom: rect ${JSON.stringify(k.rect)} magnifies ${mag.toFixed(2)}x past the capture`);
 }
 writeFileSync(join(pub, 'timeline.json'), JSON.stringify(timeline, null, 2));
-log(`timeline: ${timeline.duration}s; deepest zoom ${(style.frame.width / spec.target.w / spec.capture.scale).toFixed(2)} output px per capture px`);
+log(`timeline: ${timeline.duration}s; deepest zoom ${(style.frame.width / target.w / spec.capture.scale).toFixed(2)} output px per capture px`);
 
 // ---- 4. Lint: nothing in the scenes may run on a wall clock ----
 const lint = spawnSync('node', [join(here, 'lint.mjs')], {stdio: 'inherit'});
@@ -113,7 +119,7 @@ if (lint.status !== 0) fail('lint');
 const mp4 = join(out, 'm0.mp4');
 const rr = spawnSync(join(here, 'node_modules/.bin/remotion'), ['render', 'src/index.ts', 'M0', mp4, '--log=error'], {cwd: here, stdio: 'inherit'});
 if (rr.status !== 0) fail('render');
-for (const [name, t] of [['wide', moveStart - 0.1], ['landed', moveEnd + 0.5]]) {
+for (const [name, t] of [['title', 1.0], ['wide', moveStart - 0.1], ['mid', (moveStart + moveEnd) / 2], ['landed', moveEnd + 0.5]]) {
   spawnSync(join(here, 'node_modules/.bin/remotion'), ['still', 'src/index.ts', 'M0', join(out, `m0-${name}.png`),
     `--frame=${Math.round(t * style.frame.fps)}`, '--log=error'], {cwd: here, stdio: 'inherit'});
 }
