@@ -147,21 +147,26 @@ try { threadsKept = JSON.parse(localStorage.getItem("director-threads") || "{}")
 const keep = () => { try { localStorage.setItem("director-threads", JSON.stringify(threadsKept)); } catch (e) {} };
 async function diag(key, outcome, e) { if (!db) return; try { await db.doc("diag/" + Date.now()).set({ key, outcome, canSend, hasComments: !!comments, code: (e && e.code) || null, message: (e && (e.message || String(e))) || null, at: new Date().toISOString(), ua: navigator.userAgent.slice(0, 160) }); } catch (x) {} }
 async function send(key, anchorEl, text, statusEl) {
+  // Saving an answer redraws the cards, so the card we were handed may be gone: use its fresh copy (same id).
+  // Resolved again right before each use, since a redraw can land between awaits.
+  const live = () => (anchorEl && anchorEl.isConnected ? anchorEl : (anchorEl && anchorEl.id && document.getElementById(anchorEl.id)) || document.getElementById("needs-sec"));
+  const st0 = statusEl;
+  const stat = () => (st0 && st0.isConnected ? st0 : (live() && live().querySelector(".status")) || st0);
   if (comments && canSend !== "available") { try { canSend = await comments.canSendToClaude(); } catch (e) {} }
-  if (!comments || canSend !== "available") { diag(key, "blocked"); statusEl.className = "status err"; statusEl.textContent = canSend === "no_session" ? "The director isn't listening right now; your answer is saved and it reads it on return." : "Can't reach the director from this view; your answer is saved."; return false; }
-  statusEl.className = "status"; statusEl.textContent = "Sending…";
+  if (!comments || canSend !== "available") { diag(key, "blocked"); stat().className = "status err"; stat().textContent = canSend === "no_session" ? "The director isn't listening right now; your answer is saved and it reads it on return." : "Can't reach the director from this view; your answer is saved."; return false; }
+  stat().className = "status"; stat().textContent = "Sending…";
   const msg = text.length > 3900 ? text.slice(0, 3900) + "\n…(cut; the full text is saved in the console)" : text;
   try {
     let r;
     if (threadsKept[key]) { try { r = await comments.sendToClaude({ threadId: threadsKept[key], text: msg }); } catch (e) { if (e && e.code === "not_found") delete threadsKept[key]; else throw e; } }
-    if (!r) r = await comments.sendToClaude({ anchor: await comments.anchorFor(anchorEl), text: msg });
+    if (!r) r = await comments.sendToClaude({ anchor: await comments.anchorFor(live()), text: msg });
     threadsKept[key] = r.threadId; keep(); diag(key, "sent:" + r.threadId);
-    statusEl.className = "status ok"; statusEl.textContent = "Sent. The director's reply appears as a comment here.";
+    stat().className = "status ok"; stat().textContent = "Sent. The director's reply appears as a comment here.";
     return true;
   } catch (e) {
     diag(key, "error", e);
-    const c = e && e.code; statusEl.className = "status err";
-    statusEl.textContent = c === "consent_required" ? "Allow comments for this page, then send again." : c === "rate_limited" ? "Too fast; wait a moment." : c === "claude_unavailable" ? "The director couldn't take it; it's saved." : "Couldn't send (" + (c || "error") + "); it's saved.";
+    const c = e && e.code; stat().className = "status err";
+    stat().textContent = c === "consent_required" ? "Allow comments for this page, then send again." : c === "rate_limited" ? "Too fast; wait a moment." : c === "claude_unavailable" ? "The director couldn't take it; it's saved." : "Couldn't send (" + (c || "error") + "); it's saved.";
     return false;
   }
 }
