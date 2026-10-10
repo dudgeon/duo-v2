@@ -5,3 +5,9 @@ build/
 
 # Duo's session index (DL-50)
 .duo/
+
+# The intro video's build products and local environments (DL-169)
+video/node_modules/
+video/.cache/
+video/out/
+video/voice/.venv/

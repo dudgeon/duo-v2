@@ -4,6 +4,22 @@ import WebKit
 /// Captures the window for the comparison loop (handoff §0.2).
 @MainActor
 public enum WindowCapture {
+    /// Pixels per point for captures: `--capture-scale` / `DUO_CAPTURE_SCALE`, default 2 (the original path, untouched).
+    public static let scale: Double = LaunchOptions.captureScale(arguments: CommandLine.arguments)
+
+    /// A bitmap `scale` pixels per point over `rect`, with `view` drawn into it at that scale (vector
+    /// content is rendered at that resolution, not upsampled). Only used when `scale` is not 2.
+    private static func scaledRep(of view: NSView, in rect: NSRect) throws -> NSBitmapImageRep {
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: Int((rect.width * scale).rounded()), pixelsHigh: Int((rect.height * scale).rounded()),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+            bytesPerRow: 0, bitsPerPixel: 0
+        ) else { throw CaptureError("Could not allocate a bitmap") }
+        rep.size = rect.size
+        view.cacheDisplay(in: rect, to: rep)
+        return rep
+    }
+
     /// Runs `body` (the captures) with each showing web view's own snapshot laid over it.
     ///
     /// A web view's pixels come from WebKit's web process. While its window is on screen they're
@@ -29,7 +45,9 @@ public enum WindowCapture {
             let config = WKSnapshotConfiguration()
             config.rect = visible
             config.afterScreenUpdates = false   // a hidden page has no screen updates to wait for
-            config.snapshotWidth = NSNumber(value: Double(visible.width))
+            // Points; the image comes out at the screen's backing scale, so ask for more width at other scales.
+            let backing = Double(window.backingScaleFactor)
+            config.snapshotWidth = NSNumber(value: scale == 2 ? Double(visible.width) : Double(visible.width) * scale / max(backing, 1))
             web.takeSnapshot(with: config) { image, _ in
                 MainActor.assumeIsolated {
                     if let image, !finished {
@@ -68,10 +86,16 @@ public enum WindowCapture {
         view.layoutSubtreeIfNeeded()
         view.displayIfNeeded()
         let rect = view.convert(window.contentLayoutRect, from: nil).integral
-        guard let rep = view.bitmapImageRepForCachingDisplay(in: rect) else { throw CaptureError("Could not allocate a bitmap") }
-        view.cacheDisplay(in: rect, to: rep)
+        let rep: NSBitmapImageRep
+        if scale == 2 {
+            guard let r = view.bitmapImageRepForCachingDisplay(in: rect) else { throw CaptureError("Could not allocate a bitmap") }
+            view.cacheDisplay(in: rect, to: r)
+            rep = r
+        } else {
+            rep = try scaledRep(of: view, in: rect)
+        }
         guard let srgb = rep.converting(to: .sRGB, renderingIntent: .default) else { throw CaptureError("Could not convert to sRGB") }
-        let scaled = try resample(srgb, width: Int(rect.width * 2), height: Int(rect.height * 2), force: true)
+        let scaled = try resample(srgb, width: Int((rect.width * scale).rounded()), height: Int((rect.height * scale).rounded()), force: true)
         try compositePopovers(of: window, onto: scaled, contentRect: rect)
         guard let png = scaled.representation(using: .png, properties: [:]) else { throw CaptureError("PNG encoding failed") }
         try png.write(to: url)
@@ -102,10 +126,16 @@ public enum WindowCapture {
         frame.layoutSubtreeIfNeeded()
         frame.displayIfNeeded()
         let rect = frame.bounds
-        guard let rep = frame.bitmapImageRepForCachingDisplay(in: rect) else { throw CaptureError("Could not allocate a bitmap") }
-        frame.cacheDisplay(in: rect, to: rep)
+        let rep: NSBitmapImageRep
+        if scale == 2 {
+            guard let r = frame.bitmapImageRepForCachingDisplay(in: rect) else { throw CaptureError("Could not allocate a bitmap") }
+            frame.cacheDisplay(in: rect, to: r)
+            rep = r
+        } else {
+            rep = try scaledRep(of: frame, in: rect)
+        }
         guard let srgb = rep.converting(to: .sRGB, renderingIntent: .default),
-              let png = try resample(srgb, width: Int(rect.width * 2), height: Int(rect.height * 2)).representation(using: .png, properties: [:])
+              let png = try resample(srgb, width: Int((rect.width * scale).rounded()), height: Int((rect.height * scale).rounded())).representation(using: .png, properties: [:])
         else { throw CaptureError("PNG encoding failed") }
         try png.write(to: url)
     }
@@ -115,14 +145,21 @@ public enum WindowCapture {
     private static func compositePopovers(of window: NSWindow, onto rep: NSBitmapImageRep, contentRect: NSRect) throws {
         let content = window.convertToScreen(window.convertFromBacking(window.convertToBacking(window.contentLayoutRect)))
         for w in NSApp.windows where w !== window && w.isVisible && String(describing: type(of: w)).contains("Popover") {
-            guard let frameView = w.contentView?.superview ?? w.contentView,
-                  let pop = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds) else { continue }
-            frameView.cacheDisplay(in: frameView.bounds, to: pop)
+            guard let frameView = w.contentView?.superview ?? w.contentView else { continue }
+            let pop: NSBitmapImageRep
+            if scale == 2 {
+                guard let r = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds) else { continue }
+                frameView.cacheDisplay(in: frameView.bounds, to: r)
+                pop = r
+            } else {
+                guard let r = try? scaledRep(of: frameView, in: frameView.bounds) else { continue }
+                pop = r
+            }
                 let origin = NSPoint(x: w.frame.minX - content.minX, y: w.frame.minY - content.minY)
             NSGraphicsContext.saveGraphicsState()
             guard let context = NSGraphicsContext(bitmapImageRep: rep) else { throw CaptureError("Cannot draw into the capture bitmap") }
             NSGraphicsContext.current = context
-            // The bitmap is 2x; its point size is the content size.
+            // The bitmap is `scale`x; its point size is the content size.
             let scale = CGFloat(rep.pixelsWide) / contentRect.width
             NSGraphicsContext.current?.cgContext.scaleBy(x: scale, y: scale)
             pop.draw(in: NSRect(origin: origin, size: w.frame.size))

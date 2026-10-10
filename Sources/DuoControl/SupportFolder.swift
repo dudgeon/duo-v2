@@ -16,7 +16,7 @@ public enum SupportFolder {
     /// Every flag `LaunchOptions` reads (each takes a value, F-8). Any of them marks a scripted
     /// run: the user's own launches (Finder, Dock, login, Sparkle's relaunch) pass none.
     public static let scriptedFlags: Set<String> = [
-        "--workspace", "--state", "--capture", "--capture-window", "--then", "--window",
+        "--workspace", "--state", "--capture", "--capture-window", "--capture-scale", "--then", "--window",
         "--fixture", "--terminals", "--gallery", "--left",
     ]
 

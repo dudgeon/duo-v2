@@ -1,0 +1,6 @@
+{
+  "$note": "Speech recognition mishears product names. Each heard word on the right is read as the name on the left before scoring. Add one when a correct line fails on a name.",
+  "duo": ["do", "dois", "doo", "dua", "dual", "due", "duel"],
+  "claude": ["clawed", "cloud", "claud", "clod"],
+  "duo2": ["duo two", "do two"]
+}

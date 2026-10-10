@@ -3095,3 +3095,25 @@ Built to `chat-model-chip-handoff/` (the approved boards `chip` and `confirm`). 
   - Boards: `scripts/check-chat.sh chip-*` against `chip` and `confirm`; captures and compares in `docs/design/chat-model-chip-handoff/proof/`. At 2×, the chips' border (`rule` #C9CDD3, 1 pt), fill (`pane`), dashed working border, hover fill (`selected` #E9ECEF) and the Switch model? card (frame, heads, wrap, rows, Cancel) match. Differences: the chips are 16 pt tall where the board's are 18 (the mode chip as built is 16 too: the CSS border is outside its 16-pt line, a stroke inside one here), and the chips' text is 3.5 pt narrower in all (system font against the board's Chrome rendering). The hint row's wording on the boards is shorter than the app's (hints are the app's). The working board's left side ("Writing · 32s") and the Stop button are not drawn by the composer as built (Stop shows only with a message waiting).
 - **Effort from hooks (review).** PostToolUse and Stop carry `effort.level` on both versions; the chip follows it between the TUI's brief draws, with the glyph the screen last drew for that level (○ low, ◐ medium, ● high), or the word alone for a level never drawn.
 - **Proof at review (52c07f1 plus this note).** `swift run DuoChecks`: 1225 passed. `DUO_CHECKS=chat`: 288 passed. chat-live at 100×34: 47 passed on 2.1.296 and 44 on 2.1.219 (the chip cases, Switch model? as a card, and 2.1.219's /effort with no session-only), 0 failed. At 60×34 and 80×20: 14 of 14 on each version. The 42 older chat boards against main: 23 identical, and 19 differ only in the hint row's right end (board y 833 to 848.5), where the model label became the chips.
+
+## F-276 · The intro video's milestone 0: captures at any scale, a 1:1 zoom with no loss, a voice that's the same every build (DL-169, video/pipeline, 2026-10-10)
+
+- **`--capture-scale N` (H1).** Also `DUO_CAPTURE_SCALE`; 1 to 8; the default is 2.
+  - `cacheDisplay` honours the bitmap's pixel size. A rep whose `size` is the rect in points, with N× the pixels, makes AppKit scale the context, so text and vectors are drawn at N×, not upsampled. At 4x the `project` state is 5760 × 3444.
+  - At the default scale, the old 2x path runs unchanged. Twelve captures were byte-identical (`cmp`) to the base build `ea4e537`: the six main states and six chat states.
+  - Web snapshots ask for `width × N / backingScale` only when N ≠ 2. That path is **unproven**: no fixture state shows a web view, and WebKit may cap it.
+  - `film:` and `filmw:` take the scale with no change.
+  - `--capture-scale` is in `scriptedFlags`, so a scaled capture gets a temporary support folder like any scripted run.
+- **Zoom fidelity through Remotion.** A frame landed at 1 output pixel per capture pixel is **identical** to the same crop of the source PNG (ffmpeg PSNR ∞). Chrome's compositor adds no blur at 1:1, and the wide frame, scaled down by ⅓, reads cleanly. A 4x capture covers a 1080p zoom down to a 480 pt wide region. The build refuses a camera rect that would magnify past 1:1.
+- **The voice.**
+  - Qwen3-TTS 1.7B runs through mlx-audio 0.5.8 in a project-local venv: about 4.75 GB resident, real-time factor 0.7–0.9, model load 2–3 s.
+  - The same voice, text and seed give **byte-identical** WAVs.
+  - The house voice is candidate a (Geoff, 2026-10-10). It was designed with VoiceDesign, then frozen as a reference clip (`video/voice/house/`), and each line is cloned from it with the Base model.
+  - Parakeet mishears the names ("clawed", "do"), so `video/voice/heard-as.json` maps them back before scoring.
+- **Caching and determinism.**
+  - The first build (voice, a 4x capture, render) took 20 s.
+  - The second re-voiced nothing and recaptured nothing.
+  - Its stills were byte-identical to the first build's.
+- **What M0 showed is still missing.**
+  - In fixture mode the terminal is an empty dark pane (F-25), and `prd-v2.md` shows only its headings. A video fixture with real text (H3) and terminal replay (H4) are needed before the walkthrough looks like work.
+  - `DuoChecks`: 1224 passed and 1 failed, "a process under a Duo terminal's shell is Duo's". That check fails when it runs from a session inside a Duo terminal, which is environmental and not from H1.
