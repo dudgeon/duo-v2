@@ -94,6 +94,43 @@ extension ChatSession {
         return .done
     }
 
+    /// The model chip and the effort chip (DL-168): `/model` or `/effort` into Claude's own prompt, so DL-143's card docks.
+    /// Only at an idle prompt that is empty (text there would turn the command into a message to Claude), on a CLI whose
+    /// screens are trusted, and with the echo checked before Return, as a send does. No bubble; the composer's draft stays.
+    /// Refusals are reported as a send's are (the terminal, with why), except waiting on Claude: the chip says so itself.
+    public func openPicker(_ kind: ChatPicker.Kind) async -> ChatAnswerResult {
+        let command = kind == .effort ? "/effort" : "/model"
+        guard kind != .confirm else { return .refused("nothing to open") }
+        guard !sending, !composing else { return .refused("Duo is sending something to Claude Code") }
+        guard terminal != nil else { return finish(.refused("the terminal isn't running")) }
+        let s = reread()
+        if s.kind == .busy { return .refused("Claude is working; \(command) opens when it finishes") }
+        guard s.kind == .idle else { return finish(.refused("the terminal is showing \(s.kind == .unknown ? "a screen chat mode can’t show" : "a dialog")")) }
+        guard versionTrust != .unverified else { return finish(.refused("chat mode hasn’t been checked with this version of Claude Code’s screens")) }
+        sending = true
+        defer { sending = false }
+        if !(s.input ?? "").isEmpty {
+            // A dim suggestion reads as text on the screen (F-108): only the real buffer says whether the prompt holds any.
+            let real = usesExternalEditor ? await peekPrompt() : nil
+            guard let real, real.isEmpty else { return finish(.refused("Claude’s prompt holds text, which \(command) would join into a message to Claude")) }
+        }
+        guard reread().kind == .idle else { return finish(.refused("Claude Code’s screen changed before \(command) was sent")) }
+        terminal?.sendKeys("\u{1b}[200~" + command + "\u{1b}[201~")
+        await pause(250_000_000)
+        let echoed = reread()
+        let shown = (echoed.input ?? "").chatNorm
+        guard echoed.kind == .idle, !shown.isEmpty, command.hasPrefix(shown) else {
+            return finish(.refused("\(command) didn’t appear in Claude’s prompt as sent"))
+        }
+        lastCommand = (command, Date())
+        _ = await press(.enter)
+        for _ in 0..<30 {
+            if reread().kind == .picker { return .done }
+            await pause(100_000_000)
+        }
+        return .refused("Claude Code didn’t open \(command)")
+    }
+
     /// Claude's real prompt text, through Ctrl+G with nothing changed (the helper copies it out).
     public func peekPrompt() async -> String? {
         guard usesExternalEditor, let dir = composeDir, [.idle, .busy].contains(reread().kind) else { return nil }

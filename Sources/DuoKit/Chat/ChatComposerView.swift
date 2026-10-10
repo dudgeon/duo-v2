@@ -74,12 +74,51 @@ struct ChatComposerArea: View {
                 .accessibilityLabel(hints[0])
                 }
                 Spacer(minLength: 8)
-                if let m = chat.log.model { Text(m).duoText(.chatMeta).foregroundStyle(DuoColor.text2) }
+                // DL-168: the effort chip, then the model chip: the mode chip mirrored, each asking Claude's own /effort or /model.
+                if let e = chat.effort {
+                    ChatConfigChip(chat: chat, id: "effort", text: e.text, kind: .effort, working: s.kind == .busy)
+                }
+                ChatConfigChip(chat: chat, id: "model", text: chat.log.model ?? "Model", kind: .model, working: s.kind == .busy)
             }
             .padding(.horizontal, 4)
             }
         }
         .task(id: chat.ui.composerFocused) { if chat.ui.composerFocused { chat.prefillComposer() } }
+    }
+}
+
+/// The model chip and the effort chip (DL-168, chat-model-chip-handoff `chip`): the mode chip's look, mirrored at the
+/// hint row's right end. A click sends `/model` or `/effort` into Claude's prompt (when it is idle and empty). Under the
+/// pointer: `selected`, `controlEdge`, `text`. While Claude works the chip waits: dashed `rule`, no fill, `text2`.
+struct ChatConfigChip: View {
+    let chat: ChatSession
+    let id: String
+    let text: String
+    let kind: ChatPicker.Kind
+    let working: Bool
+
+    var body: some View {
+        let hover = chat.ui.hoverChip == id && !working
+        let what = kind == .model ? "model" : "effort"
+        Text(text)
+            .duoText(.chatMeta).foregroundStyle(hover ? DuoColor.text : DuoColor.text2)
+            .lineLimit(1).fixedSize()
+            .padding(.horizontal, 8)
+            .background(Capsule().fill(working ? Color.clear : hover ? DuoColor.selected : DuoColor.pane))
+            .overlay {
+                if working {
+                    Capsule().strokeBorder(DuoColor.rule, style: StrokeStyle(lineWidth: DuoMetric.borderHairline, dash: DuoShadow.dashPattern))
+                } else {
+                    Capsule().strokeBorder(hover ? DuoColor.controlEdge : DuoColor.rule, lineWidth: DuoMetric.borderHairline)
+                }
+            }
+            .contentShape(Capsule())
+            .onHover { inside in
+                if inside { chat.ui.hoverChip = id } else if chat.ui.hoverChip == id { chat.ui.hoverChip = nil }
+            }
+            .onActivate { if !working { Task { _ = await chat.openPicker(kind) } } }  // action: session chat
+            .help(working ? "Change the \(what) when Claude finishes" : kind == .model ? "Change model (/model)" : "Change effort (/effort)")
+            .accessibilityLabel(kind == .model ? "Model: \(text). Change model" : "Effort: \(text). Change effort")
     }
 }
 

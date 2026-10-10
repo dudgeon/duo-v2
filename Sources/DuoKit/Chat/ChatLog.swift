@@ -206,7 +206,7 @@ public final class ChatLog: @unchecked Sendable {
     public internal(set) var hooksSeen = false
     /// MessageDisplay is streaming replies, so the transcript's text is only matched, never added.
     public internal(set) var streams = false
-    /// The model Claude answers with, by family name (Opus, Sonnet, Haiku, Fable), from the transcript.
+    /// The model's name as Claude Code says it (`Opus 5.5`), newest of a /model result, a reply and SessionStart (DL-168); nil until known.
     public internal(set) var model: String?
     /// Turns before the last 50 aren't shown yet (Earlier turns, Q-56c).
     public internal(set) var earlierHidden = false

@@ -48,6 +48,8 @@ public final class ChatUIState {
     var mentionDismissedAt: Int?
     /// The link under the pointer, for the status line at the transcript's bottom left (DL-132 g).
     public var hoverLink: URL?
+    /// The model or effort chip under the pointer ("model", "effort"; DL-168).
+    public var hoverChip: String?
     public init() {}
 }
 
