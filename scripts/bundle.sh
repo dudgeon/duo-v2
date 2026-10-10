@@ -8,8 +8,12 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 config="${1:-debug}"
 cd "$root"
 
-swift build -c "$config" --product Duo 2>&1 | grep -vE "ld: warning: search path" || true
-swift build -c "$config" --product duo2 2>&1 | grep -vE "ld: warning: search path" || true
+# A failed compile stops here: an old binary from an earlier build must never be bundled as this one (F-277).
+for product in Duo duo2; do
+  rc=0; out="$(swift build -c "$config" --product "$product" 2>&1)" || rc=$?
+  printf '%s\n' "$out" | grep -vE "ld: warning: search path" || true
+  [ "$rc" -eq 0 ] || { echo "Build failed: swift build --product $product exited $rc" >&2; exit 1; }
+done
 bin="$(swift build -c "$config" --show-bin-path)/Duo"
 [ -x "$bin" ] || { echo "Build failed: no $bin" >&2; exit 1; }
 
