@@ -3142,3 +3142,19 @@ Built to `chat-model-chip-handoff/` (the approved boards `chip` and `confirm`). 
 - **Render time.**
   - The wallpaper as a blurred SVG, redrawn at 4x on every frame, made a 2:24 film take **20 min**.
   - Rendered once to a PNG (cached on its tokens), the whole build takes **2:28**.
+
+## F-278 · The intro video's milestone 2: the drawn desk, and real document text on sample data (DL-169, video/pipeline, 2026-10-10)
+
+- **The fixture's document is native SwiftUI, not the editor.** `DocumentPlaceholder` (`ProjectPanes.swift`) draws only `focusDocument.sections`, so it shows headings with no body.
+- **H3: an opt-in demo fixture.**
+  - `FocusDocument` takes two optional keys: `markdownFile`, resolved next to the fixture file, and `body` (section name to text). Each section's text is drawn under its heading in `text2`.
+  - `video/fixture/fixture.json` is the design fixture plus `markdownFile: "prd-v2.md"`, a short PRD that agrees with the fixture's chat.
+  - Turn it on with `--fixture <abs path>`. Without it, `project` and `chat-window` captures are byte-identical to before.
+  - The text is vector, so it's sharp at 4x. The web-snapshot path at a scale other than 2 is still unproven: no fixture state shows a web view.
+- **S1 and S2 are drawn** (`video/src/lib/Clutter.tsx`), about 75% as faithful as the real apps (Geoff, 2026-10-10).
+  - **The desk:** Terminal windows running Claude Code, a raw Markdown file, Finder, and a browser showing a sample page, with a generic menu bar and dock. There is no Apple logo and no Apple icons.
+  - **Timing:** each window opens on the word that names it, from events in `shots.json`. The window opened last comes to the front.
+  - **The action:** the Finder selection hunts before it lands, the `cd` path types, and the ask "the third bullet, under the second heading…" types into the front terminal.
+  - **S2** pulls back from that desk to four project desks; one shows a pulsing "Waiting for you".
+- **Deferred: H4, terminal replay.** The walkthrough films chat mode, which draws real conversations natively, and the cold open's terminals are drawn. The live terminal is still blank in captures (F-25) and is left until a scene needs it.
+- **Build:** 2:50 with every state captured fresh; 2:24 of film.

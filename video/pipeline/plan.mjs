@@ -80,6 +80,16 @@ export function plan({scenes, shots, voiced, captures, style}) {
         if (mag > style.camera.maxMagnification + 1e-9) throw new BuildError(`zoom: ${scene.id} magnifies ${mag.toFixed(2)}x past the capture`);
       }
       Object.assign(s, {capture: {src: cap.src, scale: style.capture.scale}, desk, camera: keys, appear: !!shot.appear});
+    } else if (shot.kind === 'drawn') {
+      // A drawn scene (src/lib/Clutter.tsx): its events happen on words of its lines.
+      const events = {};
+      for (const [name, e] of Object.entries(shot.events ?? {})) {
+        const line = lines[e.line - 1];
+        if (!line) throw new BuildError(`shots: ${scene.id} event ${name} names line ${e.line}, but the scene has ${lines.length}`);
+        events[name] = +(line.start + (e.word ? wordTime(line, e.word) : 0) + (e.offset ?? 0)).toFixed(3);
+        end = Math.max(end, events[name] + 0.5);
+      }
+      Object.assign(s, {drawn: {scene: shot.scene, events}});
     } else throw new BuildError(`shots: ${scene.id} has unknown kind "${shot.kind}"`);
     s.start = +t0.toFixed(3);
     s.duration = +end.toFixed(3);

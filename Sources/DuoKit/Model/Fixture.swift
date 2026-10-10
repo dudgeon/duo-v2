@@ -80,6 +80,11 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var path: String
         public var sections: [String]
         public var addedByClaude: [String]
+        /// Opt-in demo text (video fixtures): a markdown file beside the fixture, split at `## Heading`
+        /// into `body`. Absent in the design fixture, so default captures don't change.
+        public var markdownFile: String? = nil
+        /// Section name -> body text; filled by `Fixture.load` from `markdownFile`.
+        public var body: [String: String]? = nil
     }
 
     public var now: String
@@ -128,7 +133,19 @@ public struct Fixture: Codable, Sendable, Equatable {
     }
 
     public static func load(from url: URL) throws -> Fixture {
-        try JSONDecoder().decode(Fixture.self, from: Data(contentsOf: url))
+        var f = try JSONDecoder().decode(Fixture.self, from: Data(contentsOf: url))
+        if let name = f.focusDocument.markdownFile {
+            let md = try String(contentsOf: url.deletingLastPathComponent().appending(path: name), encoding: .utf8)
+            var body: [String: String] = [:]
+            var current: String?
+            for line in md.components(separatedBy: "\n") {
+                if line.hasPrefix("## ") { current = String(line.dropFirst(3)).trimmingCharacters(in: .whitespaces); continue }
+                if line.hasPrefix("# ") { current = nil; continue }
+                if let c = current { body[c, default: ""] += (body[c] == nil ? "" : "\n") + line }
+            }
+            f.focusDocument.body = body.mapValues { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        }
+        return f
     }
 
     public var home: Project? { projects.first { $0.isHome == true } }

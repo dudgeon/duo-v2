@@ -2,10 +2,10 @@
 // support folder (F-227, F-113). Recaptured only when the app, its fixtures or the spec change.
 import {execFileSync, spawnSync} from 'node:child_process';
 import {copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync} from 'node:fs';
-import {join} from 'node:path';
+import {dirname, join} from 'node:path';
 import {BuildError, fileSha, sha} from './util.mjs';
 
-export function captureStates(states, {repo, cache, pub, scale, force = false, log}) {
+export function captureStates(states, {repo, cache, pub, scale, fixture, force = false, log}) {
   const app = join(repo, 'build/Duo.app');
   const bin = join(app, 'Contents/MacOS/Duo');
   if (!existsSync(bin)) throw new BuildError(`capture: no app at ${app}; run scripts/bundle.sh`);
@@ -17,7 +17,10 @@ export function captureStates(states, {repo, cache, pub, scale, force = false, l
   const out = {};
   let taken = 0;
   for (const state of states) {
-    const key = sha('window+anchors', appKey, state, scale);
+    // The video's demo fixture (H3): the design fixture plus real document text. It's part of the key.
+    const fx = fixture ? join(repo, fixture) : null;
+    const fxKey = fx ? execFileSync('/bin/sh', ['-c', `shasum "${dirname(fx)}"/*`]).toString() : '';
+    const key = sha('window+anchors', appKey, state, scale, fxKey);
     const png = join(cc, `${key}.png`), anchors = join(cc, `${key}.anchors.json`);
     if (force || !existsSync(png)) {
       const support = mkdtempSync('/tmp/dvid.');
@@ -25,7 +28,7 @@ export function captureStates(states, {repo, cache, pub, scale, force = false, l
       const env = {...process.env};
       for (const k of ['DUO_SOCKET', 'DUO_TOKEN', 'DUO_SUPPORT_DIR']) delete env[k];
       const r = spawnSync('/usr/bin/open', ['-g', '-W', '-n', '--env', `DUO_SUPPORT_DIR=${support}`, app, '--args', '--state', state,
-        '--capture-scale', String(scale), '--then', `anchors:${anchors}`, '--capture-window', png], {env, timeout: 90000});
+        '--capture-scale', String(scale), ...(fx ? ['--fixture', fx] : []), '--then', `anchors:${anchors}`, '--capture-window', png], {env, timeout: 90000});
       rmSync(support, {recursive: true, force: true});
       if (r.status !== 0 || !existsSync(png)) throw new BuildError(`capture: ${state} produced no PNG (is it a fixture state?)`);
       taken++;
