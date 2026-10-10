@@ -20,7 +20,13 @@
   },
   "voice": {
     "gap": 0.35,
-    "leadIn": 0.4
+    "leadIn": 0.5,
+    "tail": 0.8,
+    "minScene": 3.0,
+    "maxWps": 4.0,
+    "targetWps": 3.6,
+    "maxStretch": 1.15,
+    "$pace": "The speech check fails a line outside 2 to maxWps words/s (looping or truncation). A line just over is slowed toward targetWps by at most maxStretch."
   },
   "desk": {
     "$note": "Wide shots show Duo's window on a Mac desktop (Geoff, 2026-10-10). The wallpaper is our own macOS-style look-alike, never Apple's image.",
@@ -79,5 +85,11 @@
       "blur": 0.06,
       "grain": 0.0
     }
+  },
+  "capture": {
+    "scale": 4
+  },
+  "transition": {
+    "fade": 0.4
   }
 }

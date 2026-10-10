@@ -150,6 +150,7 @@ Status: **open** (needs Geoff or a spike) · **defaulted** (Claude chose a defau
 | Q-172 | **GitHub issues: what Duo writes to GitHub** (§3.2, §7). (b) Close/Reopen, New Issue from Task and "Closes #n" in Push's PR (recommended); (a) nothing; (c) triage too. | slices 1–2 | Open. | |
 | Q-173 | **GitHub Projects (v2) on the board** (§6). Later, as a board source, ENH-68 (recommended); v1 read-only; v1 read-write; never. | — | Open. | Needs `read:project` / `project`; Geoff's gh has neither. |
 | Q-174 | **GitHub issues: when** (§8). Slice 1 in v1, the lane and offers in v1.1 (recommended); all but Projects in v1; all after v1. | build plan §3a | Open. | |
+| Q-175 | **The intro video's wallpaper: Geoff doesn't like the look-alike** (2026-10-10: "I don't like that desktop wallpaper … show me several options; if we can use official Mac backgrounds that would be preferable"). To do: (1) find out what Apple allows for its macOS wallpapers in a public product video (the macOS licence, Apple's marketing and press-image terms, and what other Mac apps' videos do); (2) show several options side by side as stills of the S3 wide shot: official macOS wallpapers if allowed, plus two or three look-alikes in other directions. The wallpaper is one token (`desk.wallpaper` in `video/style/video-tokens.json`), so the choice is a one-line change. | The video's wide shots (M3) | Open. | Logged as a bug to fix later; not blocking M1. |
 
 ## Concerns
 

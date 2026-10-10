@@ -15,7 +15,7 @@ export const deskLayout = (winW: number, winH: number, aspect: number): DeskLayo
   return {deskW, deskH, winX: (deskW - winW) / 2, winY: (deskH - winH) / 2, winW, winH};
 };
 
-const Wallpaper = ({w, h}: {w: number; h: number}) => {
+export const Wallpaper = ({w, h}: {w: number; h: number}) => {
   const wp = d.wallpaper;
   const blur = wp.blur * Math.max(w, h);
   return (
