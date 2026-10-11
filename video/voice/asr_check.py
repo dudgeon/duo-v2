@@ -35,7 +35,8 @@ HEARD_AS = {w: name for name, heard in json.load(open(Path(__file__).with_name("
 
 
 def canon(words):
-    return [HEARD_AS.get(w, w) for w in words]
+    # A name may be several words: a heard "cli" scores as the spelled-out "c l i".
+    return [x for w in words for x in HEARD_AS.get(w, w).split()]
 
 
 def edit_ops(ref, hyp):
