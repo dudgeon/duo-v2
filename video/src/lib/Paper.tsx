@@ -104,3 +104,19 @@ export const Quote = ({text, x, y, u = 1}: {text: string; x: number; y: number; 
     <span style={{color: P.marker}}>—</span> “{text}”
   </div>
 );
+
+/** A feature callout's words, large and lower left (Geoff, 2026-10-11: callout text larger and easier to see).
+ *  A white card with an accent bar, bottom-anchored, so it never covers what the marker circles mid-frame. */
+export const Caption = ({text, u = 1}: {text: string; u?: number}) => {
+  if (u <= 0) return null;
+  const words = text.charAt(0).toUpperCase() + text.slice(1);
+  return (
+    <div style={{position: 'absolute', left: tokens.frame.safe, bottom: 72, maxWidth: tokens.frame.width - tokens.frame.safe * 2,
+      display: 'flex', alignItems: 'stretch', opacity: u, transform: `translateY(${(1 - u) * 18}px)`,
+      background: '#FFFFFF', borderRadius: 14, overflow: 'hidden',
+      boxShadow: '0 16px 44px rgba(0,0,0,0.30), 0 0 0 1px rgba(31,35,40,0.14)'}}>
+      <div style={{width: 9, background: P.marker}} />
+      <div style={{padding: '18px 30px 20px 24px', fontFamily: ui, fontSize: 46, fontWeight: 600, letterSpacing: -0.8, color: P.ink, lineHeight: 1.15}}>{words}</div>
+    </div>
+  );
+};

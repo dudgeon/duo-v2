@@ -252,10 +252,10 @@
         },
         "cam": {
           "on": "video.s3.list",
-          "y0": 0.0,
+          "y0": 0,
           "y1": 0.45
         },
-        "dur": 1.0
+        "dur": 1
       },
       {
         "at": {
@@ -267,7 +267,7 @@
           "y0": 0.4,
           "y1": 0.85
         },
-        "dur": 2.0
+        "dur": 2
       },
       {
         "at": {
@@ -338,7 +338,7 @@
         },
         "cam": {
           "on": "video.pane.left",
-          "y0": 0.0,
+          "y0": 0,
           "y1": 0.6,
           "x1": 1.4
         },
@@ -437,7 +437,7 @@
         },
         "cam": {
           "on": "video.pane.middle",
-          "y0": 0.0,
+          "y0": 0,
           "y1": 0.55
         },
         "dur": 0.9
@@ -473,11 +473,77 @@
     "kind": "drawn",
     "scene": "app",
     "transitionIn": "carry-on",
-    "leadIn": 1.2,
+    "leadIn": 1.4,
+    "states": [
+      "video-s4-deleted"
+    ],
+    "beats": [
+      {
+        "at": {
+          "line": 1,
+          "word": "terminal"
+        },
+        "in": "video-s4-deleted",
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0,
+          "y1": 0.62
+        },
+        "dur": 1
+      },
+      {
+        "at": {
+          "line": 1,
+          "word": "interface"
+        },
+        "mark": {
+          "on": "video.pane.middle",
+          "y0": 0.02,
+          "y1": 0.6
+        },
+        "quote": "the full Claude Code terminal interface",
+        "hold": 2.2
+      }
+    ],
+    "requires": [
+      {
+        "what": "Way in from S4 without a cut: the picture carries on from the terminal",
+        "built": true
+      },
+      {
+        "what": "The camera settles on the middle pane while Claude Code runs in it: banner, conversation with tool calls, prompt",
+        "built": true
+      },
+      {
+        "what": "Nothing is clicked; the camera stays on the middle pane",
+        "built": true
+      }
+    ],
+    "shotSha": "dfc55ee43556"
+  },
+  "S6": {
+    "kind": "drawn",
+    "scene": "app",
+    "transitionIn": "carry-on",
+    "leadIn": 1.6,
     "states": [
       "video-s5-chat"
     ],
     "beats": [
+      {
+        "at": {
+          "line": 1,
+          "word": "tidier"
+        },
+        "in": "video-s4-deleted",
+        "cam": {
+          "x": 800,
+          "y": 20,
+          "w": 480,
+          "h": 270
+        },
+        "dur": 1
+      },
       {
         "at": {
           "line": 1,
@@ -486,23 +552,55 @@
         "click": "video.chat.toggle",
         "in": "video-s4-deleted",
         "state": "video-s5-chat",
+        "mark": {
+          "x": 1078,
+          "y": 40,
+          "w": 56,
+          "h": 27
+        },
+        "quote": "chat mode",
+        "hold": 1.5
+      },
+      {
+        "at": {
+          "line": 1,
+          "word": "steps",
+          "offset": 0.9
+        },
+        "state": "video-s6-answered",
+        "in": "video-s6-answered",
         "cam": {
           "on": "video.pane.middle",
-          "y0": 0.42,
-          "y1": 1.0
+          "y0": 0.3,
+          "y1": 1
         },
-        "dur": 0.8
+        "dur": 0.9
       },
       {
         "at": {
           "line": 1,
           "word": "rows"
         },
-        "click": "video.chat.tool.2",
-        "state": "video-s5-chat-open",
-        "mark": "video.chat.tool.2",
+        "click": "video.chat.tool.4",
+        "in": "video-s6-answered",
+        "state": "video-s6-open",
+        "stateAfter": 0.1
+      },
+      {
+        "at": {
+          "line": 1,
+          "word": "open"
+        },
+        "in": "video-s6-open",
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0,
+          "y1": 0.6
+        },
+        "mark": "video.chat.tool.4",
         "quote": "rows you can open",
-        "hold": 2
+        "hold": 2,
+        "dur": 0.8
       },
       {
         "at": {
@@ -511,38 +609,37 @@
         },
         "cam": "video.composer",
         "dur": 0.9,
-        "in": "video-s5-chat-open"
+        "in": "video-s6-draft",
+        "state": "video-s6-draft"
       },
       {
         "at": {
           "line": 2,
           "word": "click"
         },
-        "state": "video-s5-draft",
-        "stateAfter": 0,
         "drag": {
           "from": "video.composer",
           "fx0": 0.369,
           "fx1": 0.504,
           "dur": 0.8
         },
-        "in": "video-s5-chat-open"
+        "in": "video-s6-draft"
       },
       {
         "at": {
           "line": 2,
           "word": "preview"
         },
-        "state": "video-s5-paste-text",
-        "in": "video-s5-draft"
+        "state": "video-s6-paste-text",
+        "in": "video-s6-paste-text"
       },
       {
         "at": {
           "line": 2,
           "word": "image"
         },
-        "state": "video-s5-paste-image",
-        "in": "video-s5-paste-text"
+        "state": "video-s6-paste-image",
+        "in": "video-s6-paste-image"
       },
       {
         "at": {
@@ -550,37 +647,119 @@
           "word": "paste"
         },
         "mark": "video.composer",
-        "in": "video-s5-paste-image",
+        "in": "video-s6-paste-image",
         "quote": "a preview of any image or text you paste",
-        "hold": 2.4
+        "hold": 1.3
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "paste",
+          "offset": 1.45
+        },
+        "state": "video-s6-turn1",
+        "in": "video-s6-turn1",
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0.38,
+          "y1": 1
+        },
+        "dur": 0.8
+      },
+      {
+        "at": {
+          "line": 3
+        },
+        "state": "video-s6-slash",
+        "in": "video-s6-slash",
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0.55,
+          "y1": 1
+        },
+        "dur": 0.7
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "skill"
+        },
+        "mark": "video.slash.row.1",
+        "in": "video-s6-slash",
+        "quote": "skill invocations",
+        "hold": 1.1
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "invocations",
+          "offset": 0.45
+        },
+        "state": "video-s6-turn2",
+        "in": "video-s6-turn2",
+        "stateAfter": 0
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "pickers"
+        },
+        "state": "video-s6-model",
+        "in": "video-s6-model",
+        "mark": "video.model.card",
+        "quote": "model pickers",
+        "hold": 1.7
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "mode"
+        },
+        "click": "video.model.row.3",
+        "in": "video-s6-model",
+        "state": "video-s6-model-picked",
+        "stateAfter": 0.12,
+        "hold": 1.8
       }
     ],
-    "shotSha": "ab61b8d7b84b",
+    "shotSha": "1bd78f76d13d",
     "requires": [
       {
-        "what": "Way in from S4 without a cut: the picture carries on, and the cursor clicks the chat toggle on the word \"chat\"",
+        "what": "Way in from S5 without a cut: the picture carries on from the terminal; the topic list comes up with Chat mode",
         "built": true
       },
       {
-        "what": "Line 1: the middle pane flips to chat mode; the cursor opens one folded tool row",
+        "what": "On \"chat mode\": the camera pushes in on the chat-mode button and the cursor clicks it as the pane flips",
         "built": true
       },
       {
-        "what": "Line 2: the cursor drag-selects a sentence in the composer",
+        "what": "A short exchange: Sam answers, Claude replies with its steps folded into rows; the cursor opens one folded row",
         "built": true
       },
       {
-        "what": "A pasted block of user feedback folds into Pasted text · n lines",
+        "what": "Writing line: drag-select in the composer, a pasted block that folds to Pasted text · n lines, a pasted screenshot shown as a preview",
         "built": true
       },
       {
-        "what": "A pasted screenshot from that user shows as a preview in the composer",
+        "what": "Sam sends; the turn and Claude reply (a Loaded 1 skill row) appear",
+        "built": true
+      },
+      {
+        "what": "Slash line: /tri lists the demo skill in the composer menu; it runs and shows as a row",
+        "built": true
+      },
+      {
+        "what": "/model opens the model picker and a model is picked",
         "built": true
       },
       {
         "what": "The camera stays on the middle pane; nothing opens in the editor",
         "built": true
       }
-    ]
+    ],
+    "pauses": {
+      "2": 1.8
+    },
+    "tail": 2.2
   }
 }

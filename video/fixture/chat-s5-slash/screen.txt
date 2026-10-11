@@ -1,0 +1,28 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ❯ /triage-feedback            Sort tester feedback into the backlog by eval cause (project)
+    /claude-api                 Reference for the Claude API / Anthropic SDK — model ids, pricing,
+    /dataviz                    Use this skill whenever you are about to create ANY chart, graph,
+    /doctor                     Health-check the user's Claude Code setup and fix issues: diagnose
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ /tri 
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on

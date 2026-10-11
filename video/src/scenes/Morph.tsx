@@ -4,7 +4,7 @@ import {smootherstep, type Rect} from '../lib/camera';
 import {Wallpaper} from '../lib/Desk';
 import {DOCK_DUO, Dock, MenuBar, PileWindow} from '../lib/Clutter';
 import {CLUTTER_LAYOUT, clutterWin} from '../lib/clutterLayout';
-import {Cursor, Marker, Quote} from '../lib/Paper';
+import {Cursor, Marker, Caption} from '../lib/Paper';
 import tokens from '../../style/tokens.json';
 
 // S2: S1's pile morphs into one real Duo window (script v2, Geoff 2026-10-10). Each drawn window
@@ -203,12 +203,10 @@ const Overlays = ({t, ev, A, toFrame, screen, data, paneSrc}: OverlayProps) => {
         const leave = ramp(t, at + 2.2, at + 2.4);
         const marker = ramp(t, at + 0.05, at + 0.5) * (1 - leave);
         const open = ramp(t, at + 0.4, at + 0.54) * (1 - leave);
-        // The words sit in one place, lower left, so they never cover the UI the marker points at.
-        const qx = tokens.frame.safe, qy = H - tokens.frame.safe - 40;
         return (
           <AbsoluteFill key={c.ev}>
             <Marker cx={r.x + r.w / 2} cy={r.y + r.h / 2} rx={r.w / 2 + 18} ry={r.h / 2 + 14} progress={marker} />
-            <Quote text={c.quote} x={qx} y={qy} u={open} />
+            <Caption text={c.quote} u={open} />
           </AbsoluteFill>
         );
       })}

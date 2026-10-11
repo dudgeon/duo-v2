@@ -1,6 +1,6 @@
 // Parse video/script.md, the export of the script Doc (DL-169).
 // Scenes are `### S<n> · <title> (about N s)`; each bullet under one is a voiceover line;
-// a paragraph starting `Shot:` is the shot note, and prose after it (beats, `> notes`) belongs to it. The table under `## The voice` is the
+// `Topic:` under the heading is its name in the topic list; a paragraph starting `Shot:` is the shot note, and prose after it (beats, `> notes`) belongs to it. The table under `## The voice` is the
 // pronunciation lexicon (Written | Said): Said is what the voice is given.
 
 export function parseScript(md) {
@@ -13,7 +13,7 @@ export function parseScript(md) {
     if (h2) { inVoice = /voice/i.test(h2[1]); scene = null; continue; }
     const h3 = line.match(/^### (S\d+)\s*·\s*(.+?)(?:\s*\(about (\d+) s\))?$/);
     if (h3) {
-      scene = {id: h3[1], title: h3[2].trim(), targetSeconds: h3[3] ? +h3[3] : null, lines: [], shot: '', notes: []};
+      scene = {id: h3[1], title: h3[2].trim(), targetSeconds: h3[3] ? +h3[3] : null, lines: [], shot: '', notes: [], topic: null};
       scenes.push(scene);
       continue;
     }
@@ -35,6 +35,9 @@ export function parseScript(md) {
       scene.lines.push({id: `${scene.id}-${scene.lines.length + 1}`, text, cues});
       continue;
     }
+    // `Topic: …` names the scene in the topic list shown at scene changes.
+    const topic = line.match(/^Topic:\s*(.+)/);
+    if (topic && !scene.shot) { scene.topic = topic[1].trim(); continue; }
     const shot = line.match(/^Shot:\s*(.+)/);
     if (shot) scene.shot = shot[1].trim();
     // Prose after the Shot: line (beats, `> notes`) is part of what the shot must do.

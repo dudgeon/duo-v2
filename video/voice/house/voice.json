@@ -1,12 +1,13 @@
 {
-  "$note": "The house voice (DL-169): M2, a warm baritone (median F0 about 105 Hz), designed with Qwen3-TTS VoiceDesign and frozen as a reference clip; every line is cloned from it with the Base model. Geoff, 2026-10-10: picked M2 after hearing the earlier voices as 'too high pitched' and 'sterile' (was candidate a).",
+  "$note": "The house voice (DL-169; changed Oct 11, see the history below): a warm, medium-low baritone, designed with Qwen3-TTS VoiceDesign and frozen as a reference clip; every line is cloned from it with the Base model, then sped up by `tempo` (atempo, pitch unchanged). Geoff, 2026-10-11: M2 sounded 'somber', asked for '20% more upbeat'; of round 1 he liked B (brighter) but 'too deep; we can go even quicker, say 10%'; picked B-light-133 from round 2 (clone median about 133 Hz). History: 2026-10-10 M2 (median F0 about 105 Hz), picked after the first voices sounded 'too high pitched' and 'sterile'.",
   "mode": "clone",
   "ref_wav": "house/reference.wav",
   "ref_text": "Last weekend I finally walked to the market by the river. The air was cool, and the bread smelled wonderful. I stayed far longer than planned. Have you ever done that?",
-  "seed": 11,
+  "seed": 12,
   "designed_from": {
-    "description": "a deep, low-pitched, warm baritone man in his forties, lower register, calm and easygoing, gentle smile, natural rises and falls, talking to a friend, not an advert",
-    "seed": 7,
+    "description": "a warm, medium-low baritone man in his forties, friendly and upbeat, bright and engaged, smiling as he speaks, a little more energy, natural rises and falls, talking to a friend, not an advert",
+    "seed": 14,
     "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16"
-  }
+  },
+  "tempo": 1.1
 }
