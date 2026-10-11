@@ -184,7 +184,8 @@ export const BrowserPage = ({w, h}: {w: number; h: number}) => {
 // ---- Slides (PowerPoint) -----------------------------------------------------------------------
 
 const SL = {ink: '#1B2A3A', grey: '#9AA7B5', mid: '#5B6B7C', accent: '#C43E1C'};
-type SlideData = (typeof content.deck.slides)[number];
+type SlideData = {kind: string; title: string; subtitle?: string; bullets?: string[]; note?: string;
+  chart?: {label: string; bars: [string, number][]}; quotes?: string[]; stat?: string; statNote?: string; head?: string[]; rows?: string[][]};
 /** One slide drawn at 960x540; callers scale it. */
 export const Slide = ({s, index}: {s: SlideData; index: number}) => {
   const base: React.CSSProperties = {width: 960, height: 540, background: '#fff', position: 'relative', fontFamily: ui, color: SL.ink, overflow: 'hidden'};
@@ -194,31 +195,58 @@ export const Slide = ({s, index}: {s: SlideData; index: number}) => {
       <div style={{position: 'absolute', left: 90, top: 190, width: 700, fontSize: 64, fontWeight: 700, lineHeight: 1.08, letterSpacing: -1.5}}>{s.title}</div>
       <div style={{position: 'absolute', left: 92, top: 380, fontSize: 26, color: SL.mid}}>{s.subtitle}</div>
     </div>);
+  const Title = () => <div style={{position: 'absolute', left: 60, top: 46, width: 840, fontSize: 40, fontWeight: 700, lineHeight: 1.12, letterSpacing: -0.8}}>{s.title}</div>;
+  const Num = () => <div style={{position: 'absolute', right: 40, bottom: 22, fontSize: 14, color: SL.grey}}>{index + 1}</div>;
   if (s.kind === 'chart' && s.chart) {
-    const bars = s.chart.bars as [string, number][], max = 40, ch = 290, cw = 560;
+    // The tallest bar is the story; the note's leading figure becomes the big number beside the chart.
+    const bars = s.chart.bars, top = Math.max(...bars.map(([, v]) => v)), max = Math.ceil(top / 10) * 10, ch = 290, cw = 560;
+    const m = (s.note ?? '').match(/^(\S+%)\s*(?:of\s+)?(.*)$/);
     return (
       <div style={base}>
-        <div style={{position: 'absolute', left: 60, top: 46, width: 840, fontSize: 40, fontWeight: 700, lineHeight: 1.12, letterSpacing: -0.8}}>{s.title}</div>
+        <Title />
         <div style={{position: 'absolute', left: 60, top: 168, fontSize: 18, color: SL.mid}}>{s.chart.label}</div>
         <div style={{position: 'absolute', left: 60, top: 200, width: cw, height: ch + 40}}>
-          {[0, 10, 20, 30, 40].map((g) => <div key={g} style={{position: 'absolute', left: 36, right: 0, top: ch - (g / max) * ch, borderTop: '1px solid #E4E8EC'}}><span style={{position: 'absolute', left: -36, top: -10, fontSize: 14, color: SL.grey}}>{g}</span></div>)}
+          {Array.from({length: max / 10 + 1}, (_, k) => k * 10).map((g) => <div key={g} style={{position: 'absolute', left: 36, right: 0, top: ch - (g / max) * ch, borderTop: '1px solid #E4E8EC'}}><span style={{position: 'absolute', left: -36, top: -10, fontSize: 14, color: SL.grey}}>{g}</span></div>)}
           {bars.map(([n, v], i) => {
-            const bw = 78, gap = (cw - 36 - bars.length * bw) / bars.length, x = 36 + gap / 2 + i * (bw + gap), hot = v === 38;
+            const bw = Math.min(78, (cw - 36) / bars.length - 18), gap = (cw - 36 - bars.length * bw) / bars.length, x = 36 + gap / 2 + i * (bw + gap), hot = v === top;
             return (
               <React.Fragment key={n}>
                 <div style={{position: 'absolute', left: x, width: bw, bottom: 40, height: (v / max) * ch, background: hot ? SL.accent : '#B7C2CE', borderRadius: '4px 4px 0 0'}} />
                 <div style={{position: 'absolute', left: x, width: bw, bottom: 40 + (v / max) * ch + 6, textAlign: 'center', fontSize: 20, fontWeight: 700, color: hot ? SL.accent : SL.mid}}>{v}</div>
-                <div style={{position: 'absolute', left: x - 12, width: bw + 24, bottom: 8, textAlign: 'center', fontSize: 17, color: SL.mid}}>{n}</div>
+                <div style={{position: 'absolute', left: x - 12, width: bw + 24, bottom: 8, textAlign: 'center', fontSize: 15, color: SL.mid}}>{n}</div>
               </React.Fragment>);
           })}
         </div>
-        <div style={{position: 'absolute', left: 680, top: 230, width: 220}}>
-          <div style={{fontSize: 96, fontWeight: 800, color: SL.accent, letterSpacing: -3, lineHeight: 1}}>38%</div>
-          <div style={{fontSize: 22, color: SL.ink, marginTop: 14, lineHeight: 1.3}}>{(s as {note?: string}).note?.replace('38% of ', 'of ')}</div>
-        </div>
-        <div style={{position: 'absolute', right: 40, bottom: 22, fontSize: 14, color: SL.grey}}>{index + 1}</div>
+        {m && <div style={{position: 'absolute', left: 680, top: 230, width: 230}}>
+          <div style={{fontSize: 96, fontWeight: 800, color: SL.accent, letterSpacing: -3, lineHeight: 1}}>{m[1]}</div>
+          <div style={{fontSize: 21, color: SL.ink, marginTop: 14, lineHeight: 1.3}}>{m[2]}</div>
+        </div>}
+        <Num />
       </div>);
   }
+  if (s.kind === 'quotes') return (
+    <div style={base}>
+      <Title />
+      <div style={{position: 'absolute', left: 64, top: 180, width: 540}}>
+        {(s.quotes ?? []).map((q) => <div key={q} style={{fontSize: 27, lineHeight: 1.3, margin: '0 0 30px', paddingLeft: 22, borderLeft: `5px solid ${SL.accent}`, fontStyle: 'italic'}}>{q}</div>)}
+      </div>
+      {s.stat && <div style={{position: 'absolute', left: 660, top: 200, width: 250}}>
+        <div style={{fontSize: 76, fontWeight: 800, color: SL.accent, letterSpacing: -2, lineHeight: 1}}>{s.stat}</div>
+        <div style={{fontSize: 21, marginTop: 14, lineHeight: 1.3}}>{s.statNote}</div>
+      </div>}
+      <Num />
+    </div>);
+  if (s.kind === 'table') return (
+    <div style={base}>
+      <Title />
+      <div style={{position: 'absolute', left: 60, top: 180, width: 840, fontSize: 24}}>
+        {[s.head ?? [], ...(s.rows ?? [])].map((r, i) => (
+          <div key={i} style={{display: 'flex', padding: '14px 0', borderBottom: i === 0 ? `2px solid ${SL.ink}` : '1px solid #E4E8EC', fontWeight: i === 0 ? 700 : 400, color: i === 0 ? SL.mid : SL.ink}}>
+            {r.map((c, j) => <div key={j} style={{flex: j === 0 ? 2.2 : 1, textAlign: j === 0 ? 'left' : 'right', color: j === r.length - 1 && i > 0 ? SL.accent : undefined, fontWeight: j === r.length - 1 && i > 0 ? 700 : undefined}}>{c}</div>)}
+          </div>))}
+      </div>
+      <Num />
+    </div>);
   return (
     <div style={base}>
       <div style={{position: 'absolute', left: 60, top: 46, width: 840, fontSize: 40, fontWeight: 700, lineHeight: 1.12, letterSpacing: -0.8}}>{s.title}</div>
@@ -253,7 +281,7 @@ const OfficeTitle = ({file, accent, glyph, auto = true}: {file: string; accent: 
 );
 
 export const DeckApp = () => {
-  const slides = content.deck.slides, cur = 1;
+  const slides = content.deck.slides as SlideData[], cur = 1;
   const mainW = 500, ms = mainW / 960;
   return (
     <div style={{position: 'absolute', inset: 0, background: '#fff', fontFamily: ui, display: 'flex', flexDirection: 'column'}}>
@@ -279,7 +307,7 @@ export const DeckApp = () => {
           </div>
         </div>
       </div>
-      <div style={{height: 22, background: '#F3F3F5', borderTop: '1px solid #D6D6DA', fontSize: 10.5, color: '#6A6B70', display: 'flex', alignItems: 'center', padding: '0 12px', justifyContent: 'space-between'}}><span>Slide 2 of 4</span><span>Notes  ·  Comments  ·  Fit 100%</span></div>
+      <div style={{height: 22, background: '#F3F3F5', borderTop: '1px solid #D6D6DA', fontSize: 10.5, color: '#6A6B70', display: 'flex', alignItems: 'center', padding: '0 12px', justifyContent: 'space-between'}}><span>Slide {cur + 1} of {slides.length}</span><span>Notes  ·  Comments  ·  Fit 100%</span></div>
     </div>
   );
 };
@@ -288,6 +316,7 @@ export const DeckApp = () => {
 
 export const DocApp = () => {
   const d = content.doc, blue = '#185ABD';
+  const pull = (d as {pull?: {quote: string; who?: string; by?: string}}).pull;
   return (
     <div style={{position: 'absolute', inset: 0, background: '#fff', fontFamily: ui, display: 'flex', flexDirection: 'column'}}>
       <OfficeTitle file={files.doc} accent={blue} glyph="W" auto={false} />
@@ -302,6 +331,10 @@ export const DocApp = () => {
         <div style={{position: 'absolute', left: 36, right: 36, top: 30, bottom: -40, background: '#fff', boxShadow: '0 1px 8px rgba(0,0,0,0.25)', padding: '34px 42px', color: '#222'}}>
           <div style={{fontFamily: 'Georgia, "Times New Roman", serif', fontSize: 25, fontWeight: 700, lineHeight: 1.18, color: '#1F2A44'}}>{d.title}</div>
           <div style={{fontSize: 11.5, color: '#7A7C82', margin: '6px 0 14px', paddingBottom: 10, borderBottom: '1px solid #E1E2E6'}}>{d.byline}</div>
+          {pull && <div style={{margin: '0 0 14px', padding: '2px 0 2px 14px', borderLeft: `4px solid ${blue}`}}>
+            <div style={{fontFamily: 'Georgia, "Times New Roman", serif', fontSize: 15.5, fontStyle: 'italic', lineHeight: 1.4, color: '#1F2A44'}}>{pull.quote}</div>
+            <div style={{fontSize: 11, color: '#7A7C82', marginTop: 4}}>{pull.who ?? pull.by}</div>
+          </div>}
           {d.sections.map((sec) => (
             <div key={sec.heading} style={{marginBottom: 10}}>
               <div style={{fontSize: 14.5, fontWeight: 700, color: blue, marginBottom: 3}}>{sec.heading}</div>
