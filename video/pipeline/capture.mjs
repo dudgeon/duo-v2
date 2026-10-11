@@ -19,7 +19,7 @@ export function captureStates(states, {repo, cache, pub, scale, fixture, force =
   for (const state of states) {
     // The video's demo fixture (H3): the design fixture plus real document text. It's part of the key.
     const fx = fixture ? join(repo, fixture) : null;
-    const fxKey = fx ? execFileSync('/bin/sh', ['-c', `shasum "${dirname(fx)}"/*`]).toString() : '';
+    const fxKey = fx ? execFileSync('/bin/sh', ['-c', `cd "${dirname(fx)}" && find . -type f ! -name '.*' | sort | xargs shasum`]).toString() : '';
     const key = sha('window+anchors', appKey, state, scale, fxKey);
     const png = join(cc, `${key}.png`), anchors = join(cc, `${key}.anchors.json`);
     if (force || !existsSync(png)) {

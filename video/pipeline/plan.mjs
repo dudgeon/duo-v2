@@ -36,7 +36,7 @@ export function plan({scenes, shots, voiced, captures, style}) {
     const shot = shots[scene.id];
     if (!shot) throw new BuildError(`shots: scene ${scene.id} "${scene.title}" has no shot in shots.json`);
     const lines = [];
-    let t = style.voice.leadIn;
+    let t = shot.leadIn ?? style.voice.leadIn; // a shot that opens on picture alone (S0's logo build) waits longer
     for (const l of scene.lines) {
       const v = byId.get(l.id);
       lines.push({...v, start: +t.toFixed(3)});

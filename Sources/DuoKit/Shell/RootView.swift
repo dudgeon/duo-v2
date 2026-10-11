@@ -86,7 +86,7 @@ struct ProjectLayout: View {
                 .init(view: AnyView(ProjectSidebarPane().paneFocusRule(.left)), width: DuoMetric.paneProjectLeft,
                       minWidth: DuoMetric.paneMinSessionsAndFiles, collapsible: true, collapsed: model.leftCollapsedProject),
                 .init(view: AnyView(ConsolePane().paneFocusRule(.middle, onConsole: true)), width: nil, minWidth: DuoMetric.paneMinConsole),
-                .init(view: AnyView(RightPane().paneFocusRule(.right)), width: DuoMetric.paneProjectRight,
+                .init(view: AnyView(RightPane().paneFocusRule(.right)), width: model.videoRightWidth ?? DuoMetric.paneProjectRight,
                       minWidth: DuoMetric.paneMinRight, collapsible: true, collapsed: model.rightCollapsedProject),
             ],
             dividerColors: [DuoNSColor.rule, DuoNSColor.rule],

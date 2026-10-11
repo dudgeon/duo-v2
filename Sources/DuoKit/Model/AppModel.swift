@@ -120,6 +120,12 @@ public final class AppModel {
     public var fixtureEnded: (key: String, message: String)?
     /// Fixture mode: chats the chat-mode targets show, by console tab (ChatTargets).
     public var fixtureChats: [String: ChatSession] = [:]
+    /// The intro video's demo (VideoTargets): terminals showing a recorded screen, by tab; no process behind them.
+    public var fixtureTerminals: [String: TerminalSession] = [:]
+    /// The intro video's demo: a folder of real files the right pane opens in fixture mode, as a live project's would.
+    public var videoDemoFolder: URL?
+    /// The intro video's demo: the right pane's opening width, wide enough for its tabs.
+    public var videoRightWidth: CGFloat?
     /// Plain shells open in each project's console, by key, in the order opened (DB-4).
     public var shellTabs: [String: [String]] = [:]
     /// What each shell is running, for its tab's title.
@@ -210,7 +216,7 @@ public final class AppModel {
 
     /// A project-relative path as a real file, in live mode; or an outside file's tab (DL-106).
     public func liveFile(_ path: String) -> URL? {
-        guard terminalsMode == .live else { return nil }
+        guard terminalsMode == .live || videoDemoFolder != nil else { return nil }
         if Self.isOutsideFile(path) {
             let url = URL(fileURLWithPath: String(path.dropFirst(Self.outsideFilePrefix.count)))
             return FileManager.default.fileExists(atPath: url.path) ? url : nil

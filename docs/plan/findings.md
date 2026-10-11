@@ -3158,3 +3158,11 @@ Built to `chat-model-chip-handoff/` (the approved boards `chip` and `confirm`). 
   - **S2** pulls back from that desk to four project desks; one shows a pulsing "Waiting for you".
 - **Deferred: H4, terminal replay.** The walkthrough films chat mode, which draws real conversations natively, and the cold open's terminals are drawn. The live terminal is still blank in captures (F-25) and is left until a scene needs it.
 - **Build:** 2:50 with every state captured fresh; 2:24 of film.
+
+## F-282 · Intro video S2: the real panes in a background capture (2026-10-10)
+
+- **What S2 shows:** `--state video-s2-<middle-0..2|chat|right-1..4>` with the video fixture's `videoS2` section (`Sources/DuoKit/Debug/VideoTargets.swift`): three session tabs, four documents in the right pane, drawn by the real editor, HTML viewer, DeckView and DocxView from files in `video/fixture/docs/` (`make-docs.py` builds the .pptx and .docx). `AppModel.liveFile` answers for a fixture window that has a `videoDemoFolder`; nothing else about fixture mode changes.
+- **Terminal tabs are real terminals with no process:** `TerminalSession(key:screen:)` feeds recorded ANSI text (`video/fixture/terms/`), so they draw text in a window capture. The last tab's chat view is a recorded chat (`chat-s2/`), the ChatTargets way.
+- **A terminal's background is transparent in a window capture** (alpha 0: its layer isn't drawn). Over a white viewer it looked faded. `WindowCapture.underlay` paints the console colour under the capture; only the video states set it.
+- **Charts and Word pages were blank in captures because the page gets no animation frames or idle time (F-102).** The renderers started their layout from `requestAnimationFrame` and `requestIdleCallback`. `Vendor/pptx-renderer/patch.py` now has a timer stand in for the chart's frame and draws the first frame without animation; `Vendor/docx-viewer/docx.js` shims both calls with timers. This closes the "charts stay blank in scripted captures" note in F-102's follow-up.
+- **The right pane at 460 pt can't hold five tabs** (Project plus four long names show `» 2`). The video states open the window at 1800 × 1100 and the right pane at 700.

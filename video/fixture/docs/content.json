@@ -1,0 +1,53 @@
+{
+  "$note": "The sample documents the intro video shows, in the checkout-redesign project. S1 draws them in third-party windows; S2 opens the real files as Duo editor tabs. Both read this, so they always match. Sample data only.",
+  "project": "checkout-redesign",
+  "folder": "~/work/payments/checkout-redesign",
+  "markdown": {"file": "docs/prd-v2.md", "source": "../prd-v2.md"},
+  "prototype": {
+    "file": "prototype/checkout.html",
+    "title": "Checkout — Guest",
+    "brand": "Northwind Supply",
+    "steps": ["Cart", "Details", "Payment", "Review"],
+    "activeStep": 1,
+    "express": ["Apple Pay", "Google Pay", "PayPal"],
+    "fields": ["Email", "Full name", "Address", "City", "Postcode", "Country"],
+    "items": [
+      {"name": "Merino crew sweater", "variant": "Charcoal · M", "qty": 1, "price": 98.0},
+      {"name": "Canvas weekender", "variant": "Olive", "qty": 1, "price": 145.0},
+      {"name": "Wool socks, 3-pack", "variant": "Mixed", "qty": 2, "price": 24.0}
+    ],
+    "shipping": 0,
+    "taxRate": 0.08,
+    "cta": "Continue to payment",
+    "trust": "Guest checkout · no account needed"
+  },
+  "deck": {
+    "file": "docs/exec-review-oct14.pptx",
+    "slides": [
+      {"title": "Guest checkout: exec review", "subtitle": "checkout-redesign · Oct 14", "kind": "title"},
+      {"title": "Abandonment is highest at account creation", "kind": "chart",
+        "chart": {"label": "Drop-off by step (%)", "bars": [["Cart", 12], ["Account", 38], ["Shipping", 14], ["Payment", 9]]},
+        "note": "38% of guests leave when asked to make an account"},
+      {"title": "Proposal: one-page guest checkout", "kind": "bullets",
+        "bullets": ["No account until after purchase", "Express pay above the fold", "Saved cards for returning guests"]},
+      {"title": "Target: −15% abandonment by Q1", "kind": "bullets",
+        "bullets": ["A/B test from Nov 4", "Readout Dec 9", "Full rollout Jan 13"]}
+    ]
+  },
+  "doc": {
+    "file": "docs/interview-synthesis.docx",
+    "title": "Guest checkout: interview synthesis",
+    "byline": "Research · 6 interviews · Sep 2026",
+    "sections": [
+      {"heading": "Summary", "body": "Five of six shoppers abandoned a checkout in the last month because it asked them to create an account. Most would have finished as a guest."},
+      {"heading": "What we heard", "quotes": ["\"I'm not typing a card number on my phone again.\" (P2)", "\"If it wants a password, I'm gone.\" (P5)"]},
+      {"heading": "Themes", "bullets": ["Account creation feels like a trap", "Card entry on mobile is the slowest step", "Express pay builds trust when it's offered first"]},
+      {"heading": "Recommendations", "body": "Move account creation after purchase, lead with express pay, and remember cards for returning guests."}
+    ]
+  },
+  "terminals": [
+    {"session": "Tighten PRD goals", "cwd": "~/work/payments/checkout-redesign"},
+    {"session": "Prototype express pay", "cwd": "~/work/payments/checkout-redesign/prototype"},
+    {"session": "Synthesis from interviews", "cwd": "~/work/payments/checkout-redesign/research"}
+  ]
+}

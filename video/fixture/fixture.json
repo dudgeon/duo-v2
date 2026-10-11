@@ -1,5 +1,16 @@
 {
   "$note": "Sample data shown on every reference screen. From the design brief §6 plus the group and thread drawn on the canvas. For previews and tests only; this is not a schema.",
+  "videoS2": {
+    "folder": "docs",
+    "terminals": [
+      {"name": "Tighten PRD goals", "state": "working", "wait": "now", "screen": "terms/tighten-prd.ans"},
+      {"name": "Prototype express pay", "state": "idle", "wait": "12m", "screen": "terms/prototype-express-pay.ans"},
+      {"name": "Synthesis from interviews", "state": "idle", "wait": "1h", "screen": "terms/synthesis.ans"}
+    ],
+    "chat": "chat-s2",
+    "tabs": ["docs/prd-v2.md", "prototype/checkout.html", "docs/exec-review-oct14.pptx", "docs/interview-synthesis.docx"],
+    "files": ["PROJECT.md", "docs/prd-v2.md", "docs/exec-review-oct14.pptx", "docs/interview-synthesis.docx", "prototype/checkout.html"]
+  },
   "now": "2026-10-03T09:40:00",
   "user": "Geoff",
   "topics": [

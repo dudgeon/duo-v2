@@ -67,6 +67,9 @@ try {
   // 5. Wallpaper
   prepareWallpaper({style, here, cache, pub, remotion, log});
 
+  // S1's browser window shows this real HTML page in an <IFrame> (src/lib/ClutterApps.tsx).
+  mkdirSync(join(pub, 'prototype'), {recursive: true}); copyFileSync(join(here, 'fixture/docs/prototype/checkout.html'), join(pub, 'prototype/checkout.html'));
+
   // 6. Lint
   if (spawnSync('node', [join(here, 'lint.mjs')], {stdio: 'inherit'}).status !== 0) throw new BuildError('lint');
 
@@ -76,6 +79,12 @@ try {
     s.callouts?.length ? s.callouts[0].start + 1.0 : s.camera?.length > 1 ? s.camera[s.camera.length - 1].t + 0.3 : s.duration * 0.7);
   for (const s of timeline.scenes) {
     remotion('still', 'src/index.ts', 'Intro', join(out, `still-${s.id}.png`), `--frame=${Math.round(stillAt(s) * timeline.fps)}`);
+  }
+  // The thumbnail: the first scene's settled frame, when its shot names one (S0's logo and title).
+  const first = timeline.scenes[0], thumbAt = shots[first.id]?.thumbnail;
+  if (thumbAt !== undefined) {
+    remotion('still', 'src/index.ts', 'Intro', join(out, 'thumbnail.png'), `--frame=${Math.round((first.start + (thumbAt < 0 ? first.duration + thumbAt : thumbAt)) * timeline.fps)}`);
+    log('thumbnail: out/thumbnail.png');
   }
   const n = timeline.scenes.length;
   spawnSync('/bin/sh', ['-c', `ffmpeg -v error -y ${timeline.scenes.map((s) => `-i "${join(out, `still-${s.id}.png`)}"`).join(' ')} ` +

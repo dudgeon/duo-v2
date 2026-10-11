@@ -5,6 +5,20 @@
 // nothing here can write them (the page has no way to reach the file but that one GET).
 import { renderAsync, collectDocxReviewChanges } from './docx-preview.mjs';
 
+// A page in a window that isn't on screen gets no animation frames and no idle time (F-102), so the
+// renderer's layout steps never ran and a scripted capture drew an empty page. A timer stands in.
+{
+  const raf = window.requestAnimationFrame.bind(window), caf = window.cancelAnimationFrame.bind(window);
+  window.requestAnimationFrame = (cb) => {
+    let done = false, timer = 0;
+    const run = (t) => { if (done) return; done = true; clearTimeout(timer); cb(t ?? performance.now()); };
+    const id = raf(run);
+    timer = setTimeout(() => { caf(id); run(); }, 100);
+    return id;
+  };
+  window.requestIdleCallback = (cb) => setTimeout(() => cb({ didTimeout: false, timeRemaining: () => 8 }), 0);
+}
+
 const dev = new URLSearchParams(location.search);
 const devDoc = location.protocol === 'http:' ? dev.get('doc') : null;
 const post = (m) => { try { webkit.messageHandlers.duoDocx.postMessage(m); } catch (_) {} };

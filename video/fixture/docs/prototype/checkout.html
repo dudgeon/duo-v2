@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Checkout — Guest</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --ink: #1a1d21; --muted: #6b7280; --line: #e3e5e8; --bg: #f7f6f3; --card: #fff;
+    --accent: #1f4d3a; --accent-2: #2c6a50; --focus: #2f6fed;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 14px 40px; background: #fff; border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; letter-spacing: -.2px; }
+  .mark { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); position: relative; }
+  .mark::after { content: ""; position: absolute; left: 7px; top: 6px; width: 12px; height: 14px; border: 2.5px solid #e9f2ec; border-top-color: transparent; border-radius: 0 0 8px 8px; transform: rotate(-45deg); }
+  .secure { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12.5px; }
+  .lock { width: 10px; height: 8px; background: var(--muted); border-radius: 2px; position: relative; margin-top: 4px; }
+  .lock::before { content: ""; position: absolute; left: 1.5px; top: -5px; width: 4px; height: 5px; border: 1.5px solid var(--muted); border-bottom: 0; border-radius: 4px 4px 0 0; }
+  .steps { display: flex; justify-content: center; gap: 0; padding: 16px 40px 4px; }
+  .step { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  .step .n { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #cfd2d6; display: grid; place-items: center; font-size: 11.5px; font-weight: 600; background: #fff; }
+  .step.done .n { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .step.on { color: var(--ink); font-weight: 600; }
+  .step.on .n { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 3px rgba(31,77,58,.14); }
+  .bar { width: 56px; height: 1.5px; background: #d5d8dc; margin: 0 12px; }
+  .bar.done { background: var(--accent); }
+  main { display: grid; grid-template-columns: 1fr 340px; gap: 28px; padding: 14px 40px 28px; max-width: 960px; margin: 0 auto; }
+  h2 { font-size: 15px; margin: 0 0 10px; font-weight: 650; letter-spacing: -.1px; }
+  .express { margin-bottom: 4px; }
+  .express .lead { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .pay { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .btn-pay { height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 650; font-size: 15px; border: 1px solid transparent; letter-spacing: -.2px; }
+  .apple { background: #000; color: #fff; }
+  .google { background: #fff; border-color: #d4d6d9; color: #3c4043; }
+  .google b { color: #4285f4; font-weight: 700; }
+  .paypal { background: #ffc439; color: #1a2b6d; font-style: italic; font-weight: 800; }
+  .paypal span { color: #179bd7; }
+  .or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; margin: 14px 0 12px; }
+  .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .group { margin-bottom: 14px; }
+  .field { position: relative; margin-bottom: 9px; }
+  .field label { position: absolute; left: 12px; top: 6px; font-size: 10.5px; color: var(--muted); letter-spacing: .1px; }
+  .field .in { height: 46px; padding: 21px 12px 0; background: #fff; border: 1px solid #d4d6d9; border-radius: 8px; font-size: 14px; color: var(--ink); white-space: nowrap; overflow: hidden; }
+  .field.focus .in { border-color: var(--focus); box-shadow: 0 0 0 3px rgba(47,111,237,.16); }
+  .field .in.ph { color: #a2a7ae; }
+  .caret { display: inline-block; width: 1.5px; height: 15px; background: var(--focus); vertical-align: -3px; margin-left: 1px; }
+  .field .chev { position: absolute; right: 14px; top: 20px; width: 7px; height: 7px; border-right: 1.5px solid #8a8f96; border-bottom: 1.5px solid #8a8f96; transform: rotate(45deg); }
+  .field .tick { position: absolute; right: 13px; top: 17px; width: 12px; height: 7px; border-left: 2px solid #2c8a5a; border-bottom: 2px solid #2c8a5a; transform: rotate(-45deg); }
+  .row { display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; }
+  .check { display: flex; align-items: center; gap: 8px; color: #44484e; font-size: 13px; margin-top: 2px; }
+  .box { width: 16px; height: 16px; border-radius: 4px; background: var(--accent); position: relative; }
+  .box::after { content: ""; position: absolute; left: 4.5px; top: 2px; width: 4px; height: 8px; border-right: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(40deg); }
+  aside { align-self: start; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(20,24,28,.04), 0 8px 24px rgba(20,24,28,.05); }
+  .item { display: flex; align-items: center; gap: 12px; padding: 9px 0; }
+  .item + .item { border-top: 1px solid #f0f1f2; }
+  .thumb { width: 52px; height: 52px; border-radius: 9px; position: relative; flex: none; }
+  .thumb .q { position: absolute; right: -6px; top: -6px; min-width: 18px; height: 18px; border-radius: 9px; background: #5a6068; color: #fff; font-size: 10.5px; font-weight: 600; display: grid; place-items: center; padding: 0 5px; }
+  .t-sweater { background: linear-gradient(135deg, #4a4f57, #2b2e34); }
+  .t-sweater::before { content: ""; position: absolute; inset: 11px 9px 9px; background: #3a3e45; border-radius: 6px 6px 3px 3px; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.1); }
+  .t-bag { background: linear-gradient(135deg, #8a8a5c, #6c6e43); }
+  .t-bag::before { content: ""; position: absolute; left: 9px; right: 9px; top: 20px; bottom: 9px; background: #7c7d4e; border-radius: 4px; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.14); }
+  .t-bag::after { content: ""; position: absolute; left: 17px; right: 17px; top: 11px; height: 12px; border: 2px solid #5b5c37; border-bottom: 0; border-radius: 8px 8px 0 0; }
+  .t-socks { background: repeating-linear-gradient(45deg, #d9d2c3 0 6px, #b9c3cc 6px 12px, #c9a58c 12px 18px); }
+  .meta { flex: 1; min-width: 0; }
+  .meta b { display: block; font-size: 13.5px; font-weight: 600; }
+  .meta span { color: var(--muted); font-size: 12px; }
+  .price { font-weight: 600; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .promo { display: flex; gap: 8px; margin: 12px 0 10px; }
+  .promo .in { flex: 1; height: 38px; border: 1px solid #d4d6d9; border-radius: 8px; padding: 10px 12px; color: #a2a7ae; font-size: 13px; background: #fff; }
+  .promo .ap { height: 38px; padding: 0 14px; border-radius: 8px; background: #eceef0; color: #70757c; font-weight: 600; font-size: 13px; display: grid; place-items: center; }
+  .sum { border-top: 1px solid var(--line); padding-top: 10px; }
+  .line { display: flex; justify-content: space-between; padding: 3px 0; color: #4b5057; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .line.total { color: var(--ink); font-size: 17px; font-weight: 700; padding-top: 10px; margin-top: 6px; border-top: 1px solid var(--line); letter-spacing: -.2px; }
+  .line.total small { font-size: 11.5px; font-weight: 500; color: var(--muted); margin-right: 6px; }
+  .cta { margin-top: 14px; height: 48px; border-radius: 10px; background: linear-gradient(180deg, var(--accent-2), var(--accent)); color: #fff; font-weight: 650; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 6px 14px rgba(31,77,58,.28); }
+  .trust { text-align: center; color: var(--muted); font-size: 12px; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 7px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #2c8a5a; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="mark"></div>Northwind Supply</div>
+  <div class="secure"><div class="lock"></div>Secure checkout</div>
+</header>
+<nav class="steps">
+  <div class="step done"><div class="n">✓</div>Cart</div><div class="bar done"></div>
+  <div class="step on"><div class="n">2</div>Details</div><div class="bar"></div>
+  <div class="step"><div class="n">3</div>Payment</div><div class="bar"></div>
+  <div class="step"><div class="n">4</div>Review</div>
+</nav>
+<main>
+  <section>
+    <div class="express">
+      <div class="lead">Express checkout</div>
+      <div class="pay">
+        <div class="btn-pay apple">Apple Pay</div>
+        <div class="btn-pay google"><b>G</b>&nbsp;Pay</div>
+        <div class="btn-pay paypal">Pay<span>Pal</span></div>
+      </div>
+    </div>
+    <div class="or">or continue as guest</div>
+    <div class="group">
+      <h2>Contact</h2>
+      <div class="field"><label>Email</label><div class="in">alex.morgan@example.com</div><div class="tick"></div></div>
+      <div class="check"><div class="box"></div>Email me order updates</div>
+    </div>
+    <div class="group">
+      <h2>Shipping address</h2>
+      <div class="field"><label>Full name</label><div class="in">Alex Morgan</div></div>
+      <div class="field focus"><label>Address</label><div class="in">214 Harbor Street<span class="caret"></span></div></div>
+      <div class="row">
+        <div class="field"><label>City</label><div class="in">Portland</div></div>
+        <div class="field"><label>Postcode</label><div class="in">97209</div></div>
+      </div>
+      <div class="field"><label>Country</label><div class="in">United States</div><div class="chev"></div></div>
+    </div>
+  </section>
+  <aside>
+    <h2>Order summary</h2>
+    <div class="item"><div class="thumb t-sweater"><div class="q">1</div></div><div class="meta"><b>Merino crew sweater</b><span>Charcoal · M</span></div><div class="price">$98.00</div></div>
+    <div class="item"><div class="thumb t-bag"><div class="q">1</div></div><div class="meta"><b>Canvas weekender</b><span>Olive</span></div><div class="price">$145.00</div></div>
+    <div class="item"><div class="thumb t-socks"><div class="q">2</div></div><div class="meta"><b>Wool socks, 3-pack</b><span>Mixed</span></div><div class="price">$48.00</div></div>
+    <div class="promo"><div class="in">Discount code</div><div class="ap">Apply</div></div>
+    <div class="sum">
+      <div class="line"><span>Subtotal</span><span>$291.00</span></div>
+      <div class="line"><span>Shipping</span><span>Free</span></div>
+      <div class="line"><span>Estimated tax (8%)</span><span>$23.28</span></div>
+      <div class="line total"><span>Total</span><span><small>USD</small>$314.28</span></div>
+    </div>
+    <div class="cta">Continue to payment <span>→</span></div>
+    <div class="trust"><span class="dot"></span>Guest checkout · no account needed</div>
+  </aside>
+</main>
+</body>
+</html>

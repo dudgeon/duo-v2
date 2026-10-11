@@ -108,6 +108,7 @@ struct ConsoleTabStrip: View {
         .modifier(TabHover(key: t.id) { model.closeConsoleTab(t.id) })
         .accessibilityElement(children: .combine)
         .accessibilityLabel(t.state == nil ? "\(t.title), shell" : t.title)
+        .accessibilityIdentifier("video.tab.middle.\(allTabs.firstIndex { $0.id == t.id } ?? 0)")   // anchors: the video cursor's target (0-based, strip order)
         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
         .background(ground)
         .transition(.tab)

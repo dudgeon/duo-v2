@@ -131,7 +131,14 @@ public final class TerminalSession {
     public let view: GuardedTerminalView
     public private(set) var exited = false
 
-    init(key: String, command: TerminalCommand, cwd: String) {
+    /// A terminal showing recorded text, with no process (the intro video's demo, VideoTargets).
+    convenience init(key: String, screen: String) {
+        self.init(key: key, command: .shell, cwd: NSTemporaryDirectory(), running: false)
+        view.resize(cols: 98, rows: 52)   // the pane's size at the video's window, so no line wraps while it's fed
+        view.feed(text: screen.replacingOccurrences(of: "\n", with: "\r\n"))
+    }
+
+    init(key: String, command: TerminalCommand, cwd: String, running: Bool = true) {
         self.key = key
         self.command = command
         self.cwd = cwd
@@ -145,7 +152,7 @@ public final class TerminalSession {
         view.registerForDraggedTypes([.fileURL])  // files dropped in type their paths (DL-117)
         view.processDelegate = ProcessWatcher.shared
         ProcessWatcher.shared.sessions[ObjectIdentifier(view)] = self
-        start()
+        if running { start() }
         // A steady block, no blink (DB-2): DECSCUSR 2, as a program would ask for it.
         view.feed(text: "\u{1b}[2 q")
     }
