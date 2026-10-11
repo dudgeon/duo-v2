@@ -2,6 +2,8 @@
   "$note": "Sample data for the intro video's demo world (Little Shared Library; SCENARIO.md, world.json). Built by make-fixture.py; do not edit by hand. Same keys as the design fixture.",
   "videoS2": {
     "folder": "docs",
+    "project": "shelf-scan",
+    "cwd": "/Users/sam/work/little-shared-library/shelf-scan",
     "terminals": [
       {
         "name": "Tighten PRD goals",
