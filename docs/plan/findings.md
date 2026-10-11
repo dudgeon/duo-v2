@@ -3188,3 +3188,17 @@ Real `claude` 2.1.296 TUI on a PTY (`Spikes/chat-mode/drive.mjs`), the spike's m
 - **A terminal's background is transparent in a window capture** (alpha 0: its layer isn't drawn). Over a white viewer it looked faded. `WindowCapture.underlay` paints the console colour under the capture; only the video states set it.
 - **Charts and Word pages were blank in captures because the page gets no animation frames or idle time (F-102).** The renderers started their layout from `requestAnimationFrame` and `requestIdleCallback`. `Vendor/pptx-renderer/patch.py` now has a timer stand in for the chart's frame and draws the first frame without animation; `Vendor/docx-viewer/docx.js` shims both calls with timers. This closes the "charts stay blank in scripted captures" note in F-102's follow-up.
 - **The right pane at 460 pt can't hold five tabs** (Project plus four long names show `» 2`). The video states open the window at 1800 × 1100 and the right pane at 700.
+
+## F-283 · The intro video's demo world: one data file, generated fixtures, stable bytes (video/fixtures, 2026-10-11)
+
+- **One world:** the video films Little Shared Library, a seed-stage startup whose iPhone app catalogs neighbourhood book-sharing boxes. The user is Sam, a PM; the hero project is shelf-scan; "today" is Tue Oct 13 2026. Geoff agreed it in an interview, recorded in `video/fixture/SCENARIO.md`. Every name, date and number is in `video/fixture/world.json`.
+- **Generated, not hand-made:** each `make-*.py` reads `world.json`.
+  - `docs/make-docs.py` makes the PRD-derived text, the .pptx and .docx, the interviews and `content.json`, including `desk.*` for S1 and `s5`.
+  - `make-research.py` makes the eval CSV and notes, the chat recordings and the hero session.
+  - `terms/make-terms.py` makes the terminal screens.
+  - `docs/prototype/make-prototype.py` makes the prototype.
+  - `make-fixture.py` makes `fixture.json`, and `make-projects.py` the thin projects.
+  - Where two artefacts show the same thing (S1's terminal and S2's tab, the hero session's JSONL and `chat-s4`), one is generated from the other or from the same data. That stops them drifting apart, which they had.
+- **Fixture states hard-coded the old world:** `VideoTargets` opened "checkout-redesign" and returned early when no session matched, so a renamed world captured empty panes. `videoS2.project`/`cwd` now name it, and `s4Terminal`/`s5Chat` name the S4 and S5 recordings. The other fixture targets (`TargetState`, `SearchTargets`, `ChatTargets`) still name checkout-redesign; they serve the design fixture, not the video.
+- **Office files need stable bytes:** python-pptx and python-docx write zip timestamps and `docProps/core.xml` dates, and a chart embeds a workbook with its own. So every run changed the bytes and forced the video's capture cache (which hashes `fixture/`) to recapture all states. `stable_bytes()` in `make-docs.py` rewrites each zip, recursing into embedded workbooks, with fixed times.
+- **Headless Chrome won't go below a 500 px window:** `--window-size=390,844` gives a 500 × 757 viewport. The phone screenshot sets the viewport over DevTools instead (`docs/prototype/shot.mjs`); it never shows a window.
