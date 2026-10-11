@@ -65,8 +65,12 @@ Four of six wanted to skip the shipping form when an address autofills.
 Nobody asked for more payment methods.`,
 };
 
-export const desk: Desk = {...DEFAULTS, ...(c.desk ?? {}),
-  finder: {...DEFAULTS.finder, ...(c.desk?.finder ?? {})}, terms: {...DEFAULTS.terms, ...(c.desk?.terms ?? {})}, zsh: {...DEFAULTS.zsh, ...(c.desk?.zsh ?? {})}};
+// The fixture writes the PRD as a list of lines and `lastLogin` with its "Last login: " prefix; accept both forms.
+const given = (c.desk ?? {}) as Partial<Omit<Desk, 'prd'>> & {prd?: string | string[]};
+if (Array.isArray(given.prd)) given.prd = given.prd.join('\n');
+if (given.zsh?.lastLogin) given.zsh = {...given.zsh, lastLogin: given.zsh.lastLogin.replace(/^Last login:\s*/, '')};
+export const desk: Desk = {...DEFAULTS, ...(given as Partial<Desk>),
+  finder: {...DEFAULTS.finder, ...(given.finder ?? {})}, terms: {...DEFAULTS.terms, ...(given.terms ?? {})}, zsh: {...DEFAULTS.zsh, ...(given.zsh ?? {})}};
 const base = (p: string) => p.split('/').pop()!;
 /** File names and the project, as the windows' title bars show them. */
 export const files = {project: c.project, folder: c.folder, markdown: base(c.markdown.file), prototype: c.prototype.file, deck: base(c.deck.file), doc: base(c.doc.file)};

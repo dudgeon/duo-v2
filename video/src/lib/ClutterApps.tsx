@@ -5,7 +5,7 @@ import content from '../../fixture/docs/content.json';
 import {desk, files} from './deskContent';
 
 // The apps inside S1's windows (Terminal running Claude Code, Finder, a Markdown editor, a browser
-// showing the real checkout prototype, PowerPoint, Word). Sample data only: everything here comes from
+// showing the real prototype, PowerPoint, Word). Sample data only: everything here comes from
 // fixture/docs/content.json, which S2 also shows as real Duo tabs. Pure functions of `t`.
 
 const ui = tokens.font.ui, mono = tokens.font.mono;
@@ -99,7 +99,7 @@ const Folder = ({s = 15}: {s?: number}) => (
 );
 const FOLDERS = desk.finder.folders;
 export const Finder = ({t, huntAt}: {t: number; huntAt?: number}) => {
-  // The selection walks down the list, overshoots and comes back: a hunt, landing on checkout-redesign.
+  // The selection walks down the list, overshoots and comes back: a hunt, landing on the hero project (desk.finder.hero).
   const heroIdx = Math.max(0, FOLDERS.findIndex(([f]) => f === desk.finder.hero));
   const path = [0, 2, 4, 3, heroIdx].map((i) => Math.min(i, FOLDERS.length - 1));
   const step = huntAt === undefined || t < huntAt ? -1 : Math.min(path.length - 1, Math.floor((t - huntAt) / 0.32));
@@ -160,7 +160,7 @@ export const MarkdownEditor = () => {
   );
 };
 
-// ---- Browser (Safari-like) showing the real checkout.html -----------------------------------
+// ---- Browser (Safari-like) showing the real prototype --------------------------------------
 
 export const BROWSER_BAR_H = 54;
 const Chev = ({d}: {d: 'l' | 'r'}) => <div style={{width: 8, height: 8, borderLeft: '2px solid #85868B', borderBottom: '2px solid #85868B', transform: `rotate(${d === 'l' ? 45 : -135}deg)`}} />;
