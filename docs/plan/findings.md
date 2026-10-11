@@ -3158,3 +3158,19 @@ Built to `chat-model-chip-handoff/` (the approved boards `chip` and `confirm`). 
   - **S2** pulls back from that desk to four project desks; one shows a pulsing "Waiting for you".
 - **Deferred: H4, terminal replay.** The walkthrough films chat mode, which draws real conversations natively, and the cold open's terminals are drawn. The live terminal is still blank in captures (F-25) and is left until a scene needs it.
 - **Build:** 2:50 with every state captured fresh; 2:24 of film.
+
+## F-279 · Claude Code mods: what they are, how they load, what gates them (research/claude-code-mods, 2026-10-10)
+
+Full write-up: `docs/research/claude-code-mods.md`. Sources: the CLI 2.1.296 (`--help`, its built-in `plugin-authoring` skill's `reference.md` and `types/claude-code.d.ts`, binary strings) and the official CHANGELOG.
+- **Mods are plugins of function hooks**, shipped in **2.1.287** ("Added Claude Mods: plugins may now modify deeper behavior"); the first built-in is "You should know". A mod is `.claude-plugin/plugin.json`, `hooks/hooks.json` (`{ "modules": [...] }`) and a TS/JS module exporting `register(on)`; hooks are `($, e, next)` over tool calls, prompts, the system prompt, turns, sessions, slash commands and `ui.render` (band above the prompt, panes, the hint line, the mode labels, transcript rows). The API is labelled early access: "may change between releases without notice".
+- **Loading:** `--plugin-dir <folder|zip>` (per session; the flag predates mods, ≤2.1.74), `CLAUDE_CODE_PLUGIN_DIRS` (process env or the user settings' `env`, never a project's), `--plugin-url`, marketplaces (`/plugin install … --marketplace`, `enabledPlugins`), skills folders holding a manifest (`~/.claude/skills/<name>`, `.claude/skills/<name>`), managed settings (an organization's "managed seat").
+- **Gates:** workspace trust holds hooks modules back; managed `allowManagedModsOnly` refuses non-organization mods; a remote switch ("installed mods are turned off remotely"); `--safe-mode`/`--bare`; a crash breaker in the hooks worker. The work Mac's 2.1.219 has no mods.
+- **Duo strips `CLAUDE_*` from its children** (`Terminals.swift:93`, F-17), so a user's exported `CLAUDE_CODE_PLUGIN_DIRS` doesn't reach Duo sessions; one in `~/.claude/settings.json` does, and installed plugins load as usual.
+
+## F-280 · Proof: a mod Duo would ship loads per session by `--plugin-dir`, and what it does to the screen (research/claude-code-mods, 2026-10-10)
+
+Real `claude` 2.1.296 TUI on a PTY (`Spikes/chat-mode/drive.mjs`), the spike's mock Messages API, a scratch `CLAUDE_CONFIG_DIR`, Haiku 5.5; no credentials, no tokens, nothing of Geoff's touched. A probe mod (status line, band, `/duo-ping`, an events file by `$.fs.write`) passed `claude plugin validate`.
+- **`--plugin-dir` loads it with no install and no question**; `CLAUDE_CODE_PLUGIN_DIRS` does the same. The band draws above the input box with a `[-]`; `$.ui.status` draws `⚠ <plugin>: <text>` under the input box, above the mode row; the events file got `session.start`, `turn.start`, `turn.complete`.
+- **A mod's slash-command reply is a `system`/`local_command` row** in the transcript (`<local-command-stdout>…`), which chat already renders; bands and status lines are not in the transcript, so they show only in the terminal view.
+- **Two status lines push the `esc to interrupt` / mode row to the third row under the input box** (C-78).
+- **An interactive session writes into a `--plugin-dir` folder**: `tsconfig.json` and `.claude-plugin/types/…` at each load. A read-only copy loads and works with nothing written. So Duo must pass a copy in its support folder, never a path inside the signed app.
