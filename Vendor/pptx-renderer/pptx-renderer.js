@@ -48336,7 +48336,7 @@ function _Y(e, t) {
       g();
       return;
     }
-    ($ = t.signal) == null || $.addEventListener("abort", b, { once: !0 }), x = requestAnimationFrame(() => {
+    ($ = t.signal) == null || $.addEventListener("abort", b, { once: !0 }), x = duoFrame(() => {
       var C;
       if (x = void 0, (C = t.signal) != null && C.aborted || !i.isConnected) {
         b();
@@ -48366,7 +48366,7 @@ function _Y(e, t) {
 function $Y(e, t, r, n) {
   try {
     const i = Kz(e);
-    i.setOption(t), r == null || r.add(i);
+    i.setOption({ ...t, animation: false }), r == null || r.add(i);
     const a = () => {
       o == null || o.disconnect(), i.isDisposed() || i.dispose(), r == null || r.delete(i), n == null || n.removeEventListener("abort", a);
     };
@@ -50764,3 +50764,11 @@ export {
   AT as searchText,
   qX as serializePresentation
 };
+
+function duoFrame(cb) {
+  let done = false;
+  const run = () => { if (!done) { done = true; cb(); } };
+  const id = requestAnimationFrame(run);
+  setTimeout(() => { cancelAnimationFrame(id); run(); }, 120);
+  return id;
+}

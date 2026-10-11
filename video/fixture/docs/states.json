@@ -1,0 +1,175 @@
+{
+  "$note": "S2 capture states. Same layout in all: window 1800x1100 pt (the state sets it; capture at --capture-scale 4 gives 7200x4400). Anchor frames are window points, top-left origin. Tab anchors: video.tab.middle.<0..2> in strip order; video.tab.right.<0..4>, 0 = Project tab then the four documents. Needs the fixture's videoS2 section (video/fixture/fixture.json).",
+  "window": [
+    1800,
+    1100
+  ],
+  "tabs": {
+    "middle": [
+      "Tighten PRD goals",
+      "Prototype express pay",
+      "Synthesis from interviews"
+    ],
+    "right": [
+      "Project",
+      "docs/prd-v2.md",
+      "prototype/checkout.html",
+      "docs/exec-review-oct14.pptx",
+      "docs/interview-synthesis.docx"
+    ]
+  },
+  "states": [
+    {
+      "state": "video-s2-middle-0",
+      "middle": "Tighten PRD goals (terminal)",
+      "right": "docs/prd-v2.md (editor)",
+      "anchors": [
+        "video.pane.left",
+        "video.pane.middle",
+        "video.pane.right",
+        "video.tab.middle.0",
+        "video.tab.middle.1",
+        "video.tab.middle.2",
+        "video.tab.right.0",
+        "video.tab.right.1",
+        "video.tab.right.2",
+        "video.tab.right.3",
+        "video.tab.right.4",
+        "video.needs-you-chip"
+      ]
+    },
+    {
+      "state": "video-s2-middle-1",
+      "middle": "Prototype express pay (terminal)",
+      "right": "docs/prd-v2.md (editor)",
+      "anchors": [
+        "video.pane.left",
+        "video.pane.middle",
+        "video.pane.right",
+        "video.tab.middle.0",
+        "video.tab.middle.1",
+        "video.tab.middle.2",
+        "video.tab.right.0",
+        "video.tab.right.1",
+        "video.tab.right.2",
+        "video.tab.right.3",
+        "video.tab.right.4",
+        "video.needs-you-chip"
+      ]
+    },
+    {
+      "state": "video-s2-middle-2",
+      "middle": "Synthesis from interviews (terminal)",
+      "right": "docs/prd-v2.md (editor)",
+      "anchors": [
+        "video.pane.left",
+        "video.pane.middle",
+        "video.pane.right",
+        "video.tab.middle.0",
+        "video.tab.middle.1",
+        "video.tab.middle.2",
+        "video.tab.right.0",
+        "video.tab.right.1",
+        "video.tab.right.2",
+        "video.tab.right.3",
+        "video.tab.right.4",
+        "video.needs-you-chip"
+      ]
+    },
+    {
+      "state": "video-s2-chat",
+      "middle": "Synthesis from interviews (chat view)",
+      "right": "docs/prd-v2.md (editor)",
+      "anchors": [
+        "video.pane.left",
+        "video.pane.middle",
+        "video.pane.right",
+        "video.tab.middle.0",
+        "video.tab.middle.1",
+        "video.tab.middle.2",
+        "video.tab.right.0",
+        "video.tab.right.1",
+        "video.tab.right.2",
+        "video.tab.right.3",
+        "video.tab.right.4",
+        "video.needs-you-chip"
+      ]
+    },
+    {
+      "state": "video-s2-right-1",
+      "middle": "Tighten PRD goals (terminal)",
+      "right": "docs/prd-v2.md (editor (Markdown))",
+      "anchors": [
+        "video.pane.left",
+        "video.pane.middle",
+        "video.pane.right",
+        "video.tab.middle.0",
+        "video.tab.middle.1",
+        "video.tab.middle.2",
+        "video.tab.right.0",
+        "video.tab.right.1",
+        "video.tab.right.2",
+        "video.tab.right.3",
+        "video.tab.right.4",
+        "video.needs-you-chip"
+      ]
+    },
+    {
+      "state": "video-s2-right-2",
+      "middle": "Tighten PRD goals (terminal)",
+      "right": "prototype/checkout.html (HTML viewer (local page))",
+      "anchors": [
+        "video.pane.left",
+        "video.pane.middle",
+        "video.pane.right",
+        "video.tab.middle.0",
+        "video.tab.middle.1",
+        "video.tab.middle.2",
+        "video.tab.right.0",
+        "video.tab.right.1",
+        "video.tab.right.2",
+        "video.tab.right.3",
+        "video.tab.right.4",
+        "video.needs-you-chip"
+      ]
+    },
+    {
+      "state": "video-s2-right-3",
+      "middle": "Tighten PRD goals (terminal)",
+      "right": "docs/exec-review-oct14.pptx (DeckView (PowerPoint))",
+      "anchors": [
+        "video.pane.left",
+        "video.pane.middle",
+        "video.pane.right",
+        "video.tab.middle.0",
+        "video.tab.middle.1",
+        "video.tab.middle.2",
+        "video.tab.right.0",
+        "video.tab.right.1",
+        "video.tab.right.2",
+        "video.tab.right.3",
+        "video.tab.right.4",
+        "video.needs-you-chip"
+      ]
+    },
+    {
+      "state": "video-s2-right-4",
+      "middle": "Tighten PRD goals (terminal)",
+      "right": "docs/interview-synthesis.docx (DocxView (Word))",
+      "anchors": [
+        "video.pane.left",
+        "video.pane.middle",
+        "video.pane.right",
+        "video.tab.middle.0",
+        "video.tab.middle.1",
+        "video.tab.middle.2",
+        "video.tab.right.0",
+        "video.tab.right.1",
+        "video.tab.right.2",
+        "video.tab.right.3",
+        "video.tab.right.4",
+        "video.needs-you-chip"
+      ]
+    }
+  ]
+}

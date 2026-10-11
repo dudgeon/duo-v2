@@ -7,6 +7,10 @@ public enum WindowCapture {
     /// Pixels per point for captures: `--capture-scale` / `DUO_CAPTURE_SCALE`, default 2 (the original path, untouched).
     public static let scale: Double = LaunchOptions.captureScale(arguments: CommandLine.arguments)
 
+    /// Painted under a window capture before its pixels: a terminal's background is transparent in a
+    /// window capture (its layer isn't drawn), so the intro video's demo (VideoTargets) sets the console colour.
+    nonisolated(unsafe) public static var underlay: NSColor?
+
     /// A bitmap `scale` pixels per point over `rect`, with `view` drawn into it at that scale (vector
     /// content is rendered at that resolution, not upsampled). Only used when `scale` is not 2.
     private static func scaledRep(of view: NSView, in rect: NSRect) throws -> NSBitmapImageRep {
@@ -135,7 +139,7 @@ public enum WindowCapture {
             rep = try scaledRep(of: frame, in: rect)
         }
         guard let srgb = rep.converting(to: .sRGB, renderingIntent: .default),
-              let png = try resample(srgb, width: Int((rect.width * scale).rounded()), height: Int((rect.height * scale).rounded())).representation(using: .png, properties: [:])
+              let png = try resample(srgb, width: Int((rect.width * scale).rounded()), height: Int((rect.height * scale).rounded()), force: underlay != nil).representation(using: .png, properties: [:])
         else { throw CaptureError("PNG encoding failed") }
         try png.write(to: url)
     }
@@ -179,7 +183,13 @@ public enum WindowCapture {
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: out)
         NSGraphicsContext.current?.imageInterpolation = .high
-        rep.draw(in: NSRect(x: 0, y: 0, width: width, height: height))
+        if let underlay {
+            underlay.setFill(); NSRect(x: 0, y: 0, width: width, height: height).fill()
+            let image = NSImage(size: NSSize(width: width, height: height)); image.addRepresentation(rep)
+            image.draw(in: NSRect(x: 0, y: 0, width: width, height: height), from: .zero, operation: .sourceOver, fraction: 1)
+        } else {
+            rep.draw(in: NSRect(x: 0, y: 0, width: width, height: height))
+        }
         NSGraphicsContext.restoreGraphicsState()
         return out
     }

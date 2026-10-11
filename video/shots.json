@@ -1,62 +1,232 @@
 {
-  "$note": "One shot per scene in script.md, keyed by scene id (DL-169). Claude keeps these in step with the script's Shot: notes. Look: style/reference-analysis.md. kind 'desk' films a fixture state's window (ground 'paper' by default, 'wallpaper' for the desktop); 'drawn' is a drawn scene; 'card' is the end card. A move or callout targets an anchor (label or identifier) or a rect in window points, and lands on a word of line N.",
-  "S1": {"kind": "drawn", "scene": "desk", "events": {
-    "term1": {"line": 1, "word": "juggling", "offset": -0.2},
-    "term2": {"line": 2, "word": "every"},
-    "markdown": {"line": 2, "word": "Markdown"},
-    "finder": {"line": 3, "word": "Finder"},
-    "hunt": {"line": 3, "word": "hunt"},
-    "term3": {"line": 3, "word": "type", "offset": -0.5},
-    "path": {"line": 3, "word": "type"},
-    "browser": {"line": 4, "word": "browser"},
-    "ask": {"line": 5, "word": "third", "offset": -0.3}}},
-  "S2": {"kind": "drawn", "scene": "many", "events": {
-    "pullStart": {"line": 1, "word": "multiply", "offset": -0.2},
-    "pullEnd": {"line": 1, "word": "project", "offset": 0.6},
-    "dim": {"line": 3, "word": "tomorrow"}}},
-  "S3": {"kind": "drawn", "scene": "turn",
-    "headline": ["Built around", "your projects."],
-    "projects": ["checkout-redesign", "refunds-api-spec", "onboarding-v3", "pricing-experiment-q4"],
-    "states": ["project", "list-1440", "chat-window", "board-1440"],
+  "$note": "One shot per scene in script.md, keyed by scene id (DL-169). Claude keeps these in step with the script's Shot: notes. Look: style/reference-analysis.md. kind 'desk' films a fixture state's window (ground 'paper' by default, 'wallpaper' for the desktop); 'drawn' is a drawn scene; 'card' is a title card. A move or callout targets an anchor (label or identifier) or a rect in window points, and lands on a word of line N. Script v1's shots are in archive/shots-v1.json. Each shot carries shotSha (the hash of its Shot: note and the prose after it) and requires: one item per thing the note asks for, built true or false. The build stops when a note changes and reports every unbuilt item.",
+  "S0": {
+    "kind": "drawn",
+    "scene": "logo",
+    "leadIn": 2.3,
+    "thumbnail": -0.6,
     "events": {
-      "line2": {"line": 1, "word": "built"},
-      "ink": {"line": 1, "word": "projects"},
-      "projects": {"line": 2},
-      "cascade": {"line": 3}}},
-  "S4": {"kind": "desk", "state": "list-1440",
-    "moves": [{"to": {"rect": {"x": 330, "y": 40, "w": 820, "h": 461}, "width": 1100, "align": "left"}, "line": 1, "land": "finds", "dur": 2.2}],
-    "callouts": [{"rect": {"x": 340, "y": 152, "w": 460, "h": 130}, "title": "sessions · by folder", "quote": "grouped by the folder it ran in",
-      "crop": {"x": 340, "y": 146, "w": 470, "h": 140}, "line": 1, "word": "grouped", "hold": 3.4}]},
-  "S5": {"kind": "desk", "state": "chat-window",
-    "moves": [
-      {"to": {"anchor": "video.pane.left", "width": 900, "align": "left", "pad": 0}, "line": 1, "land": "project", "dur": 1.8},
-      {"to": {"anchor": "video.pane.middle", "width": 960}, "line": 3, "land": "middle", "dur": 1.6},
-      {"to": {"anchor": "video.pane.right", "width": 900}, "line": 4, "land": "beside", "dur": 1.6}],
-    "callouts": [{"rect": {"x": 16, "y": 55, "w": 190, "h": 42}, "title": "checkout-redesign", "quote": "its goal and what's next",
-      "crop": {"x": 4, "y": 46, "w": 290, "h": 60}, "line": 2, "word": "goal", "hold": 2.6}]},
-  "S6": {"kind": "desk", "state": "board-1440",
-    "moves": [
-      {"to": {"anchor": "video.needs-you-chip", "width": 1300, "align": "left", "pad": 220}, "line": 1, "land": "shows", "dur": 1.8},
-      {"to": {"anchor": "Copy review pass 2, needs you", "width": 1100}, "line": 2, "land": "question", "dur": 1.8}],
-    "callouts": [
-      {"anchor": "video.needs-you-chip", "title": "needs-you · 3", "quote": "…or waiting on you.",
-        "crop": {"x": 1104, "y": 44, "w": 333, "h": 300}, "line": 1, "word": "waiting", "hold": 2.4},
-      {"anchor": "Approve these 6 string changes?", "title": "copy review pass 2", "quote": "you answer it right there",
-        "crop": {"x": 1112, "y": 146, "w": 316, "h": 154}, "line": 2, "word": "answer", "hold": 2.2}]},
-  "S7": {"kind": "desk", "state": "chat-window",
-    "moves": [{"to": {"rect": {"x": 981, "y": 40, "w": 459, "h": 520}, "width": 1000}, "line": 1, "land": "beside", "dur": 2.0}],
-    "callouts": [{"rect": {"x": 997, "y": 318, "w": 427, "h": 42}, "title": "prd-v2.md · added by Claude", "quote": "what changed since you last looked",
-      "crop": {"x": 985, "y": 310, "w": 455, "h": 160}, "line": 2, "word": "highlighted", "hold": 3.0}]},
-  "S8": {"kind": "desk", "state": "search-overview",
-    "moves": [{"to": {"rect": {"x": 240, "y": 100, "w": 640, "h": 520}, "width": 1200, "align": "left", "pad": 40}, "line": 1, "land": "Jump", "dur": 1.8}],
-    "callouts": [{"rect": {"x": 249, "y": 189, "w": 404, "h": 202}, "title": "search · every project", "quote": "by meaning as well as by words",
-      "crop": {"x": 245, "y": 185, "w": 412, "h": 210}, "line": 2, "word": "meaning", "hold": 2.6}]},
-  "S9": {"kind": "desk", "state": "chat-window",
-    "moves": [{"to": {"rect": {"x": 0, "y": 600, "w": 1440, "h": 301}, "width": 1300, "align": "left", "pad": 0}, "line": 1, "land": "plain", "dur": 1.6}],
-    "callouts": [
-      {"rect": {"x": 0, "y": 791, "w": 299, "h": 98}, "title": "~/work/payments/checkout-redesign", "quote": "plain files, in folders you own",
-        "crop": {"x": 0, "y": 785, "w": 299, "h": 110}, "line": 1, "word": "files", "hold": 2.2},
-      {"rect": {"x": 1113, "y": 48, "w": 91, "h": 20}, "title": "prd-v2.md", "quote": "right beside you",
-        "crop": {"x": 981, "y": 40, "w": 459, "h": 230}, "line": 2, "word": "opens", "hold": 2.6}]},
-  "S10": {"kind": "card", "title": "Duo v2", "sub": "An early beta preview · github.com/dudgeon/duo-v2 · Help › Report an Issue…"}
+      "title": {
+        "line": 1,
+        "word": "duo"
+      },
+      "sub": {
+        "line": 1,
+        "word": "desktop"
+      }
+    },
+    "shotSha": "b049d7599ff1",
+    "requires": [
+      {
+        "what": "The Duo logo (app icon 2A', drawn from docs/design/icon-handoff geometry) builds itself in motion graphics",
+        "built": true
+      },
+      {
+        "what": "The logo settles beside the title \"Duo\" and the line \"A desktop client for Claude Code\", framed as one composition",
+        "built": true
+      },
+      {
+        "what": "The settled frame works as the thumbnail: readable at 320 px wide; build exports it as out/thumbnail.png",
+        "built": true
+      }
+    ],
+    "$thumbnail": "seconds before the scene ends, not counting its exit transition"
+  },
+  "S1": {
+    "kind": "drawn",
+    "scene": "desk",
+    "events": {
+      "term1": {
+        "line": 1,
+        "word": "juggling",
+        "offset": -0.2
+      },
+      "term2": {
+        "line": 1,
+        "word": "terminals"
+      },
+      "finder": {
+        "line": 1,
+        "word": "finder"
+      },
+      "markdown": {
+        "line": 1,
+        "word": "text"
+      },
+      "browser": {
+        "line": 1,
+        "word": "browser"
+      },
+      "term3": {
+        "line": 2,
+        "word": "new",
+        "offset": -0.3
+      },
+      "path": {
+        "line": 2,
+        "word": "pick"
+      },
+      "hunt": {
+        "line": 2,
+        "word": "lose"
+      },
+      "deck": {
+        "line": 1,
+        "word": "tabs",
+        "offset": 0.6
+      },
+      "doc": {
+        "line": 2,
+        "word": "I",
+        "offset": 0.0
+      }
+    },
+    "shotSha": "b19e03148cb5",
+    "requires": [
+      {
+        "what": "High Sierra desktop starts empty",
+        "built": true
+      },
+      {
+        "what": "Terminal windows running Claude Code are in dark mode",
+        "built": true
+      },
+      {
+        "what": "Finder windows on different project folders",
+        "built": true
+      },
+      {
+        "what": "A Markdown editor window",
+        "built": true
+      },
+      {
+        "what": "A browser with a polished, realistic checkout prototype (not a basic wireframe)",
+        "built": true
+      },
+      {
+        "what": "A PowerPoint deck window with a real-looking slide",
+        "built": true
+      },
+      {
+        "what": "A Word doc window with a real-looking page",
+        "built": true
+      },
+      {
+        "what": "Line 1: each window kind appears on its word (terminals, finder, text editors, browser); PowerPoint and Word in the gap before line 2",
+        "built": true
+      },
+      {
+        "what": "Line 2: a new terminal opens, a cd path is typed wrong then retyped; camera hunts over the pile for an older session",
+        "built": true
+      },
+      {
+        "what": "Ends on the full pile held ~1 s, as the start state of S2's morph",
+        "built": true
+      }
+    ],
+    "transitionIn": "logo-to-dock"
+  },
+  "S2": {
+    "kind": "drawn",
+    "scene": "morph",
+    "leadIn": 2.9,
+    "states": [
+      "video-s2-middle-0",
+      "video-s2-middle-1",
+      "video-s2-middle-2",
+      "video-s2-chat",
+      "video-s2-right-1",
+      "video-s2-right-2",
+      "video-s2-right-3",
+      "video-s2-right-4"
+    ],
+    "events": {
+      "pane": {
+        "line": 1,
+        "word": "pane"
+      },
+      "terminal": {
+        "line": 1,
+        "word": "terminal"
+      },
+      "mid1": {
+        "line": 1,
+        "word": "terminal",
+        "offset": 0.5
+      },
+      "mid2": {
+        "line": 1,
+        "word": "working",
+        "offset": -0.15
+      },
+      "chat": {
+        "line": 1,
+        "word": "claude"
+      },
+      "flexible": {
+        "line": 1,
+        "word": "flexible"
+      },
+      "right2": {
+        "line": 1,
+        "word": "editor",
+        "offset": 0.25
+      },
+      "right3": {
+        "line": 1,
+        "word": "working",
+        "nth": 2,
+        "offset": 0.0
+      },
+      "right4": {
+        "line": 1,
+        "word": "files",
+        "nth": 2,
+        "offset": 0.45
+      },
+      "wide": {
+        "line": 1,
+        "word": "files",
+        "nth": 2,
+        "offset": 2.3
+      }
+    },
+    "shotSha": "81a059bb5c40",
+    "requires": [
+      {
+        "what": "An animated morph, not a cut, from S1's pile into one real Duo window",
+        "built": true
+      },
+      {
+        "what": "Finder windows morph into the left pane (project list and file tree)",
+        "built": true
+      },
+      {
+        "what": "Dark terminals morph into session tabs in the middle pane",
+        "built": true
+      },
+      {
+        "what": "Markdown, browser prototype, PowerPoint and Word morph into tabs in the right pane",
+        "built": true
+      },
+      {
+        "what": "A callout on each pane as the narrator names it (files and projects; terminal or chat view; flexible editor)",
+        "built": true
+      },
+      {
+        "what": "Middle pane: cursor clicks through the session tabs; the last flips to chat view on \"chat view\"",
+        "built": true,
+        "note": "The flip lands on \"claude\", about 0.8 s after \"chat view\": three tab clicks need more time than the two words give."
+      },
+      {
+        "what": "Right pane: cursor clicks through Markdown, browser prototype, PowerPoint, Word tabs in that order",
+        "built": true
+      },
+      {
+        "what": "Captures: a project with 3+ terminal tabs (last in chat view) and the editor with .md, browser prototype, .pptx and .docx tabs, one state per active tab",
+        "built": true
+      }
+    ],
+    "transitionIn": "dock-launch"
+  }
 }

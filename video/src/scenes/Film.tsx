@@ -6,6 +6,8 @@ import tokens from '../../style/tokens.json';
 import {DeskScene, ManyDesksScene, type ClutterEvents} from '../lib/Clutter';
 import {Annotations, ChapterMark, type Annotation} from '../lib/Annotate';
 import {TurnScene} from './Turn';
+import {LogoScene} from './Logo';
+import {MorphScene, type MorphData} from './Morph';
 import type {Ground} from '../lib/Desk';
 
 type Line = {id: string; text: string; src: string; start: number; duration: number};
@@ -13,7 +15,8 @@ type Scene = {
   id: string; title: string; kind: 'desk' | 'card' | 'drawn'; start: number; duration: number; lines: Line[];
   card?: {title: string; sub: string; standIn: boolean};
   capture?: {src: string; scale: number}; desk?: DeskLayout; camera?: Key[]; appear?: boolean;
-  drawn?: {scene: 'desk' | 'many' | 'turn'; events: ClutterEvents};
+  drawn?: {scene: 'desk' | 'many' | 'turn' | 'logo' | 'morph'; events: ClutterEvents};
+  morph?: MorphData;
   callouts?: Annotation[]; ground?: Ground; chapter?: boolean;
   turn?: {headline: [string, string]; projects: string[]; shots: string[]};
 };
@@ -38,12 +41,15 @@ const SceneView = ({scene, fade}: {scene: Scene; fade: number}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const t = frame / fps;
-  const opacity = scene.start === 0 ? 1 : interpolate(t, [0, fade], [0, 1], clamp);
+  // No dissolves: every scene change is a transition the two scenes play themselves (plan.mjs TRANSITIONS).
+  const opacity = 1;
   const appear = scene.appear ? smootherstep(interpolate(t, [0.2, 1.0], [0, 1], clamp)) : 1;
   return (
     <AbsoluteFill style={{opacity}}>
       {scene.kind === 'card' && scene.card && <Card card={scene.card} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'desk' && <DeskScene t={t} ev={scene.drawn.events} />}
+      {scene.kind === 'drawn' && scene.drawn?.scene === 'morph' && scene.morph && <MorphScene t={t} ev={scene.drawn.events} data={scene.morph} />}
+      {scene.kind === 'drawn' && scene.drawn?.scene === 'logo' && <LogoScene t={t} ev={scene.drawn.events} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'many' && <ManyDesksScene t={t} ev={scene.drawn.events} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'turn' && scene.turn && <TurnScene t={t} ev={scene.drawn.events} {...scene.turn} />}
       {scene.kind === 'desk' && scene.capture && scene.desk && scene.camera && (
@@ -70,7 +76,7 @@ export const Film = ({timeline}: {timeline: FilmTimeline | null}) => {
     <AbsoluteFill style={{background: tokens.desk.wallpaper.base}}>
       {timeline.scenes.map((s, i) => {
         const last = i === timeline.scenes.length - 1;
-        // Each scene runs `fade` past its end so the next one dissolves in over it.
+        // `fade` is 0 since script v2: scenes hand over by transitions they draw themselves, never a dissolve.
         return (
           <Sequence key={s.id} name={s.id} from={Math.round(s.start * fps)} durationInFrames={Math.ceil((s.duration + (last ? 0 : fade)) * fps)}>
             <SceneView scene={s} fade={fade} />

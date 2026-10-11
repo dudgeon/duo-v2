@@ -509,6 +509,9 @@ struct ConsolePane: View {
             if let ended = model.fixtureEnded, model.consoleTab == ended.key {
                 Color.clear
                 ConsoleEndedBar(key: ended.key, message: ended.message)
+            } else if let tab = model.consoleTab, model.fixtureChats[tab] == nil, let t = model.fixtureTerminals[tab] {
+                // The intro video's demo (VideoTargets): a terminal showing a recorded screen, with no process behind it.
+                TerminalSlot(session: t)
             } else if let tab = model.consoleTab, let chat = model.fixtureChats[tab] {
                 // Fixture mode: a chat-mode target (ChatTargets), drawn from recorded hooks and screens.
                 ConsoleChatBody(chat: chat, terminal: nil)
@@ -580,6 +583,7 @@ struct RightPane: View {
                         .contentShape(Rectangle())
                         .modifier(TabHover(key: tab.id, enabled: tab.isDocument) { model.closeDocument(tab.id) })
                         .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("video.tab.right.\(tabs.firstIndex { $0.id == tab.id } ?? i)")   // anchors: 0 is Project, then the documents in order
                         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                         // A file outside the project: its path is the tooltip (DL-106); a popup: its opener (DL-132 i).
                         .help(outside ? String(tab.id.dropFirst(AppModel.outsideFilePrefix.count)) : opener.map { "Opened from \($0)" } ?? "")

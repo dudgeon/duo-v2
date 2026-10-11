@@ -1,114 +1,79 @@
-# Duo v2 intro video: script
+# Duo v2 intro video: script v2
 
 Oct 10, 2026 · @Geoff Dudgeon
 
-About 2:30 in all: 70 seconds on why Duo exists, then 80 seconds walking through it. This doc is the source of truth; each build exports it to `video/script.md` and re-voices only the lines that changed.
+A from-scratch rewrite. Each build reads this doc. The rules below are what the build understands; anything else is notes for us.
 
-## How this script works
+## How to write it
 
-- **Scenes** are the `###` headings. Keep the id at the front (`S5 · …`): it ties the scene to its shot in `video/shots.json`. Rename the rest freely.
-- **Each bullet is one voiceover line,** voiced and checked on its own. Short lines voice best: one sentence or clause each.
-- **Shot:** is a plain-English note on what we see. Claude turns it into captures and camera moves; the build fails if a scene has no shot.
-- Times are targets. The real length comes from the voiced lines.
-- Everything on screen is the real app on sample data, so say only what Duo actually does.
+- **A scene is a `###` heading:** `### S1 · Title (about 20 s)`. Keep the `S` number at the front; it ties the scene to its shot. The time is a target; the real length comes from the voice.
+- **Each bullet under a scene is one voiceover line,** voiced and checked on its own. One sentence or clause per bullet; long lines get rushed.
+- **`Shot:` is a plain-English note of what we see.** Say what the viewer should notice, not how to animate it. I turn it into captures, camera moves and callouts.
+- **Callouts:** if a line names a feature that should be pointed at, put the phrase in *italics*. That's where the cursor clicks and the marker lands.
+- **Only real things.** Everything on screen is the real app on sample data, so say only what Duo actually does today.
+- **Anything else** (a paragraph, a question, a `> note`) is ignored by the build. Use it freely.
+- **Every Shot: note is a checklist.** The build lists each thing a Shot: note asks for, and its report names anything not built yet. A stand-in is never silent.
+- **No shot ever cuts to the next.** If the next shot is somewhere else in the app, we get there by using the app: the camera pulls back, the cursor clicks where you'd click, and the camera pushes in on what opens. If it's a different idea, it gets a motion-graphics transition instead. The build picks one for every scene change and refuses to render a plain cut or dissolve; a Shot: note can ask for a particular one.
 
-## Part 1 · Why Duo exists
+## The brief
 
-Framed on [About Duo](https://github.com/dudgeon/duo/blob/main/docs/about-duo.md): working with Claude Code outside a code editor means juggling windows from several apps.
+Fill these four in first; I read them before every scene decision. (The build ignores this section.)
 
-### S1 · The desk (about 25 s)
+|  |  |
+| --- | --- |
+| **One sentence** the viewer should remember |  |
+| **Who it's for** |  |
+| **Length** |  |
+| **How it should feel** (and what it must not feel like) |  |
 
-- Working with Claude Code outside a code editor means juggling windows.
-- A terminal for every Claude session. A Markdown editor for the plan.
-- Finder, to hunt for the right folder, then type its path into the terminal.
-- A browser, for the page Claude just made.
-- And then you describe it all to Claude: the third bullet, under the second heading, in prd dot md.
+## Scenes
 
-Shot: a cluttered Mac desktop drawn from sample data (the checkout-redesign project, never a real desktop): Terminal windows running Claude Code, a raw Markdown file, Finder, a browser showing an HTML page. A window piles on as each is named. The Finder hunt and the pasted path happen on screen; the long description is typed into a terminal, letter by letter.
+> **Example, to copy and delete.** The build skips a scene whose title starts with "Example".
 
-### S2 · Many projects (about 20 s)
+### S0 ·Intro
 
-- Now multiply that by every project you're moving forward.
-- A spec for one, research for another, a review for a third. Eleven sessions, in six folders.
-- Come back tomorrow, and where were you? Which session was waiting on you? Where did that document go?
+- Duo is a desktop client for the claude code c-l-i that makes it easier to stay organized and get work done.
 
-Shot: pull back from the desk to a desk per project, side by side and just as cluttered. In one, a terminal pulses with a question nobody saw; in another, a document scrolls out of sight.
+Shot: the Duo logo builds itself in motion graphics, then settles beside the title "Duo" and the line "A desktop client for Claude Code", the three framed as one composition. That settled frame is the video's thumbnail, so it must read at a glance.
 
-### S3 · The turn (about 18 s)
+### S1 · (title) (about \_ s)
 
-- Duo v2 is built around your projects.
-- Each one keeps its sessions, its documents and what needs you, together.
-- So you can pick up where you left off, in any of them.
-- And use Claude to move your own work forward.
+- I found that when I was working with claude code, I would usually be juggling multiple terminals, finder windows, text editors, and browser tabs.
+- I would often open a new terminal window for a quick task, and either take a bunch of time to pick the right starting directory, or lose track of where I opened which sessions if I wanted to come back to them later.
 
-Shot: each desk's windows fly together and settle into one Duo window, its three panes taking the place of the terminal, the editor and Finder. Pull back to All projects: every project's tile, with what needs you.
+Shot: the High Sierra desktop starts empty, then fills window by window: dark-mode Terminal windows running Claude Code, Finder windows on different project folders, a Markdown editor, a browser showing a polished, realistic checkout prototype, a PowerPoint deck and a Word doc. Each opens on top of the last until you can't tell which terminal belongs to which project.
 
-## Part 2 · A walk through
+> **Notes for the build** (a quote, so the build ignores it; a bullet here would be voiced):
+>
+> - *Drawn, not captured:* these are third-party apps, so they're the 75%-fidelity stand-ins from `lib/Clutter.tsx`, with sample project names in the title bars (checkout-redesign, refunds-api-spec, onboarding-v3, pricing-experiment-q4).
+> - *Line 1 timing:* each kind of window appears on its word: terminals on "terminals", Finder on "finder windows", the editor on "text editors", the browser on "browser tabs". PowerPoint and Word arrive in the gap before line 2.
+> - *Line 2 beats:* a new terminal opens and a `cd` path is typed, wrong, then retyped; then the camera drifts over the pile hunting for an older session and doesn't find it.
+> - *Hand-off to S2:* the scene ends on the full pile, held about 1 s, so S2 can pull these same windows into Duo.
 
-### S4 · Every session, found (about 12 s)
+### S2 · (title) (about \_ s)
 
-- Open Duo, and it finds every Claude Code session on your Mac, grouped by the folder it ran in.
-- Nothing to set up. And it keeps them, so a conversation is never lost.
+- Duo brings all the tools you need together into a single window: a pane for managing files and projects, a terminal or chat view for working with claude, and a flexible editor for viewing and working with files.
 
-Shot: All projects, then a slow push in on the session list.
+Shot: an animated transition, not a cut: the S1 windows morph into one real Duo window. The Finder windows morph into the left pane; the dark terminals morph into session tabs in the middle pane; the Markdown file, the browser prototype, the PowerPoint deck and the Word doc morph into tabs in the right pane. Each pane gets a callout as the narrator names it.
 
-### S5 · Projects (about 18 s)
+Middle pane, on "a terminal or chat view": the terminals have folded into session tabs. The cursor clicks from one tab to the next (real sessions on sample data), and the last one flips to chat view on the words "chat view".
 
-- A project is something you're trying to finish, kept in its own folder.
-- It shows its goal and what's next, so coming back takes seconds, not a search.
-- Its sessions sit on the left. The conversation is in the middle.
-- And what Claude makes opens right beside it.
+Right pane, on "flexible editor": the Markdown file, the browser prototype, the PowerPoint deck and the Word doc are now editor tabs. The cursor clicks through them in that order.
 
-Shot: open checkout-redesign. Pan left to right across the three panes, landing on each as it's named.
-
-### S6 · What needs you (about 18 s)
-
-- Duo shows what every session is doing: working, ready for your review, or waiting on you.
-- When Claude has a question, you see it here, and you answer it right there.
-
-Shot: zoom to the "2 need you" chip in the toolbar, then follow it down to the session's question in chat.
-
-### S7 · Documents (about 15 s)
-
-- Documents open beside the conversation.
-- What Claude adds is highlighted, so you can see what changed since you last looked.
-
-Shot: push in on "What we heard", marked added by Claude, in prd-v2.md.
-
-### S8 · Getting around (about 12 s)
-
-- Jump to any project or session with Command K.
-- Or search across every project, by meaning as well as by words.
-
-Shot: the jump field opens and filters; then search results from several projects.
-
-### S9 · Plain files, and Claude driving Duo (about 12 s)
-
-- It's all plain files, in folders you own.
-- And Claude can drive Duo too: it opens the document it just wrote, right beside you.
-
-Shot: a document appears in the right pane as Claude finishes a turn.
-
-### S10 · Close (about 12 s)
-
-- Duo v2 is an early beta preview. Things will change, and some will break.
-- Try it, and tell us what you find.
-
-Shot: end card with the Duo icon, github.com/dudgeon/duo-v2, and Help › Report an Issue.
+> **Notes for the build** (ignored by it):
+>
+> - *Left pane, on "managing files and projects":* the Finder windows land as the project list and file tree.
+> - *New captures needed:* one project with three or more terminal tabs, the last in chat view, and the editor with four tabs open: a Markdown file, the prototype in a browser tab, a .pptx and a .docx.
+> - *Word and PowerPoint:* Duo opens .pptx and .docx (Geoff, Oct 10), so the same deck and doc from S1 appear as real tabs here.
+> - *Callouts:* putting *a pane for managing files and projects*, *a terminal or chat view* and *flexible editor* in italics in the line would pin the three callouts to those words.
 
 ## The voice
 
-A designed house voice from Qwen3-TTS for now. Later it moves to Geoff's own voice, trained in a separate private project; no recordings or weights go in this repo.
-
-**Voice brief** (what the voice is designed from): a warm, calm, mid-pitched narrator in their thirties, unhurried but not slow, plain-spoken and friendly. A colleague showing you something useful, not an advert.
+The house voice is M2, a warm baritone. The build reads this table: write the word as it appears in a line, and how it should be said. Add a row whenever a line comes out wrong.
 
 | Written | Said |
 | --- | --- |
-| Duo | Duo (respelling it made the voice stumble) |
 | v2 | vee two |
 | duo2 | duo two |
 | Command K, ⌘K | command K |
-| Claude Code | Claude Code |
 | prd-v2.md | P R D vee two dot M D |
-
-Add a row whenever a line comes out wrong; the build reads this table.

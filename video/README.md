@@ -2,7 +2,7 @@
 
 The Duo v2 intro video, rebuilt like software (DL-169). The plan and its research are in [`docs/research/intro-video.md`](../docs/research/intro-video.md).
 
-The script's source of truth is the [Claude Doc](https://claude.ai/code/artifact/05fbb2a2-d608-44e0-a930-de837a440d17). From M1, each build exports it to `script.md`.
+The script's source of truth is the [Claude Doc, script v2](https://claude.ai/code/artifact/38f24d8b-a41f-4ca4-86fe-c20fd8e4cd78). From M1, each build exports it to `script.md`.
 
 ## Build
 
@@ -27,3 +27,11 @@ node build.mjs                 # voice → capture → timeline → render → o
 - **Scenes:** pure functions of the frame. `lint.mjs` fails a build that uses a timer, `Date`, `Math.random` or CSS animation.
 - **Tokens:** `style/tokens.json` is generated: edit `style/video-tokens.json` and run `python3 scripts/gen-video-tokens.py`.
 - **The voice:** the house voice is `voice/house/`. Geoff's own voice (ENH-69) lives in a separate private project, never here.
+
+## Script history
+
+- **v1** (the M0–M3 cuts) is archived. The Doc is renamed "[Archived] … script v1" and its last export is `archive/script-v1.md`.
+- **v2** is a from-scratch rewrite (Geoff, 2026-10-10). In its Doc:
+  - a `###` scene titled "Example…" and empty `(line)` slots are skipped;
+  - an *italic* phrase in a line is a callout cue.
+- Until v2 has scenes, `node build.mjs` stops with "no scenes in script.md".

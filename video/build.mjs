@@ -13,7 +13,7 @@ import {fileURLToPath} from 'node:url';
 import {captureStates} from './pipeline/capture.mjs';
 import {plan} from './pipeline/plan.mjs';
 import {parseScript, said} from './pipeline/script.mjs';
-import {BuildError} from './pipeline/util.mjs';
+import {BuildError, sha} from './pipeline/util.mjs';
 import {voiceLines} from './pipeline/voice.mjs';
 import {prepareWallpaper} from './pipeline/wallpaper.mjs';
 
@@ -37,6 +37,18 @@ try {
   for (const id of Object.keys(shots).filter((k) => !k.startsWith('$'))) {
     if (!scenes.some((s) => s.id === id)) throw new BuildError(`shots: ${id} is in shots.json but not in the script`);
   }
+  // Each Shot: note is a checklist (script v2's rule). shots.json records the note's hash and what it asks for;
+  // a changed note stops the build until the shot is re-read, and anything not built yet is reported, never silent.
+  const missing = [];
+  for (const sc of scenes) {
+    const shot = shots[sc.id];
+    if (!shot || !sc.shot) continue;
+    const noteSha = sha([sc.shot, ...sc.notes].join('\n')).slice(0, 12);
+    if (shot.shotSha !== noteSha) throw new BuildError(`shots: ${sc.id}'s Shot: note changed since shots.json was written (now ${noteSha}). Re-read it, update ${sc.id}.requires, then set shotSha.`);
+    if (!shot.requires?.length) throw new BuildError(`shots: ${sc.id} has a Shot: note but no requires list`);
+    for (const r of shot.requires) if (!r.built) missing.push(`${sc.id}: ${r.what}`);
+  }
+  for (const m of missing) log(`NOT BUILT YET ${m}`);
   const lines = scenes.flatMap((s) => s.lines.map((l) => ({...l, said: said(l.text, lexicon)})));
   log(`script: ${scenes.length} scenes, ${lines.length} lines`);
 
@@ -49,11 +61,15 @@ try {
 
   // 4. Timeline
   const timeline = plan({scenes, shots, voiced, captures, style});
+  for (const sc of timeline.scenes) if (sc.transitionIn) log(`transition: into ${sc.id} by ${sc.transitionIn.name} (${sc.transitionIn.kind === 'app' ? 'app navigation' : 'motion graphic'})`);
   writeFileSync(join(pub, 'timeline.json'), JSON.stringify(timeline, null, 2));
   log(`timeline: ${fmt(timeline.duration)} (${timeline.scenes.map((s) => `${s.id} ${s.duration.toFixed(1)}s`).join(', ')})`);
 
   // 5. Wallpaper
   prepareWallpaper({style, here, cache, pub, remotion, log});
+
+  // S1's browser window shows this real HTML page in an <IFrame> (src/lib/ClutterApps.tsx).
+  mkdirSync(join(pub, 'prototype'), {recursive: true}); copyFileSync(join(here, 'fixture/docs/prototype/checkout.html'), join(pub, 'prototype/checkout.html'));
 
   // 6. Lint
   if (spawnSync('node', [join(here, 'lint.mjs')], {stdio: 'inherit'}).status !== 0) throw new BuildError('lint');
@@ -64,6 +80,12 @@ try {
     s.callouts?.length ? s.callouts[0].start + 1.0 : s.camera?.length > 1 ? s.camera[s.camera.length - 1].t + 0.3 : s.duration * 0.7);
   for (const s of timeline.scenes) {
     remotion('still', 'src/index.ts', 'Intro', join(out, `still-${s.id}.png`), `--frame=${Math.round(stillAt(s) * timeline.fps)}`);
+  }
+  // The thumbnail: the first scene's settled frame, when its shot names one (S0's logo and title).
+  const first = timeline.scenes[0], thumbAt = shots[first.id]?.thumbnail;
+  if (thumbAt !== undefined) {
+    remotion('still', 'src/index.ts', 'Intro', join(out, 'thumbnail.png'), `--frame=${Math.round((first.start + (thumbAt < 0 ? (first.exit?.at ?? first.duration) + thumbAt : thumbAt)) * timeline.fps)}`);
+    log('thumbnail: out/thumbnail.png');
   }
   const n = timeline.scenes.length;
   spawnSync('/bin/sh', ['-c', `ffmpeg -v error -y ${timeline.scenes.map((s) => `-i "${join(out, `still-${s.id}.png`)}"`).join(' ')} ` +
@@ -77,7 +99,8 @@ try {
     log(`render: ${mp4}`);
   }
   const table = timeline.scenes.map((s) => `| ${s.id} | ${s.title} | ${fmt(s.start)} | ${s.duration.toFixed(1)} s | ${s.kind}${s.card?.standIn ? ' (stand-in)' : ''} |`).join('\n');
-  writeFileSync(join(out, 'report.md'), `# Intro video build\n\n${report.map((l) => `- ${l}`).join('\n')}\n\n| Scene | Title | Starts | Length | Shot |\n|---|---|---|---|---|\n${table}\n`);
+  const gaps = missing.length ? `## Not built yet\n\nThe script asks for these and this cut doesn't have them:\n\n${missing.map((m) => `- ${m}`).join('\n')}\n\n` : '';
+  writeFileSync(join(out, 'report.md'), `# Intro video build\n\n${gaps}${report.map((l) => `- ${l}`).join('\n')}\n\n| Scene | Title | Starts | Length | Shot |\n|---|---|---|---|---|\n${table}\n`);
 } catch (e) {
   if (e instanceof BuildError) { console.error(`BUILD FAILED: ${e.message}`); process.exit(1); }
   throw e;

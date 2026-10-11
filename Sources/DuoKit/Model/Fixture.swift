@@ -87,6 +87,30 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var body: [String: String]? = nil
     }
 
+    /// Opt-in demo for the intro video's scene 2 (`--state video-s2-*`, VideoTargets): real files in the
+    /// project's right pane, recorded screens in its terminals. Absent in the design fixture.
+    public struct VideoS2: Codable, Sendable, Equatable {
+        public struct Terminal: Codable, Sendable, Equatable {
+            public var name: String
+            public var state: SessionState
+            public var wait: String?
+            /// A text file beside the fixture: the terminal's screen, ANSI allowed.
+            public var screen: String
+        }
+        /// The project's folder, relative to the fixture's own: its real files.
+        public var folder: String
+        public var terminals: [Terminal]
+        /// A chat recording folder beside the fixture (meta.json, transcript.jsonl) for the last terminal's chat view.
+        public var chat: String
+        /// Documents open in the right pane, project-relative, in tab order.
+        public var tabs: [String]
+        /// What the Files block lists.
+        public var files: [String]
+    }
+    public var videoS2: VideoS2? = nil
+    /// The folder the fixture was loaded from (not part of the file).
+    public var baseDir: String? = nil
+
     public var now: String
     public var user: String
     public var topics: [String]
@@ -134,6 +158,7 @@ public struct Fixture: Codable, Sendable, Equatable {
 
     public static func load(from url: URL) throws -> Fixture {
         var f = try JSONDecoder().decode(Fixture.self, from: Data(contentsOf: url))
+        f.baseDir = url.deletingLastPathComponent().path
         if let name = f.focusDocument.markdownFile {
             let md = try String(contentsOf: url.deletingLastPathComponent().appending(path: name), encoding: .utf8)
             var body: [String: String] = [:]
