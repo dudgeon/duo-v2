@@ -406,5 +406,28 @@
   "s5": {
     "draft": "Here's Denise's email and her screenshot from the Linden Street box. This is why auto-add has to wait.",
     "select": "This is why auto-add has to wait."
+  },
+  "s8": {
+    "finder": {
+      "$note": "S8: the Finder window on ~ (macOS defaults plus Sam's work folder).",
+      "path": "/Users/sam",
+      "items": [
+        "Applications",
+        "Desktop",
+        "Documents",
+        "Downloads",
+        "Movies",
+        "Music",
+        "Pictures",
+        "Public",
+        "work"
+      ]
+    },
+    "prompt": "sam@mbp ~ %",
+    "screens": {
+      "banner": "terms/s8-banner.txt",
+      "resumeTop": "terms/s8-resume-top.txt",
+      "resumeScrolled": "terms/s8-resume-scrolled.txt"
+    }
   }
 }
