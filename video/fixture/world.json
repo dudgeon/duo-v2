@@ -498,5 +498,164 @@
       "state": "archived",
       "wait": "3w"
     }
-  ]
+  ],
+  "homeSessions": {
+    "$note": "S8 (Geoff, 2026-10-11): Sam's sessions started in ~ before Duo, shelf-scan work mixed with life admin. terms/make-resume.py renders Claude Code's real --resume picker from them.",
+    "cwd": "/Users/sam",
+    "sessions": [
+      {
+        "title": "Tighten the goals in the shelf-scan PRD",
+        "prompt": "Tighten the goals in ~/work/little-shared-library/shelf-scan/docs/prd-v2.md",
+        "age": 25,
+        "msgs": 14
+      },
+      {
+        "title": "Sort tax receipts into 2026 folders",
+        "prompt": "Sort the PDFs in ~/Downloads/receipts into folders by month",
+        "age": 140,
+        "msgs": 31
+      },
+      {
+        "title": "Plan Maya's 7th birthday party",
+        "prompt": "Help me plan a birthday party for 12 seven-year-olds",
+        "age": 320,
+        "msgs": 22
+      },
+      {
+        "title": "Why does the home router drop at 9pm?",
+        "prompt": "My wifi drops every night around 9pm. Here's the router log",
+        "age": 1500,
+        "msgs": 48
+      },
+      {
+        "title": "Cover letter for the library board seat",
+        "prompt": "Draft a cover letter for the volunteer board at Northgate Library",
+        "age": 1720,
+        "msgs": 9
+      },
+      {
+        "title": "Recipe scaler: dal for 12",
+        "prompt": "Scale this dal recipe from 4 servings to 12",
+        "age": 2900,
+        "msgs": 6
+      },
+      {
+        "title": "Export Kindle highlights to Markdown",
+        "prompt": "Turn My Clippings.txt into one Markdown file per book",
+        "age": 3100,
+        "msgs": 27
+      },
+      {
+        "title": "Watering schedule for the raised beds",
+        "prompt": "Make a watering schedule for tomatoes, beans and kale",
+        "age": 4400,
+        "msgs": 11
+      },
+      {
+        "title": "Summarize interview notes P1-P8",
+        "prompt": "Summarize the eight beta interview notes in ~/work/little-shared-library/shelf-scan/research",
+        "age": 4700,
+        "msgs": 36
+      },
+      {
+        "title": "Rename vacation photos by date",
+        "prompt": "Rename the photos in ~/Pictures/Cornwall by the date they were taken",
+        "age": 5900,
+        "msgs": 18
+      },
+      {
+        "title": "Compare two refinance offers",
+        "prompt": "Compare these two mortgage refinance offers",
+        "age": 7300,
+        "msgs": 25
+      },
+      {
+        "title": "Fix zsh prompt after brew upgrade",
+        "prompt": "My zsh prompt broke after brew upgrade",
+        "age": 8700,
+        "msgs": 13
+      },
+      {
+        "title": "Reply to landlord about the leak",
+        "prompt": "Help me reply to the landlord about the bathroom leak",
+        "age": 10100,
+        "msgs": 8
+      },
+      {
+        "title": "Auto-add numbers for Jo",
+        "prompt": "Pull the auto-add numbers from the beta digest for Jo",
+        "age": 10600,
+        "msgs": 10
+      },
+      {
+        "title": "Meal plan for the week, no nuts",
+        "prompt": "Meal plan for the week, no nuts, two kids",
+        "age": 11400,
+        "msgs": 7
+      },
+      {
+        "title": "Bank CSV to budget spreadsheet",
+        "prompt": "Convert this bank CSV export into my budget spreadsheet",
+        "age": 13000,
+        "msgs": 21
+      },
+      {
+        "title": "Book club questions for Middlemarch",
+        "prompt": "Ten book club questions for Middlemarch, no spoilers past book 4",
+        "age": 14500,
+        "msgs": 12
+      },
+      {
+        "title": "Car insurance renewal: what changed",
+        "prompt": "What changed in my car insurance renewal?",
+        "age": 17300,
+        "msgs": 9
+      },
+      {
+        "title": "Read Ravi's spine eval CSV",
+        "prompt": "Read ~/work/little-shared-library/shelf-scan/eval/results.csv and tell me the accuracy",
+        "age": 20200,
+        "msgs": 19
+      },
+      {
+        "title": "Training plan for a November 10k",
+        "prompt": "Make me a running plan for a 10k on Nov 15",
+        "age": 21700,
+        "msgs": 15
+      },
+      {
+        "title": "Screen-time rules for the kids",
+        "prompt": "Draft screen-time rules the kids might actually agree to",
+        "age": 30200,
+        "msgs": 6
+      },
+      {
+        "title": "Clean up the Downloads folder",
+        "prompt": "What can I delete from ~/Downloads?",
+        "age": 31700,
+        "msgs": 4
+      },
+      {
+        "title": "Little Shared Library pitch notes",
+        "prompt": "Turn my seed pitch notes into a one-page memo",
+        "age": 44000,
+        "msgs": 40
+      }
+    ]
+  },
+  "homeFolder": {
+    "$note": "S8: the Finder window on ~ (macOS defaults plus Sam's work folder).",
+    "path": "/Users/sam",
+    "items": [
+      "Applications",
+      "Desktop",
+      "Documents",
+      "Downloads",
+      "Movies",
+      "Music",
+      "Pictures",
+      "Public",
+      "work"
+    ]
+  }
 }

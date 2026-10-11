@@ -144,6 +144,9 @@ content["desk"] = {
 content["s5"] = {"draft": "Here's Denise's email and her screenshot from the Linden Street box. This is why auto-add has to wait.",
                  "select": "This is why auto-add has to wait."}
 assert content["s5"]["select"] in content["s5"]["draft"] and content["s5"]["draft"].endswith(content["s5"]["select"])
+# S8: the desktop before Duo: a Finder window on ~ beside the Terminal (terms/s8-*.txt are its screens).
+content["s8"] = {"finder": W["homeFolder"], "prompt": f"{W['user']['shortUser']}@{W['user']['host']} ~ %",
+                 "screens": {"banner": "terms/s8-banner.txt", "resumeTop": "terms/s8-resume-top.txt", "resumeScrolled": "terms/s8-resume-scrolled.txt"}}
 (here / "content.json").write_text(json.dumps(content, indent=2, ensure_ascii=False) + "\n")
 
 # ---------------------------------------------------------------- deck
