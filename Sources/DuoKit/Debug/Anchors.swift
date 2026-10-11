@@ -39,6 +39,17 @@ public enum Anchors {
         walkViews(content, depth: 0, index: 0, path: "", into: &viaViews, window: window, toWindow: { _ in .zero })
         let have = Set(items.map(\.identifier))
         items += viaViews.filter { $0.identifier.hasPrefix("video.") && !have.contains($0.identifier) }
+        // The task board's cover (PaneSplit) is a hosting view the split's own children don't lead to: walk it on its own, its frames added where named.
+        if let split = findSplit(content), let cover = split.cover, !cover.isHidden {
+            var coverItems: [Item] = []
+            walkAX(cover, depth: 0, index: 0, path: "", inherited: "", into: &coverItems, toWindow: toWindow, size: wf.size)
+            // What the cover hides stays in the tree under it, with frames nobody sees: those named ones go (the panes' own stay).
+            let w = cover.convert(cover.bounds, to: nil)
+            let covered = CGRect(x: w.minX, y: wf.height - w.maxY, width: w.width, height: w.height)
+            items.removeAll { $0.identifier.hasPrefix("video.") && !$0.identifier.hasPrefix("video.pane.") && covered.contains(CGPoint(x: $0.frame.midX, y: $0.frame.midY)) }
+            let known = Set(items.map(\.identifier))
+            items += coverItems.filter { !$0.identifier.isEmpty && !known.contains($0.identifier) }
+        }
         items += web.sorted { $0.key < $1.key }.map { Item(role: "web", label: "", identifier: $0.key, value: "", frame: $0.value, path: $0.key, index: 0, depth: 0) }
         // Fall back to views when the tree gave nothing usable.
         if items.isEmpty {
@@ -67,6 +78,12 @@ public enum Anchors {
         ]
         let data = try JSONSerialization.data(withJSONObject: doc, options: [.prettyPrinted, .sortedKeys])
         try data.write(to: url)
+    }
+
+    private static func findSplit(_ v: NSView) -> DuoSplitView? {
+        if let s = v as? DuoSplitView, s.cover != nil { return s }
+        for c in v.subviews { if let s = findSplit(c) { return s } }
+        return nil
     }
 
     private static func clip(_ s: String?) -> String { String((s ?? "").prefix(120)) }

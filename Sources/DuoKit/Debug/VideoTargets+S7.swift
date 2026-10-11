@@ -132,6 +132,8 @@ extension VideoTargets {
                 return
             }
         case "dump": js("return duo.text()")
+        case "notecontext": model.pushNoteContext()   // scene 10: the sessions the note's links name, as the snapshot tells the editor
+        case "selectheading": model.editor.selectHeading(path: arg)   // scene 10: New Task's note, its name selected
         case "measure": measure(arg, model)
         default: FileHandle.standardError.write(Data("video: unknown action \(spec)\n".utf8))
         }
@@ -163,6 +165,9 @@ extension VideoTargets {
             take(model.editor.webView, editorMeasureJS, ["bold": "video.editor.bold", "link": "video.editor.link", "owen": "video.editor.owen",
                                                           "bullet": "video.editor.bullet", "heard": "video.editor.heard", "change": "video.editor.change",
                                                           "changes": "video.editor.change"])
+        case "note":
+            take(model.editor.webView, noteMeasureJS, ["goal": "video.tasknote.goal", "sessions": "video.tasknote.sessions",
+                                                       "body": "video.tasknote.body", "props": "video.tasknote.props"])
         case "html":
             take(model.htmlViewer.webView, """
                 const el = document.querySelector('button.fix'); if (!el) return {};

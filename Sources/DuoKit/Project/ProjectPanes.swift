@@ -22,6 +22,7 @@ struct ProjectSidebarPane: View {
                             Text(project.kind == "folder" ? (project.hasClaudeMD == true ? "Has CLAUDE.md · no project file" : "Folder · no project file")
                                  : [project.health, project.next].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
                                 .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+                                .overlay { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Project line").accessibilityIdentifier("video.project.goal") } }   // anchors (scene 10): the header's line under the name
                         }
                         .padding(EdgeInsets(top: 14, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -29,6 +30,7 @@ struct ProjectSidebarPane: View {
                         // The project's heading opens the project itself: its Project tab (DL-60).
                         .onActivate { model.rightTab = "Project"; model.selectedFile = nil }  // action: view tab
                         .accessibilityLabel("\(project.name), open the project file")
+                        .background { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Project header").accessibilityIdentifier("video.project.header") } }   // anchors (scene 10)
                         if project.isMissing { MissingNotice(project: project) }
                         else if project.kind == "folder", project.notNow != true { FolderNotice(project: project) }
                     }
@@ -55,12 +57,13 @@ struct ProjectSidebarPane: View {
                         }
                     }
                     .onChange(of: items.map(\.id), initial: true) { model.noteSidebar(sections) }
-                    if let project, model.terminalsMode == .live { TasksFold(project: project.name) }
+                    if let project, model.terminalsMode == .live || model.videoTasks { TasksFold(project: project.name) }
                     if let project { ArchivedSessionsFold(project: project.name) }
                     HStack(spacing: DuoSpace.gapButtonToButton) {
                         Button("+ New session") { model.newSession() }.buttonStyle(.duo)
-                        if let project, model.terminalsMode == .live {
+                        if let project, model.terminalsMode == .live || model.videoTasks {
                             Button("+ New task") { model.newTask(in: project.name) }.buttonStyle(.duo)
+                                .accessibilityIdentifier("video.newtask.button")   // anchors: the video cursor's target
                         }
                     }
                     .padding(.horizontal, DuoSpace.panePadding)
@@ -74,6 +77,7 @@ struct ProjectSidebarPane: View {
                 .id(project?.name)
             }
             .onHover { model.hoverSidebar($0) }
+            .background { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Sessions").accessibilityIdentifier("video.sessions.list") } }   // anchors (scene 9)
             FileTreePane()
         }
         .foregroundStyle(DuoColor.text)
@@ -181,6 +185,7 @@ struct SidebarRowView: View {
                 .modifier(TaskRowHover(key: row.task.map { TaskRowHover.key(project: model.currentProject?.name ?? "", path: $0) } ?? ""))
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("\(row.name), \(row.task == nil ? "group" : "task") of \(count), \(row.state.spokenName)")
+                .accessibilityIdentifier(row.task.map { "video.task.\(($0 as NSString).deletingPathExtension.components(separatedBy: "/").last ?? $0)" } ?? "")   // anchors: the video cursor's target
                 .accessibilityAddTraits(selected ? .isSelected : [])
 
                 if expanded {
@@ -300,6 +305,7 @@ struct FileTreePane: View {
             }
         }
         .padding(.bottom, 12)
+        .background { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Files").accessibilityIdentifier("video.files.tree") } }   // anchors (scene 9)
         .contentShape(Rectangle())
         .modifier(LiveContextMenu { NewItemsMenu(near: nil) })
         // Files dropped on the empty area go to the project root (DL-117).
@@ -491,6 +497,7 @@ struct FileRow: View {
             .modifier(TakesFileDrops(target: node.children != nil ? node.path : (node.path as NSString).deletingLastPathComponent))
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(selected ? .isSelected : [])
+            .overlay { if model.videoDemoFolder != nil, node.children != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Folder \(node.name)").accessibilityIdentifier("video.files.folder.\(node.path)") } }   // anchors (scene 9)
             if let children = node.children, open {
                 ForEach(children) { c in FileRow(node: c, depth: depth + 1) }.transition(.foldRows)
             }

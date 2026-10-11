@@ -39,7 +39,7 @@ struct BoardSwitch: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        if model.terminalsMode == .live, let project = model.currentProject?.name, model.currentProject?.isFolderOnly != true {
+        if model.terminalsMode == .live || model.videoTasks, let project = model.currentProject?.name, model.currentProject?.isFolderOnly != true {
             let board = model.boardProjects.contains(project)
             HStack(spacing: 0) {
                 side("Sessions", glyph: .term, on: !board) { model.showBoard(false, project: project) }  // action: task board
@@ -66,6 +66,7 @@ struct BoardSwitch: View {
         .contentShape(Rectangle())
         .onActivate(action)
         .accessibilityLabel(label)
+        .accessibilityIdentifier(label == "Tasks" ? "video.taskboard.open" : "video.taskboard.sessions")   // anchors: the video cursor's target
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 }
@@ -103,6 +104,7 @@ struct BoardHeader: View {
                 .duoText(.control).fixedSize()
             }
             SmallButton("+ New task") { model.newTask(in: project) }  // action: task new
+                .accessibilityIdentifier("video.taskboard.newtask")   // anchors: the video cursor's target
         }
         .padding(.horizontal, DuoMetric.taskBoardHeaderPaddingX)
         .contextMenu { ObsidianBoardItems(project: project) }
@@ -360,6 +362,7 @@ struct LaneView: View {
         .onDrop(of: [.plainText, .utf8PlainText], delegate: LaneDrop(model: model, project: project, status: lane.status))  // action: task status
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(lane.title), \(lane.count) tasks")
+        .accessibilityIdentifier("video.taskboard.col.\(lane.status)")   // anchors: the video camera's target
     }
 }
 
@@ -576,6 +579,7 @@ struct TaskCard: View {
         .contextMenu { TaskMenuItems(model: model, project: t.project, path: t.path) }   // DL-115
         .accessibilityElement(children: .contain)
         .accessibilityLabel(CardMeta.spoken(t, user: model.fixture.user))
+        .accessibilityIdentifier("video.taskboard.card.\((t.path as NSString).deletingPathExtension.components(separatedBy: "/").last ?? t.path)")   // anchors: the video camera's target
     }
 }
 
@@ -598,7 +602,7 @@ struct CardMeta: View {
                     HStack(spacing: 4) { BoardGlyph(.person); Text(TaskBoard.plain(o)).lineLimit(1) }
                 }
                 if !closed, let due = t.due, let short = TaskBoard.short(due) {
-                    if TaskBoard.overdue(t) {
+                    if TaskBoard.overdue(t, today: model.listClock ?? Date()) {
                         HStack(spacing: 4) { BoardGlyph(.calendar, color: DuoColor.text); Text("\(short) · overdue").fontWeight(.semibold) }
                             .foregroundStyle(DuoColor.text)
                     } else {
@@ -691,6 +695,7 @@ struct CardSessions: View {
         .help("Open \(s.name)")
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Session \(s.name), \(s.state.spokenName). Opens it.")
+        .accessibilityIdentifier("video.taskboard.session.\(s.name)")   // anchors: the video cursor's target
     }
 }
 

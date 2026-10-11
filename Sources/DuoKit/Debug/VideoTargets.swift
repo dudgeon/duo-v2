@@ -25,10 +25,13 @@ public enum VideoTargets {
                                              "video-s7-md-sel", "video-s7-md-composer", "video-s7-md-sent", "video-s7-md-after",
                                              "video-s7-html-pick", "video-s7-html-sent", "video-s7-html-after",
                                              "video-s7-pptx-slide3", "video-s7-pptx-pick", "video-s7-pptx-sent", "video-s7-pptx-after"]
+                                            + s9s10Screens
 
     public static func apply(_ screen: String, to model: AppModel) {
         if screen == "video-s3-list" { return applyS3(model) }
-        if screen.hasPrefix("video-s4-") || screen.hasPrefix("video-s5-") || screen.hasPrefix("video-s6-") || screen.hasPrefix("video-s7-") { return applyS4S5(screen, to: model) }
+        if screen == "video-s9-board" || screen == "video-s9-list" { return applyS9Home(screen, model) }
+        if screen.hasPrefix("video-s4-") || screen.hasPrefix("video-s5-") || screen.hasPrefix("video-s6-") || screen.hasPrefix("video-s7-")
+            || screen.hasPrefix("video-s9-") || screen.hasPrefix("video-s10-") { return applyS4S5(screen, to: model) }
         TargetState.project.apply(to: model)
         guard let v = model.fixture.videoS2, let base = model.fixture.baseDir else { return }
         let dir = URL(fileURLWithPath: base)
@@ -105,11 +108,15 @@ public enum VideoTargets {
     static let testFlight = "quick q: TestFlight build size"
     static let oldNotes = "Old v1 notes cleanup"
 
-    static func applyS4S5(_ screen: String, to model: AppModel) {
+    static func applyS4S5(_ requested: String, to model: AppModel) {
+        let screen = s9s10Base(requested)   // scenes 9 and 10's project states stand on scene 7's last one
         TargetState.project.apply(to: model)
         guard let v = model.fixture.videoS2, let base = model.fixture.baseDir else { return }
         let dir = URL(fileURLWithPath: base)
         let project = v.project ?? "checkout-redesign"
+        if requested.hasPrefix("video-s10-") { assignSessionIds(model, dir: dir) }   // scene 10's tasks link sessions by id
+        // A session's tab key: its id when it has one (scene 10), else its name, as the tabs of scenes 2 to 9 are keyed.
+        func key(_ name: String) -> String { model.fixture.sessions.first { $0.project == project && $0.name == name }?.tabKey ?? name }
         model.altitude = .project(project)
         var folder = dir.appending(path: v.folder).standardizedFileURL
         // Scene 7 edits files (the editor saves them): its states work on a copy of the project's folder, never the fixture's.
@@ -126,24 +133,24 @@ public enum VideoTargets {
         // Scene 2's three terminals stay open; "Auto-add decision" was just resumed and is the tab in front.
         for t in v.terminals {
             let text = (try? String(contentsOf: dir.appending(path: t.screen), encoding: .utf8)) ?? ""
-            model.fixtureTerminals[t.name] = TerminalSession(key: t.name, screen: text)
+            model.fixtureTerminals[key(t.name)] = TerminalSession(key: key(t.name), screen: text)
         }
         let screenText = v.s4Terminal.flatMap { try? String(contentsOf: dir.appending(path: $0), encoding: .utf8) } ?? ""
-        model.fixtureTerminals[autoAdd] = TerminalSession(key: autoAdd, screen: screenText)
-        model.parkedTabs = Set(v.terminals.map(\.name) + [autoAdd])
+        model.fixtureTerminals[key(autoAdd)] = TerminalSession(key: key(autoAdd), screen: screenText)
+        model.parkedTabs = Set((v.terminals.map(\.name) + [autoAdd]).map(key))
         model.openDocuments = v.tabs
         if let prd = v.tabs.first { model.rightTab = prd; model.selectedFile = prd } else { model.rightTab = "Project" }
-        model.consoleTab = autoAdd
+        model.consoleTab = key(autoAdd)
 
         // The chat of the same session: terminal mode in scene 4 (it makes the toggle show), chat in scenes 5 and 6.
         if screen.hasPrefix("video-s7-") {
             let spec = S7.of(screen)
-            let chat = s6Chat(dir.appending(path: spec.chat), cwd: v.cwd, picked: false)
+            let chat = s6Chat(dir.appending(path: spec.chat), cwd: v.cwd, picked: false, key: key(autoAdd))
             if spec.composer, let text = try? String(contentsOf: dir.appending(path: "chat-s7-md/composer.txt"), encoding: .utf8) {
                 chat.ui.composer = text   // Duo's payload, then Sam's words: what the composer holds just before Send
                 chat.focusComposer += 1
             }
-            model.fixtureChats[autoAdd] = chat
+            model.fixtureChats[key(autoAdd)] = chat
             model.rightTab = spec.tab; model.selectedFile = spec.tab
         } else if screen.hasPrefix("video-s6-") {
             if let folder = s6Folders[String(screen.dropFirst("video-s6-".count))] {
@@ -160,6 +167,9 @@ public enum VideoTargets {
             model.fixtureChats[autoAdd] = chat
             if screen == "video-s5-chat-open" { openScoreRow(chat) }
         }
+
+        if requested.hasPrefix("video-s9-") { applyS9Project(requested, model) }
+        if requested.hasPrefix("video-s10-") { applyS10(requested, model: model, dir: dir, video: v, project: project) }
 
         switch screen {
         case "video-s4-menu":
@@ -203,9 +213,9 @@ public enum VideoTargets {
     /// A scene 6 chat from its recording folder, set up as the chat boards are (`ChatTargets.apply`): its `meta.json` brings the
     /// composer's draft and focus and the CLI version, its `screen.txt` the `/` menu or the `/model` picker. `picked`: the moment
     /// after Sonnet was chosen in the picker (Claude Code's own line in the transcript, and the prompt idle again).
-    static func s6Chat(_ dir: URL, cwd: String?, picked: Bool) -> ChatSession {
+    static func s6Chat(_ dir: URL, cwd: String?, picked: Bool, key: String = autoAdd) -> ChatSession {
         let meta = (try? Data(contentsOf: dir.appending(path: "meta.json"))).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] } ?? [:]
-        let chat = ChatSession(key: autoAdd, mode: ChatViewMode(rawValue: meta["mode"] as? String ?? "chat") ?? .chat)
+        let chat = ChatSession(key: key, mode: ChatViewMode(rawValue: meta["mode"] as? String ?? "chat") ?? .chat)
         chat.videoAnchors = true
         chat.setVersion(meta["version"] as? String ?? "2.1.296")
         if meta["focusComposer"] as? Bool == true { chat.focusComposer += 1 }
@@ -270,6 +280,7 @@ public enum VideoTargets {
     /// `--then` actions a state brings with it, ahead of the caller's: scene 5's composer states need the window (the composer is
     /// an AppKit field, and pasting goes through ⌘V's real path), so they run after it exists. The caller's own `--then` follows.
     nonisolated public static func impliedActions(for screen: String?, fixturePath: String?) -> [String] {
+        if let screen, screen.hasPrefix("video-s9-") || screen.hasPrefix("video-s10-"), let fixturePath { return s9s10Actions(screen, dir: URL(fileURLWithPath: fixturePath).deletingLastPathComponent()) }
         if let screen, screen.hasPrefix("video-s7-"), let fixturePath { return s7Actions(screen, dir: URL(fileURLWithPath: fixturePath).deletingLastPathComponent()) }
         guard let screen, screen.hasPrefix("video-s5-") || screen.hasPrefix("video-s6-"), let fixturePath else { return [] }
         let order = screen.hasPrefix("video-s5-") ? ["video-s5-draft", "video-s5-paste-text", "video-s5-paste-image"]

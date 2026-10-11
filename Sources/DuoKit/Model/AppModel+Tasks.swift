@@ -292,6 +292,7 @@ struct TasksFold: View {
                 .contentShape(Rectangle())
                 .onActivate { withDuoAnimation(.fold) { if expanded { model.expandedGroups.insert(key) } else { model.expandedGroups.remove(key) } } }  // action: view group
                 .accessibilityLabel(expanded ? "Hide tasks without sessions" : "Show \(tasks.count) tasks without sessions")
+                .accessibilityIdentifier("video.tasks.fold")   // anchors: the video cursor's target
                 .contextMenu { TaskTemplateItems(project: project) }
                 .padding(.top, 8)
                 if expanded {
@@ -377,6 +378,7 @@ struct TaskLine: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(task.title), task, \(archived ? "archived" : completing ? "completed" : task.status ?? "open")")
+        .accessibilityIdentifier("video.task.\((task.path as NSString).deletingPathExtension.components(separatedBy: "/").last ?? task.path)")   // anchors: the video cursor's target
     }
 }
 

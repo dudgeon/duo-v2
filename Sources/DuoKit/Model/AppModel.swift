@@ -124,6 +124,11 @@ public final class AppModel {
     public var fixtureTerminals: [String: TerminalSession] = [:]
     /// The intro video's demo: a folder of real files the right pane opens in fixture mode, as a live project's would.
     public var videoDemoFolder: URL?
+    /// The intro video's scene 10: this project's tasks UI (the Tasks fold, + New task, the Sessions | Tasks switch and the board) shows
+    /// as in a live project, though the demo has no live folder behind it (VideoTargets+S9S10).
+    public var videoTasks = false
+    /// The intro video's scene 9: folders the file tree shows closed (as a live project's start), by path.
+    public var videoClosedFolders: Set<String> = []
     /// The intro video's demo: the right pane's opening width, wide enough for its tabs.
     public var videoRightWidth: CGFloat?
     /// Plain shells open in each project's console, by key, in the order opened (DB-4).
