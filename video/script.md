@@ -14,7 +14,7 @@ A from-scratch rewrite. Each build reads this doc. The rules below are what the 
 - **Anything else** (a paragraph, a question, a `> note`) is ignored by the build. Use it freely.
 - **Every Shot: note is a checklist.** The build lists each thing a Shot: note asks for, and its report names anything not built yet. A stand-in is never silent.
 - **No shot ever cuts to the next.** If the next shot is somewhere else in the app, we get there by using the app: the camera pulls back, the cursor clicks where you'd click, and the camera pushes in on what opens. If it's a different idea, it gets a motion-graphics transition instead. The build picks one for every scene change and refuses to render a plain cut or dissolve; a Shot: note can ask for a particular one.
-- **Topic:** is the scene's name in the topic list, the vertical list at the left that comes up at each scene change with the new scene highlighted. One short line under the heading, like `Topic: Chat mode`. Edit it freely; the heading's title is only for us.
+- **Topic:** is the scene's name in the topic list, the vertical list at the left that comes up at each scene change with the new scene highlighted. One short line under the heading, like `Topic: Chat mode`. Edit it freely; the heading's title is only for us. To keep a scene under the previous scene's topic, write `Topic: same`: the two share one entry, and no topic list comes up between them.
 
 ## The brief
 
