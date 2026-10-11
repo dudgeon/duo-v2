@@ -18,19 +18,22 @@ from docx.oxml import OxmlElement
 
 import datetime, io, zipfile
 FIXED = datetime.datetime(2026, 10, 12, 18, 0, 0)
-def stable(path):
-    """Rewrites an Office zip with fixed timestamps, so an unchanged deck or doc keeps the same bytes (the video's capture cache hashes them)."""
-    path = pathlib.Path(path); src = zipfile.ZipFile(io.BytesIO(path.read_bytes()))
-    out = io.BytesIO()
+def stable_bytes(raw):
+    """An Office zip (or a workbook embedded in one) with fixed timestamps, so unchanged content keeps the same bytes."""
+    import re
+    src = zipfile.ZipFile(io.BytesIO(raw)); out = io.BytesIO()
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         for info in src.infolist():
             data = src.read(info.filename)
             if info.filename == "docProps/core.xml":
-                import re
                 data = re.sub(rb"(<dcterms:(created|modified)[^>]*>)[^<]*", lambda m: m.group(1) + b"2026-10-12T18:00:00Z", data)
+            elif info.filename.endswith((".xlsx", ".docx", ".pptx")):
+                data = stable_bytes(data)   # the chart's embedded workbook carries its own timestamps
             zi = zipfile.ZipInfo(info.filename, date_time=FIXED.timetuple()[:6]); zi.compress_type = zipfile.ZIP_DEFLATED
             z.writestr(zi, data)
-    path.write_bytes(out.getvalue())
+    return out.getvalue()
+def stable(path):
+    path = pathlib.Path(path); path.write_bytes(stable_bytes(path.read_bytes()))
 
 here = pathlib.Path(__file__).parent
 W = json.load(open(here.parent / "world.json"))
@@ -131,6 +134,10 @@ content["desk"] = {
     "clock": W["time"]["clock"], "url": "localhost:3000/scan-review",
     "prd": prd_lines[:11],
 }
+# S5: what Sam has typed in the composer before pasting Denise's feedback and screenshot; the cursor drag-selects `select`.
+content["s5"] = {"draft": "Here's Denise's email and her screenshot from the Linden Street box. This is why auto-add has to wait.",
+                 "select": "This is why auto-add has to wait."}
+assert content["s5"]["select"] in content["s5"]["draft"] and content["s5"]["draft"].endswith(content["s5"]["select"])
 (here / "content.json").write_text(json.dumps(content, indent=2, ensure_ascii=False) + "\n")
 
 # ---------------------------------------------------------------- deck

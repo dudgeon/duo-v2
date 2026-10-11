@@ -375,6 +375,10 @@ def write_hero():
         "header": "Auto-add", "question": QUESTION, "multiSelect": False,
         "options": [{"label": o, "description": OPT_DESC[o]} for o in OPTIONS]}]}, "09:37:05")
     L.dump(HERE / "sessions" / "auto-add-decision.jsonl", title="Auto-add decision")
+    # S5: the same session as a chat recording (the chat-s2 format), ending on the pending question.
+    d = HERE / "chat-s4"; d.mkdir(exist_ok=True)
+    (d / "meta.json").write_text(json.dumps({"mode": "chat", "tab": "Auto-add decision"}, indent=1))
+    L.dump(d / "transcript.jsonl")
 
 
 def main():
