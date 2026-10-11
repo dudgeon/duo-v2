@@ -4,11 +4,13 @@ import {BuildError} from './util.mjs';
 
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
 
-function wordTime(line, phrase) {
+function wordTime(line, phrase, nth = 1) {
+  // `nth` picks a later occurrence when a word repeats in the line ("files" twice).
   const want = norm(phrase);
   const words = line.words.map((w) => ({...w, n: norm(w.word).join(' ')}));
+  let seen = 0;
   for (let i = 0; i < words.length; i++) {
-    if (want.every((w, j) => words[i + j] && words[i + j].n === w)) return words[i].start;
+    if (want.every((w, j) => words[i + j] && words[i + j].n === w) && ++seen === nth) return words[i].start;
   }
   throw new BuildError(`plan: ${line.id} has no word "${phrase}" to land on (heard: ${line.words.map((w) => w.word).join(' ')})`);
 }
@@ -114,10 +116,20 @@ export function plan({scenes, shots, voiced, captures, style}) {
       for (const [name, e] of Object.entries(shot.events ?? {})) {
         const line = lines[e.line - 1];
         if (!line) throw new BuildError(`shots: ${scene.id} event ${name} names line ${e.line}, but the scene has ${lines.length}`);
-        events[name] = +(line.start + (e.word ? wordTime(line, e.word) : 0) + (e.offset ?? 0)).toFixed(3);
+        events[name] = +(line.start + (e.word ? wordTime(line, e.word, e.nth) : 0) + (e.offset ?? 0)).toFixed(3);
         end = Math.max(end, events[name] + 0.5);
       }
       Object.assign(s, {drawn: {scene: shot.scene, events}});
+      if (shot.scene === 'morph') {
+        // S2's morph draws panes from several captures of one layout; anchors come from the first.
+        const caps = shot.states.map((st) => { if (!captures[st]) throw new BuildError(`shots: ${scene.id} needs a capture of ${st}`); return [st, captures[st]]; });
+        const first = caps[0][1];
+        const anchors = {};
+        for (const e of first.anchors?.anchors ?? []) if ((e.identifier ?? '').startsWith('video.') && !anchors[e.identifier]) anchors[e.identifier] = {x: e.frame.x, y: e.frame.y, w: e.frame.width, h: e.frame.height};
+        for (const id of ['video.pane.left', 'video.pane.middle', 'video.pane.right', 'video.tab.middle.1', 'video.tab.middle.2', 'video.tab.right.2', 'video.tab.right.3', 'video.tab.right.4'])
+          if (!anchors[id]) throw new BuildError(`anchor: ${id} is not in ${shot.states[0]}'s anchors. Renamed or removed?`);
+        s.morph = {window: {w: first.widthPt, h: first.heightPt}, scale: style.capture.scale, src: Object.fromEntries(caps.map(([st, c]) => [st, c.src])), anchors};
+      }
       if (shot.scene === 'turn') {
         s.turn = {headline: shot.headline, projects: shot.projects, shots: shot.states.map((st) => {
           if (!captures[st]) throw new BuildError(`shots: ${scene.id} needs a capture of ${st}`);

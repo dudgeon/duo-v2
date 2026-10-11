@@ -7,6 +7,7 @@ import {DeskScene, ManyDesksScene, type ClutterEvents} from '../lib/Clutter';
 import {Annotations, ChapterMark, type Annotation} from '../lib/Annotate';
 import {TurnScene} from './Turn';
 import {LogoScene} from './Logo';
+import {MorphScene, type MorphData} from './Morph';
 import type {Ground} from '../lib/Desk';
 
 type Line = {id: string; text: string; src: string; start: number; duration: number};
@@ -14,7 +15,8 @@ type Scene = {
   id: string; title: string; kind: 'desk' | 'card' | 'drawn'; start: number; duration: number; lines: Line[];
   card?: {title: string; sub: string; standIn: boolean};
   capture?: {src: string; scale: number}; desk?: DeskLayout; camera?: Key[]; appear?: boolean;
-  drawn?: {scene: 'desk' | 'many' | 'turn' | 'logo'; events: ClutterEvents};
+  drawn?: {scene: 'desk' | 'many' | 'turn' | 'logo' | 'morph'; events: ClutterEvents};
+  morph?: MorphData;
   callouts?: Annotation[]; ground?: Ground; chapter?: boolean;
   turn?: {headline: [string, string]; projects: string[]; shots: string[]};
 };
@@ -45,6 +47,7 @@ const SceneView = ({scene, fade}: {scene: Scene; fade: number}) => {
     <AbsoluteFill style={{opacity}}>
       {scene.kind === 'card' && scene.card && <Card card={scene.card} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'desk' && <DeskScene t={t} ev={scene.drawn.events} />}
+      {scene.kind === 'drawn' && scene.drawn?.scene === 'morph' && scene.morph && <MorphScene t={t} ev={scene.drawn.events} data={scene.morph} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'logo' && <LogoScene t={t} ev={scene.drawn.events} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'many' && <ManyDesksScene t={t} ev={scene.drawn.events} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'turn' && scene.turn && <TurnScene t={t} ev={scene.drawn.events} {...scene.turn} />}

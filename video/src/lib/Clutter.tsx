@@ -46,7 +46,7 @@ const Win = ({id, title, appear, chrome = 'light', children, bar, barH}: WinProp
 
 // ---- Menu bar and dock (generic: no Apple logo or Apple icons) -------------------------------
 
-const MenuBar = ({app}: {app: string}) => (
+export const MenuBar = ({app}: {app: string}) => (
   <div style={{position: 'absolute', left: 0, right: 0, top: 0, height: 30, background: 'rgba(255,255,255,0.28)', backdropFilter: 'blur(20px)',
     display: 'flex', alignItems: 'center', gap: 22, padding: '0 18px', fontFamily: ui, fontSize: 14, color: '#0B0B0C'}}>
     <div style={{width: 14, height: 14, borderRadius: 4, background: 'rgba(0,0,0,0.75)'}} />
@@ -55,7 +55,7 @@ const MenuBar = ({app}: {app: string}) => (
   </div>
 );
 const DOCK = [['>_', '#2B2D31'], ['M↓', '#4A6CF7'], ['🗂', '#5AA9F7'], ['◎', '#F0F0F2'], ['✎', '#F7C948'], ['✉', '#3D9BF5']];
-const Dock = () => (
+export const Dock = () => (
   <div style={{position: 'absolute', left: '50%', bottom: 10, transform: 'translateX(-50%)', display: 'flex', gap: 12, padding: 10, borderRadius: 22,
     background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(20px)', boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)'}}>
     {DOCK.map(([g, c]) => (
@@ -125,6 +125,25 @@ export const ClutteredDesk = ({t, ev, content: desk, front = 'Terminal'}: {t: nu
       </div>
     </AbsoluteFill>
   );
+};
+
+/** One window of S1's finished pile, at its layout rect (S2's morph flies each from here). */
+export const PileWindow = ({id, t}: {id: string; t: number}) => {
+  const [s1, s2] = content.terminals;
+  switch (id) {
+    case 'term1': return <Win id="term1" chrome="dark" title={`✳ ${s1.session}`} appear={1}><ClaudeTerminal t={t} lines={TERM1} /></Win>;
+    case 'term2': return <Win id="term2" chrome="dark" title={`✳ ${s2.session}`} appear={1}><ClaudeTerminal t={t} lines={TERM2} working="Frosting" /></Win>;
+    case 'finder': return <Win id="finder" title="payments" appear={1}><Finder t={t} /></Win>;
+    case 'markdown': return <Win id="markdown" title="prd-v2.md — checkout-redesign" appear={1}><MarkdownEditor /></Win>;
+    case 'browser': return (
+      <Win id="browser" title={content.prototype.title} appear={1} bar={<BrowserBar />} barH={BROWSER_BAR_H}>
+        <BrowserPage w={clutterWin('browser').w} h={clutterWin('browser').h - BROWSER_BAR_H} />
+      </Win>);
+    case 'deck': return <Win id="deck" chrome="bare" title="exec-review-oct14.pptx" appear={1}><DeckApp /></Win>;
+    case 'doc': return <Win id="doc" chrome="bare" title="interview-synthesis.docx" appear={1}><DocApp /></Win>;
+    case 'term3': return <Win id="term3" chrome="dark" title="checkout-redesign — -zsh — 80×20" appear={1}><ZshTerminal t={t} u={undefined} /></Win>;
+    default: throw new Error(`PileWindow: no window ${id}`);
+  }
 };
 
 // ---- The scenes -------------------------------------------------------------------------------

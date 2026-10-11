@@ -125,73 +125,104 @@
     ]
   },
   "S2": {
-    "kind": "desk",
-    "state": "chat-window",
-    "chapter": false,
-    "moves": [
-      {
-        "to": {
-          "anchor": "video.pane.left",
-          "width": 900,
-          "align": "left",
-          "pad": 0
-        },
-        "line": 1,
-        "land": "pane",
-        "dur": 1.6
-      },
-      {
-        "to": {
-          "anchor": "video.pane.middle",
-          "width": 960
-        },
-        "line": 1,
-        "land": "terminal",
-        "dur": 1.4
-      },
-      {
-        "to": {
-          "anchor": "video.pane.right",
-          "width": 900
-        },
-        "line": 1,
-        "land": "flexible",
-        "dur": 1.4
-      }
+    "kind": "drawn",
+    "scene": "morph",
+    "leadIn": 2.2,
+    "states": [
+      "video-s2-middle-0",
+      "video-s2-middle-1",
+      "video-s2-middle-2",
+      "video-s2-chat",
+      "video-s2-right-1",
+      "video-s2-right-2",
+      "video-s2-right-3",
+      "video-s2-right-4"
     ],
+    "events": {
+      "pane": {
+        "line": 1,
+        "word": "pane"
+      },
+      "terminal": {
+        "line": 1,
+        "word": "terminal"
+      },
+      "mid1": {
+        "line": 1,
+        "word": "terminal",
+        "offset": 0.5
+      },
+      "mid2": {
+        "line": 1,
+        "word": "working",
+        "offset": -0.15
+      },
+      "chat": {
+        "line": 1,
+        "word": "claude"
+      },
+      "flexible": {
+        "line": 1,
+        "word": "flexible"
+      },
+      "right2": {
+        "line": 1,
+        "word": "editor",
+        "offset": 0.25
+      },
+      "right3": {
+        "line": 1,
+        "word": "working",
+        "nth": 2,
+        "offset": 0.0
+      },
+      "right4": {
+        "line": 1,
+        "word": "files",
+        "nth": 2,
+        "offset": 0.45
+      },
+      "wide": {
+        "line": 1,
+        "word": "files",
+        "nth": 2,
+        "offset": 2.3
+      }
+    },
     "shotSha": "81a059bb5c40",
     "requires": [
       {
         "what": "An animated morph, not a cut, from S1's pile into one real Duo window",
-        "built": false
+        "built": true
       },
       {
         "what": "Finder windows morph into the left pane (project list and file tree)",
-        "built": false
+        "built": true
       },
       {
         "what": "Dark terminals morph into session tabs in the middle pane",
-        "built": false
+        "built": true
       },
       {
         "what": "Markdown, browser prototype, PowerPoint and Word morph into tabs in the right pane",
-        "built": false
+        "built": true
       },
       {
         "what": "A callout on each pane as the narrator names it (files and projects; terminal or chat view; flexible editor)",
-        "built": false
+        "built": true
       },
       {
         "what": "Middle pane: cursor clicks through the session tabs; the last flips to chat view on \"chat view\"",
-        "built": false
+        "built": true,
+        "note": "The flip lands on \"claude\", about 0.8 s after \"chat view\": three tab clicks need more time than the two words give."
       },
       {
         "what": "Right pane: cursor clicks through Markdown, browser prototype, PowerPoint, Word tabs in that order",
-        "built": false
+        "built": true
       },
       {
         "what": "Captures: a project with 3+ terminal tabs (last in chat view) and the editor with .md, browser prototype, .pptx and .docx tabs, one state per active tab",
-        "built": false
+        "built": true
       }
     ]
   }
