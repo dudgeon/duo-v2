@@ -4,6 +4,7 @@ import {DeskShot, type DeskLayout} from '../lib/Desk';
 import {Wallpaper} from '../lib/Desk';
 import tokens from '../../style/tokens.json';
 import {DeskScene, ManyDesksScene, type ClutterEvents} from '../lib/Clutter';
+import {Callouts, type CalloutSpec, type CalloutStyle} from '../lib/Callout';
 
 type Line = {id: string; text: string; src: string; start: number; duration: number};
 type Scene = {
@@ -11,8 +12,9 @@ type Scene = {
   card?: {title: string; sub: string; standIn: boolean};
   capture?: {src: string; scale: number}; desk?: DeskLayout; camera?: Key[]; appear?: boolean;
   drawn?: {scene: 'desk' | 'many'; events: ClutterEvents};
+  callouts?: CalloutSpec[];
 };
-export type FilmTimeline = {fps: number; duration: number; frames: number; fade: number; scenes: Scene[]};
+export type FilmTimeline = {fps: number; duration: number; frames: number; fade: number; scenes: Scene[]; calloutStyle?: string};
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
@@ -31,7 +33,7 @@ const Card = ({card}: {card: NonNullable<Scene['card']>}) => (
   </AbsoluteFill>
 );
 
-const SceneView = ({scene, fade}: {scene: Scene; fade: number}) => {
+const SceneView = ({scene, fade, styleOverride}: {scene: Scene; fade: number; styleOverride?: string}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const t = frame / fps;
@@ -45,6 +47,10 @@ const SceneView = ({scene, fade}: {scene: Scene; fade: number}) => {
       {scene.kind === 'desk' && scene.capture && scene.desk && scene.camera && (
         <DeskShot src={scene.capture.src} layout={scene.desk} scale={scene.capture.scale} camera={cameraAt(scene.camera, t)} appear={appear} />
       )}
+      {scene.kind === 'desk' && scene.callouts?.length && scene.camera && scene.desk && scene.capture ? (
+        <Callouts items={scene.callouts} cam={cameraAt(scene.camera, t)} t={t} style={(styleOverride ?? tokens.callout.style) as CalloutStyle}
+          capture={{src: scene.capture.src, scale: scene.capture.scale, winX: scene.desk.winX, winY: scene.desk.winY}} />
+      ) : null}
       {scene.lines.map((l) => (
         <Sequence key={l.id} from={Math.round(l.start * fps)} durationInFrames={Math.ceil((l.duration + 0.1) * fps)}>
           <Audio src={staticFile(l.src)} />
@@ -64,7 +70,7 @@ export const Film = ({timeline}: {timeline: FilmTimeline | null}) => {
         // Each scene runs `fade` past its end so the next one dissolves in over it.
         return (
           <Sequence key={s.id} name={s.id} from={Math.round(s.start * fps)} durationInFrames={Math.ceil((s.duration + (last ? 0 : fade)) * fps)}>
-            <SceneView scene={s} fade={fade} />
+            <SceneView scene={s} fade={fade} styleOverride={timeline.calloutStyle} />
           </Sequence>
         );
       })}

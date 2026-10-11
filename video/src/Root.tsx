@@ -2,13 +2,22 @@ import {Composition, staticFile} from 'remotion';
 import {Film, type FilmTimeline} from './scenes/Film';
 import tokens from '../style/tokens.json';
 import {WallpaperSvg} from './lib/Desk';
+import {WALLPAPERS} from './lib/Wallpapers';
+import {StyleFrame} from './scenes/StyleFrames';
 
 // build.mjs writes build/public/timeline.json; the film's length comes from it.
 export const Root = () => (
   <>
   {/* Rendered once as a still (at --scale=4) into build/public/wallpaper.png. */}
-  <Composition id="Wallpaper" component={() => <WallpaperSvg w={tokens.frame.width} h={tokens.frame.height} />}
+  <Composition id="Wallpaper"
+    component={({variant}: {variant: string}) => {
+      const V = WALLPAPERS[variant];
+      return V ? <V w={tokens.frame.width} h={tokens.frame.height} /> : <WallpaperSvg w={tokens.frame.width} h={tokens.frame.height} />;
+    }}
+    defaultProps={{variant: (tokens.desk.wallpaper as {variant?: string}).variant ?? 'blobs'}}
     width={tokens.frame.width} height={tokens.frame.height} fps={tokens.frame.fps} durationInFrames={1} />
+  <Composition id="StyleFrame" component={StyleFrame as never} defaultProps={{frame: 'callout'}}
+    width={tokens.frame.width} height={tokens.frame.height} fps={tokens.frame.fps} durationInFrames={tokens.frame.fps * 4} />
   <Composition
     id="Intro"
     component={Film}

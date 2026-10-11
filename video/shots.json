@@ -91,6 +91,16 @@
         "land": "grouped",
         "dur": 2.4
       }
+    ],
+    "callouts": [
+      {
+        "anchor": "3 need you, in the column",
+        "label": "Every session, in one list",
+        "line": 1,
+        "word": "every",
+        "side": "below",
+        "hold": 3.0
+      }
     ]
   },
   "S5": {
@@ -161,6 +171,15 @@
         "line": 2,
         "land": "question",
         "dur": 2.0
+      }
+    ],
+    "callouts": [
+      {
+        "anchor": "video.needs-you-chip",
+        "label": "3 sessions need you",
+        "line": 1,
+        "word": "waiting",
+        "side": "below"
       }
     ]
   },

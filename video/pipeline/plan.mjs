@@ -79,7 +79,18 @@ export function plan({scenes, shots, voiced, captures, style}) {
         const mag = style.frame.width / k.rect.w / style.capture.scale;
         if (mag > style.camera.maxMagnification + 1e-9) throw new BuildError(`zoom: ${scene.id} magnifies ${mag.toFixed(2)}x past the capture`);
       }
-      Object.assign(s, {capture: {src: cap.src, scale: style.capture.scale}, desk, camera: keys, appear: !!shot.appear});
+      // Callouts: an anchor's rect in desk points, shown from a word of a line for `hold` seconds.
+      const callouts = (shot.callouts ?? []).map((co) => {
+        const line = lines[co.line - 1];
+        if (!line) throw new BuildError(`shots: ${scene.id} callout "${co.label}" names line ${co.line}, but the scene has ${lines.length}`);
+        const f = findAnchor(cap, co.anchor, shot.state);
+        const start = line.start + (co.word ? wordTime(line, co.word) : 0) + (co.offset ?? 0);
+        const endAt = start + (co.hold ?? style.callout.hold);
+        end = Math.max(end, endAt + 0.3);
+        return {rect: {x: f.x + desk.winX, y: f.y + desk.winY, w: f.w, h: f.h}, label: co.label, side: co.side,
+          start: +start.toFixed(3), end: +endAt.toFixed(3)};
+      });
+      Object.assign(s, {capture: {src: cap.src, scale: style.capture.scale}, desk, camera: keys, appear: !!shot.appear, callouts});
     } else if (shot.kind === 'drawn') {
       // A drawn scene (src/lib/Clutter.tsx): its events happen on words of its lines.
       const events = {};

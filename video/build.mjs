@@ -13,8 +13,9 @@ import {fileURLToPath} from 'node:url';
 import {captureStates} from './pipeline/capture.mjs';
 import {plan} from './pipeline/plan.mjs';
 import {parseScript, said} from './pipeline/script.mjs';
-import {BuildError, sha} from './pipeline/util.mjs';
+import {BuildError} from './pipeline/util.mjs';
 import {voiceLines} from './pipeline/voice.mjs';
+import {prepareWallpaper} from './pipeline/wallpaper.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '..');
@@ -51,14 +52,8 @@ try {
   writeFileSync(join(pub, 'timeline.json'), JSON.stringify(timeline, null, 2));
   log(`timeline: ${fmt(timeline.duration)} (${timeline.scenes.map((s) => `${s.id} ${s.duration.toFixed(1)}s`).join(', ')})`);
 
-  // 5. Wallpaper: rendered once per look, at the capture scale so it stays smooth at any zoom
-  const wpKey = sha(style.desk.wallpaper, style.frame, style.capture.scale);
-  const wpPng = join(cache, `wallpaper-${wpKey}.png`);
-  if (!existsSync(wpPng)) {
-    if (remotion('still', 'src/index.ts', 'Wallpaper', wpPng, `--scale=${style.capture.scale}`).status !== 0) throw new BuildError('wallpaper');
-    log(`wallpaper: rendered (${wpKey})`);
-  }
-  copyFileSync(wpPng, join(pub, 'wallpaper.png'));
+  // 5. Wallpaper
+  prepareWallpaper({style, here, cache, pub, remotion, log});
 
   // 6. Lint
   if (spawnSync('node', [join(here, 'lint.mjs')], {stdio: 'inherit'}).status !== 0) throw new BuildError('lint');
