@@ -220,8 +220,8 @@ def style(name, size, color=None, bold=None, italic=None, font="Arial"):
         cc = rpr.find(qn("w:color"))
         for a in ("w:themeColor", "w:themeShade", "w:themeTint"):
             if cc.get(qn(a)) is not None: del cc.attrib[qn(a)]
-style("Title Char", 26, GREEN, True); style("Heading 1 Char", 17, GREEN, True)   # the renderer reads linked character styles too
-style("Normal", 11.5); style("Title", 26, GREEN, True); style("Heading 1", 17, GREEN, True)
+style("Title Char", 22, GREEN, True); style("Heading 1 Char", 17, GREEN, True)   # the renderer reads linked character styles too
+style("Normal", 11.5); style("Title", 22, GREEN, True); style("Heading 1", 17, GREEN, True)
 style("List Bullet", 11.5); style("Quote", 11.5, (0x37, 0x41, 0x3D), None, True)
 st["Heading 1"].paragraph_format.space_before = DPt(20)
 doc.add_paragraph(d["title"], style="Title")
