@@ -900,4 +900,5 @@ func spikeScreen(_ name: String) -> String {
     }
 
     chatChipChecks()
+    chatFooterChecks()
 }
