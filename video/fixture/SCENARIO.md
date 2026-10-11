@@ -168,16 +168,16 @@ The sidebar and All projects show **18 sessions**: 15 live and 3 archived. Wait 
 | Old v1 notes cleanup | shelf-scan | idle · 6d, not running | To delete (S4) |
 | Weekly digest draft | beta-feedback | working · 2m | |
 | Tag crash reports | beta-feedback | **needs you** (permission) · 7m | Wants to run `xcrun` on crash logs |
-| Tester emails, Oct 12 | beta-feedback | ready for review | "Sorted 23 emails into 5 themes" |
+| Tester emails, Oct 12 | beta-feedback | idle · 40m | "Sorted 23 emails into 5 themes" (done; reviewed) |
 | Freshness badge spec | neighborhood-map | working · 14m | |
 | Map pins: stale boxes | neighborhood-map | idle · 2d | |
-| Steward welcome email | steward-onboarding | ready for review | |
-| Morning triage | home | **needs you** (question) · 1h | "4 new asks: route 3 to projects?" |
+| Steward welcome email | steward-onboarding | idle · 3h | "welcome-email.md, 3 variants" (done) |
+| Morning triage | home | idle · 1h | "Routed 3 of 4 new asks to projects" (done) |
 | *(archived)* Scan v1 launch notes | shelf-scan | archived | |
 | *(archived)* Interview guide | shelf-scan | archived | |
 | *(archived)* Map tile costs | neighborhood-map | archived | |
 
-**Needs you: 3** (two questions and one permission). Working 4, ready for review 3, idle 5. Archived sessions are in fixture.json's `archivedSessions`.
+**Needs you: 2** (Auto-add decision's question, Tag crash reports' permission). Ready for review 1 (Deck for Thursday), working 4, idle 8. Geoff (2026-10-11): S3 shows only 2–3 waiting cards, so Morning triage, Tester emails and Steward welcome email are done (idle). Archived sessions are in fixture.json's `archivedSessions`.
 
 ## Scenes and what they use
 

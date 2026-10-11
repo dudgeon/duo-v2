@@ -201,13 +201,13 @@ surfaces = {
         "$surface": "DB-3",
         "none": {"project": "steward-onboarding", "lastSession": "Steward welcome email",
                  "files": ["PROJECT.md", "welcome-email.md"],
-                 "path": f"{ROOT}/steward-onboarding", "needYouElsewhere": 3},
+                 "path": f"{ROOT}/steward-onboarding", "needYouElsewhere": 2},
         "ended": {"project": "shelf-scan", "session": "Spine eval: glare cases", "at": "09:12", "crashVariant": "exit 1"},
         "elsewhere": {"session": "Auto-add decision", "app": "Terminal", "since": "8:55"},
         "folderMissing": {"path": f"{ROOT}/neighborhood-map", "nearest": ROOT},
         "homeNone": {
-            "counts": {"needsYou": 2, "readyForReview": 3, "working": 4, "idle": 6},
-            "why": "Morning triage is closed, so it counts as idle and the Home pointer card is gone",
+            "counts": {"needsYou": 2, "readyForReview": 1, "working": 4, "idle": 8},
+            "why": "Morning triage is done (idle), so Home has no pointer card",
         },
     },
     "shells": {

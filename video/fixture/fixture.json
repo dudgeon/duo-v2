@@ -177,7 +177,8 @@
     {
       "name": "Tester emails, Oct 12",
       "project": "beta-feedback",
-      "state": "readyForReview",
+      "state": "idle",
+      "wait": "40m",
       "summary": "Sorted 23 emails into 5 themes"
     },
     {
@@ -196,20 +197,16 @@
     {
       "name": "Steward welcome email",
       "project": "steward-onboarding",
-      "state": "readyForReview",
+      "state": "idle",
+      "wait": "3h",
       "summary": "welcome-email.md, 3 variants"
     },
     {
       "name": "Morning triage",
       "project": "home",
-      "state": "needsYou",
+      "state": "idle",
       "wait": "1h",
-      "question": "4 new asks: route 3 to projects?",
-      "options": [
-        "Yes, route 3",
-        "No",
-        "Something else"
-      ]
+      "summary": "Routed 3 of 4 new asks to projects"
     }
   ],
   "otherIdleSessions": 0,
@@ -234,10 +231,10 @@
     }
   ],
   "counts": {
-    "needsYou": 3,
-    "readyForReview": 3,
+    "needsYou": 2,
+    "readyForReview": 1,
     "working": 4,
-    "idle": 5
+    "idle": 8
   },
   "homeInbox": [
     {
@@ -676,7 +673,7 @@
           "welcome-email.md"
         ],
         "path": "~/work/little-shared-library/steward-onboarding",
-        "needYouElsewhere": 3
+        "needYouElsewhere": 2
       },
       "ended": {
         "project": "shelf-scan",
@@ -696,11 +693,11 @@
       "homeNone": {
         "counts": {
           "needsYou": 2,
-          "readyForReview": 3,
+          "readyForReview": 1,
           "working": 4,
-          "idle": 6
+          "idle": 8
         },
-        "why": "Morning triage is closed, so it counts as idle and the Home pointer card is gone"
+        "why": "Morning triage is done (idle), so Home has no pointer card"
       }
     },
     "shells": {
