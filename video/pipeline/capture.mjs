@@ -23,14 +23,19 @@ export function captureStates(states, {repo, cache, pub, scale, fixture, force =
     const key = sha('window+anchors', appKey, state, scale, fxKey);
     const png = join(cc, `${key}.png`), anchors = join(cc, `${key}.anchors.json`);
     if (force || !existsSync(png)) {
-      const support = mkdtempSync('/tmp/dvid.');
-      // open(1) doesn't hand its own environment to the app: pass the support folder with --env.
-      const env = {...process.env};
-      for (const k of ['DUO_SOCKET', 'DUO_TOKEN', 'DUO_SUPPORT_DIR']) delete env[k];
-      const r = spawnSync('/usr/bin/open', ['-g', '-W', '-n', '--env', `DUO_SUPPORT_DIR=${support}`, app, '--args', '--state', state,
-        '--capture-scale', String(scale), ...(fx ? ['--fixture', fx] : []), '--then', `anchors:${anchors}`, '--capture-window', png], {env, timeout: 90000});
-      rmSync(support, {recursive: true, force: true});
-      if (r.status !== 0 || !existsSync(png)) throw new BuildError(`capture: ${state} produced no PNG (is it a fixture state?)`);
+      // One retry: a background launch very occasionally exits without drawing (seen once in a run of five).
+      let ok = false;
+      for (let attempt = 0; attempt < 2 && !ok; attempt++) {
+        const support = mkdtempSync('/tmp/dvid.');
+        // open(1) doesn't hand its own environment to the app: pass the support folder with --env.
+        const env = {...process.env};
+        for (const k of ['DUO_SOCKET', 'DUO_TOKEN', 'DUO_SUPPORT_DIR']) delete env[k];
+        const r = spawnSync('/usr/bin/open', ['-g', '-W', '-n', '--env', `DUO_SUPPORT_DIR=${support}`, app, '--args', '--state', state,
+          '--capture-scale', String(scale), ...(fx ? ['--fixture', fx] : []), '--then', `anchors:${anchors}`, '--capture-window', png], {env, timeout: 90000});
+        rmSync(support, {recursive: true, force: true});
+        ok = r.status === 0 && existsSync(png);
+      }
+      if (!ok) throw new BuildError(`capture: ${state} produced no PNG (is it a fixture state?)`);
       taken++;
     }
     const dims = execFileSync('/usr/bin/sips', ['-g', 'pixelWidth', '-g', 'pixelHeight', png]).toString();

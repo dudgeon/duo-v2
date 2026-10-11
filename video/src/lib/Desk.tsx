@@ -1,5 +1,6 @@
 import {AbsoluteFill, Img, staticFile} from 'remotion';
 import tokens from '../../style/tokens.json';
+import {PaperGround} from './Paper';
 
 // A Mac desktop: our own wallpaper look-alike (never Apple's image), with Duo's window on it.
 // Everything is laid out in desk points and drawn at `scale` px per point, then scaled down once by
@@ -47,18 +48,20 @@ export const Wallpaper = ({w, h}: {w: number; h: number}) => (
 );
 
 /** The desk at `scale` px per point. Place it with a transform; don't scale it up. */
-export const Desk = ({src, layout, scale, appear = 1}: {src: string; layout: DeskLayout; scale: number; appear?: number}) => {
+export type Ground = 'wallpaper' | 'paper';
+
+export const Desk = ({src, layout, scale, appear = 1, ground = 'wallpaper'}: {src: string; layout: DeskLayout; scale: number; appear?: number; ground?: Ground}) => {
   const {deskW, deskH, winX, winY, winW, winH} = layout;
   const pt = (v: number) => v * scale;
   const tl = d.trafficLights;
   return (
     <div style={{position: 'absolute', left: 0, top: 0, width: pt(deskW), height: pt(deskH)}}>
-      <Wallpaper w={pt(deskW)} h={pt(deskH)} />
+      {ground === 'wallpaper' && <Wallpaper w={pt(deskW)} h={pt(deskH)} />}
       <div
         style={{
           position: 'absolute', left: pt(winX), top: pt(winY), width: pt(winW), height: pt(winH),
           borderRadius: pt(d.windowRadius), overflow: 'hidden',
-          boxShadow: d.shadow.replace(/([\d.]+)pt/g, (_, n) => `${pt(+n)}px`),
+          boxShadow: (ground === 'paper' ? d.paperShadow : d.shadow).replace(/([\d.]+)pt/g, (_, n) => `${pt(+n)}px`),
           opacity: appear, transform: `scale(${0.96 + 0.04 * appear})`, transformOrigin: '50% 50%',
         }}
       >
@@ -79,10 +82,12 @@ export const Desk = ({src, layout, scale, appear = 1}: {src: string; layout: Des
   );
 };
 
-export const DeskShot = ({src, layout, scale, camera, appear = 1}: {src: string; layout: DeskLayout; scale: number; camera: {x: number; y: number; w: number}; appear?: number}) => (
+export const DeskShot = ({src, layout, scale, camera, appear = 1, ground = 'wallpaper'}: {src: string; layout: DeskLayout; scale: number; camera: {x: number; y: number; w: number}; appear?: number; ground?: Ground}) => (
   <AbsoluteFill style={{overflow: 'hidden', background: d.wallpaper.base}}>
+    {/* Paper is drawn in screen space so its grid stays one crisp pixel at every zoom. */}
+    {ground === 'paper' && <PaperGround />}
     <CameraOver camera={camera} scale={scale}>
-      <Desk src={src} layout={layout} scale={scale} appear={appear} />
+      <Desk src={src} layout={layout} scale={scale} appear={appear} ground={ground} />
     </CameraOver>
   </AbsoluteFill>
 );

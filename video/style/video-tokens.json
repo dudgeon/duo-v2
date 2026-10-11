@@ -16,7 +16,10 @@
     "hold": 1.2,
     "ease": "smootherstep",
     "zoomSpace": "log",
-    "maxMagnification": 1.0
+    "maxMagnification": 1.0,
+    "paperMinWidth": 1180,
+    "paperMargin": 70,
+    "chapterBand": 120
   },
   "voice": {
     "gap": 0.35,
@@ -49,7 +52,10 @@
       "ring": "rgba(0,0,0,0.12)"
     },
     "wallpaper": {
-      "base": "#0B1F4A",
+      "$note": "Apple's macOS 10.13 High Sierra default (Geoff, 2026-10-10, Q-175). Fetched into ~/Library/Caches/duo-video/wallpapers, never committed. Remove 'image' to fall back to the SVG look-alike below.",
+      "image": "10-13-6k.jpg",
+      "source": "https://media.512pixels.net/downloads/macos-wallpapers-6k/10-13-6k.jpg",
+      "base": "#2A3A4A",
       "stops": [
         {
           "x": 0.18,
@@ -84,7 +90,8 @@
       ],
       "blur": 0.06,
       "grain": 0.0
-    }
+    },
+    "paperShadow": "0 14pt 40pt rgba(31,35,40,0.16), 0 0 0 0.5pt rgba(31,35,40,0.22)"
   },
   "capture": {
     "scale": 4,
@@ -92,5 +99,37 @@
   },
   "transition": {
     "fade": 0.4
+  },
+  "callout": {
+    "$note": "On-screen callouts (Geoff, 2026-10-10). style: spotlight | ring | lift, chosen with Geoff.",
+    "style": "ring",
+    "accent": "#2F6FEB",
+    "labelFill": "#FFFFFF",
+    "labelText": "#1F2328",
+    "labelSize": 40,
+    "labelGap": 22,
+    "pad": 6,
+    "radius": 8,
+    "ringWidth": 5,
+    "scrim": 0.5,
+    "lift": 0.12,
+    "in": 0.35,
+    "out": 0.3,
+    "hold": 2.6,
+    "enlarge": 1.35
+  },
+  "paper": {
+    "$note": "The look from style/reference-analysis.md (Paper Mono + Loom, chosen by Geoff 2026-10-10).",
+    "ground": "#F4F2EC",
+    "grid": "rgba(31,35,40,0.055)",
+    "gridSize": 40,
+    "window": "#FBFAF7",
+    "ink": "#1F2328",
+    "ink2": "#5B636D",
+    "ink3": "#B4B9C0",
+    "hairline": "rgba(31,35,40,0.16)",
+    "marker": "#2F6FEB",
+    "washA": "#E3DBFA",
+    "washB": "#FBE3D2"
   }
 }
