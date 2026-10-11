@@ -1,5 +1,6 @@
 // Turn the script, the voiced lines, the shots and the captures into build/public/timeline.json.
 // Voice timing is the beat map: a camera move lands on the word that names its subject.
+import {readFileSync} from 'node:fs';
 import {BuildError} from './util.mjs';
 
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
@@ -43,6 +44,11 @@ export const TRANSITIONS = {
   // The next idea happens in the same place: the picture carries straight on (same state, same camera),
   // and the scene's own first click is what moves us. Never a cut: the frames either side are identical.
   'carry-on': {kind: 'app', from: 'app', to: 'app'},
+  // Out of Duo for a new idea (S8, Geoff 2026-10-11): the scene opens on the last picture, wide, and fades Duo's window
+  // away to the bare desktop on its own `fade` event.
+  'duo-fades': {kind: 'graphic', from: 'app', to: 'projects'},
+  // Back into Duo: the scene before fades its pile out and Duo's window in, on the next scene's first capture.
+  'pile-to-duo': {kind: 'graphic', from: 'projects', to: 'app', out: 1.6},
 };
 const sceneType = (shot) => (shot.kind === 'drawn' ? shot.scene : shot.kind);
 const fromOk = (tr, type) => (Array.isArray(tr.from) ? tr.from.includes(type) : tr.from === type);
@@ -278,6 +284,15 @@ export function plan({scenes, shots, voiced, captures, style}) {
         for (const id of ['video.pane.left', 'video.pane.middle', 'video.pane.right', 'video.tab.middle.1', 'video.tab.middle.2', 'video.tab.right.2', 'video.tab.right.3', 'video.tab.right.4'])
           if (!anchors[id]) throw new BuildError(`anchor: ${id} is not in ${shot.states[0]}'s anchors. Renamed or removed?`);
         s.morph = {window: {w: first.widthPt, h: first.heightPt}, scale: style.capture.scale, src: Object.fromEntries(caps.map(([st, c]) => [st, c.src])), anchors};
+      }
+      if (shot.scene === 'projects') {
+        // S8: drawn windows on the desk. Duo's window (its first state's capture) fades out and, at the exit, back in
+        // as the next scene's first state; the terminal screens are the real 2.1.296 renders from the fixture.
+        const cap = (st) => { if (!captures[st]) throw new BuildError(`shots: ${scene.id} needs a capture of ${st}`); return captures[st]; };
+        const first = cap(shot.states[0]), back = cap(shot.states[1] ?? shot.states[0]);
+        const fx = (f) => readFileSync(new URL(`../fixture/${f}`, import.meta.url), 'utf8');
+        s.projects = {window: {w: first.widthPt, h: first.heightPt}, scale: style.capture.scale, src: first.src, back: back.src,
+          screens: Object.fromEntries(Object.entries(shot.screens ?? {}).map(([k, f]) => [k, fx(f)]))};
       }
       if (shot.scene === 'turn') {
         s.turn = {headline: shot.headline, projects: shot.projects, shots: shot.states.map((st) => {
