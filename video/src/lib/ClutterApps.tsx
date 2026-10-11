@@ -2,6 +2,7 @@ import React from 'react';
 import {IFrame, staticFile} from 'remotion';
 import tokens from '../../style/tokens.json';
 import content from '../../fixture/docs/content.json';
+import {desk, files} from './deskContent';
 
 // The apps inside S1's windows (Terminal running Claude Code, Finder, a Markdown editor, a browser
 // showing the real checkout prototype, PowerPoint, Word). Sample data only: everything here comes from
@@ -62,47 +63,27 @@ export const ClaudeTerminal = ({lines, t, working, hint = true}: {lines: TLine[]
   </div>
 );
 
-export const TERM1: TLine[] = [
-  {k: 'box', cwd: content.terminals[0].cwd},
-  {k: 'user', text: 'tighten the goals in docs/prd-v2.md'},
-  {k: 'tool', name: 'Update', arg: 'docs/prd-v2.md'},
-  {k: 'out', text: 'Updated docs/prd-v2.md with 2 additions and 2 removals'},
-  {k: 'diff', n: 8, sign: ' ', text: '## Goals'},
-  {k: 'diff', n: 9, sign: ' ', text: 'Cut guest-checkout abandonment 15% by Q1.'},
-  {k: 'diff', n: 10, sign: '-', text: 'Let a guest finish checkout in one screen on mobile.'},
-  {k: 'diff', n: 10, sign: '+', text: 'Guest checkout fits one mobile screen.'},
-  {k: 'diff', n: 11, sign: '-', text: 'Take the plan to exec review on Oct 14.'},
-  {k: 'diff', n: 11, sign: '+', text: 'Present the plan at exec review, Oct 14.'},
-];
-export const TERM2: TLine[] = [
-  {k: 'user', text: 'add express pay above the email field in checkout.html'},
-  {k: 'tool', name: 'Read', arg: 'checkout.html'},
-  {k: 'out', text: 'Read 148 lines'},
-  {k: 'tool', name: 'Update', arg: 'checkout.html'},
-  {k: 'out', text: 'Updated checkout.html with 9 additions'},
-  {k: 'diff', n: 61, sign: '+', text: '<div class="express">'},
-  {k: 'diff', n: 62, sign: '+', text: '  <div class="btn-pay apple">Apple Pay</div>'},
-  {k: 'diff', n: 63, sign: '+', text: '  <div class="btn-pay google">Google Pay</div>'},
-  {k: 'diff', n: 64, sign: '+', text: '  <div class="btn-pay paypal">PayPal</div>'},
-  {k: 'say', text: 'Express pay now sits above the email field.'},
-];
+export const TERM1: TLine[] = desk.terms.term1;
+export const TERM2: TLine[] = desk.terms.term2;
 export const TERM3_LINES: TLine[] = [];
 
 /** A plain zsh Terminal: `ev.path` starts the wrong-then-right cd. `u` is seconds since it began (undefined: finished). */
 export const ZshTerminal = ({t, u}: {t: number; u: number | undefined}) => {
-  const P = 'geoff@macbook ~ % ';
-  const WRONG = 'cd ~/work/paymnts/chekout', RIGHT = 'cd ~/work/payments/checkout-redesign';
+  const {user, host, wrongCd: WRONG, rightCd: RIGHT, lastLogin} = desk.zsh;
+  const P = `${user}@${host} ~ % `;
+  const badPath = WRONG.replace(/^cd\s+~/, `/Users/${user}`);
+  const here = RIGHT.split('/').pop();
   const cps = 34;
   const done = u === undefined || u >= 2.25;
   let body: React.ReactNode;
   if (u !== undefined && u < 0) body = <div>{P}{caret(t)}</div>;
-  else if (done) body = <><div>{P}{WRONG}</div><div>cd: no such file or directory: /Users/geoff/work/paymnts/chekout</div><div>{P}{RIGHT}</div><div>geoff@macbook <b>checkout-redesign</b> % {caret(t)}</div></>;
+  else if (done) body = <><div>{P}{WRONG}</div><div>cd: no such file or directory: {badPath}</div><div>{P}{RIGHT}</div><div>{user}@{host} <b>{here}</b> % {caret(t)}</div></>;
   else if (u! < 0.95) body = <div>{P}{typed(WRONG, u!, 0, cps)}{caret(t)}</div>;
-  else if (u! < 1.1) body = <><div>{P}{WRONG}</div><div>cd: no such file or directory: /Users/geoff/work/paymnts/chekout</div><div>{P}{caret(t)}</div></>;
-  else body = <><div>{P}{WRONG}</div><div>cd: no such file or directory: /Users/geoff/work/paymnts/chekout</div><div>{P}{typed(RIGHT, u!, 1.1, cps)}{caret(t)}</div></>;
+  else if (u! < 1.1) body = <><div>{P}{WRONG}</div><div>cd: no such file or directory: {badPath}</div><div>{P}{caret(t)}</div></>;
+  else body = <><div>{P}{WRONG}</div><div>cd: no such file or directory: {badPath}</div><div>{P}{typed(RIGHT, u!, 1.1, cps)}{caret(t)}</div></>;
   return (
     <div style={{position: 'absolute', inset: 0, background: T.bg, padding: '10px 16px', fontFamily: mono, fontSize: 13.5, lineHeight: '20px', color: T.fg, overflow: 'hidden'}}>
-      <div style={{color: T.dim}}>Last login: Tue Oct 14 09:38:12 on ttys004</div>
+      <div style={{color: T.dim}}>Last login: {lastLogin}</div>
       {body}
     </div>
   );
@@ -116,12 +97,13 @@ const Folder = ({s = 15}: {s?: number}) => (
     <path d="M1 6h18v7a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2z" fill="#7CC6FA" />
   </svg>
 );
-const FOLDERS = [['api-deprecations', 'Sep 29'], ['checkout-redesign', 'Today'], ['fraud-rules-review', 'Sep 22'], ['onboarding-v3', 'Oct 6'], ['pricing-experiment-q4', 'Oct 2'], ['refunds-api-spec', 'Yesterday'], ['vendor-review', 'Aug 30']];
+const FOLDERS = desk.finder.folders;
 export const Finder = ({t, huntAt}: {t: number; huntAt?: number}) => {
   // The selection walks down the list, overshoots and comes back: a hunt, landing on checkout-redesign.
-  const path = [0, 2, 4, 3, 1];
+  const heroIdx = Math.max(0, FOLDERS.findIndex(([f]) => f === desk.finder.hero));
+  const path = [0, 2, 4, 3, heroIdx].map((i) => Math.min(i, FOLDERS.length - 1));
   const step = huntAt === undefined || t < huntAt ? -1 : Math.min(path.length - 1, Math.floor((t - huntAt) / 0.32));
-  const sel = huntAt === undefined ? 1 : step < 0 ? -1 : path[step];
+  const sel = huntAt === undefined ? heroIdx : step < 0 ? -1 : path[step];
   const side = (h: string, items: string[], on?: string) => (
     <div style={{marginBottom: 12}}>
       <div style={{fontSize: 10.5, fontWeight: 600, color: '#8A8B90', margin: '0 6px 3px'}}>{h}</div>
@@ -140,7 +122,7 @@ export const Finder = ({t, huntAt}: {t: number; huntAt?: number}) => {
             <Folder /><span style={{flex: 1}}>{f}</span><span style={{width: 90, fontSize: 12, opacity: 0.7}}>{d}</span>
           </div>
         ))}
-        <div style={{position: 'absolute', bottom: 0, left: 160, right: 0, padding: '5px 14px', fontSize: 11, color: '#8A8B90', borderTop: '1px solid #ECECEE', background: '#F7F7F9'}}>7 items · work › payments</div>
+        <div style={{position: 'absolute', bottom: 0, left: 160, right: 0, padding: '5px 14px', fontSize: 11, color: '#8A8B90', borderTop: '1px solid #ECECEE', background: '#F7F7F9'}}>{FOLDERS.length} items · work › {desk.finder.parent}</div>
       </div>
     </div>
   );
@@ -148,20 +130,7 @@ export const Finder = ({t, huntAt}: {t: number; huntAt?: number}) => {
 
 // ---- Markdown editor (the real PRD) ----------------------------------------------------------
 
-const PRD = `# Checkout redesign: PRD v2
-
-## Problem
-Guests abandon checkout at the payment step far more often than signed-in customers. Interviews and funnel data point to too many fields and no way to reuse a card.
-
-## Goals
-Cut guest-checkout abandonment 15% by Q1.
-Let a guest finish checkout in one screen on mobile.
-Take the plan to exec review on Oct 14.
-
-## What we heard
-Two of six interviewees named saved cards as the reason they abandon guest checkout.
-Four of six wanted to skip the shipping form when an address autofills.
-Nobody asked for more payment methods.`;
+const PRD = desk.prd;
 export const MarkdownEditor = () => {
   // Hard-wrap the long paragraph the way an editor with soft wrap shows it.
   const rows: {n: number; text: string; cont: boolean}[] = [];
@@ -199,7 +168,7 @@ export const BrowserBar = () => (
   <>
     <div style={{position: 'absolute', left: 84, top: 18, display: 'flex', gap: 18}}><Chev d="l" /><Chev d="r" /></div>
     <div style={{position: 'absolute', left: 150, right: 90, top: 12, height: 28, borderRadius: 7, background: '#E4E4E8', fontSize: 13, color: '#3A3B40', textAlign: 'center', lineHeight: '28px', fontFamily: ui}}>
-      <span style={{display: 'inline-block', width: 8, height: 7, background: '#8A8B90', borderRadius: 1.5, marginRight: 7}} />localhost:3000/checkout
+      <span style={{display: 'inline-block', width: 8, height: 7, background: '#8A8B90', borderRadius: 1.5, marginRight: 7}} />{desk.url}
     </div>
   </>
 );
@@ -207,7 +176,7 @@ export const BrowserPage = ({w, h}: {w: number; h: number}) => {
   const vw = 960, s = w / vw;
   return (
     <div style={{position: 'absolute', inset: 0, overflow: 'hidden', background: '#F7F6F3'}}>
-      <IFrame src={staticFile('prototype/checkout.html')} style={{width: vw, height: h / s, border: 0, transform: `scale(${s})`, transformOrigin: '0 0', display: 'block'}} />
+      <IFrame src={staticFile(files.prototype)} style={{width: vw, height: h / s, border: 0, transform: `scale(${s})`, transformOrigin: '0 0', display: 'block'}} />
     </div>
   );
 };
@@ -288,7 +257,7 @@ export const DeckApp = () => {
   const mainW = 500, ms = mainW / 960;
   return (
     <div style={{position: 'absolute', inset: 0, background: '#fff', fontFamily: ui, display: 'flex', flexDirection: 'column'}}>
-      <OfficeTitle file="exec-review-oct14.pptx" accent="#C43E1C" glyph="P" />
+      <OfficeTitle file={files.deck} accent="#C43E1C" glyph="P" />
       <Tabs tabs={['Home', 'Insert', 'Draw', 'Design', 'Transitions', 'Animations', 'Slide Show', 'Review', 'View']} on="Home" accent="#C43E1C" />
       <div style={{height: 62, background: '#F8F8FA', borderBottom: '1px solid #D6D6DA', display: 'flex', alignItems: 'center', padding: '4px 6px'}}>
         <RibbonGroup label="Paste" icons={[30, 18]} /><RibbonGroup label="Slides" icons={[30, 22]} /><RibbonGroup label="Font" icons={[60, 22, 22]} /><RibbonGroup label="Paragraph" icons={[22, 22, 22, 22]} />
@@ -321,7 +290,7 @@ export const DocApp = () => {
   const d = content.doc, blue = '#185ABD';
   return (
     <div style={{position: 'absolute', inset: 0, background: '#fff', fontFamily: ui, display: 'flex', flexDirection: 'column'}}>
-      <OfficeTitle file="interview-synthesis.docx" accent={blue} glyph="W" auto={false} />
+      <OfficeTitle file={files.doc} accent={blue} glyph="W" auto={false} />
       <Tabs tabs={['Home', 'Insert', 'Draw', 'Design', 'Layout', 'References', 'Review', 'View']} on="Home" accent={blue} />
       <div style={{height: 62, background: '#F8F8FA', borderBottom: '1px solid #D6D6DA', display: 'flex', alignItems: 'center', padding: '4px 6px'}}>
         <RibbonGroup label="Paste" icons={[30, 18]} /><RibbonGroup label="Font" icons={[70, 22, 22]} /><RibbonGroup label="Paragraph" icons={[22, 22, 22]} /><RibbonGroup label="Styles" icons={[40, 40]} last />

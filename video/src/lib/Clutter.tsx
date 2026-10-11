@@ -6,6 +6,7 @@ import tokens from '../../style/tokens.json';
 import content from '../../fixture/docs/content.json';
 import {CLUTTER_LAYOUT, clutterWin} from './clutterLayout';
 import {DuoIcon} from './DuoIcon';
+import {desk as deskText, files} from './deskContent';
 import {BROWSER_BAR_H, BrowserBar, BrowserPage, ClaudeTerminal, DeckApp, DocApp, Finder, Lights, MarkdownEditor, TERM1, TERM2, ZshTerminal} from './ClutterApps';
 
 // The cold open's cluttered Mac desktop (S1, S2): windows from several apps, drawn about 75% as
@@ -52,7 +53,7 @@ export const MenuBar = ({app}: {app: string}) => (
     display: 'flex', alignItems: 'center', gap: 22, padding: '0 18px', fontFamily: ui, fontSize: 14, color: '#0B0B0C'}}>
     <div style={{width: 14, height: 14, borderRadius: 4, background: 'rgba(0,0,0,0.75)'}} />
     <b>{app}</b>{['File', 'Edit', 'View', 'Window', 'Help'].map((m) => <span key={m}>{m}</span>)}
-    <span style={{marginLeft: 'auto'}}>Tue 9:41</span>
+    <span style={{marginLeft: 'auto'}}>{deskText.clock}</span>
   </div>
 );
 const DOCK = [['>_', '#2B2D31'], ['M↓', '#4A6CF7'], ['🗂', '#5AA9F7'], ['◎', '#F0F0F2'], ['✎', '#F7C948'], ['✉', '#3D9BF5']];
@@ -126,14 +127,14 @@ export const ClutteredDesk = ({t, ev, content: desk, front = 'Terminal'}: {t: nu
       <Win id="term2" chrome="dark" title={`✳ ${s2.session}`} appear={opened(t, ev.term2)}>
         <ClaudeTerminal t={t} lines={TERM2} working="Frosting" />
       </Win>
-      <Win id="finder" title="payments" appear={opened(t, ev.finder)}><Finder t={t} huntAt={ev.hunt} /></Win>
-      <Win id="markdown" title="prd-v2.md — checkout-redesign" appear={opened(t, ev.markdown)}><MarkdownEditor /></Win>
+      <Win id="finder" title={deskText.finder.parent} appear={opened(t, ev.finder)}><Finder t={t} huntAt={ev.hunt} /></Win>
+      <Win id="markdown" title={`${files.markdown} — ${files.project}`} appear={opened(t, ev.markdown)}><MarkdownEditor /></Win>
       <Win id="browser" title={content.prototype.title} appear={opened(t, ev.browser)} bar={<BrowserBar />} barH={BROWSER_BAR_H}>
         <BrowserPage w={clutterWin('browser').w} h={clutterWin('browser').h - BROWSER_BAR_H} />
       </Win>
-      <Win id="deck" chrome="bare" title="exec-review-oct14.pptx" appear={opened(t, ev.deck)}><DeckApp /></Win>
-      <Win id="doc" chrome="bare" title="interview-synthesis.docx" appear={opened(t, ev.doc)}><DocApp /></Win>
-      <Win id="term3" chrome="dark" title={cdDone ? 'checkout-redesign — -zsh — 80×20' : '~ — -zsh — 80×20'} appear={opened(t, ev.term3)}>
+      <Win id="deck" chrome="bare" title={files.deck} appear={opened(t, ev.deck)}><DeckApp /></Win>
+      <Win id="doc" chrome="bare" title={files.doc} appear={opened(t, ev.doc)}><DocApp /></Win>
+      <Win id="term3" chrome="dark" title={cdDone ? `${files.project} — -zsh — 80×20` : '~ — -zsh — 80×20'} appear={opened(t, ev.term3)}>
         <ZshTerminal t={t} u={pu} />
       </Win>
       {desk.question && ev.term1 !== undefined && (
@@ -152,15 +153,15 @@ export const PileWindow = ({id, t}: {id: string; t: number}) => {
   switch (id) {
     case 'term1': return <Win id="term1" chrome="dark" title={`✳ ${s1.session}`} appear={1}><ClaudeTerminal t={t} lines={TERM1} /></Win>;
     case 'term2': return <Win id="term2" chrome="dark" title={`✳ ${s2.session}`} appear={1}><ClaudeTerminal t={t} lines={TERM2} working="Frosting" /></Win>;
-    case 'finder': return <Win id="finder" title="payments" appear={1}><Finder t={t} /></Win>;
-    case 'markdown': return <Win id="markdown" title="prd-v2.md — checkout-redesign" appear={1}><MarkdownEditor /></Win>;
+    case 'finder': return <Win id="finder" title={deskText.finder.parent} appear={1}><Finder t={t} /></Win>;
+    case 'markdown': return <Win id="markdown" title={`${files.markdown} — ${files.project}`} appear={1}><MarkdownEditor /></Win>;
     case 'browser': return (
       <Win id="browser" title={content.prototype.title} appear={1} bar={<BrowserBar />} barH={BROWSER_BAR_H}>
         <BrowserPage w={clutterWin('browser').w} h={clutterWin('browser').h - BROWSER_BAR_H} />
       </Win>);
-    case 'deck': return <Win id="deck" chrome="bare" title="exec-review-oct14.pptx" appear={1}><DeckApp /></Win>;
-    case 'doc': return <Win id="doc" chrome="bare" title="interview-synthesis.docx" appear={1}><DocApp /></Win>;
-    case 'term3': return <Win id="term3" chrome="dark" title="checkout-redesign — -zsh — 80×20" appear={1}><ZshTerminal t={t} u={undefined} /></Win>;
+    case 'deck': return <Win id="deck" chrome="bare" title={files.deck} appear={1}><DeckApp /></Win>;
+    case 'doc': return <Win id="doc" chrome="bare" title={files.doc} appear={1}><DocApp /></Win>;
+    case 'term3': return <Win id="term3" chrome="dark" title={`${files.project} — -zsh — 80×20`} appear={1}><ZshTerminal t={t} u={undefined} /></Win>;
     default: throw new Error(`PileWindow: no window ${id}`);
   }
 };
@@ -169,7 +170,7 @@ export const PileWindow = ({id, t}: {id: string; t: number}) => {
 
 /** S1: the desk fills up as each app is named. */
 export const DeskScene = ({t, ev}: {t: number; ev: ClutterEvents}) => (
-  <ClutteredDesk t={t} ev={ev} content={{project: 'checkout-redesign', folder: '~/work/payments/checkout-redesign'}} />
+  <ClutteredDesk t={t} ev={ev} content={{project: files.project, folder: files.folder}} />
 );
 
 const PROJECTS: DeskContent[] = [
