@@ -1,0 +1,8 @@
+{
+ "mode": "chat",
+ "tab": "Auto-add decision",
+ "drafts": {
+  "composer": "/tri"
+ },
+ "focusComposer": true
+}

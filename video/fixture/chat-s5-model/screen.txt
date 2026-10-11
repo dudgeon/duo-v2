@@ -1,0 +1,8 @@
+▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔ ◐ medium · /effort ▔
+   Select model
+
+     1. Default  Use the default model (currently Opus 5.5)
+   ❯ 2. Opus ✔   Opus 5.5 · Best for everyday, complex tasks
+     3. Sonnet   Sonnet 5.5 · Efficient for routine tasks
+
+   Enter to set as default · s to use this session only · Esc to cancel
