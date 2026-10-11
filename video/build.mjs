@@ -44,7 +44,7 @@ try {
   const voiced = voiceLines(lines, {here, cache, pub, style, force: args.has('--force-voice'), log});
 
   // 3. Captures
-  const states = [...new Set(Object.values(shots).filter((s) => s.kind === 'desk').map((s) => s.state))];
+  const states = [...new Set(Object.values(shots).flatMap((s) => (s.kind === 'desk' ? [s.state] : s.states ?? [])))];
   const captures = captureStates(states, {repo, cache, pub, scale: style.capture.scale, fixture: style.capture.fixture, force: args.has('--force-capture'), log});
 
   // 4. Timeline
@@ -59,7 +59,9 @@ try {
   if (spawnSync('node', [join(here, 'lint.mjs')], {stdio: 'inherit'}).status !== 0) throw new BuildError('lint');
 
   // 7. Stills: each scene where its camera has landed, or its middle
-  const stillAt = (s) => s.start + Math.min(s.duration - 0.1, s.camera?.length > 1 ? s.camera[s.camera.length - 1].t + 0.3 : s.duration / 2);
+  // Each scene at its most telling moment: a callout fully open, else where the camera lands, else the middle.
+  const stillAt = (s) => s.start + Math.min(s.duration - 0.1,
+    s.callouts?.length ? s.callouts[0].start + 1.0 : s.camera?.length > 1 ? s.camera[s.camera.length - 1].t + 0.3 : s.duration * 0.7);
   for (const s of timeline.scenes) {
     remotion('still', 'src/index.ts', 'Intro', join(out, `still-${s.id}.png`), `--frame=${Math.round(stillAt(s) * timeline.fps)}`);
   }

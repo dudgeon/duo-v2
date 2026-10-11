@@ -99,7 +99,8 @@ export const Headline = ({lines, x, y, size = 108, shown = 1, inked = 1}: {lines
 
 /** The spoken words, quoted small: Loom's caption over the UI. */
 export const Quote = ({text, x, y, u = 1}: {text: string; x: number; y: number; u?: number}) => (
-  <div style={{position: 'absolute', left: x, top: y, fontFamily: mono, fontSize: 20, color: P.ink2, opacity: u, whiteSpace: 'nowrap'}}>
+  <div style={{position: 'absolute', left: x, top: y, fontFamily: mono, fontSize: 20, color: P.ink2, opacity: u, whiteSpace: 'nowrap',
+    background: P.ground, padding: '4px 10px', boxShadow: `0 0 0 1px ${P.hairline}`}}>
     <span style={{color: P.marker}}>—</span> “{text}”
   </div>
 );

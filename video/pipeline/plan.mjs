@@ -14,6 +14,8 @@ function wordTime(line, phrase) {
 }
 
 function findAnchor(cap, text, state) {
+  // A rect in window points stands in where the UI has no label to anchor on (the native document view).
+  if (typeof text === 'object') return {x: text.x, y: text.y, w: text.w, h: text.h};
   const els = cap.anchors?.anchors ?? [];
   const t = text.toLowerCase();
   const hit = els.find((e) => (e.identifier ?? '').toLowerCase() === t)
@@ -56,13 +58,21 @@ export function plan({scenes, shots, voiced, captures, style}) {
           if (h < desk.winH * 1.06) { h = desk.winH * 1.06; w = h * aspect; }
           return {x: desk.winX + desk.winW / 2 - w / 2, y: desk.winY + desk.winH / 2 - h / 2, w, h};
         }
-        const f = findAnchor(cap, to.anchor, shot.state);
-        const w = Math.max(to.width ?? 600, minW, (f.w + 2 * (to.pad ?? 24)));
+        const f = findAnchor(cap, to.anchor ?? to.rect, shot.state);
+        const paper = (shot.ground ?? 'paper') === 'paper';
+        const w = Math.max(to.width ?? 600, minW, (f.w + 2 * (to.pad ?? 24)), paper ? style.camera.paperMinWidth : 0);
         const h = w / aspect;
         let x = to.align === 'left' ? f.x - (to.pad ?? 24) : f.x + f.w / 2 - w / 2;
         // An anchor taller than the frame (a pane) is framed from its top, where its content starts.
         let y = f.h + 2 * (to.pad ?? 24) > h ? f.y - (to.pad ?? 24) / 2 : f.y + f.h / 2 - h / 2;
-        x = Math.min(Math.max(x, 0), desk.winW - w); y = Math.min(Math.max(y, 0), desk.winH - h);
+        if (paper) {
+          // On paper the window floats: keep a margin of paper in view, and when the shot is near the top,
+          // show the window's top edge with a band above it for the chapter mark.
+          const m = style.camera.paperMargin, band = style.camera.chapterBand;
+          x = Math.min(Math.max(x, -m), desk.winW + m - w);
+          y = Math.min(Math.max(y, -band), desk.winH + m - h);
+          if (y < band) y = -band;
+        } else { x = Math.min(Math.max(x, 0), desk.winW - w); y = Math.min(Math.max(y, 0), desk.winH - h); }
         return {x: x + desk.winX, y: y + desk.winY, w, h};
       };
       const keys = [{t: 0, rect: wide}];
@@ -83,14 +93,21 @@ export function plan({scenes, shots, voiced, captures, style}) {
       const callouts = (shot.callouts ?? []).map((co) => {
         const line = lines[co.line - 1];
         if (!line) throw new BuildError(`shots: ${scene.id} callout "${co.label}" names line ${co.line}, but the scene has ${lines.length}`);
-        const f = findAnchor(cap, co.anchor, shot.state);
+        const f = findAnchor(cap, co.anchor ?? co.rect, shot.state);
         const start = line.start + (co.word ? wordTime(line, co.word) : 0) + (co.offset ?? 0);
         const endAt = start + (co.hold ?? style.callout.hold);
         end = Math.max(end, endAt + 0.3);
-        return {rect: {x: f.x + desk.winX, y: f.y + desk.winY, w: f.w, h: f.h}, label: co.label, side: co.side,
+        let crop;
+        if (co.crop) {
+          const c = typeof co.crop === 'string' ? findAnchor(cap, co.crop, shot.state) : co.crop;
+          crop = {x: c.x - (co.cropPad ?? 8), y: c.y - (co.cropPad ?? 8), w: c.w + 2 * (co.cropPad ?? 8), h: c.h + 2 * (co.cropPad ?? 8)};
+          if (co.cropHeight) crop.h = co.cropHeight;
+        }
+        return {rect: {x: f.x + desk.winX, y: f.y + desk.winY, w: f.w, h: f.h}, title: co.title, quote: co.quote, crop,
           start: +start.toFixed(3), end: +endAt.toFixed(3)};
       });
-      Object.assign(s, {capture: {src: cap.src, scale: style.capture.scale}, desk, camera: keys, appear: !!shot.appear, callouts});
+      Object.assign(s, {capture: {src: cap.src, scale: style.capture.scale}, desk, camera: keys, appear: !!shot.appear, callouts,
+        ground: shot.ground ?? 'paper', chapter: shot.chapter ?? true});
     } else if (shot.kind === 'drawn') {
       // A drawn scene (src/lib/Clutter.tsx): its events happen on words of its lines.
       const events = {};
@@ -101,6 +118,12 @@ export function plan({scenes, shots, voiced, captures, style}) {
         end = Math.max(end, events[name] + 0.5);
       }
       Object.assign(s, {drawn: {scene: shot.scene, events}});
+      if (shot.scene === 'turn') {
+        s.turn = {headline: shot.headline, projects: shot.projects, shots: shot.states.map((st) => {
+          if (!captures[st]) throw new BuildError(`shots: ${scene.id} needs a capture of ${st}`);
+          return captures[st].src;
+        })};
+      }
     } else throw new BuildError(`shots: ${scene.id} has unknown kind "${shot.kind}"`);
     s.start = +t0.toFixed(3);
     s.duration = +end.toFixed(3);

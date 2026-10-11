@@ -1,226 +1,62 @@
 {
-  "$note": "One shot per scene in script.md, keyed by scene id (DL-169). Claude keeps these in step with the script's Shot: notes. kind 'desk' films a fixture state's window on the desk; 'card' is a title or stand-in on the wallpaper. A move's 'to' is 'wide', 'window', or {anchor: text in the element's label or identifier, pad, width}; it lands at the start of line N's word 'land' (or line N's start + dur).",
-  "S1": {
-    "kind": "drawn",
-    "scene": "desk",
+  "$note": "One shot per scene in script.md, keyed by scene id (DL-169). Claude keeps these in step with the script's Shot: notes. Look: style/reference-analysis.md. kind 'desk' films a fixture state's window (ground 'paper' by default, 'wallpaper' for the desktop); 'drawn' is a drawn scene; 'card' is the end card. A move or callout targets an anchor (label or identifier) or a rect in window points, and lands on a word of line N.",
+  "S1": {"kind": "drawn", "scene": "desk", "events": {
+    "term1": {"line": 1, "word": "juggling", "offset": -0.2},
+    "term2": {"line": 2, "word": "every"},
+    "markdown": {"line": 2, "word": "Markdown"},
+    "finder": {"line": 3, "word": "Finder"},
+    "hunt": {"line": 3, "word": "hunt"},
+    "term3": {"line": 3, "word": "type", "offset": -0.5},
+    "path": {"line": 3, "word": "type"},
+    "browser": {"line": 4, "word": "browser"},
+    "ask": {"line": 5, "word": "third", "offset": -0.3}}},
+  "S2": {"kind": "drawn", "scene": "many", "events": {
+    "pullStart": {"line": 1, "word": "multiply", "offset": -0.2},
+    "pullEnd": {"line": 1, "word": "project", "offset": 0.6},
+    "dim": {"line": 3, "word": "tomorrow"}}},
+  "S3": {"kind": "drawn", "scene": "turn",
+    "headline": ["Built around", "your projects."],
+    "projects": ["checkout-redesign", "refunds-api-spec", "onboarding-v3", "pricing-experiment-q4"],
+    "states": ["project", "list-1440", "chat-window", "board-1440"],
     "events": {
-      "term1": {
-        "line": 1,
-        "word": "juggling",
-        "offset": -0.2
-      },
-      "term2": {
-        "line": 2,
-        "word": "every"
-      },
-      "markdown": {
-        "line": 2,
-        "word": "Markdown"
-      },
-      "finder": {
-        "line": 3,
-        "word": "Finder"
-      },
-      "hunt": {
-        "line": 3,
-        "word": "hunt"
-      },
-      "term3": {
-        "line": 3,
-        "word": "type",
-        "offset": -0.5
-      },
-      "path": {
-        "line": 3,
-        "word": "type"
-      },
-      "browser": {
-        "line": 4,
-        "word": "browser"
-      },
-      "ask": {
-        "line": 5,
-        "word": "third",
-        "offset": -0.3
-      }
-    }
-  },
-  "S2": {
-    "kind": "drawn",
-    "scene": "many",
-    "events": {
-      "pullStart": {
-        "line": 1,
-        "word": "multiply",
-        "offset": -0.2
-      },
-      "pullEnd": {
-        "line": 1,
-        "word": "project",
-        "offset": 0.6
-      },
-      "dim": {
-        "line": 3,
-        "word": "tomorrow"
-      }
-    }
-  },
-  "S3": {
-    "kind": "desk",
-    "state": "board-1440",
-    "appear": true,
+      "line2": {"line": 1, "word": "built"},
+      "ink": {"line": 1, "word": "projects"},
+      "projects": {"line": 2},
+      "cascade": {"line": 3}}},
+  "S4": {"kind": "desk", "state": "list-1440",
+    "moves": [{"to": {"rect": {"x": 330, "y": 40, "w": 820, "h": 461}, "width": 1100, "align": "left"}, "line": 1, "land": "finds", "dur": 2.2}],
+    "callouts": [{"rect": {"x": 340, "y": 152, "w": 460, "h": 130}, "title": "sessions · by folder", "quote": "grouped by the folder it ran in",
+      "crop": {"x": 340, "y": 146, "w": 470, "h": 140}, "line": 1, "word": "grouped", "hold": 3.4}]},
+  "S5": {"kind": "desk", "state": "chat-window",
     "moves": [
-      {
-        "to": "window",
-        "line": 2,
-        "dur": 2.6
-      }
-    ]
-  },
-  "S4": {
-    "kind": "desk",
-    "state": "list-1440",
+      {"to": {"anchor": "video.pane.left", "width": 900, "align": "left", "pad": 0}, "line": 1, "land": "project", "dur": 1.8},
+      {"to": {"anchor": "video.pane.middle", "width": 960}, "line": 3, "land": "middle", "dur": 1.6},
+      {"to": {"anchor": "video.pane.right", "width": 900}, "line": 4, "land": "beside", "dur": 1.6}],
+    "callouts": [{"rect": {"x": 16, "y": 55, "w": 190, "h": 42}, "title": "checkout-redesign", "quote": "its goal and what's next",
+      "crop": {"x": 4, "y": 46, "w": 290, "h": 60}, "line": 2, "word": "goal", "hold": 2.6}]},
+  "S6": {"kind": "desk", "state": "board-1440",
     "moves": [
-      {
-        "to": {
-          "anchor": "Teardown research",
-          "width": 900,
-          "align": "left"
-        },
-        "line": 1,
-        "land": "grouped",
-        "dur": 2.4
-      }
-    ],
+      {"to": {"anchor": "video.needs-you-chip", "width": 1300, "align": "left", "pad": 220}, "line": 1, "land": "shows", "dur": 1.8},
+      {"to": {"anchor": "Copy review pass 2, needs you", "width": 1100}, "line": 2, "land": "question", "dur": 1.8}],
     "callouts": [
-      {
-        "anchor": "3 need you, in the column",
-        "label": "Every session, in one list",
-        "line": 1,
-        "word": "every",
-        "side": "below",
-        "hold": 3.0
-      }
-    ]
-  },
-  "S5": {
-    "kind": "desk",
-    "state": "chat-window",
-    "moves": [
-      {
-        "to": {
-          "anchor": "checkout-redesign",
-          "width": 600,
-          "align": "left"
-        },
-        "line": 2,
-        "land": "goal",
-        "dur": 1.8
-      },
-      {
-        "to": {
-          "anchor": "video.pane.left",
-          "width": 480,
-          "align": "left",
-          "pad": 0
-        },
-        "line": 3,
-        "land": "left",
-        "dur": 1.6
-      },
-      {
-        "to": {
-          "anchor": "video.pane.middle",
-          "width": 900
-        },
-        "line": 3,
-        "land": "middle",
-        "dur": 1.6
-      },
-      {
-        "to": {
-          "anchor": "video.pane.right",
-          "width": 480,
-          "align": "left",
-          "pad": 0
-        },
-        "line": 4,
-        "land": "beside",
-        "dur": 1.6
-      }
-    ]
-  },
-  "S6": {
-    "kind": "desk",
-    "state": "board-1440",
-    "moves": [
-      {
-        "to": {
-          "anchor": "video.needs-you-chip",
-          "width": 520
-        },
-        "line": 1,
-        "land": "waiting",
-        "dur": 2.0
-      },
-      {
-        "to": {
-          "anchor": "Approve these 6 string changes?",
-          "width": 600
-        },
-        "line": 2,
-        "land": "question",
-        "dur": 2.0
-      }
-    ],
+      {"anchor": "video.needs-you-chip", "title": "needs-you · 3", "quote": "…or waiting on you.",
+        "crop": {"x": 1104, "y": 44, "w": 333, "h": 300}, "line": 1, "word": "waiting", "hold": 2.4},
+      {"anchor": "Approve these 6 string changes?", "title": "copy review pass 2", "quote": "you answer it right there",
+        "crop": {"x": 1112, "y": 146, "w": 316, "h": 154}, "line": 2, "word": "answer", "hold": 2.2}]},
+  "S7": {"kind": "desk", "state": "chat-window",
+    "moves": [{"to": {"rect": {"x": 981, "y": 40, "w": 459, "h": 520}, "width": 1000}, "line": 1, "land": "beside", "dur": 2.0}],
+    "callouts": [{"rect": {"x": 997, "y": 318, "w": 427, "h": 42}, "title": "prd-v2.md · added by Claude", "quote": "what changed since you last looked",
+      "crop": {"x": 985, "y": 310, "w": 455, "h": 160}, "line": 2, "word": "highlighted", "hold": 3.0}]},
+  "S8": {"kind": "desk", "state": "search-overview",
+    "moves": [{"to": {"rect": {"x": 240, "y": 100, "w": 640, "h": 520}, "width": 1200, "align": "left", "pad": 40}, "line": 1, "land": "Jump", "dur": 1.8}],
+    "callouts": [{"rect": {"x": 249, "y": 189, "w": 404, "h": 202}, "title": "search · every project", "quote": "by meaning as well as by words",
+      "crop": {"x": 245, "y": 185, "w": 412, "h": 210}, "line": 2, "word": "meaning", "hold": 2.6}]},
+  "S9": {"kind": "desk", "state": "chat-window",
+    "moves": [{"to": {"rect": {"x": 0, "y": 600, "w": 1440, "h": 301}, "width": 1300, "align": "left", "pad": 0}, "line": 1, "land": "plain", "dur": 1.6}],
     "callouts": [
-      {
-        "anchor": "video.needs-you-chip",
-        "label": "3 sessions need you",
-        "line": 1,
-        "word": "waiting",
-        "side": "below"
-      }
-    ]
-  },
-  "S7": {
-    "kind": "desk",
-    "state": "chat-window",
-    "moves": [
-      {
-        "to": {
-          "anchor": "What we heard",
-          "width": 560
-        },
-        "line": 2,
-        "land": "highlighted",
-        "dur": 2.2
-      }
-    ]
-  },
-  "S8": {
-    "kind": "desk",
-    "state": "search-overview",
-    "moves": [
-      {
-        "to": {
-          "anchor": "where did we land on saved cards",
-          "width": 1000
-        },
-        "line": 2,
-        "land": "search",
-        "dur": 2.2
-      }
-    ]
-  },
-  "S9": {
-    "kind": "desk",
-    "state": "chat-window",
-    "moves": []
-  },
-  "S10": {
-    "kind": "card",
-    "title": "Duo v2",
-    "sub": "Early beta preview \u00b7 github.com/dudgeon/duo-v2 \u00b7 Help \u203a Report an Issue\u2026"
-  }
+      {"rect": {"x": 0, "y": 791, "w": 299, "h": 98}, "title": "~/work/payments/checkout-redesign", "quote": "plain files, in folders you own",
+        "crop": {"x": 0, "y": 785, "w": 299, "h": 110}, "line": 1, "word": "files", "hold": 2.2},
+      {"rect": {"x": 1113, "y": 48, "w": 91, "h": 20}, "title": "prd-v2.md", "quote": "right beside you",
+        "crop": {"x": 981, "y": 40, "w": 459, "h": 230}, "line": 2, "word": "opens", "hold": 2.6}]},
+  "S10": {"kind": "card", "title": "Duo v2", "sub": "An early beta preview · github.com/dudgeon/duo-v2 · Help › Report an Issue…"}
 }

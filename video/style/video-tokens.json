@@ -16,7 +16,10 @@
     "hold": 1.2,
     "ease": "smootherstep",
     "zoomSpace": "log",
-    "maxMagnification": 1.0
+    "maxMagnification": 1.0,
+    "paperMinWidth": 1180,
+    "paperMargin": 70,
+    "chapterBand": 120
   },
   "voice": {
     "gap": 0.35,
@@ -87,7 +90,8 @@
       ],
       "blur": 0.06,
       "grain": 0.0
-    }
+    },
+    "paperShadow": "0 14pt 40pt rgba(31,35,40,0.16), 0 0 0 0.5pt rgba(31,35,40,0.22)"
   },
   "capture": {
     "scale": 4,
@@ -111,7 +115,8 @@
     "lift": 0.12,
     "in": 0.35,
     "out": 0.3,
-    "hold": 2.6
+    "hold": 2.6,
+    "enlarge": 1.35
   },
   "paper": {
     "$note": "The look from style/reference-analysis.md (Paper Mono + Loom, chosen by Geoff 2026-10-10).",
