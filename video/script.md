@@ -34,7 +34,19 @@ Fill these four in first; I read them before every scene decision. (The build ig
 
 - Duo is a desktop client for the claude code c-l-i that makes it easier to stay organized and get work done.
 
-Shot: the Duo logo builds itself in motion graphics, then settles beside the title "Duo" and the line "A desktop client for Claude Code", the three framed as one composition. That settled frame is the video's thumbnail, so it must read at a glance.
+Shot: the Duo logo builds itself in motion graphics, then settles beside the title "Duo" and the line "A complete workspace for your Claude Code sessions, projects, and files.", the three framed as one composition. That settled frame is the video's thumbnail, so it must read at a glance.
+
+> **Options for the line under "Duo"** (Geoff, Oct 11: "descriptive and expansive", with no superlatives or subjective adjectives). It's also the thumbnail, so the main line stays short enough to read at a glance; options D and E add a smaller second line for the rest. Geoff chose his own line (Oct 11): "A complete workspace for your Claude Code sessions, projects, and files." It's now in the Shot: above; these options are kept for reference.
+>
+> - **A.** Projects, sessions and documents for Claude Code, in one Mac window
+> - **B.** Every Claude Code session, organized by project, with its documents beside it
+> - **C.** Work with Claude Code by project, not by terminal window
+> - **D.** A desktop client for Claude Code, then a smaller line: *Projects · every session · terminal or chat · Markdown, HTML, PowerPoint and Word · what needs you · search*
+> - **E.** Claude Code, organized by project, then a smaller line: *Your sessions, the files they work on, and what's waiting on you, in one window*
+>
+> What these draw on, all real today: every Claude Code session on the Mac, listed and kept past the 30-day cleanup; a folder and a PROJECT.md per project; terminal or chat mode; documents beside the conversation (Markdown, HTML, PowerPoint, Word), with Claude's changes highlighted; one Needs you queue across projects; search across everything; plain files; and duo2, so Claude can drive Duo.
+>
+> The voice line says nearly the same thing as the current subtitle, so if the subtitle changes, the voice line probably should too.
 
 ### S1 · (title) (about \_ s)
 

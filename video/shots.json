@@ -15,14 +15,14 @@
         "word": "desktop"
       }
     },
-    "shotSha": "b049d7599ff1",
+    "shotSha": "be581e246071",
     "requires": [
       {
         "what": "The Duo logo (app icon 2A', drawn from docs/design/icon-handoff geometry) builds itself in motion graphics",
         "built": true
       },
       {
-        "what": "The logo settles beside the title \"Duo\" and the line \"A desktop client for Claude Code\", framed as one composition",
+        "what": "The logo settles beside the title \"Duo\" and the line \"A complete workspace for your Claude Code sessions, projects, and files.\" (two lines), framed as one composition",
         "built": true
       },
       {
