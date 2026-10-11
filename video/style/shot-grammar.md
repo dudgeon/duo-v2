@@ -36,3 +36,15 @@ The transitions so far:
 |---|---|---|---|
 | `logo-to-dock` | graphic | S0 logo → S1 desk | The title and line wipe back toward the icon, the menu bar and Dock slide in, and the icon arcs down into its Dock slot with a small pop. That frame is S1's empty desktop. |
 | `dock-launch` | app | S1 desk → S2 morph | The camera pushes toward the Dock, the cursor clicks Duo's tile, and the tile bounces and gets its running dot. The camera pulls back as the pile starts to morph into the Duo window. |
+| `click-through` | app | S2 → S3, S3 → S4 | The camera pulls back to show what to click, the cursor clicks it (All projects; the Needs you session), the app's next state comes up, and the scene's beats push in. |
+| `carry-on` | app | S4 → S5 | The picture carries straight on (the same capture, the same camera); the scene's first beat is the click that changes it (the chat toggle on "chat"). |
+
+## App scenes (S3 on)
+
+`scene: "app"` in `shots.json` plays real captures of Duo (`video-s3-*`, `video-s4-*`, `video-s5-*` in `VideoTargets.swift`) with beats on the voice's words. A beat can carry:
+- `cam`: an anchor, `wide`, a rect in window points, or `{on, x0, x1, y0, y1}` for part of an anchor. Use the last for panes taller than the frame, where fitting the whole pane barely zooms.
+- `click` and `state`: the cursor clicks, and the next capture comes up.
+- `menu`: a context menu, drawn with the app's real items, because macOS draws menus outside the window capture.
+- `drag`: a selection.
+- `mark` and `quote`.
+Anchors come from each capture's accessibility dump (`video.*` ids or labels).

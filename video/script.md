@@ -79,6 +79,50 @@ Right pane, on "flexible editor": the Markdown file, the browser prototype, the 
 > - *Word and PowerPoint:* Duo opens .pptx and .docx (Geoff, Oct 10), so the same deck and doc from S1 appear as real tabs here.
 > - *Callouts:* putting *a pane for managing files and projects*, *a terminal or chat view* and *flexible editor* in italics in the line would pin the three callouts to those words.
 
+### S3 · All projects (about 12 s)
+
+- The first time you open Duo, you'll see all of your previous claude code sessions, and you can resume any of them.
+- Duo also shows you any sessions that are waiting for your input.
+
+Shot: All projects in List view: every previous session in one list, with its project, title and when it last ran. On line 1 the camera runs down the list; nothing is clicked yet. On line 2 the camera moves right to the Needs you column, where a few sessions wait on a question or a permission.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Getting here from S2:* app navigation, not a cut. S2 ends wide on shelf-scan; the camera pulls back, the cursor clicks **All projects** at the top of the left pane, and the camera pushes in on the list as it opens.
+> - *Real, today:* on first launch Duo opens on every session, grouped by folder, with no setup (S2-3). All projects has Home on the left, **Board | List** in the middle and the Needs you column on the right. Clicking a session reopens it in its project with `claude --resume`.
+> - *New captures needed:* All projects in List view on sample data, four or more projects with 15 to 20 sessions across Today, This week and Earlier, and two or three in Needs you (one question, one permission). (The state after the resume click belongs to S4.)
+> - *Callouts:* italics on *previous claude code sessions*, *resume* and *waiting for your input* would pin the marker to those words.
+> - *Hand-off to S4 (Geoff, Oct 11):* S3 stays on All projects and ends on the Needs you column. The resume click that carries us into the chat pane opens S4, not the word "resume" here.
+
+### S4 · Sessions (about 15 s)
+
+- When you click a claude code session, it resumes right where you left off, in the terminal.
+- Duo helps you keep track of many sessions at once. Close one and come back to it later, or archive or delete the ones you're done with to cut down on clutter.
+
+Shot: from S3's Needs you column, the cursor clicks a session, and the camera pushes into its project as the terminal resumes with its history. On line 2 the cursor opens a session's right-click menu in the session list, with its real items, among them Archive Session and Delete Session…. One session folds into Archived; another is deleted through Duo's confirmation sheet.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Getting here from S3:* app navigation. The resume click at the start of this scene is the transition, so S3 ends on All projects with nothing clicked (Geoff, Oct 11).
+> - *Real, today:* resuming reopens the session with `claude --resume`. Archive Session and Delete Session… are in a session's right-click menu; there's no Close there (a session closes with its tab's ×, and the menu has no Close item, found Oct 11). Delete asks first, in Duo's confirmation sheet, then moves the transcript to the Trash; it never deletes a running session.
+> - *Decided (Geoff, Oct 11):* keep Delete in the line and the shot. S4 covers sessions only; chat mode is S5.
+> - *New captures needed:* the project with the resumed session in its terminal; the session list's right-click menu; the Archived fold with one more session in it; the confirmation sheet; and the list after the delete.
+> - *Fixtures (asked of demo-fixtures, Oct 11):* a Needs you session with real history, a session to archive, an idle one to delete, and a few already archived.
+> - *Leaving for S5:* S4 ends on the terminal, and S5 carries straight on from that picture. The chat-toggle click comes on S5's word "chat", so the flip lands as the narrator names it.
+
+### S5 · Chat mode (about 18 s)
+
+- The terminal runs the full claude code terminal interface. If you prefer something tidier, Duo also has a chat mode, which folds the steps Claude takes along the way, like tool calls and file edits, into rows you can open.
+- Writing is easier in chat mode too: click and drag to select, use the Mac shortcuts you already know, and see a preview of any image or text you paste.
+
+Shot: the same session as S4, in the terminal. On line 1 the middle pane flips to chat mode; the camera follows Claude's last turn, and the cursor opens one folded row to show the tool call inside. On line 2 the cursor drag-selects a sentence in the composer, then pastes a block of user feedback, which folds into a "Pasted text · n lines" block, and a screenshot from that user, which shows as a preview in the composer. The camera stays on the middle pane throughout: the session list and the right pane stay at the frame's edges or out of it, and nothing opens in the editor (Geoff, Oct 11: the right pane hasn't been introduced yet).
+
+> **Notes for the build** (ignored by it):
+>
+> - *Getting here from S4:* app navigation, carrying on from S4's last picture with no cut. On "chat", the cursor clicks the chat toggle and the camera pushes in as the pane flips.
+> - *New captures needed:* one session in terminal and in chat mode, with a turn that has folded tool calls, one row closed and the same row open; then the composer with a drag selection, the folded paste, and the image preview.
+> - *Fixtures (asked of demo-fixtures, Oct 11):* the session's history; a block of user feedback long enough to fold (over 12 lines); and a screenshot from that user, of the scan prototype on her phone.
+
 ## The voice
 
 The house voice is M2, a warm baritone. The build reads this table: write the word as it appears in a line, and how it should be said. Add a row whenever a line comes out wrong.

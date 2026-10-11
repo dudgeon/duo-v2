@@ -56,7 +56,10 @@ try {
   const voiced = voiceLines(lines, {here, cache, pub, style, force: args.has('--force-voice'), log});
 
   // 3. Captures
-  const states = [...new Set(Object.values(shots).flatMap((s) => (s.kind === 'desk' ? [s.state] : s.states ?? [])))];
+  // Every state a shot shows: its list, plus (app scenes) the states its beats switch to or read anchors from, and its entry's.
+  const shotStates = (s) => (s.kind === 'desk' ? [s.state] : [...(s.states ?? []), ...(s.beats ?? []).flatMap((b) => [b.state, b.in]),
+    s.entry?.base, ...Object.values(s.entry?.panes ?? {})].filter(Boolean));
+  const states = [...new Set(Object.values(shots).filter((s) => typeof s === 'object').flatMap(shotStates))];
   const captures = captureStates(states, {repo, cache, pub, scale: style.capture.scale, fixture: style.capture.fixture, force: args.has('--force-capture'), log});
 
   // 4. Timeline
