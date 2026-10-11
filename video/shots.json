@@ -282,7 +282,7 @@
           "x1": 1.05
         },
         "dur": 0.9,
-        "mark": "video.s3.needs.2",
+        "mark": "video.s3.needs.1",
         "quote": "waiting for your input",
         "hold": 2.2
       }
@@ -313,7 +313,7 @@
     "transitionIn": "click-through",
     "leadIn": 2.4,
     "entry": {
-      "click": "video.s3.needs.3"
+      "click": "video.s3.needs.2"
     },
     "states": [
       "video-s4-resumed"
@@ -537,10 +537,10 @@
         },
         "in": "video-s4-deleted",
         "cam": {
-          "x": 800,
-          "y": 20,
-          "w": 480,
-          "h": 270
+          "x": 938,
+          "y": -48,
+          "w": 360,
+          "h": 202
         },
         "dur": 1
       },
@@ -553,13 +553,14 @@
         "in": "video-s4-deleted",
         "state": "video-s5-chat",
         "mark": {
-          "x": 1078,
+          "x": 1104,
           "y": 40,
-          "w": 56,
+          "w": 30,
           "h": 27
         },
         "quote": "chat mode",
-        "hold": 1.5
+        "hold": 1.5,
+        "fx": 0.76
       },
       {
         "at": {
