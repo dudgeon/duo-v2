@@ -116,10 +116,10 @@ Shot: from S3's Needs you column, the cursor clicks a session, and the camera pu
 >
 > - *Getting here from S3:* app navigation. The resume click at the start of this scene is the transition, so S3 ends on All projects with nothing clicked (Geoff, Oct 11).
 > - *Real, today:* resuming reopens the session with `claude --resume`. Archive Session and Delete Session… are in a session's right-click menu; there's no Close there (a session closes with its tab's ×, and the menu has no Close item, found Oct 11). Delete asks first, in Duo's confirmation sheet, then moves the transcript to the Trash; it never deletes a running session.
-> - *Decided (Geoff, Oct 11):* keep Delete in the line and the shot. S4 covers sessions only; chat mode is S5.
+> - *Decided (Geoff, Oct 11):* keep Delete in the line and the shot. S4 covers sessions only; the terminal is S5 and chat mode S6.
 > - *New captures needed:* the project with the resumed session in its terminal; the session list's right-click menu; the Archived fold with one more session in it; the confirmation sheet; and the list after the delete.
 > - *Fixtures (asked of demo-fixtures, Oct 11):* a Needs you session with real history, a session to archive, an idle one to delete, and a few already archived.
-> - *Leaving for S5:* S4 ends on the terminal, and S5 carries straight on from that picture. The chat-toggle click comes on S5's word "chat", so the flip lands as the narrator names it.
+> - *Leaving for S5:* S4 ends on the terminal, and S5 carries straight on from that picture. The chat-toggle click comes in S6, on "chat mode", so the flip lands as the narrator names it.
 
 ### S5 · Terminal pane (about 6 s)
 
@@ -131,7 +131,7 @@ Shot: the same session as S4, in the terminal. The camera settles on the middle 
 
 > **Notes for the build** (ignored by it):
 >
-> - *Getting here from S4:* carrying on from S4's last picture, the terminal, with no cut; the topic list comes up with Terminal pane highlighted.
+> - *Getting here from S4:* carrying on from S4's last picture, the terminal, with no cut. It shares S4's topic (Topic: same), so no topic list comes up.
 > - *Split (Geoff, Oct 11):* S5 is the terminal pane only; chat mode moved to S6.
 > - *Captures:* the resumed terminal from S4 (video-s4-resumed); nothing new.
 > - *Leaving for S6:* S5 ends on the terminal; S6 pushes in on the chat-mode button.
@@ -183,17 +183,17 @@ On line 3, still on the PRD:
 > **Notes for the build** (ignored by it):
 >
 > - *The menu:* drawn, like S4's, because macOS draws context menus outside the window capture. Its items are the editor's real ones (Send Selection to Claude, Send Selection To ▸, then the system's).
-> - *Fixtures (to ask of demo-fixtures):* the chat turn (the composer with the sent selection as Duo formats it, Sam's message, and Claude's reply with its rows); the PRD after Claude's edit, a What we heard paragraph updated from the triage log (Denise's glare, Owen's two wrong books); and the editor showing that edit highlighted.
+> - *Fixtures (made by demo-fixtures, Oct 11):* the chat turn (the composer with the sent selection as Duo formats it, Sam's message, and Claude's reply with its rows); the PRD after Claude's edit, a What we heard paragraph updated from the triage log (Denise's glare, Owen's two wrong books); and the editor showing that edit highlighted.
 
 On line 4, the same pattern twice more, quicker, each ending on the change visible in its own viewer:
 
-1. On "html": the cursor clicks the scan-review.html tab, picks the "Fix" button on the prototype's review screen with the element picker (it outlines as the pointer passes over it), and sends it to Claude. Sam asks "Make this button say 'Fix this book' and make it bigger", and the prototype reloads with the change.
-2. On "powerpoint": the cursor clicks the team-review-oct15.pptx tab and picks the paragraph of text on a slide that holds a paragraph of findings. Sam asks "Turn this into three bullets", and the slide redraws with the bullets.
+1. On "html": the cursor clicks the scan-review.html tab, picks the "Fix" button on the prototype's review screen with the element picker, started from the page's right-click menu (Select Element), which outlines it, and sends it to Claude. Sam asks "Make this button say 'Fix this book' and make it bigger", and the prototype reloads with the change.
+2. On "powerpoint": the cursor clicks the team-review-oct15.pptx tab and goes to slide 3, "What the eval found", and picks its paragraph with the deck viewer's Select Shape button. Sam asks "Turn this into three bullets", and the slide redraws with the bullets.
 
 > **Notes for the build** (ignored by it):
 >
 > - *Real, today:* the HTML viewer's element picker and a picked slide shape both go to Claude through Send to Claude (`duo2 send element`). Claude edits the file and the viewer shows the new version.
-> - *Fixtures (to ask of demo-fixtures):* for each, the chat turn (the picked element or shape as Duo sends it, Sam's message, Claude's reply with its rows) and the file after Claude's edit (scan-review.html with the bigger button; the deck with that slide in bullets). The deck needs a slide with a plain paragraph to turn into bullets.
+> - *Fixtures (made by demo-fixtures, Oct 11):* for each, the chat turn (the picked element or shape as Duo sends it, Sam's message, Claude's reply with its rows) and the file after Claude's edit (scan-review.html with the bigger button; the deck with that slide in bullets). The deck needs a slide with a plain paragraph to turn into bullets.
 
 > **Notes for the build** (ignored by it):
 >

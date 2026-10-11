@@ -443,7 +443,7 @@
         "dur": 0.9
       }
     ],
-    "shotSha": "935baddb316d",
+    "shotSha": "e138ef029166",
     "requires": [
       {
         "what": "Way in from S3 by app navigation: the cursor clicks the Needs you session",
@@ -519,7 +519,7 @@
         "built": true
       }
     ],
-    "shotSha": "dfc55ee43556"
+    "shotSha": "1779b8491fb8"
   },
   "S6": {
     "kind": "drawn",
@@ -1224,7 +1224,7 @@
         "hold": 1.6
       }
     ],
-    "shotSha": "b8719f1aae39",
+    "shotSha": "6cfe4c9e59cc",
     "requires": [
       {
         "what": "Way in from S6 without a cut; the topic list comes up; the camera moves to the viewer pane",
