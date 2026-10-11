@@ -14,7 +14,7 @@ export const CLUTTER_LAYOUT: ClutterWin[] = [
   {id: 'browser', kind: 'browser', x: 1090, y: 70, w: 800, h: 540, z: 15},
   {id: 'deck', kind: 'deck', x: 1070, y: 490, w: 800, h: 470, z: 16},
   {id: 'doc', kind: 'doc', x: 590, y: 430, w: 470, h: 520, z: 17},
-  {id: 'term3', kind: 'terminal', x: 330, y: 690, w: 540, h: 260, z: 18},
+  {id: 'term3', kind: 'terminal', x: 300, y: 690, w: 690, h: 260, z: 18},
 ];
 
 export const clutterWin = (id: string): ClutterWin => {

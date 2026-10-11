@@ -89,6 +89,7 @@ export const ZshTerminal = ({t, u}: {t: number; u: number | undefined}) => {
   );
 };
 
+// The zsh window is 690 px: 80 columns of 13.5 px mono (8.1 px each) plus its padding, so its title's 80×20 is true.
 // ---- Finder ----------------------------------------------------------------------------------
 
 const Folder = ({s = 15}: {s?: number}) => (
