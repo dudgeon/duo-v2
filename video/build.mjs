@@ -61,6 +61,7 @@ try {
 
   // 4. Timeline
   const timeline = plan({scenes, shots, voiced, captures, style});
+  for (const sc of timeline.scenes) if (sc.transitionIn) log(`transition: into ${sc.id} by ${sc.transitionIn.name} (${sc.transitionIn.kind === 'app' ? 'app navigation' : 'motion graphic'})`);
   writeFileSync(join(pub, 'timeline.json'), JSON.stringify(timeline, null, 2));
   log(`timeline: ${fmt(timeline.duration)} (${timeline.scenes.map((s) => `${s.id} ${s.duration.toFixed(1)}s`).join(', ')})`);
 
@@ -83,7 +84,7 @@ try {
   // The thumbnail: the first scene's settled frame, when its shot names one (S0's logo and title).
   const first = timeline.scenes[0], thumbAt = shots[first.id]?.thumbnail;
   if (thumbAt !== undefined) {
-    remotion('still', 'src/index.ts', 'Intro', join(out, 'thumbnail.png'), `--frame=${Math.round((first.start + (thumbAt < 0 ? first.duration + thumbAt : thumbAt)) * timeline.fps)}`);
+    remotion('still', 'src/index.ts', 'Intro', join(out, 'thumbnail.png'), `--frame=${Math.round((first.start + (thumbAt < 0 ? (first.exit?.at ?? first.duration) + thumbAt : thumbAt)) * timeline.fps)}`);
     log('thumbnail: out/thumbnail.png');
   }
   const n = timeline.scenes.length;

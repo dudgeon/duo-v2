@@ -20,4 +20,19 @@ The video's visual rules. Its numbers live in `video-tokens.json`. These rules g
 
 ## Titles
 
-Titles sit on the wallpaper, in white, before the window appears. The window fades in and grows from 96%.
+Titles sit on the wallpaper, in white, before the window appears. The window grows in from 96%; a scene never fades in from another (see Transitions).
+
+## Transitions
+
+**No shot ever cuts or dissolves to the next** (Geoff, 2026-10-11). Every scene after the first names its way in (`transitionIn` in `shots.json`), from the list in `pipeline/plan.mjs` (`TRANSITIONS`). A scene change without one stops the build.
+
+- **Somewhere else in the app: navigate.** The camera pulls back enough to show where we'll click, the cursor travels there and clicks (with a press), and the camera pushes in on what opens. Every frame is still a capture of the real app.
+- **A different idea: a motion graphic.** Something already on screen carries across, rather than wiping the frame. The outgoing scene's last frame and the incoming scene's first frame must be the same picture.
+- **Where the time goes:** a transition's `out` seconds are added to the end of the scene before (its exit), and its `in` seconds open the scene after (its entry), before the voice starts. The build stops if a scene's voice starts during its entry.
+
+The transitions so far:
+
+| Name | Kind | From → to | What happens |
+|---|---|---|---|
+| `logo-to-dock` | graphic | S0 logo → S1 desk | The title and line wipe back toward the icon, the menu bar and Dock slide in, and the icon arcs down into its Dock slot with a small pop. That frame is S1's empty desktop. |
+| `dock-launch` | app | S1 desk → S2 morph | The camera pushes toward the Dock, the cursor clicks Duo's tile, and the tile bounces and gets its running dot. The camera pulls back as the pile starts to morph into the Duo window. |

@@ -29,7 +29,8 @@
         "what": "The settled frame works as the thumbnail: readable at 320 px wide; build exports it as out/thumbnail.png",
         "built": true
       }
-    ]
+    ],
+    "$thumbnail": "seconds before the scene ends, not counting its exit transition"
   },
   "S1": {
     "kind": "drawn",
@@ -122,12 +123,13 @@
         "what": "Ends on the full pile held ~1 s, as the start state of S2's morph",
         "built": true
       }
-    ]
+    ],
+    "transitionIn": "logo-to-dock"
   },
   "S2": {
     "kind": "drawn",
     "scene": "morph",
-    "leadIn": 2.2,
+    "leadIn": 2.9,
     "states": [
       "video-s2-middle-0",
       "video-s2-middle-1",
@@ -224,6 +226,7 @@
         "what": "Captures: a project with 3+ terminal tabs (last in chat view) and the editor with .md, browser prototype, .pptx and .docx tabs, one state per active tab",
         "built": true
       }
-    ]
+    ],
+    "transitionIn": "dock-launch"
   }
 }

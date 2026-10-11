@@ -28,6 +28,18 @@ function findAnchor(cap, text, state) {
   return {x: f.x, y: f.y, w: f.width, h: f.height};
 }
 
+// No shot ever cuts to the next (script rule, Geoff 2026-10-11). Every scene after the first names its
+// way in, `transitionIn` in shots.json, from this list; a scene change without one stops the build.
+// kind 'app': we get there by using the app (camera pulls back, the cursor clicks, the camera pushes in).
+// kind 'graphic': a different idea, so a motion-graphics move. `out` seconds are added to the end of the
+// scene before (its exit plays there); `in` seconds open this scene (its entry plays there, before the voice).
+// style/shot-grammar.md, "Transitions", describes each one.
+export const TRANSITIONS = {
+  'logo-to-dock': {kind: 'graphic', from: 'logo', to: 'desk', out: 1.45},
+  'dock-launch': {kind: 'app', from: 'desk', to: 'morph', in: 1.5, click: 0.85},
+};
+const sceneType = (shot) => (shot.kind === 'drawn' ? shot.scene : shot.kind);
+
 export function plan({scenes, shots, voiced, captures, style}) {
   const fps = style.frame.fps, aspect = style.frame.width / style.frame.height;
   const minW = style.frame.width / style.capture.scale; // narrower would magnify past 1:1
@@ -37,6 +49,21 @@ export function plan({scenes, shots, voiced, captures, style}) {
   for (const scene of scenes) {
     const shot = shots[scene.id];
     if (!shot) throw new BuildError(`shots: scene ${scene.id} "${scene.title}" has no shot in shots.json`);
+    const prev = out[out.length - 1];
+    let tr;
+    if (prev) {
+      const name = shot.transitionIn;
+      tr = TRANSITIONS[name];
+      if (!tr) throw new BuildError(`transition: ${scene.id} has no way in from ${prev.id}${name ? ` ("${name}" is not in plan.mjs TRANSITIONS)` : ''}. Shots never cut: give ${scene.id} a transitionIn (app navigation if it's somewhere else in the app, a motion graphic if it's a new idea).`);
+      const pt = sceneType(shots[prev.id]);
+      if (tr.from !== pt || tr.to !== sceneType(shot)) throw new BuildError(`transition: "${name}" goes ${tr.from} -> ${tr.to}, but ${prev.id} -> ${scene.id} is ${pt} -> ${sceneType(shot)}`);
+      if (tr.out) {
+        prev.exit = {name, at: prev.duration};
+        if (prev.drawn) prev.drawn.events.exit = prev.duration;
+        prev.duration = +(prev.duration + tr.out).toFixed(3);
+        t0 += tr.out;
+      }
+    }
     const lines = [];
     let t = shot.leadIn ?? style.voice.leadIn; // a shot that opens on picture alone (S0's logo build) waits longer
     for (const l of scene.lines) {
@@ -119,6 +146,12 @@ export function plan({scenes, shots, voiced, captures, style}) {
         events[name] = +(line.start + (e.word ? wordTime(line, e.word, e.nth) : 0) + (e.offset ?? 0)).toFixed(3);
         end = Math.max(end, events[name] + 0.5);
       }
+      if (tr?.in) {
+        // The entry plays before anything else; the scene's own business starts when it ends.
+        events.morph = tr.in;
+        if (tr.click !== undefined) events.launch = tr.click;
+        if (lines[0] && lines[0].start < tr.in + 0.6) throw new BuildError(`transition: ${scene.id}'s voice starts at ${lines[0].start}s, during its ${shot.transitionIn} entry (${tr.in}s). Raise its leadIn.`);
+      }
       Object.assign(s, {drawn: {scene: shot.scene, events}});
       if (shot.scene === 'morph') {
         // S2's morph draws panes from several captures of one layout; anchors come from the first.
@@ -137,11 +170,12 @@ export function plan({scenes, shots, voiced, captures, style}) {
         })};
       }
     } else throw new BuildError(`shots: ${scene.id} has unknown kind "${shot.kind}"`);
+    if (tr) s.transitionIn = {name: shot.transitionIn, kind: tr.kind};
     s.start = +t0.toFixed(3);
     s.duration = +end.toFixed(3);
     t0 += end;
     out.push(s);
   }
   const duration = +t0.toFixed(3);
-  return {fps, duration, frames: Math.ceil(duration * fps), fade: style.transition.fade, scenes: out};
+  return {fps, duration, frames: Math.ceil(duration * fps), fade: 0, scenes: out};
 }

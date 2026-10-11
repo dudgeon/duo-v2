@@ -41,7 +41,8 @@ const SceneView = ({scene, fade}: {scene: Scene; fade: number}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const t = frame / fps;
-  const opacity = scene.start === 0 ? 1 : interpolate(t, [0, fade], [0, 1], clamp);
+  // No dissolves: every scene change is a transition the two scenes play themselves (plan.mjs TRANSITIONS).
+  const opacity = 1;
   const appear = scene.appear ? smootherstep(interpolate(t, [0.2, 1.0], [0, 1], clamp)) : 1;
   return (
     <AbsoluteFill style={{opacity}}>
@@ -75,7 +76,7 @@ export const Film = ({timeline}: {timeline: FilmTimeline | null}) => {
     <AbsoluteFill style={{background: tokens.desk.wallpaper.base}}>
       {timeline.scenes.map((s, i) => {
         const last = i === timeline.scenes.length - 1;
-        // Each scene runs `fade` past its end so the next one dissolves in over it.
+        // `fade` is 0 since script v2: scenes hand over by transitions they draw themselves, never a dissolve.
         return (
           <Sequence key={s.id} name={s.id} from={Math.round(s.start * fps)} durationInFrames={Math.ceil((s.duration + (last ? 0 : fade)) * fps)}>
             <SceneView scene={s} fade={fade} />

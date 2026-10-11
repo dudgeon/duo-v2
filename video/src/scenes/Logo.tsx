@@ -1,71 +1,18 @@
 import {AbsoluteFill, interpolate} from 'remotion';
 import {Wallpaper} from '../lib/Desk';
 import {smootherstep} from '../lib/camera';
+import {DuoIcon} from '../lib/DuoIcon';
+import {DOCK_DUO, Dock, MenuBar} from '../lib/Clutter';
 import tokens from '../../style/tokens.json';
 
 // S0: the Duo logo builds itself, then glides left beside its title. The settled frame is the thumbnail.
 // The icon is drawn from the app icon's own geometry (docs/design/icon-handoff, scripts/gen-app-icon.swift),
 // on its 1024 grid, so it is the real mark, not a likeness. Parts snap in (Paper Mono's grammar), no fades.
 
-export type LogoEvents = {title?: number; sub?: number};
+export type LogoEvents = {title?: number; sub?: number; exit?: number};
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 const ramp = (t: number, a: number, b: number) => smootherstep(interpolate(t, [a, b], [0, 1], clamp));
-// A snap: a quick overshoot-free settle from 96% scale, visible from its first frame.
-const snap = (t: number, at: number, d = 0.14) => (t < at ? 0 : ramp(t, at, at + d));
-
-// The build, in scene seconds.
-const B = {outline: [0.15, 0.75], console: 0.72, page: 0.84, seam: 0.98, chevron: [1.02, 1.3],
-  cons: [1.3, 1.42, 1.54], head: 1.36, page1: 1.56, page2: 1.68, highlight: 1.86, hl: [1.98, 2.1], last: 2.24};
-
-const Pill = ({x, y, w, h, color, u}: {x: number; y: number; w: number; h: number; color: string; u: number}) =>
-  u <= 0 ? null : <rect x={x} y={y} width={w * u} height={h} rx={h / 2} fill={color} />;
-
-export const DuoIcon = ({t, size}: {t: number; size: number}) => {
-  const outline = ramp(t, B.outline[0], B.outline[1]);
-  const cons = snap(t, B.console), page = snap(t, B.page), seam = snap(t, B.seam, 0.1);
-  const chev = ramp(t, B.chevron[0], B.chevron[1]);
-  const grow = (at: number) => ramp(t, at, at + 0.2);
-  const hl = snap(t, B.highlight, 0.16);
-  const perim = 4 * 824 - 8 * 185 + 2 * Math.PI * 185;
-  const chevLen = 2 * Math.hypot(64, 52);
-  return (
-    <svg width={size} height={size} viewBox="0 0 1024 1024" style={{overflow: 'visible'}}>
-      <defs>
-        <clipPath id="sq"><rect x={100} y={100} width={824} height={824} rx={185} /></clipPath>
-        <linearGradient id="console" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#24272d" /><stop offset="1" stopColor="#121418" /></linearGradient>
-        <linearGradient id="page" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#e9edf1" /></linearGradient>
-        <filter id="drop" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="14" stdDeviation="16" floodColor="#000" floodOpacity="0.34" /></filter>
-      </defs>
-      {/* The shadowed body arrives with the console. */}
-      {/* The shadow lands once both panes are in, so nothing dark shows where the page is still arriving. */}
-      {seam > 0 && <rect x={100} y={100} width={824} height={824} rx={185} fill="#121418" filter="url(#drop)" opacity={seam} />}
-      <g clipPath="url(#sq)">
-        {/* Console wipes down from the top; the page wipes up from the bottom. */}
-        {seam > 0 && <rect x={100} y={100} width={824} height={824} fill="#121418" />}
-        {cons > 0 && <rect x={100} y={100} width={372} height={824 * cons} fill="url(#console)" />}
-        {page > 0 && <rect x={472} y={100 + 824 * (1 - page)} width={452} height={824 * page} fill="url(#page)" />}
-        {seam > 0 && <rect x={472} y={100} width={6} height={824 * seam} fill="rgba(0,0,0,0.18)" />}
-      </g>
-      {chev > 0 && <polyline points="206,364 270,416 206,468" fill="none" stroke="#e6e8eb" strokeWidth={30} strokeLinecap="round" strokeLinejoin="round"
-        strokeDasharray={chevLen} strokeDashoffset={chevLen * (1 - chev)} />}
-      <Pill x={206} y={538} w={176} h={26} color="#9aa1ab" u={grow(B.cons[0])} />
-      <Pill x={206} y={594} w={128} h={26} color="#9aa1ab" u={grow(B.cons[1])} />
-      <Pill x={206} y={650} w={156} h={26} color="#9aa1ab" u={grow(B.cons[2])} />
-      <Pill x={556} y={317} w={240} h={34} color="#1f2328" u={grow(B.head)} />
-      <Pill x={556} y={395} w={268} h={24} color="#c9cdd3" u={grow(B.page1)} />
-      <Pill x={556} y={447} w={226} h={24} color="#c9cdd3" u={grow(B.page2)} />
-      {/* Claude's highlight: the block snaps in behind two lines, as Duo marks what Claude added. */}
-      {hl > 0 && <rect x={538 + 160 * (1 - (0.96 + 0.04 * hl))} y={509 + 63 * (1 - (0.96 + 0.04 * hl))} width={320 * (0.96 + 0.04 * hl)} height={126 * (0.96 + 0.04 * hl)} rx={16} fill="#dfe3e8" />}
-      <Pill x={556} y={537} w={252} h={24} color="#8b939c" u={grow(B.hl[0])} />
-      <Pill x={556} y={585} w={182} h={24} color="#8b939c" u={grow(B.hl[1])} />
-      <Pill x={556} y={683} w={240} h={24} color="#c9cdd3" u={grow(B.last)} />
-      {/* The outline draws first, a white hairline on the wallpaper, and becomes the icon's faint edge. */}
-      <rect x={103} y={103} width={818} height={818} rx={182} fill="none" stroke={seam > 0 ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.92)'}
-        strokeWidth={seam > 0 ? 6 : 5} strokeDasharray={perim} strokeDashoffset={perim * (1 - outline)} />
-    </svg>
-  );
-};
 
 /** The opening: the icon builds at the centre, then glides left as "Duo" and its line arrive on the voice. */
 export const LogoScene = ({t, ev}: {t: number; ev: LogoEvents}) => {
@@ -80,16 +27,36 @@ export const LogoScene = ({t, ev}: {t: number; ev: LogoEvents}) => {
   const sub = ramp(t, subAt, subAt + 0.35), inked = ramp(t, subAt + 0.35, subAt + 1.1);
   const scrim = ramp(t, titleAt - 0.3, titleAt + 0.5);
   const tx = S + 32 + 300 + 64;
+
+  // The way out (transition 'logo-to-dock', a motion graphic into S1): the words wipe back toward the
+  // icon, the menu bar and Dock slide in, and the icon arcs down into its Dock slot. The last frame is
+  // S1's first: the same wallpaper, menu bar and Dock, with Duo in it, before the clutter starts.
+  const e0 = ev.exit ?? 1e9;
+  const wipeSub = ramp(t, e0, e0 + 0.38), wipeTitle = ramp(t, e0 + 0.08, e0 + 0.5);
+  const bars = ramp(t, e0 + 0.3, e0 + 0.85);
+  const fly = ramp(t, e0 + 0.25, e0 + 1.15);
+  const landed = t >= e0 + 1.15;
+  const pop = landed ? Math.sin(Math.min(1, (t - e0 - 1.15) / 0.22) * Math.PI) * 0.1 : 0;
+  const tileSize = DOCK_DUO.w * 1024 / 824;
+  const tx0 = x, ty0 = y, tx1 = DOCK_DUO.x - (tileSize - DOCK_DUO.w) / 2, ty1 = DOCK_DUO.y - (tileSize - DOCK_DUO.w) / 2;
+  // A quadratic arc: up and over, then down into the Dock.
+  const cx = (tx0 + tx1) / 2, cy = Math.min(ty0, ty1) - 220;
+  const bez = (a: number, c: number, b: number) => (1 - fly) ** 2 * a + 2 * (1 - fly) * fly * c + fly ** 2 * b;
+  const iconSize = size + (tileSize - size) * fly;
+  const ix = bez(tx0, cx, tx1), iy = bez(ty0, cy, ty1);
   return (
     <AbsoluteFill>
       <Wallpaper w={W} h={H} />
       {/* Only behind the type, for legibility; the mountain stays bright. */}
-      <AbsoluteFill style={{background: 'linear-gradient(90deg, rgba(8,12,18,0.42), rgba(8,12,18,0.2) 40%, rgba(8,12,18,0) 62%)', opacity: scrim}} />
-      <div style={{position: 'absolute', left: x, top: y}}><DuoIcon t={t} size={size} /></div>
+      <AbsoluteFill style={{background: 'linear-gradient(90deg, rgba(8,12,18,0.42), rgba(8,12,18,0.2) 40%, rgba(8,12,18,0) 62%)', opacity: scrim * (1 - ramp(t, e0, e0 + 0.6))}} />
+      <div style={{position: 'absolute', left: 0, top: 0, width: W, transform: `translateY(${(bars - 1) * 34}px)`}}>{bars > 0 && <MenuBar app="Finder" />}</div>
+      {bars > 0 && <Dock duo={landed ? 'tile' : 'slot'} y={(1 - bars) * 120} />}
+      {!landed && <div style={{position: 'absolute', left: ix, top: iy}}><DuoIcon t={t} size={iconSize} /></div>}
+      {landed && pop > 0 && <div style={{position: 'absolute', left: tx1 - tileSize * pop / 2, top: ty1 - tileSize * pop, transformOrigin: '0 0'}}><DuoIcon t={99} size={tileSize * (1 + pop)} /></div>}
       <div style={{position: 'absolute', left: tx, top: H / 2 - 150, fontFamily: tokens.font.ui, color: '#fff', filter: 'drop-shadow(0 2px 14px rgba(0,0,0,0.28))'}}>
-        <div style={{fontSize: 200, fontWeight: 650, letterSpacing: -6, lineHeight: 1, clipPath: `inset(0 ${100 - 100 * title}% 0 0)`,
+        <div style={{fontSize: 200, fontWeight: 650, letterSpacing: -6, lineHeight: 1, clipPath: `inset(0 ${100 - 100 * title * (1 - wipeTitle)}% 0 0)`,
           transform: `translateX(${(1 - title) * -24}px)`}}>Duo</div>
-        <div style={{fontSize: 54, fontWeight: 550, letterSpacing: -1, marginTop: 22, opacity: sub > 0 ? 1 : 0,
+        <div style={{fontSize: 54, fontWeight: 550, letterSpacing: -1, marginTop: 22, opacity: sub > 0 ? 1 : 0, clipPath: `inset(0 ${100 * wipeSub}% 0 0)`,
           transform: `translateY(${(1 - sub) * 14}px)`, color: `rgba(255,255,255,${0.5 + 0.45 * inked})`, }}>
           A desktop client for Claude Code
         </div>

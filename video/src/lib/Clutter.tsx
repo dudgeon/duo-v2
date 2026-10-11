@@ -5,6 +5,7 @@ import {Wallpaper} from './Desk';
 import tokens from '../../style/tokens.json';
 import content from '../../fixture/docs/content.json';
 import {CLUTTER_LAYOUT, clutterWin} from './clutterLayout';
+import {DuoIcon} from './DuoIcon';
 import {BROWSER_BAR_H, BrowserBar, BrowserPage, ClaudeTerminal, DeckApp, DocApp, Finder, Lights, MarkdownEditor, TERM1, TERM2, ZshTerminal} from './ClutterApps';
 
 // The cold open's cluttered Mac desktop (S1, S2): windows from several apps, drawn about 75% as
@@ -55,13 +56,31 @@ export const MenuBar = ({app}: {app: string}) => (
   </div>
 );
 const DOCK = [['>_', '#2B2D31'], ['M↓', '#4A6CF7'], ['🗂', '#5AA9F7'], ['◎', '#F0F0F2'], ['✎', '#F7C948'], ['✉', '#3D9BF5']];
-export const Dock = () => (
-  <div style={{position: 'absolute', left: '50%', bottom: 10, transform: 'translateX(-50%)', display: 'flex', gap: 12, padding: 10, borderRadius: 22,
+// Duo's tile is the last in the Dock. S0's logo flies into this slot, and S2 starts by clicking it.
+const TILE = 62, GAP = 12, PAD = 10, BOTTOM = 10;
+/** The Duo tile's rect in frame px (Dock centred, Duo after the six others). */
+export const DOCK_DUO = (() => {
+  const n = DOCK.length + 1, w = n * TILE + (n - 1) * GAP + 2 * PAD;
+  return {x: W / 2 - w / 2 + PAD + DOCK.length * (TILE + GAP), y: H - BOTTOM - PAD - TILE, w: TILE, h: TILE};
+})();
+/** The finished icon sized so its squircle fills a tile-sized rect (the icon's grid has a 100/1024 margin). */
+export const DuoTile = ({x, y, w}: {x: number; y: number; w: number}) => {
+  const size = w * 1024 / 824;
+  return <div style={{position: 'absolute', left: x - (size - w) / 2, top: y - (size - w) / 2}}><DuoIcon t={99} size={size} /></div>;
+};
+/** duo: the Duo tile is drawn ('tile'), or its slot is left open for the logo to land in ('slot').
+ *  lift: px the tile bounces up (launching). running: the dot under it. y: px the whole Dock sits lower (sliding in). */
+export const Dock = ({duo = 'tile', lift = 0, running = false, y = 0}: {duo?: 'tile' | 'slot'; lift?: number; running?: boolean; y?: number}) => (
+  <div style={{position: 'absolute', left: '50%', bottom: BOTTOM, transform: `translate(-50%, ${y}px)`, display: 'flex', gap: GAP, padding: PAD, borderRadius: 22,
     background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(20px)', boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)'}}>
     {DOCK.map(([g, c]) => (
-      <div key={g} style={{width: 62, height: 62, borderRadius: 15, background: c, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      <div key={g} style={{width: TILE, height: TILE, borderRadius: 15, background: c, display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: mono, fontSize: 24, color: c === '#F0F0F2' ? '#333' : '#FFF', boxShadow: '0 2px 6px rgba(0,0,0,0.25)'}}>{g}</div>
     ))}
+    <div style={{width: TILE, height: TILE, position: 'relative'}}>
+      {duo === 'tile' && <div style={{position: 'absolute', left: 0, top: -lift}}><DuoTile x={0} y={0} w={TILE} /></div>}
+      {running && <div style={{position: 'absolute', left: TILE / 2 - 2.5, bottom: -8, width: 5, height: 5, borderRadius: 3, background: 'rgba(0,0,0,0.65)'}} />}
+    </div>
   </div>
 );
 
@@ -100,7 +119,7 @@ export const ClutteredDesk = ({t, ev, content: desk, front = 'Terminal'}: {t: nu
     <AbsoluteFill style={{overflow: 'hidden'}}>
       <div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, transform: `translate(${cam.tx}px, ${cam.ty}px) scale(${cam.s})`, transformOrigin: '0 0'}}>
       <Wallpaper w={W} h={H} />
-      <MenuBar app={front} />
+      <MenuBar app={ev.term1 !== undefined && t >= ev.term1 ? front : 'Finder'} />
       <Win id="term1" chrome="dark" title={`✳ ${s1.session}`} appear={opened(t, ev.term1)}>
         <ClaudeTerminal t={t} lines={TERM1} />
       </Win>

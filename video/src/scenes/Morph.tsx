@@ -2,7 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Img, interpolate, staticFile} from 'remotion';
 import {smootherstep, type Rect} from '../lib/camera';
 import {Wallpaper} from '../lib/Desk';
-import {Dock, MenuBar, PileWindow} from '../lib/Clutter';
+import {DOCK_DUO, Dock, MenuBar, PileWindow} from '../lib/Clutter';
 import {CLUTTER_LAYOUT, clutterWin} from '../lib/clutterLayout';
 import {Cursor, Marker, Quote} from '../lib/Paper';
 import tokens from '../../style/tokens.json';
@@ -74,6 +74,13 @@ export const MorphScene = ({t, ev, data}: {t: number; ev: MorphEvents; data: Mor
   };
   const shell = ramp(t, m0 - 0.25, m0 + 0.2);
 
+  // The way in (transition 'dock-launch', app navigation from S1): the camera pushes toward the Dock,
+  // the cursor clicks Duo's tile, it bounces as it launches, the camera pulls back and the morph begins.
+  const click = ev.launch;
+  const bounceK = click === undefined ? -1 : (t - click - 0.05) / 0.6;
+  const lift = bounceK > 0 && bounceK < 1 ? 26 * Math.abs(Math.sin(bounceK * 2 * Math.PI)) * (1 - 0.45 * bounceK) : 0;
+  const running = click !== undefined && t >= click + 0.15;
+
   // Camera: wide on the window, then to each pane as it's named, then back. Rects in frame px.
   const wide: Rect = {x: 0, y: 0, w: W, h: H};
   const focus = (cx: number, viewW: number): Rect => {
@@ -82,6 +89,13 @@ export const MorphScene = ({t, ev, data}: {t: number; ev: MorphEvents; data: Mor
   };
   const keys: {t: number; r: Rect}[] = [{t: 0, r: wide}];
   const push = (at: number | undefined, r: Rect, dur = 0.9) => { if (at !== undefined) { const p = keys[keys.length - 1]; keys.push({t: Math.max(p.t, at - dur), r: p.r}, {t: at, r}); } };
+  if (click !== undefined) {
+    const z = 1.6, w = W / z, h = H / z;
+    const dock: Rect = {x: Math.min(Math.max(DOCK_DUO.x + DOCK_DUO.w / 2 - w / 2, 0), W - w), y: H - h, w, h};
+    push(click, dock, click);
+    push(click + 0.35, dock, 0.35);
+    push(m0 + 0.2, wide, m0 + 0.2 - (click + 0.35));
+  }
   push(ev.pane, focus(470, 1080));
   push(ev.terminal, focus(760, 1180));
   push(ev.flexible, focus(1380, 1080));
@@ -99,7 +113,7 @@ export const MorphScene = ({t, ev, data}: {t: number; ev: MorphEvents; data: Mor
       <div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, transformOrigin: '0 0', transform: `scale(${cs}) translate(${-cam.x}px, ${-cam.y}px)`}}>
         <Wallpaper w={W} h={H} />
         <MenuBar app={t >= m0 + 0.6 ? 'Duo' : 'Terminal'} />
-        <Dock />
+        <Dock lift={lift} running={running} />
         {/* The Duo window: its frame and toolbar arrive first, the panes fill as their windows land. */}
         {shell > 0 && (
           <div style={{position: 'absolute', left: win.x, top: win.y, width: win.w, height: win.h, borderRadius: 12, overflow: 'hidden',
@@ -199,6 +213,15 @@ const Overlays = ({t, ev, A, toFrame, screen, data, paneSrc}: OverlayProps) => {
         );
       })}
       {cursor}
+      {ev.launch !== undefined && t < ev.launch + 0.7 && (() => {
+        // The launch click: the cursor glides in to Duo's Dock tile, clicks, and fades as the app opens.
+        const c = ev.launch, tile = screen(DOCK_DUO);
+        const to = {x: tile.x + tile.w * 0.5, y: tile.y + tile.h * 0.45}, from = {x: W * 0.68, y: H * 0.38};
+        const m = ramp(t, 0.1, c - 0.04);
+        const press = interpolate(t - c, [-0.04, 0.04, 0.14], [0, 1, 0], clamp);
+        const op = ramp(t, 0, 0.15) * (1 - ramp(t, c + 0.3, c + 0.7));
+        return <div style={{opacity: op}}><Cursor x={from.x + (to.x - from.x) * m} y={from.y + (to.y - from.y) * m - Math.sin(m * Math.PI) * 40} press={press} /></div>;
+      })()}
     </AbsoluteFill>
   );
 };
