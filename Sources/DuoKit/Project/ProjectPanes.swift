@@ -589,6 +589,12 @@ struct RightPane: View {
                         .accessibilityElement(children: .combine)
                         .accessibilityIdentifier("video.tab.right.\(tabs.firstIndex { $0.id == tab.id } ?? i)")   // anchors: 0 is Project, then the documents in order
                         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+                        .overlay {   // anchors: a document's tab by its kind (`video.tab.md`, `.html`, `.pptx`, `.docx`), as a sibling so the index name stays
+                            if model.videoDemoFolder != nil, tab.isDocument {
+                                Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("\(title) tab")
+                                    .accessibilityIdentifier("video.tab.\((tab.id as NSString).pathExtension.lowercased())")
+                            }
+                        }
                         // A file outside the project: its path is the tooltip (DL-106); a popup: its opener (DL-132 i).
                         .help(outside ? String(tab.id.dropFirst(AppModel.outsideFilePrefix.count)) : opener.map { "Opened from \($0)" } ?? "")
                         .onActivate { model.rightTab = tab.id; if tab.isDocument { model.selectedFile = tab.id } }  // action: view tab
@@ -656,13 +662,15 @@ struct RightPane: View {
                 // Local HTML, read-only and live (v1; DL-67): its own web view, with the element picker.
                 ZStack(alignment: .bottom) {
                     HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
+                        .accessibilityIdentifier("video.right.document")   // on the page alone: the picker bar's buttons keep their own names
                     PickerBar()
                 }
-                .accessibilityIdentifier("video.right.document")
             } else if let path = model.rightTab, AppModel.isDeck(path), let file = model.liveFile(path) {
                 // A PowerPoint deck: drawn, with its slide and the shape picker (DL-125).
                 DeckView(viewer: model.deckViewer, path: path, file: file)
-                    .accessibilityIdentifier("video.right.document")
+                    .background {   // anchors: a sibling, so the bar's buttons keep their own names (`video.slide.select`, `video.picker.send`)
+                        Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Deck").accessibilityIdentifier("video.right.document")
+                    }
             } else if let path = model.rightTab, AppModel.isWordViewable(path), let file = model.liveFile(path) {
                 // A Word document: drawn read only with its comments and tracked changes (DL-162).
                 DocxView(viewer: model.docxViewer, path: path, file: file)
@@ -940,6 +948,7 @@ struct PickerBar: View {
                     HStack(spacing: 8) {
                         switch model.sendTarget {
                         case .success(let t): Button("Send to Claude") { model.sendPickedElement(to: t.key) }.keyboardShortcut(.defaultAction)
+                            .accessibilityIdentifier("video.picker.send")   // anchors: the video cursor's target
                         case .failure(let why): Button("Send to Claude") {}.disabled(true).help(why.reason)
                         }
                         Menu("Send To") {

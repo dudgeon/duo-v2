@@ -8,6 +8,8 @@ import AppKit
 @MainActor
 public enum Anchors {
     static let maxDepth = 60, maxCount = 4000
+    /// Frames inside web views (text in the editor, a button in a page), named by `video:measure`: window points, top-left origin.
+    static var web: [String: CGRect] = [:]
 
     struct Item {
         var role: String, label: String, identifier: String, value: String
@@ -37,6 +39,7 @@ public enum Anchors {
         walkViews(content, depth: 0, index: 0, path: "", into: &viaViews, window: window, toWindow: { _ in .zero })
         let have = Set(items.map(\.identifier))
         items += viaViews.filter { $0.identifier.hasPrefix("video.") && !have.contains($0.identifier) }
+        items += web.sorted { $0.key < $1.key }.map { Item(role: "web", label: "", identifier: $0.key, value: "", frame: $0.value, path: $0.key, index: 0, depth: 0) }
         // Fall back to views when the tree gave nothing usable.
         if items.isEmpty {
             source = "views"
