@@ -1,0 +1,505 @@
+{
+  "$note": "The demo world's data: every make-*.py script reads names, dates and numbers from here. SCENARIO.md explains it; change both together. Sample data only, all invented.",
+  "company": {
+    "name": "Little Shared Library",
+    "app": "Little Shared Library",
+    "tagline": "What's on the shelf at every book box on your street.",
+    "stage": "Seed, closed June 2026",
+    "beta": {
+      "testers": 212,
+      "neighbourhoods": [
+        "Elm Park",
+        "Northgate",
+        "Riverside"
+      ],
+      "boxes": 340
+    }
+  },
+  "user": {
+    "name": "Sam",
+    "home": "/Users/sam",
+    "shortUser": "sam",
+    "host": "Sams-MacBook-Pro"
+  },
+  "team": [
+    {
+      "name": "Jo Whitfield",
+      "role": "Co-founder & CEO"
+    },
+    {
+      "name": "Ravi Menon",
+      "role": "Co-founder & CTO",
+      "owns": "spine-recognition model"
+    },
+    {
+      "name": "Lena Park",
+      "role": "Designer"
+    },
+    {
+      "name": "Tomás Ruiz",
+      "role": "iOS engineer"
+    },
+    {
+      "name": "Sam",
+      "role": "Product manager"
+    }
+  ],
+  "testers": [
+    {
+      "id": "P1",
+      "name": "Aisha",
+      "who": "commuter, scans on the way to the train",
+      "box": "Northgate Station box"
+    },
+    {
+      "id": "P2",
+      "name": "Gerald",
+      "who": "retired teacher, steward",
+      "box": "Elm Park box",
+      "steward": true
+    },
+    {
+      "id": "P3",
+      "name": "Denise",
+      "who": "steward of a glass-door box; glare",
+      "box": "Linden Street box",
+      "steward": true
+    },
+    {
+      "id": "P4",
+      "name": "Marco",
+      "who": "parent, borrows picture books",
+      "box": "Riverside Playground box"
+    },
+    {
+      "id": "P5",
+      "name": "Priya",
+      "who": "heavy reader, uses the map daily",
+      "box": "Elm Park box"
+    },
+    {
+      "id": "P6",
+      "name": "Hal",
+      "who": "new steward",
+      "box": "Cooper Lane box",
+      "steward": true
+    },
+    {
+      "id": "P7",
+      "name": "June",
+      "who": "student",
+      "box": "Northgate Library box"
+    },
+    {
+      "id": "P8",
+      "name": "Owen",
+      "who": "stopped scanning after two wrong books",
+      "box": "Riverside Allotments box"
+    }
+  ],
+  "time": {
+    "today": "2026-10-13T09:41:00",
+    "todayLabel": "Tue Oct 13",
+    "clock": "Tue 9:41",
+    "lastLogin": "Last login: Tue Oct 13 09:12:44 on ttys002",
+    "review": {
+      "date": "2026-10-15",
+      "label": "Thu Oct 15",
+      "name": "Team review"
+    },
+    "timeline": [
+      [
+        "2026-08-24",
+        "Shelf scan v1 ships to the beta, auto-adding every spine it reads."
+      ],
+      [
+        "2026-09-14",
+        "Sam starts eight beta interviews (P1–P8), through Sep 25."
+      ],
+      [
+        "2026-09-28",
+        "Ravi's eval: 81% of spines read correctly (1,240 photos, 96 shelves)."
+      ],
+      [
+        "2026-10-05",
+        "Beta digest: 31% of testers who saw a wrong book stopped scanning."
+      ],
+      [
+        "2026-10-09",
+        "Sam starts PRD v2: scan with a review step."
+      ],
+      [
+        "2026-10-12",
+        "Prototype test of the review step (P1, P4, P6, P7): 97%, median 18 s."
+      ],
+      [
+        "2026-10-13",
+        "Today."
+      ],
+      [
+        "2026-10-15",
+        "Team review: does scan v2 go into the November build?"
+      ],
+      [
+        "2026-11-02",
+        "Target: scan v2 in TestFlight."
+      ]
+    ]
+  },
+  "numbers": {
+    "scansSep": 1870,
+    "savedShelfRate": 0.64,
+    "sawWrongBook": 148,
+    "stoppedAfterWrong": 46,
+    "stoppedRate": 0.31,
+    "eval": {
+      "photos": 1240,
+      "shelves": 96,
+      "correct": 1004,
+      "wrong": 236,
+      "accuracy": 0.81,
+      "causes": [
+        {
+          "cause": "tilted",
+          "label": "Tilted or leaning spines",
+          "wrong": 80,
+          "share": 0.34
+        },
+        {
+          "cause": "glare",
+          "label": "Glare (glass or plastic doors)",
+          "wrong": 64,
+          "share": 0.27
+        },
+        {
+          "cause": "thin",
+          "label": "Thin spines (under 1 cm)",
+          "wrong": 50,
+          "share": 0.21
+        },
+        {
+          "cause": "stacked",
+          "label": "Stacked or sideways books",
+          "wrong": 28,
+          "share": 0.12
+        },
+        {
+          "cause": "other",
+          "label": "Other (non-Latin titles, worn print)",
+          "wrong": 14,
+          "share": 0.06
+        }
+      ],
+      "glareSubset": {
+        "photos": 140,
+        "shelves": 9,
+        "note": "only 9 glass-door shelves; needs more"
+      }
+    },
+    "reviewTest": {
+      "accuracy": 0.97,
+      "testers": [
+        "P1",
+        "P4",
+        "P6",
+        "P7"
+      ],
+      "shelves": 5,
+      "medianReviewSeconds": 18
+    },
+    "autoAddThreshold": 0.95,
+    "targets": [
+      {
+        "metric": "Scans that end with a saved shelf",
+        "today": "64%",
+        "target": "80%"
+      },
+      {
+        "metric": "Wrong books in the catalog",
+        "today": "19%",
+        "target": "under 3%"
+      },
+      {
+        "metric": "Median time to review a shelf",
+        "today": "—",
+        "target": "20 s"
+      }
+    ]
+  },
+  "books": {
+    "classics": [
+      "Middlemarch",
+      "Moby-Dick",
+      "Little Women",
+      "The Secret Garden",
+      "Persuasion",
+      "Bleak House",
+      "Jane Eyre",
+      "Great Expectations",
+      "The Wind in the Willows",
+      "Treasure Island",
+      "Emma",
+      "Silas Marner"
+    ],
+    "invented": [
+      "The Lantern Keeper",
+      "Salt Roads",
+      "A Field Guide to Small Birds",
+      "Winter at Halloway",
+      "The Quiet Orchard",
+      "Ninety Bridges"
+    ],
+    "misread": {
+      "truth": "Persuasion",
+      "read": "Pervasion",
+      "matched": "Pervasive Games: A Handbook",
+      "box": "Linden Street box",
+      "tester": "P3"
+    }
+  },
+  "prototypeShelf": {
+    "box": "Elm Park box",
+    "found": 14,
+    "needLook": 2,
+    "spines": [
+      {
+        "title": "Middlemarch",
+        "ok": true
+      },
+      {
+        "title": "The Lantern Keeper",
+        "ok": true
+      },
+      {
+        "title": "Little Women",
+        "ok": true
+      },
+      {
+        "title": "Salt Roads",
+        "ok": true
+      },
+      {
+        "title": "Moby-Dick",
+        "ok": true
+      },
+      {
+        "title": "A Field Guide to Small Birds",
+        "ok": true
+      },
+      {
+        "title": "Persuasion",
+        "ok": false,
+        "read": "Pervasion",
+        "why": "Glare"
+      },
+      {
+        "title": "Bleak House",
+        "ok": true
+      },
+      {
+        "title": "The Secret Garden",
+        "ok": true
+      },
+      {
+        "title": "Winter at Halloway",
+        "ok": true
+      },
+      {
+        "title": "Jane Eyre",
+        "ok": true
+      },
+      {
+        "title": "Ninety Bridges",
+        "ok": false,
+        "read": "Ninety Brides",
+        "why": "Thin spine"
+      },
+      {
+        "title": "Treasure Island",
+        "ok": true
+      },
+      {
+        "title": "Emma",
+        "ok": true
+      }
+    ],
+    "cta": "Add 14 books to Elm Park box"
+  },
+  "root": "~/work/little-shared-library",
+  "topics": [
+    "App",
+    "Community"
+  ],
+  "projects": [
+    {
+      "name": "shelf-scan",
+      "topic": "App",
+      "goal": "Scan v2: fewer than 3% wrong books in the catalog",
+      "health": "On track",
+      "next": "Team review Thu Oct 15",
+      "hero": true
+    },
+    {
+      "name": "beta-feedback",
+      "topic": "Community",
+      "goal": "A weekly digest of what testers report",
+      "health": "On track",
+      "next": "Digest due Fri"
+    },
+    {
+      "name": "neighborhood-map",
+      "topic": "App",
+      "goal": "Show how fresh each box's catalog is",
+      "health": "At risk",
+      "next": "Map pins spec, Oct 20"
+    },
+    {
+      "name": "steward-onboarding",
+      "topic": "Community",
+      "goal": "Half of new stewards catalog their box in week 1",
+      "health": "On track",
+      "next": null
+    },
+    {
+      "name": "home",
+      "topic": null,
+      "isHome": true,
+      "goal": "Triage, status, personal ops",
+      "health": null,
+      "next": "Weekly status due 4pm"
+    }
+  ],
+  "sessions": [
+    {
+      "name": "Tighten PRD goals",
+      "project": "shelf-scan",
+      "state": "working",
+      "wait": "now",
+      "role": "S2 middle tab 0"
+    },
+    {
+      "name": "Prototype scan review",
+      "project": "shelf-scan",
+      "state": "idle",
+      "wait": "12m",
+      "role": "S2 middle tab 1"
+    },
+    {
+      "name": "Synthesis from interviews",
+      "project": "shelf-scan",
+      "state": "idle",
+      "wait": "1h",
+      "role": "S2 middle tab 2, chat"
+    },
+    {
+      "name": "Auto-add decision",
+      "project": "shelf-scan",
+      "state": "needsYou",
+      "wait": "4m",
+      "document": "docs/prd-v2.md",
+      "question": "Three testers (P3, P6, P8) say a wrong auto-added book is why they stopped scanning. That conflicts with v1 goal 2, \"every scanned spine lands in the catalog with no extra taps\". Put auto-add behind the review step, or keep it and log an open question?",
+      "options": [
+        "Put auto-add behind the review step",
+        "Keep it and log an open question",
+        "Something else"
+      ],
+      "role": "S3 needs you; S4 resume; S5 chat"
+    },
+    {
+      "name": "Spine eval: glare cases",
+      "project": "shelf-scan",
+      "state": "working",
+      "wait": "9m",
+      "summary": "Running score.py on the glare subset"
+    },
+    {
+      "name": "Deck for Thursday",
+      "project": "shelf-scan",
+      "state": "readyForReview",
+      "summary": "team-review-oct15.pptx, 6 slides"
+    },
+    {
+      "name": "quick q: TestFlight build size",
+      "project": "shelf-scan",
+      "state": "idle",
+      "wait": "3d",
+      "role": "S4 archive"
+    },
+    {
+      "name": "Old v1 notes cleanup",
+      "project": "shelf-scan",
+      "state": "idle",
+      "wait": "6d",
+      "role": "S4 delete; never running"
+    },
+    {
+      "name": "Weekly digest draft",
+      "project": "beta-feedback",
+      "state": "working",
+      "wait": "2m"
+    },
+    {
+      "name": "Tag crash reports",
+      "project": "beta-feedback",
+      "state": "needsYou",
+      "wait": "7m",
+      "permission": "Bash(xcrun crashlog symbolicate crashes/*.ips)",
+      "question": "Allow Claude to run xcrun on crashes/*.ips?"
+    },
+    {
+      "name": "Tester emails, Oct 12",
+      "project": "beta-feedback",
+      "state": "readyForReview",
+      "summary": "Sorted 23 emails into 5 themes"
+    },
+    {
+      "name": "Freshness badge spec",
+      "project": "neighborhood-map",
+      "state": "working",
+      "wait": "14m",
+      "summary": "Writing states in freshness.md"
+    },
+    {
+      "name": "Map pins: stale boxes",
+      "project": "neighborhood-map",
+      "state": "idle",
+      "wait": "2d"
+    },
+    {
+      "name": "Steward welcome email",
+      "project": "steward-onboarding",
+      "state": "readyForReview",
+      "summary": "welcome-email.md, 3 variants"
+    },
+    {
+      "name": "Morning triage",
+      "project": "home",
+      "state": "needsYou",
+      "wait": "1h",
+      "question": "4 new asks: route 3 to projects?",
+      "options": [
+        "Yes, route 3",
+        "No",
+        "Something else"
+      ]
+    },
+    {
+      "name": "Scan v1 launch notes",
+      "project": "shelf-scan",
+      "state": "archived",
+      "wait": "7w"
+    },
+    {
+      "name": "Interview guide",
+      "project": "shelf-scan",
+      "state": "archived",
+      "wait": "4w"
+    },
+    {
+      "name": "Map tile costs",
+      "project": "neighborhood-map",
+      "state": "archived",
+      "wait": "3w"
+    }
+  ]
+}

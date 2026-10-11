@@ -16,23 +16,34 @@ def diff(*rows):
         c = green if kind == "+" else red if kind == "-" else dim
         out.append(f"      {dim}{n:>3}{rst} {c}{kind} {t}{rst}")
     return out
+SHELF = "~/work/little-shared-library/shelf-scan"
 screens = {
-"tighten-prd.ans": header("~/work/payments/checkout-redesign") + you("Tighten the goals in docs/prd-v2.md: one measurable goal first, and drop anything that is really a requirement.")
-  + tool("Read", "docs/prd-v2.md", "Read 31 lines")
-  + say("The goals mix an outcome with two requirements. I'll lead with the metric and move the", "rest into Requirements.")
-  + tool("Update", "docs/prd-v2.md", f"Updated docs/prd-v2.md with 2 additions and 2 removals") + diff((" ", 9, "## Goals"), ("-", 10, "Cut guest-checkout abandonment 15% by Q1."), ("+", 10, "Cut guest-checkout abandonment 15% by Q1 (38% today; target 32%)."), (" ", 11, "Let a guest finish checkout in one screen on mobile."), ("-", 12, "Take the plan to exec review on Oct 14."), ("+", 12, "Exec review Oct 14: decision on one-page guest checkout."))
-  + [""] + say("Done. Goal 1 now carries the baseline and the target; goal 3 names the decision we need.", "Want me to cross-check the numbers against the funnel export?") + footer(),
-"prototype-express-pay.ans": header("~/work/payments/checkout-redesign/prototype") + you("Add an express-pay row above the email field in checkout.html: Apple Pay, Google Pay, PayPal.")
-  + tool("Read", "checkout.html", "Read 214 lines")
-  + say("Adding an `express` block above the form, with an \"or pay by card\" divider under it.")
-  + tool("Update", "checkout.html", "Updated checkout.html with 14 additions") + diff((" ", 62, '<main class="checkout">'), ("+", 63, '  <section class="express" aria-label="Express checkout">'), ("+", 64, '    <button class="pay apple">Apple Pay</button>'), ("+", 65, '    <button class="pay google">Google Pay</button>'), ("+", 66, '    <button class="pay paypal">PayPal</button>'), ("+", 67, '  </section>'), ("+", 68, '  <p class="divider">or pay by card</p>'), (" ", 69, '  <form id="details">'))
-  + [""] + tool("Bash", "open checkout.html", "(no content)")
-  + say("The row sits above the fold at 390 px wide. The buttons are 48 px tall, so they stay tappable.") + footer(),
-"synthesis.ans": header("~/work/payments/checkout-redesign/research") + you("Read the six interview notes and write the synthesis: themes, two quotes, recommendations.")
-  + tool("Read", "interviews/p1.md … p6.md", "Read 6 files (412 lines)")
-  + say("Five of six shoppers abandoned a checkout last month because it asked for an account.", "Three themes come up again and again:", "", "  1. Account creation feels like a trap (P2, P3, P5)", "  2. Card entry on mobile is the slowest step (P1, P2, P4)", "  3. Express pay builds trust when it is offered first (P4, P6)")
-  + tool("Write", "docs/interview-synthesis.docx", "Wrote 38 lines")
-  + say("Written. I kept two quotes, P2 and P5, and put the recommendation last: move account", "creation after purchase, lead with express pay, and remember cards for returning guests.") + footer(),
+"tighten-prd.ans": header(SHELF) + you("Tighten the goals in docs/prd-v2.md: one measurable goal first, and drop anything that is really a requirement.")
+  + tool("Read", "docs/prd-v2.md", "Read 30 lines")
+  + say("The goals mix an outcome with a requirement. I'll lead with the wrong-books metric and move", "\"fix a miss in one tap\" down to Requirements, where it already lives.")
+  + tool("Update", "docs/prd-v2.md", "Updated docs/prd-v2.md with 5 additions and 3 removals") + diff(
+      (" ", 8, "## Goals"),
+      ("-", 9, "1. Fewer wrong books."), ("+", 9, "1. Fewer than 3% wrong books in the catalog (19% today)."),
+      ("-", 10, "2. Every scanned spine lands in the catalog with no extra taps."), ("+", 10, "2. 80% of scans end with a saved shelf (64% today)."),
+      ("-", 11, "3. Fixing a missed book takes one tap."), ("+", 11, "3. A steward reviews a 14-book shelf in under 20 seconds."))
+  + [""] + say("Done. Goal 1 now carries the baseline and the target. The old goal 2 was the v1 auto-add promise,", "so I replaced it with the saved-shelf rate. Want me to check the 19% against Ravi's eval?") + footer(),
+"prototype-scan-review.ans": header(SHELF + "/prototype") + you("In scan-review.html, give the spines the model is unsure of an amber outline and a Fix chip.")
+  + tool("Read", "scan-review.html", "Read 238 lines")
+  + say("Adding an `unsure` state to the spine boxes, with a small Fix chip on its top-right corner.")
+  + tool("Update", "scan-review.html", "Updated scan-review.html with 5 additions") + diff(
+      (" ", 81, "  .summary { padding: 12px 2px 6px; }"),
+      ("+", 83, "  .summary h3 .need { color: var(--amber); }"),
+      ("+", 86, "  .sec.warn { color: var(--amber); }"),
+      ("+", 109, "  .rc.lowish { color: var(--amber); }"),
+      ("+", 113, "  .flag .cover { width: 28px; height: 38px; }"),
+      ("+", 160, "          <div class=\"sec warn\">Needs a look <small>2</small></div>"))
+  + [""] + tool("Bash", "open scan-review.html", "(no content)")
+  + say("The two unsure spines (Persuasion and Ninety Bridges) now have an amber outline and a Fix chip.", "The other 12 keep their green boxes, and the header still reads \"14 found \u00b7 2 need a look\".") + footer(),
+"synthesis.ans": header(SHELF + "/research") + you("Read the eight interview notes and write the synthesis: themes, two quotes, recommendations.")
+  + tool("Read", "interviews/p1.md \u2026 p8.md", "Read 8 files (185 lines)")
+  + say("Three of eight testers (P3, P6, P8) stopped scanning after a wrong book was added for them.", "Four themes come up again and again:", "", "  1. A wrong book costs trust fast (P3, P6, P8)", "  2. Glare from glass doors makes scanning unreliable (P3, P2)", "  3. Testers want to check the list before it is saved (P1, P4, P7)", "  4. Fixing a miss must take one tap (P4, P5, P7)")
+  + tool("Write", "../docs/beta-interview-synthesis.docx", "Wrote 46 lines")
+  + say("Written. I kept two quotes, P3 Denise and P8 Owen, and put the recommendation last: show what", "the scan found and let the steward review it before anything is added.") + footer(),
 }
 here = pathlib.Path(__file__).parent
 for name, lines in screens.items():

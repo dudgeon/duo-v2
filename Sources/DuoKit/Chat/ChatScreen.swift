@@ -319,10 +319,20 @@ public enum ChatScreenReader {
         if t.allSatisfy({ $0.chatTrim.isEmpty }) { return .starting }
         let width = cols ?? max(t.map(\.count).max() ?? 0, 1)
         let rules = t.indices.filter { t[$0].chatTrim.chatIs(s.rule) }
-        // The footer sits under the input box, which is not always at the bottom of the screen.
-        let footer = (rules.last.map { Array(t[min($0 + 1, t.count)..<min($0 + 3, t.count)]) } ?? Array(t.suffix(3))).joined(separator: " ")
-        let mode: ChatPermissionMode? = footer.chatIs(s.modePlan) ? .plan : footer.chatIs(s.modeAcceptEdits) ? .acceptEdits
-            : footer.chatIs(s.modeManual) ? .manual : footer.chatIs(s.modeAuto) ? .auto : footer.chatIs(s.modeBypass) ? .bypass : nil
+        // The footer sits under the input box, which is not always at the bottom of the screen. Its mode
+        // and busy rows are found by content, not at a fixed offset: Claude Code 2.1.287+ draws each
+        // mod's `⚠ <mod>: <text>` status line between the box and the mode row (C-78, F-281).
+        // Rows that are not the footer's own are left out: those status lines (any text, but always
+        // the `⚠` prefix), and the `/` menu 2.1.219 draws below the box (`/plan   plan mode…`). Of the
+        // rest, the last row that matches wins: the mode row is the bottom of the screen's chrome.
+        let below = rules.last.map { Array(t[min($0 + 1, t.count)...]) } ?? Array(t.suffix(3))
+        let footerRows = below.filter { r in
+            !r.chatTrim.hasPrefix("⚠") && !r.chatIs(s.commandRowBelow) && !r.chatIs(s.commandRow)
+        }
+        let mode: ChatPermissionMode? = footerRows.reversed().lazy.compactMap { row -> ChatPermissionMode? in
+            row.chatIs(s.modePlan) ? .plan : row.chatIs(s.modeAcceptEdits) ? .acceptEdits : row.chatIs(s.modeManual) ? .manual
+                : row.chatIs(s.modeAuto) ? .auto : row.chatIs(s.modeBypass) ? .bypass : nil
+        }.first
         // The input box: the last two full-width rules with "❯ " between them.
         var input: String?
         if rules.count >= 2 {
@@ -335,7 +345,7 @@ public enum ChatScreenReader {
                 input = text.chatIs(s.inputPlaceholder) && !text.contains("\n") ? "" : text
             }
         }
-        let busy = footer.chatIs(s.busy)
+        let busy = footerRows.contains { $0.chatIs(s.busy) }
         // Drawn for a few seconds after a start or a change (both versions), and in the rule over a dialog (2.1.296).
         let effort = t.last { $0.chatIs(s.effort) }.flatMap { $0.chatMatch(s.effort) }.map { ChatEffort(glyph: $0[1] ?? "", word: $0[2] ?? "") }
         func find(_ p: String) -> Int { t.firstIndex { $0.chatIs(p) } ?? -1 }
