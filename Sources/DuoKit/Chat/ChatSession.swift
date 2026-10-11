@@ -347,6 +347,9 @@ public final class ChatSession {
     /// A new screen state: fall back, come back, or close a reply the screen says ended.
     public func apply(_ s: ChatScreen) {
         let before = screen
+        var s = s
+        // 2.1.296's inline renderer draws the `/` menu where the footer was (F-284): the mode is the one before it opened.
+        if s.mode == nil, !s.commands.isEmpty, s.kind == .idle { s.mode = before.mode }
         if s != before { screen = s }
         if let e = s.effort, e != effort { effort = e; effortGlyphs[e.word] = e.glyph }
         // An interrupted reply fires no hook: busy → idle ends it (F-105).

@@ -18,6 +18,8 @@ public enum ChatTargets {
                                             "polish-bar-thin",
                                             // chat-slash-handoff (DL-143): command results, the picker cards, the named bar, the / menu.
                                             "slash-output", "slash-context", "slash-model-card", "slash-effort-card", "slash-fallback-named", "slash-menu",
+                                            // F-284: the / menu as 2.1.296's inline renderer draws it, under the box; drawn as the menu board.
+                                            "slash-menu-below",
                                             // chat-paste-handoff (DL-161): pictures in the composer and your bubble, and why one wasn't taken.
                                             "paste-picture", "paste-adding", "paste-sent", "paste-edges", "paste-failed", "paste-keys",
                                             "paste-text", "paste-text-open", "paste-huge",

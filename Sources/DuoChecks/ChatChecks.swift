@@ -259,6 +259,35 @@ func spikeScreen(_ name: String) -> String {
         check(m219.commands.first?.description == "Set the AI model for Claude Code (currently claude-haiku-5-5)" && m219.commands.allSatisfy { !$0.selected }, "its description; no selected row (colour only)")
         let s219 = ChatScreenReader.read(spikeScreen("slash-2.1.219/menu-slash.txt"))
         check(s219.input == "/" && s219.commands.first?.name == "/add-dir" && s219.commands.allSatisfy { $0.name.hasPrefix("/") && $0.description.first != " " }, "2.1.219's / menu under a bare `/` (\(s219.commands.count) rows)")
+        // 2.1.296 draws it under the box, indented, `❯` on the selected row, with its inline renderer
+        // (`tui: default`), and above the box with the fullscreen one (F-284). Recorded with a project skill.
+        let inl = "slash-2.1.296-inline/", full = "slash-2.1.296-fullscreen/"
+        let i1 = ChatScreenReader.read(spikeScreen(inl + "menu-tri.txt"))
+        check(i1.kind == .idle && i1.input == "/tri" && i1.commands.map(\.name) == ["/triage-feedback", "/claude-api", "/dataviz", "/doctor"],
+              "2.1.296 inline: the / menu under the box, indented (\(i1.commands.map(\.name)))")
+        check(i1.commands.first?.description == "Sort tester feedback into bugs, requests and questions (project)"
+              && i1.commands.first?.selected == true && i1.commands.dropFirst().allSatisfy { !$0.selected }, "its description and its selected row")
+        check(i1.mode == nil, "the menu is where the footer was: its rows are never the mode row")
+        check(ChatScreenReader.read(spikeScreen(inl + "menu-tri-down.txt")).commands.first { $0.selected }?.name == "/claude-api", "↓ moves its selection")
+        let i2 = ChatScreenReader.read(spikeScreen(inl + "menu-slash.txt"))
+        check(i2.input == "/" && i2.commands.first?.name == "/add-dir" && i2.commands.count == 14 && i2.commands.allSatisfy { $0.name.hasPrefix("/") },
+              "2.1.296 inline: under a bare `/` (\(i2.commands.count) rows)")
+        let i0 = ChatScreenReader.read(spikeScreen(inl + "idle.txt"))
+        check(i0.commands.isEmpty && i0.mode == .auto && i0.kind == .idle, "2.1.296 inline idle: no command rows, auto mode")
+        let f1 = ChatScreenReader.read(spikeScreen(full + "menu-tri.txt"))
+        check(f1.input == "/tri" && f1.commands.map(\.name) == ["/triage-feedback", "/claude-api", "/dataviz"] && f1.commands.first?.selected == true && f1.mode == .auto,
+              "2.1.296 fullscreen: the menu above the box, the mode row still read (\(f1.commands.map(\.name)))")
+        check(ChatScreenReader.read(spikeScreen(full + "menu-tri-down.txt")).commands.first { $0.selected }?.name == "/claude-api", "↓ moves its selection")
+        check(ChatScreenReader.read(spikeScreen(full + "idle.txt")).commands.isEmpty, "2.1.296 fullscreen idle: no command rows")
+        // Above the box, only the block touching its top rule is the menu: a `/`-shaped line in the transcript is not.
+        var stale = spikeScreen(full + "menu-tri.txt").components(separatedBy: "\n")
+        stale[12] = "  /old-command                 printed by an earlier turn"
+        check(ChatScreenReader.read(stale.joined(separator: "\n")).commands.map(\.name) == ["/triage-feedback", "/claude-api", "/dataviz"], "a `/` row in the transcript above the menu is not one of its rows")
+        // The inline menu hides the mode row: chat keeps the mode it had.
+        let kept = ChatSession(key: "slash-296", mode: .chat)
+        kept.apply(i0)
+        kept.apply(i1)
+        check(kept.screen.mode == .auto && !kept.screen.commands.isEmpty, "while the inline menu covers the footer, the mode chip keeps auto")
         check(ChatScreenReader.read(spikeScreen("tour-2.1.219/01-markdown.txt")).commands.isEmpty, "2.1.219's prompt, rules and footer are no command rows")
         check(ChatScreenReader.read(spikeScreen("tour-2.1.292/01-markdown.txt")).commands.isEmpty, "nor 2.1.292's")
         // 2.1.219's preview question: Return inside the notes field sends "(notes only)"; Esc leaves it with the notes kept.

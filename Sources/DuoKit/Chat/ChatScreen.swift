@@ -323,11 +323,17 @@ public enum ChatScreenReader {
         // and busy rows are found by content, not at a fixed offset: Claude Code 2.1.287+ draws each
         // mod's `⚠ <mod>: <text>` status line between the box and the mode row (C-78, F-281).
         // Rows that are not the footer's own are left out: those status lines (any text, but always
-        // the `⚠` prefix), and the `/` menu 2.1.219 draws below the box (`/plan   plan mode…`). Of the
+        // the `⚠` prefix), and the `/` menu 2.1.219 and 2.1.296's inline renderer draw below the box
+        // (`/plan   plan mode…`, `  ❯ /plan   plan mode…` and its wrapped rows). Of the
         // rest, the last row that matches wins: the mode row is the bottom of the screen's chrome.
         let below = rules.last.map { Array(t[min($0 + 1, t.count)...]) } ?? Array(t.suffix(3))
+        // A menu row's description wraps onto deeper-indented rows (F-284): those are the menu's too.
+        var inMenu = false
         let footerRows = below.filter { r in
-            !r.chatTrim.hasPrefix("⚠") && !r.chatIs(s.commandRowBelow) && !r.chatIs(s.commandRow)
+            if r.chatIs(s.commandRowBelow) || r.chatIs(s.commandRow) { inMenu = true; return false }
+            if inMenu, r.hasPrefix("    "), !r.chatTrim.isEmpty { return false }
+            inMenu = false
+            return !r.chatTrim.hasPrefix("⚠")
         }
         let mode: ChatPermissionMode? = footerRows.reversed().lazy.compactMap { row -> ChatPermissionMode? in
             row.chatIs(s.modePlan) ? .plan : row.chatIs(s.modeAcceptEdits) ? .acceptEdits : row.chatIs(s.modeManual) ? .manual
@@ -405,14 +411,25 @@ public enum ChatScreenReader {
                 r.interrupted = !above[(i + 1)...].contains { $0.hasPrefix("❯") || $0.hasPrefix("⏺") }
             }
             r.menu = t.contains { $0.chatIs(s.commandMenu) }
+            // The menu is drawn in one of three places (F-284): under the box indented with a `❯` on the
+            // selected row (2.1.296's inline renderer, `tui: default`), under it from column 0 (2.1.219),
+            // or above it indented (the fullscreen renderer, 2.1.292+). Under the box comes first: only the
+            // menu and the footer are there. Above it, only the block touching the box's top rule is the
+            // menu; a `/`-shaped line further up is the transcript's.
             if rules.count >= 2 {
-                r.commands = t[0..<rules[rules.count - 2]].compactMap { l in
+                typealias Command = (name: String, description: String, selected: Bool)
+                func row(_ l: String) -> Command? {
                     l.chatMatch(s.commandRow).map { m in (m[2] ?? "", (m[3] ?? "").chatTrim, m[1] != nil) }
+                        ?? l.chatMatch(s.commandRowBelow).map { m in (m[1] ?? "", (m[2] ?? "").chatTrim, false) }
                 }
+                r.commands = t[(rules[rules.count - 1] + 1)...].compactMap(row)
                 if r.commands.isEmpty {
-                    r.commands = t[(rules[rules.count - 1] + 1)...].compactMap { l in
-                        l.chatMatch(s.commandRowBelow).map { m in (m[1] ?? "", (m[2] ?? "").chatTrim, false) }
+                    var above: [Command] = []
+                    for l in t[0..<rules[rules.count - 2]].reversed() {
+                        if let c = l.chatMatch(s.commandRow).map({ m in (m[2] ?? "", (m[3] ?? "").chatTrim, m[1] != nil) }) { above.append(c) }
+                        else if !l.hasPrefix("    ") || l.chatTrim.isEmpty { break }   // not a wrapped description: the menu's top
                     }
+                    r.commands = above.reversed()
                 }
             }
             return r
