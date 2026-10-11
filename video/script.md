@@ -156,7 +156,7 @@ Shot: carrying on from S5's terminal. On *chat mode* the camera pushes in on the
 
 ## The voice
 
-The house voice is M2, a warm baritone. The build reads this table: write the word as it appears in a line, and how it should be said. Add a row whenever a line comes out wrong.
+The house voice is a warm, medium-low baritone, friendly and a little quicker (B-light-133, chosen Oct 11). The build reads this table: write the word as it appears in a line, and how it should be said. Add a row whenever a line comes out wrong.
 
 | Written | Said |
 | --- | --- |
