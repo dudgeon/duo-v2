@@ -1,6 +1,6 @@
 # The demo world: scenario bible
 
-The intro video films Duo on this world. Every fixture under `video/fixture/` follows it: names, numbers and dates come from here. Change this file first, then rebuild with the `make-*.py` scripts.
+The intro video films Duo on this world. Every fixture under `video/fixture/` follows it: names, numbers and dates come from here. Its data is in `world.json`, which every `make-*.py` script reads; change both together, then rebuild.
 
 Agreed with Geoff on 2026-10-11 (interview rounds 1–3). Everything here is invented; no real companies or people.
 
@@ -46,6 +46,7 @@ The testers:
 | Sep 28 | Ravi's eval: 81% of spines read correctly on 1,240 spine photos from 96 shelves. |
 | Oct 5 | Beta digest: a third of testers who saw a wrong book stopped scanning. |
 | Oct 9 | Sam starts PRD v2: scan with a review step. |
+| Oct 12 | Prototype test of the review step with P1, P4, P6 and P7: 97% right, median 18 s a shelf. |
 | **Oct 13 (today)** | Sam tightens the PRD, prototypes the review screen, finishes the synthesis, and decides on auto-add. |
 | Oct 15 | Team review: Jo decides whether scan v2 goes into the November build. |
 | Nov 2 | Target: scan v2 in TestFlight. |
@@ -74,7 +75,7 @@ Today Sam is getting all of that ready for Thursday, with several Claude session
 | Boxes catalogued | 340 |
 | Scans in Sep | 1,870 |
 | Scans that end with a saved shelf | 64% |
-| Testers who saw a wrong book and stopped scanning | 1 in 3 (31%) |
+| Testers who saw a wrong book and stopped scanning | 46 of 148 (31%) |
 
 **The model**
 
@@ -101,6 +102,15 @@ Today Sam is getting all of that ready for Thursday, with several Claude session
 | Scans that end with a saved shelf | 64% | 80% |
 | Wrong books in the catalog | 19% | under 3% |
 | Median time to review a shelf | — | 20 s |
+
+**The other projects**
+
+| Fact | Value |
+| --- | --- |
+| Beta reports, week of Oct 5 | 41 (29 the week before); 14 about wrong books |
+| Tester emails, Oct 12 | 23, in 5 themes |
+| Stale boxes (no scan in 7 days) | 61 of 340 |
+| New stewards who catalog in week 1 | 31% today, goal 50% |
 
 **Books on shelves:** public-domain classics, plus invented titles. No real living authors.
 
@@ -130,14 +140,14 @@ Folders live under `~/work/little-shared-library/`. Topics: **App** and **Commun
 | `prototype/scan-review.html` | The polished prototype: an iPhone-sized review screen. A shelf photo with a box on each detected spine; "14 found · 2 need a look"; tap a spine to fix it; "Add 14 books to Elm Park box" | S1 browser window, S2 right tab 2, S5 screenshot |
 | `docs/team-review-oct15.pptx` | The deck for Thursday, 5–6 slides in an in-house template. Slide 2 is the chart "Where scans go wrong" | S1 PowerPoint window, S2 right tab 3 |
 | `docs/beta-interview-synthesis.docx` | The synthesis of the eight interviews: Summary, What we heard, Themes, Recommendations | S1 Word window, S2 right tab 4 |
-| `eval/spine-eval-2026-09-28.md` | Ravi's eval notes: method, the confusion cases, the scrappy bits ("glare set is only 61 photos, needs more") | S5 tool calls |
+| `eval/spine-eval-2026-09-28.md` | Ravi's eval notes: method, the confusion cases, the scrappy bits ("glare set is only 140 photos from 9 shelves, needs more") | S5 tool calls |
 | `eval/results.csv` | One row per spine photo: shelf, truth, read, correct, cause | S5 tool calls |
 | `eval/score.py` | The script that scores `results.csv` and prints the miss table | S5's command |
 | `research/interviews/p1.md … p8.md` | Interview notes, about a page each | The synthesis session reads them |
 | `research/feedback/denise-p3.txt` | Denise's long beta feedback (over 12 lines, in her voice): glare from her box's glass door, *Persuasion* added as the wrong book, a neighbour came for it | S5 paste (folds to "Pasted text · n lines") |
 | `research/feedback/denise-p3-screenshot.png` | Her screenshot: the prototype on a phone viewport, showing the wrong match | S5 image paste |
 
-The other projects are thin but real: each has a `PROJECT.md` and 1–3 documents with believable content, plus sessions with titles and states.
+The other projects are thin but real. `make-projects.py` writes them under `projects/<name>/`: each gets a `PROJECT.md` (Home gets `HOME.md`) and 1–3 documents with believable content. Their sessions have titles and states.
 
 ## Sessions
 
@@ -164,7 +174,7 @@ The sidebar and All projects show **18 sessions**: 15 live and 3 archived. Wait 
 | *(archived)* Interview guide | shelf-scan | archived | |
 | *(archived)* Map tile costs | neighborhood-map | archived | |
 
-**Needs you: 3** (two questions and one permission).
+**Needs you: 3** (two questions and one permission). Working 4, ready for review 3, idle 5. Archived sessions are in fixture.json's `archivedSessions`.
 
 ## Scenes and what they use
 

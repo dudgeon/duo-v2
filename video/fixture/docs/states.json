@@ -7,15 +7,15 @@
   "tabs": {
     "middle": [
       "Tighten PRD goals",
-      "Prototype express pay",
+      "Prototype scan review",
       "Synthesis from interviews"
     ],
     "right": [
       "Project",
       "docs/prd-v2.md",
-      "prototype/checkout.html",
-      "docs/exec-review-oct14.pptx",
-      "docs/interview-synthesis.docx"
+      "prototype/scan-review.html",
+      "docs/team-review-oct15.pptx",
+      "docs/beta-interview-synthesis.docx"
     ]
   },
   "states": [
@@ -40,7 +40,7 @@
     },
     {
       "state": "video-s2-middle-1",
-      "middle": "Prototype express pay (terminal)",
+      "middle": "Prototype scan review (terminal)",
       "right": "docs/prd-v2.md (editor)",
       "anchors": [
         "video.pane.left",
@@ -117,7 +117,7 @@
     {
       "state": "video-s2-right-2",
       "middle": "Tighten PRD goals (terminal)",
-      "right": "prototype/checkout.html (HTML viewer (local page))",
+      "right": "prototype/scan-review.html (HTML viewer (local page))",
       "anchors": [
         "video.pane.left",
         "video.pane.middle",
@@ -136,7 +136,7 @@
     {
       "state": "video-s2-right-3",
       "middle": "Tighten PRD goals (terminal)",
-      "right": "docs/exec-review-oct14.pptx (DeckView (PowerPoint))",
+      "right": "docs/team-review-oct15.pptx (DeckView (PowerPoint))",
       "anchors": [
         "video.pane.left",
         "video.pane.middle",
@@ -155,7 +155,7 @@
     {
       "state": "video-s2-right-4",
       "middle": "Tighten PRD goals (terminal)",
-      "right": "docs/interview-synthesis.docx (DocxView (Word))",
+      "right": "docs/beta-interview-synthesis.docx (DocxView (Word))",
       "anchors": [
         "video.pane.left",
         "video.pane.middle",

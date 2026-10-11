@@ -1,220 +1,254 @@
 {
-  "$note": "Sample data shown on every reference screen. From the design brief §6 plus the group and thread drawn on the canvas. For previews and tests only; this is not a schema.",
+  "$note": "Sample data for the intro video's demo world (Little Shared Library; SCENARIO.md, world.json). Built by make-fixture.py; do not edit by hand. Same keys as the design fixture.",
   "videoS2": {
     "folder": "docs",
     "terminals": [
-      {"name": "Tighten PRD goals", "state": "working", "wait": "now", "screen": "terms/tighten-prd.ans"},
-      {"name": "Prototype express pay", "state": "idle", "wait": "12m", "screen": "terms/prototype-express-pay.ans"},
-      {"name": "Synthesis from interviews", "state": "idle", "wait": "1h", "screen": "terms/synthesis.ans"}
+      {
+        "name": "Tighten PRD goals",
+        "state": "working",
+        "wait": "now",
+        "screen": "terms/tighten-prd.ans"
+      },
+      {
+        "name": "Prototype scan review",
+        "state": "idle",
+        "wait": "12m",
+        "screen": "terms/prototype-scan-review.ans"
+      },
+      {
+        "name": "Synthesis from interviews",
+        "state": "idle",
+        "wait": "1h",
+        "screen": "terms/synthesis.ans"
+      }
     ],
     "chat": "chat-s2",
-    "tabs": ["docs/prd-v2.md", "prototype/checkout.html", "docs/exec-review-oct14.pptx", "docs/interview-synthesis.docx"],
-    "files": ["PROJECT.md", "docs/prd-v2.md", "docs/exec-review-oct14.pptx", "docs/interview-synthesis.docx", "prototype/checkout.html"]
+    "tabs": [
+      "docs/prd-v2.md",
+      "prototype/scan-review.html",
+      "docs/team-review-oct15.pptx",
+      "docs/beta-interview-synthesis.docx"
+    ],
+    "files": [
+      "PROJECT.md",
+      "docs/prd-v2.md",
+      "docs/team-review-oct15.pptx",
+      "docs/beta-interview-synthesis.docx",
+      "prototype/scan-review.html"
+    ]
   },
-  "now": "2026-10-03T09:40:00",
-  "user": "Geoff",
+  "now": "2026-10-13T09:41:00",
+  "user": "Sam",
   "topics": [
-    "Payments",
-    "Growth",
-    "Platform"
+    "App",
+    "Community"
   ],
   "projects": [
     {
-      "name": "checkout-redesign",
-      "topic": "Payments",
-      "path": "~/work/payments/checkout-redesign",
-      "goal": "Cut guest-checkout abandonment 15% by Q1",
+      "name": "shelf-scan",
+      "topic": "App",
+      "path": "~/work/little-shared-library/shelf-scan",
+      "goal": "Scan v2: fewer than 3% wrong books in the catalog",
       "health": "On track",
-      "next": "Exec review Oct 14"
+      "next": "Team review Thu Oct 15"
     },
     {
-      "name": "refunds-api-spec",
-      "topic": "Payments",
-      "path": "~/work/payments/refunds-api-spec",
-      "goal": "Ship refunds API spec to eng by Oct 10",
+      "name": "beta-feedback",
+      "topic": "Community",
+      "path": "~/work/little-shared-library/beta-feedback",
+      "goal": "A weekly digest of what testers report",
+      "health": "On track",
+      "next": "Digest due Fri"
+    },
+    {
+      "name": "neighborhood-map",
+      "topic": "App",
+      "path": "~/work/little-shared-library/neighborhood-map",
+      "goal": "Show how fresh each box's catalog is",
       "health": "At risk",
-      "next": "Spec review Oct 8"
+      "next": "Map pins spec, Oct 20"
     },
     {
-      "name": "fraud-rules-review",
-      "topic": "Payments",
-      "path": "~/work/payments/fraud-rules-review",
-      "goal": "Audit and simplify fraud rules",
+      "name": "steward-onboarding",
+      "topic": "Community",
+      "path": "~/work/little-shared-library/steward-onboarding",
+      "goal": "Half of new stewards catalog their box in week 1",
       "health": "On track",
-      "next": null
-    },
-    {
-      "name": "onboarding-v3",
-      "topic": "Growth",
-      "path": "~/work/growth/onboarding-v3",
-      "goal": "Lift day-7 activation to 40%",
-      "health": "On track",
-      "next": "Copy freeze Oct 6"
-    },
-    {
-      "name": "pricing-experiment-q4",
-      "topic": "Growth",
-      "path": "~/work/growth/pricing-experiment-q4",
-      "goal": "Decide Q4 pricing test",
-      "health": "Done pending readout",
-      "next": "Readout Oct 7"
-    },
-    {
-      "name": "api-deprecations",
-      "topic": "Platform",
-      "path": "~/work/platform/api-deprecations",
-      "goal": "Comms plan for v1 API sunset",
-      "health": "Off track",
       "next": null
     },
     {
       "name": "home",
       "topic": null,
-      "path": "~/work/home",
+      "path": "~/work/little-shared-library/home",
       "isHome": true,
-      "goal": "Triage, dispatch, status, personal ops",
+      "goal": "Triage, status, personal ops",
       "health": null,
       "next": "Weekly status due 4pm"
     }
   ],
   "sessions": [
     {
-      "name": "Morning triage",
-      "project": "home",
-      "state": "needsYou",
-      "wait": "1h",
-      "question": "5 new asks — route 3 to projects?",
-      "options": [
-        "Yes, route 3",
-        "No",
-        "Something else"
-      ]
+      "name": "Tighten PRD goals",
+      "project": "shelf-scan",
+      "state": "working",
+      "wait": "now"
     },
     {
-      "name": "Copy review pass 2",
-      "project": "onboarding-v3",
-      "state": "needsYou",
-      "wait": "12m",
-      "question": "Approve these 6 string changes?"
+      "name": "Prototype scan review",
+      "project": "shelf-scan",
+      "state": "idle",
+      "wait": "12m"
     },
     {
-      "name": "PRD v2 edits",
-      "project": "checkout-redesign",
+      "name": "Synthesis from interviews",
+      "project": "shelf-scan",
+      "state": "idle",
+      "wait": "1h"
+    },
+    {
+      "name": "Auto-add decision",
+      "project": "shelf-scan",
       "state": "needsYou",
       "wait": "4m",
-      "forkOf": "Interview synth",
-      "question": "Two interviewees said saved cards are the main reason they abandon guest checkout; that conflicts with non-goal #2. Move saved cards into scope, or keep it out and log an open question?",
+      "forkOf": "Synthesis from interviews",
+      "question": "Three testers (P3, P6, P8) say a wrong auto-added book is why they stopped scanning. That conflicts with v1 goal 2, \"every scanned spine lands in the catalog with no extra taps\". Put auto-add behind the review step, or keep it and log an open question?",
       "options": [
-        "Move saved cards into scope",
-        "Keep it out and log an open question",
+        "Put auto-add behind the review step",
+        "Keep it and log an open question",
         "Something else"
       ],
       "document": "docs/prd-v2.md"
     },
     {
-      "name": "Results readout",
-      "project": "pricing-experiment-q4",
-      "state": "readyForReview",
-      "summary": "wrote readout.md, 1.2k words"
-    },
-    {
-      "name": "Funnel SQL",
-      "project": "onboarding-v3",
-      "state": "readyForReview",
-      "summary": "3 files"
-    },
-    {
-      "name": "Teardown research",
-      "project": "checkout-redesign",
+      "name": "Spine eval: glare cases",
+      "project": "shelf-scan",
       "state": "working",
-      "wait": "6m",
-      "summary": "Reading stripe.com/docs/checkout"
+      "wait": "9m",
+      "summary": "Running score.py on the glare subset"
     },
     {
-      "name": "Edge-case matrix",
-      "project": "refunds-api-spec",
+      "name": "Deck for Thursday",
+      "project": "shelf-scan",
+      "state": "readyForReview",
+      "summary": "team-review-oct15.pptx, 6 slides"
+    },
+    {
+      "name": "quick q: TestFlight build size",
+      "project": "shelf-scan",
+      "state": "idle",
+      "wait": "3d"
+    },
+    {
+      "name": "Old v1 notes cleanup",
+      "project": "shelf-scan",
+      "state": "idle",
+      "wait": "6d"
+    },
+    {
+      "name": "Weekly digest draft",
+      "project": "beta-feedback",
+      "state": "working",
+      "wait": "2m"
+    },
+    {
+      "name": "Tag crash reports",
+      "project": "beta-feedback",
+      "state": "needsYou",
+      "wait": "7m",
+      "question": "Allow Claude to run xcrun on crashes/*.ips?"
+    },
+    {
+      "name": "Tester emails, Oct 12",
+      "project": "beta-feedback",
+      "state": "readyForReview",
+      "summary": "Sorted 23 emails into 5 themes"
+    },
+    {
+      "name": "Freshness badge spec",
+      "project": "neighborhood-map",
       "state": "working",
       "wait": "14m",
-      "summary": "Writing tables in spec.md"
+      "summary": "Writing states in freshness.md"
     },
     {
-      "name": "Rule audit",
-      "project": "fraud-rules-review",
-      "state": "working",
-      "wait": "31m"
-    },
-    {
-      "name": "Weekly status draft",
-      "project": "home",
-      "state": "working",
-      "wait": "2m",
-      "summary": "due 4pm"
-    },
-    {
-      "name": "Interview synth",
-      "project": "checkout-redesign",
+      "name": "Map pins: stale boxes",
+      "project": "neighborhood-map",
       "state": "idle",
       "wait": "2d"
     },
     {
-      "name": "quick q about tax rules",
-      "project": "checkout-redesign",
-      "state": "idle",
-      "wait": "3d"
+      "name": "Steward welcome email",
+      "project": "steward-onboarding",
+      "state": "readyForReview",
+      "summary": "welcome-email.md, 3 variants"
+    },
+    {
+      "name": "Morning triage",
+      "project": "home",
+      "state": "needsYou",
+      "wait": "1h",
+      "question": "4 new asks: route 3 to projects?",
+      "options": [
+        "Yes, route 3",
+        "No",
+        "Something else"
+      ]
     }
   ],
-  "otherIdleSessions": 12,
+  "otherIdleSessions": 0,
   "groups": [
     {
-      "name": "PRD v2",
-      "project": "checkout-redesign",
+      "name": "Scan v2",
+      "project": "shelf-scan",
       "sessions": [
-        "Interview synth",
-        "PRD v2 edits",
-        "quick q about tax rules"
+        "Synthesis from interviews",
+        "Auto-add decision",
+        "Tighten PRD goals"
       ],
       "threads": [
         [
-          "Interview synth",
-          "PRD v2 edits"
+          "Synthesis from interviews",
+          "Auto-add decision"
         ],
         [
-          "quick q about tax rules"
+          "Tighten PRD goals"
         ]
       ]
     }
   ],
   "counts": {
     "needsYou": 3,
-    "readyForReview": 2,
+    "readyForReview": 3,
     "working": 4,
-    "idle": 14
+    "idle": 5
   },
   "homeInbox": [
     {
-      "title": "Legal wants a call re: saved cards",
-      "source": "Slack · Priya · 8:12",
-      "status": "suggested → checkout-redesign"
+      "title": "Ravi: new eval run on glare set",
+      "source": "Slack · Ravi · 8:12",
+      "status": "suggested → shelf-scan"
     },
     {
-      "title": "1:1 notes with Dana",
-      "source": "Granola · 9:00",
-      "status": "suggested → home/personal-ops"
+      "title": "Jo: can you send the deck by Wed noon?",
+      "source": "Slack · Jo · 8:40",
+      "status": "suggested → shelf-scan"
     },
     {
-      "title": "Refund SLA question",
-      "status": "routed → refunds-api-spec, session started"
+      "title": "Tester email: the scan keeps adding the wrong book",
+      "source": "Email · 8:05",
+      "status": "routed → beta-feedback, session started"
     },
     {
-      "title": "Q4 pricing numbers?",
-      "status": "routed → pricing-experiment-q4, resumed Results readout"
+      "title": "Map tile invoice, October",
+      "source": "Email · 7:52",
+      "status": "routed → neighborhood-map, resumed Map pins: stale boxes"
     },
     {
       "title": "1 duplicate, ignored"
     }
   ],
   "focusDocument": {
-    "project": "checkout-redesign",
+    "project": "shelf-scan",
     "path": "docs/prd-v2.md",
     "sections": [
       "Problem",
@@ -227,40 +261,66 @@
     "addedByClaude": [
       "What we heard"
     ],
-    "markdownFile": "prd-v2.md"
+    "markdownFile": "docs/docs/prd-v2.md"
   },
   "projectFiles": {
-    "checkout-redesign": [
+    "shelf-scan": [
       "PROJECT.md",
-      "docs/prd-v2.md"
+      "docs/prd-v2.md",
+      "docs/team-review-oct15.pptx",
+      "docs/beta-interview-synthesis.docx",
+      "prototype/scan-review.html",
+      "eval/spine-eval-2026-09-28.md",
+      "eval/results.csv",
+      "eval/score.py"
     ]
   },
+  "archivedSessions": [
+    {
+      "name": "Scan v1 launch notes",
+      "project": "shelf-scan",
+      "state": "idle",
+      "wait": "7w"
+    },
+    {
+      "name": "Interview guide",
+      "project": "shelf-scan",
+      "state": "idle",
+      "wait": "4w"
+    },
+    {
+      "name": "Map tile costs",
+      "project": "neighborhood-map",
+      "state": "idle",
+      "wait": "3w"
+    }
+  ],
   "search": {
-    "coverage": "Indexing: refunds-api-spec 212 of 340 files · sessions before Aug 12 not yet indexed",
-    "firstRun": "Building the index for the first time. Newest first: 2 of 7 projects done · sessions before Sep 20 not yet indexed.",
+    "coverage": "Indexing: neighborhood-map 118 of 164 files · sessions before Aug 12 not yet indexed",
+    "firstRun": "Building the index for the first time. Newest first: 2 of 5 projects done · sessions before Sep 20 not yet indexed.",
     "recent": [
       {
-        "query": "where did we land on saved cards",
+        "query": "where did we land on auto-add",
         "when": "today"
       },
       {
-        "query": "customers charged twice",
+        "query": "books that weren't there",
         "when": "yesterday"
       },
       {
-        "query": "ERR_REFUND_409",
+        "query": "ERR_SCAN_GLARE",
         "when": "3d"
       }
     ],
     "sendTarget": {
       "allProjects": "Morning triage",
-      "insideProject": "PRD v2 edits"
+      "insideProject": "Auto-add decision"
     },
     "queries": [
       {
-        "query": "where did we land on saved cards",
+        "query": "where did we land on auto-add",
         "mode": "meaning and words",
-        "currentProject": "checkout-redesign",
+        "currentProject": "shelf-scan",
         "screens": [
           "search-overview",
           "search-project",
@@ -273,149 +333,149 @@
         ],
         "results": [
           {
-            "project": "checkout-redesign",
+            "project": "shelf-scan",
             "kind": "file",
             "title": "docs/prd-v2.md",
-            "where": "L40–58",
+            "where": "L28–30",
             "matchedBy": [
               "meaning",
               "words"
             ],
             "date": "today",
-            "snippet": "…two interviewees said saved cards are the main reason they abandon guest checkout. Decision: keep saved cards out of v2 scope; log as open question Q3…",
+            "snippet": "…Auto-add: keep it for stewards whose scans are 95%+ accurate, or remove it until the model reaches 95%? Three testers (P3, P6, P8) stopped scanning after a wrong book…",
             "matchedWords": [
-              "saved cards"
+              "Auto-add"
             ],
             "alsoIn": [
-              "research-notes/docs/prd-v2-copy.md"
+              "research/prd-v1-goals.md"
             ],
             "passages": [
               {
-                "where": "L40–58",
-                "heading": "What we heard",
-                "snippet": "…two interviewees said saved cards are the main reason they abandon guest checkout. Decision: keep saved cards out of v2 scope; log as open question Q3…"
-              },
-              {
-                "where": "L71–73",
-                "heading": "Non-goals",
-                "snippet": "…2. Saved cards and other stored payment methods…"
-              },
-              {
-                "where": "L88–90",
+                "where": "L28–30",
                 "heading": "Open questions",
-                "snippet": "…Q3. Saved cards: in scope for a later version?…"
+                "snippet": "…Q1. Auto-add: keep it for stewards whose scans are 95%+ accurate, or remove it until the model reaches 95%?…"
+              },
+              {
+                "where": "L13–16",
+                "heading": "What we heard",
+                "snippet": "…Three of eight testers (P3, P6, P8) stopped scanning after a wrong book was added for them…"
+              },
+              {
+                "where": "L18–22",
+                "heading": "Requirements",
+                "snippet": "…Nothing is added to the catalog until the steward taps “Add”…"
               }
             ]
           },
           {
-            "project": "checkout-redesign",
+            "project": "shelf-scan",
             "kind": "session",
-            "title": "PRD v2 edits",
+            "title": "Auto-add decision",
             "where": "turn 6",
             "matchedBy": [
               "meaning"
             ],
             "date": "4m",
-            "snippet": "You: Move saved cards into scope, or keep it out and log an open question? Claude: Keeping it out is consistent with non-goal #2…"
+            "snippet": "You: Put auto-add behind the review step, or keep it and log an open question? Claude: Three testers say a wrong auto-added book is why they stopped scanning…"
           },
           {
-            "project": "checkout-redesign",
+            "project": "shelf-scan",
             "kind": "session",
-            "title": "Interview synth",
+            "title": "Synthesis from interviews",
             "where": "turn 11",
             "matchedBy": [
               "meaning"
             ],
-            "date": "2d",
-            "snippet": "…P4 and P7 both mention re-typing card details on mobile as the moment they gave up…"
+            "date": "1h",
+            "snippet": "…P3, P6 and P8 each say the same thing: after two wrong books, they stopped scanning…"
           },
           {
-            "project": "refunds-api-spec",
+            "project": "shelf-scan",
             "kind": "file",
-            "title": "docs/edge-cases.md",
-            "where": "L112–130",
+            "title": "eval/spine-eval-2026-09-28.md",
+            "where": "L44–58",
             "matchedBy": [
               "words"
             ],
-            "date": "3d",
-            "snippet": "…refunds to a saved card versus the original payment method…",
+            "date": "2w",
+            "snippet": "…auto-add stays risky until accuracy clears 95%; v1 model is at 81%…",
             "matchedWords": [
-              "saved card"
+              "auto-add"
             ]
           },
           {
             "project": null,
             "unfiled": true,
             "kind": "session",
-            "title": "quick q about card vaulting",
+            "title": "quick q: TestFlight build size",
             "where": "turn 2",
             "matchedBy": [
               "meaning"
             ],
-            "date": "3w",
-            "snippet": "…PCI scope for storing card tokens…"
+            "date": "3d",
+            "snippet": "…does the scan model ship inside the app or download after install…"
           }
         ]
       },
       {
-        "query": "customers charged twice",
+        "query": "books that weren't there",
         "mode": "meaning and words",
         "screens": [
           "search-none (with Kind: Memory and Date: Past week set, which hide all three)"
         ],
         "results": [
           {
-            "project": "refunds-api-spec",
+            "project": "shelf-scan",
             "kind": "file",
-            "title": "data/tickets.jsonl",
-            "where": "record 418",
-            "snippet": "duplicate billing after retry, two captures on one order"
+            "title": "research/feedback/denise-p3.txt",
+            "where": "L4–12",
+            "snippet": "a neighbour walked over for Persuasion and it wasn't in the box"
           },
           {
-            "project": "refunds-api-spec",
+            "project": "shelf-scan",
             "kind": "session",
-            "title": "Edge-case matrix",
+            "title": "Synthesis from interviews",
             "where": "turn 3"
           },
           {
-            "project": "fraud-rules-review",
+            "project": "beta-feedback",
             "kind": "file",
-            "title": "notes/velocity-rules.md",
+            "title": "digests/2026-10-05.md",
             "where": "L9–20"
           }
         ]
       },
       {
-        "query": "ERR_REFUND_409",
+        "query": "ERR_SCAN_GLARE",
         "mode": "exact",
         "screens": [
           "search-exact"
         ],
         "results": [
           {
-            "project": "refunds-api-spec",
+            "project": "shelf-scan",
             "kind": "file",
-            "title": "spec/errors.md",
-            "where": "L77",
+            "title": "eval/score.py",
+            "where": "L52",
             "matchedBy": [
               "exact"
             ],
             "date": "5d"
           },
           {
-            "project": "refunds-api-spec",
+            "project": "shelf-scan",
             "kind": "session",
-            "title": "Edge-case matrix",
+            "title": "Spine eval: glare cases",
             "where": "turn 9",
             "matchedBy": [
               "exact"
             ],
-            "date": "14m"
+            "date": "9m"
           },
           {
-            "project": "api-deprecations",
+            "project": "beta-feedback",
             "kind": "file",
-            "title": "comms/v1-sunset.md",
+            "title": "crashes/triage.md",
             "where": "L31",
             "matchedBy": [
               "exact"
@@ -427,59 +487,59 @@
     ],
     "similar": {
       "source": {
-        "project": "checkout-redesign",
+        "project": "shelf-scan",
         "kind": "file",
         "title": "docs/prd-v2.md",
-        "where": "L40–58"
+        "where": "L28–30"
       },
-      "returnsTo": "where did we land on saved cards",
+      "returnsTo": "where did we land on auto-add",
       "results": "results 2 to 5 of that query, in the same order",
       "screens": [
         "search-similar"
       ]
     },
     "jump": {
-      "query": "prd",
+      "query": "auto",
       "screens": [
         "search-jump"
       ],
       "results": [
         {
           "kind": "group",
-          "title": "PRD v2",
-          "project": "checkout-redesign",
+          "title": "Scan v2",
+          "project": "shelf-scan",
           "sessions": 3,
           "state": "needsYou",
           "wait": "4m"
         },
         {
           "kind": "session",
-          "title": "PRD v2 edits",
-          "project": "checkout-redesign",
+          "title": "Auto-add decision",
+          "project": "shelf-scan",
           "state": "needsYou",
           "wait": "4m"
         }
       ],
       "always": [
-        "New project “prd”",
-        "Search contents for “prd”"
+        "New project “auto”",
+        "Search contents for “auto”"
       ]
     },
     "archivedExample": {
-      "project": "checkout-redesign",
+      "project": "shelf-scan",
       "kind": "session",
-      "title": "Kickoff deck notes",
+      "title": "Scan v1 launch notes",
       "where": "turn 4",
       "matchedBy": [
         "words"
       ],
-      "date": "4mo",
+      "date": "7w",
       "archived": true,
-      "snippet": "…saved cards came up once in kickoff and was parked…"
+      "snippet": "…auto-add came up once at launch and was kept so a first scan feels instant…"
     },
     "$additions": [
-      "search.queries[0].results[0].passages (count 3, and the L71–73 and L88–90 passages)",
-      "dates on the ERR_REFUND_409 results",
+      "search.queries[0].results[0].passages (count 3, and the L13–16 and L18–22 passages)",
+      "dates on the ERR_SCAN_GLARE results",
       "search.recent",
       "search.firstRun",
       "search.archivedExample (used only on the sheet)",
@@ -489,44 +549,27 @@
   "surfaces": {
     "$note": "Sample data the surfaces screens add to the fixture's world. Not a schema. Grows with each slice.",
     "$additions": [
-      "Twelve named idle sessions (the fixture said only '12 more idle')",
+      "Named idle sessions (live idle plus archived)",
       "idleMany: a larger set for the long list",
-      "consoleStates and shells: what the DB-3 and DB-4 screens show",
-      "api-deprecations gains two files and two idle sessions"
+      "consoleStates and shells: what the DB-3 and DB-4 screens show"
     ],
     "idleSessions": {
       "$surface": "DB-1",
-      "count": 14,
+      "count": 8,
       "buckets": [
         {
           "label": "This week",
           "sessions": [
             {
-              "name": "Error catalogue",
-              "project": "refunds-api-spec",
-              "age": "1d"
+              "name": "Map pins: stale boxes",
+              "project": "neighborhood-map",
+              "age": "2d"
             },
             {
-              "name": "Interview synth",
-              "project": "checkout-redesign",
-              "age": "2d",
-              "group": "PRD v2"
-            },
-            {
-              "name": "quick q about tax rules",
-              "project": "checkout-redesign",
+              "name": "quick q: TestFlight build size",
+              "project": "shelf-scan",
               "age": "3d",
-              "group": "PRD v2"
-            },
-            {
-              "name": "Monday triage",
-              "project": "home",
-              "age": "3d"
-            },
-            {
-              "name": "SLA wording",
-              "project": "refunds-api-spec",
-              "age": "4d"
+              "group": "Scan v2"
             }
           ]
         },
@@ -534,29 +577,9 @@
           "label": "Last week",
           "sessions": [
             {
-              "name": "Copy review pass 1",
-              "project": "onboarding-v3",
-              "age": "5d"
-            },
-            {
-              "name": "Variant sizing",
-              "project": "pricing-experiment-q4",
+              "name": "Old v1 notes cleanup",
+              "project": "shelf-scan",
               "age": "6d"
-            },
-            {
-              "name": "Velocity rules notes",
-              "project": "fraud-rules-review",
-              "age": "7d"
-            },
-            {
-              "name": "Activation metric check",
-              "project": "onboarding-v3",
-              "age": "8d"
-            },
-            {
-              "name": "Readout outline",
-              "project": "pricing-experiment-q4",
-              "age": "9d"
             }
           ]
         },
@@ -564,25 +587,21 @@
           "label": "Earlier",
           "sessions": [
             {
-              "name": "v1 sunset comms",
-              "project": "api-deprecations",
-              "age": "12d"
+              "name": "Map tile costs",
+              "project": "neighborhood-map",
+              "age": "3w",
+              "archived": true
             },
             {
-              "name": "Customer list pull",
-              "project": "api-deprecations",
-              "age": "2w"
+              "name": "Interview guide",
+              "project": "shelf-scan",
+              "age": "4w",
+              "archived": true
             },
             {
-              "name": "quick q about card vaulting",
-              "project": null,
-              "unfiled": true,
-              "age": "3w"
-            },
-            {
-              "name": "Kickoff deck notes",
-              "project": "checkout-redesign",
-              "age": "4mo",
+              "name": "Scan v1 launch notes",
+              "project": "shelf-scan",
+              "age": "7w",
               "archived": true
             }
           ]
@@ -605,19 +624,19 @@
       "laterBuckets": "by month: September, August, …",
       "awkwardRows": [
         {
-          "name": "Synthesis of the eleven customer interviews about guest checkout and saved cards, second pass",
-          "project": "checkout-redesign",
+          "name": "Synthesis of the eight beta interviews about wrong books, auto-add and glass-door glare, second pass",
+          "project": "shelf-scan",
           "age": "1d",
           "why": "a title too long for its row"
         },
         {
-          "name": "Refund policy rewrite",
-          "project": "refunds-api-spec",
+          "name": "Steward handbook rewrite",
+          "project": "steward-onboarding",
           "openIn": "Terminal",
           "why": "live outside Duo, so not resumable (LR-8)"
         },
         {
-          "name": "scratch notes on webhooks",
+          "name": "scratch notes on TestFlight groups",
           "project": null,
           "unfiled": true,
           "age": "3d",
@@ -625,60 +644,60 @@
         }
       ],
       "otherRows": [
-        "Deprecation FAQ draft · api-deprecations · 4d",
-        "Chargeback rule 14 review · fraud-rules-review · 9d",
+        "Crash log patterns · beta-feedback · 4d",
+        "Box freshness thresholds · neighborhood-map · 9d",
         "Friday triage · home · 9d"
       ]
     },
     "consoleStates": {
       "$surface": "DB-3",
       "none": {
-        "project": "api-deprecations",
-        "lastSession": "v1 sunset comms",
+        "project": "steward-onboarding",
+        "lastSession": "Steward welcome email",
         "files": [
           "PROJECT.md",
-          "comms/v1-sunset.md"
+          "welcome-email.md"
         ],
-        "path": "~/work/platform/api-deprecations",
+        "path": "~/work/little-shared-library/steward-onboarding",
         "needYouElsewhere": 3
       },
       "ended": {
-        "project": "checkout-redesign",
-        "session": "Teardown research",
-        "at": "10:42",
+        "project": "shelf-scan",
+        "session": "Spine eval: glare cases",
+        "at": "09:12",
         "crashVariant": "exit 1"
       },
       "elsewhere": {
-        "session": "PRD v2 edits",
+        "session": "Auto-add decision",
         "app": "Terminal",
-        "since": "9:12"
+        "since": "8:55"
       },
       "folderMissing": {
-        "path": "~/work/payments/refunds-api-spec",
-        "nearest": "~/work/payments"
+        "path": "~/work/little-shared-library/neighborhood-map",
+        "nearest": "~/work/little-shared-library"
       },
       "homeNone": {
         "counts": {
           "needsYou": 2,
-          "readyForReview": 2,
-          "working": 3,
-          "idle": 16
+          "readyForReview": 3,
+          "working": 4,
+          "idle": 6
         },
-        "why": "Morning triage and Weekly status draft are closed, so they count as idle and the Home pointer card is gone"
+        "why": "Morning triage is closed, so it counts as idle and the Home pointer card is gone"
       }
     },
     "shells": {
       "$surface": "DB-4",
-      "project": "checkout-redesign",
+      "project": "shelf-scan",
       "tabs": [
         {
           "kind": "session",
-          "name": "PRD v2 edits",
+          "name": "Auto-add decision",
           "state": "needsYou"
         },
         {
           "kind": "session",
-          "name": "Teardown research",
+          "name": "Spine eval: glare cases",
           "state": "working"
         },
         {
@@ -688,7 +707,7 @@
         },
         {
           "kind": "shell",
-          "name": "./export-funnel.sh",
+          "name": "python3 eval/score.py",
           "running": true
         }
       ],
@@ -696,20 +715,20 @@
         "git status",
         "ls"
       ],
-      "untrackedFile": "docs/teardown-notes.md",
+      "untrackedFile": "docs/glare-notes.md",
       "promoted": {
         "before": "claude",
         "after": "New session"
       },
       "failed": {
-        "name": "./export-funnel.sh",
+        "name": "python3 eval/score.py",
         "exit": 1
       },
       "narrow": {
         "window": "1280x800",
         "visible": [
-          "PRD v2 edits",
-          "Teardown research",
+          "Auto-add decision",
+          "Spine eval: glare cases",
           "zsh"
         ],
         "hidden": 2

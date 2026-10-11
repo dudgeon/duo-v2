@@ -1,53 +1,399 @@
 {
-  "$note": "The sample documents the intro video shows, in the checkout-redesign project. S1 draws them in third-party windows; S2 opens the real files as Duo editor tabs. Both read this, so they always match. Sample data only.",
-  "project": "checkout-redesign",
-  "folder": "~/work/payments/checkout-redesign",
-  "markdown": {"file": "docs/prd-v2.md", "source": "../prd-v2.md"},
+  "$note": "The sample documents the intro video shows, in the shelf-scan project of the Little Shared Library demo world (../world.json, ../SCENARIO.md). S1 draws them in third-party windows; S2 opens the real files as Duo editor tabs. Both read this, so they always match. Written by make-docs.py. Sample data only.",
+  "project": "shelf-scan",
+  "folder": "~/work/little-shared-library/shelf-scan",
+  "markdown": {
+    "file": "docs/prd-v2.md",
+    "source": "docs/prd-v2.md"
+  },
   "prototype": {
-    "file": "prototype/checkout.html",
-    "title": "Checkout — Guest",
-    "brand": "Northwind Supply",
-    "steps": ["Cart", "Details", "Payment", "Review"],
-    "activeStep": 1,
-    "express": ["Apple Pay", "Google Pay", "PayPal"],
-    "fields": ["Email", "Full name", "Address", "City", "Postcode", "Country"],
-    "items": [
-      {"name": "Merino crew sweater", "variant": "Charcoal · M", "qty": 1, "price": 98.0},
-      {"name": "Canvas weekender", "variant": "Olive", "qty": 1, "price": 145.0},
-      {"name": "Wool socks, 3-pack", "variant": "Mixed", "qty": 2, "price": 24.0}
+    "file": "prototype/scan-review.html",
+    "title": "Scan review — Little Shared Library",
+    "box": "Elm Park box",
+    "found": 14,
+    "needLook": 2,
+    "spines": [
+      {
+        "title": "Middlemarch",
+        "ok": true
+      },
+      {
+        "title": "The Lantern Keeper",
+        "ok": true
+      },
+      {
+        "title": "Little Women",
+        "ok": true
+      },
+      {
+        "title": "Salt Roads",
+        "ok": true
+      },
+      {
+        "title": "Moby-Dick",
+        "ok": true
+      },
+      {
+        "title": "A Field Guide to Small Birds",
+        "ok": true
+      },
+      {
+        "title": "Persuasion",
+        "ok": false,
+        "read": "Pervasion",
+        "why": "Glare"
+      },
+      {
+        "title": "Bleak House",
+        "ok": true
+      },
+      {
+        "title": "The Secret Garden",
+        "ok": true
+      },
+      {
+        "title": "Winter at Halloway",
+        "ok": true
+      },
+      {
+        "title": "Jane Eyre",
+        "ok": true
+      },
+      {
+        "title": "Ninety Bridges",
+        "ok": false,
+        "read": "Ninety Brides",
+        "why": "Thin spine"
+      },
+      {
+        "title": "Treasure Island",
+        "ok": true
+      },
+      {
+        "title": "Emma",
+        "ok": true
+      }
     ],
-    "shipping": 0,
-    "taxRate": 0.08,
-    "cta": "Continue to payment",
-    "trust": "Guest checkout · no account needed"
+    "cta": "Add 14 books to Elm Park box"
   },
   "deck": {
-    "file": "docs/exec-review-oct14.pptx",
+    "file": "docs/team-review-oct15.pptx",
     "slides": [
-      {"title": "Guest checkout: exec review", "subtitle": "checkout-redesign · Oct 14", "kind": "title"},
-      {"title": "Abandonment is highest at account creation", "kind": "chart",
-        "chart": {"label": "Drop-off by step (%)", "bars": [["Cart", 12], ["Account", 38], ["Shipping", 14], ["Payment", 9]]},
-        "note": "38% of guests leave when asked to make an account"},
-      {"title": "Proposal: one-page guest checkout", "kind": "bullets",
-        "bullets": ["No account until after purchase", "Express pay above the fold", "Saved cards for returning guests"]},
-      {"title": "Target: −15% abandonment by Q1", "kind": "bullets",
-        "bullets": ["A/B test from Nov 4", "Readout Dec 9", "Full rollout Jan 13"]}
+      {
+        "title": "Shelf scan v2",
+        "subtitle": "Team review · Thu Oct 15 · Sam",
+        "kind": "title"
+      },
+      {
+        "title": "Where scans go wrong",
+        "kind": "chart",
+        "chart": {
+          "label": "Share of 236 wrong reads (%)",
+          "bars": [
+            [
+              "Tilted",
+              34
+            ],
+            [
+              "Glare",
+              27
+            ],
+            [
+              "Thin spines",
+              21
+            ],
+            [
+              "Stacked",
+              12
+            ],
+            [
+              "Other",
+              6
+            ]
+          ]
+        },
+        "note": "81% of spines read right; every miss lands in the catalog"
+      },
+      {
+        "title": "What we heard from testers",
+        "kind": "quotes",
+        "quotes": [
+          "“My own box has a book on it that isn’t there.” Denise, P3",
+          "“Two wrong books and I stopped.” Owen, P8"
+        ],
+        "stat": "46 of 148",
+        "statNote": "testers who saw a wrong book stopped scanning"
+      },
+      {
+        "title": "Proposal: review before add",
+        "kind": "bullets",
+        "bullets": [
+          "Show every spine the scan found",
+          "Flag the ones the model is unsure of",
+          "Fix a miss in one tap",
+          "Nothing is added until you tap “Add”",
+          "Warn about glare before the photo"
+        ]
+      },
+      {
+        "title": "Targets",
+        "kind": "table",
+        "rows": [
+          [
+            "Scans that end with a saved shelf",
+            "64%",
+            "80%"
+          ],
+          [
+            "Wrong books in the catalog",
+            "19%",
+            "under 3%"
+          ],
+          [
+            "Median time to review a shelf",
+            "—",
+            "20 s"
+          ]
+        ],
+        "head": [
+          "Metric",
+          "Today",
+          "Target"
+        ]
+      },
+      {
+        "title": "Decision for Thursday",
+        "kind": "bullets",
+        "bullets": [
+          "Auto-add: keep it for stewards at 95%+, or remove it until the model gets there?",
+          "Scan v2 into the November build",
+          "Target: TestFlight Nov 2"
+        ]
+      }
     ]
   },
   "doc": {
-    "file": "docs/interview-synthesis.docx",
-    "title": "Guest checkout: interview synthesis",
-    "byline": "Research · 6 interviews · Sep 2026",
+    "file": "docs/beta-interview-synthesis.docx",
+    "title": "Shelf scan beta: interview synthesis",
+    "byline": "Sam · 8 interviews · Sep 14–25, 2026",
+    "pull": {
+      "quote": "“The glass door throws the afternoon sun straight back at the camera. Then my own box has a book on it that isn’t there.”",
+      "who": "Denise (P3), steward, Linden Street box"
+    },
     "sections": [
-      {"heading": "Summary", "body": "Five of six shoppers abandoned a checkout in the last month because it asked them to create an account. Most would have finished as a guest."},
-      {"heading": "What we heard", "quotes": ["\"I'm not typing a card number on my phone again.\" (P2)", "\"If it wants a password, I'm gone.\" (P5)"]},
-      {"heading": "Themes", "bullets": ["Account creation feels like a trap", "Card entry on mobile is the slowest step", "Express pay builds trust when it's offered first"]},
-      {"heading": "Recommendations", "body": "Move account creation after purchase, lead with express pay, and remember cards for returning guests."}
+      {
+        "heading": "Summary",
+        "body": "We talked to eight beta testers about shelf scan v1. Three of them (P3, P6, P8) stopped scanning after a wrong book was added to the catalog for them. Everyone liked the speed; nobody liked finding out later that a book on the shelf was not on the shelf."
+      },
+      {
+        "heading": "What we heard",
+        "quotes": [
+          "“I scanned the Linden Street box and it put in Pervasive Games. We have never had that book.” (P3, Denise)",
+          "“Two wrong books and I stopped. I don’t have time to audit it.” (P8, Owen)",
+          "“If it showed me the list first I’d tap through it on the train.” (P1, Aisha)",
+          "“The skinny paperbacks are always the ones it gets wrong.” (P6, Hal)"
+        ]
+      },
+      {
+        "heading": "Themes",
+        "bullets": [
+          "A wrong book costs trust fast (P3, P6, P8)",
+          "Glare from glass doors makes scanning unreliable (P3, P2)",
+          "Testers want to check the list before it is saved (P1, P4, P7)",
+          "Fixing a miss must take one tap (P4, P5, P7)"
+        ]
+      },
+      {
+        "heading": "Recommendations",
+        "body": "Add a review step: show every spine found, flag the unsure ones, fix a miss in one tap, and add nothing until the steward taps Add. Warn about glare before the photo. Keep auto-add off until accuracy reaches 95%."
+      }
     ]
   },
   "terminals": [
-    {"session": "Tighten PRD goals", "cwd": "~/work/payments/checkout-redesign"},
-    {"session": "Prototype express pay", "cwd": "~/work/payments/checkout-redesign/prototype"},
-    {"session": "Synthesis from interviews", "cwd": "~/work/payments/checkout-redesign/research"}
-  ]
+    {
+      "session": "Tighten PRD goals",
+      "cwd": "~/work/little-shared-library/shelf-scan"
+    },
+    {
+      "session": "Prototype scan review",
+      "cwd": "~/work/little-shared-library/shelf-scan/prototype"
+    },
+    {
+      "session": "Synthesis from interviews",
+      "cwd": "~/work/little-shared-library/shelf-scan/research"
+    }
+  ],
+  "desk": {
+    "finder": {
+      "parent": "little-shared-library",
+      "hero": "shelf-scan",
+      "folders": [
+        [
+          "beta-feedback",
+          "Yesterday"
+        ],
+        [
+          "neighborhood-map",
+          "Oct 9"
+        ],
+        [
+          "press-kit",
+          "Aug 30"
+        ],
+        [
+          "seed-deck",
+          "Jun 12"
+        ],
+        [
+          "shelf-scan",
+          "Today"
+        ],
+        [
+          "steward-onboarding",
+          "Oct 2"
+        ]
+      ]
+    },
+    "terms": {
+      "term1": [
+        {
+          "k": "box",
+          "cwd": "/Users/sam/work/little-shared-library/shelf-scan"
+        },
+        {
+          "k": "user",
+          "text": "tighten the goals in docs/prd-v2.md, make each one measurable"
+        },
+        {
+          "k": "tool",
+          "name": "Update",
+          "arg": "docs/prd-v2.md"
+        },
+        {
+          "k": "out",
+          "text": "Updated docs/prd-v2.md with 3 additions and 2 removals"
+        },
+        {
+          "k": "diff",
+          "n": 8,
+          "sign": " ",
+          "text": "## Goals"
+        },
+        {
+          "k": "diff",
+          "n": 9,
+          "sign": "-",
+          "text": "1. Make the catalog more accurate."
+        },
+        {
+          "k": "diff",
+          "n": 10,
+          "sign": "-",
+          "text": "2. Get more scans saved. Make review quick."
+        },
+        {
+          "k": "diff",
+          "n": 9,
+          "sign": "+",
+          "text": "1. Fewer than 3% wrong books in the catalog (19% today)."
+        },
+        {
+          "k": "diff",
+          "n": 10,
+          "sign": "+",
+          "text": "2. 80% of scans end with a saved shelf (64% today)."
+        },
+        {
+          "k": "diff",
+          "n": 11,
+          "sign": "+",
+          "text": "3. A steward reviews a 14-book shelf in under 20 seconds."
+        },
+        {
+          "k": "say",
+          "text": "Each goal now has a number and today’s baseline."
+        }
+      ],
+      "term2": [
+        {
+          "k": "box",
+          "cwd": "/Users/sam/work/little-shared-library/shelf-scan/prototype"
+        },
+        {
+          "k": "user",
+          "text": "flag unsure spines with an amber outline and a \"Fix\" chip in prototype/scan-review.html"
+        },
+        {
+          "k": "tool",
+          "name": "Read",
+          "arg": "scan-review.html"
+        },
+        {
+          "k": "tool",
+          "name": "Update",
+          "arg": "scan-review.html"
+        },
+        {
+          "k": "out",
+          "text": "Updated scan-review.html with 5 additions"
+        },
+        {
+          "k": "diff",
+          "n": 83,
+          "sign": "+",
+          "text": "  .summary h3 .need { color: var(--amber); }"
+        },
+        {
+          "k": "diff",
+          "n": 86,
+          "sign": "+",
+          "text": "  .sec.warn { color: var(--amber); }"
+        },
+        {
+          "k": "diff",
+          "n": 109,
+          "sign": "+",
+          "text": "  .rc.lowish { color: var(--amber); }"
+        },
+        {
+          "k": "diff",
+          "n": 113,
+          "sign": "+",
+          "text": "  .flag .cover { width: 28px; height: 38px; }"
+        },
+        {
+          "k": "diff",
+          "n": 160,
+          "sign": "+",
+          "text": "          <div class=\"sec warn\">Needs a look <small>2</small></div>"
+        },
+        {
+          "k": "say",
+          "text": "Two spines are flagged. Tap Fix to pick the right title."
+        }
+      ]
+    },
+    "zsh": {
+      "user": "sam",
+      "host": "Sams-MacBook-Pro",
+      "lastLogin": "Last login: Tue Oct 13 09:12:44 on ttys002",
+      "wrongCd": "cd ~/work/litle-shared-library/shelfscan",
+      "rightCd": "cd ~/work/little-shared-library/shelf-scan"
+    },
+    "clock": "Tue 9:41",
+    "url": "localhost:3000/scan-review",
+    "prd": [
+      "# Shelf scan v2: PRD",
+      "",
+      "Sam · Oct 13, 2026 · for the team review on Thu Oct 15",
+      "",
+      "## Problem",
+      "Shelf scan reads about four spines in five correctly, and v1 adds every spine it reads to the catalog. So one book in five on a scanned shelf is wrong. Neighbours walk to a box for a book that isn't there, and stewards stop trusting the scan.",
+      "",
+      "## Goals",
+      "1. Fewer than 3% wrong books in the catalog (19% today).",
+      "2. 80% of scans end with a saved shelf (64% today).",
+      "3. A steward reviews a 14-book shelf in under 20 seconds."
+    ]
+  }
 }
