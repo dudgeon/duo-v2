@@ -18,7 +18,7 @@ def diff(*rows):
     return out
 SHELF = "~/work/little-shared-library/shelf-scan"
 screens = {
-"tighten-prd.ans": header(SHELF) + you("Tighten the goals in docs/prd-v2.md: one measurable goal first, and drop anything that is really a requirement.")
+"tighten-prd.ans": header(SHELF) + you("Tighten the goals in docs/prd-v2.md: make each one measurable.")
   + tool("Read", "docs/prd-v2.md", "Read 30 lines")
   + say("The goals mix an outcome with a requirement. I'll lead with the wrong-books metric and move", "\"fix a miss in one tap\" down to Requirements, where it already lives.")
   + tool("Update", "docs/prd-v2.md", "Updated docs/prd-v2.md with 5 additions and 3 removals") + diff(
