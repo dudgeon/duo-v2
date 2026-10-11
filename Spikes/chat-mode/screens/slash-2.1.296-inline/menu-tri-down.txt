@@ -1,0 +1,15 @@
+ ▐▛███▛█   Claude Code v2.1.296
+▝▜██████▀  Haiku 5.5 · API Usage Billing
+ ▝▝   ▝▝   ~/scratch/ws
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ /tri
+────────────────────────────────────────────────────────────────────────────────────────────────────
+    /triage-feedback            Sort tester feedback into bugs, requests and questions (project)
+  ❯ /claude-api                 Reference for the Claude API / Anthropic SDK — model ids, pricing,
+                                params, streaming, tool use, MCP, agents, caching, token counting…
+    /dataviz                    Use this skill whenever you are about to create ANY chart, graph,
+                                plot, dashboard, or data visualization, in ANY output medium — an…
+    /doctor                     Health-check the user's Claude Code setup and fix issues: diagnose
+                                installation health — what the `claude doctor` terminal diagnosti…

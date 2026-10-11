@@ -106,4 +106,9 @@ menu = "\n".join(f"  {c}{n:<28}{d}" for c, n, d in rows)
 screen = "\n" * 20 + menu + f"\n{rule}\n❯ /de \n{rule}\n  ⏸ manual mode on\n"
 r = Rec()
 r.write("menu", {"now": iso("11:30"), "drafts": {"composer": "/de"}, "focusComposer": True}, screen)
+
+# menu-below: 2.1.296's inline renderer (`tui: default`) draws the menu under the box, indented (F-284). Its real screen.
+r = Rec()
+r.write("menu-below", {"now": iso("11:30"), "drafts": {"composer": "/tri"}, "focusComposer": True},
+        (root / "Spikes/chat-mode/screens/slash-2.1.296-inline/menu-tri.txt").read_text())
 print(out)
