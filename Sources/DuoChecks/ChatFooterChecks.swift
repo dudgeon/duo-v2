@@ -45,6 +45,12 @@ private func footerScreen(mods: Int, mode: String, busy: Bool, menu: [String] = 
           "2.1.219's `/` menu below the box: its rows are not the mode or the busy row, and still list as commands (\(String(describing: m.mode)) \(m.kind))")
     let mm = ChatScreenReader.read(footerScreen(mods: 2, mode: "⏸ manual mode on", busy: true, menu: menu))
     check(mm.mode == .manual && mm.kind == .busy, "the menu open under two status lines and a busy mode row: still manual and busy")
+    // 2.1.296's inline renderer draws it there too, indented, `❯` on the selected row (F-284).
+    let indented = ["  ❯ /plan                       plan mode on, esc to interrupt", "    /auto                       auto mode on",
+                    "    /permissions                bypass permissions on", "                                accept edits on"]
+    let mi = ChatScreenReader.read(footerScreen(mods: 0, mode: "⏸ manual mode on", busy: false, menu: indented))
+    check(mi.mode == .manual && mi.kind == .idle && mi.commands.map(\.name) == ["/plan", "/auto", "/permissions"] && mi.commands.first?.selected == true,
+          "2.1.296's indented `/` menu below the box: its rows are not the mode or the busy row, and list as commands (\(String(describing: mi.mode)) \(mi.kind))")
     // Without a mode row the menu must not invent one.
     var bare = footerScreen(mods: 0, mode: "x", busy: false, menu: menu).components(separatedBy: "\n")
     bare.remove(at: 7)

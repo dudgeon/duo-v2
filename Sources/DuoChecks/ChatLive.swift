@@ -99,6 +99,11 @@ struct AskCase {
         let dir = "/tmp/duo-chat-live-\(size.0)x\(size.1)"
         try? FileManager.default.removeItem(atPath: dir)
         _ = run("/bin/zsh", [spike.appending(path: "scratch.sh").path, dir])
+        // DUO_CHAT_LIVE_TUI=default|fullscreen: Claude Code's renderer (2.1.296); they draw the `/` menu in different places (F-284).
+        if let tui = ProcessInfo.processInfo.environment["DUO_CHAT_LIVE_TUI"], !tui.isEmpty {
+            try? "{\"tui\": \"\(tui)\"}\n".write(toFile: dir + "/cfg/settings.json", atomically: true, encoding: .utf8)
+            print("    tui: \(tui)")
+        }
         // A free port of its own: other sessions run the spike's mock on 8765 (seen while testing).
         let port = freePort() ?? (18765 + i)
         let mock = Process()
@@ -306,6 +311,9 @@ struct AskCase {
     _ = until(5) { !chat.reread().commands.isEmpty }
     let cmds = chat.screen.commands.map(\.name)
     check(cmds.contains("/model"), "`/` shows Claude Code's own commands, filtered as typed (\(cmds.prefix(4)))")
+    if let v = version.flatMap(ChatVersion.init), v >= ChatVersion("2.1.292")! {   // 2.1.219 marks the selected row by colour only (F-274)
+        check(chat.selectedCommand != nil && chat.screen.mode != nil, "its selected row, and the mode chip kept while the menu is up (\(chat.selectedCommand ?? "none"))")
+    }
     _ = await_ { await chat.mirrorSlash("") }
     spin(0.4)
     check(chat.reread().input == "", "leaving `/` clears what it typed into Claude's prompt")
