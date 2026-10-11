@@ -72,10 +72,15 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
   };
   const first = cap(shot.states[0]);
   const data = {window: {w: first.widthPt, h: first.heightPt}, scale: style.capture.scale, src: {}, panes: {}, steps: [], clicks: [], drags: [], cams: [], marks: [], menus: [], ends: []};
-  for (const id of ['video.pane.left', 'video.pane.middle', 'video.pane.right']) {
-    const e = (first.anchors?.anchors ?? []).find((x) => x.identifier === id);
-    if (e) data.panes[id.split('.').pop()] = {x: e.frame.x, y: e.frame.y, w: e.frame.width, h: e.frame.height};
-  }
+  const paneRects = (c) => {
+    const out = {};
+    for (const id of ['video.pane.left', 'video.pane.middle', 'video.pane.right']) {
+      const e = (c.anchors?.anchors ?? []).find((x) => x.identifier === id);
+      if (e) out[id.split('.').pop()] = {x: e.frame.x, y: e.frame.y, w: e.frame.width, h: e.frame.height};
+    }
+    return out;
+  };
+  data.panes = paneRects(first);
   const use = (st) => { data.src[st] = cap(st).src; return st; };
   let state;
   // The way in: from the scene before's last picture, the click that brings this scene's first state.
@@ -92,7 +97,8 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
     data.cams.push({at: tr.click - 0.15, dur: tr.click - 0.15, rect: en.view ? anchorRect(cap(base), en.view, base, scene.id) : null});
     data.clicks.push({at: tr.click, ...centre(target)});
     const at = tr.click + 0.1;
-    data.entry = {base, panes, until: at};
+    // The panes are cut where they stand in the base picture (its layout), not in this scene's first state.
+    data.entry = {base, panes, until: at, rects: paneRects(cap(base))};
     state = use(shot.states[0]);
     data.steps.push({at: 0, state});
     events.entry = at;
@@ -132,7 +138,7 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
       }
       data.clicks.push({at, ...p, right: true});
     }
-    if (b.mark) data.marks.push({at, until: at + (b.hold ?? 2.2), rect: rect(b.mark), quote: b.quote});
+    if (b.mark) data.marks.push({at, until: at + (b.hold ?? 2.2), rect: camRect(b.mark), quote: b.quote});
     if (b.state) { state = use(b.state); data.steps.push({at: +(at + (b.stateAfter ?? 0.1)).toFixed(3), state}); }
     data.ends.push(at + (b.hold ?? 0.6));
     last = at;
@@ -168,13 +174,14 @@ export function plan({scenes, shots, voiced, captures, style}) {
     }
     const lines = [];
     let t = shot.leadIn ?? style.voice.leadIn; // a shot that opens on picture alone (S0's logo build) waits longer
-    for (const l of scene.lines) {
+    // `pauses` {"2": 1.8}: extra seconds of picture after a line, for beats the voice doesn't name (a turn arriving).
+    scene.lines.forEach((l, i) => {
       const v = byId.get(l.id);
       lines.push({...v, start: +t.toFixed(3)});
-      t += v.duration + style.voice.gap;
-    }
-    let end = Math.max(t + style.voice.tail, style.voice.minScene);
-    const s = {id: scene.id, title: scene.title, kind: shot.kind, start: 0, duration: 0, lines};
+      t += v.duration + style.voice.gap + (shot.pauses?.[i + 1] ?? 0);
+    });
+    let end = Math.max(t + (shot.tail ?? style.voice.tail), style.voice.minScene);
+    const s = {id: scene.id, title: scene.title, topic: scene.topic ?? null, kind: shot.kind, start: 0, duration: 0, lines};
     if (shot.kind === 'card') {
       Object.assign(s, {card: {title: shot.title, sub: shot.sub, standIn: !!shot.standIn}});
     } else if (shot.kind === 'desk') {

@@ -30,6 +30,13 @@ export function voiceLines(lines, {here, cache, pub, style, force = false, log})
     writeFileSync(job, JSON.stringify({lines: todo.map((l) => ({id: l.key, text: l.said, expect: l.text, seed})),
       voice: {...voice, ref_wav: join(dir, voice.ref_wav)}, out_dir: out}));
     if (run('tts.py', job).status !== 0) throw new BuildError('voice: tts.py failed');
+    // The house voice's pace (voice.json `tempo`, Geoff 2026-10-11: "even quicker, say 10%"): atempo alone, so
+    // the pitch is unchanged; applied before the speech check, which then judges the line at the pace it's heard.
+    if (voice.tempo && voice.tempo !== 1) for (const l of todo) {
+      const wav = join(out, `${l.key}.wav`), raw = join(out, `${l.key}.raw.wav`);
+      copyFileSync(wav, raw);
+      if (spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', raw, '-filter:a', `atempo=${voice.tempo}`, wav]).status !== 0) throw new BuildError(`voice: tempo ${voice.tempo} failed on ${l.id}`);
+    }
     run('asr_check.py', out, ...todo.map((l) => l.key));
     failures = [];
     for (const l of todo) {

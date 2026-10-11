@@ -10,10 +10,11 @@ import {LogoScene} from './Logo';
 import {MorphScene, type MorphData} from './Morph';
 import {AppScene, type AppData} from './App';
 import type {Ground} from '../lib/Desk';
+import {PaperGround, TopicRail, pictureTransform, topicChanges, topicsAt} from '../lib/Topics';
 
 type Line = {id: string; text: string; src: string; start: number; duration: number};
 type Scene = {
-  id: string; title: string; kind: 'desk' | 'card' | 'drawn'; start: number; duration: number; lines: Line[];
+  id: string; title: string; topic?: string | null; kind: 'desk' | 'card' | 'drawn'; start: number; duration: number; lines: Line[];
   card?: {title: string; sub: string; standIn: boolean};
   capture?: {src: string; scale: number}; desk?: DeskLayout; camera?: Key[]; appear?: boolean;
   drawn?: {scene: 'desk' | 'many' | 'turn' | 'logo' | 'morph' | 'app'; events: ClutterEvents};
@@ -72,19 +73,26 @@ const SceneView = ({scene, fade}: {scene: Scene; fade: number}) => {
 };
 
 export const Film = ({timeline}: {timeline: FilmTimeline | null}) => {
+  const frame = useCurrentFrame();
   if (!timeline) return null;
   const {fps, fade} = timeline;
+  const {topics, changes} = topicChanges(timeline.scenes);
+  const tp = topicsAt(changes, frame / fps);
   return (
     <AbsoluteFill style={{background: tokens.desk.wallpaper.base}}>
-      {timeline.scenes.map((s, i) => {
-        const last = i === timeline.scenes.length - 1;
-        // `fade` is 0 since script v2: scenes hand over by transitions they draw themselves, never a dissolve.
-        return (
-          <Sequence key={s.id} name={s.id} from={Math.round(s.start * fps)} durationInFrames={Math.ceil((s.duration + (last ? 0 : fade)) * fps)}>
-            <SceneView scene={s} fade={fade} />
-          </Sequence>
-        );
-      })}
+      {tp.u > 0 && <PaperGround />}
+      <AbsoluteFill style={pictureTransform(tp.u)}>
+        {timeline.scenes.map((s, i) => {
+          const last = i === timeline.scenes.length - 1;
+          // `fade` is 0 since script v2: scenes hand over by transitions they draw themselves, never a dissolve.
+          return (
+            <Sequence key={s.id} name={s.id} from={Math.round(s.start * fps)} durationInFrames={Math.ceil((s.duration + (last ? 0 : fade)) * fps)}>
+              <SceneView scene={s} fade={fade} />
+            </Sequence>
+          );
+        })}
+      </AbsoluteFill>
+      <TopicRail topics={topics} {...tp} />
     </AbsoluteFill>
   );
 };

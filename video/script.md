@@ -14,6 +14,7 @@ A from-scratch rewrite. Each build reads this doc. The rules below are what the 
 - **Anything else** (a paragraph, a question, a `> note`) is ignored by the build. Use it freely.
 - **Every Shot: note is a checklist.** The build lists each thing a Shot: note asks for, and its report names anything not built yet. A stand-in is never silent.
 - **No shot ever cuts to the next.** If the next shot is somewhere else in the app, we get there by using the app: the camera pulls back, the cursor clicks where you'd click, and the camera pushes in on what opens. If it's a different idea, it gets a motion-graphics transition instead. The build picks one for every scene change and refuses to render a plain cut or dissolve; a Shot: note can ask for a particular one.
+- **Topic:** is the scene's name in the topic list, the vertical list at the left that comes up at each scene change with the new scene highlighted. One short line under the heading, like `Topic: Chat mode`. Edit it freely; the heading's title is only for us.
 
 ## The brief
 
@@ -31,6 +32,8 @@ Fill these four in first; I read them before every scene decision. (The build ig
 > **Example, to copy and delete.** The build skips a scene whose title starts with "Example".
 
 ### S0 ·Intro
+
+Topic: Intro
 
 - Duo is a desktop client for the claude code c-l-i that makes it easier to stay organized and get work done.
 
@@ -50,6 +53,8 @@ Shot: the Duo logo builds itself in motion graphics, then settles beside the tit
 
 ### S1 · (title) (about \_ s)
 
+Topic: Too many windows
+
 - I found that when I was working with claude code, I would usually be juggling multiple terminals, finder windows, text editors, and browser tabs.
 - I would often open a new terminal window for a quick task, and either take a bunch of time to pick the right starting directory, or lose track of where I opened which sessions if I wanted to come back to them later.
 
@@ -63,6 +68,8 @@ Shot: the High Sierra desktop starts empty, then fills window by window: dark-mo
 > - *Hand-off to S2:* the scene ends on the full pile, held about 1 s, so S2 can pull these same windows into Duo.
 
 ### S2 · (title) (about \_ s)
+
+Topic: One window
 
 - Duo brings all the tools you need together into a single window: a pane for managing files and projects, a terminal or chat view for working with claude, and a flexible editor for viewing and working with files.
 
@@ -81,6 +88,8 @@ Right pane, on "flexible editor": the Markdown file, the browser prototype, the 
 
 ### S3 · All projects (about 12 s)
 
+Topic: All projects
+
 - The first time you open Duo, you'll see all of your previous claude code sessions, and you can resume any of them.
 - Duo also shows you any sessions that are waiting for your input.
 
@@ -96,6 +105,8 @@ Shot: All projects in List view: every previous session in one list, with its pr
 
 ### S4 · Sessions (about 15 s)
 
+Topic: Sessions
+
 - When you click a claude code session, it resumes right where you left off, in the terminal.
 - Duo helps you keep track of many sessions at once. Close one and come back to it later, or archive or delete the ones you're done with to cut down on clutter.
 
@@ -110,18 +121,38 @@ Shot: from S3's Needs you column, the cursor clicks a session, and the camera pu
 > - *Fixtures (asked of demo-fixtures, Oct 11):* a Needs you session with real history, a session to archive, an idle one to delete, and a few already archived.
 > - *Leaving for S5:* S4 ends on the terminal, and S5 carries straight on from that picture. The chat-toggle click comes on S5's word "chat", so the flip lands as the narrator names it.
 
-### S5 · Chat mode (about 18 s)
+### S5 · Terminal pane (about 6 s)
 
-- The terminal runs the full claude code terminal interface. If you prefer something tidier, Duo also has a chat mode, which folds the steps Claude takes along the way, like tool calls and file edits, into rows you can open.
-- Writing is easier in chat mode too: click and drag to select, use the Mac shortcuts you already know, and see a preview of any image or text you paste.
+Topic: Terminal pane
 
-Shot: the same session as S4, in the terminal. On line 1 the middle pane flips to chat mode; the camera follows Claude's last turn, and the cursor opens one folded row to show the tool call inside. On line 2 the cursor drag-selects a sentence in the composer, then pastes a block of user feedback, which folds into a "Pasted text · n lines" block, and a screenshot from that user, which shows as a preview in the composer. The camera stays on the middle pane throughout: the session list and the right pane stay at the frame's edges or out of it, and nothing opens in the editor (Geoff, Oct 11: the right pane hasn't been introduced yet).
+- The terminal runs the full claude code terminal interface.
+
+Shot: the same session as S4, in the terminal. The camera settles on the middle pane while Claude Code's own interface runs in it: its banner, the conversation with each tool call, and the prompt at the bottom. Nothing is clicked. The camera stays on the middle pane (Geoff, Oct 11: the right pane hasn't been introduced yet).
 
 > **Notes for the build** (ignored by it):
 >
-> - *Getting here from S4:* app navigation, carrying on from S4's last picture with no cut. On "chat", the cursor clicks the chat toggle and the camera pushes in as the pane flips.
-> - *New captures needed:* one session in terminal and in chat mode, with a turn that has folded tool calls, one row closed and the same row open; then the composer with a drag selection, the folded paste, and the image preview.
-> - *Fixtures (asked of demo-fixtures, Oct 11):* the session's history; a block of user feedback long enough to fold (over 12 lines); and a screenshot from that user, of the scan prototype on her phone.
+> - *Getting here from S4:* carrying on from S4's last picture, the terminal, with no cut; the topic list comes up with Terminal pane highlighted.
+> - *Split (Geoff, Oct 11):* S5 is the terminal pane only; chat mode moved to S6.
+> - *Captures:* the resumed terminal from S4 (video-s4-resumed); nothing new.
+> - *Leaving for S6:* S5 ends on the terminal; S6 pushes in on the chat-mode button.
+
+### S6 · Chat mode (about 30 s)
+
+Topic: Chat mode
+
+- If you prefer something tidier, Duo also has a *chat mode*, which folds the steps Claude takes along the way, like tool calls and file edits, into rows you can open.
+- Writing is easier in chat mode too: click and drag to select, use the Mac shortcuts you already know, and see a preview of any image or text you paste.
+- Most slash commands, like skill invocations and model pickers, work in chat mode.
+
+Shot: carrying on from S5's terminal. On *chat mode* the camera pushes in on the chat-mode button at the top right of the middle pane, and the cursor clicks it as the pane flips to chat. Then a short exchange plays out: Sam sends a message, Claude replies with its steps folded into rows, Sam follows up and Claude answers; the cursor opens one folded row to show the tool call inside. On the writing line, the cursor drag-selects a sentence in the composer, then pastes a block of user feedback, which folds into a "Pasted text · n lines" block, and a screenshot from that user, which shows as a preview. On the slash-commands line, Sam types `/` and the start of the demo skill's name; the composer's menu lists the skill, Return runs it, and its run shows as a row. Then `/model` opens the model picker and a model is picked. The camera stays on the middle pane throughout: the session list and the right pane stay at the frame's edges or out of it, and nothing opens in the editor (Geoff, Oct 11: the right pane hasn't been introduced yet).
+
+> **Notes for the build** (ignored by it):
+>
+> - *Getting here from S5:* app navigation, carrying on from S5's last picture. The topic list comes up with Chat mode highlighted as the camera pushes in on the button; the click lands on "chat mode".
+> - *Split from S5 (Geoff, Oct 11):* S5 is the terminal pane; chat mode, with its turns, writing and slash commands, is this scene.
+> - *New captures needed:* the chat after each turn; one folded row closed and open; the composer with a drag selection, the folded paste and the image preview; the `/` menu listing the demo skill; the skill's run as a row; the `/model` picker.
+> - *Fixtures (asked of demo-fixtures, Oct 11):* the session's history; a block of user feedback long enough to fold (over 12 lines) and a screenshot from that user; a demo skill for shelf-scan; Claude Code's `/` menu and `/model` screens; two or three short turns between Sam and Claude.
+> - *Skill autocomplete:* any problem found with it while building goes to the director to fix (Geoff, Oct 11).
 
 ## The voice
 

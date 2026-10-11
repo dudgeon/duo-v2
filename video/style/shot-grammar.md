@@ -48,3 +48,17 @@ The transitions so far:
 - `drag`: a selection.
 - `mark` and `quote`.
 Anchors come from each capture's accessibility dump (`video.*` ids or labels).
+
+## Topic list (DL-170)
+
+Each scene's `Topic:` line in the script names it in a running list. At every change of topic (`src/lib/Topics.tsx`), the
+picture steps right to 80% of the frame and the list stands in the left 20% (`RAIL`, 384 px) on paper: done topics grey with ✓,
+upcoming ones faint, the new one large in ink with the accent bar sliding to it from the topic just finished. It starts 0.35 s
+before the scene change, slides in over 0.5 s, holds about 1.9 s and slides out over 0.5 s; the scenes' own transitions keep playing
+in the smaller picture. A scene whose topic repeats the last adds no change. The rejected options (ribbon, contents page,
+carousel) are still in `src/scenes/TopicVariants.tsx` (composition `TopicVariant`).
+
+## Callout words
+
+A marker's words are a `Caption` (`src/lib/Paper.tsx`): a white card, 46 px SF Pro semibold with an accent bar, lower left,
+72 px from the bottom (Geoff, 2026-10-11: "larger and easier to see"). `Quote`, the small mono quote, is kept only for the archived style frames.

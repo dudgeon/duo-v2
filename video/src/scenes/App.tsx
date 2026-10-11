@@ -3,7 +3,7 @@ import {AbsoluteFill, Img, interpolate, staticFile} from 'remotion';
 import {smootherstep, type Rect} from '../lib/camera';
 import {Wallpaper} from '../lib/Desk';
 import {Dock, MenuBar} from '../lib/Clutter';
-import {Cursor, Marker, Quote} from '../lib/Paper';
+import {Caption, Cursor, Marker} from '../lib/Paper';
 import tokens from '../../style/tokens.json';
 
 // S3 onward: the real Duo window on the desk, played as a run of captures of the app (one per state),
@@ -22,7 +22,7 @@ export type AppData = {
   window: {w: number; h: number}; scale: number; src: Record<string, string>;
   // The scene's first picture when it continues from another (S2's composite of panes): a base capture
   // with some panes drawn from others, shown until `until`.
-  entry?: {base: string; panes: Record<string, string>; until: number};
+  entry?: {base: string; panes: Record<string, string>; until: number; rects?: Record<string, Rect>};
   panes: Record<string, Rect>;
   steps: AppStep[]; clicks: AppClick[]; drags: AppDrag[]; cams: AppCam[]; marks: AppMark[]; menus: AppMenu[];
   running?: boolean; startCam?: Rect | null;
@@ -122,7 +122,7 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
             <>
               <Crop src={data.src[data.entry!.base]} scale={data.scale} region={{x: 0, y: 0, w: data.window.w, h: data.window.h}} rect={{x: 0, y: 0, w: win.w, h: win.h}} />
               {Object.entries(data.entry!.panes).map(([p, st]) => {
-                const r = data.panes[p];
+                const r = data.entry!.rects?.[p] ?? data.panes[p];
                 return <Crop key={p} src={data.src[st]} scale={data.scale} region={r} rect={{x: r.x * K, y: r.y * K, w: r.w * K, h: r.h * K}} />;
               })}
             </>
@@ -143,7 +143,7 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
           return (
             <AbsoluteFill key={i}>
               <Marker cx={r.x + r.w / 2} cy={r.y + r.h / 2} rx={r.w / 2 + 18} ry={r.h / 2 + 14} progress={u} />
-              {mk.quote && <Quote text={mk.quote} x={tokens.frame.safe} y={H - tokens.frame.safe - 40} u={ramp(t, mk.at + 0.4, mk.at + 0.54) * (1 - leave)} />}
+              {mk.quote && <Caption text={mk.quote} u={ramp(t, mk.at + 0.3, mk.at + 0.6) * (1 - leave)} />}
             </AbsoluteFill>
           );
         })}
