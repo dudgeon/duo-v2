@@ -26,6 +26,12 @@ def norm(text):
     t = text.lower().replace("&", " and ").replace("%", " percent")
     t = re.sub(r"(?<=[a-z0-9])\.(?=[a-z0-9])", " dot ", t)  # "prd.md" is said "prd dot md"
     t = re.sub(r"(\d+)", lambda m: " " + num_words(int(m.group(1))) + " ", t)
+    # Contractions count the same as their long form, either way round ("you are" heard as "you're").
+    t = re.sub(r"[’]", "'", t)
+    for a, b in (("n't", " not"), ("'re", " are"), ("'ll", " will"), ("'ve", " have"), ("'m", " am"), ("'d", " would")):
+        t = t.replace(a, b)
+    t = re.sub(r"\b(it|that|there|what|he|she)'s\b", r"\1 is", t)
+    t = re.sub(r"\bvs\b\.?", "versus", t)
     t = re.sub(r"[^a-z' ]", " ", t.replace("-", " ")).replace("'", "")
     return t.split()
 

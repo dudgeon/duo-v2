@@ -52,6 +52,10 @@ export const TRANSITIONS = {
   'pile-to-duo': {kind: 'graphic', from: 'projects', to: 'app', out: 1.6},
   // To the closing paper (S11): Duo's window steps away as a thumbnail while the paper ground fills in.
   'duo-steps-away': {kind: 'graphic', from: 'app', to: 'conclusion'},
+  // A scene whose captures aren't built yet stands in as a labelled card (never silent: the report names it);
+  // in and out of it is a plain graphic move. Temporary by nature: replace the card with the scene.
+  'stand-in': {kind: 'graphic', from: ['projects', 'card', 'app'], to: 'card'},
+  'stand-in-out': {kind: 'graphic', from: 'card', to: 'conclusion'},
 };
 const sceneType = (shot) => (shot.kind === 'drawn' ? shot.scene : shot.kind);
 const fromOk = (tr, type) => (Array.isArray(tr.from) ? tr.from.includes(type) : tr.from === type);

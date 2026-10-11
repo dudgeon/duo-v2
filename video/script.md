@@ -201,6 +201,100 @@ On line 4, the same pattern twice more, quicker, each ending on the change visib
 > - *Tabs:* the four files open in S2 (prd-v2.md, scan-review.html, team-review-oct15.pptx, beta-interview-synthesis.docx) are still open in the right pane, so the clicks walk the real tab strip.
 > - *New captures needed:* the right pane on each of the four tabs, in the 1800×1100 window S3–S6 use.
 
+### S8 · Projects Background
+
+Topic: Claude Code Projects
+
+- Projects are a little harder to explain and something I need to work on in the app. Let's start with some fundamentals.
+- Claude Code operates on a concept called "projects" -- wherever you open Claude Code, Claude assumes that that folder is a project
+- Claude code assumes you always change directories into the "right" folder, and that you have a different folder for each thing you are working on -- one folder for each project in your life, consistently used every time you open claude code. Claude code also does not show you your projects or make it easy to navigate between them.
+- many users don't change directories before starting claude code, so all projects stack up in the same directory and are hard to tell apart
+- Projects are a really useful construct in claude code, but they can be hard to manage.
+
+Shot: on "Let's start with some fundamentals", Duo's window fades away to the bare desktop. On the "projects" line, two simulated windows appear, side by side, drawn like S1's: a dark Terminal and a Finder window on Sam's home folder (Desktop, Documents, Downloads, work…). The Terminal's prompt reads `sam@mbp ~ %`, and Sam types `claude` with no `cd`. Claude Code's banner comes up showing `~` as its folder, and a marker circles that path as the narrator says it's the project, with the Finder window showing the same folder beside it.
+
+On the "one folder for each project" line, the windows step aside for a motion graphic on the paper ground: a row of folders under `~`, namely `work/little-shared-library/shelf-scan`, `beta-feedback`, `taxes-2026`, `maya-birthday` and `router`. Each holds its own small stack of session cards, the way Claude Code files sessions by folder, one stack per folder. This is the ideal Claude Code assumes. On "does not show you your projects", every stack except the one for the folder you're in greys out and its folder name fades, since Claude Code only shows the sessions of the folder you started in. Then the graphic folds back into the Terminal.
+
+On the "many users don't change directories" line, still in the Terminal at `~`, Sam runs `claude --resume`. Claude Code's session picker opens on a long list of unrelated sessions, all started in `~`: the shelf-scan PRD next to a tax-receipts tidy-up, a birthday-party plan, a fix to a home router, a cover letter, and so on. Sam scrolls down through a screenful or two, can't find the one wanted, and gives up, leaving the pile on screen. The list is in Claude Code's own picker format.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Drawn, not captured:* the Terminal is a stand-in from `lib/Clutter.tsx`, with the real Claude Code banner text as S2's terminals show it.
+> - *Transition:* a motion graphic (Duo fades to the desktop), as Geoff asked; it's a change of idea, not app navigation.
+
+> - *Visual plan (Geoff, Oct 11, by buttons):* the folder map for the one-folder-per-project line; the resume picker's pile is Sam's own sessions, the shelf-scan work mixed with life stuff (23 sessions, real 2.1.296 picker text from demo-fixtures, `terms/s8-resume-*.txt`).
+> - *Ending (Geoff, Oct 11):* the scene ends on the pile, still on screen. The next scene opens by fading the pile out and Duo back in.
+
+### S9 · Duo Projects
+
+Topic: Duo Projects
+
+- Duo tries to help you manage projects and use them to make progress in your own work.
+- Duo finds every session and every project folder on your mac and organizes them for you --  making it easy to see what you were working on in which project
+- Each project shows up as its own pane, and lists the sessions from that project underneath.
+- When you click on an existing session, you enter the "project view" for its project.
+- The project view shows the sessions that share a project, and the files and folders in that project's directory.
+- The project view filters sessions and files to just the ones you are working on in that project, and you can leave and return to it any time.
+
+Shot: the resume picker's pile from the scene before fades out, and Duo's window fades back in on the desktop exactly as we last saw it at the end of S7: shelf-scan open, the Auto-add decision chat in the middle, and the deck in the right pane on its new bulleted slide.
+
+On the "finds every session and every project folder" line, the cursor clicks **All projects** at the top left, then **Board** in the Board | List switch. The Board view opens: a map of project tiles grouped in columns by area (APP, COMMUNITY), each tile listing its project's sessions (shelf-scan, beta-feedback, steward-onboarding, neighborhood-map, Home). On "what you were working on in which project", the camera glides across the columns, so each project's sessions read as its own stack: the opposite of the pile in `~`.
+
+On "its own pane", the camera settles on the shelf-scan column, and a marker runs down its session cards. On "click on an existing session", the cursor clicks one of them, and Duo opens shelf-scan's project view (app navigation, as in S3 to S4). On "sessions that share a project", the camera zooms in on the project's session list at the top of the left pane (Today, This week, Archived), so its rows fill the frame. On "files and folders in that project's directory", the camera moves down the left pane to the file navigator below the sessions (FILES, the project's path, then PROJECT.md, docs/, eval/, prototype/, research/…) and zooms in on it, as the cursor opens one folder. On "leave and return to it any time", the camera pulls back, and the cursor clicks **All projects** in the breadcrumb; the Board view comes back. Then it clicks a shelf-scan card again, and the project view returns exactly as it was left: the same tabs, chat and files.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Transition:* a motion graphic, the pile out and Duo in (Geoff, Oct 11). Its first picture is S7's last capture (video-s7-pptx-after), so nothing in Duo changes across the gap.
+
+### S10 · Tasks
+
+Topic: Tasks
+
+- Tasks are an experimental, optional feature that you can use to add structure to a project.
+- Usually, a project has an overarching goal, and includes multiple tasks to achieve that goal.
+- In my own work, I found that most sessions mapped to a task, so I made tasks to help me provide more context to claude about the task goal, and attribute the claude code sessions that are related to it.
+- In duo, you can make a task in the project view, then add some details -- these are available to the user and any agents that work with them.
+- Then, duo makes it easy to attribute sessions to that task.
+- Because tasks are a defined primitive in duo, we can create view that make it easy to see, manage, and return to tasks.
+
+Shot: in shelf-scan's project view, with the camera on the left pane.
+
+On line 1 ("experimental, optional… add structure"), the session list starts flat, as it has looked all along. On "add structure", the project's **Tasks** fold opens above it and the sessions regroup under their tasks: Auto-add decision, Deck for Thursday, Spine eval: glare cases. Each group holds the sessions that worked on it, and anything without a task stays below.
+
+On line 2 ("an overarching goal, and includes multiple tasks"), the camera rises to the project's header (its health and next step, "On track · Team review Thu Oct 15"; the goal itself lives in PROJECT.md and on the All projects tile), then runs down the task rows, circling the tasks that serve it.
+
+On line 3 ("more context to claude about the task goal, and attribute the sessions"), the cursor opens the Auto-add decision task's note in the right pane. It's a plain Markdown file: its goal and done-when at the top, then its sessions listed by name. A marker circles the goal on "context to claude", then the sessions on "attribute".
+
+On "you can make a task in the project view", the cursor picks **New Task** (File › New Task). Duo opens a new note as "Untitled task" with its heading selected (the + New task button at the foot of the left pane does the same), and Sam types the name, "Warn about glare before the photo"; the file takes the name's slug. The new task note opens in the right pane's editor (tasks/warn-about-glare-before-the-photo.md, the slug New Task makes), and on "add some details" Sam types a few lines under it: the goal (no glare reads at glass-door boxes), what done looks like, and a link to Denise's feedback. On "available to the user and any agents", the camera pulls back to show the task listed in the project beside its sessions.
+
+On "attribute sessions to that task", Sam right-clicks the new task in the project's Tasks fold and picks **New Session in Task** from its menu (its real items: Open Task Note, New Session in Task, Add Session ›, and the rest). A new session opens in the middle pane, grouped under the task in the session list, and Sam starts working: types "Draft the glare warning copy for the scan screen" and sends. Claude's first reply begins, already knowing the task's goal from its note.
+
+On "views that make it easy to see, manage, and return to tasks", the cursor opens the project's task board: a kanban with columns by status and shelf-scan's tasks as cards, among them the new glare task, the auto-add decision and the team-review deck. Each card shows its sessions. The cursor clicks a different task's card (Deck for Thursday), its sessions show, and it clicks one of them; that session resumes right where it left off.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Real, today:* a task is one Markdown file per task, `tasks/<slug>.md` with `type: task` frontmatter (DL-6, DL-13), made with File › New Task, which names it first (DL-93). It is a plain file, so Claude reads it like any other.
+> - *Fixtures (asked of demo-fixtures, Oct 11):* shelf-scan's PROJECT.md goal; three task notes (Auto-add decision, Deck for Thursday, Spine eval: glare cases), each with a goal, done-when, a status for the board's columns and its sessions linked; the new task note before and after Sam's lines; the New Session in Task chat turn (Sam's first request and Claude's reply, which uses the task's goal); and the Deck for Thursday session's history for the resume.
+
+### S11 · Conclusion
+
+Topic: Conclusion
+
+- Duo is still under very active development, and I will try to keep this video up to date for major feature additions.
+- The core is working well for me in my own work, but I have a lot of work to do to make projects and tasks more intuitive. And I'm mindful of the balance in making them useful, vs not over-fitting to my own ways of working, so I would appreciate any feedback you have on how you use or want to use claude code in your own workflows -- and how I can improve how duo could work to help you.
+- Please give duo a try and open up a github issue if there are bugs, features you would like me to add, or ways I could improve the experience.
+
+Shot: out of the app and onto the paper ground, a bookend to S0.
+
+1. On "under very active development", Duo's window pulls back, shrinks and slides off as a thumbnail to the left, and a release line draws itself across the frame: one dot per real release, read from GitHub at build time (0.2.0 on Oct 6 to 0.2.11 today, so it grows with every build). On "keep this video up to date", a last dot past the newest stays open and dashed, labelled "next", with a small mono stamp under the line: "This video was built from Duo 0.2.11 on Oct 11, 2026".
+2. On "the core is working well", the topic list from the scene changes comes back, full height and centred: every topic gets a ✓, but Projects and Tasks are circled with the marker, as still in progress. On "any feedback you have", the list slides up, and a few blank feedback cards drop into a stack beside it, each with a cursor's blinking caret, as an invitation and not real messages.
+3. On "give duo a try", the cards clear. Just before, on "open up a github issue", we're briefly back in Duo for the real way in: the cursor opens the Help menu in the menu bar and picks Report an Issue…, and a browser window slides up with GitHub's new-issue form for duo-v2, Duo's version and macOS already filled in. Then the browser shrinks away, and the video ends where it began: S0's opening card (the Duo logo, "Duo" and its subtitle), exactly as the thumbnail shows it, held about 3 s after the last line (Geoff, Oct 11).
+
+> **Notes for the build** (ignored by it):
+>
+> - *Drawn, not captured:* all motion graphics in the paper language (`lib/Paper.tsx`). The releases come from `gh release list` at build time, so the line stays true as Duo ships. The repo URL is the real public one.
+> - *Open for Geoff:* whether the feedback cards are too much. (Decided, Oct 11: the end card is the opening card.) Real, today: Help › Report an Issue… opens GitHub's new-issue form, filled in, for the user to edit and submit (DuoLinks.newIssue). The menu is drawn (it's outside the window capture) and so is the browser.
+
 ## The voice
 
 The house voice is a warm, medium-low baritone, friendly and a little quicker (B-light-133, chosen Oct 11). The build reads this table: write the word as it appears in a line, and how it should be said. Add a row whenever a line comes out wrong.

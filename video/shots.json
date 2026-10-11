@@ -1331,7 +1331,8 @@
         "what": "claude --resume opens the real 2.1.296 picker on Sam's pile of 23 sessions; it scrolls a screen; the scene ends on the pile",
         "built": true
       }
-    ]
+    ],
+    "shotSha": "d9c99d0764b6"
   },
   "S11": {
     "kind": "drawn",
@@ -1401,6 +1402,426 @@
         "what": "The video ends on S0's opening card, held about 3 s after the last line",
         "built": true
       }
-    ]
+    ],
+    "shotSha": "d78a5bc82b47"
+  },
+  "S9": {
+    "kind": "drawn",
+    "scene": "app",
+    "transitionIn": "pile-to-duo",
+    "leadIn": 2,
+    "states": [
+      "video-s7-pptx-after"
+    ],
+    "pauses": {
+      "6": 2.5
+    },
+    "beats": [
+      {
+        "at": {
+          "line": 2,
+          "word": "finds"
+        },
+        "click": "video.crumb.all",
+        "in": "video-s7-pptx-after",
+        "state": "video-s9-list"
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "organizes"
+        },
+        "click": "video.allprojects.board",
+        "in": "video-s9-list",
+        "state": "video-s9-board"
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "working"
+        },
+        "in": "video-s9-board",
+        "cam": {
+          "x": 700,
+          "y": 100,
+          "w": 1100,
+          "h": 620
+        },
+        "dur": 1.2
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "pane"
+        },
+        "in": "video-s9-board",
+        "cam": "video.board.col.shelf-scan",
+        "dur": 0.9,
+        "mark": "video.board.col.shelf-scan",
+        "quote": "its own pane",
+        "hold": 1.8
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "click"
+        },
+        "click": "video.board.card.Auto-add decision",
+        "in": "video-s9-board",
+        "state": "video-s9-project",
+        "cam": "wide",
+        "dur": 0.9
+      },
+      {
+        "at": {
+          "line": 5,
+          "word": "sessions"
+        },
+        "in": "video-s9-project",
+        "cam": {
+          "on": "video.pane.left",
+          "y0": 0,
+          "y1": 0.62
+        },
+        "dur": 0.9,
+        "mark": "video.sessions.list",
+        "quote": "sessions that share a project",
+        "hold": 1.8
+      },
+      {
+        "at": {
+          "line": 5,
+          "word": "files"
+        },
+        "in": "video-s9-project",
+        "cam": {
+          "on": "video.pane.left",
+          "y0": 0.6,
+          "y1": 1
+        },
+        "dur": 0.9
+      },
+      {
+        "at": {
+          "line": 5,
+          "word": "directory"
+        },
+        "click": "video.files.folder.research",
+        "in": "video-s9-project",
+        "state": "video-s9-files-open",
+        "stateAfter": 0.1
+      },
+      {
+        "at": {
+          "line": 6,
+          "word": "leave"
+        },
+        "click": "video.crumb.all",
+        "in": "video-s9-files-open",
+        "state": "video-s9-board",
+        "cam": "wide",
+        "dur": 0.8
+      },
+      {
+        "at": {
+          "line": 6,
+          "word": "return"
+        },
+        "click": "video.board.card.Auto-add decision",
+        "in": "video-s9-board",
+        "state": "video-s9-files-open"
+      }
+    ],
+    "requires": [
+      {
+        "what": "The pile fades out and Duo fades back in on S7's last picture",
+        "built": true
+      },
+      {
+        "what": "All projects, then Board: the project tiles with their sessions",
+        "built": true
+      },
+      {
+        "what": "The shelf-scan tile as its own pane; a click opens the project view",
+        "built": true
+      },
+      {
+        "what": "Zoom on the project's session list, then the file navigator; a folder opens",
+        "built": true
+      },
+      {
+        "what": "Leave to All projects and return to the project as it was left",
+        "built": true
+      }
+    ],
+    "shotSha": "cf4038579566"
+  },
+  "S10": {
+    "kind": "drawn",
+    "scene": "app",
+    "transitionIn": "carry-on",
+    "leadIn": 1.2,
+    "states": [
+      "video-s10-flat"
+    ],
+    "pauses": {
+      "4": 1.6,
+      "5": 2.4,
+      "6": 2.6
+    },
+    "beats": [
+      {
+        "at": {
+          "line": 1,
+          "word": "experimental"
+        },
+        "in": "video-s10-flat",
+        "state": "video-s10-flat",
+        "cam": {
+          "on": "video.pane.left",
+          "y0": 0,
+          "y1": 0.55
+        },
+        "dur": 1
+      },
+      {
+        "at": {
+          "line": 1,
+          "word": "structure"
+        },
+        "in": "video-s10-grouped",
+        "state": "video-s10-grouped"
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "goal"
+        },
+        "in": "video-s10-grouped",
+        "mark": "video.project.header",
+        "quote": "an overarching goal",
+        "hold": 1.5
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "tasks"
+        },
+        "in": "video-s10-grouped",
+        "mark": {
+          "x": 0,
+          "y": 126,
+          "w": 299,
+          "h": 256
+        },
+        "quote": "multiple tasks",
+        "hold": 1.8
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "context"
+        },
+        "click": "video.task.auto-add-decision",
+        "in": "video-s10-grouped",
+        "state": "video-s10-tasknote",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0,
+          "y1": 0.5
+        },
+        "dur": 0.9
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "goal"
+        },
+        "in": "video-s10-tasknote",
+        "mark": "video.tasknote.goal",
+        "quote": "the task goal",
+        "hold": 1.6
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "attribute"
+        },
+        "in": "video-s10-tasknote",
+        "mark": "video.tasknote.sessions",
+        "quote": "the sessions related to it",
+        "hold": 1.8
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "make"
+        },
+        "click": "video.newtask.button",
+        "in": "video-s10-tasknote",
+        "state": "video-s10-newtask-untitled",
+        "cam": {
+          "x": 0,
+          "y": 40,
+          "w": 1800,
+          "h": 1012
+        },
+        "dur": 0.9
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "view"
+        },
+        "in": "video-s10-newtask-untitled",
+        "state": "video-s10-newtask-created"
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "details"
+        },
+        "wipe": {
+          "state": "video-s10-newtask-details",
+          "on": "video.tasknote.body",
+          "dur": 1.6
+        },
+        "in": "video-s10-newtask-details",
+        "state": "video-s10-newtask-details",
+        "stateAfter": 1.6,
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.05,
+          "y1": 0.55
+        },
+        "dur": 0.8
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "agents"
+        },
+        "in": "video-s10-newtask-details",
+        "cam": "wide",
+        "dur": 1
+      },
+      {
+        "at": {
+          "line": 5,
+          "word": "attribute"
+        },
+        "menu": {
+          "on": "video.task.warn-about-glare-before-the-photo",
+          "items": [
+            "Open Task Note",
+            "New Session in Task",
+            "Add Session ▸",
+            "-",
+            "Rename",
+            "Mark Complete",
+            "Set Status ▸",
+            "-",
+            "Copy Link",
+            "Reveal in Finder",
+            "Move to Project ▸",
+            "-",
+            "Archive Task…",
+            "Delete Task…"
+          ],
+          "pick": "New Session in Task",
+          "pickAfter": 0.6,
+          "hold": 0.85
+        },
+        "fx": 0.4,
+        "in": "video-s10-newtask-details"
+      },
+      {
+        "at": {
+          "line": 5,
+          "word": "task",
+          "offset": 0.4
+        },
+        "in": "video-s10-newsession",
+        "state": "video-s10-newsession",
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0.4,
+          "y1": 1
+        },
+        "dur": 0.8
+      },
+      {
+        "at": {
+          "line": 5,
+          "word": "task",
+          "offset": 2
+        },
+        "in": "video-s10-newsession-sent",
+        "state": "video-s10-newsession-sent"
+      },
+      {
+        "at": {
+          "line": 6,
+          "word": "views"
+        },
+        "click": "video.taskboard.open",
+        "in": "video-s10-newsession-sent",
+        "state": "video-s10-board",
+        "cam": {
+          "x": 0,
+          "y": 40,
+          "w": 1140,
+          "h": 641
+        },
+        "dur": 0.9
+      },
+      {
+        "at": {
+          "line": 6,
+          "word": "manage"
+        },
+        "click": "video.taskboard.card.deck-for-thursday",
+        "in": "video-s10-board",
+        "state": "video-s10-board-deck"
+      },
+      {
+        "at": {
+          "line": 6,
+          "word": "return"
+        },
+        "click": "video.taskboard.session.Deck for Thursday",
+        "in": "video-s10-board-deck",
+        "state": "video-s10-deck-resumed",
+        "cam": "wide",
+        "dur": 0.9
+      }
+    ],
+    "requires": [
+      {
+        "what": "The flat session list regroups under the project's tasks",
+        "built": true
+      },
+      {
+        "what": "The header and the tasks under it circled",
+        "built": true
+      },
+      {
+        "what": "A task note opens; its goal and its sessions circled",
+        "built": true
+      },
+      {
+        "what": "+ New task: Untitled task named \"Warn about glare before the photo\", details typed",
+        "built": true
+      },
+      {
+        "what": "New Session in Task from the task menu (drawn, real items); Sam's first request and Claude's reply",
+        "built": true
+      },
+      {
+        "what": "The task board; Deck for Thursday picked; its session resumes",
+        "built": true
+      }
+    ],
+    "shotSha": "d1edd6b3dc94"
   }
 }
