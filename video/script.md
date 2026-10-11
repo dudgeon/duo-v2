@@ -105,7 +105,7 @@ Shot: All projects in List view: every previous session in one list, with its pr
 
 ### S4 · Sessions (about 15 s)
 
-Topic: Sessions
+Topic: Agent Pane
 
 - When you click a claude code session, it resumes right where you left off, in the terminal.
 - Duo helps you keep track of many sessions at once. Close one and come back to it later, or archive or delete the ones you're done with to cut down on clutter.
@@ -123,7 +123,7 @@ Shot: from S3's Needs you column, the cursor clicks a session, and the camera pu
 
 ### S5 · Terminal pane (about 6 s)
 
-Topic: Terminal pane
+Topic: same
 
 - The terminal runs the full claude code terminal interface.
 
