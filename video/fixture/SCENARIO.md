@@ -146,6 +146,9 @@ Folders live under `~/work/little-shared-library/`. Topics: **App** and **Commun
 | `research/interviews/p1.md … p8.md` | Interview notes, about a page each | The synthesis session reads them |
 | `research/feedback/denise-p3.txt` | Denise's long beta feedback (over 12 lines, in her voice): glare from her box's glass door, *Persuasion* added as the wrong book, a neighbour came for it | S5 paste (folds to "Pasted text · n lines") |
 | `research/feedback/denise-p3-screenshot.png` | Her screenshot: the prototype on a phone viewport, showing the wrong match | S5 image paste |
+| `research/feedback/owen-p8.txt` | Owen's short email: two wrong books in two scans, then he stopped | S5 turn 2 (the skill reads it) |
+| `research/feedback/triage.md` | The feedback backlog, one line per report by eval cause (Gerald, Hal before S5; Denise and Owen added in S5) | S5 turns |
+| `.claude/skills/triage-feedback/SKILL.md` | Sam's project skill: "Sort tester feedback into the backlog by eval cause". The `/` menu lists it first for `/tri` | S5 slash menu, turns |
 
 The other projects are thin but real. `make-projects.py` writes them under `projects/<name>/`: each gets a `PROJECT.md` (Home gets `HOME.md`) and 1–3 documents with believable content. Their sessions have titles and states.
 
@@ -185,7 +188,7 @@ The sidebar and All projects show **18 sessions**: 15 live and 3 archived. Wait 
 | S2 | The pile becomes Duo | `fixture.json` `videoS2`; the shelf-scan folder; the three sessions; tabs prd-v2.md · scan-review.html · .pptx · .docx |
 | S3 | All projects, List | All 5 projects, the 18 sessions, Needs you 3 |
 | S4 | Sessions | "Auto-add decision" resumes with history; archive "quick q: TestFlight build size"; delete "Old v1 notes cleanup"; the archived list |
-| S5 | Chat mode | "Auto-add decision" in chat: a turn with Read `eval/results.csv`, Bash `python3 eval/score.py`, Edit `docs/prd-v2.md`; Denise's feedback pasted; her screenshot pasted |
+| S5 | Chat mode | "Auto-add decision" in chat: a turn with Read `eval/results.csv`, Bash `python3 eval/score.py`, Edit `docs/prd-v2.md`; Denise's feedback pasted; her screenshot pasted; then (Geoff, 2026-10-11) a few short turns and "most slash commands work in chat": Sam answers the question, sends Denise's email (Claude loads `/triage-feedback` itself), runs `/triage-feedback research/feedback/owen-p8.txt` from the `/` menu (`/tri`), asks "How many glare reports so far?"; then `/model`, the picker card with Opus in use |
 
 ## Rules for fixture content
 

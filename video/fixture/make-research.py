@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Writes the demo world's research fixtures (sample data only, all invented; see SCENARIO.md and world.json):
 docs/eval/results.csv, score.py, spine-eval-2026-09-28.md, research/feedback/denise-p3.txt,
-chat-s2/{meta.json,transcript.jsonl} and sessions/auto-add-decision.jsonl. Run with plain python3."""
+chat-s2/, chat-s4/, the S5 recordings (chat-s5-answered, -turn1, -turn2, chat-s5, and the screens chat-s5-slash,
+-model), sessions/auto-add-decision.jsonl, and the project skill with Owen's email and triage.md. Run with plain python3."""
 import csv, json, pathlib, random, subprocess, sys
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -379,6 +380,159 @@ def write_hero():
     d = HERE / "chat-s4"; d.mkdir(exist_ok=True)
     (d / "meta.json").write_text(json.dumps({"mode": "chat", "tab": "Auto-add decision"}, indent=1))
     L.dump(d / "transcript.jsonl")
+    write_s5(L)
+
+
+# ---------------------------------------------------------------- 7. S5 turns: the project's skill, its slash menu, /model
+# Geoff (2026-10-11, via the intro-video session): a few chat turns, and "most slash commands, like skill
+# invocations and model pickers, work in chat mode" shown working. Sam's project has one skill of its own.
+SKILL_NAME = "triage-feedback"
+SKILL_DESC = "Sort tester feedback into the backlog by eval cause"
+SKILL_MD = f"""---
+name: {SKILL_NAME}
+description: {SKILL_DESC}
+---
+
+# Triage feedback
+
+For each piece of tester feedback (a pasted email, or a file under `research/feedback/`):
+
+1. **Who:** the tester's id and name from `research/interviews/` (P1–P8) and their box.
+2. **What happened**, in one line, naming the book if there is one.
+3. **The cause:** the eval cause it matches (`tilted`, `glare`, `thin`, `stacked`, `other`; see
+   `eval/spine-eval-2026-09-28.md`), or `trust` when the harm is a wrong book in someone's catalog.
+4. **Append one line** to `research/feedback/triage.md`:
+   `- YYYY-MM-DD · Pn Name · box · cause · what happened`
+5. If it bears on an open question in `docs/prd-v2.md`, say which one. Don't edit the PRD.
+
+Answer in one or two lines: the cause, and the line you added.
+"""
+OWEN = """Hi Sam,
+
+Sorry for the slow reply. I tried the scanner twice at the Riverside Allotments box.
+
+The first time it added "Ninety Brides", which isn't a book anyone's heard of. The second time it put a cookbook on the shelf that was never there.
+
+Two wrong books and I stopped. I don't have time to audit it, and I didn't want people walking down for books that aren't there.
+
+If it showed me the list first I'd give it another go.
+
+Owen
+"""
+TRIAGE_HEAD = """# Feedback triage
+
+One line per report, newest last. Written by `/triage-feedback`.
+
+- 2026-10-06 · P2 Gerald · Elm Park box · glare · morning sun on the door; half the shelf came out as nonsense
+- 2026-10-08 · P6 Hal · Cooper Lane box · trust · a wrong book was added; a neighbour told him
+"""
+LINE_P3 = "- 2026-10-13 · P3 Denise · Linden Street box · glare · Persuasion read as \"Pervasion\"; added as Pervasive Games"
+LINE_P8 = "- 2026-10-13 · P8 Owen · Riverside Allotments box · trust · two wrong books in two scans; stopped"
+SKILL_DIR = f"{PROJ}/.claude/skills/{SKILL_NAME}"
+
+
+def png_b64(path):
+    """The screenshot as Claude Code keeps a pasted image: scaled to 1568 on its long side (sips is byte-stable)."""
+    import base64, tempfile
+    with tempfile.TemporaryDirectory() as t:
+        out = pathlib.Path(t) / "s.png"
+        subprocess.run(["sips", "-s", "format", "png", "-Z", "1568", str(path), "--out", str(out)], capture_output=True, check=True)
+        return base64.b64encode(out.read_bytes()).decode()
+
+
+def write_s5(L):
+    """Continues the hero session after the question: Sam answers it, sends Denise's email (the S5 draft and
+    its pastes), runs the skill by name, asks one more thing. Each step is its own recording folder."""
+    content = json.loads((DOCS / "content.json").read_text())
+    draft = content["s5"]["draft"]
+    fb = DOCS / "research" / "feedback"
+    tri_p, owen_p = f"{PROJ}/research/feedback/triage.md", f"{PROJ}/research/feedback/owen-p8.txt"
+    steps = {}
+
+    def snap(name):
+        steps[name] = list(L.lines)
+
+    # The answer to the pending question (Duo's question card, or the TUI's).
+    L._add({"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "toolu_h07",
+            "content": f"User has answered your questions: \"{QUESTION}\"=\"{OPTIONS[0]}\". You can now continue with the user's answers in mind.", "is_error": False}]},
+            "toolUseResult": {"questions": [{"question": QUESTION, "header": "Auto-add", "multiSelect": False, "options": []}], "answers": {QUESTION: OPTIONS[0]}}}, "09:43:02")
+    L.text("Got it: auto-add waits for the review step. I'll close Q1 in the PRD.", "09:43:10")
+    snap("chat-s5-answered")
+    # Turn 1: Sam sends the draft with Denise's email pasted and her screenshot. Claude reaches for the skill.
+    L._add({"type": "user", "message": {"role": "user", "content": [
+        {"type": "text", "text": draft + "\n\n" + DENISE.rstrip("\n")},
+        {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": png_b64(fb / "denise-p3-screenshot.png")}}]},
+        "origin": {"kind": "human"}}, "09:44:30")
+    L.use("toolu_t1", "Skill", {"skill": SKILL_NAME}, "09:44:36")
+    L.result("toolu_t1", f"Launching skill: {SKILL_NAME}", {"success": True, "commandName": SKILL_NAME}, "09:44:36")
+    L._add({"type": "user", "isMeta": True, "message": {"role": "user", "content": f"Base directory for this skill: {SKILL_DIR}\n\n" + SKILL_MD.split("---\n", 2)[2].lstrip("\n")}}, "09:44:37")
+    tri0 = TRIAGE_HEAD.rstrip("\n").splitlines()[-1]
+    L.use("toolu_t2", "Edit", {"file_path": tri_p, "old_string": tri0, "new_string": tri0 + "\n" + LINE_P3}, "09:44:50")
+    L.result("toolu_t2", f"The file {tri_p} has been updated successfully.",
+             {"filePath": tri_p, "oldString": tri0, "newString": tri0 + "\n" + LINE_P3, "originalFile": None, "userModified": False, "replaceAll": False,
+              "structuredPatch": [{"oldStart": 6, "oldLines": 1, "newStart": 6, "newLines": 2, "lines": [" " + tri0, "+" + LINE_P3]}]}, "09:44:51")
+    L.text("Glare: Persuasion read as “Pervasion” at Linden Street. Logged in triage.md; it backs the Q1 call.", "09:45:02")
+    snap("chat-s5-turn1")
+    # Turn 2: Sam runs the skill by name from the / menu (the composer showed `/tri`).
+    L._add({"type": "user", "message": {"role": "user", "content": f"<command-message>{SKILL_NAME}</command-message>\n<command-name>/{SKILL_NAME}</command-name>\n<command-args>research/feedback/owen-p8.txt</command-args>"}}, "09:46:10")
+    L._add({"type": "user", "isMeta": True, "message": {"role": "user", "content": f"Base directory for this skill: {SKILL_DIR}\n\n" + SKILL_MD.split("---\n", 2)[2].lstrip("\n") + "\n\nARGUMENTS: research/feedback/owen-p8.txt"}}, "09:46:10")
+    L.use("toolu_t3", "Read", {"file_path": owen_p}, "09:46:15")
+    L.result("toolu_t3", "", file_result(owen_p, OWEN, len(OWEN.splitlines())), "09:46:15")
+    L.use("toolu_t4", "Edit", {"file_path": tri_p, "old_string": LINE_P3, "new_string": LINE_P3 + "\n" + LINE_P8}, "09:46:28")
+    L.result("toolu_t4", f"The file {tri_p} has been updated successfully.",
+             {"filePath": tri_p, "oldString": LINE_P3, "newString": LINE_P3 + "\n" + LINE_P8, "originalFile": None, "userModified": False, "replaceAll": False,
+              "structuredPatch": [{"oldStart": 7, "oldLines": 1, "newStart": 7, "newLines": 2, "lines": [" " + LINE_P3, "+" + LINE_P8]}]}, "09:46:29")
+    L.text("Trust: two wrong books in two scans, then Owen stopped. Logged.", "09:46:40")
+    snap("chat-s5-turn2")
+    # Turn 3: one short question.
+    L.user("How many glare reports so far?", "09:47:05")
+    grep = f"{tri_p}:5:{TRIAGE_HEAD.splitlines()[4]}\n{tri_p}:7:{LINE_P3}"
+    L.use("toolu_t5", "Grep", {"pattern": "glare", "path": tri_p, "output_mode": "content", "-n": True}, "09:47:09")
+    L.result("toolu_t5", grep, {"mode": "content", "numFiles": 1, "filenames": [tri_p], "content": grep, "numLines": 2}, "09:47:09")
+    L.text("Two: Gerald at Elm Park and Denise at Linden Street. Both are sun on a glass door.", "09:47:15")
+    snap("chat-s5")
+
+    for name, lines in steps.items():
+        d = HERE / name; d.mkdir(exist_ok=True)
+        (d / "meta.json").write_text(json.dumps({"mode": "chat", "tab": "Auto-add decision"}, indent=1))
+        (d / "transcript.jsonl").write_text("\n".join(json.dumps(l, ensure_ascii=False) for l in lines) + "\n")
+    # The project's own files the turns touch: the skill, Owen's email, the triage log as it stood before.
+    (DOCS / ".claude" / "skills" / SKILL_NAME).mkdir(parents=True, exist_ok=True)
+    (DOCS / ".claude" / "skills" / SKILL_NAME / "SKILL.md").write_text(SKILL_MD)
+    (fb / "owen-p8.txt").write_text(OWEN)
+    (fb / "triage.md").write_text(TRIAGE_HEAD)
+    write_s5_screens(steps)
+
+
+def write_s5_screens(steps):
+    """Claude Code's own screens over chat, as `screen.txt` (100 columns, the slash-menu fixture's layout):
+    the `/` menu for `/tri` and the /model picker. Rows and wording are 2.1.296's (rendered from a scratch
+    config, 2026-10-11); the menu is drawn above the input box, where Duo's reader looks for it."""
+    rule = "─" * 100
+
+    def row(name, desc, cur=False):
+        line = ("  ❯ " if cur else "    ") + name.ljust(28) + desc
+        return line if len(line) <= 100 else line[:99] + "…"
+    menu = [row("/" + SKILL_NAME, SKILL_DESC + " (project)", True),
+            row("/claude-api", "Reference for the Claude API / Anthropic SDK — model ids, pricing,"),
+            row("/dataviz", "Use this skill whenever you are about to create ANY chart, graph,"),
+            row("/doctor", "Health-check the user's Claude Code setup and fix issues: diagnose")]
+    screen = [""] * 20 + menu + [rule, "❯ /tri ", rule, "  ⏸ manual mode on"]
+    d = HERE / "chat-s5-slash"; d.mkdir(exist_ok=True)
+    (d / "meta.json").write_text(json.dumps({"mode": "chat", "tab": "Auto-add decision", "drafts": {"composer": "/tri"}, "focusComposer": True}, indent=1))
+    (d / "screen.txt").write_text("\n".join(screen) + "\n")
+    (d / "transcript.jsonl").write_text("\n".join(json.dumps(l, ensure_ascii=False) for l in steps["chat-s5-turn1"]) + "\n")
+    # /model: the account's picker as chip-card records it (2.1.296, a subscription: no prices), Opus in use.
+    top = "▔" * 95 + " ◐ medium · /effort ▔"
+    model = [top, "   Select model", "",
+             "     1. Default  Use the default model (currently Opus 5.5)",
+             "   ❯ 2. Opus ✔   Opus 5.5 · Best for everyday, complex tasks",
+             "     3. Sonnet   Sonnet 5.5 · Efficient for routine tasks", "",
+             "   Enter to set as default · s to use this session only · Esc to cancel"]
+    d = HERE / "chat-s5-model"; d.mkdir(exist_ok=True)
+    (d / "meta.json").write_text(json.dumps({"mode": "chat", "tab": "Auto-add decision", "version": "2.1.296"}, indent=1))
+    (d / "screen.txt").write_text("\n".join(model) + "\n")
+    (d / "transcript.jsonl").write_text("\n".join(json.dumps(l, ensure_ascii=False) for l in steps["chat-s5"]) + "\n")
 
 
 def main():
