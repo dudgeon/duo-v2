@@ -154,6 +154,53 @@ Shot: carrying on from S5's terminal. On *chat mode* the camera pushes in on the
 > - *Fixtures (asked of demo-fixtures, Oct 11):* the session's history; a block of user feedback long enough to fold (over 12 lines) and a screenshot from that user; a demo skill for shelf-scan; Claude Code's `/` menu and `/model` screens; two or three short turns between Sam and Claude.
 > - *Skill autocomplete:* any problem found with it while building goes to the director to fix (Geoff, Oct 11).
 
+### S7 · Editor Pane
+
+Topic: File Viewer/Editor
+
+- Duo includes a single pane to view and edit most of the file-types you would want to interact with: markdown, html, powerpoint, and documents.
+- Markdown editing is simple -- most keyboard shortcuts are the same, like command-b to bold, and command-k to add a link. Your changes are visible in real time -- no toggling between raw and rendered markdown.
+- Anything you can see or edit, claude can too. You can select text to show it to your claude agent, and claude can update the document with visible changes.
+- This works in all document types that duo supports, like html or powerpoint.
+
+Shot: the camera moves right to the viewer pane, its first time in the video. On line 1 the cursor clicks through the tabs open there, each on its word: the PRD (Markdown) on "markdown", the scan-review prototype (HTML) on "html", the team-review deck on "powerpoint", and the interview synthesis (Word) on "documents". Each tab opens in its real viewer, and the camera stays on the viewer pane while the tabs change.
+
+On line 2 the cursor goes back to the PRD tab and makes a run of edits in the Markdown editor, each on its words, with a small keycap showing each shortcut as it's pressed:
+
+1. On "command-b": it drag-selects "Fewer than 3% wrong books" in Goals, and ⌘B bolds it in place.
+2. On "command-k": it selects "review step" in What we heard, and ⌘K (Format › Link) makes the words a link to the prototype, prototype/scan-review.html.
+3. On "real time": it types a new sentence at the end of What we heard, "Owen (P8) stopped after two wrong books in two scans.", which renders as it's typed.
+4. On "no toggling": it adds a bullet under Open questions, and the camera pulls back enough to show there is only one view of the file, with no raw/preview switch.
+
+The camera stays on the viewer pane throughout.
+
+On line 3, still on the PRD:
+
+1. On "select text": the cursor drag-selects the What we heard paragraph, right-clicks it, and picks **Send Selection to Claude** from the editor's menu, among its real items.
+2. On "show it to your claude agent": the camera moves to the middle pane, where the selection has landed in the Auto-add decision chat's composer as a reference to those lines. Sam types "Update this with the latest tester feedback in research/feedback" and sends.
+3. On "visible changes": Claude's reply folds its steps into rows (it reads the feedback files and edits prd-v2.md), and the camera moves back to the editor. There the paragraph has changed in place, with Claude's edit highlighted the way Duo marks Claude's changes.
+
+> **Notes for the build** (ignored by it):
+>
+> - *The menu:* drawn, like S4's, because macOS draws context menus outside the window capture. Its items are the editor's real ones (Send Selection to Claude, Send Selection To ▸, then the system's).
+> - *Fixtures (to ask of demo-fixtures):* the chat turn (the composer with the sent selection as Duo formats it, Sam's message, and Claude's reply with its rows); the PRD after Claude's edit, a What we heard paragraph updated from the triage log (Denise's glare, Owen's two wrong books); and the editor showing that edit highlighted.
+
+On line 4, the same pattern twice more, quicker, each ending on the change visible in its own viewer:
+
+1. On "html": the cursor clicks the scan-review.html tab, picks the "Fix" button on the prototype's review screen with the element picker (it outlines as the pointer passes over it), and sends it to Claude. Sam asks "Make this button say 'Fix this book' and make it bigger", and the prototype reloads with the change.
+2. On "powerpoint": the cursor clicks the team-review-oct15.pptx tab and picks the paragraph of text on a slide that holds a paragraph of findings. Sam asks "Turn this into three bullets", and the slide redraws with the bullets.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Real, today:* the HTML viewer's element picker and a picked slide shape both go to Claude through Send to Claude (`duo2 send element`). Claude edits the file and the viewer shows the new version.
+> - *Fixtures (to ask of demo-fixtures):* for each, the chat turn (the picked element or shape as Duo sends it, Sam's message, Claude's reply with its rows) and the file after Claude's edit (scan-review.html with the bigger button; the deck with that slide in bullets). The deck needs a slide with a plain paragraph to turn into bullets.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Getting here from S6:* app navigation. The camera pulls back from the chat, and the topic list comes up for this topic.
+> - *Tabs:* the four files open in S2 (prd-v2.md, scan-review.html, team-review-oct15.pptx, beta-interview-synthesis.docx) are still open in the right pane, so the clicks walk the real tab strip.
+> - *New captures needed:* the right pane on each of the four tabs, in the 1800×1100 window S3–S6 use.
+
 ## The voice
 
 The house voice is a warm, medium-low baritone, friendly and a little quicker (B-light-133, chosen Oct 11). The build reads this table: write the word as it appears in a line, and how it should be said. Add a row whenever a line comes out wrong.

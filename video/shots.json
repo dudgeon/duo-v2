@@ -765,5 +765,491 @@
       "2": 1.8
     },
     "tail": 2.2
+  },
+  "S7": {
+    "kind": "drawn",
+    "scene": "app",
+    "transitionIn": "carry-on",
+    "leadIn": 1.6,
+    "states": [
+      "video-s6-model-picked"
+    ],
+    "pauses": {
+      "3": 1.2,
+      "4": 9.5
+    },
+    "tail": 1.6,
+    "beats": [
+      {
+        "at": {
+          "line": 1,
+          "word": "pane"
+        },
+        "in": "video-s7-tab-md",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0,
+          "y1": 0.45
+        },
+        "dur": 1.1
+      },
+      {
+        "at": {
+          "line": 1,
+          "word": "markdown"
+        },
+        "click": "video.tab.md",
+        "in": "video-s7-tab-md",
+        "state": "video-s7-tab-md"
+      },
+      {
+        "at": {
+          "line": 1,
+          "word": "html"
+        },
+        "click": "video.tab.html",
+        "in": "video-s7-tab-md",
+        "state": "video-s7-tab-html"
+      },
+      {
+        "at": {
+          "line": 1,
+          "word": "powerpoint"
+        },
+        "click": "video.tab.pptx",
+        "in": "video-s7-tab-html",
+        "state": "video-s7-tab-pptx"
+      },
+      {
+        "at": {
+          "line": 1,
+          "word": "documents"
+        },
+        "click": "video.tab.docx",
+        "in": "video-s7-tab-pptx",
+        "state": "video-s7-tab-docx"
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "markdown"
+        },
+        "click": "video.tab.md",
+        "in": "video-s7-tab-docx",
+        "state": "video-s7-tab-md",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.19,
+          "y1": 0.5
+        },
+        "dur": 0.9
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "like",
+          "offset": -0.9
+        },
+        "drag": {
+          "from": "video.editor.bold",
+          "fx0": 0,
+          "fx1": 1,
+          "dur": 0.8,
+          "reveal": "video-s7-bold-sel"
+        },
+        "in": "video-s7-bold-sel",
+        "state": "video-s7-bold-sel",
+        "stateAfter": 0.8
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "bold"
+        },
+        "key": "⌘B",
+        "in": "video-s7-bold",
+        "state": "video-s7-bold",
+        "stateAfter": 0.06
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "add",
+          "offset": -0.8
+        },
+        "drag": {
+          "from": "video.editor.link",
+          "fx0": 0,
+          "fx1": 1,
+          "dur": 0.6,
+          "reveal": "video-s7-link-sel"
+        },
+        "in": "video-s7-link-sel",
+        "state": "video-s7-link-sel",
+        "stateAfter": 0.6
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "link"
+        },
+        "key": "⌘K",
+        "in": "video-s7-link",
+        "state": "video-s7-link",
+        "stateAfter": 0.06
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "changes"
+        },
+        "wipe": {
+          "state": "video-s7-typed",
+          "on": "video.editor.owen",
+          "dur": 1.5
+        },
+        "in": "video-s7-typed",
+        "state": "video-s7-typed",
+        "stateAfter": 1.5
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "time"
+        },
+        "mark": "video.editor.owen",
+        "in": "video-s7-typed",
+        "quote": "visible in real time",
+        "hold": 1.1
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "toggling"
+        },
+        "wipe": {
+          "state": "video-s7-bullet",
+          "on": "video.editor.bullet",
+          "dur": 1.2
+        },
+        "in": "video-s7-bullet",
+        "state": "video-s7-bullet",
+        "stateAfter": 1.2,
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.5,
+          "y1": 0.82
+        },
+        "dur": 0.6
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "rendered"
+        },
+        "in": "video-s7-bullet",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.05,
+          "y1": 0.85
+        },
+        "dur": 1
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "select"
+        },
+        "drag": {
+          "from": "video.editor.heard",
+          "fx0": 0,
+          "fx1": 1,
+          "dur": 0.9,
+          "reveal": "video-s7-md-sel"
+        },
+        "in": "video-s7-md-sel",
+        "state": "video-s7-md-sel",
+        "stateAfter": 0.9,
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.25,
+          "y1": 0.53
+        },
+        "dur": 0.7
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "show"
+        },
+        "menu": {
+          "on": "video.editor.heard",
+          "items": [
+            "Send Selection to Claude",
+            "Send Selection To ▸",
+            "-",
+            "Look Up “What we heard”",
+            "Translate “What we heard”",
+            "-",
+            "Cut",
+            "Copy",
+            "Paste",
+            "-",
+            "Spelling and Grammar ▸",
+            "Substitutions ▸",
+            "Transformations ▸",
+            "Font ▸",
+            "Speech ▸"
+          ],
+          "pick": "Send Selection to Claude",
+          "pickAfter": 0.6,
+          "hold": 0.85
+        },
+        "fx": 0.55,
+        "in": "video-s7-md-sel"
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "agent"
+        },
+        "state": "video-s7-md-composer",
+        "in": "video-s7-md-composer",
+        "stateAfter": -0.4,
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0.45,
+          "y1": 1
+        },
+        "dur": 0.8
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "update"
+        },
+        "state": "video-s7-md-sent",
+        "in": "video-s7-md-sent"
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "visible"
+        },
+        "state": "video-s7-md-after",
+        "in": "video-s7-md-after",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.25,
+          "y1": 0.53
+        },
+        "dur": 0.8,
+        "stateAfter": 0.5
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "changes"
+        },
+        "mark": "video.editor.change",
+        "in": "video-s7-md-after",
+        "quote": "visible changes",
+        "hold": 2
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html"
+        },
+        "click": "video.tab.html",
+        "in": "video-s7-md-after",
+        "state": "video-s7-tab-html",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.3,
+          "y1": 0.8
+        },
+        "dur": 0.8
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html",
+          "offset": 1
+        },
+        "menu": {
+          "on": "video.html.fix",
+          "items": [
+            "Select Element",
+            "Reload Page"
+          ],
+          "pick": "Select Element",
+          "pickAfter": 0.5,
+          "hold": 0.7
+        },
+        "fx": 0.5,
+        "in": "video-s7-html-pick"
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html",
+          "offset": 2.1
+        },
+        "click": "video.html.fix",
+        "in": "video-s7-html-pick",
+        "state": "video-s7-html-pick"
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html",
+          "offset": 3
+        },
+        "click": "video.picker.send",
+        "in": "video-s7-html-pick",
+        "state": "video-s7-html-sent",
+        "stateAfter": 0.2,
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0.45,
+          "y1": 1
+        },
+        "dur": 0.7
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html",
+          "offset": 4.6
+        },
+        "state": "video-s7-html-after",
+        "in": "video-s7-html-after",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.3,
+          "y1": 0.8
+        },
+        "dur": 0.7,
+        "stateAfter": 0.4
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html",
+          "offset": 5.2
+        },
+        "mark": "video.html.fix",
+        "in": "video-s7-html-after",
+        "quote": "Fix this book",
+        "hold": 1.4
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html",
+          "offset": 6.7
+        },
+        "click": "video.tab.pptx",
+        "in": "video-s7-html-after",
+        "state": "video-s7-pptx-slide3",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.02,
+          "y1": 0.5
+        },
+        "dur": 0.7
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html",
+          "offset": 7.6
+        },
+        "click": "video.slide.select",
+        "in": "video-s7-pptx-slide3"
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html",
+          "offset": 8.3
+        },
+        "click": "video.slide.shape",
+        "in": "video-s7-pptx-pick",
+        "state": "video-s7-pptx-pick"
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html",
+          "offset": 9.1
+        },
+        "click": "video.picker.send",
+        "in": "video-s7-pptx-pick",
+        "state": "video-s7-pptx-sent",
+        "stateAfter": 0.2,
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0.45,
+          "y1": 1
+        },
+        "dur": 0.7
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html",
+          "offset": 10.7
+        },
+        "state": "video-s7-pptx-after",
+        "in": "video-s7-pptx-after",
+        "cam": {
+          "on": "video.pane.right",
+          "y0": 0.02,
+          "y1": 0.5
+        },
+        "dur": 0.7,
+        "stateAfter": 0.4
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html",
+          "offset": 11.3
+        },
+        "mark": "video.slide.shape",
+        "in": "video-s7-pptx-after",
+        "quote": "three bullets",
+        "hold": 1.6
+      }
+    ],
+    "shotSha": "b8719f1aae39",
+    "requires": [
+      {
+        "what": "Way in from S6 without a cut; the topic list comes up; the camera moves to the viewer pane",
+        "built": true
+      },
+      {
+        "what": "Line 1: the cursor clicks the four tabs on their words; each opens in its real viewer",
+        "built": true
+      },
+      {
+        "what": "Line 2: ⌘B bolds a drag-selected phrase, ⌘K links \"review step\", a sentence renders as typed, a bullet is added; keycaps show the shortcuts",
+        "built": true
+      },
+      {
+        "what": "Line 3: drag-select the What we heard paragraph, right-click, Send Selection to Claude (drawn menu, real items); Sam sends in chat; Claude edit highlighted in the editor",
+        "built": true
+      },
+      {
+        "what": "Line 4: HTML element picker on the Fix button, sent to Claude, prototype shows the change",
+        "built": true
+      },
+      {
+        "what": "Line 4: a slide paragraph picked, sent, slide redrawn in three bullets",
+        "built": true
+      }
+    ]
   }
 }
