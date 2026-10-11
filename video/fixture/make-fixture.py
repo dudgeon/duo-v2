@@ -227,6 +227,22 @@ surfaces = {
     },
 }
 
+def video_s10():
+    import re
+    slug = lambda t: re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-")[:60].strip("-")
+    ids = {s["name"]: s["sessionId"] for s in world["sessions"]}
+    T = world["tasks"]; n = T["new"]; name = slug(n["title"])
+    tasks = [{k: v for k, v in {"project": "shelf-scan", "path": f"tasks/{slug(t['title'])}.md", "title": t["title"], "status": t["status"],
+              "sessionIds": [ids[x] for x in t["sessions"]], "owner": t.get("owner"), "waitingOn": t.get("waiting_on"), "due": t.get("due"),
+              "created": t["created"], "completed": t.get("completed")}.items() if v is not None} for t in T["notes"]]
+    return {"sessionIds": ids, "tasks": tasks, "goal": world["projects"][0]["goal"],
+            "newTask": {"title": n["title"], "path": f"tasks/{name}.md", "created": f"s10/{name}.created.md",
+                        "details": f"s10/{name}.details.md", "linked": f"s10/{name}.linked.md",
+                        "session": {"sessionId": n["session"]["sessionId"], "title": n["session"]["title"], "chat": "chat-s10-task",
+                                    "draft": f"@tasks/{name}.md ", "ask": n["session"]["ask"]}},
+            "deckSession": {"name": "Deck for Thursday", "sessionId": ids["Deck for Thursday"], "chat": "chat-s10-deck"}}
+
+
 fixture = {
     "$note": "Sample data for the intro video's demo world (Little Shared Library; SCENARIO.md, world.json). Built by make-fixture.py; do not edit by hand. Same keys as the design fixture.",
     "videoS2": {
@@ -248,6 +264,9 @@ fixture = {
                   "research/interviews/p5.md", "research/interviews/p6.md", "research/interviews/p7.md", "research/interviews/p8.md",
                   "research/feedback/denise-p3.txt", "research/feedback/denise-p3-screenshot.png"],
     },
+    # S10 (Tasks): opt-in, read only by the video's S10 states. Kept out of `sessions`/`tasks` so S2–S7 don't
+    # change: those states key tabs by session name, and a sessionId would become the tab key.
+    "videoS10": video_s10(),
     "now": world["time"]["today"],
     "user": world["user"]["name"],
     "topics": world["topics"],

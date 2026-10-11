@@ -375,21 +375,24 @@
       "project": "shelf-scan",
       "state": "working",
       "wait": "now",
-      "role": "S2 middle tab 0"
+      "role": "S2 middle tab 0",
+      "sessionId": "7a5c0000-5e55-4d0e-8a00-5e5500000000"
     },
     {
       "name": "Prototype scan review",
       "project": "shelf-scan",
       "state": "idle",
       "wait": "12m",
-      "role": "S2 middle tab 1"
+      "role": "S2 middle tab 1",
+      "sessionId": "7a5c0001-5e55-4d0e-8a00-5e5500000001"
     },
     {
       "name": "Synthesis from interviews",
       "project": "shelf-scan",
       "state": "idle",
       "wait": "1h",
-      "role": "S2 middle tab 2, chat"
+      "role": "S2 middle tab 2, chat",
+      "sessionId": "7a5c0002-5e55-4d0e-8a00-5e5500000002"
     },
     {
       "name": "Auto-add decision",
@@ -403,40 +406,46 @@
         "Keep it and log an open question",
         "Something else"
       ],
-      "role": "S3 needs you; S4 resume; S5 chat"
+      "role": "S3 needs you; S4 resume; S5 chat",
+      "sessionId": "5b1e7c42-9d3a-4f60-8a21-c0de0add0a11"
     },
     {
       "name": "Spine eval: glare cases",
       "project": "shelf-scan",
       "state": "working",
       "wait": "9m",
-      "summary": "Running score.py on the glare subset"
+      "summary": "Running score.py on the glare subset",
+      "sessionId": "7a5c0004-5e55-4d0e-8a00-5e5500000004"
     },
     {
       "name": "Deck for Thursday",
       "project": "shelf-scan",
       "state": "readyForReview",
-      "summary": "team-review-oct15.pptx, 6 slides"
+      "summary": "team-review-oct15.pptx, 6 slides",
+      "sessionId": "7a5c0005-5e55-4d0e-8a00-5e5500000005"
     },
     {
       "name": "quick q: TestFlight build size",
       "project": "shelf-scan",
       "state": "idle",
       "wait": "3d",
-      "role": "S4 archive"
+      "role": "S4 archive",
+      "sessionId": "7a5c0006-5e55-4d0e-8a00-5e5500000006"
     },
     {
       "name": "Old v1 notes cleanup",
       "project": "shelf-scan",
       "state": "idle",
       "wait": "6d",
-      "role": "S4 delete; never running"
+      "role": "S4 delete; never running",
+      "sessionId": "7a5c0007-5e55-4d0e-8a00-5e5500000007"
     },
     {
       "name": "Weekly digest draft",
       "project": "beta-feedback",
       "state": "working",
-      "wait": "2m"
+      "wait": "2m",
+      "sessionId": "7a5c0008-5e55-4d0e-8a00-5e5500000008"
     },
     {
       "name": "Tag crash reports",
@@ -444,59 +453,68 @@
       "state": "needsYou",
       "wait": "7m",
       "permission": "Bash(xcrun crashlog symbolicate crashes/*.ips)",
-      "question": "Allow Claude to run xcrun on crashes/*.ips?"
+      "question": "Allow Claude to run xcrun on crashes/*.ips?",
+      "sessionId": "7a5c0009-5e55-4d0e-8a00-5e5500000009"
     },
     {
       "name": "Tester emails, Oct 12",
       "project": "beta-feedback",
       "state": "idle",
       "summary": "Sorted 23 emails into 5 themes",
-      "wait": "40m"
+      "wait": "40m",
+      "sessionId": "7a5c000a-5e55-4d0e-8a00-5e550000000a"
     },
     {
       "name": "Freshness badge spec",
       "project": "neighborhood-map",
       "state": "working",
       "wait": "14m",
-      "summary": "Writing states in freshness.md"
+      "summary": "Writing states in freshness.md",
+      "sessionId": "7a5c000b-5e55-4d0e-8a00-5e550000000b"
     },
     {
       "name": "Map pins: stale boxes",
       "project": "neighborhood-map",
       "state": "idle",
-      "wait": "2d"
+      "wait": "2d",
+      "sessionId": "7a5c000c-5e55-4d0e-8a00-5e550000000c"
     },
     {
       "name": "Steward welcome email",
       "project": "steward-onboarding",
       "state": "idle",
       "summary": "welcome-email.md, 3 variants",
-      "wait": "3h"
+      "wait": "3h",
+      "sessionId": "7a5c000d-5e55-4d0e-8a00-5e550000000d"
     },
     {
       "name": "Morning triage",
       "project": "home",
       "state": "idle",
       "wait": "1h",
-      "summary": "Routed 3 of 4 new asks to projects"
+      "summary": "Routed 3 of 4 new asks to projects",
+      "sessionId": "7a5c000e-5e55-4d0e-8a00-5e550000000e"
     },
     {
       "name": "Scan v1 launch notes",
       "project": "shelf-scan",
       "state": "archived",
-      "wait": "7w"
+      "wait": "7w",
+      "sessionId": "7a5c000f-5e55-4d0e-8a00-5e550000000f"
     },
     {
       "name": "Interview guide",
       "project": "shelf-scan",
       "state": "archived",
-      "wait": "4w"
+      "wait": "4w",
+      "sessionId": "7a5c0010-5e55-4d0e-8a00-5e5500000010"
     },
     {
       "name": "Map tile costs",
       "project": "neighborhood-map",
       "state": "archived",
-      "wait": "3w"
+      "wait": "3w",
+      "sessionId": "7a5c0011-5e55-4d0e-8a00-5e5500000011"
     }
   ],
   "homeSessions": {
@@ -657,5 +675,88 @@
       "Public",
       "work"
     ]
+  },
+  "tasks": {
+    "$note": "S10 (Geoff, 2026-10-11): shelf-scan's task notes, tasks/<slug>.md (DL-6, DL-93, DL-146). make-tasks.py writes them; sessions link by the ids above.",
+    "notes": [
+      {
+        "title": "Auto-add decision",
+        "status": "waiting",
+        "owner": "Sam",
+        "waiting_on": "Jo Whitfield",
+        "due": "2026-10-15",
+        "goal": "Decide whether auto-add survives v2.",
+        "done": [
+          "Q1 in the PRD is closed",
+          "Jo signs off at Thursday's review"
+        ],
+        "sessions": [
+          "Auto-add decision",
+          "Tighten PRD goals"
+        ],
+        "created": "2026-10-12"
+      },
+      {
+        "title": "Deck for Thursday",
+        "status": "review",
+        "owner": "Sam",
+        "due": "2026-10-15",
+        "goal": "Six slides that get scan v2 into the November build.",
+        "done": [
+          "Jo and Ravi have read it",
+          "The chart matches Ravi's eval"
+        ],
+        "sessions": [
+          "Deck for Thursday",
+          "Prototype scan review"
+        ],
+        "created": "2026-10-12"
+      },
+      {
+        "title": "Spine eval: glare cases",
+        "status": "in-progress",
+        "owner": "Ravi Menon",
+        "due": "2026-10-20",
+        "goal": "Know how often glare causes a wrong read, on enough glass-door shelves to trust it.",
+        "done": [
+          "At least 30 glass-door shelves in the set",
+          "score.py reports glare on its own"
+        ],
+        "sessions": [
+          "Spine eval: glare cases"
+        ],
+        "created": "2026-10-09"
+      },
+      {
+        "title": "Beta interview synthesis",
+        "status": "done",
+        "owner": "Sam",
+        "completed": "2026-10-13",
+        "goal": "What eight beta testers told us, in one page.",
+        "done": [
+          "Themes, two quotes and recommendations",
+          "Linked from PROJECT.md"
+        ],
+        "sessions": [
+          "Synthesis from interviews"
+        ],
+        "created": "2026-09-26"
+      }
+    ],
+    "new": {
+      "title": "Warn about glare before the photo",
+      "created": "2026-10-13",
+      "goal": "No glare misreads at glass-door boxes.",
+      "done": [
+        "The scan screen warns about glare before the photo is taken",
+        "No glare misreads at glass-door boxes in Ravi's next eval"
+      ],
+      "feedback": "research/feedback/denise-p3.txt",
+      "session": {
+        "sessionId": "7a5c0a1a-61a2-4e00-8a00-5e5500a1a2e0",
+        "title": "Glare warning copy",
+        "ask": "Draft the glare warning copy for the scan screen"
+      }
+    }
   }
 }
