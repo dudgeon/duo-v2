@@ -1,0 +1,53 @@
+[38;5;173m ▐▛███▜▌[0m   [1mClaude Code[0m v2.1.291
+[38;5;173m▝▜█████▛▘[0m  Opus 5.5 · Claude Max
+[38;5;173m  ▘▘ ▝▝[0m    ~/work/little-shared-library/shelf-scan
+
+[90m❯[0m Should auto-add survive v2? Read the PRD and Ravi's eval notes and tell me where we stand.
+
+[38;5;173m⏺[0m [1mRead[0m(docs/prd-v2.md)
+  [90m⎿[0m  Read 24 lines
+
+[38;5;173m⏺[0m [1mRead[0m(eval/spine-eval-2026-09-28.md)
+  [90m⎿[0m  Read 60 lines
+
+[38;5;173m⏺[0m Short version: on the numbers, auto-add can't survive v2 as it is. The model reads 81.0% of
+  spines right (Ravi's threshold is 95%), and confidence doesn't separate right from wrong.
+
+[90m❯[0m Check the eval numbers against the beta feedback, then add a What we heard section to the PRD.
+
+[38;5;173m⏺[0m [1mRead[0m(eval/results.csv)
+  [90m⎿[0m  Read 40 lines
+
+[38;5;173m⏺[0m [1mBash[0m(python3 eval/score.py)
+  [90m⎿[0m  accuracy: 81.0% (1,004 / 1,240)
+  [90m⎿[0m  misses: 236 · tilted 34% · glare 27% · thin 21% · stacked 12% · other 6%
+
+[38;5;173m⏺[0m [1mSearch[0m(pattern: "stopped", path: "research/interviews")
+  [90m⎿[0m  Found 9 lines in 3 files (p3, p6, p8)
+
+[38;5;173m⏺[0m [1mUpdate[0m(docs/prd-v2.md)
+  [90m⎿[0m  Updated docs/prd-v2.md with 5 additions
+
+      [2m 13[0m [32m+ ## What we heard[0m
+      [2m 14[0m [32m+ Three of eight testers (P3, P6, P8) stopped scanning after a wro…[0m
+      [2m 15[0m [32m+ Glare from glass-door boxes caused 27% of wrong reads; Denise (P3) c…[0m
+      [2m 16[0m [32m+ With a review step in the prototype, testers fixed every miss: 97% o…[0m
+
+[38;5;173m⏺[0m I added "What we heard" between Goals and Requirements. Eval and feedback line up. One thing
+  needs your call before I touch the goals or Open questions.
+
+[90m╭────────────────────────────────────────────────────────────────────────────────────────────╮[0m
+[90m│[0m [1m[36m☐ Auto-add[0m                                                                                 [90m│[0m
+[90m│[0m                                                                                            [90m│[0m
+[90m│[0m [1mThree testers (P3, P6, P8) say a wrong auto-added book is why they stopped scanning. That[0m  [90m│[0m
+[90m│[0m [1mconflicts with v1 goal 2, "every scanned spine lands in the catalog with no extra taps".[0m   [90m│[0m
+[90m│[0m [1mPut auto-add behind the review step, or keep it and log an open question?[0m                  [90m│[0m
+[90m│[0m                                                                                            [90m│[0m
+[90m│[0m [36m❯ 1. Put auto-add behind the review step[0m                                                   [90m│[0m
+[90m│[0m [2m     Scans show a review step; nothing is added until the steward taps Add (PRD[0m            [90m│[0m
+[90m│[0m [2m     requirements)[0m                                                                         [90m│[0m
+[90m│[0m   2. Keep it and log an open question                                                      [90m│[0m
+[90m│[0m [2m     Stay with v1 behaviour for now and list it under Open questions[0m                       [90m│[0m
+[90m│[0m   3. Type something.                                                                       [90m│[0m
+[90m╰────────────────────────────────────────────────────────────────────────────────────────────╯[0m
+  [2mEnter to select · ↑/↓ to navigate · Esc to cancel[0m

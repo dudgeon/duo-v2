@@ -45,6 +45,52 @@ screens = {
   + tool("Write", "../docs/beta-interview-synthesis.docx", "Wrote 46 lines")
   + say("Written. I kept two quotes, P3 Denise and P8 Owen, and put the recommendation last: show what", "the scan found and let the steward review it before anything is added.") + footer(),
 }
+
+# S4: "Auto-add decision" resumed (claude --resume): yesterday's turn scrolls into today's, ending on the pending
+# AskUserQuestion as Claude Code draws it. Same text as sessions/auto-add-decision.jsonl (make-research.py).
+import textwrap
+cyan = E_ + "36m"
+def ask(header_, question, options, width=94):
+    inner = width - 4
+    box = [f"{grey}╭{'─' * (width - 2)}╮{rst}"]
+    def row(t="", vis=None):
+        vis = len(t) if vis is None else vis
+        return f"{grey}│{rst} {t}{' ' * (inner - vis)} {grey}│{rst}"
+    box.append(row(f"{bold}{cyan}☐ {header_}{rst}", len("☐ " + header_)))
+    box.append(row())
+    for l in textwrap.wrap(question, inner):
+        box.append(row(f"{bold}{l}{rst}", len(l)))
+    box.append(row())
+    for i, (label, desc) in enumerate(options, 1):
+        lead = "❯" if i == 1 else " "
+        t = f"{lead} {i}. {label}"
+        box.append(row(f"{cyan}{t}{rst}" if i == 1 else t, len(t)))
+        for l in textwrap.wrap(desc, inner - 6):
+            box.append(row(f"{dim}     {l}{rst}", 5 + len(l)))
+    box.append(f"{grey}╰{'─' * (width - 2)}╯{rst}")
+    return box + [f"  {dim}Enter to select · ↑/↓ to navigate · Esc to cancel{rst}"]
+QUESTION = ("Three testers (P3, P6, P8) say a wrong auto-added book is why they stopped scanning. That conflicts with "
+            "v1 goal 2, \"every scanned spine lands in the catalog with no extra taps\". Put auto-add behind the review "
+            "step, or keep it and log an open question?")
+screens["auto-add-decision.ans"] = (header(SHELF)
+  + you("Should auto-add survive v2? Read the PRD and Ravi's eval notes and tell me where we stand.")
+  + tool("Read", "docs/prd-v2.md", "Read 24 lines") + tool("Read", "eval/spine-eval-2026-09-28.md", "Read 60 lines")
+  + say("Short version: on the numbers, auto-add can't survive v2 as it is. The model reads 81.0% of",
+        "spines right (Ravi's threshold is 95%), and confidence doesn't separate right from wrong.")
+  + you("Check the eval numbers against the beta feedback, then add a What we heard section to the PRD.")
+  + tool("Read", "eval/results.csv", "Read 40 lines")
+  + tool("Bash", "python3 eval/score.py", "accuracy: 81.0% (1,004 / 1,240)", "misses: 236 · tilted 34% · glare 27% · thin 21% · stacked 12% · other 6%")
+  + tool("Search", "pattern: \"stopped\", path: \"research/interviews\"", "Found 9 lines in 3 files (p3, p6, p8)")
+  + tool("Update", "docs/prd-v2.md", "Updated docs/prd-v2.md with 5 additions")
+  + diff(("+", 13, "## What we heard"), ("+", 14, "Three of eight testers (P3, P6, P8) stopped scanning after a wro…"),
+         ("+", 15, "Glare from glass-door boxes caused 27% of wrong reads; Denise (P3) c…"),
+         ("+", 16, "With a review step in the prototype, testers fixed every miss: 97% o…"))
+  + [""] + say("I added \"What we heard\" between Goals and Requirements. Eval and feedback line up. One thing",
+        "needs your call before I touch the goals or Open questions.")
+  + ask("Auto-add", QUESTION, [
+        ("Put auto-add behind the review step", "Scans show a review step; nothing is added until the steward taps Add (PRD requirements)"),
+        ("Keep it and log an open question", "Stay with v1 behaviour for now and list it under Open questions"),
+        ("Type something.", "")]))
 here = pathlib.Path(__file__).parent
 for name, lines in screens.items():
     (here / name).write_text("\n".join(lines) + "\n")

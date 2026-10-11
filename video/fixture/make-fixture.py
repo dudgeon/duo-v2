@@ -233,6 +233,8 @@ fixture = {
         "folder": "docs",
         "project": "shelf-scan",
         "cwd": "/Users/sam/work/little-shared-library/shelf-scan",
+        "s4Terminal": "terms/auto-add-decision.ans",
+        "s5Chat": "chat-s4",
         "terminals": [
             {"name": "Tighten PRD goals", "state": "working", "wait": "now", "screen": "terms/tighten-prd.ans"},
             {"name": "Prototype scan review", "state": "idle", "wait": "12m", "screen": "terms/prototype-scan-review.ans"},
