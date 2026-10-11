@@ -449,8 +449,9 @@
     {
       "name": "Tester emails, Oct 12",
       "project": "beta-feedback",
-      "state": "readyForReview",
-      "summary": "Sorted 23 emails into 5 themes"
+      "state": "idle",
+      "summary": "Sorted 23 emails into 5 themes",
+      "wait": "40m"
     },
     {
       "name": "Freshness badge spec",
@@ -468,20 +469,16 @@
     {
       "name": "Steward welcome email",
       "project": "steward-onboarding",
-      "state": "readyForReview",
-      "summary": "welcome-email.md, 3 variants"
+      "state": "idle",
+      "summary": "welcome-email.md, 3 variants",
+      "wait": "3h"
     },
     {
       "name": "Morning triage",
       "project": "home",
-      "state": "needsYou",
+      "state": "idle",
       "wait": "1h",
-      "question": "4 new asks: route 3 to projects?",
-      "options": [
-        "Yes, route 3",
-        "No",
-        "Something else"
-      ]
+      "summary": "Routed 3 of 4 new asks to projects"
     },
     {
       "name": "Scan v1 launch notes",
