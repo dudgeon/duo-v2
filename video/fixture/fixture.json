@@ -4,6 +4,8 @@
     "folder": "docs",
     "project": "shelf-scan",
     "cwd": "/Users/sam/work/little-shared-library/shelf-scan",
+    "s4Terminal": "terms/auto-add-decision.ans",
+    "s5Chat": "chat-s4",
     "terminals": [
       {
         "name": "Tighten PRD goals",
