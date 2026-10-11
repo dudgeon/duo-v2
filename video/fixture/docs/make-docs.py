@@ -15,6 +15,23 @@ from docx.shared import Pt as DPt, RGBColor as DRGB, Inches as DIn
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
+
+import datetime, io, zipfile
+FIXED = datetime.datetime(2026, 10, 12, 18, 0, 0)
+def stable(path):
+    """Rewrites an Office zip with fixed timestamps, so an unchanged deck or doc keeps the same bytes (the video's capture cache hashes them)."""
+    path = pathlib.Path(path); src = zipfile.ZipFile(io.BytesIO(path.read_bytes()))
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for info in src.infolist():
+            data = src.read(info.filename)
+            if info.filename == "docProps/core.xml":
+                import re
+                data = re.sub(rb"(<dcterms:(created|modified)[^>]*>)[^<]*", lambda m: m.group(1) + b"2026-10-12T18:00:00Z", data)
+            zi = zipfile.ZipInfo(info.filename, date_time=FIXED.timetuple()[:6]); zi.compress_type = zipfile.ZIP_DEFLATED
+            z.writestr(zi, data)
+    path.write_bytes(out.getvalue())
+
 here = pathlib.Path(__file__).parent
 W = json.load(open(here.parent / "world.json"))
 N = W["numbers"]; T = {t["id"]: t for t in W["testers"]}
@@ -85,16 +102,17 @@ content["desk"] = {
     "terms": {
         "term1": [
             {"k": "box", "cwd": ROOT},
-            {"k": "user", "text": "tighten the goals in docs/prd-v2.md, make each one measurable"},
+            {"k": "user", "text": "Tighten the goals in docs/prd-v2.md: make each one measurable."},
             {"k": "tool", "name": "Update", "arg": "docs/prd-v2.md"},
-            {"k": "out", "text": "Updated docs/prd-v2.md with 3 additions and 2 removals"},
-            {"k": "diff", "n": gi, "sign": " ", "text": "## Goals"},
-            {"k": "diff", "n": gi + 1, "sign": "-", "text": "1. Make the catalog more accurate."},
-            {"k": "diff", "n": gi + 2, "sign": "-", "text": "2. Get more scans saved. Make review quick."},
+            {"k": "out", "text": "Updated docs/prd-v2.md with 3 additions and 3 removals"},
+            # The same edit terms/tighten-prd.ans shows in S2: the v1 goals out, the PRD's goals in.
+            {"k": "diff", "n": gi + 1, "sign": "-", "text": "1. Fewer wrong books."},
             {"k": "diff", "n": gi + 1, "sign": "+", "text": goals[0]},
+            {"k": "diff", "n": gi + 2, "sign": "-", "text": "2. Every scanned spine lands in the catalog with no extra taps."},
             {"k": "diff", "n": gi + 2, "sign": "+", "text": goals[1]},
+            {"k": "diff", "n": gi + 3, "sign": "-", "text": "3. Fixing a missed book takes one tap."},
             {"k": "diff", "n": gi + 3, "sign": "+", "text": goals[2]},
-            {"k": "say", "text": "Each goal now has a number and today’s baseline."}],
+            {"k": "say", "text": "Goal 1 now carries the baseline and the target."}],
         "term2": [
             {"k": "box", "cwd": ROOT + "/prototype"},
             {"k": "user", "text": "flag unsure spines with an amber outline and a \"Fix\" chip in prototype/scan-review.html"},
@@ -108,8 +126,8 @@ content["desk"] = {
             {"k": "diff", "n": 160, "sign": "+", "text": "          <div class=\"sec warn\">Needs a look <small>2</small></div>"},
             {"k": "say", "text": "Two spines are flagged. Tap Fix to pick the right title."}],
     },
-    "zsh": {"user": "sam", "host": "Sams-MacBook-Pro", "lastLogin": W["time"]["lastLogin"],
-            "wrongCd": "cd ~/work/litle-shared-library/shelfscan", "rightCd": "cd ~/work/little-shared-library/shelf-scan"},
+    "zsh": {"user": W["user"]["shortUser"], "host": W["user"]["host"], "lastLogin": W["time"]["lastLogin"],
+            "wrongCd": "cd ~/work/little-shared-libary/shelf-scan", "rightCd": "cd ~/work/little-shared-library/shelf-scan"},
     "clock": W["time"]["clock"], "url": "localhost:3000/scan-review",
     "prd": prd_lines[:11],
 }
@@ -201,7 +219,7 @@ for n, sl in enumerate(slides, 1):
         for i, b in enumerate(sl["bullets"]):
             p = tf.paragraphs[0] if i == 0 else tf.add_paragraph(); p.space_after = Pt(18)
             r = p.add_run(); r.text = "•  " + b; r.font.size, r.font.name = Pt(30), FONT; r.font.color.rgb = INK
-prs.save(here / content["deck"]["file"])
+prs.save(here / content["deck"]["file"]); stable(here / content["deck"]["file"])
 
 # ---------------------------------------------------------------- docx
 d = content["doc"]; doc = Document()
@@ -238,7 +256,7 @@ for s_ in d["sections"]:
     if "body" in s_: doc.add_paragraph(s_["body"])
     for q in s_.get("quotes", []): doc.add_paragraph(q, style="Quote")
     for b in s_.get("bullets", []): doc.add_paragraph(b, style="List Bullet")
-doc.save(here / d["file"])
+doc.save(here / d["file"]); stable(here / d["file"])
 
 # ---------------------------------------------------------------- PROJECT.md
 (here / "PROJECT.md").write_text("""---

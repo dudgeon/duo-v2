@@ -36,7 +36,20 @@
       "docs/prd-v2.md",
       "docs/team-review-oct15.pptx",
       "docs/beta-interview-synthesis.docx",
-      "prototype/scan-review.html"
+      "prototype/scan-review.html",
+      "eval/spine-eval-2026-09-28.md",
+      "eval/results.csv",
+      "eval/score.py",
+      "research/interviews/p1.md",
+      "research/interviews/p2.md",
+      "research/interviews/p3.md",
+      "research/interviews/p4.md",
+      "research/interviews/p5.md",
+      "research/interviews/p6.md",
+      "research/interviews/p7.md",
+      "research/interviews/p8.md",
+      "research/feedback/denise-p3.txt",
+      "research/feedback/denise-p3-screenshot.png"
     ]
   },
   "now": "2026-10-13T09:41:00",
