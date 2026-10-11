@@ -1,6 +1,6 @@
 // Parse video/script.md, the export of the script Doc (DL-169).
 // Scenes are `### S<n> · <title> (about N s)`; each bullet under one is a voiceover line;
-// a paragraph starting `Shot:` is the shot note. The table under `## The voice` is the
+// a paragraph starting `Shot:` is the shot note, and prose after it (beats, `> notes`) belongs to it. The table under `## The voice` is the
 // pronunciation lexicon (Written | Said): Said is what the voice is given.
 
 export function parseScript(md) {
@@ -13,7 +13,7 @@ export function parseScript(md) {
     if (h2) { inVoice = /voice/i.test(h2[1]); scene = null; continue; }
     const h3 = line.match(/^### (S\d+)\s*·\s*(.+?)(?:\s*\(about (\d+) s\))?$/);
     if (h3) {
-      scene = {id: h3[1], title: h3[2].trim(), targetSeconds: h3[3] ? +h3[3] : null, lines: [], shot: ''};
+      scene = {id: h3[1], title: h3[2].trim(), targetSeconds: h3[3] ? +h3[3] : null, lines: [], shot: '', notes: []};
       scenes.push(scene);
       continue;
     }
@@ -37,6 +37,8 @@ export function parseScript(md) {
     }
     const shot = line.match(/^Shot:\s*(.+)/);
     if (shot) scene.shot = shot[1].trim();
+    // Prose after the Shot: line (beats, `> notes`) is part of what the shot must do.
+    else if (scene.shot && line.trim() && !/^>\s*$/.test(line)) scene.notes.push(line.replace(/^>\s?/, '').trim());
   }
   // Example scenes and empty template slots are for the writer, not the film.
   return {scenes: scenes.filter((sc) => !/^example\b/i.test(sc.title) && sc.lines.length), lexicon};

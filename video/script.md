@@ -12,6 +12,7 @@ A from-scratch rewrite. Each build reads this doc. The rules below are what the 
 - **Callouts:** if a line names a feature that should be pointed at, put the phrase in *italics*. That's where the cursor clicks and the marker lands.
 - **Only real things.** Everything on screen is the real app on sample data, so say only what Duo actually does today.
 - **Anything else** (a paragraph, a question, a `> note`) is ignored by the build. Use it freely.
+- **Every Shot: note is a checklist.** The build lists each thing a Shot: note asks for, and its report names anything not built yet. A stand-in is never silent.
 
 ## The brief
 
@@ -32,14 +33,14 @@ Fill these four in first; I read them before every scene decision. (The build ig
 
 - Duo is a desktop client for the claude code c-l-i that makes it easier to stay organized and get work done.
 
-Shot: a motion graphics animation of the duo icon being built
+Shot: the Duo logo builds itself in motion graphics, then settles beside the title "Duo" and the line "A desktop client for Claude Code", the three framed as one composition. That settled frame is the video's thumbnail, so it must read at a glance.
 
 ### S1 · (title) (about \_ s)
 
 - I found that when I was working with claude code, I would usually be juggling multiple terminals, finder windows, text editors, and browser tabs.
 - I would often open a new terminal window for a quick task, and either take a bunch of time to pick the right starting directory, or lose track of where I opened which sessions if I wanted to come back to them later.
 
-Shot: the High Sierra desktop starts empty, then fills window by window: Terminal windows running Claude Code, Finder windows on different project folders, a Markdown editor, a browser with a design mockup, a PowerPoint deck and a Word doc. Each opens on top of the last until you can't tell which terminal belongs to which project.
+Shot: the High Sierra desktop starts empty, then fills window by window: dark-mode Terminal windows running Claude Code, Finder windows on different project folders, a Markdown editor, a browser showing a polished, realistic checkout prototype, a PowerPoint deck and a Word doc. Each opens on top of the last until you can't tell which terminal belongs to which project.
 
 > **Notes for the build** (a quote, so the build ignores it; a bullet here would be voiced):
 >
@@ -52,17 +53,17 @@ Shot: the High Sierra desktop starts empty, then fills window by window: Termina
 
 - Duo brings all the tools you need together into a single window: a pane for managing files and projects, a terminal or chat view for working with claude, and a flexible editor for viewing and working with files.
 
-Shot: the pile of windows from S1 flies together and docks into one real Duo window: Finder into the left pane, the terminals into the middle, the editor, browser and documents into the right. Each pane gets a callout as the narrator names it.
+Shot: an animated transition, not a cut: the S1 windows morph into one real Duo window. The Finder windows morph into the left pane; the dark terminals morph into session tabs in the middle pane; the Markdown file, the browser prototype, the PowerPoint deck and the Word doc morph into tabs in the right pane. Each pane gets a callout as the narrator names it.
 
 Middle pane, on "a terminal or chat view": the terminals have folded into session tabs. The cursor clicks from one tab to the next (real sessions on sample data), and the last one flips to chat view on the words "chat view".
 
-Right pane, on "flexible editor": the Markdown file, the browser page and the documents have folded into editor tabs. The cursor clicks through them in that order.
+Right pane, on "flexible editor": the Markdown file, the browser prototype, the PowerPoint deck and the Word doc are now editor tabs. The cursor clicks through them in that order.
 
 > **Notes for the build** (ignored by it):
 >
 > - *Left pane, on "managing files and projects":* the Finder windows land as the project list and file tree.
-> - *New captures needed:* one project with three or more terminal tabs, the last in chat view, and the editor with a Markdown file, an HTML page and a browser tab open.
-> - *Open question:* Duo shows Markdown, HTML and web pages today; I need to check whether it opens Word or PowerPoint files. If it doesn't, the S1 "documents" become an HTML page and an HTML slide deck in this shot, under the only-real-things rule.
+> - *New captures needed:* one project with three or more terminal tabs, the last in chat view, and the editor with four tabs open: a Markdown file, the prototype in a browser tab, a .pptx and a .docx.
+> - *Word and PowerPoint:* Duo opens .pptx and .docx (Geoff, Oct 10), so the same deck and doc from S1 appear as real tabs here.
 > - *Callouts:* putting *a pane for managing files and projects*, *a terminal or chat view* and *flexible editor* in italics in the line would pin the three callouts to those words.
 
 ## The voice

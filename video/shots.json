@@ -1,21 +1,178 @@
 {
-  "$note": "One shot per scene in script.md, keyed by scene id (DL-169). Claude keeps these in step with the script's Shot: notes. Look: style/reference-analysis.md. kind 'desk' films a fixture state's window (ground 'paper' by default, 'wallpaper' for the desktop); 'drawn' is a drawn scene; 'card' is a title card. A move or callout targets an anchor (label or identifier) or a rect in window points, and lands on a word of line N. Script v1's shots are in archive/shots-v1.json.",
-  "S0": {"kind": "card", "title": "Duo", "sub": "A desktop client for Claude Code", "standIn": true,
-    "$todo": "Stand-in for the icon being built: needs a drawn scene."},
-  "S1": {"kind": "drawn", "scene": "desk", "events": {
-    "term1": {"line": 1, "word": "juggling", "offset": -0.2},
-    "term2": {"line": 1, "word": "terminals"},
-    "finder": {"line": 1, "word": "finder"},
-    "markdown": {"line": 1, "word": "text"},
-    "browser": {"line": 1, "word": "browser"},
-    "term3": {"line": 2, "word": "new", "offset": -0.3},
-    "path": {"line": 2, "word": "pick"},
-    "hunt": {"line": 2, "word": "lose"}},
-    "$todo": "PowerPoint and Word windows aren't drawn yet."},
-  "S2": {"kind": "desk", "state": "chat-window", "chapter": false,
+  "$note": "One shot per scene in script.md, keyed by scene id (DL-169). Claude keeps these in step with the script's Shot: notes. Look: style/reference-analysis.md. kind 'desk' films a fixture state's window (ground 'paper' by default, 'wallpaper' for the desktop); 'drawn' is a drawn scene; 'card' is a title card. A move or callout targets an anchor (label or identifier) or a rect in window points, and lands on a word of line N. Script v1's shots are in archive/shots-v1.json. Each shot carries shotSha (the hash of its Shot: note and the prose after it) and requires: one item per thing the note asks for, built true or false. The build stops when a note changes and reports every unbuilt item.",
+  "S0": {
+    "kind": "card",
+    "title": "Duo",
+    "sub": "A desktop client for Claude Code",
+    "standIn": true,
+    "shotSha": "b049d7599ff1",
+    "requires": [
+      {
+        "what": "The Duo logo (app icon 2A', drawn from docs/design/icon-handoff geometry) builds itself in motion graphics",
+        "built": false
+      },
+      {
+        "what": "The logo settles beside the title \"Duo\" and the line \"A desktop client for Claude Code\", framed as one composition",
+        "built": false
+      },
+      {
+        "what": "The settled frame works as the thumbnail: readable at 320 px wide; build exports it as out/thumbnail.png",
+        "built": false
+      }
+    ]
+  },
+  "S1": {
+    "kind": "drawn",
+    "scene": "desk",
+    "events": {
+      "term1": {
+        "line": 1,
+        "word": "juggling",
+        "offset": -0.2
+      },
+      "term2": {
+        "line": 1,
+        "word": "terminals"
+      },
+      "finder": {
+        "line": 1,
+        "word": "finder"
+      },
+      "markdown": {
+        "line": 1,
+        "word": "text"
+      },
+      "browser": {
+        "line": 1,
+        "word": "browser"
+      },
+      "term3": {
+        "line": 2,
+        "word": "new",
+        "offset": -0.3
+      },
+      "path": {
+        "line": 2,
+        "word": "pick"
+      },
+      "hunt": {
+        "line": 2,
+        "word": "lose"
+      }
+    },
+    "shotSha": "b19e03148cb5",
+    "requires": [
+      {
+        "what": "High Sierra desktop starts empty",
+        "built": true
+      },
+      {
+        "what": "Terminal windows running Claude Code are in dark mode",
+        "built": false
+      },
+      {
+        "what": "Finder windows on different project folders",
+        "built": true
+      },
+      {
+        "what": "A Markdown editor window",
+        "built": true
+      },
+      {
+        "what": "A browser with a polished, realistic checkout prototype (not a basic wireframe)",
+        "built": false
+      },
+      {
+        "what": "A PowerPoint deck window with a real-looking slide",
+        "built": false
+      },
+      {
+        "what": "A Word doc window with a real-looking page",
+        "built": false
+      },
+      {
+        "what": "Line 1: each window kind appears on its word (terminals, finder, text editors, browser); PowerPoint and Word in the gap before line 2",
+        "built": false
+      },
+      {
+        "what": "Line 2: a new terminal opens, a cd path is typed wrong then retyped; camera hunts over the pile for an older session",
+        "built": false
+      },
+      {
+        "what": "Ends on the full pile held ~1 s, as the start state of S2's morph",
+        "built": false
+      }
+    ]
+  },
+  "S2": {
+    "kind": "desk",
+    "state": "chat-window",
+    "chapter": false,
     "moves": [
-      {"to": {"anchor": "video.pane.left", "width": 900, "align": "left", "pad": 0}, "line": 1, "land": "pane", "dur": 1.6},
-      {"to": {"anchor": "video.pane.middle", "width": 960}, "line": 1, "land": "terminal", "dur": 1.4},
-      {"to": {"anchor": "video.pane.right", "width": 900}, "line": 1, "land": "flexible", "dur": 1.4}],
-    "$todo": "Stand-in: no converge from S1, no tab clicks or chat flip yet; needs the captures in the S2 notes."}
+      {
+        "to": {
+          "anchor": "video.pane.left",
+          "width": 900,
+          "align": "left",
+          "pad": 0
+        },
+        "line": 1,
+        "land": "pane",
+        "dur": 1.6
+      },
+      {
+        "to": {
+          "anchor": "video.pane.middle",
+          "width": 960
+        },
+        "line": 1,
+        "land": "terminal",
+        "dur": 1.4
+      },
+      {
+        "to": {
+          "anchor": "video.pane.right",
+          "width": 900
+        },
+        "line": 1,
+        "land": "flexible",
+        "dur": 1.4
+      }
+    ],
+    "shotSha": "81a059bb5c40",
+    "requires": [
+      {
+        "what": "An animated morph, not a cut, from S1's pile into one real Duo window",
+        "built": false
+      },
+      {
+        "what": "Finder windows morph into the left pane (project list and file tree)",
+        "built": false
+      },
+      {
+        "what": "Dark terminals morph into session tabs in the middle pane",
+        "built": false
+      },
+      {
+        "what": "Markdown, browser prototype, PowerPoint and Word morph into tabs in the right pane",
+        "built": false
+      },
+      {
+        "what": "A callout on each pane as the narrator names it (files and projects; terminal or chat view; flexible editor)",
+        "built": false
+      },
+      {
+        "what": "Middle pane: cursor clicks through the session tabs; the last flips to chat view on \"chat view\"",
+        "built": false
+      },
+      {
+        "what": "Right pane: cursor clicks through Markdown, browser prototype, PowerPoint, Word tabs in that order",
+        "built": false
+      },
+      {
+        "what": "Captures: a project with 3+ terminal tabs (last in chat view) and the editor with .md, browser prototype, .pptx and .docx tabs, one state per active tab",
+        "built": false
+      }
+    ]
+  }
 }
