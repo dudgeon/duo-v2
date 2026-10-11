@@ -1,0 +1,22 @@
+{
+ "slide": 3,
+ "count": 7,
+ "id": 7,
+ "name": "TextBox 6",
+ "type": "shape",
+ "text": "Ravi's Sep 28 eval read 81% of spines right across 1,240 photos from 96 shelves. Tilted spines caused 34% of the wrong reads and glare 27%, most of it at glass-door boxes. With a review step in the prototype, testers got 97% of books right in a median 18 seconds a shelf.",
+ "box": [
+  86,
+  202,
+  739,
+  422
+ ],
+ "slideSize": [
+  1280,
+  720
+ ],
+ "outline": "Slide 3:\n  2  Rectangle 1 (shape) 1280×17 at (0, 0)\n  3  TextBox 2 (shape) 1123×115 at (77, 53)\n      What the eval found\n  4  Rectangle 3 (shape) 1126×2 at (77, 667)\n  5  TextBox 4 (shape) 864×29 at (77, 672)\n      Little Shared Library · shelf-scan · team review Oct 15\n  6  TextBox 5 (shape) 60×29 at (1142, 672)\n      3\n  7  TextBox 6 (shape) 739×422 at (86, 202)\n      Ravi's Sep 28 eval read 81% of spines right across 1,240 photos from 96 shelves. Tilted spines caused 34% of the wrong reads and glare 27%, most of it at glass-door boxes. With a review step in the prototype, testers got 97% of books right in a median 18 seconds a shelf.\n  8  Rounded Rectangle 7 (shape) 355×336 at (864, 211)\n  9  TextBox 8 (shape) 326×115 at (878, 240)\n      236\n  10  TextBox 9 (shape) 298×144 at (893, 374)\n      wrong reads in 1,240 photos",
+ "afterOutline": "Slide 3:\n  2  Rectangle 1 (shape) 1280×17 at (0, 0)\n  3  TextBox 2 (shape) 1123×115 at (77, 53)\n      What the eval found\n  4  Rectangle 3 (shape) 1126×2 at (77, 667)\n  5  TextBox 4 (shape) 864×29 at (77, 672)\n      Little Shared Library · shelf-scan · team review Oct 15\n  6  TextBox 5 (shape) 60×29 at (1142, 672)\n      3\n  7  TextBox 6 (shape) 739×422 at (86, 202)\n      •  Ravi's Sep 28 eval read 81% of spines right across 1,240 photos from 96 shelves.\n      •  Tilted spines caused 34% of the wrong reads and glare 27%, most of it at glass-door boxes.\n      •  With a review step in the prototype, testers got 97% of books right in a median 18 seconds a shelf.\n  8  Rounded Rectangle 7 (shape) 355×336 at (864, 211)\n  9  TextBox 8 (shape) 326×115 at (878, 240)\n      236\n  10  TextBox 9 (shape) 298×144 at (893, 374)\n      wrong reads in 1,240 photos",
+ "editPy": "from pptx import Presentation\nfrom pptx.util import Pt\npath = \"docs/team-review-oct15.pptx\"\nprs = Presentation(path)\ntf = next(s for s in prs.slides[2].shapes if s.shape_id == 7).text_frame\nfont = tf.paragraphs[0].runs[0].font\nsize, name, color = font.size, font.name, font.color.rgb\nsentences = [s.strip() + \".\" for s in tf.text.split(\". \") if s.strip()]\nsentences[-1] = sentences[-1].rstrip(\".\") + \".\"\ntf.clear()\nfor i, s in enumerate(sentences):\n    p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()\n    p.space_after = Pt(18)\n    r = p.add_run(); r.text = \"•  \" + s\n    r.font.size, r.font.name = size, name\n    r.font.color.rgb = color\nprs.save(path)\nprint(f\"slide 3: {len(sentences)} bullets\")\n",
+ "editOut": "slide 3: 3 bullets\n"
+}

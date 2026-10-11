@@ -231,6 +231,7 @@ def flagged(c, tc, read, why, spine, chips):
   <div class="fh">{cover(c, tc, read)}<div class="ft"><div class="fr">Read as <q>{esc(read)}</q></div><div class="fw"><span class="dot"></span>{why} · spine {spine}</div></div><span class="skip">Skip</span></div>
   <div class="dym">Did you mean&hellip;</div>
   <div class="chips">{"".join(chips)}</div>
+  <div class="fixrow"><button class="fix">Fix</button></div>
 </div>'''
 
 
