@@ -1,6 +1,7 @@
 // Turn the script, the voiced lines, the shots and the captures into build/public/timeline.json.
 // Voice timing is the beat map: a camera move lands on the word that names its subject.
 import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
 import {BuildError} from './util.mjs';
 
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
@@ -49,6 +50,8 @@ export const TRANSITIONS = {
   'duo-fades': {kind: 'graphic', from: 'app', to: 'projects'},
   // Back into Duo: the scene before fades its pile out and Duo's window in, on the next scene's first capture.
   'pile-to-duo': {kind: 'graphic', from: 'projects', to: 'app', out: 1.6},
+  // To the closing paper (S11): Duo's window steps away as a thumbnail while the paper ground fills in.
+  'duo-steps-away': {kind: 'graphic', from: 'app', to: 'conclusion'},
 };
 const sceneType = (shot) => (shot.kind === 'drawn' ? shot.scene : shot.kind);
 const fromOk = (tr, type) => (Array.isArray(tr.from) ? tr.from.includes(type) : tr.from === type);
@@ -293,6 +296,21 @@ export function plan({scenes, shots, voiced, captures, style}) {
         const fx = (f) => readFileSync(new URL(`../fixture/${f}`, import.meta.url), 'utf8');
         s.projects = {window: {w: first.widthPt, h: first.heightPt}, scale: style.capture.scale, src: first.src, back: back.src,
           screens: Object.fromEntries(Object.entries(shot.screens ?? {}).map(([k, f]) => [k, fx(f)]))};
+      }
+      if (shot.scene === 'conclusion') {
+        // S11: the release line is Duo's real releases, read from GitHub at build time (shot.releases is the fallback
+        // when gh can't reach it), so the video's own "built from" stamp stays true.
+        const cap = captures[shot.states[0]];
+        if (!cap) throw new BuildError(`shots: ${scene.id} needs a capture of ${shot.states[0]}`);
+        let releases = shot.releases ?? [];
+        const gh = spawnSync('gh', ['release', 'list', '--limit', '40', '--json', 'tagName,publishedAt'], {encoding: 'utf8'});
+        if (gh.status === 0) try { releases = JSON.parse(gh.stdout).map((r) => ({tag: r.tagName, date: r.publishedAt.slice(0, 10)})).reverse(); } catch {}
+        const md = (iso) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', {month: 'short', day: 'numeric', timeZone: 'UTC'});
+        const topics = []; for (const sc of scenes) if (sc.topic && sc.topic !== topics[topics.length - 1]) topics.push(sc.topic);
+        const today = new Date();
+        s.conclusion = {window: {w: cap.widthPt, h: cap.heightPt}, src: cap.src, topics, inProgress: shot.inProgress ?? [],
+          releases: releases.map((r) => ({tag: r.tag, date: md(r.date)})), os: shot.os ?? 'macOS',
+          built: today.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})};
       }
       if (shot.scene === 'turn') {
         s.turn = {headline: shot.headline, projects: shot.projects, shots: shot.states.map((st) => {

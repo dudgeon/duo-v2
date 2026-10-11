@@ -1222,6 +1222,16 @@
         "in": "video-s7-pptx-after",
         "quote": "three bullets",
         "hold": 1.6
+      },
+      {
+        "at": {
+          "line": 4,
+          "word": "html",
+          "offset": 12.6
+        },
+        "in": "video-s7-pptx-after",
+        "cam": "wide",
+        "dur": 1.1
       }
     ],
     "shotSha": "6cfe4c9e59cc",
@@ -1248,6 +1258,147 @@
       },
       {
         "what": "Line 4: a slide paragraph picked, sent, slide redrawn in three bullets",
+        "built": true
+      }
+    ]
+  },
+  "S8": {
+    "kind": "drawn",
+    "scene": "projects",
+    "transitionIn": "duo-fades",
+    "leadIn": 0.6,
+    "states": [
+      "video-s7-pptx-after",
+      "video-s7-pptx-after"
+    ],
+    "screens": {
+      "banner": "terms/s8-banner.txt",
+      "top": "terms/s8-resume-top.txt",
+      "scrolled": "terms/s8-resume-scrolled.txt"
+    },
+    "events": {
+      "fade": {
+        "line": 1,
+        "word": "fundamentals",
+        "offset": -0.3
+      },
+      "windows": {
+        "line": 2,
+        "offset": -0.2
+      },
+      "claude": {
+        "line": 2,
+        "word": "wherever"
+      },
+      "here": {
+        "line": 2,
+        "word": "folder"
+      },
+      "map": {
+        "line": 3
+      },
+      "grey": {
+        "line": 3,
+        "word": "show"
+      },
+      "fold": {
+        "line": 4,
+        "offset": -0.6
+      },
+      "resume": {
+        "line": 4,
+        "offset": 0.1
+      },
+      "scroll": {
+        "line": 4,
+        "word": "stack"
+      }
+    },
+    "requires": [
+      {
+        "what": "Duo fades away to the bare desktop on \"Let's start with some fundamentals\"",
+        "built": true
+      },
+      {
+        "what": "A drawn Terminal and a Finder window on ~; claude typed with no cd; the real banner shows ~ and is circled as the project",
+        "built": true
+      },
+      {
+        "what": "The folder map on paper: one folder per project with its own session cards; the others grey out on \"does not show you your projects\"",
+        "built": true
+      },
+      {
+        "what": "claude --resume opens the real 2.1.296 picker on Sam's pile of 23 sessions; it scrolls a screen; the scene ends on the pile",
+        "built": true
+      }
+    ]
+  },
+  "S11": {
+    "kind": "drawn",
+    "scene": "conclusion",
+    "transitionIn": "duo-steps-away",
+    "leadIn": 0.8,
+    "tail": 3.5,
+    "states": [
+      "video-s10-deck-resumed"
+    ],
+    "inProgress": [
+      "Duo Projects",
+      "Tasks"
+    ],
+    "os": "Version 27.0",
+    "events": {
+      "dev": {
+        "line": 1,
+        "word": "development"
+      },
+      "next": {
+        "line": 1,
+        "word": "date"
+      },
+      "list": {
+        "line": 2,
+        "offset": -0.2
+      },
+      "circle": {
+        "line": 2,
+        "word": "projects"
+      },
+      "cards": {
+        "line": 2,
+        "word": "feedback"
+      },
+      "help": {
+        "line": 3,
+        "word": "github",
+        "offset": -1.1
+      },
+      "form": {
+        "line": 3,
+        "word": "github",
+        "offset": -0.2
+      },
+      "card": {
+        "line": 3,
+        "word": "experience",
+        "offset": 0.6
+      }
+    },
+    "requires": [
+      {
+        "what": "The release line from GitHub releases, an open next dot and the built-from stamp",
+        "built": true
+      },
+      {
+        "what": "The topic list, all ticked, Duo Projects and Tasks circled; blank feedback cards",
+        "built": true
+      },
+      {
+        "what": "Help › Report an Issue… opens GitHub's new-issue form filled in as Duo fills it",
+        "built": true
+      },
+      {
+        "what": "The video ends on S0's opening card, held about 3 s after the last line",
         "built": true
       }
     ]
