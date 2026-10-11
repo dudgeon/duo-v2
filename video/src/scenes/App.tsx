@@ -14,7 +14,7 @@ import tokens from '../../style/tokens.json';
 
 export type AppStep = {at: number; state: string};
 export type AppClick = {at: number; x: number; y: number; right?: boolean};
-export type AppDrag = {at: number; dur: number; from: {x: number; y: number}; to: {x: number; y: number}};
+export type AppDrag = {at: number; dur: number; from: {x: number; y: number}; to: {x: number; y: number}; reveal?: {state: string; rect: Rect}};
 export type AppCam = {at: number; dur: number; rect: Rect | null};       // null: back to the whole desk
 export type AppMark = {at: number; until: number; rect: Rect; quote?: string};
 export type AppMenu = {at: number; until: number; x: number; y: number; items: string[]; hi?: {at: number; item: string}};
@@ -127,6 +127,15 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
               })}
             </>
           ) : <Crop src={data.src[state]} scale={data.scale} region={{x: 0, y: 0, w: data.window.w, h: data.window.h}} rect={{x: 0, y: 0, w: win.w, h: win.h}} />}
+          {/* A drag's selection grows under the cursor: the selected capture, from the drag's start to the cursor. */}
+          {data.drags.map((d, i) => {
+            if (!d.reveal || t < d.at || t > d.at + d.dur + 0.1) return null;
+            const x1 = lerp(d.from.x, d.to.x, interpolate(t, [d.at, d.at + d.dur], [0, 1], clamp));
+            const r = d.reveal.rect, x0 = Math.min(d.from.x, x1), w = Math.abs(x1 - d.from.x);
+            if (w < 0.5) return null;
+            const region = {x: x0, y: r.y, w, h: r.h};
+            return <Crop key={`rv${i}`} src={data.src[d.reveal.state]} scale={data.scale} region={region} rect={{x: x0 * K, y: r.y * K, w: w * K, h: r.h * K}} />;
+          })}
         </div>
         {data.menus.map((mn, i) => {
           if (t < mn.at || t > mn.until) return null;

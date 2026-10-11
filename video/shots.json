@@ -610,8 +610,8 @@
         },
         "cam": "video.composer",
         "dur": 0.9,
-        "in": "video-s6-draft",
-        "state": "video-s6-draft"
+        "in": "video-s6-typed",
+        "state": "video-s6-typed"
       },
       {
         "at": {
@@ -620,11 +620,14 @@
         },
         "drag": {
           "from": "video.composer",
-          "fx0": 0.369,
-          "fx1": 0.504,
-          "dur": 0.8
+          "fx0": 0.592,
+          "fx1": 0.866,
+          "dur": 0.9,
+          "reveal": "video-s6-draft"
         },
-        "in": "video-s6-draft"
+        "in": "video-s6-typed",
+        "state": "video-s6-draft",
+        "stateAfter": 0.9
       },
       {
         "at": {

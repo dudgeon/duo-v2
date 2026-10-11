@@ -124,7 +124,9 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
     };
     if (b.cam !== undefined) { lastCam = camRect(b.cam); data.cams.push({at, dur: b.dur ?? 0.9, rect: lastCam}); }
     if (b.click) data.clicks.push({at, ...centre(rect(b.click), b.fx ?? 0.5, b.fy ?? 0.5), right: !!b.right});
-    if (b.drag) data.drags.push({at, dur: b.drag.dur ?? 0.7, from: centre(rect(b.drag.from), b.drag.fx0 ?? 0, 0.5), to: centre(rect(b.drag.to ?? b.drag.from), b.drag.fx1 ?? 1, 0.5)});
+    // drag.reveal: a capture of the selection the drag makes, shown from where the drag began to the cursor as it moves.
+    if (b.drag) data.drags.push({at, dur: b.drag.dur ?? 0.7, from: centre(rect(b.drag.from), b.drag.fx0 ?? 0, 0.5), to: centre(rect(b.drag.to ?? b.drag.from), b.drag.fx1 ?? 1, 0.5),
+      ...(b.drag.reveal ? {reveal: {state: use(b.drag.reveal), rect: rect(b.drag.from)}} : {})});
     if (b.menu) {
       const r = rect(b.menu.on);
       const p = centre(r, b.fx ?? 0.5, b.fy ?? 0.5);

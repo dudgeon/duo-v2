@@ -17,7 +17,7 @@ public enum VideoTargets {
                                              "video-s4-resumed", "video-s4-menu", "video-s4-archived", "video-s4-delete-ask", "video-s4-deleted",
                                              "video-s5-chat", "video-s5-chat-open", "video-s5-draft", "video-s5-paste-text", "video-s5-paste-image",
                                              // Scene 6: chat mode, turn by turn (the recordings video/fixture/chat-s5-*).
-                                             "video-s6-answered", "video-s6-open", "video-s6-draft", "video-s6-paste-text", "video-s6-paste-image",
+                                             "video-s6-answered", "video-s6-open", "video-s6-typed", "video-s6-draft", "video-s6-paste-text", "video-s6-paste-image",
                                              "video-s6-turn1", "video-s6-slash", "video-s6-turn2", "video-s6-model", "video-s6-model-picked", "video-s6-final"]
 
     public static func apply(_ screen: String, to model: AppModel) {
@@ -178,7 +178,7 @@ public enum VideoTargets {
     // MARK: Scene 6: the chat's turns
 
     /// Each scene 6 state's recording folder, beside the fixture (video/fixture/): what Sam has said and Claude has done so far.
-    static let s6Folders = ["answered": "chat-s5-answered", "open": "chat-s5-answered", "draft": "chat-s5-answered",
+    static let s6Folders = ["answered": "chat-s5-answered", "open": "chat-s5-answered", "typed": "chat-s5-answered", "draft": "chat-s5-answered",
                             "paste-text": "chat-s5-answered", "paste-image": "chat-s5-answered", "turn1": "chat-s5-turn1",
                             "slash": "chat-s5-slash", "turn2": "chat-s5-turn2", "model": "chat-s5-model",
                             "model-picked": "chat-s5-model", "final": "chat-s5"]
@@ -256,7 +256,9 @@ public enum VideoTargets {
         guard let screen, screen.hasPrefix("video-s5-") || screen.hasPrefix("video-s6-"), let fixturePath else { return [] }
         let order = screen.hasPrefix("video-s5-") ? ["video-s5-draft", "video-s5-paste-text", "video-s5-paste-image"]
                                                    : ["video-s6-draft", "video-s6-paste-text", "video-s6-paste-image"]
-        guard let step = order.firstIndex(of: screen) else { return [] }
+        // video-s6-typed: the draft as typed, before the drag selects part of it (the drag reveals video-s6-draft's selection).
+        let typed = screen == "video-s6-typed"
+        guard let step = typed ? 0 : order.firstIndex(of: screen) else { return [] }
         let dir = URL(fileURLWithPath: fixturePath).deletingLastPathComponent()
         let content = (try? Data(contentsOf: dir.appending(path: "docs/content.json"))).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
         let s5 = content?["s5"] as? [String: String]
@@ -266,7 +268,7 @@ public enum VideoTargets {
         var out = ["chat-type:\(draft)"]
         if step >= 1 { out += ["chat-select:end", "chat-paste:textfile=\(feedback)/denise-p3.txt"] }
         if step >= 2 { out += ["chat-select:end", "chat-paste:file=\(feedback)/denise-p3-screenshot.png"] }
-        if step == 0 { out += ["chat-select:\(select)"] }
+        if step == 0 { out += [typed ? "chat-select:end" : "chat-select:\(select)"] }
         return out
     }
 }
