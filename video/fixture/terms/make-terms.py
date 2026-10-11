@@ -21,7 +21,7 @@ screens = {
 "tighten-prd.ans": header(SHELF) + you("Tighten the goals in docs/prd-v2.md: make each one measurable.")
   + tool("Read", "docs/prd-v2.md", "Read 30 lines")
   + say("The goals mix an outcome with a requirement. I'll lead with the wrong-books metric and move", "\"fix a miss in one tap\" down to Requirements, where it already lives.")
-  + tool("Update", "docs/prd-v2.md", "Updated docs/prd-v2.md with 5 additions and 3 removals") + diff(
+  + tool("Update", "docs/prd-v2.md", "Updated docs/prd-v2.md with 3 additions and 3 removals") + diff(
       (" ", 8, "## Goals"),
       ("-", 9, "1. Fewer wrong books."), ("+", 9, "1. Fewer than 3% wrong books in the catalog (19% today)."),
       ("-", 10, "2. Every scanned spine lands in the catalog with no extra taps."), ("+", 10, "2. 80% of scans end with a saved shelf (64% today)."),

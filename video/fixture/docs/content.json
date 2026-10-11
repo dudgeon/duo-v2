@@ -262,7 +262,7 @@
         },
         {
           "k": "user",
-          "text": "tighten the goals in docs/prd-v2.md, make each one measurable"
+          "text": "Tighten the goals in docs/prd-v2.md: make each one measurable."
         },
         {
           "k": "tool",
@@ -271,25 +271,13 @@
         },
         {
           "k": "out",
-          "text": "Updated docs/prd-v2.md with 3 additions and 2 removals"
-        },
-        {
-          "k": "diff",
-          "n": 8,
-          "sign": " ",
-          "text": "## Goals"
+          "text": "Updated docs/prd-v2.md with 3 additions and 3 removals"
         },
         {
           "k": "diff",
           "n": 9,
           "sign": "-",
-          "text": "1. Make the catalog more accurate."
-        },
-        {
-          "k": "diff",
-          "n": 10,
-          "sign": "-",
-          "text": "2. Get more scans saved. Make review quick."
+          "text": "1. Fewer wrong books."
         },
         {
           "k": "diff",
@@ -300,8 +288,20 @@
         {
           "k": "diff",
           "n": 10,
+          "sign": "-",
+          "text": "2. Every scanned spine lands in the catalog with no extra taps."
+        },
+        {
+          "k": "diff",
+          "n": 10,
           "sign": "+",
           "text": "2. 80% of scans end with a saved shelf (64% today)."
+        },
+        {
+          "k": "diff",
+          "n": 11,
+          "sign": "-",
+          "text": "3. Fixing a missed book takes one tap."
         },
         {
           "k": "diff",
@@ -311,7 +311,7 @@
         },
         {
           "k": "say",
-          "text": "Each goal now has a number and today’s baseline."
+          "text": "Goal 1 now carries the baseline and the target."
         }
       ],
       "term2": [
@@ -375,9 +375,9 @@
     },
     "zsh": {
       "user": "sam",
-      "host": "Sams-MacBook-Pro",
+      "host": "mbp",
       "lastLogin": "Last login: Tue Oct 13 09:12:44 on ttys002",
-      "wrongCd": "cd ~/work/litle-shared-library/shelfscan",
+      "wrongCd": "cd ~/work/little-shared-libary/shelf-scan",
       "rightCd": "cd ~/work/little-shared-library/shelf-scan"
     },
     "clock": "Tue 9:41",
