@@ -28,14 +28,18 @@ export function parseScript(md) {
     if (!scene) continue;
     const bullet = line.match(/^[-*]\s+(.+)/);
     if (bullet) {
-      const text = bullet[1].replace(/\*\*|`/g, '').trim();
-      scene.lines.push({id: `${scene.id}-${scene.lines.length + 1}`, text});
+      // *Italics* mark a phrase the picture should point at (a callout cue); the voice never sees the marks.
+      const cues = [...bullet[1].matchAll(/(?<!\*)\*([^*]+)\*(?!\*)|(?<!_)_([^_]+)_(?!_)/g)].map((m) => (m[1] ?? m[2]).trim());
+      const text = bullet[1].replace(/\*\*|`/g, '').replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '$1').replace(/(?<!_)_([^_]+)_(?!_)/g, '$1').trim();
+      if (/^\(.*\)$/.test(text)) continue; // an empty template slot: "(line)"
+      scene.lines.push({id: `${scene.id}-${scene.lines.length + 1}`, text, cues});
       continue;
     }
     const shot = line.match(/^Shot:\s*(.+)/);
     if (shot) scene.shot = shot[1].trim();
   }
-  return {scenes, lexicon};
+  // Example scenes and empty template slots are for the writer, not the film.
+  return {scenes: scenes.filter((sc) => !/^example\b/i.test(sc.title) && sc.lines.length), lexicon};
 }
 
 /** What the voice is given: each Written form replaced by its Said form, longest first, as whole words. */
