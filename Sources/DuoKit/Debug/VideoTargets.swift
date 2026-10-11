@@ -2,7 +2,7 @@ import AppKit
 import Foundation
 
 /// The intro video's scene 2 as window states (`--state video-s2-<what>`, with `--fixture video/fixture/fixture.json`):
-/// the checkout-redesign project with three session tabs in the middle pane and four documents in
+/// the fixture's project (`videoS2.project`) with three session tabs in the middle pane and four documents in
 /// the right pane, each drawn by its real view (the editor, the HTML viewer, the deck and Word
 /// viewers) from files beside the fixture. Terminals show a recorded screen with no process behind
 /// them; the chat state shows the last tab's recorded chat. `video-s2-middle-<0..2>` activates a
@@ -17,7 +17,8 @@ public enum VideoTargets {
         TargetState.project.apply(to: model)
         guard let v = model.fixture.videoS2, let base = model.fixture.baseDir else { return }
         let dir = URL(fileURLWithPath: base)
-        let project = "checkout-redesign"
+        let project = v.project ?? "checkout-redesign"
+        model.altitude = .project(project)
         let folder = dir.appending(path: v.folder).standardizedFileURL
         // The project's sessions are the three the story tells, none grouped.
         guard let template = model.fixture.sessions.first(where: { $0.project == project }) else { return }
@@ -50,7 +51,7 @@ public enum VideoTargets {
             let name = v.terminals[middle].name
             let rec = dir.appending(path: v.chat)
             let chat = ChatSession(key: name, mode: .chat)
-            chat.log.cwd = "/Users/pm/work/payments/checkout-redesign"
+            chat.log.cwd = v.cwd ?? "/Users/pm/work/payments/checkout-redesign"
             ChatRecording.play(rec, into: chat)
             model.fixtureChats[name] = chat
         } else if screen.hasPrefix("video-s2-middle-") {
