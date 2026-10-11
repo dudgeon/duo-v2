@@ -85,6 +85,7 @@ final class PasteBlockView: NSView, NSTextViewDelegate {
         self.host = host
         super.init(frame: .zero)
         wantsLayer = true
+        setAccessibilityIdentifier("video.composer.paste")   // anchors: the video camera's target
         syncOpen()
     }
     required init?(coder: NSCoder) { fatalError() }

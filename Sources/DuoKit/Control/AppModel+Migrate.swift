@@ -88,11 +88,8 @@ extension AppModel {
         do {
             plan = try m.planDelete(id, live: [], extra: [SessionArchive.copyURL(id), SessionArchive.sidecarURL(id)])
         } catch { done?(.failure(error)); return }
-        let bytes = ByteCountFormatter.string(fromByteCount: Int64(plan.steps.compactMap(\.bytesBefore).reduce(0, +)), countStyle: .file)
-        let list = plan.steps.prefix(8).map { "• " + Self.short($0.from) }.joined(separator: "\n") + (plan.steps.count > 8 ? "\n• and \(plan.steps.count - 8) more" : "")
-        confirm(title: "Delete “\(s.name)”?",
-                detail: "Its transcript goes to the Trash, and Duo’s archived copy with it (\(plan.steps.count) item\(plan.steps.count == 1 ? "" : "s"), \(bytes)). \(inDuo ? "It is running: Duo ends it first. " : "")You can put it back from the Trash, but Duo can’t undo this.\n\n\(list)",
-                button: "Move to Trash") { [weak self] ok in
+        let (title, detail, bytes) = Self.deleteWording(name: s.name, plan: plan, inDuo: inDuo)
+        confirm(title: title, detail: detail, button: "Move to Trash") { [weak self] ok in
             guard let self else { return }
             guard ok else { done?(.failure(Migrator.Refusal("Not deleted: the user clicked Cancel in Duo. Nothing changed."))); return }
             let pids = ownPids
@@ -112,6 +109,15 @@ extension AppModel {
             }
             attempt(40)
         }
+    }
+
+    /// What Delete Session…'s question says (also asked by the intro video's `video-s4-delete-ask` with a sample plan).
+    static func deleteWording(name: String, plan: Migrator.Journal, inDuo: Bool) -> (title: String, detail: String, bytes: String) {
+        let bytes = ByteCountFormatter.string(fromByteCount: Int64(plan.steps.compactMap(\.bytesBefore).reduce(0, +)), countStyle: .file)
+        let list = plan.steps.prefix(8).map { "• " + short($0.from) }.joined(separator: "\n") + (plan.steps.count > 8 ? "\n• and \(plan.steps.count - 8) more" : "")
+        return ("Delete “\(name)”?",
+                "Its transcript goes to the Trash, and Duo’s archived copy with it (\(plan.steps.count) item\(plan.steps.count == 1 ? "" : "s"), \(bytes)). \(inDuo ? "It is running: Duo ends it first. " : "")You can put it back from the Trash, but Duo can’t undo this.\n\n\(list)",
+                bytes)
     }
 
     /// Delete Task…'s sessions (DL-115): the same delete, without its own question (the task's asked).

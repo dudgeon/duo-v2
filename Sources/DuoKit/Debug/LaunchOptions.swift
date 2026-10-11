@@ -83,6 +83,7 @@ public struct LaunchOptions: Sendable {
             default: break  // AppKit passes its own flags (-NSDocumentRevisionsDebugMode etc.)
             }
         }
+        thenActions = VideoTargets.impliedActions(for: searchState, fixturePath: fixturePath) + thenActions
     }
 
     /// The fixture to load: `--fixture`, else the copy bundled in the app, else the one in the repo.

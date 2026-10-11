@@ -62,6 +62,7 @@ struct ChatRunView: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel(ChatRuns.line(run))
             .accessibilityValue(open ? "open" : "folded")
+            .accessibilityIdentifier(chat.toolRowIdentifier(run.id))
             if open {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(run.entries.enumerated()), id: \.offset) { _, e in
@@ -159,6 +160,22 @@ struct ChatTodosView: View {
     }
 }
 
+extension ChatSession {
+    /// The intro video's anchor for a tool row (`video.chat.tool.<n>`, 1-based through the chat): only on a
+    /// session a video state set up (`videoAnchors`), so a live chat does no extra work.
+    func toolRowIdentifier(_ id: String) -> String {
+        guard videoAnchors else { return "" }
+        var n = 0
+        for case .claude(let turn) in log.items {
+            for b in ChatRuns.blocks(turn.segments) where b.onThread {
+                n += 1
+                if b.id == id { return "video.chat.tool.\(n)" }
+            }
+        }
+        return ""
+    }
+}
+
 struct DottedLine: Shape {
     func path(in r: CGRect) -> Path {
         var p = Path()
@@ -198,6 +215,7 @@ struct ChatToolStepView: View {
             .contentShape(Rectangle())
             .onActivate { chat.ui.toggled.formSymmetricDifference([step.id]) }  // not an action: a fold
             .accessibilityElement(children: .combine)
+            .accessibilityIdentifier(nested ? "" : chat.toolRowIdentifier(step.id))
             if open { stepBody.padding(EdgeInsets(top: 2, leading: nested ? 0 : 18, bottom: 8, trailing: 0)) }
         }
     }

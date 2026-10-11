@@ -847,14 +847,21 @@ struct ActionColumnPane: View {
                     }
                 }
                 if !needsYou.isEmpty {
-                    SectionLabel(text: "Needs you", count: needsYou.count, needsYou: true)
-                    ForEach(needsYou) { s in
-                        if s.project == f.home?.name {
-                            HomePointerCard(session: s)
-                        } else {
-                            NeedsYouCard(session: s, selected: model.selectedActionSession == s.id)
+                    VStack(alignment: .leading, spacing: DuoSpace.gapCardToCard) {
+                        SectionLabel(text: "Needs you", count: needsYou.count, needsYou: true)
+                        ForEach(Array(needsYou.enumerated()), id: \.element.id) { i, s in
+                            Group {
+                                if s.project == f.home?.name {
+                                    HomePointerCard(session: s)
+                                } else {
+                                    NeedsYouCard(session: s, selected: model.selectedActionSession == s.id)
+                                }
+                            }
+                            .accessibilityIdentifier("video.s3.needs.\(i + 1)")   // anchors: the video cursor's target (1-based)
                         }
                     }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier("video.s3.needs")   // anchors: the video camera's target (the group)
                 }
                 if !reviews.isEmpty {
                     SectionLabel(text: "Ready for review", count: reviews.count)
