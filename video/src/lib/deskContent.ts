@@ -6,7 +6,7 @@ import content from '../../fixture/docs/content.json';
 
 export type TLine =
   | {k: 'box'; cwd: string} | {k: 'user'; text: string} | {k: 'tool'; name: string; arg: string}
-  | {k: 'out'; text: string} | {k: 'diff'; n: number; sign: '+' | '-' | ' '; text: string} | {k: 'say'; text: string};
+  | {k: 'out'; text: string} | {k: 'diff'; n: number; sign: '+' | '-' | ' '; text: string} | {k: 'say'; text: string} | {k: 'gap'};
 
 type Desk = {
   finder: {parent: string; folders: [string, string][]; hero: string};
