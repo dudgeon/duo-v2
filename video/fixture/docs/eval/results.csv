@@ -1,0 +1,1241 @@
+photo_id,shelf_id,box,truth,read,correct,cause,confidence
+lsl-0001,elm-park-01,ep-01,Middlemarch,Middlemarch,1,,0.92
+lsl-0002,elm-park-01,ep-01,Great Expectations,Great Expectations,1,,0.91
+lsl-0003,elm-park-01,ep-01,Ninety Bridges,Ninety Bridges,1,,0.82
+lsl-0004,elm-park-01,ep-01,The Wind in the Willows,The Wind in the Willows,1,,0.89
+lsl-0005,elm-park-01,ep-01,Treasure Island,Treasure Island,1,,0.96
+lsl-0006,elm-park-01,ep-01,The Secret Garden,The Secret Gardon,0,tilted,0.70
+lsl-0007,elm-park-01,ep-01,Salt Roads,Salt Roads,1,,0.85
+lsl-0008,elm-park-01,ep-01,Winter at Halloway,Winter at Halloway,1,,0.97
+lsl-0009,elm-park-01,ep-01,Ninety Bridges,Ninety Bridges,1,,0.94
+lsl-0010,elm-park-01,ep-01,Silas Marner,Silas Marner,1,,0.96
+lsl-0011,elm-park-01,ep-01,Middlemarch,Middlemarch,1,,0.86
+lsl-0012,elm-park-01,ep-01,The Quiet Orchard,The Quiet Orchard,1,,0.91
+lsl-0013,elm-park-01,ep-01,Emma,Emma,1,,0.90
+lsl-0014,elm-park-02,ep-01,Little Women,Littie Women,0,tilted,0.79
+lsl-0015,elm-park-02,ep-01,Persuasion,Persuasion,1,,0.91
+lsl-0016,elm-park-02,ep-01,Silas Marner,Silas Marner,1,,0.87
+lsl-0017,elm-park-02,ep-01,Middlemarch,Middlemarch,1,,0.97
+lsl-0018,elm-park-02,ep-01,Middlemarch,Mlddlemarch,0,tilted,0.46
+lsl-0019,elm-park-02,ep-01,The Quiet Orchard,The Quiet Orchard,1,,0.95
+lsl-0020,elm-park-02,ep-01,Great Expectations,Great Expectations,1,,0.87
+lsl-0021,elm-park-02,ep-01,Winter at Halloway,Winter at Halloway,1,,0.91
+lsl-0022,elm-park-02,ep-01,The Lantern Keeper,The Lantern Keepet,0,tilted,0.70
+lsl-0023,elm-park-02,ep-01,Moby-Dick,Moby-Dick,1,,0.93
+lsl-0024,elm-park-02,ep-01,Jane Eyre,Jane Eyre,1,,0.81
+lsl-0025,elm-park-02,ep-01,Ninety Bridges,Ninety Bridges,1,,0.94
+lsl-0026,elm-park-02,ep-01,The Lantern Keeper,The Lantern Keeper,1,,0.87
+lsl-0027,elm-park-03,ep-02,Silas Marner,Sllas Marner,0,glare,0.45
+lsl-0028,elm-park-03,ep-02,A Field Guide to Small Birds,A Fleld Guide to Small Birds,0,glare,0.69
+lsl-0029,elm-park-03,ep-02,The Wind in the Willows,The Wind in the Willows,1,,0.97
+lsl-0030,elm-park-03,ep-02,Emma,Emrna,0,glare,0.37
+lsl-0031,elm-park-03,ep-02,Emma,Emma,1,,0.93
+lsl-0032,elm-park-03,ep-02,Emma,Emma,1,,0.94
+lsl-0033,elm-park-03,ep-02,Silas Marner,Sllas Marner,0,glare,0.84
+lsl-0034,elm-park-03,ep-02,Persuasion,Pervasion,0,glare,0.59
+lsl-0035,elm-park-03,ep-02,The Quiet Orchard,The Quiet Orcharcl,0,glare,0.63
+lsl-0036,elm-park-03,ep-02,Moby-Dick,Moby-Dick,1,,0.90
+lsl-0037,elm-park-03,ep-02,Persuasion,Persuasion,1,,0.87
+lsl-0038,elm-park-03,ep-02,The Secret Garden,The Secret Garden,1,,0.89
+lsl-0039,elm-park-03,ep-02,Treasure Island,Treasure Isiand,0,glare,0.74
+lsl-0040,elm-park-03,ep-02,Treasure Island,Treasure Island,1,,0.95
+lsl-0041,elm-park-03,ep-02,The Lantern Keeper,The Lantern Keeper,1,,0.81
+lsl-0042,elm-park-03,ep-02,Winter at Halloway,Winter at Halloway,1,,0.90
+lsl-0043,elm-park-04,ep-02,Salt Roads,Salt Roads,1,,0.96
+lsl-0044,elm-park-04,ep-02,Treasure Island,Treasure Island,1,,0.91
+lsl-0045,elm-park-04,ep-02,Emma,Emma,1,,0.86
+lsl-0046,elm-park-04,ep-02,The Quiet Orchard,The Quiet Orchard,1,,0.99
+lsl-0047,elm-park-04,ep-02,Little Women,Little Women,1,,0.85
+lsl-0048,elm-park-04,ep-02,A Field Guide to Small Birds,A Field Guide to Small Bircls,0,tilted,0.50
+lsl-0049,elm-park-04,ep-02,Persuasion,Persuasion,1,,0.90
+lsl-0050,elm-park-04,ep-02,Winter at Halloway,Winter at Hallowav,0,tilted,0.63
+lsl-0051,elm-park-04,ep-02,Middlemarch,Middlemarch,1,,0.93
+lsl-0052,elm-park-04,ep-02,Salt Roads,Salt Roads,1,,0.87
+lsl-0053,elm-park-04,ep-02,The Wind in the Willows,The Wind in the Willows,1,,0.91
+lsl-0054,elm-park-04,ep-02,Salt Roads,Sal Roads,0,tilted,0.73
+lsl-0055,elm-park-04,ep-02,Persuasion,Persnasion,0,tilted,0.45
+lsl-0056,elm-park-05,ep-03,Moby-Dick,Moby-Dick,1,,0.90
+lsl-0057,elm-park-05,ep-03,The Lantern Keeper,The Lantern Keeper,1,,0.97
+lsl-0058,elm-park-05,ep-03,Ninety Bridges,Ninety Bridoes,0,other,0.68
+lsl-0059,elm-park-05,ep-03,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.89
+lsl-0060,elm-park-05,ep-03,Middlemarch,Middlemarch,1,,0.93
+lsl-0061,elm-park-05,ep-03,Silas Marner,Silas Marner,1,,0.89
+lsl-0062,elm-park-05,ep-03,Emma,Emma,1,,0.95
+lsl-0063,elm-park-05,ep-03,Persuasion,Persuasion,1,,0.98
+lsl-0064,elm-park-05,ep-03,Salt Roads,Sait Roads,0,tilted,0.81
+lsl-0065,elm-park-05,ep-03,Ninety Bridges,Ninety Brides,0,thin,0.74
+lsl-0066,elm-park-05,ep-03,The Wind in the Willows,The Wind in the Willows,1,,0.98
+lsl-0067,elm-park-05,ep-03,Moby-Dick,Moby-Dick,1,,0.97
+lsl-0068,elm-park-05,ep-03,Great Expectations,Great Expectations,1,,0.91
+lsl-0069,elm-park-06,ep-03,The Lantern Keeper,The Lantern Keeper,1,,0.98
+lsl-0070,elm-park-06,ep-03,Little Women,Little Women,1,,0.92
+lsl-0071,elm-park-06,ep-03,Great Expectations,Great Expectations,1,,0.95
+lsl-0072,elm-park-06,ep-03,Emma,Emma,1,,0.92
+lsl-0073,elm-park-06,ep-03,Jane Eyre,Jane Eyre,1,,0.95
+lsl-0074,elm-park-06,ep-03,The Secret Garden,The Secret Garden,1,,0.97
+lsl-0075,elm-park-06,ep-03,Salt Roads,Salt Roads,1,,0.97
+lsl-0076,elm-park-06,ep-03,Little Women,Little Women,1,,0.86
+lsl-0077,elm-park-06,ep-03,Jane Eyre,Jane Eyre,1,,0.83
+lsl-0078,elm-park-06,ep-03,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.96
+lsl-0079,elm-park-06,ep-03,Great Expectations,Great Expectations,1,,0.84
+lsl-0080,elm-park-06,ep-03,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.91
+lsl-0081,elm-park-06,ep-03,Middlemarch,Middlemarch,1,,0.97
+lsl-0082,elm-park-07,ep-04,Silas Marner,Silas Marner,1,,0.97
+lsl-0083,elm-park-07,ep-04,Jane Eyre,Jane Eyre,1,,0.94
+lsl-0084,elm-park-07,ep-04,The Quiet Orchard,The Quiet Orchard,1,,0.95
+lsl-0085,elm-park-07,ep-04,Jane Eyre,Jane Eyre,1,,0.88
+lsl-0086,elm-park-07,ep-04,Persuasion,Persuasion,1,,0.96
+lsl-0087,elm-park-07,ep-04,The Wind in the Willows,The Wind in the Willows,1,,0.96
+lsl-0088,elm-park-07,ep-04,Treasure Island,Treasure Island,1,,0.88
+lsl-0089,elm-park-07,ep-04,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.92
+lsl-0090,elm-park-07,ep-04,Winter at Halloway,Winter at Halloway,1,,0.99
+lsl-0091,elm-park-07,ep-04,The Secret Garden,The Secret Garden,1,,0.97
+lsl-0092,elm-park-07,ep-04,Persuasion,Persuasion,1,,0.86
+lsl-0093,elm-park-07,ep-04,The Secret Garden,The Secret Garden,1,,0.94
+lsl-0094,elm-park-07,ep-04,Silas Marner,Silas Mamer,0,tilted,0.43
+lsl-0095,elm-park-08,ep-04,Winter at Halloway,Winter at Halloway,1,,0.98
+lsl-0096,elm-park-08,ep-04,Salt Roads,Salt Roads,1,,0.97
+lsl-0097,elm-park-08,ep-04,The Lantern Keeper,The Lantern Keeper,1,,0.86
+lsl-0098,elm-park-08,ep-04,Emma,Emma,1,,0.98
+lsl-0099,elm-park-08,ep-04,The Wind in the Willows,The Wind in the Willows,1,,0.96
+lsl-0100,elm-park-08,ep-04,Silas Marner,Silas Marner,1,,0.88
+lsl-0101,elm-park-08,ep-04,Emma,Erma,0,tilted,0.59
+lsl-0102,elm-park-08,ep-04,Treasure Island,Treasure Istand,0,tilted,0.47
+lsl-0103,elm-park-08,ep-04,The Quiet Orchard,The Qulet Orchard,0,thin,0.53
+lsl-0104,elm-park-08,ep-04,A Field Guide to Small Birds,A Fleld Guide to Small Birds,0,tilted,0.56
+lsl-0105,elm-park-08,ep-04,Ninety Bridges,Ninety Bridges,1,,0.85
+lsl-0106,elm-park-08,ep-04,Ninety Bridges,Ninety Bridges,1,,0.92
+lsl-0107,elm-park-08,ep-04,The Wind in the Willows,The Wind in the Willows,1,,0.96
+lsl-0108,elm-park-09,ep-05,Moby-Dick,Moby-Dick,1,,0.86
+lsl-0109,elm-park-09,ep-05,Ninety Bridges,Ninety Bridges,1,,0.82
+lsl-0110,elm-park-09,ep-05,The Quiet Orchard,The Quiet Orchand,0,tilted,0.57
+lsl-0111,elm-park-09,ep-05,Emma,Emma,1,,0.80
+lsl-0112,elm-park-09,ep-05,Little Women,Little Women,1,,0.98
+lsl-0113,elm-park-09,ep-05,The Secret Garden,The Secret Garden,1,,0.95
+lsl-0114,elm-park-09,ep-05,Treasure Island,Treasure Island,1,,0.97
+lsl-0115,elm-park-09,ep-05,Treasure Island,Treasure Island,1,,0.97
+lsl-0116,elm-park-09,ep-05,The Quiet Orchard,The Quiet Orchard,1,,0.94
+lsl-0117,elm-park-09,ep-05,Salt Roads,Salt Roacls,0,other,0.59
+lsl-0118,elm-park-09,ep-05,Middlemarch,Middlemarch,1,,0.81
+lsl-0119,elm-park-09,ep-05,The Lantern Keeper,The Lantern Keeper,1,,0.94
+lsl-0120,elm-park-09,ep-05,The Quiet Orchard,The Quiet Orchard,1,,0.93
+lsl-0121,elm-park-10,ep-05,Little Women,Little Women,1,,0.81
+lsl-0122,elm-park-10,ep-05,Jane Eyre,Jane Eyre,1,,0.91
+lsl-0123,elm-park-10,ep-05,Persuasion,Persuasion,1,,0.95
+lsl-0124,elm-park-10,ep-05,Emma,Emma,1,,0.94
+lsl-0125,elm-park-10,ep-05,The Lantern Keeper,The Lantern Keeper,1,,0.93
+lsl-0126,elm-park-10,ep-05,Great Expectations,Great Expectations,1,,0.94
+lsl-0127,elm-park-10,ep-05,Moby-Dick,Mohy-Dick,0,thin,0.76
+lsl-0128,elm-park-10,ep-05,Ninety Bridges,Ninety Bridges,1,,0.97
+lsl-0129,elm-park-10,ep-05,The Wind in the Willows,The Wind in the Willows,1,,0.86
+lsl-0130,elm-park-10,ep-05,The Quiet Orchard,The Quiet Orchard,1,,0.86
+lsl-0131,elm-park-10,ep-05,The Quiet Orchard,The Quiet Orchard,1,,0.93
+lsl-0132,elm-park-10,ep-05,The Quiet Orchard,The Quiet Orchard,1,,0.94
+lsl-0133,elm-park-10,ep-05,Emma,Emrna,0,tilted,0.46
+lsl-0134,elm-park-11,ep-06,Moby-Dick,Moby-Dick,1,,0.89
+lsl-0135,elm-park-11,ep-06,Treasure Island,Treasure Island,1,,0.87
+lsl-0136,elm-park-11,ep-06,Bleak House,Bleak House,1,,0.94
+lsl-0137,elm-park-11,ep-06,Silas Marner,Silas Marner,1,,0.96
+lsl-0138,elm-park-11,ep-06,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.88
+lsl-0139,elm-park-11,ep-06,Salt Roads,Sal Roads,0,glare,0.83
+lsl-0140,elm-park-11,ep-06,Moby-Dick,Mobv-Dick,0,glare,0.69
+lsl-0141,elm-park-11,ep-06,The Quiet Orchard,The Quiet Orchard,1,,0.91
+lsl-0142,elm-park-11,ep-06,A Field Guide to Small Birds,A Field Guide to Smal Birds,0,glare,0.63
+lsl-0143,elm-park-11,ep-06,The Quiet Orchard,The Quiet Orchard,1,,0.88
+lsl-0144,elm-park-11,ep-06,Little Women,Littie Women,0,glare,0.86
+lsl-0145,elm-park-11,ep-06,Persuasion,Persuasion,1,,0.88
+lsl-0146,elm-park-11,ep-06,Ninety Bridges,Ninety Brldges,0,glare,0.53
+lsl-0147,elm-park-11,ep-06,Emma,Erma,0,glare,0.74
+lsl-0148,elm-park-11,ep-06,Silas Marner,Silas Mamer,0,glare,0.41
+lsl-0149,elm-park-11,ep-06,Treasure Island,Treasure Istand,0,glare,0.78
+lsl-0150,elm-park-12,ep-06,Little Women,Little Women,1,,0.93
+lsl-0151,elm-park-12,ep-06,Silas Marner,Silas Marner,1,,0.87
+lsl-0152,elm-park-12,ep-06,Ninety Bridges,Ninety Bridges,1,,0.95
+lsl-0153,elm-park-12,ep-06,Winter at Halloway,Winter at Halloway,1,,0.93
+lsl-0154,elm-park-12,ep-06,Great Expectations,Great Expectations,1,,0.87
+lsl-0155,elm-park-12,ep-06,Ninety Bridges,Ninety Brides,0,stacked,0.85
+lsl-0156,elm-park-12,ep-06,Salt Roads,Salt Roads,1,,0.88
+lsl-0157,elm-park-12,ep-06,Moby-Dick,Mohy-Dick,0,tilted,0.79
+lsl-0158,elm-park-12,ep-06,Persuasion,Persuasion,1,,0.86
+lsl-0159,elm-park-12,ep-06,Moby-Dick,Moby-Dick,1,,0.97
+lsl-0160,elm-park-12,ep-06,Ninety Bridges,Ninety Bridges,1,,0.89
+lsl-0161,elm-park-12,ep-06,Persuasion,Persuasion,1,,0.96
+lsl-0162,elm-park-12,ep-06,Persuasion,Persuasion,1,,0.96
+lsl-0163,elm-park-13,ep-07,Silas Marner,Silas Marner,1,,0.90
+lsl-0164,elm-park-13,ep-07,Emma,Emma,1,,0.96
+lsl-0165,elm-park-13,ep-07,Emma,Emma,1,,0.90
+lsl-0166,elm-park-13,ep-07,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.97
+lsl-0167,elm-park-13,ep-07,Great Expectations,Great Expectations,1,,0.84
+lsl-0168,elm-park-13,ep-07,Silas Marner,Silas Marner,1,,0.94
+lsl-0169,elm-park-13,ep-07,The Secret Garden,The Secret Garden,1,,0.97
+lsl-0170,elm-park-13,ep-07,Ninety Bridges,Ninety Bridges,1,,0.96
+lsl-0171,elm-park-13,ep-07,The Quiet Orchard,The Quiet Orchand,0,thin,0.84
+lsl-0172,elm-park-13,ep-07,Middlemarch,Middlemarch,1,,0.82
+lsl-0173,elm-park-13,ep-07,Moby-Dick,Moby-Dick,1,,0.83
+lsl-0174,elm-park-13,ep-07,The Wind in the Willows,The Wind in the Willows,1,,0.93
+lsl-0175,elm-park-13,ep-07,Ninety Bridges,Ninety Brides,0,thin,0.47
+lsl-0176,elm-park-14,ep-07,Bleak House,Bleak House,1,,0.96
+lsl-0177,elm-park-14,ep-07,Bleak House,Bleak House,1,,0.90
+lsl-0178,elm-park-14,ep-07,Bleak House,Bleak House,1,,0.96
+lsl-0179,elm-park-14,ep-07,Persuasion,Persuasion,1,,0.98
+lsl-0180,elm-park-14,ep-07,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.96
+lsl-0181,elm-park-14,ep-07,The Wind in the Willows,The Wind in the Willows,1,,0.92
+lsl-0182,elm-park-14,ep-07,Emma,Emma,1,,0.85
+lsl-0183,elm-park-14,ep-07,Great Expectations,Great Expectations,1,,0.90
+lsl-0184,elm-park-14,ep-07,Middlemarch,Middlemarch,1,,0.86
+lsl-0185,elm-park-14,ep-07,Persuasion,Persuasion,1,,0.86
+lsl-0186,elm-park-14,ep-07,Ninety Bridges,Ninety Bridges,1,,0.83
+lsl-0187,elm-park-14,ep-07,Treasure Island,Treasure Island,1,,0.95
+lsl-0188,elm-park-14,ep-07,Emma,Emma,1,,0.92
+lsl-0189,elm-park-15,ep-08,Winter at Halloway,Winter at Halloway,1,,0.95
+lsl-0190,elm-park-15,ep-08,The Quiet Orchard,The Quiet Orcharcl,0,tilted,0.71
+lsl-0191,elm-park-15,ep-08,Bleak House,Bleak House,1,,0.93
+lsl-0192,elm-park-15,ep-08,Little Women,Little Women,1,,0.83
+lsl-0193,elm-park-15,ep-08,Silas Marner,Silas Marner,1,,0.92
+lsl-0194,elm-park-15,ep-08,Little Women,Little Women,1,,0.96
+lsl-0195,elm-park-15,ep-08,Treasure Island,Treasure Island,1,,0.81
+lsl-0196,elm-park-15,ep-08,The Secret Garden,The Secret Garden,1,,0.97
+lsl-0197,elm-park-15,ep-08,The Wind in the Willows,The Wind in the Willow,0,tilted,0.85
+lsl-0198,elm-park-15,ep-08,Treasure Island,Treasure Island,1,,0.84
+lsl-0199,elm-park-15,ep-08,Salt Roads,Salt Roads,1,,0.96
+lsl-0200,elm-park-15,ep-08,Great Expectations,Great Expectations,1,,0.93
+lsl-0201,elm-park-15,ep-08,Little Women,Little Women,1,,0.89
+lsl-0202,elm-park-16,ep-08,Winter at Halloway,Winter at Halloway,1,,0.95
+lsl-0203,elm-park-16,ep-08,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.89
+lsl-0204,elm-park-16,ep-08,The Secret Garden,The Secret Garden,1,,0.96
+lsl-0205,elm-park-16,ep-08,The Quiet Orchard,The Quiet Orchard,1,,0.97
+lsl-0206,elm-park-16,ep-08,Emma,Emma,1,,0.91
+lsl-0207,elm-park-16,ep-08,Winter at Halloway,Winter at Halloway,1,,0.95
+lsl-0208,elm-park-16,ep-08,The Quiet Orchard,The Quiet Orchard,1,,0.95
+lsl-0209,elm-park-16,ep-08,Treasure Island,Treasure Island,1,,0.84
+lsl-0210,elm-park-16,ep-08,Treasure Island,Treasure Island,1,,0.90
+lsl-0211,elm-park-16,ep-08,Middlemarch,Middlemarch,1,,0.88
+lsl-0212,elm-park-16,ep-08,Salt Roads,Salt Roads,1,,0.98
+lsl-0213,elm-park-16,ep-08,Little Women,Little Women,1,,0.88
+lsl-0214,elm-park-16,ep-08,The Wind in the Willows,The Wind in the Willows,1,,0.87
+lsl-0215,elm-park-17,ep-09,The Quiet Orchard,The Quiet Orchard,1,,0.91
+lsl-0216,elm-park-17,ep-09,Persuasion,Persuaslon,0,stacked,0.76
+lsl-0217,elm-park-17,ep-09,Ninety Bridges,Ninety Brides,0,tilted,0.39
+lsl-0218,elm-park-17,ep-09,Winter at Halloway,Winter at Hallowav,0,thin,0.48
+lsl-0219,elm-park-17,ep-09,Little Women,Little Women,1,,0.90
+lsl-0220,elm-park-17,ep-09,Great Expectations,Great Expectations,1,,0.79
+lsl-0221,elm-park-17,ep-09,The Secret Garden,The Secret Garden,1,,0.97
+lsl-0222,elm-park-17,ep-09,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.96
+lsl-0223,elm-park-17,ep-09,Winter at Halloway,Winter at Halloway,1,,0.92
+lsl-0224,elm-park-17,ep-09,Salt Roads,Salt Roads,1,,0.93
+lsl-0225,elm-park-17,ep-09,Treasure Island,Treasure Island,1,,0.90
+lsl-0226,elm-park-17,ep-09,Ninety Bridges,Ninety Bridges,1,,0.89
+lsl-0227,elm-park-17,ep-09,Salt Roads,Salt Roads,1,,0.87
+lsl-0228,elm-park-18,ep-09,Middlemarch,Middlemarch,1,,0.95
+lsl-0229,elm-park-18,ep-09,Bleak House,Bleak Hause,0,tilted,0.38
+lsl-0230,elm-park-18,ep-09,Great Expectations,Great Expectations,1,,0.96
+lsl-0231,elm-park-18,ep-09,Middlemarch,Middlemarch,1,,0.96
+lsl-0232,elm-park-18,ep-09,Ninety Bridges,Ninety Bridges,1,,0.96
+lsl-0233,elm-park-18,ep-09,Jane Eyre,Jane Eyre,1,,0.88
+lsl-0234,elm-park-18,ep-09,Emma,Emma,1,,0.97
+lsl-0235,elm-park-18,ep-09,Little Women,Little Women,1,,0.92
+lsl-0236,elm-park-18,ep-09,Treasure Island,Treasure Island,1,,0.94
+lsl-0237,elm-park-18,ep-09,Jane Eyre,Jane Eyre,1,,0.88
+lsl-0238,elm-park-18,ep-09,Jane Eyre,Jane Eyne,0,tilted,0.37
+lsl-0239,elm-park-18,ep-09,Winter at Halloway,Winter at Halloway,1,,0.90
+lsl-0240,elm-park-18,ep-09,Treasure Island,Treasure Island,1,,0.97
+lsl-0241,elm-park-19,ep-10,The Wind in the Willows,The Wlnd in the Willows,0,glare,0.45
+lsl-0242,elm-park-19,ep-10,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.84
+lsl-0243,elm-park-19,ep-10,Little Women,Little Wornen,0,glare,0.73
+lsl-0244,elm-park-19,ep-10,Emma,Emma,1,,0.87
+lsl-0245,elm-park-19,ep-10,A Field Guide to Small Birds,A Field Guide to Smal Birds,0,glare,0.43
+lsl-0246,elm-park-19,ep-10,Jane Eyre,Jane Eyre,1,,0.90
+lsl-0247,elm-park-19,ep-10,The Lantern Keeper,The Lantern Keeper,1,,0.90
+lsl-0248,elm-park-19,ep-10,Persuasion,Persuasion,1,,0.88
+lsl-0249,elm-park-19,ep-10,Persuasion,Persuasion,1,,0.92
+lsl-0250,elm-park-19,ep-10,Moby-Dick,Moby-Dick,1,,0.87
+lsl-0251,elm-park-19,ep-10,Middlemarch,Mlddlemarch,0,glare,0.44
+lsl-0252,elm-park-19,ep-10,Winter at Halloway,Winter at Halloway,1,,0.97
+lsl-0253,elm-park-19,ep-10,Middlemarch,Mlddlemarch,0,glare,0.38
+lsl-0254,elm-park-19,ep-10,Emma,Erma,0,glare,0.52
+lsl-0255,elm-park-19,ep-10,Persuasion,Persuasion,1,,0.86
+lsl-0256,elm-park-19,ep-10,Treasure Island,Treasure Island,1,,0.96
+lsl-0257,elm-park-20,ep-10,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.93
+lsl-0258,elm-park-20,ep-10,The Quiet Orchard,The Quiet Orchard,1,,0.97
+lsl-0259,elm-park-20,ep-10,Bleak House,Bleak House,1,,0.96
+lsl-0260,elm-park-20,ep-10,Great Expectations,Great Expectations,1,,0.96
+lsl-0261,elm-park-20,ep-10,Treasure Island,Treasur Island,0,stacked,0.76
+lsl-0262,elm-park-20,ep-10,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.89
+lsl-0263,elm-park-20,ep-10,Little Women,Little Women,1,,0.91
+lsl-0264,elm-park-20,ep-10,Silas Marner,Silas Marnen,0,tilted,0.70
+lsl-0265,elm-park-20,ep-10,Emma,Erma,0,tilted,0.77
+lsl-0266,elm-park-20,ep-10,Winter at Halloway,Winter at Hailoway,0,tilted,0.67
+lsl-0267,elm-park-20,ep-10,Salt Roads,Salt Roads,1,,0.88
+lsl-0268,elm-park-20,ep-10,Emma,Emma,1,,0.98
+lsl-0269,elm-park-20,ep-10,Ninety Bridges,Ninety Bridges,1,,0.88
+lsl-0270,elm-park-21,ep-11,Jane Eyre,Jane Eyne,0,thin,0.53
+lsl-0271,elm-park-21,ep-11,Little Women,Little Women,1,,0.84
+lsl-0272,elm-park-21,ep-11,Ninety Bridges,Ninety Bridges,1,,0.96
+lsl-0273,elm-park-21,ep-11,The Quiet Orchard,The Quiet Orchard,1,,0.94
+lsl-0274,elm-park-21,ep-11,The Quiet Orchard,The Quiet Orchard,1,,0.96
+lsl-0275,elm-park-21,ep-11,The Secret Garden,The Secret Garden,1,,0.83
+lsl-0276,elm-park-21,ep-11,The Lantern Keeper,The Lantern Keeper,1,,0.98
+lsl-0277,elm-park-21,ep-11,The Wind in the Willows,The Wind in the Willows,1,,0.95
+lsl-0278,elm-park-21,ep-11,Jane Eyre,Jame Eyre,0,tilted,0.80
+lsl-0279,elm-park-21,ep-11,Emma,Emma,1,,0.98
+lsl-0280,elm-park-21,ep-11,Emma,Emma,1,,0.91
+lsl-0281,elm-park-21,ep-11,The Wind in the Willows,The Wind in the Willow,0,tilted,0.40
+lsl-0282,elm-park-21,ep-11,The Secret Garden,Tne Secret Garden,0,tilted,0.54
+lsl-0283,elm-park-22,ep-11,Salt Roads,Salt Roads,1,,0.97
+lsl-0284,elm-park-22,ep-11,Bleak House,Bleak House,1,,0.85
+lsl-0285,elm-park-22,ep-11,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.94
+lsl-0286,elm-park-22,ep-11,Moby-Dick,Moby-Dick,1,,0.92
+lsl-0287,elm-park-22,ep-11,Great Expectations,Great Expectations,1,,0.95
+lsl-0288,elm-park-22,ep-11,A Field Guide to Small Birds,A Fleld Guide to Small Birds,0,tilted,0.38
+lsl-0289,elm-park-22,ep-11,Silas Marner,Silas Marnen,0,tilted,0.77
+lsl-0290,elm-park-22,ep-11,Persuasion,Persuasion,1,,0.93
+lsl-0291,elm-park-22,ep-11,Persuasion,Persuasion,1,,0.87
+lsl-0292,elm-park-22,ep-11,Jane Eyre,Jane Eyre,1,,0.89
+lsl-0293,elm-park-22,ep-11,Great Expectations,Great Exneclations,0,thin,0.65
+lsl-0294,elm-park-22,ep-11,Jane Eyre,Jane Eyre,1,,0.91
+lsl-0295,elm-park-22,ep-11,Silas Marner,Silas Marner,1,,0.86
+lsl-0296,elm-park-23,ep-12,Salt Roads,Sal Roads,0,thin,0.51
+lsl-0297,elm-park-23,ep-12,Winter at Halloway,Winter at Halloway,1,,0.93
+lsl-0298,elm-park-23,ep-12,Middlemarch,Middlemarch,1,,0.94
+lsl-0299,elm-park-23,ep-12,Great Expectations,Great Expectations,1,,0.97
+lsl-0300,elm-park-23,ep-12,The Lantern Keeper,The Lantern Keeper,1,,0.95
+lsl-0301,elm-park-23,ep-12,Salt Roads,Salt Roads,1,,0.88
+lsl-0302,elm-park-23,ep-12,Emma,Emma,1,,0.94
+lsl-0303,elm-park-23,ep-12,The Secret Garden,The Secret Garden,1,,0.98
+lsl-0304,elm-park-23,ep-12,Jane Eyre,Jane Eyre,1,,0.89
+lsl-0305,elm-park-23,ep-12,Little Women,Little Women,1,,0.97
+lsl-0306,elm-park-23,ep-12,Winter at Halloway,Winter at Halloway,1,,0.92
+lsl-0307,elm-park-23,ep-12,The Lantern Keeper,The Lantern Keepet,0,other,0.57
+lsl-0308,elm-park-23,ep-12,Silas Marner,Silas Marner,1,,0.95
+lsl-0309,elm-park-24,ep-12,Jane Eyre,Jane Eyre,1,,0.96
+lsl-0310,elm-park-24,ep-12,Great Expectations,Great Expectations,1,,0.95
+lsl-0311,elm-park-24,ep-12,Emma,Ernma,0,other,0.65
+lsl-0312,elm-park-24,ep-12,Salt Roads,Salt Roads,1,,0.94
+lsl-0313,elm-park-24,ep-12,Emma,Emma,1,,0.94
+lsl-0314,elm-park-24,ep-12,Persuasion,Persuasion,1,,0.95
+lsl-0315,elm-park-24,ep-12,The Lantern Keeper,The Lantern Keeper,1,,0.88
+lsl-0316,elm-park-24,ep-12,Winter at Halloway,Winter at Halloway,1,,0.91
+lsl-0317,elm-park-24,ep-12,Little Women,Little Women,1,,0.95
+lsl-0318,elm-park-24,ep-12,Persuasion,Persuasion,1,,0.98
+lsl-0319,elm-park-24,ep-12,The Quiet Orchard,The Qulet Orchard,0,tilted,0.42
+lsl-0320,elm-park-24,ep-12,The Quiet Orchard,The Quiet Orchard,1,,0.81
+lsl-0321,elm-park-24,ep-12,Ninety Bridges,Ninety Bridges,1,,0.96
+lsl-0322,elm-park-25,ep-13,The Secret Garden,Tne Secret Garden,0,other,0.42
+lsl-0323,elm-park-25,ep-13,Moby-Dick,Moby-Dick,1,,0.98
+lsl-0324,elm-park-25,ep-13,Winter at Halloway,Winter at Halloway,1,,0.87
+lsl-0325,elm-park-25,ep-13,Persuasion,Persuasion,1,,0.97
+lsl-0326,elm-park-25,ep-13,Treasure Island,Treasure Island,1,,0.92
+lsl-0327,elm-park-25,ep-13,Bleak House,Bleak House,1,,0.94
+lsl-0328,elm-park-25,ep-13,The Wind in the Willows,The Wind in the Willows,1,,0.84
+lsl-0329,elm-park-25,ep-13,Middlemarch,Middlemarch,1,,0.98
+lsl-0330,elm-park-25,ep-13,Salt Roads,Sal Roads,0,tilted,0.42
+lsl-0331,elm-park-25,ep-13,Persuasion,Persuasion,1,,0.97
+lsl-0332,elm-park-25,ep-13,The Wind in the Willows,The Wind in the Willows,1,,0.95
+lsl-0333,elm-park-25,ep-13,Middlemarch,Middlemarch,1,,0.82
+lsl-0334,elm-park-25,ep-13,Little Women,Little Women,1,,0.88
+lsl-0335,elm-park-26,ep-13,The Lantern Keeper,The Lantern Keeper,1,,0.94
+lsl-0336,elm-park-26,ep-13,Silas Marner,Silas Marner,1,,0.80
+lsl-0337,elm-park-26,ep-13,Great Expectations,Great Expectations,1,,0.95
+lsl-0338,elm-park-26,ep-13,Jane Eyre,Jane Eyre,1,,0.94
+lsl-0339,elm-park-26,ep-13,Persuasion,Persuasion,1,,0.93
+lsl-0340,elm-park-26,ep-13,Emma,Emma,1,,0.94
+lsl-0341,elm-park-26,ep-13,Moby-Dick,Moby-Dick,1,,0.90
+lsl-0342,elm-park-26,ep-13,Middlemarch,Middlemarch,1,,0.91
+lsl-0343,elm-park-26,ep-13,Middlemarch,Middlemarch,1,,0.97
+lsl-0344,elm-park-26,ep-13,Great Expectations,Great Expectations,1,,0.89
+lsl-0345,elm-park-26,ep-13,Middlemarch,Middlemarch,1,,0.89
+lsl-0346,elm-park-26,ep-13,Bleak House,Bleak House,1,,0.92
+lsl-0347,elm-park-26,ep-13,Treasure Island,Treasure Island,1,,0.87
+lsl-0348,elm-park-27,ep-14,Winter at Halloway,Winter at Halloway,1,,0.99
+lsl-0349,elm-park-27,ep-14,The Lantern Keeper,The Lantern Keeper,1,,0.97
+lsl-0350,elm-park-27,ep-14,Middlemarch,Middlemarch,1,,0.94
+lsl-0351,elm-park-27,ep-14,Moby-Dick,Moby-Dick,1,,0.96
+lsl-0352,elm-park-27,ep-14,Emma,Emma,1,,0.97
+lsl-0353,elm-park-27,ep-14,Little Women,Little Women,1,,0.96
+lsl-0354,elm-park-27,ep-14,Salt Roads,Salt Roads,1,,0.97
+lsl-0355,elm-park-27,ep-14,Winter at Halloway,Winter at Halloway,1,,0.95
+lsl-0356,elm-park-27,ep-14,Middlemarch,Middlemarch,1,,0.86
+lsl-0357,elm-park-27,ep-14,Bleak House,Bleak House,1,,0.88
+lsl-0358,elm-park-27,ep-14,The Wind in the Willows,The Wind in the Willow,0,stacked,0.66
+lsl-0359,elm-park-27,ep-14,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.95
+lsl-0360,elm-park-27,ep-14,Salt Roads,Salt Roads,1,,0.86
+lsl-0361,elm-park-28,ep-14,Middlemarch,Middlemarch,1,,0.96
+lsl-0362,elm-park-28,ep-14,Ninety Bridges,Ninety Brldges,0,tilted,0.68
+lsl-0363,elm-park-28,ep-14,Little Women,Little Women,1,,0.98
+lsl-0364,elm-park-28,ep-14,Silas Marner,Silas Marner,1,,0.96
+lsl-0365,elm-park-28,ep-14,The Quiet Orchard,The Quiet Orchard,1,,0.87
+lsl-0366,elm-park-28,ep-14,Great Expectations,Great Expectatlons,0,other,0.65
+lsl-0367,elm-park-28,ep-14,Middlemarch,Middlemarch,1,,0.90
+lsl-0368,elm-park-28,ep-14,Jane Eyre,Jane Eyre,1,,0.90
+lsl-0369,elm-park-28,ep-14,Bleak House,Bleak House,1,,0.95
+lsl-0370,elm-park-28,ep-14,Ninety Bridges,Ninety Bridges,1,,0.88
+lsl-0371,elm-park-28,ep-14,The Lantern Keeper,The Lantern Keeper,1,,0.88
+lsl-0372,elm-park-28,ep-14,Middlemarch,Middlemarsh,0,tilted,0.72
+lsl-0373,elm-park-28,ep-14,The Quiet Orchard,The Quiet Orchard,1,,0.84
+lsl-0374,elm-park-29,ep-15,Middlemarch,Middlemarch,1,,0.94
+lsl-0375,elm-park-29,ep-15,Treasure Island,Treasure Island,1,,0.95
+lsl-0376,elm-park-29,ep-15,The Lantern Keeper,The Lantern Keeper,1,,0.96
+lsl-0377,elm-park-29,ep-15,Silas Marner,Silas Marner,1,,0.93
+lsl-0378,elm-park-29,ep-15,Salt Roads,Salt Roads,1,,0.94
+lsl-0379,elm-park-29,ep-15,Ninety Bridges,Ninety Bridges,1,,0.96
+lsl-0380,elm-park-29,ep-15,Persuasion,Persuasion,1,,0.93
+lsl-0381,elm-park-29,ep-15,Treasure Island,Treasure Island,1,,0.95
+lsl-0382,elm-park-29,ep-15,Moby-Dick,Moby-Dick,1,,0.88
+lsl-0383,elm-park-29,ep-15,Treasure Island,Treasure Island,1,,0.94
+lsl-0384,elm-park-29,ep-15,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.94
+lsl-0385,elm-park-29,ep-15,Emma,Emma,1,,0.94
+lsl-0386,elm-park-29,ep-15,Persuasion,Persuasion,1,,0.87
+lsl-0387,elm-park-30,ep-15,The Secret Garden,The Secret Garden,1,,0.95
+lsl-0388,elm-park-30,ep-15,The Quiet Orchard,The Quiet Orchard,1,,0.94
+lsl-0389,elm-park-30,ep-15,Persuasion,Persuasion,1,,0.96
+lsl-0390,elm-park-30,ep-15,The Secret Garden,The Secret Garden,1,,0.85
+lsl-0391,elm-park-30,ep-15,Salt Roads,Salt Roads,1,,0.83
+lsl-0392,elm-park-30,ep-15,Silas Marner,Silas Marner,1,,0.90
+lsl-0393,elm-park-30,ep-15,Winter at Halloway,Winter at Halloway,1,,0.97
+lsl-0394,elm-park-30,ep-15,Bleak House,Bleak House,1,,0.97
+lsl-0395,elm-park-30,ep-15,Salt Roads,Salt Roads,1,,0.89
+lsl-0396,elm-park-30,ep-15,Persuasion,Persuasion,1,,0.96
+lsl-0397,elm-park-30,ep-15,Great Expectations,Great Expectations,1,,0.91
+lsl-0398,elm-park-30,ep-15,Silas Marner,Silas Marner,1,,0.96
+lsl-0399,elm-park-30,ep-15,Persuasion,Persuasion,1,,0.96
+lsl-0400,elm-park-31,ep-16,Moby-Dick,Moby-Dick,1,,0.97
+lsl-0401,elm-park-31,ep-16,The Secret Garden,The Secret Garden,1,,0.95
+lsl-0402,elm-park-31,ep-16,Little Women,Little Women,1,,0.94
+lsl-0403,elm-park-31,ep-16,The Quiet Orchard,The Quiet Orchard,1,,0.93
+lsl-0404,elm-park-31,ep-16,Silas Marner,Silas Marner,1,,0.95
+lsl-0405,elm-park-31,ep-16,The Quiet Orchard,The Quiet Orchand,0,tilted,0.57
+lsl-0406,elm-park-31,ep-16,Ninety Bridges,Ninety Brides,0,tilted,0.71
+lsl-0407,elm-park-31,ep-16,Bleak House,Bleak House,1,,0.92
+lsl-0408,elm-park-31,ep-16,Winter at Halloway,Winter at Halloway,1,,0.95
+lsl-0409,elm-park-31,ep-16,Treasure Island,Treasure Istand,0,stacked,0.80
+lsl-0410,elm-park-31,ep-16,Moby-Dick,Moby-Dlck,0,thin,0.41
+lsl-0411,elm-park-31,ep-16,Emma,Emma,1,,0.94
+lsl-0412,elm-park-31,ep-16,Moby-Dick,Moby-Dick,1,,0.95
+lsl-0413,elm-park-32,ep-16,Ninety Bridges,Ninety Bridges,1,,0.90
+lsl-0414,elm-park-32,ep-16,The Wind in the Willows,The Wind in the Willows,1,,0.95
+lsl-0415,elm-park-32,ep-16,The Quiet Orchard,The Qulet Orchard,0,tilted,0.60
+lsl-0416,elm-park-32,ep-16,The Secret Garden,Tne Secret Garden,0,tilted,0.60
+lsl-0417,elm-park-32,ep-16,The Lantern Keeper,The Lantern Kecper,0,other,0.65
+lsl-0418,elm-park-32,ep-16,Middlemarch,Middlemarch,1,,0.84
+lsl-0419,elm-park-32,ep-16,A Field Guide to Small Birds,A Field Guide to Small Bircls,0,thin,0.40
+lsl-0420,elm-park-32,ep-16,Bleak House,Bleak House,1,,0.89
+lsl-0421,elm-park-32,ep-16,Persuasion,Persuasion,1,,0.90
+lsl-0422,elm-park-32,ep-16,Winter at Halloway,Winter at Halloway,1,,0.97
+lsl-0423,elm-park-32,ep-16,A Field Guide to Small Birds,A Fleld Guide to Small Birds,0,thin,0.69
+lsl-0424,elm-park-32,ep-16,Winter at Halloway,Winter at Halloway,1,,0.92
+lsl-0425,elm-park-32,ep-16,Jane Eyre,Jane Eyre,1,,0.88
+lsl-0426,northgate-01,ng-01,The Wind in the Willows,The Wind in the Willows,1,,0.86
+lsl-0427,northgate-01,ng-01,Jane Eyre,Jane Eyre,1,,0.95
+lsl-0428,northgate-01,ng-01,The Lantern Keeper,The Lantern Keeper,1,,0.96
+lsl-0429,northgate-01,ng-01,Ninety Bridges,Ninety Bridges,1,,0.97
+lsl-0430,northgate-01,ng-01,Salt Roads,Salt Roads,1,,0.97
+lsl-0431,northgate-01,ng-01,Moby-Dick,Moby-Dick,1,,0.95
+lsl-0432,northgate-01,ng-01,Persuasion,Persuasion,1,,0.93
+lsl-0433,northgate-01,ng-01,Middlemarch,Middlemarch,1,,0.97
+lsl-0434,northgate-01,ng-01,Treasure Island,Treasure Island,1,,0.86
+lsl-0435,northgate-01,ng-01,Treasure Island,Treasure Island,1,,0.93
+lsl-0436,northgate-01,ng-01,The Quiet Orchard,The Quiet Orchard,1,,0.91
+lsl-0437,northgate-01,ng-01,Emma,Emma,1,,0.90
+lsl-0438,northgate-01,ng-01,Emma,Emma,1,,0.90
+lsl-0439,northgate-02,ng-01,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.92
+lsl-0440,northgate-02,ng-01,Jane Eyre,Jane Eyre,1,,0.95
+lsl-0441,northgate-02,ng-01,Winter at Halloway,Winter at Halloway,1,,0.94
+lsl-0442,northgate-02,ng-01,The Wind in the Willows,The Wind in the Willows,1,,0.90
+lsl-0443,northgate-02,ng-01,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.92
+lsl-0444,northgate-02,ng-01,Winter at Halloway,Winter at Halloway,1,,0.84
+lsl-0445,northgate-02,ng-01,The Wind in the Willows,The Wind in the Willows,1,,0.98
+lsl-0446,northgate-02,ng-01,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.88
+lsl-0447,northgate-02,ng-01,Jane Eyre,Jame Eyre,0,stacked,0.80
+lsl-0448,northgate-02,ng-01,Great Expectations,Great Expectations,1,,0.85
+lsl-0449,northgate-02,ng-01,The Secret Garden,The Secret Garden,1,,0.89
+lsl-0450,northgate-02,ng-01,Treasure Island,Treasure Island,1,,0.92
+lsl-0451,northgate-02,ng-01,Little Women,Llttle Women,0,tilted,0.74
+lsl-0452,northgate-03,ng-02,Silas Marner,Silas Marner,1,,0.94
+lsl-0453,northgate-03,ng-02,Winter at Halloway,Winter at Halloway,1,,0.96
+lsl-0454,northgate-03,ng-02,Middlemarch,Middlemarch,1,,0.83
+lsl-0455,northgate-03,ng-02,The Secret Garden,The Secret Garden,1,,0.98
+lsl-0456,northgate-03,ng-02,Salt Roads,Salt Roads,1,,0.89
+lsl-0457,northgate-03,ng-02,Little Women,Little Women,1,,0.87
+lsl-0458,northgate-03,ng-02,The Wind in the Willows,The Wind in the Willows,1,,0.82
+lsl-0459,northgate-03,ng-02,Little Women,Little Women,1,,0.97
+lsl-0460,northgate-03,ng-02,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.85
+lsl-0461,northgate-03,ng-02,The Lantern Keeper,The Lantern Keeper,1,,0.92
+lsl-0462,northgate-03,ng-02,Ninety Bridges,Ninety Bridges,1,,0.92
+lsl-0463,northgate-03,ng-02,Moby-Dick,Moby-Dick,1,,0.93
+lsl-0464,northgate-03,ng-02,Emma,Emma,1,,0.95
+lsl-0465,northgate-04,ng-02,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.88
+lsl-0466,northgate-04,ng-02,Treasure Island,Treasure Island,1,,0.94
+lsl-0467,northgate-04,ng-02,Salt Roads,Salt Roads,1,,0.94
+lsl-0468,northgate-04,ng-02,Middlemarch,Mlddlemarch,0,thin,0.76
+lsl-0469,northgate-04,ng-02,Moby-Dick,Moby-Dick,1,,0.94
+lsl-0470,northgate-04,ng-02,The Quiet Orchard,The Quiet Orchard,1,,0.80
+lsl-0471,northgate-04,ng-02,Salt Roads,Salt Roads,1,,0.93
+lsl-0472,northgate-04,ng-02,Silas Marner,Silas Marner,1,,0.83
+lsl-0473,northgate-04,ng-02,Ninety Bridges,Ninety Bridoes,0,stacked,0.55
+lsl-0474,northgate-04,ng-02,Bleak House,Bleak House,1,,0.89
+lsl-0475,northgate-04,ng-02,Winter at Halloway,Winter at Halloway,1,,0.85
+lsl-0476,northgate-04,ng-02,Bleak House,Bleak House,1,,0.95
+lsl-0477,northgate-04,ng-02,Treasure Island,Treasure Island,1,,0.94
+lsl-0478,northgate-05,ng-03,Bleak House,Bleak House,1,,0.82
+lsl-0479,northgate-05,ng-03,Treasure Island,Treasure Island,1,,0.96
+lsl-0480,northgate-05,ng-03,Great Expectations,Great Expedations,0,glare,0.37
+lsl-0481,northgate-05,ng-03,Salt Roads,Sait Roads,0,glare,0.63
+lsl-0482,northgate-05,ng-03,The Wind in the Willows,The Wind in the Willows,1,,0.96
+lsl-0483,northgate-05,ng-03,Ninety Bridges,Ninety Bridges,1,,0.83
+lsl-0484,northgate-05,ng-03,Emma,Ernma,0,glare,0.43
+lsl-0485,northgate-05,ng-03,Bleak House,Bleak House,1,,0.97
+lsl-0486,northgate-05,ng-03,Bleak House,Bleak House,1,,0.92
+lsl-0487,northgate-05,ng-03,The Quiet Orchard,The Quiet Orchard,1,,0.96
+lsl-0488,northgate-05,ng-03,Persuasion,Persuasion,1,,0.88
+lsl-0489,northgate-05,ng-03,Silas Marner,Silas Marner,1,,0.94
+lsl-0490,northgate-05,ng-03,Salt Roads,Salt Roads,1,,0.94
+lsl-0491,northgate-05,ng-03,The Wind in the Willows,The Wind in the Wiliows,0,glare,0.66
+lsl-0492,northgate-05,ng-03,Ninety Bridges,Ninety Bridges,1,,0.89
+lsl-0493,northgate-05,ng-03,The Wind in the Willows,The Wind in the Willows,1,,0.96
+lsl-0494,northgate-06,ng-03,Moby-Dick,Moby-Dick,1,,0.86
+lsl-0495,northgate-06,ng-03,Winter at Halloway,Winter at Halloway,1,,0.94
+lsl-0496,northgate-06,ng-03,Silas Marner,Silas Mamer,0,tilted,0.49
+lsl-0497,northgate-06,ng-03,The Lantern Keeper,The Lantern Keeper,1,,0.95
+lsl-0498,northgate-06,ng-03,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.86
+lsl-0499,northgate-06,ng-03,Emma,Emma,1,,0.84
+lsl-0500,northgate-06,ng-03,The Wind in the Willows,The Wind in the Willows,1,,0.85
+lsl-0501,northgate-06,ng-03,Great Expectations,Great Expectations,1,,0.98
+lsl-0502,northgate-06,ng-03,Treasure Island,Treasure Island,1,,0.94
+lsl-0503,northgate-06,ng-03,The Lantern Keeper,The Lantern Keeper,1,,0.88
+lsl-0504,northgate-06,ng-03,Persuasion,Persuasion,1,,0.98
+lsl-0505,northgate-06,ng-03,The Secret Garden,The Secret Garden,1,,0.92
+lsl-0506,northgate-06,ng-03,The Wind in the Willows,The Wind in the Willows,1,,0.97
+lsl-0507,northgate-07,ng-04,Middlemarch,Middlemarch,1,,0.94
+lsl-0508,northgate-07,ng-04,Persuasion,Persuasion,1,,0.92
+lsl-0509,northgate-07,ng-04,The Wind in the Willows,The Wind in the Willows,1,,0.92
+lsl-0510,northgate-07,ng-04,Silas Marner,Silas Marner,1,,0.97
+lsl-0511,northgate-07,ng-04,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.89
+lsl-0512,northgate-07,ng-04,Treasure Island,Treasure Island,1,,0.96
+lsl-0513,northgate-07,ng-04,The Secret Garden,The Secret Garden,1,,0.88
+lsl-0514,northgate-07,ng-04,Jane Eyre,Jane Eyre,1,,0.95
+lsl-0515,northgate-07,ng-04,Great Expectations,Great Expectations,1,,0.86
+lsl-0516,northgate-07,ng-04,Persuasion,Persuasion,1,,0.97
+lsl-0517,northgate-07,ng-04,The Wind in the Willows,The Wind in the Willows,1,,0.89
+lsl-0518,northgate-07,ng-04,Ninety Bridges,Ninety Bridges,1,,0.98
+lsl-0519,northgate-07,ng-04,Winter at Halloway,Winter at Halloway,1,,0.80
+lsl-0520,northgate-08,ng-04,Moby-Dick,Moby-Dick,1,,0.93
+lsl-0521,northgate-08,ng-04,The Wind in the Willows,The Wind in the Willows,1,,0.97
+lsl-0522,northgate-08,ng-04,Little Women,Little Wornen,0,thin,0.64
+lsl-0523,northgate-08,ng-04,Winter at Halloway,Winter at Halloway,1,,0.87
+lsl-0524,northgate-08,ng-04,Ninety Bridges,Ninety Brldges,0,stacked,0.53
+lsl-0525,northgate-08,ng-04,Bleak House,Bleak House,1,,0.87
+lsl-0526,northgate-08,ng-04,Emma,Emrna,0,tilted,0.65
+lsl-0527,northgate-08,ng-04,Little Women,Little Women,1,,0.95
+lsl-0528,northgate-08,ng-04,Persuasion,Persuasion,1,,0.94
+lsl-0529,northgate-08,ng-04,Middlemarch,Middlemarch,1,,0.94
+lsl-0530,northgate-08,ng-04,Treasure Island,Treasure Island,1,,0.90
+lsl-0531,northgate-08,ng-04,Persuasion,Persuasion,1,,0.80
+lsl-0532,northgate-08,ng-04,The Wind in the Willows,The Wind in the Willows,1,,0.83
+lsl-0533,northgate-09,ng-05,Jane Eyre,Jane Eyre,1,,0.82
+lsl-0534,northgate-09,ng-05,Bleak House,Bleak Hause,0,tilted,0.75
+lsl-0535,northgate-09,ng-05,Ninety Bridges,Ninety Bridges,1,,0.81
+lsl-0536,northgate-09,ng-05,Middlemarch,Middlemarsh,0,thin,0.69
+lsl-0537,northgate-09,ng-05,Winter at Halloway,Wlnter at Halloway,0,stacked,0.36
+lsl-0538,northgate-09,ng-05,Moby-Dick,Moby-Dick,1,,0.91
+lsl-0539,northgate-09,ng-05,The Lantern Keeper,The Lantern Keeper,1,,0.94
+lsl-0540,northgate-09,ng-05,Treasure Island,Treasure Island,1,,0.94
+lsl-0541,northgate-09,ng-05,Treasure Island,Treasure Island,1,,0.86
+lsl-0542,northgate-09,ng-05,The Wind in the Willows,The Wind in the Willows,1,,0.90
+lsl-0543,northgate-09,ng-05,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.85
+lsl-0544,northgate-09,ng-05,Little Women,Little Women,1,,0.95
+lsl-0545,northgate-09,ng-05,The Lantern Keeper,The Lantern Keeper,1,,0.89
+lsl-0546,northgate-10,ng-05,Ninety Bridges,Ninety Bridges,1,,0.90
+lsl-0547,northgate-10,ng-05,Jane Eyre,Jane Eyne,0,thin,0.44
+lsl-0548,northgate-10,ng-05,Persuasion,Persuasion,1,,0.90
+lsl-0549,northgate-10,ng-05,Silas Marner,Silas Marner,1,,0.96
+lsl-0550,northgate-10,ng-05,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.96
+lsl-0551,northgate-10,ng-05,Winter at Halloway,Winter at Halloway,1,,0.97
+lsl-0552,northgate-10,ng-05,The Secret Garden,The Secret Gardon,0,thin,0.68
+lsl-0553,northgate-10,ng-05,Emma,Emma,1,,0.81
+lsl-0554,northgate-10,ng-05,Emma,Emma,1,,0.92
+lsl-0555,northgate-10,ng-05,Emma,Emrna,0,thin,0.42
+lsl-0556,northgate-10,ng-05,Salt Roads,Salt Roads,1,,0.90
+lsl-0557,northgate-10,ng-05,The Secret Garden,The Secret Garden,1,,0.96
+lsl-0558,northgate-10,ng-05,The Secret Garden,The Secret Garden,1,,0.86
+lsl-0559,northgate-11,ng-06,Winter at Halloway,Winter at Halloway,1,,0.97
+lsl-0560,northgate-11,ng-06,Emma,Emma,1,,0.88
+lsl-0561,northgate-11,ng-06,Little Women,Little Women,1,,0.86
+lsl-0562,northgate-11,ng-06,Winter at Halloway,Winter at Halloway,1,,0.97
+lsl-0563,northgate-11,ng-06,Salt Roads,Sait Roads,0,thin,0.61
+lsl-0564,northgate-11,ng-06,Winter at Halloway,Winter at Halloway,1,,0.94
+lsl-0565,northgate-11,ng-06,Silas Marner,Silas Marner,1,,0.96
+lsl-0566,northgate-11,ng-06,The Quiet Orchard,The Quiet Orchard,1,,0.95
+lsl-0567,northgate-11,ng-06,Middlemarch,Middlemarch,1,,0.95
+lsl-0568,northgate-11,ng-06,Ninety Bridges,Ninety Bridges,1,,0.93
+lsl-0569,northgate-11,ng-06,Salt Roads,Salt Roads,1,,0.96
+lsl-0570,northgate-11,ng-06,Persuasion,Persuasion,1,,0.93
+lsl-0571,northgate-11,ng-06,Moby-Dick,Moby-Dick,1,,0.88
+lsl-0572,northgate-12,ng-06,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.94
+lsl-0573,northgate-12,ng-06,The Wind in the Willows,The Wind in the Willows,1,,0.94
+lsl-0574,northgate-12,ng-06,The Wind in the Willows,The Wind in the Willows,1,,0.86
+lsl-0575,northgate-12,ng-06,The Wind in the Willows,The Wind in the Willows,1,,0.97
+lsl-0576,northgate-12,ng-06,Treasure Island,Treasure Island,1,,0.93
+lsl-0577,northgate-12,ng-06,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.85
+lsl-0578,northgate-12,ng-06,Persuasion,Persuasion,1,,0.93
+lsl-0579,northgate-12,ng-06,Moby-Dick,Moby-Dick,1,,0.89
+lsl-0580,northgate-12,ng-06,Silas Marner,Silas Marner,1,,0.94
+lsl-0581,northgate-12,ng-06,Jane Eyre,Jane Eyre,1,,0.96
+lsl-0582,northgate-12,ng-06,The Lantern Keeper,The Lantern Keeper,1,,0.86
+lsl-0583,northgate-12,ng-06,Moby-Dick,Moby-Dick,1,,0.80
+lsl-0584,northgate-12,ng-06,The Quiet Orchard,The Qulet Orchard,0,tilted,0.57
+lsl-0585,northgate-13,ng-07,Winter at Halloway,Winter at Halloway,1,,0.94
+lsl-0586,northgate-13,ng-07,The Lantern Keeper,The Lantern Keeper,1,,0.92
+lsl-0587,northgate-13,ng-07,Great Expectations,Great Expectations,1,,0.91
+lsl-0588,northgate-13,ng-07,Silas Marner,Silas Mamer,0,other,0.56
+lsl-0589,northgate-13,ng-07,The Secret Garden,The Secret Garden,1,,0.91
+lsl-0590,northgate-13,ng-07,The Wind in the Willows,The Wind in the Willows,1,,0.97
+lsl-0591,northgate-13,ng-07,Moby-Dick,Moby-Dick,1,,0.95
+lsl-0592,northgate-13,ng-07,The Wind in the Willows,The Wind in the Willows,1,,0.97
+lsl-0593,northgate-13,ng-07,Treasure Island,Treasure Island,1,,0.98
+lsl-0594,northgate-13,ng-07,Great Expectations,Great Expectations,1,,0.86
+lsl-0595,northgate-13,ng-07,Treasure Island,Treasure Island,1,,0.95
+lsl-0596,northgate-13,ng-07,The Lantern Keeper,The Lantern Keeper,1,,0.94
+lsl-0597,northgate-13,ng-07,Persuasion,Persuasion,1,,0.93
+lsl-0598,northgate-14,linden-st,Persuasion,Pervasion,0,glare,0.39
+lsl-0599,northgate-14,linden-st,Silas Marner,Silas Marner,1,,0.89
+lsl-0600,northgate-14,linden-st,A Field Guide to Small Birds,A Field Guide to Small Bircls,0,glare,0.64
+lsl-0601,northgate-14,linden-st,The Secret Garden,Tne Secret Garden,0,glare,0.46
+lsl-0602,northgate-14,linden-st,Great Expectations,Great Expectations,1,,0.95
+lsl-0603,northgate-14,linden-st,The Lantern Keeper,The Lantern Keeper,1,,0.91
+lsl-0604,northgate-14,linden-st,Bleak House,Bleak Horse,0,glare,0.47
+lsl-0605,northgate-14,linden-st,Salt Roads,Salt Roacls,0,glare,0.73
+lsl-0606,northgate-14,linden-st,Great Expectations,Great Expedations,0,glare,0.39
+lsl-0607,northgate-14,linden-st,Silas Marner,Silas Marnen,0,glare,0.65
+lsl-0608,northgate-14,linden-st,Emma,Emma,1,,0.88
+lsl-0609,northgate-14,linden-st,Little Women,Little Wornen,0,glare,0.77
+lsl-0610,northgate-14,linden-st,Persuasion,Persuasion,1,,0.95
+lsl-0611,northgate-14,linden-st,Middlemarch,Middlemarsh,0,glare,0.82
+lsl-0612,northgate-14,linden-st,The Wind in the Willows,The Wind in the Willows,1,,0.85
+lsl-0613,northgate-14,linden-st,The Wind in the Willows,The Wlnd in the Willows,0,glare,0.53
+lsl-0614,northgate-15,ng-08,Bleak House,Bleak Horse,0,tilted,0.44
+lsl-0615,northgate-15,ng-08,Ninety Bridges,Ninety Bridges,1,,0.88
+lsl-0616,northgate-15,ng-08,The Wind in the Willows,The Wind in the Willows,1,,0.89
+lsl-0617,northgate-15,ng-08,Silas Marner,Silas Marner,1,,0.94
+lsl-0618,northgate-15,ng-08,Little Women,Littie Women,0,tilted,0.52
+lsl-0619,northgate-15,ng-08,Persuasion,Persuasion,1,,0.97
+lsl-0620,northgate-15,ng-08,The Secret Garden,The Secret Garden,1,,0.83
+lsl-0621,northgate-15,ng-08,Great Expectations,Great Expectations,1,,0.94
+lsl-0622,northgate-15,ng-08,The Wind in the Willows,The Wind in the Wiliows,0,thin,0.49
+lsl-0623,northgate-15,ng-08,Salt Roads,Salt Roads,1,,0.95
+lsl-0624,northgate-15,ng-08,Silas Marner,Silas Marner,1,,0.97
+lsl-0625,northgate-15,ng-08,Treasure Island,Treasure Island,1,,0.87
+lsl-0626,northgate-15,ng-08,The Wind in the Willows,The Wind in the Willows,1,,0.84
+lsl-0627,northgate-16,ng-08,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.94
+lsl-0628,northgate-16,ng-08,Ninety Bridges,Ninety Bridges,1,,0.98
+lsl-0629,northgate-16,ng-08,Great Expectations,Great Expectations,1,,0.97
+lsl-0630,northgate-16,ng-08,Bleak House,Bleak House,1,,0.96
+lsl-0631,northgate-16,ng-08,Emma,Emrna,0,tilted,0.82
+lsl-0632,northgate-16,ng-08,Middlemarch,Middlemarch,1,,0.81
+lsl-0633,northgate-16,ng-08,Bleak House,Bleah House,0,stacked,0.66
+lsl-0634,northgate-16,ng-08,Winter at Halloway,Winter at Halloway,1,,0.83
+lsl-0635,northgate-16,ng-08,Middlemarch,Midd1emarch,0,thin,0.54
+lsl-0636,northgate-16,ng-08,Little Women,Little Women,1,,0.90
+lsl-0637,northgate-16,ng-08,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.91
+lsl-0638,northgate-16,ng-08,Winter at Halloway,Winter at Halloway,1,,0.91
+lsl-0639,northgate-16,ng-08,Emma,Emma,1,,0.87
+lsl-0640,northgate-17,ng-09,Ninety Bridges,Ninety Bridges,1,,0.97
+lsl-0641,northgate-17,ng-09,Ninety Bridges,Ninety Bridges,1,,0.91
+lsl-0642,northgate-17,ng-09,Moby-Dick,Moby-Dick,1,,0.92
+lsl-0643,northgate-17,ng-09,The Wind in the Willows,The Wind in the Willows,1,,0.86
+lsl-0644,northgate-17,ng-09,Salt Roads,Salt Roads,1,,0.83
+lsl-0645,northgate-17,ng-09,The Quiet Orchard,The Quiet Orchard,1,,0.94
+lsl-0646,northgate-17,ng-09,Winter at Halloway,Winter at Halloway,1,,0.83
+lsl-0647,northgate-17,ng-09,Emma,Emma,1,,0.97
+lsl-0648,northgate-17,ng-09,Persuasion,Persuasion,1,,0.96
+lsl-0649,northgate-17,ng-09,Salt Roads,Salt Roads,1,,0.97
+lsl-0650,northgate-17,ng-09,The Wind in the Willows,The Wind in the Willows,1,,0.83
+lsl-0651,northgate-17,ng-09,Jane Eyre,Jane Eyre,1,,0.92
+lsl-0652,northgate-17,ng-09,Treasure Island,Treasure Island,1,,0.88
+lsl-0653,northgate-18,ng-09,The Lantern Keeper,The Lantern Keeper,1,,0.92
+lsl-0654,northgate-18,ng-09,Silas Marner,Silas Marner,1,,0.93
+lsl-0655,northgate-18,ng-09,Emma,Erma,0,tilted,0.75
+lsl-0656,northgate-18,ng-09,Salt Roads,Salt Roads,1,,0.92
+lsl-0657,northgate-18,ng-09,Winter at Halloway,Winter at Halloway,1,,0.92
+lsl-0658,northgate-18,ng-09,Jane Eyre,Jane Eyre,1,,0.92
+lsl-0659,northgate-18,ng-09,Jane Eyre,Jane Eyre,1,,0.97
+lsl-0660,northgate-18,ng-09,Silas Marner,Silas Marnen,0,tilted,0.40
+lsl-0661,northgate-18,ng-09,Great Expectations,Great Expectations,1,,0.95
+lsl-0662,northgate-18,ng-09,The Wind in the Willows,The Wind in the Willows,1,,0.95
+lsl-0663,northgate-18,ng-09,Bleak House,Bleak House,1,,0.93
+lsl-0664,northgate-18,ng-09,Great Expectations,Great Expectations,1,,0.82
+lsl-0665,northgate-18,ng-09,The Lantern Keeper,The Lantern Kecper,0,thin,0.80
+lsl-0666,northgate-19,ng-10,Salt Roads,Salt Roads,1,,0.93
+lsl-0667,northgate-19,ng-10,The Secret Garden,The Secret Garden,1,,0.94
+lsl-0668,northgate-19,ng-10,Jane Eyre,Jane Eyre,1,,0.85
+lsl-0669,northgate-19,ng-10,Ninety Bridges,Ninety Bridges,1,,0.95
+lsl-0670,northgate-19,ng-10,Winter at Halloway,Winter at Halloway,1,,0.87
+lsl-0671,northgate-19,ng-10,Jane Eyre,Jane Eyre,1,,0.98
+lsl-0672,northgate-19,ng-10,The Wind in the Willows,The Wind in the Willows,1,,0.96
+lsl-0673,northgate-19,ng-10,Little Women,Little Women,1,,0.95
+lsl-0674,northgate-19,ng-10,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.92
+lsl-0675,northgate-19,ng-10,Silas Marner,Silas Marner,1,,0.98
+lsl-0676,northgate-19,ng-10,Treasure Island,Treasure Island,1,,0.93
+lsl-0677,northgate-19,ng-10,Little Women,Little Women,1,,0.95
+lsl-0678,northgate-19,ng-10,Moby-Dick,Moby-Dick,1,,0.85
+lsl-0679,northgate-20,ng-10,Bleak House,Bleak House,1,,0.87
+lsl-0680,northgate-20,ng-10,Salt Roads,Salt Roads,1,,0.92
+lsl-0681,northgate-20,ng-10,Winter at Halloway,Winter at Halloway,1,,0.96
+lsl-0682,northgate-20,ng-10,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.96
+lsl-0683,northgate-20,ng-10,Silas Marner,Silas Marner,1,,0.91
+lsl-0684,northgate-20,ng-10,The Wind in the Willows,The Wind in the Willows,1,,0.95
+lsl-0685,northgate-20,ng-10,Great Expectations,Great Expectations,1,,0.97
+lsl-0686,northgate-20,ng-10,Bleak House,Bleak House,1,,0.92
+lsl-0687,northgate-20,ng-10,The Secret Garden,Tne Secret Garden,0,stacked,0.75
+lsl-0688,northgate-20,ng-10,The Lantern Keeper,The Lantern Keeper,1,,0.84
+lsl-0689,northgate-20,ng-10,Emma,Ernma,0,stacked,0.72
+lsl-0690,northgate-20,ng-10,Great Expectations,Great Expectations,1,,0.93
+lsl-0691,northgate-20,ng-10,The Wind in the Willows,The Wind in the Willows,1,,0.96
+lsl-0692,northgate-21,ng-11,The Secret Garden,The Secret Gardon,0,other,0.66
+lsl-0693,northgate-21,ng-11,Bleak House,Bleak House,1,,0.93
+lsl-0694,northgate-21,ng-11,Emma,Emrna,0,thin,0.45
+lsl-0695,northgate-21,ng-11,Winter at Halloway,Winter at Hallowav,0,tilted,0.37
+lsl-0696,northgate-21,ng-11,The Secret Garden,The Secret Garden,1,,0.92
+lsl-0697,northgate-21,ng-11,Winter at Halloway,Winter at Halloway,1,,0.94
+lsl-0698,northgate-21,ng-11,Silas Marner,Silas Marner,1,,0.94
+lsl-0699,northgate-21,ng-11,Winter at Halloway,Wlnter at Halloway,0,tilted,0.77
+lsl-0700,northgate-21,ng-11,Ninety Bridges,Ninety Bridges,1,,0.93
+lsl-0701,northgate-21,ng-11,Silas Marner,Silas Marnen,0,tilted,0.65
+lsl-0702,northgate-21,ng-11,Emma,Emma,1,,0.89
+lsl-0703,northgate-21,ng-11,The Lantern Keeper,The Lantern Keeper,1,,0.97
+lsl-0704,northgate-21,ng-11,The Secret Garden,The Secret Garden,1,,0.94
+lsl-0705,northgate-22,ng-11,Ninety Bridges,Ninety Brides,0,glare,0.57
+lsl-0706,northgate-22,ng-11,Treasure Island,Treasure Island,1,,0.95
+lsl-0707,northgate-22,ng-11,Bleak House,Bleak House,1,,0.81
+lsl-0708,northgate-22,ng-11,Winter at Halloway,Winter at Hailoway,0,glare,0.50
+lsl-0709,northgate-22,ng-11,A Field Guide to Small Birds,A Field Guide to Smal Birds,0,glare,0.43
+lsl-0710,northgate-22,ng-11,Little Women,Littie Women,0,glare,0.82
+lsl-0711,northgate-22,ng-11,Little Women,Little Wornen,0,glare,0.82
+lsl-0712,northgate-22,ng-11,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.90
+lsl-0713,northgate-22,ng-11,Little Women,Littie Women,0,glare,0.60
+lsl-0714,northgate-22,ng-11,The Quiet Orchard,The Quiet Orchard,1,,0.89
+lsl-0715,northgate-22,ng-11,Little Women,Little Wornen,0,glare,0.41
+lsl-0716,northgate-22,ng-11,The Secret Garden,The Secret Garden,1,,0.92
+lsl-0717,northgate-22,ng-11,The Wind in the Willows,The Wind in the Wiliows,0,glare,0.47
+lsl-0718,northgate-22,ng-11,Bleak House,Bleah House,0,glare,0.55
+lsl-0719,northgate-22,ng-11,The Secret Garden,The Secret Garden,1,,0.82
+lsl-0720,northgate-23,ng-12,Jane Eyre,Jane Eyre,1,,0.89
+lsl-0721,northgate-23,ng-12,Persuasion,Persuaslon,0,stacked,0.41
+lsl-0722,northgate-23,ng-12,The Lantern Keeper,The Lantern Kecper,0,tilted,0.49
+lsl-0723,northgate-23,ng-12,Emma,Emma,1,,0.92
+lsl-0724,northgate-23,ng-12,Middlemarch,Middlemarch,1,,0.89
+lsl-0725,northgate-23,ng-12,Treasure Island,Treasure Island,1,,0.91
+lsl-0726,northgate-23,ng-12,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.91
+lsl-0727,northgate-23,ng-12,Silas Marner,Silas Marner,1,,0.90
+lsl-0728,northgate-23,ng-12,Treasure Island,Treasure Istand,0,tilted,0.72
+lsl-0729,northgate-23,ng-12,The Wind in the Willows,The Wind in the Willows,1,,0.97
+lsl-0730,northgate-23,ng-12,The Secret Garden,The Secret Garden,1,,0.97
+lsl-0731,northgate-23,ng-12,Ninety Bridges,Ninety Bridges,1,,0.88
+lsl-0732,northgate-23,ng-12,The Lantern Keeper,The Lantern Keeper,1,,0.84
+lsl-0733,northgate-24,ng-12,Persuasion,Persuasion,1,,0.91
+lsl-0734,northgate-24,ng-12,Jane Eyre,Jane Eyre,1,,0.94
+lsl-0735,northgate-24,ng-12,Little Women,Little Women,1,,0.93
+lsl-0736,northgate-24,ng-12,Great Expectations,Great Expectations,1,,0.95
+lsl-0737,northgate-24,ng-12,Ninety Bridges,Ninety Bridges,1,,0.97
+lsl-0738,northgate-24,ng-12,The Lantern Keeper,The Lantern Kecper,0,thin,0.35
+lsl-0739,northgate-24,ng-12,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.94
+lsl-0740,northgate-24,ng-12,Winter at Halloway,Winter at Halloway,1,,0.84
+lsl-0741,northgate-24,ng-12,Persuasion,Persuasion,1,,0.81
+lsl-0742,northgate-24,ng-12,Jane Eyre,Jane Eyre,1,,0.95
+lsl-0743,northgate-24,ng-12,Persuasion,Persuasion,1,,0.91
+lsl-0744,northgate-24,ng-12,The Quiet Orchard,The Quiet Orcharcl,0,tilted,0.55
+lsl-0745,northgate-24,ng-12,The Secret Garden,The Secret Garden,1,,0.98
+lsl-0746,northgate-25,ng-13,Treasure Island,Treasure Island,1,,0.97
+lsl-0747,northgate-25,ng-13,Treasure Island,Treasure Island,1,,0.84
+lsl-0748,northgate-25,ng-13,Great Expectations,Great Expectations,1,,0.95
+lsl-0749,northgate-25,ng-13,Moby-Dick,Moby-Dick,1,,0.90
+lsl-0750,northgate-25,ng-13,Moby-Dick,Moby-Dick,1,,0.83
+lsl-0751,northgate-25,ng-13,Persuasion,Persuasion,1,,0.85
+lsl-0752,northgate-25,ng-13,Little Women,Little Women,1,,0.97
+lsl-0753,northgate-25,ng-13,The Wind in the Willows,The Wind in the Willows,1,,0.96
+lsl-0754,northgate-25,ng-13,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.83
+lsl-0755,northgate-25,ng-13,Persuasion,Persuasion,1,,0.97
+lsl-0756,northgate-25,ng-13,The Wind in the Willows,The Wind in the Willows,1,,0.88
+lsl-0757,northgate-25,ng-13,The Secret Garden,The Secret Gardon,0,tilted,0.47
+lsl-0758,northgate-25,ng-13,The Wind in the Willows,The Wind in the Willow,0,thin,0.49
+lsl-0759,northgate-26,ng-13,Emma,Erma,0,thin,0.45
+lsl-0760,northgate-26,ng-13,Persuasion,Persuasion,1,,0.80
+lsl-0761,northgate-26,ng-13,Ninety Bridges,Ninety Bridges,1,,0.92
+lsl-0762,northgate-26,ng-13,The Secret Garden,The Secret Garden,1,,0.96
+lsl-0763,northgate-26,ng-13,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.81
+lsl-0764,northgate-26,ng-13,Little Women,Little Women,1,,0.91
+lsl-0765,northgate-26,ng-13,Emma,Emma,1,,0.92
+lsl-0766,northgate-26,ng-13,Great Expectations,Great Expectations,1,,0.88
+lsl-0767,northgate-26,ng-13,Middlemarch,Middlemarch,1,,0.93
+lsl-0768,northgate-26,ng-13,The Wind in the Willows,The Wind in the Willows,1,,0.97
+lsl-0769,northgate-26,ng-13,Great Expectations,Great Expectations,1,,0.85
+lsl-0770,northgate-26,ng-13,Treasure Island,Treasure Island,1,,0.98
+lsl-0771,northgate-26,ng-13,The Wind in the Willows,The Wind in the Willows,1,,0.89
+lsl-0772,northgate-27,ng-14,Winter at Halloway,Winter at Halloway,1,,0.85
+lsl-0773,northgate-27,ng-14,Treasure Island,Treasure Island,1,,0.98
+lsl-0774,northgate-27,ng-14,Persuasion,Persuasion,1,,0.91
+lsl-0775,northgate-27,ng-14,Silas Marner,Silas Marner,1,,0.95
+lsl-0776,northgate-27,ng-14,Emma,Emma,1,,0.89
+lsl-0777,northgate-27,ng-14,Treasure Island,Treasure Istand,0,stacked,0.63
+lsl-0778,northgate-27,ng-14,Silas Marner,Silas Marner,1,,0.96
+lsl-0779,northgate-27,ng-14,Emma,Erma,0,thin,0.35
+lsl-0780,northgate-27,ng-14,The Secret Garden,The Secret Gardon,0,tilted,0.80
+lsl-0781,northgate-27,ng-14,Emma,Emma,1,,0.97
+lsl-0782,northgate-27,ng-14,Middlemarch,Middlemarch,1,,0.90
+lsl-0783,northgate-27,ng-14,Ninety Bridges,Ninety Bridges,1,,0.87
+lsl-0784,northgate-27,ng-14,Middlemarch,Middlemarch,1,,0.98
+lsl-0785,northgate-28,ng-14,Silas Marner,Silas Marner,1,,0.91
+lsl-0786,northgate-28,ng-14,The Wind in the Willows,The Wind in the Willows,1,,0.90
+lsl-0787,northgate-28,ng-14,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.88
+lsl-0788,northgate-28,ng-14,Emma,Emma,1,,0.97
+lsl-0789,northgate-28,ng-14,Silas Marner,Silas Marner,1,,0.97
+lsl-0790,northgate-28,ng-14,Persuasion,Persuasion,1,,0.79
+lsl-0791,northgate-28,ng-14,Little Women,Little Women,1,,0.89
+lsl-0792,northgate-28,ng-14,Middlemarch,Middlemarch,1,,0.81
+lsl-0793,northgate-28,ng-14,The Quiet Orchard,The Qulet Orchard,0,thin,0.84
+lsl-0794,northgate-28,ng-14,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.95
+lsl-0795,northgate-28,ng-14,Winter at Halloway,Winter at Hailoway,0,stacked,0.42
+lsl-0796,northgate-28,ng-14,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.98
+lsl-0797,northgate-28,ng-14,The Quiet Orchard,The Quiet Orchard,1,,0.93
+lsl-0798,northgate-29,ng-15,Middlemarch,Middlemarch,1,,0.97
+lsl-0799,northgate-29,ng-15,Winter at Halloway,Winter at Halloway,1,,0.98
+lsl-0800,northgate-29,ng-15,Bleak House,Bleak House,1,,0.95
+lsl-0801,northgate-29,ng-15,Ninety Bridges,Ninety Bridges,1,,0.97
+lsl-0802,northgate-29,ng-15,Bleak House,Bleak House,1,,0.88
+lsl-0803,northgate-29,ng-15,Middlemarch,Middlemarch,1,,0.87
+lsl-0804,northgate-29,ng-15,The Wind in the Willows,The Wind in the Willow,0,tilted,0.85
+lsl-0805,northgate-29,ng-15,Moby-Dick,Moby-Dick,1,,0.94
+lsl-0806,northgate-29,ng-15,Great Expectations,Great Expectations,1,,0.94
+lsl-0807,northgate-29,ng-15,Silas Marner,Silas Marner,1,,0.84
+lsl-0808,northgate-29,ng-15,Winter at Halloway,Winter at Halloway,1,,0.88
+lsl-0809,northgate-29,ng-15,Ninety Bridges,Ninety Bridges,1,,0.90
+lsl-0810,northgate-29,ng-15,Jane Eyre,Jane Eyre,1,,0.95
+lsl-0811,northgate-30,ng-15,Winter at Halloway,Winter at Halloway,1,,0.83
+lsl-0812,northgate-30,ng-15,Salt Roads,Salt Roads,1,,0.88
+lsl-0813,northgate-30,ng-15,The Wind in the Willows,The Wind in the Willows,1,,0.91
+lsl-0814,northgate-30,ng-15,Persuasion,Persuasion,1,,0.96
+lsl-0815,northgate-30,ng-15,Bleak House,Bleak House,1,,0.97
+lsl-0816,northgate-30,ng-15,Salt Roads,Salt Roads,1,,0.93
+lsl-0817,northgate-30,ng-15,Jane Eyre,Jane Eyre,1,,0.82
+lsl-0818,northgate-30,ng-15,The Quiet Orchard,The Quiet Orchard,1,,0.93
+lsl-0819,northgate-30,ng-15,Ninety Bridges,Ninety Bridges,1,,0.86
+lsl-0820,northgate-30,ng-15,Salt Roads,Salt Roads,1,,0.96
+lsl-0821,northgate-30,ng-15,The Secret Garden,The Secret Garden,1,,0.96
+lsl-0822,northgate-30,ng-15,Little Women,Little Women,1,,0.95
+lsl-0823,northgate-30,ng-15,Little Women,Little Women,1,,0.84
+lsl-0824,northgate-31,ng-16,The Wind in the Willows,The Wind in the Willow,0,tilted,0.52
+lsl-0825,northgate-31,ng-16,Winter at Halloway,Winter at Hailoway,0,thin,0.64
+lsl-0826,northgate-31,ng-16,Salt Roads,Salt Roads,1,,0.96
+lsl-0827,northgate-31,ng-16,Moby-Dick,Moby-Dick,1,,0.81
+lsl-0828,northgate-31,ng-16,Middlemarch,Middlemarch,1,,0.85
+lsl-0829,northgate-31,ng-16,Great Expectations,Great Exneclations,0,tilted,0.40
+lsl-0830,northgate-31,ng-16,The Secret Garden,The Secret Garden,1,,0.91
+lsl-0831,northgate-31,ng-16,Little Women,Little Women,1,,0.89
+lsl-0832,northgate-31,ng-16,Ninety Bridges,Ninety Bridges,1,,0.89
+lsl-0833,northgate-31,ng-16,The Quiet Orchard,The Quiet Orchard,1,,0.96
+lsl-0834,northgate-31,ng-16,Winter at Halloway,Winter at Halloway,1,,0.85
+lsl-0835,northgate-31,ng-16,Silas Marner,Silas Marner,1,,0.95
+lsl-0836,northgate-32,ng-16,Great Expectations,Great Expectations,1,,0.98
+lsl-0837,northgate-32,ng-16,The Secret Garden,The Secret Garden,1,,0.92
+lsl-0838,northgate-32,ng-16,Middlemarch,Middlemarch,1,,0.95
+lsl-0839,northgate-32,ng-16,Great Expectations,Great Expectations,1,,0.98
+lsl-0840,northgate-32,ng-16,Great Expectations,Great Expectations,1,,0.82
+lsl-0841,northgate-32,ng-16,The Quiet Orchard,The Quiet Orchard,1,,0.88
+lsl-0842,northgate-32,ng-16,The Lantern Keeper,The Lantern Keeper,1,,0.93
+lsl-0843,northgate-32,ng-16,Persuasion,Persuasion,1,,0.89
+lsl-0844,northgate-32,ng-16,The Quiet Orchard,The Quiet Orchard,1,,0.92
+lsl-0845,northgate-32,ng-16,Middlemarch,Middlemarch,1,,0.87
+lsl-0846,northgate-32,ng-16,Moby-Dick,Mohy-Dick,0,stacked,0.38
+lsl-0847,northgate-32,ng-16,Middlemarch,Middlemarch,1,,0.94
+lsl-0848,riverside-01,rs-01,Persuasion,Persuaslon,0,tilted,0.60
+lsl-0849,riverside-01,rs-01,Emma,Emma,1,,0.85
+lsl-0850,riverside-01,rs-01,Emma,Emma,1,,0.93
+lsl-0851,riverside-01,rs-01,The Wind in the Willows,The Wind in the Willows,1,,0.91
+lsl-0852,riverside-01,rs-01,Silas Marner,Silas Marner,1,,0.91
+lsl-0853,riverside-01,rs-01,The Quiet Orchard,The Quiet Orchand,0,tilted,0.80
+lsl-0854,riverside-01,rs-01,The Wind in the Willows,The Wind in the Willows,1,,0.97
+lsl-0855,riverside-01,rs-01,Jane Eyre,Jane Eyre,1,,0.98
+lsl-0856,riverside-01,rs-01,The Lantern Keeper,The Lantern Keeper,1,,0.93
+lsl-0857,riverside-01,rs-01,Bleak House,Bleak House,1,,0.95
+lsl-0858,riverside-01,rs-01,Persuasion,Persuasion,1,,0.85
+lsl-0859,riverside-01,rs-01,Bleak House,Bleah House,0,stacked,0.83
+lsl-0860,riverside-02,rs-01,The Quiet Orchard,The Quiet Orchard,1,,0.91
+lsl-0861,riverside-02,rs-01,Jane Eyre,Jane Eyne,0,glare,0.60
+lsl-0862,riverside-02,rs-01,Persuasion,Persuasion,1,,0.93
+lsl-0863,riverside-02,rs-01,Jane Eyre,Jane Eyre,1,,0.93
+lsl-0864,riverside-02,rs-01,Bleak House,Bleak House,1,,0.88
+lsl-0865,riverside-02,rs-01,Persuasion,Persuasion,1,,0.91
+lsl-0866,riverside-02,rs-01,Little Women,Little Women,1,,0.86
+lsl-0867,riverside-02,rs-01,Silas Marner,Sllas Marner,0,glare,0.41
+lsl-0868,riverside-02,rs-01,Salt Roads,Salt Roads,1,,0.98
+lsl-0869,riverside-02,rs-01,A Field Guide to Small Birds,A Field Guide to Smal Birds,0,glare,0.53
+lsl-0870,riverside-02,rs-01,The Secret Garden,Tne Secret Garden,0,glare,0.39
+lsl-0871,riverside-02,rs-01,Salt Roads,Salt Roads,1,,0.96
+lsl-0872,riverside-02,rs-01,Moby-Dick,Mobv-Dick,0,glare,0.52
+lsl-0873,riverside-02,rs-01,Moby-Dick,Moby-Dlck,0,glare,0.38
+lsl-0874,riverside-02,rs-01,Bleak House,Bleak Horse,0,glare,0.81
+lsl-0875,riverside-03,rs-02,Silas Marner,Silas Marner,1,,0.87
+lsl-0876,riverside-03,rs-02,Jane Eyre,Jane Eyre,1,,0.86
+lsl-0877,riverside-03,rs-02,Middlemarch,Middlemarch,1,,0.80
+lsl-0878,riverside-03,rs-02,The Secret Garden,The Secret Garden,1,,0.94
+lsl-0879,riverside-03,rs-02,Silas Marner,Silas Marner,1,,0.95
+lsl-0880,riverside-03,rs-02,The Wind in the Willows,The Wind in the Wiliows,0,tilted,0.75
+lsl-0881,riverside-03,rs-02,Winter at Halloway,Winter at Halloway,1,,0.85
+lsl-0882,riverside-03,rs-02,Salt Roads,Salt Roads,1,,0.82
+lsl-0883,riverside-03,rs-02,The Lantern Keeper,The Lantern Keepet,0,stacked,0.85
+lsl-0884,riverside-03,rs-02,Persuasion,Persuasion,1,,0.84
+lsl-0885,riverside-03,rs-02,The Secret Garden,The Secret Garden,1,,0.91
+lsl-0886,riverside-03,rs-02,Bleak House,Bleak House,1,,0.90
+lsl-0887,riverside-04,rs-02,A Field Guide to Small Birds,A Field Guide to Small Bircls,0,thin,0.64
+lsl-0888,riverside-04,rs-02,The Secret Garden,The Secret Garden,1,,0.90
+lsl-0889,riverside-04,rs-02,The Lantern Keeper,The Lantern Keeper,1,,0.84
+lsl-0890,riverside-04,rs-02,Little Women,Little Women,1,,0.91
+lsl-0891,riverside-04,rs-02,Emma,Emma,1,,0.98
+lsl-0892,riverside-04,rs-02,Ninety Bridges,Ninety Bridges,1,,0.94
+lsl-0893,riverside-04,rs-02,Silas Marner,Silas Marner,1,,0.97
+lsl-0894,riverside-04,rs-02,Great Expectations,Great Exneclations,0,stacked,0.66
+lsl-0895,riverside-04,rs-02,The Secret Garden,The Secret Garden,1,,0.98
+lsl-0896,riverside-04,rs-02,The Wind in the Willows,The Wind in the Willows,1,,0.97
+lsl-0897,riverside-04,rs-02,Treasure Island,Treasure Island,1,,0.88
+lsl-0898,riverside-04,rs-02,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.97
+lsl-0899,riverside-05,rs-03,Great Expectations,Great Expectations,1,,0.94
+lsl-0900,riverside-05,rs-03,Salt Roads,Salt Roads,1,,0.86
+lsl-0901,riverside-05,rs-03,Treasure Island,Treasure Island,1,,0.94
+lsl-0902,riverside-05,rs-03,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.88
+lsl-0903,riverside-05,rs-03,Emma,Emma,1,,0.94
+lsl-0904,riverside-05,rs-03,Middlemarch,Middlemarch,1,,0.96
+lsl-0905,riverside-05,rs-03,The Quiet Orchard,The Quiet Orchard,1,,0.90
+lsl-0906,riverside-05,rs-03,The Quiet Orchard,The Quiet Orchard,1,,0.98
+lsl-0907,riverside-05,rs-03,Silas Marner,Sllas Marner,0,stacked,0.80
+lsl-0908,riverside-05,rs-03,The Lantern Keeper,The Lantern Keeper,1,,0.95
+lsl-0909,riverside-05,rs-03,Silas Marner,Silas Mamer,0,other,0.59
+lsl-0910,riverside-05,rs-03,Emma,Emma,1,,0.91
+lsl-0911,riverside-06,rs-03,The Secret Garden,The Secret Garden,1,,0.96
+lsl-0912,riverside-06,rs-03,Persuasion,Persuasion,1,,0.90
+lsl-0913,riverside-06,rs-03,Winter at Halloway,Winter at Halloway,1,,0.93
+lsl-0914,riverside-06,rs-03,The Secret Garden,The Secret Garden,1,,0.82
+lsl-0915,riverside-06,rs-03,The Quiet Orchard,The Quiet Orchard,1,,0.93
+lsl-0916,riverside-06,rs-03,Salt Roads,Salt Roads,1,,0.91
+lsl-0917,riverside-06,rs-03,Treasure Island,Treasure Island,1,,0.94
+lsl-0918,riverside-06,rs-03,Great Expectations,Great Expectations,1,,0.82
+lsl-0919,riverside-06,rs-03,Emma,Emma,1,,0.93
+lsl-0920,riverside-06,rs-03,Moby-Dick,Moby-Dick,1,,0.87
+lsl-0921,riverside-06,rs-03,Salt Roads,Salt Roads,1,,0.97
+lsl-0922,riverside-06,rs-03,Little Women,Little Women,1,,0.90
+lsl-0923,riverside-07,rs-04,Little Women,Little Women,1,,0.94
+lsl-0924,riverside-07,rs-04,Moby-Dick,Moby-Dick,1,,0.98
+lsl-0925,riverside-07,rs-04,Salt Roads,Salt Roads,1,,0.92
+lsl-0926,riverside-07,rs-04,Middlemarch,Middlemarch,1,,0.92
+lsl-0927,riverside-07,rs-04,The Lantern Keeper,The Lantern Keeper,1,,0.87
+lsl-0928,riverside-07,rs-04,Middlemarch,Middlemarch,1,,0.86
+lsl-0929,riverside-07,rs-04,The Lantern Keeper,The Lantern Keeper,1,,0.93
+lsl-0930,riverside-07,rs-04,Great Expectations,Great Expectations,1,,0.96
+lsl-0931,riverside-07,rs-04,Bleak House,Bleak House,1,,0.91
+lsl-0932,riverside-07,rs-04,Salt Roads,Salt Roads,1,,0.81
+lsl-0933,riverside-07,rs-04,Little Women,Little Women,1,,0.94
+lsl-0934,riverside-07,rs-04,Moby-Dick,Moby-Dick,1,,0.93
+lsl-0935,riverside-08,rs-04,Emma,Emrna,0,tilted,0.50
+lsl-0936,riverside-08,rs-04,Emma,Emma,1,,0.92
+lsl-0937,riverside-08,rs-04,Silas Marner,Silas Marner,1,,0.94
+lsl-0938,riverside-08,rs-04,Little Women,Little Women,1,,0.91
+lsl-0939,riverside-08,rs-04,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.95
+lsl-0940,riverside-08,rs-04,Great Expectations,Great Expectations,1,,0.92
+lsl-0941,riverside-08,rs-04,Salt Roads,Salt Roads,1,,0.90
+lsl-0942,riverside-08,rs-04,Moby-Dick,Moby-Dick,1,,0.90
+lsl-0943,riverside-08,rs-04,Moby-Dick,Moby-Dick,1,,0.94
+lsl-0944,riverside-08,rs-04,Middlemarch,Middlemarch,1,,0.95
+lsl-0945,riverside-08,rs-04,Jane Eyre,Jane Eyne,0,thin,0.63
+lsl-0946,riverside-08,rs-04,The Wind in the Willows,The Wind in the Willows,1,,0.91
+lsl-0947,riverside-09,rs-05,Jane Eyre,Jame Eyre,0,glare,0.84
+lsl-0948,riverside-09,rs-05,Emma,Emma,1,,0.87
+lsl-0949,riverside-09,rs-05,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.95
+lsl-0950,riverside-09,rs-05,Middlemarch,Mlddlemarch,0,glare,0.59
+lsl-0951,riverside-09,rs-05,The Secret Garden,The Secret Garden,1,,0.96
+lsl-0952,riverside-09,rs-05,Jane Eyre,Jane Eyre,1,,0.85
+lsl-0953,riverside-09,rs-05,Jane Eyre,Jame Eyre,0,glare,0.65
+lsl-0954,riverside-09,rs-05,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.83
+lsl-0955,riverside-09,rs-05,Great Expectations,Great Exneclations,0,glare,0.58
+lsl-0956,riverside-09,rs-05,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.82
+lsl-0957,riverside-09,rs-05,Middlemarch,Middlemarch,1,,0.93
+lsl-0958,riverside-09,rs-05,Jane Eyre,Jane Eyre,1,,0.88
+lsl-0959,riverside-09,rs-05,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.96
+lsl-0960,riverside-09,rs-05,Jane Eyre,Jame Eyre,0,glare,0.56
+lsl-0961,riverside-09,rs-05,Emma,Emma,1,,0.94
+lsl-0962,riverside-10,rs-05,Salt Roads,Salt Roads,1,,0.85
+lsl-0963,riverside-10,rs-05,The Wind in the Willows,The Wind in the Willows,1,,0.93
+lsl-0964,riverside-10,rs-05,The Quiet Orchard,The Qulet Orchard,0,thin,0.39
+lsl-0965,riverside-10,rs-05,Middlemarch,Middlemarch,1,,0.85
+lsl-0966,riverside-10,rs-05,The Secret Garden,The Secret Garden,1,,0.95
+lsl-0967,riverside-10,rs-05,Persuasion,Persuasion,1,,0.84
+lsl-0968,riverside-10,rs-05,The Lantern Keeper,The Lantern Keeper,1,,0.92
+lsl-0969,riverside-10,rs-05,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.85
+lsl-0970,riverside-10,rs-05,Silas Marner,Silas Marner,1,,0.88
+lsl-0971,riverside-10,rs-05,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.94
+lsl-0972,riverside-10,rs-05,The Wind in the Willows,The Wind in the Willows,1,,0.91
+lsl-0973,riverside-10,rs-05,Little Women,Little Wornen,0,thin,0.49
+lsl-0974,riverside-11,rs-06,Little Women,Littie Women,0,stacked,0.62
+lsl-0975,riverside-11,rs-06,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.89
+lsl-0976,riverside-11,rs-06,Bleak House,Bleak House,1,,0.86
+lsl-0977,riverside-11,rs-06,Persuasion,Persuasion,1,,0.97
+lsl-0978,riverside-11,rs-06,Silas Marner,Silas Marner,1,,0.86
+lsl-0979,riverside-11,rs-06,Salt Roads,Salt Roads,1,,0.91
+lsl-0980,riverside-11,rs-06,Treasure Island,Treasure Island,1,,0.90
+lsl-0981,riverside-11,rs-06,Persuasion,Persuasion,1,,0.89
+lsl-0982,riverside-11,rs-06,Winter at Halloway,Winter at Halloway,1,,0.93
+lsl-0983,riverside-11,rs-06,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.90
+lsl-0984,riverside-11,rs-06,Little Women,Little Women,1,,0.94
+lsl-0985,riverside-11,rs-06,Emma,Emma,1,,0.97
+lsl-0986,riverside-12,rs-06,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.84
+lsl-0987,riverside-12,rs-06,The Quiet Orchard,The Quiet Orchand,0,tilted,0.68
+lsl-0988,riverside-12,rs-06,Salt Roads,Salt Roacls,0,thin,0.59
+lsl-0989,riverside-12,rs-06,Ninety Bridges,Ninety Bridges,1,,0.87
+lsl-0990,riverside-12,rs-06,Middlemarch,Midd1emarch,0,tilted,0.85
+lsl-0991,riverside-12,rs-06,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.87
+lsl-0992,riverside-12,rs-06,The Secret Garden,The Secret Garden,1,,0.98
+lsl-0993,riverside-12,rs-06,Emma,Emrna,0,tilted,0.51
+lsl-0994,riverside-12,rs-06,Silas Marner,Silas Marner,1,,0.90
+lsl-0995,riverside-12,rs-06,The Wind in the Willows,The Wind in the Willows,1,,0.87
+lsl-0996,riverside-12,rs-06,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.87
+lsl-0997,riverside-12,rs-06,The Lantern Keeper,The Lantern Keeper,1,,0.85
+lsl-0998,riverside-13,rs-07,Salt Roads,Salt Roads,1,,0.82
+lsl-0999,riverside-13,rs-07,Salt Roads,Salt Roads,1,,0.97
+lsl-1000,riverside-13,rs-07,The Secret Garden,Tne Secret Garden,0,thin,0.54
+lsl-1001,riverside-13,rs-07,Jane Eyre,Jane Eyre,1,,0.90
+lsl-1002,riverside-13,rs-07,Jane Eyre,Jame Eyre,0,other,0.75
+lsl-1003,riverside-13,rs-07,Jane Eyre,Jane Eyre,1,,0.90
+lsl-1004,riverside-13,rs-07,Middlemarch,Midd1emarch,0,thin,0.54
+lsl-1005,riverside-13,rs-07,Treasure Island,Treasure Island,1,,0.80
+lsl-1006,riverside-13,rs-07,Great Expectations,Great Expectations,1,,0.91
+lsl-1007,riverside-13,rs-07,The Secret Garden,The Secret Garden,1,,0.93
+lsl-1008,riverside-13,rs-07,Middlemarch,Middlemarch,1,,0.98
+lsl-1009,riverside-13,rs-07,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.96
+lsl-1010,riverside-14,rs-07,The Wind in the Willows,The Wind in the Willows,1,,0.96
+lsl-1011,riverside-14,rs-07,Salt Roads,Salt Roads,1,,0.88
+lsl-1012,riverside-14,rs-07,The Secret Garden,The Secret Gardon,0,tilted,0.61
+lsl-1013,riverside-14,rs-07,Great Expectations,Great Expectations,1,,0.94
+lsl-1014,riverside-14,rs-07,The Secret Garden,The Secret Garden,1,,0.93
+lsl-1015,riverside-14,rs-07,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.98
+lsl-1016,riverside-14,rs-07,Winter at Halloway,Winter at Halloway,1,,0.95
+lsl-1017,riverside-14,rs-07,The Secret Garden,The Secret Garden,1,,0.98
+lsl-1018,riverside-14,rs-07,The Lantern Keeper,The Lantern Keeper,1,,0.90
+lsl-1019,riverside-14,rs-07,Persuasion,Persuasion,1,,0.85
+lsl-1020,riverside-14,rs-07,Great Expectations,Great Expectations,1,,0.87
+lsl-1021,riverside-14,rs-07,Moby-Dick,Mobv-Dick,0,tilted,0.44
+lsl-1022,riverside-15,rs-08,The Lantern Keeper,The Lantern Keeper,1,,0.97
+lsl-1023,riverside-15,rs-08,Silas Marner,Silas Marner,1,,0.95
+lsl-1024,riverside-15,rs-08,The Wind in the Willows,The Wind in the Willows,1,,0.93
+lsl-1025,riverside-15,rs-08,Persuasion,Persuasion,1,,0.96
+lsl-1026,riverside-15,rs-08,Emma,Emma,1,,0.95
+lsl-1027,riverside-15,rs-08,Great Expectations,Great Expectations,1,,0.91
+lsl-1028,riverside-15,rs-08,The Quiet Orchard,The Quiet Orchard,1,,0.93
+lsl-1029,riverside-15,rs-08,Ninety Bridges,Ninety Bridges,1,,0.91
+lsl-1030,riverside-15,rs-08,Salt Roads,Salt Roads,1,,0.89
+lsl-1031,riverside-15,rs-08,Winter at Halloway,Winter at Halloway,1,,0.93
+lsl-1032,riverside-15,rs-08,Ninety Bridges,Ninety Bridges,1,,0.98
+lsl-1033,riverside-15,rs-08,Moby-Dick,Moby-Dick,1,,0.94
+lsl-1034,riverside-16,rs-08,Persuasion,Persuasion,1,,0.96
+lsl-1035,riverside-16,rs-08,Jane Eyre,Jane Eyre,1,,0.94
+lsl-1036,riverside-16,rs-08,Moby-Dick,Moby-Dick,1,,0.97
+lsl-1037,riverside-16,rs-08,Winter at Halloway,Winter at Halloway,1,,0.96
+lsl-1038,riverside-16,rs-08,Jane Eyre,Jane Eyre,1,,0.98
+lsl-1039,riverside-16,rs-08,Emma,Emma,1,,0.95
+lsl-1040,riverside-16,rs-08,Persuasion,Persuaslon,0,thin,0.48
+lsl-1041,riverside-16,rs-08,The Wind in the Willows,The Wind in the Willows,1,,0.95
+lsl-1042,riverside-16,rs-08,Little Women,Little Women,1,,0.95
+lsl-1043,riverside-16,rs-08,Jane Eyre,Jane Eyre,1,,0.87
+lsl-1044,riverside-16,rs-08,Winter at Halloway,Winter at Halloway,1,,0.89
+lsl-1045,riverside-16,rs-08,Treasure Island,Treasure Island,1,,0.94
+lsl-1046,riverside-17,rs-09,Persuasion,Persuasion,1,,0.91
+lsl-1047,riverside-17,rs-09,The Lantern Keeper,The Lantem Keeper,0,glare,0.66
+lsl-1048,riverside-17,rs-09,Emma,Emma,1,,0.85
+lsl-1049,riverside-17,rs-09,Little Women,Little Wornen,0,glare,0.43
+lsl-1050,riverside-17,rs-09,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.94
+lsl-1051,riverside-17,rs-09,Salt Roads,Sait Roads,0,glare,0.74
+lsl-1052,riverside-17,rs-09,Persuasion,Persuasion,1,,0.84
+lsl-1053,riverside-17,rs-09,Persuasion,Persuaslon,0,glare,0.70
+lsl-1054,riverside-17,rs-09,The Lantern Keeper,The Lantern Keeper,1,,0.98
+lsl-1055,riverside-17,rs-09,The Secret Garden,The Secret Garden,1,,0.90
+lsl-1056,riverside-17,rs-09,Treasure Island,Treasure Istand,0,glare,0.43
+lsl-1057,riverside-17,rs-09,Great Expectations,Great Exneclations,0,glare,0.62
+lsl-1058,riverside-17,rs-09,Salt Roads,Salt Roacls,0,glare,0.84
+lsl-1059,riverside-17,rs-09,Bleak House,Bleak Horse,0,glare,0.60
+lsl-1060,riverside-17,rs-09,Treasure Island,Treasure Island,1,,0.96
+lsl-1061,riverside-18,rs-09,Middlemarch,Middlemarch,1,,0.95
+lsl-1062,riverside-18,rs-09,Silas Marner,Silas Marner,1,,0.92
+lsl-1063,riverside-18,rs-09,Middlemarch,Middlemarch,1,,0.97
+lsl-1064,riverside-18,rs-09,Winter at Halloway,Winter at Halloway,1,,0.92
+lsl-1065,riverside-18,rs-09,Moby-Dick,Moby-Dick,1,,0.86
+lsl-1066,riverside-18,rs-09,Emma,Emma,1,,0.84
+lsl-1067,riverside-18,rs-09,Salt Roads,Salt Roads,1,,0.97
+lsl-1068,riverside-18,rs-09,Persuasion,Persuasion,1,,0.96
+lsl-1069,riverside-18,rs-09,Persuasion,Persuasion,1,,0.82
+lsl-1070,riverside-18,rs-09,Great Expectations,Great Expectations,1,,0.83
+lsl-1071,riverside-18,rs-09,Treasure Island,Treasure Istand,0,thin,0.77
+lsl-1072,riverside-18,rs-09,Great Expectations,Great Expectations,1,,0.97
+lsl-1073,riverside-19,rs-10,The Wind in the Willows,The Wind in the Willows,1,,0.94
+lsl-1074,riverside-19,rs-10,Middlemarch,Middlemarch,1,,0.82
+lsl-1075,riverside-19,rs-10,The Wind in the Willows,The Wind in the Willows,1,,0.84
+lsl-1076,riverside-19,rs-10,Moby-Dick,Mobv-Dick,0,tilted,0.69
+lsl-1077,riverside-19,rs-10,Ninety Bridges,Ninety Brides,0,tilted,0.56
+lsl-1078,riverside-19,rs-10,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.86
+lsl-1079,riverside-19,rs-10,Moby-Dick,Moby-Dick,1,,0.94
+lsl-1080,riverside-19,rs-10,The Wind in the Willows,The Wind in the Willows,1,,0.87
+lsl-1081,riverside-19,rs-10,Great Expectations,Great Expectations,1,,0.97
+lsl-1082,riverside-19,rs-10,The Quiet Orchard,The Quiet Orchard,1,,0.95
+lsl-1083,riverside-19,rs-10,Moby-Dick,Moby-Dick,1,,0.88
+lsl-1084,riverside-19,rs-10,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.93
+lsl-1085,riverside-20,rs-10,Moby-Dick,Moby-Dick,1,,0.88
+lsl-1086,riverside-20,rs-10,The Wind in the Willows,The Wind in the Willows,1,,0.94
+lsl-1087,riverside-20,rs-10,Great Expectations,Great Expectations,1,,0.90
+lsl-1088,riverside-20,rs-10,The Secret Garden,The Secret Garden,1,,0.87
+lsl-1089,riverside-20,rs-10,Moby-Dick,Moby-Dick,1,,0.88
+lsl-1090,riverside-20,rs-10,Ninety Bridges,Ninety Bridges,1,,0.98
+lsl-1091,riverside-20,rs-10,Persuasion,Persuasion,1,,0.93
+lsl-1092,riverside-20,rs-10,Great Expectations,Great Expectations,1,,0.95
+lsl-1093,riverside-20,rs-10,Great Expectations,Great Expectations,1,,0.96
+lsl-1094,riverside-20,rs-10,Salt Roads,Salt Roads,1,,0.89
+lsl-1095,riverside-20,rs-10,Ninety Bridges,Ninety Brides,0,thin,0.67
+lsl-1096,riverside-20,rs-10,Winter at Halloway,Winter at Halloway,1,,0.92
+lsl-1097,riverside-21,rs-11,Persuasion,Persuasion,1,,0.90
+lsl-1098,riverside-21,rs-11,The Wind in the Willows,The Wlnd in the Willows,0,tilted,0.81
+lsl-1099,riverside-21,rs-11,Little Women,Little Women,1,,0.97
+lsl-1100,riverside-21,rs-11,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.98
+lsl-1101,riverside-21,rs-11,Little Women,Little Women,1,,0.96
+lsl-1102,riverside-21,rs-11,Moby-Dick,Moby-Dick,1,,0.95
+lsl-1103,riverside-21,rs-11,Moby-Dick,Moby-Dick,1,,0.89
+lsl-1104,riverside-21,rs-11,Silas Marner,Silas Mamer,0,thin,0.77
+lsl-1105,riverside-21,rs-11,Little Women,Little Women,1,,0.88
+lsl-1106,riverside-21,rs-11,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.97
+lsl-1107,riverside-21,rs-11,Jane Eyre,Jane Eyre,1,,0.89
+lsl-1108,riverside-21,rs-11,Persuasion,Persuasion,1,,0.91
+lsl-1109,riverside-22,rs-11,Emma,Emma,1,,0.90
+lsl-1110,riverside-22,rs-11,The Wind in the Willows,The Wind in the Willows,1,,0.84
+lsl-1111,riverside-22,rs-11,Salt Roads,Salt Roads,1,,0.93
+lsl-1112,riverside-22,rs-11,Winter at Halloway,Winter at Halloway,1,,0.96
+lsl-1113,riverside-22,rs-11,The Quiet Orchard,The Quiet Orchard,1,,0.92
+lsl-1114,riverside-22,rs-11,Ninety Bridges,Ninety Bridges,1,,0.84
+lsl-1115,riverside-22,rs-11,Emma,Emma,1,,0.97
+lsl-1116,riverside-22,rs-11,Emma,Emma,1,,0.87
+lsl-1117,riverside-22,rs-11,Treasure Island,Treasure Island,1,,0.93
+lsl-1118,riverside-22,rs-11,Great Expectations,Great Expectations,1,,0.97
+lsl-1119,riverside-22,rs-11,Ninety Bridges,Ninety Bridges,1,,0.85
+lsl-1120,riverside-22,rs-11,Middlemarch,Middlemarch,1,,0.91
+lsl-1121,riverside-23,rs-12,Persuasion,Persuasion,1,,0.91
+lsl-1122,riverside-23,rs-12,Treasure Island,Treasure Isiand,0,thin,0.39
+lsl-1123,riverside-23,rs-12,Salt Roads,Salt Roads,1,,0.96
+lsl-1124,riverside-23,rs-12,Ninety Bridges,Ninety Brides,0,thin,0.83
+lsl-1125,riverside-23,rs-12,Silas Marner,Silas Mamer,0,tilted,0.50
+lsl-1126,riverside-23,rs-12,Middlemarch,Middlemarch,1,,0.89
+lsl-1127,riverside-23,rs-12,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.94
+lsl-1128,riverside-23,rs-12,Salt Roads,Salt Roads,1,,0.95
+lsl-1129,riverside-23,rs-12,Great Expectations,Great Expectations,1,,0.93
+lsl-1130,riverside-23,rs-12,Persuasion,Persuasion,1,,0.97
+lsl-1131,riverside-23,rs-12,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.88
+lsl-1132,riverside-23,rs-12,Jane Eyre,Jane Eyre,1,,0.80
+lsl-1133,riverside-24,rs-12,Bleak House,Bleak House,1,,0.95
+lsl-1134,riverside-24,rs-12,Bleak House,Bleak House,1,,0.91
+lsl-1135,riverside-24,rs-12,The Lantern Keeper,The Lantern Kecper,0,tilted,0.75
+lsl-1136,riverside-24,rs-12,Silas Marner,Silas Marner,1,,0.83
+lsl-1137,riverside-24,rs-12,A Field Guide to Small Birds,A Field Guide to Small Birds,1,,0.80
+lsl-1138,riverside-24,rs-12,Jane Eyre,Jane Eyre,1,,0.90
+lsl-1139,riverside-24,rs-12,Persuasion,Persnasion,0,thin,0.43
+lsl-1140,riverside-24,rs-12,Bleak House,Bleak House,1,,0.96
+lsl-1141,riverside-24,rs-12,The Wind in the Willows,The Wind in the Willows,1,,0.83
+lsl-1142,riverside-24,rs-12,Great Expectations,Great Exneclations,0,tilted,0.78
+lsl-1143,riverside-24,rs-12,Ninety Bridges,Ninety Bridges,1,,0.88
+lsl-1144,riverside-24,rs-12,Middlemarch,Middlemarch,1,,0.87
+lsl-1145,riverside-25,rs-13,Little Women,Llttle Women,0,tilted,0.54
+lsl-1146,riverside-25,rs-13,The Quiet Orchard,The Quiet Orchard,1,,0.87
+lsl-1147,riverside-25,rs-13,Bleak House,Bleak House,1,,0.90
+lsl-1148,riverside-25,rs-13,Persuasion,Persnasion,0,stacked,0.53
+lsl-1149,riverside-25,rs-13,Persuasion,Persuasion,1,,0.91
+lsl-1150,riverside-25,rs-13,The Secret Garden,The Secret Garden,1,,0.92
+lsl-1151,riverside-25,rs-13,The Wind in the Willows,The Wind in the Willows,1,,0.88
+lsl-1152,riverside-25,rs-13,Moby-Dick,Moby-Dick,1,,0.84
+lsl-1153,riverside-25,rs-13,Treasure Island,Treasur Island,0,stacked,0.73
+lsl-1154,riverside-25,rs-13,The Quiet Orchard,The Quiet Orcharcl,0,thin,0.80
+lsl-1155,riverside-25,rs-13,Treasure Island,Treasur Island,0,tilted,0.44
+lsl-1156,riverside-25,rs-13,The Wind in the Willows,The Wind in the Willows,1,,0.98
+lsl-1157,riverside-26,rs-13,Winter at Halloway,Winter at Halloway,1,,0.90
+lsl-1158,riverside-26,rs-13,The Quiet Orchard,The Quiet Orchard,1,,0.93
+lsl-1159,riverside-26,rs-13,Great Expectations,Great Expectations,1,,0.90
+lsl-1160,riverside-26,rs-13,Jane Eyre,Jane Eyre,1,,0.88
+lsl-1161,riverside-26,rs-13,Silas Marner,Silas Marner,1,,0.96
+lsl-1162,riverside-26,rs-13,Emma,Emma,1,,0.90
+lsl-1163,riverside-26,rs-13,The Lantern Keeper,The Lantern Keeper,1,,0.84
+lsl-1164,riverside-26,rs-13,Silas Marner,Silas Marner,1,,0.94
+lsl-1165,riverside-26,rs-13,Ninety Bridges,Ninety Brldges,0,tilted,0.81
+lsl-1166,riverside-26,rs-13,Silas Marner,Silas Marner,1,,0.88
+lsl-1167,riverside-26,rs-13,Ninety Bridges,Ninety Bridges,1,,0.81
+lsl-1168,riverside-26,rs-13,The Secret Garden,The Secret Garclen,0,tilted,0.36
+lsl-1169,riverside-27,rs-14,Salt Roads,Salt Roads,1,,0.92
+lsl-1170,riverside-27,rs-14,Middlemarch,Middlemarch,1,,0.90
+lsl-1171,riverside-27,rs-14,Middlemarch,Middlemarch,1,,0.96
+lsl-1172,riverside-27,rs-14,Ninety Bridges,Ninety Bridges,1,,0.85
+lsl-1173,riverside-27,rs-14,Salt Roads,Salt Roads,1,,0.88
+lsl-1174,riverside-27,rs-14,Bleak House,Bleak Horse,0,thin,0.72
+lsl-1175,riverside-27,rs-14,The Secret Garden,The Secret Garden,1,,0.97
+lsl-1176,riverside-27,rs-14,Persuasion,Persuasion,1,,0.93
+lsl-1177,riverside-27,rs-14,Middlemarch,Middlemarsh,0,tilted,0.76
+lsl-1178,riverside-27,rs-14,The Lantern Keeper,The Lantern Keeper,1,,0.94
+lsl-1179,riverside-27,rs-14,Emma,Emma,1,,0.95
+lsl-1180,riverside-27,rs-14,Salt Roads,Salt Roads,1,,0.87
+lsl-1181,riverside-28,rs-14,Salt Roads,Salt Roads,1,,0.95
+lsl-1182,riverside-28,rs-14,Jane Eyre,Jane Eyrc,0,thin,0.82
+lsl-1183,riverside-28,rs-14,Winter at Halloway,Winter at Halloway,1,,0.87
+lsl-1184,riverside-28,rs-14,Bleak House,Bleah House,0,other,0.62
+lsl-1185,riverside-28,rs-14,Middlemarch,Middlemarch,1,,0.89
+lsl-1186,riverside-28,rs-14,Jane Eyre,Jane Eyre,1,,0.89
+lsl-1187,riverside-28,rs-14,Persuasion,Persuasion,1,,0.96
+lsl-1188,riverside-28,rs-14,Middlemarch,Midd1emarch,0,thin,0.41
+lsl-1189,riverside-28,rs-14,Bleak House,Bleak House,1,,0.93
+lsl-1190,riverside-28,rs-14,Persuasion,Persuasion,1,,0.84
+lsl-1191,riverside-28,rs-14,The Lantern Keeper,The Lantern Keeper,1,,0.94
+lsl-1192,riverside-28,rs-14,Emma,Emma,1,,0.93
+lsl-1193,riverside-29,rs-15,The Lantern Keeper,The Lantern Keepet,0,other,0.84
+lsl-1194,riverside-29,rs-15,Ninety Bridges,Ninety Bridges,1,,0.82
+lsl-1195,riverside-29,rs-15,Little Women,Little Women,1,,0.98
+lsl-1196,riverside-29,rs-15,Jane Eyre,Jane Eyre,1,,0.96
+lsl-1197,riverside-29,rs-15,Emma,Emma,1,,0.83
+lsl-1198,riverside-29,rs-15,The Wind in the Willows,The Wind in the Willows,1,,0.96
+lsl-1199,riverside-29,rs-15,Persuasion,Persuasion,1,,0.88
+lsl-1200,riverside-29,rs-15,Little Women,Little Women,1,,0.84
+lsl-1201,riverside-29,rs-15,Jane Eyre,Jane Eyre,1,,0.89
+lsl-1202,riverside-29,rs-15,Great Expectations,Great Expectations,1,,0.89
+lsl-1203,riverside-29,rs-15,The Wind in the Willows,The Wind in the Wiliows,0,stacked,0.61
+lsl-1204,riverside-29,rs-15,Winter at Halloway,Winter at Halloway,1,,0.93
+lsl-1205,riverside-30,rs-15,The Secret Garden,The Secret Garden,1,,0.89
+lsl-1206,riverside-30,rs-15,Salt Roads,Salt Roacls,0,thin,0.85
+lsl-1207,riverside-30,rs-15,Little Women,Little Women,1,,0.95
+lsl-1208,riverside-30,rs-15,The Wind in the Willows,The Wind in the Willows,1,,0.92
+lsl-1209,riverside-30,rs-15,Emma,Emma,1,,0.88
+lsl-1210,riverside-30,rs-15,Little Women,Little Wornen,0,thin,0.73
+lsl-1211,riverside-30,rs-15,Middlemarch,Middlemarch,1,,0.87
+lsl-1212,riverside-30,rs-15,Middlemarch,Midd1emarch,0,stacked,0.86
+lsl-1213,riverside-30,rs-15,Great Expectations,Great Expectations,1,,0.95
+lsl-1214,riverside-30,rs-15,The Quiet Orchard,The Quiet Orchard,1,,0.84
+lsl-1215,riverside-30,rs-15,Emma,Emma,1,,0.87
+lsl-1216,riverside-30,rs-15,Ninety Bridges,Ninety Bridges,1,,0.97
+lsl-1217,riverside-31,rs-16,Moby-Dick,Mohy-Dick,0,other,0.71
+lsl-1218,riverside-31,rs-16,Treasure Island,Treasure Island,1,,0.97
+lsl-1219,riverside-31,rs-16,Little Women,Little Women,1,,0.96
+lsl-1220,riverside-31,rs-16,Moby-Dick,Mohy-Dick,0,stacked,0.52
+lsl-1221,riverside-31,rs-16,Salt Roads,Salt Roads,1,,0.97
+lsl-1222,riverside-31,rs-16,The Quiet Orchard,The Qulet Orchard,0,thin,0.39
+lsl-1223,riverside-31,rs-16,Winter at Halloway,Winter at Halloway,1,,0.86
+lsl-1224,riverside-31,rs-16,Persuasion,Persuasion,1,,0.86
+lsl-1225,riverside-31,rs-16,The Secret Garden,The Secret Gardon,0,stacked,0.38
+lsl-1226,riverside-31,rs-16,Moby-Dick,Moby-Dick,1,,0.89
+lsl-1227,riverside-31,rs-16,Persuasion,Persuasion,1,,0.94
+lsl-1228,riverside-31,rs-16,Middlemarch,Mlddlemarch,0,tilted,0.43
+lsl-1229,riverside-32,rs-16,Middlemarch,Middlemarch,1,,0.81
+lsl-1230,riverside-32,rs-16,Treasure Island,Treasure Istand,0,stacked,0.49
+lsl-1231,riverside-32,rs-16,Treasure Island,Treasure Island,1,,0.95
+lsl-1232,riverside-32,rs-16,Winter at Halloway,Winter at Halloway,1,,0.86
+lsl-1233,riverside-32,rs-16,The Wind in the Willows,The Wind in the Willows,1,,0.93
+lsl-1234,riverside-32,rs-16,Middlemarch,Middlemarch,1,,0.94
+lsl-1235,riverside-32,rs-16,Bleak House,Bleah House,0,tilted,0.36
+lsl-1236,riverside-32,rs-16,Emma,Emma,1,,0.90
+lsl-1237,riverside-32,rs-16,Ninety Bridges,Ninety Bridges,1,,0.91
+lsl-1238,riverside-32,rs-16,Middlemarch,Middlemarch,1,,0.94
+lsl-1239,riverside-32,rs-16,Persuasion,Persuasion,1,,0.90
+lsl-1240,riverside-32,rs-16,The Quiet Orchard,The Quiet Orchard,1,,0.94

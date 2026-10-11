@@ -28,6 +28,9 @@ struct ChatComposerArea: View {
                     }
                     ChatComposerField(chat: chat)
                 }
+                    .overlay {   // anchors: the video camera's target, a sibling of the pictures and the paste block so they keep their own
+                        Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Composer").accessibilityIdentifier("video.composer")
+                    }
                     .background(RoundedRectangle(cornerRadius: DuoMetric.radiusComposer).fill(DuoColor.pane))
                     .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusComposer)
                         .strokeBorder(focused ? DuoColor.text : DuoColor.controlEdge, lineWidth: focused ? 1.5 : DuoMetric.borderHairline))

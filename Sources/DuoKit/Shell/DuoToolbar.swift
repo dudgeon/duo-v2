@@ -119,6 +119,7 @@ struct ProjectBreadcrumb: View {
                     .foregroundStyle(DuoColor.text2)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("video.crumb.all")   // anchors: the video cursor's target
             Image(systemName: "chevron.right")
                 .font(.system(size: 9, weight: .semibold))
                 .foregroundStyle(DuoColor.text2)

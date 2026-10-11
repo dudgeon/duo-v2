@@ -525,6 +525,15 @@ public enum FixtureHarness {
                 v.window?.makeFirstResponder(v)
                 v.insertText(parts[1], replacementRange: v.selectedRange())
             }
+        case "chat-select":   // chat-select:<substring> | chat-select:end: the composer's selection on that text, or the caret at its end
+            if parts.count > 1, let v = Self.composerView(for: model.visibleSessionId) {
+                let ns = v.string as NSString
+                if parts[1] == "end" { v.setSelectedRange(NSRange(location: ns.length, length: 0)) }
+                else {
+                    let r = ns.range(of: parts[1])
+                    if r.location != NSNotFound { v.setSelectedRange(r) } else { FileHandle.standardError.write(Data("chat-select: no '\(parts[1])' in the composer\n".utf8)) }
+                }
+            }
         case "chat-paste":   // chat-paste:text=<s>|lines=<n>|image|file=<path>: ⌘V in the composer through the menu, from a private pasteboard (never the user's)
             if parts.count > 1, let v = Self.composerView(for: model.visibleSessionId), let w = v.window {
                 let pb = HarnessPasteboard.take()
@@ -535,6 +544,7 @@ public enum FixtureHarness {
                 case "lines": pb.setString((1...(Int(kv.count > 1 ? kv[1] : "20") ?? 20)).map { "line \($0) of the pasted text" }.joined(separator: "\n"), forType: .string)
                 case "image": pb.setData(HarnessPasteboard.png, forType: .png)
                 case "file": pb.writeObjects([URL(fileURLWithPath: kv.count > 1 ? kv[1] : "/tmp/x.png") as NSURL])
+                case "textfile": pb.setString((try? String(contentsOfFile: kv.count > 1 ? kv[1] : "", encoding: .utf8)) ?? "", forType: .string)   // the file's text, as copied from an editor
                 default: break
                 }
                 w.makeFirstResponder(v)

@@ -117,6 +117,7 @@ struct ChatPictureRow: View {
                     }
                     .onActivate { if let i = chat.ui.images[token] { ChatQuickLook.shared.show(i, token: token) } }  // not an action: previews a picture in the composer
                     .accessibilityLabel("Picture \(token.filter(\.isNumber)): preview")
+                    .accessibilityIdentifier("video.composer.image")   // anchors: the video camera's target
             }
             if chat.ui.addingPicture {
                 Text("Adding…").duoText(.control).foregroundStyle(DuoColor.text2)

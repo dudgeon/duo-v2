@@ -32,6 +32,11 @@ public enum Anchors {
         var source = "accessibility"
         // From the frame view, so the toolbar (the titlebar's own views) is walked too.
         walkAX(content.superview ?? content, depth: 0, index: 0, path: "", inherited: "", into: &items, toWindow: toWindow, size: wf.size)
+        // Named AppKit views the tree doesn't expose (the composer's pasted-text block) join by identifier.
+        var viaViews: [Item] = []
+        walkViews(content, depth: 0, index: 0, path: "", into: &viaViews, window: window, toWindow: { _ in .zero })
+        let have = Set(items.map(\.identifier))
+        items += viaViews.filter { $0.identifier.hasPrefix("video.") && !have.contains($0.identifier) }
         // Fall back to views when the tree gave nothing usable.
         if items.isEmpty {
             source = "views"

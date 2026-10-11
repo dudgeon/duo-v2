@@ -106,6 +106,14 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var tabs: [String]
         /// What the Files block lists.
         public var files: [String]
+        /// The project the scene opens (default checkout-redesign, the first fixture's) and the chat's working
+        /// folder as Claude saw it. Set by the demo world (video/fixture/SCENARIO.md).
+        public var project: String? = nil
+        public var cwd: String? = nil
+        /// Scene 4's terminal screen for "Auto-add decision" (ANSI allowed), relative to the fixture; missing: an empty screen.
+        public var s4Terminal: String? = nil
+        /// Scene 5's chat recording folder for the same session, relative to the fixture.
+        public var s5Chat: String? = nil
     }
     public var videoS2: VideoS2? = nil
     /// The folder the fixture was loaded from (not part of the file).

@@ -230,6 +230,10 @@ struct SidebarLeafRow: View {
         .modifier(SessionOrganizeMenu(sessionKey: row.sessionKey))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(row.name), \(row.state.spokenName)\(row.wait.map { ", waiting \($0)" } ?? "")")
+        .accessibilityIdentifier("video.session.\(row.name)")   // anchors: the video cursor's target
+        .overlay {   // anchors: the row a context menu is open on
+            if model.contextMenuSession == row.sessionKey { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Context menu row").accessibilityIdentifier("video.menu.row") }
+        }
     }
 }
 
@@ -514,7 +518,7 @@ struct ConsolePane: View {
                 TerminalSlot(session: t)
             } else if let tab = model.consoleTab, let chat = model.fixtureChats[tab] {
                 // Fixture mode: a chat-mode target (ChatTargets), drawn from recorded hooks and screens.
-                ConsoleChatBody(chat: chat, terminal: nil)
+                ConsoleChatBody(chat: chat, terminal: model.fixtureTerminals[tab])   // the video demo: terminal mode shows the recorded screen
             } else if let project = model.currentProject, let tab = model.consoleTab, model.fixtureConsole == nil,
                let t = model.terminal(project: project.name, session: tab), !t.missingClaude {
                 if let chat = model.chats.existing(t.key) {

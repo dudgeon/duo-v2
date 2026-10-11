@@ -60,6 +60,7 @@ struct ChatToggle: View {
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(light ? DuoColor.controlEdge : DuoColor.tuiInputBorder, lineWidth: DuoMetric.borderHairline))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Show session as")
+        .accessibilityIdentifier("video.chat.toggle")   // anchors: the video cursor's target
     }
 
     func segment(_ mode: ChatViewMode, on: Bool, @ViewBuilder icon: () -> some View) -> some View {

@@ -2,9 +2,10 @@ import React from 'react';
 import {IFrame, staticFile} from 'remotion';
 import tokens from '../../style/tokens.json';
 import content from '../../fixture/docs/content.json';
+import {desk, files} from './deskContent';
 
 // The apps inside S1's windows (Terminal running Claude Code, Finder, a Markdown editor, a browser
-// showing the real checkout prototype, PowerPoint, Word). Sample data only: everything here comes from
+// showing the real prototype, PowerPoint, Word). Sample data only: everything here comes from
 // fixture/docs/content.json, which S2 also shows as real Duo tabs. Pure functions of `t`.
 
 const ui = tokens.font.ui, mono = tokens.font.mono;
@@ -62,52 +63,33 @@ export const ClaudeTerminal = ({lines, t, working, hint = true}: {lines: TLine[]
   </div>
 );
 
-export const TERM1: TLine[] = [
-  {k: 'box', cwd: content.terminals[0].cwd},
-  {k: 'user', text: 'tighten the goals in docs/prd-v2.md'},
-  {k: 'tool', name: 'Update', arg: 'docs/prd-v2.md'},
-  {k: 'out', text: 'Updated docs/prd-v2.md with 2 additions and 2 removals'},
-  {k: 'diff', n: 8, sign: ' ', text: '## Goals'},
-  {k: 'diff', n: 9, sign: ' ', text: 'Cut guest-checkout abandonment 15% by Q1.'},
-  {k: 'diff', n: 10, sign: '-', text: 'Let a guest finish checkout in one screen on mobile.'},
-  {k: 'diff', n: 10, sign: '+', text: 'Guest checkout fits one mobile screen.'},
-  {k: 'diff', n: 11, sign: '-', text: 'Take the plan to exec review on Oct 14.'},
-  {k: 'diff', n: 11, sign: '+', text: 'Present the plan at exec review, Oct 14.'},
-];
-export const TERM2: TLine[] = [
-  {k: 'user', text: 'add express pay above the email field in checkout.html'},
-  {k: 'tool', name: 'Read', arg: 'checkout.html'},
-  {k: 'out', text: 'Read 148 lines'},
-  {k: 'tool', name: 'Update', arg: 'checkout.html'},
-  {k: 'out', text: 'Updated checkout.html with 9 additions'},
-  {k: 'diff', n: 61, sign: '+', text: '<div class="express">'},
-  {k: 'diff', n: 62, sign: '+', text: '  <div class="btn-pay apple">Apple Pay</div>'},
-  {k: 'diff', n: 63, sign: '+', text: '  <div class="btn-pay google">Google Pay</div>'},
-  {k: 'diff', n: 64, sign: '+', text: '  <div class="btn-pay paypal">PayPal</div>'},
-  {k: 'say', text: 'Express pay now sits above the email field.'},
-];
+export const TERM1: TLine[] = desk.terms.term1;
+export const TERM2: TLine[] = desk.terms.term2;
 export const TERM3_LINES: TLine[] = [];
 
 /** A plain zsh Terminal: `ev.path` starts the wrong-then-right cd. `u` is seconds since it began (undefined: finished). */
 export const ZshTerminal = ({t, u}: {t: number; u: number | undefined}) => {
-  const P = 'geoff@macbook ~ % ';
-  const WRONG = 'cd ~/work/paymnts/chekout', RIGHT = 'cd ~/work/payments/checkout-redesign';
+  const {user, host, wrongCd: WRONG, rightCd: RIGHT, lastLogin} = desk.zsh;
+  const P = `${user}@${host} ~ % `;
+  const badPath = WRONG.replace(/^cd\s+~/, `/Users/${user}`);
+  const here = RIGHT.split('/').pop();
   const cps = 34;
   const done = u === undefined || u >= 2.25;
   let body: React.ReactNode;
   if (u !== undefined && u < 0) body = <div>{P}{caret(t)}</div>;
-  else if (done) body = <><div>{P}{WRONG}</div><div>cd: no such file or directory: /Users/geoff/work/paymnts/chekout</div><div>{P}{RIGHT}</div><div>geoff@macbook <b>checkout-redesign</b> % {caret(t)}</div></>;
+  else if (done) body = <><div>{P}{WRONG}</div><div>cd: no such file or directory: {badPath}</div><div>{P}{RIGHT}</div><div>{user}@{host} <b>{here}</b> % {caret(t)}</div></>;
   else if (u! < 0.95) body = <div>{P}{typed(WRONG, u!, 0, cps)}{caret(t)}</div>;
-  else if (u! < 1.1) body = <><div>{P}{WRONG}</div><div>cd: no such file or directory: /Users/geoff/work/paymnts/chekout</div><div>{P}{caret(t)}</div></>;
-  else body = <><div>{P}{WRONG}</div><div>cd: no such file or directory: /Users/geoff/work/paymnts/chekout</div><div>{P}{typed(RIGHT, u!, 1.1, cps)}{caret(t)}</div></>;
+  else if (u! < 1.1) body = <><div>{P}{WRONG}</div><div>cd: no such file or directory: {badPath}</div><div>{P}{caret(t)}</div></>;
+  else body = <><div>{P}{WRONG}</div><div>cd: no such file or directory: {badPath}</div><div>{P}{typed(RIGHT, u!, 1.1, cps)}{caret(t)}</div></>;
   return (
     <div style={{position: 'absolute', inset: 0, background: T.bg, padding: '10px 16px', fontFamily: mono, fontSize: 13.5, lineHeight: '20px', color: T.fg, overflow: 'hidden'}}>
-      <div style={{color: T.dim}}>Last login: Tue Oct 14 09:38:12 on ttys004</div>
+      <div style={{color: T.dim}}>Last login: {lastLogin}</div>
       {body}
     </div>
   );
 };
 
+// The zsh window is 690 px: 80 columns of 13.5 px mono (8.1 px each) plus its padding, so its title's 80×20 is true.
 // ---- Finder ----------------------------------------------------------------------------------
 
 const Folder = ({s = 15}: {s?: number}) => (
@@ -116,12 +98,13 @@ const Folder = ({s = 15}: {s?: number}) => (
     <path d="M1 6h18v7a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2z" fill="#7CC6FA" />
   </svg>
 );
-const FOLDERS = [['api-deprecations', 'Sep 29'], ['checkout-redesign', 'Today'], ['fraud-rules-review', 'Sep 22'], ['onboarding-v3', 'Oct 6'], ['pricing-experiment-q4', 'Oct 2'], ['refunds-api-spec', 'Yesterday'], ['vendor-review', 'Aug 30']];
+const FOLDERS = desk.finder.folders;
 export const Finder = ({t, huntAt}: {t: number; huntAt?: number}) => {
-  // The selection walks down the list, overshoots and comes back: a hunt, landing on checkout-redesign.
-  const path = [0, 2, 4, 3, 1];
+  // The selection walks down the list, overshoots and comes back: a hunt, landing on the hero project (desk.finder.hero).
+  const heroIdx = Math.max(0, FOLDERS.findIndex(([f]) => f === desk.finder.hero));
+  const path = [0, 2, 4, 3, heroIdx].map((i) => Math.min(i, FOLDERS.length - 1));
   const step = huntAt === undefined || t < huntAt ? -1 : Math.min(path.length - 1, Math.floor((t - huntAt) / 0.32));
-  const sel = huntAt === undefined ? 1 : step < 0 ? -1 : path[step];
+  const sel = huntAt === undefined ? heroIdx : step < 0 ? -1 : path[step];
   const side = (h: string, items: string[], on?: string) => (
     <div style={{marginBottom: 12}}>
       <div style={{fontSize: 10.5, fontWeight: 600, color: '#8A8B90', margin: '0 6px 3px'}}>{h}</div>
@@ -140,7 +123,7 @@ export const Finder = ({t, huntAt}: {t: number; huntAt?: number}) => {
             <Folder /><span style={{flex: 1}}>{f}</span><span style={{width: 90, fontSize: 12, opacity: 0.7}}>{d}</span>
           </div>
         ))}
-        <div style={{position: 'absolute', bottom: 0, left: 160, right: 0, padding: '5px 14px', fontSize: 11, color: '#8A8B90', borderTop: '1px solid #ECECEE', background: '#F7F7F9'}}>7 items · work › payments</div>
+        <div style={{position: 'absolute', bottom: 0, left: 160, right: 0, padding: '5px 14px', fontSize: 11, color: '#8A8B90', borderTop: '1px solid #ECECEE', background: '#F7F7F9'}}>{FOLDERS.length} items · work › {desk.finder.parent}</div>
       </div>
     </div>
   );
@@ -148,20 +131,7 @@ export const Finder = ({t, huntAt}: {t: number; huntAt?: number}) => {
 
 // ---- Markdown editor (the real PRD) ----------------------------------------------------------
 
-const PRD = `# Checkout redesign: PRD v2
-
-## Problem
-Guests abandon checkout at the payment step far more often than signed-in customers. Interviews and funnel data point to too many fields and no way to reuse a card.
-
-## Goals
-Cut guest-checkout abandonment 15% by Q1.
-Let a guest finish checkout in one screen on mobile.
-Take the plan to exec review on Oct 14.
-
-## What we heard
-Two of six interviewees named saved cards as the reason they abandon guest checkout.
-Four of six wanted to skip the shipping form when an address autofills.
-Nobody asked for more payment methods.`;
+const PRD = desk.prd;
 export const MarkdownEditor = () => {
   // Hard-wrap the long paragraph the way an editor with soft wrap shows it.
   const rows: {n: number; text: string; cont: boolean}[] = [];
@@ -191,7 +161,7 @@ export const MarkdownEditor = () => {
   );
 };
 
-// ---- Browser (Safari-like) showing the real checkout.html -----------------------------------
+// ---- Browser (Safari-like) showing the real prototype --------------------------------------
 
 export const BROWSER_BAR_H = 54;
 const Chev = ({d}: {d: 'l' | 'r'}) => <div style={{width: 8, height: 8, borderLeft: '2px solid #85868B', borderBottom: '2px solid #85868B', transform: `rotate(${d === 'l' ? 45 : -135}deg)`}} />;
@@ -199,7 +169,7 @@ export const BrowserBar = () => (
   <>
     <div style={{position: 'absolute', left: 84, top: 18, display: 'flex', gap: 18}}><Chev d="l" /><Chev d="r" /></div>
     <div style={{position: 'absolute', left: 150, right: 90, top: 12, height: 28, borderRadius: 7, background: '#E4E4E8', fontSize: 13, color: '#3A3B40', textAlign: 'center', lineHeight: '28px', fontFamily: ui}}>
-      <span style={{display: 'inline-block', width: 8, height: 7, background: '#8A8B90', borderRadius: 1.5, marginRight: 7}} />localhost:3000/checkout
+      <span style={{display: 'inline-block', width: 8, height: 7, background: '#8A8B90', borderRadius: 1.5, marginRight: 7}} />{desk.url}
     </div>
   </>
 );
@@ -207,7 +177,7 @@ export const BrowserPage = ({w, h}: {w: number; h: number}) => {
   const vw = 960, s = w / vw;
   return (
     <div style={{position: 'absolute', inset: 0, overflow: 'hidden', background: '#F7F6F3'}}>
-      <IFrame src={staticFile('prototype/checkout.html')} style={{width: vw, height: h / s, border: 0, transform: `scale(${s})`, transformOrigin: '0 0', display: 'block'}} />
+      <IFrame src={staticFile(files.prototype)} style={{width: vw, height: h / s, border: 0, transform: `scale(${s})`, transformOrigin: '0 0', display: 'block'}} />
     </div>
   );
 };
@@ -215,7 +185,8 @@ export const BrowserPage = ({w, h}: {w: number; h: number}) => {
 // ---- Slides (PowerPoint) -----------------------------------------------------------------------
 
 const SL = {ink: '#1B2A3A', grey: '#9AA7B5', mid: '#5B6B7C', accent: '#C43E1C'};
-type SlideData = (typeof content.deck.slides)[number];
+type SlideData = {kind: string; title: string; subtitle?: string; bullets?: string[]; note?: string;
+  chart?: {label: string; bars: [string, number][]}; quotes?: string[]; stat?: string; statNote?: string; head?: string[]; rows?: string[][]};
 /** One slide drawn at 960x540; callers scale it. */
 export const Slide = ({s, index}: {s: SlideData; index: number}) => {
   const base: React.CSSProperties = {width: 960, height: 540, background: '#fff', position: 'relative', fontFamily: ui, color: SL.ink, overflow: 'hidden'};
@@ -225,31 +196,58 @@ export const Slide = ({s, index}: {s: SlideData; index: number}) => {
       <div style={{position: 'absolute', left: 90, top: 190, width: 700, fontSize: 64, fontWeight: 700, lineHeight: 1.08, letterSpacing: -1.5}}>{s.title}</div>
       <div style={{position: 'absolute', left: 92, top: 380, fontSize: 26, color: SL.mid}}>{s.subtitle}</div>
     </div>);
+  const Title = () => <div style={{position: 'absolute', left: 60, top: 46, width: 840, fontSize: 40, fontWeight: 700, lineHeight: 1.12, letterSpacing: -0.8}}>{s.title}</div>;
+  const Num = () => <div style={{position: 'absolute', right: 40, bottom: 22, fontSize: 14, color: SL.grey}}>{index + 1}</div>;
   if (s.kind === 'chart' && s.chart) {
-    const bars = s.chart.bars as [string, number][], max = 40, ch = 290, cw = 560;
+    // The tallest bar is the story; the note's leading figure becomes the big number beside the chart.
+    const bars = s.chart.bars, top = Math.max(...bars.map(([, v]) => v)), max = Math.ceil(top / 10) * 10, ch = 290, cw = 560;
+    const m = (s.note ?? '').match(/^(\S+%)\s*(?:of\s+)?(.*)$/);
     return (
       <div style={base}>
-        <div style={{position: 'absolute', left: 60, top: 46, width: 840, fontSize: 40, fontWeight: 700, lineHeight: 1.12, letterSpacing: -0.8}}>{s.title}</div>
+        <Title />
         <div style={{position: 'absolute', left: 60, top: 168, fontSize: 18, color: SL.mid}}>{s.chart.label}</div>
         <div style={{position: 'absolute', left: 60, top: 200, width: cw, height: ch + 40}}>
-          {[0, 10, 20, 30, 40].map((g) => <div key={g} style={{position: 'absolute', left: 36, right: 0, top: ch - (g / max) * ch, borderTop: '1px solid #E4E8EC'}}><span style={{position: 'absolute', left: -36, top: -10, fontSize: 14, color: SL.grey}}>{g}</span></div>)}
+          {Array.from({length: max / 10 + 1}, (_, k) => k * 10).map((g) => <div key={g} style={{position: 'absolute', left: 36, right: 0, top: ch - (g / max) * ch, borderTop: '1px solid #E4E8EC'}}><span style={{position: 'absolute', left: -36, top: -10, fontSize: 14, color: SL.grey}}>{g}</span></div>)}
           {bars.map(([n, v], i) => {
-            const bw = 78, gap = (cw - 36 - bars.length * bw) / bars.length, x = 36 + gap / 2 + i * (bw + gap), hot = v === 38;
+            const bw = Math.min(78, (cw - 36) / bars.length - 18), gap = (cw - 36 - bars.length * bw) / bars.length, x = 36 + gap / 2 + i * (bw + gap), hot = v === top;
             return (
               <React.Fragment key={n}>
                 <div style={{position: 'absolute', left: x, width: bw, bottom: 40, height: (v / max) * ch, background: hot ? SL.accent : '#B7C2CE', borderRadius: '4px 4px 0 0'}} />
                 <div style={{position: 'absolute', left: x, width: bw, bottom: 40 + (v / max) * ch + 6, textAlign: 'center', fontSize: 20, fontWeight: 700, color: hot ? SL.accent : SL.mid}}>{v}</div>
-                <div style={{position: 'absolute', left: x - 12, width: bw + 24, bottom: 8, textAlign: 'center', fontSize: 17, color: SL.mid}}>{n}</div>
+                <div style={{position: 'absolute', left: x - 12, width: bw + 24, bottom: 8, textAlign: 'center', fontSize: 15, color: SL.mid}}>{n}</div>
               </React.Fragment>);
           })}
         </div>
-        <div style={{position: 'absolute', left: 680, top: 230, width: 220}}>
-          <div style={{fontSize: 96, fontWeight: 800, color: SL.accent, letterSpacing: -3, lineHeight: 1}}>38%</div>
-          <div style={{fontSize: 22, color: SL.ink, marginTop: 14, lineHeight: 1.3}}>{(s as {note?: string}).note?.replace('38% of ', 'of ')}</div>
-        </div>
-        <div style={{position: 'absolute', right: 40, bottom: 22, fontSize: 14, color: SL.grey}}>{index + 1}</div>
+        {m && <div style={{position: 'absolute', left: 680, top: 230, width: 230}}>
+          <div style={{fontSize: 96, fontWeight: 800, color: SL.accent, letterSpacing: -3, lineHeight: 1}}>{m[1]}</div>
+          <div style={{fontSize: 21, color: SL.ink, marginTop: 14, lineHeight: 1.3}}>{m[2]}</div>
+        </div>}
+        <Num />
       </div>);
   }
+  if (s.kind === 'quotes') return (
+    <div style={base}>
+      <Title />
+      <div style={{position: 'absolute', left: 64, top: 180, width: 540}}>
+        {(s.quotes ?? []).map((q) => <div key={q} style={{fontSize: 27, lineHeight: 1.3, margin: '0 0 30px', paddingLeft: 22, borderLeft: `5px solid ${SL.accent}`, fontStyle: 'italic'}}>{q}</div>)}
+      </div>
+      {s.stat && <div style={{position: 'absolute', left: 660, top: 200, width: 250}}>
+        <div style={{fontSize: 76, fontWeight: 800, color: SL.accent, letterSpacing: -2, lineHeight: 1}}>{s.stat}</div>
+        <div style={{fontSize: 21, marginTop: 14, lineHeight: 1.3}}>{s.statNote}</div>
+      </div>}
+      <Num />
+    </div>);
+  if (s.kind === 'table') return (
+    <div style={base}>
+      <Title />
+      <div style={{position: 'absolute', left: 60, top: 180, width: 840, fontSize: 24}}>
+        {[s.head ?? [], ...(s.rows ?? [])].map((r, i) => (
+          <div key={i} style={{display: 'flex', padding: '14px 0', borderBottom: i === 0 ? `2px solid ${SL.ink}` : '1px solid #E4E8EC', fontWeight: i === 0 ? 700 : 400, color: i === 0 ? SL.mid : SL.ink}}>
+            {r.map((c, j) => <div key={j} style={{flex: j === 0 ? 2.2 : 1, textAlign: j === 0 ? 'left' : 'right', color: j === r.length - 1 && i > 0 ? SL.accent : undefined, fontWeight: j === r.length - 1 && i > 0 ? 700 : undefined}}>{c}</div>)}
+          </div>))}
+      </div>
+      <Num />
+    </div>);
   return (
     <div style={base}>
       <div style={{position: 'absolute', left: 60, top: 46, width: 840, fontSize: 40, fontWeight: 700, lineHeight: 1.12, letterSpacing: -0.8}}>{s.title}</div>
@@ -284,11 +282,11 @@ const OfficeTitle = ({file, accent, glyph, auto = true}: {file: string; accent: 
 );
 
 export const DeckApp = () => {
-  const slides = content.deck.slides, cur = 1;
+  const slides = content.deck.slides as SlideData[], cur = 1;
   const mainW = 500, ms = mainW / 960;
   return (
     <div style={{position: 'absolute', inset: 0, background: '#fff', fontFamily: ui, display: 'flex', flexDirection: 'column'}}>
-      <OfficeTitle file="exec-review-oct14.pptx" accent="#C43E1C" glyph="P" />
+      <OfficeTitle file={files.deck} accent="#C43E1C" glyph="P" />
       <Tabs tabs={['Home', 'Insert', 'Draw', 'Design', 'Transitions', 'Animations', 'Slide Show', 'Review', 'View']} on="Home" accent="#C43E1C" />
       <div style={{height: 62, background: '#F8F8FA', borderBottom: '1px solid #D6D6DA', display: 'flex', alignItems: 'center', padding: '4px 6px'}}>
         <RibbonGroup label="Paste" icons={[30, 18]} /><RibbonGroup label="Slides" icons={[30, 22]} /><RibbonGroup label="Font" icons={[60, 22, 22]} /><RibbonGroup label="Paragraph" icons={[22, 22, 22, 22]} />
@@ -310,7 +308,7 @@ export const DeckApp = () => {
           </div>
         </div>
       </div>
-      <div style={{height: 22, background: '#F3F3F5', borderTop: '1px solid #D6D6DA', fontSize: 10.5, color: '#6A6B70', display: 'flex', alignItems: 'center', padding: '0 12px', justifyContent: 'space-between'}}><span>Slide 2 of 4</span><span>Notes  ·  Comments  ·  Fit 100%</span></div>
+      <div style={{height: 22, background: '#F3F3F5', borderTop: '1px solid #D6D6DA', fontSize: 10.5, color: '#6A6B70', display: 'flex', alignItems: 'center', padding: '0 12px', justifyContent: 'space-between'}}><span>Slide {cur + 1} of {slides.length}</span><span>Notes  ·  Comments  ·  Fit 100%</span></div>
     </div>
   );
 };
@@ -319,9 +317,10 @@ export const DeckApp = () => {
 
 export const DocApp = () => {
   const d = content.doc, blue = '#185ABD';
+  const pull = (d as {pull?: {quote: string; who?: string; by?: string}}).pull;
   return (
     <div style={{position: 'absolute', inset: 0, background: '#fff', fontFamily: ui, display: 'flex', flexDirection: 'column'}}>
-      <OfficeTitle file="interview-synthesis.docx" accent={blue} glyph="W" auto={false} />
+      <OfficeTitle file={files.doc} accent={blue} glyph="W" auto={false} />
       <Tabs tabs={['Home', 'Insert', 'Draw', 'Design', 'Layout', 'References', 'Review', 'View']} on="Home" accent={blue} />
       <div style={{height: 62, background: '#F8F8FA', borderBottom: '1px solid #D6D6DA', display: 'flex', alignItems: 'center', padding: '4px 6px'}}>
         <RibbonGroup label="Paste" icons={[30, 18]} /><RibbonGroup label="Font" icons={[70, 22, 22]} /><RibbonGroup label="Paragraph" icons={[22, 22, 22]} /><RibbonGroup label="Styles" icons={[40, 40]} last />
@@ -333,6 +332,10 @@ export const DocApp = () => {
         <div style={{position: 'absolute', left: 36, right: 36, top: 30, bottom: -40, background: '#fff', boxShadow: '0 1px 8px rgba(0,0,0,0.25)', padding: '34px 42px', color: '#222'}}>
           <div style={{fontFamily: 'Georgia, "Times New Roman", serif', fontSize: 25, fontWeight: 700, lineHeight: 1.18, color: '#1F2A44'}}>{d.title}</div>
           <div style={{fontSize: 11.5, color: '#7A7C82', margin: '6px 0 14px', paddingBottom: 10, borderBottom: '1px solid #E1E2E6'}}>{d.byline}</div>
+          {pull && <div style={{margin: '0 0 14px', padding: '2px 0 2px 14px', borderLeft: `4px solid ${blue}`}}>
+            <div style={{fontFamily: 'Georgia, "Times New Roman", serif', fontSize: 15.5, fontStyle: 'italic', lineHeight: 1.4, color: '#1F2A44'}}>{pull.quote}</div>
+            <div style={{fontSize: 11, color: '#7A7C82', marginTop: 4}}>{pull.who ?? pull.by}</div>
+          </div>}
           {d.sections.map((sec) => (
             <div key={sec.heading} style={{marginBottom: 10}}>
               <div style={{fontSize: 14.5, fontWeight: 700, color: blue, marginBottom: 3}}>{sec.heading}</div>

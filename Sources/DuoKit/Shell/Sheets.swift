@@ -21,7 +21,7 @@ struct SheetOverlay: View {
                     else if let n = model.newProjectForm { NewProjectSheet(form: n) }
                     else if let p = model.pushForm { PushSheet(form: p) }
                     else if let g = model.gitHubProjectForm { GitHubProjectSheet(form: g) }
-                    else if let q = SheetCenter.shared.current { QuestionSheet(q: q).id(q.id).transition(.opacity) }
+                    else if let q = SheetCenter.shared.current { QuestionSheet(q: q).id(q.id).transition(.opacity).accessibilityIdentifier("video.sheet") }
                 }
                 .duoAnimation(.sheetSwap, value: SheetCenter.shared.current?.id)
                 // The targets hang the sheet 38 from the window's top, over the toolbar's hairline.

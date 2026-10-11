@@ -229,6 +229,8 @@ public final class ChatSession {
     @ObservationIgnored var feed: ChatFeed?
     /// Fixture mode: the screen the stand-in terminal shows.
     public var fixtureScreenText: String?
+    /// A video state set this chat up (VideoTargets): its tool rows carry `video.chat.tool.<n>` anchors.
+    public var videoAnchors = false
     @ObservationIgnored private var unknownSince: Date?
     @ObservationIgnored private var unknownTimer: Timer?
     @ObservationIgnored private var readPending = false

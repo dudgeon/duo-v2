@@ -53,12 +53,12 @@ export const LogoScene = ({t, ev}: {t: number; ev: LogoEvents}) => {
       {bars > 0 && <Dock duo={landed ? 'tile' : 'slot'} y={(1 - bars) * 120} />}
       {!landed && <div style={{position: 'absolute', left: ix, top: iy}}><DuoIcon t={t} size={iconSize} /></div>}
       {landed && pop > 0 && <div style={{position: 'absolute', left: tx1 - tileSize * pop / 2, top: ty1 - tileSize * pop, transformOrigin: '0 0'}}><DuoIcon t={99} size={tileSize * (1 + pop)} /></div>}
-      <div style={{position: 'absolute', left: tx, top: H / 2 - 150, fontFamily: tokens.font.ui, color: '#fff', filter: 'drop-shadow(0 2px 14px rgba(0,0,0,0.28))'}}>
+      <div style={{position: 'absolute', left: tx, top: H / 2 - 172, fontFamily: tokens.font.ui, color: '#fff', filter: 'drop-shadow(0 2px 14px rgba(0,0,0,0.28))'}}>
         <div style={{fontSize: 200, fontWeight: 650, letterSpacing: -6, lineHeight: 1, clipPath: `inset(0 ${100 - 100 * title * (1 - wipeTitle)}% 0 0)`,
           transform: `translateX(${(1 - title) * -24}px)`}}>Duo</div>
-        <div style={{fontSize: 54, fontWeight: 550, letterSpacing: -1, marginTop: 22, opacity: sub > 0 ? 1 : 0, clipPath: `inset(0 ${100 * wipeSub}% 0 0)`,
+        <div style={{fontSize: 50, fontWeight: 550, letterSpacing: -0.8, lineHeight: 1.22, marginTop: 24, opacity: sub > 0 ? 1 : 0, clipPath: `inset(0 ${100 * wipeSub}% 0 0)`,
           transform: `translateY(${(1 - sub) * 14}px)`, color: `rgba(255,255,255,${0.5 + 0.45 * inked})`, }}>
-          A desktop client for Claude Code
+          A complete workspace for your Claude Code<br />sessions, projects, and files.
         </div>
       </div>
     </AbsoluteFill>

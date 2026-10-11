@@ -15,14 +15,14 @@
         "word": "desktop"
       }
     },
-    "shotSha": "b049d7599ff1",
+    "shotSha": "be581e246071",
     "requires": [
       {
         "what": "The Duo logo (app icon 2A', drawn from docs/design/icon-handoff geometry) builds itself in motion graphics",
         "built": true
       },
       {
-        "what": "The logo settles beside the title \"Duo\" and the line \"A desktop client for Claude Code\", framed as one composition",
+        "what": "The logo settles beside the title \"Duo\" and the line \"A complete workspace for your Claude Code sessions, projects, and files.\" (two lines), framed as one composition",
         "built": true
       },
       {
@@ -78,7 +78,7 @@
       "doc": {
         "line": 2,
         "word": "I",
-        "offset": 0.0
+        "offset": 0
       }
     },
     "shotSha": "b19e03148cb5",
@@ -176,7 +176,7 @@
         "line": 1,
         "word": "working",
         "nth": 2,
-        "offset": 0.0
+        "offset": 0
       },
       "right4": {
         "line": 1,
@@ -228,5 +228,359 @@
       }
     ],
     "transitionIn": "dock-launch"
+  },
+  "S3": {
+    "kind": "drawn",
+    "scene": "app",
+    "transitionIn": "click-through",
+    "leadIn": 2.4,
+    "entry": {
+      "base": "video-s2-right-4",
+      "panes": {
+        "middle": "video-s2-chat"
+      },
+      "click": "video.crumb.all"
+    },
+    "states": [
+      "video-s3-list"
+    ],
+    "beats": [
+      {
+        "at": {
+          "line": 1,
+          "word": "previous"
+        },
+        "cam": {
+          "on": "video.s3.list",
+          "y0": 0.0,
+          "y1": 0.45
+        },
+        "dur": 1.0
+      },
+      {
+        "at": {
+          "line": 1,
+          "word": "resume"
+        },
+        "cam": {
+          "on": "video.s3.list",
+          "y0": 0.4,
+          "y1": 0.85
+        },
+        "dur": 2.0
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "waiting"
+        },
+        "cam": {
+          "on": "video.s3.needs",
+          "y0": 0,
+          "y1": 1.05,
+          "x0": -0.15,
+          "x1": 1.05
+        },
+        "dur": 0.9,
+        "mark": "video.s3.needs.2",
+        "quote": "waiting for your input",
+        "hold": 2.2
+      }
+    ],
+    "shotSha": "c0d63e840d0c",
+    "requires": [
+      {
+        "what": "All projects in List view on sample data: every previous session in one list, with project, title and last run",
+        "built": true
+      },
+      {
+        "what": "Line 1: the camera runs down the list; nothing is clicked",
+        "built": true
+      },
+      {
+        "what": "Line 2: the camera moves right to the Needs you column (question and permission waits)",
+        "built": true
+      },
+      {
+        "what": "Way in from S2 by app navigation: the cursor clicks All projects",
+        "built": true
+      }
+    ]
+  },
+  "S4": {
+    "kind": "drawn",
+    "scene": "app",
+    "transitionIn": "click-through",
+    "leadIn": 2.4,
+    "entry": {
+      "click": "video.s3.needs.3"
+    },
+    "states": [
+      "video-s4-resumed"
+    ],
+    "beats": [
+      {
+        "at": {
+          "line": 1,
+          "word": "resumes"
+        },
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0.38,
+          "y1": 0.98
+        },
+        "dur": 1
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "close"
+        },
+        "cam": {
+          "on": "video.pane.left",
+          "y0": 0.0,
+          "y1": 0.6,
+          "x1": 1.4
+        },
+        "dur": 0.8
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "archive",
+          "offset": -0.95
+        },
+        "menu": {
+          "on": "video.session.quick q: TestFlight build size",
+          "items": [
+            "Send to Claude",
+            "Send To ▸",
+            "Find Similar",
+            "Copy Link",
+            "-",
+            "Make a Task",
+            "-",
+            "Move to Project ▸",
+            "-",
+            "Archive Session",
+            "Delete Session…"
+          ],
+          "pick": "Archive Session",
+          "pickAfter": 0.85,
+          "hold": 0.95
+        },
+        "fx": 0.4
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "archive"
+        },
+        "state": "video-s4-archived",
+        "stateAfter": 0
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "delete"
+        },
+        "menu": {
+          "on": "video.session.Old v1 notes cleanup",
+          "items": [
+            "Send to Claude",
+            "Send To ▸",
+            "Find Similar",
+            "Copy Link",
+            "-",
+            "Make a Task",
+            "-",
+            "Move to Project ▸",
+            "-",
+            "Archive Session",
+            "Delete Session…"
+          ],
+          "pick": "Delete Session…",
+          "pickAfter": 0.5,
+          "hold": 0.6
+        },
+        "fx": 0.4,
+        "in": "video-s4-archived"
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "delete",
+          "offset": 0.65
+        },
+        "state": "video-s4-delete-ask",
+        "cam": {
+          "x": 0,
+          "y": 30,
+          "w": 1150,
+          "h": 560
+        },
+        "dur": 0.5
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "clutter"
+        },
+        "click": "Move to Trash",
+        "in": "video-s4-delete-ask",
+        "state": "video-s4-deleted",
+        "hold": 1.2
+      },
+      {
+        "at": {
+          "after": 0.8
+        },
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0.0,
+          "y1": 0.55
+        },
+        "dur": 0.9
+      }
+    ],
+    "shotSha": "935baddb316d",
+    "requires": [
+      {
+        "what": "Way in from S3 by app navigation: the cursor clicks the Needs you session",
+        "built": true
+      },
+      {
+        "what": "The camera pushes into its project as the terminal resumes with its history",
+        "built": true
+      },
+      {
+        "what": "The right-click menu on a session row, with its real items including Archive Session and Delete Session…",
+        "built": true,
+        "note": "drawn over the capture: macOS menus are separate windows, and fixture sessions carry no menu"
+      },
+      {
+        "what": "One session folds into Archived",
+        "built": true
+      },
+      {
+        "what": "Another is deleted through Duo's confirmation sheet",
+        "built": true
+      }
+    ],
+    "$menu": "macOS draws context menus in their own window, which --capture-window can't include, and fixture sessions have no menu (no sessionId), so the menu is drawn with the real items of SessionOrganizeMenu (AllProjectsPanes.swift)."
+  },
+  "S5": {
+    "kind": "drawn",
+    "scene": "app",
+    "transitionIn": "carry-on",
+    "leadIn": 1.2,
+    "states": [
+      "video-s5-chat"
+    ],
+    "beats": [
+      {
+        "at": {
+          "line": 1,
+          "word": "chat"
+        },
+        "click": "video.chat.toggle",
+        "in": "video-s4-deleted",
+        "state": "video-s5-chat",
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0.42,
+          "y1": 1.0
+        },
+        "dur": 0.8
+      },
+      {
+        "at": {
+          "line": 1,
+          "word": "rows"
+        },
+        "click": "video.chat.tool.2",
+        "state": "video-s5-chat-open",
+        "mark": "video.chat.tool.2",
+        "quote": "rows you can open",
+        "hold": 2
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "writing"
+        },
+        "cam": "video.composer",
+        "dur": 0.9,
+        "in": "video-s5-chat-open"
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "click"
+        },
+        "state": "video-s5-draft",
+        "stateAfter": 0,
+        "drag": {
+          "from": "video.composer",
+          "fx0": 0.369,
+          "fx1": 0.504,
+          "dur": 0.8
+        },
+        "in": "video-s5-chat-open"
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "preview"
+        },
+        "state": "video-s5-paste-text",
+        "in": "video-s5-draft"
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "image"
+        },
+        "state": "video-s5-paste-image",
+        "in": "video-s5-paste-text"
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "paste"
+        },
+        "mark": "video.composer",
+        "in": "video-s5-paste-image",
+        "quote": "a preview of any image or text you paste",
+        "hold": 2.4
+      }
+    ],
+    "shotSha": "ab61b8d7b84b",
+    "requires": [
+      {
+        "what": "Way in from S4 without a cut: the picture carries on, and the cursor clicks the chat toggle on the word \"chat\"",
+        "built": true
+      },
+      {
+        "what": "Line 1: the middle pane flips to chat mode; the cursor opens one folded tool row",
+        "built": true
+      },
+      {
+        "what": "Line 2: the cursor drag-selects a sentence in the composer",
+        "built": true
+      },
+      {
+        "what": "A pasted block of user feedback folds into Pasted text · n lines",
+        "built": true
+      },
+      {
+        "what": "A pasted screenshot from that user shows as a preview in the composer",
+        "built": true
+      },
+      {
+        "what": "The camera stays on the middle pane; nothing opens in the editor",
+        "built": true
+      }
+    ]
   }
 }

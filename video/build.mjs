@@ -56,7 +56,10 @@ try {
   const voiced = voiceLines(lines, {here, cache, pub, style, force: args.has('--force-voice'), log});
 
   // 3. Captures
-  const states = [...new Set(Object.values(shots).flatMap((s) => (s.kind === 'desk' ? [s.state] : s.states ?? [])))];
+  // Every state a shot shows: its list, plus (app scenes) the states its beats switch to or read anchors from, and its entry's.
+  const shotStates = (s) => (s.kind === 'desk' ? [s.state] : [...(s.states ?? []), ...(s.beats ?? []).flatMap((b) => [b.state, b.in]),
+    s.entry?.base, ...Object.values(s.entry?.panes ?? {})].filter(Boolean));
+  const states = [...new Set(Object.values(shots).filter((s) => typeof s === 'object').flatMap(shotStates))];
   const captures = captureStates(states, {repo, cache, pub, scale: style.capture.scale, fixture: style.capture.fixture, force: args.has('--force-capture'), log});
 
   // 4. Timeline
@@ -69,7 +72,7 @@ try {
   prepareWallpaper({style, here, cache, pub, remotion, log});
 
   // S1's browser window shows this real HTML page in an <IFrame> (src/lib/ClutterApps.tsx).
-  mkdirSync(join(pub, 'prototype'), {recursive: true}); copyFileSync(join(here, 'fixture/docs/prototype/checkout.html'), join(pub, 'prototype/checkout.html'));
+  { const proto = JSON.parse(readFileSync(join(here, 'fixture/docs/content.json'), 'utf8')).prototype.file; mkdirSync(dirname(join(pub, proto)), {recursive: true}); copyFileSync(join(here, 'fixture/docs', proto), join(pub, proto)); }
 
   // 6. Lint
   if (spawnSync('node', [join(here, 'lint.mjs')], {stdio: 'inherit'}).status !== 0) throw new BuildError('lint');
