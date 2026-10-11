@@ -50,6 +50,12 @@ slides = [
     {"title": "Where scans go wrong", "kind": "chart",
      "chart": {"label": f"Share of {N['eval']['wrong']} wrong reads (%)", "bars": [[SHORT[c["cause"]], pct(c["share"])] for c in causes]},
      "note": f"{pct(N['eval']['accuracy'])}% of spines read right; every miss lands in the catalog"},
+    {"title": "What the eval found", "kind": "paragraph",
+     # S7 (Geoff, 2026-10-11): one plain paragraph of findings that Claude turns into three bullets.
+     "text": (f"Ravi's Sep 28 eval read {pct(N['eval']['accuracy'])}% of spines right across {N['eval']['photos']:,} photos from {N['eval']['shelves']} shelves. "
+              f"Tilted spines caused {pct(causes[0]['share'])}% of the wrong reads and glare {pct(causes[1]['share'])}%, most of it at glass-door boxes. "
+              f"With a review step in the prototype, testers got {pct(N['reviewTest']['accuracy'])}% of books right in a median {N['reviewTest']['medianReviewSeconds']} seconds a shelf."),
+     "stat": f"{N['eval']['wrong']}", "statNote": f"wrong reads in {N['eval']['photos']:,} photos"},
     {"title": "What we heard from testers", "kind": "quotes",
      "quotes": ["“My own box has a book on it that isn’t there.” Denise, P3",
                 "“Two wrong books and I stopped.” Owen, P8"],
@@ -209,6 +215,11 @@ for n, sl in enumerate(slides, 1):
         rect(s, 9.0, 2.2, 3.7, 3.5, CARD, LINE, MSO_SHAPE.ROUNDED_RECTANGLE)
         text(s, 9.15, 2.5, 3.4, 1.2, sl["stat"], 48, ACC, True, align=PP_ALIGN.CENTER, font=FONT)
         text(s, 9.3, 3.9, 3.1, 1.5, sl["statNote"], 18, INK, align=PP_ALIGN.CENTER)
+    elif k == "paragraph":
+        text(s, 0.9, 2.1, 7.7, 4.4, sl["text"], 24, INK, font=FONT)
+        rect(s, 9.0, 2.2, 3.7, 3.5, CARD, LINE, MSO_SHAPE.ROUNDED_RECTANGLE)
+        text(s, 9.15, 2.5, 3.4, 1.2, sl["stat"], 54, ACC, True, align=PP_ALIGN.CENTER, font=FONT)
+        text(s, 9.3, 3.9, 3.1, 1.5, sl["statNote"], 18, INK, align=PP_ALIGN.CENTER)
     elif k == "table":
         rows = [sl["head"]] + sl["rows"]
         tbl = s.shapes.add_table(len(rows), 3, Inches(0.8), Inches(2.1), Inches(11.7), Inches(3.6)).table
@@ -227,6 +238,53 @@ for n, sl in enumerate(slides, 1):
             p = tf.paragraphs[0] if i == 0 else tf.add_paragraph(); p.space_after = Pt(18)
             r = p.add_run(); r.text = "•  " + b; r.font.size, r.font.name = Pt(30), FONT; r.font.color.rgb = INK
 prs.save(here / content["deck"]["file"]); stable(here / content["deck"]["file"])
+
+# S7: the paragraph slide as Duo's picker sends it, `duo2 slide shapes` for it, and the deck after Claude runs
+# EDIT_PY (the same code its Bash row shows), written to ../s7/ for the video's after state.
+PARA = next(n for n, sl in enumerate(slides, 1) if sl["kind"] == "paragraph")
+def outline(slide, number):
+    px = 914400 / 96
+    lines = [f"Slide {number}:"]
+    for sh in slide.shapes:
+        kind = "chart" if getattr(sh, "has_chart", False) and sh.has_chart else ("table" if getattr(sh, "has_table", False) and sh.has_table else "shape")
+        lines.append(f"  {sh.shape_id}  {sh.name} ({kind}) {round(sh.width / px)}×{round(sh.height / px)} at ({round(sh.left / px)}, {round(sh.top / px)})")
+        if sh.has_text_frame and sh.text_frame.text:
+            lines += ["      " + l for l in sh.text_frame.text.split("\n")]
+    return "\n".join(lines)
+sl3 = prs.slides[PARA - 1]
+pick = next(sh for sh in sl3.shapes if sh.has_text_frame and sh.text_frame.text == slides[PARA - 1]["text"])
+px = 914400 / 96
+EDIT_PY = f"""from pptx import Presentation
+from pptx.util import Pt
+path = "docs/team-review-oct15.pptx"
+prs = Presentation(path)
+tf = next(s for s in prs.slides[{PARA - 1}].shapes if s.shape_id == {pick.shape_id}).text_frame
+font = tf.paragraphs[0].runs[0].font
+size, name, color = font.size, font.name, font.color.rgb
+sentences = [s.strip() + "." for s in tf.text.split(". ") if s.strip()]
+sentences[-1] = sentences[-1].rstrip(".") + "."
+tf.clear()
+for i, s in enumerate(sentences):
+    p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+    p.space_after = Pt(18)
+    r = p.add_run(); r.text = "•  " + s
+    r.font.size, r.font.name = size, name
+    r.font.color.rgb = color
+prs.save(path)
+print(f"slide {PARA}: {{len(sentences)}} bullets")
+"""
+s7 = here.parent / "s7"; s7.mkdir(exist_ok=True)
+import os, shutil, subprocess, sys, tempfile
+with tempfile.TemporaryDirectory() as t:
+    os.makedirs(os.path.join(t, "docs")); shutil.copy(here / content["deck"]["file"], os.path.join(t, "docs", "team-review-oct15.pptx"))
+    out = subprocess.run([sys.executable, "-c", EDIT_PY], cwd=t, capture_output=True, text=True, check=True).stdout
+    after = pathlib.Path(t) / "docs" / "team-review-oct15.pptx"
+    (s7 / "team-review-oct15.after.pptx").write_bytes(stable_bytes(after.read_bytes()))
+    after_outline = outline(Presentation(after).slides[PARA - 1], PARA)
+(s7 / "deck-shape.json").write_text(json.dumps({
+    "slide": PARA, "count": len(slides), "id": pick.shape_id, "name": pick.name, "type": "shape",
+    "text": pick.text_frame.text, "box": [round(pick.left / px), round(pick.top / px), round(pick.width / px), round(pick.height / px)],
+    "slideSize": [1280, 720], "outline": outline(sl3, PARA), "afterOutline": after_outline, "editPy": EDIT_PY, "editOut": out}, indent=1, ensure_ascii=False) + "\n")
 
 # ---------------------------------------------------------------- docx
 d = content["doc"]; doc = Document()

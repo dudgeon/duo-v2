@@ -137,8 +137,8 @@ Folders live under `~/work/little-shared-library/`. Topics: **App** and **Commun
 | --- | --- | --- |
 | `PROJECT.md` | Goal, health, next step; links to the PRD and the deck | S2 left pane, S5 |
 | `docs/prd-v2.md` | PRD v2: Problem, Goals, What we heard (added by Claude), Requirements, Non-goals, Open questions | S1 editor window, S2 right tab 1, later the documents scene |
-| `prototype/scan-review.html` | The polished prototype: an iPhone-sized review screen. A shelf photo with a box on each detected spine; "14 found · 2 need a look"; tap a spine to fix it; "Add 14 books to Elm Park box" | S1 browser window, S2 right tab 2, S5 screenshot |
-| `docs/team-review-oct15.pptx` | The deck for Thursday, 5–6 slides in an in-house template. Slide 2 is the chart "Where scans go wrong" | S1 PowerPoint window, S2 right tab 3 |
+| `prototype/scan-review.html` | The polished prototype: an iPhone-sized review screen. A shelf photo with a box on each detected spine; "14 found · 2 need a look"; tap a spine to fix it; each flagged card ends in a small amber "Fix" button (S7 picks it); "Add 14 books to Elm Park box" | S1 browser window, S2 right tab 2, S5 screenshot |
+| `docs/team-review-oct15.pptx` | The deck for Thursday, 5–6 slides in an in-house template. Slide 2 is the chart "Where scans go wrong"; slide 3, "What the eval found", is one plain paragraph (S7 turns it into three bullets) | S1 PowerPoint window, S2 right tab 3 |
 | `docs/beta-interview-synthesis.docx` | The synthesis of the eight interviews: Summary, What we heard, Themes, Recommendations | S1 Word window, S2 right tab 4 |
 | `eval/spine-eval-2026-09-28.md` | Ravi's eval notes: method, the confusion cases, the scrappy bits ("glare set is only 140 photos from 9 shelves, needs more") | S5 tool calls |
 | `eval/results.csv` | One row per spine photo: shelf, truth, read, correct, cause | S5 tool calls |
@@ -189,6 +189,7 @@ The sidebar and All projects show **18 sessions**: 15 live and 3 archived. Wait 
 | S3 | All projects, List | All 5 projects, the 18 sessions, Needs you 3 |
 | S4 | Sessions | "Auto-add decision" resumes with history; archive "quick q: TestFlight build size"; delete "Old v1 notes cleanup"; the archived list |
 | S5 | Chat mode | "Auto-add decision" in chat: a turn with Read `eval/results.csv`, Bash `python3 eval/score.py`, Edit `docs/prd-v2.md`; Denise's feedback pasted; her screenshot pasted; then (Geoff, 2026-10-11) a few short turns and "most slash commands work in chat": Sam answers the question, sends Denise's email (Claude loads `/triage-feedback` itself), runs `/triage-feedback research/feedback/owen-p8.txt` from the `/` menu (`/tri`), asks "How many glare reports so far?"; then `/model`, the picker card with Opus in use |
+| S7 | Editor pane | Still the "Auto-add decision" chat, after S5. Line 2's hand edits to the PRD (Goal 1 bold, "review step" linked to the prototype, Owen's sentence, an open-question bullet) give `s7/prd-v2.before.md`. Then three sends: the What we heard lines by Send Selection (Claude rewrites the glare and Owen lines: `s7/prd-v2.after.md`); the prototype's Fix button by the element picker ("Fix this book", full width: `s7/scan-review.after.html`); slide 3's paragraph by the shape picker (three bullets: `s7/team-review-oct15.after.pptx`). Chats `chat-s7-md`, `chat-s7-html`, `chat-s7-pptx` |
 
 ## Rules for fixture content
 

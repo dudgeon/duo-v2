@@ -115,6 +115,13 @@
         "note": "81% of spines read right; every miss lands in the catalog"
       },
       {
+        "title": "What the eval found",
+        "kind": "paragraph",
+        "text": "Ravi's Sep 28 eval read 81% of spines right across 1,240 photos from 96 shelves. Tilted spines caused 34% of the wrong reads and glare 27%, most of it at glass-door boxes. With a review step in the prototype, testers got 97% of books right in a median 18 seconds a shelf.",
+        "stat": "236",
+        "statNote": "wrong reads in 1,240 photos"
+      },
+      {
         "title": "What we heard from testers",
         "kind": "quotes",
         "quotes": [

@@ -1,0 +1,12 @@
+From prototype/scan-review.html ("Scan review · v2 prototype · Little Shared Library"), the element <button.fix>:
+selector: body > div > div > div > div:nth-child(1) > div:nth-child(3) > div:nth-child(4) > div:nth-child(4) > button
+under: Review scan › 14 found · 2 need a look
+text: "Fix"
+box: 46×28 at (449, 676)
+styles: background-color: rgb(255, 176, 32); border: 0px none rgb(58, 37, 0); border-radius: 99px; color: rgb(58, 37, 0); display: block; font-family: -apple-system, "system-ui", "SF Pro Text", "Helvetica Neue", system-ui, sans-serif; font-size: 13px; font-weight: 700; height: 28px; line-height: 17.55px; padding: 0px 14px; width: 46.8281px
+screenshot: /Users/sam/Library/Application Support/Duo/context/element-20261013-095412-318.png
+html:
+```html
+<button class="fix">Fix</button>
+```
+Make this button say 'Fix this book' and make it bigger
