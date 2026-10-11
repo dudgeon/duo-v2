@@ -143,7 +143,7 @@ struct ChatCommandMenu: View {
         let rows = Array(commands.prefix(8))
         let column = Self.column(rows.map(\.name))
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(rows.enumerated()), id: \.offset) { _, c in
+            ForEach(Array(rows.enumerated()), id: \.offset) { i, c in
                 HStack(spacing: 12) {
                     Self.name(c.name, column: column).duoText(.mono).lineLimit(1).truncationMode(.tail).frame(width: column, alignment: .leading)
                     Text(terminal.contains(c.name) ? "Opens in the terminal" : c.description).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
@@ -155,6 +155,7 @@ struct ChatCommandMenu: View {
                 .contentShape(Rectangle())
                 .help(c.name)
                 .onActivate { chat.ui.composer = c.name + " "; chat.focusComposer += 1 }  // action: session chat
+                .videoAnchor(chat.videoAnchors ? "video.slash.row.\(i + 1)" : "", group: true)
             }
             // The TUI shows a page of its list; ↑↓ scroll it (F-174). Under a full page, say so.
             if rows.count >= Self.page {
@@ -165,6 +166,7 @@ struct ChatCommandMenu: View {
         .padding(5)
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).fill(DuoColor.pane))
         .duoPopoverShadow()
+        .videoAnchor(chat.videoAnchors ? "video.slash.menu" : "", group: true)
     }
 
     /// The TUI's page of commands (4 at the sizes measured, F-173): a full one has more under it.

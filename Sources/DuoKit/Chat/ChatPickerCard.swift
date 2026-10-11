@@ -44,6 +44,7 @@ struct ChatPickerCard: View {
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusReviewCard).strokeBorder(DuoColor.text, lineWidth: 1.5))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(picker.kind == .confirm ? picker.title : picker.kind == .model ? "Choose a model" : "Choose an effort level")
+        .accessibilityIdentifier(chat.videoAnchors && picker.kind == .model ? "video.model.card" : "")   // anchors: the video camera's target
     }
 
     /// Switch model? / Change effort level? (DL-168): Claude Code's own words, its answers keyed by their numbers, none chosen.
@@ -95,6 +96,7 @@ struct ChatPickerCard: View {
                 .onActivate { Task { await chat.pickerMove(to: r.n) } }  // action: session chat
                 .accessibilityLabel("\(r.n). \(r.name)\(r.selected ? ", in use" : ""). \(r.note)")
                 .accessibilityAddTraits(r.cursor ? .isSelected : [])
+                .videoAnchor(chat.videoAnchors ? "video.model.row.\(r.n)" : "", group: true)
             }
         }
         ForEach(picker.footnotes, id: \.self) { Text($0).duoText(.control).foregroundStyle(DuoColor.text2) }

@@ -15,11 +15,14 @@ public enum VideoTargets {
                                              // Scene 3: All projects as a List. Scene 4: sessions (resume, menu, archive, delete). Scene 5: the same session in chat.
                                              "video-s3-list",
                                              "video-s4-resumed", "video-s4-menu", "video-s4-archived", "video-s4-delete-ask", "video-s4-deleted",
-                                             "video-s5-chat", "video-s5-chat-open", "video-s5-draft", "video-s5-paste-text", "video-s5-paste-image"]
+                                             "video-s5-chat", "video-s5-chat-open", "video-s5-draft", "video-s5-paste-text", "video-s5-paste-image",
+                                             // Scene 6: chat mode, turn by turn (the recordings video/fixture/chat-s5-*).
+                                             "video-s6-answered", "video-s6-open", "video-s6-draft", "video-s6-paste-text", "video-s6-paste-image",
+                                             "video-s6-turn1", "video-s6-slash", "video-s6-turn2", "video-s6-model", "video-s6-model-picked", "video-s6-final"]
 
     public static func apply(_ screen: String, to model: AppModel) {
         if screen == "video-s3-list" { return applyS3(model) }
-        if screen.hasPrefix("video-s4-") || screen.hasPrefix("video-s5-") { return applyS4S5(screen, to: model) }
+        if screen.hasPrefix("video-s4-") || screen.hasPrefix("video-s5-") || screen.hasPrefix("video-s6-") { return applyS4S5(screen, to: model) }
         TargetState.project.apply(to: model)
         guard let v = model.fixture.videoS2, let base = model.fixture.baseDir else { return }
         let dir = URL(fileURLWithPath: base)
@@ -124,8 +127,14 @@ public enum VideoTargets {
         if let prd = v.tabs.first { model.rightTab = prd; model.selectedFile = prd } else { model.rightTab = "Project" }
         model.consoleTab = autoAdd
 
-        // The chat of the same session: terminal mode in scene 4 (it makes the toggle show), chat in scene 5.
-        if let rec = v.s5Chat {
+        // The chat of the same session: terminal mode in scene 4 (it makes the toggle show), chat in scenes 5 and 6.
+        if screen.hasPrefix("video-s6-") {
+            if let folder = s6Folders[String(screen.dropFirst("video-s6-".count))] {
+                let chat = s6Chat(dir.appending(path: folder), cwd: v.cwd, picked: screen == "video-s6-model-picked")
+                model.fixtureChats[autoAdd] = chat
+                if screen == "video-s6-open" { openLastToolRow(chat) }
+            }
+        } else if let rec = v.s5Chat {
             let chat = ChatSession(key: autoAdd, mode: screen.hasPrefix("video-s5-") ? .chat : .terminal)
             chat.log.cwd = v.cwd ?? "/Users/pm/work/payments/checkout-redesign"
             chat.videoAnchors = true
@@ -166,6 +175,58 @@ public enum VideoTargets {
         model.confirm(title: w.title, detail: w.detail, button: "Move to Trash") { _ in }
     }
 
+    // MARK: Scene 6: the chat's turns
+
+    /// Each scene 6 state's recording folder, beside the fixture (video/fixture/): what Sam has said and Claude has done so far.
+    static let s6Folders = ["answered": "chat-s5-answered", "open": "chat-s5-answered", "draft": "chat-s5-answered",
+                            "paste-text": "chat-s5-answered", "paste-image": "chat-s5-answered", "turn1": "chat-s5-turn1",
+                            "slash": "chat-s5-slash", "turn2": "chat-s5-turn2", "model": "chat-s5-model",
+                            "model-picked": "chat-s5-model", "final": "chat-s5"]
+
+    /// A scene 6 chat from its recording folder, set up as the chat boards are (`ChatTargets.apply`): its `meta.json` brings the
+    /// composer's draft and focus and the CLI version, its `screen.txt` the `/` menu or the `/model` picker. `picked`: the moment
+    /// after Sonnet was chosen in the picker (Claude Code's own line in the transcript, and the prompt idle again).
+    static func s6Chat(_ dir: URL, cwd: String?, picked: Bool) -> ChatSession {
+        let meta = (try? Data(contentsOf: dir.appending(path: "meta.json"))).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] } ?? [:]
+        let chat = ChatSession(key: autoAdd, mode: ChatViewMode(rawValue: meta["mode"] as? String ?? "chat") ?? .chat)
+        chat.videoAnchors = true
+        chat.setVersion(meta["version"] as? String ?? "2.1.296")
+        if meta["focusComposer"] as? Bool == true { chat.focusComposer += 1 }
+        ChatRecording.play(dir, into: chat)
+        chat.log.cwd = cwd ?? "/Users/pm/work/payments/checkout-redesign"
+        if let d = meta["drafts"] as? [String: String] { chat.ui.composer = d["composer"] ?? "" }
+        if chat.fixtureScreenText == nil { chat.fixtureScreenText = "" }   // no TUI behind a fixture chat: a picture paste takes the next number
+        if picked {
+            // The picker's answer as the TUI prints it, then its prompt as it was: the slash recording's screen without the menu.
+            let line: ChatJSON = ["type": "user", "message": ["role": "user", "content": "<local-command-stdout>Set model to `Sonnet 5.5` for this session only</local-command-stdout>"],
+                                  "timestamp": "2026-10-12T16:20:00.000Z", "cwd": chat.log.cwd ?? ""]
+            ChatIngest.record(line, into: chat.log, chat: chat)
+            let idle = ((try? String(contentsOf: dir.deletingLastPathComponent().appending(path: "chat-s5-slash/screen.txt"), encoding: .utf8)) ?? "")
+                .components(separatedBy: "\n").filter { !$0.hasPrefix("  ❯ /") && !$0.hasPrefix("    /") }
+                .map { $0.hasPrefix("❯ /") ? "❯ " : $0 }.joined(separator: "\n")
+            chat.fixtureScreenText = idle
+            chat.apply(ChatScreenReader.read(idle, table: chat.signatures))
+        }
+        return chat
+    }
+
+    /// Opens the newest tool row in the chat (its run, and the step inside): whatever is last on the page, not a particular one.
+    static func openLastToolRow(_ chat: ChatSession) {
+        var last: (run: String?, step: ChatToolStep)?
+        for case .claude(let turn) in chat.log.items {
+            for b in ChatRuns.blocks(turn.segments) {
+                switch b {
+                case .run(let r): for case .step(let s) in r.entries { last = (r.id, s) }
+                case .step(let s): last = (nil, s)
+                default: break
+                }
+            }
+        }
+        guard let t = last else { return }
+        if let run = t.run { chat.ui.openRuns.insert(run); chat.ui.toggled.insert(t.step.id) }
+        else if t.step.foldsByDefault { chat.ui.toggled.insert(t.step.id) }
+    }
+
     /// Opens the Bash `python3 eval/score.py` row (else the first tool row): its run, and the step's output.
     static func openScoreRow(_ chat: ChatSession) {
         var first: (run: String?, step: ChatToolStep)?, found: (run: String?, step: ChatToolStep)?
@@ -192,8 +253,9 @@ public enum VideoTargets {
     /// `--then` actions a state brings with it, ahead of the caller's: scene 5's composer states need the window (the composer is
     /// an AppKit field, and pasting goes through ⌘V's real path), so they run after it exists. The caller's own `--then` follows.
     nonisolated public static func impliedActions(for screen: String?, fixturePath: String?) -> [String] {
-        guard let screen, screen.hasPrefix("video-s5-"), let fixturePath else { return [] }
-        let order = ["video-s5-draft", "video-s5-paste-text", "video-s5-paste-image"]
+        guard let screen, screen.hasPrefix("video-s5-") || screen.hasPrefix("video-s6-"), let fixturePath else { return [] }
+        let order = screen.hasPrefix("video-s5-") ? ["video-s5-draft", "video-s5-paste-text", "video-s5-paste-image"]
+                                                   : ["video-s6-draft", "video-s6-paste-text", "video-s6-paste-image"]
         guard let step = order.firstIndex(of: screen) else { return [] }
         let dir = URL(fileURLWithPath: fixturePath).deletingLastPathComponent()
         let content = (try? Data(contentsOf: dir.appending(path: "docs/content.json"))).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }

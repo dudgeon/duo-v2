@@ -176,6 +176,31 @@ extension ChatSession {
     }
 }
 
+extension ChatSession {
+    /// Where the newest turn starts in the feed (the intro video's `video.chat.last`): your last message, or your last answer to a
+    /// card. Nil on a chat no video state set up.
+    var videoTurnStart: Int? {
+        guard videoAnchors else { return nil }
+        return log.items.lastIndex { if case .you = $0 { true } else if case .answer = $0 { true } else { false } }
+    }
+
+    /// `video.chat.you.last` for your newest bubble.
+    func youIdentifier(_ id: String) -> String {
+        guard videoAnchors, let last = log.items.last(where: { if case .you = $0 { true } else { false } }), last.id == id else { return "" }
+        return "video.chat.you.last"
+    }
+}
+
+extension View {
+    /// The intro video's anchor (`video.*`): names this view's frame for the camera and the cursor. Nothing when `id` is empty, so a
+    /// live chat does no extra work. A `group` is a container: its children keep their own names.
+    @ViewBuilder func videoAnchor(_ id: String, group: Bool = false) -> some View {
+        if id.isEmpty { self }
+        else if group { accessibilityElement(children: .contain).accessibilityIdentifier(id) }
+        else { accessibilityIdentifier(id) }
+    }
+}
+
 struct DottedLine: Shape {
     func path(in r: CGRect) -> Path {
         var p = Path()

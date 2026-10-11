@@ -166,8 +166,23 @@ struct ChatPane: View {
         }
         // A new item (your prompt, a tool card, Claude's reply) fades in where it lands
         // (`messageIn`, DL-130); streaming text grows in place, unanimated.
-        ForEach(chat.log.items) { item in
-            ChatItemView(item: item, chat: chat).id(item.id).transition(.opacity)
+        if let start = chat.videoTurnStart {
+            // A video state: the newest turn (your message, and Claude's rows and reply) is one container, `video.chat.last`.
+            let items = chat.log.items
+            ForEach(items[..<start]) { item in
+                ChatItemView(item: item, chat: chat).id(item.id).transition(.opacity)
+            }
+            VStack(alignment: .leading, spacing: 16) {
+                ForEach(items[start...]) { item in
+                    ChatItemView(item: item, chat: chat).id(item.id).transition(.opacity)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .videoAnchor("video.chat.last", group: true)
+        } else {
+            ForEach(chat.log.items) { item in
+                ChatItemView(item: item, chat: chat).id(item.id).transition(.opacity)
+            }
         }
         ChatWorkingLine(chat: chat)
     }
@@ -243,6 +258,7 @@ struct ChatYouBubble: View {
                 .padding(EdgeInsets(top: 9, leading: 14, bottom: 9, trailing: 14))
                 .background(UnevenRoundedRectangle(cornerRadii: DuoMetric.radiusChatBubble).fill(DuoColor.chatYou))
             }
+            .videoAnchor(chat.youIdentifier(you.id), group: true)
             .opacity(you.queued ? 0.6 : 1)
             if you.queued { Text("Queued · Claude reads it when it’s ready").duoText(.chatMeta).foregroundStyle(DuoColor.text2) }
         }
