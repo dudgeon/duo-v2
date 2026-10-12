@@ -6,12 +6,13 @@ import Foundation
 /// `glyphs-240` is the narrowest pane (`--then left-width:240`).
 @MainActor
 public enum GlyphTargets {
-    nonisolated public static let screens = ["glyphs", "glyphs-240", "glyphs-notasks"]
+    nonisolated public static let screens = ["glyphs", "glyphs-240", "glyphs-notasks", "hierarchy", "hierarchy-240"]
 
     static let project = "checkout-redesign"
 
     public static func apply(_ screen: String, to model: AppModel) {
         TargetState.project.apply(to: model)
+        if screen.hasPrefix("hierarchy") { return hierarchy(screen, to: model) }
         var f = model.fixture
         f.sessions.removeAll { $0.project == project }
         f.groups.removeAll { $0.project == project }
@@ -56,5 +57,50 @@ public enum GlyphTargets {
         model.expandedGroups = ["Launch email", "Refund policy", "Pricing page"]
         model.consoleTab = nil
         if screen == "glyphs-240" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { FixtureHarness.perform("left-width:240", on: model) } }
+    }
+}
+
+extension GlyphTargets {
+    /// Board 04: NEEDS YOU, TASKS (Launch email with the waiting session's hand, Stripe migration), OTHER SESSIONS
+    /// (Open 2, Today 2, This week 3, Earlier 12 folded) and Archived 3, on the board's data.
+    static func hierarchy(_ screen: String, to model: AppModel) {
+        var f = model.fixture
+        f.sessions.removeAll { $0.project == project }
+        f.groups.removeAll { $0.project == project }
+        f.tasks = (f.tasks ?? []).filter { $0.project != project }
+        var prefs = ChatPrefs()
+        func add(_ name: String, _ st: SessionState, _ wait: String, _ kind: ChatViewMode, archived: Bool = false) {
+            var s = Fixture.Session(name: name, project: project, state: st, wait: wait)
+            s.sessionId = name
+            if archived { f.archivedSessions = (f.archivedSessions ?? []) + [s] } else { f.sessions.append(s) }
+            prefs.modes[name] = kind
+        }
+        add("Pricing copy review", .needsYou, "4m", .chat)
+        add("Draft launch email", .idle, "1m", .chat)
+        add("Segment list query", .idle, "3h", .terminal)
+        add("Migrate Stripe webhooks", .readyForReview, "1h", .terminal)
+        add("Fix flaky cart test", .working, "now", .terminal)
+        add("Summarise user interviews", .readyForReview, "9m", .chat)
+        add("Competitor teardown", .idle, "2h", .chat)
+        add("Update README badges", .idle, "5h", .terminal)
+        for (i, n) in ["Tax rules", "Checkout latency", "Cart abandonment"].enumerated() { add(n, .idle, "\(2 + i)d", i == 1 ? .chat : .terminal) }
+        for i in 1...12 { add("Older session \(i)", .idle, "\(10 + i)d", .terminal) }
+        for n in ["Old spike", "Vendor call notes", "Kickoff"] { add(n, .idle, "40d", .terminal, archived: true) }
+        let tasks: [(String, String, [String])] = [
+            ("Launch email", "tasks/launch-email.md", ["Pricing copy review", "Draft launch email", "Segment list query"]),
+            ("Stripe migration", "tasks/stripe-migration.md", ["Migrate Stripe webhooks"]),
+        ]
+        for (title, path, members) in tasks {
+            f.groups.append(Fixture.Group(name: title, project: project, sessions: members, threads: members.map { [$0] }, task: path))
+            f.tasks = (f.tasks ?? []) + [.init(project: project, path: path, title: title, status: "open", sessionIds: members)]
+        }
+        model.fixture = f
+        model.chats.prefs = prefs
+        model.videoTasks = true
+        model.fixtureActive = ["Fix flaky cart test", "Summarise user interviews"]
+        model.selectedSidebarItem = "Competitor teardown"
+        model.expandedGroups = ["Launch email", "Stripe migration"]
+        model.consoleTab = nil
+        if screen == "hierarchy-240" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { FixtureHarness.perform("left-width:240", on: model) } }
     }
 }

@@ -270,75 +270,7 @@ struct TaskStatusMenu: View {
     }
 }
 
-/// Tasks with no sessions yet (DL-93): a fold under the session list. Stand-in look (S2-1).
-struct TasksFold: View {
-    @Environment(AppModel.self) private var model
-    let project: String
-
-    var body: some View {
-        let listed = Set(model.fixture.sessions(inProject: project).compactMap(\.sessionId))
-        let tasks = (model.fixture.tasks ?? []).filter { $0.project == project && model.listedTask($0) && !$0.sessionIds.contains(where: listed.contains) }
-        // Always in a project (DL-172): the New task row lives here, so the fold shows with no tasks.
-        let key = "\(project)/tasks-fold"
-        let expanded = !model.expandedGroups.contains(key)   // open unless folded
-        let headHover = "\(project)/tasks-fold-head"
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: DuoSpace.gapRowItems) {
-                Chevron(direction: expanded ? .down : .right).frame(width: 10)
-                Text(expanded || tasks.isEmpty ? "Tasks" : "Tasks · \(tasks.count)").duoText(.body).foregroundStyle(DuoColor.text2)
-                Spacer(minLength: 0)
-                // Closed, the pointer on the header shows the + that is New task (DL-172, as task rows' + DL-112).
-                if !expanded && model.hoveredTaskRow == headHover {
-                    Text("+")
-                        .font(.system(size: DuoMetric.rowActionGlyph))
-                        .foregroundStyle(DuoColor.text2)
-                        .frame(width: DuoMetric.rowActionSize, height: DuoMetric.rowActionSize)
-                        .contentShape(RoundedRectangle(cornerRadius: DuoMetric.rowActionRadius))
-                        .accessibilityElement(children: .ignore)
-                        .onActivate { model.newTask(in: project) }  // action: task new
-                        .help("Track a new task in this project")
-                        .explainerTrigger(.tasks, key: "tasks.fold-plus", origin: "tasks.fold-head")
-                        .accessibilityLabel("New task")
-                        .accessibilityHint("Track a new task in this project")
-                }
-            }
-            .padding(.horizontal, 8 + DuoSpace.selectionInset)
-            .frame(height: DuoMetric.rowGroup)
-            .background {
-                if !expanded && model.hoveredTaskRow == headHover {
-                    RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected)
-                        .padding(.horizontal, DuoSpace.selectionInset)
-                }
-            }
-            .contentShape(Rectangle())
-            .explainerFrame("tasks.fold-head")
-            .onHover { inside in
-                if inside { model.hoveredTaskRow = headHover } else if model.hoveredTaskRow == headHover { model.hoveredTaskRow = nil }
-            }
-            .onActivate { withDuoAnimation(.fold) { if expanded { model.expandedGroups.insert(key) } else { model.expandedGroups.remove(key) } } }  // action: view group
-            .accessibilityLabel(expanded ? "Hide tasks" : "Show \(tasks.count) tasks without sessions")
-            .accessibilityIdentifier("video.tasks.fold")   // anchors: the video cursor's target
-            .contextMenu { TaskTemplateItems(project: project) }
-            .padding(.top, 8)
-            if expanded {
-                VStack(alignment: .leading, spacing: 0) {
-                    if model.projectHasNoTasks(project) {
-                        Text("Most sessions are for a task or a goal. Put them in a task and Duo keeps them together.")
-                            .duoText(.control).foregroundStyle(DuoColor.text2)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.horizontal, 8 + DuoSpace.selectionInset).padding(.leading, 18).padding(.vertical, 4)
-                    }
-                    ForEach(tasks) { t in TaskLine(task: t, showsProject: false, indented: true).transition(.listRow) }
-                    NewTaskRow(project: project)
-                }
-                .duoAnimation(.rowMove, value: tasks.map(\.id))
-                .transition(.foldRows)
-            }
-        }
-    }
-}
-
-/// + New task, the Tasks fold's last row (DL-172, board 01-sidebar-fold A3): `rowSession` tall, a +
+/// + New task, the TASKS section's last row (DL-172, board 01-sidebar-fold A3): `rowSession` tall, a +
 /// in the task rows' glyph column and the label in `control` `text2`, lined up with the task names;
 /// `selected` fill and `text` on hover.
 struct NewTaskRow: View {

@@ -10,7 +10,9 @@ struct ProjectSidebarPane: View {
     var body: some View {
         let project = model.currentProject
         let sections = model.sidebarSections()
-        let items = SidebarItem.items(sections)
+        let name = project?.name ?? ""
+        let items = SidebarItem.items(sections, tasksShown: model.terminalsMode == .live || model.videoTasks,
+                                      folded: { model.timeGroupFolded(project: name, $0) })
         let movers = model.sidebarMovers(sections)
         VStack(alignment: .leading, spacing: 0) {
             ScrollView {
@@ -34,30 +36,34 @@ struct ProjectSidebarPane: View {
                         if project.isMissing { MissingNotice(project: project) }
                         else if project.kind == "folder", project.notNow != true { FolderNotice(project: project) }
                     }
-                    // Needs you, Open, then history by date, then the folds (DL-91). One flat list, so a
-                    // row keeps its identity when it changes section and travels there (DL-130):
+                    // NEEDS YOU, then TASKS, then OTHER SESSIONS in its time groups, then Archived (DL-174). One
+                    // flat list, so a row keeps its identity when it changes section and travels there (DL-130):
                     // `rowMove`; a new row fades in (`rowIn`), a row that goes fades out (`rowOut`).
                     // Each item is opaque on the pane, and a row changing section travels above the rows
                     // it passes, so no text overprints mid-move.
                     ForEach(items) { item in
                         switch item.kind {
                         case .label(let section):
-                            SectionLabel(text: section.title, count: section.id == "needs" || section.id == "open" ? section.rows.count : nil,
-                                         needsYou: section.needsYou)
+                            SectionLabel(text: section.title, count: section.rows.count, needsYou: section.needsYou)
                                 .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(DuoColor.pane)
-                        case .gap:
-                            Color.clear.frame(height: 8)
-                        case .row(let row):
-                            SidebarRowView(row: row)
+                        case .tasksHead:
+                            if let project { TasksHeader(project: project.name) }
+                        case .tasksTail:
+                            if let project { TasksTail(project: project.name) }
+                        case .otherHead(let count):
+                            if let project { OtherSessionsHeader(project: project.name, count: count) }
+                        case .timeGroup(let section):
+                            if let project { TimeGroupRow(project: project.name, section: section) }
+                        case .row(let row, let indented):
+                            SidebarRowView(row: row, indented: indented)
                                 .background(DuoColor.pane)
                                 .zIndex(movers.contains(row.id) ? 1 : 0)
                                 .transition(.listRow)
                         }
                     }
                     .onChange(of: items.map(\.id), initial: true) { model.noteSidebar(sections) }
-                    if let project, model.terminalsMode == .live || model.videoTasks { TasksFold(project: project.name) }
                     if let project { ArchivedSessionsFold(project: project.name) }
                     HStack(spacing: DuoSpace.gapButtonToButton) {
                         Button("+ New Claude Code session") { model.newSession() }.buttonStyle(.duo)
@@ -81,18 +87,50 @@ struct ProjectSidebarPane: View {
     }
 }
 
-/// The session list flattened: section labels, gaps and rows in one run, keyed so a row is the
-/// same view in whichever section it sits (DL-130).
-struct SidebarItem: Identifiable {
-    enum Kind { case label(SidebarSection), gap, row(SidebarRow) }
-    let id: String
-    let kind: Kind
+/// The session list flattened: section labels, headers, time groups and rows in one run, keyed so a
+/// row is the same view in whichever section it sits (DL-130).
+public struct SidebarItem: Identifiable {
+    public enum Kind {
+        case label(SidebarSection)
+        /// TASKS (a section label with a + on hover); its rows are the task rows, `tasksTail` what follows them.
+        case tasksHead, tasksTail
+        /// OTHER SESSIONS, with its count (a section label with a + on hover).
+        case otherHead(count: Int)
+        /// A time group's fold row: Open, Today, This week or Earlier.
+        case timeGroup(SidebarSection)
+        /// `indented`: a session in a time group, at the nested rows' inset.
+        case row(SidebarRow, indented: Bool)
+    }
+    public let id: String
+    public let kind: Kind
 
-    static func items(_ sections: [SidebarSection]) -> [SidebarItem] {
-        sections.flatMap { s -> [SidebarItem] in
-            let head = SidebarItem(id: "section/\(s.id)", kind: s.title.isEmpty ? .gap : .label(s))
-            return [head] + s.rows.map { SidebarItem(id: "row/\($0.id)", kind: .row($0)) }
+    static let timeGroups = ["open", "today", "week", "earlier"]
+
+    public static func items(_ sections: [SidebarSection], tasksShown: Bool, folded: (String) -> Bool) -> [SidebarItem] {
+        func rows(_ s: SidebarSection, indented: Bool) -> [SidebarItem] {
+            s.rows.map { SidebarItem(id: "row/\($0.id)", kind: .row($0, indented: indented)) }
         }
+        var out: [SidebarItem] = []
+        let byID = Dictionary(sections.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        if let needs = byID["needs"] {
+            out.append(SidebarItem(id: "section/needs", kind: .label(needs)))
+            out += rows(needs, indented: false)
+        }
+        // TASKS is always there in a project (DL-172's New task row lives in it), empty or not.
+        if tasksShown || byID["tasks"] != nil {
+            out.append(SidebarItem(id: "section/tasks", kind: .tasksHead))
+            if let tasks = byID["tasks"] { out += rows(tasks, indented: false) }
+            out.append(SidebarItem(id: "section/tasks-tail", kind: .tasksTail))
+        }
+        let groups = timeGroups.compactMap { byID[$0] }
+        if !groups.isEmpty {
+            out.append(SidebarItem(id: "section/other", kind: .otherHead(count: groups.reduce(0) { $0 + $1.rows.count })))
+            for g in groups {
+                out.append(SidebarItem(id: "section/\(g.id)", kind: .timeGroup(g)))
+                if !folded(g.id) { out += rows(g, indented: true) }
+            }
+        }
+        return out
     }
 }
 
@@ -112,6 +150,8 @@ extension SessionState {
 struct SidebarRowView: View {
     @Environment(AppModel.self) private var model
     let row: SidebarRow
+    /// A session in a time group (DL-174): at the inset of a task's sessions, without the rule.
+    var indented = false
 
     var body: some View {
         switch row.kind {
@@ -206,13 +246,15 @@ struct SidebarRowView: View {
                     .transition(.foldRows)
                 }
             }
+            .padding(.leading, indented ? DuoSpace.threadRuleX : 0)   // a group in a time group (DL-174)
             .background {   // anchors (scene 10): the task's row with its session rows, as far as they show
                 if model.videoDemoFolder != nil, let taskSlug {
                     Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Task group").accessibilityIdentifier("video.task.\(taskSlug).group")
                 }
             }
         case .thread, .session:
-            SidebarLeafRow(row: row, nested: false)
+            // In a time group (DL-174) the row sits at the inset of a task's sessions, without the rule.
+            SidebarLeafRow(row: row, nested: indented).padding(.leading, indented ? DuoSpace.threadRuleX : 0)
         }
     }
 }

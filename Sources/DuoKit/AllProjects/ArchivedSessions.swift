@@ -53,7 +53,7 @@ struct ArchivedSessionsFold: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: DuoSpace.gapRowItems) {
                     Chevron(direction: expanded ? .down : .right).frame(width: 10)
-                    Text("Archived · \(count)").duoText(.body).foregroundStyle(DuoColor.text2)
+                    SectionLabel(text: "Archived", count: count)   // a section label with a chevron (board 04)
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 8 + DuoSpace.selectionInset)
