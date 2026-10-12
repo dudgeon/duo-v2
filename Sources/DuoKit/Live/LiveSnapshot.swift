@@ -137,7 +137,7 @@ public enum LiveSnapshot {
 
         func makeSession(_ id: String, project name: String, folder: URL, entry: SessionIndex.Entry?) -> Fixture.Session {
             let beacon = beacons.first { $0.sessionId == id }
-            let hooks = ctx.events.flatMap { HookEvents.summarize(HookEvents.read(id, in: $0)) }
+            let hooks = ctx.events.flatMap { HookEvents.summary(for: id, in: $0) }
             let live = beacon.map { Attention.live(beacon: $0, hooks: hooks, seenAt: ctx.seen[id]) }
             let mtime = history.first { $0.id == id }.flatMap { try? $0.transcript.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate }
             // Last activity: the transcript's change time when it's newer than the filing (a session

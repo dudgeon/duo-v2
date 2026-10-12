@@ -656,6 +656,18 @@ func repoFixture() throws -> Fixture {
     check(stressLines.count == 40 && HookEvents.read("stress", in: ev).count == 40
           && Set(HookEvents.read("stress", in: ev).compactMap { $0.lastMessage?.split(separator: " ").first }).count == 40,
           "40 concurrent ~1 KB hook events: 40 lines, every one parses (one write each, C-27)")
+    // C-79: the live refresh re-reads a log only when it changed.
+    let sumA = HookEvents.summary(for: "s1", in: ev)
+    check(sumA == HookEvents.summarize(HookEvents.read("s1", in: ev)), "summary(for:) equals summarize(read())")
+    let reads0 = HookEvents.tailReads
+    _ = HookEvents.summary(for: "s1", in: ev); _ = HookEvents.summary(for: "s1", in: ev)
+    check(HookEvents.tailReads == reads0, "two builds with no change: 0 log parses (C-79)")
+    fire(#"{"session_id":"s1","hook_event_name":"UserPromptSubmit","prompt":"again"}"#)
+    fire(###"{"session_id":"s1","hook_event_name":"Stop","last_assistant_message":"## Fresh result"}"###)
+    check(HookEvents.summary(for: "s1", in: ev)?.message == "## Fresh result" && HookEvents.tailReads == reads0 + 1, "an appended Stop updates the summary, one re-read")
+    try? Data(#"{"at":1,"e":{"hook_event_name":"Stop","last_assistant_message":"rewritten"}}"#.utf8 + [10]).write(to: HookEvents.file(for: "s1", in: ev))
+    check(HookEvents.summary(for: "s1", in: ev)?.message == "rewritten", "a truncated or rewritten log is re-read")
+    check(HookEvents.summary(for: "no-such-log", in: ev) == nil, "no log: no summary")
     let store = TerminalStore()
     _ = store.session("old-id", command: .shell, cwd: NSTemporaryDirectory())
     store.rekey("old-id", to: "new-id")
