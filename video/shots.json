@@ -443,7 +443,7 @@
         "dur": 0.9
       }
     ],
-    "shotSha": "e138ef029166",
+    "shotSha": "cb716e14727c",
     "requires": [
       {
         "what": "Way in from S3 by app navigation: the cursor clicks the Needs you session",
@@ -465,6 +465,10 @@
       {
         "what": "Another is deleted through Duo's confirmation sheet",
         "built": true
+      },
+      {
+        "what": "On \"close one\": a session tab's × closes it in the middle pane; the session stays in the list",
+        "built": false
       }
     ],
     "$menu": "macOS draws context menus in their own window, which --capture-window can't include, and fixture sessions have no menu (no sessionId), so the menu is drawn with the real items of SessionOrganizeMenu (AllProjectsPanes.swift)."
@@ -776,7 +780,9 @@
     ],
     "pauses": {
       "3": 1.2,
-      "4": 9.5
+      "4": 0.6,
+      "5": 1.6,
+      "6": 2.2
     },
     "tail": 1.6,
     "beats": [
@@ -1073,9 +1079,8 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 1
+          "line": 5,
+          "offset": -0.2
         },
         "menu": {
           "on": "video.html.fix",
@@ -1092,9 +1097,8 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 2.1
+          "line": 5,
+          "word": "element"
         },
         "click": "video.html.fix",
         "in": "video-s7-html-pick",
@@ -1102,9 +1106,8 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 3
+          "line": 5,
+          "word": "ask"
         },
         "click": "video.picker.send",
         "in": "video-s7-html-pick",
@@ -1119,9 +1122,9 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 4.6
+          "line": 5,
+          "word": "change",
+          "offset": 0.6
         },
         "state": "video-s7-html-after",
         "in": "video-s7-html-after",
@@ -1135,9 +1138,9 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 5.2
+          "line": 5,
+          "word": "change",
+          "offset": 1.2
         },
         "mark": "video.html.fix",
         "in": "video-s7-html-after",
@@ -1146,9 +1149,8 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 6.7
+          "line": 6,
+          "offset": -0.3
         },
         "click": "video.tab.pptx",
         "in": "video-s7-html-after",
@@ -1162,18 +1164,16 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 7.6
+          "line": 6,
+          "word": "pick"
         },
         "click": "video.slide.select",
         "in": "video-s7-pptx-slide3"
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 8.3
+          "line": 6,
+          "word": "paragraph"
         },
         "click": "video.slide.shape",
         "in": "video-s7-pptx-pick",
@@ -1181,9 +1181,8 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 9.1
+          "line": 6,
+          "word": "ask"
         },
         "click": "video.picker.send",
         "in": "video-s7-pptx-pick",
@@ -1198,9 +1197,9 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 10.7
+          "line": 6,
+          "word": "bullets",
+          "offset": 0.5
         },
         "state": "video-s7-pptx-after",
         "in": "video-s7-pptx-after",
@@ -1214,9 +1213,9 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 11.3
+          "line": 6,
+          "word": "bullets",
+          "offset": 1.1
         },
         "mark": "video.slide.shape",
         "in": "video-s7-pptx-after",
@@ -1225,16 +1224,16 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 12.6
+          "line": 6,
+          "word": "bullets",
+          "offset": 2.6
         },
         "in": "video-s7-pptx-after",
         "cam": "wide",
         "dur": 1.1
       }
     ],
-    "shotSha": "6cfe4c9e59cc",
+    "shotSha": "b8bfa78ea6c1",
     "requires": [
       {
         "what": "Way in from S6 without a cut; the topic list comes up; the camera moves to the viewer pane",
@@ -1253,11 +1252,11 @@
         "built": true
       },
       {
-        "what": "Line 4: HTML element picker on the Fix button, sent to Claude, prototype shows the change",
+        "what": "Lines 4–5: HTML element picker on the Fix button, sent to Claude, prototype shows the change",
         "built": true
       },
       {
-        "what": "Line 4: a slide paragraph picked, sent, slide redrawn in three bullets",
+        "what": "Line 6: a slide paragraph picked, sent, slide redrawn in three bullets",
         "built": true
       }
     ]

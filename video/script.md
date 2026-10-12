@@ -110,7 +110,7 @@ Topic: Agent Pane
 - When you click a claude code session, it resumes right where you left off, in the terminal.
 - Duo helps you keep track of many sessions at once. Close one and come back to it later, or archive or delete the ones you're done with to cut down on clutter.
 
-Shot: from S3's Needs you column, the cursor clicks a session, and the camera pushes into its project as the terminal resumes with its history. On line 2 the cursor opens a session's right-click menu in the session list, with its real items, among them Archive Session and Delete Session…. One session folds into Archived; another is deleted through Duo's confirmation sheet.
+Shot: from S3's Needs you column, the cursor clicks a session, and the camera pushes into its project as the terminal resumes with its history. On "close one" the cursor clicks a session tab's × in the middle pane and the tab closes, the session staying in the list to come back to (Geoff, Oct 11: show the tab's ×, since the menu has no Close). Then the cursor opens a session's right-click menu in the session list, with its real items, among them Archive Session and Delete Session…. One session folds into Archived; another is deleted through Duo's confirmation sheet.
 
 > **Notes for the build** (ignored by it):
 >
@@ -162,6 +162,8 @@ Topic: File Viewer/Editor
 - Markdown editing is simple -- most keyboard shortcuts are the same, like command-b to bold, and command-k to add a link. Your changes are visible in real time -- no toggling between raw and rendered markdown.
 - Anything you can see or edit, claude can too. You can select text to show it to your claude agent, and claude can update the document with visible changes.
 - This works in all document types that duo supports, like html or powerpoint.
+- Pick an element in a prototype and ask for a change.
+- Or pick a paragraph on a slide and ask for bullets.
 
 Shot: the camera moves right to the viewer pane, its first time in the video. On line 1 the cursor clicks through the tabs open there, each on its word: the PRD (Markdown) on "markdown", the scan-review prototype (HTML) on "html", the team-review deck on "powerpoint", and the interview synthesis (Word) on "documents". Each tab opens in its real viewer, and the camera stays on the viewer pane while the tabs change.
 
@@ -185,10 +187,10 @@ On line 3, still on the PRD:
 > - *The menu:* drawn, like S4's, because macOS draws context menus outside the window capture. Its items are the editor's real ones (Send Selection to Claude, Send Selection To ▸, then the system's).
 > - *Fixtures (made by demo-fixtures, Oct 11):* the chat turn (the composer with the sent selection as Duo formats it, Sam's message, and Claude's reply with its rows); the PRD after Claude's edit, a What we heard paragraph updated from the triage log (Denise's glare, Owen's two wrong books); and the editor showing that edit highlighted.
 
-On line 4, the same pattern twice more, quicker, each ending on the change visible in its own viewer:
+On lines 4–6, the same pattern twice more, each ending on the change visible in its own viewer (lines 5 and 6 added Oct 11, so each demo has its own line):
 
-1. On "html": the cursor clicks the scan-review.html tab, picks the "Fix" button on the prototype's review screen with the element picker, started from the page's right-click menu (Select Element), which outlines it, and sends it to Claude. Sam asks "Make this button say 'Fix this book' and make it bigger", and the prototype reloads with the change.
-2. On "powerpoint": the cursor clicks the team-review-oct15.pptx tab and goes to slide 3, "What the eval found", and picks its paragraph with the deck viewer's Select Shape button. Sam asks "Turn this into three bullets", and the slide redraws with the bullets.
+1. On "html" and line 5: the cursor clicks the scan-review.html tab, picks the "Fix" button on the prototype's review screen with the element picker, started from the page's right-click menu (Select Element), which outlines it, and sends it to Claude. Sam asks "Make this button say 'Fix this book' and make it bigger", and the prototype reloads with the change.
+2. On line 6: the cursor clicks the team-review-oct15.pptx tab and goes to slide 3, "What the eval found", and picks its paragraph with the deck viewer's Select Shape button. Sam asks "Turn this into three bullets", and the slide redraws with the bullets.
 
 > **Notes for the build** (ignored by it):
 >
