@@ -1209,6 +1209,20 @@ func repoFixture() throws -> Fixture {
         let registers = bundle.components(separatedBy: "\n").enumerated().filter { $0.element.contains("lsregister\" -f") }
         let lines = bundle.components(separatedBy: "\n")
         check(registers.count == 1 && registers.allSatisfy { $0.offset > 0 && lines[$0.offset - 1].contains("\"$kind\" = main") }, "bundle.sh registers only the main checkout's build with Launch Services")
+        // Third-party notices (C-82): an entry for every vendored component bundle.sh ships and every linked package, and the file in the bundle.
+        let notices = (try? String(contentsOf: repoRoot().appending(path: "THIRD-PARTY-NOTICES.md"), encoding: .utf8)) ?? ""
+        let vendored = ["Sparkle": "## Sparkle", "codemirror": "## CodeMirror", "pptx-renderer": "## @aiden0z/pptx-renderer", "docx-viewer": "## @file-viewer/docx"]
+        for (dir, heading) in vendored.sorted(by: { $0.key < $1.key }) {
+            check(bundle.contains("Vendor/\(dir)/") && notices.contains(heading), "THIRD-PARTY-NOTICES.md has an entry for Vendor/\(dir)")
+        }
+        let vendorDirs = ((try? FileManager.default.contentsOfDirectory(atPath: repoRoot().appending(path: "Vendor").path)) ?? []).filter { !$0.hasPrefix(".") }
+        let shippedDirs = vendorDirs.filter { bundle.contains("Vendor/\($0)/") }
+        check(!shippedDirs.isEmpty && Set(shippedDirs).isSubset(of: Set(vendored.keys)), "every Vendor/ folder bundle.sh ships has a notices entry (missing: \(Set(shippedDirs).subtracting(vendored.keys).sorted()))")
+        let resolved = (try? String(contentsOf: repoRoot().appending(path: "Package.resolved"), encoding: .utf8)) ?? ""
+        let linkedPins = resolved.matches(of: /"identity" : "([^"]+)"/).map { String($0.1) }.filter { !["h", "swift-argument-parser", "swift-png"].contains($0) }
+        check(linkedPins == ["swiftterm"] && notices.contains("## SwiftTerm (MIT)"), "every linked Package.resolved dependency has a notices entry (\(linkedPins))")
+        check(notices.contains("bge-small-en-v1.5") && notices.contains("JSZip") && notices.contains("mtx-decompressor") && notices.contains("Permission is hereby granted"), "THIRD-PARTY-NOTICES.md carries the model's, JSZip's and the MPL component's notices with licence text")
+        check(bundle.contains("cp \"$root/THIRD-PARTY-NOTICES.md\" \"$app/Contents/Resources/"), "bundle.sh copies THIRD-PARTY-NOTICES.md into Resources")
         // Every flag LaunchOptions reads marks a scripted run.
         let src = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Debug/LaunchOptions.swift"), encoding: .utf8)) ?? ""
         let flags = Set(src.matches(of: /case "(--[a-z-]+)"/).map { String($0.1) })
