@@ -285,6 +285,10 @@ public struct DuoCommands: Commands {
     public init(model: AppModel) { self.model = model }
 
     public var body: some Commands {
+        // The standard About panel, with the third-party notices as its credits (DL-176, C-82).
+        CommandGroup(replacing: .appInfo) {
+            Button("About Duo") { AboutCredits.show() }
+        }
         // Until Sparkle (v1.1): ask GitHub for a newer release.
         CommandGroup(after: .appInfo) {
             Button("Check for Updates…") { model.checkForUpdates(userInitiated: true) }
