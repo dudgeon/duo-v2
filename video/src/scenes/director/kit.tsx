@@ -75,11 +75,11 @@ export const YouCard = ({box, chip = 0, chipU = 1, u = 1, label = 'the PM'}: {bo
 );
 
 /** The director: the dark console, since it's whoever you're talking to (design system, Principles). */
-export const DirectorCard = ({box, title = 'director', sub, needs = 0, u = 1, children}: {box: Box; title?: string; sub?: string; needs?: number; u?: number; children?: React.ReactNode}) => (
+export const DirectorCard = ({box, title = 'director', sub, subU = 1, needs = 0, u = 1, children}: {box: Box; title?: string; sub?: string; subU?: number; needs?: number; u?: number; children?: React.ReactNode}) => (
   <div style={place(box, {background: C.console, borderRadius: 12, padding: '24px 32px', display: 'flex', flexDirection: 'column',
     justifyContent: 'center', overflow: 'hidden', opacity: u, fontFamily: mono, color: C.consoleText})}>
     <div style={{fontSize: 30, lineHeight: '40px', fontWeight: 500, whiteSpace: 'nowrap'}}>{title}</div>
-    {sub && <div style={{fontSize: 20, lineHeight: '30px', color: C.consoleText2, whiteSpace: 'nowrap'}}>{sub}</div>}
+    {sub && <div style={{fontSize: 20, lineHeight: '30px', color: C.consoleText2, whiteSpace: 'nowrap', opacity: subU}}>{sub}</div>}
     {needs > 0 && <div style={{fontSize: 20, lineHeight: '30px', color: C.needsYouOnConsole, whiteSpace: 'nowrap'}}>● {needs} need you</div>}
     {children}
   </div>
@@ -154,3 +154,10 @@ export const Heading = ({title, sub, u = 1}: {title: string; sub?: string; u?: n
 export const mixBox = (a: Box, b: Box, u: number): Box => ({x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u), w: lerp(a.w, b.w, u), h: lerp(a.h, b.h, u)});
 export const centre = (b: Box): [number, number] => [b.x + b.w / 2, b.y + b.h / 2];
 export type {Box};
+
+/** The director's context meter (S3 on): how full its context is. */
+export const Meter = ({fill, u = 1}: {fill: number; u?: number}) => (
+  <div style={{position: 'absolute', left: 32, right: 32, bottom: 20, height: 6, borderRadius: 3, background: C.consoleRule, overflow: 'hidden', opacity: u}}>
+    <div style={{width: `${fill * 100}%`, height: 6, background: fill > 0.9 ? C.needsYouOnConsole : C.consoleText2}} />
+  </div>
+);

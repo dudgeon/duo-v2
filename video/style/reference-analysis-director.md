@@ -41,3 +41,18 @@ Everything in `reference-analysis.md`'s list, plus:
 - **Org-chart clip art and stick figures.** Geoff is a node with his role on it, like every other node.
 - **Spinning counters.** Numbers fill as cells, or are set once.
 - **Superlatives on screen**, and any Claude-isms in on-screen words (Geoff, 2026-10-12).
+
+## A standing reference: "Dynamic workflows in Claude Managed Agents"
+
+Geoff, 2026-10-12: "Save this link/video as a future style reference — esp the animation style." The post is [Claude Developers, Oct 9, 2026](https://x.com/claudedevs/status/2108591328732856655): a 58-second, 1920 × 1080 explainer of multi-agent orchestration. A copy for private study is at `~/Library/Caches/duo-video/refs/director/claudedevs-2108591328732856655.mp4` (never committed). It is the closest film there is to this one's subject, and the animation style to aim for in this film and later ones.
+
+| | What it does | What we take |
+|---|---|---|
+| **One actor throughout** | The agent is a single orange dot, labelled once, on the left of every frame for the whole film. Everything else connects to it with a thin ink line. Scenes change what it is connected to, never the dot. | **A persistent anchor.** Our anchor is the director's console card. It stays in the frame and carries from scene to scene; what changes is what hangs off it. |
+| **Line art** | Ink outlines about 1.5 px on warm ivory. Pending things are hollow circles; done things fill black. Work is a line that grows like a progress bar. There are no fills except black, and one accent. | **Hollow → filled for state**, alongside Duo's glyphs. **Progress is a growing line.** Keep the one accent for the actor. |
+| **The diagram is the data** | The diagram is drawn from the work itself: "300 contracts" are 300 drawn cells. A run's threads are vertical ticks, and its events are mono pills (`workflow_run.created`). In the result, 41 of 300 cells fill black, and the count is a plain sentence. | **Counts are cells; events are mono pills**: real names, real numbers. |
+| **Morphs, never cuts** | Pages collapse into a dot that travels. A box shrinks into a pill header and becomes the next scene's title. Threads fan back in along curves to one node, which becomes a dot that returns to the agent along its line. | **Fan-in curves for merges** (our S7). **A box's title becomes the next scene's pill.** Every change is something moving. |
+| **Typing** | Briefs and code type themselves into boxes with a caret, one step at a time (`1 Read the contracts`, `2 Reconcile the findings`). | **We already type the first prompt (S2).** Use the same for briefs (S6) and the gist (S11). |
+| **The caption is the line** | One serif sentence under the diagram per beat. It arrives grey, darkens to ink while current, and goes grey again as the next arrives. | **A question for Geoff:** captions of the voice line under the diagram, set the same way, would make the film readable with the sound off. |
+| **Pace** | About 9 sentences in 58 s, one idea per sentence, each with its own morph. Holds of 1 to 2 s at the end of a beat. | The same rhythm per line. |
+| **The end** | The agent's dot blooms into the Claude mark over a final sentence. | Our end resolves the director's card into the first prompt and the QR code (S11). |
