@@ -64,7 +64,7 @@ export function sceneKeys({here, pub, timeline, scale, encode = null}) {
 // encode: remotion flags for the scenes' encoder, when not remotion.config.ts's H.264. V2's frame-identical proof
 // renders ProRes, which codes each frame alone, so the same pixels make the same frames however the film is split
 // (Remotion refuses H.264 at CRF 0). A ProRes film goes in a .mov.
-export function renderFilm({here, pub, out, cache, timeline, scale = 1, encode = null, only = null, name = null, log}) {
+export function renderFilm({here, pub, out, cache, timeline, scale = 1, encode = null, only = null, name = null, cover = null, log}) {
   const rc = join(cache, 'render');
   mkdirSync(rc, {recursive: true});
   const ext = encode?.some((a) => a.includes('prores')) ? 'mov' : 'mp4';
@@ -93,7 +93,9 @@ export function renderFilm({here, pub, out, cache, timeline, scale = 1, encode =
   writeFileSync(list, want.map((k) => `file '${join(rc, `${k.key}.${ext}`)}'\n`).join(''));
   name ??= only ? `scene-${only.join('-')}${scale !== 1 ? '-draft' : ''}.mp4` : scale !== 1 ? 'intro-draft.mp4' : 'intro.mp4';
   const mp4 = join(out, name);
-  const mux = spawnSync('ffmpeg', ['-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', list, '-i', wav, '-map', '0:v', '-map', '1:a', '-c:v', 'copy',
+  // cover: a picture for the file's cover art (out/thumbnail.png, the title card), which QuickTime and Finder show.
+  const art = cover && existsSync(cover) ? ['-i', cover, '-map', '2:v', '-c:v:1', 'png', '-disposition:v:1', 'attached_pic'] : [];
+  const mux = spawnSync('ffmpeg', ['-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', list, '-i', wav, ...art.slice(0, 2), '-map', '0:v', '-map', '1:a', ...art.slice(2), '-c:v:0', 'copy',
     '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '256k', '-ar', '48000', '-movflags', '+faststart', mp4]);
   rmSync(list, {force: true}); rmSync(wav, {force: true});
   if (mux.status !== 0) throw new BuildError('render: joining the scenes failed');

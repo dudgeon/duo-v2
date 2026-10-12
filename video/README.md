@@ -43,6 +43,8 @@ It also lists the lines changed since the last build. When every line is voiced 
 - the shared pictures, the source and the render settings.
 The soundtrack is rendered once for the whole film, so the score and its ducking run on across scene edges, then it's normalised to -16 LUFS and muxed. An edit to one scene re-renders that scene, and sometimes the one after it.
 
+**The poster.** The film's frame 0 is S0's settled title card (the icon, "Duo" and its line), so a player that shows the video before play shows the title; on play it gives way to the logo building. Film.tsx draws frame 0 at the first scene's `poster` time, which build.mjs sets from S0's `thumbnail`; `out/thumbnail.png` is the same frame and goes into the file as its cover art. The build fails if frame 0 isn't the title card.
+
 **What Geoff reviews.** `out/review.json` lists each scene's start, end and still, and whether this build re-rendered it. It also lists what its Shot: note asks for, with the timecodes where each item is on screen. Each re-rendered scene also gets a 480p clip in `out/review/`.
 
 **The score bed** is reused when a cached bed is at least as long as the film; the film fades it out itself. A new one is made at least 8 minutes long, in whole minutes, so a change in the film's length doesn't make new music.

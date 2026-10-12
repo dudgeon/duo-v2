@@ -84,6 +84,12 @@ try {
   // 5. Score: the bed for the film's length, mixed in the film under the voice (pipeline/score.mjs).
   if (!args.has('--no-score')) timeline.score = scoreBed({here, cache, pub, duration: timeline.duration, voiceWavs: voiced.slice(0, 8).map((l) => join(pub, l.src)), log});
   for (const sc of timeline.scenes) if (sc.transitionIn) log(`transition: into ${sc.id} by ${sc.transitionIn.name} (${sc.transitionIn.kind === 'app' ? 'app navigation' : 'motion graphic'})`);
+  // The poster: the first scene's settled frame (S0's icon, title and line), when its shot names one. Film draws the
+  // film's frame 0 as that frame, so a player with no poster image shows the title card until play (Geoff, Oct 12),
+  // and out/thumbnail.png is the same frame.
+  const first = timeline.scenes[0], thumbAt = shots[first.id]?.thumbnail;
+  const posterFrame = thumbAt === undefined ? undefined : Math.round((first.start + (thumbAt < 0 ? (first.exit?.at ?? first.duration) + thumbAt : thumbAt)) * timeline.fps);
+  if (posterFrame !== undefined) first.poster = +(posterFrame / timeline.fps - first.start).toFixed(6);
   writeFileSync(join(pub, 'timeline.json'), JSON.stringify(timeline, null, 2));
   log(`timeline: ${fmt(timeline.duration)} (${timeline.scenes.map((s) => `${s.id} ${s.duration.toFixed(1)}s`).join(', ')})`);
 
@@ -104,10 +110,9 @@ try {
   for (const s of args.has('--scene') ? [] : timeline.scenes) {
     remotion('still', 'src/index.ts', 'Intro', join(out, `still-${s.id}.png`), `--frame=${Math.round(stillAt(s) * timeline.fps)}`);
   }
-  // The thumbnail: the first scene's settled frame, when its shot names one (S0's logo and title).
-  const first = timeline.scenes[0], thumbAt = shots[first.id]?.thumbnail;
-  if (thumbAt !== undefined && !args.has('--scene')) {
-    remotion('still', 'src/index.ts', 'Intro', join(out, 'thumbnail.png'), `--frame=${Math.round((first.start + (thumbAt < 0 ? (first.exit?.at ?? first.duration) + thumbAt : thumbAt)) * timeline.fps)}`);
+  // The thumbnail: the poster frame (above), also the video's cover art (pipeline/render.mjs).
+  if (posterFrame !== undefined && !args.has('--scene')) {
+    remotion('still', 'src/index.ts', 'Intro', join(out, 'thumbnail.png'), `--frame=${posterFrame}`);
     log('thumbnail: out/thumbnail.png');
   }
   const n = timeline.scenes.length;
@@ -130,12 +135,22 @@ try {
       // Loudness: the voice comes out of the TTS near -28 LUFS; the film's soundtrack is brought to -16 LUFS
       // (peaks under -1.5 dBTP), the level web video plays at, with the picture copied untouched.
       const loud = join(out, 'intro.loud.mp4');
-      if (spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, '-c:v', 'copy', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '256k', '-ar', '48000', loud]).status === 0) {
+      const thumb = join(out, 'thumbnail.png'), art = existsSync(thumb) ? ['-i', thumb, '-map', '0:v', '-map', '0:a', '-map', '1:v', '-c:v:1', 'png', '-disposition:v:1', 'attached_pic'] : [];
+      if (spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, ...art, '-c:v:0', 'copy', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '256k', '-ar', '48000', loud]).status === 0) {
         copyFileSync(loud, mp4);
         log('render: soundtrack at -16 LUFS');
       }
       rendered = timeline.scenes.map((s) => s.id);
-    } else ({mp4, rendered} = renderFilm({here, pub, out, cache, timeline, scale, log}));
+    } else ({mp4, rendered} = renderFilm({here, pub, out, cache, timeline, scale, cover: join(out, 'thumbnail.png'), log}));
+    // The poster check: the film's first frame must be the title card (Geoff, Oct 12: the still a player shows before
+    // play is the icon, title and line), the same picture as out/thumbnail.png.
+    const thumb = join(out, 'thumbnail.png');
+    if (existsSync(thumb) && scale === 1) {
+      const r = spawnSync('ffmpeg', ['-v', 'info', '-i', mp4, '-i', thumb, '-lavfi', '[0:v]trim=end_frame=1[a];[1:v]format=yuv420p[b];[a][b]psnr', '-f', 'null', '-'], {encoding: 'utf8'});
+      const db = +(r.stderr.match(/PSNR .*average:([0-9.]+|inf)/)?.[1]?.replace('inf', '99') ?? 0);
+      if (db < 35) throw new BuildError(`poster: the film's first frame isn't the title card (${db.toFixed(1)} dB against out/thumbnail.png); Film.tsx draws frame 0 at the first scene's poster time`);
+      log(`poster: frame 0 is the title card (${db >= 99 ? 'identical' : `${db.toFixed(1)} dB`} against out/thumbnail.png), and the file's cover art`);
+    }
     spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, '-vf', 'fps=1,scale=320:-1,tile=8x0:padding=4', '-frames:v', '1', join(out, 'contact-sheet.png')]);
     log(`render: ${mp4}`);
     // The score's ear check (after the sound-design method Geoff sent): a waveform of the final mix, and five
