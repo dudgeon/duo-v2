@@ -1439,11 +1439,41 @@ function sendImages(files, pos) {
   }
   return any;
 }
+// Tab-separated text as a Markdown table, or null (mirrors ImagePaste.tableMarkdown, DL-181).
+function tsvToMarkdown(tsv) {
+  const rows = tsv.replace(/\r\n?/g, "\n").split("\n");
+  while (rows.length && rows[rows.length - 1] === "") rows.pop();
+  if (rows.length < 2) return null;
+  const cells = rows.map((r) => r.split("\t"));
+  const n = cells[0].length;
+  if (n < 2 || !cells.every((r) => r.length === n)) return null;
+  const cell = (c) => { let t = c.trim(); if (t.length >= 2 && t[0] === '"' && t.endsWith('"')) t = t.slice(1, -1).replace(/""/g, '"'); return t.replace(/\|/g, "\\|"); };
+  const line = (r) => "| " + r.map(cell).join(" | ") + " |";
+  return [line(cells[0]), "| " + Array(n).fill("---").join(" | ") + " |", ...cells.slice(1).map(line)].join("\n");
+}
+// What a paste does (DL-181; mirrors ImagePaste.decide): text wins when the clipboard holds text and a picture
+// (Numbers, Excel, Word and Pages put a picture of the selection beside the text). Spreadsheet text becomes a table.
+function decidePaste(cd) {
+  const text = cd?.getData("text/plain") || "";
+  if (text.trim()) { const md = tsvToMarkdown(text); return md ? { kind: "table", md } : { kind: "text" }; }
+  return { kind: [...(cd?.files || [])].some((f) => IMAGE_TYPES.test(f.type)) ? "image" : "nothing" };
+}
 function pasteImage(e, v) {
-  const files = [...(e.clipboardData?.files || [])];
-  if (!files.some((f) => IMAGE_TYPES.test(f.type))) return false;
+  if (decidePaste(e.clipboardData).kind !== "image") return false;
   e.preventDefault();
-  return sendImages(files, v.state.selection.main.head);
+  return sendImages([...e.clipboardData.files], v.state.selection.main.head);
+}
+function pasteTable(e, v) {
+  const d = decidePaste(e.clipboardData);
+  const sel = v.state.selection.main;
+  if (d.kind !== "table" || tableAt(v.state, sel.head)) return false;
+  e.preventDefault();
+  const st = v.state, line = st.doc.lineAt(sel.from);
+  const before = st.sliceDoc(line.from, sel.from).trim() !== "", after = st.sliceDoc(sel.to, st.doc.lineAt(sel.to).to).trim() !== "";
+  const prevBlank = line.number === 1 || st.doc.line(line.number - 1).text.trim() === "";
+  const ins = (before ? "\n\n" : prevBlank ? "" : "\n") + d.md + (after ? "\n\n" : "\n");
+  v.dispatch({ changes: { from: sel.from, to: sel.to, insert: ins }, selection: { anchor: sel.from + ins.length }, userEvent: "input.paste", scrollIntoView: true });
+  return true;
 }
 function dropImage(e, v) {
   const files = [...(e.dataTransfer?.files || [])];
@@ -2008,7 +2038,7 @@ function endPreview() {
   return true;
 }
 
-const previewPropsList = [propertiesField, propertiesKeymap, tableKeymap, EditorView.domEventHandlers({ paste: (e, v) => pasteImage(e, v) || pasteIntoCell(e, v), drop: dropImage }), trackPendingImages, suggestionKeys,
+const previewPropsList = [propertiesField, propertiesKeymap, tableKeymap, EditorView.domEventHandlers({ paste: (e, v) => pasteImage(e, v) || pasteTable(e, v) || pasteIntoCell(e, v), drop: dropImage }), trackPendingImages, suggestionKeys,
         autocompletion({ override: [propertyCompletions], icons: false, activateOnTyping: true,
           tooltipClass: (st) => (inBlock(st) && !st.sliceDoc(st.doc.lineAt(st.selection.main.head).from, st.selection.main.head).includes(":") ? "duo-sugg-names" : "duo-sugg-values"),
           addToOptions: [{ position: 20, render: (c) => { const s = document.createElement("span"); s.className = "duo-sugg-icon";
