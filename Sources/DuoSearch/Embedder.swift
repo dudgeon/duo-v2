@@ -93,6 +93,31 @@ public final class Embedder: @unchecked Sendable {
     }
 }
 
+/// The one query embedder (C-79, task 7): loaded on the first semantic query, shared by every
+/// query after it (search's field, the List's filter), and dropped by `release()` when search
+/// has been quiet. Typing 30 characters loads the Core ML model once, not 30 times.
+public enum QueryEmbedder {
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var cached: Embedder?
+    /// How many times the model was loaded (DuoChecks reads it).
+    nonisolated(unsafe) public private(set) static var loads = 0
+
+    public static func shared() throws -> Embedder {
+        lock.lock(); defer { lock.unlock() }
+        if let cached { return cached }
+        let e = try Embedder(use: .query)
+        cached = e
+        loads += 1
+        return e
+    }
+
+    /// Drops the model's memory; the next query loads it again.
+    public static func release() {
+        lock.lock(); defer { lock.unlock() }
+        cached = nil
+    }
+}
+
 public struct SearchError: Error, CustomStringConvertible {
     public var description: String
     public init(_ d: String) { description = d }

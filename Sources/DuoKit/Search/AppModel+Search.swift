@@ -61,7 +61,7 @@ extension AppModel {
         case .escape:
             // Esc steps back: menu, then find similar, then close (DL-79 h).
             if s.menuOpen { s.menuOpen = false }
-            else if let back = s.similarReturnsTo { s.similarTo = nil; s.similarReturnsTo = nil; searchQueryChanged(back) }
+            else if let back = s.similarReturnsTo { s.similarTo = nil; s.similarReturnsTo = nil; searchQueryChanged(back, immediate: true) }
             else { closeSearch() }
         case .toggleExact: toggleExact()
         case .narrow: openSearch()
@@ -111,31 +111,35 @@ extension AppModel {
         loadSelectedTurns()
     }
 
-    public func runRecent(_ q: String) { searchQueryChanged(q) }
+    public func runRecent(_ q: String) { searchQueryChanged(q, immediate: true) }
 
-    func requery() { searchQueryChanged(search.query) }
+    func requery() { searchQueryChanged(search.query, immediate: true) }
+
+    /// Typing waits this long for the next keystroke before the index is asked (task 7).
+    nonisolated static let typingDebounce: Duration = .milliseconds(120)
 
     // MARK: The query
 
-    /// Every keystroke: names now (no index needed, DL-80), content once the index answers.
-    public func searchQueryChanged(_ text: String) {
+    /// Every keystroke: names now (no index needed, DL-80), content once the index answers. The
+    /// index is asked 120 ms after the last keystroke (`immediate` skips the wait for filters and
+    /// recents), off the main thread, which also reads the index's state.
+    public func searchQueryChanged(_ text: String, immediate: Bool = false) {
         let s = search
+        s.queryTask?.cancel()
+        s.queryTask = nil
         s.query = text
         s.menuOpen = false
         s.multi = []
         let q = text.trimmingCharacters(in: .whitespaces)
-        if q.isEmpty, s.similarTo == nil { s.phase = .empty; s.items = []; s.newProjectName = nil; s.recentSelected = nil; return }
+        if q.isEmpty, s.similarTo == nil { s.generation += 1; s.stillSearching = nil; s.phase = .empty; s.items = []; s.newProjectName = nil; s.recentSelected = nil; return }
         // Exact turns on by itself for quoted phrases and identifier-like input (search-exact).
         if !s.exact, SearchIndex.literal(in: q) != nil || RecentSearches.looksLikeIdentifier(q) { s.exact = true }
         let names = nameMatches(q)
         s.newProjectName = fixture.projects.contains(where: { $0.name.caseInsensitiveCompare(q) == .orderedSame }) || q.count < 2 ? nil : q
         s.generation += 1
         let gen = s.generation
-        let state = indexState()
-        switch state {
-        case .rebuilding(let why): s.phase = names.isEmpty ? .rebuilding(why) : .results; s.items = names; s.selected = 0; return
-        case .unreadable(let e): s.phase = names.isEmpty ? .unreadable(e) : .results; s.items = names; s.selected = 0; return
-        default: break
+        if let forced = s.forcedIndexState {
+            if applyIndexState(forced, names: names) { return }
         }
         s.items = names
         s.phase = .results
@@ -150,14 +154,44 @@ extension AppModel {
         query.passagesPerItem = 4
         query.similarTo = s.similarTo?.path
         let includeArchived = s.includeArchived, time = s.time
-        Task.detached(priority: .userInitiated) {
-            // Query and build the rows off the main thread: files are read for passage headings.
-            let rows = Result { () throws -> [SearchItem] in
-                let index = try SearchIndex(readOnly: true)
-                let embedder = query.exactOnly || query.similarTo != nil ? nil : try? Embedder(use: .query)
-                return Self.rows(try index.search(query, embedder: embedder), words: q, includeArchived: includeArchived, time: time)
+        let forcedOK = s.forcedIndexState != nil
+        s.queryTask = Task.detached(priority: .userInitiated) {
+            if !immediate {
+                try? await Task.sleep(for: Self.typingDebounce)
+                if Task.isCancelled { return }
             }
-            await MainActor.run { self.searchAnswered(rows, gen: gen, words: q) }
+            // Open the index once for its state and the query, off the main thread; files are read for passage headings.
+            var state = SearchUI.IndexState.ok
+            var rows: Result<[SearchItem], Error>
+            do {
+                let index = try SearchIndex(readOnly: true)
+                if !forcedOK && !index.modelMatches {
+                    state = .rebuilding("The search model changed, so everything is being indexed again.")
+                    rows = .success([])
+                } else {
+                    let embedder = query.exactOnly || query.similarTo != nil ? nil : try? QueryEmbedder.shared()
+                    if Task.isCancelled { return }
+                    rows = Result { Self.rows(try index.search(query, embedder: embedder), words: q, includeArchived: includeArchived, time: time) }
+                }
+            } catch {
+                if forcedOK { rows = .failure(error) } else { state = .unreadable("\(error)"); rows = .success([]) }
+            }
+            if Task.isCancelled { return }
+            await MainActor.run {
+                guard gen == self.search.generation else { return }
+                if case .ok = state { self.searchAnswered(rows, gen: gen, words: q) }
+                else { self.search.stillSearching = nil; _ = self.applyIndexState(state, names: names) }
+            }
+        }
+    }
+
+    /// An index that can't answer: names only, or the sentence for it. True when it did (nothing more to ask).
+    private func applyIndexState(_ state: SearchUI.IndexState, names: [SearchItem]) -> Bool {
+        let s = search
+        switch state {
+        case .rebuilding(let why): s.phase = names.isEmpty ? .rebuilding(why) : .results; s.items = names; s.selected = 0; return true
+        case .unreadable(let e): s.phase = names.isEmpty ? .unreadable(e) : .results; s.items = names; s.selected = 0; return true
+        case .ok: return false
         }
     }
 
@@ -220,7 +254,7 @@ extension AppModel {
         query.exactOnly = search.exact
         query.limit = 50
         Task.detached(priority: .utility) {
-            let n = (try? SearchIndex(readOnly: true).search(query, embedder: query.exactOnly ? nil : try? Embedder(use: .query)))?.count ?? 0
+            let n = (try? SearchIndex(readOnly: true).search(query, embedder: query.exactOnly ? nil : try? QueryEmbedder.shared()))?.count ?? 0
             await MainActor.run {
                 guard gen == self.search.generation, case .none(let sentence, _) = self.search.phase else { return }
                 self.search.phase = .none(sentence, n)
@@ -344,19 +378,10 @@ extension AppModel {
         search.similarReturnsTo = nil
         search.similarTo = item
         search.exact = false
-        searchQueryChanged("")
+        searchQueryChanged("", immediate: true)
     }
 
-    // MARK: Index state
-
-    func indexState() -> SearchUI.IndexState {
-        if let forced = search.forcedIndexState { return forced }
-        do {
-            let index = try SearchIndex(readOnly: true)
-            if !index.modelMatches { return .rebuilding("The search model changed, so everything is being indexed again.") }
-            return .ok
-        } catch { return .unreadable("\(error)") }
-    }
+    // MARK: Index state (read off the main thread, with the query: searchQueryChanged)
 
     func liveSearchCoverage() -> String? {
         if let c = search.fixtureCoverage { return c }
@@ -426,7 +451,7 @@ extension AppModel {
             s.similarReturnsTo = s.query
             s.similarTo = item
             s.exact = false
-            searchQueryChanged("")
+            searchQueryChanged("", immediate: true)
         case .showPassages:
             s.selected = s.items.firstIndex(of: item) ?? s.selected
         case .copyPath:

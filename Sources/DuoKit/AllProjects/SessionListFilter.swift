@@ -118,7 +118,7 @@ extension AppModel {
         query.passagesPerItem = 1
         query.exactOnly = SearchIndex.literal(in: text) != nil
         Task.detached(priority: .userInitiated) {
-            let hits = (try? SearchIndex(readOnly: true).search(query, embedder: query.exactOnly ? nil : try? Embedder(use: .query))) ?? []
+            let hits = (try? SearchIndex(readOnly: true).search(query, embedder: query.exactOnly ? nil : try? QueryEmbedder.shared())) ?? []
             let found = hits.map { SessionList.SearchMatch(sessionId: URL(fileURLWithPath: $0.path).deletingPathExtension().lastPathComponent, snippet: $0.snippet) }
             await MainActor.run {
                 guard gen == self.listGeneration else { return }
@@ -133,7 +133,7 @@ extension AppModel {
     public func searchFromListFilter() {
         let text = listFilter
         openSearch()
-        searchQueryChanged(text)
+        searchQueryChanged(text, immediate: true)
     }
 
     /// ⌘F in the List: its filter takes the keyboard. SwiftUI's field is an NSTextField underneath.

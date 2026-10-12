@@ -403,7 +403,7 @@ public enum FixtureHarness {
             } else { FileHandle.standardError.write(Data("sheet: none\n".utf8)) }
         case "search":   // search:<query>: open the modal (⇧⌘A) and type the query
             if !model.search.isOpen { model.openSearch() }
-            model.searchQueryChanged(parts.count > 1 ? parts[1] : "")
+            model.searchQueryChanged(parts.count > 1 ? parts[1] : "", immediate: true)
         case "search-kind":   // search-kind:file|session|memory|any (the Kind pop-up)
             model.setSearchKind(parts.count > 1 ? SearchItem.Kind(rawValue: parts[1]) : nil)
         case "search-close": model.closeSearch()
