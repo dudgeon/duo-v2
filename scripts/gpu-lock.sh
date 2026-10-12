@@ -18,7 +18,9 @@ shift
 queue="$lock.queue"
 poll="${GPU_LOCK_POLL:-2}"
 
-alive() { [[ "$1" =~ ^[0-9]+$ ]] && kill -0 "$1" 2>/dev/null; }
+# A pid is alive unless it's certainly gone: kill -0 also fails with "not permitted" (another user's process, or one
+# outside a sandboxed shell), so ask ps before calling an owner dead.
+alive() { [[ "$1" =~ ^[0-9]+$ ]] && { kill -0 "$1" 2>/dev/null || ps -p "$1" >/dev/null 2>&1; }; }
 
 # A ticket: the next number, taken under a short mkdir mutex, written whole by a rename.
 mkdir -p "$queue"
@@ -33,7 +35,14 @@ ticket="$queue/$(printf '%010d' "$n")"
 echo "$name $$" > "$ticket.tmp" && mv "$ticket.tmp" "$ticket"
 rmdir "$queue/.take"
 
-release() { rm -f "$lock/owner"; rmdir "$lock" 2>/dev/null; }
+# Release only a lock that is still ours. A bare-mkdir script that releases twice (an unlock, then the same unlock
+# again from its EXIT trap) deletes whoever took the lock in between, and the next release would cascade (F-296).
+me="$name $$"
+release() {
+  [ -n "${watch:-}" ] && kill "$watch" 2>/dev/null
+  if [ "$(cat "$lock/owner" 2>/dev/null)" = "$me" ]; then rm -f "$lock/owner"; rmdir "$lock" 2>/dev/null
+  else echo "gpu-lock: not releasing: the lock is no longer ours (owner now: $(cat "$lock/owner" 2>/dev/null || echo none))" >&2; fi
+}
 leave() { rm -f "$ticket"; }
 trap leave EXIT
 trap 'exit 143' TERM INT
@@ -74,10 +83,17 @@ while :; do
   if [ "$said" != "$msg" ]; then echo "gpu-lock: $msg" >&2; said="$msg"; fi
   sleep "$poll"
 done
-echo "$name $$" > "$lock/owner"
+echo "$me" > "$lock/owner"
 rm -f "$ticket"
 trap release EXIT
 echo "gpu-lock: taken by $name ($$)" >&2
+# Watch for the lock being taken from under the job (someone else's release deleted it): say so, loudly, once.
+( while sleep "${GPU_LOCK_WATCH:-10}"; do
+    kill -0 $$ 2>/dev/null || exit 0
+    o=$(cat "$lock/owner" 2>/dev/null || echo "no lock")
+    [ "$o" = "$me" ] || { echo "gpu-lock: WARNING: the lock was taken from $name while its job runs (owner now: $o). Some script released a lock it didn't hold." >&2; exit 0; }
+  done ) &
+watch=$!
 # The job runs as a child, so a TERM to this script reaches it (and the lock is still released after).
 "$@" &
 child=$!
