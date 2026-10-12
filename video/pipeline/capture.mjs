@@ -5,7 +5,8 @@ import {copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync} 
 import {dirname, join} from 'node:path';
 import {BuildError, fileSha, sha} from './util.mjs';
 
-export function captureStates(states, {repo, cache, pub, scale, fixture, force = false, log}) {
+// cachedOnly (the check stage): never launch the app; null when any state isn't captured yet.
+export function captureStates(states, {repo, cache, pub, scale, fixture, force = false, cachedOnly = false, log}) {
   const app = join(repo, 'build/Duo.app');
   const bin = join(app, 'Contents/MacOS/Duo');
   if (!existsSync(bin)) throw new BuildError(`capture: no app at ${app}; run scripts/bundle.sh`);
@@ -16,11 +17,13 @@ export function captureStates(states, {repo, cache, pub, scale, fixture, force =
   mkdirSync(join(pub, 'capture'), {recursive: true});
   const out = {};
   let taken = 0;
+  // The video's demo fixture (H3): the design fixture plus real document text. It's part of the key.
+  const fx = fixture ? join(repo, fixture) : null;
+  const fxKey = fx ? execFileSync('/bin/sh', ['-c', `cd "${dirname(fx)}" && find . -type f ! -name '.*' | sort | xargs shasum`]).toString() : '';
+  const keyOf = (state) => sha('window+anchors', appKey, state, scale, fxKey);
+  if (cachedOnly && states.some((st) => !existsSync(join(cc, `${keyOf(st)}.png`)))) return null;
   for (const state of states) {
-    // The video's demo fixture (H3): the design fixture plus real document text. It's part of the key.
-    const fx = fixture ? join(repo, fixture) : null;
-    const fxKey = fx ? execFileSync('/bin/sh', ['-c', `cd "${dirname(fx)}" && find . -type f ! -name '.*' | sort | xargs shasum`]).toString() : '';
-    const key = sha('window+anchors', appKey, state, scale, fxKey);
+    const key = keyOf(state);
     const png = join(cc, `${key}.png`), anchors = join(cc, `${key}.anchors.json`);
     if (force || !existsSync(png)) {
       // One retry: a background launch very occasionally exits without drawing (seen once in a run of five).

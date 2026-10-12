@@ -46,7 +46,12 @@ The transitions so far:
 ## App scenes (S3 on)
 
 `scene: "app"` in `shots.json` plays real captures of Duo (`video-s3-*`, `video-s4-*`, `video-s5-*` in `VideoTargets.swift`) with beats on the voice's words. A beat can carry:
-- `cam`: an anchor, `wide`, a rect in window points, or `{on, x0, x1, y0, y1}` for part of an anchor. Use the last for panes taller than the frame, where fitting the whole pane barely zooms.
+- `cam`: framing that follows the app, so a change to Duo's layout moves the camera with what it frames:
+  - an anchor, or `wide`;
+  - `{on, x0, x1, y0, y1}`: part of an anchor, in fractions. Use it for panes taller than the frame, where fitting the whole pane barely zooms;
+  - `{rel, dx, dy, w, h}`: a rect placed from an anchor's top-left (`x` or `y` instead of `dx` or `dy` pins that edge in window points). Use it to frame a row with what's around it, such as S10's + New task;
+  - `{fit: [anchors], pad}`: the anchors' union, padded (`pad` is a number or `{t, r, b, l}`), such as S10's task rows, first to last.
+  A bare rect in window points (`{x, y, w, h}`) still works, but it doesn't follow the app. The build names it as stale when the anchors inside it move (`pipeline/anchors.mjs`). `mark` and `wipe.on` take the same forms.
 - `click` and `state`: the cursor clicks, and the next capture comes up.
 - `menu`: a context menu, drawn with the app's real items, because macOS draws menus outside the window capture.
 - `drag`: a selection.

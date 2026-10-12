@@ -1,6 +1,6 @@
 // Parse video/script.md, the export of the script Doc (DL-169).
 // Scenes are `### S<n> · <title> (about N s)`; each bullet under one is a voiceover line;
-// `Topic:` under the heading is its name in the topic list; a paragraph starting `Shot:` is the shot note, and prose after it (beats, `> notes`) belongs to it. The table under `## The voice` is the
+// `Topic:` under the heading is its name in the topic list; a paragraph starting `Shot:` is the shot note, and prose after it (paragraphs, numbered beats, but not `> notes`) belongs to it. The table under `## The voice` is the
 // pronunciation lexicon (Written | Said): Said is what the voice is given.
 
 export function parseScript(md) {
@@ -13,7 +13,7 @@ export function parseScript(md) {
     if (h2) { inVoice = /voice/i.test(h2[1]); scene = null; continue; }
     const h3 = line.match(/^### (S\d+)\s*·\s*(.+?)(?:\s*\(about (\d+) s\))?$/);
     if (h3) {
-      scene = {id: h3[1], title: h3[2].trim(), targetSeconds: h3[3] ? +h3[3] : null, lines: [], shot: '', notes: [], topic: null};
+      scene = {id: h3[1], title: h3[2].trim(), targetSeconds: h3[3] ? +h3[3] : null, lines: [], shot: '', notes: [], asides: [], topic: null};
       scenes.push(scene);
       continue;
     }
@@ -41,8 +41,10 @@ export function parseScript(md) {
     if (topic && !scene.shot) { scene.topic = /^same$/i.test(topic[1].trim()) ? (scenes.at(-2)?.topic ?? null) : topic[1].trim(); continue; }
     const shot = line.match(/^Shot:\s*(.+)/);
     if (shot) scene.shot = shot[1].trim();
-    // Prose after the Shot: line (beats, `> notes`) is part of what the shot must do.
-    else if (scene.shot && line.trim() && !/^>\s*$/.test(line)) scene.notes.push(line.replace(/^>\s?/, '').trim());
+    // Prose after the Shot: line (paragraphs, numbered beats) is part of what the shot must do. A `> note` is for
+    // us, as the script's rules promise: kept as an aside, never part of the note's hash.
+    else if (scene.shot && /^>/.test(line)) { if (!/^>\s*$/.test(line)) scene.asides.push(line.replace(/^>\s?/, '').trim()); }
+    else if (scene.shot && line.trim()) scene.notes.push(line.trim());
   }
   // Example scenes and empty template slots are for the writer, not the film.
   return {scenes: scenes.filter((sc) => !/^example\b/i.test(sc.title) && sc.lines.length), lexicon};

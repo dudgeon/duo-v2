@@ -6,26 +6,39 @@ import {isAbsolute, join} from 'node:path';
 import {homedir} from 'node:os';
 import {BuildError, fileSha, sha} from './util.mjs';
 
-export function voiceLines(lines, {here, cache, pub, style, force = false, log}) {
+// The narrator and what keys its lines: shared by the voicing and the check stage (pipeline/check.mjs).
+export function voiceSetup({here}) {
   const dir = join(here, 'voice');
   const house = JSON.parse(readFileSync(join(dir, 'house/voice.json'), 'utf8'));
   // A voice kept outside the repo (Geoff's own, DL-169): its file and reference audio never enter duo-v2.
-  const ext = (process.env.DUO_VOICE_JSON ?? house.external ?? '').replace(/^~/, homedir());
-  const voice = ext && existsSync(ext) ? JSON.parse(readFileSync(ext, 'utf8')) : house;
+  // A named voice file that isn't there stops the build: falling back would change the narrator, and every
+  // timing with it (the two clones' cuts differ by 39 s). DUO_VOICE_JSON=house asks for the house voice.
+  const env = process.env.DUO_VOICE_JSON;
+  const ext = env === 'house' ? '' : (env ?? house.external ?? '').replace(/^~/, homedir());
+  if (ext && !existsSync(ext)) throw new BuildError(`voice: ${env ? 'DUO_VOICE_JSON' : 'voice.json external'} names ${ext}, which isn't there. Fix the path, or set DUO_VOICE_JSON=house for the house voice.`);
+  const voice = ext ? JSON.parse(readFileSync(ext, 'utf8')) : house;
   const refWav = isAbsolute(voice.ref_wav) ? voice.ref_wav : join(dir, voice.ref_wav);
-  log(`voice: ${voice === house ? 'house voice' : `external voice (${ext})`}, tempo ${voice.tempo ?? 1}`);
-  // `engine: "voxcpm"` (a candidate, 2026-10-12): VoxCPM2 with an optional LoRA, run from the voice-clone project
+  for (const [what, f] of [['reference audio', refWav], ...(voice.engine === 'voxcpm' ? [['voxcpm script', join(voice.root, voice.script)], ...(voice.lora ? [['LoRA', join(voice.root, voice.lora, 'lora_weights.safetensors')]] : [])] : [])])
+    if (!existsSync(f)) throw new BuildError(`voice: the ${what} ${f} isn't there`);
+  // `engine: "voxcpm"` (DL-173): VoxCPM2 with an optional LoRA, run from the voice-clone project
   // (`root`, its own venv and script); nothing of it enters duo-v2. Its script, LoRA weights and reference count in the key.
   const vox = voice.engine === 'voxcpm';
   const setup = vox ? sha(voice, fileSha(refWav), fileSha(join(voice.root, voice.script)), ...(voice.lora ? [fileSha(join(voice.root, voice.lora, 'lora_weights.safetensors'))] : []))
     : sha(voice, fileSha(refWav), ...['models.lock.json', 'requirements.txt', 'tts.py'].map((f) => readFileSync(join(dir, f), 'utf8')));
-  const vc = join(cache, 'voice');
-  mkdirSync(vc, {recursive: true});
-  mkdirSync(join(pub, 'voice'), {recursive: true});
   // A voice's own spellings (`said` in its file, {written: said}), for words only that voice gets wrong; the script's
   // table stays the same for every voice. The speech check still expects the written line.
   const own = (t) => Object.entries(voice.said ?? {}).reduce((s, [w, x]) => s.split(w).join(x), t);
-  const keyed = lines.map((l) => ({...l, said: own(l.said), key: sha(own(l.said), setup)}));
+  const keyed = (lines) => lines.map((l) => ({...l, said: own(l.said), key: sha(own(l.said), setup)}));
+  return {dir, house, ext, voice, refWav, vox, setup, keyed};
+}
+
+export function voiceLines(lines, {here, cache, pub, style, force = false, log}) {
+  const {dir, house, ext, voice, refWav, vox, keyed: keyLines} = voiceSetup({here});
+  log(`voice: ${voice === house ? 'house voice' : `external voice (${ext})`}, tempo ${voice.tempo ?? 1}`);
+  const vc = join(cache, 'voice');
+  mkdirSync(vc, {recursive: true});
+  mkdirSync(join(pub, 'voice'), {recursive: true});
+  const keyed = keyLines(lines);
   const missing = keyed.filter((l) => force || !existsSync(join(vc, `${l.key}.asr.json`)));
   const py = join(dir, '.venv/bin/python');
   const run = (script, ...a) => spawnSync(py, ['-I', join(dir, script), ...a], {cwd: dir, stdio: ['ignore', 'ignore', 'inherit'], env: {...process.env, DUO_MAX_WPS: String(style.voice.maxWps)}});
