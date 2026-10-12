@@ -79,6 +79,14 @@ public struct SettingsView: View {
         let _ = info.revision
         let state = DuoState.load()
         return VStack(alignment: .leading, spacing: DuoMetric.settingsGroupGap) {
+                // A stand-in placement: Settings has no General group drawn (DL-172, Q-177).
+                group("General") {
+                    row("Explanations", value: Text(state.dismissedExplainers.isEmpty ? "None dismissed" : "\(state.dismissedExplainers.count) dismissed"),
+                        sub: "Short pictures that explain a feature after a long hover. Don’t show again hides one.") {
+                        Button("Show dismissed explanations again") { model.explainer.resetDismissed() }.buttonStyle(.duo)
+                            .disabled(state.dismissedExplainers.isEmpty)
+                    }
+                }
                 group("Claude Code") { claudeRow(state) }
                 group("Home") {
                     if let root = model.liveRoot {

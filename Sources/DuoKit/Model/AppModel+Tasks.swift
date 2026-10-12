@@ -297,7 +297,9 @@ struct TasksFold: View {
                         .accessibilityElement(children: .ignore)
                         .onActivate { model.newTask(in: project) }  // action: task new
                         .help("Track a new task in this project")
+                        .explainerTrigger(.tasks, key: "tasks.fold-plus", origin: "tasks.fold-head")
                         .accessibilityLabel("New task")
+                        .accessibilityHint("Track a new task in this project")
                 }
             }
             .padding(.horizontal, 8 + DuoSpace.selectionInset)
@@ -309,6 +311,7 @@ struct TasksFold: View {
                 }
             }
             .contentShape(Rectangle())
+            .explainerFrame("tasks.fold-head")
             .onHover { inside in
                 if inside { model.hoveredTaskRow = headHover } else if model.hoveredTaskRow == headHover { model.hoveredTaskRow = nil }
             }
@@ -369,7 +372,9 @@ struct NewTaskRow: View {
         .accessibilityElement(children: .ignore)   // one element: the identifier, label and help sit on the row, not on its + and label
         .onActivate { model.newTask(in: project) }  // action: task new
         .help("Track a new task in this project")
+        .explainerTrigger(.tasks, key: "tasks.new-row")
         .accessibilityLabel("New task")
+        .accessibilityHint("Track a new task in this project")
         .accessibilityIdentifier("video.newtask.button")   // anchors: the video cursor's target
     }
 }

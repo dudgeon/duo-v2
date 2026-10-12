@@ -164,6 +164,9 @@ layout = [
     {"name": "searchFieldWidth", "value": px(s["jumpField"]["width"]), "usage": "Toolbar field `Search all projects ⇧⌘A` (DL-80)."},
     {"name": "searchFieldHeight", "value": px(s["jumpField"]["height"]), "usage": "Toolbar search field height."},
     {"name": "peekPopoverWidth", "value": px(s["peekPopoverWidth"]), "usage": "The needs-you peek popover."},
+    {"name": "explainerWidth", "value": px(s["explainer"]["width"]), "usage": "The Explainer popover (DL-172)."},
+    {"name": "explainerArrow", "value": px(s["explainer"]["arrow"]), "usage": "The Explainer's arrow on its trigger."},
+    {"name": "explainerBottom", "value": px(s["explainer"]["bottom"]), "usage": "The Explainer's bottom padding; its top and sides are popoverPadding's."},
 ]
 for k, v in s["row"].items():
     layout.append({"name": "row" + cap(k), "value": px(v), "usage": {"file": "File tree rows.", "tileSession": "Session rows inside a map tile.",

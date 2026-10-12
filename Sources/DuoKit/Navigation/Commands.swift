@@ -48,6 +48,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case duo2Reference      // Help: docs/cli/duo2.md on GitHub
     case whatsNew           // Help: this version's release notes
     case reportIssue        // Help: a new GitHub issue with the version and macOS filled in
+    case explainTasks       // Help: Explain Tasks, the Explainer at its trigger (DL-172)
     // Browser tabs (DL-124): print and page zoom, as in Safari
     case printPage          // ⌘P: File › Print…, the browser tab on screen
     case zoomIn             // ⌘+ (⌘= too): View › Zoom In, while a browser tab has the keyboard
@@ -108,6 +109,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .duo2Reference: "duo2 Reference"
         case .whatsNew: "What’s New in This Version"
         case .reportIssue: "Report an Issue…"
+        case .explainTasks: "Explain Tasks"
         case .printPage: "Print…"
         case .zoomIn: "Zoom In"
         case .zoomOut: "Zoom Out"
@@ -140,7 +142,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
         case .link: KeyboardShortcut("k", modifiers: .command)  // DL-108
         case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newProject, .newProjectFromGitHub, .code, .heading1, .heading2, .heading3,
-             .task, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .tableInsert, .tableRowAbove, .tableRowBelow,
+             .task, .addProperties, .duo2Reference, .whatsNew, .reportIssue, .explainTasks, .tableInsert, .tableRowAbove, .tableRowBelow,
              .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft, .tableAlignCenter,
              .tableAlignRight, .showBoard, .showList: nil  // Show Board / Show List: Q-100
         case .newBrowserTab: KeyboardShortcut("t", modifiers: [.command, .option])
@@ -175,6 +177,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .newTask: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
         case .newProject, .newProjectFromGitHub: model.terminalsMode == .live && model.liveRoot != nil
         case .duo2Reference, .whatsNew, .reportIssue: true
+        case .explainTasks: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
         case .sendSelection: model.canSendSelection
         case .newClaudeSession, .newShell: model.terminalsMode == .live
         case .chooseHome: model.terminalsMode == .live
@@ -247,6 +250,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .duo2Reference: NSWorkspace.shared.open(DuoLinks.duo2Reference)
         case .whatsNew: NSWorkspace.shared.open(DuoLinks.releaseNotes)
         case .reportIssue: NSWorkspace.shared.open(DuoLinks.newIssue)
+        case .explainTasks: model.explainTasks()
         case .closeWindow: NSApp.keyWindow?.performClose(nil)
         case .sendSelection: model.sendSelection()
         case .newClaudeSession: model.newSession()
@@ -410,6 +414,7 @@ public struct DuoCommands: Commands {
         CommandGroup(replacing: .help) {
             item(.duo2Reference)
             item(.whatsNew)
+            item(.explainTasks)
             Divider()
             item(.reportIssue)
         }

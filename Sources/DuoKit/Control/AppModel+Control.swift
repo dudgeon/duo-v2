@@ -311,6 +311,7 @@ extension AppModel {
                 return ["claude-path: \(st.claudePath ?? "auto") (runs \(c ?? "nothing found"))",
                         "notify: \(DuoState.load().notifyNeedsYou ? "on" : "off")",
                         "dock-badge: \(DuoState.load().dockBadge ? "on" : "off") (showing \(NSApp.dockTile.badgeLabel ?? "nothing"))",
+                        "explanations dismissed: \(DuoState.load().dismissedExplainers.isEmpty ? "none" : DuoState.load().dismissedExplainers.joined(separator: ", "))",
                         "home: \(liveRoot.map { Self.short($0.path) } ?? "none")"].joined(separator: "\n")
             }
             // What macOS allows decides whether the badge is drawn at all (DL-138).
@@ -331,7 +332,10 @@ extension AppModel {
                 DuoState.update { if key == "notify" { $0.notifyNeedsYou = value == "on" } else { $0.dockBadge = value == "on" } }
                 updateDockBadge()
                 SettingsInfo.shared.revision += 1
-            default: return done(.fail("no setting '\(key)'. Settings: claude-path, notify, dock-badge"))
+            case "explainers":
+                guard value == "reset" else { return done(.fail("usage: \(id.action.usage)")) }
+                explainer.resetDismissed()
+            default: return done(.fail("no setting '\(key)'. Settings: claude-path, notify, dock-badge, explainers"))
             }
             reply()
         case .projectReconnect:

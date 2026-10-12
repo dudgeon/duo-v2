@@ -276,6 +276,9 @@ public enum DuoMetric {
     public static let taskBoardSwitchPaddingX: CGFloat = 10.0
     public static let taskBoardAddColumnWidth: CGFloat = 170.0
     public static let taskBoardAddColumnIdle: CGFloat = 26.0
+    public static let explainerWidth: CGFloat = 300.0
+    public static let explainerArrow: CGFloat = 12.0
+    public static let explainerBottom: CGFloat = 12.0
     public static let idlePopoverWidth: CGFloat = 460.0
     public static let idlePopoverPadding = EdgeInsets(top: 12.0, leading: 8.0, bottom: 12.0, trailing: 8.0)
     public static let idleRowHeight: CGFloat = 26.0
