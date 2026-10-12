@@ -1,31 +1,275 @@
 {
-  "$note": "The director film's shots, keyed by scene id, as for the intro (video/shots.json). Placeholder paper cards until its real scenes exist.",
+  "$note": "The director film's shots, keyed by scene id (as video/shots.json is for the intro). Look B · Panes (DL-180): src/scenes/director/. Scenes still standing in are paper cards with requires marked built: false.",
   "S1": {
     "kind": "drawn",
-    "scene": "paper-card",
-    "shotSha": "e2969f2f2fff",
+    "scene": "dir-switchboard",
+    "tail": 1,
     "requires": [
       {
-        "what": "A paper card with the scene's title in ink",
+        "what": "You as one node in the middle",
         "by": [
-          "src:src/scenes/director/PaperCard.tsx"
+          "src:src/scenes/director/Switchboard.tsx"
+        ]
+      },
+      {
+        "what": "Sessions appear around you one by one, each tied to you by a line",
+        "by": [
+          "event:rowsStart",
+          "event:rowsEnd"
+        ]
+      },
+      {
+        "what": "Each time one asks for you, its line pulses toward you (a message runs down it and it turns needs-you orange)",
+        "by": [
+          "event:brief",
+          "event:check",
+          "event:merge",
+          "event:remember"
+        ]
+      },
+      {
+        "what": "Every line pulling on the centre by the end",
+        "by": [
+          "event:switch"
         ]
       }
-    ]
+    ],
+    "shotSha": "0a7043ef8803",
+    "events": {
+      "rowsStart": {
+        "line": 1,
+        "word": "often"
+      },
+      "rowsEnd": {
+        "line": 1,
+        "word": "once"
+      },
+      "brief": {
+        "line": 2,
+        "word": "brief"
+      },
+      "check": {
+        "line": 2,
+        "word": "check"
+      },
+      "merge": {
+        "line": 2,
+        "word": "merge"
+      },
+      "remember": {
+        "line": 2,
+        "word": "remember"
+      },
+      "switch": {
+        "line": 3,
+        "word": "switchboard"
+      }
+    }
   },
   "S2": {
     "kind": "drawn",
-    "scene": "paper-card",
-    "transitionIn": "paper-carry",
-    "shotSha": "7adc8502f488",
+    "scene": "dir-prompt",
+    "transitionIn": "board-carry",
+    "tail": 2.6,
     "requires": [
       {
-        "what": "The paper card carries on into the next scene's title",
+        "what": "The prompt types itself onto a card, in the director's own words (the verbatim first prompt)",
         "by": [
-          "transition",
-          "src:src/scenes/director/PaperCard.tsx"
+          "event:typeA0",
+          "event:typeA1",
+          "event:typeB0"
+        ]
+      },
+      {
+        "what": "The tangle from S1 reorganises into frame B's tree: you on the left, the director beside you, the sessions in a panel",
+        "by": [
+          "event:submit"
+        ]
+      },
+      {
+        "what": "The director's first survey runs down the sessions",
+        "by": [
+          "event:stood"
+        ]
+      },
+      {
+        "what": "One line reaches you",
+        "by": [
+          "event:submit"
         ]
       }
-    ]
+    ],
+    "shotSha": "c530d84ee3de",
+    "events": {
+      "session": {
+        "line": 1,
+        "word": "session"
+      },
+      "typeA0": {
+        "line": 2,
+        "word": "There",
+        "offset": -0.1
+      },
+      "typeA1": {
+        "line": 2,
+        "word": "manager"
+      },
+      "typeB0": {
+        "line": 3,
+        "word": "Then"
+      },
+      "submit": {
+        "line": 3,
+        "word": "survey"
+      },
+      "stood": {
+        "line": 3,
+        "word": "stood"
+      }
+    }
+  },
+  "S3": {
+    "kind": "drawn",
+    "scene": "paper-card",
+    "transitionIn": "paper-carry",
+    "requires": [
+      {
+        "what": "The director's card unfolds into its job description, one section per line",
+        "built": false
+      },
+      {
+        "what": "Numbered records stack beside it like a ledger",
+        "built": false
+      }
+    ],
+    "shotSha": "c86df2b6fae3"
+  },
+  "S4": {
+    "kind": "drawn",
+    "scene": "paper-card",
+    "transitionIn": "paper-carry",
+    "requires": [
+      {
+        "what": "A timeline from Oct 5 to today under the tree; each addition drops onto its date",
+        "built": false
+      },
+      {
+        "what": "Sessions slide into a background lane",
+        "built": false
+      },
+      {
+        "what": "Three model tiers colour the sessions",
+        "built": false
+      },
+      {
+        "what": "A phone between you and the director with the console's buttons",
+        "built": false
+      }
+    ],
+    "shotSha": "a346980fd4f6"
+  },
+  "S5": {
+    "kind": "drawn",
+    "scene": "paper-card",
+    "transitionIn": "paper-carry",
+    "requires": [
+      {
+        "what": "Subagents: boxes inside the parent's outline, which swells",
+        "built": false
+      },
+      {
+        "what": "The director: full sessions outside it on their own branch lines, a short report arrow back tagged since Claude Code 2.1.224",
+        "built": false
+      },
+      {
+        "what": "You step into one session and out again; the director's outline stays the same size",
+        "built": false
+      }
+    ],
+    "shotSha": "067eba54a8b0"
+  },
+  "S6": {
+    "kind": "drawn",
+    "scene": "paper-card",
+    "transitionIn": "paper-carry",
+    "requires": [
+      {
+        "what": "Workers take a different task card in turn without changing shape or label",
+        "built": false
+      }
+    ],
+    "shotSha": "17b2f8516149"
+  },
+  "S7": {
+    "kind": "drawn",
+    "scene": "paper-card",
+    "transitionIn": "paper-carry",
+    "requires": [
+      {
+        "what": "The timeline fills with what shipped: release tags, merges as ticks, a few features named",
+        "built": false
+      },
+      {
+        "what": "Counts set as the line says them",
+        "built": false
+      }
+    ],
+    "shotSha": "0fc5006d96e9"
+  },
+  "S8": {
+    "kind": "drawn",
+    "scene": "paper-card",
+    "transitionIn": "paper-carry",
+    "requires": [
+      {
+        "what": "A grid of constraints; the tree redraws for each cell (arrows become files, move into the chat)",
+        "built": false
+      }
+    ],
+    "shotSha": "c24f6f0eec4b"
+  },
+  "S9": {
+    "kind": "drawn",
+    "scene": "paper-card",
+    "transitionIn": "paper-carry",
+    "requires": [
+      {
+        "what": "The home-built tree beside a Claude Code Projects tree; the shapes match",
+        "built": false
+      }
+    ],
+    "shotSha": "02ef95f70b66"
+  },
+  "S10": {
+    "kind": "drawn",
+    "scene": "paper-card",
+    "transitionIn": "paper-carry",
+    "requires": [
+      {
+        "what": "The director gains a trail back through the timeline (persistent)",
+        "built": false
+      },
+      {
+        "what": "A second and third person appear, each with a line to the same director (shared)",
+        "built": false
+      }
+    ],
+    "shotSha": "7817935cf1c2"
+  },
+  "S11": {
+    "kind": "drawn",
+    "scene": "paper-card",
+    "transitionIn": "paper-carry",
+    "requires": [
+      {
+        "what": "The first prompt's card comes back alone",
+        "built": false
+      },
+      {
+        "what": "A QR code to the gist draws itself, with its short address",
+        "built": false
+      }
+    ],
+    "shotSha": "95ddfd3fb1e8"
   }
 }
