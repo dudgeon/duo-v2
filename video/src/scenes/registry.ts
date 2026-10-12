@@ -10,6 +10,7 @@ import {Generalists} from './director/Generalists';
 import {Done} from './director/Done';
 import {Patterns} from './director/Patterns';
 import {NextUp, Projects, StartHere} from './director/Ending';
+import {FromLine, Standup, Team} from './director/Stories';
 
 /** What a registered scene draws: the time in the scene, its events (seconds), and the scene's timeline entry. */
 export type SceneProps = {t: number; ev: Record<string, number>; scene: {id: string; title: string; topic?: string | null; lines?: {text: string; start: number; duration: number}[]}};
@@ -36,4 +37,7 @@ export const SCENE_KINDS: Record<string, ComponentType<SceneProps>> = {
   'dir-projects': captioned(Projects),
   'dir-next': captioned(NextUp),
   'dir-start': captioned(StartHere),
+  'dir-brief': captioned(FromLine),
+  'dir-team': captioned(Team),
+  'dir-standup': captioned(Standup),
 };

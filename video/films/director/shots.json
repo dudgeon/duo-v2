@@ -1,14 +1,54 @@
 {
-  "$note": "The director film's shots, keyed by scene id (as video/shots.json is for the intro). Look B \u00b7 Panes (DL-180): src/scenes/director/. Scenes still standing in are paper cards with requires marked built: false.",
+  "$note": "The director film's shots, keyed by scene id (as video/shots.json is for the intro). Look B · Panes (DL-180), script v2 (Oct 12): src/scenes/director/.",
   "S1": {
     "kind": "drawn",
     "scene": "dir-switchboard",
-    "tail": 1,
+    "tail": 1.4,
+    "events": {
+      "hobby": {
+        "line": 1,
+        "word": "phone"
+      },
+      "rowsStart": {
+        "line": 2,
+        "word": "often"
+      },
+      "rowsEnd": {
+        "line": 2,
+        "word": "once"
+      },
+      "brief": {
+        "line": 3,
+        "word": "brief"
+      },
+      "check": {
+        "line": 3,
+        "word": "check"
+      },
+      "merge": {
+        "line": 3,
+        "word": "merge"
+      },
+      "remember": {
+        "line": 3,
+        "word": "remember"
+      },
+      "switch": {
+        "line": 4,
+        "word": "switchboard"
+      }
+    },
     "requires": [
       {
-        "what": "You as one node in the middle",
+        "what": "It opens on a phone, an idea going out as a one-line message (a real ask, verbatim)",
         "by": [
-          "src:src/scenes/director/Switchboard.tsx"
+          "event:hobby"
+        ]
+      },
+      {
+        "what": "The camera pulls back to you in the middle (the phone becomes your card)",
+        "by": [
+          "event:rowsStart"
         ]
       },
       {
@@ -19,7 +59,7 @@
         ]
       },
       {
-        "what": "Each time one asks for you, its line pulses toward you (a message runs down it and it turns needs-you orange)",
+        "what": "Each time one asks for you, its line pulses toward you",
         "by": [
           "event:brief",
           "event:check",
@@ -34,72 +74,12 @@
         ]
       }
     ],
-    "shotSha": "0a7043ef8803",
-    "events": {
-      "rowsStart": {
-        "line": 1,
-        "word": "often"
-      },
-      "rowsEnd": {
-        "line": 1,
-        "word": "once"
-      },
-      "brief": {
-        "line": 2,
-        "word": "brief"
-      },
-      "check": {
-        "line": 2,
-        "word": "check"
-      },
-      "merge": {
-        "line": 2,
-        "word": "merge"
-      },
-      "remember": {
-        "line": 2,
-        "word": "remember"
-      },
-      "switch": {
-        "line": 3,
-        "word": "switchboard"
-      }
-    }
+    "shotSha": "12ef3defe264"
   },
   "S2": {
     "kind": "drawn",
     "scene": "dir-prompt",
-    "transitionIn": "board-carry",
     "tail": 2.6,
-    "requires": [
-      {
-        "what": "The prompt types itself onto a card, in the director's own words (the verbatim first prompt)",
-        "by": [
-          "event:typeA0",
-          "event:typeA1",
-          "event:typeB0"
-        ]
-      },
-      {
-        "what": "The tangle from S1 reorganises into frame B's tree: you on the left, the director beside you, the sessions in a panel",
-        "by": [
-          "event:submit"
-        ]
-      },
-      {
-        "what": "The director's first survey runs down the sessions",
-        "by": [
-          "event:stood"
-        ]
-      },
-      {
-        "what": "One line reaches you",
-        "by": [
-          "event:submit"
-        ]
-      }
-    ],
-    "shotSha": "c530d84ee3de",
     "events": {
       "session": {
         "line": 1,
@@ -116,195 +96,320 @@
       },
       "typeB0": {
         "line": 3,
-        "word": "Then"
+        "word": "Twenty"
       },
       "submit": {
         "line": 3,
-        "word": "survey"
+        "word": "work"
       },
       "stood": {
         "line": 3,
-        "word": "stood"
-      }
-    },
-    "leadIn": 1.1
-  },
-  "S3": {
-    "kind": "drawn",
-    "scene": "dir-skill",
-    "transitionIn": "board-carry",
-    "tail": 1.4,
-    "shotSha": "c86df2b6fae3",
-    "events": {
-      "compact": {
-        "line": 1,
-        "word": "compacted"
-      },
-      "lost": {
-        "line": 1,
-        "word": "lost"
-      },
-      "skill": {
-        "line": 2,
-        "word": "skill"
-      },
-      "brief": {
-        "line": 2,
-        "word": "brief"
-      },
-      "review": {
-        "line": 2,
-        "word": "review"
-      },
-      "ask": {
-        "line": 2,
-        "word": "ask"
-      },
-      "record": {
-        "line": 3,
-        "word": "record"
+        "word": "work",
+        "offset": 1.2
       }
     },
     "requires": [
       {
-        "what": "The director's card unfolds into its job description, one section per line (the skill's real sections, lit as they're named)",
+        "what": "The first prompt types itself onto the console, verbatim",
         "by": [
-          "event:skill",
-          "event:brief",
+          "event:typeA0",
+          "event:typeA1"
+        ]
+      },
+      {
+        "what": "On line 3 a second message types below it, verbatim: the 10:25 message",
+        "by": [
+          "event:typeB0"
+        ]
+      },
+      {
+        "what": "The tangle settles into frame B's tree: you, the director, the sessions in a panel",
+        "by": [
+          "event:submit"
+        ]
+      },
+      {
+        "what": "The director's first survey runs down the sessions; one line reaches you",
+        "by": [
+          "event:stood"
+        ]
+      }
+    ],
+    "transitionIn": "board-carry",
+    "leadIn": 1.1,
+    "shotSha": "7a5a23be8da3"
+  },
+  "S3": {
+    "kind": "drawn",
+    "scene": "dir-brief",
+    "tail": 1.6,
+    "events": {
+      "go": {
+        "line": 1,
+        "word": "Most"
+      },
+      "asks": {
+        "line": 1,
+        "word": "asks"
+      },
+      "turns": {
+        "line": 2,
+        "word": "turns"
+      },
+      "quoted": {
+        "line": 2,
+        "word": "quoted"
+      },
+      "branch": {
+        "line": 2,
+        "word": "branch"
+      },
+      "record": {
+        "line": 2,
+        "word": "record"
+      },
+      "prove": {
+        "line": 2,
+        "word": "prove"
+      },
+      "briefed": {
+        "line": 3,
+        "word": "briefed"
+      },
+      "merged": {
+        "line": 3,
+        "word": "merged"
+      },
+      "review": {
+        "line": 4,
+        "word": "review"
+      },
+      "brief2": {
+        "line": 4,
+        "word": "brief"
+      },
+      "report": {
+        "line": 4,
+        "word": "report"
+      }
+    },
+    "requires": [
+      {
+        "what": "Your ask arrives as a phone message, verbatim",
+        "by": [
+          "event:asks"
+        ]
+      },
+      {
+        "what": "It travels to the director, which unfolds it into a brief card",
+        "by": [
+          "event:turns"
+        ]
+      },
+      {
+        "what": "Lines of the brief light up as named: your words quoted, the branch, the records, how to prove it (the brief's spec line)",
+        "by": [
+          "event:quoted",
+          "event:branch",
+          "event:record",
+          "event:prove"
+        ]
+      },
+      {
+        "what": "The brief goes to a new session; a merge card lands with what changed and how long it took",
+        "by": [
+          "event:briefed",
+          "event:merged"
+        ]
+      },
+      {
+        "what": "The review: a 34-word ask beside an 872-word brief, drawn to scale, and the report",
+        "by": [
           "event:review",
+          "event:brief2",
+          "event:report"
+        ]
+      }
+    ],
+    "transitionIn": "board-carry",
+    "leadIn": 1.1,
+    "shotSha": "5256e86cd9d1"
+  },
+  "S4": {
+    "kind": "drawn",
+    "scene": "dir-team",
+    "tail": 1.6,
+    "events": {
+      "go": {
+        "line": 1,
+        "word": "Bigger"
+      },
+      "chat": {
+        "line": 2,
+        "word": "chat"
+      },
+      "research": {
+        "line": 2,
+        "word": "research"
+      },
+      "design": {
+        "line": 2,
+        "word": "design"
+      },
+      "told": {
+        "line": 3,
+        "word": "told"
+      },
+      "canvas": {
+        "line": 3,
+        "word": "canvas"
+      },
+      "picked": {
+        "line": 3,
+        "word": "picked"
+      },
+      "builder": {
+        "line": 3,
+        "word": "builder"
+      },
+      "hundred": {
+        "line": 4,
+        "word": "hundred"
+      },
+      "Word": {
+        "line": 5,
+        "word": "Word"
+      },
+      "looks": {
+        "line": 5,
+        "word": "looks"
+      },
+      "ship": {
+        "line": 5,
+        "word": "ship"
+      }
+    },
+    "requires": [
+      {
+        "what": "Your ask splits into two sessions, research and design, side by side",
+        "by": [
+          "event:research",
+          "event:design"
+        ]
+      },
+      {
+        "what": "A message passes from research to design",
+        "by": [
+          "event:told"
+        ]
+      },
+      {
+        "what": "A canvas card with three looks; your pick ticks one",
+        "by": [
+          "event:canvas",
+          "event:picked"
+        ]
+      },
+      {
+        "what": "A builder appears under the director on its own branch, and a merge card lands",
+        "by": [
+          "event:builder",
+          "event:hundred"
+        ]
+      },
+      {
+        "what": "The Word viewer: a canvas card with your comment on it, in your words, and two build slices merging",
+        "by": [
+          "event:Word",
+          "event:looks",
+          "event:ship"
+        ]
+      }
+    ],
+    "transitionIn": "board-carry",
+    "leadIn": 1.1,
+    "shotSha": "77f637108c47"
+  },
+  "S5": {
+    "kind": "drawn",
+    "scene": "dir-standup",
+    "tail": 1.6,
+    "events": {
+      "go": {
+        "line": 1,
+        "word": "When"
+      },
+      "ask": {
+        "line": 1,
+        "word": "ask"
+      },
+      "standup": {
+        "line": 2,
+        "word": "standup"
+      },
+      "done": {
+        "line": 2,
+        "word": "done"
+      },
+      "needs": {
+        "line": 2,
+        "word": "needs"
+      },
+      "next": {
+        "line": 2,
+        "word": "next"
+      },
+      "buttons": {
+        "line": 3,
+        "word": "buttons"
+      },
+      "tapped": {
+        "line": 3,
+        "word": "tapped"
+      },
+      "started": {
+        "line": 3,
+        "word": "started"
+      }
+    },
+    "requires": [
+      {
+        "what": "Your question arrives from the phone, verbatim",
+        "by": [
           "event:ask"
         ]
       },
       {
-        "what": "Numbered records stack beside it like a ledger (real decisions)",
+        "what": "The answer comes back as a digest card, Done / Needs you / Next, with real lines from it",
         "by": [
-          "event:record"
+          "event:standup",
+          "event:done",
+          "event:needs",
+          "event:next"
         ]
       },
       {
-        "what": "Before that, the director's context fills and collapses on compaction, and its job falls away",
+        "what": "Four buttons, recommendation first; your four taps",
         "by": [
-          "event:compact",
-          "event:lost"
-        ]
-      }
-    ],
-    "leadIn": 1.1
-  },
-  "S4": {
-    "kind": "drawn",
-    "scene": "dir-additions",
-    "transitionIn": "board-carry",
-    "tail": 1.4,
-    "shotSha": "a346980fd4f6",
-    "events": {
-      "fold": {
-        "line": 1,
-        "word": "New"
-      },
-      "session": {
-        "line": 1,
-        "word": "session"
-      },
-      "delegates": {
-        "line": 1,
-        "word": "delegates"
-      },
-      "background": {
-        "line": 2,
-        "word": "background"
-      },
-      "phone": {
-        "line": 2,
-        "word": "phone"
-      },
-      "model": {
-        "line": 3,
-        "word": "model"
-      },
-      "plans": {
-        "line": 3,
-        "word": "plans"
-      },
-      "builds": {
-        "line": 3,
-        "word": "builds"
-      },
-      "tests": {
-        "line": 3,
-        "word": "tests"
-      },
-      "buttons": {
-        "line": 4,
-        "word": "buttons"
-      },
-      "message": {
-        "line": 5,
-        "word": "message"
-      },
-      "tells": {
-        "line": 5,
-        "word": "tells"
-      },
-      "wakes": {
-        "line": 5,
-        "word": "wakes"
-      }
-    },
-    "requires": [
-      {
-        "what": "A timeline from Oct 5 to today runs under the tree from S2",
-        "by": [
-          "event:fold"
-        ]
-      },
-      {
-        "what": "Each addition drops onto its date as the line names it",
-        "by": [
-          "event:delegates",
-          "event:background",
-          "event:model",
           "event:buttons",
-          "event:message"
+          "event:tapped"
         ]
       },
       {
-        "what": "Sessions slide into a background lane",
+        "what": "Two new sessions start (drawn as rows beside the digest)",
         "by": [
-          "event:background"
-        ]
-      },
-      {
-        "what": "Three model tiers colour the sessions",
-        "by": [
-          "event:plans",
-          "event:builds",
-          "event:tests"
-        ]
-      },
-      {
-        "what": "A phone between you and the director with the console's buttons on it (drawn above you: there's no room between the two cards)",
-        "by": [
-          "event:phone",
-          "event:buttons"
-        ]
-      },
-      {
-        "what": "Line 5: reports run up to the director as messages, and it wakes a worker",
-        "by": [
-          "event:tells",
-          "event:wakes"
+          "event:started"
         ]
       }
     ],
-    "leadIn": 1.1
+    "transitionIn": "board-carry",
+    "leadIn": 1.1,
+    "shotSha": "492986005b65"
   },
-  "S5": {
+  "S6": {
     "kind": "drawn",
     "scene": "dir-why",
-    "transitionIn": "board-carry",
     "tail": 1.4,
-    "shotSha": "067eba54a8b0",
     "events": {
       "go": {
         "line": 1,
@@ -312,11 +417,11 @@
       },
       "farm": {
         "line": 1,
-        "word": "farm"
+        "word": "farms"
       },
       "back": {
         "line": 1,
-        "word": "back"
+        "word": "context"
       },
       "here": {
         "line": 2,
@@ -336,11 +441,11 @@
       },
       "report": {
         "line": 3,
-        "word": "report"
+        "word": "reads"
       },
       "small": {
         "line": 3,
-        "word": "small"
+        "word": "transcript"
       }
     },
     "requires": [
@@ -352,7 +457,7 @@
         ]
       },
       {
-        "what": "Left, subagents: small boxes inside the parent session's outline, their work flowing back into it until the outline swells",
+        "what": "Left, subagents: small boxes inside the parent's outline, their work flowing back until the outline swells",
         "by": [
           "event:farm",
           "event:back"
@@ -379,80 +484,20 @@
         ]
       },
       {
-        "what": "The director's outline stays the same size the whole time (its context meter stays low)",
+        "what": "The director's outline stays the same size (its context meter stays low)",
         "by": [
           "event:small"
         ]
       }
     ],
-    "leadIn": 1.1
-  },
-  "S6": {
-    "kind": "drawn",
-    "scene": "dir-generalists",
     "transitionIn": "board-carry",
-    "tail": 1.2,
-    "shotSha": "17b2f8516149",
-    "events": {
-      "go": {
-        "line": 1,
-        "word": "Many"
-      },
-      "persona": {
-        "line": 1,
-        "word": "persona"
-      },
-      "didnt": {
-        "line": 2,
-        "word": "didn't"
-      },
-      "design": {
-        "line": 2,
-        "word": "design"
-      },
-      "bug": {
-        "line": 2,
-        "word": "bug"
-      },
-      "release": {
-        "line": 2,
-        "word": "release"
-      },
-      "research": {
-        "line": 2,
-        "word": "research"
-      }
-    },
-    "requires": [
-      {
-        "what": "The worker sessions each take a different task card in turn (design, bug, release, research)",
-        "by": [
-          "event:design",
-          "event:bug",
-          "event:release",
-          "event:research"
-        ]
-      },
-      {
-        "what": "Without changing shape or label: the brief changes, not the worker (specialist badges shown, then fall away)",
-        "by": [
-          "event:persona",
-          "event:didnt"
-        ]
-      },
-      {
-        "what": "A video task card (the Shot lists five; the line names four, so the card for video isn't shown)",
-        "built": false
-      }
-    ],
-    "leadIn": 1.1
+    "leadIn": 1.1,
+    "shotSha": "067eba54a8b0"
   },
   "S7": {
     "kind": "drawn",
     "scene": "dir-done",
-    "transitionIn": "board-carry",
     "tail": 1.6,
-    "shotSha": "0fc5006d96e9",
     "events": {
       "go": {
         "line": 1,
@@ -475,20 +520,20 @@
         "line": 2,
         "word": "sessions"
       },
-      "decisions": {
+      "personas": {
         "line": 2,
-        "word": "decisions"
+        "word": "personas"
       }
     },
     "requires": [
       {
-        "what": "The timeline from S4 fills with what shipped: merges as ticks (one cell per merge, per day)",
+        "what": "The first week's timeline fills: merges as cells over their days",
         "by": [
           "event:merges"
         ]
       },
       {
-        "what": "Release tags as markers",
+        "what": "Release tags under them",
         "by": [
           "event:releases"
         ]
@@ -500,7 +545,7 @@
         ]
       },
       {
-        "what": "Each count set as the line says it (not run up: a number that spins reads as a gimmick, reference-analysis-director.md)",
+        "what": "Each count appears as the line says it",
         "by": [
           "event:releases",
           "event:merges",
@@ -508,14 +553,14 @@
         ]
       }
     ],
-    "leadIn": 1.1
+    "transitionIn": "board-carry",
+    "leadIn": 1.1,
+    "shotSha": "a4e2fa1e67d9"
   },
   "S8": {
     "kind": "drawn",
     "scene": "dir-patterns",
-    "transitionIn": "board-carry",
     "tail": 1.6,
-    "shotSha": "c24f6f0eec4b",
     "events": {
       "go": {
         "line": 1,
@@ -525,45 +570,45 @@
         "line": 2,
         "word": "older"
       },
+      "laptop": {
+        "line": 2,
+        "word": "laptop"
+      },
       "Remote": {
         "line": 3,
         "word": "Remote"
       },
       "page": {
-        "line": 4,
-        "word": "page"
-      },
-      "laptop": {
-        "line": 5,
-        "word": "laptop"
+        "line": 3,
+        "word": "buttons"
       }
     },
     "requires": [
       {
-        "what": "A grid of constraints: Claude Code version, Remote Control on or off, a page for buttons or not (plus the pinned work laptop the fifth line names)",
+        "what": "A grid of constraints",
         "by": [
           "event:older",
+          "event:laptop",
           "event:Remote",
-          "event:page",
-          "event:laptop"
+          "event:page"
         ]
       },
       {
-        "what": "For each cell, the director tree from S2 redraws to show what changes: arrows become files, questions move into the chat",
+        "what": "For each cell, the director tree redraws: arrows become files, questions move into the chat",
         "by": [
           "event:older",
           "event:page"
         ]
       }
     ],
-    "leadIn": 1.1
+    "transitionIn": "board-carry",
+    "leadIn": 1.1,
+    "shotSha": "26b8f497876c"
   },
   "S9": {
     "kind": "drawn",
     "scene": "dir-projects",
-    "transitionIn": "board-carry",
     "tail": 1.4,
-    "shotSha": "02ef95f70b66",
     "events": {
       "go": {
         "line": 1,
@@ -602,14 +647,14 @@
         ]
       }
     ],
-    "leadIn": 1.1
+    "transitionIn": "board-carry",
+    "leadIn": 1.1,
+    "shotSha": "02ef95f70b66"
   },
   "S10": {
     "kind": "drawn",
     "scene": "dir-next",
-    "transitionIn": "board-carry",
     "tail": 1.4,
-    "shotSha": "7817935cf1c2",
     "events": {
       "go": {
         "line": 1,
@@ -653,14 +698,14 @@
         ]
       }
     ],
-    "leadIn": 1.1
+    "transitionIn": "board-carry",
+    "leadIn": 1.1,
+    "shotSha": "06e6874a5baa"
   },
   "S11": {
     "kind": "drawn",
     "scene": "dir-start",
-    "transitionIn": "board-carry",
     "tail": 3.5,
-    "shotSha": "95ddfd3fb1e8",
     "events": {
       "go": {
         "line": 1,
@@ -695,6 +740,8 @@
         ]
       }
     ],
-    "leadIn": 1.1
+    "transitionIn": "board-carry",
+    "leadIn": 1.1,
+    "shotSha": "95ddfd3fb1e8"
   }
 }

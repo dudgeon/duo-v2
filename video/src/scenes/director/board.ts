@@ -36,3 +36,8 @@ export const ORDER = [1, 9, 0, 3, 2, 6, 7, 4, 8, 5];
  *  second line; part B, the survey, in its third. */
 export const PROMPT_A = 'There are many sessions in this repo/project all in various states—you are now their director. I am the PM and you are the engineering manager.';
 export const PROMPT_B = ' Please do a quick survey of the state of each of these active sessions';
+
+/** Twenty minutes later, the rest of the job (Geoff, 2026-10-05 10:25, the first director's transcript, verbatim). */
+export const PROMPT_C = 'I think it would be helpful for you to make and maintain a director reviews artifact; in it you will surface decisions for me and have ui buttons that when I interact with them send you messages\n\nI don\u2019t want to recreate the feature walks (though you should take over that artifact); this is more abstract; it will cover what to do with the various branches and worktrees, when to review, merge, ship, how to resolve conflicts, etc\n\nYou should be periodically watching all other agents in this space and reviewing their work, surfacing decisions to me as needed';
+/** An idea sent from the phone (Geoff to the director, 2026-10-12 06:53, verbatim). */
+export const IDEA = 'New enhancement: I still think it is not obvious that sessions in the project view left pane are sessions.';

@@ -3,14 +3,14 @@ import {AbsoluteFill} from 'remotion';
 import type {SceneProps} from '../registry';
 import {PaperGround} from '../../lib/Paper';
 import {C, centre, DirectorCard, Heading, L, mixBox, mono, ramp, SectionLabel, SessionRow, spring, Wire, YouCard, type Box, type State} from './kit';
-import {BUS_X, ORDER, PANEL, panelRow, PROMPT_A, PROMPT_B, RING_YOU, ringRow, SESSIONS, SURVEY, TREE_DIRECTOR, TREE_YOU} from './board';
+import {BUS_X, ORDER, PANEL, panelRow, PROMPT_A, PROMPT_B, PROMPT_C, RING_YOU, ringRow, SESSIONS, SURVEY, TREE_DIRECTOR, TREE_YOU} from './board';
 
 // S2 · A simple prompt. It opens on S1's last picture: you in the middle of ten sessions, every line orange. One more
 // session opens as a console and the first prompt types itself, verbatim, in time with the voice. On Return the console
 // becomes the director, the ring settles into the tree of style frame B (DL-180), and the director's first survey runs
 // down the sessions. One line reaches you now.
 
-const PROMPT_BOX: Box = {x: 300, y: 300, w: 1320, h: 460};
+const PROMPT_BOX: Box = {x: 240, y: 222, w: 1440, h: 640};
 const slot = (i: number) => ORDER.indexOf(i);
 
 export const FirstPrompt = ({t, ev}: SceneProps) => {
@@ -24,8 +24,11 @@ export const FirstPrompt = ({t, ev}: SceneProps) => {
   const settle = spring(t, submit, 5.5, 0.95);
   const small: Box = {x: 960 - 60, y: 540 - 30, w: 120, h: 60};
   const consoleBox = settle > 0 ? mixBox(PROMPT_BOX, TREE_DIRECTOR, settle) : mixBox(small, PROMPT_BOX, appear);
-  const typedA = PROMPT_A.slice(0, Math.round(PROMPT_A.length * ramp(t, a0, a1)));
-  const typedB = PROMPT_B.slice(0, Math.round(PROMPT_B.length * ramp(t, b0, submit - 0.25)));
+  // The first message types in time with line 2; the second, twenty minutes later, with line 3.
+  const first = PROMPT_A + PROMPT_B;
+  const typedA = first.slice(0, Math.round(first.length * ramp(t, a0, a1 + 0.6)));
+  const typedB = '';
+  const typedC = PROMPT_C.slice(0, Math.round(PROMPT_C.length * ramp(t, b0 + 0.3, submit - 0.3)));
   const caret = Math.floor(t * 2) % 2 === 0 && t < submit;
   const promptU = 1 - ramp(t, submit, submit + 0.25);
   const dirU = ramp(t, submit + 0.35, submit + 0.7);
@@ -85,11 +88,20 @@ export const FirstPrompt = ({t, ev}: SceneProps) => {
         <div style={{position: 'absolute', left: consoleBox.x, top: consoleBox.y, width: consoleBox.w, height: consoleBox.h, background: C.console,
           borderRadius: 12, overflow: 'hidden', opacity: Math.min(1, appear * 1.4)}}>
           <div style={{position: 'absolute', left: 48, top: 40, width: PROMPT_BOX.w - 96, opacity: promptU, fontFamily: mono}}>
-            <div style={{fontSize: 20, lineHeight: '30px', color: C.consoleText2}}>claude  ·  Oct 5, 10:08</div>
-            <div style={{marginTop: 24, fontSize: 34, lineHeight: '52px', color: C.consoleText, whiteSpace: 'pre-wrap'}}>
+            <div style={{fontSize: 18, lineHeight: '26px', color: C.consoleText2}}>claude  ·  Oct 5, 10:08</div>
+            <div style={{marginTop: 14, fontSize: 25, lineHeight: '36px', color: C.consoleText, whiteSpace: 'pre-wrap'}}>
               <span style={{color: C.consoleText2}}>{'> '}</span>{typedA}{typedB}
-              <span style={{display: 'inline-block', width: 18, height: 38, marginLeft: 2, verticalAlign: -6, background: caret ? C.consoleText : 'transparent'}} />
+              {t < b0 + 0.3 && <span style={{display: 'inline-block', width: 13, height: 28, marginLeft: 2, verticalAlign: -5, background: caret ? C.consoleText : 'transparent'}} />}
             </div>
+            {t >= b0 && (
+              <>
+                <div style={{marginTop: 22, fontSize: 18, lineHeight: '26px', color: C.consoleText2, opacity: ramp(t, b0, b0 + 0.3)}}>10:25</div>
+                <div style={{marginTop: 8, fontSize: 21, lineHeight: '30px', color: C.consoleText, whiteSpace: 'pre-wrap'}}>
+                  <span style={{color: C.consoleText2}}>{'> '}</span>{typedC}
+                  <span style={{display: 'inline-block', width: 11, height: 24, marginLeft: 2, verticalAlign: -4, background: caret ? C.consoleText : 'transparent'}} />
+                </div>
+              </>
+            )}
           </div>
           <div style={{position: 'absolute', inset: 0, opacity: dirU}}>
             <DirectorCard box={{x: 0, y: 0, w: TREE_DIRECTOR.w, h: TREE_DIRECTOR.h}} sub="engineering manager"

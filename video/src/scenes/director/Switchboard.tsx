@@ -3,7 +3,8 @@ import {AbsoluteFill} from 'remotion';
 import type {SceneProps} from '../registry';
 import {PaperGround} from '../../lib/Paper';
 import {centre, Heading, L, Pulse, ramp, SessionRow, spring, Wire, YouCard, type State} from './kit';
-import {RING_YOU, ringRow, SESSIONS} from './board';
+import {IDEA, RING_YOU, ringRow, SESSIONS} from './board';
+import {Bubble, PhoneChat} from './Stories';
 
 // S1 · The problem. You in the middle; the sessions arrive around you one by one, each tied to you by a line. Each
 // time one asks for you, a message runs down its line and the line turns needs-you orange, until every line pulls on
@@ -58,10 +59,21 @@ export const Switchboard = ({t, ev}: SceneProps) => {
   return (
     <AbsoluteFill>
       <PaperGround />
-      <Heading title="The problem" sub="Every session needs you." u={ramp(t, 0.3, 0.9)} />
-      <div style={{position: 'absolute', inset: 0, opacity: spring(t, 0.1, 8, 1)}}>
+      {/* It opens on the phone: an idea going out as one line. Then the phone becomes you, in the middle of the sessions. */}
+      <Heading title="The problem" sub="Every session needs you." u={ramp(t, (ev.rowsStart ?? 3) - 0.6, (ev.rowsStart ?? 3))} />
+      <div style={{position: 'absolute', inset: 0, opacity: ramp(t, (ev.rowsStart ?? 3) - 0.8, (ev.rowsStart ?? 3) - 0.3)}}>
         <Ring r={r} t={t} askAt={askAt} />
       </div>
+      {t < (ev.rowsStart ?? 3) && (() => {
+        const shrink = ramp(t, (ev.rowsStart ?? 3) - 1.2, (ev.rowsStart ?? 3) - 0.2);
+        const box = {x: 795 + (RING_YOU.x - 795) * shrink, y: 230 + (RING_YOU.y - 230) * shrink, w: 330 + (RING_YOU.w - 330) * shrink, h: 620 + (RING_YOU.h - 620) * shrink};
+        return (
+          <PhoneChat box={box} u={ramp(t, 0, 0.4) * (1 - ramp(shrink, 0.6, 1))}>
+            <div style={{fontSize: 16, color: '#5B636D', textAlign: 'center', opacity: 1 - shrink}}>Duo · an idea</div>
+            <div style={{display: 'flex', flexDirection: 'column', opacity: 1 - shrink}}><Bubble text={IDEA} typed={ramp(t, 0.4, (ev.hobby ?? 2) + 0.6)} /></div>
+          </PhoneChat>
+        );
+      })()}
     </AbsoluteFill>
   );
 };

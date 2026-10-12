@@ -4,7 +4,7 @@ import type {SceneProps} from '../registry';
 import {PaperGround} from '../../lib/Paper';
 import {centre, DirectorCard, Heading, L, lerp, Meter, mixBox, mono, Pulse, ramp, SectionLabel, SessionRow, spring, ui, Wire, YouCard, type Box} from './kit';
 import {slotNames} from './Tree';
-import {AdditionsEnd, T2_DIRECTOR, T2_YOU} from './Additions';
+import {DIR as STORY_DIR, StandupEnd} from './Stories';
 
 // S5 · Why it works. Two diagrams side by side, then one. Left, subagents: small boxes inside the parent session's
 // outline; their work flows back into it, its context fills and the outline swells. Right, the director: full sessions
@@ -27,7 +27,7 @@ export const WhyItWorks = ({t, ev}: SceneProps) => {
   // Leaving S4: the timeline, phone and panel go; the director and you move to the right-hand diagram.
   const leave = ramp(t, go, go + 0.6);
   const move = spring(t, go + 0.2, 5.5, 0.95);
-  const dir = mixBox(T2_DIRECTOR, WHY_DIR, move);
+  const dir = mixBox(STORY_DIR, WHY_DIR, move);
 
   // Left: subagents inside the parent's outline.
   const leftU = ramp(t, go + 0.4, go + 0.9) * (1 - 0.75 * ramp(t, here, here + 0.6));
@@ -51,7 +51,7 @@ export const WhyItWorks = ({t, ev}: SceneProps) => {
     <AbsoluteFill>
       <PaperGround />
       {/* S4's picture leaving. */}
-      <div style={{position: 'absolute', inset: 0, opacity: 1 - leave}}><AdditionsEnd /></div>
+      <div style={{position: 'absolute', inset: 0, opacity: 1 - leave}}><StandupEnd /></div>
       <Heading title="Why it works" sub="Workers are whole sessions; the director reads reports." u={ramp(t, go + 0.5, go + 1.0)} />
 
       {/* Left: subagents. */}
@@ -91,12 +91,12 @@ export const WhyItWorks = ({t, ev}: SceneProps) => {
       <div style={{position: 'absolute', left: 1080, top: 560, padding: '4px 12px', borderRadius: 8, background: L.pane, border: `1.5px solid ${L.rule}`,
         fontFamily: mono, fontSize: 18, lineHeight: '26px', color: L.text2, opacity: tagU}}>since Claude Code 2.1.224</div>
 
-      <DirectorCard box={dir} sub={t < go + 0.6 ? 'Opus · plans and reviews' : t < small ? 'reads short reports' : 'context stays small'}>
+      <DirectorCard box={dir} sub={t < go + 0.6 ? 'the standup' : t < small ? 'reads short reports' : 'context stays small'}>
         <Meter fill={lerp(0.12, 0.2, ramp(t, report, report + 2))} u={1} />
       </DirectorCard>
       <div style={{position: 'absolute', left: dir.x + dir.w - 120, top: dir.y + dir.h - 46, fontFamily: mono, fontSize: 16, color: '#9AA1AB', opacity: smallU}}>context</div>
 
-      <YouCard box={mixBox(T2_YOU, youBox, move)} chip={t < go + 0.3 ? 2 : 0} label={stepIn > 0.5 ? 'working alongside' : 'the PM'} />
+      <YouCard box={youBox} chip={0} u={ramp(t, go + 0.4, go + 0.9)} label={stepIn > 0.5 ? 'working alongside' : 'the PM'} />
     </AbsoluteFill>
   );
 };

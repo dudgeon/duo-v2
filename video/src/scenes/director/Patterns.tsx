@@ -77,9 +77,9 @@ export const MiniTree = ({variant, u = 1}: {variant: Variant; u?: number}) => {
 
 const CELLS: {variant: Variant; title: string; word: string}[] = [
   {variant: 'files', title: 'AN OLDER CLAUDE CODE', word: 'older'},
+  {variant: 'laptop', title: 'A PINNED WORK LAPTOP', word: 'laptop'},
   {variant: 'oneApp', title: 'NO REMOTE CONTROL', word: 'Remote'},
   {variant: 'chat', title: 'NO PAGE FOR BUTTONS', word: 'page'},
-  {variant: 'laptop', title: 'A PINNED WORK LAPTOP', word: 'laptop'},
 ];
 const cellAt = (k: number) => ({x: 144 + (k % 2) * (CW + 112), y: 290 + Math.floor(k / 2) * (CH + 96)});
 
@@ -121,5 +121,5 @@ export const Patterns = ({t, ev}: SceneProps) => {
 };
 
 /** S8's last picture, for the scene after it to open on. */
-const END_EV = {go: 0, older: 1, Remote: 2, page: 3, laptop: 4};
+const END_EV = {go: 0, older: 1, laptop: 2, Remote: 3, page: 4};
 export const PatternsEnd = () => <Patterns t={999} ev={END_EV} scene={{id: 'S8', title: ''}} />;
