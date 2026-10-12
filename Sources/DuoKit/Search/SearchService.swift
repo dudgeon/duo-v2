@@ -26,15 +26,14 @@ public final class SearchService {
     private var lastProjects: [String: URL] = [:]
     private var engine: Engine?
 
-    /// The embedder and the open index, made once and kept for the app's life (C-79).
+    /// The open index, made once and kept for the app's life, and the embedder, which loads when a pass
+    /// has something to embed and goes after `idleRelease` of not being used (C-79).
     final class Engine: @unchecked Sendable {
-        let embedder: Embedder
+        let embedder = EmbedderSource { try Embedder(use: .indexing) }
         let index: SearchIndex
-        init() throws {
-            embedder = try Embedder(use: .indexing)
-            index = try SearchIndex(readOnly: false)
-        }
+        init() throws { index = try SearchIndex(readOnly: false) }
     }
+    nonisolated static let idleRelease: TimeInterval = 180
     /// A file already in the index is re-indexed once it has been quiet this long (seconds).
     nonisolated static let quietPeriod: TimeInterval = 180
 
@@ -98,7 +97,9 @@ public final class SearchService {
             let total = out.values.reduce(IndexStats()) { a, b in
                 var a = a; a.changed += b.changed; a.embedded += b.embedded; a.chunks += b.chunks; a.deferred += b.deferred; return a
             }
-            FileHandle.standardError.write(Data("search: pass \(total.changed) files changed, \(total.chunks) chunks (\(total.embedded) embedded), \(total.deferred) waiting, \(Int(Date().timeIntervalSince(began) * 1000)) ms\n".utf8))
+            let released = engine.embedder.releaseIfIdle(after: idleRelease)
+            engine.index.shrinkMemory()
+            FileHandle.standardError.write(Data("search: pass \(total.changed) files changed, \(total.chunks) chunks (\(total.embedded) embedded), \(total.deferred) waiting, model \(released ? "released" : engine.embedder.isLoaded ? "loaded" : "idle"), \(Int(Date().timeIntervalSince(began) * 1000)) ms\n".utf8))
             return (out, engine)
         } catch {
             FileHandle.standardError.write(Data("search: \(error)\n".utf8))

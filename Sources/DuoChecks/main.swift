@@ -844,6 +844,18 @@ func repoFixture() throws -> Fixture {
         check(busy.changed == 0 && busy.deferred == 1, "an indexed file still being edited waits")
         let settled: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
         check(settled.changed == 1 && settled.replaced == 1, "…and is re-indexed once quiet")
+        // C-79 (RSS): the indexing model loads when a pass has something to embed, goes after sitting idle, and comes back on demand.
+        let lazy = EmbedderSource { try Embedder(modelAt: compiled, vocab: SearchPaths.vocab, use: .indexing) }
+        let _: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: lazy) }
+        check(!lazy.isLoaded && lazy.loads == 0, "a pass over an unchanged tree never loads the model")
+        try "# Lazy\n\nPomegranate harpsichord isthmus.\n".write(to: proj.appending(path: "notes/lazy-load.md"), atomically: true, encoding: .utf8)
+        let loaded: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: lazy) }
+        check(loaded.changed == 1 && lazy.isLoaded && lazy.loads == 1, "a pass with a new file loads it")
+        check(!lazy.releaseIfIdle(after: 180) && lazy.isLoaded, "…and keeps it while it is in use")
+        check(lazy.releaseIfIdle(after: 180, now: Date().addingTimeInterval(200)) && !lazy.isLoaded, "…and lets it go after 3 idle minutes")
+        try "# Lazy\n\nPomegranate harpsichord isthmus.\n\nA second paragraph about quince.\n".write(to: proj.appending(path: "notes/lazy-load.md"), atomically: true, encoding: .utf8)
+        let again2: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: lazy) }
+        check(again2.changed == 1 && lazy.loads == 2 && lazy.isLoaded, "a later change loads it again")
         try FileManager.default.moveItem(at: proj.appending(path: "docs/tides.md"), to: proj.appending(path: "notes/tides-moved.md"))
         let moved: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
         check(moved.changed == 1 && moved.removed == 1 && moved.embedded == 0, "a moved file reuses its vectors (FR-7.3.5)")
