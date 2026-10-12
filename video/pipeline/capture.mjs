@@ -10,8 +10,10 @@ export function captureStates(states, {repo, cache, pub, scale, fixture, force =
   const app = join(repo, 'build/Duo.app');
   const bin = join(app, 'Contents/MacOS/Duo');
   if (!existsSync(bin)) throw new BuildError(`capture: no app at ${app}; run scripts/bundle.sh`);
+  // Paths relative to Resources, so the key is the app's content, not where the work tree is (a cache copied to
+  // another work tree still hits).
   const appKey = sha(fileSha(bin), execFileSync('/bin/sh', ['-c',
-    `find "${join(app, 'Contents/Resources')}" -type f \\( -name '*.json' -o -name '*.html' -o -name '*.md' \\) | sort | xargs shasum`]).toString());
+    `cd "${join(app, 'Contents/Resources')}" && find . -type f \\( -name '*.json' -o -name '*.html' -o -name '*.md' \\) | sort | xargs shasum`]).toString());
   const cc = join(cache, 'capture');
   mkdirSync(cc, {recursive: true});
   mkdirSync(join(pub, 'capture'), {recursive: true});

@@ -27,6 +27,10 @@ Generic defaults read as made by AI. The motion references Geoff sent (three art
 
 - **A Shot: note is a spec, not a suggestion.** Every item in it is built, or the report says it isn't, up front. A quiet substitute reads as ignoring what he wrote.
 
+## The poster
+
+- **The still a player shows before play is the title card.** His words: "be sure the thumbnail/still view of the video (on this run and all future runs) is the title card, showing the icon, title, and sub-title — even if this is just one frame that disappears when the user presses play". The film's frame 0 is S0's settled frame (Film.tsx draws it at the first scene's `poster` time), `out/thumbnail.png` is the same frame and is the file's cover art, and the build fails if frame 0 isn't the title card.
+
 ## Words on screen
 
 - **The S0 line under "Duo":** "descriptive and expansive", with no superlatives or subjective adjectives. He then wrote his own line.

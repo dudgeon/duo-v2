@@ -17,6 +17,7 @@ import {PaperGround, TopicRail, pictureTransform, topicChanges, topicsAt} from '
 type Line = {id: string; text: string; src: string; start: number; duration: number};
 type Scene = {
   id: string; title: string; topic?: string | null; kind: 'desk' | 'card' | 'drawn'; start: number; duration: number; lines: Line[];
+  poster?: number;
   card?: {title: string; sub: string; standIn: boolean};
   capture?: {src: string; scale: number}; desk?: DeskLayout; camera?: Key[]; appear?: boolean;
   drawn?: {scene: 'desk' | 'many' | 'turn' | 'logo' | 'morph' | 'app' | 'projects' | 'conclusion'; events: ClutterEvents};
@@ -65,7 +66,9 @@ const Card = ({card}: {card: NonNullable<Scene['card']>}) => (
 const SceneView = ({scene, fade}: {scene: Scene; fade: number}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const t = frame / fps;
+  // Frame 0 is the poster (the first scene's `poster`, its settled title card): the still a player shows before play
+  // (Geoff, Oct 12). On play it gives way to frame 1, where the logo starts building.
+  const t = frame === 0 && scene.poster !== undefined ? scene.poster : frame / fps;
   // No dissolves: every scene change is a transition the two scenes play themselves (plan.mjs TRANSITIONS).
   const opacity = 1;
   const appear = scene.appear ? smootherstep(interpolate(t, [0.2, 1.0], [0, 1], clamp)) : 1;
