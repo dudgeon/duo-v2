@@ -36,6 +36,7 @@ def norm(text):
     t = text.lower().replace("&", " and ").replace("%", " percent")
     t = re.sub(r"(?<=[a-z0-9])\.(?=[a-z0-9])", " dot ", t)  # "prd.md" is said "prd dot md"
     t = re.sub(r"\ba (hundred|thousand)\b", r"one \1", t)  # "a hundred" is heard as "100", "one hundred"
+    t = re.sub(r"\b(hundred|thousand) and\b", r"\1", t)  # and "a hundred and eighty" as "180"
     t = re.sub(r"\b(\d+)(st|nd|rd|th)\b", lambda m: " " + ordinal(int(m.group(1))) + " ", t)  # "5th" is said "fifth"
     t = re.sub(r"(\d+)", lambda m: " " + num_words(int(m.group(1))) + " ", t)
     # Contractions count the same as their long form, either way round ("you are" heard as "you're").
