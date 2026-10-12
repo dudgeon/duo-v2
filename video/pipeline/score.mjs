@@ -1,8 +1,8 @@
-// The background score: one ambient bed the length of the film, generated locally (ACE-Step 1.5, video/score/),
+// The background score: one ambient bed at least the length of the film, generated locally (ACE-Step 1.5, video/score/),
 // finished to sit under speech, and checked by speech recognition so no word-like sounds slip in. Cached by
 // everything that shapes it. The film mixes it from the voice timeline (src/scenes/Film.tsx, ScoreBed).
 import {spawnSync} from 'node:child_process';
-import {copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
+import {copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {BuildError, fileSha, sha} from './util.mjs';
 
@@ -15,10 +15,19 @@ const lufs = (file) => {
 export function scoreBed({here, cache, pub, duration, voiceWavs, log}) {
   const dir = join(here, 'score');
   const cfg = JSON.parse(readFileSync(join(dir, 'score.json'), 'utf8'));
-  const len = Math.ceil(duration + 1);
-  const key = sha(cfg.prompt, cfg.key, cfg.seed, cfg.steps, cfg.fade_in, cfg.fade_out, cfg.lufs, len,
-    ...['models.lock.json', 'score.py', 'finish.py'].map((f) => fileSha(join(dir, f)))).slice(0, 16);
+  // The bed is cut to the film by the film itself (its fade-out is the score's gain, Film.tsx), so any bed at least as
+  // long as the film will do: a cached one is reused, and a new one is made at least 8 minutes long, in whole minutes,
+  // so a change in the film's length doesn't make new music under review (codebase review V2).
+  const need = Math.ceil(duration + 1);
+  const scripts = ['models.lock.json', 'score.py', 'finish.py'].map((f) => fileSha(join(dir, f)));
+  const family = sha('bed', cfg.prompt, cfg.key, cfg.seed, cfg.steps, cfg.fade_in, cfg.fade_out, cfg.lufs, ...scripts).slice(0, 16);
   const sc = join(cache, 'score'); mkdirSync(sc, {recursive: true});
+  const lengths = readdirSync(sc).map((f) => f.match(new RegExp(`^bed-${family}-(\\d+)\\.wav$`))?.[1]).filter(Boolean).map(Number).filter((l) => l >= need).sort((a, b) => a - b);
+  // A bed made before this scheme, for exactly this length, is the same music: keep it.
+  const legacy = join(sc, `bed-${sha(cfg.prompt, cfg.key, cfg.seed, cfg.steps, cfg.fade_in, cfg.fade_out, cfg.lufs, need, ...scripts).slice(0, 16)}.wav`);
+  if (!lengths.length && existsSync(legacy)) { copyFileSync(legacy, join(sc, `bed-${family}-${need}.wav`)); lengths.push(need); }
+  const len = lengths[0] ?? Math.max(480, Math.ceil(need / 60) * 60);
+  const key = `${family}-${len}`;
   const bed = join(sc, `bed-${key}.wav`);
   const py = (venv, script, arg) => spawnSync(join(venv, '.venv/bin/python'), ['-I', join(venv, script), arg], {cwd: venv, stdio: ['ignore', 'ignore', 'inherit']});
   if (!existsSync(bed)) {
@@ -37,7 +46,7 @@ export function scoreBed({here, cache, pub, duration, voiceWavs, log}) {
     py(join(here, 'voice'), 'asr_check.py', chk);
     const heard = JSON.parse(readFileSync(join(chk, 'bed.asr.json'), 'utf8')).words?.length ?? 0;
     if (heard > cfg.maxHeardWords) throw new BuildError(`score: speech recognition hears ${heard} words in the bed (seed ${cfg.seed}). Try another seed in score/score.json.`);
-  } else log('score: bed from cache');
+  } else log(`score: bed from cache (${len} s, for a ${need} s film)`);
   mkdirSync(join(pub, 'score'), {recursive: true});
   copyFileSync(bed, join(pub, 'score', `bed-${key}.wav`));
   // Levels relative to the voice: the bed's gain while a line plays, between lines, and its swell at a topic change.

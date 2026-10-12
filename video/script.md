@@ -1,5 +1,5 @@
 # Duo v2 intro video: script v2
-<!-- Synced from the script Doc at rev 4617 on 2026-10-12 by pipeline/sync.mjs; edit the Doc, not this file. -->
+<!-- Synced from the script Doc at rev 4621 on 2026-10-12 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 10, 2026 · @Geoff Dudgeon
 
@@ -268,15 +268,15 @@ Topic: Tasks
 
 Shot: in shelf-scan's project view, with the camera on the left pane.
 
-On line 1 ("experimental, optional… add structure"), the session list starts flat, as it has looked all along. On "add structure", the project's **Tasks** fold opens above it and the sessions regroup under their tasks: Auto-add decision, Deck for Thursday, Spine eval: glare cases. Each group holds the sessions that worked on it, and anything without a task stays below.
+On line 1 ("experimental, optional… add structure"), the session list starts flat, as it has looked all along. On "add structure", the project's **TASKS** section opens above it and the sessions regroup under their tasks: Auto-add decision, Deck for Thursday, Spine eval: glare cases. Each group holds the sessions that worked on it, and anything without a task stays below.
 
 On line 2 ("an overarching goal, and includes multiple tasks"), the camera rises to the project's header (its health and next step, "On track · Team review Thu Oct 15"; the goal itself lives in PROJECT.md and on the All projects tile), then runs down the task rows, tracing the tasks that serve it. On "tasks come and go" it settles on the complete one (Beta interview synthesis, done).
 
 On line 3 ("more context to claude about the task goal, and attribute the sessions"), the cursor opens the Auto-add decision task's note in the right pane. It's a plain Markdown file: its goal and done-when at the top, then its sessions listed by name. A marker circles the goal on "context to claude", then the sessions on "attribute".
 
-On "you can make a task in the project view", the cursor picks **New Task** (File › New Task). Duo opens a new note as "Untitled task" with its heading selected (the + New task row at the end of the Tasks fold does the same), and Sam types the name, "Warn about glare before the photo"; the file takes the name's slug. The new task note opens in the right pane's editor (tasks/warn-about-glare-before-the-photo.md, the slug New Task makes), and on "add some details" Sam types a few lines under it: the goal (no glare reads at glass-door boxes), what done looks like, and a link to Denise's feedback. On "available to the user and any agents", the camera pulls back to show the task listed in the project beside its sessions.
+On "you can make a task in the project view", the cursor picks **New Task** (File › New Task). Duo opens a new note as "Untitled task" with its heading selected (the + New task row at the end of the TASKS section does the same), and Sam types the name, "Warn about glare before the photo"; the file takes the name's slug. The new task note opens in the right pane's editor (tasks/warn-about-glare-before-the-photo.md, the slug New Task makes), and on "add some details" Sam types a few lines under it: the goal (no glare reads at glass-door boxes), what done looks like, and a link to Denise's feedback. On "available to the user and any agents", the camera pulls back to show the task listed in the project beside its sessions.
 
-On "attribute sessions to that task", Sam right-clicks the new task in the project's Tasks fold and picks **New Session in Task** from its menu (its real items: Open Task Note, New Session in Task, Add Session ›, and the rest). A new session opens in the middle pane, grouped under the task in the session list, and Sam starts working: types "Draft the glare warning copy for the scan screen" and sends. Claude's first reply begins, already knowing the task's goal from its note.
+On "attribute sessions to that task", Sam right-clicks the new task in the project's TASKS section and picks **New Session in Task** from its menu (its real items: Open Task Note, New Session in Task, Add Session ›, and the rest). A new session opens in the middle pane, grouped under the task in the session list, and Sam starts working: types "Draft the glare warning copy for the scan screen" and sends. Claude's first reply begins, already knowing the task's goal from its note.
 
 On "You can collapse them or show them", the cursor clicks the new task's disclosure arrow: its session folds up under it, then unfolds again.
 

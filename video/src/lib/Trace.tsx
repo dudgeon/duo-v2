@@ -33,8 +33,10 @@ export const Trace = ({r, radius = 10, p, width = TRACE.width, color = TRACE.col
   const o = TRACE.offset;
   const {d, len} = roundedRect({x: r.x - o, y: r.y - o, w: r.w + 2 * o, h: r.h + 2 * o}, radius + o);
   const on = p <= 1 ? len * p : len * (2 - p), start = p <= 1 ? 0 : len * (p - 1);
+  // The svg covers its parent rather than being a 1x1 box the path overflows: Chrome repaints only an element's own box
+  // when it goes, so a 1x1 trace could stay in the next frame a render tab shoots (V2's proof, frame 1942).
   return (
-    <svg style={{position: 'absolute', left: 0, top: 0, overflow: 'visible', pointerEvents: 'none'}} width={1} height={1}>
+    <svg style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', overflow: 'visible', pointerEvents: 'none'}}>
       <path d={d} fill="none" stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={`${on} ${len + 1}`} strokeDashoffset={-start} />
     </svg>
   );

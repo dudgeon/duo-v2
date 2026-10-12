@@ -6,6 +6,8 @@ The script's source of truth is the [Claude Doc, script v2](https://claude.ai/co
 
 **Syncing the Doc.** Export the Doc's tab as Markdown (Claude Docs `export`, format `markdown`) to a file, then run `node pipeline/sync.mjs <file> --rev <n>`. It shows what changed, line by line, and the Shot: notes that changed as diffs. With `--write`, it writes `script.md` and renumbers the beats, events and pauses in `shots.json` that name a line which moved. A ref to a line the Doc no longer has stops it. A changed Shot: note keeps stopping the build until you re-read it and sync again with `--accept-notes S7`. `script.md`'s second line records the Doc revision it came from, so the next sync can read only what changed since then.
 
+**Making a video for another project.** The pipeline is reusable: the code stays, and the script, fixtures, shots, style and narrator are per film. The skill `.claude/skills/product-video/SKILL.md` is the procedure, from the brief to review rounds, including the voice: if `gh repo view dudgeon/geoff-voice` fails, you don't have access to Geoff's, so build with `DUO_VOICE_JSON=house` (or design a voice of your own) and don't look for copies of his.
+
 **Remotion's licence (DL-177).** Remotion, which renders the film, isn't open source. It's free for individuals and for companies of up to 3 people; a larger company needs Remotion's Company License, and its terms change at Remotion 5.0 (see `node_modules/remotion/LICENSE.md`). Duo itself doesn't ship Remotion, so this binds only whoever renders the film. Duo is a personal project by one developer (the main [README](../README.md)), who renders it as an individual. If you fork Duo and render the film for a larger company, you need that licence.
 
 ## Build
@@ -14,7 +16,8 @@ The script's source of truth is the [Claude Doc, script v2](https://claude.ai/co
 scripts/bundle.sh              # the app the captures come from
 cd video && npm install        # Remotion, project-local
 node build.mjs --check         # seconds: the script and shots, before anything is voiced
-node build.mjs                 # check → voice → capture → timeline → render → out/
+node build.mjs                 # check → voice → capture → timeline → render (by scene, cached) → out/
+node build.mjs --scene S7      # one scene, for a quick look
 ```
 
 **The check stage** runs first in every build, and alone with `--check`. It needs no app, voice or GPU, and it reports every problem at once:
@@ -29,11 +32,28 @@ It also lists the lines changed since the last build. When every line is voiced 
 
 **What `node build.mjs` writes:**
 - `out/intro.mp4`, its soundtrack normalised to -16 LUFS;
+- `out/review.json` and `out/review/<scene>.mp4` for the scenes it re-rendered;
 - stills at the key frames and `out/thumbnail.png`;
 - `out/report.md` (scenes, lengths, anything a Shot: note asks for that isn't built, and any stale framing);
 - `out/LISTEN.md` and `out/score-qa.png`: five timecodes and a waveform for checking the score by ear.
 
-**Flags:** `--stills` (no video), `--draft` (half scale), `--no-score`, `--accept-anchors`.
+**Flags:** `--stills` (no video), `--draft` (half scale), `--no-score`, `--accept-anchors`, `--scene S7` (one scene, or `S7,S8`, to `out/scene-S7.mp4`; with `--draft`, half size), `--whole` (one pass, no scene cache), `--gc`.
+
+**Rendering a scene at a time** (`pipeline/render.mjs`). Each scene's frames are kept in `.cache/render/` under a key of everything that draws them, so a build renders only the scenes that changed and joins the rest with `ffmpeg -c copy`. The key covers:
+- the scene's slice of the timeline (its start only as a sub-frame phase, so a scene that only moved later keeps its key);
+- the topic list and the topic changes near it;
+- the scene before it, when that scene's last frame spills into its range;
+- the pixels of the captures it shows, not the app build that took them;
+- the shared pictures, the source and the render settings.
+The soundtrack is rendered once for the whole film, so the score and its ducking run on across scene edges, then it's normalised to -16 LUFS and muxed. An edit to one scene re-renders that scene, and sometimes the one after it.
+
+**The poster.** The film's frame 0 is S0's settled title card (the icon, "Duo" and its line), so a player that shows the video before play shows the title; on play it gives way to the logo building. Film.tsx draws frame 0 at the first scene's `poster` time, which build.mjs sets from S0's `thumbnail`; `out/thumbnail.png` is the same frame and goes into the file as its cover art. The build fails if frame 0 isn't the title card.
+
+**What Geoff reviews.** `out/review.json` lists each scene's start, end and still, and whether this build re-rendered it. It also lists what its Shot: note asks for, with the timecodes where each item is on screen. Each re-rendered scene also gets a 480p clip in `out/review/`.
+
+**The score bed** is reused when a cached bed is at least as long as the film; the film fades it out itself. A new one is made at least 8 minutes long, in whole minutes, so a change in the film's length doesn't make new music.
+
+**`--gc`** removes captures and scene renders the current build doesn't use, and leftover voicing jobs. Voiced lines and score beds stay, because another narrator's lines cost a GPU run to redo.
 
 **Framing that follows the app.** Cameras and marks name anchors (`style/shot-grammar.md`, App scenes), so a change to Duo's layout moves them with it. Each build notes every rect it reads in `.cache/anchors-used.json` and logs the framing that moved. A rect in window points whose anchors moved is reported as `STALE` in the log and in `report.md`, and stays reported until it is fixed or the build runs with `--accept-anchors`.
 
@@ -51,7 +71,12 @@ It also lists the lines changed since the last build. When every line is voiced 
 - **Scenes:** pure functions of the frame. `lint.mjs` fails a build that uses a timer, `Date`, `Math.random` or CSS animation.
 - **Taste:** `style/taste.md` lists what Geoff has rejected and chosen, in his words. Read it before proposing any look, transition, callout or voice.
 - **Tokens:** `style/tokens.json` is generated: edit `style/video-tokens.json` and run `python3 scripts/gen-video-tokens.py`.
-- **The voice:** `voice/house/voice.json`. Its `external` names Geoff's voice file outside the repo. A named voice file that isn't there stops the build, because another narrator would change every timing. On a machine without it, such as a clean checkout, the cut can't be reproduced in his voice: build with `DUO_VOICE_JSON=house` for the house voice. Since DL-173 that's the fine-tuned VoxCPM2 clone (`voxcpm-lora100.json`, `engine: "voxcpm"`: duo-voice's own venv, script and LoRA run it; its `said` map holds spellings only it needs). The zero-shot Qwen clone (DL-171) stays one switch away: `DUO_VOICE_JSON=~/Library/Caches/duo-video/voices/geoff-zeroshot.json node build.mjs`. VoxCPM voices at RTF ~1.4, so a full re-voice takes about 10 minutes, under the GPU lock. His reference audio and anything voiced in his voice never enter this repo: voiced lines live only in the gitignored `.cache/`, `build/` and `out/`. Check `git status` for audio before every commit.
+- **The voice:** Geoff's voice is the fine-tuned VoxCPM2 clone (DL-173) and lives in his **private** repo `dudgeon/geoff-voice` (DL-179), not here and not as a submodule (a public clone or CI can't fetch a private one). `voice/house/voice.json` says how Duo uses it (`geoff`: the voice folder, seed, tempo, and the `said` spellings only this voice needs). Where the checkout is comes from, in order:
+  1. `DUO_VOICE_JSON=house` → the house voice (below), never Geoff's;
+  2. `GEOFF_VOICE_DIR`, the path of a geoff-voice checkout (set up with its `setup.sh`);
+  3. else the machine-local card `external` names (`~/Library/Caches/duo-video/voices/geoff-voice.json`, outside the repo): `{"engine": "voxcpm", "root": "<checkout>"}`; any other field in it overrides `geoff`.
+
+  Nothing found, or a checkout without its venv, stops the build with the fix named, because another narrator would change every timing. On a machine without geoff-voice, such as a clean public checkout, build with `DUO_VOICE_JSON=house`. The build runs the checkout's own `.venv/bin/python geoff_voice/speak.py` with `--ref-wav --ref-text --lines --out --seed --lora`. A line's cache key is made of what the voice is, never where it lives: the LoRA's, `speak.py`'s and the reference clip's sha, the reference text, seed, tempo and `said`. Moving or re-cloning geoff-voice re-voices nothing. Keys made before DL-179 (the whole voice file, paths included) are converted once with `node pipeline/migrate-voice-keys.mjs <the old voice file>`. The zero-shot Qwen clone (DL-171) stays one switch away: `DUO_VOICE_JSON=~/Library/Caches/duo-video/voices/geoff-zeroshot.json node build.mjs`. VoxCPM voices at RTF ~1.4, so a full re-voice takes about 10 minutes, under the GPU lock. His reference audio, weights and anything voiced in his voice never enter this repo: voiced lines live only in the gitignored `.cache/`, `build/` and `out/`. Check `git status` for audio before every commit.
 
 ## Script history
 

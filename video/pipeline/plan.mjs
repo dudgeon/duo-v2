@@ -141,6 +141,7 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
   let last = tr?.in ?? 0, lastCam = data.startCam ?? null;
   for (const b of shot.beats ?? []) {
     const at = +when(b.at, last).toFixed(3);
+    if (b.id) (data.beatAt ??= {})[b.id] = at; // review.json: when each named beat happens
     const inSt = b.in ? use(b.in) : state;
     const c0 = cap(inSt), bi = shot.beats.indexOf(b);
     // Every rect a beat reads is noted (pipeline/anchors.mjs): the anchors it follows, or, for a rect in window

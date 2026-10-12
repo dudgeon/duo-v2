@@ -67,7 +67,7 @@ export const Marker = ({cx, cy, rx, ry, progress, color = P.marker, width = 4}: 
   }
   const len = 2 * Math.PI * Math.sqrt((rx * rx + ry * ry) / 2) * turns * 1.05;
   return (
-    <svg style={{position: 'absolute', left: 0, top: 0, overflow: 'visible'}} width={1} height={1}>
+    <svg style={{position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', overflow: 'visible'}}>
       <polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round"
         strokeDasharray={len} strokeDashoffset={len * (1 - progress)} />
     </svg>
