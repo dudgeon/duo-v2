@@ -20,7 +20,7 @@ export type AppCam = {at: number; dur: number; rect: Rect | null};       // null
 export type AppMark = {at: number; until: number; rect: Rect; quote?: string};
 export type AppKey = {at: number; label: string};
 // A wipe: `state` drawn over the picture inside `rect`, left to right over dur (typing that renders as it's typed).
-export type AppWipe = {at: number; dur: number; state: string; rect: Rect};
+export type AppWipe = {at: number; dur: number; state: string; rect: Rect; chars?: number};
 export type AppMenu = {at: number; until: number; x: number; y: number; items: string[]; hi?: {at: number; item: string}};
 export type AppData = {
   window: {w: number; h: number}; scale: number; src: Record<string, string>;
@@ -150,7 +150,17 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
           ) : <Crop src={data.src[state]} scale={data.scale} region={{x: 0, y: 0, w: data.window.w, h: data.window.h}} rect={{x: 0, y: 0, w: win.w, h: win.h}} />}
           {(data.wipes ?? []).map((w, i) => {
             if (t < w.at || t > w.at + w.dur + 0.1) return null;
-            const ww = w.rect.w * interpolate(t, [w.at, w.at + w.dur], [0, 1], clamp);
+            // `chars`: typing, not a wipe. The text arrives a character at a time, with the small uneven gaps of real
+            // typing (a fixed pseudo-random spread, so every render is the same), finishing at w.at + w.dur.
+            let u = interpolate(t, [w.at, w.at + w.dur], [0, 1], clamp);
+            if (w.chars) {
+              const n = w.chars, gaps = Array.from({length: n}, (_, i) => 0.6 + 0.8 * Math.abs(Math.sin(i * 12.9898) * 43758.5453 % 1));
+              const total = gaps.reduce((a, b) => a + b, 0);
+              let acc = 0, typed = 0;
+              for (const g of gaps) { acc += g; if (w.at + (acc / total) * w.dur <= t) typed++; else break; }
+              u = typed / n;
+            }
+            const ww = w.rect.w * u;
             if (ww < 0.5) return null;
             return <Crop key={`wp${i}`} src={data.src[w.state]} scale={data.scale} region={{...w.rect, w: ww}} rect={{x: w.rect.x * K, y: w.rect.y * K, w: ww * K, h: w.rect.h * K}} />;
           })}
