@@ -73,13 +73,13 @@ case .hook where rest.first == "context":
     guard let hook = (try? JSONSerialization.jsonObject(with: FileHandle.standardInput.readDataToEndOfFile())) as? [String: Any],
           let name = hook["hook_event_name"] as? String, ["SessionStart", "UserPromptSubmit"].contains(name),
           let sid = (hook["session_id"] as? String) ?? env["CLAUDE_CODE_SESSION_ID"],
-          let (endpoint, _) = ControlEndpoint.discover() else { exit(0) }
+          let (endpoint, source) = ControlEndpoint.discover() else { exit(0) }
     var a = [sid, "--hook", name == "SessionStart" ? "start" : "prompt", "--pid", String(getppid())]
     if let source = hook["source"] as? String { a += ["--source", source] }
     if let origin = env["DUO_SESSION_ID"] { a += ["--origin", origin] }
     guard let r = try? ControlClient.send(ControlRequest(token: endpoint.token, command: "session task", args: a, session: sid,
                                                          cwd: (hook["cwd"] as? String) ?? FileManager.default.currentDirectoryPath),
-                                          socket: endpoint.socket, timeout: 8),
+                                          via: endpoint, source: source, timeout: 8),
           r.ok, !r.output.isEmpty else { exit(0) }
     let out: [String: Any] = ["hookSpecificOutput": ["hookEventName": name, "additionalContext": r.output]]
     FileHandle.standardOutput.write((try? JSONSerialization.data(withJSONObject: out)) ?? Data())
@@ -92,7 +92,7 @@ case .hook:
     guard rest.first == "pre-edit",
           let hook = (try? JSONSerialization.jsonObject(with: FileHandle.standardInput.readDataToEndOfFile())) as? [String: Any],
           let tool = hook["tool_name"] as? String, let input = hook["tool_input"] as? [String: Any],
-          let path = input["file_path"] as? String, let (endpoint, _) = ControlEndpoint.discover() else { exit(0) }
+          let path = input["file_path"] as? String, let (endpoint, source) = ControlEndpoint.discover() else { exit(0) }
     var edit: [String: Any] = ["file_path": path]
     switch tool {
     case "Edit": for k in ["old_string", "new_string", "replace_all"] { edit[k] = input[k] }
@@ -100,15 +100,14 @@ case .hook:
     case "Write": edit["content"] = input["content"]
     default: exit(0)
     }
-    guard let json = try? JSONSerialization.data(withJSONObject: edit),
-          let r = try? ControlClient.send(ControlRequest(token: endpoint.token, command: "doc edit", args: [String(decoding: json, as: UTF8.self)],
-                                                         session: env["CLAUDE_CODE_SESSION_ID"] ?? env["DUO_SESSION_ID"], cwd: FileManager.default.currentDirectoryPath),
-                                          socket: endpoint.socket) else { exit(0) }
-    if !r.ok, r.output.hasPrefix("not open") { exit(0) }
+    guard let json = try? JSONSerialization.data(withJSONObject: edit) else { exit(0) }
+    let answer = try? ControlClient.send(ControlRequest(token: endpoint.token, command: "doc edit", args: [String(decoding: json, as: UTF8.self)],
+                                                        session: env["CLAUDE_CODE_SESSION_ID"] ?? env["DUO_SESSION_ID"], cwd: FileManager.default.currentDirectoryPath),
+                                         via: endpoint, source: source)
+    // Only a clear yes denies Claude's own write (the editor did the edit); any failure lets it run (C-80, F-108).
+    guard case .deny(let done) = PreEditDecision.decide(answer) else { exit(0) }
     let name = (path as NSString).lastPathComponent
-    let reason = r.ok
-        ? "Done: the user has \(name) open in Duo, so Duo made this change in its editor instead of writing the file. \(r.output) Don't repeat it. For further edits to \(name), keep using \(tool) as usual, or `duo2 doc edit`."
-        : "Not applied: the user has \(name) open in Duo, and Duo couldn't make this change there: \(r.output). Read the current text with `duo2 doc read \(path)` and try again; don't write the file directly."
+    let reason = "Done: the user has \(name) open in Duo, so Duo made this change in its editor instead of writing the file. \(done) Don't repeat it. For further edits to \(name), keep using \(tool) as usual, or `duo2 doc edit`."
     let out: [String: Any] = ["hookSpecificOutput": ["hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": reason]]
     FileHandle.standardOutput.write((try? JSONSerialization.data(withJSONObject: out)) ?? Data())
     exit(0)
@@ -162,7 +161,7 @@ case .doctor:
     }
     print("Found Duo through \(source): \(endpoint.socket)")
     do {
-        let r = try ControlClient.send(ControlRequest(token: endpoint.token, command: "ping", args: []), socket: endpoint.socket)
+        let r = try ControlClient.send(ControlRequest(token: endpoint.token, command: "ping", args: []), via: endpoint, source: source)
         print(r.ok ? "Reachable: \(r.output)" : "Reached Duo, but it refused: \(r.output)")
         exit(r.ok ? 0 : 1)
     } catch {
@@ -171,13 +170,13 @@ case .doctor:
         exit(1)
     }
 default:
-    guard let (endpoint, _) = ControlEndpoint.discover() else { fail("Duo isn't running. Run `duo2 doctor`.", code: 69) }
+    guard let (endpoint, source) = ControlEndpoint.discover() else { fail("Duo isn't running. Run `duo2 doctor`.", code: 69) }
     let request = ControlRequest(token: endpoint.token, command: action.verb, args: rest,
                                  // Claude's own id is current after /clear; Duo's may be stale (F-29).
                                  session: env["CLAUDE_CODE_SESSION_ID"] ?? env["DUO_SESSION_ID"],
                                  cwd: FileManager.default.currentDirectoryPath)
     do {
-        let r = try ControlClient.send(request, socket: endpoint.socket, timeout: action.timeout)
+        let r = try ControlClient.send(request, via: endpoint, source: source, timeout: action.timeout)
         if r.ok { print(r.output, terminator: r.output.hasSuffix("\n") ? "" : "\n") } else { fail(r.output) }
     } catch {
         fail("\(error). Run `duo2 doctor`.", code: 69)
