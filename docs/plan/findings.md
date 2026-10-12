@@ -3214,3 +3214,17 @@ Reported by the demo-fixtures session: on 2.1.296 the `/` menu sits under the in
 - **Fix.** Under the box first, with either row shape; above only when nothing is under it, and only the block touching the box's top rule (a `/`-shaped transcript line further up is no longer a menu row). The footer filter (C-78, F-281) also drops a menu row's wrapped description rows (indented four or more, right after a menu row), so a description can't be read as the mode or busy row. While the inline menu covers the footer, `ChatSession.apply` keeps the mode it had (the chip stays).
 - **ChatLive** takes `DUO_CHAT_LIVE_TUI=default|fullscreen` (written to the scratch config's `settings.json`) and checks the selected row and kept mode from 2.1.292 on.
 - **Proof.** `DUO_CHECKS=chat`: 306 passed, 0 failed. `swift run DuoChecks`: 1243 passed, 0 failed. ChatLive on 2.1.296 (mock API, no tokens): 76 of 76 with `tui: default` and 76 of 76 with `tui: fullscreen`. 2.1.219 is covered by its recorded screens (`slash-2.1.219/`, `ChatChecks`, `ChatFooterChecks`). New board `chat-slash-menu-below` (the real inline screen, drawn as the menu board: four rows, `/triage-feedback` selected). `scripts/check-chat.sh`: 49 of 49 boards identical to main's (`samepng.py`, 0 pixels).
+
+## F-285 · Building the intro video's narration, score and later scenes (video/pipeline, 2026-10-11)
+
+- **The speech check failed correct lines.** Parakeet writes what it hears in its own spelling: "you're" for "you are", "anytime" for "any time", "versus"/"overfitting" for "vs"/"over-fitting", and "cloud" for "Claude" in Geoff's cloned voice. `voice/asr_check.py` now expands contractions and "vs" on both sides, and `voice/heard-as.json` maps compounds and names. The planner's word lookup (`wordTime` in `pipeline/plan.mjs`) reads the same file, so beats still land on a misheard word.
+- **The TTS voice comes out near -28 LUFS.** The first scored render measured -29 LUFS overall. `build.mjs` now normalises the final soundtrack to -16 LUFS / -1.5 dBTP (loudnorm, picture copied), and the score's levels are set relative to the measured voice.
+- **ACE-Step 1.5's checkpoint ships Python for `trust_remote_code`.** The package overwrites it with its own pinned copies. `score/score.py` refuses to run unless those files match hashes in `score/models.lock.json`, so no unreviewed code runs from the model folder.
+- **Facts about Duo the shot notes got wrong, found by the capture agents:**
+  - New Task has no sheet: it writes `tasks/untitled-task.md` and opens it with the heading selected; the file takes the slug once titled.
+  - The project header shows health and next step, not the goal; the goal is on the All projects tile and in PROJECT.md.
+  - The Tasks fold lists only tasks with no session.
+  - The HTML picker has no button: it starts from the page's right-click menu (Select Element).
+  - The deck viewer has a Select Shape button.
+- **Two cursor waypoints 0.02 s apart crashed the render** (Remotion's `interpolate` needs a strictly increasing range). Every `ramp` helper now treats an empty span as a step.
+- **Heavy work shares the GPU with voice-clone's fine-tunes.** A render that overlapped its smoke tests swapped 21 GB. Renders, TTS and score runs now take `~/repos/duo-voice/.gpu.lock` first (video/README.md).

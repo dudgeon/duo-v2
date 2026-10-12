@@ -61,7 +61,8 @@ const TopicsDone = ({t, ev, d}: {t: number; ev: ConclusionEvents; d: ConclusionD
             <span style={{fontFamily: mono, fontSize: 22, width: 40, color: P.ink3}}>{String(i + 1).padStart(2, '0')}</span>
             <span style={{fontFamily: ui, fontSize: 44, fontWeight: 600, letterSpacing: -1, color: P.ink}}>{name}</span>
             <span style={{fontSize: 30, color: hot ? ACCENT : '#2E7A3A'}}>{hot ? '…' : '✓'}</span>
-            {c > 0 && <Marker cx={62 + name.length * 12.5} cy={2} rx={name.length * 12.5 + 30} ry={34} progress={c} />}
+            {/* The circle sits on the name: 44 px SF Pro semibold runs about 0.52 em a character. */}
+            {c > 0 && <Marker cx={62 + (name.length * 44 * 0.52) / 2} cy={0} rx={(name.length * 44 * 0.52) / 2 + 26} ry={36} progress={c} />}
           </div>);
       })}
     </div>

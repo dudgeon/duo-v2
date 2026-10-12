@@ -13,11 +13,18 @@ node build.mjs                 # voice → capture → timeline → render → o
 ```
 
 **What `node build.mjs` writes:**
-- `out/m0.mp4`;
-- stills at the key frames;
-- `out/m0-report.md`.
+- `out/intro.mp4`, its soundtrack normalised to -16 LUFS;
+- stills at the key frames and `out/thumbnail.png`;
+- `out/report.md` (scenes, lengths, and anything a Shot: note asks for that isn't built);
+- `out/LISTEN.md` and `out/score-qa.png`: five timecodes and a waveform for checking the score by ear.
+
+**Flags:** `--stills` (no video), `--draft` (half scale), `--no-score`.
 
 **What it reuses:** voiced lines and captures, from `.cache/`, until their inputs change. The flags `--force-voice` and `--force-capture` redo them anyway.
+
+**The score step** needs `score/.venv` (`uv venv --python 3.12 score/.venv`, then `uv pip install --python score/.venv/bin/python -r score/requirements.txt`) and ACE-Step 1.5's weights from `score/fetch.py` in `~/Library/Caches/duo-video/models/ACE-Step-1.5`. `score/score.json` holds the prompt, seed and levels; `pipeline/score.mjs` generates the bed for the film's length, checks it has no words in it, and the film ducks it under the voice (`src/scenes/Film.tsx`).
+
+**Heavy runs share the Mac's GPU** with the voice-clone work: take the lock first (`mkdir ~/repos/duo-voice/.gpu.lock`, wait while it exists, `rmdir` when done), and never render Mon 2026-10-12 10:00–18:00.
 
 **The voice step** needs `voice/.venv`, made with `uv venv --python 3.12 voice/.venv` and `uv pip install --python voice/.venv/bin/python -r voice/requirements.txt`. It also needs the models in `~/Library/Caches/duo-video/models/`; `voice/models.lock.json` lists them and their commits. Models are never in the repo.
 
@@ -26,7 +33,7 @@ node build.mjs                 # voice → capture → timeline → render → o
 - **Captures:** fixtures only, with a throwaway `DUO_SUPPORT_DIR`. They run in the background and never touch your own Duo.
 - **Scenes:** pure functions of the frame. `lint.mjs` fails a build that uses a timer, `Date`, `Math.random` or CSS animation.
 - **Tokens:** `style/tokens.json` is generated: edit `style/video-tokens.json` and run `python3 scripts/gen-video-tokens.py`.
-- **The voice:** the house voice is `voice/house/`. Geoff's own voice (ENH-69) lives in a separate private project, never here.
+- **The voice:** `voice/house/voice.json`. Its `external` names Geoff's voice file outside the repo (DL-171), used when it exists; otherwise the house voice there. His reference audio and anything voiced in his voice never enter this repo: voiced lines live only in the gitignored `.cache/`, `build/` and `out/`. Check `git status` for audio before every commit.
 
 ## Script history
 
