@@ -9,9 +9,15 @@
 #  - I: a bare holder releases and re-takes in a tight loop while J and K are queued at the front: never two at once;
 #  - a bare script that releases twice (visible-gate.sh's unlock plus its EXIT trap) deletes Q's lock while Q's job
 #    runs; Q must warn, and Q's release must leave the next holder's lock alone.
+# Shared and exclusive holds (F-298), with GPU_LOCK_SHARED_SLOTS=2:
+#  - S1, S2, S3 shared: S1 and S2 run together, S3 waits for a slot;
+#  - X exclusive queues behind a running shared job, then A2 shared queues behind X: X waits for the shared job, A2
+#    waits for X although a slot is free, and X runs alone;
+#  - a mix of 12 shared and exclusive jobs: an exclusive job never overlaps another job, and never more than 2 shared;
+#  - dead holders in both shared slots are cleared, for an exclusive job and for a shared one.
 # Expect: the dead ticket cleared, A then B then C in ticket order, no two holders ever overlapping, F's ticket gone,
 # and G running once the ownerless lock is cleared.
-#   scripts/check-gpu-lock.sh   (about 20 s, in /tmp)
+#   scripts/check-gpu-lock.sh   (about 40 s, in /tmp)
 set -u
 R="$(cd "$(dirname "$0")/.." && pwd)"; T="$(mktemp -d /tmp/lockq.XXXX)"; L="$T/gpu.lock"; LOG="$T/events.log"
 export GPU_LOCK="$L" GPU_LOCK_POLL=0.2
@@ -84,4 +90,55 @@ wait $q
 grep -q "WARNING: the lock was taken from test Q" "$T/Q.err" && echo "Q warned that its lock was taken: ok"
 grep -q "not releasing" "$T/Q.err" && [ "$(cat "$L/owner" 2>/dev/null)" = "contender $$" ] && echo "Q's release left the contender's lock alone: ok"
 rm -f "$L/owner"; rmdir "$L"
+
+# Shared and exclusive. Events are "<time> <job> <s|x> start|end"; holds() checks them.
+export GPU_LOCK_SHARED_SLOTS=2
+job() {  # job <shared|exclusive> <name> <seconds>
+  "$R/scripts/gpu-lock.sh" --$1 "test $2" bash -c "ev '$2 ${1:0:1} start'; sleep $3; ev '$2 ${1:0:1} end'" 2> "$T/$2.err"
+}
+holds() {
+  sort -n "$LOG" | awk '
+    $4 == "start" && $3 == "e" { if (nx + ns) { print "OVERLAP: exclusive " $2 " started while " nx + ns " held it"; bad=1 } nx++ }
+    $4 == "start" && $3 == "s" { if (nx) { print "OVERLAP: shared " $2 " started during an exclusive job"; bad=1 } if (++ns > max) max = ns }
+    $4 == "start" { order = order " " $2 }
+    $4 == "end" { if ($3 == "e") nx--; else ns-- }
+    END { printf "order:%s; at most %d shared at once; %s\n", order, max, (bad || max > 2) ? "FAILED" : "no exclusive overlap" }'
+}
+
+echo "--- S: three shared jobs, two slots"
+: > "$LOG"
+for j in S1 S2 S3; do job shared $j 1.5 & sleep 0.1; done
+wait; holds
+sort -n "$LOG" | awk '$2 == "S3" && $4 == "start" { s3 = $1 } $4 == "end" && !first { first = $1 }
+  END { print (s3 >= first) ? "S3 waited for a slot: ok" : "S3 FAILED: it started before a slot was free" }'
+grep -q "waiting for a free slot" "$T/S3.err" && echo "S3 said it was waiting for a slot: ok"
+
+echo "--- X: an exclusive waiter keeps new shared jobs out, then runs alone"
+: > "$LOG"
+job shared A1 2 & sleep 0.3
+job exclusive X 1 & sleep 0.3
+job shared A2 0.5 &
+wait; holds
+sort -n "$LOG" | awk '{ t[$2 " " $4] = $1 }
+  END { print (t["X start"] >= t["A1 end"] && t["A2 start"] >= t["X end"]) ? "X waited for A1, and A2 waited for X: ok" : "X FAILED: the order is wrong" }'
+grep -q "waiting for 1 shared job" "$T/X.err" && echo "X held the lock while A1 finished: ok"
+
+echo "--- M: a mix of 12 jobs"
+: > "$LOG"
+for i in $(seq 1 12); do
+  if [ $((i % 3)) -eq 0 ]; then job exclusive M$i 0.3 & else job shared M$i 0.4 & fi
+  sleep 0.05
+done
+wait; holds
+ls -A "$L.queue" | grep -vE '^\.(next)$' | sed 's/^/left in queue: /'
+[ -z "$(ls -A "$L.shared")" ] && [ ! -d "$L" ] && echo "every hold released: ok"
+
+echo "--- dead shared holders"
+mkdir -p "$L.shared"
+for i in 1 2; do sleep 0 & d=$!; wait $d; mkdir "$L.shared/$i"; echo "ghost $d" > "$L.shared/$i/owner"; done
+"$R/scripts/gpu-lock.sh" "test W" true 2> "$T/W.err"
+[ "$(grep -c "clearing a stale lock" "$T/W.err")" = 2 ] && grep -q "taken by test W" "$T/W.err" && echo "W (exclusive) cleared both dead shared holders and ran: ok"
+for i in 1 2; do sleep 0 & d=$!; wait $d; mkdir "$L.shared/$i"; echo "ghost $d" > "$L.shared/$i/owner"; done
+"$R/scripts/gpu-lock.sh" --shared "test Z" true 2> "$T/Z.err"
+grep -q "clearing a stale lock" "$T/Z.err" && grep -q "taken by test Z" "$T/Z.err" && echo "Z (shared) cleared a dead shared holder and ran: ok"
 rm -rf "$T"
