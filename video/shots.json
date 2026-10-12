@@ -1567,7 +1567,7 @@
     "pauses": {
       "4": 1.6,
       "5": 2.4,
-      "6": 2.6
+      "6": 3.4
     },
     "beats": [
       {
@@ -1762,7 +1762,7 @@
       {
         "at": {
           "line": 6,
-          "word": "views"
+          "word": "view"
         },
         "click": "video.taskboard.open",
         "in": "video-s10-newsession-sent",
@@ -1787,7 +1787,8 @@
       {
         "at": {
           "line": 6,
-          "word": "return"
+          "word": "return",
+          "offset": 1.4
         },
         "click": "video.taskboard.session.Deck for Thursday",
         "in": "video-s10-board-deck",
