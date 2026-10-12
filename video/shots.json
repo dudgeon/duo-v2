@@ -1791,9 +1791,9 @@
         "state": "video-s10-newtask-untitled",
         "cam": {
           "x": 0,
-          "y": 40,
-          "w": 1800,
-          "h": 1012
+          "y": 250,
+          "w": 800,
+          "h": 450
         },
         "dur": 0.9
       },
@@ -1897,7 +1897,7 @@
         "in": "video-s10-newsession-sent",
         "cam": {
           "x": 0,
-          "y": 90,
+          "y": 196,
           "w": 470,
           "h": 264
         },
@@ -1932,7 +1932,7 @@
         "cam": {
           "on": "video.pane.left",
           "y0": 0,
-          "y1": 0.78
+          "y1": 0.58
         },
         "dur": 1
       },
@@ -2053,7 +2053,7 @@
         "in": "video-s10-archived",
         "cam": {
           "x": 0,
-          "y": 200,
+          "y": 316,
           "w": 900,
           "h": 506
         },
@@ -2105,6 +2105,6 @@
         "built": true
       }
     ],
-    "shotSha": "a0f3da40d847"
+    "shotSha": "1f414b1ff549"
   }
 }
