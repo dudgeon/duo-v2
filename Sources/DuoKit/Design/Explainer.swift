@@ -23,6 +23,8 @@ import SwiftUI
     @ObservationIgnored var overCard = false
     @ObservationIgnored var overTrigger = false
     @ObservationIgnored var pinned = false
+    /// Where the keyboard was when a keyboard-opened Explainer took focus; Esc gives it back.
+    @ObservationIgnored var previousResponder: NSResponder?
     /// Registered trigger frames by key (a plain table: drawing never reads it).
     @ObservationIgnored var frames: [String: CGRect] = [:]
     @ObservationIgnored var dwellTask: Task<Void, Never>?
@@ -81,6 +83,7 @@ import SwiftUI
         anchor = frame
         origin = frames[originKey]?.minX ?? frame.minX
         self.pinned = pinned
+        previousResponder = pinned ? NSApp.keyWindow?.firstResponder : nil
         height = 0
         withDuoAnimation(.scrimIn) { open = id }
         installMonitors()
@@ -91,7 +94,9 @@ import SwiftUI
         dwellTask?.cancel(); closeTask?.cancel()
         guard open != nil else { return }
         withDuoAnimation(.scrimOut) { open = nil }
-        overCard = false; pinned = false
+        overCard = false
+        if pinned, let r = previousResponder { NSApp.keyWindow?.makeFirstResponder(r) }
+        pinned = false; previousResponder = nil
         removeMonitors()
     }
 
@@ -117,6 +122,8 @@ import SwiftUI
             guard let self, self.open != nil else { return event }
             switch event.type {
             case .keyDown:
+                // Return, Space and Tab belong to the focused Don't show again (a keyboard-opened Explainer).
+                if self.pinned, [36, 49, 76, 48].contains(event.keyCode) { return event }
                 self.close()
                 return event.keyCode == 53 ? nil : event   // Esc is ours; typing goes on
             case .leftMouseDown, .rightMouseDown:
@@ -221,7 +228,7 @@ struct ExplainerOverlay: View {
                 GeometryReader { root in
                     placed(state: state, root: root.size) {
                         ExplainerCard(content: content, picture: { TaskExplainerPicture() },
-                                      onDismissForGood: { state.dismissForGood(id) })
+                                      onDismissForGood: { state.dismissForGood(id) }, takesFocus: state.pinned)
                     }
                 }
                 .transition(.opacity)
@@ -282,22 +289,25 @@ struct ExplainerCard<Picture: View>: View {
     let content: ExplainerContent
     @ViewBuilder let picture: () -> Picture
     let onDismissForGood: () -> Void
+    /// Opened from the keyboard: focus goes to Don't show again (Learn more, when shown, would take it first).
+    var takesFocus = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(content.title).duoText(.title).foregroundStyle(DuoColor.text)
                     Text(content.line).duoText(.body).foregroundStyle(DuoColor.text)
                 }
+                .padding(.top, 1)
                 picture().accessibilityHidden(true)   // decorative
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 7) {
                     ForEach(Array(content.points.enumerated()), id: \.offset) { i, p in
                         HStack(alignment: .top, spacing: 8) {
                             ExplainerMark(number: i + 1).padding(.top, 0.5)
                             (Text(p.lead + " ").fontWeight(.semibold).foregroundStyle(DuoColor.text)
                                 + Text(p.rest).foregroundStyle(DuoColor.text2))
-                                .font(.system(size: 12)).lineSpacing(3)
+                                .font(.system(size: 12)).lineSpacing(3.5)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -315,8 +325,9 @@ struct ExplainerCard<Picture: View>: View {
                     .contentShape(Rectangle())
                     .onActivate(onDismissForGood)  // action: settings explainers
                     .accessibilityLabel("Don’t show again")
+                    .background(ExplainerFocus(focus: takesFocus && content.learnMore == nil, action: onDismissForGood).allowsHitTesting(false))
             }
-            .padding(.horizontal, DuoSpace.popoverPadding.leading).padding(.vertical, 10)
+            .padding(.horizontal, DuoSpace.popoverPadding.leading).padding(.vertical, 11)
         }
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).fill(DuoColor.pane).duoPopoverShadow())   // the shadow on the frame alone, not on the parts in it
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
@@ -334,37 +345,41 @@ struct ExplainerMark: View {
     }
 }
 
-/// The picture: one annotated task, drawn from Duo's own parts (the task box, `body` and `text2`
-/// lines, a file chip and a session chip), 268 wide on `ground`. Decorative.
+/// The picture: one annotated task, drawn from Duo's own parts (the task box, a semibold title and
+/// `text2` lines, a file chip and a session chip), 268 wide on `ground`, with numbered marks inside
+/// the card at its right. Decorative. Sizes are board 02's, measured (title 12, lines 11/17.5).
 struct TaskExplainerPicture: View {
     var body: some View {
-        HStack(alignment: .top, spacing: 6) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: DuoSpace.gapRowItems) {
-                    TaskBox()
-                    Text("Draft the Q4 plan").duoText(.bodyEmphasis).foregroundStyle(DuoColor.text).lineLimit(1)
-                }.frame(height: 20)
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("Done when staff sign off.").duoText(.body).foregroundStyle(DuoColor.text2)
-                    Text("Start from last year’s plan.").duoText(.body).foregroundStyle(DuoColor.text2)
-                }
-                .font(.system(size: 12)).padding(.leading, 16)
-                HStack(spacing: 6) {
-                    chip(mono: true, "outline.md") { BoardGlyph(.page, color: DuoColor.text2).frame(width: 10, height: 10) }
-                    chip(mono: false, "Q4 outline") { Circle().strokeBorder(DuoColor.text, lineWidth: 1.3).frame(width: 8, height: 8) }
-                }.padding(.leading, 14)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: DuoSpace.gapRowItems) {
+                TaskBox()
+                Text("Draft the Q4 plan").font(.system(size: 12, weight: .semibold)).foregroundStyle(DuoColor.text).lineLimit(1)
+            }.frame(height: 20)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Done when staff sign off.").frame(height: 17.5)
+                Text("Start from last year’s plan.").frame(height: 17.5)
             }
-            .padding(EdgeInsets(top: 4, leading: 10, bottom: 8, trailing: 8))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).fill(DuoColor.pane))
-            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
-            VStack(spacing: 4) {
-                ExplainerMark(number: 1).frame(height: 20)
-                ExplainerMark(number: 2).frame(height: 34)
-                ExplainerMark(number: 3).frame(height: 18)
-            }.padding(.top, 4)
+            .font(.system(size: 11)).foregroundStyle(DuoColor.text2)
+            .padding(.top, 2.5).padding(.leading, 18)
+            HStack(spacing: 5) {
+                chip(mono: true, "outline.md") { BoardGlyph(.page, color: DuoColor.text2).frame(width: 10, height: 10) }
+                chip(mono: false, "Q4 outline") { Circle().strokeBorder(DuoColor.text, lineWidth: 1.3).frame(width: 8, height: 8) }
+            }
+            .padding(.top, 5).padding(.leading, 18)
         }
-        .padding(8)
+        .padding(EdgeInsets(top: 8, leading: 12, bottom: 11, trailing: 12))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).fill(DuoColor.pane))
+        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+        // The marks sit inside the card at its right, level with the title, the first line and the chips.
+        .overlay(alignment: .topTrailing) {
+            ZStack(alignment: .topTrailing) {
+                ExplainerMark(number: 1).offset(y: 10.5)
+                ExplainerMark(number: 2).offset(y: 31.5)
+                ExplainerMark(number: 3).offset(y: 71)
+            }.padding(.trailing, 10)
+        }
+        .padding(EdgeInsets(top: 12, leading: 13, bottom: 10, trailing: 13))
         .frame(width: DuoMetric.explainerWidth - 2 * DuoSpace.popoverPadding.leading)
         .background(RoundedRectangle(cornerRadius: 6).fill(DuoColor.ground))
     }
@@ -374,8 +389,37 @@ struct TaskExplainerPicture: View {
             glyph()
             Text(text).duoText(mono ? .monoPath : .pill).foregroundStyle(DuoColor.text)
         }
-        .padding(.horizontal, 6).frame(height: 18)
+        .padding(.horizontal, 6).frame(height: 17)
         .background(Capsule().fill(DuoColor.pane))
         .overlay(Capsule().strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+    }
+}
+
+/// A key view behind Don't show again, so a keyboard-opened Explainer can put focus there (Return or
+/// Space does it). SwiftUI's focus state is out (DL-30), so this is the one AppKit piece.
+struct ExplainerFocus: NSViewRepresentable {
+    let focus: Bool
+    let action: () -> Void
+
+    func makeNSView(context: Context) -> ExplainerFocusView { ExplainerFocusView() }
+
+    func updateNSView(_ view: ExplainerFocusView, context: Context) {
+        view.action = action
+        if focus, !view.tookFocus {
+            view.tookFocus = true
+            DispatchQueue.main.async { view.window?.makeFirstResponder(view) }
+        }
+    }
+}
+
+final class ExplainerFocusView: NSView {
+    var action: () -> Void = {}
+    var tookFocus = false
+    override var acceptsFirstResponder: Bool { true }
+    override var focusRingMaskBounds: NSRect { bounds.insetBy(dx: -4, dy: -2) }
+    override func drawFocusRingMask() { NSBezierPath(roundedRect: bounds.insetBy(dx: -4, dy: -2), xRadius: 4, yRadius: 4).fill() }
+    override func becomeFirstResponder() -> Bool { noteFocusRingMaskChanged(); return true }
+    override func keyDown(with event: NSEvent) {
+        if [36, 49, 76].contains(event.keyCode) { action() } else { super.keyDown(with: event) }
     }
 }
