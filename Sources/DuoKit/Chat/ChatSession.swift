@@ -305,6 +305,10 @@ public final class ChatSession {
         feed = ChatFeed(sessionId: sessionId, cwd: cwd, chat: self)
     }
 
+    /// The feed's timer is going (for DuoChecks: a closed tab's chat must stop it, C-79).
+    public var feedRunning: Bool { feed?.isRunning == true }
+    public func feedStop() { feed?.stop() }
+
     /// Earlier turns (Q-56c).
     public func loadEarlier() { feed?.loadEarlier() }
 
@@ -512,7 +516,9 @@ public final class ChatStore {
         sessions[new] = moved
     }
 
-    public func forget(_ key: String) { sessions.removeValue(forKey: key) }
+    /// A closed tab's chat goes with it: its feed timer, parsed transcript and log (C-79). The mode
+    /// stays in the prefs, so reopening the tab rebuilds the chat as it was.
+    public func forget(_ key: String) { sessions.removeValue(forKey: key)?.feed?.stop() }
 }
 
 /// The installed CLI's version, asked once per binary (`claude --version`: "2.1.291 (Claude Code)").

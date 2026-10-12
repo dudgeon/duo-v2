@@ -525,6 +525,41 @@ func spikeScreen(_ name: String) -> String {
         check(ChatFeedProbe.start(recs, turns: 50) == 140, "a long history opens on its last 50 turns (Q-56c)")
     }
 
+    print("chat mode: a closed tab's chat is forgotten and rebuilds on reopen (C-79)")
+    do {
+        let cfg = FileManager.default.temporaryDirectory.appending(path: "duo-forget-\(UUID().uuidString)")
+        let cwdDir = cfg.appending(path: "work")
+        try FileManager.default.createDirectory(at: cwdDir, withIntermediateDirectories: true)
+        let was = getenv("CLAUDE_CONFIG_DIR").map { String(cString: $0) }
+        setenv("CLAUDE_CONFIG_DIR", cfg.path, 1)
+        defer { if let was { setenv("CLAUDE_CONFIG_DIR", was, 1) } else { unsetenv("CLAUDE_CONFIG_DIR") } }
+        let sid = "forget-\(UUID().uuidString.prefix(8))"
+        let folder = ClaudeStorage.projects.appending(path: ClaudeStorage.encode(cwdDir.realPath))
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        var lines: [String] = []
+        for i in 0..<3 {
+            lines.append(#"{"type":"user","message":{"role":"user","content":"question \#(i)"}}"#)
+            lines.append(#"{"type":"assistant","message":{"content":[{"type":"text","text":"answer \#(i)"}]}}"#)
+        }
+        try (lines.joined(separator: "\n") + "\n").write(to: folder.appending(path: sid + ".jsonl"), atomically: true, encoding: .utf8)
+        let store = ChatStore(persist: false)
+        let first = store.session("tab-1")
+        first.follow(sessionId: sid, cwd: cwdDir.path)
+        let until = Date().addingTimeInterval(5)
+        while first.log.items.count < 6, Date() < until { spin(0.02) }
+        let turns = first.log.items
+        check(first.feedRunning && turns.count >= 6, "an open chat has its feed going and its turns (\(turns.count) items)")
+        store.forget("tab-1")
+        check(!first.feedRunning && store.existing("tab-1") == nil, "closing the tab stops the feed and drops the chat from the store")
+        let again = store.session("tab-1")
+        again.follow(sessionId: sid, cwd: cwdDir.path)
+        let until2 = Date().addingTimeInterval(5)
+        while again.log.items.count < turns.count, Date() < until2 { spin(0.02) }
+        check(again !== first && again.log.items == turns, "reopening the tab rebuilds the same turns")
+        again.feedStop()
+        try? FileManager.default.removeItem(at: cfg)
+    }
+
     print("chat mode: a long chat opens off the main thread (F-160)")
     do {
         // Every board's recording, replayed off the main thread, gives the log the main thread's replay gives.

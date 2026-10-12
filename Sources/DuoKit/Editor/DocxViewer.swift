@@ -254,7 +254,7 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
                 guard let self, let url = self.url, self.webView.window != nil else { return }
                 if Self.modified(url) != self.stamp { self.reload() }
             }
-        }
+        }.loose()
     }
 
     /// The pane stopped showing the document: no more polling the file.

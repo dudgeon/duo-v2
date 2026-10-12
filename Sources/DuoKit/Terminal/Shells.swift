@@ -78,6 +78,7 @@ extension AppModel {
 
     public func closeShell(_ key: String) {
         terminals.close(key)
+        chats.forget(key)
         for p in shellTabs.keys { shellTabs[p]?.removeAll { $0 == key } }
         shellTitles[key] = nil
         let project = altitude.isAllProjects ? fixture.home?.name : currentProject?.name

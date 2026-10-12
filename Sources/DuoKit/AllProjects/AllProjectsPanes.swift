@@ -583,13 +583,13 @@ struct OutsideRow: View {
     var body: some View {
         let sessions = model.fixture.sessions(inProject: project.name)
         let focused = model.focusedTile == project.name
-        let last = MapLayout.activity(of: project.name, in: model.fixture, now: Date().timeIntervalSince1970 * 1000)
+        let last = MapLayout.activity(of: project.name, in: model.fixture, now: model.minute.timeIntervalSince1970 * 1000)
         HStack(spacing: DuoSpace.gapGlyphToLabel) {
             Text(project.name.split(separator: "/").last.map(String.init) ?? project.name)
                 .duoText(.body).lineLimit(1).truncationMode(.tail)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Text("\(sessions.count)").duoText(.body).foregroundStyle(DuoColor.text2).monospacedDigit()
-            Text(Self.wait(last)).duoText(.body).foregroundStyle(DuoColor.text2).monospacedDigit()
+            Text(Self.wait(last, now: model.minute)).duoText(.body).foregroundStyle(DuoColor.text2).monospacedDigit()
                 .frame(width: DuoMetric.mapOutsideRowWaitWidth, alignment: .trailing)
         }
         .frame(height: DuoMetric.rowTileSession)
@@ -601,14 +601,14 @@ struct OutsideRow: View {
         .modifier(ProjectOrganizeMenu(project: project))
         .help(project.path)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(project.name), \(sessions.count) sessions, last active \(Self.wait(last))")
+        .accessibilityLabel("\(project.name), \(sessions.count) sessions, last active \(Self.wait(last, now: model.minute))")
         .accessibilityAddTraits(.isButton)
     }
 
     /// The wait words for a time (`4m`, `1h`, `3d`, `2w`), the same as session rows (Attention).
-    static func wait(_ ms: Double) -> String {
+    static func wait(_ ms: Double, now: Date = Date()) -> String {
         guard ms > 0 else { return "" }
-        return Attention.waitText(since: ms, now: Date()) ?? ""
+        return Attention.waitText(since: ms, now: now) ?? ""
     }
 }
 

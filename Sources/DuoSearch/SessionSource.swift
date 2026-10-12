@@ -106,7 +106,7 @@ extension SearchIndex {
     /// sweep removed leave the index (L17). Changed transcripts are re-read whole (FR-7.2.4).
     public func indexSessions(projects: [String: URL], claudeProjects: URL, embedder: Embedder,
                               archived: [(id: String, copy: URL, cwd: String)] = [],
-                              pause: () async -> Void = {}) async throws -> IndexStats {
+                              quiet: TimeInterval = 0, pause: () async -> Void = {}) async throws -> IndexStats {
         var stats = IndexStats()
         let roots = projects.map { (name: $0.key, path: $0.value.realPath) }
         func owner(_ cwd: String?) -> String {
@@ -130,7 +130,10 @@ extension SearchIndex {
         for t in transcripts {
             let key = "session:" + t.path
             let mod = t.modified.timeIntervalSince1970
-            if let k = known[key], k.modified == mod, k.size == t.size { continue }
+            if let k = known[key] {
+                if k.modified == mod, k.size == t.size { continue }
+                if quiet > 0, Date().timeIntervalSince1970 - mod < quiet { stats.deferred += 1; continue }
+            }
             let (turns, title, cwd) = SessionSource.read(t.path)
             guard !turns.isEmpty else { continue }
             let chunks = turns.flatMap { turn -> [Chunk] in
@@ -200,6 +203,7 @@ extension SearchIndex {
             for (chunk, h) in zip(chunks, hashes) { try c.run([item, ids[h] ?? 0, chunk.startLine, chunk.endLine, chunk.text]) }
         }
         stats.changed += 1
+        if replacing != nil { stats.replaced += 1 }
         stats.chunks += chunks.count
     }
 }

@@ -5,6 +5,9 @@ import Foundation
 /// punctuation), WordPiece with `##`, 100-character words, [CLS] … [SEP].
 public struct WordPiece: Sendable {
     public let vocab: [String: Int32]
+    /// Token counts remembered per unit of text (hash → count), so an edited file re-tokenizes only
+    /// its changed paragraphs (C-79). Shared by copies of the tokenizer.
+    public let counts = TokenCountMemo()
     let unk: Int32, cls: Int32, sep: Int32
 
     public init(vocabFile: URL) throws {
@@ -96,10 +99,33 @@ public struct WordPiece: Sendable {
     /// Tokens in `text` without [CLS]/[SEP]: what chunking budgets count.
     public func tokenCount(_ text: String) -> Int { words(text).reduce(0) { $0 + pieces($1).count } }
 
+    /// `tokenCount`, remembered by the text's hash.
+    public func memoTokenCount(_ text: String) -> Int {
+        let key = text.hashValue
+        if let n = counts.get(key) { return n }
+        let n = tokenCount(text)
+        counts.set(key, n)
+        return n
+    }
+
     /// [CLS] tokens [SEP], truncated to `maxLength` like the POC's tokenizer.
     public func encode(_ text: String, maxLength: Int = 512) -> [Int32] {
         var ids = words(text).flatMap(pieces)
         if ids.count > maxLength - 2 { ids = Array(ids.prefix(maxLength - 2)) }
         return [cls] + ids + [sep]
+    }
+}
+
+/// A bounded, locked hash → token count table; `computed` counts the misses (for DuoChecks).
+public final class TokenCountMemo: @unchecked Sendable {
+    private let lock = NSLock()
+    private var table: [Int: Int] = [:]
+    private var misses = 0
+    public var computed: Int { lock.lock(); defer { lock.unlock() }; return misses }
+    func get(_ k: Int) -> Int? { lock.lock(); defer { lock.unlock() }; return table[k] }
+    func set(_ k: Int, _ n: Int) {
+        lock.lock(); defer { lock.unlock() }
+        if table.count > 400_000 { table.removeAll(keepingCapacity: true) }
+        table[k] = n; misses += 1
     }
 }
