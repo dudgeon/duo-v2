@@ -22,9 +22,22 @@ def num_words(n):
     return " ".join(ONES[int(c)] for c in str(n))
 
 
+ORD = {"one": "first", "two": "second", "three": "third", "five": "fifth", "eight": "eighth", "nine": "ninth", "twelve": "twelfth"}
+
+
+def ordinal(n):
+    words = num_words(n).split()
+    last = words[-1]
+    words[-1] = ORD.get(last, last[:-1] + "ieth" if last.endswith("y") else last + "th")
+    return " ".join(words)
+
+
 def norm(text):
     t = text.lower().replace("&", " and ").replace("%", " percent")
     t = re.sub(r"(?<=[a-z0-9])\.(?=[a-z0-9])", " dot ", t)  # "prd.md" is said "prd dot md"
+    t = re.sub(r"\ba (hundred|thousand)\b", r"one \1", t)  # "a hundred" is heard as "100", "one hundred"
+    t = re.sub(r"\b(hundred|thousand) and\b", r"\1", t)  # and "a hundred and eighty" as "180"
+    t = re.sub(r"\b(\d+)(st|nd|rd|th)\b", lambda m: " " + ordinal(int(m.group(1))) + " ", t)  # "5th" is said "fifth"
     t = re.sub(r"(\d+)", lambda m: " " + num_words(int(m.group(1))) + " ", t)
     # Contractions count the same as their long form, either way round ("you are" heard as "you're").
     t = re.sub(r"[’]", "'", t)

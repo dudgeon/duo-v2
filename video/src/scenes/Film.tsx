@@ -13,6 +13,7 @@ import {ProjectsScene, type ProjectsData} from './ProjectsBg';
 import {ConclusionScene, type ConclusionData} from './Conclusion';
 import type {Ground} from '../lib/Desk';
 import {PaperGround, TopicRail, pictureTransform, topicChanges, topicsAt} from '../lib/Topics';
+import {SCENE_KINDS} from './registry'; // @film-hook
 
 type Line = {id: string; text: string; src: string; start: number; duration: number};
 type Scene = {
@@ -72,9 +73,11 @@ const SceneView = ({scene, fade}: {scene: Scene; fade: number}) => {
   // No dissolves: every scene change is a transition the two scenes play themselves (plan.mjs TRANSITIONS).
   const opacity = 1;
   const appear = scene.appear ? smootherstep(interpolate(t, [0.2, 1.0], [0, 1], clamp)) : 1;
+  const Registered = scene.drawn ? SCENE_KINDS[scene.drawn.scene as string] : undefined; // @film-hook
   return (
     <AbsoluteFill style={{opacity}}>
       {scene.kind === 'card' && scene.card && <Card card={scene.card} />}
+      {Registered && scene.drawn && <Registered t={t} ev={scene.drawn.events} scene={scene} />}{/* @film-hook */}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'desk' && <DeskScene t={t} ev={scene.drawn.events} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'morph' && scene.morph && <MorphScene t={t} ev={scene.drawn.events} data={scene.morph} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'app' && scene.app && <AppScene t={t} data={scene.app} />}

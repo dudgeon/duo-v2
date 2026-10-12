@@ -10,6 +10,10 @@ Generic defaults read as made by AI. The motion references Geoff sent (three art
 - show two or three crafted options as real frames or motion from the film, not quick variations;
 - design on a Design canvas with the Duo design system.
 
+## Standing references
+
+- **"Dynamic workflows in Claude Managed Agents"** (Claude Developers, Oct 9, 2026, https://x.com/claudedevs/status/2108591328732856655). Geoff, 2026-10-12: "Save this link/video as a future style reference — esp the animation style." Its grammar is in `reference-analysis-director.md`: one persistent actor, ink line art, hollow-to-filled states, diagrams made of the data, morphs and fan-ins instead of cuts, and captions that darken while their line is current.
+
 ## Looks
 
 | Rejected | His words | Chosen instead |

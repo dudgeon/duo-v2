@@ -3,7 +3,7 @@
 // seconds, not after ten minutes of voicing. Every problem is collected, not just the first.
 import {existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
-import {HEARD_AS, TRANSITIONS, fromOk, norm, sceneType} from './plan.mjs';
+import {HEARD_AS, TRANSITIONS, fromOk, norm, sceneType, toOk} from './plan.mjs';
 import {sha} from './util.mjs';
 
 // The fixture states the app can draw: VideoTargets' screen lists, read from its source.
@@ -80,7 +80,7 @@ export function checkScript({here, repo, scenes, shots, lexicon, said, cache}) {
     if (prev) {
       const tr = TRANSITIONS[shot.transitionIn];
       if (!tr) errors.push(`transition: ${sc.id} has no way in from ${prev.id}${shot.transitionIn ? ` ("${shot.transitionIn}" is not in plan.mjs TRANSITIONS)` : ''}`);
-      else if (!fromOk(tr, sceneType(shots[prev.id] ?? {})) || tr.to !== sceneType(shot)) errors.push(`transition: "${shot.transitionIn}" goes ${tr.from} -> ${tr.to}, but ${prev.id} -> ${sc.id} is ${sceneType(shots[prev.id] ?? {})} -> ${sceneType(shot)}`);
+      else if (!fromOk(tr, sceneType(shots[prev.id] ?? {})) || !toOk(tr, sceneType(shot))) errors.push(`transition: "${shot.transitionIn}" goes ${tr.from} -> ${tr.to}, but ${prev.id} -> ${sc.id} is ${sceneType(shots[prev.id] ?? {})} -> ${sceneType(shot)}`);
     }
     prev = sc;
     // Every timed thing lands on a line the scene has, on a word that line says.

@@ -9,10 +9,11 @@
 //   node build.mjs --stills     no video: one still per scene, where its camera lands
 //   node build.mjs --check      the check stage only (seconds, no voicing, capture or render); with voice and captures cached, the plan too
 //   --force-voice / --force-capture  redo those stages anyway
+//   --film <name>               build another film: films/<name>/ (script.md, shots.json), out/<name>/, build/<name>/public; default intro
 //   --accept-anchors            take this build's framing as the new record for the stale-anchor check
 import {spawnSync} from 'node:child_process';
 import {copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
-import {dirname, join, resolve} from 'node:path';
+import {dirname, join, relative, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {checkAnchors} from './pipeline/anchors.mjs';
 import {checkScript, scriptChanges, shotStates} from './pipeline/check.mjs';
@@ -20,6 +21,7 @@ import {captureStates} from './pipeline/capture.mjs';
 import {plan} from './pipeline/plan.mjs';
 import {parseScript, said} from './pipeline/script.mjs';
 import {BuildError} from './pipeline/util.mjs';
+import {filmNames, filmPaths, filmStyle, INTRO} from './pipeline/film.mjs';
 import {voiceLines, voiceSetup} from './pipeline/voice.mjs';
 import {gcCache, renderFilm, reviewClips, sceneKeys, soundtrackKey} from './pipeline/render.mjs';
 import {scoreBed} from './pipeline/score.mjs';
@@ -27,25 +29,30 @@ import {prepareWallpaper} from './pipeline/wallpaper.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '..');
-const cache = join(here, '.cache'), pub = join(here, 'build/public'), out = join(here, 'out');
-for (const d of [cache, pub, out]) mkdirSync(d, {recursive: true});
 const argv = process.argv.slice(2), args = new Set(argv);
+const film = args.has('--film') ? argv[argv.indexOf('--film') + 1] : INTRO;
+if (!film || film.startsWith('--')) { console.error('BUILD FAILED: --film needs a film name (the intro, or a folder under films/)'); process.exit(1); }
+let paths;
+try { paths = filmPaths(here, film); } catch (e) { console.error(`BUILD FAILED: ${e.message}`); process.exit(1); }
+const cache = join(here, '.cache'), pub = paths.pub, out = paths.out;
+for (const d of [cache, pub, out]) mkdirSync(d, {recursive: true});
 const report = [];
 const log = (s) => { console.log(s); report.push(s); };
-const remotion = (...a) => spawnSync(join(here, 'node_modules/.bin/remotion'), [...a, '--log=error'], {cwd: here, stdio: 'inherit'});
+// remotion.config.ts sets the intro's public dir; every call for another film says its own.
+const remotion = (...a) => spawnSync(join(here, 'node_modules/.bin/remotion'), [...a, '--log=error', ...paths.publicDirArgs], {cwd: here, stdio: 'inherit'});
 const fmt = (s) => `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, '0')}`;
 
 try {
-  const style = JSON.parse(readFileSync(join(here, 'style/tokens.json'), 'utf8'));
-  const shots = JSON.parse(readFileSync(join(here, 'shots.json'), 'utf8'));
+  const style = filmStyle(here, paths);
+  const shots = JSON.parse(readFileSync(paths.shots, 'utf8'));
 
   // 1. Script, and the check stage: everything that can be known without voicing, capturing or rendering.
-  const {scenes, lexicon} = parseScript(readFileSync(join(here, 'script.md'), 'utf8'));
-  if (!scenes.length) throw new BuildError('script: no scenes in script.md');
+  const {scenes, lexicon} = parseScript(readFileSync(paths.script, 'utf8'));
+  if (!scenes.length) throw new BuildError(`script: no scenes in ${relative(here, paths.script)}`);
   const {errors, missing} = checkScript({here, repo, scenes, shots, lexicon, said, cache});
   // The voice's file is checked here too: a missing one stops the build before anything is voiced.
   const voice = voiceSetup({here});
-  const changes = scriptChanges(scenes, join(cache, 'last-build-script.json'));
+  const changes = scriptChanges(scenes, join(cache, paths.lastBuild));
   if (changes.changes?.length) log(`script since the last build:\n${changes.changes.map((c) => `  ${c}`).join('\n')}`);
   if (errors.length) throw new BuildError(`check: ${errors.length} problem(s):\n${errors.map((e) => `- ${e}`).join('\n')}`);
   for (const m of missing) log(`NOT BUILT YET ${m}`);
@@ -61,7 +68,7 @@ try {
     const voiced = keyed.map((l) => { const a = JSON.parse(readFileSync(join(cache, 'voice', `${l.key}.asr.json`), 'utf8')); return {...l, duration: a.duration_s, words: a.words}; });
     const used = [];
     const tl = plan({scenes, shots, voiced, captures, style, used});
-    const anchors = checkAnchors({used, captures, cache, record: false});
+    const anchors = checkAnchors({used, captures, cache, record: false, name: paths.anchors});
     for (const m of anchors.stale) log(`STALE ${m}`);
     log(`check: plan ok, ${fmt(tl.duration)}, ${used.length} rects read, ${anchors.moved.length} moved with the app, ${anchors.stale.length} stale`);
     process.exit(anchors.stale.length ? 1 : 0);
@@ -77,7 +84,7 @@ try {
   const used = [];
   const timeline = plan({scenes, shots, voiced, captures, style, used});
   // Rects that follow anchors move with the app; rects in window points that the app moved under are stale (pipeline/anchors.mjs).
-  const anchors = checkAnchors({used, captures, cache, accept: args.has('--accept-anchors')});
+  const anchors = checkAnchors({used, captures, cache, accept: args.has('--accept-anchors'), name: paths.anchors});
   for (const m of anchors.moved) log(`anchors: ${m}`);
   for (const m of anchors.stale) log(`STALE ${m}`);
   log(`anchors: ${used.length} rects read, ${anchors.absolute} in window points${anchors.first ? ' (first record: nothing to compare)' : ''}`);
@@ -94,10 +101,12 @@ try {
   log(`timeline: ${fmt(timeline.duration)} (${timeline.scenes.map((s) => `${s.id} ${s.duration.toFixed(1)}s`).join(', ')})`);
 
   // 5. Wallpaper
-  prepareWallpaper({style, here, cache, pub, remotion, log});
+  // Only a film with a desk scene needs the wallpaper and S1's prototype page; a paper-only film skips both.
+  const needsDesk = Object.values(shots).some((s) => typeof s === 'object' && !(s.kind === 'drawn' && s.scene === 'paper-card'));
+  if (needsDesk) prepareWallpaper({style, here, cache, pub, remotion, log});
 
   // S1's browser window shows this real HTML page in an <IFrame> (src/lib/ClutterApps.tsx).
-  { const proto = JSON.parse(readFileSync(join(here, 'fixture/docs/content.json'), 'utf8')).prototype.file; mkdirSync(dirname(join(pub, proto)), {recursive: true}); copyFileSync(join(here, 'fixture/docs', proto), join(pub, proto)); }
+  if (needsDesk) { const proto = JSON.parse(readFileSync(join(here, 'fixture/docs/content.json'), 'utf8')).prototype.file; mkdirSync(dirname(join(pub, proto)), {recursive: true}); copyFileSync(join(here, 'fixture/docs', proto), join(pub, proto)); }
 
   // 6. Lint
   if (spawnSync('node', [join(here, 'lint.mjs')], {stdio: 'inherit'}).status !== 0) throw new BuildError('lint');
@@ -126,26 +135,26 @@ try {
   let rendered = [];
   if (args.has('--scene')) {
     if (!sceneArg || sceneArg.startsWith('--')) throw new BuildError('render: --scene needs a scene id, e.g. --scene S7');
-    renderFilm({here, pub, out, cache, timeline, scale, only: sceneArg.split(','), log});
+    renderFilm({here, pub, out, cache, timeline, scale, only: sceneArg.split(','), film, publicDirArgs: paths.publicDirArgs, styleOverride: paths.styleOverride, log});
   } else if (!args.has('--stills')) {
     let mp4;
     if (args.has('--whole')) {
-      mp4 = join(out, scale !== 1 ? 'intro-draft.mp4' : 'intro.mp4');
+      mp4 = join(out, scale !== 1 ? `${film}-draft.mp4` : `${film}.mp4`);
       if (remotion('render', 'src/index.ts', 'Intro', mp4, ...(scale !== 1 ? [`--scale=${scale}`] : [])).status !== 0) throw new BuildError('render');
       // Loudness: the voice comes out of the TTS near -28 LUFS; the film's soundtrack is brought to -16 LUFS
       // (peaks under -1.5 dBTP), the level web video plays at, with the picture copied untouched.
-      const loud = join(out, 'intro.loud.mp4');
+      const loud = join(out, `${film}.loud.mp4`);
       const thumb = join(out, 'thumbnail.png'), art = existsSync(thumb) ? ['-i', thumb, '-map', '0:v', '-map', '0:a', '-map', '1:v', '-c:v:1', 'png', '-disposition:v:1', 'attached_pic'] : [];
       if (spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, ...art, '-c:v:0', 'copy', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '256k', '-ar', '48000', loud]).status === 0) {
         copyFileSync(loud, mp4);
         log('render: soundtrack at -16 LUFS');
       }
       rendered = timeline.scenes.map((s) => s.id);
-    } else ({mp4, rendered} = renderFilm({here, pub, out, cache, timeline, scale, cover: join(out, 'thumbnail.png'), log}));
+    } else ({mp4, rendered} = renderFilm({here, pub, out, cache, timeline, scale, cover: join(out, 'thumbnail.png'), film, publicDirArgs: paths.publicDirArgs, styleOverride: paths.styleOverride, log}));
     // The poster check: the film's first frame must be the title card (Geoff, Oct 12: the still a player shows before
     // play is the icon, title and line), the same picture as out/thumbnail.png.
     const thumb = join(out, 'thumbnail.png');
-    if (existsSync(thumb) && scale === 1) {
+    if (posterFrame !== undefined && existsSync(thumb) && scale === 1) {
       const r = spawnSync('ffmpeg', ['-v', 'info', '-i', mp4, '-i', thumb, '-lavfi', '[0:v]trim=end_frame=1[a];[1:v]format=yuv420p[b];[a][b]psnr', '-f', 'null', '-'], {encoding: 'utf8'});
       const db = +(r.stderr.match(/PSNR .*average:([0-9.]+|inf)/)?.[1]?.replace('inf', '99') ?? 0);
       if (db < 35) throw new BuildError(`poster: the film's first frame isn't the title card (${db.toFixed(1)} dB against out/thumbnail.png); Film.tsx draws frame 0 at the first scene's poster time`);
@@ -173,7 +182,7 @@ try {
   }
   // What Geoff reviews (out/review.json): each scene's place, its still, what its Shot: note asks for and when each is
   // on screen, and, for the scenes this build re-rendered, a 480p clip, so a cut is reviewed by what changed.
-  const clips = rendered.length && scale === 1 && !args.has('--scene') ? reviewClips({out, timeline, rendered}) : {};
+  const clips = rendered.length && scale === 1 && !args.has('--scene') ? reviewClips({out, timeline, rendered, film}) : {};
   const at = (sc, ref) => {
     if (ref.startsWith('#')) return sc.app?.beatAt?.[ref.slice(1)];
     if (ref.startsWith('event:')) return sc.drawn?.events?.[ref.slice(6)];
@@ -187,15 +196,32 @@ try {
     requires: (shots[sc.id]?.requires ?? []).map((r) => ({what: r.what, built: r.built !== false,
       at: [...new Set((r.by ?? []).map((ref) => at(sc, ref)).filter((t) => t !== undefined).map((t) => fmt(sc.start + t)))]})),
   }))}, null, 1));
-  if (args.has('--gc')) gcCache({cache, liveCaptureKeys: new Set(Object.values(captures).map((c) => c.key)),
-    liveRenderKeys: new Set([...[1, 0.5].flatMap((sc) => sceneKeys({here, pub, timeline, scale: sc}).map((k) => k.key)),
-      `audio-${soundtrackKey({here, pub, timeline, from: 0, to: timeline.frames - 1})}`]), log});
+  // What this build uses, kept per film: --gc keeps the union over every film, so cleaning one never removes another's cache.
+  const live = {captures: Object.values(captures).map((c) => c.key),
+    renders: [...[1, 0.5].flatMap((sc) => sceneKeys({here, pub, timeline, scale: sc, film, styleOverride: paths.styleOverride}).map((k) => k.key)),
+      `audio-${soundtrackKey({here, pub, timeline, from: 0, to: timeline.frames - 1, film})}`]};
+  writeFileSync(join(cache, `live-${film}.json`), JSON.stringify(live));
+  if (args.has('--gc')) {
+    const keepCap = new Set(), keepRender = new Set();
+    for (const f of filmNames(here)) {
+      const file = join(cache, `live-${f}.json`);
+      if (!existsSync(file)) {
+        // A film built before this record existed has cache we can't name: stop rather than remove it. One never built has none.
+        if (existsSync(join(cache, filmPaths(here, f).lastBuild))) throw new BuildError(`gc: film ${f} has been built but has no record of its cache entries yet; build it once (node build.mjs${f === INTRO ? '' : ` --film ${f}`}), then --gc`);
+        continue;
+      }
+      const rec = JSON.parse(readFileSync(file, 'utf8'));
+      rec.captures.forEach((k) => keepCap.add(k));
+      rec.renders.forEach((k) => keepRender.add(k));
+    }
+    gcCache({cache, liveCaptureKeys: keepCap, liveRenderKeys: keepRender, log});
+  }
   const table = timeline.scenes.map((s) => `| ${s.id} | ${s.title} | ${fmt(s.start)} | ${s.duration.toFixed(1)} s | ${s.kind}${s.card?.standIn ? ' (stand-in)' : ''} |`).join('\n');
   const staleMd = anchors.stale.length ? `## Stale framing\n\nThe app moved under these rects; they are framed as before until fixed:\n\n${anchors.stale.map((m) => `- ${m}`).join('\n')}\n\n` : '';
   const gaps = missing.length ? `## Not built yet\n\nThe script asks for these and this cut doesn't have them:\n\n${missing.map((m) => `- ${m}`).join('\n')}\n\n` : '';
   // The script as built, for the next build's "since the last build".
-  writeFileSync(join(cache, 'last-build-script.json'), JSON.stringify(changes.now, null, 1));
-  writeFileSync(join(out, 'report.md'), `# Intro video build\n\n${staleMd}${gaps}${report.map((l) => `- ${l}`).join('\n')}\n\n| Scene | Title | Starts | Length | Shot |\n|---|---|---|---|---|\n${table}\n`);
+  writeFileSync(join(cache, paths.lastBuild), JSON.stringify(changes.now, null, 1));
+  writeFileSync(join(out, 'report.md'), `# ${film === INTRO ? 'Intro video' : film} build\n\n${staleMd}${gaps}${report.map((l) => `- ${l}`).join('\n')}\n\n| Scene | Title | Starts | Length | Shot |\n|---|---|---|---|---|\n${table}\n`);
 } catch (e) {
   if (e instanceof BuildError) { console.error(`BUILD FAILED: ${e.message}`); process.exit(1); }
   throw e;

@@ -65,6 +65,18 @@ The soundtrack is rendered once for the whole film, so the score and its ducking
 
 **The voice step** needs `voice/.venv`, made with `uv venv --python 3.12 voice/.venv` and `uv pip install --python voice/.venv/bin/python -r voice/requirements.txt`. It also needs the models in `~/Library/Caches/duo-video/models/`; `voice/models.lock.json` lists them and their commits. Models are never in the repo.
 
+## Films
+
+The pipeline builds more than one film. `node build.mjs` builds the intro, with the paths above (`script.md`, `shots.json`, `out/`, `build/public`). `node build.mjs --film <name>` builds the film in `films/<name>/`:
+
+- `films/<name>/script.md` and `shots.json`, in the same formats as the intro's, and an optional `style/tokens.json` merged over `style/tokens.json` (only what the build reads: the frame, the voice timings, the capture; scenes import the shared tokens).
+- It builds to `out/<name>/`, with its own public dir `build/<name>/public` (every `remotion` call passes `--public-dir`, because `remotion.config.ts` sets the intro's) and its own `.cache/last-build-script-<name>.json` and `anchors-used-<name>.json`.
+- `.cache/` itself is shared and content-addressed: voiced lines, captures and scene renders are reused across films. `--gc` keeps what any film uses (each build leaves `.cache/live-<film>.json`); it stops if a film that has been built has no such record yet, so build it once first.
+- `node pipeline/sync.mjs <export.md> --rev <n> --film <name>` writes that film's `script.md`; `pipeline/voice-only.mjs --film <name>` voices it.
+- The wallpaper and the intro's prototype page are prepared only when a film has desk scenes; a film with no `thumbnail` on its first shot gets no poster check.
+- A film's own scenes are registered in `src/scenes/registry.ts` (scene kind to component) and live in `src/scenes/<name>/`. Film.tsx consults the registry before its own branches. A film's render keys leave out the other films' scene folders (and the intro's leave out the registry), so adding a film re-renders nothing of another's; the hook lines in Film.tsx carry `@film-hook` and are left out of the hash for the same reason.
+- `films/director/` is a placeholder: two `paper-card` scenes (paper ground, the scene's title in ink) joined by the `paper-carry` transition, so the film builds end to end before its real scenes exist.
+
 ## Rules
 
 - **Captures:** fixtures only, with a throwaway `DUO_SUPPORT_DIR`. They run in the background and never touch your own Duo.
