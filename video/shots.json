@@ -334,15 +334,36 @@
       {
         "at": {
           "line": 2,
-          "word": "close"
+          "word": "close",
+          "offset": -0.9
         },
         "cam": {
-          "on": "video.pane.left",
-          "y0": 0,
-          "y1": 0.6,
-          "x1": 1.4
+          "x": 0,
+          "y": 30,
+          "w": 980,
+          "h": 551
         },
         "dur": 0.8
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "close",
+          "offset": -0.35
+        },
+        "in": "video-s4-tab-hover",
+        "state": "video-s4-tab-hover",
+        "stateAfter": 0
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "close",
+          "offset": 0.2
+        },
+        "click": "video.tab.middle.close.2",
+        "in": "video-s4-tab-hover",
+        "state": "video-s4-tab-closed"
       },
       {
         "at": {
@@ -468,7 +489,7 @@
       },
       {
         "what": "On \"close one\": a session tab's × closes it in the middle pane; the session stays in the list",
-        "built": false
+        "built": true
       }
     ],
     "$menu": "macOS draws context menus in their own window, which --capture-window can't include, and fixture sessions have no menu (no sessionId), so the menu is drawn with the real items of SessionOrganizeMenu (AllProjectsPanes.swift)."
