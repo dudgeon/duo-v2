@@ -18,7 +18,8 @@ extension VideoTargets {
     nonisolated static let s9Screens = ["video-s9-board", "video-s9-list", "video-s9-project", "video-s9-files-open"]
     nonisolated static let s10Screens = ["video-s10-flat", "video-s10-grouped", "video-s10-tasknote", "video-s10-newtask-untitled",
                                          "video-s10-newtask-created", "video-s10-newtask-details", "video-s10-newsession", "video-s10-newsession-sent",
-                                         "video-s10-board", "video-s10-board-deck", "video-s10-deck-resumed"]
+                                         "video-s10-board", "video-s10-board-deck", "video-s10-deck-resumed",
+                                         "video-s10-collapsed", "video-s10-workstreams", "video-s10-task-menu-target", "video-s10-archive-ask", "video-s10-archived"]
     nonisolated static var s9s10Screens: [String] { s9Screens + s10Screens }
 
     /// The scene 7 state a scene 9 or 10 project state stands on: the project as scene 7 ended, the deck's slide 3 after the edit.
@@ -29,6 +30,7 @@ extension VideoTargets {
     nonisolated static let newTaskTitle = "Warn about glare before the photo"
     nonisolated static let untitledPath = "tasks/untitled-task.md"
     static let boardProject = "shelf-scan"
+    nonisolated static let archivedTaskTitle = "Beta interview synthesis"   // the done task scene 10 archives, with its three sessions
 
     // MARK: Scene 9
 
@@ -39,7 +41,7 @@ extension VideoTargets {
         model.rightCollapsedAllProjects = false
         model.listClock = Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 13, hour: 9, minute: 41))
         if let v = model.fixture.videoS2 {
-            let names = Set(v.terminals.map(\.name).filter { $0 != scanReview } + [autoAdd])   // the tab scene 4 closed stays closed
+            let names = Set(v.terminals.map(\.name) + [autoAdd])
             model.fixtureActive = Set(model.fixture.sessions.filter { names.contains($0.name) }.map(\.tabKey))
         }
         WindowCapture.underlay = DuoNSColor.console
@@ -55,6 +57,7 @@ extension VideoTargets {
     struct S10Data {
         var ids: [String: String] = [:]
         var tasks: [Fixture.TaskSummary] = []
+        var sessions: [Fixture.Session] = []   // the idle sessions the tasks' second and third rows are (every scene 10 state lists them)
         var newTask: [String: Any] = [:]
         var deck: [String: Any] = [:]
         var newSessionId: String { ((newTask["session"] as? [String: Any])?["sessionId"] as? String) ?? "" }
@@ -67,6 +70,7 @@ extension VideoTargets {
         var out = S10Data()
         out.ids = s10["sessionIds"] as? [String: String] ?? [:]
         if let t = s10["tasks"], let json = try? JSONSerialization.data(withJSONObject: t) { out.tasks = (try? JSONDecoder().decode([Fixture.TaskSummary].self, from: json)) ?? [] }
+        if let t = s10["sessions"], let json = try? JSONSerialization.data(withJSONObject: t) { out.sessions = (try? JSONDecoder().decode([Fixture.Session].self, from: json)) ?? [] }
         out.newTask = s10["newTask"] as? [String: Any] ?? [:]
         out.deck = s10["deckSession"] as? [String: Any] ?? [:]
         return out
@@ -82,9 +86,21 @@ extension VideoTargets {
         }
     }
 
+    /// The state a scene 10 state is built on: `collapsed` is New Task's details with a group folded, and the task menu, its two questions
+    /// and the workstreams list all stand on the deck resumed (the project view, the new task's session in its group).
+    nonisolated static func s10Base(_ name: String) -> String {
+        switch name {
+        case "collapsed": "newtask-details"
+        case "workstreams", "task-menu-target", "archive-ask", "archived": "deck-resumed"
+        default: name
+        }
+    }
+
     static func applyS10(_ screen: String, model: AppModel, dir: URL, video: Fixture.VideoS2, project: String) {
         guard let d = s10Data(dir: dir), let folder = model.videoDemoFolder else { return }
-        let name = String(screen.dropFirst("video-s10-".count))
+        let requested = String(screen.dropFirst("video-s10-".count))
+        let name = s10Base(requested)
+        model.fixture.sessions += d.sessions.filter { s in !model.fixture.sessions.contains { $0.sessionId == s.sessionId } }   // the same set all through scene 10, flat included
         let fm = FileManager.default
         model.videoTasks = true
         model.listClock = Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 13, hour: 9, minute: 41))
@@ -130,12 +146,20 @@ extension VideoTargets {
             s.question = nil; s.options = nil; s.summary = nil; s.forkOf = nil; s.document = nil; s.reason = nil
             model.fixture.sessions.append(s)
         }
+        // Archive Task and Its Sessions, as the model leaves the lists (the real call's file writes aside): the note and its sessions go to the Archived fold.
+        if requested == "archived", let i = tasks.firstIndex(where: { $0.title == archivedTaskTitle }) {
+            tasks[i].archived = true
+            for id in tasks[i].sessionIds { if let n = model.fixture.sessions.first(where: { $0.sessionId == id })?.name { archive(n, in: model) } }
+            model.expandedGroups.insert("\(project)/archived")
+        }
         model.fixture.tasks = tasks
         model.fixture.groups = model.fixture.groups.filter { $0.project != project } + tasks.filter { $0.archived != true }.compactMap { t in
             let names = t.sessionIds.compactMap { id in model.fixture.sessions.first { $0.project == project && $0.sessionId == id }?.name }
             return names.isEmpty ? nil : Fixture.Group(name: t.title, project: project, sessions: names, threads: names.map { [$0] }, task: t.path)
         }
-        model.expandedGroups = ["Auto-add decision", "Deck for Thursday"]
+        model.expandedGroups.formUnion(["Auto-add decision", "Deck for Thursday"])
+        if requested == "workstreams" { model.expandedGroups.formUnion(tasks.map(\.title)) }   // every task open, so every session shows
+        if requested == "collapsed" { model.expandedGroups.remove("Auto-add decision") }       // the disclosure clicked: the group folds, its sessions hidden
         if name == "newsession" || name == "newsession-sent" { model.expandedGroups.insert(nt["title"] as? String ?? newTaskTitle) }   // the new session shows under its task
         model.fixture.projectFiles[project] = (model.fixture.projectFiles[project] ?? []) + tasks.map(\.path).sorted()
 
@@ -182,6 +206,8 @@ extension VideoTargets {
             model.consoleTab = id
             model.selectedSidebarItem = model.fixture.sessions.first { $0.name == n }?.id
         }
+        // Archive Task…'s own question (a Duo sheet, worded by the real code from the task's note and its sessions), over the project view.
+        if requested == "archive-ask", let t = tasks.first(where: { $0.title == archivedTaskTitle }) { model.askArchiveTask(project: project, path: t.path) }
         _ = fm
     }
 
@@ -192,7 +218,7 @@ extension VideoTargets {
     nonisolated static func s9s10Actions(_ screen: String, dir: URL) -> [String] {
         let deck = s7Actions("video-s7-pptx-after", dir: dir)
         if screen.hasPrefix("video-s9-") { return screen == "video-s9-board" || screen == "video-s9-list" ? [] : deck }
-        let name = String(screen.dropFirst("video-s10-".count))
+        let name = s10Base(String(screen.dropFirst("video-s10-".count)))
         switch name {
         case "flat", "grouped", "board", "deck-resumed": return deck
         case "newtask-untitled": return ["wait:1.5", "video:notecontext", "video:selectheading=\(untitledPath)", "wait:1", "video:measure=note"]

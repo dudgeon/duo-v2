@@ -12,7 +12,10 @@ extension VideoTargets {
 
     /// Which right-pane tab a scene 7 state shows, and which recording its chat is (all three continue chat-s5, in order).
     nonisolated struct S7 {
-        var tab: String, chat: String, composer = false
+        /// What the chat's composer holds in a state: nothing (focused, before the selection is sent), only Duo's reference to the selection,
+        /// or the reference and Sam's words (what's there just before Send).
+        enum Composer { case none, empty, reference, full }
+        var tab: String, chat: String, composer = Composer.none
 
         static func of(_ screen: String) -> S7 {
             let name = String(screen.dropFirst("video-s7-".count))
@@ -20,7 +23,9 @@ extension VideoTargets {
             case "tab-html": return .init(tab: VideoTargets.htmlTab, chat: "chat-s5")
             case "tab-pptx": return .init(tab: VideoTargets.pptxTab, chat: "chat-s5")
             case "tab-docx": return .init(tab: VideoTargets.docxTab, chat: "chat-s5")
-            case "md-composer": return .init(tab: VideoTargets.mdTab, chat: "chat-s5", composer: true)
+            case "md-composer-empty": return .init(tab: VideoTargets.mdTab, chat: "chat-s5", composer: .empty)
+            case "md-composer-ref": return .init(tab: VideoTargets.mdTab, chat: "chat-s5", composer: .reference)
+            case "md-composer": return .init(tab: VideoTargets.mdTab, chat: "chat-s5", composer: .full)
             case "md-sent", "md-after": return .init(tab: VideoTargets.mdTab, chat: "chat-s7-md")
             case "html-pick": return .init(tab: VideoTargets.htmlTab, chat: "chat-s7-md")
             case "html-sent", "html-after": return .init(tab: VideoTargets.htmlTab, chat: "chat-s7-html")
@@ -88,7 +93,10 @@ extension VideoTargets {
         case "link": return [selectLink, "video:exec=link", "video:insert=\(linkURL)", "video:caret-eol=[\(linkPhrase)]", "video:caret-eol=Q1. Auto-add", "video:measure=editor"]
         case "typed": return ["video:caret-eol=[\(linkPhrase)]", "video:insert=\n\(owenLine)", "video:measure=editor"]
         case "bullet": return ["video:caret-eol=Q2. Do we keep", "video:insert=\n\(bulletLine)", "video:caret-eol=Q1. Auto-add", "video:measure=editor"]
-        case "md-sel", "md-composer", "md-sent": return ["video:lines=14-17", "video:measure=editor"]
+        case "md-sel", "md-sent": return ["video:lines=14-17", "video:measure=editor"]
+        case "md-composer-empty": return ["video:lines=14-17", "video:measure=editor", "wait:1", "video:focus=composer"]
+        case "md-composer-ref": return ["video:lines=14-17", "video:measure=editor", "wait:1", "video:focus=composer", "video:measure=composer"]
+        case "md-composer": return ["video:lines=14-17", "video:measure=editor", "wait:1", "video:measure=composer"]
         case "md-after":
             return ["video:agentedit=\(dir.appending(path: "chat-s7-md/transcript.jsonl").path)|toolu_m5", "video:caret-eol=Q1. Auto-add", "video:measure=editor"]
         case "html-pick": return ["wait:1.5", fix, "video:measure=html"]
@@ -131,6 +139,8 @@ extension VideoTargets {
                 js("return JSON.stringify(duo.agentEdit(e, null))", ["e": [input]])
                 return
             }
+        case "focus":   // the composer's focus ring, drawn while the editor keeps the keyboard (a blurred editor would hide its selection, which the frame shows)
+            if let key = model.consoleTab { model.chat(for: key)?.ui.composerFocused = true }
         case "dump": js("return duo.text()")
         case "notecontext": model.pushNoteContext()   // scene 10: the sessions the note's links name, as the snapshot tells the editor
         case "selectheading": model.editor.selectHeading(path: arg)   // scene 10: New Task's note, its name selected
@@ -165,6 +175,7 @@ extension VideoTargets {
             take(model.editor.webView, editorMeasureJS, ["bold": "video.editor.bold", "link": "video.editor.link", "owen": "video.editor.owen",
                                                           "bullet": "video.editor.bullet", "heard": "video.editor.heard", "change": "video.editor.change",
                                                           "changes": "video.editor.change"])
+        case "composer": measureComposer(model)
         case "note":
             take(model.editor.webView, noteMeasureJS, ["goal": "video.tasknote.goal", "sessions": "video.tasknote.sessions",
                                                        "body": "video.tasknote.body", "props": "video.tasknote.props"])
@@ -180,6 +191,32 @@ extension VideoTargets {
                 """, ["shape": "video.slide.shape"])
         default: break
         }
+    }
+
+    /// What Sam types after Duo's reference to the selection (the end of `chat-s7-md/composer.txt`).
+    nonisolated static let samWords = "Update this with the latest tester feedback in research/feedback"
+
+    /// `video.composer.text`: the rect where Sam's words sit in the composer (window points, top-left origin), the same in the state before
+    /// he types (the line after Duo's reference, as wide as his words will be) and the one with them there (their own glyph box).
+    static func measureComposer(_ model: AppModel) {
+        guard let key = model.consoleTab, let v = model.chat(for: key)?.composerView, let w = v.window,
+              let layout = v.layoutManager, let container = v.textContainer else { return }
+        let ns = v.string as NSString
+        let found = ns.range(of: samWords)
+        var r: NSRect
+        if found.location != NSNotFound {
+            r = layout.boundingRect(forGlyphRange: layout.glyphRange(forCharacterRange: found, actualCharacterRange: nil), in: container)
+        } else {
+            // The line after the reference: the layout's extra line fragment (the text ends in a newline), else the last line's.
+            let line = layout.extraLineFragmentRect.isEmpty ? layout.lineFragmentUsedRect(forGlyphAt: max(0, layout.numberOfGlyphs - 1), effectiveRange: nil) : layout.extraLineFragmentRect
+            let size = (samWords as NSString).size(withAttributes: [.font: ComposerTextView.font])
+            r = NSRect(x: container.lineFragmentPadding, y: line.minY, width: ceil(size.width), height: line.height)
+        }
+        let origin = v.textContainerOrigin
+        r = r.offsetBy(dx: origin.x, dy: origin.y)
+        let base = v.convert(r, to: nil)
+        Anchors.web["video.composer.text"] = CGRect(x: base.minX, y: w.frame.height - base.maxY, width: base.width, height: base.height)
+        FileHandle.standardError.write(Data("video:measure: video.composer.text \(Anchors.web["video.composer.text"]!)\n".utf8))
     }
 
     /// Text-range rects in the editor's page: each phrase's own glyph box (a DOM range over the line's text), the What we heard

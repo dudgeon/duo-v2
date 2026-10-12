@@ -136,6 +136,7 @@ struct SidebarRowView: View {
             // A task row under the pointer (DL-132 a, standins2-handoff q46-hover): the selected fill,
             // its status kept whole and the + after it; the name gives way instead.
             let hovered = row.task.map { task in model.terminalsMode == .live && model.currentProject.map { model.hoveredTaskRow == TaskRowHover.key(project: $0.name, path: task) } == true } ?? false
+            let taskSlug = row.task.map { ($0 as NSString).deletingPathExtension.components(separatedBy: "/").last ?? $0 }
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: DuoSpace.gapRowItems) {
                     Chevron(direction: expanded ? .down : .right).frame(width: 10)
@@ -183,6 +184,14 @@ struct SidebarRowView: View {
                 .accessibilityLabel("\(row.name), \(row.task == nil ? "group" : "task") of \(count), \(row.state.spokenName)")
                 .accessibilityIdentifier(row.task.map { "video.task.\(($0 as NSString).deletingPathExtension.components(separatedBy: "/").last ?? $0)" } ?? "")   // anchors: the video cursor's target
                 .accessibilityAddTraits(selected ? .isSelected : [])
+                .overlay(alignment: .leading) {   // anchors (scene 10): the disclosure arrow's 18 pt box, centred on the chevron; a sibling so the row keeps its own name
+                    if model.videoDemoFolder != nil, let taskSlug {
+                        Color.clear.frame(width: 18, height: DuoMetric.rowGroup).allowsHitTesting(false)
+                            .padding(.leading, DuoSpace.selectionInset + 8 - 4)
+                            .accessibilityElement().accessibilityLabel(expanded ? "Collapse" : "Expand")
+                            .accessibilityIdentifier("video.task.\(taskSlug).disclosure")
+                    }
+                }
 
                 if expanded {
                     VStack(alignment: .leading, spacing: 0) {
@@ -193,6 +202,11 @@ struct SidebarRowView: View {
                     }
                     .padding(.leading, DuoSpace.threadRuleX)
                     .transition(.foldRows)
+                }
+            }
+            .background {   // anchors (scene 10): the task's row with its session rows, as far as they show
+                if model.videoDemoFolder != nil, let taskSlug {
+                    Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Task group").accessibilityIdentifier("video.task.\(taskSlug).group")
                 }
             }
         case .thread, .session:
