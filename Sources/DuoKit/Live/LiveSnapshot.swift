@@ -71,7 +71,15 @@ public enum LiveSnapshot {
     }
 
     public static func build(_ ctx: Context, beacons: [Beacon] = Beacon.readAll()) -> (Fixture, folders: [String: URL], moves: [Move]) {
-        let resolve = { (p: String) in URL(fileURLWithPath: p).realPath }
+        // realPath hits the file system, and the scans below ask for the same few cwds over and over (C-79).
+        final class Resolved: @unchecked Sendable { var paths: [String: String] = [:] }
+        let resolved = Resolved()
+        let resolve = { (p: String) -> String in
+            if let r = resolved.paths[p] { return r }
+            let r = URL(fileURLWithPath: p).realPath
+            resolved.paths[p] = r
+            return r
+        }
         // Claude's history, plus sessions only Duo's archive still has (Claude's cleanup removed the
         // transcript, DL-44): they stay listed by title and resume from the copy.
         let history = ctx.historyOverride ?? (ctx.includeHistory
