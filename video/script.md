@@ -297,7 +297,7 @@ Shot: out of the app and onto the paper ground, a bookend to S0.
 
 ## The voice
 
-The house voice is a warm, medium-low baritone, friendly and a little quicker (B-light-133, chosen Oct 11). The build reads this table: write the word as it appears in a line, and how it should be said. Add a row whenever a line comes out wrong.
+The narrator is Geoff's own voice, a zero-shot clone at tempo 1.05 (Oct 11; the house voice, B-light-133, is kept to switch back). The build reads this table: write the word as it appears in a line, and how it should be said. Add a row whenever a line comes out wrong.
 
 | Written | Said |
 | --- | --- |
