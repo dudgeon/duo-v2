@@ -24,7 +24,8 @@ const frameOf = (cap, id) => {
   return e && {x: e.frame.x, y: e.frame.y, w: e.frame.width, h: e.frame.height};
 };
 
-export function checkAnchors({used, captures, cache, accept = false}) {
+// record: false (the check stage) compares without writing.
+export function checkAnchors({used, captures, cache, accept = false, record = true}) {
   const file = join(cache, 'anchors-used.json');
   const before = existsSync(file) ? keyed(JSON.parse(readFileSync(file, 'utf8'))) : null;
   const now = keyed(used);
@@ -49,7 +50,8 @@ export function checkAnchors({used, captures, cache, accept = false}) {
     if (why.length) staleKeys.add(k), stale.push(`${k} is a rect in window points in ${u.state}, and the app moved under it: ${why.slice(0, 4).join('; ')}${why.length > 4 ? ` and ${why.length - 4} more` : ''}. Re-frame it, or make it follow an anchor (rel, fit or on).`);
   }
   const absolute = used.filter((u) => u.absolute && u.role !== 'click').length;
-  if (accept || !stale.length) writeFileSync(file, JSON.stringify(used, null, 1));
+  if (!record) {}
+  else if (accept || !stale.length) writeFileSync(file, JSON.stringify(used, null, 1));
   else {
     // Keep the accepted notes for the stale rects; take the rest from this build.
     const keep = [...now].map(([k, u]) => (staleKeys.has(k) && before.get(k)) || u);

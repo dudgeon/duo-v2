@@ -4,12 +4,12 @@ import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {BuildError} from './util.mjs';
 
-const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+export const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
 
-const HEARD_AS = Object.fromEntries(Object.entries(JSON.parse(readFileSync(new URL('../voice/heard-as.json', import.meta.url), 'utf8')))
+export const HEARD_AS = Object.fromEntries(Object.entries(JSON.parse(readFileSync(new URL('../voice/heard-as.json', import.meta.url), 'utf8')))
   .filter(([k]) => !k.startsWith('$')).flatMap(([name, heard]) => heard.map((h) => [h, name])));
 
-function wordTime(line, phrase, nth = 1) {
+export function wordTime(line, phrase, nth = 1) {
   // `nth` picks a later occurrence when a word repeats in the line ("files" twice).
   const want = norm(phrase);
   // A heard word reads as the name it stands for (voice/heard-as.json: "cloud" is Claude), as the speech check reads it.
@@ -67,8 +67,8 @@ export const TRANSITIONS = {
   'stand-in': {kind: 'graphic', from: ['projects', 'card', 'app'], to: 'card'},
   'stand-in-out': {kind: 'graphic', from: 'card', to: 'conclusion'},
 };
-const sceneType = (shot) => (shot.kind === 'drawn' ? shot.scene : shot.kind);
-const fromOk = (tr, type) => (Array.isArray(tr.from) ? tr.from.includes(type) : tr.from === type);
+export const sceneType = (shot) => (shot.kind === 'drawn' ? shot.scene : shot.kind);
+export const fromOk = (tr, type) => (Array.isArray(tr.from) ? tr.from.includes(type) : tr.from === type);
 
 // A rect in window points from a capture's anchors: an id (video.*) or a label.
 function anchorRect(cap, key, state, sceneId) {

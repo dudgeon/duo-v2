@@ -5,6 +5,7 @@
 //   node build.mjs              full build: out/intro.mp4, a still per scene, contact sheet, report
 //   node build.mjs --draft      half-size render, for a quick look
 //   node build.mjs --stills     no video: one still per scene, where its camera lands
+//   node build.mjs --check      the check stage only (seconds, no voicing, capture or render); with voice and captures cached, the plan too
 //   --force-voice / --force-capture  redo those stages anyway
 //   --accept-anchors            take this build's framing as the new record for the stale-anchor check
 import {spawnSync} from 'node:child_process';
@@ -12,11 +13,12 @@ import {copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync} from '
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {checkAnchors} from './pipeline/anchors.mjs';
+import {checkScript, scriptChanges, shotStates} from './pipeline/check.mjs';
 import {captureStates} from './pipeline/capture.mjs';
 import {plan} from './pipeline/plan.mjs';
 import {parseScript, said} from './pipeline/script.mjs';
-import {BuildError, sha} from './pipeline/util.mjs';
-import {voiceLines} from './pipeline/voice.mjs';
+import {BuildError} from './pipeline/util.mjs';
+import {voiceLines, voiceSetup} from './pipeline/voice.mjs';
 import {scoreBed} from './pipeline/score.mjs';
 import {prepareWallpaper} from './pipeline/wallpaper.mjs';
 
@@ -34,35 +36,38 @@ try {
   const style = JSON.parse(readFileSync(join(here, 'style/tokens.json'), 'utf8'));
   const shots = JSON.parse(readFileSync(join(here, 'shots.json'), 'utf8'));
 
-  // 1. Script
+  // 1. Script, and the check stage: everything that can be known without voicing, capturing or rendering.
   const {scenes, lexicon} = parseScript(readFileSync(join(here, 'script.md'), 'utf8'));
   if (!scenes.length) throw new BuildError('script: no scenes in script.md');
-  for (const id of Object.keys(shots).filter((k) => !k.startsWith('$'))) {
-    if (!scenes.some((s) => s.id === id)) throw new BuildError(`shots: ${id} is in shots.json but not in the script`);
-  }
-  // Each Shot: note is a checklist (script v2's rule). shots.json records the note's hash and what it asks for;
-  // a changed note stops the build until the shot is re-read, and anything not built yet is reported, never silent.
-  const missing = [];
-  for (const sc of scenes) {
-    const shot = shots[sc.id];
-    if (!shot || !sc.shot) continue;
-    const noteSha = sha([sc.shot, ...sc.notes].join('\n')).slice(0, 12);
-    if (shot.shotSha !== noteSha) throw new BuildError(`shots: ${sc.id}'s Shot: note changed since shots.json was written (now ${noteSha}). Re-read it, update ${sc.id}.requires, then set shotSha.`);
-    if (!shot.requires?.length) throw new BuildError(`shots: ${sc.id} has a Shot: note but no requires list`);
-    for (const r of shot.requires) if (!r.built) missing.push(`${sc.id}: ${r.what}`);
-  }
+  const {errors, missing} = checkScript({here, repo, scenes, shots, lexicon, said, cache});
+  // The voice's file is checked here too: a missing one stops the build before anything is voiced.
+  const voice = voiceSetup({here});
+  const changes = scriptChanges(scenes, join(cache, 'last-build-script.json'));
+  if (changes.changes?.length) log(`script since the last build:\n${changes.changes.map((c) => `  ${c}`).join('\n')}`);
+  if (errors.length) throw new BuildError(`check: ${errors.length} problem(s):\n${errors.map((e) => `- ${e}`).join('\n')}`);
   for (const m of missing) log(`NOT BUILT YET ${m}`);
   const lines = scenes.flatMap((s) => s.lines.map((l) => ({...l, said: said(l.text, lexicon)})));
-  log(`script: ${scenes.length} scenes, ${lines.length} lines`);
+  log(`script: ${scenes.length} scenes, ${lines.length} lines; check passed`);
+  const states = [...new Set(Object.values(shots).filter((s) => typeof s === 'object').flatMap(shotStates))];
+  if (args.has('--check')) {
+    // With every line voiced and every state captured already, the plan itself is checked too: anchors, heard words, stale framing.
+    const keyed = voice.keyed(lines);
+    const unvoiced = keyed.filter((l) => !existsSync(join(cache, 'voice', `${l.key}.asr.json`)));
+    const captures = captureStates(states, {repo, cache, pub, scale: style.capture.scale, fixture: style.capture.fixture, cachedOnly: true, log: () => {}});
+    if (unvoiced.length || !captures) { log(`check: plan not checked (${unvoiced.length ? `${unvoiced.length} line(s) not voiced yet` : 'captures not all cached'}); a build voices and captures them`); process.exit(0); }
+    const voiced = keyed.map((l) => { const a = JSON.parse(readFileSync(join(cache, 'voice', `${l.key}.asr.json`), 'utf8')); return {...l, duration: a.duration_s, words: a.words}; });
+    const used = [];
+    const tl = plan({scenes, shots, voiced, captures, style, used});
+    const anchors = checkAnchors({used, captures, cache, record: false});
+    for (const m of anchors.stale) log(`STALE ${m}`);
+    log(`check: plan ok, ${fmt(tl.duration)}, ${used.length} rects read, ${anchors.moved.length} moved with the app, ${anchors.stale.length} stale`);
+    process.exit(anchors.stale.length ? 1 : 0);
+  }
 
   // 2. Voice
   const voiced = voiceLines(lines, {here, cache, pub, style, force: args.has('--force-voice'), log});
 
   // 3. Captures
-  // Every state a shot shows: its list, plus (app scenes) the states its beats switch to or read anchors from, and its entry's.
-  const shotStates = (s) => (s.kind === 'desk' ? [s.state] : [...(s.states ?? []), ...(s.beats ?? []).flatMap((b) => [b.state, b.in, b.wipe?.state, b.drag?.reveal]),
-    s.entry?.base, ...Object.values(s.entry?.panes ?? {})].filter(Boolean));
-  const states = [...new Set(Object.values(shots).filter((s) => typeof s === 'object').flatMap(shotStates))];
   const captures = captureStates(states, {repo, cache, pub, scale: style.capture.scale, fixture: style.capture.fixture, force: args.has('--force-capture'), log});
 
   // 4. Timeline
@@ -139,6 +144,8 @@ try {
   const table = timeline.scenes.map((s) => `| ${s.id} | ${s.title} | ${fmt(s.start)} | ${s.duration.toFixed(1)} s | ${s.kind}${s.card?.standIn ? ' (stand-in)' : ''} |`).join('\n');
   const staleMd = anchors.stale.length ? `## Stale framing\n\nThe app moved under these rects; they are framed as before until fixed:\n\n${anchors.stale.map((m) => `- ${m}`).join('\n')}\n\n` : '';
   const gaps = missing.length ? `## Not built yet\n\nThe script asks for these and this cut doesn't have them:\n\n${missing.map((m) => `- ${m}`).join('\n')}\n\n` : '';
+  // The script as built, for the next build's "since the last build".
+  writeFileSync(join(cache, 'last-build-script.json'), JSON.stringify(changes.now, null, 1));
   writeFileSync(join(out, 'report.md'), `# Intro video build\n\n${staleMd}${gaps}${report.map((l) => `- ${l}`).join('\n')}\n\n| Scene | Title | Starts | Length | Shot |\n|---|---|---|---|---|\n${table}\n`);
 } catch (e) {
   if (e instanceof BuildError) { console.error(`BUILD FAILED: ${e.message}`); process.exit(1); }
