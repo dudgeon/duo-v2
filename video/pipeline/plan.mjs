@@ -66,6 +66,8 @@ export const TRANSITIONS = {
   // in and out of it is a plain graphic move. Temporary by nature: replace the card with the scene.
   'stand-in': {kind: 'graphic', from: ['projects', 'card', 'app'], to: 'card'},
   'stand-in-out': {kind: 'graphic', from: 'card', to: 'conclusion'},
+  // Paper to paper (the director film): the paper ground and the title carry across; the next scene's content takes the place of the last's.
+  'paper-carry': {kind: 'graphic', from: ['paper-card', 'conclusion'], to: 'paper-card'},
 };
 export const sceneType = (shot) => (shot.kind === 'drawn' ? shot.scene : shot.kind);
 export const fromOk = (tr, type) => (Array.isArray(tr.from) ? tr.from.includes(type) : tr.from === type);
