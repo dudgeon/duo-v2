@@ -145,7 +145,9 @@ struct SidebarRowView: View {
                             withDuoAnimation(.fold) { if expanded { model.expandedGroups.remove(row.name) } else { model.expandedGroups.insert(row.name) } }
                         }
                         .accessibilityLabel(expanded ? "Collapse" : "Expand")
-                    StateGlyph(row.state)
+                    // A task or group has no kind: the hand while one of its sessions needs you, else nothing (DL-174).
+                    Group { if SessionGlyph.taskMark(row.state) { SessionGlyph(kind: .terminal, state: .needsYou) } else { Color.clear } }
+                        .frame(width: DuoMetric.glyph, height: DuoMetric.glyph)
                     // A task leads with its box and reads "status · n"; a group keeps its pill (DL-100).
                     if row.task != nil { TaskBox(color: DuoColor.text) }
                     Text(row.name).duoText(.bodyEmphasis).lineLimit(1).layoutPriority(1)   // the name keeps its room; status gives way, except under the pointer (fixed below)
@@ -222,12 +224,13 @@ struct SidebarLeafRow: View {
     let nested: Bool
 
     var body: some View {
+        let kind = model.sessionKind(key: row.sessionKey, project: model.currentProject?.name ?? "")
         HStack(spacing: DuoSpace.gapRowItems) {
             Group {
                 if case .thread = row.kind { Chevron(direction: .right) } else { Color.clear }
             }
             .frame(width: 10, height: 10)
-            StateGlyph(row.state)
+            SessionGlyph(kind: kind, state: row.state)
             Text(row.name).duoText(.body).lineLimit(1)
             if case .thread(let n) = row.kind { CountPill(text: "thread · \(n)", emphasised: false) }
             Spacer(minLength: 8)
@@ -244,7 +247,7 @@ struct SidebarLeafRow: View {
         .onActivate { model.openConsoleTab(row.sessionKey) }  // action: session open
         .modifier(SessionOrganizeMenu(sessionKey: row.sessionKey))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(row.name), \(row.state.spokenName)\(row.wait.map { ", waiting \($0)" } ?? "")")
+        .accessibilityLabel("\(row.name), \(SessionGlyph.spokenKind(kind)), \(row.state.spokenName)\(row.wait.map { ", waiting \($0)" } ?? "")")
         .accessibilityIdentifier("video.session.\(row.name)")   // anchors: the video cursor's target
         .overlay {   // anchors: the row a context menu is open on
             if model.contextMenuSession == row.sessionKey { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Context menu row").accessibilityIdentifier("video.menu.row") }
