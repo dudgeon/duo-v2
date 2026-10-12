@@ -27,7 +27,7 @@ for name in $order; do
   echo "codebase-review-measure $$" > $L/owner
   echo "=== $name ($(date +%H:%M:%S)) swap used: $(sysctl -n vm.swapusage | awk '{print $6}')"
   APP=$app OUT=$M/runs ${0:A:h}/measure.sh $name $secs ${=opts} -- ${=fx}
-  rm -f $L/owner; rmdir $L
+  [[ "$(cat $L/owner 2>/dev/null)" == "codebase-review-measure $$" ]] && { rm -f $L/owner; rmdir $L }   # only our own lock (F-296)
   sleep 10
 done
 echo "=== matrix done $(date +%H:%M:%S)"

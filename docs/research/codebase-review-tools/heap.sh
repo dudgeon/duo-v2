@@ -20,6 +20,6 @@ heap -s $pid > $o/heap.txt 2>&1
 kill -TERM $pid; for i in {1..20}; do kill -0 $pid 2>/dev/null || break; sleep 1; done
 pkill -f "$fx/claude" 2>/dev/null
 rm -rf $fx
-rm -f $L/owner; rmdir $L
+[[ "$(cat $L/owner 2>/dev/null)" == "codebase-review-heap $$" ]] && { rm -f $L/owner; rmdir $L }   # only our own lock (F-296)
 grep -E 'Footprint:' $o/footprint.txt; grep -E 'All zones|Process [0-9]+:' $o/heap.txt | head -3
 sed -n '/COUNT *BYTES/,+25p' $o/heap.txt | head -30
