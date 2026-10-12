@@ -15,6 +15,7 @@ import {plan} from './pipeline/plan.mjs';
 import {parseScript, said} from './pipeline/script.mjs';
 import {BuildError, sha} from './pipeline/util.mjs';
 import {voiceLines} from './pipeline/voice.mjs';
+import {scoreBed} from './pipeline/score.mjs';
 import {prepareWallpaper} from './pipeline/wallpaper.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -64,6 +65,8 @@ try {
 
   // 4. Timeline
   const timeline = plan({scenes, shots, voiced, captures, style});
+  // 5. Score: the bed for the film's length, mixed in the film under the voice (pipeline/score.mjs).
+  if (!args.has('--no-score')) timeline.score = scoreBed({here, cache, pub, duration: timeline.duration, voiceWavs: voiced.slice(0, 8).map((l) => join(pub, l.src)), log});
   for (const sc of timeline.scenes) if (sc.transitionIn) log(`transition: into ${sc.id} by ${sc.transitionIn.name} (${sc.transitionIn.kind === 'app' ? 'app navigation' : 'motion graphic'})`);
   writeFileSync(join(pub, 'timeline.json'), JSON.stringify(timeline, null, 2));
   log(`timeline: ${fmt(timeline.duration)} (${timeline.scenes.map((s) => `${s.id} ${s.duration.toFixed(1)}s`).join(', ')})`);
@@ -100,6 +103,23 @@ try {
     if (remotion('render', 'src/index.ts', 'Intro', mp4, ...(args.has('--draft') ? ['--scale=0.5'] : [])).status !== 0) throw new BuildError('render');
     spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, '-vf', 'fps=1,scale=320:-1,tile=8x0:padding=4', '-frames:v', '1', join(out, 'contact-sheet.png')]);
     log(`render: ${mp4}`);
+    // The score's ear check (after the sound-design method Geoff sent): a waveform of the final mix, and five
+    // timecodes to listen at. The checks above are numbers; whether the bed sits right is decided by ear.
+    if (timeline.score) {
+      spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, '-filter_complex', 'showwavespic=s=2400x360:split_channels=0:colors=#2F6FEB', '-frames:v', '1', join(out, 'score-qa.png')]);
+      const lines = timeline.scenes.flatMap((s) => s.lines.map((l) => ({id: l.id, start: s.start + l.start, end: s.start + l.start + l.duration})));
+      let gap = {at: 0, len: 0};
+      for (let i = 1; i < lines.length; i++) if (lines[i].start - lines[i - 1].end > gap.len) gap = {at: lines[i - 1].end, len: lines[i].start - lines[i - 1].end};
+      const topic = timeline.scenes.find((s, i) => i > 0 && s.topic && s.topic !== 'same');
+      const at = [
+        ['The open: the bed fades in under S0', 0.5],
+        [`A topic change (${topic?.id}): a small swell while the topic list is up`, topic ? topic.start - 0.5 : 10],
+        [`The longest gap between lines (${gap.len.toFixed(1)} s): the bed up, never louder than the voice`, gap.at],
+        ['A busy stretch of speech (S6): the bed well under, words clear', timeline.scenes.find((s) => s.id === 'S6')?.start + 2 || 90],
+        ['The end card: the bed fades out with the hold', timeline.duration - 6],
+      ];
+      writeFileSync(join(out, 'LISTEN.md'), `# Listen at\n\nThe score is checked by numbers; these five moments are for the ear.\n\n${at.map(([w, t]) => `- **${fmt(t)}**: ${w}`).join('\n')}\n\nWaveform: score-qa.png.\n`);
+    }
   }
   const table = timeline.scenes.map((s) => `| ${s.id} | ${s.title} | ${fmt(s.start)} | ${s.duration.toFixed(1)} s | ${s.kind}${s.card?.standIn ? ' (stand-in)' : ''} |`).join('\n');
   const gaps = missing.length ? `## Not built yet\n\nThe script asks for these and this cut doesn't have them:\n\n${missing.map((m) => `- ${m}`).join('\n')}\n\n` : '';
