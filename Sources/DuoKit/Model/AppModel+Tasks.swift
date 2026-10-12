@@ -294,6 +294,7 @@ struct TasksFold: View {
                         .foregroundStyle(DuoColor.text2)
                         .frame(width: DuoMetric.rowActionSize, height: DuoMetric.rowActionSize)
                         .contentShape(RoundedRectangle(cornerRadius: DuoMetric.rowActionRadius))
+                        .accessibilityElement(children: .ignore)
                         .onActivate { model.newTask(in: project) }  // action: task new
                         .help("Track a new task in this project")
                         .accessibilityLabel("New task")
@@ -318,7 +319,7 @@ struct TasksFold: View {
             .padding(.top, 8)
             if expanded {
                 VStack(alignment: .leading, spacing: 0) {
-                    if tasks.isEmpty {
+                    if model.projectHasNoTasks(project) {
                         Text("Most sessions are for a task or a goal. Put them in a task and Duo keeps them together.")
                             .duoText(.control).foregroundStyle(DuoColor.text2)
                             .fixedSize(horizontal: false, vertical: true)
@@ -365,6 +366,7 @@ struct NewTaskRow: View {
         .onHover { inside in
             if inside { model.hoveredTaskRow = key } else if model.hoveredTaskRow == key { model.hoveredTaskRow = nil }
         }
+        .accessibilityElement(children: .ignore)   // one element: the identifier, label and help sit on the row, not on its + and label
         .onActivate { model.newTask(in: project) }  // action: task new
         .help("Track a new task in this project")
         .accessibilityLabel("New task")
@@ -700,6 +702,12 @@ extension AppModel {
 
     /// The task lists: open tasks, and ones just marked complete while they hold (DL-130).
     func listedTask(_ t: Fixture.TaskSummary) -> Bool { t.isOpen || completingTasks.contains(t.id) && t.archived != true }
+
+    /// A project with no listed task at all, those in the time groups (they have sessions) counted:
+    /// only then the Tasks fold explains tasks (DL-172, DL-147).
+    public func projectHasNoTasks(_ project: String) -> Bool {
+        !(fixture.tasks ?? []).contains { $0.project == project && listedTask($0) }
+    }
 
     /// Whether a task shows as just completed: checked, struck through, grey (DL-130).
     func isCompleting(_ t: Fixture.TaskSummary) -> Bool { completingTasks.contains(t.id) && t.status == "done" }

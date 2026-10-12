@@ -13,6 +13,19 @@ import Foundation
         return s
     }
 
+    // The Tasks fold explains tasks only for a project with no listed task at all, those in the time
+    // groups (with sessions) counted (DL-172, DL-147).
+    var fx = try repoFixture()
+    let proj = fx.projects[0].name
+    fx.tasks = []
+    check(AppModel(fixture: fx).projectHasNoTasks(proj), "no tasks: the fold explains")
+    fx.tasks = [Fixture.TaskSummary(project: proj, path: "tasks/a.md", title: "A", status: "open", sessionIds: ["s1"])]
+    check(!AppModel(fixture: fx).projectHasNoTasks(proj), "one task with a session (in the time groups): no explainer")
+    fx.tasks = [Fixture.TaskSummary(project: proj, path: "tasks/b.md", title: "B", status: "done", sessionIds: [])]
+    check(AppModel(fixture: fx).projectHasNoTasks(proj), "only a done task: not listed, so the fold explains")
+    fx.tasks = [Fixture.TaskSummary(project: "other", path: "tasks/c.md", title: "C", status: "open", sessionIds: [])]
+    check(AppModel(fixture: fx).projectHasNoTasks(proj), "another project's task doesn't count")
+
     // Lanes: the default five, the brief's list, Open and Done always kept, dropped never a lane.
     check(TaskBoard.lanes(brief: nil) == TaskBoard.defaultLanes, "no brief: the default five lanes")
     check(TaskBoard.lanes(brief: "---\ntype: project\n---\n") == TaskBoard.defaultLanes, "a brief without lanes: the default five")
