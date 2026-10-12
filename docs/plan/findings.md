@@ -3334,3 +3334,22 @@ All three of C-80's findings were real in the code.
 - **Clears what dies.** A ticket whose waiter is gone is cleared, and so is a lock with no `owner` after a minute (`GPU_LOCK_ORPHAN`). The old script waited forever on a lock left by a holder that died between its `mkdir` and writing `owner`; the queue proof found this when its own contender died there.
 - **Proof** (`scripts/check-gpu-lock.sh`, scratch lock): a bare-mkdir holder first, then a dead ticket at the front, A, B and C queued 0.5 s apart, and a bare-mkdir contender E. Order D, E, A, B, C, no overlaps; a waiter stopped in the queue leaves no ticket; an ownerless lock is cleared after `GPU_LOCK_ORPHAN`.
 - **The soundtrack is cached** in `.cache/render/audio-<key>.wav`. The key is what Film.tsx's `<Audio>`s play: scene spans, line timings and voice files by content, the score bed by content with its gain settings, topic changes, film length, frames and source. A camera or mark change keeps it; a line moved, a gain or a scene's length changes it. A build with nothing changed went from 4.2 min to 39 s. `--gc` keeps the live soundtrack; on this cache it removed 1,372 entries (2.15 GB), leaving 2.1 GB, 1.5 GB of it score beds, which gc keeps by design.
+
+## F-295 · The visible gate's baseline: on screen against background, on main (review/codebase, 2026-10-12)
+
+- **Setup.** Release build of main's code (`0681c38`, the code of `b5dbb84`), isolated instances, with Geoff's OK for visible runs ("Ok to test", 2026-10-12, now standing for the freeze gate). Each run took the GPU lock. Swap use was 15.6–19.3 GB throughout.
+- **`check-scale.sh`, the 16-tab work-Mac shape, passes either way.** Visible: 4.4% mean CPU after 15 s, no stalls, 14 tabs parked. Background: 3.9%, no stalls. This check's failure mode (F-208's whole-window layout storm) shows in a background run too.
+- **`check-chat-perf.sh`, the heavy chat** (82 MB, 100 items, 1,945 steps, so the lazy stack):
+
+  | Phase | Visible (3 runs; load) | Background (2 runs) | Budget |
+  |---|---|---|---|
+  | Open, longest stall | 112, 102, 103 ms | 104, 109 ms | 600 |
+  | Slow scroll, late frames of 300 | 1 (run 1) | 1 | 10 |
+  | Flick, longest stall | 90, 87, 68 ms | 84, 68 ms | 250 |
+  | **Replies at the bottom, longest stall** | **531 (load 10), 946 ✘ (load 2.3), 287 (load 2.7) ms** | 48, 51 ms | 600 |
+  | Replies at the bottom: stalls over 50 ms in total; over 250 ms | 1,789 ms, 4; 1,082 ms, 1; 577 ms, 1 | 0 ms, 0; 101 ms, 0 | — |
+  | A reply while scrolled up, longest stall | 109, 21, 5 ms | 31, 41 ms | 250 |
+
+- **On screen, the main thread is busy almost all through "replies at the bottom".** The watchdog got 6–10 pings in that phase against 296–297 in the background. Appending after a jump to the bottom makes SwiftUI re-estimate a giant lazy row (ENH-23 (a), F-157), and on screen that row is also drawn.
+- **Background runs understate this phase 6–19×.** `check-chat-perf.sh`, run in the background as it is by default, can't catch it getting worse, and its budget scores only the longest stall. C-85 has the changes to the gate.
+- **The other phases match within noise,** visible or not.
