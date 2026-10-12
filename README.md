@@ -2,6 +2,8 @@
 
 A Mac app for working with Claude Code across many pieces of work at once. It keeps your projects, your Claude conversations and the documents they make in one place, and shows which conversation is waiting on you.
 
+> **Duo is a personal, open-source project by one developer, [Geoffrey Dudgeon](https://github.com/dudgeon).** It isn't a company's product. It's free, and the code is MIT-licensed ([LICENSE](LICENSE)).
+
 > **Duo v2 is an early beta and an experiment.** Things will change and some will break. Try it, and tell us what you find: open an [issue](https://github.com/dudgeon/duo-v2/issues), or use Help › Report an Issue… in Duo. Legacy Duo is in maintenance mode: it gets fixes, not new features.
 
 ![All projects: Home's Claude session on the left, a map of projects in the middle, and what needs you on the right.](docs/guide/images/all-projects.png)
