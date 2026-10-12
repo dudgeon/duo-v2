@@ -192,7 +192,7 @@ extension DuoAction {
               ui: ["Merge Into", "Merge Sessions Into", "drag a tile onto a tile"], timeout: 600),
 
         // Sessions
-        .init(.sessions, .sessions, "[--project <p>]", "Sessions with id, state, title and project.", everyday: true),
+        .init(.sessions, .sessions, "[--project <p>]", "Sessions with id, state, kind (terminal or chat), title and project.", everyday: true),
         .init(.sessionShow, .sessions, "<id>", "A session's title, project, state, note, next step, transcript path and recent turns.", everyday: true),
         .init(.sessionNew, .sessions, "[--project <p>] [--prompt <text>] [--remote-control [name]]", "Start a Claude session in a project (the current one by default). --remote-control makes it reachable from the Claude app, named <name> or its project and a short id, and keeps it on when the session resumes; a claude without the flag starts without it and the reply says so.",
               ui: ["+ New session", "+ New Claude Code session", "New Session", "console +", "New Claude Session", "Start Claude here", "Start Claude in Home", "Start in"]),
@@ -479,10 +479,10 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right"]
+    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "cancel", "fetch"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
-    static let optionalValues: Set<String> = ["remote-control"]
+    public static let optionalValues: Set<String> = ["remote-control"]
 
     public init(_ args: [String]) {
         var i = 0

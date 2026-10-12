@@ -35,10 +35,15 @@ public struct ControlEndpoint: Codable, Sendable, Equatable {
         if let s = environment[socketVariable], let t = environment[tokenVariable], !s.isEmpty, !t.isEmpty {
             return (ControlEndpoint(socket: s, token: t, pid: 0), "environment")
         }
-        guard let data = try? Data(contentsOf: file),
+        return fileEndpoint()
+    }
+
+    /// The live endpoint file's Duo, if its process is still running.
+    public static func fileEndpoint(_ url: URL = ControlEndpoint.file) -> (ControlEndpoint, source: String)? {
+        guard let data = try? Data(contentsOf: url),
               let e = try? JSONDecoder().decode(ControlEndpoint.self, from: data),
               kill(e.pid, 0) == 0 else { return nil }
-        return (e, file.path)
+        return (e, url.path)
     }
 
     /// Writes the endpoint file readable by the user only.
@@ -88,6 +93,24 @@ public enum ControlClient {
         }
     }
 
+    /// Sends through a discovered endpoint. An endpoint from the environment can outlive its Duo
+    /// (a Remote Control or `--bg` session across a Duo restart: dead socket, or a new token), so
+    /// on a connect failure or "wrong token" it retries the endpoint file's current Duo (C-80).
+    public static func send(_ request: ControlRequest, via endpoint: ControlEndpoint, source: String, file: URL = ControlEndpoint.file, timeout: Int = 10) throws -> ControlResponse {
+        var first = request; first.token = endpoint.token
+        let outcome = Result { try send(first, socket: endpoint.socket, timeout: timeout) }
+        let stale: Bool
+        switch outcome {
+        case .failure(let e): if case Failure.connect = e { stale = true } else { stale = false }
+        case .success(let r): stale = !r.ok && r.output == "wrong token"
+        }
+        if stale, source == "environment", let (current, _) = ControlEndpoint.fileEndpoint(file), current.socket != endpoint.socket || current.token != endpoint.token {
+            var retry = request; retry.token = current.token
+            return try send(retry, socket: current.socket, timeout: timeout)
+        }
+        return try outcome.get()
+    }
+
     public static func send(_ request: ControlRequest, socket path: String, timeout: Int = 10) throws -> ControlResponse {
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard fd >= 0 else { throw Failure.connect(errno) }
@@ -123,5 +146,18 @@ public enum ControlClient {
             throw Failure.io("Duo didn't answer")
         }
         return response
+    }
+}
+
+/// What the pre-edit hook does with Duo's answer (DL-78, C-80). Duo's editor takes the change only
+/// on a clear yes; anything else (no answer, "not open", a stale token, an unreadable request)
+/// lets Claude's own tool write, as when Duo isn't running. A failed edit must never block Claude.
+public enum PreEditDecision: Equatable {
+    case allow
+    case deny(done: String)
+
+    public static func decide(_ response: ControlResponse?) -> PreEditDecision {
+        guard let r = response, r.ok else { return .allow }
+        return .deny(done: r.output)
     }
 }

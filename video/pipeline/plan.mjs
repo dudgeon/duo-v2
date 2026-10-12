@@ -4,12 +4,12 @@ import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {BuildError} from './util.mjs';
 
-const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+export const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
 
-const HEARD_AS = Object.fromEntries(Object.entries(JSON.parse(readFileSync(new URL('../voice/heard-as.json', import.meta.url), 'utf8')))
+export const HEARD_AS = Object.fromEntries(Object.entries(JSON.parse(readFileSync(new URL('../voice/heard-as.json', import.meta.url), 'utf8')))
   .filter(([k]) => !k.startsWith('$')).flatMap(([name, heard]) => heard.map((h) => [h, name])));
 
-function wordTime(line, phrase, nth = 1) {
+export function wordTime(line, phrase, nth = 1) {
   // `nth` picks a later occurrence when a word repeats in the line ("files" twice).
   const want = norm(phrase);
   // A heard word reads as the name it stands for (voice/heard-as.json: "cloud" is Claude), as the speech check reads it.
@@ -67,8 +67,8 @@ export const TRANSITIONS = {
   'stand-in': {kind: 'graphic', from: ['projects', 'card', 'app'], to: 'card'},
   'stand-in-out': {kind: 'graphic', from: 'card', to: 'conclusion'},
 };
-const sceneType = (shot) => (shot.kind === 'drawn' ? shot.scene : shot.kind);
-const fromOk = (tr, type) => (Array.isArray(tr.from) ? tr.from.includes(type) : tr.from === type);
+export const sceneType = (shot) => (shot.kind === 'drawn' ? shot.scene : shot.kind);
+export const fromOk = (tr, type) => (Array.isArray(tr.from) ? tr.from.includes(type) : tr.from === type);
 
 // A rect in window points from a capture's anchors: an id (video.*) or a label.
 function anchorRect(cap, key, state, sceneId) {
@@ -81,10 +81,14 @@ function anchorRect(cap, key, state, sceneId) {
   return {x: hit.frame.x, y: hit.frame.y, w: hit.frame.width, h: hit.frame.height};
 }
 const centre = (r, fx = 0.5, fy = 0.5) => ({x: r.x + r.w * fx, y: r.y + r.h * fy});
+// The video.* anchors wholly inside a rect: what a rect in window points was framing.
+const inside = (cap, r) => (cap.anchors?.anchors ?? []).filter((e) => (e.identifier ?? '').startsWith('video.') && !e.identifier.startsWith('video.pane.')
+  && e.frame.x >= r.x - 0.5 && e.frame.y >= r.y - 0.5 && e.frame.x + e.frame.width <= r.x + r.w + 0.5 && e.frame.y + e.frame.height <= r.y + r.h + 0.5)
+  .map((e) => ({anchor: e.identifier, rect: {x: e.frame.x, y: e.frame.y, w: e.frame.width, h: e.frame.height}}));
 
 // kind drawn/app (S3 on): a run of captures with clicks, menus, drags, camera moves and markers on the
 // voice's words. Returns AppScene's data (src/scenes/App.tsx); all rects in window points.
-function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, style}) {
+function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, style, used}) {
   const cap = (st) => { if (!captures[st]) throw new BuildError(`shots: ${scene.id} needs a capture of ${st}`); return captures[st]; };
   const when = (a, last) => {
     if (typeof a === 'number') return a;
@@ -115,6 +119,7 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
     use(base);
     const panes = Object.fromEntries(Object.entries(en.panes ?? {}).map(([p, st]) => [p, use(st)]));
     const target = anchorRect(cap(base), en.click, base, scene.id);
+    used?.push({scene: scene.id, beat: 'entry', role: 'click', state: base, ...(typeof en.click === 'object' ? {absolute: true, inside: inside(cap(base), target)} : {anchor: en.click}), rect: target});
     if (prevApp?.lastCam !== undefined) data.startCam = prevApp.lastCam;
     // Pull back (or across) to show where we'll click, click, then the new state.
     data.cams.push({at: tr.click - 0.15, dur: tr.click - 0.15, rect: en.view ? anchorRect(cap(base), en.view, base, scene.id) : null});
@@ -137,21 +142,37 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
   for (const b of shot.beats ?? []) {
     const at = +when(b.at, last).toFixed(3);
     const inSt = b.in ? use(b.in) : state;
-    const rect = (k) => anchorRect(cap(inSt), k, inSt, scene.id);
-    // cam: an anchor, 'wide', a rect in window points, or {on: anchor, x0, x1, y0, y1}: a part of an anchor (fractions),
-    // for panes taller than the frame, where fitting the whole pane would barely zoom.
-    const camRect = (c) => {
+    const c0 = cap(inSt), bi = shot.beats.indexOf(b);
+    // Every rect a beat reads is noted (pipeline/anchors.mjs): the anchors it follows, or, for a rect in window
+    // points, the anchors inside it, so the next build can name the beats whose picture moved under them.
+    const note = (role, key, r) => { used?.push({scene: scene.id, beat: bi, role, state: inSt, ...(key ? {anchor: key} : {absolute: true, inside: inside(c0, r)}), rect: r}); return r; };
+    const rect = (k, role = 'click') => typeof k === 'object' ? note(role, null, k) : note(role, k, anchorRect(c0, k, inSt, scene.id));
+    // cam (and mark, wipe.on) is one of:
+    //   'wide'; an anchor; {on: anchor, x0, x1, y0, y1}, a part of an anchor (fractions), for panes taller than the frame;
+    //   {rel: anchor, dx, dy, w, h}, a rect placed from the anchor's top-left (x or y instead of dx or dy pins that edge
+    //   in window points); {fit: [anchors], pad: n | {t, r, b, l}}, the anchors' union, padded;
+    //   or a rect in window points, which doesn't follow the app: prefer the others (DL-174 moved every sidebar row).
+    const camRect = (c, role = 'cam') => {
       if (c === 'wide') return null;
-      if (typeof c === 'object' && c.on) { const r = rect(c.on); return {x: r.x + r.w * (c.x0 ?? 0), y: r.y + r.h * (c.y0 ?? 0), w: r.w * ((c.x1 ?? 1) - (c.x0 ?? 0)), h: r.h * ((c.y1 ?? 1) - (c.y0 ?? 0))}; }
-      return rect(c);
+      if (typeof c !== 'object') return rect(c, role);
+      if (c.on) { const r = anchorRect(c0, c.on, inSt, scene.id); return note(role, c.on, {x: r.x + r.w * (c.x0 ?? 0), y: r.y + r.h * (c.y0 ?? 0), w: r.w * ((c.x1 ?? 1) - (c.x0 ?? 0)), h: r.h * ((c.y1 ?? 1) - (c.y0 ?? 0))}); }
+      if (c.rel) { const r = anchorRect(c0, c.rel, inSt, scene.id); return note(role, c.rel, {x: c.x ?? r.x + (c.dx ?? 0), y: c.y ?? r.y + (c.dy ?? 0), w: c.w ?? r.w, h: c.h ?? r.h}); }
+      if (c.fit) {
+        const rs = c.fit.map((k) => anchorRect(c0, k, inSt, scene.id));
+        const p = typeof c.pad === 'object' ? c.pad : {t: c.pad ?? 0, r: c.pad ?? 0, b: c.pad ?? 0, l: c.pad ?? 0};
+        const x0 = Math.min(...rs.map((r) => r.x)) - (p.l ?? 0), y0 = Math.min(...rs.map((r) => r.y)) - (p.t ?? 0);
+        const x1 = Math.max(...rs.map((r) => r.x + r.w)) + (p.r ?? 0), y1 = Math.max(...rs.map((r) => r.y + r.h)) + (p.b ?? 0);
+        return note(role, c.fit.join(' + '), {x: x0, y: y0, w: x1 - x0, h: y1 - y0});
+      }
+      return note(role, null, c);
     };
     if (b.cam !== undefined) { lastCam = camRect(b.cam); data.cams.push({at, dur: b.dur ?? 0.9, rect: lastCam}); }
     if (b.click) data.clicks.push({at, ...centre(rect(b.click), b.fx ?? 0.5, b.fy ?? 0.5), right: !!b.right});
     // drag.reveal: a capture of the selection the drag makes, shown from where the drag began to the cursor as it moves.
-    if (b.drag) data.drags.push({at, dur: b.drag.dur ?? 0.7, from: centre(rect(b.drag.from), b.drag.fx0 ?? 0, 0.5), to: centre(rect(b.drag.to ?? b.drag.from), b.drag.fx1 ?? 1, 0.5),
-      ...(b.drag.reveal ? {reveal: {state: use(b.drag.reveal), rect: rect(b.drag.from)}} : {})});
+    if (b.drag) data.drags.push({at, dur: b.drag.dur ?? 0.7, from: centre(rect(b.drag.from, 'drag'), b.drag.fx0 ?? 0, 0.5), to: centre(rect(b.drag.to ?? b.drag.from, 'drag'), b.drag.fx1 ?? 1, 0.5),
+      ...(b.drag.reveal ? {reveal: {state: use(b.drag.reveal), rect: rect(b.drag.from, 'drag')}} : {})});
     if (b.menu) {
-      const r = rect(b.menu.on);
+      const r = rect(b.menu.on, 'menu');
       const p = centre(r, b.fx ?? 0.5, b.fy ?? 0.5);
       data.menus.push({at, until: at + (b.menu.hold ?? 0.9), x: p.x, y: p.y, items: b.menu.items, hi: b.menu.pick ? {at: at + (b.menu.pickAfter ?? 0.55), item: b.menu.pick} : undefined});
       if (b.menu.pick) {
@@ -165,8 +186,8 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
     }
     // key: a shortcut's keycaps as it's pressed; wipe: a state revealed left to right inside an anchor (typing).
     if (b.key) (data.keys ??= []).push({at, label: b.key});
-    if (b.wipe) (data.wipes ??= []).push({at, dur: b.wipe.dur ?? 1.2, state: use(b.wipe.state), rect: camRect(b.wipe.on), ...(b.wipe.chars ? {chars: b.wipe.chars} : {})});
-    if (b.mark) data.marks.push({at, until: at + (b.hold ?? 2.2), rect: camRect(b.mark), quote: b.quote});
+    if (b.wipe) (data.wipes ??= []).push({at, dur: b.wipe.dur ?? 1.2, state: use(b.wipe.state), rect: camRect(b.wipe.on, 'wipe'), ...(b.wipe.chars ? {chars: b.wipe.chars} : {})});
+    if (b.mark) data.marks.push({at, until: at + (b.hold ?? 2.2), rect: camRect(b.mark, 'mark'), quote: b.quote});
     if (b.state) { state = use(b.state); data.steps.push({at: +(at + (b.stateAfter ?? 0.1)).toFixed(3), state}); }
     data.ends.push(at + (b.hold ?? 0.6));
     last = at;
@@ -179,7 +200,8 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
   return data;
 }
 
-export function plan({scenes, shots, voiced, captures, style}) {
+// `used` (an array, optional) collects every rect the app scenes read, for the stale-anchor check (pipeline/anchors.mjs).
+export function plan({scenes, shots, voiced, captures, style, used}) {
   const fps = style.frame.fps, aspect = style.frame.width / style.frame.height;
   const minW = style.frame.width / style.capture.scale; // narrower would magnify past 1:1
   const byId = new Map(voiced.map((l) => [l.id, l]));
@@ -293,7 +315,7 @@ export function plan({scenes, shots, voiced, captures, style}) {
         if (lines[0] && lines[0].start < tr.in + 0.6) throw new BuildError(`transition: ${scene.id}'s voice starts at ${lines[0].start}s, during its ${shot.transitionIn} entry (${tr.in}s). Raise its leadIn.`);
       }
       Object.assign(s, {drawn: {scene: shot.scene, events}});
-      if (shot.scene === 'app') s.app = planApp({scene, shot, lines, tr, prev, prevShot: prev && shots[prev.id], captures, events, style});
+      if (shot.scene === 'app') s.app = planApp({scene, shot, lines, tr, prev, prevShot: prev && shots[prev.id], captures, events, style, used});
       if (shot.scene === 'app') for (const b of s.app.ends) end = Math.max(end, b);
       if (shot.scene === 'morph') {
         // S2's morph draws panes from several captures of one layout; anchors come from the first.

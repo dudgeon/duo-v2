@@ -1,5 +1,5 @@
 {
-  "$note": "One shot per scene in script.md, keyed by scene id (DL-169). Claude keeps these in step with the script's Shot: notes. Look: style/reference-analysis.md. kind 'desk' films a fixture state's window (ground 'paper' by default, 'wallpaper' for the desktop); 'drawn' is a drawn scene; 'card' is a title card. A move or callout targets an anchor (label or identifier) or a rect in window points, and lands on a word of line N. Script v1's shots are in archive/shots-v1.json. Each shot carries shotSha (the hash of its Shot: note and the prose after it) and requires: one item per thing the note asks for, built true or false. The build stops when a note changes and reports every unbuilt item.",
+  "$note": "One shot per scene in script.md, keyed by scene id (DL-169). Claude keeps these in step with the script's Shot: notes. Look: style/reference-analysis.md. kind 'desk' films a fixture state's window (ground 'paper' by default, 'wallpaper' for the desktop); 'drawn' is a drawn scene; 'card' is a title card. A move or callout targets an anchor (label or identifier) or a rect in window points, and lands on a word of line N. Script v1's shots are in archive/shots-v1.json. Each shot carries shotSha (the hash of its Shot: note and the prose after it, not its > notes) and requires: one item per thing the note asks for, with by: the beats (#id), events, states, transition or src files that build it, or built: false while it is not built (pipeline/check.mjs). The build stops when a note changes and reports every unbuilt item.",
   "S0": {
     "kind": "drawn",
     "scene": "logo",
@@ -15,19 +15,30 @@
         "word": "desktop"
       }
     },
-    "shotSha": "be581e246071",
+    "shotSha": "d7500fc7850a",
     "requires": [
       {
         "what": "The Duo logo (app icon 2A', drawn from docs/design/icon-handoff geometry) builds itself in motion graphics",
-        "built": true
+        "by": [
+          "src:src/scenes/Logo.tsx",
+          "src:src/lib/DuoIcon.tsx"
+        ]
       },
       {
         "what": "The logo settles beside the title \"Duo\" and the line \"A complete workspace for your Claude Code sessions, projects, and files.\" (two lines), framed as one composition",
-        "built": true
+        "by": [
+          "event:title",
+          "event:sub",
+          "src:src/scenes/Logo.tsx"
+        ]
       },
       {
         "what": "The settled frame works as the thumbnail: readable at 320 px wide; build exports it as out/thumbnail.png",
-        "built": true
+        "by": [
+          "event:sub",
+          "src:src/scenes/Logo.tsx",
+          "src:build.mjs"
+        ]
       }
     ],
     "$thumbnail": "seconds before the scene ends, not counting its exit transition"
@@ -81,47 +92,85 @@
         "offset": 0
       }
     },
-    "shotSha": "b19e03148cb5",
+    "shotSha": "8b28e7f9bdcf",
     "requires": [
       {
         "what": "High Sierra desktop starts empty",
-        "built": true
+        "by": [
+          "src:src/lib/Clutter.tsx",
+          "src:src/lib/Wallpapers.tsx"
+        ]
       },
       {
         "what": "Terminal windows running Claude Code are in dark mode",
-        "built": true
+        "by": [
+          "event:term1",
+          "event:term2",
+          "event:term3",
+          "src:src/lib/ClutterApps.tsx"
+        ]
       },
       {
         "what": "Finder windows on different project folders",
-        "built": true
+        "by": [
+          "event:finder",
+          "src:src/lib/ClutterApps.tsx"
+        ]
       },
       {
         "what": "A Markdown editor window",
-        "built": true
+        "by": [
+          "event:markdown",
+          "src:src/lib/ClutterApps.tsx"
+        ]
       },
       {
         "what": "A browser with a polished, realistic checkout prototype (not a basic wireframe)",
-        "built": true
+        "by": [
+          "event:browser",
+          "src:src/lib/ClutterApps.tsx"
+        ]
       },
       {
         "what": "A PowerPoint deck window with a real-looking slide",
-        "built": true
+        "by": [
+          "event:deck",
+          "src:src/lib/ClutterApps.tsx"
+        ]
       },
       {
         "what": "A Word doc window with a real-looking page",
-        "built": true
+        "by": [
+          "event:doc",
+          "src:src/lib/ClutterApps.tsx"
+        ]
       },
       {
         "what": "Line 1: each window kind appears on its word (terminals, finder, text editors, browser); PowerPoint and Word in the gap before line 2",
-        "built": true
+        "by": [
+          "event:term1",
+          "event:term2",
+          "event:finder",
+          "event:markdown",
+          "event:browser",
+          "event:deck",
+          "event:doc"
+        ]
       },
       {
         "what": "Line 2: a new terminal opens, a cd path is typed wrong then retyped; camera hunts over the pile for an older session",
-        "built": true
+        "by": [
+          "event:term3",
+          "event:path",
+          "event:hunt"
+        ]
       },
       {
         "what": "Ends on the full pile held ~1 s, as the start state of S2's morph",
-        "built": true
+        "by": [
+          "src:src/lib/clutterLayout.ts",
+          "src:src/lib/Clutter.tsx"
+        ]
       }
     ],
     "transitionIn": "logo-to-dock"
@@ -191,40 +240,75 @@
         "offset": 2.3
       }
     },
-    "shotSha": "81a059bb5c40",
+    "shotSha": "439c47bf732e",
     "requires": [
       {
         "what": "An animated morph, not a cut, from S1's pile into one real Duo window",
-        "built": true
+        "by": [
+          "src:src/scenes/Morph.tsx"
+        ]
       },
       {
         "what": "Finder windows morph into the left pane (project list and file tree)",
-        "built": true
+        "by": [
+          "src:src/scenes/Morph.tsx",
+          "event:pane"
+        ]
       },
       {
         "what": "Dark terminals morph into session tabs in the middle pane",
-        "built": true
+        "by": [
+          "src:src/scenes/Morph.tsx",
+          "event:mid1",
+          "event:mid2"
+        ]
       },
       {
         "what": "Markdown, browser prototype, PowerPoint and Word morph into tabs in the right pane",
-        "built": true
+        "by": [
+          "src:src/scenes/Morph.tsx",
+          "event:right2",
+          "event:right3",
+          "event:right4"
+        ]
       },
       {
         "what": "A callout on each pane as the narrator names it (files and projects; terminal or chat view; flexible editor)",
-        "built": true
+        "by": [
+          "event:pane",
+          "event:terminal",
+          "event:flexible"
+        ]
       },
       {
         "what": "Middle pane: cursor clicks through the session tabs; the last flips to chat view on \"chat view\"",
-        "built": true,
+        "by": [
+          "event:mid1",
+          "event:mid2",
+          "event:chat"
+        ],
         "note": "The flip lands on \"claude\", about 0.8 s after \"chat view\": three tab clicks need more time than the two words give."
       },
       {
         "what": "Right pane: cursor clicks through Markdown, browser prototype, PowerPoint, Word tabs in that order",
-        "built": true
+        "by": [
+          "event:right2",
+          "event:right3",
+          "event:right4"
+        ]
       },
       {
         "what": "Captures: a project with 3+ terminal tabs (last in chat view) and the editor with .md, browser prototype, .pptx and .docx tabs, one state per active tab",
-        "built": true
+        "by": [
+          "state:video-s2-middle-0",
+          "state:video-s2-middle-1",
+          "state:video-s2-middle-2",
+          "state:video-s2-chat",
+          "state:video-s2-right-1",
+          "state:video-s2-right-2",
+          "state:video-s2-right-3",
+          "state:video-s2-right-4"
+        ]
       }
     ],
     "transitionIn": "dock-launch"
@@ -246,6 +330,7 @@
     ],
     "beats": [
       {
+        "id": "list-run-a",
         "at": {
           "line": 1,
           "word": "previous"
@@ -258,6 +343,7 @@
         "dur": 1
       },
       {
+        "id": "list-run-b",
         "at": {
           "line": 1,
           "word": "resume"
@@ -270,6 +356,7 @@
         "dur": 2
       },
       {
+        "id": "needs-pan",
         "at": {
           "line": 2,
           "word": "waiting"
@@ -287,23 +374,32 @@
         "hold": 2.2
       }
     ],
-    "shotSha": "c0d63e840d0c",
+    "shotSha": "88c9e09ed30c",
     "requires": [
       {
         "what": "All projects in List view on sample data: every previous session in one list, with project, title and last run",
-        "built": true
+        "by": [
+          "state:video-s3-list"
+        ]
       },
       {
         "what": "Line 1: the camera runs down the list; nothing is clicked",
-        "built": true
+        "by": [
+          "#list-run-a",
+          "#list-run-b"
+        ]
       },
       {
         "what": "Line 2: the camera moves right to the Needs you column (question and permission waits)",
-        "built": true
+        "by": [
+          "#needs-pan"
+        ]
       },
       {
         "what": "Way in from S2 by app navigation: the cursor clicks All projects",
-        "built": true
+        "by": [
+          "transition"
+        ]
       }
     ]
   },
@@ -320,6 +416,7 @@
     ],
     "beats": [
       {
+        "id": "resume-push",
         "at": {
           "line": 1,
           "word": "resumes"
@@ -332,20 +429,23 @@
         "dur": 1
       },
       {
+        "id": "list-pullback-close",
         "at": {
           "line": 2,
           "word": "close",
           "offset": -0.9
         },
         "cam": {
-          "x": 0,
-          "y": 30,
+          "rel": "video.pane.left",
+          "dx": 0,
+          "dy": -10,
           "w": 980,
           "h": 551
         },
         "dur": 0.8
       },
       {
+        "id": "tab-hover",
         "at": {
           "line": 2,
           "word": "close",
@@ -356,6 +456,7 @@
         "stateAfter": 0
       },
       {
+        "id": "tab-close",
         "at": {
           "line": 2,
           "word": "close",
@@ -366,6 +467,7 @@
         "state": "video-s4-tab-closed"
       },
       {
+        "id": "list-pullback",
         "at": {
           "line": 2,
           "word": "come",
@@ -380,6 +482,7 @@
         "dur": 0.9
       },
       {
+        "id": "session-reopen",
         "at": {
           "line": 2,
           "word": "later"
@@ -388,14 +491,16 @@
         "in": "video-s4-tab-closed",
         "state": "video-s4-tab-reopened",
         "cam": {
-          "x": 0,
-          "y": 30,
+          "rel": "video.pane.left",
+          "dx": 0,
+          "dy": -10,
           "w": 1100,
           "h": 619
         },
         "dur": 0.9
       },
       {
+        "id": "reopened-tab-hold",
         "at": {
           "line": 3,
           "offset": -0.55
@@ -405,6 +510,7 @@
         "state": "video-s4-resumed"
       },
       {
+        "id": "archive-menu",
         "at": {
           "line": 3,
           "word": "archive",
@@ -432,6 +538,7 @@
         "fx": 0.4
       },
       {
+        "id": "archived",
         "at": {
           "line": 3,
           "word": "archive"
@@ -440,6 +547,7 @@
         "stateAfter": 0
       },
       {
+        "id": "delete-menu",
         "at": {
           "line": 3,
           "word": "delete"
@@ -467,6 +575,7 @@
         "in": "video-s4-archived"
       },
       {
+        "id": "delete-ask",
         "at": {
           "line": 3,
           "word": "delete",
@@ -474,14 +583,16 @@
         },
         "state": "video-s4-delete-ask",
         "cam": {
-          "x": 0,
-          "y": 30,
+          "rel": "video.pane.left",
+          "dx": 0,
+          "dy": -10,
           "w": 1150,
           "h": 560
         },
         "dur": 0.5
       },
       {
+        "id": "delete-trash",
         "at": {
           "line": 3,
           "word": "clutter"
@@ -503,36 +614,59 @@
         "dur": 0.9
       }
     ],
-    "shotSha": "e486182e0b67",
+    "shotSha": "f9fc8d75f46f",
     "requires": [
       {
         "what": "Way in from S3 by app navigation: the cursor clicks the Needs you session",
-        "built": true
+        "by": [
+          "transition"
+        ]
       },
       {
         "what": "The camera pushes into its project as the terminal resumes with its history",
-        "built": true
+        "by": [
+          "#resume-push",
+          "state:video-s4-resumed"
+        ]
       },
       {
         "what": "The right-click menu on a session row, with its real items including Archive Session and Delete Session…",
-        "built": true,
+        "by": [
+          "#archive-menu",
+          "#delete-menu"
+        ],
         "note": "drawn over the capture: macOS menus are separate windows, and fixture sessions carry no menu"
       },
       {
         "what": "One session folds into Archived",
-        "built": true
+        "by": [
+          "#archive-menu",
+          "#archived"
+        ]
       },
       {
         "what": "Another is deleted through Duo's confirmation sheet",
-        "built": true
+        "by": [
+          "#delete-menu",
+          "#delete-ask",
+          "#delete-trash"
+        ]
       },
       {
         "what": "On \"close one\": a session tab's × closes it in the middle pane; the session stays in the list",
-        "built": true
+        "by": [
+          "#tab-hover",
+          "#tab-close"
+        ]
       },
       {
         "what": "Slower close: the camera pulls back to the list where the closed session stays; on \"come back to it later\" the cursor clicks it and its tab reopens with its history; hold before line 3",
-        "built": true
+        "by": [
+          "#list-pullback-close",
+          "#list-pullback",
+          "#session-reopen",
+          "#reopened-tab-hold"
+        ]
       }
     ],
     "$menu": "macOS draws context menus in their own window, which --capture-window can't include, and fixture sessions have no menu (no sessionId), so the menu is drawn with the real items of SessionOrganizeMenu (AllProjectsPanes.swift).",
@@ -550,6 +684,7 @@
     ],
     "beats": [
       {
+        "id": "middle-settle",
         "at": {
           "line": 1,
           "word": "terminal"
@@ -563,6 +698,7 @@
         "dur": 1
       },
       {
+        "id": "terminal-mark",
         "at": {
           "line": 1,
           "word": "interface"
@@ -579,18 +715,26 @@
     "requires": [
       {
         "what": "Way in from S4 without a cut: the picture carries on from the terminal",
-        "built": true
+        "by": [
+          "transition"
+        ]
       },
       {
         "what": "The camera settles on the middle pane while Claude Code runs in it: banner, conversation with tool calls, prompt",
-        "built": true
+        "by": [
+          "#middle-settle",
+          "#terminal-mark",
+          "state:video-s4-deleted"
+        ]
       },
       {
         "what": "Nothing is clicked; the camera stays on the middle pane",
-        "built": true
+        "by": [
+          "#middle-settle"
+        ]
       }
     ],
-    "shotSha": "1779b8491fb8"
+    "shotSha": "9ef47933a2bf"
   },
   "S6": {
     "kind": "drawn",
@@ -602,20 +746,23 @@
     ],
     "beats": [
       {
+        "id": "chat-push",
         "at": {
           "line": 1,
           "word": "tidier"
         },
         "in": "video-s4-deleted",
         "cam": {
-          "x": 938,
-          "y": -48,
+          "rel": "video.chat.toggle",
+          "dx": -137,
+          "dy": -96,
           "w": 360,
           "h": 202
         },
         "dur": 1
       },
       {
+        "id": "chat-click",
         "at": {
           "line": 1,
           "word": "chat"
@@ -624,8 +771,9 @@
         "in": "video-s4-deleted",
         "state": "video-s5-chat",
         "mark": {
-          "x": 1104,
-          "y": 40,
+          "rel": "video.chat.toggle",
+          "dx": 29,
+          "dy": -8,
           "w": 30,
           "h": 27
         },
@@ -634,6 +782,7 @@
         "fx": 0.76
       },
       {
+        "id": "answered",
         "at": {
           "line": 1,
           "word": "steps",
@@ -649,6 +798,7 @@
         "dur": 0.9
       },
       {
+        "id": "tool-row-open",
         "at": {
           "line": 1,
           "word": "rows"
@@ -659,6 +809,7 @@
         "stateAfter": 0.1
       },
       {
+        "id": "tool-row-mark",
         "at": {
           "line": 1,
           "word": "open"
@@ -675,6 +826,7 @@
         "dur": 0.8
       },
       {
+        "id": "composer-focus",
         "at": {
           "line": 2,
           "word": "writing"
@@ -685,6 +837,7 @@
         "state": "video-s6-typed"
       },
       {
+        "id": "composer-drag",
         "at": {
           "line": 2,
           "word": "click"
@@ -701,6 +854,7 @@
         "stateAfter": 0.9
       },
       {
+        "id": "paste-text",
         "at": {
           "line": 2,
           "word": "preview"
@@ -709,6 +863,7 @@
         "in": "video-s6-paste-text"
       },
       {
+        "id": "paste-image",
         "at": {
           "line": 2,
           "word": "image"
@@ -717,6 +872,7 @@
         "in": "video-s6-paste-image"
       },
       {
+        "id": "paste-mark",
         "at": {
           "line": 2,
           "word": "paste"
@@ -727,6 +883,7 @@
         "hold": 1.3
       },
       {
+        "id": "turn1",
         "at": {
           "line": 2,
           "word": "paste",
@@ -742,6 +899,7 @@
         "dur": 0.8
       },
       {
+        "id": "slash-menu",
         "at": {
           "line": 3
         },
@@ -755,6 +913,7 @@
         "dur": 0.7
       },
       {
+        "id": "slash-mark",
         "at": {
           "line": 3,
           "word": "skill"
@@ -765,6 +924,7 @@
         "hold": 1.1
       },
       {
+        "id": "skill-row",
         "at": {
           "line": 3,
           "word": "invocations",
@@ -775,6 +935,7 @@
         "stateAfter": 0
       },
       {
+        "id": "model-picker",
         "at": {
           "line": 3,
           "word": "picker"
@@ -786,6 +947,7 @@
         "hold": 1.7
       },
       {
+        "id": "model-pick",
         "at": {
           "line": 3,
           "word": "mode"
@@ -797,39 +959,69 @@
         "hold": 1.8
       }
     ],
-    "shotSha": "1bd78f76d13d",
+    "shotSha": "1b73f25baf3f",
     "requires": [
       {
         "what": "Way in from S5 without a cut: the picture carries on from the terminal; the topic list comes up with Chat mode",
-        "built": true
+        "by": [
+          "transition",
+          "#chat-push"
+        ]
       },
       {
         "what": "On \"chat mode\": the camera pushes in on the chat-mode button and the cursor clicks it as the pane flips",
-        "built": true
+        "by": [
+          "#chat-push",
+          "#chat-click"
+        ]
       },
       {
         "what": "A short exchange: Sam answers, Claude replies with its steps folded into rows; the cursor opens one folded row",
-        "built": true
+        "by": [
+          "#answered",
+          "#tool-row-open",
+          "#tool-row-mark"
+        ]
       },
       {
         "what": "Writing line: drag-select in the composer, a pasted block that folds to Pasted text · n lines, a pasted screenshot shown as a preview",
-        "built": true
+        "by": [
+          "#composer-focus",
+          "#composer-drag",
+          "#paste-text",
+          "#paste-image",
+          "#paste-mark"
+        ]
       },
       {
         "what": "Sam sends; the turn and Claude reply (a Loaded 1 skill row) appear",
-        "built": true
+        "by": [
+          "#turn1",
+          "state:video-s6-turn1"
+        ]
       },
       {
         "what": "Slash line: /tri lists the demo skill in the composer menu; it runs and shows as a row",
-        "built": true
+        "by": [
+          "#slash-menu",
+          "#slash-mark",
+          "#skill-row"
+        ]
       },
       {
         "what": "/model opens the model picker and a model is picked",
-        "built": true
+        "by": [
+          "#model-picker",
+          "#model-pick"
+        ]
       },
       {
         "what": "The camera stays on the middle pane; nothing opens in the editor",
-        "built": true
+        "by": [
+          "#answered",
+          "#turn1",
+          "#slash-menu"
+        ]
       }
     ],
     "pauses": {
@@ -855,6 +1047,7 @@
     "tail": 1.6,
     "beats": [
       {
+        "id": "viewer-push",
         "at": {
           "line": 1,
           "word": "pane"
@@ -868,6 +1061,7 @@
         "dur": 1.1
       },
       {
+        "id": "tab-md",
         "at": {
           "line": 1,
           "word": "markdown"
@@ -877,6 +1071,7 @@
         "state": "video-s7-tab-md"
       },
       {
+        "id": "tab-html",
         "at": {
           "line": 1,
           "word": "html"
@@ -886,6 +1081,7 @@
         "state": "video-s7-tab-html"
       },
       {
+        "id": "tab-pptx",
         "at": {
           "line": 1,
           "word": "powerpoint"
@@ -895,6 +1091,7 @@
         "state": "video-s7-tab-pptx"
       },
       {
+        "id": "tab-docx",
         "at": {
           "line": 1,
           "word": "documents"
@@ -919,6 +1116,7 @@
         "dur": 0.9
       },
       {
+        "id": "bold-select",
         "at": {
           "line": 2,
           "word": "like",
@@ -936,6 +1134,7 @@
         "stateAfter": 0.8
       },
       {
+        "id": "bold-key",
         "at": {
           "line": 2,
           "word": "bold"
@@ -946,6 +1145,7 @@
         "stateAfter": 0.06
       },
       {
+        "id": "link-select",
         "at": {
           "line": 2,
           "word": "add",
@@ -963,6 +1163,7 @@
         "stateAfter": 0.6
       },
       {
+        "id": "link-key",
         "at": {
           "line": 2,
           "word": "link"
@@ -973,6 +1174,7 @@
         "stateAfter": 0.06
       },
       {
+        "id": "sentence-typed",
         "at": {
           "line": 2,
           "word": "changes"
@@ -997,6 +1199,7 @@
         "hold": 1.1
       },
       {
+        "id": "bullet-add",
         "at": {
           "line": 2,
           "word": "toggling"
@@ -1030,6 +1233,7 @@
         "dur": 1
       },
       {
+        "id": "heard-zoom",
         "at": {
           "line": 3,
           "word": "select",
@@ -1041,6 +1245,7 @@
         "dur": 1
       },
       {
+        "id": "heard-select",
         "at": {
           "line": 3,
           "word": "select",
@@ -1058,6 +1263,7 @@
         "stateAfter": 1.8
       },
       {
+        "id": "send-selection-menu",
         "at": {
           "line": 3,
           "word": "agent",
@@ -1090,6 +1296,7 @@
         "in": "video-s7-md-sel"
       },
       {
+        "id": "composer-empty",
         "at": {
           "line": 3,
           "word": "agent",
@@ -1105,6 +1312,7 @@
         "dur": 1
       },
       {
+        "id": "composer-ref",
         "at": {
           "line": 3,
           "word": "agent",
@@ -1114,6 +1322,7 @@
         "state": "video-s7-md-composer-ref"
       },
       {
+        "id": "composer-typing",
         "at": {
           "line": 3,
           "word": "agent",
@@ -1130,6 +1339,7 @@
         "stateAfter": 13.2
       },
       {
+        "id": "md-sent",
         "at": {
           "line": 3,
           "word": "agent",
@@ -1158,6 +1368,7 @@
         "dur": 0.8
       },
       {
+        "id": "md-after",
         "at": {
           "line": 4,
           "word": "visible"
@@ -1167,6 +1378,7 @@
         "stateAfter": 0.3
       },
       {
+        "id": "change-mark",
         "at": {
           "line": 4,
           "word": "changes"
@@ -1177,6 +1389,7 @@
         "hold": 2
       },
       {
+        "id": "html-tab",
         "at": {
           "line": 5,
           "word": "html"
@@ -1192,6 +1405,7 @@
         "dur": 0.8
       },
       {
+        "id": "html-menu",
         "at": {
           "line": 6,
           "offset": -0.2
@@ -1210,6 +1424,7 @@
         "in": "video-s7-html-pick"
       },
       {
+        "id": "html-pick",
         "at": {
           "line": 6,
           "word": "element"
@@ -1219,6 +1434,7 @@
         "state": "video-s7-html-pick"
       },
       {
+        "id": "html-send",
         "at": {
           "line": 6,
           "word": "ask"
@@ -1235,6 +1451,7 @@
         "dur": 0.7
       },
       {
+        "id": "html-after",
         "at": {
           "line": 6,
           "word": "change",
@@ -1262,6 +1479,7 @@
         "hold": 1.4
       },
       {
+        "id": "pptx-tab",
         "at": {
           "line": 7,
           "offset": -0.3
@@ -1277,6 +1495,7 @@
         "dur": 0.7
       },
       {
+        "id": "slide-select",
         "at": {
           "line": 7,
           "word": "pick"
@@ -1285,6 +1504,7 @@
         "in": "video-s7-pptx-slide3"
       },
       {
+        "id": "slide-shape",
         "at": {
           "line": 7,
           "word": "paragraph",
@@ -1295,6 +1515,7 @@
         "state": "video-s7-pptx-pick"
       },
       {
+        "id": "pptx-send",
         "at": {
           "line": 7,
           "word": "ask"
@@ -1311,6 +1532,7 @@
         "dur": 0.7
       },
       {
+        "id": "pptx-after",
         "at": {
           "line": 7,
           "word": "bullets",
@@ -1327,6 +1549,7 @@
         "stateAfter": 0.4
       },
       {
+        "id": "slide-mark",
         "at": {
           "line": 7,
           "word": "bullets",
@@ -1348,35 +1571,77 @@
         "dur": 1.1
       }
     ],
-    "shotSha": "c2eb13b14050",
+    "shotSha": "78e5941fe211",
     "requires": [
       {
         "what": "Way in from S6 without a cut; the topic list comes up; the camera moves to the viewer pane",
-        "built": true
+        "by": [
+          "transition",
+          "#viewer-push"
+        ]
       },
       {
         "what": "Line 1: the cursor clicks the four tabs on their words; each opens in its real viewer",
-        "built": true
+        "by": [
+          "#tab-md",
+          "#tab-html",
+          "#tab-pptx",
+          "#tab-docx"
+        ]
       },
       {
         "what": "Line 2: ⌘B bolds a drag-selected phrase, ⌘K links \"review step\", a sentence renders as typed, a bullet is added; keycaps show the shortcuts",
-        "built": true
+        "by": [
+          "#bold-select",
+          "#bold-key",
+          "#link-select",
+          "#link-key",
+          "#sentence-typed",
+          "#bullet-add"
+        ]
       },
       {
         "what": "Line 3: drag-select the What we heard paragraph, right-click, Send Selection to Claude (drawn menu, real items); Sam sends in chat; Claude edit highlighted in the editor",
-        "built": true
+        "by": [
+          "#heard-select",
+          "#send-selection-menu",
+          "#md-sent",
+          "#md-after",
+          "#change-mark"
+        ]
       },
       {
         "what": "Lines 4–5: HTML element picker on the Fix button, sent to Claude, prototype shows the change",
-        "built": true
+        "by": [
+          "#html-tab",
+          "#html-menu",
+          "#html-pick",
+          "#html-send",
+          "#html-after"
+        ]
       },
       {
         "what": "Line 6: a slide paragraph picked, sent, slide redrawn in three bullets",
-        "built": true
+        "by": [
+          "#pptx-tab",
+          "#slide-select",
+          "#slide-shape",
+          "#pptx-send",
+          "#pptx-after",
+          "#slide-mark"
+        ]
       },
       {
         "what": "Lines 3–4 slowed: zoom on the paragraph, I-beam drag-select, right-click, Send Selection to Claude, hold; the composer empty, the reference lands, Sam types at a real pace (~15 s) and sends; the narration waits",
-        "built": true
+        "by": [
+          "#heard-zoom",
+          "#heard-select",
+          "#send-selection-menu",
+          "#composer-empty",
+          "#composer-ref",
+          "#composer-typing",
+          "#md-sent"
+        ]
       }
     ]
   },
@@ -1435,22 +1700,37 @@
     "requires": [
       {
         "what": "Duo fades away to the bare desktop on \"Let's start with some fundamentals\"",
-        "built": true
+        "by": [
+          "event:fade",
+          "transition"
+        ]
       },
       {
         "what": "A drawn Terminal and a Finder window on ~; claude typed with no cd; the real banner shows ~ and is circled as the project",
-        "built": true
+        "by": [
+          "event:windows",
+          "event:claude",
+          "event:here"
+        ]
       },
       {
         "what": "The folder map on paper: one folder per project with its own session cards; the others grey out on \"does not show you your projects\"",
-        "built": true
+        "by": [
+          "event:map",
+          "event:grey",
+          "event:fold"
+        ]
       },
       {
         "what": "claude --resume opens the real 2.1.296 picker on Sam's pile of 23 sessions; it scrolls a screen; the scene ends on the pile",
-        "built": true
+        "by": [
+          "event:resume",
+          "event:scroll",
+          "src:src/scenes/ProjectsBg.tsx"
+        ]
       }
     ],
-    "shotSha": "6297f373ae51"
+    "shotSha": "61046a2f0d82"
   },
   "S11": {
     "kind": "drawn",
@@ -1506,22 +1786,35 @@
     "requires": [
       {
         "what": "The release line from GitHub releases, an open next dot and the built-from stamp",
-        "built": true
+        "by": [
+          "event:dev",
+          "event:next",
+          "src:src/scenes/Conclusion.tsx"
+        ]
       },
       {
         "what": "The topic list, all ticked, Duo Projects and Tasks circled; blank feedback cards",
-        "built": true
+        "by": [
+          "event:list",
+          "event:circle",
+          "event:cards"
+        ]
       },
       {
         "what": "Help › Report an Issue… opens GitHub's new-issue form filled in as Duo fills it",
-        "built": true
+        "by": [
+          "event:help",
+          "event:form"
+        ]
       },
       {
         "what": "The video ends on S0's opening card, held about 3 s after the last line",
-        "built": true
+        "by": [
+          "event:card"
+        ]
       }
     ],
-    "shotSha": "d78a5bc82b47"
+    "shotSha": "0248f39ee645"
   },
   "S9": {
     "kind": "drawn",
@@ -1536,6 +1829,7 @@
     },
     "beats": [
       {
+        "id": "all-projects",
         "at": {
           "line": 2,
           "word": "finds"
@@ -1545,6 +1839,7 @@
         "state": "video-s9-list"
       },
       {
+        "id": "board",
         "at": {
           "line": 2,
           "word": "organizes"
@@ -1554,20 +1849,23 @@
         "state": "video-s9-board"
       },
       {
+        "id": "board-zoom",
         "at": {
           "line": 2,
           "word": "working"
         },
         "in": "video-s9-board",
         "cam": {
-          "x": 700,
-          "y": 100,
+          "rel": "video.pane.middle",
+          "dx": 360,
+          "dy": 60,
           "w": 1100,
           "h": 620
         },
         "dur": 1.2
       },
       {
+        "id": "tile-mark",
         "at": {
           "line": 3,
           "word": "card"
@@ -1580,6 +1878,7 @@
         "hold": 1.8
       },
       {
+        "id": "project-open",
         "at": {
           "line": 4,
           "word": "click"
@@ -1591,6 +1890,7 @@
         "dur": 0.9
       },
       {
+        "id": "sessions-zoom",
         "at": {
           "line": 5,
           "word": "sessions"
@@ -1607,6 +1907,7 @@
         "hold": 1.8
       },
       {
+        "id": "files-zoom",
         "at": {
           "line": 5,
           "word": "files"
@@ -1620,6 +1921,7 @@
         "dur": 0.9
       },
       {
+        "id": "folder-open",
         "at": {
           "line": 5,
           "word": "directory"
@@ -1630,6 +1932,7 @@
         "stateAfter": 0.1
       },
       {
+        "id": "leave",
         "at": {
           "line": 6,
           "word": "leave"
@@ -1641,6 +1944,7 @@
         "dur": 0.8
       },
       {
+        "id": "return",
         "at": {
           "line": 6,
           "word": "return"
@@ -1653,26 +1957,42 @@
     "requires": [
       {
         "what": "The pile fades out and Duo fades back in on S7's last picture",
-        "built": true
+        "by": [
+          "transition"
+        ]
       },
       {
         "what": "All projects, then Board: the project tiles with their sessions",
-        "built": true
+        "by": [
+          "#all-projects",
+          "#board",
+          "#board-zoom"
+        ]
       },
       {
         "what": "The shelf-scan tile as its own pane; a click opens the project view",
-        "built": true
+        "by": [
+          "#tile-mark",
+          "#project-open"
+        ]
       },
       {
         "what": "Zoom on the project's session list, then the file navigator; a folder opens",
-        "built": true
+        "by": [
+          "#sessions-zoom",
+          "#files-zoom",
+          "#folder-open"
+        ]
       },
       {
         "what": "Leave to All projects and return to the project as it was left",
-        "built": true
+        "by": [
+          "#leave",
+          "#return"
+        ]
       }
     ],
-    "shotSha": "7b5ee7e54ad0"
+    "shotSha": "9d31e8b33309"
   },
   "S10": {
     "kind": "drawn",
@@ -1691,6 +2011,7 @@
     },
     "beats": [
       {
+        "id": "flat",
         "at": {
           "line": 1,
           "word": "experimental"
@@ -1705,6 +2026,7 @@
         "dur": 1
       },
       {
+        "id": "grouped",
         "at": {
           "line": 1,
           "word": "structure"
@@ -1713,6 +2035,7 @@
         "state": "video-s10-grouped"
       },
       {
+        "id": "goal-mark",
         "at": {
           "line": 2,
           "word": "goal"
@@ -1723,21 +2046,27 @@
         "hold": 1.5
       },
       {
+        "id": "tasks-mark",
         "at": {
           "line": 2,
           "word": "tasks"
         },
         "in": "video-s10-grouped",
         "mark": {
-          "x": 0,
-          "y": 126,
-          "w": 299,
-          "h": 256
+          "fit": [
+            "video.task.auto-add-decision",
+            "video.task.beta-interview-synthesis"
+          ],
+          "pad": {
+            "t": 4,
+            "b": 4
+          }
         },
         "quote": "multiple tasks",
         "hold": 1.8
       },
       {
+        "id": "tasks-come-go",
         "at": {
           "line": 2,
           "word": "come"
@@ -1748,6 +2077,7 @@
         "hold": 1.6
       },
       {
+        "id": "tasknote-open",
         "at": {
           "line": 3,
           "word": "context"
@@ -1763,6 +2093,7 @@
         "dur": 0.9
       },
       {
+        "id": "tasknote-goal",
         "at": {
           "line": 3,
           "word": "goal"
@@ -1773,6 +2104,7 @@
         "hold": 1.6
       },
       {
+        "id": "tasknote-sessions",
         "at": {
           "line": 3,
           "word": "attribute"
@@ -1783,6 +2115,7 @@
         "hold": 1.8
       },
       {
+        "id": "newtask-click",
         "at": {
           "line": 4,
           "word": "make"
@@ -1791,8 +2124,9 @@
         "in": "video-s10-tasknote",
         "state": "video-s10-newtask-untitled",
         "cam": {
-          "x": 0,
-          "y": 250,
+          "rel": "video.newtask.button",
+          "dx": 0,
+          "dy": -248,
           "w": 800,
           "h": 450
         },
@@ -1800,6 +2134,7 @@
         "fx": 0.25
       },
       {
+        "id": "newtask-created",
         "at": {
           "line": 4,
           "word": "view"
@@ -1808,6 +2143,7 @@
         "state": "video-s10-newtask-created"
       },
       {
+        "id": "newtask-details",
         "at": {
           "line": 4,
           "word": "details"
@@ -1837,6 +2173,7 @@
         "dur": 1
       },
       {
+        "id": "newsession-menu",
         "at": {
           "line": 5,
           "word": "attribute"
@@ -1867,6 +2204,7 @@
         "in": "video-s10-newtask-details"
       },
       {
+        "id": "newsession",
         "at": {
           "line": 5,
           "word": "sessions",
@@ -1882,6 +2220,7 @@
         "dur": 0.8
       },
       {
+        "id": "newsession-sent",
         "at": {
           "line": 5,
           "word": "task"
@@ -1890,6 +2229,7 @@
         "state": "video-s10-newsession-sent"
       },
       {
+        "id": "group-zoom",
         "at": {
           "line": 5,
           "word": "you",
@@ -1897,14 +2237,16 @@
         },
         "in": "video-s10-newsession-sent",
         "cam": {
-          "x": 0,
-          "y": 196,
+          "rel": "video.task.warn-about-glare-before-the-photo.group",
+          "dx": 0,
+          "dy": -126,
           "w": 470,
           "h": 264
         },
         "dur": 0.6
       },
       {
+        "id": "collapse",
         "at": {
           "line": 5,
           "word": "collapse"
@@ -1914,6 +2256,7 @@
         "state": "video-s10-collapsed"
       },
       {
+        "id": "expand",
         "at": {
           "line": 5,
           "word": "show"
@@ -1923,6 +2266,7 @@
         "state": "video-s10-newsession-sent"
       },
       {
+        "id": "workstreams",
         "at": {
           "line": 6,
           "word": "imagine",
@@ -1938,6 +2282,7 @@
         "dur": 1
       },
       {
+        "id": "board-open",
         "at": {
           "line": 7,
           "word": "view"
@@ -1946,14 +2291,16 @@
         "in": "video-s10-newsession-sent",
         "state": "video-s10-board",
         "cam": {
-          "x": 0,
-          "y": 40,
+          "rel": "video.pane.left",
+          "dx": 0,
+          "dy": 0,
           "w": 1140,
           "h": 641
         },
         "dur": 0.9
       },
       {
+        "id": "board-deck",
         "at": {
           "line": 7,
           "word": "manage"
@@ -1963,6 +2310,7 @@
         "state": "video-s10-board-deck"
       },
       {
+        "id": "deck-resume",
         "at": {
           "line": 7,
           "word": "return",
@@ -1975,6 +2323,7 @@
         "dur": 0.9
       },
       {
+        "id": "task-menu-target",
         "at": {
           "line": 8,
           "word": "best",
@@ -1983,14 +2332,16 @@
         "in": "video-s10-task-menu-target",
         "state": "video-s10-task-menu-target",
         "cam": {
-          "x": 0,
-          "y": 200,
+          "rel": "video.task.beta-interview-synthesis",
+          "dx": 0,
+          "dy": -178,
           "w": 900,
           "h": 506
         },
         "dur": 0.9
       },
       {
+        "id": "archive-task-menu",
         "at": {
           "line": 8,
           "word": "complete"
@@ -2021,6 +2372,7 @@
         "in": "video-s10-task-menu-target"
       },
       {
+        "id": "archive-ask",
         "at": {
           "line": 8,
           "word": "archive"
@@ -2028,14 +2380,16 @@
         "in": "video-s10-archive-ask",
         "state": "video-s10-archive-ask",
         "cam": {
-          "x": 560,
-          "y": 20,
+          "rel": "video.sheet",
+          "dx": -110,
+          "dy": -19,
           "w": 680,
           "h": 383
         },
         "dur": 0.7
       },
       {
+        "id": "archive-confirm",
         "at": {
           "line": 8,
           "word": "sessions"
@@ -2046,6 +2400,7 @@
         "stateAfter": 0.15
       },
       {
+        "id": "archived-mark",
         "at": {
           "line": 8,
           "word": "way",
@@ -2053,8 +2408,9 @@
         },
         "in": "video-s10-archived",
         "cam": {
-          "x": 0,
-          "y": 290,
+          "rel": "video.task.beta-interview-synthesis",
+          "dx": 0,
+          "dy": -404,
           "w": 900,
           "h": 506
         },
@@ -2067,45 +2423,82 @@
     "requires": [
       {
         "what": "The flat session list regroups under the project's tasks",
-        "built": true
+        "by": [
+          "#flat",
+          "#grouped"
+        ]
       },
       {
         "what": "The header and the tasks under it circled",
-        "built": true
+        "by": [
+          "#goal-mark",
+          "#tasks-mark"
+        ]
       },
       {
         "what": "A task note opens; its goal and its sessions circled",
-        "built": true
+        "by": [
+          "#tasknote-open",
+          "#tasknote-goal",
+          "#tasknote-sessions"
+        ]
       },
       {
         "what": "+ New task: Untitled task named \"Warn about glare before the photo\", details typed",
-        "built": true
+        "by": [
+          "#newtask-click",
+          "#newtask-created",
+          "#newtask-details"
+        ]
       },
       {
         "what": "New Session in Task from the task menu (drawn, real items); Sam's first request and Claude's reply",
-        "built": true
+        "by": [
+          "#newsession-menu",
+          "#newsession",
+          "#newsession-sent"
+        ]
       },
       {
         "what": "The task board; Deck for Thursday picked; its session resumes",
-        "built": true
+        "by": [
+          "#board-open",
+          "#board-deck",
+          "#deck-resume"
+        ]
       },
       {
         "what": "Line 2: \"tasks come and go\" settles on the complete task",
-        "built": true
+        "by": [
+          "#tasks-come-go"
+        ]
       },
       {
         "what": "Line 5: collapse and show a task's sessions",
-        "built": true
+        "by": [
+          "#group-zoom",
+          "#collapse",
+          "#expand"
+        ]
       },
       {
         "what": "Line 6: the whole list with four tasks of 2–3 sessions each, one complete",
-        "built": true
+        "by": [
+          "#workstreams",
+          "state:video-s10-workstreams"
+        ]
       },
       {
         "what": "Line 8: Archive Task… → Archive Task and Its Sessions; they fold into Archived",
-        "built": true
+        "by": [
+          "#task-menu-target",
+          "#archive-task-menu",
+          "#archive-ask",
+          "#archive-confirm",
+          "#archived-mark"
+        ]
       }
     ],
-    "shotSha": "1f414b1ff549"
+    "shotSha": "5c95052ce71b"
   }
 }

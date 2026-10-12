@@ -48,6 +48,9 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var lastActive: Double? = nil
         /// The Remote Control name it was started with (DL-128), from the session index.
         public var remoteControl: String? = nil
+        /// A Claude process is running for it (a hook beacon). With no Duo terminal open for it, it runs
+        /// outside Duo: a terminal session as far as its glyph goes (DL-174).
+        public var liveProcess: Bool? = nil
         public var id: String { "\(project)/\(name)" }
         /// What console tabs and terminals are keyed by: the session id when there is one.
         public var tabKey: String { sessionId ?? name }

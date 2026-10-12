@@ -193,7 +193,7 @@ extension AppModel {
             let project = inv.flags["project"].flatMap { project(named: $0)?.name }
             if inv.flags["project"] != nil, project == nil { return done(.fail("no project '\(inv.flags["project"]!)'")) }
             let list = (project.map { fixture.sessions(inProject: $0) } ?? fixture.sessions).filter { $0.sessionId != nil }
-            let lines = list.map { s in "\(s.sessionId!.prefix(8))  \(stateWord(s.state).padding(toLength: 9, withPad: " ", startingAt: 0)) \(s.project) / \(s.name)" }
+            let lines = list.map { s in "\(s.sessionId!.prefix(8))  \(stateWord(s.state).padding(toLength: 9, withPad: " ", startingAt: 0)) \(sessionKind(s).rawValue.padding(toLength: 9, withPad: " ", startingAt: 0)) \(s.project) / \(s.name)" }
             done(.ok(lines.isEmpty ? "No sessions." : lines.joined(separator: "\n"), list.map(sessionJSON)))
         case .sessionShow:
             guard let key = inv[0] ?? req.session, let s = findSession(key, in: nil), let sid = s.sessionId else { return done(.fail("no session '\(inv[0] ?? "")'")) }
@@ -1086,6 +1086,7 @@ extension AppModel {
 
     func sessionJSON(_ s: Fixture.Session) -> [String: Any] {
         var j: [String: Any] = ["title": s.name, "project": s.project, "state": stateWord(s.state)]
+        j["kind"] = sessionKind(s).rawValue   // terminal | chat (DL-174)
         if let v = s.sessionId { j["id"] = v }
         if let v = s.wait { j["wait"] = v }
         if let v = s.question { j["question"] = v }

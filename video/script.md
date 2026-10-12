@@ -1,4 +1,5 @@
 # Duo v2 intro video: script v2
+<!-- Synced from the script Doc at rev 4617 on 2026-10-12 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 10, 2026 · @Geoff Dudgeon
 
@@ -83,7 +84,7 @@ Right pane, on "flexible editor": the Markdown file, the browser prototype, the 
 >
 > - *Left pane, on "managing files and projects":* the Finder windows land as the project list and file tree.
 > - *New captures needed:* one project with three or more terminal tabs, the last in chat view, and the editor with four tabs open: a Markdown file, the prototype in a browser tab, a .pptx and a .docx.
-> - *Word and PowerPoint:* Duo opens .pptx and .docx (Geoff, Oct 10), so the same deck and doc from S1 appear as real tabs here.
+> - *Word and PowerPoint*: Duo opens .pptx and .docx (Geoff, Oct 10), so the same deck and doc from S1 appear as real tabs here.
 > - *Callouts:* putting *a pane for managing files and projects*, *a terminal or chat view* and *flexible editor* in italics in the line would pin the three callouts to those words.
 
 ### S3 · All projects (about 12 s)
@@ -187,8 +188,8 @@ On lines 3 and 4, still on the PRD, played slower for emphasis (Geoff, Oct 11):
 > **Notes for the build** (ignored by it):
 >
 > - *The menu:* drawn, like S4's, because macOS draws context menus outside the window capture. Its items are the editor's real ones (Send Selection to Claude, Send Selection To ▸, then the system's).
-> - *Slowed (Geoff, Oct 11):* line 3 is split after "agent," (same words), so the selection, the menu and Sam's typing play out between lines 3 and 4; the later lines move down one. New captures needed: the composer empty, then holding only the selection reference, before Sam types.
 > - *Fixtures (made by demo-fixtures, Oct 11):* the chat turn (the composer with the sent selection as Duo formats it, Sam's message, and Claude's reply with its rows); the PRD after Claude's edit, a What we heard paragraph updated from the triage log (Denise's glare, Owen's two wrong books); and the editor showing that edit highlighted.
+> - *Slowed (Geoff, Oct 11):* line 3 is split after "agent," (same words), so the selection, the menu and Sam's typing play out between lines 3 and 4; the later lines move down one. New captures needed: the composer empty, then holding only the selection reference, before Sam types.
 
 On lines 5–7, the same pattern twice more, each ending on the change visible in its own viewer (lines 6 and 7 added Oct 11, so each demo has its own line):
 
@@ -240,7 +241,7 @@ Topic: Duo Projects
 - Each project shows up as its own card, and lists the sessions from that project underneath it.
 - When you click on an existing session, you enter a view for its parent project.
 - Here, you can see the sessions that share a project, and the files and folders in that project's directory.
-- You can always leave the project view and return — and find all of the sessions and files from that project right where you left them. This helps make switching between many different projects a little easier. 
+- You can always leave the project view and return — and find all of the sessions and files from that project right where you left them. This helps make switching between many different projects a little easier.
 
 Shot: the resume picker's pile from the scene before fades out, and Duo's window fades back in on the desktop exactly as we last saw it at the end of S7: shelf-scan open, the Auto-add decision chat in the middle, and the deck in the right pane on its new bulleted slide.
 
@@ -293,7 +294,7 @@ On the last line ("Best of all, when you complete a task…"), back in the sessi
 > **Notes for the build** (ignored by it):
 >
 > - *Real, today:* a task is one Markdown file per task, `tasks/<slug>.md` with `type: task` frontmatter (DL-6, DL-13), made with File › New Task, which names it first (DL-93). It is a plain file, so Claude reads it like any other.
-> - *Fixtures (asked of demo-fixtures, Oct 11):* shelf-scan's PROJECT.md goal; three task notes (Auto-add decision, Deck for Thursday, Spine eval: glare cases), each with a goal, done-when, a status for the board's columns and its sessions linked; the new task note before and after Sam's lines; the New Session in Task chat turn (Sam's first request and Claude's reply, which uses the task's goal); and the Deck for Thursday session's history for the resume.
+> - *Fixtures (*asked of demo-fixtures, Oct 11): shelf-scan's PROJECT.md goal; three task notes (Auto-add decision, Deck for Thursday, Spine eval: glare cases), each with a goal, done-when, a status for the board's columns and its sessions linked; the new task note before and after Sam's lines; the New Session in Task chat turn (Sam's first request and Claude's reply, which uses the task's goal); and the Deck for Thursday session's history for the resume.
 
 ### S11 · Conclusion
 

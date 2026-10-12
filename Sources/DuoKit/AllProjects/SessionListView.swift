@@ -205,7 +205,7 @@ struct SessionListRow: View {
             if twoLine {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(spacing: DuoSpace.gapRowItems) {
-                        StateGlyph(row.session.state)
+                        SessionGlyph(kind: model.sessionKind(row.session), state: row.session.state)
                         Text(row.session.name).duoText(.body, weight: bold ? .semibold : nil).lineLimit(1).truncationMode(.tail)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         WaitLabel(text: row.wait)
@@ -225,7 +225,7 @@ struct SessionListRow: View {
                 .frame(height: DuoMetric.sessionListTwoLineHeight)
             } else {
                 HStack(spacing: DuoSpace.gapRowItems) {
-                    StateGlyph(row.session.state)
+                    SessionGlyph(kind: model.sessionKind(row.session), state: row.session.state)
                     Text(row.session.name).duoText(.body, weight: bold ? .semibold : nil).lineLimit(1).truncationMode(.tail)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text(row.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.tail)
@@ -251,7 +251,7 @@ struct SessionListRow: View {
         .modifier(SessionOrganizeMenu(sessionKey: row.session.tabKey))
         .help([row.session.name, model.fixture.projects.first { $0.name == row.session.project }?.path, row.task].compactMap { $0 }.joined(separator: " · "))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(row.session.name), \(row.project)\(row.task.map { ", task \($0)" } ?? ""), \(row.session.state.spokenName)\(row.wait.map { ", \($0)" } ?? "")")
+        .accessibilityLabel("\(row.session.name), \(row.project)\(row.task.map { ", task \($0)" } ?? ""), \(SessionGlyph.spokenKind(model.sessionKind(row.session))), \(row.session.state.spokenName)\(row.wait.map { ", \($0)" } ?? "")")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
 }
