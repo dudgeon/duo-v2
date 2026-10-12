@@ -20,7 +20,8 @@ const walk = (dir, skip = () => false) => (existsSync(dir) ? readdirSync(dir).so
   return statSync(p).isDirectory() ? walk(p, skip) : [p];
 }) : []);
 const files = (p) => (!existsSync(p) ? [] : statSync(p).isDirectory() ? walk(p) : [p]);
-const treeKey = (root, paths) => sha(...paths.flatMap((p) => files(join(root, p))).map((f) => `${relative(root, f)} ${fileSha(f)}`));
+// Markdown under style/ is for people (shot grammar, taste), not read by the film, so it doesn't key a render.
+const treeKey = (root, paths) => sha(...paths.flatMap((p) => files(join(root, p))).filter((f) => !f.endsWith('.md')).map((f) => `${relative(root, f)} ${fileSha(f)}`));
 
 // The frame ranges: scene k from its first frame to the frame before the next scene's first, the last to the end.
 export function sceneRanges(timeline) {
@@ -51,12 +52,15 @@ export function sceneKeys({here, pub, timeline, scale, encode = null}) {
   };
   return timeline.scenes.map((s, k) => {
     const r = ranges[k];
-    const local = {...s, start: +(r.from - s.start * fps).toFixed(6), lines: s.lines.map(({src: _src, ...l}) => l)};
+    // A line's voice file and key name its audio, which a scene's frames don't draw (they render muted): a re-voice or a
+  // voice cache re-key (DL-179) keeps the scene.
+  const silent = (l) => { const {src: _src, key: _key, ...rest} = l; return rest; };
+  const local = {...s, start: +(r.from - s.start * fps).toFixed(6), lines: s.lines.map(silent)};
     const near = changes.filter((c) => c.at > s.start - 10 && c.at < s.start + s.duration + 10).map((c) => ({...c, at: +(c.at - s.start).toFixed(6)}));
     const prev = timeline.scenes[k - 1];
     const spills = prev && Math.round(prev.start * fps) + Math.ceil(prev.duration * fps) > r.from;
     const key = sha('scene-render-1', src, shared, scale, encode, fps, timeline.fade, r.to - r.from + 1, k === timeline.scenes.length - 1, local, topics, near,
-      spills ? {...prev, start: +(prev.start - s.start).toFixed(6), lines: prev.lines.map(({src: _src, ...l}) => l)} : null, named(local));
+      spills ? {...prev, start: +(prev.start - s.start).toFixed(6), lines: prev.lines.map(silent)} : null, named(local));
     return {...r, key};
   });
 }
