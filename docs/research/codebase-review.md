@@ -11,7 +11,7 @@
   - a read-only `sample`/`footprint` of Geoff's own running Duo (the director's OK);
   - isolated background runs (own `DUO_SUPPORT_DIR`, scratch `CLAUDE_CONFIG_DIR`, the stand-in 2.1.219 CLI, SIGTERM by pid);
   - timed builds under the shared GPU lock.
-- The measurement scripts are kept in the job scratchpad. They're listed under the measurement method so they can be re-run.
+- The measurement scripts are committed in [`codebase-review-tools/`](codebase-review-tools/), so the runs can be repeated as a before/after for each build task.
 
 **Sizes.** S is under half a day for a Sonnet session, M is a day, L is several. Risk is the chance of a visible regression or a lost session.
 
@@ -642,7 +642,7 @@ His taste lives in per-user memory files (`feedback-video-visual-craft.md` and o
 ### Video maintainability and risks
 
 - **A silent narrator fallback.** A missing or mistyped `DUO_VOICE_JSON` falls back to the house voice with only a log line (`voice.mjs:13-14`). The Qwen and VoxCPM cuts differ by 39 s, so a wrong narrator changes every timing. Fail instead.
-- **A machine-bound default narrator.** It depends on `/Users/geoff/repos/duo-voice` (venv, LoRA) and a 25 GB `~/Library/Caches/duo-video`. A clean checkout can't reproduce the cut. That's acceptable for a one-person film, but it should say so in the README.
+- **A machine-bound default narrator.** It depends on a private voice repo outside duo-v2 (venv, LoRA) and a 25 GB local model cache. A clean checkout can't reproduce the cut. That's acceptable for a one-person film, but it should say so in the README.
 - **Captures ship in the release app.** The video's 79 states (834 lines of `VideoTargets*.swift`) and 49 `video.*` anchors are part of the release binary. Nothing on the app side notices a removed anchor. See task 11 for the harness gate.
 - **Dead code:** `src/lib/Callout.tsx`, the `desk`/`card` kinds, `Turn.tsx`, `many`, the stand-in transitions, `wallpaper-options.mjs`, `score/mix.py`, `voice/experiments/` and `video/archive/` (see [Abandoned code](#abandoned-code)).
 - **No `typecheck` script, no test, no CI.**
@@ -756,7 +756,7 @@ Each task is scoped for one Sonnet build session: files, the check that proves i
 
 That's read-only, with the director's OK: no signals, no `duo2`, nothing in its support folder.
 
-**Isolated runs.** The scripts are in the job scratchpad, `/Users/geoff/.claude/jobs/233351a5/tmp/m/`; copy them into `scripts/` if they're to be kept.
+**Isolated runs.** The scripts are in [`codebase-review-tools/`](codebase-review-tools/). Set `GPU_LOCK` to the shared lock folder, and put copies of `build/Duo.app` at `$M/Duo-release.app` and `$M/Duo-debug.app` (`M` defaults to `$TMPDIR/duo-review`).
 - **`measure.sh <label> <secs> [--events N] [--churn KB] [--docs N --html N] -- <make-scale-fixture args>`** makes the scale fixture in `/tmp/d-rv-XXXX` with the stand-in 2.1.219 TUI (`scripts/scale-tui.py`). Then:
   - It launches the bundle with its own `DUO_SUPPORT_DIR`, a scratch `CLAUDE_CONFIG_DIR` and `DUO_AUTOCONFIRM=1`, in the background (F-227).
   - It times the endpoint and the first `duo2 status` (using that instance's `DUO_SOCKET` and `DUO_TOKEN`).
@@ -767,7 +767,7 @@ That's read-only, with the director's OK: no signals, no `duo2`, nothing in its 
 - **`matrix.sh`** runs the 10 configurations one at a time, each under the shared GPU lock: `rel-idle`, `rel-short`, `rel-events`, `rel-churn`, `rel-scale16`, `rel-term16`, `rel-many`, `rel-docs`, `dbg-events`, `dbg-churn`.
 - **`inclusive.py <sample> <frame>…`** gives inclusive sample counts for frames in a `sample` call graph.
 - **`build.sh`, `noop.sh` and `idle-rebuild.sh`** time the builds.
-- **`../maxrec.py`** finds the highest record numbers on every ref.
+- **`maxrec.py <repo> <refs.txt>`** finds the highest record numbers on every ref (feed it `git for-each-ref --format='%(refname)' refs/heads refs/remotes`).
 
 **Caveats.**
 - Every run is a background run, so the window is drawn but not shown. macOS may skip drawing, which understates layout and SwiftUI cost (F-208's trap). The visible gate (`DUO_TEST_FOREGROUND=1`) needs Geoff's OK and wasn't run.
