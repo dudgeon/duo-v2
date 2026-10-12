@@ -122,7 +122,9 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
     const t0 = i === 0 ? ways[0].at - 1.0 : last.at, t1 = i < ways.length ? next.at : t0 + 0.01;
     // A drag moves straight and steadily; otherwise the cursor glides in an arc and settles before it clicks.
     const dragging = i > 0 && last.hold !== undefined;
-    const m = dragging ? interpolate(t, [t0, t1], [0, 1], clamp) : i < ways.length ? ramp(t, Math.max(t0 + 0.12, t1 - 0.6), t1 - 0.04) : 1;
+    // Two waypoints can sit a hair apart (a click right after a drag ends); the ease needs a real span.
+    const ea = Math.max(t0 + 0.12, t1 - 0.6), eb = Math.max(ea + 0.01, t1 - 0.04);
+    const m = dragging ? interpolate(t, [t0, Math.max(t1, t0 + 0.01)], [0, 1], clamp) : i < ways.length ? ramp(t, ea, eb) : 1;
     const press = data.clicks.reduce((p, c) => Math.max(p, interpolate(t - c.at, [-0.04, 0.04, 0.14], [0, 1, 0], clamp)), dragging ? 1 : 0);
     const op = ramp(t, ways[0].at - 1.0, ways[0].at - 0.8) * (1 - ramp(t, ways[ways.length - 1].at + 0.6, ways[ways.length - 1].at + 1.0));
     cursor = <div style={{opacity: op}}><Cursor x={lerp(from.x, to.x, m)} y={lerp(from.y, to.y, m) - (dragging ? 0 : Math.sin(m * Math.PI) * 26)} press={press} /></div>;
