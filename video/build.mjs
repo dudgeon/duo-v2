@@ -4,6 +4,8 @@
 // unchanged app is never recaptured.
 //   node build.mjs              full build: out/intro.mp4, a still per scene, contact sheet, report
 //   node build.mjs --draft      half-size render, for a quick look
+//   node build.mjs --scene S7   render one scene (or S7,S8) to out/scene-S7.mp4, from the cache where unchanged; with --draft, half size
+//   --whole                     render the film in one pass (no scene cache); --gc  drop unused captures and scene renders
 //   node build.mjs --stills     no video: one still per scene, where its camera lands
 //   node build.mjs --check      the check stage only (seconds, no voicing, capture or render); with voice and captures cached, the plan too
 //   --force-voice / --force-capture  redo those stages anyway
@@ -19,6 +21,7 @@ import {plan} from './pipeline/plan.mjs';
 import {parseScript, said} from './pipeline/script.mjs';
 import {BuildError} from './pipeline/util.mjs';
 import {voiceLines, voiceSetup} from './pipeline/voice.mjs';
+import {gcCache, renderFilm, reviewClips, sceneKeys} from './pipeline/render.mjs';
 import {scoreBed} from './pipeline/score.mjs';
 import {prepareWallpaper} from './pipeline/wallpaper.mjs';
 
@@ -26,7 +29,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '..');
 const cache = join(here, '.cache'), pub = join(here, 'build/public'), out = join(here, 'out');
 for (const d of [cache, pub, out]) mkdirSync(d, {recursive: true});
-const args = new Set(process.argv.slice(2));
+const argv = process.argv.slice(2), args = new Set(argv);
 const report = [];
 const log = (s) => { console.log(s); report.push(s); };
 const remotion = (...a) => spawnSync(join(here, 'node_modules/.bin/remotion'), [...a, '--log=error'], {cwd: here, stdio: 'inherit'});
@@ -97,30 +100,42 @@ try {
   // Each scene at its most telling moment: a callout fully open, else where the camera lands, else the middle.
   const stillAt = (s) => s.start + Math.min(s.duration - 0.1,
     s.callouts?.length ? s.callouts[0].start + 1.0 : s.camera?.length > 1 ? s.camera[s.camera.length - 1].t + 0.3 : s.duration * 0.7);
-  for (const s of timeline.scenes) {
+  // A one-scene preview (--scene) makes no stills.
+  for (const s of args.has('--scene') ? [] : timeline.scenes) {
     remotion('still', 'src/index.ts', 'Intro', join(out, `still-${s.id}.png`), `--frame=${Math.round(stillAt(s) * timeline.fps)}`);
   }
   // The thumbnail: the first scene's settled frame, when its shot names one (S0's logo and title).
   const first = timeline.scenes[0], thumbAt = shots[first.id]?.thumbnail;
-  if (thumbAt !== undefined) {
+  if (thumbAt !== undefined && !args.has('--scene')) {
     remotion('still', 'src/index.ts', 'Intro', join(out, 'thumbnail.png'), `--frame=${Math.round((first.start + (thumbAt < 0 ? (first.exit?.at ?? first.duration) + thumbAt : thumbAt)) * timeline.fps)}`);
     log('thumbnail: out/thumbnail.png');
   }
   const n = timeline.scenes.length;
-  spawnSync('/bin/sh', ['-c', `ffmpeg -v error -y ${timeline.scenes.map((s) => `-i "${join(out, `still-${s.id}.png`)}"`).join(' ')} ` +
+  if (!args.has('--scene')) spawnSync('/bin/sh', ['-c', `ffmpeg -v error -y ${timeline.scenes.map((s) => `-i "${join(out, `still-${s.id}.png`)}"`).join(' ')} ` +
     `-filter_complex "${timeline.scenes.map((_, i) => `[${i}]scale=640:360,setsar=1[s${i}]`).join(';')};${timeline.scenes.map((_, i) => `[s${i}]`).join('')}concat=n=${n}:v=1:a=0,tile=4x${Math.ceil(n / 4)}:padding=6" -frames:v 1 "${join(out, 'stills.png')}"`]);
 
-  // 8. Render
-  if (!args.has('--stills')) {
-    const mp4 = join(out, args.has('--draft') ? 'intro-draft.mp4' : 'intro.mp4');
-    if (remotion('render', 'src/index.ts', 'Intro', mp4, ...(args.has('--draft') ? ['--scale=0.5'] : [])).status !== 0) throw new BuildError('render');
-    // Loudness: the voice comes out of the TTS near -28 LUFS; the film's soundtrack is brought to -16 LUFS
-    // (peaks under -1.5 dBTP), the level web video plays at, with the picture copied untouched.
-    const loud = join(out, 'intro.loud.mp4');
-    if (spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, '-c:v', 'copy', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '256k', '-ar', '48000', loud]).status === 0) {
-      copyFileSync(loud, mp4);
-      log('render: soundtrack at -16 LUFS');
-    }
+  // 8. Render: a scene at a time, from the cache where a scene is unchanged (pipeline/render.mjs); `--scene S7` renders
+  // just that scene to out/scene-S7.mp4, for a quick look. `--whole` renders the film in one pass, as before V2.
+  const scale = args.has('--draft') ? 0.5 : 1;
+  const sceneArg = argv[argv.indexOf('--scene') + 1];
+  let rendered = [];
+  if (args.has('--scene')) {
+    if (!sceneArg || sceneArg.startsWith('--')) throw new BuildError('render: --scene needs a scene id, e.g. --scene S7');
+    renderFilm({here, pub, out, cache, timeline, scale, only: sceneArg.split(','), log});
+  } else if (!args.has('--stills')) {
+    let mp4;
+    if (args.has('--whole')) {
+      mp4 = join(out, scale !== 1 ? 'intro-draft.mp4' : 'intro.mp4');
+      if (remotion('render', 'src/index.ts', 'Intro', mp4, ...(scale !== 1 ? [`--scale=${scale}`] : [])).status !== 0) throw new BuildError('render');
+      // Loudness: the voice comes out of the TTS near -28 LUFS; the film's soundtrack is brought to -16 LUFS
+      // (peaks under -1.5 dBTP), the level web video plays at, with the picture copied untouched.
+      const loud = join(out, 'intro.loud.mp4');
+      if (spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, '-c:v', 'copy', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '256k', '-ar', '48000', loud]).status === 0) {
+        copyFileSync(loud, mp4);
+        log('render: soundtrack at -16 LUFS');
+      }
+      rendered = timeline.scenes.map((s) => s.id);
+    } else ({mp4, rendered} = renderFilm({here, pub, out, cache, timeline, scale, log}));
     spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, '-vf', 'fps=1,scale=320:-1,tile=8x0:padding=4', '-frames:v', '1', join(out, 'contact-sheet.png')]);
     log(`render: ${mp4}`);
     // The score's ear check (after the sound-design method Geoff sent): a waveform of the final mix, and five
@@ -141,6 +156,24 @@ try {
       writeFileSync(join(out, 'LISTEN.md'), `# Listen at\n\nThe score is checked by numbers; these five moments are for the ear.\n\n${at.map(([w, t]) => `- **${fmt(t)}**: ${w}`).join('\n')}\n\nWaveform: score-qa.png.\n`);
     }
   }
+  // What Geoff reviews (out/review.json): each scene's place, its still, what its Shot: note asks for and when each is
+  // on screen, and, for the scenes this build re-rendered, a 480p clip, so a cut is reviewed by what changed.
+  const clips = rendered.length && scale === 1 && !args.has('--scene') ? reviewClips({out, timeline, rendered}) : {};
+  const at = (sc, ref) => {
+    if (ref.startsWith('#')) return sc.app?.beatAt?.[ref.slice(1)];
+    if (ref.startsWith('event:')) return sc.drawn?.events?.[ref.slice(6)];
+    if (ref.startsWith('state:')) return sc.app?.steps.find((st) => st.state === ref.slice(6))?.at;
+    if (ref === 'transition') return 0;
+    return undefined;
+  };
+  writeFileSync(join(out, 'review.json'), JSON.stringify({duration: timeline.duration, scenes: timeline.scenes.map((sc) => ({
+    id: sc.id, title: sc.title, topic: sc.topic, start: fmt(sc.start), end: fmt(sc.start + sc.duration), still: `still-${sc.id}.png`,
+    rerendered: rendered.includes(sc.id), clip: clips[sc.id] ?? null,
+    requires: (shots[sc.id]?.requires ?? []).map((r) => ({what: r.what, built: r.built !== false,
+      at: [...new Set((r.by ?? []).map((ref) => at(sc, ref)).filter((t) => t !== undefined).map((t) => fmt(sc.start + t)))]})),
+  }))}, null, 1));
+  if (args.has('--gc')) gcCache({cache, liveCaptureKeys: new Set(Object.values(captures).map((c) => c.key)),
+    liveRenderKeys: new Set([1, 0.5].flatMap((sc) => sceneKeys({here, pub, timeline, scale: sc}).map((k) => k.key))), log});
   const table = timeline.scenes.map((s) => `| ${s.id} | ${s.title} | ${fmt(s.start)} | ${s.duration.toFixed(1)} s | ${s.kind}${s.card?.standIn ? ' (stand-in)' : ''} |`).join('\n');
   const staleMd = anchors.stale.length ? `## Stale framing\n\nThe app moved under these rects; they are framed as before until fixed:\n\n${anchors.stale.map((m) => `- ${m}`).join('\n')}\n\n` : '';
   const gaps = missing.length ? `## Not built yet\n\nThe script asks for these and this cut doesn't have them:\n\n${missing.map((m) => `- ${m}`).join('\n')}\n\n` : '';

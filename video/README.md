@@ -12,7 +12,8 @@ The script's source of truth is the [Claude Doc, script v2](https://claude.ai/co
 scripts/bundle.sh              # the app the captures come from
 cd video && npm install        # Remotion, project-local
 node build.mjs --check         # seconds: the script and shots, before anything is voiced
-node build.mjs                 # check → voice → capture → timeline → render → out/
+node build.mjs                 # check → voice → capture → timeline → render (by scene, cached) → out/
+node build.mjs --scene S7      # one scene, for a quick look
 ```
 
 **The check stage** runs first in every build, and alone with `--check`. It needs no app, voice or GPU, and it reports every problem at once:
@@ -27,11 +28,26 @@ It also lists the lines changed since the last build. When every line is voiced 
 
 **What `node build.mjs` writes:**
 - `out/intro.mp4`, its soundtrack normalised to -16 LUFS;
+- `out/review.json` and `out/review/<scene>.mp4` for the scenes it re-rendered;
 - stills at the key frames and `out/thumbnail.png`;
 - `out/report.md` (scenes, lengths, anything a Shot: note asks for that isn't built, and any stale framing);
 - `out/LISTEN.md` and `out/score-qa.png`: five timecodes and a waveform for checking the score by ear.
 
-**Flags:** `--stills` (no video), `--draft` (half scale), `--no-score`, `--accept-anchors`.
+**Flags:** `--stills` (no video), `--draft` (half scale), `--no-score`, `--accept-anchors`, `--scene S7` (one scene, or `S7,S8`, to `out/scene-S7.mp4`; with `--draft`, half size), `--whole` (one pass, no scene cache), `--gc`.
+
+**Rendering a scene at a time** (`pipeline/render.mjs`). Each scene's frames are kept in `.cache/render/` under a key of everything that draws them, so a build renders only the scenes that changed and joins the rest with `ffmpeg -c copy`. The key covers:
+- the scene's slice of the timeline (its start only as a sub-frame phase, so a scene that only moved later keeps its key);
+- the topic list and the topic changes near it;
+- the scene before it, when that scene's last frame spills into its range;
+- the pixels of the captures it shows, not the app build that took them;
+- the shared pictures, the source and the render settings.
+The soundtrack is rendered once for the whole film, so the score and its ducking run on across scene edges, then it's normalised to -16 LUFS and muxed. An edit to one scene re-renders that scene, and sometimes the one after it.
+
+**What Geoff reviews.** `out/review.json` lists each scene's start, end and still, and whether this build re-rendered it. It also lists what its Shot: note asks for, with the timecodes where each item is on screen. Each re-rendered scene also gets a 480p clip in `out/review/`.
+
+**The score bed** is reused when a cached bed is at least as long as the film; the film fades it out itself. A new one is made at least 8 minutes long, in whole minutes, so a change in the film's length doesn't make new music.
+
+**`--gc`** removes captures and scene renders the current build doesn't use, and leftover voicing jobs. Voiced lines and score beds stay, because another narrator's lines cost a GPU run to redo.
 
 **Framing that follows the app.** Cameras and marks name anchors (`style/shot-grammar.md`, App scenes), so a change to Duo's layout moves them with it. Each build notes every rect it reads in `.cache/anchors-used.json` and logs the framing that moved. A rect in window points whose anchors moved is reported as `STALE` in the log and in `report.md`, and stays reported until it is fixed or the build runs with `--accept-anchors`.
 

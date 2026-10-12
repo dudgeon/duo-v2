@@ -6,7 +6,7 @@ The video's visual rules. Its numbers live in `video-tokens.json`. These rules g
 
 **Every wide shot of the app is Duo's window on a Mac desktop** (Geoff, 2026-10-10: "it makes it feel more real"). The capture is `--capture-window`, frame and toolbar included. The renderer (`src/lib/Desk.tsx`) puts it on a desk:
 
-- **The wallpaper is our own** macOS-style look-alike (`desk.wallpaper`), never Apple's image, which is Apple's copyright (Geoff chose the look-alike, 2026-10-10).
+- **The wallpaper is Apple's real macOS 10.13 High Sierra default** (`desk.wallpaper.image`; Geoff, 2026-10-10, Q-175, after four rounds of generated wallpapers he rejected; see `taste.md`). It's Apple's image, so it is fetched into `~/Library/Caches/duo-video/wallpapers` at build time and never committed. Without `image`, the build falls back to the SVG look-alike in `desk.wallpaper`.
 - **The window fills `desk.windowWidthShare`** of the frame's width, centred.
 - **It has macOS's corner radius** (`desk.windowRadius`, 16 pt, to be checked against a real window) **and shadow** (`desk.shadow`).
 - **The traffic lights are painted in their active colours.** A background capture is never the key window, so it draws them grey. Their size and position are measured from the capture: 14 pt across, centred at 19, 42 and 65 pt from the left and 20 pt from the top.
