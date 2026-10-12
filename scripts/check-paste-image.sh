@@ -23,9 +23,12 @@ PY
 # mk(): build a File, put it in a DataTransfer; `,` is written ⸴ because --then splits on commas.
 mk="const b=atob('$png');const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const dt=new DataTransfer();dt.items.add(new File([u]⸴'x.png'⸴{type:'image/png'}));const c=document.querySelector('.cm-content');"
 paste="${mk}duo.select(30);const ev=new ClipboardEvent('paste'⸴{clipboardData:dt⸴bubbles:true⸴cancelable:true});c.dispatchEvent(ev);return 'paste prevented='+ev.defaultPrevented"
+# DL-181: a clipboard holding text AND a picture (Numbers, Excel) pastes the text; TSV text becomes a Markdown table.
+both="${mk}dt.setData('text/plain'⸴'plain words');duo.select(0);const ev=new ClipboardEvent('paste'⸴{clipboardData:dt⸴bubbles:true⸴cancelable:true});c.dispatchEvent(ev);return 'text+image prevented='+ev.defaultPrevented"
+table="${mk}dt.setData('text/plain'⸴'Name\tQty\nApples\t3\n');duo.select(0);const ev=new ClipboardEvent('paste'⸴{clipboardData:dt⸴bubbles:true⸴cancelable:true});c.dispatchEvent(ev);return 'tsv+image prevented='+ev.defaultPrevented"
 drop="${mk}dt.items.add(new File([u]⸴'y.png'⸴{type:'image/png'}));const r=c.getBoundingClientRect();const ev=new DragEvent('drop'⸴{dataTransfer:dt⸴bubbles:true⸴cancelable:true⸴clientX:r.left+20⸴clientY:r.bottom-4});c.dispatchEvent(ev);return 'drop prevented='+ev.defaultPrevented"
-acts="open:garden,open-file:$doc,freeze:2,editor-js:$paste,freeze:2,editor-js:$drop,freeze:2,editor-js:return 1,freeze:2,editor-js:return 1,freeze:1,editor-js:duo.select(0)⸴1,freeze:2,editor-js:return 1,freeze:2,editor-js:return 1,freeze:2,editor-snapshot:$out/editor.png,freeze:3,editor-js:return 1,freeze:2,editor-js:return 1,freeze:2,editor-js:return 1,freeze:2,editor-state"
+acts="open:garden,open-file:$doc,freeze:2,editor-js:$paste,freeze:2,editor-js:$both,freeze:2,editor-js:$table,freeze:2,editor-js:$drop,freeze:2,editor-js:return 1,freeze:2,editor-js:return 1,freeze:1,editor-js:duo.select(0)⸴1,freeze:2,editor-js:return 1,freeze:2,editor-js:return 1,freeze:2,editor-snapshot:$out/editor.png,freeze:3,editor-js:return 1,freeze:2,editor-js:return 1,freeze:2,editor-js:return 1,freeze:2,editor-state"
 env -u DUO_SUPPORT_DIR DUO_EXTRA_ENV="DUO_SUPPORT_DIR=/private/tmp/pcf-editor-1/sup CLAUDE_CONFIG_DIR=/private/tmp/pcf-editor-1/cc" DUO_TIMEOUT=60 \
   scripts/run-live.sh $ws "$out/window.png" "$acts" "$out/run.log" >/dev/null
 grep -E "editor-js|editor-state|buffer|disk" "$out/run.log"
-sleep 2; echo "--- on disk:"; cat "$doc"; ls -l "${doc:h}"
+sleep 2; echo "--- expected: text+image inserts "plain words" with no png; tsv+image inserts the Markdown table; 3 pngs in all (image-only paste, 2-picture drop)"; echo "--- on disk:"; cat "$doc"; ls -l "${doc:h}"

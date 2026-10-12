@@ -250,6 +250,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 
 | Item | Why it has no verb |
 |---|---|
+| About Duo | the standard macOS About panel, whose credits list the third-party notices (DL-176); system UI for a person at the screen |
 | Add to .gitignore | a one-time question to the user (DL-50) |
 | Align Column | a submenu, not an action |
 | Anyone | the task board's owner filter: view state; `duo2 task board` lists every card |

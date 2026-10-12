@@ -21,7 +21,7 @@ import {plan} from './pipeline/plan.mjs';
 import {parseScript, said} from './pipeline/script.mjs';
 import {BuildError} from './pipeline/util.mjs';
 import {voiceLines, voiceSetup} from './pipeline/voice.mjs';
-import {gcCache, renderFilm, reviewClips, sceneKeys} from './pipeline/render.mjs';
+import {gcCache, renderFilm, reviewClips, sceneKeys, soundtrackKey} from './pipeline/render.mjs';
 import {scoreBed} from './pipeline/score.mjs';
 import {prepareWallpaper} from './pipeline/wallpaper.mjs';
 
@@ -188,7 +188,8 @@ try {
       at: [...new Set((r.by ?? []).map((ref) => at(sc, ref)).filter((t) => t !== undefined).map((t) => fmt(sc.start + t)))]})),
   }))}, null, 1));
   if (args.has('--gc')) gcCache({cache, liveCaptureKeys: new Set(Object.values(captures).map((c) => c.key)),
-    liveRenderKeys: new Set([1, 0.5].flatMap((sc) => sceneKeys({here, pub, timeline, scale: sc}).map((k) => k.key))), log});
+    liveRenderKeys: new Set([...[1, 0.5].flatMap((sc) => sceneKeys({here, pub, timeline, scale: sc}).map((k) => k.key)),
+      `audio-${soundtrackKey({here, pub, timeline, from: 0, to: timeline.frames - 1})}`]), log});
   const table = timeline.scenes.map((s) => `| ${s.id} | ${s.title} | ${fmt(s.start)} | ${s.duration.toFixed(1)} s | ${s.kind}${s.card?.standIn ? ' (stand-in)' : ''} |`).join('\n');
   const staleMd = anchors.stale.length ? `## Stale framing\n\nThe app moved under these rects; they are framed as before until fixed:\n\n${anchors.stale.map((m) => `- ${m}`).join('\n')}\n\n` : '';
   const gaps = missing.length ? `## Not built yet\n\nThe script asks for these and this cut doesn't have them:\n\n${missing.map((m) => `- ${m}`).join('\n')}\n\n` : '';

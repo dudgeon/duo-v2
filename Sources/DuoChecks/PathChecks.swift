@@ -18,6 +18,15 @@ import Foundation
     check(ImagePaste.link(fileName: n1) == "![](\(n1))" && !ImagePaste.link(fileName: "a b.png").contains(" ") && !ImagePaste.link(fileName: n1).contains("/"), "link is relative and encoded")
     check(ImagePaste.link(fileName: "Plan: v2 (draft).png") == "![](Plan%3A%20v2%20%28draft%29.png)", "a colon or bracket in the name can't break the link")
 
+    // DL-181: text wins when the clipboard holds both.
+    check(ImagePaste.decide(text: "hello", hasImage: true) == .text, "text plus a picture pastes the text")
+    check(ImagePaste.decide(text: nil, hasImage: true) == .image && ImagePaste.decide(text: "  \n", hasImage: true) == .image, "a picture alone pastes as a picture")
+    check(ImagePaste.decide(text: nil, hasImage: false) == .nothing, "an empty clipboard does nothing")
+    let tsvMD = "| Name | Qty |\n| --- | --- |\n| Apples | 3 |\n| a\\|b | 4 |"
+    check(ImagePaste.decide(text: "Name\tQty\nApples\t3\na|b\t4\n", hasImage: true) == .table(tsvMD), "tab-separated text with a picture becomes a Markdown table")
+    check(ImagePaste.decide(text: "one\ttwo", hasImage: false) == .text && ImagePaste.decide(text: "a\tb\nc", hasImage: false) == .text, "a lone row or ragged rows stay text")
+    check(ImagePaste.tableMarkdown(tsv: "A\tB\r\n\"x y\"\t2\r\n") == "| A | B |\n| --- | --- |\n| x y | 2 |", "CRLF rows and quoted cells")
+
     print("real paths (LR-24, F-200)")
     let fm = FileManager.default
     check(URL.realPath("/tmp") == "/private/tmp" && URL.realPath("/private/tmp") == "/private/tmp", "/tmp is /private/tmp, as Claude spells it")

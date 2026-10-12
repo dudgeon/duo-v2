@@ -1285,6 +1285,18 @@ func repoFixture() throws -> Fixture {
         let linkedPins = resolved.matches(of: /"identity" : "([^"]+)"/).map { String($0.1) }.filter { !["h", "swift-argument-parser", "swift-png"].contains($0) }
         check(linkedPins == ["swiftterm"] && notices.contains("## SwiftTerm (MIT)"), "every linked Package.resolved dependency has a notices entry (\(linkedPins))")
         check(notices.contains("bge-small-en-v1.5") && notices.contains("JSZip") && notices.contains("mtx-decompressor") && notices.contains("Permission is hereby granted"), "THIRD-PARTY-NOTICES.md carries the model's, JSZip's and the MPL component's notices with licence text")
+        // About Duo's credits (DL-176): every component in the standard panel is in the notices file, with its licence and a link to it.
+        let tableRows = notices.components(separatedBy: "\n").filter { $0.hasPrefix("| ") }.joined(separator: "\n")
+        let creditNames = AboutCredits.components.map { $0.name.components(separatedBy: " (").first! }
+        check(!creditNames.isEmpty && creditNames.allSatisfy { n in tableRows.contains(n == "CodeMirror and Lezer" ? "CodeMirror" : n == "pptx-renderer" ? "pptx-renderer" : n) }, "every component in About Duo's credits is in THIRD-PARTY-NOTICES.md's table (\(creditNames))")
+        let noticesFile = URL(fileURLWithPath: "/x/Resources/THIRD-PARTY-NOTICES.md")
+        let credits = AboutCredits.attributed(noticesURL: noticesFile)
+        check(AboutCredits.components.allSatisfy { credits.string.contains($0.name) && credits.string.contains($0.licence) }, "the About credits name each component and its licence")
+        var linked: URL?
+        credits.enumerateAttribute(.link, in: NSRange(location: 0, length: credits.length)) { v, _, _ in if let u = v as? URL { linked = u } }
+        check(linked == noticesFile && AboutCredits.attributed(noticesURL: nil).string == credits.string, "the About credits link to the bundled notices file")
+        let commandsSource = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Navigation/Commands.swift"), encoding: .utf8)) ?? ""
+        check(commandsSource.contains("CommandGroup(replacing: .appInfo)") && commandsSource.contains("Button(\"About Duo\") { AboutCredits.show() }") && Parity.uiOnly["About Duo"] != nil, "the app menu's About Duo opens the panel with the credits, and is listed as UI-only")
         check(bundle.contains("cp \"$root/THIRD-PARTY-NOTICES.md\" \"$app/Contents/Resources/"), "bundle.sh copies THIRD-PARTY-NOTICES.md into Resources")
         // Every flag LaunchOptions reads marks a scripted run.
         let src = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Debug/LaunchOptions.swift"), encoding: .utf8)) ?? ""

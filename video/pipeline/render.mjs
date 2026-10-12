@@ -65,6 +65,18 @@ export function sceneKeys({here, pub, timeline, scale, encode = null}) {
   });
 }
 
+// The soundtrack's key: what Film.tsx's <Audio>s play. Each scene's span (its Sequence cuts its lines), each line's
+// timing and voice file by content, the score bed by content with its gain settings, the topic changes it ducks at,
+// the film's length, the frames wanted and the source. A camera move or a new capture keeps the soundtrack.
+export function soundtrackKey({here, pub, timeline, from, to}) {
+  const src = treeKey(here, ['src', 'style', 'remotion.config.ts', 'package-lock.json']);
+  const {fps} = timeline;
+  const scenes = timeline.scenes.map((s) => ({start: s.start, duration: s.duration, topic: s.topic ?? null,
+    lines: s.lines.map((l) => ({start: l.start, duration: l.duration, wav: fileSha(join(pub, l.src))}))}));
+  const score = timeline.score ? {...timeline.score, wav: fileSha(join(pub, timeline.score.src))} : null;
+  return sha('soundtrack-1', src, fps, timeline.fade, timeline.duration, timeline.frames, from, to, scenes, score);
+}
+
 // encode: remotion flags for the scenes' encoder, when not remotion.config.ts's H.264. V2's frame-identical proof
 // renders ProRes, which codes each frame alone, so the same pixels make the same frames however the film is split
 // (Remotion refuses H.264 at CRF 0). A ProRes film goes in a .mov.
@@ -90,9 +102,15 @@ export function renderFilm({here, pub, out, cache, timeline, scale = 1, encode =
   log(`render: ${want.length} scene(s), ${rendered.length} rendered, ${want.length - rendered.length} from cache`);
   // The soundtrack for the frames wanted, in one piece, then -16 LUFS (peaks under -1.5 dBTP), the level web video plays at.
   const from = want[0].from, to = want[want.length - 1].to;
+  // Cached on its inputs (soundtrackKey), so a build that changed only pictures doesn't redo it (about 3.4 min).
   // --crf=0: the config's CRF is for the picture, and Remotion refuses any other CRF for an audio codec (it ignores 0).
-  const wav = join(rc, `audio-${process.pid}.wav`);
-  if (remotion('render', 'src/index.ts', 'Intro', wav, '--codec=wav', '--crf=0', `--frames=${from}-${to}`).status !== 0) throw new BuildError('render: the soundtrack failed');
+  const wav = join(rc, `audio-${soundtrackKey({here, pub, timeline, from, to})}.wav`);
+  if (existsSync(wav)) log('render: soundtrack from cache');
+  else {
+    const part = join(rc, `audio-${process.pid}.part.wav`);
+    if (remotion('render', 'src/index.ts', 'Intro', part, '--codec=wav', '--crf=0', `--frames=${from}-${to}`).status !== 0) throw new BuildError('render: the soundtrack failed');
+    renameSync(part, wav);
+  }
   const list = join(rc, `concat-${process.pid}.txt`);
   writeFileSync(list, want.map((k) => `file '${join(rc, `${k.key}.${ext}`)}'\n`).join(''));
   name ??= only ? `scene-${only.join('-')}${scale !== 1 ? '-draft' : ''}.mp4` : scale !== 1 ? 'intro-draft.mp4' : 'intro.mp4';
@@ -101,7 +119,7 @@ export function renderFilm({here, pub, out, cache, timeline, scale = 1, encode =
   const art = cover && existsSync(cover) ? ['-i', cover, '-map', '2:v', '-c:v:1', 'png', '-disposition:v:1', 'attached_pic'] : [];
   const mux = spawnSync('ffmpeg', ['-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', list, '-i', wav, ...art.slice(0, 2), '-map', '0:v', '-map', '1:a', ...art.slice(2), '-c:v:0', 'copy',
     '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '256k', '-ar', '48000', '-movflags', '+faststart', mp4]);
-  rmSync(list, {force: true}); rmSync(wav, {force: true});
+  rmSync(list, {force: true});
   if (mux.status !== 0) throw new BuildError('render: joining the scenes failed');
   log(`render: ${mp4}${only ? '' : ', soundtrack at -16 LUFS'}`);
   return {mp4, rendered, keys};
