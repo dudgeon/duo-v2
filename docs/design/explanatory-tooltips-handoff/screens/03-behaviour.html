@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1000x800">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-172">
+<!--
+B4: timing, placement, dismissal, keyboard and VoiceOver, and until-dismissed
+APPROVED BOARD. Geoff, 2026-10-12 (DL-172). Exported from the Design canvas
+https://claude.ai/artifact/6KHUj9hbPQLwqarUdWpcAc (board B4-behaviour.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · Explanatory tooltips · B4 · Timing, placement, dismissal, keyboard</title>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;width:1000px;height:800px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;padding:24px 28px;display:flex;flex-direction:column;gap:16px;overflow:hidden}
+.bd *{box-sizing:border-box}
+.bt{font:600 17px/24px -apple-system,system-ui,sans-serif;margin:0}
+.bsub{color:#5B636D;margin:0;font-size:12px;line-height:18px;max-width:900px}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.tl{position:relative;height:96px}
+.axis{position:absolute;left:0;right:0;top:44px;height:2px;background:#8B939C}
+.seg{position:absolute;top:36px;height:18px;border-radius:4px;font-size:11px;line-height:18px;padding:0 8px;white-space:nowrap;overflow:hidden}
+.tick{position:absolute;top:30px;width:2px;height:30px;background:#1F2328}
+.tlab{position:absolute;top:0;font-size:11px;line-height:14px;color:#1F2328;white-space:nowrap;font-weight:600}
+.tsub{position:absolute;top:64px;font-size:11px;line-height:14px;color:#5B636D;white-space:normal;width:150px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.mini{position:relative;height:150px;background:#F3F4F6;border-radius:6px;overflow:hidden}
+.pn{position:absolute;background:#FFFFFF;border:1px solid #C9CDD3}
+.ex{position:absolute;background:#FFFFFF;border:1px solid #8B939C;border-radius:6px;box-shadow:0 6px 14px rgba(31,35,40,.18);font-size:10px;line-height:12px;color:#5B636D;display:flex;align-items:center;justify-content:center}
+.bn{position:absolute;height:12px;border:1px solid #8B939C;border-radius:3px;background:#FFFFFF}
+.bn.q{border:0;background:#E9ECEF}
+.t{font-size:12px;line-height:17px;color:#5B636D;white-space:normal;margin:0}
+.t b{color:#1F2328}
+table{border-collapse:collapse;font-size:12px;line-height:17px;width:100%}
+td{padding:5px 8px 5px 0;vertical-align:top;border-top:1px solid #E9ECEF;color:#5B636D}
+td:first-child{color:#1F2328;font-weight:600;width:150px}
+</style>
+</head>
+<body>
+<div class="bd">
+  <div>
+    <h1 class="bt">B4 · Timing, placement, dismissal, keyboard</h1>
+    <p class="bsub">The rules for B1 and B3 (hover). B2 opens on a click and only shares placement and dismissal. These follow WCAG 1.4.13: the Explainer can be dismissed, hovered and stays put. The plain tag is the system's own help tag.</p>
+  </div>
+  <div class="card">
+    <div class="cap">Timing, pointer resting on + New task</div>
+    <div class="tl">
+      <div class="axis"></div>
+      <div class="seg" style="left:0;width:150px;background:#E9ECEF;color:#5B636D">resting</div>
+      <div class="seg" style="left:150px;width:225px;background:#FFFFFF;border:1px solid #8B939C;color:#1F2328">help tag</div>
+      <div class="seg" style="left:375px;width:390px;background:#1F2328;color:#FFFFFF">Explainer (pointer may move onto it)</div>
+      <div class="seg" style="left:765px;width:60px;background:#E9ECEF;color:#5B636D">grace</div>
+      <div class="tick" style="left:0"></div><div class="tlab" style="left:0">0 · pointer arrives</div>
+      <div class="tick" style="left:150px"></div><div class="tlab" style="left:150px">≈1 s · system delay</div>
+      <div class="tick" style="left:375px"></div><div class="tlab" style="left:375px">+1.5 s still · Explainer</div>
+      <div class="tick" style="left:765px"></div><div class="tlab" style="left:690px">pointer leaves both</div>
+      <div class="tick" style="left:825px"></div><div class="tlab" style="left:832px">300 ms · closes</div>
+      <div class="tsub" style="left:150px">Any move off the button resets the clock.</div>
+      <div class="tsub" style="left:375px;width:380px">Opens with the system popover fade. No motion of Duo’s own; Reduce Motion: instant. A second Explainer nearby opens without the wait while one is open (Radix’s 300 ms skip).</div>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="cap">Placement · default</div>
+      <div class="mini" aria-hidden="true">
+        <div class="pn" style="left:0;top:0;width:130px;height:150px;border-width:0 1px 0 0"></div>
+        <div class="pn" style="left:130px;top:0;width:150px;height:150px;background:#15171B;border:0"></div>
+        <div class="ex" style="left:8px;top:18px;width:140px;height:84px">Explainer</div>
+        <div class="bn" style="left:8px;top:112px;width:70px"></div><div class="bn q" style="left:82px;top:112px;width:34px"></div>
+      </div>
+      <p class="t"><b>Above the button,</b> left edges on the pane’s 16 inset, arrow on the button’s centre. It may overhang the next pane by up to 16.</p>
+    </div>
+    <div class="card">
+      <div class="cap">Placement · no room above</div>
+      <div class="mini" aria-hidden="true">
+        <div class="pn" style="left:0;top:0;width:280px;height:22px;border-width:0 0 1px 0"></div>
+        <div class="bn q" style="left:200px;top:5px;width:40px"></div>
+        <div class="ex" style="left:110px;top:30px;width:140px;height:84px">Explainer</div>
+      </div>
+      <p class="t"><b>Below it,</b> right edges aligned when the trigger sits at the right (Chat’s pill, C1). It never covers its own trigger.</p>
+    </div>
+    <div class="card">
+      <div class="cap">Dismissal</div>
+      <table>
+        <tr><td>Pointer leaves</td><td>Both button and Explainer, then 300 ms.</td></tr>
+        <tr><td>Esc</td><td>Closes it without moving the pointer.</td></tr>
+        <tr><td>Any click</td><td>Closes it. A click on the button also does the action.</td></tr>
+        <tr><td>Typing, scrolling, the window losing focus</td><td>Closes it at once.</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+    <div class="card">
+      <div class="cap">Keyboard and VoiceOver</div>
+      <p class="t"><b>Help › Explain Tasks</b> (and Explain Chat Mode, Explain Home) opens the Explainer at its trigger with focus on Learn more; Esc closes it and focus goes back where it was. No new shortcut: the map is locked (DL-34).</p>
+      <p class="t"><b>VoiceOver:</b> the help tag’s sentence is the button’s hint. A custom action, <b>Explain</b>, reads the title, the line and the points. The picture is decorative and hidden from VoiceOver.</p>
+    </div>
+    <div class="card">
+      <div class="cap">Until dismissed (Geoff, 2026-10-12)</div>
+      <p class="t"><b>Don’t show again</b> in the Explainer’s footer stops it opening on hover for good. The help tag stays, and Help › Explain Tasks still opens it. Until then it opens on every long hover.</p>
+      <p class="t"><b>Settings › General › Show dismissed explanations again</b> brings back every one you dismissed. Office and Adobe both ship an off switch, and Adobe’s users asked for one loudly.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

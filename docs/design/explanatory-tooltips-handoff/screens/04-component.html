@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1000x760">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-172">
+<!--
+C3: the Explainer component's parts, sizes and rules
+APPROVED BOARD. Geoff, 2026-10-12 (DL-172). Exported from the Design canvas
+https://claude.ai/artifact/6KHUj9hbPQLwqarUdWpcAc (board C3-anatomy.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · Explanatory tooltips · C3 · The Explainer component</title>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;width:1000px;height:760px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;padding:24px 28px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.bd *{box-sizing:border-box}
+.bt{font:600 17px/24px -apple-system,system-ui,sans-serif;margin:0}
+.bsub{color:#5B636D;margin:0;font-size:12px;line-height:18px;max-width:900px}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.pop{position:relative;width:300px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:14px 16px 12px;display:flex;flex-direction:column;gap:10px;white-space:normal}
+.ph{font:600 14px/20px -apple-system,system-ui,sans-serif;margin:0}
+.pl{margin:-8px 0 0;font-size:13px;line-height:20px}
+.ill{background:#F3F4F6;border-radius:6px;height:90px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#5B636D;border:1px dashed #8B939C}
+.pts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.pts li{display:flex;gap:9px;align-items:flex-start;font-size:12px;line-height:17px;color:#5B636D}
+.pts b{color:#1F2328;font-weight:600}
+.ico{flex:none;width:14px;height:14px;border:1px solid #8B939C;border-radius:3px;margin-top:1px}
+.pf{border-top:1px solid #C9CDD3;margin:2px -16px 0;padding:9px 16px 0;display:flex;justify-content:space-between;font-size:12px;line-height:16px}
+.mk{position:absolute;left:-30px;width:18px;height:18px;border-radius:9px;background:#1F2328;color:#FFFFFF;font-size:10px;line-height:18px;font-weight:600;text-align:center}
+.leg{display:flex;flex-direction:column;gap:9px;font-size:12px;line-height:17px;color:#5B636D;white-space:normal}
+.leg div{display:flex;gap:10px}
+.leg b{color:#1F2328}
+.n{flex:none;width:18px;height:18px;border-radius:9px;background:#1F2328;color:#FFFFFF;font-size:10px;line-height:18px;font-weight:600;text-align:center}
+.box{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:12px;line-height:17px;color:#5B636D;white-space:normal}
+.box b{color:#1F2328}
+.box ul{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:3px}
+</style>
+</head>
+<body>
+<div class="bd">
+  <div>
+    <h1 class="bt">C3 · The component: Explainer</h1>
+    <p class="bsub">One component for any feature a new user won't guess. It's always the second stage after a plain help tag, never the only label. Built once in SwiftUI from the tokens (a popover Duo draws); each feature supplies only its words and its picture.</p>
+  </div>
+  <div style="display:flex;gap:44px;align-items:flex-start">
+    <div style="padding-left:34px;padding-top:6px;position:relative">
+      <div class="pop">
+        <span class="mk" style="top:-4px;left:-30px">0</span>
+        <h2 class="ph" style="position:relative"><span class="mk" style="top:1px">1</span>Feature name</h2>
+        <p class="pl" style="position:relative"><span class="mk" style="top:1px">2</span>What it is, in one line.</p>
+        <div class="ill" style="position:relative"><span class="mk" style="top:36px">3</span>Picture, 268 × 72–110</div>
+        <ul class="pts" style="position:relative"><span class="mk" style="top:0">4</span>
+          <li><span class="ico"></span><span><b>Lead-in.</b> The rest of the point.</span></li>
+          <li><span class="ico"></span><span><b>Lead-in.</b> The rest of the point.</span></li>
+          <li><span class="ico"></span><span><b>Lead-in.</b> The rest of the point.</span></li>
+        </ul>
+        <div class="pf" style="position:relative"><span class="mk" style="top:8px;left:-14px">5</span><span style="color:#1F2328">Learn more about …</span><span>esc</span></div>
+      </div>
+    </div>
+    <div class="leg" style="width:290px">
+      <div class="cap">Parts</div>
+      <div><span class="n">0</span><span><b>Frame:</b> 300 wide, <b>pane</b>, 1 <b>rule</b>, <b>radiusPopover</b> 10, <b>shadowPopover</b>; padding 14 16 12; 10 between parts. An arrow 12 on the trigger.</span></div>
+      <div><span class="n">1</span><span><b>Title:</b> the feature’s noun, as Duo names it. <b>title</b> 14/20.</span></div>
+      <div><span class="n">2</span><span><b>Line:</b> what it is, 60 characters at most. <b>body</b> 13/20.</span></div>
+      <div><span class="n">3</span><span><b>Picture:</b> on <b>ground</b>, radius 6, drawn from Duo’s own parts at small size, in the tokens. Decorative: hidden from VoiceOver. No video, no motion, no accent.</span></div>
+      <div><span class="n">4</span><span><b>Points:</b> two or three; a lead-in of 2–5 words in <b>text</b>, the rest in <b>text2</b>, 12/17; 90 characters each at most; a 14 stroke icon or a number tied to the picture.</span></div>
+      <div><span class="n">5</span><span><b>Footer:</b> Learn more (text, underlined on hover; never the accent) and the Esc hint in <b>text2</b>.</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;width:250px">
+      <div class="box">
+        <div class="cap">Rules</div>
+        <ul>
+          <li>Never the only place a fact lives; never something you must read to get on.</li>
+          <li>No buttons but Learn more; no fields.</li>
+          <li>Never on a disabled control, and never while a sheet or menu is open.</li>
+          <li>One at a time.</li>
+          <li>Until you’ve used the feature; then help tag only.</li>
+        </ul>
+      </div>
+      <div class="box">
+        <div class="cap">First three</div>
+        <ul>
+          <li><b>Tasks</b> on + New task (B).</li>
+          <li><b>Chat mode</b> on the Terminal | Chat pill (C1).</li>
+          <li><b>Home</b> on Home’s title (C2).</li>
+        </ul>
+        <span>More only by decision: each one is a promise to keep its picture true.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
