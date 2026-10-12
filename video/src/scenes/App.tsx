@@ -62,6 +62,14 @@ const ContextMenu = ({x, y, items, hi, u}: {x: number; y: number; items: string[
   </div>
 );
 
+/** The macOS text cursor (I-beam), centred on (x, y). */
+const IBeam = ({x, y}: {x: number; y: number}) => (
+  <svg style={{position: 'absolute', left: x - 9, top: y - 20, overflow: 'visible'}} width={18} height={40} viewBox="0 0 18 40">
+    <path d="M3 2 Q9 2 9 6 Q9 2 15 2 M9 6 V34 M3 38 Q9 38 9 34 Q9 38 15 38 M5 20 H13" fill="none" stroke="#fff" strokeWidth={5} strokeLinecap="round" />
+    <path d="M3 2 Q9 2 9 6 Q9 2 15 2 M9 6 V34 M3 38 Q9 38 9 34 Q9 38 15 38 M5 20 H13" fill="none" stroke="#000" strokeWidth={2.2} strokeLinecap="round" />
+  </svg>
+);
+
 /** A shortcut as it's pressed: keycaps low in the frame, centred (S7's ⌘B, ⌘K). */
 const KeyCap = ({label, u, down}: {label: string; u: number; down: number}) => {
   const keys = label.split(/(?<=⌘|⇧|⌥|⌃)/);
@@ -128,7 +136,10 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
     const m = dragging ? interpolate(t, [t0, Math.max(t1, t0 + 0.01)], [0, 1], clamp) : i < ways.length ? ramp(t, ea, eb) : 1;
     const press = data.clicks.reduce((p, c) => Math.max(p, interpolate(t - c.at, [-0.04, 0.04, 0.14], [0, 1, 0], clamp)), dragging ? 1 : 0);
     const op = ramp(t, ways[0].at - 1.0, ways[0].at - 0.8) * (1 - ramp(t, ways[ways.length - 1].at + 0.6, ways[ways.length - 1].at + 1.0));
-    cursor = <div style={{opacity: op}}><Cursor x={lerp(from.x, to.x, m)} y={lerp(from.y, to.y, m) - (dragging ? 0 : Math.sin(m * Math.PI) * 26)} press={press} /></div>;
+    // Over text being selected the pointer is the macOS I-beam, as it is in the real editor and composer.
+    const cx = lerp(from.x, to.x, m), cy = lerp(from.y, to.y, m) - (dragging ? 0 : Math.sin(m * Math.PI) * 26);
+    const beam = dragging || (i < ways.length && next.hold !== undefined && t > next.at - 0.35);
+    cursor = <div style={{opacity: op}}>{beam ? <IBeam x={cx} y={cy} /> : <Cursor x={cx} y={cy} press={press} />}</div>;
   }
 
   return (
