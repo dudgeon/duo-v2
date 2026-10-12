@@ -1,5 +1,5 @@
 # Director explainer — script v1
-<!-- Synced from the script Doc at rev 27 on 2026-10-12 by pipeline/sync.mjs; edit the Doc, not this file. -->
+<!-- Synced from the script Doc at rev 1144 on 2026-10-12 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 12, 2026 · @Geoff Dudgeon
 
@@ -49,24 +49,28 @@ The narrator is your own voice, the fine-tuned VoxCPM2 clone the intro uses (DL-
 
 Topic: The problem
 
-- Duo is a hobby. I work on it after hours, in short bursts, and most ideas I send from my phone as they occur to me.
-- Building it, I often had ten or more Claude Code sessions running at once.
-- Each one needed me to brief it, check its work, merge it, and remember where it had left off.
-- I had become the switchboard.
+- I want to share a pattern that has been working really well for me: using a single claude code session as a "director agent" to make it easier to advance many different goals in parallel, providing high level instructions while preserving the ability to dig into details when needed.
+- Duo is a personal project app that I build in my free time. I work on it after hours, in short bursts, and most ideas I send from my phone as they occur to me.
+- Typically, I will spin up a new session every time an idea occurs to me: features to prototype, patterns to research, or bugs to squash as I encounter them during use.
+- Worktrees have helped reduce the number of change collisions, but I still need to keep all of these sessions straight, give them repetitive starting prompts, and manage the rebasing, review, and merging as work completes.
+- I typically spend as much time managing the merges and renumbering documented changes as i do providing direction to my agents.
 
-Shot: it opens on a phone, an idea going out as a one-line message. The camera pulls back to you in the middle; sessions appear around you one by one, each tied to you by a line. Each time one finishes or asks a question, its line pulses toward you, until every line is pulling on the centre.
+Shot: on line 1, the title card animates in: "The director agent" with a small tree (canvas option T1, with "user" in place of "You"); its finished frame is frame 0, the thumbnail. On line 2, a card animates in with the intro's Duo logo build and a small screenshot of the app. On line 3, a phone opens a new Claude Code session for each idea as it's named: a feature to prototype, a pattern to research, a bug to squash; they stack up. On line 4, each session grows a worktree branch, and the chores pile onto you as they're named (a repeated starting prompt, a rebase, a review, a merge), each a needs-you tag, until you're the switchboard. On line 5, your time splits in two: managing merges and renumbering, and giving direction.
 
 ### S2 · A simple prompt (about 25 s)
 
 Topic: A simple prompt
 
+- I've spent a lot of time thinking of agent orchestrators -- where one director agent abstracts complexity for the user, but I wasn't ready to commit and lock into a specific pattern -- so I decided to start simple, and evolve according to my needs
 - On October fifth, I started one more session and typed this.
-- *There are many sessions in this repo, all in various states. You are now their director. I am the PM and you are the engineering manager.*
-- Twenty minutes later I gave it the rest of the job: it should surface decisions for me, watch the other agents, and review their work.
+- *There are many sessions in this repo, all in various states. You are now their director.*
+- *I am the PM and you are the engineering manager. Please do a quick survey of the state of each of these active sessions.*
+- Twenty minutes later, I gave it the rest of the job.
+- *Make and maintain a director reviews artifact, where you surface decisions for me, with buttons that send you messages.*
+- *It covers what to do with the branches and worktrees: when to review, merge and ship, and how to resolve conflicts.*
+- *Watch all the other agents, review their work, and surface decisions to me as needed.*
 
-Shot: the first prompt types itself onto the console, verbatim. On line 3 a second message types below it, verbatim: the 10:25 message. As it lands, the tangle from S1 settles into the tree of style frame B: you on the left, the director beside you, the sessions in a panel. The director's first survey runs down the sessions. One line reaches you now.
-
-> Verbatim, 2026-10-05.
+Shot: on line 1, a big orchestrator (one agent over layers of agents) sketches itself faintly, then is set aside for one console: start simple. Then the first prompt goes onto the console, its ideas as bullets that build in time with the voice; the 10:25 message follows the same way. As it lands, the tangle from S1 settles into the tree of style frame B: you on the left, the director beside you, the sessions in a panel. The director's first survey runs down the sessions. One line reaches you now.
 
 ### S3 · A line becomes a brief (about 30 s)
 

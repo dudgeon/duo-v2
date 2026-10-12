@@ -1,129 +1,200 @@
 {
-  "$note": "The director film's shots, keyed by scene id (as video/shots.json is for the intro). Look B \u00b7 Panes (DL-180), script v2 (Oct 12): src/scenes/director/.",
+  "$note": "The director film's shots, keyed by scene id (as video/shots.json is for the intro). Look B · Panes (DL-180), script v2 (Oct 12): src/scenes/director/.",
   "S1": {
     "kind": "drawn",
-    "scene": "dir-switchboard",
+    "scene": "dir-opening",
     "tail": 1.4,
+    "thumbnail": 3,
+    "states": [
+      "video-s2-right-4"
+    ],
     "events": {
-      "hobby": {
+      "share": {
         "line": 1,
-        "word": "phone"
+        "word": "share"
       },
-      "rowsStart": {
+      "duo": {
         "line": 2,
-        "word": "often"
+        "word": "Duo"
       },
-      "rowsEnd": {
-        "line": 2,
-        "word": "once"
-      },
-      "brief": {
+      "typically": {
         "line": 3,
-        "word": "brief"
+        "word": "Typically"
       },
-      "check": {
+      "features": {
         "line": 3,
-        "word": "check"
+        "word": "features"
       },
-      "merge": {
+      "patterns": {
         "line": 3,
-        "word": "merge"
+        "word": "patterns"
       },
-      "remember": {
+      "bugs": {
         "line": 3,
-        "word": "remember"
+        "word": "bugs"
       },
-      "switch": {
+      "worktrees": {
         "line": 4,
-        "word": "switchboard"
+        "word": "Worktrees"
+      },
+      "prompts": {
+        "line": 4,
+        "word": "prompts"
+      },
+      "rebasing": {
+        "line": 4,
+        "word": "rebasing"
+      },
+      "review": {
+        "line": 4,
+        "word": "review"
+      },
+      "merging": {
+        "line": 4,
+        "word": "merging"
+      },
+      "time": {
+        "line": 5,
+        "word": "time"
+      },
+      "direction": {
+        "line": 5,
+        "word": "direction"
       }
     },
     "requires": [
       {
-        "what": "It opens on a phone, an idea going out as a one-line message (a real ask, verbatim)",
+        "what": "Line 1: the title card animates in (canvas T1, \"user\" for \"You\"); its finished frame is frame 0",
         "by": [
-          "event:hobby"
+          "event:share",
+          "src:src/scenes/director/Opening.tsx"
         ]
       },
       {
-        "what": "The camera pulls back to you in the middle (the phone becomes your card)",
+        "what": "Line 2: a card with the intro's Duo logo build and a small screenshot of the app",
         "by": [
-          "event:rowsStart"
+          "event:duo",
+          "state:video-s2-right-4"
         ]
       },
       {
-        "what": "Sessions appear around you one by one, each tied to you by a line",
+        "what": "Line 3: a phone opens a new Claude Code session for each idea as it's named",
         "by": [
-          "event:rowsStart",
-          "event:rowsEnd"
+          "event:features",
+          "event:patterns",
+          "event:bugs"
         ]
       },
       {
-        "what": "Each time one asks for you, its line pulses toward you",
+        "what": "Line 4: each session grows a worktree branch; the chores pile on as needs-you tags, until you're the switchboard",
         "by": [
-          "event:brief",
-          "event:check",
-          "event:merge",
-          "event:remember"
+          "event:worktrees",
+          "event:prompts",
+          "event:rebasing",
+          "event:review",
+          "event:merging"
         ]
       },
       {
-        "what": "Every line pulling on the centre by the end",
+        "what": "Line 5: your time splits in two, merges and renumbering against direction",
         "by": [
-          "event:switch"
+          "event:time",
+          "event:direction"
         ]
       }
     ],
-    "shotSha": "12ef3defe264"
+    "shotSha": "166a3f966f82"
   },
   "S2": {
     "kind": "drawn",
     "scene": "dir-prompt",
+    "transitionIn": "board-carry",
+    "leadIn": 1.1,
     "tail": 2.6,
     "events": {
-      "session": {
+      "orch": {
         "line": 1,
+        "word": "orchestrators"
+      },
+      "simple": {
+        "line": 1,
+        "word": "simple"
+      },
+      "session": {
+        "line": 2,
         "word": "session"
       },
-      "typeA0": {
-        "line": 2,
-        "word": "There",
-        "offset": -0.1
-      },
-      "typeA1": {
-        "line": 2,
-        "word": "manager"
-      },
-      "typeB0": {
+      "a1": {
         "line": 3,
+        "word": "There"
+      },
+      "a2": {
+        "line": 3,
+        "word": "director"
+      },
+      "a3": {
+        "line": 4,
+        "word": "PM"
+      },
+      "a4": {
+        "line": 4,
+        "word": "survey"
+      },
+      "b0": {
+        "line": 5,
         "word": "Twenty"
       },
+      "c1": {
+        "line": 6,
+        "word": "Make"
+      },
+      "c2": {
+        "line": 7,
+        "word": "branches"
+      },
+      "c3": {
+        "line": 8,
+        "word": "Watch"
+      },
+      "c4": {
+        "line": 8,
+        "word": "surface"
+      },
       "submit": {
-        "line": 3,
-        "word": "work"
+        "line": 8,
+        "word": "needed",
+        "offset": 0.3
       },
       "stood": {
-        "line": 3,
-        "word": "work",
-        "offset": 1.2
+        "line": 8,
+        "word": "needed",
+        "offset": 1.5
       }
     },
     "requires": [
       {
-        "what": "The first prompt types itself onto the console, verbatim",
+        "what": "Line 1: a big orchestrator sketches itself faintly, then is set aside for one console",
         "by": [
-          "event:typeA0",
-          "event:typeA1"
+          "event:orch",
+          "event:simple"
         ]
       },
       {
-        "what": "On line 3 a second message types below it, verbatim: the 10:25 message",
+        "what": "The first prompt goes onto the console, its ideas as bullets in time with the voice; the 10:25 message the same way",
         "by": [
-          "event:typeB0"
+          "event:a1",
+          "event:a2",
+          "event:a3",
+          "event:a4",
+          "event:b0",
+          "event:c1",
+          "event:c2",
+          "event:c3",
+          "event:c4"
         ]
       },
       {
-        "what": "The tangle settles into frame B's tree: you, the director, the sessions in a panel",
+        "what": "The tangle from S1 settles into the tree of style frame B",
         "by": [
           "event:submit"
         ]
@@ -135,9 +206,7 @@
         ]
       }
     ],
-    "transitionIn": "board-carry",
-    "leadIn": 1.1,
-    "shotSha": "7a5a23be8da3"
+    "shotSha": "4d57aace0d10"
   },
   "S3": {
     "kind": "drawn",
