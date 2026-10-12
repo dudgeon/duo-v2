@@ -1,0 +1,11 @@
+{
+  "$note": "Session row glyphs and the project pane's hierarchy, approved 2026-10-12 (DL-174). kind=board: drawn on the Design canvas and exported as static HTML. Directions B and C, the emoji and accent options, and the other wordings were drawn and not chosen; they stay on the canvas only (the read-me and directions boards too).",
+  "source": "https://claude.ai/artifact/Eepq4MsbBwM24crUKaCPVE",
+  "screens": [
+    {"file": "screens/01-glyph-set.html", "board": "A3-set.dc.html", "kind": "board", "width": 1280, "height": 720, "decision": "DL-174", "shows": "A: the eight session glyphs on pane, selected, open tint, hovered and dark, with specs."},
+    {"file": "screens/02-in-place.html", "board": "B1-in-place.dc.html", "kind": "board", "width": 1240, "height": 760, "decision": "DL-174", "shows": "The project's left pane before and after at 300 and 240 (glyphs only; hierarchy is 04)."},
+    {"file": "screens/03-reach.html", "board": "C1-reach.dc.html", "kind": "board", "width": 1080, "height": 620, "decision": "DL-174", "shows": "Tiles and the session list follow; console tabs keep StateGlyph."},
+    {"file": "screens/04-hierarchy.html", "board": "D1-hierarchy.dc.html", "kind": "board", "width": 1280, "height": 940, "decision": "DL-174", "shows": "NEEDS YOU, TASKS, OTHER SESSIONS (Open, Today, This week, Earlier), Archived; W3 + S1 chosen."},
+    {"file": "screens/05-needs-you-mark.html", "board": "A2-needs-you.dc.html", "kind": "board", "width": 1040, "height": 620, "decision": "DL-174", "shows": "The drawn raised hand, chosen over the emoji and the accent !."}
+  ]
+}
