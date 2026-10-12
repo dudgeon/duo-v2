@@ -176,16 +176,16 @@ public final class TerminalSession {
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
             var args = ["--session-id", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude)
             if let prompt { args.append(prompt) }
-            view.startProcess(executable: claude, args: args, environment: ChildEnvironment.make(sessionID: id),
+            view.startProcess(executable: claude, args: args, environment: Self.environment(id),
                               execName: nil, currentDirectory: cwd)
         case .resumeClaude(let id, let remote):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
-            view.startProcess(executable: claude, args: ["--resume", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude), environment: ChildEnvironment.make(sessionID: id),
+            view.startProcess(executable: claude, args: ["--resume", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude), environment: Self.environment(id),
                               execName: nil, currentDirectory: cwd)
         case .forkClaude(let from, let id):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
             view.startProcess(executable: claude, args: ["--resume", from, "--fork-session", "--session-id", id] + Self.hookArgs(id),
-                              environment: ChildEnvironment.make(sessionID: id), execName: nil, currentDirectory: cwd)
+                              environment: Self.environment(id), execName: nil, currentDirectory: cwd)
         case .shell:
             let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
             view.startProcess(executable: shell, args: ["-l"], environment: ChildEnvironment.make(sessionID: nil),
@@ -199,9 +199,16 @@ public final class TerminalSession {
         // disables hooks would: the primer and the merge must hold on their own (DL-78).
         let editHook = !Env.isSet("DUO_NO_EDIT_HOOK") ? ChildEnvironment.cliDirectory.map { $0 + "/duo2" } : nil
         // Chat mode's events, for a CLI that has them all (DL-118).
-        let chat = ClaudeLocator.resolve().flatMap(ClaudeVersion.known).flatMap(ChatVersion.init).map { $0 >= ChatVersion.messageDisplay } ?? false
+        let claude = ClaudeLocator.resolve(), version = claude.flatMap(ClaudeVersion.known)
+        let chat = version.flatMap(ChatVersion.init).map { $0 >= ChatVersion.messageDisplay } ?? false
         let settings = (try? HookEvents.settingsFile(for: id, cli: editHook, chatEvents: chat)).map { ["--settings", $0.path] } ?? []
-        return settings + ["--append-system-prompt", DuoAction.primer()]
+        // duo-signal (ENH-70 spike): only with DUO_SIGNAL=1, on a CLI with mods that validated it.
+        return settings + ["--append-system-prompt", DuoAction.primer()] + DuoSignal.launchArgs(id, claude: claude, cliVersion: version)
+    }
+
+    /// A Claude session's environment: duo-signal's file only when `hookArgs` passed the mod.
+    private static func environment(_ id: String) -> [String] {
+        ChildEnvironment.make(sessionID: id) + DuoSignal.environment(id).map { "\($0.key)=\($0.value)" }
     }
 
     /// The console says so in Duo's own type (DB-3) instead of printing into the terminal.

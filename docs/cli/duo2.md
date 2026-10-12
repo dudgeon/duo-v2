@@ -237,7 +237,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 
 | Command | What it does | In the app |
 |---|---|---|
-| `duo2 doctor` | How this terminal finds Duo, whether it can reach it, and what Duo installed. | — |
+| `duo2 doctor` | How this terminal finds Duo, whether it can reach it, what Duo installed, and whether Claude Code mods work here. | — |
 | `duo2 install` | Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74). | Install, Install… |
 | `duo2 uninstall` | Remove exactly what `duo2 install` added (anything you edited stays). | Remove… |
 | `duo2 settings [claude-path <path\|auto> \| notify on\|off \| dock-badge on\|off \| explainers reset \| macos]` | Duo's settings (S3-1): with no arguments, all of them, and what macOS allows; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge; `explainers reset` shows the explanations the user dismissed again (Settings › General); `macos` opens System Settings › Notifications › Duo. | Choose…, Use Found One, Open Notification Settings…, Show dismissed explanations again |

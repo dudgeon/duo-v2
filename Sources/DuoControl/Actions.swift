@@ -128,7 +128,7 @@ extension DuoAction {
         .init(.needsYou, .app, "", "Sessions waiting for the user, with their questions.", ui: ["Needs You Elsewhere"]),
         .init(.undo, .app, "", "Undo Duo's last move, merge or Make a Project (Edit › Undo).", ui: ["Undo", "Undo Conversion"]),
         .init(.help, .app, "[family | --markdown]", "Families and everyday verbs; a family's verbs; or the full reference as Markdown.", ui: ["duo2 Reference"], local: true),
-        .init(.doctor, .setup, "", "How this terminal finds Duo, whether it can reach it, and what Duo installed.", local: true),
+        .init(.doctor, .setup, "", "How this terminal finds Duo, whether it can reach it, what Duo installed, and whether Claude Code mods work here.", local: true),
         .init(.install, .setup, "", "Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74).",
               ui: ["Install", "Install…"], local: true),
         .init(.uninstall, .setup, "", "Remove exactly what `duo2 install` added (anything you edited stays).", ui: ["Remove…"], local: true),

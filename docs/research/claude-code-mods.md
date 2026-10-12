@@ -198,3 +198,7 @@ The scratch harness (`run-probe.sh`, the steps files and the probe mods) was kep
    - *Alternative:* B. It installs into `~/.claude` through the install sheet, and only if a mod should also run in sessions outside Duo.
 3. **Should a Duo mod ever draw in the terminal** (a status line, a band)?
    - *Recommendation:* no for now. It stays an invisible sensor. Anything visible goes through the design canvas first.
+
+## 7. Spike (F-297)
+
+DL-183 spiked `duo-signal` on `spike/duo-signal`, behind `DUO_SIGNAL=1`. It works and fails safe: 2.1.219 ignores the mod, and Duo never passes it there. It buys little, though: the permission card comes up about 60 ms sooner, busy comes no sooner, and on 2.1.296 the mode never reaches a mod. The recommendation is to keep it unshipped as a reference. F-297 has the numbers, the faults and what shipping would take.
