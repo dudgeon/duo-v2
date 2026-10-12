@@ -6,7 +6,7 @@ import {smootherstep} from './camera';
 // finished icon (the Dock tile). The squircle spans 100-924 of the grid: a 62 px tile is size 77.
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
-const ramp = (t: number, a: number, b: number) => smootherstep(interpolate(t, [a, b], [0, 1], clamp));
+const ramp = (t: number, a: number, b: number) => (b <= a ? (t >= a ? 1 : 0) : smootherstep(interpolate(t, [a, b], [0, 1], clamp)));
 // A snap: a quick overshoot-free settle from 96% scale, visible from its first frame.
 const snap = (t: number, at: number, d = 0.14) => (t < at ? 0 : ramp(t, at, at + d));
 

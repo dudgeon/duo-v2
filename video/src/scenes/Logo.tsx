@@ -12,7 +12,7 @@ import tokens from '../../style/tokens.json';
 export type LogoEvents = {title?: number; sub?: number; exit?: number};
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
-const ramp = (t: number, a: number, b: number) => smootherstep(interpolate(t, [a, b], [0, 1], clamp));
+const ramp = (t: number, a: number, b: number) => (b <= a ? (t >= a ? 1 : 0) : smootherstep(interpolate(t, [a, b], [0, 1], clamp)));
 
 /** The opening: the icon builds at the centre, then glides left as "Duo" and its line arrive on the voice. */
 export const LogoScene = ({t, ev}: {t: number; ev: LogoEvents}) => {

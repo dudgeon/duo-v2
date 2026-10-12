@@ -23,7 +23,7 @@ export type MorphData = {
 
 const W = tokens.frame.width, H = tokens.frame.height;
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
-const ramp = (t: number, a: number, b: number) => smootherstep(interpolate(t, [a, b], [0, 1], clamp));
+const ramp = (t: number, a: number, b: number) => (b <= a ? (t >= a ? 1 : 0) : smootherstep(interpolate(t, [a, b], [0, 1], clamp)));
 const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
 const lerpRect = (a: Rect, b: Rect, u: number): Rect => ({x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u), w: lerp(a.w, b.w, u), h: lerp(a.h, b.h, u)});
 
