@@ -172,10 +172,10 @@ public enum VideoTargets {
         if requested.hasPrefix("video-s9-") { applyS9Project(requested, model) }
         if requested.hasPrefix("video-s10-") { applyS10(requested, model: model, dir: dir, video: v, project: project) }
 
-        // Scene 4 closes "Prototype scan review" with its ×, before the context menu; the states after it keep it closed. The pointer
+        // Scene 4 closes "Prototype scan review" with its ×, before the context menu; every state after it keeps it closed. The pointer
         // over the tab shows the ×; closing goes through the tab's own close path, so the session stays filed in the list.
         if screen == "video-s4-tab-hover" { model.hoveredTab = key(scanReview) }
-        if closedScanReview.contains(screen) || screen.hasPrefix("video-s5-") || screen.hasPrefix("video-s6-") { model.closeConsoleTab(key(scanReview)) }
+        if !tabStillOpen.contains(screen) { model.closeConsoleTab(key(scanReview)) }   // every later state (scenes 5 to 10) has it closed
 
         switch screen {
         case "video-s4-menu":
@@ -190,8 +190,8 @@ public enum VideoTargets {
         }
     }
 
-    /// The scene 4 states after the tab was closed (scenes 5 and 6, which follow, close it too).
-    static let closedScanReview: Set<String> = ["video-s4-tab-closed", "video-s4-menu", "video-s4-archived", "video-s4-delete-ask", "video-s4-deleted"]
+    /// The scene 4 states before the tab is closed; every state after them has it closed.
+    static let tabStillOpen: Set<String> = ["video-s4-resumed", "video-s4-tab-hover"]
 
     /// Archive Session's effect on the lists: the row leaves them for the project's Archived fold.
     static func archive(_ name: String, in model: AppModel) {

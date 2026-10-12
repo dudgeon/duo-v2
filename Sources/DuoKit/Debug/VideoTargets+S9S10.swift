@@ -39,7 +39,7 @@ extension VideoTargets {
         model.rightCollapsedAllProjects = false
         model.listClock = Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 13, hour: 9, minute: 41))
         if let v = model.fixture.videoS2 {
-            let names = Set(v.terminals.map(\.name) + [autoAdd])
+            let names = Set(v.terminals.map(\.name).filter { $0 != scanReview } + [autoAdd])   // the tab scene 4 closed stays closed
             model.fixtureActive = Set(model.fixture.sessions.filter { names.contains($0.name) }.map(\.tabKey))
         }
         WindowCapture.underlay = DuoNSColor.console
