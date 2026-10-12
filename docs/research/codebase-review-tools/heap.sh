@@ -6,7 +6,10 @@ set -u
 W=${W:-${0:A:h:h:h:h}}
 M=${M:-${TMPDIR:-/tmp}/duo-review}
 : ${GPU_LOCK:?set GPU_LOCK to the shared lock folder}
-[[ -n ${HEAP_LOCKED:-} ]] || exec $W/scripts/gpu-lock.sh codebase-review-heap env HEAP_LOCKED=1 W=$W M=$M $0 "$@"
+# The lock script is the main checkout's copy (a work tree's may be stale); exclusive, the default, for measurements.
+gitdir=$(git -C $W rev-parse --path-format=absolute --git-common-dir)   # the main checkout's .git
+GL=${GPU_LOCK_SCRIPT:-${gitdir:h}/scripts/gpu-lock.sh}
+[[ -n ${HEAP_LOCKED:-} ]] || exec $GL codebase-review-heap env HEAP_LOCKED=1 W=$W M=$M $0 "$@"
 o=$M/runs/heap; rm -rf $o; mkdir -p $o
 fx=$(mktemp -d /tmp/d-rv-XXXX); fx=${fx:A}
 printf '#!/bin/sh\nexec /usr/bin/python3 -I %s "$@"\n' "$W/scripts/scale-tui.py" > $fx/claude; chmod +x $fx/claude
