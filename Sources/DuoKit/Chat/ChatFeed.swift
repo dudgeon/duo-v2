@@ -31,6 +31,7 @@ final class ChatFeed {
     }
 
     func stop() { timer?.invalidate(); timer = nil }
+    var isRunning: Bool { timer != nil }
 
     var eventsURL: URL { HookEvents.file(for: sessionId) }
 

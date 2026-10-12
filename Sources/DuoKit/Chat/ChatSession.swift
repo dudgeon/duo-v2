@@ -305,6 +305,10 @@ public final class ChatSession {
         feed = ChatFeed(sessionId: sessionId, cwd: cwd, chat: self)
     }
 
+    /// The feed's timer is going (for DuoChecks: a closed tab's chat must stop it, C-79).
+    public var feedRunning: Bool { feed?.isRunning == true }
+    public func feedStop() { feed?.stop() }
+
     /// Earlier turns (Q-56c).
     public func loadEarlier() { feed?.loadEarlier() }
 
