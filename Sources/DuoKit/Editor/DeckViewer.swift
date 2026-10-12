@@ -34,6 +34,7 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     private var waiters: [() -> Void] = []
     private var stamp: Date?
     private var timer: Timer?
+    private var dormant = false
 
     static let scheme = "duo-deck"
     /// Where the page is when there's no app bundle around it (checks run from the checkout).
@@ -130,6 +131,7 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
 
     private func startWatching() {
         timer?.invalidate()
+        guard !dormant else { return }
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, let url = self.url, self.webView.window != nil, !self.picking else { return }
@@ -137,6 +139,20 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
                 if now != self.stamp { self.reload() }
             }
         }.loose()
+    }
+
+    /// The pane stopped showing the deck: no more polling the file (C-83).
+    public func sleep() {
+        dormant = true
+        timer?.invalidate(); timer = nil
+    }
+
+    /// The pane shows it again: it redraws if the file changed meanwhile.
+    public func wake() {
+        guard dormant else { return }
+        dormant = false
+        startWatching()
+        if let url, Self.modified(url) != stamp { reload() }
     }
 
     nonisolated static func modified(_ u: URL) -> Date? { try? u.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate }

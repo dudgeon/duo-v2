@@ -3374,3 +3374,16 @@ All three of C-80's findings were real in the code.
   - Kept from F-294 and F-296: the queue, releasing only one's own hold, an owner it can't signal counted as alive, dead holders and ownerless holds cleared (now in the slots too), and the "taken" warning (for a shared slot too). A stale hold is cleared only if its owner is still the dead one just read.
   - A bare `mkdir <lock>` still keeps exclusive and new shared jobs out, but doesn't wait for shared jobs already running, so it's no longer supported. An older copy of the script doesn't know the slots either: call the main checkout's copy by its full path.
 - **Proof** (`scripts/check-gpu-lock.sh`, about 35 s). The F-294 and F-296 cases still pass. New: three shared jobs on two slots (two overlap, the third waits for a slot); a shared job running, then an exclusive waiter, then a shared one (the exclusive waits for the first, the second shared waits behind the exclusive although a slot is free, and the exclusive runs alone); a mix of 12 jobs, every third exclusive (no exclusive job ever overlaps another job, never more than 2 shared, every hold released); dead holders in both slots, cleared by an exclusive job and by a shared one.
+
+## F-299 · Web view lifetimes (fix/web-lifetimes, C-83, DL-178, 2026-10-12)
+
+- **A closed browser tab is released.**
+  - `WebTab` now gives WebKit a `WeakScriptHandler` proxy instead of itself, because a `WKUserContentController` retains its handlers.
+  - `WebTab.close()` (called by `closeWebTab`, which every close path reaches: the tab's x, `duo2 browser close`, `window.close()`) stops the page, cancels a running download, drops the KVO observers and the delegates, and calls `removeAllScriptMessageHandlers`.
+  - DuoChecks hold a closed tab and its web view weakly and expect both to be gone; a tab dropped without `close()` is released too, which proves the proxy alone breaks the cycle.
+- **Restored tabs load on first show.** `applyRestore` calls `WebTab.defer_(url)`, so the tab has its address and a title and loads nothing. `WebTabHost.updateNSView` calls `loadIfDeferred()`, and so does every `duo2 browser` verb that targets the tab. `WebTab.url` falls back to the deferred page, so the next save keeps it, and a tab never shown stays in the restore file.
+- **Viewer timers stop when hidden.** `HTMLViewer` and `DeckViewer` got `sleep()` and `wake()` like `DocxViewer`'s: the one-second poll stops when the pane doesn't show them, and a file that changed meanwhile reloads on wake.
+- **DL-178.**
+  - `duo2 browser allow <host>` asks through a `SheetCenter` sheet ("Allow x in Duo's browser?"). `DUO_AUTOCONFIRM=1` answers yes; a host already on the list needs no question. The reply waits for the answer, and "Don't Allow" fails the verb.
+  - A tab's `file:` pages stay inside its project's folder (`WebTab.fileRoots`, set when the tab is made, restored or opened as a popup). The check resolves the folder's symlinks, so a link out of the project doesn't lead outside it, and a sibling folder that shares the prefix isn't inside.
+- `ChatStore.forget` on close was already on main (fix/idle-cpu); not redone.

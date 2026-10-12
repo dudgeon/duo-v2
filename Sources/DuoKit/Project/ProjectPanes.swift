@@ -725,6 +725,7 @@ struct RightPane: View {
                 ZStack(alignment: .bottom) {
                     HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
                         .accessibilityIdentifier("video.right.document")   // on the page alone: the picker bar's buttons keep their own names
+                        .onDisappear { model.htmlViewer.sleep() }
                     PickerBar()
                 }
             } else if let path = model.rightTab, AppModel.isDeck(path), let file = model.liveFile(path) {

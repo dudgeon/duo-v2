@@ -309,6 +309,49 @@ func repoFixture() throws -> Fixture {
         let f = FileManager.default.temporaryDirectory.appending(path: "duo-sites-\(UUID().uuidString).txt")
         check(AllowedSites.add("www.Example.com", to: f) && !AllowedSites.add("example.com", to: f) && AllowedSites.load(f) == ["example.com"], "allow list adds once, without www")
         try? FileManager.default.removeItem(at: f)
+
+        // DL-178: a tab's file: pages stay inside its project's folders.
+        let proj = URL(fileURLWithPath: NSTemporaryDirectory()).appending(path: "duo-fileroot-\(UUID().uuidString)")
+        let outside = proj.deletingLastPathComponent().appending(path: "duo-fileroot-out-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: proj, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: outside, withIntermediateDirectories: true)
+        try? FileManager.default.createSymbolicLink(at: proj.appending(path: "escape"), withDestinationURL: outside)
+        check(AllowedSites.allows(proj.appending(path: "a.html"), fileRoots: [proj]) && AllowedSites.allows(proj.appending(path: "sub/b.html"), fileRoots: [proj]),
+              "a file in the project's folder is allowed")
+        check(!AllowedSites.allows(URL(fileURLWithPath: "/etc/hosts"), fileRoots: [proj]) && !AllowedSites.allows(proj.deletingLastPathComponent().appending(path: "x.html"), fileRoots: [proj])
+              && !AllowedSites.allows(URL(fileURLWithPath: proj.path + "-sibling/a.html"), fileRoots: [proj]),
+              "a file outside the project's folder, or in a sibling that shares its prefix, is not")
+        check(!AllowedSites.allows(proj.appending(path: "escape/secret.html"), fileRoots: [proj]), "a symlink out of the project doesn't lead outside it")
+        check(!AllowedSites.allows(URL(fileURLWithPath: "/etc/hosts"), fileRoots: []), "a tab with no folder reads no files")
+        try? FileManager.default.removeItem(at: proj)
+        try? FileManager.default.removeItem(at: outside)
+    }
+
+    print("browser tabs: lifetimes (C-83)")
+    do {
+        // A closed tab is released: WebKit retained the tab through its script handler before.
+        weak var closed: WebTab?
+        weak var closedView: AnyObject?
+        autoreleasepool {
+            let tab = WebTab(id: "web:check1")
+            closed = tab; closedView = tab.webView
+            tab.close()
+        }
+        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        check(closed == nil, "a closed browser tab is released")
+        check(closedView == nil, "a closed browser tab's web view is released")
+        weak var dropped: WebTab?
+        autoreleasepool { dropped = WebTab(id: "web:check2") }
+        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        check(dropped == nil, "a tab dropped without close() is released too: its script handlers hold it weakly")
+
+        let lazy = WebTab(id: "web:check3")
+        let page = URL(string: "http://localhost:9/x")!
+        lazy.defer_(page)
+        check(lazy.deferred == page && lazy.url == page && lazy.webView.url == nil && lazy.address == page.absoluteString, "a restored tab keeps its address and loads nothing")
+        lazy.loadIfDeferred()
+        check(lazy.deferred == nil, "showing a restored tab takes its page")
+        lazy.close()
     }
 
     print("browser basics (DL-124)")

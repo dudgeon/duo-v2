@@ -20,10 +20,23 @@ public enum AllowedSites {
         return ["localhost", "127.0.0.1", "::1", "[::1]"].contains(host) || host.hasSuffix(".localhost")
     }
 
-    public static func allows(_ url: URL, list: [String]? = nil) -> Bool {
-        if url.isFileURL || isLocal(url) { return true }
+    /// `fileRoots` are the folders a tab's `file:` pages may come from (DL-178: a project's own);
+    /// nil admits any file, for callers that never see one.
+    public static func allows(_ url: URL, list: [String]? = nil, fileRoots: [URL]? = nil) -> Bool {
+        if url.isFileURL { return fileRoots.map { inside(url, $0) } ?? true }
+        if isLocal(url) { return true }
         guard ["http", "https"].contains(url.scheme?.lowercased() ?? ""), let host = url.host?.lowercased() else { return false }
         return (list ?? load()).contains { host == $0 || host.hasSuffix("." + $0) }
+    }
+
+    /// Whether a file is in one of the folders, after symlinks (a link out of a project doesn't count).
+    public static func inside(_ file: URL, _ roots: [URL]) -> Bool {
+        // The folder is resolved, not the file: a page that doesn't exist yet has nothing to resolve.
+        let path = file.deletingLastPathComponent().resolvingSymlinksInPath().appending(path: file.lastPathComponent).standardized.path
+        return roots.contains { r in
+            let root = r.resolvingSymlinksInPath().standardized.path
+            return path == root || path.hasPrefix(root.hasSuffix("/") ? root : root + "/")
+        }
     }
 
     /// Adds a host (without `www.`), keeping the file's own lines and comments.
@@ -90,6 +103,8 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
     @ObservationIgnored private var progressTimer: Timer?
     /// Links to other sites from a page, when they aren't allowed here: the model sends them out.
     @ObservationIgnored var onLinkOut: ((URL) -> Void)?
+    /// Where this tab's `file:` pages may come from: its project's folder (DL-178).
+    @ObservationIgnored public var fileRoots: [URL] = []
     /// A page opened a window: the model makes its tab around the web view WebKit configured.
     @ObservationIgnored var onPopup: ((WKWebViewConfiguration) -> WebTab?)?
     /// The page called window.close().
@@ -120,7 +135,7 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
 
     /// A popup passes WebKit's configuration (`createWebViewWith`), which ties its web view to the
     /// opener's; it gets its own scripts, so the picker and print talk to this tab.
-    init(id: String, configuration: WKWebViewConfiguration? = nil, opener: String? = nil) {
+    public init(id: String, configuration: WKWebViewConfiguration? = nil, opener: String? = nil) {
         self.id = id
         self.opener = opener
         let config = configuration ?? WKWebViewConfiguration()
@@ -137,8 +152,11 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
         let view = BrowserWebView(frame: .zero, configuration: config)
         webView = view
         super.init()
-        config.userContentController.add(self, contentWorld: .defaultClient, name: "duoPage")
-        config.userContentController.add(self, contentWorld: .page, name: "duoPrint")
+        // Through a proxy that holds the tab weakly: WebKit retains its handlers, so adding the tab itself
+        // kept a closed tab, its web view and its WebContent process alive (C-83).
+        let proxy = WeakScriptHandler(self)
+        config.userContentController.add(proxy, contentWorld: .defaultClient, name: "duoPage")
+        config.userContentController.add(proxy, contentWorld: .page, name: "duoPrint")
         view.onZoomKey = { [weak self] key in
             guard let self else { return }
             self.zoom(key == "0" ? 1.0 : key == "-" ? ZoomStore.zoomOut(self.zoom) : ZoomStore.zoomIn(self.zoom))
@@ -156,7 +174,46 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
     }
     @ObservationIgnored private var observations: [NSKeyValueObservation] = []
 
-    public var url: URL? { webView.url ?? blocked }
+    public var url: URL? { webView.url ?? blocked ?? deferred }
+
+    /// A restored tab's page, loaded when the tab is first shown rather than at launch (C-83).
+    @ObservationIgnored public private(set) var deferred: URL?
+
+    /// Remembers a page to load on first show: the tab has its address and a title meanwhile.
+    public func defer_(_ u: URL) {
+        deferred = u
+        address = u.absoluteString
+        title = u.host ?? u.absoluteString
+    }
+
+    /// The tab is on screen: a deferred page loads now.
+    public func loadIfDeferred() {
+        guard let u = deferred else { return }
+        deferred = nil
+        load(u)
+    }
+
+    /// The tab is closed: stops the page and everything WebKit holds for it, so the tab, its web view
+    /// and its WebContent process are released (audio, video and downloads end with it; C-83).
+    public func close() {
+        deferred = nil
+        progressTimer?.invalidate(); progressTimer = nil
+        if let a = active { a.download.cancel { _ in }; active = nil }
+        running = nil
+        observations = []
+        webView.stopLoading()
+        webView.loadHTMLString("", baseURL: nil)
+        webView.navigationDelegate = nil
+        webView.uiDelegate = nil
+        (webView as? BrowserWebView)?.onZoomKey = nil
+        webView.onFocusChange = nil
+        webView.extraMenuItems = nil
+        let c = webView.configuration.userContentController
+        c.removeAllScriptMessageHandlers()
+        c.removeAllUserScripts()
+        webView.removeFromSuperview()
+        onLinkOut = nil; onPopup = nil; onClose = nil; onDownload = nil; onChange = nil
+    }
 
     /// Loads what was typed or a URL; a site not on the list is shown as blocked, not loaded.
     public func go(_ typed: String) {
@@ -166,7 +223,7 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
 
     public func load(_ u: URL) {
         address = u.absoluteString
-        if AllowedSites.allows(u) {
+        if AllowedSites.allows(u, fileRoots: fileRoots) {
             blocked = nil
             if u.isFileURL { webView.loadFileURL(u, allowingReadAccessTo: u.deletingLastPathComponent()) } else { webView.load(URLRequest(url: u)) }
         } else {
@@ -192,7 +249,7 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
     public func webView(_ w: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
         guard let target = action.request.url else { return decisionHandler(.cancel) }
         // Frames inside an allowed page load as the page wants; only where the tab goes is checked.
-        if action.targetFrame?.isMainFrame == false || target.scheme == "about" || target.scheme == "blob" || target.scheme == "data" || AllowedSites.allows(target) {
+        if action.targetFrame?.isMainFrame == false || target.scheme == "about" || target.scheme == "blob" || target.scheme == "data" || AllowedSites.allows(target, fileRoots: fileRoots) {
             return decisionHandler(action.shouldPerformDownload ? .download : .allow)
         }
         if action.navigationType == .linkActivated { onLinkOut?(target) } else { blocked = target; address = target.absoluteString; title = target.host ?? title }
@@ -218,7 +275,7 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
     /// configured, so the page keeps its opener (DL-124). A link to a site that isn't allowed
     /// opens in the system browser, as any other link does (DL-3).
     public func webView(_ w: WKWebView, createWebViewWith c: WKWebViewConfiguration, for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        if let u = action.request.url, !["about", "blob", "data", ""].contains(u.scheme ?? ""), !AllowedSites.allows(u) {
+        if let u = action.request.url, !["about", "blob", "data", ""].contains(u.scheme ?? ""), !AllowedSites.allows(u, fileRoots: fileRoots) {
             onLinkOut?(u)
             return nil
         }
@@ -356,6 +413,15 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
     }
 }
 
+/// Holds a script-message handler weakly, because WebKit retains the handlers it is given (C-83).
+final class WeakScriptHandler: NSObject, WKScriptMessageHandler {
+    private weak var target: WKScriptMessageHandler?
+    init(_ target: WKScriptMessageHandler) { self.target = target }
+    func userContentController(_ c: WKUserContentController, didReceive message: WKScriptMessage) {
+        target?.userContentController(c, didReceive: message)
+    }
+}
+
 /// A browser tab's web view: ⌘+ (or ⌘=), ⌘- and ⌘0 zoom the page while it has the keyboard
 /// (DL-124). The View menu has the same items; handling them here also takes ⌘= without ⇧.
 final class BrowserWebView: DuoWebView {
@@ -388,6 +454,7 @@ extension AppModel {
         guard let project = currentProject?.name else { info("Open a project first: browser tabs sit in its right pane."); return nil }
         let id = "web:" + UUID().uuidString.prefix(8).lowercased()
         let tab = WebTab(id: id)
+        tab.fileRoots = liveFolders[project].map { [$0] } ?? []
         wireWebTab(tab)
         webTabs[id] = tab
         openDocumentsByProject[project, default: []].append(id)
@@ -403,6 +470,7 @@ extension AppModel {
         guard let project = openDocumentsByProject.first(where: { $0.value.contains(opener.id) })?.key else { return nil }
         let id = "web:" + UUID().uuidString.prefix(8).lowercased()
         let tab = WebTab(id: id, configuration: configuration, opener: opener.id)
+        tab.fileRoots = opener.fileRoots
         wireWebTab(tab)
         webTabs[id] = tab
         var docs = openDocumentsByProject[project] ?? []
@@ -415,11 +483,11 @@ extension AppModel {
     /// Closes a browser tab in whichever project holds it (window.close() can come from a tab
     /// that isn't on screen); a popup hands the pane back to its opener.
     public func closeWebTab(_ id: String) {
-        guard let project = openDocumentsByProject.first(where: { $0.value.contains(id) })?.key else { webTabs.removeValue(forKey: id); return }
+        guard let project = openDocumentsByProject.first(where: { $0.value.contains(id) })?.key else { webTabs.removeValue(forKey: id)?.close(); return }
         let docs = openDocumentsByProject[project] ?? []
         let next = PopupPlacement.after(closing: id, in: docs, openers: webTabs.compactMapValues(\.opener))
         openDocumentsByProject[project] = docs.filter { $0 != id }
-        webTabs.removeValue(forKey: id)
+        webTabs.removeValue(forKey: id)?.close()
         if currentProject?.name == project, rightTab == id { rightTab = next ?? "Project" }
     }
 
@@ -599,7 +667,10 @@ struct DownloadNotice: View {
 struct WebTabHost: NSViewRepresentable {
     let tab: WebTab
     func makeNSView(context: Context) -> DocumentEditorView.EditorHost { DocumentEditorView.EditorHost() }
-    func updateNSView(_ host: DocumentEditorView.EditorHost, context: Context) { host.show(tab.webView) }
+    func updateNSView(_ host: DocumentEditorView.EditorHost, context: Context) {
+        host.show(tab.webView)
+        tab.loadIfDeferred()
+    }
 }
 
 /// The address field: Return loads; it takes the keyboard when the tab asks (new tab, ⌘L).
@@ -803,6 +874,7 @@ extension AppModel {
                             downloads.map { ["file": $0.file.path, "error": $0.error ?? "", "tab": $0.tab] }))
         }
         guard let tab = browserTab(inv) else { return done(.fail("no browser tab is showing (open one with `duo2 browser open <url>`, or pass --tab)")) }
+        tab.loadIfDeferred()   // a restored tab that hasn't been shown yet
         if tab.blocked != nil, ![.browserGo, .browserClose].contains(id) {
             return done(.fail("\(tab.blocked?.host ?? "this site") isn't on the allow list; the user can allow it in the tab (or `duo2 browser allow`)"))
         }
