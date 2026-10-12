@@ -6,10 +6,12 @@
 //   node build.mjs --draft      half-size render, for a quick look
 //   node build.mjs --stills     no video: one still per scene, where its camera lands
 //   --force-voice / --force-capture  redo those stages anyway
+//   --accept-anchors            take this build's framing as the new record for the stale-anchor check
 import {spawnSync} from 'node:child_process';
 import {copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {checkAnchors} from './pipeline/anchors.mjs';
 import {captureStates} from './pipeline/capture.mjs';
 import {plan} from './pipeline/plan.mjs';
 import {parseScript, said} from './pipeline/script.mjs';
@@ -64,7 +66,13 @@ try {
   const captures = captureStates(states, {repo, cache, pub, scale: style.capture.scale, fixture: style.capture.fixture, force: args.has('--force-capture'), log});
 
   // 4. Timeline
-  const timeline = plan({scenes, shots, voiced, captures, style});
+  const used = [];
+  const timeline = plan({scenes, shots, voiced, captures, style, used});
+  // Rects that follow anchors move with the app; rects in window points that the app moved under are stale (pipeline/anchors.mjs).
+  const anchors = checkAnchors({used, captures, cache, accept: args.has('--accept-anchors')});
+  for (const m of anchors.moved) log(`anchors: ${m}`);
+  for (const m of anchors.stale) log(`STALE ${m}`);
+  log(`anchors: ${used.length} rects read, ${anchors.absolute} in window points${anchors.first ? ' (first record: nothing to compare)' : ''}`);
   // 5. Score: the bed for the film's length, mixed in the film under the voice (pipeline/score.mjs).
   if (!args.has('--no-score')) timeline.score = scoreBed({here, cache, pub, duration: timeline.duration, voiceWavs: voiced.slice(0, 8).map((l) => join(pub, l.src)), log});
   for (const sc of timeline.scenes) if (sc.transitionIn) log(`transition: into ${sc.id} by ${sc.transitionIn.name} (${sc.transitionIn.kind === 'app' ? 'app navigation' : 'motion graphic'})`);
@@ -129,8 +137,9 @@ try {
     }
   }
   const table = timeline.scenes.map((s) => `| ${s.id} | ${s.title} | ${fmt(s.start)} | ${s.duration.toFixed(1)} s | ${s.kind}${s.card?.standIn ? ' (stand-in)' : ''} |`).join('\n');
+  const staleMd = anchors.stale.length ? `## Stale framing\n\nThe app moved under these rects; they are framed as before until fixed:\n\n${anchors.stale.map((m) => `- ${m}`).join('\n')}\n\n` : '';
   const gaps = missing.length ? `## Not built yet\n\nThe script asks for these and this cut doesn't have them:\n\n${missing.map((m) => `- ${m}`).join('\n')}\n\n` : '';
-  writeFileSync(join(out, 'report.md'), `# Intro video build\n\n${gaps}${report.map((l) => `- ${l}`).join('\n')}\n\n| Scene | Title | Starts | Length | Shot |\n|---|---|---|---|---|\n${table}\n`);
+  writeFileSync(join(out, 'report.md'), `# Intro video build\n\n${staleMd}${gaps}${report.map((l) => `- ${l}`).join('\n')}\n\n| Scene | Title | Starts | Length | Shot |\n|---|---|---|---|---|\n${table}\n`);
 } catch (e) {
   if (e instanceof BuildError) { console.error(`BUILD FAILED: ${e.message}`); process.exit(1); }
   throw e;

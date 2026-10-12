@@ -2,7 +2,7 @@
 
 The Duo v2 intro video, rebuilt like software (DL-169). The plan and its research are in [`docs/research/intro-video.md`](../docs/research/intro-video.md).
 
-The script's source of truth is the [Claude Doc, script v2](https://claude.ai/code/artifact/38f24d8b-a41f-4ca4-86fe-c20fd8e4cd78). From M1, each build exports it to `script.md`.
+The script's source of truth is the [Claude Doc, script v2](https://claude.ai/code/artifact/38f24d8b-a41f-4ca4-86fe-c20fd8e4cd78). `script.md` is its copy in the repo, synced from the Doc by hand; the build reads only `script.md`.
 
 ## Build
 
@@ -15,10 +15,12 @@ node build.mjs                 # voice → capture → timeline → render → o
 **What `node build.mjs` writes:**
 - `out/intro.mp4`, its soundtrack normalised to -16 LUFS;
 - stills at the key frames and `out/thumbnail.png`;
-- `out/report.md` (scenes, lengths, and anything a Shot: note asks for that isn't built);
+- `out/report.md` (scenes, lengths, anything a Shot: note asks for that isn't built, and any stale framing);
 - `out/LISTEN.md` and `out/score-qa.png`: five timecodes and a waveform for checking the score by ear.
 
-**Flags:** `--stills` (no video), `--draft` (half scale), `--no-score`.
+**Flags:** `--stills` (no video), `--draft` (half scale), `--no-score`, `--accept-anchors`.
+
+**Framing that follows the app.** Cameras and marks name anchors (`style/shot-grammar.md`, App scenes), so a change to Duo's layout moves them with it. Each build notes every rect it reads in `.cache/anchors-used.json` and logs the framing that moved. A rect in window points whose anchors moved is reported as `STALE` in the log and in `report.md`, and stays reported until it is fixed or the build runs with `--accept-anchors`.
 
 **What it reuses:** voiced lines and captures, from `.cache/`, until their inputs change. The flags `--force-voice` and `--force-capture` redo them anyway.
 

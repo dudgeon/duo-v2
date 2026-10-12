@@ -338,8 +338,9 @@
           "offset": -0.9
         },
         "cam": {
-          "x": 0,
-          "y": 30,
+          "rel": "video.pane.left",
+          "dx": 0,
+          "dy": -10,
           "w": 980,
           "h": 551
         },
@@ -388,8 +389,9 @@
         "in": "video-s4-tab-closed",
         "state": "video-s4-tab-reopened",
         "cam": {
-          "x": 0,
-          "y": 30,
+          "rel": "video.pane.left",
+          "dx": 0,
+          "dy": -10,
           "w": 1100,
           "h": 619
         },
@@ -474,8 +476,9 @@
         },
         "state": "video-s4-delete-ask",
         "cam": {
-          "x": 0,
-          "y": 30,
+          "rel": "video.pane.left",
+          "dx": 0,
+          "dy": -10,
           "w": 1150,
           "h": 560
         },
@@ -608,8 +611,9 @@
         },
         "in": "video-s4-deleted",
         "cam": {
-          "x": 938,
-          "y": -48,
+          "rel": "video.chat.toggle",
+          "dx": -137,
+          "dy": -96,
           "w": 360,
           "h": 202
         },
@@ -624,8 +628,9 @@
         "in": "video-s4-deleted",
         "state": "video-s5-chat",
         "mark": {
-          "x": 1104,
-          "y": 40,
+          "rel": "video.chat.toggle",
+          "dx": 29,
+          "dy": -8,
           "w": 30,
           "h": 27
         },
@@ -1560,8 +1565,9 @@
         },
         "in": "video-s9-board",
         "cam": {
-          "x": 700,
-          "y": 100,
+          "rel": "video.pane.middle",
+          "dx": 360,
+          "dy": 60,
           "w": 1100,
           "h": 620
         },
@@ -1729,10 +1735,14 @@
         },
         "in": "video-s10-grouped",
         "mark": {
-          "x": 0,
-          "y": 126,
-          "w": 299,
-          "h": 256
+          "fit": [
+            "video.task.auto-add-decision",
+            "video.task.beta-interview-synthesis"
+          ],
+          "pad": {
+            "t": 4,
+            "b": 4
+          }
         },
         "quote": "multiple tasks",
         "hold": 1.8
@@ -1791,8 +1801,9 @@
         "in": "video-s10-tasknote",
         "state": "video-s10-newtask-untitled",
         "cam": {
-          "x": 0,
-          "y": 250,
+          "rel": "video.newtask.button",
+          "dx": 0,
+          "dy": -248,
           "w": 800,
           "h": 450
         },
@@ -1897,8 +1908,9 @@
         },
         "in": "video-s10-newsession-sent",
         "cam": {
-          "x": 0,
-          "y": 196,
+          "rel": "video.task.warn-about-glare-before-the-photo.group",
+          "dx": 0,
+          "dy": -126,
           "w": 470,
           "h": 264
         },
@@ -1946,8 +1958,9 @@
         "in": "video-s10-newsession-sent",
         "state": "video-s10-board",
         "cam": {
-          "x": 0,
-          "y": 40,
+          "rel": "video.pane.left",
+          "dx": 0,
+          "dy": 0,
           "w": 1140,
           "h": 641
         },
@@ -1983,8 +1996,9 @@
         "in": "video-s10-task-menu-target",
         "state": "video-s10-task-menu-target",
         "cam": {
-          "x": 0,
-          "y": 200,
+          "rel": "video.task.beta-interview-synthesis",
+          "dx": 0,
+          "dy": -178,
           "w": 900,
           "h": 506
         },
@@ -2028,8 +2042,9 @@
         "in": "video-s10-archive-ask",
         "state": "video-s10-archive-ask",
         "cam": {
-          "x": 560,
-          "y": 20,
+          "rel": "video.sheet",
+          "dx": -110,
+          "dy": -19,
           "w": 680,
           "h": 383
         },
@@ -2053,8 +2068,9 @@
         },
         "in": "video-s10-archived",
         "cam": {
-          "x": 0,
-          "y": 290,
+          "rel": "video.task.beta-interview-synthesis",
+          "dx": 0,
+          "dy": -404,
           "w": 900,
           "h": 506
         },
