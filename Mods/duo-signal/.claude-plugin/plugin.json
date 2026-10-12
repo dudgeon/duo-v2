@@ -1,0 +1,1 @@
+{ "name": "duo-signal", "version": "0.1.0", "author": { "name": "Duo" }, "description": "Duo's sensor (ENH-70): tells the Duo that started this session when Claude is working, which mode it is in and what it is asking. Draws nothing and changes nothing." }
