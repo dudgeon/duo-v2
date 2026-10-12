@@ -45,7 +45,7 @@ It also lists the lines changed since the last build. When every line is voiced 
 - the scene before it, when that scene's last frame spills into its range;
 - the pixels of the captures it shows, not the app build that took them;
 - the shared pictures, the source and the render settings.
-The soundtrack is rendered once for the whole film, so the score and its ducking run on across scene edges, then it's normalised to -16 LUFS and muxed. An edit to one scene re-renders that scene, and sometimes the one after it.
+The soundtrack is rendered once for the whole film, so the score and its ducking run on across scene edges, then it's normalised to -16 LUFS and muxed. It's cached too, keyed on what it plays: each scene's span, each line's timing and voice file, the score bed and its gain settings, the topic changes and the source. A change to the pictures only (a camera, a mark, a capture) keeps it. An edit to one scene re-renders that scene, and sometimes the one after it.
 
 **The poster.** The film's frame 0 is S0's settled title card (the icon, "Duo" and its line), so a player that shows the video before play shows the title; on play it gives way to the logo building. Film.tsx draws frame 0 at the first scene's `poster` time, which build.mjs sets from S0's `thumbnail`; `out/thumbnail.png` is the same frame and goes into the file as its cover art. The build fails if frame 0 isn't the title card.
 
@@ -61,7 +61,7 @@ The soundtrack is rendered once for the whole film, so the score and its ducking
 
 **The score step** needs `score/.venv` (`uv venv --python 3.12 score/.venv`, then `uv pip install --python score/.venv/bin/python -r score/requirements.txt`) and ACE-Step 1.5's weights from `score/fetch.py` in `~/Library/Caches/duo-video/models/ACE-Step-1.5`. `score/score.json` holds the prompt, seed and levels; `pipeline/score.mjs` generates the bed for the film's length, checks it has no words in it, and the film ducks it under the voice (`src/scenes/Film.tsx`).
 
-**Heavy runs share the Mac's GPU** with the voice-clone work. Run them under the lock: `GPU_LOCK=<the lock dir> scripts/gpu-lock.sh <your name> node build.mjs`. It waits for a live owner, clears one whose process is gone, passes a TERM on to the job, and releases the lock however the job ends. The lock's path is machine-local, so it comes from `$GPU_LOCK`, never the repo.
+**Heavy runs share the Mac's GPU** with the voice-clone work. Run them under the lock: `GPU_LOCK=<the lock dir> scripts/gpu-lock.sh <your name> node build.mjs`. Waiters queue in order and each prints its place, so a long render isn't starved by short jobs. The front of the queue still takes the plain `mkdir` lock, so a job that takes the lock with a bare `mkdir` stays safe, though it isn't queued. It waits for a live owner and clears one whose process is gone, a lock with no owner after a minute, and a queued waiter that died. It passes a TERM on to the job and releases the lock however the job ends. `scripts/check-gpu-lock.sh` proves it on a scratch lock. The lock's path is machine-local, so it comes from `$GPU_LOCK`, never the repo.
 
 **The voice step** needs `voice/.venv`, made with `uv venv --python 3.12 voice/.venv` and `uv pip install --python voice/.venv/bin/python -r voice/requirements.txt`. It also needs the models in `~/Library/Caches/duo-video/models/`; `voice/models.lock.json` lists them and their commits. Models are never in the repo.
 
