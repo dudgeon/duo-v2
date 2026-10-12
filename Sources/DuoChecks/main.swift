@@ -56,6 +56,8 @@ func repoFixture() throws -> Fixture {
     }
     homeListChecks(f)
     sessionRowChecks(f)
+    sessionGlyphChecks(f)
+    sidebarHierarchyChecks(f)
     try taskBoardChecks()
 
     print("properties (DB-16)")

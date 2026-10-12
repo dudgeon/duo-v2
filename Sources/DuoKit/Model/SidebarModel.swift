@@ -82,9 +82,13 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
         return sorted
     }
 
-    /// The list as Geoff chose it (DL-91, Q-27 option A): what needs you, then what's open in Duo
-    /// (a tab, whatever Claude is doing), then the rest as history by last use: Today, This week,
-    /// and an Earlier fold. Archived sessions keep their own fold below (drawn by the view).
+    /// The pane's hierarchy (DL-174, session-glyphs-handoff 04; it replaces DL-91's sections and DL-93's
+    /// mixing of task rows into them): what needs you first, from tasks or not; then the TASKS, each with
+    /// the sessions that don't wait; then OTHER SESSIONS, the sessions in no task, in the time groups
+    /// Open (a tab is open in Duo), Today, This week and Earlier. A waiting session leaves its task or time
+    /// group until answered; its task row keeps the state, so it shows the hand meanwhile. Archived
+    /// sessions keep their own fold below (drawn by the view). Section ids: needs, tasks, open, today,
+    /// week, earlier; an empty section isn't listed.
     public static func sections(for project: String, in fixture: Fixture, isOpen: (String) -> Bool,
                                 now: Date = Date(), calendar: Calendar = .current) -> [SidebarSection] {
         let all = rows(for: project, in: fixture).flatMap { r -> [SidebarRow] in
@@ -94,23 +98,40 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
             if case .group(let threads, _) = r.kind { return threads.contains { isOpen($0.sessionKey) } }
             return isOpen(r.sessionKey)
         }
-        let needs = all.filter { $0.state == .needsYou }.sorted(by: urgency)
-        let opened = all.filter { $0.state != .needsYou && open($0) }.sorted(by: urgency)
-        let past = all.filter { $0.state != .needsYou && !open($0) }.sorted { WaitTime($0.wait) < WaitTime($1.wait) }
+        var needs: [SidebarRow] = [], tasks: [SidebarRow] = [], rest: [SidebarRow] = []
+        for r in all {
+            if r.task != nil, case .group(let threads, let n) = r.kind {
+                // The waiting sessions go up to NEEDS YOU; the task row keeps its (most urgent) state.
+                needs += threads.filter { $0.state == .needsYou }
+                var t = r
+                t.kind = .group(threads: threads.filter { $0.state != .needsYou }, sessionCount: n)
+                tasks.append(t)
+            } else if r.state == .needsYou {
+                needs.append(r)
+            } else {
+                rest.append(r)
+            }
+        }
+        needs.sort(by: urgency)
+        tasks.sort(by: urgency)
+        let opened = rest.filter(open).sorted(by: urgency)
+        let past = rest.filter { !open($0) }.sorted { WaitTime($0.wait) < WaitTime($1.wait) }
         let sinceMidnight = Int(now.timeIntervalSince(calendar.startOfDay(for: now)))
         let today = past.filter { WaitTime($0.wait).seconds <= sinceMidnight }
         let week = past.filter { WaitTime($0.wait).seconds > sinceMidnight && WaitTime($0.wait).seconds <= 7 * 86400 }
         let earlier = past.filter { WaitTime($0.wait).seconds > 7 * 86400 }
         var out: [SidebarSection] = []
         if !needs.isEmpty { out.append(.init(id: "needs", title: "Needs you", rows: needs, needsYou: true)) }
+        if !tasks.isEmpty { out.append(.init(id: "tasks", title: "Tasks", rows: tasks)) }
         if !opened.isEmpty { out.append(.init(id: "open", title: "Open", rows: opened)) }
         if !today.isEmpty { out.append(.init(id: "today", title: "Today", rows: today)) }
         if !week.isEmpty { out.append(.init(id: "week", title: "This week", rows: week)) }
-        if !earlier.isEmpty {
-            out.append(.init(id: "earlier", title: "", rows: [SidebarRow(id: "\(project)/earlier", name: "Earlier", state: .idle, wait: nil, kind: .older(rows: earlier))]))
-        }
+        if !earlier.isEmpty { out.append(.init(id: "earlier", title: "Earlier", rows: earlier)) }
         return out
     }
+
+    /// The section ids, in the order they are drawn.
+    static let sectionOrder = ["needs", "tasks", "open", "today", "week", "earlier"]
 
     /// The sections as they stood when the pointer came into the list (Q-80, DL-130): while it's
     /// there, a row that was already listed keeps its section and place, so nothing moves under a
@@ -120,9 +141,10 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
         let byID = Dictionary(fresh.flatMap(\.rows).map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         let heldIDs = Set(order.values.joined())
         let template = Dictionary(fresh.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-        let titles = ["needs": ("Needs you", true), "open": ("Open", false), "today": ("Today", false), "week": ("This week", false), "earlier": ("", false)]
+        let titles = ["needs": ("Needs you", true), "tasks": ("Tasks", false), "open": ("Open", false), "today": ("Today", false),
+                      "week": ("This week", false), "earlier": ("Earlier", false)]
         var out: [SidebarSection] = []
-        for id in ["needs", "open", "today", "week", "earlier"] {
+        for id in sectionOrder {
             var rows = (order[id] ?? []).compactMap { byID[$0] }
             // New rows join where the fresh list puts them, after the held rows before them.
             for (i, r) in (template[id]?.rows ?? []).enumerated() where !heldIDs.contains(r.id) {

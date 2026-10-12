@@ -752,6 +752,13 @@ public enum FixtureHarness {
         // (the picker's dashed outline, B), slide-pick:<slide>/<id> (a shape picked, C).
         case "right":   // right:hidden|shown, or toggle: the right pane (DL-129), as ⌥⌘0
             model.rightCollapsed = parts.count > 1 ? parts[1] == "hidden" : !model.rightCollapsed
+        case "left-width":   // left-width:<pt>: the left pane's width, as if its divider were dragged
+            if let w = Double(parts.count > 1 ? parts[1] : ""), let split = NSApp.windows.lazy.compactMap({ $0.contentView.map { paneSplits($0) } }).first(where: { !$0.isEmpty }).map({ $0[model.altitude.isAllProjects ? 0 : min(1, $0.count - 1)] }),
+               split.arrangedSubviews.count >= 2 {
+                split.setPosition(w, ofDividerAt: 0)
+                split.adjustSubviews()
+                FileHandle.standardError.write(Data("left-width: \(split.arrangedSubviews.map { Int($0.frame.width) })\n".utf8))
+            } else { FileHandle.standardError.write(Data("left-width: no split\n".utf8)) }
         case "right-width":   // right-width:<pt>: the right pane's width, as if its divider were dragged
             if let w = Double(parts.count > 1 ? parts[1] : ""), let split = NSApp.windows.lazy.compactMap({ $0.contentView.map { paneSplits($0) } }).first(where: { !$0.isEmpty }).map({ $0[model.altitude.isAllProjects ? 0 : min(1, $0.count - 1)] }),
                split.arrangedSubviews.count >= 2 {

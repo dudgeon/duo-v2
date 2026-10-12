@@ -779,6 +779,7 @@ struct ProjectTile: View {
 
 /// A 24-high session row inside a tile: glyph, name, wait time (no time for ready for review).
 struct TileSessionRow: View {
+    @Environment(AppModel.self) private var model
     let session: Fixture.Session
     var selected = false
     /// A terminal is open for it in Duo (ENH-7, DL-133): it reads `at prompt` or `working` in place
@@ -789,7 +790,7 @@ struct TileSessionRow: View {
 
     var body: some View {
         HStack(spacing: DuoSpace.gapRowItems) {
-            StateGlyph(session.state)
+            SessionGlyph(kind: model.sessionKind(session), state: session.state)
             Text(session.name)
                 .duoText(.body, weight: selected ? .semibold : nil)
                 .lineLimit(1)
@@ -804,7 +805,7 @@ struct TileSessionRow: View {
         }
         .padding(.horizontal, selected || active ? -6 : 0)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(session.name), \(session.state.spokenName)\(active ? ", open in Duo" : "")\(wait == session.wait ? session.wait.map { ", waiting \($0)" } ?? "" : "")")
+        .accessibilityLabel("\(session.name), \(SessionGlyph.spokenKind(model.sessionKind(session))), \(session.state.spokenName)\(active ? ", open in Duo" : "")\(wait == session.wait ? session.wait.map { ", waiting \($0)" } ?? "" : "")")
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
