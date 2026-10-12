@@ -6,6 +6,8 @@ The script's source of truth is the [Claude Doc, script v2](https://claude.ai/co
 
 **Syncing the Doc.** Export the Doc's tab as Markdown (Claude Docs `export`, format `markdown`) to a file, then run `node pipeline/sync.mjs <file> --rev <n>`. It shows what changed, line by line, and the Shot: notes that changed as diffs. With `--write`, it writes `script.md` and renumbers the beats, events and pauses in `shots.json` that name a line which moved. A ref to a line the Doc no longer has stops it. A changed Shot: note keeps stopping the build until you re-read it and sync again with `--accept-notes S7`. `script.md`'s second line records the Doc revision it came from, so the next sync can read only what changed since then.
 
+**Making a video for another project.** The pipeline is reusable: the code stays, and the script, fixtures, shots, style and narrator are per film. The skill `.claude/skills/product-video/SKILL.md` is the procedure, from the brief to review rounds, including the voice: if `gh repo view dudgeon/geoff-voice` fails, you don't have access to Geoff's, so build with `DUO_VOICE_JSON=house` (or design a voice of your own) and don't look for copies of his.
+
 **Remotion's licence (DL-177).** Remotion, which renders the film, isn't open source. It's free for individuals and for companies of up to 3 people; a larger company needs Remotion's Company License, and its terms change at Remotion 5.0 (see `node_modules/remotion/LICENSE.md`). Duo itself doesn't ship Remotion, so this binds only whoever renders the film. Duo is a personal project by one developer (the main [README](../README.md)), who renders it as an individual. If you fork Duo and render the film for a larger company, you need that licence.
 
 ## Build
