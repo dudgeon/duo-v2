@@ -3,8 +3,9 @@ import {AbsoluteFill, Img, interpolate, staticFile} from 'remotion';
 import {smootherstep, type Rect} from '../lib/camera';
 import {Wallpaper} from '../lib/Desk';
 import {Dock, MenuBar} from '../lib/Clutter';
-import {Caption, Cursor, Marker} from '../lib/Paper';
+import {Caption, Cursor} from '../lib/Paper';
 import tokens from '../../style/tokens.json';
+import {Trace, traceProgress} from '../lib/Trace';
 
 // S3 onward: the real Duo window on the desk, played as a run of captures of the app (one per state),
 // with the cursor clicking what changes it, the camera pushing in on what the narrator names, and
@@ -177,7 +178,7 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
           const u = ramp(t, mk.at + 0.05, mk.at + 0.5) * (1 - leave);
           return (
             <AbsoluteFill key={i}>
-              <Marker cx={r.x + r.w / 2} cy={r.y + r.h / 2} rx={r.w / 2 + 18} ry={r.h / 2 + 14} progress={u} />
+              <Trace r={r} radius={8 * K * cs} p={traceProgress(t, mk.at + 0.05, mk.until)} />
               {mk.quote && <Caption text={mk.quote} u={ramp(t, mk.at + 0.3, mk.at + 0.6) * (1 - leave)} />}
             </AbsoluteFill>
           );

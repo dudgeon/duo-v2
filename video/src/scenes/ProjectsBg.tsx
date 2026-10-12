@@ -3,8 +3,9 @@ import {AbsoluteFill, Img, interpolate, staticFile} from 'remotion';
 import {Wallpaper} from '../lib/Desk';
 import {Dock, MenuBar} from '../lib/Clutter';
 import {Lights, caret} from '../lib/ClutterApps';
-import {Marker, PaperGround, ramp} from '../lib/Paper';
+import {PaperGround, ramp} from '../lib/Paper';
 import tokens from '../../style/tokens.json';
+import {Trace, traceProgress} from '../lib/Trace';
 import content from '../../fixture/docs/content.json';
 import world from '../../fixture/world.json';
 
@@ -114,7 +115,7 @@ const FolderMap = ({t, ev}: {t: number; ev: ProjectsEvents}) => {
           </div>);
       })}
       {ev.grey !== undefined && (
-        <Marker cx={x0 + (colW - 40) / 2} cy={560} rx={(colW - 10) / 2} ry={330} progress={ramp(t, ev.grey + 0.2, ev.grey + 0.8)} />
+        <Trace r={{x: x0 - 16, y: 214, w: colW - 8, h: 560}} radius={14} p={traceProgress(t, ev.grey + 0.2, ev.fold ?? ev.grey + 4)} />
       )}
     </AbsoluteFill>
   );
@@ -162,7 +163,7 @@ export const ProjectsScene = ({t, ev, data}: {t: number; ev: ProjectsEvents; dat
         <Win r={FIND} title="sam" u={wins}><FinderHome /></Win>
         <Win r={TERM} title={`sam — ${ev.resume !== undefined && t >= ev.resume ? 'claude --resume' : ev.claude !== undefined && t >= ev.claude ? 'claude' : '-zsh'} — 100×32`} dark u={wins}>
           {term}
-          {hereU > 0 && <Marker cx={16 + 11 * cw + cw / 2} cy={12 + 2 * 21 + 10} rx={26} ry={18} progress={hereU} color="#FFB37A" />}
+          {hereU > 0 && <Trace r={{x: 16 + 11 * cw - 4, y: 12 + 2 * 21, w: cw + 8, h: 21}} radius={4} p={traceProgress(t, ev.here!, ev.map !== undefined ? ev.map - 0.2 : ev.here! + 3)} color="#FFB37A" />}
         </Win>
       </div>
       {mapU > 0 && <AbsoluteFill style={{opacity: mapU}}><FolderMap t={t} ev={ev} /></AbsoluteFill>}
