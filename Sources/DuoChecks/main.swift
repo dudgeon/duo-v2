@@ -803,6 +803,30 @@ func repoFixture() throws -> Fixture {
               "the current-project boost doesn't crowd out a strong match elsewhere")
         let again: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
         check(again.changed == 0 && again.embedded == 0, "re-index with nothing changed embeds nothing")
+        // C-79: a settled tree costs no tokenizing; an edit re-tokenizes only its changed paragraphs.
+        let memo = indexer.tokenizer.counts
+        let before0 = memo.computed
+        let _: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer, quiet: 180) }
+        check(memo.computed == before0, "a pass over an unchanged tree tokenizes 0 units (C-79)")
+        var big = (0..<6000).map { "Paragraph \($0) about tidal harmonics number \($0 * 7919 % 10007) and the moon\u{2019}s pull on the sea." }
+        let bigText = big.joined(separator: "\n\n")
+        check(bigText.utf8.count > 500_000, "the large-file case is large (\(bigText.utf8.count / 1000) KB)")
+        let chunked = Chunker.chunks(path: "big.md", text: bigText, tokenizer: indexer.tokenizer)
+        let m1 = memo.computed
+        let rechunked = Chunker.chunks(path: "big.md", text: bigText, tokenizer: indexer.tokenizer)
+        check(memo.computed == m1 && rechunked == chunked, "chunking the same text again tokenizes 0 units, same chunks")
+        big.append("A brand new closing paragraph about neap tides and quadrature.")
+        _ = Chunker.chunks(path: "big.md", text: big.joined(separator: "\n\n"), tokenizer: indexer.tokenizer)
+        check(memo.computed - m1 <= 2, "appending one paragraph tokenizes \(memo.computed - m1) unit(s), at most a few")
+        let quietFile = proj.appending(path: "notes/quiet-zone.md")
+        try "# Quiet zone\n\nXylophone quartz lighthouse marmalade.\n".write(to: quietFile, atomically: true, encoding: .utf8)
+        let fresh: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer, quiet: 180) }
+        check(fresh.changed == 1 && fresh.deferred == 0, "a new file is indexed at once")
+        try "# Quiet zone\n\nXylophone quartz lighthouse marmalade.\n\nA second paragraph about velvet.\n".write(to: quietFile, atomically: true, encoding: .utf8)
+        let busy: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer, quiet: 180) }
+        check(busy.changed == 0 && busy.deferred == 1, "an indexed file still being edited waits")
+        let settled: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
+        check(settled.changed == 1 && settled.replaced == 1, "…and is re-indexed once quiet")
         try FileManager.default.moveItem(at: proj.appending(path: "docs/tides.md"), to: proj.appending(path: "notes/tides-moved.md"))
         let moved: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
         check(moved.changed == 1 && moved.removed == 1 && moved.embedded == 0, "a moved file reuses its vectors (FR-7.3.5)")
