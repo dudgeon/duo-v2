@@ -3273,3 +3273,11 @@ Reported by the demo-fixtures session: on 2.1.296 the `/` menu sits under the in
   - All Markdown documents share one editor WebContent process, and all HTML pages one viewer process: 4 notes and 4 pages make 2 WebContent processes, about 67 MB.
   - The editor's WebContent, GPU and Networking processes start at launch with no document open. The launch sample shows `DuoCommands.body` → `DuoCommand.isEnabled` (`Commands.swift:173`, Save) → `AppModel.editor.getter` → `EditorController.init`.
 - **Leaks.** `leaks` reports about 420 leaked blocks (≈20 KB) in every run: small and constant.
+
+## F-289 · The duo2 control plane: verified and fixed (fix/duo2-control, C-80, 2026-10-12)
+
+All three of C-80's findings were real in the code.
+- **The pre-edit hook failed closed.** `Sources/duo2/main.swift` denied Claude's Edit/Write for any answer that wasn't ok and didn't start with "not open" (a stale token, an unreadable request, a failed edit). Now `PreEditDecision.decide` (in `DuoControl`) denies only on a clear yes; everything else, including no answer, lets Claude write.
+- **Env endpoints never fell back.** `ControlClient.send(_:via:source:)` retries the endpoint file's live Duo when an endpoint that came from the environment fails to connect or answers "wrong token". A file endpoint is never retried against itself. All `duo2` paths (verbs, `doctor` ping, both context hooks) use it.
+- **Value-less flags.** Of the 30 flags read with `inv.has`, five were missing from `Invocation.switches` (`hidden`, `anyway`, `not-now`, `cancel`, `fetch`). Added, and a DuoChecks cross-read (`ControlPlaneChecks.swift`, `DUO_CHECKS=control`) scans the sources for every `.has("x")` and fails on an undeclared one. The review proposed declaring flags per action; the single global set plus the cross-read gives the same guarantee with no change to the 130-odd usage strings, and per-action declaration is left out (a flag with the same name never means both a switch and a value).
+- `scripts/check-sandbox.sh` quits on `pgrep -xq Duo` and uses the real support folder, so it can't run while Geoff's Duo is open.
