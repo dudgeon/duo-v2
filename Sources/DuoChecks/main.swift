@@ -575,6 +575,15 @@ func repoFixture() throws -> Fixture {
     Thread.sleep(forTimeInterval: 1.1)
     let (snapAgain, _, _) = LiveSnapshot.build(noHistory(lw), beacons: [live])
     check(snapAgain.now != snapFirst.now && snapAgain.sameApartFromClock(snapFirst), "a refresh with nothing new differs only in its clock, which apply() ignores (C-79)")
+    // C-79: with an idle refresh no longer republishing `fixture`, views that print relative time read the model's minute
+    // clock, not Date() (the sources are scanned: a new Date() in these spots would freeze its label).
+    let srcRoot = repoRoot().appending(path: "Sources/DuoKit")
+    func src(_ f: String) -> String { (try? String(contentsOf: srcRoot.appending(path: f), encoding: .utf8)) ?? "" }
+    let tile = src("AllProjects/AllProjectsPanes.swift"), list = src("AllProjects/SessionList.swift")
+    check(tile.contains("model.minute") && !tile.contains("now: Date().timeIntervalSince1970")
+          && list.contains("listClock ?? minute") && src("AllProjects/MapLayout.swift").contains("now: minute.timeIntervalSince1970")
+          && src("Project/RepoBlock.swift").components(separatedBy: "RepoLine.of(view, now: model.minute)").count == 3,
+          "relative-time labels (tile, session list, map order, repo line) read the model's minute clock (C-79)")
     let (snap2, _, moves) = LiveSnapshot.build(noHistory(lw), beacons: [moved])
     check(snap2.sessions.first { $0.sessionId == "aaaa-filed" }?.project == "onboarding"
           && moves.map(\.sessionId) == ["aaaa-filed"] && moves.first?.to.lastPathComponent == "onboarding",

@@ -23,7 +23,7 @@ struct RepoFactLine: View {
     let view: RepoView
 
     var body: some View {
-        let line = RepoLine.of(view)
+        let line = RepoLine.of(view, now: model.minute)
         HStack(spacing: 4) {
             HStack(spacing: 4) {
                 if let busy = view.busy {
@@ -70,7 +70,7 @@ struct RepoDetails: View {
     let view: RepoView
 
     var body: some View {
-        let line = RepoLine.of(view)
+        let line = RepoLine.of(view, now: model.minute)
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) { BranchMark(); Text(view.status.branch ?? "detached").duoText(.control, weight: .semibold) }
             Text(subtitle).duoText(.control).foregroundStyle(DuoColor.text2)

@@ -172,7 +172,8 @@ public struct MapLayout: Sendable, Equatable {
 extension AppModel {
     public var mapLayout: MapLayout {
         MapLayout.build(fixture, sort: mapSort, filter: mapFilter, openGroups: openOutsideGroups,
-                        isArchived: { [self] in isArchived($0) }, settled: mapSettled)
+                        isArchived: { [self] in isArchived($0) }, settled: mapSettled,
+                        now: minute.timeIntervalSince1970 * 1000)
     }
 
     /// Fixes the map's Recent order as of now (DL-104: it settles on arrival, then holds).
