@@ -110,6 +110,15 @@ struct ConsoleTabStrip: View {
         .accessibilityLabel(t.state == nil ? "\(t.title), shell" : t.title)
         .accessibilityIdentifier("video.tab.middle.\(allTabs.firstIndex { $0.id == t.id } ?? 0)")   // anchors: the video cursor's target (0-based, strip order)
         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+        .overlay(alignment: .leading) {   // anchors (scene 4): the × while the tab shows it (its 16 pt box, centred on the glyph's place), 1-based in strip order; a sibling so the tab's own name stays
+            if model.videoDemoFolder != nil, model.showsTabClose(t.id) {
+                let glyph = t.state == nil ? 11 : DuoMetric.glyph
+                Color.clear.frame(width: DuoMetric.tabCloseSize, height: DuoMetric.tabCloseSize).allowsHitTesting(false)
+                    .offset(x: (glyph - DuoMetric.tabCloseSize) / 2)
+                    .accessibilityElement().accessibilityLabel("Close tab")
+                    .accessibilityIdentifier("video.tab.middle.close.\((allTabs.firstIndex { $0.id == t.id } ?? 0) + 1)")
+            }
+        }
         .background(ground)
         .transition(.tab)
     }

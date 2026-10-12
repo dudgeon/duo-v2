@@ -14,7 +14,7 @@ public enum VideoTargets {
                                              "video-s2-right-1", "video-s2-right-2", "video-s2-right-3", "video-s2-right-4",
                                              // Scene 3: All projects as a List. Scene 4: sessions (resume, menu, archive, delete). Scene 5: the same session in chat.
                                              "video-s3-list",
-                                             "video-s4-resumed", "video-s4-menu", "video-s4-archived", "video-s4-delete-ask", "video-s4-deleted",
+                                             "video-s4-resumed", "video-s4-tab-hover", "video-s4-tab-closed", "video-s4-menu", "video-s4-archived", "video-s4-delete-ask", "video-s4-deleted",
                                              "video-s5-chat", "video-s5-chat-open", "video-s5-draft", "video-s5-paste-text", "video-s5-paste-image",
                                              // Scene 6: chat mode, turn by turn (the recordings video/fixture/chat-s5-*).
                                              "video-s6-answered", "video-s6-open", "video-s6-typed", "video-s6-draft", "video-s6-paste-text", "video-s6-paste-image",
@@ -107,6 +107,7 @@ public enum VideoTargets {
     static let autoAdd = "Auto-add decision"
     static let testFlight = "quick q: TestFlight build size"
     static let oldNotes = "Old v1 notes cleanup"
+    static let scanReview = "Prototype scan review"   // the tab the story closes ("Close one and come back to it later")
 
     static func applyS4S5(_ requested: String, to model: AppModel) {
         let screen = s9s10Base(requested)   // scenes 9 and 10's project states stand on scene 7's last one
@@ -171,6 +172,11 @@ public enum VideoTargets {
         if requested.hasPrefix("video-s9-") { applyS9Project(requested, model) }
         if requested.hasPrefix("video-s10-") { applyS10(requested, model: model, dir: dir, video: v, project: project) }
 
+        // Scene 4 closes "Prototype scan review" with its ×, before the context menu; the states after it keep it closed. The pointer
+        // over the tab shows the ×; closing goes through the tab's own close path, so the session stays filed in the list.
+        if screen == "video-s4-tab-hover" { model.hoveredTab = key(scanReview) }
+        if closedScanReview.contains(screen) || screen.hasPrefix("video-s5-") || screen.hasPrefix("video-s6-") { model.closeConsoleTab(key(scanReview)) }
+
         switch screen {
         case "video-s4-menu":
             // The row as its context menu leaves it (Q-147); the NSMenu is a window of its own that captures don't draw.
@@ -183,6 +189,9 @@ public enum VideoTargets {
         default: break
         }
     }
+
+    /// The scene 4 states after the tab was closed (scenes 5 and 6, which follow, close it too).
+    static let closedScanReview: Set<String> = ["video-s4-tab-closed", "video-s4-menu", "video-s4-archived", "video-s4-delete-ask", "video-s4-deleted"]
 
     /// Archive Session's effect on the lists: the row leaves them for the project's Archived fold.
     static func archive(_ name: String, in model: AppModel) {
