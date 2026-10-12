@@ -3228,3 +3228,48 @@ Reported by the demo-fixtures session: on 2.1.296 the `/` menu sits under the in
   - The deck viewer has a Select Shape button.
 - **Two cursor waypoints 0.02 s apart crashed the render** (Remotion's `interpolate` needs a strictly increasing range). Every `ramp` helper now treats an empty span as a step.
 - **Heavy work shares the GPU with voice-clone's fine-tunes.** A render that overlapped its smoke tests swapped 21 GB. Renders, TTS and score runs now take `~/repos/duo-voice/.gpu.lock` first (video/README.md).
+
+## F-286 · Where an idle Duo's CPU goes: the field sample and an isolated repro (review/codebase, 2026-10-12)
+
+- **The field (C-79).** Geoff's own Duo is the main checkout's debug "Duo Dev" build on `~/DuoAcceptance/workspace`, up 4 days 15 h with nothing changing on screen.
+  - `ps` read 45–150% CPU. The footprint was 782 MB (peak 2.6 GB): 404 MB of small mallocs and 286 MB of GPU buffers (`IOAccelerator`, the search model). It had 46 threads and 177 open files.
+  - A read-only 10 s `sample` (the director's OK) showed about 87% of a core in the indexer (`SearchService.pass` → `indexProject` → `Chunker.chunks`/`WordPiece`, plus `Embedder.embed` on MPSGraph). About 63% was in the 2 s refresh (`refreshLive` → `LiveSnapshot.build`), 34% of that in `HookEvents.read` re-parsing 256 KB hook-log tails. The main thread was nearly idle.
+- **The isolated repro.** Release build, background, stand-in 2.1.219 CLI, first launch, `make-scale-fixture.py`. Scripts are in `docs/research/codebase-review.md` § Measurement method.
+  - 42 sessions idle at **3.7% of a core** (3.5% without long transcripts).
+  - 40 of them with a 256 KB chat-mode hook log: **7.2%**, and 9.8% in a debug build. The debug build is only ~1.4× slower here: the cost is Foundation's `Data.split` and `JSONSerialization`.
+  - **40 projects and 600 sessions: 32.5%.** `LiveSnapshot.build` is 33% of the end sample and `realPath` alone 14%, so the 2 s rebuild grows with session history (Duo lists every Claude session on the Mac, DL-82).
+  - A 500 KB Markdown file in Home, appended every 20 s, adds only 0.2 points (the debug build idles at 5.0% with it). The field indexer's cost therefore comes from DL-103's scope on a busy Mac (every repo Claude ran in, many files changing each minute), not from one big file.
+  - The 16-tab shapes of `check-scale.sh` (chat or terminal) idle at 4.3–4.4%, with 14 tabs parked at 5.5 s.
+- **Fixes:** `fix/idle-cpu` takes C-79 (a)–(c) and a memoized `realPath` as (d). The two-speed refresh is task 6 of the review.
+
+## F-287 · Build times, no-op rebuilds and type-check hot spots (review/codebase, 2026-10-12)
+
+- **Times.** Swift 6.4 (swiftlang-6.4.0.34.1), Mac mini, under the GPU lock, load average about 5:
+  - cold `swift build` (debug, dependency cache warm): 44 s;
+  - `scripts/bundle.sh release`: 116 s, for a 100 MB app (28 MB binary; Resources 68 MB, of which 64 MB is the search model);
+  - touching one DuoKit file: 21 s;
+  - touching `DuoControl/Actions.swift`, which every target depends on: 38 s.
+- **No-op builds sometimes rebuild everything.** 6 of 14 no-op `swift build` runs recompiled the whole package (124 steps, 17–27 s) with nothing changed. The others took 0.2–2 s.
+  - It happened after idle gaps of 30 s and 180 s, but not after 90 s, so it isn't simply time-based.
+  - SwiftPM 6.4 builds with Swift Build (`.build/out`, `manifest.pif`), and SwiftTerm's build-info plugin re-ran each time it happened.
+  - The cause isn't isolated. Next: compare `--build-system native`.
+- **Type-checks over 200 ms** (`-warn-long-function-bodies=200`): 13 functions.
+  - `ChatPerf.perform` 4.3 s, DuoChecks' `run()` 2.2 s, `SessionListFilter.matches` 1.7 s plus an expression in it 1.7 s.
+  - `FixtureHarness.perform` 0.8 s, `RightPane.body` 0.8 s, `chatChecks()` 0.6 s.
+  - `ConsoleTabStrip.tab`, `AppModel.perform` and `VideoTargets.apply` 0.3–0.4 s each.
+- **19 compiler warnings.** One is a real defect in a check.
+  - `ComposerProbe` assigns a fresh coordinator to the composer's `weak var coordinator` (`ChatComposerView.swift:365`, warned at `ChatPaste.swift:215,243`). It is gone at once, so the five paste checks at `ChatChecks.swift:922-928` run without it.
+  - `Explainer.swift:192` reads a main-actor static from a `Sendable` closure, which is an error under Swift 6 mode.
+
+## F-288 · Launch, memory and web views measured on isolated runs (review/codebase, 2026-10-12)
+
+- **Launch.** `duo2 status` answers 0.46–0.79 s after launch in every shape tried, from 42 to 600 sessions, with or without 16 tabs, release or debug.
+- **First launch is heavy.** The first 30 s cost 7–22 s of CPU, and the footprint peaks at 0.75–1.8 GB (294 MB without long transcripts). The 8 s launch samples split it:
+  - the first index pass: model load, plus `SessionSource` parsing whole transcripts for session search;
+  - `LiveSnapshot.build`.
+- **`ThreadCache.head` is quadratic up to its 4 MB cap.** It re-splits and re-parses the whole buffer after each 64 KB chunk (`ThreadCache.swift:57-63`). `make-scale-fixture.py` writes no `uuid`, so its long transcripts hit the cap: a fixture artifact, but the loop is real for a transcript whose first user line comes late.
+- **At rest.** A `heap` at 90 s shows 57 MB of live allocations under a 173 MB footprint. End-of-run footprints of 318–478 MB are index passes in flight (Core ML GPU buffers, transient parses), not retention.
+- **Web views.**
+  - All Markdown documents share one editor WebContent process, and all HTML pages one viewer process: 4 notes and 4 pages make 2 WebContent processes, about 67 MB.
+  - The editor's WebContent, GPU and Networking processes start at launch with no document open. The launch sample shows `DuoCommands.body` → `DuoCommand.isEnabled` (`Commands.swift:173`, Save) → `AppModel.editor.getter` → `EditorController.init`.
+- **Leaks.** `leaks` reports about 420 leaked blocks (≈20 KB) in every run: small and constant.
