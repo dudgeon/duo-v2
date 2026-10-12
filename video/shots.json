@@ -1908,7 +1908,7 @@
           "line": 5,
           "word": "collapse"
         },
-        "click": "video.task.auto-add-decision.disclosure",
+        "click": "video.task.warn-about-glare-before-the-photo.disclosure",
         "in": "video-s10-newsession-sent",
         "state": "video-s10-collapsed"
       },
@@ -1917,7 +1917,7 @@
           "line": 5,
           "word": "show"
         },
-        "click": "video.task.auto-add-decision.disclosure",
+        "click": "video.task.warn-about-glare-before-the-photo.disclosure",
         "in": "video-s10-collapsed",
         "state": "video-s10-newsession-sent"
       },
