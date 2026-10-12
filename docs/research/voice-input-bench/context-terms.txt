@@ -1,0 +1,26 @@
+Duo
+duo2
+Claude Code
+Claude
+Opus
+Sonnet
+Haiku
+FluidAudio
+Parakeet
+SheetCenter
+DuoChecks
+AVAudioEngine
+SpeechTranscriber
+NSMicrophoneUsageDescription
+Info.plist
+Package.swift
+SIGTERM
+ENOENT
+PTY
+JSON
+Sparkle
+LibriSpeech
+symbolicate
+palettization
+whisper.cpp
+worktree

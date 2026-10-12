@@ -1,0 +1,40 @@
+{"id":"u01","spoken":"Can you look at the failing test in the session list and tell me why it times out?","terms":["session list"]}
+{"id":"u02","spoken":"Open Package dot swift and bump FluidAudio to the latest commit.","written":"Open Package.swift and bump FluidAudio to the latest commit.","terms":["Package.swift","FluidAudio"]}
+{"id":"u03","spoken":"Run duo two session list and paste the output here.","written":"Run duo2 session list and paste the output here.","terms":["duo2"]}
+{"id":"u04","spoken":"Start Claude Code with dash dash model claude sonnet five five.","written":"Start Claude Code with --model claude-sonnet-5-5.","terms":["Claude Code","--model","claude-sonnet-5-5"]}
+{"id":"u05","spoken":"Rename the function make terminal view to build terminal view everywhere.","written":"Rename the function makeTerminalView to buildTerminalView everywhere.","terms":["makeTerminalView","buildTerminalView"]}
+{"id":"u06","spoken":"Please summarize what changed since yesterday's release.","terms":[]}
+{"id":"u07","spoken":"Check whether the sheet center handles the escape key.","written":"Check whether the SheetCenter handles the escape key.","terms":["SheetCenter"]}
+{"id":"u08","spoken":"Use git rebase onto main, but don't force push.","terms":["git rebase","main","force push"]}
+{"id":"u09","spoken":"The view model should be an observable class, not a struct.","written":"The view model should be an @Observable class, not a struct.","terms":["@Observable","struct"]}
+{"id":"u10","spoken":"Add a finding to findings dot md about the microphone permission.","written":"Add a finding to findings.md about the microphone permission.","terms":["findings.md"]}
+{"id":"u11","spoken":"What does the error E N O E N T mean in this log?","written":"What does the error ENOENT mean in this log?","terms":["ENOENT"]}
+{"id":"u12","spoken":"Let's take a break and come back to this after lunch.","terms":[]}
+{"id":"u13","spoken":"Write a unit check in Duo Checks for the token parser.","written":"Write a unit check in DuoChecks for the token parser.","terms":["DuoChecks"]}
+{"id":"u14","spoken":"Set D U O underscore autoconfirm to one before the scripted run.","written":"Set DUO_AUTOCONFIRM=1 before the scripted run.","terms":["DUO_AUTOCONFIRM"]}
+{"id":"u15","spoken":"The A V audio engine tap is dropping frames at forty eight kilohertz.","written":"The AVAudioEngine tap is dropping frames at 48 kHz.","terms":["AVAudioEngine","48 kHz"]}
+{"id":"u16","spoken":"Install it with brew install whisper c p p.","written":"Install it with brew install whisper.cpp.","terms":["brew install","whisper.cpp"]}
+{"id":"u17","spoken":"Move the settings window code into the shell folder.","written":"Move the settings window code into the Shell folder.","terms":["Shell"]}
+{"id":"u18","spoken":"Why is the build failing on Swift six point two?","written":"Why is the build failing on Swift 6.2?","terms":["Swift 6.2"]}
+{"id":"u19","spoken":"Grep for N S microphone usage description in the info plist.","written":"Grep for NSMicrophoneUsageDescription in the Info.plist.","terms":["NSMicrophoneUsageDescription","Info.plist"]}
+{"id":"u20","spoken":"Good, that looks right. Commit it and push the branch.","terms":[]}
+{"id":"u21","spoken":"Open the pull request and ask for a review from the director.","terms":["pull request"]}
+{"id":"u22","spoken":"Convert the Parakeet model to Core ML with four bit palettization.","written":"Convert the Parakeet model to Core ML with 4-bit palettization.","terms":["Parakeet","Core ML","4-bit palettization"]}
+{"id":"u23","spoken":"Show me the diff for scripts slash release dot s h.","written":"Show me the diff for scripts/release.sh.","terms":["scripts/release.sh"]}
+{"id":"u24","spoken":"Is the JSON decoder strict about trailing commas?","terms":["JSON"]}
+{"id":"u25","spoken":"I think the problem is a race between the PTY reader and the resize handler.","terms":["PTY"]}
+{"id":"u26","spoken":"Kill the process with sig term, never kill dash nine.","written":"Kill the process with SIGTERM, never kill -9.","terms":["SIGTERM","kill -9"]}
+{"id":"u27","spoken":"Add Hugging Face to the list of blocked hosts on the work Mac.","terms":["Hugging Face","work Mac"]}
+{"id":"u28","spoken":"Can you explain how Sparkle delta updates work?","terms":["Sparkle"]}
+{"id":"u29","spoken":"Use Haiku for the test runs and Opus for planning.","terms":["Haiku","Opus"]}
+{"id":"u30","spoken":"The notarization failed because of a missing timestamp.","terms":["notarization"]}
+{"id":"u31","spoken":"Run swift build dash c release and tell me the binary size.","written":"Run swift build -c release and tell me the binary size.","terms":["swift build","-c release"]}
+{"id":"u32","spoken":"Make the composer text field grow up to six lines.","written":"Make the composer text field grow up to 6 lines.","terms":["composer"]}
+{"id":"u33","spoken":"Yes, go ahead.","terms":[]}
+{"id":"u34","spoken":"No, stop. Revert the last commit.","terms":["Revert"]}
+{"id":"u35","spoken":"Look at the stack trace in hangs dot JSON L and symbolicate it.","written":"Look at the stack trace in hangs.jsonl and symbolicate it.","terms":["hangs.jsonl","symbolicate"]}
+{"id":"u36","spoken":"Set the Speech Transcriber locale to English United States.","written":"Set the SpeechTranscriber locale to en-US.","terms":["SpeechTranscriber","en-US"]}
+{"id":"u37","spoken":"What is the word error rate on the Libri Speech test clean set?","written":"What is the word error rate on the LibriSpeech test-clean set?","terms":["word error rate","LibriSpeech"]}
+{"id":"u38","spoken":"Open the walk page in Chrome next to Duo.","terms":["Chrome","Duo"]}
+{"id":"u39","spoken":"Use the Opus five point five model for this review.","written":"Use the Opus 5.5 model for this review.","terms":["Opus 5.5"]}
+{"id":"u40","spoken":"Delete the worktree under dot claude slash worktrees once it's merged.","written":"Delete the worktree under .claude/worktrees once it's merged.","terms":["worktree",".claude/worktrees"]}
