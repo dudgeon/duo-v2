@@ -1,6 +1,6 @@
 A session's attention state as a shape: needs you, ready for review, working, idle, resolved.
 
-**Status:** Designed (handoff §4.4). **In code:** `Sources/DuoKit/Design/StateGlyph.swift` (`StateGlyph(state, on: .light | .console(active:))`).
+**Status:** Designed (handoff §4.4); changed by decision (DL-174): session rows will draw `SessionGlyph` instead (kind plus attention, `session-glyphs-handoff/`), and task and group rows only the needs-you hand. `StateGlyph` stays on console tabs, the action column's cards, the peek and the Dock menu. Not built yet. **In code:** `Sources/DuoKit/Design/StateGlyph.swift` (`StateGlyph(state, on: .light | .console(active:))`).
 
 **Anatomy:** 9 pt square (`glyphSize`), drawn in a 10 × 10 box from the paths in `assets/Glyphs/`. Needs you is a filled circle in `needsYou` (`needsYouOnConsole` on the dark pane). Ready for review is a filled diamond, and working a 1.5 ring, both in `text`. Idle is a dash and resolved a check, both 1.6 stroke in `text2`. On the console, inactive tabs draw glyphs in `consoleText2`.
 
