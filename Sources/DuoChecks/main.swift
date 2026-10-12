@@ -1825,32 +1825,11 @@ func repoFixture() throws -> Fixture {
 
     print("the window's root reads no session's state (F-208, ENH-46)")
     do {
-        // A root-level view that reads a session's chat state re-lays out the whole window when that
-        // session changes; at work, many times a second (F-208). Panes read it; the root never does.
-        let src = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Shell/RootView.swift"), encoding: .utf8)) ?? ""
-        let forbidden = #"model\.(homeShowsChat|consoleShowsChat|chats|chat\(|fixtureChats|terminals)|\.fallback\b|\.showsChat\b|\.screen\b"#
-        var found: [String] = []
-        for name in ["RootView", "AllProjectsLayout", "ProjectLayout"] {
-            guard let start = src.range(of: "struct \(name)") else { found.append("\(name) missing"); continue }
-            let rest = src[start.upperBound...]
-            let body = rest.range(of: "\nstruct ").map { rest[..<$0.lowerBound] } ?? rest
-            for line in body.split(separator: "\n") where line.range(of: forbidden, options: .regularExpression) != nil && !line.trimmingCharacters(in: .whitespaces).hasPrefix("//") {
-                found.append("\(name): \(line.trimmingCharacters(in: .whitespaces))")
-            }
-        }
-        check(found.isEmpty, "RootView, AllProjectsLayout and ProjectLayout read no chat or terminal state (\(found))")
-        let split = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Shell/PaneSplit.swift"), encoding: .utf8)) ?? ""
-        let update = split.range(of: "func updateNSView").map { String(split[$0.lowerBound...].prefix(400)) } ?? ""
-        check(!update.isEmpty && !update.contains("rootView ="), "PaneSplit never replaces a pane's root view on update")
-        // F-225: SwiftUI re-anchoring the chat feed on size changes looped for good at work.
-        let feed = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Chat/ChatView.swift"), encoding: .utf8)) ?? ""
-        check(!feed.isEmpty && !feed.contains("for: .sizeChanges)"), "the chat feed never asks SwiftUI to re-anchor on size changes")
+        freezeGuardChecks()  // FreezeGuardChecks.swift: F-208 and F-225 scans, by declaration (C-84)
         // F-226: a chat the size of the one that froze (24 items, 86 steps) has no lazy stack at all.
         check(!ChatFeedShape.isLazy(items: 24, steps: 86) && !ChatFeedShape.isLazy(items: 48, steps: 250)
               && ChatFeedShape.isLazy(items: 49, steps: 10) && ChatFeedShape.isLazy(items: 10, steps: 251) && ChatFeedShape.isLazy(items: 100, steps: 1945),
               "the feed is a plain stack up to 48 items and 250 steps, lazy past either")
-        check(feed.contains("ChatFeedShape.isLazy(items: chat.log.items.count, steps: chat.log.steps.count)") && feed.contains("VStack(alignment: .leading, spacing: 16) { rows }"),
-              "and ChatPane chooses its stack by that rule")
     }
 
     print("the console's tab strip measures each title once (F-224)")
