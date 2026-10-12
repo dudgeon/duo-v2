@@ -99,7 +99,9 @@ export function voiceLines(lines, {here, cache, pub, style, force = false, log})
       if (spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', raw, '-filter:a', `atempo=${voice.tempo}`, wav]).status !== 0) throw new BuildError(`voice: tempo ${voice.tempo} failed on ${l.id}`);
     }
     const checked = run('asr_check.py', out, ...todo.map((l) => l.key));
-    if (checked.error || checked.status !== 0) throw new BuildError(`voice: the speech check didn't run (${checked.error?.code ?? `exit ${checked.status}`}); is voice/.venv set up? (README, The voice)`);
+    // It exits 1 when a line fails (that line is re-rolled below); it not running at all leaves no .asr.json.
+    const unchecked = todo.filter((l) => !existsSync(join(out, `${l.key}.asr.json`)));
+    if (checked.error || unchecked.length) throw new BuildError(`voice: the speech check didn't run (${checked.error?.code ?? `exit ${checked.status}, ${unchecked.length} line(s) unchecked`}); is voice/.venv set up? (README, The voice)`);
     failures = [];
     for (const l of todo) {
       const asr = JSON.parse(readFileSync(join(out, `${l.key}.asr.json`), 'utf8'));
