@@ -13,23 +13,50 @@ export function voiceSetup({here}) {
   // A voice kept outside the repo (Geoff's own, DL-169): its file and reference audio never enter duo-v2.
   // A named voice file that isn't there stops the build: falling back would change the narrator, and every
   // timing with it (the two clones' cuts differ by 39 s). DUO_VOICE_JSON=house asks for the house voice.
-  const env = process.env.DUO_VOICE_JSON;
+  // Geoff's voice itself lives in his private repo dudgeon/geoff-voice; GEOFF_VOICE_DIR names its checkout (README, "The voice").
+  const env = process.env.DUO_VOICE_JSON, gv = process.env.GEOFF_VOICE_DIR;
   const ext = env === 'house' ? '' : (env ?? house.external ?? '').replace(/^~/, homedir());
-  if (ext && !existsSync(ext)) throw new BuildError(`voice: ${env ? 'DUO_VOICE_JSON' : 'voice.json external'} names ${ext}, which isn't there. Fix the path, or set DUO_VOICE_JSON=house for the house voice.`);
-  const voice = ext ? JSON.parse(readFileSync(ext, 'utf8')) : house;
+  const hasCard = ext && existsSync(ext);
+  if (ext && !hasCard && !(gv && !env)) throw new BuildError(`voice: ${env ? 'DUO_VOICE_JSON' : 'voice.json external'} names ${ext}, which isn't there. Fix the path, point GEOFF_VOICE_DIR at a geoff-voice checkout, or set DUO_VOICE_JSON=house for the house voice.`);
+  const card = hasCard ? JSON.parse(readFileSync(ext, 'utf8')) : null;
+  // GEOFF_VOICE_DIR alone is enough: Duo's own choices for the voice (which voice folder, seed, tempo, spellings) are `house.geoff`.
+  const vox = env !== 'house' && (card ? card.engine === 'voxcpm' : !!gv);
+  const voice = vox ? geoffVoice({house, card: card ?? {}, ext, gv}) : (card ?? house);
   const refWav = isAbsolute(voice.ref_wav) ? voice.ref_wav : join(dir, voice.ref_wav);
-  for (const [what, f] of [['reference audio', refWav], ...(voice.engine === 'voxcpm' ? [['voxcpm script', join(voice.root, voice.script)], ...(voice.lora ? [['LoRA', join(voice.root, voice.lora, 'lora_weights.safetensors')]] : [])] : [])])
-    if (!existsSync(f)) throw new BuildError(`voice: the ${what} ${f} isn't there`);
-  // `engine: "voxcpm"` (DL-173): VoxCPM2 with an optional LoRA, run from the voice-clone project
-  // (`root`, its own venv and script); nothing of it enters duo-v2. Its script, LoRA weights and reference count in the key.
-  const vox = voice.engine === 'voxcpm';
-  const setup = vox ? sha(voice, fileSha(refWav), fileSha(join(voice.root, voice.script)), ...(voice.lora ? [fileSha(join(voice.root, voice.lora, 'lora_weights.safetensors'))] : []))
-    : sha(voice, fileSha(refWav), ...['models.lock.json', 'requirements.txt', 'tts.py'].map((f) => readFileSync(join(dir, f), 'utf8')));
+  if (!existsSync(refWav)) throw new BuildError(`voice: the reference audio ${refWav} isn't there`);
+  // `engine: "voxcpm"` (DL-173): VoxCPM2 with a LoRA, run from the geoff-voice checkout (its own venv and speak script);
+  // nothing of it enters duo-v2. A line's key is made of what the voice IS (LoRA, runner script, reference clip and its text,
+  // seed, tempo, spellings), never of where it is kept: moving or re-cloning the checkout re-voices nothing.
+  // (The other engines hash their voice file, minus its notes.)
+  const {$note, history, external, ...keyable} = voice;
+  const setup = vox ? sha('voxcpm', fileSha(join(voice.root, voice.lora, 'lora_weights.safetensors')), fileSha(join(voice.root, voice.script)), fileSha(refWav),
+    voice.ref_text, voice.seed, voice.tempo ?? 1, voice.said ?? {})
+    : sha(keyable, fileSha(refWav), ...['models.lock.json', 'requirements.txt', 'tts.py'].map((f) => readFileSync(join(dir, f), 'utf8')));
   // A voice's own spellings (`said` in its file, {written: said}), for words only that voice gets wrong; the script's
   // table stays the same for every voice. The speech check still expects the written line.
   const own = (t) => Object.entries(voice.said ?? {}).reduce((s, [w, x]) => s.split(w).join(x), t);
   const keyed = (lines) => lines.map((l) => ({...l, said: own(l.said), key: sha(own(l.said), setup)}));
-  return {dir, house, ext, voice, refWav, vox, setup, keyed};
+  return {dir, house, ext: vox && !card ? `GEOFF_VOICE_DIR ${voice.root}` : ext, voice, refWav, vox, setup, keyed};
+}
+
+// Geoff's voice as geoff-voice describes it (voices/<name>/voice.json), with Duo's choices on top: `house.geoff`, then the
+// machine-local card. Returns what voiceLines uses: `python`, `script` and `lora` relative to `root`, an absolute `ref_wav`.
+function geoffVoice({house, card, ext, gv}) {
+  const spec = {...house.geoff, ...card};
+  const root = (gv || spec.root || '').replace(/^~/, homedir());
+  const where = gv ? 'GEOFF_VOICE_DIR' : `root in ${ext}`;
+  const way = 'Clone dudgeon/geoff-voice and run its setup.sh, or set DUO_VOICE_JSON=house for the house voice.';
+  if (!root) throw new BuildError(`voice: Geoff's voice needs a geoff-voice checkout: set GEOFF_VOICE_DIR (or "root" in ${ext}). ${way}`);
+  const vfile = join(root, spec.voice, 'voice.json');
+  if (!existsSync(vfile)) throw new BuildError(`voice: geoff-voice isn't at ${root} (${where}): no ${join(spec.voice, 'voice.json')} there. ${way}`);
+  const python = spec.python ?? '.venv/bin/python', script = spec.script ?? 'geoff_voice/speak.py';
+  for (const [what, f] of [['venv python', join(root, python)], ['speak script', join(root, script)]])
+    if (!existsSync(f)) throw new BuildError(`voice: the geoff-voice ${what} ${f} isn't there. Run ${join(root, 'setup.sh')}.`);
+  const v = JSON.parse(readFileSync(vfile, 'utf8')), vdir = join(root, spec.voice);
+  const lora = join(spec.voice, v.lora ?? '.');
+  if (!existsSync(join(root, lora, 'lora_weights.safetensors'))) throw new BuildError(`voice: the LoRA ${join(root, lora, 'lora_weights.safetensors')} isn't there`);
+  const ref_text = v.ref_text ?? readFileSync(join(vdir, v.ref_text_file), 'utf8').trim();
+  return {engine: 'voxcpm', root, python, script, lora, ref_wav: join(vdir, v.ref_wav), ref_text, seed: spec.seed ?? v.seed ?? 0, tempo: spec.tempo ?? v.tempo ?? 1, said: spec.said ?? {}};
 }
 
 export function voiceLines(lines, {here, cache, pub, style, force = false, log}) {

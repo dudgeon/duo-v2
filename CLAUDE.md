@@ -31,6 +31,8 @@ One session, the **DUO DIRECTOR** (in Duo, with Remote Control and Artifact tool
 
 Geoff talks to the director through the **director console**, https://claude.ai/artifact/MMmJ9BjomsKq9f9HpHK1ka (skill §7): decisions as buttons with the recommendation first, release and delegation calls, what's in flight with links that open each session on his phone, and what's done. Its buttons message the director session directly. The console is the default channel; chat and AskUserQuestion are the fallback.
 
+**Dependencies the director also runs.** Geoff's own voice, which narrates the intro video (DL-173), lives in the private repo **`dudgeon/geoff-voice`**. It holds the fine-tuned VoxCPM2 LoRA, his takes, and the record → check → train → evaluate → package procedure, all in its README. The director directs work there too: new recordings, fine-tunes and evaluations. It delegates, reviews, pushes and keeps duo-v2's link to the voice working, the same as for Duo. duo-v2 is public, so nothing from geoff-voice enters it: no audio, weights, voice cards, transcripts or local paths. The video pipeline reaches the voice through a machine-local card (`video/README.md`, "The voice"). An agent without access to the repo uses the house voice (`DUO_VOICE_JSON=house`). Details: the director skill, §8.
+
 ## Model efficiency
 
 A rule for how we work, not app behaviour (DL-153; Geoff, 2026-10-08). Use the model the job needs:
