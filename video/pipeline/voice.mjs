@@ -98,7 +98,8 @@ export function voiceLines(lines, {here, cache, pub, style, force = false, log})
       copyFileSync(wav, raw);
       if (spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', raw, '-filter:a', `atempo=${voice.tempo}`, wav]).status !== 0) throw new BuildError(`voice: tempo ${voice.tempo} failed on ${l.id}`);
     }
-    run('asr_check.py', out, ...todo.map((l) => l.key));
+    const checked = run('asr_check.py', out, ...todo.map((l) => l.key));
+    if (checked.error || checked.status !== 0) throw new BuildError(`voice: the speech check didn't run (${checked.error?.code ?? `exit ${checked.status}`}); is voice/.venv set up? (README, The voice)`);
     failures = [];
     for (const l of todo) {
       const asr = JSON.parse(readFileSync(join(out, `${l.key}.asr.json`), 'utf8'));
