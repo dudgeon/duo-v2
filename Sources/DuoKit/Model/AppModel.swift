@@ -208,6 +208,9 @@ public final class AppModel {
     public var editorRevision = 0
     /// The editor if it has been created (doc-status mustn't create one).
     @ObservationIgnored public var editorIfLoaded: EditorController?
+    /// Set once, when the editor first shows a document. Observed, so commands that depend on the
+    /// (unobserved) editor re-evaluate then: Save stayed disabled until something else invalidated.
+    public var editorOpened = false
     /// Word documents being converted to Markdown (DL-123), by the .docx's tab: how far, and what
     /// it's doing. Set only once a conversion has taken half a second, so a quick one shows nothing.
     public var converting: [String: (fraction: Double, stage: String)] = [:]

@@ -49,6 +49,16 @@ extension AppModel {
         if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL { e.saveNow(force: true, completion: then) } else { then() }
     }
 
+    /// Why a note can't be rewritten on disk right now, or nil when it can: it is open in the editor
+    /// with text not yet saved (or in conflict), and a rewrite from the file would lose that text (C-81).
+    /// The editor is told to save; the caller reports the reason and the action can be repeated.
+    func noteBusy(_ file: URL) -> String? {
+        guard let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL,
+              e.dirty || e.conflict || Date().timeIntervalSince(e.lastTyped) < 2 else { return nil }
+        flushTask(file) { [weak self] in self?.refreshLive() }
+        return "\(file.lastPathComponent) has changes that aren't saved yet. Duo is saving them: try again."
+    }
+
     /// Tabs, the editor and tab restore follow a note that moved within its project.
     func followTaskMove(project: String, from old: String, to new: String) {
         if currentProject?.name == project {
@@ -84,6 +94,7 @@ extension AppModel {
               let data = FileManager.default.contents(atPath: file.path), let text = String(data: data, encoding: .utf8) else {
             return .failure(Refused(description: "no task '\(path)' in \(project)"))
         }
+        if let why = noteBusy(file) { return .failure(Refused(description: why)) }
         let new = TaskNotes.pathForTitle(title, current: path) { FileManager.default.fileExists(atPath: folder.appending(path: $0).path) }
         do {
             try Data(TaskNotes.renaming(to: title, in: text).utf8).write(to: file, options: .atomic)
@@ -164,6 +175,7 @@ extension AppModel {
         guard let file = taskFile(project, path), let text = try? String(contentsOf: file, encoding: .utf8) else { return nil }
         var t = TaskNotes.parse(text, path: path)
         if t.id == nil {
+            if noteBusy(file) != nil { return nil }
             let id = UUID().uuidString.lowercased()
             guard (try? Data(TaskNotes.setting("id", id, in: text).utf8).write(to: file, options: .atomic)) != nil else { return nil }
             t.id = id
@@ -201,6 +213,7 @@ extension AppModel {
         struct Refused: Error, CustomStringConvertible { let description: String }
         guard let file = taskFile(project, path), let data = FileManager.default.contents(atPath: file.path),
               let text = String(data: data, encoding: .utf8) else { return .failure(Refused(description: "no task '\(path)' in \(project)")) }
+        if let why = noteBusy(file) { return .failure(Refused(description: why)) }
         let t = TaskNotes.parse(text, path: path)
         var skipped: [String] = []
         var failed: Error?
@@ -224,6 +237,7 @@ extension AppModel {
     public func unarchiveTask(project: String, path: String) -> String? {
         guard let file = taskFile(project, path), let data = FileManager.default.contents(atPath: file.path),
               let text = String(data: data, encoding: .utf8) else { return "no task '\(path)' in \(project)" }
+        if let why = noteBusy(file) { return why }
         let t = TaskNotes.parse(text, path: path)
         var failed: String?
         asOneUndo("Unarchive Task") {

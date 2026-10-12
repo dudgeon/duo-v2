@@ -1,6 +1,8 @@
 <!doctype html>
 <!-- Duo's document editor page: loads the vendored bundle. The app sets the token CSS variables. -->
 <meta charset="utf-8">
+<!-- DL-175: the page runs its own bundle and nothing else. A note may show an https image; no script, style, frame or request goes out. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' file:; style-src 'self' file: 'unsafe-inline'; img-src https: data: blob:; font-src file: data:; connect-src 'none'; frame-src 'none'; object-src 'none'; media-src 'none'; base-uri 'none'; form-action 'none'">
 <style>
   html, body { margin: 0; height: 100%; background: var(--duo-pane); }
   #editor { height: 100vh; }

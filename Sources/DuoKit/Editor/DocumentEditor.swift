@@ -2,6 +2,14 @@ import AppKit
 import SwiftUI
 import WebKit
 
+/// The messages the editor page posts to Swift (`post(kind, …)` in `duo-editor.js`). DuoChecks
+/// checks that this list is exactly the kinds the page posts, so a new one can't be dropped
+/// by a prefix test the way "propertiesFolded" was (C-81).
+public enum EditorMessage: String, CaseIterable {
+    case openLink, image, pasteImage, tableMenu, noteEdit, ready, selection
+    case propertiesFolded, propertyType, propertyDate, propertyMenu, propertyAdd, propertyReference
+}
+
 /// The document editor (Phase I; stack rec #8–9): CodeMirror 6 live preview in one WKWebView
 /// that every document shares (research §1). Text is the only truth: files are read and written
 /// byte for byte (LR-30), saves are atomic and only when changed (LR-35), outside changes merge
@@ -65,6 +73,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     private var fileFD: Int32 = -1
     /// Called when conflict or removed-on-disk changes (the bars under the document redraw).
     var onStateChange: (() -> Void)?
+    /// Called once, after the first document is chosen (see `open`).
+    var onFirstDocument: (() -> Void)?
+    private var announcedFirstDocument = false
     /// A link clicked in the document (DL-87): its target as written.
     var onOpenLink: ((String) -> Void)?
     /// The properties block's controls (S2-5): `propertyMenu` (status popup), `propertyAdd` (+ Add).
@@ -97,6 +108,11 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             source: EditorChords.script(), injectionTime: .atDocumentStart, forMainFrameOnly: true))
         webView.navigationDelegate = self
         webView.setValue(false, forKey: "drawsBackground")
+        loadPage()
+    }
+
+    /// Loads the editor page (again, after its process died).
+    private func loadPage() {
         if let dir = Bundle.main.resourceURL?.appending(path: "editor"),
            FileManager.default.fileExists(atPath: dir.appending(path: "editor.html").path) {
             webView.loadFileURL(dir.appending(path: "editor.html"), allowingReadAccessTo: dir)
@@ -125,6 +141,25 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         pending?(); pending = nil
         sendSourceModes()
         if !noteContext.isEmpty { webView.evaluateJavaScript("window.__ctx = \(noteContext); window.duo && duo.setContext(window.__ctx)") }
+    }
+
+    /// The editor's WebContent process died (C-81). The page, its undo history and any text typed
+    /// since the last autosave (at most a second) are gone; the file on disk is not. Reload the page
+    /// and show the document again from disk, rather than leave a blank pane that looks open.
+    public func webViewWebContentProcessDidTerminate(_ w: WKWebView) {
+        DuoLog.write("editor: web content process terminated (dirty=\(dirty), phase=\(phase))")
+        pageReady = false
+        saveTask?.cancel()
+        generation += 1          // replies still in flight from the dead page are dropped
+        dirty = false
+        kept = [:]               // their text lived in the dead page
+        if let file = url {
+            if phase != .closed { phase = .opening }
+            readOnlyReason = nil
+            pending = { [weak self] in self?.load(file) }
+        }
+        lastEvent = "web process restarted"
+        loadPage()
     }
 
     /// Shows a file. The current document is saved first if it changed; one in conflict, or
@@ -161,6 +196,12 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         previewing = false
         url = file
         readOnlyReason = nil
+        if !announcedFirstDocument {
+            // Menus read the editor without observing it (it may not exist yet): tell the model once, so
+            // Save re-evaluates after the first document opens. Deferred: open() can run inside a view update.
+            announcedFirstDocument = true
+            DispatchQueue.main.async { [weak self] in self?.onFirstDocument?() }
+        }
         let go: () -> Void = { [weak self] in self?.load(file) }
         if pageReady { go() } else { pending = go }
     }
@@ -369,21 +410,22 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     // MARK: Saving
 
     public func userContentController(_ u: WKUserContentController, didReceive m: WKScriptMessage) {
-        if let body = m.body as? [String: Any], body["kind"] as? String == "openLink", let link = body["url"] as? String {
-            onOpenLink?(link); return
-        }
-        if let body = m.body as? [String: Any], body["kind"] as? String == "image", let id = body["id"] as? Int, let src = body["src"] as? String {
-            // An image in the document (S3-5): the page can't read the project, so Duo hands it over.
-            webView.callAsyncJavaScript("return duo.imageLoaded(i, u)", arguments: ["i": id, "u": imageDataURL(src) ?? NSNull()], in: nil, in: .page) { _ in }
+        guard let body = m.body as? [String: Any], let kind = EditorMessage(rawValue: body["kind"] as? String ?? "") else { return }
+        switch kind {
+        case .openLink:
+            if let link = body["url"] as? String { onOpenLink?(link) }
             return
-        }
-        if let body = m.body as? [String: Any], body["kind"] as? String == "pasteImage" {
+        case .image:
+            // An image in the document (S3-5): the page can't read the project, so Duo hands it over.
+            if let id = body["id"] as? Int, let src = body["src"] as? String {
+                webView.callAsyncJavaScript("return duo.imageLoaded(i, u)", arguments: ["i": id, "u": imageDataURL(src) ?? NSNull()], in: nil, in: .page) { _ in }
+            }
+            return
+        case .pasteImage:
             savePastedImage(body); return
-        }
-        if let body = m.body as? [String: Any], body["kind"] as? String == "tableMenu" {
+        case .tableMenu:
             tableMenu(body["menu"] as? String ?? "", at: NSPoint(x: body["x"] as? Double ?? 0, y: (body["y"] as? Double ?? 0) + 2)); return
-        }
-        if let body = m.body as? [String: Any], body["kind"] as? String == "noteEdit" {
+        case .noteEdit:
             // The properties block's own controls (the references field) ask Swift to write (DL-167 step 4).
             let link = body["link"] as? String ?? "", target = body["target"] as? String ?? ""
             switch body["op"] as? String {
@@ -394,11 +436,13 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             default: break
             }
             return
+        case .propertiesFolded, .propertyType, .propertyDate, .propertyMenu, .propertyAdd, .propertyReference:
+            onPropertyAction?(kind.rawValue, body); return
+        case .ready:
+            return
+        case .selection:
+            break
         }
-        if let body = m.body as? [String: Any], let kind = body["kind"] as? String, kind.hasPrefix("property") {
-            onPropertyAction?(kind, body); return
-        }
-        guard let body = m.body as? [String: Any], body["kind"] as? String == "selection" else { return }
         // A report from a page state that is no longer on screen (the page tags reports with the document it shows).
         if let doc = body["doc"] as? String, let shown = url.map(Self.docID), doc != shown { return }
         let count = body["claudeChanges"] as? Int ?? 0, atCaret = body["atClaudeChange"] as? Bool == true, table = body["inTable"] as? Bool == true

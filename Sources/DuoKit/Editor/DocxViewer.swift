@@ -353,6 +353,13 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     }
 
     /// The page itself didn't load (the app's copy is missing): say so rather than "Drawing…" forever.
+    /// The viewer's process died (C-81): load its page again and draw the document again.
+    public func webViewWebContentProcessDidTerminate(_ w: WKWebView) {
+        DuoLog.write("docx: web content process terminated")
+        loadPage()
+        load(scroll: 0)
+    }
+
     public func webView(_ w: WKWebView, didFailProvisionalNavigation n: WKNavigation!, withError error: Error) {
         DuoLog.write("docx: the viewer's page didn't load: \(error.localizedDescription)")
         deadline?.invalidate()

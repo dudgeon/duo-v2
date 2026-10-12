@@ -214,6 +214,12 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
     public func webView(_ w: WKWebView, didFail n: WKNavigation!, withError e: Error) { refresh() }
     public func webView(_ w: WKWebView, didFailProvisionalNavigation n: WKNavigation!, withError e: Error) { refresh() }
 
+    /// The tab's process died (C-81): reload what it showed instead of leaving a blank page.
+    public func webViewWebContentProcessDidTerminate(_ w: WKWebView) {
+        DuoLog.write("browser: web content process terminated")
+        if let u = w.url, AllowedSites.allows(u) { load(u) } else { w.reload() }
+    }
+
     /// window.open and target=_blank open a tab beside this one, around the web view WebKit
     /// configured, so the page keeps its opener (DL-124). A link to a site that isn't allowed
     /// opens in the system browser, as any other link does (DL-3).

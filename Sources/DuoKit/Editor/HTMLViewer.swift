@@ -20,6 +20,17 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     private var root: URL?
     private var stamp: Date?
     private var timer: Timer?
+    /// DL-175: a local page loads nothing remote. WebKit compiles the rules asynchronously, so the
+    /// first page waits for them (`open` below): a page must never start without them.
+    private var rulesReady = false
+    private var afterRules: (() -> Void)?
+
+    /// Blocks every subresource from the network and every remote frame; the page's own files (file:)
+    /// and data: URLs are untouched. Links still leave through `decidePolicyFor`.
+    public static let remoteBlockRules = """
+    [{"trigger":{"url-filter":"^(https?|wss?|ftp)://","resource-type":["image","style-sheet","script","font","raw","svg-document","media","ping","fetch","websocket","other"]},"action":{"type":"block"}},
+     {"trigger":{"url-filter":"^(https?|wss?|ftp)://","resource-type":["document"],"load-context":["child-frame"]},"action":{"type":"block"}}]
+    """
 
     public override init() {
         let config = WKWebViewConfiguration()
@@ -29,6 +40,14 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         super.init()
         webView.configuration.userContentController.add(self, name: "duoPage")
         webView.navigationDelegate = self
+        WKContentRuleListStore.default().compileContentRuleList(forIdentifier: "duo-local-page-no-remote", encodedContentRuleList: Self.remoteBlockRules) { [weak self] list, error in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if let list { self.webView.configuration.userContentController.add(list); self.rulesReady = true }
+                else { DuoLog.write("html: the remote-content rules didn't compile, so local pages stay unloaded: \(String(describing: error))") }
+                self.afterRules?(); self.afterRules = nil
+            }
+        }
     }
 
     /// Shows a file; `root` is the folder the page may read (its project).
@@ -39,7 +58,11 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         picked = nil
         picking = false
         stamp = Self.newest(around: file)
-        webView.loadFileURL(file, allowingReadAccessTo: root)
+        let load = { [weak self] in
+            guard let self, self.rulesReady, self.url == file else { return }
+            self.webView.loadFileURL(file, allowingReadAccessTo: root)
+        }
+        if rulesReady { load() } else { afterRules = load }
         startWatching()
         onChange?()
     }
@@ -82,6 +105,14 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
             if let out = onLinkOut { out(target) } else { NSWorkspace.shared.open(target) }
         }
         decisionHandler(.cancel)
+    }
+
+    /// The page's process died (C-81): load it again rather than leave it blank.
+    public func webViewWebContentProcessDidTerminate(_ w: WKWebView) {
+        DuoLog.write("html: web content process terminated")
+        picked = nil; picking = false
+        if rulesReady, let url, let root { w.loadFileURL(url, allowingReadAccessTo: root) }
+        onChange?()
     }
 
     // MARK: The page's selection and the picker: PageHost (shared with browser tabs)
