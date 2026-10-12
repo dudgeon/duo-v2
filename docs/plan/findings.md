@@ -3274,7 +3274,7 @@ Reported by the demo-fixtures session: on 2.1.296 the `/` menu sits under the in
   - The editor's WebContent, GPU and Networking processes start at launch with no document open. The launch sample shows `DuoCommands.body` → `DuoCommand.isEnabled` (`Commands.swift:173`, Save) → `AppModel.editor.getter` → `EditorController.init`.
 - **Leaks.** `leaks` reports about 420 leaked blocks (≈20 KB) in every run: small and constant.
 
-## F-289 · The duo2 control plane: verified and fixed (fix/duo2-control, C-80, 2026-10-12)
+## F-290 · The duo2 control plane: verified and fixed (fix/duo2-control, C-80, 2026-10-12)
 
 All three of C-80's findings were real in the code.
 - **The pre-edit hook failed closed.** `Sources/duo2/main.swift` denied Claude's Edit/Write for any answer that wasn't ok and didn't start with "not open" (a stale token, an unreadable request, a failed edit). Now `PreEditDecision.decide` (in `DuoControl`) denies only on a clear yes; everything else, including no answer, lets Claude write.
