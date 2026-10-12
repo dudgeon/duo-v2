@@ -278,32 +278,97 @@ struct TasksFold: View {
     var body: some View {
         let listed = Set(model.fixture.sessions(inProject: project).compactMap(\.sessionId))
         let tasks = (model.fixture.tasks ?? []).filter { $0.project == project && model.listedTask($0) && !$0.sessionIds.contains(where: listed.contains) }
-        if !tasks.isEmpty {
-            let key = "\(project)/tasks-fold"
-            let expanded = !model.expandedGroups.contains(key)   // open unless folded
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: DuoSpace.gapRowItems) {
-                    Chevron(direction: expanded ? .down : .right).frame(width: 10)
-                    Text("Tasks · \(tasks.count)").duoText(.body).foregroundStyle(DuoColor.text2)
-                    Spacer(minLength: 0)
-                }
-                .padding(.horizontal, 8 + DuoSpace.selectionInset)
-                .frame(height: DuoMetric.rowGroup)
-                .contentShape(Rectangle())
-                .onActivate { withDuoAnimation(.fold) { if expanded { model.expandedGroups.insert(key) } else { model.expandedGroups.remove(key) } } }  // action: view group
-                .accessibilityLabel(expanded ? "Hide tasks without sessions" : "Show \(tasks.count) tasks without sessions")
-                .accessibilityIdentifier("video.tasks.fold")   // anchors: the video cursor's target
-                .contextMenu { TaskTemplateItems(project: project) }
-                .padding(.top, 8)
-                if expanded {
-                    VStack(alignment: .leading, spacing: 0) {
-                        ForEach(tasks) { t in TaskLine(task: t, showsProject: false, indented: true).transition(.listRow) }
-                    }
-                    .duoAnimation(.rowMove, value: tasks.map(\.id))
-                    .transition(.foldRows)
+        // Always in a project (DL-172): the New task row lives here, so the fold shows with no tasks.
+        let key = "\(project)/tasks-fold"
+        let expanded = !model.expandedGroups.contains(key)   // open unless folded
+        let headHover = "\(project)/tasks-fold-head"
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: DuoSpace.gapRowItems) {
+                Chevron(direction: expanded ? .down : .right).frame(width: 10)
+                Text(expanded || tasks.isEmpty ? "Tasks" : "Tasks · \(tasks.count)").duoText(.body).foregroundStyle(DuoColor.text2)
+                Spacer(minLength: 0)
+                // Closed, the pointer on the header shows the + that is New task (DL-172, as task rows' + DL-112).
+                if !expanded && model.hoveredTaskRow == headHover {
+                    Text("+")
+                        .font(.system(size: DuoMetric.rowActionGlyph))
+                        .foregroundStyle(DuoColor.text2)
+                        .frame(width: DuoMetric.rowActionSize, height: DuoMetric.rowActionSize)
+                        .contentShape(RoundedRectangle(cornerRadius: DuoMetric.rowActionRadius))
+                        .onActivate { model.newTask(in: project) }  // action: task new
+                        .help("Track a new task in this project")
+                        .accessibilityLabel("New task")
                 }
             }
+            .padding(.horizontal, 8 + DuoSpace.selectionInset)
+            .frame(height: DuoMetric.rowGroup)
+            .background {
+                if !expanded && model.hoveredTaskRow == headHover {
+                    RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected)
+                        .padding(.horizontal, DuoSpace.selectionInset)
+                }
+            }
+            .contentShape(Rectangle())
+            .onHover { inside in
+                if inside { model.hoveredTaskRow = headHover } else if model.hoveredTaskRow == headHover { model.hoveredTaskRow = nil }
+            }
+            .onActivate { withDuoAnimation(.fold) { if expanded { model.expandedGroups.insert(key) } else { model.expandedGroups.remove(key) } } }  // action: view group
+            .accessibilityLabel(expanded ? "Hide tasks" : "Show \(tasks.count) tasks without sessions")
+            .accessibilityIdentifier("video.tasks.fold")   // anchors: the video cursor's target
+            .contextMenu { TaskTemplateItems(project: project) }
+            .padding(.top, 8)
+            if expanded {
+                VStack(alignment: .leading, spacing: 0) {
+                    if tasks.isEmpty {
+                        Text("Most sessions are for a task or a goal. Put them in a task and Duo keeps them together.")
+                            .duoText(.control).foregroundStyle(DuoColor.text2)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 8 + DuoSpace.selectionInset).padding(.leading, 18).padding(.vertical, 4)
+                    }
+                    ForEach(tasks) { t in TaskLine(task: t, showsProject: false, indented: true).transition(.listRow) }
+                    NewTaskRow(project: project)
+                }
+                .duoAnimation(.rowMove, value: tasks.map(\.id))
+                .transition(.foldRows)
+            }
         }
+    }
+}
+
+/// + New task, the Tasks fold's last row (DL-172, board 01-sidebar-fold A3): `rowSession` tall, a +
+/// in the task rows' glyph column and the label in `control` `text2`, lined up with the task names;
+/// `selected` fill and `text` on hover.
+struct NewTaskRow: View {
+    @Environment(AppModel.self) private var model
+    let project: String
+
+    var body: some View {
+        let key = "\(project)/new-task-row"
+        let hovered = model.hoveredTaskRow == key
+        HStack(spacing: DuoSpace.gapRowItems) {
+            Text("+").font(.system(size: DuoMetric.rowActionGlyph)).frame(width: 8)   // the task rows' box column, so the label lines up with their names
+            Text("New task").duoText(.control)
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(hovered ? DuoColor.text : DuoColor.text2)
+        .padding(.horizontal, 8 + DuoSpace.selectionInset)
+        .padding(.leading, 18)
+        .frame(height: DuoMetric.rowSession)
+        .background {
+            if hovered {
+                RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected)
+                    .padding(.leading, 18 + DuoSpace.selectionInset)
+                    .padding(.trailing, DuoSpace.selectionInset)
+            }
+        }
+        .background(DuoColor.pane)
+        .contentShape(Rectangle())
+        .onHover { inside in
+            if inside { model.hoveredTaskRow = key } else if model.hoveredTaskRow == key { model.hoveredTaskRow = nil }
+        }
+        .onActivate { model.newTask(in: project) }  // action: task new
+        .help("Track a new task in this project")
+        .accessibilityLabel("New task")
+        .accessibilityIdentifier("video.newtask.button")   // anchors: the video cursor's target
     }
 }
 
