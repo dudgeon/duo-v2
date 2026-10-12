@@ -46,6 +46,8 @@ function findAnchor(cap, text, state) {
 // kind 'graphic': a different idea, so a motion-graphics move. `out` seconds are added to the end of the
 // scene before (its exit plays there); `in` seconds open this scene (its entry plays there, before the voice).
 // style/shot-grammar.md, "Transitions", describes each one.
+/** The director film's scene kinds (src/scenes/registry.ts). */
+export const DIRECTOR_SCENES = ['dir-switchboard', 'dir-prompt'];
 export const TRANSITIONS = {
   'logo-to-dock': {kind: 'graphic', from: 'logo', to: 'desk', out: 1.45},
   'dock-launch': {kind: 'app', from: 'desk', to: 'morph', in: 1.5, click: 0.85},
@@ -67,10 +69,14 @@ export const TRANSITIONS = {
   'stand-in': {kind: 'graphic', from: ['projects', 'card', 'app'], to: 'card'},
   'stand-in-out': {kind: 'graphic', from: 'card', to: 'conclusion'},
   // Paper to paper (the director film): the paper ground and the title carry across; the next scene's content takes the place of the last's.
-  'paper-carry': {kind: 'graphic', from: ['paper-card', 'conclusion'], to: 'paper-card'},
+  'paper-carry': {kind: 'graphic', from: ['paper-card', 'conclusion', ...DIRECTOR_SCENES], to: 'paper-card'},
+  // The director film's scenes (src/scenes/director/): each opens on the last picture of the scene before and carries
+  // its shapes on (the board's layouts, board.ts), so the move between them is the next scene's own entry.
+  'board-carry': {kind: 'graphic', from: [...DIRECTOR_SCENES, 'paper-card'], to: DIRECTOR_SCENES, in: 0.4},
 };
 export const sceneType = (shot) => (shot.kind === 'drawn' ? shot.scene : shot.kind);
 export const fromOk = (tr, type) => (Array.isArray(tr.from) ? tr.from.includes(type) : tr.from === type);
+export const toOk = (tr, type) => (Array.isArray(tr.to) ? tr.to.includes(type) : tr.to === type);
 
 // A rect in window points from a capture's anchors: an id (video.*) or a label.
 function anchorRect(cap, key, state, sceneId) {
@@ -220,7 +226,7 @@ export function plan({scenes, shots, voiced, captures, style, used}) {
       tr = TRANSITIONS[name];
       if (!tr) throw new BuildError(`transition: ${scene.id} has no way in from ${prev.id}${name ? ` ("${name}" is not in plan.mjs TRANSITIONS)` : ''}. Shots never cut: give ${scene.id} a transitionIn (app navigation if it's somewhere else in the app, a motion graphic if it's a new idea).`);
       const pt = sceneType(shots[prev.id]);
-      if (!fromOk(tr, pt) || tr.to !== sceneType(shot)) throw new BuildError(`transition: "${name}" goes ${tr.from} -> ${tr.to}, but ${prev.id} -> ${scene.id} is ${pt} -> ${sceneType(shot)}`);
+      if (!fromOk(tr, pt) || !toOk(tr, sceneType(shot))) throw new BuildError(`transition: "${name}" goes ${tr.from} -> ${tr.to}, but ${prev.id} -> ${scene.id} is ${pt} -> ${sceneType(shot)}`);
       if (tr.out) {
         prev.exit = {name, at: prev.duration};
         if (prev.drawn) prev.drawn.events.exit = prev.duration;
