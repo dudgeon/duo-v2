@@ -13,7 +13,13 @@ function wordTime(line, phrase, nth = 1) {
   // `nth` picks a later occurrence when a word repeats in the line ("files" twice).
   const want = norm(phrase);
   // A heard word reads as the name it stands for (voice/heard-as.json: "cloud" is Claude), as the speech check reads it.
-  const words = line.words.map((w) => { const n = norm(w.word).join(' '); return {...w, n: HEARD_AS[n] ?? n}; });
+  // A heard word that holds several ("up-to-date") splits into its parts, spread across its time.
+  const words = line.words.flatMap((w) => {
+    const parts = norm(w.word), n = parts.join(' ');
+    if (HEARD_AS[n] || parts.length < 2) return [{...w, n: HEARD_AS[n] ?? n}];
+    const d = ((w.end ?? w.start) - w.start) / parts.length;
+    return parts.map((p, i) => ({...w, start: w.start + d * i, n: HEARD_AS[p] ?? p}));
+  });
   let seen = 0;
   for (let i = 0; i < words.length; i++) {
     if (want.every((w, j) => words[i + j] && words[i + j].n === w) && ++seen === nth) return words[i].start;

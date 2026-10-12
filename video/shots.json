@@ -1287,7 +1287,8 @@
       {
         "at": {
           "line": 7,
-          "word": "paragraph"
+          "word": "paragraph",
+          "offset": 0.3
         },
         "click": "video.slide.shape",
         "in": "video-s7-pptx-pick",
@@ -1868,8 +1869,8 @@
       {
         "at": {
           "line": 5,
-          "word": "task",
-          "offset": 0.4
+          "word": "sessions",
+          "offset": 0.35
         },
         "in": "video-s10-newsession",
         "state": "video-s10-newsession",
@@ -1883,8 +1884,7 @@
       {
         "at": {
           "line": 5,
-          "word": "task",
-          "offset": 2
+          "word": "task"
         },
         "in": "video-s10-newsession-sent",
         "state": "video-s10-newsession-sent"
@@ -1892,8 +1892,8 @@
       {
         "at": {
           "line": 5,
-          "word": "collapse",
-          "offset": -0.4
+          "word": "you",
+          "offset": -0.1
         },
         "in": "video-s10-newsession-sent",
         "cam": {
@@ -1902,7 +1902,7 @@
           "w": 470,
           "h": 264
         },
-        "dur": 0.8
+        "dur": 0.6
       },
       {
         "at": {

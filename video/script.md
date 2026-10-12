@@ -324,3 +324,4 @@ The narrator is Geoff's own voice, a zero-shot clone at tempo 1.05 (Oct 11; the 
 | duo2 | duo two |
 | Command K, ⌘K | command K |
 | prd-v2.md | P R D vee two dot M D |
+| cli | C L I |
