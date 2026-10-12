@@ -3273,3 +3273,9 @@ Reported by the demo-fixtures session: on 2.1.296 the `/` menu sits under the in
   - All Markdown documents share one editor WebContent process, and all HTML pages one viewer process: 4 notes and 4 pages make 2 WebContent processes, about 67 MB.
   - The editor's WebContent, GPU and Networking processes start at launch with no document open. The launch sample shows `DuoCommands.body` → `DuoCommand.isEnabled` (`Commands.swift:173`, Save) → `AppModel.editor.getter` → `EditorController.init`.
 - **Leaks.** `leaks` reports about 420 leaked blocks (≈20 KB) in every run: small and constant.
+
+## F-289 · Third-party notices are generated and bundled (build/third-party-notices, 2026-10-12)
+
+- `scripts/gen-notices.py` writes `THIRD-PARTY-NOTICES.md` at the repo root from `Vendor/` (Sparkle, CodeMirror's `dist/THIRD-PARTY-LICENSES.md`, pptx-renderer with its MPL-2.0 and ECMA notices, the docx viewer and JSZip's MIT half), SwiftTerm's `LICENSE` from `.build/checkouts`, and the bge model (MIT per its card, which the script asserts). `bundle.sh` copies it into `Contents/Resources`. It has no UI yet; where it shows is Q-186.
+- **Review claims checked.** SwiftTerm's `swift-argument-parser` is only for its `Termcast` target and `swift-png`/`h` only on Linux/Windows/WASI under a trait, so none link on macOS: no entries. `Vendor/swift-markdown-engine` is referenced by no `Package.swift` or source file, so it ships nothing and has no entry (task 10 may remove it).
+- DuoChecks has a case per shipped `Vendor/` folder, the linked `Package.resolved` pins, the licence texts and the `bundle.sh` copy. A new vendored folder that `bundle.sh` ships fails the check until it has an entry. The Sparkle file lists its externals' copyrights; the two READMEs that promise Settings › About still do, pending Q-186.
