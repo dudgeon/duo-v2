@@ -86,12 +86,12 @@ extension VideoTargets {
         }
     }
 
-    /// The state a scene 10 state is built on: `collapsed` is New Task's details with a group folded, and the task menu, its two questions
-    /// and the workstreams list all stand on the deck resumed (the project view, the new task's session in its group).
+    /// The state a scene 10 state is built on: `collapsed` and `workstreams` follow the new session's answer (same panes, the new task's
+    /// group folded, or every group open), and the task menu and its two questions stand on the deck resumed (the project view).
     nonisolated static func s10Base(_ name: String) -> String {
         switch name {
-        case "collapsed": "newtask-details"
-        case "workstreams", "task-menu-target", "archive-ask", "archived": "deck-resumed"
+        case "collapsed", "workstreams": "newsession-sent"
+        case "task-menu-target", "archive-ask", "archived": "deck-resumed"
         default: name
         }
     }
@@ -159,8 +159,8 @@ extension VideoTargets {
         }
         model.expandedGroups.formUnion(["Auto-add decision", "Deck for Thursday"])
         if requested == "workstreams" { model.expandedGroups.formUnion(tasks.map(\.title)) }   // every task open, so every session shows
-        if requested == "collapsed" { model.expandedGroups.remove("Auto-add decision") }       // the disclosure clicked: the group folds, its sessions hidden
         if name == "newsession" || name == "newsession-sent" { model.expandedGroups.insert(nt["title"] as? String ?? newTaskTitle) }   // the new session shows under its task
+        if requested == "collapsed" { model.expandedGroups.remove(nt["title"] as? String ?? newTaskTitle) }   // the new task's disclosure clicked: its group folds, "Glare warning copy" hidden
         model.fixture.projectFiles[project] = (model.fixture.projectFiles[project] ?? []) + tasks.map(\.path).sorted()
 
         // The right pane: a task's note, or scene 7's deck.
