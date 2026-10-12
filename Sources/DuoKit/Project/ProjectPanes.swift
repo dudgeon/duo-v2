@@ -60,11 +60,7 @@ struct ProjectSidebarPane: View {
                     if let project, model.terminalsMode == .live || model.videoTasks { TasksFold(project: project.name) }
                     if let project { ArchivedSessionsFold(project: project.name) }
                     HStack(spacing: DuoSpace.gapButtonToButton) {
-                        Button("+ New session") { model.newSession() }.buttonStyle(.duo)
-                        if let project, model.terminalsMode == .live || model.videoTasks {
-                            Button("+ New task") { model.newTask(in: project.name) }.buttonStyle(.duo)
-                                .accessibilityIdentifier("video.newtask.button")   // anchors: the video cursor's target
-                        }
+                        Button("+ New Claude Code session") { model.newSession() }.buttonStyle(.duo)
                     }
                     .padding(.horizontal, DuoSpace.panePadding)
                     .padding(.vertical, 14)

@@ -66,7 +66,7 @@ public struct GalleryView: View {
                 SectionLabel(text: "Pieces")
                 HStack(alignment: .center, spacing: 12) {
                     Button("Resume a session") {}.buttonStyle(.duo)
-                    Button("+ New session") {}.buttonStyle(.duo)
+                    Button("+ New Claude Code session") {}.buttonStyle(.duo)
                     CountPill(text: "group · 3", emphasised: true)
                     CountPill(text: "thread · 2", emphasised: false)
                     ChipSample(open: false)
