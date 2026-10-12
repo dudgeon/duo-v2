@@ -95,6 +95,8 @@ public final class AppModel {
     public var rightTab: String?                // "Project", a group name, or a document path
     /// The search modal (DL-76, DL-80).
     public let search = SearchUI()
+    /// The Explainer popover (DL-172): which is open, where, and the hover clocks.
+    public let explainer = ExplainerState()
     /// A session opened read-only from search, shown as a right-pane tab (search-open-session).
     public var readOnlySession: ReadOnlySession?
     /// Fixture mode's stand-in document: the section a search result landed on (search-open-file).

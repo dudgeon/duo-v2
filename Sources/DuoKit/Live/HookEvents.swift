@@ -235,6 +235,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var homeView: String?
     /// View › Show Hidden Files (DL-105).
     public var showHiddenFiles = false
+    /// Explainers the user said Don't show again to (DL-172), by id; Settings › General brings them back.
+    public var dismissedExplainers: [String] = []
 
     public init() {}
     public init(from decoder: Decoder) throws {
@@ -260,6 +262,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         mapSort = try c.decodeIfPresent(String.self, forKey: .mapSort)
         homeView = try c.decodeIfPresent(String.self, forKey: .homeView)
         showHiddenFiles = try c.decodeIfPresent(Bool.self, forKey: .showHiddenFiles) ?? false
+        dismissedExplainers = try c.decodeIfPresent([String].self, forKey: .dismissedExplainers) ?? []
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {

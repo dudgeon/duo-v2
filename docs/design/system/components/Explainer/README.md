@@ -1,6 +1,6 @@
 A feature's explanation, as the second tier after a plain help tag: a small popover with a picture, for a feature a new user won't guess. Tasks has the first one.
 
-**Status:** Designed, not built (DL-172, `explanatory-tooltips-handoff/`). **In code:** none yet. A popover Duo draws, like search and the idle list; the build names the view.
+**Status:** Built for Tasks (DL-172, `explanatory-tooltips-handoff/`). **In code:** `Design/Explainer.swift` (`ExplainerState`, `ExplainerCard`, `ExplainerOverlay`, the `.explainerTrigger` modifier), `Model/AppModel+Explainer.swift`. A popover Duo draws over the window, like search; its tokens are `explainerWidth`, `explainerArrow`, `explainerBottom`. Learn more is hidden until the user guide has the page (Q-177); the dismissed flags live in `DuoState.dismissedExplainers`; `duo2 settings explainers reset` clears them.
 
 **Anatomy:**
 - **Frame:** 300 wide, `pane` fill, 1 `rule` border, `radiusPopover`, `shadowPopover`. Padding 14 16 12, with 10 between parts. A 12 arrow points at the trigger.

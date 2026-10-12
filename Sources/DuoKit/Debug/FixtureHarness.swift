@@ -334,6 +334,8 @@ public enum FixtureHarness {
             }
         case "template-preview": model.toggleTemplatePreview()   // the template bar's Preview (DL-146, board A2)
         case "new-task": if let p = model.currentProject?.name { model.newTask(in: p) }   // + New task in the open project
+        case "explain-tasks": model.explainTasks()   // Help › Explain Tasks (DL-172)
+        case "hover-new-task": if let p = model.currentProject?.name { model.hoveredTaskRow = "\(p)/new-task-row" }   // the pointer on + New task (DL-172)
         case "board": model.showBoard(parts.count < 2 || parts[1] != "off")   // board[:off]: Sessions | Tasks (DL-148)
         case "card": if parts.count > 1, let p = model.currentProject?.name { model.selectCard(project: p, path: parts[1]) }   // card:<path>: a click on a card
         case "hover-card":   // hover-card:<path>[=<session title>]: the pointer over a card, or one of its session rows

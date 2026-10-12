@@ -132,9 +132,9 @@ extension DuoAction {
         .init(.install, .setup, "", "Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74).",
               ui: ["Install", "Install…"], local: true),
         .init(.uninstall, .setup, "", "Remove exactly what `duo2 install` added (anything you edited stays).", ui: ["Remove…"], local: true),
-        .init(.settings, .setup, "[claude-path <path|auto> | notify on|off | dock-badge on|off | macos]",
-              "Duo's settings (S3-1): with no arguments, all of them, and what macOS allows; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge; `macos` opens System Settings › Notifications › Duo.",
-              ui: ["Choose…", "Use Found One", "Open Notification Settings…"]),
+        .init(.settings, .setup, "[claude-path <path|auto> | notify on|off | dock-badge on|off | explainers reset | macos]",
+              "Duo's settings (S3-1): with no arguments, all of them, and what macOS allows; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge; `explainers reset` shows the explanations the user dismissed again (Settings › General); `macos` opens System Settings › Notifications › Duo.",
+              ui: ["Choose…", "Use Found One", "Open Notification Settings…", "Show dismissed explanations again"]),
         .init(.walkSetup, .setup, "<test id>", "Put Duo in the state an acceptance-walk test starts from (the walk page's Set up test button, or `duo2://walk-setup?id=…`). Steps come from ~/DuoAcceptance/walk-setups.json, never from the caller.",
               ui: ["Set up test"]),
         .init(.compose, .setup, "<file>", "Claude Code's external editor in Duo's sessions (Ctrl+G; chat mode's composer, F-104, F-112): hands Claude the composer's text when chat mode asked for it, and otherwise opens your own editor ($VISUAL or $EDITOR as they were). Not for running by hand.", local: true),
@@ -431,6 +431,7 @@ extension DuoAction {
 /// accepts these labels; everything else in the UI must name an action.
 public enum Parity {
     public static let uiOnly: [String: String] = [
+        "Explain Tasks": "Help › Explain Tasks shows an explanation to a person at the screen (DL-172); `duo2 task new` is the action it explains",
         "Close Window": "window management",
         "Paste or drop a picture in the editor": "a gesture, not a menu item: the picture is saved beside the document and linked (LR-39); `duo2 doc insert` adds the same `![](name)` text, and `duo2 file move` puts a picture beside a note",
         "Anyone": "the task board's owner filter: view state; `duo2 task board` lists every card",

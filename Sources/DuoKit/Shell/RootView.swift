@@ -21,11 +21,14 @@ public struct RootView: View {
                 .allowsHitTesting(!model.altitude.isAllProjects)
                 .accessibilityHidden(model.altitude.isAllProjects)
         }
+        .coordinateSpace(name: ExplainerState.space)
         // Search (DL-76): over both altitudes, scrim and modal fading together, 120 ms in and 100 ms
         // out, without moving; none with Reduce Motion (DL-129).
         .overlay { if model.search.isOpen { SearchOverlay().transition(.opacity) } }
         // Duo's sheets (DL-100): Move into Home…, New project.
         .overlay { SheetOverlay() }
+        // The Explainer (DL-172): above the panes, under nothing but the sheets' own scrim.
+        .overlay(alignment: .topLeading) { ExplainerOverlay() }
         .animation((model.search.isOpen ? DuoMotionToken.scrimIn : .scrimOut).animation, value: model.search.isOpen)
         // Altitude change: cross-fade, 150 ms, ease-out; none with Reduce Motion (handoff §9).
         // Keyed on the altitude alone: a jump between projects fades the project up (projectShown)
