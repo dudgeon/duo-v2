@@ -93,7 +93,7 @@ extension AppModel {
             guard let self else { return }
             guard ok else { done?(.failure(Migrator.Refusal("Not deleted: the user clicked Cancel in Duo. Nothing changed."))); return }
             let pids = ownPids
-            if inDuo { self.terminals.close(s.tabKey) }
+            if inDuo { self.terminals.close(s.tabKey); self.chats.forget(s.tabKey) }
             if self.consoleTab == s.tabKey { self.consoleTab = nil }
             if self.homeTab == s.tabKey { self.homeTab = nil }
             // Wait (up to 8 s) for the process to end and its beacon to go before the files do; a session with no turn yet has no beacon.
@@ -156,6 +156,7 @@ extension AppModel {
         }
         DuoState.update { $0.archivedSessions.removeAll { $0 == id } }
         terminals.close(key)
+        chats.forget(key)
         if consoleTab == key { consoleTab = nil }
         if homeTab == key { homeTab = nil }
         refreshLive()

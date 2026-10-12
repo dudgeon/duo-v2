@@ -406,7 +406,7 @@ public final class AppModel {
         refreshLive()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.refreshLive() }
-        }
+        }.loose()
     }
 
     /// Rebuilds the snapshot off the main thread, one refresh at a time: disk reads can block
@@ -479,7 +479,7 @@ public final class AppModel {
             merged.sessions[i].reason = nil
             merged.counts.needsYou = max(0, merged.counts.needsYou - 1)
         }
-        if merged != fixture { fixture = merged }
+        if !merged.sameApartFromClock(fixture) { fixture = merged }
         followTaskTitles()
         // The map's order settles on the first scan, then on each arrival at All projects (DL-104).
         if mapSettled.isEmpty || altitude != .allProjects { settleMapOrder() }
@@ -579,6 +579,7 @@ public final class AppModel {
         if isShell(key) { closeShell(key); return }
         let project: String? = altitude.isAllProjects ? fixture.home?.name : currentProject?.name
         terminals.close(key)
+        chats.forget(key)
         let next = project.map { tabSessions(inProject: $0).first { $0.tabKey != key }?.tabKey } ?? nil
         if altitude.isAllProjects { homeTab = next } else { consoleTab = next }
         fixture = fixture  // republish: tabs depend on which terminals exist

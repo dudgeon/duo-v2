@@ -27,7 +27,7 @@ final class ChatFeed {
         chat.log.cwd = cwd
         loadHistory()
         startEvents()
-        timer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { [weak self] _ in MainActor.assumeIsolated { self?.tick() } }
+        timer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { [weak self] _ in MainActor.assumeIsolated { self?.tick() } }.loose()
     }
 
     func stop() { timer?.invalidate(); timer = nil }

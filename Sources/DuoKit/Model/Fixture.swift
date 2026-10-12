@@ -120,6 +120,8 @@ public struct Fixture: Codable, Sendable, Equatable {
     public var baseDir: String? = nil
 
     public var now: String
+    /// Equal but for the clock: `now` is stamped on every refresh and nothing reads it, so it mustn't make an idle refresh look like a change (C-79).
+    public func sameApartFromClock(_ other: Fixture) -> Bool { var c = self; c.now = other.now; return c == other }
     public var user: String
     public var topics: [String]
     public var projects: [Project]

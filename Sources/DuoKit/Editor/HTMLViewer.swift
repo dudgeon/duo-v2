@@ -58,7 +58,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
                 let now = Self.newest(around: url)
                 if now != self.stamp, !self.picking { self.stamp = now; self.webView.reload() }
             }
-        }
+        }.loose()
     }
 
     static func newest(around file: URL) -> Date? {

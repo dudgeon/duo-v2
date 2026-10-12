@@ -567,6 +567,11 @@ func repoFixture() throws -> Fixture {
     try "---\ngoal: x\n---\n".write(to: other.appending(path: "PROJECT.md"), atomically: true, encoding: .utf8)
     let moved = Beacon(pid: 1, sessionId: "aaaa-filed", cwd: other.path, name: nil, status: "idle", waitingFor: nil,
                        statusUpdatedAt: nil, entrypoint: "cli", kind: nil)
+    // C-79: the refresh's clock stamp alone isn't a change.
+    let (snapFirst, _, _) = LiveSnapshot.build(noHistory(lw), beacons: [live])
+    Thread.sleep(forTimeInterval: 1.1)
+    let (snapAgain, _, _) = LiveSnapshot.build(noHistory(lw), beacons: [live])
+    check(snapAgain.now != snapFirst.now && snapAgain.sameApartFromClock(snapFirst), "a refresh with nothing new differs only in its clock, which apply() ignores (C-79)")
     let (snap2, _, moves) = LiveSnapshot.build(noHistory(lw), beacons: [moved])
     check(snap2.sessions.first { $0.sessionId == "aaaa-filed" }?.project == "onboarding"
           && moves.map(\.sessionId) == ["aaaa-filed"] && moves.first?.to.lastPathComponent == "onboarding",

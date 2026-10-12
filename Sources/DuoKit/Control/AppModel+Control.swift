@@ -1149,6 +1149,7 @@ extension AppModel {
         guard terminals.existing(key) != nil || parked else { return }
         let s = fixture.sessions.first { $0.tabKey == key }
         if terminals.existing(key) != nil { terminals.close(key) }
+        chats.forget(key)
         if let s {
             let next = tabSessions(inProject: s.project).first { $0.tabKey != key }?.tabKey
             if homeTab == key { homeTab = next }

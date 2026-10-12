@@ -264,7 +264,7 @@ public final class WebTab: NSObject, WKNavigationDelegate, WKUIDelegate, WKScrip
                 if d.progress.totalUnitCount > 0 { r.total = d.progress.totalUnitCount }
                 if r != self.running { self.running = r }
             }
-        }
+        }.loose()
         completionHandler(dest)
     }
 
