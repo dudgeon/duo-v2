@@ -1,0 +1,31 @@
+{
+  "$note": "The director film's shots, keyed by scene id, as for the intro (video/shots.json). Placeholder paper cards until its real scenes exist.",
+  "S1": {
+    "kind": "drawn",
+    "scene": "paper-card",
+    "shotSha": "e2969f2f2fff",
+    "requires": [
+      {
+        "what": "A paper card with the scene's title in ink",
+        "by": [
+          "src:src/scenes/director/PaperCard.tsx"
+        ]
+      }
+    ]
+  },
+  "S2": {
+    "kind": "drawn",
+    "scene": "paper-card",
+    "transitionIn": "paper-carry",
+    "shotSha": "7adc8502f488",
+    "requires": [
+      {
+        "what": "The paper card carries on into the next scene's title",
+        "by": [
+          "transition",
+          "src:src/scenes/director/PaperCard.tsx"
+        ]
+      }
+    ]
+  }
+}
