@@ -14,7 +14,7 @@ public enum VideoTargets {
                                              "video-s2-right-1", "video-s2-right-2", "video-s2-right-3", "video-s2-right-4",
                                              // Scene 3: All projects as a List. Scene 4: sessions (resume, menu, archive, delete). Scene 5: the same session in chat.
                                              "video-s3-list",
-                                             "video-s4-resumed", "video-s4-menu", "video-s4-archived", "video-s4-delete-ask", "video-s4-deleted",
+                                             "video-s4-resumed", "video-s4-tab-hover", "video-s4-tab-closed", "video-s4-tab-reopened", "video-s4-menu", "video-s4-archived", "video-s4-delete-ask", "video-s4-deleted",
                                              "video-s5-chat", "video-s5-chat-open", "video-s5-draft", "video-s5-paste-text", "video-s5-paste-image",
                                              // Scene 6: chat mode, turn by turn (the recordings video/fixture/chat-s5-*).
                                              "video-s6-answered", "video-s6-open", "video-s6-typed", "video-s6-draft", "video-s6-paste-text", "video-s6-paste-image",
@@ -22,7 +22,7 @@ public enum VideoTargets {
                                              // Scene 7: the editor pane (the right pane's tabs, the PRD's hand edits, Send Selection, the pickers).
                                              "video-s7-tab-md", "video-s7-tab-html", "video-s7-tab-pptx", "video-s7-tab-docx",
                                              "video-s7-bold-sel", "video-s7-bold", "video-s7-link-sel", "video-s7-link", "video-s7-typed", "video-s7-bullet",
-                                             "video-s7-md-sel", "video-s7-md-composer", "video-s7-md-sent", "video-s7-md-after",
+                                             "video-s7-md-sel", "video-s7-md-composer-empty", "video-s7-md-composer-ref", "video-s7-md-composer", "video-s7-md-sent", "video-s7-md-after",
                                              "video-s7-html-pick", "video-s7-html-sent", "video-s7-html-after",
                                              "video-s7-pptx-slide3", "video-s7-pptx-pick", "video-s7-pptx-sent", "video-s7-pptx-after"]
                                             + s9s10Screens
@@ -107,6 +107,7 @@ public enum VideoTargets {
     static let autoAdd = "Auto-add decision"
     static let testFlight = "quick q: TestFlight build size"
     static let oldNotes = "Old v1 notes cleanup"
+    static let scanReview = "Prototype scan review"   // the tab the story closes ("Close one and come back to it later")
 
     static func applyS4S5(_ requested: String, to model: AppModel) {
         let screen = s9s10Base(requested)   // scenes 9 and 10's project states stand on scene 7's last one
@@ -146,8 +147,13 @@ public enum VideoTargets {
         if screen.hasPrefix("video-s7-") {
             let spec = S7.of(screen)
             let chat = s6Chat(dir.appending(path: spec.chat), cwd: v.cwd, picked: false, key: key(autoAdd))
-            if spec.composer, let text = try? String(contentsOf: dir.appending(path: "chat-s7-md/composer.txt"), encoding: .utf8) {
-                chat.ui.composer = text   // Duo's payload, then Sam's words: what the composer holds just before Send
+            if spec.composer != .none {
+                let text = (try? String(contentsOf: dir.appending(path: "chat-s7-md/composer.txt"), encoding: .utf8)) ?? ""
+                switch spec.composer {
+                case .full: chat.ui.composer = text   // Duo's payload, then Sam's words: what the composer holds just before Send
+                case .reference: chat.ui.composer = text.replacingOccurrences(of: samWords, with: "")   // Duo's payload alone, the caret on the line after it
+                default: break
+                }
                 chat.focusComposer += 1
             }
             model.fixtureChats[key(autoAdd)] = chat
@@ -170,6 +176,19 @@ public enum VideoTargets {
 
         if requested.hasPrefix("video-s9-") { applyS9Project(requested, model) }
         if requested.hasPrefix("video-s10-") { applyS10(requested, model: model, dir: dir, video: v, project: project) }
+
+        // Scene 4 closes "Prototype scan review" with its ×, then comes back to it from the session list ("come back to it later"): the
+        // tab is open again in every state after that, so only these two show it closed. The pointer over the tab shows the ×; closing
+        // goes through the tab's own close path, so the session stays filed in the list.
+        if screen == "video-s4-tab-hover" { model.hoveredTab = key(scanReview) }
+        if screen == "video-s4-tab-closed" { model.closeConsoleTab(key(scanReview)) }
+        if screen == "video-s4-tab-reopened" {
+            // Closed, then its row in the list clicked: `openConsoleTab` is the row's own action; the console then brings the session's
+            // terminal up (here the recorded one), which is what puts its tab back in the strip, in front.
+            model.closeConsoleTab(key(scanReview))
+            model.openConsoleTab(key(scanReview))
+            model.parkedTabs.insert(key(scanReview))
+        }
 
         switch screen {
         case "video-s4-menu":

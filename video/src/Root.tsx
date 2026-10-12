@@ -5,6 +5,9 @@ import {WallpaperSvg} from './lib/Desk';
 import {WALLPAPERS} from './lib/Wallpapers';
 import {StyleFrame} from './scenes/StyleFrames';
 import {TopicVariant} from './scenes/TopicVariants';
+import {CalloutVariant} from './scenes/CalloutVariants';
+import {CalloutStudy} from './scenes/CalloutStudy';
+import {CalloutStudy2} from './scenes/CalloutStudy2';
 
 // build.mjs writes build/public/timeline.json; the film's length comes from it.
 export const Root = () => (
@@ -19,6 +22,12 @@ export const Root = () => (
     width={tokens.frame.width} height={tokens.frame.height} fps={tokens.frame.fps} durationInFrames={1} />
   <Composition id="StyleFrame" component={StyleFrame as never} defaultProps={{frame: 'callout'}}
     width={tokens.frame.width} height={tokens.frame.height} fps={tokens.frame.fps} durationInFrames={tokens.frame.fps * 4} />
+  <Composition id="CalloutStudy2" component={CalloutStudy2 as never} defaultProps={{variant: 'trace'}}
+    width={tokens.frame.width} height={tokens.frame.height} fps={tokens.frame.fps} durationInFrames={tokens.frame.fps * 6} />
+  <Composition id="CalloutStudy" component={CalloutStudy as never} defaultProps={{variant: 'loop'}}
+    width={tokens.frame.width} height={tokens.frame.height} fps={tokens.frame.fps} durationInFrames={tokens.frame.fps * 4} />
+  <Composition id="CalloutVariant" component={CalloutVariant as never} defaultProps={{variant: 'ring'}}
+    width={tokens.frame.width} height={tokens.frame.height} fps={tokens.frame.fps} durationInFrames={1} />
   <Composition id="TopicVariant" component={TopicVariant as never} defaultProps={{variant: 'rail'}}
     width={tokens.frame.width} height={tokens.frame.height} fps={tokens.frame.fps} durationInFrames={1} />
   <Composition

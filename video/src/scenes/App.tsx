@@ -3,8 +3,9 @@ import {AbsoluteFill, Img, interpolate, staticFile} from 'remotion';
 import {smootherstep, type Rect} from '../lib/camera';
 import {Wallpaper} from '../lib/Desk';
 import {Dock, MenuBar} from '../lib/Clutter';
-import {Caption, Cursor, Marker} from '../lib/Paper';
+import {Caption, Cursor} from '../lib/Paper';
 import tokens from '../../style/tokens.json';
+import {Trace, traceProgress} from '../lib/Trace';
 
 // S3 onward: the real Duo window on the desk, played as a run of captures of the app (one per state),
 // with the cursor clicking what changes it, the camera pushing in on what the narrator names, and
@@ -19,7 +20,7 @@ export type AppCam = {at: number; dur: number; rect: Rect | null};       // null
 export type AppMark = {at: number; until: number; rect: Rect; quote?: string};
 export type AppKey = {at: number; label: string};
 // A wipe: `state` drawn over the picture inside `rect`, left to right over dur (typing that renders as it's typed).
-export type AppWipe = {at: number; dur: number; state: string; rect: Rect};
+export type AppWipe = {at: number; dur: number; state: string; rect: Rect; chars?: number};
 export type AppMenu = {at: number; until: number; x: number; y: number; items: string[]; hi?: {at: number; item: string}};
 export type AppData = {
   window: {w: number; h: number}; scale: number; src: Record<string, string>;
@@ -59,6 +60,14 @@ const ContextMenu = ({x, y, items, hi, u}: {x: number; y: number; items: string[
         <span>{it.replace(' ▸', '')}</span>{it.endsWith(' ▸') && <span style={{opacity: 0.6}}>›</span>}</div>
     ))}
   </div>
+);
+
+/** The macOS text cursor (I-beam), centred on (x, y). */
+const IBeam = ({x, y}: {x: number; y: number}) => (
+  <svg style={{position: 'absolute', left: x - 9, top: y - 20, overflow: 'visible'}} width={18} height={40} viewBox="0 0 18 40">
+    <path d="M3 2 Q9 2 9 6 Q9 2 15 2 M9 6 V34 M3 38 Q9 38 9 34 Q9 38 15 38 M5 20 H13" fill="none" stroke="#fff" strokeWidth={5} strokeLinecap="round" />
+    <path d="M3 2 Q9 2 9 6 Q9 2 15 2 M9 6 V34 M3 38 Q9 38 9 34 Q9 38 15 38 M5 20 H13" fill="none" stroke="#000" strokeWidth={2.2} strokeLinecap="round" />
+  </svg>
 );
 
 /** A shortcut as it's pressed: keycaps low in the frame, centred (S7's ⌘B, ⌘K). */
@@ -127,7 +136,10 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
     const m = dragging ? interpolate(t, [t0, Math.max(t1, t0 + 0.01)], [0, 1], clamp) : i < ways.length ? ramp(t, ea, eb) : 1;
     const press = data.clicks.reduce((p, c) => Math.max(p, interpolate(t - c.at, [-0.04, 0.04, 0.14], [0, 1, 0], clamp)), dragging ? 1 : 0);
     const op = ramp(t, ways[0].at - 1.0, ways[0].at - 0.8) * (1 - ramp(t, ways[ways.length - 1].at + 0.6, ways[ways.length - 1].at + 1.0));
-    cursor = <div style={{opacity: op}}><Cursor x={lerp(from.x, to.x, m)} y={lerp(from.y, to.y, m) - (dragging ? 0 : Math.sin(m * Math.PI) * 26)} press={press} /></div>;
+    // Over text being selected the pointer is the macOS I-beam, as it is in the real editor and composer.
+    const cx = lerp(from.x, to.x, m), cy = lerp(from.y, to.y, m) - (dragging ? 0 : Math.sin(m * Math.PI) * 26);
+    const beam = dragging || (i < ways.length && next.hold !== undefined && t > next.at - 0.35);
+    cursor = <div style={{opacity: op}}>{beam ? <IBeam x={cx} y={cy} /> : <Cursor x={cx} y={cy} press={press} />}</div>;
   }
 
   return (
@@ -149,7 +161,17 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
           ) : <Crop src={data.src[state]} scale={data.scale} region={{x: 0, y: 0, w: data.window.w, h: data.window.h}} rect={{x: 0, y: 0, w: win.w, h: win.h}} />}
           {(data.wipes ?? []).map((w, i) => {
             if (t < w.at || t > w.at + w.dur + 0.1) return null;
-            const ww = w.rect.w * interpolate(t, [w.at, w.at + w.dur], [0, 1], clamp);
+            // `chars`: typing, not a wipe. The text arrives a character at a time, with the small uneven gaps of real
+            // typing (a fixed pseudo-random spread, so every render is the same), finishing at w.at + w.dur.
+            let u = interpolate(t, [w.at, w.at + w.dur], [0, 1], clamp);
+            if (w.chars) {
+              const n = w.chars, gaps = Array.from({length: n}, (_, i) => 0.6 + 0.8 * Math.abs(Math.sin(i * 12.9898) * 43758.5453 % 1));
+              const total = gaps.reduce((a, b) => a + b, 0);
+              let acc = 0, typed = 0;
+              for (const g of gaps) { acc += g; if (w.at + (acc / total) * w.dur <= t) typed++; else break; }
+              u = typed / n;
+            }
+            const ww = w.rect.w * u;
             if (ww < 0.5) return null;
             return <Crop key={`wp${i}`} src={data.src[w.state]} scale={data.scale} region={{...w.rect, w: ww}} rect={{x: w.rect.x * K, y: w.rect.y * K, w: ww * K, h: w.rect.h * K}} />;
           })}
@@ -177,7 +199,7 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
           const u = ramp(t, mk.at + 0.05, mk.at + 0.5) * (1 - leave);
           return (
             <AbsoluteFill key={i}>
-              <Marker cx={r.x + r.w / 2} cy={r.y + r.h / 2} rx={r.w / 2 + 18} ry={r.h / 2 + 14} progress={u} />
+              <Trace r={r} radius={8 * K * cs} p={traceProgress(t, mk.at + 0.05, mk.until)} />
               {mk.quote && <Caption text={mk.quote} u={ramp(t, mk.at + 0.3, mk.at + 0.6) * (1 - leave)} />}
             </AbsoluteFill>
           );

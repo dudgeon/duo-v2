@@ -334,19 +334,79 @@
       {
         "at": {
           "line": 2,
-          "word": "close"
+          "word": "close",
+          "offset": -0.9
         },
         "cam": {
-          "on": "video.pane.left",
-          "y0": 0,
-          "y1": 0.6,
-          "x1": 1.4
+          "x": 0,
+          "y": 30,
+          "w": 980,
+          "h": 551
         },
         "dur": 0.8
       },
       {
         "at": {
           "line": 2,
+          "word": "close",
+          "offset": -0.35
+        },
+        "in": "video-s4-tab-hover",
+        "state": "video-s4-tab-hover",
+        "stateAfter": 0
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "close",
+          "offset": 0.2
+        },
+        "click": "video.tab.middle.close.2",
+        "in": "video-s4-tab-hover",
+        "state": "video-s4-tab-closed"
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "come",
+          "offset": -0.3
+        },
+        "in": "video-s4-tab-closed",
+        "cam": {
+          "on": "video.pane.left",
+          "y0": 0,
+          "y1": 0.55
+        },
+        "dur": 0.9
+      },
+      {
+        "at": {
+          "line": 2,
+          "word": "later"
+        },
+        "click": "video.session.Prototype scan review",
+        "in": "video-s4-tab-closed",
+        "state": "video-s4-tab-reopened",
+        "cam": {
+          "x": 0,
+          "y": 30,
+          "w": 1100,
+          "h": 619
+        },
+        "dur": 0.9
+      },
+      {
+        "at": {
+          "line": 3,
+          "offset": -0.55
+        },
+        "click": "video.tab.middle.3",
+        "in": "video-s4-tab-reopened",
+        "state": "video-s4-resumed"
+      },
+      {
+        "at": {
+          "line": 3,
           "word": "archive",
           "offset": -0.95
         },
@@ -373,7 +433,7 @@
       },
       {
         "at": {
-          "line": 2,
+          "line": 3,
           "word": "archive"
         },
         "state": "video-s4-archived",
@@ -381,7 +441,7 @@
       },
       {
         "at": {
-          "line": 2,
+          "line": 3,
           "word": "delete"
         },
         "menu": {
@@ -408,7 +468,7 @@
       },
       {
         "at": {
-          "line": 2,
+          "line": 3,
           "word": "delete",
           "offset": 0.65
         },
@@ -423,7 +483,7 @@
       },
       {
         "at": {
-          "line": 2,
+          "line": 3,
           "word": "clutter"
         },
         "click": "Move to Trash",
@@ -443,7 +503,7 @@
         "dur": 0.9
       }
     ],
-    "shotSha": "e138ef029166",
+    "shotSha": "e486182e0b67",
     "requires": [
       {
         "what": "Way in from S3 by app navigation: the cursor clicks the Needs you session",
@@ -465,9 +525,20 @@
       {
         "what": "Another is deleted through Duo's confirmation sheet",
         "built": true
+      },
+      {
+        "what": "On \"close one\": a session tab's × closes it in the middle pane; the session stays in the list",
+        "built": true
+      },
+      {
+        "what": "Slower close: the camera pulls back to the list where the closed session stays; on \"come back to it later\" the cursor clicks it and its tab reopens with its history; hold before line 3",
+        "built": true
       }
     ],
-    "$menu": "macOS draws context menus in their own window, which --capture-window can't include, and fixture sessions have no menu (no sessionId), so the menu is drawn with the real items of SessionOrganizeMenu (AllProjectsPanes.swift)."
+    "$menu": "macOS draws context menus in their own window, which --capture-window can't include, and fixture sessions have no menu (no sessionId), so the menu is drawn with the real items of SessionOrganizeMenu (AllProjectsPanes.swift).",
+    "pauses": {
+      "2": 1.8
+    }
   },
   "S5": {
     "kind": "drawn",
@@ -706,7 +777,7 @@
       {
         "at": {
           "line": 3,
-          "word": "pickers"
+          "word": "picker"
         },
         "state": "video-s6-model",
         "in": "video-s6-model",
@@ -775,8 +846,11 @@
       "video-s6-model-picked"
     ],
     "pauses": {
-      "3": 1.2,
-      "4": 9.5
+      "3": 19.4,
+      "4": 1.2,
+      "5": 0.6,
+      "6": 1.6,
+      "7": 2.2
     },
     "tail": 1.6,
     "beats": [
@@ -958,29 +1032,36 @@
       {
         "at": {
           "line": 3,
-          "word": "select"
+          "word": "select",
+          "offset": -0.2
+        },
+        "in": "video-s7-bullet",
+        "state": "video-s7-bullet",
+        "cam": "video.editor.heard",
+        "dur": 1
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "select",
+          "offset": 0.9
         },
         "drag": {
           "from": "video.editor.heard",
           "fx0": 0,
           "fx1": 1,
-          "dur": 0.9,
+          "dur": 1.8,
           "reveal": "video-s7-md-sel"
         },
         "in": "video-s7-md-sel",
         "state": "video-s7-md-sel",
-        "stateAfter": 0.9,
-        "cam": {
-          "on": "video.pane.right",
-          "y0": 0.25,
-          "y1": 0.53
-        },
-        "dur": 0.7
+        "stateAfter": 1.8
       },
       {
         "at": {
           "line": 3,
-          "word": "show"
+          "word": "agent",
+          "offset": 0.5
         },
         "menu": {
           "on": "video.editor.heard",
@@ -1002,20 +1083,60 @@
             "Speech ▸"
           ],
           "pick": "Send Selection to Claude",
-          "pickAfter": 0.6,
-          "hold": 0.85
+          "pickAfter": 0.9,
+          "hold": 1.3
         },
-        "fx": 0.55,
+        "fx": 0.6,
         "in": "video-s7-md-sel"
       },
       {
         "at": {
           "line": 3,
-          "word": "agent"
+          "word": "agent",
+          "offset": 2.6
         },
-        "state": "video-s7-md-composer",
+        "in": "video-s7-md-composer-empty",
+        "state": "video-s7-md-composer-empty",
+        "cam": {
+          "on": "video.pane.middle",
+          "y0": 0.62,
+          "y1": 1
+        },
+        "dur": 1
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "agent",
+          "offset": 3.9
+        },
+        "in": "video-s7-md-composer-ref",
+        "state": "video-s7-md-composer-ref"
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "agent",
+          "offset": 5
+        },
+        "wipe": {
+          "state": "video-s7-md-composer",
+          "on": "video.composer.text",
+          "dur": 13.2,
+          "chars": 64
+        },
         "in": "video-s7-md-composer",
-        "stateAfter": -0.4,
+        "state": "video-s7-md-composer",
+        "stateAfter": 13.2
+      },
+      {
+        "at": {
+          "line": 3,
+          "word": "agent",
+          "offset": 18.7
+        },
+        "in": "video-s7-md-sent",
+        "state": "video-s7-md-sent",
         "cam": {
           "on": "video.pane.middle",
           "y0": 0.45,
@@ -1025,30 +1146,29 @@
       },
       {
         "at": {
-          "line": 3,
+          "line": 4,
           "word": "update"
         },
-        "state": "video-s7-md-sent",
-        "in": "video-s7-md-sent"
-      },
-      {
-        "at": {
-          "line": 3,
-          "word": "visible"
-        },
-        "state": "video-s7-md-after",
         "in": "video-s7-md-after",
         "cam": {
           "on": "video.pane.right",
           "y0": 0.25,
           "y1": 0.53
         },
-        "dur": 0.8,
-        "stateAfter": 0.5
+        "dur": 0.8
       },
       {
         "at": {
-          "line": 3,
+          "line": 4,
+          "word": "visible"
+        },
+        "in": "video-s7-md-after",
+        "state": "video-s7-md-after",
+        "stateAfter": 0.3
+      },
+      {
+        "at": {
+          "line": 4,
           "word": "changes"
         },
         "mark": "video.editor.change",
@@ -1058,7 +1178,7 @@
       },
       {
         "at": {
-          "line": 4,
+          "line": 5,
           "word": "html"
         },
         "click": "video.tab.html",
@@ -1073,9 +1193,8 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 1
+          "line": 6,
+          "offset": -0.2
         },
         "menu": {
           "on": "video.html.fix",
@@ -1092,9 +1211,8 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 2.1
+          "line": 6,
+          "word": "element"
         },
         "click": "video.html.fix",
         "in": "video-s7-html-pick",
@@ -1102,9 +1220,8 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 3
+          "line": 6,
+          "word": "ask"
         },
         "click": "video.picker.send",
         "in": "video-s7-html-pick",
@@ -1119,9 +1236,9 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 4.6
+          "line": 6,
+          "word": "change",
+          "offset": 0.6
         },
         "state": "video-s7-html-after",
         "in": "video-s7-html-after",
@@ -1135,9 +1252,9 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 5.2
+          "line": 6,
+          "word": "change",
+          "offset": 1.2
         },
         "mark": "video.html.fix",
         "in": "video-s7-html-after",
@@ -1146,9 +1263,8 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 6.7
+          "line": 7,
+          "offset": -0.3
         },
         "click": "video.tab.pptx",
         "in": "video-s7-html-after",
@@ -1162,18 +1278,17 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 7.6
+          "line": 7,
+          "word": "pick"
         },
         "click": "video.slide.select",
         "in": "video-s7-pptx-slide3"
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 8.3
+          "line": 7,
+          "word": "paragraph",
+          "offset": 0.3
         },
         "click": "video.slide.shape",
         "in": "video-s7-pptx-pick",
@@ -1181,9 +1296,8 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 9.1
+          "line": 7,
+          "word": "ask"
         },
         "click": "video.picker.send",
         "in": "video-s7-pptx-pick",
@@ -1198,9 +1312,9 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 10.7
+          "line": 7,
+          "word": "bullets",
+          "offset": 0.5
         },
         "state": "video-s7-pptx-after",
         "in": "video-s7-pptx-after",
@@ -1214,9 +1328,9 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 11.3
+          "line": 7,
+          "word": "bullets",
+          "offset": 1.1
         },
         "mark": "video.slide.shape",
         "in": "video-s7-pptx-after",
@@ -1225,16 +1339,16 @@
       },
       {
         "at": {
-          "line": 4,
-          "word": "html",
-          "offset": 12.6
+          "line": 7,
+          "word": "bullets",
+          "offset": 2.6
         },
         "in": "video-s7-pptx-after",
         "cam": "wide",
         "dur": 1.1
       }
     ],
-    "shotSha": "6cfe4c9e59cc",
+    "shotSha": "c2eb13b14050",
     "requires": [
       {
         "what": "Way in from S6 without a cut; the topic list comes up; the camera moves to the viewer pane",
@@ -1253,11 +1367,15 @@
         "built": true
       },
       {
-        "what": "Line 4: HTML element picker on the Fix button, sent to Claude, prototype shows the change",
+        "what": "Lines 4–5: HTML element picker on the Fix button, sent to Claude, prototype shows the change",
         "built": true
       },
       {
-        "what": "Line 4: a slide paragraph picked, sent, slide redrawn in three bullets",
+        "what": "Line 6: a slide paragraph picked, sent, slide redrawn in three bullets",
+        "built": true
+      },
+      {
+        "what": "Lines 3–4 slowed: zoom on the paragraph, I-beam drag-select, right-click, Send Selection to Claude, hold; the composer empty, the reference lands, Sam types at a real pace (~15 s) and sends; the narration waits",
         "built": true
       }
     ]
@@ -1298,19 +1416,19 @@
         "line": 3
       },
       "grey": {
-        "line": 3,
+        "line": 4,
         "word": "show"
       },
       "fold": {
-        "line": 4,
+        "line": 5,
         "offset": -0.6
       },
       "resume": {
-        "line": 4,
+        "line": 5,
         "offset": 0.1
       },
       "scroll": {
-        "line": 4,
+        "line": 5,
         "word": "stack"
       }
     },
@@ -1332,7 +1450,7 @@
         "built": true
       }
     ],
-    "shotSha": "d9c99d0764b6"
+    "shotSha": "6297f373ae51"
   },
   "S11": {
     "kind": "drawn",
@@ -1452,7 +1570,7 @@
       {
         "at": {
           "line": 3,
-          "word": "pane"
+          "word": "card"
         },
         "in": "video-s9-board",
         "cam": "video.board.col.shelf-scan",
@@ -1554,7 +1672,7 @@
         "built": true
       }
     ],
-    "shotSha": "cf4038579566"
+    "shotSha": "7b5ee7e54ad0"
   },
   "S10": {
     "kind": "drawn",
@@ -1567,7 +1685,9 @@
     "pauses": {
       "4": 1.6,
       "5": 2.4,
-      "6": 3.4
+      "6": 1.4,
+      "7": 3.4,
+      "8": 3
     },
     "beats": [
       {
@@ -1619,6 +1739,16 @@
       },
       {
         "at": {
+          "line": 2,
+          "word": "come"
+        },
+        "in": "video-s10-grouped",
+        "mark": "video.task.beta-interview-synthesis",
+        "quote": "tasks come and go",
+        "hold": 1.6
+      },
+      {
+        "at": {
           "line": 3,
           "word": "context"
         },
@@ -1662,11 +1792,12 @@
         "state": "video-s10-newtask-untitled",
         "cam": {
           "x": 0,
-          "y": 40,
-          "w": 1800,
-          "h": 1012
+          "y": 250,
+          "w": 800,
+          "h": 450
         },
-        "dur": 0.9
+        "dur": 0.9,
+        "fx": 0.25
       },
       {
         "at": {
@@ -1738,8 +1869,8 @@
       {
         "at": {
           "line": 5,
-          "word": "task",
-          "offset": 0.4
+          "word": "sessions",
+          "offset": 0.35
         },
         "in": "video-s10-newsession",
         "state": "video-s10-newsession",
@@ -1753,15 +1884,62 @@
       {
         "at": {
           "line": 5,
-          "word": "task",
-          "offset": 2
+          "word": "task"
         },
         "in": "video-s10-newsession-sent",
         "state": "video-s10-newsession-sent"
       },
       {
         "at": {
+          "line": 5,
+          "word": "you",
+          "offset": -0.1
+        },
+        "in": "video-s10-newsession-sent",
+        "cam": {
+          "x": 0,
+          "y": 196,
+          "w": 470,
+          "h": 264
+        },
+        "dur": 0.6
+      },
+      {
+        "at": {
+          "line": 5,
+          "word": "collapse"
+        },
+        "click": "video.task.warn-about-glare-before-the-photo.disclosure",
+        "in": "video-s10-newsession-sent",
+        "state": "video-s10-collapsed"
+      },
+      {
+        "at": {
+          "line": 5,
+          "word": "show"
+        },
+        "click": "video.task.warn-about-glare-before-the-photo.disclosure",
+        "in": "video-s10-collapsed",
+        "state": "video-s10-newsession-sent"
+      },
+      {
+        "at": {
           "line": 6,
+          "word": "imagine",
+          "offset": -0.2
+        },
+        "in": "video-s10-workstreams",
+        "state": "video-s10-workstreams",
+        "cam": {
+          "on": "video.pane.left",
+          "y0": 0,
+          "y1": 0.58
+        },
+        "dur": 1
+      },
+      {
+        "at": {
+          "line": 7,
           "word": "view"
         },
         "click": "video.taskboard.open",
@@ -1777,7 +1955,7 @@
       },
       {
         "at": {
-          "line": 6,
+          "line": 7,
           "word": "manage"
         },
         "click": "video.taskboard.card.deck-for-thursday",
@@ -1786,7 +1964,7 @@
       },
       {
         "at": {
-          "line": 6,
+          "line": 7,
           "word": "return",
           "offset": 1.4
         },
@@ -1795,6 +1973,95 @@
         "state": "video-s10-deck-resumed",
         "cam": "wide",
         "dur": 0.9
+      },
+      {
+        "at": {
+          "line": 8,
+          "word": "best",
+          "offset": -0.4
+        },
+        "in": "video-s10-task-menu-target",
+        "state": "video-s10-task-menu-target",
+        "cam": {
+          "x": 0,
+          "y": 200,
+          "w": 900,
+          "h": 506
+        },
+        "dur": 0.9
+      },
+      {
+        "at": {
+          "line": 8,
+          "word": "complete"
+        },
+        "menu": {
+          "on": "video.task.beta-interview-synthesis",
+          "items": [
+            "Open Task Note",
+            "New Session in Task",
+            "Add Session ▸",
+            "-",
+            "Rename",
+            "Mark Complete",
+            "Status ▸",
+            "-",
+            "Copy Link",
+            "Reveal in Finder",
+            "Move to Project ▸",
+            "-",
+            "Archive Task…",
+            "Delete Task…"
+          ],
+          "pick": "Archive Task…",
+          "pickAfter": 0.7,
+          "hold": 1
+        },
+        "fx": 0.45,
+        "in": "video-s10-task-menu-target"
+      },
+      {
+        "at": {
+          "line": 8,
+          "word": "archive"
+        },
+        "in": "video-s10-archive-ask",
+        "state": "video-s10-archive-ask",
+        "cam": {
+          "x": 560,
+          "y": 20,
+          "w": 680,
+          "h": 383
+        },
+        "dur": 0.7
+      },
+      {
+        "at": {
+          "line": 8,
+          "word": "sessions"
+        },
+        "click": "Archive Task and Its Sessions",
+        "in": "video-s10-archive-ask",
+        "state": "video-s10-archived",
+        "stateAfter": 0.15
+      },
+      {
+        "at": {
+          "line": 8,
+          "word": "way",
+          "offset": -0.3
+        },
+        "in": "video-s10-archived",
+        "cam": {
+          "x": 0,
+          "y": 290,
+          "w": 900,
+          "h": 506
+        },
+        "dur": 0.8,
+        "mark": "video.task.beta-interview-synthesis",
+        "quote": "out of the way",
+        "hold": 1.8
       }
     ],
     "requires": [
@@ -1821,8 +2088,24 @@
       {
         "what": "The task board; Deck for Thursday picked; its session resumes",
         "built": true
+      },
+      {
+        "what": "Line 2: \"tasks come and go\" settles on the complete task",
+        "built": true
+      },
+      {
+        "what": "Line 5: collapse and show a task's sessions",
+        "built": true
+      },
+      {
+        "what": "Line 6: the whole list with four tasks of 2–3 sessions each, one complete",
+        "built": true
+      },
+      {
+        "what": "Line 8: Archive Task… → Archive Task and Its Sessions; they fold into Archived",
+        "built": true
       }
     ],
-    "shotSha": "d1edd6b3dc94"
+    "shotSha": "1f414b1ff549"
   }
 }

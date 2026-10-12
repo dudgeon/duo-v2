@@ -73,8 +73,37 @@
       "Morning triage": "7a5c000e-5e55-4d0e-8a00-5e550000000e",
       "Scan v1 launch notes": "7a5c000f-5e55-4d0e-8a00-5e550000000f",
       "Interview guide": "7a5c0010-5e55-4d0e-8a00-5e5500000010",
-      "Map tile costs": "7a5c0011-5e55-4d0e-8a00-5e5500000011"
+      "Map tile costs": "7a5c0011-5e55-4d0e-8a00-5e5500000011",
+      "Glass-door photos from stewards": "7a5c0012-5e55-4d0e-8a00-5e5500000012",
+      "Interview themes, P1–P8": "7a5c0013-5e55-4d0e-8a00-5e5500000013",
+      "Pick quotes for the synthesis": "7a5c0014-5e55-4d0e-8a00-5e5500000014"
     },
+    "sessions": [
+      {
+        "name": "Glass-door photos from stewards",
+        "project": "shelf-scan",
+        "state": "idle",
+        "wait": "2d",
+        "summary": "Asked glass-door stewards for shelf photos: 22 shelves in so far, filed for Ravi's glare set.",
+        "sessionId": "7a5c0012-5e55-4d0e-8a00-5e5500000012"
+      },
+      {
+        "name": "Interview themes, P1–P8",
+        "project": "shelf-scan",
+        "state": "idle",
+        "wait": "6d",
+        "summary": "Sorted the eight interviews into four themes: trust, glare, checking the list first, one-tap fixes.",
+        "sessionId": "7a5c0013-5e55-4d0e-8a00-5e5500000013"
+      },
+      {
+        "name": "Pick quotes for the synthesis",
+        "project": "shelf-scan",
+        "state": "idle",
+        "wait": "4d",
+        "summary": "Picked the pull quote (Denise, P3, on glare) and four more for What we heard.",
+        "sessionId": "7a5c0014-5e55-4d0e-8a00-5e5500000014"
+      }
+    ],
     "tasks": [
       {
         "project": "shelf-scan",
@@ -109,7 +138,8 @@
         "title": "Spine eval: glare cases",
         "status": "in-progress",
         "sessionIds": [
-          "7a5c0004-5e55-4d0e-8a00-5e5500000004"
+          "7a5c0004-5e55-4d0e-8a00-5e5500000004",
+          "7a5c0012-5e55-4d0e-8a00-5e5500000012"
         ],
         "owner": "Ravi Menon",
         "due": "2026-10-20",
@@ -121,7 +151,9 @@
         "title": "Beta interview synthesis",
         "status": "done",
         "sessionIds": [
-          "7a5c0002-5e55-4d0e-8a00-5e5500000002"
+          "7a5c0002-5e55-4d0e-8a00-5e5500000002",
+          "7a5c0013-5e55-4d0e-8a00-5e5500000013",
+          "7a5c0014-5e55-4d0e-8a00-5e5500000014"
         ],
         "owner": "Sam",
         "created": "2026-09-26",

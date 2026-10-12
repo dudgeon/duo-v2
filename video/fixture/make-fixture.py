@@ -230,12 +230,14 @@ surfaces = {
 def video_s10():
     import re
     slug = lambda t: re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-")[:60].strip("-")
-    ids = {s["name"]: s["sessionId"] for s in world["sessions"]}
-    T = world["tasks"]; n = T["new"]; name = slug(n["title"])
+    T = world["tasks"]
+    ids = {s["name"]: s["sessionId"] for s in world["sessions"] + T["sessions"]}
+    # Sessions only scene 10 has (every task has 2–3): Fixture.Session as is, sessionId set; the S10 states add them to the list.
+    extra = [{k: s[k] for k in ("name", "project", "state", "wait", "summary", "sessionId")} for s in T["sessions"]]; n = T["new"]; name = slug(n["title"])
     tasks = [{k: v for k, v in {"project": "shelf-scan", "path": f"tasks/{slug(t['title'])}.md", "title": t["title"], "status": t["status"],
               "sessionIds": [ids[x] for x in t["sessions"]], "owner": t.get("owner"), "waitingOn": t.get("waiting_on"), "due": t.get("due"),
               "created": t["created"], "completed": t.get("completed")}.items() if v is not None} for t in T["notes"]]
-    return {"sessionIds": ids, "tasks": tasks, "goal": world["projects"][0]["goal"],
+    return {"sessionIds": ids, "sessions": extra, "tasks": tasks, "goal": world["projects"][0]["goal"],
             "newTask": {"title": n["title"], "path": f"tasks/{name}.md", "created": f"s10/{name}.created.md",
                         "details": f"s10/{name}.details.md", "linked": f"s10/{name}.linked.md",
                         "session": {"sessionId": n["session"]["sessionId"], "title": n["session"]["title"], "chat": "chat-s10-task",

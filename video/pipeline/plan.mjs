@@ -13,7 +13,13 @@ function wordTime(line, phrase, nth = 1) {
   // `nth` picks a later occurrence when a word repeats in the line ("files" twice).
   const want = norm(phrase);
   // A heard word reads as the name it stands for (voice/heard-as.json: "cloud" is Claude), as the speech check reads it.
-  const words = line.words.map((w) => { const n = norm(w.word).join(' '); return {...w, n: HEARD_AS[n] ?? n}; });
+  // A heard word that holds several ("up-to-date") splits into its parts, spread across its time.
+  const words = line.words.flatMap((w) => {
+    const parts = norm(w.word), n = parts.join(' ');
+    if (HEARD_AS[n] || parts.length < 2) return [{...w, n: HEARD_AS[n] ?? n}];
+    const d = ((w.end ?? w.start) - w.start) / parts.length;
+    return parts.map((p, i) => ({...w, start: w.start + d * i, n: HEARD_AS[p] ?? p}));
+  });
   let seen = 0;
   for (let i = 0; i < words.length; i++) {
     if (want.every((w, j) => words[i + j] && words[i + j].n === w) && ++seen === nth) return words[i].start;
@@ -159,14 +165,17 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
     }
     // key: a shortcut's keycaps as it's pressed; wipe: a state revealed left to right inside an anchor (typing).
     if (b.key) (data.keys ??= []).push({at, label: b.key});
-    if (b.wipe) (data.wipes ??= []).push({at, dur: b.wipe.dur ?? 1.2, state: use(b.wipe.state), rect: camRect(b.wipe.on)});
+    if (b.wipe) (data.wipes ??= []).push({at, dur: b.wipe.dur ?? 1.2, state: use(b.wipe.state), rect: camRect(b.wipe.on), ...(b.wipe.chars ? {chars: b.wipe.chars} : {})});
     if (b.mark) data.marks.push({at, until: at + (b.hold ?? 2.2), rect: camRect(b.mark), quote: b.quote});
     if (b.state) { state = use(b.state); data.steps.push({at: +(at + (b.stateAfter ?? 0.1)).toFixed(3), state}); }
     data.ends.push(at + (b.hold ?? 0.6));
     last = at;
   }
-  data.lastState = state;
-  data.lastCam = lastCam;
+  // Beats may be written out of time order; the scene reads its pictures and camera moves in time order.
+  data.steps.sort((a, b) => a.at - b.at);
+  data.cams.sort((a, b) => a.at - b.at);
+  data.lastState = data.steps.length ? data.steps[data.steps.length - 1].state : state;
+  data.lastCam = data.cams.length ? data.cams[data.cams.length - 1].rect : lastCam;
   return data;
 }
 

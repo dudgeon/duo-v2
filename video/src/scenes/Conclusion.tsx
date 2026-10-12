@@ -3,9 +3,10 @@ import {AbsoluteFill, Img, staticFile} from 'remotion';
 import {Wallpaper} from '../lib/Desk';
 import {MenuBar} from '../lib/Clutter';
 import {Lights} from '../lib/ClutterApps';
-import {Cursor, Marker, PaperGround, ramp} from '../lib/Paper';
+import {Cursor, PaperGround, ramp} from '../lib/Paper';
 import {LogoScene} from './Logo';
 import tokens from '../../style/tokens.json';
+import {Trace, traceProgress} from '../lib/Trace';
 
 // S11 · Conclusion (Geoff, 2026-10-11), off the app on the paper ground, a bookend to S0.
 // 1. Duo's window steps away and a release line draws itself, one dot per real GitHub release (read at build
@@ -61,7 +62,8 @@ const TopicsDone = ({t, ev, d}: {t: number; ev: ConclusionEvents; d: ConclusionD
             <span style={{fontFamily: mono, fontSize: 22, width: 40, color: P.ink3}}>{String(i + 1).padStart(2, '0')}</span>
             <span style={{fontFamily: ui, fontSize: 44, fontWeight: 600, letterSpacing: -1, color: P.ink}}>{name}</span>
             <span style={{fontSize: 30, color: hot ? ACCENT : '#2E7A3A'}}>{hot ? '…' : '✓'}</span>
-            {c > 0 && <Marker cx={62 + name.length * 12.5} cy={2} rx={name.length * 12.5 + 30} ry={34} progress={c} />}
+            {/* The circle sits on the name: 44 px SF Pro semibold runs about 0.52 em a character. */}
+            {c > 0 && <Trace r={{x: 62 - 10, y: -30, w: name.length * 44 * 0.52 + 20, h: 60}} radius={12} p={c} />}
           </div>);
       })}
     </div>

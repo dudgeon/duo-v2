@@ -37,7 +37,11 @@ The transitions so far:
 | `logo-to-dock` | graphic | S0 logo → S1 desk | The title and line wipe back toward the icon, the menu bar and Dock slide in, and the icon arcs down into its Dock slot with a small pop. That frame is S1's empty desktop. |
 | `dock-launch` | app | S1 desk → S2 morph | The camera pushes toward the Dock, the cursor clicks Duo's tile, and the tile bounces and gets its running dot. The camera pulls back as the pile starts to morph into the Duo window. |
 | `click-through` | app | S2 → S3, S3 → S4 | The camera pulls back to show what to click, the cursor clicks it (All projects; the Needs you session), the app's next state comes up, and the scene's beats push in. |
-| `carry-on` | app | S4 → S5 | The picture carries straight on (the same capture, the same camera); the scene's first beat is the click that changes it (the chat toggle on "chat"). |
+| `carry-on` | app | S4 → S5 → S6 → S7, S9 → S10 | The picture carries straight on (the same capture, the same camera); the scene's first beat is the click that changes it (the chat toggle on "chat"). |
+| `duo-fades` | graphic | S7 → S8 | The scene opens on S7's last picture, wide, and fades Duo's window away to the bare desktop on its `fade` event (Geoff: "this is the point where duo should fade away"). |
+| `pile-to-duo` | graphic | S8 → S9 | The resume picker's pile fades out and Duo's window fades back in on the next scene's first capture, the same picture S7 ended on. |
+| `duo-steps-away` | graphic | S10 → S11 | Duo's window shrinks and slides off as a thumbnail while the paper ground fills in. |
+| `stand-in`, `stand-in-out` | graphic | any → card → S11 | Only while a scene's captures aren't built: a labelled card, never silent (the report names it). |
 
 ## App scenes (S3 on)
 
@@ -46,7 +50,12 @@ The transitions so far:
 - `click` and `state`: the cursor clicks, and the next capture comes up.
 - `menu`: a context menu, drawn with the app's real items, because macOS draws menus outside the window capture.
 - `drag`: a selection.
-- `mark` and `quote`.
+- `mark` and `quote` (the quote is a large caption card, lower left).
+- `key`: a shortcut's keycaps as it's pressed (S7's ⌘B, ⌘K).
+- `wipe: {state, on, dur}`: a state revealed left to right inside an anchor, for typing that renders as it's typed.
+- `drag.reveal`: the selection capture shown from the drag's start to the cursor as it moves.
+A shot's `pauses: {"n": seconds}` adds picture after line n, and `tail` holds the end.
+Drawn scenes: `projects` (S8, `src/scenes/ProjectsBg.tsx`: drawn Terminal and Finder with Claude Code 2.1.296's own screens, the folder map) and `conclusion` (S11, `src/scenes/Conclusion.tsx`: the release line from `gh release list`, the topic list, Help › Report an Issue…, the opening card).
 Anchors come from each capture's accessibility dump (`video.*` ids or labels).
 
 ## Topic list (DL-170)

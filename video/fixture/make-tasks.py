@@ -11,7 +11,7 @@ R = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(R)   # its 
 HERE = pathlib.Path(__file__).resolve().parent
 W = json.loads((HERE / "world.json").read_text())
 T = W["tasks"]
-SID = {s["name"]: s["sessionId"] for s in W["sessions"]}
+SID = {s["name"]: s["sessionId"] for s in W["sessions"] + W["tasks"]["sessions"]}   # the S10-only sessions too
 PROJ = "/Users/sam/work/little-shared-library/shelf-scan"
 DOCS = HERE / "docs"
 

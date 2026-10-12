@@ -4,8 +4,9 @@ import {smootherstep, type Rect} from '../lib/camera';
 import {Wallpaper} from '../lib/Desk';
 import {DOCK_DUO, Dock, MenuBar, PileWindow} from '../lib/Clutter';
 import {CLUTTER_LAYOUT, clutterWin} from '../lib/clutterLayout';
-import {Cursor, Marker, Caption} from '../lib/Paper';
+import {Cursor, Caption} from '../lib/Paper';
 import tokens from '../../style/tokens.json';
+import {Trace, traceProgress} from '../lib/Trace';
 
 // S2: S1's pile morphs into one real Duo window (script v2, Geoff 2026-10-10). Each drawn window
 // flies from its rect in clutterLayout.ts to where its job lives in Duo: Finder to the left pane, the
@@ -205,7 +206,7 @@ const Overlays = ({t, ev, A, toFrame, screen, data, paneSrc}: OverlayProps) => {
         const open = ramp(t, at + 0.4, at + 0.54) * (1 - leave);
         return (
           <AbsoluteFill key={c.ev}>
-            <Marker cx={r.x + r.w / 2} cy={r.y + r.h / 2} rx={r.w / 2 + 18} ry={r.h / 2 + 14} progress={marker} />
+            <Trace r={r} radius={12} p={traceProgress(t, at + 0.05, at + 2.4)} />
             <Caption text={c.quote} u={open} />
           </AbsoluteFill>
         );

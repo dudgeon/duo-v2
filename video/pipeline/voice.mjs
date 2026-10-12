@@ -14,18 +14,24 @@ export function voiceLines(lines, {here, cache, pub, style, force = false, log})
   const voice = ext && existsSync(ext) ? JSON.parse(readFileSync(ext, 'utf8')) : house;
   const refWav = isAbsolute(voice.ref_wav) ? voice.ref_wav : join(dir, voice.ref_wav);
   log(`voice: ${voice === house ? 'house voice' : `external voice (${ext})`}, tempo ${voice.tempo ?? 1}`);
-  const setup = sha(voice, fileSha(refWav), ...['models.lock.json', 'requirements.txt', 'tts.py']
-    .map((f) => readFileSync(join(dir, f), 'utf8')));
+  // `engine: "voxcpm"` (a candidate, 2026-10-12): VoxCPM2 with an optional LoRA, run from the voice-clone project
+  // (`root`, its own venv and script); nothing of it enters duo-v2. Its script, LoRA weights and reference count in the key.
+  const vox = voice.engine === 'voxcpm';
+  const setup = vox ? sha(voice, fileSha(refWav), fileSha(join(voice.root, voice.script)), ...(voice.lora ? [fileSha(join(voice.root, voice.lora, 'lora_weights.safetensors'))] : []))
+    : sha(voice, fileSha(refWav), ...['models.lock.json', 'requirements.txt', 'tts.py'].map((f) => readFileSync(join(dir, f), 'utf8')));
   const vc = join(cache, 'voice');
   mkdirSync(vc, {recursive: true});
   mkdirSync(join(pub, 'voice'), {recursive: true});
-  const keyed = lines.map((l) => ({...l, key: sha(l.said, setup)}));
+  // A voice's own spellings (`said` in its file, {written: said}), for words only that voice gets wrong; the script's
+  // table stays the same for every voice. The speech check still expects the written line.
+  const own = (t) => Object.entries(voice.said ?? {}).reduce((s, [w, x]) => s.split(w).join(x), t);
+  const keyed = lines.map((l) => ({...l, said: own(l.said), key: sha(own(l.said), setup)}));
   const missing = keyed.filter((l) => force || !existsSync(join(vc, `${l.key}.asr.json`)));
   const py = join(dir, '.venv/bin/python');
   const run = (script, ...a) => spawnSync(py, ['-I', join(dir, script), ...a], {cwd: dir, stdio: ['ignore', 'ignore', 'inherit'], env: {...process.env, DUO_MAX_WPS: String(style.voice.maxWps)}});
   // A line that fails the speech check is re-rolled with the next seed, up to RETRIES times; the
   // passing seed is kept with the line (its .asr.json), so the build stays reproducible.
-  const RETRIES = 3, {maxWps: MAX_WPS, targetWps: TARGET_WPS, maxStretch: MAX_STRETCH} = style.voice;
+  const RETRIES = +(process.env.DUO_VOICE_RETRIES ?? 3), {maxWps: MAX_WPS, targetWps: TARGET_WPS, maxStretch: MAX_STRETCH} = style.voice;
   const onlyTooFast = (a) => a.fail_reasons.length === 1 && a.words_per_sec > MAX_WPS && a.words_per_sec <= MAX_WPS * MAX_STRETCH;
   let todo = missing, failures = [];
   for (let attempt = 0; todo.length && attempt <= RETRIES; attempt++) {
@@ -35,7 +41,16 @@ export function voiceLines(lines, {here, cache, pub, style, force = false, log})
     const job = join(vc, `job-${jobKey}.json`);
     writeFileSync(job, JSON.stringify({lines: todo.map((l) => ({id: l.key, text: l.said, expect: l.text, seed})),
       voice: {...voice, ref_wav: refWav}, out_dir: out}));
-    if (run('tts.py', job).status !== 0) throw new BuildError('voice: tts.py failed');
+    if (vox) {
+      const linesJson = join(vc, `job-${jobKey}.lines.json`);
+      writeFileSync(linesJson, JSON.stringify(todo.map((l) => ({id: l.key, text: l.said}))));
+      const r = spawnSync(join(voice.root, voice.python), ['-I', join(voice.root, voice.script), '--ref-wav', refWav, '--ref-text', voice.ref_text,
+        '--lines', linesJson, '--out', out, '--seed', String(seed), ...(voice.lora ? ['--lora', join(voice.root, voice.lora)] : [])],
+      {cwd: voice.root, stdio: ['ignore', 'ignore', 'inherit']});
+      if (r.status !== 0) throw new BuildError('voice: voxcpm failed');
+      // The speech check reads each line's <id>.json, as tts.py writes it.
+      for (const l of todo) writeFileSync(join(out, `${l.key}.json`), JSON.stringify({id: l.key, text: l.said, expect: l.text, seed}));
+    } else if (run('tts.py', job).status !== 0) throw new BuildError('voice: tts.py failed');
     // The house voice's pace (voice.json `tempo`, Geoff 2026-10-11: "even quicker, say 10%"): atempo alone, so
     // the pitch is unchanged; applied before the speech check, which then judges the line at the pace it's heard.
     if (voice.tempo && voice.tempo !== 1) for (const l of todo) {
