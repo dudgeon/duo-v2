@@ -33,7 +33,7 @@ node build.mjs                 # voice → capture → timeline → render → o
 - **Captures:** fixtures only, with a throwaway `DUO_SUPPORT_DIR`. They run in the background and never touch your own Duo.
 - **Scenes:** pure functions of the frame. `lint.mjs` fails a build that uses a timer, `Date`, `Math.random` or CSS animation.
 - **Tokens:** `style/tokens.json` is generated: edit `style/video-tokens.json` and run `python3 scripts/gen-video-tokens.py`.
-- **The voice:** `voice/house/voice.json`. Its `external` names Geoff's voice file outside the repo (DL-171), used when it exists; otherwise the house voice there. His reference audio and anything voiced in his voice never enter this repo: voiced lines live only in the gitignored `.cache/`, `build/` and `out/`. Check `git status` for audio before every commit.
+- **The voice:** `voice/house/voice.json`. Its `external` names Geoff's voice file outside the repo, used when it exists; otherwise the house voice there. Since DL-173 that's the fine-tuned VoxCPM2 clone (`voxcpm-lora100.json`, `engine: "voxcpm"`: duo-voice's own venv, script and LoRA run it; its `said` map holds spellings only it needs). The zero-shot Qwen clone (DL-171) stays one switch away: `DUO_VOICE_JSON=~/Library/Caches/duo-video/voices/geoff-zeroshot.json node build.mjs`. VoxCPM voices at RTF ~1.4, so a full re-voice takes about 10 minutes, under the GPU lock. His reference audio and anything voiced in his voice never enter this repo: voiced lines live only in the gitignored `.cache/`, `build/` and `out/`. Check `git status` for audio before every commit.
 
 ## Script history
 

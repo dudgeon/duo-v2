@@ -1,6 +1,6 @@
 {
-  "$note": "The narrator. `external` names a voice file outside the repo, used when it exists (Geoff, 2026-10-11: his zero-shot clone at tempo 1.05; DL-169 privacy: his audio never enters duo-v2). Without it, the house voice below. Switch back by removing `external`.",
-  "external": "~/Library/Caches/duo-video/voices/geoff-zeroshot.json",
+  "$note": "The narrator. `external` names a voice file outside the repo, used when it exists: since DL-173 (Geoff, 2026-10-12) the fine-tuned VoxCPM2 clone (LoRA step 100, engine voxcpm, run from duo-voice; its own spellings in its `said`). The zero-shot Qwen clone (DL-171) stays selectable with DUO_VOICE_JSON=~/Library/Caches/duo-video/voices/geoff-zeroshot.json. Without either file, the house voice below. DL-169 privacy: none of his audio, weights or voice files enter duo-v2.",
+  "external": "~/Library/Caches/duo-video/voices/voxcpm-lora100.json",
   "mode": "clone",
   "ref_wav": "house/reference.wav",
   "ref_text": "Last weekend I finally walked to the market by the river. The air was cool, and the bread smelled wonderful. I stayed far longer than planned. Have you ever done that?",
@@ -12,6 +12,11 @@
   },
   "tempo": 1.1,
   "history": [
+    {
+      "name": "VoxCPM2 + LoRA step 100 (Geoff)",
+      "since": "2026-10-12",
+      "note": "DL-173: picked over the zero-shot Qwen clone after v9 was rendered in both (speaker similarity 0.800 held-out against 0.747). 3.06 words/s, no tempo. Before it: the Qwen zero-shot clone at tempo 1.05 (DL-171, Oct 11), file geoff-zeroshot.json."
+    },
     {
       "name": "B-light-133 (house)",
       "since": "2026-10-11",

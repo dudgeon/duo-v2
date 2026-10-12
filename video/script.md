@@ -316,7 +316,7 @@ Shot: out of the app and onto the paper ground, a bookend to S0.
 
 ## The voice
 
-The narrator is Geoff's own voice, a zero-shot clone at tempo 1.05 (Oct 11; the house voice, B-light-133, is kept to switch back). The build reads this table: write the word as it appears in a line, and how it should be said. Add a row whenever a line comes out wrong.
+The narrator is Geoff's own voice, a fine-tuned VoxCPM2 clone (DL-173, Oct 12; the zero-shot Qwen clone of Oct 11 and the house voice, B-light-133, are kept to switch back). The build reads this table: write the word as it appears in a line, and how it should be said. Add a row whenever a line comes out wrong.
 
 | Written | Said |
 | --- | --- |
