@@ -570,6 +570,20 @@ func repoFixture() throws -> Fixture {
     try "---\ngoal: x\n---\n".write(to: other.appending(path: "PROJECT.md"), atomically: true, encoding: .utf8)
     let moved = Beacon(pid: 1, sessionId: "aaaa-filed", cwd: other.path, name: nil, status: "idle", waitingFor: nil,
                        statusUpdatedAt: nil, entrypoint: "cli", kind: nil)
+    // C-79: the refresh's clock stamp alone isn't a change.
+    let (snapFirst, _, _) = LiveSnapshot.build(noHistory(lw), beacons: [live])
+    Thread.sleep(forTimeInterval: 1.1)
+    let (snapAgain, _, _) = LiveSnapshot.build(noHistory(lw), beacons: [live])
+    check(snapAgain.now != snapFirst.now && snapAgain.sameApartFromClock(snapFirst), "a refresh with nothing new differs only in its clock, which apply() ignores (C-79)")
+    // C-79: with an idle refresh no longer republishing `fixture`, views that print relative time read the model's minute
+    // clock, not Date() (the sources are scanned: a new Date() in these spots would freeze its label).
+    let srcRoot = repoRoot().appending(path: "Sources/DuoKit")
+    func src(_ f: String) -> String { (try? String(contentsOf: srcRoot.appending(path: f), encoding: .utf8)) ?? "" }
+    let tile = src("AllProjects/AllProjectsPanes.swift"), list = src("AllProjects/SessionList.swift")
+    check(tile.contains("model.minute") && !tile.contains("now: Date().timeIntervalSince1970")
+          && list.contains("listClock ?? minute") && src("AllProjects/MapLayout.swift").contains("now: minute.timeIntervalSince1970")
+          && src("Project/RepoBlock.swift").components(separatedBy: "RepoLine.of(view, now: model.minute)").count == 3,
+          "relative-time labels (tile, session list, map order, repo line) read the model's minute clock (C-79)")
     let (snap2, _, moves) = LiveSnapshot.build(noHistory(lw), beacons: [moved])
     check(snap2.sessions.first { $0.sessionId == "aaaa-filed" }?.project == "onboarding"
           && moves.map(\.sessionId) == ["aaaa-filed"] && moves.first?.to.lastPathComponent == "onboarding",
@@ -659,6 +673,18 @@ func repoFixture() throws -> Fixture {
     check(stressLines.count == 40 && HookEvents.read("stress", in: ev).count == 40
           && Set(HookEvents.read("stress", in: ev).compactMap { $0.lastMessage?.split(separator: " ").first }).count == 40,
           "40 concurrent ~1 KB hook events: 40 lines, every one parses (one write each, C-27)")
+    // C-79: the live refresh re-reads a log only when it changed.
+    let sumA = HookEvents.summary(for: "s1", in: ev)
+    check(sumA == HookEvents.summarize(HookEvents.read("s1", in: ev)), "summary(for:) equals summarize(read())")
+    let reads0 = HookEvents.tailReads
+    _ = HookEvents.summary(for: "s1", in: ev); _ = HookEvents.summary(for: "s1", in: ev)
+    check(HookEvents.tailReads == reads0, "two builds with no change: 0 log parses (C-79)")
+    fire(#"{"session_id":"s1","hook_event_name":"UserPromptSubmit","prompt":"again"}"#)
+    fire(###"{"session_id":"s1","hook_event_name":"Stop","last_assistant_message":"## Fresh result"}"###)
+    check(HookEvents.summary(for: "s1", in: ev)?.message == "## Fresh result" && HookEvents.tailReads == reads0 + 1, "an appended Stop updates the summary, one re-read")
+    try? Data(#"{"at":1,"e":{"hook_event_name":"Stop","last_assistant_message":"rewritten"}}"#.utf8 + [10]).write(to: HookEvents.file(for: "s1", in: ev))
+    check(HookEvents.summary(for: "s1", in: ev)?.message == "rewritten", "a truncated or rewritten log is re-read")
+    check(HookEvents.summary(for: "no-such-log", in: ev) == nil, "no log: no summary")
     let store = TerminalStore()
     _ = store.session("old-id", command: .shell, cwd: NSTemporaryDirectory())
     store.rekey("old-id", to: "new-id")
@@ -794,6 +820,30 @@ func repoFixture() throws -> Fixture {
               "the current-project boost doesn't crowd out a strong match elsewhere")
         let again: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
         check(again.changed == 0 && again.embedded == 0, "re-index with nothing changed embeds nothing")
+        // C-79: a settled tree costs no tokenizing; an edit re-tokenizes only its changed paragraphs.
+        let memo = indexer.tokenizer.counts
+        let before0 = memo.computed
+        let _: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer, quiet: 180) }
+        check(memo.computed == before0, "a pass over an unchanged tree tokenizes 0 units (C-79)")
+        var big = (0..<6000).map { "Paragraph \($0) about tidal harmonics number \($0 * 7919 % 10007) and the moon\u{2019}s pull on the sea." }
+        let bigText = big.joined(separator: "\n\n")
+        check(bigText.utf8.count > 500_000, "the large-file case is large (\(bigText.utf8.count / 1000) KB)")
+        let chunked = Chunker.chunks(path: "big.md", text: bigText, tokenizer: indexer.tokenizer)
+        let m1 = memo.computed
+        let rechunked = Chunker.chunks(path: "big.md", text: bigText, tokenizer: indexer.tokenizer)
+        check(memo.computed == m1 && rechunked == chunked, "chunking the same text again tokenizes 0 units, same chunks")
+        big.append("A brand new closing paragraph about neap tides and quadrature.")
+        _ = Chunker.chunks(path: "big.md", text: big.joined(separator: "\n\n"), tokenizer: indexer.tokenizer)
+        check(memo.computed - m1 <= 2, "appending one paragraph tokenizes \(memo.computed - m1) unit(s), at most a few")
+        let quietFile = proj.appending(path: "notes/quiet-zone.md")
+        try "# Quiet zone\n\nXylophone quartz lighthouse marmalade.\n".write(to: quietFile, atomically: true, encoding: .utf8)
+        let fresh: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer, quiet: 180) }
+        check(fresh.changed == 1 && fresh.deferred == 0, "a new file is indexed at once")
+        try "# Quiet zone\n\nXylophone quartz lighthouse marmalade.\n\nA second paragraph about velvet.\n".write(to: quietFile, atomically: true, encoding: .utf8)
+        let busy: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer, quiet: 180) }
+        check(busy.changed == 0 && busy.deferred == 1, "an indexed file still being edited waits")
+        let settled: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
+        check(settled.changed == 1 && settled.replaced == 1, "…and is re-indexed once quiet")
         try FileManager.default.moveItem(at: proj.appending(path: "docs/tides.md"), to: proj.appending(path: "notes/tides-moved.md"))
         let moved: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
         check(moved.changed == 1 && moved.removed == 1 && moved.embedded == 0, "a moved file reuses its vectors (FR-7.3.5)")
@@ -1223,6 +1273,18 @@ func repoFixture() throws -> Fixture {
         let linkedPins = resolved.matches(of: /"identity" : "([^"]+)"/).map { String($0.1) }.filter { !["h", "swift-argument-parser", "swift-png"].contains($0) }
         check(linkedPins == ["swiftterm"] && notices.contains("## SwiftTerm (MIT)"), "every linked Package.resolved dependency has a notices entry (\(linkedPins))")
         check(notices.contains("bge-small-en-v1.5") && notices.contains("JSZip") && notices.contains("mtx-decompressor") && notices.contains("Permission is hereby granted"), "THIRD-PARTY-NOTICES.md carries the model's, JSZip's and the MPL component's notices with licence text")
+        // About Duo's credits (DL-176): every component in the standard panel is in the notices file, with its licence and a link to it.
+        let tableRows = notices.components(separatedBy: "\n").filter { $0.hasPrefix("| ") }.joined(separator: "\n")
+        let creditNames = AboutCredits.components.map { $0.name.components(separatedBy: " (").first! }
+        check(!creditNames.isEmpty && creditNames.allSatisfy { n in tableRows.contains(n == "CodeMirror and Lezer" ? "CodeMirror" : n == "pptx-renderer" ? "pptx-renderer" : n) }, "every component in About Duo's credits is in THIRD-PARTY-NOTICES.md's table (\(creditNames))")
+        let noticesFile = URL(fileURLWithPath: "/x/Resources/THIRD-PARTY-NOTICES.md")
+        let credits = AboutCredits.attributed(noticesURL: noticesFile)
+        check(AboutCredits.components.allSatisfy { credits.string.contains($0.name) && credits.string.contains($0.licence) }, "the About credits name each component and its licence")
+        var linked: URL?
+        credits.enumerateAttribute(.link, in: NSRange(location: 0, length: credits.length)) { v, _, _ in if let u = v as? URL { linked = u } }
+        check(linked == noticesFile && AboutCredits.attributed(noticesURL: nil).string == credits.string, "the About credits link to the bundled notices file")
+        let commandsSource = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Navigation/Commands.swift"), encoding: .utf8)) ?? ""
+        check(commandsSource.contains("CommandGroup(replacing: .appInfo)") && commandsSource.contains("Button(\"About Duo\") { AboutCredits.show() }") && Parity.uiOnly["About Duo"] != nil, "the app menu's About Duo opens the panel with the credits, and is listed as UI-only")
         check(bundle.contains("cp \"$root/THIRD-PARTY-NOTICES.md\" \"$app/Contents/Resources/"), "bundle.sh copies THIRD-PARTY-NOTICES.md into Resources")
         // Every flag LaunchOptions reads marks a scripted run.
         let src = (try? String(contentsOf: repoRoot().appending(path: "Sources/DuoKit/Debug/LaunchOptions.swift"), encoding: .utf8)) ?? ""

@@ -74,7 +74,7 @@ public enum Chunker {
             cur = []; tokens = 0
         }
         for u in units {
-            let n = tokenizer.tokenCount(u.text)
+            let n = tokenizer.memoTokenCount(u.text)
             if n > budget {
                 emit()
                 out += split(u, tokenizer: tokenizer)

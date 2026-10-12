@@ -76,6 +76,9 @@ public final class SearchIndex: @unchecked Sendable {
 
 public struct IndexStats: Sendable, Equatable {
     public var files = 0, changed = 0, removed = 0, chunks = 0, embedded = 0, reused = 0
+    /// Items that were rewritten (their old chunks may have orphaned vectors) and files left for later (still changing).
+    public var replaced = 0, deferred = 0
+    public init() {}
 }
 
 extension SearchIndex {
@@ -84,7 +87,7 @@ extension SearchIndex {
     /// `pause` runs between files so the caller can throttle (FR-7.3.3).
     /// `excluding`: searched folders inside this one, indexed under their own names.
     public func indexProject(_ name: String, root: URL, excluding: Set<String> = [], embedder: Embedder,
-                             pause: () async -> Void = {}) async throws -> IndexStats {
+                             quiet: TimeInterval = 0, pause: () async -> Void = {}) async throws -> IndexStats {
         var stats = IndexStats()
         let root = root.resolvingSymlinksInPath()
         let files = FileSource.files(in: root, excluding: excluding).sorted { $0.modified > $1.modified }
@@ -103,7 +106,12 @@ extension SearchIndex {
 
         for f in files {
             let mod = f.modified.timeIntervalSince1970
-            if let k = known[f.path], k.modified == mod, k.size == f.size { continue }
+            if let k = known[f.path] {
+                if k.modified == mod, k.size == f.size { continue }
+                // Already indexed and still being edited: wait until it has been quiet (C-79).
+                if quiet > 0, Date().timeIntervalSince1970 - mod < quiet { stats.deferred += 1; continue }
+                stats.replaced += 1
+            }
             guard let raw = FileSource.read(f.path) else { continue }
             let text = Secrets.redact(raw)
             let chunks = Chunker.chunks(path: f.path, text: text, tokenizer: embedder.tokenizer)

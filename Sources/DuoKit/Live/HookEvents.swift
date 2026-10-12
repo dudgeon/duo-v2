@@ -95,6 +95,36 @@ public enum HookEvents {
         return lines.compactMap { parse(Data($0)) }
     }
 
+    private struct CacheKey: Hashable { var path: String }
+    private struct CacheEntry { var size: UInt64; var mtime: Date; var summary: Summary? }
+    private static let cache = NSLock()
+    nonisolated(unsafe) private static var cached: [CacheKey: CacheEntry] = [:]
+    nonisolated(unsafe) private static var rereads = 0
+
+    /// How many times `summary(for:in:)` has read a log's tail (for DuoChecks).
+    public static var tailReads: Int { cache.lock(); defer { cache.unlock() }; return rereads }
+
+    /// `summarize(read(id))`, remembered per log by (size, mtime): the 2 s live refresh reads and
+    /// parses a log's 256 KB tail only when the log has changed (C-79).
+    public static func summary(for sessionId: String, in dir: URL = DuoPaths.events, maxBytes: Int = 256 * 1024) -> Summary? {
+        let url = file(for: sessionId, in: dir)
+        let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
+        guard let size = (attrs?[.size] as? NSNumber)?.uint64Value, let mtime = attrs?[.modificationDate] as? Date else {
+            cache.lock(); cached[CacheKey(path: url.path)] = nil; cache.unlock()
+            return nil
+        }
+        let key = CacheKey(path: url.path)
+        cache.lock()
+        if let e = cached[key], e.size == size, e.mtime == mtime { cache.unlock(); return e.summary }
+        cache.unlock()
+        let s = summarize(read(sessionId, in: dir, maxBytes: maxBytes))
+        cache.lock()
+        rereads += 1
+        cached[key] = CacheEntry(size: size, mtime: mtime, summary: s)
+        cache.unlock()
+        return s
+    }
+
     static func parse(_ line: Data) -> Event? {
         guard let obj = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
               let at = (obj["at"] as? NSNumber)?.doubleValue,

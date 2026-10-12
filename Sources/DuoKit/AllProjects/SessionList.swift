@@ -100,7 +100,7 @@ public struct SessionList: Sendable, Equatable {
 extension AppModel {
     /// The list as it stands now.
     public var sessionList: SessionList {
-        SessionList.build(fixture, isOpen: { [self] in hasOpenTerminal($0) }, now: listClock ?? Date())
+        SessionList.build(fixture, isOpen: { [self] in hasOpenTerminal($0) }, now: listClock ?? minute)
     }
 
     /// Board or List (`duo2 view home`, View › Show Board / Show List); remembered from then on.

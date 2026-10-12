@@ -316,6 +316,9 @@ public final class AppModel {
     public var listShowsArchived = true
     /// Target states only: the clock the list's Today and This week are cut by.
     @ObservationIgnored public var listClock: Date?
+    /// The time views cut relative labels by (`4m`, age buckets, activity order, `fetched … ago`). It moves once a
+    /// minute, so an idle refresh that changes nothing needn't republish `fixture` to keep them right (C-79).
+    public private(set) var minute = Date()
 
     /// Home's folder (DL-85); nil until one is chosen. Live mode runs either way (DL-82).
     public var liveRoot: URL?
@@ -358,6 +361,7 @@ public final class AppModel {
     /// Live sessions whose process Duo doesn't own (Terminal, the Desktop app, another Duo).
     public var liveElsewhere: Set<String> = []
     @ObservationIgnored private var refreshTimer: Timer?
+    @ObservationIgnored private var minuteTimer: Timer?
     @ObservationIgnored private var refreshing = false
     @ObservationIgnored private var lastArchive = Date.distantPast
     /// False for scripted captures: nothing may block on a prompt.
@@ -404,9 +408,12 @@ public final class AppModel {
         extraProjects = state.projects.map { URL(fileURLWithPath: $0) }
         fixture = LiveSnapshot.empty()  // never show the design fixture while the first scan runs
         refreshLive()
+        minuteTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.minute = Date() }
+        }.loose()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.refreshLive() }
-        }
+        }.loose()
     }
 
     /// Rebuilds the snapshot off the main thread, one refresh at a time: disk reads can block
@@ -479,7 +486,7 @@ public final class AppModel {
             merged.sessions[i].reason = nil
             merged.counts.needsYou = max(0, merged.counts.needsYou - 1)
         }
-        if merged != fixture { fixture = merged }
+        if !merged.sameApartFromClock(fixture) { fixture = merged }
         followTaskTitles()
         // The map's order settles on the first scan, then on each arrival at All projects (DL-104).
         if mapSettled.isEmpty || altitude != .allProjects { settleMapOrder() }
@@ -579,6 +586,7 @@ public final class AppModel {
         if isShell(key) { closeShell(key); return }
         let project: String? = altitude.isAllProjects ? fixture.home?.name : currentProject?.name
         terminals.close(key)
+        chats.forget(key)
         let next = project.map { tabSessions(inProject: $0).first { $0.tabKey != key }?.tabKey } ?? nil
         if altitude.isAllProjects { homeTab = next } else { consoleTab = next }
         fixture = fixture  // republish: tabs depend on which terminals exist

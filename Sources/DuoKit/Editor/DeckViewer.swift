@@ -136,7 +136,7 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
                 let now = Self.modified(url)
                 if now != self.stamp { self.reload() }
             }
-        }
+        }.loose()
     }
 
     nonisolated static func modified(_ u: URL) -> Date? { try? u.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate }

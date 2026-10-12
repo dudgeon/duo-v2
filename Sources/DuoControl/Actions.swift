@@ -433,6 +433,7 @@ public enum Parity {
     public static let uiOnly: [String: String] = [
         "Explain Tasks": "Help › Explain Tasks shows an explanation to a person at the screen (DL-172); `duo2 task new` is the action it explains",
         "Close Window": "window management",
+        "About Duo": "the standard macOS About panel, whose credits list the third-party notices (DL-176); system UI for a person at the screen",
         "Paste or drop a picture in the editor": "a gesture, not a menu item: the picture is saved beside the document and linked (LR-39); `duo2 doc insert` adds the same `![](name)` text, and `duo2 file move` puts a picture beside a note",
         "Anyone": "the task board's owner filter: view state; `duo2 task board` lists every card",
         "Me": "the task board's owner filter: view state; `duo2 task board` lists every card",
