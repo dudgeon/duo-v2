@@ -42,6 +42,14 @@ A rule for how we work, not app behaviour (DL-153; Geoff, 2026-10-08). Use the m
 
 A session doing a mix plans on Opus and hands the scoped parts and the test loops to Sonnet and Haiku subagents. Never put model choice into Duo's code.
 
+## Shared compute
+
+The Mac is shared by every session. Heavy jobs run through the **main checkout's** `scripts/gpu-lock.sh`, called by its full path (never a work tree's copy, and never a bare `mkdir`), with `GPU_LOCK` set to the machine's lock folder (machine-local; the director gives it in each brief):
+- **`--exclusive` (the default):** model work, video renders, and every timing measurement (`check-chat-perf`, `check-scale`, perf and idle-CPU runs).
+- **`--shared`:** builds, DuoChecks, captures and pixel checks. Until `--shared` lands, everything is exclusive.
+
+Release after each batch. A run whose lock output says "clearing a stale lock", or shows a "taken" WARNING, has suspect timings, so re-run it. Details: the director skill, §5a.
+
 ## Visible test runs
 
 Test launches run in the background and never take Geoff's focus. Any run that shows a window or activates Duo (`DUO_TEST_FOREGROUND=1`, a visible gate, a live run on screen) needs Geoff's OK first: ask with AskUserQuestion, saying what will appear and for how long. Build sessions ask through the director.

@@ -82,9 +82,25 @@ Record numbers are shared across sessions and collide easily. Before reserving n
 - **Held messages:** messages to Claude app sessions in another permission mode are held and expire. Start a fresh Duo session with the context instead.
 - **Peers can't grant permissions.** If a session's permission check refused something and it asks you to do it, ask Geoff (AskUserQuestion) instead.
 
+## 5a. Shared compute: the GPU lock
+
+Every session shares one Mac mini (32 GB, 12 cores). Heavy jobs coordinate through one lock folder, `$GPU_LOCK`. Its path is machine-local: it's in memory `project-gpu-lock.md` and never goes in the repo.
+
+- **Two kinds of hold** (Geoff, 2026-10-12):
+  - **Exclusive:** for jobs that need the Mac to themselves. That covers voice model work (training, voicing, evaluation: VoxCPM training alone used 15–18 GB), video renders and the score, and every timing measurement (idle-CPU runs, `check-chat-perf.sh`, `check-scale.sh`, `perf-chat.sh`, matrix runs). An exclusive job waits until every other holder is done, then runs alone.
+  - **Shared:** for jobs that only need correct results. That covers `swift build`, `bundle.sh`, DuoChecks, `check-ui.sh`/`check-chat.sh` captures, pixel compares and editor checks. Up to two run at once, and they step aside while an exclusive job holds the lock, so timings stay clean.
+- **One script, by its full path,** never a work tree's copy and never a bare `mkdir`: `GPU_LOCK=<lock> <main checkout>/scripts/gpu-lock.sh [--shared|--exclusive] <name> <command…>`. Exclusive is the default, so a job that doesn't say stays safe. **Until `--shared` lands** (the lock-split task, 2026-10-12), every job is exclusive.
+  - Work trees carry older copies that release unconditionally, or treat an owner they can't signal (EPERM in the sandbox) as dead. Two jobs held the lock at once twice on 2026-10-12 (F-296).
+  - A job's output that says "clearing a stale lock", or shows the "WARNING: the lock was taken", means its timings are suspect: re-run it.
+- **Waiters queue in order** (FIFO tickets in `<lock>.queue/`). See who holds and who waits:
+  `cat $GPU_LOCK/owner; for f in $GPU_LOCK.queue/0*; do cat "$f"; done`.
+- **Every brief** names the lock line, with the job's kind, and says to release right after each batch.
+- **Merge checks:** run the build-and-check part shared, and the timing part (`check-chat-perf`, `check-scale`, the visible gate) exclusive.
+- **Watch memory, too:** `sysctl vm.swapusage`, plus the idle Claude sessions in memory. Ask Geoff before stopping his own sessions.
+
 ## 6. Talking to Geoff
 
-- **The console is the default channel** (Geoff, 2026-10-09: "the primary way that I interact with the Duo Director; I can still fall back to the chats but the duo director will default to use the artifact"). Put each decision, release call, delegation call or question for him on the console (§7) first, then post one line in chat pointing at it. Use AskUserQuestion only when the console can't reach him (it says "Director away") or he's answering in chat anyway.
+- **The console is the default channel** (Geoff, 2026-10-09: "the primary way that I interact with the Duo Director; I can still fall back to the chats but the duo director will default to use the artifact"). Put each decision, release call, delegation call or question for him on the console (§7) first, then post one line in chat pointing at it. Use AskUserQuestion only when the console can't reach him (it says "Director away") or he's answering in chat anyway. **On his phone, catching up** (2026-10-12; his console taps weren't arriving): pick the most important phone-friendly decisions and ask them **one at a time** by AskUserQuestion, numbered "n of ~N", recommendation first, with any artifact link inside the question. Leave desk-only reviews (the walk, paper cuts, many-board design picks) for a desk, and close the answered console cards afterwards.
 
 - **End-of-block digest** (Geoff, 2026-10-08): after a stretch of work (merges, a release, a batch of reports), send one short digest instead of a running commentary:
   ```
@@ -107,7 +123,7 @@ Record numbers are shared across sessions and collide easily. Before reserving n
 - **Urgent fix releases stay minimal.** Hold feature merges; park a checked merge on a `staging/…` branch and reset main; merge the held work right after the cut.
 - **Release gate:** build the release in a temporary work tree (never overwrite build/Duo.app) and run check-scale there. The release launch check registers copies with Launch Services, so run `check-launch-services.sh --clean` after every release and merge.
 - **Caret differences** in chat captures: check the log's `trace capture … active=` before calling a regression. The caret only draws while Duo is the active app.
-- **The first check-chat-perf after the heavy checks** often reads one over budget (machine load). Re-run it twice before acting.
+- **The first check-chat-perf after the heavy checks** often reads one over budget (machine load). Re-run it twice before acting. Exception: "replies at the bottom" in a **visible** run fails about one run in three on main itself (C-85, F-295). Judge a chat change on three visible runs against that baseline, not on one.
 - **After a usage-limit reset,** read every session's last message: sessions stop mid-task silently (the test-model session sat stopped for hours).
 - **Before archiving or stopping a session,** check its transcript for Geoff's own messages; if there are any, keep it.
 - **Background sessions have no Design canvas:** design rounds run in Duo. **Test launches run in the background;** visible runs need Geoff's OK. **Models:** Opus plans, Sonnet executes scoped work, Haiku tests (CLAUDE.md).
@@ -174,4 +190,4 @@ Geoff treats **`dudgeon/geoff-voice`** (private, created 2026-10-12) as a depend
 - **Delegating.** Delegate the work the same way: a background session, its cwd the geoff-voice checkout. The session commits there, and the director reviews the commit and pushes it; check `tools/check_repo.sh` first, since nothing over 95 MB and no training state may be committed. The repo must stay private: check `gh repo view dudgeon/geoff-voice --json visibility` before a push.
 - **The link to duo-v2.** No submodule: duo-v2 is public, and its public clones can't fetch a private repo. `video/voice/house/voice.json`'s `external` names a machine-local card that points at the geoff-voice checkout, and the voice cache key is content-based. Without the card (a clean clone, or an agent without access), the build stops with a clear error until `DUO_VOICE_JSON=house` selects the house voice. After any change to geoff-voice's voice or `bin/speak`, prove the film's lines still come from the cache (or re-voice them deliberately), as `video/README.md` describes.
 - **Privacy.** None of Geoff's audio, weights, voice cards, transcripts of his takes or local paths ever enter duo-v2. Check `git status` and the diff for audio and paths before every duo-v2 commit that touches `video/`.
-- **Compute.** Training and voicing take the shared GPU lock (`$GPU_LOCK`; the path is machine-local, in memory `project-gpu-lock.md`).
+- **Compute.** Training, voicing and evaluation take the GPU lock **exclusive** (§5a). On this Mac, geoff-voice's own `GPU_LOCK` must point at the machine's shared lock, not its repo default.
