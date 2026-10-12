@@ -778,6 +778,21 @@ func repoFixture() throws -> Fixture {
     let fts = SearchIndex.ftsQuery("retry OR backoff* NEAR(x) -y", exact: false) ?? ""
     check(fts.components(separatedBy: " OR ").allSatisfy { $0.hasPrefix("\"") && $0.hasSuffix("\"") }, "every FTS term is quoted, so query syntax can't break it")
 
+    // Task 7: the vector scan reads blobs in place; same bytes as the copying accessor.
+    do {
+        let path = FileManager.default.temporaryDirectory.appending(path: "duo-blob-\(UUID().uuidString).sqlite").path
+        let db = try SQLiteDB(path: path, readOnly: false)
+        try db.exec("CREATE TABLE v (id INTEGER PRIMARY KEY, b BLOB)")
+        let vec: [Float] = (0..<384).map { Float($0) / 384 }
+        _ = try db.prepare("INSERT INTO v (b) VALUES (?)").bind([vec.withUnsafeBufferPointer { Data(buffer: $0) }]).step()
+        let s = try db.prepare("SELECT b FROM v")
+        _ = try s.step()
+        let viaCopy = s.blob(0)
+        let viaView: [Float] = s.withBlob(0) { Array($0.bindMemory(to: Float.self)) }
+        check(viaView == vec && viaCopy.count == 384 * 4, "withBlob reads the stored vector in place")
+        try? FileManager.default.removeItem(atPath: path)
+    }
+
     // Golden set (SRCH § 12, the POC's), through Duo's own chunker and index, when the model is here.
     let pkg = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appending(path: "Spikes/S13CoreML/out/bge-small-fp16.mlpackage")
@@ -799,6 +814,13 @@ func repoFixture() throws -> Fixture {
         print("  indexed \(stats.files) files, \(stats.chunks) chunks in \(Int(Date().timeIntervalSince(t0) * 1000)) ms")
         let reader = try SearchIndex(readOnly: true)
         let queryEmbedder = try Embedder(use: .query)
+        // Task 7: thirty keystrokes share one model load.
+        let loadsBefore = QueryEmbedder.loads
+        for _ in 0..<30 { _ = try QueryEmbedder.shared() }
+        check(QueryEmbedder.loads - loadsBefore <= 1, "30 queries load the query model at most once (task 7)")
+        QueryEmbedder.release()
+        _ = try QueryEmbedder.shared()
+        check(QueryEmbedder.loads - loadsBefore <= 2, "release() drops the model, the next query loads it again")
         let golden = [("why are there two high tides every day", "docs/tides.md"),
                       ("feeding a sourdough starter with flour and water", "docs/sourdough.md"),
                       ("horizontal pod autoscaler adds replicas", "docs/kubernetes.md"),
