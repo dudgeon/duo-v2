@@ -1,0 +1,14 @@
+{
+  "$note": "A quieter New task and the task Explainer, approved 2026-10-12 (DL-172). kind=board: drawn on the Design canvas and exported as static HTML. Options A1, A2, B1, B2 and the Chat mode and Home Explainers (C1, C2) were drawn and not chosen; they stay on the canvas only.",
+  "source": "https://claude.ai/artifact/6KHUj9hbPQLwqarUdWpcAc",
+  "screens": [
+    {"file": "screens/01-sidebar-fold.html", "board": "A3-fold.dc.html", "kind": "board", "width": 680, "height": 640, "decision": "DL-172",
+     "shows": "A3: one footer button, + New Claude Code session; + New task as the Tasks fold's last row with its help tag; the fold header's hover + while closed, at 300 and 240."},
+    {"file": "screens/02-explainer-tasks.html", "board": "B3-annotated.dc.html", "kind": "board", "width": 1000, "height": 800, "decision": "DL-172",
+     "shows": "B3: the task Explainer above the New task row after a long hover: annotated task, three numbered lines, Learn more, Don't show again."},
+    {"file": "screens/03-behaviour.html", "board": "B4-behaviour.dc.html", "kind": "board", "width": 1000, "height": 800, "decision": "DL-172",
+     "shows": "Timing, placement, dismissal, keyboard and VoiceOver, until dismissed."},
+    {"file": "screens/04-component.html", "board": "C3-anatomy.dc.html", "kind": "board", "width": 1000, "height": 760, "decision": "DL-172",
+     "shows": "The Explainer component: parts, sizes, content limits, rules."}
+  ]
+}

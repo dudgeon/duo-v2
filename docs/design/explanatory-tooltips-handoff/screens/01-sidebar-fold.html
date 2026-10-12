@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x640">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-172">
+<!--
+A3: the footer keeps one button, + New Claude Code session; + New task is the Tasks fold's last row, and a + on the fold header while it is closed
+APPROVED BOARD. Geoff, 2026-10-12 (DL-172). Exported from the Design canvas
+https://claude.ai/artifact/6KHUj9hbPQLwqarUdWpcAc (board A3-fold.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · Explanatory tooltips · A3 · In the Tasks fold</title>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;width:680px;height:640px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;padding:24px 28px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.bd *{box-sizing:border-box}
+.bt{font:600 17px/24px -apple-system,system-ui,sans-serif;margin:0}
+.bsub{color:#5B636D;margin:0;font-size:12px;line-height:18px}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.frame{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;position:relative}
+.side{background:#FFFFFF;display:flex;flex-direction:column;white-space:nowrap;position:relative}
+.sec{padding:10px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;color:#5B636D}
+.row{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px}
+.row.tint{background:#E8F0FA}
+.ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tm{color:#5B636D;flex:none}
+.fold{display:flex;align-items:center;gap:6px;height:26px;padding:0 16px;color:#5B636D}
+.btn{font-family:inherit;display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328;white-space:nowrap;flex:none}
+.qb{font-family:inherit;border:0;background:none;display:inline-flex;align-items:center;height:26px;padding:0 8px;border-radius:6px;font-size:12px;line-height:16px;color:#5B636D;white-space:nowrap;flex:none}
+.qb.hov{background:#E9ECEF;color:#1F2328}
+.foot{display:flex;flex-wrap:wrap;gap:6px 2px;padding:14px 16px 14px 16px;position:relative}
+.files{border-top:2px solid #C9CDD3;padding:6px 0 8px}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.frow{height:24px;display:flex;align-items:center;gap:6px;padding:0 16px}
+.tag{position:absolute;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:5px;padding:2px 7px;font-size:11px;line-height:16px;color:#1F2328;box-shadow:0 2px 6px rgba(31,35,40,.18);white-space:nowrap;z-index:2}
+.ptr{position:absolute;z-index:3}
+.ib{font-family:inherit;width:26px;height:26px;border:0;border-radius:6px;background:none;color:#5B636D;display:inline-flex;align-items:center;justify-content:center;margin-left:auto;flex:none}
+.ib.hov{background:#E9ECEF;color:#1F2328}
+.plus{margin-left:auto;width:18px;height:18px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;color:#5B636D}
+.flag{font-size:12px;line-height:18px;color:#1F2328;white-space:normal;margin:0}
+</style>
+</head>
+<body>
+<div class="bd">
+  <div>
+    <h1 class="bt">A3 · In the Tasks fold</h1>
+    <p class="bsub">The footer keeps one button. “+ New task” becomes the Tasks fold’s last row: <b>rowSession</b> 26, <b>text2</b>, lined up with the task names. While the fold is closed, its header shows a + on hover, like the + that task rows already show (DL-112).</p>
+  </div>
+  <div style="display:flex;gap:24px;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div class="cap">Default · 300 · pointer resting on New task</div>
+      <div class="frame" style="width:300px;height:430px">
+        <div class="side" style="width:300px">
+          <div style="padding:14px 16px 2px"><div style="font-weight:600">q4-plan</div><div style="color:#5B636D">Q4 plan signed off by staff</div></div>
+          <div class="sec">TODAY</div>
+          <div class="row tint"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Q4 plan outline</span><span class="tm">at prompt</span></div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Staff feedback notes</span><span class="tm">2h</span></div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Last year’s plan, summarised</span><span class="tm">1d</span></div>
+          <div class="fold"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>Tasks</div>
+<div class="row"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="2" fill="none" stroke="#5B636D" stroke-width="1.2"></rect></svg><span class="ti">Draft the plan</span><span class="tm">open · 2</span></div>
+<div class="row" style="background:#E9ECEF;color:#1F2328;position:relative"><span style="width:12px;display:inline-flex;justify-content:center;color:#1F2328"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7M1.5 5h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path></svg></span><span class="ti" style="font-size:12px">New task</span><div class="tag" style="left:40px;top:30px">Track a new task in this project</div><svg class="ptr" style="left:96px;top:8px" width="12" height="18" viewBox="0 0 12 18" aria-hidden="true"><path d="M1 1v14l3.5-3.5 2.5 5.5 2-1-2.5-5.2H11z" fill="#1F2328" stroke="#FFFFFF" stroke-width="1"></path></svg></div>
+<div class="fold"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>Archived · 3</div>
+<div class="foot"><button class="btn" type="button">+ New Claude Code session</button></div>
+          <div class="files"><div class="sec" style="padding-top:8px">FILES</div><div class="frow mono" style="font-size:11px;line-height:20px;color:#5B636D">~/q4-plan</div><div class="frow mono">PROJECT.md</div><div class="frow mono">tasks/</div></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div class="cap">Narrowest · 240 · at rest</div>
+      <div class="frame" style="width:240px;height:430px">
+        <div class="side" style="width:240px">
+          <div style="padding:14px 16px 2px"><div style="font-weight:600">q4-plan</div><div style="color:#5B636D;overflow:hidden;text-overflow:ellipsis">Q4 plan signed off by staff</div></div>
+          <div class="sec">TODAY</div>
+          <div class="row tint"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Q4 plan outline</span><span class="tm">at prompt</span></div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Staff feedback notes</span><span class="tm">2h</span></div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Last year’s plan, summarised</span><span class="tm">1d</span></div>
+          <div class="fold" style="background:#E9ECEF;margin:0 8px;padding:0 8px;border-radius:6px;position:relative;color:#1F2328"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Tasks · 1</span><span class="plus" style="color:#1F2328"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7M1.5 5h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path></svg></span><svg class="ptr" style="left:150px;top:12px" width="12" height="18" viewBox="0 0 12 18" aria-hidden="true"><path d="M1 1v14l3.5-3.5 2.5 5.5 2-1-2.5-5.2H11z" fill="#1F2328" stroke="#FFFFFF" stroke-width="1"></path></svg></div>
+<div class="fold"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>Archived · 3</div>
+<div style="padding:6px 16px 0;white-space:normal;font-size:11px;line-height:16px;color:#5B636D">Fold closed, pointer on its header: the + is New task.</div>
+<div class="foot"><button class="btn" type="button">+ New Claude Code session</button></div>
+          <div class="files"><div class="sec" style="padding-top:8px">FILES</div><div class="frow mono" style="font-size:11px;line-height:20px;color:#5B636D">~/q4-plan</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="flag"><b>For:</b> no new button style, and New task sits where the tasks are. It fits at any width. <b>Against:</b> with the fold closed it is only a hover +, and the video’s cursor target moves (keep <span class="mono" style="font-size:11px">video.newtask.button</span> on the row). The empty fold’s explainer and + New task (DL-147) stay as they are.</p>
+</div>
+</body>
+</html>

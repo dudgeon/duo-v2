@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1000x800">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-172">
+<!--
+B3: the task Explainer, opened by a long hover on New task: an annotated task, three numbered lines, Learn more, Don't show again
+APPROVED BOARD. Geoff, 2026-10-12 (DL-172). Exported from the Design canvas
+https://claude.ai/artifact/6KHUj9hbPQLwqarUdWpcAc (board B3-annotated.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · Explanatory tooltips · B3 · Two-stage hover: annotated card</title>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;width:1000px;height:800px;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;padding:24px 28px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.bd *{box-sizing:border-box}
+.bt{font:600 17px/24px -apple-system,system-ui,sans-serif;margin:0}
+.bsub{color:#5B636D;margin:0;font-size:12px;line-height:18px;max-width:900px}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.frame{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;position:relative;display:flex}
+.side{background:#FFFFFF;display:flex;flex-direction:column;white-space:nowrap;position:relative;border-right:1px solid #C9CDD3;flex:none}
+.sec{padding:10px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;color:#5B636D}
+.row{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px}
+.row.tint{background:#E8F0FA}
+.ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tm{color:#5B636D;flex:none}
+.fold{display:flex;align-items:center;gap:6px;height:26px;padding:0 16px;color:#5B636D}
+.btn{font-family:inherit;display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328;white-space:nowrap;flex:none}
+.qb{font-family:inherit;border:0;background:none;display:inline-flex;align-items:center;height:26px;padding:0 8px;border-radius:6px;font-size:12px;line-height:16px;color:#5B636D;white-space:nowrap;flex:none}
+.qb.hov{background:#E9ECEF;color:#1F2328}
+.foot{display:flex;gap:6px 2px;padding:14px 16px;position:relative}
+.files{border-top:2px solid #C9CDD3;padding:6px 0 8px}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.frow{height:24px;display:flex;align-items:center;gap:6px;padding:0 16px}
+.con{flex:1;background:#15171B;color:#E6E8EB;display:flex;flex-direction:column;min-width:0}
+.ctabs{height:36px;border-bottom:1px solid #2B2F36;display:flex;align-items:center;gap:16px;padding:0 16px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:#9AA1AB;white-space:nowrap}
+.ctabs .on{color:#E6E8EB;font-weight:500}
+.cbody{padding:14px 16px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;line-height:19px;color:#9AA1AB;white-space:pre}
+.ptr{position:absolute;z-index:6}
+.tag{position:absolute;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:5px;padding:2px 7px;font-size:11px;line-height:16px;color:#1F2328;box-shadow:0 2px 6px rgba(31,35,40,.18);white-space:nowrap;z-index:2}
+.pop{position:absolute;z-index:5;width:300px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:10px;box-shadow:0 12px 32px rgba(31,35,40,.22);padding:14px 16px 12px;display:flex;flex-direction:column;gap:10px;white-space:normal}
+.arrow{position:absolute;width:12px;height:12px;background:#FFFFFF;border-right:1px solid #C9CDD3;border-bottom:1px solid #C9CDD3;transform:rotate(45deg)}
+.ph{font:600 14px/20px -apple-system,system-ui,sans-serif;margin:0}
+.pl{margin:-8px 0 0;font-size:13px;line-height:20px;color:#1F2328}
+.ill{background:#F3F4F6;border-radius:6px;padding:10px}
+.mini{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px 9px;display:flex;flex-direction:column;gap:3px}
+.chip{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 7px;border:1px solid #C9CDD3;border-radius:9px;font-size:11px;line-height:16px;color:#1F2328;background:#FFFFFF;white-space:nowrap}
+.chip.f{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10.5px}
+.pts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.pts li{display:flex;gap:9px;align-items:flex-start;font-size:12px;line-height:17px;color:#5B636D}
+.pts li svg{flex:none;margin-top:1px}
+.pts b{color:#1F2328;font-weight:600}
+.pf{border-top:1px solid #C9CDD3;margin:2px -16px 0;padding:9px 16px 0;display:flex;justify-content:space-between;font-size:12px;line-height:16px}
+.pf a{color:#1F2328;text-decoration:none}
+.pf a:hover{text-decoration:underline}
+.steps{display:flex;flex-direction:column;gap:14px;width:330px;flex:none}
+.st{display:flex;gap:10px;align-items:flex-start;font-size:12px;line-height:18px;color:#5B636D;white-space:normal}
+.st b{color:#1F2328}
+.n{flex:none;width:20px;height:20px;border-radius:10px;border:1px solid #1F2328;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1F2328}
+.pan{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.pan .pic{background:#F3F4F6;border-radius:6px;height:78px;padding:8px 6px;display:flex;flex-direction:column;justify-content:center}
+.pan .pc{font-size:11px;line-height:14px;color:#1F2328;text-align:center;font-weight:600}
+.bar{height:4px;border-radius:2px;background:#C9CDD3}
+.num{flex:none;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font-size:10px;line-height:16px;font-weight:600;text-align:center}
+.qm{font-family:inherit;width:22px;height:22px;border:0;border-radius:6px;background:none;color:#5B636D;display:inline-flex;align-items:center;justify-content:center;margin-left:auto}
+.qm.on{background:#E9ECEF;color:#1F2328}
+.flag{font-size:12px;line-height:18px;color:#1F2328;white-space:normal;margin:0}
+</style>
+</head>
+<body>
+<div class="bd">
+  <div>
+    <h1 class="bt">B3 · Two-stage hover: an annotated task</h1>
+    <p class="bsub">The same trigger as B1, with the picture doing more of the work: one larger task, three numbered marks on its parts, and three numbered lines that answer them. Fewer words, and the parts you’ll see later are already named.</p>
+  </div>
+  <div style="display:flex;gap:28px;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div class="cap">Inside a project · 300 sidebar · pointer still on the Tasks fold’s New task row for 2.5 s (A3)</div>
+      <div class="frame" style="width:560px;height:640px">
+        <div class="side" style="width:300px">
+          <div style="padding:14px 16px 2px"><div style="font-weight:600">q4-plan</div><div style="color:#5B636D">Q4 plan signed off by staff</div></div>
+          <div class="sec">TODAY</div>
+          <div class="row tint"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Q4 plan outline</span><span class="tm">at prompt</span></div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Staff feedback notes</span><span class="tm">2h</span></div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Last year’s plan, summarised</span><span class="tm">1d</span></div>
+          <div class="sec">THIS WEEK</div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Headcount scenarios</span><span class="tm">3d</span></div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Budget lines from finance</span><span class="tm">4d</span></div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">“Summarise the six buyer…”</span><span class="tm">5d</span></div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Offsite agenda</span><span class="tm">5d</span></div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Hiring plan, first pass</span><span class="tm">6d</span></div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Vendor shortlist</span><span class="tm">6d</span></div>
+          <div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round"></path></svg><span class="ti">Team survey themes</span><span class="tm">6d</span></div>
+          <div class="fold"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>Tasks</div>
+          <div class="row"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="2" fill="none" stroke="#5B636D" stroke-width="1.2"></rect></svg><span class="ti">Book the staff review</span><span class="tm">open</span></div>
+          <div class="row" style="background:#E9ECEF;color:#1F2328"><span style="width:12px;display:inline-flex;justify-content:center"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7M1.5 5h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path></svg></span><span class="ti" style="font-size:12px">New task</span></div>
+          <div class="fold"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>Archived · 3</div>
+          <div class="foot"><button class="btn" type="button">+ New Claude Code session</button></div>
+          <div class="files"><div class="sec" style="padding-top:8px">FILES</div><div class="frow mono" style="font-size:11px;line-height:20px;color:#5B636D">~/q4-plan</div><div class="frow mono">PROJECT.md</div><div class="frow mono">notes/</div><div class="frow mono">plan-outline.md</div></div>
+        </div>
+        <div class="con">
+          <div class="ctabs"><span class="on">Q4 plan outline</span><span>zsh</span></div>
+          <div class="cbody">  Outline saved to plan-outline.md.
+  Want me to draft section 2 next?
+
+<span style="color:#E6E8EB">&gt;</span> </div>
+        </div>
+        <div class="pop" style="left:16px;bottom:252px" role="dialog" aria-label="About tasks">
+  <h2 class="ph">Tasks</h2>
+  <p class="pl">Track the work in this project.</p>
+  <div class="ill" aria-hidden="true" style="padding:12px 12px 12px 14px">
+    <div class="mini" style="gap:6px;padding:9px 10px 10px;position:relative">
+      <div style="display:flex;align-items:center;gap:7px;font-size:12px;line-height:16px;font-weight:600"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" rx="2" fill="none" stroke="#5B636D" stroke-width="1.2"></rect></svg>Draft the Q4 plan<span class="num" style="margin-left:auto">1</span></div>
+      <div style="display:flex;gap:7px;align-items:flex-start;padding-left:19px"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="font-size:11px;line-height:15px;color:#5B636D">Done when staff sign off.</div><div style="font-size:11px;line-height:15px;color:#5B636D">Start from last year’s plan.</div></div><span class="num">2</span></div>
+      <div style="display:flex;gap:5px;padding-left:19px;align-items:center;flex-wrap:nowrap"><span class="chip f"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 1h4l2 2v6H2z" fill="none" stroke="#5B636D" stroke-width="1" stroke-linejoin="round"></path></svg>outline.md</span><span class="chip"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3.5" fill="none" stroke="#1F2328" stroke-width="1.5"></circle></svg>Q4 outline</span><span class="num" style="margin-left:auto">3</span></div>
+    </div>
+  </div>
+  <ol class="pts">
+    <li><span class="num">1</span><span><b>A to-do.</b> Check it off when it’s done.</span></li>
+    <li><span class="num">2</span><span><b>Detail and context,</b> if you want them. Claude reads them.</span></li>
+    <li><span class="num">3</span><span><b>Files and Claude Code sessions,</b> attached, so the work stays together.</span></li>
+  </ol>
+  <div class="pf"><a href="#">Learn more about tasks</a><button type="button" style="font-family:inherit;border:0;background:none;padding:0;font-size:12px;line-height:16px;color:#5B636D">Don’t show again</button></div>
+  <div class="arrow" style="left:30px;bottom:-7px"></div>
+</div>
+        <svg class="ptr" style="left:72px;top:404px" width="12" height="18" viewBox="0 0 12 18" aria-hidden="true"><path d="M1 1v14l3.5-3.5 2.5 5.5 2-1-2.5-5.2H11z" fill="#1F2328" stroke="#FFFFFF" stroke-width="1"></path></svg>
+      </div>
+    </div>
+    <div class="steps">
+  <div class="cap">How it appears</div>
+  <div class="st"><span class="n">1</span><span><b>Timing as B1</b> (B4): help tag “Track a new task in this project” at about 1 s; the Explainer 1.5 s later if the pointer stays still; hoverable; closes on leave (300 ms), Esc or a click. Here on A3’s New task row (and the fold header’s hover +).</span></div>
+  <div class="st"><span class="n">★</span><span><b>Until dismissed</b> (Geoff, 2026-10-12): <b>Don’t show again</b> in the footer stops it opening on hover for good; the help tag stays. Help › Explain Tasks still opens it.</span></div>
+  <div class="st"><span class="n">2</span><span><b>Numbers, not icons,</b> tie each line to its part. They are the only filled marks, in <b>text</b> (never the accent).</span></div>
+  <div class="st"><span class="n">3</span><span><b>Lines are shorter</b> than B1’s, since the picture carries the meaning: 34–60 characters each.</span></div>
+  <div class="cap" style="margin-top:8px">Trade-off</div>
+  <div class="st"><span><b>For:</b> the fastest to scan, and it teaches what a task looks like in the sidebar and on the board. <b>Against:</b> the numbered marks are a new element, and the picture has to stay true to the real task card as that changes.</span></div>
+</div>
+  </div>
+</div>
+</body>
+</html>
