@@ -301,7 +301,7 @@ struct ExplainerCard<Picture: View>: View {
                 }
                 .padding(.top, 1)
                 picture().accessibilityHidden(true)   // decorative
-                VStack(alignment: .leading, spacing: 7) {
+                VStack(alignment: .leading, spacing: 7.5) {
                     ForEach(Array(content.points.enumerated()), id: \.offset) { i, p in
                         HStack(alignment: .top, spacing: 8) {
                             ExplainerMark(number: i + 1).padding(.top, 0.5)
@@ -327,7 +327,7 @@ struct ExplainerCard<Picture: View>: View {
                     .accessibilityLabel("Don’t show again")
                     .background(ExplainerFocus(focus: takesFocus && content.learnMore == nil, action: onDismissForGood).allowsHitTesting(false))
             }
-            .padding(.horizontal, DuoSpace.popoverPadding.leading).padding(.vertical, 11)
+            .padding(.horizontal, DuoSpace.popoverPadding.leading).padding(.top, 9.5).padding(.bottom, 13)
         }
         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).fill(DuoColor.pane).duoPopoverShadow())   // the shadow on the frame alone, not on the parts in it
         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusPopover).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
@@ -352,7 +352,7 @@ struct TaskExplainerPicture: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: DuoSpace.gapRowItems) {
-                TaskBox()
+                TaskBox().scaleEffect(1.25)   // board 02 draws the box at about 11 pt
                 Text("Draft the Q4 plan").font(.system(size: 12, weight: .semibold)).foregroundStyle(DuoColor.text).lineLimit(1)
             }.frame(height: 20)
             VStack(alignment: .leading, spacing: 0) {
@@ -379,7 +379,7 @@ struct TaskExplainerPicture: View {
                 ExplainerMark(number: 3).offset(y: 71)
             }.padding(.trailing, 10)
         }
-        .padding(EdgeInsets(top: 12, leading: 13, bottom: 10, trailing: 13))
+        .padding(EdgeInsets(top: 12, leading: 13, bottom: 11.5, trailing: 13))
         .frame(width: DuoMetric.explainerWidth - 2 * DuoSpace.popoverPadding.leading)
         .background(RoundedRectangle(cornerRadius: 6).fill(DuoColor.ground))
     }
