@@ -1,4 +1,5 @@
-import type {ComponentType} from 'react';
+import {createElement, Fragment, type ComponentType} from 'react';
+import {Captions} from './director/kit';
 import {PaperCard} from './director/PaperCard';
 import {Switchboard} from './director/Switchboard';
 import {FirstPrompt} from './director/FirstPrompt';
@@ -11,7 +12,11 @@ import {Patterns} from './director/Patterns';
 import {NextUp, Projects, StartHere} from './director/Ending';
 
 /** What a registered scene draws: the time in the scene, its events (seconds), and the scene's timeline entry. */
-export type SceneProps = {t: number; ev: Record<string, number>; scene: {id: string; title: string; topic?: string | null}};
+export type SceneProps = {t: number; ev: Record<string, number>; scene: {id: string; title: string; topic?: string | null; lines?: {text: string; start: number; duration: number}[]}};
+
+/** The director film's scenes carry captions of their voice lines (DL-180). */
+const captioned = (C: ComponentType<SceneProps>): ComponentType<SceneProps> => (p: SceneProps) =>
+  createElement(Fragment, null, createElement(C, p), createElement(Captions, {t: p.t, lines: p.scene.lines ?? []}));
 
 /**
  * Scene kinds other films add: a drawn scene whose shot says `scene: "<kind>"` is drawn by the component listed here,
@@ -20,15 +25,15 @@ export type SceneProps = {t: number; ev: Record<string, number>; scene: {id: str
  */
 export const SCENE_KINDS: Record<string, ComponentType<SceneProps>> = {
   'paper-card': PaperCard,
-  'dir-switchboard': Switchboard,
-  'dir-prompt': FirstPrompt,
-  'dir-skill': Skill,
-  'dir-additions': Additions,
-  'dir-why': WhyItWorks,
-  'dir-generalists': Generalists,
-  'dir-done': Done,
-  'dir-patterns': Patterns,
-  'dir-projects': Projects,
-  'dir-next': NextUp,
-  'dir-start': StartHere,
+  'dir-switchboard': captioned(Switchboard),
+  'dir-prompt': captioned(FirstPrompt),
+  'dir-skill': captioned(Skill),
+  'dir-additions': captioned(Additions),
+  'dir-why': captioned(WhyItWorks),
+  'dir-generalists': captioned(Generalists),
+  'dir-done': captioned(Done),
+  'dir-patterns': captioned(Patterns),
+  'dir-projects': captioned(Projects),
+  'dir-next': captioned(NextUp),
+  'dir-start': captioned(StartHere),
 };

@@ -81,7 +81,7 @@ const CELLS: {variant: Variant; title: string; word: string}[] = [
   {variant: 'chat', title: 'NO PAGE FOR BUTTONS', word: 'page'},
   {variant: 'laptop', title: 'A PINNED WORK LAPTOP', word: 'laptop'},
 ];
-const cellAt = (k: number) => ({x: 144 + (k % 2) * (CW + 112), y: 300 + Math.floor(k / 2) * (CH + 110)});
+const cellAt = (k: number) => ({x: 144 + (k % 2) * (CW + 112), y: 290 + Math.floor(k / 2) * (CH + 96)});
 
 export const Patterns = ({t, ev}: SceneProps) => {
   const go = ev.go ?? 0.4;

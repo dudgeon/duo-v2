@@ -161,3 +161,23 @@ export const Meter = ({fill, u = 1}: {fill: number; u?: number}) => (
     <div style={{width: `${fill * 100}%`, height: 6, background: fill > 0.9 ? C.needsYouOnConsole : C.consoleText2}} />
   </div>
 );
+
+/**
+ * The voice line as a caption along the foot of the frame, after the standing reference (taste.md): one line at a time,
+ * arriving grey, ink while it's said, grey again as it ends. Geoff, 2026-10-12: captions "like that film".
+ */
+export const Captions = ({t, lines}: {t: number; lines: {text: string; start: number; duration: number}[]}) => (
+  <>
+    {lines.map((l, i) => {
+      const next = lines[i + 1]?.start ?? l.start + l.duration + 1.2;
+      const inU = ramp(t, l.start - 0.25, l.start + 0.15), outU = ramp(t, Math.min(next - 0.2, l.start + l.duration + 0.6), next);
+      const u = inU * (1 - outU);
+      if (u <= 0.001) return null;
+      const ink = ramp(t, l.start, l.start + 0.3) * (1 - ramp(t, l.start + l.duration, l.start + l.duration + 0.3));
+      return (
+        <div key={i} style={{position: 'absolute', left: 144, right: 144, bottom: 44, fontFamily: ui, fontSize: 30, lineHeight: '40px', fontWeight: 500,
+          color: ink > 0.5 ? L.text : L.text2, opacity: u, transform: `translateY(${(1 - inU) * 8}px)`}}>{l.text}</div>
+      );
+    })}
+  </>
+);

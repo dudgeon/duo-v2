@@ -11,7 +11,7 @@ import {GeneralistsEnd} from './Generalists';
 // the things that shipped are named over the days they landed. All real: git log --merges and gh release list,
 // counted from the first prompt (Oct 5, 10:08) in local time.
 
-const AXIS = 860;
+const AXIS = 780;
 export const MERGES: [number, number][] = [[5, 6], [6, 46], [7, 58], [8, 13], [9, 20], [10, 8], [11, 16], [12, 20]];
 export const RELEASES: Record<number, string[]> = {5: ['0.1.7'], 6: ['0.1.8', '0.1.9', '0.2.0', '0.2.1', '0.2.2'], 7: ['0.2.3', '0.2.4', '0.2.5', '0.2.6', '0.2.7'],
   8: ['0.2.8'], 9: ['0.2.9', '0.2.10'], 10: ['0.2.11']};
@@ -56,10 +56,10 @@ export const Done = ({t, ev}: SceneProps) => {
       })}
       {FEATURES.map(([name, d], j) => {
         const u = spring(t, feat + 0.3 * j, 9, 0.85);
-        const y = j % 2 === 0 ? 470 : 530;
+        const y = j % 2 === 0 ? 410 : 460;
         return (
           <React.Fragment key={name}>
-            <div style={{position: 'absolute', left: dayX(d) - 1, top: y + 40, width: 2, height: 560 - y - 40 + 40, background: L.rule, opacity: Math.min(1, u)}} />
+            <div style={{position: 'absolute', left: dayX(d) - 1, top: y + 40, width: 2, height: 540 - y, background: L.rule, opacity: Math.min(1, u)}} />
             <div style={{position: 'absolute', left: dayX(d), top: y, transform: `translate(-50%, ${(1 - Math.min(1, u)) * -14}px)`, padding: '4px 14px', borderRadius: 10,
               background: L.pane, border: `2px solid ${L.rule}`, fontFamily: ui, fontSize: 20, lineHeight: '28px', fontWeight: 600, color: L.text, whiteSpace: 'nowrap',
               opacity: Math.min(1, u * 1.4)}}>{name}</div>

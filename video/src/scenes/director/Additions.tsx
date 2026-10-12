@@ -22,7 +22,7 @@ export const t2Row = (k: number): Box => ({x: T2_PANEL.x + 2, y: T2_PANEL.y + 72
 export const PHONE: Box = {x: 204, y: 236, w: 180, h: 260};
 
 /** The timeline: Oct 5 to Oct 12. */
-export const AXIS_Y = 900, AXIS_X0 = 200, AXIS_X1 = 1720;
+export const AXIS_Y = 850, AXIS_X0 = 200, AXIS_X1 = 1720;
 export const dayX = (d: number) => AXIS_X0 + ((d - 5) * (AXIS_X1 - AXIS_X0)) / 7;
 
 /** The additions, on the day each came in (decisions.md, the director skill), the word that drops each, and its row. */
