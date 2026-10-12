@@ -35,7 +35,7 @@ Fill these four in first; I read them before every scene decision. (The build ig
 
 Topic: Intro
 
-- Duo is a desktop client for the claude code c-l-i that makes it easier to stay organized and get work done.
+- Duo is a desktop client for claude code that makes it easier to stay organized and get work done.
 
 Shot: the Duo logo builds itself in motion graphics, then settles beside the title "Duo" and the line "A complete workspace for your Claude Code sessions, projects, and files.", the three framed as one composition. That settled frame is the video's thumbnail, so it must read at a glance.
 
@@ -55,8 +55,8 @@ Shot: the Duo logo builds itself in motion graphics, then settles beside the tit
 
 Topic: Too many windows
 
-- I found that when I was working with claude code, I would usually be juggling multiple terminals, finder windows, text editors, and browser tabs.
-- I would often open a new terminal window for a quick task, and either take a bunch of time to pick the right starting directory, or lose track of where I opened which sessions if I wanted to come back to them later.
+- I find that when I work with claude code, I am usually juggling multiple terminals, finder windows, text editors, and browser tabs.
+- I often open a new terminal window for a quick task, and either take a bunch of time to pick the right starting directory, or lose track of where I opened which sessions if I want to come back to them later.
 
 Shot: the High Sierra desktop starts empty, then fills window by window: dark-mode Terminal windows running Claude Code, Finder windows on different project folders, a Markdown editor, a browser showing a polished, realistic checkout prototype, a PowerPoint deck and a Word doc. Each opens on top of the last until you can't tell which terminal belongs to which project.
 
@@ -91,7 +91,7 @@ Right pane, on "flexible editor": the Markdown file, the browser prototype, the 
 Topic: All projects
 
 - The first time you open Duo, you'll see all of your previous claude code sessions, and you can resume any of them.
-- Duo also shows you any sessions that are waiting for your input.
+- Duo also calls out any sessions that are waiting for your input.
 
 Shot: All projects in List view: every previous session in one list, with its project, title and when it last ran. On line 1 the camera runs down the list; nothing is clicked yet. On line 2 the camera moves right to the Needs you column, where a few sessions wait on a question or a permission.
 
@@ -103,21 +103,22 @@ Shot: All projects in List view: every previous session in one list, with its pr
 > - *Callouts:* italics on *previous claude code sessions*, *resume* and *waiting for your input* would pin the marker to those words.
 > - *Hand-off to S4 (Geoff, Oct 11):* S3 stays on All projects and ends on the Needs you column. The resume click that carries us into the chat pane opens S4, not the word "resume" here.
 
-### S4 · Sessions (about 15 s)
+### S4 · Sessions (about 20 s)
 
 Topic: Agent Pane
 
 - When you click a claude code session, it resumes right where you left off, in the terminal.
-- Duo helps you keep track of many sessions at once. Close one and come back to it later, or archive or delete the ones you're done with to cut down on clutter.
+- Duo helps you keep track of many sessions at once. You can close one and come back to it later,
+- or archive or delete the ones you're done with to cut down on clutter.
 
-Shot: from S3's Needs you column, the cursor clicks a session, and the camera pushes into its project as the terminal resumes with its history. On "close one" the cursor clicks a session tab's × in the middle pane and the tab closes, the session staying in the list to come back to (Geoff, Oct 11: show the tab's ×, since the menu has no Close). Then the cursor opens a session's right-click menu in the session list, with its real items, among them Archive Session and Delete Session…. One session folds into Archived; another is deleted through Duo's confirmation sheet.
+Shot: from S3's Needs you column, the cursor clicks a session, and the camera pushes into its project as the terminal resumes with its history. On "close one" the cursor clicks a session tab's × in the middle pane and the tab closes (Geoff, Oct 11: show the tab's ×, since the menu has no Close). This beat runs slower: the camera pulls back to the session list in the left pane, where the closed session is still listed. On "come back to it later" the cursor clicks it there, and its tab reopens in the middle pane with its history, right where it was. Hold on the reopened tab for a beat before line 3 (Geoff, Oct 11). On "archive or delete", the cursor opens a session's right-click menu in the session list, with its real items, among them Archive Session and Delete Session…. One session folds into Archived; another is deleted through Duo's confirmation sheet.
 
 > **Notes for the build** (ignored by it):
 >
 > - *Getting here from S3:* app navigation. The resume click at the start of this scene is the transition, so S3 ends on All projects with nothing clicked (Geoff, Oct 11).
 > - *Real, today:* resuming reopens the session with `claude --resume`. Archive Session and Delete Session… are in a session's right-click menu; there's no Close there (a session closes with its tab's ×, and the menu has no Close item, found Oct 11). Delete asks first, in Duo's confirmation sheet, then moves the transcript to the Trash; it never deletes a running session.
 > - *Decided (Geoff, Oct 11):* keep Delete in the line and the shot. S4 covers sessions only; the terminal is S5 and chat mode S6.
-> - *New captures needed:* the project with the resumed session in its terminal; the session list's right-click menu; the Archived fold with one more session in it; the confirmation sheet; and the list after the delete.
+> - *New captures needed:* the project with the resumed session in its terminal; the session list's right-click menu; the Archived fold with one more session in it; the confirmation sheet; the list after the delete; and the closed tab reopened from the session list.
 > - *Fixtures (asked of demo-fixtures, Oct 11):* a Needs you session with real history, a session to archive, an idle one to delete, and a few already archived.
 > - *Leaving for S5:* S4 ends on the terminal, and S5 carries straight on from that picture. The chat-toggle click comes in S6, on "chat mode", so the flip lands as the narrator names it.
 
@@ -125,7 +126,7 @@ Shot: from S3's Needs you column, the cursor clicks a session, and the camera pu
 
 Topic: same
 
-- The terminal runs the full claude code terminal interface.
+- The terminal pane runs the full claude code  interface.
 
 Shot: the same session as S4, in the terminal. The camera settles on the middle pane while Claude Code's own interface runs in it: its banner, the conversation with each tool call, and the prompt at the bottom. Nothing is clicked. The camera stays on the middle pane (Geoff, Oct 11: the right pane hasn't been introduced yet).
 
@@ -140,9 +141,9 @@ Shot: the same session as S4, in the terminal. The camera settles on the middle 
 
 Topic: Chat mode
 
-- If you prefer something tidier, Duo also has a *chat mode*, which folds the steps Claude takes along the way, like tool calls and file edits, into rows you can open.
+- If you prefer something tidier, Duo also has a *chat mode*, which collapses the steps Claude takes along the way, like tool calls and file edits, into rows you can open.
 - Writing is easier in chat mode too: click and drag to select, use the Mac shortcuts you already know, and see a preview of any image or text you paste.
-- Most slash commands, like skill invocations and model pickers, work in chat mode.
+- Most slash commands, like skill invocations and the model picker, work in chat mode.
 
 Shot: carrying on from S5's terminal. On *chat mode* the camera pushes in on the chat-mode button at the top right of the middle pane, and the cursor clicks it as the pane flips to chat. Then a short exchange plays out: Sam sends a message, Claude replies with its steps folded into rows, Sam follows up and Claude answers; the cursor opens one folded row to show the tool call inside. On the writing line, the cursor drag-selects a sentence in the composer, then pastes a block of user feedback, which folds into a "Pasted text · n lines" block, and a screenshot from that user, which shows as a preview. On the slash-commands line, Sam types `/` and the start of the demo skill's name; the composer's menu lists the skill, Return runs it, and its run shows as a row. Then `/model` opens the model picker and a model is picked. The camera stays on the middle pane throughout: the session list and the right pane stay at the frame's edges or out of it, and nothing opens in the editor (Geoff, Oct 11: the right pane hasn't been introduced yet).
 
@@ -160,7 +161,8 @@ Topic: File Viewer/Editor
 
 - Duo includes a single pane to view and edit most of the file-types you would want to interact with: markdown, html, powerpoint, and documents.
 - Markdown editing is simple -- most keyboard shortcuts are the same, like command-b to bold, and command-k to add a link. Your changes are visible in real time -- no toggling between raw and rendered markdown.
-- Anything you can see or edit, claude can too. You can select text to show it to your claude agent, and claude can update the document with visible changes.
+- Anything you can see or edit, claude can too. You can select text to show it to your claude agent,
+- and claude can update the document with visible changes.
 - This works in all document types that duo supports, like html or powerpoint.
 - Pick an element in a prototype and ask for a change.
 - Or pick a paragraph on a slide and ask for bullets.
@@ -176,21 +178,22 @@ On line 2 the cursor goes back to the PRD tab and makes a run of edits in the Ma
 
 The camera stays on the viewer pane throughout.
 
-On line 3, still on the PRD:
+On lines 3 and 4, still on the PRD, played slower for emphasis (Geoff, Oct 11):
 
-1. On "select text": the cursor drag-selects the What we heard paragraph, right-clicks it, and picks **Send Selection to Claude** from the editor's menu, among its real items.
-2. On "show it to your claude agent": the camera moves to the middle pane, where the selection has landed in the Auto-add decision chat's composer as a reference to those lines. Sam types "Update this with the latest tester feedback in research/feedback" and sends.
+1. On "select text": the camera zooms in on the What we heard paragraph until it fills the frame, with nothing selected yet. The cursor, an I-beam over the text, presses before the paragraph's first word and drags to its last; the highlight grows behind it word by word, as a real selection does. It lets go and right-clicks the selection. The editor's menu opens with its real items, the cursor moves down to **Send Selection to Claude**, the item highlights, and it clicks. The menu closes, and the picture holds about a second on the selection.
+2. On "show it to your claude agent": the camera moves to the middle pane and pushes in on the Auto-add decision chat's composer, empty at first. The selection lands in it as a reference to those lines, and the picture holds a beat. Then Sam types "Update this with the latest tester feedback in research/feedback" at a normal typing pace: one character at a time, with the small uneven pauses of real typing (about 50 words a minute, so roughly 15 s), never filled in at once. Sam presses Return to send. The narration waits after line 3 until it's sent.
 3. On "visible changes": Claude's reply folds its steps into rows (it reads the feedback files and edits prd-v2.md), and the camera moves back to the editor. There the paragraph has changed in place, with Claude's edit highlighted the way Duo marks Claude's changes.
 
 > **Notes for the build** (ignored by it):
 >
 > - *The menu:* drawn, like S4's, because macOS draws context menus outside the window capture. Its items are the editor's real ones (Send Selection to Claude, Send Selection To ▸, then the system's).
+> - *Slowed (Geoff, Oct 11):* line 3 is split after "agent," (same words), so the selection, the menu and Sam's typing play out between lines 3 and 4; the later lines move down one. New captures needed: the composer empty, then holding only the selection reference, before Sam types.
 > - *Fixtures (made by demo-fixtures, Oct 11):* the chat turn (the composer with the sent selection as Duo formats it, Sam's message, and Claude's reply with its rows); the PRD after Claude's edit, a What we heard paragraph updated from the triage log (Denise's glare, Owen's two wrong books); and the editor showing that edit highlighted.
 
-On lines 4–6, the same pattern twice more, each ending on the change visible in its own viewer (lines 5 and 6 added Oct 11, so each demo has its own line):
+On lines 5–7, the same pattern twice more, each ending on the change visible in its own viewer (lines 6 and 7 added Oct 11, so each demo has its own line):
 
-1. On "html" and line 5: the cursor clicks the scan-review.html tab, picks the "Fix" button on the prototype's review screen with the element picker, started from the page's right-click menu (Select Element), which outlines it, and sends it to Claude. Sam asks "Make this button say 'Fix this book' and make it bigger", and the prototype reloads with the change.
-2. On line 6: the cursor clicks the team-review-oct15.pptx tab and goes to slide 3, "What the eval found", and picks its paragraph with the deck viewer's Select Shape button. Sam asks "Turn this into three bullets", and the slide redraws with the bullets.
+1. On "html" and line 6: the cursor clicks the scan-review.html tab, picks the "Fix" button on the prototype's review screen with the element picker, started from the page's right-click menu (Select Element), which outlines it, and sends it to Claude. Sam asks "Make this button say 'Fix this book' and make it bigger", and the prototype reloads with the change.
+2. On line 7: the cursor clicks the team-review-oct15.pptx tab and goes to slide 3, "What the eval found", and picks its paragraph with the deck viewer's Select Shape button. Sam asks "Turn this into three bullets", and the slide redraws with the bullets.
 
 > **Notes for the build** (ignored by it):
 >
@@ -208,14 +211,15 @@ On lines 4–6, the same pattern twice more, each ending on the change visible i
 Topic: Claude Code Projects
 
 - Projects are a little harder to explain and something I need to work on in the app. Let's start with some fundamentals.
-- Claude Code operates on a concept called "projects" -- wherever you open Claude Code, Claude assumes that that folder is a project
-- Claude code assumes you always change directories into the "right" folder, and that you have a different folder for each thing you are working on -- one folder for each project in your life, consistently used every time you open claude code. Claude code also does not show you your projects or make it easy to navigate between them.
+- Claude Code itself operates on a concept called "projects" -- wherever you open Claude Code, Claude assumes that that folder is a project, and any future Claude code session opened in the same folder is part of the same project.
+- Claude code assumes you have one folder for each of the projects in your life—and that you consistently change the working  directory into the "right" project folder before each session.
+- Claude code cli does not show you your projects or make it easy to navigate between them.
 - many users don't change directories before starting claude code, so all projects stack up in the same directory and are hard to tell apart
 - Projects are a really useful construct in claude code, but they can be hard to manage.
 
 Shot: on "Let's start with some fundamentals", Duo's window fades away to the bare desktop. On the "projects" line, two simulated windows appear, side by side, drawn like S1's: a dark Terminal and a Finder window on Sam's home folder (Desktop, Documents, Downloads, work…). The Terminal's prompt reads `sam@mbp ~ %`, and Sam types `claude` with no `cd`. Claude Code's banner comes up showing `~` as its folder, and a marker circles that path as the narrator says it's the project, with the Finder window showing the same folder beside it.
 
-On the "one folder for each project" line, the windows step aside for a motion graphic on the paper ground: a row of folders under `~`, namely `work/little-shared-library/shelf-scan`, `beta-feedback`, `taxes-2026`, `maya-birthday` and `router`. Each holds its own small stack of session cards, the way Claude Code files sessions by folder, one stack per folder. This is the ideal Claude Code assumes. On "does not show you your projects", every stack except the one for the folder you're in greys out and its folder name fades, since Claude Code only shows the sessions of the folder you started in. Then the graphic folds back into the Terminal.
+On line 3 ("one folder for each of the projects in your life"), the windows step aside for a motion graphic on the paper ground: a row of folders under `~`, namely `work/little-shared-library/shelf-scan`, `beta-feedback`, `taxes-2026`, `maya-birthday` and `router`. Each holds its own small stack of session cards, the way Claude Code files sessions by folder, one stack per folder. This is the ideal Claude Code assumes. On line 4 ("does not show you your projects"), every stack except the one for the folder you're in greys out and its folder name fades, since Claude Code only shows the sessions of the folder you started in. Then the graphic folds back into the Terminal.
 
 On the "many users don't change directories" line, still in the Terminal at `~`, Sam runs `claude --resume`. Claude Code's session picker opens on a long list of unrelated sessions, all started in `~`: the shelf-scan PRD next to a tax-receipts tidy-up, a birthday-party plan, a fix to a home router, a cover letter, and so on. Sam scrolls down through a screenful or two, can't find the one wanted, and gives up, leaving the pile on screen. The list is in Claude Code's own picker format.
 
@@ -232,17 +236,17 @@ On the "many users don't change directories" line, still in the Terminal at `~`,
 Topic: Duo Projects
 
 - Duo tries to help you manage projects and use them to make progress in your own work.
-- Duo finds every session and every project folder on your mac and organizes them for you --  making it easy to see what you were working on in which project
-- Each project shows up as its own pane, and lists the sessions from that project underneath.
-- When you click on an existing session, you enter the "project view" for its project.
-- The project view shows the sessions that share a project, and the files and folders in that project's directory.
-- The project view filters sessions and files to just the ones you are working on in that project, and you can leave and return to it any time.
+- Duo finds every Claude code session from your history and organizes them by the project folders where they were created --  making it easy to see what you were working on and where.
+- Each project shows up as its own card, and lists the sessions from that project underneath it.
+- When you click on an existing session, you enter a view for its parent project.
+- Here, you can see the sessions that share a project, and the files and folders in that project's directory.
+- You can always leave the project view and return — and find all of the sessions and files from that project right where you left them. This helps make switching between many different projects a little easier. 
 
 Shot: the resume picker's pile from the scene before fades out, and Duo's window fades back in on the desktop exactly as we last saw it at the end of S7: shelf-scan open, the Auto-add decision chat in the middle, and the deck in the right pane on its new bulleted slide.
 
-On the "finds every session and every project folder" line, the cursor clicks **All projects** at the top left, then **Board** in the Board | List switch. The Board view opens: a map of project tiles grouped in columns by area (APP, COMMUNITY), each tile listing its project's sessions (shelf-scan, beta-feedback, steward-onboarding, neighborhood-map, Home). On "what you were working on in which project", the camera glides across the columns, so each project's sessions read as its own stack: the opposite of the pile in `~`.
+On "finds every Claude code session from your history", the cursor clicks **All projects** at the top left, then **Board** in the Board | List switch. The Board view opens: a map of project tiles grouped in columns by area (APP, COMMUNITY), each tile listing its project's sessions (shelf-scan, beta-feedback, steward-onboarding, neighborhood-map, Home). On "what you were working on and where", the camera glides across the columns, so each project's sessions read as its own stack: the opposite of the pile in `~`.
 
-On "its own pane", the camera settles on the shelf-scan column, and a marker runs down its session cards. On "click on an existing session", the cursor clicks one of them, and Duo opens shelf-scan's project view (app navigation, as in S3 to S4). On "sessions that share a project", the camera zooms in on the project's session list at the top of the left pane (Today, This week, Archived), so its rows fill the frame. On "files and folders in that project's directory", the camera moves down the left pane to the file navigator below the sessions (FILES, the project's path, then PROJECT.md, docs/, eval/, prototype/, research/…) and zooms in on it, as the cursor opens one folder. On "leave and return to it any time", the camera pulls back, and the cursor clicks **All projects** in the breadcrumb; the Board view comes back. Then it clicks a shelf-scan card again, and the project view returns exactly as it was left: the same tabs, chat and files.
+On "its own card", the camera settles on the shelf-scan column, and a marker runs down its session cards. On "click on an existing session", the cursor clicks one of them, and Duo opens shelf-scan's project view (app navigation, as in S3 to S4). On "sessions that share a project", the camera zooms in on the project's session list at the top of the left pane (Today, This week, Archived), so its rows fill the frame. On "files and folders in that project's directory", the camera moves down the left pane to the file navigator below the sessions (FILES, the project's path, then PROJECT.md, docs/, eval/, prototype/, research/…) and zooms in on it, as the cursor opens one folder. On "You can always leave the project view and return", the camera pulls back, and the cursor clicks **All projects** in the breadcrumb; the Board view comes back. Then it clicks a shelf-scan card again, and the project view returns exactly as it was left: the same tabs, chat and files ("right where you left them"). On "switching between many different projects" the camera eases back to the whole window.
 
 > **Notes for the build** (ignored by it):
 >
@@ -253,17 +257,19 @@ On "its own pane", the camera settles on the shelf-scan column, and a marker run
 Topic: Tasks
 
 - Tasks are an experimental, optional feature that you can use to add structure to a project.
-- Usually, a project has an overarching goal, and includes multiple tasks to achieve that goal.
-- In my own work, I found that most sessions mapped to a task, so I made tasks to help me provide more context to claude about the task goal, and attribute the claude code sessions that are related to it.
+- Usually, a project has an overarching goal, and includes multiple tasks to achieve that goal. The project persists over time, but tasks come and go.
+- In my own work, I found that most of my Claude code sessions mapped to a task, so I made tasks to help me provide more context to claude about the task goal, and attribute the claude code sessions that are related to it.
 - In duo, you can make a task in the project view, then add some details -- these are available to the user and any agents that work with them.
-- Then, duo makes it easy to attribute sessions to that task.
+- Then, duo makes it easy to attribute sessions to that task. You can collapse them or show them.
+- Imagine a project with several work-streams; instead of searching through dozens of sessions, they are tidily organized by the task they support.
 - Because tasks are a defined primitive in duo, we can create view that make it easy to see, manage, and return to tasks.
+- Best of all, when you complete a task, you can archive all of the sessions that related to that task so they are out of the way.
 
 Shot: in shelf-scan's project view, with the camera on the left pane.
 
 On line 1 ("experimental, optional… add structure"), the session list starts flat, as it has looked all along. On "add structure", the project's **Tasks** fold opens above it and the sessions regroup under their tasks: Auto-add decision, Deck for Thursday, Spine eval: glare cases. Each group holds the sessions that worked on it, and anything without a task stays below.
 
-On line 2 ("an overarching goal, and includes multiple tasks"), the camera rises to the project's header (its health and next step, "On track · Team review Thu Oct 15"; the goal itself lives in PROJECT.md and on the All projects tile), then runs down the task rows, circling the tasks that serve it.
+On line 2 ("an overarching goal, and includes multiple tasks"), the camera rises to the project's header (its health and next step, "On track · Team review Thu Oct 15"; the goal itself lives in PROJECT.md and on the All projects tile), then runs down the task rows, tracing the tasks that serve it. On "tasks come and go" it settles on the complete one (Beta interview synthesis, done).
 
 On line 3 ("more context to claude about the task goal, and attribute the sessions"), the cursor opens the Auto-add decision task's note in the right pane. It's a plain Markdown file: its goal and done-when at the top, then its sessions listed by name. A marker circles the goal on "context to claude", then the sessions on "attribute".
 
@@ -271,7 +277,18 @@ On "you can make a task in the project view", the cursor picks **New Task** (Fil
 
 On "attribute sessions to that task", Sam right-clicks the new task in the project's Tasks fold and picks **New Session in Task** from its menu (its real items: Open Task Note, New Session in Task, Add Session ›, and the rest). A new session opens in the middle pane, grouped under the task in the session list, and Sam starts working: types "Draft the glare warning copy for the scan screen" and sends. Claude's first reply begins, already knowing the task's goal from its note.
 
+On "You can collapse them or show them", the cursor clicks the new task's disclosure arrow: its session folds up under it, then unfolds again.
+
+On the work-streams line ("Imagine a project with several work-streams…"), the camera pulls back to shelf-scan's whole session list with every task expanded: four tasks with two or three sessions under each, the complete one marked done, so the sessions read as tidy groups rather than one long list (Geoff, Oct 12).
+
 On "views that make it easy to see, manage, and return to tasks", the cursor opens the project's task board: a kanban with columns by status and shelf-scan's tasks as cards, among them the new glare task, the auto-add decision and the team-review deck. Each card shows its sessions. The cursor clicks a different task's card (Deck for Thursday), its sessions show, and it clicks one of them; that session resumes right where it left off.
+
+On the last line ("Best of all, when you complete a task…"), back in the session list, the cursor right-clicks the complete task (Beta interview synthesis), picks **Archive Task…** from its real menu, and Duo's own question asks whether to archive its sessions too; the cursor clicks **Archive Task and Its Sessions**, and the task and its sessions fold into Archived, out of the way.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Real, today:* Archive Task… asks "Archive Task Only" or "Archive Task and Its Sessions" (AppModel+TaskMenu.swift); collapse and show are the task row's disclosure.
+> - *Fixtures (asked of demo-fixtures, Oct 12):* shelf-scan with four tasks of two or three sessions each, one complete (Geoff).
 
 > **Notes for the build** (ignored by it):
 >

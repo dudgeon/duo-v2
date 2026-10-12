@@ -367,7 +367,7 @@
       },
       {
         "at": {
-          "line": 2,
+          "line": 3,
           "word": "archive",
           "offset": -0.95
         },
@@ -394,7 +394,7 @@
       },
       {
         "at": {
-          "line": 2,
+          "line": 3,
           "word": "archive"
         },
         "state": "video-s4-archived",
@@ -402,7 +402,7 @@
       },
       {
         "at": {
-          "line": 2,
+          "line": 3,
           "word": "delete"
         },
         "menu": {
@@ -429,7 +429,7 @@
       },
       {
         "at": {
-          "line": 2,
+          "line": 3,
           "word": "delete",
           "offset": 0.65
         },
@@ -444,7 +444,7 @@
       },
       {
         "at": {
-          "line": 2,
+          "line": 3,
           "word": "clutter"
         },
         "click": "Move to Trash",
@@ -464,7 +464,7 @@
         "dur": 0.9
       }
     ],
-    "shotSha": "cb716e14727c",
+    "shotSha": "e486182e0b67",
     "requires": [
       {
         "what": "Way in from S3 by app navigation: the cursor clicks the Needs you session",
@@ -490,6 +490,10 @@
       {
         "what": "On \"close one\": a session tab's × closes it in the middle pane; the session stays in the list",
         "built": true
+      },
+      {
+        "what": "Slower close: the camera pulls back to the list where the closed session stays; on \"come back to it later\" the cursor clicks it and its tab reopens with its history; hold before line 3",
+        "built": false
       }
     ],
     "$menu": "macOS draws context menus in their own window, which --capture-window can't include, and fixture sessions have no menu (no sessionId), so the menu is drawn with the real items of SessionOrganizeMenu (AllProjectsPanes.swift)."
@@ -731,7 +735,7 @@
       {
         "at": {
           "line": 3,
-          "word": "pickers"
+          "word": "picker"
         },
         "state": "video-s6-model",
         "in": "video-s6-model",
@@ -800,10 +804,11 @@
       "video-s6-model-picked"
     ],
     "pauses": {
-      "3": 1.2,
-      "4": 0.6,
-      "5": 1.6,
-      "6": 2.2
+      "3": 16,
+      "4": 1.2,
+      "5": 0.6,
+      "6": 1.6,
+      "7": 2.2
     },
     "tail": 1.6,
     "beats": [
@@ -1052,7 +1057,7 @@
       },
       {
         "at": {
-          "line": 3,
+          "line": 4,
           "word": "update"
         },
         "state": "video-s7-md-sent",
@@ -1060,7 +1065,7 @@
       },
       {
         "at": {
-          "line": 3,
+          "line": 4,
           "word": "visible"
         },
         "state": "video-s7-md-after",
@@ -1075,7 +1080,7 @@
       },
       {
         "at": {
-          "line": 3,
+          "line": 4,
           "word": "changes"
         },
         "mark": "video.editor.change",
@@ -1085,7 +1090,7 @@
       },
       {
         "at": {
-          "line": 4,
+          "line": 5,
           "word": "html"
         },
         "click": "video.tab.html",
@@ -1100,7 +1105,7 @@
       },
       {
         "at": {
-          "line": 5,
+          "line": 6,
           "offset": -0.2
         },
         "menu": {
@@ -1118,7 +1123,7 @@
       },
       {
         "at": {
-          "line": 5,
+          "line": 6,
           "word": "element"
         },
         "click": "video.html.fix",
@@ -1127,7 +1132,7 @@
       },
       {
         "at": {
-          "line": 5,
+          "line": 6,
           "word": "ask"
         },
         "click": "video.picker.send",
@@ -1143,7 +1148,7 @@
       },
       {
         "at": {
-          "line": 5,
+          "line": 6,
           "word": "change",
           "offset": 0.6
         },
@@ -1159,7 +1164,7 @@
       },
       {
         "at": {
-          "line": 5,
+          "line": 6,
           "word": "change",
           "offset": 1.2
         },
@@ -1170,7 +1175,7 @@
       },
       {
         "at": {
-          "line": 6,
+          "line": 7,
           "offset": -0.3
         },
         "click": "video.tab.pptx",
@@ -1185,7 +1190,7 @@
       },
       {
         "at": {
-          "line": 6,
+          "line": 7,
           "word": "pick"
         },
         "click": "video.slide.select",
@@ -1193,7 +1198,7 @@
       },
       {
         "at": {
-          "line": 6,
+          "line": 7,
           "word": "paragraph"
         },
         "click": "video.slide.shape",
@@ -1202,7 +1207,7 @@
       },
       {
         "at": {
-          "line": 6,
+          "line": 7,
           "word": "ask"
         },
         "click": "video.picker.send",
@@ -1218,7 +1223,7 @@
       },
       {
         "at": {
-          "line": 6,
+          "line": 7,
           "word": "bullets",
           "offset": 0.5
         },
@@ -1234,7 +1239,7 @@
       },
       {
         "at": {
-          "line": 6,
+          "line": 7,
           "word": "bullets",
           "offset": 1.1
         },
@@ -1245,7 +1250,7 @@
       },
       {
         "at": {
-          "line": 6,
+          "line": 7,
           "word": "bullets",
           "offset": 2.6
         },
@@ -1254,7 +1259,7 @@
         "dur": 1.1
       }
     ],
-    "shotSha": "b8bfa78ea6c1",
+    "shotSha": "c2eb13b14050",
     "requires": [
       {
         "what": "Way in from S6 without a cut; the topic list comes up; the camera moves to the viewer pane",
@@ -1279,6 +1284,10 @@
       {
         "what": "Line 6: a slide paragraph picked, sent, slide redrawn in three bullets",
         "built": true
+      },
+      {
+        "what": "Lines 3–4 slowed: zoom on the paragraph, I-beam drag-select, right-click, Send Selection to Claude, hold; the composer empty, the reference lands, Sam types at a real pace (~15 s) and sends; the narration waits",
+        "built": false
       }
     ]
   },
@@ -1318,19 +1327,19 @@
         "line": 3
       },
       "grey": {
-        "line": 3,
+        "line": 4,
         "word": "show"
       },
       "fold": {
-        "line": 4,
+        "line": 5,
         "offset": -0.6
       },
       "resume": {
-        "line": 4,
+        "line": 5,
         "offset": 0.1
       },
       "scroll": {
-        "line": 4,
+        "line": 5,
         "word": "stack"
       }
     },
@@ -1352,7 +1361,7 @@
         "built": true
       }
     ],
-    "shotSha": "d9c99d0764b6"
+    "shotSha": "6297f373ae51"
   },
   "S11": {
     "kind": "drawn",
@@ -1472,7 +1481,7 @@
       {
         "at": {
           "line": 3,
-          "word": "pane"
+          "word": "card"
         },
         "in": "video-s9-board",
         "cam": "video.board.col.shelf-scan",
@@ -1574,7 +1583,7 @@
         "built": true
       }
     ],
-    "shotSha": "cf4038579566"
+    "shotSha": "7b5ee7e54ad0"
   },
   "S10": {
     "kind": "drawn",
@@ -1587,7 +1596,9 @@
     "pauses": {
       "4": 1.6,
       "5": 2.4,
-      "6": 3.4
+      "6": 1.4,
+      "7": 3.4,
+      "8": 3
     },
     "beats": [
       {
@@ -1781,7 +1792,7 @@
       },
       {
         "at": {
-          "line": 6,
+          "line": 7,
           "word": "view"
         },
         "click": "video.taskboard.open",
@@ -1797,7 +1808,7 @@
       },
       {
         "at": {
-          "line": 6,
+          "line": 7,
           "word": "manage"
         },
         "click": "video.taskboard.card.deck-for-thursday",
@@ -1806,7 +1817,7 @@
       },
       {
         "at": {
-          "line": 6,
+          "line": 7,
           "word": "return",
           "offset": 1.4
         },
@@ -1841,8 +1852,24 @@
       {
         "what": "The task board; Deck for Thursday picked; its session resumes",
         "built": true
+      },
+      {
+        "what": "Line 2: \"tasks come and go\" settles on the complete task",
+        "built": false
+      },
+      {
+        "what": "Line 5: collapse and show a task's sessions",
+        "built": false
+      },
+      {
+        "what": "Line 6: the whole list with four tasks of 2–3 sessions each, one complete",
+        "built": false
+      },
+      {
+        "what": "Line 8: Archive Task… → Archive Task and Its Sessions; they fold into Archived",
+        "built": false
       }
     ],
-    "shotSha": "d1edd6b3dc94"
+    "shotSha": "a0f3da40d847"
   }
 }
