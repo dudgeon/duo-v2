@@ -678,6 +678,33 @@
   },
   "tasks": {
     "$note": "S10 (Geoff, 2026-10-11): shelf-scan's task notes, tasks/<slug>.md (DL-6, DL-93, DL-146). make-tasks.py writes them; sessions link by the ids above.",
+    "sessions": [
+      {
+        "$note": "S10 only (Geoff, 2026-10-12: every task has 2–3 sessions): fixture.json videoS10.sessions, never `sessions`, so S2–S9 don't change. All idle, this week, after the task they serve was made.",
+        "name": "Glass-door photos from stewards",
+        "project": "shelf-scan",
+        "state": "idle",
+        "wait": "2d",
+        "summary": "Asked glass-door stewards for shelf photos: 22 shelves in so far, filed for Ravi's glare set.",
+        "sessionId": "7a5c0012-5e55-4d0e-8a00-5e5500000012"
+      },
+      {
+        "name": "Interview themes, P1–P8",
+        "project": "shelf-scan",
+        "state": "idle",
+        "wait": "6d",
+        "summary": "Sorted the eight interviews into four themes: trust, glare, checking the list first, one-tap fixes.",
+        "sessionId": "7a5c0013-5e55-4d0e-8a00-5e5500000013"
+      },
+      {
+        "name": "Pick quotes for the synthesis",
+        "project": "shelf-scan",
+        "state": "idle",
+        "wait": "4d",
+        "summary": "Picked the pull quote (Denise, P3, on glare) and four more for What we heard.",
+        "sessionId": "7a5c0014-5e55-4d0e-8a00-5e5500000014"
+      }
+    ],
     "notes": [
       {
         "title": "Auto-add decision",
@@ -723,7 +750,8 @@
           "score.py reports glare on its own"
         ],
         "sessions": [
-          "Spine eval: glare cases"
+          "Spine eval: glare cases",
+          "Glass-door photos from stewards"
         ],
         "created": "2026-10-09"
       },
@@ -738,7 +766,9 @@
           "Linked from PROJECT.md"
         ],
         "sessions": [
-          "Synthesis from interviews"
+          "Synthesis from interviews",
+          "Interview themes, P1–P8",
+          "Pick quotes for the synthesis"
         ],
         "created": "2026-09-26"
       }

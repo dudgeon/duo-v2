@@ -6,6 +6,7 @@ owner: Ravi Menon
 due: 2026-10-20
 sessions:
   - "[Spine eval: glare cases](duo2://session/7a5c0004-5e55-4d0e-8a00-5e5500000004)"
+  - "[Glass-door photos from stewards](duo2://session/7a5c0012-5e55-4d0e-8a00-5e5500000012)"
 created: 2026-10-09
 ---
 
