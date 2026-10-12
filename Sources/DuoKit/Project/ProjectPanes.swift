@@ -22,6 +22,7 @@ struct ProjectSidebarPane: View {
                             Text(project.kind == "folder" ? (project.hasClaudeMD == true ? "Has CLAUDE.md · no project file" : "Folder · no project file")
                                  : [project.health, project.next].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
                                 .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
+                                .overlay { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Project line").accessibilityIdentifier("video.project.goal") } }   // anchors (scene 10): the header's line under the name
                         }
                         .padding(EdgeInsets(top: 14, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -29,6 +30,7 @@ struct ProjectSidebarPane: View {
                         // The project's heading opens the project itself: its Project tab (DL-60).
                         .onActivate { model.rightTab = "Project"; model.selectedFile = nil }  // action: view tab
                         .accessibilityLabel("\(project.name), open the project file")
+                        .background { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Project header").accessibilityIdentifier("video.project.header") } }   // anchors (scene 10)
                         if project.isMissing { MissingNotice(project: project) }
                         else if project.kind == "folder", project.notNow != true { FolderNotice(project: project) }
                     }
@@ -55,12 +57,13 @@ struct ProjectSidebarPane: View {
                         }
                     }
                     .onChange(of: items.map(\.id), initial: true) { model.noteSidebar(sections) }
-                    if let project, model.terminalsMode == .live { TasksFold(project: project.name) }
+                    if let project, model.terminalsMode == .live || model.videoTasks { TasksFold(project: project.name) }
                     if let project { ArchivedSessionsFold(project: project.name) }
                     HStack(spacing: DuoSpace.gapButtonToButton) {
                         Button("+ New session") { model.newSession() }.buttonStyle(.duo)
-                        if let project, model.terminalsMode == .live {
+                        if let project, model.terminalsMode == .live || model.videoTasks {
                             Button("+ New task") { model.newTask(in: project.name) }.buttonStyle(.duo)
+                                .accessibilityIdentifier("video.newtask.button")   // anchors: the video cursor's target
                         }
                     }
                     .padding(.horizontal, DuoSpace.panePadding)
@@ -74,6 +77,7 @@ struct ProjectSidebarPane: View {
                 .id(project?.name)
             }
             .onHover { model.hoverSidebar($0) }
+            .background { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Sessions").accessibilityIdentifier("video.sessions.list") } }   // anchors (scene 9)
             FileTreePane()
         }
         .foregroundStyle(DuoColor.text)
@@ -181,6 +185,7 @@ struct SidebarRowView: View {
                 .modifier(TaskRowHover(key: row.task.map { TaskRowHover.key(project: model.currentProject?.name ?? "", path: $0) } ?? ""))
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("\(row.name), \(row.task == nil ? "group" : "task") of \(count), \(row.state.spokenName)")
+                .accessibilityIdentifier(row.task.map { "video.task.\(($0 as NSString).deletingPathExtension.components(separatedBy: "/").last ?? $0)" } ?? "")   // anchors: the video cursor's target
                 .accessibilityAddTraits(selected ? .isSelected : [])
 
                 if expanded {
@@ -300,6 +305,7 @@ struct FileTreePane: View {
             }
         }
         .padding(.bottom, 12)
+        .background { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Files").accessibilityIdentifier("video.files.tree") } }   // anchors (scene 9)
         .contentShape(Rectangle())
         .modifier(LiveContextMenu { NewItemsMenu(near: nil) })
         // Files dropped on the empty area go to the project root (DL-117).
@@ -491,6 +497,7 @@ struct FileRow: View {
             .modifier(TakesFileDrops(target: node.children != nil ? node.path : (node.path as NSString).deletingLastPathComponent))
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(selected ? .isSelected : [])
+            .overlay { if model.videoDemoFolder != nil, node.children != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Folder \(node.name)").accessibilityIdentifier("video.files.folder.\(node.path)") } }   // anchors (scene 9)
             if let children = node.children, open {
                 ForEach(children) { c in FileRow(node: c, depth: depth + 1) }.transition(.foldRows)
             }
@@ -589,6 +596,12 @@ struct RightPane: View {
                         .accessibilityElement(children: .combine)
                         .accessibilityIdentifier("video.tab.right.\(tabs.firstIndex { $0.id == tab.id } ?? i)")   // anchors: 0 is Project, then the documents in order
                         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+                        .overlay {   // anchors: a document's tab by its kind (`video.tab.md`, `.html`, `.pptx`, `.docx`), as a sibling so the index name stays
+                            if model.videoDemoFolder != nil, tab.isDocument {
+                                Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("\(title) tab")
+                                    .accessibilityIdentifier("video.tab.\((tab.id as NSString).pathExtension.lowercased())")
+                            }
+                        }
                         // A file outside the project: its path is the tooltip (DL-106); a popup: its opener (DL-132 i).
                         .help(outside ? String(tab.id.dropFirst(AppModel.outsideFilePrefix.count)) : opener.map { "Opened from \($0)" } ?? "")
                         .onActivate { model.rightTab = tab.id; if tab.isDocument { model.selectedFile = tab.id } }  // action: view tab
@@ -656,13 +669,15 @@ struct RightPane: View {
                 // Local HTML, read-only and live (v1; DL-67): its own web view, with the element picker.
                 ZStack(alignment: .bottom) {
                     HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
+                        .accessibilityIdentifier("video.right.document")   // on the page alone: the picker bar's buttons keep their own names
                     PickerBar()
                 }
-                .accessibilityIdentifier("video.right.document")
             } else if let path = model.rightTab, AppModel.isDeck(path), let file = model.liveFile(path) {
                 // A PowerPoint deck: drawn, with its slide and the shape picker (DL-125).
                 DeckView(viewer: model.deckViewer, path: path, file: file)
-                    .accessibilityIdentifier("video.right.document")
+                    .background {   // anchors: a sibling, so the bar's buttons keep their own names (`video.slide.select`, `video.picker.send`)
+                        Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Deck").accessibilityIdentifier("video.right.document")
+                    }
             } else if let path = model.rightTab, AppModel.isWordViewable(path), let file = model.liveFile(path) {
                 // A Word document: drawn read only with its comments and tracked changes (DL-162).
                 DocxView(viewer: model.docxViewer, path: path, file: file)
@@ -940,6 +955,7 @@ struct PickerBar: View {
                     HStack(spacing: 8) {
                         switch model.sendTarget {
                         case .success(let t): Button("Send to Claude") { model.sendPickedElement(to: t.key) }.keyboardShortcut(.defaultAction)
+                            .accessibilityIdentifier("video.picker.send")   // anchors: the video cursor's target
                         case .failure(let why): Button("Send to Claude") {}.disabled(true).help(why.reason)
                         }
                         Menu("Send To") {

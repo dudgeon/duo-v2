@@ -56,6 +56,7 @@ struct DeckBar: View {
             Spacer(minLength: 8)
             Button("Select Shape") { viewer.picking ? viewer.stopPicking() : viewer.startPicking() }
                 .buttonStyle(DuoButtonStyle(on: viewer.picking)).disabled(viewer.state != .ready)
+                .accessibilityIdentifier("video.slide.select")   // anchors: the video cursor's target
             OpenWithMenu(path: path, file: file, bordered: true)
         }
         .padding(.horizontal, DuoMetric.noticePaddingX)
@@ -130,6 +131,7 @@ struct PickerButtonRow: View {
         case .success(let t):
             Button("Send to Claude") { model.sendPickedElement(to: t.key) }
                 .buttonStyle(DefaultSheetButtonStyle()).keyboardShortcut(.defaultAction)
+                .accessibilityIdentifier("video.picker.send")   // anchors: the video cursor's target
         case .failure(let why):
             Button("Send to Claude") {}.buttonStyle(DefaultSheetButtonStyle()).disabled(true).help(why.reason)
         }

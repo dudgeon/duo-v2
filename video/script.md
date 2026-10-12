@@ -14,7 +14,7 @@ A from-scratch rewrite. Each build reads this doc. The rules below are what the 
 - **Anything else** (a paragraph, a question, a `> note`) is ignored by the build. Use it freely.
 - **Every Shot: note is a checklist.** The build lists each thing a Shot: note asks for, and its report names anything not built yet. A stand-in is never silent.
 - **No shot ever cuts to the next.** If the next shot is somewhere else in the app, we get there by using the app: the camera pulls back, the cursor clicks where you'd click, and the camera pushes in on what opens. If it's a different idea, it gets a motion-graphics transition instead. The build picks one for every scene change and refuses to render a plain cut or dissolve; a Shot: note can ask for a particular one.
-- **Topic:** is the scene's name in the topic list, the vertical list at the left that comes up at each scene change with the new scene highlighted. One short line under the heading, like `Topic: Chat mode`. Edit it freely; the heading's title is only for us.
+- **Topic:** is the scene's name in the topic list, the vertical list at the left that comes up at each scene change with the new scene highlighted. One short line under the heading, like `Topic: Chat mode`. Edit it freely; the heading's title is only for us. To keep a scene under the previous scene's topic, write `Topic: same`: the two share one entry, and no topic list comes up between them.
 
 ## The brief
 
@@ -105,7 +105,7 @@ Shot: All projects in List view: every previous session in one list, with its pr
 
 ### S4 · Sessions (about 15 s)
 
-Topic: Sessions
+Topic: Agent Pane
 
 - When you click a claude code session, it resumes right where you left off, in the terminal.
 - Duo helps you keep track of many sessions at once. Close one and come back to it later, or archive or delete the ones you're done with to cut down on clutter.
@@ -116,14 +116,14 @@ Shot: from S3's Needs you column, the cursor clicks a session, and the camera pu
 >
 > - *Getting here from S3:* app navigation. The resume click at the start of this scene is the transition, so S3 ends on All projects with nothing clicked (Geoff, Oct 11).
 > - *Real, today:* resuming reopens the session with `claude --resume`. Archive Session and Delete Session… are in a session's right-click menu; there's no Close there (a session closes with its tab's ×, and the menu has no Close item, found Oct 11). Delete asks first, in Duo's confirmation sheet, then moves the transcript to the Trash; it never deletes a running session.
-> - *Decided (Geoff, Oct 11):* keep Delete in the line and the shot. S4 covers sessions only; chat mode is S5.
+> - *Decided (Geoff, Oct 11):* keep Delete in the line and the shot. S4 covers sessions only; the terminal is S5 and chat mode S6.
 > - *New captures needed:* the project with the resumed session in its terminal; the session list's right-click menu; the Archived fold with one more session in it; the confirmation sheet; and the list after the delete.
 > - *Fixtures (asked of demo-fixtures, Oct 11):* a Needs you session with real history, a session to archive, an idle one to delete, and a few already archived.
-> - *Leaving for S5:* S4 ends on the terminal, and S5 carries straight on from that picture. The chat-toggle click comes on S5's word "chat", so the flip lands as the narrator names it.
+> - *Leaving for S5:* S4 ends on the terminal, and S5 carries straight on from that picture. The chat-toggle click comes in S6, on "chat mode", so the flip lands as the narrator names it.
 
 ### S5 · Terminal pane (about 6 s)
 
-Topic: Terminal pane
+Topic: same
 
 - The terminal runs the full claude code terminal interface.
 
@@ -131,7 +131,7 @@ Shot: the same session as S4, in the terminal. The camera settles on the middle 
 
 > **Notes for the build** (ignored by it):
 >
-> - *Getting here from S4:* carrying on from S4's last picture, the terminal, with no cut; the topic list comes up with Terminal pane highlighted.
+> - *Getting here from S4:* carrying on from S4's last picture, the terminal, with no cut. It shares S4's topic (Topic: same), so no topic list comes up.
 > - *Split (Geoff, Oct 11):* S5 is the terminal pane only; chat mode moved to S6.
 > - *Captures:* the resumed terminal from S4 (video-s4-resumed); nothing new.
 > - *Leaving for S6:* S5 ends on the terminal; S6 pushes in on the chat-mode button.
@@ -154,9 +154,150 @@ Shot: carrying on from S5's terminal. On *chat mode* the camera pushes in on the
 > - *Fixtures (asked of demo-fixtures, Oct 11):* the session's history; a block of user feedback long enough to fold (over 12 lines) and a screenshot from that user; a demo skill for shelf-scan; Claude Code's `/` menu and `/model` screens; two or three short turns between Sam and Claude.
 > - *Skill autocomplete:* any problem found with it while building goes to the director to fix (Geoff, Oct 11).
 
+### S7 · Editor Pane
+
+Topic: File Viewer/Editor
+
+- Duo includes a single pane to view and edit most of the file-types you would want to interact with: markdown, html, powerpoint, and documents.
+- Markdown editing is simple -- most keyboard shortcuts are the same, like command-b to bold, and command-k to add a link. Your changes are visible in real time -- no toggling between raw and rendered markdown.
+- Anything you can see or edit, claude can too. You can select text to show it to your claude agent, and claude can update the document with visible changes.
+- This works in all document types that duo supports, like html or powerpoint.
+
+Shot: the camera moves right to the viewer pane, its first time in the video. On line 1 the cursor clicks through the tabs open there, each on its word: the PRD (Markdown) on "markdown", the scan-review prototype (HTML) on "html", the team-review deck on "powerpoint", and the interview synthesis (Word) on "documents". Each tab opens in its real viewer, and the camera stays on the viewer pane while the tabs change.
+
+On line 2 the cursor goes back to the PRD tab and makes a run of edits in the Markdown editor, each on its words, with a small keycap showing each shortcut as it's pressed:
+
+1. On "command-b": it drag-selects "Fewer than 3% wrong books" in Goals, and ⌘B bolds it in place.
+2. On "command-k": it selects "review step" in What we heard, and ⌘K (Format › Link) makes the words a link to the prototype, prototype/scan-review.html.
+3. On "real time": it types a new sentence at the end of What we heard, "Owen (P8) stopped after two wrong books in two scans.", which renders as it's typed.
+4. On "no toggling": it adds a bullet under Open questions, and the camera pulls back enough to show there is only one view of the file, with no raw/preview switch.
+
+The camera stays on the viewer pane throughout.
+
+On line 3, still on the PRD:
+
+1. On "select text": the cursor drag-selects the What we heard paragraph, right-clicks it, and picks **Send Selection to Claude** from the editor's menu, among its real items.
+2. On "show it to your claude agent": the camera moves to the middle pane, where the selection has landed in the Auto-add decision chat's composer as a reference to those lines. Sam types "Update this with the latest tester feedback in research/feedback" and sends.
+3. On "visible changes": Claude's reply folds its steps into rows (it reads the feedback files and edits prd-v2.md), and the camera moves back to the editor. There the paragraph has changed in place, with Claude's edit highlighted the way Duo marks Claude's changes.
+
+> **Notes for the build** (ignored by it):
+>
+> - *The menu:* drawn, like S4's, because macOS draws context menus outside the window capture. Its items are the editor's real ones (Send Selection to Claude, Send Selection To ▸, then the system's).
+> - *Fixtures (made by demo-fixtures, Oct 11):* the chat turn (the composer with the sent selection as Duo formats it, Sam's message, and Claude's reply with its rows); the PRD after Claude's edit, a What we heard paragraph updated from the triage log (Denise's glare, Owen's two wrong books); and the editor showing that edit highlighted.
+
+On line 4, the same pattern twice more, quicker, each ending on the change visible in its own viewer:
+
+1. On "html": the cursor clicks the scan-review.html tab, picks the "Fix" button on the prototype's review screen with the element picker, started from the page's right-click menu (Select Element), which outlines it, and sends it to Claude. Sam asks "Make this button say 'Fix this book' and make it bigger", and the prototype reloads with the change.
+2. On "powerpoint": the cursor clicks the team-review-oct15.pptx tab and goes to slide 3, "What the eval found", and picks its paragraph with the deck viewer's Select Shape button. Sam asks "Turn this into three bullets", and the slide redraws with the bullets.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Real, today:* the HTML viewer's element picker and a picked slide shape both go to Claude through Send to Claude (`duo2 send element`). Claude edits the file and the viewer shows the new version.
+> - *Fixtures (made by demo-fixtures, Oct 11):* for each, the chat turn (the picked element or shape as Duo sends it, Sam's message, Claude's reply with its rows) and the file after Claude's edit (scan-review.html with the bigger button; the deck with that slide in bullets). The deck needs a slide with a plain paragraph to turn into bullets.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Getting here from S6:* app navigation. The camera pulls back from the chat, and the topic list comes up for this topic.
+> - *Tabs:* the four files open in S2 (prd-v2.md, scan-review.html, team-review-oct15.pptx, beta-interview-synthesis.docx) are still open in the right pane, so the clicks walk the real tab strip.
+> - *New captures needed:* the right pane on each of the four tabs, in the 1800×1100 window S3–S6 use.
+
+### S8 · Projects Background
+
+Topic: Claude Code Projects
+
+- Projects are a little harder to explain and something I need to work on in the app. Let's start with some fundamentals.
+- Claude Code operates on a concept called "projects" -- wherever you open Claude Code, Claude assumes that that folder is a project
+- Claude code assumes you always change directories into the "right" folder, and that you have a different folder for each thing you are working on -- one folder for each project in your life, consistently used every time you open claude code. Claude code also does not show you your projects or make it easy to navigate between them.
+- many users don't change directories before starting claude code, so all projects stack up in the same directory and are hard to tell apart
+- Projects are a really useful construct in claude code, but they can be hard to manage.
+
+Shot: on "Let's start with some fundamentals", Duo's window fades away to the bare desktop. On the "projects" line, two simulated windows appear, side by side, drawn like S1's: a dark Terminal and a Finder window on Sam's home folder (Desktop, Documents, Downloads, work…). The Terminal's prompt reads `sam@mbp ~ %`, and Sam types `claude` with no `cd`. Claude Code's banner comes up showing `~` as its folder, and a marker circles that path as the narrator says it's the project, with the Finder window showing the same folder beside it.
+
+On the "one folder for each project" line, the windows step aside for a motion graphic on the paper ground: a row of folders under `~`, namely `work/little-shared-library/shelf-scan`, `beta-feedback`, `taxes-2026`, `maya-birthday` and `router`. Each holds its own small stack of session cards, the way Claude Code files sessions by folder, one stack per folder. This is the ideal Claude Code assumes. On "does not show you your projects", every stack except the one for the folder you're in greys out and its folder name fades, since Claude Code only shows the sessions of the folder you started in. Then the graphic folds back into the Terminal.
+
+On the "many users don't change directories" line, still in the Terminal at `~`, Sam runs `claude --resume`. Claude Code's session picker opens on a long list of unrelated sessions, all started in `~`: the shelf-scan PRD next to a tax-receipts tidy-up, a birthday-party plan, a fix to a home router, a cover letter, and so on. Sam scrolls down through a screenful or two, can't find the one wanted, and gives up, leaving the pile on screen. The list is in Claude Code's own picker format.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Drawn, not captured:* the Terminal is a stand-in from `lib/Clutter.tsx`, with the real Claude Code banner text as S2's terminals show it.
+> - *Transition:* a motion graphic (Duo fades to the desktop), as Geoff asked; it's a change of idea, not app navigation.
+
+> - *Visual plan (Geoff, Oct 11, by buttons):* the folder map for the one-folder-per-project line; the resume picker's pile is Sam's own sessions, the shelf-scan work mixed with life stuff (23 sessions, real 2.1.296 picker text from demo-fixtures, `terms/s8-resume-*.txt`).
+> - *Ending (Geoff, Oct 11):* the scene ends on the pile, still on screen. The next scene opens by fading the pile out and Duo back in.
+
+### S9 · Duo Projects
+
+Topic: Duo Projects
+
+- Duo tries to help you manage projects and use them to make progress in your own work.
+- Duo finds every session and every project folder on your mac and organizes them for you --  making it easy to see what you were working on in which project
+- Each project shows up as its own pane, and lists the sessions from that project underneath.
+- When you click on an existing session, you enter the "project view" for its project.
+- The project view shows the sessions that share a project, and the files and folders in that project's directory.
+- The project view filters sessions and files to just the ones you are working on in that project, and you can leave and return to it any time.
+
+Shot: the resume picker's pile from the scene before fades out, and Duo's window fades back in on the desktop exactly as we last saw it at the end of S7: shelf-scan open, the Auto-add decision chat in the middle, and the deck in the right pane on its new bulleted slide.
+
+On the "finds every session and every project folder" line, the cursor clicks **All projects** at the top left, then **Board** in the Board | List switch. The Board view opens: a map of project tiles grouped in columns by area (APP, COMMUNITY), each tile listing its project's sessions (shelf-scan, beta-feedback, steward-onboarding, neighborhood-map, Home). On "what you were working on in which project", the camera glides across the columns, so each project's sessions read as its own stack: the opposite of the pile in `~`.
+
+On "its own pane", the camera settles on the shelf-scan column, and a marker runs down its session cards. On "click on an existing session", the cursor clicks one of them, and Duo opens shelf-scan's project view (app navigation, as in S3 to S4). On "sessions that share a project", the camera zooms in on the project's session list at the top of the left pane (Today, This week, Archived), so its rows fill the frame. On "files and folders in that project's directory", the camera moves down the left pane to the file navigator below the sessions (FILES, the project's path, then PROJECT.md, docs/, eval/, prototype/, research/…) and zooms in on it, as the cursor opens one folder. On "leave and return to it any time", the camera pulls back, and the cursor clicks **All projects** in the breadcrumb; the Board view comes back. Then it clicks a shelf-scan card again, and the project view returns exactly as it was left: the same tabs, chat and files.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Transition:* a motion graphic, the pile out and Duo in (Geoff, Oct 11). Its first picture is S7's last capture (video-s7-pptx-after), so nothing in Duo changes across the gap.
+
+### S10 · Tasks
+
+Topic: Tasks
+
+- Tasks are an experimental, optional feature that you can use to add structure to a project.
+- Usually, a project has an overarching goal, and includes multiple tasks to achieve that goal.
+- In my own work, I found that most sessions mapped to a task, so I made tasks to help me provide more context to claude about the task goal, and attribute the claude code sessions that are related to it.
+- In duo, you can make a task in the project view, then add some details -- these are available to the user and any agents that work with them.
+- Then, duo makes it easy to attribute sessions to that task.
+- Because tasks are a defined primitive in duo, we can create view that make it easy to see, manage, and return to tasks.
+
+Shot: in shelf-scan's project view, with the camera on the left pane.
+
+On line 1 ("experimental, optional… add structure"), the session list starts flat, as it has looked all along. On "add structure", the project's **Tasks** fold opens above it and the sessions regroup under their tasks: Auto-add decision, Deck for Thursday, Spine eval: glare cases. Each group holds the sessions that worked on it, and anything without a task stays below.
+
+On line 2 ("an overarching goal, and includes multiple tasks"), the camera rises to the project's header (its health and next step, "On track · Team review Thu Oct 15"; the goal itself lives in PROJECT.md and on the All projects tile), then runs down the task rows, circling the tasks that serve it.
+
+On line 3 ("more context to claude about the task goal, and attribute the sessions"), the cursor opens the Auto-add decision task's note in the right pane. It's a plain Markdown file: its goal and done-when at the top, then its sessions listed by name. A marker circles the goal on "context to claude", then the sessions on "attribute".
+
+On "you can make a task in the project view", the cursor picks **New Task** (File › New Task). Duo opens a new note as "Untitled task" with its heading selected (the + New task button at the foot of the left pane does the same), and Sam types the name, "Warn about glare before the photo"; the file takes the name's slug. The new task note opens in the right pane's editor (tasks/warn-about-glare-before-the-photo.md, the slug New Task makes), and on "add some details" Sam types a few lines under it: the goal (no glare reads at glass-door boxes), what done looks like, and a link to Denise's feedback. On "available to the user and any agents", the camera pulls back to show the task listed in the project beside its sessions.
+
+On "attribute sessions to that task", Sam right-clicks the new task in the project's Tasks fold and picks **New Session in Task** from its menu (its real items: Open Task Note, New Session in Task, Add Session ›, and the rest). A new session opens in the middle pane, grouped under the task in the session list, and Sam starts working: types "Draft the glare warning copy for the scan screen" and sends. Claude's first reply begins, already knowing the task's goal from its note.
+
+On "views that make it easy to see, manage, and return to tasks", the cursor opens the project's task board: a kanban with columns by status and shelf-scan's tasks as cards, among them the new glare task, the auto-add decision and the team-review deck. Each card shows its sessions. The cursor clicks a different task's card (Deck for Thursday), its sessions show, and it clicks one of them; that session resumes right where it left off.
+
+> **Notes for the build** (ignored by it):
+>
+> - *Real, today:* a task is one Markdown file per task, `tasks/<slug>.md` with `type: task` frontmatter (DL-6, DL-13), made with File › New Task, which names it first (DL-93). It is a plain file, so Claude reads it like any other.
+> - *Fixtures (asked of demo-fixtures, Oct 11):* shelf-scan's PROJECT.md goal; three task notes (Auto-add decision, Deck for Thursday, Spine eval: glare cases), each with a goal, done-when, a status for the board's columns and its sessions linked; the new task note before and after Sam's lines; the New Session in Task chat turn (Sam's first request and Claude's reply, which uses the task's goal); and the Deck for Thursday session's history for the resume.
+
+### S11 · Conclusion
+
+Topic: Conclusion
+
+- Duo is still under very active development, and I will try to keep this video up to date for major feature additions.
+- The core is working well for me in my own work, but I have a lot of work to do to make projects and tasks more intuitive. And I'm mindful of the balance in making them useful, vs not over-fitting to my own ways of working, so I would appreciate any feedback you have on how you use or want to use claude code in your own workflows -- and how I can improve how duo could work to help you.
+- Please give duo a try and open up a github issue if there are bugs, features you would like me to add, or ways I could improve the experience.
+
+Shot: out of the app and onto the paper ground, a bookend to S0.
+
+1. On "under very active development", Duo's window pulls back, shrinks and slides off as a thumbnail to the left, and a release line draws itself across the frame: one dot per real release, read from GitHub at build time (0.2.0 on Oct 6 to 0.2.11 today, so it grows with every build). On "keep this video up to date", a last dot past the newest stays open and dashed, labelled "next", with a small mono stamp under the line: "This video was built from Duo 0.2.11 on Oct 11, 2026".
+2. On "the core is working well", the topic list from the scene changes comes back, full height and centred: every topic gets a ✓, but Projects and Tasks are circled with the marker, as still in progress. On "any feedback you have", the list slides up, and a few blank feedback cards drop into a stack beside it, each with a cursor's blinking caret, as an invitation and not real messages.
+3. On "give duo a try", the cards clear. Just before, on "open up a github issue", we're briefly back in Duo for the real way in: the cursor opens the Help menu in the menu bar and picks Report an Issue…, and a browser window slides up with GitHub's new-issue form for duo-v2, Duo's version and macOS already filled in. Then the browser shrinks away, and the video ends where it began: S0's opening card (the Duo logo, "Duo" and its subtitle), exactly as the thumbnail shows it, held about 3 s after the last line (Geoff, Oct 11).
+
+> **Notes for the build** (ignored by it):
+>
+> - *Drawn, not captured:* all motion graphics in the paper language (`lib/Paper.tsx`). The releases come from `gh release list` at build time, so the line stays true as Duo ships. The repo URL is the real public one.
+> - *Open for Geoff:* whether the feedback cards are too much. (Decided, Oct 11: the end card is the opening card.) Real, today: Help › Report an Issue… opens GitHub's new-issue form, filled in, for the user to edit and submit (DuoLinks.newIssue). The menu is drawn (it's outside the window capture) and so is the browser.
+
 ## The voice
 
-The house voice is M2, a warm baritone. The build reads this table: write the word as it appears in a line, and how it should be said. Add a row whenever a line comes out wrong.
+The narrator is Geoff's own voice, a zero-shot clone at tempo 1.05 (Oct 11; the house voice, B-light-133, is kept to switch back). The build reads this table: write the word as it appears in a line, and how it should be said. Add a row whenever a line comes out wrong.
 
 | Written | Said |
 | --- | --- |

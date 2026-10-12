@@ -1,0 +1,35 @@
+{
+  "thinking": false,
+  "steps": 8,
+  "clips": [
+    {
+      "prompt": "warm Rhodes electric piano chords with a soft airy synth pad, very subtle soft pulse, no drums, no percussion, gentle, slow, minimal, hopeful, major key, instrumental underscore",
+      "bpm": 90,
+      "key": "C Major",
+      "duration": 30,
+      "seed": 21,
+      "fade_in": 1.5,
+      "fade_out": 3,
+      "out": "/Users/geoff/repos/duo-v2/.claude/worktrees/video-pipeline/video/.cache/score/A-warm-pulse.raw.wav"
+    },
+    {
+      "prompt": "slow evolving ambient pads, airy warm drones, soft shimmering textures, spacious, ethereal, calm, beatless, instrumental ambient soundscape",
+      "key": "D Major",
+      "duration": 30,
+      "seed": 12,
+      "fade_in": 1.5,
+      "fade_out": 3,
+      "out": "/Users/geoff/repos/duo-v2/.claude/worktrees/video-pipeline/video/.cache/score/B-ambient.raw.wav"
+    },
+    {
+      "prompt": "relaxed lo-fi, muted felt piano and soft Rhodes chords, very quiet soft brushed snare and light shaker, no kick drum, mellow, gentle, minimal, vinyl crackle, instrumental",
+      "bpm": 80,
+      "key": "Eb Major",
+      "duration": 30,
+      "seed": 22,
+      "fade_in": 1.5,
+      "fade_out": 3,
+      "out": "/Users/geoff/repos/duo-v2/.claude/worktrees/video-pipeline/video/.cache/score/C-lofi.raw.wav"
+    }
+  ]
+}

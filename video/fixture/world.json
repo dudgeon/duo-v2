@@ -375,21 +375,24 @@
       "project": "shelf-scan",
       "state": "working",
       "wait": "now",
-      "role": "S2 middle tab 0"
+      "role": "S2 middle tab 0",
+      "sessionId": "7a5c0000-5e55-4d0e-8a00-5e5500000000"
     },
     {
       "name": "Prototype scan review",
       "project": "shelf-scan",
       "state": "idle",
       "wait": "12m",
-      "role": "S2 middle tab 1"
+      "role": "S2 middle tab 1",
+      "sessionId": "7a5c0001-5e55-4d0e-8a00-5e5500000001"
     },
     {
       "name": "Synthesis from interviews",
       "project": "shelf-scan",
       "state": "idle",
       "wait": "1h",
-      "role": "S2 middle tab 2, chat"
+      "role": "S2 middle tab 2, chat",
+      "sessionId": "7a5c0002-5e55-4d0e-8a00-5e5500000002"
     },
     {
       "name": "Auto-add decision",
@@ -403,40 +406,46 @@
         "Keep it and log an open question",
         "Something else"
       ],
-      "role": "S3 needs you; S4 resume; S5 chat"
+      "role": "S3 needs you; S4 resume; S5 chat",
+      "sessionId": "5b1e7c42-9d3a-4f60-8a21-c0de0add0a11"
     },
     {
       "name": "Spine eval: glare cases",
       "project": "shelf-scan",
       "state": "working",
       "wait": "9m",
-      "summary": "Running score.py on the glare subset"
+      "summary": "Running score.py on the glare subset",
+      "sessionId": "7a5c0004-5e55-4d0e-8a00-5e5500000004"
     },
     {
       "name": "Deck for Thursday",
       "project": "shelf-scan",
       "state": "readyForReview",
-      "summary": "team-review-oct15.pptx, 6 slides"
+      "summary": "team-review-oct15.pptx, 6 slides",
+      "sessionId": "7a5c0005-5e55-4d0e-8a00-5e5500000005"
     },
     {
       "name": "quick q: TestFlight build size",
       "project": "shelf-scan",
       "state": "idle",
       "wait": "3d",
-      "role": "S4 archive"
+      "role": "S4 archive",
+      "sessionId": "7a5c0006-5e55-4d0e-8a00-5e5500000006"
     },
     {
       "name": "Old v1 notes cleanup",
       "project": "shelf-scan",
       "state": "idle",
       "wait": "6d",
-      "role": "S4 delete; never running"
+      "role": "S4 delete; never running",
+      "sessionId": "7a5c0007-5e55-4d0e-8a00-5e5500000007"
     },
     {
       "name": "Weekly digest draft",
       "project": "beta-feedback",
       "state": "working",
-      "wait": "2m"
+      "wait": "2m",
+      "sessionId": "7a5c0008-5e55-4d0e-8a00-5e5500000008"
     },
     {
       "name": "Tag crash reports",
@@ -444,62 +453,310 @@
       "state": "needsYou",
       "wait": "7m",
       "permission": "Bash(xcrun crashlog symbolicate crashes/*.ips)",
-      "question": "Allow Claude to run xcrun on crashes/*.ips?"
+      "question": "Allow Claude to run xcrun on crashes/*.ips?",
+      "sessionId": "7a5c0009-5e55-4d0e-8a00-5e5500000009"
     },
     {
       "name": "Tester emails, Oct 12",
       "project": "beta-feedback",
-      "state": "readyForReview",
-      "summary": "Sorted 23 emails into 5 themes"
+      "state": "idle",
+      "summary": "Sorted 23 emails into 5 themes",
+      "wait": "40m",
+      "sessionId": "7a5c000a-5e55-4d0e-8a00-5e550000000a"
     },
     {
       "name": "Freshness badge spec",
       "project": "neighborhood-map",
       "state": "working",
       "wait": "14m",
-      "summary": "Writing states in freshness.md"
+      "summary": "Writing states in freshness.md",
+      "sessionId": "7a5c000b-5e55-4d0e-8a00-5e550000000b"
     },
     {
       "name": "Map pins: stale boxes",
       "project": "neighborhood-map",
       "state": "idle",
-      "wait": "2d"
+      "wait": "2d",
+      "sessionId": "7a5c000c-5e55-4d0e-8a00-5e550000000c"
     },
     {
       "name": "Steward welcome email",
       "project": "steward-onboarding",
-      "state": "readyForReview",
-      "summary": "welcome-email.md, 3 variants"
+      "state": "idle",
+      "summary": "welcome-email.md, 3 variants",
+      "wait": "3h",
+      "sessionId": "7a5c000d-5e55-4d0e-8a00-5e550000000d"
     },
     {
       "name": "Morning triage",
       "project": "home",
-      "state": "needsYou",
+      "state": "idle",
       "wait": "1h",
-      "question": "4 new asks: route 3 to projects?",
-      "options": [
-        "Yes, route 3",
-        "No",
-        "Something else"
-      ]
+      "summary": "Routed 3 of 4 new asks to projects",
+      "sessionId": "7a5c000e-5e55-4d0e-8a00-5e550000000e"
     },
     {
       "name": "Scan v1 launch notes",
       "project": "shelf-scan",
       "state": "archived",
-      "wait": "7w"
+      "wait": "7w",
+      "sessionId": "7a5c000f-5e55-4d0e-8a00-5e550000000f"
     },
     {
       "name": "Interview guide",
       "project": "shelf-scan",
       "state": "archived",
-      "wait": "4w"
+      "wait": "4w",
+      "sessionId": "7a5c0010-5e55-4d0e-8a00-5e5500000010"
     },
     {
       "name": "Map tile costs",
       "project": "neighborhood-map",
       "state": "archived",
-      "wait": "3w"
+      "wait": "3w",
+      "sessionId": "7a5c0011-5e55-4d0e-8a00-5e5500000011"
     }
-  ]
+  ],
+  "homeSessions": {
+    "$note": "S8 (Geoff, 2026-10-11): Sam's sessions started in ~ before Duo, shelf-scan work mixed with life admin. terms/make-resume.py renders Claude Code's real --resume picker from them.",
+    "cwd": "/Users/sam",
+    "sessions": [
+      {
+        "title": "Tighten the goals in the shelf-scan PRD",
+        "prompt": "Tighten the goals in ~/work/little-shared-library/shelf-scan/docs/prd-v2.md",
+        "age": 25,
+        "msgs": 14
+      },
+      {
+        "title": "Sort tax receipts into 2026 folders",
+        "prompt": "Sort the PDFs in ~/Downloads/receipts into folders by month",
+        "age": 140,
+        "msgs": 31
+      },
+      {
+        "title": "Plan Maya's 7th birthday party",
+        "prompt": "Help me plan a birthday party for 12 seven-year-olds",
+        "age": 320,
+        "msgs": 22
+      },
+      {
+        "title": "Why does the home router drop at 9pm?",
+        "prompt": "My wifi drops every night around 9pm. Here's the router log",
+        "age": 1500,
+        "msgs": 48
+      },
+      {
+        "title": "Cover letter for the library board seat",
+        "prompt": "Draft a cover letter for the volunteer board at Northgate Library",
+        "age": 1720,
+        "msgs": 9
+      },
+      {
+        "title": "Recipe scaler: dal for 12",
+        "prompt": "Scale this dal recipe from 4 servings to 12",
+        "age": 2900,
+        "msgs": 6
+      },
+      {
+        "title": "Export Kindle highlights to Markdown",
+        "prompt": "Turn My Clippings.txt into one Markdown file per book",
+        "age": 3100,
+        "msgs": 27
+      },
+      {
+        "title": "Watering schedule for the raised beds",
+        "prompt": "Make a watering schedule for tomatoes, beans and kale",
+        "age": 4400,
+        "msgs": 11
+      },
+      {
+        "title": "Summarize interview notes P1-P8",
+        "prompt": "Summarize the eight beta interview notes in ~/work/little-shared-library/shelf-scan/research",
+        "age": 4700,
+        "msgs": 36
+      },
+      {
+        "title": "Rename vacation photos by date",
+        "prompt": "Rename the photos in ~/Pictures/Cornwall by the date they were taken",
+        "age": 5900,
+        "msgs": 18
+      },
+      {
+        "title": "Compare two refinance offers",
+        "prompt": "Compare these two mortgage refinance offers",
+        "age": 7300,
+        "msgs": 25
+      },
+      {
+        "title": "Fix zsh prompt after brew upgrade",
+        "prompt": "My zsh prompt broke after brew upgrade",
+        "age": 8700,
+        "msgs": 13
+      },
+      {
+        "title": "Reply to landlord about the leak",
+        "prompt": "Help me reply to the landlord about the bathroom leak",
+        "age": 10100,
+        "msgs": 8
+      },
+      {
+        "title": "Auto-add numbers for Jo",
+        "prompt": "Pull the auto-add numbers from the beta digest for Jo",
+        "age": 10600,
+        "msgs": 10
+      },
+      {
+        "title": "Meal plan for the week, no nuts",
+        "prompt": "Meal plan for the week, no nuts, two kids",
+        "age": 11400,
+        "msgs": 7
+      },
+      {
+        "title": "Bank CSV to budget spreadsheet",
+        "prompt": "Convert this bank CSV export into my budget spreadsheet",
+        "age": 13000,
+        "msgs": 21
+      },
+      {
+        "title": "Book club questions for Middlemarch",
+        "prompt": "Ten book club questions for Middlemarch, no spoilers past book 4",
+        "age": 14500,
+        "msgs": 12
+      },
+      {
+        "title": "Car insurance renewal: what changed",
+        "prompt": "What changed in my car insurance renewal?",
+        "age": 17300,
+        "msgs": 9
+      },
+      {
+        "title": "Read Ravi's spine eval CSV",
+        "prompt": "Read ~/work/little-shared-library/shelf-scan/eval/results.csv and tell me the accuracy",
+        "age": 20200,
+        "msgs": 19
+      },
+      {
+        "title": "Training plan for a November 10k",
+        "prompt": "Make me a running plan for a 10k on Nov 15",
+        "age": 21700,
+        "msgs": 15
+      },
+      {
+        "title": "Screen-time rules for the kids",
+        "prompt": "Draft screen-time rules the kids might actually agree to",
+        "age": 30200,
+        "msgs": 6
+      },
+      {
+        "title": "Clean up the Downloads folder",
+        "prompt": "What can I delete from ~/Downloads?",
+        "age": 31700,
+        "msgs": 4
+      },
+      {
+        "title": "Little Shared Library pitch notes",
+        "prompt": "Turn my seed pitch notes into a one-page memo",
+        "age": 44000,
+        "msgs": 40
+      }
+    ]
+  },
+  "homeFolder": {
+    "$note": "S8: the Finder window on ~ (macOS defaults plus Sam's work folder).",
+    "path": "/Users/sam",
+    "items": [
+      "Applications",
+      "Desktop",
+      "Documents",
+      "Downloads",
+      "Movies",
+      "Music",
+      "Pictures",
+      "Public",
+      "work"
+    ]
+  },
+  "tasks": {
+    "$note": "S10 (Geoff, 2026-10-11): shelf-scan's task notes, tasks/<slug>.md (DL-6, DL-93, DL-146). make-tasks.py writes them; sessions link by the ids above.",
+    "notes": [
+      {
+        "title": "Auto-add decision",
+        "status": "waiting",
+        "owner": "Sam",
+        "waiting_on": "Jo Whitfield",
+        "due": "2026-10-15",
+        "goal": "Decide whether auto-add survives v2.",
+        "done": [
+          "Q1 in the PRD is closed",
+          "Jo signs off at Thursday's review"
+        ],
+        "sessions": [
+          "Auto-add decision",
+          "Tighten PRD goals"
+        ],
+        "created": "2026-10-12"
+      },
+      {
+        "title": "Deck for Thursday",
+        "status": "review",
+        "owner": "Sam",
+        "due": "2026-10-15",
+        "goal": "Six slides that get scan v2 into the November build.",
+        "done": [
+          "Jo and Ravi have read it",
+          "The chart matches Ravi's eval"
+        ],
+        "sessions": [
+          "Deck for Thursday",
+          "Prototype scan review"
+        ],
+        "created": "2026-10-12"
+      },
+      {
+        "title": "Spine eval: glare cases",
+        "status": "in-progress",
+        "owner": "Ravi Menon",
+        "due": "2026-10-20",
+        "goal": "Know how often glare causes a wrong read, on enough glass-door shelves to trust it.",
+        "done": [
+          "At least 30 glass-door shelves in the set",
+          "score.py reports glare on its own"
+        ],
+        "sessions": [
+          "Spine eval: glare cases"
+        ],
+        "created": "2026-10-09"
+      },
+      {
+        "title": "Beta interview synthesis",
+        "status": "done",
+        "owner": "Sam",
+        "completed": "2026-10-13",
+        "goal": "What eight beta testers told us, in one page.",
+        "done": [
+          "Themes, two quotes and recommendations",
+          "Linked from PROJECT.md"
+        ],
+        "sessions": [
+          "Synthesis from interviews"
+        ],
+        "created": "2026-09-26"
+      }
+    ],
+    "new": {
+      "title": "Warn about glare before the photo",
+      "created": "2026-10-13",
+      "goal": "No glare misreads at glass-door boxes.",
+      "done": [
+        "The scan screen warns about glare before the photo is taken",
+        "No glare misreads at glass-door boxes in Ravi's next eval"
+      ],
+      "feedback": "research/feedback/denise-p3.txt",
+      "session": {
+        "sessionId": "7a5c0a1a-61a2-4e00-8a00-5e5500a1a2e0",
+        "title": "Glare warning copy",
+        "ask": "Draft the glare warning copy for the scan screen"
+      }
+    }
+  }
 }

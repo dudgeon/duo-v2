@@ -1,0 +1,7 @@
+From docs/team-review-oct15.pptx, slide 3 of 7, the shape "TextBox 6" (id 7):
+type: shape
+text: "Ravi's Sep 28 eval read 81% of spines right across 1,240 photos from 96 shelves. Tilted spines caused 34% of the wrong reads and glare 27%, most of it at glass-door boxes. With a review step in the prototype, testers got 97% of books right in a median 18 seconds a shelf."
+box: 739×422 at (86, 202) on a 1280×720 slide
+the whole slide: duo2 slide shapes docs/team-review-oct15.pptx 3
+screenshot: /Users/sam/Library/Application Support/Duo/context/element-20261013-095602-074.png
+Turn this into three bullets

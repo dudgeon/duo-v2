@@ -2,13 +2,19 @@
 // One tts.py run (one model load) voices all the missing lines; each is then checked by speech recognition.
 import {spawnSync} from 'node:child_process';
 import {copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
-import {join} from 'node:path';
+import {isAbsolute, join} from 'node:path';
+import {homedir} from 'node:os';
 import {BuildError, fileSha, sha} from './util.mjs';
 
 export function voiceLines(lines, {here, cache, pub, style, force = false, log}) {
   const dir = join(here, 'voice');
-  const voice = JSON.parse(readFileSync(join(dir, 'house/voice.json'), 'utf8'));
-  const setup = sha(voice, fileSha(join(dir, voice.ref_wav)), ...['models.lock.json', 'requirements.txt', 'tts.py']
+  const house = JSON.parse(readFileSync(join(dir, 'house/voice.json'), 'utf8'));
+  // A voice kept outside the repo (Geoff's own, DL-169): its file and reference audio never enter duo-v2.
+  const ext = (process.env.DUO_VOICE_JSON ?? house.external ?? '').replace(/^~/, homedir());
+  const voice = ext && existsSync(ext) ? JSON.parse(readFileSync(ext, 'utf8')) : house;
+  const refWav = isAbsolute(voice.ref_wav) ? voice.ref_wav : join(dir, voice.ref_wav);
+  log(`voice: ${voice === house ? 'house voice' : `external voice (${ext})`}, tempo ${voice.tempo ?? 1}`);
+  const setup = sha(voice, fileSha(refWav), ...['models.lock.json', 'requirements.txt', 'tts.py']
     .map((f) => readFileSync(join(dir, f), 'utf8')));
   const vc = join(cache, 'voice');
   mkdirSync(vc, {recursive: true});
@@ -28,7 +34,7 @@ export function voiceLines(lines, {here, cache, pub, style, force = false, log})
     const out = join(vc, `job-${jobKey}`);
     const job = join(vc, `job-${jobKey}.json`);
     writeFileSync(job, JSON.stringify({lines: todo.map((l) => ({id: l.key, text: l.said, expect: l.text, seed})),
-      voice: {...voice, ref_wav: join(dir, voice.ref_wav)}, out_dir: out}));
+      voice: {...voice, ref_wav: refWav}, out_dir: out}));
     if (run('tts.py', job).status !== 0) throw new BuildError('voice: tts.py failed');
     // The house voice's pace (voice.json `tempo`, Geoff 2026-10-11: "even quicker, say 10%"): atempo alone, so
     // the pitch is unchanged; applied before the speech check, which then judges the line at the pace it's heard.

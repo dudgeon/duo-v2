@@ -186,7 +186,7 @@ export const BrowserPage = ({w, h}: {w: number; h: number}) => {
 
 const SL = {ink: '#1B2A3A', grey: '#9AA7B5', mid: '#5B6B7C', accent: '#C43E1C'};
 type SlideData = {kind: string; title: string; subtitle?: string; bullets?: string[]; note?: string;
-  chart?: {label: string; bars: [string, number][]}; quotes?: string[]; stat?: string; statNote?: string; head?: string[]; rows?: string[][]};
+  chart?: {label: string; bars: [string, number][]}; quotes?: string[]; stat?: string; statNote?: string; head?: string[]; rows?: string[][]; text?: string};
 /** One slide drawn at 960x540; callers scale it. */
 export const Slide = ({s, index}: {s: SlideData; index: number}) => {
   const base: React.CSSProperties = {width: 960, height: 540, background: '#fff', position: 'relative', fontFamily: ui, color: SL.ink, overflow: 'hidden'};
@@ -231,6 +231,16 @@ export const Slide = ({s, index}: {s: SlideData; index: number}) => {
       <div style={{position: 'absolute', left: 64, top: 180, width: 540}}>
         {(s.quotes ?? []).map((q) => <div key={q} style={{fontSize: 27, lineHeight: 1.3, margin: '0 0 30px', paddingLeft: 22, borderLeft: `5px solid ${SL.accent}`, fontStyle: 'italic'}}>{q}</div>)}
       </div>
+      {s.stat && <div style={{position: 'absolute', left: 660, top: 200, width: 250}}>
+        <div style={{fontSize: 76, fontWeight: 800, color: SL.accent, letterSpacing: -2, lineHeight: 1}}>{s.stat}</div>
+        <div style={{fontSize: 21, marginTop: 14, lineHeight: 1.3}}>{s.statNote}</div>
+      </div>}
+      <Num />
+    </div>);
+  if (s.kind === 'paragraph') return (
+    <div style={base}>
+      <Title />
+      <div style={{position: 'absolute', left: 64, top: 170, width: 540, fontFamily: 'Georgia, serif', fontSize: 24, lineHeight: 1.45}}>{s.text}</div>
       {s.stat && <div style={{position: 'absolute', left: 660, top: 200, width: 250}}>
         <div style={{fontSize: 76, fontWeight: 800, color: SL.accent, letterSpacing: -2, lineHeight: 1}}>{s.stat}</div>
         <div style={{fontSize: 21, marginTop: 14, lineHeight: 1.3}}>{s.statNote}</div>

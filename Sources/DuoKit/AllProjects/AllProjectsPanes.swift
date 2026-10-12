@@ -742,6 +742,7 @@ struct ProjectTile: View {
                         .contentShape(Rectangle())
                         .onActivate { model.open(project: project.name, session: s.name) }  // action: open
                         .modifier(SessionOrganizeMenu(sessionKey: s.tabKey))
+                        .accessibilityIdentifier("video.board.card.\(s.name)")   // anchors: the video cursor's target
                 }
             }
         }
@@ -762,6 +763,7 @@ struct ProjectTile: View {
         .accessibilityLabel(tileLabel(sessions))
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { model.open(project: project.name) }
+        .accessibilityIdentifier("video.board.col.\(project.name)")   // anchors: the video camera's target
     }
 
     private func tileLabel(_ sessions: [Fixture.Session]) -> String {

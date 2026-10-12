@@ -1,0 +1,6 @@
+From docs/prd-v2.md, lines 14–17:
+> Three of eight testers (P3, P6, P8) stopped scanning after a wrong book was added for them.
+> Glare from glass-door boxes caused 27% of wrong reads; Denise (P3) can't scan her box at all after 4pm.
+> With a [review step](../prototype/scan-review.html) in the prototype, testers fixed every miss: 97% of books right, median 18 s a shelf.
+> Owen (P8) stopped after two wrong books in two scans.
+Update this with the latest tester feedback in research/feedback

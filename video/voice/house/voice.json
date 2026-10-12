@@ -1,5 +1,6 @@
 {
-  "$note": "The house voice (DL-169; changed Oct 11, see the history below): a warm, medium-low baritone, designed with Qwen3-TTS VoiceDesign and frozen as a reference clip; every line is cloned from it with the Base model, then sped up by `tempo` (atempo, pitch unchanged). Geoff, 2026-10-11: M2 sounded 'somber', asked for '20% more upbeat'; of round 1 he liked B (brighter) but 'too deep; we can go even quicker, say 10%'; picked B-light-133 from round 2 (clone median about 133 Hz). History: 2026-10-10 M2 (median F0 about 105 Hz), picked after the first voices sounded 'too high pitched' and 'sterile'.",
+  "$note": "The narrator. `external` names a voice file outside the repo, used when it exists (Geoff, 2026-10-11: his zero-shot clone at tempo 1.05; DL-169 privacy: his audio never enters duo-v2). Without it, the house voice below. Switch back by removing `external`.",
+  "external": "~/Library/Caches/duo-video/voices/geoff-zeroshot.json",
   "mode": "clone",
   "ref_wav": "house/reference.wav",
   "ref_text": "Last weekend I finally walked to the market by the river. The air was cool, and the bread smelled wonderful. I stayed far longer than planned. Have you ever done that?",
@@ -9,5 +10,12 @@
     "seed": 14,
     "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16"
   },
-  "tempo": 1.1
+  "tempo": 1.1,
+  "history": [
+    {
+      "name": "B-light-133 (house)",
+      "since": "2026-10-11",
+      "note": "The house voice (DL-169; changed Oct 11, see the history below): a warm, medium-low baritone, designed with Qwen3-TTS VoiceDesign and frozen as a reference clip; every line is cloned from it with the Base model, then sped up by `tempo` (atempo, pitch unchanged). Geoff, 2026-10-11: M2 sounded 'somber', asked for '20% more upbeat'; of round 1 he liked B (brighter) but 'too deep; we can go even quicker, say 10%'; picked B-light-133 from round 2 (clone median about 133 Hz). History: 2026-10-10 M2 (median F0 about 105 Hz), picked after the first voices sounded 'too high pitched' and 'sterile'."
+    }
+  ]
 }

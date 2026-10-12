@@ -2,7 +2,8 @@
 """Writes the demo world's research fixtures (sample data only, all invented; see SCENARIO.md and world.json):
 docs/eval/results.csv, score.py, spine-eval-2026-09-28.md, research/feedback/denise-p3.txt,
 chat-s2/, chat-s4/, the S5 recordings (chat-s5-answered, -turn1, -turn2, chat-s5, and the screens chat-s5-slash,
--model), sessions/auto-add-decision.jsonl, and the project skill with Owen's email and triage.md. Run with plain python3."""
+-model), sessions/auto-add-decision.jsonl, the project skill with Owen's email and triage.md, and S7's chats (chat-s7-md, -html, -pptx) with s7/ before and after files
+(run docs/make-docs.py first: it writes s7/deck-shape.json; s7/fix-element.json comes from docs/prototype/pick.mjs). Run with plain python3."""
 import csv, json, pathlib, random, subprocess, sys
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -502,6 +503,142 @@ def write_s5(L):
     (fb / "owen-p8.txt").write_text(OWEN)
     (fb / "triage.md").write_text(TRIAGE_HEAD)
     write_s5_screens(steps)
+    write_s7(L)
+
+
+# ---------------------------------------------------------------- 8. S7: the editor pane (Geoff, 2026-10-11)
+# Line 2's edits, made by hand in the editor before line 3 (the video types them; this is where they end).
+S7_OWEN_TYPED = "Owen (P8) stopped after two wrong books in two scans."
+S7_BULLET = "- Do stewards want the glare warning before every scan, or only at glass-door boxes?"
+S7_GLARE_NEW = ("Glare from glass-door boxes caused 27% of wrong reads. Gerald (P2) and Denise (P3) both report it; "
+                "Denise's Persuasion went into her box's catalog as “Pervasive Games: A Handbook”.")
+S7_OWEN_NEW = "Owen (P8) stopped after two wrong books in two scans; he'd scan again if the app showed him the list first."
+
+
+def prd_s7_before():
+    """The PRD after line 2's hand edits: Goal 1 bold, "review step" a link, Owen's sentence, a new open question."""
+    t = PRD.replace("1. Fewer than 3% wrong books in", "1. **Fewer than 3% wrong books** in", 1)
+    t = t.replace("With a review step in", "With a [review step](../prototype/scan-review.html) in", 1)
+    heard_end = "median 18 s a shelf.\n"
+    assert t.count(heard_end) == 1
+    t = t.replace(heard_end, heard_end + S7_OWEN_TYPED + "\n", 1)
+    return t.rstrip("\n") + "\n" + S7_BULLET + "\n"
+
+
+def patch(before, after):
+    """Claude Code's structuredPatch for an edit: one hunk, with up to three lines of context."""
+    import difflib
+    a, b = before.splitlines(), after.splitlines()
+    hunks = []
+    for g in difflib.SequenceMatcher(None, a, b).get_grouped_opcodes(3):
+        i1, i2, j1, j2 = g[0][1], g[-1][2], g[0][3], g[-1][4]
+        lines = []
+        for tag, a1, a2, b1, b2 in g:
+            if tag == "equal": lines += [" " + l for l in a[a1:a2]]
+            else: lines += ["-" + l for l in a[a1:a2]] + ["+" + l for l in b[b1:b2]]
+        hunks.append({"oldStart": i1 + 1, "oldLines": i2 - i1, "newStart": j1 + 1, "newLines": j2 - j1, "lines": lines})
+    return hunks
+
+
+def edit(L, tid, path, before, old, new, t, replace_all=False):
+    assert (before.count(old) >= 1) if replace_all else (before.count(old) == 1), (path, old)
+    after = before.replace(old, new) if replace_all else before.replace(old, new, 1)
+    L.use(tid, "Edit", {"file_path": path, "old_string": old, "new_string": new, "replace_all": replace_all}, t)
+    L.result(tid, f"The file {path} has been updated. All occurrences were successfully replaced." if replace_all else f"The file {path} has been updated successfully.",
+             {"filePath": path, "oldString": old, "newString": new, "originalFile": None, "userModified": False, "replaceAll": replace_all,
+              "structuredPatch": patch(before, after)}, t)
+    return after
+
+
+def read(L, tid, path, content, t, **kw):
+    L.use(tid, "Read", {"file_path": path, **kw}, t)
+    L.result(tid, "", file_result(path, content, len(content.splitlines())), t)
+
+
+def write_s7(L):
+    s7 = HERE / "s7"; s7.mkdir(exist_ok=True)
+    meta = lambda d: (d / "meta.json").write_text(json.dumps({"mode": "chat", "tab": "Auto-add decision"}, indent=1))
+    dump = lambda d: (d / "transcript.jsonl").write_text("\n".join(json.dumps(l, ensure_ascii=False) for l in L.lines) + "\n")
+    prd_p = f"{PROJ}/docs/prd-v2.md"
+    fb = f"{PROJ}/research/feedback"
+
+    # 1. Markdown: Send Selection to Claude on What we heard, then Claude updates it from the feedback.
+    before = prd_s7_before()
+    lines = before.splitlines()
+    a = lines.index("## What we heard") + 2
+    b = lines.index("## Requirements") - 1   # the section's last line, 1-based
+    sel = "\n".join(lines[a - 1:b])
+    payload = f"From docs/prd-v2.md, lines {a}–{b}:\n" + "\n".join("> " + l for l in sel.split("\n")) + "\n"   # SendFormat.documentSelection
+    ask = "Update this with the latest tester feedback in research/feedback"
+    old = "\n".join(lines[a:b])     # glare line … Owen's line
+    new = old.replace(lines[a], S7_GLARE_NEW).replace(S7_OWEN_TYPED, S7_OWEN_NEW)
+    after = before.replace(old, new, 1)
+    (s7 / "prd-v2.before.md").write_text(before)
+    (s7 / "prd-v2.after.md").write_text(after)
+    L.user(payload + ask, "09:52:20")
+    L.use("toolu_m1", "Glob", {"pattern": "research/feedback/*"}, "09:52:26")
+    files = [f"{fb}/denise-p3-screenshot.png", f"{fb}/denise-p3.txt", f"{fb}/owen-p8.txt", f"{fb}/triage.md"]
+    L.result("toolu_m1", "\n".join(files), {"filenames": files, "durationMs": 9, "numFiles": 4, "truncated": False}, "09:52:26")
+    tri = TRIAGE_HEAD + LINE_P3 + "\n" + LINE_P8 + "\n"
+    read(L, "toolu_m2", f"{fb}/triage.md", tri, "09:52:31")
+    read(L, "toolu_m3", f"{fb}/owen-p8.txt", OWEN, "09:52:31")
+    read(L, "toolu_m4", prd_p, before, "09:52:36")
+    edit(L, "toolu_m5", prd_p, before, old, new, "09:52:58")
+    L.text("Updated What we heard: the glare line now names Gerald and Denise, and Owen's line says what would bring him back.", "09:53:04")
+    d = HERE / "chat-s7-md"; d.mkdir(exist_ok=True); meta(d); dump(d)
+    (d / "composer.txt").write_text(payload + ask)   # what the composer holds before Send: the selection as sent, then Sam's words
+
+    # 2. HTML: the picked Fix button, then Claude renames it and makes it bigger.
+    el = json.loads((s7 / "fix-element.json").read_text())
+    proto_p = f"{PROJ}/prototype/scan-review.html"
+    shot = "/Users/sam/Library/Application Support/Duo/context/element-20261013-095412-318.png"
+    r = el["rect"]
+    out = f"From prototype/scan-review.html (\"{el['title']}\"), the element <{el['label']}>:\nselector: {el['selector']}"
+    if el["trail"]: out += "\nunder: " + " › ".join(el["trail"])
+    out += f"\ntext: \"{el['text']}\""
+    if el["attributes"]: out += "\nattributes: " + " ".join(f'{k}="{v}"' for k, v in sorted(el["attributes"].items()))
+    out += f"\nbox: {int(r[2])}×{int(r[3])} at ({int(r[0])}, {int(r[1])})"
+    out += "\nstyles: " + "; ".join(f"{k}: {v}" for k, v in sorted(el["styles"].items()))
+    out += f"\nscreenshot: {shot}\nhtml:\n```html\n{el['html']}\n```\n"   # SendFormat.element
+    ask = "Make this button say 'Fix this book' and make it bigger"
+    html = (DOCS / "prototype" / "scan-review.html").read_text()
+    css_old = next(l for l in html.splitlines() if l.startswith("  .fix {"))
+    css_new = "  .fix { width: 100%; height: 44px; padding: 0 18px; border: 0; border-radius: 14px; background: var(--amber-2); color: #3a2500; font: inherit; font-size: 16px; font-weight: 700; }"
+    L.user(out + ask, "09:54:15")
+    L.use("toolu_x1", "Grep", {"pattern": "class=\"fix\"|\\.fix \\{", "path": proto_p, "output_mode": "content", "-n": True}, "09:54:21")
+    hl = html.splitlines()
+    hits = "\n".join(f"{i}:{l}" for i, l in enumerate(hl, 1) if 'class="fix"' in l or l.startswith("  .fix {"))
+    L.result("toolu_x1", hits, {"mode": "content", "numFiles": 1, "filenames": [proto_p], "content": hits, "numLines": len(hits.splitlines())}, "09:54:21")
+    first = next(i for i, l in enumerate(hl, 1) if l.startswith("  .fix {"))
+    read(L, "toolu_x2", proto_p, "\n".join(hl[first - 3:first + 2]), "09:54:25", offset=first - 2, limit=5)
+    h2 = edit(L, "toolu_x3", proto_p, html, css_old, css_new, "09:54:38")
+    h3 = edit(L, "toolu_x4", proto_p, h2, '<button class="fix">Fix</button>', '<button class="fix">Fix this book</button>', "09:54:44", replace_all=True)
+    (s7 / "scan-review.after.html").write_text(h3)
+    L.text("The Fix button on both flagged books now says “Fix this book”, full width and 44 px tall.", "09:54:50")
+    d = HERE / "chat-s7-html"; d.mkdir(exist_ok=True); meta(d); dump(d)
+    (d / "composer.txt").write_text(out + ask)
+
+    # 3. PowerPoint: the picked paragraph becomes three bullets.
+    sh = json.loads((s7 / "deck-shape.json").read_text())
+    deck_p = "docs/team-review-oct15.pptx"
+    shot = "/Users/sam/Library/Application Support/Duo/context/element-20261013-095602-074.png"
+    bx = sh["box"]
+    out = (f"From {deck_p}, slide {sh['slide']} of {sh['count']}, the shape \"{sh['name']}\" (id {sh['id']}):\ntype: {sh['type']}"
+           f"\ntext: \"{sh['text'][:300] + '…' if len(sh['text']) > 300 else sh['text']}\""
+           f"\nbox: {bx[2]}×{bx[3]} at ({bx[0]}, {bx[1]}) on a {sh['slideSize'][0]}×{sh['slideSize'][1]} slide"
+           f"\nthe whole slide: duo2 slide shapes {deck_p} {sh['slide']}\nscreenshot: {shot}\n")   # SendFormat.shape
+    ask = "Turn this into three bullets"
+    L.user(out + ask, "09:56:05")
+    cmd = f"duo2 slide shapes {deck_p} {sh['slide']}"
+    res = deck_p + "\n" + sh["outline"]
+    L.use("toolu_p1", "Bash", {"command": cmd, "description": "List the shapes on slide 3"}, "09:56:10")
+    L.result("toolu_p1", res, {"stdout": res, "stderr": "", "interrupted": False, "isImage": False, "noOutputExpected": False}, "09:56:11")
+    py = "python3 - <<'PY'\n" + sh["editPy"] + "PY"
+    L.use("toolu_p2", "Bash", {"command": py, "description": "Split the paragraph into three bullets"}, "09:56:24")
+    L.result("toolu_p2", sh["editOut"].rstrip("\n"), {"stdout": sh["editOut"].rstrip("\n"), "stderr": "", "interrupted": False, "isImage": False, "noOutputExpected": False}, "09:56:26")
+    L.text("Slide 3 is now three bullets, one sentence each, in the slide's own font and size.", "09:56:31")
+    d = HERE / "chat-s7-pptx"; d.mkdir(exist_ok=True); meta(d); dump(d)
+    (d / "composer.txt").write_text(out + ask)
 
 
 def write_s5_screens(steps):

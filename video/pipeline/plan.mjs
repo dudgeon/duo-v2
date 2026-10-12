@@ -1,13 +1,19 @@
 // Turn the script, the voiced lines, the shots and the captures into build/public/timeline.json.
 // Voice timing is the beat map: a camera move lands on the word that names its subject.
+import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
 import {BuildError} from './util.mjs';
 
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
 
+const HEARD_AS = Object.fromEntries(Object.entries(JSON.parse(readFileSync(new URL('../voice/heard-as.json', import.meta.url), 'utf8')))
+  .filter(([k]) => !k.startsWith('$')).flatMap(([name, heard]) => heard.map((h) => [h, name])));
+
 function wordTime(line, phrase, nth = 1) {
   // `nth` picks a later occurrence when a word repeats in the line ("files" twice).
   const want = norm(phrase);
-  const words = line.words.map((w) => ({...w, n: norm(w.word).join(' ')}));
+  // A heard word reads as the name it stands for (voice/heard-as.json: "cloud" is Claude), as the speech check reads it.
+  const words = line.words.map((w) => { const n = norm(w.word).join(' '); return {...w, n: HEARD_AS[n] ?? n}; });
   let seen = 0;
   for (let i = 0; i < words.length; i++) {
     if (want.every((w, j) => words[i + j] && words[i + j].n === w) && ++seen === nth) return words[i].start;
@@ -43,6 +49,17 @@ export const TRANSITIONS = {
   // The next idea happens in the same place: the picture carries straight on (same state, same camera),
   // and the scene's own first click is what moves us. Never a cut: the frames either side are identical.
   'carry-on': {kind: 'app', from: 'app', to: 'app'},
+  // Out of Duo for a new idea (S8, Geoff 2026-10-11): the scene opens on the last picture, wide, and fades Duo's window
+  // away to the bare desktop on its own `fade` event.
+  'duo-fades': {kind: 'graphic', from: 'app', to: 'projects'},
+  // Back into Duo: the scene before fades its pile out and Duo's window in, on the next scene's first capture.
+  'pile-to-duo': {kind: 'graphic', from: 'projects', to: 'app', out: 1.6},
+  // To the closing paper (S11): Duo's window steps away as a thumbnail while the paper ground fills in.
+  'duo-steps-away': {kind: 'graphic', from: 'app', to: 'conclusion'},
+  // A scene whose captures aren't built yet stands in as a labelled card (never silent: the report names it);
+  // in and out of it is a plain graphic move. Temporary by nature: replace the card with the scene.
+  'stand-in': {kind: 'graphic', from: ['projects', 'card', 'app'], to: 'card'},
+  'stand-in-out': {kind: 'graphic', from: 'card', to: 'conclusion'},
 };
 const sceneType = (shot) => (shot.kind === 'drawn' ? shot.scene : shot.kind);
 const fromOk = (tr, type) => (Array.isArray(tr.from) ? tr.from.includes(type) : tr.from === type);
@@ -124,7 +141,9 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
     };
     if (b.cam !== undefined) { lastCam = camRect(b.cam); data.cams.push({at, dur: b.dur ?? 0.9, rect: lastCam}); }
     if (b.click) data.clicks.push({at, ...centre(rect(b.click), b.fx ?? 0.5, b.fy ?? 0.5), right: !!b.right});
-    if (b.drag) data.drags.push({at, dur: b.drag.dur ?? 0.7, from: centre(rect(b.drag.from), b.drag.fx0 ?? 0, 0.5), to: centre(rect(b.drag.to ?? b.drag.from), b.drag.fx1 ?? 1, 0.5)});
+    // drag.reveal: a capture of the selection the drag makes, shown from where the drag began to the cursor as it moves.
+    if (b.drag) data.drags.push({at, dur: b.drag.dur ?? 0.7, from: centre(rect(b.drag.from), b.drag.fx0 ?? 0, 0.5), to: centre(rect(b.drag.to ?? b.drag.from), b.drag.fx1 ?? 1, 0.5),
+      ...(b.drag.reveal ? {reveal: {state: use(b.drag.reveal), rect: rect(b.drag.from)}} : {})});
     if (b.menu) {
       const r = rect(b.menu.on);
       const p = centre(r, b.fx ?? 0.5, b.fy ?? 0.5);
@@ -138,6 +157,9 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
       }
       data.clicks.push({at, ...p, right: true});
     }
+    // key: a shortcut's keycaps as it's pressed; wipe: a state revealed left to right inside an anchor (typing).
+    if (b.key) (data.keys ??= []).push({at, label: b.key});
+    if (b.wipe) (data.wipes ??= []).push({at, dur: b.wipe.dur ?? 1.2, state: use(b.wipe.state), rect: camRect(b.wipe.on)});
     if (b.mark) data.marks.push({at, until: at + (b.hold ?? 2.2), rect: camRect(b.mark), quote: b.quote});
     if (b.state) { state = use(b.state); data.steps.push({at: +(at + (b.stateAfter ?? 0.1)).toFixed(3), state}); }
     data.ends.push(at + (b.hold ?? 0.6));
@@ -273,6 +295,30 @@ export function plan({scenes, shots, voiced, captures, style}) {
         for (const id of ['video.pane.left', 'video.pane.middle', 'video.pane.right', 'video.tab.middle.1', 'video.tab.middle.2', 'video.tab.right.2', 'video.tab.right.3', 'video.tab.right.4'])
           if (!anchors[id]) throw new BuildError(`anchor: ${id} is not in ${shot.states[0]}'s anchors. Renamed or removed?`);
         s.morph = {window: {w: first.widthPt, h: first.heightPt}, scale: style.capture.scale, src: Object.fromEntries(caps.map(([st, c]) => [st, c.src])), anchors};
+      }
+      if (shot.scene === 'projects') {
+        // S8: drawn windows on the desk. Duo's window (its first state's capture) fades out and, at the exit, back in
+        // as the next scene's first state; the terminal screens are the real 2.1.296 renders from the fixture.
+        const cap = (st) => { if (!captures[st]) throw new BuildError(`shots: ${scene.id} needs a capture of ${st}`); return captures[st]; };
+        const first = cap(shot.states[0]), back = cap(shot.states[1] ?? shot.states[0]);
+        const fx = (f) => readFileSync(new URL(`../fixture/${f}`, import.meta.url), 'utf8');
+        s.projects = {window: {w: first.widthPt, h: first.heightPt}, scale: style.capture.scale, src: first.src, back: back.src,
+          screens: Object.fromEntries(Object.entries(shot.screens ?? {}).map(([k, f]) => [k, fx(f)]))};
+      }
+      if (shot.scene === 'conclusion') {
+        // S11: the release line is Duo's real releases, read from GitHub at build time (shot.releases is the fallback
+        // when gh can't reach it), so the video's own "built from" stamp stays true.
+        const cap = captures[shot.states[0]];
+        if (!cap) throw new BuildError(`shots: ${scene.id} needs a capture of ${shot.states[0]}`);
+        let releases = shot.releases ?? [];
+        const gh = spawnSync('gh', ['release', 'list', '--limit', '40', '--json', 'tagName,publishedAt'], {encoding: 'utf8'});
+        if (gh.status === 0) try { releases = JSON.parse(gh.stdout).map((r) => ({tag: r.tagName, date: r.publishedAt.slice(0, 10)})).reverse(); } catch {}
+        const md = (iso) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', {month: 'short', day: 'numeric', timeZone: 'UTC'});
+        const topics = []; for (const sc of scenes) if (sc.topic && sc.topic !== topics[topics.length - 1]) topics.push(sc.topic);
+        const today = new Date();
+        s.conclusion = {window: {w: cap.widthPt, h: cap.heightPt}, src: cap.src, topics, inProgress: shot.inProgress ?? [],
+          releases: releases.map((r) => ({tag: r.tag, date: md(r.date)})), os: shot.os ?? 'macOS',
+          built: today.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})};
       }
       if (shot.scene === 'turn') {
         s.turn = {headline: shot.headline, projects: shot.projects, shots: shot.states.map((st) => {

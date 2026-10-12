@@ -54,6 +54,101 @@
       "research/feedback/denise-p3-screenshot.png"
     ]
   },
+  "videoS10": {
+    "sessionIds": {
+      "Tighten PRD goals": "7a5c0000-5e55-4d0e-8a00-5e5500000000",
+      "Prototype scan review": "7a5c0001-5e55-4d0e-8a00-5e5500000001",
+      "Synthesis from interviews": "7a5c0002-5e55-4d0e-8a00-5e5500000002",
+      "Auto-add decision": "5b1e7c42-9d3a-4f60-8a21-c0de0add0a11",
+      "Spine eval: glare cases": "7a5c0004-5e55-4d0e-8a00-5e5500000004",
+      "Deck for Thursday": "7a5c0005-5e55-4d0e-8a00-5e5500000005",
+      "quick q: TestFlight build size": "7a5c0006-5e55-4d0e-8a00-5e5500000006",
+      "Old v1 notes cleanup": "7a5c0007-5e55-4d0e-8a00-5e5500000007",
+      "Weekly digest draft": "7a5c0008-5e55-4d0e-8a00-5e5500000008",
+      "Tag crash reports": "7a5c0009-5e55-4d0e-8a00-5e5500000009",
+      "Tester emails, Oct 12": "7a5c000a-5e55-4d0e-8a00-5e550000000a",
+      "Freshness badge spec": "7a5c000b-5e55-4d0e-8a00-5e550000000b",
+      "Map pins: stale boxes": "7a5c000c-5e55-4d0e-8a00-5e550000000c",
+      "Steward welcome email": "7a5c000d-5e55-4d0e-8a00-5e550000000d",
+      "Morning triage": "7a5c000e-5e55-4d0e-8a00-5e550000000e",
+      "Scan v1 launch notes": "7a5c000f-5e55-4d0e-8a00-5e550000000f",
+      "Interview guide": "7a5c0010-5e55-4d0e-8a00-5e5500000010",
+      "Map tile costs": "7a5c0011-5e55-4d0e-8a00-5e5500000011"
+    },
+    "tasks": [
+      {
+        "project": "shelf-scan",
+        "path": "tasks/auto-add-decision.md",
+        "title": "Auto-add decision",
+        "status": "waiting",
+        "sessionIds": [
+          "5b1e7c42-9d3a-4f60-8a21-c0de0add0a11",
+          "7a5c0000-5e55-4d0e-8a00-5e5500000000"
+        ],
+        "owner": "Sam",
+        "waitingOn": "Jo Whitfield",
+        "due": "2026-10-15",
+        "created": "2026-10-12"
+      },
+      {
+        "project": "shelf-scan",
+        "path": "tasks/deck-for-thursday.md",
+        "title": "Deck for Thursday",
+        "status": "review",
+        "sessionIds": [
+          "7a5c0005-5e55-4d0e-8a00-5e5500000005",
+          "7a5c0001-5e55-4d0e-8a00-5e5500000001"
+        ],
+        "owner": "Sam",
+        "due": "2026-10-15",
+        "created": "2026-10-12"
+      },
+      {
+        "project": "shelf-scan",
+        "path": "tasks/spine-eval-glare-cases.md",
+        "title": "Spine eval: glare cases",
+        "status": "in-progress",
+        "sessionIds": [
+          "7a5c0004-5e55-4d0e-8a00-5e5500000004"
+        ],
+        "owner": "Ravi Menon",
+        "due": "2026-10-20",
+        "created": "2026-10-09"
+      },
+      {
+        "project": "shelf-scan",
+        "path": "tasks/beta-interview-synthesis.md",
+        "title": "Beta interview synthesis",
+        "status": "done",
+        "sessionIds": [
+          "7a5c0002-5e55-4d0e-8a00-5e5500000002"
+        ],
+        "owner": "Sam",
+        "created": "2026-09-26",
+        "completed": "2026-10-13"
+      }
+    ],
+    "goal": "Scan v2: fewer than 3% wrong books in the catalog",
+    "newTask": {
+      "title": "Warn about glare before the photo",
+      "path": "tasks/warn-about-glare-before-the-photo.md",
+      "created": "s10/warn-about-glare-before-the-photo.created.md",
+      "details": "s10/warn-about-glare-before-the-photo.details.md",
+      "linked": "s10/warn-about-glare-before-the-photo.linked.md",
+      "session": {
+        "sessionId": "7a5c0a1a-61a2-4e00-8a00-5e5500a1a2e0",
+        "title": "Glare warning copy",
+        "chat": "chat-s10-task",
+        "draft": "@tasks/warn-about-glare-before-the-photo.md ",
+        "ask": "Draft the glare warning copy for the scan screen"
+      }
+    },
+    "deckSession": {
+      "name": "Deck for Thursday",
+      "sessionId": "7a5c0005-5e55-4d0e-8a00-5e5500000005",
+      "chat": "chat-s10-deck"
+    }
+  },
   "now": "2026-10-13T09:41:00",
   "user": "Sam",
   "topics": [
@@ -177,7 +272,8 @@
     {
       "name": "Tester emails, Oct 12",
       "project": "beta-feedback",
-      "state": "readyForReview",
+      "state": "idle",
+      "wait": "40m",
       "summary": "Sorted 23 emails into 5 themes"
     },
     {
@@ -196,20 +292,16 @@
     {
       "name": "Steward welcome email",
       "project": "steward-onboarding",
-      "state": "readyForReview",
+      "state": "idle",
+      "wait": "3h",
       "summary": "welcome-email.md, 3 variants"
     },
     {
       "name": "Morning triage",
       "project": "home",
-      "state": "needsYou",
+      "state": "idle",
       "wait": "1h",
-      "question": "4 new asks: route 3 to projects?",
-      "options": [
-        "Yes, route 3",
-        "No",
-        "Something else"
-      ]
+      "summary": "Routed 3 of 4 new asks to projects"
     }
   ],
   "otherIdleSessions": 0,
@@ -234,10 +326,10 @@
     }
   ],
   "counts": {
-    "needsYou": 3,
-    "readyForReview": 3,
+    "needsYou": 2,
+    "readyForReview": 1,
     "working": 4,
-    "idle": 5
+    "idle": 8
   },
   "homeInbox": [
     {
@@ -676,7 +768,7 @@
           "welcome-email.md"
         ],
         "path": "~/work/little-shared-library/steward-onboarding",
-        "needYouElsewhere": 3
+        "needYouElsewhere": 2
       },
       "ended": {
         "project": "shelf-scan",
@@ -696,11 +788,11 @@
       "homeNone": {
         "counts": {
           "needsYou": 2,
-          "readyForReview": 3,
+          "readyForReview": 1,
           "working": 4,
-          "idle": 6
+          "idle": 8
         },
-        "why": "Morning triage is closed, so it counts as idle and the Home pointer card is gone"
+        "why": "Morning triage is done (idle), so Home has no pointer card"
       }
     },
     "shells": {

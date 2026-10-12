@@ -43,6 +43,7 @@ extension AppModel {
     /// Whether a folder in the tree shows what's inside (DL-105). Live folders start closed and are
     /// listed when opened; the fixture's tree stays open, as its targets draw it.
     public func isFolderOpen(_ path: String) -> Bool {
+        if videoClosedFolders.contains(path) { return false }   // the intro video's scene 9 (VideoTargets+S9S10)
         guard terminalsMode == .live, let p = currentProject?.name else { return true }
         return expandedFolders[p]?.contains(path) ?? false
     }

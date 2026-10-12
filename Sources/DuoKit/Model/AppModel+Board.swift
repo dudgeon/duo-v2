@@ -9,7 +9,7 @@ import Foundation
 extension AppModel {
     /// The board is up: at a project, in live mode, with Tasks chosen.
     public var boardShown: Bool {
-        guard !altitude.isAllProjects, terminalsMode == .live, let p = currentProject?.name else { return false }
+        guard !altitude.isAllProjects, terminalsMode == .live || videoTasks, let p = currentProject?.name else { return false }
         return boardProjects.contains(p)
     }
 
@@ -50,7 +50,7 @@ extension AppModel {
             guard let was = boardHeld[t.id] else { return t }
             var t = t; t.status = was; return t
         }
-        return TaskBoard.lanes(tasks: held, lanes: boardLanes(project), state: { states[$0] })
+        return TaskBoard.lanes(tasks: held, lanes: boardLanes(project), state: { states[$0] }, today: listClock ?? Date())
     }
 
     /// The owners named on the project's tasks, other than you, for Anyone ▾.

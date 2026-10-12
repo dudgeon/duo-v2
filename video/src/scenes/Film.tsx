@@ -9,6 +9,8 @@ import {TurnScene} from './Turn';
 import {LogoScene} from './Logo';
 import {MorphScene, type MorphData} from './Morph';
 import {AppScene, type AppData} from './App';
+import {ProjectsScene, type ProjectsData} from './ProjectsBg';
+import {ConclusionScene, type ConclusionData} from './Conclusion';
 import type {Ground} from '../lib/Desk';
 import {PaperGround, TopicRail, pictureTransform, topicChanges, topicsAt} from '../lib/Topics';
 
@@ -17,12 +19,33 @@ type Scene = {
   id: string; title: string; topic?: string | null; kind: 'desk' | 'card' | 'drawn'; start: number; duration: number; lines: Line[];
   card?: {title: string; sub: string; standIn: boolean};
   capture?: {src: string; scale: number}; desk?: DeskLayout; camera?: Key[]; appear?: boolean;
-  drawn?: {scene: 'desk' | 'many' | 'turn' | 'logo' | 'morph' | 'app'; events: ClutterEvents};
-  morph?: MorphData; app?: AppData;
+  drawn?: {scene: 'desk' | 'many' | 'turn' | 'logo' | 'morph' | 'app' | 'projects' | 'conclusion'; events: ClutterEvents};
+  morph?: MorphData; app?: AppData; projects?: ProjectsData; conclusion?: ConclusionData;
   callouts?: Annotation[]; ground?: Ground; chapter?: boolean;
   turn?: {headline: [string, string]; projects: string[]; shots: string[]};
 };
-export type FilmTimeline = {fps: number; duration: number; frames: number; fade: number; scenes: Scene[]; calloutStyle?: string};
+export type ScoreData = {src: string; speech: number; gap: number; swell: number; fadeIn: number; fadeOut: number};
+export type FilmTimeline = {fps: number; duration: number; frames: number; fade: number; scenes: Scene[]; calloutStyle?: string; score?: ScoreData};
+
+// The background score's level at time t (Geoff, 2026-10-11): down under every voice line (ducking 0.25 s
+// before it starts, back up over 0.7 s after it ends), a little up in the gaps, a small swell at each topic
+// change, faded in at the start and out over the end card. Interpolated in dB so the moves are smooth.
+function scoreGain(t: number, sc: ScoreData, lines: {start: number; end: number}[], changes: number[], duration: number): number {
+  const db = (g: number) => 20 * Math.log10(Math.max(g, 1e-6));
+  let near = 1;   // 1 = in a gap, 0 = under speech
+  for (const l of lines) {
+    if (t >= l.start - 0.25 && t <= l.end) { near = 0; break; }
+    if (t < l.start - 0.25 && t > l.start - 0.25 - 0.25) near = Math.min(near, (l.start - 0.25 - t) / 0.25);
+    if (t > l.end && t < l.end + 0.7) near = Math.min(near, (t - l.end) / 0.7);
+  }
+  let g = db(sc.speech) + (db(sc.gap) - db(sc.speech)) * near;
+  for (const c of changes) {
+    const u = t < c - 0.6 || t > c + 2.2 ? 0 : t < c ? (t - (c - 0.6)) / 0.6 : t < c + 1.2 ? 1 : 1 - (t - c - 1.2) / 1.0;
+    g += (db(sc.swell) - db(sc.gap)) * u * near;
+  }
+  const fade = Math.min(1, t / sc.fadeIn, Math.max(0, (duration - t) / sc.fadeOut));
+  return Math.pow(10, g / 20) * fade;
+}
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
@@ -52,6 +75,8 @@ const SceneView = ({scene, fade}: {scene: Scene; fade: number}) => {
       {scene.kind === 'drawn' && scene.drawn?.scene === 'desk' && <DeskScene t={t} ev={scene.drawn.events} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'morph' && scene.morph && <MorphScene t={t} ev={scene.drawn.events} data={scene.morph} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'app' && scene.app && <AppScene t={t} data={scene.app} />}
+      {scene.kind === 'drawn' && scene.drawn?.scene === 'projects' && scene.projects && <ProjectsScene t={t} ev={scene.drawn.events} data={scene.projects} />}
+      {scene.kind === 'drawn' && scene.drawn?.scene === 'conclusion' && scene.conclusion && <ConclusionScene t={t} ev={scene.drawn.events} data={scene.conclusion} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'logo' && <LogoScene t={t} ev={scene.drawn.events} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'many' && <ManyDesksScene t={t} ev={scene.drawn.events} />}
       {scene.kind === 'drawn' && scene.drawn?.scene === 'turn' && scene.turn && <TurnScene t={t} ev={scene.drawn.events} {...scene.turn} />}
@@ -80,6 +105,12 @@ export const Film = ({timeline}: {timeline: FilmTimeline | null}) => {
   const tp = topicsAt(changes, frame / fps);
   return (
     <AbsoluteFill style={{background: tokens.desk.wallpaper.base}}>
+      {timeline.score && (() => {
+        const sc = timeline.score;
+        const lines = timeline.scenes.flatMap((s) => s.lines.map((l) => ({start: s.start + l.start, end: s.start + l.start + l.duration})));
+        const at = changes.map((c) => c.at);
+        return <Audio src={staticFile(sc.src)} volume={(f) => scoreGain(f / fps, sc, lines, at, timeline.duration)} />;
+      })()}
       {tp.u > 0 && <PaperGround />}
       <AbsoluteFill style={pictureTransform(tp.u)}>
         {timeline.scenes.map((s, i) => {

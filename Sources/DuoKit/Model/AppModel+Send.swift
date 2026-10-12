@@ -28,6 +28,11 @@ extension AppModel {
 
     /// The visible session, when it can take context; otherwise why not (for the menu item).
     public var sendTarget: Result<SendTarget, SendUnavailable> {
+        // An intro video state: its chat can take a send, though no process runs behind a fixture.
+        if videoDemoFolder != nil, let key = visibleSessionId, fixtureChats[key] != nil {
+            let s = fixture.sessions.first { $0.tabKey == key }
+            return .success(SendTarget(key: key, title: s?.name ?? "Session", project: s?.project ?? ""))
+        }
         guard let key = visibleSessionId else { return .failure(.init(reason: "No session is showing")) }
         guard let t = terminals.existing(key) else { return .failure(.init(reason: "The session showing isn't running")) }
         guard t.isClaude else { return .failure(.init(reason: "The tab showing is a shell, not Claude")) }

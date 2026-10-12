@@ -317,6 +317,7 @@ struct HomeViewToggle: View {
         .contentShape(Rectangle())
         .onActivate { model.setHomeView(v) }  // action: view home
         .accessibilityLabel("Show \(v.title)")
+        .accessibilityIdentifier("video.allprojects.\(v.rawValue)")   // anchors: the video cursor's target
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 }

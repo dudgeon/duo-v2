@@ -11,4 +11,6 @@ video/node_modules/
 video/.cache/
 video/out/
 video/voice/.venv/
+video/score/.venv/
+video/score/.cache/
 __pycache__/

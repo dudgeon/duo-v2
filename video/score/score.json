@@ -1,0 +1,14 @@
+{
+  "$note": "The background score (Geoff, 2026-10-11: \"help fill the silence, without getting in the way\"; picked B, ambient, from three local clips). Generated each build by ACE-Step 1.5 (score.py) for the film's length, finished by finish.py, mixed in the film from the voice timeline (src/scenes/Film.tsx ScoreBed): `speechDb` under the voice while a line plays, `gapDb` under it between lines, `swellDb` more at a topic change.",
+  "prompt": "slow evolving ambient pads, airy warm drones, soft shimmering textures, spacious, ethereal, calm, beatless, instrumental ambient soundscape",
+  "key": "D Major",
+  "seed": 12,
+  "steps": 8,
+  "fade_in": 2,
+  "fade_out": 5,
+  "lufs": -18,
+  "speechDb": -20,
+  "gapDb": -11,
+  "swellDb": 3,
+  "maxHeardWords": 2
+}

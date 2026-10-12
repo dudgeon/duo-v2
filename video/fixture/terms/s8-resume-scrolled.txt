@@ -1,0 +1,31 @@
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  Resume session (13 of 23)
+  ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
+  │ ⌕ Search…                                                                                    │
+  ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+    sam
+
+  ↑ Export Kindle highlights to Markdown
+    2 days ago · 50.5KB
+
+    Watering schedule for the raised beds
+    3 days ago · 18.5KB
+
+    Summarize interview notes P1-P8
+    3 days ago · 69.2KB
+
+    Rename vacation photos by date
+    4 days ago · 34.7KB
+
+    Compare two refinance offers
+    5 days ago · 45.6KB
+
+    Fix zsh prompt after brew upgrade
+    6 days ago · 23.9KB
+
+  ❯ Reply to landlord about the leak
+    1 week ago · 14.9KB
+
+    Ctrl+A to show all projects · Ctrl+B to only show current branch · Space to preview · Ctrl+R
+    to rename · Type to search · Esc to cancel

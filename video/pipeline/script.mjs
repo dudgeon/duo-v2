@@ -37,7 +37,8 @@ export function parseScript(md) {
     }
     // `Topic: …` names the scene in the topic list shown at scene changes.
     const topic = line.match(/^Topic:\s*(.+)/);
-    if (topic && !scene.shot) { scene.topic = topic[1].trim(); continue; }
+    // `Topic: same` keeps the scene under the previous scene's topic: one entry, no topic list between them.
+    if (topic && !scene.shot) { scene.topic = /^same$/i.test(topic[1].trim()) ? (scenes.at(-2)?.topic ?? null) : topic[1].trim(); continue; }
     const shot = line.match(/^Shot:\s*(.+)/);
     if (shot) scene.shot = shot[1].trim();
     // Prose after the Shot: line (beats, `> notes`) is part of what the shot must do.

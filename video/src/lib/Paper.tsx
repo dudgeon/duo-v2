@@ -10,7 +10,7 @@ import tokens from '../../style/tokens.json';
 const P = tokens.paper;
 const ui = tokens.font.ui, mono = tokens.font.mono;
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
-export const ramp = (t: number, a: number, b: number) => smootherstep(interpolate(t, [a, b], [0, 1], clamp));
+export const ramp = (t: number, a: number, b: number) => (b <= a ? (t >= a ? 1 : 0) : smootherstep(interpolate(t, [a, b], [0, 1], clamp)));
 
 /** Warm paper with a faint graph grid. */
 export const PaperGround = () => (
