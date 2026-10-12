@@ -126,7 +126,8 @@
         "line": 3,
         "word": "stood"
       }
-    }
+    },
+    "leadIn": 1.1
   },
   "S3": {
     "kind": "drawn",
@@ -187,7 +188,8 @@
           "event:lost"
         ]
       }
-    ]
+    ],
+    "leadIn": 1.1
   },
   "S4": {
     "kind": "drawn",
@@ -294,7 +296,8 @@
           "event:wakes"
         ]
       }
-    ]
+    ],
+    "leadIn": 1.1
   },
   "S5": {
     "kind": "drawn",
@@ -381,7 +384,8 @@
           "event:small"
         ]
       }
-    ]
+    ],
+    "leadIn": 1.1
   },
   "S6": {
     "kind": "drawn",
@@ -440,7 +444,8 @@
         "what": "A video task card (the Shot lists five; the line names four, so the card for video isn't shown)",
         "built": false
       }
-    ]
+    ],
+    "leadIn": 1.1
   },
   "S7": {
     "kind": "drawn",
@@ -502,7 +507,8 @@
           "event:sessions"
         ]
       }
-    ]
+    ],
+    "leadIn": 1.1
   },
   "S8": {
     "kind": "drawn",
@@ -549,7 +555,8 @@
           "event:page"
         ]
       }
-    ]
+    ],
+    "leadIn": 1.1
   },
   "S9": {
     "kind": "drawn",
@@ -594,7 +601,8 @@
           "event:pieces"
         ]
       }
-    ]
+    ],
+    "leadIn": 1.1
   },
   "S10": {
     "kind": "drawn",
@@ -644,7 +652,8 @@
           "event:several"
         ]
       }
-    ]
+    ],
+    "leadIn": 1.1
   },
   "S11": {
     "kind": "drawn",
@@ -685,6 +694,7 @@
           "event:gist"
         ]
       }
-    ]
+    ],
+    "leadIn": 1.1
   }
 }

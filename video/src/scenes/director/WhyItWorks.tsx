@@ -14,10 +14,10 @@ import {AdditionsEnd, T2_DIRECTOR, T2_YOU} from './Additions';
 const PARENT: Box = {x: 200, y: 340, w: 520, h: 180};
 const SUBS = ['feature A', 'feature B', 'feature C', 'feature D'];
 const sub = (i: number): Box => ({x: 214 + i * 124, y: 560, w: 112, h: 56});
-export const WHY_DIR: Box = {x: 1000, y: 340, w: 380, h: 180};
+export const WHY_DIR: Box = {x: 880, y: 340, w: 380, h: 180};
 export const WHY_WORKERS = [2, 3, 4, 5]; // panel slots that become the right-hand workers
-export const whyWorker = (i: number): Box => ({x: 1460, y: 300 + i * 104, w: 340, h: 64});
-export const WHY_YOU: Box = {x: 1000, y: 680, w: 300, h: 140};
+export const whyWorker = (i: number): Box => ({x: 1360, y: 300 + i * 104, w: 320, h: 64});
+export const WHY_YOU: Box = {x: 880, y: 680, w: 300, h: 140};
 
 export const WhyItWorks = ({t, ev}: SceneProps) => {
   const go = ev.go ?? 0.4, farm = ev.farm ?? go + 1, back = ev.back ?? farm + 2;
@@ -78,17 +78,17 @@ export const WhyItWorks = ({t, ev}: SceneProps) => {
         const b = whyWorker(i), c = centre(b);
         return (
           <React.Fragment key={k}>
-            <Wire pts={[[b.x + b.w + 6, c[1]], [b.x + b.w + 6, c[1] - 30], [1860, c[1] - 30]]} draw={brU(i)} color="#6F8A5C" width={3} radius={10} />
+            <Wire pts={[[b.x + b.w + 2, c[1]], [1840, c[1]]]} draw={brU(i)} color="#6F8A5C" width={3} />
             <Wire pts={[[b.x - 2, c[1]], [dir.x + dir.w + 2, centre(dir)[1]]]} draw={ramp(t, report - 0.3, report)} width={2} opacity={rightU} />
             <Pulse a={[b.x, c[1]]} b={[dir.x + dir.w, centre(dir)[1]]} u={reportU(i)} color={L.text} r={7} />
             <div style={{position: 'absolute', inset: 0, opacity: Math.min(1, wU(i)) * rightU}}>
               <SessionRow box={b} name={slotNames[k]} state="working" />
             </div>
-            <div style={{position: 'absolute', left: b.x + b.w + 18, top: c[1] - 62, fontFamily: mono, fontSize: 16, color: '#4E6A3F', opacity: brU(i)}}>own branch</div>
+            <div style={{position: 'absolute', left: b.x + b.w + 22, top: c[1] - 30, fontFamily: mono, fontSize: 16, lineHeight: '22px', color: '#4E6A3F', opacity: brU(i)}}>own branch</div>
           </React.Fragment>
         );
       })}
-      <div style={{position: 'absolute', left: 1180, top: 600, padding: '4px 12px', borderRadius: 8, background: L.pane, border: `1.5px solid ${L.rule}`,
+      <div style={{position: 'absolute', left: 1080, top: 560, padding: '4px 12px', borderRadius: 8, background: L.pane, border: `1.5px solid ${L.rule}`,
         fontFamily: mono, fontSize: 18, lineHeight: '26px', color: L.text2, opacity: tagU}}>since Claude Code 2.1.224</div>
 
       <DirectorCard box={dir} sub={t < go + 0.6 ? 'Opus · plans and reviews' : t < small ? 'reads short reports' : 'context stays small'}>

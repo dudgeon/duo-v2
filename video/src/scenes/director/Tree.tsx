@@ -18,7 +18,7 @@ export type TreeProps = {
 export const slotNames = ORDER.map((i) => SESSIONS[i]);
 
 export const Tree = ({you = TREE_YOU, director = TREE_DIRECTOR, panel = PANEL, row = panelRow, busX = BUS_X, youU = 1, panelU = 1, wiresU = 1,
-  directorU = 1, chip = 2, sub = 'engineering manager · at prompt', subU = 1, needs = 2, label, states = SURVEY, names = slotNames, directorChildren, rowRight}: TreeProps) => {
+  directorU = 1, chip = 2, sub = 'engineering manager', subU = 1, needs = 2, label, states = SURVEY, names = slotNames, directorChildren, rowRight}: TreeProps) => {
   const yc = centre(you), dc = centre(director);
   const first = centre(row(0))[1], last = centre(row(names.length - 1))[1];
   return (

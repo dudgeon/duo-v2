@@ -92,7 +92,7 @@ export const FirstPrompt = ({t, ev}: SceneProps) => {
             </div>
           </div>
           <div style={{position: 'absolute', inset: 0, opacity: dirU}}>
-            <DirectorCard box={{x: 0, y: 0, w: TREE_DIRECTOR.w, h: TREE_DIRECTOR.h}} sub="engineering manager · at prompt"
+            <DirectorCard box={{x: 0, y: 0, w: TREE_DIRECTOR.w, h: TREE_DIRECTOR.h}} sub="engineering manager"
               needs={t >= scan + 0.16 * SESSIONS.length ? 2 : 0} />
           </div>
         </div>

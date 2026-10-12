@@ -32,7 +32,7 @@ const ProjectsTree = ({u}: {u: number}) => {
   );
 };
 
-const PIECES: [string, number, number][] = [['a prompt and a skill', 250, 64], ['claude --bg, worktrees', 520, 270], ['SendMessage', 400, 108]];
+const PIECES: [string, number, number][] = [['a prompt and a skill', 250, 210], ['SendMessage', 404, 112], ['claude --bg · worktrees', 520, 274]];
 
 export const Projects = ({t, ev}: SceneProps) => {
   const go = ev.go ?? 0.4, projects = ev.projects ?? go + 1, coordinator = ev.coordinator ?? projects + 1.5, pieces = ev.pieces ?? coordinator + 4;
@@ -47,7 +47,7 @@ export const Projects = ({t, ev}: SceneProps) => {
         <SectionLabel x={0} y={-56} text="OURS, FROM PIECES" />
         <MiniTree variant="base" />
         {PIECES.map(([label, x, y], k) => (
-          <div key={label} style={{position: 'absolute', left: x, top: y + 196, transform: 'translateX(-30%)', padding: '2px 10px', borderRadius: 8, background: L.selected,
+          <div key={label} style={{position: 'absolute', left: x, top: y, padding: '2px 10px', borderRadius: 8, background: L.selected,
             fontFamily: mono, fontSize: 16, lineHeight: '24px', color: L.text, whiteSpace: 'nowrap', opacity: ramp(t, pieces + 0.25 * k, pieces + 0.25 * k + 0.35)}}>{label}</div>
         ))}
       </div>
@@ -56,8 +56,8 @@ export const Projects = ({t, ev}: SceneProps) => {
         <ProjectsTree u={ramp(t, projects + 0.1, projects + 0.6)} />
       </div>
       {/* Part for part: you to you, the director to the coordinator, sessions to threads. */}
-      {([[105, 150], [350, 150], [630, 128]] as [number, number][]).map(([x, y], k) => (
-        <Wire key={k} pts={[[OURS.x + x * S, OURS.y + y * S + 70], [OURS.x + x * S, OURS.y + 330], [THEIRS.x + x * S, OURS.y + 330], [THEIRS.x + x * S, THEIRS.y + y * S + 70]]}
+      {([[105, 200], [350, 210], [756, 150]] as [number, number][]).map(([x, y], k) => (
+        <Wire key={k} pts={[[OURS.x + x * S, OURS.y + y * S], [OURS.x + x * S, OURS.y + 360], [THEIRS.x + x * S, OURS.y + 360], [THEIRS.x + x * S, THEIRS.y + y * S]]}
           draw={map(k)} dash="4 8" width={2} radius={10} opacity={map(k)} />
       ))}
     </AbsoluteFill>

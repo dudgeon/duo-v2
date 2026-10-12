@@ -72,7 +72,7 @@ export const Skill = ({t, ev}: SceneProps) => {
   const fill = t < compact ? lerp(0.55, 0.96, ramp(t, 0, compact)) : lerp(0.96, 0.12, spring(t, compact, 9, 0.9));
   const jobU = 1 - ramp(t, lost - 0.2, lost + 0.3); // the job description falls away
   const backU = ramp(t, skill + 0.4, skill + 0.9); // and comes back, read from the skill
-  const sub = t < skill ? 'engineering manager · at prompt' : 'reads SKILL.md';
+  const sub = t < skill ? 'engineering manager' : 'reads SKILL.md';
   const subU = t < skill ? jobU : backU;
 
   const open = spring(t, skill, 6, 0.95);
