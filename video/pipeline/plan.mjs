@@ -165,8 +165,11 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
     data.ends.push(at + (b.hold ?? 0.6));
     last = at;
   }
-  data.lastState = state;
-  data.lastCam = lastCam;
+  // Beats may be written out of time order; the scene reads its pictures and camera moves in time order.
+  data.steps.sort((a, b) => a.at - b.at);
+  data.cams.sort((a, b) => a.at - b.at);
+  data.lastState = data.steps.length ? data.steps[data.steps.length - 1].state : state;
+  data.lastCam = data.cams.length ? data.cams[data.cams.length - 1].rect : lastCam;
   return data;
 }
 
