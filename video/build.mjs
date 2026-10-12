@@ -101,6 +101,13 @@ try {
   if (!args.has('--stills')) {
     const mp4 = join(out, args.has('--draft') ? 'intro-draft.mp4' : 'intro.mp4');
     if (remotion('render', 'src/index.ts', 'Intro', mp4, ...(args.has('--draft') ? ['--scale=0.5'] : [])).status !== 0) throw new BuildError('render');
+    // Loudness: the voice comes out of the TTS near -28 LUFS; the film's soundtrack is brought to -16 LUFS
+    // (peaks under -1.5 dBTP), the level web video plays at, with the picture copied untouched.
+    const loud = join(out, 'intro.loud.mp4');
+    if (spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, '-c:v', 'copy', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '256k', '-ar', '48000', loud]).status === 0) {
+      copyFileSync(loud, mp4);
+      log('render: soundtrack at -16 LUFS');
+    }
     spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, '-vf', 'fps=1,scale=320:-1,tile=8x0:padding=4', '-frames:v', '1', join(out, 'contact-sheet.png')]);
     log(`render: ${mp4}`);
     // The score's ear check (after the sound-design method Geoff sent): a waveform of the final mix, and five
