@@ -23,7 +23,7 @@ export const MiniTree = ({variant, u = 1}: {variant: Variant; u?: number}) => {
         <>
           <div style={{position: 'absolute', left: -14, top: -12, width: CW + 28, height: CH + 6, boxSizing: 'border-box', borderRadius: 16, border: `4px solid ${L.text}`}} />
           <div style={{position: 'absolute', left: -60, top: CH - 6, width: CW + 120, height: 16, borderRadius: '0 0 12px 12px', background: L.text}} />
-          <div style={{position: 'absolute', left: 14, top: 8, padding: '0 8px', borderRadius: 6, background: L.selected, fontFamily: mono, fontSize: 15, lineHeight: '22px', color: L.text}}>pinned, months behind</div>
+          <div style={{position: 'absolute', left: 130, top: 8, padding: '0 8px', borderRadius: 6, background: L.selected, fontFamily: mono, fontSize: 15, lineHeight: '22px', color: L.text}}>pinned, months behind</div>
         </>
       )}
       {variant === 'oneApp' && (

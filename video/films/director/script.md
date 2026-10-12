@@ -1,5 +1,5 @@
 # Director explainer — script v1
-<!-- Synced from the script Doc at rev 26 on 2026-10-12 by pipeline/sync.mjs; edit the Doc, not this file. -->
+<!-- Synced from the script Doc at rev 27 on 2026-10-12 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 12, 2026 · @Geoff Dudgeon
 
@@ -62,7 +62,7 @@ Topic: A simple prompt
 
 - On October fifth, I started one more session and typed this.
 - *There are many sessions in this repo, all in various states. You are now their director. I am the PM and you are the engineering manager.*
-- Twenty minutes later I gave it the rest of the job: surface decisions for me, watch the other agents, and review their work.
+- Twenty minutes later I gave it the rest of the job: it should surface decisions for me, watch the other agents, and review their work.
 
 Shot: the first prompt types itself onto the console, verbatim. On line 3 a second message types below it, verbatim: the 10:25 message. As it lands, the tangle from S1 settles into the tree of style frame B: you on the left, the director beside you, the sessions in a panel. The director's first survey runs down the sessions. One line reaches you now.
 
