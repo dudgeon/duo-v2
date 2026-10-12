@@ -46,7 +46,7 @@ A session doing a mix plans on Opus and hands the scoped parts and the test loop
 
 The Mac is shared by every session. Heavy jobs run through the **main checkout's** `scripts/gpu-lock.sh`, called by its full path (never a work tree's copy, and never a bare `mkdir`), with `GPU_LOCK` set to the machine's lock folder (machine-local; the director gives it in each brief):
 - **`--exclusive` (the default):** model work, video renders, and every timing measurement (`check-chat-perf`, `check-scale`, perf and idle-CPU runs).
-- **`--shared`:** builds, DuoChecks, captures and pixel checks. Until `--shared` lands, everything is exclusive.
+- **`--shared`:** builds, DuoChecks, captures and pixel checks. Up to two run at once, and none starts while an exclusive job holds the lock or waits at the front of the queue.
 
 Release after each batch. A run whose lock output says "clearing a stale lock", or shows a "taken" WARNING, has suspect timings, so re-run it. Details: the director skill, §5a.
 
