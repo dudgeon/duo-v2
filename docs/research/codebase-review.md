@@ -762,8 +762,13 @@ Geoff asked for this check. Duo froze twice in the field, both on the work Mac, 
   - `scripts/check-chat-perf.sh` (twice if one run is over budget, per the director skill);
   - `scripts/check-chat.sh`, all boards pixel-identical;
   - DuoChecks.
-- **Chat feed changes** also re-run `perf-chat.sh --heavy` at F-226's five sizes and compare row by row.
-- **Once per batch that touches views:** the visible gate, `DUO_TEST_FOREGROUND=1 scripts/check-scale.sh` plus one heavy chat run on screen. It shows a window for about a minute, so it needs Geoff's OK (CLAUDE.md); the director asks.
+- **Chat feed changes** also re-run `perf-chat.sh --heavy` at F-226's five sizes and compare row by row. They also run **`check-chat-perf.sh` visibly, three times**, against the baseline below.
+- **Once per batch that touches views:** the visible gate, `DUO_TEST_FOREGROUND=1 scripts/check-scale.sh` plus one heavy chat run on screen. Geoff gave a standing OK on 2026-10-12, so it runs without asking each time.
+
+**The visible baseline, on main** (F-295, C-85; release build):
+- `check-scale.sh` passes either way: 4.4% visible, 3.9% background, no stalls.
+- `check-chat-perf.sh` agrees within noise on every phase but one. **Replies arriving at the bottom of a long chat** stalled 531, 946 and 287 ms on screen, against a 600 ms budget, so one run in three fails. In the background the same phase measures 48–51 ms. That's ENH-23 (a)'s lazy-row residual, and only a visible run can see it get worse.
+- So for chat-feed work the background `check-chat-perf` is not evidence. Its budget should also count stalls over 250 ms and the total.
 - **After each release Geoff takes to work:** his hang log is the real gate. `duo2 hangs` on the work Mac, shared by him; nothing scripted there.
 - **Task 9a (new, S, do before 9, and ideally before 4 and 5):**
   - The freeze scans locate code by declaration, not by file.

@@ -2,7 +2,8 @@
 # The measurement matrix: isolated background runs of measure.sh, one at a time, under the shared lock.
 #   matrix.sh [run names…]      (default: all, in order)
 M=${M:-${TMPDIR:-/tmp}/duo-review}   # holds Duo-release.app and Duo-debug.app (copies of build/Duo.app)
-L=${GPU_LOCK:?set GPU_LOCK to the shared lock folder}
+: ${GPU_LOCK:?set GPU_LOCK to the shared lock folder}
+W=${W:-${0:A:h:h:h:h}}               # the repo, for scripts/gpu-lock.sh (queued, clears dead owners)
 REL=$M/Duo-release.app DBG=$M/Duo-debug.app
 small=(--projects 6 --sessions 42 --tabs 0)
 typeset -A runs
@@ -22,12 +23,9 @@ order=(rel-idle rel-short rel-events rel-churn rel-scale16 rel-term16 rel-many r
 (( $# )) && order=("$@")
 for name in $order; do
   IFS='|' read -r app secs opts fx <<< "${runs[$name]}"
-  # Take the shared lock (wait while anyone holds it; retry if another session wins the race).
-  until mkdir $L 2>/dev/null; do sleep 2; done
-  echo "codebase-review-measure $$" > $L/owner
+  # One run under the shared lock, through scripts/gpu-lock.sh: queued in order, released however the run ends.
   echo "=== $name ($(date +%H:%M:%S)) swap used: $(sysctl -n vm.swapusage | awk '{print $6}')"
-  APP=$app OUT=$M/runs ${0:A:h}/measure.sh $name $secs ${=opts} -- ${=fx}
-  rm -f $L/owner; rmdir $L
+  $W/scripts/gpu-lock.sh "codebase-review-measure-$name" env APP=$app OUT=$M/runs ${0:A:h}/measure.sh $name $secs ${=opts} -- ${=fx}
   sleep 10
 done
 echo "=== matrix done $(date +%H:%M:%S)"
