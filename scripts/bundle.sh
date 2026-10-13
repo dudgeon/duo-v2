@@ -9,7 +9,7 @@ config="${1:-debug}"
 cd "$root"
 
 # A failed compile stops here: an old binary from an earlier build must never be bundled as this one (F-277).
-for product in Duo duo2; do
+for product in Duo duo2 duo-exec; do
   rc=0; out="$(swift build -c "$config" --product "$product" 2>&1)" || rc=$?
   printf '%s\n' "$out" | grep -vE "ld: warning: search path" || true
   [ "$rc" -eq 0 ] || { echo "Build failed: swift build --product $product exited $rc" >&2; exit 1; }
@@ -25,6 +25,10 @@ cp "$bin" "$app/Contents/MacOS/Duo"
 mkdir -p "$app/Contents/Helpers"
 cp "$(dirname "$bin")/duo2" "$app/Contents/Helpers/duo2"
 codesign --force --sign - "$app/Contents/Helpers/duo2" >/dev/null 2>&1 || true
+# duo-exec starts each terminal's process as responsible for itself (DL-185); not on the terminals' PATH.
+mkdir -p "$app/Contents/Library/Exec"
+cp "$(dirname "$bin")/duo-exec" "$app/Contents/Library/Exec/duo-exec"
+codesign --force --sign - "$app/Contents/Library/Exec/duo-exec" >/dev/null 2>&1 || true
 # In-app updates (Vendor/Sparkle/README.md): the framework the app links, in Contents/Frameworks.
 mkdir -p "$app/Contents/Frameworks"
 ditto "$root/Vendor/Sparkle/Sparkle.framework" "$app/Contents/Frameworks/Sparkle.framework"
@@ -50,6 +54,8 @@ cp -R "$root/docs/design/chat-model-chip-handoff/fixture-chat/." "$app/Contents/
 cp -R "$root/docs/design/chat-slash-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and slash commands' (slash-<board>, DL-143)
 cp -R "$root/docs/design/chat-paste-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and chat paste's (paste-<board>, DL-161)
 # The document editor: vendored CodeMirror bundle and its page (F-34).
+rm -rf "$app/Contents/Resources/mods"; mkdir -p "$app/Contents/Resources/mods"
+cp -R "$root/Mods/duo-signal" "$app/Contents/Resources/mods/duo-signal"   # the sensor mod, used only with DUO_SIGNAL=1 (ENH-70 spike)
 mkdir -p "$app/Contents/Resources/editor"
 cp "$root/Vendor/codemirror/dist/cm6.js" "$root/Vendor/codemirror/dist/editor.html" "$app/Contents/Resources/editor/"
 # The PowerPoint viewer (DL-125): the vendored renderer and Duo's page around it.

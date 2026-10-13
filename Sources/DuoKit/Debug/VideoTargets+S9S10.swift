@@ -15,7 +15,7 @@ import Foundation
 /// New Task in Duo has no sheet: File › New Task (or + New task) writes `tasks/untitled-task.md` and opens it with its name selected,
 /// so `video-s10-newtask-untitled` is that moment and the typed name's note is `video-s10-newtask-created`.
 extension VideoTargets {
-    nonisolated static let s9Screens = ["video-s9-board", "video-s9-list", "video-s9-project", "video-s9-files-open"]
+    nonisolated static let s9Screens = ["video-s9-board", "video-s9-list", "video-s9-project", "video-s9-files-open", "video-s9-beta"]
     nonisolated static let s10Screens = ["video-s10-flat", "video-s10-grouped", "video-s10-tasknote", "video-s10-newtask-untitled",
                                          "video-s10-newtask-created", "video-s10-newtask-details", "video-s10-newsession", "video-s10-newsession-sent",
                                          "video-s10-board", "video-s10-board-deck", "video-s10-deck-resumed",
@@ -50,6 +50,35 @@ extension VideoTargets {
     /// The project view of scene 9: scene 7's, with research/ closed until the cursor opens it (`video-s9-files-open`).
     static func applyS9Project(_ screen: String, _ model: AppModel) {
         if screen == "video-s9-project" { model.videoClosedFolders = ["research"] }
+    }
+
+    /// The project view of beta-feedback, where the cursor lands from the Board: its own sessions, its files, "Weekly digest draft"
+    /// in a terminal tab and the project's own PROJECT.md on the right. Built like `applyS4S5`'s shelf-scan view, from the fixture's
+    /// `projects/beta-feedback` folder.
+    static func applyS9Beta(_ model: AppModel) {
+        TargetState.project.apply(to: model)
+        guard let base = model.fixture.baseDir else { return }
+        let dir = URL(fileURLWithPath: base)
+        let project = "beta-feedback"
+        let folder = dir.appending(path: "projects/beta-feedback").standardizedFileURL
+        let digest = "Weekly digest draft"
+        let key = model.fixture.sessions.first { $0.project == project && $0.name == digest }?.tabKey ?? digest
+        model.altitude = .project(project)
+        model.fixture.groups = model.fixture.groups.filter { $0.project != project }
+        model.fixture.projectFiles[project] = ["PROJECT.md", "digests/2026-10-09.md", "inbox/tester-emails-oct12.md"]
+        model.selectedSidebarItem = nil
+        model.expandedGroups = []
+        model.liveFolders[project] = folder
+        model.videoDemoFolder = folder
+        model.listClock = Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 13, hour: 9, minute: 41))
+        WindowCapture.underlay = DuoNSColor.console
+        model.videoRightWidth = 700
+        let text = (try? String(contentsOf: dir.appending(path: "terms/beta-digest.ans"), encoding: .utf8)) ?? ""
+        model.fixtureTerminals[key] = TerminalSession(key: key, screen: text)
+        model.parkedTabs = [key]
+        model.openDocuments = ["PROJECT.md"]
+        model.rightTab = "PROJECT.md"; model.selectedFile = "PROJECT.md"
+        model.consoleTab = key
     }
 
     // MARK: Scene 10
@@ -158,7 +187,8 @@ extension VideoTargets {
             return names.isEmpty ? nil : Fixture.Group(name: t.title, project: project, sessions: names, threads: names.map { [$0] }, task: t.path)
         }
         model.expandedGroups.formUnion(["Auto-add decision", "Deck for Thursday"])
-        if requested == "workstreams" { model.expandedGroups.formUnion(tasks.map(\.title)) }   // every task open, so every session shows
+        // Every open task unfolded, so every session shows; a done task stays folded, as completing one folds it (Geoff's v10 note).
+        if requested == "workstreams" { model.expandedGroups.formUnion(tasks.filter { $0.status != "done" }.map(\.title)) }
         if name == "newsession" || name == "newsession-sent" { model.expandedGroups.insert(nt["title"] as? String ?? newTaskTitle) }   // the new session shows under its task
         if requested == "collapsed" { model.expandedGroups.remove(nt["title"] as? String ?? newTaskTitle) }   // the new task's disclosure clicked: its group folds, "Glare warning copy" hidden
         model.fixture.projectFiles[project] = (model.fixture.projectFiles[project] ?? []) + tasks.map(\.path).sorted()
@@ -217,7 +247,7 @@ extension VideoTargets {
     /// the task note's properties and text frames where a note is.
     nonisolated static func s9s10Actions(_ screen: String, dir: URL) -> [String] {
         let deck = s7Actions("video-s7-pptx-after", dir: dir)
-        if screen.hasPrefix("video-s9-") { return screen == "video-s9-board" || screen == "video-s9-list" ? [] : deck }
+        if screen.hasPrefix("video-s9-") { return ["video-s9-board", "video-s9-list", "video-s9-beta"].contains(screen) ? [] : deck }
         let name = s10Base(String(screen.dropFirst("video-s10-".count)))
         switch name {
         case "flat", "grouped", "board", "deck-resumed": return deck

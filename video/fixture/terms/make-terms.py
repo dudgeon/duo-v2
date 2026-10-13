@@ -91,6 +91,18 @@ screens["auto-add-decision.ans"] = (header(SHELF)
         ("Put auto-add behind the review step", "Scans show a review step; nothing is added until the steward taps Add (PRD requirements)"),
         ("Keep it and log an open question", "Stay with v1 behaviour for now and list it under Open questions"),
         ("Type something.", "")]))
+# S9: the beta-feedback project's "Weekly digest draft", mid-turn (Claude Code as it draws a turn in progress).
+BETA = "~/work/little-shared-library/beta-feedback"
+screens["beta-digest.ans"] = (header(BETA)
+  + you("Draft this week's digest from the tester emails in inbox/: themes, two quotes, asks for the team.")
+  + tool("Read", "inbox/tester-emails-oct12.md", "Read 58 lines") + tool("Read", "digests/2026-10-09.md", "Read 20 lines")
+  + say("23 emails, 41 reports across the week. Wrong books after a scan is still the top theme (14 again),", "and the iOS 19.4 camera crash is down to one report since build 0.9.14 shipped.")
+  + tool("Write", "digests/2026-10-16.md", "Wrote 24 lines") + diff(
+      ("+", 1, "# Beta digest: week of Oct 12"), ("+", 3, "230 testers \u00b7 3 neighbourhoods \u00b7 38 reports this week (down from 41)"),
+      ("+", 5, "## Top themes"), ("+", 6, "1. **Wrong books after a scan** (14 reports). Glass-door boxes and leaning spines."))
+  + [""] + say("First draft is in digests/2026-10-16.md. Next I'll pick the two quotes and write the asks.", "Sam still needs to decide on auto-add before the Oct 15 review.")
+  + [f"{orange}\u2736{rst} Drafting the asks\u2026 {dim}(42s \u00b7 \u2193 1.8k tokens \u00b7 esc to interrupt){rst}"] + footer())
+
 here = pathlib.Path(__file__).parent
 for name, lines in screens.items():
     (here / name).write_text("\n".join(lines) + "\n")

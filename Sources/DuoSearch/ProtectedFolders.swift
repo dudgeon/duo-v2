@@ -7,9 +7,10 @@ public enum ProtectedFolders {
     public static let names = ["Desktop", "Documents", "Downloads", "Pictures", "Movies", "Music", "Library", "Public",
                                "Applications"]
 
+    /// Under home, and `/Volumes`: other disks and network shares have prompts of their own.
     public static let paths: Set<String> = {
         let home = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
-        return Set(names.map { "\(home)/\($0)" })
+        return Set(names.map { "\(home)/\($0)" } + ["/Volumes"])
     }()
 
     /// Whether a walk that started at `root` should stay out of `dir`.

@@ -28,7 +28,8 @@ struct DeckView: View {
                 DeckPickerBar(viewer: viewer)
             }
         }
-        .onAppear { viewer.open(file) }
+        .onAppear { viewer.open(file); viewer.wake() }
+        .onDisappear { viewer.sleep() }
         .onChange(of: file) { _, f in viewer.open(f) }
     }
 }

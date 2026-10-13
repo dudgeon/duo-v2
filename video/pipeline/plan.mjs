@@ -197,7 +197,7 @@ function planApp({scene, shot, lines, tr, prev, prevShot, captures, events, styl
     if (b.key) (data.keys ??= []).push({at, label: b.key});
     if (b.wipe) (data.wipes ??= []).push({at, dur: b.wipe.dur ?? 1.2, state: use(b.wipe.state), rect: camRect(b.wipe.on, 'wipe'), ...(b.wipe.chars ? {chars: b.wipe.chars} : {})});
     if (b.mark) data.marks.push({at, until: at + (b.hold ?? 2.2), rect: camRect(b.mark, 'mark'), quote: b.quote});
-    if (b.state) { state = use(b.state); data.steps.push({at: +(at + (b.stateAfter ?? 0.1)).toFixed(3), state}); }
+    if (b.state) { state = use(b.state); data.steps.push({at: +(at + (b.stateAfter ?? 0.1)).toFixed(3), state, ...(b.fade ? {fade: b.fade} : {})}); }
     data.ends.push(at + (b.hold ?? 0.6));
     last = at;
   }

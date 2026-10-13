@@ -103,6 +103,21 @@ extension AppModel {
     public func setTaskStatus(project: String, path: String, _ status: String) -> String? {
         guard let folder = liveFolders[project] else { return "no project '\(project)'" }
         let file = folder.appending(path: path)
+        if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL {
+            // Open in the editor: the change goes through its buffer (DL-13), so unsaved typing is kept and
+            // ⌘Z undoes it. The menu and a board drag are the same writer (C-81).
+            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
+            let closes = ["done", "dropped"].contains(status)
+            let task = fixture.tasks?.first { $0.id == project + "/" + path }
+            let oldStatus = task?.status, oldCompleted = task?.completed
+            e.applyNoteEdit(.status(status, completed: closes ? f.string(from: Date()) : nil))
+            registerUndo("Set Task Status") { model in
+                e.applyNoteEdit(.status(oldStatus, completed: oldCompleted))
+                model.showNow { model.setShownTask(project, path) { $0.status = oldStatus; $0.completed = oldCompleted } }
+            }
+            showNow { setShownTask(project, path) { $0.status = status; $0.completed = closes ? f.string(from: Date()) : nil } }
+            return nil
+        }
         guard let data = FileManager.default.contents(atPath: file.path), let text = String(data: data, encoding: .utf8) else { return "\(path) isn't readable" }
         do { try Data(TaskNotes.settingStatus(status, in: text).utf8).write(to: file, options: .atomic) } catch { return error.localizedDescription }
         registerUndo("Set Task Status") { model in
@@ -142,6 +157,10 @@ extension AppModel {
         guard let s = fixture.sessions.first(where: { $0.tabKey == key || $0.sessionId == key }), let id = s.sessionId,
               let folder = liveFolders[s.project] else { return "no session '\(key)'" }
         let file = folder.appending(path: path)
+        if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL {
+            e.applyNoteEdit(.addSession(link: TaskNotes.link(title: s.name, id: id)))   // through the buffer, as + Add does
+            return nil
+        }
         guard let data = FileManager.default.contents(atPath: file.path), let text = String(data: data, encoding: .utf8) else { return "\(path) isn't readable" }
         guard let updated = TaskNotes.adding(TaskNotes.link(title: s.name, id: id), to: text) else { return "\(s.name) is already in \(path)" }
         do { try Data(updated.utf8).write(to: file, options: .atomic) } catch { return error.localizedDescription }
@@ -342,8 +361,8 @@ struct TaskLine: View {
         let key = TaskRowHover.key(project: task.project, path: task.path)
         let archived = task.archived == true
         let hovered = model.terminalsMode == .live && model.hoveredTaskRow == key && !archived
-        // Just marked complete (DL-130): checked, struck through and grey while it holds.
-        let completing = model.isCompleting(task)
+        // Done (DL-130, DL-187): checked, struck through and grey for as long as it's listed.
+        let completing = model.isDone(task)
         HStack(spacing: DuoSpace.gapRowItems) {
             TaskBox(checked: completing)
             Text(task.title).duoText(.body).strikethrough(completing).foregroundStyle(completing ? DuoColor.text2 : DuoColor.text).lineLimit(1)
@@ -632,9 +651,10 @@ final class DatePickTarget: NSObject {
 
 extension AppModel {
     /// Changes a task as listed, before the snapshot reads its note (Q-78).
-    func setShownTask(_ project: String, _ path: String, _ change: (inout Fixture.TaskSummary) -> Void) {
+    public func setShownTask(_ project: String, _ path: String, _ change: (inout Fixture.TaskSummary) -> Void) {
         guard let i = fixture.tasks?.firstIndex(where: { $0.project == project && $0.path == path }) else { return }
         change(&fixture.tasks![i])
+        followTaskStatus()   // a task shown done folds at once, not on the next snapshot (DL-187)
     }
 
     /// The task lists: open tasks, and ones just marked complete while they hold (DL-130).
@@ -646,6 +666,12 @@ extension AppModel {
         !(fixture.tasks ?? []).contains { $0.project == project && listedTask($0) }
     }
 
-    /// Whether a task shows as just completed: checked, struck through, grey (DL-130).
-    func isCompleting(_ t: Fixture.TaskSummary) -> Bool { completingTasks.contains(t.id) && t.status == "done" }
+    /// Whether a task looks done: checked, struck through, grey (DL-130's rowHold look), for as long as it's
+    /// listed, not only while it holds (DL-187).
+    public func isDone(_ t: Fixture.TaskSummary) -> Bool { t.status == "done" }
+
+    /// The task a group row stands for, by its note's path in the project.
+    public func summary(ofTask path: String, in project: String) -> Fixture.TaskSummary? {
+        fixture.tasks?.first { $0.project == project && $0.path == path }
+    }
 }

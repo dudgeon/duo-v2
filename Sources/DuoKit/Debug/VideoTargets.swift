@@ -30,6 +30,7 @@ public enum VideoTargets {
     public static func apply(_ screen: String, to model: AppModel) {
         if screen == "video-s3-list" { return applyS3(model) }
         if screen == "video-s9-board" || screen == "video-s9-list" { return applyS9Home(screen, model) }
+        if screen == "video-s9-beta" { return applyS9Beta(model) }
         if screen.hasPrefix("video-s4-") || screen.hasPrefix("video-s5-") || screen.hasPrefix("video-s6-") || screen.hasPrefix("video-s7-")
             || screen.hasPrefix("video-s9-") || screen.hasPrefix("video-s10-") { return applyS4S5(screen, to: model) }
         TargetState.project.apply(to: model)

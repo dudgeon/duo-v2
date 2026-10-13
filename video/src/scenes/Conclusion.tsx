@@ -49,6 +49,13 @@ const ReleaseLine = ({t, ev, d}: {t: number; ev: ConclusionEvents; d: Conclusion
   );
 };
 
+/** A string's width in px as the browser draws it (canvas metrics), with CSS letter-spacing added per character. */
+const textWidth = (text: string, font: string, spacing = 0) => {
+  const g = document.createElement('canvas').getContext('2d')!;
+  g.font = font;
+  return g.measureText(text).width + spacing * text.length;
+};
+
 const TopicsDone = ({t, ev, d}: {t: number; ev: ConclusionEvents; d: ConclusionData}) => {
   const at = ev.list ?? 0, row = 74, top = (H - d.topics.length * row) / 2;
   const slide = ev.cards === undefined ? 0 : ramp(t, ev.cards, ev.cards + 0.6);
@@ -60,10 +67,13 @@ const TopicsDone = ({t, ev, d}: {t: number; ev: ConclusionEvents; d: ConclusionD
         return (
           <div key={name} style={{position: 'absolute', top: top + i * row, left: 0, display: 'flex', alignItems: 'center', gap: 22, opacity: u}}>
             <span style={{fontFamily: mono, fontSize: 22, width: 40, color: P.ink3}}>{String(i + 1).padStart(2, '0')}</span>
-            <span style={{fontFamily: ui, fontSize: 44, fontWeight: 600, letterSpacing: -1, color: P.ink}}>{name}</span>
+            {/* The circle sits on the name itself: drawn inside the name's own box, as wide as the text measures
+                (the v10 estimate of 0.52 em a character sat high and ran wide, Geoff's v10 notes). */}
+            <span style={{position: 'relative', display: 'inline-block', lineHeight: '56px', fontFamily: ui, fontSize: 44, fontWeight: 600, letterSpacing: -1, color: P.ink}}>
+              {name}
+              {c > 0 && <Trace r={{x: -14, y: -2, w: textWidth(name, `600 44px ${ui}`, -1) + 28, h: 60}} radius={12} p={c} />}
+            </span>
             <span style={{fontSize: 30, color: hot ? ACCENT : '#2E7A3A'}}>{hot ? '…' : '✓'}</span>
-            {/* The circle sits on the name: 44 px SF Pro semibold runs about 0.52 em a character. */}
-            {c > 0 && <Trace r={{x: 62 - 10, y: -30, w: name.length * 44 * 0.52 + 20, h: 60}} radius={12} p={c} />}
           </div>);
       })}
     </div>

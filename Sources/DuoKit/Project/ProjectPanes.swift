@@ -176,6 +176,8 @@ struct SidebarRowView: View {
             // A task row under the pointer (DL-132 a, standins2-handoff q46-hover): the selected fill,
             // its status kept whole and the + after it; the name gives way instead.
             let hovered = row.task.map { task in model.terminalsMode == .live && model.currentProject.map { model.hoveredTaskRow == TaskRowHover.key(project: $0.name, path: task) } == true } ?? false
+            // A done task keeps DL-130's look while it's listed: checked box, grey, struck through (DL-187).
+            let taskDone = row.task.flatMap { t in model.currentProject.flatMap { model.summary(ofTask: t, in: $0.name) } }.map(model.isDone) ?? false
             let taskSlug = row.task.map { ($0 as NSString).deletingPathExtension.components(separatedBy: "/").last ?? $0 }
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: DuoSpace.gapRowItems) {
@@ -189,8 +191,8 @@ struct SidebarRowView: View {
                     Group { if SessionGlyph.taskMark(row.state) { SessionGlyph(kind: .terminal, state: .needsYou) } else { Color.clear } }
                         .frame(width: DuoMetric.glyph, height: DuoMetric.glyph)
                     // A task leads with its box and reads "status · n"; a group keeps its pill (DL-100).
-                    if row.task != nil { TaskBox(color: DuoColor.text) }
-                    Text(row.name).duoText(.bodyEmphasis).lineLimit(1).layoutPriority(1)   // the name keeps its room; status gives way, except under the pointer (fixed below)
+                    if row.task != nil { TaskBox(color: taskDone ? DuoColor.text2 : DuoColor.text, checked: taskDone) }
+                    Text(row.name).duoText(.bodyEmphasis).strikethrough(taskDone).foregroundStyle(taskDone ? DuoColor.text2 : DuoColor.text).lineLimit(1).layoutPriority(1)   // the name keeps its room; status gives way, except under the pointer (fixed below)
                     if let task = row.task {
                         let st = model.fixture.tasks?.first(where: { $0.path == task && $0.project == model.currentProject?.name })?.status ?? "open"
                         Text(st == "open" ? "\(count) session\(count == 1 ? "" : "s")" : "\(st.replacingOccurrences(of: "-", with: " ")) · \(count)")
@@ -725,6 +727,7 @@ struct RightPane: View {
                 ZStack(alignment: .bottom) {
                     HTMLViewerView(viewer: model.htmlViewer, file: file, root: root)
                         .accessibilityIdentifier("video.right.document")   // on the page alone: the picker bar's buttons keep their own names
+                        .onDisappear { model.htmlViewer.sleep() }
                     PickerBar()
                 }
             } else if let path = model.rightTab, AppModel.isDeck(path), let file = model.liveFile(path) {

@@ -10,4 +10,4 @@ A task as a single line: a box, its title, its status. Used for tasks with no se
 
 **Open for design (S2-5):** the box, status display, and whether Home's list belongs in the action column.
 
-**Motion (DL-130):** Mark Complete shows the line checked, struck through and in `text2` for `motionRowHold` (5 s); ⌘Z or Mark Open keeps it. Then it fades out (`motionRowOut`) while the lines below close up. Lines are opaque on the pane. With Reduce Motion, it still holds 5 s, then goes at once.
+**Motion (DL-130):** Mark Complete shows the line checked, struck through and in `text2` for `motionRowHold` (5 s); ⌘Z or Mark Open keeps it. Then it fades out (`motionRowOut`) while the lines below close up. Lines are opaque on the pane. With Reduce Motion, it still holds 5 s, then goes at once. **Done look (DL-187):** a task whose status is `done` keeps that look (checked box, `text2`, struck through) for as long as any row for it is listed, including its group row (the name struck and in `text2`, the status "done · n"), and completing it folds its sessions; reopening it restores the normal look and unfolds it.

@@ -6,13 +6,14 @@ import Foundation
 /// `glyphs-240` is the narrowest pane (`--then left-width:240`).
 @MainActor
 public enum GlyphTargets {
-    nonisolated public static let screens = ["glyphs", "glyphs-240", "glyphs-notasks", "hierarchy", "hierarchy-240"]
+    nonisolated public static let screens = ["glyphs", "glyphs-240", "glyphs-notasks", "hierarchy", "hierarchy-240", "done-task", "done-task-open"]
 
     static let project = "checkout-redesign"
 
     public static func apply(_ screen: String, to model: AppModel) {
         TargetState.project.apply(to: model)
         if screen.hasPrefix("hierarchy") { return hierarchy(screen, to: model) }
+        if screen.hasPrefix("done-task") { return doneTask(screen, to: model) }
         var f = model.fixture
         f.sessions.removeAll { $0.project == project }
         f.groups.removeAll { $0.project == project }
@@ -57,6 +58,20 @@ public enum GlyphTargets {
         model.expandedGroups = ["Launch email", "Refund policy", "Pricing page"]
         model.consoleTab = nil
         if screen == "glyphs-240" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { FixtureHarness.perform("left-width:240", on: model) } }
+    }
+}
+
+extension GlyphTargets {
+    /// DL-187: board 04's hierarchy with "Stripe migration" done (its group folded under it; `done-task-open`
+    /// has the user expand it) and a done task with no session, "Sign-off notes", still listed under TASKS.
+    static func doneTask(_ screen: String, to model: AppModel) {
+        hierarchy("hierarchy", to: model)
+        var f = model.fixture
+        if let i = f.tasks?.firstIndex(where: { $0.path == "tasks/stripe-migration.md" }) { f.tasks![i].status = "done" }
+        f.tasks = (f.tasks ?? []) + [.init(project: project, path: "tasks/sign-off-notes.md", title: "Sign-off notes", status: "done", sessionIds: [])]
+        model.fixture = f
+        model.completingTasks.insert("\(project)/tasks/sign-off-notes.md")   // listed, as it is while Mark Complete holds
+        model.expandedGroups = screen == "done-task-open" ? ["Launch email", "Stripe migration"] : ["Launch email"]
     }
 }
 

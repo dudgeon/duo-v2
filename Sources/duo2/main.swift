@@ -155,6 +155,8 @@ case .doctor:
     }
     let legacy = LegacyDuo.detect()
     if !legacy.isEmpty { print("Legacy Duo's instructions are still installed (\(legacy.map(\.what).joined(separator: ", "))). See `duo2 legacy`.") }
+    // The mod canary (F-297): what Duo found at its last launch.
+    print((ModCanary.load(support: ControlEndpoint.file.deletingLastPathComponent())?.lines() ?? [ModCanary.notChecked]).joined(separator: "\n"))
     guard let (endpoint, source) = ControlEndpoint.discover() else {
         print("Duo isn't running, or this terminal can't see it: no \(ControlEndpoint.socketVariable) in the environment and no live \(ControlEndpoint.file.path).")
         exit(1)

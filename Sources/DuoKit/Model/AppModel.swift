@@ -208,6 +208,9 @@ public final class AppModel {
     public var editorRevision = 0
     /// The editor if it has been created (doc-status mustn't create one).
     @ObservationIgnored public var editorIfLoaded: EditorController?
+    /// Set once, when the editor first shows a document. Observed, so commands that depend on the
+    /// (unobserved) editor re-evaluate then: Save stayed disabled until something else invalidated.
+    public var editorOpened = false
     /// Word documents being converted to Markdown (DL-123), by the .docx's tab: how far, and what
     /// it's doing. Set only once a conversion has taken half a second, so a quick one shows nothing.
     public var converting: [String: (fraction: Double, stage: String)] = [:]
@@ -374,6 +377,8 @@ public final class AppModel {
     /// Task titles as last seen, by "project/path": a title that changes moves its note to the
     /// new name's slug once it settles (DL-115, C-24).
     @ObservationIgnored var taskTitlesSeen: [String: String]?
+    /// Whether each task was done when last seen, by "project/path": one that becomes done folds its sessions, one reopened unfolds them (DL-187).
+    @ObservationIgnored public var taskStatusSeen: [String: Bool]?
     /// Undo steps being gathered into one (a task with its sessions archives, moves or comes back in one step).
     @ObservationIgnored var undoBatch: [(String, @MainActor (AppModel) -> Void)]?
     /// Checks only: undo steps go here instead of the window's undo manager.
@@ -488,6 +493,7 @@ public final class AppModel {
         }
         if !merged.sameApartFromClock(fixture) { fixture = merged }
         followTaskTitles()
+        followTaskStatus()
         // The map's order settles on the first scan, then on each arrival at All projects (DL-104).
         if mapSettled.isEmpty || altitude != .allProjects { settleMapOrder() }
         pushNoteContext()

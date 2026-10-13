@@ -213,7 +213,11 @@ public final class ChatSession {
     /// Claude's external editor is open for the composer (F-104): a blank screen is expected.
     public var composing = false { didSet { if oldValue, !composing, !sending { evaluateFallback() } } }
     /// The request Claude is waiting on, from PermissionRequest; cleared by the tool running or Stop.
-    @ObservationIgnored public var pendingRequest: ChatRequest?
+    @ObservationIgnored public var pendingRequest: ChatRequest? {
+        didSet { if ChatSignalTrace.on, let r = pendingRequest, r.tool != oldValue?.tool || r.at != oldValue?.at { ChatSignalTrace.note("pending", r.tool) } }
+    }
+    /// duo-signal's snapshot (ENH-70 spike, `DUO_SIGNAL=1`): busy ahead of the screen while it's fresh.
+    @ObservationIgnored let signalReader = ChatSignalReader()
     /// How the last declined question should read (set when the card declines it).
     @ObservationIgnored public var lastDeclined: String?
 
@@ -305,6 +309,7 @@ public final class ChatSession {
         guard feed?.sessionId != sessionId else { return }
         feed?.stop()
         feed = ChatFeed(sessionId: sessionId, cwd: cwd, chat: self)
+        signalReader.start(for: self)
     }
 
     /// The feed's timer is going (for DuoChecks: a closed tab's chat must stop it, C-79).
@@ -345,8 +350,11 @@ public final class ChatSession {
     @discardableResult
     public func reread() -> ChatScreen {
         guard let t = terminal else { return screen }
-        let s = ChatScreenReader.read(lines: t.screenLines(), cols: t.columns, table: signatures)
+        let read = ChatScreenReader.read(lines: t.screenLines(), cols: t.columns, table: signatures)
+        let s = signalReader.overlay(read, now: Date())
+        ChatSignalTrace.change("screen", read.kind.rawValue)
         apply(s)
+        ChatSignalTrace.change("chat", "\(screen.kind.rawValue) card=\(cardUp)")
         return s
     }
 

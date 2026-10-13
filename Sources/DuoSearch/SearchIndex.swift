@@ -86,7 +86,7 @@ extension SearchIndex {
     /// and only passages the index hasn't seen are embedded. Recent files first (FR-7.3.2).
     /// `pause` runs between files so the caller can throttle (FR-7.3.3).
     /// `excluding`: searched folders inside this one, indexed under their own names.
-    public func indexProject(_ name: String, root: URL, excluding: Set<String> = [], embedder: Embedder,
+    public func indexProject(_ name: String, root: URL, excluding: Set<String> = [], embedder: EmbedderSource,
                              quiet: TimeInterval = 0, pause: () async -> Void = {}) async throws -> IndexStats {
         var stats = IndexStats()
         let root = root.resolvingSymlinksInPath()
@@ -114,14 +114,14 @@ extension SearchIndex {
             }
             guard let raw = FileSource.read(f.path) else { continue }
             let text = Secrets.redact(raw)
-            let chunks = Chunker.chunks(path: f.path, text: text, tokenizer: embedder.tokenizer)
+            let chunks = Chunker.chunks(path: f.path, text: text, tokenizer: try embedder.get().tokenizer)
             let hashes = chunks.map { Self.hash($0.text) }
             var ids: [String: Int] = [:]
             let look = try db.prepare("SELECT id FROM content WHERE hash = ?")
             for h in Set(hashes) { look.bind([h]); if try look.step() { ids[h] = look.int(0) } }
             let missing = Array(Set(hashes).subtracting(ids.keys))
             let texts = missing.map { h in chunks[hashes.firstIndex(of: h)!].text }
-            let vectors = try embedder.embedDocuments(texts)
+            let vectors = texts.isEmpty ? [] : try embedder.get().embedDocuments(texts)
             stats.embedded += missing.count
             stats.reused += Set(hashes).count - missing.count
             try db.transaction {
@@ -146,6 +146,15 @@ extension SearchIndex {
         }
         return stats
     }
+
+    /// `indexProject` with an embedder that stays loaded.
+    public func indexProject(_ name: String, root: URL, excluding: Set<String> = [], embedder: Embedder,
+                             quiet: TimeInterval = 0, pause: () async -> Void = {}) async throws -> IndexStats {
+        try await indexProject(name, root: root, excluding: excluding, embedder: EmbedderSource(embedder), quiet: quiet, pause: pause)
+    }
+
+    /// Hands SQLite's page and statement caches back (the app calls it when a pass is done).
+    public func shrinkMemory() { try? db.exec("PRAGMA shrink_memory") }
 
     /// A project that left the registry leaves search (FR-7.1.1).
     public func removeProject(_ name: String) throws {
@@ -339,13 +348,16 @@ extension SearchIndex {
         var scored: [(Int, Float)] = []
         let s = try db.prepare("SELECT id, vector FROM content")
         while try s.step() {
-            let d = s.blob(1)
-            guard d.count == dim * 4, !excluding.contains(s.int(0)) else { continue }
+            let id = s.int(0)
+            guard !excluding.contains(id) else { continue }
             var dot: Float = 0
-            d.withUnsafeBytes { raw in
+            let ok: Bool = s.withBlob(1) { raw in
+                guard raw.count == dim * 4 else { return false }
                 qv.withUnsafeBufferPointer { q in vDSP_dotpr(q.baseAddress!, 1, raw.bindMemory(to: Float.self).baseAddress!, 1, &dot, vDSP_Length(dim)) }
+                return true
             }
-            scored.append((s.int(0), dot))
+            guard ok else { continue }
+            scored.append((id, dot))
         }
         scored.sort { $0.1 > $1.1 }
         if let best = scored.first?.1 { scored = scored.filter { $0.1 >= best - Self.semanticMargin } }

@@ -11,6 +11,7 @@ let package = Package(
     products: [
         .executable(name: "Duo", targets: ["Duo"]),
         .executable(name: "duo2", targets: ["duo2"]),
+        .executable(name: "duo-exec", targets: ["duo-exec"]),
         .library(name: "DuoKit", targets: ["DuoKit"]),
     ],
     dependencies: [
@@ -25,6 +26,8 @@ let package = Package(
         .target(name: "DuoSearch", dependencies: ["DuoControl"], linkerSettings: [.linkedLibrary("sqlite3")]),
         .target(name: "DuoKit", dependencies: ["DuoControl", "DuoSearch", .product(name: "SwiftTerm", package: "SwiftTerm")]),
         .executableTarget(name: "duo2", dependencies: ["DuoControl", "DuoSearch"]),
+        // Starts each terminal's process as responsible for itself (DL-185): Darwin only.
+        .executableTarget(name: "duo-exec"),
         .executableTarget(name: "Duo", dependencies: ["DuoKit"],
                           swiftSettings: [.unsafeFlags(["-F", sparkle])],
                           linkerSettings: [.unsafeFlags(["-F", sparkle, "-framework", "Sparkle",

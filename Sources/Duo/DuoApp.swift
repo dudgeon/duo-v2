@@ -45,6 +45,8 @@ struct DuoApp: App {
         if FileManager.default.isExecutableFile(atPath: helpers.appending(path: "duo2").path) {
             ChildEnvironment.cliDirectory = helpers.path
         }
+        let exec = Bundle.main.bundleURL.appending(path: "Contents/Library/Exec/duo-exec")
+        if FileManager.default.isExecutableFile(atPath: exec.path) { ChildEnvironment.exec = exec.path }
         let server = ControlServer { model.handle($0, done: $1) }
         // Scripted and capture runs never take the socket from the user's open Duo (C-18).
         try? server.start(privateIfTaken: options.capturing) { ChildEnvironment.control = $0 }
@@ -75,7 +77,7 @@ struct DuoApp: App {
         if !options.capturing, model.terminalsMode == .live { SparkleUpdater.start(model: model) }
         // The CLI's version decides chat mode's hooks when a session starts (F-111): asked now, off the
         // main thread, so the first session finds it cached (C-34).
-        if model.terminalsMode == .live, let claude = ClaudeLocator.resolve() { ClaudeVersion.warm(claude); RemoteControl.warm(claude) }
+        if model.terminalsMode == .live, let claude = ClaudeLocator.resolve() { ClaudeVersion.warm(claude); RemoteControl.warm(claude); DuoSignal.warm(claude) }
         if !options.capturing, model.terminalsMode == .live {
             DispatchQueue.main.asyncAfter(deadline: .now() + 8) { MainActor.assumeIsolated { model.checkForUpdates(userInitiated: false) } }
         }
