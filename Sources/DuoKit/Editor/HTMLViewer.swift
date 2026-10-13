@@ -21,16 +21,20 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     private var stamp: Date?
     private var timer: Timer?
     /// DL-175: a local page loads nothing remote. WebKit compiles the rules asynchronously, so the
-    /// first page waits for them (`open` below): a page must never start without them.
+    /// first page waits for them (`open` below); if they fail to compile, pages load without them.
     private var rulesReady = false
     private var afterRules: (() -> Void)?
 
     /// Blocks every subresource from the network and every remote frame; the page's own files (file:)
-    /// and data: URLs are untouched. Links still leave through `decidePolicyFor`.
-    public static let remoteBlockRules = """
-    [{"trigger":{"url-filter":"^(https?|wss?|ftp)://","resource-type":["image","style-sheet","script","font","raw","svg-document","media","ping","fetch","websocket","other"]},"action":{"type":"block"}},
-     {"trigger":{"url-filter":"^(https?|wss?|ftp)://","resource-type":["document"],"load-context":["child-frame"]},"action":{"type":"block"}}]
-    """
+    /// and data: URLs are untouched. Links still leave through `decidePolicyFor`. One rule per scheme:
+    /// WebKit's url-filter has no `|`, and a list that doesn't compile leaves every page blank.
+    public static let remoteBlockRules: String = {
+        let subresources = #"["image","style-sheet","script","font","raw","svg-document","media","ping","fetch","websocket","other"]"#
+        return "[" + ["^https?://", "^wss?://", "^ftp://"].map { scheme in
+            #"{"trigger":{"url-filter":"\#(scheme)","resource-type":\#(subresources)},"action":{"type":"block"}},"#
+            + #"{"trigger":{"url-filter":"\#(scheme)","resource-type":["document"],"load-context":["child-frame"]},"action":{"type":"block"}}"#
+        }.joined(separator: ",") + "]"
+    }()
     private var dormant = false
 
     public override init() {
@@ -44,8 +48,10 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         WKContentRuleListStore.default().compileContentRuleList(forIdentifier: "duo-local-page-no-remote", encodedContentRuleList: Self.remoteBlockRules) { [weak self] list, error in
             MainActor.assumeIsolated {
                 guard let self else { return }
-                if let list { self.webView.configuration.userContentController.add(list); self.rulesReady = true }
-                else { DuoLog.write("html: the remote-content rules didn't compile, so local pages stay unloaded: \(String(describing: error))") }
+                // A list that doesn't compile mustn't blank every page: log it and load pages without it.
+                if let list { self.webView.configuration.userContentController.add(list) }
+                else { DuoLog.write("html: the remote-content rules didn't compile, so local pages load without them: \(String(describing: error))") }
+                self.rulesReady = true
                 self.afterRules?(); self.afterRules = nil
             }
         }

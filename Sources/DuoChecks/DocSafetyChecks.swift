@@ -1,5 +1,6 @@
 import DuoKit
 import Foundation
+import WebKit
 
 // C-81, DL-175: the editor's bridge, web-process recovery and what local pages may load.
 
@@ -57,9 +58,11 @@ private func matches(_ pattern: String, in text: String) -> [String] {
         check(["image", "style-sheet", "script", "font", "fetch", "websocket", "media"].allSatisfy(types.contains), "the local-page rule list blocks images, styles, scripts, fonts, fetches, sockets and media")
         check(rules.contains { ($0["trigger"] as? [String: Any])?["load-context"] as? [String] == ["child-frame"] }, "and remote frames")
         check(rules.allSatisfy { ($0["action"] as? [String: String])?["type"] == "block" }, "every rule blocks")
+        check(rules.allSatisfy { !((($0["trigger"] as? [String: Any])?["url-filter"] as? String) ?? "|").contains("|") }, "no url-filter uses |, which WebKit can't compile")
     } else { check(false, "the local-page rule list is JSON") }
     let viewer = index.declarations(of: "HTMLViewer").map(\.body).joined()
     check(viewer.contains("compileContentRuleList") && viewer.contains("rulesReady"), "the HTML viewer compiles the rules and waits for them before loading a page")
+    check(compiles(HTMLViewer.remoteBlockRules), "WebKit compiles the local-page rule list (a list that doesn't leaves every page blank)")
 
     // The task menus and the duo2 task verbs wait for the editor's save before rewriting a note.
     let menu = index.files.first { $0.path.hasSuffix("Model/AppModel+TaskMenu.swift") }?.text ?? ""
@@ -72,4 +75,17 @@ private func matches(_ pattern: String, in text: String) -> [String] {
     // Save re-evaluates once the editor first shows a document (the editor is unobserved).
     let commands = index.files.first { $0.path.hasSuffix("Navigation/Commands.swift") }?.text ?? ""
     check(commands.contains("case .save: model.terminalsMode == .live && model.editorOpened"), "Save depends on the observed editorOpened flag")
+}
+
+/// Compiles a content rule list in a throwaway store, so the check never touches the user's own.
+@MainActor private func compiles(_ rules: String) -> Bool {
+    let dir = FileManager.default.temporaryDirectory.appending(path: "duochecks-rules-\(UUID().uuidString)")
+    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: dir) }
+    guard let store = WKContentRuleListStore(url: dir) else { return false }
+    var result: Bool?
+    store.compileContentRuleList(forIdentifier: "check", encodedContentRuleList: rules) { list, _ in result = list != nil }
+    let deadline = Date().addingTimeInterval(10)
+    while result == nil && Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
+    return result ?? false
 }
