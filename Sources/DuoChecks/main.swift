@@ -1764,6 +1764,7 @@ func repoFixture() throws -> Fixture {
           "walks never enter Music, Photos, Documents… unless the project lives inside them")
     check(FileSource.files(in: URL(fileURLWithPath: "/")).isEmpty && FileSource.files(in: home.deletingLastPathComponent()).isEmpty,
           "folders above home are never walked for files (a session started in / or /Users)")
+    walkGuardChecks()  // WalkGuardChecks.swift: every walk goes through ProtectedFolders (F-302)
 
     print("Claude folders (DL-103)")
     let cw = FileManager.default.temporaryDirectory.appending(path: "duo-claude-\(UUID().uuidString)")

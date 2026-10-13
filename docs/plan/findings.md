@@ -3454,3 +3454,37 @@ DL-183's spike of ENH-70. The mod is `Mods/duo-signal`. Duo's side is `Chat/Chat
 - **Measured** (`scripts/measure-web-lifetimes.sh <tree> <label>`, an isolated Duo started through LaunchServices so its WebKit processes count as its own; exclusive lock). With 3 browser tabs, an HTML page and a deck open, then closed: WebContent processes main c69183a 1 → 6 → 6, branch 1 → 6 → 3 (what remains is the editor and the HTML and deck viewers, which live as long as the app). `leaks` finds about 420 small system leaks (20 KB) on both; footprint 116.6 MB on main, 102.1 MB on the branch.
 - **Unattributed: the editor page reported `vis=visible` in the branch's background `check-editor-host` runs** (twice), where main's two background runs reported hidden and skipped the scroll case. The branch's case then ran and drifted 17 px (left at 1500, back at 1483). Nothing in this branch touches the editor's web view or its host (the changes are in `WebTab`, `HTMLViewer`, `DeckViewer` and the control verb), so I can't say why visibility differed; the likeliest cause is the machine's screen state at the time, not the code, but no run proves it. The F-272 scroll restore still needs its on-screen proof (`DUO_TEST_FOREGROUND=1`, Geoff's OK).
 - `check-deck-motion.mjs` needs `playwright-core` on `NODE_PATH`; `/tmp/pwc/node_modules/playwright-core` had no `package.json`, and a working copy was `/Users/geoff/repos/thinking-about-risk/node_modules`.
+
+## F-302 · The Photos and Music prompts came from `find /` in Duo's terminals, not Duo's code (fix/no-privacy-prompts, 2026-10-12)
+
+- **Seen:** Geoff, 2026-10-12: "Duo is still exhibiting the worrisome behavior of asking for access to things it does not need to access, like photos and music." At 19:39–19:40 he answered 20 prompts for `com.dudgeon.duo`, one after another: Photos ×5, MediaLibrary ×3, Documents ×5, Downloads ×4, Desktop ×3 and NetworkVolumes ×2.
+- **Duo's own process asked for nothing.** In seven days of tccd's log, Duo (pid 34502) sent no request. Every prompt came through `sandboxd`, the broker for file access. tccd's msgID starts with the client's pid: 94215 is sandboxd now, and Duo's own requests would read `34502.n`. The subject was "Resp: Duo 34502", meaning a process whose *responsible* app is Duo opened the files.
+- **The prompts were days old.** tccd showed them one at a time behind an earlier unanswered one, and its first answer at 19:39:07 closed a prompt shown before the log's retention. Their threads' ids, matched against the log over time, date the requests to Oct 9–11. They were not a burst at 19:39.
+- **The walkers were subagents of sessions in Duo terminals:**
+  - `4dd881e9`: `find / -type d -path "*SwiftTerm*"` on Oct 9, 12:15.
+  - `1f87a975`: `find / -path '*mlx_audio/…'` on Oct 11, 19:25. It "did not complete within its 120s timeout": it was blocked on the prompts.
+  - `3966a0f5`: `find / -maxdepth 6` on Oct 8.
+  - A walk of `/` passes ~/Desktop, ~/Documents, ~/Downloads, ~/Music (MediaLibrary), ~/Pictures/Photos Library (Photos) and /Volumes (NetworkVolumes). That is exactly the set Geoff saw.
+- **Who is responsible** (`responsibility_get_pid_responsible_for_pid`): a process in a Duo terminal counts Duo. Background sessions (`claude --bg`) count Terminal (pid 688), because their daemon was started from Terminal. So build sessions never raised Duo's prompts. **Terminal.app keeps responsibility for its children too:** they count Terminal. VS Code's terminal and Chromium disclaim it.
+- **Why the prompts kept coming back:** every one logged "Failed to match existing code requirement … cdhash" (-67050). His running Duo was the ad-hoc debug build in the main checkout. Rebuilding it changes the cdhash that earlier answers are keyed to, so tccd asks again. The director now builds merge checks in their own work tree (558d803), and Geoff's Duo moves to the signed release.
+- **Fixed (DL-185):**
+  - **Terminal processes start responsible for themselves.** SwiftTerm starts a terminal with `forkpty` and `execve`, and only `posix_spawn` can disclaim. Duo therefore execs `Contents/Library/Exec/duo-exec <program> <argv0> args…`, which becomes the program in place (`POSIX_SPAWN_SETEXEC` with `responsibility_spawnattrs_setdisclaim`). The pid, pty and environment are unchanged, and a failed spawn falls back to `execve`. duo-exec is outside `Helpers`, so it isn't on the terminals' PATH. A prompt from a session's tools now names `claude` or the shell, not Duo.
+  - **Duo's own walks all go through ProtectedFolders.** Three walks bypassed it:
+    - `MissingFolders.walk` skipped only `Library`, and could start from `/Users` or any parent of a moved folder.
+    - `PropertyCorpus.markdownFiles`, four deep from any root.
+    - `ReferenceIndex.scan`.
+    - All three now skip guarded folders and never start from home or above. `ProtectedFolders` adds `/Volumes`.
+  - **A DuoChecks scan enforces the rule:** any file under `Sources/` that lists folders or asks Spotlight must use ProtectedFolders (or the tree's `unlisted`) or be listed in `walkGuardExempt` with why it's safe. A stale exemption also fails.
+- **Checked:** DuoChecks 1397 passed, 0 failed. The live check shows a child started directly counts its parent's app (Terminal, 688), and one started through duo-exec counts itself.
+- **Checked live, without raising a prompt.** Two isolated background instances ran on a scratch workspace holding `Music/` and `Pictures/`, each with its own support and Claude config folders. Each one's shell terminal read `/Library/Application Support/com.apple.TCC`. That is system data under Full Disk Access, which is denied silently and logged with the responsible process.
+  - **Before (duo-exec moved aside):** the shell's responsible process was the Duo instance. tccd logged `Sub:{com.dudgeon.duo.test} Resp: com.dudgeon.duo.test pid=69212`.
+  - **After:** the shell was responsible for itself (11715 → 11715). tccd logged `Sub:{/bin/zsh} Resp: com.apple.zsh pid=11715`.
+  - In both runs the shell had `DUO_SOCKET` and `DUO_TOKEN`, and `duo2 ping` reached its instance.
+  - tccd logged no Photos or MediaLibrary request from any process during either run.
+  - `scripts/check-sandbox.sh`: all 10 pass.
+  - **A real Claude session (2.1.296) started through duo-exec** in a trusted folder:
+    - Its hooks fired: SessionStart, MessageDisplay, Stop and SessionEnd reached the instance's events file.
+    - The bundle's `duo2` reached the instance.
+    - `claude` (45029) was responsible for itself and for its tools: tccd logged `Resp: com.anthropic.claude-code pid=45029` for the same read.
+- **Seen on the way, no prompt raised:** Duo's WebKit GPU process makes silent Camera and Microphone checks (`com.apple.WebKit.GPU`, responsible Duo). Chrome and Remotion's `headless_shell`, started by sessions in Duo terminals, counted Duo as responsible; after this change they count the session.
+  - `ls ~/Music` itself does reach tccd (MediaLibrary, from my Terminal shell), so testing with it from a Duo terminal would have put a real prompt on screen.
