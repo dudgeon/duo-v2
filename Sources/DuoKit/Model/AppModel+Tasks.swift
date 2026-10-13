@@ -372,7 +372,7 @@ struct TaskLine: View {
                 Color.clear.frame(width: DuoMetric.glyph, height: DuoMetric.glyph)   // the glyph's slot
             }
             TaskBox(checked: completing)
-            Text(task.title).duoText(.body).strikethrough(completing).foregroundStyle(completing ? DuoColor.text2 : DuoColor.text).lineLimit(1)
+            Text(task.title).duoText(headerColumns ? .bodyEmphasis : .body).strikethrough(completing).foregroundStyle(completing ? DuoColor.text2 : DuoColor.text).lineLimit(1)
             if showsProject { Text(task.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1) }
             Spacer(minLength: 8)
             // On hover the + takes the status's place (DL-112, stand-ins-handoff q43-hover).
