@@ -199,7 +199,7 @@ All Duo shortcuts carry ⌘, so they never collide with keys typed into Claude C
 | ⌘T / ⇧⌘T / ⌥⌘T | New Claude session / new shell / new browser tab |
 | ⌘L | A browser tab's address field |
 | ⌘N / ⇧⌘N | New Markdown file / new folder |
-| ⌘S, ⌘B, ⌘I | Save, bold, italic in the editor |
+| ⌘S, ⌘B, ⌘I, ⇧⌘X | Save, bold, italic, strikethrough in the editor (DL-189) |
 | ⌘D | Send selection to Claude |
 | ⌘W / ⇧⌘W | Close tab (never the window) / close window |
 | ⌥⌘0 | Hide or show the right pane (DL-129) |
