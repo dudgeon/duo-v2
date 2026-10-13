@@ -1,5 +1,5 @@
 # Director explainer — script v1
-<!-- Synced from the script Doc at rev 1936 on 2026-10-13 by pipeline/sync.mjs; edit the Doc, not this file. -->
+<!-- Synced from the script Doc at rev 1937 on 2026-10-13 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 12, 2026 · @Geoff Dudgeon
 
@@ -78,10 +78,9 @@ Shot: on line 1, a big orchestrator (one agent over layers of agents) sketches i
 
 Topic: From a line to a brief
 
-- Most of my asks are a sentence or two, typed on my phone.
-- The director turns each one into a full brief for a new session: my words quoted, a branch of its own, record numbers, and how to prove the work.
-- A close button on tabs: briefed twenty-five seconds after I asked, and merged thirty-two minutes later.
-- A review of the whole codebase: one sentence from me, an eight-hundred-word brief, and a report seventy-four minutes later.
+- Most of my asks are a sentence or two, typed on my phone, and the director turns each one into a full brief for a new session -- with my words quoted, its own branch, and how to prove the work.
+- When I asked for a close button on tabs, it briefed a session twenty-five seconds later, and the change was merged about half an hour after that.
+- A one-sentence ask to review the whole codebase turned into an eight hundred word brief, and a full report about an hour later.
 
 Shot: your ask arrives as a phone message, verbatim. It travels to the director, which unfolds it into a brief card; lines of the brief light up as the voice names them (your words quoted, the branch, the reserved records, how to prove it). The brief goes to a new session; a merge card lands with what changed and how long it took. Then the review: a 34-word ask beside an 872-word brief, drawn to scale, and the report it produced.
 
@@ -101,9 +100,9 @@ Shot: your ask splits into two sessions, research and design, side by side; a me
 
 Topic: Catching up
 
-- When I come back, I don't open ten sessions one by one. I ask the director where things stand.
-- It answers like a standup: what's done, what needs me, and what's next.
-- Decisions come as buttons, with a recommendation first. One evening I tapped four answers, and two new sessions started within a minute.
+- When I come back to it, I don't open ten sessions one by one -- I just ask the director where things stand.
+- It answers like a standup, with what's done, what needs me, and what's next, and the decisions come as buttons with its recommendation first.
+- One evening I tapped four answers, and two new sessions were running within a minute.
 
 Shot: your question arrives from the phone, verbatim. The director's answer comes back as a digest card, Done / Needs you / Next, with real lines from it. Four buttons follow, recommendation first; your four taps; two new sessions start on the tree.
 
@@ -111,9 +110,8 @@ Shot: your question arrives from the phone, verbatim. The director's answer come
 
 Topic: Why it works
 
-- With subagents, one session farms out the work and holds all of it in its own context.
-- Here each worker is a full session on its own branch, so features don't collide, and I can open any one of them and work alongside it.
-- Sessions message each other. A worker reports when its work is committed, and the director reads the report, not the transcript.
+- This works better for me than subagents, because each worker is a full session on its own branch, so features don't collide and I can jump into any of them.
+- The sessions message each other, so the director only reads short reports, and its own context stays small.
 
 Shot: two diagrams side by side, then one. Left, subagents: small boxes inside the parent session's outline, their work flowing back into it until the outline swells. Right, the director: full sessions outside it, each on its own branch line, with only a short report arrow back, tagged "since Claude Code 2.1.224"; your figure steps into one session, then out again. The director's outline stays the same size the whole time.
 
@@ -121,9 +119,8 @@ Shot: two diagrams side by side, then one. Left, subagents: small boxes inside t
 
 Topic: What got done
 
-- In its first week, the director oversaw fifteen releases and a hundred and eighty-seven merges.
-- About a hundred sessions did the work, with no specialist personas: the same workers took design studies, bug hunts and research.
-- (line: how many major features and refactors, named briefly)
+- In its first week, the director oversaw fifteen releases and a hundred and eighty seven merges, done by about a hundred sessions.
+- The work ranged from small fixes to whole new features like chat mode and the Word viewer, and the same workers took on design studies, bug hunts and research, without any specialist personas.
 
 Shot: the first week's timeline fills with what shipped: merges as cells over their days, release tags under them, a few features named. Each count appears as the line says it.
 
@@ -131,9 +128,9 @@ Shot: the first week's timeline fills with what shipped: merges as cells over th
 
 Topic: Patterns
 
-- The pattern bends to what your Claude Code can do.
-- On an older version, workers run as one-shot jobs and report through files. That's how it runs on a managed work laptop whose Claude Code is pinned months behind.
-- Without Remote Control, or a page for buttons, the questions come in the chat.
+- The pattern also bends to what your setup allows.
+- On an older version of Claude Code, like the one on a managed work laptop that's pinned months behind, workers run as one-shot jobs and report back through files.
+- And without Remote Control or a page for buttons, the questions just come in the chat instead.
 
 Shot: a grid of constraints. For each cell, the director tree redraws to show what changes: which arrows become files, which move into the chat.
 

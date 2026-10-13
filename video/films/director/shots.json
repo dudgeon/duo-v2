@@ -3,7 +3,7 @@
   "S1": {
     "kind": "drawn",
     "scene": "dir-opening",
-    "tail": 1.4,
+    "tail": 1.0,
     "thumbnail": 3,
     "states": [
       "video-s2-right-4"
@@ -111,7 +111,7 @@
     "scene": "dir-prompt",
     "transitionIn": "board-carry",
     "leadIn": 1.1,
-    "tail": 2.6,
+    "tail": 1.8,
     "events": {
       "orch": {
         "line": 1,
@@ -225,7 +225,7 @@
   "S3": {
     "kind": "drawn",
     "scene": "dir-brief",
-    "tail": 1.6,
+    "tail": 1.0,
     "events": {
       "go": {
         "line": 1,
@@ -236,43 +236,44 @@
         "word": "asks"
       },
       "turns": {
-        "line": 2,
+        "line": 1,
         "word": "turns"
       },
       "quoted": {
-        "line": 2,
+        "line": 1,
         "word": "quoted"
       },
       "branch": {
-        "line": 2,
+        "line": 1,
         "word": "branch"
       },
       "record": {
-        "line": 2,
-        "word": "record"
+        "line": 1,
+        "word": "branch",
+        "offset": 0.5
       },
       "prove": {
-        "line": 2,
+        "line": 1,
         "word": "prove"
       },
       "briefed": {
-        "line": 3,
+        "line": 2,
         "word": "briefed"
       },
       "merged": {
-        "line": 3,
+        "line": 2,
         "word": "merged"
       },
       "review": {
-        "line": 4,
+        "line": 3,
         "word": "review"
       },
       "brief2": {
-        "line": 4,
+        "line": 3,
         "word": "brief"
       },
       "report": {
-        "line": 4,
+        "line": 3,
         "word": "report"
       }
     },
@@ -321,7 +322,7 @@
   "S4": {
     "kind": "drawn",
     "scene": "dir-team",
-    "tail": 1.6,
+    "tail": 1.0,
     "events": {
       "go": {
         "line": 1,
@@ -416,7 +417,7 @@
   "S5": {
     "kind": "drawn",
     "scene": "dir-standup",
-    "tail": 1.6,
+    "tail": 1.0,
     "events": {
       "go": {
         "line": 1,
@@ -444,7 +445,7 @@
         "word": "next"
       },
       "buttons": {
-        "line": 3,
+        "line": 2,
         "word": "buttons"
       },
       "tapped": {
@@ -453,7 +454,7 @@
       },
       "started": {
         "line": 3,
-        "word": "started"
+        "word": "running"
       }
     },
     "requires": [
@@ -493,43 +494,45 @@
   "S6": {
     "kind": "drawn",
     "scene": "dir-why",
-    "tail": 1.4,
+    "tail": 1.0,
     "events": {
       "go": {
         "line": 1,
-        "word": "With"
+        "word": "This"
       },
       "farm": {
         "line": 1,
-        "word": "farms"
+        "word": "subagents"
       },
       "back": {
         "line": 1,
-        "word": "context"
+        "word": "subagents",
+        "offset": 1
       },
       "here": {
-        "line": 2,
-        "word": "Here"
+        "line": 1,
+        "word": "full"
       },
       "branch": {
-        "line": 2,
+        "line": 1,
         "word": "branch"
       },
       "open": {
-        "line": 2,
-        "word": "open"
+        "line": 1,
+        "word": "jump"
       },
       "alongside": {
-        "line": 2,
-        "word": "alongside"
+        "line": 1,
+        "word": "jump",
+        "offset": 1.2
       },
       "report": {
-        "line": 3,
-        "word": "reads"
+        "line": 2,
+        "word": "reports"
       },
       "small": {
-        "line": 3,
-        "word": "transcript"
+        "line": 2,
+        "word": "small"
       }
     },
     "requires": [
@@ -581,7 +584,7 @@
   "S7": {
     "kind": "drawn",
     "scene": "dir-done",
-    "tail": 1.6,
+    "tail": 1.0,
     "events": {
       "go": {
         "line": 1,
@@ -596,12 +599,11 @@
         "word": "merges"
       },
       "feat": {
-        "line": 1,
-        "word": "merges",
-        "offset": 1.4
+        "line": 2,
+        "word": "features"
       },
       "sessions": {
-        "line": 2,
+        "line": 1,
         "word": "sessions"
       },
       "personas": {
@@ -644,11 +646,11 @@
   "S8": {
     "kind": "drawn",
     "scene": "dir-patterns",
-    "tail": 1.6,
+    "tail": 1.0,
     "events": {
       "go": {
         "line": 1,
-        "word": "The"
+        "word": "pattern"
       },
       "older": {
         "line": 2,
@@ -694,7 +696,7 @@
     "scene": "dir-levels",
     "transitionIn": "board-carry",
     "leadIn": 1.1,
-    "tail": 1.6,
+    "tail": 1.0,
     "events": {
       "go": {
         "line": 1,
@@ -767,7 +769,7 @@
     "scene": "dir-next",
     "transitionIn": "board-carry",
     "leadIn": 1.1,
-    "tail": 2.4,
+    "tail": 1.0,
     "events": {
       "go": {
         "line": 1,
