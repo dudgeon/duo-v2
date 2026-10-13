@@ -156,5 +156,17 @@ expect "crash: the autosaved text is back in the page" $out/crash.log has "after
 expect "crash: the document saves again after the restart" $A has "middle AFTER"
 expect "crash: and keeps the earlier typing" $A has "alpha EDITED"
 
+# 15. Strikethrough (DL-189): ⇧⌘X is a registered chord the page leaves to the menu; Format › Strikethrough wraps the
+# selection in ~~, the marks hide off the caret's line and the text renders struck, and it toggles back.
+# (Action strings are split on commas, so the page code below has none: sel() takes "from to".)
+fresh strike
+sel="duo.select(...'%s'.split(' ').map(Number))"
+run strike "${open}$A,wait:2,editor-js:return 'chord '+window.__duoChords.includes('Shift-Mod-x'),editor-js:${sel/\%s/5 10}; duo.exec('strikethrough'); return 'wrapped '+JSON.stringify(duo.text()),editor-js:${sel/\%s/20 20}; var e=document.querySelector('.duo-strike'); return 'off-caret '+e.textContent+'|'+getComputedStyle(e).textDecorationLine+'|'+Array.from(document.querySelectorAll('.cm-line')).some(l=>l.textContent.includes('~~')),editor-js:${sel/\%s/5 14}; duo.exec('strikethrough'); return 'unwrapped '+JSON.stringify(duo.text()),editor-js:${sel/\%s/5 5}; duo.exec('strikethrough'); return 'empty '+JSON.stringify(duo.text()),wait:3,editor-state"
+expect "strike: ⇧⌘X is among the chords the page leaves to Duo's menu" $out/strike.log has "editor-js: chord true"
+expect "strike: Format › Strikethrough wraps the selection in ~~" $out/strike.log has "wrapped \"# A\\n\\n~~alpha~~\\n\\nmiddle"
+expect "strike: off the caret's line the text is struck and the marks are hidden" $out/strike.log has "editor-js: off-caret alpha|line-through|false"
+expect "strike: choosing it again takes the marks off" $out/strike.log has "unwrapped \"# A\\n\\nalpha\\n\\nmiddle"
+expect "strike: with nothing selected it inserts ~~~~" $out/strike.log has "empty \"# A\\n\\n~~~~alpha"
+
 echo "$((total-fails)) of $total checks passed (logs and captures in $out)"
 [[ $fails == 0 ]]
