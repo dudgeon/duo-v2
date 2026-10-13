@@ -12,10 +12,10 @@ const dist = (process.argv[2] || "Vendor/codemirror/dist").replace(/^(?!\/)/, pr
 const cache = process.env.PLAYWRIGHT_BROWSERS_PATH || process.env.HOME + "/Library/Caches/ms-playwright";
 const shell = fs.readdirSync(cache).filter((d) => d.startsWith("chromium_headless_shell-")).sort().pop();
 const doc = "# PRD v2\n\n## Goals\n\nCut abandonment.\n";
-// The app's token CSS, as DocumentEditor.tokenCSS() sets it: selected #E9ECEF, highlight 200 / 600 ms.
-const tokens = "--duo-pane:#FFFFFF;--duo-text:#1F2328;--duo-text2:#5B636D;--duo-selected:#E9ECEF;--duo-rule:#C9CDD3;--duo-control-edge:#8B939C;"
+// The app's token CSS, as DocumentEditor.tokenCSS() sets it: selected #E9ECEF, Claude's edit #D6EDDC (DL-186), highlight 400 / 600 ms.
+const tokens = "--duo-pane:#FFFFFF;--duo-text:#1F2328;--duo-text2:#5B636D;--duo-selected:#E9ECEF;--duo-claude-edit:#D6EDDC;--duo-rule:#C9CDD3;--duo-control-edge:#8B939C;"
   + "--duo-ground:#F3F4F6;--duo-needs-you:#C2410C;--duo-radius-card:6px;--duo-heading-above:4px;"
-  + "--duo-motion-highlight-in-ms:200;--duo-motion-highlight-out-ms:600;";
+  + "--duo-motion-highlight-in-ms:400;--duo-motion-highlight-out-ms:600;";
 const fails = [];
 const b = await chromium.launch({ executablePath: `${cache}/${shell}/chrome-headless-shell-mac-arm64/chrome-headless-shell` });
 for (const reduce of [false, true]) {
@@ -38,7 +38,7 @@ for (const reduce of [false, true]) {
     tick();
   }), [sel, ms]);
   await page.evaluate(() => duo.agentReplace("Cut", "Halve"));
-  const into = await sample(".duo-added", 400);
+  const into = await sample(".duo-added", 600);
   // The user's next edit clears it; what's left fades.
   await page.evaluate(() => V.dispatch({ changes: { from: 0, insert: "x" }, userEvent: "input.type" }));
   const out = await sample(".duo-added-fading", 900);
@@ -49,11 +49,11 @@ for (const reduce of [false, true]) {
   const distinct = (xs) => new Set(xs.map(([, c]) => c)).size;
   if (added !== 0) fails.push(`${label}: the highlight is still there after the user's edit (${added})`);
   if (!reduce) {
-    if (distinct(into.filter(([t]) => t < 250)) < 3) fails.push("motion: the highlight didn't fade in (fewer than 3 colours in 250 ms)");
+    if (distinct(into.filter(([t]) => t < 450)) < 3) fails.push("motion: the highlight didn't fade in (fewer than 3 colours in 450 ms)");
     if (distinct(out.filter(([t]) => t < 650)) < 3) fails.push("motion: the cleared highlight didn't fade out (fewer than 3 colours in 650 ms)");
     if (out.at(-1)[1] !== "none") fails.push("motion: the fading copy is still there after 900 ms");
   } else {
-    if (into[0][1] !== "rgb(233, 236, 239)") fails.push(`Reduce Motion: the highlight isn't there at once (${into[0][1]})`);
+    if (into[0][1] !== "rgb(214, 237, 220)") fails.push(`Reduce Motion: the highlight isn't there at once (${into[0][1]})`);
     if (out[0][1] !== "none") fails.push("Reduce Motion: a cleared highlight fades instead of going at once");
   }
   await page.close();
