@@ -464,6 +464,24 @@ func spikeScreen(_ name: String) -> String {
         check(links.contains { $0.scheme == "duo-file" && $0.path == "notes.md" }, "a bare file name with a known extension is a link")
         check(links.contains { $0.absoluteString == "https://stripe.com/docs/refunds" }, "a bare URL is a link, without its full stop")
         check(ChatMarkdown.inline("Version 2.1.291 is e.g. fine").runs.compactMap(\.link).isEmpty, "version numbers and e.g. aren't files")
+        // Task items (F-305, Q-194): the box is read from the item's start only.
+        check(ChatMarkdown.task([.paragraph("[ ] check the numbers")]) == (false, [.paragraph("check the numbers")]), "an open task item")
+        check(ChatMarkdown.task([.paragraph("[x] name the owner")]) == (true, [.paragraph("name the owner")]), "a done task item")
+        check(ChatMarkdown.task([.paragraph("keep\n[ ] this")]) == (nil, [.paragraph("keep\n[ ] this")]), "a box on a later line isn't a task")
+        check(ChatMarkdown.task([.paragraph("[link](x) here")]).0 == nil, "a link isn't a task")
+    }
+
+    print("chat mode: your Markdown, by every path (F-305)")
+    do {
+        let md = "Rework the **non-goals**:\n- drop #3\n> P2: quoted\n```\nx = 1\n```"
+        for (name, feed) in [("the hook", { (l: ChatLog) in ChatIngest.hook(["hook_event_name": "UserPromptSubmit", "prompt": md, "source": "user"], at: 1, into: l) }),
+                             ("the transcript", { (l: ChatLog) in ChatIngest.record(["type": "user", "message": ["content": md], "origin": ["kind": "human"]], into: l) }),
+                             ("a text block", { (l: ChatLog) in ChatIngest.record(["type": "user", "message": ["content": [["type": "text", "text": md]]]], into: l) })] {
+            let log = ChatLog()
+            feed(log)
+            guard case .you(let y)? = log.items.first else { check(false, "\(name): your bubble"); continue }
+            check(y.text == md, "\(name): your bubble keeps your Markdown as typed, for the bubble to render")
+        }
     }
 
     print("chat mode: the log from hooks and the transcript (F-103, F-105)")

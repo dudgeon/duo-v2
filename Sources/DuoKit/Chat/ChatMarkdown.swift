@@ -118,6 +118,13 @@ public enum ChatMarkdown {
         return out
     }
 
+    /// A task item (`[ ] text`, `[x] text`): whether it's done, and the item without its box.
+    /// Not a task: nil and the item as it was.
+    public static func task(_ item: [ChatBlock]) -> (Bool?, [ChatBlock]) {
+        guard case .paragraph(let p)? = item.first, let m = p.chatMatch(#"^\[([ xX])\]\s+"#), let whole = m[0], p.hasPrefix(whole) else { return (nil, item) }
+        return (m[1] != " ", [.paragraph(String(p.dropFirst(whole.count)))] + item.dropFirst())
+    }
+
     // MARK: Inline
 
     /// Inline Markdown as an attributed string: Foundation parses emphasis, code and links; bare

@@ -3566,3 +3566,12 @@ The duo-signal spike (F-297) saw "didn't send your answer" on the work Mac's 2.1
   - `Spikes/duo-signal/live.sh`, flag off, the spike's script: every send was ok, and the AskUserQuestion's card came up after the Bash turn (`screen=question card=true`, no fallback), on 2.1.219 and on 2.1.296. Main's build on 2.1.219 fell back as the spike saw.
   - `ChatChecks`: the 42-column 2.1.219 screen reads idle with input `ok`; the recorded probe screens; the pure decision (`isSuggestion`); and a `FakeTUI` send in paste mode over a suggestion that pastes exactly the text, with no `ok` and no leading space.
   - chat-live has a suggestion case after the Bash turn, on the default path and forced paste. The suite sets `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`, which turns suggestions off, so the case skips there with a note; `live.sh` is the end-to-end run with them on.
+
+## F-305 · Your Markdown in your bubble already renders, by every path (chat/markdown-you, 2026-10-13)
+
+Geoff asked (2026-10-13) for chat to render the Markdown he types, in the history and in the composer (DL-188). Before building, the history side was checked path by path:
+- **Every way your message reaches the chat renders it.** Your bubble draws its text through `ChatMarkdownView(ChatMarkdown.parse(…))` (`ChatView.swift`), the same as Claude's card, whether it came from the transcript (a string or a text block), the prompt hook, or the composer's own `sent` bubble. Nothing escapes or rewrites the text first: `ChatLog.prompt` strips only `[Image #N]` tokens.
+- **Fixture states** `chat-md-history` (the transcript replayed), `chat-md-live` (the hook only) and `chat-md-long` (over 12 lines, cut at 8 with Show all) carry a heading, bold, inline code and a file link, strikethrough, a nested bullet list, a numbered list, a link, a quote, a fenced block, a table and task items (`scripts/make-chat-markdown-fixtures.py`, `docs/design/chat-markdown-handoff/fixture-chat/`). All rendered, in the bubble's look, before any change.
+- **The one gap was task items**: `- [ ] check the numbers` drew `[ ]` as text, in your bubble and in Claude's card. They now take the review card's checkbox in the bullet's place (Q-194 stand-in); `ChatMarkdown.task` reads the box, and only from the start of the item.
+- A cut long message ends at line 8, which can fall inside a fence or a list. The parser takes an unclosed fence to the end, so the cut part still draws as code; Show all draws the rest.
+- No real transcript was read for this: the samples are made up.
