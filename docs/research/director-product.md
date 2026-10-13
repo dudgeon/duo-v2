@@ -1,655 +1,341 @@
 # The director as a product
 
-*Design study, 2026-10-12. Builds on [director-agent.md](director-agent.md) (the primitives by Claude Code version, and §9a as practised) and on the director skill we run on Duo itself (`.claude/skills/director/SKILL.md`). Claude Code facts were checked against the docs and the changelog on 2026-10-12, with 2.1.296 installed; **[unverified]** marks the gaps. Geoff's answers are recorded as DL-n in `docs/design/decisions.md`, and the open ones as Q-n in `docs/plan/concerns-and-questions.md`. Geoff's design and decision page: https://claude.ai/artifact/4S3xjcdySNGxytxvJMrz8Q. Nothing here is built yet: the build follows the decisions, and the director delegates it.*
+*Design study, 2026-10-12, version 4 (simplified). It replaces the 23-decision draft at commit 3d3d368, which is kept in git history with the full research notes. Builds on [director-agent.md](director-agent.md) and the director skill we run (`.claude/skills/director/SKILL.md`). The test harness is designed in [director-test-harness.md](director-test-harness.md). Geoff's answers will be recorded as DL-n, open questions as Q-n. Decision page: https://claude.ai/artifact/4S3xjcdySNGxytxvJMrz8Q. Nothing is built yet.*
 
-**The ask** (Geoff, 2026-10-12):
-- Ship a solid director skill with Duo that installs itself at user scope and self-updates through the app.
-- It works in one project (directing that project's sessions) and in Home (across all projects).
-- It is defined and managed like a product, with features we test and measure.
-- It uses the richest primitives (agent-to-agent messaging, hooks), with solid fallbacks when they're missing (a pinned old Claude Code, disabled features), tested in simulated client setups.
-- The director we use to build Duo shares as much of it as makes sense.
+## What Geoff asked for (2026-10-12)
 
----
+1. A director skill that ships with Duo, installs at user scope and updates through the app.
+2. It works in one project, or across Home.
+3. It is managed like a product, with features, tests and measures.
+4. It uses rich primitives (messaging, hooks), with solid fallbacks on pinned or locked-down clients. That includes his work Mac, which runs Claude Code 2.1.219 and allows no Claude artifacts.
+5. The director we use to build Duo shares the same core.
+6. It takes Claude Code Projects' patterns, with UX compatible enough that users can move to Projects later.
+7. Tasks are the primitive directors orient to:
+   - task folders hold a task's files;
+   - the director encourages projects and tasks where they fit;
+   - changing tasks is in scope, with his approval.
+8. Round 4: "consider how we don't want to overfit to coding tasks or make the director or tasks primitives constricting in their conventions … simplify as needed."
 
-## 1. The thesis
+## The idea in one paragraph
 
-A director is three layers, and only the third depends on the client:
+A director is a Claude session that takes work from you, turns each piece into a **Duo task**, starts a worker session for it, checks what comes back against what you asked for, and brings you only real decisions. Everything it needs to remember lives in things Duo already has:
+- the project's brief (`PROJECT.md`) for how to work here;
+- task notes for each piece of work;
+- an optional task folder for its files;
+- Duo's own session states for who is doing what.
 
-1. **A protocol**, which is judgement and lives in the skill: brief verbatim, one worker per thread, report back, verify before believing, ask the human only real decisions, land with consent. It is the same on every client.
-2. **State on disk**, which is deterministic and lives in `duo2 director …` verbs:
-   - the threads ledger;
-   - the journal;
-   - who owns which session;
-   - where the director can be reached;
-   - the capability profile.
+Richer Claude Code features make it faster: messages that wake a session, background sessions, phone links. Without them it still works, by typing into a worker for you to send, or by asking you to. Nothing in it assumes the work is code. A code project adds checks, branches and merges on top, as the project's own guidance says.
 
-   Files work on every client, so this layer is the floor.
-3. **Transports**, which are adapters chosen at runtime: how a worker starts, how a message reaches it, how a report comes back, how the director is woken, and how the human is asked. Each one has a ladder from the richest primitive down to a file plus a human relay.
+## Round 4: what I dropped from my own draft
 
-**The invariant that makes one instruction set work everywhere: every message is a file first.** A brief, a follow-up, a report or a question is written to the ledger before any primitive carries it. A richer rung only adds a faster wake-up. So on 2.1.219 with hooks off the protocol is unchanged: only the wake-up is a person instead of `SendMessage`.
+| Dropped | Why |
+|---|---|
+| A `DIRECTOR.md` overlay file | The project brief (`PROJECT.md`) already is the project's instructions; one more file per project is clutter. |
+| A project memory folder | A new convention for a problem only worktree workers have. Project facts go in the brief's Notes; Claude Code's own memory does the rest. Revisit if workers miss knowledge. |
+| `reports/` and `messages/` subfolders, and the "every message is a file first" mailbox | A worker's report is its last message, which Duo can already read. The task note's Progress is the record. A task folder is just a folder for files. |
+| The Stop-hook inbox rung | Complex, and hooks may be disabled exactly where it would matter. Old clients use headless turns, or Duo types and you press Enter. |
+| Heartbeat leases | Ownership is the task's `directed_by`. Taking over means rewriting it. |
+| A compute lock and number reservations in the core | These are our needs. They stay in Duo dev's own guidance until a user asks. |
+| Setup and teardown per worktree, a ready list, claims | Coding-shaped or pool-shaped machinery (see the Beads answer). |
+| A mandatory three-part task note; "done never reopens" | Constricting. The note stays the user's; the director adds one Brief section and appends Progress. |
+| Thirteen `duo2 director` verbs | Five are enough. |
+| Export to Projects in v1 | Later. The shapes stay compatible now, so it's cheap when wanted. |
+| Coding words in the core ("merge", "land", "review gate") | The core says **accept** the work, and **check** it against what was asked. A code project's guidance says accepting means merging and checking means its tests. |
 
-**The evidence for this split.** Every failure in the dev director's first week was a failure of who owns what and where that is written down, never of a worker's code:
-- a stale peer name;
-- a retired director that woke up;
-- console taps that vanished;
-- two copies of a script holding one lock;
-- colliding record numbers;
-- a merge check that rebuilt the app Geoff was running.
+## Decisions for Geoff
 
-Those belong in tested code. The model was fine at judgement.
+Ten decisions, each with my recommendation first. They merge the earlier letters as follows:
 
-## 2. Decisions
+| Decision | Earlier letters |
+|---|---|
+| 1 | A, I, K, L |
+| 2 | N, T, O, W |
+| 3 | Beads |
+| 4 | S |
+| 5 | B |
+| 6 | C, E |
+| 7 | F, R |
+| 8 | G, V |
+| 9 | H, U, M |
+| 10 | J, P, Q |
 
-Each decision gives the options with the recommendation first, the reasons, the strongest objection, and what would change the answer. An independent analysis pass (a Fable subagent) reached the same recommendations on A, D, E, F, G and H. Where it differed (B), both positions are given.
+### 1. How it ships
 
-### A. One skill or two
-- **Recommended: one core skill that ships with Duo, plus a per-project overlay, `DIRECTOR.md`.**
-  - The core is generated by Duo into `~/.claude/skills/duo-director/`, the way the `duo2` skill is.
-  - A project can add `DIRECTOR.md` at its root: the user's own file, visible in Obsidian and committed if they like. The core reads it on start and on every resume.
-  - Duo v2's `DIRECTOR.md` carries what only we need: releases and notarizing, the acceptance walk page, design-system publishing, the geoff-voice dependency, record numbering, the GPU lock, the freeze and release gates, the isolation rules for test instances, and the Lessons.
-  - "Duo dev director" is the core running with that file. `.claude/skills/director/` shrinks to a pointer, or goes.
-- **Other options:**
-  - (b) **A fork.** The dev director diverges, users get the version from before our lessons, and every lesson has to be ported by hand.
-  - (c) **A core with named profiles.** A profile is an overlay with extra ceremony, and it bakes our shape into the product.
-- **Why:**
-  - The only way to know the shipped director is good is to run it all day on Duo.
-  - An overlay is also what users need (their test commands, merge policy and never-touch list), so building ours as one proves the extension point.
-- **Rule:** anything in our overlay that a user would also want moves into the core. The compute lock and the reserved number ranges are the first candidates.
-- **Dogfood:** the dev director runs the core installed by the Duo Geoff runs, which is the newest release. A DuoChecks case asserts that the generated core matches the source at HEAD, so drift is caught before a release.
-- **Objection:** our director carries Duo's own release train, and a core change could break it mid-batch. **Answer:** `DIRECTOR.md` states the lowest core version it needs, and core changes are tested on the dev director before they ship.
-- **Would change it:** if, after two weeks, more than a third of our overlay overrides core behaviour instead of adding to it.
+**Recommended: one skill, `duo-director`, written and kept current by Duo at user scope, under the `duo2` skill's rules.** Duo regenerates it at launch unless you've edited it, and `duo2 uninstall` removes it.
 
-### B. Home director and project directors
-- **Recommended: Home is a portfolio director.**
-  - It reads every project's ledger and director journal, plus Duo's needs-you.
-  - It owns Home's own sessions.
-  - In a project with no live project director, it directs sessions directly.
-  - In a project that has one, it talks to that director and never to its workers.
-- **The alternative, argued in the analysis pass: Home never directs a worker directly.** It starts a project director where there is none and relays to it.
-  - The argument: a project's CLAUDE.md, permission rules and `DIRECTOR.md` load from the project's folder, and a Home director reviewing work in project X lacks that context.
-  - My answer: Home can read X's `DIRECTOR.md` and CLAUDE.md before it acts, and forcing a second director into every two-session side project costs the user a session they didn't ask for.
-- **Other option: Home directs everything.** It can't hold forty projects in one context, and it collides with any project director the user starts.
-- **Why:** ownership must be unambiguous (decision C), and context is the scarce resource. A portfolio view needs only files, which are cheap to read and survive restarts.
-- **Would change it:** if a Home director that acts directly loses coherence across more than a few projects within a week, switch to the alternative.
+Project-specific guidance comes from what the project already has:
+- its brief (`PROJECT.md`), with an optional `## Director` section for standing rules, such as "you may accept checked work without asking";
+- its `CLAUDE.md`;
+- its project skills.
 
-### C. One owner per session
-- **Recommended: a lease plus provenance, checked by a `duo2` verb.**
-  - A director takes a project's lease with `duo2 director claim`. The lease is recorded in `.duo/director.json`: the session id, pid, peer name, Remote Control id, heartbeat, and the pages it publishes.
-  - Each worker it starts gets `directed-by: <director session id>` in Duo's session index, and `owner:` in its task note.
-  - A director may message, steer or stop a session only if `duo2 director owner <session>` names it as the owner.
-  - **A session with no `directed-by` belongs to the human, forever.** A director may read it, never task it.
-  - **The human outranks a director.** When the user types into a worker (Duo sees it), the lease on that worker pauses until the user hands it back.
-  - A dead director's lease (no process, and no heartbeat for 10 minutes) can be claimed. The claim is journalled.
-- **Other options:**
-  - Instruction only ("don't touch other directors' sessions"). It fails silently.
-  - A registry in Duo's support folder. It works only while Duo runs, and a sandboxed session can't write it.
-- **Why the project folder:** a sandboxed session can write in its project but not under `~/.claude` or most of home (sandboxing docs).
-- **Would change it:** a native owner or parent field on Claude Code sessions.
+**Duo dev's extras live in our project's skill folder** as references and scripts: releases, the walk page, the design system, the voice repo, records, the GPU lock. The "Duo dev director" is the shipped skill plus those. This is the shape Geoff described: "the duo dev specific context is just an additional ref or set of scripts, but the instruction set is common".
 
-### D. Ledger and journal
-- **Recommended: one ledger per project, one journal per director.**
-  - **The ledger is the threads, as Duo task notes** (DL-87, DL-93). One Markdown note per thread:
-    - frontmatter: `sessions:` (Duo's existing membership), `owner`, `state`, `branch`, `worktree`, `model`;
-    - body: the brief verbatim and the acceptance checks, then the reports, appended.
+**The deterministic parts are five `duo2 director` verbs,** tested in DuoChecks:
 
-    The notes show on the task board the user already has. They are Obsidian- and OKF-compatible, and a new director rebuilds its picture from them (`duo2 tasks --json`).
-  - **The journal is append-only JSON lines**, at `.duo/director/<director-id>/journal.jsonl`. It records briefed, sent (with the rung), report received, verified, merge begin and end, need opened and answered (with the human's own words), lease, and retire. Metrics are computed from it, and a resumed director reads its tail first. It is hidden because events are noise in a vault. `duo2 director log` renders a Markdown day view for anyone who wants it.
-  - **Machine state** (lease, registry, profile, number reservations) lives in small JSON files under `.duo/`, written only by `duo2 director` verbs. `.duo/` is Duo's and isn't committed, so none of it ends up in the user's repo.
-- **One journal per director, not a shared log.** A shared file has many writers, so it races and its authorship is unclear. Home gets the combined view by reading every journal through `duo2 director status --all`.
-- **Duo dev:** this replaces today's three stores, none of which is in the repo or readable by a successor without the right tools: the reviews doc (a Claude Doc), memory files and the console `db`. The reviews doc, if kept, becomes a view of the journal.
-- **Would change it:** if director threads crowd users' task boards, give them a Director fold on the board rather than a separate store.
+| Verb | What it does |
+|---|---|
+| `status` | Who is directing, what's in flight, and what this client can do |
+| `start` | Creates a task and its worker, within the cap |
+| `send` | Reaches a worker the best way available, and logs it |
+| `retire` | Retires the current director |
+| `guide` | Prints the skill's text, for clients where user skills are blocked |
 
-### E. Addressing that survives restarts
-- **Recommended: the registry as the truth, reply-to-`from` as the floor, a readable name for people, and a tombstone that a retired director enforces on itself.**
-  - `.duo/director.json` (the lease file) holds the current peer name. Every brief says to run `duo2 director whois` before each report and to message the name it returns. If that fails, reply to the `from` of the director's latest message.
-  - After a restart, the new director claims the lease and messages every worker it owns with its new name.
-  - **Tombstone.** The lease lists retired session ids. The core's first step on every turn is `duo2 director whoami`. A retired director only says "I'm retired; the director is now X" and ends its turn. Retiring also stops its process.
+**The name:** "Director" in Duo, and `duo-director` as the skill. Not `director`, because a user-scope skill silently replaces a project skill of the same name.
 
-    This works even when an old brief wakes the old name, which is what happened with `*DUO DIRECTOR*`. Today's rule ("never message it") depended on every brief being right, and they weren't.
-  - **Pages:** the lease lists the pages a director publishes, so a successor re-publishes them or re-arms their watches. A retired director's page otherwise delivers taps to a dead session.
-- **A stable name alone isn't enough.**
-  - Claude Code documents that a `--name` or `/rename` name persists for resuming. It doesn't promise that the peer address survives a restart **[unverified]**, and duplicate names get a short id appended.
-  - Only a human-typed `--name` or `/rename` sets the name; a session can't rename itself.
-  - So directors start as `director-<project>` for readability, and the registry stays the truth.
+**Other options:**
+- a `DIRECTOR.md` overlay per project (my earlier recommendation; one more file);
+- a fork for Duo dev (users would get the director from before our lessons).
 
-### F. The user channel
-- **For users: in Duo first.**
-  - The director asks with AskUserQuestion in its own session, which works on the phone through Remote Control and in Duo's chat mode.
-  - It also sets `duo2 session next "<question>"`, so its row goes to needs-you in Duo's cross-project list.
-  - Digests (Done / Needs you / Next) go in chat and the journal.
-  - An artifact console is opt-in, for users with the Artifact tools who want a phone dashboard.
-- **For the dev director: the console becomes a status board, and decisions move to AskUserQuestion, one at a time, recommendation first.**
-  - **The evidence:** no `answers` rows reached the director after Oct 9, while one-at-a-time AskUserQuestion on Geoff's phone worked every time. A channel that drops answers silently is worse than a plainer one that works.
-  - **The rule:** a decision never exists only on a page.
-  - **This revises DL-166's "console first".**
-- **The fallback order:**
-  1. AskUserQuestion in the director's session;
-  2. Duo's needs-you, with the question in `next`;
-  3. the open needs in the journal, which the user can read in Duo;
-  4. a push notification (needs Remote Control) saying something is waiting.
-- **What Duo's UI should show:**
-  - a director badge on its session row;
-  - its workers grouped under it, with their state;
-  - "directed by X" on each worker;
-  - its open needs in Needs you.
+### 2. Tasks are the unit of work
 
-  This is new UI, so it needs a design round. Until then nothing new is drawn, and `next` and `note` carry it (Q).
+**Recommended: one delegated piece of work is one Duo task, with light conventions.**
 
-### G. Workers
-- **Where they run:**
-  - **Users:** in Duo by default (`duo2 session new --prompt`). Seeing the workers is Duo's whole stance, and Duo sessions have the Artifact tools.
-  - Background (`claude --bg`) when the user asks for it, when Duo isn't running, or for long jobs that must survive Duo restarts.
-  - **Dev director:** background with Remote Control, as Geoff decided on 2026-10-07, and design work in Duo.
-- **A worktree per code-writing worker** in a git repo. None for document work or a folder that isn't a git repo. This needs `duo2 session new --worktree` (D1 in the earlier research).
-- **Model policy is a feature, off by default for users.**
-  - `DIRECTOR.md` may say `models: {plan: opus, build: sonnet, test: haiku}`.
-  - The director passes `--model` where the launcher allows it (`claude --bg`). Where it can't (`duo2 session new` has no model option), it writes the model into the brief.
-  - Duo itself never chooses a model (DL-153).
-- **A concurrency cap**, enforced by `duo2 director start`: 3 workers per director by default, changeable in `DIRECTOR.md`. Projects only asks the model to keep to a cap; this one is enforced.
-- **The compute lock is a core feature, off unless `DIRECTOR.md` names lock classes.**
-  - Usage: `duo2 director lock --shared|--exclusive <name> <cmd>`.
-  - It moves `gpu-lock.sh` (FIFO queue, shared slots, the stale-owner rules of F-296 and F-298) into one compiled implementation.
-  - That ends the failure where a work tree ran an older copy of the script.
-- **Reserved number ranges are a core feature, off by default.** `duo2 director reserve <prefix> <n>` hands out blocks to briefs and records them in `.duo/director/numbers.json`. Renumbering on merge treats the symptom; reserving fixes the cause.
+- **The brief.** The director adds a `## Brief` section to the note: your words verbatim, plus anything it was told not to decide. It also fills the existing `done_when:` key. Duo's hooks already tell every linked session "its note is the task's brief" (DL-116).
+- **Progress.** The director appends `## Progress`, one dated line per step: what it asked, what came back, what it checked.
+- **Ownership.** `directed_by:` links the director session.
+- **Propose first.** New work is proposed as `status: suggested`. Duo already shows an unknown status as its own column, so this works today. You start it, and it moves on.
+- **Files.** A task folder `tasks/<slug>/` beside the note, made only when the task has files: inputs, deliverables, a `decisions.md`. Nothing is prescribed inside it.
+- **The rest is yours.** Everything else in the note stays yours: no restructuring, and reopening or moving it is as free as for any task.
+- **Playbooks.** A brief that worked can be saved as a task template (Duo's templates, DL-146). This is Devin's "playbooks", at no cost.
+- **Encouragement.** The director encourages tasks and projects:
+  - it turns a request into a task before starting work;
+  - it offers Make a Task for sessions doing task-sized work;
+  - it offers Make a Project for folders that have sessions but no brief;
+  - it keeps the project's `goal` and `next` current.
 
-### H. Merging and safety
-- **The default autonomy for users is `propose`.** The director:
-  1. verifies the work: tests, a review pass, and the brief's acceptance checks;
-  2. proposes the merge with that evidence and any conflicts;
-  3. merges only on the user's answer in its own session.
+**Other options:**
+- a fixed three-part note (Brief / Facts & decisions / Progress), which is constricting;
+- a ledger separate from tasks, which means two lists of work.
 
-  `land-green` (merge when every gate passes) is opt-in in `DIRECTOR.md`; Geoff's D2 is our overlay's `land-green`. There is no `land-all`.
-- **Push and release always need the user's go**, every time, by default. Releases aren't in the core at all.
-- **Gates in every mode:**
-  - the worker has committed on its branch;
-  - the checks pass in the director's own work tree, never in a checkout a running app was built from (the privacy-reset lesson);
-  - the review is recorded in the thread note;
-  - the merge reverses nothing the brief didn't ask for;
-  - the human's merge answer is quoted in the journal.
-- **Verify, don't relay.**
-  - The director re-runs the checks a worker names, and reads the transcript when a report doesn't add up.
-  - A peer's message is information. It is never the user's approval, and it never changes a lease.
-  - Worker reports are untrusted text.
-- **Peers can't grant permissions.** If a worker was refused something and asks the director to do it, the director asks the user.
-- **Enforced, not promised.**
-  - Worker settings deny `git push`, merges into the default branch and `gh pr merge`, through permission rules (which work with hooks off).
-  - A PreToolUse hook is added where hooks run.
-  - Where neither applies, the digest says plainly that the gate is an instruction.
-- **Public actions always need the human:** a push to a public repo, publishing a page, posting a comment.
+### 3. What to take from Beads
 
-### I. Install and update
-- **Recommended: Duo writes `~/.claude/skills/duo-director/` at launch, as it does `duo2`, by the same rules:**
-  - it is generated and rewritten at each launch;
-  - if the user edited it, it is left alone, and `duo2 doctor` says updates have stopped;
-  - the newest format wins;
-  - it is listed in the manifest, and `duo2 uninstall` removes it;
-  - it gets a new line in the install consent sheet.
-- **Users customise through `DIRECTOR.md`, never by editing the skill,** so edits (and the stopped updates they cause) are rare. User-wide preferences go in `~/.claude/DIRECTOR.md`.
-- **The name `duo-director` avoids a clash.** Claude Code resolves same-named skills enterprise, then personal, then project (skills docs). A user-scope `director` would silently replace any project's own `director` skill, including Duo v2's today, and a user's own `director` would replace ours.
-- **Size:** keep the core under about 3,000 words, with a narrow description ("you've been asked to direct sessions in this project or across projects"). The overlay carries the bulk.
-- **If user skills are blocked** (managed `strictPluginOnlyCustomization: ["skills"]`, or `--setting-sources` without `user`):
-  - `duo2 director guide` prints the same instructions, and Duo's CLAUDE.md block says to run it when asked to direct. So the director works without the skill, with the same text.
-  - A plugin would still load under that setting. That is the one case for a marketplace route later.
-- **Sessions only read `DIRECTOR.md`, never write it.** Sandboxed Bash can't write `.claude/skills`, settings files or most of `~/.claude`, so nothing the director writes at runtime lives there.
+Beads is an issue tracker for coding agents, kept in a Dolt database. It has:
+- hash ids;
+- links between issues (blocks, parent, discovered-from);
+- a `ready` query for work with no open blockers;
+- an atomic claim;
+- priorities;
+- compaction of old closed issues;
+- messages stored as issues.
 
-### J. Claude Code Projects
-- **Recommended: stand down per repo, stay on as the portfolio, and offer an export.**
-  - In a repo the user runs as a Projects project, the Duo director starts no threads, and says so.
-  - Home still lists that project.
-  - `duo2 director export` writes the project's instructions and open threads in a form Projects can take (instructions of 16k characters or less, the briefs). Moving to Projects is then a step aside, not a loss.
-- **Other options:**
-  - Wrapping Projects is impossible today: it has no local API (#96115).
-  - Running both in one repo means two coordinators.
-- **Would change it:** Projects reaching the CLI with a local API. The director then becomes a front end that starts Projects threads.
+**Recommended: take one behaviour and nothing structural.**
 
-### K. The name
-- **Recommended:**
-  - the product is **Director** in Duo's words ("Start a director here");
-  - the skill is `duo-director`;
-  - ours is the **Duo dev director**: the same skill, with Duo v2's `DIRECTOR.md`.
-- As a skill name, "Duo director" reads as "the director of Duo".
+- **Take: found work becomes a suggested task.** A worker that notices other work says so in its report. The director files it as `status: suggested`, with a link back to where it was found (Beads' "discovered-from"). Nothing gets lost in a report, and you decide whether it's worth doing. No new field: the link goes in the note's body or `references:`.
+- **Already there: dependencies.** Duo's task format has `depends_on:` (links to other tasks) and `waiting_on:`. The director writes them when they're real and reads them before starting work.
+- **Not worth it:**
 
-### L. Where the logic lives
-- **Recommended: the deterministic parts are `duo2 director` verbs, checked in DuoChecks.**
-  - The verbs: `probe`, `start` (with the cap), `claim`, `owner`, `whois`, `whoami`, `retire`, `journal`, `status`, `reserve`, `lock`, `guide`, `export`.
-  - They ship and update with the app, and work when the app isn't running wherever they can, as `duo2 search` does.
-  - Judgement stays in the skill. There are no shell scripts in the skill folder.
-- **Why:**
-  - Verbs are tested, versioned, signed and updated with Duo.
-  - They run on the work Mac as part of Duo, with nothing extra to run there.
-  - DL-71 already wants every action to be a verb.
-- **Objection:** this ties the skill's pace to Duo's releases. **Answer:** the app writes the skill anyway, so the two already ship together.
-
-### M. Relay mode is first-class
-- **Recommended: the lowest rung, M0, is a designed mode, not a degraded one.**
-  - The director writes the brief as a task note.
-  - The human starts the worker from it in Duo (`duo2 task session` types `@tasks/<note>.md` without pressing Enter, DL-112).
-  - The worker appends its report to the note, and the director reads it on its next turn.
-- **This is how a director works on a managed Mac:** pinned 2.1.219, hooks perhaps off, nothing scripted. The person presses Enter, so nothing runs that they didn't start. The skill says so plainly ("relay mode: start the session from this task").
-
-## 2b. Tasks, Claude Code Projects, and no artifacts (Geoff, 2026-10-12, second round)
-
-Geoff added four requirements:
-- research Claude Code Projects and use its patterns;
-- his work Mac allows no Claude artifacts, so everything needs a graceful fallback;
-- the director is an expert in Duo's projects and tasks and encourages their use;
-- tasks are the primitive directors orient to, with task folders for their files.
-
-Changing the structure and UX of tasks is in scope, with his approval. The aim is as much of Projects' value as possible, with UX compatible with it, since most users don't have Projects today but may move to it.
-
-Sources: the Projects docs page (https://code.claude.com/docs/en/claude-projects, read in full 2026-10-12), the launch blog, and the anthropics/claude-code issues cited by number (user reports). Duo's side: DL-87, DL-93, DL-112, DL-115, DL-116, DL-146 to DL-150, DL-174, and `TaskNotes.swift`, `TaskContext.swift`, `TaskBoard.swift`, `ProjectDiscovery.swift`.
-
-### What Projects is made of, and what we take
-
-| Projects pattern | What it does | Duo's version | Verdict |
-|---|---|---|---|
-| Coordinator conversation | One long-running session takes everything, routes it, and sees reports, not steps | The director session | Take |
-| Routing | A quick question is answered in the conversation; new work goes to a new thread or "a thread already working in that area, and Claude tells you which" | The same three-way routing: answer here, new task, or existing task, and say which | Take |
-| Suggested threads | "Claude proposes threads instead of starting them"; an arrow starts one, a button starts all | Tasks created with `status: suggested`; Start (one) or Start all | Take |
-| Setup recommendations | First turn proposes repos, routines and threads; switch off what you don't want, then **Update setup** | The director's first run proposes a `DIRECTOR.md` (checks, merge policy, caps, lanes it detected) for approval | Take |
-| Status groups | Ready for review / Waiting on you / Working / Landing / Idle / Resolved; auto-resolve after a week idle | Task lanes: open, in-progress, waiting, review, done (+ dropped), plus `suggested`; Duo's session states give needs-you/working/idle | Adapt (map; see N) |
-| Thread cards with buttons | Resolve conflicts, Fix CI, Address comments, Merge it ("sent as a message from you"), Review PR, Create PR | Actions on a directed task: Start, Open worker, Send back, Land, Resolve (needs design) | Adapt (S) |
-| Approvals in the thread | "Telling Claude in the project conversation to go ahead doesn't reach it" | Already our rule (peers can't approve); Duo makes the worker one click away | Take |
-| Brief like a chief of staff | Instructions, memory and the coordinator's task text; the brief isn't kept (#97924) | The brief is the task note's body, verbatim and kept | Take, improved |
-| Debug prompt | "For every open thread, list what you asked it to do, what it assumed or couldn't reach, and what it's waiting on" | The director's status digest per task: asked / assumed / waiting on | Take |
-| Project instructions | Up to 16,000 characters to every thread and the coordinator; local threads get only 8,192 bytes (#101398) | The Instructions section of `DIRECTOR.md`, added to every brief; warn over 8k, refuse over 16k | Take |
-| Project memory | Files + a `MEMORY.md` index Claude writes when told to remember; cloud threads read the index at start; local threads don't (#97464) | A project memory folder in the same shape, read by every brief, worktree-proof (Q) | Take (Q) |
-| Library | Files you add and files threads produce | Task folders (O) and the project's own files | Adapt |
-| PR tab, auto-fix | Threads watch their PR and push fixes when CI fails | Optional: Monitor over `gh pr checks` when the project uses PRs; most Duo work lands locally | Adapt, opt-in |
-| Routines | Scheduled work runs as threads | Later (ENH) | Defer |
-| Notifications | Desktop notice on a post, an error, or needs-input; a dot on Overview | Duo's needs-you; push through Remote Control | Take |
-| Mobile steering | Phone apps steer the project | Remote Control links per worker | Take |
-| Local threads, Worktree toggle | `claude remote-control --spawn worktree`; per-folder Worktree switch | A worktree per code-writing worker; a `DIRECTOR.md` switch | Take |
-| Continue as project / Move to project | Promote a session; the coordinator reads it and picks up | **Direct this** on a session or task: makes it a directed task and hands it to the director | Take |
-| Pause, Archive, Restart Claude | Pause stops threads and routines; Restart loses only the reply in progress | `duo2 director pause/resume`; restart = retire + claim (E) | Take |
-| Usage tab | Tokens by thread and model | Cost per task in the journal; later in Duo | Adapt |
-| Caps are preferences | "a limit you ask for is a preference rather than a cap"; 200 threads/day enforced | The cap is enforced by `duo2 director start` | Improve |
-| Cloud threads, server auto-fix, GitHub-only | Work with the laptop shut | Not local; `claude --cloud` borrowed where available | Skip |
-
-What Projects users complain about that the design already answers:
-- briefs lost to summarising (#97924): briefs are verbatim in the task note;
-- a coordinator that relays without verifying (#97924): the verify step (H);
-- the coordinator's session id changes (#100714): the registry and tombstone (E);
-- local threads miss memory (#97464): memory is read by every brief from a folder;
-- caps are only preferences: the cap is enforced;
-- no local-first projects (#99307, #101539): everything here is local;
-- "type go" approval rituals (#100219, #100591): approvals stay in the worker, one click away.
-
-**Moving to Projects later.** Projects has no import or API (#96115, #100714), so compatibility is in concepts and shape, not files. `duo2 director export` writes:
-- the instructions as one text block (16k characters at most);
-- the memory folder, ready to upload or to "remember";
-- each open task as a "Move to project"-style message: the brief, the branch, what's done, and what's waiting.
-
-The words stay Duo's (task, not thread), with this mapping documented, so the move needs no relearning.
-
-### N. Tasks are the director's spine
-- **Recommended: one delegated piece of work is one Duo task.** The director creates the note, links its worker sessions (`sessions:`), and moves it through the lanes. Duo's DL-116 hooks already tell every linked session "Its note … is the task's brief: read it before working on the task". So a worker started with `duo2 task session` finds its brief with no extra plumbing, and `@tasks/<note>.md` is typed without Enter (DL-112).
-- **Suggested tasks.** The director proposes work as `status: suggested`. A status that isn't a lane already shows as its own lane with Keep as Column (DL-150), so this needs no app change to start. You start one (or all), and it moves to in-progress.
-- **Lanes map to Projects' groups.**
-
-  | Duo lane | Projects group |
+  | Beads feature | Why we don't need it |
   |---|---|
-  | suggested | Suggested threads |
-  | in-progress | Working |
-  | waiting | Waiting on you |
-  | review | Ready for review |
-  | done | Resolved |
+  | `ready` list | With a few tasks in flight the director reads the notes. A query earns its place only with dozens of agents pulling from a pool. |
+  | Atomic claims | Our workers don't pull work; the director assigns it. |
+  | Hash ids | Slugs and Duo's `id:` already avoid collisions. |
+  | Priorities | Order is computed on the board (DL-148). A second ordering would need keeping in sync. |
+  | Compaction | Done tasks are archived; the director reads only open ones. |
+  | Messages as issues | Progress covers it. |
+  | Dolt | Plain notes are the point. |
 
-  Landing is the moment a merge is under way and shows in the task's note, not as a lane. Idle comes from the sessions' state. After a week with no activity the director proposes Done; it never moves a task by itself.
-- **The director owns the note; workers own their reports.** Only the director writes the note's frontmatter and brief. Workers write reports as files in the task folder (O) and may tick its `Done when` boxes. This removes the merge conflict a worker in a worktree would create by editing its branch's copy of the note.
-- **Directed tasks say so:** `directed_by: "[director](duo2://session/<id>)"` (a flat key, as the task format allows), plus the existing `sessions:`.
-- **The director encourages tasks:**
-  - It turns a request into a task before starting work.
-  - It offers Make a Task for sessions that are doing task-sized work.
-  - It suggests a project (Make a Project) when a folder has sessions but no brief.
-  - It keeps the project's `goal` and `next` current, which Duo's hooks pass to every session.
-- **Other options:** a ledger separate from tasks (`.director/threads/`), which leaves two lists of work; or groups as threads, which have no note, no status and no file.
-- **Would change it:** if directed tasks crowd users' boards; then they get a filter or a Director fold, not a separate store.
+- **Push back.** Most of Beads exists because its agents share one pool of issues with no coordinator. A director is the coordinator, so that machinery has no job here.
 
-### O. Task folders
-- **Recommended: a task's files live in a folder named after it, beside its note: `tasks/<slug>/` next to `tasks/<slug>.md`.**
-  - It is created only when the task needs files, by a new `duo2 task folder <task>`, and it's added to the note's `references:` (DL-150) so it shows on the card.
-  - Duo's task loader already ignores subfolders of `tasks/`, so nothing breaks today.
-  - Rename, move, archive and delete carry the folder with the note (an app change, since a rename moves the file today).
-- **What goes in it:**
+**Other options:**
+- also show `depends_on` as a "blocked" mark on the board (cheap; a later task-board change);
+- add priorities.
 
-  | Path | What it holds |
-  |---|---|
-  | `decisions.md` | Open questions for the user, as checkboxes (R) |
-  | `reports/<date>-<worker>.md` | One file per report, so workers never edit the same file |
-  | `messages/` | The file-first mailbox: each director-to-worker message as a dated file (the invariant in §1) |
-  | `files/` | Inputs and outputs: pages, captures, write-ups, the task's own Library |
+### 4. Changes to tasks' UX, for a design round
 
-  Everything is Markdown or plain files, so it is Obsidian- and OKF-compatible.
-- **Coordination:** the folder is where everyone working on the task looks first. A worker is told its folder in the brief. A worker in a sandboxed worktree is started with the folder as an added directory (`--add-dir`), because the sandbox lets Bash write only its own working directory and the added ones.
-- **Other options:**
-  - A folder note (`tasks/<slug>/<slug>.md`): it reopens DL-87's rejected "tasks as folders", and the loader would have to recurse.
-  - `references:` only, pointing anywhere: there is no convention, so agents can't find one another's files.
-- **Would change it:** if Obsidian users find folders beside notes untidy; then it's a setting to put task folders under `tasks/_files/<slug>/`.
+Each change is designed on a canvas with Geoff before it's built. Until then, the director runs on the conventions in decision 2.
 
-### P. A Projects-compatible shape
-- **Recommended: take the patterns in the table above, keep Duo's words, and ship `export`.**
-  - Duo's words: task, lane, needs you.
-  - Each Projects concept has one Duo home (instructions → `DIRECTOR.md`; memory → the memory folder; threads → tasks; Library → task folders; Suggested threads → the suggested lane), so a later move is a copy, not a rethink.
-- **Other options:**
-  - Rename Duo's lanes to Projects' words (Working, Waiting on you, Ready for review, Resolved). It is closer to Projects, but it changes a built, approved UI for users who don't have Projects.
-  - No mapping: users relearn on moving.
+- **S1, the folder follows its note.** Rename, move, archive and delete carry `tasks/<slug>/` along. A card shows when its task has a folder.
+- **S2, directed tasks.** "Directed by …" on the card and the note. The suggested column comes first whenever it has cards.
+- **S3, actions on a directed task.** Start (for suggested tasks), Open worker, Send back (with a note), Accept, Resolve. These are the buttons users know from Projects and from parallel-agent tools, in Duo's form. Each is a `duo2 task …` verb that tells the director, as from you.
+- **S4, Direct this.** On a session or task, it hands the work to the project's director. This is Projects' "Continue as project".
+- **S5, decisions in Duo.** A director's `decisions.md` with open boxes raises Needs you, and ticking a box tells the director.
 
-### Q. Project memory
-- **Recommended: a visible project memory folder in Projects' shape (`memory/MEMORY.md` plus one file per fact), read by every brief and written by the director when told to remember something, or when a report names a pitfall.**
-  - Claude Code's own auto-memory is stored per working folder (`~/.claude/projects/<path>/memory`), so a worker in a worktree, whose path differs, never sees it. Projects' local threads have the same gap (#97464). A folder in the project fixes both.
-  - It is plain Markdown, so Obsidian sees it, and an export can copy it as is.
-- **Other options:**
-  - Rely on Claude Code's auto-memory: it's invisible in Duo, tied to the path, and missed by worktrees.
-  - Put memory in `DIRECTOR.md`: it mixes rules with facts and grows without bound.
-- **Open:** the folder's name and place. Options are `memory/` at the root, or under the brief's folder (Q-n).
+**Recommended order:** S1 and S2 first, since they're small and make the conventions visible. Then S3. Then S4 and S5.
 
-### R. Without Claude artifacts
-- **Recommended: every page is a file first, and an artifact is an optional mirror.**
-  - The director writes what it would publish into the task folder:
-    - `decisions.md`, with each decision as a heading, the options as `- [ ]` checkboxes (recommendation first) and a Notes line;
-    - optionally a page (`files/<name>.html`), opened in Duo's HTML viewer.
-  - You tick a box in Duo's editor (or Obsidian, or anything else), and the director reads the file:
-    - on its next turn;
-    - through Monitor (2.1.98+, so on 2.1.219 unless disabled);
-    - or, later, through Duo noticing the tick and nudging the director.
-  - Where the Artifact tools exist and you want phone access, the director also publishes the same content with Send buttons, as this page does, and writes your answers back into `decisions.md`, so the file stays the record.
-- **The channel order everywhere:**
-  1. AskUserQuestion in the director's session;
-  2. `decisions.md` in the task folder, with needs-you raised;
-  3. the artifact mirror, where available.
-- **What the work Mac gets:** everything except the mirror, and nothing is lost by its absence.
-- **Other options:**
-  - Artifacts first, with a degraded file mode: it fails on the work Mac.
-  - AskUserQuestion only: it scatters decisions, and the record lives in chat scrollback.
+### 5. Where it works: a project, or Home
 
-### S. Changes to tasks' structure and UX (for approval, then a design round)
-Recommended, each built only after a design on the canvas, with your approval:
-- **S1, task folders** (O): `duo2 task folder`; rename, move, archive and delete carry the folder; the card shows the folder reference.
-- **S2, directed tasks:**
-  - the card and note show "Directed by X";
-  - worker sessions are told their task folder and to report there, which is a change to DL-116's hook text for directed tasks;
-  - the suggested lane appears first when it has cards.
-- **S3, task actions for directed tasks:** Start (suggested), Open worker, Send back (with a note), Land, Resolve. These are Projects' card buttons in Duo's form. Each sends its instruction to the director, as a message from you (DL-71 verbs: `duo2 task start|send-back|land|resolve`).
-- **S4, Direct this:** on a session row or task, it hands the work to the project's director (Projects' Continue as project).
-- **S5, decisions in Duo:** `decisions.md` already renders as checkboxes. Later, Duo could raise needs-you when a director's decision file has open boxes, and nudge the director when one is ticked.
+**Recommended: the same skill in both.**
+- In a project, it directs that project.
+- In Home, it sees every project and directs work directly in projects without their own director.
+- A project's director takes precedence. Home never directs another director's workers; it asks that director.
 
-Until these are designed and built, the director runs on conventions alone: `status: suggested`, `directed_by:`, sibling folders made by hand, and `decisions.md`. Everything above S works without app changes.
+**Other options:**
+- Home works only through project directors: cleaner, but needs a director in every small project;
+- Home directs everything: forty projects in one context.
 
-## 2c. What other orchestrators teach us (Geoff, 2026-10-12, third round)
+### 6. One owner per worker, and restarts
 
-Geoff: "explore other agent orchestrators and/or director agent patterns … Is bmad relevant? Minions? Goose? I don't want to scope creep or feature bloat — but I also don't want to reinvent the wheel if they have solid director patterns."
+**Recommended: a worker is directed only by the director named on its task.**
+- Sessions not on a director's task are yours, and a director never tasks them.
+- When you type into a worker, the director stops messaging it until you hand it back.
+- **A director is started with an explicit name,** `director-<project>`. Evidence (harness doc, P3): a name given with `-n` survived a stop and a background resume on 2.1.296. The session id changed, though, and an unnamed session's derived name (`duo-v2-ef` → `duo-v2-b0`) changes on every restart. That is how the old name went stale.
+- `.duo/director.json` names the current director: its name, its current session id, and the retired ones. A retired director that wakes stands down and points to the new one. That would have prevented the `*DUO DIRECTOR*` incident.
+- Workers find the director through `duo2 director status`, and otherwise reply to whoever messaged them last.
 
-**Surveyed** (sources are cited inline; most tool details are from vendor pages and secondary write-ups, and the [unverified] ones are marked as such):
-- **Methods:** BMAD Method (v6 stable, v7 alpha as a Claude Code plugin).
-- **Agents:** Goose (Block), and Stripe's Minions (2026-02, built on a Goose fork). HazyResearch's Minions is unrelated: it pairs a small local model with a cloud model to cut cost.
-- **Orchestrators:** Gas Town and Beads (Steve Yegge).
-- **Parallel-agent tools:** Vibe Kanban, Conductor, Claude Squad, Sculptor, Crystal, Cursor's agents, Codex cloud, Devin's managed Devins, and 2026 newcomers (Bernstein, Agent Orchestrator, Baton, Agent Kanban, Emdash).
-- **Frameworks:** Magentic-One, AutoGen, LangGraph, CrewAI, MetaGPT, OpenAI Agents SDK, Google ADK and A2A.
-- **Writing:** Anthropic's multi-agent research system and "Building effective agents"; Cognition's "Don't build multi-agents"; the MAST failure taxonomy ("Why Do Multi-Agent LLM Systems Fail?", arXiv 2503.13657).
+**Other options:**
+- heartbeat leases: more machinery than the problem needs;
+- the name alone, with no registry: two sessions can share a name, and the id moves on a resume.
 
-### The short answer
-- **BMAD:** relevant as a confirmation, not as a director. It is a human-driven agile pipeline of personas (analyst, PM, architect, scrum master, dev, QA) whose real mechanism is the **self-contained story file** a fresh session picks up. Our task note is that story file. Skip the personas and the human gate between every step.
-- **Goose:** it delegates in-process, with no durable ledger. Its "lead/worker" is model routing (the first turns on a big model, then a cheaper one), not an orchestrator. The one lesson, "delegates share no context, so put everything in the instructions", is our verbatim brief.
-- **Minions (Stripe):** relevant. It is one-shot, unattended work to a PR, with **deterministic steps (lint, tests) wrapped around the agent loop**, **CI retries capped at two**, and humans reviewing every PR (1,300+ PRs a week, per write-ups). That confirms L (deterministic verbs) and H (verify, then human approval), and adds a retry cap.
-- **Gas Town and Beads:**
-  - **Gas Town** is a cautionary tale about role sprawl (mayor, polecats, witness, deacon, dogs, refinery, crew; "100% vibe coded" by its author's account). Two ideas are worth keeping: **a serialized merge gate** (the Refinery) and a **staged plan the human approves** (our suggested lane).
-  - **Beads** contributes **a "ready" list (work with no open blockers) and an atomic claim**. Its Dolt graph database is not worth taking.
-- **The parallel-agent tools:**
-  - Almost all of them are a person dispatching agents, not a director: one task, one worktree; a board where "needs review" is distinct from "running"; a diff and a chat per task; and Create PR / Merge / Retry / Archive. Users will expect those conventions, and S3 covers them.
-  - Only Devin has a true coordinator. It makes mid-task corrections, tracks cost per child, can put children to sleep or stop them, lets the user open any child, and has **playbooks** (reusable briefs).
-  - Nobody else gates merges on user approval or enforces one owner per session, as far as these sources show. That, local-first files and Duo's view are our difference. Notifications are open ground.
-- **Frameworks and writing:**
-  - **Magentic-One's two ledgers:** a task ledger (facts, guesses, plan) and a progress ledger (who has what, is it moving), with a **stall counter that replans after two stalls**.
-  - **Anthropic's lessons:**
-    - Briefs need an objective, an output format, tools and sources, and boundaries.
-    - Scale effort to the job.
-    - Multi-agent work costs about 15× the tokens of a chat.
-    - The pattern fits poorly where work shares context, "such as most coding work".
-  - **Cognition:** "actions carry implicit decisions", so default to one thread per piece of work.
-  - **MAST's 14 failure modes:** most fall under unclear specs, misalignment between agents, and missing or wrong verification.
-  - **OpenAI's SDK** separates handoffs (control passes) from agents-as-tools (the manager stays in charge). A director is the second shape: it never hands ownership away.
-  - **A2A's task states** (submitted, working, input-required, auth-required, completed, canceled, failed, rejected) map onto our lanes. Terminal tasks don't reopen; follow-ups are new tasks.
+### 7. How it talks to you
 
-### Borrowed, each tied to a decision (nothing else is added)
-| Borrow | From | Into | Cost |
-|---|---|---|---|
-| A task note in three parts: **Brief** (the user's words verbatim, plus objective, done-when, boundaries, "ask before deciding X"), **Facts & decisions** (durable: what's been decided, non-goals, assumptions), **Progress** (reports, appended by the director) | Magentic-One's two ledgers; Anthropic's brief elements; MetaGPT's structured artifacts | N, T | A template; no code |
-| **Stalls are judged on evidence, and retries are capped.** A stall is no new commit, file or transcript growth within a window, or the same error twice. The response: a nudge, then a re-brief with the facts updated, then `waiting` with `waiting_on: "stalled: <why>"`, asking you. Never a third attempt without asking | Magentic-One (stall > 2 → replan); Stripe (2 CI rounds); Magentic-One's account-lockout runaway | F6, U | A rule in the skill; the journal records attempts |
-| **One worker per task by default; parallel only for separable work** (disjoint files, research, test runs). Work that shares design decisions is serialized. Effort scales: a small fix is one worker on the cheaper model | Cognition; Anthropic (effort scaling, 15× cost); MAST | G, V | A rule in the skill |
-| **Land one branch at a time and re-run the checks after each merge** | Gas Town's Refinery; Bors | H | Already practised by the dev director; now written down |
-| **A "ready" list** (suggested or open tasks whose `depends_on` are all done) | Beads | N, W | Duo reads `depends_on` (in the task format, not yet parsed) |
-| **Playbooks are task templates:** a brief that worked is saved as a template for the next one like it | Devin | N, W | Duo's templates exist (DL-146) |
-| **Setup and teardown per worktree** (`DIRECTOR.md` `setup:`, `teardown:`), and worktrees removed on land or drop | Conductor, Emdash; Vibe Kanban's worktree sprawl | G, W | Two fields |
-| **Done doesn't reopen; rework is a new task linked to the old one.** Send back from review stays as it is | A2A's terminal states | N, W | A rule |
-| **Test for MAST's failure modes**: a worker that loops; one that claims done early; one that strays outside its brief's files; context lost at compaction; an ignored message; a brief so vague it should ask; runaway retries; over-spawning | MAST; Anthropic (about 20 scenarios, judge the end state) | §7 Tier 2 | Eval cases |
+**Recommended: the same everywhere, the work Mac included.**
+1. **One question:** asked in its own session (AskUserQuestion, which works in Duo and on the phone through Remote Control), with Needs you raised in Duo.
+2. **Several decisions at once:** a `decisions.md` in the task folder. Each decision has a heading, the options as checkboxes with the recommendation first, and a Notes line. Tick it in Duo's editor or in Obsidian.
+3. **A page, where Claude artifacts exist and you want one:** like this page, with Send buttons. Answers are written back into `decisions.md`.
 
-### Avoided, on purpose
-- Personas and role hierarchies (BMAD, Gas Town's witness, deacon and dogs; CrewAI's managers).
-- Shared-transcript group chats (AutoGen).
-- Handing control to a worker (handoff-style).
-- Graph databases (Beads' Dolt).
-- Daemons, YAML workflow languages, devbox or VM fleets.
-- Best-of-N runs (later, maybe, opt-in).
-- Auto-merge by default.
-- New lanes: a stalled task is `waiting` with a reason, not a new `failed` lane.
+The file is always the record; the page is a mirror.
 
-### T. The task note's shape
-- **Recommended: Brief / Facts & decisions / Progress**, with the brief's elements:
-  - the user's words verbatim;
-  - the objective;
-  - done when;
-  - boundaries (files, non-goals);
-  - ask before deciding;
-  - how to verify.
+**For us:** this page is the test of whether Send reaches the session reliably, since the console's taps stopped arriving after Oct 9. If your Sends arrive, a page with buttons stays our default for batches of decisions. If not, we go back to AskUserQuestion, one question at a time.
 
-  It ships as the directed-task template, so Obsidian and Duo show it as ordinary headings.
-- **Other options:** a free-form note (today's task template), or a separate brief file in the task folder.
+**Other options:**
+- artifacts first: fails at work;
+- chat only: decisions get lost in scrollback.
 
-### U. Stalls and retries
-- **Recommended: judge stalls on evidence and cap retries at two.** The sequence is a nudge, then a re-brief, then the task moves to `waiting` with the reason and you're asked. The director never makes a third attempt, at anything external, without you.
-- **Other options:** nudges only, with no cap; or stall detection left to the user.
+### 8. Workers
 
-### V. When to fan out
-- **Recommended: one worker per task by default.** Parallel workers only for separable work. Effort scales to the job, within the cap (G).
-- **Other option:** fan out freely up to the cap.
+**Recommended:**
+- **Where they run.** Users' workers run in Duo by default, so you see them. They run in the background when you ask, when Duo isn't running, or for long jobs. Ours run in the background with Remote Control (already decided); design work stays in Duo.
+- **One worker per task by default.** Parallel workers only for work that splits cleanly: separate files, research, tests. Anything that shares decisions runs one at a time. Cognition: "actions carry implicit decisions". Anthropic: several agents cost about 15 times the tokens of a chat.
+- **A cap of 3 workers per director** by default. `duo2 director start` enforces it, and the brief's Director section can change it.
+- **A worktree** only for code in a git repo.
+- **The model is your default** unless the project's guidance says otherwise. Duo itself never picks one.
 
-### W. The small borrows
-- **Recommended: take all four:**
-  - a ready list from `depends_on`;
-  - playbooks as task templates;
-  - setup and teardown in `DIRECTOR.md`, with worktrees cleaned up on land or drop;
-  - done tasks that don't reopen (rework is a linked new task).
-- **Other option:** pick some (say which in the notes).
+**Other options:**
+- background by default;
+- fan out freely up to the cap.
 
-## 3. Hypotheticals
+### 9. Accepting work
 
-- **What if two directors want the same session?** The lease says who owns it, and the other director messages the owner instead. A dead owner's claim moves, and the journal says so.
-- **What if the user types into a worker the director is steering?** The lease pauses, and the director stops messaging that session and notes "user took over T-7".
-- **What if the director is closed mid-merge?** The journal writes intent before the act (`merge.begin`). The next director finishes the merge or rolls it back (a reset only for an unpushed local merge) instead of guessing.
-- **What if usage runs out mid-batch?** Every session stops silently. On resume, the director reads each owned worker's last message before anything else. This is a step in the skill now, not just a lesson.
-- **What if someone messages a retired director?** The tombstone answers and points to the new one.
-- **What if the worker runs an older Claude Code than the director?** Capabilities are checked per peer: the beacon's `version` and `peerFeatures` (an undocumented hint) and the worker's own report of its tools. A peer without messaging gets the next rung.
-- **What if a message is held** (one side bypasses permissions)? The send reports it as held, and the director takes the next rung and journals `send.held`.
-- **What if a user has forty projects in Home?** Home reads ledgers and needs-you. It doesn't start forty directors or open forty contexts.
-- **What if the user's plan is small?** The director idles cheaply: no polling loops, and it wakes on events. Workers default to the user's model. The journal reports tokens per thread where Claude Code exposes them, so directing has a visible cost.
-- **What if Projects reaches Team plans or the CLI?** See J. Our lasting value is the ledger on disk, the fallbacks, the cross-project needs-you, and Duo's view of the workers.
-- **What if the Mac sleeps?** Background sessions resume on wake, timers fire late, and the journal notes the gap.
-- **What if Home works through project directors only?** That's B's alternative. It's cleaner, but it costs a director per project. We switch to it if the evidence in B appears.
-- **What if one shared log replaced the per-director journals?** Writers would race, authorship would blur, and we'd gain nothing that `status --all` doesn't already give.
-- **What if the director runs in a sandboxed session?** It can write the project (ledger, journal, lease) but not `~/.claude`. Bash can't reach messaging sockets, though the `SendMessage` tool still works. Checks that fail only in the sandbox are re-run outside by the user or an unsandboxed director, and the journal notes it.
+**Recommended:**
+- **Check before accepting.** The director checks what came back against the brief and `done_when`. For code, it runs the project's checks too. It never passes on a claim it hasn't checked.
+- **You say go.** It proposes acceptance, saying what it checked. A standing rule in the brief can let it accept checked work itself; our own dev director has one.
+- **Anything public or hard to undo always waits for you:** a push, a release, publishing, sending a message.
+- **Stalls.** When a worker makes no progress, or fails the same way twice, the director tries at most twice: a nudge, then a clearer brief. Then it sets the task to `waiting` with the reason, and asks you. (Stripe's Minions cap retries at two; Magentic-One replans after two stalls.)
+- **Messages from workers.** A worker's message is never your approval. A worker can't get the director to do what its own permissions refused.
 
-## 4. Features
+**Other options:**
+- accept checked work by default;
+- no retry cap.
 
-Each feature lists the primitive it uses at best, the fallbacks in order, and how it's tested:
-- **T1:** the stand-in CLI, with no tokens.
-- **T2:** scenario evals on Haiku.
-- **T3:** dogfood on Duo.
+### 10. Claude Code Projects
 
-| # | Feature | Best primitive | Fallbacks, in order | Test |
-|---|---|---|---|---|
-| F1 | Capability probe | `duo2 director probe`: `claude --version` and `--help`; `CLAUDE_CODE_MESSAGING_SOCKET` set (messaging on); settings, managed first (`disableAllHooks`, `disableAgentView`, `disableRemoteControl`, `crossSessionInbound`, `permissions.deny`); sandbox; Duo reachable; beacon `peerFeatures` as a hint. The skill checks its own tool list itself | Ask the user the one thing it can't tell (e.g. Projects) | T1 per profile |
-| F2 | Mailbox (file first) | The ledger note, then the best wake-up | Same on every client | T1 |
-| F3 | Start a worker | `duo2 session new --prompt` or `claude --bg` with a worktree | `claude -p --session-id` in a `git worktree add`, run in background bash → relay mode (M0) | T1, T2 |
-| F4 | Message a worker | `SendMessage` (2.1.224+) | `claude --resume <id> "<msg>"` (2.1.285) → Stop-hook inbox (hooks) → `claude -p --resume` (only for headless workers the director started, never a session open in Duo) → `duo2 send` without Enter, plus the user (M1) → relay (M0) | T1 per rung, T2 |
-| F5 | Report back | The worker `SendMessage`s its report | Stop hook writes it → the worker appends it to its task note as the brief's last step (no hooks needed) → the director reads the transcript tail (`duo2 session show --turns`) | T1, T2 |
-| F6 | Wake on events | `notify_when_idle` (2.1.236) | Monitor (2.1.98) over `duo2 sessions --json` and the ledger → `/loop` (self-paced from 2.1.248, fixed from 2.1.71) → a sweep on each user turn | T1, T3 |
-| F7 | Ledger | Duo task notes | Same (files only) | T1 |
-| F8 | Journal | `duo2 director journal` | Same (files only) | T1 |
-| F9 | Resume after compaction | A SessionStart hook injects `duo2 director status` | Skill step 0: `whoami`, then `status`, then read each worker's last message | T2 (lost work) |
-| F10 | Ownership lease | `claim`/`owner` + Duo's `directed-by` | The lease file only (Duo not running) | T1 (races) |
-| F11 | Addressing | Registry + `whois` + reply-to-`from` | The name given in the brief | T1, T2 (wrong address) |
-| F12 | Retire (tombstone) | `whoami` self-check + `claude stop` | The self-check only | T1, T2 |
-| F13 | Review gate | Tests + `/code-review` (2.1.147) | Tests + a reviewer subagent | T2 |
-| F14 | Verify claims | Re-run the named checks, read the transcript | Same | T2 (seeded false claims) |
-| F15 | Merge with consent | Permission rules + a PreToolUse hook in workers | Permission rules only → an instruction only (said in the digest) | T1, T2 |
-| F16 | Ask the human | AskUserQuestion + `duo2 session next` | Needs-you only → the journal's open needs → a push notification | T2 |
-| F17 | Digest | Done / Needs you / Next | Same | T2 |
-| F18 | Phone access | A Remote Control link per worker | None (it says so) | T3 |
-| F19 | Concurrency cap | `duo2 director start` counts live workers | Same | T1 |
-| F20 | Model policy | `--model` on `claude --bg` | Stated in the brief | T1 |
-| F21 | Number reservations | `duo2 director reserve` | Off | T1 (races) |
-| F22 | Compute lock | `duo2 director lock` | Off | T1 (races) |
-| F23 | Console (opt-in) | An artifact page with `db` | Off (no Artifact tools) | T3 |
-| F24 | Portfolio (Home) | `duo2 director status --all` | Read each project's journal | T1, T2 |
-| F25 | Stand down for Projects, export | The probe, or the user says so | Ask | T2 |
-| F26 | Skill-less mode | `duo2 director guide` | Same | T1 (user skills blocked) |
-| F27 | Tasks as the ledger | `duo2 task new/session/status` + `directed_by` | Notes written by hand | T1, T2 |
-| F28 | Suggested tasks | `status: suggested` lane; Start / Start all (S3) | Status only (Keep as Column) | T2 |
-| F29 | Task folders | `duo2 task folder` (S1) | Folder made by hand + `references:` | T1 |
-| F30 | Decisions as a file | `decisions.md` checkboxes + needs-you | Same | T1, T2 (no-artifact profile) |
-| F31 | Project memory | Memory folder read by every brief | Same | T2 (worktree worker sees it) |
-| F32 | Setup proposal | First run drafts `DIRECTOR.md` | Same | T2 |
-| F33 | Export for Projects | `duo2 director export` | Same | T1 |
-| F34 | Stall watch, retry cap | Evidence from git, files and transcripts, journalled attempts | Check on each user turn | T2 (a looping worker, runaway retries) |
-| F35 | Ready list | `duo2 director ready` over `depends_on` | Read the notes | T1 |
-| F36 | Worktree setup and teardown | `DIRECTOR.md` `setup:` / `teardown:` | Off | T1 |
+**Recommended: take its patterns, keep Duo's words, and stand down where Projects runs.**
 
-## 5. Capability matrix
+Each Projects concept has one Duo home, so a move later is a copy, not a rethink:
 
-What each client setup can do, by transport. ✓ is full, ~ is a fallback rung, and ✗ is unavailable.
+| Projects | Duo |
+|---|---|
+| Instructions | The brief and `CLAUDE.md` |
+| Memory | The brief's Notes, plus Claude Code's memory |
+| Threads | Tasks |
+| Suggested threads | The suggested column |
+| Library | Task folders |
+| Status groups | Columns |
+| Card buttons | S3 |
+| "Continue as project" | S4 |
 
-| Setup | Start worker | Message worker | Report back | Wake | Ask human | Phone | Notes |
-|---|---|---|---|---|---|---|---|
-| Current CLI (2.1.29x) | ✓ Duo or `--bg` | ✓ SendMessage | ✓ SendMessage + idle notify | ✓ | ✓ | ✓ RC | Everything |
-| Pinned 2.1.219 (work Mac) | ✓ Duo; `--bg` unless disabled | ~ Stop-hook inbox, `-p --resume`, or relay | ~ Stop hook or task note | ~ Monitor | ✓ | ~ RC if allowed | Scenario B; no ListAgents. If managed settings are strict: relay mode (M0) |
-| Messaging off | ✓ | ~ `--resume <id> "msg"` (2.1.285) or inbox | ~ hook or task note | ~ Monitor | ✓ | ✓ | The probe sees no messaging socket |
-| No `--bg` | ✓ Duo; ~ `-p` turns | ✓ for Duo sessions | ✓ | ✓ | ✓ | ✓ | Workers are visible in Duo only |
-| Remote Control off | ✓ | ✓ locally | ✓ | ✓ | ✓ at the Mac | ✗ | No phone, no push |
-| Hooks disabled | ✓ | ✓ or ~ (no inbox rung) | ~ task note | ✓ or ~ | ✓ | ✓ | Duo's own session states fall back to beacons; the merge guard is permission rules |
-| No Artifact tools (work Mac) | ✓ | ✓ | ✓ | ✓ | ✓ AskUserQuestion, `decisions.md` | ✓ | No console or mirror; decisions in the task folder; dev design work stays in Duo |
-| Sandboxed sessions | ~ worktrees inside the project | ✓ tool; ✗ socket from Bash | ✓ | ~ | ✓ | ✓ | Checks that fail only in the sandbox are re-run outside |
-| Claude Code Projects | stands down in that repo | | | | ✓ | ✓ | Portfolio and export only |
+An export can come when someone wants it. In a repo you run as a Projects project, the Duo director starts nothing, and says so.
 
-## 6. Measuring it
+**Other options:**
+- rename Duo's columns to Projects' words: changes a built UI for users who don't have Projects;
+- a memory folder now.
 
-Every metric is computed from the journal and Duo's session index, so measuring costs nothing at runtime.
+## Commitments that aren't questions
 
-| Metric | Definition | Starting target |
-|---|---|---|
-| Decisions surfaced vs resolved | `need.open` vs `need.answered`, and the median time to answer | 90% or more answered within a day |
-| Re-asks | a need whose answer was already given (in `DIRECTOR.md` or an earlier answer) | 0 |
-| Collisions | two owners of one session; record-number clashes at merge; overlapping file areas | 0 owners; a trend for the rest |
-| Merge latency | worker report → merged | median under 1 h while the user is around |
-| Wrong-address messages | a send to a name that isn't the registry's, or one refused or held | 0 |
-| Lost work across compaction | after a forced compaction, threads the director can't account for, against the ledger | 0 |
-| Claims verified | claims re-checked / claims made, and false claims caught | 100% checked |
-| Fallback activations | which rung each transport used, per setup | known per setup; an alarm on an unexpected rung |
-| Cost per thread | tokens by worker and director, where Claude Code reports them | a trend |
-| Human interruptions | user-facing messages per merged thread | trending down |
+**It works on every client.** At start, `duo2 director status` sees what this session can do. Each job then has a ladder, best rung first:
+- **Reaching a worker:**
+  1. `SendMessage`;
+  2. resuming into a background session (2.1.285+);
+  3. a headless turn (`claude -p --resume`), for workers it started that way;
+  4. Duo types the message and you press Enter;
+  5. it asks you to pass it on.
+- **Hearing back:**
+  1. `SendMessage`;
+  2. the idle notice;
+  3. Duo's session state plus the worker's last message (`duo2 session show`).
+- **Waking itself:**
+  1. the idle notice;
+  2. Monitor;
+  3. your next message.
 
-## 7. Test plan: simulated client setups
+On the work Mac: AskUserQuestion, `decisions.md` and the bottom rungs, with nothing scripted.
 
-### Tier 1: the deterministic layer, no tokens
-- **A stand-in `claude`**, as `check-scale.sh` uses one, configured by a profile file per matrix row. A profile sets:
-  - its `--version`;
-  - which flags `--help` lists (`--bg`, `--remote-control`);
-  - whether `agents --json` exists;
-  - the beacon it writes (`version`, `peerFeatures`, socket);
-  - canned behaviour for `-p` and `--resume`.
-- **Settings that turn features off**, per session with `claude --settings '<json>'`, in a scratch `CLAUDE_CONFIG_DIR`, so no user file is touched:
+**It's measured** from a log that the `duo2 director` verbs write as a side effect:
+- decisions asked versus answered, and the time to answer;
+- questions asked twice;
+- two directors on one worker;
+- messages sent to a wrong address;
+- tasks unaccounted for after a compaction;
+- claims checked;
+- which rung each send used;
+- the time from a report to acceptance;
+- cost per task.
 
-  | Row | Settings |
-  |---|---|
-  | messaging off | `crossSessionInbound: "refuse"` plus `permissions.deny: ["SendMessage", "ListAgents"]` |
-  | no `--bg` | `disableAgentView: true` (or `CLAUDE_CODE_DISABLE_AGENT_VIEW=1`) |
-  | Remote Control off | `disableRemoteControl: true` |
-  | hooks off | `disableAllHooks: true` |
-  | no Artifact tools | deny `Artifact`, `ArtifactData`, `ArtifactComments` |
-  | no wake primitives | deny `Monitor` and `ScheduleWakeup`, plus `CLAUDE_CODE_DISABLE_CRON=1` |
-  | sandboxed | `{"sandbox": {"enabled": true, "allowUnsandboxedCommands": false}}`, and `scripts/check-sandbox.sh` (Seatbelt) around the verbs |
-  | user skills blocked | `--setting-sources project,local` (tests the skill-less `guide` path) |
-  | managed ("can't be turned back on") | the same keys in the scratch install's managed-settings file |
-- **What's checked** (in DuoChecks where the code is pure, in a shell check where it needs processes):
-  - `probe` reports the right profile for each row;
-  - `start` enforces the cap and writes the task note;
-  - `claim` races between two processes produce one winner;
-  - `whois` works after a simulated restart;
-  - `whoami` answers correctly for a tombstoned id;
-  - `lock` orders shared and exclusive holds, and `reserve` hands out disjoint blocks;
-  - every journal line parses.
+**It's tested** as [director-test-harness.md](director-test-harness.md) describes:
+1. a stand-in `claude` plus settings that switch features off, at no token cost;
+2. scenario evals on Haiku;
+3. running it on Duo every day.
 
-### Tier 2: the judgement layer, on Haiku
-- **Scenario evals.** Each run has:
-  - a fixture project and a capability profile;
-  - a scripted user;
-  - stand-in workers that reply with canned reports: some with false claims, some blocked, one that never reports.
+## Appendix A: what Projects and other orchestrators taught (rounds 2 and 3, condensed)
 
-  Each outcome is graded from the files and the journal:
-  - the right rung was chosen;
-  - the briefs are verbatim;
-  - no message went to a wrong address;
-  - false claims were caught;
-  - the right questions were asked, and nothing was re-asked;
-  - nothing was merged without consent;
-  - after a forced compaction, every thread is accounted for.
-- **Two runners:**
-  - **`claude plugin eval` (2.1.269+) for single-session cases.**
-    - It runs a fresh `-p` session per case, with only our skill loaded (`plugins: ["../.."]`).
-    - It takes `--model claude-haiku-5-5` and a cost ceiling (`--max-cost-usd`).
-    - Graders check the tools used and their order, regex matches, and the files created.
-    - A `history_file` replays a transcript up to a compaction.
-    - It runs a no-skill baseline arm for free.
-  - **Our own runner for multi-session cases.** `plugin eval` has no peers, limits env keys to `EVAL_*`, and documents no way to put a stand-in `claude` on PATH **[unverified]**. This runner uses `claude -p --model claude-haiku-5-5 --settings <profile>` for the director, the stand-in workers, and a grader that reads the journal and the task notes.
-- **Cost:**
-  - Haiku plays both director and workers, and most workers are stand-ins.
-  - The whole matrix runs nightly; each PR runs only the cases it touches.
-  - Runs take the GPU lock as shared.
+- **Claude Code Projects** (docs read 2026-10-12).
+  - Patterns taken:
+    - one conversation to talk to;
+    - routing ("answer here, new thread, or existing thread, and say which");
+    - suggested threads;
+    - setup recommendations;
+    - status groups;
+    - card buttons;
+    - approvals made in the thread itself;
+    - a status prompt ("what you asked, what it assumed, what it's waiting on");
+    - instructions and memory;
+    - a worktree per thread;
+    - "Continue as project";
+    - pause and restart.
+  - User complaints the design answers:
+    - briefs lost to summarising (#97924);
+    - a coordinator that only relays;
+    - the coordinator's session id changing (#100714);
+    - local threads missing memory (#97464);
+    - caps that are only preferences.
+  - There's no import or API, so compatibility is in shape.
+- **BMAD.** A human-driven chain of personas. Its lasting idea, a self-contained story file for a fresh session, is our task note. We skip the personas.
+- **Goose.** Delegation inside one process, with no durable record. Its "lead/worker" setting is model routing.
+- **Stripe's Minions.** Fixed checks around the agent, two retries, and a human review of every PR. This confirms decision 9. HazyResearch's Minions is unrelated.
+- **Gas Town.** A warning about role sprawl. Keep only "one acceptance at a time" and "a plan you approve first".
+- **Beads.** See decision 3.
+- **Parallel-agent tools** (Vibe Kanban, Conductor, Claude Squad, Cursor, Codex, …). These are a person handing out work, and they set the conventions users expect: one workspace per task, a review column, a chat per task, and Accept / Send back / Retry. Devin alone has a coordinator, with playbooks. None of the sources shows a tool that gates acceptance on approval or enforces one owner per worker.
+- **Frameworks and write-ups.**
+  - Magentic-One: a ledger of facts and plan, a ledger of progress, and a replan after two stalls.
+  - Anthropic: briefs with an objective, an output, sources and boundaries; effort scaled to the job; poor fit where work shares context.
+  - Cognition: one thread per piece of work.
+  - MAST: missing or wrong verification is the leading failure.
+  - A2A: its task states map onto our columns.
+- **Not taken:**
+  - personas and role hierarchies;
+  - group chats;
+  - handing control to a worker;
+  - graph databases, daemons, YAML workflows and VM fleets;
+  - running the same task N ways;
+  - auto-accept;
+  - new columns.
 
-### Tier 3: dogfood
-- The Duo dev director runs the core with Duo v2's `DIRECTOR.md` every day. Its journal is the live source of the metrics, and a weekly digest compares each week with the last.
-- **The pinned row runs for real as well:** an isolated install of Claude Code 2.1.219 on this Mac (never on the work Mac), behind Duo's director, on Haiku. It needs a login that isn't a copy of credentials (Q).
+## Appendix B: capability matrix
 
-## 8. Build order (the director delegates it once the decisions are in)
+| Setup | Start a worker | Reach it | Hear back | Ask you | Phone |
+|---|---|---|---|---|---|
+| Current CLI | Duo or background | SendMessage | SendMessage, idle notice | All three ways | Remote Control |
+| Pinned 2.1.219 (work Mac) | Duo; background unless disabled | Headless turn, or Duo types + you press Enter | Duo state + last message | AskUserQuestion, `decisions.md` | If allowed |
+| Messaging off | Same | Resume into background (2.1.285+), headless, or Duo types | Duo state + last message | Same | Same |
+| No background sessions | Duo, or headless turns | Same | Same | Same | Same |
+| Remote Control off | Same | Same | Same | At the Mac | None |
+| Hooks disabled | Same | Same | Duo state from beacons + last message | Same | Same |
+| No artifacts | Same | Same | Same | AskUserQuestion, `decisions.md` | Same |
+| Sandboxed | Same; a worktree worker also gets its task folder as an added directory | SendMessage works; Bash can't reach sockets | Same | Same | Same |
+| Claude Code Projects | Stands down in that repo | | | | |
 
-1. The `duo2 director` verbs (probe, journal, claim/owner, whois/whoami/retire, status, guide), DuoChecks for them, and the stand-in CLI profiles (T1).
-2. The core skill text and its generation in `Installer`, with the consent line.
-3. The start, message and report ladders, including relay mode, and the T2 suite on Haiku.
-4. Duo v2's `DIRECTOR.md`; the dev director switches to the core.
-5. The Home portfolio, `reserve`, `lock`, `export`, and the opt-in console.
-6. A design round for the director in Duo's UI (badge, grouping, directed-by), then its build.
+## Open questions (they become Q-n once answers are in)
 
-## 9. Open questions
-
-The ones that are still open after Geoff's answers are logged as Q-n:
-- Whether a restarted session can take back its peer name.
-- How a test install of 2.1.219 logs in without copying credentials.
-- How Duo shows a director (it needs a design round).
-- Whether Duo's own session states hold up with hooks disabled by management.
-
-## 10. The message ladder
-
-The file is always written first; each rung up adds a faster wake-up. A held or refused send drops one rung, and the journal records the rung used.
-
-| Rung | Carrier | Needs |
-|---|---|---|
-| M0 | The task note, plus the human starting or nudging the session (relay mode) | Nothing |
-| M1 | `duo2 send` into the prompt without Enter, and Needs you raised | Duo running |
-| M2 | The Stop-hook inbox, delivered when the worker's turn ends | Hooks |
-| M3 | `claude -p --resume <id> "<msg>"`, only for headless workers the director started | Any version; never a session open in Duo |
-| M4 | `claude --resume <id> "<msg>"` into a running background session | 2.1.285+ |
-| M5 | `SendMessage`, with `notify_when_idle` | 2.1.224+ (2.1.236+ for idle notices), messaging on |
-
-## 11. The design and decision page
-
-https://claude.ai/artifact/4S3xjcdySNGxytxvJMrz8Q
+- How the harness's real runs log in without copying credentials (harness doc: `plugin eval` now; a `claude setup-token` token for multi-session runs, which Geoff would make once).
+- Whether Duo's session states hold up when management disables hooks.
+- The designs for S1–S5.
