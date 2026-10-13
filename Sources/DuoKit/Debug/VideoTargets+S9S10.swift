@@ -187,7 +187,8 @@ extension VideoTargets {
             return names.isEmpty ? nil : Fixture.Group(name: t.title, project: project, sessions: names, threads: names.map { [$0] }, task: t.path)
         }
         model.expandedGroups.formUnion(["Auto-add decision", "Deck for Thursday"])
-        if requested == "workstreams" { model.expandedGroups.formUnion(tasks.map(\.title)) }   // every task open, so every session shows
+        // Every open task unfolded, so every session shows; a done task stays folded, as completing one folds it (Geoff's v10 note).
+        if requested == "workstreams" { model.expandedGroups.formUnion(tasks.filter { $0.status != "done" }.map(\.title)) }
         if name == "newsession" || name == "newsession-sent" { model.expandedGroups.insert(nt["title"] as? String ?? newTaskTitle) }   // the new session shows under its task
         if requested == "collapsed" { model.expandedGroups.remove(nt["title"] as? String ?? newTaskTitle) }   // the new task's disclosure clicked: its group folds, "Glare warning copy" hidden
         model.fixture.projectFiles[project] = (model.fixture.projectFiles[project] ?? []) + tasks.map(\.path).sorted()
