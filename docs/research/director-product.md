@@ -376,6 +376,92 @@ Recommended, each built only after a design on the canvas, with your approval:
 
 Until these are designed and built, the director runs on conventions alone: `status: suggested`, `directed_by:`, sibling folders made by hand, and `decisions.md`. Everything above S works without app changes.
 
+## 2c. What other orchestrators teach us (Geoff, 2026-10-12, third round)
+
+Geoff: "explore other agent orchestrators and/or director agent patterns … Is bmad relevant? Minions? Goose? I don't want to scope creep or feature bloat — but I also don't want to reinvent the wheel if they have solid director patterns."
+
+**Surveyed** (sources are cited inline; most tool details are from vendor pages and secondary write-ups, and the [unverified] ones are marked as such):
+- **Methods:** BMAD Method (v6 stable, v7 alpha as a Claude Code plugin).
+- **Agents:** Goose (Block), and Stripe's Minions (2026-02, built on a Goose fork). HazyResearch's Minions is unrelated: it pairs a small local model with a cloud model to cut cost.
+- **Orchestrators:** Gas Town and Beads (Steve Yegge).
+- **Parallel-agent tools:** Vibe Kanban, Conductor, Claude Squad, Sculptor, Crystal, Cursor's agents, Codex cloud, Devin's managed Devins, and 2026 newcomers (Bernstein, Agent Orchestrator, Baton, Agent Kanban, Emdash).
+- **Frameworks:** Magentic-One, AutoGen, LangGraph, CrewAI, MetaGPT, OpenAI Agents SDK, Google ADK and A2A.
+- **Writing:** Anthropic's multi-agent research system and "Building effective agents"; Cognition's "Don't build multi-agents"; the MAST failure taxonomy ("Why Do Multi-Agent LLM Systems Fail?", arXiv 2503.13657).
+
+### The short answer
+- **BMAD:** relevant as a confirmation, not as a director. It is a human-driven agile pipeline of personas (analyst, PM, architect, scrum master, dev, QA) whose real mechanism is the **self-contained story file** a fresh session picks up. Our task note is that story file. Skip the personas and the human gate between every step.
+- **Goose:** it delegates in-process, with no durable ledger. Its "lead/worker" is model routing (the first turns on a big model, then a cheaper one), not an orchestrator. The one lesson, "delegates share no context, so put everything in the instructions", is our verbatim brief.
+- **Minions (Stripe):** relevant. It is one-shot, unattended work to a PR, with **deterministic steps (lint, tests) wrapped around the agent loop**, **CI retries capped at two**, and humans reviewing every PR (1,300+ PRs a week, per write-ups). That confirms L (deterministic verbs) and H (verify, then human approval), and adds a retry cap.
+- **Gas Town and Beads:**
+  - **Gas Town** is a cautionary tale about role sprawl (mayor, polecats, witness, deacon, dogs, refinery, crew; "100% vibe coded" by its author's account). Two ideas are worth keeping: **a serialized merge gate** (the Refinery) and a **staged plan the human approves** (our suggested lane).
+  - **Beads** contributes **a "ready" list (work with no open blockers) and an atomic claim**. Its Dolt graph database is not worth taking.
+- **The parallel-agent tools:**
+  - Almost all of them are a person dispatching agents, not a director: one task, one worktree; a board where "needs review" is distinct from "running"; a diff and a chat per task; and Create PR / Merge / Retry / Archive. Users will expect those conventions, and S3 covers them.
+  - Only Devin has a true coordinator. It makes mid-task corrections, tracks cost per child, can put children to sleep or stop them, lets the user open any child, and has **playbooks** (reusable briefs).
+  - Nobody else gates merges on user approval or enforces one owner per session, as far as these sources show. That, local-first files and Duo's view are our difference. Notifications are open ground.
+- **Frameworks and writing:**
+  - **Magentic-One's two ledgers:** a task ledger (facts, guesses, plan) and a progress ledger (who has what, is it moving), with a **stall counter that replans after two stalls**.
+  - **Anthropic's lessons:**
+    - Briefs need an objective, an output format, tools and sources, and boundaries.
+    - Scale effort to the job.
+    - Multi-agent work costs about 15× the tokens of a chat.
+    - The pattern fits poorly where work shares context, "such as most coding work".
+  - **Cognition:** "actions carry implicit decisions", so default to one thread per piece of work.
+  - **MAST's 14 failure modes:** most fall under unclear specs, misalignment between agents, and missing or wrong verification.
+  - **OpenAI's SDK** separates handoffs (control passes) from agents-as-tools (the manager stays in charge). A director is the second shape: it never hands ownership away.
+  - **A2A's task states** (submitted, working, input-required, auth-required, completed, canceled, failed, rejected) map onto our lanes. Terminal tasks don't reopen; follow-ups are new tasks.
+
+### Borrowed, each tied to a decision (nothing else is added)
+| Borrow | From | Into | Cost |
+|---|---|---|---|
+| A task note in three parts: **Brief** (the user's words verbatim, plus objective, done-when, boundaries, "ask before deciding X"), **Facts & decisions** (durable: what's been decided, non-goals, assumptions), **Progress** (reports, appended by the director) | Magentic-One's two ledgers; Anthropic's brief elements; MetaGPT's structured artifacts | N, T | A template; no code |
+| **Stalls are judged on evidence, and retries are capped.** A stall is no new commit, file or transcript growth within a window, or the same error twice. The response: a nudge, then a re-brief with the facts updated, then `waiting` with `waiting_on: "stalled: <why>"`, asking you. Never a third attempt without asking | Magentic-One (stall > 2 → replan); Stripe (2 CI rounds); Magentic-One's account-lockout runaway | F6, U | A rule in the skill; the journal records attempts |
+| **One worker per task by default; parallel only for separable work** (disjoint files, research, test runs). Work that shares design decisions is serialized. Effort scales: a small fix is one worker on the cheaper model | Cognition; Anthropic (effort scaling, 15× cost); MAST | G, V | A rule in the skill |
+| **Land one branch at a time and re-run the checks after each merge** | Gas Town's Refinery; Bors | H | Already practised by the dev director; now written down |
+| **A "ready" list** (suggested or open tasks whose `depends_on` are all done) | Beads | N, W | Duo reads `depends_on` (in the task format, not yet parsed) |
+| **Playbooks are task templates:** a brief that worked is saved as a template for the next one like it | Devin | N, W | Duo's templates exist (DL-146) |
+| **Setup and teardown per worktree** (`DIRECTOR.md` `setup:`, `teardown:`), and worktrees removed on land or drop | Conductor, Emdash; Vibe Kanban's worktree sprawl | G, W | Two fields |
+| **Done doesn't reopen; rework is a new task linked to the old one.** Send back from review stays as it is | A2A's terminal states | N, W | A rule |
+| **Test for MAST's failure modes**: a worker that loops; one that claims done early; one that strays outside its brief's files; context lost at compaction; an ignored message; a brief so vague it should ask; runaway retries; over-spawning | MAST; Anthropic (about 20 scenarios, judge the end state) | §7 Tier 2 | Eval cases |
+
+### Avoided, on purpose
+- Personas and role hierarchies (BMAD, Gas Town's witness, deacon and dogs; CrewAI's managers).
+- Shared-transcript group chats (AutoGen).
+- Handing control to a worker (handoff-style).
+- Graph databases (Beads' Dolt).
+- Daemons, YAML workflow languages, devbox or VM fleets.
+- Best-of-N runs (later, maybe, opt-in).
+- Auto-merge by default.
+- New lanes: a stalled task is `waiting` with a reason, not a new `failed` lane.
+
+### T. The task note's shape
+- **Recommended: Brief / Facts & decisions / Progress**, with the brief's elements:
+  - the user's words verbatim;
+  - the objective;
+  - done when;
+  - boundaries (files, non-goals);
+  - ask before deciding;
+  - how to verify.
+
+  It ships as the directed-task template, so Obsidian and Duo show it as ordinary headings.
+- **Other options:** a free-form note (today's task template), or a separate brief file in the task folder.
+
+### U. Stalls and retries
+- **Recommended: judge stalls on evidence and cap retries at two.** The sequence is a nudge, then a re-brief, then the task moves to `waiting` with the reason and you're asked. The director never makes a third attempt, at anything external, without you.
+- **Other options:** nudges only, with no cap; or stall detection left to the user.
+
+### V. When to fan out
+- **Recommended: one worker per task by default.** Parallel workers only for separable work. Effort scales to the job, within the cap (G).
+- **Other option:** fan out freely up to the cap.
+
+### W. The small borrows
+- **Recommended: take all four:**
+  - a ready list from `depends_on`;
+  - playbooks as task templates;
+  - setup and teardown in `DIRECTOR.md`, with worktrees cleaned up on land or drop;
+  - done tasks that don't reopen (rework is a linked new task).
+- **Other option:** pick some (say which in the notes).
+
 ## 3. Hypotheticals
 
 - **What if two directors want the same session?** The lease says who owns it, and the other director messages the owner instead. A dead owner's claim moves, and the journal says so.
@@ -435,6 +521,9 @@ Each feature lists the primitive it uses at best, the fallbacks in order, and ho
 | F31 | Project memory | Memory folder read by every brief | Same | T2 (worktree worker sees it) |
 | F32 | Setup proposal | First run drafts `DIRECTOR.md` | Same | T2 |
 | F33 | Export for Projects | `duo2 director export` | Same | T1 |
+| F34 | Stall watch, retry cap | Evidence from git, files and transcripts, journalled attempts | Check on each user turn | T2 (a looping worker, runaway retries) |
+| F35 | Ready list | `duo2 director ready` over `depends_on` | Read the notes | T1 |
+| F36 | Worktree setup and teardown | `DIRECTOR.md` `setup:` / `teardown:` | Off | T1 |
 
 ## 5. Capability matrix
 
