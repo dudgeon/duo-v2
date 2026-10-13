@@ -162,6 +162,21 @@ extension AppModel {
         taskTitlesSeen = seen
     }
 
+    /// A task that becomes done folds its sessions under it; one that's reopened unfolds them (DL-187). Only the
+    /// change does it, so a fold the user then sets stays as set. Runs after each refresh.
+    public func followTaskStatus() {
+        let tasks = fixture.tasks ?? []
+        let now = Dictionary(tasks.map { ($0.id, isDone($0)) }, uniquingKeysWith: { a, _ in a })
+        defer { taskStatusSeen = now }
+        guard let seen = taskStatusSeen else { return }
+        for t in tasks {
+            guard let was = seen[t.id], was != now[t.id] else { continue }
+            for g in fixture.groups where g.project == t.project && g.task == t.path {
+                if isDone(t) { expandedGroups.remove(g.name) } else { expandedGroups.insert(g.name) }
+            }
+        }
+    }
+
     // MARK: Complete, link, reveal
 
     /// Mark Complete (DL-130): the line shows checked, struck through and grey at once, stays for
