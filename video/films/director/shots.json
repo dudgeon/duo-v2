@@ -35,7 +35,8 @@
       },
       "worktrees": {
         "line": 4,
-        "word": "Worktrees"
+        "word": "have",
+        "offset": -0.6
       },
       "prompts": {
         "line": 4,
@@ -140,34 +141,46 @@
         "line": 4,
         "word": "survey"
       },
-      "b0": {
+      "c0": {
         "line": 5,
         "word": "Twenty"
       },
-      "c1": {
+      "w1": {
         "line": 6,
-        "word": "Make"
+        "word": "watching"
+      },
+      "w2": {
+        "line": 6,
+        "word": "surfacing"
+      },
+      "b0": {
+        "line": 7,
+        "word": "From"
+      },
+      "c1": {
+        "line": 8,
+        "word": "tell"
       },
       "c2": {
-        "line": 7,
-        "word": "branches"
+        "line": 9,
+        "word": "briefs"
       },
       "c3": {
-        "line": 8,
-        "word": "Watch"
+        "line": 9,
+        "word": "ready"
       },
       "c4": {
-        "line": 8,
-        "word": "surface"
+        "line": 10,
+        "word": "asks"
       },
       "submit": {
-        "line": 8,
-        "word": "needed",
+        "line": 10,
+        "word": "decision",
         "offset": 0.3
       },
       "stood": {
-        "line": 8,
-        "word": "needed",
+        "line": 10,
+        "word": "decision",
         "offset": 1.5
       }
     },
@@ -180,13 +193,14 @@
         ]
       },
       {
-        "what": "The first prompt goes onto the console, its ideas as bullets in time with the voice; the 10:25 message the same way",
+        "what": "The first prompt goes onto the console as bullets in time with the voice; then the pattern, step by step (phone, director, session, reviewed and merged; only decisions reach you)",
         "by": [
           "event:a1",
           "event:a2",
           "event:a3",
           "event:a4",
-          "event:b0",
+          "event:w1",
+          "event:w2",
           "event:c1",
           "event:c2",
           "event:c3",
@@ -206,7 +220,7 @@
         ]
       }
     ],
-    "shotSha": "4d57aace0d10"
+    "shotSha": "01b0693829e5"
   },
   "S3": {
     "kind": "drawn",

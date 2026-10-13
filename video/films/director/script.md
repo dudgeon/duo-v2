@@ -1,5 +1,5 @@
 # Director explainer — script v1
-<!-- Synced from the script Doc at rev 1144 on 2026-10-12 by pipeline/sync.mjs; edit the Doc, not this file. -->
+<!-- Synced from the script Doc at rev 1149 on 2026-10-13 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 12, 2026 · @Geoff Dudgeon
 
@@ -65,12 +65,14 @@ Topic: A simple prompt
 - On October fifth, I started one more session and typed this.
 - *There are many sessions in this repo, all in various states. You are now their director.*
 - *I am the PM and you are the engineering manager. Please do a quick survey of the state of each of these active sessions.*
-- Twenty minutes later, I gave it the rest of the job.
-- *Make and maintain a director reviews artifact, where you surface decisions for me, with buttons that send you messages.*
-- *It covers what to do with the branches and worktrees: when to review, merge and ship, and how to resolve conflicts.*
-- *Watch all the other agents, review their work, and surface decisions to me as needed.*
+- Twenty minutes later, I added one more instruction.
+- *You should be periodically watching all other agents in this space and reviewing their work, surfacing decisions to me as needed.*
+- From then on, all of my interactions with live sessions, and every new task, went through the director.
+- I tell it what I want, usually in a sentence or two from my phone.
+- It briefs a new session, or passes the word to one already running, and tells me when the work is ready.
+- It reviews and merges what comes back, and asks me only when something needs my decision.
 
-Shot: on line 1, a big orchestrator (one agent over layers of agents) sketches itself faintly, then is set aside for one console: start simple. Then the first prompt goes onto the console, its ideas as bullets that build in time with the voice; the 10:25 message follows the same way. As it lands, the tangle from S1 settles into the tree of style frame B: you on the left, the director beside you, the sessions in a panel. The director's first survey runs down the sessions. One line reaches you now.
+Shot: on line 1, a big orchestrator (one agent over layers of agents) sketches itself faintly, then is set aside for one console: start simple. Then the first prompt goes onto the console, its ideas as bullets that build in time with the voice; then the pattern, step by step as it's said: your sentence from the phone goes to the director; a brief goes to a new or running session; the work comes back reviewed and merged; only decisions reach you. As it lands, the tangle from S1 settles into the tree of style frame B: you on the left, the director beside you, the sessions in a panel. The director's first survey runs down the sessions. One line reaches you now.
 
 ### S3 · A line becomes a brief (about 30 s)
 

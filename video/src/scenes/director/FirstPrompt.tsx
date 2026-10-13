@@ -8,19 +8,19 @@ import {OpeningEnd} from './Opening';
 
 // S2 · A simple prompt (script v2, Geoff's rewrite, Oct 12). It opens on S1's last picture, the switchboard. Line 1:
 // a big orchestrator sketches itself faintly over the dimmed ring, then is set aside: start simple. Line 2: one more
-// session opens as a console. Lines 3 to 8: the first prompt and the 10:25 message go onto it as bullets that build in
-// time with the voice (Geoff: "split the concepts of the prompt into bullets"). On the last word the console becomes the
+// session opens as a console. Lines 3 to 6: the first prompt and the 10:25 instruction go onto it as bullets that build in
+// time with the voice (Geoff: "split the concepts of the prompt into bullets"); then the pattern from then on, as steps. On the last word the console becomes the
 // director, the ring settles into style frame B's tree, and the first survey runs down the sessions.
 
-const PROMPT_BOX: Box = {x: 380, y: 196, w: 1160, h: 700};
+const PROMPT_BOX: Box = {x: 300, y: 180, w: 1320, h: 760};
 const slot = (i: number) => ORDER.indexOf(i);
 const at = (ev: Record<string, number>, w: string, d = 0) => (ev[w] ?? 1e9) + d;
 const has = (ev: Record<string, number>, w: string) => ev[w] !== undefined;
 
 /** The two messages as their ideas, each lit by a word of the voice (the verbatim text is in the script's notes). */
 const FIRST: [string, string][] = [['a1', 'Many sessions, in various states'], ['a2', 'You are now their director'], ['a3', 'I am the PM; you are the engineering manager'], ['a4', 'Survey the state of each active session']];
-const SECOND: [string, string][] = [['c1', 'Keep a director reviews page: decisions for me, as buttons that message you'], ['c2', 'Branches and worktrees: when to review, merge and ship; how to resolve conflicts'],
-  ['c3', 'Watch all the other agents and review their work'], ['c4', 'Surface decisions to me as needed']];
+/** The pattern from then on (Geoff's note, Oct 12), as steps lit by the voice: [event, step]. */
+const STEPS: [string, string][] = [['c1', 'a sentence from your phone'], ['c2', 'the director writes the brief'], ['c3', 'a new or running session does the work'], ['c4', 'reviewed and merged; only decisions reach you']];
 
 /** The orchestrator Geoff had been thinking about: one agent over layers of agents, sketched and set aside. */
 const Orchestrator = ({u, gone}: {u: number; gone: number}) => {
@@ -108,8 +108,18 @@ export const FirstPrompt = ({t, ev}: SceneProps) => {
           <div style={{position: 'absolute', left: 52, top: 40, width: PROMPT_BOX.w - 104, opacity: promptU, fontFamily: mono}}>
             <div style={{fontSize: 20, lineHeight: '28px', color: C.consoleText2}}>claude  ·  Oct 5, 10:08</div>
             {bullets(FIRST)}
-            <div style={{marginTop: 30, fontSize: 20, lineHeight: '28px', color: C.consoleText2, opacity: ramp(t, b0 - 0.1, b0 + 0.3)}}>10:25</div>
-            {bullets(SECOND)}
+            <div style={{marginTop: 26, fontSize: 20, lineHeight: '28px', color: C.consoleText2, opacity: lit('c0')}}>10:25</div>
+            {bullets([['w1', 'Watch all the other agents and review their work'], ['w2', 'Surface decisions to me as needed']])}
+            <div style={{marginTop: 26, fontSize: 20, lineHeight: '28px', color: C.consoleText2, opacity: ramp(t, b0 - 0.1, b0 + 0.3)}}>from then on, everything went through the director</div>
+            <div style={{marginTop: 16, display: 'flex', alignItems: 'stretch', gap: 0}}>
+              {STEPS.map(([w, text], k) => (
+                <React.Fragment key={w}>
+                  {k > 0 && <div style={{flex: 'none', width: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.consoleText2, fontSize: 26, opacity: lit(w)}}>→</div>}
+                  <div style={{flex: 1, padding: '14px 16px', borderRadius: 10, border: `1.5px solid ${C.consoleRule}`, background: k === 3 ? 'rgba(249,115,22,0.10)' : 'transparent',
+                    fontSize: 21, lineHeight: '28px', color: C.consoleText, opacity: lit(w), transform: `translateY(${(1 - lit(w)) * 10}px)`}}>{text}</div>
+                </React.Fragment>
+              ))}
+            </div>
           </div>
           <div style={{position: 'absolute', inset: 0, opacity: dirU}}>
             <DirectorCard box={{x: 0, y: 0, w: TREE_DIRECTOR.w, h: TREE_DIRECTOR.h}} sub="engineering manager" needs={t >= scan + 0.16 * SESSIONS.length ? 2 : 0} />
