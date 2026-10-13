@@ -913,6 +913,37 @@ func spikeScreen(_ name: String) -> String {
         check(ChatPaste.carried(prompt: path + " [Image #1]", text: "[Image #1] words") == path, "and so is words beside a picture's token, never the token")
         check(ChatPaste.carried(prompt: path, text: path + " Please summarise.").isEmpty, "not when the composer opened on it and already starts with it")
         check(ChatPaste.carried(prompt: "", text: "words").isEmpty && ChatPaste.carried(prompt: "/mo", text: "words").isEmpty && ChatPaste.carried(prompt: "[Image #1]", text: "words").isEmpty, "nothing is carried from an empty prompt, a `/` command or a lone token")
+        // F-303: a dim prompt suggestion reads as typed text on 2.1.219; a typed space tells them apart.
+        let sug = ChatScreenReader.read(spikeScreen("suggestion-2.1.219/idle-suggestion.txt"), cols: 42)
+        check(sug.kind == .idle && sug.input == "ok", "2.1.219's idle screen with a prompt suggestion reads as idle with input “ok” (\(sug.kind) \(sug.input.debugDescription))")
+        let sug100 = ChatScreenReader.read(spikeScreen("suggestion-2.1.219/a-idle-2.1.219.txt"), cols: 100)
+        let spaced = ChatScreenReader.read(spikeScreen("suggestion-2.1.219/b-space-2.1.219.txt"), cols: 100)
+        let typedSp = ChatScreenReader.read(spikeScreen("suggestion-2.1.219/g-typed-space-2.1.219.txt"), cols: 100)
+        check(ChatSession.isSuggestion(before: sug100.input ?? "", afterSpace: spaced.input ?? "x") && !ChatSession.isSuggestion(before: typedSp.input ?? "", afterSpace: typedSp.input ?? "") ,
+              "the recorded 100-column probe: a suggestion vanishes under a typed space (\(sug100.input.debugDescription) → \(spaced.input.debugDescription)); typed text stays (\(typedSp.input.debugDescription))")
+        check(ChatSession.isSuggestion(before: "ok", afterSpace: "") && !ChatSession.isSuggestion(before: "ok", afterSpace: "ok ")
+              && !ChatSession.isSuggestion(before: "@tasks/x.md", afterSpace: "@tasks/x.md ") && !ChatSession.isSuggestion(before: "", afterSpace: ""),
+              "suggestion or real: gone after a space is a suggestion; kept is real text; nothing is nothing to carry")
+        check(ChatPaste.carried(prompt: "", text: "SCENARIO:ask1").isEmpty, "with a suggestion the paste carries nothing, so the echo is just the text")
+        do {
+            let base = spikeScreen("suggestion-2.1.219/idle-suggestion.txt")
+            func withPrompt(_ t: String) -> String { base.replacingOccurrences(of: "❯ ok", with: "❯ " + t) }
+            let fake = FakeTUI(base)
+            var pastedBytes = "", submitted = false
+            fake.react = { k, t in
+                if k == " " { t.show(withPrompt(" ")) }                                // a typed key replaces the suggestion
+                else if k == ChatKey.backspace.bytes { t.show(base) }                  // and its removal brings it back
+                else if k.hasPrefix("\u{1b}[200~") { pastedBytes = k.replacingOccurrences(of: "\u{1b}[200~", with: "").replacingOccurrences(of: "\u{1b}[201~", with: ""); t.show(withPrompt(pastedBytes)) }
+                else if k == ChatKey.enter.bytes { submitted = true }
+            }
+            let c = ChatSession(key: "sug", mode: .chat)
+            c.setVersion("2.1.219")
+            c.attach(fake)
+            var r: ChatAnswerResult?
+            Task { r = await c.send("SCENARIO:ask1") }
+            spin(1.2)
+            check(r?.ok == true && submitted && pastedBytes == "SCENARIO:ask1", "paste mode over a prompt suggestion: sent, with no “ok” and no leading space (\(r?.why ?? "ok") “\(pastedBytes)”)")
+        }
         // F-232: Ctrl+A, Right once per unit from the start up to and including the token, Backspace.
         var units = ChatPaste.units("[Image #1] [Image #2] [Image #3]"), keys: [[ChatKey]] = []
         check(units == ["[Image #1]", " ", "[Image #2]", " ", "[Image #3]"], "a prompt's units: a token is one, no space is assumed after the last")

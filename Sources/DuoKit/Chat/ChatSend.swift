@@ -64,7 +64,12 @@ extension ChatSession {
             // Pictures this composer attached are in the prompt as tokens: the removed ones are deleted,
             // the rest stay, and the text goes in after them. Other words in the prompt (the drafted
             // task path, DL-112) stay too, ahead of the text (F-254); anything else there is refused.
-            let prompt = s.input ?? ""
+            var prompt = s.input ?? ""
+            // Words on screen may be a dim suggestion, which the paste replaces (F-303): ask before carrying them.
+            if !prompt.isEmpty, ui.heldTokens.isEmpty, ui.composerBasis == nil {
+                guard let suggestion = await promptIsSuggestion() else { return finish(.refused("couldn’t read Claude’s prompt")) }
+                if suggestion { prompt = "" }
+            }
             guard !prompt.hasPrefix("/"), Set(ChatPaste.tokens(in: prompt)).isSubset(of: Set(ui.heldTokens)) else { return finish(.refused("Claude’s prompt already holds “\(prompt.prefix(40))”")) }
             if !ui.heldTokens.isEmpty, let why = await removeImageTokens(plan.remove, from: prompt) { return finish(.refused(why)) }
             let left = ui.heldTokens.isEmpty ? prompt : reread().input ?? ""
@@ -111,7 +116,7 @@ extension ChatSession {
         defer { sending = false }
         if !(s.input ?? "").isEmpty {
             // A dim suggestion reads as text on the screen (F-108): only the real buffer says whether the prompt holds any.
-            let real = usesExternalEditor ? await peekPrompt() : nil
+            let real = usesExternalEditor ? await peekPrompt() : (await promptIsSuggestion()).map { $0 ? "" : "text" }
             guard let real, real.isEmpty else { return finish(.refused("Claude’s prompt holds text, which \(command) would join into a message to Claude")) }
         }
         guard reread().kind == .idle else { return finish(.refused("Claude Code’s screen changed before \(command) was sent")) }
@@ -149,6 +154,30 @@ extension ChatSession {
         }
         try? FileManager.default.removeItem(at: ChatCompose.handoverFile(dir, composeKey))
         return nil
+    }
+
+    /// Whether the words the screen shows in Claude's prompt are only a dim suggestion (paste mode, where Ctrl+G can't
+    /// ask). The screen can't tell them from typed text (F-108), but a typed key replaces a suggestion and joins real
+    /// text (F-303): type a space, read the prompt, take the space back. Nil when the screen can't be read.
+    public func promptIsSuggestion() async -> Bool? {
+        let before = reread()
+        guard [.idle, .busy].contains(before.kind) else { return nil }
+        let wasSending = sending
+        sending = true
+        defer { sending = wasSending }
+        terminal?.sendKeys(" ")
+        await pause(200_000_000)
+        let after = reread()
+        guard [.idle, .busy].contains(after.kind) else { return nil }
+        let verdict = Self.isSuggestion(before: before.input ?? "", afterSpace: after.input ?? "")
+        terminal?.sendKeys(ChatKey.backspace.bytes)
+        await pause(200_000_000)
+        return verdict
+    }
+
+    /// The prompt read `before` a typed space and `afterSpace`: a suggestion is gone (or was empty) once a key is typed.
+    public static func isSuggestion(before: String, afterSpace: String) -> Bool {
+        !before.trimmingCharacters(in: .whitespaces).isEmpty && afterSpace.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     /// The prompt on screen shows the text: whole, or its start, or (a long input scrolls inside the

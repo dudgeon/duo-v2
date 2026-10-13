@@ -1,0 +1,33 @@
+ ▐▛███▜▌   Claude Code v2.1.219
+▝▜█████▛▘  claude-haiku-5-5 · API Usage Billing
+  ▘▘ ▝▝    /private/tmp/c219p-8931/ws
+
+
+❯ SCENARIO:bash                                                                                     
+
+⏺ Running a command.
+ 
+  Read 1 file (ctrl+o to expand)
+
+⏺ Done. The tool said: "hello"
+
+✻ Crunched for 0s
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⚠ Transcript saving is off — inherited CLAUDE_CODE_CHILD_SESSION marker · restart with CLAUDE_COD…
+  ⏸ manual mode on                                                                ● high · /effort
+
+
+
+
+
+
+
+
+
+
+
+
+

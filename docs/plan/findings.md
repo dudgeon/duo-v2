@@ -3430,3 +3430,27 @@ DL-183's spike of ENH-70. The mod is `Mods/duo-signal`. Duo's side is `Chat/Chat
   4. A run on Geoff's real login.
 
   **The canary could ship ahead of the sensor**, doctor-only, as the cheap way to learn whether mods would run on Geoff's Macs before anyone commits to the sensor. It costs two background `claude` runs per launch on a CLI with mods (validate is cached, `plugin test` takes 0.24 s), and on 2.1.219 one `--version`. Where it shows beyond doctor is Q-189.
+
+## F-303 · On 2.1.219, a send after a prompt suggestion fell back: the suggestion read as typed text (fix/chat-219-answer, 2026-10-12)
+
+The duo-signal spike (F-297) saw "didn't send your answer" on the work Mac's 2.1.219 in scripted runs. It happened with the flag on and with it off.
+- **What failed.** The answer to the Bash permission went through. The send after it failed: "your text didn't appear in Claude's prompt as sent". The AskUserQuestion that followed never came, so its answer fell back too ("the terminal shows idle, not a question").
+- **Root cause.** After a turn, Claude Code draws a dim **prompt suggestion** in the empty prompt. The mock's is `ok`; the real API's is a likely next message. Duo's terminal gives no cell attributes (F-108), so the screen reads it as typed text (`input="ok"`).
+  - Below 2.1.269 (and with Ctrl+G rebound), send pastes. It carried the words ahead of the text, as it does for a drafted task path (F-254), and expected `ok SCENARIO:ask1`.
+  - The suggestion vanished under the paste, so the prompt showed ` SCENARIO:ask1` and the echo check refused.
+  - The model and effort chips refused for the same reason ("Claude's prompt holds text").
+  - 2.1.296 draws the same suggestion. Its Ctrl+G path asks the real buffer (`peekPrompt`), so it was never affected. On the work Mac, every send that followed a suggestion failed.
+- **Measured** (the real TUI in a PTY on the mock, 2.1.219 and 2.1.296 alike; screens in `Spikes/chat-mode/screens/suggestion-2.1.219/`):
+  - Over a suggestion, a typed space leaves the prompt empty, and Backspace draws the suggestion again.
+  - Over typed text, the space joins it (`ok `).
+  - A paste replaces a suggestion.
+- **Fix.** `ChatSession.promptIsSuggestion()` (`ChatSend.swift`) is used in paste mode when the screen shows words in the prompt and there are no held pictures or composer basis. It types a space, rereads, and takes the space back with Backspace. Then:
+  - A suggestion counts as an empty prompt, so nothing is carried and the echo is just the text.
+  - Real words are carried as before.
+  - An unreadable screen refuses.
+  - `openPicker` uses the same probe in paste mode.
+  - With real text in the prompt, a refused chip now sends a space and a Backspace first, and still no paste and no Return (`ChatChipChecks`).
+- **Proof.**
+  - `Spikes/duo-signal/live.sh`, flag off, the spike's script: every send was ok, and the AskUserQuestion's card came up after the Bash turn (`screen=question card=true`, no fallback), on 2.1.219 and on 2.1.296. Main's build on 2.1.219 fell back as the spike saw.
+  - `ChatChecks`: the 42-column 2.1.219 screen reads idle with input `ok`; the recorded probe screens; the pure decision (`isSuggestion`); and a `FakeTUI` send in paste mode over a suggestion that pastes exactly the text, with no `ok` and no leading space.
+  - chat-live has a suggestion case after the Bash turn, on the default path and forced paste. The suite sets `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`, which turns suggestions off, so the case skips there with a note; `live.sh` is the end-to-end run with them on.

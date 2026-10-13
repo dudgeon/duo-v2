@@ -1,0 +1,4 @@
+Claude Code draws a dim prompt suggestion ("ok") in the empty prompt after a turn; the text screen cannot tell it from typed text (F-108, F-303).
+idle-suggestion.txt: the 42-column screen Duo terminal held on 2.1.219 with the suggestion showing.
+a-idle-*: 100-column PTY probe, suggestion showing. b-space-*: after a typed space the prompt reads empty (the suggestion is replaced).
+g-typed-space-2.1.219.txt: real typed "ok" then a space; it reads "ok " (a typed key joins real text).
