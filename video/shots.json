@@ -1963,10 +1963,32 @@
         "dur": 0.8
       },
       {
+        "id": "beta-open",
+        "at": {
+          "line": 6,
+          "word": "view",
+          "offset": 0.6
+        },
+        "click": "video.board.card.Weekly digest draft",
+        "in": "video-s9-board",
+        "state": "video-s9-beta"
+      },
+      {
+        "id": "beta-leave",
+        "at": {
+          "line": 6,
+          "word": "sessions",
+          "offset": 0.9
+        },
+        "click": "video.crumb.all",
+        "in": "video-s9-beta",
+        "state": "video-s9-board"
+      },
+      {
         "id": "return",
         "at": {
           "line": 6,
-          "word": "return"
+          "word": "where"
         },
         "click": "video.board.card.Auto-add decision",
         "in": "video-s9-board",
@@ -2007,6 +2029,15 @@
         "what": "Leave to All projects and return to the project as it was left",
         "by": [
           "#leave",
+          "#return"
+        ]
+      },
+      {
+        "what": "Out to All projects, into a different project (beta-feedback: its own sessions, files, terminal and PROJECT.md), then back to shelf-scan as it was left",
+        "by": [
+          "#leave",
+          "#beta-open",
+          "#beta-leave",
           "#return"
         ]
       }
