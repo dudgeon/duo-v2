@@ -98,6 +98,7 @@ public final class SearchService {
                 var a = a; a.changed += b.changed; a.embedded += b.embedded; a.chunks += b.chunks; a.deferred += b.deferred; return a
             }
             let released = engine.embedder.releaseIfIdle(after: idleRelease)
+            QueryEmbedder.releaseIfIdle(after: idleRelease)
             engine.index.shrinkMemory()
             FileHandle.standardError.write(Data("search: pass \(total.changed) files changed, \(total.chunks) chunks (\(total.embedded) embedded), \(total.deferred) waiting, model \(released ? "released" : engine.embedder.isLoaded ? "loaded" : "idle"), \(Int(Date().timeIntervalSince(began) * 1000)) ms\n".utf8))
             return (out, engine)

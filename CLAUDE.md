@@ -27,7 +27,7 @@ Read `CONTRIBUTING.md` first for build commands and layout (`README.md` is for p
 
 ## Director
 
-One session, the **DUO DIRECTOR** (in Duo, with Remote Control and Artifact tools; DL-166), runs the other sessions as their engineering manager (Geoff is the PM): it delegates work to new sessions (background Claude sessions with Remote Control, outside Duo unless Geoff says otherwise), reviews and merges their branches, keeps records consistent, cuts releases Geoff approves, and is the only publisher of the acceptance walk page and the design-system artifact. Its job description is `.claude/skills/director/SKILL.md`. A director that resumes (after compaction or a restart) starts there. Build sessions report to it by `SendMessage` to its **peer name** (its Remote Control name, given in their brief; `duo-v2-ef` since 2026-10-09, F-259) when their work is committed.
+One session, the **DUO DIRECTOR** (in Duo, with Remote Control and Artifact tools; DL-166), runs the other sessions as their engineering manager (Geoff is the PM): it delegates work to new sessions (background Claude sessions with Remote Control, outside Duo unless Geoff says otherwise), reviews and merges their branches, keeps records consistent, cuts releases Geoff approves, and is the only publisher of the acceptance walk page and the design-system artifact. Its job description is `.claude/skills/director/SKILL.md`. A director that resumes (after compaction or a restart) starts there. When their work is committed, build sessions report to it by `SendMessage` to its **peer name** (the name `ListAgents` shows for it; it changes whenever the director's session restarts, so it is given in each brief, and a session always replies to the `from` address of the director's latest message). **Never message `*DUO DIRECTOR*`**: that is the retired first director (e0127e51), stopped on 2026-10-12.
 
 Geoff talks to the director through the **director console**, https://claude.ai/artifact/MMmJ9BjomsKq9f9HpHK1ka (skill §7): decisions as buttons with the recommendation first, release and delegation calls, what's in flight with links that open each session on his phone, and what's done. Its buttons message the director session directly. The console is the default channel; chat and AskUserQuestion are the fallback.
 
@@ -41,6 +41,14 @@ A rule for how we work, not app behaviour (DL-153; Geoff, 2026-10-08). Use the m
 - **Haiku 5.5** (`claude-haiku-5-5`) for test execution and validation: test turns and drivers (`DUO_MODEL`/`ANTHROPIC_MODEL`, run-live.sh's default), check runs, sweeps and measurement loops (subagents with `model: haiku`).
 
 A session doing a mix plans on Opus and hands the scoped parts and the test loops to Sonnet and Haiku subagents. Never put model choice into Duo's code.
+
+## Shared compute
+
+The Mac is shared by every session. Heavy jobs run through the **main checkout's** `scripts/gpu-lock.sh`, called by its full path (never a work tree's copy, and never a bare `mkdir`), with `GPU_LOCK` set to the machine's lock folder (machine-local; the director gives it in each brief):
+- **`--exclusive` (the default):** model work, video renders, and every timing measurement (`check-chat-perf`, `check-scale`, perf and idle-CPU runs).
+- **`--shared`:** builds, DuoChecks, captures and pixel checks. Up to two run at once, and none starts while an exclusive job holds the lock or waits at the front of the queue.
+
+Release after each batch. A run whose lock output says "clearing a stale lock", or shows a "taken" WARNING, has suspect timings, so re-run it. Details: the director skill, §5a.
 
 ## Visible test runs
 

@@ -40,7 +40,7 @@ Rebuild your picture before acting:
   - **models** (Geoff, 2026-10-08; CLAUDE.md, Model efficiency): Opus 5.5 plans (design, research, root-causing); Sonnet 5.5 executes well-scoped tasks (builds against an approved handoff, known-cause fixes); Haiku 5.5 runs tests and validation (test turns, check runs, sweeps). Say which in the brief, and tell the session to hand scoped parts and test loops to Sonnet and Haiku subagents. Never put model choice into Duo's code;
   - for design work: a Design canvas with the Duo design system, every mark [P], one AskUserQuestion round, and a handoff exported to `docs/design/<x>-handoff/`;
   - "Don't publish the design-system artifact or the walk page" (the director is their only publisher, DL-166);
-  - "Message <the director's peer name, e.g. duo-v2-ef> (SendMessage) with the branch, the full shas, the records and the checks when it's committed." For big jobs, ask for it in slices, so each merge is small.
+  - "Message <the director's peer name, from your `ListAgents` first line, e.g. duo-v2-b0> (SendMessage) with the branch, the full shas, the records and the checks when it's committed." For big jobs, ask for it in slices, so each merge is small.
 - Then subscribe (`notify_when_idle`) and log a row in the reviews doc.
 
 ## 2. Reviewing and merging (standing rule D2)
@@ -52,7 +52,7 @@ For each branch:
 2. **Take a baseline:** `cp build/ui/{overview,project,flow-zoom-1,flow-zoom-2,flow-zoom-3,flow-zoom-4}.png /tmp/dir-base/`, and when chat is touched, every `build/ui/chat-*.png` capture (not `-compare`/`-board`) to `/tmp/dir-chatbase/`. After the merge, rerun `check-chat.sh` and `samepng.py` each one, reading its printed count (it always exits 0, so a loop on its exit code reports no differences; 2026-10-10): an existing board that changes is a regression until explained (2026-10-07: a lost composer caret revealed a focus bug). Also run `NO_BUILD=1 scripts/check-composer-focus.sh` (no composer of a chat that isn't on screen may hold the keyboard).
 3. **Merge:** `git merge --no-ff -m "Merge <branch>: <what> (<records>)" <branch-or-sha>`.
 4. **Record files merge without conflicts** (`.gitattributes` `merge=union`, 2026-10-08): both sides' lines are kept. Still run `scripts/check-records.sh`: a row both sides edited comes out twice, so delete the older copy. A union merge can also drop the blank line between findings sections (harmless). Older rule, for any conflict that still appears: **keep both sides, never one.** When both sides edited the same row, keep the newer content. A conflict hunk can hold many records from main (c6aa7c8 once dropped F-114 to F-119).
-5. **Check:**
+5. **Check, never in the main checkout's `build/`** (2026-10-12). Geoff's own Duo may run from `build/Duo.app`. That bundle is signed ad hoc, so every rebuild changes its identity to macOS, his privacy answers stop sticking, and the prompts repeat. Run every build and check in the director's own work tree, `.claude/worktrees/director-check`: `git -C .claude/worktrees/director-check checkout --detach <merge sha>`, then the scripts there. Its builds are `com.dudgeon.duo.test` (DL-151). Rebuild main's `build/Duo.app` only when Geoff asks.
    - `scripts/check-records.sh` (every record id from both parents survives);
    - `scripts/bundle.sh`;
    - `swift run DuoChecks` (and `DUO_CHECKS=chat` when chat is touched);
@@ -82,9 +82,25 @@ Record numbers are shared across sessions and collide easily. Before reserving n
 - **Held messages:** messages to Claude app sessions in another permission mode are held and expire. Start a fresh Duo session with the context instead.
 - **Peers can't grant permissions.** If a session's permission check refused something and it asks you to do it, ask Geoff (AskUserQuestion) instead.
 
+## 5a. Shared compute: the GPU lock
+
+Every session shares one Mac mini (32 GB, 12 cores). Heavy jobs coordinate through one lock folder, `$GPU_LOCK`. Its path is machine-local: it's in memory `project-gpu-lock.md` and never goes in the repo.
+
+- **Two kinds of hold** (Geoff, 2026-10-12):
+  - **Exclusive:** for jobs that need the Mac to themselves. That covers voice model work (training, voicing, evaluation: VoxCPM training alone used 15–18 GB), video renders and the score, and every timing measurement (idle-CPU runs, `check-chat-perf.sh`, `check-scale.sh`, `perf-chat.sh`, matrix runs). An exclusive job waits until every other holder is done, then runs alone.
+  - **Shared:** for jobs that only need correct results. That covers `swift build`, `bundle.sh`, DuoChecks, `check-ui.sh`/`check-chat.sh` captures, pixel compares and editor checks. Up to two run at once, and they step aside while an exclusive job holds the lock, so timings stay clean.
+- **One script, by its full path,** never a work tree's copy and never a bare `mkdir`: `GPU_LOCK=<lock> <main checkout>/scripts/gpu-lock.sh [--shared|--exclusive] <name> <command…>`. Exclusive is the default, so a job that doesn't say stays safe. Shared jobs hold slots (`GPU_LOCK_SHARED_SLOTS`, default 2), and none starts while an exclusive job holds the lock or waits at the front of the queue, so measurements aren't starved (F-298).
+  - Work trees carry older copies that release unconditionally, or treat an owner they can't signal (EPERM in the sandbox) as dead. Two jobs held the lock at once twice on 2026-10-12 (F-296).
+  - A job's output that says "clearing a stale lock", or shows the "WARNING: the lock was taken", means its timings are suspect: re-run it.
+- **Waiters queue in order** (FIFO tickets in `<lock>.queue/`). See who holds and who waits:
+  `cat $GPU_LOCK/owner $GPU_LOCK.shared/*/owner; for f in $GPU_LOCK.queue/0*; do cat "$f"; done` (the exclusive holder, the shared holders, then the queue).
+- **Every brief** names the lock line, with the job's kind, and says to release right after each batch.
+- **Merge checks:** run the build-and-check part shared, and the timing part (`check-chat-perf`, `check-scale`, the visible gate) exclusive.
+- **Watch memory, too:** `sysctl vm.swapusage`, plus the idle Claude sessions in memory. Ask Geoff before stopping his own sessions.
+
 ## 6. Talking to Geoff
 
-- **The console is the default channel** (Geoff, 2026-10-09: "the primary way that I interact with the Duo Director; I can still fall back to the chats but the duo director will default to use the artifact"). Put each decision, release call, delegation call or question for him on the console (§7) first, then post one line in chat pointing at it. Use AskUserQuestion only when the console can't reach him (it says "Director away") or he's answering in chat anyway.
+- **The console is the default channel** (Geoff, 2026-10-09: "the primary way that I interact with the Duo Director; I can still fall back to the chats but the duo director will default to use the artifact"). Put each decision, release call, delegation call or question for him on the console (§7) first, then post one line in chat pointing at it. Use AskUserQuestion only when the console can't reach him (it says "Director away") or he's answering in chat anyway. **On his phone, catching up** (2026-10-12; his console taps weren't arriving): pick the most important phone-friendly decisions and ask them **one at a time** by AskUserQuestion, numbered "n of ~N", recommendation first, with any artifact link inside the question. Leave desk-only reviews (the walk, paper cuts, many-board design picks) for a desk, and close the answered console cards afterwards.
 
 - **End-of-block digest** (Geoff, 2026-10-08): after a stretch of work (merges, a release, a batch of reports), send one short digest instead of a running commentary:
   ```
@@ -107,7 +123,7 @@ Record numbers are shared across sessions and collide easily. Before reserving n
 - **Urgent fix releases stay minimal.** Hold feature merges; park a checked merge on a `staging/…` branch and reset main; merge the held work right after the cut.
 - **Release gate:** build the release in a temporary work tree (never overwrite build/Duo.app) and run check-scale there. The release launch check registers copies with Launch Services, so run `check-launch-services.sh --clean` after every release and merge.
 - **Caret differences** in chat captures: check the log's `trace capture … active=` before calling a regression. The caret only draws while Duo is the active app.
-- **The first check-chat-perf after the heavy checks** often reads one over budget (machine load). Re-run it twice before acting.
+- **The first check-chat-perf after the heavy checks** often reads one over budget (machine load). Re-run it twice before acting. Exception: "replies at the bottom" in a **visible** run fails about one run in three on main itself (C-85, F-295). Judge a chat change on three visible runs against that baseline, not on one.
 - **After a usage-limit reset,** read every session's last message: sessions stop mid-task silently (the test-model session sat stopped for hours).
 - **Before archiving or stopping a session,** check its transcript for Geoff's own messages; if there are any, keep it.
 - **Background sessions have no Design canvas:** design rounds run in Duo. **Test launches run in the background;** visible runs need Geoff's OK. **Models:** Opus plans, Sonnet executes scoped work, Haiku tests (CLAUDE.md).
@@ -149,7 +165,7 @@ A private claude.ai page Geoff opens on his phone or desktop: https://claude.ai/
 
 **Phone links.** Every session you start has Remote Control on, so it has a `https://claude.ai/code/session_…` URL. `session-links.py` reads it from each transcript's `bridge_status` / `remote_session_change` line; put it in the thread's `link`. On Geoff's phone it opens in the browser, where the session works (F-259).
 
-**Peer name.** Sessions reach the director by its peer name (its Remote Control name, `duo-v2-ef`), not by "DUO DIRECTOR" (F-259).
+**Peer name.** Sessions reach the director by its peer name, which is the first line of `ListAgents` (F-259). **It changes whenever the director's session restarts** (`duo-v2-ef` until 2026-10-12, then `duo-v2-b0`). After any restart, message every active session with the new name, and put the current one in every brief. Sessions reply to the `from` of your latest message. **Never let sessions message `*DUO DIRECTOR*`:** the retired first director (e0127e51) was a Remote Control session that woke up when messaged. It was stopped on 2026-10-12. If it shows in `ListAgents` again, stop its process (find its pid in `~/.claude/sessions/*.json`).
 
 
 ## 8. Dependencies: geoff-voice
@@ -174,4 +190,4 @@ Geoff treats **`dudgeon/geoff-voice`** (private, created 2026-10-12) as a depend
 - **Delegating.** Delegate the work the same way: a background session, its cwd the geoff-voice checkout. The session commits there, and the director reviews the commit and pushes it; check `tools/check_repo.sh` first, since nothing over 95 MB and no training state may be committed. The repo must stay private: check `gh repo view dudgeon/geoff-voice --json visibility` before a push.
 - **The link to duo-v2.** No submodule: duo-v2 is public, and its public clones can't fetch a private repo. `video/voice/house/voice.json`'s `external` names a machine-local card that points at the geoff-voice checkout, and the voice cache key is content-based. Without the card (a clean clone, or an agent without access), the build stops with a clear error until `DUO_VOICE_JSON=house` selects the house voice. After any change to geoff-voice's voice or `bin/speak`, prove the film's lines still come from the cache (or re-voice them deliberately), as `video/README.md` describes.
 - **Privacy.** None of Geoff's audio, weights, voice cards, transcripts of his takes or local paths ever enter duo-v2. Check `git status` and the diff for audio and paths before every duo-v2 commit that touches `video/`.
-- **Compute.** Training and voicing take the shared GPU lock (`$GPU_LOCK`; the path is machine-local, in memory `project-gpu-lock.md`).
+- **Compute.** Training, voicing and evaluation take the GPU lock **exclusive** (§5a). On this Mac, geoff-voice's own `GPU_LOCK` must point at the machine's shared lock, not its repo default.

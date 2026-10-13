@@ -1,0 +1,20 @@
+[
+  {"sleep": 7000},
+  {"dump": "01-start"},
+  {"type": "SCENARIO:long write a lot"}, {"sleep": 300}, {"key": "enter"},
+  {"sleep": 1500}, {"dump": "02-busy"},
+  {"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*Line 40", "timeout": 200},
+  {"sleep": 1500},
+  {"type": "SCENARIO:bash"}, {"sleep": 300}, {"key": "enter"},
+  {"wait": "Do you want", "timeout": 150}, {"sleep": 1000}, {"dump": "03-permission"},
+  {"key": "1"},
+  {"wait": "^(?![\\s\\S]*esc to interrupt)[\\s\\S]*hello", "timeout": 150},
+  {"sleep": 1500},
+  {"type": "SCENARIO:ask1"}, {"sleep": 300}, {"key": "enter"},
+  {"wait": "Enter to select", "timeout": 150}, {"sleep": 1000}, {"dump": "04-question"},
+  {"key": "esc"},
+  {"sleep": 2500},
+  {"key": "shift-tab"}, {"sleep": 1500}, {"dump": "05-mode1"},
+  {"key": "shift-tab"}, {"sleep": 1500}, {"dump": "06-mode2"},
+  {"sleep": 1000}
+]

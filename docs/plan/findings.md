@@ -3363,3 +3363,85 @@ All three of C-80's findings were real in the code.
 - **Not the cause, also fixed.** `alive()` called any `kill -0` failure dead, but `kill -0` also fails with "not permitted" (pid 1, another user's process, a sandboxed shell), and then a live owner's lock would be cleared. It now asks `ps -p` before calling an owner dead. The orphan rule was safe: removing `owner` refreshes the lock dir's mtime, so a lock in mid-release never looks a minute old.
 - **Fix.** `gpu-lock.sh` releases only a lock whose `owner` is still its own line, and a watcher warns if the lock is taken from under a running job. `matrix.sh` and `heap.sh` release only their own lock. `visible-gate.sh` and `visible-chat-again.sh` belong to the codebase-review session and need the same guard, and a single release.
 - **Proof** (`scripts/check-gpu-lock.sh`), three new cases. H waits behind an owner it can't signal (pid 1). A bare holder releases and re-takes 40 times in a tight loop while two waiters are queued: no overlap. A double release deletes Q's lock while Q runs: Q warns, and its release leaves the next holder's lock alone. Run against main's previous script, H and the double-release case both fail.
+
+## F-298 · The GPU lock has shared and exclusive holds (video/gpu-lock-shared, 2026-10-12)
+
+- **Why.** Geoff's shared-compute rule (CLAUDE.md, director skill §5a): builds, DuoChecks, captures and pixel checks only need correct results, so two can run together; model work, renders, the score and timing measurements need the Mac to themselves. Until now every job was exclusive, so a 25-minute render kept every quick check waiting.
+- **How.** `scripts/gpu-lock.sh [--exclusive|--shared] <name> <command…>`; exclusive is the default.
+  - An exclusive hold is the lock directory itself, as before. A shared hold is a slot directory, `<lock>.shared/<n>/owner`, with `GPU_LOCK_SHARED_SLOTS` slots (default 2).
+  - Only the front ticket of the FIFO queue may take a hold. A shared job at the front waits while an exclusive job holds the lock; an exclusive job at the front takes the lock directory at once, so no new shared job starts, then waits for the shared jobs already running ("holding the lock, waiting for N shared job(s)"). So an exclusive waiter is never starved by a stream of shared jobs.
+  - The race between the two is ordered like a flag protocol: an exclusive job takes the lock, then reads the slots; a shared job takes a slot, then reads the lock, and steps back if it's held. Of two that race, at least one sees the other, and the shared one is always the one to step back.
+  - Kept from F-294 and F-296: the queue, releasing only one's own hold, an owner it can't signal counted as alive, dead holders and ownerless holds cleared (now in the slots too), and the "taken" warning (for a shared slot too). A stale hold is cleared only if its owner is still the dead one just read.
+  - A bare `mkdir <lock>` still keeps exclusive and new shared jobs out, but doesn't wait for shared jobs already running, so it's no longer supported. An older copy of the script doesn't know the slots either: call the main checkout's copy by its full path.
+- **Proof** (`scripts/check-gpu-lock.sh`, about 35 s). The F-294 and F-296 cases still pass. New: three shared jobs on two slots (two overlap, the third waits for a slot); a shared job running, then an exclusive waiter, then a shared one (the exclusive waits for the first, the second shared waits behind the exclusive although a slot is free, and the exclusive runs alone); a mix of 12 jobs, every third exclusive (no exclusive job ever overlaps another job, never more than 2 shared, every hold released); dead holders in both slots, cleared by an exclusive job and by a shared one.
+
+## F-300
+**Search typing path (codebase review task 7).** Each keystroke in search's field built a Core ML `Embedder` (model plus a 30k-line vocabulary), opened a `SearchIndex` twice (once on the main thread for `indexState()`, once for the query) and started a query at once; the List's filter did the same.
+- **Built (`fix/search-typing`):**
+  - `QueryEmbedder.shared()` loads the query model on the first semantic query and keeps it, for search and the List filter. `QueryEmbedder.release()` drops it (for an idle unload; coordinate with idle-cpu-fix, who owns `SearchService`'s indexing embedder).
+  - A typed query waits 120 ms for the next keystroke and is cancelled by it (`SearchUI.queryTask`). Filters, recents, Esc-back and find-similar skip the wait (`immediate: true`). The names block still answers at once.
+  - The index's state (`modelMatches`) is read in the same detached task that queries, from the one `SearchIndex` it opens; `AppModel.indexState()` is gone. A fixture's `forcedIndexState` is still answered on the main thread.
+  - `SQLiteDB.Statement.withBlob` reads vectors in place; `semanticChunks` no longer copies a `Data` per row.
+- **Proof:** `swift run DuoChecks` 1320 passed (`withBlob` equals the copying accessor; with the model present, 30 queries load it once and `release()` makes the next load again); `check-ui` states byte-identical to main's captures. The golden set and the model-load check are skipped in a work tree, so they run on main.
+## F-297 · duo-signal, the sensor mod, spiked: it works and fails safe, but buys little (spike/duo-signal, 2026-10-12)
+
+DL-183's spike of ENH-70. The mod is `Mods/duo-signal`. Duo's side is `Chat/ChatSignal.swift`, behind `DUO_SIGNAL=1` and off by default. The checks are `DuoSignalChecks.swift`, and the runs are in `Spikes/duo-signal/`. Every run was the real TUI against the chat-mode mock: no login and no tokens.
+- **What it is.** A sensor that draws nothing. Its hooks only note state and pass every event on unchanged: `turn.start` and `turn.complete` (busy, plus `isAborted` for an interrupted turn), `tool.check` answering `ask` (the permission question: tool, id, input), `tool.call` (closes the question), and `PromptHint` (`isWorking`, `isDraft`). A 100 ms `$.clock.every` timer, started at `session.start`, writes one JSON snapshot to `$DUO_SIGNAL_FILE` (`events/<launch id>.signal.json`). It writes within 100 ms of a change and every 500 ms as a heartbeat.
+- **How it reaches a session.** Duo copies the mod to `<support>/mods/<build>/duo-signal`, read-only (F-280). It passes `--plugin-dir` only when all of these hold: the flag is on, the CLI's version is known and is 2.1.287 or later, and `claude plugin validate` passed on that CLI. Validation takes 0.34 s, runs off the main thread at launch, and is remembered per claude and version in `validated.json`, because restored tabs start before a first validation could finish. Chat reads the file only for a session that got the mod, every 50 ms on screen and every 2 s off it.
+- **What chat takes from it.** While the snapshot is fresh (under 1.5 s old), chat takes busy and idle from it, and only over an idle or busy screen. Dialogs, pickers and unknown screens stay the screen's. It also sets Claude's request ahead of the PermissionRequest hook when none has arrived yet. Stale, missing or unparsable, it changes nothing.
+- **Mod facts (2.1.296).**
+  - `SessionMode`, the footer's mode labels, is never raised on the terminal, so the mode can't come from a mod and stays the screen's.
+  - `$` can't be kept or passed (`claude plugin validate` refuses it), so every write spells `$.fs.write` where it happens.
+  - Screens with the mod are the same as without it, 6 of 6 (`same-screens.sh`).
+- **Faults, the mod alone.**
+  - **Syntax error:** the session works, but Claude draws `⏺ duo-signal: hooks module did not load: … does not parse` in the terminal. That is why Duo validates on each CLI before passing the mod.
+  - **Hook that throws:** its `.catch` passes the event on and nothing shows.
+  - **Hook that waits at a gating site:** this is the dangerous one. A `tool.check` hook that sleeps held the Bash dialog back 10 s. The engine then replaced the hooks worker, drew "hooks worker was replaced" rows, and **rejected the next AskUserQuestion** ("The user doesn't want to proceed"). So the mod's hooks hold no I/O and no waits, and only the timer writes. A DuoChecks scan holds the mod to that.
+- **The work Mac's CLI (Q-176).** I ran Anthropic's signed 2.1.219 from npm with the mod by `--plugin-dir`: no error, the same screens as without it, and no signal. Through Duo with `DUO_SIGNAL=1`, 2.1.219 got no `--plugin-dir`, no validation and no copy of the mod, and chat's states matched flag-off exactly.
+- **Measured** (`live.sh` × 3 with the flag and × 3 without, `analyze.py`):
+  - **Permission and question card up after the dialog draws:** median 9 ms (0–98) with the signal, against 72 ms (1–268) on the hook alone. The signal's request led the hook's by about 50 ms.
+  - **Busy:** no lead. The signal was never more than 2 ms ahead of the screen (median 0 over 10 starts). On 3 starts it trailed by 75–128 ms, its timer again.
+  - **Idle:** the signal is later, by a median of 28 ms and up to 225 ms. Its 100 ms timer trails the TUI's redraw, so chat holds busy that much longer.
+  - With the mod alone, the signal's busy, permission and question are within ±30 ms of the screen.
+- **The canary (Geoff, 2026-10-12; Q-189).** At each launch, in the background and whatever the flag, Duo checks four steps and writes `<support>/mods/canary.json`. `duo2 doctor` prints it as a summary line and one marked line per step.
+  1. **The CLI has mods.** On 2.1.219 the canary only asks `--version`, then says "not available … Duo works as before".
+  2. **Duo can install its mod:** the copy and `claude plugin validate`.
+  3. **Mods may run here:** `claude plugin test` runs `hooks/canary.test.ts`. It loads the mod in the hooks' own environment, starts a mock session and checks that a snapshot is written. That takes 0.24 s, with no session and no tokens. With `disableAllHooks` it fails with the CLI's own words, "hooks modules are turned off here (disableAllHooks, allowManagedHooksOnly or a policy)", and Duo then stops passing the mod. The CLI also has a "turned off remotely" answer for its rollout switch.
+  4. **Duo's mod loads in sessions:** only with the flag on. It is ok at the first snapshot from a session started with the mod, and failed if that session stays silent for 20 s, which names the policy, trust and crash causes.
+
+  - **No answer is no verdict.** On a loaded Mac (six sessions queued for the GPU lock) `claude plugin validate` outlasted its 10 s limit. The first build stored that as a refusal and doctor said "refuses it: no answer". Now a CLI that doesn't answer within 30 s gets no verdict ("no verdict yet"): nothing is remembered, nothing is passed, and the next launch asks again.
+
+  A managed `allowManagedModsOnly` policy isn't tested here: it needs admin rights and would change the whole Mac. Step 4 is what would catch it.
+- **The canary in Duo** (`live.sh`, 2.1.296 unless named). `duo2 doctor` printed:
+  - Flag off: "available".
+  - Flag on: "working", with a session's report.
+  - 2.1.219: "not available … Duo works as before", and the CLI was asked only `--version`.
+  - `disableAllHooks`: "not working" in the CLI's words, and the silent-session step caught it too. From the next launch Duo passes no `--plugin-dir`, going by the last launch's refusal.
+- **Freeze gates (C-84)** on the release build. `check-scale` and `check-chat-perf` ran under the GPU lock; the build and the board captures under its shared hold.
+  - DuoChecks: 1347 passed, 0 failed.
+  - `check-scale`, flag off: CPU 1.4%. Flag on: CPU 1.5%. No stalls either way, and the restore came back.
+  - `check-chat-perf`: 7 of 7 within budget.
+  - `check-chat`: 100 of 100 boards identical to main (`samepng.py`).
+- **Not tested:** a managed `allowManagedModsOnly` machine and the real CLI login. Both would show as no signal, which is the fallback. `check-sandbox.sh` doesn't apply: the mod writes a file from Claude's own process, never through Duo's socket or a Bash command.
+- **Recommendation: don't ship it now; keep the branch as the reference.** Its gains are a card up about 60 ms sooner and busy that survives screens chat can't read. C-78's content search already covers the screen side. It costs an early-access API that may change in any release, a validation per CLI, a timer per session, and one more state source to reconcile. Ship it if chat's screen reading breaks again in a way the footer search can't fix, or if a later Claude Code raises `SessionMode` or gives mods the mode. To ship:
+  1. A Settings switch in place of the env flag (designed first).
+  2. A lower write latency for idle: write at `turn.complete` itself, which is safe because it isn't a gating site.
+  3. A check that a session with the mod still matches main across `check-chat`'s live states.
+  4. A run on Geoff's real login.
+
+  **The canary could ship ahead of the sensor**, doctor-only, as the cheap way to learn whether mods would run on Geoff's Macs before anyone commits to the sensor. It costs two background `claude` runs per launch on a CLI with mods (validate is cached, `plugin test` takes 0.24 s), and on 2.1.219 one `--version`. Where it shows beyond doctor is Q-189.
+## F-299 · Web view lifetimes (fix/web-lifetimes, C-83, DL-178, 2026-10-12)
+
+- **A closed browser tab is released.**
+  - `WebTab` now gives WebKit a `WeakScriptHandler` proxy instead of itself, because a `WKUserContentController` retains its handlers.
+  - `WebTab.close()` (called by `closeWebTab`, which every close path reaches: the tab's x, `duo2 browser close`, `window.close()`) stops the page, cancels a running download, drops the KVO observers and the delegates, and calls `removeAllScriptMessageHandlers`.
+  - DuoChecks hold a closed tab and its web view weakly and expect both to be gone; a tab dropped without `close()` is released too, which proves the proxy alone breaks the cycle.
+- **Restored tabs load on first show.** `applyRestore` calls `WebTab.defer_(url)`, so the tab has its address and a title and loads nothing. `WebTabHost.updateNSView` calls `loadIfDeferred()`, and so does every `duo2 browser` verb that targets the tab. `WebTab.url` falls back to the deferred page, so the next save keeps it, and a tab never shown stays in the restore file.
+- **Viewer timers stop when hidden.** `HTMLViewer` and `DeckViewer` got `sleep()` and `wake()` like `DocxViewer`'s: the one-second poll stops when the pane doesn't show them, and a file that changed meanwhile reloads on wake.
+- **DL-178.**
+  - `duo2 browser allow <host>` asks through a `SheetCenter` sheet ("Allow x in Duo's browser?"). `DUO_AUTOCONFIRM=1` answers yes; a host already on the list needs no question. The reply waits for the answer, and "Don't Allow" fails the verb.
+  - A tab's `file:` pages stay inside its project's folder (`WebTab.fileRoots`, set when the tab is made, restored or opened as a popup). The check resolves the folder's symlinks, so a link out of the project doesn't lead outside it, and a sibling folder that shares the prefix isn't inside.
+- `ChatStore.forget` on close was already on main (fix/idle-cpu); not redone.
+- **Measured** (`scripts/measure-web-lifetimes.sh <tree> <label>`, an isolated Duo started through LaunchServices so its WebKit processes count as its own; exclusive lock). With 3 browser tabs, an HTML page and a deck open, then closed: WebContent processes main c69183a 1 → 6 → 6, branch 1 → 6 → 3 (what remains is the editor and the HTML and deck viewers, which live as long as the app). `leaks` finds about 420 small system leaks (20 KB) on both; footprint 116.6 MB on main, 102.1 MB on the branch.
+- **Unattributed: the editor page reported `vis=visible` in the branch's background `check-editor-host` runs** (twice), where main's two background runs reported hidden and skipped the scroll case. The branch's case then ran and drifted 17 px (left at 1500, back at 1483). Nothing in this branch touches the editor's web view or its host (the changes are in `WebTab`, `HTMLViewer`, `DeckViewer` and the control verb), so I can't say why visibility differed; the likeliest cause is the machine's screen state at the time, not the code, but no run proves it. The F-272 scroll restore still needs its on-screen proof (`DUO_TEST_FOREGROUND=1`, Geoff's OK).
+- `check-deck-motion.mjs` needs `playwright-core` on `NODE_PATH`; `/tmp/pwc/node_modules/playwright-core` had no `package.json`, and a working copy was `/Users/geoff/repos/thinking-about-risk/node_modules`.

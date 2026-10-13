@@ -3,7 +3,10 @@
 #   matrix.sh [run names…]      (default: all, in order)
 M=${M:-${TMPDIR:-/tmp}/duo-review}   # holds Duo-release.app and Duo-debug.app (copies of build/Duo.app)
 : ${GPU_LOCK:?set GPU_LOCK to the shared lock folder}
-W=${W:-${0:A:h:h:h:h}}               # the repo, for scripts/gpu-lock.sh (queued, clears dead owners)
+W=${W:-${0:A:h:h:h:h}}               # the repo (this script is in docs/research/codebase-review-tools)
+# The lock script is always the main checkout's copy (a work tree's may be stale); exclusive, the default, for measurements.
+gitdir=$(git -C $W rev-parse --path-format=absolute --git-common-dir)   # the main checkout's .git
+GL=${GPU_LOCK_SCRIPT:-${gitdir:h}/scripts/gpu-lock.sh}
 REL=$M/Duo-release.app DBG=$M/Duo-debug.app
 small=(--projects 6 --sessions 42 --tabs 0)
 typeset -A runs
@@ -25,7 +28,7 @@ for name in $order; do
   IFS='|' read -r app secs opts fx <<< "${runs[$name]}"
   # One run under the shared lock, through scripts/gpu-lock.sh: queued in order, released however the run ends.
   echo "=== $name ($(date +%H:%M:%S)) swap used: $(sysctl -n vm.swapusage | awk '{print $6}')"
-  $W/scripts/gpu-lock.sh "codebase-review-measure-$name" env APP=$app OUT=$M/runs ${0:A:h}/measure.sh $name $secs ${=opts} -- ${=fx}
+  $GL "codebase-review-measure-$name" env APP=$app OUT=$M/runs ${0:A:h}/measure.sh $name $secs ${=opts} -- ${=fx}
   sleep 10
 done
 echo "=== matrix done $(date +%H:%M:%S)"

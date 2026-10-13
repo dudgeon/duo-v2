@@ -4,6 +4,7 @@
 //   node pipeline/sync.mjs <export.md> --rev <n>            what would change: lines, notes, the beats they move
 //   node pipeline/sync.mjs <export.md> --rev <n> --write    write script.md and renumber shots.json's line refs
 //   --accept-notes S7,S10                                   also take those scenes' changed Shot: notes (after re-reading them)
+//   --film <name>                                           sync films/<name>/script.md and shots.json instead of the intro's
 // Lines are matched old to new within each scene, so a bullet added, removed or split renumbers every beat,
 // event and pause that names a later line; a ref to a removed line stops the sync. A changed Shot: note is shown
 // as a diff and keeps stopping the build until it's re-read and accepted. script.md records the Doc revision it
@@ -12,6 +13,7 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {checkScript, lineDiff, noteSha, noteText} from './check.mjs';
+import {filmPaths} from './film.mjs';
 import {norm} from './plan.mjs';
 import {parseScript, said} from './script.mjs';
 
@@ -19,21 +21,23 @@ const here = join(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
 const opt = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : undefined; };
 const src = argv[0];
+const film = opt('--film') ?? 'intro';
+const paths = filmPaths(here, film);
 const rev = opt('--rev');
-if (!src || !rev) { console.error('usage: node pipeline/sync.mjs <export.md> --rev <n> [--write] [--accept-notes S7,S10]'); process.exit(2); }
+if (!src || !rev) { console.error('usage: node pipeline/sync.mjs <export.md> --rev <n> [--write] [--accept-notes S7,S10] [--film <name>]'); process.exit(2); }
 const accept = new Set((opt('--accept-notes') ?? '').split(',').filter(Boolean));
 
 // The export escapes what the Doc shows literally, and marks kept trailing spaces; script.md is plain Markdown.
 const HEADER = /^<!-- Synced from the script Doc at rev \d+[^\n]*-->\n/m;
 const clean = (md) => md.replace(/&#32;/g, '').replace(/\\([*`])/g, '$1').split('\n').map((l) => l.trimEnd()).join('\n').replace(HEADER, '');
-const oldMd = readFileSync(join(here, 'script.md'), 'utf8');
+const oldMd = readFileSync(paths.script, 'utf8');
 const lastRev = oldMd.match(/Synced from the script Doc at rev (\d+)/)?.[1];
 let newMd = clean(readFileSync(src, 'utf8'));
 const stamp = `<!-- Synced from the script Doc at rev ${rev} on ${new Date().toISOString().slice(0, 10)} by pipeline/sync.mjs; edit the Doc, not this file. -->\n`;
 newMd = newMd.replace(/^(# [^\n]*\n)/, `$1${stamp}`);
 
 const old = parseScript(oldMd), now = parseScript(newMd);
-const shots = JSON.parse(readFileSync(join(here, 'shots.json'), 'utf8'));
+const shots = JSON.parse(readFileSync(paths.shots, 'utf8'));
 const words = (t) => new Set(norm(t));
 const like = (a, b) => { const A = words(a), B = words(b); return [...A].filter((w) => B.has(w)).length / Math.max(1, Math.max(A.size, B.size)); };
 
@@ -86,7 +90,7 @@ console.log(report.length ? report.join('\n') : 'no line or note changes');
 if (errors.length) console.log(`\nthe build's check after this sync:\n${errors.map((e) => `- ${e}`).join('\n')}`);
 if (problems.length) { console.log(`\nnot synced:\n${problems.map((p) => `- ${p}`).join('\n')}`); process.exit(1); }
 if (argv.includes('--write')) {
-  writeFileSync(join(here, 'script.md'), newMd);
-  writeFileSync(join(here, 'shots.json'), JSON.stringify(shots, null, 2) + '\n');
+  writeFileSync(paths.script, newMd);
+  writeFileSync(paths.shots, JSON.stringify(shots, null, 2) + '\n');
   console.log('\nwrote script.md and shots.json');
 } else console.log('\n(dry run: --write to apply)');

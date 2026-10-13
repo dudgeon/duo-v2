@@ -180,7 +180,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | Command | What it does | In the app |
 |---|---|---|
 | `duo2 browser open [url]` | A browser tab in the right pane (⌥⌘T). Sites not on the allow list show Allow or Open in Browser instead of loading (DL-3). | New Browser Tab, Open Location…, Open in Browser, Copy Address |
-| `duo2 browser allow <host>` | Add a site to the allow list, so its pages open in Duo's browser tabs (and its subdomains). | — |
+| `duo2 browser allow <host>` | Ask the user to add a site to the allow list, so its pages open in Duo's browser tabs (and its subdomains). The user answers on a Duo sheet. | — |
 | `duo2 browser sites` | The allow list: sites Duo opens in its own browser tabs; everything else opens in the system browser (DL-3). | Edit… |
 | `duo2 browser tabs` | Browser tabs open in Duo: id, project, title, address. | — |
 | `duo2 browser read [selector] [--tab <id>]` | The page's text (or one element's), with its title and address (LR-45). Allowed sites only. | — |
@@ -237,7 +237,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 
 | Command | What it does | In the app |
 |---|---|---|
-| `duo2 doctor` | How this terminal finds Duo, whether it can reach it, and what Duo installed. | — |
+| `duo2 doctor` | How this terminal finds Duo, whether it can reach it, what Duo installed, and whether Claude Code mods work here. | — |
 | `duo2 install` | Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74). | Install, Install… |
 | `duo2 uninstall` | Remove exactly what `duo2 install` added (anything you edited stays). | Remove… |
 | `duo2 settings [claude-path <path\|auto> \| notify on\|off \| dock-badge on\|off \| explainers reset \| macos]` | Duo's settings (S3-1): with no arguments, all of them, and what macOS allows; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge; `explainers reset` shows the explanations the user dismissed again (Settings › General); `macos` opens System Settings › Notifications › Duo. | Choose…, Use Found One, Open Notification Settings…, Show dismissed explanations again |

@@ -10,9 +10,11 @@
 // published files every scene uses (wallpaper, topic paper, prototype), the source (src/, style/, remotion.config.ts,
 // package-lock.json), and the render settings.
 import {spawnSync} from 'node:child_process';
-import {existsSync, mkdirSync, readdirSync, renameSync, rmSync, statSync, writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync} from 'node:fs';
 import {join, relative} from 'node:path';
 import {BuildError, fileSha, sha} from './util.mjs';
+import {filmNames, INTRO} from './film.mjs';
 
 const walk = (dir, skip = () => false) => (existsSync(dir) ? readdirSync(dir).sort().flatMap((n) => {
   const p = join(dir, n);
@@ -21,7 +23,22 @@ const walk = (dir, skip = () => false) => (existsSync(dir) ? readdirSync(dir).so
 }) : []);
 const files = (p) => (!existsSync(p) ? [] : statSync(p).isDirectory() ? walk(p) : [p]);
 // Markdown under style/ is for people (shot grammar, taste), not read by the film, so it doesn't key a render.
-const treeKey = (root, paths) => sha(...paths.flatMap((p) => files(join(root, p))).filter((f) => !f.endsWith('.md')).map((f) => `${relative(root, f)} ${fileSha(f)}`));
+// A source line containing `@film-hook` is the film registry's hook in Film.tsx (a pure insertion); it is left out of the hash,
+// so adding a film leaves the intro's keys as they were.
+const HOOK = '@film-hook';
+const srcSha = (f) => {
+  if (!f.endsWith('.tsx')) return fileSha(f);
+  const text = readFileSync(f, 'utf8');
+  return text.includes(HOOK) ? createHash('sha256').update(text.split('\n').filter((l) => !l.includes(HOOK)).join('\n')).digest('hex').slice(0, 16) : fileSha(f);
+};
+const treeKey = (root, paths, skip = () => false) => sha(...paths.flatMap((p) => files(join(root, p))).filter((f) => !f.endsWith('.md') && !skip(relative(root, f))).map((f) => `${relative(root, f)} ${srcSha(f)}`));
+// What draws a film's frames. A film's own scenes live in src/scenes/<film>/, and src/scenes/registry.ts lists them, so
+// one film's key leaves out the other films' scene folders, and the intro's leaves out the registry too.
+function sourceKey(here, film) {
+  const others = filmNames(here).filter((n) => n !== INTRO && n !== film);
+  const skip = (rel) => others.some((n) => rel.startsWith(`src/scenes/${n}/`)) || (film === INTRO && rel === 'src/scenes/registry.ts');
+  return treeKey(here, ['src', 'style', 'remotion.config.ts', 'package-lock.json'], skip);
+}
 
 // The frame ranges: scene k from its first frame to the frame before the next scene's first, the last to the end.
 export function sceneRanges(timeline) {
@@ -30,9 +47,11 @@ export function sceneRanges(timeline) {
   return scenes.map((s, k) => ({id: s.id, from: first[k], to: (k + 1 < scenes.length ? first[k + 1] : frames) - 1}));
 }
 
-export function sceneKeys({here, pub, timeline, scale, encode = null}) {
+export function sceneKeys({here, pub, timeline, scale, encode = null, film = INTRO, styleOverride = null}) {
   const {fps} = timeline;
-  const src = treeKey(here, ['src', 'style', 'remotion.config.ts', 'package-lock.json']);
+  const src = sourceKey(here, film);
+  // Another film's own style/tokens.json changes how its frames are drawn; the intro has none, so its key is as before.
+  const own = styleOverride ? fileSha(styleOverride) : null;
   const shared = treeKey(pub, ['wallpaper.png', 'topics-bg.png', 'prototype']);
   // The topic list's changes, as Film.tsx computes them (src/lib/Topics.tsx topicChanges).
   const topics = [], changes = [];
@@ -59,8 +78,8 @@ export function sceneKeys({here, pub, timeline, scale, encode = null}) {
     const near = changes.filter((c) => c.at > s.start - 10 && c.at < s.start + s.duration + 10).map((c) => ({...c, at: +(c.at - s.start).toFixed(6)}));
     const prev = timeline.scenes[k - 1];
     const spills = prev && Math.round(prev.start * fps) + Math.ceil(prev.duration * fps) > r.from;
-    const key = sha('scene-render-1', src, shared, scale, encode, fps, timeline.fade, r.to - r.from + 1, k === timeline.scenes.length - 1, local, topics, near,
-      spills ? {...prev, start: +(prev.start - s.start).toFixed(6), lines: prev.lines.map(silent)} : null, named(local));
+    const key = sha(...['scene-render-1', src, ...(own ? [own] : []), shared, scale, encode, fps, timeline.fade, r.to - r.from + 1, k === timeline.scenes.length - 1, local, topics, near,
+      spills ? {...prev, start: +(prev.start - s.start).toFixed(6), lines: prev.lines.map(silent)} : null, named(local)]);
     return {...r, key};
   });
 }
@@ -68,8 +87,8 @@ export function sceneKeys({here, pub, timeline, scale, encode = null}) {
 // The soundtrack's key: what Film.tsx's <Audio>s play. Each scene's span (its Sequence cuts its lines), each line's
 // timing and voice file by content, the score bed by content with its gain settings, the topic changes it ducks at,
 // the film's length, the frames wanted and the source. A camera move or a new capture keeps the soundtrack.
-export function soundtrackKey({here, pub, timeline, from, to}) {
-  const src = treeKey(here, ['src', 'style', 'remotion.config.ts', 'package-lock.json']);
+export function soundtrackKey({here, pub, timeline, from, to, film = INTRO}) {
+  const src = sourceKey(here, film);
   const {fps} = timeline;
   const scenes = timeline.scenes.map((s) => ({start: s.start, duration: s.duration, topic: s.topic ?? null,
     lines: s.lines.map((l) => ({start: l.start, duration: l.duration, wav: fileSha(join(pub, l.src))}))}));
@@ -80,13 +99,13 @@ export function soundtrackKey({here, pub, timeline, from, to}) {
 // encode: remotion flags for the scenes' encoder, when not remotion.config.ts's H.264. V2's frame-identical proof
 // renders ProRes, which codes each frame alone, so the same pixels make the same frames however the film is split
 // (Remotion refuses H.264 at CRF 0). A ProRes film goes in a .mov.
-export function renderFilm({here, pub, out, cache, timeline, scale = 1, encode = null, only = null, name = null, cover = null, log}) {
+export function renderFilm({here, pub, out, cache, timeline, scale = 1, encode = null, only = null, name = null, cover = null, film = INTRO, publicDirArgs = [], styleOverride = null, log}) {
   const rc = join(cache, 'render');
   mkdirSync(rc, {recursive: true});
   const ext = encode?.some((a) => a.includes('prores')) ? 'mov' : 'mp4';
   const scaleArgs = [...(scale !== 1 ? [`--scale=${scale}`] : []), ...(encode ?? [])];
-  const remotion = (...a) => spawnSync(join(here, 'node_modules/.bin/remotion'), [...a, '--log=error'], {cwd: here, stdio: 'inherit'});
-  const keys = sceneKeys({here, pub, timeline, scale, encode});
+  const remotion = (...a) => spawnSync(join(here, 'node_modules/.bin/remotion'), [...a, '--log=error', ...publicDirArgs], {cwd: here, stdio: 'inherit'});
+  const keys = sceneKeys({here, pub, timeline, scale, encode, film, styleOverride});
   const want = only ? keys.filter((k) => only.includes(k.id)) : keys;
   if (only && want.length !== only.length) throw new BuildError(`render: no scene ${only.filter((id) => !keys.some((k) => k.id === id)).join(', ')} in the timeline`);
   const rendered = [];
@@ -104,7 +123,7 @@ export function renderFilm({here, pub, out, cache, timeline, scale = 1, encode =
   const from = want[0].from, to = want[want.length - 1].to;
   // Cached on its inputs (soundtrackKey), so a build that changed only pictures doesn't redo it (about 3.4 min).
   // --crf=0: the config's CRF is for the picture, and Remotion refuses any other CRF for an audio codec (it ignores 0).
-  const wav = join(rc, `audio-${soundtrackKey({here, pub, timeline, from, to})}.wav`);
+  const wav = join(rc, `audio-${soundtrackKey({here, pub, timeline, from, to, film})}.wav`);
   if (existsSync(wav)) log('render: soundtrack from cache');
   else {
     const part = join(rc, `audio-${process.pid}.part.wav`);
@@ -113,7 +132,7 @@ export function renderFilm({here, pub, out, cache, timeline, scale = 1, encode =
   }
   const list = join(rc, `concat-${process.pid}.txt`);
   writeFileSync(list, want.map((k) => `file '${join(rc, `${k.key}.${ext}`)}'\n`).join(''));
-  name ??= only ? `scene-${only.join('-')}${scale !== 1 ? '-draft' : ''}.mp4` : scale !== 1 ? 'intro-draft.mp4' : 'intro.mp4';
+  name ??= only ? `scene-${only.join('-')}${scale !== 1 ? '-draft' : ''}.mp4` : scale !== 1 ? `${film}-draft.mp4` : `${film}.mp4`;
   const mp4 = join(out, name);
   // cover: a picture for the file's cover art (out/thumbnail.png, the title card), which QuickTime and Finder show.
   const art = cover && existsSync(cover) ? ['-i', cover, '-map', '2:v', '-c:v:1', 'png', '-disposition:v:1', 'attached_pic'] : [];
@@ -126,13 +145,13 @@ export function renderFilm({here, pub, out, cache, timeline, scale = 1, encode =
 }
 
 // Clips for review: each scene re-rendered in this build, at 480p, cut from the joined film.
-export function reviewClips({out, timeline, rendered}) {
+export function reviewClips({out, timeline, rendered, film = INTRO}) {
   const dir = join(out, 'review');
   mkdirSync(dir, {recursive: true});
   const clips = {};
   for (const s of timeline.scenes.filter((x) => rendered.includes(x.id))) {
     const clip = join(dir, `${s.id}.mp4`);
-    spawnSync('ffmpeg', ['-v', 'error', '-y', '-ss', String(s.start), '-t', String(s.duration), '-i', join(out, 'intro.mp4'), '-vf', 'scale=-2:480',
+    spawnSync('ffmpeg', ['-v', 'error', '-y', '-ss', String(s.start), '-t', String(s.duration), '-i', join(out, `${film}.mp4`), '-vf', 'scale=-2:480',
       '-c:v', 'libx264', '-crf', '28', '-preset', 'veryfast', '-c:a', 'aac', '-b:a', '128k', clip]);
     if (existsSync(clip)) clips[s.id] = `review/${s.id}.mp4`;
   }

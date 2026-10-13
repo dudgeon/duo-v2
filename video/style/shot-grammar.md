@@ -41,6 +41,7 @@ The transitions so far:
 | `duo-fades` | graphic | S7 → S8 | The scene opens on S7's last picture, wide, and fades Duo's window away to the bare desktop on its `fade` event (Geoff: "this is the point where duo should fade away"). |
 | `pile-to-duo` | graphic | S8 → S9 | The resume picker's pile fades out and Duo's window fades back in on the next scene's first capture, the same picture S7 ended on. |
 | `duo-steps-away` | graphic | S10 → S11 | Duo's window shrinks and slides off as a thumbnail while the paper ground fills in. |
+| `paper-carry` | graphic | paper scene → paper scene (director film's `paper-card`; S11) | The paper ground stays put and the incoming scene's content takes the place of the outgoing one's; the frames either side share the ground. |
 | `stand-in`, `stand-in-out` | graphic | any → card → S11 | Only while a scene's captures aren't built: a labelled card, never silent (the report names it). |
 
 ## App scenes (S3 on)

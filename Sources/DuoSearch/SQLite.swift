@@ -85,6 +85,11 @@ public final class Statement {
     public func int(_ col: Int32) -> Int { Int(sqlite3_column_int64(s, col)) }
     public func double(_ col: Int32) -> Double { sqlite3_column_double(s, col) }
     public func string(_ col: Int32) -> String? { sqlite3_column_text(s, col).map { String(cString: $0) } }
+    /// The blob's bytes, valid until the next `step()`, with no copy (the search scan reads every vector).
+    public func withBlob<R>(_ col: Int32, _ body: (UnsafeRawBufferPointer) -> R) -> R {
+        guard let p = sqlite3_column_blob(s, col) else { return body(UnsafeRawBufferPointer(start: nil, count: 0)) }
+        return body(UnsafeRawBufferPointer(start: p, count: Int(sqlite3_column_bytes(s, col))))
+    }
     public func blob(_ col: Int32) -> Data {
         guard let p = sqlite3_column_blob(s, col) else { return Data() }
         return Data(bytes: p, count: Int(sqlite3_column_bytes(s, col)))

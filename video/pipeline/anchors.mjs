@@ -25,8 +25,8 @@ const frameOf = (cap, id) => {
 };
 
 // record: false (the check stage) compares without writing.
-export function checkAnchors({used, captures, cache, accept = false, record = true}) {
-  const file = join(cache, 'anchors-used.json');
+export function checkAnchors({used, captures, cache, accept = false, record = true, name = 'anchors-used.json'}) {
+  const file = join(cache, name);
   const before = existsSync(file) ? keyed(JSON.parse(readFileSync(file, 'utf8'))) : null;
   const now = keyed(used);
   const moved = [], stale = [], staleKeys = new Set();
