@@ -1038,10 +1038,10 @@
       "video-s6-model-picked"
     ],
     "pauses": {
-      "3": 19.4,
+      "3": 12.8,
       "4": 1.2,
-      "5": 0.6,
-      "6": 1.6,
+      "5": 1.6,
+      "6": 11.6,
       "7": 2.2
     },
     "tail": 1.6,
@@ -1331,19 +1331,19 @@
         "wipe": {
           "state": "video-s7-md-composer",
           "on": "video.composer.text",
-          "dur": 13.2,
+          "dur": 6.6,
           "chars": 64
         },
         "in": "video-s7-md-composer",
         "state": "video-s7-md-composer",
-        "stateAfter": 13.2
+        "stateAfter": 6.6
       },
       {
         "id": "md-sent",
         "at": {
           "line": 3,
           "word": "agent",
-          "offset": 18.7
+          "offset": 12.1
         },
         "in": "video-s7-md-sent",
         "state": "video-s7-md-sent",
@@ -1375,7 +1375,8 @@
         },
         "in": "video-s7-md-after",
         "state": "video-s7-md-after",
-        "stateAfter": 0.3
+        "stateAfter": 0.3,
+        "fade": 0.4
       },
       {
         "id": "change-mark",
@@ -1402,13 +1403,13 @@
           "y0": 0.3,
           "y1": 0.8
         },
-        "dur": 0.8
+        "dur": 1.6
       },
       {
         "id": "html-menu",
         "at": {
           "line": 6,
-          "offset": -0.2
+          "offset": 0.2
         },
         "menu": {
           "on": "video.html.fix",
@@ -1417,8 +1418,8 @@
             "Reload Page"
           ],
           "pick": "Select Element",
-          "pickAfter": 0.5,
-          "hold": 0.7
+          "pickAfter": 2,
+          "hold": 2.8
         },
         "fx": 0.5,
         "in": "video-s7-html-pick"
@@ -1427,7 +1428,7 @@
         "id": "html-pick",
         "at": {
           "line": 6,
-          "word": "element"
+          "offset": 3.6
         },
         "click": "video.html.fix",
         "in": "video-s7-html-pick",
@@ -1437,25 +1438,24 @@
         "id": "html-send",
         "at": {
           "line": 6,
-          "word": "ask"
+          "offset": 6.6
         },
         "click": "video.picker.send",
         "in": "video-s7-html-pick",
         "state": "video-s7-html-sent",
-        "stateAfter": 0.2,
+        "stateAfter": 0.6,
         "cam": {
           "on": "video.pane.middle",
           "y0": 0.45,
           "y1": 1
         },
-        "dur": 0.7
+        "dur": 1.4
       },
       {
         "id": "html-after",
         "at": {
           "line": 6,
-          "word": "change",
-          "offset": 0.6
+          "offset": 10.4
         },
         "state": "video-s7-html-after",
         "in": "video-s7-html-after",
@@ -1464,19 +1464,18 @@
           "y0": 0.3,
           "y1": 0.8
         },
-        "dur": 0.7,
-        "stateAfter": 0.4
+        "dur": 1.4,
+        "stateAfter": 1.6
       },
       {
         "at": {
           "line": 6,
-          "word": "change",
-          "offset": 1.2
+          "offset": 12.6
         },
         "mark": "video.html.fix",
         "in": "video-s7-html-after",
         "quote": "Fix this book",
-        "hold": 1.4
+        "hold": 2.2
       },
       {
         "id": "pptx-tab",
@@ -1571,7 +1570,7 @@
         "dur": 1.1
       }
     ],
-    "shotSha": "78e5941fe211",
+    "shotSha": "f9283d35ee57",
     "requires": [
       {
         "what": "Way in from S6 without a cut; the topic list comes up; the camera moves to the viewer pane",
@@ -1677,8 +1676,25 @@
         "line": 2,
         "word": "folder"
       },
+      "link": {
+        "line": 2,
+        "word": "project"
+      },
       "map": {
         "line": 3
+      },
+      "cd": {
+        "line": 3,
+        "word": "change"
+      },
+      "newsession": {
+        "line": 3,
+        "word": "project",
+        "offset": 0.1
+      },
+      "cdOut": {
+        "line": 4,
+        "offset": 0.3
       },
       "grey": {
         "line": 4,
@@ -1706,19 +1722,22 @@
         ]
       },
       {
-        "what": "A drawn Terminal and a Finder window on ~; claude typed with no cd; the real banner shows ~ and is circled as the project",
+        "what": "A drawn Terminal and a Finder window on ~; claude typed with no cd; the real banner shows ~ and is circled as the project; a line runs from the circled ~ to the Finder window, whose folder lights up",
         "by": [
           "event:windows",
           "event:claude",
-          "event:here"
+          "event:here",
+          "event:link"
         ]
       },
       {
-        "what": "The folder map on paper: one folder per project with its own session cards; the others grey out on \"does not show you your projects\"",
+        "what": "The folder map on paper: one folder per project with its own session cards, the columns arriving one at a time; a small terminal cds into shelf-scan (it lights up) and starts claude, and a new session card drops onto its stack; the other stacks fade to faint outlines on \"does not show you your projects\"",
         "by": [
           "event:map",
           "event:grey",
-          "event:fold"
+          "event:fold",
+          "event:cd",
+          "event:newsession"
         ]
       },
       {
@@ -1730,7 +1749,7 @@
         ]
       }
     ],
-    "shotSha": "61046a2f0d82"
+    "shotSha": "57b104c09904"
   },
   "S11": {
     "kind": "drawn",
@@ -1944,10 +1963,32 @@
         "dur": 0.8
       },
       {
+        "id": "beta-open",
+        "at": {
+          "line": 6,
+          "word": "view",
+          "offset": 0.6
+        },
+        "click": "video.board.card.Weekly digest draft",
+        "in": "video-s9-board",
+        "state": "video-s9-beta"
+      },
+      {
+        "id": "beta-leave",
+        "at": {
+          "line": 6,
+          "word": "sessions",
+          "offset": 0.9
+        },
+        "click": "video.crumb.all",
+        "in": "video-s9-beta",
+        "state": "video-s9-board"
+      },
+      {
         "id": "return",
         "at": {
           "line": 6,
-          "word": "return"
+          "word": "where"
         },
         "click": "video.board.card.Auto-add decision",
         "in": "video-s9-board",
@@ -1990,9 +2031,18 @@
           "#leave",
           "#return"
         ]
+      },
+      {
+        "what": "Out to All projects, into a different project (beta-feedback: its own sessions, files, terminal and PROJECT.md), then back to shelf-scan as it was left",
+        "by": [
+          "#leave",
+          "#beta-open",
+          "#beta-leave",
+          "#return"
+        ]
       }
     ],
-    "shotSha": "9d31e8b33309"
+    "shotSha": "7d451319a68f"
   },
   "S10": {
     "kind": "drawn",
@@ -2326,8 +2376,7 @@
         "id": "task-menu-target",
         "at": {
           "line": 8,
-          "word": "best",
-          "offset": -0.4
+          "offset": -1.6
         },
         "in": "video-s10-task-menu-target",
         "state": "video-s10-task-menu-target",
@@ -2344,7 +2393,7 @@
         "id": "archive-task-menu",
         "at": {
           "line": 8,
-          "word": "complete"
+          "offset": -0.6
         },
         "menu": {
           "on": "video.task.beta-interview-synthesis",
@@ -2365,34 +2414,41 @@
             "Delete Task…"
           ],
           "pick": "Archive Task…",
-          "pickAfter": 0.7,
-          "hold": 1
+          "pickAfter": 1.6,
+          "hold": 2.4
         },
         "fx": 0.45,
         "in": "video-s10-task-menu-target"
       },
       {
+        "id": "archive-ask-shown",
+        "at": {
+          "line": 8,
+          "offset": 1.9
+        },
+        "in": "video-s10-archive-ask",
+        "state": "video-s10-archive-ask"
+      },
+      {
         "id": "archive-ask",
         "at": {
           "line": 8,
-          "word": "archive"
+          "offset": 3.6
         },
         "in": "video-s10-archive-ask",
-        "state": "video-s10-archive-ask",
         "cam": {
-          "rel": "video.sheet",
-          "dx": -110,
-          "dy": -19,
-          "w": 680,
-          "h": 383
+          "fit": [
+            "video.sheet"
+          ],
+          "pad": 170
         },
-        "dur": 0.7
+        "dur": 1
       },
       {
         "id": "archive-confirm",
         "at": {
           "line": 8,
-          "word": "sessions"
+          "offset": 4.6
         },
         "click": "Archive Task and Its Sessions",
         "in": "video-s10-archive-ask",
@@ -2403,8 +2459,7 @@
         "id": "archived-mark",
         "at": {
           "line": 8,
-          "word": "way",
-          "offset": -0.3
+          "offset": 5.7
         },
         "in": "video-s10-archived",
         "cam": {
@@ -2499,6 +2554,6 @@
         ]
       }
     ],
-    "shotSha": "f0d9929bc289"
+    "shotSha": "a44b67c0b00e"
   }
 }
