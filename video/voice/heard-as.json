@@ -45,5 +45,17 @@
   ],
   "mid size": [
     "midsize"
+  ],
+  "stand up": [
+    "standup"
+  ],
+  "work trees": [
+    "worktrees"
+  ],
+  "director": [
+    "directors"
+  ],
+  "codebase": [
+    "code base"
   ]
 }

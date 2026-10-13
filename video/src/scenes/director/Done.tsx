@@ -2,9 +2,9 @@ import React from 'react';
 import {AbsoluteFill} from 'remotion';
 import type {SceneProps} from '../registry';
 import {PaperGround} from '../../lib/Paper';
-import {Heading, L, mono, ramp, spring, ui, Wire, YouCard} from './kit';
+import {Heading, L, mono, ramp, spring, ui, Wire} from './kit';
 import {AXIS_X0, AXIS_X1, dayX} from './Additions';
-import {GeneralistsEnd} from './Generalists';
+import {WhyEnd} from './WhyItWorks';
 
 // S7 · What got done. S6's picture gives way to the first week's timeline (the same days as S4's). Every merge into
 // main is one cell, stacked over its day as the voice says the count; every release is a tag under its day; a few of
@@ -21,14 +21,14 @@ const CELL = 18, GAP = 5, PER = 6;
 
 export const Done = ({t, ev}: SceneProps) => {
   const go = ev.go ?? 0.4, merges = ev.merges ?? go + 3, releases = ev.releases ?? merges - 1, feat = ev.feat ?? merges + 1.5;
-  const sessions = ev.sessions, decisions = ev.decisions;
+  const sessions = ev.sessions, personas = ev.personas;
   const leave = ramp(t, go, go + 0.5);
   const axis = ramp(t, go + 0.3, go + 1.0);
 
   return (
     <AbsoluteFill>
       <PaperGround />
-      <div style={{position: 'absolute', inset: 0, opacity: 1 - leave}}><GeneralistsEnd /></div>
+      <div style={{position: 'absolute', inset: 0, opacity: 1 - leave}}><WhyEnd /></div>
       <Heading title="What got done" sub="The first week with a director, Oct 5 to Oct 12." u={ramp(t, go + 0.3, go + 0.8)} />
 
       <Wire pts={[[AXIS_X0, AXIS], [AXIS_X1, AXIS]]} draw={axis} color={L.text} head />
@@ -75,13 +75,17 @@ export const Done = ({t, ev}: SceneProps) => {
           </div>
         ))}
       </div>
-      {decisions !== undefined && (
-        <YouCard box={{x: 1240, y: 270, w: 340, h: 110}} label="made the decisions" u={ramp(t, decisions, decisions + 0.4)} />
+      {personas !== undefined && (
+        <div style={{position: 'absolute', left: 1240, top: 262, display: 'flex', gap: 10, opacity: ramp(t, personas, personas + 0.4)}}>
+          {['design studies', 'bug hunts', 'research'].map((w) => (
+            <span key={w} style={{padding: '4px 12px', borderRadius: 8, background: L.selected, fontFamily: ui, fontSize: 20, lineHeight: '28px', color: L.text}}>{w}</span>
+          ))}
+        </div>
       )}
     </AbsoluteFill>
   );
 };
 
 /** S7's last picture, for the scene after it to open on. */
-const END_EV = {go: 0, releases: 1, merges: 2, feat: 3, sessions: 5, decisions: 6};
+const END_EV = {go: 0, releases: 1, merges: 2, feat: 3, sessions: 5, personas: 6};
 export const DoneEnd = () => <Done t={999} ev={END_EV} scene={{id: 'S7', title: ''}} />;
