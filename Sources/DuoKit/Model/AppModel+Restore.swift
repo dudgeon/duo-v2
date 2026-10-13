@@ -117,9 +117,10 @@ extension AppModel {
             for d in docs where d.hasPrefix("web:") {
                 guard let u = p.webTabs?[d].flatMap(URL.init(string:)) else { continue }
                 let tab = WebTab(id: d)
+                tab.fileRoots = [folder]
                 wireWebTab(tab)
                 webTabs[d] = tab
-                tab.load(u)
+                tab.defer_(u)   // loads when the tab is first shown (C-83)
             }
             if !docs.isEmpty { openDocumentsByProject[project] = docs }
             // The tabs it showed, for coming back to it (DL-107).

@@ -31,6 +31,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     [{"trigger":{"url-filter":"^(https?|wss?|ftp)://","resource-type":["image","style-sheet","script","font","raw","svg-document","media","ping","fetch","websocket","other"]},"action":{"type":"block"}},
      {"trigger":{"url-filter":"^(https?|wss?|ftp)://","resource-type":["document"],"load-context":["child-frame"]},"action":{"type":"block"}}]
     """
+    private var dormant = false
 
     public override init() {
         let config = WKWebViewConfiguration()
@@ -75,6 +76,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     /// images next to it, so editing any of them shows straight away.
     private func startWatching() {
         timer?.invalidate()
+        guard !dormant else { return }
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, let url = self.url, self.webView.window != nil else { return }
@@ -82,6 +84,20 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
                 if now != self.stamp, !self.picking { self.stamp = now; self.webView.reload() }
             }
         }.loose()
+    }
+
+    /// The pane stopped showing the page: no more polling its folder (C-83).
+    public func sleep() {
+        dormant = true
+        timer?.invalidate(); timer = nil
+    }
+
+    /// The pane shows it again: it reloads if anything changed meanwhile.
+    public func wake() {
+        guard dormant else { return }
+        dormant = false
+        startWatching()
+        if let url, Self.newest(around: url) != stamp, !picking { stamp = Self.newest(around: url); webView.reload() }
     }
 
     static func newest(around file: URL) -> Date? {
@@ -209,6 +225,7 @@ struct HTMLViewerView: NSViewRepresentable {
 
     func updateNSView(_ host: DocumentEditorView.EditorHost, context: Context) {
         host.show(viewer.webView)
+        viewer.wake()
         viewer.open(file, root: root)
     }
 }

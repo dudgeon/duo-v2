@@ -40,7 +40,7 @@ Rebuild your picture before acting:
   - **models** (Geoff, 2026-10-08; CLAUDE.md, Model efficiency): Opus 5.5 plans (design, research, root-causing); Sonnet 5.5 executes well-scoped tasks (builds against an approved handoff, known-cause fixes); Haiku 5.5 runs tests and validation (test turns, check runs, sweeps). Say which in the brief, and tell the session to hand scoped parts and test loops to Sonnet and Haiku subagents. Never put model choice into Duo's code;
   - for design work: a Design canvas with the Duo design system, every mark [P], one AskUserQuestion round, and a handoff exported to `docs/design/<x>-handoff/`;
   - "Don't publish the design-system artifact or the walk page" (the director is their only publisher, DL-166);
-  - "Message <the director's peer name, e.g. duo-v2-ef> (SendMessage) with the branch, the full shas, the records and the checks when it's committed." For big jobs, ask for it in slices, so each merge is small.
+  - "Message <the director's peer name, from your `ListAgents` first line, e.g. duo-v2-b0> (SendMessage) with the branch, the full shas, the records and the checks when it's committed." For big jobs, ask for it in slices, so each merge is small.
 - Then subscribe (`notify_when_idle`) and log a row in the reviews doc.
 
 ## 2. Reviewing and merging (standing rule D2)
@@ -52,7 +52,7 @@ For each branch:
 2. **Take a baseline:** `cp build/ui/{overview,project,flow-zoom-1,flow-zoom-2,flow-zoom-3,flow-zoom-4}.png /tmp/dir-base/`, and when chat is touched, every `build/ui/chat-*.png` capture (not `-compare`/`-board`) to `/tmp/dir-chatbase/`. After the merge, rerun `check-chat.sh` and `samepng.py` each one, reading its printed count (it always exits 0, so a loop on its exit code reports no differences; 2026-10-10): an existing board that changes is a regression until explained (2026-10-07: a lost composer caret revealed a focus bug). Also run `NO_BUILD=1 scripts/check-composer-focus.sh` (no composer of a chat that isn't on screen may hold the keyboard).
 3. **Merge:** `git merge --no-ff -m "Merge <branch>: <what> (<records>)" <branch-or-sha>`.
 4. **Record files merge without conflicts** (`.gitattributes` `merge=union`, 2026-10-08): both sides' lines are kept. Still run `scripts/check-records.sh`: a row both sides edited comes out twice, so delete the older copy. A union merge can also drop the blank line between findings sections (harmless). Older rule, for any conflict that still appears: **keep both sides, never one.** When both sides edited the same row, keep the newer content. A conflict hunk can hold many records from main (c6aa7c8 once dropped F-114 to F-119).
-5. **Check:**
+5. **Check, never in the main checkout's `build/`** (2026-10-12). Geoff's own Duo may run from `build/Duo.app`. That bundle is signed ad hoc, so every rebuild changes its identity to macOS, his privacy answers stop sticking, and the prompts repeat. Run every build and check in the director's own work tree, `.claude/worktrees/director-check`: `git -C .claude/worktrees/director-check checkout --detach <merge sha>`, then the scripts there. Its builds are `com.dudgeon.duo.test` (DL-151). Rebuild main's `build/Duo.app` only when Geoff asks.
    - `scripts/check-records.sh` (every record id from both parents survives);
    - `scripts/bundle.sh`;
    - `swift run DuoChecks` (and `DUO_CHECKS=chat` when chat is touched);
@@ -165,7 +165,7 @@ A private claude.ai page Geoff opens on his phone or desktop: https://claude.ai/
 
 **Phone links.** Every session you start has Remote Control on, so it has a `https://claude.ai/code/session_…` URL. `session-links.py` reads it from each transcript's `bridge_status` / `remote_session_change` line; put it in the thread's `link`. On Geoff's phone it opens in the browser, where the session works (F-259).
 
-**Peer name.** Sessions reach the director by its peer name (its Remote Control name, `duo-v2-ef`), not by "DUO DIRECTOR" (F-259).
+**Peer name.** Sessions reach the director by its peer name, which is the first line of `ListAgents` (F-259). **It changes whenever the director's session restarts** (`duo-v2-ef` until 2026-10-12, then `duo-v2-b0`). After any restart, message every active session with the new name, and put the current one in every brief. Sessions reply to the `from` of your latest message. **Never let sessions message `*DUO DIRECTOR*`:** the retired first director (e0127e51) was a Remote Control session that woke up when messaged. It was stopped on 2026-10-12. If it shows in `ListAgents` again, stop its process (find its pid in `~/.claude/sessions/*.json`).
 
 
 ## 8. Dependencies: geoff-voice

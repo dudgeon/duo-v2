@@ -128,7 +128,7 @@ extension DuoAction {
         .init(.needsYou, .app, "", "Sessions waiting for the user, with their questions.", ui: ["Needs You Elsewhere"]),
         .init(.undo, .app, "", "Undo Duo's last move, merge or Make a Project (Edit › Undo).", ui: ["Undo", "Undo Conversion"]),
         .init(.help, .app, "[family | --markdown]", "Families and everyday verbs; a family's verbs; or the full reference as Markdown.", ui: ["duo2 Reference"], local: true),
-        .init(.doctor, .setup, "", "How this terminal finds Duo, whether it can reach it, and what Duo installed.", local: true),
+        .init(.doctor, .setup, "", "How this terminal finds Duo, whether it can reach it, what Duo installed, and whether Claude Code mods work here.", local: true),
         .init(.install, .setup, "", "Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, ~/.local/bin/duo2 (DL-74).",
               ui: ["Install", "Install…"], local: true),
         .init(.uninstall, .setup, "", "Remove exactly what `duo2 install` added (anything you edited stays).", ui: ["Remove…"], local: true),
@@ -355,7 +355,7 @@ extension DuoAction {
         // HTML pages
         .init(.browserOpen, .html, "[url]", "A browser tab in the right pane (⌥⌘T). Sites not on the allow list show Allow or Open in Browser instead of loading (DL-3).",
               ui: ["New Browser Tab", "Open Location…", "Open in Browser", "Copy Address"]),
-        .init(.browserAllow, .html, "<host>", "Add a site to the allow list, so its pages open in Duo's browser tabs (and its subdomains)."),
+        .init(.browserAllow, .html, "<host>", "Ask the user to add a site to the allow list, so its pages open in Duo's browser tabs (and its subdomains). The user answers on a Duo sheet."),
         .init(.browserSites, .html, "", "The allow list: sites Duo opens in its own browser tabs; everything else opens in the system browser (DL-3).", ui: ["Edit…"]),
         .init(.browserTabs, .html, "", "Browser tabs open in Duo: id, project, title, address."),
         .init(.browserRead, .html, "[selector] [--tab <id>]", "The page's text (or one element's), with its title and address (LR-45). Allowed sites only."),

@@ -309,6 +309,49 @@ func repoFixture() throws -> Fixture {
         let f = FileManager.default.temporaryDirectory.appending(path: "duo-sites-\(UUID().uuidString).txt")
         check(AllowedSites.add("www.Example.com", to: f) && !AllowedSites.add("example.com", to: f) && AllowedSites.load(f) == ["example.com"], "allow list adds once, without www")
         try? FileManager.default.removeItem(at: f)
+
+        // DL-178: a tab's file: pages stay inside its project's folders.
+        let proj = URL(fileURLWithPath: NSTemporaryDirectory()).appending(path: "duo-fileroot-\(UUID().uuidString)")
+        let outside = proj.deletingLastPathComponent().appending(path: "duo-fileroot-out-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: proj, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: outside, withIntermediateDirectories: true)
+        try? FileManager.default.createSymbolicLink(at: proj.appending(path: "escape"), withDestinationURL: outside)
+        check(AllowedSites.allows(proj.appending(path: "a.html"), fileRoots: [proj]) && AllowedSites.allows(proj.appending(path: "sub/b.html"), fileRoots: [proj]),
+              "a file in the project's folder is allowed")
+        check(!AllowedSites.allows(URL(fileURLWithPath: "/etc/hosts"), fileRoots: [proj]) && !AllowedSites.allows(proj.deletingLastPathComponent().appending(path: "x.html"), fileRoots: [proj])
+              && !AllowedSites.allows(URL(fileURLWithPath: proj.path + "-sibling/a.html"), fileRoots: [proj]),
+              "a file outside the project's folder, or in a sibling that shares its prefix, is not")
+        check(!AllowedSites.allows(proj.appending(path: "escape/secret.html"), fileRoots: [proj]), "a symlink out of the project doesn't lead outside it")
+        check(!AllowedSites.allows(URL(fileURLWithPath: "/etc/hosts"), fileRoots: []), "a tab with no folder reads no files")
+        try? FileManager.default.removeItem(at: proj)
+        try? FileManager.default.removeItem(at: outside)
+    }
+
+    print("browser tabs: lifetimes (C-83)")
+    do {
+        // A closed tab is released: WebKit retained the tab through its script handler before.
+        weak var closed: WebTab?
+        weak var closedView: AnyObject?
+        autoreleasepool {
+            let tab = WebTab(id: "web:check1")
+            closed = tab; closedView = tab.webView
+            tab.close()
+        }
+        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        check(closed == nil, "a closed browser tab is released")
+        check(closedView == nil, "a closed browser tab's web view is released")
+        weak var dropped: WebTab?
+        autoreleasepool { dropped = WebTab(id: "web:check2") }
+        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        check(dropped == nil, "a tab dropped without close() is released too: its script handlers hold it weakly")
+
+        let lazy = WebTab(id: "web:check3")
+        let page = URL(string: "http://localhost:9/x")!
+        lazy.defer_(page)
+        check(lazy.deferred == page && lazy.url == page && lazy.webView.url == nil && lazy.address == page.absoluteString, "a restored tab keeps its address and loads nothing")
+        lazy.loadIfDeferred()
+        check(lazy.deferred == nil, "showing a restored tab takes its page")
+        lazy.close()
     }
 
     print("browser basics (DL-124)")
@@ -779,6 +822,21 @@ func repoFixture() throws -> Fixture {
     let fts = SearchIndex.ftsQuery("retry OR backoff* NEAR(x) -y", exact: false) ?? ""
     check(fts.components(separatedBy: " OR ").allSatisfy { $0.hasPrefix("\"") && $0.hasSuffix("\"") }, "every FTS term is quoted, so query syntax can't break it")
 
+    // Task 7: the vector scan reads blobs in place; same bytes as the copying accessor.
+    do {
+        let path = FileManager.default.temporaryDirectory.appending(path: "duo-blob-\(UUID().uuidString).sqlite").path
+        let db = try SQLiteDB(path: path, readOnly: false)
+        try db.exec("CREATE TABLE v (id INTEGER PRIMARY KEY, b BLOB)")
+        let vec: [Float] = (0..<384).map { Float($0) / 384 }
+        _ = try db.prepare("INSERT INTO v (b) VALUES (?)").bind([vec.withUnsafeBufferPointer { Data(buffer: $0) }]).step()
+        let s = try db.prepare("SELECT b FROM v")
+        _ = try s.step()
+        let viaCopy = s.blob(0)
+        let viaView: [Float] = s.withBlob(0) { Array($0.bindMemory(to: Float.self)) }
+        check(viaView == vec && viaCopy.count == 384 * 4, "withBlob reads the stored vector in place")
+        try? FileManager.default.removeItem(atPath: path)
+    }
+
     // Golden set (SRCH § 12, the POC's), through Duo's own chunker and index, when the model is here.
     let pkg = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appending(path: "Spikes/S13CoreML/out/bge-small-fp16.mlpackage")
@@ -800,6 +858,13 @@ func repoFixture() throws -> Fixture {
         print("  indexed \(stats.files) files, \(stats.chunks) chunks in \(Int(Date().timeIntervalSince(t0) * 1000)) ms")
         let reader = try SearchIndex(readOnly: true)
         let queryEmbedder = try Embedder(use: .query)
+        // Task 7: thirty keystrokes share one model load.
+        let loadsBefore = QueryEmbedder.loads
+        for _ in 0..<30 { _ = try QueryEmbedder.shared() }
+        check(QueryEmbedder.loads - loadsBefore <= 1, "30 queries load the query model at most once (task 7)")
+        QueryEmbedder.release()
+        _ = try QueryEmbedder.shared()
+        check(QueryEmbedder.loads - loadsBefore <= 2, "release() drops the model, the next query loads it again")
         let golden = [("why are there two high tides every day", "docs/tides.md"),
                       ("feeding a sourdough starter with flour and water", "docs/sourdough.md"),
                       ("horizontal pod autoscaler adds replicas", "docs/kubernetes.md"),

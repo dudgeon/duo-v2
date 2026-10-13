@@ -339,13 +339,16 @@ extension SearchIndex {
         var scored: [(Int, Float)] = []
         let s = try db.prepare("SELECT id, vector FROM content")
         while try s.step() {
-            let d = s.blob(1)
-            guard d.count == dim * 4, !excluding.contains(s.int(0)) else { continue }
+            let id = s.int(0)
+            guard !excluding.contains(id) else { continue }
             var dot: Float = 0
-            d.withUnsafeBytes { raw in
+            let ok: Bool = s.withBlob(1) { raw in
+                guard raw.count == dim * 4 else { return false }
                 qv.withUnsafeBufferPointer { q in vDSP_dotpr(q.baseAddress!, 1, raw.bindMemory(to: Float.self).baseAddress!, 1, &dot, vDSP_Length(dim)) }
+                return true
             }
-            scored.append((s.int(0), dot))
+            guard ok else { continue }
+            scored.append((id, dot))
         }
         scored.sort { $0.1 > $1.1 }
         if let best = scored.first?.1 { scored = scored.filter { $0.1 >= best - Self.semanticMargin } }

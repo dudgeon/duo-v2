@@ -122,6 +122,8 @@ public final class SearchUI {
     public var wantsFocus = false
     /// Answers to older keystrokes are dropped.
     public var generation = 0
+    /// The pending or running content query; a keystroke cancels it (task 7: 120 ms debounce).
+    public var queryTask: Task<Void, Never>?
     /// Fixture mode: the index state and coverage line a target shows, instead of the real index.
     public var forcedIndexState: IndexState?
     public var fixtureCoverage: String?
