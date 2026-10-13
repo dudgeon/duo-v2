@@ -1478,11 +1478,16 @@ func repoFixture() throws -> Fixture {
               && held[1].rows[1].state == SessionState.needsYou, "a held list keeps rows in place with fresh state, adds new rows, drops gone ones (Q-80)")
     }
 
-    // DL-130: the editor page gets Claude's highlight timings from the tokens (zero with Reduce Motion).
-    check(EditorController.tokenCSS().contains("--duo-motion-highlight-in-ms: \(MotionSettings.shared.reduce ? 0 : 200)")
+    // DL-130, DL-186: the editor page gets Claude's highlight timings from the tokens (zero with Reduce Motion).
+    check(EditorController.tokenCSS().contains("--duo-motion-highlight-in-ms: \(MotionSettings.shared.reduce ? 0 : 400)")
           && EditorController.tokenCSS().contains("--duo-motion-highlight-out-ms: \(MotionSettings.shared.reduce ? 0 : 600)")
           && editorSource.contains("--duo-motion-") && editorSource.contains("prefers-reduced-motion"),
           "the editor's highlight fades from motion.highlightIn and highlightOut, and honours Reduce Motion")
+    // DL-186: Claude's changes sit on the claudeEdit green, not the selected grey.
+    check(EditorController.tokenCSS().contains("--duo-claude-edit: #D6EDDC") || EditorController.tokenCSS().contains("--duo-claude-edit: #1F3A28"),
+          "the editor page gets the claudeEdit token")
+    check(editorSource.contains("\".duo-added\": { backgroundColor: \"var(--duo-claude-edit)\"") && !editorSource.contains("to { background-color: var(--duo-selected)"),
+          "Claude's highlight is drawn on claudeEdit (DL-186)")
 
     print("cli parity (DL-71, DL-72)")
     check(Set(DuoAction.all.map(\.id)) == Set(ActionID.allCases) && DuoAction.all.count == ActionID.allCases.count, "every action is in the registry once")
