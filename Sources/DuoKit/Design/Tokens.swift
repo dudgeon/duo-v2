@@ -10,8 +10,10 @@ public enum DuoColor {
     public static let ground = Color(nsColor: NSColor.duoDynamic(light: 0xF3F4F6, dark: 0x16181C, name: "ground"))
     /// Light panes, cards, popover, buttons
     public static let pane = Color(nsColor: NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x16181C, name: "pane"))
-    /// Selected row, Claude's-additions block
+    /// Selected row
     public static let selected = Color(nsColor: NSColor.duoDynamic(light: 0xE9ECEF, dark: 0x23262B, name: "selected"))
+    /// Behind text Claude just changed in the editor, and Claude's-additions block: the diff-add green, a step darker than selected (Geoff, 2026-10-13)
+    public static let claudeEdit = Color(nsColor: NSColor.duoDynamic(light: 0xD6EDDC, dark: 0x1F3A28, name: "claudeEdit"))
     /// Behind a session row, card or tab while its right-click menu is open, darker than selected so it's clear which item the menu acts on (Q-147, undrawn stand-in)
     public static let menuTarget = Color(nsColor: NSColor.duoDynamic(light: 0xD8DCE1, dark: 0x2E3238, name: "menuTarget"))
     /// Pane dividers, card borders, field border
@@ -88,6 +90,7 @@ public enum DuoNSColor {
     public static let ground = NSColor.duoDynamic(light: 0xF3F4F6, dark: 0x16181C, name: "ground")
     public static let pane = NSColor.duoDynamic(light: 0xFFFFFF, dark: 0x16181C, name: "pane")
     public static let selected = NSColor.duoDynamic(light: 0xE9ECEF, dark: 0x23262B, name: "selected")
+    public static let claudeEdit = NSColor.duoDynamic(light: 0xD6EDDC, dark: 0x1F3A28, name: "claudeEdit")
     public static let menuTarget = NSColor.duoDynamic(light: 0xD8DCE1, dark: 0x2E3238, name: "menuTarget")
     public static let rule = NSColor.duoDynamic(light: 0xC9CDD3, dark: 0x2B2F36, name: "rule")
     public static let controlEdge = NSColor.duoDynamic(light: 0x8B939C, dark: 0x4A4F57, name: "controlEdge")
@@ -421,7 +424,7 @@ public enum DuoMotion {
     public static let noticeOut: Double = 0.12
     public static let chipIn: Double = 0.15
     public static let count: Double = 0.2
-    public static let highlightIn: Double = 0.2
+    public static let highlightIn: Double = 0.4
     public static let highlightOut: Double = 0.6
     public static let slide: Double = 0.25
     public static let outline: Double = 0.08

@@ -109,7 +109,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             let s = c.usingColorSpace(.sRGB) ?? c
             return String(format: "#%02X%02X%02X", Int(round(s.redComponent * 255)), Int(round(s.greenComponent * 255)), Int(round(s.blueComponent * 255)))
         }
-        let vars = [("pane", DuoNSColor.pane), ("text", DuoNSColor.text), ("text2", DuoNSColor.text2), ("selected", DuoNSColor.selected),
+        let vars = [("pane", DuoNSColor.pane), ("text", DuoNSColor.text), ("text2", DuoNSColor.text2), ("selected", DuoNSColor.selected), ("claude-edit", DuoNSColor.claudeEdit),
                     ("rule", DuoNSColor.rule), ("control-edge", DuoNSColor.controlEdge), ("ground", DuoNSColor.ground), ("needs-you", DuoNSColor.needsYou)]
             .map { "--duo-\($0.0): \(hex($0.1));" }.joined(separator: " ")
         // Motion (DL-130): Claude's highlight fading in and out, in ms (zero with Reduce Motion).

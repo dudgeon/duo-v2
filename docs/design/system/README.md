@@ -58,7 +58,7 @@ Write the way a knowledgeable colleague talks: plain, short, specific. Sentence 
 
 Light chrome, from `tokens.json`:
 - **Grounds:** `ground` for the toolbar and sheet backgrounds; `pane` for panes, cards, popovers and buttons.
-- **Selection:** `selected` for the selected row and for Claude's additions to a document. `activeTint` is behind unselected sessions with a tab open in Duo, which also read `at prompt` or `working` (DL-133).
+- **Selection:** `selected` for the selected row. `claudeEdit`, a pale green (the diff-add green, a step darker than `selected`), is behind Claude's changes to a document and its additions block (DL-186). `activeTint` is behind unselected sessions with a tab open in Duo, which also read `at prompt` or `working` (DL-133).
 - **Text:** `text` for primary text, and the review and working glyphs. `text2` for secondary text, the idle and resolved glyphs, and chevrons.
 - **Lines:** `rule` for pane dividers and card or field borders. `controlEdge` for button and pill borders, dashed borders and the group rule.
 - **The accent:** `needsYou` only (above). `onNeedsYou` is text on the filled chip.
@@ -157,7 +157,7 @@ Minimal: motion shows where something went, that a click worked, or keeps your p
 - **Chat.** The review card rises in place of the composer, `motionCardIn`, and sinks after the answer, `motionCardOut`. New items fade in, `motionMessageIn`.
 - **The chip.** It fades, `motionChipIn`, and its count rolls, `motionCount`.
 - **Documents.**
-  - Claude's highlight fades in, `motionHighlightIn` 200 ms, and out on your next edit, `motionHighlightOut` 600 ms.
+  - Claude's highlight fades in, `motionHighlightIn` 400 ms (DL-186), and out on your next edit, `motionHighlightOut` 600 ms.
   - The deck scrolls to a slide, `motionSlide` 250 ms, and the picker's outline glides, `motionOutline` 80 ms.
 - **Never animated:**
   - state glyphs, the needs-you dot, and map order;

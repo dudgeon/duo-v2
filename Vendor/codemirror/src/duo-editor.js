@@ -1150,8 +1150,8 @@ let settleTimer = null, fadeTimer = null;
 // The highlight's keyframes (from nothing to `selected`, and back), off with Reduce Motion.
 {
   const st = document.createElement("style");
-  st.textContent = "@keyframes duo-highlight-in { from { background-color: transparent; } to { background-color: var(--duo-selected); } }"
-    + " @keyframes duo-highlight-out { from { background-color: var(--duo-selected); } to { background-color: transparent; } }"
+  st.textContent = "@keyframes duo-highlight-in { from { background-color: transparent; } to { background-color: var(--duo-claude-edit); } }"
+    + " @keyframes duo-highlight-out { from { background-color: var(--duo-claude-edit); } to { background-color: transparent; } }"
     + " @media (prefers-reduced-motion: reduce) { .duo-added-new, .duo-added-fading { animation: none !important; } .duo-added-fading { background-color: transparent; } }";
   document.head.appendChild(st);
 }
@@ -1759,7 +1759,7 @@ const duoTheme = EditorView.theme({
   ".duo-fs-last": { boxShadow: "inset 1.5px 0 0 var(--duo-text), inset -1.5px 0 0 var(--duo-text), inset 0 -1.5px 0 var(--duo-text)", borderBottomLeftRadius: "6px", borderBottomRightRadius: "6px", paddingBottom: "8px" },
   ".duo-fs-first.duo-fs-last": { boxShadow: "inset 0 0 0 1.5px var(--duo-text)" },
   ".duo-fs-first::after": { content: "attr(data-label)", position: "absolute", right: "12px", top: "8px", color: "var(--duo-text2)", fontFamily: "-apple-system, sans-serif", fontSize: "13px" },
-  ".duo-added": { backgroundColor: "var(--duo-selected)", borderRadius: "var(--duo-radius-card)" },
+  ".duo-added": { backgroundColor: "var(--duo-claude-edit)", borderRadius: "var(--duo-radius-card)" },
   ".duo-added-new": { animation: "duo-highlight-in calc(var(--duo-motion-highlight-in-ms, 0) * 1ms) ease-out both" },
   ".duo-added-fading": { borderRadius: "var(--duo-radius-card)", animation: "duo-highlight-out calc(var(--duo-motion-highlight-out-ms, 0) * 1ms) ease-in-out both" },
   ".duo-task": { display: "inline-flex", margin: "0 8px 0 0", verticalAlign: "-1px", cursor: "default", textIndent: "0" },
@@ -1794,7 +1794,7 @@ const duoTheme = EditorView.theme({
   ".duo-fm-check": { margin: "0 4px 0 0", verticalAlign: "-2px" },
   ".duo-fm-control": { display: "inline-flex", alignItems: "center", marginLeft: "12px", verticalAlign: "-2px", cursor: "default" },
   ".duo-fm-link": { textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px" },
-  ".cm-line.duo-fm-claude::before": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", backgroundColor: "var(--duo-selected)", borderRadius: "4px", zIndex: "-1" },
+  ".cm-line.duo-fm-claude::before": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", backgroundColor: "var(--duo-claude-edit)", borderRadius: "4px", zIndex: "-1" },
   ".duo-fm-claude-label": { float: "right", paddingLeft: "8px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", color: "var(--duo-text2)", whiteSpace: "nowrap" },
   ".cm-line.duo-fm-error::after": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", boxShadow: "inset 0 0 0 1.5px var(--duo-text)", borderRadius: "4px", pointerEvents: "none" },
   ".duo-fm-message": { margin: "8px -8px 0", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", lineHeight: "16px", color: "var(--duo-text2)" },
