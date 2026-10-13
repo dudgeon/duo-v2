@@ -3356,6 +3356,7 @@ All three of C-80's findings were real in the code.
 - **On screen, the main thread is busy almost all through "replies at the bottom".** The watchdog got 6–10 pings in that phase against 296–297 in the background. Appending after a jump to the bottom makes SwiftUI re-estimate a giant lazy row (ENH-23 (a), F-157), and on screen that row is also drawn.
 - **Background runs understate this phase 6–19×.** `check-chat-perf.sh`, run in the background as it is by default, can't catch it getting worse, and its budget scores only the longest stall. C-85 has the changes to the gate.
 - **The other phases match within noise,** visible or not.
+- **Corrected (F-304):** the display was asleep during these visible runs (pmset: off 10:25–15:14). The 287–946 ms is what the stall costs with the window in front and the display asleep; on a lit, front screen main measures 40–97 ms. check-chat-perf now refuses a visible run that was covered or asleep.
 ## F-296 · Two jobs held the GPU lock at once: a script released it twice (video/tooling, 2026-10-12)
 
 - **What happened.** director-merge (via `gpu-lock.sh`) and codebase-review's `matrix.sh` (bare `mkdir`) both ran under the lock, and a third job, director-film, then got in too. director-merge printed no "clearing" line: its `mkdir` simply succeeded, so the lock dir had already been deleted under a live holder.
@@ -3374,3 +3375,56 @@ All three of C-80's findings were real in the code.
   - Kept from F-294 and F-296: the queue, releasing only one's own hold, an owner it can't signal counted as alive, dead holders and ownerless holds cleared (now in the slots too), and the "taken" warning (for a shared slot too). A stale hold is cleared only if its owner is still the dead one just read.
   - A bare `mkdir <lock>` still keeps exclusive and new shared jobs out, but doesn't wait for shared jobs already running, so it's no longer supported. An older copy of the script doesn't know the slots either: call the main checkout's copy by its full path.
 - **Proof** (`scripts/check-gpu-lock.sh`, about 35 s). The F-294 and F-296 cases still pass. New: three shared jobs on two slots (two overlap, the third waits for a slot); a shared job running, then an exclusive waiter, then a shared one (the exclusive waits for the first, the second shared waits behind the exclusive although a slot is free, and the exclusive runs alone); a mix of 12 jobs, every third exclusive (no exclusive job ever overlaps another job, never more than 2 shared, every hold released); dead holders in both slots, cleared by an exclusive job and by a shared one.
+
+## F-304 · Replies at the bottom of a long chat: whole-turn lazy rows, and a gate that measured a sleeping display (fix/chat-finer-rows, 2026-10-12)
+
+- **Root cause (C-85).** A trace of the heavy chat (`DUO_PERF_TRACE=1`: busy run-loop turns, scroll geometry, follows; `sample` on the phase) showed the cost in SwiftUI's own update and layout (about 55%) and in drawing (about 30%). Duo's view code took about 1%, and no views were created. Each reply batch that changed or built a whole Claude turn cost 230–530 ms: the last turn had 175 segments, and the one realized after it 123. Meanwhile the lazy stack's estimate of the feed swung from 144k to 359k pt. The bodies ran 8 times in the phase, so it isn't diffing: it's laying out and drawing one giant row.
+- **Two dead ends, measured:**
+  - The live exchange in a plain tail below the lazy stack: the estimate stopped swinging, but a tail of big turns cost more (833 ms).
+  - Equatable card sections alone: no clear gain.
+- **The fix: lazy rows of bounded size.** In the lazy feed, a Claude turn of more than 8 card sections is several rows. Each row holds 8 sections, drawn on its piece of the card, and the pieces meet edge to edge (`Chat/ChatRows.swift`). A shorter turn stays one row. Each turn's rows are kept until its segments change, so an event rebuilds only the turn it touched. F-160's prototype had rebuilt all 1,850 rows on every event. Sections are Equatable, so a changed piece redraws only its changed section. The plain stack (F-226, every chat board) is unchanged: its code is main's.
+- **Piece size, measured on screen:** 4, 8 and 16 sections all removed the stall. 8 keeps the row count near the item count.
+- **The gate measured a sleeping display.** F-295's "visible" runs ran while the display was off (pmset: off 10:25–15:14; F-295 committed 15:14), and so did this session's first slow runs. The condition is a window shown in front with the display asleep. Two runs that don't hit it:
+  - with the display lit and the window covered (it is then occluded), main measures 88–111 ms;
+  - in front on a lit screen, main measures 40–97 ms.
+
+  So on a screen someone is looking at, main's stall is about 100 ms, not 0.3–0.9 s. What the condition costs is real main-thread time (hooks, `duo2` and terminals wait), but nobody sees it.
+- **Gate changes:**
+  - Perf reports carry `window_visible` and `display_asleep`. check-chat-perf refuses a visible run that was covered or asleep.
+  - A visible perf run floats its window in front, on every Space, for the run.
+  - Background runs are driven by default (`DUO_PERF_DRIVE=1`, a 60 Hz layout and display while replies arrive), so the draw cost counts.
+  - New budget: at most 1 stall over 250 ms at the bottom; the total of stalls over 50 ms is printed.
+  - `DUO_FEED=whole` draws the lazy feed's turns whole (main's rows) to measure against. `DUO_FEED=proof` draws the plain feed in pieces (check-ui passes it on), so the boards prove the pieces look like whole cards.
+- **Numbers, heavy fixture (100 items, 1,945 steps), release builds, longest stall in ms:**
+
+  | Phase | Main's rows | Pieces | Budget |
+  |---|---|---|---|
+  | **Window in front, display asleep** (C-85's condition, 6 runs each in two batches; load 1.5–4.1): replies at the bottom | **165–467**; a stall over 250 in 4 of 6 runs; 328–716 over 50 | **76–264**; a stall over 250 in 1 of 6; 76–264 over 50, always one stall | 600 |
+  | First batch: flick; slow scroll late frames | 80–82; 1 | 48–61; 3 | 250; 10 |
+  | **Lit, front window** (Geoff's OK, 3 runs each; load 4.0–6.2): replies at the bottom | 40, 93, 97 | 47, 47, 57 | 600 |
+  | Same runs: open; flick; slow scroll longest frame; late frames | 80–142; 77–89; 108–124; 1 | 60–86; 38–55; 44–67; 3–4 | 600; 250; —; 10 |
+  | Same runs: a reply while scrolled up | 23–40 | 19–25 | 250 |
+  | Background, driven (check-chat-perf, 2 runs each): replies at the bottom; flick; open | 53, 53; 78, 79; 103, 108 | 41, 54; 35, 47; 85, **726** | 600; 250; 600 |
+  | Background, main 9fe7333's own build and script (not driven): replies at the bottom; flick | 49, 80; 78, 84 | — | |
+
+  With the display asleep, the stall left in the pieces build comes when new turns arrive (a prompt and a new small turn: one 295 ms turn of the run loop), not from a giant row. It isn't drawn, since nobody can see a sleeping display.
+
+  Two opens were slow, 726 and 701 ms, each the first run right after a check-chat capture job (about 100 Duo launches), with the off-main replay taking twice its usual time (1.49–1.56 s against 0.79–0.86 s). The second run of each batch opened in 81–85 ms, and every other open of the pieces build took 60–95 ms.
+- **The one row that's worse:** slow scroll, frames over 33 ms, 1 → 3–4 of 300 (budget 10), in every condition. More rows are realized as you scroll: the longest frame drops, but more frames pass 33 ms.
+- **F-226's sizes** (background, not driven, main 9fe7333's build against this one, two passes each):
+
+  | Items / steps (make-long-chat args) | Open | Flick | Replies at the bottom | Reply while scrolled up | Memory |
+  |---|---|---|---|---|---|
+  | 24 / 101 (`--turns 12 --tools 8`), plain | 212 → 212 | 8 → 6 | 37 → 38 | 30 → 40 | 177 → 176 MB |
+  | 48 / 105 (`--turns 24 --tools 5`), plain | 400 → 385 | 23 → 10 | 75 → 81 | 21 → 24 | 234 → 248 MB |
+  | 48 / 212 (`--turns 24 --tools 10`), plain | 460 → 467 | 14 → 14 | 126 → 116 | 22 → 20 | 297 → 285 MB |
+  | 24 / 494 (`--turns 12 --tools 47`), lazy | 157–170 → 34–64 | 67–87 → 36–42 | 58–79 → 23–27 | 21–27 → 16–20 | 231–260 → 160–167 MB |
+  | 100 / 1,945 (heavy), lazy | 102–126 → 75–89 | 64–80 → 43–52 | 56–294 → 64–69 | 6–35 → 19–32 | 357 → 290–309 MB |
+
+  The plain rows are the final build (pass 3), main → this branch: the same code as main's, so they differ by noise only. In passes 1 and 2, before the plain stack went back to main's exact code, 48 / 105's replies at the bottom read 99 and 117 against 90 and 63. The lazy rows are the range over all three passes. Every value is within its budget.
+
+- **Proof:**
+  - check-chat: 100 of 100 board captures byte-identical to main's, and 100 of 100 with every card drawn in 1-section pieces (`DUO_FEED=proof DUO_FEED_PIECE=1`). The first proof pass found a piece left for a question list its card hides; such sections are now left out of the pieces.
+  - check-scale on release passes: 4.5% CPU, no stalls.
+  - DuoChecks: 1,323 pass. The three that fail are the EDITOR/VISUAL checks, which fail on main the same way (1,313 pass, 3 fail). They depend on the environment.
+  - New checks: how a turn is split into pieces, the ids and corners, the gaps, every section once and in order, one turn rebuilt per change, and ChatPane drawing the pieces.

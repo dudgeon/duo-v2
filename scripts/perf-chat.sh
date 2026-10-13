@@ -8,6 +8,9 @@
 # Isolated: its own support folder and Claude config folder under /tmp; never Geoff's Duo.
 # Writes <out>/perf.log (the `perf:` lines), <out>/sample-*.txt (sample(1) while opening,
 # scrolling and appending) and <out>/window.png. PERF_THEN replaces the actions.
+# PERF_ENV passes variables to the app (F-304): DUO_PERF_DRIVE=1 lays out and draws the window every
+# frame while replies arrive; DUO_PERF_TRACE=1 writes a timeline of each append to stderr.txt;
+# DUO_FEED=whole draws the lazy feed's turns whole, as before F-304, to measure against.
 set -u
 root=${0:A:h:h}
 cd $root

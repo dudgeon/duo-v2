@@ -162,6 +162,8 @@ public final class ChatSession {
     public let log: ChatLog = { let l = ChatLog(); l.drawn = true; return l }()
     /// Folds and long outputs the reader opened.
     public let ui = ChatUIState()
+    /// The lazy feed's rows for each turn, kept until the turn changes (ChatRows.swift).
+    @ObservationIgnored var feedRows: [String: ChatFeedRows.Kept] = [:]
     /// Fixture targets: the clock the Writing line counts from.
     public var fixedNow: Date?
     public var now: Date { fixedNow ?? Date() }

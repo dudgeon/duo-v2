@@ -76,7 +76,15 @@ struct ChatPane: View {
                     // at work can't arise (F-226). A longer one stays lazy, as F-157 built it.
                     Group {
                         if ChatFeedShape.isLazy(items: chat.log.items.count, steps: chat.log.steps.count) {
-                            LazyVStack(alignment: .leading, spacing: 16) { rows }
+                            // Its rows are of bounded size: a long Claude turn is several pieces, so
+                            // a turn growing at the end isn't one giant row rebuilt on each event (C-85).
+                            if chat.videoTurnStart == nil, ChatFeedRows.mode != .whole {
+                                LazyVStack(alignment: .leading, spacing: 0) { pieces }
+                            } else {
+                                LazyVStack(alignment: .leading, spacing: 16) { rows }
+                            }
+                        } else if chat.videoTurnStart == nil, ChatFeedRows.mode == .proof {
+                            VStack(alignment: .leading, spacing: 0) { pieces }
                         } else {
                             VStack(alignment: .leading, spacing: 16) { rows }
                         }
@@ -102,6 +110,7 @@ struct ChatPane: View {
                 // item was a walk of the whole feed per event (F-160).
                 .onScrollGeometryChange(for: [CGFloat].self, of: { g in [g.contentOffset.y, g.containerSize.height, g.contentSize.height] }) { old, g in
                     let atBottom = g[0] + g[1] >= g[2] - 60
+                    ChatPerf.note("geo y \(Int(g[0])) h \(Int(g[2])) follows \(chat.followsBottom)")
                     if old.count == 3, old[2] != g[2] || old[1] != g[1] {
                         // Grown or the pane resized while following: back to the end, once, by us
                         // (what the size-change anchor did). Otherwise you've left the end.
@@ -187,6 +196,19 @@ struct ChatPane: View {
         ChatWorkingLine(chat: chat)
     }
 
+    /// The lazy feed in rows of bounded size (ChatRows.swift): a long Claude turn is several pieces.
+    @ViewBuilder var pieces: some View {
+        if chat.log.earlierHidden {
+            Text("Earlier turns").duoText(.chatMeta).foregroundStyle(DuoColor.text).underline(color: DuoColor.controlEdge)
+                .frame(maxWidth: .infinity)
+                .onActivate { chat.loadEarlier() }  // not an action: shows more of the transcript
+        }
+        ForEach(ChatFeedRows.rows(chat)) { row in
+            ChatFeedRowView(row: row, chat: chat).equatable().id(row.id).transition(.opacity)
+        }
+        ChatWorkingLine(chat: chat, gap: chat.log.items.isEmpty && !chat.log.earlierHidden ? 0 : 16)
+    }
+
     /// Back to the end of the feed, at most once per turn of the run loop, and never more than 20
     /// times in a second: content that keeps changing size can't scroll it for ever (F-225). Past
     /// that, the feed stops following until you scroll to the end.
@@ -201,6 +223,7 @@ struct ChatPane: View {
             return
         }
         chat.followPending = true
+        ChatPerf.note("follow")
         DispatchQueue.main.async {
             chat.followPending = false
             proxy.scrollTo(ChatPane.bottom, anchor: .bottom)
@@ -393,6 +416,8 @@ struct ChatInterruptedLine: View {
 /// own retry status (`529 Overloaded · Retrying in 2s · attempt 4/10`).
 struct ChatWorkingLine: View {
     let chat: ChatSession
+    /// The space above it, in a feed whose rows carry their own (ChatRows.swift).
+    var gap: CGFloat = 0
 
     var body: some View {
         if currentText != nil {
@@ -403,6 +428,7 @@ struct ChatWorkingLine: View {
                 }
                 .padding(.leading, 4)
             }
+            .padding(.top, gap)
         }
     }
 
@@ -463,6 +489,34 @@ struct ChatClaudeCard: View {
             if b.onThread, let last = out.last?.last, last.onThread { out[out.count - 1].append(b) } else { out.append([b]) }
         }
         return out
+    }
+}
+
+/// One section of a piece of Claude's card (ChatRows.swift), drawn as ChatClaudeCard draws its
+/// sections inline (keep the two the same; the chat boards' proof mode checks they are). Equatable,
+/// so a piece that changed doesn't redraw its unchanged sections.
+struct ChatCardSection: View, Equatable {
+    let section: [ChatCardRow]
+    let lastAsked: String?
+    let chat: ChatSession
+
+    nonisolated static func == (a: Self, b: Self) -> Bool { a.chat === b.chat && a.lastAsked == b.lastAsked && a.section == b.section }
+
+    var body: some View {
+        if section.first!.onThread {
+            ChatThread(blocks: section, chat: chat)
+        } else {
+            switch section.first! {
+            case .thinking(let id, let secs): ChatThinkingRow(id: id, seconds: secs, chat: chat)
+            case .text(let t): ChatMarkdownView(blocks: ChatMarkdown.parse(t.markdown), streaming: t.streaming, faded: t.cut)
+            case .asked(let id, let qs):
+                // While the question is up, its card shows it; the list stays once it closes.
+                if !(chat.cardUp && [.question, .questionReview].contains(chat.screen.kind) && id == lastAsked) {
+                    ChatAskedBox(questions: qs)
+                }
+            default: EmptyView()
+            }
+        }
     }
 }
 

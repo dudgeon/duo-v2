@@ -1,5 +1,6 @@
 import AppKit
 import Darwin
+import DuoControl
 
 /// Chat mode's performance harness (F-157): a long session's transcript followed by the fixture
 /// chat, then timed. Results go to stderr as `perf: {json}` lines.
@@ -14,6 +15,30 @@ import Darwin
 enum ChatPerf {
     static let watchdog = Watchdog()
     static var scrollTimer: Timer?
+    /// A timeline of the feed during `perf-append` (root-causing C-85): busy run-loop turns, the
+    /// scroll geometry's changes and follows, in ms from the append's start (DUO_PERF_TRACE=1).
+    static var tracing = false
+    static var trace: [String] = []
+    static var traceStart = 0.0
+    static var turnObserver: CFRunLoopObserver?
+    static func note(_ s: @autoclosure () -> String) {
+        guard tracing, trace.count < 4000 else { return }
+        trace.append("\(ms(CACurrentMediaTime() - traceStart)) \(s())")
+    }
+    static func startTrace() {
+        tracing = true; trace = []; traceStart = CACurrentMediaTime()
+        if turnObserver == nil {
+            var woke = 0.0
+            let o = CFRunLoopObserverCreateWithHandler(nil, CFRunLoopActivity.afterWaiting.rawValue | CFRunLoopActivity.beforeWaiting.rawValue, true, 0) { _, act in
+                MainActor.assumeIsolated {
+                    let now = CACurrentMediaTime()
+                    if act == .afterWaiting { woke = now } else if woke > 0, now - woke > 0.016 { note("busy \(ms(now - woke))") }
+                }
+            }
+            CFRunLoopAddObserver(CFRunLoopGetMain(), o, .commonModes)
+            turnObserver = o
+        }
+    }
 
     static func perform(_ parts: [String], on model: AppModel) {
         let args = parts.count > 1 ? parts[1].split(separator: "|", omittingEmptySubsequences: false).map(String.init) : []
@@ -92,20 +117,38 @@ enum ChatPerf {
                   let h = FileHandle(forWritingAtPath: args[1]) else { return say(["error": "perf-append: no files"]) }
             let count = min(Int(args[2]) ?? 50, lines.count)
             watchdog.start()
+            if ProcessInfo.processInfo.environment["DUO_PERF_TRACE"] == "1" { startTrace() }
+            // DUO_PERF_DRIVE=1: lay out and draw the window every frame, as a window on screen is,
+            // so a background run (or a covered window) counts what drawing costs (C-85).
+            let driver: Timer? = {
+                guard ProcessInfo.processInfo.environment["DUO_PERF_DRIVE"] == "1", let w = chatScroll()?.window else { return nil }
+                let t = Timer(timeInterval: 1.0 / 60, repeats: true) { _ in
+                    MainActor.assumeIsolated { w.contentView?.layoutSubtreeIfNeeded(); w.displayIfNeeded() }
+                }
+                RunLoop.main.add(t, forMode: .common)
+                return t
+            }()
             let before = chatScroll().map { Int($0.contentView.bounds.minY) } ?? -1
             let beforeHeight = chatScroll()?.documentView.map { Int($0.bounds.height) } ?? -1
             let follows = model.consoleTab.flatMap { model.fixtureChats[$0] }?.followsBottom
             for i in 0..<count {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05 * Double(i)) {
+                    MainActor.assumeIsolated { note("line \(i)") }
                     h.seekToEndOfFile(); h.write(Data((lines[i] + "\n").utf8))
                 }
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05 * Double(count) + 1) {
                 MainActor.assumeIsolated {
                     try? h.close()
+                    driver?.invalidate()
+                    if tracing {
+                        FileHandle.standardError.write(Data(("trace \(args.count > 3 ? args[3] : "append"):\n" + trace.joined(separator: "\n") + "\n").utf8))
+                        tracing = false
+                    }
                     var r = watchdog.take(label: args.count > 3 ? args[3] : "append")
                     let sv = chatScroll()
                     r.merge(["event": "append", "lines": count, "follows_bottom": follows ?? false, "y_before": before, "height_before": beforeHeight,
+                             "window_visible": sv?.window?.occlusionState.contains(.visible) ?? false, "display_asleep": CGDisplayIsAsleep(CGMainDisplayID()) != 0,
                              "y_after": sv.map { Int($0.contentView.bounds.minY) } ?? -1,
                              "height_after": sv?.documentView.map { Int($0.bounds.height) } ?? -1, "footprint_mb": footprintMB()]) { a, _ in a }
                     say(r)
@@ -121,6 +164,14 @@ enum ChatPerf {
             try? p.run()
         case "perf-bottom":
             guard let sv = chatScroll(), let doc = sv.documentView else { return }
+            // A visible run (DUO_TEST_FOREGROUND=1, Geoff's OK) measures a window in front, not one
+            // covered by other apps' windows, which AppKit doesn't draw (C-85).
+            // Floating, and on every Space (a full-screen app's too), only for that run.
+            if !TestBackground.isOn, let w = sv.window {
+                w.collectionBehavior.formUnion([.canJoinAllSpaces, .fullScreenAuxiliary])
+                w.level = .floating
+                w.orderFrontRegardless()
+            }
             doc.scroll(NSPoint(x: 0, y: max(0, doc.bounds.height - sv.contentView.bounds.height)))
             sv.reflectScrolledClipView(sv.contentView)
         case "perf-stall":
