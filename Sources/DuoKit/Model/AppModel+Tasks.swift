@@ -356,6 +356,9 @@ struct TaskLine: View {
     let showsProject: Bool
     /// Inside the Tasks fold, lines sit under the fold's label (DL-100).
     var indented = false
+    /// A task with no session in the TASKS section keeps the task headers' columns: an empty chevron slot
+    /// and an empty glyph slot before its box (session-glyphs-handoff 04-hierarchy). Replaces `indented`.
+    var headerColumns = false
 
     var body: some View {
         let key = TaskRowHover.key(project: task.project, path: task.path)
@@ -364,8 +367,12 @@ struct TaskLine: View {
         // Done (DL-130, DL-187): checked, struck through and grey for as long as it's listed.
         let completing = model.isDone(task)
         HStack(spacing: DuoSpace.gapRowItems) {
+            if headerColumns {
+                Color.clear.frame(width: 10, height: 1)   // the chevron's slot
+                Color.clear.frame(width: DuoMetric.glyph, height: DuoMetric.glyph)   // the glyph's slot
+            }
             TaskBox(checked: completing)
-            Text(task.title).duoText(.body).strikethrough(completing).foregroundStyle(completing ? DuoColor.text2 : DuoColor.text).lineLimit(1)
+            Text(task.title).duoText(headerColumns ? .bodyEmphasis : .body).strikethrough(completing).foregroundStyle(completing ? DuoColor.text2 : DuoColor.text).lineLimit(1)
             if showsProject { Text(task.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1) }
             Spacer(minLength: 8)
             // On hover the + takes the status's place (DL-112, stand-ins-handoff q43-hover).
