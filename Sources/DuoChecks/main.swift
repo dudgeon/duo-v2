@@ -2692,6 +2692,26 @@ func repoFixture() throws -> Fixture {
         path = "tasks/exec-review-final.md"
         m.fixture.tasks = nil
 
+        // A done task looks done while it's listed, folds when it's completed and unfolds when reopened (DL-187).
+        let doneGroup: Fixture.Group = decoded(["name": "Exec review", "project": "tasky", "sessions": ["Quiet one"], "threads": [["Quiet one"]], "task": path])
+        func taskShown(_ status: String) -> Fixture.TaskSummary { .init(project: "tasky", path: path, title: "Exec review", status: status, sessionIds: [quiet]) }
+        m.fixture.groups = [doneGroup]
+        m.fixture.tasks = [taskShown("open")]
+        m.expandedGroups = [doneGroup.name]
+        m.taskStatusSeen = nil
+        m.followTaskStatus()   // first look: remembers
+        check(!m.isDone(taskShown("open")) && m.isDone(taskShown("done")), "an open task doesn't look done; a done one does (checked, struck, grey)")
+        check(m.expandedGroups.contains(doneGroup.name), "an open task's sessions stay as they were")
+        m.setShownTask("tasky", path) { $0.status = "done" }
+        check(m.isDone(m.summary(ofTask: path, in: "tasky")!) && !m.expandedGroups.contains(doneGroup.name), "completing a task folds its sessions")
+        m.expandedGroups.insert(doneGroup.name)
+        m.followTaskStatus()
+        check(m.expandedGroups.contains(doneGroup.name), "a fold the user opens on a done task stays open")
+        m.setShownTask("tasky", path) { $0.status = "open" }
+        check(!m.isDone(m.summary(ofTask: path, in: "tasky")!) && m.expandedGroups.contains(doneGroup.name), "reopening a task restores the normal look and unfolds it")
+        m.fixture.groups = []
+        m.fixture.tasks = nil
+
         // Archive, sessions kept.
         guard case .success = m.archiveTask(project: "tasky", path: path, sessions: false) else { check(false, "Archive worked"); return }
         check(m.loadTask("tasky", path)?.archived == true && archivedIds().isEmpty, "Archive Task Only marks the note archived and leaves its sessions")

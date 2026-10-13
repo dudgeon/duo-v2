@@ -342,8 +342,8 @@ struct TaskLine: View {
         let key = TaskRowHover.key(project: task.project, path: task.path)
         let archived = task.archived == true
         let hovered = model.terminalsMode == .live && model.hoveredTaskRow == key && !archived
-        // Just marked complete (DL-130): checked, struck through and grey while it holds.
-        let completing = model.isCompleting(task)
+        // Done (DL-130, DL-187): checked, struck through and grey for as long as it's listed.
+        let completing = model.isDone(task)
         HStack(spacing: DuoSpace.gapRowItems) {
             TaskBox(checked: completing)
             Text(task.title).duoText(.body).strikethrough(completing).foregroundStyle(completing ? DuoColor.text2 : DuoColor.text).lineLimit(1)
@@ -632,9 +632,10 @@ final class DatePickTarget: NSObject {
 
 extension AppModel {
     /// Changes a task as listed, before the snapshot reads its note (Q-78).
-    func setShownTask(_ project: String, _ path: String, _ change: (inout Fixture.TaskSummary) -> Void) {
+    public func setShownTask(_ project: String, _ path: String, _ change: (inout Fixture.TaskSummary) -> Void) {
         guard let i = fixture.tasks?.firstIndex(where: { $0.project == project && $0.path == path }) else { return }
         change(&fixture.tasks![i])
+        followTaskStatus()   // a task shown done folds at once, not on the next snapshot (DL-187)
     }
 
     /// The task lists: open tasks, and ones just marked complete while they hold (DL-130).
@@ -646,6 +647,12 @@ extension AppModel {
         !(fixture.tasks ?? []).contains { $0.project == project && listedTask($0) }
     }
 
-    /// Whether a task shows as just completed: checked, struck through, grey (DL-130).
-    func isCompleting(_ t: Fixture.TaskSummary) -> Bool { completingTasks.contains(t.id) && t.status == "done" }
+    /// Whether a task looks done: checked, struck through, grey (DL-130's rowHold look), for as long as it's
+    /// listed, not only while it holds (DL-187).
+    public func isDone(_ t: Fixture.TaskSummary) -> Bool { t.status == "done" }
+
+    /// The task a group row stands for, by its note's path in the project.
+    public func summary(ofTask path: String, in project: String) -> Fixture.TaskSummary? {
+        fixture.tasks?.first { $0.project == project && $0.path == path }
+    }
 }
