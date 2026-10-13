@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="680x1460">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-188">
+<!--
+Composer · light Markdown styling, blocks drawn [G]
+APPROVED BOARD. Geoff, 2026-10-13 (DL-188, by button: "looks good"). Exported from the Design canvas
+https://claude.ai/artifact/HqqgRX8mpDfZjRLM14Btd9 (board Main.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+The section labels, THE RULE and the grey notes under each snippet are the board's, not the app's.
+-->
+<title>Composer Markdown</title>
+<style>
+body{margin:0}
+.lbl{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B636D}
+.field{background:#FFFFFF;border:1px solid #8B939C;border-radius:12px;padding:10px 14px;box-sizing:border-box;display:flex;flex-direction:column}
+.focus{border:1.5px solid #1F2328}
+.hint{display:flex;align-items:center;gap:8px;font-size:12px;line-height:16px;color:#5B636D;padding:0 4px}
+.snip{display:flex;flex-direction:column;gap:6px}
+.m{color:#5B636D}
+.b{font-weight:600}
+.i{font-style:italic}
+.code{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12.5px;background:#F3F4F6;border-radius:4px;padding:0 2px}
+.mono{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:12px;line-height:19px}
+.li{display:flex}
+.dot{width:22px;flex:none;text-align:center}
+.num{width:22px;flex:none;text-align:right;padding-right:6px}
+.quote{display:flex;gap:10px;color:#5B636D}
+.qrule{width:2px;flex:none;background:#C9CDD3}
+.fence{background:#F3F4F6;border-radius:10px;padding:6px 14px;margin:4px 0}
+.u{text-decoration:underline;text-decoration-color:#8B939C}
+.caret{display:inline-block;width:1.5px;height:15px;background:#1F2328;vertical-align:-3px;margin-left:1px}
+.file{display:inline-flex;align-items:center;gap:4px;vertical-align:1px;border:1px solid #C9CDD3;border-radius:6px;padding:0 6px;background:#F3F4F6;font-size:12px;line-height:18px}
+.chipm{border:1px solid #C9CDD3;border-radius:9px;padding:0 8px;background:#FFFFFF}
+</style>
+</head><body>
+<div style="width: 680px; height: 1460px; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 18px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+
+<div class="snip">
+<div class="lbl">A · TODAY · WHAT YOU TYPE IS PLAIN TEXT</div>
+<div class="field" style="white-space: pre-wrap">## Saved cards, next pass
+Rework the **non-goals** in `docs/prd-v2.md`:
+- drop #3, it restates #1
+- keep wallets out
+  - but log an open question
+1. Read the interviews first
+2. Then the [Stripe guide](https://stripe.com/docs/refunds)
+&gt; P2: “I’m not typing a card number on my phone again.”
+```
+refund.threshold = 500
+```</div>
+</div>
+
+<div class="snip">
+<div class="lbl">B · AS YOU TYPE · MARKS STAY, BLOCKS ARE DRAWN [P]</div>
+<div class="field focus">
+<div><span class="m">## </span><span class="b">Saved cards, next pass</span></div>
+<div>Rework the <span class="m">**</span><span class="b">non-goals</span><span class="m">**</span> in <span class="code"><span class="m">`</span>docs/prd-v2.md<span class="m">`</span></span>:</div>
+<div class="li"><span class="dot">•</span><span>drop #3, it restates #1</span></div>
+<div class="li"><span class="dot">•</span><span>keep wallets out</span></div>
+<div class="li" style="padding-left: 22px"><span class="dot">•</span><span>but log an open question</span></div>
+<div class="li"><span class="num">1.</span><span>Read the interviews first</span></div>
+<div class="li"><span class="num">2.</span><span>Then the <span class="m">[</span><span class="u">Stripe guide</span><span class="m">](https://stripe.com/docs/refunds)</span></span></div>
+<div class="quote" style="margin: 4px 0"><span class="qrule"></span><span>P2: “I’m not typing a card number on my phone again.”</span></div>
+<div class="fence">
+<div class="mono m">```</div>
+<div class="mono">refund.threshold = 500</div>
+<div class="mono m">```<span class="caret"></span></div>
+</div>
+</div>
+<div class="hint"><span class="chipm">⏵⏵ accept edits on</span><span>⏎ send · ⇧⏎ new line · / commands</span><span style="margin-left: auto">Opus</span></div>
+</div>
+
+<div class="snip">
+<div class="lbl">THE RULE [P]</div>
+<div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 20px">
+<div class="li"><span class="dot">•</span><span>Every character stays where you typed it; what’s sent is what’s in the box.</span></div>
+<div class="li"><span class="dot">•</span><span>Inline marks stay, in <span class="m">text2</span>: <span class="m">**</span> <span class="m">*</span> <span class="m">`</span> <span class="m">#</span> <span class="m">[ ]( )</span>. Bold goes semibold, code goes mono on the code ground, a heading goes semibold at the same size.</span></div>
+<div class="li"><span class="dot">•</span><span>Block marks are drawn over: a line’s <span class="m">-</span> or <span class="m">*</span> shows as a bullet, its <span class="m">&gt;</span> as the quote rule. Wrapped lines hang under the text. Numbers stay as typed.</span></div>
+<div class="li"><span class="dot">•</span><span>Fences stay, dim, and the lines between them sit on the code ground in mono.</span></div>
+</div>
+</div>
+
+<div class="snip">
+<div class="lbl">C · A LONG BULLET WRAPS UNDER ITS TEXT, THE CARET ON ITS MARK [P]</div>
+<div class="field focus">
+<div>Before Friday:</div>
+<div class="li"><span class="dot" style="position: relative">•<span class="caret" style="position: absolute; left: 15px; top: 4px; margin: 0"></span></span><span>check whether the guest flow keeps the card form on one page, as the interviews asked, and say which screens change</span></div>
+<div class="li"><span class="dot">•</span><span>name an owner</span></div>
+</div>
+<div class="hint"><span>The bullet is the dash, drawn: ⌫ after it deletes the dash, and the line is plain again</span></div>
+</div>
+
+<div class="snip">
+<div class="lbl">D · WITH A PASTE BLOCK AND A FILE · EACH KEEPS ITS OWN LOOK [P]</div>
+<div class="field focus" style="gap: 4px">
+<div>Fold the <span class="m">**</span><span class="b">decisions</span><span class="m">**</span> from these into <span class="file"><svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M1.5.5h4.5l2.5 2.5v8H1.5Z" fill="none" stroke="#5B636D" stroke-width="1.1" stroke-linejoin="round"></path></svg>prd-v2.md</span>:</div>
+<div style="border: 1px solid #C9CDD3; border-radius: 8px; background: #F3F4F6; padding: 6px 10px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px">
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2 6.5 5 3.5 8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span style="font-weight: 600">Pasted text</span><span style="color: #5B636D">· 42 lines</span>
+</div>
+<div style="font-size: 13px; line-height: 20px; color: #5B636D; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Review notes, 8 October. 1. Guest checkout keeps the card form on one page. 2. Saved cards need…</div>
+</div>
+<div class="li"><span class="dot">•</span><span>keep the open questions<span class="caret"></span></span></div>
+</div>
+<div class="hint"><span>A folded paste isn’t styled; opened, it is, like the rest</span></div>
+</div>
+
+<div class="snip">
+<div class="lbl">E · SENT · YOUR BUBBLE RENDERS IT, MARKS GONE</div>
+<div style="align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
+<div style="font-size: 12px; line-height: 16px; color: #5B636D">You · 10:02</div>
+<div style="max-width: 440px; box-sizing: border-box; background: #DCE6F7; border-radius: 14px 14px 3px 14px; padding: 9px 14px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 16px; line-height: 24px; font-weight: 600">Saved cards, next pass</div>
+<div>Rework the <span class="b">non-goals</span> in <span class="code u">docs/prd-v2.md</span>:</div>
+<div>
+<div class="li"><span class="dot">•</span><span>drop #3, it restates #1</span></div>
+<div class="li"><span class="dot">•</span><span>keep wallets out</span></div>
+<div class="li" style="padding-left: 22px"><span class="dot">•</span><span>but log an open question</span></div>
+</div>
+<div>
+<div class="li"><span class="num">1.</span><span>Read the interviews first</span></div>
+<div class="li"><span class="num">2.</span><span>Then the <span class="u">Stripe guide</span></span></div>
+</div>
+<div class="quote"><span class="qrule"></span><span>P2: “I’m not typing a card number on my phone again.”</span></div>
+<div style="background: #F3F4F6; border-radius: 10px; padding: 10px 14px"><span class="mono">refund.threshold = 500</span></div>
+</div>
+</div>
+</div>
+
+</div>
+</body></html>
