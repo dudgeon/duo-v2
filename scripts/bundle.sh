@@ -9,7 +9,7 @@ config="${1:-debug}"
 cd "$root"
 
 # A failed compile stops here: an old binary from an earlier build must never be bundled as this one (F-277).
-for product in Duo duo2 duo-exec; do
+for product in Duo duo2; do
   rc=0; out="$(swift build -c "$config" --product "$product" 2>&1)" || rc=$?
   printf '%s\n' "$out" | grep -vE "ld: warning: search path" || true
   [ "$rc" -eq 0 ] || { echo "Build failed: swift build --product $product exited $rc" >&2; exit 1; }
@@ -25,10 +25,6 @@ cp "$bin" "$app/Contents/MacOS/Duo"
 mkdir -p "$app/Contents/Helpers"
 cp "$(dirname "$bin")/duo2" "$app/Contents/Helpers/duo2"
 codesign --force --sign - "$app/Contents/Helpers/duo2" >/dev/null 2>&1 || true
-# duo-exec starts each terminal's process as responsible for itself (DL-185); not on the terminals' PATH.
-mkdir -p "$app/Contents/Library/Exec"
-cp "$(dirname "$bin")/duo-exec" "$app/Contents/Library/Exec/duo-exec"
-codesign --force --sign - "$app/Contents/Library/Exec/duo-exec" >/dev/null 2>&1 || true
 # In-app updates (Vendor/Sparkle/README.md): the framework the app links, in Contents/Frameworks.
 mkdir -p "$app/Contents/Frameworks"
 ditto "$root/Vendor/Sparkle/Sparkle.framework" "$app/Contents/Frameworks/Sparkle.framework"

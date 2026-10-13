@@ -55,32 +55,4 @@ func walkGuardChecks() {
           "property suggestions and task references never walk home")
     check(ProtectedFolders.skip(URL(fileURLWithPath: "/Volumes"), root: URL(fileURLWithPath: "/")),
           "walks stay out of /Volumes (network shares prompt)")
-
-    print("terminal processes are responsible for themselves (DL-185)")
-    let l = ChildEnvironment.launch("/bin/zsh", args: ["-l"], argv0: "-zsh", exec: "/X/duo-exec")
-    check(l.executable == "/X/duo-exec" && l.args == ["/bin/zsh", "-zsh", "-l"] && l.execName == nil,
-          "a terminal starts through duo-exec, with the program, its argv0 and its arguments")
-    let plain = ChildEnvironment.launch("/c/claude", args: ["--resume", "x"], exec: nil)
-    check(plain.executable == "/c/claude" && plain.args == ["--resume", "x"], "without duo-exec it starts the program directly")
-    let sibling = URL(fileURLWithPath: CommandLine.arguments[0]).deletingLastPathComponent().appending(path: "duo-exec").path
-    let built = repoRoot().appending(path: "build/Duo.app/Contents/Library/Exec/duo-exec").path
-    guard let exec = [sibling, built].first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
-        print("  (duo-exec isn't built: `swift build --product duo-exec` runs the live check)")
-        return
-    }
-    func responsible(viaExec: Bool) -> (pid: Int32, responsible: Int32) {
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: viaExec ? exec : "/bin/sleep")
-        p.arguments = viaExec ? ["/bin/sleep", "sleep", "2"] : ["2"]
-        guard (try? p.run()) != nil else { return (0, -2) }
-        usleep(300_000)
-        defer { p.terminate(); p.waitUntilExit() }
-        return (p.processIdentifier, responsibility_get_pid_responsible_for_pid(p.processIdentifier))
-    }
-    let direct = responsible(viaExec: false), disclaimed = responsible(viaExec: true)
-    check(direct.responsible != direct.pid, "a child started directly counts its parent's app as responsible (\(direct.responsible))")
-    check(disclaimed.responsible == disclaimed.pid, "a child started through duo-exec is responsible for itself (\(disclaimed.pid))")
 }
-
-@_silgen_name("responsibility_get_pid_responsible_for_pid")
-func responsibility_get_pid_responsible_for_pid(_ pid: Int32) -> Int32
