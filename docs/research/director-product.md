@@ -227,6 +227,155 @@ Each decision gives the options with the recommendation first, the reasons, the 
   - The worker appends its report to the note, and the director reads it on its next turn.
 - **This is how a director works on a managed Mac:** pinned 2.1.219, hooks perhaps off, nothing scripted. The person presses Enter, so nothing runs that they didn't start. The skill says so plainly ("relay mode: start the session from this task").
 
+## 2b. Tasks, Claude Code Projects, and no artifacts (Geoff, 2026-10-12, second round)
+
+Geoff added four requirements:
+- research Claude Code Projects and use its patterns;
+- his work Mac allows no Claude artifacts, so everything needs a graceful fallback;
+- the director is an expert in Duo's projects and tasks and encourages their use;
+- tasks are the primitive directors orient to, with task folders for their files.
+
+Changing the structure and UX of tasks is in scope, with his approval. The aim is as much of Projects' value as possible, with UX compatible with it, since most users don't have Projects today but may move to it.
+
+Sources: the Projects docs page (https://code.claude.com/docs/en/claude-projects, read in full 2026-10-12), the launch blog, and the anthropics/claude-code issues cited by number (user reports). Duo's side: DL-87, DL-93, DL-112, DL-115, DL-116, DL-146 to DL-150, DL-174, and `TaskNotes.swift`, `TaskContext.swift`, `TaskBoard.swift`, `ProjectDiscovery.swift`.
+
+### What Projects is made of, and what we take
+
+| Projects pattern | What it does | Duo's version | Verdict |
+|---|---|---|---|
+| Coordinator conversation | One long-running session takes everything, routes it, and sees reports, not steps | The director session | Take |
+| Routing | A quick question is answered in the conversation; new work goes to a new thread or "a thread already working in that area, and Claude tells you which" | The same three-way routing: answer here, new task, or existing task, and say which | Take |
+| Suggested threads | "Claude proposes threads instead of starting them"; an arrow starts one, a button starts all | Tasks created with `status: suggested`; Start (one) or Start all | Take |
+| Setup recommendations | First turn proposes repos, routines and threads; switch off what you don't want, then **Update setup** | The director's first run proposes a `DIRECTOR.md` (checks, merge policy, caps, lanes it detected) for approval | Take |
+| Status groups | Ready for review / Waiting on you / Working / Landing / Idle / Resolved; auto-resolve after a week idle | Task lanes: open, in-progress, waiting, review, done (+ dropped), plus `suggested`; Duo's session states give needs-you/working/idle | Adapt (map; see N) |
+| Thread cards with buttons | Resolve conflicts, Fix CI, Address comments, Merge it ("sent as a message from you"), Review PR, Create PR | Actions on a directed task: Start, Open worker, Send back, Land, Resolve (needs design) | Adapt (S) |
+| Approvals in the thread | "Telling Claude in the project conversation to go ahead doesn't reach it" | Already our rule (peers can't approve); Duo makes the worker one click away | Take |
+| Brief like a chief of staff | Instructions, memory and the coordinator's task text; the brief isn't kept (#97924) | The brief is the task note's body, verbatim and kept | Take, improved |
+| Debug prompt | "For every open thread, list what you asked it to do, what it assumed or couldn't reach, and what it's waiting on" | The director's status digest per task: asked / assumed / waiting on | Take |
+| Project instructions | Up to 16,000 characters to every thread and the coordinator; local threads get only 8,192 bytes (#101398) | The Instructions section of `DIRECTOR.md`, added to every brief; warn over 8k, refuse over 16k | Take |
+| Project memory | Files + a `MEMORY.md` index Claude writes when told to remember; cloud threads read the index at start; local threads don't (#97464) | A project memory folder in the same shape, read by every brief, worktree-proof (Q) | Take (Q) |
+| Library | Files you add and files threads produce | Task folders (O) and the project's own files | Adapt |
+| PR tab, auto-fix | Threads watch their PR and push fixes when CI fails | Optional: Monitor over `gh pr checks` when the project uses PRs; most Duo work lands locally | Adapt, opt-in |
+| Routines | Scheduled work runs as threads | Later (ENH) | Defer |
+| Notifications | Desktop notice on a post, an error, or needs-input; a dot on Overview | Duo's needs-you; push through Remote Control | Take |
+| Mobile steering | Phone apps steer the project | Remote Control links per worker | Take |
+| Local threads, Worktree toggle | `claude remote-control --spawn worktree`; per-folder Worktree switch | A worktree per code-writing worker; a `DIRECTOR.md` switch | Take |
+| Continue as project / Move to project | Promote a session; the coordinator reads it and picks up | **Direct this** on a session or task: makes it a directed task and hands it to the director | Take |
+| Pause, Archive, Restart Claude | Pause stops threads and routines; Restart loses only the reply in progress | `duo2 director pause/resume`; restart = retire + claim (E) | Take |
+| Usage tab | Tokens by thread and model | Cost per task in the journal; later in Duo | Adapt |
+| Caps are preferences | "a limit you ask for is a preference rather than a cap"; 200 threads/day enforced | The cap is enforced by `duo2 director start` | Improve |
+| Cloud threads, server auto-fix, GitHub-only | Work with the laptop shut | Not local; `claude --cloud` borrowed where available | Skip |
+
+What Projects users complain about that the design already answers:
+- briefs lost to summarising (#97924): briefs are verbatim in the task note;
+- a coordinator that relays without verifying (#97924): the verify step (H);
+- the coordinator's session id changes (#100714): the registry and tombstone (E);
+- local threads miss memory (#97464): memory is read by every brief from a folder;
+- caps are only preferences: the cap is enforced;
+- no local-first projects (#99307, #101539): everything here is local;
+- "type go" approval rituals (#100219, #100591): approvals stay in the worker, one click away.
+
+**Moving to Projects later.** Projects has no import or API (#96115, #100714), so compatibility is in concepts and shape, not files. `duo2 director export` writes:
+- the instructions as one text block (16k characters at most);
+- the memory folder, ready to upload or to "remember";
+- each open task as a "Move to project"-style message: the brief, the branch, what's done, and what's waiting.
+
+The words stay Duo's (task, not thread), with this mapping documented, so the move needs no relearning.
+
+### N. Tasks are the director's spine
+- **Recommended: one delegated piece of work is one Duo task.** The director creates the note, links its worker sessions (`sessions:`), and moves it through the lanes. Duo's DL-116 hooks already tell every linked session "Its note … is the task's brief: read it before working on the task". So a worker started with `duo2 task session` finds its brief with no extra plumbing, and `@tasks/<note>.md` is typed without Enter (DL-112).
+- **Suggested tasks.** The director proposes work as `status: suggested`. A status that isn't a lane already shows as its own lane with Keep as Column (DL-150), so this needs no app change to start. You start one (or all), and it moves to in-progress.
+- **Lanes map to Projects' groups.**
+
+  | Duo lane | Projects group |
+  |---|---|
+  | suggested | Suggested threads |
+  | in-progress | Working |
+  | waiting | Waiting on you |
+  | review | Ready for review |
+  | done | Resolved |
+
+  Landing is the moment a merge is under way and shows in the task's note, not as a lane. Idle comes from the sessions' state. After a week with no activity the director proposes Done; it never moves a task by itself.
+- **The director owns the note; workers own their reports.** Only the director writes the note's frontmatter and brief. Workers write reports as files in the task folder (O) and may tick its `Done when` boxes. This removes the merge conflict a worker in a worktree would create by editing its branch's copy of the note.
+- **Directed tasks say so:** `directed_by: "[director](duo2://session/<id>)"` (a flat key, as the task format allows), plus the existing `sessions:`.
+- **The director encourages tasks:**
+  - It turns a request into a task before starting work.
+  - It offers Make a Task for sessions that are doing task-sized work.
+  - It suggests a project (Make a Project) when a folder has sessions but no brief.
+  - It keeps the project's `goal` and `next` current, which Duo's hooks pass to every session.
+- **Other options:** a ledger separate from tasks (`.director/threads/`), which leaves two lists of work; or groups as threads, which have no note, no status and no file.
+- **Would change it:** if directed tasks crowd users' boards; then they get a filter or a Director fold, not a separate store.
+
+### O. Task folders
+- **Recommended: a task's files live in a folder named after it, beside its note: `tasks/<slug>/` next to `tasks/<slug>.md`.**
+  - It is created only when the task needs files, by a new `duo2 task folder <task>`, and it's added to the note's `references:` (DL-150) so it shows on the card.
+  - Duo's task loader already ignores subfolders of `tasks/`, so nothing breaks today.
+  - Rename, move, archive and delete carry the folder with the note (an app change, since a rename moves the file today).
+- **What goes in it:**
+
+  | Path | What it holds |
+  |---|---|
+  | `decisions.md` | Open questions for the user, as checkboxes (R) |
+  | `reports/<date>-<worker>.md` | One file per report, so workers never edit the same file |
+  | `messages/` | The file-first mailbox: each director-to-worker message as a dated file (the invariant in §1) |
+  | `files/` | Inputs and outputs: pages, captures, write-ups, the task's own Library |
+
+  Everything is Markdown or plain files, so it is Obsidian- and OKF-compatible.
+- **Coordination:** the folder is where everyone working on the task looks first. A worker is told its folder in the brief. A worker in a sandboxed worktree is started with the folder as an added directory (`--add-dir`), because the sandbox lets Bash write only its own working directory and the added ones.
+- **Other options:**
+  - A folder note (`tasks/<slug>/<slug>.md`): it reopens DL-87's rejected "tasks as folders", and the loader would have to recurse.
+  - `references:` only, pointing anywhere: there is no convention, so agents can't find one another's files.
+- **Would change it:** if Obsidian users find folders beside notes untidy; then it's a setting to put task folders under `tasks/_files/<slug>/`.
+
+### P. A Projects-compatible shape
+- **Recommended: take the patterns in the table above, keep Duo's words, and ship `export`.**
+  - Duo's words: task, lane, needs you.
+  - Each Projects concept has one Duo home (instructions → `DIRECTOR.md`; memory → the memory folder; threads → tasks; Library → task folders; Suggested threads → the suggested lane), so a later move is a copy, not a rethink.
+- **Other options:**
+  - Rename Duo's lanes to Projects' words (Working, Waiting on you, Ready for review, Resolved). It is closer to Projects, but it changes a built, approved UI for users who don't have Projects.
+  - No mapping: users relearn on moving.
+
+### Q. Project memory
+- **Recommended: a visible project memory folder in Projects' shape (`memory/MEMORY.md` plus one file per fact), read by every brief and written by the director when told to remember something, or when a report names a pitfall.**
+  - Claude Code's own auto-memory is stored per working folder (`~/.claude/projects/<path>/memory`), so a worker in a worktree, whose path differs, never sees it. Projects' local threads have the same gap (#97464). A folder in the project fixes both.
+  - It is plain Markdown, so Obsidian sees it, and an export can copy it as is.
+- **Other options:**
+  - Rely on Claude Code's auto-memory: it's invisible in Duo, tied to the path, and missed by worktrees.
+  - Put memory in `DIRECTOR.md`: it mixes rules with facts and grows without bound.
+- **Open:** the folder's name and place. Options are `memory/` at the root, or under the brief's folder (Q-n).
+
+### R. Without Claude artifacts
+- **Recommended: every page is a file first, and an artifact is an optional mirror.**
+  - The director writes what it would publish into the task folder:
+    - `decisions.md`, with each decision as a heading, the options as `- [ ]` checkboxes (recommendation first) and a Notes line;
+    - optionally a page (`files/<name>.html`), opened in Duo's HTML viewer.
+  - You tick a box in Duo's editor (or Obsidian, or anything else), and the director reads the file:
+    - on its next turn;
+    - through Monitor (2.1.98+, so on 2.1.219 unless disabled);
+    - or, later, through Duo noticing the tick and nudging the director.
+  - Where the Artifact tools exist and you want phone access, the director also publishes the same content with Send buttons, as this page does, and writes your answers back into `decisions.md`, so the file stays the record.
+- **The channel order everywhere:**
+  1. AskUserQuestion in the director's session;
+  2. `decisions.md` in the task folder, with needs-you raised;
+  3. the artifact mirror, where available.
+- **What the work Mac gets:** everything except the mirror, and nothing is lost by its absence.
+- **Other options:**
+  - Artifacts first, with a degraded file mode: it fails on the work Mac.
+  - AskUserQuestion only: it scatters decisions, and the record lives in chat scrollback.
+
+### S. Changes to tasks' structure and UX (for approval, then a design round)
+Recommended, each built only after a design on the canvas, with your approval:
+- **S1, task folders** (O): `duo2 task folder`; rename, move, archive and delete carry the folder; the card shows the folder reference.
+- **S2, directed tasks:**
+  - the card and note show "Directed by X";
+  - worker sessions are told their task folder and to report there, which is a change to DL-116's hook text for directed tasks;
+  - the suggested lane appears first when it has cards.
+- **S3, task actions for directed tasks:** Start (suggested), Open worker, Send back (with a note), Land, Resolve. These are Projects' card buttons in Duo's form. Each sends its instruction to the director, as a message from you (DL-71 verbs: `duo2 task start|send-back|land|resolve`).
+- **S4, Direct this:** on a session row or task, it hands the work to the project's director (Projects' Continue as project).
+- **S5, decisions in Duo:** `decisions.md` already renders as checkboxes. Later, Duo could raise needs-you when a director's decision file has open boxes, and nudge the director when one is ticked.
+
+Until these are designed and built, the director runs on conventions alone: `status: suggested`, `directed_by:`, sibling folders made by hand, and `decisions.md`. Everything above S works without app changes.
+
 ## 3. Hypotheticals
 
 - **What if two directors want the same session?** The lease says who owns it, and the other director messages the owner instead. A dead owner's claim moves, and the journal says so.
@@ -279,6 +428,13 @@ Each feature lists the primitive it uses at best, the fallbacks in order, and ho
 | F24 | Portfolio (Home) | `duo2 director status --all` | Read each project's journal | T1, T2 |
 | F25 | Stand down for Projects, export | The probe, or the user says so | Ask | T2 |
 | F26 | Skill-less mode | `duo2 director guide` | Same | T1 (user skills blocked) |
+| F27 | Tasks as the ledger | `duo2 task new/session/status` + `directed_by` | Notes written by hand | T1, T2 |
+| F28 | Suggested tasks | `status: suggested` lane; Start / Start all (S3) | Status only (Keep as Column) | T2 |
+| F29 | Task folders | `duo2 task folder` (S1) | Folder made by hand + `references:` | T1 |
+| F30 | Decisions as a file | `decisions.md` checkboxes + needs-you | Same | T1, T2 (no-artifact profile) |
+| F31 | Project memory | Memory folder read by every brief | Same | T2 (worktree worker sees it) |
+| F32 | Setup proposal | First run drafts `DIRECTOR.md` | Same | T2 |
+| F33 | Export for Projects | `duo2 director export` | Same | T1 |
 
 ## 5. Capability matrix
 
@@ -292,7 +448,7 @@ What each client setup can do, by transport. ✓ is full, ~ is a fallback rung, 
 | No `--bg` | ✓ Duo; ~ `-p` turns | ✓ for Duo sessions | ✓ | ✓ | ✓ | ✓ | Workers are visible in Duo only |
 | Remote Control off | ✓ | ✓ locally | ✓ | ✓ | ✓ at the Mac | ✗ | No phone, no push |
 | Hooks disabled | ✓ | ✓ or ~ (no inbox rung) | ~ task note | ✓ or ~ | ✓ | ✓ | Duo's own session states fall back to beacons; the merge guard is permission rules |
-| No Artifact tools | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | No console; dev design work stays in Duo |
+| No Artifact tools (work Mac) | ✓ | ✓ | ✓ | ✓ | ✓ AskUserQuestion, `decisions.md` | ✓ | No console or mirror; decisions in the task folder; dev design work stays in Duo |
 | Sandboxed sessions | ~ worktrees inside the project | ✓ tool; ✗ socket from Bash | ✓ | ~ | ✓ | ✓ | Checks that fail only in the sandbox are re-run outside |
 | Claude Code Projects | stands down in that repo | | | | ✓ | ✓ | Portfolio and export only |
 
