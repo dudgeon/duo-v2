@@ -47,7 +47,7 @@ function findAnchor(cap, text, state) {
 // scene before (its exit plays there); `in` seconds open this scene (its entry plays there, before the voice).
 // style/shot-grammar.md, "Transitions", describes each one.
 /** The director film's scene kinds (src/scenes/registry.ts). */
-export const DIRECTOR_SCENES = ['dir-switchboard', 'dir-prompt', 'dir-skill', 'dir-additions', 'dir-why', 'dir-generalists', 'dir-done', 'dir-patterns', 'dir-projects', 'dir-next', 'dir-start', 'dir-brief', 'dir-team', 'dir-standup', 'dir-opening'];
+export const DIRECTOR_SCENES = ['dir-switchboard', 'dir-prompt', 'dir-skill', 'dir-additions', 'dir-why', 'dir-generalists', 'dir-done', 'dir-patterns', 'dir-projects', 'dir-next', 'dir-start', 'dir-brief', 'dir-team', 'dir-standup', 'dir-opening', 'dir-levels'];
 export const TRANSITIONS = {
   'logo-to-dock': {kind: 'graphic', from: 'logo', to: 'desk', out: 1.45},
   'dock-launch': {kind: 'app', from: 'desk', to: 'morph', in: 1.5, click: 0.85},

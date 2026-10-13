@@ -325,7 +325,7 @@
     "events": {
       "go": {
         "line": 1,
-        "word": "Bigger"
+        "word": "For"
       },
       "chat": {
         "line": 2,
@@ -341,7 +341,7 @@
       },
       "told": {
         "line": 3,
-        "word": "told"
+        "word": "passed"
       },
       "canvas": {
         "line": 3,
@@ -691,100 +691,143 @@
   },
   "S9": {
     "kind": "drawn",
-    "scene": "dir-projects",
-    "tail": 1.4,
+    "scene": "dir-levels",
+    "transitionIn": "board-carry",
+    "leadIn": 1.1,
+    "tail": 1.6,
     "events": {
       "go": {
         "line": 1,
-        "word": "Claude"
+        "word": "director"
       },
-      "projects": {
-        "line": 1,
-        "word": "Projects"
-      },
-      "coordinator": {
-        "line": 1,
-        "word": "coordinator"
-      },
-      "pieces": {
+      "l1": {
         "line": 2,
-        "word": "pieces"
+        "word": "prompt"
+      },
+      "l2": {
+        "line": 3,
+        "word": "skill"
+      },
+      "l3": {
+        "line": 4,
+        "word": "artifacts"
+      },
+      "l4": {
+        "line": 5,
+        "word": "projects"
+      },
+      "access": {
+        "line": 5,
+        "word": "access"
       }
     },
     "requires": [
       {
-        "what": "The home-built tree sits beside a second tree labelled Claude Code Projects",
+        "what": "The same tree with a piece added at each level (canvas option L2)",
         "by": [
-          "event:projects"
+          "src:src/scenes/director/Levels.tsx"
         ]
       },
       {
-        "what": "The shapes match, part for part",
+        "what": "Level 1: a prompt on one console",
         "by": [
-          "event:coordinator"
+          "event:l1"
         ]
       },
       {
-        "what": "Our pieces named (a prompt and a skill, claude --bg and worktrees, SendMessage)",
+        "what": "Level 2: the skill page beside the director",
         "by": [
-          "event:pieces"
+          "event:l2"
+        ]
+      },
+      {
+        "what": "Level 3: a console page of buttons, and sessions messaging the director",
+        "by": [
+          "event:l3"
+        ]
+      },
+      {
+        "what": "Level 4: the tree inside Claude Code, a coordinator and threads",
+        "by": [
+          "event:l4"
+        ]
+      },
+      {
+        "what": "A rail counts the levels 1 to 4 as the voice moves up (each panel is headed level 1 to 4)",
+        "by": [
+          "event:l1",
+          "event:l4"
         ]
       }
     ],
-    "transitionIn": "board-carry",
-    "leadIn": 1.1,
-    "shotSha": "02ef95f70b66"
+    "shotSha": "04bfe4652c81"
   },
   "S10": {
     "kind": "drawn",
     "scene": "dir-next",
-    "tail": 1.4,
+    "transitionIn": "board-carry",
+    "leadIn": 1.1,
+    "tail": 2.4,
     "events": {
       "go": {
         "line": 1,
-        "word": "Two"
+        "word": "impressed"
       },
-      "persistent": {
-        "line": 1,
-        "word": "persistent"
+      "two": {
+        "line": 2,
+        "word": "two"
       },
-      "weeks": {
-        "line": 1,
-        "word": "weeks"
+      "artifacts": {
+        "line": 3,
+        "word": "artifacts"
+      },
+      "surface": {
+        "line": 3,
+        "word": "surface"
       },
       "shared": {
-        "line": 2,
+        "line": 4,
         "word": "shared"
       },
-      "several": {
-        "line": 2,
-        "word": "several"
+      "combine": {
+        "line": 5,
+        "word": "Combining"
       }
     },
     "requires": [
       {
-        "what": "The director node gains a long trail back through the timeline (persistent)",
+        "what": "Line 1: the director's trail runs back through the weeks it has kept its job",
         "by": [
-          "event:persistent",
-          "event:weeks"
+          "event:go"
         ]
       },
       {
-        "what": "A second and third person appear above it, each with a line to the same director (shared)",
+        "what": "Line 2: two circles open, director agents and shared agents",
         "by": [
-          "event:several"
+          "event:two"
         ]
       },
       {
-        "what": "Hold on that picture",
+        "what": "Line 3: inside the first, task agents pass artifacts; only review and conflict calls rise to you",
         "by": [
-          "event:several"
+          "event:artifacts",
+          "event:surface"
+        ]
+      },
+      {
+        "what": "Line 4: inside the second, several people gather around one shared agent",
+        "by": [
+          "event:shared"
+        ]
+      },
+      {
+        "what": "Line 5: the circles slide together; the overlap becomes a team of people sharing one director over many agents",
+        "by": [
+          "event:combine"
         ]
       }
     ],
-    "transitionIn": "board-carry",
-    "leadIn": 1.1,
-    "shotSha": "06e6874a5baa"
+    "shotSha": "3a613529995e"
   },
   "S11": {
     "kind": "drawn",

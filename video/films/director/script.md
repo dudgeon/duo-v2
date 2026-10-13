@@ -1,5 +1,5 @@
 # Director explainer — script v1
-<!-- Synced from the script Doc at rev 1149 on 2026-10-13 by pipeline/sync.mjs; edit the Doc, not this file. -->
+<!-- Synced from the script Doc at rev 1936 on 2026-10-13 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 12, 2026 · @Geoff Dudgeon
 
@@ -89,11 +89,11 @@ Shot: your ask arrives as a phone message, verbatim. It travels to the director,
 
 Topic: Teams for bigger ideas
 
-- Bigger ideas get a small team.
-- For chat mode, one message from me became a research session and a design session, working side by side.
-- The research told the design what was possible. I picked a look on the design canvas, and the director briefed a builder.
-- Five hours after I asked, it merged: a hundred and eight files.
-- For the Word viewer, my whole review was four words: looks good, build, test, ship.
+- For bigger ideas, I'll often ask the director to set up a small team.
+- For chat mode, I sent one message asking for a research agent and a design agent, and the director started both of them, working side by side.
+- The research agent passed what it learned to the design agent, so the mock-ups only showed what was feasible. I picked a design on the canvas, and the director assigned a builder.
+- The whole feature, about a hundred files of changes, was merged about five hours after I first asked for it.
+- For the Word viewer feature, my whole review was four words: looks good, build, test, ship.
 
 Shot: your ask splits into two sessions, research and design, side by side; a message passes from research to design. A canvas card with three looks; your pick ticks one. A builder appears under the director on its own branch, and a merge card lands. Then the Word viewer: a canvas card with your comment on it, in your words, and two build slices merging.
 
@@ -137,24 +137,29 @@ Topic: Patterns
 
 Shot: a grid of constraints. For each cell, the director tree redraws to show what changes: which arrows become files, which move into the chat.
 
-### S9 · Claude Code Projects (about 15 s)
+### S9 · How far it goes (about 35 s)
 
-Topic: Projects
+Topic: How far it goes
 
-- Claude Code now has Projects: one coordinator in charge of many sessions, built in.
-- I don't have access yet. Everything here is built from pieces that ship with Claude Code today.
+- The director pattern can be as simple or as sophisticated as you need it to be.
+- At its most basic, it's just a prompt -- one session that you ask to act as the director, and you talk to it in a normal chat.
+- The next step for me was moving that prompt into a director skill, so the job could survive long sessions and restarts, and I could keep improving it over time.
+- From there, the skill started using shared artifacts, like a console page where I answer decisions with buttons from my phone, and agent to agent messaging, so sessions could report back to the director directly.
+- At the far end is something like Claude Code projects, where the coordinator and its threads are built right in -- I don't have access to it yet, but it looks like the natural home for this pattern.
 
-Shot: the home-built tree sits beside a second tree labelled Claude Code Projects; the shapes match, part for part.
+Shot: the same tree, with a piece added at each level (canvas option L2, https://claude.ai/artifact/GCWec8D9T3DtqGt4ZDzQcF): level 1, a prompt on one console; level 2, the skill page beside the director; level 3, a console page of buttons on a phone, and the sessions messaging the director; level 4, the tree drawn inside Claude Code, a coordinator and threads. A rail counts the levels 1 to 4 as the voice moves up.
 
 ### S10 · What's next (about 15 s)
 
 Topic: What's next
 
-- Two patterns I don't see often yet: a persistent agent, like this director, that keeps its job for weeks;
-- and a shared agent, one that several people can talk to.
-- (line: what the two together might do)
+- I've been really impressed with how helpful the director agent pattern has been in my own life, and how much value it can offer starting with even the most simple prompt -- and it's fun to evolve it to your needs.
+- Director agents are one of two patterns that I think will offer a step change to teams that adopt them.
+- One agent, advancing your work, while task-specific agents share artifacts, collaborate, and only surface issues that need the user, like review or resolving conflicts.
+- The other is shared agents -- where multiple human team members can collaborate with a single shared agent.
+- Combining the two patterns seems extremely promising.
 
-Shot: the director node gains a long trail back through the weeks (persistent); then a second and third person appear above it, each with a line to the same director (shared). Hold on that picture.
+Shot: on line 1, the director's trail runs back through the weeks it has kept its job. On line 2, two circles open: director agents and shared agents. On line 3, inside the first, task agents pass artifacts between them, and only the review and conflict calls rise to you. On line 4, inside the second, several people gather around one shared agent. On line 5, the circles slide together, and their overlap becomes a team of people sharing one director over many agents. Hold on that picture.
 
 ### S11 · Start with a prompt (about 15 s)
 
@@ -162,5 +167,6 @@ Topic: same
 
 - You don't need anything special to start: a prompt like my first one is enough.
 - I've put a plain version of that prompt in a gist, with a link to where ours ended up.
+- If you choose to try out the director agent pattern, or have suggestions for how I can improve my own implementation, please let me know!
 
 Shot: the first prompt's card from S2 comes back, alone on the paper. Beside it, a QR code to the gist draws itself, with its short address under it. The film ends on the two together.

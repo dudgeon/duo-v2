@@ -3,6 +3,7 @@ import {Captions} from './director/kit';
 import {PaperCard} from './director/PaperCard';
 import {Switchboard} from './director/Switchboard';
 import {Opening} from './director/Opening';
+import {Levels} from './director/Levels';
 import {FirstPrompt} from './director/FirstPrompt';
 import {Skill} from './director/Skill';
 import {Additions} from './director/Additions';
@@ -29,6 +30,7 @@ export const SCENE_KINDS: Record<string, ComponentType<SceneProps>> = {
   'paper-card': PaperCard,
   'dir-switchboard': captioned(Switchboard),
   'dir-opening': captioned(Opening),
+  'dir-levels': captioned(Levels),
   'dir-prompt': captioned(FirstPrompt),
   'dir-skill': captioned(Skill),
   'dir-additions': captioned(Additions),

@@ -4,6 +4,7 @@ import type {SceneProps} from '../registry';
 import {PaperGround} from '../../lib/Paper';
 import {C, DirectorCard, Heading, L, lerp, Meter, mono, ramp, SectionLabel, spring, ui, Wire, YouCard, type Box} from './kit';
 import {MiniTree, PatternsEnd} from './Patterns';
+import {LevelsEnd} from './Levels';
 import {PROMPT_A, PROMPT_B} from './board';
 import qr from './qr.json';
 
@@ -66,50 +67,115 @@ export const Projects = ({t, ev}: SceneProps) => {
 const PROJECTS_END = {go: 0, projects: 1, coordinator: 2, pieces: 3};
 export const ProjectsEnd = () => <Projects t={999} ev={PROJECTS_END} scene={{id: 'S9', title: ''}} />;
 
-/** S10: persistent and shared. */
-const DIR: Box = {x: 770, y: 560, w: 380, h: 180};
-const PEOPLE: [Box, string][] = [[{x: 360, y: 250, w: 300, h: 120}, 'the PM'], [{x: 810, y: 250, w: 300, h: 120}, 'a teammate'], [{x: 1260, y: 250, w: 300, h: 120}, 'a teammate']];
+/** S10: two patterns (Geoff's lines, Oct 12). The director's trail through the weeks; then two circles, director
+ *  agents and shared agents; inside the first, task agents pass artifacts and only review and conflict calls rise to the
+ *  user; inside the second, people gather round one shared agent; then the circles slide together and the overlap is a
+ *  team of people sharing one director over many agents. */
+const DIR: Box = {x: 770, y: 520, w: 380, h: 150};
+const R = 270;
+const circleAt = (k: 0 | 1, merge: number) => ({x: lerp(k === 0 ? 640 : 1280, k === 0 ? 840 : 1080, merge), y: 590});
 
 export const NextUp = ({t, ev}: SceneProps) => {
-  const go = ev.go ?? 0.4, persistent = ev.persistent ?? go + 1.5, weeks = ev.weeks ?? persistent + 2, shared = ev.shared ?? weeks + 1.5, several = ev.several ?? shared + 1;
+  const go = ev.go ?? 0.4, at = (w: string) => ev[w] ?? 1e9;
   const leave = ramp(t, go, go + 0.5);
-  const trail = ramp(t, persistent, weeks + 0.6);
-  const person = (k: number) => (k === 0 ? ramp(t, go + 0.4, go + 0.9) : spring(t, several + 0.3 * (k - 1), 8, 0.85));
-  const cy = DIR.y + DIR.h / 2;
+  const trail = ramp(t, go + 0.3, at('two') - 0.3), trailOut = ramp(t, at('two') - 0.3, at('two') + 0.3);
+  const circles = spring(t, at('two'), 6, 0.9);
+  const merge = spring(t, at('combine'), 4.5, 0.95);
+  const team = ramp(t, at('combine') + 0.8, at('combine') + 1.6);
+  const c0 = circleAt(0, merge), c1 = circleAt(1, merge);
+  const art = (k: number) => (t - at('artifacts') - 0.35 * k) / 0.7;
+  const rise = (k: number) => spring(t, at('surface') + 0.3 * k, 7, 0.85);
+  const people = (k: number) => spring(t, at('shared') + 0.25 * k, 8, 0.85);
+  const inner = 1 - ramp(t, at('combine') + 0.2, at('combine') + 0.8);
+  const agentsAround = (c: {x: number; y: number}, n: number, r: number) => Array.from({length: n}, (_, k) => {
+    const a = -Math.PI / 2 + (k + 0.5) * (2 * Math.PI / n);
+    return {x: c.x + r * Math.cos(a), y: c.y + r * Math.sin(a)};
+  });
+  const left = agentsAround(c0, 5, 170), right = agentsAround(c1, 4, 175);
+  const circle = (c: {x: number; y: number}, label: string, u: number) => (
+    <>
+      <div style={{position: 'absolute', left: c.x - R * u, top: c.y - R * u, width: 2 * R * u, height: 2 * R * u, borderRadius: R, boxSizing: 'border-box',
+        border: `2.5px solid ${L.text}`, background: 'rgba(255,255,255,0.55)'}} />
+      <div style={{position: 'absolute', left: c.x - 200, top: c.y - R - 46, width: 400, textAlign: 'center', fontFamily: ui, fontSize: 24, fontWeight: 700,
+        color: L.text, opacity: ramp(u, 0.6, 1)}}>{label}</div>
+    </>
+  );
+  const dot = (p: {x: number; y: number}, key: string, u: number, label?: string) => (
+    <div key={key} style={{position: 'absolute', left: p.x - 34, top: p.y - 22, width: 68, height: 44, boxSizing: 'border-box', borderRadius: 10, background: L.pane,
+      border: `2px solid ${L.rule}`, fontFamily: ui, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', color: L.text2, opacity: u}}>{label ?? 'agent'}</div>
+  );
+  const person = (p: {x: number; y: number}, key: string, u: number) => (
+    <div key={key} style={{position: 'absolute', left: p.x - 46, top: p.y - 24, width: 92, height: 48, boxSizing: 'border-box', borderRadius: 24, background: L.chatYou,
+      fontFamily: ui, fontSize: 15, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', color: L.text, opacity: Math.min(1, u),
+      transform: `scale(${0.85 + 0.15 * Math.min(1, u)})`}}>person</div>
+  );
   return (
     <AbsoluteFill>
       <PaperGround />
-      <div style={{position: 'absolute', inset: 0, opacity: 1 - leave}}><ProjectsEnd /></div>
-      <Heading title="What's next" sub="Agents that stay, and agents that are shared." u={ramp(t, go + 0.3, go + 0.8)} />
-      {/* Persistent: the director's trail back through the weeks it has kept its job. */}
-      <Wire pts={[[DIR.x - 2, cy], [160, cy]]} draw={trail} color={L.text2} width={3} />
-      {[1, 2, 3, 4, 5, 6].map((w) => {
-        const x = DIR.x - 100 * w;
-        const u = ramp(trail, 1 - (w - 0.5) / 6.5, 1 - (w - 1) / 6.5 + 0.02);
-        return (
-          <React.Fragment key={w}>
-            <div style={{position: 'absolute', left: x - 7, top: cy - 7, width: 14, height: 14, borderRadius: 7, background: L.text, opacity: u}} />
-            <div style={{position: 'absolute', left: x - 40, top: cy + 18, width: 80, textAlign: 'center', fontFamily: mono, fontSize: 16, color: L.text2, opacity: u}}>week {7 - w}</div>
-          </React.Fragment>
-        );
-      })}
-      {/* Shared: more people on its line. */}
-      {PEOPLE.map(([b, label], k) => {
-        const u = Math.min(1, person(k));
-        return (
-          <React.Fragment key={k}>
-            <Wire pts={[[b.x + b.w / 2, b.y + b.h], [b.x + b.w / 2, b.y + b.h + 50], [DIR.x + DIR.w / 2, b.y + b.h + 50], [DIR.x + DIR.w / 2, DIR.y - 2]]} draw={u} head width={2.5} radius={12} />
-            <div style={{position: 'absolute', inset: 0, opacity: u}}>
-              <YouCard box={b} label={label} />
-            </div>
-          </React.Fragment>
-        );
-      })}
-      <DirectorCard box={DIR} sub={t < shared ? 'keeps its job for weeks' : 'shared by a team'} u={ramp(t, go + 0.2, go + 0.6)}><Meter fill={0.2} /></DirectorCard>
+      <div style={{position: 'absolute', inset: 0, opacity: 1 - leave}}><LevelsEnd /></div>
+      <Heading title="What's next" sub="Two patterns, and what they might do together." u={ramp(t, go + 0.3, go + 0.8)} />
+
+      {/* Line 1: a director that keeps its job for weeks: its trail back through them. */}
+      <div style={{position: 'absolute', inset: 0, opacity: 1 - trailOut}}>
+        <Wire pts={[[DIR.x - 2, DIR.y + DIR.h / 2], [160, DIR.y + DIR.h / 2]]} draw={trail} color={L.text2} width={3} />
+        {[1, 2, 3, 4, 5, 6].map((w) => {
+          const x = DIR.x - 100 * w, u = ramp(trail, 1 - (w - 0.5) / 6.5, 1 - (w - 1) / 6.5 + 0.02);
+          return (
+            <React.Fragment key={w}>
+              <div style={{position: 'absolute', left: x - 7, top: DIR.y + DIR.h / 2 - 7, width: 14, height: 14, borderRadius: 7, background: L.text, opacity: u}} />
+              <div style={{position: 'absolute', left: x - 40, top: DIR.y + DIR.h / 2 + 16, width: 80, textAlign: 'center', fontFamily: mono, fontSize: 16, color: L.text2, opacity: u}}>week {7 - w}</div>
+            </React.Fragment>
+          );
+        })}
+        <DirectorCard box={DIR} sub="keeps its job for weeks" u={ramp(t, go + 0.2, go + 0.6)}><Meter fill={0.2} /></DirectorCard>
+      </div>
+
+      {/* Line 2 on: two circles. */}
+      {circles > 0.01 && (
+        <>
+          {circle(c0, 'Director agents', Math.min(1, circles))}
+          {circle(c1, 'Shared agents', Math.min(1, circles))}
+          <div style={{position: 'absolute', inset: 0, opacity: inner}}>
+            {/* Inside the first: a director, task agents passing artifacts, only review and conflict rising to you. */}
+            <div style={{position: 'absolute', left: c0.x - 70, top: c0.y - 28, width: 140, height: 56, borderRadius: 10, background: C.console, color: C.consoleText,
+              fontFamily: mono, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: ramp(t, at('two') + 0.4, at('two') + 0.8)}}>director</div>
+            {left.map((p, k) => dot(p, `a${k}`, ramp(t, at('two') + 0.5 + 0.1 * k, at('two') + 0.9 + 0.1 * k)))}
+            {left.map((p, k) => {
+              const q = left[(k + 1) % left.length], u = art(k);
+              if (u <= 0 || u >= 1) return null;
+              return <div key={`d${k}`} style={{position: 'absolute', left: lerp(p.x, q.x, u) - 9, top: lerp(p.y, q.y, u) - 11, width: 18, height: 22, borderRadius: 3,
+                background: L.pane, border: `2px solid ${L.text}`}} />;
+            })}
+            {['review', 'conflict'].map((w, k) => {
+              const u = rise(k);
+              if (u <= 0.01) return null;
+              return <div key={w} style={{position: 'absolute', left: c0.x - 140 + k * 150, top: lerp(c0.y - 120, c0.y - R - 110, Math.min(1, u)), padding: '3px 12px', borderRadius: 9,
+                background: L.needsYou, color: L.onNeedsYou, fontFamily: ui, fontSize: 18, fontWeight: 600, opacity: Math.min(1, u)}}>{w}</div>;
+            })}
+            {/* Inside the second: people around one shared agent. */}
+            <div style={{position: 'absolute', left: c1.x - 75, top: c1.y - 28, width: 150, height: 56, borderRadius: 10, background: C.console, color: C.consoleText,
+              fontFamily: mono, fontSize: 17, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: ramp(t, at('shared'), at('shared') + 0.4)}}>shared agent</div>
+            {right.map((p, k) => person(p, `p${k}`, people(k)))}
+          </div>
+          {/* Line 5: the overlap: a team of people, one director, many agents. */}
+          <div style={{position: 'absolute', inset: 0, opacity: team}}>
+            {[-130, 0, 130].map((dx, k) => person({x: 960 + dx, y: 430}, `t${k}`, 1))}
+            {[-130, 0, 130].map((dx, k) => <Wire key={`tw${k}`} pts={[[960 + dx, 454], [960 + dx, 500], [960, 500], [960, 540]]} width={2} radius={8} />)}
+            <div style={{position: 'absolute', left: 960 - 80, top: 542, width: 160, height: 56, borderRadius: 10, background: C.console, color: C.consoleText, fontFamily: mono,
+              fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>director</div>
+            {[-180, -90, 0, 90, 180].map((dx, k) => (
+              <React.Fragment key={`ta${k}`}>
+                <Wire pts={[[960, 600], [960, 640], [960 + dx, 640], [960 + dx, 676]]} width={2} radius={8} />
+                {dot({x: 960 + dx, y: 698}, `tg${k}`, 1)}
+              </React.Fragment>
+            ))}
+          </div>
+        </>
+      )}
     </AbsoluteFill>
   );
 };
-const NEXT_END = {go: 0, persistent: 1, weeks: 2, shared: 3, several: 3.5};
+const NEXT_END = {go: 0, two: 1, artifacts: 2, surface: 2.5, shared: 3, combine: 4};
 export const NextEnd = () => <NextUp t={999} ev={NEXT_END} scene={{id: 'S10', title: ''}} />;
 
 /** S11: the first prompt again, and a QR code to the gist. */
