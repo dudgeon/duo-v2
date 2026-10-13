@@ -23,6 +23,10 @@ if [ "${DUO_TEST_FOREGROUND:-}" = 1 ]; then
   fg=(--env DUO_TEST_FOREGROUND=1)
   echo "⚠ DUO_TEST_FOREGROUND=1: this run shows a Duo window, about 5 s for each of ${#states[@]} state(s) (Geoff's OK first)" >&2
 fi
+# The chat feed's proof mode (DUO_FEED=proof: cards drawn in pieces, C-85) reaches the app too; `open` passes no environment.
+for v in DUO_FEED DUO_FEED_PIECE; do
+  if [ -n "${!v:-}" ]; then fg+=(--env "$v=${!v}"); fi
+done
 
 # Run the app with a watchdog: a launch that never captures (findings F-8) fails instead of hanging.
 capture() {

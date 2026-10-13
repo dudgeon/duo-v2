@@ -1978,6 +1978,52 @@ func repoFixture() throws -> Fixture {
         check(!ChatFeedShape.isLazy(items: 24, steps: 86) && !ChatFeedShape.isLazy(items: 48, steps: 250)
               && ChatFeedShape.isLazy(items: 49, steps: 10) && ChatFeedShape.isLazy(items: 10, steps: 251) && ChatFeedShape.isLazy(items: 100, steps: 1945),
               "the feed is a plain stack up to 48 items and 250 steps, lazy past either")
+        // C-85: a long Claude turn is several rows (pieces) in the lazy feed.
+        print("the lazy feed draws a long Claude turn in pieces (C-85)")
+        let n = ChatFeedProof.size
+        func turnLog(_ sections: Int, prompt: Bool, tag: String) -> ChatSession {
+            let c = ChatSession(key: "pieces-\(tag)", mode: .chat)
+            if prompt { c.log.prompt("go", time: nil, fromHook: false) }
+            for k in 0..<sections {
+                if k % 2 == 0 { c.log.display(message: "m-\(tag)-\(k)", delta: "text \(tag) \(k)", final: true, time: nil) }
+                else { c.log.toolUse(id: "t-\(tag)-\(k)", name: "Bash", input: ["command": "echo \(k)"], time: nil) }
+            }
+            return c
+        }
+        func lastTurn(_ c: ChatSession) -> ChatTurn? { if case .claude(let t)? = c.log.items.last { t } else { nil } }
+        let short = turnLog(n, prompt: true, tag: "short")
+        let shortRows = ChatFeedProof.rows(short)
+        if let t = lastTurn(short) {
+            check(ChatFeedProof.sections(t).count == n && shortRows.count == 2 && shortRows[1].isItem && shortRows[1].id == t.id,
+                  "C-85: a turn of \(n) sections is one row, drawn whole, with the turn's id")
+        } else { check(false, "C-85: the short turn exists") }
+        let longChat = turnLog(20, prompt: true, tag: "long")
+        let longRows = ChatFeedProof.rows(longChat)
+        if let t = lastTurn(longChat) {
+            let all = ChatFeedProof.sections(t)
+            let ps = Array(longRows.dropFirst())
+            check(all.count == 20 && ps.count == (20 + n - 1) / n, "C-85: 20 sections make ceil(20/\(n)) rows (\(ps.count))")
+            check(ps.indices.allSatisfy { ps[$0].id == ($0 == 0 ? t.id : "\(t.id)|\($0)") }, "C-85: the pieces' ids are the turn's, then turn|1, turn|2")
+            check(ps.indices.allSatisfy { ps[$0].first == ($0 == 0) && ps[$0].last == ($0 == ps.count - 1) }, "C-85: only the first piece is first, only the last is last")
+            check(ps.first?.gap == 16 && ps.dropFirst().allSatisfy { $0.gap == 0 }, "C-85: the first piece has the 16 gap above, later pieces none")
+            check(ps.allSatisfy { !$0.isItem } && ps.flatMap { $0.sections } == all, "C-85: every section appears once across the pieces, in order")
+        } else { check(false, "C-85: the long turn exists") }
+        let bare = turnLog(20, prompt: false, tag: "bare")
+        check(ChatFeedProof.rows(bare).first?.gap == 0, "C-85: a first turn with nothing above it has no gap")
+        // The memo: an event rebuilds only the turn it touched.
+        let memo = turnLog(20, prompt: true, tag: "memo")
+        memo.log.prompt("again", time: nil, fromHook: false)
+        memo.log.display(message: "m-memo-2", delta: "second turn start", final: true, time: nil)
+        let b0 = ChatFeedProof.built
+        _ = ChatFeedProof.rows(memo)
+        let b1 = ChatFeedProof.built
+        _ = ChatFeedProof.rows(memo)
+        check(b1 - b0 == 2 && ChatFeedProof.built == b1, "C-85: the first pass builds both turns (\(b1 - b0)), the second rebuilds nothing")
+        memo.log.toolUse(id: "t-memo-late", name: "Bash", input: ["command": "date"], time: nil)
+        _ = ChatFeedProof.rows(memo)
+        check(ChatFeedProof.built - b1 == 1, "C-85: changing only the last turn rebuilds exactly that turn (\(ChatFeedProof.built - b1))")
+        let pane = SourceIndex().declarations(of: "ChatPane").map(\.body).joined(separator: "\n")
+        check(pane.contains("LazyVStack(alignment: .leading, spacing: 0) { pieces }"), "C-85: ChatPane's lazy branch draws the pieces (found by declaration, C-84)")
     }
 
     print("the console's tab strip measures each title once (F-224)")

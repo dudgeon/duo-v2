@@ -8,15 +8,19 @@
 # Budgets are main-thread stalls measured by the run's watchdog, with room for a busy Mac; before
 # DL-137 the same run measured 2.9–3.5 s to open, 293 of 300 late scroll frames and 1.5–2.4 s
 # stalls as replies arrived, and every reply pulled a scrolled-up feed to the bottom.
+# A background run sets DUO_PERF_DRIVE=1 (PERF_DRIVE=0 opts out): the window is laid out and drawn every
+# frame while replies append, so the draw cost counts (C-85: otherwise it skipped drawing and measured
+# replies at the bottom 6-19x low).
 set -u
 root=${0:A:h:h}
 cd $root
 [[ ${NO_BUILD:-} == 1 ]] || scripts/bundle.sh >/dev/null || exit 1
 out=build/perf/check
+if [[ ${DUO_TEST_FOREGROUND:-} != 1 && ${PERF_DRIVE:-1} != 0 ]]; then export PERF_ENV="${PERF_ENV:-} DUO_PERF_DRIVE=1"; fi
 rm -rf $out
 scripts/perf-chat.sh $out --heavy >/dev/null 2>&1
 python3 - $out/perf.log <<'PY'
-import json, sys
+import json, os, sys
 ev = [json.loads(l) for l in open(sys.argv[1])]
 def one(pred):
     m = [e for e in ev if pred(e)]
@@ -30,11 +34,18 @@ rows = [
     ("slow scroll: frames over 33 ms, of 300", wheels and wheels[0]["hitches_over_33ms"], 10, ""),
     ("fast flick: longest stall", len(wheels) > 1 and wheels[1]["stall_max_ms"], 250, "ms"),
     ("replies at the bottom: longest stall", bottom and bottom["stall_max_ms"], 600, "ms"),
+    ("replies at the bottom: stalls over 250 ms", bottom and bottom.get("stalls_over_250ms"), 1, ""),
     ("replies at the bottom: left behind (1 = stuck)", bottom and (0 if bottom["follows_bottom"] else 1), 0, ""),
     ("a reply while scrolled up: longest stall", up and up["stall_max_ms"], 250, "ms"),
     ("a reply while scrolled up: pulled down to it (1 = pulled)", up and (1 if up["follows_bottom"] else 0), 0, ""),
 ]
 bad = 0
+if bottom is not None and os.environ.get("DUO_TEST_FOREGROUND") == "1" and (not bottom.get("window_visible") or bottom.get("display_asleep")):
+    print("✘ not a visible run: the window was covered or the display asleep (C-85); its numbers don't count")
+    sys.exit(1)
+if bottom is not None:
+    print("  (" + ("visible run" if os.environ.get("DUO_TEST_FOREGROUND") == "1" else "background run, " + ("driven: window laid out and drawn every frame" if "DUO_PERF_DRIVE=1" in os.environ.get("PERF_ENV", "") else "not driven: drawing skipped, numbers read low")) + ")")
+    print(f"  (stalls over 50 ms at the bottom, total: {bottom.get('stall_total_over_50ms_ms')} ms)")
 for name, got, budget, unit in rows:
     if got is None or got is False:
         print(f"✘ {name}: not measured"); bad += 1; continue
