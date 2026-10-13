@@ -3452,3 +3452,15 @@ DL-183's spike of ENH-70. The mod is `Mods/duo-signal`. Duo's side is `Chat/Chat
     - All three now skip guarded folders and never start from home or above. `ProtectedFolders` adds `/Volumes`.
   - **A DuoChecks scan enforces the rule:** any file under `Sources/` that lists folders or asks Spotlight must use ProtectedFolders (or the tree's `unlisted`) or be listed in `walkGuardExempt` with why it's safe. A stale exemption also fails.
 - **Checked:** DuoChecks 1397 passed, 0 failed. The live check shows a child started directly counts its parent's app (Terminal, 688), and one started through duo-exec counts itself.
+- **Checked live, without raising a prompt.** Two isolated background instances ran on a scratch workspace holding `Music/` and `Pictures/`, each with its own support and Claude config folders. Each one's shell terminal read `/Library/Application Support/com.apple.TCC`. That is system data under Full Disk Access, which is denied silently and logged with the responsible process.
+  - **Before (duo-exec moved aside):** the shell's responsible process was the Duo instance. tccd logged `Sub:{com.dudgeon.duo.test} Resp: com.dudgeon.duo.test pid=69212`.
+  - **After:** the shell was responsible for itself (11715 → 11715). tccd logged `Sub:{/bin/zsh} Resp: com.apple.zsh pid=11715`.
+  - In both runs the shell had `DUO_SOCKET` and `DUO_TOKEN`, and `duo2 ping` reached its instance.
+  - tccd logged no Photos or MediaLibrary request from any process during either run.
+  - `scripts/check-sandbox.sh`: all 10 pass.
+  - **A real Claude session (2.1.296) started through duo-exec** in a trusted folder:
+    - Its hooks fired: SessionStart, MessageDisplay, Stop and SessionEnd reached the instance's events file.
+    - The bundle's `duo2` reached the instance.
+    - `claude` (45029) was responsible for itself and for its tools: tccd logged `Resp: com.anthropic.claude-code pid=45029` for the same read.
+- **Seen on the way, no prompt raised:** Duo's WebKit GPU process makes silent Camera and Microphone checks (`com.apple.WebKit.GPU`, responsible Duo). Chrome and Remotion's `headless_shell`, started by sessions in Duo terminals, counted Duo as responsible; after this change they count the session.
+  - `ls ~/Music` itself does reach tccd (MediaLibrary, from my Terminal shell), so testing with it from a Duo terminal would have put a real prompt on screen.
