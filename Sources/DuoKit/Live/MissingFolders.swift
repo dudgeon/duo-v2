@@ -1,3 +1,4 @@
+import DuoSearch
 import Foundation
 
 /// A folder Claude sessions ran in that isn't there any more (DB-8, LR-23): what happened to it,
@@ -43,16 +44,10 @@ public enum MissingFolders {
     }
 
     static func look(_ path: String, ids: Set<String>, roots: [URL]) -> Status {
-        let fm = FileManager.default
         if case .unmounted = volumeStatus(of: path) { return volumeStatus(of: path) }
         let name = URL(fileURLWithPath: path).lastPathComponent
-        // Where to look: the given roots (Home), and the nearest folder above the old place that's still there.
-        var places = roots
-        var up = URL(fileURLWithPath: path).deletingLastPathComponent()
-        while up.path.count > 1, !fm.fileExists(atPath: up.path) { up.deleteLastPathComponent() }
-        if up.path != fm.homeDirectoryForCurrentUser.path, up.path.count > 1 { places.append(up) }
         var byName: URL?
-        for root in places {
+        for root in places(for: path, roots: roots) {
             for dir in folders(under: root, depth: 4) {
                 let index = SessionIndex.load(project: dir)
                 if !ids.isEmpty, index.sessions.contains(where: { ids.contains($0.sessionId) }) { return .movedTo(dir.path) }
@@ -60,6 +55,16 @@ public enum MissingFolders {
             }
         }
         return byName.map { .movedTo($0.path) } ?? .notFound
+    }
+
+    /// Where to look: the given roots (Home), and the nearest folder above the old place that's still
+    /// there. Never home or a folder above it (F-302): a walk from there enters ~/Pictures and the rest.
+    public static func places(for path: String, roots: [URL]) -> [URL] {
+        var places = roots.filter { !ProtectedFolders.neverFileRoot($0) }
+        var up = URL(fileURLWithPath: path).deletingLastPathComponent()
+        while up.path.count > 1, !FileManager.default.fileExists(atPath: up.path) { up.deleteLastPathComponent() }
+        if !ProtectedFolders.neverFileRoot(up) { places.append(up) }
+        return places
     }
 
     private final class WalkCache: @unchecked Sendable {
@@ -78,12 +83,13 @@ public enum MissingFolders {
         return dirs
     }
 
-    static func walk(_ root: URL, depth: Int) -> [URL] {
+    public static func walk(_ root: URL, depth: Int) -> [URL] {
         var out: [URL] = []
         func walk(_ d: URL, _ n: Int) {
             guard out.count < 4000, let items = try? FileManager.default.contentsOfDirectory(at: d, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]) else { return }
             for u in items where (try? u.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true {
                 if ["node_modules", "build", "dist", "Pods", "vendor", "Library"].contains(u.lastPathComponent) { continue }
+                if ProtectedFolders.skip(u, root: root) { continue }
                 out.append(u)
                 if n < depth { walk(u, n + 1) }
             }

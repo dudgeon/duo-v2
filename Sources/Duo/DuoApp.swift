@@ -45,6 +45,8 @@ struct DuoApp: App {
         if FileManager.default.isExecutableFile(atPath: helpers.appending(path: "duo2").path) {
             ChildEnvironment.cliDirectory = helpers.path
         }
+        let exec = Bundle.main.bundleURL.appending(path: "Contents/Library/Exec/duo-exec")
+        if FileManager.default.isExecutableFile(atPath: exec.path) { ChildEnvironment.exec = exec.path }
         let server = ControlServer { model.handle($0, done: $1) }
         // Scripted and capture runs never take the socket from the user's open Duo (C-18).
         try? server.start(privateIfTaken: options.capturing) { ChildEnvironment.control = $0 }

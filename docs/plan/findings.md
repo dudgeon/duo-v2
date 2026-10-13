@@ -3430,3 +3430,25 @@ DL-183's spike of ENH-70. The mod is `Mods/duo-signal`. Duo's side is `Chat/Chat
   4. A run on Geoff's real login.
 
   **The canary could ship ahead of the sensor**, doctor-only, as the cheap way to learn whether mods would run on Geoff's Macs before anyone commits to the sensor. It costs two background `claude` runs per launch on a CLI with mods (validate is cached, `plugin test` takes 0.24 s), and on 2.1.219 one `--version`. Where it shows beyond doctor is Q-189.
+
+## F-302 · The Photos and Music prompts came from `find /` in Duo's terminals, not Duo's code (fix/no-privacy-prompts, 2026-10-12)
+
+- **Seen:** Geoff, 2026-10-12: "Duo is still exhibiting the worrisome behavior of asking for access to things it does not need to access, like photos and music." At 19:39–19:40 he answered 20 prompts for `com.dudgeon.duo`, one after another: Photos ×5, MediaLibrary ×3, Documents ×5, Downloads ×4, Desktop ×3 and NetworkVolumes ×2.
+- **Duo's own process asked for nothing.** In seven days of tccd's log, Duo (pid 34502) sent no request. Every prompt came through `sandboxd`, the broker for file access. tccd's msgID starts with the client's pid: 94215 is sandboxd now, and Duo's own requests would read `34502.n`. The subject was "Resp: Duo 34502", meaning a process whose *responsible* app is Duo opened the files.
+- **The prompts were days old.** tccd showed them one at a time behind an earlier unanswered one, and its first answer at 19:39:07 closed a prompt shown before the log's retention. Their threads' ids, matched against the log over time, date the requests to Oct 9–11. They were not a burst at 19:39.
+- **The walkers were subagents of sessions in Duo terminals:**
+  - `4dd881e9`: `find / -type d -path "*SwiftTerm*"` on Oct 9, 12:15.
+  - `1f87a975`: `find / -path '*mlx_audio/…'` on Oct 11, 19:25. It "did not complete within its 120s timeout": it was blocked on the prompts.
+  - `3966a0f5`: `find / -maxdepth 6` on Oct 8.
+  - A walk of `/` passes ~/Desktop, ~/Documents, ~/Downloads, ~/Music (MediaLibrary), ~/Pictures/Photos Library (Photos) and /Volumes (NetworkVolumes). That is exactly the set Geoff saw.
+- **Who is responsible** (`responsibility_get_pid_responsible_for_pid`): a process in a Duo terminal counts Duo. Background sessions (`claude --bg`) count Terminal (pid 688), because their daemon was started from Terminal. So build sessions never raised Duo's prompts. **Terminal.app keeps responsibility for its children too:** they count Terminal. VS Code's terminal and Chromium disclaim it.
+- **Why the prompts kept coming back:** every one logged "Failed to match existing code requirement … cdhash" (-67050). His running Duo was the ad-hoc debug build in the main checkout. Rebuilding it changes the cdhash that earlier answers are keyed to, so tccd asks again. The director now builds merge checks in their own work tree (558d803), and Geoff's Duo moves to the signed release.
+- **Fixed (DL-185):**
+  - **Terminal processes start responsible for themselves.** SwiftTerm starts a terminal with `forkpty` and `execve`, and only `posix_spawn` can disclaim. Duo therefore execs `Contents/Library/Exec/duo-exec <program> <argv0> args…`, which becomes the program in place (`POSIX_SPAWN_SETEXEC` with `responsibility_spawnattrs_setdisclaim`). The pid, pty and environment are unchanged, and a failed spawn falls back to `execve`. duo-exec is outside `Helpers`, so it isn't on the terminals' PATH. A prompt from a session's tools now names `claude` or the shell, not Duo.
+  - **Duo's own walks all go through ProtectedFolders.** Three walks bypassed it:
+    - `MissingFolders.walk` skipped only `Library`, and could start from `/Users` or any parent of a moved folder.
+    - `PropertyCorpus.markdownFiles`, four deep from any root.
+    - `ReferenceIndex.scan`.
+    - All three now skip guarded folders and never start from home or above. `ProtectedFolders` adds `/Volumes`.
+  - **A DuoChecks scan enforces the rule:** any file under `Sources/` that lists folders or asks Spotlight must use ProtectedFolders (or the tree's `unlisted`) or be listed in `walkGuardExempt` with why it's safe. A stale exemption also fails.
+- **Checked:** DuoChecks 1397 passed, 0 failed. The live check shows a child started directly counts its parent's app (Terminal, 688), and one started through duo-exec counts itself.

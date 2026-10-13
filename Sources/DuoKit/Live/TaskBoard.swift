@@ -1,3 +1,4 @@
+import DuoSearch
 import Foundation
 
 /// A project's task board (DL-148, DL-150, `task-board-handoff/`): computed from the task notes
@@ -216,12 +217,13 @@ public enum ReferenceIndex {
 
     public static func scan(_ folder: URL, limit: Int = 3000) -> [String] {
         let fm = FileManager.default
-        guard let e = fm.enumerator(at: folder, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles, .skipsPackageDescendants]) else { return [] }
+        guard !ProtectedFolders.neverFileRoot(folder),
+              let e = fm.enumerator(at: folder, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles, .skipsPackageDescendants]) else { return [] }
         let base = folder.standardizedFileURL.path
         var out: [String] = []
         for case let url as URL in e {
             let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
-            if isDir, skipped.contains(url.lastPathComponent) { e.skipDescendants(); continue }
+            if isDir, skipped.contains(url.lastPathComponent) || ProtectedFolders.skip(url, root: folder) { e.skipDescendants(); continue }
             let path = url.standardizedFileURL.path
             guard path.hasPrefix(base + "/") else { continue }
             out.append(String(path.dropFirst(base.count + 1)) + (isDir ? "/" : ""))

@@ -84,6 +84,7 @@ Design reference PNGs need Google Chrome to re-render ([ADR-0002](docs/adr/0002-
 | `Sources/DuoKit/` | Views, model, live state, editor host, design tokens, fixture harness |
 | `Sources/DuoControl/` | The app ↔ `duo2` protocol and the action registry (Foundation only) |
 | `Sources/duo2/` | The `duo2` command line, bundled in `Duo.app/Contents/Helpers` |
+| `Sources/duo-exec/` | Starts each terminal's process responsible for itself (DL-185), bundled in `Duo.app/Contents/Library/Exec` |
 | `Sources/DuoSearch/` | Cross-project search: index, Core ML embedder, hybrid ranking (shared by the app and `duo2`) |
 | `Sources/DuoChecks/` | Logic checks (`swift run DuoChecks`) |
 | `Vendor/codemirror/` | CodeMirror 6 and Duo's editor module (`src/duo-editor.js`), bundled into a checked-in `dist/cm6.js` by `build.sh` |
