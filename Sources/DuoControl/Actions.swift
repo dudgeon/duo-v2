@@ -355,7 +355,7 @@ extension DuoAction {
         // HTML pages
         .init(.browserOpen, .html, "[url]", "A browser tab in the right pane (⌥⌘T). Sites not on the allow list show Allow or Open in Browser instead of loading (DL-3).",
               ui: ["New Browser Tab", "Open Location…", "Open in Browser", "Copy Address"]),
-        .init(.browserAllow, .html, "<host>", "Add a site to the allow list, so its pages open in Duo's browser tabs (and its subdomains)."),
+        .init(.browserAllow, .html, "<host>", "Ask the user to add a site to the allow list, so its pages open in Duo's browser tabs (and its subdomains). The user answers on a Duo sheet."),
         .init(.browserSites, .html, "", "The allow list: sites Duo opens in its own browser tabs; everything else opens in the system browser (DL-3).", ui: ["Edit…"]),
         .init(.browserTabs, .html, "", "Browser tabs open in Duo: id, project, title, address."),
         .init(.browserRead, .html, "[selector] [--tab <id>]", "The page's text (or one element's), with its title and address (LR-45). Allowed sites only."),

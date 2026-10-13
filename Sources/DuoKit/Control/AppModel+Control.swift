@@ -272,7 +272,15 @@ extension AppModel {
         case .browserAllow:
             guard let h = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             let host = URL(string: h)?.host ?? h
-            done(.ok(AllowedSites.add(host) ? "\(host) is allowed: its pages open in Duo." : "\(host) was already allowed."))
+            func add() { done(.ok(AllowedSites.add(host) ? "\(host) is allowed: its pages open in Duo." : "\(host) was already allowed.")) }
+            // A session can't widen the list unasked (DL-178): the user answers on a Duo sheet.
+            if Env.autoconfirm || AllowedSites.load().contains(host) { return add() }
+            SheetCenter.shared.ask(DuoQuestion(
+                title: "Allow \(host) in Duo’s browser?",
+                paragraphs: ["A Claude session asked to let pages from `\(host)` and its subdomains open in Duo’s browser tabs. They stay signed in there, and their pages can be sent to Claude."],
+                note: "The list is a plain file you can edit: \(Self.short(AllowedSites.file.path)).",
+                choices: [.init(label: "Don’t Allow", isCancel: true) { done(.fail("\(host) was not allowed: the user declined.")) },
+                          .init(label: "Allow", isDefault: true) { add() }]))
         case .browserSites:
             let list = AllowedSites.load()
             done(.ok((list.isEmpty ? "No sites allowed yet (localhost always is)." : list.joined(separator: "\n")) + "\nThe list: \(AllowedSites.file.path)", ["sites": list]))

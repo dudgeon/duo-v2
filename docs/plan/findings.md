@@ -3430,3 +3430,18 @@ DL-183's spike of ENH-70. The mod is `Mods/duo-signal`. Duo's side is `Chat/Chat
   4. A run on Geoff's real login.
 
   **The canary could ship ahead of the sensor**, doctor-only, as the cheap way to learn whether mods would run on Geoff's Macs before anyone commits to the sensor. It costs two background `claude` runs per launch on a CLI with mods (validate is cached, `plugin test` takes 0.24 s), and on 2.1.219 one `--version`. Where it shows beyond doctor is Q-189.
+## F-299 · Web view lifetimes (fix/web-lifetimes, C-83, DL-178, 2026-10-12)
+
+- **A closed browser tab is released.**
+  - `WebTab` now gives WebKit a `WeakScriptHandler` proxy instead of itself, because a `WKUserContentController` retains its handlers.
+  - `WebTab.close()` (called by `closeWebTab`, which every close path reaches: the tab's x, `duo2 browser close`, `window.close()`) stops the page, cancels a running download, drops the KVO observers and the delegates, and calls `removeAllScriptMessageHandlers`.
+  - DuoChecks hold a closed tab and its web view weakly and expect both to be gone; a tab dropped without `close()` is released too, which proves the proxy alone breaks the cycle.
+- **Restored tabs load on first show.** `applyRestore` calls `WebTab.defer_(url)`, so the tab has its address and a title and loads nothing. `WebTabHost.updateNSView` calls `loadIfDeferred()`, and so does every `duo2 browser` verb that targets the tab. `WebTab.url` falls back to the deferred page, so the next save keeps it, and a tab never shown stays in the restore file.
+- **Viewer timers stop when hidden.** `HTMLViewer` and `DeckViewer` got `sleep()` and `wake()` like `DocxViewer`'s: the one-second poll stops when the pane doesn't show them, and a file that changed meanwhile reloads on wake.
+- **DL-178.**
+  - `duo2 browser allow <host>` asks through a `SheetCenter` sheet ("Allow x in Duo's browser?"). `DUO_AUTOCONFIRM=1` answers yes; a host already on the list needs no question. The reply waits for the answer, and "Don't Allow" fails the verb.
+  - A tab's `file:` pages stay inside its project's folder (`WebTab.fileRoots`, set when the tab is made, restored or opened as a popup). The check resolves the folder's symlinks, so a link out of the project doesn't lead outside it, and a sibling folder that shares the prefix isn't inside.
+- `ChatStore.forget` on close was already on main (fix/idle-cpu); not redone.
+- **Measured** (`scripts/measure-web-lifetimes.sh <tree> <label>`, an isolated Duo started through LaunchServices so its WebKit processes count as its own; exclusive lock). With 3 browser tabs, an HTML page and a deck open, then closed: WebContent processes main c69183a 1 → 6 → 6, branch 1 → 6 → 3 (what remains is the editor and the HTML and deck viewers, which live as long as the app). `leaks` finds about 420 small system leaks (20 KB) on both; footprint 116.6 MB on main, 102.1 MB on the branch.
+- **Unattributed: the editor page reported `vis=visible` in the branch's background `check-editor-host` runs** (twice), where main's two background runs reported hidden and skipped the scroll case. The branch's case then ran and drifted 17 px (left at 1500, back at 1483). Nothing in this branch touches the editor's web view or its host (the changes are in `WebTab`, `HTMLViewer`, `DeckViewer` and the control verb), so I can't say why visibility differed; the likeliest cause is the machine's screen state at the time, not the code, but no run proves it. The F-272 scroll restore still needs its on-screen proof (`DUO_TEST_FOREGROUND=1`, Geoff's OK).
+- `check-deck-motion.mjs` needs `playwright-core` on `NODE_PATH`; `/tmp/pwc/node_modules/playwright-core` had no `package.json`, and a working copy was `/Users/geoff/repos/thinking-about-risk/node_modules`.
