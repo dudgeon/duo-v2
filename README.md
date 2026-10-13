@@ -6,9 +6,11 @@ A Mac app for working with Claude Code across many pieces of work at once. It ke
 
 > **Duo v2 is an early beta and an experiment.** Things will change and some will break. Try it, and tell us what you find: open an [issue](https://github.com/dudgeon/duo-v2/issues), or use Help › Report an Issue… in Duo. Legacy Duo is in maintenance mode: it gets fixes, not new features.
 
-### ▶ [Watch the 7-minute intro to Duo](https://github.com/dudgeon/duo-v2/releases/download/v0.2.13/duo-intro.mp4)
+### ▶ [Watch the intro to Duo](https://github.com/dudgeon/duo-v2/releases/download/v0.2.13/duo-intro.mp4)
 
-![All projects: Home's Claude session on the left, a map of projects in the middle, and what needs you on the right.](docs/guide/images/all-projects.png)
+<a href="https://github.com/dudgeon/duo-v2/releases/download/v0.2.13/duo-intro.mp4">
+<img width="1280" height="720" alt="duo-intro-poster" src="https://github.com/user-attachments/assets/45bd3812-90ea-4f31-857c-e274167270b1" />
+</a>
 
 Duo runs Claude Code itself, the same interactive Claude, signed in with your own Claude account. It doesn't need an API key.
 
