@@ -2406,11 +2406,10 @@
         },
         "in": "video-s10-archive-ask",
         "cam": {
-          "rel": "video.sheet",
-          "dx": -110,
-          "dy": -19,
-          "w": 1240,
-          "h": 698
+          "fit": [
+            "video.sheet"
+          ],
+          "pad": 170
         },
         "dur": 1
       },
