@@ -82,17 +82,6 @@ public enum ChildEnvironment {
     nonisolated(unsafe) public static var control: ControlEndpoint?
     /// The folder holding `duo2` (`Duo.app/Contents/Helpers`).
     nonisolated(unsafe) public static var cliDirectory: String?
-    /// `Duo.app/Contents/Library/Exec/duo-exec` (DL-185); nil starts programs directly.
-    nonisolated(unsafe) public static var exec: String?
-
-    /// How to start `program` in a terminal: through duo-exec, so the process is responsible for
-    /// itself and a privacy prompt its tools raise names it, not Duo (DL-185, F-302). `argv0` is
-    /// what the program sees as its name (`-zsh` for a login shell).
-    public static func launch(_ program: String, args: [String], argv0: String? = nil, exec: String? = ChildEnvironment.exec)
-        -> (executable: String, args: [String], execName: String?) {
-        guard let exec else { return (program, args, argv0) }
-        return (exec, [program, argv0 ?? program] + args, nil)
-    }
 
     /// Drops what a parent Claude Code session leaks into Duo's environment when Duo was launched
     /// from one (CLAUDECODE, CLAUDE_CODE_SESSION_ID, messaging socket and token, …; findings
@@ -200,10 +189,9 @@ public final class TerminalSession {
         }
     }
 
-    /// Every terminal process starts here, responsible for itself (DL-185).
+    /// Every terminal process starts here. Duo stays the responsible process for it (DL-190).
     private func run(_ program: String, _ args: [String], argv0: String? = nil, environment: [String]) {
-        let l = ChildEnvironment.launch(program, args: args, argv0: argv0)
-        view.startProcess(executable: l.executable, args: l.args, environment: environment, execName: l.execName, currentDirectory: cwd)
+        view.startProcess(executable: program, args: args, environment: environment, execName: argv0, currentDirectory: cwd)
     }
 
     /// Per-session hooks (F-23); none if the settings file can't be written.
