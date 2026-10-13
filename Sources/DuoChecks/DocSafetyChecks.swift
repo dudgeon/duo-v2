@@ -61,6 +61,14 @@ private func matches(_ pattern: String, in text: String) -> [String] {
     let viewer = index.declarations(of: "HTMLViewer").map(\.body).joined()
     check(viewer.contains("compileContentRuleList") && viewer.contains("rulesReady"), "the HTML viewer compiles the rules and waits for them before loading a page")
 
+    // The task menus and the duo2 task verbs wait for the editor's save before rewriting a note.
+    let menu = index.files.first { $0.path.hasSuffix("Model/AppModel+TaskMenu.swift") }?.text ?? ""
+    check(menu.contains("afterNoteSaved(project: project, path: path) { [weak self] in\n            if let link = self?.taskLink")
+          && menu.contains("model.afterNoteSaved(project: project, path: path) { if let why = model.unarchiveTask")
+          && menu.contains("self?.afterNoteSaved(project: project, path: path) { if let self { report(self.archiveTask(project: project, path: path, sessions: true))")
+          && menu.contains("afterNoteSaved(project: hit.project, path: hit.path) { [weak self] in self?.taskMenuVerbNow"),
+          "Copy Link, Archive, Unarchive and the duo2 rename/archive/unarchive/link verbs wait for the open note's save")
+
     // Save re-evaluates once the editor first shows a document (the editor is unobserved).
     let commands = index.files.first { $0.path.hasSuffix("Navigation/Commands.swift") }?.text ?? ""
     check(commands.contains("case .save: model.terminalsMode == .live && model.editorOpened"), "Save depends on the observed editorOpened flag")

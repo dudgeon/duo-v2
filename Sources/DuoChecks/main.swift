@@ -2606,6 +2606,10 @@ func repoFixture() throws -> Fixture {
         m.undoRecorder = { name, u in undos.append((name, u)) }
         func undoLast() { if let u = undos.popLast() { u.1(m) } }
         func archivedIds() -> Set<String> { Set(DuoState.load().archivedSessions) }
+        // C-81: the menu and duo2 paths wait for an open note's save; with no editor showing it they go on at once.
+        var waited = 0
+        m.afterNoteSaved(project: "tasky", path: "tasks/nothing.md") { waited += 1 }
+        check(waited == 1 && m.editorIfLoaded == nil, "a task action goes straight on when no editor shows the note (and builds no editor)")
 
         // Rename: title, heading, file; one undo puts both back.
         var path = try write("Exec review prep")

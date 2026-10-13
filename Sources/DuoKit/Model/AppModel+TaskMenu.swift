@@ -51,12 +51,22 @@ extension AppModel {
 
     /// Why a note can't be rewritten on disk right now, or nil when it can: it is open in the editor
     /// with text not yet saved (or in conflict), and a rewrite from the file would lose that text (C-81).
-    /// The editor is told to save; the caller reports the reason and the action can be repeated.
+    /// The writers below refuse with this as a last resort; menus and `duo2` verbs go through
+    /// `afterNoteSaved` first, so they wait for the save instead.
     func noteBusy(_ file: URL) -> String? {
-        guard let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL,
-              e.dirty || e.conflict || Date().timeIntervalSince(e.lastTyped) < 2 else { return nil }
-        flushTask(file) { [weak self] in self?.refreshLive() }
-        return "\(file.lastPathComponent) has changes that aren't saved yet. Duo is saving them: try again."
+        guard let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL, e.dirty || e.conflict else { return nil }
+        return e.conflict ? "\(file.lastPathComponent) is open with changes in conflict with the file on disk. Resolve that first."
+                          : "\(file.lastPathComponent) has changes that aren't saved yet."
+    }
+
+    /// Runs `then` once the note's open editor has saved (at most about 2 s), or at once when the
+    /// editor isn't showing it. A save that fails or stalls leaves the writer to refuse with its reason (C-81).
+    public func afterNoteSaved(project: String, path: String, _ then: @escaping @MainActor () -> Void) {
+        guard let file = taskFile(project, path), let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL else { return then() }
+        var ran = false
+        let once: @MainActor () -> Void = { if !ran { ran = true; then() } }
+        e.saveNow(force: true, completion: once)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { MainActor.assumeIsolated { once() } }
     }
 
     /// Tabs, the editor and tab restore follow a note that moved within its project.
@@ -189,7 +199,9 @@ extension AppModel {
     }
 
     public func copyTaskLink(project: String, path: String) {
-        if let link = taskLink(project: project, path: path) { FileActions.copy(link) } else { info("Couldn't link \(path).") }
+        afterNoteSaved(project: project, path: path) { [weak self] in
+            if let link = self?.taskLink(project: project, path: path) { FileActions.copy(link) } else { self?.info("Couldn't link \(path).") }
+        }
     }
 
     /// Opens the task a `duo2://task/<id>` link names, wherever its note is now.
@@ -371,15 +383,15 @@ extension AppModel {
             }
         }
         let n = linkedSessions(t).count
-        guard n > 0 else { return report(archiveTask(project: project, path: path, sessions: false)) }
+        guard n > 0 else { return afterNoteSaved(project: project, path: path) { [weak self] in if let self { report(self.archiveTask(project: project, path: path, sessions: false)) } } }
         var q = DuoQuestion(title: "Archive “\(t.title)”?", choices: [])
         q.paragraphs = ["Its note stays in `tasks/` and leaves the lists. Its \(sessionCount(n)) can be archived with it:"]
         q.items = questionItems(t, runningSays: "running: stays listed")
         q.note = runningNote(t, verb: "archived") ?? "Bring \(n == 1 ? "it" : "them") back from \(project)’s Archived fold. Edit › Undo puts \(n == 1 ? "it" : "them") back now."
         q.choices = [
             .init(label: "Cancel", isCancel: true) { answered?("Not archived: the user clicked Cancel in Duo.") },
-            .init(label: "Archive Task Only") { [weak self] in if let self { report(self.archiveTask(project: project, path: path, sessions: false)) } },
-            .init(label: "Archive Task and Its Sessions", isDefault: true) { [weak self] in if let self { report(self.archiveTask(project: project, path: path, sessions: true)) } },
+            .init(label: "Archive Task Only") { [weak self] in self?.afterNoteSaved(project: project, path: path) { if let self { report(self.archiveTask(project: project, path: path, sessions: false)) } } },
+            .init(label: "Archive Task and Its Sessions", isDefault: true) { [weak self] in self?.afterNoteSaved(project: project, path: path) { if let self { report(self.archiveTask(project: project, path: path, sessions: true)) } } },
         ]
         ask(q)
     }
@@ -452,7 +464,7 @@ struct TaskMenuItems: View {
             Button("Copy Link") { model.copyTaskLink(project: project, path: path) }
             Button("Reveal in Finder") { model.revealTask(project: project, path: path) }
             Divider()
-            Button("Unarchive Task") { if let why = model.unarchiveTask(project: project, path: path) { model.info(why) } }
+            Button("Unarchive Task") { model.afterNoteSaved(project: project, path: path) { if let why = model.unarchiveTask(project: project, path: path) { model.info(why) } } }
             Button("Delete Task…") { model.askDeleteTask(project: project, path: path) }
         } else {
             Button("Open Task Note") { model.openTask(project: project, path: path) }
@@ -520,6 +532,15 @@ struct MoveTaskMenu: View {
 
 extension AppModel {
     func taskMenuVerb(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
+        // Verbs that rewrite the note on disk wait for the editor to save it first (C-81).
+        guard [.taskRename, .taskArchive, .taskUnarchive, .taskLink].contains(id), let t = inv[0],
+              let hit = findTask(t, project: inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name) ?? findTask(t, project: nil) else {
+            return taskMenuVerbNow(id, inv, req, done)
+        }
+        afterNoteSaved(project: hit.project, path: hit.path) { [weak self] in self?.taskMenuVerbNow(id, inv, req, done) }
+    }
+
+    private func taskMenuVerbNow(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
         guard let t = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
         guard let hit = findTask(t, project: inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name) ?? findTask(t, project: nil) else {
             return done(.fail("no task '\(t)'"))
