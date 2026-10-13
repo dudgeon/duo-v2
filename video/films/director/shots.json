@@ -1,5 +1,5 @@
 {
-  "$note": "The director film's shots, keyed by scene id (as video/shots.json is for the intro). Look B · Panes (DL-180), script v2 (Oct 12): src/scenes/director/.",
+  "$note": "The director film's shots, keyed by scene id (as video/shots.json is for the intro). Look B \u00b7 Panes (DL-180), script v2 (Oct 12): src/scenes/director/.",
   "S1": {
     "kind": "drawn",
     "scene": "dir-opening",
@@ -357,7 +357,7 @@
       },
       "hundred": {
         "line": 4,
-        "word": "hundred"
+        "word": "files"
       },
       "Word": {
         "line": 5,

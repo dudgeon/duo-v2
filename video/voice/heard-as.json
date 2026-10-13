@@ -51,5 +51,8 @@
   ],
   "work trees": [
     "worktrees"
+  ],
+  "director": [
+    "directors"
   ]
 }

@@ -162,7 +162,8 @@ export const Opening = ({t, ev}: SceneProps) => {
       <div style={{position: 'absolute', inset: 0, opacity: ringU}}>
         <YouCard box={you} chip={chip} />
         {/* Line 5: your time, half on merges and renumbering, half on direction. */}
-        <div style={{position: 'absolute', left: you.x - 60, top: you.y + you.h + 18, width: you.w + 120, opacity: split, fontFamily: ui}}>
+        <div style={{position: 'absolute', left: 1400, top: 128, width: 420, opacity: split, fontFamily: ui}}>
+          <div style={{fontSize: 18, lineHeight: '24px', fontWeight: 600, letterSpacing: 1, color: L.text2, marginBottom: 8}}>YOUR TIME</div>
           <div style={{display: 'flex', height: 18, borderRadius: 9, overflow: 'hidden', border: `1.5px solid ${L.rule}`, background: L.pane}}>
             <div style={{width: `${50 * split}%`, background: L.needsYou}} />
             <div style={{width: `${50 * half}%`, background: L.text}} />

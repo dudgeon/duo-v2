@@ -149,7 +149,7 @@ export const NextUp = ({t, ev}: SceneProps) => {
             {['review', 'conflict'].map((w, k) => {
               const u = rise(k);
               if (u <= 0.01) return null;
-              return <div key={w} style={{position: 'absolute', left: c0.x - 140 + k * 150, top: lerp(c0.y - 120, c0.y - R - 110, Math.min(1, u)), padding: '3px 12px', borderRadius: 9,
+              return <div key={w} style={{position: 'absolute', left: c0.x - 140 + k * 150, top: lerp(c0.y - 120, c0.y - R + 24, Math.min(1, u)), padding: '3px 12px', borderRadius: 9,
                 background: L.needsYou, color: L.onNeedsYou, fontFamily: ui, fontSize: 18, fontWeight: 600, opacity: Math.min(1, u)}}>{w}</div>;
             })}
             {/* Inside the second: people around one shared agent. */}
