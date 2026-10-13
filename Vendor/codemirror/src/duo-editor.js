@@ -1544,7 +1544,7 @@ class ImageWidget extends WidgetType {
         fig.appendChild(m);
       }
     };
-    if (/^(https?:|data:)/.test(this.src)) show(this.src);
+    if (/^(https:|data:)/.test(this.src)) show(this.src);
     else {
       const id = ++imageSeq;
       imageWaiters.set(id, show);

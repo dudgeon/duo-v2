@@ -170,7 +170,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .goHome, .toggleSidebar, .closeWindow: true
         case .closeSession: model.visibleTerminal != nil || (model.webFocus == .editor && model.openDocuments.contains(model.rightTab ?? ""))
         case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
-        case .save: model.terminalsMode == .live && model.editor.url != nil
+        case .save: model.terminalsMode == .live && model.editorOpened && model.editorIfLoaded?.url != nil
         case .bold, .italic, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert: model.webFocus == .editor
         case .tableRowAbove, .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn,
              .tableAlignLeft, .tableAlignCenter, .tableAlignRight: model.webFocus == .editor && (model.editorIfLoaded?.inTable ?? false)

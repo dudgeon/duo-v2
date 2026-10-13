@@ -270,6 +270,11 @@ public enum FixtureHarness {
             if let edit { model.editor.applyNoteEdit(edit) { ok in FileHandle.standardError.write(Data("note-edit: \(ok ? "applied" : "not applied")\n".utf8)) } }
         case "source":   // source:on|off: Source mode for the document on screen, as View › Source Mode does (DL-167)
             model.setSourceMode(parts.count > 1 && parts[1] == "on")
+        case "editor-terminate":   // the editor's web process dies (C-81): the delegate runs as WebKit would call it
+            let e = model.editor
+            e.webViewWebContentProcessDidTerminate(e.webView)
+        case "save-enabled":       // whether File › Save is enabled now (the review's note on editorIfLoaded)
+            FileHandle.standardError.write(Data("save-enabled: \(DuoCommand.save.isEnabled(in: model))\n".utf8))
         case "doc-status":
             if let url = model.editor.url { FileHandle.standardError.write(Data("doc-status: \(model.editor.status(of: url))\n".utf8)) }
         // Collisions (DL-77): a person typing, and another writer on disk, at the same time.

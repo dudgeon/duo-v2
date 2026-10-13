@@ -147,5 +147,14 @@ expect "renameheld: the renamed file has the outside version" $ws/work/garden/A2
 expect "renameheld: and nothing of mine was written over it" $ws/work/garden/A2.md lacks "MINE"
 expect "renameheld: my text is in the buffer under the new name" $out/renameheld.log has "alpha MINE"
 
+# 14. The editor's web process dies (C-81): the page reloads and shows the document again from disk;
+# what was autosaved is back, the document still saves, and Save was enabled once the document opened.
+fresh crash
+run crash "${open}$A,wait:2,save-enabled,user-type:alpha=>alpha EDITED,wait:3,editor-terminate,wait:4,editor-js:return 'after '+JSON.stringify(duo.text()),user-type:middle=>middle AFTER,wait:3,editor-state"
+expect "crash: Save is enabled once a document is open" $out/crash.log has "save-enabled: true"
+expect "crash: the autosaved text is back in the page" $out/crash.log has "after \"# A\\n\\nalpha EDITED"
+expect "crash: the document saves again after the restart" $A has "middle AFTER"
+expect "crash: and keeps the earlier typing" $A has "alpha EDITED"
+
 echo "$((total-fails)) of $total checks passed (logs and captures in $out)"
 [[ $fails == 0 ]]

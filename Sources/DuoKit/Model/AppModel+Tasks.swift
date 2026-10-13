@@ -103,6 +103,21 @@ extension AppModel {
     public func setTaskStatus(project: String, path: String, _ status: String) -> String? {
         guard let folder = liveFolders[project] else { return "no project '\(project)'" }
         let file = folder.appending(path: path)
+        if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL {
+            // Open in the editor: the change goes through its buffer (DL-13), so unsaved typing is kept and
+            // ⌘Z undoes it. The menu and a board drag are the same writer (C-81).
+            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
+            let closes = ["done", "dropped"].contains(status)
+            let task = fixture.tasks?.first { $0.id == project + "/" + path }
+            let oldStatus = task?.status, oldCompleted = task?.completed
+            e.applyNoteEdit(.status(status, completed: closes ? f.string(from: Date()) : nil))
+            registerUndo("Set Task Status") { model in
+                e.applyNoteEdit(.status(oldStatus, completed: oldCompleted))
+                model.showNow { model.setShownTask(project, path) { $0.status = oldStatus; $0.completed = oldCompleted } }
+            }
+            showNow { setShownTask(project, path) { $0.status = status; $0.completed = closes ? f.string(from: Date()) : nil } }
+            return nil
+        }
         guard let data = FileManager.default.contents(atPath: file.path), let text = String(data: data, encoding: .utf8) else { return "\(path) isn't readable" }
         do { try Data(TaskNotes.settingStatus(status, in: text).utf8).write(to: file, options: .atomic) } catch { return error.localizedDescription }
         registerUndo("Set Task Status") { model in
@@ -142,6 +157,10 @@ extension AppModel {
         guard let s = fixture.sessions.first(where: { $0.tabKey == key || $0.sessionId == key }), let id = s.sessionId,
               let folder = liveFolders[s.project] else { return "no session '\(key)'" }
         let file = folder.appending(path: path)
+        if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL {
+            e.applyNoteEdit(.addSession(link: TaskNotes.link(title: s.name, id: id)))   // through the buffer, as + Add does
+            return nil
+        }
         guard let data = FileManager.default.contents(atPath: file.path), let text = String(data: data, encoding: .utf8) else { return "\(path) isn't readable" }
         guard let updated = TaskNotes.adding(TaskNotes.link(title: s.name, id: id), to: text) else { return "\(s.name) is already in \(path)" }
         do { try Data(updated.utf8).write(to: file, options: .atomic) } catch { return error.localizedDescription }

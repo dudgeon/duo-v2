@@ -97,25 +97,12 @@ extension AppModel {
     /// either way. Onto Done, the card holds ticked where it was for Mark Complete's 5 s (DL-130).
     @discardableResult
     public func moveCard(project: String, path: String, to status: String) -> String? {
-        guard let folder = liveFolders[project] else { return "no project '\(project)'" }
+        guard liveFolders[project] != nil else { return "no project '\(project)'" }
         let id = project + "/" + path
         let task = fixture.tasks?.first { $0.id == id }
         let was = TaskBoard.key(task?.status)
         guard was != status else { return nil }
-        let file = folder.appending(path: path).standardizedFileURL
-        if let e = editorIfLoaded, e.url?.standardizedFileURL == file {
-            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
-            let closes = ["done", "dropped"].contains(status)
-            let oldStatus = task?.status, oldCompleted = task?.completed
-            e.applyNoteEdit(.status(status, completed: closes ? f.string(from: Date()) : nil))
-            registerUndo("Set Task Status") { model in
-                e.applyNoteEdit(.status(oldStatus, completed: oldCompleted))
-                model.showNow { model.setShownTask(project, path) { $0.status = oldStatus; $0.completed = oldCompleted } }
-            }
-            showNow { setShownTask(project, path) { $0.status = status; $0.completed = closes ? f.string(from: Date()) : nil } }
-        } else if let why = setTaskStatus(project: project, path: path, status) {
-            return why
-        }
+        if let why = setTaskStatus(project: project, path: path, status) { return why }
         if status == "done" && !MotionSettings.shared.reduce {
             boardHeld[id] = was
             completingTasks.insert(id)
