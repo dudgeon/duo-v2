@@ -54,12 +54,12 @@ const LevelTree = ({i, add}: {i: number; add: number}) => {
           <Piece b={{x: x + 26, y: y + 450, w: 112, h: 92}} ink={i === 2} u={i === 2 ? add : 1} round={18}>
             <span style={{fontSize: 14, lineHeight: '19px'}}><b style={{color: L.needsYou}}>console</b><br />Ship it<br />Hold</span>
           </Piece>
-          <div style={{position: 'absolute', left: x + 170, top: y + 506, fontFamily: mono, fontSize: 14, color: i === 2 ? L.text : L.text2, opacity: i === 2 ? add : 1}}>↺ sessions message the director</div>
+          <div style={{position: 'absolute', left: x + 170, top: y + 498, width: 200, fontFamily: mono, fontSize: 14, lineHeight: '19px', color: i === 2 ? L.text : L.text2, opacity: i === 2 ? add : 1}}>↺ sessions message<br />&nbsp;&nbsp;the director</div>
         </>
       )}
       {projects && (
         <>
-          <div style={{position: 'absolute', left: x + 150, top: y + 176, width: 238, height: 352, boxSizing: 'border-box', border: `2.5px dashed ${L.text}`, borderRadius: 18, opacity: add}} />
+          <div style={{position: 'absolute', left: x + 150, top: y + 176, width: 238, height: 380, boxSizing: 'border-box', border: `2.5px dashed ${L.text}`, borderRadius: 18, opacity: add}} />
           <div style={{position: 'absolute', left: x + 160, top: y + 146, fontFamily: mono, fontSize: 15, color: L.text, opacity: add}}>built into Claude Code</div>
         </>
       )}
