@@ -14,3 +14,6 @@ video/voice/.venv/
 video/score/.venv/
 video/score/.cache/
 __pycache__/
+
+# Duo task notes: they quote Geoff verbatim, and this repo is public (Geoff, 2026-10-14)
+tasks/
