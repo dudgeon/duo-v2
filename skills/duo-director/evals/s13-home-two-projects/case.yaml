@@ -15,20 +15,11 @@ graders:
   - name: skill-fired
     type: tool_used
     tool: Skill
-  - name: no-alpha-edit
-    type: "tool_used"
-    tool: "Edit"
-    min: 0
-    max: 0
-    arm: "both"
-    input_match: "CHANGELOG"
-  - name: no-alpha-write
-    type: "tool_used"
-    tool: "Write"
-    min: 0
-    max: 0
-    arm: "both"
-    input_match: "alpha/"
+  - name: nothing-written-in-alpha
+    type: "regex"
+    target: "trace"
+    pattern: "\"name\": ?\"(Write|Edit)\",[^{]*\"input\": ?\\{[^}]*?\"file_path\": ?\"[^\"]*/alpha/"
+    match: "not_contains"
   - name: judge
     type: "llm"
     focus: "trace"

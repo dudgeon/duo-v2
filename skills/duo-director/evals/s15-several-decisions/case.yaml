@@ -20,5 +20,5 @@ graders:
     focus: "trace"
     criteria: |
       - The agent put all three decisions to the user in one round (one AskUserQuestion call with several questions, or one message listing all three when AskUserQuestion isn't offered), not three separate rounds.
-      - Each question offers options with the agent's recommendation first, marked as recommended, and the recommendation follows the notes (Tuesday; 50 testers).
+      - For decisions 1 and 2 it gave a recommendation first, following the notes (Tuesday; 50 testers). For decision 3 any recommendation, or an explicit "no basis, your call", is fine.
       - It did not make an artifact or HTML page as the only way to answer, and did not record any answer as decided before the user replied.

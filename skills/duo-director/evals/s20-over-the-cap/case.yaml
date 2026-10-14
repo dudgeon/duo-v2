@@ -18,7 +18,7 @@ graders:
   - name: suggested
     type: "regex"
     target: "trace"
-    pattern: "status: suggested|--suggest"
+    pattern: "status: suggested\\\\n|director start [^`\\\\n]*--suggest"
   - name: judge
     type: "llm"
     focus: "trace"
