@@ -22,7 +22,8 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Folder tiles ("No project file") | Stand-in (DL-63) | — | DB-12 | ProjectTile |
 | Inside a folder: `Folder · no project file`, the notice with Make a Project and Not Now, the Project tab's offer | Designed (DL-110) | folder `folder-not-project.html` | — | FolderNotice, FolderProjectTab |
 | Missing or moved folder tiles ("Folder not found", "Moved to …") | Designed (DL-101); "In the Trash" not built | slice3 `missing-folder.html` | — | ProjectTile, MissingNotice, `Live/MissingFolders.swift` |
-| New project tile | Designed; opens the New project sheet (DL-100) | build `overview.html` | — | NewProjectTile |
+| New project tile | Designed; opens the New project sheet (DL-100). On the Board it always closes Home's columns (DL-212) | build `overview.html` | — | NewProjectTile |
+| Home with no projects yet: a card, + New project, `FOLDERS IN HOME · n` with Make a Project on each (Board and List) | Stand-in (DL-212, F-313): FolderNotice's card look and the map's tiles, until designed | — | Q-197 | `AllProjects/AllProjectsPanes.swift` `HomeFoldersSection`, `HomeFolderTile` |
 | Sessions open in Duo: `at prompt`/`working`, tinted | Designed (DL-133, ENH-7) | canvas https://claude.ai/artifact/2qhPnZG6qUpLWFsXKCYSzt `Tiles` (A) | — | TileSessionRow, `activeTint` |
 | Archived rollup under the map | Stand-in (ENH-6) | — | DB-34 | `AllProjects/ArchivedProjects.swift` |
 | Idle footer and idle list | Designed (DB-1) | surfaces `idle-list.html`, `idle-many.html` | — | `AllProjects/IdleList.swift` |
@@ -76,7 +77,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 
 | Surface | Status | Open | Code |
 |---|---|---|---|
-| Move into Home… and New project sheets | Designed (DL-100): Duo's own sheets under the toolbar, the map dimmed to 55% | — | `Shell/Sheets.swift` |
+| Move into Home… and New project sheets | Designed (DL-100): Duo's own sheets under the toolbar, the map dimmed to 55%. New project's In lists every folder in Home, then Choose Folder…; its "Make this folder the project" checkbox is a stand-in (DL-211, Q-197) | — | `Shell/Sheets.swift` |
 | Confirmations and launch questions (merge, move, delete, reconnect, install, legacy Duo, .gitignore) | Designed (DL-101): Duo's own sheets, one at a time | — | `Shell/DuoQuestion.swift` |
 | Drag a session or tile; drop targets | Built (Geoff's feel, F-51) | DB-12 | AllProjectsPanes DragCard |
 | Files dropped on the file tree (move, with a highlight and the clash question) and on a terminal (paths) | Designed (DL-132): selection fill with the drop-target dash; the clash question counts and says where each came from; copies across volumes (standins2 `q50-highlight`, `q50-clash`, `q51-copy`) | — | `Project/TreeDrop.swift`, `Model/AppModel+Drop.swift`, `Live/FileDrop.swift` |
