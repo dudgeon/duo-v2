@@ -17,13 +17,16 @@ public enum DuoPaths {
 /// hooks print nothing, so they never answer a permission prompt on the user's behalf; `duo2 hook
 /// context` prints only additional context for Claude (DL-116).
 public enum HookEvents {
-    static let names = ["SessionStart", "UserPromptSubmit", "PermissionRequest", "PostToolUse", "Notification", "Stop", "SessionEnd"]
+    /// SubagentStart and SubagentStop are here for every CLI, not only chat's (DL-192): parking
+    /// waits for a subagent to finish. Claude Code 2.1.219, the oldest we run on, accepts both and
+    /// fires them with the parent's `session_id` and the subagent's `agent_id`.
+    static let names = ["SessionStart", "UserPromptSubmit", "PermissionRequest", "PostToolUse", "Notification", "Stop", "SessionEnd", "SubagentStart", "SubagentStop"]
     /// What chat mode reads besides (DL-118, F-103): every tool call, failures and interrupts,
     /// background agents, compaction, failed turns, and MessageDisplay's streamed Markdown. All
     /// observe only; they print nothing (a printing MessageDisplay hook would change what the TUI
     /// shows). Added only for a CLI that has them all (2.1.152, MessageDisplay's release): an
     /// unknown hook name could make an older CLI reject the whole settings file.
-    static let chatNames = ["PreToolUse", "PostToolUseFailure", "SubagentStart", "SubagentStop", "PreCompact", "PostCompact", "StopFailure", "MessageDisplay"]
+    static let chatNames = ["PreToolUse", "PostToolUseFailure", "PreCompact", "PostCompact", "StopFailure", "MessageDisplay"]
 
     public static func file(for sessionId: String, in dir: URL = DuoPaths.events) -> URL {
         dir.appending(path: "\(sessionId).jsonl")
@@ -80,6 +83,14 @@ public enum HookEvents {
         public var command: String?
         public var filePath: String?
         public var lastMessage: String?
+        /// A subagent's id, on SubagentStart and SubagentStop (DL-192).
+        public var agentId: String?
+
+        public init(at: Double = 0, name: String, toolName: String? = nil, question: String? = nil, options: [String]? = nil,
+                    command: String? = nil, filePath: String? = nil, lastMessage: String? = nil, agentId: String? = nil) {
+            self.at = at; self.name = name; self.toolName = toolName; self.question = question; self.options = options
+            self.command = command; self.filePath = filePath; self.lastMessage = lastMessage; self.agentId = agentId
+        }
     }
 
     /// The last `maxBytes` of a session's events (bounded read, LR-9).
@@ -138,7 +149,8 @@ public enum HookEvents {
                      options: (q?["options"] as? [[String: Any]])?.compactMap { $0["label"] as? String },
                      command: input?["command"] as? String,
                      filePath: (input?["file_path"] ?? input?["notebook_path"]) as? String,
-                     lastMessage: e["last_assistant_message"] as? String)
+                     lastMessage: e["last_assistant_message"] as? String,
+                     agentId: e["agent_id"] as? String)
     }
 
     /// What the hooks say about a session right now.
@@ -267,6 +279,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var showHiddenFiles = false
     /// Explainers the user said Don't show again to (DL-172), by id; Settings › General brings them back.
     public var dismissedExplainers: [String] = []
+    /// Sessions set to Keep Running (DL-192): never parked, and started at launch instead of when shown. By session id.
+    public var keepRunning: [String] = []
 
     public init() {}
     public init(from decoder: Decoder) throws {
@@ -293,6 +307,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         homeView = try c.decodeIfPresent(String.self, forKey: .homeView)
         showHiddenFiles = try c.decodeIfPresent(Bool.self, forKey: .showHiddenFiles) ?? false
         dismissedExplainers = try c.decodeIfPresent([String].self, forKey: .dismissedExplainers) ?? []
+        keepRunning = try c.decodeIfPresent([String].self, forKey: .keepRunning) ?? []
     }
 
     public static func load(_ url: URL = DuoPaths.state) -> DuoState {

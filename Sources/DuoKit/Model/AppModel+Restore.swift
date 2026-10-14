@@ -105,7 +105,7 @@ extension AppModel {
         guard restoreEnabled, let s = RestoreState.load(RestoreState.file(root: liveRoot?.path)), s.root == liveRoot?.path else { return }
         let resolve = { (p: String) in URL(fileURLWithPath: p).realPath }
         func name(_ folder: String) -> String? { liveFolders.first { resolve($0.value.path) == resolve(folder) }?.key }
-        var reopened = 0
+        var reopened = 0, started = 0
         for p in s.projects {
             guard let project = name(p.folder), let folder = liveFolders[project] else { continue }
             let docs = p.documents.filter { d in
@@ -130,6 +130,8 @@ extension AppModel {
             // what's on screen, not one sign-in per tab at once (F-208).
             for id in p.sessions where !liveElsewhere.contains(id) {
                 guard let key = fixture.sessions(inProject: project).first(where: { $0.sessionId == id })?.tabKey else { continue }
+                // Keep Running (DL-192): started now, not when shown.
+                if keepRunningIDs.contains(id) { if terminal(project: project, session: key) != nil { started += 1 }; continue }
                 parkedTabs.insert(key)
                 reopened += 1
             }
@@ -148,5 +150,6 @@ extension AppModel {
             }
         }
         FileHandle.standardError.write(Data("restore: parked \(reopened) session(s) in \(s.projects.count) project(s)\n".utf8))
+        if started > 0 { FileHandle.standardError.write(Data("restore: resumed \(started) Keep Running session(s) at once\n".utf8)) }
     }
 }

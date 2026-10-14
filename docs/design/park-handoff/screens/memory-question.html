@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Memory-pressure question</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1040px; height: 620px; box-sizing: border-box; padding: 24px; background: #FFFFFF; color: #1F2328; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="font-size: 14px; font-weight: 600; line-height: 20px">[P] When macOS reports critical memory pressure and some idle tabs are off screen, Duo asks once, on its own sheet</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px">
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] A · Recommended: names the tabs it would park, in the question's item box</div>
+<div style="width: 460px; box-sizing: border-box; padding: 20px; background: #F3F4F6; border: 1px solid #C9CDD3; border-top: none; border-radius: 0 0 10px 10px; box-shadow: 0 8px 24px rgba(31,35,40,.18); display: flex; flex-direction: column; gap: 12px">
+<div style="font-weight: 600">Your Mac is low on memory. Park 4 idle sessions?</div>
+<div>Parking ends Claude in tabs you aren’t looking at. Each tab stays, and its session picks up where it left off when you show it.</div>
+<div style="background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px; padding: 6px 10px; display: flex; flex-direction: column">
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>Refund policy draft</span><span style="color: #5B636D">checkout · 2h</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>Buyer interviews</span><span style="color: #5B636D">research · 45m</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>“Summarise the six buyer…”</span><span style="color: #5B636D">research · 3h</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>Weekly plan</span><span style="color: #5B636D">Home · 1d</span></div>
+</div>
+<div style="font-size: 12px; line-height: 16px; color: #5B636D">Tabs that are working, waiting on you, running something in the background, or set to Keep Running stay as they are.</div>
+<div style="display: flex; gap: 6px; justify-content: flex-end"><button type="button" style="font: inherit; font-size: 12px; line-height: 16px; padding: 4px 10px; border: 1px solid #8B939C; border-radius: 6px; background: #FFFFFF; color: #1F2328">Not Now</button><button type="button" style="font: inherit; font-size: 12px; line-height: 16px; padding: 4px 10px; border: 1px solid #1F2328; border-radius: 6px; background: #FFFFFF; color: #1F2328; font-weight: 600">Park 4 Sessions</button></div>
+</div>
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] Rows: the tab’s name (one line, tail truncated) and, in text2, its project and how long it has sat at its prompt. More than 6: the first 5, then “and 3 more”.</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] B · Shorter: the count only</div>
+<div style="width: 460px; box-sizing: border-box; padding: 20px; background: #F3F4F6; border: 1px solid #C9CDD3; border-top: none; border-radius: 0 0 10px 10px; box-shadow: 0 8px 24px rgba(31,35,40,.18); display: flex; flex-direction: column; gap: 12px">
+<div style="font-weight: 600">Your Mac is low on memory. Park 4 idle sessions?</div>
+<div>Parking ends Claude in 4 tabs you aren’t looking at. Each tab stays, and its session picks up where it left off when you show it.</div>
+<div style="display: flex; gap: 6px; justify-content: flex-end"><button type="button" style="font: inherit; font-size: 12px; line-height: 16px; padding: 4px 10px; border: 1px solid #8B939C; border-radius: 6px; background: #FFFFFF; color: #1F2328">Not Now</button><button type="button" style="font: inherit; font-size: 12px; line-height: 16px; padding: 4px 10px; border: 1px solid #1F2328; border-radius: 6px; background: #FFFFFF; color: #1F2328; font-weight: 600">Park 4 Sessions</button></div>
+</div>
+</div>
+</div>
+
+<div style="font-size: 11px; line-height: 16px; color: #5B636D; display: flex; flex-direction: column; gap: 4px; max-width: 980px">
+<div>[P] It hangs from the toolbar like every Duo question (motionSheetIn). Return parks, Escape is Not Now. It is never a system alert; a scripted run answers it with DUO_AUTOCONFIRM.</div>
+<div>[P] Asked at most once per pressure episode: not again until macOS says pressure is back to normal and then critical again. Never while another sheet is up (it waits its turn in the queue, and is dropped if pressure has eased by then). Not asked when nothing is eligible.</div>
+<div>[P] After Park: the tabs stay in their strips and look idle (Q-136 stays open). The window says nothing more.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1040,"height":620}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

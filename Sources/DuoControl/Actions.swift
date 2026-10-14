@@ -46,6 +46,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     // Sessions
     case sessions, sessionShow = "session show", sessionNew = "session new", sessionOpen = "session open"
     case sessionClose = "session close", sessionMove = "session move"
+    case sessionPark = "session park", sessionKeepRunning = "session keep-running"
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
     case sessionLink = "session link", sessionTask = "session task", sessionChat = "session chat"
     case shellNew = "shell new", sessionFork = "session fork", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
@@ -198,6 +199,10 @@ extension DuoAction {
               ui: ["+ New session", "+ New Claude Code session", "New Session", "console +", "New Claude Session", "Start Claude here", "Start Claude in Home", "Start in"]),
         .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab", "Resume", "Open Session"]),
         .init(.sessionClose, .sessions, "[id] [--force]", "End a session's process and close its tab (it stays listed and resumable). Refuses while Claude is working there, unless --force.", ui: ["Close Tab", "End Session"]),
+        .init(.sessionPark, .sessions, "<id> | --background", "Park a session: end its Claude process, keep its tab, and resume it when the tab is shown (it picks up where it left off). Refuses, saying why, while Claude is working or waiting on the user, is running something in the background or has a subagent running, or the session is set to Keep Running; a tab on screen first gives its pane to the next tab. --background parks every idle tab that isn't on screen and says what it kept and why.",
+              ui: ["Park Session", "Park Background Sessions"]),
+        .init(.sessionKeepRunning, .sessions, "<id> [on|off]", "Keep a session running: it is never parked (by hand, in bulk or under memory pressure) and starts at launch instead of waiting to be shown. Turning it on wakes a parked tab. With no on/off it says whether the session is set.",
+              ui: ["Keep Running"]),
         .init(.sessionMove, .sessions, "<id> --to <project> [--new]", "File a session in another project, or with --new in a new project of that name made in Home; it moves there on its next resume. The user confirms in Duo. Undo with `duo2 undo`.",
               ui: ["Move to Project", "New Project…", "drag a session onto a tile"], timeout: 600),
         .init(.sessionNote, .sessions, "<text>", "Tell the user what this session is doing (one line, shown in Duo).", everyday: true),
@@ -480,7 +485,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "cancel", "fetch"]
+    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "cancel", "fetch", "background"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]

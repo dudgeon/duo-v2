@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Park menu wording</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1040px; height: 560px; box-sizing: border-box; padding: 24px; background: #F3F4F6; color: #1F2328; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; line-height: 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="font-size: 14px; font-weight: 600; line-height: 20px">[P] Menu items (native menus, drawn here only for their wording and order)</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] The Session menu: three new items above End Session</div>
+<div style="background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 10px; box-shadow: 0 8px 24px rgba(31,35,40,.18); padding: 5px 0; display: flex; flex-direction: column">
+<div style="padding: 1px 14px 1px 22px">Copy Link</div>
+<div style="padding: 1px 14px 1px 22px">Resume as a Fork</div>
+<div style="height: 1px; background: #C9CDD3; margin: 5px 0"></div>
+<div style="padding: 1px 14px 1px 22px; color: #5B636D">… tasks, move, archive, delete …</div>
+<div style="height: 1px; background: #C9CDD3; margin: 5px 0"></div>
+<div style="padding: 1px 14px 1px 22px">Park Session</div>
+<div style="padding: 1px 14px 1px 22px">Park Background Sessions</div>
+<div style="padding: 1px 14px 1px 6px; display: flex; gap: 4px"><span style="width: 12px">✓</span><span>Keep Running</span></div>
+<div style="height: 1px; background: #C9CDD3; margin: 5px 0"></div>
+<div style="padding: 1px 14px 1px 22px">End Session</div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] A Claude tab’s right-click menu: Park Session and Keep Running, above Close Tab</div>
+<div style="background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 10px; box-shadow: 0 8px 24px rgba(31,35,40,.18); padding: 5px 0; display: flex; flex-direction: column">
+<div style="padding: 1px 14px 1px 22px; color: #5B636D">… the tab’s items today …</div>
+<div style="height: 1px; background: #C9CDD3; margin: 5px 0"></div>
+<div style="padding: 1px 14px 1px 22px">Park Session</div>
+<div style="padding: 1px 14px 1px 22px">Keep Running</div>
+<div style="height: 1px; background: #C9CDD3; margin: 5px 0"></div>
+<div style="padding: 1px 14px 1px 22px">Close Tab</div>
+</div>
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] Park Session is dimmed when the tab can’t park: working, waiting on you, running something in the background, set to Keep Running, already parked, or a shell. Its tooltip says which.</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 11px; line-height: 16px; color: #5B636D">[P] What Duo says after Park Background Sessions (Duo’s usual notice)</div>
+<div style="background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px">
+<div>Parked 4 sessions. Each picks up where it left off when you show it.</div>
+<div style="height: 1px; background: #C9CDD3"></div>
+<div>Parked 3 sessions. 2 kept running: “Buyer interviews” is waiting on you, “Release watcher” is set to Keep Running.</div>
+<div style="height: 1px; background: #C9CDD3"></div>
+<div>No idle sessions to park.</div>
+</div>
+</div>
+</div>
+
+<div style="font-size: 14px; font-weight: 600; line-height: 20px">[P] duo2 verbs (DL-71)</div>
+<div style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 19px; background: #FFFFFF; border: 1px solid #C9CDD3; border-radius: 6px; padding: 10px 12px; white-space: pre">duo2 session park &lt;id&gt;          Park one session: end its Claude, keep its tab; it resumes when shown
+duo2 session park --background    Park every idle tab not on screen; says what it kept and why
+duo2 session keep-running &lt;id&gt; [on|off]   Never park it, and start it at launch
+duo2 sessions --json              each tab: "parked": true, "keepRunning": true, "parkable": false + "why"</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1040,"height":560}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

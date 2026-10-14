@@ -96,6 +96,10 @@ struct ConsoleTabStrip: View {
                     .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2)
                     .lineLimit(1)
             }
+            // Keep Running (DL-192): a pin after the name; the state glyph stays where it is.
+            if t.state != nil, model.isKeepRunning(t.id) {
+                KeepRunningPin(color: light ? (active ? DuoColor.text : DuoColor.text2) : (active ? DuoColor.consoleText : DuoColor.consoleText2))
+            }
         }
         .fixedSize()
         .modifier(TabHoverFill(key: t.id, onConsole: !light, fill: light ? DuoColor.selected : nil))
@@ -104,10 +108,11 @@ struct ConsoleTabStrip: View {
         .overlay(alignment: .bottom) { if light && active { DuoColor.text.frame(height: 2) } }
         .contentShape(Rectangle())
         .onActivate { model.openConsoleTab(t.id) }  // action: session open
-        .modifier(SessionOrganizeMenu(sessionKey: t.id, radius: DuoMetric.tabHoverRadius, onConsole: !light))
+        .modifier(SessionOrganizeMenu(sessionKey: t.id, radius: DuoMetric.tabHoverRadius, onConsole: !light, tab: true))
         .modifier(TabHover(key: t.id) { model.closeConsoleTab(t.id) })
         .accessibilityElement(children: .combine)
         .accessibilityLabel(t.state == nil ? "\(t.title), shell" : t.title)
+        .modifier(KeepRunningLabel(pinned: t.state != nil && model.isKeepRunning(t.id), name: t.title, state: t.state ?? .idle))
         .accessibilityIdentifier("video.tab.middle.\(allTabs.firstIndex { $0.id == t.id } ?? 0)")   // anchors: the video cursor's target (0-based, strip order)
         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
         .overlay(alignment: .leading) {   // anchors (scene 4): the × while the tab shows it (its 16 pt box, centred on the glyph's place), 1-based in strip order; a sibling so the tab's own name stays
@@ -133,6 +138,7 @@ struct ConsoleTabStrip: View {
         let font = (light ? DuoTextStyle.control : DuoTextStyle.mono).spec.nsFont
         func w(_ t: Tab, _ short: Bool) -> CGFloat {
             (t.state == nil ? 11 : 9) + DuoSpace.gapGlyphToLabel + ceil(TextWidth.of(short ? Self.short(t.title) : t.title, font: font))
+                + (t.state != nil && model.isKeepRunning(t.id) ? DuoSpace.gapGlyphToLabel + DuoMetric.keepRunningPinSize : 0)
         }
         var controls: CGFloat = 5 + 8 + 10 + 18          // + , chevron, and the gap before them
         if let key = model.consoleTab, model.chat(for: key) != nil { controls += light ? 46 + 16 - 6 : 52 + 18 - 4 }   // the chat toggle

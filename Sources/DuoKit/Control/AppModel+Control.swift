@@ -254,6 +254,38 @@ extension AppModel {
             }
             closeSession(s.tabKey)
             done(.ok("Closed \(s.name). It stays listed and resumable."))
+        case .sessionPark:
+            if inv.has("background") {
+                let r = parkBackground(notify: false)
+                var j: [String: Any] = ["parked": r.parked.map { $0.sessionId ?? $0.tabKey }]
+                j["kept"] = r.kept.map { ["id": $0.session.sessionId ?? $0.session.tabKey, "title": $0.session.name, "why": $0.block.why] }
+                return done(.ok(r.text, j))
+            }
+            guard let k = inv[0], let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }) else {
+                return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)"))
+            }
+            if let why = park(s.tabKey) {
+                let shown = why == .onScreen ? "\(s.name) is on screen and is the only tab in its pane, so there is no other tab to show instead." : "\(s.name) \(why.why), so it isn't parked."
+                return done(.fail(shown))
+            }
+            done(.ok("Parked \(s.name). Its tab stays; it picks up where it left off when shown (duo2 session open \(s.sessionId ?? s.tabKey)).", ["parked": s.sessionId ?? s.tabKey]))
+        case .sessionKeepRunning:
+            guard let k = inv[0], let s = findSession(k, in: nil) ?? fixture.sessions.first(where: { $0.tabKey == k }), !isShell(s.tabKey) else {
+                return done(.fail(inv[0].map { "no session '\($0)'" } ?? "usage: \(id.action.usage)"))
+            }
+            switch inv[1]?.lowercased() {
+            case nil:
+                let on = isKeepRunning(s.tabKey)
+                done(.ok("\(s.name) \(on ? "is set to Keep Running: never parked, and started at launch." : "is not set to Keep Running."))", ["keepRunning": on]))
+            case "on"?, "off"?:
+                let on = inv[1]?.lowercased() == "on"
+                let waking = on && parkedTabs.contains(s.tabKey) && terminals.existing(s.tabKey) == nil
+                setKeepRunning(s.tabKey, on)
+                done(.ok(on ? "\(s.name) keeps running: never parked, and started at launch\(waking ? " (resuming it now)" : "")."
+                         : "\(s.name) can be parked again.", ["keepRunning": on]))
+            default:
+                done(.fail("usage: \(id.action.usage)"))
+            }
         case .projectArchive, .projectUnarchive:
             guard let name = inv[0], let p = project(named: name) else { return done(.fail(inv[0].map { "no project '\($0)'" } ?? "usage: \(id.action.usage)")) }
             let on = id == .projectArchive
@@ -1103,6 +1135,10 @@ extension AppModel {
         j["running"] = terminals.existing(s.tabKey) != nil
         if parkedTabs.contains(s.tabKey), terminals.existing(s.tabKey) == nil { j["parked"] = true }  // DL-156
         j["remoteControl"] = s.remoteControl ?? NSNull()  // the name it was started with (DL-128)
+        if isKeepRunning(s.tabKey) { j["keepRunning"] = true }   // DL-192
+        if terminals.existing(s.tabKey) != nil, !isShell(s.tabKey), let why = parkBlock(s.tabKey), why != .notRunning {
+            j["parkable"] = false; j["parkBlock"] = why.why
+        }
         return j
     }
 

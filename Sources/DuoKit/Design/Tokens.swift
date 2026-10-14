@@ -246,6 +246,8 @@ public enum DuoMetric {
     public static let tabCloseGlyph: CGFloat = 10.0
     public static let tabCloseStroke: CGFloat = 1.5
     public static let tabCloseTitleGap: CGFloat = 1.0
+    public static let keepRunningPinSize: CGFloat = 9.0
+    public static let keepRunningPinStroke: CGFloat = 1.3
     public static let tabHoverRadius: CGFloat = 5.0
     public static let tabHoverHeight: CGFloat = 24.0
     public static let tabHoverInset: CGFloat = 7.0
