@@ -1,0 +1,29 @@
+schema_version: "1.0"
+name: s05-worker-loops
+description: "S05: a worker fails the same way after a nudge and a clearer request; the task goes to waiting and the user is asked."
+tags: [multi, pinned-219-strict]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "The worker on tasks/export-csv.md just reported again: \"Error: permission denied writing exports/. Retrying the same way.\""
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: waiting
+    type: "regex"
+    target: "trace"
+    pattern: "waiting"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent recognised this is the third identical failure after a nudge and a clearer request (two retries already used).
+      - It did not send a third retry to the worker.
+      - It set the task to waiting (duo2 task status … waiting, or status: waiting in the note) with the reason in Progress.
+      - It asked the user what to do (AskUserQuestion or a direct question).

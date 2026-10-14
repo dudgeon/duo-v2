@@ -3696,3 +3696,15 @@ Measured on 2.1.219 against the mock API (as F-310), with `disableAllHooks: true
 - **The queue** lives in `.duo/director.json` (`pending`). Each refresh tries the first message of each project; a refusal leaves it first in line without a new Progress line, so a busy worker doesn't fill its note.
 - **Resuming with a message:** `TerminalCommand.resumeClaude` takes a `prompt`, which `claude --resume <id> <prompt>` submits as the next message. The tab isn't shown and the keyboard isn't taken.
 - **Checks:** `DUO_CHECKS=director` runs 89, including every guard, the queue, the pause and hand-back, take-over and stand-down, end to end against stand-in claudes (no real one, no tokens).
+
+## F-314 · What `claude plugin eval` gives a case, and what that means for the director's evals (DL-206)
+
+Measured on 2.1.299 with probe cases (Haiku, a few cents).
+
+- **Each case runs headless in a sandbox:** a scratch `CLAUDE_CONFIG_DIR` and HOME (`<tmp>/e-…/home`, with the cwd at `home/cwd`), the environment stripped of everything but PATH and Claude's own variables (no `DUO_*`), and reads of `/tmp` and of the repo refused ("Operation not permitted"). The case's `scaffold_script` runs as you, outside the sandbox, in the case's cwd, with a clean environment.
+- **`duo2` inside a case can't reach any Duo:** with a scratch HOME there's no endpoint file, and no `DUO_SOCKET`. Geoff's running Duo is safe from every case, and cases grade the director on the no-Duo rungs (`duo2 director status` offline: client caps, rules, Home's directed projects).
+- **The `duo2` on PATH is the installed app's** (`/Applications/Duo.app/Contents/Helpers`), which may be older than the branch. `run-evals.sh` puts a relative `.director-bin` first on PATH, and each scaffold (`evals/_lib/setup.sh`) copies the branch's `.build/debug/duo2` into the case folder: a symlink or a copy in `/tmp` can't be executed from inside the sandbox.
+- **A headless run has no AskUserQuestion.** The case's tool list is Task, Bash, Edit, Glob, Grep, NotebookEdit, Read, Skill, TaskStop, ToolSearch, Write, whatever `allowed_tools` says. A director in such a run (an eval, `claude -p`, a headless turn) can't ask; the first runs went ahead and filed passages unapproved. The skill now says: without AskUserQuestion, end the turn with the question and a recommendation, and act on nothing that needs a yes. The evals grade that from the last message.
+- **Answers can't be scripted**, so every case is one turn of judgement: what it wrote, what it ran, what it asked. Multi-turn scenarios (a user's answer, then the next step) wait for DL-206's token.
+- **On 2.1.219 `plugin eval` doesn't run** (F-310: "early access"), so the work Mac's row is covered by the mock API (`scripts/director-harness/spikes/`) and Tier 1's stand-in, not by evals.
+- **A skill only loads when the prompt reaches for it.** Cases model a director session through `append_system_prompt` ("This session is the project's director… Use the duo-director skill"); s01 alone tests triggering from the user's words.

@@ -1,0 +1,36 @@
+schema_version: "1.0"
+name: s02-three-requests
+description: "S02: three requests in one message become three suggested tasks; nothing starts before the user says go."
+tags: [multi, documents, pinned-219-strict]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "Three things for the launch: tidy the install section of README.md, write a FAQ from notes/faq-raw.md, and draft an email to the beta testers announcing the FAQ."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: suggested
+    type: "regex"
+    target: "trace"
+    pattern: "status: suggested|--suggest"
+  - name: no-work-started
+    type: "tool_used"
+    tool: "Bash"
+    min: 0
+    max: 0
+    arm: "both"
+    input_match: "director start [^-]*$"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - Three separate tasks were filed, one per request, each with the user's words for that request.
+      - All three were filed as suggested (status: suggested or `duo2 director start --suggest`), not started.
+      - The agent did not draft the README, FAQ or email itself before the user said go.
+      - It ended by asking the user which to start (AskUserQuestion or a direct question).

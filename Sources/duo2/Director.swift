@@ -1,4 +1,5 @@
 import DuoControl
+import DuoSearch
 import Foundation
 
 // The parts of `duo2 director` that run in the director's own process (DL-193, DL-199): what this
@@ -20,6 +21,14 @@ func directorStatusOffline() -> Int32 {
     if let project {
         let reg = DirectorRegistry.load(project: project)
         print("Project: \(project.lastPathComponent). Director: \(reg.current.map { "\($0.name) (\($0.sessionId.prefix(8)))" } ?? "none").")
+        // In Home: the projects inside it that have their own director (DL-197), two levels down.
+        if FileManager.default.fileExists(atPath: project.appending(path: "HOME.md").path) {
+            let fm = FileManager.default
+            let kids = ((try? fm.contentsOfDirectory(at: project, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)) ?? [])
+            let folders = kids + kids.filter { !ProtectedFolders.paths.contains($0.standardizedFileURL.path) }.flatMap { (try? fm.contentsOfDirectory(at: $0, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)) ?? [] }
+            let directed = folders.compactMap { f in DirectorRegistry.load(project: f).current.map { "\(f.path.dropFirst(project.path.count + 1)) (\($0.name))" } }.sorted()
+            print(directed.isEmpty ? "No project here has its own director." : "Projects with their own director (ask it, never touch its workers): " + directed.joined(separator: ", "))
+        }
     }
     print("Rules:")
     print("  - your rules for every director: Home's HOME.md (## Director); Duo names Home when it runs")

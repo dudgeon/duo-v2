@@ -412,7 +412,7 @@ extension DuoAction {
 
         // Director (DL-193 to DL-206): the exact parts of the duo-director skill. Each writes a line to
         // the project's .duo/director-log.jsonl, which the director's metrics are counted from.
-        .init(.directorStatus, .director, "[--project <p>]", "Who directs this project (and whether you're its director, or one it replaced), its workers and their tasks with each one's state, the rules to read (your preferences for every director, the project's ## Director), and what this Claude client can do: messaging, background sessions, Remote Control, hooks, Monitor."),
+        .init(.directorStatus, .director, "[--project <p>]", "Who directs this project (and whether you're its director, or one it replaced), its workers and their tasks with each one's state, the rules to read (the Director sections: Home's HOME.md, then the project's PROJECT.md), and what this Claude client can do: messaging, background sessions, Remote Control, hooks, Monitor."),
         .init(.directorStart, .director, "<task> | --title <t> --request <the user's words> [--done-when <text>] [--suggest | --no-worker | --worker <session id>] [--background] [--take-over] [--project <p>]",
               "Start a worker on a task this director directs (DL-194, DL-201): writes directed_by:, ## Request and ## Progress, then starts the worker in Duo with the task as its brief (or links --worker, an existing session). --suggest files it as suggested with no worker; --no-worker makes it a task the director does itself (organising work, DL-208). Refuses over the cap (3 unless the project's ## Director says max workers: N), a task another director directs, and a project another director runs (--take-over replaces it).",
               timeout: 30),

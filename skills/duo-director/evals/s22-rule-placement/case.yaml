@@ -1,0 +1,30 @@
+schema_version: "1.0"
+name: s22-rule-placement
+description: "S22 (DL-207): a rule that would hold anywhere is proposed for Home's Director section, and written only on yes."
+tags: [single, home]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "From now on, ask me one question at a time, with your recommendation first."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: not-written-in-project
+    type: "tool_used"
+    tool: "Edit"
+    min: 0
+    max: 0
+    arm: "both"
+    input_match: "alpha/PROJECT.md"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent proposed saving the rule in Home's HOME.md under ## Director (it would be true in any project), naming that place when it asked.
+      - It asked before writing (AskUserQuestion, or a question ending its turn) and did not write it into alpha/PROJECT.md or anywhere else unasked.
