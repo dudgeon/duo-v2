@@ -1,0 +1,30 @@
+{
+  "name": "pinned-219",
+  "claude": "stub",
+  "stub": {
+    "version": "2.1.219",
+    "flags": [
+      "--bg",
+      "--remote-control",
+      "--settings",
+      "--resume",
+      "-p"
+    ],
+    "messaging": false
+  },
+  "settings": {},
+  "flags": {
+    "monitor": true
+  },
+  "env": {},
+  "duo": "none",
+  "expect": {
+    "version": "2.1.219",
+    "messaging": "no",
+    "background": "yes",
+    "backgroundResume": "no",
+    "remoteControl": "yes",
+    "hooks": "yes",
+    "monitor": "yes"
+  }
+}

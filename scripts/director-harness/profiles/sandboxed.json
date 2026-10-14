@@ -1,0 +1,35 @@
+{
+  "name": "sandboxed",
+  "claude": "stub",
+  "stub": {
+    "version": "2.1.299",
+    "flags": [
+      "--bg",
+      "--remote-control",
+      "--settings",
+      "--resume",
+      "-p"
+    ],
+    "messaging": true
+  },
+  "settings": {
+    "sandbox": {
+      "enabled": true,
+      "allowUnsandboxedCommands": false
+    }
+  },
+  "flags": {
+    "monitor": true
+  },
+  "env": {},
+  "duo": "none",
+  "expect": {
+    "version": "2.1.299",
+    "messaging": "yes",
+    "background": "yes",
+    "backgroundResume": "yes",
+    "remoteControl": "yes",
+    "hooks": "yes",
+    "monitor": "yes"
+  }
+}
