@@ -1,5 +1,7 @@
 # The director beyond building: librarian and chief-of-staff work
 
+**Decided 2026-10-14: DL-207 to DL-210** (Q-196, closed), all as recommended. DL-210 adds Geoff's note: "Director can offer to invoke curation skills — the project.md should describe how those work".
+
 A design study, 2026-10-14, for the director decided in DL-193 to DL-204 (`director-product.md`). Decisions it raises are on the director-product page (13 to 16), and Q-196 tracks them.
 
 ## What Geoff asked
