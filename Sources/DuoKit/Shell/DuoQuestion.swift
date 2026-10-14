@@ -48,6 +48,8 @@ public struct DuoQuestion: Identifiable {
     public var field: Field? = nil
     public var pick: Pick? = nil
     public var note: String? = nil
+    /// The note in `control` type (12/16), as the memory question draws it (park-handoff); others use body.
+    public var noteIsSmall = false
     /// Lines under the first paragraph in a `WHAT’S NEW` box, up to 160 high, then it scrolls
     /// (the update question, DL-132 b).
     public var notes: [String] = []
@@ -159,7 +161,9 @@ struct QuestionSheet: View {
             if !q.items.isEmpty {
                 // Clash rows (with a detail) sit 6 apart in their own padding, a rule between (q50-clash).
                 let rowed = q.items.contains { !$0.what.isEmpty && !$0.path.isEmpty && $0.detail != nil }
-                VStack(alignment: .leading, spacing: rowed ? 0 : DuoSpace.gapGlyphToLabel) {
+                // Name rows (the memory question's tabs, DL-192) are 20-high lines with no gap (park-handoff).
+                let named = q.items.contains { !$0.what.isEmpty && $0.path.isEmpty && $0.detail != nil }
+                VStack(alignment: .leading, spacing: rowed || named ? 0 : DuoSpace.gapGlyphToLabel) {
                     ForEach(Array(q.items.enumerated()), id: \.offset) { n, i in
                         if rowed && n > 0 { DuoColor.rule.frame(height: DuoMetric.borderHairline).padding(.horizontal, -DuoSpace.cardPadding.leading) }
                         if i.what.isEmpty {
@@ -198,7 +202,7 @@ struct QuestionSheet: View {
                     }
                 }
                 .padding(.horizontal, DuoSpace.cardPadding.leading)
-                .padding(.vertical, rowed ? 0 : DuoSpace.gapRowItems)
+                .padding(.vertical, rowed ? 0 : named ? DuoSpace.gapGlyphToLabel : DuoSpace.gapRowItems)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
                 .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
@@ -213,7 +217,7 @@ struct QuestionSheet: View {
             }
             if let p = q.pick { PickRow(pick: p) }
             if let n = q.note {
-                Text(Self.rich(n)).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
+                Text(Self.rich(n)).duoText(q.noteIsSmall ? .control : .body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
             }
             HStack(spacing: DuoSpace.gapButtonToButton) {
                 if !q.leadingCancel { Spacer(minLength: 0) }

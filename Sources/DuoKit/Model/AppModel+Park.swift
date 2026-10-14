@@ -40,7 +40,9 @@ extension AppModel {
         i.parked = parkedTabs.contains(key)
         i.keepRunning = isKeepRunning(key)
         i.state = fixture.sessions.first { $0.tabKey == key }?.state
-        i.onScreen = visibleSessionId == key
+        // Home's tab and a project's console tab count as on screen: their panes stay alive and
+        // would start a parked one again at once (the live run parked Home's and it came back).
+        i.onScreen = visibleSessionId == key || homeTab == key || consoleTab == key
         if deep, i.hasTerminal, let t {
             if let pid = t.view.process?.shellPid, pid > 0 { i.children = parkChildren(pid) }
             if let id = sessionID(forTab: key) { i.events = parkEvents(id) }
@@ -68,7 +70,7 @@ extension AppModel {
     public func park(_ key: String) -> ParkBlock? {
         if let why = parkBlock(key) { return why }
         let s = fixture.sessions.first { $0.tabKey == key }
-        if visibleSessionId == key {
+        if visibleSessionId == key || homeTab == key || consoleTab == key {
             guard let s, let next = consoleTabKeys(inProject: s.project).first(where: { $0 != key }) else { return .onScreen }
             if homeTab == key { homeTab = next }
             if consoleTab == key { consoleTab = next }
@@ -121,6 +123,7 @@ extension AppModel {
         q.items = shown.map { s in .init(what: s.name, path: "", detail: [s.project, idleFor(s)].compactMap { $0 }.joined(separator: " · ")) }
         if n > 6 { q.items.append(.init(what: "and \(n - 5) more", path: "")) }
         q.note = "Tabs that are working, waiting on you, running something in the background, or set to Keep Running stay as they are."
+        q.noteIsSmall = true
         q.choices = [
             .init(label: "Not Now", isCancel: true) {},
             // Eligibility is read again when the answer comes: a tab may have started working since.

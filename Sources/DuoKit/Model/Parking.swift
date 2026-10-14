@@ -80,9 +80,12 @@ public enum ParkCheck {
         return open.count + anonymous
     }
 
+    /// A name in curly quotes, unless it already is (an untitled session's first words are).
+    public static func quoted(_ name: String) -> String { name.hasPrefix("“") ? name : "“\(name)”" }
+
     /// What Duo says after Park Background Sessions (park-handoff, "After Park Background Sessions").
     public static func notice(parked: Int, kept: [(name: String, block: ParkBlock)]) -> String {
-        let why = kept.map { "“\($0.name)” \($0.block.why)" }.joined(separator: ", ")
+        let why = kept.map { "\(quoted($0.name)) \($0.block.why)" }.joined(separator: ", ")
         guard parked > 0 else { return kept.isEmpty ? "No idle sessions to park." : "No idle sessions to park: \(why)." }
         let s = parked == 1 ? "Parked 1 session." : "Parked \(parked) sessions."
         guard !kept.isEmpty else { return s + (parked == 1 ? " It picks up where it left off when you show it." : " Each picks up where it left off when you show it.") }

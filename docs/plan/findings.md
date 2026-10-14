@@ -3600,6 +3600,20 @@ The duo-signal spike (F-297) saw "didn't send your answer" on the work Mac's 2.1
 - **The menus check cheaply.** The Session menu and a tab's right-click menu dim Park Session from the state, the pin and the terminal only, so a menu or tab drawn on every refresh never walks the process table. Choosing Park runs the full check. If the tab is busy after all, Duo says so ("“‹name›” is running something in the background, so it isn't parked").
 - **The memory question** (`ParkPressure`): `DispatchSource.makeMemoryPressureSource` at `.critical`, live mode only. Duo asks once per episode, and the episode ends when pressure goes back to normal. While another sheet is up it retries every 2 s and drops the question if pressure has eased. Eligibility is read again when the answer comes. The harness drives it with `memory-pressure:critical|normal`.
 - **The pin:** `DuoState.keepRunning` (session ids). A pinned tab restored at launch starts at once instead of parking ("restore: resumed N Keep Running session(s) at once"). Pinning a parked tab wakes it.
+- **Home's tab and each project's console tab count as on screen** for Park Background Sessions and the memory question. In the live run, a bulk park counted Home's tab as parked, but Home's pane started it again at once with a new pid. Parking one of them by itself moves its pane to the next tab first.
+- **Live, on an isolated instance.** 8 tabs from F-208's fixture ran the real 2.1.296 at its sign-in screen; a scratch config can't sign in, and no credentials were copied. All 8 were pinned, then Duo relaunched: "restore: resumed 8 Keep Running session(s) at once".
+  - **Park Background Sessions** (after unpinning 7) parked the idle tabs. It kept the pinned one ("is set to Keep Running") and the tab on screen. Each parked claude was gone within 5 s.
+  - **Showing a parked tab** (`duo2 session open`) started `claude --resume <the same id> --settings … --append-system-prompt …`.
+  - **Background shell:** a stand-in child `/bin/zsh -c source <cfg>/shell-snapshots/snapshot-zsh-1.sh … && { sleep 100; }` made `session park` refuse ("is running something in the background"). Once the sleep ended, it parked.
+  - **Memory pressure:** two `memory-pressure:critical` in a row under `DUO_AUTOCONFIRM` logged the question once.
+- **Memory freed** (`footprint -p`, summed over each claude and its descendants): 812 MB for 9 claudes before, 270 MB for 3 after. That is 542 MB freed by 6 parks, about 90 MB each. These were sign-in-screen processes with no MCP servers, so this is a lower bound. DL-192 measured an idle session at 80–320 MB (about 230 MB) plus its MCP servers.
+- **Gates:**
+  - DuoChecks 1504 passed, 0 failed; `DUO_CHECKS=chat` 361 passed, 0 failed (`DUO_CHECKS=park` runs the 57 park checks alone).
+  - check-ui: the 6 standard states. check-background: 0 failed, though the screen was locked.
+  - check-scale (exclusive): 4 of 4, CPU mean 4.4% after 15 s, 0 stalls.
+  - check-chat-perf (exclusive): 8 of 8, longest stall 61.8 ms.
+  - Captures: `build/ui/park-question.png` matches `memory-question.html` A region by region: 20-high rows, the note in `control`. The fixture has no idle time, so a row's detail shows only the project. `build/ui/park-pin.png` matches `keep-running-pin.html` A.
+- **Not checked:** a signed-in turn, a real Remote Control resume, and macOS's real pressure signal (driven only through the harness).
 
 ## F-309 · What survives a park: SIGTERM, then `--resume` (DL-192)
 

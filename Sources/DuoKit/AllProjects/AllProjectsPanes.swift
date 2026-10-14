@@ -1069,8 +1069,8 @@ struct SessionOrganizeMenu: ViewModifier {
                     if tab {
                         Divider()
                         let block = model.parkBlock(sessionKey, deep: false)
-                        Button("Park Session") { if let why = model.park(sessionKey) { model.info("“\(s.name)” \(why.why), so it isn’t parked.") } }
-                            .disabled(block != nil).help(block.map { "“\(s.name)” \($0.why)" } ?? "")
+                        Button("Park Session") { if let why = model.park(sessionKey) { model.info("\(ParkCheck.quoted(s.name)) \(why.why), so it isn’t parked.") } }
+                            .disabled(block != nil).help(block.map { "\(ParkCheck.quoted(s.name)) \($0.why)" } ?? "")
                         Toggle("Keep Running", isOn: Binding(get: { model.isKeepRunning(sessionKey) }, set: { model.setKeepRunning(sessionKey, $0) }))
                         Divider()
                         Button("Close Tab") { model.closeConsoleTab(sessionKey) }

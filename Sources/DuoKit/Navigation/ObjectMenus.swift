@@ -93,8 +93,8 @@ struct SessionMenuItems: View {
         Divider()
         // Parking (DL-192): ends Claude, keeps the tab; it resumes when shown.
         let block = id == nil ? ParkBlock.notRunning : model.parkBlock(key, deep: false)
-        Button("Park Session") { if let why = model.park(key) { model.info("“\(s?.name ?? "")” \(why.why), so it isn’t parked.") } }   // action: session park
-            .disabled(block != nil).help(block.map { "“\(s?.name ?? "")” \($0.why)" } ?? "")
+        Button("Park Session") { if let why = model.park(key) { model.info("\(ParkCheck.quoted(s?.name ?? "")) \(why.why), so it isn’t parked.") } }   // action: session park
+            .disabled(block != nil).help(block.map { "\(ParkCheck.quoted(s?.name ?? "")) \($0.why)" } ?? "")
         Button("Park Background Sessions") { model.parkBackground() }   // action: session park
             .disabled(model.terminalsMode != .live)
         Toggle("Keep Running", isOn: Binding(get: { model.isKeepRunning(key) }, set: { model.setKeepRunning(key, $0) }))   // action: session keep-running

@@ -56,6 +56,7 @@ import Foundation
           == "Parked 3 sessions. 2 kept running: “Buyer interviews” is waiting on you, “Release watcher” is set to Keep Running.", "notice: some kept, with why")
     check(ParkCheck.notice(parked: 0, kept: [("x", .working)]) == "No idle sessions to park: “x” is working.", "notice: none could park, says why")
     check(ParkCheck.notice(parked: 0, kept: []) == "No idle sessions to park.", "notice: nothing running")
+    check(ParkCheck.notice(parked: 0, kept: [("“Summarise the six…”", .working)]) == "No idle sessions to park: “Summarise the six…” is working.", "notice: an untitled session's quotes aren't doubled")
 
     // Hooks: SubagentStart/Stop are registered for every CLI (2.1.219 accepts them).
     do {
@@ -199,6 +200,12 @@ import Foundation
     let relaunched = model(fx)
     relaunched.loadKeepRunning()
     check(relaunched.isKeepRunning(d) && !relaunched.isKeepRunning(c), "a relaunched Duo reads the pins")
+
+    // Home's tab stays alive off screen, so a bulk park leaves it (the live run parked it and Home started it again).
+    let savedHome = m.homeTab
+    m.homeTab = c
+    check(m.parkBlock(c, bulk: true) == .onScreen, "a bulk park leaves Home's tab, which Home would start again")
+    m.homeTab = savedHome
 
     // Park Background Sessions.
     let report = m.parkBackground(notify: false)
