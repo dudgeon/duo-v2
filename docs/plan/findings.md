@@ -3656,3 +3656,32 @@ Measured on 2.1.296 and on the work Mac's 2.1.219 (Anthropic's signed native bin
 - The two losses are C-86.
 - Mode order differs between versions: 2.1.296 cycles auto → manual → accept edits → plan, 2.1.219 manual → accept edits → plan → auto.
 - Changing model or effort mid-conversation raises a "Switch model?" / "Change effort level?" confirm, so anything that re-sends a setting after a resume would have to answer it.
+
+## F-310 · Monitor works on 2.1.219, but only where the account's flag turns it on (DL-199 spike)
+
+Measured on the work Mac's 2.1.219 (`@anthropic-ai/claude-code-darwin-arm64@2.1.219`, in a scratch npm prefix) and on 2.1.299, each run interactively in a PTY against a scripted mock API (`scripts/director-harness/mock-api.mjs`, `spikes/run-mock.sh`) with a scratch `CLAUDE_CONFIG_DIR`: no credentials, no tokens.
+
+- **Monitor is behind a server-side feature flag on both versions.** Its `isEnabled()` is `flag("tengu_amber_sentinel", false) && …` in 2.1.219 and 2.1.299 alike. A client that can't fetch flags (API-key login with `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`, as in the mock) doesn't list the tool, and a call fails with "Monitor exists but is not enabled in this context". So whether a director has Monitor depends on the account and organisation, not the version. Whether the work Mac's account has it is unknown until a director runs there.
+- **The mechanics work on 2.1.219.** With the flag seeded in the scratch config (`cachedGrowthBookFeatures`, read when `CLAUDE_CODE_GB_DISK_CACHE_WHEN_TELEMETRY_OFF=1`), a Monitor on `for i in 1 2 3; do echo tick $i; sleep 2; done`:
+  - started ("Monitor started (task …). You will be notified on each event");
+  - after the turn ended, **woke the idle session once per line**: each `tick n` arrived 2 s apart as a new turn whose user message is a `<task-notification>` with `<event>tick n</event>`;
+  - ended with a "stream ended" notification, also a turn.
+  So DL-199's Monitor rung does wake a director on 2.1.219, wherever the tool is offered.
+- **It asks permission first.** The command shows a "Do you want to proceed?" prompt (here because of `$i`, "Contains simple_expansion"). A director asks the user once to allow `duo2 director watch`.
+- **ScheduleWakeup is offered without the flag** on 2.1.219 (it was in the 27 tools of the unflagged run), so the next rung is always there.
+- **What follows for the director:** the skill can't assume Monitor. It uses the tool if it has it and falls to ScheduleWakeup if not (skill §4). `duo2 director status` can't see a session's tools from outside, so it doesn't report Monitor; the director checks its own tool list.
+- **Also seen:** `claude plugin eval` on 2.1.219 answers "`plugin eval` is currently in early access" and runs nothing (P1 saw only its `--help`). The work Mac's row can't use plugin eval; the mock is how that row is tested.
+
+## F-311 · With hooks off, Duo still sees working, idle and waiting, from Claude's own beacons (Q-192)
+
+Measured on 2.1.219 against the mock API (as F-310), with `disableAllHooks: true` in the scratch config's user settings.
+
+- **`disableAllHooks` silences Duo's hooks completely.** Duo passes its hooks in a per-session `--settings` file (`HookEvents.settingsFile`), which ranks above user settings, yet with `disableAllHooks` in user settings none of SessionStart, UserPromptSubmit, PreToolUse or Stop ran (the same file ran all four without it). A managed setting would do the same. The turn itself ran normally.
+- **The beacons don't depend on hooks.** Claude Code writes `<CLAUDE_CONFIG_DIR>/sessions/<pid>.json` itself (F-23), and with hooks off it still went `idle` → `busy` (a Bash `sleep 4`) → `waiting`, `waitingFor: "input needed"` (an AskUserQuestion). The file lives under `CLAUDE_CONFIG_DIR`, which settles the harness doc's [Unverified] about where the stub writes them.
+- **So with hooks off, Duo's states hold up for working, idle and needs-you** (`Attention.live`: beacon busy → working, waiting → needs you, else idle). What's lost:
+  - **Ready for review**, which needs a Stop event: a finished turn shows as idle;
+  - **needs-you for a turn that ends in a question** in plain text (the Stop's last message);
+  - **the question's words and options**, which come from PermissionRequest: the card says only "Waiting for your answer" or "Waiting for permission";
+  - **task context at start and the pre-edit routing** (`duo2 hook …`), and chat mode, which needs SessionStart (chat-mode spike).
+  - Nothing reads the transcript or the screen for the state today; DL-199's "states come from transcript and screen" is not built. `duo2 doctor` already says when no hooks have run in a session.
+- **What follows for the director (DL-199):** it doesn't need what's lost. `duo2 director watch` reports a worker that finishes from the beacon going busy → idle, and one that needs the user from `waiting`; the report is the transcript's last assistant message (`duo2 session show`). Ready for review on the board with hooks off is ENH-145.

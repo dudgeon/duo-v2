@@ -1,0 +1,4 @@
+[
+  {"when": "SPIKE:hooks", "once": true, "reply": [{"tool": "Bash", "input": {"command": "echo ran", "description": "A tool, so PreToolUse and PostToolUse fire"}}]},
+  {"when": "tool_result", "reply": [{"text": "DONE"}]}
+]

@@ -1,0 +1,5 @@
+[
+  {"when": "tick 3", "reply": [{"text": "SAW-TICK-3"}]},
+  {"when": "SPIKE:monitor", "once": true, "reply": [{"tool": "Monitor", "input": {"description": "spike ticks", "timeout_ms": 60000, "persistent": false, "command": "for i in 1 2 3; do echo tick $i; sleep 2; done"}}]},
+  {"when": "tool_result", "reply": [{"text": "WATCHING"}]}
+]

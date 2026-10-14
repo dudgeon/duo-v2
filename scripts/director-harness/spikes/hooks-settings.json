@@ -1,0 +1,7 @@
+{"permissions": {"allow": ["Bash(echo ran)"]},
+ "hooks": {
+  "SessionStart": [{"hooks": [{"type": "command", "command": "echo SessionStart >> /tmp/ddhooks.log"}]}],
+  "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "echo UserPromptSubmit >> /tmp/ddhooks.log"}]}],
+  "PreToolUse": [{"matcher": "", "hooks": [{"type": "command", "command": "echo PreToolUse >> /tmp/ddhooks.log"}]}],
+  "Stop": [{"hooks": [{"type": "command", "command": "echo Stop >> /tmp/ddhooks.log"}]}]
+}}
