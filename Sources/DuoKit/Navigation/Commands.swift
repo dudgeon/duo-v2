@@ -22,6 +22,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case save               // ⌘S saves the open document now (it also autosaves)
     case bold               // ⌘B, only while the editor has focus (stack rec #9)
     case italic             // ⌘I, likewise
+    case strikethrough      // ⇧⌘X, as Google Docs (DL-189)
     case closeSession       // ⌘W closes the focused tab (document or session), never the window (LR-60, LR-13)
     case closeWindow        // ⇧⌘W, as in browsers once ⌘W closes tabs
     case revertChange       // Edit › Revert Claude's Change (ENH-4); no chord
@@ -75,6 +76,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .save: "Save"
         case .bold: "Bold"
         case .italic: "Italic"
+        case .strikethrough: "Strikethrough"
         case .closeSession: "Close Tab"
         case .closeWindow: "Close Window"
         case .sendSelection: "Send Selection to Claude"
@@ -137,6 +139,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .save: KeyboardShortcut("s", modifiers: .command)
         case .bold: KeyboardShortcut("b", modifiers: .command)
         case .italic: KeyboardShortcut("i", modifiers: .command)
+        case .strikethrough: KeyboardShortcut("x", modifiers: [.command, .shift])
         case .closeSession: KeyboardShortcut("w", modifiers: .command)
         case .closeWindow: KeyboardShortcut("w", modifiers: [.command, .shift])
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
@@ -170,8 +173,8 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .goHome, .toggleSidebar, .closeWindow: true
         case .closeSession: model.visibleTerminal != nil || (model.webFocus == .editor && model.openDocuments.contains(model.rightTab ?? ""))
         case .newMarkdown, .newFolder: model.terminalsMode == .live && model.projectFolder != nil
-        case .save: model.terminalsMode == .live && model.editor.url != nil
-        case .bold, .italic, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert: model.webFocus == .editor
+        case .save: model.terminalsMode == .live && model.editorOpened && model.editorIfLoaded?.url != nil
+        case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert: model.webFocus == .editor
         case .tableRowAbove, .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn,
              .tableAlignLeft, .tableAlignCenter, .tableAlignRight: model.webFocus == .editor && (model.editorIfLoaded?.inTable ?? false)
         case .newTask: model.terminalsMode == .live && model.currentProject.map { !$0.isFolderOnly } == true
@@ -198,6 +201,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         switch self {
         case .bold: "bold"
         case .italic: "italic"
+        case .strikethrough: "strikethrough"
         case .code: "code"
         case .link: "link"
         case .heading1: "heading1"
@@ -240,7 +244,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .newMarkdown: model.newMarkdownFile(near: model.selectedFile)
         case .newFolder: model.newFolder(near: model.selectedFile)
         case .save: model.editor.saveNow()
-        case .bold, .italic, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert, .tableRowAbove,
+        case .bold, .italic, .strikethrough, .code, .link, .heading1, .heading2, .heading3, .task, .addProperties, .tableInsert, .tableRowAbove,
              .tableRowBelow, .tableColumnBefore, .tableColumnAfter, .tableDeleteRow, .tableDeleteColumn, .tableAlignLeft,
              .tableAlignCenter, .tableAlignRight:
             model.editor.run("duo.exec(f); return 1", ["f": (formatName ?? tableName)!]) { _ in }
@@ -321,6 +325,7 @@ public struct DuoCommands: Commands {
         CommandGroup(replacing: .textFormatting) {
             item(.bold)
             item(.italic)
+            item(.strikethrough)
             item(.code)
             item(.link)
             Divider()

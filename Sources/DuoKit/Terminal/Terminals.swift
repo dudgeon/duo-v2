@@ -176,21 +176,22 @@ public final class TerminalSession {
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
             var args = ["--session-id", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude)
             if let prompt { args.append(prompt) }
-            view.startProcess(executable: claude, args: args, environment: Self.environment(id),
-                              execName: nil, currentDirectory: cwd)
+            run(claude, args, environment: Self.environment(id))
         case .resumeClaude(let id, let remote):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
-            view.startProcess(executable: claude, args: ["--resume", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude), environment: Self.environment(id),
-                              execName: nil, currentDirectory: cwd)
+            run(claude, ["--resume", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude), environment: Self.environment(id))
         case .forkClaude(let from, let id):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
-            view.startProcess(executable: claude, args: ["--resume", from, "--fork-session", "--session-id", id] + Self.hookArgs(id),
-                              environment: Self.environment(id), execName: nil, currentDirectory: cwd)
+            run(claude, ["--resume", from, "--fork-session", "--session-id", id] + Self.hookArgs(id), environment: Self.environment(id))
         case .shell:
             let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
-            view.startProcess(executable: shell, args: ["-l"], environment: ChildEnvironment.make(sessionID: nil),
-                              execName: "-" + (shell as NSString).lastPathComponent, currentDirectory: cwd)
+            run(shell, ["-l"], argv0: "-" + (shell as NSString).lastPathComponent, environment: ChildEnvironment.make(sessionID: nil))
         }
+    }
+
+    /// Every terminal process starts here. Duo stays the responsible process for it (DL-190).
+    private func run(_ program: String, _ args: [String], argv0: String? = nil, environment: [String]) {
+        view.startProcess(executable: program, args: args, environment: environment, execName: argv0, currentDirectory: cwd)
     }
 
     /// Per-session hooks (F-23); none if the settings file can't be written.

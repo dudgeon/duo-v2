@@ -24,13 +24,17 @@ public enum ChatTargets {
                                             "paste-picture", "paste-adding", "paste-sent", "paste-edges", "paste-failed", "paste-keys",
                                             "paste-text", "paste-text-open", "paste-huge",
                                             // chat-model-chip-handoff (DL-168): the chips at rest, under the pointer, after a switch, while Claude works, not known; the /model card; Switch model?.
-                                            "chip-rest", "chip-hover", "chip-card", "chip-after", "chip-working", "chip-unknown", "chip-confirm"]
+                                            "chip-rest", "chip-hover", "chip-card", "chip-after", "chip-working", "chip-unknown", "chip-confirm",
+                                            // DL-188: your Markdown in your bubble, replayed, live, and cut by Show all.
+                                            "md-history", "md-live", "md-long",
+                                            // DL-188: your Markdown in the composer (composer.html B and C).
+                                            "md-composer", "md-composer-wrap", "md-composer-fence"]
     nonisolated public static let screens = boards.map { "chat-" + $0 }
 
     public static func folder(_ board: String) -> URL? {
         if let r = Bundle.main.url(forResource: "chat-fixtures", withExtension: nil) { return r.appending(path: board) }
         var dir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : board.hasPrefix("slash-") ? "chat-slash-handoff" : board.hasPrefix("paste-") ? "chat-paste-handoff" : board.hasPrefix("chip-") ? "chat-model-chip-handoff" : "chat-mode-handoff"
+        let handoff = board.hasPrefix("polish-") ? "chat-polish-handoff" : board.hasPrefix("slash-") ? "chat-slash-handoff" : board.hasPrefix("paste-") ? "chat-paste-handoff" : board.hasPrefix("chip-") ? "chat-model-chip-handoff" : board.hasPrefix("md-") ? "chat-markdown-handoff" : "chat-mode-handoff"
         for _ in 0..<6 {
             let c = dir.appending(path: "docs/design/\(handoff)/fixture-chat/\(board)")
             if FileManager.default.fileExists(atPath: c.path) { return c }

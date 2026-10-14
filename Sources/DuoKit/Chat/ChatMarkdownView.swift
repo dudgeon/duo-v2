@@ -43,9 +43,19 @@ struct ChatBlockView: View {
             ChatInlineText(text: text, style: compact ? .body : .chatBody, caret: caret, color: faded ? DuoColor.text2 : DuoColor.text)
         case .list(let ordered, let start, let items):
             VStack(alignment: .leading, spacing: 0) {
-                ForEach(Array(items.enumerated()), id: \.offset) { i, item in
+                ForEach(Array(items.enumerated()), id: \.offset) { i, rawItem in
+                    let (task, item) = ordered ? (nil, rawItem) : ChatMarkdown.task(rawItem)
                     HStack(alignment: .firstTextBaseline, spacing: 0) {
-                        Text(ordered ? "\(start + i)." : "•").duoText(compact ? .body : .chatBody).foregroundStyle(DuoColor.text)
+                        Group {
+                            // A task item (`- [ ]`, `- [x]`): the review card's checkbox, in the bullet's place (Q-194 stand-in).
+                            if let done = task {
+                                Text("\u{200B}").duoText(compact ? .body : .chatBody)
+                                    .overlay(ChatChoiceMark(multi: true, on: done))
+                                    .accessibilityLabel(done ? "Done" : "Not done")
+                            } else {
+                                Text(ordered ? "\(start + i)." : "•").duoText(compact ? .body : .chatBody).foregroundStyle(DuoColor.text)
+                            }
+                        }
                             .frame(width: 22, alignment: ordered ? .trailing : .center)
                             .padding(.trailing, ordered ? 6 : 2)
                         VStack(alignment: .leading, spacing: 4) {

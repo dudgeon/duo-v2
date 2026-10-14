@@ -3356,6 +3356,7 @@ All three of C-80's findings were real in the code.
 - **On screen, the main thread is busy almost all through "replies at the bottom".** The watchdog got 6–10 pings in that phase against 296–297 in the background. Appending after a jump to the bottom makes SwiftUI re-estimate a giant lazy row (ENH-23 (a), F-157), and on screen that row is also drawn.
 - **Background runs understate this phase 6–19×.** `check-chat-perf.sh`, run in the background as it is by default, can't catch it getting worse, and its budget scores only the longest stall. C-85 has the changes to the gate.
 - **The other phases match within noise,** visible or not.
+- **Corrected (F-304):** the display was asleep during these visible runs (pmset: off 10:25–15:14). The 287–946 ms is what the stall costs with the window in front and the display asleep; on a lit, front screen main measures 40–97 ms. check-chat-perf now refuses a visible run that was covered or asleep.
 ## F-296 · Two jobs held the GPU lock at once: a script released it twice (video/tooling, 2026-10-12)
 
 - **What happened.** director-merge (via `gpu-lock.sh`) and codebase-review's `matrix.sh` (bare `mkdir`) both ran under the lock, and a third job, director-film, then got in too. director-merge printed no "clearing" line: its `mkdir` simply succeeded, so the lock dir had already been deleted under a live holder.
@@ -3375,6 +3376,68 @@ All three of C-80's findings were real in the code.
   - A bare `mkdir <lock>` still keeps exclusive and new shared jobs out, but doesn't wait for shared jobs already running, so it's no longer supported. An older copy of the script doesn't know the slots either: call the main checkout's copy by its full path.
 - **Proof** (`scripts/check-gpu-lock.sh`, about 35 s). The F-294 and F-296 cases still pass. New: three shared jobs on two slots (two overlap, the third waits for a slot); a shared job running, then an exclusive waiter, then a shared one (the exclusive waits for the first, the second shared waits behind the exclusive although a slot is free, and the exclusive runs alone); a mix of 12 jobs, every third exclusive (no exclusive job ever overlaps another job, never more than 2 shared, every hold released); dead holders in both slots, cleared by an exclusive job and by a shared one.
 
+## F-304 · Replies at the bottom of a long chat: whole-turn lazy rows, and a gate that measured a sleeping display (fix/chat-finer-rows, 2026-10-12)
+
+- **Root cause (C-85).** A trace of the heavy chat (`DUO_PERF_TRACE=1`: busy run-loop turns, scroll geometry, follows; `sample` on the phase) showed the cost in SwiftUI's own update and layout (about 55%) and in drawing (about 30%). Duo's view code took about 1%, and no views were created. Each reply batch that changed or built a whole Claude turn cost 230–530 ms: the last turn had 175 segments, and the one realized after it 123. Meanwhile the lazy stack's estimate of the feed swung from 144k to 359k pt. The bodies ran 8 times in the phase, so it isn't diffing: it's laying out and drawing one giant row.
+- **Two dead ends, measured:**
+  - The live exchange in a plain tail below the lazy stack: the estimate stopped swinging, but a tail of big turns cost more (833 ms).
+  - Equatable card sections alone: no clear gain.
+- **The fix: lazy rows of bounded size.** In the lazy feed, a Claude turn of more than 8 card sections is several rows. Each row holds 8 sections, drawn on its piece of the card, and the pieces meet edge to edge (`Chat/ChatRows.swift`). A shorter turn stays one row. Each turn's rows are kept until its segments change, so an event rebuilds only the turn it touched. F-160's prototype had rebuilt all 1,850 rows on every event. Sections are Equatable, so a changed piece redraws only its changed section. The plain stack (F-226, every chat board) is unchanged: its code is main's.
+- **Piece size, measured on screen:** 4, 8 and 16 sections all removed the stall. 8 keeps the row count near the item count.
+- **The gate measured a sleeping display.** F-295's "visible" runs ran while the display was off (pmset: off 10:25–15:14; F-295 committed 15:14), and so did this session's first slow runs. The condition is a window shown in front with the display asleep. Two runs that don't hit it:
+  - with the display lit and the window covered (it is then occluded), main measures 88–111 ms;
+  - in front on a lit screen, main measures 40–97 ms.
+
+  So on a screen someone is looking at, main's stall is about 100 ms, not 0.3–0.9 s. What the condition costs is real main-thread time (hooks, `duo2` and terminals wait), but nobody sees it.
+- **Gate changes:**
+  - Perf reports carry `window_visible` and `display_asleep`. check-chat-perf refuses a visible run that was covered or asleep.
+  - A visible perf run floats its window in front, on every Space, for the run.
+  - Background runs are driven by default (`DUO_PERF_DRIVE=1`, a 60 Hz layout and display while replies arrive), so the draw cost counts.
+  - New budget: at most 1 stall over 250 ms at the bottom; the total of stalls over 50 ms is printed.
+  - `DUO_FEED=whole` draws the lazy feed's turns whole (main's rows) to measure against. `DUO_FEED=proof` draws the plain feed in pieces (check-ui passes it on), so the boards prove the pieces look like whole cards.
+- **Numbers, heavy fixture (100 items, 1,945 steps), release builds, longest stall in ms:**
+
+  | Phase | Main's rows | Pieces | Budget |
+  |---|---|---|---|
+  | **Window in front, display asleep** (C-85's condition, 6 runs each in two batches; load 1.5–4.1): replies at the bottom | **165–467**; a stall over 250 in 4 of 6 runs; 328–716 over 50 | **76–264**; a stall over 250 in 1 of 6; 76–264 over 50, always one stall | 600 |
+  | First batch: flick; slow scroll late frames | 80–82; 1 | 48–61; 3 | 250; 10 |
+  | **Lit, front window** (Geoff's OK, 3 runs each; load 4.0–6.2): replies at the bottom | 40, 93, 97 | 47, 47, 57 | 600 |
+  | Same runs: open; flick; slow scroll longest frame; late frames | 80–142; 77–89; 108–124; 1 | 60–86; 38–55; 44–67; 3–4 | 600; 250; —; 10 |
+  | Same runs: a reply while scrolled up | 23–40 | 19–25 | 250 |
+  | Background, driven (check-chat-perf, 2 runs each): replies at the bottom; flick; open | 53, 53; 78, 79; 103, 108 | 41, 54; 35, 47; 85, **726** | 600; 250; 600 |
+  | Background, main 9fe7333's own build and script (not driven): replies at the bottom; flick | 49, 80; 78, 84 | — | |
+
+  With the display asleep, the stall left in the pieces build comes when new turns arrive (a prompt and a new small turn: one 295 ms turn of the run loop), not from a giant row. It isn't drawn, since nobody can see a sleeping display.
+
+  Two opens were slow, 726 and 701 ms, each the first run right after a check-chat capture job (about 100 Duo launches), with the off-main replay taking twice its usual time (1.49–1.56 s against 0.79–0.86 s). The second run of each batch opened in 81–85 ms, and every other open of the pieces build took 60–95 ms.
+- **The one row that's worse:** slow scroll, frames over 33 ms, 1 → 3–4 of 300 (budget 10), in every condition. More rows are realized as you scroll: the longest frame drops, but more frames pass 33 ms.
+- **F-226's sizes** (background, not driven, main 9fe7333's build against this one, two passes each):
+
+  | Items / steps (make-long-chat args) | Open | Flick | Replies at the bottom | Reply while scrolled up | Memory |
+  |---|---|---|---|---|---|
+  | 24 / 101 (`--turns 12 --tools 8`), plain | 212 → 212 | 8 → 6 | 37 → 38 | 30 → 40 | 177 → 176 MB |
+  | 48 / 105 (`--turns 24 --tools 5`), plain | 400 → 385 | 23 → 10 | 75 → 81 | 21 → 24 | 234 → 248 MB |
+  | 48 / 212 (`--turns 24 --tools 10`), plain | 460 → 467 | 14 → 14 | 126 → 116 | 22 → 20 | 297 → 285 MB |
+  | 24 / 494 (`--turns 12 --tools 47`), lazy | 157–170 → 34–64 | 67–87 → 36–42 | 58–79 → 23–27 | 21–27 → 16–20 | 231–260 → 160–167 MB |
+  | 100 / 1,945 (heavy), lazy | 102–126 → 75–89 | 64–80 → 43–52 | 56–294 → 64–69 | 6–35 → 19–32 | 357 → 290–309 MB |
+
+  The plain rows are the final build (pass 3), main → this branch: the same code as main's, so they differ by noise only. In passes 1 and 2, before the plain stack went back to main's exact code, 48 / 105's replies at the bottom read 99 and 117 against 90 and 63. The lazy rows are the range over all three passes. Every value is within its budget.
+
+- **Proof:**
+  - check-chat: 100 of 100 board captures byte-identical to main's, and 100 of 100 with every card drawn in 1-section pieces (`DUO_FEED=proof DUO_FEED_PIECE=1`). The first proof pass found a piece left for a question list its card hides; such sections are now left out of the pieces.
+  - check-scale on release passes: 4.5% CPU, no stalls.
+  - DuoChecks: 1,323 pass. The three that fail are the EDITOR/VISUAL checks, which fail on main the same way (1,313 pass, 3 fail). They depend on the environment.
+  - New checks: how a turn is split into pieces, the ids and corners, the gaps, every section once and in order, one turn rebuilt per change, and ChatPane drawing the pieces.
+## F-301 · Document safety: the bridge, web-process recovery, one task-note writer, DL-175 (fix/doc-safety, 2026-10-12)
+
+Codebase review task 2 (C-81), with DL-175.
+
+- **The bridge is an enum.** `EditorMessage` (`DocumentEditor.swift`) lists every kind the page posts. The old prefix test (`hasPrefix("property")`) dropped `propertiesFolded`, so `rememberFold` never ran; it is routed now. DuoChecks (`DocSafetyChecks.swift`) reads `post("…")` in `duo-editor.js` and fails if the page and the enum differ either way, and checks every `duo.<name>(` Swift calls is on `window.duo`.
+- **A dead WebContent process is reloaded** in the editor, the HTML viewer, the deck viewer, the Word viewer and browser tabs (`webViewWebContentProcessDidTerminate`). The editor reloads its page and shows the document again from disk. **What it cannot keep is text typed since the last autosave** (at most a second): that lived only in the dead process, and the page's undo history and held states go with it. Replies in flight from the dead page are dropped (the generation moves on). Menus and `duo2` task verbs (rename, archive, unarchive, link, Copy Link) wait up to 2 s for the open note's save (`afterNoteSaved`); the synchronous writers still refuse if it is dirty or in conflict. The editor JS now shows only `https:` and `data:` image URLs. The harness action `editor-terminate` calls the delegate as WebKit would, and `check-editor-host.sh` case 14 asserts the autosaved text is back and the document saves again.
+- **Task-note writers.** `setTaskStatus` is now the one writer for status: with the note open it goes through the editor's buffer (what `moveCard` did), otherwise to disk; `moveCard` calls it, so the menu, the board and `duo2` are the same code. `addToTask` also goes through the buffer when the note is open. Rename, archive, unarchive and the link's `id:` write the file, so the menus (Copy Link, Archive, Unarchive) and the `duo2` verbs (`task rename|archive|unarchive|link`) first wait up to 2 s for the open note's save (`afterNoteSaved`), then write. The synchronous writers still refuse, with the real reason, if the note is dirty or in conflict when they run (the save failed, timed out, or the note is in conflict).
+- **Save enables after the first document opens.** `editorIfLoaded` is `@ObservationIgnored`, and Save read `model.editor`, which also built the editor (and its WebKit process) on the first menu evaluation. It reads `editorOpened`, an observed flag the editor sets once, after its first `open` (deferred, since `open` can run inside a view update). `save-enabled` in the harness prints it.
+- **DL-175.** `editor.html` has a CSP: scripts and styles from the bundle only, `img-src https: data: blob:`, no connections, frames or objects. The HTML viewer compiles a `WKContentRuleList` that blocks every http(s), ws(s) and ftp subresource and remote frame, and holds its first page until the rules are compiled. Not covered: a browser tab showing a `file:` page (a tab has one rule set for all its pages; Q-188's folder limit is the planned guard), and the editor's JS still accepts `http:` image URLs, which the CSP blocks.
+- **Fixed after merge (fix/html-rules-disjunction).** The DL-175 rule list used a disjunction in `url-filter`, which WebKit content rules don't support. It failed to compile and local pages loaded blank. A check that compiles the rules would have caught it; DuoChecks only parsed the JSON. Now one rule per scheme, DuoChecks compiles the list in a throwaway store, and a list that fails to compile is logged and pages load without it.
 ## F-300
 **Search typing path (codebase review task 7).** Each keystroke in search's field built a Core ML `Embedder` (model plus a 30k-line vocabulary), opened a `SearchIndex` twice (once on the main thread for `indexState()`, once for the query) and started a query at once; the List's filter did the same.
 - **Built (`fix/search-typing`):**
@@ -3445,3 +3508,88 @@ DL-183's spike of ENH-70. The mod is `Mods/duo-signal`. Duo's side is `Chat/Chat
 - **Measured** (`scripts/measure-web-lifetimes.sh <tree> <label>`, an isolated Duo started through LaunchServices so its WebKit processes count as its own; exclusive lock). With 3 browser tabs, an HTML page and a deck open, then closed: WebContent processes main c69183a 1 → 6 → 6, branch 1 → 6 → 3 (what remains is the editor and the HTML and deck viewers, which live as long as the app). `leaks` finds about 420 small system leaks (20 KB) on both; footprint 116.6 MB on main, 102.1 MB on the branch.
 - **Unattributed: the editor page reported `vis=visible` in the branch's background `check-editor-host` runs** (twice), where main's two background runs reported hidden and skipped the scroll case. The branch's case then ran and drifted 17 px (left at 1500, back at 1483). Nothing in this branch touches the editor's web view or its host (the changes are in `WebTab`, `HTMLViewer`, `DeckViewer` and the control verb), so I can't say why visibility differed; the likeliest cause is the machine's screen state at the time, not the code, but no run proves it. The F-272 scroll restore still needs its on-screen proof (`DUO_TEST_FOREGROUND=1`, Geoff's OK).
 - `check-deck-motion.mjs` needs `playwright-core` on `NODE_PATH`; `/tmp/pwc/node_modules/playwright-core` had no `package.json`, and a working copy was `/Users/geoff/repos/thinking-about-risk/node_modules`.
+
+## F-302 · The Photos and Music prompts came from `find /` in Duo's terminals, not Duo's code (fix/no-privacy-prompts, 2026-10-12)
+
+- **Seen:** Geoff, 2026-10-12: "Duo is still exhibiting the worrisome behavior of asking for access to things it does not need to access, like photos and music." At 19:39–19:40 he answered 20 prompts for `com.dudgeon.duo`, one after another: Photos ×5, MediaLibrary ×3, Documents ×5, Downloads ×4, Desktop ×3 and NetworkVolumes ×2.
+- **Duo's own process asked for nothing.** In seven days of tccd's log, Duo (pid 34502) sent no request. Every prompt came through `sandboxd`, the broker for file access. tccd's msgID starts with the client's pid: 94215 is sandboxd now, and Duo's own requests would read `34502.n`. The subject was "Resp: Duo 34502", meaning a process whose *responsible* app is Duo opened the files.
+- **The prompts were days old.** tccd showed them one at a time behind an earlier unanswered one, and its first answer at 19:39:07 closed a prompt shown before the log's retention. Their threads' ids, matched against the log over time, date the requests to Oct 9–11. They were not a burst at 19:39.
+- **The walkers were subagents of sessions in Duo terminals:**
+  - `4dd881e9`: `find / -type d -path "*SwiftTerm*"` on Oct 9, 12:15.
+  - `1f87a975`: `find / -path '*mlx_audio/…'` on Oct 11, 19:25. It "did not complete within its 120s timeout": it was blocked on the prompts.
+  - `3966a0f5`: `find / -maxdepth 6` on Oct 8.
+  - A walk of `/` passes ~/Desktop, ~/Documents, ~/Downloads, ~/Music (MediaLibrary), ~/Pictures/Photos Library (Photos) and /Volumes (NetworkVolumes). That is exactly the set Geoff saw.
+- **Who is responsible** (`responsibility_get_pid_responsible_for_pid`): a process in a Duo terminal counts Duo. Background sessions (`claude --bg`) count Terminal (pid 688), because their daemon was started from Terminal. So build sessions never raised Duo's prompts. **Terminal.app keeps responsibility for its children too:** they count Terminal. VS Code's terminal and Chromium disclaim it.
+- **Why the prompts kept coming back:** every one logged "Failed to match existing code requirement … cdhash" (-67050). His running Duo was the ad-hoc debug build in the main checkout. Rebuilding it changes the cdhash that earlier answers are keyed to, so tccd asks again. The director now builds merge checks in their own work tree (558d803), and Geoff's Duo moves to the signed release.
+- **Fixed (DL-185; the duo-exec part was undone by DL-190 / F-306 — Claude Code's path changes with every update, so disclaiming made it ask again each time; Duo answers for its terminals again, release 0.2.14):**
+  - **Terminal processes start responsible for themselves.** SwiftTerm starts a terminal with `forkpty` and `execve`, and only `posix_spawn` can disclaim. Duo therefore execs `Contents/Library/Exec/duo-exec <program> <argv0> args…`, which becomes the program in place (`POSIX_SPAWN_SETEXEC` with `responsibility_spawnattrs_setdisclaim`). The pid, pty and environment are unchanged, and a failed spawn falls back to `execve`. duo-exec is outside `Helpers`, so it isn't on the terminals' PATH. A prompt from a session's tools now names `claude` or the shell, not Duo.
+  - **Duo's own walks all go through ProtectedFolders.** Three walks bypassed it:
+    - `MissingFolders.walk` skipped only `Library`, and could start from `/Users` or any parent of a moved folder.
+    - `PropertyCorpus.markdownFiles`, four deep from any root.
+    - `ReferenceIndex.scan`.
+    - All three now skip guarded folders and never start from home or above. `ProtectedFolders` adds `/Volumes`.
+  - **A DuoChecks scan enforces the rule:** any file under `Sources/` that lists folders or asks Spotlight must use ProtectedFolders (or the tree's `unlisted`) or be listed in `walkGuardExempt` with why it's safe. A stale exemption also fails.
+- **Checked:** DuoChecks 1397 passed, 0 failed. The live check shows a child started directly counts its parent's app (Terminal, 688), and one started through duo-exec counts itself.
+- **Checked live, without raising a prompt.** Two isolated background instances ran on a scratch workspace holding `Music/` and `Pictures/`, each with its own support and Claude config folders. Each one's shell terminal read `/Library/Application Support/com.apple.TCC`. That is system data under Full Disk Access, which is denied silently and logged with the responsible process.
+  - **Before (duo-exec moved aside):** the shell's responsible process was the Duo instance. tccd logged `Sub:{com.dudgeon.duo.test} Resp: com.dudgeon.duo.test pid=69212`.
+  - **After:** the shell was responsible for itself (11715 → 11715). tccd logged `Sub:{/bin/zsh} Resp: com.apple.zsh pid=11715`.
+  - In both runs the shell had `DUO_SOCKET` and `DUO_TOKEN`, and `duo2 ping` reached its instance.
+  - tccd logged no Photos or MediaLibrary request from any process during either run.
+  - `scripts/check-sandbox.sh`: all 10 pass.
+  - **A real Claude session (2.1.296) started through duo-exec** in a trusted folder:
+    - Its hooks fired: SessionStart, MessageDisplay, Stop and SessionEnd reached the instance's events file.
+    - The bundle's `duo2` reached the instance.
+    - `claude` (45029) was responsible for itself and for its tools: tccd logged `Resp: com.anthropic.claude-code pid=45029` for the same read.
+- **Seen on the way, no prompt raised:** Duo's WebKit GPU process makes silent Camera and Microphone checks (`com.apple.WebKit.GPU`, responsible Duo). Chrome and Remotion's `headless_shell`, started by sessions in Duo terminals, counted Duo as responsible; after this change they count the session.
+  - `ls ~/Music` itself does reach tccd (MediaLibrary, from my Terminal shell), so testing with it from a Duo terminal would have put a real prompt on screen.
+
+## F-303 · On 2.1.219, a send after a prompt suggestion fell back: the suggestion read as typed text (fix/chat-219-answer, 2026-10-12)
+
+The duo-signal spike (F-297) saw "didn't send your answer" on the work Mac's 2.1.219 in scripted runs. It happened with the flag on and with it off.
+- **What failed.** The answer to the Bash permission went through. The send after it failed: "your text didn't appear in Claude's prompt as sent". The AskUserQuestion that followed never came, so its answer fell back too ("the terminal shows idle, not a question").
+- **Root cause.** After a turn, Claude Code draws a dim **prompt suggestion** in the empty prompt. The mock's is `ok`; the real API's is a likely next message. Duo's terminal gives no cell attributes (F-108), so the screen reads it as typed text (`input="ok"`).
+  - Below 2.1.269 (and with Ctrl+G rebound), send pastes. It carried the words ahead of the text, as it does for a drafted task path (F-254), and expected `ok SCENARIO:ask1`.
+  - The suggestion vanished under the paste, so the prompt showed ` SCENARIO:ask1` and the echo check refused.
+  - The model and effort chips refused for the same reason ("Claude's prompt holds text").
+  - 2.1.296 draws the same suggestion. Its Ctrl+G path asks the real buffer (`peekPrompt`), so it was never affected. On the work Mac, every send that followed a suggestion failed.
+- **Measured** (the real TUI in a PTY on the mock, 2.1.219 and 2.1.296 alike; screens in `Spikes/chat-mode/screens/suggestion-2.1.219/`):
+  - Over a suggestion, a typed space leaves the prompt empty, and Backspace draws the suggestion again.
+  - Over typed text, the space joins it (`ok `).
+  - A paste replaces a suggestion.
+- **Fix.** `ChatSession.promptIsSuggestion()` (`ChatSend.swift`) is used in paste mode when the screen shows words in the prompt and there are no held pictures or composer basis. It types a space, rereads, and takes the space back with Backspace. Then:
+  - A suggestion counts as an empty prompt, so nothing is carried and the echo is just the text.
+  - Real words are carried as before.
+  - An unreadable screen refuses.
+  - `openPicker` uses the same probe in paste mode.
+  - With real text in the prompt, a refused chip now sends a space and a Backspace first, and still no paste and no Return (`ChatChipChecks`).
+- **Proof.**
+  - `Spikes/duo-signal/live.sh`, flag off, the spike's script: every send was ok, and the AskUserQuestion's card came up after the Bash turn (`screen=question card=true`, no fallback), on 2.1.219 and on 2.1.296. Main's build on 2.1.219 fell back as the spike saw.
+  - `ChatChecks`: the 42-column 2.1.219 screen reads idle with input `ok`; the recorded probe screens; the pure decision (`isSuggestion`); and a `FakeTUI` send in paste mode over a suggestion that pastes exactly the text, with no `ok` and no leading space.
+  - chat-live has a suggestion case after the Bash turn, on the default path and forced paste. The suite sets `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`, which turns suggestions off, so the case skips there with a note; `live.sh` is the end-to-end run with them on.
+
+## F-306 · macOS keys a command-line tool's privacy answer by its path, which breaks for versioned installs (fix/undo-disclaim, 2026-10-13)
+
+- **Seen:** Geoff, 2026-10-13: since 0.2.13 he grants permission again for each new version of Claude Code.
+- **Cause:** under DL-185 duo-exec disclaimed responsibility, so the privacy prompt was for the program itself. A command-line tool has no bundle identity, so TCC keys its decision by its path. Claude Code installs every update at a new path (`~/.local/share/claude/versions/<v>`), so each update is a new subject and asks again. An app bundle like Duo is keyed by its signing identity (Developer ID since 0.2.13), so one answer lasts across updates.
+- **Fixed (DL-190):** duo-exec, its bundle and signing steps and its checks are removed; terminals start as before 0.2.13 with Duo responsible. The walk rules (ProtectedFolders, /Volumes, the WalkGuardChecks scan) stay.
+- **General rule:** don't make a versioned-path CLI the subject of a privacy decision; keep the stable signed app as the responsible process.
+- **Checked:** DuoChecks 1447 passed, 0 failed; `DUO_CHECKS=chat` 361 passed; `scripts/check-sandbox.sh` all 10 pass; `check-ui.sh` captured the 6 standard states; `check-background.sh`: no test Duo became the front app or showed a Dock icon (its one ✘ was Chrome → Claude desktop, not a Duo).
+- **Checked live:** an isolated test Duo (`com.dudgeon.duo.test`, launched with `open`, own support and config folders). Its shell terminal ran `responsibility_get_pid_responsible_for_pid` on itself and got the Duo's own pid (shell 73856, responsible 73724 = the test Duo). It had `DUO_SOCKET` and `DUO_TOKEN`. I read the responsible pid directly because tccd logged no request for the shell's read of a protected file. A real Claude session wasn't started: that needs credentials in a scratch config. Claude's args and environment go through the same `run()` call as the shell's, unchanged from before 0.2.13.
+## F-305 · Your Markdown in your bubble already renders, by every path (chat/markdown-you, 2026-10-13)
+
+Geoff asked (2026-10-13) for chat to render the Markdown he types, in the history and in the composer (DL-188). Before building, the history side was checked path by path:
+- **Every way your message reaches the chat renders it.** Your bubble draws its text through `ChatMarkdownView(ChatMarkdown.parse(…))` (`ChatView.swift`), the same as Claude's card, whether it came from the transcript (a string or a text block), the prompt hook, or the composer's own `sent` bubble. Nothing escapes or rewrites the text first: `ChatLog.prompt` strips only `[Image #N]` tokens.
+- **Fixture states** `chat-md-history` (the transcript replayed), `chat-md-live` (the hook only) and `chat-md-long` (over 12 lines, cut at 8 with Show all) carry a heading, bold, inline code and a file link, strikethrough, a nested bullet list, a numbered list, a link, a quote, a fenced block, a table and task items (`scripts/make-chat-markdown-fixtures.py`, `docs/design/chat-markdown-handoff/fixture-chat/`). All rendered, in the bubble's look, before any change.
+- **The one gap was task items**: `- [ ] check the numbers` drew `[ ]` as text, in your bubble and in Claude's card. They now take the review card's checkbox in the bullet's place (Q-194 stand-in); `ChatMarkdown.task` reads the box, and only from the start of the item.
+- A cut long message ends at line 8, which can fall inside a fence or a list. The parser takes an unclosed fence to the end, so the cut part still draws as code; Show all draws the rest.
+- No real transcript was read for this: the samples are made up.
+
+## F-307 · The composer styles your Markdown with attributes only, and the keys are one undo each (chat/markdown-you, 2026-10-13)
+
+DL-188's composer half (chat-markdown-handoff `composer`, B to D). How it works and what was measured:
+- **The text never changes.** `ComposerMarkdown.analyze` (pure, `Sources/DuoKit/Chat/ComposerMarkdown.swift`) classifies each line (heading, bullet, number, quote, fence mark, fence body) and lists inline runs (bold, italic, strike, code, link, dim marks); `ComposerTextView.styleMarkdown` (`ComposerMarkdownStyle.swift`) puts attributes on the storage after `styleMentions`, from `textDidChange` and `setPlain`. DuoChecks types a draft into a real composer in an offscreen window and checks `plainText` and the storage string are byte-identical, line heights are all 22, and typing attributes go back to plain.
+- **Drawn over, not removed.** A list dash and a `>` get a clear foreground and a kern, so the marker holds its column and the caret keeps its place; the bullet is drawn at the marker's glyph in `draw`, the quote rule and the fence ground behind the text (`textContainerOrigin` plus the line fragments). A paragraph style per line gives the hanging indent; a paragraph holding a paste block keeps its own (insertBlock's, no maximum height) and is skipped. Marked text (an IME) skips the pass until the next change; text over 30,000 characters stays plain.
+- **Measured against the board** (section B, captures at 2x, `chat-md-composer-board.png` against the target's PNG): a bullet's dot is 10.5 pt from the marker's start and its text 22 pt, as drawn; a nested item steps 22 pt (11 per leading space, a stand-in, Q-195); a numbered item's text starts 28 pt in with the number right-aligned in 22, as drawn; a quote's rule is 2 wide with its text 12 in; a fence's text is 14 in from its ground. The whole composer sits 4 pt right of the target because the field's own inset (14) plus the text container's 5 are what every composer has, not new. Every pre-existing chat board is byte-identical to its capture before the change.
+- **The eight-line cap hides the fence in `md-composer`**: section B has 11 lines, and the field shows eight, then scrolls (DL-188). `md-composer-fence` carries the last four lines so the quote and fence can be looked at whole; `md-composer-wrap` is section C.
+- **The keys** are `performKeyEquivalent` on `ComposerTextView`, only while it is first responder, so the menus never see them there. Each key is a single `insertText(_:replacementRange:)`, one undo. The toggle rule is `wrap()` and `insertLink()` of the editor, ported as `ComposerMarkdown.toggle`/`link`, with the same `*`-versus-`**` rule. A selection holding a paste block or chip, or marked text, beeps and does nothing. ⌘E is "Use Selection for Find" in the app's Edit > Find menu (SwiftUI's `TextEditingCommands`); the composer takes it first when focused, the menu item still works everywhere else.
+- **Limits.** The inline-code ground is the layout manager's square background (no radius 4, no padding, as history draws it). `***x***` styles as bold around a star. Not verified: typing with a real keyboard or an IME on screen (the captures are of a non-active window, no caret), and the work Mac.

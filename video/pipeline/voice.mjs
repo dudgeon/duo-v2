@@ -27,8 +27,9 @@ export function voiceSetup({here}) {
   // `engine: "voxcpm"` (DL-173): VoxCPM2 with a LoRA, run from the geoff-voice checkout (its own venv and speak script);
   // nothing of it enters duo-v2. A line's key is made of what the voice IS (LoRA, runner script, reference clip and its text,
   // seed, tempo, spellings), never of where it is kept: moving or re-cloning the checkout re-voices nothing.
-  // (The other engines hash their voice file, minus its notes.)
-  const {$note, history, external, ...keyable} = voice;
+  // (The other engines hash their voice file, minus its notes and spellings.)
+  // `said` stays out of the hash: a line's key already holds its text as said, so a new spelling re-voices only the lines it changes.
+  const {$note, history, external, said: _said, ...keyable} = voice;
   const setup = vox ? sha('voxcpm', fileSha(join(voice.root, voice.lora, 'lora_weights.safetensors')), fileSha(join(voice.root, voice.script)), fileSha(refWav),
     voice.ref_text, voice.seed, voice.tempo ?? 1, voice.said ?? {})
     : sha(keyable, fileSha(refWav), ...['models.lock.json', 'requirements.txt', 'tts.py'].map((f) => readFileSync(join(dir, f), 'utf8')));

@@ -2,6 +2,8 @@ import {createElement, Fragment, type ComponentType} from 'react';
 import {Captions} from './director/kit';
 import {PaperCard} from './director/PaperCard';
 import {Switchboard} from './director/Switchboard';
+import {Opening} from './director/Opening';
+import {Levels} from './director/Levels';
 import {FirstPrompt} from './director/FirstPrompt';
 import {Skill} from './director/Skill';
 import {Additions} from './director/Additions';
@@ -10,6 +12,7 @@ import {Generalists} from './director/Generalists';
 import {Done} from './director/Done';
 import {Patterns} from './director/Patterns';
 import {NextUp, Projects, StartHere} from './director/Ending';
+import {FromLine, Standup, Team} from './director/Stories';
 
 /** What a registered scene draws: the time in the scene, its events (seconds), and the scene's timeline entry. */
 export type SceneProps = {t: number; ev: Record<string, number>; scene: {id: string; title: string; topic?: string | null; lines?: {text: string; start: number; duration: number}[]}};
@@ -26,6 +29,8 @@ const captioned = (C: ComponentType<SceneProps>): ComponentType<SceneProps> => (
 export const SCENE_KINDS: Record<string, ComponentType<SceneProps>> = {
   'paper-card': PaperCard,
   'dir-switchboard': captioned(Switchboard),
+  'dir-opening': captioned(Opening),
+  'dir-levels': captioned(Levels),
   'dir-prompt': captioned(FirstPrompt),
   'dir-skill': captioned(Skill),
   'dir-additions': captioned(Additions),
@@ -36,4 +41,7 @@ export const SCENE_KINDS: Record<string, ComponentType<SceneProps>> = {
   'dir-projects': captioned(Projects),
   'dir-next': captioned(NextUp),
   'dir-start': captioned(StartHere),
+  'dir-brief': captioned(FromLine),
+  'dir-team': captioned(Team),
+  'dir-standup': captioned(Standup),
 };

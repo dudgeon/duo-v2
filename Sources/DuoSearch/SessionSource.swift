@@ -104,7 +104,7 @@ extension SearchIndex {
     /// Indexes every session (and memory note) Claude Code has on this Mac: attributed to the
     /// project whose folder holds its cwd, else "Unfiled" (FR-7.1.5). Transcripts the retention
     /// sweep removed leave the index (L17). Changed transcripts are re-read whole (FR-7.2.4).
-    public func indexSessions(projects: [String: URL], claudeProjects: URL, embedder: Embedder,
+    public func indexSessions(projects: [String: URL], claudeProjects: URL, embedder: EmbedderSource,
                               archived: [(id: String, copy: URL, cwd: String)] = [],
                               quiet: TimeInterval = 0, pause: () async -> Void = {}) async throws -> IndexStats {
         var stats = IndexStats()
@@ -136,9 +136,10 @@ extension SearchIndex {
             }
             let (turns, title, cwd) = SessionSource.read(t.path)
             guard !turns.isEmpty else { continue }
+            let tokenizer = try embedder.get().tokenizer
             let chunks = turns.flatMap { turn -> [Chunk] in
                 let text = Secrets.redact(turn.text)
-                let pieces = Chunker.chunks(path: "turn.txt", text: text, tokenizer: embedder.tokenizer)
+                let pieces = Chunker.chunks(path: "turn.txt", text: text, tokenizer: tokenizer)
                 return pieces.map { Chunk(text: $0.text, startLine: turn.index, endLine: turn.index) }
             }
             try store(key: key, kind: "session", project: owner(cwd), title: title ?? t.sessionId, modified: mod, size: t.size,
@@ -153,8 +154,9 @@ extension SearchIndex {
             if let k = known[key], k.modified == mod, k.size == (v?.fileSize ?? 0) { continue }
             let (turns, title, _) = SessionSource.read(a.copy.path)
             guard !turns.isEmpty else { continue }
+            let tokenizer = try embedder.get().tokenizer
             let chunks = turns.flatMap { turn -> [Chunk] in
-                Chunker.chunks(path: "turn.txt", text: Secrets.redact(turn.text), tokenizer: embedder.tokenizer)
+                Chunker.chunks(path: "turn.txt", text: Secrets.redact(turn.text), tokenizer: tokenizer)
                     .map { Chunk(text: $0.text, startLine: turn.index, endLine: turn.index) }
             }
             try store(key: key, kind: "session", project: owner(a.cwd), title: title ?? a.id, modified: mod, size: v?.fileSize ?? 0,
@@ -169,24 +171,32 @@ extension SearchIndex {
             guard let raw = FileSource.read(m.path) else { continue }
             // The bucket folder's sessions tell us its cwd.
             let cwd = transcripts.first { $0.path.hasPrefix(m.bucket + "/") }.flatMap { SessionSource.read($0.path).cwd }
-            let chunks = Chunker.chunks(path: m.path, text: Secrets.redact(raw), tokenizer: embedder.tokenizer)
+            let chunks = Chunker.chunks(path: m.path, text: Secrets.redact(raw), tokenizer: try embedder.get().tokenizer)
             try store(key: key, kind: "memory", project: owner(cwd), title: "Memory: " + (m.path as NSString).lastPathComponent,
                       modified: mod, size: v?.fileSize ?? 0, chunks: chunks, replacing: known[key]?.id, embedder: embedder, stats: &stats)
         }
         return stats
     }
 
+    /// `indexSessions` with an embedder that stays loaded.
+    public func indexSessions(projects: [String: URL], claudeProjects: URL, embedder: Embedder,
+                              archived: [(id: String, copy: URL, cwd: String)] = [],
+                              quiet: TimeInterval = 0, pause: () async -> Void = {}) async throws -> IndexStats {
+        try await indexSessions(projects: projects, claudeProjects: claudeProjects, embedder: EmbedderSource(embedder),
+                                archived: archived, quiet: quiet, pause: pause)
+    }
+
     public static let unfiled = "Unfiled"
 
     /// Writes one item's chunks, embedding only passages the index hasn't seen.
     func store(key: String, kind: String, project: String, title: String, modified: Double, size: Int,
-               chunks: [Chunk], replacing: Int?, embedder: Embedder, stats: inout IndexStats) throws {
+               chunks: [Chunk], replacing: Int?, embedder: EmbedderSource, stats: inout IndexStats) throws {
         let hashes = chunks.map { Self.hash($0.text) }
         var ids: [String: Int] = [:]
         let look = try db.prepare("SELECT id FROM content WHERE hash = ?")
         for h in Set(hashes) { look.bind([h]); if try look.step() { ids[h] = look.int(0) } }
         let missing = Array(Set(hashes).subtracting(ids.keys))
-        let vectors = try embedder.embedDocuments(missing.map { h in chunks[hashes.firstIndex(of: h)!].text })
+        let vectors = missing.isEmpty ? [] : try embedder.get().embedDocuments(missing.map { h in chunks[hashes.firstIndex(of: h)!].text })
         stats.embedded += missing.count
         stats.reused += Set(hashes).count - missing.count
         try db.transaction {

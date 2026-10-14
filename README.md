@@ -6,7 +6,11 @@ A Mac app for working with Claude Code across many pieces of work at once. It ke
 
 > **Duo v2 is an early beta and an experiment.** Things will change and some will break. Try it, and tell us what you find: open an [issue](https://github.com/dudgeon/duo-v2/issues), or use Help › Report an Issue… in Duo. Legacy Duo is in maintenance mode: it gets fixes, not new features.
 
-![All projects: Home's Claude session on the left, a map of projects in the middle, and what needs you on the right.](docs/guide/images/all-projects.png)
+### ▶ [Watch the intro to Duo](https://github.com/dudgeon/duo-v2/releases/download/v0.2.13/duo-intro.mp4)
+
+<a href="https://github.com/dudgeon/duo-v2/releases/download/v0.2.13/duo-intro.mp4">
+<img width="1280" height="720" alt="duo-intro-poster" src="https://github.com/user-attachments/assets/45bd3812-90ea-4f31-857c-e274167270b1" />
+</a>
 
 Duo runs Claude Code itself, the same interactive Claude, signed in with your own Claude account. It doesn't need an API key.
 
@@ -35,6 +39,11 @@ Duo v2 tests one idea: once Claude is part of how you work, organise around your
 | **Plain files.** Projects, Home and tasks are ordinary Markdown files you can open anywhere. | Does this hold up as projects pile up? |
 
 Tried it? Tell us what you found, good or bad.
+
+## Films
+
+- **[Intro to Duo](https://github.com/dudgeon/duo-v2/releases/download/v0.2.13/duo-intro.mp4)** (7 min 22 s): why Duo exists, and a walk through it.
+- **[The director agent](https://github.com/dudgeon/duo-v2/releases/download/v0.2.13/duo-director.mp4)** (6 min 47 s): how Geoff uses one Claude Code session to direct the others while building Duo, from a single prompt to the patterns for different setups. Narrated in his own voice.
 
 ## Install
 

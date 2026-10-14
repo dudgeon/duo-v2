@@ -738,6 +738,7 @@ func repoFixture() throws -> Fixture {
     try pathChecks()
     try noteEditChecks()
     try editorChordChecks()
+    try docSafetyChecks()
     taskPaneKeyChecks()
     dockBadgeChecks()
     try paneFocusChecks()
@@ -864,6 +865,8 @@ func repoFixture() throws -> Fixture {
         QueryEmbedder.release()
         _ = try QueryEmbedder.shared()
         check(QueryEmbedder.loads - loadsBefore <= 2, "release() drops the model, the next query loads it again")
+        check(!QueryEmbedder.releaseIfIdle(after: 180), "the query model stays while queries are recent (C-79)")
+        check(QueryEmbedder.releaseIfIdle(after: 180, now: Date().addingTimeInterval(200)), "…and goes after 3 minutes without one")
         let golden = [("why are there two high tides every day", "docs/tides.md"),
                       ("feeding a sourdough starter with flour and water", "docs/sourdough.md"),
                       ("horizontal pod autoscaler adds replicas", "docs/kubernetes.md"),
@@ -909,6 +912,18 @@ func repoFixture() throws -> Fixture {
         check(busy.changed == 0 && busy.deferred == 1, "an indexed file still being edited waits")
         let settled: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
         check(settled.changed == 1 && settled.replaced == 1, "…and is re-indexed once quiet")
+        // C-79 (RSS): the indexing model loads when a pass has something to embed, goes after sitting idle, and comes back on demand.
+        let lazy = EmbedderSource { try Embedder(modelAt: compiled, vocab: SearchPaths.vocab, use: .indexing) }
+        let _: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: lazy) }
+        check(!lazy.isLoaded && lazy.loads == 0, "a pass over an unchanged tree never loads the model")
+        try "# Lazy\n\nPomegranate harpsichord isthmus.\n".write(to: proj.appending(path: "notes/lazy-load.md"), atomically: true, encoding: .utf8)
+        let loaded: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: lazy) }
+        check(loaded.changed == 1 && lazy.isLoaded && lazy.loads == 1, "a pass with a new file loads it")
+        check(!lazy.releaseIfIdle(after: 180) && lazy.isLoaded, "…and keeps it while it is in use")
+        check(lazy.releaseIfIdle(after: 180, now: Date().addingTimeInterval(200)) && !lazy.isLoaded, "…and lets it go after 3 idle minutes")
+        try "# Lazy\n\nPomegranate harpsichord isthmus.\n\nA second paragraph about quince.\n".write(to: proj.appending(path: "notes/lazy-load.md"), atomically: true, encoding: .utf8)
+        let again2: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: lazy) }
+        check(again2.changed == 1 && lazy.loads == 2 && lazy.isLoaded, "a later change loads it again")
         try FileManager.default.moveItem(at: proj.appending(path: "docs/tides.md"), to: proj.appending(path: "notes/tides-moved.md"))
         let moved: IndexStats = try blocking { try await index.indexProject("fx", root: proj, embedder: indexer) }
         check(moved.changed == 1 && moved.removed == 1 && moved.embedded == 0, "a moved file reuses its vectors (FR-7.3.5)")
@@ -1478,11 +1493,16 @@ func repoFixture() throws -> Fixture {
               && held[1].rows[1].state == SessionState.needsYou, "a held list keeps rows in place with fresh state, adds new rows, drops gone ones (Q-80)")
     }
 
-    // DL-130: the editor page gets Claude's highlight timings from the tokens (zero with Reduce Motion).
-    check(EditorController.tokenCSS().contains("--duo-motion-highlight-in-ms: \(MotionSettings.shared.reduce ? 0 : 200)")
+    // DL-130, DL-186: the editor page gets Claude's highlight timings from the tokens (zero with Reduce Motion).
+    check(EditorController.tokenCSS().contains("--duo-motion-highlight-in-ms: \(MotionSettings.shared.reduce ? 0 : 400)")
           && EditorController.tokenCSS().contains("--duo-motion-highlight-out-ms: \(MotionSettings.shared.reduce ? 0 : 600)")
           && editorSource.contains("--duo-motion-") && editorSource.contains("prefers-reduced-motion"),
           "the editor's highlight fades from motion.highlightIn and highlightOut, and honours Reduce Motion")
+    // DL-186: Claude's changes sit on the claudeEdit green, not the selected grey.
+    check(EditorController.tokenCSS().contains("--duo-claude-edit: #D6EDDC") || EditorController.tokenCSS().contains("--duo-claude-edit: #1F3A28"),
+          "the editor page gets the claudeEdit token")
+    check(editorSource.contains("\".duo-added\": { backgroundColor: \"var(--duo-claude-edit)\"") && !editorSource.contains("to { background-color: var(--duo-selected)"),
+          "Claude's highlight is drawn on claudeEdit (DL-186)")
 
     print("cli parity (DL-71, DL-72)")
     check(Set(DuoAction.all.map(\.id)) == Set(ActionID.allCases) && DuoAction.all.count == ActionID.allCases.count, "every action is in the registry once")
@@ -1744,6 +1764,7 @@ func repoFixture() throws -> Fixture {
           "walks never enter Music, Photos, Documents… unless the project lives inside them")
     check(FileSource.files(in: URL(fileURLWithPath: "/")).isEmpty && FileSource.files(in: home.deletingLastPathComponent()).isEmpty,
           "folders above home are never walked for files (a session started in / or /Users)")
+    walkGuardChecks()  // WalkGuardChecks.swift: every walk goes through ProtectedFolders (F-302)
 
     print("Claude folders (DL-103)")
     let cw = FileManager.default.temporaryDirectory.appending(path: "duo-claude-\(UUID().uuidString)")
@@ -1957,6 +1978,52 @@ func repoFixture() throws -> Fixture {
         check(!ChatFeedShape.isLazy(items: 24, steps: 86) && !ChatFeedShape.isLazy(items: 48, steps: 250)
               && ChatFeedShape.isLazy(items: 49, steps: 10) && ChatFeedShape.isLazy(items: 10, steps: 251) && ChatFeedShape.isLazy(items: 100, steps: 1945),
               "the feed is a plain stack up to 48 items and 250 steps, lazy past either")
+        // C-85: a long Claude turn is several rows (pieces) in the lazy feed.
+        print("the lazy feed draws a long Claude turn in pieces (C-85)")
+        let n = ChatFeedProof.size
+        func turnLog(_ sections: Int, prompt: Bool, tag: String) -> ChatSession {
+            let c = ChatSession(key: "pieces-\(tag)", mode: .chat)
+            if prompt { c.log.prompt("go", time: nil, fromHook: false) }
+            for k in 0..<sections {
+                if k % 2 == 0 { c.log.display(message: "m-\(tag)-\(k)", delta: "text \(tag) \(k)", final: true, time: nil) }
+                else { c.log.toolUse(id: "t-\(tag)-\(k)", name: "Bash", input: ["command": "echo \(k)"], time: nil) }
+            }
+            return c
+        }
+        func lastTurn(_ c: ChatSession) -> ChatTurn? { if case .claude(let t)? = c.log.items.last { t } else { nil } }
+        let short = turnLog(n, prompt: true, tag: "short")
+        let shortRows = ChatFeedProof.rows(short)
+        if let t = lastTurn(short) {
+            check(ChatFeedProof.sections(t).count == n && shortRows.count == 2 && shortRows[1].isItem && shortRows[1].id == t.id,
+                  "C-85: a turn of \(n) sections is one row, drawn whole, with the turn's id")
+        } else { check(false, "C-85: the short turn exists") }
+        let longChat = turnLog(20, prompt: true, tag: "long")
+        let longRows = ChatFeedProof.rows(longChat)
+        if let t = lastTurn(longChat) {
+            let all = ChatFeedProof.sections(t)
+            let ps = Array(longRows.dropFirst())
+            check(all.count == 20 && ps.count == (20 + n - 1) / n, "C-85: 20 sections make ceil(20/\(n)) rows (\(ps.count))")
+            check(ps.indices.allSatisfy { ps[$0].id == ($0 == 0 ? t.id : "\(t.id)|\($0)") }, "C-85: the pieces' ids are the turn's, then turn|1, turn|2")
+            check(ps.indices.allSatisfy { ps[$0].first == ($0 == 0) && ps[$0].last == ($0 == ps.count - 1) }, "C-85: only the first piece is first, only the last is last")
+            check(ps.first?.gap == 16 && ps.dropFirst().allSatisfy { $0.gap == 0 }, "C-85: the first piece has the 16 gap above, later pieces none")
+            check(ps.allSatisfy { !$0.isItem } && ps.flatMap { $0.sections } == all, "C-85: every section appears once across the pieces, in order")
+        } else { check(false, "C-85: the long turn exists") }
+        let bare = turnLog(20, prompt: false, tag: "bare")
+        check(ChatFeedProof.rows(bare).first?.gap == 0, "C-85: a first turn with nothing above it has no gap")
+        // The memo: an event rebuilds only the turn it touched.
+        let memo = turnLog(20, prompt: true, tag: "memo")
+        memo.log.prompt("again", time: nil, fromHook: false)
+        memo.log.display(message: "m-memo-2", delta: "second turn start", final: true, time: nil)
+        let b0 = ChatFeedProof.built
+        _ = ChatFeedProof.rows(memo)
+        let b1 = ChatFeedProof.built
+        _ = ChatFeedProof.rows(memo)
+        check(b1 - b0 == 2 && ChatFeedProof.built == b1, "C-85: the first pass builds both turns (\(b1 - b0)), the second rebuilds nothing")
+        memo.log.toolUse(id: "t-memo-late", name: "Bash", input: ["command": "date"], time: nil)
+        _ = ChatFeedProof.rows(memo)
+        check(ChatFeedProof.built - b1 == 1, "C-85: changing only the last turn rebuilds exactly that turn (\(ChatFeedProof.built - b1))")
+        let pane = SourceIndex().declarations(of: "ChatPane").map(\.body).joined(separator: "\n")
+        check(pane.contains("LazyVStack(alignment: .leading, spacing: 0) { pieces }"), "C-85: ChatPane's lazy branch draws the pieces (found by declaration, C-84)")
     }
 
     print("the console's tab strip measures each title once (F-224)")
@@ -2670,6 +2737,10 @@ func repoFixture() throws -> Fixture {
         m.undoRecorder = { name, u in undos.append((name, u)) }
         func undoLast() { if let u = undos.popLast() { u.1(m) } }
         func archivedIds() -> Set<String> { Set(DuoState.load().archivedSessions) }
+        // C-81: the menu and duo2 paths wait for an open note's save; with no editor showing it they go on at once.
+        var waited = 0
+        m.afterNoteSaved(project: "tasky", path: "tasks/nothing.md") { waited += 1 }
+        check(waited == 1 && m.editorIfLoaded == nil, "a task action goes straight on when no editor shows the note (and builds no editor)")
 
         // Rename: title, heading, file; one undo puts both back.
         var path = try write("Exec review prep")
@@ -2690,6 +2761,26 @@ func repoFixture() throws -> Fixture {
         check(tfm.fileExists(atPath: proj.appending(path: "tasks/exec-review-final.md").path) && !tfm.fileExists(atPath: proj.appending(path: path).path),
               "retitling the note moves it to its new slug once settled (C-24)")
         path = "tasks/exec-review-final.md"
+        m.fixture.tasks = nil
+
+        // A done task looks done while it's listed, folds when it's completed and unfolds when reopened (DL-187).
+        let doneGroup: Fixture.Group = decoded(["name": "Exec review", "project": "tasky", "sessions": ["Quiet one"], "threads": [["Quiet one"]], "task": path])
+        func taskShown(_ status: String) -> Fixture.TaskSummary { .init(project: "tasky", path: path, title: "Exec review", status: status, sessionIds: [quiet]) }
+        m.fixture.groups = [doneGroup]
+        m.fixture.tasks = [taskShown("open")]
+        m.expandedGroups = [doneGroup.name]
+        m.taskStatusSeen = nil
+        m.followTaskStatus()   // first look: remembers
+        check(!m.isDone(taskShown("open")) && m.isDone(taskShown("done")), "an open task doesn't look done; a done one does (checked, struck, grey)")
+        check(m.expandedGroups.contains(doneGroup.name), "an open task's sessions stay as they were")
+        m.setShownTask("tasky", path) { $0.status = "done" }
+        check(m.isDone(m.summary(ofTask: path, in: "tasky")!) && !m.expandedGroups.contains(doneGroup.name), "completing a task folds its sessions")
+        m.expandedGroups.insert(doneGroup.name)
+        m.followTaskStatus()
+        check(m.expandedGroups.contains(doneGroup.name), "a fold the user opens on a done task stays open")
+        m.setShownTask("tasky", path) { $0.status = "open" }
+        check(!m.isDone(m.summary(ofTask: path, in: "tasky")!) && m.expandedGroups.contains(doneGroup.name), "reopening a task restores the normal look and unfolds it")
+        m.fixture.groups = []
         m.fixture.tasks = nil
 
         // Archive, sessions kept.

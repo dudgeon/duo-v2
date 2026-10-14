@@ -768,6 +768,7 @@ Geoff asked for this check. Duo froze twice in the field, both on the work Mac, 
 **The visible baseline, on main** (F-295, C-85; release build):
 - `check-scale.sh` passes either way: 4.4% visible, 3.9% background, no stalls.
 - `check-chat-perf.sh` agrees within noise on every phase but one. **Replies arriving at the bottom of a long chat** stalled 531, 946 and 287 ms on screen, against a 600 ms budget, so one run in three fails. In the background the same phase measures 48–51 ms. That's ENH-23 (a)'s lazy-row residual, and only a visible run can see it get worse.
+- **Corrected (F-304):** those visible runs were made with the display asleep; lit and in front, main measures 40–97 ms there. Lazy rows of bounded size cut the asleep case (165–467 ms to 76–264 ms). check-chat-perf now refuses a covered or asleep visible run and drives a background run's drawing.
 - So for chat-feed work the background `check-chat-perf` is not evidence. Its budget should also count stalls over 250 ms and the total.
 - **After each release Geoff takes to work:** his hang log is the real gate. `duo2 hangs` on the work Mac, shared by him; nothing scripted there.
 - **Task 9a (new, S, do before 9, and ideally before 4 and 5):**

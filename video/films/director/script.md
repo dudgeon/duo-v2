@@ -1,5 +1,5 @@
 # Director explainer — script v1
-<!-- Synced from the script Doc at rev 25 on 2026-10-12 by pipeline/sync.mjs; edit the Doc, not this file. -->
+<!-- Synced from the script Doc at rev 1937 on 2026-10-13 by pipeline/sync.mjs; edit the Doc, not this file. -->
 
 Oct 12, 2026 · @Geoff Dudgeon
 
@@ -43,120 +43,120 @@ The narrator is your own voice, the fine-tuned VoxCPM2 clone the intro uses (DL-
 
 ## Scenes
 
-> Eleven scenes: your six beats, plus why it works, generalist workers, the tease and the link to the skill. Lines are first drafts from the records and the director's answers; `(line)` is a slot for you. Numbers marked *(to check)* get confirmed before voicing. Aiming at about 500 words; the draft runs a little long, so expect cuts.
+> **v2 (Oct 12), after your notes on the first draft:** the hobby framing; the rest of your first prompt (the 10:25 message); real examples of a one-line ask becoming a brief and a landed feature; research and design sessions teaming before a builder; and the director as a standup. "Writing the job down", "What we added" and "Generalists" are folded in. Every example below is from the transcripts and git: quotes are verbatim, numbers are `git show --stat`. About 560 words, so roughly 3:30; tell me what to cut if you want 3:00. Your earlier version is in this Doc's history.
 
-### S1 · The problem (about 20 s)
+### S1 · The problem (about 25 s)
 
 Topic: The problem
 
-- Building Duo, I often had ten or more Claude Code sessions running at once.
-- Each one needed me to brief it, check its work, merge it, and remember where it had left off.
-- I had become the switchboard.
+- I want to share a pattern that has been working really well for me: using a single claude code session as a "director agent" to make it easier to advance many different goals in parallel, providing high level instructions while preserving the ability to dig into details when needed.
+- Duo is a personal project app that I build in my free time. I work on it after hours, in short bursts, and most ideas I send from my phone as they occur to me.
+- Typically, I will spin up a new session every time an idea occurs to me: features to prototype, patterns to research, or bugs to squash as I encounter them during use.
+- Worktrees have helped reduce the number of change collisions, but I still need to keep all of these sessions straight, give them repetitive starting prompts, and manage the rebasing, review, and merging as work completes.
+- I typically spend as much time managing the merges and renumbering documented changes as i do providing direction to my agents.
 
-Shot: you as one node in the middle; sessions appear around you one by one, each tied to you by a line. Each time one finishes or asks a question, its line pulses toward you, until every line is pulling on the centre.
+Shot: on line 1, the title card animates in: "The director agent" with a small tree (canvas option T1, with "user" in place of "You"); its finished frame is frame 0, the thumbnail. On line 2, a card animates in with the intro's Duo logo build and a small screenshot of the app. On line 3, a phone opens a new Claude Code session for each idea as it's named: a feature to prototype, a pattern to research, a bug to squash; they stack up. On line 4, each session grows a worktree branch, and the chores pile onto you as they're named (a repeated starting prompt, a rebase, a review, a merge), each a needs-you tag, until you're the switchboard. On line 5, your time splits in two: managing merges and renumbering, and giving direction.
 
-### S2 · One prompt (about 20 s)
+### S2 · A simple prompt (about 25 s)
 
 Topic: A simple prompt
 
+- I've spent a lot of time thinking of agent orchestrators -- where one director agent abstracts complexity for the user, but I wasn't ready to commit and lock into a specific pattern -- so I decided to start simple, and evolve according to my needs
 - On October fifth, I started one more session and typed this.
-- *There are many sessions in this repo, all in various states. You are now their director. I am the PM and you are the engineering manager.*
-- Then I asked it for a quick survey of where each session stood.
+- *There are many sessions in this repo, all in various states. You are now their director.*
+- *I am the PM and you are the engineering manager. Please do a quick survey of the state of each of these active sessions.*
+- Twenty minutes later, I added one more instruction.
+- *You should be periodically watching all other agents in this space and reviewing their work, surfacing decisions to me as needed.*
+- From then on, all of my interactions with live sessions, and every new task, went through the director.
+- I tell it what I want, usually in a sentence or two from my phone.
+- It briefs a new session, or passes the word to one already running, and tells me when the work is ready.
+- It reviews and merges what comes back, and asks me only when something needs my decision.
 
-Shot: the prompt types itself onto a card, the director's own words. As it lands, the tangle from S1 reorganises into the tree of style frame B: you on the left, the director beside you, the sessions in a panel to its right. The director's first survey runs down the sessions. One line reaches you now.
+Shot: on line 1, a big orchestrator (one agent over layers of agents) sketches itself faintly, then is set aside for one console: start simple. Then the first prompt goes onto the console, its ideas as bullets that build in time with the voice; then the pattern, step by step as it's said: your sentence from the phone goes to the director; a brief goes to a new or running session; the work comes back reviewed and merged; only decisions reach you. As it lands, the tangle from S1 settles into the tree of style frame B: you on the left, the director beside you, the sessions in a panel. The director's first survey runs down the sessions. One line reaches you now.
 
-> Verbatim, from the director's transcript (e0127e51, Oct 5, 10:08): "There are many sessions in this repo/project all in various states—you are now their director. I am the PM and you are the engineering manager. Please do a quick survey of the state of each of these active sessions". The line above trims "repo/project" for the voice.
+### S3 · A line becomes a brief (about 30 s)
 
-### S3 · Writing the job down (about 20 s)
+Topic: From a line to a brief
 
-Topic: Along the way
+- Most of my asks are a sentence or two, typed on my phone, and the director turns each one into a full brief for a new session -- with my words quoted, its own branch, and how to prove the work.
+- When I asked for a close button on tabs, it briefed a session twenty-five seconds later, and the change was merged about half an hour after that.
+- A one-sentence ask to review the whole codebase turned into an eight hundred word brief, and a full report about an hour later.
 
-- A long-running session gets compacted, and each time, the director lost its own job description.
-- So on day three it wrote the job down as a skill: how to brief a session, how to review and merge, and when to ask me.
-- Every decision I make goes into a numbered record, so no one asks me twice.
+Shot: your ask arrives as a phone message, verbatim. It travels to the director, which unfolds it into a brief card; lines of the brief light up as the voice names them (your words quoted, the branch, the reserved records, how to prove it). The brief goes to a new session; a merge card lands with what changed and how long it took. Then the review: a 34-word ask beside an 872-word brief, drawn to scale, and the report it produced.
 
-Shot: the director's card unfolds into its job description, one section per line (Taking work, Reviewing and merging, Records, Releases, Talking to me). Numbered records stack beside it like a ledger.
+### S4 · Teams for bigger ideas (about 30 s)
 
-### S4 · What we added (about 40 s)
+Topic: Teams for bigger ideas
 
-Topic: same
+- For bigger ideas, I'll often ask the director to set up a small team.
+- For chat mode, I sent one message asking for a research agent and a design agent, and the director started both of them, working side by side.
+- The research agent passed what it learned to the design agent, so the mock-ups only showed what was feasible. I picked a design on the canvas, and the director assigned a builder.
+- The whole feature, about a hundred files of changes, was merged about five hours after I first asked for it.
+- For the Word viewer feature, my whole review was four words: looks good, build, test, ship.
 
-- New work goes to a new session. The director doesn't build; it delegates and reviews.
-- Sessions run in the background with Remote Control, so I can follow any of them from my phone.
-- A model rule: the larger model plans, a mid-size one builds, the smallest one runs the tests.
-- Decisions come to me as buttons, with a recommendation first, on a console page I can open anywhere.
-- And the piece everything else hangs on: sessions message each other. A worker tells the director when its work is committed, and the director wakes it with the next step.
+Shot: your ask splits into two sessions, research and design, side by side; a message passes from research to design. A canvas card with three looks; your pick ticks one. A builder appears under the director on its own branch, and a merge card lands. Then the Word viewer: a canvas card with your comment on it, in your words, and two build slices merging.
 
-Shot: a timeline from October fifth to today runs under the tree from S2. Each addition drops onto its date as the line names it, and the tree changes to match: sessions slide into a background lane; three model tiers colour the sessions; a phone appears between you and the director with the console's buttons on it.
+### S5 · A standup (about 25 s)
 
-> Dates: delegate-don't-build and Remote Control (DL-128), Oct 6; background sessions, buttons and the model rule (DL-153), Oct 7–8; the console (DL-166) and peer names (F-259), Oct 9; the GPU lock and geoff-voice, Oct 11–12.
+Topic: Catching up
 
-### S5 · Why it works (about 25 s)
+- When I come back to it, I don't open ten sessions one by one -- I just ask the director where things stand.
+- It answers like a standup, with what's done, what needs me, and what's next, and the decisions come as buttons with its recommendation first.
+- One evening I tapped four answers, and two new sessions were running within a minute.
+
+Shot: your question arrives from the phone, verbatim. The director's answer comes back as a digest card, Done / Needs you / Next, with real lines from it. Four buttons follow, recommendation first; your four taps; two new sessions start on the tree.
+
+### S6 · Why it works (about 25 s)
 
 Topic: Why it works
 
-- With subagents, one session can farm out many features at once, but the work stays out of reach until it comes back.
-- Here, each worker is a full session. It works in its own branch, so features don't collide, and I can open any one of them and work alongside it.
-- The director reads each worker's short report, not its whole transcript, so its own context stays small.
-- (line: the messaging channel is what makes this work)
+- This works better for me than subagents, because each worker is a full session on its own branch, so features don't collide and I can jump into any of them.
+- The sessions message each other, so the director only reads short reports, and its own context stays small.
 
 Shot: two diagrams side by side, then one. Left, subagents: small boxes inside the parent session's outline, their work flowing back into it until the outline swells. Right, the director: full sessions outside it, each on its own branch line, with only a short report arrow back, tagged "since Claude Code 2.1.224"; your figure steps into one session, then out again. The director's outline stays the same size the whole time.
 
-> Your point (Oct 12): the director lets many features run one after another without collisions, like subagents, while keeping the ability to roll up your sleeves and work closely with any agent, without bloating the director's context window. And: the messaging channel between agents is important.
-
-> Your call (Oct 12): name the version. The Shot shows a small tag on the messaging arrow: "since Claude Code 2.1.224".
-
-### S6 · Generalists (about 15 s)
-
-Topic: Generalists
-
-- Many multi-agent setups give each worker a specialist persona.
-- We didn't. Any worker could take a design study, a bug hunt, a release check or a research question, given a clear brief.
-
-Shot: the worker sessions under the tree each take a different task card in turn (design, bug, release, research, video) without changing shape or label: the brief is what changes, not the worker.
-
-### S7 · What got done (about 25 s)
+### S7 · What got done (about 20 s)
 
 Topic: What got done
 
-- In the week since that first prompt, the director oversaw fifteen releases and a hundred and eighty-seven merges.
-- (line: how many major features and refactors, named briefly)
-- About a hundred sessions did the work; I made the decisions.
+- In its first week, the director oversaw fifteen releases and a hundred and eighty seven merges, done by about a hundred sessions.
+- The work ranged from small fixes to whole new features like chat mode and the Word viewer, and the same workers took on design studies, bug hunts and research, without any specialist personas.
 
-Shot: the timeline from S4 fills with what shipped: release tags as markers, merges as ticks, a few features named. Each count runs up as the line says it.
+Shot: the first week's timeline fills with what shipped: merges as cells over their days, release tags under them, a few features named. Each count appears as the line says it.
 
-> From the director *(to check)*: 15 of 22 releases (0.1.7 to 0.2.11), 187 of 192 merges, 590 of 728 commits, about 100 sessions; records: \~179 decisions, \~293 findings. Candidates to name: the 0.2 line with chat mode; a work-laptop freeze found from field hang logs and fixed overnight; a design system with pixel-checked screens; this film's pipeline and voice; a whole-codebase review. I still need a count of major features and refactors.
-
-### S8 · Patterns for your setup (about 30 s)
+### S8 · Patterns for your setup (about 25 s)
 
 Topic: Patterns
 
-- The pattern bends to what your Claude Code can do.
-- On an older version, workers run as one-shot jobs and pass messages through files.
-- Without Remote Control, you follow sessions in one app instead of on your phone.
-- Without a page for buttons, the questions come in the chat.
-- On a managed work laptop whose Claude Code is pinned months behind, the director still runs; only the way workers report back changes.
+- The pattern also bends to what your setup allows.
+- On an older version of Claude Code, like the one on a managed work laptop that's pinned months behind, workers run as one-shot jobs and report back through files.
+- And without Remote Control or a page for buttons, the questions just come in the chat instead.
 
-Shot: a grid of constraints (Claude Code version; Remote Control on or off; a page for buttons or not). For each cell, the director tree from S2 redraws to show what changes: which arrows become files, which move into the chat.
+Shot: a grid of constraints. For each cell, the director tree redraws to show what changes: which arrows become files, which move into the chat.
 
-### S9 · Claude Code Projects (about 15 s)
+### S9 · How far it goes (about 35 s)
 
-Topic: Projects
+Topic: How far it goes
 
-- Claude Code now has Projects: one coordinator in charge of many sessions, built in.
-- I don't have access yet. Everything here is built from pieces that ship with Claude Code today.
+- The director pattern can be as simple or as sophisticated as you need it to be.
+- At its most basic, it's just a prompt -- one session that you ask to act as the director, and you talk to it in a normal chat.
+- The next step for me was moving that prompt into a director skill, so the job could survive long sessions and restarts, and I could keep improving it over time.
+- From there, the skill started using shared artifacts, like a console page where I answer decisions with buttons from my phone, and agent to agent messaging, so sessions could report back to the director directly.
+- At the far end is something like Claude Code projects, where the coordinator and its threads are built right in -- I don't have access to it yet, but it looks like the natural home for this pattern.
 
-Shot: the home-built tree sits beside a second tree labelled Claude Code Projects; the shapes match, part for part.
+Shot: the same tree, with a piece added at each level (canvas option L2, https://claude.ai/artifact/GCWec8D9T3DtqGt4ZDzQcF): level 1, a prompt on one console; level 2, the skill page beside the director; level 3, a console page of buttons on a phone, and the sessions messaging the director; level 4, the tree drawn inside Claude Code, a coordinator and threads. A rail counts the levels 1 to 4 as the voice moves up.
 
-### S10 · What's next (about 20 s)
+### S10 · What's next (about 15 s)
 
 Topic: What's next
 
-- Two patterns I don't see often yet: a persistent agent, like this director, that keeps its job for weeks;
-- and a shared agent, one that several people can talk to.
-- (line: what the two together might do)
+- I've been really impressed with how helpful the director agent pattern has been in my own life, and how much value it can offer starting with even the most simple prompt -- and it's fun to evolve it to your needs.
+- Director agents are one of two patterns that I think will offer a step change to teams that adopt them.
+- One agent, advancing your work, while task-specific agents share artifacts, collaborate, and only surface issues that need the user, like review or resolving conflicts.
+- The other is shared agents -- where multiple human team members can collaborate with a single shared agent.
+- Combining the two patterns seems extremely promising.
 
-Shot: the director node gains a long trail back through the timeline (persistent); then a second and third person appear above it, each with a line to the same director (shared). Hold on that picture.
+Shot: on line 1, the director's trail runs back through the weeks it has kept its job. On line 2, two circles open: director agents and shared agents. On line 3, inside the first, task agents pass artifacts between them, and only the review and conflict calls rise to you. On line 4, inside the second, several people gather around one shared agent. On line 5, the circles slide together, and their overlap becomes a team of people sharing one director over many agents. Hold on that picture.
 
 ### S11 · Start with a prompt (about 15 s)
 
@@ -164,7 +164,6 @@ Topic: same
 
 - You don't need anything special to start: a prompt like my first one is enough.
 - I've put a plain version of that prompt in a gist, with a link to where ours ended up.
+- If you choose to try out the director agent pattern, or have suggestions for how I can improve my own implementation, please let me know!
 
 Shot: the first prompt's card from S2 comes back, alone on the paper. Beside it, a QR code to the gist draws itself, with its short address under it. The film ends on the two together.
-
-> Your point (Oct 12): offer a link to the director skill, but this is sharing a pattern that doesn't need a skill to get started. Link: [the director skill](https://github.com/dudgeon/duo-v2/blob/main/.claude/skills/director/SKILL.md). Your call (Oct 12): last, after the tease, with a gist of a vanilla director prompt modelled on your first one and a QR code to it. The gist: https://gist.github.com/dudgeon/d8faa688683885a0aaad2be56a7b8084 (public; edit it freely, the QR code follows the address, not the text).

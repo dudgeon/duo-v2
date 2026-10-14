@@ -112,7 +112,7 @@ struct TasksTail: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 8 + DuoSpace.selectionInset).padding(.leading, 18).padding(.vertical, 4)
             }
-            ForEach(tasks) { t in TaskLine(task: t, showsProject: false, indented: true).transition(.listRow) }
+            ForEach(tasks) { t in TaskLine(task: t, showsProject: false, headerColumns: true).transition(.listRow) }
             NewTaskRow(project: project)
         }
         .background(DuoColor.pane)

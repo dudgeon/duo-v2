@@ -93,6 +93,42 @@ public final class Embedder: @unchecked Sendable {
     }
 }
 
+/// An indexing embedder that loads when a pass first has something to embed and goes after it has sat
+/// idle: the Core ML model, its buffers and the tokenizer's tables are tens of MB the app needn't
+/// hold between bursts of editing (C-79).
+public final class EmbedderSource: @unchecked Sendable {
+    private let lock = NSLock()
+    private let make: () throws -> Embedder
+    private var current: Embedder?
+    private var used = Date.distantPast
+    /// How many times the model was loaded (for DuoChecks).
+    public private(set) var loads = 0
+
+    public init(load: @escaping () throws -> Embedder) { make = load }
+    /// A fixed embedder, never released.
+    public init(_ fixed: Embedder) { current = fixed; make = { fixed } }
+
+    public var isLoaded: Bool { lock.lock(); defer { lock.unlock() }; return current != nil }
+
+    public func get() throws -> Embedder {
+        lock.lock(); defer { lock.unlock() }
+        used = Date()
+        if let current { return current }
+        let e = try make()
+        current = e; loads += 1
+        return e
+    }
+
+    /// Lets the model go when it hasn't been used for `seconds`. True if it went.
+    @discardableResult public func releaseIfIdle(after seconds: TimeInterval, now: Date = Date()) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        guard current != nil, now.timeIntervalSince(used) >= seconds else { return false }
+        // A fixed embedder (made by `init(_:)`) comes straight back from `make`, so this only drops the reference.
+        current = nil
+        return true
+    }
+}
+
 /// The one query embedder (C-79, task 7): loaded on the first semantic query, shared by every
 /// query after it (search's field, the List's filter), and dropped by `release()` when search
 /// has been quiet. Typing 30 characters loads the Core ML model once, not 30 times.
@@ -101,14 +137,24 @@ public enum QueryEmbedder {
     nonisolated(unsafe) private static var cached: Embedder?
     /// How many times the model was loaded (DuoChecks reads it).
     nonisolated(unsafe) public private(set) static var loads = 0
+    nonisolated(unsafe) private static var used = Date.distantPast
 
     public static func shared() throws -> Embedder {
         lock.lock(); defer { lock.unlock() }
+        used = Date()
         if let cached { return cached }
         let e = try Embedder(use: .query)
         cached = e
         loads += 1
         return e
+    }
+
+    /// Drops the model once no query has used it for `seconds` (the app's idle release, C-79). True if it went.
+    @discardableResult public static func releaseIfIdle(after seconds: TimeInterval, now: Date = Date()) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        guard cached != nil, now.timeIntervalSince(used) >= seconds else { return false }
+        cached = nil
+        return true
     }
 
     /// Drops the model's memory; the next query loads it again.

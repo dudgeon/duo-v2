@@ -106,7 +106,7 @@ func chipPrompt(_ text: String, screen: String = "idle-2.1.296.txt") -> String {
     var r2: ChatAnswerResult?
     Task { r2 = await c2.openPicker(.model) }
     spin(0.6)
-    check(r2?.ok == false && held.keys.isEmpty, "text in Claude's prompt: nothing is sent (\(r2?.why ?? "-"))")
+    check(r2?.ok == false && held.keys == [" ", ChatKey.backspace.bytes], "text in Claude's prompt (it stays under a typed space): only the probe's space and its Backspace are sent (\(r2?.why ?? "-"))")
 
     let busy = FakeTUI(chipScreen("idle-2.1.296.txt").replacingOccurrences(of: "auto mode on (shift+tab to cycle)", with: "esc to interrupt"))
     let c3 = ChatSession(key: "chip3", mode: .chat)

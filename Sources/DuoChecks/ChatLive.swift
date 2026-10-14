@@ -392,6 +392,36 @@ struct AskCase {
         check(chat.log.steps.last { $0.name == "Bash" }?.status == .done, "the Bash step is done in the chat")
     } else { check(false, "the Bash permission appears (\(chat.screen.kind), request \(chat.pendingRequest?.tool ?? "none"))") }
 
+    // F-303: after a turn Claude draws a dim prompt suggestion ("ok"), which the screen reads as typed text.
+    // Sending must not carry it ahead of the text, on Ctrl+G or on paste; the model chip must not refuse it.
+    for viaPaste in [false, true] {
+        let label = viaPaste ? "paste" : "default path"
+        if viaPaste && chat.usesExternalEditor == false { continue }   // already the paste path
+        // Suggestions are non-essential traffic, which this suite turns off; Spikes/duo-signal/live.sh runs with them.
+        guard until(30, { chat.reread().kind == .idle && chat.reread().input == "ok" }) else {
+            print("  - no prompt suggestion after the turn (\(label)): the suggestion cases are skipped"); continue
+        }
+        let saved = chat.composeDir
+        if viaPaste { chat.composeDir = nil }
+        chat.ui.composerBasis = nil
+        let before = transcriptSize()
+        let r = await_ { await chat.send("After a suggestion SCENARIO:hello") }
+        chat.composeDir = saved
+        _ = idle(); spin(1)
+        check(r?.ok == true && lastPrompt(after: before) == "After a suggestion SCENARIO:hello",
+              "a send over a prompt suggestion carries nothing ahead of the text (\(label); \(r?.why ?? "ok"); \(lastPrompt(after: before) ?? "-"))")
+        if until(30, { chat.reread().kind == .idle && chat.reread().input == "ok" }) {
+            if viaPaste { chat.composeDir = nil }
+            let opened = await_ { await chat.openPicker(.model) }
+            chat.composeDir = saved
+            spin(0.3)
+            check(opened?.ok == true && chat.pickerUp, "the model chip opens its card over a prompt suggestion (\(label); \(opened?.why ?? "ok"))")
+            tui.sendKeys("\u{1b}"); spin(0.6)
+            _ = idle()
+        } else { print("  - no suggestion came back after the send (\(label)): the model chip case is skipped") }
+        if !viaPaste { _ = idle() }
+    }
+
     start = transcriptSize()
     prompt("read")
     if until(25, { chat.reread().kind == .permission && chat.cardUp }) {

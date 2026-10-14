@@ -229,6 +229,14 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         decisionHandler(.cancel)
     }
 
+    /// The viewer's process died (C-81): load its page again and draw the deck at the same slide.
+    public func webViewWebContentProcessDidTerminate(_ w: WKWebView) {
+        DuoLog.write("deck: web content process terminated")
+        loaded = false
+        webView.load(URLRequest(url: URL(string: "\(Self.scheme)://app/deck.html")!))
+        load(slide: max(slide, 1))
+    }
+
     /// The page itself didn't load (the app's copy is missing): say so rather than "Drawing…" forever.
     public func webView(_ w: WKWebView, didFailProvisionalNavigation n: WKNavigation!, withError error: Error) {
         DuoLog.write("deck: the viewer's page didn't load: \(error.localizedDescription)")

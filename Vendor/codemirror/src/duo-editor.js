@@ -57,6 +57,7 @@ const headingMark = (level) => headingMarks[level - 1];
 const headingLines = [1, 2, 3, 4, 5, 6].map((l) => Decoration.line({ class: `duo-hl duo-hl${l}` }));
 const strong = Decoration.mark({ class: "duo-strong" });
 const em = Decoration.mark({ class: "duo-em" });
+const strike = Decoration.mark({ class: "duo-strike" });
 const code = Decoration.mark({ class: "duo-code" });
 const link = Decoration.mark({ class: "duo-link" });
 
@@ -134,9 +135,11 @@ function buildDecorations(view) {
           ranges.push([node.from, node.to, strong]);
         } else if (name === "Emphasis") {
           ranges.push([node.from, node.to, em]);
+        } else if (name === "Strikethrough") {
+          ranges.push([node.from, node.to, strike]);
         } else if (name === "InlineCode") {
           ranges.push([node.from, node.to, code]);
-        } else if (name === "EmphasisMark" || name === "CodeMark") {
+        } else if (name === "EmphasisMark" || name === "CodeMark" || name === "StrikethroughMark") {
           if (!raw && node.to - node.from <= 3 && state.doc.lineAt(node.from).number === state.doc.lineAt(node.to).number) {
             const parent = node.node.parent?.name;
             if (parent !== "FencedCode") ranges.push([node.from, node.to, hide]);
@@ -1150,8 +1153,8 @@ let settleTimer = null, fadeTimer = null;
 // The highlight's keyframes (from nothing to `selected`, and back), off with Reduce Motion.
 {
   const st = document.createElement("style");
-  st.textContent = "@keyframes duo-highlight-in { from { background-color: transparent; } to { background-color: var(--duo-selected); } }"
-    + " @keyframes duo-highlight-out { from { background-color: var(--duo-selected); } to { background-color: transparent; } }"
+  st.textContent = "@keyframes duo-highlight-in { from { background-color: transparent; } to { background-color: var(--duo-claude-edit); } }"
+    + " @keyframes duo-highlight-out { from { background-color: var(--duo-claude-edit); } to { background-color: transparent; } }"
     + " @media (prefers-reduced-motion: reduce) { .duo-added-new, .duo-added-fading { animation: none !important; } .duo-added-fading { background-color: transparent; } }";
   document.head.appendChild(st);
 }
@@ -1544,7 +1547,7 @@ class ImageWidget extends WidgetType {
         fig.appendChild(m);
       }
     };
-    if (/^(https?:|data:)/.test(this.src)) show(this.src);
+    if (/^(https:|data:)/.test(this.src)) show(this.src);
     else {
       const id = ++imageSeq;
       imageWaiters.set(id, show);
@@ -1752,6 +1755,7 @@ const duoTheme = EditorView.theme({
   ".duo-code-lang": { position: "absolute", right: "10px", top: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "11px", lineHeight: "16px", color: "var(--duo-text2)", zIndex: "1" },
   ".duo-strong": { fontWeight: "600" },
   ".duo-em": { fontStyle: "italic" },
+  ".duo-strike": { textDecoration: "line-through" },
   ".duo-code": { fontFamily: "'SF Mono', ui-monospace, monospace", fontSize: "12px", backgroundColor: "var(--duo-ground)", borderRadius: "4px", padding: "1px 4px" },
   ".duo-link": { color: "var(--duo-text)", textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)" },
   ".duo-fs": { boxShadow: "inset 1.5px 0 0 var(--duo-text), inset -1.5px 0 0 var(--duo-text)", paddingLeft: "12px", paddingRight: "12px", marginLeft: "-12px", marginRight: "-12px" },
@@ -1759,7 +1763,7 @@ const duoTheme = EditorView.theme({
   ".duo-fs-last": { boxShadow: "inset 1.5px 0 0 var(--duo-text), inset -1.5px 0 0 var(--duo-text), inset 0 -1.5px 0 var(--duo-text)", borderBottomLeftRadius: "6px", borderBottomRightRadius: "6px", paddingBottom: "8px" },
   ".duo-fs-first.duo-fs-last": { boxShadow: "inset 0 0 0 1.5px var(--duo-text)" },
   ".duo-fs-first::after": { content: "attr(data-label)", position: "absolute", right: "12px", top: "8px", color: "var(--duo-text2)", fontFamily: "-apple-system, sans-serif", fontSize: "13px" },
-  ".duo-added": { backgroundColor: "var(--duo-selected)", borderRadius: "var(--duo-radius-card)" },
+  ".duo-added": { backgroundColor: "var(--duo-claude-edit)", borderRadius: "var(--duo-radius-card)" },
   ".duo-added-new": { animation: "duo-highlight-in calc(var(--duo-motion-highlight-in-ms, 0) * 1ms) ease-out both" },
   ".duo-added-fading": { borderRadius: "var(--duo-radius-card)", animation: "duo-highlight-out calc(var(--duo-motion-highlight-out-ms, 0) * 1ms) ease-in-out both" },
   ".duo-task": { display: "inline-flex", margin: "0 8px 0 0", verticalAlign: "-1px", cursor: "default", textIndent: "0" },
@@ -1794,7 +1798,7 @@ const duoTheme = EditorView.theme({
   ".duo-fm-check": { margin: "0 4px 0 0", verticalAlign: "-2px" },
   ".duo-fm-control": { display: "inline-flex", alignItems: "center", marginLeft: "12px", verticalAlign: "-2px", cursor: "default" },
   ".duo-fm-link": { textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px" },
-  ".cm-line.duo-fm-claude::before": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", backgroundColor: "var(--duo-selected)", borderRadius: "4px", zIndex: "-1" },
+  ".cm-line.duo-fm-claude::before": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", backgroundColor: "var(--duo-claude-edit)", borderRadius: "4px", zIndex: "-1" },
   ".duo-fm-claude-label": { float: "right", paddingLeft: "8px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", color: "var(--duo-text2)", whiteSpace: "nowrap" },
   ".cm-line.duo-fm-error::after": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", boxShadow: "inset 0 0 0 1.5px var(--duo-text)", borderRadius: "4px", pointerEvents: "none" },
   ".duo-fm-message": { margin: "8px -8px 0", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", lineHeight: "16px", color: "var(--duo-text2)" },
@@ -2082,14 +2086,26 @@ function extensions(readOnly) {
     ];
 }
 
+// Bold, italic and strikethrough toggle (⌘B, ⌘I, ⇧⌘X; strikethrough as Google Docs): a selection
+// already wrapped in the marker, inside or just outside it, is unwrapped; otherwise it is wrapped.
+// Nothing selected puts the pair at the caret with the caret between (DL-189).
 function wrap(marker) {
-  const r = view.state.selection.main;
-  const text = view.state.sliceDoc(r.from, r.to);
-  view.dispatch({
-    changes: { from: r.from, to: r.to, insert: marker + text + marker },
-    selection: { anchor: r.from + marker.length, head: r.to + marker.length },
-    userEvent: "input.format",  // a user edit: clears Claude's highlight (DL-5)
-  });
+  const { state } = view, r = state.selection.main, n = marker.length;
+  const text = state.sliceDoc(r.from, r.to);
+  const doc = state.doc.length;
+  // A single `*` must not match half of `**`.
+  const lone = (at, dir) => marker !== "*" || state.sliceDoc(Math.max(0, at - (dir < 0 ? 1 : 0)), Math.min(doc, at + (dir < 0 ? 0 : 1))) !== "*";
+  const before = r.from >= n && state.sliceDoc(r.from - n, r.from) === marker && lone(r.from - n, -1);
+  const after = r.to + n <= doc && state.sliceDoc(r.to, r.to + n) === marker && lone(r.to + n, 1);
+  let spec;
+  if (!r.empty && before && after) {
+    spec = { changes: [{ from: r.from - n, to: r.from }, { from: r.to, to: r.to + n }], selection: { anchor: r.from - n, head: r.to - n } };
+  } else if (!r.empty && text.length >= 2 * n && text.startsWith(marker) && text.endsWith(marker) && lone(r.from + n, 1) && lone(r.to - n, -1)) {
+    spec = { changes: { from: r.from, to: r.to, insert: text.slice(n, -n) }, selection: { anchor: r.from, head: r.to - 2 * n } };
+  } else {
+    spec = { changes: { from: r.from, to: r.to, insert: marker + text + marker }, selection: { anchor: r.from + n, head: r.to + n } };
+  }
+  view.dispatch({ ...spec, userEvent: "input.format" });  // a user edit: clears Claude's highlight (DL-5)
 }
 
 // Format › Link… (⌘K, DL-108): the selection becomes a link's text and the caret waits for its
@@ -2132,6 +2148,7 @@ function addProperties() {
 const commands = {
   bold: () => wrap("**"),
   italic: () => wrap("*"),
+  strikethrough: () => wrap("~~"),
   code: () => wrap("`"),
   link: insertLink,
   heading1: () => lineMark("# ", HEADING_MARK),

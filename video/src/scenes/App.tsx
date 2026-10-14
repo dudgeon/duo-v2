@@ -13,7 +13,8 @@ import {Trace, traceProgress} from '../lib/Trace';
 // (where macOS draws a menu outside the window) a context menu are added. The planner (plan.mjs, kind
 // drawn/app) resolves every time from the voice and every rect from the capture's anchors, in window points.
 
-export type AppStep = {at: number; state: string};
+// fade: the new state dissolves in over this many seconds instead of cutting (an app motion, such as Claude's highlight).
+export type AppStep = {at: number; state: string; fade?: number};
 export type AppClick = {at: number; x: number; y: number; right?: boolean};
 export type AppDrag = {at: number; dur: number; from: {x: number; y: number}; to: {x: number; y: number}; reveal?: {state: string; rect: Rect}};
 export type AppCam = {at: number; dur: number; rect: Rect | null};       // null: back to the whole desk
@@ -89,8 +90,11 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
   const toFrame = (r: Rect): Rect => ({x: win.x + r.x * K, y: win.y + r.y * K, w: r.w * K, h: r.h * K});
 
   // Which capture is on screen: the last step at or before now.
-  let state = data.steps[0].state;
-  for (const s of data.steps) if (t >= s.at) state = s.state;
+  let state = data.steps[0].state, under: string | null = null, mix = 1;
+  for (const s of data.steps) if (t >= s.at) {
+    if (s.fade && t < s.at + s.fade && s.state !== state) { under = state; mix = (t - s.at) / s.fade; } else { under = null; mix = 1; }
+    state = s.state;
+  }
   const inEntry = data.entry && t < data.entry.until;
 
   // Camera: frame rects, eased between keys. A focus rect is fitted to the frame's aspect around its centre.
@@ -158,7 +162,12 @@ export const AppScene = ({t, data}: {t: number; data: AppData}) => {
                 return <Crop key={p} src={data.src[st]} scale={data.scale} region={r} rect={{x: r.x * K, y: r.y * K, w: r.w * K, h: r.h * K}} />;
               })}
             </>
-          ) : <Crop src={data.src[state]} scale={data.scale} region={{x: 0, y: 0, w: data.window.w, h: data.window.h}} rect={{x: 0, y: 0, w: win.w, h: win.h}} />}
+          ) : <>
+            {under && <Crop src={data.src[under]} scale={data.scale} region={{x: 0, y: 0, w: data.window.w, h: data.window.h}} rect={{x: 0, y: 0, w: win.w, h: win.h}} />}
+            <div style={{position: 'absolute', inset: 0, opacity: under ? 1 - Math.pow(1 - mix, 3) : 1}}>
+              <Crop src={data.src[state]} scale={data.scale} region={{x: 0, y: 0, w: data.window.w, h: data.window.h}} rect={{x: 0, y: 0, w: win.w, h: win.h}} />
+            </div>
+          </>}
           {(data.wipes ?? []).map((w, i) => {
             if (t < w.at || t > w.at + w.dur + 0.1) return null;
             // `chars`: typing, not a wipe. The text arrives a character at a time, with the small uneven gaps of real

@@ -365,6 +365,10 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
     weak var coordinator: ChatComposerField.Coordinator?
     static let font = NSFont.systemFont(ofSize: DuoTextStyle.chatBody.spec.size)
     static let inset = NSSize(width: 14, height: 11)
+    /// What a character typed with no styling carries; the field goes back to it after every styling pass.
+    var baseAttributes: [NSAttributedString.Key: Any] = [:]
+    /// What the Markdown pass found, kept for drawing the fences, quote rules and bullets.
+    var md = ComposerMarkdown.Analysis()
 
     init() {
         let storage = NSTextStorage(), layout = NSLayoutManager(), container = NSTextContainer(size: NSSize(width: 400, height: CGFloat.greatestFiniteMagnitude))
@@ -387,6 +391,7 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
         defaultParagraphStyle = p
         typingAttributes = [.font: Self.font, .foregroundColor: DuoNSColor.text, .paragraphStyle: p,
                             .baselineOffset: (DuoTextStyle.chatBody.spec.lineHeight - Self.font.ascender + Self.font.descender) / 4]
+        baseAttributes = typingAttributes
         registerForDraggedTypes([.fileURL])
         setAccessibilityLabel("Reply to Claude")
     }
@@ -416,7 +421,7 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
 
     /// `@` mentions in mono, the rest in the body face (small-features-handoff `composer-at`, DL-133).
     func styleMentions() {
-        guard let ts = textStorage, ts.length > 0 else { return }
+        guard let ts = textStorage, ts.length > 0 else { md = .init(); return }
         ts.beginEditing()
         ts.enumerateAttribute(.attachment, in: NSRange(location: 0, length: ts.length)) { a, r, _ in
             if a == nil { ts.addAttribute(.font, value: Self.font, range: r) }
@@ -426,6 +431,7 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
         }
         ts.endEditing()
         typingAttributes[.font] = Self.font
+        styleMarkdown()
     }
 
     func height(for width: CGFloat) -> CGFloat {
@@ -560,6 +566,34 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
         return ok
     }
 
+    /// ⌘B, ⌘I, ⇧⌘X, ⌘E and ⌘K while the composer has the keyboard (DL-188); the menus never see them then.
+    override func performKeyEquivalent(with e: NSEvent) -> Bool {
+        guard window?.firstResponder === self, e.type == .keyDown, isEditable else { return super.performKeyEquivalent(with: e) }
+        let mods = e.modifierFlags.intersection([.command, .shift, .option, .control])
+        let key = (e.charactersIgnoringModifiers ?? "").lowercased()
+        var marker: String?, link = false
+        switch (key, mods) {
+        case ("b", .command): marker = "**"
+        case ("i", .command): marker = "*"
+        case ("x", [.command, .shift]): marker = "~~"
+        case ("e", .command): marker = "`"
+        case ("k", .command): link = true
+        default: return super.performKeyEquivalent(with: e)
+        }
+        applyMarkdownKey(marker: marker, link: link)
+        return true
+    }
+
+    /// One replacement, so one ⌘Z; then the selection the editor would leave.
+    func applyMarkdownKey(marker: String?, link: Bool) {
+        let sel = selectedRange()
+        let all = (textStorage?.string ?? "") as NSString
+        if hasMarkedText() || all.substring(with: sel).contains("\u{FFFC}") { NSSound.beep(); return }
+        let edit = link ? ComposerMarkdown.link(in: all as String, selection: sel) : ComposerMarkdown.toggle(marker ?? "", in: all as String, selection: sel)
+        insertText(edit.text, replacementRange: edit.range)
+        setSelectedRange(edit.selection)
+    }
+
     override func keyDown(with e: NSEvent) {
         // ⇧⇥: Claude Code's own mode cycle (manual, accept edits, plan, auto …, whatever this claude
         // offers); the chip follows its footer (F-179).
@@ -670,7 +704,9 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
     }
 
     override func draw(_ dirtyRect: NSRect) {
+        drawMarkdownBehind()
         super.draw(dirtyRect)
+        drawMarkdownOver()
         if string.isEmpty {
             ("Reply to Claude" as NSString).draw(at: NSPoint(x: Self.inset.width + 5, y: Self.inset.height + 1.5),
                                                  withAttributes: [.font: Self.font, .foregroundColor: DuoNSColor.text2])

@@ -1,3 +1,4 @@
+import DuoSearch
 import Foundation
 
 /// The frontmatter names and values used in a project's notes and across Home, for the properties
@@ -78,14 +79,15 @@ public enum PropertyCorpus {
     }
 
     /// Markdown files under a folder, four levels deep, skipping hidden folders and dependencies.
-    static func markdownFiles(in root: URL, limit: Int) -> [URL] {
-        guard limit > 0 else { return [] }
+    public static func markdownFiles(in root: URL, limit: Int) -> [URL] {
+        guard limit > 0, !ProtectedFolders.neverFileRoot(root) else { return [] }
         var out: [URL] = []
         func walk(_ dir: URL, _ depth: Int) {
             guard out.count < limit, let items = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]) else { return }
             for u in items where out.count < limit {
                 if (try? u.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true {
-                    if depth < 4, !["node_modules", "build", "dist", "Pods", "vendor"].contains(u.lastPathComponent) { walk(u, depth + 1) }
+                    if depth < 4, !["node_modules", "build", "dist", "Pods", "vendor"].contains(u.lastPathComponent),
+                       !ProtectedFolders.skip(u, root: root) { walk(u, depth + 1) }
                 } else if u.pathExtension.lowercased() == "md" {
                     out.append(u)
                 }
