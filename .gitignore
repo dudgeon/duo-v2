@@ -15,3 +15,6 @@ video/score/.venv/
 video/score/.cache/
 __pycache__/
 skills/duo-director/evals/results/
+
+# Duo task notes: they quote Geoff verbatim, and this repo is public (Geoff, 2026-10-14)
+tasks/
