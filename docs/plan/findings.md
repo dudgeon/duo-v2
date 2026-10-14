@@ -3764,3 +3764,8 @@ An independent review found four must-fixes and five should-fixes. All are fixed
   - `directed_by:` is written quoted.
   - `run-evals.sh` finds the main checkout from git instead of a fixed path.
 - **Backlog:** C-89.
+- **Re-review of 24f06cf.**
+  - `start --background` mints the session id, prints `claude --bg -n <slug>-<4> --session-id <id> -- <brief>`, and records it as the task's worker before it runs. The director needs no link step and never `--adopt` for its own workers; a different id Claude may choose is matched by the name.
+  - `--adopt` and `--handed-back` need the same sign from the user: a keystroke in the director's own Duo tab after the director was told to ask. That tab is found by the director's process id (`$CLAUDE_PID`, now in `ClientCaps`), not its session id, which a /clear changes (F-29). The terminal path, a send run outside Claude, could never reach a director-only verb, so it's gone from the code and the text.
+  - The pause is recorded at the user's keystroke (`UserTyping.onType` → `persistPause`), not first at the next send, so queue delivery after a restart sees it.
+  - At each refresh a worker whose task is done, dropped, archived or gone leaves the registry, and a new run log keeps the newest four old ones per worker. `DUO_CHECKS=director`: 116.

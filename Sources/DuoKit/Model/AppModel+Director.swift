@@ -68,7 +68,7 @@ extension AppModel {
         case .directorSend:
             if let r = standDown() { return done(r) }
             guard role == .current else { return done(.fail("You're not \(p.name)'s director\(reg.current.map { " (\($0.name) is)" } ?? ""): `duo2 director start` makes you its director.")) }
-            directorSend(p, folder: folder, inv: inv, director: mine, caps: caps, caller: req.session, log: log, done: done)
+            directorSend(p, folder: folder, inv: inv, director: mine, caps: caps, log: log, done: done)
 
         case .directorRetire:
             if let r = standDown() { return done(r) }
@@ -231,9 +231,10 @@ extension AppModel {
             }
             if DirectorNotes.directedBy(text) == nil {
                 // A task with no directed_by: is the user's (DL-200): only on their yes.
-                guard inv.has("adopt") else {
+                if let why = adoptRefusal("adopt:\(path)", inv: inv, folder: folder, caps: caps,
+                                          ask: "\(hit.title) has no directed_by:, so it's the user's (DL-200)") {
                     log("refused", path, nil, nil, "the user's task (no directed_by:)")
-                    return .fail("\(hit.title) has no directed_by:, so it's the user's (DL-200). Ask them; if they say you may take it on, run this again with --adopt.")
+                    return .fail(why)
                 }
                 _ = editTaskNote(p.name, path, .setKey("directed_by", TaskNotes.quoted(director)))
             }
@@ -274,18 +275,36 @@ extension AppModel {
         if let w = inv.flags["worker"] {
             if w == caps.sessionId { return .fail("that's you: a director isn't its own worker") }
             guard let s = findSession(w, in: nil), let id = s.sessionId else { return .fail("no session '\(w)'") }
-            if let why = workerRefusal(id, task: path, folder: folder, director: director, caller: caps.sessionId, adopt: inv.has("adopt")) {
+            if let why = workerRefusal(id, task: path, folder: folder, director: director, caller: caps.sessionId) {
                 log("refused", path, id, nil, why)
                 return .fail(why)
             }
-            adopted = inv.has("adopt")
+            if !startedBy(director, id, task: path, folder: folder) {
+                if let why = adoptRefusal("adopt:\(id)", inv: inv, folder: folder, caps: caps,
+                                          ask: "that session wasn't started by you, so it's the user's (DL-200)") {
+                    log("refused", path, id, nil, "the user's session")
+                    return .fail(why)
+                }
+                adopted = true
+            }
             sid = id; how = adopted ? "adopted \(s.name) (the user's yes)" : "linked \(s.name)"
         } else if inv.has("background") {
-            let name = String(TaskNotes.slug(URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent).prefix(40))
-            let cmd = "cd \(shellQuote(folder.path)) && claude --bg -n \(shellQuote(name)) \(shellQuote(DirectorNotes.workerPrompt(path: path, director: director)))"
-            log("start", path, nil, nil, "background, by the director")
-            return .ok("Start the worker in the background yourself, then link it:\n  \(cmd)\n  duo2 director start \(path) --worker <the session id it prints>",
-                       ["task": path, "command": cmd])
+            // The director runs the command itself (its own flags, Remote Control, its model). Its
+            // session id is minted here and recorded as the task's worker before it starts, so no
+            // link step and no --adopt: Duo knows the director started it.
+            let minted = UUID().uuidString.lowercased()
+            let name = String(TaskNotes.slug(URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent).prefix(36)) + "-" + minted.prefix(4)
+            let cmd = "cd \(shellQuote(folder.path)) && claude --bg -n \(shellQuote(name)) --session-id \(minted) -- \(shellQuote(DirectorNotes.workerPrompt(path: path, director: director)))"
+            var reg = DirectorRegistry.load(project: folder)
+            reg.setWorker(task: path, session: minted, at: Self.isoNow(), adopted: false, name: name)
+            try? reg.save(project: folder)
+            _ = editTaskNote(p.name, path, .addSession(link: TaskNotes.link(title: name, id: minted)))
+            let status = TaskNotes.parse((try? String(contentsOf: folder.appending(path: path), encoding: .utf8)) ?? "", path: path).status
+            if status == nil || status == "open" || status == DirectorNotes.suggested { _ = editTaskNote(p.name, path, .setKey("status", "in-progress")) }
+            _ = editTaskNote(p.name, path, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Worker \(minted.prefix(8)) (\(name)) to start in the background.")))
+            log("start", path, minted, nil, "background, by the director")
+            return .ok("Run this; it's already recorded as \(path)'s worker, so there's no link step:\n  \(cmd)\nIf Claude starts it under another id, link that id: duo2 director start \(path) --worker <id> (it's matched by the name \(name)).",
+                       ["task": path, "command": cmd, "worker": minted, "name": name])
         } else {
             guard let id = newSession(in: p.name, prompt: DirectorNotes.workerPrompt(path: path, director: director), provenance: "directed-by:\(director)") else {
                 return .fail("couldn't start a worker in \(p.name) (is Duo running on live folders?)")
@@ -309,14 +328,55 @@ extension AppModel {
     /// Why `id` can't be this director's worker on `task`, or nil (DL-200). A session the director
     /// didn't start (its index provenance isn't `directed-by:<director>`) needs the user's yes
     /// (`--adopt`); never the director itself, a project's director, or another task's worker.
-    func workerRefusal(_ id: String, task: String, folder: URL, director: String, caller: String?, adopt: Bool) -> String? {
+    func workerRefusal(_ id: String, task: String, folder: URL, director: String, caller: String?) -> String? {
         if id == caller { return "that's you: a director isn't its own worker" }
         if liveFolders.values.contains(where: { DirectorRegistry.load(project: $0).current?.sessionId == id }) { return "that session is a project's director, not a worker" }
         let reg = DirectorRegistry.load(project: folder)
         if let w = reg.workers.first(where: { $0.session == id && $0.task != task }) { return "that session is already the worker on \(w.task): one worker per task (DL-201)" }
-        let started = liveFolders.values.contains { f in SessionIndex.load(project: f).sessions.contains { $0.sessionId == id && $0.provenance == "directed-by:\(director)" } }
-        if !started && !adopt { return "that session wasn't started by you, so it's the user's (DL-200). Ask them; if they say you may take it on, run this again with --adopt." }
         return nil
+    }
+
+    /// Whether this director started `id` for `task`: Duo started it for the director (index
+    /// provenance `directed-by:<director>`), or it's the session `start --background` minted and
+    /// recorded for the task (by id, or by the name it was given if Claude chose another id).
+    func startedBy(_ director: String, _ id: String, task: String, folder: URL) -> Bool {
+        if liveFolders.values.contains(where: { f in SessionIndex.load(project: f).sessions.contains { $0.sessionId == id && $0.provenance == "directed-by:\(director)" } }) { return true }
+        guard let w = DirectorRegistry.load(project: folder).worker(task: task), !w.adopted else { return false }
+        if w.session == id { return true }
+        guard let name = w.name else { return false }
+        return Beacon.readAll().contains { $0.sessionId == id && $0.name == name }
+    }
+
+    /// The director's own tab in Duo: the terminal running its claude process (`$CLAUDE_PID`),
+    /// whose key stays put when a /clear changes the session id (F-29). Nil outside Duo.
+    func directorTab(_ caps: ClientCaps) -> String? {
+        guard let pid = caps.pid else { return nil }
+        return terminals.all.first { $0.view.process?.shellPid == pid }?.key
+    }
+
+    /// Whether the user has typed in the director's own tab after `since`: their answer to what the
+    /// director asked. A director's word is never enough (DL-200, DL-202).
+    func userAnswered(after since: Date, caps: ClientCaps) -> Bool {
+        guard let tab = directorTab(caps), let k = UserTyping.lastKey(tab) else { return false }
+        return k > since
+    }
+
+    /// Nil when `--adopt` stands: the director was told to ask (recorded under `key`), and the user
+    /// has answered in its tab since. Otherwise records the ask (first time) and says what to do.
+    func adoptRefusal(_ key: String, inv: Invocation, folder: URL, caps: ClientCaps, ask: String) -> String? {
+        var reg = DirectorRegistry.load(project: folder)
+        if inv.has("adopt"), let at = reg.asked[key].flatMap({ ISO8601DateFormatter().date(from: $0) }), userAnswered(after: at, caps: caps) {
+            reg.asked[key] = nil
+            try? reg.save(project: folder)
+            return nil
+        }
+        if reg.asked[key] == nil {
+            reg.asked[key] = Self.isoNow()
+            try? reg.save(project: folder)
+        }
+        return inv.has("adopt")
+            ? "\(ask). --adopt needs the user's yes: ask them in this session, and run it again once they've answered you here in Duo."
+            : "\(ask). Ask them; once they've answered you here in Duo, run this again with --adopt."
     }
 
     func shellQuote(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }

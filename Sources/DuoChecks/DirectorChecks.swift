@@ -296,8 +296,9 @@ import Foundation
         try? fm.removeItem(at: root)
     }
     func wait(_ what: () -> Bool) { let until = Date().addingTimeInterval(8); while !what(), Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) } }
+    var directorPid: Int32?   // the director's own claude, when it has a tab in Duo
     func caps(_ name: String?) -> String {
-        var c = ClientCaps(); c.name = name; c.messaging = .no; c.version = "2.1.219"; c.backgroundResume = .no; c.monitor = .no
+        var c = ClientCaps(); c.name = name; c.messaging = .no; c.version = "2.1.219"; c.backgroundResume = .no; c.monitor = .no; c.pid = directorPid
         return String(decoding: try! JSONEncoder().encode(c), as: UTF8.self)
     }
     func run(_ verb: String, _ args: [String], as session: String, name: String? = nil) -> ControlResponse {
@@ -317,7 +318,7 @@ import Foundation
         }
         return nil
     }
-    let D = "dir-session-1", D2 = "dir-session-2"
+    let D = "dir-session-1", D2 = "dir-session-2", D3Pre = D
 
     // status before anyone directs.
     var r = run("director status", ["--json"], as: D, name: "director-dirproj")
@@ -360,11 +361,19 @@ import Foundation
     r = run("director start", ["theirs"], as: D, name: "director-dirproj")
     check(!r.ok && r.output.contains("--adopt") && DirectorNotes.directedBy(note("tasks/theirs.md")) == nil, "starting the user's task (no directed_by:) needs --adopt, and leaves the note alone")
     let user = m.newSession(in: "dirproj")!   // the user's own session: Duo started it, not the director
+    // The director's own tab: a stand-in claude in Duo, found by its pid (F-29: not its session id).
+    let dirTab = m.newSession(in: "dirproj")!
+    wait { m.terminals.existing(dirTab)?.view.process?.shellPid ?? 0 > 0 }
+    directorPid = m.terminals.existing(dirTab)?.view.process?.shellPid
     r = run("director start", ["--title", "Pair", "--request", "p", "--worker", user], as: D, name: "director-dirproj")
     check(!r.ok && r.output.contains("wasn't started by you") && DirectorRegistry.load(project: proj).worker(task: "tasks/pair.md") == nil,
           "--worker with a session the director didn't start: refused without --adopt")
     r = run("director start", ["pair", "--worker", D], as: D, name: "director-dirproj")
     check(!r.ok && r.output.contains("that's you"), "a director can't be its own worker")
+    r = run("director start", ["pair", "--worker", user, "--adopt"], as: D, name: "director-dirproj")
+    check(!r.ok && r.output.contains("needs the user's yes") && DirectorRegistry.load(project: proj).worker(task: "tasks/pair.md") == nil,
+          "--adopt on the director's word alone is refused (DL-200)")
+    UserTyping.note(dirTab, at: Date().addingTimeInterval(1))   // the user answers the director in its tab
     r = run("director start", ["pair", "--worker", user, "--adopt"], as: D, name: "director-dirproj")
     check(r.ok && DirectorRegistry.load(project: proj).worker(task: "tasks/pair.md")?.adopted == true, "with --adopt (the user's yes) it's recorded as adopted")
     r = run("director start", ["theirs", "--adopt", "--no-worker"], as: D, name: "director-dirproj")
@@ -409,7 +418,9 @@ import Foundation
 
     // The user types in the worker: paused there until the user hands it back (DL-200), and the
     // pause outlives a restart (it's in director.json).
+    m.deliverDirectorMessages()   // a refresh: Duo learns which sessions are directed workers
     UserTyping.note(w1)
+    check(DirectorRegistry.load(project: proj).paused[w1] != nil, "the keystroke itself records the pause in director.json (the queue and a restart see it)")
     typed = []
     r = run("director send", ["one-page-brief", "Ping."], as: D, name: "director-dirproj")
     check(!r.ok && r.output.contains("paused") && typed.isEmpty && DirectorRegistry.load(project: proj).paused[w1] != nil,
@@ -420,7 +431,7 @@ import Foundation
     r = run("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj")
     check(!r.ok && r.output.contains("Only the user") && DirectorRegistry.load(project: proj).paused[w1] != nil,
           "--handed-back on the director's word alone: refused, and the pause stays")
-    UserTyping.note(D, at: Date().addingTimeInterval(5))   // the user answers the director in Duo
+    UserTyping.note(dirTab, at: Date().addingTimeInterval(5))   // the user answers the director in its own tab
     screen = PromptRead(idle: true, input: "")
     m.submitHooks?.type = { s in typed.append(s); if s != "\r" { screen.input = "Ping." } }
     r = run("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj")
@@ -468,6 +479,31 @@ import Foundation
     let out = (try? String(contentsOf: runLog, encoding: .utf8)) ?? ""
     check(started == nil && exit == 3 && out.contains(support.resolvingSymlinksInPath().lastPathComponent) && out.contains("-- -x message"),
           "runDetached runs in the given folder, keeps the output, and reports the exit status (\(exit))")
+
+    // A worker the director starts in the background: recorded before it starts, so no link step.
+    r = run("director start", ["--title", "Bg job", "--request", "b", "--background"], as: D3Pre, name: "director-dirproj")
+    let bgWorker = DirectorRegistry.load(project: proj).worker(task: "tasks/bg-job.md")
+    check(r.ok && r.output.contains("--session-id \(bgWorker?.session ?? "?")") && r.output.contains("-- '") && bgWorker?.adopted == false && bgWorker?.name?.hasPrefix("bg-job-") == true,
+          "start --background prints a claude --bg command with a minted --session-id, already recorded as the task's worker")
+    // Once claude has started it, Duo lists the session (outside Duo, so no index provenance).
+    m.fixture.sessions.append(try JSONDecoder().decode(Fixture.Session.self, from: JSONSerialization.data(withJSONObject:
+        ["name": "bg job", "project": "dirproj", "state": "idle", "sessionId": bgWorker?.session ?? "?"])))
+    r = run("director start", ["bg-job", "--worker", bgWorker?.session ?? "?"], as: D3Pre, name: "director-dirproj")
+    check(r.ok && !r.output.contains("--adopt") && DirectorRegistry.load(project: proj).worker(task: "tasks/bg-job.md")?.adopted == false,
+          "linking that id needs no --adopt: Duo knows the director started it (\(r.output.prefix(120)))")
+    // Done or archived tasks lose their worker entry; old run logs are pruned.
+    try Data(note("tasks/bg-job.md").replacingOccurrences(of: "status: in-progress", with: "status: done").utf8).write(to: proj.appending(path: "tasks/bg-job.md"))
+    m.deliverDirectorMessages()
+    check(DirectorRegistry.load(project: proj).worker(task: "tasks/bg-job.md") == nil && DirectorRegistry.load(project: proj).worker(task: "tasks/one-page-brief.md") != nil,
+          "a done task's worker entry is removed at the next refresh; others stay")
+    let runs = root.appending(path: "runs")
+    try fm.createDirectory(at: runs, withIntermediateDirectories: true)
+    for i in 1...7 { try Data().write(to: runs.appending(path: "abcdef12-\(1000 + i).log")) }
+    try Data().write(to: runs.appending(path: "99999999-1.log"))
+    AppModel.pruneRuns(beside: runs.appending(path: "abcdef12-2000.log"))
+    let left = (try? fm.contentsOfDirectory(atPath: runs.path).sorted()) ?? []
+    check(left == ["99999999-1.log", "abcdef12-1004.log", "abcdef12-1005.log", "abcdef12-1006.log", "abcdef12-1007.log"],
+          "a new run log keeps the newest \(AppModel.runsKept - 1) old ones of that worker, and other workers' alone (\(left))")
 
     // Paths from director.json stay in tasks/.
     check(DirectorRegistry.isTaskPath("tasks/a.md") && !DirectorRegistry.isTaskPath("../../a.md") && !DirectorRegistry.isTaskPath("tasks/../../a.md")

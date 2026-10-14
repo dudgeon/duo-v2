@@ -90,6 +90,9 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
     /// Workers the user typed into since the director's last message (DL-200), by session id, with
     /// when: the director is paused there until the user hands it back. Kept across restarts.
     public var paused: [String: String] = [:]
+    /// When the director was told to ask the user before going on (`adopt:<task or session>`): a
+    /// keystroke of the user's in the director's own tab after that is the answer `--adopt` needs.
+    public var asked: [String: String] = [:]
 
     public struct Worker: Codable, Equatable, Sendable {
         public var task: String
@@ -97,14 +100,17 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
         public var since: String
         /// Not started by the director: the user said it may take this session on.
         public var adopted: Bool
-        public init(task: String, session: String, since: String, adopted: Bool) {
-            self.task = task; self.session = session; self.since = since; self.adopted = adopted
+        /// The name it was started under (`claude --bg -n <name>`), for one the director started
+        /// outside Duo: if Claude gave it another id than the one minted, the name still links it.
+        public var name: String?
+        public init(task: String, session: String, since: String, adopted: Bool, name: String? = nil) {
+            self.task = task; self.session = session; self.since = since; self.adopted = adopted; self.name = name
         }
     }
 
     public init() {}
 
-    enum CodingKeys: String, CodingKey { case schema, current, retired, pending, workers, paused }
+    enum CodingKeys: String, CodingKey { case schema, current, retired, pending, workers, paused, asked }
 
     /// Every key is optional, so a file from an older Duo (or a hand edit) still reads.
     public init(from d: Decoder) throws {
@@ -115,15 +121,16 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
         pending = try c.decodeIfPresent([Pending].self, forKey: .pending) ?? []
         workers = try c.decodeIfPresent([Worker].self, forKey: .workers) ?? []
         paused = try c.decodeIfPresent([String: String].self, forKey: .paused) ?? [:]
+        asked = try c.decodeIfPresent([String: String].self, forKey: .asked) ?? [:]
     }
 
     /// The worker on `task`: its latest one.
     public func worker(task: String) -> Worker? { workers.last { $0.task == task } }
 
     /// Records `session` as the worker on `task` (one worker per task: it replaces an earlier one).
-    public mutating func setWorker(task: String, session: String, at: String, adopted: Bool) {
+    public mutating func setWorker(task: String, session: String, at: String, adopted: Bool, name: String? = nil) {
         workers.removeAll { $0.task == task }
-        workers.append(Worker(task: task, session: session, since: at, adopted: adopted))
+        workers.append(Worker(task: task, session: session, since: at, adopted: adopted, name: name))
     }
 
     /// A task path the registry may name: a note directly in `tasks/`, nothing that climbs out.
@@ -332,6 +339,9 @@ public struct ClientCaps: Codable, Equatable, Sendable {
     /// A Claude Code Projects session (DL-203): the director starts nothing.
     public var projects = false
     public var sessionId: String?
+    /// The calling claude's process id (`$CLAUDE_PID`): how Duo finds the director's own tab, which
+    /// keeps its key when a /clear changes the session id (F-29).
+    public var pid: Int32?
     public var name: String?
     public var notes: [String] = []
 
@@ -345,6 +355,7 @@ public struct ClientCaps: Codable, Equatable, Sendable {
                              managed: String = managedSettings, home: URL = FileManager.default.homeDirectoryForCurrentUser) -> ClientCaps {
         var c = ClientCaps()
         c.sessionId = env["CLAUDE_CODE_SESSION_ID"]
+        c.pid = env["CLAUDE_PID"].flatMap { Int32($0) }
         c.inDuo = env["DUO_SESSION_ID"] != nil
         c.projects = env["CLAUDE_CODE_PROJECTS_SESSION"].map { !$0.isEmpty && $0 != "0" } ?? false
 

@@ -7,7 +7,7 @@ import Foundation
 /// the note and `.duo/director.json`, never assumed) and the screen check below, and every send is
 /// logged with its rung and noted in the task's Progress.
 extension AppModel {
-    func directorSend(_ p: Fixture.Project, folder: URL, inv: Invocation, director: String, caps: ClientCaps, caller: String?,
+    func directorSend(_ p: Fixture.Project, folder: URL, inv: Invocation, director: String, caps: ClientCaps,
                       log: @escaping (String, String?, String?, String?, String?) -> Void, done: @escaping @MainActor (Reply) -> Void) {
         if let target = inv.flags["director"] {
             guard p.isHome == true else { return done(.fail("--director is for Home's director asking a project's (DL-197); run it from Home.")) }
@@ -38,13 +38,12 @@ extension AppModel {
                 log("refused", hit.path, sid, nil, "paused: the user typed into the worker")
                 return done(.fail("The user typed into this worker (\(since)) since your last message, so you're paused there (DL-200). Ask them; once they hand it back, send again with --handed-back."))
             }
-            // Only the user hands it back: they answered the director in Duo since typing in the
-            // worker, or they run the send themselves from a terminal (no Claude session).
+            // Only the user hands it back: they've answered the director in its own Duo tab since
+            // typing in the worker.
             let sinceDate = ISO8601DateFormatter().date(from: since) ?? .distantPast
-            let userSaidSo = caller == nil || (caller.flatMap { UserTyping.lastKey($0) }.map { $0 > sinceDate } ?? false)
-            guard userSaidSo else {
+            guard userAnswered(after: sinceDate, caps: caps) else {
                 log("refused", hit.path, sid, nil, "hand-back without a sign from the user")
-                return done(.fail("Only the user can hand this worker back. Ask them; it counts once they've answered you in Duo since typing in the worker (or they run this with --handed-back in a terminal)."))
+                return done(.fail("Only the user can hand this worker back. Ask them; it counts once they've answered you here in Duo since typing in the worker."))
             }
             handedBack = true
         }
@@ -262,6 +261,7 @@ extension AppModel {
         p.environment = env
         p.standardInput = FileHandle.nullDevice
         try? FileManager.default.createDirectory(at: log.deletingLastPathComponent(), withIntermediateDirectories: true)
+        pruneRuns(beside: log)
         FileManager.default.createFile(atPath: log.path, contents: nil)
         let out = try? FileHandle(forWritingTo: log)
         p.standardOutput = out ?? FileHandle.nullDevice
@@ -275,14 +275,49 @@ extension AppModel {
         return nil
     }
 
+    /// Keeps the newest few run logs per worker in `.duo/director-runs/` (named `<id8>-<time>.log`).
+    public static let runsKept = 5
+    public static func pruneRuns(beside log: URL) {
+        let dir = log.deletingLastPathComponent(), prefix = String(log.lastPathComponent.prefix(9))
+        let fm = FileManager.default
+        let mine = ((try? fm.contentsOfDirectory(atPath: dir.path)) ?? []).filter { $0.hasPrefix(prefix) && $0.hasSuffix(".log") }.sorted()
+        for old in mine.dropLast(runsKept - 1) { try? fm.removeItem(at: dir.appending(path: old)) }
+    }
+
+    /// Takes workers whose task is done, dropped, archived or gone off the registry, and notes which
+    /// sessions are directed workers now (for the pause, `persistPause`).
+    func pruneDirectorWorkers(_ folder: URL) {
+        var reg = DirectorRegistry.load(project: folder)
+        let before = reg.workers
+        reg.workers.removeAll { w in
+            guard DirectorRegistry.isTaskPath(w.task), let text = try? String(contentsOf: folder.appending(path: w.task), encoding: .utf8) else { return true }
+            let n = TaskNotes.parse(text, path: w.task)
+            return n.archived || ["done", "dropped"].contains((n.status ?? "").lowercased())
+        }
+        if reg.workers != before { try? reg.save(project: folder) }
+        for w in reg.workers { directorWorkerKeys[w.session] = folder }
+    }
+
+    /// The user typed in a session: if it's a directed worker, its director is paused there now,
+    /// recorded at once, so a restart or the queue sees it (DL-200).
+    func persistPause(_ key: String) {
+        guard let folder = directorWorkerKeys[key] else { return }
+        var reg = DirectorRegistry.load(project: folder)
+        guard reg.workers.contains(where: { $0.session == key }), reg.paused[key] == nil else { return }
+        reg.paused[key] = Self.isoNow()
+        try? reg.save(project: folder)
+    }
+
     // MARK: The queue
 
     /// Delivers messages waiting for idle workers (each refresh). A message whose worker is gone,
     /// or whose task no longer names its director, is dropped with a Progress line; one naming a
     /// path outside `tasks/` is dropped untouched.
     public func deliverDirectorMessages() {
+        directorWorkerKeys = [:]
         for (project, folder) in liveFolders {
             guard FileManager.default.fileExists(atPath: DirectorRegistry.file(project: folder).path) else { continue }
+            pruneDirectorWorkers(folder)
             let reg = DirectorRegistry.load(project: folder)
             guard let first = reg.pending.first, let director = reg.current?.name, !deliveringDirector.contains(project) else { continue }
             let drop: (String) -> Void = { [weak self] why in
