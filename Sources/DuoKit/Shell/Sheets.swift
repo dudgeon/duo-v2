@@ -93,7 +93,14 @@ struct NewProjectSheet: View {
                 }
             }
             SheetRow("In", center: true) {
-                PlacePopup(places: form.places, selected: form.into, folderMark: true) { form.into = $0 }
+                PlacePopup(places: form.places, selected: form.into, folderMark: true,
+                           chooseFolder: { model.chooseNewProjectFolder() }) { form.into = $0 }
+            }
+            // DL-211's "use this folder" (stand-in until designed, Q-197): the sheet's own checkbox.
+            SheetRow("", center: true) {
+                Toggle("Make this folder the project", isOn: $form.useFolder)
+                    .toggleStyle(.checkbox).duoText(.body)
+                    .disabled(!form.canUseFolder)
             }
             SheetRow("") {
                 Text(AppModel.short(form.path)).duoText(.mono, lineHeight: DuoTextStyle.body.spec.lineHeight).foregroundStyle(DuoColor.text2)
@@ -186,12 +193,18 @@ struct PlacePopup: View {
     let places: [HomePlace]
     let selected: HomePlace
     let folderMark: Bool
+    /// New project's Choose Folder…, for a folder deeper in Home (DL-211).
+    var chooseFolder: (() -> Void)? = nil
     let choose: (HomePlace) -> Void
 
     var body: some View {
         Menu {
             ForEach(places, id: \.self) { p in
                 Button(p.label) { choose(p) }   // not an action: picks a field's value
+            }
+            if let chooseFolder {
+                Divider()
+                Button("Choose Folder…") { chooseFolder() }   // not an action: picks a field's value (duo2: project new --into <path>)
             }
         } label: {
             HStack(spacing: DuoSpace.gapGlyphToLabel) {

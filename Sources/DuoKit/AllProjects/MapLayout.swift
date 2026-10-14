@@ -43,6 +43,12 @@ public struct MapLayout: Sendable, Equatable {
 
     public static func isPath(_ topic: String) -> Bool { topic.hasPrefix("~") || topic.hasPrefix("/") }
 
+    /// Home has no projects yet (DL-212): nothing in Home but Home itself and folders with no project file.
+    public static func homeHasNoProjects(_ f: Fixture) -> Bool {
+        guard f.home != nil else { return false }
+        return !f.projects.contains { p in p.isHome != true && !p.isFolderOnly && p.topic.map { !isPath($0) } == true }
+    }
+
     /// Minutes since a session was last active, from its wait text when it has no timestamp
     /// (fixture sessions): `now`, `4m`, `1h`, `3d`, `2w`. Open sessions (`working`, `at prompt`) are 0.
     public static func minutesAgo(_ wait: String?) -> Double? {
@@ -174,6 +180,14 @@ extension AppModel {
         MapLayout.build(fixture, sort: mapSort, filter: mapFilter, openGroups: openOutsideGroups,
                         isArchived: { [self] in isArchived($0) }, settled: mapSettled,
                         now: minute.timeIntervalSince1970 * 1000)
+    }
+
+    /// The folders All projects offers to make projects of while Home has none (DL-212), less those
+    /// already on the map as folder tiles; nil once Home has a project.
+    public var firstRunFolders: [URL]? {
+        guard MapLayout.homeHasNoProjects(fixture) else { return nil }
+        let onMap = Set(fixture.projects.map(\.name))
+        return homeFolderList.filter { !onMap.contains($0.lastPathComponent) }
     }
 
     /// Fixes the map's Recent order as of now (DL-104: it settles on arrival, then holds).
