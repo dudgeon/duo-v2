@@ -60,8 +60,9 @@ public enum TerminalCommand: Sendable, Equatable {
     /// as its first message.
     /// `remoteControl` names it for the Claude app (`--remote-control <name>`, DL-128).
     case newClaude(sessionID: String, prompt: String?, remoteControl: String? = nil)
-    /// Reopen a session by id. Never `-c` or the picker (DL-14).
-    case resumeClaude(sessionID: String, remoteControl: String? = nil)
+    /// Reopen a session by id. Never `-c` or the picker (DL-14). `prompt` is submitted as its next
+    /// message: a director's message to a stopped worker (DL-199).
+    case resumeClaude(sessionID: String, remoteControl: String? = nil, prompt: String? = nil)
     /// A new session with the same history: `--resume <from> --fork-session`, under a Duo-minted id.
     case forkClaude(from: String, sessionID: String)
     /// A plain shell (DL-8). Auto-promotion of `claude` typed in it comes later.
@@ -70,7 +71,7 @@ public enum TerminalCommand: Sendable, Equatable {
     /// The id the process was started with: its `DUO_SESSION_ID`, whatever the session is now.
     public var launchId: String? {
         switch self {
-        case .newClaude(let id, _, _), .resumeClaude(let id, _), .forkClaude(_, let id): id
+        case .newClaude(let id, _, _), .resumeClaude(let id, _, _), .forkClaude(_, let id): id
         case .shell: nil
         }
     }
@@ -177,9 +178,11 @@ public final class TerminalSession {
             var args = ["--session-id", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude)
             if let prompt { args.append(prompt) }
             run(claude, args, environment: Self.environment(id))
-        case .resumeClaude(let id, let remote):
+        case .resumeClaude(let id, let remote, let prompt):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
-            run(claude, ["--resume", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude), environment: Self.environment(id))
+            var args = ["--resume", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude)
+            if let prompt { args += ["--", prompt] }   // `--`: a message starting with "-" is never a flag
+            run(claude, args, environment: Self.environment(id))
         case .forkClaude(let from, let id):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
             run(claude, ["--resume", from, "--fork-session", "--session-id", id] + Self.hookArgs(id), environment: Self.environment(id))

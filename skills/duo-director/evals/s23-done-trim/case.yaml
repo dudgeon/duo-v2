@@ -1,0 +1,35 @@
+schema_version: "1.0"
+name: s23-done-trim
+description: "S23 (DL-209): Done keeps its latest 20 lines; the oldest moves to log.md beside the project file."
+tags: [single, documents]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "I accept the work on tasks/press-kit.md. Mark it complete and log it."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: log-made
+    type: "file_exists"
+    path: "log.md"
+  - name: oldest-moved
+    type: "regex"
+    target: {"source": "file", "path": "log.md"}
+    pattern: "Finished old task 1\\."
+  - name: decisions-stay
+    type: "regex"
+    target: {"source": "file", "path": "PROJECT.md"}
+    pattern: "## Decisions"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The task was marked done (duo2 task status … done, or status: done) and one dated line linking it was added to ## Done.
+      - ## Done in PROJECT.md now holds 20 lines: the oldest ("Finished old task 1.") moved to log.md beside PROJECT.md.
+      - ## Decisions stayed in PROJECT.md.

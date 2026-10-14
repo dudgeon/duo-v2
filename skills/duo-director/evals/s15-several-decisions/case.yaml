@@ -1,0 +1,24 @@
+schema_version: "1.0"
+name: s15-several-decisions
+description: "S15: several decisions at once are asked together, recommendation first, with no artifact needed."
+tags: [single, pinned-219-strict]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "tasks/launch/decisions.md lists three open decisions for the launch. Get my answers and record them."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent put all three decisions to the user in one round (one AskUserQuestion call with several questions, or one message listing all three when AskUserQuestion isn't offered), not three separate rounds.
+      - For decisions 1 and 2 it gave a recommendation first, following the notes (Tuesday; 50 testers). For decision 3 any recommendation, or an explicit "no basis, your call", is fine.
+      - It did not make an artifact or HTML page as the only way to answer, and did not record any answer as decided before the user replied.

@@ -1,0 +1,4 @@
+[
+  {"when": "SPIKE:states", "once": true, "reply": [{"tool": "Bash", "input": {"command": "sleep 4", "description": "Work for a while, so the beacon reads busy"}}]},
+  {"when": "tool_result", "once": true, "reply": [{"tool": "AskUserQuestion", "input": {"questions": [{"question": "Which one?", "header": "Pick", "multiSelect": false, "options": [{"label": "A", "description": "a"}, {"label": "B", "description": "b"}]}]}}]}
+]

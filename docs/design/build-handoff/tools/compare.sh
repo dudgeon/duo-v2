@@ -43,10 +43,17 @@ mkdir -p "$(dirname "$out")"
 size="$(sed -n 's/.*name="design-size" content="\([0-9]*x[0-9]*\)".*/\1/p' "$target" | head -1)"
 w="${size%x*}"; h="${size#*x}"
 
+# A handoff's committed render is used as it is. Missing or older than its HTML, the target is
+# rendered into build/reference-renders/ instead: a handoff's screens/ is a snapshot of the design
+# canvas and is never written by a check (CLAUDE.md; C-88).
 ref="$root/screens/png/$screen@2x.png"
 if [ ! -s "$ref" ] || [ "$target" -nt "$ref" ]; then
-  mkdir -p "$(dirname "$ref")"
-  shoot "file://$(urlencode_path "$target")" "$w" "$h" "$ref" 2
+  repo="$(cd "$root/../../.." && pwd)"
+  ref="$repo/build/reference-renders/$(basename "$root")/$screen@2x.png"
+  if [ ! -s "$ref" ] || [ "$target" -nt "$ref" ]; then
+    mkdir -p "$(dirname "$ref")"
+    shoot "file://$(urlencode_path "$target")" "$w" "$h" "$ref" 2
+  fi
 fi
 
 ph=$((h - top))                       # panel height

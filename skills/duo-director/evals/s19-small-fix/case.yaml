@@ -1,0 +1,23 @@
+schema_version: "1.0"
+name: s19-small-fix
+description: "S19: a small fix gets one task and at most one worker: no fan-out."
+tags: [single, documents, pinned-219-strict]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "Fix the typo 'recieve' in docs/guide.md."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent made at most one task for this and started at most one worker (or did the one-word fix itself after making the task note).
+      - It did not split this into several tasks or workers.

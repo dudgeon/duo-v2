@@ -1,0 +1,40 @@
+{
+  "name": "pinned-219-strict",
+  "claude": "stub",
+  "stub": {
+    "version": "2.1.219",
+    "flags": [
+      "--bg",
+      "--remote-control",
+      "--settings",
+      "--resume",
+      "-p"
+    ],
+    "messaging": false
+  },
+  "settings": {
+    "disableAllHooks": true,
+    "disableRemoteControl": true,
+    "permissions": {
+      "deny": [
+        "Artifact",
+        "ArtifactData",
+        "ArtifactComments"
+      ]
+    }
+  },
+  "flags": {
+    "monitor": false
+  },
+  "env": {},
+  "duo": "none",
+  "expect": {
+    "version": "2.1.219",
+    "messaging": "no",
+    "background": "yes",
+    "backgroundResume": "no",
+    "remoteControl": "no",
+    "hooks": "no",
+    "monitor": "no"
+  }
+}

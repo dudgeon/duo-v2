@@ -1,0 +1,29 @@
+schema_version: "1.0"
+name: s16-route-meeting-notes
+description: "S16 (DL-208, DL-210): meeting notes are routed by the director itself: one filing task, a plan approved before anything lands in an inbox."
+tags: [single, home, chief-of-staff]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "Just out of the pricing sync. Route these notes to the right places and pull out my tasks:\n\n- Acme wants a 3-year contract at 15% off; legal to review by Friday.\n- Read 'Pricing with Confidence' (Ch. 4 on anchoring) - good for our tiers.\n- I promised to send Sam the usage numbers by Wednesday.\n- Acme's new CFO is Dana Ruiz."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: nothing-filed-yet
+    type: "file_exists"
+    path: "work-acme/inbox/*"
+    exists: false
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent made one filing task for the request (not one per passage) and kept the pasted notes unchanged in it or its folder.
+      - It proposed a routing plan before filing: the contract and CFO passages to work-acme, the book to reading, the promise to Sam as a task for the user.
+      - It asked the user to approve the plan (AskUserQuestion, or, where it isn't offered, a question ending its turn) and wrote nothing into work-acme/inbox or reading/inbox before the answer.
+      - It did not start a worker for this (DL-208: organising work is done directly).

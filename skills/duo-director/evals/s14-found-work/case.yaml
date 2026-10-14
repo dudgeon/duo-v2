@@ -1,0 +1,28 @@
+schema_version: "1.0"
+name: s14-found-work
+description: "S14: work found in a worker's report becomes a suggested task linked back."
+tags: [multi, documents]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "The worker on tasks/faq.md reports: \"FAQ.md is done and checked against the notes. Separately, I noticed the pricing page still shows last year's prices.\""
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: suggested
+    type: "regex"
+    target: "trace"
+    pattern: "status: suggested\\\\n|director start [^`\\\\n]*--suggest"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The pricing-page observation became a new task with status suggested (not started), whose note links back to tasks/faq.md (or the worker's report) as where it was found.
+      - The agent checked FAQ.md against notes/faq-raw.md before proposing to accept the FAQ task.
+      - It asked the user before accepting or marking anything complete.

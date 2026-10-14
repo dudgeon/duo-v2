@@ -171,8 +171,17 @@ case .doctor:
         print("Inside Claude's sandbox, add this socket to sandbox.network.allowUnixSockets in your settings. Duo's own terminals do this for you.")
         exit(1)
     }
+case .directorGuide:
+    print(DirectorSkill.text(), terminator: "")
+case .directorWatch:
+    exit(runDirectorWatch(rest))
 default:
-    guard let (endpoint, source) = ControlEndpoint.discover() else { fail("Duo isn't running. Run `duo2 doctor`.", code: 69) }
+    // The director's verbs carry what this client can do, which only its own side can read.
+    if action.family == .director { rest += ["--caps", directorCaps()] }
+    guard let (endpoint, source) = ControlEndpoint.discover() else {
+        if action.id == .directorStatus { exit(directorStatusOffline()) }
+        fail("Duo isn't running. Run `duo2 doctor`.", code: 69)
+    }
     let request = ControlRequest(token: endpoint.token, command: action.verb, args: rest,
                                  // Claude's own id is current after /clear; Duo's may be stale (F-29).
                                  session: env["CLAUDE_CODE_SESSION_ID"] ?? env["DUO_SESSION_ID"],

@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+"""Stand-in `claude` for the duo-director test harness (Tier 1).
+
+Driven by the profile JSON named in $STUB_PROFILE. Never talks to a network or a model.
+See scripts/director-harness/README.md.
+"""
+import json, os, signal, sys, time, uuid
+
+ALWAYS = {"--version", "-v", "--help", "-h", "--session-id", "-n", "--name", "--as-session"}
+WITH_VALUE = {"--session-id", "--resume", "-n", "--name", "--settings", "--model", "--setting-sources"}
+
+
+def load_profile():
+    p = os.environ.get("STUB_PROFILE")
+    if not p:
+        sys.stderr.write("stub-claude: STUB_PROFILE is not set\n")
+        sys.exit(2)
+    with open(p) as f:
+        return json.load(f)
+
+
+def config_dir():
+    d = os.environ.get("CLAUDE_CONFIG_DIR")
+    if not d:
+        sys.stderr.write("stub-claude: CLAUDE_CONFIG_DIR is not set (the stub never uses ~/.claude)\n")
+        sys.exit(2)
+    return d
+
+
+def write_session_file(profile, pid, session_id, name, kind):
+    d = os.path.join(config_dir(), "sessions")
+    os.makedirs(d, exist_ok=True)
+    stub = profile.get("stub", {})
+    rec = {
+        "pid": pid,
+        "sessionId": session_id,
+        "cwd": os.getcwd(),
+        "version": stub.get("version", "0.0.0"),
+        "kind": kind,
+        "status": "idle",
+    }
+    if name:
+        rec["name"] = name
+        rec["nameSource"] = "user"
+    else:
+        rec["nameSource"] = "derived"
+    if stub.get("messaging"):
+        rec["peerFeatures"] = ["notify_idle"]
+        rec["messagingSocketPath"] = "/tmp/stub-%d.sock" % pid
+    path = os.path.join(d, "%d.json" % pid)
+    with open(path, "w") as f:
+        json.dump(rec, f)
+    return path
+
+
+def sessions_path():
+    return os.path.join(config_dir(), "stub-sessions.json")
+
+
+def load_sessions():
+    try:
+        with open(sessions_path()) as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
+def save_sessions(s):
+    with open(sessions_path(), "w") as f:
+        json.dump(s, f)
+
+
+def parse(argv, allowed):
+    """Returns (flags dict, positionals). Unknown flags exit 1 with Claude Code's wording."""
+    flags, pos = {}, []
+    i = 0
+    while i < len(argv):
+        a = argv[i]
+        if a == "--":
+            pos.extend(argv[i + 1:])
+            break
+        if a.startswith("-") and len(a) > 1:
+            key = a.split("=", 1)[0]
+            if key not in allowed and key not in ALWAYS:
+                sys.stderr.write("error: unknown option '%s'\n" % key)
+                sys.exit(1)
+            if "=" in a:
+                flags[key] = a.split("=", 1)[1]
+            elif key in WITH_VALUE and i + 1 < len(argv):
+                flags[key] = argv[i + 1]
+                i += 1
+            else:
+                flags[key] = True
+        else:
+            pos.append(a)
+        i += 1
+    return flags, pos
+
+
+def hold_until_eof(cleanup):
+    def bye(*_):
+        cleanup()
+        sys.exit(0)
+    signal.signal(signal.SIGTERM, bye)
+    signal.signal(signal.SIGINT, bye)
+    try:
+        while sys.stdin.read(4096):
+            pass
+    finally:
+        cleanup()
+
+
+def main():
+    argv = sys.argv[1:]
+    profile = load_profile()
+    stub = profile.get("stub", {})
+    allowed = set(stub.get("flags", []))
+
+    # as-session: the checks' wrapper. Split at "--" before flag parsing so the command's flags pass.
+    if argv and argv[0] == "--as-session":
+        rest = argv[1:]
+        name = None
+        sid = str(uuid.uuid4())
+        cmd = []
+        i = 0
+        while i < len(rest):
+            if rest[i] == "--":
+                cmd = rest[i + 1:]
+                break
+            if rest[i] in ("-n", "--name") and i + 1 < len(rest):
+                name = rest[i + 1]; i += 1
+            i += 1
+        if not cmd:
+            sys.stderr.write("stub-claude --as-session: no command after --\n")
+            return 2
+        pid = os.getpid()
+        path = write_session_file(profile, pid, sid, name, "interactive")
+        env = dict(os.environ)
+        env["CLAUDE_PID"] = str(pid)
+        env["CLAUDE_CODE_SESSION_ID"] = sid
+        env.update({k: str(v) for k, v in profile.get("env", {}).items()})
+        try:
+            import subprocess
+            return subprocess.call(cmd, env=env)
+        finally:
+            try: os.remove(path)
+            except OSError: pass
+
+    if argv and argv[0] in ("agents", "stop", "rm"):
+        verb = argv[0]
+        sessions = load_sessions()
+        if verb == "agents":
+            print(json.dumps(sessions))
+        else:
+            target = argv[-1] if len(argv) > 1 else ""
+            for s in sessions:
+                if s["id"] == target or s["id"].startswith(target):
+                    if verb == "stop":
+                        s["alive"] = False
+                    else:
+                        s["removed"] = True
+            if verb == "rm":
+                sessions = [s for s in sessions if not s.get("removed")]
+            save_sessions(sessions)
+        return 0
+
+    flags, pos = parse(argv, allowed)
+
+    if "--version" in flags or "-v" in flags:
+        print("%s (Claude Code)" % stub.get("version", "0.0.0"))
+        return 0
+    if "--help" in flags or "-h" in flags:
+        print("Usage: claude [options] [command] [prompt]\n\nOptions:")
+        for f in stub.get("flags", []):
+            print("  %s" % f)
+        return 0
+
+    name = flags.get("-n") or flags.get("--name")
+    if name is True:
+        name = None
+    resume = flags.get("--resume")
+    if resume is True:
+        resume = None
+
+    if "-p" in flags:
+        if resume:
+            with open(os.path.join(config_dir(), "stub-turns.jsonl"), "a") as f:
+                f.write(json.dumps({"resumed": resume, "prompt": argv[-1]}) + "\n")
+        print(os.environ.get("STUB_REPLY", "ok"))
+        return 0
+
+    sid = flags.get("--session-id")
+    if not isinstance(sid, str):
+        sid = None
+    if "--bg" in flags:
+        sessions = load_sessions()
+        if resume:
+            old = next((s for s in sessions if s["id"] == resume), None)
+            if old and not name:
+                name = old.get("name")
+            sid = str(uuid.uuid4())  # a background resume mints a new id (P3)
+        else:
+            sid = sid or str(uuid.uuid4())
+        sessions.append({"id": sid, "name": name, "kind": "bg", "alive": True})
+        save_sessions(sessions)
+        print("backgrounded %s" % sid)
+        return 0
+
+    sid = sid or resume or str(uuid.uuid4())
+    path = write_session_file(profile, os.getpid(), sid, name, "interactive")
+
+    def cleanup():
+        try: os.remove(path)
+        except OSError: pass
+    hold_until_eof(cleanup)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

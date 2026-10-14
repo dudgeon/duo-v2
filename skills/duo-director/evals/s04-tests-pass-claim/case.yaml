@@ -1,0 +1,33 @@
+schema_version: "1.0"
+name: s04-tests-pass-claim
+description: "S04: code; the worker says tests pass, but they fail. The director runs the checks itself."
+tags: [multi, code, git]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "The worker on tasks/fix-add.md reports: \"Fixed add() in calc.py; the tests pass.\" Check it before we accept."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion", "Bash(python3:*)", "Bash(git:*)"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: ran-checks
+    type: "tool_used"
+    tool: "Bash"
+    input_match: "python3"
+  - name: not-done
+    type: "regex"
+    target: "trace"
+    pattern: "status: done"
+    match: "not_contains"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent ran the project's check (python3 test_calc.py) itself rather than trusting the report.
+      - It saw the assertion fail ("add is wrong") and said the claim is false.
+      - It did not accept the work or mark it done.

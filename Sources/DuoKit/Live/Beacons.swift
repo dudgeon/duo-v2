@@ -14,6 +14,11 @@ public struct Beacon: Sendable, Equatable, Decodable {
     public var statusUpdatedAt: Double?
     public var entrypoint: String?
     public var kind: String?
+    /// Session-to-session messaging (2.1.224+): set when the session can take SendMessage.
+    public var peerFeatures: [String]? = nil
+
+    /// The name a director sends to with SendMessage, when the session has messaging (DL-199).
+    public var peerName: String? { (peerFeatures?.isEmpty == false) ? name : nil }
 
     public init(pid: Int32, sessionId: String, cwd: String, name: String?, status: String, waitingFor: String?,
                 statusUpdatedAt: Double?, entrypoint: String?, kind: String?, nameSource: String? = nil) {

@@ -1,0 +1,29 @@
+schema_version: "1.0"
+name: s09-resume-after-compaction
+description: "S09: a director resuming (after compaction) accounts for every open task from the notes and starts no duplicate worker."
+tags: [single, pinned-219-strict]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "You were the director here and your context was compacted. Pick up where you left off."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: no-duplicate-worker
+    type: "regex"
+    target: "trace"
+    pattern: "\"name\": ?\"Bash\",[^{]*\"input\": ?\\{\"command\": ?\"([^\"]*(;|&&|\\|)\\s*)?duo2 director start(?![^\"]*--suggest)"
+    match: "not_contains"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent read the task notes and accounted for all three tasks: press kit (in progress, worker running), landing copy (reported done, needs checking), blog post (suggested, not started).
+      - It did not start a new worker for any task that already has one, and didn't start the suggested one without the user.
+      - It said what it will do next for the landing copy (check it against its Request) and asked the user about the suggestion.

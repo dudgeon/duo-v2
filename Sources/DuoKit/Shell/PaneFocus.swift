@@ -42,6 +42,7 @@ extension AppModel {
     public func installPaneKeys() {
         guard !PaneKeyMonitor.installed else { return }
         PaneKeyMonitor.installed = true
+        UserTyping.install(terminals: terminals)   // what the user typed where, for a director's guards (DL-199)
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
             guard let forward = PaneCycle.tabCycleDirection(keyCode: e.keyCode, flags: e.modifierFlags) else { return e }
             let used = MainActor.assumeIsolated { () -> Bool in

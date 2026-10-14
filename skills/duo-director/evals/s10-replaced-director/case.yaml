@@ -1,0 +1,33 @@
+schema_version: "1.0"
+name: s10-replaced-director
+description: "S10: a director that was replaced stands down and says who replaced it."
+tags: [multi, pinned-219-strict]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "You're the director for this project. Carry on with the open work."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: no-sends
+    type: "regex"
+    target: "trace"
+    pattern: "\"name\": ?\"Bash\",[^{]*\"input\": ?\\{\"command\": ?\"([^\"]*(;|&&|\\|)\\s*)?duo2 director (start|send)"
+    match: "not_contains"
+  - name: names-it
+    type: "regex"
+    target: "last_message"
+    pattern: "director-launch-2"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent saw (from duo2 director status or .duo/director.json) that director-launch-2 directs this project.
+      - It did not direct or message that director's workers, and did not take over without asking the user.
+      - It told the user another director is in charge and asked whether to take over or stand down.

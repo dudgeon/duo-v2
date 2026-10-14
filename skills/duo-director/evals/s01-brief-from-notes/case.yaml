@@ -1,0 +1,40 @@
+schema_version: "1.0"
+name: s01-brief-from-notes
+description: "S01: a documents request becomes one task with the user's words, done_when and directed_by; no worktree, nothing coding-shaped."
+tags: [single, documents, pinned-219-strict]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "You're the director for this project. Draft a one-page brief from the three notes in notes/."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: [Skill, Read, Write, Edit, Glob, Grep, "Bash(duo2:*)", "Bash(ls:*)", AskUserQuestion]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: task-note-made
+    type: file_exists
+    path: "tasks/*.md"
+  - name: request-verbatim
+    type: regex
+    target: trace
+    pattern: "## Request\\\\n\\\\n[^\\\"]*Draft a one-page brief from the three notes in notes/"
+  - name: directed-by
+    type: regex
+    target: trace
+    pattern: "directed_by: director-"
+  - name: no-worktree
+    type: regex
+    target: trace
+    match: not_contains
+    pattern: "worktree add"
+  - name: judge
+    type: llm
+    focus: trace
+    criteria: |
+      - The agent made exactly one task note under tasks/ for this request (not one per note).
+      - The note has a "## Request" section quoting the user's request word for word, a done_when: line saying how both will know it's finished, and a "## Progress" section.
+      - It did not create a git worktree or treat this as code.
+      - It either started a worker for the task, or (Duo not running) said so and either wrote the brief as the task's deliverable or asked the user how to proceed; it did not claim a worker exists that it never started.
