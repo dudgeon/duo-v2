@@ -261,6 +261,26 @@ Geoff, 2026-10-13: one task per worker means tasks stack up, so the director mus
 - **Move archived notes to `tasks/archive/`** (with their folders). This is what Geoff literally described. It changes DL-115 and the task scanner, and breaks plain path links. Worth it only if a cluttered `tasks/` folder in Finder or Obsidian is the real problem.
 - Archive without asking once you've accepted the work, still undoable. Faster, but against "require user input".
 
+### 12. When sessions can't message each other
+
+Geoff, 2026-10-14: "I'm concerned we are not yet talking about graceful fallbacks when the client Claude code does not support session to session messaging, which feels like a critical piece of functionality. What is the work-around?"
+
+The ladder below under Commitments does fall back, but on a client without messaging (the pinned 2.1.219 has no `SendMessage`, no inbox and no idle notices) its working rung for reaching a live worker was "Duo types the message and you press Enter". That stalls the director whenever you're away, which defeats the point.
+
+**Recommended: Duo carries the messages.** Duo already owns the workers' terminals, reads their transcripts and knows each session's state, so it can do the three jobs messaging does:
+- **Director to worker.** `duo2 director send <task> "<text>"`. For a worker in Duo, Duo types the text into the worker's prompt and submits it, but only when all of these hold: the session is on a task this director directs, Claude is idle with an empty prompt, and you haven't typed there recently (decision 6). That's the check Duo's model chip already makes before it sends `/model` (DL-168). If the worker isn't running, Duo resumes it in its tab with the text as its first prompt. A background worker that has stopped gets a headless turn (`claude -p --resume <id>`), never while its process is running. Otherwise the text waits in the task note's Progress, and the send is retried when the worker next goes idle.
+- **Worker to director.** The worker doesn't need to send anything. It ends its turn with its report as its last message and writes progress in the task note. Duo sees it go idle and reads that message (`duo2 session show`).
+- **Waking the director.** The director runs Monitor on `duo2 director watch`, which prints one line whenever one of its workers goes idle, needs you, or its task note changes. Monitor and ScheduleWakeup are in 2.1.219's code (seen in the binary; a harness run confirms they work). Without Monitor, ScheduleWakeup checks `duo2 director status` every few minutes. Without either, Duo types a one-line "worker finished" into the director's own prompt, under the same idle rules. Last of all, your next message.
+- **If hooks are switched off** (Q-192), Duo tells a session's state from its transcript and screen instead.
+
+On a client with messaging, `SendMessage` and idle notices come first and Duo's route is the fallback. Every send is logged with the route it took. A director outside Duo, on a client without messaging, can only use headless turns for stopped workers and asks you for the rest, so on such clients its workers start in Duo (decision 8 already makes that the default).
+
+New ground: Duo would submit a prompt on the director's behalf. Today Duo only types and leaves the Enter to you (`duo2 send text`), and its hooks never send a turn (DL-116). Recommended limits: only into sessions on a task this director directs, only when idle, and each one logged in the task's Progress.
+
+**Other options:**
+- Keep "Duo types it, you press Enter": safe, but the director waits on you for every message.
+- A file mailbox the worker reads at each turn through a hook: dropped earlier, because hooks may be off exactly where this matters.
+
 ## Commitments that aren't questions
 
 **It works on every client.** At start, `duo2 director status` sees what this session can do. Each job then has a ladder, best rung first:
@@ -268,7 +288,7 @@ Geoff, 2026-10-13: one task per worker means tasks stack up, so the director mus
   1. `SendMessage`;
   2. resuming into a background session (2.1.285+);
   3. a headless turn (`claude -p --resume`), for workers it started that way;
-  4. Duo types the message and you press Enter;
+  4. Duo submits it into an idle worker in Duo, or resumes a stopped one with it (decision 12);
   5. it asks you to pass it on.
 - **Hearing back:**
   1. `SendMessage`;
@@ -276,8 +296,10 @@ Geoff, 2026-10-13: one task per worker means tasks stack up, so the director mus
   3. Duo's session state plus the worker's last message (`duo2 session show`).
 - **Waking itself:**
   1. the idle notice;
-  2. Monitor;
-  3. your next message.
+  2. Monitor on `duo2 director watch`;
+  3. ScheduleWakeup;
+  4. Duo types a one-line notice into the director when it's idle;
+  5. your next message.
 
 On the work Mac: AskUserQuestion, `decisions.md` and the bottom rungs, with nothing scripted.
 
