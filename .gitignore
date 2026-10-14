@@ -14,3 +14,4 @@ video/voice/.venv/
 video/score/.venv/
 video/score/.cache/
 __pycache__/
+skills/duo-director/evals/results/
