@@ -16,12 +16,10 @@ graders:
     type: tool_used
     tool: Skill
   - name: no-duplicate-worker
-    type: "tool_used"
-    tool: "Bash"
-    min: 0
-    max: 0
-    arm: "both"
-    input_match: "director start"
+    type: "regex"
+    target: "trace"
+    pattern: "\"name\": ?\"Bash\",[^{]*\"input\": ?\\{\"command\": ?\"([^\"]*(;|&&|\\|)\\s*)?duo2 director start(?![^\"]*--suggest)"
+    match: "not_contains"
   - name: judge
     type: "llm"
     focus: "trace"
