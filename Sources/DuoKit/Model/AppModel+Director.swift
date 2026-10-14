@@ -258,8 +258,11 @@ extension AppModel {
         // The cap (DL-201): workers on unfinished tasks, this one aside.
         let brief = (try? String(contentsOf: folder.appending(path: "PROJECT.md"), encoding: .utf8)) ?? ""
         let cap = Director.cap(directorSection: Director.section("Director", in: brief))
+        // Workers on unfinished tasks, this one aside: running ones, and ones started in the
+        // background that haven't appeared yet (minted, within `mintedLasts`).
+        let reg0 = DirectorRegistry.load(project: folder)
         let busy = directedTasks(p.name, folder: folder, director: director).filter {
-            $0.note.path != path && $0.worker != nil && Director.holdsSlot(status: $0.note.status, archived: false)
+            $0.note.path != path && reg0.worker(task: $0.note.path) != nil && Director.holdsSlot(status: $0.note.status, archived: false)
         }
         if busy.count >= cap {
             _ = editTaskNote(p.name, path, .setKey("status", DirectorNotes.suggested))
@@ -349,15 +352,22 @@ extension AppModel {
 
     /// The director's own tab in Duo: the terminal running its claude process (`$CLAUDE_PID`),
     /// whose key stays put when a /clear changes the session id (F-29). Nil outside Duo.
-    func directorTab(_ caps: ClientCaps) -> String? {
-        guard let pid = caps.pid else { return nil }
-        return terminals.all.first { $0.view.process?.shellPid == pid }?.key
+    /// The pid only finds the tab; it proves nothing (the caller could name any process). The tab
+    /// counts only if the session running there is the project's current director, by its key or by
+    /// that process's beacon, and is the session asking. Otherwise nil.
+    func directorTab(_ caps: ClientCaps, folder: URL) -> String? {
+        guard let pid = caps.pid, let director = DirectorRegistry.load(project: folder).current?.sessionId,
+              let t = terminals.all.first(where: { $0.view.process?.shellPid == pid }) else { return nil }
+        let running = Beacon.readAll().first { $0.pid == pid }?.sessionId
+        guard t.key == director || running == director else { return nil }
+        guard caps.sessionId == nil || caps.sessionId == director || caps.sessionId == running else { return nil }
+        return t.key
     }
 
     /// Whether the user has typed in the director's own tab after `since`: their answer to what the
     /// director asked. A director's word is never enough (DL-200, DL-202).
-    func userAnswered(after since: Date, caps: ClientCaps) -> Bool {
-        guard let tab = directorTab(caps), let k = UserTyping.lastKey(tab) else { return false }
+    func userAnswered(after since: Date, caps: ClientCaps, folder: URL) -> Bool {
+        guard let tab = directorTab(caps, folder: folder), let k = UserTyping.lastKey(tab) else { return false }
         return k > since
     }
 
@@ -365,7 +375,11 @@ extension AppModel {
     /// has answered in its tab since. Otherwise records the ask (first time) and says what to do.
     func adoptRefusal(_ key: String, inv: Invocation, folder: URL, caps: ClientCaps, ask: String) -> String? {
         var reg = DirectorRegistry.load(project: folder)
-        if inv.has("adopt"), let at = reg.asked[key].flatMap({ ISO8601DateFormatter().date(from: $0) }), userAnswered(after: at, caps: caps) {
+        // An ask goes stale after `askLasts`: then the director asks again.
+        if let at = reg.asked[key].flatMap({ ISO8601DateFormatter().date(from: $0) }), Date().timeIntervalSince(at) > Self.askLasts {
+            reg.asked[key] = nil
+        }
+        if inv.has("adopt"), let at = reg.asked[key].flatMap({ ISO8601DateFormatter().date(from: $0) }), userAnswered(after: at, caps: caps, folder: folder) {
             reg.asked[key] = nil
             try? reg.save(project: folder)
             return nil
@@ -378,6 +392,11 @@ extension AppModel {
             ? "\(ask). --adopt needs the user's yes: ask them in this session, and run it again once they've answered you here in Duo."
             : "\(ask). Ask them; once they've answered you here in Duo, run this again with --adopt."
     }
+
+    /// How long an ask stands for `--adopt`, and how long a minted background worker may take to
+    /// appear before its slot is freed.
+    static let askLasts: TimeInterval = 30 * 60
+    static let mintedLasts: TimeInterval = 30 * 60
 
     func shellQuote(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
 

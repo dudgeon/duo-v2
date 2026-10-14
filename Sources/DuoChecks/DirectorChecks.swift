@@ -318,7 +318,12 @@ import Foundation
         }
         return nil
     }
-    let D = "dir-session-1", D2 = "dir-session-2", D3Pre = D
+    // The director runs in its own Duo tab (a stand-in claude): its session is the one the registry
+    // records, and its tab is where the user's answers count (found by pid, then checked).
+    let D = m.newSession(in: "dirproj")!
+    wait { m.terminals.existing(D)?.view.process?.shellPid ?? 0 > 0 && Beacon.readAll().contains { $0.sessionId == D } }
+    directorPid = m.terminals.existing(D)?.view.process?.shellPid
+    let D2 = "dir-session-2", D3Pre = D
 
     // status before anyone directs.
     var r = run("director status", ["--json"], as: D, name: "director-dirproj")
@@ -362,9 +367,7 @@ import Foundation
     check(!r.ok && r.output.contains("--adopt") && DirectorNotes.directedBy(note("tasks/theirs.md")) == nil, "starting the user's task (no directed_by:) needs --adopt, and leaves the note alone")
     let user = m.newSession(in: "dirproj")!   // the user's own session: Duo started it, not the director
     // The director's own tab: a stand-in claude in Duo, found by its pid (F-29: not its session id).
-    let dirTab = m.newSession(in: "dirproj")!
-    wait { m.terminals.existing(dirTab)?.view.process?.shellPid ?? 0 > 0 }
-    directorPid = m.terminals.existing(dirTab)?.view.process?.shellPid
+    let dirTab = D
     r = run("director start", ["--title", "Pair", "--request", "p", "--worker", user], as: D, name: "director-dirproj")
     check(!r.ok && r.output.contains("wasn't started by you") && DirectorRegistry.load(project: proj).worker(task: "tasks/pair.md") == nil,
           "--worker with a session the director didn't start: refused without --adopt")
@@ -419,6 +422,10 @@ import Foundation
     // The user types in the worker: paused there until the user hands it back (DL-200), and the
     // pause outlives a restart (it's in director.json).
     m.deliverDirectorMessages()   // a refresh: Duo learns which sessions are directed workers
+    setState(w1, .needsYou)
+    UserTyping.note(w1)
+    check(DirectorRegistry.load(project: proj).paused[w1] == nil, "answering a prompt in the worker (it's waiting on the user) doesn't pause its director")
+    setState(w1, .idle)
     UserTyping.note(w1)
     check(DirectorRegistry.load(project: proj).paused[w1] != nil, "the keystroke itself records the pause in director.json (the queue and a restart see it)")
     typed = []
@@ -431,6 +438,16 @@ import Foundation
     r = run("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj")
     check(!r.ok && r.output.contains("Only the user") && DirectorRegistry.load(project: proj).paused[w1] != nil,
           "--handed-back on the director's word alone: refused, and the pause stays")
+    // A forged pid: the caller names the worker's process, whose tab the user just typed in. The tab
+    // isn't the director's, so it proves nothing.
+    let savedPid = directorPid
+    directorPid = m.terminals.existing(w1)?.view.process?.shellPid
+    UserTyping.note(w1, at: Date().addingTimeInterval(4))
+    r = run("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj")
+    check(!r.ok && r.output.contains("Only the user") && DirectorRegistry.load(project: proj).paused[w1] != nil,
+          "$CLAUDE_PID naming the worker's process: its typing isn't the user's answer to the director")
+    directorPid = savedPid
+    UserTyping.note(w1, at: Date().addingTimeInterval(-300))   // that keystroke long ago, outside the quiet window
     UserTyping.note(dirTab, at: Date().addingTimeInterval(5))   // the user answers the director in its own tab
     screen = PromptRead(idle: true, input: "")
     m.submitHooks?.type = { s in typed.append(s); if s != "\r" { screen.input = "Ping." } }
@@ -491,6 +508,30 @@ import Foundation
     r = run("director start", ["bg-job", "--worker", bgWorker?.session ?? "?"], as: D3Pre, name: "director-dirproj")
     check(r.ok && !r.output.contains("--adopt") && DirectorRegistry.load(project: proj).worker(task: "tasks/bg-job.md")?.adopted == false,
           "linking that id needs no --adopt: Duo knows the director started it (\(r.output.prefix(120)))")
+    // Minted workers hold their slot until they appear, or for 30 minutes.
+    let slots = DirectorRegistry.load(project: proj).workers.filter { w in
+        Director.holdsSlot(status: TaskNotes.parse(note(w.task), path: w.task).status, archived: TaskNotes.parse(note(w.task), path: w.task).archived)
+    }.count
+    try Data("# p\n\n## Director\nmax workers: \(slots + 1)\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
+    r = run("director start", ["--title", "Bg two", "--request", "b2", "--background"], as: D3Pre, name: "director-dirproj")
+    check(r.ok, "a background start fits the last slot (\(slots + 1))")
+    r = run("director start", ["--title", "Bg three", "--request", "b3", "--background"], as: D3Pre, name: "director-dirproj")
+    check(!r.ok && r.output.contains("of \(slots + 1)"), "the next is refused: a minted worker that hasn't appeared yet still holds its slot (\(r.output.prefix(80)))")
+    var reg2 = DirectorRegistry.load(project: proj)
+    if let i = reg2.workers.firstIndex(where: { $0.task == "tasks/bg-two.md" }) { reg2.workers[i].since = "2026-01-01T00:00:00Z" }
+    try reg2.save(project: proj)
+    m.deliverDirectorMessages()
+    check(DirectorRegistry.load(project: proj).worker(task: "tasks/bg-two.md") == nil, "a minted worker that never appears frees its slot after 30 minutes")
+    try Data("# p\n\n## Director\nmax workers: 5\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
+    // A stale ask: --adopt needs a fresh one.
+    reg2 = DirectorRegistry.load(project: proj); reg2.asked["adopt:tasks/stale.md"] = "2026-01-01T00:00:00Z"; try reg2.save(project: proj)
+    try Data("---\ntitle: Stale\nstatus: open\n---\n# Stale\n".utf8).write(to: proj.appending(path: "tasks/stale.md"))
+    UserTyping.note(dirTab, at: Date().addingTimeInterval(6))
+    r = run("director start", ["stale", "--adopt", "--no-worker"], as: D3Pre, name: "director-dirproj")
+    check(!r.ok && r.output.contains("needs the user's yes"), "an ask older than 30 minutes doesn't count: the director asks again")
+    m.deliverDirectorMessages()
+    check(DirectorRegistry.load(project: proj).asked.values.allSatisfy { !$0.hasPrefix("2026-01-01") }, "stale asks are pruned at the refresh")
+
     // Done or archived tasks lose their worker entry; old run logs are pruned.
     try Data(note("tasks/bg-job.md").replacingOccurrences(of: "status: in-progress", with: "status: done").utf8).write(to: proj.appending(path: "tasks/bg-job.md"))
     m.deliverDirectorMessages()

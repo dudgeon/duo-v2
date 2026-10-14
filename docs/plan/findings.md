@@ -3769,3 +3769,11 @@ An independent review found four must-fixes and five should-fixes. All are fixed
   - `--adopt` and `--handed-back` need the same sign from the user: a keystroke in the director's own Duo tab after the director was told to ask. That tab is found by the director's process id (`$CLAUDE_PID`, now in `ClientCaps`), not its session id, which a /clear changes (F-29). The terminal path, a send run outside Claude, could never reach a director-only verb, so it's gone from the code and the text.
   - The pause is recorded at the user's keystroke (`UserTyping.onType` → `persistPause`), not first at the next send, so queue delivery after a restart sees it.
   - At each refresh a worker whose task is done, dropped, archived or gone leaves the registry, and a new run log keeps the newest four old ones per worker. `DUO_CHECKS=director`: 116.
+- **Third review (6a12e13).**
+  - The director's tab is found by `$CLAUDE_PID` but counts only if the session running there is the project's current director (its key or that process's beacon) and is the caller. A forged pid naming a worker proves nothing.
+  - The cap counts every recorded worker on an unfinished task, including one minted by `start --background` that hasn't appeared yet. A minted worker that never appears frees its slot after 30 minutes.
+  - A keystroke while the worker waits on the user (a permission or question prompt) doesn't pause its director: only typing at Claude's own prompt does.
+  - An ask for `--adopt` lasts 30 minutes, and the refresh prunes stale asks and the pauses of gone workers.
+  - The keystroke path reads `director.json` at most once per pause (`directorWorkerKeys` caches it).
+  - A valid hand-back lifts the in-memory pause at once; the recorded one stays until a send works.
+  - `DUO_CHECKS=director`: 123.

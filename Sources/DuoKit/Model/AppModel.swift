@@ -376,7 +376,7 @@ public final class AppModel {
     /// Projects whose director's queue is being delivered now (DL-199): one message at a time.
     var deliveringDirector: Set<String> = []
     /// Directed workers' session ids, with their project's folder (refreshed each refresh).
-    var directorWorkerKeys: [String: URL] = [:]
+    var directorWorkerKeys: [String: (folder: URL, paused: Bool)] = [:]
     /// The checks' stand-in for a terminal in a guarded submit (DL-199); nil in the app.
     public var submitHooks: SubmitIO?
     @ObservationIgnored private var refreshTimer: Timer?

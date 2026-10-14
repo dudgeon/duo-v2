@@ -41,11 +41,13 @@ extension AppModel {
             // Only the user hands it back: they've answered the director in its own Duo tab since
             // typing in the worker.
             let sinceDate = ISO8601DateFormatter().date(from: since) ?? .distantPast
-            guard userAnswered(after: sinceDate, caps: caps) else {
+            guard userAnswered(after: sinceDate, caps: caps, folder: folder) else {
                 log("refused", hit.path, sid, nil, "hand-back without a sign from the user")
                 return done(.fail("Only the user can hand this worker back. Ask them; it counts once they've answered you here in Duo since typing in the worker."))
             }
             handedBack = true
+            // The user's go lifts the in-memory pause now; the recorded one stays until a send works.
+            UserTyping.noteDirectorSend(worker.tabKey)
         }
         let facts = workerFacts(worker, paused: false)
         let rung = SendLadder.choose(director: caps, worker: facts, duoRunning: true)
@@ -288,21 +290,37 @@ extension AppModel {
     /// sessions are directed workers now (for the pause, `persistPause`).
     func pruneDirectorWorkers(_ folder: URL) {
         var reg = DirectorRegistry.load(project: folder)
-        let before = reg.workers
+        let before = reg
+        let iso = ISO8601DateFormatter()
+        let beacons = Beacon.readAll()
         reg.workers.removeAll { w in
             guard DirectorRegistry.isTaskPath(w.task), let text = try? String(contentsOf: folder.appending(path: w.task), encoding: .utf8) else { return true }
             let n = TaskNotes.parse(text, path: w.task)
-            return n.archived || ["done", "dropped"].contains((n.status ?? "").lowercased())
+            if n.archived || ["done", "dropped"].contains((n.status ?? "").lowercased()) { return true }
+            // A worker started in the background that never appeared frees its slot.
+            if w.name != nil, !w.adopted, !fixture.sessions.contains(where: { $0.sessionId == w.session }),
+               !beacons.contains(where: { $0.sessionId == w.session || $0.name == w.name }),
+               let since = iso.date(from: w.since), Date().timeIntervalSince(since) > Self.mintedLasts { return true }
+            return false
         }
-        if reg.workers != before { try? reg.save(project: folder) }
-        for w in reg.workers { directorWorkerKeys[w.session] = folder }
+        // Asks expire; pauses go with their workers.
+        reg.asked = reg.asked.filter { _, v in iso.date(from: v).map { Date().timeIntervalSince($0) <= Self.askLasts } ?? false }
+        let live = Set(reg.workers.map(\.session))
+        reg.paused = reg.paused.filter { live.contains($0.key) }
+        if reg != before { try? reg.save(project: folder) }
+        for w in reg.workers { directorWorkerKeys[w.session] = (folder, reg.paused[w.session] != nil) }
     }
 
     /// The user typed in a session: if it's a directed worker, its director is paused there now,
     /// recorded at once, so a restart or the queue sees it (DL-200).
+    /// Only typing at Claude's own prompt counts: a keystroke that answers a permission or question
+    /// prompt (the session is waiting on the user) doesn't pause its director. Cheap: the cache says
+    /// whether it's already paused, so a keystroke reads director.json at most once per pause.
     func persistPause(_ key: String) {
-        guard let folder = directorWorkerKeys[key] else { return }
+        guard let (folder, paused) = directorWorkerKeys[key], !paused else { return }
+        if fixture.sessions.first(where: { $0.tabKey == key })?.state == .needsYou { return }
         var reg = DirectorRegistry.load(project: folder)
+        directorWorkerKeys[key] = (folder, true)
         guard reg.workers.contains(where: { $0.session == key }), reg.paused[key] == nil else { return }
         reg.paused[key] = Self.isoNow()
         try? reg.save(project: folder)
