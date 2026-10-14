@@ -3743,3 +3743,24 @@ DL-211 and DL-212, from a new user's first run (Home was ~/Documents/Claude, man
 - **Below 3/3 on both:** s04 (the check isn't run: chained commands refused, so the director reasons from the source instead), s20 (over the cap, counted by hand), s22 (rule placement).
 - **Haiku only:** s01 (the Request isn't verbatim), s02 (the three requests aren't all left suggested), s07, s23.
 - **Sonnet only:** s13 and s17 at 0/3 on the judge alone (their command graders pass), s06 and s09 at 1–2/3. Sonnet does more than asked, and the rubrics may be stricter than the skill. The next pass reads their traces (`--keep-temp`, `trace.py`) before changing either.
+
+## F-317 · The review of the director (80be37e): what was wrong, and the rules now
+
+An independent review found four must-fixes and five should-fixes. All are fixed, each with a DuoCheck (`DUO_CHECKS=director`, now 110).
+
+- **The installer claimed the user's file.** On first install (no hash recorded) an existing `~/.claude/skills/duo-director/SKILL.md` with other text was overwritten, recorded as Duo's, and removed on uninstall. Now a skill file that was there before Duo's is the user's: left alone, never recorded, never removed. The duo2 skill follows the same rule. Uninstall removes only `SKILL.md`, then the folder only if it's empty, and a linked skill folder or file is never written through or removed.
+- **A director could reach the user's own sessions.** Workers were whatever a task note's `sessions:` linked, `--worker` took any session, and `guardedSubmit` was passed `directedBy` = the director and `onTask` = true, so two guards never bit. Now:
+  - a worker is a session the director started, or adopted on the user's yes (`--adopt`), recorded per task in `.duo/director.json` (`workers`);
+  - the guards are fed the note's real `directed_by:` and that record;
+  - a task with no `directed_by:` needs `--adopt`;
+  - `--worker` refuses the caller itself, a project's director, and another task's worker.
+- **A name moved the registry.** Any verb from any session with the director's name made it the director. Now the role is by session id alone. `status` never changes the registry, and a resumed director (new id, same name, P3) records itself with `duo2 director start --take-over`.
+- **Messages could be read as flags.** `claude -p --resume <id> <message>`, `--bg --resume` and `--resume <id> <prompt>` now put `--` before the message.
+- **Should-fixes:**
+  - The DL-200 pause is kept in `director.json` (`paused`). `--handed-back` lifts it only after a real sign from the user (they typed in the director's session since, or ran the send themselves outside Claude), and only once a send succeeds.
+  - Text Duo typed but didn't send stays in the prompt and is no longer also queued.
+  - Headless and background resumes run in the worker's own folder (its terminal's, else its transcript's), keep their output in `.duo/director-runs/`, and are logged as sent only on exit 0.
+  - Task paths from `director.json` must be notes directly in `tasks/`.
+  - `directed_by:` is written quoted.
+  - `run-evals.sh` finds the main checkout from git instead of a fixed path.
+- **Backlog:** C-89.

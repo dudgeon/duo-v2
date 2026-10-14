@@ -181,7 +181,7 @@ public final class TerminalSession {
         case .resumeClaude(let id, let remote, let prompt):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
             var args = ["--resume", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude)
-            if let prompt { args.append(prompt) }
+            if let prompt { args += ["--", prompt] }   // `--`: a message starting with "-" is never a flag
             run(claude, args, environment: Self.environment(id))
         case .forkClaude(let from, let id):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }

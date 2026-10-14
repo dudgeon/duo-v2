@@ -218,17 +218,30 @@ public enum Installer {
         return r
     }
 
-    /// Writes a generated skill unless the user edited it (its hash isn't what Duo last wrote).
-    /// Returns the hash to keep: Duo's text once written, the old one while the user's edit stands.
+    /// A skill's folder or file that is a symbolic link is the user's arrangement: Duo neither
+    /// writes through it nor removes it.
+    static func isLink(_ url: URL) -> Bool {
+        (try? FileManager.default.destinationOfSymbolicLink(atPath: url.path)) != nil
+    }
+
+    /// Writes a generated skill unless it's the user's: edited since Duo wrote it (its hash isn't
+    /// what Duo last wrote), or there before Duo ever wrote one (no hash) with other text, or
+    /// reached through a symbolic link. Returns the hash to keep: Duo's text once written; nil
+    /// while the file is the user's, so uninstall never takes it.
     static func writeSkill(_ text: String, to file: URL, label: String, hash h: String?, into r: inout Report) -> String? {
-        let now = try? String(contentsOf: file, encoding: .utf8)
-        if let now, let h, hash(now) != h, now != text {
-            r.lines.append("\(label): edited by you, left alone.")
+        let folder = file.deletingLastPathComponent()
+        if isLink(folder) || isLink(file) {
+            r.lines.append("\(label): \(folder.path) is a link, left alone.")
             return h
+        }
+        let now = try? String(contentsOf: file, encoding: .utf8)
+        if let now, now != text {
+            if let h, hash(now) != h { r.lines.append("\(label): edited by you, left alone."); return h }
+            if h == nil { r.lines.append("\(label): \(file.path) was there before Duo's, left alone."); return nil }
         }
         guard now != text else { return hash(text) }
         do {
-            try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             try Data(text.utf8).write(to: file, options: .atomic)
             r.lines.append("\(label): \(now == nil ? "written" : "updated").")
             return hash(text)
@@ -238,13 +251,21 @@ public enum Installer {
         }
     }
 
-    /// Removes a generated skill's folder if it's still Duo's text.
+    /// Removes a generated skill if it's still Duo's text: the SKILL.md alone, then its folder only
+    /// if nothing else is in it. A linked folder or file is left alone.
     static func removeSkill(_ text: String, at file: URL, hash h: String?, into r: inout Report) {
+        let folder = file.deletingLastPathComponent()
+        if isLink(folder) || isLink(file) { r.lines.append("Left \(folder.path): it's a link."); return }
         guard let s = try? String(contentsOf: file, encoding: .utf8) else { return }
-        if h.map({ hash(s) == $0 }) ?? false || s == text {
-            try? FileManager.default.removeItem(at: file.deletingLastPathComponent())
-            r.lines.append("Removed \(file.deletingLastPathComponent().path).")
-        } else { r.lines.append("Left \(file.path): you edited it.") }
+        guard h.map({ hash(s) == $0 }) ?? false || s == text else { r.lines.append("Left \(file.path): you edited it."); return }
+        let fm = FileManager.default
+        try? fm.removeItem(at: file)
+        if (try? fm.contentsOfDirectory(atPath: folder.path))?.isEmpty == true {
+            try? fm.removeItem(at: folder)
+            r.lines.append("Removed \(folder.path).")
+        } else {
+            r.lines.append("Removed \(file.path) (the folder holds other files of yours, so it stays).")
+        }
     }
 
     /// Removes exactly what the manifest says Duo wrote. Edited files stay, with a note.

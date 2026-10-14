@@ -14,7 +14,7 @@ public enum DirectorNotes {
                                links: [String], template: String, date: Date = Date()) -> String {
         var text = TaskNotes.newNote(title: title, links: links, template: template, date: date)
         text = TaskNotes.setting("status", status, in: text)
-        text = TaskNotes.setting("directed_by", director, in: text)
+        text = TaskNotes.setting("directed_by", TaskNotes.quoted(director), in: text)
         if let d = doneWhen?.trimmingCharacters(in: .whitespacesAndNewlines), !d.isEmpty { text = TaskNotes.setting("done_when", TaskNotes.quoted(d), in: text) }
         let body = text.hasSuffix("\n") ? text : text + "\n"
         return body + "\n## Request\n\n" + request.trimmingCharacters(in: .newlines) + "\n\n## Progress\n\n" + progressLine("Filed by \(director)\(status == suggested ? ", suggested" : "").", date: date) + "\n"

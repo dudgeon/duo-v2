@@ -20,7 +20,9 @@ cp $root/.build/debug/duo2 $out/bin/duo2   # a copy: the sandbox may not read th
 # The case sandbox can read neither /tmp nor the repo: each scaffold copies this duo2 into its own
 # folder (.director-bin), and that relative entry goes first on PATH (F-314).
 export DIRECTOR_EVAL_DUO2=$out/bin/duo2 PATH=.director-bin:$PATH
-lock=(/Users/geoff/repos/duo-v2/scripts/gpu-lock.sh --shared director-evals)
+# The lock script is the main checkout's (CLAUDE.md: never a work tree's copy): git's first work tree.
+main=$(git -C $root worktree list --porcelain | sed -n '1s/^worktree //p')
+lock=(${main:-$root}/scripts/gpu-lock.sh --shared director-evals)
 [[ -n ${GPU_LOCK:-} && -x ${lock[1]} ]] || lock=()
 cd $skill
 $lock $claude plugin ev""al $skill --trust-plugin --scaffold --ablation none --model ${DIRECTOR_EVAL_MODEL:-claude-haiku-5-5} \

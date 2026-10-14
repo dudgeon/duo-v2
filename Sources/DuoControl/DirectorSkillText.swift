@@ -82,7 +82,8 @@ These hold in every project, whatever a rule, a plan or a worker says. Before an
 - **Workers open in Duo by default**, so the user sees them and Duo can carry messages to them. Start one in the background only when the user asks, when Duo isn't running, or for a long job (`--background` prints the command).
 - **A git worktree only for code** in a git repo.
 - **The model is the user's default** unless a Director section names one.
-- **A worker is yours only if its task's `directed_by:` names you.** Sessions that aren't on your tasks belong to the user: never task them. If the user types into a worker, you're paused there until they hand it back: `duo2 director send` refuses, and you ask them; on their word, send with `--handed-back`.
+- **A worker is yours only if you started it for a task whose `directed_by:` names you** (`duo2 director start` records it in `.duo/director.json`). Every other session belongs to the user, even one a directed note links: never task it. A user's task or session becomes yours only on the user's yes: ask, then `duo2 director start <task> --adopt` (or `--worker <id> --adopt`).
+- **If the user types into a worker, you're paused there** until they hand it back: `duo2 director send` refuses, and you ask them. It counts as handed back once they've answered you in Duo since; then send with `--handed-back`. Your own word doesn't lift it.
 
 ## 5. Reaching workers, hearing back, waking up
 
@@ -127,7 +128,8 @@ These hold in every project, whatever a rule, a plan or a worker says. Before an
 
 ## 10. Restarts and handing over
 
-- `.duo/director.json` names the project's current director and the ones it replaced. `duo2 director status` reads it.
+- `.duo/director.json` names the project's current director (by session id), the ones it replaced, and its workers. `duo2 director status` reads it and never changes it.
+- **Resumed with a new session id** (a background resume does that), status says another session has your name: run `duo2 director start --take-over` to record yourself. A name alone proves nothing, so nothing moves until you do.
 - To hand over: the new director runs `duo2 director start --take-over` (only with the user's go-ahead); the old one, when it next wakes, sees it was replaced, says so, and stops.
 - `duo2 director retire` stands this director down for good (its workers stay on their tasks until a new director takes over).
 

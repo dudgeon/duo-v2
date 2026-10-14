@@ -84,7 +84,52 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
         public init(task: String, message: String, at: String) { self.task = task; self.message = message; self.at = at }
     }
 
+    /// The sessions this director may reach, each on one task (DL-200): ones it started, or ones the
+    /// user agreed it may adopt. A session not here is the user's, whatever a note's `sessions:` says.
+    public var workers: [Worker] = []
+    /// Workers the user typed into since the director's last message (DL-200), by session id, with
+    /// when: the director is paused there until the user hands it back. Kept across restarts.
+    public var paused: [String: String] = [:]
+
+    public struct Worker: Codable, Equatable, Sendable {
+        public var task: String
+        public var session: String
+        public var since: String
+        /// Not started by the director: the user said it may take this session on.
+        public var adopted: Bool
+        public init(task: String, session: String, since: String, adopted: Bool) {
+            self.task = task; self.session = session; self.since = since; self.adopted = adopted
+        }
+    }
+
     public init() {}
+
+    enum CodingKeys: String, CodingKey { case schema, current, retired, pending, workers, paused }
+
+    /// Every key is optional, so a file from an older Duo (or a hand edit) still reads.
+    public init(from d: Decoder) throws {
+        let c = try d.container(keyedBy: CodingKeys.self)
+        schema = try c.decodeIfPresent(Int.self, forKey: .schema) ?? 1
+        current = try c.decodeIfPresent(Entry.self, forKey: .current)
+        retired = try c.decodeIfPresent([Entry].self, forKey: .retired) ?? []
+        pending = try c.decodeIfPresent([Pending].self, forKey: .pending) ?? []
+        workers = try c.decodeIfPresent([Worker].self, forKey: .workers) ?? []
+        paused = try c.decodeIfPresent([String: String].self, forKey: .paused) ?? [:]
+    }
+
+    /// The worker on `task`: its latest one.
+    public func worker(task: String) -> Worker? { workers.last { $0.task == task } }
+
+    /// Records `session` as the worker on `task` (one worker per task: it replaces an earlier one).
+    public mutating func setWorker(task: String, session: String, at: String, adopted: Bool) {
+        workers.removeAll { $0.task == task }
+        workers.append(Worker(task: task, session: session, since: at, adopted: adopted))
+    }
+
+    /// A task path the registry may name: a note directly in `tasks/`, nothing that climbs out.
+    public static func isTaskPath(_ p: String) -> Bool {
+        p.range(of: #"^tasks/[^/\\]+\.md$"#, options: .regularExpression) != nil && !p.contains("..")
+    }
 
     public static func file(project: URL) -> URL { project.appending(path: ".duo/director.json") }
 
@@ -110,21 +155,21 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
         case none
     }
 
-    /// What a session (by id, or by name when the id moved on a resume, P3) is to this project.
-    public func role(sessionId: String?, name: String?) -> Role {
-        if let c = current, (sessionId != nil && c.sessionId == sessionId) { return .current }
+    /// What a session is to this project, by its id alone. A name proves nothing (two sessions can
+    /// share one): a resumed director whose id moved (P3) is `.other` until it runs
+    /// `duo2 director start --take-over`, and `status` never moves the registry.
+    public func role(sessionId: String?) -> Role {
+        if let c = current, let sessionId, c.sessionId == sessionId { return .current }
         if let sid = sessionId, let r = retired.last(where: { $0.sessionId == sid }) {
             return .replaced(by: current?.name == r.replacedBy ? current : retired.last(where: { $0.name == r.replacedBy }))
         }
-        // A background resume keeps the name and mints a new id (P3): the same name is the same
-        // director, so the registry follows its new id (`adopt`).
-        if let c = current, let name, c.name == name { return .current }
         if let c = current { return .other(c) }
         return .none
     }
 
-    /// Records `name`/`sessionId` as the current director. Taking over from another moves it to
-    /// `retired`, replaced by this one; the same name with a new id (a resume) just moves the id.
+    /// Records `name`/`sessionId` as the current director (only `start`, and `--take-over` when one
+    /// exists). Taking over from another moves it to `retired`, replaced by this one; the same name
+    /// with a new id (the director resumed, P3) just moves the id.
     public mutating func adopt(name: String, sessionId: String, at: String) {
         if let c = current {
             if c.sessionId == sessionId, c.name == name { return }

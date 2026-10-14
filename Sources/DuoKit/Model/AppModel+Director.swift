@@ -18,14 +18,15 @@ extension AppModel {
     }
 
     func directorVerb(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
-        let caps = inv.flags["caps"].flatMap { try? JSONDecoder().decode(ClientCaps.self, from: Data($0.utf8)) } ?? ClientCaps()
+        var caps = inv.flags["caps"].flatMap { try? JSONDecoder().decode(ClientCaps.self, from: Data($0.utf8)) } ?? ClientCaps()
+        caps.sessionId = req.session ?? caps.sessionId   // the caller, as the control plane knows it
         let pname = inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name ?? currentProject?.name ?? fixture.home?.name
         guard let pname, let p = project(named: pname), let folder = liveFolders[p.name] else {
             return done(.fail("which project? Run it from the project's folder, or --project <p>"))
         }
         let me = req.session ?? caps.sessionId
         var reg = DirectorRegistry.load(project: folder)
-        let role = reg.role(sessionId: me, name: caps.name)
+        let role = reg.role(sessionId: me)
         let mine = reg.current.flatMap { role == .current ? $0.name : nil }
             ?? (caps.name?.hasPrefix("director-") == true ? caps.name! : Director.name(project: p.name))
         let now = Self.isoNow()
@@ -36,11 +37,6 @@ extension AppModel {
             guard case .replaced(let by) = role else { return nil }
             log("standdown", by.map { "replaced by \($0.name)" })
             return .fail("You were replaced as \(p.name)'s director\(by.map { " by \($0.name) (since \($0.since))" } ?? ""). Stand down: say so to the user and stop directing.")
-        }
-        // The same name with a new id is the same director after a resume (P3): follow the id.
-        if role == .current, let me, let c = reg.current, c.sessionId != me, c.name == caps.name {
-            reg.adopt(name: c.name, sessionId: me, at: now)
-            try? reg.save(project: folder)
         }
 
         switch id {
@@ -61,14 +57,18 @@ extension AppModel {
                 let took = reg.current
                 reg.adopt(name: mine, sessionId: me, at: now)
                 try? reg.save(project: folder)
-                log(took == nil ? "adopt" : "takeover", took.map { "replaced \($0.name)" })
+                log(took == nil ? "adopt" : "takeover", took.map { "replaced \($0.name)\($0.name == mine ? " (the same name: this director resumed)" : "")" })
+            }
+            // `start --take-over` alone: only the take-over (a resumed director whose id moved, P3).
+            if inv[0] == nil, inv.flags["title"] == nil {
+                return done(inv.has("take-over") ? .ok("You're \(p.name)'s director now, as \(mine).") : .fail("usage: \(ActionID.directorStart.action.usage)"))
             }
             done(directorStart(p, folder: folder, inv: inv, director: mine, caps: caps, log: log))
 
         case .directorSend:
             if let r = standDown() { return done(r) }
             guard role == .current else { return done(.fail("You're not \(p.name)'s director\(reg.current.map { " (\($0.name) is)" } ?? ""): `duo2 director start` makes you its director.")) }
-            directorSend(p, folder: folder, inv: inv, director: mine, caps: caps, log: log, done: done)
+            directorSend(p, folder: folder, inv: inv, director: mine, caps: caps, caller: req.session, log: log, done: done)
 
         case .directorRetire:
             if let r = standDown() { return done(r) }
@@ -89,8 +89,11 @@ extension AppModel {
 
     // MARK: Workers
 
-    /// The project's tasks `director` directs (open and suggested; not archived), with each one's worker.
+    /// The project's tasks `director` directs (open and suggested; not archived), each with its
+    /// worker: the session `.duo/director.json` records for that task, never a session the note
+    /// merely links (those are the user's, DL-200).
     func directedTasks(_ project: String, folder: URL, director: String) -> [DirectedTask] {
+        let reg = DirectorRegistry.load(project: folder)
         let dir = folder.appending(path: "tasks")
         let files = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
         return files.filter { $0.pathExtension.lowercased() == "md" }.sorted { $0.path < $1.path }.compactMap { url in
@@ -98,15 +101,15 @@ extension AppModel {
             let note = TaskNotes.parse(text, path: "tasks/" + url.lastPathComponent)
             guard !note.archived else { return nil }
             let mod = ((try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast).timeIntervalSince1970
-            let worker = note.sessionIds.reversed().lazy.compactMap { id in self.fixture.sessions.first { $0.sessionId == id } }.first
-            let facts = worker.map(workerFacts)
+            let worker = reg.worker(task: note.path).flatMap { w in self.fixture.sessions.first { $0.sessionId == w.session } }
+            let facts = worker.map { workerFacts($0, paused: reg.paused[$0.sessionId ?? ""] != nil) }
             let word = facts.map { $0.run == .stopped ? "stopped" : stateWord(worker!.state) } ?? "no worker"
             return DirectedTask(note: note, text: text, modified: mod, worker: worker, facts: facts, stateWord: word)
         }
     }
 
     /// Where a worker runs and whether it's running, from Duo's terminal and Claude's beacon (F-311).
-    func workerFacts(_ s: Fixture.Session) -> WorkerFacts {
+    func workerFacts(_ s: Fixture.Session, paused: Bool = false) -> WorkerFacts {
         let t = terminals.existing(s.tabKey)
         let runningHere = t?.isLiveClaude == true
         let runningElsewhere = !runningHere && s.liveProcess == true
@@ -123,8 +126,8 @@ extension AppModel {
         if !runningHere && !runningElsewhere { run = .stopped }
         else { run = s.state == .working ? .working : s.state == .needsYou ? .needsYou : .idle }
         let beacon = Beacon.readAll().first { $0.sessionId == s.sessionId }
-        let typed = UserTyping.pausedSinceDirector(s.tabKey)
-        return WorkerFacts(place: place, run: run, peerName: beacon?.peerName, userTyping: typed != nil)
+        let typed = paused || UserTyping.pausedSinceDirector(s.tabKey) != nil
+        return WorkerFacts(place: place, run: run, peerName: beacon?.peerName, userTyping: typed)
     }
 
     func directorStatus(_ p: Fixture.Project, folder: URL, reg: DirectorRegistry, role: DirectorRegistry.Role, director: String, caps: ClientCaps) -> Reply {
@@ -136,7 +139,9 @@ extension AppModel {
             lines.append("You were replaced as \(p.name)'s director\(by.map { " by \($0.name)" } ?? ""): stand down, say so, and stop.")
             j["role"] = "replaced"; j["replacedBy"] = by?.name
         case .other(let c):
-            lines.append("\(p.name) is directed by \(c.name) (session \(c.sessionId.prefix(8)), since \(c.since)), not you. Ask the user before taking over (`duo2 director start --take-over`).")
+            lines.append(c.name == caps.name
+                ? "\(p.name)'s director is named \(c.name), like you, but runs as session \(c.sessionId.prefix(8)). If you are that director, resumed with a new id, `duo2 director start --take-over` records you; otherwise another session has your name: ask the user."
+                : "\(p.name) is directed by \(c.name) (session \(c.sessionId.prefix(8)), since \(c.since)), not you. Ask the user before taking over (`duo2 director start --take-over`).")
             j["role"] = "other"; j["current"] = c.name
         case .none:
             lines.append("Nobody directs \(p.name) yet. `duo2 director start` makes you its director, as \(director)\(caps.name == director ? "" : " (start as `claude -n \(director)` so the name survives restarts)").")
@@ -224,7 +229,14 @@ extension AppModel {
                 log("refused", path, nil, nil, "directed by another director (\(by))")
                 return .fail("\(hit.title) is directed by \(by), not you: never task another director's worker (DL-200).")
             }
-            if DirectorNotes.directedBy(text) == nil { _ = editTaskNote(p.name, path, .setKey("directed_by", director)) }
+            if DirectorNotes.directedBy(text) == nil {
+                // A task with no directed_by: is the user's (DL-200): only on their yes.
+                guard inv.has("adopt") else {
+                    log("refused", path, nil, nil, "the user's task (no directed_by:)")
+                    return .fail("\(hit.title) has no directed_by:, so it's the user's (DL-200). Ask them; if they say you may take it on, run this again with --adopt.")
+                }
+                _ = editTaskNote(p.name, path, .setKey("directed_by", TaskNotes.quoted(director)))
+            }
             if inv.has("suggest") { _ = editTaskNote(p.name, path, .setKey("status", DirectorNotes.suggested)) }
             if let d = inv.flags["done-when"] { _ = editTaskNote(p.name, path, .setKey("done_when", TaskNotes.quoted(d))) }
         }
@@ -258,12 +270,16 @@ extension AppModel {
         // The worker.
         let sid: String
         var how: String
+        var adopted = false
         if let w = inv.flags["worker"] {
+            if w == caps.sessionId { return .fail("that's you: a director isn't its own worker") }
             guard let s = findSession(w, in: nil), let id = s.sessionId else { return .fail("no session '\(w)'") }
-            if let other = directedTasks(p.name, folder: folder, director: director).first(where: { $0.note.path != path && $0.worker?.sessionId == id && Director.holdsSlot(status: $0.note.status, archived: false) }) {
-                return .fail("\(s.name) is already the worker on \(other.note.path): one worker per task (DL-201).")
+            if let why = workerRefusal(id, task: path, folder: folder, director: director, caller: caps.sessionId, adopt: inv.has("adopt")) {
+                log("refused", path, id, nil, why)
+                return .fail(why)
             }
-            sid = id; how = "linked \(s.name)"
+            adopted = inv.has("adopt")
+            sid = id; how = adopted ? "adopted \(s.name) (the user's yes)" : "linked \(s.name)"
         } else if inv.has("background") {
             let name = String(TaskNotes.slug(URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent).prefix(40))
             let cmd = "cd \(shellQuote(folder.path)) && claude --bg -n \(shellQuote(name)) \(shellQuote(DirectorNotes.workerPrompt(path: path, director: director)))"
@@ -277,6 +293,9 @@ extension AppModel {
             sid = id; how = "started in Duo"
         }
         let title = fixture.sessions.first { $0.sessionId == sid }?.name ?? sid
+        var reg = DirectorRegistry.load(project: folder)
+        reg.setWorker(task: path, session: sid, at: Self.isoNow(), adopted: adopted)
+        try? reg.save(project: folder)
         _ = editTaskNote(p.name, path, .addSession(link: TaskNotes.link(title: title, id: sid)))
         let status = TaskNotes.parse((try? String(contentsOf: folder.appending(path: path), encoding: .utf8)) ?? "", path: path).status
         if status == nil || status == "open" || status == DirectorNotes.suggested { _ = editTaskNote(p.name, path, .setKey("status", "in-progress")) }
@@ -287,12 +306,26 @@ extension AppModel {
                    ["task": path, "worker": sid, "director": director])
     }
 
+    /// Why `id` can't be this director's worker on `task`, or nil (DL-200). A session the director
+    /// didn't start (its index provenance isn't `directed-by:<director>`) needs the user's yes
+    /// (`--adopt`); never the director itself, a project's director, or another task's worker.
+    func workerRefusal(_ id: String, task: String, folder: URL, director: String, caller: String?, adopt: Bool) -> String? {
+        if id == caller { return "that's you: a director isn't its own worker" }
+        if liveFolders.values.contains(where: { DirectorRegistry.load(project: $0).current?.sessionId == id }) { return "that session is a project's director, not a worker" }
+        let reg = DirectorRegistry.load(project: folder)
+        if let w = reg.workers.first(where: { $0.session == id && $0.task != task }) { return "that session is already the worker on \(w.task): one worker per task (DL-201)" }
+        let started = liveFolders.values.contains { f in SessionIndex.load(project: f).sessions.contains { $0.sessionId == id && $0.provenance == "directed-by:\(director)" } }
+        if !started && !adopt { return "that session wasn't started by you, so it's the user's (DL-200). Ask them; if they say you may take it on, run this again with --adopt." }
+        return nil
+    }
+
     func shellQuote(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
 
     /// A director's edit to a task note: through the editor's buffer when the note is open there
     /// (as Status ▸ does, DL-13), else on disk. Nil, or why not.
     @discardableResult
     func editTaskNote(_ project: String, _ path: String, _ edit: TaskNotes.NoteEdit) -> String? {
+        guard DirectorRegistry.isTaskPath(path) else { return "\(path) isn't a note in tasks/" }
         guard let folder = liveFolders[project] else { return "no project '\(project)'" }
         let file = folder.appending(path: path)
         if let e = editorIfLoaded, e.url?.standardizedFileURL == file.standardizedFileURL {
