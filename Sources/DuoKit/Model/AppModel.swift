@@ -325,6 +325,9 @@ public final class AppModel {
 
     /// Home's folder (DL-85); nil until one is chosen. Live mode runs either way (DL-82).
     public var liveRoot: URL?
+    /// The folders in Home that aren't projects (`homeFolders(root:)`), read with each refresh: All
+    /// projects offers them when Home has no projects yet (DL-212).
+    public var homeFolderList: [URL] = []
     @ObservationIgnored public var isLive = false
     /// Needs-you cards showing their whole question (DL-100: past 6 lines they fold).
     public var expandedQuestions: Set<String> = []
@@ -464,8 +467,14 @@ public final class AppModel {
                 }
                 try? from.save(project: m.from)
             }
+            let homeFolders = root.map { AppModel.homeFolders(root: $0) } ?? []
             await self?.apply(snapshot, folders: folders, beacons: beacons, generation: generation)
+            await self?.setHomeFolderList(homeFolders)
         }
+    }
+
+    private func setHomeFolderList(_ list: [URL]) {
+        if list != homeFolderList { homeFolderList = list }   // unchanged: no redraw every refresh
     }
 
     private func apply(_ snapshot: Fixture, folders: [String: URL], beacons: [Beacon], generation: Int) {

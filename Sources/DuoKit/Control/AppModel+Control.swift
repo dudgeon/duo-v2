@@ -171,6 +171,11 @@ extension AppModel {
             let text = (projectPayload(p.name) ?? p.name) + "\(sessions.count) sessions: " + sessions.prefix(10).map(\.name).joined(separator: ", ")
             done(.ok(text, j))
         case .projectMake:
+            // A folder in Home with no sessions yet (All projects' folders, DL-212): by name or path in Home.
+            if let name = inv[0], project(named: name) == nil, !inv.has("not-now"), let place = homePlace(named: name), place.folder != liveRoot?.standardizedFileURL {
+                if let why = useFolderProblem(place.folder) ?? makeProject(folder: place.folder) { return done(.fail(why)) }
+                return done(.ok("\(place.folder.lastPathComponent) is now a project (PROJECT.md written and opened). Undo: duo2 undo"))
+            }
             guard let name = inv[0], let p = project(named: name) else { return done(.fail("no folder '\(inv[0] ?? "")'")) }
             guard p.isFolderOnly else { return done(.fail("\(p.name) is already a project")) }
             if inv.has("not-now") {
@@ -399,11 +404,19 @@ extension AppModel {
         case .projectNew where inv.flags["from-github"] != nil:
             projectFromGitHub(inv, done)
         case .projectNew:
-            guard let name = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             let into = inv.flags["into"]
             guard let place = homePlace(named: into) else {
-                return done(.fail(liveRoot == nil ? "There's no Home folder yet: duo2 home set <folder>" : "Home has no topic folder '\(into ?? "")'. Choose from: \(homePlaces().map(\.label).joined(separator: ", "))"))
+                return done(.fail(liveRoot == nil ? "There's no Home folder yet: duo2 home set <folder>" : "Home has no folder '\(into ?? "")'. Choose from: \(homePlaces().map(\.label).joined(separator: ", ")), or a path inside Home"))
             }
+            if inv.has("use-folder") {
+                // DL-211: the --into folder itself becomes the project; <name> titles it.
+                guard into != nil else { return done(.fail("--use-folder needs --into <folder in Home>")) }
+                if let why = useFolderProblem(place.folder) ?? makeProject(folder: place.folder, title: inv[0] ?? "", goal: inv.flags["goal"] ?? "", startSession: inv.has("session")) {
+                    return done(.fail(why))
+                }
+                return done(.ok("Made \(Self.short(place.folder.path)) a project\(inv.has("session") ? ", with a Claude session in it" : ""). Undo: duo2 undo"))
+            }
+            guard let name = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             if let why = createProject(named: name, goal: inv.flags["goal"] ?? "", in: place.folder, moving: [], startSession: inv.has("session")) { return done(.fail(why)) }
             done(.ok("Made the project \(name) at \(Self.short(place.folder.appending(path: name).path))\(inv.has("session") ? ", with a Claude session in it" : ""). Undo: duo2 undo"))
         case .docRevert:

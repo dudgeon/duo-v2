@@ -195,11 +195,14 @@ struct ProjectMapPane: View {
                 // DL-104: the filter and sort, Home's ★ tile and columns as tiles, then the folders
                 // outside Home: live ones as tiles, the rest as rows under their parent folder.
                 let outsideAny = !map.active.isEmpty || !map.outside.isEmpty
+                let firstRun = model.mapFilter.isEmpty ? model.firstRunFolders : nil
                 VStack(alignment: .leading, spacing: DuoSpace.gapMapColumns) {
                     MapHeader(layout: map)
                     if !map.homeColumns.isEmpty {
-                        MapGrid(columns: map.homeColumns, home: map.home, tileAtEnd: !outsideAny && model.mapFilter.isEmpty)
+                        // + New project closes Home's columns, in sight above the folders outside Home (DL-212).
+                        MapGrid(columns: map.homeColumns, home: map.home, tileAtEnd: model.mapFilter.isEmpty && firstRun == nil)
                     }
+                    if let firstRun { HomeFoldersSection(folders: firstRun) }
                     if outsideAny {
                         if model.fixture.home != nil {
                             HStack(spacing: 10) {
@@ -213,7 +216,7 @@ struct ProjectMapPane: View {
                             TileFlow(projects: map.active)
                         }
                         if !map.outside.isEmpty { OutsideGroups(columns: map.outside) }
-                        if model.mapFilter.isEmpty { NewProjectTile() }
+                        if model.mapFilter.isEmpty && map.homeColumns.isEmpty { NewProjectTile() }
                     }
                     if map.isEmpty && model.mapFilter.isEmpty { NewProjectTile() }
                 }
@@ -812,6 +815,57 @@ struct TileSessionRow: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(session.name), \(SessionGlyph.spokenKind(model.sessionKind(session))), \(session.state.spokenName)\(active ? ", open in Duo" : "")\(wait == session.wait ? session.wait.map { ", waiting \($0)" } ?? "" : "")")
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+/// All projects while Home has no projects yet (DL-212; a stand-in from existing pieces until it's
+/// designed, Q-197): the "This folder isn't a project yet" card's look and words, + New project, then
+/// Home's folders as tiles, each with Make a Project.
+struct HomeFoldersSection: View {
+    let folders: [URL]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DuoSpace.gapTileToTile) {
+            VStack(alignment: .leading, spacing: DuoSpace.gapGlyphToLabel) {
+                Text("Home has no projects yet.")
+                    .duoText(.body).fixedSize(horizontal: false, vertical: true)
+                Text(folders.isEmpty
+                     ? "Start a new one. A project file gives it a goal and a next step, shown here and on the map."
+                     : "Make one of these folders a project, or start a new one. A project file gives it a goal and a next step, shown here and on the map.")
+                    .duoText(.body).foregroundStyle(DuoColor.text2).fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.ground))
+            NewProjectTile()
+            if !folders.isEmpty {
+                SectionLabel(text: "Folders in Home", count: folders.count).padding(.top, 6)
+                AdaptiveColumns(count: folders.count, rowSpacing: DuoSpace.gapTileToTile) { i in HomeFolderTile(folder: folders[i]) }
+            }
+        }
+        .accessibilityIdentifier("first-run.folders")
+    }
+}
+
+/// A folder in Home with no project file (DL-212): a tile with its name, `Folder · no project file`
+/// (the folder header's words) and Make a Project.
+struct HomeFolderTile: View {
+    @Environment(AppModel.self) private var model
+    let folder: URL
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DuoSpace.gapTileRows) {
+            Text(folder.lastPathComponent).duoText(.bodyEmphasis)
+            Text("Folder · no project file").duoText(.body).foregroundStyle(DuoColor.text2)
+            Button("Make a Project") { if let why = model.makeProject(folder: folder) { model.info(why) } }  // action: project make
+                .buttonStyle(DefaultSheetButtonStyle())
+                .fixedSize()
+                .padding(.top, 6)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .bordered(DuoSpace.cardPadding, color: DuoColor.rule)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(folder.lastPathComponent), a folder with no project file")
     }
 }
 

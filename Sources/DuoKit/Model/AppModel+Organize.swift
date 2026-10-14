@@ -153,27 +153,54 @@ extension AppModel {
     /// unless the folder has one, remembers the folder if it's outside the workspace, and opens the file.
     public func makeProject(_ name: String) {
         guard let folder = liveFolders[name] else { return }
+        if let why = makeProject(folder: folder) { info(why) }
+    }
+
+    /// Make a Project on a folder by its path: the card's, the empty map's folders (DL-212) and New
+    /// project's "Make this folder the project" (DL-211, whose Name titles it and whose goal it
+    /// carries). Returns why it couldn't, or nil.
+    @discardableResult
+    public func makeProject(folder: URL, title: String = "", goal: String = "", startSession: Bool = false) -> String? {
+        let fm = FileManager.default
+        var isDir: ObjCBool = false
+        guard fm.fileExists(atPath: folder.path, isDirectory: &isDir), isDir.boolValue else { return "\(Self.short(folder.path)) isn't a folder." }
+        if let root = liveRoot, folder.standardizedFileURL.path == root.standardizedFileURL.path { return "Home can't be a project: choose a folder in it." }
         let file = folder.appending(path: "PROJECT.md")
-        if !FileManager.default.fileExists(atPath: file.path) {
-            let starter = Templates.make(.project, title: folder.lastPathComponent, project: nil, home: homeFolder)
-            do { try Data(starter.utf8).write(to: file, options: .withoutOverwriting) } catch { info(error.localizedDescription); return }
-        }
+        let wrote: Bool
+        do { wrote = try Self.writeProjectFile(in: folder, title: title, goal: goal, home: homeFolder) } catch { return error.localizedDescription }
         DuoState.update { s in if !s.projects.contains(folder.path) { s.projects.append(folder.path) } }
         extraProjects = DuoState.load().projects.map { URL(fileURLWithPath: $0) }
         registerUndo("Make Project") { model in
-            try? FileManager.default.trashItem(at: file, resultingItemURL: nil)
+            if wrote { try? FileManager.default.trashItem(at: file, resultingItemURL: nil) }
             DuoState.update { $0.projects.removeAll { $0 == folder.path } }
             model.extraProjects = DuoState.load().projects.map { URL(fileURLWithPath: $0) }
             model.refreshLive()
         }
-        refreshLive()
         let projectName = folder.lastPathComponent
+        if liveFolders[projectName] == nil { liveFolders[projectName] = folder }   // known now; the snapshot catches up on refresh
+        let started = startSession ? newSession(in: projectName) : nil
+        refreshLive()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             MainActor.assumeIsolated {
                 self.open(project: projectName)
+                if let started { self.consoleTab = started }
                 self.rightTab = "Project"
             }
         }
+        return nil
+    }
+
+    /// Writes a starter PROJECT.md in `folder` from the template (DL-146), titled `title` (the folder's
+    /// name when blank) and carrying the goal, unless it has one. Returns whether it wrote one.
+    public static func writeProjectFile(in folder: URL, title: String, goal: String, home: URL?) throws -> Bool {
+        let file = folder.appending(path: "PROJECT.md")
+        guard !FileManager.default.fileExists(atPath: file.path) else { return false }
+        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let g = goal.trimmingCharacters(in: .whitespacesAndNewlines)
+        let starter = Templates.make(.project, title: t.isEmpty ? folder.lastPathComponent : t, project: nil, home: home,
+                                     values: g.isEmpty ? [] : [("goal", .scalar(g))])
+        try Data(starter.utf8).write(to: file, options: .withoutOverwriting)
+        return true
     }
 
     /// Not Now on a folder's Make a Project notice (DL-110): hides the notice for that folder,

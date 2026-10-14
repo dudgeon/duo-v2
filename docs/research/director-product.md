@@ -44,6 +44,8 @@ Richer Claude Code features make it faster: messages that wake a session, backgr
 
 ## Decisions for Geoff
 
+**Later amendments:** DL-207 moves your rules for every director to `HOME.md`'s `## Director` section, replacing `~/.claude/duo-director.md` (DL-193). DL-208 has the director do organising work itself. DL-209 keeps the latest 20 `## Done` lines in the file and moves older ones to `log.md` (DL-204). DL-210 files passages into a knowledge base's inbox. See `director-chief-of-staff.md`.
+
 **All twelve decided on 2026-10-14: DL-193 to DL-204** (Q-190, closed). Each section below starts with its decision. Where Geoff's answer changed the recommendation (1, 4, 7, 11), the decision line says how, and the DL entry wins.
 
 Ten decisions, each with my recommendation first. They merge the earlier letters as follows:
