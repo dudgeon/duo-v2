@@ -68,6 +68,8 @@ Project-specific guidance comes from what the project already has:
 - its `CLAUDE.md`;
 - its project skills.
 
+**Your preferences for every director on this Mac** live in a local file the skill reads and Duo never writes over, `~/.claude/duo-director.md` (Geoff, 2026-10-14: preferences kept in the skill would be wiped by its updates). A project's `## Director` rules win over it where they disagree. **Decided: DL-193.**
+
 **It doesn't depend on `PROJECT.md` being there or being full** (Geoff, 2026-10-13: "most projects will not initially have a project.md, and often the project.md will be sparse"). A missing or thin `PROJECT.md` is normal, and the director works from what you tell it. It doesn't fill gaps with guesses. Instead it grows the file in two ways:
 - **Proposals you accept.** When it notices a standing rule or a fact worth keeping ("always ask before publishing", "the goal is a draft by Friday"), it proposes the addition by AskUserQuestion, and only writes it if you accept. That includes creating `PROJECT.md` (Make a Project) when there isn't one.
 - **A record of your decisions.** Decisions you make while it directs are appended with their date to a section of `PROJECT.md` (for example `## Decisions`), so later sessions see what you chose and why, rather than the director's own conclusions.
