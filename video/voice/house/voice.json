@@ -1,7 +1,7 @@
 {
   "$note": "The narrator. `external` names a small machine-local file outside the repo that points at Geoff's own voice: since DL-179 his private repo dudgeon/geoff-voice (VoxCPM2 + LoRA step 100, DL-173), run by its bin/speak. `geoff` below is Duo's use of that voice (voice folder, seed, tempo, its own spellings); the machine-local file says where the checkout is (`root`), or GEOFF_VOICE_DIR does, with no file at all. The zero-shot Qwen clone (DL-171) stays selectable with DUO_VOICE_JSON=~/Library/Caches/duo-video/voices/geoff-zeroshot.json. Without any of them, the house voice below (DUO_VOICE_JSON=house). DL-169 privacy: none of his audio, weights or voice files enter duo-v2.",
   "external": "~/Library/Caches/duo-video/voices/geoff-voice.json",
-  "geoff": {"voice": "voices/geoff-voxcpm2-v2", "seed": 0, "tempo": 1, "said": {"Markdown editing": "Mark-down editing", "feature additions": "feature ad-ditions"}},
+  "geoff": {"voice": "voices/geoff-voxcpm2-v2", "seed": 0, "tempo": 1, "said": {"Markdown editing": "Mark-down editing", "feature additions": "feature ad-ditions", "tidily organized": "tidy-lee organized"}},
   "said": {"mapped to a task, so I made tasks": "mapped to a task. So I made tasks", "about the task goal, and attribute": "about the task goal. And attribute", "tidily organized": "tidy-lee organized"},
   "mode": "clone",
   "ref_wav": "house/reference.wav",
