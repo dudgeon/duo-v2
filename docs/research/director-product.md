@@ -44,6 +44,8 @@ Richer Claude Code features make it faster: messages that wake a session, backgr
 
 ## Decisions for Geoff
 
+**All twelve decided on 2026-10-14: DL-193 to DL-204** (Q-190, closed). Each section below starts with its decision. Where Geoff's answer changed the recommendation (1, 4, 7, 11), the decision line says how, and the DL entry wins.
+
 Ten decisions, each with my recommendation first. They merge the earlier letters as follows:
 
 | Decision | Earlier letters |
@@ -179,6 +181,8 @@ Each change is designed on a canvas with Geoff before it's built. Until then, th
 
 ### 6. One owner per worker, and restarts
 
+**Decided: DL-200** (the recommendation).
+
 **Recommended: a worker is directed only by the director named on its task.**
 - Sessions not on a director's task are yours, and a director never tasks them.
 - When you type into a worker, the director stops messaging it until you hand it back.
@@ -209,6 +213,8 @@ The file is always the record; the page is a mirror.
 
 ### 8. Workers
 
+**Decided: DL-201** (the recommendation).
+
 **Recommended:**
 - **Where they run.** Users' workers run in Duo by default, so you see them. They run in the background when you ask, when Duo isn't running, or for long jobs. Ours run in the background with Remote Control (already decided); design work stays in Duo.
 - **One worker per task by default.** Parallel workers only for work that splits cleanly: separate files, research, tests. Anything that shares decisions runs one at a time. Cognition: "actions carry implicit decisions". Anthropic: several agents cost about 15 times the tokens of a chat.
@@ -222,6 +228,8 @@ The file is always the record; the page is a mirror.
 
 ### 9. Accepting work
 
+**Decided: DL-202** (the recommendation).
+
 **Recommended:**
 - **Check before accepting.** The director checks what came back against the brief and `done_when`. For code, it runs the project's checks too. It never passes on a claim it hasn't checked.
 - **You say go.** It proposes acceptance, saying what it checked. A standing rule in the brief can let it accept checked work itself; our own dev director has one.
@@ -234,6 +242,8 @@ The file is always the record; the page is a mirror.
 - no retry cap.
 
 ### 10. Claude Code Projects
+
+**Decided: DL-203** (the recommendation; card buttons narrowed to Open worker by DL-196).
 
 **Recommended: take its patterns, keep Duo's words, and stand down where Projects runs.**
 
@@ -257,6 +267,8 @@ An export can come when someone wants it. In a repo you run as a Projects projec
 - a memory folder now.
 
 ### 11. Finishing and archiving tasks
+
+**Decided: DL-204** (the recommendation; Geoff: "You don't need ui elements for accepting work as complete — Claude can askuserquestions").
 
 Geoff, 2026-10-13: one task per worker means tasks stack up, so the director must be diligent about marking tasks complete and archiving them. Both need the user's say-so and must be reversible. Completed tasks are listed in the `PROJECT.md` log, and the director scans that log before starting new work, in case an existing task has context it needs.
 
