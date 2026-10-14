@@ -20,6 +20,8 @@ let walkGuardExempt: [String: String] = [
     "DuoKit/Live/SessionArchive.swift": "Duo's archive in its support folder",
     "DuoKit/Live/TaskContext.swift": "one listing of a project's tasks folder",
     "DuoKit/Live/TaskNotes.swift": "one listing of a project's tasks folder",
+    "DuoKit/Model/AppModel+Director.swift": "one listing of a project's tasks folder (a director's tasks)",
+    "DuoControl/Director.swift": "Claude's sessions folder (the caller's beacon)",
     "DuoKit/Model/AppModel+Organize.swift": "one listing of a folder being emptied",
     "DuoKit/Shell/SettingsView.swift": "the size of Claude's config folder",
     "DuoSearch/SessionSource.swift": "Claude's config folder",

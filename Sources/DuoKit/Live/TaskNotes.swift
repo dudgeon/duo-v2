@@ -169,6 +169,10 @@ public enum TaskNotes {
         case addSession(link: String)
         case addReference(link: String)
         case removeReference(target: String)
+        /// One scalar key set (or removed): the director's `directed_by:` (DL-194).
+        case setKey(String, String?)
+        /// One line appended to a `## <section>`, made at the end if missing: the director's Progress.
+        case appendLine(section: String, line: String)
     }
 
     /// The note after `edit`, or nil when it would change nothing (already linked, no such reference).
@@ -179,6 +183,8 @@ public enum TaskNotes {
         case .addSession(let link): out = adding(link, to: text)
         case .addReference(let link): out = TaskReferences.adding(link, to: text)
         case .removeReference(let t): out = TaskReferences.removing(target: t, from: text)
+        case .setKey(let k, let v): out = setting(k, v, in: text)
+        case .appendLine(let section, let line): out = DirectorNotes.appending(line, toSection: section, in: text)
         }
         return out == text ? nil : out
     }

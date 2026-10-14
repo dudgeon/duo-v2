@@ -103,4 +103,5 @@ Design reference PNGs need Google Chrome to re-render ([ADR-0002](docs/adr/0002-
 | `docs/acceptance/` | Acceptance walks: features, verdict pages, ledgers |
 | `docs/adr/` | Architecture decision records |
 | `docs/research/` | Research behind the decisions |
+| `skills/duo-director/` | The duo-director skill Duo installs for users (DL-193); `scripts/gen-director-skill.py` compiles it into `DirectorSkillText.swift` |
 | `.claude/skills/` | The acceptance-walk and release skills |

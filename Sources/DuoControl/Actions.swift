@@ -7,7 +7,7 @@ import Foundation
 // menu item or click in the app isn't tied to an action here or listed in `Parity.uiOnly`.
 
 public enum ActionFamily: String, CaseIterable, Sendable {
-    case app, view, projects, sessions, files, repo, docs, html, slides, send, search, setup
+    case app, view, projects, sessions, director, files, repo, docs, html, slides, send, search, setup
 
     public var title: String {
         switch self {
@@ -15,6 +15,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
         case .view: "What's on screen"
         case .projects: "Projects"
         case .sessions: "Sessions"
+        case .director: "Director"
         case .files: "Files"
         case .repo: "GitHub"
         case .docs: "Documents"
@@ -56,6 +57,9 @@ public enum ActionID: String, CaseIterable, Sendable {
     case taskBoard = "task board", taskColumn = "task column", taskReference = "task reference", taskBase = "task base"
     case templateShow = "template show", templateEdit = "template edit", templateCopy = "template copy", templateReset = "template reset", templatePreview = "template preview"
     case groups, groupNew = "group new", groupAdd = "group add", groupRemove = "group remove", groupRename = "group rename", groupDelete = "group delete"
+    // Director (DL-193 to DL-206)
+    case directorStatus = "director status", directorStart = "director start", directorSend = "director send"
+    case directorRetire = "director retire", directorGuide = "director guide", directorWatch = "director watch"
     // Files
     case files, filesBrowse = "files browse", fileNew = "file new", fileNewFolder = "file new-folder", fileTemplate = "file template", fileTemplates = "file templates"
     case fileRename = "file rename", fileDuplicate = "file duplicate", fileMove = "file move", fileTrash = "file trash"
@@ -406,6 +410,19 @@ extension DuoAction {
         .init(.sendText, .send, "<text> [--to <id> | --new]", "Type text into a session's prompt for the user to finish and send."),
         .init(.selection, .send, "", "What the user has selected or picked right now, in the editor or an HTML page.", everyday: true),
 
+        // Director (DL-193 to DL-206): the exact parts of the duo-director skill. Each writes a line to
+        // the project's .duo/director-log.jsonl, which the director's metrics are counted from.
+        .init(.directorStatus, .director, "[--project <p>]", "Who directs this project (and whether you're its director, or one it replaced), its workers and their tasks with each one's state, the rules to read (your preferences for every director, the project's ## Director), and what this Claude client can do: messaging, background sessions, Remote Control, hooks, Monitor."),
+        .init(.directorStart, .director, "<task> | --title <t> --request <the user's words> [--done-when <text>] [--suggest | --no-worker | --worker <session id>] [--background] [--take-over] [--project <p>]",
+              "Start a worker on a task this director directs (DL-194, DL-201): writes directed_by:, ## Request and ## Progress, then starts the worker in Duo with the task as its brief (or links --worker, an existing session). --suggest files it as suggested with no worker; --no-worker makes it a task the director does itself (organising work, DL-208). Refuses over the cap (3 unless the project's ## Director says max workers: N), a task another director directs, and a project another director runs (--take-over replaces it).",
+              timeout: 30),
+        .init(.directorSend, .director, "<task> <message> [--handed-back] | --director <project> <message>",
+              "Reach a task's worker (or, from Home, a project's director) the best way this client has, and log which (DL-199): SendMessage where both have messaging; a stopped background worker resumed with it; Duo typing it into an idle worker and pressing Enter, only when its task is yours, Claude is idle with an empty prompt and the user hasn't typed there for 2 minutes; a stopped worker in Duo reopened with it; else it waits and goes at the worker's next idle. Every send goes into the task's ## Progress.",
+              timeout: 30),
+        .init(.directorRetire, .director, "[--project <p>]", "Stand this director down: .duo/director.json moves it to the retired list, and if it wakes later it's told to stop. Its workers stay on their tasks until a new director takes over."),
+        .init(.directorGuide, .director, "", "Print the duo-director skill, for a Claude client where personal skills are blocked.", local: true),
+        .init(.directorWatch, .director, "[--project <p>] [--every <seconds>]", "One line per change to this director's workers (finished, needs you, working, stopped) or their task notes, until stopped: run it under Monitor to be woken (DL-199).", local: true),
+
         // Search
         .init(.search, .search, "<query> | --similar <path> [-k N] [--project P] [--kind file|session|memory] [--exact]",
               "Search every project by meaning and by words. Works without the app; read-only.",
@@ -485,7 +502,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "cancel", "fetch", "background"]
+    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "cancel", "fetch", "background", "suggest", "take-over", "handed-back", "no-worker"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]

@@ -34,6 +34,9 @@ public enum Installer {
     public static var claudeDir: URL { testRoot?.appending(path: "claude") ?? LegacyDuo.claudeDir }
     public static var claudeMD: URL { claudeDir.appending(path: "CLAUDE.md") }
     public static var skillFile: URL { claudeDir.appending(path: "skills/duo2/SKILL.md") }
+    /// The shared director skill (DL-193): `duo-director`, never `director`, since a personal skill
+    /// hides a project skill of the same name.
+    public static var directorSkillFile: URL { claudeDir.appending(path: "skills/duo-director/SKILL.md") }
     public static var link: URL { (testRoot ?? FileManager.default.homeDirectoryForCurrentUser).appending(path: ".local/bin/duo2") }
     static var manifestFile: URL { testRoot?.appending(path: "installed.json") ?? ControlEndpoint.file.deletingLastPathComponent().appending(path: "installed.json") }
 
@@ -96,6 +99,7 @@ public enum Installer {
         public var format = Installer.format
         public var blockHash: String?
         public var skillHash: String?
+        public var directorSkillHash: String?
         public var linkTarget: String?
         /// The user removed the block; never add it back.
         public var blockRemovedByUser = false
@@ -122,6 +126,7 @@ public enum Installer {
         [
             "Add a short \"Duo\" section to \(claudeMD.path), between <!-- duo2:begin --> and <!-- duo2:end --> markers (\(block().split(separator: " ").count) words; it loads into every Claude session).",
             "Write a duo2 skill to \(skillFile.path).",
+            "Write a duo-director skill to \(directorSkillFile.path) (Director: Claude hands out and checks work in a project; your own rules never go in it).",
             "Link \(link.path) to \(cli), so duo2 works in any terminal.",
             "Keep these current each time Duo starts. Anything you edit is left alone; `duo2 uninstall` removes all of it.",
         ]
@@ -133,6 +138,7 @@ public enum Installer {
         let short = { (p: String) in p.hasPrefix(home) ? "~" + p.dropFirst(home.count) : p }
         return [("Add a short Duo section, between duo2 markers (\(block().split(separator: " ").count) words)", short(claudeMD.path)),
                 ("Write the duo2 skill", short(skillFile.path)),
+                ("Write the duo-director skill", short(directorSkillFile.path)),
                 ("Put duo2 on your PATH", short(link.path))]
     }
 
@@ -190,18 +196,9 @@ public enum Installer {
             m.blockHash = hash(block())
         }
 
-        // The skill.
-        let skillNow = try? String(contentsOf: skillFile, encoding: .utf8)
-        if let skillNow, let h = m.skillHash, hash(skillNow) != h, skillNow != skill() {
-            r.lines.append("Skill: edited by you, left alone.")
-        } else if skillNow != skill() {
-            do {
-                try fm.createDirectory(at: skillFile.deletingLastPathComponent(), withIntermediateDirectories: true)
-                try Data(skill().utf8).write(to: skillFile, options: .atomic)
-                m.skillHash = hash(skill())
-                r.lines.append("Skill: \(skillNow == nil ? "written" : "updated").")
-            } catch { r.lines.append("Skill: couldn't write (\(error.localizedDescription)).") }
-        } else { m.skillHash = hash(skill()) }
+        // The skills: rewritten unless edited (fork-on-edit).
+        m.skillHash = writeSkill(skill(), to: skillFile, label: "Skill", hash: m.skillHash, into: &r)
+        m.directorSkillHash = writeSkill(DirectorSkill.text(), to: directorSkillFile, label: "Director skill", hash: m.directorSkillHash, into: &r)
 
         // The link: replaced only if it's Duo's (a link to some Duo.app's duo2).
         let dest = try? fm.destinationOfSymbolicLink(atPath: link.path)
@@ -221,6 +218,35 @@ public enum Installer {
         return r
     }
 
+    /// Writes a generated skill unless the user edited it (its hash isn't what Duo last wrote).
+    /// Returns the hash to keep: Duo's text once written, the old one while the user's edit stands.
+    static func writeSkill(_ text: String, to file: URL, label: String, hash h: String?, into r: inout Report) -> String? {
+        let now = try? String(contentsOf: file, encoding: .utf8)
+        if let now, let h, hash(now) != h, now != text {
+            r.lines.append("\(label): edited by you, left alone.")
+            return h
+        }
+        guard now != text else { return hash(text) }
+        do {
+            try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try Data(text.utf8).write(to: file, options: .atomic)
+            r.lines.append("\(label): \(now == nil ? "written" : "updated").")
+            return hash(text)
+        } catch {
+            r.lines.append("\(label): couldn't write (\(error.localizedDescription)).")
+            return h
+        }
+    }
+
+    /// Removes a generated skill's folder if it's still Duo's text.
+    static func removeSkill(_ text: String, at file: URL, hash h: String?, into r: inout Report) {
+        guard let s = try? String(contentsOf: file, encoding: .utf8) else { return }
+        if h.map({ hash(s) == $0 }) ?? false || s == text {
+            try? FileManager.default.removeItem(at: file.deletingLastPathComponent())
+            r.lines.append("Removed \(file.deletingLastPathComponent().path).")
+        } else { r.lines.append("Left \(file.path): you edited it.") }
+    }
+
     /// Removes exactly what the manifest says Duo wrote. Edited files stay, with a note.
     @discardableResult
     public static func uninstall() -> Report {
@@ -234,17 +260,13 @@ public enum Installer {
                 r.lines.append("Removed the Duo block from \(claudeMD.path).")
             } else { r.lines.append("Left the Duo block in \(claudeMD.path): you edited it. Delete it by hand if you like.") }
         }
-        if let s = try? String(contentsOf: skillFile, encoding: .utf8) {
-            if m.skillHash.map({ hash(s) == $0 }) ?? false || s == skill() {
-                try? fm.removeItem(at: skillFile.deletingLastPathComponent())
-                r.lines.append("Removed \(skillFile.deletingLastPathComponent().path).")
-            } else { r.lines.append("Left \(skillFile.path): you edited it.") }
-        }
+        removeSkill(skill(), at: skillFile, hash: m.skillHash, into: &r)
+        removeSkill(DirectorSkill.text(), at: directorSkillFile, hash: m.directorSkillHash, into: &r)
         if let dest = try? fm.destinationOfSymbolicLink(atPath: link.path), isDuoCLI(dest) {
             try? fm.removeItem(at: link)
             r.lines.append("Removed \(link.path).")
         }
-        m.blockHash = nil; m.skillHash = nil; m.linkTarget = nil; m.consented = false
+        m.blockHash = nil; m.skillHash = nil; m.directorSkillHash = nil; m.linkTarget = nil; m.consented = false
         save(m)
         if r.lines.isEmpty { r.lines.append("Nothing of Duo's was installed.") }
         return r
@@ -263,6 +285,9 @@ public enum Installer {
         if let s = try? String(contentsOf: skillFile, encoding: .utf8) {
             out.append("Skill: \(s == skill() ? "current" : m.skillHash.map { hash(s) == $0 } == true ? "from an older Duo (updates at launch)" : "edited by you (left alone)") (\(skillFile.path)).")
         } else { out.append("Skill: not installed.") }
+        if let s = try? String(contentsOf: directorSkillFile, encoding: .utf8) {
+            out.append("Director skill: \(s == DirectorSkill.text() ? "current" : m.directorSkillHash.map { hash(s) == $0 } == true ? "from an older Duo (updates at launch)" : "edited by you (left alone)") (\(directorSkillFile.path)).")
+        } else { out.append("Director skill: not installed.") }
         if let dest = try? FileManager.default.destinationOfSymbolicLink(atPath: link.path) {
             out.append("\(link.path) → \(dest)\(cli.map { dest == $0 ? "" : " (Duo relinks it to \($0) at launch)" } ?? "").")
         } else { out.append("\(link.path): not linked.") }

@@ -370,6 +370,10 @@ public final class AppModel {
     @ObservationIgnored public var liveFolders: [String: URL] = [:]
     /// Live sessions whose process Duo doesn't own (Terminal, the Desktop app, another Duo).
     public var liveElsewhere: Set<String> = []
+    /// Projects whose director's queue is being delivered now (DL-199): one message at a time.
+    var deliveringDirector: Set<String> = []
+    /// The checks' stand-in for a terminal in a guarded submit (DL-199); nil in the app.
+    public var submitHooks: SubmitIO?
     @ObservationIgnored private var refreshTimer: Timer?
     @ObservationIgnored private var minuteTimer: Timer?
     @ObservationIgnored private var refreshing = false
@@ -508,6 +512,7 @@ public final class AppModel {
         pushNoteContext()
         Notifier.shared.model = self
         notifyNeedsYou()
+        deliverDirectorMessages()   // a director's queued messages, to workers now idle (DL-199)
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts && !SupportFolder.isIsolated)   // C-28: no first-run questions in an isolated instance
         refreshRepo()   // the open project's repository state (DL-149, DL-157)
