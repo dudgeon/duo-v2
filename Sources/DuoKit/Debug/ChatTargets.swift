@@ -26,7 +26,9 @@ public enum ChatTargets {
                                             // chat-model-chip-handoff (DL-168): the chips at rest, under the pointer, after a switch, while Claude works, not known; the /model card; Switch model?.
                                             "chip-rest", "chip-hover", "chip-card", "chip-after", "chip-working", "chip-unknown", "chip-confirm",
                                             // DL-188: your Markdown in your bubble, replayed, live, and cut by Show all.
-                                            "md-history", "md-live", "md-long"]
+                                            "md-history", "md-live", "md-long",
+                                            // DL-188: your Markdown in the composer (composer.html B and C).
+                                            "md-composer", "md-composer-wrap", "md-composer-fence"]
     nonisolated public static let screens = boards.map { "chat-" + $0 }
 
     public static func folder(_ board: String) -> URL? {

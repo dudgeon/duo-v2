@@ -16,7 +16,7 @@ boards=("$@")
   slash-output slash-context slash-model-card slash-effort-card slash-fallback-named slash-menu slash-menu-below
   paste-picture paste-adding paste-sent paste-edges paste-failed paste-keys paste-text paste-text-open paste-huge
   chip-rest chip-hover chip-card chip-after chip-working chip-unknown chip-confirm
-  md-history md-live md-long)
+  md-history md-live md-long md-composer md-composer-wrap md-composer-fence)
 states=()
 for b in "${boards[@]}"; do states+=("chat-$b"); done
 NO_COMPARE=1 scripts/check-ui.sh "${states[@]}" >/dev/null
@@ -42,6 +42,9 @@ for b in "${boards[@]}"; do
     chip-confirm) box=(300 0 680 860); target="chat-model-chip-handoff/confirm" ;;
     chip-*) box=(300 0 680 860); target="chat-model-chip-handoff/chip" ;;
     # DL-188: no board draws your Markdown; these compare against the text board for the record.
+    # md-composer: the composer against composer.html (B, C); the board stacks snippets, so the numbers come from the cropped composer.
+    md-composer) box=(300 0 680 860); target="chat-markdown-handoff/composer" ;;
+    md-composer-wrap|md-composer-fence) box=(300 0 680 860); target="chat-markdown-handoff/composer" ;;
     md-*) box=(300 0 680 860); target="chat-mode-handoff/text" ;;
     *) box=(300 0 680 860) ;;
   esac

@@ -98,4 +98,25 @@ r = Rec()
 r.you("10:10", LONG)
 r.say("10:10", "On it.")
 r.write("md-long", {"mode": "chat", "tab": "PRD v2 edits"})
+# composer: section B of composer.html, typed in the composer (focused, caret at the end), and C's wrapped bullet.
+COMPOSER = """## Saved cards, next pass
+Rework the **non-goals** in `docs/prd-v2.md`:
+- drop #3, it restates #1
+- keep wallets out
+  - but log an open question
+1. Read the interviews first
+2. Then the [Stripe guide](https://stripe.com/docs/refunds)
+> P2: “I’m not typing a card number on my phone again.”
+```
+refund.threshold = 500
+```"""
+WRAP = """Before Friday:
+- check whether the guest flow keeps the card form on one page, as the interviews asked, and say which screens change
+- name an owner"""
+FENCE = "\n".join(COMPOSER.split("\n")[-4:])   # the quote and the fence, which the eight-line field scrolls past in md-composer
+for board, draft in (("md-composer", COMPOSER), ("md-composer-wrap", WRAP), ("md-composer-fence", FENCE)):
+    r = Rec()
+    r.you("10:50", "Tighten the non-goals.")
+    r.say("10:50", "Done: non-goal #3 is gone.")
+    r.write(board, {"mode": "chat", "tab": "PRD v2 edits", "drafts": {"composer": draft}, "focusComposer": True})
 print("wrote md boards")
