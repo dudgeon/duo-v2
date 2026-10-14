@@ -192,6 +192,8 @@ Each change is designed on a canvas with Geoff before it's built. Until then, th
 
 ### 7. How it talks to you
 
+**Decided: DL-198.** Geoff: "you are overthinking/over engineering"; the skill says only "offer to make artifacts when helpful, make html and open in duo when necessary". No `decisions.md` convention and no artifact mirror. The text below is the superseded recommendation.
+
 **Recommended: the same everywhere, the work Mac included.**
 1. **One question:** asked in its own session (AskUserQuestion, which works in Duo and on the phone through Remote Control), with Needs you raised in Duo.
 2. **Several decisions at once:** a `decisions.md` in the task folder. Each decision has a heading, the options as checkboxes with the recommendation first, and a Notes line. Tick it in Duo's editor or in Obsidian.
@@ -270,6 +272,8 @@ Geoff, 2026-10-13: one task per worker means tasks stack up, so the director mus
 - Archive without asking once you've accepted the work, still undoable. Faster, but against "require user input".
 
 ### 12. When sessions can't message each other
+
+**Decided: DL-199** (the recommendation; Geoff: "This makes sense").
 
 Geoff, 2026-10-14: "I'm concerned we are not yet talking about graceful fallbacks when the client Claude code does not support session to session messaging, which feels like a critical piece of functionality. What is the work-around?"
 
