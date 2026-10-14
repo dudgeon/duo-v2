@@ -1012,7 +1012,7 @@ func spikeScreen(_ name: String) -> String {
         check(ComposerProbe.sent([.block(t), .type("\n"), .block(u)]) == t + "\n\n" + u + "\n" && ComposerProbe.sent([.block(t), .block(u), .type("x")]) == t + "\n" + u + "\nx", "two blocks, in order")
     }
 
-    print("chat mode: your Markdown in the composer (DL-188, F-306)")
+    print("chat mode: your Markdown in the composer (DL-188, F-307)")
     do {
         typealias M = ComposerMarkdown
         func at(_ a: M.Analysis, _ text: String, _ needle: String) -> M.Style {

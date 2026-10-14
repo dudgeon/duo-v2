@@ -3576,7 +3576,7 @@ Geoff asked (2026-10-13) for chat to render the Markdown he types, in the histor
 - A cut long message ends at line 8, which can fall inside a fence or a list. The parser takes an unclosed fence to the end, so the cut part still draws as code; Show all draws the rest.
 - No real transcript was read for this: the samples are made up.
 
-## F-306 · The composer styles your Markdown with attributes only, and the keys are one undo each (chat/markdown-you, 2026-10-13)
+## F-307 · The composer styles your Markdown with attributes only, and the keys are one undo each (chat/markdown-you, 2026-10-13)
 
 DL-188's composer half (chat-markdown-handoff `composer`, B to D). How it works and what was measured:
 - **The text never changes.** `ComposerMarkdown.analyze` (pure, `Sources/DuoKit/Chat/ComposerMarkdown.swift`) classifies each line (heading, bullet, number, quote, fence mark, fence body) and lists inline runs (bold, italic, strike, code, link, dim marks); `ComposerTextView.styleMarkdown` (`ComposerMarkdownStyle.swift`) puts attributes on the storage after `styleMentions`, from `textDidChange` and `setPlain`. DuoChecks types a draft into a real composer in an offscreen window and checks `plainText` and the storage string are byte-identical, line heights are all 22, and typing attributes go back to plain.
