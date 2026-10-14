@@ -68,6 +68,10 @@ Project-specific guidance comes from what the project already has:
 - its `CLAUDE.md`;
 - its project skills.
 
+**It doesn't depend on `PROJECT.md` being there or being full** (Geoff, 2026-10-13: "most projects will not initially have a project.md, and often the project.md will be sparse"). A missing or thin `PROJECT.md` is normal, and the director works from what you tell it. It doesn't fill gaps with guesses. Instead it grows the file in two ways:
+- **Proposals you accept.** When it notices a standing rule or a fact worth keeping ("always ask before publishing", "the goal is a draft by Friday"), it proposes the addition by AskUserQuestion, and only writes it if you accept. That includes creating `PROJECT.md` (Make a Project) when there isn't one.
+- **A record of your decisions.** Decisions you make while it directs are appended with their date to a section of `PROJECT.md` (for example `## Decisions`), so later sessions see what you chose and why, rather than the director's own conclusions.
+
 **Duo dev's extras live in our project's skill folder** as references and scripts: releases, the walk page, the design system, the voice repo, records, the GPU lock. The "Duo dev director" is the shipped skill plus those. This is the shape Geoff described: "the duo dev specific context is just an additional ref or set of scripts, but the instruction set is common".
 
 **The deterministic parts are five `duo2 director` verbs,** tested in DuoChecks:
