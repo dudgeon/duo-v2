@@ -1,0 +1,8 @@
+{
+ "mode": "chat",
+ "tab": "PRD v2 edits",
+ "drafts": {
+  "composer": "## Saved cards, next pass\nRework the **non-goals** in `docs/prd-v2.md`:\n- drop #3, it restates #1\n- keep wallets out\n  - but log an open question\n1. Read the interviews first\n2. Then the [Stripe guide](https://stripe.com/docs/refunds)\n> P2: “I’m not typing a card number on my phone again.”\n```\nrefund.threshold = 500\n```"
+ },
+ "focusComposer": true
+}

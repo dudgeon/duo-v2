@@ -49,6 +49,7 @@ cp -R "$root/docs/design/chat-polish-handoff/fixture-chat/." "$app/Contents/Reso
 cp -R "$root/docs/design/chat-model-chip-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and the model chip's (chip-<board>)
 cp -R "$root/docs/design/chat-slash-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and slash commands' (slash-<board>, DL-143)
 cp -R "$root/docs/design/chat-paste-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and chat paste's (paste-<board>, DL-161)
+cp -R "$root/docs/design/chat-markdown-handoff/fixture-chat/." "$app/Contents/Resources/chat-fixtures"   # and your Markdown's (md-<board>, DL-188)
 # The document editor: vendored CodeMirror bundle and its page (F-34).
 rm -rf "$app/Contents/Resources/mods"; mkdir -p "$app/Contents/Resources/mods"
 cp -R "$root/Mods/duo-signal" "$app/Contents/Resources/mods/duo-signal"   # the sensor mod, used only with DUO_SIGNAL=1 (ENH-70 spike)

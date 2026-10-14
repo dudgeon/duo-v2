@@ -464,6 +464,24 @@ func spikeScreen(_ name: String) -> String {
         check(links.contains { $0.scheme == "duo-file" && $0.path == "notes.md" }, "a bare file name with a known extension is a link")
         check(links.contains { $0.absoluteString == "https://stripe.com/docs/refunds" }, "a bare URL is a link, without its full stop")
         check(ChatMarkdown.inline("Version 2.1.291 is e.g. fine").runs.compactMap(\.link).isEmpty, "version numbers and e.g. aren't files")
+        // Task items (F-305, Q-194): the box is read from the item's start only.
+        check(ChatMarkdown.task([.paragraph("[ ] check the numbers")]) == (false, [.paragraph("check the numbers")]), "an open task item")
+        check(ChatMarkdown.task([.paragraph("[x] name the owner")]) == (true, [.paragraph("name the owner")]), "a done task item")
+        check(ChatMarkdown.task([.paragraph("keep\n[ ] this")]) == (nil, [.paragraph("keep\n[ ] this")]), "a box on a later line isn't a task")
+        check(ChatMarkdown.task([.paragraph("[link](x) here")]).0 == nil, "a link isn't a task")
+    }
+
+    print("chat mode: your Markdown, by every path (F-305)")
+    do {
+        let md = "Rework the **non-goals**:\n- drop #3\n> P2: quoted\n```\nx = 1\n```"
+        for (name, feed) in [("the hook", { (l: ChatLog) in ChatIngest.hook(["hook_event_name": "UserPromptSubmit", "prompt": md, "source": "user"], at: 1, into: l) }),
+                             ("the transcript", { (l: ChatLog) in ChatIngest.record(["type": "user", "message": ["content": md], "origin": ["kind": "human"]], into: l) }),
+                             ("a text block", { (l: ChatLog) in ChatIngest.record(["type": "user", "message": ["content": [["type": "text", "text": md]]]], into: l) })] {
+            let log = ChatLog()
+            feed(log)
+            guard case .you(let y)? = log.items.first else { check(false, "\(name): your bubble"); continue }
+            check(y.text == md, "\(name): your bubble keeps your Markdown as typed, for the bubble to render")
+        }
     }
 
     print("chat mode: the log from hooks and the transcript (F-103, F-105)")
@@ -992,6 +1010,86 @@ func spikeScreen(_ name: String) -> String {
         check(ComposerProbe.sent([.type("Compare: "), .block(t), .type("and why?")]) == "Compare: \n" + t + "\nand why?", "a block between typed text sends its text on lines of its own, as the box shows it")
         check(ComposerProbe.sent([.block(t), .open(0), .edit(0, "edited\ntext")]) == "edited\ntext\n" && ComposerProbe.sent([.block(t), .open(0), .edit(0, "edited"), .fold(0), .type("!")]) == "edited\n!", "an opened block's edits are what's sent, and folding keeps them")
         check(ComposerProbe.sent([.block(t), .type("\n"), .block(u)]) == t + "\n\n" + u + "\n" && ComposerProbe.sent([.block(t), .block(u), .type("x")]) == t + "\n" + u + "\nx", "two blocks, in order")
+    }
+
+    print("chat mode: your Markdown in the composer (DL-188, F-307)")
+    do {
+        typealias M = ComposerMarkdown
+        func at(_ a: M.Analysis, _ text: String, _ needle: String) -> M.Style {
+            let r = (text as NSString).range(of: needle)
+            return a.styles(at: r.location)
+        }
+        let t = "## Saved cards\nRework the **non-goals** in `docs/prd-v2.md`, ~~old~~ and *new* and _also_ [Stripe](https://x.y/z):\n- drop #3\n  * nested\n1. Read\n> quoted\n```\n**not bold**\n```\nafter"
+        let a = M.analyze(t)
+        check(a.lines.map(\.kind) == [.heading(mark: 3), .plain, .bullet(lead: 0, marker: (t as NSString).range(of: "- drop").location, gap: 1),
+                                      .bullet(lead: 2, marker: (t as NSString).range(of: "* nested").location, gap: 1), .number(lead: 0, mark: 3), .quote(mark: 2),
+                                      .fenceMark, .fenceBody, .fenceMark, .plain], "each line is classified: heading, bullets (nested too), number, quote, fence, plain")
+        check(at(a, t, "Saved").contains(.heading) && at(a, t, "## ").contains(.dim), "a heading: the hashes dim, the rest semibold")
+        check(at(a, t, "non-goals").contains(.bold) && !at(a, t, "non-goals").contains(.dim) && at(a, t, "**non").contains(.dim), "bold: the words bold, the stars dim")
+        check(at(a, t, "docs/prd").contains(.code) && at(a, t, "`docs").contains(.dim), "inline code: mono ground, the ticks dim")
+        check(at(a, t, "old").contains(.strike) && at(a, t, "~~old").contains(.dim) && !at(a, t, "~~old").contains(.strike), "strikethrough: the words struck, the tildes dim")
+        check(at(a, t, "new").contains(.italic) && at(a, t, "also").contains(.italic) && at(a, t, "*new").contains(.dim), "italic with * and _, the marks dim")
+        check(at(a, t, "Stripe").contains(.link) && at(a, t, "[Stripe").contains(.dim) && at(a, t, "(https").contains(.dim), "a link: the text underlined, the brackets and address dim")
+        check(a.fences == [(t as NSString).range(of: "```\n**not bold**\n```")], "a fence is from the opening line to the closing one")
+        check(at(a, t, "not bold") == [], "marks inside a fence are not styled")
+        let code = M.analyze("`**x**` and ``a ` b`` and `open")
+        check(!code.styles(at: 2).contains(.bold) && code.styles(at: 2).contains(.code), "marks inside inline code are not bold")
+        check(code.styles(at: 15).contains(.code) && !code.styles(at: 26).contains(.code), "a double-tick span holds a tick; an unclosed tick is plain")
+        check(M.analyze("```\ncode\nmore").fences == [NSRange(location: 0, length: 13)], "an unclosed fence runs to the end")
+        check(M.analyze("~~~\n```\nx\n~~~\ny").fences == [NSRange(location: 0, length: 13)] && M.analyze("~~~\n```\nx\n~~~\ny").lines.last?.kind == .plain, "a fence closes on its own kind of fence")
+        check(M.analyze("2 * 3 * 4 and snake_case_name").runs.isEmpty, "spaced stars and snake_case are plain")
+        check(M.analyze("-x\n**bold**").lines.map(\.kind) == [.plain, .plain], "a dash with no space isn't a bullet; ** isn't one either")
+        check(M.analyze("- ").lines.first?.kind == .bullet(lead: 0, marker: 0, gap: 1), "a dash and a space is a bullet at once")
+        check(M.analyze("    > four spaces").lines.first?.kind == .plain, "four spaces is not a quote")
+
+        // The keys: the editor's toggle rule.
+        func tog(_ m: String, _ doc: String, _ sel: NSRange) -> String {
+            let e = M.toggle(m, in: doc, selection: sel)
+            let out = (doc as NSString).replacingCharacters(in: e.range, with: e.text)
+            return (out as NSString).substring(to: e.selection.location) + "|" + (out as NSString).substring(with: e.selection) + "|" + (out as NSString).substring(from: NSMaxRange(e.selection))
+        }
+        check(tog("**", "a word b", NSRange(location: 2, length: 4)) == "a **|word|** b", "wrap a selection")
+        check(tog("**", "a **word** b", NSRange(location: 4, length: 4)) == "a |word| b", "marks just outside the selection come off")
+        check(tog("**", "a **word** b", NSRange(location: 2, length: 8)) == "a |word| b", "a selection that starts and ends with the marks unwraps inside")
+        check(tog("**", "a b", NSRange(location: 2, length: 0)) == "a **||**b", "nothing selected: the pair, the caret between")
+        check(tog("*", "a **word** b", NSRange(location: 4, length: 4)) == "a ***|word|*** b", "a single * is not half of **")
+        check(tog("*", "a *word* b", NSRange(location: 3, length: 4)) == "a |word| b", "a single * comes off its own marks")
+        check(tog("*", "**x**", NSRange(location: 0, length: 5)) == "*|**x**|*", "a selection of **x** is not unwrapped by *")
+        check(tog("~~", "a ~~gone~~ b", NSRange(location: 4, length: 4)) == "a |gone| b" && tog("`", "x", NSRange(location: 0, length: 1)) == "`|x|`", "~~ and ` toggle the same way")
+        check(tog("**", "****", NSRange(location: 2, length: 0)) == "****||****", "a caret inside a pair adds another pair")
+        let lk = M.link(in: "see docs now", selection: NSRange(location: 4, length: 4))
+        check(lk.text == "[docs]()" && lk.selection == NSRange(location: 4 + 4 + 3, length: 0), "⌘K on a selection: [text]() with the caret in the parentheses")
+        let lk0 = M.link(in: "see ", selection: NSRange(location: 4, length: 0))
+        check(lk0.text == "[]()" && lk0.selection == NSRange(location: 5, length: 0), "⌘K with nothing selected: []() with the caret in the brackets")
+
+        // A real composer: styling changes attributes, never characters; each key is one undo.
+        let typed = "## Hi\nRework the **non-goals** in `a.md`\n- one\n> q\n```\nx\n```"
+        let p = ComposerMarkdownProbe(typed)
+        check(p.plain == typed && p.storage == typed, "styling leaves the composer's text byte for byte as typed")
+        let nb = (typed as NSString).range(of: "non-goals").location
+        check(p.look(at: nb).bold && p.look(at: nb - 2).dim && !p.look(at: nb - 2).bold, "the field draws bold words and dim stars")
+        let dash = (typed as NSString).range(of: "- one").location, gt = (typed as NSString).range(of: "> q").location
+        check(p.look(at: dash).hidden && p.look(at: gt).hidden, "a bullet's dash and a quote's > are drawn over, not removed")
+        check(p.look(at: (typed as NSString).range(of: "a.md").location).grounded && p.look(at: (typed as NSString).range(of: "a.md").location).mono, "inline code is mono on the code ground")
+        check(p.lineHeights == [22], "every line keeps its 22 point height")
+        check(p.typing, "typing attributes go back to plain after styling")
+        p.selection = NSRange(location: nb, length: 9)
+        check(p.key("b") && p.plain == typed.replacingOccurrences(of: "**non-goals**", with: "non-goals"), "⌘B takes the stars off")
+        p.undoManager?.undo()
+        check(p.plain == typed, "one ⌘Z puts the stars back")
+        p.selection = NSRange(location: 3, length: 2)
+        _ = p.key("k")
+        check(p.plain == "## [Hi]()\n" + typed.dropFirst(6) && p.selection == NSRange(location: 8, length: 0), "⌘K in the composer: [text]() and the caret inside")
+        p.undoManager?.undo()
+        check(p.plain == typed, "one ⌘Z undoes ⌘K")
+        p.selection = NSRange(location: 0, length: 0)
+        _ = p.key("e")
+        check(p.plain == "``" + typed && p.selection == NSRange(location: 1, length: 0), "⌘E with nothing selected: a pair of ticks, the caret between")
+        p.undoManager?.undo()
+        check(p.plain == typed, "one ⌘Z undoes ⌘E")
+        p.selection = NSRange(location: 3, length: 2)
+        _ = p.key("i"); _ = p.key("x")
+        check(p.plain == "## *~~Hi~~*" + String(typed.dropFirst(5)), "⌘I then ⇧⌘X nest")
     }
 
     chatChipChecks()
