@@ -44,6 +44,8 @@ Richer Claude Code features make it faster: messages that wake a session, backgr
 
 ## Decisions for Geoff
 
+**All twelve decided on 2026-10-14: DL-193 to DL-204** (Q-190, closed). Each section below starts with its decision. Where Geoff's answer changed the recommendation (1, 4, 7, 11), the decision line says how, and the DL entry wins.
+
 Ten decisions, each with my recommendation first. They merge the earlier letters as follows:
 
 | Decision | Earlier letters |
@@ -68,6 +70,12 @@ Project-specific guidance comes from what the project already has:
 - its `CLAUDE.md`;
 - its project skills.
 
+**Your preferences for every director on this Mac** live in a local file the skill reads and Duo never writes over, `~/.claude/duo-director.md` (Geoff, 2026-10-14: preferences kept in the skill would be wiped by its updates). A project's `## Director` rules win over it where they disagree. **Decided: DL-193.**
+
+**It doesn't depend on `PROJECT.md` being there or being full** (Geoff, 2026-10-13: "most projects will not initially have a project.md, and often the project.md will be sparse"). A missing or thin `PROJECT.md` is normal, and the director works from what you tell it. It doesn't fill gaps with guesses. Instead it grows the file in two ways:
+- **Proposals you accept.** When it notices a standing rule or a fact worth keeping ("always ask before publishing", "the goal is a draft by Friday"), it proposes the addition by AskUserQuestion, and only writes it if you accept. That includes creating `PROJECT.md` (Make a Project) when there isn't one.
+- **A record of your decisions.** Decisions you make while it directs are appended with their date to a section of `PROJECT.md` (for example `## Decisions`), so later sessions see what you chose and why, rather than the director's own conclusions.
+
 **Duo dev's extras live in our project's skill folder** as references and scripts: releases, the walk page, the design system, the voice repo, records, the GPU lock. The "Duo dev director" is the shipped skill plus those. This is the shape Geoff described: "the duo dev specific context is just an additional ref or set of scripts, but the instruction set is common".
 
 **The deterministic parts are five `duo2 director` verbs,** tested in DuoChecks:
@@ -87,6 +95,8 @@ Project-specific guidance comes from what the project already has:
 - a fork for Duo dev (users would get the director from before our lessons).
 
 ### 2. Tasks are the unit of work
+
+**Decided: DL-194** (the recommendation).
 
 **Recommended: one delegated piece of work is one Duo task, with light conventions.**
 
@@ -108,6 +118,8 @@ Project-specific guidance comes from what the project already has:
 - a ledger separate from tasks, which means two lists of work.
 
 ### 3. What to take from Beads
+
+**Decided: DL-195** (the recommendation).
 
 Beads is an issue tracker for coding agents, kept in a Dolt database. It has:
 - hash ids;
@@ -142,6 +154,8 @@ Beads is an issue tracker for coding agents, kept in a Dolt database. It has:
 
 ### 4. Changes to tasks' UX, for a design round
 
+**Decided: DL-196.** S1, S2 and S3's Open worker only. Geoff: "stop there — s4, s5 feel like we may be overengineering".
+
 Each change is designed on a canvas with Geoff before it's built. Until then, the director runs on the conventions in decision 2.
 
 - **S1, the folder follows its note.** Rename, move, archive and delete carry `tasks/<slug>/` along. A card shows when its task has a folder.
@@ -154,6 +168,8 @@ Each change is designed on a canvas with Geoff before it's built. Until then, th
 
 ### 5. Where it works: a project, or Home
 
+**Decided: DL-197** (the recommendation).
+
 **Recommended: the same skill in both.**
 - In a project, it directs that project.
 - In Home, it sees every project and directs work directly in projects without their own director.
@@ -164,6 +180,8 @@ Each change is designed on a canvas with Geoff before it's built. Until then, th
 - Home directs everything: forty projects in one context.
 
 ### 6. One owner per worker, and restarts
+
+**Decided: DL-200** (the recommendation).
 
 **Recommended: a worker is directed only by the director named on its task.**
 - Sessions not on a director's task are yours, and a director never tasks them.
@@ -177,6 +195,8 @@ Each change is designed on a canvas with Geoff before it's built. Until then, th
 - the name alone, with no registry: two sessions can share a name, and the id moves on a resume.
 
 ### 7. How it talks to you
+
+**Decided: DL-198.** Geoff: "you are overthinking/over engineering"; the skill says only "offer to make artifacts when helpful, make html and open in duo when necessary". No `decisions.md` convention and no artifact mirror. The text below is the superseded recommendation.
 
 **Recommended: the same everywhere, the work Mac included.**
 1. **One question:** asked in its own session (AskUserQuestion, which works in Duo and on the phone through Remote Control), with Needs you raised in Duo.
@@ -193,6 +213,8 @@ The file is always the record; the page is a mirror.
 
 ### 8. Workers
 
+**Decided: DL-201** (the recommendation).
+
 **Recommended:**
 - **Where they run.** Users' workers run in Duo by default, so you see them. They run in the background when you ask, when Duo isn't running, or for long jobs. Ours run in the background with Remote Control (already decided); design work stays in Duo.
 - **One worker per task by default.** Parallel workers only for work that splits cleanly: separate files, research, tests. Anything that shares decisions runs one at a time. Cognition: "actions carry implicit decisions". Anthropic: several agents cost about 15 times the tokens of a chat.
@@ -206,6 +228,8 @@ The file is always the record; the page is a mirror.
 
 ### 9. Accepting work
 
+**Decided: DL-202** (the recommendation).
+
 **Recommended:**
 - **Check before accepting.** The director checks what came back against the brief and `done_when`. For code, it runs the project's checks too. It never passes on a claim it hasn't checked.
 - **You say go.** It proposes acceptance, saying what it checked. A standing rule in the brief can let it accept checked work itself; our own dev director has one.
@@ -218,6 +242,8 @@ The file is always the record; the page is a mirror.
 - no retry cap.
 
 ### 10. Claude Code Projects
+
+**Decided: DL-203** (the recommendation; card buttons narrowed to Open worker by DL-196).
 
 **Recommended: take its patterns, keep Duo's words, and stand down where Projects runs.**
 
@@ -240,6 +266,45 @@ An export can come when someone wants it. In a repo you run as a Projects projec
 - rename Duo's columns to Projects' words: changes a built UI for users who don't have Projects;
 - a memory folder now.
 
+### 11. Finishing and archiving tasks
+
+**Decided: DL-204** (the recommendation; Geoff: "You don't need ui elements for accepting work as complete — Claude can askuserquestions").
+
+Geoff, 2026-10-13: one task per worker means tasks stack up, so the director must be diligent about marking tasks complete and archiving them. Both need the user's say-so and must be reversible. Completed tasks are listed in the `PROJECT.md` log, and the director scans that log before starting new work, in case an existing task has context it needs.
+
+**Recommended:**
+- **Mark complete.** When the director has checked a task's work (decision 9) and you've accepted it, it proposes "mark complete" by AskUserQuestion, several tasks to a question when there are several. On yes it runs `duo2 task status <task> done`, which writes `status: done` and `completed:` and is undone by `duo2 undo` or by setting the status back.
+- **Archive.** It proposes archiving completed tasks the same way: right after completion, and in a sweep when it starts, for anything done and not yet archived. On yes, `duo2 task archive`. Its sessions are archived too, never a running one. `duo2 task unarchive` or `duo2 undo` reverses it.
+- **Where archived tasks go.** Keep Duo's archive as built (DL-115): the note gets `archived: true` and stays in `tasks/`. It leaves the lists and counts, stays searchable, and shows in the project's Archived fold with Unarchive Task. Nothing moves, so links, the task's folder and Obsidian's view all keep working.
+- **The log.** On completion, the director appends one dated line to a `## Done` section of `PROJECT.md`: a link to the task (Copy Link's `duo2://task/<id>` form, which survives renames and moves), and what came of it in a sentence. It creates the section the first time it's needed, and the line is part of what you approve.
+- **Scan before new work.** Before writing a new task, the director reads `## Done` and `## Decisions`, and opens any archived task that looks related, so that it reuses context rather than redoing work. The new task links to the old one in its Request when it does.
+
+**Other options:**
+- **Move archived notes to `tasks/archive/`** (with their folders). This is what Geoff literally described. It changes DL-115 and the task scanner, and breaks plain path links. Worth it only if a cluttered `tasks/` folder in Finder or Obsidian is the real problem.
+- Archive without asking once you've accepted the work, still undoable. Faster, but against "require user input".
+
+### 12. When sessions can't message each other
+
+**Decided: DL-199** (the recommendation; Geoff: "This makes sense").
+
+Geoff, 2026-10-14: "I'm concerned we are not yet talking about graceful fallbacks when the client Claude code does not support session to session messaging, which feels like a critical piece of functionality. What is the work-around?"
+
+The ladder below under Commitments does fall back, but on a client without messaging (the pinned 2.1.219 has no `SendMessage`, no inbox and no idle notices) its working rung for reaching a live worker was "Duo types the message and you press Enter". That stalls the director whenever you're away, which defeats the point.
+
+**Recommended: Duo carries the messages.** Duo already owns the workers' terminals, reads their transcripts and knows each session's state, so it can do the three jobs messaging does:
+- **Director to worker.** `duo2 director send <task> "<text>"`. For a worker in Duo, Duo types the text into the worker's prompt and submits it, but only when all of these hold: the session is on a task this director directs, Claude is idle with an empty prompt, and you haven't typed there recently (decision 6). That's the check Duo's model chip already makes before it sends `/model` (DL-168). If the worker isn't running, Duo resumes it in its tab with the text as its first prompt. A background worker that has stopped gets a headless turn (`claude -p --resume <id>`), never while its process is running. Otherwise the text waits in the task note's Progress, and the send is retried when the worker next goes idle.
+- **Worker to director.** The worker doesn't need to send anything. It ends its turn with its report as its last message and writes progress in the task note. Duo sees it go idle and reads that message (`duo2 session show`).
+- **Waking the director.** The director runs Monitor on `duo2 director watch`, which prints one line whenever one of its workers goes idle, needs you, or its task note changes. Monitor and ScheduleWakeup are in 2.1.219's code (seen in the binary; a harness run confirms they work). Without Monitor, ScheduleWakeup checks `duo2 director status` every few minutes. Without either, Duo types a one-line "worker finished" into the director's own prompt, under the same idle rules. Last of all, your next message.
+- **If hooks are switched off** (Q-192), Duo tells a session's state from its transcript and screen instead.
+
+On a client with messaging, `SendMessage` and idle notices come first and Duo's route is the fallback. Every send is logged with the route it took. A director outside Duo, on a client without messaging, can only use headless turns for stopped workers and asks you for the rest, so on such clients its workers start in Duo (decision 8 already makes that the default).
+
+New ground: Duo would submit a prompt on the director's behalf. Today Duo only types and leaves the Enter to you (`duo2 send text`), and its hooks never send a turn (DL-116). Recommended limits: only into sessions on a task this director directs, only when idle, and each one logged in the task's Progress.
+
+**Other options:**
+- Keep "Duo types it, you press Enter": safe, but the director waits on you for every message.
+- A file mailbox the worker reads at each turn through a hook: dropped earlier, because hooks may be off exactly where this matters.
+
 ## Commitments that aren't questions
 
 **It works on every client.** At start, `duo2 director status` sees what this session can do. Each job then has a ladder, best rung first:
@@ -247,7 +312,7 @@ An export can come when someone wants it. In a repo you run as a Projects projec
   1. `SendMessage`;
   2. resuming into a background session (2.1.285+);
   3. a headless turn (`claude -p --resume`), for workers it started that way;
-  4. Duo types the message and you press Enter;
+  4. Duo submits it into an idle worker in Duo, or resumes a stopped one with it (decision 12);
   5. it asks you to pass it on.
 - **Hearing back:**
   1. `SendMessage`;
@@ -255,8 +320,10 @@ An export can come when someone wants it. In a repo you run as a Projects projec
   3. Duo's session state plus the worker's last message (`duo2 session show`).
 - **Waking itself:**
   1. the idle notice;
-  2. Monitor;
-  3. your next message.
+  2. Monitor on `duo2 director watch`;
+  3. ScheduleWakeup;
+  4. Duo types a one-line notice into the director when it's idle;
+  5. your next message.
 
 On the work Mac: AskUserQuestion, `decisions.md` and the bottom rungs, with nothing scripted.
 
