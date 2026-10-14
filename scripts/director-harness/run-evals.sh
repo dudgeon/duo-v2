@@ -4,7 +4,8 @@
 # Each case runs as you on a fresh config with a scratch HOME, so no credentials are copied and
 # `duo2` inside a case can't reach any Duo (F-314): cases grade the director's judgement on the
 # no-Duo rungs. Writes evals/results/ under the skill (git-ignored) and a JSON summary.
-# Runs under the shared GPU lock; set DIRECTOR_EVAL_CLAUDE to try another claude binary.
+# Runs under the shared GPU lock; DIRECTOR_EVAL_CLAUDE picks another claude binary, DIRECTOR_EVAL_MODEL
+# another model (the release gate runs claude-sonnet-5-5 too, C-87).
 set -e
 here=${0:A:h}
 root=${here:h:h}
@@ -22,7 +23,7 @@ export DIRECTOR_EVAL_DUO2=$out/bin/duo2 PATH=.director-bin:$PATH
 lock=(/Users/geoff/repos/duo-v2/scripts/gpu-lock.sh --shared director-evals)
 [[ -n ${GPU_LOCK:-} && -x ${lock[1]} ]] || lock=()
 cd $skill
-$lock $claude plugin ev""al $skill --trust-plugin --scaffold --ablation none --model claude-haiku-5-5 \
+$lock $claude plugin ev""al $skill --trust-plugin --scaffold --ablation none --model ${DIRECTOR_EVAL_MODEL:-claude-haiku-5-5} \
   --allow-tools Write Edit "Bash(duo2:*)" "Bash(ls:*)" "Bash(mkdir:*)" "Bash(git:*)" \
   --max-cost-usd ${DIRECTOR_EVAL_MAX_USD:-5} --json $out/result.json --report $out/report.html "$@"
 echo "Results: $out/result.json, $out/report.html"
