@@ -147,10 +147,19 @@ public enum FixtureHarness {
         case "sheet-new":    // sheet-new[:<name>]: the New project sheet
             model.showNewProject(name: parts.count > 1 ? parts[1] : "")
         case "sheet-goal": model.newProjectForm?.goal = parts.count > 1 ? parts[1] : ""
-        case "sheet-into":   // sheet-into:<topic>: pick a place on whichever sheet is up
-            if let p = model.homePlaces().first(where: { $0.folder.lastPathComponent == (parts.count > 1 ? parts[1] : "") }) {
+        case "sheet-into":   // sheet-into:<folder|path in Home>: pick a place on whichever sheet is up
+            if parts.count > 1, let p = model.homePlace(named: parts[1]) {
+                if let f = model.newProjectForm, !f.places.contains(p) { f.places.append(p) }
                 model.moveIntoHomeForm?.into = p; model.newProjectForm?.into = p
             }
+        case "sheet-use-folder": model.newProjectForm?.useFolder = true   // New project's "Make this folder the project" (DL-211)
+        case "first-run":   // first-run[:<a|b|c>]: Home with no projects (DL-212), these as its folders (fixture states)
+            let homeName = model.fixture.home?.name
+            let kept = model.fixture.projects.filter { p in p.isHome == true || p.topic.map(MapLayout.isPath) != false }
+            model.fixture.projects = kept
+            model.fixture.sessions = model.fixture.sessions.filter { s in kept.contains { $0.name == s.project } || s.project == homeName }
+            let base = URL(fileURLWithPath: ((model.fixture.home?.path ?? "~/Home") as NSString).expandingTildeInPath)
+            model.homeFolderList = (parts.count > 1 ? parts[1].split(separator: "|").map(String.init) : []).map { base.appending(path: $0) }
         case "notify-hidden":   // notify-hidden:notifications|badges|none: what macOS hides, for Settings (Q-93)
             SettingsInfo.shared.macOSHidesOverride = .some(parts.count > 1 ? MacOSHides(rawValue: parts[1]) : nil)
         case "render-settings":   // render-settings:<png>: the Settings view, drawn to an image at 2x

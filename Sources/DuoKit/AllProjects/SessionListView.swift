@@ -30,6 +30,12 @@ struct SessionListPane: View {
                             }
                         }
                     } else {
+                        // Home has no projects yet (DL-212): its folders, to make projects of, before the sessions.
+                        if let folders = model.firstRunFolders {
+                            HomeFoldersSection(folders: folders)
+                                .padding(.horizontal, DuoSpace.panePadding)
+                                .padding(.bottom, 8)
+                        }
                         if model.rightCollapsedAllProjects {
                             // N1 with the column hidden: the line opens into the rows themselves.
                             if !list.needsYou.isEmpty {
