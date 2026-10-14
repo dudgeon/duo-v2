@@ -82,10 +82,11 @@ public enum ParkCheck {
 
     /// What Duo says after Park Background Sessions (park-handoff, "After Park Background Sessions").
     public static func notice(parked: Int, kept: [(name: String, block: ParkBlock)]) -> String {
-        guard parked > 0 else { return "No idle sessions to park." }
+        let why = kept.map { "“\($0.name)” \($0.block.why)" }.joined(separator: ", ")
+        guard parked > 0 else { return kept.isEmpty ? "No idle sessions to park." : "No idle sessions to park: \(why)." }
         let s = parked == 1 ? "Parked 1 session." : "Parked \(parked) sessions."
         guard !kept.isEmpty else { return s + (parked == 1 ? " It picks up where it left off when you show it." : " Each picks up where it left off when you show it.") }
-        return s + " \(kept.count) kept running: " + kept.map { "“\($0.name)” \($0.block.why)" }.joined(separator: ", ") + "."
+        return s + " \(kept.count) kept running: " + why + "."
     }
 }
 

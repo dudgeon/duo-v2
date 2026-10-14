@@ -3575,3 +3575,52 @@ The duo-signal spike (F-297) saw "didn't send your answer" on the work Mac's 2.1
 - **General rule:** don't make a versioned-path CLI the subject of a privacy decision; keep the stable signed app as the responsible process.
 - **Checked:** DuoChecks 1447 passed, 0 failed; `DUO_CHECKS=chat` 361 passed; `scripts/check-sandbox.sh` all 10 pass; `check-ui.sh` captured the 6 standard states; `check-background.sh`: no test Duo became the front app or showed a Dock icon (its one ✘ was Chrome → Claude desktop, not a Duo).
 - **Checked live:** an isolated test Duo (`com.dudgeon.duo.test`, launched with `open`, own support and config folders). Its shell terminal ran `responsibility_get_pid_responsible_for_pid` on itself and got the Duo's own pid (shell 73856, responsible 73724 = the test Duo). It had `DUO_SOCKET` and `DUO_TOKEN`. I read the responsible pid directly because tccd logged no request for the shell's read of a protected file. A real Claude session wasn't started: that needs credentials in a scratch config. Claude's args and environment go through the same `run()` call as the shell's, unchanged from before 0.2.13.
+
+## F-308 · How Duo tells whether a tab can park (DL-192)
+
+- **Order of the checks (`ParkCheck.why`, `Model/Parking.swift`):**
+  1. A shell tab never parks.
+  2. A tab with no live terminal is not running in Duo, or is already parked.
+  3. Keep Running.
+  4. Working (the session's state).
+  5. Waiting on you: a permission or a question.
+  6. A background shell or Monitor.
+  7. A running subagent.
+  8. For Park Background Sessions and the memory question only: the tab on screen.
+  The Session menu's Park Session on the tab on screen moves the pane to the next tab first. If the pane has no other tab, it refuses ("is on screen").
+- **Background shells and Monitors are child processes.**
+  - Claude Code runs every Bash command, foreground or `run_in_background`, and every Monitor as a direct child of its own process: `<shell> -c source <CLAUDE_CONFIG_DIR>/shell-snapshots/snapshot-<shell>-….sh … && { … }`. The command itself runs under that shell.
+  - This is the same on 2.1.296 and 2.1.219: the native binary showed `/bin/zsh -c source …/shell-snapshots/snapshot-zsh-….sh` over `sleep 240`, and its footer said "1 shell".
+  - Other children are not that. An idle session's `caffeinate -i -t 300` (held for 5 min after a turn) and stdio MCP servers, which start from their own config command, never block.
+  - `ProcessTable.children(of:)` reads the process table (`KERN_PROC_ALL`, filtered by parent) and the argv of each child.
+- **Subagents are in-process, so there is nothing to see in `ps`.**
+  - They're counted from the session's hook events: SubagentStart without its SubagentStop, by `agent_id`. Both events carry the parent's `session_id`.
+  - 2.1.219 accepts both hooks and fires them, so they're now registered for every CLI (`HookEvents.names`), not only chat-capable ones.
+  - A process killed mid-subagent never writes the Stop, so a SessionStart or SessionEnd clears the count.
+- **The menus check cheaply.** The Session menu and a tab's right-click menu dim Park Session from the state, the pin and the terminal only, so a menu or tab drawn on every refresh never walks the process table. Choosing Park runs the full check. If the tab is busy after all, Duo says so ("“‹name›” is running something in the background, so it isn't parked").
+- **The memory question** (`ParkPressure`): `DispatchSource.makeMemoryPressureSource` at `.critical`, live mode only. Duo asks once per episode, and the episode ends when pressure goes back to normal. While another sheet is up it retries every 2 s and drops the question if pressure has eased. Eligibility is read again when the answer comes. The harness drives it with `memory-pressure:critical|normal`.
+- **The pin:** `DuoState.keepRunning` (session ids). A pinned tab restored at launch starts at once instead of parking ("restore: resumed N Keep Running session(s) at once"). Pinning a parked tab wakes it.
+
+## F-309 · What survives a park: SIGTERM, then `--resume` (DL-192)
+
+Measured on 2.1.296 and on the work Mac's 2.1.219 (Anthropic's signed native binary, `@anthropic-ai/claude-code-darwin-arm64@2.1.219`). Both ran against the chat-mode spike's mock API with a scratch `CLAUDE_CONFIG_DIR`, so no tokens were spent. Ground truth was the `model` and `output_config.effort` of each request the mock got, the TUI's footer, and the transcript's permission-mode records. Neither launch passed `--model`, `--effort` or `--permission-mode`, which is how Duo launches.
+
+- **Duo's flags come back as they were.** A parked tab resumes through the same path as a restored one (F-210): `--resume <id>`, the per-session `--settings` and `--append-system-prompt`, and `--remote-control <name>` when SessionIndex says the session had it. Duo passes nothing else at launch, so nothing is lost on Duo's side. `--resume <id> --remote-control <name>` starts without error on both versions; the connection itself wasn't tested, since the mock uses API-key auth.
+- **SIGTERM is clean on both versions.**
+  - It takes about 300 ms on 2.1.296 and 20–45 ms on 2.1.219; the exit status is 143.
+  - Claude prints "Resume this session with: claude --resume <id>".
+  - The transcript is intact under the same id, and the resumed screen replays the history.
+  - A kill mid-reply also resumes: the prompt shows with no answer, and the next turn works. Duo parks only tabs at their prompt.
+
+| Set mid-session | 2.1.296 | 2.1.219 |
+|---|---|---|
+| `/model`, this session only ("s") | survives (from the transcript) | survives |
+| `/model`, as the default (Return) | survives, because it writes `"model"` to the user's settings.json for every session | same |
+| `/effort`, this session only | **lost**: back to the default (medium) | no session-only choice |
+| `/effort`, as the default | survives via settings.json (`modelSettings.<model>.effortLevel`) | survives via settings.json (`effortLevel`) |
+| Shift+Tab: accept edits, manual, auto | survives | survives |
+| Shift+Tab: plan mode | survives | **lost**: resumes in manual (the transcript reads default, plan, default) |
+
+- The two losses are C-86.
+- Mode order differs between versions: 2.1.296 cycles auto → manual → accept edits → plan, 2.1.219 manual → accept edits → plan → auto.
+- Changing model or effort mid-conversation raises a "Switch model?" / "Change effort level?" confirm, so anything that re-sends a setting after a resume would have to answer it.

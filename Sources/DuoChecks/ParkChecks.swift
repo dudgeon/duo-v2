@@ -54,7 +54,8 @@ import Foundation
     check(ParkCheck.notice(parked: 4, kept: []) == "Parked 4 sessions. Each picks up where it left off when you show it.", "notice: all parked")
     check(ParkCheck.notice(parked: 3, kept: [("Buyer interviews", .needsYou), ("Release watcher", .keepRunning)])
           == "Parked 3 sessions. 2 kept running: “Buyer interviews” is waiting on you, “Release watcher” is set to Keep Running.", "notice: some kept, with why")
-    check(ParkCheck.notice(parked: 0, kept: [("x", .working)]) == "No idle sessions to park.", "notice: none could park")
+    check(ParkCheck.notice(parked: 0, kept: [("x", .working)]) == "No idle sessions to park: “x” is working.", "notice: none could park, says why")
+    check(ParkCheck.notice(parked: 0, kept: []) == "No idle sessions to park.", "notice: nothing running")
 
     // Hooks: SubagentStart/Stop are registered for every CLI (2.1.219 accepts them).
     do {

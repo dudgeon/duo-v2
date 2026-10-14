@@ -29,7 +29,9 @@ extension AppModel {
 
     // MARK: Eligibility
 
-    func parkInputs(_ key: String) -> ParkInputs {
+    /// `deep` also reads the process table and the hook events; menus pass false, so a menu or a
+    /// tab drawn on every refresh never walks the processes (the full check runs when Park is chosen).
+    func parkInputs(_ key: String, deep: Bool = true) -> ParkInputs {
         var i = ParkInputs()
         i.isShell = isShell(key)
         guard !i.isShell else { return i }
@@ -39,7 +41,7 @@ extension AppModel {
         i.keepRunning = isKeepRunning(key)
         i.state = fixture.sessions.first { $0.tabKey == key }?.state
         i.onScreen = visibleSessionId == key
-        if i.hasTerminal, let t {
+        if deep, i.hasTerminal, let t {
             if let pid = t.view.process?.shellPid, pid > 0 { i.children = parkChildren(pid) }
             if let id = sessionID(forTab: key) { i.events = parkEvents(id) }
         }
@@ -47,8 +49,8 @@ extension AppModel {
     }
 
     /// Nil when the tab can park. `bulk` also keeps the tab on screen.
-    public func parkBlock(_ key: String, bulk: Bool = false) -> ParkBlock? {
-        ParkCheck.why(parkInputs(key), bulk: bulk)
+    public func parkBlock(_ key: String, bulk: Bool = false, deep: Bool = true) -> ParkBlock? {
+        ParkCheck.why(parkInputs(key, deep: deep), bulk: bulk)
     }
 
     /// Every tab that could park now without being asked: running, not on screen, not busy, not pinned.
