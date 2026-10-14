@@ -91,6 +91,15 @@ struct SessionMenuItems: View {
         }
         Button("Delete Session…") { model.deleteSession(key) }.disabled(id == nil)
         Divider()
+        // Parking (DL-192): ends Claude, keeps the tab; it resumes when shown.
+        let block = id == nil ? ParkBlock.notRunning : model.parkBlock(key)
+        Button("Park Session") { if let why = model.park(key) { model.info("“\(s?.name ?? "")” \(why.why), so it isn’t parked.") } }   // action: session park
+            .disabled(block != nil).help(block.map { "“\(s?.name ?? "")” \($0.why)" } ?? "")
+        Button("Park Background Sessions") { model.parkBackground() }   // action: session park
+            .disabled(model.terminalsMode != .live)
+        Toggle("Keep Running", isOn: Binding(get: { model.isKeepRunning(key) }, set: { model.setKeepRunning(key, $0) }))   // action: session keep-running
+            .disabled(s == nil || id == nil || model.isShell(key))
+        Divider()
         // Ends the process; the session stays listed and resumable (as ⌘W on its tab).
         Button("End Session") { model.confirmClose(key) { model.closeSession(key) } }   // asks first when Claude is working (Q-71)
             .disabled(s == nil || model.terminals.existing(key) == nil)

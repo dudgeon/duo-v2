@@ -357,6 +357,13 @@ public final class AppModel {
     @ObservationIgnored public var restoreEnabled = false
     /// DL-156: see `tabSessions`.
     public var parkedTabs: Set<String> = []
+    /// Sessions set to Keep Running (DL-192), by session id: never parked, resumed at launch.
+    public var keepRunningIDs: Set<String> = []
+    /// What the park check reads, replaceable in checks: a process's children (argv each), a session's hook events.
+    @ObservationIgnored public var parkChildren: (Int32) -> [[String]] = { ProcessTable.children(of: $0) }
+    @ObservationIgnored public var parkEvents: (String) -> [HookEvents.Event] = { HookEvents.read($0) }
+    @ObservationIgnored public var parkPressure: ParkPressure?
+    @ObservationIgnored var pressureSource: DispatchSourceMemoryPressure?
     @ObservationIgnored var restoreApplied = false
     @ObservationIgnored var lastRestoreSave = Date.distantPast
     @ObservationIgnored var lastRestoreData: Data?
@@ -410,7 +417,9 @@ public final class AppModel {
         let state = DuoState.load()
         seen = state.seen
         rememberedHome = state.home
+        keepRunningIDs = Set(state.keepRunning)
         extraProjects = state.projects.map { URL(fileURLWithPath: $0) }
+        startMemoryPressureWatch()
         fixture = LiveSnapshot.empty()  // never show the design fixture while the first scan runs
         refreshLive()
         minuteTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in

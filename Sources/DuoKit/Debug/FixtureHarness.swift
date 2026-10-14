@@ -204,6 +204,18 @@ public enum FixtureHarness {
                 let why: AppModel.TabBusy? = parts[1].hasPrefix("shell=") ? .shellRunning(command: String(parts[1].dropFirst(6))) : model.busy(parts[1])
                 if let why { SheetCenter.shared.ask(model.closeQuestion(why) {}) }
             }
+        case "memory-pressure":   // memory-pressure:critical|warning|normal: macOS's signal, for DL-192's question
+            let level: ParkPressure.Level = parts.count > 1 && parts[1] == "critical" ? .critical : parts.count > 1 && parts[1] == "warning" ? .warning : .normal
+            (model.parkPressure ?? model.makeParkPressure()).changed(to: level)
+        case "ask-park":   // ask-park[:<n>]: the memory question over the first n sessions (fixture tabs run nothing), always shown
+            let n = parts.count > 1 ? Int(parts[1]) ?? 4 : 4
+            let list = Array(model.fixture.sessions.filter { $0.state == .idle }.prefix(n))
+            if !list.isEmpty { model.ask(model.parkQuestion(list)) }
+        case "keep-running":   // keep-running:<tab key>[=off]: Keep Running on a tab, for the pin (DL-192)
+            if parts.count > 1 {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                model.setKeepRunning(kv[0], kv.count < 2 || kv[1] != "off")
+            }
         case "hover-tab":   // hover-tab:<tab key or document path>[=close|press]: the pointer over a tab, or on its × (DL-126)
             if parts.count > 1 {
                 let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)

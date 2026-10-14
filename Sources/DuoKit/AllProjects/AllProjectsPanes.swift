@@ -64,6 +64,10 @@ struct HomePane: View {
                                 .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2)
                                 .lineLimit(1)
                         }
+                        // Keep Running (DL-192): a pin after the name.
+                        if model.isKeepRunning(s.tabKey) {
+                            KeepRunningPin(color: light ? (active ? DuoColor.text : DuoColor.text2) : (active ? DuoColor.consoleText : DuoColor.consoleText2))
+                        }
                     }
                     .modifier(TabHoverFill(key: s.tabKey, onConsole: !light, fill: light ? DuoColor.selected : nil))   // DL-134
                     .frame(maxHeight: light ? .infinity : nil)
@@ -71,9 +75,10 @@ struct HomePane: View {
                     .overlay(alignment: .bottom) { if light && active { DuoColor.text.frame(height: 2) } }
                     .contentShape(Rectangle())
                     .onActivate { model.homeTab = s.tabKey }  // action: session open
-                    .modifier(SessionOrganizeMenu(sessionKey: s.tabKey))
+                    .modifier(SessionOrganizeMenu(sessionKey: s.tabKey, tab: true))
                     .modifier(TabHover(key: s.tabKey) { model.closeConsoleTab(s.tabKey) })
                     .accessibilityElement(children: .combine)
+                    .modifier(KeepRunningLabel(pinned: model.isKeepRunning(s.tabKey), name: s.name, state: s.state))
                     .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
                     .background(ground)
                     .transition(.tab)
@@ -1031,6 +1036,8 @@ struct SessionOrganizeMenu: ViewModifier {
     var radius = DuoMetric.radiusSelection
     /// A console tab sits on the dark console, so its fill is the console's.
     var onConsole = false
+    /// On a console or Home tab: Park Session, Keep Running and Close Tab close its menu (DL-192).
+    var tab = false
 
     func body(content base: Content) -> some View {
         let content = base.modifier(MenuTargetFill(sessionKey: sessionKey, radius: radius, onConsole: onConsole))
@@ -1058,6 +1065,15 @@ struct SessionOrganizeMenu: ViewModifier {
                     }
                     Button("Delete Session…") {  // action: session delete
                         model.deleteSession(sessionKey) { if case .failure(let e) = $0, !"\(e)".hasPrefix("Not deleted") { model.info("\(e)") } }
+                    }
+                    if tab {
+                        Divider()
+                        let block = model.parkBlock(sessionKey)
+                        Button("Park Session") { if let why = model.park(sessionKey) { model.info("“\(s.name)” \(why.why), so it isn’t parked.") } }
+                            .disabled(block != nil).help(block.map { "“\(s.name)” \($0.why)" } ?? "")
+                        Toggle("Keep Running", isOn: Binding(get: { model.isKeepRunning(sessionKey) }, set: { model.setKeepRunning(sessionKey, $0) }))
+                        Divider()
+                        Button("Close Tab") { model.closeConsoleTab(sessionKey) }
                     }
                 }
                 .modifier(Lifted(active: model.dragging == payload))

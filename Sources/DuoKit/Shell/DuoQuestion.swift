@@ -10,7 +10,8 @@ public struct DuoQuestion: Identifiable {
         public var what: String
         public var path: String
         /// With no `what`: the path alone in `text`, this at its right in `text2` ("edited 2d ago").
-        /// With a `what`: the clash row of `standins2-handoff/q50-clash` (DL-132 c): `what` in mono,
+        /// With a `what` and no `path`: the name in body type, this at the right in `text2` (DL-192).
+        /// With a `what` and a `path`: the clash row of `standins2-handoff/q50-clash` (DL-132 c): `what` in mono,
         /// `path` under it in `text2` ("from ~/Downloads"), this at the right in `text2`.
         public var detail: String? = nil
     }
@@ -157,7 +158,7 @@ struct QuestionSheet: View {
             }
             if !q.items.isEmpty {
                 // Clash rows (with a detail) sit 6 apart in their own padding, a rule between (q50-clash).
-                let rowed = q.items.contains { !$0.what.isEmpty && $0.detail != nil }
+                let rowed = q.items.contains { !$0.what.isEmpty && !$0.path.isEmpty && $0.detail != nil }
                 VStack(alignment: .leading, spacing: rowed ? 0 : DuoSpace.gapGlyphToLabel) {
                     ForEach(Array(q.items.enumerated()), id: \.offset) { n, i in
                         if rowed && n > 0 { DuoColor.rule.frame(height: DuoMetric.borderHairline).padding(.horizontal, -DuoSpace.cardPadding.leading) }
@@ -167,6 +168,13 @@ struct QuestionSheet: View {
                                     .lineLimit(1).truncationMode(.middle)
                                 Spacer(minLength: 0)
                                 if let d = i.detail { Text(d).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize() }
+                            }
+                        } else if i.path.isEmpty, let d = i.detail {
+                            // A name and, at the right in `text2`, what goes with it (the memory question's tabs, DL-192).
+                            HStack(spacing: DuoSpace.gapCardToCard) {
+                                Text(i.what).duoText(.body).lineLimit(1).truncationMode(.tail)
+                                Spacer(minLength: 0)
+                                Text(d).duoText(.body).foregroundStyle(DuoColor.text2).fixedSize()
                             }
                         } else if let d = i.detail {
                             HStack(alignment: .top, spacing: DuoSpace.gapCardToCard) {
