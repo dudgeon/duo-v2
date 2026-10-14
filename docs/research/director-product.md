@@ -244,6 +244,21 @@ An export can come when someone wants it. In a repo you run as a Projects projec
 - rename Duo's columns to Projects' words: changes a built UI for users who don't have Projects;
 - a memory folder now.
 
+### 11. Finishing and archiving tasks
+
+Geoff, 2026-10-13: one task per worker means tasks stack up, so the director must be diligent about marking tasks complete and archiving them. Both need the user's say-so and must be reversible. Completed tasks are listed in the `PROJECT.md` log, and the director scans that log before starting new work, in case an existing task has context it needs.
+
+**Recommended:**
+- **Mark complete.** When the director has checked a task's work (decision 9) and you've accepted it, it proposes "mark complete" by AskUserQuestion, several tasks to a question when there are several. On yes it runs `duo2 task status <task> done`, which writes `status: done` and `completed:` and is undone by `duo2 undo` or by setting the status back.
+- **Archive.** It proposes archiving completed tasks the same way: right after completion, and in a sweep when it starts, for anything done and not yet archived. On yes, `duo2 task archive`. Its sessions are archived too, never a running one. `duo2 task unarchive` or `duo2 undo` reverses it.
+- **Where archived tasks go.** Keep Duo's archive as built (DL-115): the note gets `archived: true` and stays in `tasks/`. It leaves the lists and counts, stays searchable, and shows in the project's Archived fold with Unarchive Task. Nothing moves, so links, the task's folder and Obsidian's view all keep working.
+- **The log.** On completion, the director appends one dated line to a `## Done` section of `PROJECT.md`: a link to the task (Copy Link's `duo2://task/<id>` form, which survives renames and moves), and what came of it in a sentence. It creates the section the first time it's needed, and the line is part of what you approve.
+- **Scan before new work.** Before writing a new task, the director reads `## Done` and `## Decisions`, and opens any archived task that looks related, so that it reuses context rather than redoing work. The new task links to the old one in its Request when it does.
+
+**Other options:**
+- **Move archived notes to `tasks/archive/`** (with their folders). This is what Geoff literally described. It changes DL-115 and the task scanner, and breaks plain path links. Worth it only if a cluttered `tasks/` folder in Finder or Obsidian is the real problem.
+- Archive without asking once you've accepted the work, still undoable. Faster, but against "require user input".
+
 ## Commitments that aren't questions
 
 **It works on every client.** At start, `duo2 director status` sees what this session can do. Each job then has a ladder, best rung first:
