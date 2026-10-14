@@ -94,6 +94,8 @@ Project-specific guidance comes from what the project already has:
 
 ### 2. Tasks are the unit of work
 
+**Decided: DL-194** (the recommendation).
+
 **Recommended: one delegated piece of work is one Duo task, with light conventions.**
 
 - **The brief.** The director adds a `## Brief` section to the note: your words verbatim, plus anything it was told not to decide. It also fills the existing `done_when:` key. Duo's hooks already tell every linked session "its note is the task's brief" (DL-116).
@@ -114,6 +116,8 @@ Project-specific guidance comes from what the project already has:
 - a ledger separate from tasks, which means two lists of work.
 
 ### 3. What to take from Beads
+
+**Decided: DL-195** (the recommendation).
 
 Beads is an issue tracker for coding agents, kept in a Dolt database. It has:
 - hash ids;
@@ -148,6 +152,8 @@ Beads is an issue tracker for coding agents, kept in a Dolt database. It has:
 
 ### 4. Changes to tasks' UX, for a design round
 
+**Decided: DL-196.** S1, S2 and S3's Open worker only. Geoff: "stop there — s4, s5 feel like we may be overengineering".
+
 Each change is designed on a canvas with Geoff before it's built. Until then, the director runs on the conventions in decision 2.
 
 - **S1, the folder follows its note.** Rename, move, archive and delete carry `tasks/<slug>/` along. A card shows when its task has a folder.
@@ -159,6 +165,8 @@ Each change is designed on a canvas with Geoff before it's built. Until then, th
 **Recommended order:** S1 and S2 first, since they're small and make the conventions visible. Then S3. Then S4 and S5.
 
 ### 5. Where it works: a project, or Home
+
+**Decided: DL-197** (the recommendation).
 
 **Recommended: the same skill in both.**
 - In a project, it directs that project.
