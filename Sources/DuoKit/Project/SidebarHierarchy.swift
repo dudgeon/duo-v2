@@ -38,6 +38,8 @@ struct SectionHeaderPlus: View {
     let help: String
     /// TASKS carries the Explainer's frame and trigger (DL-172).
     var tasks = false
+    /// The header's own help tag: TASKS says why tasks exist here, not in the pane (DL-214).
+    var headHelp: String?
     let action: () -> Void
 
     var body: some View {
@@ -55,6 +57,7 @@ struct SectionHeaderPlus: View {
             .accessibilityLabel(label)
             .accessibilityHint(help)
         let head = SectionLabel(text: text, count: count)
+            .help(headHelp ?? "")
             .frame(maxWidth: .infinity, alignment: .leading)
             .overlay(alignment: .trailing) {
                 if tasks { plus.explainerTrigger(.tasks, key: "tasks.fold-plus", origin: "tasks.fold-head") } else { plus }
@@ -77,7 +80,8 @@ struct TasksHeader: View {
     var body: some View {
         let n = (model.fixture.tasks ?? []).filter { $0.project == project && model.listedTask($0) }.count
         SectionHeaderPlus(text: "Tasks", count: n == 0 ? nil : n, hoverKey: "\(project)/tasks-head", label: "New task",
-                          help: "Track a new task in this project", tasks: true) {
+                          help: "Track a new task in this project", tasks: true,
+                          headHelp: "Most sessions are for a task or a goal. Put them in a task and Duo keeps them together.") {
             model.newTask(in: project)  // action: task new
         }
     }
@@ -97,8 +101,8 @@ struct OtherSessionsHeader: View {
     }
 }
 
-/// What follows the task rows: tasks with no session yet, the explainer line when there are no tasks at
-/// all (DL-147), and + New task (DL-172).
+/// What follows the task rows: tasks with no session yet and + New task (DL-172). DL-147's explainer line
+/// is the TASKS header's help tag now (DL-214).
 struct TasksTail: View {
     @Environment(AppModel.self) private var model
     let project: String
@@ -106,12 +110,6 @@ struct TasksTail: View {
     var body: some View {
         let tasks = model.sessionlessTasks(project)
         VStack(alignment: .leading, spacing: 0) {
-            if model.projectHasNoTasks(project) {
-                Text("Most sessions are for a task or a goal. Put them in a task and Duo keeps them together.")
-                    .duoText(.control).foregroundStyle(DuoColor.text2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 8 + DuoSpace.selectionInset).padding(.leading, 18).padding(.vertical, 4)
-            }
             ForEach(tasks) { t in TaskLine(task: t, showsProject: false, headerColumns: true).transition(.listRow) }
             NewTaskRow(project: project)
         }
