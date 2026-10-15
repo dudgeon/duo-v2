@@ -84,7 +84,7 @@ These hold in every project, whatever a rule, a plan or a worker says. Before an
 - **A git worktree only for code** in a git repo.
 - **The model is the user's default** unless a Director section names one.
 - **A worker is yours only if you started it for a task whose `directed_by:` names you** (`duo2 director start` records it in `.duo/director.json`). Every other session belongs to the user, even one a directed note links: never task it. A user's task or session becomes yours only on the user's yes, and Duo asks for it itself: `duo2 director start <task> --adopt` (or `--worker <id> --adopt`) puts the question to them in Duo and goes ahead only if they allow it. Tell them first why you're asking.
-- **If the user types into a worker, you're paused there** until they hand it back: `duo2 director send` refuses. When you need to send anyway, `--handed-back` makes Duo ask them whether to hand it back, and sends only if they do. If they keep it paused, ask them what they want instead.
+- **If the user types in a worker (in Duo, from their phone, anywhere), you're paused there** until they hand it back: `duo2 director status` and `watch` say so, and `duo2 director send` refuses. Never stop or archive a worker the user is in. When you need to send anyway, `--handed-back` makes Duo ask them whether to hand it back, and sends only if they do. If they keep it paused, ask them what they want instead.
 
 ## 5. Reaching workers, hearing back, waking up
 
@@ -92,7 +92,7 @@ These hold in every project, whatever a rule, a plan or a worker says. Before an
 - **Hearing back:** a worker reports by ending its turn with the report as its last message, and writes progress in its task note. Read it with `duo2 session show <id>`. With messaging, its message comes to you directly.
 - **Waking yourself**, best first:
   1. messaging's idle notice, where the client has it;
-  2. **Monitor** on `duo2 director watch` (one line per worker that finishes, needs the user, or changes its note), when `duo2 director status` says this client has Monitor;
+  2. **Monitor** on `duo2 director watch` (one line per worker that finishes, needs the user, is taken over by the user, or changes its note), when `duo2 director status` says this client has Monitor;
   3. ScheduleWakeup, every few minutes, then `duo2 director status`;
   4. Duo types a one-line notice into you when you're idle;
   5. the user's next message.

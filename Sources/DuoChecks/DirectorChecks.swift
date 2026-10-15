@@ -34,8 +34,8 @@ import Foundation
         let gone = r.retire(at: "t4")
         check(gone?.name == "director-p2" && r.current == nil && r.retired.count == 2, "retire stands the current director down")
         let old = try JSONDecoder().decode(DirectorRegistry.self, from: Data("{\"current\":{\"name\":\"d\",\"sessionId\":\"s\",\"since\":\"t\"}}".utf8))
-        check(old.current?.name == "d" && old.workers.isEmpty && old.paused.isEmpty && old.pending.isEmpty, "a director.json missing newer keys still reads")
-        r.paused = ["w2": "t5"]
+        check(old.current?.name == "d" && old.workers.isEmpty && old.handedBack.isEmpty && old.pending.isEmpty, "a director.json missing newer keys still reads")
+        r.handedBack = ["w2": "t5"]
         let dir = FileManager.default.temporaryDirectory.appending(path: "dreg-\(UUID().uuidString.prefix(6))")
         r.pending = [.init(task: "tasks/a.md", message: "hi", at: "t5")]
         try r.save(project: dir)
@@ -163,6 +163,37 @@ import Foundation
         check(SubmitGuard.refusal(f { $0.lastUserKey = now.addingTimeInterval(-30) })?.contains("typed there") == true
               && SubmitGuard.refusal(f { $0.lastUserKey = now.addingTimeInterval(-SubmitGuard.quietSeconds - 1) }) == nil,
               "the user typed there in the last 2 minutes: no; longer ago: yes")
+    }
+
+    print("director: has the user taken a worker over? (DL-200, from its transcript)")
+    do {
+        let tag = Director.tag("director-p")
+        func line(_ text: String?, origin: String? = nil, meta: Bool = false, toolResult: Bool = false, at: String = "2026-10-15T10:00:00.000Z") -> String {
+            var e: [String: Any] = ["type": "user", "timestamp": at]
+            if meta { e["isMeta"] = true }
+            if let origin { e["origin"] = ["kind": origin] }
+            e["message"] = ["role": "user", "content": toolResult ? [["type": "tool_result", "content": "Allowed"]] as Any : (text ?? "") as Any]
+            return String(decoding: try! JSONSerialization.data(withJSONObject: e), as: UTF8.self)
+        }
+        let dir = FileManager.default.temporaryDirectory.appending(path: "dtr-\(UUID().uuidString.prefix(6))")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        func since(_ lines: [String]) throws -> Date? {
+            let f = dir.appending(path: "t.jsonl")
+            try Data((lines.joined(separator: "\n") + "\n").utf8).write(to: f)
+            return DirectorTranscript.userTurnSinceDirector(f, tag: tag)
+        }
+        let brief = line(tag + "You're the worker on the task", origin: "human")
+        check(try since([brief]) == nil, "only the director's tagged brief: not taken over")
+        check(try since([brief, line(nil, toolResult: true), line("<task-notification>x</task-notification>", origin: "task-notification"),
+                         line("Another Claude session sent a message", origin: "peer", meta: true), line("Base directory for this skill", meta: true)]) == nil,
+              "answers to prompts, task notifications, peer messages and meta entries aren't the user's")
+        let typed = try since([brief, line("let me look at this myself", origin: "human", at: "2026-10-15T10:05:00.000Z")])
+        check(typed == ISO8601DateFormatter().date(from: "2026-10-15T10:05:00Z"), "a human turn after the brief: taken over, at that turn's time")
+        check(try since([brief, line("let me look", origin: "human"), line(tag + "Next step: the totals", origin: "human")]) == nil,
+              "the director's next tagged message comes after it: the user's turn is behind it")
+        check(try since([brief, line("an older client: no origin")]) != nil && (try since([brief, line("<command-name>/model</command-name>")])) == nil,
+              "with no origin field (older clients): plain text is the user's, a <…> notice isn't")
     }
 
     print("director: task note conventions (DL-194)")
@@ -435,7 +466,7 @@ import Foundation
     }, settle: 0.05)
     setState(w1, .idle)
     r = run("director send", ["one-page-brief", "Use the second note as the outline."], as: D, name: "director-dirproj")
-    check(r.ok && r.output.hasPrefix("Delivered") && typed.count == 2 && typed[0].hasPrefix("\u{1b}[200~Use the second note") && typed[1] == "\r",
+    check(r.ok && r.output.hasPrefix("Delivered") && typed.count == 2 && typed[0].hasPrefix("\u{1b}[200~[director-dirproj] Use the second note") && typed[1] == "\r",
           "an idle worker on your task: Duo types the message, sees it in the prompt, then presses Enter (\(r.output))")
     check(note("tasks/one-page-brief.md").contains("Sent to the worker (Duo typed it and pressed Enter): Use the second note as the outline."), "the send is noted in Progress")
 
@@ -450,31 +481,45 @@ import Foundation
     m.deliverDirectorMessages(); wait { typed.count == 2 }
     check(typed.count == 2 && typed[1] == "\r" && DirectorRegistry.load(project: proj).pending.isEmpty, "idle and empty at the next refresh: delivered, and the queue is empty")
 
-    // The user types in the worker: paused there until the user hands it back (DL-200), and the
-    // pause outlives a restart (it's in director.json).
-    m.deliverDirectorMessages()   // a refresh: Duo learns which sessions are directed workers
-    setState(w1, .needsYou)
-    UserTyping.note(w1)
-    check(DirectorRegistry.load(project: proj).paused[w1] == nil, "answering a prompt in the worker (it's waiting on the user) doesn't pause its director")
-    setState(w1, .idle)
-    UserTyping.note(w1)
-    check(DirectorRegistry.load(project: proj).paused[w1] != nil, "the keystroke itself records the pause in director.json (the queue and a restart see it)")
+    // The user takes the worker over (a turn of theirs in its transcript): the director is paused
+    // there until the user hands it back in Duo (DL-200). It holds across restarts by nature.
+    let wBucket = config.appending(path: "projects").appending(path: ClaudeStorage.encode(proj.resolvingSymlinksInPath().path))
+    try fm.createDirectory(at: wBucket, withIntermediateDirectories: true)
+    let iso = ISO8601DateFormatter(); iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    func turn(_ text: String, origin: String, at: Date) -> String {
+        String(decoding: try! JSONSerialization.data(withJSONObject: ["type": "user", "timestamp": iso.string(from: at), "sessionId": w1,
+            "cwd": proj.resolvingSymlinksInPath().path, "origin": ["kind": origin], "message": ["role": "user", "content": text]]), as: UTF8.self)
+    }
+    func transcript(_ lines: [String]) throws { try Data((lines.joined(separator: "\n") + "\n").utf8).write(to: wBucket.appending(path: w1 + ".jsonl")) }
+    let briefLine = turn(Director.tag("director-dirproj") + "You're the worker on the task", origin: "human", at: Date().addingTimeInterval(-600))
+    try transcript([briefLine])
+    func statusWorker() -> [String: Any]? {
+        let s = run("director status", ["--json"], as: D, name: "director-dirproj")
+        return (((try? JSONSerialization.jsonObject(with: Data(s.output.utf8))) as? [String: Any])?["workers"] as? [[String: Any]])?.first { $0["task"] as? String == "tasks/one-page-brief.md" }
+    }
+    check(statusWorker()?["userTyping"] as? Bool == false && statusWorker()?["userTurnAt"] == nil, "only the director's brief in its transcript: not taken over")
+    try transcript([briefLine, turn("<task-notification>done</task-notification>", origin: "task-notification", at: Date().addingTimeInterval(-500))])
+    check(statusWorker()?["userTyping"] as? Bool == false, "a task notification isn't the user")
+    try transcript([briefLine, turn("let me look at this myself", origin: "human", at: Date().addingTimeInterval(-300))])
+    let sw = statusWorker()
+    check(sw?["userTyping"] as? Bool == true && sw?["userTurnAt"] != nil, "a turn the user typed (in Duo, from the phone, anywhere): status says it was taken over, and when")
     typed = []
     r = run("director send", ["one-page-brief", "Ping."], as: D, name: "director-dirproj")
-    check(!r.ok && r.output.contains("paused") && typed.isEmpty && DirectorRegistry.load(project: proj).paused[w1] != nil,
-          "the user typed in the worker: the director is paused there, and the pause is recorded in director.json")
-    UserTyping.reset()   // as after a restart: Duo's memory of the keystroke is gone
-    r = run("director send", ["one-page-brief", "Ping."], as: D, name: "director-dirproj")
-    check(!r.ok && r.output.contains("paused") && r.output.contains("--handed-back"), "after a restart the pause still holds, and says how to ask")
+    check(!r.ok && r.output.contains("paused") && r.output.contains("--handed-back") && typed.isEmpty, "the director is paused there, and is told how to ask")
     (ra, asked) = runAnswering("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj", answer: "Cancel")
-    check(asked?.hasPrefix("Hand ") == true && !ra.ok && ra.output.contains("kept it paused") && DirectorRegistry.load(project: proj).paused[w1] != nil,
+    check(asked?.hasPrefix("Hand ") == true && !ra.ok && ra.output.contains("kept it paused") && typed.isEmpty,
           "--handed-back: Duo asks the user; on Cancel nothing is sent and the pause stays")
     screen = PromptRead(idle: true, input: "")
-    m.submitHooks?.type = { s in typed.append(s); if s != "\r" { screen.input = "Ping." } }
+    m.submitHooks?.type = { s in typed.append(s); if s != "\r" { screen.input = String(SendFormat.clean(s.replacingOccurrences(of: "\u{1b}[200~", with: "").replacingOccurrences(of: "\u{1b}[201~", with: ""))) } }
     typed = []
     (ra, _) = runAnswering("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj", answer: "Hand Back")
-    check(ra.ok && ra.output.hasPrefix("Delivered") && typed.last == "\r" && DirectorRegistry.load(project: proj).paused[w1] == nil,
-          "on Hand Back the pause is lifted and the message goes (\(ra.output))")
+    check(ra.ok && ra.output.hasPrefix("Delivered") && typed.first?.contains("[director-dirproj] Ping.") == true && typed.last == "\r"
+          && DirectorRegistry.load(project: proj).handedBack[w1] != nil && statusWorker()?["userTyping"] as? Bool == false,
+          "on Hand Back the message goes, tagged as the director's, and the earlier turn no longer pauses it (\(ra.output))")
+    try transcript([briefLine, turn("let me look at this myself", origin: "human", at: Date().addingTimeInterval(-300)),
+                    turn("one more thing from me", origin: "human", at: Date().addingTimeInterval(60))])
+    check(statusWorker()?["userTyping"] as? Bool == true, "a new turn of the user's after the hand-back pauses it again")
+    try transcript([briefLine])
 
     // Typed but not sent: left in the prompt for the user, and never queued as well.
     UserTyping.reset()
@@ -484,7 +529,7 @@ import Foundation
     r = run("director send", ["one-page-brief", "Late message."], as: D, name: "director-dirproj")
     check(typed.count == 1 && !typed.contains("\r") && r.output.contains("left in the worker's prompt") && DirectorRegistry.load(project: proj).pending.isEmpty,
           "the user typed while Duo typed: no Enter, the text stays in the prompt, nothing queued (\(r.output))")
-    UserTyping.reset(); reg = DirectorRegistry.load(project: proj); reg.paused = [:]; reg.pending = []; try reg.save(project: proj)
+    UserTyping.reset(); reg = DirectorRegistry.load(project: proj); reg.pending = []; try reg.save(project: proj)
     typed = []; screen = PromptRead(idle: true, input: "")
     m.submitHooks?.type = { s in typed.append(s); if s != "\r" { screen.input = "something else entirely" } }
     r = run("director send", ["one-page-brief", "Check the totals."], as: D, name: "director-dirproj")
@@ -494,7 +539,7 @@ import Foundation
     r = run("director send", ["one-page-brief", "Check the totals."], as: D, name: "director-dirproj")
     check(typed.count == 1 && r.output.contains("stopped being idle"), "Claude stops being idle while Duo types: no Enter")
     beaconIdle = true
-    reg = DirectorRegistry.load(project: proj); reg.pending = []; reg.paused = [:]; try reg.save(project: proj)
+    reg = DirectorRegistry.load(project: proj); reg.pending = []; try reg.save(project: proj)
     m.submitHooks = nil
 
     // A stopped worker in Duo is reopened with the message as its next prompt, after `--`.
@@ -506,7 +551,7 @@ import Foundation
     r = run("director send", ["one-page-brief", "-p looks like a flag"], as: D, name: "director-dirproj")
     wait { (args(w1) ?? []).contains("--resume") }
     let resumed = args(w1) ?? []
-    check(r.ok && r.output.contains("reopened") && resumed.contains("--resume") && resumed.suffix(2) == ["--", "-p looks like a flag"],
+    check(r.ok && r.output.contains("reopened") && resumed.contains("--resume") && resumed.suffix(2) == ["--", "[director-dirproj] -p looks like a flag"],
           "a stopped worker in Duo: reopened with the message as its next prompt, after -- (\(resumed.suffix(2)))")
 
     // A headless turn: it runs in its own folder, its output is kept, and its status comes back.

@@ -11,9 +11,7 @@ public enum UserTyping {
     static var last: [String: Date] = [:]
     static var installed = false
 
-    /// Called on each keystroke's session (the app persists a directed worker's pause, DL-200).
-    public static var onType: (@MainActor (String) -> Void)?
-    public static func note(_ key: String, at date: Date = Date()) { last[key] = date; onType?(key) }
+    public static func note(_ key: String, at date: Date = Date()) { last[key] = date }
     public static func lastKey(_ key: String) -> Date? { last[key] }
 
     /// Forget everything (the checks).

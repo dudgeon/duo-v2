@@ -34,9 +34,9 @@ extension AppModel {
             self.carry(rung, message: message, task: hit.path, project: p.name, folder: folder, worker: worker, facts: facts, director: director,
                        directedBy: directedBy, onTask: true, log: log, done: done)
         }
-        // DL-200's pause: the user typed in the worker (recorded in director.json at the keystroke).
-        // Only the user lifts it, in Duo: --handed-back makes Duo ask them.
-        guard let since = reg.paused[sid] else { return send() }
+        // DL-200's pause: the user took the worker over (a turn of theirs in its transcript since the
+        // director's last message). Only the user lifts it, in Duo: --handed-back makes Duo ask them.
+        guard let since = takenOver(worker, folder: folder, director: director, reg: reg).map({ Self.isoNow($0) }) else { return send() }
         guard inv.has("handed-back") else {
             log("refused", hit.path, sid, nil, "paused: the user typed into the worker")
             return done(.fail("The user typed into this worker (\(since)), so you're paused there (DL-200). With --handed-back, Duo asks them whether to hand it back to you, and sends only if they do."))
@@ -49,9 +49,8 @@ extension AppModel {
                 return done(.fail("The user kept it paused, in Duo: don't send it. Ask them what they want instead."))
             }
             var r = DirectorRegistry.load(project: folder)
-            r.paused[sid] = nil
+            r.handedBack[sid] = Self.isoNow()
             try? r.save(project: folder)
-            self.directorWorkerKeys[sid] = (folder, false)
             log("handback", hit.path, sid, nil, "the user handed it back in Duo")
             send()
         }
@@ -65,6 +64,8 @@ extension AppModel {
                log: @escaping (String, String?, String?, String?, String?) -> Void, done: @escaping @MainActor (Reply) -> Void,
                refused: (@MainActor (_ why: String, _ typed: Bool) -> Void)? = nil) {
         let sid = worker.sessionId ?? worker.tabKey
+        // What Duo delivers carries the director's tag, so the worker's transcript tells it from the user's turns.
+        let tagged = Director.tag(director) + message
         func queue(_ why: String? = nil) {
             if let refused { return refused(why ?? "not now", false) }
             self.queue(message, task: task, folder: folder, project: project, why: why, log: log, done: done)
@@ -80,7 +81,7 @@ extension AppModel {
         case .resumeBackground, .headless:
             guard let claude = ClaudeLocator.resolve() else { return queue("no claude to run") }
             // `--` ends the options: a message starting with "-" is never read as a flag.
-            let args = (rung == .headless ? ["-p", "--resume", sid] : ["--bg", "--resume", sid]) + ["--", message]
+            let args = (rung == .headless ? ["-p", "--resume", sid] : ["--bg", "--resume", sid]) + ["--", tagged]
             let cwd = workerCwd(worker, folder: folder)
             let runLog = folder.appending(path: ".duo/director-runs/\(sid.prefix(8))-\(Int(Date().timeIntervalSince1970)).log")
             let how = rung == .headless ? "a headless turn" : "resumed in the background"
@@ -99,7 +100,7 @@ extension AppModel {
                      : "The worker had stopped: it's resuming in the background with your message. It's logged as sent once it has started.",
                      ["task": task, "worker": sid, "rung": rung.rawValue]))
         case .duoSubmit:
-            guardedSubmit(key: worker.tabKey, message: message, directedBy: directedBy, director: director, onTask: onTask) { refusal, typed in
+            guardedSubmit(key: worker.tabKey, message: tagged, directedBy: directedBy, director: director, onTask: onTask) { refusal, typed in
                 if let refusal {
                     if refused == nil || typed { log("refused", task, sid, rung.rawValue, refusal) }
                     if typed {
@@ -115,7 +116,7 @@ extension AppModel {
                 }
             }
         case .duoResume:
-            if let why = resumeWithPrompt(worker, prompt: message, folder: folder) { log("refused", task, sid, rung.rawValue, why); return queue(why) }
+            if let why = resumeWithPrompt(worker, prompt: tagged, folder: folder) { log("refused", task, sid, rung.rawValue, why); return queue(why) }
             delivered("reopened in Duo with it")
             done(.ok("The worker had stopped: Duo reopened it with your message as its next prompt.", ["task": task, "worker": sid, "rung": rung.rawValue]))
         case .queued:
@@ -283,8 +284,8 @@ extension AppModel {
         for old in mine.dropLast(runsKept - 1) { try? fm.removeItem(at: dir.appending(path: old)) }
     }
 
-    /// Takes workers whose task is done, dropped, archived or gone off the registry, and notes which
-    /// sessions are directed workers now (for the pause, `persistPause`).
+    /// Takes workers whose task is done, dropped, archived or gone off the registry, links pending
+    /// background workers whose session has appeared, and expires pending ones that never did.
     func pruneDirectorWorkers(_ folder: URL) {
         var reg = DirectorRegistry.load(project: folder)
         let before = reg
@@ -301,9 +302,9 @@ extension AppModel {
             if w.pending, let since = iso.date(from: w.since), Date().timeIntervalSince(since) > Self.pendingLasts { return true }
             return false
         }
-        // Pauses go with their workers.
+        // Hand-backs go with their workers.
         let live = Set(reg.workers.map(\.session))
-        reg.paused = reg.paused.filter { live.contains($0.key) }
+        reg.handedBack = reg.handedBack.filter { live.contains($0.key) }
         if reg != before { try? reg.save(project: folder) }
         if let project = liveFolders.first(where: { $0.value == folder })?.key {
             for w in linked where reg.workers.contains(w) {
@@ -311,22 +312,6 @@ extension AppModel {
                 _ = editTaskNote(project, w.task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Worker \(w.session.prefix(8)) (\(w.name ?? "")) started in the background.")))
             }
         }
-        for w in reg.workers where !w.pending { directorWorkerKeys[w.session] = (folder, reg.paused[w.session] != nil) }
-    }
-
-    /// The user typed in a session: if it's a directed worker, its director is paused there now,
-    /// recorded at once, so a restart or the queue sees it (DL-200).
-    /// Only typing at Claude's own prompt counts: a keystroke that answers a permission or question
-    /// prompt (the session is waiting on the user) doesn't pause its director. Cheap: the cache says
-    /// whether it's already paused, so a keystroke reads director.json at most once per pause.
-    func persistPause(_ key: String) {
-        guard let (folder, paused) = directorWorkerKeys[key], !paused else { return }
-        if fixture.sessions.first(where: { $0.tabKey == key })?.state == .needsYou { return }
-        var reg = DirectorRegistry.load(project: folder)
-        directorWorkerKeys[key] = (folder, true)
-        guard reg.workers.contains(where: { $0.session == key }), reg.paused[key] == nil else { return }
-        reg.paused[key] = Self.isoNow()
-        try? reg.save(project: folder)
     }
 
     // MARK: The queue
@@ -335,7 +320,6 @@ extension AppModel {
     /// or whose task no longer names its director, is dropped with a Progress line; one naming a
     /// path outside `tasks/` is dropped untouched.
     public func deliverDirectorMessages() {
-        directorWorkerKeys = [:]
         for (project, folder) in liveFolders {
             guard FileManager.default.fileExists(atPath: DirectorRegistry.file(project: folder).path) else { continue }
             pruneDirectorWorkers(folder)

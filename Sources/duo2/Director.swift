@@ -65,7 +65,7 @@ func runDirectorWatch(_ rest: [String]) -> Int32 {
             var now: [String: String] = [:]
             for w in workers {
                 let task = w["task"] as? String ?? "?"
-                let sig = "\(w["state"] as? String ?? "?")|\(w["noteModified"] as? Double ?? 0)"
+                let sig = "\(w["state"] as? String ?? "?")|\(w["noteModified"] as? Double ?? 0)|\(w["userTyping"] as? Bool ?? false)"
                 now[task] = sig
                 guard !first, let was = last[task] else { continue }
                 if was != sig { print(watchLine(w, was: was)) }
@@ -85,7 +85,11 @@ func watchLine(_ w: [String: Any], was: String) -> String {
     let task = w["task"] as? String ?? "?"
     let title = w["title"] as? String ?? task
     let state = w["state"] as? String ?? "?"
-    let prior = String(was.split(separator: "|").first ?? "")
+    let parts = was.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
+    let prior = parts.first ?? ""
+    if (w["userTyping"] as? Bool ?? false), parts.count > 2, parts[2] != "true" {
+        return "\(title) (\(task)): the user typed in its worker, so you're paused there (DL-200). Don't stop or archive it; ask them before sending."
+    }
     if prior != state {
         switch state {
         case "idle", "review": return "\(title) (\(task)): its worker finished a turn. Read its report: duo2 session show \(w["session"] as? String ?? "")"

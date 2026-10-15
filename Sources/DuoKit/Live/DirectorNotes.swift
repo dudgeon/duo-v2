@@ -60,7 +60,7 @@ public enum DirectorNotes {
     /// The brief a new worker starts with: what the task is and how to report. Its words come from
     /// the note, which the worker reads; nothing here decides for the user.
     public static func workerPrompt(path: String, director: String) -> String {
-        """
+        Director.tag(director) + """
         You're the worker on the task @\(path), directed by \(director). Read its ## Request and done_when: first; \
         don't decide anything the Request says you mustn't, and ask in this session if something only the user can answer comes up. \
         As you go, append dated one-line updates under the note's ## Progress. When you're done or stuck, end your turn with your \

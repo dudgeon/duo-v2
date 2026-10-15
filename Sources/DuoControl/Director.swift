@@ -10,6 +10,10 @@ public enum Director {
     /// restarts where a derived name doesn't (P3).
     public static func name(project: String) -> String { "director-" + slug(project) }
 
+    /// What starts every message a director's worker gets through Duo (its brief, each send), so the
+    /// worker's transcript tells the director's turns from the user's (DL-200's pause).
+    public static func tag(_ director: String) -> String { "[\(director)] " }
+
     /// At most this many workers per director (DL-201), unless the project's `## Director` says
     /// `max workers: N`.
     public static let defaultCap = 3
@@ -87,9 +91,9 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
     /// The sessions this director may reach, each on one task (DL-200): ones it started, or ones the
     /// user agreed it may adopt. A session not here is the user's, whatever a note's `sessions:` says.
     public var workers: [Worker] = []
-    /// Workers the user typed into since the director's last message (DL-200), by session id, with
-    /// when: the director is paused there until the user hands it back. Kept across restarts.
-    public var paused: [String: String] = [:]
+    /// When the user handed each worker back (DL-200), by session id: their turns before then no
+    /// longer pause its director. The pause itself is read from the worker's transcript.
+    public var handedBack: [String: String] = [:]
 
     public struct Worker: Codable, Equatable, Sendable {
         public var task: String
@@ -109,7 +113,7 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
 
     public init() {}
 
-    enum CodingKeys: String, CodingKey { case schema, current, retired, pending, workers, paused }
+    enum CodingKeys: String, CodingKey { case schema, current, retired, pending, workers, handedBack }
 
     /// Every key is optional, so a file from an older Duo (or a hand edit) still reads.
     public init(from d: Decoder) throws {
@@ -119,7 +123,7 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
         retired = try c.decodeIfPresent([Entry].self, forKey: .retired) ?? []
         pending = try c.decodeIfPresent([Pending].self, forKey: .pending) ?? []
         workers = try c.decodeIfPresent([Worker].self, forKey: .workers) ?? []
-        paused = try c.decodeIfPresent([String: String].self, forKey: .paused) ?? [:]
+        handedBack = try c.decodeIfPresent([String: String].self, forKey: .handedBack) ?? [:]
     }
 
     /// The worker on `task`: its latest one.
@@ -329,6 +333,63 @@ public enum DirectorRules {
     public static func text(_ s: Source) -> String? {
         guard let t = try? String(contentsOf: URL(fileURLWithPath: s.path), encoding: .utf8) else { return nil }
         return Director.section(s.section, in: t)
+    }
+}
+
+// MARK: - Has the user taken a worker over? (DL-200)
+
+/// Reads the end of a worker's transcript for the user's own turns since the director's last
+/// message. A turn counts as the user's when Claude marks it human (`origin.kind`), or, on a client
+/// that doesn't mark origins, when it's plain text that isn't a meta entry or a `<…>` notice. Turns
+/// that start with the director's tag are the director's; tool results (answers to permission and
+/// question prompts), peer messages and task notifications are neither. This sees typing from the
+/// phone (Remote Control) and in background workers, which a keystroke in Duo can't.
+public enum DirectorTranscript {
+    /// When the user last typed in it after the director's last message, or nil.
+    public static func userTurnSinceDirector(_ url: URL, tag: String, tailBytes: Int = 512 * 1024) -> Date? {
+        guard let h = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? h.close() }
+        let size = (try? h.seekToEnd()) ?? 0
+        let from = size > UInt64(tailBytes) ? size - UInt64(tailBytes) : 0
+        try? h.seek(toOffset: from)
+        guard let data = try? h.readToEnd() else { return nil }
+        var lines = String(decoding: data, as: UTF8.self).split(separator: "\n", omittingEmptySubsequences: true)
+        if from > 0, !lines.isEmpty { lines.removeFirst() }   // a partial line
+        var lastUser: Date?
+        for line in lines {
+            guard line.contains("\"user\""), let e = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any],
+                  e["type"] as? String == "user", let kind = turnKind(e, tag: tag) else { continue }
+            switch kind {
+            case .director: lastUser = nil
+            case .user: lastUser = (e["timestamp"] as? String).flatMap(parseDate) ?? Date.distantPast
+            }
+        }
+        return lastUser
+    }
+
+    enum Kind { case user, director }
+
+    static func turnKind(_ e: [String: Any], tag: String) -> Kind? {
+        if e["isMeta"] as? Bool == true { return nil }
+        let content = (e["message"] as? [String: Any])?["content"]
+        let text: String?
+        if let s = content as? String { text = s }
+        else if let blocks = content as? [[String: Any]] {
+            if blocks.contains(where: { $0["type"] as? String == "tool_result" }) { return nil }
+            text = blocks.first { $0["type"] as? String == "text" }?["text"] as? String
+        } else { text = nil }
+        guard let t = text?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty else { return nil }
+        if t.hasPrefix(tag.trimmingCharacters(in: .whitespaces)) { return .director }
+        if let origin = (e["origin"] as? [String: Any])?["kind"] as? String { return origin == "human" ? .user : nil }
+        return t.hasPrefix("<") ? nil : .user
+    }
+
+    static func parseDate(_ s: String) -> Date? {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = f.date(from: s) { return d }
+        f.formatOptions = [.withInternetDateTime]
+        return f.date(from: s)
     }
 }
 

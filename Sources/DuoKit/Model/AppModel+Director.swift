@@ -141,14 +141,23 @@ extension AppModel {
             let mod = ((try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast).timeIntervalSince1970
             let w = reg.worker(task: note.path)
             let worker = w.flatMap { w in w.pending ? nil : self.fixture.sessions.first { $0.sessionId == w.session } }
-            let facts = worker.map { workerFacts($0, paused: reg.paused[$0.sessionId ?? ""] != nil) }
+            let facts = worker.map { workerFacts($0, paused: takenOver($0, folder: folder, director: director, reg: reg) != nil) }
             let word = facts.map { $0.run == .stopped ? "stopped" : stateWord(worker!.state) } ?? (w?.pending == true ? "starting" : "no worker")
             return DirectedTask(note: note, text: text, modified: mod, worker: worker, facts: facts, stateWord: word, pendingName: w?.pending == true ? w?.name : nil)
         }
     }
 
     /// Where a worker runs and whether it's running, from Duo's terminal and Claude's beacon (F-311).
-    /// `paused`: the user typed in it since (DL-200), as `.duo/director.json` records.
+    /// When the user took the worker over (DL-200): a turn of theirs in its transcript after the
+    /// director's last message and after they last handed it back. Nil when the director may send.
+    func takenOver(_ s: Fixture.Session, folder: URL, director: String, reg: DirectorRegistry) -> Date? {
+        guard let id = s.sessionId, let t = ClaudeStorage.transcript(sessionId: id, cwd: cwd(of: s.tabKey) ?? folder.path),
+              let typed = DirectorTranscript.userTurnSinceDirector(t, tag: Director.tag(director)) else { return nil }
+        if let back = reg.handedBack[id].flatMap({ ISO8601DateFormatter().date(from: $0) }), typed <= back { return nil }
+        return typed
+    }
+
+    /// `paused`: the user took it over (`takenOver`).
     func workerFacts(_ s: Fixture.Session, paused: Bool = false) -> WorkerFacts {
         let t = terminals.existing(s.tabKey)
         let runningHere = t?.isLiveClaude == true
@@ -199,7 +208,7 @@ extension AppModel {
             if let w = t.worker, let f = t.facts {
                 l += "\(t.stateWord), \(f.place.rawValue), session \(w.sessionId?.prefix(8) ?? "?")"
                 if let q = w.question { l += ": \(q)" }
-                if f.userTyping { l += " · the user typed there: you're paused there until they hand it back" }
+                if f.userTyping { l += " · the user took it over (typed there since your last message): you're paused there until they hand it back" }
             } else if let n = t.pendingName { l += "starting in the background as \(n)" }
             else { l += "no worker" }
             lines.append(l)
@@ -210,6 +219,9 @@ extension AppModel {
             var w: [String: Any] = ["task": t.note.path, "title": t.note.title, "status": t.note.status ?? "open", "state": t.stateWord, "noteModified": t.modified]
             if let s = t.worker { w["session"] = s.sessionId ?? ""; if let q = s.question { w["question"] = q } }
             if let f = t.facts { w["place"] = f.place.rawValue; w["userTyping"] = f.userTyping; if let n = f.peerName { w["peer"] = n } }
+            // The user's last turn there since the director's last message (DL-200): an overlay's
+            // "never stop or archive a session the user is in" reads it too.
+            if let s = t.worker, let at = takenOver(s, folder: folder, director: reg.current?.name ?? director, reg: reg) { w["userTurnAt"] = Self.isoNow(at) }
             if let n = t.pendingName { w["starting"] = n }
             return w
         }
@@ -371,7 +383,6 @@ extension AppModel {
         var reg = DirectorRegistry.load(project: folder)
         reg.setWorker(task: task, session: sid, at: Self.isoNow(), adopted: adopted)
         try? reg.save(project: folder)
-        directorWorkerKeys[sid] = (folder, false)
         _ = editTaskNote(project, task, .addSession(link: TaskNotes.link(title: title, id: sid)))
         _ = editTaskNote(project, task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Worker \(sid.prefix(8)) \(how).")))
     }

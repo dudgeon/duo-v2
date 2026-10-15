@@ -375,8 +375,6 @@ public final class AppModel {
     public var liveElsewhere: Set<String> = []
     /// Projects whose director's queue is being delivered now (DL-199): one message at a time.
     var deliveringDirector: Set<String> = []
-    /// Directed workers' session ids, with their project's folder (refreshed each refresh).
-    var directorWorkerKeys: [String: (folder: URL, paused: Bool)] = [:]
     /// The checks' stand-in for a terminal in a guarded submit (DL-199); nil in the app.
     public var submitHooks: SubmitIO?
     @ObservationIgnored private var refreshTimer: Timer?
@@ -673,7 +671,6 @@ public final class AppModel {
     public init(fixture: Fixture) {
         self.fixture = fixture
         terminals.onEnded = { [weak self] t in self?.endedRevision += 1; self?.shellEnded(t) }
-        UserTyping.onType = { [weak self] key in self?.persistPause(key) }   // a directed worker's pause, recorded at the keystroke (DL-200)
     }
 
     public var leftCollapsed: Bool {
