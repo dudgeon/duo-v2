@@ -645,15 +645,15 @@ public final class AppModel {
 
     @discardableResult
     public func newSession(in project: String, prompt: String? = nil, provenance: String = "created-by-duo",
-                           id: String = UUID().uuidString.lowercased(), remoteControl: String? = nil) -> String? {
+                           id: String = UUID().uuidString.lowercased(), remoteControl: String? = nil, name: String? = nil) -> String? {
         guard terminalsMode == .live, let folder = liveFolders[project] else { return nil }
         var index = SessionIndex.load(project: folder)
         var entry = SessionIndex.Entry(sessionId: id, provenance: provenance)
         entry.remoteControl = remoteControl
         index.sessions.append(entry)
         try? index.save(project: folder)
-        _ = terminals.session(id, command: .newClaude(sessionID: id, prompt: prompt, remoteControl: remoteControl), cwd: folder.path)
-        fixture.sessions.append(Fixture.Session(name: LiveSnapshot.untitled(Date()), project: project, state: .working, wait: "now",
+        _ = terminals.session(id, command: .newClaude(sessionID: id, prompt: prompt, remoteControl: remoteControl, name: name), cwd: folder.path)
+        fixture.sessions.append(Fixture.Session(name: name ?? LiveSnapshot.untitled(Date()), project: project, state: .working, wait: "now",
                                                 question: nil, options: nil, summary: nil, forkOf: nil, document: nil,
                                                 sessionId: id, remoteControl: remoteControl))
         return id

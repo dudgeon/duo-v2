@@ -657,6 +657,16 @@ import Foundation
     r = run("director retire", [], as: D2, name: "director-new")
     check(r.ok && DirectorRegistry.load(project: proj).current == nil, "retire")
 
+    // A director started in Duo under its fixed name (DL-200): session new --name passes -n.
+    var named: ControlResponse?
+    m.handle(ControlRequest(token: "", command: "session new", args: ["--project", "dirproj", "--name", "director-dirproj"], session: nil, cwd: proj.path)) { named = $0 }
+    wait { named != nil }
+    let newId = ((try? JSONSerialization.jsonObject(with: Data((named?.output ?? "").utf8))) as? [String: Any])?["id"] as? String
+        ?? named?.output.split(separator: " ").dropFirst(2).first.map { String($0).trimmingCharacters(in: CharacterSet(charactersIn: ".")) } ?? "?"
+    let namedArgs = args(newId) ?? []
+    check(named?.ok == true && namedArgs.firstIndex(of: "-n").map { namedArgs[$0 + 1] == "director-dirproj" } == true,
+          "session new --name starts claude with -n <name> (\(namedArgs.prefix(4)))")
+
     let metrics = DirectorLog.metrics(DirectorLog.read(project: proj))
     check(metrics.starts >= 3 && metrics.takeovers >= 1 && (metrics.sends["duo-submit"] ?? 0) >= 1 && (metrics.sends["queued"] ?? 0) >= 1 && metrics.refusals >= 3,
           "the log has every step (\(metrics))")

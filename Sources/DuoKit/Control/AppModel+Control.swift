@@ -227,7 +227,8 @@ extension AppModel {
                     off = "\(v) doesn't take --remote-control, so the session started without Remote Control."
                 }
             }
-            guard newSession(in: p.name, prompt: inv.flags["prompt"], id: sid, remoteControl: remote) != nil else { return done(.fail("couldn't start a session in \(p.name)")) }
+            let given = inv.flags["name"].flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 }
+            guard newSession(in: p.name, prompt: inv.flags["prompt"], id: sid, remoteControl: remote, name: given) != nil else { return done(.fail("couldn't start a session in \(p.name)")) }
             if p.isHome == true, altitude.isAllProjects { homeTab = sid } else if currentProject?.name == p.name { consoleTab = sid }
             var j: [String: Any] = ["id": sid, "project": p.name]
             var text = "Started session \(sid) in \(p.name)."

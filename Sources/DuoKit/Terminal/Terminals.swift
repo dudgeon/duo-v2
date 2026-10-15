@@ -59,7 +59,8 @@ public enum TerminalCommand: Sendable, Equatable {
     /// A new Claude Code session with a Duo-minted id (DL-14), optionally seeded with a prompt
     /// as its first message.
     /// `remoteControl` names it for the Claude app (`--remote-control <name>`, DL-128).
-    case newClaude(sessionID: String, prompt: String?, remoteControl: String? = nil)
+    /// `name` is given with `-n`: a fixed name survives restarts (a director's, DL-200).
+    case newClaude(sessionID: String, prompt: String?, remoteControl: String? = nil, name: String? = nil)
     /// Reopen a session by id. Never `-c` or the picker (DL-14). `prompt` is submitted as its next
     /// message: a director's message to a stopped worker (DL-199).
     case resumeClaude(sessionID: String, remoteControl: String? = nil, prompt: String? = nil)
@@ -71,7 +72,7 @@ public enum TerminalCommand: Sendable, Equatable {
     /// The id the process was started with: its `DUO_SESSION_ID`, whatever the session is now.
     public var launchId: String? {
         switch self {
-        case .newClaude(let id, _, _), .resumeClaude(let id, _, _), .forkClaude(_, let id): id
+        case .newClaude(let id, _, _, _), .resumeClaude(let id, _, _), .forkClaude(_, let id): id
         case .shell: nil
         }
     }
@@ -173,9 +174,9 @@ public final class TerminalSession {
     private func start() {
         try? FileManager.default.createDirectory(atPath: cwd, withIntermediateDirectories: true)
         switch command {
-        case .newClaude(let id, let prompt, let remote):
+        case .newClaude(let id, let prompt, let remote, let name):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
-            var args = ["--session-id", id] + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude)
+            var args = ["--session-id", id] + (name.map { ["-n", $0] } ?? []) + Self.hookArgs(id) + RemoteControl.args(remote, claude: claude)
             if let prompt { args.append(prompt) }
             run(claude, args, environment: Self.environment(id))
         case .resumeClaude(let id, let remote, let prompt):
