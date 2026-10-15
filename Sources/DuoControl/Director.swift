@@ -90,9 +90,6 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
     /// Workers the user typed into since the director's last message (DL-200), by session id, with
     /// when: the director is paused there until the user hands it back. Kept across restarts.
     public var paused: [String: String] = [:]
-    /// When the director was told to ask the user before going on (`adopt:<task or session>`): a
-    /// keystroke of the user's in the director's own tab after that is the answer `--adopt` needs.
-    public var asked: [String: String] = [:]
 
     public struct Worker: Codable, Equatable, Sendable {
         public var task: String
@@ -100,9 +97,11 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
         public var since: String
         /// Not started by the director: the user said it may take this session on.
         public var adopted: Bool
-        /// The name it was started under (`claude --bg -n <name>`), for one the director started
-        /// outside Duo: if Claude gave it another id than the one minted, the name still links it.
+        /// The name it was started under (`claude --bg -n <name>`, unique to that start) for one the
+        /// director started in the background: Duo links the session with that name when it appears.
         public var name: String?
+        /// Started in the background and not seen yet: no session id (F-318).
+        public var pending: Bool { session.isEmpty }
         public init(task: String, session: String, since: String, adopted: Bool, name: String? = nil) {
             self.task = task; self.session = session; self.since = since; self.adopted = adopted; self.name = name
         }
@@ -110,7 +109,7 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
 
     public init() {}
 
-    enum CodingKeys: String, CodingKey { case schema, current, retired, pending, workers, paused, asked }
+    enum CodingKeys: String, CodingKey { case schema, current, retired, pending, workers, paused }
 
     /// Every key is optional, so a file from an older Duo (or a hand edit) still reads.
     public init(from d: Decoder) throws {
@@ -121,11 +120,18 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
         pending = try c.decodeIfPresent([Pending].self, forKey: .pending) ?? []
         workers = try c.decodeIfPresent([Worker].self, forKey: .workers) ?? []
         paused = try c.decodeIfPresent([String: String].self, forKey: .paused) ?? [:]
-        asked = try c.decodeIfPresent([String: String].self, forKey: .asked) ?? [:]
     }
 
     /// The worker on `task`: its latest one.
     public func worker(task: String) -> Worker? { workers.last { $0.task == task } }
+
+    /// Links a pending background worker to its session, found by the name it was started under.
+    /// True if one was linked.
+    public mutating func link(pendingNamed name: String, to session: String) -> Worker? {
+        guard let i = workers.firstIndex(where: { $0.pending && $0.name == name }) else { return nil }
+        workers[i].session = session
+        return workers[i]
+    }
 
     /// Records `session` as the worker on `task` (one worker per task: it replaces an earlier one).
     public mutating func setWorker(task: String, session: String, at: String, adopted: Bool, name: String? = nil) {
@@ -283,10 +289,21 @@ public enum DirectorRules {
         public var section: String
         /// The file has that section.
         public var exists: Bool
+        /// The file itself is there (a project often has no PROJECT.md yet, DL-193).
+        public var fileExists: Bool = true
         /// Higher wins: the project's rules beat Home's (DL-207).
         public var precedence: Int
-        public init(label: String, path: String, section: String, exists: Bool, precedence: Int) {
-            self.label = label; self.path = path; self.section = section; self.exists = exists; self.precedence = precedence
+        public init(label: String, path: String, section: String, exists: Bool, precedence: Int, fileExists: Bool = true) {
+            self.label = label; self.path = path; self.section = section; self.exists = exists; self.precedence = precedence; self.fileExists = fileExists
+        }
+
+        /// One line for `status`: where, and what to do when it's missing.
+        public var line: String {
+            let file = URL(fileURLWithPath: path).lastPathComponent
+            let state = exists ? "" : !fileExists
+                ? (file == "PROJECT.md" ? " (no PROJECT.md yet: offer Make a Project, `duo2 project make`)" : " (no \(file) yet)")
+                : " (no ## \(section) section yet)"
+            return "\(label): \(path) (## \(section))\(state)"
         }
     }
 
@@ -296,8 +313,9 @@ public enum DirectorRules {
     /// the project's, and the director offers to set one up (DL-207).
     public static func sources(project: URL?, home: URL?) -> [Source] {
         func source(_ label: String, _ file: URL, _ precedence: Int) -> Source {
-            let text = (try? String(contentsOf: file, encoding: .utf8)) ?? ""
-            return Source(label: label, path: file.path, section: section, exists: Director.section(section, in: text) != nil, precedence: precedence)
+            let text = try? String(contentsOf: file, encoding: .utf8)
+            return Source(label: label, path: file.path, section: section, exists: text.flatMap { Director.section(section, in: $0) } != nil,
+                          precedence: precedence, fileExists: text != nil)
         }
         var out: [Source] = []
         if let home { out.append(source("your rules for every director (Home)", home.appending(path: "HOME.md"), 0)) }
@@ -311,6 +329,30 @@ public enum DirectorRules {
     public static func text(_ s: Source) -> String? {
         guard let t = try? String(contentsOf: URL(fileURLWithPath: s.path), encoding: .utf8) else { return nil }
         return Director.section(s.section, in: t)
+    }
+}
+
+// MARK: - Which project, which Home
+
+/// Where a director stands, from the folder it runs in alone, the same way with or without Duo
+/// running: the project is the nearest folder at or above it with a `PROJECT.md`, not above Home;
+/// Home is the nearest folder at or above it with a `HOME.md`. A folder inside Home (or anywhere)
+/// with no `PROJECT.md` above it is a project without one yet (DL-193: that's normal), and Home's
+/// own folder is Home's project (a Home director, DL-197).
+public enum DirectorPlace {
+    public static func resolve(from dir: URL) -> (project: URL, home: URL?) {
+        let fm = FileManager.default
+        let start = dir.standardizedFileURL
+        var project: URL?, home: URL?
+        var d = start
+        while true {
+            if home == nil, fm.fileExists(atPath: d.appending(path: "HOME.md").path) { home = d }
+            if project == nil, home == nil, fm.fileExists(atPath: d.appending(path: "PROJECT.md").path) { project = d }
+            let up = d.deletingLastPathComponent().standardizedFileURL
+            if up.path == d.path || d.path == "/" { break }
+            d = up
+        }
+        return (project ?? start, home)
     }
 }
 
@@ -339,9 +381,6 @@ public struct ClientCaps: Codable, Equatable, Sendable {
     /// A Claude Code Projects session (DL-203): the director starts nothing.
     public var projects = false
     public var sessionId: String?
-    /// The calling claude's process id (`$CLAUDE_PID`): how Duo finds the director's own tab, which
-    /// keeps its key when a /clear changes the session id (F-29).
-    public var pid: Int32?
     public var name: String?
     public var notes: [String] = []
 
@@ -355,7 +394,6 @@ public struct ClientCaps: Codable, Equatable, Sendable {
                              managed: String = managedSettings, home: URL = FileManager.default.homeDirectoryForCurrentUser) -> ClientCaps {
         var c = ClientCaps()
         c.sessionId = env["CLAUDE_CODE_SESSION_ID"]
-        c.pid = env["CLAUDE_PID"].flatMap { Int32($0) }
         c.inDuo = env["DUO_SESSION_ID"] != nil
         c.projects = env["CLAUDE_CODE_PROJECTS_SESSION"].map { !$0.isEmpty && $0 != "0" } ?? false
 
@@ -517,11 +555,9 @@ public enum SubmitGuard {
         /// When the user last typed in this worker's terminal, if ever.
         public var lastUserKey: Date?
         public var now: Date
-        /// The user handed the worker back after typing (DL-200): typing no longer pauses it.
-        public var handedBack = false
-        public init(directedBy: String?, director: String, onTask: Bool, idle: Bool, promptEmpty: Bool, lastUserKey: Date?, now: Date, handedBack: Bool = false) {
+        public init(directedBy: String?, director: String, onTask: Bool, idle: Bool, promptEmpty: Bool, lastUserKey: Date?, now: Date) {
             self.directedBy = directedBy; self.director = director; self.onTask = onTask; self.idle = idle
-            self.promptEmpty = promptEmpty; self.lastUserKey = lastUserKey; self.now = now; self.handedBack = handedBack
+            self.promptEmpty = promptEmpty; self.lastUserKey = lastUserKey; self.now = now
         }
     }
 
@@ -532,7 +568,7 @@ public enum SubmitGuard {
         guard f.onTask else { return "that session isn't on the task" }
         guard f.idle else { return "Claude isn't idle there" }
         guard f.promptEmpty else { return "something is typed in its prompt" }
-        if let k = f.lastUserKey, !f.handedBack, f.now.timeIntervalSince(k) < quietSeconds {
+        if let k = f.lastUserKey, f.now.timeIntervalSince(k) < quietSeconds {
             return "the user typed there \(Int(f.now.timeIntervalSince(k))) s ago"
         }
         return nil

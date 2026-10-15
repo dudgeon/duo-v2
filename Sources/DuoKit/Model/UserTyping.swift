@@ -9,26 +9,15 @@ import Foundation
 @MainActor
 public enum UserTyping {
     static var last: [String: Date] = [:]
-    /// When a director last sent to each worker (in this run of Duo).
-    static var directorSent: [String: Date] = [:]
     static var installed = false
 
     /// Called on each keystroke's session (the app persists a directed worker's pause, DL-200).
     public static var onType: (@MainActor (String) -> Void)?
     public static func note(_ key: String, at date: Date = Date()) { last[key] = date; onType?(key) }
     public static func lastKey(_ key: String) -> Date? { last[key] }
-    public static func noteDirectorSend(_ key: String, at date: Date = Date()) { directorSent[key] = date }
-
-    /// The user typed into it since its director's last message (or ever, if it never sent one):
-    /// the director is paused there until the user hands it back (DL-200).
-    public static func pausedSinceDirector(_ key: String) -> Date? {
-        guard let k = last[key] else { return nil }
-        if let s = directorSent[key], s >= k { return nil }
-        return k
-    }
 
     /// Forget everything (the checks).
-    public static func reset() { last = [:]; directorSent = [:] }
+    public static func reset() { last = [:] }
 
     /// The session a responder types into: a terminal's key, or a chat composer's session.
     static func key(of responder: NSResponder?, terminals: TerminalStore) -> String? {

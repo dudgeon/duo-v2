@@ -12,42 +12,30 @@ func directorCaps() -> String {
     return (try? enc.encode(caps)).map { String(decoding: $0, as: UTF8.self) } ?? "{}"
 }
 
-/// `duo2 director status` when Duo isn't running: what can be known without it.
+/// `duo2 director status` when Duo isn't running: what can be known without it. The project and
+/// Home come from the folder alone (`DirectorPlace`), the same rule the app uses first.
 func directorStatusOffline() -> Int32 {
     let env = ProcessInfo.processInfo.environment
     let caps = ClientCaps.probe(env: env, cwd: FileManager.default.currentDirectoryPath)
     print("Duo isn't running, so workers' states and the task board are unknown (start Duo, or ask the user).")
-    let project = nearestProject(from: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
-    if let project {
-        let reg = DirectorRegistry.load(project: project)
-        print("Project: \(project.lastPathComponent). Director: \(reg.current.map { "\($0.name) (\($0.sessionId.prefix(8)))" } ?? "none").")
-        // In Home: the projects inside it that have their own director (DL-197), two levels down.
-        if FileManager.default.fileExists(atPath: project.appending(path: "HOME.md").path) {
-            let fm = FileManager.default
-            let kids = ((try? fm.contentsOfDirectory(at: project, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)) ?? [])
-            let folders = kids + kids.filter { !ProtectedFolders.paths.contains($0.standardizedFileURL.path) }.flatMap { (try? fm.contentsOfDirectory(at: $0, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)) ?? [] }
-            let directed = folders.compactMap { f in DirectorRegistry.load(project: f).current.map { "\(f.path.dropFirst(project.path.count + 1)) (\($0.name))" } }.sorted()
-            print(directed.isEmpty ? "No project here has its own director." : "Projects with their own director (ask it, never touch its workers): " + directed.joined(separator: ", "))
-        }
+    let (project, home) = DirectorPlace.resolve(from: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
+    let reg = DirectorRegistry.load(project: project)
+    print("Project: \(project.lastPathComponent) (\(project.path)). Director: \(reg.current.map { "\($0.name) (\($0.sessionId.prefix(8)))" } ?? "none").")
+    print(home.map { "Home: \($0.path)." } ?? "No Home above this folder (no HOME.md).")
+    // In Home: the projects inside it that have their own director (DL-197), two levels down.
+    if let home, home.path == project.path {
+        let fm = FileManager.default
+        let kids = ((try? fm.contentsOfDirectory(at: home, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)) ?? [])
+        let folders = kids + kids.filter { !ProtectedFolders.paths.contains($0.standardizedFileURL.path) }.flatMap { (try? fm.contentsOfDirectory(at: $0, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)) ?? [] }
+        let directed = folders.compactMap { f in DirectorRegistry.load(project: f).current.map { "\(f.path.dropFirst(home.path.count + 1)) (\($0.name))" } }.sorted()
+        print(directed.isEmpty ? "No project here has its own director." : "Projects with their own director (ask it, never touch its workers): " + directed.joined(separator: ", "))
     }
-    print("Rules:")
-    print("  - your rules for every director: Home's HOME.md (## Director); Duo names Home when it runs")
-    for s in DirectorRules.sources(project: project, home: nil) {
-        print("  - \(s.label): \(s.path) (## \(s.section))\(s.exists ? "" : " (none yet)")")
-    }
+    print("Rules (the project's win where they disagree):")
+    for s in DirectorRules.sources(project: project, home: home) { print("  - " + s.line) }
+    if home == nil { print("  - No Home: rules for every director live in Home's HOME.md. Offer to set one up (`duo2 home set <folder>`), or keep a rule in this project (DL-207).") }
     print("This client:")
     for l in caps.lines { print("  " + l) }
     return 0
-}
-
-/// The project folder holding `dir`: the nearest ancestor with a PROJECT.md, else `dir` itself.
-func nearestProject(from dir: URL) -> URL? {
-    var d = dir.standardizedFileURL
-    while d.path != "/" {
-        if FileManager.default.fileExists(atPath: d.appending(path: "PROJECT.md").path) { return d }
-        d = d.deletingLastPathComponent()
-    }
-    return dir
 }
 
 /// `duo2 director watch`: polls Duo for this director's workers and prints one line per change,

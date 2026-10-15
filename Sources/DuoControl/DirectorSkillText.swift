@@ -26,7 +26,8 @@ These hold in every project, whatever a rule, a plan or a worker says. Before an
 
 ## 1. Starting, and after every restart or compaction
 
-1. `duo2 director status`. It says:
+1. `duo2 director status`, from the folder you run in. It says:
+   - which project you're in and where Home is: the project is the nearest folder at or above yours with a `PROJECT.md` (not above Home), or your folder itself if there's none yet; Home is the nearest folder above with a `HOME.md`. If Duo doesn't know your folder, it says so: run from the project's folder, or pass `--project <name>`;
    - whether you're this project's director, or one it replaced (then **stand down**: say who replaced you, and stop);
    - whether this is a Claude Code Projects session (then start nothing, and say so);
    - your workers and their tasks, each with its state;
@@ -79,11 +80,11 @@ These hold in every project, whatever a rule, a plan or a worker says. Before an
 
 - **One worker per task.** Run several at once only for work that splits cleanly (separate files, separate research). Anything that shares decisions runs one at a time.
 - **At most 3 workers** unless a Director section says otherwise (a line `max workers: N`). `duo2 director start` refuses a fourth; the work is filed as `status: suggested`, to start when one finishes. When Duo isn't running nothing refuses you: count your tasks yourself (`in-progress` or `waiting`, with a worker, `directed_by:` you), and at the cap file the new one as suggested and say it starts when a worker frees up (or ask whether to raise the cap).
-- **Workers open in Duo by default**, so the user sees them and Duo can carry messages to them. Start one in the background only when the user asks, when Duo isn't running, or for a long job: `duo2 director start <task> --background` prints a `claude --bg` command with a session id it has already recorded as the task's worker. Run it as printed (add your own flags before `--`); there's no link step.
+- **Workers open in Duo by default**, so the user sees them and Duo can carry messages to them. Start one in the background only when the user asks, when Duo isn't running, or for a long job: `duo2 director start <task> --background` prints a `claude --bg` command with a name made for this start, and records the worker under that name. Run it as printed (add your own flags before `--`, but keep `-n`): Duo links the worker by its name when it starts, with no link step.
 - **A git worktree only for code** in a git repo.
 - **The model is the user's default** unless a Director section names one.
-- **A worker is yours only if you started it for a task whose `directed_by:` names you** (`duo2 director start` records it in `.duo/director.json`). Every other session belongs to the user, even one a directed note links: never task it. A user's task or session becomes yours only on the user's yes: ask them in this session, and once they've answered you here in Duo, `duo2 director start <task> --adopt` (or `--worker <id> --adopt`). `--adopt` is refused until they have; never pass it on your own judgement.
-- **If the user types into a worker, you're paused there** until they hand it back: `duo2 director send` refuses, and you ask them. It counts as handed back once they've answered you in Duo since; then send with `--handed-back`. Your own word doesn't lift it.
+- **A worker is yours only if you started it for a task whose `directed_by:` names you** (`duo2 director start` records it in `.duo/director.json`). Every other session belongs to the user, even one a directed note links: never task it. A user's task or session becomes yours only on the user's yes, and Duo asks for it itself: `duo2 director start <task> --adopt` (or `--worker <id> --adopt`) puts the question to them in Duo and goes ahead only if they allow it. Tell them first why you're asking.
+- **If the user types into a worker, you're paused there** until they hand it back: `duo2 director send` refuses. When you need to send anyway, `--handed-back` makes Duo ask them whether to hand it back, and sends only if they do. If they keep it paused, ask them what they want instead.
 
 ## 5. Reaching workers, hearing back, waking up
 

@@ -72,8 +72,28 @@ import Foundation
         check(DirectorRules.text(s[1]) == "max workers: 2\nask before publishing" && DirectorRules.text(s[0]) == nil, "a source's text is its ## Director section")
         check(DirectorRules.sources(project: root, home: root).count == 1 && DirectorRules.sources(project: proj, home: nil).map(\.precedence) == [1],
               "in Home itself, one source; with no Home, only the project's")
+        let bare = root.appending(path: "bare")
+        try FileManager.default.createDirectory(at: bare, withIntermediateDirectories: true)
+        let none = DirectorRules.sources(project: bare, home: root)
+        check(none[1].fileExists == false && none[1].line.contains("no PROJECT.md yet") && none[0].fileExists && !none[0].exists && none[0].line.contains("no ## Director section yet"),
+              "status tells no file (offer Make a Project) from a file with no Director section")
         let skill = DirectorSkill.text()
         check(!skill.contains("duo-director.md") && skill.contains("HOME.md") && skill.contains("duo2 director status"), "the skill keeps no rules of its own: Home's and the project's files")
+
+        // Which project, which Home: from the folder alone, the same with Duo running or not.
+        let tree = FileManager.default.temporaryDirectory.appending(path: "dplace-\(UUID().uuidString.prefix(6))"), fm = FileManager.default
+        defer { try? fm.removeItem(at: tree) }
+        let H = tree.appending(path: "Home"), alpha = H.appending(path: "alpha"), deep = alpha.appending(path: "docs/notes"), loose = H.appending(path: "loose/sub")
+        for d in [deep, loose] { try fm.createDirectory(at: d, withIntermediateDirectories: true) }
+        try Data("# above Home\n".utf8).write(to: tree.appending(path: "PROJECT.md"))
+        try Data("# Home\n".utf8).write(to: H.appending(path: "HOME.md"))
+        try Data("# alpha\n".utf8).write(to: alpha.appending(path: "PROJECT.md"))
+        func at(_ u: URL) -> (String, String?) { let r = DirectorPlace.resolve(from: u); return (r.project.path, r.home?.path) }
+        check(at(deep) == (alpha.path, H.path), "deep in a project: the nearest PROJECT.md, and Home above it")
+        check(at(loose) == (loose.path, H.path), "in Home with no PROJECT.md above: that folder is the project (none yet), Home above it")
+        check(at(H) == (H.path, H.path), "in Home itself: Home's director")
+        check(at(tree) == (tree.path, nil), "outside any Home: the folder's own PROJECT.md, no Home")
+        check(DirectorPlace.resolve(from: alpha).home?.path == H.path && at(loose).0 != tree.path, "a PROJECT.md above Home never counts as the project")
     }
 
     print("director: what the calling client can do")
@@ -143,7 +163,6 @@ import Foundation
         check(SubmitGuard.refusal(f { $0.lastUserKey = now.addingTimeInterval(-30) })?.contains("typed there") == true
               && SubmitGuard.refusal(f { $0.lastUserKey = now.addingTimeInterval(-SubmitGuard.quietSeconds - 1) }) == nil,
               "the user typed there in the last 2 minutes: no; longer ago: yes")
-        check(SubmitGuard.refusal(f { $0.lastUserKey = now.addingTimeInterval(-5); $0.handedBack = true }) == nil, "handed back: typing no longer holds it")
     }
 
     print("director: task note conventions (DL-194)")
@@ -296,9 +315,8 @@ import Foundation
         try? fm.removeItem(at: root)
     }
     func wait(_ what: () -> Bool) { let until = Date().addingTimeInterval(8); while !what(), Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) } }
-    var directorPid: Int32?   // the director's own claude, when it has a tab in Duo
     func caps(_ name: String?) -> String {
-        var c = ClientCaps(); c.name = name; c.messaging = .no; c.version = "2.1.219"; c.backgroundResume = .no; c.monitor = .no; c.pid = directorPid
+        var c = ClientCaps(); c.name = name; c.messaging = .no; c.version = "2.1.219"; c.backgroundResume = .no; c.monitor = .no
         return String(decoding: try! JSONEncoder().encode(c), as: UTF8.self)
     }
     func run(_ verb: String, _ args: [String], as session: String, name: String? = nil) -> ControlResponse {
@@ -306,6 +324,17 @@ import Foundation
         m.handle(ControlRequest(token: "", command: verb, args: args + ["--caps", caps(name)], session: session, cwd: proj.path)) { out = $0 }
         wait { out != nil }
         return out ?? ControlResponse(ok: false, output: "no answer")
+    }
+    /// A verb that makes Duo ask the user: waits for Duo's question, answers it with `answer` (as the
+    /// user would click), then waits for the verb's reply.
+    func runAnswering(_ verb: String, _ args: [String], as session: String, name: String? = nil, answer: String) -> (ControlResponse, String?) {
+        var out: ControlResponse?
+        m.handle(ControlRequest(token: "", command: verb, args: args + ["--caps", caps(name)], session: session, cwd: proj.path)) { out = $0 }
+        wait { SheetCenter.shared.current != nil || out != nil }
+        let asked = SheetCenter.shared.current?.title
+        if let q = SheetCenter.shared.current, let c = q.choices.first(where: { $0.label == answer }) { SheetCenter.shared.answer(c) }
+        wait { out != nil }
+        return (out ?? ControlResponse(ok: false, output: "no answer"), asked)
     }
     func note(_ path: String) -> String { (try? String(contentsOf: proj.appending(path: path), encoding: .utf8)) ?? "" }
     func setState(_ id: String, _ state: SessionState) { if let i = m.fixture.sessions.firstIndex(where: { $0.sessionId == id }) { m.fixture.sessions[i].state = state } }
@@ -318,18 +347,20 @@ import Foundation
         }
         return nil
     }
-    // The director runs in its own Duo tab (a stand-in claude): its session is the one the registry
-    // records, and its tab is where the user's answers count (found by pid, then checked).
-    let D = m.newSession(in: "dirproj")!
-    wait { m.terminals.existing(D)?.view.process?.shellPid ?? 0 > 0 && Beacon.readAll().contains { $0.sessionId == D } }
-    directorPid = m.terminals.existing(D)?.view.process?.shellPid
-    let D2 = "dir-session-2", D3Pre = D
+    let D = "dir-session-1", D2 = "dir-session-2", D3Pre = D
 
     // status before anyone directs.
     var r = run("director status", ["--json"], as: D, name: "director-dirproj")
     let j0 = (try? JSONSerialization.jsonObject(with: Data(r.output.utf8))) as? [String: Any]
     check(r.ok && j0?["role"] as? String == "none" && j0?["cap"] as? Int == 2 && ((j0?["rules"] as? [[String: Any]])?.last?["path"] as? String)?.hasSuffix("/p/PROJECT.md") == true,
           "status: nobody directs yet; the project's cap is 2; its Director section is listed (\(r.output.prefix(300)))")
+
+    // A folder Duo doesn't know: refused, never a guess from what's on screen.
+    var stray: ControlResponse?
+    m.open(project: "dirproj")
+    m.handle(ControlRequest(token: "", command: "director status", args: ["--caps", caps("director-dirproj")], session: D, cwd: "/private/var/empty")) { stray = $0 }
+    wait { stray != nil }
+    check(stray?.ok == false && stray?.output.contains("doesn't know") == true, "status from a folder Duo doesn't know is refused, though a project is on screen")
 
     // start a new task.
     r = run("director start", ["--title", "One-page brief", "--request", "Draft a one-page brief from these three notes.", "--done-when", "a brief exists"], as: D, name: "director-dirproj")
@@ -361,28 +392,28 @@ import Foundation
     check(r.ok && filing.status == "in-progress" && filing.sessionIds.isEmpty && note("tasks/file-notes-from-the-pricing-sync.md").contains("itself (organising work)"),
           "--no-worker: organising work the director does itself, over the cap, with no worker (DL-208)")
 
-    // The user's own tasks and sessions are never a director's without the user's yes (DL-200).
+    // The user's own tasks and sessions are never a director's without the user's yes, and Duo asks
+    // for it itself (DL-200): the director's word is never the yes.
     try Data("# p\n\n## Director\nmax workers: 5\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
     r = run("director start", ["theirs"], as: D, name: "director-dirproj")
-    check(!r.ok && r.output.contains("--adopt") && DirectorNotes.directedBy(note("tasks/theirs.md")) == nil, "starting the user's task (no directed_by:) needs --adopt, and leaves the note alone")
+    check(!r.ok && r.output.contains("--adopt") && DirectorNotes.directedBy(note("tasks/theirs.md")) == nil && SheetCenter.shared.current == nil,
+          "starting the user's task (no directed_by:): refused, the note untouched, and no question without --adopt")
     let user = m.newSession(in: "dirproj")!   // the user's own session: Duo started it, not the director
-    // The director's own tab: a stand-in claude in Duo, found by its pid (F-29: not its session id).
-    let dirTab = D
     r = run("director start", ["--title", "Pair", "--request", "p", "--worker", user], as: D, name: "director-dirproj")
-    check(!r.ok && r.output.contains("wasn't started by you") && DirectorRegistry.load(project: proj).worker(task: "tasks/pair.md") == nil,
-          "--worker with a session the director didn't start: refused without --adopt")
+    check(!r.ok && r.output.contains("wasn't started by you") && !fm.fileExists(atPath: proj.appending(path: "tasks/pair.md").path),
+          "--worker with the user's session: refused without --adopt, before anything is written")
+    var (ra, asked) = runAnswering("director start", ["--title", "Pair", "--request", "p", "--worker", user, "--adopt"], as: D, name: "director-dirproj", answer: "Cancel")
+    check(asked?.contains("take this on") == true && !ra.ok && ra.output.contains("not now") && !fm.fileExists(atPath: proj.appending(path: "tasks/pair.md").path),
+          "--adopt: Duo asks the user; on Cancel nothing is written and it stays theirs")
+    (ra, asked) = runAnswering("director start", ["--title", "Pair", "--request", "p", "--worker", user, "--adopt"], as: D, name: "director-dirproj", answer: "Allow")
+    check(ra.ok && DirectorRegistry.load(project: proj).worker(task: "tasks/pair.md")?.adopted == true && DirectorRegistry.load(project: proj).worker(task: "tasks/pair.md")?.session == user,
+          "on Allow the session becomes the task's worker, recorded as adopted (\(ra.output.prefix(100)))")
     r = run("director start", ["pair", "--worker", D], as: D, name: "director-dirproj")
     check(!r.ok && r.output.contains("that's you"), "a director can't be its own worker")
-    r = run("director start", ["pair", "--worker", user, "--adopt"], as: D, name: "director-dirproj")
-    check(!r.ok && r.output.contains("needs the user's yes") && DirectorRegistry.load(project: proj).worker(task: "tasks/pair.md") == nil,
-          "--adopt on the director's word alone is refused (DL-200)")
-    UserTyping.note(dirTab, at: Date().addingTimeInterval(1))   // the user answers the director in its tab
-    r = run("director start", ["pair", "--worker", user, "--adopt"], as: D, name: "director-dirproj")
-    check(r.ok && DirectorRegistry.load(project: proj).worker(task: "tasks/pair.md")?.adopted == true, "with --adopt (the user's yes) it's recorded as adopted")
-    r = run("director start", ["theirs", "--adopt", "--no-worker"], as: D, name: "director-dirproj")
+    (ra, _) = runAnswering("director start", ["theirs", "--adopt", "--no-worker"], as: D, name: "director-dirproj", answer: "Allow")
     let theirs = note("tasks/theirs.md")
-    check(r.ok && theirs.contains("directed_by: \"director-dirproj\"") && DirectorRegistry.load(project: proj).worker(task: "tasks/theirs.md") == nil,
-          "adopting the user's task with --no-worker: directed_by: is set (quoted) and its linked sessions don't become workers")
+    check(ra.ok && theirs.contains("directed_by: \"director-dirproj\"") && DirectorRegistry.load(project: proj).worker(task: "tasks/theirs.md") == nil,
+          "adopting the user's task with --no-worker, on the user's Allow: directed_by: is set (quoted) and its linked sessions don't become workers")
     try Data("---\ntitle: Linked\nstatus: in-progress\ndirected_by: \"director-dirproj\"\nsessions:\n  - \"[mine](duo2://session/\(user))\"\n---\n# Linked\n".utf8).write(to: proj.appending(path: "tasks/linked.md"))
     r = run("director send", ["linked", "hello"], as: D, name: "director-dirproj")
     check(!r.ok && r.output.contains("no worker of yours"), "a session a directed note merely links isn't a worker: send refuses")
@@ -434,26 +465,16 @@ import Foundation
           "the user typed in the worker: the director is paused there, and the pause is recorded in director.json")
     UserTyping.reset()   // as after a restart: Duo's memory of the keystroke is gone
     r = run("director send", ["one-page-brief", "Ping."], as: D, name: "director-dirproj")
-    check(!r.ok && r.output.contains("paused"), "after a restart the pause still holds")
-    r = run("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj")
-    check(!r.ok && r.output.contains("Only the user") && DirectorRegistry.load(project: proj).paused[w1] != nil,
-          "--handed-back on the director's word alone: refused, and the pause stays")
-    // A forged pid: the caller names the worker's process, whose tab the user just typed in. The tab
-    // isn't the director's, so it proves nothing.
-    let savedPid = directorPid
-    directorPid = m.terminals.existing(w1)?.view.process?.shellPid
-    UserTyping.note(w1, at: Date().addingTimeInterval(4))
-    r = run("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj")
-    check(!r.ok && r.output.contains("Only the user") && DirectorRegistry.load(project: proj).paused[w1] != nil,
-          "$CLAUDE_PID naming the worker's process: its typing isn't the user's answer to the director")
-    directorPid = savedPid
-    UserTyping.note(w1, at: Date().addingTimeInterval(-300))   // that keystroke long ago, outside the quiet window
-    UserTyping.note(dirTab, at: Date().addingTimeInterval(5))   // the user answers the director in its own tab
+    check(!r.ok && r.output.contains("paused") && r.output.contains("--handed-back"), "after a restart the pause still holds, and says how to ask")
+    (ra, asked) = runAnswering("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj", answer: "Cancel")
+    check(asked?.hasPrefix("Hand ") == true && !ra.ok && ra.output.contains("kept it paused") && DirectorRegistry.load(project: proj).paused[w1] != nil,
+          "--handed-back: Duo asks the user; on Cancel nothing is sent and the pause stays")
     screen = PromptRead(idle: true, input: "")
     m.submitHooks?.type = { s in typed.append(s); if s != "\r" { screen.input = "Ping." } }
-    r = run("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj")
-    check(r.ok && r.output.hasPrefix("Delivered") && DirectorRegistry.load(project: proj).paused[w1] == nil,
-          "handed back after the user answered the director: sent, and only then the pause is lifted (\(r.output))")
+    typed = []
+    (ra, _) = runAnswering("director send", ["one-page-brief", "Ping.", "--handed-back"], as: D, name: "director-dirproj", answer: "Hand Back")
+    check(ra.ok && ra.output.hasPrefix("Delivered") && typed.last == "\r" && DirectorRegistry.load(project: proj).paused[w1] == nil,
+          "on Hand Back the pause is lifted and the message goes (\(ra.output))")
 
     // Typed but not sent: left in the prompt for the user, and never queued as well.
     UserTyping.reset()
@@ -497,18 +518,25 @@ import Foundation
     check(started == nil && exit == 3 && out.contains(support.resolvingSymlinksInPath().lastPathComponent) && out.contains("-- -x message"),
           "runDetached runs in the given folder, keeps the output, and reports the exit status (\(exit))")
 
-    // A worker the director starts in the background: recorded before it starts, so no link step.
+    // A worker the director starts in the background: pending under a name unique to the start, and
+    // linked by Duo when a session with that name appears (claude --bg ignores --session-id, F-318).
     r = run("director start", ["--title", "Bg job", "--request", "b", "--background"], as: D3Pre, name: "director-dirproj")
     let bgWorker = DirectorRegistry.load(project: proj).worker(task: "tasks/bg-job.md")
-    check(r.ok && r.output.contains("--session-id \(bgWorker?.session ?? "?")") && r.output.contains("-- '") && bgWorker?.adopted == false && bgWorker?.name?.hasPrefix("bg-job-") == true,
-          "start --background prints a claude --bg command with a minted --session-id, already recorded as the task's worker")
-    // Once claude has started it, Duo lists the session (outside Duo, so no index provenance).
-    m.fixture.sessions.append(try JSONDecoder().decode(Fixture.Session.self, from: JSONSerialization.data(withJSONObject:
-        ["name": "bg job", "project": "dirproj", "state": "idle", "sessionId": bgWorker?.session ?? "?"])))
-    r = run("director start", ["bg-job", "--worker", bgWorker?.session ?? "?"], as: D3Pre, name: "director-dirproj")
-    check(r.ok && !r.output.contains("--adopt") && DirectorRegistry.load(project: proj).worker(task: "tasks/bg-job.md")?.adopted == false,
-          "linking that id needs no --adopt: Duo knows the director started it (\(r.output.prefix(120)))")
-    // Minted workers hold their slot until they appear, or for 30 minutes.
+    check(r.ok && bgWorker?.pending == true && bgWorker?.name?.hasPrefix("bg-job-") == true && r.output.contains("-n '\(bgWorker?.name ?? "?")'")
+          && !r.output.contains("--session-id") && r.output.contains("-- '"),
+          "start --background prints a claude --bg command named for this start, and records the worker as pending")
+    r = run("director status", [], as: D3Pre, name: "director-dirproj")
+    check(r.output.contains("starting in the background as \(bgWorker?.name ?? "?")"), "status shows it as starting")
+    // Claude starts it: its beacon carries that name and Claude's own id.
+    let bgId = "b9b9b9b9-0000-4000-8000-000000000001"
+    try Data("{\"pid\": \(getpid()), \"sessionId\": \"\(bgId)\", \"cwd\": \"\(proj.path)\", \"status\": \"idle\", \"name\": \"\(bgWorker?.name ?? "?")\"}".utf8)
+        .write(to: config.appending(path: "sessions/\(getpid()).json"))
+    m.deliverDirectorMessages()   // a refresh
+    let linked = DirectorRegistry.load(project: proj).worker(task: "tasks/bg-job.md")
+    check(linked?.session == bgId && linked?.pending == false && linked?.adopted == false && note("tasks/bg-job.md").contains(bgId),
+          "at the next refresh Duo links it by its name: no link step, no --adopt, and the note links the session")
+    try? fm.removeItem(at: config.appending(path: "sessions/\(getpid()).json"))
+    // Pending workers hold their slot until they appear, or for 30 minutes.
     let slots = DirectorRegistry.load(project: proj).workers.filter { w in
         Director.holdsSlot(status: TaskNotes.parse(note(w.task), path: w.task).status, archived: TaskNotes.parse(note(w.task), path: w.task).archived)
     }.count
@@ -516,21 +544,13 @@ import Foundation
     r = run("director start", ["--title", "Bg two", "--request", "b2", "--background"], as: D3Pre, name: "director-dirproj")
     check(r.ok, "a background start fits the last slot (\(slots + 1))")
     r = run("director start", ["--title", "Bg three", "--request", "b3", "--background"], as: D3Pre, name: "director-dirproj")
-    check(!r.ok && r.output.contains("of \(slots + 1)"), "the next is refused: a minted worker that hasn't appeared yet still holds its slot (\(r.output.prefix(80)))")
+    check(!r.ok && r.output.contains("of \(slots + 1)"), "the next is refused: a pending worker still holds its slot (\(r.output.prefix(80)))")
     var reg2 = DirectorRegistry.load(project: proj)
     if let i = reg2.workers.firstIndex(where: { $0.task == "tasks/bg-two.md" }) { reg2.workers[i].since = "2026-01-01T00:00:00Z" }
     try reg2.save(project: proj)
     m.deliverDirectorMessages()
-    check(DirectorRegistry.load(project: proj).worker(task: "tasks/bg-two.md") == nil, "a minted worker that never appears frees its slot after 30 minutes")
+    check(DirectorRegistry.load(project: proj).worker(task: "tasks/bg-two.md") == nil, "a pending worker that never appears frees its slot after 30 minutes")
     try Data("# p\n\n## Director\nmax workers: 5\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
-    // A stale ask: --adopt needs a fresh one.
-    reg2 = DirectorRegistry.load(project: proj); reg2.asked["adopt:tasks/stale.md"] = "2026-01-01T00:00:00Z"; try reg2.save(project: proj)
-    try Data("---\ntitle: Stale\nstatus: open\n---\n# Stale\n".utf8).write(to: proj.appending(path: "tasks/stale.md"))
-    UserTyping.note(dirTab, at: Date().addingTimeInterval(6))
-    r = run("director start", ["stale", "--adopt", "--no-worker"], as: D3Pre, name: "director-dirproj")
-    check(!r.ok && r.output.contains("needs the user's yes"), "an ask older than 30 minutes doesn't count: the director asks again")
-    m.deliverDirectorMessages()
-    check(DirectorRegistry.load(project: proj).asked.values.allSatisfy { !$0.hasPrefix("2026-01-01") }, "stale asks are pruned at the refresh")
 
     // Done or archived tasks lose their worker entry; old run logs are pruned.
     try Data(note("tasks/bg-job.md").replacingOccurrences(of: "status: in-progress", with: "status: done").utf8).write(to: proj.appending(path: "tasks/bg-job.md"))
