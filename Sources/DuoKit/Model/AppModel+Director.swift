@@ -19,6 +19,10 @@ extension AppModel {
         var stateWord: String
         /// A worker the director started in the background that hasn't appeared yet: its name.
         var pendingName: String?
+        /// Counts against the cap (DL-201): an unfinished task whose worker runs, or hasn't started yet.
+        var holdsSlot: Bool {
+            Director.holdsSlot(status: note.status, archived: note.archived) && (pendingName != nil || (facts.map { $0.run != .stopped } ?? false))
+        }
     }
 
     func directorVerb(_ id: ActionID, _ inv: Invocation, _ req: ControlRequest, _ done: @escaping @MainActor (Reply) -> Void) {
@@ -201,7 +205,7 @@ extension AppModel {
         let tasks = directedTasks(p.name, folder: folder, director: reg.current?.name ?? director)
         let brief = (try? String(contentsOf: folder.appending(path: "PROJECT.md"), encoding: .utf8)) ?? ""
         let cap = Director.cap(directorSection: Director.section("Director", in: brief))
-        let active = tasks.filter { Director.holdsSlot(status: $0.note.status, archived: false) && reg.worker(task: $0.note.path) != nil }
+        let active = tasks.filter(\.holdsSlot)
         lines.append("Workers: \(active.count) of \(cap).")
         for t in tasks {
             var l = "  \(t.note.path)  \(t.note.title) (\(t.note.status ?? "open"))  "
@@ -322,14 +326,12 @@ extension AppModel {
                        ["task": path, "status": DirectorNotes.suggested])
         }
 
-        // The cap (DL-201): recorded workers on unfinished tasks, this one aside, including ones
-        // started in the background that haven't appeared yet.
+        // The cap (DL-201): workers running on unfinished tasks, this one aside, plus ones started
+        // in the background that haven't appeared yet. A worker stopped after its work (waiting
+        // on the user's sign-off) frees its slot.
         let brief = (try? String(contentsOf: folder.appending(path: "PROJECT.md"), encoding: .utf8)) ?? ""
         let cap = Director.cap(directorSection: Director.section("Director", in: brief))
-        let reg0 = DirectorRegistry.load(project: folder)
-        let busy = directedTasks(p.name, folder: folder, director: director).filter {
-            $0.note.path != path && reg0.worker(task: $0.note.path) != nil && Director.holdsSlot(status: $0.note.status, archived: false)
-        }
+        let busy = directedTasks(p.name, folder: folder, director: director).filter { $0.note.path != path && $0.holdsSlot }
         if busy.count >= cap {
             _ = editTaskNote(p.name, path, .setKey("status", DirectorNotes.suggested))
             _ = editTaskNote(p.name, path, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Not started: \(busy.count) of \(cap) workers busy, so it waits as suggested.")))

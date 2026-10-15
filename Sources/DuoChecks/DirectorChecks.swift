@@ -543,8 +543,11 @@ import Foundation
     m.submitHooks = nil
 
     // A stopped worker in Duo is reopened with the message as its next prompt, after `--`.
+    func active() -> Int { (((try? JSONSerialization.jsonObject(with: Data(run("director status", ["--json"], as: D, name: "director-dirproj").output.utf8))) as? [String: Any])?["active"] as? Int) ?? -1 }
+    let activeBefore = active()
     m.terminals.existing(w1)?.terminate()
     wait { m.terminals.existing(w1)?.exited != false }
+    check(activeBefore > 0 && active() == activeBefore - 1, "a stopped worker frees its slot: the cap counts running workers (\(activeBefore) then \(active()))")
     let bucket = config.appending(path: "projects").appending(path: ClaudeStorage.encode(proj.resolvingSymlinksInPath().path))
     try fm.createDirectory(at: bucket, withIntermediateDirectories: true)
     try Data("{\"type\":\"user\",\"cwd\":\"\(proj.resolvingSymlinksInPath().path)\",\"sessionId\":\"\(w1)\"}\n".utf8).write(to: bucket.appending(path: w1 + ".jsonl"))
@@ -582,9 +585,7 @@ import Foundation
           "at the next refresh Duo links it by its name: no link step, no --adopt, and the note links the session")
     try? fm.removeItem(at: config.appending(path: "sessions/\(getpid()).json"))
     // Pending workers hold their slot until they appear, or for 30 minutes.
-    let slots = DirectorRegistry.load(project: proj).workers.filter { w in
-        Director.holdsSlot(status: TaskNotes.parse(note(w.task), path: w.task).status, archived: TaskNotes.parse(note(w.task), path: w.task).archived)
-    }.count
+    let slots = active()   // running and pending workers, as the cap counts them
     try Data("# p\n\n## Director\nmax workers: \(slots + 1)\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
     r = run("director start", ["--title", "Bg two", "--request", "b2", "--background"], as: D3Pre, name: "director-dirproj")
     check(r.ok, "a background start fits the last slot (\(slots + 1))")
