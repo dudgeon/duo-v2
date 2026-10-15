@@ -129,6 +129,8 @@ def main():
                 break
             if rest[i] in ("-n", "--name") and i + 1 < len(rest):
                 name = rest[i + 1]; i += 1
+            elif rest[i] == "--session-id" and i + 1 < len(rest):
+                sid = rest[i + 1]; i += 1
             i += 1
         if not cmd:
             sys.stderr.write("stub-claude --as-session: no command after --\n")

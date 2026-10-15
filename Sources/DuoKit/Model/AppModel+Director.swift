@@ -355,8 +355,7 @@ extension AppModel {
             // `claude --bg` picks its own session id (it ignores --session-id), so the worker is
             // recorded by a name unique to this start; Duo links it when a session with that name
             // appears, with no link step and no --adopt (F-318).
-            let name = String(TaskNotes.slug(URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent).prefix(36)) + "-" + UUID().uuidString.lowercased().prefix(6)
-            let cmd = "cd \(shellQuote(folder.path)) && claude --bg -n \(shellQuote(name)) -- \(shellQuote(DirectorNotes.workerPrompt(path: path, director: director)))"
+            let (name, cmd) = Director.backgroundStart(folder: folder, task: path, director: director)
             var reg = DirectorRegistry.load(project: folder)
             reg.setWorker(task: path, session: "", at: Self.isoNow(), adopted: false, name: name)
             try? reg.save(project: folder)
@@ -407,10 +406,7 @@ extension AppModel {
         return w.session == id && !w.adopted
     }
 
-    /// How long a background worker may take to appear before its slot is freed.
-    static let pendingLasts: TimeInterval = 30 * 60
 
-    func shellQuote(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
 
     /// A director's edit to a task note: through the editor's buffer when the note is open there
     /// (as Status ▸ does, DL-13), else on disk. Nil, or why not.

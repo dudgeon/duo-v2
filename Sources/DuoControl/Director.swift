@@ -14,6 +14,40 @@ public enum Director {
     /// worker's transcript tells the director's turns from the user's (DL-200's pause).
     public static func tag(_ director: String) -> String { "[\(director)] " }
 
+    /// The brief a new worker starts with: what the task is and how to report. Its words come from
+    /// the note, which the worker reads; nothing here decides for the user.
+    public static func workerPrompt(path: String, director: String) -> String {
+        tag(director) + """
+        You're the worker on the task @\(path), directed by \(director). Read its ## Request and done_when: first; \
+        don't decide anything the Request says you mustn't, and ask in this session if something only the user can answer comes up. \
+        As you go, append dated one-line updates under the note's ## Progress. When you're done or stuck, end your turn with your \
+        report as your last message: what you did, what you checked and how, and any other work you noticed (as suggestions, not done).
+        """
+    }
+
+    /// A background worker's start (DL-201): a name unique to this start (`claude --bg` picks its own
+    /// session id, F-318, so the name is how Duo links it) and the command the director runs.
+    public static func backgroundStart(folder: URL, task path: String, director: String) -> (name: String, command: String) {
+        let stem = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
+        let name = String(slug(stem).prefix(36)) + "-" + UUID().uuidString.lowercased().prefix(6)
+        return (name, "cd \(shellQuote(folder.path)) && claude --bg -n \(shellQuote(name)) -- \(shellQuote(workerPrompt(path: path, director: director)))")
+    }
+
+    public static func shellQuote(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+
+    /// A scalar from a note's frontmatter (quotes dropped), for code without Duo's note parser.
+    public static func frontmatter(_ key: String, in text: String) -> String? {
+        guard text.hasPrefix("---\n"), let end = text.range(of: "\n---", range: text.index(text.startIndex, offsetBy: 4)..<text.endIndex) else { return nil }
+        for line in text[text.index(text.startIndex, offsetBy: 4)..<end.lowerBound].split(separator: "\n") where line.hasPrefix(key + ":") {
+            let v = line.dropFirst(key.count + 1).trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+            return v.isEmpty ? nil : v
+        }
+        return nil
+    }
+
+    /// How long a worker started in the background may take to appear before its slot is freed.
+    public static let pendingLasts: TimeInterval = 30 * 60
+
     /// At most this many workers per director (DL-201), unless the project's `## Director` says
     /// `max workers: N`.
     public static let defaultCap = 3

@@ -79,6 +79,23 @@ sys.exit(0 if len(s)==2 and s[0]["name"]==s[1]["name"]=="w1" and s[0]["id"]!=s[1
   g=$(cd $proj && $duo2 director guide 2>&1)
   if [[ $g == $'---\nname: duo-director'* ]]; then ok "director guide starts with the skill front matter"; else bad "director guide: ${g[1,60]}"; fi
 
+  # Duo closed: start --background records a pending worker by name, and refuses the user's task.
+  mkdir -p $proj/tasks
+  print -r -- $'---\ntitle: T\nstatus: in-progress\ndirected_by: "director-x"\n---\n# T\n' > $proj/tasks/t.md
+  print -r -- $'---\ntitle: U\nstatus: open\n---\n# U\n' > $proj/tasks/u.md
+  o=$(cd $proj && $stub --as-session -n director-x --session-id 33333333-3333-4333-8333-333333333333 -- $duo2 director start t --background 2>&1); rc=$?
+  if (( rc == 0 )) && [[ $o == *"claude --bg -n 't-"* ]] && python3 -I -c '
+import json,sys
+r=json.load(open(sys.argv[1]+"/.duo/director.json"))
+w=r["workers"][0]
+sys.exit(0 if r["current"]["name"]=="director-x" and w["task"]=="tasks/t.md" and w["session"]=="" and w["name"].startswith("t-") else 1)' $proj; then
+    ok "Duo closed: start --background records a pending worker by name, and the director"
+  else bad "offline start: rc=$rc ${o[1,200]}"; fi
+  o=$(cd $proj && $stub --as-session -n director-x --session-id 33333333-3333-4333-8333-333333333333 -- $duo2 director start u --background 2>&1); rc=$?
+  if (( rc != 0 )) && [[ $o == *"no directed_by"* ]]; then ok "Duo closed: the user's task (no directed_by:) is refused"; else bad "offline start of the user's task: rc=$rc ${o[1,160]}"; fi
+  o=$(cd $proj && $stub --as-session -n director-x --session-id 33333333-3333-4333-8333-333333333333 -- $duo2 director start t 2>&1); rc=$?
+  if (( rc != 0 )) && [[ $o == *"only"*"--background"* ]]; then ok "Duo closed: only --background starts"; else bad "offline start without --background: rc=$rc ${o[1,160]}"; fi
+
   rm -rf $tmp
 done
 

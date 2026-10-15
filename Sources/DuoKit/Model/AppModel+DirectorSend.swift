@@ -299,7 +299,7 @@ extension AppModel {
             let n = TaskNotes.parse(text, path: w.task)
             if n.archived || ["done", "dropped"].contains((n.status ?? "").lowercased()) { return true }
             // One that never appeared frees its slot.
-            if w.pending, let since = iso.date(from: w.since), Date().timeIntervalSince(since) > Self.pendingLasts { return true }
+            if w.pending, let since = iso.date(from: w.since), Date().timeIntervalSince(since) > Director.pendingLasts { return true }
             return false
         }
         // Hand-backs go with their workers.
