@@ -3788,3 +3788,21 @@ Geoff (2026-10-15, through the director): "consider that you may be overcomplica
 - **No file is not the same as no section.** Each rule source says whether its file is there, and status says "no PROJECT.md yet: offer Make a Project" or "no ## Director section yet".
 - **Checks:** `DUO_CHECKS=director` 127. They answer Duo's question as the user would (Allow, Cancel, Hand Back), link a pending worker from a stand-in beacon, cover the project and Home rule over a folder tree, and refuse a stray folder while a project is on screen.
 - **Visible:** the two questions use Duo's existing confirm sheet, with new wording. No new surface was drawn for them.
+
+## F-319 · Claude marks typed turns in the transcript, and what the director now reads from it (plan items 1 to 7)
+
+- **Transcripts say who a user turn came from.** On 2.1.29x each `type: "user"` entry carries `origin.kind`:
+  - `human` for typed input (in the terminal, in Duo's chat, or from the phone over Remote Control);
+  - `peer` for cross-session messages, with `isMeta: true`;
+  - `task-notification` for Monitor and background notices.
+
+  Tool results (answers to permission and question prompts) and skill text have no origin. This was seen across 40 of this Mac's duo-v2 transcripts. 2.1.219 isn't known to write `origin`, so a plain-text turn that isn't meta or a `<…>` notice counts as typed there.
+- **DL-200's pause is read from it** (item 1, 6d6737d). A typed turn after the director's last message pauses the director there, and Duo tags everything it delivers `[director-x]` to tell its own turns apart. This sees typing from the phone and in background workers, which a keystroke monitor can't. The keystroke monitor stays for DL-199's 2-minute quiet window only. `status --json` gives `userTurnAt`, and `watch` prints a line when it happens, so an overlay can keep from archiving a session the user is in.
+- **The cap counts running workers** (item 2, d649a3c), plus background ones not started yet; a worker stopped after its work frees its slot.
+- **Duo closed:**
+  - `start --background` records the pending worker itself, and Duo links it when it next runs (item 3, 0f60fe6);
+  - status names the Home Duo was given (its `state.json`) for a project outside Home (item 5, 15889d5).
+- **A git work tree is its main checkout's project** (item 4, e8a010b). Submodules (`.git/modules`) aren't affected.
+- **Workers get their note by absolute path** (item 6, 7c99c3c), and report Progress when they can't write it. `--request --stdin` carries long or quoted words.
+- **`duo2 session new --name`** passes `-n` (item 7, da28617), so a director can start in Duo under its fixed name.
+- Checks: `DUO_CHECKS=director` 137, `check-director.sh` 154.
