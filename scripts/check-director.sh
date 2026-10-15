@@ -79,6 +79,15 @@ sys.exit(0 if len(s)==2 and s[0]["name"]==s[1]["name"]=="w1" and s[0]["id"]!=s[1
   g=$(cd $proj && $duo2 director guide 2>&1)
   if [[ $g == $'---\nname: duo-director'* ]]; then ok "director guide starts with the skill front matter"; else bad "director guide: ${g[1,60]}"; fi
 
+  # Duo closed, project outside Home: the Home Duo was given (its state.json) is named, not "No Home".
+  mkdir -p $tmp/home $sup/Duo
+  print "# Home" > $tmp/home/HOME.md
+  print -r -- "{\"home\":\"$tmp/home\"}" > $sup/Duo/state.json
+  o=$(cd $proj && $stub --as-session -n director-x -- $duo2 director status 2>&1)
+  if [[ $o == *"Home: $tmp/home (Duo's Home"* && $o == *"$tmp/home/HOME.md (## Director) (no ## Director section yet)"* ]]; then ok "Duo closed: Duo's configured Home is used for a project outside it"
+  else bad "offline Home: ${o[1,300]}"; fi
+  rm $sup/Duo/state.json
+
   # Duo closed: start --background records a pending worker by name, and refuses the user's task.
   mkdir -p $proj/tasks
   print -r -- $'---\ntitle: T\nstatus: in-progress\ndirected_by: "director-x"\n---\n# T\n' > $proj/tasks/t.md

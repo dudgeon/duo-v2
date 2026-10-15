@@ -453,6 +453,15 @@ public enum DirectorPlace {
         return (project ?? start, home)
     }
 
+    /// The Home Duo was told to use (`duo2 home set`, kept in its `state.json`), for when Duo is
+    /// closed and the folder has no `HOME.md` above it (a project outside Home). Nil if none.
+    public static func configuredHome() -> URL? {
+        guard let data = try? Data(contentsOf: SupportFolder.duo.appending(path: "state.json")),
+              let j = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any], let path = j["home"] as? String, !path.isEmpty,
+              FileManager.default.fileExists(atPath: path) else { return nil }
+        return URL(fileURLWithPath: path)
+    }
+
     /// The main checkout when `dir` is inside a linked git work tree (its `.git` is a file reading
     /// `gitdir: <main>/.git/worktrees/<name>`), else nil. Submodules (`.git/modules/…`) stay put.
     public static func mainCheckout(of dir: URL) -> URL? {

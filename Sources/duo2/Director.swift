@@ -18,10 +18,11 @@ func directorStatusOffline() -> Int32 {
     let env = ProcessInfo.processInfo.environment
     let caps = ClientCaps.probe(env: env, cwd: FileManager.default.currentDirectoryPath)
     print("Duo isn't running, so workers' states and the task board are unknown (start Duo, or ask the user).")
-    let (project, home) = DirectorPlace.resolve(from: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
+    let (project, above) = DirectorPlace.resolve(from: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
+    let home = above ?? DirectorPlace.configuredHome()   // a project outside Home: the Home Duo was given
     let reg = DirectorRegistry.load(project: project)
     print("Project: \(project.lastPathComponent) (\(project.path)). Director: \(reg.current.map { "\($0.name) (\($0.sessionId.prefix(8)))" } ?? "none").")
-    print(home.map { "Home: \($0.path)." } ?? "No Home above this folder (no HOME.md).")
+    print(home.map { "Home: \($0.path)\(above == nil ? " (Duo's Home; this project is outside it)" : "")." } ?? "No Home: no HOME.md above this folder, and Duo has none set.")
     // In Home: the projects inside it that have their own director (DL-197), two levels down.
     if let home, home.path == project.path {
         let fm = FileManager.default
