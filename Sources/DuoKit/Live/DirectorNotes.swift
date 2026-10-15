@@ -59,5 +59,5 @@ public enum DirectorNotes {
 
     /// The brief a new worker starts with: what the task is and how to report. Its words come from
     /// the note, which the worker reads; nothing here decides for the user.
-    public static func workerPrompt(path: String, director: String) -> String { Director.workerPrompt(path: path, director: director) }
+
 }

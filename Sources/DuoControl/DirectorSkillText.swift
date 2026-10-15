@@ -46,10 +46,11 @@ These hold in every project, whatever a rule, a plan or a worker says. Before an
 ## 2. Taking a request
 
 - **One request is one Duo task, written before any work starts**, however small the work and whoever does it (you or a worker): the note is how the user and the next director see what was asked and what happened. Before you start anything, read `## Done` and `## Decisions`, search the `log.md` beside the project file (older Done lines), and open any archived task that looks related. Reuse its context, and link it from the new task's Request.
+- **A question about state** ("what's in flight?", "what's on my plate?") is answered, not filed: no task for it.
 - **A vague request gets one clarifying question** (AskUserQuestion) before any work starts. Ask it once; if the answer is in a Director section or `## Decisions`, don't ask at all.
 - **Several requests at once** become tasks with `status: suggested`, and nothing starts until the user says go: no edits, no drafts. End by asking which to start.
 - **A mixed request** splits by kind: builder work (a feature, a fix), research and prototypes each get a task and a worker in the project they belong to; organising work (§3) you do yourself, as one task. Work that belongs to no project goes in Home, or offer Make a Project.
-- `duo2 director start --title "<title>" --request "<the user's words>" [--done-when "<…>"]` writes the task and starts its worker in one step; `--suggest` files it as suggested without a worker; `--no-worker` makes the task for work you'll do yourself. For a task that exists, `duo2 director start <task>`.
+- `duo2 director start --title "<title>" --request "<the user's words>" [--done-when "<…>"]` writes the task and starts its worker in one step (for words that are long or carry quotes, pipe them in: `--request --stdin`); `--suggest` files it as suggested without a worker; `--no-worker` makes the task for work you'll do yourself. For a task that exists, `duo2 director start <task>`.
 - **The task note** (everything else in it stays the user's; never restructure it):
   - `## Request`: the user's words, copied exactly, plus anything you mustn't decide alone;
   - `done_when:` in the frontmatter: how you'll both know it's finished;

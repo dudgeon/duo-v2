@@ -365,7 +365,7 @@ extension AppModel {
             return .ok("Run this; Duo links the worker by its name, \(name), as soon as it starts (no link step):\n  \(cmd)",
                        ["task": path, "command": cmd, "name": name])
         } else {
-            guard let id = newSession(in: p.name, prompt: DirectorNotes.workerPrompt(path: path, director: director), provenance: "directed-by:\(director)") else {
+            guard let id = newSession(in: p.name, prompt: Director.workerPrompt(note: folder.appending(path: path).path, director: director), provenance: "directed-by:\(director)") else {
                 return .fail("couldn't start a worker in \(p.name) (is Duo running on live folders?)")
             }
             sid = id; how = "started in Duo"

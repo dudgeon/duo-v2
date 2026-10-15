@@ -231,7 +231,7 @@ import Foundation
         check(TaskNotes.apply(.setKey("directed_by", "director-p"), to: user)?.contains("status: open\ndirected_by: director-p\n---") == true
               && TaskNotes.apply(.setKey("directed_by", "director-p"), to: TaskNotes.apply(.setKey("directed_by", "director-p"), to: user)!) == nil,
               "setting directed_by: touches only that key, and setting it again changes nothing")
-        check(DirectorNotes.progressLine("two\nlines", date: date).hasSuffix(" two lines") && DirectorNotes.workerPrompt(path: "tasks/x.md", director: "director-p").contains("@tasks/x.md"),
+        check(DirectorNotes.progressLine("two\nlines", date: date).hasSuffix(" two lines") && Director.workerPrompt(note: "/p/tasks/x.md", director: "director-p").contains("/p/tasks/x.md"),
               "a Progress line stays one line; a worker's brief points at its note")
     }
 
@@ -412,7 +412,7 @@ import Foundation
           && TaskNotes.parse(brief, path: "x").status == "in-progress" && !w1.isEmpty && brief.contains("## Progress"),
           "start writes the task (directed_by:, Request, Progress), links its worker and sets it in progress (\(r.output))")
     let a1 = args(w1)
-    check(a1?.contains("--session-id") == true && a1?.last?.contains("@tasks/one-page-brief.md") == true, "the worker starts in Duo with its task as its brief")
+    check(a1?.contains("--session-id") == true && a1?.last?.contains("/tasks/one-page-brief.md") == true && a1?.last?.hasPrefix("[director-dirproj] ") == true, "the worker starts in Duo with its task as its brief")
     check(DirectorRegistry.load(project: proj).current?.name == "director-dirproj" && DirectorRegistry.load(project: proj).current?.sessionId == D, "the first start makes it the project's director")
 
     // never another's task, never the user's.

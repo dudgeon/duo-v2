@@ -15,13 +15,16 @@ public enum Director {
     public static func tag(_ director: String) -> String { "[\(director)] " }
 
     /// The brief a new worker starts with: what the task is and how to report. Its words come from
-    /// the note, which the worker reads; nothing here decides for the user.
-    public static func workerPrompt(path: String, director: String) -> String {
+    /// the note, which the worker reads; nothing here decides for the user. `note` is the note's
+    /// absolute path: a worker that moves into a git work tree (where `tasks/` may not exist, or be
+    /// ignored) still finds it.
+    public static func workerPrompt(note: String, director: String) -> String {
         tag(director) + """
-        You're the worker on the task @\(path), directed by \(director). Read its ## Request and done_when: first; \
+        You're the worker on the task whose note is \(note), directed by \(director). Read its ## Request and done_when: first; \
         don't decide anything the Request says you mustn't, and ask in this session if something only the user can answer comes up. \
-        As you go, append dated one-line updates under the note's ## Progress. When you're done or stuck, end your turn with your \
-        report as your last message: what you did, what you checked and how, and any other work you noticed (as suggestions, not done).
+        As you go, append dated one-line updates under the note's ## Progress; if you can't write to the note, put those lines in your report. \
+        When you're done or stuck, end your turn with your report as your last message: what you did, what you checked and how, \
+        and any other work you noticed (as suggestions, not done).
         """
     }
 
@@ -30,7 +33,7 @@ public enum Director {
     public static func backgroundStart(folder: URL, task path: String, director: String) -> (name: String, command: String) {
         let stem = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
         let name = String(slug(stem).prefix(36)) + "-" + UUID().uuidString.lowercased().prefix(6)
-        return (name, "cd \(shellQuote(folder.path)) && claude --bg -n \(shellQuote(name)) -- \(shellQuote(workerPrompt(path: path, director: director)))")
+        return (name, "cd \(shellQuote(folder.path)) && claude --bg -n \(shellQuote(name)) -- \(shellQuote(workerPrompt(note: folder.appending(path: path).path, director: director)))")
     }
 
     public static func shellQuote(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
