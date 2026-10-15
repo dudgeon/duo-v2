@@ -94,6 +94,17 @@ import Foundation
         check(at(H) == (H.path, H.path), "in Home itself: Home's director")
         check(at(tree) == (tree.path, nil), "outside any Home: the folder's own PROJECT.md, no Home")
         check(DirectorPlace.resolve(from: alpha).home?.path == H.path && at(loose).0 != tree.path, "a PROJECT.md above Home never counts as the project")
+        // A linked git work tree stands for its main checkout (the director's check tree, a worker's).
+        let wt = alpha.appending(path: ".claude/worktrees/feature-x"), sub = wt.appending(path: "Sources/x")
+        try fm.createDirectory(at: sub, withIntermediateDirectories: true)
+        try fm.createDirectory(at: alpha.appending(path: ".git/worktrees/feature-x"), withIntermediateDirectories: true)
+        try Data("gitdir: \(alpha.path)/.git/worktrees/feature-x\n".utf8).write(to: wt.appending(path: ".git"))
+        try Data("# alpha (a checkout of it)\n".utf8).write(to: wt.appending(path: "PROJECT.md"))
+        check(at(sub) == (alpha.path, H.path) && at(wt) == (alpha.path, H.path), "inside a git work tree: its main checkout's project, and that one's Home")
+        let mod = alpha.appending(path: "vendor/lib")
+        try fm.createDirectory(at: mod, withIntermediateDirectories: true)
+        try Data("gitdir: ../../.git/modules/lib\n".utf8).write(to: mod.appending(path: ".git"))
+        check(DirectorPlace.mainCheckout(of: mod) == nil && at(mod) == (alpha.path, H.path), "a submodule isn't a work tree: it stays in its project")
     }
 
     print("director: what the calling client can do")

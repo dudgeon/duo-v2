@@ -434,8 +434,11 @@ public enum DirectorTranscript {
 /// Home is the nearest folder at or above it with a `HOME.md`. A folder inside Home (or anywhere)
 /// with no `PROJECT.md` above it is a project without one yet (DL-193: that's normal), and Home's
 /// own folder is Home's project (a Home director, DL-197).
+/// A folder inside a git work tree stands for the work tree's main checkout: the director's
+/// own check work tree, or a worker's, belongs to the project the main checkout is.
 public enum DirectorPlace {
     public static func resolve(from dir: URL) -> (project: URL, home: URL?) {
+        if let main = mainCheckout(of: dir) { return resolve(from: main) }
         let fm = FileManager.default
         let start = dir.standardizedFileURL
         var project: URL?, home: URL?
@@ -448,6 +451,28 @@ public enum DirectorPlace {
             d = up
         }
         return (project ?? start, home)
+    }
+
+    /// The main checkout when `dir` is inside a linked git work tree (its `.git` is a file reading
+    /// `gitdir: <main>/.git/worktrees/<name>`), else nil. Submodules (`.git/modules/…`) stay put.
+    public static func mainCheckout(of dir: URL) -> URL? {
+        let fm = FileManager.default
+        var d = dir.standardizedFileURL
+        while true {
+            let git = d.appending(path: ".git")
+            var isDir: ObjCBool = false
+            if fm.fileExists(atPath: git.path, isDirectory: &isDir) {
+                guard !isDir.boolValue, let text = try? String(contentsOf: git, encoding: .utf8),
+                      let line = text.split(separator: "\n").first(where: { $0.hasPrefix("gitdir:") }) else { return nil }
+                var gitdir = line.dropFirst("gitdir:".count).trimmingCharacters(in: .whitespaces)
+                if !gitdir.hasPrefix("/") { gitdir = d.appending(path: gitdir).standardizedFileURL.path }
+                guard let r = gitdir.range(of: "/.git/worktrees/") else { return nil }
+                return URL(fileURLWithPath: String(gitdir[..<r.lowerBound]))
+            }
+            let up = d.deletingLastPathComponent().standardizedFileURL
+            if up.path == d.path || d.path == "/" { return nil }
+            d = up
+        }
     }
 }
 
