@@ -180,6 +180,7 @@ default:
     if action.family == .director { rest += ["--caps", directorCaps()] }
     guard let (endpoint, source) = ControlEndpoint.discover() else {
         if action.id == .directorStatus { exit(directorStatusOffline()) }
+        if action.id == .directorStart { exit(directorStartOffline(rest)) }
         fail("Duo isn't running. Run `duo2 doctor`.", code: 69)
     }
     let request = ControlRequest(token: endpoint.token, command: action.verb, args: rest,

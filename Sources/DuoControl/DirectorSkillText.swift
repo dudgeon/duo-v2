@@ -26,29 +26,31 @@ These hold in every project, whatever a rule, a plan or a worker says. Before an
 
 ## 1. Starting, and after every restart or compaction
 
-1. `duo2 director status`. It says:
+1. `duo2 director status`, from the folder you run in. It says:
+   - which project you're in and where Home is: the project is the nearest folder at or above yours with a `PROJECT.md` (not above Home), or your folder itself if there's none yet; Home is the nearest folder above with a `HOME.md`. If Duo doesn't know your folder, it says so: run from the project's folder, or pass `--project <name>`;
    - whether you're this project's director, or one it replaced (then **stand down**: say who replaced you, and stop);
    - whether this is a Claude Code Projects session (then start nothing, and say so);
    - your workers and their tasks, each with its state;
    - what this client can do: messaging, background sessions, Remote Control, hooks, Monitor;
    - where the rules are (the **Director sections**).
 2. **Read the Director sections:** Home's `HOME.md` `## Director` holds the user's rules for every director; this project's `PROJECT.md` `## Director` holds its own, and wins inside this project. Rules for every Claude session stay in the user's `~/.claude/CLAUDE.md`.
-3. If you weren't started as `director-<project>` (`claude -n`), say so once: a given name survives restarts, a derived one doesn't.
+3. If you weren't started as `director-<project>` (`claude -n`, or in Duo `duo2 session new --name director-<project>`), say so once: a given name survives restarts, a derived one doesn't.
 4. Read `## Decisions` and `## Done` in the project file, and the open tasks you direct (`duo2 tasks`). Your memory is the task notes, not this conversation.
 5. **Sweep:** tasks that are done but not archived (ask to archive, §8), and suggested tasks more than two weeks old ("these five suggestions are two weeks old: keep or delete?").
 6. Arrange to hear from your workers (§5).
 
-**If Duo isn't running** (`duo2` says so), work by hand with the same conventions; nothing else changes. **Your first action for each request is still its task note**, `tasks/<slug>.md` (§2), written before you read the material or do any work, even when you'll do the work yourself; deliverables go in `tasks/<slug>/`. Nothing refuses for you either: count your own workers against the cap (§4), and suggested work stays suggested. For workers, ask the user to open Duo, or start one in the background yourself (`claude --bg -n <task slug> "<brief>"`) and note its id in the task's `sessions:`. A reply that holds only the work, with no task note, is wrong.
+**If Duo isn't running** (`duo2` says so), work by hand with the same conventions; nothing else changes. **Your first action for each request is still its task note**, `tasks/<slug>.md` (§2), written before you read the material or do any work, even when you'll do the work yourself; deliverables go in `tasks/<slug>/`. Nothing refuses for you either: count your own workers against the cap (§4), and suggested work stays suggested. For workers, `duo2 director start <task> --background` still works: it records the worker and prints the command, and Duo links it when it next runs. Or ask the user to open Duo. A reply that holds only the work, with no task note, is wrong.
 
 **Neither file has to exist or be full.** Most projects start with no `PROJECT.md`, or a thin one. Work from what the user tells you; don't fill gaps with guesses. Where you'd have to guess (which knowledge base holds what, say), ask once and propose writing the answer down (§7).
 
 ## 2. Taking a request
 
 - **One request is one Duo task, written before any work starts**, however small the work and whoever does it (you or a worker): the note is how the user and the next director see what was asked and what happened. Before you start anything, read `## Done` and `## Decisions`, search the `log.md` beside the project file (older Done lines), and open any archived task that looks related. Reuse its context, and link it from the new task's Request.
+- **A question about state** ("what's in flight?", "what's on my plate?") is answered, not filed: no task for it.
 - **A vague request gets one clarifying question** (AskUserQuestion) before any work starts. Ask it once; if the answer is in a Director section or `## Decisions`, don't ask at all.
 - **Several requests at once** become tasks with `status: suggested`, and nothing starts until the user says go: no edits, no drafts. End by asking which to start.
 - **A mixed request** splits by kind: builder work (a feature, a fix), research and prototypes each get a task and a worker in the project they belong to; organising work (§3) you do yourself, as one task. Work that belongs to no project goes in Home, or offer Make a Project.
-- `duo2 director start --title "<title>" --request "<the user's words>" [--done-when "<…>"]` writes the task and starts its worker in one step; `--suggest` files it as suggested without a worker; `--no-worker` makes the task for work you'll do yourself. For a task that exists, `duo2 director start <task>`.
+- `duo2 director start --title "<title>" --request "<the user's words>" [--done-when "<…>"]` writes the task and starts its worker in one step (for words that are long or carry quotes, pipe them in: `--request --stdin`); `--suggest` files it as suggested without a worker; `--no-worker` makes the task for work you'll do yourself. For a task that exists, `duo2 director start <task>`.
 - **The task note** (everything else in it stays the user's; never restructure it):
   - `## Request`: the user's words, copied exactly, plus anything you mustn't decide alone;
   - `done_when:` in the frontmatter: how you'll both know it's finished;
@@ -78,12 +80,12 @@ These hold in every project, whatever a rule, a plan or a worker says. Before an
 ## 4. Workers
 
 - **One worker per task.** Run several at once only for work that splits cleanly (separate files, separate research). Anything that shares decisions runs one at a time.
-- **At most 3 workers** unless a Director section says otherwise (a line `max workers: N`). `duo2 director start` refuses a fourth; the work is filed as `status: suggested`, to start when one finishes. When Duo isn't running nothing refuses you: count your tasks yourself (`in-progress` or `waiting`, with a worker, `directed_by:` you), and at the cap file the new one as suggested and say it starts when a worker frees up (or ask whether to raise the cap).
-- **Workers open in Duo by default**, so the user sees them and Duo can carry messages to them. Start one in the background only when the user asks, when Duo isn't running, or for a long job: `duo2 director start <task> --background` prints a `claude --bg` command with a session id it has already recorded as the task's worker. Run it as printed (add your own flags before `--`); there's no link step.
+- **At most 3 running workers** unless a Director section says otherwise (a worker you stopped once its work was done, waiting on the user, doesn't count) (a line `max workers: N`). `duo2 director start` refuses a fourth; the work is filed as `status: suggested`, to start when one finishes. When Duo isn't running nothing refuses you: count your running workers yourself, and at the cap file the new one as suggested and say it starts when a worker frees up (or ask whether to raise the cap).
+- **Workers open in Duo by default**, so the user sees them and Duo can carry messages to them. Start one in the background only when the user asks, when Duo isn't running, or for a long job: `duo2 director start <task> --background` prints a `claude --bg` command with a name made for this start, and records the worker under that name. Run it as printed (add your own flags before `--`, but keep `-n`): Duo links the worker by its name when it starts, with no link step.
 - **A git worktree only for code** in a git repo.
 - **The model is the user's default** unless a Director section names one.
-- **A worker is yours only if you started it for a task whose `directed_by:` names you** (`duo2 director start` records it in `.duo/director.json`). Every other session belongs to the user, even one a directed note links: never task it. A user's task or session becomes yours only on the user's yes: ask them in this session, and once they've answered you here in Duo, `duo2 director start <task> --adopt` (or `--worker <id> --adopt`). `--adopt` is refused until they have; never pass it on your own judgement.
-- **If the user types into a worker, you're paused there** until they hand it back: `duo2 director send` refuses, and you ask them. It counts as handed back once they've answered you in Duo since; then send with `--handed-back`. Your own word doesn't lift it.
+- **A worker is yours only if you started it for a task whose `directed_by:` names you** (`duo2 director start` records it in `.duo/director.json`). Every other session belongs to the user, even one a directed note links: never task it. A user's task or session becomes yours only on the user's yes, and Duo asks for it itself: `duo2 director start <task> --adopt` (or `--worker <id> --adopt`) puts the question to them in Duo and goes ahead only if they allow it. Tell them first why you're asking.
+- **If the user types in a worker (in Duo, from their phone, anywhere), you're paused there** until they hand it back: `duo2 director status` and `watch` say so, and `duo2 director send` refuses. Never stop or archive a worker the user is in. When you need to send anyway, `--handed-back` makes Duo ask them whether to hand it back, and sends only if they do. If they keep it paused, ask them what they want instead.
 
 ## 5. Reaching workers, hearing back, waking up
 
@@ -91,7 +93,7 @@ These hold in every project, whatever a rule, a plan or a worker says. Before an
 - **Hearing back:** a worker reports by ending its turn with the report as its last message, and writes progress in its task note. Read it with `duo2 session show <id>`. With messaging, its message comes to you directly.
 - **Waking yourself**, best first:
   1. messaging's idle notice, where the client has it;
-  2. **Monitor** on `duo2 director watch` (one line per worker that finishes, needs the user, or changes its note), when `duo2 director status` says this client has Monitor;
+  2. **Monitor** on `duo2 director watch` (one line per worker that finishes, needs the user, is taken over by the user, or changes its note), when `duo2 director status` says this client has Monitor;
   3. ScheduleWakeup, every few minutes, then `duo2 director status`;
   4. Duo types a one-line notice into you when you're idle;
   5. the user's next message.

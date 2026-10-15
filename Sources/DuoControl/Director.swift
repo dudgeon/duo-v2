@@ -10,6 +10,47 @@ public enum Director {
     /// restarts where a derived name doesn't (P3).
     public static func name(project: String) -> String { "director-" + slug(project) }
 
+    /// What starts every message a director's worker gets through Duo (its brief, each send), so the
+    /// worker's transcript tells the director's turns from the user's (DL-200's pause).
+    public static func tag(_ director: String) -> String { "[\(director)] " }
+
+    /// The brief a new worker starts with: what the task is and how to report. Its words come from
+    /// the note, which the worker reads; nothing here decides for the user. `note` is the note's
+    /// absolute path: a worker that moves into a git work tree (where `tasks/` may not exist, or be
+    /// ignored) still finds it.
+    public static func workerPrompt(note: String, director: String) -> String {
+        tag(director) + """
+        You're the worker on the task whose note is \(note), directed by \(director). Read its ## Request and done_when: first; \
+        don't decide anything the Request says you mustn't, and ask in this session if something only the user can answer comes up. \
+        As you go, append dated one-line updates under the note's ## Progress; if you can't write to the note, put those lines in your report. \
+        When you're done or stuck, end your turn with your report as your last message: what you did, what you checked and how, \
+        and any other work you noticed (as suggestions, not done).
+        """
+    }
+
+    /// A background worker's start (DL-201): a name unique to this start (`claude --bg` picks its own
+    /// session id, F-318, so the name is how Duo links it) and the command the director runs.
+    public static func backgroundStart(folder: URL, task path: String, director: String) -> (name: String, command: String) {
+        let stem = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
+        let name = String(slug(stem).prefix(36)) + "-" + UUID().uuidString.lowercased().prefix(6)
+        return (name, "cd \(shellQuote(folder.path)) && claude --bg -n \(shellQuote(name)) -- \(shellQuote(workerPrompt(note: folder.appending(path: path).path, director: director)))")
+    }
+
+    public static func shellQuote(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+
+    /// A scalar from a note's frontmatter (quotes dropped), for code without Duo's note parser.
+    public static func frontmatter(_ key: String, in text: String) -> String? {
+        guard text.hasPrefix("---\n"), let end = text.range(of: "\n---", range: text.index(text.startIndex, offsetBy: 4)..<text.endIndex) else { return nil }
+        for line in text[text.index(text.startIndex, offsetBy: 4)..<end.lowerBound].split(separator: "\n") where line.hasPrefix(key + ":") {
+            let v = line.dropFirst(key.count + 1).trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+            return v.isEmpty ? nil : v
+        }
+        return nil
+    }
+
+    /// How long a worker started in the background may take to appear before its slot is freed.
+    public static let pendingLasts: TimeInterval = 30 * 60
+
     /// At most this many workers per director (DL-201), unless the project's `## Director` says
     /// `max workers: N`.
     public static let defaultCap = 3
@@ -87,12 +128,9 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
     /// The sessions this director may reach, each on one task (DL-200): ones it started, or ones the
     /// user agreed it may adopt. A session not here is the user's, whatever a note's `sessions:` says.
     public var workers: [Worker] = []
-    /// Workers the user typed into since the director's last message (DL-200), by session id, with
-    /// when: the director is paused there until the user hands it back. Kept across restarts.
-    public var paused: [String: String] = [:]
-    /// When the director was told to ask the user before going on (`adopt:<task or session>`): a
-    /// keystroke of the user's in the director's own tab after that is the answer `--adopt` needs.
-    public var asked: [String: String] = [:]
+    /// When the user handed each worker back (DL-200), by session id: their turns before then no
+    /// longer pause its director. The pause itself is read from the worker's transcript.
+    public var handedBack: [String: String] = [:]
 
     public struct Worker: Codable, Equatable, Sendable {
         public var task: String
@@ -100,9 +138,11 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
         public var since: String
         /// Not started by the director: the user said it may take this session on.
         public var adopted: Bool
-        /// The name it was started under (`claude --bg -n <name>`), for one the director started
-        /// outside Duo: if Claude gave it another id than the one minted, the name still links it.
+        /// The name it was started under (`claude --bg -n <name>`, unique to that start) for one the
+        /// director started in the background: Duo links the session with that name when it appears.
         public var name: String?
+        /// Started in the background and not seen yet: no session id (F-318).
+        public var pending: Bool { session.isEmpty }
         public init(task: String, session: String, since: String, adopted: Bool, name: String? = nil) {
             self.task = task; self.session = session; self.since = since; self.adopted = adopted; self.name = name
         }
@@ -110,7 +150,7 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
 
     public init() {}
 
-    enum CodingKeys: String, CodingKey { case schema, current, retired, pending, workers, paused, asked }
+    enum CodingKeys: String, CodingKey { case schema, current, retired, pending, workers, handedBack }
 
     /// Every key is optional, so a file from an older Duo (or a hand edit) still reads.
     public init(from d: Decoder) throws {
@@ -120,12 +160,19 @@ public struct DirectorRegistry: Codable, Equatable, Sendable {
         retired = try c.decodeIfPresent([Entry].self, forKey: .retired) ?? []
         pending = try c.decodeIfPresent([Pending].self, forKey: .pending) ?? []
         workers = try c.decodeIfPresent([Worker].self, forKey: .workers) ?? []
-        paused = try c.decodeIfPresent([String: String].self, forKey: .paused) ?? [:]
-        asked = try c.decodeIfPresent([String: String].self, forKey: .asked) ?? [:]
+        handedBack = try c.decodeIfPresent([String: String].self, forKey: .handedBack) ?? [:]
     }
 
     /// The worker on `task`: its latest one.
     public func worker(task: String) -> Worker? { workers.last { $0.task == task } }
+
+    /// Links a pending background worker to its session, found by the name it was started under.
+    /// True if one was linked.
+    public mutating func link(pendingNamed name: String, to session: String) -> Worker? {
+        guard let i = workers.firstIndex(where: { $0.pending && $0.name == name }) else { return nil }
+        workers[i].session = session
+        return workers[i]
+    }
 
     /// Records `session` as the worker on `task` (one worker per task: it replaces an earlier one).
     public mutating func setWorker(task: String, session: String, at: String, adopted: Bool, name: String? = nil) {
@@ -283,10 +330,21 @@ public enum DirectorRules {
         public var section: String
         /// The file has that section.
         public var exists: Bool
+        /// The file itself is there (a project often has no PROJECT.md yet, DL-193).
+        public var fileExists: Bool = true
         /// Higher wins: the project's rules beat Home's (DL-207).
         public var precedence: Int
-        public init(label: String, path: String, section: String, exists: Bool, precedence: Int) {
-            self.label = label; self.path = path; self.section = section; self.exists = exists; self.precedence = precedence
+        public init(label: String, path: String, section: String, exists: Bool, precedence: Int, fileExists: Bool = true) {
+            self.label = label; self.path = path; self.section = section; self.exists = exists; self.precedence = precedence; self.fileExists = fileExists
+        }
+
+        /// One line for `status`: where, and what to do when it's missing.
+        public var line: String {
+            let file = URL(fileURLWithPath: path).lastPathComponent
+            let state = exists ? "" : !fileExists
+                ? (file == "PROJECT.md" ? " (no PROJECT.md yet: offer Make a Project, `duo2 project make`)" : " (no \(file) yet)")
+                : " (no ## \(section) section yet)"
+            return "\(label): \(path) (## \(section))\(state)"
         }
     }
 
@@ -296,8 +354,9 @@ public enum DirectorRules {
     /// the project's, and the director offers to set one up (DL-207).
     public static func sources(project: URL?, home: URL?) -> [Source] {
         func source(_ label: String, _ file: URL, _ precedence: Int) -> Source {
-            let text = (try? String(contentsOf: file, encoding: .utf8)) ?? ""
-            return Source(label: label, path: file.path, section: section, exists: Director.section(section, in: text) != nil, precedence: precedence)
+            let text = try? String(contentsOf: file, encoding: .utf8)
+            return Source(label: label, path: file.path, section: section, exists: text.flatMap { Director.section(section, in: $0) } != nil,
+                          precedence: precedence, fileExists: text != nil)
         }
         var out: [Source] = []
         if let home { out.append(source("your rules for every director (Home)", home.appending(path: "HOME.md"), 0)) }
@@ -311,6 +370,121 @@ public enum DirectorRules {
     public static func text(_ s: Source) -> String? {
         guard let t = try? String(contentsOf: URL(fileURLWithPath: s.path), encoding: .utf8) else { return nil }
         return Director.section(s.section, in: t)
+    }
+}
+
+// MARK: - Has the user taken a worker over? (DL-200)
+
+/// Reads the end of a worker's transcript for the user's own turns since the director's last
+/// message. A turn counts as the user's when Claude marks it human (`origin.kind`), or, on a client
+/// that doesn't mark origins, when it's plain text that isn't a meta entry or a `<…>` notice. Turns
+/// that start with the director's tag are the director's; tool results (answers to permission and
+/// question prompts), peer messages and task notifications are neither. This sees typing from the
+/// phone (Remote Control) and in background workers, which a keystroke in Duo can't.
+public enum DirectorTranscript {
+    /// When the user last typed in it after the director's last message, or nil.
+    public static func userTurnSinceDirector(_ url: URL, tag: String, tailBytes: Int = 512 * 1024) -> Date? {
+        guard let h = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? h.close() }
+        let size = (try? h.seekToEnd()) ?? 0
+        let from = size > UInt64(tailBytes) ? size - UInt64(tailBytes) : 0
+        try? h.seek(toOffset: from)
+        guard let data = try? h.readToEnd() else { return nil }
+        var lines = String(decoding: data, as: UTF8.self).split(separator: "\n", omittingEmptySubsequences: true)
+        if from > 0, !lines.isEmpty { lines.removeFirst() }   // a partial line
+        var lastUser: Date?
+        for line in lines {
+            guard line.contains("\"user\""), let e = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any],
+                  e["type"] as? String == "user", let kind = turnKind(e, tag: tag) else { continue }
+            switch kind {
+            case .director: lastUser = nil
+            case .user: lastUser = (e["timestamp"] as? String).flatMap(parseDate) ?? Date.distantPast
+            }
+        }
+        return lastUser
+    }
+
+    enum Kind { case user, director }
+
+    static func turnKind(_ e: [String: Any], tag: String) -> Kind? {
+        if e["isMeta"] as? Bool == true { return nil }
+        let content = (e["message"] as? [String: Any])?["content"]
+        let text: String?
+        if let s = content as? String { text = s }
+        else if let blocks = content as? [[String: Any]] {
+            if blocks.contains(where: { $0["type"] as? String == "tool_result" }) { return nil }
+            text = blocks.first { $0["type"] as? String == "text" }?["text"] as? String
+        } else { text = nil }
+        guard let t = text?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty else { return nil }
+        if t.hasPrefix(tag.trimmingCharacters(in: .whitespaces)) { return .director }
+        if let origin = (e["origin"] as? [String: Any])?["kind"] as? String { return origin == "human" ? .user : nil }
+        return t.hasPrefix("<") ? nil : .user
+    }
+
+    static func parseDate(_ s: String) -> Date? {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = f.date(from: s) { return d }
+        f.formatOptions = [.withInternetDateTime]
+        return f.date(from: s)
+    }
+}
+
+// MARK: - Which project, which Home
+
+/// Where a director stands, from the folder it runs in alone, the same way with or without Duo
+/// running: the project is the nearest folder at or above it with a `PROJECT.md`, not above Home;
+/// Home is the nearest folder at or above it with a `HOME.md`. A folder inside Home (or anywhere)
+/// with no `PROJECT.md` above it is a project without one yet (DL-193: that's normal), and Home's
+/// own folder is Home's project (a Home director, DL-197).
+/// A folder inside a git work tree stands for the work tree's main checkout: the director's
+/// own check work tree, or a worker's, belongs to the project the main checkout is.
+public enum DirectorPlace {
+    public static func resolve(from dir: URL) -> (project: URL, home: URL?) {
+        if let main = mainCheckout(of: dir) { return resolve(from: main) }
+        let fm = FileManager.default
+        let start = dir.standardizedFileURL
+        var project: URL?, home: URL?
+        var d = start
+        while true {
+            if home == nil, fm.fileExists(atPath: d.appending(path: "HOME.md").path) { home = d }
+            if project == nil, home == nil, fm.fileExists(atPath: d.appending(path: "PROJECT.md").path) { project = d }
+            let up = d.deletingLastPathComponent().standardizedFileURL
+            if up.path == d.path || d.path == "/" { break }
+            d = up
+        }
+        return (project ?? start, home)
+    }
+
+    /// The Home Duo was told to use (`duo2 home set`, kept in its `state.json`), for when Duo is
+    /// closed and the folder has no `HOME.md` above it (a project outside Home). Nil if none.
+    public static func configuredHome() -> URL? {
+        guard let data = try? Data(contentsOf: SupportFolder.duo.appending(path: "state.json")),
+              let j = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any], let path = j["home"] as? String, !path.isEmpty,
+              FileManager.default.fileExists(atPath: path) else { return nil }
+        return URL(fileURLWithPath: path)
+    }
+
+    /// The main checkout when `dir` is inside a linked git work tree (its `.git` is a file reading
+    /// `gitdir: <main>/.git/worktrees/<name>`), else nil. Submodules (`.git/modules/…`) stay put.
+    public static func mainCheckout(of dir: URL) -> URL? {
+        let fm = FileManager.default
+        var d = dir.standardizedFileURL
+        while true {
+            let git = d.appending(path: ".git")
+            var isDir: ObjCBool = false
+            if fm.fileExists(atPath: git.path, isDirectory: &isDir) {
+                guard !isDir.boolValue, let text = try? String(contentsOf: git, encoding: .utf8),
+                      let line = text.split(separator: "\n").first(where: { $0.hasPrefix("gitdir:") }) else { return nil }
+                var gitdir = line.dropFirst("gitdir:".count).trimmingCharacters(in: .whitespaces)
+                if !gitdir.hasPrefix("/") { gitdir = d.appending(path: gitdir).standardizedFileURL.path }
+                guard let r = gitdir.range(of: "/.git/worktrees/") else { return nil }
+                return URL(fileURLWithPath: String(gitdir[..<r.lowerBound]))
+            }
+            let up = d.deletingLastPathComponent().standardizedFileURL
+            if up.path == d.path || d.path == "/" { return nil }
+            d = up
+        }
     }
 }
 
@@ -339,9 +513,6 @@ public struct ClientCaps: Codable, Equatable, Sendable {
     /// A Claude Code Projects session (DL-203): the director starts nothing.
     public var projects = false
     public var sessionId: String?
-    /// The calling claude's process id (`$CLAUDE_PID`): how Duo finds the director's own tab, which
-    /// keeps its key when a /clear changes the session id (F-29).
-    public var pid: Int32?
     public var name: String?
     public var notes: [String] = []
 
@@ -355,7 +526,6 @@ public struct ClientCaps: Codable, Equatable, Sendable {
                              managed: String = managedSettings, home: URL = FileManager.default.homeDirectoryForCurrentUser) -> ClientCaps {
         var c = ClientCaps()
         c.sessionId = env["CLAUDE_CODE_SESSION_ID"]
-        c.pid = env["CLAUDE_PID"].flatMap { Int32($0) }
         c.inDuo = env["DUO_SESSION_ID"] != nil
         c.projects = env["CLAUDE_CODE_PROJECTS_SESSION"].map { !$0.isEmpty && $0 != "0" } ?? false
 
@@ -517,11 +687,9 @@ public enum SubmitGuard {
         /// When the user last typed in this worker's terminal, if ever.
         public var lastUserKey: Date?
         public var now: Date
-        /// The user handed the worker back after typing (DL-200): typing no longer pauses it.
-        public var handedBack = false
-        public init(directedBy: String?, director: String, onTask: Bool, idle: Bool, promptEmpty: Bool, lastUserKey: Date?, now: Date, handedBack: Bool = false) {
+        public init(directedBy: String?, director: String, onTask: Bool, idle: Bool, promptEmpty: Bool, lastUserKey: Date?, now: Date) {
             self.directedBy = directedBy; self.director = director; self.onTask = onTask; self.idle = idle
-            self.promptEmpty = promptEmpty; self.lastUserKey = lastUserKey; self.now = now; self.handedBack = handedBack
+            self.promptEmpty = promptEmpty; self.lastUserKey = lastUserKey; self.now = now
         }
     }
 
@@ -532,7 +700,7 @@ public enum SubmitGuard {
         guard f.onTask else { return "that session isn't on the task" }
         guard f.idle else { return "Claude isn't idle there" }
         guard f.promptEmpty else { return "something is typed in its prompt" }
-        if let k = f.lastUserKey, !f.handedBack, f.now.timeIntervalSince(k) < quietSeconds {
+        if let k = f.lastUserKey, f.now.timeIntervalSince(k) < quietSeconds {
             return "the user typed there \(Int(f.now.timeIntervalSince(k))) s ago"
         }
         return nil

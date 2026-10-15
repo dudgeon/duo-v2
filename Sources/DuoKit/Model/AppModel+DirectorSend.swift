@@ -22,57 +22,55 @@ extension AppModel {
             log("refused", hit.path, nil, nil, directedBy.map { "directed by another director (\($0))" } ?? "not a directed task")
             return done(.fail(directedBy.map { "\(hit.title) is directed by \($0), not you." } ?? "\(hit.title) has no directed_by:, so its sessions are the user's: never task them (DL-200)."))
         }
-        var reg = DirectorRegistry.load(project: folder)
-        guard let w = reg.worker(task: hit.path), let worker = fixture.sessions.first(where: { $0.sessionId == w.session }), let sid = worker.sessionId else {
+        let reg = DirectorRegistry.load(project: folder)
+        guard let w = reg.worker(task: hit.path), !w.pending, let worker = fixture.sessions.first(where: { $0.sessionId == w.session }), let sid = worker.sessionId else {
+            if reg.worker(task: hit.path)?.pending == true { return done(.fail("\(hit.title)'s worker hasn't started yet (it's linked when a session named \(reg.worker(task: hit.path)?.name ?? "?") appears).")) }
             return done(.fail("\(hit.title) has no worker of yours: `duo2 director start \(hit.path)` starts one."))
         }
-        // DL-200's pause: the user typed into the worker since the director's last message. Kept in
-        // director.json, so a restart doesn't lift it.
-        if reg.paused[sid] == nil, let typed = UserTyping.pausedSinceDirector(worker.tabKey) {
-            reg.paused[sid] = Self.isoNow(typed)
-            try? reg.save(project: folder)
+        let send: @MainActor () -> Void = { [weak self] in
+            guard let self else { return }
+            let facts = self.workerFacts(worker, paused: false)
+            let rung = SendLadder.choose(director: caps, worker: facts, duoRunning: true)
+            self.carry(rung, message: message, task: hit.path, project: p.name, folder: folder, worker: worker, facts: facts, director: director,
+                       directedBy: directedBy, onTask: true, log: log, done: done)
         }
-        var handedBack = false
-        if let since = reg.paused[sid] {
-            guard inv.has("handed-back") else {
-                log("refused", hit.path, sid, nil, "paused: the user typed into the worker")
-                return done(.fail("The user typed into this worker (\(since)) since your last message, so you're paused there (DL-200). Ask them; once they hand it back, send again with --handed-back."))
-            }
-            // Only the user hands it back: they've answered the director in its own Duo tab since
-            // typing in the worker.
-            let sinceDate = ISO8601DateFormatter().date(from: since) ?? .distantPast
-            guard userAnswered(after: sinceDate, caps: caps, folder: folder) else {
-                log("refused", hit.path, sid, nil, "hand-back without a sign from the user")
-                return done(.fail("Only the user can hand this worker back. Ask them; it counts once they've answered you here in Duo since typing in the worker."))
-            }
-            handedBack = true
-            // The user's go lifts the in-memory pause now; the recorded one stays until a send works.
-            UserTyping.noteDirectorSend(worker.tabKey)
+        // DL-200's pause: the user took the worker over (a turn of theirs in its transcript since the
+        // director's last message). Only the user lifts it, in Duo: --handed-back makes Duo ask them.
+        guard let since = takenOver(worker, folder: folder, director: director, reg: reg).map({ Self.isoNow($0) }) else { return send() }
+        guard inv.has("handed-back") else {
+            log("refused", hit.path, sid, nil, "paused: the user typed into the worker")
+            return done(.fail("The user typed into this worker (\(since)), so you're paused there (DL-200). With --handed-back, Duo asks them whether to hand it back to you, and sends only if they do."))
         }
-        let facts = workerFacts(worker, paused: false)
-        let rung = SendLadder.choose(director: caps, worker: facts, duoRunning: true)
-        carry(rung, message: message, task: hit.path, project: p.name, folder: folder, worker: worker, facts: facts, director: director,
-              directedBy: directedBy, onTask: true, handedBack: handedBack, log: log, done: done)
+        confirm(title: "Hand “\(worker.name)” back to \(director)?",
+                detail: "You typed in this session, so \(director) has been holding off. It wants to send:\n\n“\(message.prefix(300))”",
+                button: "Hand Back") { yes in
+            guard yes else {
+                log("refused", hit.path, sid, nil, "the user kept it paused")
+                return done(.fail("The user kept it paused, in Duo: don't send it. Ask them what they want instead."))
+            }
+            var r = DirectorRegistry.load(project: folder)
+            r.handedBack[sid] = Self.isoNow()
+            try? r.save(project: folder)
+            log("handback", hit.path, sid, nil, "the user handed it back in Duo")
+            send()
+        }
     }
 
     /// Takes one rung. When Duo's guards refuse before anything was typed, `refused` decides (the
     /// queue's own delivery leaves the message where it is); by default it joins the queue. Text
     /// Duo typed but didn't send stays in the prompt for the user and is never queued as well.
     func carry(_ rung: SendRung, message: String, task: String, project: String, folder: URL, worker: Fixture.Session, facts: WorkerFacts,
-               director: String, directedBy: String?, onTask: Bool, handedBack: Bool = false,
+               director: String, directedBy: String?, onTask: Bool,
                log: @escaping (String, String?, String?, String?, String?) -> Void, done: @escaping @MainActor (Reply) -> Void,
                refused: (@MainActor (_ why: String, _ typed: Bool) -> Void)? = nil) {
         let sid = worker.sessionId ?? worker.tabKey
+        // What Duo delivers carries the director's tag, so the worker's transcript tells it from the user's turns.
+        let tagged = Director.tag(director) + message
         func queue(_ why: String? = nil) {
             if let refused { return refused(why ?? "not now", false) }
             self.queue(message, task: task, folder: folder, project: project, why: why, log: log, done: done)
         }
         func delivered(_ how: String) {
-            UserTyping.noteDirectorSend(worker.tabKey)
-            if handedBack, var reg = Optional(DirectorRegistry.load(project: folder)) {
-                reg.paused[sid] = nil
-                try? reg.save(project: folder)
-            }
             editTaskNote(project, task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Sent to the worker (\(how)): \(message.prefix(300))")))
             log("send", task, sid, rung.rawValue, how)
         }
@@ -83,7 +81,7 @@ extension AppModel {
         case .resumeBackground, .headless:
             guard let claude = ClaudeLocator.resolve() else { return queue("no claude to run") }
             // `--` ends the options: a message starting with "-" is never read as a flag.
-            let args = (rung == .headless ? ["-p", "--resume", sid] : ["--bg", "--resume", sid]) + ["--", message]
+            let args = (rung == .headless ? ["-p", "--resume", sid] : ["--bg", "--resume", sid]) + ["--", tagged]
             let cwd = workerCwd(worker, folder: folder)
             let runLog = folder.appending(path: ".duo/director-runs/\(sid.prefix(8))-\(Int(Date().timeIntervalSince1970)).log")
             let how = rung == .headless ? "a headless turn" : "resumed in the background"
@@ -102,7 +100,7 @@ extension AppModel {
                      : "The worker had stopped: it's resuming in the background with your message. It's logged as sent once it has started.",
                      ["task": task, "worker": sid, "rung": rung.rawValue]))
         case .duoSubmit:
-            guardedSubmit(key: worker.tabKey, message: message, directedBy: directedBy, director: director, onTask: onTask) { refusal, typed in
+            guardedSubmit(key: worker.tabKey, message: tagged, directedBy: directedBy, director: director, onTask: onTask) { refusal, typed in
                 if let refusal {
                     if refused == nil || typed { log("refused", task, sid, rung.rawValue, refusal) }
                     if typed {
@@ -118,7 +116,7 @@ extension AppModel {
                 }
             }
         case .duoResume:
-            if let why = resumeWithPrompt(worker, prompt: message, folder: folder) { log("refused", task, sid, rung.rawValue, why); return queue(why) }
+            if let why = resumeWithPrompt(worker, prompt: tagged, folder: folder) { log("refused", task, sid, rung.rawValue, why); return queue(why) }
             delivered("reopened in Duo with it")
             done(.ok("The worker had stopped: Duo reopened it with your message as its next prompt.", ["task": task, "worker": sid, "rung": rung.rawValue]))
         case .queued:
@@ -286,44 +284,34 @@ extension AppModel {
         for old in mine.dropLast(runsKept - 1) { try? fm.removeItem(at: dir.appending(path: old)) }
     }
 
-    /// Takes workers whose task is done, dropped, archived or gone off the registry, and notes which
-    /// sessions are directed workers now (for the pause, `persistPause`).
+    /// Takes workers whose task is done, dropped, archived or gone off the registry, links pending
+    /// background workers whose session has appeared, and expires pending ones that never did.
     func pruneDirectorWorkers(_ folder: URL) {
         var reg = DirectorRegistry.load(project: folder)
         let before = reg
         let iso = ISO8601DateFormatter()
-        let beacons = Beacon.readAll()
+        // A worker started in the background is linked when a session with its name appears.
+        var linked: [DirectorRegistry.Worker] = []
+        let beacons = reg.workers.contains(where: \.pending) ? Beacon.readAll() : []
+        for b in beacons { if let n = b.name, let w = reg.link(pendingNamed: n, to: b.sessionId) { linked.append(w) } }
         reg.workers.removeAll { w in
             guard DirectorRegistry.isTaskPath(w.task), let text = try? String(contentsOf: folder.appending(path: w.task), encoding: .utf8) else { return true }
             let n = TaskNotes.parse(text, path: w.task)
             if n.archived || ["done", "dropped"].contains((n.status ?? "").lowercased()) { return true }
-            // A worker started in the background that never appeared frees its slot.
-            if w.name != nil, !w.adopted, !fixture.sessions.contains(where: { $0.sessionId == w.session }),
-               !beacons.contains(where: { $0.sessionId == w.session || $0.name == w.name }),
-               let since = iso.date(from: w.since), Date().timeIntervalSince(since) > Self.mintedLasts { return true }
+            // One that never appeared frees its slot.
+            if w.pending, let since = iso.date(from: w.since), Date().timeIntervalSince(since) > Director.pendingLasts { return true }
             return false
         }
-        // Asks expire; pauses go with their workers.
-        reg.asked = reg.asked.filter { _, v in iso.date(from: v).map { Date().timeIntervalSince($0) <= Self.askLasts } ?? false }
+        // Hand-backs go with their workers.
         let live = Set(reg.workers.map(\.session))
-        reg.paused = reg.paused.filter { live.contains($0.key) }
+        reg.handedBack = reg.handedBack.filter { live.contains($0.key) }
         if reg != before { try? reg.save(project: folder) }
-        for w in reg.workers { directorWorkerKeys[w.session] = (folder, reg.paused[w.session] != nil) }
-    }
-
-    /// The user typed in a session: if it's a directed worker, its director is paused there now,
-    /// recorded at once, so a restart or the queue sees it (DL-200).
-    /// Only typing at Claude's own prompt counts: a keystroke that answers a permission or question
-    /// prompt (the session is waiting on the user) doesn't pause its director. Cheap: the cache says
-    /// whether it's already paused, so a keystroke reads director.json at most once per pause.
-    func persistPause(_ key: String) {
-        guard let (folder, paused) = directorWorkerKeys[key], !paused else { return }
-        if fixture.sessions.first(where: { $0.tabKey == key })?.state == .needsYou { return }
-        var reg = DirectorRegistry.load(project: folder)
-        directorWorkerKeys[key] = (folder, true)
-        guard reg.workers.contains(where: { $0.session == key }), reg.paused[key] == nil else { return }
-        reg.paused[key] = Self.isoNow()
-        try? reg.save(project: folder)
+        if let project = liveFolders.first(where: { $0.value == folder })?.key {
+            for w in linked where reg.workers.contains(w) {
+                _ = editTaskNote(project, w.task, .addSession(link: TaskNotes.link(title: w.name ?? w.session, id: w.session)))
+                _ = editTaskNote(project, w.task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Worker \(w.session.prefix(8)) (\(w.name ?? "")) started in the background.")))
+            }
+        }
     }
 
     // MARK: The queue
@@ -332,7 +320,6 @@ extension AppModel {
     /// or whose task no longer names its director, is dropped with a Progress line; one naming a
     /// path outside `tasks/` is dropped untouched.
     public func deliverDirectorMessages() {
-        directorWorkerKeys = [:]
         for (project, folder) in liveFolders {
             guard FileManager.default.fileExists(atPath: DirectorRegistry.file(project: folder).path) else { continue }
             pruneDirectorWorkers(folder)
