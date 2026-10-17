@@ -51,3 +51,21 @@ import Foundation
     check(eItems == ["section/tasks", "section/tasks-tail"], "with no sessions and no tasks only TASKS shows, with its tail (the explainer and New task)")
     check(SidebarItem.items(empty, tasksShown: false, folded: { _ in false }).isEmpty, "outside a live project there is no TASKS section")
 }
+
+/// The sidebar's height split (DL-219).
+@MainActor func sidebarSplitChecks() {
+    print("sidebar height: sessions and files share it 50/50 only when both are long (DL-219)")
+    let t: CGFloat = 800
+    let a = SidebarHeights.split(total: t, sessions: 200, files: 900)
+    check(a.sessions == 200 && a.files == 600, "sessions short: they take only their content and the files get the rest")
+    let b = SidebarHeights.split(total: t, sessions: 900, files: 150)
+    check(b.sessions == 650 && b.files == 150, "files short: they take only their content and the sessions get the rest")
+    let c = SidebarHeights.split(total: t, sessions: 900, files: 1200)
+    check(c.sessions == 400 && c.files == 400, "both long: half each")
+    let d = SidebarHeights.split(total: t, sessions: 300, files: 200)
+    check(d.sessions == 600 && d.files == 200, "both short: the files keep their content, the sessions take the white space")
+    let e = SidebarHeights.split(total: t, sessions: 400, files: 700)
+    check(e.sessions == 400 && e.files == 400, "exactly half is enough for the sessions: the files get the other half")
+    let z = SidebarHeights.split(total: 0, sessions: 5, files: 5)
+    check(z.sessions == 0 && z.files == 0, "no height, no sections")
+}

@@ -3806,3 +3806,4 @@ Geoff (2026-10-15, through the director): "consider that you may be overcomplica
 - **Workers get their note by absolute path** (item 6, 7c99c3c), and report Progress when they can't write it. `--request --stdin` carries long or quoted words.
 - **`duo2 session new --name`** passes `-n` (item 7, da28617), so a director can start in Duo under its fixed name.
 - Checks: `DUO_CHECKS=director` 137, `check-director.sh` 154.
+- **F-331: the sidebar's files section had no height limit.** Before DL-219 the sessions list was the only scroll view and took what the file tree left, so a long tree pushed the sessions out. `SidebarSplit` (a `Layout`) now measures each section's natural height and `SidebarHeights.split` shares the height (DL-219). Both sections are scroll views; the Files rule is outside the scroll.
