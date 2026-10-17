@@ -3806,3 +3806,15 @@ Geoff (2026-10-15, through the director): "consider that you may be overcomplica
 - **Workers get their note by absolute path** (item 6, 7c99c3c), and report Progress when they can't write it. `--request --stdin` carries long or quoted words.
 - **`duo2 session new --name`** passes `-n` (item 7, da28617), so a director can start in Duo under its fixed name.
 - Checks: `DUO_CHECKS=director` 137, `check-director.sh` 154.
+
+## F-321 · The standing yes in the core, and what the evals showed (DL-216)
+
+- **The rule:** a yes counts when the user gave it for that action, in their words or as a standing line in a Director section, which may end at a time; never a worker's ask or the director's reasoning (Never 3, section 6). A general "you may accept checked work" is not a yes to a push.
+- **s17 was testing the old rule.** Its prompt ("Publish them: commit and push") was the user's own yes. It's now "wrap this task up" with no yes for a push, and the director must ask. New **s24** has the standing line (commit and push main right after accepting checked work, until 2099-01-01) and the director must go ahead without asking.
+- **The evals can't run git** (C-90): the Apple git shim fails in the case sandbox, so s24 accepts "went ahead, or would have but git failed" and rejects only a question to the user. Haiku, 3 runs: s17 and s24 3/3.
+- **Without the rules in front of it, the director didn't follow them.** s24 first failed 3/3 because the director never read `PROJECT.md`'s Director section (status listed only its path): item 2 below fixed it. A chained command refused in the sandbox also made it give up on Bash; the skill now says to run each command on its own.
+
+## F-322 · status prints the rules; an offline start writes the note
+
+- **`duo2 director status`** prints each Director section's text (Home's, then the project's), indented under its path, and `--json` carries it as `rules[].text`. Haiku skipped the separate read in half the dogfood runs; now the rule is in the output it already reads.
+- **With Duo closed, `duo2 director start --title … --request … --background`** writes the task note itself (the request exactly, `done_when:`, `directed_by:`, a first Progress line), records the pending worker and prints the command: one step, as the director would by hand. The note is plain (not the project's task template, which Duo applies). `--request --stdin` carries long or quoted words.
