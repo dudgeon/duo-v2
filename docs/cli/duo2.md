@@ -29,6 +29,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 view sidebar show\|hide\|toggle` | Show or hide the left pane. | Toggle Sidebar |
 | `duo2 view right show\|hide\|toggle` | Show or hide the right pane: the action column at All projects, the documents in a project (⌥⌘0, DL-129). | Toggle Right Pane, right pane button |
 | `duo2 view tab <Project \| document path \| group \| next \| previous>` | Switch the right pane's tab; next and previous step through the active pane's tabs instead (⌃Tab, ⌃⇧Tab, DL-165). | right pane tab, Open Project File, Show Next Tab, Show Previous Tab |
+| `duo2 view tab-move left\|right\|<n> [tab] [--pane middle\|right]` | Move a tab along its strip: one place left or right (Move Tab Left / Right on its menu), or to place n among the tabs that move (1 is the leftmost), as a drag does (DL-220). The tab is a document path, a session id or name, or by default the selected tab of the active pane (or --pane). The right pane's Project tab stays first. | Move Tab Left, Move Tab Right, tab dragged along its strip |
 | `duo2 view pane next\|previous\|left\|middle\|right` | Make a pane active and give it the keyboard: the next or previous one (⌥⌘→, ⌥⌘←), or one by name; a hidden pane can't be chosen. | Next Pane, Previous Pane |
 | `duo2 view group <group> expand\|collapse` | Expand or collapse a group in the session list. | group row |
 | `duo2 view select <session id>` | Select a session's card (action column or peek) without opening it. | action card, peek card |

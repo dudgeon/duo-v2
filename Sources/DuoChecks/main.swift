@@ -37,6 +37,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "control" { return try controlPlaneChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "git" { return try gitChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pane" { return try paneFocusChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "tabs" { return try tabOrderChecks() }
     let f = try repoFixture()
 
     print("fixture")
@@ -745,6 +746,7 @@ func repoFixture() throws -> Fixture {
     taskPaneKeyChecks()
     dockBadgeChecks()
     try paneFocusChecks()
+    try tabOrderChecks()
     try gitChecks()
     dockMenuChecks()
 

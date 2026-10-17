@@ -6,7 +6,7 @@ import WebKit
 /// checks that this list is exactly the kinds the page posts, so a new one can't be dropped
 /// by a prefix test the way "propertiesFolded" was (C-81).
 public enum EditorMessage: String, CaseIterable {
-    case openLink, image, pasteImage, tableMenu, noteEdit, ready, selection
+    case openLink, image, pasteImage, tableMenu, noteEdit, ready, selection, copyCode
     case propertiesFolded, propertyType, propertyDate, propertyMenu, propertyAdd, propertyReference
 }
 
@@ -438,6 +438,10 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             return
         case .propertiesFolded, .propertyType, .propertyDate, .propertyMenu, .propertyAdd, .propertyReference:
             onPropertyAction?(kind.rawValue, body); return
+        case .copyCode:
+            // A code block's Copy button (DL-220, code-hover): the page can't reach the pasteboard itself.
+            if let text = body["text"] as? String { FileActions.copy(text) }
+            return
         case .ready:
             return
         case .selection:

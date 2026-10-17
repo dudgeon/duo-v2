@@ -36,7 +36,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case ping, status, needsYou = "needs-you", undo, help, doctor, legacy, install, uninstall, hook, walkSetup = "walk setup", settings, updateProbe = "update probe", hangs
     // What's on screen
     case goAll = "go all", goHome = "go home", open, peek, peekJump = "peek jump"
-    case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewPane = "view pane", viewGroup = "view group", viewSelect = "view select"
+    case viewSidebar = "view sidebar", viewRight = "view right", viewTab = "view tab", viewTabMove = "view tab-move", viewPane = "view pane", viewGroup = "view group", viewSelect = "view select"
     case viewSort = "view sort", viewFilter = "view filter", viewHidden = "view hidden", viewFolder = "view folder", viewHome = "view home"
     // Projects
     case projects, projectShow = "project show", projectMake = "project make", projectMerge = "project merge"
@@ -157,6 +157,9 @@ extension DuoAction {
         .init(.viewRight, .view, "show|hide|toggle", "Show or hide the right pane: the action column at All projects, the documents in a project (⌥⌘0, DL-129).", ui: ["Toggle Right Pane", "right pane button"]),
         .init(.viewTab, .view, "<Project | document path | group | next | previous>", "Switch the right pane's tab; next and previous step through the active pane's tabs instead (⌃Tab, ⌃⇧Tab, DL-165).",
               ui: ["right pane tab", "Open Project File", "Show Next Tab", "Show Previous Tab"]),
+        .init(.viewTabMove, .view, "left|right|<n> [tab] [--pane middle|right]",
+              "Move a tab along its strip: one place left or right (Move Tab Left / Right on its menu), or to place n among the tabs that move (1 is the leftmost), as a drag does (DL-220). The tab is a document path, a session id or name, or by default the selected tab of the active pane (or --pane). The right pane's Project tab stays first.",
+              ui: ["Move Tab Left", "Move Tab Right", "tab dragged along its strip"]),
         .init(.viewPane, .view, "next|previous|left|middle|right", "Make a pane active and give it the keyboard: the next or previous one (⌥⌘→, ⌥⌘←), or one by name; a hidden pane can't be chosen.", ui: ["Next Pane", "Previous Pane"]),
         .init(.viewGroup, .view, "<group> expand|collapse", "Expand or collapse a group in the session list.", ui: ["group row"]),
         .init(.viewSelect, .view, "<session id>", "Select a session's card (action column or peek) without opening it.", ui: ["action card", "peek card"]),

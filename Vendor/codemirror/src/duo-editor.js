@@ -43,12 +43,85 @@ class RuleLineWidget extends WidgetType {
   eq() { return true; }
   toDOM() { const s = document.createElement("span"); s.className = "duo-hr"; return s; }
 }
-// A code block's language, top right (S3-5).
-class CodeLangWidget extends WidgetType {
+// A code block's head, top right: its language (S3-5) and, under the pointer, Copy, which reads
+// "Copied" for 1.5 s once clicked (DL-220, code-hover, code-copied).
+const COPY_ICON = '<svg class="duo-code-copy-icon" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.2"></rect><path d="M8 2.2V2a.8.8 0 0 0-.8-.8H2a.8.8 0 0 0-.8.8v5.2a.8.8 0 0 0 .8.8h.2"></path></svg>';
+const COPIED_ICON = '<svg class="duo-code-copied-icon" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.3l2.3 2.3 4.7-5"></path></svg>';
+const COPIED_MS = 1500;
+class CodeHeadWidget extends WidgetType {
   constructor(lang) { super(); this.lang = lang; }
   eq(o) { return o.lang === this.lang; }
-  toDOM() { const s = document.createElement("span"); s.className = "duo-code-lang"; s.textContent = this.lang; return s; }
+  toDOM(view) {
+    const s = document.createElement("span");
+    s.className = "duo-code-head";
+    if (this.lang) { const l = document.createElement("span"); l.className = "duo-code-lang"; l.textContent = this.lang; s.append(l); }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "duo-code-copy";
+    const show = (copied) => {
+      b.innerHTML = (copied ? COPIED_ICON : COPY_ICON) + (copied ? "Copied" : "Copy");
+      b.setAttribute("aria-label", copied ? "Copied" : "Copy code");
+      s.classList.toggle("duo-code-copied", copied);
+    };
+    show(false);
+    b.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); });   // the caret stays where it was
+    b.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const text = codeText(view.state, view.posAtDOM(s));
+      if (text == null) return;
+      copyText(text);
+      show(true);
+      clearTimeout(b.duoTimer);
+      b.duoTimer = setTimeout(() => show(false), COPIED_MS);
+    });
+    s.append(b);
+    return s;
+  }
+  ignoreEvent() { return true; }
 }
+// The fenced block at `pos`, or null.
+function codeBlockAt(state, pos) {
+  for (const side of [1, -1]) {
+    for (let n = syntaxTree(state).resolveInner(pos, side); n; n = n.parent) if (n.name === "FencedCode") return n;
+  }
+  return null;
+}
+// What Copy copies: the block's code, without its fences.
+function codeText(state, pos) {
+  const block = codeBlockAt(state, pos);
+  if (!block) return null;
+  const code = block.getChild("CodeText");
+  return code ? state.sliceDoc(code.from, code.to) : "";
+}
+function copyText(text) {
+  if (window.webkit?.messageHandlers?.duo) post("copyCode", { text });   // Duo writes the pasteboard
+  else navigator.clipboard?.writeText(text).catch(() => {});
+}
+// The block under the pointer, by its first line's start (-1: none): its head shows Copy.
+const setCodeHover = StateEffect.define();
+const codeHoverField = StateField.define({
+  create: () => -1,
+  update(v, tr) {
+    if (v >= 0 && tr.docChanged) v = tr.changes.mapPos(v);
+    for (const e of tr.effects) if (e.is(setCodeHover)) v = e.value;
+    return v;
+  },
+  provide: (f) => EditorView.decorations.compute([f], (state) => {
+    const v = state.field(f);
+    return v < 0 || v > state.doc.length ? Decoration.none : Decoration.set([Decoration.line({ class: "duo-code-hover" }).range(state.doc.lineAt(v).from)]);
+  }),
+});
+const codeHover = [codeHoverField, EditorView.domEventHandlers({
+  mousemove(e, view) {
+    const line = e.target?.closest?.(".cm-line.duo-codeblock");
+    const block = line ? codeBlockAt(view.state, view.posAtDOM(line)) : null;
+    const from = block ? view.state.doc.lineAt(block.from).from : -1;
+    if (from !== view.state.field(codeHoverField)) view.dispatch({ effects: setCodeHover.of(from) });
+  },
+  mouseleave(e, view) {
+    if (view.state.field(codeHoverField) >= 0) view.dispatch({ effects: setCodeHover.of(-1) });
+  },
+})];
 
 const hide = Decoration.replace({});
 const headingMarks = [1, 2, 3, 4, 5, 6].map((l) => Decoration.mark({ class: `duo-h duo-h${l}` }));
@@ -118,9 +191,11 @@ function buildDecorations(view) {
             ranges.push([l.from, l.from, Decoration.line({ class: "duo-codeblock" + (n === first ? " duo-codeblock-first" : "") + (n === last ? " duo-codeblock-last" : "") + (fence ? " duo-codeblock-fence" + (fenceRaw ? " duo-codeblock-fence-raw" : "") : "") })]);
             if (fence && !fenceRaw && l.to > l.from) ranges.push([l.from, l.to, hide]);
           }
-          if (info && !active.has(first)) {
+          // Every block has a head for Copy; the language shows while its fence line isn't raw.
+          {
             const l = state.doc.line(first);
-            ranges.push([l.to, l.to, Decoration.widget({ widget: new CodeLangWidget(state.sliceDoc(info.from, info.to).trim()), side: 1 })]);
+            const lang = info && !active.has(first) ? state.sliceDoc(info.from, info.to).trim() : "";
+            ranges.push([l.to, l.to, Decoration.widget({ widget: new CodeHeadWidget(lang), side: 1 })]);
           }
           return false;
         }
@@ -1693,7 +1768,7 @@ const readOnlyCompartment = new Compartment();
 const previewLive = new Compartment(), previewProps = new Compartment(), previewBlocks = new Compartment();
 let sourceMode = !!window.duoFlags?.noPreview;   // the next state's mode (checks start a page in source with the flag)
 const sourceIds = new Set();                      // documents Duo remembers in source mode, by id
-const sourceEffects = (on) => [previewLive.reconfigure(on ? [] : [livePreview]), previewProps.reconfigure(on ? [] : previewPropsList), previewBlocks.reconfigure(on ? [] : [blocksField])];
+const sourceEffects = (on) => [previewLive.reconfigure(on ? [] : [livePreview, codeHover]), previewProps.reconfigure(on ? [] : previewPropsList), previewBlocks.reconfigure(on ? [] : [blocksField])];
 const isSource = (state) => previewLive.get(state).length === 0;
 function setSource(on) {
   on = !!on;
@@ -1752,7 +1827,15 @@ const duoTheme = EditorView.theme({
   ".duo-deleted-rule": { flex: "1", minWidth: "12px", height: "1px", backgroundColor: "var(--duo-rule)" },
   ".duo-deleted a": { color: "var(--duo-text2)", textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px", cursor: "default" },
   ".duo-deleted-body": { flexBasis: "100%", whiteSpace: "pre-wrap", textDecoration: "line-through", fontSize: "13px", lineHeight: "20px" },
-  ".duo-code-lang": { position: "absolute", right: "10px", top: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "11px", lineHeight: "16px", color: "var(--duo-text2)", zIndex: "1" },
+  // The head: the language alone at rest (10 in, 6 down); under the pointer it moves left of Copy, the two 6 in and 5 down (code-hover).
+  ".duo-code-head": { position: "absolute", right: "10px", top: "6px", display: "flex", alignItems: "center", gap: "8px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", zIndex: "1" },
+  ".cm-line.duo-code-hover .duo-code-head, .duo-code-head.duo-code-copied": { right: "6px", top: "5px" },
+  ".duo-code-lang": { fontSize: "11px", lineHeight: "16px", color: "var(--duo-text2)" },
+  ".duo-code-copy": { display: "none", boxSizing: "border-box", height: "22px", margin: "0", alignItems: "center", gap: "4px", padding: "0 8px", border: "1px solid var(--duo-control-edge)", borderRadius: "6px",
+    backgroundColor: "var(--duo-pane)", color: "var(--duo-text)", font: "12px/16px -apple-system, BlinkMacSystemFont, sans-serif", whiteSpace: "nowrap", cursor: "default" },
+  ".cm-line.duo-code-hover .duo-code-copy, .duo-code-copied .duo-code-copy": { display: "inline-flex" },
+  ".duo-code-copy-icon": { stroke: "var(--duo-text2)" },
+  ".duo-code-copied-icon": { stroke: "var(--duo-text)" },
   ".duo-strong": { fontWeight: "600" },
   ".duo-em": { fontStyle: "italic" },
   ".duo-strike": { textDecoration: "line-through" },
@@ -2058,7 +2141,7 @@ function extensions(readOnly) {
       history(),
       markdown({ base: markdownLanguage }),  // GitHub-flavoured: task lists, tables, strikethrough
       search({ top: true, createPanel: findPanel }),
-      previewLive.of(sourceMode ? [] : [livePreview]),
+      previewLive.of(sourceMode ? [] : [livePreview, codeHover]),
       contextField,
       foldField,
       previewProps.of(sourceMode ? [] : previewPropsList),

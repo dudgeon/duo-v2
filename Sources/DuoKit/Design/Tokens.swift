@@ -251,6 +251,7 @@ public enum DuoMetric {
     public static let tabHoverRadius: CGFloat = 5.0
     public static let tabHoverHeight: CGFloat = 24.0
     public static let tabHoverInset: CGFloat = 7.0
+    public static let tabDragPaddingX: CGFloat = 8.0
     public static let repoLineButtonHeight: CGFloat = 20.0
     public static let repoLineButtonFont: CGFloat = 11.0
     public static let repoLineButtonPaddingX: CGFloat = 8.0
@@ -517,6 +518,10 @@ public enum DuoShadow {
     public static let popoverRadius: CGFloat = 16.0
     public static let popoverX: CGFloat = 0.0
     public static let popoverY: CGFloat = 12.0
+    /// A console tab lifted by a drag (DL-220): the popover's shape on the dark console.
+    public static let consoleLiftColor = Color(.sRGB, red: 0/255, green: 0/255, blue: 0/255, opacity: 0.5)
+    public static let consoleLiftRadius: CGFloat = 16.0
+    public static let consoleLiftY: CGFloat = 12.0
     /// Dashed borders (New project tile, drop targets): on, off.
     public static let dashPattern: [CGFloat] = [3.0, 2.0]
 }

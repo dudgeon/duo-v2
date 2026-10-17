@@ -607,6 +607,7 @@ struct ConsolePane: View {
 
 struct RightPane: View {
     @Environment(AppModel.self) private var model
+    static let tabSpace = "duo.tabs.right"
 
     var body: some View {
         let tabs = rightTabs
@@ -666,6 +667,12 @@ struct RightPane: View {
                             Button("Close Tab") { model.closeDocument(tab.id) }
                             Button("Close Other Tabs") { model.closeOtherDocuments(than: tab.id) }
                             Divider()
+                            // DL-220 (tabs-menu): the tab one place along; dimmed at the end it's at.
+                            Button("Move Tab Left") { model.moveTab(tab.id, in: .right, by: -1) }  // action: view tab-move
+                                .disabled(!model.canMoveTab(tab.id, in: .right, by: -1))
+                            Button("Move Tab Right") { model.moveTab(tab.id, in: .right, by: 1) }  // action: view tab-move
+                                .disabled(!model.canMoveTab(tab.id, in: .right, by: 1))
+                            Divider()
                             if let web = model.webTabs[tab.id] {
                                 Button("Open in Browser") { if let u = web.url { NSWorkspace.shared.open(u) } }
                                 Button("Copy Address") { if let u = web.url { FileActions.copy(u.absoluteString) } }
@@ -673,6 +680,9 @@ struct RightPane: View {
                                 FileMenu(path: tab.id, isFolder: false, onTab: true)
                             }
                         })
+                        // Dragged along the strip, its place moves (DL-220, tabs-drag); Project stays first.
+                        .modifier(TabDraggable(key: tab.id, pane: .right, space: Self.tabSpace, enabled: tab.isDocument && model.openDocuments.contains(tab.id),
+                                               lead: closeSlot, shown: { shownTabs.map(\.id) }))
                         .background(DuoColor.pane)
                         .zIndex(model.showsTabClose(tab.id) ? 1 : 0)   // its fill reaches over the next tab's padding (DL-134)
                         .transition(.tab)
@@ -703,6 +713,17 @@ struct RightPane: View {
                         .background(DuoColor.pane)
                 }
                 Spacer(minLength: 0)
+            }
+            .coordinateSpace(.named(Self.tabSpace))
+            .overlay(alignment: .topLeading) {
+                // The dragged tab, lifted under the pointer (tabs-drag).
+                if let drag = model.tabDrag, drag.pane == .right, let tab = tabs.first(where: { $0.id == drag.key }) {
+                    let active = tab.id == model.rightTab
+                    TabDragGhost(drag: drag, onConsole: false) {
+                        Text(fit.short ? ConsoleTabStrip.short(tab.title) : tab.title).duoText(active ? .bodyEmphasis : .body)
+                            .foregroundStyle(active ? DuoColor.text : DuoColor.text2).lineLimit(1)
+                    }
+                }
             }
             .padding(.horizontal, 20)
             .frame(height: DuoMetric.tabStripHeight)

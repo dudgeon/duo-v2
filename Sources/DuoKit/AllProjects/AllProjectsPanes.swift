@@ -1092,6 +1092,9 @@ struct SessionOrganizeMenu: ViewModifier {
     var onConsole = false
     /// On a console or Home tab: Park Session, Keep Running and Close Tab close its menu (DL-192).
     var tab = false
+    /// A console tab (DL-220): its drag image is the tab, lifted, its place stays empty while it's
+    /// dragged, and its menu moves it along the strip. A session row's image is its card.
+    var dragImage: (() -> AnyView)?
 
     func body(content base: Content) -> some View {
         let content = base.modifier(MenuTargetFill(sessionKey: sessionKey, radius: radius, onConsole: onConsole))
@@ -1129,12 +1132,21 @@ struct SessionOrganizeMenu: ViewModifier {
                         Divider()
                         Button("Close Tab") { model.closeConsoleTab(sessionKey) }
                     }
+                    if dragImage != nil {
+                        Divider()
+                        Button("Move Tab Left") { model.moveTab(sessionKey, in: .middle, by: -1) }  // action: view tab-move
+                            .disabled(!model.canMoveTab(sessionKey, in: .middle, by: -1))
+                        Button("Move Tab Right") { model.moveTab(sessionKey, in: .middle, by: 1) }  // action: view tab-move
+                            .disabled(!model.canMoveTab(sessionKey, in: .middle, by: 1))
+                    }
                 }
-                .modifier(Lifted(active: model.dragging == payload))
+                // A tab leaves its place empty while it's dragged (tabs-drag); a row sinks back.
+                .modifier(Lifted(active: dragImage == nil && model.dragging == payload))
+                .opacity(dragImage != nil && model.dragging == payload ? 0 : 1)
                 .onDrag({  // action: session move
                     model.beginDrag(payload)
                     return NSItemProvider(object: payload as NSString)
-                }, preview: { DragCard(title: s.name, detail: s.project) })
+                }, preview: { if let dragImage { dragImage() } else { DragCard(title: s.name, detail: s.project) } })
         } else {
             content
         }

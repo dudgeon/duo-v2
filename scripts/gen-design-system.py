@@ -142,6 +142,9 @@ border.append({"name": "borderDash", "value": " ".join(px(x) for x in t["border"
 sh = t["shadow"]["popover"]
 shadow = [{"name": "shadowPopover", "value": f"{px(sh['x'])} {px(sh['y'])} {px(sh['blur'])} {sh['color'].replace(',', ', ')}",
            "usage": "Popovers Duo draws: search, the action menu, the idle list, drag cards. System popovers keep the system's."}]
+cl = t["shadow"]["consoleLift"]
+shadow.append({"name": "shadowConsoleLift", "value": f"{px(cl['x'])} {px(cl['y'])} {px(cl['blur'])} {cl['color'].replace(',', ', ')}",
+               "usage": "A console tab lifted by a drag (DL-220): the popover's shape, black at 50% on the dark console."})
 
 # ---------- sizes (split so each family stays under the type's 60) ----------
 s = t["size"]

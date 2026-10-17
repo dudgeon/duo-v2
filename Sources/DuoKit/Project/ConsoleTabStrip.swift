@@ -27,7 +27,7 @@ struct ConsoleTabStrip: View {
         GeometryReader { box in
             let fit = layout(tabs, width: box.size.width - 2 * DuoSpace.panePadding)
             HStack(spacing: light ? 16 : 18) {
-                ForEach(fit.shown) { t in tab(t, short: fit.short) }
+                ForEach(fit.shown) { t in tab(t, short: fit.short, shown: fit.shown.map(\.id)) }
                 if !fit.hidden.isEmpty {
                     HStack(spacing: 4) {
                         MoreTabsMark(color: dim).frame(width: 11, height: 9)
@@ -58,6 +58,15 @@ struct ConsoleTabStrip: View {
                     ChatToggle(key: key, light: light).padding(.trailing, light ? -6 : -4)   // 11 from the edge (bar-thin) on the thin strip
                 }
             }
+            .coordinateSpace(.named(Self.space))
+            // A live session's tab is dragged as itself (onto a task or a project, DL-147); along the strip its place moves (DL-220).
+            .onDrop(of: [.plainText, .utf8PlainText], delegate: TabStripDrop(model: model, pane: .middle, shown: fit.shown.map(\.id)))  // action: view tab-move
+            .overlay(alignment: .topLeading) {
+                // Any other tab, lifted under the pointer (console-drag).
+                if let drag = model.tabDrag, drag.pane == .middle, let t = tabs.first(where: { $0.id == drag.key }) {
+                    TabDragGhost(drag: drag, onConsole: !light) { label(t, short: fit.short) }
+                }
+            }
             .padding(.horizontal, DuoSpace.panePadding)
             .frame(height: height)
             .duoAnimation(.tabMove, value: fit.shown.map(\.id))
@@ -76,11 +85,14 @@ struct ConsoleTabStrip: View {
         }
     }
 
-    @ViewBuilder func tab(_ t: Tab, short: Bool) -> some View {
+    static let space = "duo.tabs.console"
+
+    /// A tab's glyph, name and pin; under the pointer the glyph's place holds the × (DL-126).
+    @ViewBuilder func label(_ t: Tab, short: Bool, closable: Bool = false) -> some View {
         let active = t.id == model.consoleTab
         HStack(spacing: DuoSpace.gapGlyphToLabel) {
             // Under the pointer the glyph's place holds the × (DL-126); nothing moves.
-            if model.showsTabClose(t.id) {
+            if closable && model.showsTabClose(t.id) {
                 TabCloseButton(key: t.id, onConsole: !light, active: active) { model.closeConsoleTab(t.id) }  // action: session close
                     .frame(width: t.state == nil ? 11 : DuoMetric.glyph, height: t.state == nil ? 9 : DuoMetric.glyph)   // the glyph's own box
             } else if let st = t.state { StateGlyph(st, on: light ? .light : .console(active: active)) }   // light: Q-87's stand-in
@@ -102,13 +114,21 @@ struct ConsoleTabStrip: View {
             }
         }
         .fixedSize()
+    }
+
+    @ViewBuilder func tab(_ t: Tab, short: Bool, shown: [String]) -> some View {
+        let active = t.id == model.consoleTab
+        label(t, short: short, closable: true)
         .modifier(TabHoverFill(key: t.id, onConsole: !light, fill: light ? DuoColor.selected : nil))
         .frame(maxHeight: light ? .infinity : nil)
         // The selected tab is underlined at the strip's foot (DL-136).
         .overlay(alignment: .bottom) { if light && active { DuoColor.text.frame(height: 2) } }
         .contentShape(Rectangle())
         .onActivate { model.openConsoleTab(t.id) }  // action: session open
-        .modifier(SessionOrganizeMenu(sessionKey: t.id, radius: DuoMetric.tabHoverRadius, onConsole: !light, tab: true))
+        .modifier(SessionOrganizeMenu(sessionKey: t.id, radius: DuoMetric.tabHoverRadius, onConsole: !light, tab: true,
+                                      dragImage: { AnyView(TabDragImage(onConsole: !light) { label(t, short: short) }.padding(24)) }))   // room for the shadow
+        // Dragged along the strip, its place moves (DL-220, console-drag). A live session's tab is a drag source already.
+        .modifier(TabDraggable(key: t.id, pane: .middle, space: Self.space, enabled: !model.isSessionDragSource(t.id), shown: { shown }))
         .modifier(TabHover(key: t.id) { model.closeConsoleTab(t.id) })
         .accessibilityElement(children: .combine)
         .accessibilityLabel(t.state == nil ? "\(t.title), shell" : t.title)
