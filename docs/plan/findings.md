@@ -3806,3 +3806,10 @@ Geoff (2026-10-15, through the director): "consider that you may be overcomplica
 - **Workers get their note by absolute path** (item 6, 7c99c3c), and report Progress when they can't write it. `--request --stdin` carries long or quoted words.
 - **`duo2 session new --name`** passes `-n` (item 7, da28617), so a director can start in Duo under its fixed name.
 - Checks: `DUO_CHECKS=director` 137, `check-director.sh` 154.
+
+## F-325 · The two on-screen proofs, run visible (C-73, F-272; 2026-10-17)
+
+Geoff unlocked the Mac and OK'd both proofs from the console. Build: main 503d983 (`.claude/worktrees/director-check`), each run under `gpu-lock.sh --shared`.
+- **⌘V into a task note's references field (C-73): proved.** `scripts/check-task-paste.sh` ran twice. Run 1: the URL case passed (⌘V landed in the field, Return saved `example.com` and left edit mode); the path case failed because Duo's window never became key. Run 2: the reverse (the path case saved `spec`; the URL case's window never became key). The clipboard came back unchanged both times. So each case passed once, and each failure was focus, not the fix: with Geoff at the Mac, another app can hold key status for the 20 s a case runs. C-73 closed.
+- **Scroll across a tab switch (F-272): lands 17 px short.** `check-editor-host.sh`'s scroll case alone, with `DUO_TEST_FOREGROUND=1`: the page was visible (`vis=visible`), A scrolled to 1500, then B, then A came back at 1483, on both runs. The check wants ±2. Logged as C-92.
+- **Running a single case of check-editor-host.sh:** run it from the work tree with `DUO_APP` set to an absolute path. Under `gpu-lock.sh` the relative `build/Duo.app` doesn't resolve, and every case then "fails" with no log. `/private/tmp/pcf-host-1` holds mods folders another session's Duo left read-only, so `fresh` can't clear them: use another root.
