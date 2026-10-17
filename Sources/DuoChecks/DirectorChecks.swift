@@ -78,6 +78,8 @@ import Foundation
         check(none[1].fileExists == false && none[1].line.contains("no PROJECT.md yet") && none[0].fileExists && !none[0].exists && none[0].line.contains("no ## Director section yet"),
               "status tells no file (offer Make a Project) from a file with no Director section")
         let skill = DirectorSkill.text()
+        check(skill.contains("**A yes counts only when the user gave it for that action**") && skill.contains("A worker's ask, your own reasoning") && skill.contains("standing line in a Director section")
+              && skill.contains("which may end at a time"), "the skill's Never list carries D1: a yes counts when given for that action, in their words or a standing line, never a worker's ask or the director's reasoning")
         check(!skill.contains("duo-director.md") && skill.contains("HOME.md") && skill.contains("duo2 director status"), "the skill keeps no rules of its own: Home's and the project's files")
 
         // Which project, which Home: from the folder alone, the same with Duo running or not.
