@@ -3806,3 +3806,11 @@ Geoff (2026-10-15, through the director): "consider that you may be overcomplica
 - **Workers get their note by absolute path** (item 6, 7c99c3c), and report Progress when they can't write it. `--request --stdin` carries long or quoted words.
 - **`duo2 session new --name`** passes `-n` (item 7, da28617), so a director can start in Duo under its fixed name.
 - Checks: `DUO_CHECKS=director` 137, `check-director.sh` 154.
+
+## F-323 · An isolated Duo can't run the walk's Claude-session cards: its scratch config has no login (walk-since-0-2-4, 2026-10-17)
+
+The walk's setups run against an isolated Duo (its own `DUO_SUPPORT_DIR`, a scratch `CLAUDE_CONFIG_DIR` with the fixtures' buckets copied, `DUO_SOCKET` and `DUO_TOKEN` from its endpoint.json). All 237 setups answered "Ready" (one timed out once and passed on a rerun). But `session-running <project>` only shows the tab: the session in it is Claude Code's first-run screen (theme, then login), because credentials are never copied. So cards that need Claude to answer (chat chips, the composer, parking, send) can be set up but not exercised by Claude; their `claude` field is `partial` and the rest goes to `human`. Captures of fixture states (`check-ui.sh` with `NO_COMPARE=1`) and `duo2` verbs (doc, settings, director, file) are what Claude can run. A `duo2 walk setup` for a card with no setup answers "no setup for test", so every new card has one (`go all` at least).
+
+## F-324 · The first-run cards change Home, and `duo2 undo` puts it back (walk-since-0-2-4, 2026-10-17)
+
+The acceptance Duo (`--workspace ~/DuoAcceptance/workspace`) has no Home (`duo2 settings` says `home: none`). The first-run cards (DL-211, DL-212) need a Home of plain folders, so their setup runs the `first-run-home` fixture recipe (`~/DuoAcceptance/first-run-home`, five folders, no PROJECT.md) and `duo2 home set` on it. Every `home set` is its own undo step, so going back takes `duo2 undo` repeated until it says "nothing to undo"; `home set ~/DuoAcceptance/workspace` is not the way back (it writes a HOME.md and `.duo/` into the workspace root, and leaves Home set). On Geoff's own acceptance Duo the same holds against his real Home setting, so the two cards are rated `home` and say so.

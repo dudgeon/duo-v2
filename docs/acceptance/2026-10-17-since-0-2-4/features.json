@@ -27,8 +27,7 @@
     ],
     "didnt": [],
     "human": [],
-    "at": "2026-10-04 (rerun)",
-    "stale": true
+    "at": "2026-10-04 (rerun)"
    },
    "commit": "c4a1051823dbef68d64de4e420baea28f65b5594",
    "workMac": "home",
@@ -53,7 +52,23 @@
    "commit": "dfd38ebb5e98b7e95d9a2b971c175ba93e595767",
    "alsoCommits": [],
    "workMac": "small",
-   "workMacWhy": "Needs a Duo you updated across 0.2.15 to get the question again; reads and writes ~/.claude"
+   "workMacWhy": "Needs a Duo you updated across 0.2.15 to get the question again; reads and writes ~/.claude",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 director guide` prints the duo-director skill; `duo2 doctor` reports `Director skill: not installed`."
+    ],
+    "didnt": [
+     "The question itself: an isolated Duo skips the install question (C-28)."
+    ],
+    "human": [
+     "Update across 0.2.15 and answer the question; edit SKILL.md and relaunch."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "install-outside",
@@ -297,8 +312,7 @@
     "human": [
      "Use Duo for a while and tell me if any permission prompt still appears; System Settings › Privacy & Security lists past answers, and Duo needs none of them."
     ],
-    "at": "2026-10-04",
-    "stale": true
+    "at": "2026-10-04"
    },
    "commit": "79b7c30bf3b3a6fa2dc597d052b02673444603ff",
    "workMac": "as-is",
@@ -323,7 +337,23 @@
    "commit": "0663de36cca4feddaa36f683d0631c2629c63ef3",
    "alsoCommits": [],
    "workMac": "as-is",
-   "workMacWhy": "A menu item in any Duo"
+   "workMacWhy": "A menu item in any Duo",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "The built app's Resources hold THIRD-PARTY-NOTICES.md."
+    ],
+    "didnt": [
+     "Open the About panel (menu click)."
+    ],
+    "human": [
+     "Read the credits in the About panel."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "app-icon",
@@ -1117,8 +1147,7 @@
     ],
     "didnt": [],
     "human": [],
-    "at": "2026-10-04",
-    "stale": true
+    "at": "2026-10-04"
    },
    "commit": "7ce483dba918abadcf7de639501a03111b3c1427",
    "alsoCommits": [
@@ -1145,7 +1174,21 @@
    "workMacWhy": "Search works in any projects",
    "setup": [
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch.",
+     "The index pass ran (47 files, 571 chunks) on launch."
+    ],
+    "didnt": [
+     "Typing speed is a feel."
+    ],
+    "human": [
+     "Type fast in search and the List filter."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "search-actions",
@@ -2014,8 +2057,7 @@
      "Didn't click the menus."
     ],
     "human": [],
-    "at": "2026-10-04",
-    "stale": true
+    "at": "2026-10-04"
    },
    "commit": "bc86a35328a44bf7d2446ae5b149e7393fad8552",
    "workMac": "as-is",
@@ -2071,8 +2113,7 @@
     "human": [
      "The Open section's look (S2-1 in the slice 2 brief)."
     ],
-    "at": "2026-10-04",
-    "stale": true
+    "at": "2026-10-04"
    },
    "commit": "c66bcc9fcbf19021be9c6061be7db1e84baa6399",
    "workMac": "as-is",
@@ -2161,8 +2202,7 @@
     "human": [
      "How task rows differ from group rows beyond the pill (S2-1)."
     ],
-    "at": "2026-10-04",
-    "stale": true
+    "at": "2026-10-04"
    },
    "commit": "5bd86bd15e61dda76c88000a9c86f30842fb60ac",
    "workMac": "small",
@@ -2190,8 +2230,7 @@
     ],
     "didnt": [],
     "human": [],
-    "at": "2026-10-05",
-    "stale": true
+    "at": "2026-10-05"
    },
    "commit": "3642245d52077b3f2de20565d95376c9125cb719",
    "setup": [
@@ -2410,7 +2449,20 @@
    "workMacWhy": "Needs a task, which you make in a minute",
    "setup": [
     "open refunds"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "Captured `done-task`: a done task shows its box checked, grey and struck through, `done · 1`, with its session folded."
+    ],
+    "didnt": [
+     "Mark Complete live (needs a click)."
+    ],
+    "human": [
+     "Mark Complete on a refunds task and wait 10 seconds."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "task-sessionless-align",
@@ -2430,7 +2482,20 @@
    "workMacWhy": "Needs a task with no session",
    "setup": [
     "open refunds"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "The `done-task` capture shows the sessionless done task on the same box column as the task headers."
+    ],
+    "didnt": [
+     "Measuring pixels in the live app."
+    ],
+    "human": [
+     "Compare in refunds."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "session-links",
@@ -2713,7 +2778,21 @@
    "workMacWhy": "Hover and a menu in any project",
    "setup": [
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 settings explainers reset` works and settings reads `explanations dismissed: none`.",
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "Hover popover needs a pointer."
+    ],
+    "human": [
+     "Hover + New task; Help ▸ Explain Tasks."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "session-glyphs",
@@ -2733,7 +2812,18 @@
    "workMacWhy": "Visible in any project",
    "setup": [
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Captured the `hierarchy` state: `>_` on terminal rows, a bubble on chat rows, the needs-you hand replacing the kind glyph, a filled glyph on the selected open sessions."
+    ],
+    "didnt": [],
+    "human": [
+     "Live working and done glyphs on a real session."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "project-pane-hierarchy",
@@ -2752,7 +2842,18 @@
    "workMacWhy": "Visible in any project",
    "setup": [
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Captured the `hierarchy` state: NEEDS YOU · 1, TASKS · 2 with `+ New task` last, OTHER SESSIONS with Open, Today, This week, Earlier, then ARCHIVED."
+    ],
+    "didnt": [],
+    "human": [
+     "Check it on checkout with your sessions."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "ed-open",
@@ -2807,8 +2908,7 @@
     ],
     "didnt": [],
     "human": [],
-    "at": "2026-10-04",
-    "stale": true
+    "at": "2026-10-04"
    },
    "commit": "1b6aec33992568c0d4579016c0b0dfdb070d01df",
    "workMac": "as-is",
@@ -2848,7 +2948,21 @@
     "doc open prototypes/card.svg",
     "doc open tasks/exec-review-prep.md",
     "doc open templates/meeting-notes.md"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch.",
+     "`duo2 doc tabs` lists all 12 opened documents."
+    ],
+    "didnt": [
+     "The `» n` look."
+    ],
+    "human": [
+     "Narrow the window; use the » menu; close a middle tab."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "ed-autosave",
@@ -2902,8 +3016,7 @@
     "human": [
      "Clicking a line switches it to raw Markdown, which shifts words under the pointer (a double-click can miss); the same as Obsidian, but you may want it calmer."
     ],
-    "at": "2026-10-04",
-    "stale": true
+    "at": "2026-10-04"
    },
    "commit": "04c1f09fca24f6fa470f37b51cbae14ccdc68c94",
    "workMac": "as-is",
@@ -2932,7 +3045,21 @@
    "setup": [
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`duo2 doc format strikethrough` wrapped `Goal` as `~~Goal~~` and a second call unwrapped it.",
+     "`doc format bold` and `italic` also wrapped then unwrapped (no stacked marks)."
+    ],
+    "didnt": [
+     "The render (line-through, hidden marks) and the ⇧⌘X key."
+    ],
+    "human": [
+     "Type `~~x~~` and press ⇧⌘X."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "ed-stable-heights",
@@ -2953,7 +3080,20 @@
    "setup": [
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "Heights and click landing are visual."
+    ],
+    "human": [
+     "Click below a table, a picture, a code block; arrow through."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "ed-source-mode",
@@ -2975,7 +3115,20 @@
     "open checkout",
     "doc open docs/prd.md",
     "doc open docs/research.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`duo2 doc mode` said Preview; `toggle` gave Source mode; `preview` restored it."
+    ],
+    "didnt": [
+     "View menu item."
+    ],
+    "human": [
+     "View ▸ Source Mode, per document."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "ed-state-per-doc",
@@ -3001,7 +3154,21 @@
     "open checkout",
     "doc open docs/prd.md",
     "doc open docs/research.md"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch.",
+     "`duo2 doc tabs` lists the open documents."
+    ],
+    "didnt": [
+     "Caret, scroll and undo across a tab switch."
+    ],
+    "human": [
+     "Switch tabs and ⌘Z."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "ed-picture-paste",
@@ -3024,7 +3191,20 @@
    "setup": [
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "A picture on the clipboard."
+    ],
+    "human": [
+     "Paste a screenshot and drop a file."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "ed-office-paste",
@@ -3044,7 +3224,20 @@
    "setup": [
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "Needs Numbers or Excel."
+    ],
+    "human": [
+     "Paste 3 × 3 cells."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "doc-save-waits",
@@ -3064,7 +3257,20 @@
    "setup": [
     "open checkout",
     "doc open tasks/exec-review-prep.md"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "Typing then a menu in the same instant."
+    ],
+    "human": [
+     "Type, then Rename Task… at once."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "doc-crash-reload",
@@ -3085,7 +3291,20 @@
    "setup": [
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "Quitting a WebContent process."
+    ],
+    "human": [
+     "Activity Monitor: quit the editor's Web Content process."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "tables-edit",
@@ -3120,8 +3339,7 @@
     "human": [
      "Whether editing tables this way feels right."
     ],
-    "at": "2026-10-06",
-    "stale": true
+    "at": "2026-10-06"
    },
    "commit": "1bdd5d23588e516784f004b56c5b3bf6fb391f9b",
    "workMac": "as-is",
@@ -3543,8 +3761,7 @@
     ],
     "didnt": [],
     "human": [],
-    "at": "2026-10-04",
-    "stale": true
+    "at": "2026-10-04"
    },
    "commit": "cc05ba55507c4a63e9c4aed6f7f84f7f3a626764",
    "workMac": "as-is",
@@ -3606,7 +3823,20 @@
    "setup": [
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "The 150 ms race by hand; `scripts/check-editor-host.sh` not run here."
+    ],
+    "human": [
+     "Run the script."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "col-merge",
@@ -3903,8 +4133,7 @@
     "human": [
      "Try Move To… once."
     ],
-    "at": "2026-10-04 (rerun)",
-    "stale": true
+    "at": "2026-10-04 (rerun)"
    },
    "commit": "1b6aec33992568c0d4579016c0b0dfdb070d01df",
    "workMac": "as-is",
@@ -3934,7 +4163,20 @@
    "setup": [
     "open checkout",
     "doc open docs/prd.md"
-   ]
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "Moved `docs/research.md` away while open, `duo2 file trash docs/research.md` answered `already gone from the disk; its tab is closed` and `doc tabs` no longer listed it. The file was put back and matches its backup."
+    ],
+    "didnt": [
+     "The `removed on disk` banner (visual)."
+    ],
+    "human": [
+     "Same with the tree's menu."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "drag-files",
@@ -4298,8 +4540,7 @@
      "The click came from the page's own script: with the screen locked, WebKit ignores synthetic mouse clicks."
     ],
     "human": [],
-    "at": "2026-10-04 (rerun)",
-    "stale": true
+    "at": "2026-10-04 (rerun)"
    },
    "commit": "c4a1051823dbef68d64de4e420baea28f65b5594",
    "workMac": "small",
@@ -4335,8 +4576,7 @@
     "human": [
      "The bar's look (DB-20)."
     ],
-    "at": "2026-10-04",
-    "stale": true
+    "at": "2026-10-04"
    },
    "commit": "cd648ecac9565e32fe0ba6eb0ba8666b893d5fcb",
    "workMac": "as-is",
@@ -4364,7 +4604,20 @@
    "setup": [
     "open checkout",
     "doc open prototypes/checkout.html"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "Counting WebContent processes."
+    ],
+    "human": [
+     "Activity Monitor and a relaunch."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "browser-allow-asks",
@@ -4384,7 +4637,20 @@
    "workMacWhy": "A sheet to answer",
    "setup": [
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "The sheet is a click."
+    ],
+    "human": [
+     "Answer No then Yes."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "html-local-rules",
@@ -4407,7 +4673,20 @@
     "fixture add-missing",
     "open checkout",
     "doc open prototypes/remote-content.html"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch. `fixture add-missing` planted `remote-content.html`; it opens."
+    ],
+    "didnt": [
+     "Whether the remote picture loads."
+    ],
+    "human": [
+     "Look at the page."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "browser-google",
@@ -4842,8 +5121,7 @@
     "human": [
      "How typing in chat feels compared with the terminal."
     ],
-    "at": "2026-10-06",
-    "stale": true
+    "at": "2026-10-06"
    },
    "commit": "bf2964d5ab44647811c8ee2860095b31b1f21e5d",
    "alsoCommits": [
@@ -4878,7 +5156,20 @@
    "setup": [
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch. It shows the running session's tab."
+    ],
+    "didnt": [
+     "Anything inside the session: needs a signed-in Claude session: the isolated Duo's scratch config has no login (F-323)"
+    ],
+    "human": [
+     "Do the steps in a signed-in session."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "chat-md-bubble",
@@ -4898,7 +5189,20 @@
    "setup": [
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch. It shows the running session's tab."
+    ],
+    "didnt": [
+     "Anything inside the session: needs a signed-in Claude session: the isolated Duo's scratch config has no login (F-323)"
+    ],
+    "human": [
+     "Do the steps in a signed-in session."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "chat-finer-rows",
@@ -4918,7 +5222,20 @@
    "setup": [
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch. It shows the running session's tab."
+    ],
+    "didnt": [
+     "Anything inside the session: needs a signed-in Claude session: the isolated Duo's scratch config has no login (F-323)"
+    ],
+    "human": [
+     "Do the steps in a signed-in session."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "chat-at-files",
@@ -5396,7 +5713,20 @@
    "setup": [
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch. It shows the running session's tab."
+    ],
+    "didnt": [
+     "Anything inside the session: needs a signed-in Claude session: the isolated Duo's scratch config has no login (F-323)"
+    ],
+    "human": [
+     "Do the steps in a signed-in session."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "chat-slash-below",
@@ -5419,7 +5749,20 @@
    "setup": [
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch. It shows the running session's tab."
+    ],
+    "didnt": [
+     "Anything inside the session: needs a signed-in Claude session: the isolated Duo's scratch config has no login (F-323)"
+    ],
+    "human": [
+     "Do the steps in a signed-in session."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "chat-219-send",
@@ -5438,7 +5781,20 @@
    "setup": [
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch. It shows the running session's tab."
+    ],
+    "didnt": [
+     "Anything inside the session: needs a signed-in Claude session: the isolated Duo's scratch config has no login (F-323)"
+    ],
+    "human": [
+     "Do the steps in a signed-in session."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "chat-named-bar",
@@ -6009,8 +6365,7 @@
     ],
     "didnt": [],
     "human": [],
-    "at": "2026-10-04",
-    "stale": true
+    "at": "2026-10-04"
    },
    "commit": "ed2b5aac273d9d710de0a3cb42cac2e00797ef5c",
    "workMac": "small",
@@ -6075,8 +6430,7 @@
     "human": [
      "Whether the fade reads clearly."
     ],
-    "at": "2026-10-06",
-    "stale": true
+    "at": "2026-10-06"
    },
    "commit": "6a1279668d7f0deee25c46da44ca25bede0be055",
    "workMac": "small",
@@ -6494,7 +6848,20 @@
    "setup": [
     "open checkout",
     "session-running checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch. It shows the running session's tab."
+    ],
+    "didnt": [
+     "Anything inside the session: needs a signed-in Claude session: the isolated Duo's scratch config has no login (F-323)"
+    ],
+    "human": [
+     "Do the steps in a signed-in session."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "cli-basics",
@@ -6605,7 +6972,21 @@
    "commit": "e6eab02a4e6fbfc1a2da8be5a2c615a6d19aa1d7",
    "alsoCommits": [],
    "workMac": "as-is",
-   "workMacWhy": "Read-only duo2"
+   "workMacWhy": "Read-only duo2",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "passed",
+    "did": [
+     "`duo2 doctor` printed `Claude Code mods: available` with the checks (mods supported, Duo's mod installed and validated, mods may run) and `Duo's mod loads in sessions: not passed: the sensor is off (DUO_SIGNAL)`."
+    ],
+    "didnt": [],
+    "human": [
+     "Try `DUO_SIGNAL=1` if you want the sensor."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "duo2-env-fallback",
@@ -6621,7 +7002,23 @@
    "commit": "92373a0834f7c1e3e682d37fcb4f2779bedd50da",
    "alsoCommits": [],
    "workMac": "as-is",
-   "workMacWhy": "Read-only duo2"
+   "workMacWhy": "Read-only duo2",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "A bad endpoint would fall back to the real Duo's endpoint file, so it was not run here."
+    ],
+    "human": [
+     "Run the steps in a Duo terminal."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "director-verbs",
@@ -6645,7 +7042,20 @@
    "workMacWhy": "Duo director is Duo-dev tooling; read-only here",
    "setup": [
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 director status --project checkout` named the project, no director yet, workers 0 of 3, the rules and this client's capabilities; `guide` printed the skill."
+    ],
+    "didnt": [
+     "`watch` showed no changes in 6 s (nothing was running)."
+    ],
+    "human": [
+     "With a real director running."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "director-start-background",
@@ -6665,7 +7075,23 @@
     "7c99c3c434b528de737c8881c42ec6fed86203bb"
    ],
    "workMac": "home",
-   "workMacWhy": "Starts a real background Claude session"
+   "workMacWhy": "Starts a real background Claude session",
+   "setup": [
+    "go all"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "Starting a real background Claude session."
+    ],
+    "human": [
+     "Only if you want one."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "director-adopt-asks",
@@ -6684,7 +7110,20 @@
    "workMacWhy": "A sheet and a session of yours",
    "setup": [
     "open checkout"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "The sheet and a session of yours."
+    ],
+    "human": [
+     "Answer the sheet."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "cons-migrate",
@@ -7186,19 +7625,32 @@
     "The setup makes `~/DuoAcceptance/first-run-home` (plain folders, no projects) and makes it Home.",
     "Go to All projects (Board, then List).",
     "Make a Project on `ideas`; ⌘Z.",
-    "When done: `duo2 home set ~/DuoAcceptance/workspace` to get the fixtures back."
+    "To go back: `duo2 undo`, repeated until it says nothing to undo (or File ▸ Choose Home Folder… and pick your own Home)."
    ],
    "expect": "Both Board and List show the folders as cards with Make a Project, and a + New project. Make a Project writes a starter PROJECT.md and opens it; Undo removes only a PROJECT.md Duo wrote. Not designed (Q-197): built from the 'This folder isn't a project yet' card and the map's tiles.",
    "ref": "DL-212, F-313, Q-197",
    "commit": "5b9ec93f68deea3a9a8fd881226f177e2730d105",
    "alsoCommits": [],
-   "workMac": "small",
-   "workMacWhy": "Needs a Home folder of plain folders (your own Home may already have projects)",
+   "workMac": "home",
+   "workMacWhy": "Changes your Home to a folder of plain folders; goes back with duo2 undo",
    "setup": [
     "fixture first-run-home",
     "home set ~/DuoAcceptance/first-run-home",
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch. It made `first-run-home` (five plain folders), set it as Home, and `duo2 undo` put Home back (`home: none`)."
+    ],
+    "didnt": [
+     "The look of the page."
+    ],
+    "human": [
+     "Look at Board and List; Make a Project; ⌘Z."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "new-project-any-folder",
@@ -7209,19 +7661,32 @@
     "With `first-run-home` as Home: + New project.",
     "Open the `In` menu; pick `recipes`; tick Make this folder the project; Create.",
     "Again, Choose Folder… for a deeper folder.",
-    "`duo2 project new --help` shows `--into` and `--use-folder`. Then `duo2 home set ~/DuoAcceptance/workspace`."
+    "`duo2 project new --help` shows `--into` and `--use-folder`. To go back: `duo2 undo`, repeated until it says nothing to undo (or File ▸ Choose Home Folder… and pick your own Home)."
    ],
    "expect": "`In` lists every plain folder in Home sorted by name (not hidden, build or Duo folders, existing projects, or Home's own); Choose Folder… reaches a deeper one. With the tick, `recipes` itself gets a PROJECT.md; without it, a new folder is made inside. Not designed (Q-197).",
    "ref": "DL-211, F-313, Q-197",
    "commit": "5b9ec93f68deea3a9a8fd881226f177e2730d105",
    "alsoCommits": [],
-   "workMac": "small",
-   "workMacWhy": "Needs a Home of plain folders",
+   "workMac": "home",
+   "workMacWhy": "Changes your Home to a folder of plain folders; goes back with duo2 undo",
    "setup": [
     "fixture first-run-home",
     "home set ~/DuoAcceptance/first-run-home",
     "go all"
-   ]
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from this branch."
+    ],
+    "didnt": [
+     "The sheet's `In` list."
+    ],
+    "human": [
+     "Open + New project."
+    ],
+    "at": "2026-10-17"
+   }
   },
   {
    "id": "ret-carry",
@@ -8106,7 +8571,7 @@
   "Claude running: closing and ending": "These end sessions, so they come last of the Claude-running groups. att-review starts its own session in refunds.",
   "The command line": "Any terminal; no particular screen.",
   "Other launches (quit Duo first)": "Each card quits Duo and launches it another way, then comes back with `open-duo.sh`.",
-  "Last: cards that change the fixtures": "These move, delete or purge fixture data, so nothing after them needs clean fixtures. Fixture reset 3 of 3 is the purge in `ret-archive`. The last two cards change Home to `~/DuoAcceptance/first-run-home` (a new user's folders); their steps end with `duo2 home set ~/DuoAcceptance/workspace` to come back. To start the walk over afterwards: `python3 scripts/acceptance/fixtures.py --reset`."
+  "Last: cards that change the fixtures": "These move, delete or purge fixture data, so nothing after them needs clean fixtures. Fixture reset 3 of 3 is the purge in `ret-archive`. The last two cards change Home to `~/DuoAcceptance/first-run-home` (a new user's folders); their steps end with `duo2 undo` (repeat until it says nothing to undo) to put Home back. To start the walk over afterwards: `python3 scripts/acceptance/fixtures.py --reset`."
  },
  "decisionsIntro": "Open questions from the builds since 0.2.4: the 19 still open from the last walk, and 12 new ones (Q-166 split in three) (pane focus, the right pane's overflow, the Explainer, the session split, how sure \"done\" is, chat Markdown, the first-run paths). Most are stand-ins already shipping; my recommendation is first. Answered since: Q-143 (DL-165: the board keeps ⌥⌘←/→ only while a card is selected), Q-168 (DL-182), Q-189 (doctor now). Answer here and Send to Claude, or leave them."
 }

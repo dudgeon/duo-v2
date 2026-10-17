@@ -1,0 +1,14 @@
+# Acceptance walk: everything since 0.2.4
+
+- **Status:** ready to publish (2026-10-17; the director publishes it, DL-166; Geoff may defer it)
+- **Page:** not published yet (verdicts will be in its `verdicts` collection, answers in `decisions`)
+- **Covers:** built from main at `503d983`. The 224 cards of [2026-10-09-since-0-2-4](../2026-10-09-since-0-2-4/walk.md) (no verdicts and no answered decisions, so all carried with their ids; 25 gained `alsoCommits` where later work changed the feature), plus 36 new cards for the merges and commits from `21276fa` to `503d983`: the editor (strikethrough, Source Mode, stable heights, per-document state, pictures, Office paste, document safety, the right pane's overflow), chat (model and effort chips, your Markdown in the composer and bubble, the / menu under the box, the 2.1.219 send fix, finer rows), the project pane's glyphs and sections, the quieter New task and its Explainer, done tasks, park sessions, web lifetimes and the browser-allow sheet, local-page rules, About notices, search typing, the mod canary, the duo2 control fallback, `duo2 director`, the install question for the director skill (DL-213) and the first-run project paths (DL-211, DL-212). Skipped as internals: the video pipeline, review and GPU-lock tooling, idle CPU and memory work, the director harness and evals. Carried but reverted: DL-185's no-privacy-prompts (undone by DL-190), recorded on the app-privacy card.
+- **Cards:** 260 (224 carried, 36 new). Work Mac: 110 as-is, 124 small, 26 home.
+- **Decisions:** 31: 19 carried (Q-135 to Q-164; Q-143 dropped, answered provisionally by DL-165) and 12 new (Q-165, Q-166 in three, Q-167, Q-177 in two, Q-183, Q-184, Q-194, Q-195, Q-197). Not on the page: Q-168 (DL-182), Q-189 (decided), Q-169 to Q-174 (GitHub issues: research, own decision page), Q-178 to Q-182 (voice input: nothing built), Q-190 to Q-193, Q-196 (director product).
+- **Claude's own runs (2026-10-17, isolated Duo from this branch):** every setup ran (237, the one timeout passed on a rerun). 183 carried cards keep their earlier results (those whose feature changed keep the older run and are noted). New cards: 6 passed (glyphs, project-pane sections, strikethrough, Source Mode, trash of a gone file, the mod canary), 30 partial: Claude can't sign in inside an isolated Duo, so session cards got their setup and nothing more (F-323, C-91).
+- **Fixtures:** `~/DuoAcceptance` from `scripts/acceptance/fixtures.py`; new recipes `first-run-home` and `add-missing` (plus `prototypes/remote-content.html`); open Duo with `scripts/acceptance/open-duo.sh`. The last two cards change Home; `duo2 undo` goes back (F-324).
+- **Records:** F-323, F-324, C-91. Q-199 to Q-202 unused.
+
+## Outcome
+
+Not yet read back.
