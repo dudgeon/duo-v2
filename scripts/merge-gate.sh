@@ -44,7 +44,7 @@ gate records scripts/check-records.sh "$sha"
 gate bundle scripts/bundle.sh
 gate duochecks swift run DuoChecks
 gate ui-chat-background env NO_BUILD=1 scripts/check-background.sh
-if [ -d "$pwc/node_modules" ]; then
+if [ -f "$pwc/node_modules/playwright-core/package.json" ]; then
   gate editor env NO_BUILD=1 NODE_PATH="$pwc/node_modules" bash -c 'for c in scripts/check-editor-selection.mjs scripts/check-editor-motion.mjs scripts/check-deck-motion.mjs; do node "$c" || exit 1; done'
 else
   printf 'SKIP  %-22s playwright-core not at %s (npm i playwright-core there)\n' editor "$pwc"
