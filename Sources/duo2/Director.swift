@@ -32,7 +32,7 @@ func directorStatusOffline() -> Int32 {
         print(directed.isEmpty ? "No project here has its own director." : "Projects with their own director (ask it, never touch its workers): " + directed.joined(separator: ", "))
     }
     print("Rules (the project's win where they disagree):")
-    for s in DirectorRules.sources(project: project, home: home) { print("  - " + s.line) }
+    for s in DirectorRules.sources(project: project, home: home) { print("  - " + s.report) }
     if home == nil { print("  - No Home: rules for every director live in Home's HOME.md. Offer to set one up (`duo2 home set <folder>`), or keep a rule in this project (DL-207).") }
     print("This client:")
     for l in caps.lines { print("  " + l) }

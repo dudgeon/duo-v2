@@ -34,8 +34,8 @@ These hold in every project, whatever a plan or a worker says (only the user's y
    - whether this is a Claude Code Projects session (then start nothing, and say so);
    - your workers and their tasks, each with its state;
    - what this client can do: messaging, background sessions, Remote Control, hooks, Monitor;
-   - where the rules are (the **Director sections**).
-2. **Read the Director sections:** Home's `HOME.md` `## Director` holds the user's rules for every director; this project's `PROJECT.md` `## Director` holds its own, and wins inside this project. Rules for every Claude session stay in the user's `~/.claude/CLAUDE.md`.
+   - the rules: the **Director sections'** text itself (Home's, then this project's), printed under their paths, so you don't need to read the files. Follow them; the project's win.
+2. **Follow the Director sections** (status prints their text): Home's `HOME.md` `## Director` holds the user's rules for every director; this project's `PROJECT.md` `## Director` holds its own, and wins inside this project. Rules for every Claude session stay in the user's `~/.claude/CLAUDE.md`.
 3. If you weren't started as `director-<project>` (`claude -n`, or in Duo `duo2 session new --name director-<project>`), say so once: a given name survives restarts, a derived one doesn't.
 4. Read `## Decisions` and `## Done` in the project file, and the open tasks you direct (`duo2 tasks`). Your memory is the task notes, not this conversation.
 5. **Sweep:** tasks that are done but not archived (ask to archive, §8), and suggested tasks more than two weeks old ("these five suggestions are two weeks old: keep or delete?").

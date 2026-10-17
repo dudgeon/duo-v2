@@ -346,6 +346,13 @@ public enum DirectorRules {
                 : " (no ## \(section) section yet)"
             return "\(label): \(path) (## \(section))\(state)"
         }
+
+        /// The line plus the section's own text, indented under it: a director reads its rules
+        /// from `status` without a separate read (Haiku skipped that read in half the dogfood runs).
+        public var report: String {
+            guard exists, let text = DirectorRules.text(self), !text.isEmpty else { return line }
+            return line + "\n" + text.split(separator: "\n", omittingEmptySubsequences: false).map { "      " + $0 }.joined(separator: "\n")
+        }
     }
 
     public static let section = "Director"

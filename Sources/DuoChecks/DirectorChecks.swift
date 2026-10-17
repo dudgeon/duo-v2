@@ -74,6 +74,9 @@ import Foundation
               "in Home itself, one source; with no Home, only the project's")
         let bare = root.appending(path: "bare")
         try FileManager.default.createDirectory(at: bare, withIntermediateDirectories: true)
+        let withText = DirectorRules.sources(project: proj, home: root)[1].report
+        check(withText.contains("(## Director)") && withText.contains("\n      max workers: 2\n      ask before publishing"), "status prints a Director section's text under its path, indented")
+        check(DirectorRules.sources(project: proj, home: root)[0].report == DirectorRules.sources(project: proj, home: root)[0].line, "a section that isn't there prints just its line")
         let none = DirectorRules.sources(project: bare, home: root)
         check(none[1].fileExists == false && none[1].line.contains("no PROJECT.md yet") && none[0].fileExists && !none[0].exists && none[0].line.contains("no ## Director section yet"),
               "status tells no file (offer Make a Project) from a file with no Director section")
@@ -396,8 +399,8 @@ import Foundation
     // status before anyone directs.
     var r = run("director status", ["--json"], as: D, name: "director-dirproj")
     let j0 = (try? JSONSerialization.jsonObject(with: Data(r.output.utf8))) as? [String: Any]
-    check(r.ok && j0?["role"] as? String == "none" && j0?["cap"] as? Int == 2 && ((j0?["rules"] as? [[String: Any]])?.last?["path"] as? String)?.hasSuffix("/p/PROJECT.md") == true,
-          "status: nobody directs yet; the project's cap is 2; its Director section is listed (\(r.output.prefix(300)))")
+    check(r.ok && (((j0?["rules"] as? [[String: Any]])?.last?["text"] as? String) ?? "").contains("max workers: 2") && j0?["role"] as? String == "none" && j0?["cap"] as? Int == 2 && ((j0?["rules"] as? [[String: Any]])?.last?["path"] as? String)?.hasSuffix("/p/PROJECT.md") == true,
+          "status: nobody directs yet; the project's cap is 2; its Director section is listed, with its text (\(r.output.prefix(300)))")
 
     // A folder Duo doesn't know: refused, never a guess from what's on screen.
     var stray: ControlResponse?
