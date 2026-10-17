@@ -213,7 +213,9 @@ public final class ChatSession {
     /// Claude's external editor is open for the composer (F-104): a blank screen is expected.
     public var composing = false { didSet { if oldValue, !composing, !sending { evaluateFallback() } } }
     /// The request Claude is waiting on, from PermissionRequest; cleared by the tool running or Stop.
-    @ObservationIgnored public var pendingRequest: ChatRequest? {
+    /// Observed: the card (`cardUp`) waits on it, and the question usually draws before its hook is
+    /// read, on a screen that then never repaints (F-328).
+    public var pendingRequest: ChatRequest? {
         didSet { if ChatSignalTrace.on, let r = pendingRequest, r.tool != oldValue?.tool || r.at != oldValue?.at { ChatSignalTrace.note("pending", r.tool) } }
     }
     /// duo-signal's snapshot (ENH-70 spike, `DUO_SIGNAL=1`): busy ahead of the screen while it's fresh.
