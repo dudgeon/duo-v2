@@ -3806,3 +3806,17 @@ Geoff (2026-10-15, through the director): "consider that you may be overcomplica
 - **Workers get their note by absolute path** (item 6, 7c99c3c), and report Progress when they can't write it. `--request --stdin` carries long or quoted words.
 - **`duo2 session new --name`** passes `-n` (item 7, da28617), so a director can start in Duo under its fixed name.
 - Checks: `DUO_CHECKS=director` 137, `check-director.sh` 154.
+
+## F-320 · `scripts/merge-gate.sh`: the merge checks as one command, and what the first runs showed (DL-215)
+
+- **What it runs** (`GPU_LOCK=<lock> scripts/merge-gate.sh <sha|branch>`): it checks the commit out detached in the check work tree (`.claude/worktrees/director-check`, or `$MERGE_GATE_TREE`) and runs each gate under the main checkout's `gpu-lock.sh --shared`, one line per gate, exit 1 on any failure:
+  - `records` (`check-records.sh`), `bundle`, `duochecks` (`swift run DuoChecks`);
+  - `ui-chat-background` (`check-background.sh`: check-ui, check-chat and check-composer-focus together, with the front-app check);
+  - `editor` (selection, motion and deck motion; SKIP unless `$PWC`, default `/tmp/pwc`, has a real playwright-core);
+  - `stand-in-claude` (`check-context.sh`).
+- **Still by hand:** the baseline comparison of the six captures (`samepng.py` against main without the merge), `check-launch-services.sh`, and the timing checks (`check-chat-perf`, `check-scale`, which are exclusive).
+- **Run time on the branch tip, with other sessions queued on the lock:** records 0 to 63 s (the second figure includes lock waiting), bundle 4 to 62 s, DuoChecks about 100 to 120 s, `ui-chat-background` about 1050 s (17 minutes, most of it check-ui and check-chat's many boards), stand-in 2 to 18 s.
+- **A long run on a Mac someone is using trips the front-app check.** Both proof runs had every check pass (0 failed, no test Duo became the front app, none ran in the Dock, no capture found Duo active) and failed only on "the front app changed" because the person at the Mac switched apps during the 17 minutes. Judge that line against who was using the Mac; re-run when nobody is, or run `ui-chat-background` on a locked screen (where the check says the front-app part proves nothing).
+- **bash 3.2 (macOS /bin/bash) mis-parses an apostrophe inside `${VAR:?message}`.** The script said "the machine's lock folder" there and failed with "unexpected EOF"; keep apostrophes out of such messages.
+- **`/tmp/pwc` here is a broken install** (`node_modules/playwright-core` has no `package.json`), so the editor gate skips. `npm i playwright-core` in `/tmp/pwc` fixes it.
+- The product film (`video/src/scenes/director/Skill.tsx`) still shows the retired skill's path as an on-screen graphic. It is film content, left as it is.
