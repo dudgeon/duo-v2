@@ -47,26 +47,44 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
     func no(_ why: String) -> Int32 { FileHandle.standardError.write(Data("duo2: \(why)\n".utf8)); return 1 }
     let inv = Invocation(rest)
     let env = ProcessInfo.processInfo.environment
-    guard inv.has("background"), inv.flags["title"] == nil, let t = inv[0] else {
-        return no("Duo isn't running. With Duo closed only `duo2 director start <task> --background` works, for a task note you've written; start Duo for the rest.")
+    guard inv.has("background"), inv.flags["title"] != nil || inv[0] != nil else {
+        return no("Duo isn't running. With Duo closed only `duo2 director start <task> --background` (or `--title … --request … --background`, which writes the note) works; start Duo for the rest.")
     }
     guard let me = env["CLAUDE_CODE_SESSION_ID"] else { return no("not run from a Claude session (no session id), so there's no director to record") }
     let here = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     let caps = ClientCaps.probe(env: env, cwd: here.path)
     let (project, _) = DirectorPlace.resolve(from: here)
-    let path = t.hasPrefix("tasks/") ? (t.hasSuffix(".md") ? t : t + ".md") : "tasks/" + (t.hasSuffix(".md") ? t : t + ".md")
-    guard DirectorRegistry.isTaskPath(path), let text = try? String(contentsOf: project.appending(path: path), encoding: .utf8) else {
-        return no("no task note \(path) in \(project.path): write it first (## Request, done_when:, directed_by:, ## Progress)")
+    var path = ""
+    var text = ""
+    var newNote: String?
+    if inv.flags["title"] == nil {
+        let t = inv[0]!
+        path = t.hasPrefix("tasks/") ? (t.hasSuffix(".md") ? t : t + ".md") : "tasks/" + (t.hasSuffix(".md") ? t : t + ".md")
+        guard DirectorRegistry.isTaskPath(path), let read = try? String(contentsOf: project.appending(path: path), encoding: .utf8) else {
+            return no("no task note \(path) in \(project.path): write it first (## Request, done_when:, directed_by:, ## Progress), or give --title and --request and Duo's duo2 writes it")
+        }
+        text = read
     }
     var reg = DirectorRegistry.load(project: project)
     let role = reg.role(sessionId: me)
     if case .replaced(let by) = role { return no("You were replaced as this project's director\(by.map { " by \($0.name)" } ?? ""). Stand down: say so to the user and stop directing.") }
     if case .other(let c) = role, !inv.has("take-over") { return no("this project is directed by \(c.name). Ask the user; with their go-ahead, --take-over replaces it.") }
     let name = (role == .current ? reg.current?.name : nil) ?? (caps.name?.hasPrefix("director-") == true ? caps.name! : Director.name(project: project.lastPathComponent))
-    guard let by = Director.frontmatter("directed_by", in: text) else {
-        return no("\(path) has no directed_by:, so it's the user's (DL-200). With Duo running, --adopt asks them.")
+    if let title = inv.flags["title"] {
+        // A new task: the note is the director's own, written here as it would by hand.
+        guard let request = inv.flags["request"], !request.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return no("a new task needs --request with the user's words, exactly (for long or quoted words: --request --stdin)")
+        }
+        var slug = Director.slugFor(title), n = 2
+        while FileManager.default.fileExists(atPath: project.appending(path: "tasks/\(slug).md").path) { slug = Director.slugFor(title) + "-\(n)"; n += 1 }
+        path = "tasks/\(slug).md"
+        newNote = Director.newNote(title: title, request: request, doneWhen: inv.flags["done-when"], director: name, status: "in-progress")
+    } else {
+        guard let by = Director.frontmatter("directed_by", in: text) else {
+            return no("\(path) has no directed_by:, so it's the user's (DL-200). With Duo running, --adopt asks them.")
+        }
+        guard by == name else { return no("\(path) is directed by \(by), not you: never task another director's worker (DL-200).") }
     }
-    guard by == name else { return no("\(path) is directed by \(by), not you: never task another director's worker (DL-200).") }
     // The cap (DL-201): running workers and pending ones on unfinished tasks.
     let brief = (try? String(contentsOf: project.appending(path: "PROJECT.md"), encoding: .utf8)) ?? ""
     let cap = Director.cap(directorSection: Director.section("Director", in: brief))
@@ -80,12 +98,18 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
     }
     guard busy.count < cap else { return no("You have \(busy.count) of \(cap) workers running (\(busy.map(\.task).joined(separator: ", "))). Mark \(path) status: suggested and start it when one finishes.") }
     let now = iso.string(from: Date())
+    if let newNote {
+        do {
+            try FileManager.default.createDirectory(at: project.appending(path: "tasks"), withIntermediateDirectories: true)
+            try Data(newNote.utf8).write(to: project.appending(path: path), options: .withoutOverwriting)
+        } catch { return no("couldn't write \(path): \(error.localizedDescription)") }
+    }
     if role != .current { reg.adopt(name: name, sessionId: me, at: now) }
     let (worker, cmd) = Director.backgroundStart(folder: project, task: path, director: name)
     reg.setWorker(task: path, session: "", at: now, adopted: false, name: worker)
     do { try reg.save(project: project) } catch { return no("couldn't write \(DirectorRegistry.file(project: project).path): \(error.localizedDescription)") }
     DirectorLog.append(DirectorEvent(at: now, director: name, event: "start", task: path, detail: "background, Duo closed, as \(worker)"), project: project)
-    print("Duo isn't running: add the Progress line to \(path) yourself (\"Worker \(worker) to start in the background\"). Run this; Duo links the worker by its name, \(worker), when it next runs:\n  \(cmd)")
+    print(newNote != nil ? "Duo isn't running: wrote \(path). Add a Progress line for the worker yourself (\"Worker \(worker) to start in the background\"). Run this; Duo links the worker by its name, \(worker), when it next runs:\n  \(cmd)" : "Duo isn't running: add the Progress line to \(path) yourself (\"Worker \(worker) to start in the background\"). Run this; Duo links the worker by its name, \(worker), when it next runs:\n  \(cmd)")
     return 0
 }
 

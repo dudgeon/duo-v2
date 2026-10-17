@@ -38,6 +38,19 @@ public enum Director {
 
     public static func shellQuote(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
 
+    /// A new task note for a request, as the director would write it by hand: the request exactly,
+    /// `done_when:`, `directed_by:` and a first Progress line. For when Duo isn't running to write
+    /// it with the project's task template.
+    public static func newNote(title: String, request: String, doneWhen: String?, director: String, status: String, now: Date = Date()) -> String {
+        func q(_ s: String) -> String { "\"" + s.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\"" }
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd HH:mm"; f.locale = Locale(identifier: "en_US_POSIX")
+        let day = DateFormatter(); day.dateFormat = "yyyy-MM-dd"; day.locale = Locale(identifier: "en_US_POSIX")
+        var fm = "---\ntype: task\ntitle: \(q(title))\nstatus: \(status)\ndirected_by: \(q(director))\ncreated: \(day.string(from: now))\n"
+        if let d = doneWhen?.trimmingCharacters(in: .whitespacesAndNewlines), !d.isEmpty { fm += "done_when: \(q(d))\n" }
+        fm += "---\n"
+        return fm + "# \(title)\n\n## Request\n\n" + request.trimmingCharacters(in: .newlines) + "\n\n## Progress\n\n- \(f.string(from: now)) Filed by \(director) (Duo closed).\n"
+    }
+
     /// A scalar from a note's frontmatter (quotes dropped), for code without Duo's note parser.
     public static func frontmatter(_ key: String, in text: String) -> String? {
         guard text.hasPrefix("---\n"), let end = text.range(of: "\n---", range: text.index(text.startIndex, offsetBy: 4)..<text.endIndex) else { return nil }
@@ -79,6 +92,11 @@ public enum Director {
         let rest = lines[(start + 1)...]
         let end = rest.firstIndex(where: { $0.hasPrefix("# ") || $0.hasPrefix("## ") }) ?? lines.endIndex
         return lines[(start + 1)..<end].joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// A task note's file stem for a title (the same rule as `TaskNotes.slug`, for code without DuoKit).
+    public static func slugFor(_ title: String) -> String {
+        let out = slug(title); return out == "project" && !title.lowercased().contains("project") ? "task" : String(out.prefix(60))
     }
 
     static func slug(_ s: String) -> String {
