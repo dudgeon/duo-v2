@@ -14,7 +14,7 @@ struct ProjectSidebarPane: View {
         let items = SidebarItem.items(sections, tasksShown: model.terminalsMode == .live || model.videoTasks,
                                       folded: { model.timeGroupFolded(project: name, $0) })
         let movers = model.sidebarMovers(sections)
-        VStack(alignment: .leading, spacing: 0) {
+        SidebarSplit {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if let project {
@@ -84,6 +84,41 @@ struct ProjectSidebarPane: View {
         }
         .foregroundStyle(DuoColor.text)
         .background(DuoColor.pane)
+    }
+}
+
+/// How the sidebar shares its height between the sessions and the files (DL-219; Geoff,
+/// 2026-10-17): each section's natural height is its content. If both fit, the files keep theirs
+/// and the sessions take the rest; if one needs no more than half, it takes only that and the
+/// other gets the rest; if both need more than half, each gets half and scrolls.
+public enum SidebarHeights {
+    public static func split(total: CGFloat, sessions: CGFloat, files: CGFloat) -> (sessions: CGFloat, files: CGFloat) {
+        let half = total / 2
+        if sessions + files <= total { return (total - files, files) }
+        if sessions <= half { return (sessions, total - sessions) }
+        if files <= half { return (total - files, files) }
+        return (half, total - half)
+    }
+}
+
+/// Two children, the sessions above the files, sized by `SidebarHeights`.
+struct SidebarSplit: Layout {
+    private func natural(_ subviews: Subviews, _ width: CGFloat?) -> (CGFloat, CGFloat) {
+        let p = ProposedViewSize(width: width, height: nil)
+        return (subviews[0].sizeThatFits(p).height, subviews[1].sizeThatFits(p).height)
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let (s, f) = natural(subviews, proposal.width)
+        return CGSize(width: proposal.width ?? 0, height: proposal.height ?? s + f)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard subviews.count == 2 else { return }
+        let (sn, fn) = natural(subviews, bounds.width)
+        let h = SidebarHeights.split(total: bounds.height, sessions: sn, files: fn)
+        subviews[0].place(at: bounds.origin, anchor: .topLeading, proposal: ProposedViewSize(width: bounds.width, height: h.sessions))
+        subviews[1].place(at: CGPoint(x: bounds.minX, y: bounds.minY + h.sessions), anchor: .topLeading, proposal: ProposedViewSize(width: bounds.width, height: h.files))
     }
 }
 
@@ -328,6 +363,8 @@ struct FileTreePane: View {
         let tree = FileNode.tree(from: files)
         VStack(alignment: .leading, spacing: 0) {
             DuoColor.controlEdge.frame(height: DuoMetric.borderFilesDivider)
+            ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
             let repo = model.currentRepo
             if let n = model.repoNotice {
                 RepoNoticeView(notice: n).padding(.horizontal, DuoSpace.panePadding).padding(.top, 8)
@@ -360,8 +397,10 @@ struct FileTreePane: View {
             } else {
                 ForEach(tree) { node in FileRow(node: node, depth: 0) }
             }
+            }
+            .padding(.bottom, 12)
+            }
         }
-        .padding(.bottom, 12)
         .background { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Files").accessibilityIdentifier("video.files.tree") } }   // anchors (scene 9)
         .contentShape(Rectangle())
         .modifier(LiveContextMenu { NewItemsMenu(near: nil) })
