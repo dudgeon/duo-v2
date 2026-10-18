@@ -142,6 +142,30 @@ extension AppModel {
                 rightTab = tab; if openDocuments.contains(tab) { selectedFile = tab }
             } else { return done(.fail("no tab '\(tab)'. Tabs: \((["Project"] + openDocuments).joined(separator: ", "))")) }
             done(.ok("Showing \(tab)."))
+        case .viewTabMove:
+            guard let to = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
+            guard currentProject != nil, !altitude.isAllProjects else { return done(.fail("no project is open")) }
+            let named = inv[1].map { n in currentProject.flatMap { p in tabSessions(inProject: p.name).first { $0.name == n }?.tabKey } ?? n }
+            var pane: DuoPane = activePane == .right ? .right : .middle
+            if let p = inv.flags["pane"] {
+                guard let pp = DuoPane(rawValue: p), pp != .left else { return done(.fail("--pane is middle or right")) }
+                pane = pp
+            } else if let named, let p = paneOfMovableTab(named) { pane = p }
+            let keys = movableTabKeys(in: pane)
+            guard let key = named ?? currentTabKey(in: pane), keys.contains(key) else {
+                return done(.fail("no tab '\(named ?? currentTabKey(in: pane) ?? "")' that moves in the \(pane.rawValue) pane. Tabs that move: \(keys.joined(separator: ", "))"))
+            }
+            let moved: Bool
+            switch to {
+            case "left": moved = moveTab(key, in: pane, by: -1)
+            case "right": moved = moveTab(key, in: pane, by: 1)
+            default:
+                guard let n = Int(to), n >= 1, n <= keys.count else { return done(.fail("place is 1 to \(keys.count), left or right")) }
+                moved = keys.firstIndex(of: key) == n - 1 || moveTab(key, in: pane, to: n - 1)
+            }
+            guard moved else { return done(.fail("'\(key)' is already the \(to == "left" ? "first" : "last") tab that moves in the \(pane.rawValue) pane.")) }
+            let order = movableTabKeys(in: pane)
+            done(.ok("Moved \(key) to place \((order.firstIndex(of: key) ?? 0) + 1) of \(order.count) in the \(pane.rawValue) pane.", ["pane": pane.rawValue, "tab": key, "order": order]))
         case .viewGroup:
             guard let g = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             let key = expandedGroups.first { $0.hasSuffix(g) } ?? g

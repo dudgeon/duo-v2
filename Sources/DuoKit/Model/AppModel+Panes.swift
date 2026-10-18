@@ -113,7 +113,7 @@ extension AppModel {
 
     /// The console strip's tab keys, in its order: sessions, then shells.
     public func consoleTabKeys(inProject project: String) -> [String] {
-        tabSessions(inProject: project).map(\.tabKey) + shells(inProject: project)
+        TabOrder.apply(consoleTabOrder[project] ?? [], to: tabSessions(inProject: project).map(\.tabKey) + shells(inProject: project))
     }
 
     /// The right pane's tabs, in its order: Project, the selected group, documents, a read-only session.

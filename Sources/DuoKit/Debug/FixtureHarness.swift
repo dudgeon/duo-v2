@@ -233,6 +233,20 @@ public enum FixtureHarness {
                 model.hoveredTabClose = on == "close" || on == "press" ? key : nil
                 model.pressedTabClose = on == "press" ? key : nil
             }
+        case "move-tab":   // move-tab:<tab key or document path>=<place>: a tab put at a place along its strip, 1-based, as a drag drops it (DL-220)
+            if parts.count > 1 {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                if kv.count == 2, let n = Int(kv[1]), let pane = model.paneOfMovableTab(kv[0]) { model.moveTab(kv[0], in: pane, to: n - 1) }
+            }
+        case "drag-tab":   // drag-tab:<tab key or document path>[=<dx>x<dy>]: the tab held, lifted that far from its place (tabs-drag, console-drag); drag-tab:off lets go
+            if parts.count > 1 {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                let d = (kv.count > 1 ? kv[1] : "0x0").split(separator: "x").compactMap { Double($0) }
+                if kv[0] == "off" { model.tabDrag = nil } else if let pane = model.paneOfMovableTab(kv[0]), let f = model.tabFrames[kv[0]] {
+                    let lead = pane == .right ? DuoMetric.tabCloseSize + DuoMetric.tabCloseTitleGap : 0   // a document tab's × slot is before its name
+                    model.tabDrag = TabDrag(key: kv[0], pane: pane, location: CGPoint(x: f.midX + lead / 2 + (d.first ?? 0), y: f.midY + (d.count > 1 ? d[1] : 0)), grab: .zero)
+                }
+            }
         case "file": if parts.count > 1 { model.selectedFile = parts[1]; model.rightTab = parts[1] }
         case "close-doc": if parts.count > 1 { model.closeDocument(parts[1]) }   // close-doc:<path>: a document tab closes as its × does (ENH-144)
         case "doc": if parts.count > 1 { model.openDocument(parts[1]) }   // doc:<path>: a document tab, as the file tree opens it

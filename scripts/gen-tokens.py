@@ -109,7 +109,7 @@ for k, v in s["paneMinimumProposed"].items():
     w(f"    public static let paneMin{k[0].upper() + k[1:]}: CGFloat = {num(v)}")
 w(f"    public static let peekPopoverWidth: CGFloat = {num(s['peekPopoverWidth'])}")
 # Search (search-handoff tokens-additions): the modal, its rows, preview and action menu.
-for group, prefix in [("searchModal", "searchModal"), ("searchRow", "searchRow"), ("searchPreview", "searchPreview"), ("actionMenu", "actionMenu"), ("sheet", "sheet"), ("notice", "notice"), ("settings", "settings"), ("map", "map"), ("sessionList", "sessionList"), ("rowAction", "rowAction"), ("tabClose", "tabClose"), ("keepRunningPin", "keepRunningPin"), ("tabHover", "tabHover"), ("repoLine", "repoLine"), ("taskBoard", "taskBoard"), ("explainer", "explainer")]:
+for group, prefix in [("searchModal", "searchModal"), ("searchRow", "searchRow"), ("searchPreview", "searchPreview"), ("actionMenu", "actionMenu"), ("sheet", "sheet"), ("notice", "notice"), ("settings", "settings"), ("map", "map"), ("sessionList", "sessionList"), ("rowAction", "rowAction"), ("tabClose", "tabClose"), ("keepRunningPin", "keepRunningPin"), ("tabHover", "tabHover"), ("tabDrag", "tabDrag"), ("repoLine", "repoLine"), ("taskBoard", "taskBoard"), ("explainer", "explainer")]:
     for k, v in s[group].items():
         name = prefix + k[0].upper() + k[1:]
         if isinstance(v, (int, float)):
@@ -228,6 +228,12 @@ w(f"    /// SwiftUI's radius is half the CSS blur.")
 w(f"    public static let popoverRadius: CGFloat = {num(sh['blur'] / 2)}")
 w(f"    public static let popoverX: CGFloat = {num(sh['x'])}")
 w(f"    public static let popoverY: CGFloat = {num(sh['y'])}")
+cl = t["shadow"]["consoleLift"]   # DL-220: a console tab lifted by a drag
+m = re.fullmatch(r"rgba\((\d+),\s*(\d+),\s*(\d+),\s*([0-9.]+)\)", cl["color"].replace(" ", ""))
+w(f"    /// A console tab lifted by a drag (DL-220): the popover's shape on the dark console.")
+w(f"    public static let consoleLiftColor = Color(.sRGB, red: {int(m.group(1))}/255, green: {int(m.group(2))}/255, blue: {int(m.group(3))}/255, opacity: {float(m.group(4))!r})")
+w(f"    public static let consoleLiftRadius: CGFloat = {num(cl['blur'] / 2)}")
+w(f"    public static let consoleLiftY: CGFloat = {num(cl['y'])}")
 w(f"    /// Dashed borders (New project tile, drop targets): on, off.")
 w(f"    public static let dashPattern: [CGFloat] = [{', '.join(num(x) for x in t['border']['dash'])}]")
 w("}")

@@ -32,9 +32,12 @@ public struct RestoreState: Codable, Equatable, Sendable {
         public var rightTab: String?
         /// Browser tabs among `documents` (`web:…`), by the address each had.
         public var webTabs: [String: String]? = nil
+        /// The console's order where the user moved a tab (DL-220), by session id; absent otherwise.
+        public var tabOrder: [String]? = nil
 
-        public init(folder: String, sessions: [String], consoleTab: String?, documents: [String], rightTab: String?, webTabs: [String: String]? = nil) {
+        public init(folder: String, sessions: [String], consoleTab: String?, documents: [String], rightTab: String?, webTabs: [String: String]? = nil, tabOrder: [String]? = nil) {
             self.folder = folder; self.sessions = sessions; self.consoleTab = consoleTab; self.documents = documents; self.rightTab = rightTab; self.webTabs = webTabs
+            self.tabOrder = tabOrder
         }
     }
 
@@ -75,14 +78,16 @@ extension AppModel {
             .union(lastConsoleTab.keys).union(lastRightTab.keys)
         for name in names.sorted() {
             guard let folder = liveFolders[name]?.path else { continue }
-            let tabs = tabSessions(inProject: name).compactMap(\.sessionId)
+            let ids = Set(tabSessions(inProject: name).compactMap(\.sessionId))
+            let tabs = consoleTabKeys(inProject: name).filter(ids.contains)   // in tab order, as moved (DL-220)
             let open = byProject[name] ?? []
             let docs = openDocumentsByProject[name] ?? []
             let web = Dictionary(docs.compactMap { d in webTabs[d]?.url.map { (d, $0.absoluteString) } }, uniquingKeysWith: { a, _ in a })
             s.projects.append(.init(folder: folder, sessions: tabs.filter(open.contains) + open.filter { !tabs.contains($0) },
                                     consoleTab: name == current ? consoleTab : lastConsoleTab[name],
                                     documents: docs.filter { !$0.hasPrefix("web:") || web[$0] != nil },
-                                    rightTab: name == current ? rightTab : lastRightTab[name], webTabs: web.isEmpty ? nil : web))
+                                    rightTab: name == current ? rightTab : lastRightTab[name], webTabs: web.isEmpty ? nil : web,
+                                    tabOrder: consoleTabOrder[name].map { $0.filter(ids.contains) }.flatMap { $0.isEmpty ? nil : $0 }))
         }
         return s
     }
@@ -123,6 +128,7 @@ extension AppModel {
                 tab.defer_(u)   // loads when the tab is first shown (C-83)
             }
             if !docs.isEmpty { openDocumentsByProject[project] = docs }
+            if let order = p.tabOrder, !order.isEmpty { consoleTabOrder[project] = order }
             // The tabs it showed, for coming back to it (DL-107).
             if let t = p.consoleTab { lastConsoleTab[project] = t }
             if let r = p.rightTab, r == "Project" || docs.contains(r) { lastRightTab[project] = r }

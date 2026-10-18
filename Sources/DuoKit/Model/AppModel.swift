@@ -140,6 +140,13 @@ public final class AppModel {
     public var selectedFile: String?            // path relative to the project
     /// Open document tabs by project (DL-60): switching to Project no longer closes them.
     public var openDocumentsByProject: [String: [String]] = [:]
+    /// The console's tab order by project, where the user moved a tab (ENH-042, DL-220): tab keys,
+    /// applied over sessions-then-shells by `TabOrder.apply`. Empty until a tab is moved.
+    public var consoleTabOrder: [String: [String]] = [:]
+    /// A tab being dragged along its strip (ENH-042): the strips draw it lifted under the pointer.
+    public var tabDrag: TabDrag?
+    /// Each tab's frame on its strip, for where a drag lands; written as the strips lay out.
+    @ObservationIgnored var tabFrames: [String: CGRect] = [:]
     /// The file tree (DL-105): hidden files on or off, and the folders open in each project's tree.
     public var showHiddenFiles = DuoState.load().showHiddenFiles
     /// Documents shown in Source mode (DL-167), by standardized path; remembered.
