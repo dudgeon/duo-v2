@@ -749,7 +749,7 @@ public enum FixtureHarness {
             func tick() {
                 let now = Date(), composer = composerDrawn()
                 if asked == nil, [.question, .questionReview].contains(c.screen.kind) { asked = now }
-                if asked != nil, drawn == nil, !composer { drawn = now }
+                if asked != nil, drawn == nil, !composer, c.showsChat { drawn = now }   // chat on screen, its composer gone: the card
                 FileHandle.standardError.write(Data("chat-watch: t=\(ms(now)) screen=\(c.screen.kind.rawValue) pending=\(c.pendingRequest?.tool ?? "-") card=\(c.cardUp) composerDrawn=\(composer) showing=\(c.showsChat ? "chat" : "terminal")\n".utf8))
                 if let png, let a = asked, !captured, now.timeIntervalSince(a) >= 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
                     captured = true
