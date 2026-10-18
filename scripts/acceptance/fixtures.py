@@ -6,7 +6,7 @@
     scripts/acceptance/fixtures.py --clean    move everything this script made to the Trash
     scripts/acceptance/fixtures.py --purge    simulate Claude's cleanup of the purge-test session (after Duo has run once)
     scripts/acceptance/fixtures.py --add      add fixtures introduced since the workspace was built (never overwrites)
-    scripts/acceptance/fixtures.py --recipe reset-checkout | purge   named setup steps for the walk page
+    scripts/acceptance/fixtures.py --recipe reset-checkout | purge | first-run-home | add-missing   named setup steps for the walk page
 
 Builds a workspace of projects and documents in the states the walk needs, plants synthetic
 Claude sessions (marked "[fixture]") in ~/.claude/projects for its folders, and records what it
@@ -241,6 +241,17 @@ input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; }
 .primary { background: #2f6fde; color: #fff; }
 .secondary { background: #e8e8e8; color: #222; }
 """,
+        co / "prototypes" / "remote-content.html": """<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Remote content</title></head>
+<body>
+<h1>Remote content (DL-175)</h1>
+<p>A local page loads nothing remote. The picture below points at example.com and should not load.</p>
+<img src="https://example.com/not-loaded.png" alt="blocked remote picture" width="120" height="60" style="border:1px dashed #999">
+<p>This text always shows.</p>
+</body>
+</html>
+""",
         co / "prototypes" / "card.svg": """<svg xmlns="http://www.w3.org/2000/svg" width="120" height="76" viewBox="0 0 120 76">
 <rect width="120" height="76" rx="8" fill="#2f6fde"/><rect x="12" y="20" width="22" height="16" rx="3" fill="#f4c542"/>
 <text x="12" y="62" font-family="Menlo" font-size="10" fill="#fff">1234 5678 9012 3456</text></svg>
@@ -255,6 +266,8 @@ input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; }
 RECIPES = {
     "reset-checkout": "checkout's documents and HTML prototype back to their starting text",
     "purge": "simulate Claude's cleanup of the purge-test session",
+    "add-missing": "fixtures added since the workspace was built (a missing prototype page), never overwriting",
+    "first-run-home": "a Home of plain folders with no projects (a new user's first run), for the first-run cards",
 }
 
 
@@ -264,7 +277,7 @@ def recipe(name):
     if name == "reset-checkout":
         # Anything a test added (new files, folders, duplicates, renames) goes to the Trash.
         keep = {"docs": {"prd.md", "research.md", "windows-notes.md", "mixed-endings.md", "legacy-export.txt", "long-backlog.md", "vendor-brief.docx", "garden-review.pptx", "exports.zip"},
-                "prototypes": {"checkout.html", "checkout.css", "card.svg"}, "templates": {"meeting-notes.md"}}
+                "prototypes": {"checkout.html", "checkout.css", "card.svg", "remote-content.html"}, "templates": {"meeting-notes.md"}}
         for folder, names in keep.items():
             for f in (co / folder).iterdir() if (co / folder).exists() else []:
                 if f.name not in names and not f.name.startswith("."):
@@ -288,6 +301,19 @@ def recipe(name):
             reg.write_text(json.dumps(data, indent=2) + "\n")
     elif name == "purge":
         purge()
+    elif name == "add-missing":
+        add()
+    elif name == "first-run-home":
+        # A new user's Home: plain folders, no PROJECT.md anywhere (DL-211, DL-212). Never overwrites.
+        fr = ROOT / "first-run-home"
+        for folder, note in {"ideas": "Things to try someday.", "reading-list": "Articles to read.", "trips": "Packing lists.",
+                             "taxes-2025": "Receipts.", "recipes": "Pancakes."}.items():
+            d = fr / folder
+            if not (d / "notes.md").exists():
+                write(d / "notes.md", "# %s\n\n%s\n" % (folder, note))
+            pm = d / "PROJECT.md"
+            if pm.exists():
+                trash(pm)   # a project a test made goes back to a plain folder
     else:
         sys.exit("unknown recipe %r; known: %s" % (name, ", ".join(RECIPES)))
 
