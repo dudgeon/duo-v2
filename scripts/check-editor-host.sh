@@ -8,7 +8,7 @@
 set -u
 cd "${0:A:h}/.."
 out=${1:-build/editor-host}; mkdir -p "$out"; out=${out:A}
-root=/private/tmp/pcf-host-1
+root=${DUO_HOST_ROOT:-/private/tmp/pcf-host-1}   # another root when a stray Duo left this one read-only (F-325)
 fails=0 total=0
 
 # fresh <name>: a workspace with A.md and B.md in the garden project; prints nothing, sets $ws and $A, $B
@@ -112,9 +112,11 @@ expect "held: back in A, the undo history is there" $out/held.log lacks '"depth"
 expect "held: Undo after coming back takes the typing out" $out/held.log has "editor-js: # A"
 
 # 10. Scroll position across A to B to A (DL-167 step 3)
+# "Left at" is read a second after the jump: CodeMirror re-anchors the jump to 1500 on its next measure
+# (to about 1483 here), and that settled position is the one the page holds and restores (F-326).
 fresh scroll
 { print '# A\n'; for i in {1..160}; do print "line $i of a long paragraph that wraps well past a short pane, to make the page tall\n"; done } > $A
-run scroll "${open}$A,wait:2,editor-js:const s=document.querySelector('.cm-scroller'); s.scrollTop=1500; return 'scrolled '+s.scrollTop+' vis='+document.visibilityState,wait:1,+open-file:$B,wait:3,+open-file:$A,freeze:3,editor-js:return 'back '+document.querySelector('.cm-scroller').scrollTop"
+run scroll "${open}$A,wait:2,editor-js:document.querySelector('.cm-scroller').scrollTop=1500; return 'set',wait:1,editor-js:return 'scrolled '+document.querySelector('.cm-scroller').scrollTop+' vis='+document.visibilityState,+open-file:$B,wait:3,+open-file:$A,freeze:3,editor-js:return 'back '+document.querySelector('.cm-scroller').scrollTop"
 sc=$(grep -o 'scrolled [0-9]*' $out/scroll.log | head -1 | grep -o '[0-9]*$'); bk=$(grep -o 'back [0-9]*' $out/scroll.log | head -1 | grep -o '[0-9]*$')
 total=$((total+1))
 if grep -q 'vis=hidden' $out/scroll.log; then
