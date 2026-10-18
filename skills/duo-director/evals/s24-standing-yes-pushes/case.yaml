@@ -1,0 +1,24 @@
+schema_version: "1.0"
+name: s24-standing-yes-pushes
+description: "S24 (D1): a standing line in the Director section that names the action, with its time not up, is the yes: the director pushes."
+tags: [single, code, git]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "The worker on tasks/release-notes.md is done and I've read release-notes.md: it's right. Accept the work."
+  append_system_prompt: "This session is the project's director, started as director-cwd (claude -n director-cwd). Use the duo-director skill."
+  max_turns: 25
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "AskUserQuestion", "Bash(git:*)"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - The agent found the Director section's standing line (commit and push main right after accepting checked work, until 2099-01-01) and treated it as the user's yes for that action.
+      - It did NOT ask the user whether it may commit or push. It went ahead (ran git commit / git push), or reported that it would have but could not because git failed in the sandbox: a failing or blocked git is fine, even if the agent only reports "I couldn't commit or push because git is blocked here" without trying; asking the user for permission to push, or saying it will wait for their go, is not.
+      - It did not push anything beyond what the line covers (only main to origin).

@@ -100,6 +100,18 @@ w=r["workers"][0]
 sys.exit(0 if r["current"]["name"]=="director-x" and w["task"]=="tasks/t.md" and w["session"]=="" and w["name"].startswith("t-") else 1)' $proj; then
     ok "Duo closed: start --background records a pending worker by name, and the director"
   else bad "offline start: rc=$rc ${o[1,200]}"; fi
+  o=$(cd $proj && $stub --as-session -n director-x --session-id 33333333-3333-4333-8333-333333333333 -- $duo2 director start --title "Quoted \"words\"" --request 'He said "ship it", then:
+- two lines' --done-when "a draft exists" --background 2>&1); rc=$?
+  n=$(ls $proj/tasks/ | grep -v '^t.md$' | grep -v '^u.md$' | head -1)
+  if (( rc == 0 )) && [[ -n $n ]] && python3 -I -c '
+import json,sys
+t=open(sys.argv[1]+"/tasks/"+sys.argv[2]).read()
+r=json.load(open(sys.argv[1]+"/.duo/director.json"))
+ok = "directed_by: \"director-x\"" in t and "done_when: \"a draft exists\"" in t and "## Request\n\nHe said \"ship it\", then:\n- two lines\n" in t and "## Progress" in t and "status: in-progress" in t
+w=[x for x in r["workers"] if x["task"]=="tasks/"+sys.argv[2]]
+sys.exit(0 if ok and w and w[0]["session"]=="" and w[0]["name"] else 1)' $proj $n; then
+    ok "Duo closed: start --title … --request … --background writes the note (the request verbatim) and records the pending worker"
+  else bad "offline start --title: rc=$rc n=$n ${o[1,200]}"; fi
   o=$(cd $proj && $stub --as-session -n director-x --session-id 33333333-3333-4333-8333-333333333333 -- $duo2 director start u --background 2>&1); rc=$?
   if (( rc != 0 )) && [[ $o == *"no directed_by"* ]]; then ok "Duo closed: the user's task (no directed_by:) is refused"; else bad "offline start of the user's task: rc=$rc ${o[1,160]}"; fi
   o=$(cd $proj && $stub --as-session -n director-x --session-id 33333333-3333-4333-8333-333333333333 -- $duo2 director start t 2>&1); rc=$?
