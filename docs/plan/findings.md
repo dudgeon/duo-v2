@@ -3919,3 +3919,11 @@ Results, all at the default window size:
 - **Two limits:**
   - The failing runs show `pendingRequest` already set at their first sample: the screen read and the hook land within one 0.1 s sample, and the body had been drawn in between.
   - `composerDrawn` reads AppKit views, so it can't tell the card apart from another view in the composer's place. Either way the composer is gone, so the check would read a picker card as the question's card. The mock asks only the question, so that doesn't arise here.
+
+## F-334 · A visible proof run reached Geoff's Duo, and raised an Automation prompt (C-96; 2026-10-18)
+
+The tab-drag proof (C-96) ran on Geoff's OK, with his Duo window minimized so the test window was in front. Two things went wrong; the director undid the first by hand.
+- **duo2 reached Geoff's own Duo.** After relaunching its test instance, the worker's env file pointed at a removed support folder, so one setup batch ran with empty `DUO_SOCKET` and `DUO_TOKEN`. `duo2` then quietly fell back to the running Duo, as CLAUDE.md warns. It opened checkout, started an empty session, two shells and three documents there. Nothing was edited. The director closed the documents and shells and archived the session. **Rule for scripts:** abort if either variable is empty, never just unset; the worker's driver now does.
+- **`osascript` against System Events** (to read the front app) raised macOS's Automation prompt, which stayed in front. Duo never became key, so no synthetic click or drag landed. CLAUDE.md already says never AppleScript; that includes System Events. Read the front app from `NSWorkspace` in a harness action, or from `lsappinfo front`.
+- **A covered test window reads as hidden** (the first scroll try): WebKit reports `visibilityState=hidden` when another window covers it, even with `DUO_TEST_FOREGROUND=1`. Minimize or move the windows in front first.
+- Synthetic HID drags (CGEvent to the HID tap) were refused by the session's permission classifier. Only the in-process `real-drag` harness action remains, and dragging a session tab onto a task is a system drag that a synthetic one could hang. So C-96 goes to Geoff's hands on the walk.
