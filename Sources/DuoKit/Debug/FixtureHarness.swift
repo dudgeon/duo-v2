@@ -746,6 +746,38 @@ public enum FixtureHarness {
                 }
                 FileHandle.standardError.write(Data((lines.joined(separator: "\n") + "\n").utf8))
             }
+        case "chat-watch":   // chat-watch:<s>[:<png>]: every 0.1 s for s seconds, the chat's state and whether its composer is drawn (F-329)
+            // The card takes the composer's place, so a composer still drawn while `card=true` is a card the view
+            // wasn't told about (F-328). With a png, the window is captured 1 s after the question is first read.
+            guard let k = model.visibleSessionId, let c = model.chat(for: k) else { break }
+            let args = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
+            let secs = args.first.flatMap(Double.init) ?? 10
+            let png = args.count > 1 ? args[1] : nil
+            let start = Date()
+            var asked: Date?, drawn: Date?, captured = false
+            func composerDrawn() -> Bool {
+                func all(_ v: NSView) -> [ComposerTextView] { ((v as? ComposerTextView).map { [$0] } ?? []) + v.subviews.flatMap(all) }
+                return NSApp.windows.contains { w in (w.contentView.map(all) ?? []).contains { $0.coordinator?.chat.key == k && !$0.isHiddenOrHasHiddenAncestor && $0.visibleRect.width > 0 } }
+            }
+            func ms(_ d: Date?) -> String { d.map { String(Int($0.timeIntervalSince(start) * 1000)) } ?? "-" }
+            func tick() {
+                let now = Date(), composer = composerDrawn()
+                if asked == nil, [.question, .questionReview].contains(c.screen.kind) { asked = now }
+                if asked != nil, drawn == nil, !composer, c.showsChat { drawn = now }   // chat on screen, its composer gone: the card
+                FileHandle.standardError.write(Data("chat-watch: t=\(ms(now)) screen=\(c.screen.kind.rawValue) pending=\(c.pendingRequest?.tool ?? "-") card=\(c.cardUp) composerDrawn=\(composer) showing=\(c.showsChat ? "chat" : "terminal")\n".utf8))
+                if let png, let a = asked, !captured, now.timeIntervalSince(a) >= 1, let w = NSApp.windows.first(where: { $0.title == "Duo" }) {
+                    captured = true
+                    try? WindowCapture.content(of: w, to: URL(fileURLWithPath: png))
+                    FileHandle.standardError.write(Data("chat-watch: captured \(png) at t=\(ms(now)) composerDrawn=\(composer)\n".utf8))
+                }
+                guard now.timeIntervalSince(start) < secs else {
+                    let lag = asked.flatMap { a in drawn.map { Int($0.timeIntervalSince(a) * 1000) } }
+                    FileHandle.standardError.write(Data("chat-watch: done asked=\(ms(asked)) cardDrawn=\(ms(drawn)) lagMs=\(lag.map(String.init) ?? "never")\n".utf8))
+                    return
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { MainActor.assumeIsolated { tick() } }
+            }
+            tick()
         // Blocks the main thread for n seconds: the hang log's own check (F-208).
         case "freeze": Thread.sleep(forTimeInterval: Double(parts.count > 1 ? parts[1] : "5") ?? 5)
         case "dump":

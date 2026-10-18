@@ -3893,3 +3893,29 @@ The walk's setups run against an isolated Duo (its own `DUO_SUPPORT_DIR`, a scra
 ## F-324 · The first-run cards change Home, and `duo2 undo` puts it back (walk-since-0-2-4, 2026-10-17)
 
 The acceptance Duo (`--workspace ~/DuoAcceptance/workspace`) has no Home (`duo2 settings` says `home: none`). The first-run cards (DL-211, DL-212) need a Home of plain folders, so their setup runs the `first-run-home` fixture recipe (`~/DuoAcceptance/first-run-home`, five folders, no PROJECT.md) and `duo2 home set` on it. Every `home set` is its own undo step, so going back takes `duo2 undo` repeated until it says "nothing to undo"; `home set ~/DuoAcceptance/workspace` is not the way back (it writes a HOME.md and `.duo/` into the workspace root, and leaves Home set). On Geoff's own acceptance Duo the same holds against his real Home setting, so the two cards are rated `home` and say so.
+
+## F-329 · F-328 proved in a real Duo: before 7 of 10, after 10 of 10 (2026-10-18)
+
+Geoff (2026-10-18, through the director): "is this tested? … you should fully test on a dev instance". `scripts/check-chat-ask-live.sh <out> [runs]` runs a built Duo.app as an isolated dev instance, in the background (F-227):
+
+- Each run gets its own `/tmp/caq-<n>` support folder and scratch Claude config, and the Home session runs the real `claude` TUI against the chat-mode spike's mock API (no login, no tokens).
+- In chat mode it sends the mock's `permask` turn: a Bash, then an AskUserQuestion, in one turn, as Geoff's shop-triage turn did. On 2.1.219 it sends `ask1` instead: 2.1.219 starts in manual mode and would ask for the Bash.
+- A new harness action, `chat-watch:<s>:<png>`, logs every 0.1 s:
+  - the chat's state: screen, `pendingRequest`, `cardUp`;
+  - whether the chat's composer is drawn. The card takes the composer's place, so with chat on screen, a composer gone means the card is drawn.
+
+  It also captures the window 1 s after the question is first read.
+- A run passes when the card is drawn within 1 s of the question being read.
+
+Results, all at the default window size:
+
+| Build | CLI | Passed | When failing |
+|---|---|---|---|
+| "Before": main 503d983, plus the harness | 2.1.302 | 7 of 10 | Runs 1, 4 and 8: `screen=question pending=AskUserQuestion card=true composerDrawn=true` for the whole 12 s, and the card never drawn. The capture (`docs/plan/review/f-329/before-main-run1-1s.png`) shows what Geoff saw: Duo's column says "Needs you", and chat still shows "Reply to Claude". |
+| "After": integrate/2026-10-18 514d420, plus the harness | 2.1.302 | 10 of 10 | None. The card was drawn 206 to 317 ms after the question was read (the composer's fade-out). Capture: `docs/plan/review/f-329/after-run1-1s.png`. |
+| "After" | 2.1.219, an npm install in the job's own temp folder | 10 of 10 | None. The card was drawn 207 to 320 ms after. |
+
+- **The answer goes through.** The last 2.1.302 run picked Postgres on the card (`chat-ask:pick=Postgres`). The transcript's `toolUseResult` reads `"answers":{"Which database should we use?":"Postgres"}`, and chat showed the answer line.
+- **Two limits:**
+  - The failing runs show `pendingRequest` already set at their first sample: the screen read and the hook land within one 0.1 s sample, and the body had been drawn in between.
+  - `composerDrawn` reads AppKit views, so it can't tell the card apart from another view in the composer's place. Either way the composer is gone, so the check would read a picker card as the question's card. The mock asks only the question, so that doesn't arise here.
