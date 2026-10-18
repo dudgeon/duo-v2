@@ -6,7 +6,7 @@
     scripts/acceptance/fixtures.py --clean    move everything this script made to the Trash
     scripts/acceptance/fixtures.py --purge    simulate Claude's cleanup of the purge-test session (after Duo has run once)
     scripts/acceptance/fixtures.py --add      add fixtures introduced since the workspace was built (never overwrites)
-    scripts/acceptance/fixtures.py --recipe reset-checkout | purge | first-run-home | add-missing   named setup steps for the walk page
+    scripts/acceptance/fixtures.py --recipe reset-checkout | purge | first-run-home | add-missing | sidebar-fill | sidebar-clear   named setup steps for the walk page
 
 Builds a workspace of projects and documents in the states the walk needs, plants synthetic
 Claude sessions (marked "[fixture]") in ~/.claude/projects for its folders, and records what it
@@ -266,6 +266,8 @@ input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; }
 RECIPES = {
     "reset-checkout": "checkout's documents and HTML prototype back to their starting text",
     "purge": "simulate Claude's cleanup of the purge-test session",
+    "sidebar-fill": "reading gets 40 files and 14 more sessions, so both sidebar sections are long (DL-219)",
+    "sidebar-clear": "takes the sidebar-fill files and sessions out again (to the Trash)",
     "add-missing": "fixtures added since the workspace was built (a missing prototype page), never overwriting",
     "first-run-home": "a Home of plain folders with no projects (a new user's first run), for the first-run cards",
 }
@@ -301,6 +303,31 @@ def recipe(name):
             reg.write_text(json.dumps(data, indent=2) + "\n")
     elif name == "purge":
         purge()
+    elif name == "sidebar-fill":
+        rd = WS / "research" / "reading"
+        for i in range(1, 41):
+            f = rd / ("sidebar-note-%02d.md" % i)
+            if not f.exists():
+                write(f, "# Sidebar note %d\n\nA file so the Files tree is long.\n" % i)
+        info = json.loads(PLANTED.read_text()) if PLANTED.exists() else {"transcripts": []}
+        if not info.get("sidebar_fill"):
+            planted.clear()
+            for i in range(1, 15):
+                session(rd, "Sidebar filler %d" % i, [("Filler %d for the sidebar split." % i, "Noted.")], days_ago=i % 5)
+            info["sidebar_fill"] = list(planted)
+            info["transcripts"] = info.get("transcripts", []) + planted
+            PLANTED.write_text(json.dumps(info, indent=2))
+    elif name == "sidebar-clear":
+        rd = WS / "research" / "reading"
+        for f in rd.glob("sidebar-note-*.md"):
+            trash(f)
+        info = json.loads(PLANTED.read_text()) if PLANTED.exists() else {}
+        for t in info.pop("sidebar_fill", []):
+            if pathlib.Path(t).exists():
+                trash(pathlib.Path(t))
+        info["transcripts"] = [t for t in info.get("transcripts", []) if pathlib.Path(t).exists()]
+        if PLANTED.exists():
+            PLANTED.write_text(json.dumps(info, indent=2))
     elif name == "add-missing":
         add()
     elif name == "first-run-home":

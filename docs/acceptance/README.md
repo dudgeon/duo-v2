@@ -10,4 +10,4 @@ A walk can be deferred: verdicts live in the page's database, so nothing is lost
 |---|---|---|
 | [2026-10-04-live-to-organise](2026-10-04-live-to-organise/walk.md) | live workspace … collisions and Claude's edits, search, slice 1, Home, tasks and links (to DL-98) | superseded |
 | [2026-10-09-since-0-2-4](2026-10-09-since-0-2-4/walk.md) | everything still to walk: the 183 carried cards and 40 new ones from 0.2.4 to `21276fa`; each card rated for the work Mac; responsive, questions first on a phone | superseded by [2026-10-17-since-0-2-4](2026-10-17-since-0-2-4/walk.md) |
-| [2026-10-17-since-0-2-4](2026-10-17-since-0-2-4/walk.md) | everything since 0.2.4: the 224 carried cards and 36 new ones to `503d983`, 31 decisions; questions first on a phone | ready to publish |
+| [2026-10-17-since-0-2-4](2026-10-17-since-0-2-4/walk.md) | everything since 0.2.4: the 224 carried cards and 44 new ones to `0a77556`, 31 decisions; questions first on a phone | ready to publish |

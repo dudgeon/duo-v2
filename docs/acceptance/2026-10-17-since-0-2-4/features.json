@@ -2856,6 +2856,74 @@
    }
   },
   {
+   "id": "sidebar-split-short",
+   "group": "In checkout: sessions and tasks",
+   "title": "The sidebar gives sessions the white space when files are few",
+   "what": "Sessions and Files each take their content's height; if both fit, Files keep theirs and Sessions take the rest (DL-219).",
+   "steps": [
+    "Open `refunds` (a few sessions, a few files).",
+    "Drag the window shorter and taller."
+   ],
+   "expect": "The Files block is as tall as its tree and no taller; the session list takes everything above it, with white space under the last row. Resizing follows at once; nothing is cut off.",
+   "ref": "DL-219, F-331, C-95",
+   "commit": "8fdee2c53eb4455324ae7f10a43a9ff21b8f4a53",
+   "alsoCommits": [],
+   "workMac": "as-is",
+   "workMacWhy": "Visible in any project",
+   "setup": [
+    "open refunds"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from 0a77556 (DUO_SOCKET and DUO_TOKEN checked non-empty)."
+    ],
+    "didnt": [
+     "Looking at white space under the sessions."
+    ],
+    "human": [
+     "Open refunds and resize the window."
+    ],
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "sidebar-split-long",
+   "group": "In checkout: sessions and tasks",
+   "title": "When both sections are long, each gets half and scrolls on its own",
+   "what": "One section that needs no more than half takes only that; if both need more than half, 50/50, each scrolling, with the Files rule fixed above its tree.",
+   "steps": [
+    "The setup gives `reading` 40 more files and 14 more sessions.",
+    "Expand the Earlier fold in OTHER SESSIONS so both sections are long, then scroll each.",
+    "Fold Earlier again, then lengthen it again.",
+    "(`fixture sidebar-clear` takes the extras out again if you want it.)"
+   ],
+   "expect": "Sessions and Files each take half the height and scroll separately; the Files heading and rule stay put while the tree scrolls. When one side shrinks below half, the other grows into the rest.",
+   "ref": "DL-219, F-331, C-95",
+   "commit": "8fdee2c53eb4455324ae7f10a43a9ff21b8f4a53",
+   "alsoCommits": [],
+   "workMac": "small",
+   "workMacWhy": "Needs a project with many files and sessions; yours may already have them",
+   "setup": [
+    "fixture sidebar-fill",
+    "open reading"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from 0a77556 (DUO_SOCKET and DUO_TOKEN checked non-empty).",
+     "`fixture sidebar-fill` ran (40 files, 14 sessions). A background capture of `reading` with Earlier folded shows Sessions taking only their content and Files taking the rest of the height, the DL-219 rule for one short section."
+    ],
+    "didnt": [
+     "Both sections long (Earlier expanded) and scrolling each."
+    ],
+    "human": [
+     "Expand Earlier and scroll both."
+    ],
+    "at": "2026-10-18"
+   }
+  },
+  {
    "id": "ed-open",
    "group": "In checkout: documents",
    "title": "Documents open in the right pane",
@@ -2962,6 +3030,44 @@
      "Narrow the window; use the » menu; close a middle tab."
     ],
     "at": "2026-10-17"
+   }
+  },
+  {
+   "id": "tab-drag-doc",
+   "group": "In checkout: documents",
+   "title": "Drag a document tab to reorder it in the right pane",
+   "what": "Document tabs reorder by dragging within the right pane; Move Tab Left / Right are on the tab menu and `duo2 view tab-move` (DL-220).",
+   "steps": [
+    "With several documents open, drag one tab left past its neighbour and release; drag another to the far right.",
+    "Right-click a tab ▸ Move Tab Left, then Move Tab Right.",
+    "Try to drag a tab in front of Project; click a tab without dragging; `duo2 view tab-move left`."
+   ],
+   "expect": "The lifted tab follows the pointer and the others slide aside; it lands where released and stays selected. A plain click still selects. Project is always first and nothing passes it. A drag stays inside the strip. Not designed (Q-210): the lifted tab is drawn in its own look (an unselected tab lifts in a quieter text colour); no chord for Move Tab; Project and group pages are fixed. C-96: the real-pointer drag was only proved by the harness and captures, so this walk is its first real test.",
+   "ref": "DL-220, ENH-042, Q-210, C-96, F-333",
+   "commit": "8d3bb5ddc34009e4fdbebec62b4c8727a25f9068",
+   "alsoCommits": [],
+   "workMac": "as-is",
+   "workMacWhy": "Any project with a few documents",
+   "setup": [
+    "open checkout",
+    "doc open docs/prd.md",
+    "doc open docs/research.md",
+    "doc open docs/windows-notes.md",
+    "doc open prototypes/checkout.html"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 view tab-move left|right|<n> <doc> --pane right` moved documents along the right strip (to places 3, 1, 2 and 1 of 5); `doc tabs` showed the new order each time; Project stayed first, and `tab-move left Project` was refused (`no tab 'Project' that moves`).",
+     "`duo2 walk setup` ran against an isolated Duo built from 0a77556 (DUO_SOCKET and DUO_TOKEN checked non-empty)."
+    ],
+    "didnt": [
+     "A real pointer drag, the lift look and the tab menu's Move Tab Left/Right (C-96)."
+    ],
+    "human": [
+     "Drag a document tab; use Move Tab Left/Right in the menu."
+    ],
+    "at": "2026-10-18"
    }
   },
   {
@@ -3171,6 +3277,40 @@
    }
   },
   {
+   "id": "ed-scroll-restore",
+   "group": "In checkout: documents",
+   "title": "Scroll comes back exactly after a tab switch",
+   "what": "Switching tabs and back puts the document at the scroll position it settled at; the earlier '17 px short' was the check's, not the editor's (C-92).",
+   "steps": [
+    "Open `docs/long-backlog.md` and `docs/prd.md`; scroll the backlog a long way down and stop.",
+    "Click `prd.md`, wait a second, click the backlog tab again."
+   ],
+   "expect": "The backlog is exactly where you left it, with the same lines in the same places; no small jump. (The fix is to the proof script; the editor needed none.)",
+   "ref": "C-92, F-326, F-272",
+   "commit": "ab948d05c68bab0875068e05893c3f7720e5caad",
+   "alsoCommits": [],
+   "workMac": "as-is",
+   "workMacWhy": "Any two long documents",
+   "setup": [
+    "open checkout",
+    "doc open docs/long-backlog.md",
+    "doc open docs/prd.md"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from 0a77556 (DUO_SOCKET and DUO_TOKEN checked non-empty)."
+    ],
+    "didnt": [
+     "Scroll position after a switch (C-92 was proved visible on 514d420: 1483 and 1483)."
+    ],
+    "human": [
+     "Scroll the backlog, switch and come back."
+    ],
+    "at": "2026-10-18"
+   }
+  },
+  {
    "id": "ed-picture-paste",
    "group": "In checkout: documents",
    "title": "Paste or drop a picture: saved beside the document, linked on its own line",
@@ -3237,6 +3377,41 @@
      "Paste 3 × 3 cells."
     ],
     "at": "2026-10-17"
+   }
+  },
+  {
+   "id": "ed-code-copy",
+   "group": "In checkout: documents",
+   "title": "Copy on a code block: under the pointer, then \"Copied\"",
+   "what": "A code block in the editor shows a Copy button under the pointer; clicking copies the block and the button reads Copied for 1.5 s (DL-220, ENH-005).",
+   "steps": [
+    "Open `docs/long-backlog.md` and scroll to the `json` block near line 810 (or any fenced block).",
+    "Move the pointer over the block, click Copy, then paste somewhere.",
+    "Move the pointer away and back, and click twice quickly."
+   ],
+   "expect": "Copy appears at the pointer on hover, only on code blocks; after a click it reads Copied for about 1.5 s (even if the pointer leaves) and the clipboard holds the block's text without the fence marks. Not designed (Q-210): chat's code blocks and the HTML viewer get no Copy yet; only the editor's.",
+   "ref": "DL-220, ENH-005, Q-210, F-332",
+   "commit": "8d3bb5ddc34009e4fdbebec62b4c8727a25f9068",
+   "alsoCommits": [],
+   "workMac": "as-is",
+   "workMacWhy": "Any Markdown file with a code block",
+   "setup": [
+    "open checkout",
+    "doc open docs/long-backlog.md",
+    "doc select 810"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from 0a77556 (DUO_SOCKET and DUO_TOKEN checked non-empty). The fenced block at line 810 is selected."
+    ],
+    "didnt": [
+     "Hover and click Copy."
+    ],
+    "human": [
+     "Click Copy, paste, watch Copied for 1.5 s."
+    ],
+    "at": "2026-10-18"
    }
   },
   {
@@ -4880,6 +5055,76 @@
    "workMacWhy": "Hover and click tab × in his project"
   },
   {
+   "id": "tab-drag-console",
+   "group": "In checkout: shells and tabs",
+   "title": "Drag shell and session tabs to reorder them in the console",
+   "what": "Shell tabs and live session tabs reorder along the console strip; a session tab's menu ends with Move Tab Left / Right (DL-220).",
+   "steps": [
+    "Open two shells (⌘T twice) and a running session; drag a shell tab left past the other, then the session tab to the first place.",
+    "Right-click the session tab ▸ Move Tab Left / Right (they sit after Close Tab); right-click a shell tab.",
+    "Quit and reopen Duo."
+   ],
+   "expect": "Tabs slide as they're dragged and land where released; the order survives a relaunch. Session tabs keep their own system drag (so dragging one to a task or project still works) and reorder through the strip as a drop target. A shell tab has no menu, so only drag and `duo2 view tab-move` move it. Not designed (Q-210): Move Tab Left / Right sit at the end of the session tab's menu; Home's tabs don't move; no chord; no moving a tab across panes or projects.",
+   "ref": "DL-220, ENH-042, Q-210, C-96, F-333",
+   "commit": "8d3bb5ddc34009e4fdbebec62b4c8727a25f9068",
+   "alsoCommits": [],
+   "workMac": "small",
+   "workMacWhy": "Needs two shells and a running session",
+   "setup": [
+    "open checkout",
+    "shell new",
+    "shell new",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from 0a77556 (DUO_SOCKET and DUO_TOKEN checked non-empty).",
+     "`duo2 view tab-move` moved a session tab among shell tabs in the middle pane (place 1 and 2 of 7) and said `already the first tab` at the edge."
+    ],
+    "didnt": [
+     "Real drags and the tab menu; a relaunch (not run)."
+    ],
+    "human": [
+     "Drag a shell and a session tab; Move Tab Left/Right; quit and reopen."
+    ],
+    "at": "2026-10-18"
+   }
+  },
+  {
+   "id": "tab-drop-on-task",
+   "group": "In checkout: shells and tabs",
+   "title": "A session tab dropped on a task still moves the session",
+   "what": "Reordering must not break DL-147's drag of a session tab onto a task or project.",
+   "steps": [
+    "Open the project's task and a running session; drag the session's console tab onto the task row in the sidebar, passing over the strip on the way.",
+    "Look at the task's sessions and at the strip's order."
+   ],
+   "expect": "The session joins the task (its row appears under it) and the console strip's order is unchanged; passing over the strip on the way doesn't leave the tab moved. A session tab dropped on the editor types its drag text (`duo-session:<id>`), as before DL-220.",
+   "ref": "DL-220, DL-147, C-96",
+   "commit": "8d3bb5ddc34009e4fdbebec62b4c8727a25f9068",
+   "alsoCommits": [],
+   "workMac": "small",
+   "workMacWhy": "Needs a task and a running session",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from 0a77556 (DUO_SOCKET and DUO_TOKEN checked non-empty)."
+    ],
+    "didnt": [
+     "The drag onto a task needs a real pointer (C-96)."
+    ],
+    "human": [
+     "Drag the session tab onto a task and check the strip's order."
+    ],
+    "at": "2026-10-18"
+   }
+  },
+  {
    "id": "tab-hover",
    "title": "A fill behind the hovered tab",
    "what": "When a tab shows its ×, a subtle rounded fill sits behind the × and the name, so it's plain which tab will close. Right-pane tabs sit 24 apart.",
@@ -5202,6 +5447,40 @@
      "Do the steps in a signed-in session."
     ],
     "at": "2026-10-17"
+   }
+  },
+  {
+   "id": "chat-auq-instant",
+   "group": "Claude running in checkout: chat mode",
+   "title": "A question from Claude shows in chat at once, no flip to the terminal",
+   "what": "An AskUserQuestion card is drawn as soon as its hook lands; before, the card sometimes never appeared until you flipped to the terminal and back (F-328).",
+   "steps": [
+    "In a chat session, ask `Use the AskUserQuestion tool to ask me which colour I prefer, with options red and blue.`",
+    "Watch the composer area; answer in the card.",
+    "Repeat five times, on 2.1.302 and on the work Mac's 2.1.219."
+   ],
+   "expect": "Each time the card replaces the composer within a moment, with no flip to the terminal and no empty composer waiting. Your answer goes to Claude and the card goes away. Proved 10 of 10 on a dev instance (main 7 of 10) in F-329.",
+   "ref": "F-328, F-329",
+   "commit": "aa73ac2f5faba5f22cbd40e376b80b148ce6a0ef",
+   "alsoCommits": [],
+   "workMac": "small",
+   "workMacWhy": "A running Claude session that you can make ask a question",
+   "setup": [
+    "open checkout",
+    "session-running checkout"
+   ],
+   "claude": {
+    "result": "partial",
+    "did": [
+     "`duo2 walk setup` ran against an isolated Duo built from 0a77556 (DUO_SOCKET and DUO_TOKEN checked non-empty). It shows the running session's tab."
+    ],
+    "didnt": [
+     "The question itself: the isolated Duo has no Claude login (F-323). F-329 proved it 10 of 10 on a dev instance."
+    ],
+    "human": [
+     "Ask for a question in chat a few times."
+    ],
+    "at": "2026-10-18"
    }
   },
   {
