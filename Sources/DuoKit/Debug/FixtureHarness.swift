@@ -736,8 +736,9 @@ public enum FixtureHarness {
             // The card takes the composer's place, so a composer still drawn while `card=true` is a card the view
             // wasn't told about (F-328). With a png, the window is captured 1 s after the question is first read.
             guard let k = model.visibleSessionId, let c = model.chat(for: k) else { break }
-            let secs = parts.count > 1 ? Double(parts[1]) ?? 10 : 10
-            let png = parts.count > 2 ? parts[2] : nil
+            let args = parts.count > 1 ? parts[1].split(separator: ":", maxSplits: 1).map(String.init) : []
+            let secs = args.first.flatMap(Double.init) ?? 10
+            let png = args.count > 1 ? args[1] : nil
             let start = Date()
             var asked: Date?, drawn: Date?, captured = false
             func composerDrawn() -> Bool {
