@@ -49,7 +49,7 @@ Geoff, 2026-10-15: "consider that you may be overcomplicating things and explore
 - **The core fixes what has gone wrong most often here.** A fixed name with a registry ends the peer-name churn: three names in six days, and a retired director that woke up and messaged sessions (10-13). Task notes replace a seven-source resume checklist. `watch` replaces subscriptions that die at every compaction. Asking before archiving, with the transcript-based "user is here" check (planned, item e), would have kept reachable the sessions Geoff was still using.
 - **It fights us on approval, and only there.** The core makes every push, delete and publish wait for a yes for that item "whatever the rules say". Our director pushes main after each checked merge on Geoff's standing OK, about 16 times a day. That's question 1.
 - **Most of our job is rightly not in the core:** releases, the walk, the design system, records, the GPU lock, the voice repo, visible-test permission, the work Mac. The missing piece is the seam. The core reads only Director sections, and duo-v2's `PROJECT.md` has none, so a fresh director that loads `duo-director` alone never learns the overlay exists. A draft section is below.
-- **The overlay can lose about half its text:** the reviews doc (3 updates in six days), peer-name broadcasting, re-subscribing after compaction, and, if Geoff agrees, the console (about 155 tool calls in six days, for a page whose buttons stopped reaching the director after its first day). The merge checks become one script.
+- **The overlay can lose about half its text:** the reviews doc (3 updates in six days), peer-name broadcasting and re-subscribing after compaction. The console stays for now (Q3), but its rules move out of the skill into `PROJECT.md`. The merge checks become one script.
 - **Four core gaps this repo hit are now in the plan:** the cap counting stopped workers, offline starts, a worktree read as a project with "No Home" beside it, and a pause that can't see Remote Control. Three more are below (D9 to D11).
 
 ### The director's week in numbers
@@ -119,7 +119,8 @@ Verdicts: **fits**; **fits with a change** (named); **conflicts**; **ours** (ove
 | What's in flight | The director's head, the console's `threads`, the memory snapshot | One task note per delegation from the switch on, plus one handover note listing the older ones | "Your memory is the task notes." Don't adopt old workers: each `--adopt` is a sheet at the Mac. |
 | The standing rules every worker gets (worktree, no push, isolation, the lock, models, visible runs, who to report to) | Repeated in each brief (12 items in `refs/delegating.md`) | CLAUDE.md, which every session loads anyway, with "report to `director-duo-v2`" | A brief shrinks to the job: Geoff's words, `done_when:`, branch, record range, proofs, who else is working where. |
 | The merge checks | `refs/review-merge.md`, as prose | `scripts/merge-gate.sh <sha>` | One plain command, the same every time. |
-| The reviews doc, and the console if retired | claude.ai | Left read-only | Replaced by task notes, git and AskUserQuestion. |
+| The reviews doc | claude.ai | Left read-only | Replaced by task notes and git. |
+| The console's rules | `refs/talking-to-geoff.md` §6–7 (the skill) | `PROJECT.md` `## Director` (the rule), and a doc it points to (the collections table) | Geoff, Q3: not hard-coded in a skill. The test below says the vanilla director follows such rules on Sonnet and Opus. |
 
 **Draft `## Director` for duo-v2's `PROJECT.md`** (public; each line restates a rule Geoff has already given, except the cap, which is Q5's subject, and the asks line, which formalises how he works):
 
@@ -135,15 +136,39 @@ Verdicts: **fits**; **fits with a change** (named); **conflicts**; **ours** (ove
 - Stop a finished worker after its merge, to free memory, unless Geoff has typed in it since your last message: then ask. Never archive a worker's session before he signs off.
 - Always ask: a release; a visible test run (the freeze-guard gate is pre-approved); anything on the work Mac.
 - Decisions are DL-n in docs/design/decisions.md, and found work is a record (ENH, C, Q). Don't keep ## Decisions or ## Done here.
-- Merged work waits for Geoff's sign-off as `waiting`; it's done when he signs off.
+- Merged work waits for Geoff's sign-off as `waiting`; it's done when he signs off. End each digest with one question listing what's waiting for him, with links (Q4).
+- The director console is how Geoff hears from you first: https://claude.ai/artifact/MMmJ9BjomsKq9f9HpHK1ka. It needs the Artifact tools, so run where they are. Put each decision, release call or question for him on it as a card in its `needs` collection (options with your recommendation first), then post one line in chat pointing at it. Keep its `threads`, `done` and `release` rows current; read its `answers` on every turn, and re-arm it after a restart (`ArtifactComments watch`). Its collections: `docs/director/console.md`. If it can't be reached, ask with AskUserQuestion; if you can't ask either, end your turn with the question and say the console couldn't be reached.
 ```
+
+### Test: does the vanilla director follow rules kept in `PROJECT.md`? (Q3)
+
+Geoff asked whether the console's rules can live in `PROJECT.md` instead of a skill, and for a test of whether the shared skill, as written, finds such rules and reliably follows them. Four `claude plugin eval` cases ran the skill at `feature/duo-director` 552b0f8, unchanged, with no project skill, on a small duo-v2 fixture whose `PROJECT.md` `## Director` holds our rules, one of which points to a habits file. Each case ran 3 times on each model, 2026-10-16; no real Duo or console was touched; $4.52 in all. Cases and runner: `scripts/director-harness/dogfood/` on branch `review/director-dogfood` (9470c9f); rerun with `run.sh --duo2 <duo2 built from the same ref>`.
+
+| Case (the rule in `PROJECT.md`) | Haiku 5.5 | Sonnet 5.5 | Opus 5.5 |
+|---|---|---|---|
+| Read `PROJECT.md`'s Director section (all cases) | 6 of 12 | 12 of 12 | 12 of 12 |
+| Read the habits file it points to, and use its digest format (D1, D2) | 0 of 6 read it | 6 of 6 | 6 of 6 |
+| D1, the console in its real wording (no Artifact tools here): tried the console or said it couldn't reach it, then asked, recommendation first | 1 of 3 named the console; judge 0 of 3 | 3 of 3; judge 2 of 3 | 3 of 3; judge 3 of 3 |
+| D2, a console it can reach (a stand-in script): posted the decision there as a card, then one line in chat | 0 of 3 | 3 of 3; judge 2 of 3 | 3 of 3; judge 2 of 3 |
+| D3, decisions are DL-n rows: wrote DL-4 in `decisions.md`, no Decisions section in `PROJECT.md` | 3 of 3 | 3 of 3 | 3 of 3 |
+| D4, Geoff's asks start at once (the core says several asks wait as suggested) | no `--suggest`, 3 of 3 | no `--suggest`, 3 of 3 | no `--suggest`, 3 of 3 |
+
+**What it says:**
+- **On Sonnet and Opus the pattern works.** Every run read the Director section, followed the file it points to, put Geoff's decision on the console when it could and said so when it couldn't, recorded the decision where the section said, and let the project's rule beat the core's default (D4). The judge's misses (one or two per case) came with no reason; the file and command checks all passed.
+- **On Haiku it doesn't.** Half its runs never opened `PROJECT.md`, and none followed the pointer. Our director runs on Opus, so this doesn't block us, but users on cheap models would miss their own rules.
+- **D4's judge failed on every model for a reason outside the rule.** With Duo closed, `duo2 director start --title` refuses ("only `start <task> --background` works, for a task note you've written"); the director then wrote both notes by hand, the case's permission mode stopped further commands, and it reported both asks filed and unstarted, asking only for the go to run the start commands. It never filed them as suggested or asked which to start.
+
+**What follows:**
+- **Move the console's rules into `PROJECT.md`** (the draft above has them), with the collections table in `docs/director/console.md`, and take them out of the skill. Then check it live once: the director's first decision after the switch should land on the console.
+- **The rest of the overlay can follow the same way:** rules in the Director section, procedures in files it points to. That's question 7.
+- **Two core changes this test found (for the build lead):** (1) `duo2 director status` prints the Director sections' text, not only their paths, so a director gets the rules without a separate read. That's the step Haiku skipped. (2) With Duo closed, `start --title … --background` writes the note itself, as the director would by hand, so offline starts are one step.
 
 ### Changes to our overlay
 
 - **A "what the core's words mean here" table:** accept = merge under D2; the project's checks = `merge-gate.sh`; Decisions = DL-n; Done = the merge on main plus sign-off; found work = a record; complete = Geoff's sign-off; archive = after sign-off only.
 - **Workers:** `duo2 director start <task> --background`, then add `--remote-control <name> --model <model>` before `--` and run it. The job's brief goes in the note's `## Brief`.
 - **Run `duo2 director` from the main checkout**, not `director-check`, until planned item c lands.
-- **Retire:** the reviews doc (`refs/resuming.md` step 2, the last line of `refs/delegating.md`, step 6 of `refs/review-merge.md`); broadcasting a new peer name after restarts (`refs/talking-to-geoff.md` §7); re-subscribing after compaction (`refs/resuming.md` step 5); the console, per Q3.
+- **Retire:** the reviews doc (`refs/resuming.md` step 2, the last line of `refs/delegating.md`, step 6 of `refs/review-merge.md`); broadcasting a new peer name after restarts (`refs/talking-to-geoff.md` §7); re-subscribing after compaction (`refs/resuming.md` step 5); the console's rules, which move into `PROJECT.md`'s `## Director` (Q3), with its collections table in a doc that section points to.
 - **Records, the director's call:** provisional ids. Workers write `F-?`, `DL-?` and so on; a script at merge gives them the next free numbers and rewrites the references. Clashes then can't happen, and CLAUDE.md's "take the next after the highest anywhere" rule goes.
 - **Keep:** releases, the walk, the design-system sync, the GPU lock, the voice repo, the lessons.
 
@@ -170,8 +195,16 @@ Verdicts: **fits**; **fits with a change** (named); **conflicts**; **ours** (ove
 ## Open questions / Geoff's answers
 
 1. **Standing yes** (the reviewer puts this one to Geoff): Never 3 and §6 say a push, delete or publish waits for the user "whatever the rules say", but Geoff's standing OK covers pushing main after a checked merge and sweeping merged work trees. Proposal: a yes counts when the user gave it for that action, in their own words naming it or as a standing line in a Director section (it can be time-boxed); a worker's ask or the director's own inference never does.
+   - **Answer (Geoff, by button, 2026-10-15): the recommendation.** A yes counts when he gave it for that action, in his own words naming it or as a standing line in a Director section, which may end at a time; a worker's ask or the director's own reasoning never counts. → Build lead: D1 in the core (Never and §6, s17 rewritten, one new case, the s18/s21 gates re-run on Haiku and Sonnet). → Director: our standing yeses go in duo-v2's `PROJECT.md` `## Director`.
 2. **Duo's two new questions** (the build session's): `--adopt` and `--handed-back` now show Duo's existing confirm sheet with new wording ("Let director-x take this on?", "Hand “…” back to director-x?"). No new surface was drawn. Is the existing sheet fine, or should these be designed? Not yet asked; the director may bundle it with the install-question re-ask. **The director asked the reviewer to put it to Geoff in the same round, recommending the existing sheet (a sheet he approved, new words: a stand-in under our rules).**
+   - **Answer (Geoff, by button, 2026-10-15): the existing sheet**, with the new words, as a stand-in logged as a question for a later design pass.
 3. **The console** (the reviewer's): the console's buttons stopped reaching the director after its first day; Geoff has since answered by AskUserQuestion and asked for status in chat, and its upkeep was about 155 tool calls in six days. Options: retire it (decisions by AskUserQuestion, digests in chat with session links, a page with Send buttons only for a big batch, Duo's board for what's in flight; recommended); keep it as a read-only status board; keep it as the default channel (DL-166).
+   - **Answer (Geoff, 2026-10-15, in his own words): keep the console for now, but not hard-coded in a skill.** Its instructions go in `PROJECT.md` as Director instructions, and the reviewer tests whether that pattern is viable: whether the vanilla director, as written, finds those instructions and reliably follows them. → Reviewer: that test, reported in the Dogfood review.
 4. **Sign-off** (the reviewer's): merged work waits for Geoff's sign-off before its task is done and its sessions can be archived. How is it collected? Options: one batched question in each digest, with his word in a worker's session or a walk verdict also counting (recommended); only when he says so; done at merge, with the walk tracking sign-off separately.
+   - **Answer (Geoff, by button, 2026-10-15): the recommendation.** Each digest ends with one batched question listing merged work waiting for him, with links; his word in a worker's session, or a walk verdict, also counts.
 5. **The cap** (the reviewer's; it counts running workers once the plan's item lands): 6 (recommended), 4 or 8. This week 1 to 4 workers were busy at once.
+   - **Answer (Geoff, by button, 2026-10-16): 6** for our director, as `max workers: 6` in duo-v2's `PROJECT.md`. The core's default stays 3.
 6. **Geoff's habits for every director** (the reviewer's): move the cross-project ones (digests, one decision at a time on the phone, routine steps of a job he handed over, answer a question asked back and wait, never archive or stop a session he's talking to) from this repo's Claude memory into `~/claude-home/HOME.md`'s `## Director` (recommended, DL-207), or keep them in memory.
+   - **Answer (Geoff, by button, 2026-10-16): move them to `~/claude-home/HOME.md`'s `## Director`.** Machine-local facts stay in memory. → Director: write them there and prune the memory notes they replace.
+7. **The rest of the overlay** (the reviewer's, after the test): rules in `PROJECT.md`'s Director section, procedures (merge checks, releases, the walk, the design-system sync, the GPU lock, the voice repo, lessons) in docs it points to, and the project skill `.claude/skills/director/` removed. Or keep the project skill for everything but the console.
+   - **Answer (Geoff, by button, 2026-10-17): move it all.** Rules into `PROJECT.md`'s `## Director`, procedures into docs it points to, `.claude/skills/director/` removed. → Director: the move, then one live check that its first decision after the switch lands on the console.

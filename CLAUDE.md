@@ -27,11 +27,21 @@ Read `CONTRIBUTING.md` first for build commands and layout (`README.md` is for p
 
 ## Director
 
-One session, the **DUO DIRECTOR** (in Duo, with Remote Control and Artifact tools; DL-166), runs the other sessions as their engineering manager (Geoff is the PM): it delegates work to new sessions (background Claude sessions with Remote Control, outside Duo unless Geoff says otherwise), reviews and merges their branches, keeps records consistent, cuts releases Geoff approves, and is the only publisher of the acceptance walk page and the design-system artifact. Its job description is `.claude/skills/director/SKILL.md`. A director that resumes (after compaction or a restart) starts there. When their work is committed, build sessions report to it by `SendMessage` to its **peer name** (the name `ListAgents` shows for it; it changes whenever the director's session restarts, so it is given in each brief, and a session always replies to the `from` address of the director's latest message). **Never message `*DUO DIRECTOR*`**: that is the retired first director (e0127e51), stopped on 2026-10-12.
+One session, the **director** (named `director-duo-v2`, DL-200; in Duo, with Remote Control and Artifact tools; DL-166), runs the other sessions as their engineering manager (Geoff is the PM): it delegates work to new sessions (background Claude sessions with Remote Control, outside Duo unless Geoff says otherwise), reviews and merges their branches, keeps records consistent, cuts releases Geoff approves, and is the only publisher of the acceptance walk page and the design-system artifact. Its rules are PROJECT.md's `## Director`, and its procedures `docs/director/README.md`. Build sessions report to it by `SendMessage` to **director-duo-v2**, and reply to the `from` address of its latest message. Never message `*DUO DIRECTOR*`: the retired first director.
 
-Geoff talks to the director through the **director console**, https://claude.ai/artifact/MMmJ9BjomsKq9f9HpHK1ka (skill §7): decisions as buttons with the recommendation first, release and delegation calls, what's in flight with links that open each session on his phone, and what's done. Its buttons message the director session directly. The console is the default channel; chat and AskUserQuestion are the fallback.
+Geoff talks to the director through the **director console**, https://claude.ai/artifact/MMmJ9BjomsKq9f9HpHK1ka (`docs/director/console.md`): decisions as buttons with the recommendation first, release and delegation calls, what's in flight with links that open each session on his phone, and what's done. The console is the default channel; chat and AskUserQuestion are the fallback.
 
-**Dependencies the director also runs.** Geoff's own voice, which narrates the intro video (DL-173), lives in the private repo **`dudgeon/geoff-voice`**. It holds the fine-tuned VoxCPM2 LoRA, his takes, and the record → check → train → evaluate → package procedure, all in its README. The director directs work there too: new recordings, fine-tunes and evaluations. It delegates, reviews, pushes and keeps duo-v2's link to the voice working, the same as for Duo. duo-v2 is public, so nothing from geoff-voice enters it: no audio, weights, voice cards, transcripts or local paths. The video pipeline reaches the voice through a machine-local card (`video/README.md`, "The voice"). An agent without access to the repo uses the house voice (`DUO_VOICE_JSON=house`). Details: the director skill, §8.
+### Rules for every build session
+
+A brief gives the job; these hold for every session the director starts, so briefs don't repeat them.
+- **Work tree:** `git worktree add .claude/worktrees/<x> -b <branch> origin/main` (or the branch the brief names), and never commit on main. Commit in slices; the director pushes and merges, so don't push. Record numbers are the ones the brief reserves.
+- **Isolation for every scripted run:** its own short `DUO_SUPPORT_DIR`, a scratch `CLAUDE_CONFIG_DIR`, no Google account, no real Claude turns except an approved real-login test, and any that run use Haiku 5.5 (`DUO_MODEL`/`ANTHROPIC_MODEL`).
+- **GPU lock and models:** as in the Shared compute and Model efficiency sections below. Hand scoped parts and test loops to Sonnet and Haiku subagents; release the lock after each batch.
+- **Visible runs:** a run that shows a window or takes focus needs Geoff's OK first. Ask the director, or Geoff directly if he is talking to you.
+- **Publishing:** don't publish the design-system artifact or the walk page.
+- **Report:** when the work is committed, `SendMessage` the director (above) with the branch, the full shas, the records and the checks. Stuck or blocked: ask the director rather than guessing.
+
+**Dependencies the director also runs.** Geoff's own voice, which narrates the intro video (DL-173), lives in the private repo **`dudgeon/geoff-voice`**. It holds the fine-tuned VoxCPM2 LoRA, his takes, and the record → check → train → evaluate → package procedure, all in its README. The director directs work there too: new recordings, fine-tunes and evaluations. It delegates, reviews, pushes and keeps duo-v2's link to the voice working, the same as for Duo. duo-v2 is public, so nothing from geoff-voice enters it: no audio, weights, voice cards, transcripts or local paths. The video pipeline reaches the voice through a machine-local card (`video/README.md`, "The voice"). An agent without access to the repo uses the house voice (`DUO_VOICE_JSON=house`). Details: `docs/director/voice-repo.md`.
 
 ## Model efficiency
 
@@ -48,7 +58,7 @@ The Mac is shared by every session. Heavy jobs run through the **main checkout's
 - **`--exclusive` (the default):** model work, video renders, and every timing measurement (`check-chat-perf`, `check-scale`, perf and idle-CPU runs).
 - **`--shared`:** builds, DuoChecks, captures and pixel checks. Up to two run at once, and none starts while an exclusive job holds the lock or waits at the front of the queue.
 
-Release after each batch. A run whose lock output says "clearing a stale lock", or shows a "taken" WARNING, has suspect timings, so re-run it. Details: the director skill, §5a.
+Release after each batch. A run whose lock output says "clearing a stale lock", or shows a "taken" WARNING, has suspect timings, so re-run it. Details: `docs/director/gpu-lock.md`.
 
 ## Visible test runs
 

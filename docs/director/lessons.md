@@ -1,6 +1,6 @@
 # Lessons, and where things are
 
-*Part of Duo's own director (`../SKILL.md`): Duo dev's habits on top of the shared duo-director core. Moved here unchanged from the single SKILL.md on 2026-10-14.*
+*Part of Duo's director procedures (`README.md`): Duo dev's habits on top of the shared duo-director core. Moved here from the project skill (retired) on 2026-10-17; the rules are in PROJECT.md's `## Director`.*
 
 ## Lessons (2026-10-07/08: the 0.2.5–0.2.7 work-Mac freeze and a long night)
 
@@ -23,11 +23,10 @@
 
 | What | Where |
 |---|---|
-| Director reviews doc (log and decisions) | the link and ids in memory `director-reviews-doc.md` |
-| Director console | https://claude.ai/artifact/MMmJ9BjomsKq9f9HpHK1ka (source `.claude/skills/director/console.html`) |
+| Director console | https://claude.ai/artifact/MMmJ9BjomsKq9f9HpHK1ka (source `docs/director/console.html`) |
 | Acceptance walk page | https://claude.ai/artifact/DfQ1rfxcxHuf3Zshy6UmXX (`docs/acceptance/2026-10-09-since-0-2-4/`); the old one, Wu4bb9tB7C4HH1UEfXgKMa, is superseded |
-| Session phone links | `.claude/skills/director/session-links.py [id-prefix…]` |
+| Session phone links | `docs/director/session-links.py [id-prefix…]` |
 | Design system artifact | https://claude.ai/artifact/QMapKeLYS3TVV36QKEc6MH |
 | Records | `docs/design/decisions.md`, `docs/plan/findings.md`, `docs/plan/concerns-and-questions.md`, `docs/plan/enhancements.md` |
-| Geoff's voice (a dependency, §8) | private repo `dudgeon/geoff-voice`; its local checkout is in memory `reference-geoff-voice.md` |
+| Geoff's voice (a dependency, `voice-repo.md`) | private repo `dudgeon/geoff-voice`; its local checkout is in memory `reference-geoff-voice.md` |
 | Checks | `scripts/check-records.sh`, `check-ui.sh`, `check-chat.sh`, `check-context.sh`, `check-reap.sh`, `check-motion.sh`, `check-*.mjs` |

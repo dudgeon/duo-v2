@@ -1,6 +1,6 @@
 # Reviewing, merging and records
 
-*Part of Duo's own director (`../SKILL.md`): Duo dev's habits on top of the shared duo-director core. Moved here unchanged from the single SKILL.md on 2026-10-14.*
+*Part of Duo's director procedures (`README.md`): Duo dev's habits on top of the shared duo-director core. Moved here from the project skill (retired) on 2026-10-17; the rules are in PROJECT.md's `## Director`.*
 
 ## 2. Reviewing and merging (standing rule D2)
 
@@ -12,13 +12,14 @@ For each branch:
 3. **Merge:** `git merge --no-ff -m "Merge <branch>: <what> (<records>)" <branch-or-sha>`.
 4. **Record files merge without conflicts** (`.gitattributes` `merge=union`, 2026-10-08): both sides' lines are kept. Still run `scripts/check-records.sh`: a row both sides edited comes out twice, so delete the older copy. A union merge can also drop the blank line between findings sections (harmless). Older rule, for any conflict that still appears: **keep both sides, never one.** When both sides edited the same row, keep the newer content. A conflict hunk can hold many records from main (c6aa7c8 once dropped F-114 to F-119).
 5. **Check, never in the main checkout's `build/`** (2026-10-12). Geoff's own Duo may run from `build/Duo.app`. That bundle is signed ad hoc, so every rebuild changes its identity to macOS, his privacy answers stop sticking, and the prompts repeat. Run every build and check in the director's own work tree, `.claude/worktrees/director-check`: `git -C .claude/worktrees/director-check checkout --detach <merge sha>`, then the scripts there. Its builds are `com.dudgeon.duo.test` (DL-151). Rebuild main's `build/Duo.app` only when Geoff asks.
+   - **`scripts/merge-gate.sh <merge sha>` runs the list below as one command** (each gate under the main checkout's `gpu-lock.sh --shared`, one line per gate, non-zero on any failure). The list says what it covers; the baseline comparison, `check-launch-services.sh` and the timing checks stay by hand.
    - `scripts/check-records.sh` (every record id from both parents survives);
    - `scripts/bundle.sh`;
    - `swift run DuoChecks` (and `DUO_CHECKS=chat` when chat is touched);
    - `NO_BUILD=1 scripts/check-ui.sh`, then `python3 scripts/samepng.py /tmp/dir-base/<s>.png build/ui/<s>.png` for the six states. A difference must be explained (an intended change) or it's a regression; check main without the merge before blaming the branch. Run the checks inside `scripts/check-background.sh -- …` (or plain `scripts/check-background.sh` for check-ui, check-chat and check-composer-focus together): it fails if a test Duo came to the front, ran as a Dock app or captured while active (F-227). With the screen locked it says the front-app part proves nothing.
    - `scripts/check-launch-services.sh` after every merge (and `--clean` if it fails): only main's build may be registered as Duo (DL-151). Branches made before 76fb3e6 must merge main before their next bundle.sh (C-55).
    - The editor and deck checks when relevant: `NODE_PATH=/tmp/pwc/node_modules node scripts/check-editor-selection.mjs` (also check-editor-motion and check-deck-motion). playwright-core lives in /tmp/pwc; `npm i playwright-core` there if it's missing.
-6. **Push,** then remove the work tree and branch (local and origin), message the session ("merged, you're done"), and add a Log row to the reviews doc.
+6. **Push,** then remove the work tree and branch (local and origin), message the session ("merged, you're done").
 7. **Never push a merge you haven't checked.** If you find a problem, `git reset --hard origin/main` (only for an unpushed local merge) and send it back with specifics.
 
 ## 3. Records
