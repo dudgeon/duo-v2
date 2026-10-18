@@ -3841,3 +3841,18 @@ Geoff (2026-10-15, through the director): "consider that you may be overcomplica
   | s24 (standing line: goes ahead) | 1/3 | 2/3 |
 
   s24 is the weak one: the case's git can't run (C-90), and the judge is split on whether "I couldn't commit or push, git is blocked" counts as going ahead. The directors didn't ask for permission in the traces read. It's a candidate for a non-sandboxed Tier 1 check.
+## F-328 · Chat mode missed a question whose hook was read after its screen (0.2.16, 2026-10-17)
+
+Geoff (2026-10-17): in chat mode an AskUserQuestion sometimes "appears as a no op". Flipping to the terminal showed the question, and flipping back to chat then showed its card. Field evidence came from his Mac: build 891 (v0.2.16, 43ad8e6, and no chat code has changed on main since), Claude Code 2.1.302, the "Shop triage skill" session 2cab609c.
+
+- **Timings (UTC, Duo's events file):** PreToolUse AskUserQuestion at 15:39:55.767, PermissionRequest at 15:39:55.798, Notification `permission_prompt` at 15:40:01.807. `duo.log` has nothing about it, and `hangs.jsonl` has no hang near it (the nearest is 805 ms at 15:40:37), so nothing was stuck. The card was simply never drawn.
+- **Cause.** The card shows while `ChatSession.cardUp`, which needs `requestAgrees`. That reads `pendingRequest`, and `pendingRequest` was `@ObservationIgnored` (since 9db766b). Chat reads the screen 60 ms after the TUI draws, but the feed reads hooks every 150 ms. So the question's screen is usually read first: cardUp is false (no request yet) and the composer stays. A moment later the PermissionRequest sets `pendingRequest`, and nothing tells SwiftUI:
+  - the PreToolUse had already added the question's "asked" segment to the current turn, so `log.items.count` (the other thing the pane's body reads) didn't change;
+  - a TUI waiting on a question doesn't repaint, so the screen didn't change;
+  - the 1.5 s request-grace timer then found the two agreeing and changed nothing.
+
+  The flip rebuilt the pane, which read cardUp afresh, so the card appeared. The duo-signal path (`ChatSignal`) sets the same property, so it had the same gap.
+- **Why the checks missed it.** The chat checks and chat-live read `cardUp` directly, which is always right. Only the view depended on being told.
+- **Fix.** `pendingRequest` is observed, so the hook itself redraws the card. This covers every CLI version: 2.1.219's request comes by the same property.
+- **Check.** `DUO_CHECKS=chat` "falling back": the question draws first (no card), then its PermissionRequest is ingested, under `withObservationTracking` on `cardUp`. It failed before the fix (`cardUp true, told false`) and passes with it.
+- **Proof.** `swift run DuoChecks`: 1714 passed, 3 failed. `DUO_CHECKS=chat`: 408 passed, 3 failed. The 3 are the EDITOR-helper checks, which fail the same way without the fix, in the background session that ran them. chat-live at 100×34: 2.1.219 passed 44 of 44; 2.1.302 passed 39 and failed 9, the same 9 with the fix reverted (C-93). Nothing visible changed: the card is the one already drawn, it just comes up when the request lands, so no capture was needed.

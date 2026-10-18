@@ -2,6 +2,7 @@ import AppKit
 import DuoControl
 import DuoKit
 import Foundation
+import Observation
 
 // Chat mode's checks (DL-118 to DL-120): the screen reader against the spike's real TUI screens,
 // the AskUserQuestion driver against a scripted TUI, and the log built from recorded hooks and
@@ -143,6 +144,22 @@ func spikeScreen(_ name: String) -> String {
         shown = true
         q.wake(); spin(0.8)
         check(q.screen.kind == .unknown && !q.showsChat, "shown again, it reads what it skipped at once (\(q.screen.kind))")
+        // F-328: the question draws before its PermissionRequest is read (screen 60 ms, hooks every 150 ms),
+        // and the waiting screen never repaints. The hook alone must tell the view the card is up.
+        let ask: ChatJSON = ["questions": [["header": "Colour", "question": "Which colour should the button be?", "multiSelect": false,
+                                            "options": [["label": "Blue"], ["label": "Green"], ["label": "Grey"]]]]]
+        let asking = FakeTUI(idleText)
+        let a = ChatSession(key: "s-ask-late", mode: .chat)
+        a.attach(asking)
+        ChatIngest.hook(["hook_event_name": "UserPromptSubmit", "prompt": "Ask me", "source": "user"], at: 1, into: a.log, chat: a)
+        ChatIngest.hook(["hook_event_name": "PreToolUse", "tool_use_id": "q1", "tool_name": "AskUserQuestion", "tool_input": ask], at: 2, into: a.log, chat: a)
+        asking.show(spikeScreen("tour-2.1.291/04-question.txt")); spin(0.15)
+        check(a.screen.kind == .question && !a.cardUp, "the question on screen before its request: no card yet")
+        final class Told: @unchecked Sendable { var yes = false }
+        let told = Told()
+        withObservationTracking { _ = a.cardUp } onChange: { told.yes = true }
+        ChatIngest.hook(["hook_event_name": "PermissionRequest", "tool_name": "AskUserQuestion", "tool_input": ask], at: 3, into: a.log, chat: a)
+        check(a.cardUp && told.yes, "its PermissionRequest lands: the card is up and the view is told (cardUp \(a.cardUp), told \(told.yes))")
         let v = ChatSession(key: "s-version", mode: .chat)
         v.setVersion(nil)
         check(v.versionTrust == .unverified, "a claude that gave no version: unverified, not the verified default")
