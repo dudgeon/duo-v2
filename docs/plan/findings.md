@@ -3928,11 +3928,11 @@ The tab-drag proof (C-96) ran on Geoff's OK, with his Duo window minimized so th
 - **A covered test window reads as hidden** (the first scroll try): WebKit reports `visibilityState=hidden` when another window covers it, even with `DUO_TEST_FOREGROUND=1`. Minimize or move the windows in front first.
 - Synthetic HID drags (CGEvent to the HID tap) were refused by the session's permission classifier. Only the in-process `real-drag` harness action remains, and dragging a session tab onto a task is a system drag that a synthetic one could hang. So C-96 goes to Geoff's hands on the walk.
 
-## F-335 · The director ran on retired rules from a Claude-app work tree (director-regression, 2026-10-19)
+## F-335 · A new director session didn't get the released director (director-regression, 2026-10-19)
 
-- **What.** director-duo-v2 (60d72656, the Claude desktop app) runs in the app's own work tree, `.claude/worktrees/work-in-flight-review-282901`, at e788537. That is 37 commits behind main and predates DL-215 (f696ec1). So `/director` loaded the retired project skill `.claude/skills/director/`; its PROJECT.md has no `## Director` and `docs/director/` doesn't exist there. From 10-17 to 10-19 it never ran on the new rules, and nothing told it so.
-- **Also.** `duo2 director status` was "unknown command" on 0.2.14 (no verbs before 0.2.16; offline `start` only from 0.2.17), and it never re-checked after the update. No worker was started through `duo2 director start`, so duo-v2 has no `.duo/director.json`, and `watch`/`status` had nothing to see.
-- **Write-up and fixes:** `docs/research/director-regression.md` (P1, ENH-267).
+- **What.** On 2026-10-17 15:07 Geoff opened a new Claude desktop-app session in duo-v2 and typed `/director`. It loaded duo-v2's own project skill, `.claude/skills/director/` (still on main until DL-215's merge on 10-18 18:55), not the released `duo-director` core. Duo names the core `duo-director` on purpose, so it can't hide a project skill (Installer.swift:37), and so `/director` doesn't reach it.
+- **Also.** The installed core was 0.2.16's, but Geoff's Duo was 0.2.14 (updates wait for Install Now). The skill's first step, `duo2 director status`, answered "unknown command" with no hint to update, and the director worked by hand from then on. The session then ran for two days on the skill and files of 10-17 (its Claude-app work tree branched at 15:07) through the restructure's merge and 0.2.17. Nothing tells a running director that its skill, its Duo or its project's rules changed. No worker went through `duo2 director start`, so duo-v2 has no `.duo/director.json`.
+- **Product defects, not use.** Name resolution, skill/app version mismatch, no staleness signal. Write-up and fixes: `docs/research/director-regression.md` (§2A, P1, ENH-267).
 
 ## F-336 · Workers' SendMessage reports to a bypassPermissions director are held and expire (director-regression, 2026-10-19)
 

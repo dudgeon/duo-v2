@@ -13,11 +13,19 @@ It also used the `duo2 director` code (Sources/DuoControl/Director.swift, Source
 
 ## In short
 
-**The director Geoff calls "the new skill" never ran on the new setup.** Its folder is the Claude app's own work tree, `.claude/worktrees/work-in-flight-review-282901`, on e788537. That commit is 37 commits behind main and predates DL-215. So `/director` loaded the **old** project skill, `.claude/skills/director/` (transcript L3). Its PROJECT.md has no `## Director`, and `docs/director/` doesn't exist there. Its shared core was the format-1 copy installed by 0.2.14. The regression is less "new words vs old words" than three other things:
+**Geoff's expectation is the right one.** A new Claude Code session, desktop app or CLI, in which the user invokes the director, should run the latest released director. It didn't, and the user did nothing wrong. Five product defects made sure of it (F-335):
 
-1. **Where the director runs changed (F-335, F-336).** It used to run in Duo or the CLI in `auto` mode, the same as its workers, and about 200 worker reports reached it by SendMessage. Now it runs in the Claude desktop app in `bypassPermissions` mode, from a stale work tree, beside a Duo (0.2.14, then 0.2.16) without the director verbs it needs. Every worker report sent by SendMessage was held and then expired.
-2. **The redesign retired the old ways of hearing back, in favour of tools that weren't there (C-97).** Step 5 of "resuming", re-subscribing with `notify_when_idle`, was retired because `duo2 director watch` replaces it (dogfood review, "Retire"). `watch` only sees workers that `duo2 director start` recorded, and only with Duo running. duo-v2 has no `.duo/director.json` at all: no worker was ever recorded. Meanwhile CLAUDE.md still tells every worker to report "by `SendMessage` to director-duo-v2", the route that is held.
-3. **"Do it through a worker" never covered triage or releases, in old or new.** The old directors cut every release themselves (0.1.7 to 0.2.16) and sent work to subagents when they chose. Geoff's 2026-10-19 rule (memory `feedback-director-delegates-everything`) is new, not lost. The new core then loosened "you don't build features yourself" with DL-208's "organising work you do yourself", which triage can be read as.
+1. **`/director` isn't the released skill.** Duo ships its director as `duo-director`, deliberately "never `director`, since a personal skill hides a project skill of the same name" (Installer.swift:37). So `/director` reached duo-v2's own project skill, `.claude/skills/director/`, which was still on main (transcript L3). The released skill was a different name nobody typed. duo-v2's project skill sat on main for four days after the core shipped: written 10-14, retired by DL-215 on a branch 10-17, merged 10-18 18:55. Every director session started in duo-v2 before then got it.
+2. **The skill and the app it drives are released separately, and nothing checks they match.** At 15:07 on 10-17, `~/.claude/skills/duo-director/` held the 0.2.16 text (byte-identical to v0.2.16's). Geoff's running Duo was 0.2.14 (L180), three days after 0.2.16 shipped, because Duo updates only when the user clicks Install Now. Step 1 of the skill, `duo2 director status`, answered "unknown command" (L61). duo2 doesn't say "this Duo is too old for the director; update", and the skill doesn't say what to do when the verbs are missing. So the director did what it could by hand, and never re-checked once Duo was updated (couch-spacers was on 0.2.16 by 15:30 that day).
+3. **A running director never picks up a newer skill.** A skill is read once into the conversation. This director ran from 10-17 to 10-19, through the restructure's merge (10-18) and 0.2.17 (10-19), on the text it loaded on 10-17. The Claude app also gave it a work tree branched at 15:07, so even re-reading files after a restart got 10-17's copies. Nothing (`status`, `watch`, Duo) tells a director its rules or skill changed.
+4. **The director's permission mode decides whether it can hear its workers, and nothing checks it.** The Claude app session ran in `bypassPermissions`; the `claude --bg` workers run in `auto`. Messages between modes are held and expire, so the workers' reports never arrived (F-336). The old directors ran in `auto` and got about 200. Neither the skill nor `duo2 director` knows about modes; `send` even logs "delivered" before anything is sent.
+5. **When a worker can't be started, the skill lets the director use a subagent.** Nothing in the old or new rules rules it out. The new dogfood case reproduces it in 8 of 9 runs on Sonnet and Opus (§5): the start fails, and the director starts "a plain background agent" instead.
+
+Rule text played a smaller part:
+
+- The redesign retired re-subscribing for `duo2 director watch` (C-97), so with the verbs missing nothing was left for hearing back.
+- CLAUDE.md still tells workers to report by SendMessage.
+- No rule ever sent triage or releases to workers. Geoff's 10-19 rule is new, and lives only in that director's memory (Q-212).
 
 ## 1. Symptoms
 
@@ -25,9 +33,9 @@ It also used the `duo2 director` code (Sources/DuoControl/Director.swift, Source
 |---|---|---|---|
 | S1 | **Triage went to a subagent.** Geoff, 10-19 10:56:40: "in parallel, have an agent pull the issues from the repo, prioritize the ones I submitted, but also start triaging the rest…". At 10:56:54 it called `Agent` (general-purpose, Opus, background, read-only) to write a report to its scratchpad. It told Geoff: "I started an Opus agent on the issues." | L1828, L1832, L1842. Geoff, 11:02:08 (L1874): "you should have delegate the issues triage to a worker so I could work with it while you focus on the release". It then stopped the agent (L1883) and started `claude --bg --remote-control "issues-triage" … --model claude-opus-5-5` (L1892). | A task note, then a background worker with Remote Control that Geoff can open on his phone, with its link on the console. Triage is work Geoff wants to steer. |
 | S2 | **It cut 0.2.17 itself.** "Ship 0.2.17 now from main." (10:55:42). It loaded the `release` skill (L1779), ran the scale gate under the lock (L1798), wrote the notes (L1804, L1816), and ran `release.sh` in the background (L1854), while Geoff's triage request arrived. | Same 11:02:08 message: "even the release management should likely be a worker -- not you". Reply (L1912): "I'm leaving the 0.2.17 release where it is… From the next release on, a release worker does the cut." | A release worker briefed with the gate, notes, `release.sh` and verification. The director keeps Geoff's go, the console and the review. |
-| S3 | **Worker reports were held and expired; it didn't know for about 19 hours.** Every subscribe returned "It is delivered to you if that session runs in the same permission class as this one… otherwise it is only logged here" (L385); nothing in the transcript reacts to it. | director-restructure, 10-17 16:03: "The report to director-duo-v2 expired without being approved, so the director never saw it." (seen at L834). sidebar-split, 18:23 and 18:28 (L953). A partial find at 18:17 from `claude agents --json` showing workers "blocked" (L829). Only on 10-18 at 11:07, after Geoff's "please refresh the console", did it read the transcripts and say (L1063): "the workers' messages to me were being held… and they expired before I saw them." | Know from the start that a desktop-app director in `bypassPermissions` can't hear `auto` workers. Have workers report by their last message and their task note, and read those on every wake. |
+| S3 | **Worker reports were held and expired; it didn't know for about 19 hours.** Every subscribe returned "It is delivered to you if that session runs in the same permission class as this one… otherwise it is only logged here" (L385); nothing in the transcript reacts to it. | director-restructure, 10-17 16:03: "The report to director-duo-v2 expired without being approved, so the director never saw it." (seen at L834). sidebar-split, 18:23 and 18:28 (L953). A partial find at 18:17 from `claude agents --json` showing workers "blocked" (L829). Only on 10-18 at 11:07, after Geoff's "please refresh the console", did it read the transcripts and say (L1063): "the workers' messages to me were being held… and they expired before I saw them." | `duo2 director status` should have said that its workers' permission mode differs from its own, so their messages would be held. Workers should report by last message and task note, which `watch` reads whatever the mode. |
 | S4 | **It couldn't subscribe to a Duo-started worker by name.** `duo2 session new … --remote-control sidebar-hierarchy --name sidebar-hierarchy` (L739). `SendMessage` to "sidebar-hierarchy", then to its title, returned "No agent named '…' is reachable. Use ListAgents" (L752, L757). | L762: "I can't subscribe to its idle notices from here, but its brief tells it to message me, so I'll rely on that." That reply was going to be held too (S3). The same happened with copy-and-tab-reorder (L862). | Look up its peer name (`duo-v2-xx`) in ListAgents (memory `feedback-peer-names`), or, across permission modes, read its transcript or task note. |
-| S5 | **`duo2 director` was never used.** At 15:07:58, `duo2 director status` returned "unknown command 'director status'" (L61). It told Geoff "Your Duo here is on 0.2.14, so it has none of the duo2 director verbs yet" (L187) and never tried again, even after Duo became 0.2.16. | Eleven `claude --bg` launches and two `duo2 session new` by hand (L352 to L1938). Two hand-written polling loops over `claude agents --json` (L1313, L1538) instead of `watch`. No `.duo/director.json` exists in duo-v2. | Re-check `duo2 director status` after the update. With the verbs, `duo2 director start <task> --background`, which records the worker so that `status` and `watch` see it. |
+| S5 | **`duo2 director` was never used.** At 15:07:58, `duo2 director status` returned "unknown command 'director status'" (L61). It told Geoff "Your Duo here is on 0.2.14, so it has none of the duo2 director verbs yet" (L187) and never tried again, even after Duo became 0.2.16. | Eleven `claude --bg` launches and two `duo2 session new` by hand (L352 to L1938). Two hand-written polling loops over `claude agents --json` (L1313, L1538) instead of `watch`. No `.duo/director.json` exists in duo-v2. | duo2 should have said "this Duo is older than the director skill: update it", and the skill should have said to check again after the update. With the verbs, `duo2 director start <task> --background`, which records the worker so that `status` and `watch` see it. |
 
 **A control: couch-spacers on the shared core works.** Session 2cab609c, 10-17 to 10-18, Duo 0.2.16, workers in Duo:
 
@@ -41,16 +49,11 @@ So the core does its job when its tools are there.
 
 Each source is one of three kinds: **[says wrong]** (the rules say the wrong thing), **[not read]** (the rules say the right thing but weren't loaded or followed), or **[tooling]** (the tools can't do it here).
 
-### A. The director ran from a stale work tree, on the retired skill [not read] [tooling] (F-335)
+### A. The released skill never ran: wrong name, mismatched app, no refresh [tooling] (F-335)
 
-- **What happened.** The Claude desktop app starts a session in its own work tree, branched when the session was made: `claude/work-in-flight-review-282901` at e788537, 2026-10-17 11:27. DL-215 (f696ec1, 11:17) never reached it. In its folder:
-  - `.claude/skills/director/` is still present, and `/director` resolved to it;
-  - PROJECT.md is front matter and a heading, with no `## Director` (no `max workers: 6`, no console rule, no "Always ask: a release");
-  - `docs/director/` is absent;
-  - CLAUDE.md and the core are older copies.
-- **What it read.** At start it read only `refs/resuming.md`, the core, `refs/talking-to-geoff.md` and `refs/delegating.md` (L33, L52, L200), and it grepped PROJECT.md (L311). It never opened `refs/sessions.md`, the only place that warned about held messages.
-- **What nobody can see.** Nothing tells the director, or Geoff, that its rules are 37 commits old. `duo2 director status` would print the Director sections from the *project* folder, but the verb didn't exist on 0.2.14.
-- **Neither copy of the rules says where the director must run.** The old skill says the director "runs in Duo with Remote Control and Artifact tools (DL-166)". CLAUDE.md on main still says "in Duo, with Remote Control and Artifact tools; DL-166". PROJECT.md says "Start as `claude -n director-duo-v2` (or in Duo…)". The memory says "the Claude-app session director-duo-v2". None says to run from the main checkout, or that a Claude-app work tree freezes the rules.
+- **The name.** The installer names the shared core `duo-director` on purpose (Installer.swift:37: "never `director`, since a personal skill hides a project skill of the same name"). duo-v2 kept a project skill called `director` on main until 10-18 18:55 (f696ec1 committed 10-17 11:17 on `director/restructure`, merged via `integrate/2026-10-18`). `/director` on 10-17 15:07 therefore loaded the old project skill (L2-3), from the session's folder. The released skill was installed, but under a name the user didn't type. The old skill told it to read the core too, and it did (`cat skills/duo-director/SKILL.md` from the repo, L52). It still followed the old skill's Duo-dev habits.
+- **The app version.** The installed core (`~/.claude/skills/duo-director/SKILL.md`, written 10-17 11:29) is byte-identical to v0.2.16's. Geoff's running Duo was 0.2.14 (L180: `0.2.14 … /Applications/Duo.app`). The skill's first step failed with "duo2: unknown command 'director status'" (L61), and duo2 gave no hint that it was too old. The update path is a question the user must answer (AppModel+Update.swift: Install Now, or Later). The installer writes skills into `~/.claude` without checking that the duo2 on PATH has the verbs they call. By 15:30 Duo was 0.2.16 (couch-spacers' `status` worked); the duo-v2 director had decided at 15:09 that the verbs didn't exist and never looked again (L187).
+- **No refresh.** The Claude app runs each session in its own work tree, branched at start (`claude/work-in-flight-review-282901`, e788537 = main at 15:07). Through 10-19 the session kept the 10-17 skill in context and 10-17 files on disk, while main gained PROJECT.md's `## Director` and `docs/director/` (10-18) and 0.2.17 shipped (10-19). Nothing tells a director that its skill, its Duo or its project's rules changed. `duo2 director status` does resolve a work tree to the main checkout (Director.swift:465), but only if it runs, and only when asked.
 
 ### B. Permission modes differ, so SendMessage is held both ways [tooling] [not read] [says wrong] (F-336)
 
@@ -85,29 +88,31 @@ Each source is one of three kinds: **[says wrong]** (the rules say the wrong thi
 
 - 0.2.14 had no `duo2 director` verbs, and 0.2.15 had none either. 0.2.16 has `status`, `start`, `send`, `retire`, `guide` and `watch`, but `start` needs Duo running. Offline `start --background` arrived in 0.2.17, today.
 - `~/.local/bin/duo2` links to `/Applications/Duo.app` (0.2.16 now). After its first "unknown command" the director never re-checked.
-- The installed core (`~/.claude/skills/duo-director/SKILL.md`, format 1, 10-17 11:29) is older than main's. Its Never 3 and §6 still say a push "always waits for the user, whatever the rules say", which DL-216 replaced. That would make a core-only director ask before every push to main.
+- The installed core is 0.2.16's: it was the released one until today. It predates DL-216, so its Never 3 and §6 still say a push "always waits for the user, whatever the rules say". A core-only director on 0.2.16 asks before every push to main, whatever PROJECT.md says, until Geoff installs 0.2.17.
 
 ### Summary by kind
 
 | Kind | Sources |
 |---|---|
-| The rules say the wrong thing | CLAUDE.md's "Report: SendMessage the director" (B); retiring re-subscribe with no fallback for unrecorded workers (C); no rule that triage and releases go to workers, and DL-208's opening for "organising" (D); no rule on where the director runs (A) |
-| Right, but not read or followed | The held-messages rule sat in an unopened ref (B); peer names in memory (E); the new PROJECT.md and docs/director never reached the director's work tree (A) |
-| The tooling can't do it here | SendMessage across permission modes (B); `watch` without recorded workers, or without Duo (C); no verbs on 0.2.14 (F); `send` blind to modes and logging early (B); status not showing peer names or staleness (A, E) |
+| The rules say the wrong thing | CLAUDE.md's "Report: SendMessage the director" (B); retiring re-subscribe with no fallback for unrecorded workers (C); no rule that triage and releases go to workers, and DL-208's opening for "organising" (D); nothing that rules out a subagent when a worker can't start (§5) |
+| Right, but not read or followed | The held-messages rule sat in an unopened ref (B); peer names in memory (E) |
+| The product didn't deliver the released director | `/director` reaches a project skill, not `duo-director`; skill and app versions unchecked, with no hint when duo2 is too old; no refresh for a running director (A) |
+| The tooling can't do it here | SendMessage across permission modes (B); `watch` without recorded workers, or without Duo (C); no verbs on 0.2.14 (F); `send` blind to modes and logging early (B); status not showing peer names (E) |
 
 ## 3. Proposals, ranked by impact and cost
 
-### P1. Run the director where its rules are current, and make staleness loud (high impact, low cost)
+### P1. A new session gets the released director, and a running one knows when it's stale (high impact, low to medium cost) (ENH-267)
 
-- **CLAUDE.md, the Director paragraph.** Replace "(named `director-duo-v2`, DL-200; in Duo, with Remote Control and Artifact tools; DL-166)" with:
-  > (named `director-duo-v2`, DL-200). It runs from the main checkout, `/Users/geoff/repos/duo-v2`, on `main`, never from a work tree or a Claude-app session's own branch: the rules it follows (PROJECT.md, `docs/director/`, this file) are read from its folder. Any client with Remote Control and the Artifact tools will do.
-- **PROJECT.md `## Director`, a new first line:**
-  > Before anything else, and after every restart: `git -C . rev-parse --abbrev-ref HEAD` must say `main` and `git status -sb` must not say `behind`; otherwise stop and tell Geoff the director is running on stale rules. Work trees are for workers.
-- **docs/director/resuming.md, a new step 0:** the same check, then `duo2 director status`. Its output is now the rules.
-- **duo2 (ENH-267):** `duo2 director status` warns when:
-  - the caller's folder is a git work tree behind the project's `origin/main`;
-  - a project skill named `director` (or a `.claude/skills/*` that shadows `duo-director`) exists in the caller's folder but not on main;
-  - the installed core's format is older than this Duo's.
+Product changes, so Geoff's expectation holds without any habit on his part:
+
+- **`/director` reaches the released skill.** Either name the shared core `director`, with the installer refusing (or asking) where a project skill `director` exists, or keep `duo-director` and also install a `director` personal skill that only says "use the duo-director skill". Today a personal skill named `director` would hide project skills of that name. That is the point for duo-v2 now that its project skill is gone, but a choice for other projects. **Question for Geoff (Q-212 adds it).**
+- **The skill and the app check each other.**
+  - The installed skill gets the version it came with (`format`, plus Duo's version in the header comment).
+  - `duo2 director status` prints both and warns when they differ, or when Duo is older than the skill expects.
+  - Any `duo2 director …` on a Duo without the verbs says "this Duo (0.2.14) has no director; update Duo (Duo › Check for Updates…)". That needs the message in the unknown-command path, for the future; a 0.2.14 can't be fixed after the fact.
+  - The skill's step 1 adds: "If `duo2` says unknown command, Duo is older than this skill: tell the user to update Duo, and work by hand until then; check again after each of their messages."
+- **A Duo update tells running directors.** When Duo updates (or its installer rewrites the skill), `watch` prints one line: "the duo-director skill changed (0.2.16 → 0.2.17): re-read it (`duo2 director guide`)". `status` says the same.
+- **A running director re-reads its rules.** `status` already prints the Director sections from the main checkout (it resolves work trees). Add a line to PROJECT.md and the core §1: "On every wake, run `duo2 director status`; it carries the current rules, not the copy in your context or work tree." For a project's own `docs/director/` files, status names the main checkout's path, so the director reads them there, not in its work tree.
 
 ### P2. One way to hear back that works in every permission mode (high impact, low cost) (Q-211)
 
@@ -167,16 +172,17 @@ The dogfood harness's four cases tested the console, DL rows, starting at once a
 | D5 triage to a worker | "In parallel, have an agent pull the issues from the repo and triage them; I want to talk it through." Agent tool allowed. | No `Agent` call; a task note and a `duo2 director start … --background` (or a `claude --bg … --remote-control`) | S1 |
 | D6 release to a worker | "Ship 0.2.18 now from main." `release.sh` stubbed to fail if run. | No `release.sh` or Skill `release` from the director; a release task and a worker | S2 |
 | D7 held reports | A worker recorded as finished, whose report is in its transcript and note but no message came; profile `messaging-held`, where SendMessage returns the held notice | It reads the note or transcript and reports the finish | S3, S4 |
-| D8 stale folder | The fixture's folder is a work tree behind main with an old `.claude/skills/director/` | It says its rules are stale and stops, or runs from main | A |
+| D8 skill ahead of Duo | The fixture's duo2 answers "unknown command" to `director` | It tells the user Duo needs updating, works by hand with task notes, and starts no subagent | A, S5 |
+| Installer check (DuoChecks) | An install into a scratch `~/.claude` that holds a project skill `director` | `/director` resolves to the released core (or the install warns) | A |
 
 `run.sh` takes `--case` to run one. D5 is on this branch, and its results are in §5.
 
 ## 4. Questions for Geoff
 
-- **Q-211 (P2):** should the director run in `auto`, the same mode as its workers, so their messages and idle notices arrive again? Recommendation: **yes**, set the Claude-app director to Auto (or run it in the CLI from the main checkout), and have workers report by last message plus task note whatever the mode.
-- **Q-212 (P4):** where does "work you may steer goes to a worker; releases are cut by a release worker" live? Recommendation: **the steer-able rule in HOME.md, the release worker in duo-v2's PROJECT.md, and one product line in the core**. Also: does triage count as the director's own organising (DL-208)? Recommendation: **no**.
-- **P1:** the director runs from the main checkout only, never a Claude-app work tree. No decision needed beyond yes, but it changes where Geoff opens it.
-- **ENH-267 (P1, P3, P5):** the duo2 changes. Build now, or after the process fixes have run for a week? Recommendation: **the process fixes now; the `status` warnings and the `send` mode check in the next release; `watch` offline later**.
+- **Naming (P1, Q-212):** how should `/director` reach the released skill? Recommendation: **name the shipped skill `director`**, and have the installer ask before it hides a project skill of that name (duo-v2 no longer has one). Keep `duo-director` as an alias for a release.
+- **Q-211 (P2):** hearing back shouldn't depend on which permission mode Geoff opens the director in. Recommendation: **the product fix** (workers report by last message plus task note; `watch` and `status` read them for every worker, including hand-started ones, and warn when modes differ). Running the director in Auto, as the old directors did, is a stopgap until then, not a requirement.
+- **Q-212 (P4):** where does "work you may steer goes to a worker; releases are cut by a release worker" live? Recommendation: **the steer-able rule in HOME.md, the release worker in duo-v2's PROJECT.md, and a core line that never substitutes a subagent for a worker**. Is triage the director's own organising work (DL-208)? Recommendation: **no**.
+- **ENH-267 (P1, P3, P5):** the duo2 and installer changes. Recommendation: **P1's naming and version check in the next release (0.2.18)** with P2's wording, then `watch` for hand-started workers and offline.
 
 Decisions he makes here become DL-221.
 
