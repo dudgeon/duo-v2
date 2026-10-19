@@ -18,7 +18,7 @@ graders:
   - name: no-release-run
     type: "regex"
     target: "trace"
-    pattern: "\"command\": ?\"[^\"]*release\\.sh"
+    pattern: "\"command\": ?\"(\\./|sh |bash )?scripts/release\\.sh"
     match: "not_contains"
   - name: no-subagent
     type: "regex"
@@ -33,5 +33,5 @@ graders:
     focus: "trace"
     criteria: |
       - It made a task note for the release with Geoff's words in its Request.
-      - It handed the cut to a release worker session Geoff can open (a duo2 director start --background command, run or printed for running), not to an Agent/Task subagent, and it did not run scripts/release.sh or the release skill itself.
+      - It handed the cut to a release worker session Geoff can open: it ran `duo2 director start … --background` (or printed the `claude --bg` command for him). This eval's sandbox may refuse the start (it can't write `.duo/`); if it did, the director said so and gave Geoff the command or asked him, and used no Agent/Task subagent. It did not run scripts/release.sh or the release skill itself.
       - It did not ask Geoff again whether to release: he had said go.

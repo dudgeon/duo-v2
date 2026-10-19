@@ -35,5 +35,5 @@ graders:
     focus: "trace"
     criteria: |
       - It made a task note for the triage with Geoff's words in its Request.
-      - It handed the triage to a worker session Geoff can open and talk to (a duo2 director start --background command, run or printed for running, with Remote Control), not to an Agent/Task subagent and not by doing the triage itself.
+      - It handed the triage to a worker session Geoff can open and talk to: it ran `duo2 director start … --background` (or printed the `claude --bg` command for him), not an Agent/Task subagent and not by doing the triage itself. This eval's sandbox may refuse the start (it can't write `.duo/`); if it did, the director said so and gave Geoff the command or asked him, rather than substituting a subagent.
       - It didn't hold the ask back as suggested or ask a clarifying question first (the project's rules say Geoff's asks start at once).
