@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Edge cases</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.t2{color:#5B636D}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0 0 8px}
+.p{margin:8px 0 0;font-size:12px;line-height:18px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:14px 16px}
+ul{margin:0;padding-left:18px}
+li{margin:0 0 6px;font-size:12px;line-height:18px}
+code{font:12px/18px 'SF Mono',ui-monospace,monospace}
+.tile{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:10px 12px;width:220px;white-space:nowrap}
+.tr{display:flex;align-items:center;gap:6px;height:24px}
+.tt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+</style>
+</helmet>
+<div class="bd" style="width: 1760px; height: 1000px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">F · Edge cases, drawn in B (open above tasks)</h1>
+<p class="t2" style="margin: 4px 0 0; font-size: 12px; line-height: 18px">Later opened with a done task, 240 wide, Home, All projects' tiles, and what the keyboard, VoiceOver and duo2 need. [P] throughout.</p>
+</div>
+<div style="display: flex; gap: 24px; align-items: flex-start">
+<div style="width: 300px; flex: none">
+<div class="cap">1 · Later opened, a done task</div>
+<dc-import name="Pane" pane="{{p1}}" hint-size="300px,800px"></dc-import>
+<p class="p"><b>Later, opened:</b> most recent first, each with its age where the status sits. A done task (DL-187's look) sinks below the in-play tasks, then joins Later after 3 quiet days, until the director archives it (DL-204). The fold remembers being open, per project.</p>
+</div>
+<div style="width: 240px; flex: none">
+<div class="cap">2 · 240 wide</div>
+<dc-import name="Pane" pane="{{p2}}" hint-size="240px,500px"></dc-import>
+<p class="p">Names truncate their tail; waits never do. Under 280 the slot's second line drops the word “Director” and keeps the counts.</p>
+</div>
+<div style="width: 300px; flex: none">
+<div class="cap">3 · Home</div>
+<dc-import name="Pane" pane="{{p3}}" hint-size="300px,500px"></dc-import>
+<p class="p">Home's director (DL-197) sits in Home's slot. Its second line counts the projects it's directing in, as well as workers. A project's director never shows here.</p>
+</div>
+<div style="width: 250px; flex: none">
+<div class="cap">4 · All projects' tile</div>
+<div class="tile">
+<div style="font-weight: 600">checkout</div>
+<div class="t2" style="font-size: 12px; line-height: 16px; margin-bottom: 4px">On track · Ship by Nov 1</div>
+<div class="tr"><dc-import name="Glyph" g="hand" hint-size="10px,10px"></dc-import><span class="tt">Pricing copy review</span><span class="t2">4m</span></div>
+<div class="tr"><dc-import name="Glyph" g="tw" hint-size="10px,10px"></dc-import><span class="tt" style="font-weight: 600">director-checkout</span><span class="t2">working</span></div>
+<div class="tr"><dc-import name="Glyph" g="cw" hint-size="10px,10px"></dc-import><span class="tt">Draft launch email</span><span class="t2">working</span></div>
+<div class="tr"><dc-import name="Glyph" g="tw" hint-size="10px,10px"></dc-import><span class="tt">Fix flaky cart test</span><span class="t2">working</span></div>
+</div>
+<p class="p">Needs-you rows first, as now; then the director, its name in `bodyEmphasis`, ahead of the other sessions. Kept-running sessions don't move in tiles. Home's List (DL-142) stays by recency; it's every project's sessions.</p>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div class="card">
+<div class="cap">Keyboard and VoiceOver</div>
+<ul>
+<li>Order on screen is the order everywhere: VoiceOver reads PINNED first, and the list's arrow keys (when ENH-58 adds them) follow it.</li>
+<li>No new shortcut (DL-34). ⌃Tab keeps cycling the console's tabs in their own order (DL-165); the sidebar's order doesn't change the tab strip.</li>
+<li>The slot reads “director-checkout, director, terminal session, working, 2 workers, kept running”. Later reads “Later, 11 tasks, folded”.</li>
+</ul>
+</div>
+<div class="card">
+<div class="cap">duo2 (DL-71)</div>
+<ul>
+<li><code>duo2 session keep-running &lt;id&gt; on|off</code> (exists) is PINNED's verb and its +.</li>
+<li><code>duo2 view group later expand|collapse</code> uses the existing group verb.</li>
+<li><code>duo2 sessions</code> marks <code>director</code> and <code>pinned</code>; <code>--json</code> adds <code>"director": true</code> and the row's <code>"section"</code>.</li>
+<li><code>duo2 tasks</code> adds <code>later</code> and the last activity, so a director can see what's gone quiet.</li>
+<li>Close on a replaced director is <code>duo2 session close</code> (exists).</li>
+</ul>
+</div>
+<div class="card">
+<div class="cap">Migration and scale</div>
+<ul>
+<li>Nothing on disk changes. On the first launch with this build, tasks quiet for 3 days go into Later, folded; the director moves up.</li>
+<li>Your shop project: 18 tasks, 1 with a session. Today the director is about row 24, under them all. With B it's row 1, and TASKS shows what changed in 3 days.</li>
+<li>duo-v2: its director and workers run outside Duo. They show only once linked to the project (Q).</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const base = { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1' };
+    const later = [['Tax engine upgrade', '5d'], ['Saved cards', '6d'], ['Apple Pay', '9d'], ['Receipt redesign', '12d'], ['Abandoned-cart emails', '2w'], ['Localise currency', '3w'], ['Accessibility audit', '3w'], ['Order history page', '1mo'], ['Gift cards', '1mo'], ['Refund flow copy', '2mo'], ['Shipping estimates', '2mo']];
+    const p1 = { ...base, rows: [
+      { k: 'sec', label: 'Pinned · 1' },
+      { k: 'slot', g: 'tw', title: 'director-checkout', pin: true, tm: 'working', sub: 'Director · 2 workers', tint: true },
+      { k: 'sec', label: 'Tasks · 16' },
+      { k: 'task', chev: 'r', title: 'Guest checkout A/B test', tm: 'open · 1' },
+      { k: 'task', chev: 'r', title: 'Address autocomplete', tm: 'open · 1' },
+      { k: 'line', title: 'Fraud rule audit', tm: 'open' },
+      { k: 'task', chev: 'r', done: true, title: 'Stripe migration', tm: 'done · 1' },
+      { k: 'fold', chev: 'd', title: 'Later', tm: '11' }
+    ].concat(later.map(([t, a]) => ({ k: 'line', title: t, tm: a }))).concat([{ k: 'new', title: 'New task' }, { k: 'sec', label: 'Other sessions · 6' }, { k: 'more', title: '…' }]) };
+    const p2 = { w: 240, title: 'checkout', goal: 'Ship the new checkout by Nov 1', rows: [
+      { k: 'sec', label: 'Pinned · 2' },
+      { k: 'slot', g: 'tw', title: 'director-checkout', pin: true, tm: 'working', sub: '2 workers', tint: true },
+      { k: 'row', g: 'ti', pin: true, tint: true, title: 'Nightly order export', tm: 'at prompt' },
+      { k: 'sec', label: 'Needs you · 1' }, { k: 'row', g: 'hand', title: 'Pricing copy review', tm: '4m' },
+      { k: 'sec', label: 'Tasks · 16' },
+      { k: 'task', chev: 'r', hand: true, title: 'Launch email', tm: 'open · 2' },
+      { k: 'task', chev: 'r', title: 'Guest checkout A/B test', tm: 'open · 1' },
+      { k: 'fold', chev: 'r', title: 'Later', tm: '11' },
+      { k: 'new', title: 'New task' }
+    ] };
+    const p3 = { w: 300, title: 'Home', goal: 'Everything not in a project', rows: [
+      { k: 'sec', label: 'Pinned · 1' },
+      { k: 'slot', g: 'ci', title: 'director-home', pin: true, tm: 'at prompt', sub: 'Director · 3 projects · 1 worker', tint: true },
+      { k: 'sec', label: 'Open · 1' },
+      { k: 'row', g: 'ci', tint: true, title: 'Reading list triage', tm: 'at prompt' },
+      { k: 'sec', label: 'Tasks · 4' },
+      { k: 'task', chev: 'r', title: 'File this week’s notes', tm: 'open · 1' },
+      { k: 'line', title: 'Plan the offsite', tm: 'open' },
+      { k: 'fold', chev: 'r', title: 'Later', tm: '2' },
+      { k: 'new', title: 'New task' },
+      { k: 'sec', label: 'Other sessions · 4' },
+      { k: 'fold', chev: 'r', title: 'This week', tm: '4' }
+    ] };
+    return { p1, p2, p3 };
+  }
+}
+</script>
+</body>
+</html>
