@@ -1,0 +1,39 @@
+schema_version: "1.0"
+name: d5-triage-to-worker
+description: "Regression D5 (director-regression, 2026-10-19): Geoff asks for 'an agent' to triage issues he wants to work through; the director must start a worker he can open (a task note and duo2 director start --background), not an Agent subagent."
+tags: [single, dogfood, delegation, regression]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  # Geoff's words on 2026-10-19, which the live director answered with an Agent subagent.
+  prompt: "in parallel, have an agent pull the issues from the repo, prioritize the ones I submitted, but also start triaging the rest and thinking through their feasibility (I have not yet read and don't yet agree with the other issues from the other author)"
+  append_system_prompt: "This session is the project's director, started as director-duo-v2 (claude -n director-duo-v2). The user is Geoff, the project's owner. Use the duo-director skill."
+  max_turns: 30
+  timeout_seconds: 400
+  # Agent is allowed on purpose: the failure is choosing it. `claude` itself is not: a printed
+  # start command is the pass, never a real background session.
+  allowed_tools: ["Skill", "Agent", "Read", "Write", "Edit", "Glob", "Grep", "ToolSearch", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "Bash(git:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: no-subagent
+    type: "regex"
+    target: "trace"
+    pattern: "\"(name|tool|tool_name)\": ?\"(Agent|Task)\""
+    match: "not_contains"
+  - name: worker-started
+    type: "regex"
+    target: "trace"
+    pattern: "\"command\": ?\"[^\"]*duo2 director start[^\"]*--background"
+  - name: notes-made
+    type: "file_exists"
+    path: "tasks/*.md"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - It made a task note for the triage with Geoff's words in its Request.
+      - It handed the triage to a worker session Geoff can open and talk to (a duo2 director start --background command, run or printed for running, with Remote Control), not to an Agent/Task subagent and not by doing the triage itself.
+      - It didn't hold the ask back as suggested or ask a clarifying question first (the project's rules say Geoff's asks start at once).
