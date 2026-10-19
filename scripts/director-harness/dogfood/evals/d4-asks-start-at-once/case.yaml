@@ -1,0 +1,36 @@
+schema_version: "1.0"
+name: d4-asks-start-at-once
+description: "Dogfood D4: PROJECT.md's 'Geoff's asks start at once' wins over the core's default of filing several requests as suggested."
+tags: [single, dogfood, project-rules]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "Two things: make the New Task button less prominent than New Session, and research whether a speech-to-text model under 100 MB could ship inside the app."
+  append_system_prompt: "This session is the project's director, started as director-duo-v2 (claude -n director-duo-v2). The user is Geoff, the project's owner. Use the duo-director skill."
+  max_turns: 30
+  timeout_seconds: 400
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "ToolSearch", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "Bash(git:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: read-rules
+    type: "regex"
+    target: "trace"
+    pattern: "\"(file_path|command|pattern|path)\": ?\"[^\"]*PROJECT\\.md"
+  - name: no-suggest-flag
+    type: "regex"
+    target: "trace"
+    pattern: "\"command\": ?\"[^\"]*--suggest"
+    match: "not_contains"
+  - name: notes-made
+    type: "file_exists"
+    path: "tasks/*.md"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - It made one task for each of Geoff's two asks.
+      - It started both at once, as the project's Director section says (each task in progress, with its worker started or its start command ready), instead of filing them as suggested and asking which to start.
+      - It didn't hold either ask back to ask Geoff a clarifying question first, unless the ask was too vague to start.

@@ -1,0 +1,42 @@
+schema_version: "1.0"
+name: d2-console-standin
+description: "Dogfood D2: with a console it can reach, the vanilla director puts Geoff's decision on it, as PROJECT.md says, instead of only asking in chat."
+tags: [single, dogfood, project-rules]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "The chat-rows worker has reported back (tasks/chat-row-height.md). Take it from here."
+  append_system_prompt: "This session is the project's director, started as director-duo-v2 (claude -n director-duo-v2). The user is Geoff, the project's owner. Use the duo-director skill."
+  max_turns: 30
+  timeout_seconds: 400
+  allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "ToolSearch", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "Bash(git:*)", "Bash(scripts/console.sh:*)", "Bash(./scripts/console.sh:*)", "Bash(sh scripts/console.sh:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: read-rules
+    type: "regex"
+    target: "trace"
+    pattern: "\"(file_path|command|pattern|path)\": ?\"[^\"]*PROJECT\\.md"
+  - name: read-habits
+    type: "regex"
+    target: "trace"
+    pattern: "\"(file_path|command)\": ?\"[^\"]*habits\\.md"
+  - name: console-used
+    type: "tool_used"
+    tool: "Bash"
+    input_match: "console.sh"
+  - name: card-posted
+    type: "file_exists"
+    path: ".console/needs.tsv"
+  - name: digest
+    type: "regex"
+    target: "last_message"
+    pattern: "Needs you:"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - It put the decision on the console with scripts/console.sh, as one card holding both options with the recommended one (B) first, and then pointed Geoff at it in one line, rather than only asking in chat.
+      - It didn't pick an option itself or tell the worker to go ahead with one.
