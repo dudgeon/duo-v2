@@ -184,7 +184,7 @@ The dogfood harness's four cases tested the console, DL rows, starting at once a
 - **Q-212 (P4):** where does "work you may steer goes to a worker; releases are cut by a release worker" live? Recommendation: **the steer-able rule in HOME.md, the release worker in duo-v2's PROJECT.md, and a core line that never substitutes a subagent for a worker**. Is triage the director's own organising work (DL-208)? Recommendation: **no**.
 - **ENH-267 (P1, P3, P5):** the duo2 and installer changes. Recommendation: **P1's naming and version check in the next release (0.2.18)** with P2's wording, then `watch` for hand-started workers and offline.
 
-Decisions he makes here become DL-221.
+Geoff decided on 2026-10-19: DL-222, §6.
 
 ## 5. The reproduction case (D5)
 
@@ -209,3 +209,14 @@ None printed the `claude --bg` command for the user, and none asked.
 **This adds one line to P4, for the core (§4, after the background-start sentence):**
 
 > If you can't start a worker (the start fails, no background sessions, no Duo), never use a subagent instead: give the user the `claude --bg` command to run, or ask them to open Duo. A subagent is invisible to the user and ends with your turn.
+
+## 6. Geoff's decision (DL-222, 2026-10-19)
+
+- **Naming.** "Ship it as `director`". The installer asks before it would hide a project skill of that name; `duo-director` stays as an alias for one release.
+- **0.2.18 carries all four groups:**
+  - the naming and the version check (P1);
+  - hearing back in any permission mode (P2, P3);
+  - the worker rules (P4 and the §5 core line);
+  - the harness cases (P7).
+- **Geoff added:** "Work machine disables dangerously skip permissions so we should avoid its use." So nothing in the director may rely on `bypassPermissions`. The design and its tests assume `auto`, and the stopgap of matching modes means running the director in Auto, never the workers in bypass.
+- **Numbering.** DL-221 was taken the same morning by the issues triage (dark appearance, `research/issues-triage` eefd764). This decision is DL-222.
