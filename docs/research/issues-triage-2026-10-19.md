@@ -156,5 +156,8 @@ DL-11, 22–24, 26, 27, 29, 34, 36, 43, 51, 71, 86, 87, 93, 98, 109, 116, 118–
 - **#12:** build it, plus a Tasks line in PROJECT.md. Suggested task: `tasks/agents-know-duo-tasks.md`.
 - **#5, #6:** reply with the assessment, ask them to try the current build and reopen if it's not fixed. Done: both replied to and closed as likely fixed.
 - **#14:** Opus design note first. Suggested task: `tasks/fork-handling-design-note.md`.
-- **#8:** dark mode sooner, starting with a design round. Suggested task: `tasks/dark-appearance-design-round.md`. The decision record (proposed DL-221) is not written yet.
-- **Still open:** #9, #11, #13, and #4's Ctrl+C and text-size parts.
+- **#8:** dark mode sooner, starting with a design round. Recorded as DL-221. Suggested task: `tasks/dark-appearance-design-round.md`.
+- **#9:** asked the author, politely, what the current layout gets in the way of and what they wish they could do. Mentioned that multiple windows and split panes are planned and still in progress. Left open.
+- **#11:** asked the author whether they've tried chat mode. Left open.
+- **#4:** Shift+Return on 2.1.219 and the Option/Command+Delete check go in `tasks/terminal-keys-shift-return-and-delete.md`. Text size goes in `tasks/text-size-zoom.md`. Ctrl+C in chat wasn't chosen.
+- **#13:** waits on the fork note (#14).

@@ -222,7 +222,7 @@ Shared by everything after it, including both PRDs.
 | Builds | Per gate zero: Developer ID + notarization + Sparkle, and/or the clone-and-build path; a launch validator in the release script (LR-61); restore on relaunch (LR-58); MIT `LICENSE` (DL-12); settings and menus. |
 | Gates | ⛔ design: settings, menus, notifications (§13). ❓ G1. |
 
-Later, by decision: version history (DL-5, right after I), tracked suggestions (DL-5), scheduled sessions (DL-9), side-by-side documents (DL-11), dark appearance (§12 Q4), similarity analysis (SRCH L12).
+Later, by decision: version history (DL-5, right after I), tracked suggestions (DL-5), scheduled sessions (DL-9), side-by-side documents (DL-11), dark appearance (§12 Q4; its design round pulled forward by DL-221), similarity analysis (SRCH L12).
 
 ---
 
@@ -262,7 +262,7 @@ Geoff delegated scoping. The test for v1: **Geoff can use Duo all day instead of
 - Full consolidation (CONS): archive by move, delete, tandem folder moves, catch-all splitting, duplicate and collision repair.
 - **Replying from the chrome** (DL-29; S12 first).
 - Thread detection for forks made inside the TUI (S11).
-- Google Docs reading (DL-7), tracked suggestions (DL-5), scheduled sessions (DL-9), side-by-side documents (DL-11), dark appearance (§12 Q4), similarity analysis (SRCH L12), frontmatter panel beyond plain editing (LR-37), multi-window.
+- Google Docs reading (DL-7), tracked suggestions (DL-5), scheduled sessions (DL-9), side-by-side documents (DL-11), dark appearance (§12 Q4; its design round pulled forward by DL-221), similarity analysis (SRCH L12), frontmatter panel beyond plain editing (LR-37), multi-window.
 
 ### Design queue, in build order
 
