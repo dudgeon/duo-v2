@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option C: now, then the rest</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.t2{color:#5B636D}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0 0 8px}
+.p{margin:0 0 8px;font-size:12px;line-height:18px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:14px 16px}
+.n{display:grid;grid-template-columns:24px minmax(0,1fr);column-gap:6px;margin:0 0 8px;font-size:12px;line-height:18px}
+.m{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;margin-top:1px}
+ul{margin:0;padding-left:18px}
+li{margin:0 0 6px;font-size:12px;line-height:18px}
+</style>
+</helmet>
+<div class="bd" style="width: 1100px; height: 1180px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">C · Now, then the rest</h1>
+<p class="t2" style="margin: 4px 0 0; font-size: 12px; line-height: 18px">Live work leads, whatever it belongs to. A NOW section holds every task with a live session and every live loose session; the rest keeps DL-174's split below it. [P] throughout.</p>
+</div>
+<div style="display: flex; gap: 28px; align-items: flex-start">
+<div style="width: 300px; flex: none">
+<div class="cap">Proposed · 300</div>
+<dc-import name="Pane" pane="{{pane}}" hint-size="300px,1000px"></dc-import>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div class="card">
+<div class="cap">What's drawn</div>
+<div class="n"><span class="m">1</span><div><b>The director's slot</b>, as in A, above everything.</div></div>
+<div class="n"><span class="m">2</span><div><b>NOW · n</b>: task groups with a live session (open in Duo, working or needing you), with all their sessions; then live loose sessions at the task rows' level, tinted, Keep Running ones first. Order: most urgent, then most recent.</div></div>
+<div class="n"><span class="m">3</span><div><b>TASKS</b> then holds the in-play tasks with nothing live, then Later, then + New task.</div></div>
+<div class="n" style="margin: 0"><span class="m">4</span><div><b>OTHER SESSIONS</b> loses Open (its sessions are in NOW) and keeps Today, This week and Earlier.</div></div>
+</div>
+<div class="card">
+<div class="cap">Good</div>
+<ul>
+<li>Exactly “live over long-range”: what's running is at the top, task or not.</li>
+<li>Open as a group goes away: NOW says the same thing with fewer folds.</li>
+</ul>
+<div class="cap" style="margin-top: 10px">Costs</div>
+<ul>
+<li>Undoes part of DL-174, which you chose: tasks and loose sessions share a section again (DL-93's mixing, which DL-174 replaced).</li>
+<li>Rows travel between NOW and TASKS or Today each time a tab opens, closes or parks, so the list moves under the pointer more (DL-130's hold softens it).</li>
+<li>A task is in NOW because one session is open, though its other sessions may be days old.</li>
+</ul>
+</div>
+<div class="card">
+<div class="cap">Top to bottom</div>
+<p class="p" style="margin: 0">Director slot · NEEDS YOU · NOW (live tasks, live sessions) · TASKS (in play, Later, + New task) · OTHER SESSIONS (Today, This week, Earlier) · Archived.</p>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1100,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pane = { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1', rows: [
+      { k: 'slot', g: 'tw', title: 'director-checkout', pin: true, tm: 'working', sub: 'Director · 2 workers', tint: true, mk: '1' },
+      { k: 'rule' },
+      { k: 'sec', label: 'Needs you · 1' }, { k: 'row', g: 'hand', title: 'Pricing copy review', tm: '4m' },
+      { k: 'sec', label: 'Now · 5', mk: '2' },
+      { k: 'task', chev: 'd', hand: true, title: 'Launch email', tm: 'open · 2' },
+      { k: 'row', in: 'nest', g: 'cw', tint: true, title: 'Draft launch email', tm: 'working' },
+      { k: 'row', in: 'nest', g: 'ti', title: 'Segment list query', tm: '3h' },
+      { k: 'task', chev: 'd', title: 'Guest checkout A/B test', tm: 'open · 1' },
+      { k: 'row', in: 'nest', g: 'tw', title: 'A/B test harness', tm: '2m' },
+      { k: 'row', g: 'ti', pin: true, tint: true, title: 'Nightly order export', tm: 'at prompt' },
+      { k: 'row', g: 'tw', tint: true, title: 'Fix flaky cart test', tm: 'working' },
+      { k: 'row', g: 'ci', tint: true, title: 'Summarise user interviews', tm: 'at prompt' },
+      { k: 'sec', label: 'Tasks · 14', mk: '3' },
+      { k: 'task', chev: 'd', title: 'Stripe migration', tm: 'open · 1' },
+      { k: 'row', in: 'nest', g: 'td', title: 'Migrate Stripe webhooks' },
+      { k: 'task', chev: 'd', title: 'Address autocomplete', tm: 'open · 1' },
+      { k: 'row', in: 'nest', g: 'ti', title: 'Autocomplete spike', tm: '1h' },
+      { k: 'line', title: 'Fraud rule audit', tm: 'open' },
+      { k: 'fold', chev: 'r', title: 'Later', tm: '11' },
+      { k: 'new', title: 'New task' },
+      { k: 'sec', label: 'Other sessions · 17', mk: '4' },
+      { k: 'fold', chev: 'd', title: 'Today', tm: '2' },
+      { k: 'row', in: 'kid', g: 'ci', title: 'Competitor teardown', tm: '2h' },
+      { k: 'row', in: 'kid', g: 'ti', title: 'Update README badges', tm: '5h' },
+      { k: 'fold', chev: 'r', title: 'This week', tm: '3' },
+      { k: 'fold', chev: 'r', title: 'Earlier', tm: '12' },
+      { k: 'sec', chev: 'r', label: 'Archived · 3' }
+    ] };
+    return { pane };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option B: pinned on top</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.t2{color:#5B636D}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0 0 8px}
+.p{margin:0 0 8px;font-size:12px;line-height:18px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:14px 16px}
+.n{display:grid;grid-template-columns:24px minmax(0,1fr);column-gap:6px;margin:0 0 8px;font-size:12px;line-height:18px}
+.m{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;margin-top:1px}
+.rec{display:inline-block;font:600 10px/14px -apple-system,system-ui,sans-serif;letter-spacing:.5px;text-transform:uppercase;border:1px solid #1F2328;border-radius:9px;padding:0 6px;margin-left:6px;vertical-align:3px}
+ul{margin:0;padding-left:18px}
+li{margin:0 0 6px;font-size:12px;line-height:18px}
+</style>
+</helmet>
+<div class="bd" style="width: 1100px; height: 1180px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">B · Pinned on top, open above tasks<span class="rec">Chosen</span></h1>
+<p class="t2" style="margin: 4px 0 0; font-size: 12px; line-height: 18px">You chose B on 2026-10-17, then (2026-10-19): “open sessions should be above tasks”. Drawn with board G’s O2, your pick (2026-10-19): OPEN holds sessions in no task. [P] throughout.</p>
+</div>
+<div style="display: flex; gap: 28px; align-items: flex-start">
+<div style="width: 300px; flex: none">
+<div class="cap">Proposed · 300</div>
+<dc-import name="Pane" pane="{{pane}}" hint-size="300px,1000px"></dc-import>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div class="card">
+<div class="cap">What's drawn</div>
+<div class="n"><span class="m">1</span><div><b>PINNED · n</b>, a section label like the others, first in the pane. It shows only when there's a director or a Keep Running session; otherwise the pane starts at NEEDS YOU as today.</div></div>
+<div class="n"><span class="m">2</span><div><b>The director, first in PINNED</b>, in its two-line slot: glyph, name in `bodyEmphasis`, pin, wait; then “Director · 2 workers” in `control` `text2`. It's there whether or not it's set to Keep Running.</div></div>
+<div class="n"><span class="m">3</span><div><b>Keep Running sessions</b> follow, as ordinary session rows with their pin, most recent first. A pinned session in a task shows here, not under its task; the task row counts it (“open · 2”, as for a session waiting in NEEDS YOU). Keep Running off sends it back.</div></div>
+<div class="n"><span class="m">4</span><div><b>OPEN · n</b>: tabs open in Duo for sessions in no task, not pinned or waiting on you, most recent first. A task's open tabs stay under their task, which ranks first in TASKS (board G, O2).</div></div>
+<div class="n"><span class="m">6</span><div><b>Later · 11</b> and the task-line order, as in A.</div></div>
+<div class="n" style="margin: 0"><span class="m">5</span><div><b>On hover, PINNED's + is Keep Running…</b>: it lists the open sessions not yet kept, and is `duo2 session keep-running`. No new command; Keep Running is already in the session menu and on the tab.</div></div>
+</div>
+<div class="card">
+<div class="cap">Good</div>
+<ul>
+<li>One idea, not two: the pin you already see on a tab now also means “stays on top”. No Pin to Top to learn.</li>
+<li>Long-lived sessions (a director, a monitor, an inbox watcher) are the ones you return to all day. They sit where the eye starts.</li>
+<li>Works the same in Home and in a project, and with no director at all.</li>
+</ul>
+<div class="cap" style="margin-top: 10px">Costs</div>
+<ul>
+<li>Someone who keeps a session running only to save its start-up gets it on top too. If that turns out to annoy, a separate Pin to Top can come later (ENH).</li>
+<li>Five or more kept sessions make PINNED long. It shows them all; it's your list.</li>
+</ul>
+</div>
+<div class="card">
+<div class="cap">Top to bottom</div>
+<p class="p" style="margin: 0">PINNED (director, Keep Running) · NEEDS YOU · OPEN · TASKS (in play, Later, + New task) · OTHER SESSIONS (Today, This week, Earlier) · Archived.</p>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1100,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pane = { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1', rows: [
+      { k: 'sec', label: 'Pinned · 2', mk: '1' },
+      { k: 'slot', g: 'tw', title: 'director-checkout', pin: true, tm: 'working', sub: 'Director · 2 workers', tint: true, mk: '2' },
+      { k: 'row', g: 'ti', pin: true, tint: true, title: 'Nightly order export', tm: 'at prompt', mk: '3' },
+      { k: 'sec', label: 'Needs you · 1' }, { k: 'row', g: 'hand', title: 'Pricing copy review', tm: '4m' },
+      { k: 'sec', label: 'Open · 2', mk: '4' },
+      { k: 'row', g: 'tw', tint: true, title: 'Fix flaky cart test', tm: 'working' },
+      { k: 'row', g: 'ci', tint: true, title: 'Summarise user interviews', tm: 'at prompt' },
+      { k: 'sec', label: 'Tasks · 16' },
+      { k: 'task', chev: 'd', hand: true, title: 'Launch email', tm: 'open · 3' },
+      { k: 'row', in: 'nest', g: 'cw', tint: true, title: 'Draft launch email', tm: 'working' },
+      { k: 'row', in: 'nest', g: 'ti', title: 'Segment list query', tm: '3h' },
+      { k: 'task', chev: 'd', title: 'Stripe migration', tm: 'open · 1' },
+      { k: 'row', in: 'nest', g: 'td', title: 'Migrate Stripe webhooks' },
+      { k: 'task', chev: 'd', title: 'Guest checkout A/B test', tm: 'open · 1' },
+      { k: 'row', in: 'nest', g: 'tw', title: 'A/B test harness', tm: '2m' },
+      { k: 'task', chev: 'd', title: 'Address autocomplete', tm: 'open · 1' },
+      { k: 'row', in: 'nest', g: 'ti', title: 'Autocomplete spike', tm: '1h' },
+      { k: 'line', title: 'Fraud rule audit', tm: 'open' },
+      { k: 'fold', chev: 'r', title: 'Later', tm: '11', mk: '6' },
+      { k: 'new', title: 'New task' },
+      { k: 'sec', label: 'Other sessions · 17' },
+      { k: 'fold', chev: 'd', title: 'Today', tm: '2' },
+      { k: 'row', in: 'kid', g: 'ci', title: 'Competitor teardown', tm: '2h' },
+      { k: 'row', in: 'kid', g: 'ti', title: 'Update README badges', tm: '5h' },
+      { k: 'fold', chev: 'r', title: 'This week', tm: '3' },
+      { k: 'fold', chev: 'r', title: 'Earlier', tm: '12' },
+      { k: 'sec', chev: 'r', label: 'Archived · 3' }
+    ] };
+    return { pane };
+  }
+}
+</script>
+</body>
+</html>

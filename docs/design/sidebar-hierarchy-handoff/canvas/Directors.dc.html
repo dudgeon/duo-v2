@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The director's states, and two directors</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.t2{color:#5B636D}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0 0 8px}
+.p{margin:8px 0 0;font-size:12px;line-height:18px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:14px 16px}
+ul{margin:0;padding-left:18px}
+li{margin:0 0 6px;font-size:12px;line-height:18px}
+code{font:12px/18px 'SF Mono',ui-monospace,monospace}
+</style>
+</helmet>
+<div class="bd" style="width: 1640px; height: 1000px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">E · The director's slot, its states, and two directors</h1>
+<p class="t2" style="margin: 4px 0 0; font-size: 12px; line-height: 18px">Drawn in B's PINNED; A, C and D use the same slot without the label. Only the top of the pane is drawn; the rest is as on B. [P] throughout.</p>
+</div>
+<div style="display: flex; gap: 24px; align-items: flex-start">
+<div style="width: 300px; flex: none">
+<div class="cap">1 · Working</div>
+<dc-import name="Pane" pane="{{p1}}" hint-size="300px,300px"></dc-import>
+<p class="p">The usual case. Its glyph is its state; the second line counts its running workers (from `duo2 director status`), and adds “1 needs you” when a worker is waiting on you.</p>
+</div>
+<div style="width: 300px; flex: none">
+<div class="cap">2 · It needs you</div>
+<dc-import name="Pane" pane="{{p2}}" hint-size="300px,300px"></dc-import>
+<p class="p"><b>It stays in its slot</b> with the hand, and its second line says so with its wait. It isn't repeated in NEEDS YOU, whose label counts the rows under it. The project's tile, the chip and the peek count it, as for any session. Where you talk to the director doesn't move.</p>
+</div>
+<div style="width: 300px; flex: none">
+<div class="cap">3 · Not open</div>
+<dc-import name="Pane" pane="{{p3}}" hint-size="300px,300px"></dc-import>
+<p class="p">No tab, or a parked one (only if Keep Running is off). It keeps its slot, idle, with its last wait. A click opens it and it resumes (DL-156), as any session. The slot is how you find it again.</p>
+</div>
+<div style="width: 300px; flex: none">
+<div class="cap">4 · A replaced director still open</div>
+<dc-import name="Pane" pane="{{p4}}" hint-size="300px,300px"></dc-import>
+<p class="p"><b>Your idea:</b> both in the slot, the current one first. The old one is greyed (`text2` name), says it was replaced and when, and offers <b>Close</b> (Close Tab: its Claude process ends, the session stays in the list and in Earlier). Once closed it leaves the slot.</p>
+</div>
+<div style="flex: 1; min-width: 0">
+<div class="card">
+<div class="cap">How two happen, and what stops them</div>
+<ul>
+<li><b>The registry keeps one.</b> <code>.duo/director.json</code> names one current director. <code>duo2 director start</code> where one exists needs <code>--take-over</code>, which retires the old one (DL-200). So a project can't have two directors on record. Nothing to add there.</li>
+<li><b>Two can still be open:</b> after a take-over the old session keeps running until it next wakes and stands down; or a resume gave the director a new session id and the old tab is still there. That's drawn in 4.</li>
+<li><b>A session named like a director</b> but not on record is an ordinary session. Duo never guesses from a name.</li>
+<li><b>Home's director</b> (DL-197) sits in Home's slot, never in a project's.</li>
+<li><b>No director:</b> no slot. PINNED holds only Keep Running sessions, and doesn't show at all with none.</li>
+</ul>
+</div>
+<div class="card" style="margin-top: 14px">
+<div class="cap">Not recommended</div>
+<ul>
+<li><b>Show the old one as an ordinary row:</b> quiet, but it's the case you'd want to notice.</li>
+<li><b>Hide it:</b> a running Claude process you can't see.</li>
+<li><b>A lock that refuses a second open director tab:</b> there's no second director to refuse; the leftover is a session, and closing it is your call.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1640,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tail = [
+      { k: 'sec', label: 'Needs you · 1' }, { k: 'row', g: 'hand', title: 'Pricing copy review', tm: '4m' },
+      { k: 'sec', label: 'Tasks · 16' },
+      { k: 'task', chev: 'r', hand: true, title: 'Launch email', tm: 'open · 2' },
+      { k: 'task', chev: 'r', title: 'Stripe migration', tm: 'open · 1' },
+      { k: 'more', title: '…' }
+    ];
+    const base = { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1' };
+    const keep = { k: 'row', g: 'ti', pin: true, tint: true, title: 'Nightly order export', tm: 'at prompt' };
+    const p1 = { ...base, rows: [{ k: 'sec', label: 'Pinned · 2' },
+      { k: 'slot', g: 'tw', title: 'director-checkout', pin: true, tm: 'working', sub: 'Director · 2 workers', tint: true }, keep].concat(tail) };
+    const p2 = { ...base, rows: [{ k: 'sec', label: 'Pinned · 2' },
+      { k: 'slot', g: 'hand', title: 'director-checkout', pin: true, tm: '6m', sub: 'Director · needs you · 2 workers', tint: true }, keep].concat(tail) };
+    const p3 = { ...base, rows: [{ k: 'sec', label: 'Pinned · 2' },
+      { k: 'slot', g: 'ti', title: 'director-checkout', tm: '3h', sub: 'Director · not open · 2 workers' }, keep].concat(tail) };
+    const p4 = { ...base, rows: [{ k: 'sec', label: 'Pinned · 3' },
+      { k: 'slot', g: 'tw', title: 'director-checkout', pin: true, tm: 'working', sub: 'Director · 2 workers', tint: true },
+      { k: 'slot', g: 'ti', title: 'director-checkout', dim: true, light: true, tm: 'at prompt', sub: 'Replaced 2h ago', btn: 'Close', tint: true }, keep].concat(tail) };
+    return { p1, p2, p3, p4 };
+  }
+}
+</script>
+</body>
+</html>

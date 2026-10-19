@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option A: director slot</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.t2{color:#5B636D}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0 0 8px}
+.p{margin:0 0 8px;font-size:12px;line-height:18px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:14px 16px}
+.n{display:grid;grid-template-columns:24px minmax(0,1fr);column-gap:6px;margin:0 0 8px;font-size:12px;line-height:18px}
+.m{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;margin-top:1px}
+ul{margin:0;padding-left:18px}
+li{margin:0 0 6px;font-size:12px;line-height:18px}
+</style>
+</helmet>
+<div class="bd" style="width: 1100px; height: 1180px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">A · Director slot, tasks ranked</h1>
+<p class="t2" style="margin: 4px 0 0; font-size: 12px; line-height: 18px">The smallest change. DL-174's sections stay; the director gets a slot above them, and long-range tasks fold away. [P] throughout.</p>
+</div>
+<div style="display: flex; gap: 28px; align-items: flex-start">
+<div style="width: 300px; flex: none">
+<div class="cap">Proposed · 300</div>
+<dc-import name="Pane" pane="{{pane}}" hint-size="300px,1000px"></dc-import>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div class="card">
+<div class="cap">What's drawn</div>
+<div class="n"><span class="m">1</span><div><b>The director's slot.</b> First in the pane, with no section label, and a hairline rule under it. Two lines: the glyph, its name in `bodyEmphasis`, the Keep Running pin and its wait; under them in `control` `text2`, “Director · 2 workers” (the workers `duo2 director status` lists that are running). It takes `activeTint` when its tab is open and `selected` when it's the selected session, as any row.</div></div>
+<div class="n"><span class="m">2</span><div><b>Keep Running sessions don't move.</b> Nightly order export keeps its pin and stays in Open with the other tabs.</div></div>
+<div class="n"><span class="m">3</span><div><b>Later · 11.</b> Tasks not in play (board 0's rule) fold here, at the end of TASKS above + New task. Folded to start; opened, its tasks list most recent first with their age (“12d”) where the status sits.</div></div>
+<div class="n" style="margin: 0"><span class="m">4</span><div><b>Task lines sort with the groups.</b> Fraud rule audit (its note changed yesterday) sits after the groups by its last change, not in a fixed block.</div></div>
+</div>
+<div class="card">
+<div class="cap">Good</div>
+<ul>
+<li>One new row style and one fold. Nothing else moves, so the walk, the video's anchors and DL-174 stay true.</li>
+<li>The director is reachable at any length of list.</li>
+</ul>
+<div class="cap" style="margin-top: 10px">Costs</div>
+<ul>
+<li>Other long-lived sessions (a monitor, an inbox watcher) stay down in Open, under every task in play.</li>
+<li>Live loose sessions still sit below the tasks. With Later folded, that's 5 groups here, not 16.</li>
+</ul>
+</div>
+<div class="card">
+<div class="cap">Top to bottom</div>
+<p class="p" style="margin: 0">Director slot · NEEDS YOU · TASKS (in play, Later, + New task) · OTHER SESSIONS (Open, Today, This week, Earlier) · Archived.</p>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1100,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pane = { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1', rows: [
+      { k: 'slot', g: 'tw', title: 'director-checkout', pin: true, tm: 'working', sub: 'Director · 2 workers', tint: true, mk: '1' },
+      { k: 'rule' },
+      { k: 'sec', label: 'Needs you · 1' }, { k: 'row', g: 'hand', title: 'Pricing copy review', tm: '4m' },
+      { k: 'sec', label: 'Tasks · 16' },
+      { k: 'task', chev: 'd', hand: true, title: 'Launch email', tm: 'open · 2' },
+      { k: 'row', in: 'nest', g: 'cw', tint: true, title: 'Draft launch email', tm: 'working' },
+      { k: 'row', in: 'nest', g: 'ti', title: 'Segment list query', tm: '3h' },
+      { k: 'task', chev: 'd', title: 'Stripe migration', tm: 'open · 1' },
+      { k: 'row', in: 'nest', g: 'td', title: 'Migrate Stripe webhooks' },
+      { k: 'task', chev: 'd', title: 'Guest checkout A/B test', tm: 'open · 1' },
+      { k: 'row', in: 'nest', g: 'tw', title: 'A/B test harness', tm: '2m' },
+      { k: 'task', chev: 'd', title: 'Address autocomplete', tm: 'open · 1' },
+      { k: 'row', in: 'nest', g: 'ti', title: 'Autocomplete spike', tm: '1h' },
+      { k: 'line', title: 'Fraud rule audit', tm: 'open', mk: '4' },
+      { k: 'fold', chev: 'r', title: 'Later', tm: '11', mk: '3' },
+      { k: 'new', title: 'New task' },
+      { k: 'sec', label: 'Other sessions · 7' },
+      { k: 'fold', chev: 'd', title: 'Open', tm: '3' },
+      { k: 'row', in: 'kid', g: 'ti', pin: true, tint: true, title: 'Nightly order export', tm: 'at prompt', mk: '2' },
+      { k: 'row', in: 'kid', g: 'tw', tint: true, title: 'Fix flaky cart test', tm: 'working' },
+      { k: 'row', in: 'kid', g: 'ci', tint: true, title: 'Summarise user interviews', tm: 'at prompt' },
+      { k: 'fold', chev: 'd', title: 'Today', tm: '2' },
+      { k: 'row', in: 'kid', g: 'ci', title: 'Competitor teardown', tm: '2h' },
+      { k: 'row', in: 'kid', g: 'ti', title: 'Update README badges', tm: '5h' },
+      { k: 'fold', chev: 'r', title: 'This week', tm: '3' },
+      { k: 'fold', chev: 'r', title: 'Earlier', tm: '12' },
+      { k: 'sec', chev: 'r', label: 'Archived · 3' }
+    ] };
+    return { pane };
+  }
+}
+</script>
+</body>
+</html>
