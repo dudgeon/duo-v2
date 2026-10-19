@@ -138,6 +138,8 @@ public final class AppModel {
     /// What each shell is running, for its tab's title.
     public var shellTitles: [String: String] = [:]
     public var selectedFile: String?            // path relative to the project
+    /// Bumped by every reveal in the tree, so the tree scrolls to the selection even when it was already selected (BUG-053).
+    public var treeRevealTick = 0
     /// Open document tabs by project (DL-60): switching to Project no longer closes them.
     public var openDocumentsByProject: [String: [String]] = [:]
     /// The console's tab order by project, where the user moved a tab (ENH-042, DL-220): tab keys,
