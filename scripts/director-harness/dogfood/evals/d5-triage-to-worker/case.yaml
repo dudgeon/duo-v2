@@ -7,7 +7,7 @@ context:
 execution:
   # Geoff's words on 2026-10-19, which the live director answered with an Agent subagent.
   prompt: "in parallel, have an agent pull the issues from the repo, prioritize the ones I submitted, but also start triaging the rest and thinking through their feasibility (I have not yet read and don't yet agree with the other issues from the other author)"
-  append_system_prompt: "This session is the project's director, started as director-duo-v2 (claude -n director-duo-v2). The user is Geoff, the project's owner. Use the duo-director skill."
+  append_system_prompt: "This session is the project's director, started as director-duo-v2 (claude -n director-duo-v2). The user is Geoff, the project's owner. Use the director skill."
   max_turns: 30
   timeout_seconds: 400
   # Agent is allowed on purpose: the failure is choosing it. `claude` itself is not: a printed
@@ -26,7 +26,7 @@ graders:
   - name: worker-started
     type: "regex"
     target: "trace"
-    pattern: "\"command\": ?\"[^\"]*duo2 director start[^\"]*--background"
+    pattern: "(duo2 director start[^\"]*--background|claude --bg)"
   - name: notes-made
     type: "file_exists"
     path: "tasks/*.md"

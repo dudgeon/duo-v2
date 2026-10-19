@@ -244,9 +244,10 @@ import Foundation
     do {
         let source = (try? String(contentsOf: repoRoot().appending(path: "skills/duo-director/SKILL.md"), encoding: .utf8)) ?? ""
         let skill = DirectorSkill.text()
-        check(!source.isEmpty && skill == source.replacingOccurrences(of: "{{FORMAT}}", with: "\(DirectorSkill.format)"),
+        check(!source.isEmpty && skill == source.replacingOccurrences(of: "{{FORMAT}}", with: "\(DirectorSkill.format)").replacingOccurrences(of: "{{REVISION}}", with: "\(DirectorSkill.revision)"),
               "DirectorSkillText.swift is skills/duo-director/SKILL.md (run scripts/gen-director-skill.py)")
-        check(skill.hasPrefix("---\nname: duo-director\n") && !skill.contains("\nname: director\n"), "it's named duo-director, so it never hides a project's own director skill")
+        check(skill.hasPrefix("---\nname: director\n") && DirectorSkill.text(name: "duo-director").hasPrefix("---\nname: duo-director\n") && DirectorSkill.aliasText().hasPrefix("---\nname: duo-director\n"),
+              "it's named director (DL-222), with the old name kept as an alias; the installer asks before it hides a project's own")
         for verb in ["status", "start", "send", "retire", "guide", "watch"] { check(skill.contains("duo2 director \(verb)"), "the skill uses `duo2 director \(verb)`") }
         let verbs = Set(skill.matches(of: /duo2 ([a-z-]+(?: [a-z-]+)?)/).map { String($0.1) })
         let unknown = verbs.filter { v in DuoAction.resolve(v.split(separator: " ").map(String.init)) == nil && !DuoAction.all.contains { $0.verb.hasPrefix(v + " ") } }
@@ -259,8 +260,10 @@ import Foundation
         Installer.recordConsent(true, cli: "/x/Duo.app/Contents/Helpers/duo2")
         let r1 = Installer.install(cli: "/x/Duo.app/Contents/Helpers/duo2")
         let file = Installer.directorSkillFile
-        check(file.path.hasSuffix("claude/skills/duo-director/SKILL.md") && (try? String(contentsOf: file, encoding: .utf8)) == skill && r1.lines.contains("Director skill: written."),
-              "install writes ~/.claude/skills/duo-director/SKILL.md")
+        check(file.path.hasSuffix("claude/skills/director/SKILL.md") && (try? String(contentsOf: file, encoding: .utf8)) == skill && r1.lines.contains("Director skill: written."),
+              "install writes ~/.claude/skills/director/SKILL.md")
+        check((try? String(contentsOf: Installer.directorAliasFile, encoding: .utf8)) == DirectorSkill.aliasText() && Installer.directorAliasFile.path.hasSuffix("skills/duo-director/SKILL.md"),
+              "and a duo-director stub at the old name (DL-222)")
         check(Installer.status(cli: nil).contains { $0.hasPrefix("Director skill: current") }, "doctor says it's current")
         try Data((skill + "\nmy own line\n").utf8).write(to: file)
         let r2 = Installer.install(cli: "/x/Duo.app/Contents/Helpers/duo2")
@@ -268,19 +271,19 @@ import Foundation
               "an edited skill is left alone (fork-on-edit)")
         check(Installer.status(cli: nil).contains { $0.hasPrefix("Director skill: edited by you") }, "and doctor says so")
         let u1 = Installer.uninstall()
-        check(u1.lines.contains { $0.hasPrefix("Left ") && $0.contains("duo-director") } && FileManager.default.fileExists(atPath: file.path), "uninstall leaves the edited one")
+        check(u1.lines.contains { $0.hasPrefix("Left ") && $0.contains("skills/director") } && FileManager.default.fileExists(atPath: file.path), "uninstall leaves the edited one")
         try FileManager.default.removeItem(at: file)
         Installer.recordConsent(true, cli: "/x/Duo.app/Contents/Helpers/duo2")
         _ = Installer.install(cli: "/x/Duo.app/Contents/Helpers/duo2")
         let u2 = Installer.uninstall()
-        check(!FileManager.default.fileExists(atPath: file.deletingLastPathComponent().path) && u2.lines.contains { $0.contains("skills/duo-director") }, "and removes Duo's own")
-        check(Installer.plannedItems(cli: "/x").contains { $0.what == "Write the duo-director skill" }, "the install question lists it")
+        check(!FileManager.default.fileExists(atPath: file.deletingLastPathComponent().path) && u2.lines.contains { $0.contains("skills/director") }, "and removes Duo's own")
+        check(Installer.plannedItems(cli: "/x").contains { $0.what == "Write the director skill" }, "the install question lists it")
 
         // A skill the user already had, before Duo ever wrote one: theirs, never claimed or removed.
         let fm = FileManager.default
         Installer.recordConsent(true, cli: "/x/Duo.app/Contents/Helpers/duo2")
         try fm.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try Data("---\nname: duo-director\n---\nmy own director\n".utf8).write(to: file)
+        try Data("---\nname: director\n---\nmy own director\n".utf8).write(to: file)
         let r3 = Installer.install(cli: "/x/Duo.app/Contents/Helpers/duo2")
         check(r3.lines.contains { $0.contains("was there before Duo's") } && (try? String(contentsOf: file, encoding: .utf8))?.contains("my own director") == true
               && Installer.manifest().directorSkillHash == nil, "a skill that was there first is left alone and not recorded as Duo's")
@@ -313,6 +316,49 @@ import Foundation
         check(r4.lines.contains { $0.contains("is a link") } && (try? fm.contentsOfDirectory(atPath: elsewhere.path))?.isEmpty == true
               && (try? fm.destinationOfSymbolicLink(atPath: file.deletingLastPathComponent().path)) != nil,
               "a linked skill folder: nothing written through it, and the link stays")
+        // DL-222: the name `director`, the question before hiding a project skill, the old name, the version check.
+        try fm.removeItem(at: elsewhere)
+        let cliPath = "/x/Duo.app/Contents/Helpers/duo2"
+        try? fm.removeItem(at: file.deletingLastPathComponent()); try? fm.removeItem(at: Installer.directorAliasFile.deletingLastPathComponent())
+        let projectSkill = root.appending(path: "proj/.claude/skills/director/SKILL.md")
+        try fm.createDirectory(at: projectSkill.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("project's own".utf8).write(to: projectSkill)
+        Installer.projectDirectorSkills = { [projectSkill] }
+        defer { Installer.projectDirectorSkills = { [] } }
+        Installer.recordConsent(true, cli: cliPath)
+        let rq = Installer.install(cli: cliPath)
+        check(!fm.fileExists(atPath: file.path) && (try? String(contentsOf: Installer.directorAliasFile, encoding: .utf8)) == DirectorSkill.text(name: "duo-director")
+              && Installer.needsDirectorNameAnswer() && rq.lines.contains { $0.contains("installed as duo-director") },
+              "a project skill named director: the shared skill goes in as duo-director and Duo still has to ask")
+        check((try? String(contentsOf: projectSkill, encoding: .utf8)) == "project's own", "and the project's skill is untouched")
+        Installer.recordDirectorName(allowed: true)
+        let ry = Installer.install(cli: cliPath)
+        check((try? String(contentsOf: file, encoding: .utf8)) == DirectorSkill.text() && (try? String(contentsOf: Installer.directorAliasFile, encoding: .utf8)) == DirectorSkill.aliasText()
+              && !Installer.needsDirectorNameAnswer(), "yes: director takes the name and duo-director becomes the stub (\(ry.lines))")
+        Installer.recordDirectorName(allowed: false)
+        check(Installer.directorNameQuestion() != nil && !Installer.needsDirectorNameAnswer(), "no: it's remembered and not asked again")
+        // Before DL-222 the one hash was duo-director's full text: migrated, and the stub replaces it without "edited by you".
+        _ = Installer.uninstall()
+        try fm.createDirectory(at: Installer.directorAliasFile.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("old full skill".utf8).write(to: Installer.directorAliasFile)
+        var old = Installer.Manifest()
+        old.consented = true; old.consentHash = Installer.consentHash(cli: cliPath)
+        old.directorSkillHash = Installer.hash("old full skill")
+        Installer.save(old)
+        Installer.projectDirectorSkills = { [] }
+        let rm = Installer.install(cli: cliPath)
+        check((try? String(contentsOf: Installer.directorAliasFile, encoding: .utf8)) == DirectorSkill.aliasText() && (try? String(contentsOf: file, encoding: .utf8)) == DirectorSkill.text()
+              && !rm.lines.contains { $0.contains("edited by you") }, "an install from before the rename moves duo-director to the stub and writes director (\(rm.lines))")
+        _ = Installer.uninstall()
+        // The version check.
+        check(DirectorSkill.versionNote(installed: DirectorSkill.text()) == nil, "the installed skill matches this Duo: no note")
+        check(DirectorSkill.versionNote(installed: "revision \(DirectorSkill.revision + 1)")?.contains("update Duo") == true, "a skill newer than Duo says to update Duo")
+        check(DirectorSkill.versionNote(installed: "revision \(DirectorSkill.revision - 1)")?.contains("older") == true, "a skill older than Duo says Duo updates it")
+        check(DirectorSkill.versionNote(installed: nil) == nil && DirectorSkill.versionNote(installed: "no header") == nil, "no skill or no header: no note")
+        check(DirectorSkill.text().contains("If `duo2` answers \"unknown command\", Duo is older"), "the skill says what to do when verbs are missing")
+        check(DirectorSkill.text().contains("never use a subagent instead") && DirectorSkill.text().contains("never a subagent") && DirectorSkill.text().contains("Don't wait for a SendMessage"),
+              "the skill rules out subagents for steerable work and says to read, not wait (P3, P4)")
+        check(!DirectorSkill.text().contains("bypassPermissions") || DirectorSkill.text().contains("never rely on `bypassPermissions`"), "nothing relies on bypassPermissions (DL-222)")
     }
 
     try directorEndToEnd()

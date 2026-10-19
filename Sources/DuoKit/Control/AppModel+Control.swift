@@ -20,7 +20,7 @@ extension AppModel {
 
     public func handle(_ req: ControlRequest, done: @escaping @MainActor (ControlResponse) -> Void) {
         guard let (action, rest) = DuoAction.resolve([req.command] + req.args) else {
-            return done(.init(ok: false, output: "unknown command '\(req.command)'. Run `duo2 help`."))
+            return done(.init(ok: false, output: "unknown command '\(req.command)'. Run `duo2 help`. If this duo2 is newer than the Duo that is running, update Duo (Duo › Check for Updates…)."))
         }
         let inv = Invocation(rest)
         perform(action.id, inv, req) { r in

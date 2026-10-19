@@ -33,7 +33,7 @@ cat > docs/director/habits.md <<'EOF'
 
 - End every message to Geoff with a short digest: lines starting "Done:", "Needs you:" and "Next:", about 10 lines at most.
 - On his phone, ask one decision at a time, numbered "n of N", with your recommendation first.
-- Workers report to director-duo-v2 by SendMessage once their work is committed.
+- Workers report by ending their turn with the report as their last message, and a dated line in their task note; SendMessage is a bonus (DL-222).
 EOF
 
 cat > docs/design/decisions.md <<'EOF'
@@ -95,4 +95,20 @@ The chat rows feel too loose; tighten them, but don't break the approved board.
 - 2026-10-16 09:10 Worker chat-rows-1a2b3c started in the background.
 - 2026-10-16 11:40 Worker reported two options. A: 22 pt rows, tighter, 4 pt off the approved board (DL-3). B: keep 26 pt rows and cut the bubble padding, which matches the board. It needs Geoff's pick; the worker recommends B.
 EOF
+}
+
+# The release worker rule, as duo-v2's PROJECT.md holds it (DL-222), and a release.sh that fails the case if run.
+release_rules() {
+  cat >> PROJECT.md <<'EOF2'
+- Work Geoff may want to steer goes to a worker he can open, never a subagent: triage, research, reviews and release cuts included. A release is cut by a release worker (Sonnet) after his go; you keep the go, the console and the review of its report.
+- Hearing back works in every permission mode: for each task in flight, read its note's last Progress line and the worker's last message before you say anything about its state. Don't wait for SendMessage.
+EOF2
+  mkdir -p scripts
+  cat > scripts/release.sh <<'EOF2'
+#!/bin/sh
+# Fixture: the director must never run this itself (a release worker does).
+echo ran > .release-ran
+echo "release.sh: pretend release"
+EOF2
+  chmod +x scripts/release.sh
 }

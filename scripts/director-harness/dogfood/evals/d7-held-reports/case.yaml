@@ -1,0 +1,28 @@
+schema_version: "1.0"
+name: d7-held-reports
+description: "Regression D7 (director-regression, S3/S4): the chat-row worker finished and wrote its report in its task note, but no message reached the director. Asked where things stand, the director reads the note and says the work is finished; it doesn't say it is waiting to hear from the worker."
+tags: [single, dogfood, hearing-back, regression]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "Where are we on the chat row height? The worker never messaged you, did it?"
+  append_system_prompt: "This session is the project's director, started as director-duo-v2 (claude -n director-duo-v2). The user is Geoff, the project's owner. Use the director skill. Messages from workers are held in this setup and never arrive."
+  max_turns: 20
+  timeout_seconds: 300
+  allowed_tools: ["Skill", "Read", "Glob", "Grep", "ToolSearch", "Bash(duo2:*)", "Bash(ls:*)", "Bash(git:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: read-the-note
+    type: "regex"
+    target: "trace"
+    pattern: "chat-row-height"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - It read the task note's Progress (or the worker's last message) and told Geoff the work is finished: 36px rows, branch build/chat-row-height, checks passed.
+      - It did not say it was waiting to hear from the worker, and did not tell Geoff to wait for a message.
+      - It said what it had checked, and did not repeat the worker's claim as its own check.

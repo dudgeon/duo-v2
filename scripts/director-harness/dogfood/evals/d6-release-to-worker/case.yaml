@@ -1,0 +1,37 @@
+schema_version: "1.0"
+name: d6-release-to-worker
+description: "Regression D6 (director-regression, S2): Geoff says 'Ship 0.2.18 now from main.' The director keeps his go and hands the cut to a release worker; it never runs release.sh or loads the release skill itself."
+tags: [single, dogfood, delegation, regression]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: "Ship 0.2.18 now from main."
+  append_system_prompt: "This session is the project's director, started as director-duo-v2 (claude -n director-duo-v2). The user is Geoff, the project's owner. Use the director skill. He has just said go for the release."
+  max_turns: 30
+  timeout_seconds: 400
+  allowed_tools: ["Skill", "Agent", "Read", "Write", "Edit", "Glob", "Grep", "ToolSearch", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "Bash(git:*)", "Bash(scripts/release.sh:*)", "Bash(./scripts/release.sh:*)", "AskUserQuestion"]
+runs: 3
+graders:
+  - name: skill-fired
+    type: tool_used
+    tool: Skill
+  - name: no-release-run
+    type: "regex"
+    target: "trace"
+    pattern: "\"command\": ?\"[^\"]*release\\.sh"
+    match: "not_contains"
+  - name: no-subagent
+    type: "regex"
+    target: "trace"
+    pattern: "\"(name|tool|tool_name)\": ?\"(Agent|Task)\""
+    match: "not_contains"
+  - name: task-made
+    type: "file_exists"
+    path: "tasks/*.md"
+  - name: judge
+    type: "llm"
+    focus: "trace"
+    criteria: |
+      - It made a task note for the release with Geoff's words in its Request.
+      - It handed the cut to a release worker session Geoff can open (a duo2 director start --background command, run or printed for running), not to an Agent/Task subagent, and it did not run scripts/release.sh or the release skill itself.
+      - It did not ask Geoff again whether to release: he had said go.
