@@ -150,3 +150,11 @@ These are proposals. Geoff hasn't read or agreed to them. Conflicts first.
 ## Records and branches checked
 
 DL-11, 22–24, 26, 27, 29, 34, 36, 43, 51, 71, 86, 87, 93, 98, 109, 116, 118–120, 124, 129, 135, 142, 165, 185, 190, 220; F-31, 55, 173, 174, 302, 306, 333; ENH-13, 26, 67; LR-8, 16, 60, 63; Q-210. No open branch works on any of these issues. The highest records on main today are DL-220 and ENH-232; this doc takes none.
+
+## Geoff's answers, 2026-10-19 (by button)
+
+- **#12:** build it, plus a Tasks line in PROJECT.md. Suggested task: `tasks/agents-know-duo-tasks.md`.
+- **#5, #6:** reply with the assessment, ask them to try the current build and reopen if it's not fixed. Done: both replied to and closed as likely fixed.
+- **#14:** Opus design note first. Suggested task: `tasks/fork-handling-design-note.md`.
+- **#8:** dark mode sooner, starting with a design round. Suggested task: `tasks/dark-appearance-design-round.md`. The decision record (proposed DL-221) is not written yet.
+- **Still open:** #9, #11, #13, and #4's Ctrl+C and text-size parts.
