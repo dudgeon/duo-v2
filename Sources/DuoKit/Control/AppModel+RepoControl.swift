@@ -14,7 +14,10 @@ extension AppModel {
         }
         // The project named, else the terminal's, else the one on screen; repo verbs act on the shown one.
         let name = inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name ?? currentProject?.name
-        guard let name, project(named: name) != nil else { return done(.fail("no project '\(inv.flags["project"] ?? "")': open one or pass --project")) }
+        guard let name, project(named: name) != nil else {
+            if let n = inv.flags["project"], projects(named: n).count > 1 { return done(noProject(n)) }
+            return done(.fail("no project '\(inv.flags["project"] ?? "")': open one or pass --project"))
+        }
         if currentProject?.name != name { open(project: name) }
         refreshRepo(force: true, fetch: id == .repoCheck || id == .repoStatus && inv.has("fetch")) { [self] in
             guard let v = repos[name] else { return done(.fail("\(name) isn't in a git repository.")) }

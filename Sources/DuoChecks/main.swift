@@ -32,6 +32,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-real"{ return try chatRealChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "askq-fallback" { return try askqFallbackChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "remote-control" { return try remoteControlChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "ambiguous-name" { return try ambiguousNameChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "park" { return try parkChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "director" { return try directorChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "control" { return try controlPlaneChecks() }
@@ -2858,7 +2859,7 @@ func repoFixture() throws -> Fixture {
     }
 }
 
-do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try parkChecks(); try directorChecks(); try controlPlaneChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
+do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try parkChecks(); try directorChecks(); try ambiguousNameChecks(); try controlPlaneChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
 print("\(passes) passed, \(failures) failed")
 exit(Int32(failures))
 

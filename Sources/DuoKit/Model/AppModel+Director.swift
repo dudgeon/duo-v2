@@ -36,7 +36,7 @@ extension AppModel {
         guard let pname = inv.flags["project"] ?? byPlace ?? projectFor(cwd: req.cwd)?.name else {
             return done(.fail("Duo doesn't know \(req.cwd ?? "this folder") as a project or folder: run it from the project's folder, or pass --project <name> (`duo2 projects` lists them)."))
         }
-        guard let p = project(named: pname), let folder = liveFolders[p.name] else { return done(.fail("no project '\(pname)'")) }
+        guard let p = project(named: pname), let folder = liveFolders[p.name] else { return done(noProject(pname)) }
         let me = req.session ?? caps.sessionId
         var reg = DirectorRegistry.load(project: folder)
         let role = reg.role(sessionId: me)
