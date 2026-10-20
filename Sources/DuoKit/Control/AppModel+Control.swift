@@ -169,7 +169,8 @@ extension AppModel {
         case .viewGroup:
             guard let g = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             // Later and Earlier keep their fold per project (DL-217): the current project's, unless it's already there.
-            let key = expandedGroups.first { $0.hasSuffix(g) } ?? (g == "later" || g == "earlier" ? currentProject.map { "\($0.name)/\(g)" } : nil) ?? g
+            let key = expandedGroups.first { $0.hasSuffix(g) } ?? (g == "later" || g == "earlier" ? currentProject.map { "\($0.name)/\(g)" } : nil)
+                ?? findSession(g, in: nil).flatMap { s in s.sessionId.map { threadFoldKey(project: s.project, original: $0) } } ?? g   // a thread, by its original's id (DL-228)
             if inv[1] == "collapse" { expandedGroups.remove(key) } else { expandedGroups.insert(key) }
             done(.ok(inv[1] == "collapse" ? "Collapsed \(g)." : "Expanded \(g)."))
         case .viewSelect:
@@ -226,6 +227,7 @@ extension AppModel {
             let sections = sidebarSectionMap(projects: Set(list.map(\.project)))
             let lines = list.map { s in
                 let mark = (directorSlotInfo(project: s.project)?.sessionId == s.tabKey ? " director" : "") + (sections["\(s.project)/\(s.tabKey)"] == "pinned" ? " pinned" : "")
+                    + (forkFacts(s).map { " \($0.kind) of \($0.parent.prefix(8))" } ?? "")
                 return "\(s.sessionId!.prefix(8))  \(stateWord(s.state).padding(toLength: 9, withPad: " ", startingAt: 0)) \(sessionKind(s).rawValue.padding(toLength: 9, withPad: " ", startingAt: 0)) \(s.project) / \(s.name)\(mark)"
             }
             done(.ok(lines.isEmpty ? "No sessions." : lines.joined(separator: "\n"), list.map { sessionJSON($0, sections: sections) }))
@@ -1199,6 +1201,12 @@ extension AppModel {
         switch s { case .needsYou: "needs-you"; case .readyForReview: "review"; case .working: "working"; case .idle: "idle"; case .resolved: "resolved" }
     }
 
+    /// A fork's parent session id and its kind (`branch` or `fork`), nil for an original (DL-228).
+    func forkFacts(_ s: Fixture.Session) -> (parent: String, kind: String)? {
+        guard let parent = s.forkParent ?? s.forkOf.flatMap({ n in fixture.sessions(inProject: s.project).first { $0.name == n }?.sessionId }) else { return nil }
+        return (parent, s.fork ?? ForkSource.Kind.fork.rawValue)
+    }
+
     func sessionJSON(_ s: Fixture.Session, sections: [String: String]? = nil) -> [String: Any] {
         var j: [String: Any] = ["title": s.name, "project": s.project, "state": stateWord(s.state)]
         j["kind"] = sessionKind(s).rawValue   // terminal | chat (DL-174)
@@ -1208,6 +1216,7 @@ extension AppModel {
         if let v = s.options { j["options"] = v }
         if let v = s.summary { j["summary"] = v }
         j["running"] = terminals.existing(s.tabKey) != nil
+        if let f = forkFacts(s) { j["forkOf"] = f.parent; j["fork"] = f.kind }   // DL-228
         if parkedTabs.contains(s.tabKey), terminals.existing(s.tabKey) == nil { j["parked"] = true }  // DL-156
         j["remoteControl"] = s.remoteControl ?? NSNull()  // the name it was started with (DL-128)
         if isKeepRunning(s.tabKey) { j["keepRunning"] = true }   // DL-192
@@ -1273,6 +1282,7 @@ extension AppModel {
         let s = fixture.sessions.first { $0.tabKey == key }
         let next = s.flatMap { TabOrder.neighbour(closing: key, in: consoleTabKeys(inProject: $0.project)) }
         if terminals.existing(key) != nil { terminals.close(key) }
+        if s?.fork == ForkSource.Kind.fork.rawValue, s?.liveProcess == true { detachedForks.insert(key) }   // detach: the fork runs on (DL-227)
         chats.forget(key)
         if s != nil {
             if homeTab == key { homeTab = next }

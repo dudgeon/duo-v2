@@ -62,8 +62,12 @@ extension AppModel {
             for sec in SidebarRow.sections(for: p, in: fixture, isOpen: { hasOpenTerminal($0) }, isPinned: { isKeepRunning($0) },
                                            director: directorSlotInfo(project: p), listedTask: { listedTask($0) }) {
                 let name = ["needs": "needs-you", "today": "other", "week": "other", "earlier": "other"][sec.id] ?? sec.id
+                func place(_ r: SidebarRow) {
+                    if case .thread(_, let members) = r.kind { for m in members { out["\(p)/\(m.sessionKey)"] = name } }
+                    else { out["\(p)/\(r.sessionKey)"] = name }
+                }
                 for r in sec.rows {
-                    if case .group(let threads, _) = r.kind { for t in threads { out["\(p)/\(t.sessionKey)"] = name } } else { out["\(p)/\(r.sessionKey)"] = name }
+                    if case .group(let threads, _) = r.kind { for t in threads { place(t) } } else { place(r) }
                 }
             }
         }

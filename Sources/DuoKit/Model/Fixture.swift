@@ -51,6 +51,10 @@ public struct Fixture: Codable, Sendable, Equatable {
         /// A Claude process is running for it (a hook beacon). With no Duo terminal open for it, it runs
         /// outside Duo: a terminal session as far as its glyph goes (DL-174).
         public var liveProcess: Bool? = nil
+        /// A fork's parent session id, and `branch` or `fork` (DL-227, F-344): from the transcript's `forkedFrom`,
+        /// the job's `state.json`, or Duo's index, before the shared-uuid lineage.
+        public var forkParent: String? = nil
+        public var fork: String? = nil
         public var id: String { "\(project)/\(name)" }
         /// What console tabs and terminals are keyed by: the session id when there is one.
         public var tabKey: String { sessionId ?? name }

@@ -8,6 +8,11 @@ public struct SidebarSection: Identifiable, Equatable, Sendable {
     public var rows: [SidebarRow]
     public var needsYou = false
 
+    /// The sessions the rows stand for: a thread counts its members (DL-228's boards read "OPEN · 3" for a thread and one more).
+    public var sessionCount: Int {
+        rows.reduce(0) { n, r in if case .thread(let c, _) = r.kind { return n + c } else { return n + 1 } }
+    }
+
     public init(id: String, title: String, rows: [SidebarRow], needsYou: Bool = false) {
         self.id = id; self.title = title; self.rows = rows; self.needsYou = needsYou
     }
@@ -18,8 +23,9 @@ public struct SidebarSection: Identifiable, Equatable, Sendable {
 public struct SidebarRow: Identifiable, Equatable, Sendable {
     public enum Kind: Equatable, Sendable {
         case group(threads: [SidebarRow], sessionCount: Int)
-        /// A fork family folded into one row; `count` is its sessions (shown when ≥ 2).
-        case thread(count: Int)
+        /// A fork family in one row; `count` is its sessions (shown when ≥ 2). `members` are the original first,
+        /// then its forks oldest first (DL-228): the pane lists them when the thread is open.
+        case thread(count: Int, members: [SidebarRow])
         case older(rows: [SidebarRow])
         case session
         /// A task with no session yet (DL-93): a line, in the TASKS order by its note's last change (DL-217).
@@ -48,6 +54,12 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
     public var pinned = false
     /// For a task under Later: how long it's been quiet, "5d", "2w", "1mo" (DL-217).
     public var age: String? = nil
+    /// A fork that left its thread for NEEDS YOU says whose fork it is on a second line (DL-228).
+    public var forkOf: String? = nil
+    /// A session that is a fork wears the mark where a row shows one (Q-229); nil for an original.
+    public var isFork = false
+    /// Show "Fork of ‹original›" under the name: a fork that left its thread for NEEDS YOU (DL-228).
+    public var showsOrigin = false
 
     public init(id: String, name: String, state: SessionState, wait: String?, kind: Kind, task: String? = nil) {
         self.id = id; self.name = name; self.state = state; self.wait = wait; self.kind = kind; self.task = task
@@ -64,9 +76,19 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
         /// Rows are keyed by session identity (id when live, else name): live sessions can share a
         /// name ("New session"), and keying by name folded them into a false thread (F-43).
         func threadRow(_ members: [Fixture.Session]) -> SidebarRow? {
-            guard let lead = mostUrgent(members) else { return nil }
-            return SidebarRow(id: "\(project)/thread/\(lead.tabKey)", name: lead.name, state: lead.state,
-                              wait: lead.wait, kind: members.count >= 2 ? .thread(count: members.count) : .session)
+            guard let lead = leader(members) else { return nil }
+            guard members.count >= 2 else { return SidebarRow(id: "\(project)/thread/\(lead.tabKey)", name: lead.name, state: lead.state, wait: lead.wait, kind: .session) }
+            // The original first, then the forks, oldest first (DL-228); the row keeps the original's name.
+            let order = ForkThread.ordered(members.map { (key: $0.tabKey, parent: parentKey(of: $0, in: members)) })
+            let ordered = order.compactMap { k in members.first { $0.tabKey == k } }
+            let rows = ordered.enumerated().map { i, m -> SidebarRow in
+                var r = SidebarRow(id: "\(project)/thread/\(m.tabKey)", name: m.name, state: m.state, wait: m.wait, kind: .session)
+                r.isFork = i > 0
+                r.forkOf = i > 0 ? ordered[0].name : nil
+                return r
+            }
+            return SidebarRow(id: "\(project)/thread/\(ordered[0].tabKey)", name: ordered[0].name, state: lead.state, wait: lead.wait,
+                              kind: .thread(count: members.count, members: rows))
         }
 
         var grouped = Set<String>()   // tabKeys
@@ -112,7 +134,8 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
             if case .older(let rows) = r.kind { return rows } else { return [r] }
         }
         func open(_ r: SidebarRow) -> Bool {
-            if case .group(let threads, _) = r.kind { return threads.contains { isOpen($0.sessionKey) } }
+            if case .group(let threads, _) = r.kind { return threads.contains { open($0) } }
+            if case .thread(_, let members) = r.kind { return members.contains { isOpen($0.sessionKey) } }   // placed by its liveliest member
             return isOpen(r.sessionKey)
         }
         /// The row for a session that goes to PINNED: the director's slot, a replaced director's, or a kept session.
@@ -138,15 +161,20 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
                 // A pinned session goes up to PINNED, a waiting one to NEEDS YOU; the task row keeps its (most urgent) state.
                 var staying: [SidebarRow] = []
                 for t in threads {
-                    if let p = slotted(t) { pinned.append(p) } else if t.state == .needsYou { needs.append(t) } else { staying.append(t) }
+                    if let p = slotted(t) { pinned.append(p); continue }
+                    let (stay, leave) = splitNeeds(t)
+                    needs += leave
+                    if let stay { staying.append(stay) }
                 }
                 var t = r
                 t.kind = .group(threads: staying, sessionCount: n)
                 groups.append(t)
             } else if let p = slotted(r) {
                 pinned.append(p)
-            } else if r.state == .needsYou {
-                needs.append(r)
+            } else if r.state == .needsYou || { if case .thread = r.kind { return true } else { return false } }() {
+                let (stay, leave) = splitNeeds(r)
+                needs += leave
+                if let stay { rest.append(stay) }
             } else {
                 rest.append(r)
             }
@@ -244,6 +272,39 @@ public struct SidebarRow: Identifiable, Equatable, Sendable {
             out.append(SidebarSection(id: id, title: template[id]?.title ?? t.0, rows: rows, needsYou: template[id]?.needsYou ?? t.1))
         }
         return out
+    }
+
+    /// The member whose state and wait a thread shows (DL-24, DL-228): the most urgent one; with every member quiet,
+    /// the most recent, where it would be listed on its own.
+    static func leader(_ sessions: [Fixture.Session]) -> Fixture.Session? {
+        guard let best = mostUrgent(sessions) else { return nil }
+        guard best.state == .idle || best.state == .resolved else { return best }
+        return sessions.min { a, b in a.state != b.state ? a.state < b.state : WaitTime(a.wait) < WaitTime(b.wait) }
+    }
+
+    /// The parent's tab key, from its session id or its name (a fork family is linked by `forkOf`).
+    static func parentKey(of s: Fixture.Session, in family: [Fixture.Session]) -> String? {
+        if let p = s.forkParent, family.contains(where: { $0.tabKey == p }) { return p }
+        return s.forkOf.flatMap { n in family.first { $0.name == n }?.tabKey }
+    }
+
+    /// A thread with members that need you: they leave it for NEEDS YOU, the rest stay as the thread (DL-228).
+    /// A fork leaving says whose it is; the original says nothing. Nil `staying` when nothing is left.
+    static func splitNeeds(_ r: SidebarRow) -> (staying: SidebarRow?, leaving: [SidebarRow]) {
+        guard case .thread(_, let members) = r.kind else { return r.state == .needsYou ? (nil, [r]) : (r, []) }
+        guard members.contains(where: { $0.state == .needsYou }) else { return (r, []) }
+        let leaving = members.filter { $0.state == .needsYou }.map { m -> SidebarRow in var m = m; m.showsOrigin = m.forkOf != nil; return m }
+        let rest = members.filter { $0.state != .needsYou }
+        guard let lead = rest.min(by: urgency) else { return (nil, leaving) }
+        var out = r
+        out.state = lead.state; out.wait = lead.wait
+        if rest.count == 1 { out.id = lead.id; out.name = lead.name; out.kind = .session; out.isFork = lead.isFork; out.forkOf = lead.forkOf }
+        else {
+            // The original may have left: the first row left leads, under its own name.
+            out.kind = .thread(count: rest.count, members: rest)
+            out.id = rest[0].id; out.name = rest[0].name
+        }
+        return (out, leaving)
     }
 
     static func mostUrgent(_ sessions: [Fixture.Session]) -> Fixture.Session? {

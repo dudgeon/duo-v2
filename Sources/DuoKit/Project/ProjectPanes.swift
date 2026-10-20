@@ -44,7 +44,7 @@ struct ProjectSidebarPane: View {
                     ForEach(items) { item in
                         switch item.kind {
                         case .label(let section):
-                            SectionLabel(text: section.title, count: section.rows.count, needsYou: section.needsYou)
+                            SectionLabel(text: section.title, count: section.sessionCount, needsYou: section.needsYou)
                                 .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(DuoColor.pane)
@@ -161,7 +161,7 @@ public struct SidebarItem: Identifiable {
         var out: [SidebarItem] = []
         let byID = Dictionary(sections.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         if let pinned = byID["pinned"] {
-            out.append(SidebarItem(id: "section/pinned", kind: .pinnedHead(count: pinned.rows.count)))
+            out.append(SidebarItem(id: "section/pinned", kind: .pinnedHead(count: pinned.sessionCount)))
             out += rows(pinned, indented: false)
         }
         if let needs = byID["needs"] {
@@ -169,7 +169,7 @@ public struct SidebarItem: Identifiable {
             out += rows(needs, indented: false)
         }
         if let open = byID["open"] {
-            out.append(SidebarItem(id: "section/open", kind: .openHead(count: open.rows.count)))
+            out.append(SidebarItem(id: "section/open", kind: .openHead(count: open.sessionCount)))
             out += rows(open, indented: false)
         }
         // TASKS is always there in a project (DL-172's New task row lives in it), empty or not.
@@ -184,7 +184,7 @@ public struct SidebarItem: Identifiable {
         }
         let groups = timeGroups.compactMap { byID[$0] }
         if !groups.isEmpty {
-            out.append(SidebarItem(id: "section/other", kind: .otherHead(count: groups.reduce(0) { $0 + $1.rows.count })))
+            out.append(SidebarItem(id: "section/other", kind: .otherHead(count: groups.reduce(0) { $0 + $1.sessionCount })))
             for g in groups {
                 out.append(SidebarItem(id: "section/\(g.id)", kind: .timeGroup(g)))
                 if !folded(g.id) { out += rows(g, indented: true) }
@@ -228,7 +228,7 @@ struct SidebarRowView: View {
                 .contentShape(Rectangle())
                 .onActivate { withDuoAnimation(.fold) { if expanded { model.expandedGroups.remove(row.id) } else { model.expandedGroups.insert(row.id) } } }  // action: view group
                 .accessibilityLabel(expanded ? "Hide \(row.name.lowercased()) sessions" : "Show \(rows.count) \(row.name.lowercased()) sessions")
-                if expanded { ForEach(rows) { r in SidebarLeafRow(row: r, nested: false) }.transition(.foldRows) }
+                if expanded { ForEach(rows) { r in SidebarMemberRow(row: r, nested: false) }.transition(.foldRows) }
             }
         case .group(let threads, let count):
             let expanded = model.expandedGroups.contains(row.name)
@@ -299,7 +299,7 @@ struct SidebarRowView: View {
 
                 if expanded {
                     VStack(alignment: .leading, spacing: 0) {
-                        ForEach(threads) { t in SidebarLeafRow(row: t, nested: true) }
+                        ForEach(threads) { t in SidebarMemberRow(row: t, nested: true) }
                     }
                     .overlay(alignment: .leading) {
                         DuoColor.controlEdge.frame(width: DuoMetric.borderEmphasis)
@@ -318,7 +318,10 @@ struct SidebarRowView: View {
             if let project = model.currentProject?.name, let t = model.summary(ofTask: row.task ?? "", in: project) {
                 TaskLine(task: t, showsProject: false, headerColumns: true, age: row.age)
             }
-        case .thread, .session:
+        case .thread(let n, let members):
+            ThreadRows(row: row, count: n, members: members, nested: indented)
+                .padding(.leading, indented ? DuoSpace.threadRuleX : 0)
+        case .session:
             if let slot = row.slot {
                 DirectorSlotRow(row: row, slot: slot)
             } else {
@@ -329,31 +332,103 @@ struct SidebarRowView: View {
     }
 }
 
+/// A thread (DL-228): folded, the original's name with the most urgent member's glyph and wait; open, the original
+/// first with the chevron down, and its forks under the thread rule. A click on the row opens the original, the
+/// chevron folds the thread (`duo2 view group ‹original id› expand|collapse`).
+struct ThreadRows: View {
+    @Environment(AppModel.self) private var model
+    let row: SidebarRow
+    let count: Int
+    let members: [SidebarRow]
+    /// In a task or a time group: the thread sits one rule deeper (the inner rule at x 37, DL-228).
+    let nested: Bool
+
+    var body: some View {
+        let open = model.expandedGroups.contains(row.id)
+        if open, let first = members.first {
+            // The rule sits where the original's glyph does, less the row's own inset: forks line up under the original.
+            let ruleX = nested ? 16 : DuoSpace.threadRuleX
+            let glyphX = nested ? 11 + DuoMetric.borderEmphasis + 10 + DuoSpace.gapRowItems : DuoSpace.panePadding + 10 + DuoSpace.gapRowItems
+            VStack(alignment: .leading, spacing: 0) {
+                SidebarLeafRow(row: first, nested: nested, thread: ThreadHead(foldKey: row.id, open: true, count: count))
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(members.dropFirst()) { m in SidebarLeafRow(row: m, nested: true, leading: glyphX - ruleX) }
+                }
+                .overlay(alignment: .leading) { DuoColor.controlEdge.frame(width: DuoMetric.borderEmphasis) }
+                .padding(.leading, ruleX)
+                .transition(.foldRows)
+            }
+        } else {
+            SidebarLeafRow(row: row, nested: nested, thread: ThreadHead(foldKey: row.id, open: false, count: count))
+        }
+    }
+}
+
+/// A row inside a fold or a task: a thread opens as one, anything else is a plain session row.
+struct SidebarMemberRow: View {
+    let row: SidebarRow
+    let nested: Bool
+    var body: some View {
+        if case .thread(let n, let members) = row.kind { ThreadRows(row: row, count: n, members: members, nested: nested) }
+        else { SidebarLeafRow(row: row, nested: nested) }
+    }
+}
+
+/// What makes a row the head of a thread.
+struct ThreadHead {
+    let foldKey: String
+    let open: Bool
+    let count: Int
+}
+
 /// A thread or session row, 26 high: chevron (threads) or a 10 pt spacer, glyph, name, pill, wait.
 struct SidebarLeafRow: View {
     @Environment(AppModel.self) private var model
     let row: SidebarRow
     let nested: Bool
+    /// Set on a thread's first row (DL-228): the chevron and, folded, the count.
+    var thread: ThreadHead? = nil
+    /// A fork under its thread's rule: no chevron place, and this far from the rule.
+    var leading: CGFloat? = nil
 
     var body: some View {
         let kind = model.sessionKind(key: row.sessionKey, project: model.currentProject?.name ?? "")
-        HStack(spacing: DuoSpace.gapRowItems) {
-            Group {
-                if case .thread = row.kind { Chevron(direction: .right) } else { Color.clear }
+        // The row's own tab, not the thread's most urgent member's: a folded thread is the original's row.
+        HStack(alignment: row.showsOrigin ? .top : .center, spacing: DuoSpace.gapRowItems) {
+            if let thread {
+                Chevron(direction: thread.open ? .down : .right)
+                    .frame(width: 10, height: 10)
+                    .frame(width: 18, height: DuoMetric.rowSession).padding(.horizontal, -4)   // a bigger target than the mark
+                    .contentShape(Rectangle())
+                    .onActivate { withDuoAnimation(.fold) { if thread.open { model.expandedGroups.remove(thread.foldKey) } else { model.expandedGroups.insert(thread.foldKey) } } }  // action: view group
+                    .accessibilityLabel(thread.open ? "Fold thread" : "Open thread")
+            } else if leading == nil {
+                Color.clear.frame(width: 10, height: 10)
             }
-            .frame(width: 10, height: 10)
-            SessionGlyph(kind: kind, state: row.state)
-            Text(row.name).duoText(.body).lineLimit(1)
-            if row.pinned { KeepRunningPin(color: DuoColor.text2) }   // PINNED's rows (DL-217)
-            if case .thread(let n) = row.kind { CountPill(text: "thread · \(n)", emphasised: false) }
-            Spacer(minLength: 8)
-            // Open in Duo (DL-91): say what it's doing rather than how long ago.
-            WaitLabel(text: row.state.waitText(row.wait, open: model.hasOpenTerminal(row.sessionKey)))
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: DuoSpace.gapRowItems) {
+                    SessionGlyph(kind: kind, state: row.state)
+                    Text(row.name).duoText(.body).lineLimit(1)
+                    if row.pinned { KeepRunningPin(color: DuoColor.text2) }   // PINNED's rows (DL-217)
+                    if let thread, !thread.open { CountPill(text: "thread · \(thread.count)", emphasised: false) }
+                    Spacer(minLength: 8)
+                    // Open in Duo (DL-91): say what it's doing rather than how long ago.
+                    WaitLabel(text: row.state.waitText(row.wait, open: model.hasOpenTerminal(row.sessionKey)))
+                }
+                .frame(height: row.showsOrigin ? 20 : DuoMetric.rowSession)
+                .padding(.top, row.showsOrigin ? 3 : 0)
+                // The second line (DL-228, board 05): "Fork of ‹original›" in text2, 12 on a 16 line.
+                if row.showsOrigin, let of = row.forkOf {
+                    Text("Fork of \(of)").font(.system(size: 12)).foregroundStyle(DuoColor.text2).lineLimit(1)
+                        .padding(.leading, DuoMetric.glyph + DuoSpace.gapRowItems).frame(height: 16, alignment: .leading)
+                        .padding(.bottom, 3)
+                }
+            }
         }
         // Nested rows sit 11 pt from the group's rule (which is 1.5 wide at x 21).
-        .padding(.leading, nested ? 11 + DuoMetric.borderEmphasis : DuoSpace.panePadding)
+        .padding(.leading, leading ?? (nested ? 11 + DuoMetric.borderEmphasis : DuoSpace.panePadding))
         .padding(.trailing, DuoSpace.panePadding)
-        .frame(height: DuoMetric.rowSession)
+        .frame(height: row.showsOrigin ? 42 : DuoMetric.rowSession, alignment: .top)
         // A terminal is open for it in Duo (ENH-7). The selected row's own fill is drawn by the list.
         .background {
             // Inset and rounded, as the boards draw it (sidebar-hierarchy-handoff, session-glyphs-handoff 04).
@@ -365,11 +440,22 @@ struct SidebarLeafRow: View {
         .onActivate { model.openConsoleTab(row.sessionKey) }  // action: session open
         .modifier(SessionOrganizeMenu(sessionKey: row.sessionKey))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(row.name), \(SessionGlyph.spokenKind(kind)), \(row.state.spokenName)\(row.wait.map { ", waiting \($0)" } ?? "")")
+        .accessibilityLabel(rowLabel(kind))
         .accessibilityIdentifier("video.session.\(row.name)")   // anchors: the video cursor's target
         .overlay {   // anchors: the row a context menu is open on
             if model.contextMenuSession == row.sessionKey { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Context menu row").accessibilityIdentifier("video.menu.row") }
         }
+    }
+}
+
+extension SidebarLeafRow {
+    /// "Pricing research, terminal session, at prompt, thread of 2, expanded" and "Pricing research (Branch), fork of
+    /// Pricing research, terminal session, working" (DL-228).
+    func rowLabel(_ kind: ChatViewMode) -> String {
+        let waiting = row.wait.map { ", waiting \($0)" } ?? ""
+        if let thread { return "\(row.name), \(SessionGlyph.spokenKind(kind)), \(row.state.spokenName)\(waiting), thread of \(thread.count), \(thread.open ? "expanded" : "folded")" }
+        if row.isFork, let of = row.forkOf { return "\(row.name), fork of \(of), \(SessionGlyph.spokenKind(kind)), \(row.state.spokenName)\(waiting)" }
+        return "\(row.name), \(SessionGlyph.spokenKind(kind)), \(row.state.spokenName)\(waiting)"
     }
 }
 

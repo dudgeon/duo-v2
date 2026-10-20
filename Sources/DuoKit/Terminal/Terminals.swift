@@ -66,13 +66,16 @@ public enum TerminalCommand: Sendable, Equatable {
     case resumeClaude(sessionID: String, remoteControl: String? = nil, prompt: String? = nil)
     /// A new session with the same history: `--resume <from> --fork-session`, under a Duo-minted id.
     case forkClaude(from: String, sessionID: String)
+    /// A `/fork` in Claude's background: `claude attach ‹short›` shows the job in a tab (DL-227). Closing the tab detaches;
+    /// the fork keeps running. `sessionID` is the fork's id, which keys the tab and sets `DUO_SESSION_ID`.
+    case attachClaude(short: String, sessionID: String)
     /// A plain shell (DL-8). Auto-promotion of `claude` typed in it comes later.
     case shell
 
     /// The id the process was started with: its `DUO_SESSION_ID`, whatever the session is now.
     public var launchId: String? {
         switch self {
-        case .newClaude(let id, _, _, _), .resumeClaude(let id, _, _), .forkClaude(_, let id): id
+        case .newClaude(let id, _, _, _), .resumeClaude(let id, _, _), .forkClaude(_, let id), .attachClaude(_, let id): id
         case .shell: nil
         }
     }
@@ -187,6 +190,9 @@ public final class TerminalSession {
         case .forkClaude(let from, let id):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
             run(claude, ["--resume", from, "--fork-session", "--session-id", id] + Self.hookArgs(id), environment: Self.environment(id))
+        case .attachClaude(let short, let id):
+            guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
+            run(claude, ["attach", short], environment: Self.environment(id))
         case .shell:
             let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
             run(shell, ["-l"], argv0: "-" + (shell as NSString).lastPathComponent, environment: ChildEnvironment.make(sessionID: nil))

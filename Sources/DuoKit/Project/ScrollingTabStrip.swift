@@ -80,6 +80,7 @@ struct TabMenuRow {
     let state: SessionState?
     let isShell: Bool
     let selected: Bool
+    var isFork = false
 }
 
 extension PopUp {
@@ -92,8 +93,12 @@ extension PopUp {
             i.run = { choose(r.key) }; i.target = i
             i.state = r.selected ? .on : .off
             if glyphs {
+                // A fork's row carries the mark after the state glyph, in light colours (a stand-in, Q-229).
                 let glyph: AnyView = r.isShell ? AnyView(ShellPromptMark(active: false, light: true).frame(width: 11, height: 9))
-                    : AnyView(StateGlyph(r.state ?? .idle, on: .light).frame(width: DuoMetric.glyph, height: DuoMetric.glyph))
+                    : AnyView(HStack(spacing: 5) {
+                        StateGlyph(r.state ?? .idle, on: .light).frame(width: DuoMetric.glyph, height: DuoMetric.glyph)
+                        if r.isFork { ForkMark(color: DuoColor.text2) }
+                    })
                 let render = ImageRenderer(content: glyph)
                 render.scale = NSScreen.main?.backingScaleFactor ?? 2
                 i.image = render.nsImage

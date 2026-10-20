@@ -163,7 +163,9 @@ public enum LiveSnapshot {
                 reason: live?.state == .needsYou ? Self.reason(beacon: beacon, hooks: hooks) : nil,
                 lastActive: since,
                 remoteControl: entry?.remoteControl,
-                liveProcess: beacon != nil ? true : nil)
+                liveProcess: beacon != nil ? true : nil,
+                forkParent: entry?.provenance.hasPrefix("forked-from:") == true && entry?.fork != nil ? String(entry!.provenance.dropFirst("forked-from:".count)) : nil,
+                fork: entry?.fork)
         }
 
         // Where each session ran, last (after any /cd): a project that moved still has sessions
@@ -272,16 +274,33 @@ public enum LiveSnapshot {
             }
         }
 
+        // A fork's parent as the fork itself says it, before the shared-uuid lineage (DL-227, F-344): Duo's
+        // index (a fork made in Duo), a /branch transcript's `forkedFrom`, a /fork job's `state.json`.
+        let transcripts = Dictionary(history.map { ($0.id, $0.transcript) }, uniquingKeysWith: { a, _ in a })
+        let jobs = ForkSource.jobs()
+        for i in sessions.indices {
+            guard let id = sessions[i].sessionId else { continue }
+            if sessions[i].forkParent == nil {
+                if let job = jobs.first(where: { $0.sessionId == id }) { sessions[i].forkParent = job.parent; sessions[i].fork = sessions[i].fork ?? ForkSource.Kind.fork.rawValue }
+                else if let t = transcripts[id], let p = ThreadCache.shared.declaredParents([(id, t)])[id] {
+                    sessions[i].forkParent = p; sessions[i].fork = sessions[i].fork ?? ForkSource.Kind.branch.rawValue
+                }
+            }
+        }
+        for i in sessions.indices {
+            guard let parent = sessions[i].forkParent,
+                  let pname = sessions.first(where: { $0.sessionId == parent && $0.project == sessions[i].project })?.name else { continue }
+            sessions[i].forkOf = pname
+        }
         // Threads (DL-24): a fork folds under the session it came from; a group lists its threads.
         if ctx.includeHistory || ctx.historyOverride != nil {
-            let transcripts = Dictionary(history.map { ($0.id, $0.transcript) }, uniquingKeysWith: { a, _ in a })
             for project in Set(sessions.map(\.project)) {
                 let members = sessions.filter { $0.project == project }.compactMap { s in s.sessionId.flatMap { id in transcripts[id].map { (id: id, transcript: $0) } } }
                 guard members.count > 1 else { continue }
                 for (child, parent) in ThreadCache.shared.parents(members) {
                     guard let ci = sessions.firstIndex(where: { $0.sessionId == child }),
                           let pname = sessions.first(where: { $0.sessionId == parent && $0.project == project })?.name else { continue }
-                    sessions[ci].forkOf = pname
+                    if sessions[ci].forkOf == nil { sessions[ci].forkOf = pname; sessions[ci].forkParent = sessions[ci].forkParent ?? parent }
                 }
             }
             groups = groups.map { g in
