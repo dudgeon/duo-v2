@@ -1,0 +1,60 @@
+{
+ "$note": "Fork threads, the two tabs and the moment after a fork (DL-227 option A), picked 2026-10-20 (DL-228). kind=board: drawn on the Design canvas and exported as static HTML (rendered from the canvas sources in canvas/). Options not chosen stay on the boards and in canvas/.",
+ "source": "https://claude.ai/artifact/84jHaESxQeitexXgaqGZAh",
+ "screens": [
+  {
+   "file": "screens/00-today-and-questions.html",
+   "board": "Main.dc.html",
+   "kind": "board",
+   "width": 1400,
+   "height": 1000,
+   "decision": "DL-228",
+   "shows": "CONTEXT: today's pane after a /branch, option A's rules (DL-227), the four questions and Geoff's answers (A, A, B, A; 2026-10-20, by buttons) (DL-228)."
+  },
+  {
+   "file": "screens/01-thread-row.html",
+   "board": "Thread.dc.html",
+   "kind": "board",
+   "width": 1460,
+   "height": 1000,
+   "decision": "DL-228",
+   "shows": "THE TARGET for the thread row: A (chosen), expanded and folded. B and C were drawn and not chosen; build A only. Question 2 (auto-open, A chosen) is the text at the foot. Geoff, 2026-10-20 (DL-228)."
+  },
+  {
+   "file": "screens/02-after-branch.html",
+   "board": "Branch.dc.html",
+   "kind": "board",
+   "width": 1400,
+   "height": 980,
+   "decision": "DL-228",
+   "shows": "THE TARGET for the moment after /branch: the branch's new tab (with the fork mark), the original resumed in its tab, the thread opened. Geoff, 2026-10-20 (DL-228)."
+  },
+  {
+   "file": "screens/03-after-fork.html",
+   "board": "Fork.dc.html",
+   "kind": "board",
+   "width": 1460,
+   "height": 980,
+   "decision": "DL-228",
+   "shows": "THE TARGET for the moment after /fork: focus stays on the original; the attach tab (with the fork mark) right of it; the thread opened; Close Tab detaches. Geoff, 2026-10-20 (DL-228)."
+  },
+  {
+   "file": "screens/04-tabs.html",
+   "board": "Tabs.dc.html",
+   "kind": "board",
+   "width": 1200,
+   "height": 1000,
+   "decision": "DL-228",
+   "shows": "THE TARGET for fork tabs: B (a fork mark after the state glyph, the session's own title), chosen by Geoff 2026-10-20. A and C are drawn and not chosen. The many-tabs row applies (DL-225) (DL-228)."
+  },
+  {
+   "file": "screens/05-edge-cases.html",
+   "board": "Edges.dc.html",
+   "kind": "board",
+   "width": 1640,
+   "height": 980,
+   "decision": "DL-228",
+   "shows": "Edge cases: a thread in a task, question 4 A (chosen: one row placed by its liveliest session; a needs-you fork leaves it), B (not chosen), 240 wide, keyboard/VoiceOver/duo2. Geoff, 2026-10-20 (DL-228)."
+  }
+ ]
+}
