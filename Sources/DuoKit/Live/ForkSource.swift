@@ -33,16 +33,36 @@ public enum ForkSource {
         }
     }
 
+    /// Verdicts already reached, by job folder: a fork's parent and ids are written when the job starts and don't change, and
+    /// a job that isn't a fork and hasn't changed for two minutes isn't going to be one. Claude's `jobs` folder holds hundreds
+    /// of finished jobs, and this is read on every 2 s refresh. (`needs` is as it was when the verdict was reached.)
+    private final class Settled: @unchecked Sendable {
+        let lock = NSLock()
+        var verdicts: [String: Job?] = [:]
+    }
+    private static let settled = Settled()
+
     /// Every job that is a fork, read from Claude's `jobs` folder. A job without `forkParentSessionId` isn't one.
     public static func jobs(in root: URL = ClaudeStorage.root) -> [Job] {
         let dir = root.appending(path: "jobs")
         guard let names = try? FileManager.default.contentsOfDirectory(atPath: dir.path) else { return [] }
         return names.sorted().compactMap { short in
-            guard let data = try? Data(contentsOf: dir.appending(path: short).appending(path: "state.json")),
-                  let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-                  let parent = json["forkParentSessionId"] as? String, !parent.isEmpty else { return nil }
-            return Job(short: short, parent: parent, sessionId: (json["forkSessionId"] as? String) ?? (json["sessionId"] as? String),
-                       needs: json["needs"] as? String)
+            let cacheKey = dir.path + "/" + short
+            settled.lock.lock(); let known = settled.verdicts[cacheKey]; settled.lock.unlock()
+            if let known { return known }
+            let file = dir.appending(path: short).appending(path: "state.json")
+            guard let data = try? Data(contentsOf: file) else { return nil }
+            var job: Job?
+            if let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+               let parent = json["forkParentSessionId"] as? String, !parent.isEmpty {
+                job = Job(short: short, parent: parent, sessionId: (json["forkSessionId"] as? String) ?? (json["sessionId"] as? String),
+                          needs: json["needs"] as? String)
+            }
+            let age = (try? file.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate).map { -$0.timeIntervalSinceNow } ?? 0
+            if job?.sessionId != nil || (job == nil && age > 120) {
+                settled.lock.lock(); settled.verdicts[cacheKey] = .some(job); settled.lock.unlock()
+            }
+            return job
         }
     }
 

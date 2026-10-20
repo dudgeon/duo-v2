@@ -1,6 +1,6 @@
 # Duo: fork threads, the two tabs, the moment after a fork — design handoff
 
-Status: Geoff picked by buttons on 2026-10-20 (DL-228): the thread row A, auto-open A, the fork's tab **B (a fork mark)**, a split thread A. The canvas is https://claude.ai/artifact/84jHaESxQeitexXgaqGZAh ("Duo · Fork threads"). Not built: `tasks/build-fork-tabs.md` is the suggested build.
+Status: Geoff picked by buttons on 2026-10-20 (DL-228): the thread row A, auto-open A, the fork's tab **B (a fork mark)**, a split thread A. The canvas is https://claude.ai/artifact/84jHaESxQeitexXgaqGZAh ("Duo · Fork threads"). Built on `build/fork-tabs` (F-359, F-360; stand-ins Q-233).
 
 This draws what **DL-227** (option A, `docs/research/fork-handling.md`, F-344) left undrawn: a `/branch` or `/fork` made in a Duo session leaves both sessions live, each in its own tab, and the left pane shows them as one thread. It fits **DL-217's pane order** (`sidebar-hierarchy-handoff/`), **DL-174's glyphs**, and **DL-225's scrolling strip** (`tabs-handoff/`). It changes none of them.
 

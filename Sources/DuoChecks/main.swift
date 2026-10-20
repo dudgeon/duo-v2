@@ -68,6 +68,7 @@ func repoFixture() throws -> Fixture {
     sidebarHierarchyChecks(f)
     sidebarSplitChecks()
     try forkChecks(f)
+    try forkAdoptChecks()
     try taskBoardChecks()
     try appearanceChecks()
 
