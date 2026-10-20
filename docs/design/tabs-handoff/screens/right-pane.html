@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>B: right pane</title>
+<meta name="design-size" content="1200x980">
+</head>
+<body>
+<!-- Exported from https://claude.ai/artifact/6c1sHmzDmboFzMoxgagWdm (board ScrollRight.dc.html, “B, picked [P] · Right pane in detail”); no holes or loops -->
+<helmet>
+<style>
+body{margin:0}
+a{color:#1f2328}a:hover{color:#5b636d}
+.rs{width:460px;height:36px;box-sizing:border-box;background:#ffffff;border:1px solid #c9cdd3;display:flex;align-items:center;padding:0 0 0 20px;font-size:13px;line-height:20px;color:#5b636d;white-space:nowrap;overflow:hidden;flex:none;position:relative}
+.rs b{font-weight:600;color:#1f2328}
+.pin{flex:none;padding-right:24px}
+.sc{flex:1;min-width:0;position:relative;overflow:hidden;height:34px;display:flex;align-items:center}
+.run{display:flex;gap:24px;align-items:center;flex:none}
+.fl{position:absolute;left:0;top:0;bottom:0;width:24px;background:linear-gradient(90deg, #ffffff, rgba(255,255,255,0))}
+.fr{position:absolute;right:0;top:0;bottom:0;width:24px;background:linear-gradient(270deg, #ffffff, rgba(255,255,255,0))}
+.all{flex:none;border-left:1px solid #c9cdd3;height:34px;display:inline-flex;align-items:center;gap:4px;padding:0 10px 0 12px;color:#5b636d}
+.plus{flex:none;padding:0 20px 0 10px}
+.row{display:flex;gap:32px;align-items:center}
+.cap{font-size:12px;line-height:16px;color:#5b636d;width:620px}
+.cap b{font-weight:600;color:#1f2328}
+.menu{box-sizing:border-box;background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:5px;box-shadow:0px 12px 32px rgba(31, 35, 40, 0.22);font-size:13px;line-height:20px;color:#1f2328;display:flex;flex-direction:column}
+.mi{padding:1px 10px 1px 24px;border-radius:4px}
+</style>
+</helmet>
+<div style="width: 1200px; height: 980px; box-sizing: border-box; background: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1f2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="font-size: 14px; line-height: 20px; font-weight: 600">Twelve documents: brief, notes, plan, pricing, launch, hiring, goals, retro, terms, changes, api, faq</div>
+  <div class="row">
+    <div class="rs"><span class="pin">Project</span><div class="sc"><div class="run"><b>brief.md</b><span>notes.md</span><span>plan.md</span><span>pricing.md</span><span>launch.md</span></div><div class="fr"></div></div><span class="all">12<svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1.5l3 3 3-3"></path></svg></span><span class="plus">+</span></div>
+    <div class="cap"><b>At the start.</b> Project stays pinned; the documents scroll between it and the end. A 24 fade in the strip's ground shows there's more to the right; none at the left, where nothing is. No scroll bar. 12 ⌄ is every tab, after a hairline (rule), then +.</div>
+  </div>
+  <div class="row">
+    <div class="rs"><span class="pin">Project</span><div class="sc"><div class="run" style="margin-left: -34px"><span>hiring.md</span><span>goals.md</span><b>retro.md</b><span>terms.md</span><span>changes.md</span></div><div class="fl"></div><div class="fr"></div></div><span class="all">12<svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1.5l3 3 3-3"></path></svg></span><span class="plus">+</span></div>
+    <div class="cap"><b>In the middle.</b> Fades at both edges. Tabs keep their places in the order; the strip moves, not the tabs. A trackpad swipe, or a scroll wheel with ⇧, scrolls it.</div>
+  </div>
+  <div class="row">
+    <div class="rs"><span class="pin">Project</span><div class="sc"><div class="run" style="margin-left: -96px"><span>goals.md</span><span>retro.md</span><b>terms.md</b><span>changes.md</span><span>api.md</span></div><div class="fl"></div><div class="fr"></div></div><span class="all">12<svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1.5l3 3 3-3"></path></svg></span><span class="plus">+</span></div>
+    <div class="cap"><b>The selected tab is always in view, whole.</b> On ⌃Tab, a click, a choice from 12 ⌄, a close or a move, the strip scrolls the least it can (motionTabMove) to show the selected tab with 32 of its next neighbour beyond the fade, so you can see where ⌃Tab goes next.</div>
+  </div>
+  <div class="row" style="align-items: flex-start">
+    <div style="width: 460px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
+      <div class="rs"><span class="pin">Project</span><div class="sc"><div class="run" style="margin-left: -34px"><span>hiring.md</span><span>goals.md</span><b>retro.md</b><span>terms.md</span><span>changes.md</span></div><div class="fl"></div><div class="fr"></div></div><span class="all" style="color: #1f2328">12<svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1.5l3 3 3-3"></path></svg></span><span class="plus">+</span></div>
+      <div class="menu" style="width: 170px; margin-right: 20px"><div class="mi">brief.md</div><div class="mi">notes.md</div><div class="mi">plan.md</div><div class="mi">pricing.md</div><div class="mi">launch.md</div><div class="mi">hiring.md</div><div class="mi">goals.md</div><div class="mi" style="padding-left: 8px">✓ retro.md</div><div class="mi">terms.md</div><div class="mi">changes.md</div><div class="mi">api.md</div><div class="mi">faq.md</div></div>
+    </div>
+    <div class="cap"><b>12 ⌄ opens every tab</b> in strip order, Project's page excepted, the selected one checked (a pop-up menu, as today's » n). Choosing one selects it and scrolls to it. Shown only while something is out of view.</div>
+  </div>
+  <div class="row">
+    <div class="rs"><span class="pin">Project</span><div class="sc"><div class="run" style="margin-left: -60px"><span>goals.md</span><span style="width: 57px"></span><span>terms.md</span><span>changes.md</span><span>api.md</span></div><div class="fl"></div><div class="fr"></div></div><span class="all">12<svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1.5l3 3 3-3"></path></svg></span><span class="plus">+</span><div style="position: absolute; left: 330px; top: 5px; height: 24px; padding: 0 8px; display: flex; align-items: center; background: #ffffff; border: 1px solid #c9cdd3; border-radius: 5px; box-shadow: 0px 12px 32px rgba(31, 35, 40, 0.22); font-weight: 600; color: #1f2328">retro.md</div></div>
+    <div class="cap"><b>Dragging retro.md to the end.</b> The drag selects it (DL-225). Held within 32 of an edge, the strip scrolls that way at a steady pace and its place keeps moving; let go anywhere along the strip. Lifted as tabs-drag draws it.</div>
+  </div>
+  <div class="row">
+    <div class="rs"><span class="pin">Project</span><div class="sc"><div class="run"><span>brief.md</span><b>notes.md</b><span>plan.md</span></div></div><span class="plus" style="padding-left: 0">+</span></div>
+    <div class="cap"><b>When everything fits</b>, nothing changes from today: no fades, no 12 ⌄, the + after the last tab.</div>
+  </div>
+  <div class="row">
+    <div class="rs" style="width: 360px"><span class="pin">Project</span><div class="sc"><div class="run" style="flex: 1; min-width: 0"><b style="min-width: 0; overflow: hidden; text-overflow: ellipsis">competitive-landscape.md</b></div><div class="fl"></div><div class="fr"></div></div><span class="all">12<svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1.5l3 3 3-3"></path></svg></span><span class="plus">+</span></div>
+    <div class="cap" style="width: 720px"><b>The narrowest right pane (360).</b> When the selected tab is wider than the scrolling space, it fills the space and its title is cut at the end; it's never half off screen.</div>
+  </div>
+</div>
+</body>
+</html>
