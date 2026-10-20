@@ -231,10 +231,10 @@ extension DuoAction {
         .init(.idle, .sessions, "", "Idle, resumable sessions, newest first, grouped by when (the map footer's list).", ui: ["idle footer"]),
         .init(.shellNew, .sessions, "", "Open a plain shell in the console (DL-8); typing `claude` in it makes it a session.", ui: ["New Shell"]),
         // Groups (DL-24): related threads, grouped by hand; Duo-owned facts in the project's .duo/sessions.json.
-        .init(.tasks, .sessions, "[--project <p>]", "Task notes (tasks/*.md in each project) with their status and how many sessions their `sessions:` frontmatter links (DL-93)."),
+        .init(.tasks, .sessions, "[--project <p>]", "Task notes (tasks/*.md in each project) with their status and how many sessions their `sessions:` frontmatter links (DL-93).", everyday: true),
         .init(.taskMake, .sessions, "<session|group> [--title <t>]", "Make a Task: writes tasks/<slug>.md whose `sessions:` links the session (or the group's sessions; the group becomes the task) and opens it. Undo with `duo2 undo`.",
               ui: ["Make a Task"]),
-        .init(.taskNew, .sessions, "[title] [--project <p>]", "+ New task: a task note with no sessions yet, opened to write. Undo with `duo2 undo`.", ui: ["+ New task", "New Task"]),
+        .init(.taskNew, .sessions, "[title] [--project <p>] [--status <s>] [--no-open]", "+ New task: a task note in tasks/ with no sessions yet, opened to write; use this, not a TASKS.md file. --no-open leaves the note closed (for making several); --status starts it at open, in-progress, waiting, review, done or dropped. Undo with `duo2 undo`.", ui: ["+ New task", "New Task"], everyday: true),
         .init(.taskSession, .sessions, "<task> [--project <p>]", "New Session in Task: starts a Claude session in the task's project with its link already in the note's `sessions:` list, and shows it when that project is open. Once Claude's prompt is up, Duo types `@tasks/<note>.md` into it and doesn't send it (DL-112): no turn is spent until someone adds a word and presses Return. Also the + on a task row's hover.",
               ui: ["New Session in Task"]),
         .init(.taskStatus, .sessions, "<task> <open|in-progress|waiting|review|done|dropped> [--project <p>]", "Set a task's status: rewrites only `status:` (and `completed:` when done or dropped). Done and dropped tasks leave the lists. Undo with `duo2 undo`.",
@@ -505,7 +505,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "cancel", "fetch", "background", "suggest", "take-over", "handed-back", "no-worker", "adopt"]
+    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "cancel", "fetch", "background", "suggest", "take-over", "handed-back", "no-worker", "adopt", "no-open"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]
@@ -592,6 +592,7 @@ extension DuoAction {
             + "\nDocuments the user has open in Duo (`duo2 status` shows them) are theirs to see change: edit them with "
             + "`duo2 doc edit --stdin`, piping the JSON your Edit tool takes ({\"file_path\",\"old_string\",\"new_string\"}, or {\"file_path\",\"content\"} to rewrite), "
             + "not with Edit, Write or shell redirection. Duo applies it in the editor the user is looking at, highlighted, and merges it with their unsaved typing."
+            + "\nTo track work, make Duo tasks (`duo2 task new`, one note each in the project's tasks/ folder) and set their status with `duo2 task status`; do not write a TASKS.md or a to-do list file."
             + "\nWhen you start substantial work, `duo2 session note \"<one line>\"`; when you hand back, `duo2 session next \"<one line>\"`."
     }
 }

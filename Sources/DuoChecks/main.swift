@@ -1759,6 +1759,12 @@ func repoFixture() throws -> Fixture {
 
     check(DuoAction.primer().contains("duo2 doc edit --stdin") && DuoAction.primer().contains("not with Edit, Write or shell redirection"),
           "the primer tells Claude how to edit open documents without the hook")
+    check(DuoAction.primer().contains("`duo2 task new") && DuoAction.primer().contains("`duo2 tasks") && DuoAction.primer().contains("TASKS.md"),
+          "the primer lists the task verbs and says not to write a TASKS.md (F-343)")
+    check(Installer.skill().contains("tasks, to-dos") && Installer.skill().contains("## Tasks") && Installer.skill().contains("--no-open"),
+          "the duo2 skill's trigger and a Tasks section mention tasks (F-343)")
+    check(ProjectContext.atStart(.init(name: "p", folder: "/p"))?.contains("duo2 task new") == true, "the hook context names tasks even with none (F-343)")
+    check(Invocation(["--no-open", "A title"]).positional == ["A title"], "--no-open takes no value")
 
     print("privacy prompts (F-53)")
     let home = FileManager.default.homeDirectoryForCurrentUser

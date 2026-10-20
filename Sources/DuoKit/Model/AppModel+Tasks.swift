@@ -16,7 +16,7 @@ extension AppModel {
     /// them, opens it so it can be named and written, and for a group removes the group (the task
     /// replaces it). One undo puts everything back. Returns the note's path, or why not.
     @discardableResult
-    public func makeTask(title: String, sessionIds: [String], project: String, replacingGroup group: String? = nil) -> Result<String, Error> {
+    public func makeTask(title: String, sessionIds: [String], project: String, replacingGroup group: String? = nil, status: String = "open", open opens: Bool = true) -> Result<String, Error> {
         struct Refused: Error, CustomStringConvertible { let description: String }
         guard let folder = liveFolders[project] else { return .failure(Refused(description: "no project '\(project)'")) }
         let dir = folder.appending(path: "tasks")
@@ -28,7 +28,9 @@ extension AppModel {
         }
         do {
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-            try Data(TaskNotes.newNote(title: title, links: links, template: Templates.text(.task, project: folder, home: homeFolder).text).utf8).write(to: file, options: .withoutOverwriting)
+            var text = TaskNotes.newNote(title: title, links: links, template: Templates.text(.task, project: folder, home: homeFolder).text)
+            if status != "open" { text = TaskNotes.setting("status", status, in: text) }
+            try Data(text.utf8).write(to: file, options: .withoutOverwriting)
         } catch { return .failure(error) }
         let before = SessionIndex.load(project: folder)
         if let group {
@@ -39,7 +41,7 @@ extension AppModel {
         }
         // Shown now (Q-78): a task with no sessions yet joins the Tasks fold at once.
         if sessionIds.isEmpty, group == nil {
-            let summary = Fixture.TaskSummary(project: project, path: "tasks/\(file.lastPathComponent)", title: title, status: "open", sessionIds: [])
+            let summary = Fixture.TaskSummary(project: project, path: "tasks/\(file.lastPathComponent)", title: title, status: status, sessionIds: [])
             showNow { fixture.tasks = (fixture.tasks ?? []) + [summary] }
         }
         registerUndo("Make a Task") { model in
@@ -54,8 +56,10 @@ extension AppModel {
         }
         refreshLive()
         let path = "tasks/\(slug).md"
-        if currentProject?.name != project { open(project: project) }
-        openDocument(path)
+        if opens {
+            if currentProject?.name != project { open(project: project) }
+            openDocument(path)
+        }
         return .success(path)
     }
 
@@ -205,7 +209,12 @@ extension AppModel {
         case .taskNew:
             let name = inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name ?? currentProject?.name
             guard let name, project(named: name) != nil else { return done(.fail("which project? --project <p>")) }
-            switch makeTask(title: inv.positional.isEmpty ? "Untitled task" : inv.positional.joined(separator: " "), sessionIds: [], project: name) {
+            let status = TaskBoard.key(inv.flags["status"] ?? "open")
+            guard Set(TaskNotes.statuses + boardLanes(name) + ["dropped"]).contains(status) else {
+                return done(.fail("\(name) has no status '\(status)': \((TaskNotes.statuses + ["dropped"]).joined(separator: " | "))"))
+            }
+            switch makeTask(title: inv.positional.isEmpty ? "Untitled task" : inv.positional.joined(separator: " "), sessionIds: [], project: name,
+                            status: status, open: !inv.has("no-open")) {
             case .success(let p): done(.ok("Made \(name)/\(p). Undo: duo2 undo"))
             case .failure(let e): done(.fail("\(e)"))
             }

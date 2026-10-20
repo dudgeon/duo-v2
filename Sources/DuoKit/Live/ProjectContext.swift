@@ -82,7 +82,7 @@ public enum ProjectContext {
     }
 
     static func listing(_ b: Brief) -> String {
-        let head = "This session is in the project \(quoted(b.name)) (\(b.folder))."
+        let head = "This session is in the project \(quoted(b.name)) (\(b.folder)). Track work as Duo tasks, not a TASKS.md: `duo2 tasks` lists them, `duo2 task new` makes one."
         if b.imported { return head + " Its CLAUDE.md imports PROJECT.md, so you already have its goal, health and next step." }
         let facts = [("Goal", b.goal), ("Health", healthWords(b.health)), ("Next step", b.next)].filter { !$0.1.isEmpty }
         // A brand-new PROJECT.md says only `health: on-track`: no brief yet, so no lines.
