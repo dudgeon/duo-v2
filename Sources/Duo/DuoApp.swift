@@ -56,6 +56,7 @@ struct DuoApp: App {
             else if HomeListTargets.screens.contains(screen) { HomeListTargets.apply(screen, to: model) }
             else if VideoTargets.screens.contains(screen) { VideoTargets.apply(screen, to: model) }
             else if GlyphTargets.screens.contains(screen) { GlyphTargets.apply(screen, to: model) }
+            else if SidebarTargets.screens.contains(screen) { SidebarTargets.apply(screen, to: model) }
             else { SearchTargets.apply(screen, to: model) }
         }
         if options.collapseLeft { model.leftCollapsed = true }

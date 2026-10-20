@@ -24,6 +24,7 @@ The open design items are DB-n (`docs/design/design-brief-2026-10-04.md`) and S2
 | Missing or moved folder tiles ("Folder not found", "Moved to …") | Designed (DL-101); "In the Trash" not built | slice3 `missing-folder.html` | — | ProjectTile, MissingNotice, `Live/MissingFolders.swift` |
 | New project tile | Designed; opens the New project sheet (DL-100). On the Board it always closes Home's columns (DL-212) | build `overview.html` | — | NewProjectTile |
 | Home with no projects yet: a card, + New project, `FOLDERS IN HOME · n` with Make a Project on each (Board and List) | Stand-in (DL-212, F-313): FolderNotice's card look and the map's tiles, until designed | — | Q-197 | `AllProjects/AllProjectsPanes.swift` `HomeFoldersSection`, `HomeFolderTile` |
+| The project pane's order and the director's slot: PINNED, OPEN above TASKS, Later (DL-217, DL-218) | Built (build/sidebar-hierarchy) | docs/design/sidebar-hierarchy-handoff/ (canvas https://claude.ai/artifact/LUJfX4njDoqrtgQwVzFTiP) | build-compare/ | SessionList, SessionRow, SectionLabel |
 | Sessions open in Duo: `at prompt`/`working`, tinted | Designed (DL-133, ENH-7) | canvas https://claude.ai/artifact/2qhPnZG6qUpLWFsXKCYSzt `Tiles` (A) | — | TileSessionRow, `activeTint` |
 | Archived rollup under the map | Stand-in (ENH-6) | — | DB-34 | `AllProjects/ArchivedProjects.swift` |
 | Idle footer and idle list | Designed (DB-1) | surfaces `idle-list.html`, `idle-many.html` | — | `AllProjects/IdleList.swift` |

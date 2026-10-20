@@ -36,7 +36,7 @@ struct ProjectSidebarPane: View {
                         if project.isMissing { MissingNotice(project: project) }
                         else if project.kind == "folder", project.notNow != true { FolderNotice(project: project) }
                     }
-                    // NEEDS YOU, then TASKS, then OTHER SESSIONS in its time groups, then Archived (DL-174). One
+                    // PINNED, NEEDS YOU, OPEN, TASKS (in play, Later), then OTHER SESSIONS in its time groups, then Archived (DL-217). One
                     // flat list, so a row keeps its identity when it changes section and travels there (DL-130):
                     // `rowMove`; a new row fades in (`rowIn`), a row that goes fades out (`rowOut`).
                     // Each item is opaque on the pane, and a row changing section travels above the rows
@@ -48,6 +48,12 @@ struct ProjectSidebarPane: View {
                                 .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(DuoColor.pane)
+                        case .pinnedHead(let count):
+                            if let project { PinnedHeader(project: project.name, count: count) }
+                        case .openHead(let count):
+                            if let project { OpenHeader(project: project.name, count: count) }
+                        case .laterFold(let section):
+                            if let project { LaterFoldRow(project: project.name, section: section) }
                         case .tasksHead:
                             if let project { TasksHeader(project: project.name) }
                         case .tasksTail:
@@ -79,6 +85,7 @@ struct ProjectSidebarPane: View {
                 .id(project?.name)
             }
             .onHover { model.hoverSidebar($0) }
+            .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { model.sidebarWidth = $0 }
             .background { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Sessions").accessibilityIdentifier("video.sessions.list") } }   // anchors (scene 9)
             FileTreePane()
         }
@@ -127,11 +134,17 @@ struct SidebarSplit: Layout {
 public struct SidebarItem: Identifiable {
     public enum Kind {
         case label(SidebarSection)
+        /// PINNED: a section label with a + (Keep Running) on hover; the director's slot and the kept sessions follow.
+        case pinnedHead(count: Int)
+        /// OPEN: a section label with a + (New Claude Code session) on hover.
+        case openHead(count: Int)
         /// TASKS (a section label with a + on hover); its rows are the task rows, `tasksTail` what follows them.
         case tasksHead, tasksTail
+        /// Later: a fold row among the tasks, after those in play (DL-217).
+        case laterFold(SidebarSection)
         /// OTHER SESSIONS, with its count (a section label with a + on hover).
         case otherHead(count: Int)
-        /// A time group's fold row: Open, Today, This week or Earlier.
+        /// A time group's fold row: Today, This week or Earlier.
         case timeGroup(SidebarSection)
         /// `indented`: a session in a time group, at the nested rows' inset.
         case row(SidebarRow, indented: Bool)
@@ -139,7 +152,7 @@ public struct SidebarItem: Identifiable {
     public let id: String
     public let kind: Kind
 
-    static let timeGroups = ["open", "today", "week", "earlier"]
+    static let timeGroups = ["today", "week", "earlier"]
 
     public static func items(_ sections: [SidebarSection], tasksShown: Bool, folded: (String) -> Bool) -> [SidebarItem] {
         func rows(_ s: SidebarSection, indented: Bool) -> [SidebarItem] {
@@ -147,14 +160,26 @@ public struct SidebarItem: Identifiable {
         }
         var out: [SidebarItem] = []
         let byID = Dictionary(sections.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        if let pinned = byID["pinned"] {
+            out.append(SidebarItem(id: "section/pinned", kind: .pinnedHead(count: pinned.rows.count)))
+            out += rows(pinned, indented: false)
+        }
         if let needs = byID["needs"] {
             out.append(SidebarItem(id: "section/needs", kind: .label(needs)))
             out += rows(needs, indented: false)
         }
+        if let open = byID["open"] {
+            out.append(SidebarItem(id: "section/open", kind: .openHead(count: open.rows.count)))
+            out += rows(open, indented: false)
+        }
         // TASKS is always there in a project (DL-172's New task row lives in it), empty or not.
-        if tasksShown || byID["tasks"] != nil {
+        if tasksShown || byID["tasks"] != nil || byID["later"] != nil {
             out.append(SidebarItem(id: "section/tasks", kind: .tasksHead))
             if let tasks = byID["tasks"] { out += rows(tasks, indented: false) }
+            if let later = byID["later"] {
+                out.append(SidebarItem(id: "section/later", kind: .laterFold(later)))
+                if !folded("later") { out += rows(later, indented: false) }
+            }
             out.append(SidebarItem(id: "section/tasks-tail", kind: .tasksTail))
         }
         let groups = timeGroups.compactMap { byID[$0] }
@@ -230,7 +255,7 @@ struct SidebarRowView: View {
                     Text(row.name).duoText(.bodyEmphasis).strikethrough(taskDone).foregroundStyle(taskDone ? DuoColor.text2 : DuoColor.text).lineLimit(1).layoutPriority(1)   // the name keeps its room; status gives way, except under the pointer (fixed below)
                     if let task = row.task {
                         let st = model.fixture.tasks?.first(where: { $0.path == task && $0.project == model.currentProject?.name })?.status ?? "open"
-                        Text(st == "open" ? "\(count) session\(count == 1 ? "" : "s")" : "\(st.replacingOccurrences(of: "-", with: " ")) · \(count)")
+                        Text(row.age ?? (st == "open" ? "\(count) session\(count == 1 ? "" : "s")" : "\(st.replacingOccurrences(of: "-", with: " ")) · \(count)"))
                             .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
                             .fixedSize(horizontal: hovered, vertical: false).layoutPriority(hovered ? 0 : -1)
                     } else {
@@ -289,9 +314,17 @@ struct SidebarRowView: View {
                     Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Task group").accessibilityIdentifier("video.task.\(taskSlug).group")
                 }
             }
+        case .taskLine:
+            if let project = model.currentProject?.name, let t = model.summary(ofTask: row.task ?? "", in: project) {
+                TaskLine(task: t, showsProject: false, headerColumns: true, age: row.age)
+            }
         case .thread, .session:
-            // In a time group (DL-174) the row sits at the inset of a task's sessions, without the rule.
-            SidebarLeafRow(row: row, nested: indented).padding(.leading, indented ? DuoSpace.threadRuleX : 0)
+            if let slot = row.slot {
+                DirectorSlotRow(row: row, slot: slot)
+            } else {
+                // In a time group (DL-174) the row sits at the inset of a task's sessions, without the rule.
+                SidebarLeafRow(row: row, nested: indented).padding(.leading, indented ? DuoSpace.threadRuleX : 0)
+            }
         }
     }
 }
@@ -311,6 +344,7 @@ struct SidebarLeafRow: View {
             .frame(width: 10, height: 10)
             SessionGlyph(kind: kind, state: row.state)
             Text(row.name).duoText(.body).lineLimit(1)
+            if row.pinned { KeepRunningPin(color: DuoColor.text2) }   // PINNED's rows (DL-217)
             if case .thread(let n) = row.kind { CountPill(text: "thread · \(n)", emphasised: false) }
             Spacer(minLength: 8)
             // Open in Duo (DL-91): say what it's doing rather than how long ago.
@@ -321,7 +355,12 @@ struct SidebarLeafRow: View {
         .padding(.trailing, DuoSpace.panePadding)
         .frame(height: DuoMetric.rowSession)
         // A terminal is open for it in Duo (ENH-7). The selected row's own fill is drawn by the list.
-        .background { if model.hasOpenTerminal(row.sessionKey) { DuoColor.activeTint } }
+        .background {
+            // Inset and rounded, as the boards draw it (sidebar-hierarchy-handoff, session-glyphs-handoff 04).
+            if model.hasOpenTerminal(row.sessionKey) {
+                RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.activeTint).padding(.horizontal, DuoSpace.selectionInset)
+            }
+        }
         .contentShape(Rectangle())
         .onActivate { model.openConsoleTab(row.sessionKey) }  // action: session open
         .modifier(SessionOrganizeMenu(sessionKey: row.sessionKey))

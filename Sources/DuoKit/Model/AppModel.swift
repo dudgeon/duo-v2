@@ -60,6 +60,12 @@ public final class AppModel {
     /// Which section each row of the session list was in when last shown, to lift the rows that
     /// change section above the ones they pass (DL-130).
     @ObservationIgnored var sidebarShown: [String: String] = [:]
+    /// The director's slot in a fixture state (DL-218); live, it's read from `.duo/director.json`.
+    public var fixtureDirector: DirectorSlotInfo?
+    /// The project pane's width, for the slot's second line (under 280 it drops "Director", DL-218).
+    public var sidebarWidth: CGFloat = 300
+    /// `.duo/director.json` as last read, by project, with its modification time: the sidebar asks on every draw.
+    @ObservationIgnored var directorRegistryCache: [String: (modified: Date, reg: DirectorRegistry)] = [:]
     /// The task row under the pointer ("<project>/<note path>"), which shows its + (DL-112).
     public var hoveredTaskRow: String?
     /// Projects showing their task board in place of the session list and console (DL-148, C):
@@ -824,7 +830,8 @@ extension AppModel {
     /// The open project's session list as shown: held still while the pointer is in it (Q-80).
     public func sidebarSections() -> [SidebarSection] {
         guard let p = currentProject?.name else { return [] }
-        let fresh = SidebarRow.sections(for: p, in: fixture, isOpen: { hasOpenTerminal($0) })
+        let fresh = SidebarRow.sections(for: p, in: fixture, isOpen: { hasOpenTerminal($0) }, isPinned: { isKeepRunning($0) },
+                                        director: directorSlotInfo(project: p), listedTask: { listedTask($0) })
         guard let hold = sidebarHold, hold.project == p else { return fresh }
         return SidebarRow.held(fresh, order: hold.order)
     }
