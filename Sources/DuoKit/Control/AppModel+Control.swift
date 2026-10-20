@@ -1256,10 +1256,10 @@ extension AppModel {
         let parked = parkedTabs.remove(key) != nil
         guard terminals.existing(key) != nil || parked else { return }
         let s = fixture.sessions.first { $0.tabKey == key }
+        let next = s.flatMap { TabOrder.neighbour(closing: key, in: consoleTabKeys(inProject: $0.project)) }
         if terminals.existing(key) != nil { terminals.close(key) }
         chats.forget(key)
-        if let s {
-            let next = tabSessions(inProject: s.project).first { $0.tabKey != key }?.tabKey
+        if s != nil {
             if homeTab == key { homeTab = next }
             if consoleTab == key { consoleTab = next }
         }

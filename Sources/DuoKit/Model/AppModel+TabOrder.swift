@@ -15,6 +15,14 @@ public enum TabOrder {
         return ordered + natural.filter { !seen.contains($0) }
     }
 
+    /// The tab to select when `key` closes: its left neighbour in `keys`, the new first tab if it was
+    /// first, nil when it was the only one (ENH-144, as a closing document's `PopupPlacement.after`).
+    public static func neighbour(closing key: String, in keys: [String]) -> String? {
+        guard let i = keys.firstIndex(of: key) else { return keys.first }
+        let rest = keys.filter { $0 != key }
+        return rest.isEmpty ? nil : rest[max(0, i - 1)]
+    }
+
     /// `key` moved `offset` places (−1 left, +1 right); nil when it can't go that far.
     public static func moved(_ keys: [String], _ key: String, by offset: Int) -> [String]? {
         guard let i = keys.firstIndex(of: key) else { return nil }

@@ -73,6 +73,20 @@ import Foundation
     r = cli(["view tab-move", "9"])
     check(!r.ok && r.out.contains("place is 1 to"), "verb: a place off the strip is refused")
 
+    // Closing a tab selects its left neighbour in the strip's order (F-347)
+    check(TabOrder.neighbour(closing: "c", in: ["a", "b", "c", "d"]) == "b" && TabOrder.neighbour(closing: "a", in: ["a", "b"]) == "b" && TabOrder.neighbour(closing: "a", in: ["a"]) == nil, "neighbour: the left one, the new first, none")
+    for i in 1...6 { m.shellTabs[project, default: []].append("shell:chk\(i)") }
+    var strip = m.consoleTabKeys(inProject: project)
+    let mid = strip[strip.count - 4]
+    m.consoleTab = mid
+    m.closeShell(mid)
+    check(m.consoleTab == strip[strip.count - 5], "closing a tab in the middle of the shells selects its left neighbour, not the first session")
+    strip = m.consoleTabKeys(inProject: project)
+    m.consoleTab = strip[0]
+    m.closeShell(strip.first { $0.hasPrefix("shell:chk") }!)
+    check(m.consoleTab == strip[0], "closing a tab that isn't selected leaves the selection")
+    m.shellTabs[project] = nil
+
     // Restore keeps a moved console order, by session id
     var s = RestoreState.Project(folder: "/x", sessions: ["s2", "s1"], consoleTab: nil, documents: [], rightTab: nil, tabOrder: ["s2", "s1"])
     let data = try JSONEncoder().encode(s)

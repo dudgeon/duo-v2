@@ -77,12 +77,12 @@ extension AppModel {
     }
 
     public func closeShell(_ key: String) {
+        let owner = shellTabs.first { $0.value.contains(key) }?.key
+        let next = owner.flatMap { TabOrder.neighbour(closing: key, in: consoleTabKeys(inProject: $0)) }
         terminals.close(key)
         chats.forget(key)
         for p in shellTabs.keys { shellTabs[p]?.removeAll { $0 == key } }
         shellTitles[key] = nil
-        let project = altitude.isAllProjects ? fixture.home?.name : currentProject?.name
-        let next = project.map { p in (tabSessions(inProject: p).map(\.tabKey) + shells(inProject: p)).first } ?? nil
         if consoleTab == key { consoleTab = next }
         if homeTab == key { homeTab = next }
     }
