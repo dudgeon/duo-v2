@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fork threads: edge cases</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.col{width:300px;display:flex;flex-direction:column;gap:12px}
+.pick{display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1.5px solid #1F2328;border-radius:6px;font-size:12px;line-height:16px;font-weight:600;color:#1F2328;align-self:flex-start}
+.alt{border-color:#8B939C;color:#5B636D;font-weight:400}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+ul.l{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:8px}
+</style>
+</helmet>
+<div style="width: 1640px; height: 980px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Edge cases, and question 4 · a thread whose sessions belong in different sections [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1400px">All drawn with board 1's A. DL-217's order decides the section; these say where a thread goes when its sessions disagree.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div class="col">
+      <span class="pick alt">In a task</span>
+      <dc-import name="Pane" pane="{{inTask}}" hint-size="300px,380px"></dc-import>
+      <div class="cap"><b>The fork joins the original's tasks</b>, so the thread stays under its task, which ranks first in TASKS (live). The thread's rule sits inside the task's, under the original's chevron. <b>More forks</b> line up under the same rule, oldest first, including a fork of a fork: the thread is one list, not a tree.</div>
+    </div>
+    <div class="col">
+      <span class="pick">Question 4 · A · recommended</span>
+      <dc-import name="Pane" pane="{{q4a}}" hint-size="300px,380px"></dc-import>
+      <div class="cap"><b>A thread stays one row</b>, placed by its liveliest session: here the original's tab is closed, but the branch is open, so the thread is in OPEN, the original untinted with its wait. <b>Only a session that needs you leaves it</b>, as a task's do: Rates study (Branch) is in NEEDS YOU, with a second line "Fork of Rates study"; the original stays in OPEN as a plain row until it's answered.</div>
+    </div>
+    <div class="col">
+      <span class="pick alt">Question 4 · B</span>
+      <dc-import name="Pane" pane="{{q4b}}" hint-size="300px,380px"></dc-import>
+      <div class="cap"><b>Each session goes to its own section</b>, and a fork away from its original says "Fork of ‹name›" on a second line. Every row is where DL-217 puts a session, but the thread is only seen together while both are open.</div>
+    </div>
+    <div class="col">
+      <span class="pick alt">240 wide</span>
+      <dc-import name="Pane" pane="{{narrow}}" hint-size="240px,300px"></dc-import>
+      <div class="cap">Names cut at the end; the chevron, the rule and the waits stay whole.</div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Keyboard, VoiceOver, duo2</div>
+      <ul class="l cap">
+        <li><b>VoiceOver</b> reads the original "Pricing research, terminal session, at prompt, thread of 2, expanded", and a fork "Pricing research (Branch), fork of Pricing research, terminal session, working".</li>
+        <li><b>No new shortcut</b> (DL-34). ⌃Tab steps the strip in its order, so the fork's tab comes right after its original.</li>
+        <li><b>duo2</b> (DL-71): <span class="mono">duo2 sessions</span> marks each fork with <span class="mono">forkOf</span> and <span class="mono">fork: branch|fork</span>; folding a thread is the group fold verb, by the original's id; detach and attach are <span class="mono">session close</span> and <span class="mono">session open</span>.</li>
+        <li><b>All projects' tiles and the session list</b> list each session on its own row, as now.</li>
+        <li><b>Not drawn:</b> /fork's "Workspace not trusted" notice (Q-219 (c): its own canvas round).</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1640,"height":980}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const head = { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1' };
+    return {
+      inTask: { ...head, rows: [ { k: 'sec', label: 'Tasks · 2' },
+        { k: 'task', chev: 'd', title: 'Pricing page', tm: 'working · 3' },
+        { k: 'row', in: 'nest', chev: 'd', g: 'ti', tint: true, title: 'Pricing research', tm: 'at prompt' },
+        { k: 'row', in: 'nest2', g: 'tw', tint: true, sel: true, title: 'Pricing research (Bra…', tm: 'working' },
+        { k: 'row', in: 'nest2', g: 'ti', tint: true, title: 'Pricing research', tm: 'at prompt' },
+        { k: 'task', chev: 'd', title: 'Launch email', tm: 'idle · 1' },
+        { k: 'row', in: 'nest', g: 'ci', title: 'Draft launch email', tm: '2h' },
+        { k: 'new', title: 'New task' } ] },
+      q4a: { ...head, rows: [ { k: 'sec', label: 'Needs you · 1' },
+        { k: 'two', g: 'hand', title: 'Rates study (Branch)', sub: 'Fork of Rates study', tm: '2m' },
+        { k: 'sec', label: 'Open · 3' },
+        { k: 'row', chev: 'd', g: 'ti', title: 'Pricing research', tm: '20m' },
+        { k: 'row', in: 'nest', g: 'tw', tint: true, sel: true, title: 'Pricing research (Branch)', tm: 'working' },
+        { k: 'row', g: 'ti', tint: true, title: 'Rates study', tm: 'at prompt' },
+        { k: 'sec', label: 'Tasks · 1' }, { k: 'task', chev: 'r', title: 'Launch email', tm: 'idle · 1' }, { k: 'new', title: 'New task' } ] },
+      q4b: { ...head, rows: [ { k: 'sec', label: 'Needs you · 1' },
+        { k: 'two', g: 'hand', title: 'Rates study (Branch)', sub: 'Fork of Rates study', tm: '2m' },
+        { k: 'sec', label: 'Open · 2' },
+        { k: 'two', g: 'tw', tint: true, sel: true, title: 'Pricing research (Branch)', sub: 'Fork of Pricing research', tm: 'working' },
+        { k: 'row', g: 'ti', tint: true, title: 'Rates study', tm: 'at prompt' },
+        { k: 'sec', label: 'Tasks · 1' }, { k: 'task', chev: 'r', title: 'Launch email', tm: 'idle · 1' }, { k: 'new', title: 'New task' },
+        { k: 'sec', label: 'Other sessions · 1' }, { k: 'fold', chev: 'd', title: 'Today', tm: '1' },
+        { k: 'row', in: 'kid', g: 'ti', title: 'Pricing research', tm: '20m' } ] },
+      narrow: { w: 240, title: 'checkout', goal: 'Ship the new checkout by Nov 1', rows: [ { k: 'sec', label: 'Open · 2' },
+        { k: 'row', chev: 'd', g: 'ti', tint: true, title: 'Pricing research', tm: 'at prompt' },
+        { k: 'row', in: 'nest', g: 'tw', tint: true, sel: true, title: 'Pricing research (Branch)', tm: 'working' },
+        { k: 'sec', label: 'Tasks · 1' }, { k: 'task', chev: 'r', title: 'Launch email', tm: 'idle · 1' }, { k: 'new', title: 'New task' } ] }
+    };
+  }
+}
+</script>
+</body>
+</html>

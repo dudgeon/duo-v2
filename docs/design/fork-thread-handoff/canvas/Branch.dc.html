@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Just after a branch</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.term{background:#15171B;border:1px solid #2B2F36;border-top:none;box-sizing:border-box;padding:16px;display:flex;flex-direction:column;gap:9px;font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px;line-height:19px;color:#E6E8EB}
+.bar{height:9px;border-radius:2px;background:#2F333A}
+.pr{border:1px solid #4A4F57;border-radius:4px;padding:6px 10px;color:#E6E8EB;margin-top:auto}
+.mk{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;flex:none}
+.step{display:flex;gap:10px;align-items:flex-start}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+</style>
+</helmet>
+<div style="width: 1400px; height: 980px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">The moment after /branch: the branch keeps your terminal, the original comes back beside it [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1200px">Drawn with board 1's A and question 2's A. The terminal is Claude Code's own TUI, untouched; its text is drawn as placeholder bars.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 300px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Before</div>
+      <dc-import name="Pane" pane="{{before}}" hint-size="300px,300px"></dc-import>
+    </div>
+    <div style="width: 620px; display: flex; flex-direction: column">
+      <div class="lab" style="margin-bottom: 10px">Before: you type /branch</div>
+      <dc-import name="Strip" strip="{{stripBefore}}" hint-size="620px,36px"></dc-import>
+      <div class="term" style="height: 264px">
+        <div class="bar" style="width: 72%"></div><div class="bar" style="width: 55%"></div><div class="bar" style="width: 64%"></div><div class="bar" style="width: 38%"></div>
+        <div class="pr">&gt; /branch</div>
+      </div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10px; padding-top: 26px">
+      <div class="cap"><b>Today</b> this tab would re-key to the branch and the original would leave the strip (board 0).</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 300px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">After</div>
+      <dc-import name="Pane" pane="{{after}}" hint-size="300px,360px"></dc-import>
+    </div>
+    <div style="width: 620px; display: flex; flex-direction: column">
+      <div class="lab" style="margin-bottom: 10px">After: two tabs, focus on the branch</div>
+      <dc-import name="Strip" strip="{{stripAfter}}" hint-size="620px,36px"></dc-import>
+      <div class="term" style="height: 324px">
+        <div class="bar" style="width: 72%"></div><div class="bar" style="width: 55%"></div><div class="bar" style="width: 64%"></div><div class="bar" style="width: 38%"></div><div class="bar" style="width: 48%"></div>
+        <div class="pr">&gt; <span style="display: inline-block; width: 7px; height: 14px; background: #E6E8EB; vertical-align: -2px"></span></div>
+      </div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 14px; padding-top: 26px">
+      <div class="step"><span class="mk">1</span><div class="cap"><b>The branch keeps the terminal.</b> The same process is now the branch, so its tab is new: right of the original, titled from Claude's "‹title› (Branch)" with the fork mark after its state glyph (board 4), selected and focused, since you're typing there. It fades in (motionTabIn) as the strip slides (motionTabMove), and is scrolled into view (DL-225).</div></div>
+      <div class="step"><span class="mk">2</span><div class="cap"><b>The original comes back in its own place</b>, by <span class="mono">claude --resume</span>, sitting at its prompt (idle glyph). It costs nothing until you type in it.</div></div>
+      <div class="step"><span class="mk">3</span><div class="cap"><b>The thread opens by itself</b> (question 2), original first, the branch under the rule and selected. Both have activeTint.</div></div>
+      <div class="step"><span class="mk">4</span><div class="cap"><b>Tasks:</b> the branch joins every task the original is in, so if the original was under a task, both are now (board 5).</div></div>
+      <div class="cap">No notice bar or toast: the new tab and the opened thread are the signal. VoiceOver announces "Pricing research (Branch) opened, a fork of Pricing research". duo2: <span class="mono">duo2 sessions</span> lists both, the branch with <span class="mono">forkOf</span>.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":980}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const head = { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1' };
+    const tail = [ { k: 'sec', label: 'Tasks · 1' }, { k: 'task', chev: 'd', title: 'Launch email', tm: 'idle · 1' }, { k: 'row', in: 'nest', g: 'ci', title: 'Draft launch email', tm: '2h' }, { k: 'new', title: 'New task' } ];
+    return {
+      before: { ...head, rows: [ { k: 'sec', label: 'Open · 2' },
+        { k: 'row', g: 'tw', tint: true, sel: true, title: 'Pricing research', tm: 'working' },
+        { k: 'row', g: 'cw', tint: true, title: 'Fix flaky cart test', tm: 'working' }, ...tail ] },
+      after: { ...head, rows: [ { k: 'sec', label: 'Open · 3' },
+        { k: 'row', chev: 'd', g: 'ti', tint: true, title: 'Pricing research', tm: 'at prompt', mk: '2' },
+        { k: 'row', in: 'nest', g: 'tw', tint: true, sel: true, title: 'Pricing research (Branch)', tm: 'working', mk: '3' },
+        { k: 'row', g: 'cw', tint: true, title: 'Fix flaky cart test', tm: 'working' }, ...tail ] },
+      stripBefore: { w: 620, tabs: [ { g: 'work', title: 'Pricing research', on: true }, { g: 'work', title: 'Fix flaky cart test' }, { g: 'shell', title: 'alpha' } ] },
+      stripAfter: { w: 620, tabs: [ { g: 'idle', title: 'Pricing research', mk: '2' }, { g: 'work', title: 'Pricing research (Branch)', on: true, fork: true, mk: '1' }, { g: 'work', title: 'Fix flaky cart test' }, { g: 'shell', title: 'alpha' } ] }
+    };
+  }
+}
+</script>
+</body>
+</html>

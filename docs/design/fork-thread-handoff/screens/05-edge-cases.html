@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1640x980">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-228">
+<!--
+Edge cases: a thread in a task, question 4 A (chosen: one row placed by its liveliest session; a needs-you fork leaves it), B (not chosen), 240 wide, keyboard/VoiceOver/duo2. Geoff, 2026-10-20 (DL-228).
+Exported from the Design canvas https://claude.ai/artifact/84jHaESxQeitexXgaqGZAh (board Edges.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · Fork threads · Edge cases</title>
+<style>
+
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.col{width:300px;display:flex;flex-direction:column;gap:12px}
+.pick{display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1.5px solid #1F2328;border-radius:6px;font-size:12px;line-height:16px;font-weight:600;color:#1F2328;align-self:flex-start}
+.alt{border-color:#8B939C;color:#5B636D;font-weight:400}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+ul.l{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:8px}
+
+
+body{margin:0}
+.pane{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;box-sizing:border-box}
+.pane *{box-sizing:border-box}
+.pane .hd{padding:14px 16px 4px}
+.pane .pn{font-weight:600;font-size:14px;line-height:20px}
+.pane .t2{color:#5B636D;overflow:hidden;text-overflow:ellipsis}
+.pane .body{position:relative;overflow:hidden;padding-bottom:6px}
+.pane .sec{padding:12px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:6px}
+.pane .row{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px}
+.pane .tint{background:#E8F0FA}
+.pane .sel{background:#E9ECEF}
+.pane .nest{margin-left:21px;border-left:1.5px solid #8B939C}
+.pane .nest .row,.pane .nest .two{margin:0 8px 0 3px}
+.pane .kid .row{margin:0 8px 0 24px}
+.pane .nest2{margin-left:21px;border-left:1.5px solid #8B939C;padding-left:16px}
+.pane .nest2 .row,.pane .nest2 .two{margin:0 8px 0 3px;position:relative}
+.pane .nest2 .row::before,.pane .nest2 .two::before{content:'';position:absolute;left:-4.5px;top:0;bottom:0;width:1.5px;background:#8B939C}
+.pane .grp{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;margin:0 8px;border-radius:6px}
+.pane .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pane .b{font-weight:600}
+.pane .tm{color:#5B636D;flex:none}
+.pane .done{color:#5B636D;text-decoration:line-through}
+.pane .dim{color:#5B636D}
+.pane .two{display:flex;align-items:flex-start;gap:8px;padding:3px 8px;margin:0 8px;border-radius:6px}
+.pane .gpad{padding-top:5px;display:flex}
+.pane .sl{flex:1;min-width:0}
+.pane .l1{display:flex;align-items:center;gap:6px;height:20px}
+.pane .l2{font-size:12px;line-height:16px;color:#5B636D;display:flex;align-items:center;gap:6px;min-width:0}
+.pane .l2 span{overflow:hidden;text-overflow:ellipsis}
+.pane .rl{height:1px;background:#C9CDD3;margin:6px 16px 2px}
+.pane .more{padding:2px 16px 2px 44px;color:#5B636D;font-size:12px;line-height:18px}
+.pane .mk{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;flex:none;letter-spacing:0}
+.pane .ft{border-top:1px solid #C9CDD3;padding:10px 16px}
+.pane .btn{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328;flex:none}
+.pane .sp{width:10px;height:10px;flex:none;display:inline-flex}
+.pane .tag{color:#5B636D;flex:0 1 auto;max-width:110px;overflow:hidden;text-overflow:ellipsis}
+.pane .pill{font-size:11px;line-height:16px;color:#5B636D;border:1px solid #C9CDD3;border-radius:9px;padding:0 7px;flex:none}
+.pane .row .ti{flex:0 1 auto}
+.pane .row .tm{margin-left:auto}
+
+body{margin:0}
+</style>
+</head>
+<body>
+
+
+<div style="width: 1640px; height: 980px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Edge cases, and question 4 · a thread whose sessions belong in different sections [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1400px">All drawn with board 1's A. DL-217's order decides the section; these say where a thread goes when its sessions disagree.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div class="col">
+      <span class="pick alt">In a task</span>
+      
+
+<div class="pane" style="width: 300px">
+<div class="hd"><div class="pn">checkout</div><div class="t2">Ship the new checkout by Nov 1</div></div>
+<div class="body" style="height: auto">
+
+<div class="sec"><span>Tasks · 2</span></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="sp"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#1F2328" stroke-width="1.2"></rect></svg><span class="ti b">Pricing page</span><span class="tm">working · 3</span></div>
+
+
+
+
+
+
+<div class="nest"><div class="row tint"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Pricing research</span><span class="tm">at prompt</span></div></div>
+
+
+
+
+
+
+
+
+<div class="nest2"><div class="row tint sel">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8" fill="none" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><rect x="5.6" y="5" width="3.2" height="3.6" rx=".5" fill="#1F2328"></rect></svg>
+
+
+
+
+
+
+</span>
+<span class="ti">Pricing research (Bra…</span><span class="tm">working</span></div></div>
+
+
+
+
+
+
+
+
+<div class="nest2"><div class="row tint">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Pricing research</span><span class="tm">at prompt</span></div></div>
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="sp"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#1F2328" stroke-width="1.2"></rect></svg><span class="ti b">Launch email</span><span class="tm">idle · 1</span></div>
+
+
+
+
+
+
+<div class="nest"><div class="row">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linejoin="round"></path></svg>
+
+
+
+
+</span>
+<span class="ti">Draft launch email</span><span class="tm">2h</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp" style="color: #5B636D"><span class="sp"></span><span style="width: 10px; text-align: center; flex: none">+</span><span class="ti">New task</span></div>
+
+
+
+</div>
+<div class="ft"><span class="btn">+ New Claude Code session</span></div>
+</div>
+
+      <div class="cap"><b>The fork joins the original's tasks</b>, so the thread stays under its task, which ranks first in TASKS (live). The thread's rule sits inside the task's, under the original's chevron. <b>More forks</b> line up under the same rule, oldest first, including a fork of a fork: the thread is one list, not a tree.</div>
+    </div>
+    <div class="col">
+      <span class="pick">Question 4 · A · recommended</span>
+      
+
+<div class="pane" style="width: 300px">
+<div class="hd"><div class="pn">checkout</div><div class="t2">Ship the new checkout by Nov 1</div></div>
+<div class="body" style="height: auto">
+
+<div class="sec"><span>Needs you · 1</span></div>
+
+
+
+
+
+
+
+
+
+
+<div class=""><div class="two"><span class="gpad">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+
+
+
+<svg width="10" height="10" viewBox="0 0 10 10" role="img" aria-label="needs you"><g fill="#C2410C"><rect x="2.1" y="1.7" width="1.45" height="5" rx=".72"></rect><rect x="3.8" y=".5" width="1.45" height="5.6" rx=".72"></rect><rect x="5.5" y=".9" width="1.45" height="5.3" rx=".72"></rect><rect x="7.2" y="2" width="1.45" height="4.6" rx=".72"></rect><rect x="2.1" y="4.6" width="6.55" height="5" rx="2.3"></rect><rect x=".7" y="4.3" width="1.45" height="3.6" rx=".72" transform="rotate(-30 1.4 7.9)"></rect></g></svg>
+
+</span>
+</span><div class="sl"><div class="l1"><span class="ti">Rates study (Branch)</span><span class="tm" style="margin-left: auto">2m</span></div><div class="l2"><span style="flex: 1">Fork of Rates study</span></div></div></div></div>
+
+
+
+
+
+
+<div class="sec"><span>Open · 3</span></div>
+
+
+
+
+
+
+
+
+
+<div class=""><div class="row"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Pricing research</span><span class="tm">20m</span></div></div>
+
+
+
+
+
+
+
+
+<div class="nest"><div class="row tint sel">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8" fill="none" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><rect x="5.6" y="5" width="3.2" height="3.6" rx=".5" fill="#1F2328"></rect></svg>
+
+
+
+
+
+
+</span>
+<span class="ti">Pricing research (Branch)</span><span class="tm">working</span></div></div>
+
+
+
+
+
+
+
+
+<div class=""><div class="row tint">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Rates study</span><span class="tm">at prompt</span></div></div>
+
+
+
+
+
+
+
+<div class="sec"><span>Tasks · 1</span></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M3.8 2.5 6.3 5 3.8 7.5" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="sp"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#1F2328" stroke-width="1.2"></rect></svg><span class="ti b">Launch email</span><span class="tm">idle · 1</span></div>
+
+
+
+
+
+
+
+
+
+
+<div class="grp" style="color: #5B636D"><span class="sp"></span><span style="width: 10px; text-align: center; flex: none">+</span><span class="ti">New task</span></div>
+
+
+
+</div>
+<div class="ft"><span class="btn">+ New Claude Code session</span></div>
+</div>
+
+      <div class="cap"><b>A thread stays one row</b>, placed by its liveliest session: here the original's tab is closed, but the branch is open, so the thread is in OPEN, the original untinted with its wait. <b>Only a session that needs you leaves it</b>, as a task's do: Rates study (Branch) is in NEEDS YOU, with a second line "Fork of Rates study"; the original stays in OPEN as a plain row until it's answered.</div>
+    </div>
+    <div class="col">
+      <span class="pick alt">Question 4 · B</span>
+      
+
+<div class="pane" style="width: 300px">
+<div class="hd"><div class="pn">checkout</div><div class="t2">Ship the new checkout by Nov 1</div></div>
+<div class="body" style="height: auto">
+
+<div class="sec"><span>Needs you · 1</span></div>
+
+
+
+
+
+
+
+
+
+
+<div class=""><div class="two"><span class="gpad">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+
+
+
+<svg width="10" height="10" viewBox="0 0 10 10" role="img" aria-label="needs you"><g fill="#C2410C"><rect x="2.1" y="1.7" width="1.45" height="5" rx=".72"></rect><rect x="3.8" y=".5" width="1.45" height="5.6" rx=".72"></rect><rect x="5.5" y=".9" width="1.45" height="5.3" rx=".72"></rect><rect x="7.2" y="2" width="1.45" height="4.6" rx=".72"></rect><rect x="2.1" y="4.6" width="6.55" height="5" rx="2.3"></rect><rect x=".7" y="4.3" width="1.45" height="3.6" rx=".72" transform="rotate(-30 1.4 7.9)"></rect></g></svg>
+
+</span>
+</span><div class="sl"><div class="l1"><span class="ti">Rates study (Branch)</span><span class="tm" style="margin-left: auto">2m</span></div><div class="l2"><span style="flex: 1">Fork of Rates study</span></div></div></div></div>
+
+
+
+
+
+
+<div class="sec"><span>Open · 2</span></div>
+
+
+
+
+
+
+
+
+
+
+<div class=""><div class="two tint sel"><span class="gpad">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8" fill="none" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><rect x="5.6" y="5" width="3.2" height="3.6" rx=".5" fill="#1F2328"></rect></svg>
+
+
+
+
+
+
+</span>
+</span><div class="sl"><div class="l1"><span class="ti">Pricing research (Branch)</span><span class="tm" style="margin-left: auto">working</span></div><div class="l2"><span style="flex: 1">Fork of Pricing research</span></div></div></div></div>
+
+
+
+
+
+
+
+<div class=""><div class="row tint">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Rates study</span><span class="tm">at prompt</span></div></div>
+
+
+
+
+
+
+
+<div class="sec"><span>Tasks · 1</span></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M3.8 2.5 6.3 5 3.8 7.5" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="sp"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#1F2328" stroke-width="1.2"></rect></svg><span class="ti b">Launch email</span><span class="tm">idle · 1</span></div>
+
+
+
+
+
+
+
+
+
+
+<div class="grp" style="color: #5B636D"><span class="sp"></span><span style="width: 10px; text-align: center; flex: none">+</span><span class="ti">New task</span></div>
+
+
+
+<div class="sec"><span>Other sessions · 1</span></div>
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="ti b">Today</span><span class="tm">1</span></div>
+
+
+
+
+
+<div class="kid"><div class="row">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Pricing research</span><span class="tm">20m</span></div></div>
+
+
+
+
+
+
+
+</div>
+<div class="ft"><span class="btn">+ New Claude Code session</span></div>
+</div>
+
+      <div class="cap"><b>Each session goes to its own section</b>, and a fork away from its original says "Fork of ‹name›" on a second line. Every row is where DL-217 puts a session, but the thread is only seen together while both are open.</div>
+    </div>
+    <div class="col">
+      <span class="pick alt">240 wide</span>
+      
+
+<div class="pane" style="width: 240px">
+<div class="hd"><div class="pn">checkout</div><div class="t2">Ship the new checkout by Nov 1</div></div>
+<div class="body" style="height: auto">
+
+<div class="sec"><span>Open · 2</span></div>
+
+
+
+
+
+
+
+
+
+<div class=""><div class="row tint"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Pricing research</span><span class="tm">at prompt</span></div></div>
+
+
+
+
+
+
+
+
+<div class="nest"><div class="row tint sel">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8" fill="none" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><rect x="5.6" y="5" width="3.2" height="3.6" rx=".5" fill="#1F2328"></rect></svg>
+
+
+
+
+
+
+</span>
+<span class="ti">Pricing research (Branch)</span><span class="tm">working</span></div></div>
+
+
+
+
+
+
+
+<div class="sec"><span>Tasks · 1</span></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M3.8 2.5 6.3 5 3.8 7.5" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="sp"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#1F2328" stroke-width="1.2"></rect></svg><span class="ti b">Launch email</span><span class="tm">idle · 1</span></div>
+
+
+
+
+
+
+
+
+
+
+<div class="grp" style="color: #5B636D"><span class="sp"></span><span style="width: 10px; text-align: center; flex: none">+</span><span class="ti">New task</span></div>
+
+
+
+</div>
+<div class="ft"><span class="btn">+ New Claude Code session</span></div>
+</div>
+
+      <div class="cap">Names cut at the end; the chevron, the rule and the waits stay whole.</div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Keyboard, VoiceOver, duo2</div>
+      <ul class="l cap">
+        <li><b>VoiceOver</b> reads the original "Pricing research, terminal session, at prompt, thread of 2, expanded", and a fork "Pricing research (Branch), fork of Pricing research, terminal session, working".</li>
+        <li><b>No new shortcut</b> (DL-34). ⌃Tab steps the strip in its order, so the fork's tab comes right after its original.</li>
+        <li><b>duo2</b> (DL-71): <span class="mono">duo2 sessions</span> marks each fork with <span class="mono">forkOf</span> and <span class="mono">fork: branch|fork</span>; folding a thread is the group fold verb, by the original's id; detach and attach are <span class="mono">session close</span> and <span class="mono">session open</span>.</li>
+        <li><b>All projects' tiles and the session list</b> list each session on its own row, as now.</li>
+        <li><b>Not drawn:</b> /fork's "Workspace not trusted" notice (Q-219 (c): its own canvas round).</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</body></html>

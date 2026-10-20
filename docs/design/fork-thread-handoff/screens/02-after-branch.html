@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1400x980">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-228">
+<!--
+THE TARGET for the moment after /branch: the branch's new tab (with the fork mark), the original resumed in its tab, the thread opened. Geoff, 2026-10-20 (DL-228).
+Exported from the Design canvas https://claude.ai/artifact/84jHaESxQeitexXgaqGZAh (board Branch.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and data are illustrative.
+-->
+<title>Duo · Fork threads · Just after /branch</title>
+<style>
+
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.term{background:#15171B;border:1px solid #2B2F36;border-top:none;box-sizing:border-box;padding:16px;display:flex;flex-direction:column;gap:9px;font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px;line-height:19px;color:#E6E8EB}
+.bar{height:9px;border-radius:2px;background:#2F333A}
+.pr{border:1px solid #4A4F57;border-radius:4px;padding:6px 10px;color:#E6E8EB;margin-top:auto}
+.mk{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;flex:none}
+.step{display:flex;gap:10px;align-items:flex-start}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+
+
+body{margin:0}
+.pane{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;white-space:nowrap;box-sizing:border-box}
+.pane *{box-sizing:border-box}
+.pane .hd{padding:14px 16px 4px}
+.pane .pn{font-weight:600;font-size:14px;line-height:20px}
+.pane .t2{color:#5B636D;overflow:hidden;text-overflow:ellipsis}
+.pane .body{position:relative;overflow:hidden;padding-bottom:6px}
+.pane .sec{padding:12px 16px 4px;font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;display:flex;align-items:center;gap:6px}
+.pane .row{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;margin:0 8px;border-radius:6px}
+.pane .tint{background:#E8F0FA}
+.pane .sel{background:#E9ECEF}
+.pane .nest{margin-left:21px;border-left:1.5px solid #8B939C}
+.pane .nest .row,.pane .nest .two{margin:0 8px 0 3px}
+.pane .kid .row{margin:0 8px 0 24px}
+.pane .nest2{margin-left:21px;border-left:1.5px solid #8B939C;padding-left:16px}
+.pane .nest2 .row,.pane .nest2 .two{margin:0 8px 0 3px;position:relative}
+.pane .nest2 .row::before,.pane .nest2 .two::before{content:'';position:absolute;left:-4.5px;top:0;bottom:0;width:1.5px;background:#8B939C}
+.pane .grp{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;margin:0 8px;border-radius:6px}
+.pane .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pane .b{font-weight:600}
+.pane .tm{color:#5B636D;flex:none}
+.pane .done{color:#5B636D;text-decoration:line-through}
+.pane .dim{color:#5B636D}
+.pane .two{display:flex;align-items:flex-start;gap:8px;padding:3px 8px;margin:0 8px;border-radius:6px}
+.pane .gpad{padding-top:5px;display:flex}
+.pane .sl{flex:1;min-width:0}
+.pane .l1{display:flex;align-items:center;gap:6px;height:20px}
+.pane .l2{font-size:12px;line-height:16px;color:#5B636D;display:flex;align-items:center;gap:6px;min-width:0}
+.pane .l2 span{overflow:hidden;text-overflow:ellipsis}
+.pane .rl{height:1px;background:#C9CDD3;margin:6px 16px 2px}
+.pane .more{padding:2px 16px 2px 44px;color:#5B636D;font-size:12px;line-height:18px}
+.pane .mk{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;flex:none;letter-spacing:0}
+.pane .ft{border-top:1px solid #C9CDD3;padding:10px 16px}
+.pane .btn{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;font-size:12px;line-height:16px;color:#1F2328;flex:none}
+.pane .sp{width:10px;height:10px;flex:none;display:inline-flex}
+.pane .tag{color:#5B636D;flex:0 1 auto;max-width:110px;overflow:hidden;text-overflow:ellipsis}
+.pane .pill{font-size:11px;line-height:16px;color:#5B636D;border:1px solid #C9CDD3;border-radius:9px;padding:0 7px;flex:none}
+.pane .row .ti{flex:0 1 auto}
+.pane .row .tm{margin-left:auto}
+
+body{margin:0}
+
+body{margin:0}
+.cs{height:36px;box-sizing:border-box;background:#15171B;border:1px solid #2B2F36;display:flex;align-items:center;font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px;line-height:19px;color:#9AA1AB;white-space:nowrap;overflow:hidden}
+.cs .run{display:flex;gap:18px;align-items:center;flex:1;min-width:0;padding-left:16px;overflow:hidden}
+.cs .t{display:inline-flex;align-items:center;gap:6px;flex:none;height:34px;position:relative}
+.cs .on{color:#E6E8EB;font-weight:500}
+.cs .mk{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#E6E8EB;color:#15171B;font:600 10px/16px -apple-system,system-ui,sans-serif;flex:none}
+.cs .plus{flex:none;padding:0 16px 0 6px}
+
+</style>
+</head>
+<body>
+
+
+<div style="width: 1400px; height: 980px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">The moment after /branch: the branch keeps your terminal, the original comes back beside it [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1200px">Drawn with board 1's A and question 2's A. The terminal is Claude Code's own TUI, untouched; its text is drawn as placeholder bars.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 300px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Before</div>
+      
+
+<div class="pane" style="width: 300px">
+<div class="hd"><div class="pn">checkout</div><div class="t2">Ship the new checkout by Nov 1</div></div>
+<div class="body" style="height: auto">
+
+<div class="sec"><span>Open · 2</span></div>
+
+
+
+
+
+
+
+
+
+<div class=""><div class="row tint sel">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8" fill="none" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><rect x="5.6" y="5" width="3.2" height="3.6" rx=".5" fill="#1F2328"></rect></svg>
+
+
+
+
+
+
+</span>
+<span class="ti">Pricing research</span><span class="tm">working</span></div></div>
+
+
+
+
+
+
+
+
+<div class=""><div class="row tint">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#1F2328" stroke-width="1.2" stroke-linejoin="round"></path><circle cx="3.1" cy="4.4" r=".75" fill="#1F2328"></circle><circle cx="5" cy="4.4" r=".75" fill="#1F2328"></circle><circle cx="6.9" cy="4.4" r=".75" fill="#1F2328"></circle></svg>
+
+
+
+</span>
+<span class="ti">Fix flaky cart test</span><span class="tm">working</span></div></div>
+
+
+
+
+
+
+
+<div class="sec"><span>Tasks · 1</span></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="sp"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#1F2328" stroke-width="1.2"></rect></svg><span class="ti b">Launch email</span><span class="tm">idle · 1</span></div>
+
+
+
+
+
+
+<div class="nest"><div class="row">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linejoin="round"></path></svg>
+
+
+
+
+</span>
+<span class="ti">Draft launch email</span><span class="tm">2h</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp" style="color: #5B636D"><span class="sp"></span><span style="width: 10px; text-align: center; flex: none">+</span><span class="ti">New task</span></div>
+
+
+
+</div>
+<div class="ft"><span class="btn">+ New Claude Code session</span></div>
+</div>
+
+    </div>
+    <div style="width: 620px; display: flex; flex-direction: column">
+      <div class="lab" style="margin-bottom: 10px">Before: you type /branch</div>
+      
+
+<div class="cs" style="width: 620px">
+<div class="run">
+
+<span class="t on">
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3.75"></circle></svg>
+
+
+
+
+<span>Pricing research</span>
+
+</span>
+
+<span class="t">
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3.75"></circle></svg>
+
+
+
+
+<span>Fix flaky cart test</span>
+
+</span>
+
+<span class="t">
+
+
+
+
+<svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>
+
+<span>alpha</span>
+
+</span>
+
+</div>
+<span class="plus">+ ⌄</span>
+</div>
+
+      <div class="term" style="height: 264px">
+        <div class="bar" style="width: 72%"></div><div class="bar" style="width: 55%"></div><div class="bar" style="width: 64%"></div><div class="bar" style="width: 38%"></div>
+        <div class="pr">&gt; /branch</div>
+      </div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10px; padding-top: 26px">
+      <div class="cap"><b>Today</b> this tab would re-key to the branch and the original would leave the strip (board 0).</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 300px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">After</div>
+      
+
+<div class="pane" style="width: 300px">
+<div class="hd"><div class="pn">checkout</div><div class="t2">Ship the new checkout by Nov 1</div></div>
+<div class="body" style="height: auto">
+
+<div class="sec"><span>Open · 3</span></div>
+
+
+
+
+
+
+
+
+
+<div class=""><div class="row tint"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+
+
+
+
+
+
+</span>
+<span class="ti">Pricing research</span><span class="tm">at prompt</span><span class="mk">2</span></div></div>
+
+
+
+
+
+
+
+
+<div class="nest"><div class="row tint sel">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8" fill="none" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><rect x="5.6" y="5" width="3.2" height="3.6" rx=".5" fill="#1F2328"></rect></svg>
+
+
+
+
+
+
+</span>
+<span class="ti">Pricing research (Branch)</span><span class="tm">working</span><span class="mk">3</span></div></div>
+
+
+
+
+
+
+
+
+<div class=""><div class="row tint">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#1F2328" stroke-width="1.2" stroke-linejoin="round"></path><circle cx="3.1" cy="4.4" r=".75" fill="#1F2328"></circle><circle cx="5" cy="4.4" r=".75" fill="#1F2328"></circle><circle cx="6.9" cy="4.4" r=".75" fill="#1F2328"></circle></svg>
+
+
+
+</span>
+<span class="ti">Fix flaky cart test</span><span class="tm">working</span></div></div>
+
+
+
+
+
+
+
+<div class="sec"><span>Tasks · 1</span></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><path d="M2.5 3.8 5 6.3 7.5 3.8" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="sp"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="#1F2328" stroke-width="1.2"></rect></svg><span class="ti b">Launch email</span><span class="tm">idle · 1</span></div>
+
+
+
+
+
+
+<div class="nest"><div class="row">
+
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+
+
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linejoin="round"></path></svg>
+
+
+
+
+</span>
+<span class="ti">Draft launch email</span><span class="tm">2h</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="grp" style="color: #5B636D"><span class="sp"></span><span style="width: 10px; text-align: center; flex: none">+</span><span class="ti">New task</span></div>
+
+
+
+</div>
+<div class="ft"><span class="btn">+ New Claude Code session</span></div>
+</div>
+
+    </div>
+    <div style="width: 620px; display: flex; flex-direction: column">
+      <div class="lab" style="margin-bottom: 10px">After: two tabs, focus on the branch</div>
+      
+
+<div class="cs" style="width: 620px">
+<div class="run">
+
+<span class="t">
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>
+
+
+
+
+
+<span>Pricing research</span>
+<span class="mk">2</span>
+</span>
+
+<span class="t on">
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3.75"></circle></svg>
+
+
+
+<svg width="10" height="10" viewBox="0 0 10 10" role="img" aria-label="fork" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="2.6" cy="2" r="1.2"></circle><circle cx="2.6" cy="8.2" r="1.2"></circle><circle cx="7.6" cy="2" r="1.2"></circle><path d="M2.6 3.2v3.8M7.6 3.2c0 2.2-5 1.6-5 3.8"></path></svg>
+<span>Pricing research (Branch)</span>
+<span class="mk">1</span>
+</span>
+
+<span class="t">
+
+<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3.75"></circle></svg>
+
+
+
+
+<span>Fix flaky cart test</span>
+
+</span>
+
+<span class="t">
+
+
+
+
+<svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>
+
+<span>alpha</span>
+
+</span>
+
+</div>
+<span class="plus">+ ⌄</span>
+</div>
+
+      <div class="term" style="height: 324px">
+        <div class="bar" style="width: 72%"></div><div class="bar" style="width: 55%"></div><div class="bar" style="width: 64%"></div><div class="bar" style="width: 38%"></div><div class="bar" style="width: 48%"></div>
+        <div class="pr">&gt; <span style="display: inline-block; width: 7px; height: 14px; background: #E6E8EB; vertical-align: -2px"></span></div>
+      </div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 14px; padding-top: 26px">
+      <div class="step"><span class="mk">1</span><div class="cap"><b>The branch keeps the terminal.</b> The same process is now the branch, so its tab is new: right of the original, titled from Claude's "‹title› (Branch)" with the fork mark after its state glyph (board 4), selected and focused, since you're typing there. It fades in (motionTabIn) as the strip slides (motionTabMove), and is scrolled into view (DL-225).</div></div>
+      <div class="step"><span class="mk">2</span><div class="cap"><b>The original comes back in its own place</b>, by <span class="mono">claude --resume</span>, sitting at its prompt (idle glyph). It costs nothing until you type in it.</div></div>
+      <div class="step"><span class="mk">3</span><div class="cap"><b>The thread opens by itself</b> (question 2), original first, the branch under the rule and selected. Both have activeTint.</div></div>
+      <div class="step"><span class="mk">4</span><div class="cap"><b>Tasks:</b> the branch joins every task the original is in, so if the original was under a task, both are now (board 5).</div></div>
+      <div class="cap">No notice bar or toast: the new tab and the opened thread are the signal. VoiceOver announces "Pricing research (Branch) opened, a fork of Pricing research". duo2: <span class="mono">duo2 sessions</span> lists both, the branch with <span class="mono">forkOf</span>.</div>
+    </div>
+  </div>
+</div>
+
+</body></html>

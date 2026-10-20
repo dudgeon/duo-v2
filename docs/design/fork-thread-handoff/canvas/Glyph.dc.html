@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Session glyph</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>body{margin:0}</style>
+</helmet>
+<span style="display: inline-flex; width: 10px; height: 10px; flex: none">
+<sc-if value="{{ti}}" hint-placeholder-val="{{ true }}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8M5.9 8.1h2.8" fill="none" stroke="#5B636D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+<sc-if value="{{tw}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.6 2.2 4.6 5 1.6 7.8" fill="none" stroke="#1F2328" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><rect x="5.6" y="5" width="3.2" height="3.6" rx=".5" fill="#1F2328"></rect></svg></sc-if>
+<sc-if value="{{td}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect x=".5" y=".5" width="9" height="9" rx="2.2" fill="#1F2328"></rect><path d="M2.4 3 4.6 5 2.4 7M5.6 7.4h2" fill="none" stroke="#FFFFFF" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+<sc-if value="{{ci}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#5B636D" stroke-width="1.2" stroke-linejoin="round"></path></svg></sc-if>
+<sc-if value="{{cw}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="#1F2328" stroke-width="1.2" stroke-linejoin="round"></path><circle cx="3.1" cy="4.4" r=".75" fill="#1F2328"></circle><circle cx="5" cy="4.4" r=".75" fill="#1F2328"></circle><circle cx="6.9" cy="4.4" r=".75" fill="#1F2328"></circle></svg></sc-if>
+<sc-if value="{{cd}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.1 1.2h5.8a1.5 1.5 0 0 1 1.5 1.5v3.4a1.5 1.5 0 0 1-1.5 1.5H4.7L2.3 9.3V7.6h-.2A1.5 1.5 0 0 1 .6 6.1V2.7a1.5 1.5 0 0 1 1.5-1.5z" fill="#1F2328" stroke="#1F2328" stroke-width="1.2" stroke-linejoin="round"></path></svg></sc-if>
+<sc-if value="{{hand}}"><svg width="10" height="10" viewBox="0 0 10 10" role="img" aria-label="needs you"><g fill="#C2410C"><rect x="2.1" y="1.7" width="1.45" height="5" rx=".72"></rect><rect x="3.8" y=".5" width="1.45" height="5.6" rx=".72"></rect><rect x="5.5" y=".9" width="1.45" height="5.3" rx=".72"></rect><rect x="7.2" y="2" width="1.45" height="4.6" rx=".72"></rect><rect x="2.1" y="4.6" width="6.55" height="5" rx="2.3"></rect><rect x=".7" y="4.3" width="1.45" height="3.6" rx=".72" transform="rotate(-30 1.4 7.9)"></rect></g></svg></sc-if>
+<sc-if value="{{tick}}"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.8 5.2 4 7.3 8.2 2.7" fill="none" stroke="#5B636D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+</span>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"g":{"editor":"enum","options":["ti","tw","td","ci","cw","cd","hand","tick","none"],"default":"ti"},"$preview":{"width":40,"height":40}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const g = this.props.g ?? 'ti';
+    return { ti: g === 'ti', tw: g === 'tw', td: g === 'td', ci: g === 'ci', cw: g === 'cw', cd: g === 'cd', hand: g === 'hand', tick: g === 'tick' };
+  }
+}
+</script>
+</body>
+</html>

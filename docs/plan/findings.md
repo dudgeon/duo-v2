@@ -4031,6 +4031,13 @@ Two of the three reproduced legacy bugs (the third is F-339).
 - **The scripted check** `scripts/check-editor-dark.mjs` needs playwright-core in `NODE_PATH` and WebKit installed, like the other editor checks.
 - **F-348: a single click in the file tree selects; a double click or Return opens (Geoff, 2026-10-19: "single clicking a file in the file explorer should select it -- not open it").** `FileRow` (and `BrowseRow`, the read-only parent-folder view) opened on one click. No DL says single-click opens. A click now calls `AppModel.selectFile` (sets `selectedFile`, makes the left pane active, resigns the first responder so the keys reach the tree); a double click (`simultaneousGesture`, so selecting isn't delayed) opens; Return opens via the key monitor in `installPaneKeys` only when no text field, terminal or page has the keys (`openSelectedFile`). Folders still fold on one click; drags, rename, the menu and Reveal are untouched. DuoChecks (`PaneFocusChecks`) cover click, double click and Return; harness actions `tree-click:<path>`, `tree-return`. The "project" capture's selected `prd-v2.md` row matches its screen.
 
+## F-355 · Fork threads: what the drawing needed to know (fork-thread-row, 2026-10-20)
+
+- **A `/fork` has no title of its own.** Only `/branch` writes one ("‹title› (Branch)", F-344), so a fork's row and tab read the parent's title until Claude renames it. That is why two tabs could look identical, and why Geoff chose a fork mark on the tab (DL-228).
+- **The folded thread row named the most urgent member** (`SidebarModel.threadRow`, `lead`). DL-228 keeps the original's name, so the row doesn't change name when it opens. The state and wait are still the most urgent member's.
+- **A thread inside a task needs a second rule.** The task's rule is at x 21. The thread's sits under the original's chevron, at x 37 (21 + 1.5 + 14.5), with the task's rule continuing beside it (`canvas/Pane.dc.html`, `.nest2`).
+- **Exporting the canvas.** The boards were turned into static HTML by a small renderer: holes, `sc-for`, `sc-if` and `dc-import` were evaluated in headless Chrome and the DOM dumped. The PNGs came from `lib.sh`'s `shoot` under the shared GPU lock. The renderer is not in the repo.
+
 ## F-357 · GitHub issues, slice 1: a task links one issue (github-issues-1, 2026-10-20; DL-226)
 
 Built from `docs/design/github-issues-handoff/` (boards 03, 06, 07 cards 1 to 3, 09's verbs; the study's boards, unchanged).

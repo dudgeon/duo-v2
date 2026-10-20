@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fork threads: today and the questions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.h{font-size:14px;line-height:20px;font-weight:600;color:#1F2328;margin:0}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+ul.l{margin:0;padding-left:18px;font-size:13px;line-height:19px;color:#1F2328;display:flex;flex-direction:column;gap:6px}
+ol.q{margin:0;padding-left:20px;font-size:13px;line-height:19px;color:#1F2328;display:flex;flex-direction:column;gap:12px}
+.rec{color:#1F2328;font-weight:600}
+.alt{color:#5B636D}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:16px 18px;box-sizing:border-box}
+</style>
+</helmet>
+<div style="width: 1400px; height: 1000px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <h1 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600">Forks made in the TUI: the thread row, the two tabs, the moment after</h1>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1100px">GitHub #14 and DL-227 (option A): a <b>/branch</b> or <b>/fork</b> in a Duo session leaves both sessions live, each in its own tab, and the left pane shows them as one thread. This canvas draws what DL-227 left undrawn. Everything on boards 1–5 is a proposal, marked [P]. Sample data only.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 360px; display: flex; flex-direction: column; gap: 12px">
+      <div class="lab">Today, after a /branch (as built)</div>
+      <dc-import name="Strip" strip="{{todayStrip}}" hint-size="360px,36px"></dc-import>
+      <dc-import name="Pane" pane="{{todayPane}}" hint-size="300px,330px"></dc-import>
+      <div class="cap"><b>The original vanishes.</b> The tab re-keys to the branch, so the original has no tab and no process; it folds into a thread row that shows only the most urgent member's name ("thread · 2"). Its task links don't carry over. A /fork keeps the tab, but the fork lands in "open somewhere else" (DL-109).</div>
+    </div>
+    <div style="width: 400px; display: flex; flex-direction: column; gap: 12px">
+      <div class="lab">Option A, chosen (DL-227)</div>
+      <div class="card">
+        <ul class="l">
+          <li><b>/branch</b>: the live terminal becomes the branch in a <b>new tab right of the original</b>, and keeps focus. The original reopens in its own tab by <span style="font-family: 'SF Mono', ui-monospace, monospace; font-size: 12px">claude --resume</span>, at its prompt.</li>
+          <li><b>/fork</b>: a <b>new tab right of the original</b> attaches to the fork (<span style="font-family: 'SF Mono', ui-monospace, monospace; font-size: 12px">claude attach</span>). Focus stays on the original: /fork means "keep working here".</li>
+          <li>The fork joins every task the original is in (DL-116).</li>
+          <li>The left pane shows both as <b>one thread</b>, in the DL-217 order: PINNED · NEEDS YOU · OPEN · TASKS · OTHER SESSIONS.</li>
+          <li>⌘W on an attached fork detaches; the fork keeps running in Claude's background.</li>
+          <li>Unchanged: /clear and /resume keep today's behaviour; DL-174's glyphs; console tabs keep the state glyphs.</li>
+        </ul>
+      </div>
+      <div class="cap">Boards: <b>1</b> the expanded thread row · <b>2</b> just after /branch · <b>3</b> just after /fork · <b>4</b> the two tabs in the strip · <b>5</b> edge cases.</div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 12px">
+      <div class="lab">The questions · answered by Geoff, 2026-10-20: A, A, B, A</div>
+      <div class="card">
+        <ol class="q">
+          <li><b>The expanded thread (board 1).</b> <span class="rec">A: the original leads, its forks hang under the thread rule</span>, as a task's sessions do; folded, the row keeps the original's name. <span class="alt">B: a thread heading over all its members. C: forks on two lines, "Fork of ‹name› · 2m ago".</span></li>
+          <li><b>When a thread opens itself (board 1).</b> <span class="rec">A: it opens when a fork is made in Duo, then stays as you leave it</span>. <span class="alt">B: open whenever two or more of its sessions have tabs. C: as built, folded until clicked.</span></li>
+          <li><b>The fork's tab (board 4).</b> <span class="rec">Chosen: B, a fork mark after the state glyph, with the session's own title.</span> <span class="alt">Not chosen: A, names alone with "‹name› (Fork)" (recommended); C, the parent's name unchanged and no mark.</span></li>
+          <li><b>A thread split across sections (board 5).</b> <span class="rec">A: it stays one row, placed by its liveliest session; only a session that needs you leaves it, tagged "Fork of ‹name›"</span>. <span class="alt">B: each session goes to its own section, tagged.</span></li>
+        </ol>
+      </div>
+      <div class="cap">Not asked, as the note proposes: no notice bar after a fork (the new tab and the opened thread are the signal); the new tab fades in with motionTabIn while the strip slides (motionTabMove). Q-219 (the /fork trust error, answered (c): a "Trust this folder" notice) is its own canvas round and isn't drawn here.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      todayStrip: { w: 360, tabs: [ { g: 'work', title: 'Pricing research (Branch)', on: true }, { g: 'shell', title: 'alpha' } ] },
+      todayPane: { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1', rows: [
+        { k: 'sec', label: 'Needs you · 1' }, { k: 'row', g: 'hand', title: 'Refund copy review', tm: '4m' },
+        { k: 'sec', label: 'Open · 2' },
+        { k: 'row', chev: 'r', g: 'tw', tint: true, sel: true, title: 'Pricing research (Bra…', pill: 'thread · 2', tm: 'working' },
+        { k: 'row', g: 'cw', tint: true, title: 'Fix flaky cart test', tm: 'working' },
+        { k: 'sec', label: 'Tasks · 1' }, { k: 'task', chev: 'd', title: 'Launch email', tm: 'idle · 1' },
+        { k: 'row', in: 'nest', g: 'ci', title: 'Draft launch email', tm: '2h' },
+        { k: 'new', title: 'New task' }
+      ] }
+    };
+  }
+}
+</script>
+</body>
+</html>
