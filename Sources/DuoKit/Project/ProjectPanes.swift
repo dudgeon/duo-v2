@@ -478,9 +478,11 @@ struct BrowseRow: View {
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: DuoMetric.rowFile)
+            .background { if !isFolder, model.selectedFile == model.tabKey(for: url) { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected) } }
             .padding(.horizontal, DuoSpace.selectionInset)
             .contentShape(Rectangle())
-            .onActivate { if isFolder { withDuoAnimation(.fold) { model.toggleBrowseFolder(node.path) } } else { model.openBrowsed(url) } }   // action: doc open
+            .onActivate { if isFolder { withDuoAnimation(.fold) { model.toggleBrowseFolder(node.path) } } else { model.selectFile(model.tabKey(for: url)) } }   // not an action: a click selects a file or folds a folder; opening is a double click or Return (`duo2 doc open`)
+            .simultaneousGesture(TapGesture(count: 2).onEnded { if !isFolder { model.openBrowsed(url) } })   // opens: doc open
             .modifier(LiveContextMenu { FileMenu(path: AppModel.outsideFilePrefix + url.standardizedFileURL.path, isFolder: isFolder, onTab: false) })
             .accessibilityElement(children: .combine)
             if let children = node.children, open {
@@ -586,7 +588,8 @@ struct FileRow: View {
             .duoAnimation(.dropIn, value: model.treeDropTarget == node.path)   // the drop target lights up (DL-130)
             .padding(.horizontal, DuoSpace.selectionInset)
             .contentShape(Rectangle())
-            .onActivate { if node.children == nil { model.openDocument(node.path) } else { withDuoAnimation(.fold) { model.toggleFolder(node.path) } } }  // action: doc open
+            .onActivate { if node.children == nil { model.selectFile(node.path) } else { withDuoAnimation(.fold) { model.toggleFolder(node.path) } } }  // not an action: a click selects a file or folds a folder; opening is a double click or Return (`duo2 doc open`)
+            .simultaneousGesture(TapGesture(count: 2).onEnded { if node.children == nil { model.openDocument(node.path) } })   // opens: doc open
             .modifier(LiveContextMenu { FileMenu(path: node.path, isFolder: node.children != nil, onTab: false) })
             // Drag the file out (a terminal types its path); drop files on a folder, or on a file for its folder (DL-117).
             .modifier(DragsFile(path: node.path, name: node.name))
