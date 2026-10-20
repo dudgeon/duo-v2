@@ -753,6 +753,7 @@ func repoFixture() throws -> Fixture {
     try paneFocusChecks()
     try tabOrderChecks()
     try gitChecks()
+    try issueChecks()   // IssueChecks.swift: DL-226
     dockMenuChecks()
 
     print("titles")

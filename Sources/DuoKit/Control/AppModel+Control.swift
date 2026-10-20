@@ -358,6 +358,8 @@ extension AppModel {
         case .tasks, .taskMake, .taskAdd, .taskNew, .taskSession, .taskStatus,
              .taskRename, .taskArchive, .taskUnarchive, .taskDelete, .taskMove, .taskLink, .taskReveal:
             taskVerb(id, inv, req, done)
+        case .issueShow, .issueOpen, .issueClose, .issueReopen, .issueNew, .taskIssue:
+            issueVerb(id, inv, req, done)
         case .taskBoard, .taskColumn, .taskReference, .taskBase:
             boardVerb(id, inv, req, done)
         case .directorStatus, .directorStart, .directorSend, .directorRetire, .directorGuide, .directorWatch:

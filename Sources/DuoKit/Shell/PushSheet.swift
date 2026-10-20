@@ -117,6 +117,13 @@ struct PushSheet: View {
                         .frame(height: DuoMetric.sheetPushBodyHeight)
                         .background(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).fill(DuoColor.pane))
                         .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+                    // "Closes #n" for each task here that tracks an issue in this repo (DL-226, board 6): GitHub closes them on merge.
+                    ForEach(form.closes) { c in
+                        Toggle(isOn: Binding(get: { c.ticked }, set: { v in if let i = form.closes.firstIndex(where: { $0.id == c.id }) { form.closes[i].ticked = v } })) {
+                            Text("Closes \(c.ref.short) · \(c.title)\(c.status == "in-progress" ? "" : "  (\(TaskBoard.title(c.status)))")").lineLimit(1)
+                        }
+                        .toggleStyle(.checkbox).duoText(.body)
+                    }
                     if form.mode != .browser {
                         Toggle("As a draft", isOn: $form.draft).toggleStyle(.checkbox).duoText(.body)
                     }

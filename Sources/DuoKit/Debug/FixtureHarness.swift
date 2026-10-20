@@ -387,6 +387,18 @@ public enum FixtureHarness {
         case "explain-tasks": model.explainTasks()   // Help › Explain Tasks (DL-172)
         case "hover-new-task": if let p = model.currentProject?.name { model.hoveredTaskRow = "\(p)/new-task-row" }   // the pointer on + New task (DL-172)
         case "board": model.showBoard(parts.count < 2 || parts[1] != "off")   // board[:off]: Sessions | Tasks (DL-148)
+        case "issue-link":   // issue-link:<path>=<n>:<open|closed>[:<labels>]: a task tracks an acme/checkout issue, its state as read (DL-226; no gh)
+            if parts.count > 1, let p = model.currentProject?.name {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                let f = (kv.count > 1 ? kv[1] : "1").split(separator: ":").map(String.init)
+                if let n = Int(f[0]) {
+                    let ref = IssueRef(owner: "acme", name: "checkout", number: n)
+                    model.setShownTask(p, kv[0]) { $0.issue = ref.url }
+                    model.issueStates[ref.url] = .info(IssueInfo(ref: ref, title: "Checkout spinner never ends on slow networks", open: (f.count > 1 ? f[1] : "open") == "open",
+                                                                 labels: f.count > 2 ? f[2].split(separator: ",").map(String.init) : []))
+                    model.issueFetched[ref.url] = Date()
+                }
+            }
         case "card": if parts.count > 1, let p = model.currentProject?.name { model.selectCard(project: p, path: parts[1]) }   // card:<path>: a click on a card
         case "hover-card":   // hover-card:<path>[=<session title>]: the pointer over a card, or one of its session rows
             if parts.count > 1, let p = model.currentProject?.name {
