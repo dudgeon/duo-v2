@@ -22,8 +22,8 @@ struct DuoApp: App {
         DuoFocus.startBackground()
         let options = LaunchOptions()
         self.options = options
-        // Light only until a dark appearance is approved (handoff §12 Q4).
-        NSApplication.shared.appearance = NSAppearance(named: .aqua)
+        // Match System, Light or Dark, as Settings › General › Appearance says (DL-224).
+        AppearanceSetting.apply()
         NSWindow.allowsAutomaticWindowTabbing = false
 
         let fixture: Fixture

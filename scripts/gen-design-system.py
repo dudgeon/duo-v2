@@ -42,14 +42,22 @@ def rgba(spec):
 
 
 # ---------- colour ----------
+darkset = t["color"]["dark"]
+
+
+def both(name, spec):
+    """Light and dark (DL-224, Dark B "Ink"); a token with no dark value is the same in both."""
+    return {"light": rgba(spec), "dark": rgba({"value": darkset.get(name, spec)["value"], **({"alpha": darkset.get(name, spec)["alpha"]} if "alpha" in darkset.get(name, spec) else {})})}
+
+
 colors = []
 for name, spec in light.items():
     if not name.startswith("$"):
-        colors.append({"name": name, "value": {"light": rgba(spec)}, "usage": spec.get("use", "")})
+        colors.append({"name": name, "value": both(name, spec), "usage": spec.get("use", "")})
 for name, spec in console.items():
     if not name.startswith("$"):
-        colors.append({"name": name, "value": {"light": rgba(spec)},
-                       "usage": spec.get("use", "") + " Console chrome: the same in every appearance."})
+        colors.append({"name": name, "value": both(name, spec),
+                       "usage": spec.get("use", "") + " Console chrome: the console sinks in dark (DL-224)."})
 tp = t["terminal"]
 for k, spec in tp["ansi"].items():
     colors.append({"name": "terminal" + cap(k), "value": {"light": spec["value"].lower()},
@@ -255,7 +263,7 @@ source = {"source": "github", "repo": "dudgeon/duo-v2", "paths": {"tokens": ["do
           "swift": ["Sources/DuoKit/Design/Tokens.swift"]}, "generator": "scripts/gen-design-system.py"}
 tokens = {
     "name": "Duo", "version": 1, "meta": source,
-    "color": {"themes": [{"id": "light", "name": "Light"}], "note": "Light only: the dark appearance isn't approved (DB-29). Console colours are fixed in every appearance.", "tokens": colors},
+    "color": {"themes": [{"id": "light", "name": "Light"}, {"id": "dark", "name": "Dark"}], "note": "Light, and Dark B \"Ink\" (DL-224): Match System, Light or Dark in Settings. The terminal's ANSI palette is the same in both.", "tokens": colors},
     "type": typ,
     "spacing": {"tokens": spacing},
     "radius": {"tokens": radius},

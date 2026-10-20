@@ -383,6 +383,7 @@ extension AppModel {
                 return ["claude-path: \(st.claudePath ?? "auto") (runs \(c ?? "nothing found"))",
                         "notify: \(DuoState.load().notifyNeedsYou ? "on" : "off")",
                         "dock-badge: \(DuoState.load().dockBadge ? "on" : "off") (showing \(NSApp.dockTile.badgeLabel ?? "nothing"))",
+                        "appearance: \(AppearanceSetting.current.rawValue)",
                         "explanations dismissed: \(DuoState.load().dismissedExplainers.isEmpty ? "none" : DuoState.load().dismissedExplainers.joined(separator: ", "))",
                         "home: \(liveRoot.map { Self.short($0.path) } ?? "none")"].joined(separator: "\n")
             }
@@ -404,10 +405,14 @@ extension AppModel {
                 DuoState.update { if key == "notify" { $0.notifyNeedsYou = value == "on" } else { $0.dockBadge = value == "on" } }
                 updateDockBadge()
                 SettingsInfo.shared.revision += 1
+            case "appearance":
+                guard let a = AppearanceSetting(rawValue: value) else { return done(.fail("usage: \(id.action.usage)")) }
+                AppearanceSetting.set(a)
+                SettingsInfo.shared.revision += 1
             case "explainers":
                 guard value == "reset" else { return done(.fail("usage: \(id.action.usage)")) }
                 explainer.resetDismissed()
-            default: return done(.fail("no setting '\(key)'. Settings: claude-path, notify, dock-badge, explainers"))
+            default: return done(.fail("no setting '\(key)'. Settings: claude-path, notify, dock-badge, appearance, explainers"))
             }
             reply()
         case .projectReconnect:

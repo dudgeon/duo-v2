@@ -1887,7 +1887,7 @@ const duoTheme = EditorView.theme({
   ".duo-fm-message": { margin: "8px -8px 0", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", lineHeight: "16px", color: "var(--duo-text2)" },
   ".duo-fm-rule.duo-fm-rule-folded": { margin: "6px -28px 22px" },
   // Suggestions (§4): pane, rule border, radius 10, the popover shadow; rows 26, radius 6.
-  ".cm-tooltip.cm-tooltip-autocomplete": { backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "0 12px 32px rgba(31, 35, 40, 0.22)", padding: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px" },
+  ".cm-tooltip.cm-tooltip-autocomplete": { backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "0 12px 32px var(--duo-shadow)", padding: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px" },
   ".cm-tooltip.duo-sugg-names > ul": { width: "286px" },
   ".cm-tooltip.duo-sugg-values > ul": { width: "266px" },
   ".cm-tooltip.cm-tooltip-autocomplete > ul": { fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", maxHeight: "260px" },
@@ -1909,7 +1909,7 @@ const duoTheme = EditorView.theme({
   ".duo-fm-reffield": { position: "relative", display: "block", flex: "1", maxWidth: "340px", minWidth: "0" },
   ".duo-fm-reffield input": { width: "100%", height: "22px", boxSizing: "border-box", border: "1px solid var(--duo-rule)", borderRadius: "6px", padding: "0 8px", font: "12px -apple-system, BlinkMacSystemFont, sans-serif", color: "var(--duo-text)", background: "var(--duo-pane)", outline: "none" },
   ".duo-fm-reffield input:focus": { borderColor: "var(--duo-text)" },
-  ".duo-fm-refmenu": { position: "absolute", top: "26px", left: "0", right: "0", zIndex: "20", backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "0 12px 32px rgba(31, 35, 40, 0.22)", padding: "6px", font: "13px -apple-system, BlinkMacSystemFont, sans-serif" },
+  ".duo-fm-refmenu": { position: "absolute", top: "26px", left: "0", right: "0", zIndex: "20", backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "0 12px 32px var(--duo-shadow)", padding: "6px", font: "13px -apple-system, BlinkMacSystemFont, sans-serif" },
   ".duo-fm-refitem": { display: "flex", alignItems: "center", gap: "8px", height: "26px", padding: "0 8px", borderRadius: "6px", color: "var(--duo-text)" },
   ".duo-fm-refitem-on": { backgroundColor: "var(--duo-selected)" },
   ".duo-fm-refitem-name": { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },

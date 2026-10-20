@@ -50,6 +50,7 @@ public final class DeckViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         config.setURLSchemeHandler(proxy, forURLScheme: Self.scheme)
         config.userContentController.addUserScript(WKUserScript(source: EditorController.tokenCSS(), injectionTime: .atDocumentStart, forMainFrameOnly: true))
         webView = DuoWebView(frame: .zero, configuration: config)
+        webView.appearance = NSAppearance(named: .aqua)   // a page keeps its author's colours in dark too (DL-224)
         super.init()
         proxy.owner = self
         webView.configuration.userContentController.add(self, name: "duoDeck")
