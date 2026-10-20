@@ -113,6 +113,7 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 group remove <group> <session>…` | Take sessions out of a group (an empty group goes away). | — |
 | `duo2 group rename <group> <new name>` | Rename a group. | — |
 | `duo2 group delete <group>` | Ungroup: the group goes, its sessions stay. | — |
+| `duo2 task issue <task> <issue\|--clear> [--project <p>]` | A task's issue link (DL-226): writes `issue:` with the full URL, quoted, by key (a task tracks one issue; the issue's state is read from GitHub, never copied into the note). <issue> is a URL, owner/repo#n or #n in the project's GitHub remote. --clear removes the link; nothing on GitHub changes. Through the editor when the note is open. Undo with `duo2 undo`. | Link Issue…, Change Issue…, Unlink Issue |
 
 ## Director
 
@@ -158,6 +159,11 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 | `duo2 repo draft [--message <m>] [--title <t>] [--body <b>]` | Fill in the open Push sheet's message, pull request title and description: how Claude answers Ask Claude to Write These. Doesn't push. | Ask Claude to Write These |
 | `duo2 repo move-to-branch <new branch> [--project <name>] --yes` | Move commits made on a protected branch to a new branch; the old one goes back to GitHub's only once the new one holds every commit. Then push it with `duo2 repo pr`. | Move to a Branch…, Move to a Branch and Push |
 | `duo2 repo signin` | Sign in to GitHub: a shell tab running the GitHub CLI's browser sign-in (`gh auth login --web`, then `gh auth setup-git`). Duo never sees or keeps a token. Without the CLI, a shell tab with `brew install gh` typed. | Sign In…, Sign In in a Shell…, Install in a Shell…, Switch Account… |
+| `duo2 issue show [<task\|issue>] [--project <p>] [--refresh]` | The GitHub issue a task tracks (its `issue:` link, DL-226) and its state now: open or closed, labels, and why it can't be read without gh or access. <issue> is a URL, owner/repo#n or #n (the project's GitHub remote). With no argument, every task in the project that tracks one. Reads only. | issue chip, issue row, Copy Issue Link |
+| `duo2 issue open <task\|issue> [--project <p>]` | Open the issue on GitHub in the browser. | Open Issue on GitHub |
+| `duo2 issue close <task\|issue> [--project <p>] --yes` | Close the issue on GitHub (`gh issue close`): the one change Duo makes to an issue besides reopening it. Needs --yes. Undo with `duo2 undo` reopens it. | Close Issue, Close #n too, Close too |
+| `duo2 issue reopen <task\|issue> [--project <p>] --yes` | Reopen the issue on GitHub (`gh issue reopen`). Needs --yes. | Reopen Issue |
+| `duo2 issue new --from-task <task> [--project <p>] --yes` | New Issue from Task: files the task as an issue in the project's GitHub repository, titled after it with its note's text as the body, and links it (`issue:`). Needs --yes (it publishes under the user's name); without it the user is asked in Duo. Undo with `duo2 undo` unlinks it; the issue stays on GitHub. | New Issue from Task… |
 | `duo2 repo open [--project <name>] [--pr]` | Open the repository (its branch) or the branch's pull request on GitHub. | Open on GitHub, Open Pull Request #, Open PR, Open GitHub |
 
 ## Documents

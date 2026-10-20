@@ -186,7 +186,9 @@ extension AppModel {
         // Only a listed (open) task holds; one already done just stays done.
         let listed = fixture.tasks?.first(where: { $0.id == key })?.isOpen == true
         if listed { completingTasks.insert(key) }
+        let was = fixture.tasks?.first(where: { $0.id == key })?.status
         if let why = setTaskStatus(project: project, path: path, "done") { completingTasks.remove(key); info(why); return }
+        offerCloseIssue(project: project, path: path, previousStatus: was)   // a tracked, open issue: "Close #n too" (DL-226)
         DispatchQueue.main.asyncAfter(deadline: .now() + DuoMotionToken.rowHold.delay) { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, self.completingTasks.contains(key) else { return }
@@ -489,6 +491,7 @@ struct TaskMenuItems: View {
             Button("Rename") { model.beginRenameTask(project: project, path: path) }
             Button("Mark Complete") { model.completeTask(project: project, path: path) }
             TaskStatusMenu(project: project, path: path)
+            IssueMenuItems(model: model, project: project, path: path, issue: summary?.issue)
             Divider()
             Button("Copy Link") { model.copyTaskLink(project: project, path: path) }
             Button("Reveal in Finder") { model.revealTask(project: project, path: path) }
@@ -605,6 +608,32 @@ extension AppModel {
             revealTask(project: hit.project, path: hit.path)
             done(.ok("Showed \(hit.project)/\(hit.path) in Finder."))
         default: done(.fail("not a task verb"))
+        }
+    }
+}
+
+
+/// Link Issue…, and for a task that tracks one: Open on GitHub, Copy Link, Close/Reopen, Unlink (github-issues-handoff 03).
+/// New Issue from Task is offered while it tracks none.
+struct IssueMenuItems: View {
+    let model: AppModel
+    let project: String
+    let path: String
+    let issue: String?
+
+    var body: some View {
+        Divider()
+        if let raw = issue, let ref = model.issueRef(project: project, raw: raw) {
+            let open: Bool? = { if case .info(let i)? = model.issueStates[ref.url] { return i.open }; return nil }()
+            Button("Open Issue \(ref.short) on GitHub") { AppModel.openOutside(ref.webURL) }   // action: issue open
+            Button("Copy Issue Link") { FileActions.copy(ref.url) }   // action: issue show
+            if open == false { Button("Reopen Issue \(ref.short)") { model.setIssueOpen(project: project, path: path, open: true) { if let w = $0 { model.info(w) } } } }   // action: issue reopen
+            else { Button("Close Issue \(ref.short)") { model.setIssueOpen(project: project, path: path, open: false) { if let w = $0 { model.info(w) } } } }   // action: issue close
+            Button("Change Issue…") { model.askLinkIssue(project: project, path: path) }   // action: task issue
+            Button("Unlink Issue") { if let why = model.unlinkIssue(project: project, path: path) { model.info(why) } }   // action: task issue
+        } else {
+            Button("Link Issue…") { model.askLinkIssue(project: project, path: path) }   // action: task issue
+            Button("New Issue from Task…") { model.askNewIssue(project: project, path: path) }   // action: issue new
         }
     }
 }

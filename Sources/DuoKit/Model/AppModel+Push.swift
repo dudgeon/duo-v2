@@ -37,6 +37,21 @@ import Foundation
     /// The project's own note, named in "… stays out."
     public var projectFileName = "_PROJECT.md"
     public var problem: String?
+    /// "Closes #n" for each task in the project that tracks an issue in this repo (DL-226, board 6).
+    public struct Closes: Identifiable, Equatable {
+        public var ref: IssueRef
+        public var title: String
+        public var status: String
+        public var ticked: Bool
+        public var id: String { ref.url }
+    }
+    public var closes: [Closes] = []
+    /// The pull request's body as it goes: the text, then one "Closes #n" line per ticked task.
+    public var bodyWithCloses: String {
+        let lines = closes.filter(\.ticked).map { IssueTool.closesLine($0.ref, in: repo) }
+        guard !lines.isEmpty else { return body }
+        return (body.isEmpty ? "" : body.trimmingCharacters(in: .whitespacesAndNewlines) + "\n\n") + lines.joined(separator: "\n")
+    }
 
     init(project: String, repo: RemoteRepo, branch: String, base: String, newOnGitHub: Bool, commitsAhead: Int, rows: [Row],
          message: String, body: String, existingPR: Int?, mode: Mode, login: String?) {
@@ -87,6 +102,7 @@ extension AppModel {
                 let body = ([goal.isEmpty ? nil : goal] + (sessions.isEmpty ? [] : ["From the sessions: " + sessions.joined(separator: ", ") + "."])).compactMap { $0 }.joined(separator: "\n\n")
                 let form = PushForm(project: name, repo: origin, branch: branch, base: v.base, newOnGitHub: v.status.upstream == nil,
                                     commitsAhead: v.status.ahead, rows: rows, message: message, body: body, existingPR: v.pr, mode: mode, login: v.access?.login)
+                form.closes = self.closesCandidates(project: name, repo: origin)
                 form.projectFileName = self.projectFile ?? "_PROJECT.md"
                 form.bases = [v.base] + bases.filter { $0 != v.base && $0 != branch }
                 if sendNow, form.ticked.isEmpty, v.pr != nil, mode != .fork {
@@ -123,7 +139,7 @@ extension AppModel {
         guard let f = pushForm, let v = repos[f.project], f.canSend else { reply?(.failure(GitFailure(kind: .unknown, details: "Nothing to push."))); return }
         f.working = true
         let plan = RepoOps.PushPlan(files: f.ticked, message: f.message.trimmingCharacters(in: .whitespacesAndNewlines), openPR: f.openPR && f.existingPR == nil,
-                                    prTitle: (f.prTitle ?? f.message).trimmingCharacters(in: .whitespacesAndNewlines), prBody: f.body, base: f.base,
+                                    prTitle: (f.prTitle ?? f.message).trimmingCharacters(in: .whitespacesAndNewlines), prBody: f.bodyWithCloses, base: f.base,
                                     draft: f.draft, fork: f.mode == .fork, browser: f.mode == .browser)
         let root = v.status.root, login = f.login, project = f.project
         repos[project]?.busy = "Pushing…"
