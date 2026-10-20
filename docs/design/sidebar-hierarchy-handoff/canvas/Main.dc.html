@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sidebar hierarchy: today and decisions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.bd{box-sizing:border-box;background:#F3F4F6;color:#1F2328;font:13px/20px -apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif}
+.bd *{box-sizing:border-box}
+.t2{color:#5B636D}
+.cap{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D;margin:0 0 8px}
+.p{margin:0 0 8px;font-size:12px;line-height:18px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:14px 16px}
+.dec{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:8px;padding:9px 0;border-bottom:1px solid #C9CDD3;font-size:12px;line-height:18px}
+.dec:last-child{border-bottom:0}
+.dk{font-weight:600}
+.rec{display:inline-block;font:600 10px/14px -apple-system,system-ui,sans-serif;letter-spacing:.5px;text-transform:uppercase;border:1px solid #1F2328;border-radius:9px;padding:0 6px;margin-left:4px}
+ol,ul{margin:0;padding-left:18px}
+li{margin:0 0 6px;font-size:12px;line-height:18px}
+</style>
+</helmet>
+<div class="bd" style="width: 1400px; height: 1180px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font: 600 20px/26px -apple-system, system-ui, sans-serif">Sidebar hierarchy: the director on top, live work over long-range tasks</h1>
+<p class="t2" style="margin: 4px 0 0; font-size: 12px; line-height: 18px; max-width: 1300px">Your note: “when a project has a duo director and the session is pinned/keep awake, it should appear at the very top of the sessions list; right now it gets buried under all of the tasks … if a project has many tasks, some are long range, it does not make sense for them to always take precedence, especially over live tasks.” Every mark on this canvas is a proposal [P]. Sample data throughout (a checkout project with 16 tasks, the size of your shop project). Comment on any board, or answer the decisions on the right.</p>
+</div>
+<div style="display: flex; gap: 28px; align-items: flex-start">
+<div style="width: 300px; flex: none">
+<div class="cap">Today, as built (DL-174) · 300</div>
+<dc-import name="Pane" pane="{{today}}" hint-size="300px,700px"></dc-import>
+<p class="p t2" style="margin-top: 10px">The pane's sessions area at 1440 × 900, with FILES under it. The director is row 27.</p>
+</div>
+<div style="width: 420px; flex: none; display: flex; flex-direction: column; gap: 14px">
+<div class="card">
+<div class="cap">What goes wrong</div>
+<ol>
+<li><b>TASKS always comes first, and lists every task.</b> Twelve task lines nobody has touched this week sit above every live session.</li>
+<li><b>The director is just a loose session.</b> Kept running and working, it lands in OTHER SESSIONS › Open, after all the tasks. So do other Keep Running sessions.</li>
+<li><b>A task line with no session never moves.</b> Task groups sort by their most urgent session; lines don't, so long-range work holds its place forever.</li>
+<li><b>Nothing marks the director, or says there are two.</b> A replaced director that's still open looks like any other session.</li>
+</ol>
+</div>
+<div class="card">
+<div class="cap">Rules every option shares [P]</div>
+<ul>
+<li><b>The director</b> is the session `.duo/director.json` names as current, by session id. A name starting “director-” proves nothing (DL-200), so a session's name never puts it in the slot.</li>
+<li><b>Live</b> means open in Duo (a tab, running or parked), working, or needs you, as Open and NEEDS YOU count today.</li>
+<li><b>In play:</b> a task with a live session, or one that ran in the last 3 days, or whose note changed in the last 3 days (a director's Progress line counts). Status isn't used: directors set in-progress, and most people never update it.</li>
+<li><b>Later · n:</b> every other task, in a fold at the end of TASKS, folded to start, most recent first. A task leaves Later the moment something happens in it.</li>
+<li><b>Order inside TASKS stays:</b> most urgent session (needs you, review, working, idle), then most recent activity. Task lines now sort by their note's last change, among the groups.</li>
+<li><b>Nothing new on disk.</b> The order is worked out from sessions and notes; which folds are open is view state, as for the time groups.</li>
+</ul>
+</div>
+<div class="card">
+<div class="cap">The four options</div>
+<p class="p"><b>A · Director slot, tasks ranked.</b> The director gets a two-line slot above everything. TASKS folds long-range work into Later. Keep Running sessions stay where they are.</p>
+<p class="p"><b>B · Pinned on top.</b> <span class="rec">Recommended</span> As A, with every Keep Running session under the director in PINNED. One idea: what you keep running, you keep in view.</p>
+<p class="p"><b>C · Now, then the rest.</b> A NOW section above TASKS holds every live task group and live loose session. Bolder: live work leads, whatever it belongs to.</p>
+<p class="p" style="margin: 0"><b>D · The backlog lives on the board.</b> The sidebar shows tasks in play only. The rest is one row that opens the task board.</p>
+</div>
+</div>
+<div style="flex: 1; min-width: 0">
+<div class="card">
+<div class="cap">Decided (you, by buttons, 2026-10-17; note 2026-10-19)</div>
+<div class="dec"><span class="dk">1</span><div><b>Shape:</b> B, pinned on top.</div></div>
+<div class="dec"><span class="dk">2</span><div><b>The director's row:</b> the two-line slot.</div></div>
+<div class="dec"><span class="dk">3</span><div><b>Keep Running sessions:</b> under the director, in PINNED. One idea, no Pin to Top.</div></div>
+<div class="dec"><span class="dk">4</span><div><b>A replaced director still open:</b> shares the slot, greyed, with Close.</div></div>
+<div class="dec"><span class="dk">5</span><div><b>Long-range tasks:</b> the Later fold, by activity, 3 days.</div></div>
+<div class="dec"><span class="dk">6, 7</span><div><b>A director that needs you</b> keeps its slot; <b>done tasks</b> sink, then join Later.</div></div>
+<div class="dec"><span class="dk">8</span><div><b>Changed by your note:</b> “open sessions should be above tasks”. OPEN is a section between NEEDS YOU and TASKS; OTHER SESSIONS keeps Today, This week and Earlier.</div></div>
+</div>
+<div class="card" style="margin-top: 14px">
+<div class="cap">Decided 2026-10-19 (board G)</div>
+<div class="dec"><span class="dk">9</span><div><b>An open tab that belongs to a task:</b> <b>O2:</b> OPEN holds open sessions in no task; a task's tabs stay under it, and the task ranks first in TASKS.</div></div>
+</div>
+<p class="p t2" style="margin-top: 10px">Board B is drawn with O2. Boards E and F: the director's states, two directors, Home, All projects' tiles, 240 wide, a long Later, done tasks, keyboard and duo2.</p>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const lines = ['Fraud rule audit', 'Tax engine upgrade', 'Saved cards', 'Apple Pay', 'Receipt redesign', 'Abandoned-cart emails', 'Localise currency', 'Accessibility audit', 'Order history page', 'Gift cards', 'Refund flow copy', 'Shipping estimates'];
+    const today = { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1', h: 760,
+      cut: 'The window ends here. Below: + New task, OTHER SESSIONS › Open, and in it director-checkout, kept running and working.',
+      rows: [
+        { k: 'sec', label: 'Needs you · 1' }, { k: 'row', g: 'hand', title: 'Pricing copy review', tm: '4m' },
+        { k: 'sec', label: 'Tasks · 16' },
+        { k: 'task', chev: 'd', hand: true, title: 'Launch email', tm: 'open · 2' },
+        { k: 'row', in: 'nest', g: 'cw', tint: true, title: 'Draft launch email', tm: 'working' },
+        { k: 'row', in: 'nest', g: 'ti', title: 'Segment list query', tm: '3h' },
+        { k: 'task', chev: 'd', title: 'Stripe migration', tm: 'open · 1' },
+        { k: 'row', in: 'nest', g: 'td', title: 'Migrate Stripe webhooks' },
+        { k: 'task', chev: 'd', title: 'Guest checkout A/B test', tm: 'open · 1' },
+        { k: 'row', in: 'nest', g: 'tw', title: 'A/B test harness', tm: '2m' },
+        { k: 'task', chev: 'd', title: 'Address autocomplete', tm: 'open · 1' },
+        { k: 'row', in: 'nest', g: 'ti', title: 'Autocomplete spike', tm: '1h' }
+      ].concat(lines.map((t) => ({ k: 'line', title: t, tm: 'open' })))
+    };
+    return { today };
+  }
+}
+</script>
+</body>
+</html>
