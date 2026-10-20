@@ -162,6 +162,10 @@ public final class AppModel {
     public var tabDrag: TabDrag?
     /// Each tab's frame on its strip, for where a drag lands; written as the strips lay out.
     @ObservationIgnored var tabFrames: [String: CGRect] = [:]
+    /// Each scrolling tab strip's offset and measures (DL-225): console (.middle), right pane (.right), Home (.left).
+    public let tabStrips: [DuoPane: TabStripState] = [.left: TabStripState(), .middle: TabStripState(), .right: TabStripState()]
+    /// Where the pointer is on a strip while a tab is dragged along it, in the strip's scrolling part (edge scroll).
+    var tabDragPointer: (pane: DuoPane, x: CGFloat)?
     /// The file tree (DL-105): hidden files on or off, and the folders open in each project's tree.
     public var showHiddenFiles = DuoState.load().showHiddenFiles
     /// Documents shown in Source mode (DL-167), by standardized path; remembered.

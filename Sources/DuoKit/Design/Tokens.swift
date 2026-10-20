@@ -153,6 +153,10 @@ public enum DuoMetric {
     public static let toolbarHeight: CGFloat = 38.0
     public static let tabStripHeight: CGFloat = 36.0
     public static let chatStripHeight: CGFloat = 28.0
+    public static let tabFade: CGFloat = 24.0
+    public static let tabPeek: CGFloat = 32.0
+    public static let tabEdgeScroll: CGFloat = 32.0
+    public static let tabNeedsYouDot: CGFloat = 6.0
     public static let deckBarHeight: CGFloat = 44.0
     public static let docxMenuWidth: CGFloat = 246.0
     public static let docxMenuTop: CGFloat = 39.0

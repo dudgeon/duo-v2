@@ -77,12 +77,12 @@ extension AppModel {
     }
 
     public func closeShell(_ key: String) {
+        let owner = shellTabs.first { $0.value.contains(key) }?.key
+        let next = owner.flatMap { TabOrder.neighbour(closing: key, in: consoleTabKeys(inProject: $0)) }
         terminals.close(key)
         chats.forget(key)
         for p in shellTabs.keys { shellTabs[p]?.removeAll { $0 == key } }
         shellTitles[key] = nil
-        let project = altitude.isAllProjects ? fixture.home?.name : currentProject?.name
-        let next = project.map { p in (tabSessions(inProject: p).map(\.tabKey) + shells(inProject: p)).first } ?? nil
         if consoleTab == key { consoleTab = next }
         if homeTab == key { homeTab = next }
     }
@@ -113,10 +113,30 @@ public enum ForegroundCommand {
         let args = arguments(pgid)
         guard let first = args.first else { return nil }
         let name = (first as NSString).lastPathComponent.trimmingCharacters(in: CharacterSet(charactersIn: "-"))
-        if pgid == shellPid { return name }
+        if pgid == shellPid { return folderTitle(of: shellPid) ?? name }   // at its prompt: its folder (DL-225, Q-224 A)
         // A script run by an interpreter shows as the script: `./export-funnel.sh`, not `bash`.
         if interpreters.contains(name), args.count > 1, let script = args.dropFirst().first(where: { !$0.hasPrefix("-") }) { return script }
         return ([name] + args.dropFirst()).joined(separator: " ")
+    }
+
+    /// The name of a process's current folder, `~` for home (a shell at its prompt, DL-225). Read from the
+    /// process (F-353): it needs nothing from the user's shell, as OSC 7 would.
+    public static func folderTitle(of pid: Int32) -> String? {
+        var info = proc_vnodepathinfo()
+        let size = Int32(MemoryLayout<proc_vnodepathinfo>.size)
+        guard proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, 0, &info, size) == size else { return nil }
+        let path = withUnsafePointer(to: &info.pvi_cdir.vip_path) {
+            $0.withMemoryRebound(to: CChar.self, capacity: Int(MAXPATHLEN)) { String(cString: $0) }
+        }
+        return folderTitle(path: path, home: NSHomeDirectory())
+    }
+
+    /// `~` for the home folder, `/` for the root, else the folder's own name.
+    public static func folderTitle(path: String, home: String) -> String? {
+        guard !path.isEmpty else { return nil }
+        if path == home { return "~" }
+        if path == "/" { return "/" }
+        return (path as NSString).lastPathComponent
     }
 
     /// A process's argv, from KERN_PROCARGS2.
