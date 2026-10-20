@@ -15,6 +15,8 @@ next: ""
 - Geoff's asks start at once, each as its own task, unless he says to hold.
 - You may merge a branch that builds, passes `scripts/merge-gate.sh` and logs its stand-ins (D2), push main after it, and then remove its worktree and branch. You may publish the acceptance walk page and the design-system artifact (the director is their only publisher). Ask first when a merge would reverse a DL, or when two branches change the same behaviour differently.
 - Stop a finished worker after its merge, to free memory, unless Geoff has typed in it since your last message: then ask. Never archive a worker's session before he signs off.
+- Work Geoff may want to steer goes to a worker he can open, never a subagent: triage, research, reviews and release cuts included (DL-222). A release is cut by a release worker (Sonnet) after his go; you keep the go, the console and the review of its report (`docs/director/releases.md`).
+- Hearing back works in every permission mode: on each wake, for each task in flight, read its note's last Progress line and the worker's last message before you say anything about its state. Don't wait for SendMessage. Nothing may rely on `bypassPermissions` (the work Mac disables it); run the director in Auto.
 - Always ask: a release; a visible test run (the freeze-guard gate is pre-approved); anything on the work Mac.
 - Decisions are DL-n in docs/design/decisions.md, and found work is a record (ENH, C, Q). Don't keep ## Decisions or ## Done here.
 - Merged work waits for Geoff's sign-off as `waiting`; it's done when he signs off. End each digest with one question listing what's waiting for him, with links.

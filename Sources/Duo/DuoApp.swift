@@ -131,6 +131,7 @@ struct DuoApp: App {
                 }
                 // DL-74, DL-75: what lets Claude sessions anywhere use duo2; asked once, kept current.
                 if !options.capturing || Installer.testRoot != nil, let dir = ChildEnvironment.cliDirectory {
+                    model.lookForProjectDirectorSkills()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) { InstallPrompt.run(cli: dir + "/duo2") }
                 }
             }

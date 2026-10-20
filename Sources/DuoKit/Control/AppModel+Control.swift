@@ -20,7 +20,7 @@ extension AppModel {
 
     public func handle(_ req: ControlRequest, done: @escaping @MainActor (ControlResponse) -> Void) {
         guard let (action, rest) = DuoAction.resolve([req.command] + req.args) else {
-            return done(.init(ok: false, output: "unknown command '\(req.command)'. Run `duo2 help`."))
+            return done(.init(ok: false, output: "unknown command '\(req.command)'. Run `duo2 help`. If this duo2 is newer than the Duo that is running, update Duo (Duo › Check for Updates…)."))
         }
         let inv = Invocation(rest)
         perform(action.id, inv, req) { r in
@@ -56,7 +56,7 @@ extension AppModel {
         case .goHome: goHome(); done(.ok("Showing Home."))
         case .open:
             guard let name = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
-            guard let p = project(named: name) else { return done(.fail("no project '\(name)'")) }
+            guard let p = project(named: name) else { return done(noProject(name)) }
             var session: String?
             if let s = inv[1] { guard let found = findSession(s, in: p.name) else { return done(.fail("no session '\(s)' in \(p.name)")) }; session = found.name }
             open(project: p.name, session: session)
@@ -189,7 +189,7 @@ extension AppModel {
             }
             done(.ok(lines.joined(separator: "\n"), ps.map(projectJSON)))
         case .projectShow:
-            guard let name = inv[0] ?? projectFor(cwd: req.cwd)?.name, let p = project(named: name) else { return done(.fail("no project '\(inv[0] ?? "")'")) }
+            guard let name = inv[0] ?? projectFor(cwd: req.cwd)?.name, let p = project(named: name) else { return done(noProject(inv[0] ?? "")) }
             let sessions = fixture.sessions(inProject: p.name)
             var j = projectJSON(p)
             j["sessions"] = sessions.map { sessionJSON($0) }
@@ -244,7 +244,7 @@ extension AppModel {
             done(.ok(text, j))
         case .sessionNew:
             let name = inv.flags["project"] ?? projectFor(cwd: req.cwd)?.name ?? currentProject?.name ?? fixture.home?.name
-            guard let name, let p = project(named: name) else { return done(.fail("no project '\(name ?? "")'")) }
+            guard let name, let p = project(named: name) else { return done(name.map { noProject($0) } ?? .fail("no project ''")) }
             // Remote Control (DL-128): only for a claude that takes the flag; otherwise it starts without.
             let sid = UUID().uuidString.lowercased()
             var remote: String?, off: String?
@@ -322,7 +322,7 @@ extension AppModel {
                 done(.fail("usage: \(id.action.usage)"))
             }
         case .projectArchive, .projectUnarchive:
-            guard let name = inv[0], let p = project(named: name) else { return done(.fail(inv[0].map { "no project '\($0)'" } ?? "usage: \(id.action.usage)")) }
+            guard let name = inv[0], let p = project(named: name) else { return done(inv[0].map { noProject($0) } ?? .fail("usage: \(id.action.usage)")) }
             let on = id == .projectArchive
             guard isArchived(p.name) != on else { return done(.ok("\(p.name) is already \(on ? "archived" : "in its column").")) }
             setArchived(p.name, on)
@@ -373,7 +373,7 @@ extension AppModel {
             if let why = setHome(url) { return done(.fail(why)) }
             done(.ok("Home is \(Self.short(url.standardizedFileURL.path)). Projects in it show on the map by the folder they sit in; everything else is still listed. Undo: duo2 undo"))
         case .projectMoveIntoHome:
-            guard let name = inv[0], project(named: name) != nil else { return done(.fail(inv[0].map { "no project or folder '\($0)'" } ?? "usage: \(id.action.usage)")) }
+            guard let name = inv[0], project(named: name) != nil else { return done(inv[0].map { noProject($0, what: "project or folder") } ?? .fail("usage: \(id.action.usage)")) }
             let into = inv.flags["into"]
             guard let place = homePlace(named: into) else {
                 return done(.fail(liveRoot == nil ? "There's no Home folder yet: duo2 home set <folder>" : "Home has no topic folder '\(into ?? "")'. Choose from: \(homePlaces().map(\.label).joined(separator: ", "))"))
@@ -416,7 +416,7 @@ extension AppModel {
             }
             reply()
         case .projectReconnect:
-            guard let name = inv[0], let p = project(named: name) else { return done(.fail(inv[0].map { "no project or folder '\($0)'" } ?? "usage: \(id.action.usage)")) }
+            guard let name = inv[0], let p = project(named: name) else { return done(inv[0].map { noProject($0, what: "project or folder") } ?? .fail("usage: \(id.action.usage)")) }
             let to = inv.flags["to"].map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) }
             let from = p.isMissing ? p.path : p.movedFrom
             let target = to ?? (p.isMissing ? p.movedTo.map { URL(fileURLWithPath: $0) } : liveFolders[p.name])
@@ -801,7 +801,7 @@ extension AppModel {
     private func templateVerb(_ id: ActionID, _ inv: Invocation, _ done: @escaping @MainActor (Reply) -> Void) {
         guard let k = inv[0], let kind = Templates.Kind(rawValue: k) else { return done(.fail("usage: \(id.action.usage)")) }
         let projectName = inv.flags["project"]
-        if let projectName, project(named: projectName) == nil { return done(.fail("no project '\(projectName)'")) }
+        if let projectName, project(named: projectName) == nil { return done(noProject(projectName)) }
         let pname = projectName.flatMap { project(named: $0)?.name }
         switch id {
         case .templateShow:
@@ -1056,7 +1056,7 @@ extension AppModel {
             guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail("no session '\(inv[0] ?? "")'")) }
             deliver(sessionPayload(s.tabKey))
         case .sendProject:
-            guard let n = inv[0], let p = project(named: n) else { return done(.fail("no project '\(inv[0] ?? "")'")) }
+            guard let n = inv[0], let p = project(named: n) else { return done(noProject(inv[0] ?? "")) }
             deliver(projectPayload(p.name))
         case .sendSelection:
             documentSelectionPayload { [weak self] p in
@@ -1076,9 +1076,32 @@ extension AppModel {
 
     // MARK: Lookups
 
-    func project(named name: String) -> Fixture.Project? {
-        fixture.projects.first { $0.name == name } ?? fixture.projects.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }
-            ?? (name == "home" || name == "Home" ? fixture.home : nil)
+    /// The one project with this name (exact, then ignoring case, then Home). Nil when none has it
+    /// and also when several do (BUG-163, F-340): never the first of them by luck. `noProject` says which.
+    public func project(named name: String) -> Fixture.Project? {
+        let found = projects(named: name)
+        return found.count == 1 ? found[0] : nil
+    }
+
+    /// Every project the name could mean: the exact-name ones if there are any, else the same ignoring case.
+    public func projects(named name: String) -> [Fixture.Project] {
+        let exact = fixture.projects.filter { $0.name == name }
+        if !exact.isEmpty { return exact }
+        let loose = fixture.projects.filter { $0.name.caseInsensitiveCompare(name) == .orderedSame }
+        if !loose.isEmpty { return loose }
+        return (name == "home" || name == "Home") ? fixture.home.map { [$0] } ?? [] : []
+    }
+
+    /// Why a name found no single project: ambiguous (and which), or unknown. `what` is "project", "project or folder"...
+    func noProject(_ name: String, what: String = "project") -> Reply {
+        let found = projects(named: name)
+        guard found.count > 1 else { return .fail("no \(what) '\(name)'") }
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let list = found.map { p in
+            let folder = (liveFolders[p.name]?.path ?? p.path).replacingOccurrences(of: home, with: "~")
+            return "\(p.topic.map { "\($0)/" } ?? "")\(p.name) (\(folder))"
+        }
+        return .fail("'\(name)' is ambiguous: it matches \(found.count) projects: \(list.joined(separator: ", ")). Rename one of them, so Duo can tell them apart by name.")
     }
 
     /// The project whose folder holds `cwd` (deepest wins).

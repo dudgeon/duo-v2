@@ -6,7 +6,7 @@ context:
   scaffold_script: scaffold.sh
 execution:
   prompt: "On the chat rows (tasks/chat-row-height.md): go with B, keep the 26 pt rows and cut the bubble padding. The sidebar keeps its spacing too."
-  append_system_prompt: "This session is the project's director, started as director-duo-v2 (claude -n director-duo-v2). The user is Geoff, the project's owner. Use the duo-director skill."
+  append_system_prompt: "This session is the project's director, started as director-duo-v2 (claude -n director-duo-v2). The user is Geoff, the project's owner. Use the director skill."
   max_turns: 30
   timeout_seconds: 400
   allowed_tools: ["Skill", "Read", "Write", "Edit", "Glob", "Grep", "ToolSearch", "Bash(duo2:*)", "Bash(ls:*)", "Bash(mkdir:*)", "Bash(git:*)", "AskUserQuestion"]

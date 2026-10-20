@@ -31,7 +31,7 @@ claude=${DOGFOOD_CLAUDE:-$(command -v claude || echo $HOME/.local/bin/claude)}
 out=${DOGFOOD_OUT:-/tmp/duo-director-dogfood-$(date +%Y%m%d-%H%M%S)}
 plugin=$out/duo-director
 mkdir -p $plugin/evals
-git -C $root show "${ref}:skills/duo-director/SKILL.md" | sed 's/{{FORMAT}}/1/' > $plugin/SKILL.md
+git -C $root show "${ref}:skills/duo-director/SKILL.md" | sed 's/{{FORMAT}}/1/; s/{{REVISION}}/2/' > $plugin/SKILL.md
 [[ -s $plugin/SKILL.md ]] || { echo "no skill at ${ref}" >&2; exit 2 }
 if (( ${#cases} )); then
   cp -R $here/evals/_lib $plugin/evals/
