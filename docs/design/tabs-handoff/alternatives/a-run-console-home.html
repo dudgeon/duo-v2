@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A: console and Home</title>
+<meta name="design-size" content="1200x640">
+</head>
+<body>
+<!-- Exported from https://claude.ai/artifact/6c1sHmzDmboFzMoxgagWdm (board WindowConsole.dc.html, “A [P] · Console, chat strip and Home”); no holes or loops -->
+<helmet>
+<style>
+body{margin:0}
+a{color:#1f2328}a:hover{color:#5b636d}
+.cs{width:620px;height:36px;box-sizing:border-box;background:#15171b;border:1px solid #2b2f36;display:flex;align-items:center;gap:18px;padding:0 16px;font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px;line-height:19px;color:#9aa1ab;white-space:nowrap;overflow:hidden;flex:none}
+.cs .on{color:#e6e8eb;font-weight:500}
+.ls{width:620px;height:28px;box-sizing:border-box;background:#f3f4f6;border:1px solid #c9cdd3;display:flex;align-items:stretch;gap:16px;padding:0 16px;font-size:12px;line-height:16px;color:#5b636d;white-space:nowrap;overflow:hidden;flex:none}
+.ls .t{align-self:stretch}
+.ls .on{color:#1f2328;font-weight:600;box-shadow:inset 0 -2px 0 #1f2328}
+.t{display:inline-flex;align-items:center;gap:6px;flex:none}
+.mk{display:inline-flex;align-items:center;gap:4px;flex:none}
+.row{display:flex;gap:32px;align-items:center}
+.cap{font-size:12px;line-height:16px;color:#5b636d;width:460px}
+.cap b{font-weight:600;color:#1f2328}
+</style>
+</helmet>
+<div style="width: 1200px; height: 640px; box-sizing: border-box; background: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1f2328; padding: 40px; display: flex; flex-direction: column; gap: 24px">
+  <div style="font-size: 14px; line-height: 20px; font-weight: 600">Console: Inbox triage (needs you), Q4 planning, Pricing research, Launch checklist, Board deck, Hiring loop, then shells alpha, npm test, web</div>
+  <div class="row">
+    <div class="cs"><span class="mk"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#f97316"></circle></svg><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5L6.5 5 10 8.5M5.5 1.5L2 5 5.5 8.5"></path></svg>2</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Pricing research</span><span class="t on"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3.75"></circle></svg>Launch checklist</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Board deck</span><span class="mk"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1.5l3.5 3.5L2 8.5M6.5 1.5L10 5 6.5 8.5"></path></svg>4</span><span>+ ⌄</span></div>
+    <div class="cap"><b>At rest.</b> The same run as the right pane. A hidden tab that needs you puts the needs-you dot on its side's count (“2 more tabs, 1 needs you”), so it isn't lost off the edge.</div>
+  </div>
+  <div class="row">
+    <div class="cs"><span class="mk"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#f97316"></circle></svg><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5L6.5 5 10 8.5M5.5 1.5L2 5 5.5 8.5"></path></svg>4</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Board deck</span><span class="t on"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.8L9.2 5 5 9.2 0.8 5z" fill="currentColor"></path></svg>Hiring loop</span><span class="t"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>alpha</span><span class="mk"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1.5l3.5 3.5L2 8.5M6.5 1.5L10 5 6.5 8.5"></path></svg>2</span><span>+ ⌄</span></div>
+    <div class="cap"><b>⌃Tab twice.</b> The selection walks right, and the run slides to keep a neighbour beyond it. Sessions and shells are one order, as now.</div>
+  </div>
+  <div class="row">
+    <div class="cs"><span class="mk"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#f97316"></circle></svg><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5L6.5 5 10 8.5M5.5 1.5L2 5 5.5 8.5"></path></svg>3</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3.75"></circle></svg>Launch checklist</span><span class="t on"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Board deck</span><span class="t"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>alpha</span><span class="mk"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1.5l3.5 3.5L2 8.5M6.5 1.5L10 5 6.5 8.5"></path></svg>2</span><span>+ ⌄</span></div>
+    <div class="cap"><b>Close Hiring loop</b> (⌘W or its ×). Its left neighbour, Board deck, is selected: today it would jump to Inbox triage.</div>
+  </div>
+  <div class="row">
+    <div class="ls"><span class="mk"><svg width="6" height="6" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#c2410c"></circle></svg><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5L6.5 5 10 8.5M5.5 1.5L2 5 5.5 8.5"></path></svg>2</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Pricing research</span><span class="t on"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3.75"></circle></svg>Launch checklist</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Board deck</span><span class="mk"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1.5l3.5 3.5L2 8.5M6.5 1.5L10 5 6.5 8.5"></path></svg>4</span><span class="t">+ ⌄</span></div>
+    <div class="cap"><b>Over chat (the thin light strip, DL-136).</b> The same run and counts in the light colours; the dot is needsYou. The Terminal / Chat toggle keeps its place at the right (not drawn).</div>
+  </div>
+  <div class="row">
+    <div class="cs" style="width: 340px; gap: 16px"><span class="mk"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5L6.5 5 10 8.5M5.5 1.5L2 5 5.5 8.5"></path></svg>5</span><span class="t"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>build</span><span class="t on"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>logs</span><span class="t"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>ci</span><span class="mk"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1.5l3.5 3.5L2 8.5M6.5 1.5L10 5 6.5 8.5"></path></svg>4</span><span>+ ⌄</span></div>
+    <div class="cap" style="width: 740px"><b>Home (340 wide).</b> Home gets the console's overflow, which it has none of today: thirteen tabs, the selected one with its neighbours, the rest counted. Home's tabs move too (Q-210 7).</div>
+  </div>
+</div>
+</body>
+</html>

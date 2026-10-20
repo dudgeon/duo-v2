@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>B: console and Home</title>
+<meta name="design-size" content="1200x760">
+</head>
+<body>
+<!-- Exported from https://claude.ai/artifact/6c1sHmzDmboFzMoxgagWdm (board ScrollConsole.dc.html, “B, picked [P] · Console, chat strip and Home”); no holes or loops -->
+<helmet>
+<style>
+body{margin:0}
+a{color:#1f2328}a:hover{color:#5b636d}
+.cs{width:620px;height:36px;box-sizing:border-box;background:#15171b;border:1px solid #2b2f36;display:flex;align-items:center;padding:0;font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px;line-height:19px;color:#9aa1ab;white-space:nowrap;overflow:hidden;flex:none}
+.cs .on{color:#e6e8eb;font-weight:500}
+.sc{flex:1;min-width:0;position:relative;overflow:hidden;height:34px;display:flex;align-items:center}
+.run{display:flex;gap:18px;align-items:center;flex:none;padding-left:16px}
+.fl{position:absolute;left:0;top:0;bottom:0;width:24px;background:linear-gradient(90deg, #15171b, rgba(21,23,27,0))}
+.fr{position:absolute;right:0;top:0;bottom:0;width:24px;background:linear-gradient(270deg, #15171b, rgba(21,23,27,0))}
+.dotl{position:absolute;left:5px;top:14px;width:6px;height:6px;border-radius:3px;background:#f97316}
+.all{flex:none;border-left:1px solid #2b2f36;height:34px;display:inline-flex;align-items:center;gap:4px;padding:0 10px 0 12px}
+.plus{flex:none;padding:0 16px 0 6px}
+.ls{width:620px;height:28px;box-sizing:border-box;background:#f3f4f6;border:1px solid #c9cdd3;display:flex;align-items:stretch;padding:0;font-size:12px;line-height:16px;color:#5b636d;white-space:nowrap;overflow:hidden;flex:none}
+.ls .sc{height:26px;align-items:stretch}
+.ls .run{gap:16px;align-items:stretch}
+.ls .on{color:#1f2328;font-weight:600;box-shadow:inset 0 -2px 0 #1f2328}
+.ls .fl{background:linear-gradient(90deg, #f3f4f6, rgba(243,244,246,0))}
+.ls .fr{background:linear-gradient(270deg, #f3f4f6, rgba(243,244,246,0))}
+.ls .all{height:26px;border-left:1px solid #c9cdd3}
+.t{display:inline-flex;align-items:center;gap:6px;flex:none}
+.row{display:flex;gap:32px;align-items:center}
+.cap{font-size:12px;line-height:16px;color:#5b636d;width:460px}
+.cap b{font-weight:600;color:#1f2328}
+.menu{box-sizing:border-box;background:#ffffff;border:1px solid #c9cdd3;border-radius:6px;padding:5px;box-shadow:0px 12px 32px rgba(31, 35, 40, 0.22);font-size:13px;line-height:20px;color:#1f2328;display:flex;flex-direction:column}
+.mi{padding:1px 10px 1px 8px;border-radius:4px;display:flex;align-items:center;gap:6px}
+.ck{width:12px;flex:none}
+</style>
+</helmet>
+<div style="width: 1200px; height: 760px; box-sizing: border-box; background: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1f2328; padding: 40px; display: flex; flex-direction: column; gap: 24px">
+  <div style="font-size: 14px; line-height: 20px; font-weight: 600">Console: Inbox triage (needs you), Q4 planning, Pricing research, Launch checklist, Board deck, Hiring loop; shells alpha, npm test, web</div>
+  <div class="row">
+    <div class="cs"><div class="sc"><div class="run" style="margin-left: -150px"><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Q4 planning</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Pricing research</span><span class="t on"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3.75"></circle></svg>Launch checklist</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Board deck</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.8L9.2 5 5 9.2 0.8 5z" fill="currentColor"></path></svg>Hiring loop</span><span class="t"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>alpha</span></div><div class="fl"></div><div class="dotl"></div><div class="fr"></div></div><span class="all">9<svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1.5l3 3 3-3"></path></svg></span><span class="plus">+ ⌄</span></div>
+    <div class="cap"><b>The console scrolls the same way.</b> Inbox triage needs you and is out of view to the left, so a needs-you dot (needsYouOnConsole, 6) sits in that edge's fade: it doesn't get lost off screen. A click on the dot scrolls to it. Shells read what's running, else their folder (Q-224).</div>
+  </div>
+  <div class="row" style="align-items: flex-start">
+    <div style="width: 620px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
+      <div class="cs"><div class="sc"><div class="run" style="margin-left: -150px"><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Q4 planning</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Pricing research</span><span class="t on"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3.75"></circle></svg>Launch checklist</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Board deck</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.8L9.2 5 5 9.2 0.8 5z" fill="currentColor"></path></svg>Hiring loop</span><span class="t"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>alpha</span></div><div class="fl"></div><div class="dotl"></div><div class="fr"></div></div><span class="all" style="color: #e6e8eb">9<svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1.5l3 3 3-3"></path></svg></span><span class="plus">+ ⌄</span></div>
+      <div class="menu" style="width: 210px; margin-right: 40px">
+        <div class="mi"><span class="ck"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.5" fill="#c2410c"></circle></svg>Inbox triage</div>
+        <div class="mi"><span class="ck"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="#5b636d" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Q4 planning</div>
+        <div class="mi"><span class="ck"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="#5b636d" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Pricing research</div>
+        <div class="mi"><span class="ck">✓</span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="#1f2328" stroke-width="1.5"><circle cx="5" cy="5" r="3.75"></circle></svg>Launch checklist</div>
+        <div class="mi"><span class="ck"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="#5b636d" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Board deck</div>
+        <div class="mi"><span class="ck"></span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.8L9.2 5 5 9.2 0.8 5z" fill="#1f2328"></path></svg>Hiring loop</div>
+        <div class="mi"><span class="ck"></span><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="#5b636d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>alpha</div>
+        <div class="mi"><span class="ck"></span><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="#5b636d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>npm test</div>
+        <div class="mi"><span class="ck"></span><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="#5b636d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>web</div>
+      </div>
+    </div>
+    <div class="cap"><b>9 ⌄ lists every tab</b> with its state glyph in the light colours (shells their prompt mark), the selected one checked. Choosing one selects it and scrolls to it.</div>
+  </div>
+  <div class="row">
+    <div class="ls"><div class="sc"><div class="run" style="margin-left: -140px"><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Q4 planning</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Pricing research</span><span class="t on"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3.75"></circle></svg>Launch checklist</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 5h7"></path></svg>Board deck</span><span class="t"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.8L9.2 5 5 9.2 0.8 5z" fill="currentColor"></path></svg>Hiring loop</span><span class="t"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>alpha</span></div><div class="fl"></div><div class="dotl" style="top: 10px; background: #c2410c"></div><div class="fr"></div></div><span class="all">9<svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1.5l3 3 3-3"></path></svg></span><span class="plus" style="display: inline-flex; align-items: center">+ ⌄</span></div>
+    <div class="cap"><b>Over chat (DL-136).</b> The thin light strip scrolls the same way, its fades in ground and the dot in needsYou. The Terminal / Chat toggle stays fixed at the right, after + ⌄ (not drawn).</div>
+  </div>
+  <div class="row">
+    <div class="cs" style="width: 340px"><div class="sc"><div class="run" style="gap: 16px; margin-left: -70px"><span class="t"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>notes</span><span class="t"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>build</span><span class="t on"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>tail -f</span><span class="t"><svg width="11" height="9" viewBox="0 0 12 10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2L5 5 1.5 8M6.5 8.5h4"></path></svg>ci</span></div><div class="fl"></div><div class="fr"></div></div><span class="all">13<svg width="8" height="6" viewBox="0 0 8 6" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1.5l3 3 3-3"></path></svg></span><span class="plus">+ ⌄</span></div>
+    <div class="cap" style="width: 740px"><b>Home (340 wide)</b> gets the same strip; it has no overflow at all today, and its selected tab can go off screen. Thirteen tabs: the selected one in view, the rest a swipe or 13 ⌄ away. Home's tabs move too.</div>
+  </div>
+</div>
+</body>
+</html>
