@@ -10,7 +10,7 @@ Claude works in whatever folder you start it in, and saves its files there. Star
 
 Give each piece of work its own folder, with a short `PROJECT.md` in it: the goal, how it's going, and the next step. Duo shows the folder as a project: a tile on the map with its goal, health and live sessions. Open it and everything for that work is in one window: its sessions, its files, Claude, and the document you're on.
 
-**+ New project** makes the folder and the file for you. A folder you already use can become a project with **Make a Project**.
+**+ New project** makes the folder and the file for you. A folder you already use can become a project with **Make a Project**. Duo writes the starter `PROJECT.md`, then starts a Claude session there that looks around the folder, asks you a few questions and fills in the goal, next step, why and done-when for you. (Tick **Start a Claude session in it** in New project for the same interview.)
 
 ![Inside a project: its sessions and files on the left, Claude in the middle, a document on the right.](images/project.png)
 
