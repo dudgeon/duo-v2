@@ -41,4 +41,4 @@ None open on the boards. Two build questions are for the builder to answer and l
 
 ## Build
 
-Not built. A suggested build note: `tasks/tabs-scrolling-strip.md`. It replaces `TabStripFit` (`Project/ConsoleTabStrip.swift`) and the right pane's `layout` (`Project/ProjectPanes.swift`), adds Home's strip (`AllProjects/AllProjectsPanes.swift`), and touches `Model/AppModel+TabOrder.swift` and the close and restore paths.
+Built on build/tabs-scroll (F-354); the edge-scroll pace waits on a visible gate (Q-228). Build note: `tasks/tabs-scrolling-strip.md`. It replaces `TabStripFit` (`Project/ConsoleTabStrip.swift`) and the right pane's `layout` (`Project/ProjectPanes.swift`), adds Home's strip (`AllProjects/AllProjectsPanes.swift`), and touches `Model/AppModel+TabOrder.swift` and the close and restore paths.
