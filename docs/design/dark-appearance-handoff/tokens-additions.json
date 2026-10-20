@@ -1,0 +1,135 @@
+{
+ "$note": "DL-224 (Geoff, 2026-10-19): the dark appearance is Dark B, \"Ink\". Replaces color.darkProvisional: every light token gets a dark value here, the console tokens included (in dark the console sinks to #0C0D10; in light it stays #15171B). gen-tokens.py reads darkProvisional today; the build renames it to color.dark and adds the console tokens to it.",
+ "color": {
+  "dark": {
+   "ground": {
+    "value": "#131518"
+   },
+   "pane": {
+    "value": "#181A1E"
+   },
+   "selected": {
+    "value": "#262A30"
+   },
+   "claudeEdit": {
+    "value": "#1F3A28"
+   },
+   "menuTarget": {
+    "value": "#2E3238"
+   },
+   "rule": {
+    "value": "#2B2F36"
+   },
+   "controlEdge": {
+    "value": "#6E7681"
+   },
+   "text": {
+    "value": "#E6E8EB"
+   },
+   "text2": {
+    "value": "#9AA1AB"
+   },
+   "needsYou": {
+    "value": "#F97316"
+   },
+   "onNeedsYou": {
+    "value": "#0C0D10"
+   },
+   "placeholderBar": {
+    "value": "#2B2F36"
+   },
+   "placeholderBarOnSelected": {
+    "value": "#363B42"
+   },
+   "activeTint": {
+    "value": "#18222E"
+   },
+   "chatGround": {
+    "value": "#0C0D10"
+   },
+   "chatYou": {
+    "value": "#22344F"
+   },
+   "diffAddFill": {
+    "value": "#15291C"
+   },
+   "diffAddText": {
+    "value": "#7CC98A"
+   },
+   "diffDelFill": {
+    "value": "#331A1D"
+   },
+   "diffDelText": {
+    "value": "#F2959E"
+   },
+   "toolErrorEdge": {
+    "value": "#5E2A30"
+   },
+   "toolOutputFill": {
+    "value": "#131518"
+   },
+   "reviewAuthor1": {
+    "value": "#F38BA8"
+   },
+   "reviewAuthor2": {
+    "value": "#7FB0EE"
+   },
+   "reviewAuthor3": {
+    "value": "#7CC98A"
+   },
+   "reviewAuthor4": {
+    "value": "#C39BEB"
+   },
+   "reviewAuthor5": {
+    "value": "#E0A64A"
+   },
+   "commentHighlight": {
+    "value": "#4F4112"
+   },
+   "console": {
+    "value": "#0C0D10"
+   },
+   "consoleRule": {
+    "value": "#24272D"
+   },
+   "consoleMenuTarget": {
+    "value": "#262A30"
+   },
+   "consoleHover": {
+    "value": "#17191D"
+   },
+   "consoleText": {
+    "value": "#E6E8EB"
+   },
+   "consoleText2": {
+    "value": "#9AA1AB"
+   },
+   "needsYouOnConsole": {
+    "value": "#F97316"
+   },
+   "placeholderBarOnConsole": {
+    "value": "#24272D"
+   },
+   "tuiInputBorder": {
+    "value": "#3F444C"
+   }
+  },
+  "scrim": {
+   "dark": {
+    "value": "#000000",
+    "alpha": 0.55
+   }
+  },
+  "shadow": {
+   "popoverDark": {
+    "x": 0,
+    "y": 12,
+    "blur": 32,
+    "color": "rgba(0,0,0,0.5)"
+   }
+  }
+ },
+ "terminal": {
+  "$note": "In dark the terminal background is the dark console (#0C0D10); the ANSI palette is unchanged and every colour gains contrast on it."
+ }
+}
