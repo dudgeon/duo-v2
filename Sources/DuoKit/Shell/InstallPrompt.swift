@@ -22,7 +22,22 @@ public enum InstallPrompt {
             return
         }
         refresh(cli: cli)
+        askDirectorName(cli: cli)
         LegacyPrompt.run()
+    }
+
+    /// DL-222: the shared skill is `director`, and a personal skill hides a project skill of the same
+    /// name. Asks once, naming the project skills; until the answer the skill is installed as `duo-director`.
+    static func askDirectorName(cli: String) {
+        guard Installer.needsDirectorNameAnswer(), let hidden = Installer.directorNameQuestion() else { return }
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        SheetCenter.shared.ask(DuoQuestion(
+            title: "Name Duo’s director skill “director”?",
+            paragraphs: ["Duo’s director skill is named `director`, so `/director` reaches it. A skill of yours with the same name would be hidden by it:"],
+            items: hidden.map { .init(what: "Project skill", path: $0.path.replacingOccurrences(of: home, with: "~")) },
+            note: "Keep duo-director leaves yours as it is and installs Duo’s as `duo-director`. `duo2 install --director-name director` changes your mind later.",
+            choices: [.init(label: "Keep duo-director", isCancel: true) { Installer.recordDirectorName(allowed: false); refresh(cli: cli) },
+                      .init(label: "Use director", isDefault: true) { Installer.recordDirectorName(allowed: true); refresh(cli: cli) }]))
     }
 
     static func refresh(cli: String) {

@@ -1,0 +1,51 @@
+{
+ "$note": "The project pane's order and the director's slot, approved 2026-10-17 and 2026-10-19 (DL-217, DL-218). kind=board: drawn on the Design canvas and exported as static HTML (rendered from the canvas sources in canvas/). Options A, C, D and O1, O3 were drawn and not chosen; they stay on the canvas and in canvas/.",
+ "source": "https://claude.ai/artifact/LUJfX4njDoqrtgQwVzFTiP",
+ "screens": [
+  {
+   "file": "screens/00-today-and-decisions.html",
+   "board": "Main.dc.html",
+   "kind": "board",
+   "width": 1400,
+   "height": 1180,
+   "decision": "DL-217",
+   "shows": "Context: today's pane (DL-174), the shared rules, the decisions as taken."
+  },
+  {
+   "file": "screens/01-pane-order.html",
+   "board": "B.dc.html",
+   "kind": "board",
+   "width": 1100,
+   "height": 1180,
+   "decision": "DL-217",
+   "shows": "The target: PINNED, NEEDS YOU, OPEN, TASKS (in play, Later), OTHER SESSIONS."
+  },
+  {
+   "file": "screens/02-open-above-tasks.html",
+   "board": "G.dc.html",
+   "kind": "board",
+   "width": 1440,
+   "height": 1280,
+   "decision": "DL-217",
+   "shows": "OPEN above TASKS; O2 chosen (open sessions in no task)."
+  },
+  {
+   "file": "screens/03-director-slot.html",
+   "board": "Directors.dc.html",
+   "kind": "board",
+   "width": 1640,
+   "height": 1000,
+   "decision": "DL-218",
+   "shows": "The director's slot: working, needs you, not open, a replaced director still open with Close."
+  },
+  {
+   "file": "screens/04-edge-cases.html",
+   "board": "Edges.dc.html",
+   "kind": "board",
+   "width": 1760,
+   "height": 1000,
+   "decision": "DL-217",
+   "shows": "Later opened with a done task, 240, Home, All projects' tile, keyboard, duo2."
+  }
+ ]
+}

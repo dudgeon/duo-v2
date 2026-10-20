@@ -259,6 +259,11 @@ public enum FixtureHarness {
                 model.conversionFailures[kv[0]] = kv[1] == "password" ? .passwordProtected : kv[1] == "scan" ? .noText(images: 4) : .damaged
             }
         case "open-file": if parts.count > 1 { model.openFile(at: URL(fileURLWithPath: parts[1])) }   // open-file:<path>: Open File… (DL-106)
+        case "tree-fill":   // tree-fill:<n>: the current project gets n more files (z001.md…), so the tree overflows (BUG-053)
+            if let p = model.currentProject?.name, parts.count > 1, let n = Int(parts[1]) {
+                model.fixture.projectFiles[p, default: []] += (1...max(1, n)).map { String(format: "z%03d.md", $0) }
+            }
+        case "reveal-tree": if parts.count > 1 { model.revealInTree(parts[1]) }   // reveal-tree:<path>: Reveal in the file tree
         case "hidden": model.setShowHiddenFiles(parts.count > 1 ? parts[1] == "on" : !model.showHiddenFiles)   // hidden:on|off (DL-105)
         case "folder": if parts.count > 1 { withDuoAnimation(.fold) { model.toggleFolder(parts[1]) } }   // folder:<path>: open or close it in the tree
         case "browse":   // browse:up|back|<folder>|open=<path from the browse root>: the Files block above the project's folder (Q-162)

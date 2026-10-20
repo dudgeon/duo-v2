@@ -76,8 +76,10 @@ extension AppModel {
         }
         switch rung {
         case .message:
-            delivered("SendMessage")
-            done(.ok("Send it yourself: SendMessage(to: \"\(facts.peerName ?? sid)\"). Logged and noted in Progress.", ["task": task, "worker": sid, "rung": rung.rawValue]))
+            // Duo can't call SendMessage for the director: log that it was handed over, never "delivered" (F-342).
+            editTaskNote(project, task, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Handed to the director to send (SendMessage; not confirmed delivered, and held if the permission modes differ): \(message.prefix(300))")))
+            log("handed", task, sid, rung.rawValue, "handed to the director to send")
+            done(.ok("Send it yourself: SendMessage(to: \"\(facts.peerName ?? sid)\"). Logged and noted in Progress as handed to you, not delivered. Messages between sessions in different permission modes are held and can expire unseen: the worker's last message and task note are the channel back, so read them rather than wait.", ["task": task, "worker": sid, "rung": rung.rawValue]))
         case .resumeBackground, .headless:
             guard let claude = ClaudeLocator.resolve() else { return queue("no claude to run") }
             // `--` ends the options: a message starting with "-" is never read as a flag.

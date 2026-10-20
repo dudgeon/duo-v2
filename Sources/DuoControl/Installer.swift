@@ -34,9 +34,16 @@ public enum Installer {
     public static var claudeDir: URL { testRoot?.appending(path: "claude") ?? LegacyDuo.claudeDir }
     public static var claudeMD: URL { claudeDir.appending(path: "CLAUDE.md") }
     public static var skillFile: URL { claudeDir.appending(path: "skills/duo2/SKILL.md") }
-    /// The shared director skill (DL-193): `duo-director`, never `director`, since a personal skill
-    /// hides a project skill of the same name.
-    public static var directorSkillFile: URL { claudeDir.appending(path: "skills/duo-director/SKILL.md") }
+    /// The shared director skill (DL-193, DL-222): `director`, so `/director` reaches the released
+    /// one. A personal skill hides a project skill of the same name, so Duo asks before it takes
+    /// the name where a project has one (`projectDirectorSkills`); until the user says yes the
+    /// skill is installed as `duo-director`.
+    public static var directorSkillFile: URL { claudeDir.appending(path: "skills/director/SKILL.md") }
+    /// The old name (one release): a stub pointing at `director`, or the full skill while the name is held back.
+    public static var directorAliasFile: URL { claudeDir.appending(path: "skills/duo-director/SKILL.md") }
+    /// Project skills named `director` that a personal one would hide; the app sets this to look
+    /// through its projects. Empty by default (a script, a check).
+    nonisolated(unsafe) public static var projectDirectorSkills: () -> [URL] = { [] }
     public static var link: URL { (testRoot ?? FileManager.default.homeDirectoryForCurrentUser).appending(path: ".local/bin/duo2") }
     static var manifestFile: URL { testRoot?.appending(path: "installed.json") ?? ControlEndpoint.file.deletingLastPathComponent().appending(path: "installed.json") }
 
@@ -105,24 +112,33 @@ public enum Installer {
         public var blockHash: String?
         public var skillHash: String?
         public var directorSkillHash: String?
+        /// The `duo-director` file: the old full skill (migrated from `directorSkillHash`), a stub, or the full skill while `director` is held back.
+        public var directorAliasHash: String?
+        /// 2 once the director skill lives at `director` (DL-222); nil for a manifest from before.
+        public var directorLayout: Int?
+        /// The user's answer to "may the shared skill take the name `director`, hiding a project's own?"; nil until asked.
+        public var directorNameAllowed: Bool?
         public var linkTarget: String?
         /// The user removed the block; never add it back.
         public var blockRemovedByUser = false
+        /// What the last install couldn't do and why, in Duo's words; `duo2 doctor` shows it.
+        public var skipped: [String]?
         /// The consent list the user answered, and how.
         public var consentHash: String?
         public var consented = false
+        public init() {}
     }
 
     public static func manifest() -> Manifest {
         (try? JSONDecoder().decode(Manifest.self, from: Data(contentsOf: manifestFile))) ?? Manifest()
     }
 
-    static func save(_ m: Manifest) {
+    public static func save(_ m: Manifest) {
         try? FileManager.default.createDirectory(at: manifestFile.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? JSONEncoder().encode(m).write(to: manifestFile, options: .atomic)
     }
 
-    static func hash(_ s: String) -> String { SHA256.hash(data: Data(s.utf8)).map { String(format: "%02x", $0) }.joined() }
+    public static func hash(_ s: String) -> String { SHA256.hash(data: Data(s.utf8)).map { String(format: "%02x", $0) }.joined() }
 
     // MARK: Consent (DL-75)
 
@@ -131,7 +147,7 @@ public enum Installer {
         [
             "Add a short \"Duo\" section to \(claudeMD.path), between <!-- duo2:begin --> and <!-- duo2:end --> markers (\(block().split(separator: " ").count) words; it loads into every Claude session).",
             "Write a duo2 skill to \(skillFile.path).",
-            "Write a duo-director skill to \(directorSkillFile.path) (Director: Claude hands out and checks work in a project; your own rules never go in it).",
+            "Write a director skill to \(directorSkillFile.path) (Director: Claude hands out and checks work in a project; your own rules never go in it), and a duo-director stub at the old name for one release.",
             "Link \(link.path) to \(cli), so duo2 works in any terminal.",
             "Keep these current each time Duo starts. Anything you edit is left alone; `duo2 uninstall` removes all of it.",
         ]
@@ -143,7 +159,7 @@ public enum Installer {
         let short = { (p: String) in p.hasPrefix(home) ? "~" + p.dropFirst(home.count) : p }
         return [("Add a short Duo section, between duo2 markers (\(block().split(separator: " ").count) words)", short(claudeMD.path)),
                 ("Write the duo2 skill", short(skillFile.path)),
-                ("Write the duo-director skill", short(directorSkillFile.path)),
+                ("Write the director skill", short(directorSkillFile.path)),
                 ("Put duo2 on your PATH", short(link.path))]
     }
 
@@ -177,9 +193,20 @@ public enum Installer {
         let fm = FileManager.default
 
         // The block.
-        let current = (try? String(contentsOf: claudeMD, encoding: .utf8)) ?? ""
+        var skipped: [String] = []
+        var current = ""
+        var blocked: String?
+        switch SafeFile.read(claudeMD) {
+        case .missing: break
+        case .text(let t): current = t
+        case .blocked(let why): blocked = why
+        }
         let existing = firstBlock(in: current)
-        if m.blockRemovedByUser {
+        if let why = blocked {
+            // Never act on a file Duo couldn't read: it may hold the block, or the user's own notes.
+            let line = "CLAUDE.md block: skipped. \(claudeMD.path) is there but \(why), so Duo left it alone and carried on. Fix that and Duo adds the block at its next start (or run `duo2 install`)."
+            r.lines.append(line); skipped.append(line)
+        } else if m.blockRemovedByUser {
             r.lines.append("CLAUDE.md block: you removed it, so Duo doesn't add it back.")
         } else if let existing, m.blockHash != nil, hash(existing) != m.blockHash!, existing != block() {
             r.lines.append("CLAUDE.md block: edited by you, left alone.")
@@ -193,17 +220,22 @@ public enum Installer {
                 : replaceBlock(in: current, with: block())
             if text != current {
                 do {
-                    try fm.createDirectory(at: claudeDir, withIntermediateDirectories: true)
-                    try Data(text.utf8).write(to: claudeMD, options: .atomic)
+                    try SafeFile.write(text, to: claudeMD)
                     r.lines.append("CLAUDE.md block: \(existing == nil ? "added" : "updated").")
-                } catch { r.lines.append("CLAUDE.md block: couldn't write (\(error.localizedDescription)).") }
-            }
-            m.blockHash = hash(block())
+                    m.blockHash = hash(block())
+                } catch {
+                    let why = (error as? SafeFile.Blocked)?.why ?? error.localizedDescription
+                    let line = "CLAUDE.md block: skipped. \(claudeMD.path) \(why == "it's locked" || why == "it's read-only" ? "is" : "can't be changed:") \(why), so Duo left it alone and carried on. Fix that and Duo adds the block at its next start (or run `duo2 install`)."
+                    r.lines.append(line); skipped.append(line)
+                }
+            } else { m.blockHash = hash(block()) }
         }
 
         // The skills: rewritten unless edited (fork-on-edit).
+        let before = r.lines.count
         m.skillHash = writeSkill(skill(), to: skillFile, label: "Skill", hash: m.skillHash, into: &r)
-        m.directorSkillHash = writeSkill(DirectorSkill.text(), to: directorSkillFile, label: "Director skill", hash: m.directorSkillHash, into: &r)
+        installDirectorSkill(&m, into: &r)
+        skipped += r.lines[before...].filter { $0.contains("skipped.") }
 
         // The link: replaced only if it's Duo's (a link to some Duo.app's duo2).
         let dest = try? fm.destinationOfSymbolicLink(atPath: link.path)
@@ -216,11 +248,50 @@ public enum Installer {
                 try fm.createSymbolicLink(atPath: link.path, withDestinationPath: cli)
                 m.linkTarget = cli
                 r.lines.append("\(link.path) → \(cli).")
-            } catch { r.lines.append("Link: couldn't write (\(error.localizedDescription)).") }
+            } catch {
+                let line = "Link: skipped. Duo couldn't make \(link.path) (\(error.localizedDescription)) and carried on."
+                r.lines.append(line); skipped.append(line)
+            }
         } else { m.linkTarget = cli }
 
+        m.skipped = skipped.isEmpty ? nil : skipped
         save(m)
         return r
+    }
+
+    /// The director skill at `director` and the stub at `duo-director` (DL-222). Where a project has a
+    /// skill named `director` and the user hasn't said yes, the full skill goes under `duo-director`
+    /// instead and `director` is left alone; `directorNameQuestion` names the projects.
+    static func installDirectorSkill(_ m: inout Manifest, into r: inout Report) {
+        if m.directorLayout == nil {   // before DL-222 the one hash was duo-director's
+            m.directorAliasHash = m.directorSkillHash
+            m.directorSkillHash = nil
+            m.directorLayout = 2
+        }
+        if let hidden = directorNameQuestion(m) {
+            m.directorAliasHash = writeSkill(DirectorSkill.text(name: "duo-director"), to: directorAliasFile, label: "Director skill", hash: m.directorAliasHash, into: &r)
+            r.lines.append("Director skill: installed as duo-director, not director, since \(hidden.count == 1 ? "a project skill" : "\(hidden.count) project skills") named director (\(hidden.map(\.path).joined(separator: ", "))) would be hidden. Duo asks; `duo2 install --director-name director` says yes.")
+            return
+        }
+        m.directorSkillHash = writeSkill(DirectorSkill.text(), to: directorSkillFile, label: "Director skill", hash: m.directorSkillHash, into: &r)
+        m.directorAliasHash = writeSkill(DirectorSkill.aliasText(), to: directorAliasFile, label: "Director skill (old name)", hash: m.directorAliasHash, into: &r)
+    }
+
+    /// The project skills a personal `director` would hide, while the user hasn't said yes; nil
+    /// when there are none or they've answered.
+    public static func directorNameQuestion(_ m: Manifest? = nil) -> [URL]? {
+        let m = m ?? manifest()
+        return m.directorNameAllowed == true ? nil : projectDirectorSkills().nilIfEmpty
+    }
+
+    /// Whether Duo still has to ask: there are project skills to hide and no answer yet.
+    public static func needsDirectorNameAnswer() -> Bool { manifest().directorNameAllowed == nil && directorNameQuestion() != nil }
+
+    /// The user's answer. Yes takes the name `director` (hiding project skills of that name).
+    public static func recordDirectorName(allowed: Bool) {
+        var m = manifest()
+        m.directorNameAllowed = allowed
+        save(m)
     }
 
     /// A skill's folder or file that is a symbolic link is the user's arrangement: Duo neither
@@ -239,19 +310,27 @@ public enum Installer {
             r.lines.append("\(label): \(folder.path) is a link, left alone.")
             return h
         }
-        let now = try? String(contentsOf: file, encoding: .utf8)
+        var now: String?
+        switch SafeFile.read(file) {
+        case .missing: break
+        case .text(let t): now = t
+        case .blocked(let why):
+            r.lines.append("\(label): skipped. \(file.path) is there but \(why), so Duo left it alone and carried on.")
+            return h
+        }
         if let now, now != text {
             if let h, hash(now) != h { r.lines.append("\(label): edited by you, left alone."); return h }
             if h == nil { r.lines.append("\(label): \(file.path) was there before Duo's, left alone."); return nil }
         }
         guard now != text else { return hash(text) }
         do {
-            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            try Data(text.utf8).write(to: file, options: .atomic)
+            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try SafeFile.write(text, to: file)
             r.lines.append("\(label): \(now == nil ? "written" : "updated").")
             return hash(text)
         } catch {
-            r.lines.append("\(label): couldn't write (\(error.localizedDescription)).")
+            let why = (error as? SafeFile.Blocked)?.why ?? error.localizedDescription
+            r.lines.append("\(label): skipped. \(file.path) can't be changed: \(why). Duo left it alone and carried on.")
             return h
         }
     }
@@ -280,19 +359,24 @@ public enum Installer {
         if let why = refusal { r.lines.append(why.replacingOccurrences(of: "Not installed", with: "Nothing removed")); return r }
         var m = manifest()
         let fm = FileManager.default
-        if let text = try? String(contentsOf: claudeMD, encoding: .utf8), let b = firstBlock(in: text) {
+        if case .blocked(let why) = SafeFile.read(claudeMD) {
+            r.lines.append("Left \(claudeMD.path): \(why). If it holds Duo's block, delete it by hand.")
+        } else if case .text(let text) = SafeFile.read(claudeMD), let b = firstBlock(in: text) {
             if m.blockHash == nil || hash(b) == m.blockHash! || b == block() {
-                try? Data(replaceBlock(in: text, with: nil).utf8).write(to: claudeMD, options: .atomic)
-                r.lines.append("Removed the Duo block from \(claudeMD.path).")
+                do {
+                    try SafeFile.write(replaceBlock(in: text, with: nil), to: claudeMD)
+                    r.lines.append("Removed the Duo block from \(claudeMD.path).")
+                } catch { r.lines.append("Left the Duo block in \(claudeMD.path): \((error as? SafeFile.Blocked)?.why ?? "it can't be changed"). Delete it by hand.") }
             } else { r.lines.append("Left the Duo block in \(claudeMD.path): you edited it. Delete it by hand if you like.") }
         }
         removeSkill(skill(), at: skillFile, hash: m.skillHash, into: &r)
         removeSkill(DirectorSkill.text(), at: directorSkillFile, hash: m.directorSkillHash, into: &r)
+        removeSkill(DirectorSkill.aliasText(), at: directorAliasFile, hash: m.directorAliasHash, into: &r)
         if let dest = try? fm.destinationOfSymbolicLink(atPath: link.path), isDuoCLI(dest) {
             try? fm.removeItem(at: link)
             r.lines.append("Removed \(link.path).")
         }
-        m.blockHash = nil; m.skillHash = nil; m.directorSkillHash = nil; m.linkTarget = nil; m.consented = false
+        m.blockHash = nil; m.skillHash = nil; m.directorSkillHash = nil; m.directorAliasHash = nil; m.linkTarget = nil; m.consented = false
         save(m)
         if r.lines.isEmpty { r.lines.append("Nothing of Duo's was installed.") }
         return r
@@ -303,7 +387,13 @@ public enum Installer {
         let m = manifest()
         var out: [String] = []
         if !m.consented { out.append("Duo's Claude instructions aren't installed (you said not now, or Duo hasn't asked yet). `duo2 install` installs them; Duo's own sessions don't need them.") }
-        let text = (try? String(contentsOf: claudeMD, encoding: .utf8)) ?? ""
+        var text = ""
+        switch SafeFile.read(claudeMD) {
+        case .text(let t): text = t
+        case .blocked(let why): out.append("CLAUDE.md block: Duo can't tell: \(claudeMD.path) is there but \(why).")
+        case .missing: break
+        }
+        for line in m.skipped ?? [] { out.append("Skipped at the last install: " + line) }
         switch firstBlock(in: text) {
         case nil: out.append("CLAUDE.md block: \(m.blockRemovedByUser ? "removed by you (Duo won't add it back)" : "not present").")
         case let b?: out.append("CLAUDE.md block: \(b == block() ? "current" : m.blockHash.map { hash(b) == $0 } == true ? "from an older Duo (updates at launch)" : "edited by you (left alone)").")
@@ -314,6 +404,10 @@ public enum Installer {
         if let s = try? String(contentsOf: directorSkillFile, encoding: .utf8) {
             out.append("Director skill: \(s == DirectorSkill.text() ? "current" : m.directorSkillHash.map { hash(s) == $0 } == true ? "from an older Duo (updates at launch)" : "edited by you (left alone)") (\(directorSkillFile.path)).")
         } else { out.append("Director skill: not installed.") }
+        if let s = try? String(contentsOf: directorAliasFile, encoding: .utf8) {
+            out.append("Old name duo-director: \(s == DirectorSkill.aliasText() || s == DirectorSkill.text(name: "duo-director") ? "current" : m.directorAliasHash.map { hash(s) == $0 } == true ? "from an older Duo (updates at launch)" : "edited by you (left alone)") (\(directorAliasFile.path)).")
+        }
+        if let hidden = directorNameQuestion(m) { out.append("A project skill named director would be hidden by Duo's: \(hidden.map(\.path).joined(separator: ", ")). \(m.directorNameAllowed == false ? "You said keep it, so Duo's is installed as duo-director." : "Duo asks at launch; `duo2 install --director-name director` says yes.")") }
         if let dest = try? FileManager.default.destinationOfSymbolicLink(atPath: link.path) {
             out.append("\(link.path) → \(dest)\(cli.map { dest == $0 ? "" : " (Duo relinks it to \($0) at launch)" } ?? "").")
         } else { out.append("\(link.path): not linked.") }
@@ -339,7 +433,11 @@ public enum Installer {
 
     /// Keeps Duo's block when legacy's restore copies a whole CLAUDE.md back from its backup.
     public static func reapplyBlock(ifPresentIn before: String, to file: URL) {
-        guard let b = firstBlock(in: before), let now = try? String(contentsOf: file, encoding: .utf8), firstBlock(in: now) == nil else { return }
-        try? Data((now + (now.hasSuffix("\n") ? "\n" : "\n\n") + b + "\n").utf8).write(to: file, options: .atomic)
+        guard let b = firstBlock(in: before), case .text(let now) = SafeFile.read(file), firstBlock(in: now) == nil else { return }
+        try? SafeFile.write(now + (now.hasSuffix("\n") ? "\n" : "\n\n") + b + "\n", to: file)
     }
+}
+
+extension Array {
+    var nilIfEmpty: [Element]? { isEmpty ? nil : self }
 }

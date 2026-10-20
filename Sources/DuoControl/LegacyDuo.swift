@@ -60,7 +60,9 @@ public enum LegacyDuo {
         }
         // settings.json: drop managed hook entries, keep everything else as it was.
         let settings = dir.appending(path: "settings.json")
-        if let data = try? Data(contentsOf: settings), var obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+        // A locked, read-only, managed or unreadable file is left as it is (BUG-117): the other steps
+        // carry on, and the sheet lists what still loads.
+        if case .text(let raw) = SafeFile.read(settings), let data = Optional(Data(raw.utf8)), var obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            var hooks = obj["hooks"] as? [String: Any] {
             for (event, value) in hooks {
                 guard let list = value as? [[String: Any]] else { continue }
@@ -69,12 +71,12 @@ public enum LegacyDuo {
             }
             obj["hooks"] = hooks.isEmpty ? nil : hooks
             let out = try JSONSerialization.data(withJSONObject: obj, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
-            try out.write(to: settings, options: .atomic)
+            try? SafeFile.write(String(decoding: out, as: UTF8.self), to: settings)
         }
         let md = dir.appending(path: "CLAUDE.md")
-        if let text = try? String(contentsOf: md, encoding: .utf8) {
+        if case .text(let text) = SafeFile.read(md) {
             let cleaned = blockRE.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "")
-            try cleaned.write(to: md, atomically: true, encoding: .utf8)
+            if cleaned != text { try? SafeFile.write(cleaned, to: md) }
         }
         for rel in ["skills/duo", "agents/duo.md", "duo/bin"] where fm.fileExists(atPath: dir.appending(path: rel).path) {
             let dest = backup.appending(path: "moved").appending(path: rel)

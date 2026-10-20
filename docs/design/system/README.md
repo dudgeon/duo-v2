@@ -67,7 +67,7 @@ The dark pane uses `console`, `consoleRule`, `consoleText`, `consoleText2` and `
 
 `scrim` dims the window behind the search modal. The `placeholderBar` colours exist only in design targets; don't build them.
 
-Light is the only approved appearance. A dark set exists in the source as provisional and unapproved (DB-29). Don't design dark screens unless asked.
+Dark is approved and not yet built (DL-224, `dark-appearance-handoff/`): Dark B "Ink", every token with a dark value, Settings › General › Appearance (Match System, Light, Dark). In dark the console sinks a step (#0C0D10); in light the console tokens are unchanged. Until it's built, Duo is light only and the source's `darkProvisional` set is the old, unapproved one.
 
 ## Type
 

@@ -9,6 +9,16 @@ import Foundation
 /// (taking on their task or session, handing a worker back), Duo asks them itself, with the same
 /// confirm sheet merges use; a director's word is never the yes.
 extension AppModel {
+    /// Lets the installer look for project skills named `director` in the projects Duo knows (DL-222).
+    public func lookForProjectDirectorSkills() {
+        Installer.projectDirectorSkills = { [weak self] in
+            MainActor.assumeIsolated {
+                (self?.liveFolders.values.map { $0.appending(path: ".claude/skills/director/SKILL.md") } ?? [])
+                    .filter { FileManager.default.fileExists(atPath: $0.path) }.sorted { $0.path < $1.path }
+            }
+        }
+    }
+
     /// One worker as `status` and `watch` see it.
     struct DirectedTask {
         var note: TaskNote
@@ -36,7 +46,7 @@ extension AppModel {
         guard let pname = inv.flags["project"] ?? byPlace ?? projectFor(cwd: req.cwd)?.name else {
             return done(.fail("Duo doesn't know \(req.cwd ?? "this folder") as a project or folder: run it from the project's folder, or pass --project <name> (`duo2 projects` lists them)."))
         }
-        guard let p = project(named: pname), let folder = liveFolders[p.name] else { return done(.fail("no project '\(pname)'")) }
+        guard let p = project(named: pname), let folder = liveFolders[p.name] else { return done(noProject(pname)) }
         let me = req.session ?? caps.sessionId
         var reg = DirectorRegistry.load(project: folder)
         let role = reg.role(sessionId: me)
@@ -186,6 +196,11 @@ extension AppModel {
         var lines: [String] = []
         var j: [String: Any] = ["project": p.name, "folder": folder.path, "director": director]
         lines.append("Project: \(p.name) (\(folder.path)).")
+        // The skill and the app it drives are released separately (F-341): say when they differ.
+        let installed = (try? String(contentsOf: Installer.directorSkillFile, encoding: .utf8)) ?? (try? String(contentsOf: Installer.directorAliasFile, encoding: .utf8))
+        j["skillRevision"] = installed.flatMap(DirectorSkill.revision(of:)) ?? 0
+        j["duoSkillRevision"] = DirectorSkill.revision
+        if let note = DirectorSkill.versionNote(installed: installed) { lines.append(note) }
         switch role {
         case .current: lines.append("You're \(p.name)'s director, \(director)."); j["role"] = "current"
         case .replaced(let by):

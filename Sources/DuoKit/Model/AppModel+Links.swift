@@ -87,5 +87,6 @@ extension AppModel {
             fixture.projectFiles[p] = LiveSnapshot.treeFiles(root, showHidden: showHiddenFiles, expanded: expandedFolders[p] ?? [])
         }
         selectedFile = path.hasSuffix("/") ? path : path + "/"
+        treeRevealTick += 1
     }
 }

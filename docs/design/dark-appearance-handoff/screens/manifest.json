@@ -1,0 +1,75 @@
+{
+ "$note": "Dark appearance (DL-224): Dark B, Ink. Each dark screen is an approved light target with every token at its dark value; it settles colour only.",
+ "canvas": "https://claude.ai/artifact/C5VkwLWwUPpEuVA23waNJG",
+ "screens": [
+  {
+   "file": "screens/allprojects-dark.html",
+   "kind": "target",
+   "base": "pane-focus-handoff/pane-home",
+   "shows": "All projects: the chrome on Ink, Home's console deeper (console #0C0D10).",
+   "canvasBoard": "allprojects-B.dc.html"
+  },
+  {
+   "file": "screens/project-dark.html",
+   "kind": "target",
+   "base": "pane-focus-handoff/pane-console",
+   "shows": "A project's three panes: the session list and editor on pane, the console deeper.",
+   "canvasBoard": "project-B.dc.html"
+  },
+  {
+   "file": "screens/chat-dark.html",
+   "kind": "target",
+   "base": "chat-mode-handoff/window",
+   "shows": "Chat: the transcript on chatGround (the console colour), Claude's card on pane, your bubble chatYou.",
+   "canvasBoard": "chat-B.dc.html"
+  },
+  {
+   "file": "screens/chattools-dark.html",
+   "kind": "target",
+   "base": "chat-mode-handoff/tools",
+   "shows": "Chat's tool steps: diff fills and text, a failed step's edge, the output box.",
+   "canvasBoard": "chattools-B.dc.html"
+  },
+  {
+   "file": "screens/editor-dark.html",
+   "kind": "target",
+   "base": "frontmatter-handoff/frontmatter-claude",
+   "shows": "The editor after Claude changed it: claudeEdit behind the change and the additions block.",
+   "canvasBoard": "editor-B.dc.html"
+  },
+  {
+   "file": "screens/sheet-dark.html",
+   "kind": "target",
+   "base": "project-task-cx/03-new-a-fresh",
+   "shows": "A sheet (New project): the sheet on ground over the window; fields, the segmented control, the preview box.",
+   "canvasBoard": "sheet-B.dc.html"
+  },
+  {
+   "file": "screens/search-dark.html",
+   "kind": "target",
+   "base": "search-handoff/search-overview",
+   "shows": "Search over the scrim (black at 55%).",
+   "canvasBoard": "search-B.dc.html"
+  },
+  {
+   "file": "screens/settings-dark.html",
+   "kind": "target",
+   "base": "slice3-handoff/settings",
+   "shows": "Settings in dark, with the new Appearance row first in General.",
+   "canvasBoard": "settings-B.dc.html"
+  },
+  {
+   "file": "screens/settings-light.html",
+   "kind": "target",
+   "base": "slice3-handoff/settings",
+   "shows": "Settings in light with the new Appearance row (Match System) above Explanations in General.",
+   "canvasBoard": "settings-light.dc.html"
+  },
+  {
+   "file": "screens/tokens.html",
+   "kind": "reference",
+   "shows": "Every chrome and console token in light, Dark A (not chosen) and Dark B (chosen), and the contrast pairs.",
+   "canvasBoard": "tokens.dc.html"
+  }
+ ]
+}
