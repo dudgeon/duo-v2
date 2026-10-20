@@ -87,7 +87,10 @@ Gives Geoff exactly what #14 asks for.
 
 A or B pulls part of the v1.2 item into v1. The line to add to §3a: "**Pulled into v1 by DL-n** (Geoff, 2026-10-19, #14): `/branch` replaced the open tab, so the original vanished from the console and lost its task links. That fails the v1 test of never losing a session from view." C would be a small v1 fix, with the rest staying in v1.2.
 
-## 5. Recommendation
+## 5. Recommendation and answer
+
+**Geoff chose A (2026-10-20).** Next: draw the expanded thread row in the sidebar-hierarchy canvas round, then a Sonnet build. The trust question (Q-219) is still open: Geoff took it to be about Duo's own fork, so it needs asking again with where the error came from.
+
 
 **Option A**, built after the expanded thread row is drawn in the sidebar-hierarchy round. Trust: **(a)**, report upstream and say what to do, with no Duo change now.
 
