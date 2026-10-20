@@ -198,9 +198,16 @@ extension AppModel {
             done(.ok(text, j))
         case .projectMake:
             // A folder in Home with no sessions yet (All projects' folders, DL-212): by name or path in Home.
+            // Each starts a session that interviews the user and fills PROJECT.md in, unless --no-interview (DL-223).
+            let interview = !inv.has("no-interview")
+            let made: (String) -> Reply = { name in
+                guard let id = self.lastInterview else { return .ok("\(name) is now a project (PROJECT.md written and opened). Undo: duo2 undo") }
+                return .ok("\(name) is now a project (PROJECT.md written and opened); Claude session \(id) is interviewing you to fill it in. Undo: duo2 undo",
+                           ["project": name, "session": id])
+            }
             if let name = inv[0], project(named: name) == nil, !inv.has("not-now"), let place = homePlace(named: name), place.folder != liveRoot?.standardizedFileURL {
-                if let why = useFolderProblem(place.folder) ?? makeProject(folder: place.folder) { return done(.fail(why)) }
-                return done(.ok("\(place.folder.lastPathComponent) is now a project (PROJECT.md written and opened). Undo: duo2 undo"))
+                if let why = useFolderProblem(place.folder) ?? makeProject(folder: place.folder, interview: interview) { return done(.fail(why)) }
+                return done(made(place.folder.lastPathComponent))
             }
             guard let name = inv[0], let p = project(named: name) else { return done(.fail("no folder '\(inv[0] ?? "")'")) }
             guard p.isFolderOnly else { return done(.fail("\(p.name) is already a project")) }
@@ -208,8 +215,9 @@ extension AppModel {
                 notNowProject(p.name)
                 return done(.ok("\(p.name)'s Make a Project notice is hidden; its Project tab still offers it. Undo: duo2 undo"))
             }
-            makeProject(p.name)
-            done(.ok("\(p.name) is now a project (PROJECT.md written and opened). Undo: duo2 undo"))
+            guard let folder = liveFolders[p.name] else { return done(.fail("no folder '\(p.name)'")) }
+            if let why = makeProject(folder: folder, interview: interview) { return done(.fail(why)) }
+            done(made(p.name))
         case .projectMerge:
             guard let s = inv[0], let target = inv.flags["into"] ?? inv[1], let src = project(named: s), let dst = project(named: target) else {
                 return done(.fail("usage: \(id.action.usage)"))
@@ -451,14 +459,14 @@ extension AppModel {
             if inv.has("use-folder") {
                 // DL-211: the --into folder itself becomes the project; <name> titles it.
                 guard into != nil else { return done(.fail("--use-folder needs --into <folder in Home>")) }
-                if let why = useFolderProblem(place.folder) ?? makeProject(folder: place.folder, title: inv[0] ?? "", goal: inv.flags["goal"] ?? "", startSession: inv.has("session")) {
+                if let why = useFolderProblem(place.folder) ?? makeProject(folder: place.folder, title: inv[0] ?? "", goal: inv.flags["goal"] ?? "", interview: inv.has("session")) {
                     return done(.fail(why))
                 }
-                return done(.ok("Made \(Self.short(place.folder.path)) a project\(inv.has("session") ? ", with a Claude session in it" : ""). Undo: duo2 undo"))
+                return done(.ok("Made \(Self.short(place.folder.path)) a project\(inv.has("session") ? ", with a Claude session in it interviewing you to fill in PROJECT.md" : ""). Undo: duo2 undo"))
             }
             guard let name = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             if let why = createProject(named: name, goal: inv.flags["goal"] ?? "", in: place.folder, moving: [], startSession: inv.has("session")) { return done(.fail(why)) }
-            done(.ok("Made the project \(name) at \(Self.short(place.folder.appending(path: name).path))\(inv.has("session") ? ", with a Claude session in it" : ""). Undo: duo2 undo"))
+            done(.ok("Made the project \(name) at \(Self.short(place.folder.appending(path: name).path))\(inv.has("session") ? ", with a Claude session in it interviewing you to fill in PROJECT.md" : ""). Undo: duo2 undo"))
         case .docRevert:
             guard editor.url != nil else { return done(.fail("no document is open in Duo")) }
             let finish: @MainActor (Int) -> Void = { n in done(n > 0 ? .ok("Reverted \(n) of Claude's change(s).") : .fail("no change of Claude's there to revert")) }

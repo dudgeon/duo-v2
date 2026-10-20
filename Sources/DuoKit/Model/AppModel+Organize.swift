@@ -37,8 +37,8 @@ extension AppModel {
     }
 
     /// Makes a project folder in Home (or one of its topic folders) with a PROJECT.md from the
-    /// template (DL-146) carrying the goal, files any sessions given in it, and starts a session there if asked: one
-    /// undo step. Returns why it couldn't, or nil.
+    /// template (DL-146) carrying the goal, files any sessions given in it, and starts a session there if asked, one
+    /// that interviews the user and fills the file in (DL-223): one undo step. Returns why it couldn't, or nil.
     @discardableResult
     public func createProject(named raw: String, goal: String = "", in parent: URL? = nil, moving ids: [String], startSession: Bool = false) -> String? {
         let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -65,7 +65,8 @@ extension AppModel {
             apply(moving, to: name, folder: folder, action: "Move to New Project", alsoUndo: trashIfUntouched)
         }
         liveFolders[name] = folder   // known now; the snapshot catches up on refresh
-        let started = startSession ? newSession(in: name) : nil
+        let started = startSession ? newSession(in: name, prompt: ProjectInterview.prompt(title: name)) : nil
+        lastInterview = started
         refreshLive()
         if moving.isEmpty {
             // Go to the new project once the refresh has it on the map.
@@ -150,7 +151,8 @@ extension AppModel {
     }
 
     /// Makes a folder a documented project (DL-63): writes PROJECT.md from the template (DL-146)
-    /// unless the folder has one, remembers the folder if it's outside the workspace, and opens the file.
+    /// unless the folder has one, remembers the folder if it's outside the workspace, opens the file,
+    /// and starts a Claude session there that interviews the user and fills it in (DL-223).
     public func makeProject(_ name: String) {
         guard let folder = liveFolders[name] else { return }
         if let why = makeProject(folder: folder) { info(why) }
@@ -158,9 +160,11 @@ extension AppModel {
 
     /// Make a Project on a folder by its path: the card's, the empty map's folders (DL-212) and New
     /// project's "Make this folder the project" (DL-211, whose Name titles it and whose goal it
-    /// carries). Returns why it couldn't, or nil.
+    /// carries, and whose "Start a Claude session in it" is the interview). `interview` starts the
+    /// session that interviews the user (DL-223); `duo2 project make --no-interview` doesn't.
+    /// Returns why it couldn't, or nil.
     @discardableResult
-    public func makeProject(folder: URL, title: String = "", goal: String = "", startSession: Bool = false) -> String? {
+    public func makeProject(folder: URL, title: String = "", goal: String = "", interview: Bool = true) -> String? {
         let fm = FileManager.default
         var isDir: ObjCBool = false
         guard fm.fileExists(atPath: folder.path, isDirectory: &isDir), isDir.boolValue else { return "\(Self.short(folder.path)) isn't a folder." }
@@ -178,7 +182,9 @@ extension AppModel {
         }
         let projectName = folder.lastPathComponent
         if liveFolders[projectName] == nil { liveFolders[projectName] = folder }   // known now; the snapshot catches up on refresh
-        let started = startSession ? newSession(in: projectName) : nil
+        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let started = interview ? newSession(in: projectName, prompt: ProjectInterview.prompt(title: t.isEmpty ? projectName : t)) : nil
+        lastInterview = started
         refreshLive()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             MainActor.assumeIsolated {

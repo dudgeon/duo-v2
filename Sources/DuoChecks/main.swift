@@ -32,6 +32,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-real"{ return try chatRealChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "askq-fallback" { return try askqFallbackChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "remote-control" { return try remoteControlChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "project-interview" { return try projectInterviewChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "installer-lock" { return try installerLockChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "terminal-keys" { return try terminalKeyChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "ambiguous-name" { return try ambiguousNameChecks() }
@@ -2841,7 +2842,7 @@ func repoFixture() throws -> Fixture {
     }
 }
 
-do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try parkChecks(); try directorChecks(); try installerLockChecks(); try terminalKeyChecks(); try ambiguousNameChecks(); try revealTreeChecks(); try controlPlaneChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
+do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try projectInterviewChecks(); try parkChecks(); try directorChecks(); try installerLockChecks(); try terminalKeyChecks(); try ambiguousNameChecks(); try revealTreeChecks(); try controlPlaneChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
 print("\(passes) passed, \(failures) failed")
 exit(Int32(failures))
 

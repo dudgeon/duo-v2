@@ -167,7 +167,7 @@ extension AppModel {
     public func commitNewProject() -> String? {
         guard let f = newProjectForm else { return nil }
         if f.useFolder {
-            if let why = useFolderProblem(f.into.folder) ?? makeProject(folder: f.into.folder, title: f.name, goal: f.goal, startSession: f.startSession) {
+            if let why = useFolderProblem(f.into.folder) ?? makeProject(folder: f.into.folder, title: f.name, goal: f.goal, interview: f.startSession) {
                 info(why)
                 return why
             }

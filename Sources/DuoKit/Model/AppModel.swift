@@ -442,6 +442,8 @@ public final class AppModel {
     @ObservationIgnored public var lastSent: (key: String, text: String)?
     /// The last task reference drafted into a new session's prompt (DL-112), for the harness and checks.
     @ObservationIgnored public var lastDrafted: (key: String, text: String)?
+    /// The session the last Make a Project or New Project started to interview the user (DL-223), for `duo2` and checks.
+    @ObservationIgnored public var lastInterview: String?
 
     public var visibleTerminal: TerminalSession? { visibleSessionId.flatMap { terminals.existing($0) } }
 
