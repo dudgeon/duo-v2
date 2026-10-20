@@ -14,7 +14,9 @@ func fail(_ message: String, code: Int32 = 1) -> Never {
 
 // The verbs are the action registry (DL-72): two-word verbs ("file rename") first, then one word.
 guard let (action, parsed) = DuoAction.resolve(argv.isEmpty ? ["help"] : argv) else {
-    fail("unknown command '\(argv.prefix(2).joined(separator: " "))'. Run `duo2 help`.", code: 64)
+    var hint = ""
+    if argv.first == "director" { hint = " This duo2 has no such director verb: Duo is older than the director skill. Update Duo (Duo › Check for Updates…), work by hand with task notes until then, and try again after the update." }
+    fail("unknown command '\(argv.prefix(2).joined(separator: " "))'. Run `duo2 help`.\(hint)", code: 64)
 }
 var rest = parsed
 // `--stdin`: the argument is whatever is piped in (JSON for `doc edit`).
@@ -114,6 +116,10 @@ case .hook:
 case .install:
     guard let cli = Bundle.main.executableURL?.resolvingSymlinksInPath().path, Installer.isDuoCLIPath(cli) else {
         fail("run the duo2 inside Duo.app (Duo.app/Contents/Helpers/duo2) so the link points at the app", code: 64)
+    }
+    if let i = rest.firstIndex(of: "--director-name") {
+        guard i + 1 < rest.count, ["director", "duo-director"].contains(rest[i + 1]) else { fail("--director-name takes director or duo-director", code: 64) }
+        Installer.recordDirectorName(allowed: rest[i + 1] == "director")
     }
     Installer.recordConsent(true, cli: cli)
     print(Installer.install(cli: cli).lines.joined(separator: "\n"))

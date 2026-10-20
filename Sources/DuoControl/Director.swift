@@ -106,13 +106,55 @@ public enum Director {
     }
 }
 
-/// The shared director skill Duo installs as `~/.claude/skills/duo-director/SKILL.md` (DL-193),
-/// under the duo2 skill's rules (`Installer`). Its source is `skills/duo-director/SKILL.md`,
-/// generated into `DirectorSkillText.swift` by `scripts/gen-director-skill.py`.
+/// The shared director skill Duo installs as `~/.claude/skills/director/SKILL.md` (DL-193, DL-222),
+/// under the duo2 skill's rules (`Installer`), with a stub at the old name `duo-director` for one
+/// release. Its source is `skills/duo-director/SKILL.md`, generated into `DirectorSkillText.swift`
+/// by `scripts/gen-director-skill.py`.
 public enum DirectorSkill {
     /// Bump when the skill's shape changes in a way an older Duo shouldn't overwrite.
     public static let format = 1
-    public static func text() -> String { source.replacingOccurrences(of: "{{FORMAT}}", with: "\(format)") }
+    /// Bump when the skill starts needing a `duo2 director` verb or behaviour an older Duo lacks
+    /// (F-341): `status` compares the installed skill's revision with the running Duo's.
+    public static let revision = 2
+    public static func text(name: String = "director") -> String {
+        let t = source.replacingOccurrences(of: "{{FORMAT}}", with: "\(format)").replacingOccurrences(of: "{{REVISION}}", with: "\(revision)")
+        return name == "director" ? t : t.replacingOccurrences(of: "name: director\n", with: "name: \(name)\n")
+    }
+
+    /// The old name's stub (DL-222): points at the real skill, so `/duo-director` keeps working for a release.
+    public static func aliasText() -> String {
+        """
+        ---
+        name: duo-director
+        description: The old name of the `director` skill. Use the `director` skill: Direct work in a Duo project or across Home (tasks, workers, checking what comes back). Use when the user says "direct", "be the director", "delegate this", or when a session named director-<project> starts or resumes.
+        ---
+
+        <!-- Written by the Duo app (duo-director alias, format \(format), revision \(revision)). Duo rewrites this file each release unless you edit it; the next release removes it. -->
+
+        # duo-director is now `director`
+
+        Load the `director` skill (`~/.claude/skills/director/SKILL.md`) and follow it. If that skill isn't available, run `duo2 director guide`: it prints the same text.
+
+        """
+    }
+
+    /// The revision a skill file was written with, from its header comment; nil if it has none.
+    public static func revision(of text: String) -> Int? {
+        guard let r = text.range(of: #"revision (\d+)"#, options: .regularExpression) else { return nil }
+        return Int(text[r].dropFirst("revision ".count))
+    }
+
+    /// What `duo2 director status` says about the installed skill against this Duo, or nil when they match (F-341).
+    public static func versionNote(installed: String?) -> String? {
+        guard let installed, let r = revision(of: installed) else { return nil }
+        if r > revision {
+            return "The installed director skill is newer (revision \(r)) than this Duo (\(revision)): this Duo lacks verbs it names. Tell the user to update Duo (Duo › Check for Updates…), work by hand until then, and check again after each of their messages."
+        }
+        if r < revision {
+            return "The installed director skill is older (revision \(r)) than this Duo (\(revision)); Duo updates it at launch. If your own copy differs from `duo2 director guide`, re-read that."
+        }
+        return nil
+    }
 }
 
 // MARK: - Who directs a project (DL-200)
