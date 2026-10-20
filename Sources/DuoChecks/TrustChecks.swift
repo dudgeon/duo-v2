@@ -1,8 +1,9 @@
+import DuoControl
 import DuoKit
 import Foundation
 
 // DL-229: the "Trust this folder" notice. The write touches Claude Code's own file, so these run on scratch copies only.
-@MainActor func trustChecks() throws {
+@MainActor func trustChecks(_ base: Fixture) throws {
     print("trust this folder: the line, the rule, the write (DL-229)")
     let fm = FileManager.default
     let root = fm.temporaryDirectory.appending(path: "trust-checks-\(UUID().uuidString.prefix(8))")
@@ -110,4 +111,49 @@ import Foundation
     _ = GitTool.git(["init", "-q"], in: root.appending(path: "repo"))
     check(ClaudeTrust.repositoryTop(of: gitRoot.path) == ClaudeTrust.realPath(root.appending(path: "repo").path), "the repository's top folder holds the key")
     check(ClaudeTrust.configFile(configDir: "/x/y").path == "/x/y/.claude.json", "CLAUDE_CONFIG_DIR names the file's folder")
+
+    // The model: the notice's life on a session's tab (DL-229)
+    let m = AppModel(fixture: base)
+    let key = "tab-1"
+    let entries: [String: Bool?] = ["/private/tmp": true, "/private/tmp/checkout": false]
+    let read = TrustLine.Read(path: "/private/tmp/checkout", forkLine: "/fork x")
+    m.applyTrustRead(key: key, read: read, sessionFolder: "/private/tmp/checkout") { entries }
+    check(m.trustNotice(key)?.phase == .offer && m.trustNotice(key)?.folder == "checkout", "the line on a session's screen raises the offer bar")
+    m.dismissTrustNotice(key)
+    check(m.trustNotice(key) == nil && m.trustNotices[key] != nil, "Not Now hides it for the session")
+    m.applyTrustRead(key: key, read: read, sessionFolder: "/private/tmp/checkout") { entries }
+    check(m.trustNotice(key) == nil, "…while the same line is still on screen it stays hidden")
+    m.applyTrustRead(key: key, read: nil, sessionFolder: "/private/tmp/checkout") { entries }
+    m.applyTrustRead(key: key, read: read, sessionFolder: "/private/tmp/checkout") { entries }
+    check(m.trustNotice(key)?.phase == .offer, "…and the next such line, once it had left, brings it back")
+    m.applyTrustRead(key: key, read: read, sessionFolder: "/private/tmp/checkout") { ["/private/tmp/checkout": true] }
+    check(m.trustNotices[key] == nil, "trusted some other way: the bar goes by itself")
+    m.applyTrustRead(key: key, read: TrustLine.Read(path: "/private/tmp/elsewhere", forkLine: nil), sessionFolder: "/private/tmp/checkout") { entries }
+    check(m.trustNotice(key)?.phase == .runClaude, "a folder Duo doesn't offer gets the OK-only bar")
+
+    // The write through the model, on a scratch config only
+    let cfg = root.appending(path: "model-config")
+    try fm.createDirectory(at: cfg, withIntermediateDirectories: true)
+    let file = cfg.appending(path: ".claude.json")
+    try Data(#"{"projects":{"/private/tmp/checkout":{"hasTrustDialogAccepted":false}}}"#.utf8).write(to: file)
+    setenv("CLAUDE_CONFIG_DIR", cfg.path, 1)
+    defer { unsetenv("CLAUDE_CONFIG_DIR") }
+    m.trustNotices[key] = TrustNotice(path: "/private/tmp/checkout", forkLine: "/fork x", phase: .offer, sessionFolder: "/private/tmp/checkout")
+    var answer = ""
+    m.writeTrust(key, source: "duo2") { answer = $0 }
+    check(m.trustNotices[key]?.phase == .trusted && answer == "trusted /private/tmp/checkout", "the write changes the bar in place and says what it trusted")
+    check(((parsed(file)?["projects"] as? NSDictionary)?["/private/tmp/checkout"] as? NSDictionary)?["hasTrustDialogAccepted"] as? Bool == true, "…in the scratch file")
+    let lockDir = cfg.appending(path: ".claude.json.lock")
+    try fm.createDirectory(at: lockDir, withIntermediateDirectories: false)
+    try Data(#"{"projects":{"/private/tmp/checkout":{"hasTrustDialogAccepted":false}}}"#.utf8).write(to: file)
+    m.trustNotices[key]?.phase = .offer
+    m.writeTrust(key, source: "you") { answer = $0 }
+    if case .failed(let why)? = m.trustNotices[key]?.phase { check(why.hasPrefix("another Claude is saving them"), "a held lock gives the failure bar with its reason") } else { check(false, "a held lock gives the failure bar") }
+    check(m.trustNotices[key]?.canAsk == true, "…with Try Again")
+
+    // duo2 can ask but not trust for itself
+    let verb = DuoAction.all.first { $0.verb == "session trust-folder" }
+    check(verb?.args == "<id>" && verb?.summary.contains("no --yes") == true, "duo2 session trust-folder takes an id and no --yes")
+    check(DuoAction.all.contains { $0.verb == "session fork-again" }, "Fork Again has its verb")
 }
+

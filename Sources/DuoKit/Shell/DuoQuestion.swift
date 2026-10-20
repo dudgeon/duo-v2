@@ -14,6 +14,9 @@ public struct DuoQuestion: Identifiable {
         /// With a `what` and a `path`: the clash row of `standins2-handoff/q50-clash` (DL-132 c): `what` in mono,
         /// `path` under it in `text2` ("from ~/Downloads"), this at the right in `text2`.
         public var detail: String? = nil
+        /// A caption over a mono value, as the trust question's box draws them (trust-notice-handoff `02`): `what` in `text2`,
+        /// `path` under it in mono and `text`, wrapping rather than cutting.
+        public var captioned = false
     }
     /// A name to type, filled in with a suggestion (B of the .docx boards, DL-123). A class, so
     /// the choices read what was typed when they run.
@@ -166,7 +169,12 @@ struct QuestionSheet: View {
                 VStack(alignment: .leading, spacing: rowed || named ? 0 : DuoSpace.gapGlyphToLabel) {
                     ForEach(Array(q.items.enumerated()), id: \.offset) { n, i in
                         if rowed && n > 0 { DuoColor.rule.frame(height: DuoMetric.borderHairline).padding(.horizontal, -DuoSpace.cardPadding.leading) }
-                        if i.what.isEmpty {
+                        if i.captioned {
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text(i.what).duoText(.body).foregroundStyle(DuoColor.text2)
+                                Text(i.path).duoText(.mono, lineHeight: DuoTextStyle.body.spec.lineHeight).fixedSize(horizontal: false, vertical: true)
+                            }
+                        } else if i.what.isEmpty {
                             HStack(spacing: DuoSpace.gapCardToCard) {
                                 Text(i.path).duoText(.mono, lineHeight: DuoTextStyle.body.spec.lineHeight)
                                     .lineLimit(1).truncationMode(.middle)

@@ -147,6 +147,7 @@ struct ChatPane: View {
                     .zIndex(1)
                     .transition(.move(edge: .bottom))
             } else {
+                TrustBar(key: chat.key, inChat: true)
                 ChatComposerArea(chat: chat)
                     .padding(EdgeInsets(top: 0, leading: DuoSpace.chatColumnInset, bottom: 12, trailing: DuoSpace.chatColumnInset))
                     .transition(.opacity)

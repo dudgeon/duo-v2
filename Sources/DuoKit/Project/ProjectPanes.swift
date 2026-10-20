@@ -768,9 +768,11 @@ struct ConsolePane: View {
             } else if let tab = model.consoleTab, model.fixtureChats[tab] == nil, let t = model.fixtureTerminals[tab] {
                 // The intro video's demo (VideoTargets): a terminal showing a recorded screen, with no process behind it.
                 TerminalSlot(session: t)
+                TrustBar(key: t.key)
             } else if let tab = model.consoleTab, let chat = model.fixtureChats[tab] {
                 // Fixture mode: a chat-mode target (ChatTargets), drawn from recorded hooks and screens.
                 ConsoleChatBody(chat: chat, terminal: model.fixtureTerminals[tab])   // the video demo: terminal mode shows the recorded screen
+                if !chat.showsChat { TrustBar(key: chat.key) }
             } else if let project = model.currentProject, let tab = model.consoleTab, model.fixtureConsole == nil,
                let t = model.terminal(project: project.name, session: tab), !t.missingClaude {
                 if let chat = model.chats.existing(t.key) {
@@ -779,6 +781,7 @@ struct ConsolePane: View {
                     TerminalSlot(session: t)
                 }
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
+                else if model.chats.existing(t.key)?.showsChat != true { TrustBar(key: t.key) }   // chat's own bar sits over its composer
                 Color.clear.frame(height: 0).task(id: t.key) { model.attachChat(t) }
             } else if let project = model.currentProject, model.terminalsMode == .live || model.fixtureConsole != nil,
                       let empty = model.consoleEmpty(project: project.name) {

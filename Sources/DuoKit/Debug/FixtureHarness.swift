@@ -178,6 +178,8 @@ public enum FixtureHarness {
                     }
                 }
             }
+        case "trust-notice":   // trust-notice:offer|run|trusted|failed|sheet|failed-sheet: the DL-229 bar on the open tab (a terminal showing a recorded screen, or a chat state's chat)
+            model.showTrustNoticeFixture(parts.count > 1 ? parts[1] : "offer")
         case "ask-legacy": LegacyPrompt.run()
         case "ask-update":   // ask-update:writable|admin|no-sparkle|no-notes: the update question (DL-114) for 0.1.9 over 0.1.8, its buttons only logged
             let form = parts.count > 1 ? parts[1] : "writable"

@@ -50,7 +50,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sessionPark = "session park", sessionKeepRunning = "session keep-running"
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
     case sessionLink = "session link", sessionTask = "session task", sessionChat = "session chat"
-    case shellNew = "shell new", sessionFork = "session fork", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
+    case shellNew = "shell new", sessionFork = "session fork", sessionTrustFolder = "session trust-folder", sessionForkAgain = "session fork-again", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
     case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskSession = "task session", taskStatus = "task status"
     case taskRename = "task rename", taskArchive = "task archive", taskUnarchive = "task unarchive", taskDelete = "task delete"
     case taskMove = "task move", taskLink = "task link", taskReveal = "task reveal"
@@ -220,6 +220,10 @@ extension DuoAction {
         .init(.sessionCarryOn, .sessions, "<id>", "Start a new session carrying on from an archived one."),
         .init(.sessionFork, .sessions, "<id>", "Carry a session on as a fork: a new session with the same history (the original is left alone).",
               ui: ["Resume as a Fork"]),
+        .init(.sessionTrustFolder, .sessions, "<id>", "When a session's /fork said \"Workspace not trusted\": show Duo's sheet and wait for the user's answer. Yes sets only that folder's hasTrustDialogAccepted in Claude Code's file; it prints `trusted <path>` or `cancelled`. There is no --yes: Claude can ask, but can't trust a folder for itself (DL-229).",
+              ui: ["Trust This Folder…", "Try Again"], timeout: 600),
+        .init(.sessionForkAgain, .sessions, "<id>", "After the folder is trusted: type the session's blocked /fork line again, only while Claude is at its prompt with nothing typed (DL-229).",
+              ui: ["Fork Again"]),
         .init(.sessionLink, .sessions, "<session>", "A Markdown link to a session for a note or task: [title](duo2://session/<id>). Clicking it in Duo opens or resumes the session (DL-87).",
               ui: ["Copy Link", "Copy Markdown link"]),
         .init(.sessionArchive, .sessions, "<id>", "File a session away: it leaves the lists and counts, keeps its transcript, stays searchable, and sits in its project's Archived fold. Not while it runs. Undo with `duo2 undo`.",
