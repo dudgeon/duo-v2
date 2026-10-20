@@ -6,7 +6,7 @@ import Foundation
 /// into Claude's background; a tab right of the original attaches to it.
 extension AppModel {
     /// The SessionStart hook's source for a session (`clear`, `resume`, `fork` …), noted for `followSessionChanges`.
-    func noteSessionStart(_ sid: String, source: String?) {
+    public func noteSessionStart(_ sid: String, source: String?) {
         guard let source else { return }
         startSources[sid] = source
         if source == "fork" { refreshLive() }   // look for it now, not at the next poll
@@ -14,18 +14,18 @@ extension AppModel {
 
     /// Whether the terminal's process moved to `newId` by `/branch`: the hook said `fork` (same pid, the
     /// process is the terminal's), or the new transcript names the old session in `forkedFrom`.
-    func isBranch(newId: String, from old: String, folder: URL) -> Bool {
+    public func isBranch(newId: String, from old: String, folder: URL) -> Bool {
         if ForkSource.classify(source: startSources[newId], ownsPid: true, parentIsDuoTab: false) == .branch { return true }
         guard let transcript = ClaudeStorage.transcript(sessionId: newId, cwd: folder.path) else { return false }
         return ThreadCache.shared.declaredParents([(newId, transcript)])[newId] == old
     }
 
     /// The thread row's fold id, which `duo2 view group ‹original id›` matches by suffix.
-    func threadFoldKey(project: String, original: String) -> String { "\(project)/thread/\(original)" }
+    public func threadFoldKey(project: String, original: String) -> String { "\(project)/thread/\(original)" }
 
     /// `/branch`: the terminal's tab becomes the branch's tab right of the original's place, selected; the
     /// original reopens in its old place by `claude --resume`; the thread opens; task links are copied.
-    func splitBranch(from old: Fixture.Session, to new: String, folder: URL) {
+    public func splitBranch(from old: Fixture.Session, to new: String, folder: URL) {
         let oldKey = old.tabKey
         let order = consoleTabKeys(inProject: old.project)   // before the tab changes hands
         var index = SessionIndex.load(project: folder)
@@ -52,7 +52,7 @@ extension AppModel {
     /// `/fork`: a job in Claude's background whose parent is one of Duo's tabs gets a tab right of it that
     /// attaches, unselected; it joins the parent's tasks and its thread opens. Jobs found at the first look
     /// are the baseline and open nothing. The fork is listed at once, before it has a transcript (2.1.219).
-    func adoptForks(into snapshot: inout Fixture) {
+    public func adoptForks(into snapshot: inout Fixture) {
         let jobs = ForkSource.jobs()
         guard var seen = forksSeen else { forksSeen = Set(jobs.compactMap(\.sessionId)); return }
         defer { forksSeen = seen }
