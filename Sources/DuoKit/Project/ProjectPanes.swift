@@ -671,123 +671,58 @@ struct RightPane: View {
         VStack(alignment: .leading, spacing: 0) {
             // Spacing is laid out by hand so a document tab's × (DL-126) sits in the gap before its
             // title: the gap is the 1 left over, the × box and the 1 before the title.
-            GeometryReader { box in
-            let fit = layout(tabs, width: box.size.width - 40)
-            let shownTabs = tabs.indices.filter { fit.keep[$0] }.map { tabs[$0] }
-            let hiddenTabs = tabs.indices.filter { !fit.keep[$0] }.map { tabs[$0] }
-            HStack(spacing: 0) {
-                ForEach(Array(shownTabs.enumerated()), id: \.element.id) { i, tab in
-                    let active = tab.id == model.rightTab
-                    let title = fit.short ? ConsoleTabStrip.short(tab.title) : tab.title
-                    // A document waiting in conflict says so on its tab (S3-4).
-                    let conflicted = !active && tab.isDocument && (model.liveFile(tab.id).map { model.editorIfLoaded?.keptInConflict($0) == true } ?? false)
-                    let closeSlot = tab.isDocument ? DuoMetric.tabCloseSize + DuoMetric.tabCloseTitleGap : 0
-                    let outside = AppModel.isOutsideFile(tab.id)
-                    let opener = model.webTabs[tab.id]?.opener.flatMap { o in tabs.first(where: { $0.id == o })?.title }   // gone with its opener
-                    HStack(spacing: DuoMetric.tabCloseTitleGap) {
-                        if tab.isDocument {
-                            if model.showsTabClose(tab.id) {
-                                TabCloseButton(key: tab.id, onConsole: false, active: active) { model.closeDocument(tab.id) }  // action: doc close
-                            } else {
-                                Color.clear.frame(width: DuoMetric.tabCloseSize, height: DuoMetric.tabCloseSize)
-                            }
-                        }
-                        // A popup's tab leads with ↳ (DL-132 i, standins2-handoff q67-popup).
-                        if opener != nil { Text("↳").duoText(.body).foregroundStyle(DuoColor.text2).padding(.trailing, 3) }
-                        Text("\(Text(title).foregroundStyle(active ? DuoColor.text : DuoColor.text2))\(conflicted ? Text(" · conflict").foregroundStyle(DuoColor.text) : Text(""))")
-                            .duoText(active ? .bodyEmphasis : .body)
-                            .lineLimit(1)
-                        // A file outside the project shows its folder under the pointer (DL-132 f, q39-hover).
-                        if outside, model.showsTabClose(tab.id) {
-                            Text(AppModel.short(URL(fileURLWithPath: String(tab.id.dropFirst(AppModel.outsideFilePrefix.count))).deletingLastPathComponent().path))
-                                .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.head)
-                                .padding(.leading, DuoSpace.gapGlyphToLabel - DuoMetric.tabCloseTitleGap)
-                        }
+            let pinnedTabs = Array(tabs.prefix { $0.id == "Project" || (!$0.isDocument && $0.id != ReadOnlySession.tabKey) })
+            let scrolling = Array(tabs.dropFirst(pinnedTabs.count))
+            let scrollKeys = scrolling.map(\.id)
+            ScrollingTabStrip(
+                pane: .right, space: Self.tabSpace, keys: scrollKeys, selected: model.rightTab,
+                ground: DuoColor.pane, rule: DuoColor.rule, dim: DuoColor.text2, font: .body, dot: DuoColor.needsYou,
+                rows: { scrolling.map { TabMenuRow(key: $0.id, title: $0.title, state: nil, isShell: false, selected: $0.id == model.rightTab) } },
+                glyphs: false,
+                choose: { id in model.rightTab = id; if tabs.first(where: { $0.id == id })?.isDocument == true { model.selectedFile = id } },  // action: view tab
+                height: DuoMetric.tabStripHeight,
+                pinned: {
+                    HStack(spacing: 0) {
+                        ForEach(Array(pinnedTabs.enumerated()), id: \.element.id) { i, tab in tabView(tab, at: i, of: tabs, scrollKeys: scrollKeys) }
                     }
-                        .modifier(TabHoverFill(key: tab.id, onConsole: false, leading: 3))   // 3 past the × box, as drawn (DL-134)
-                        .padding(.leading, (i == 0 ? 0 : DuoSpace.gapPaneTabs) - closeSlot)
-                        .contentShape(Rectangle())
-                        .modifier(TabHover(key: tab.id, enabled: tab.isDocument) { model.closeDocument(tab.id) })
-                        .accessibilityElement(children: .combine)
-                        .accessibilityIdentifier("video.tab.right.\(tabs.firstIndex { $0.id == tab.id } ?? i)")   // anchors: 0 is Project, then the documents in order
-                        .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
-                        .overlay {   // anchors: a document's tab by its kind (`video.tab.md`, `.html`, `.pptx`, `.docx`), as a sibling so the index name stays
-                            if model.videoDemoFolder != nil, tab.isDocument {
-                                Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("\(title) tab")
-                                    .accessibilityIdentifier("video.tab.\((tab.id as NSString).pathExtension.lowercased())")
-                            }
-                        }
-                        // A file outside the project: its path is the tooltip (DL-106); a popup: its opener (DL-132 i).
-                        .help(outside ? String(tab.id.dropFirst(AppModel.outsideFilePrefix.count)) : opener.map { "Opened from \($0)" } ?? "")
-                        .onActivate { model.rightTab = tab.id; if tab.isDocument { model.selectedFile = tab.id } }  // action: view tab
-                        .modifier(LiveContextMenu(enabled: tab.isDocument) {
-                            Button("Close Tab") { model.closeDocument(tab.id) }
-                            Button("Close Other Tabs") { model.closeOtherDocuments(than: tab.id) }
-                            Divider()
-                            // DL-220 (tabs-menu): the tab one place along; dimmed at the end it's at.
-                            Button("Move Tab Left") { model.moveTab(tab.id, in: .right, by: -1) }  // action: view tab-move
-                                .disabled(!model.canMoveTab(tab.id, in: .right, by: -1))
-                            Button("Move Tab Right") { model.moveTab(tab.id, in: .right, by: 1) }  // action: view tab-move
-                                .disabled(!model.canMoveTab(tab.id, in: .right, by: 1))
-                            Divider()
-                            if let web = model.webTabs[tab.id] {
-                                Button("Open in Browser") { if let u = web.url { NSWorkspace.shared.open(u) } }
-                                Button("Copy Address") { if let u = web.url { FileActions.copy(u.absoluteString) } }
-                            } else {
-                                FileMenu(path: tab.id, isFolder: false, onTab: true)
-                            }
-                        })
-                        // Dragged along the strip, its place moves (DL-220, tabs-drag); Project stays first.
-                        .modifier(TabDraggable(key: tab.id, pane: .right, space: Self.tabSpace, enabled: tab.isDocument && model.openDocuments.contains(tab.id),
-                                               lead: closeSlot, shown: { shownTabs.map(\.id) }))
-                        .background(DuoColor.pane)
-                        .zIndex(model.showsTabClose(tab.id) ? 1 : 0)   // its fill reaches over the next tab's padding (DL-134)
-                        .transition(.tab)
-                }
-                // Tabs that don't fit wait in a `» n` menu before the +, as on the console (BUG-068, Q-167).
-                if !hiddenTabs.isEmpty {
-                    HStack(spacing: 4) {
-                        MoreTabsMark(color: DuoColor.text2).frame(width: 11, height: 9)
-                        Text("\(hiddenTabs.count)").duoText(.body).foregroundStyle(DuoColor.text2)
+                },
+                tabs: {
+                    HStack(spacing: 0) {
+                        ForEach(Array(scrolling.enumerated()), id: \.element.id) { i, tab in tabView(tab, at: pinnedTabs.count + i, of: tabs, scrollKeys: scrollKeys) }
                     }
-                    .padding(.leading, DuoSpace.gapPaneTabs)
-                    .contentShape(Rectangle())
-                    .onActivate { PopUp.show(hiddenTabs.map { t in (t.title, { model.rightTab = t.id; if t.isDocument { model.selectedFile = t.id } }) }) }  // action: view tab
-                    .accessibilityLabel("\(hiddenTabs.count) more tabs")
-                    .background(DuoColor.pane)
-                }
-                // New Markdown file, the same treatment as the console's + (DL-61).
-                if model.terminalsMode == .live, model.projectFolder != nil {
-                    Text("+").duoText(.body).foregroundStyle(DuoColor.text2)
-                        .padding(.leading, tabs.isEmpty ? 0 : DuoSpace.gapPaneTabs)
-                        .onActivate { model.newMarkdownFile(near: model.selectedFile) }  // action: file new
-                        // Right-click + for the other new tabs (ENH-8).
-                        .contextMenu {
-                            Button("New Markdown File") { model.newMarkdownFile(near: model.selectedFile) }
-                            Button("New Browser Tab") { model.newBrowserTab() }
-                        }
-                        .accessibilityLabel("New Markdown file")
-                        .background(DuoColor.pane)
-                }
-                Spacer(minLength: 0)
-            }
-            .coordinateSpace(.named(Self.tabSpace))
+                    .duoAnimation(.tabMove, value: scrollKeys)
+                },
+                plus: {
+                    HStack(spacing: 0) {
+                    // New Markdown file, the same treatment as the console's + (DL-61).
+                    if model.terminalsMode == .live, model.projectFolder != nil {
+                        Text("+").duoText(.body).foregroundStyle(DuoColor.text2)
+                            .padding(.leading, tabs.isEmpty ? 0 : DuoSpace.gapPaneTabs)
+                            .onActivate { model.newMarkdownFile(near: model.selectedFile) }  // action: file new
+                            // Right-click + for the other new tabs (ENH-8).
+                            .contextMenu {
+                                Button("New Markdown File") { model.newMarkdownFile(near: model.selectedFile) }
+                                Button("New Browser Tab") { model.newBrowserTab() }
+                            }
+                            .accessibilityLabel("New Markdown file")
+                            .background(DuoColor.pane)
+                    }
+                    }
+                },
+                edge: { EmptyView() })
             .overlay(alignment: .topLeading) {
                 // The dragged tab, lifted under the pointer (tabs-drag).
                 if let drag = model.tabDrag, drag.pane == .right, let tab = tabs.first(where: { $0.id == drag.key }) {
                     let active = tab.id == model.rightTab
-                    TabDragGhost(drag: drag, onConsole: false) {
-                        Text(fit.short ? ConsoleTabStrip.short(tab.title) : tab.title).duoText(active ? .bodyEmphasis : .body)
+                    TabDragGhost(drag: model.stripDrag(drag), onConsole: false) {
+                        Text(ConsoleTabStrip.short(tab.title)).duoText(active ? .bodyEmphasis : .body)
                             .foregroundStyle(active ? DuoColor.text : DuoColor.text2).lineLimit(1)
                     }
                 }
             }
             .padding(.horizontal, 20)
             .frame(height: DuoMetric.tabStripHeight)
-            .duoAnimation(.tabMove, value: shownTabs.map(\.id))
             .id(model.currentProject?.name)   // another project's tabs replace these at once
-            }
-            .frame(height: DuoMetric.tabStripHeight)
             DuoColor.rule.frame(height: 1)
             if let id = model.rightTab, let web = model.webTabs[id] {
                 // A browser tab (Phase K, ENH-8): allowed sites in Duo, the rest in the browser (DL-3).
@@ -858,21 +793,75 @@ struct RightPane: View {
 
     private var rightTabs: [(id: String, title: String, isDocument: Bool)] { model.rightTabItems() }
 
-    /// Which tabs show and whether titles shorten, by the console's rule (`TabStripFit`): titles
-    /// shorten to 24 characters, then the tabs furthest right go into `» n`; the active one stays.
-    private func layout(_ tabs: [(id: String, title: String, isDocument: Bool)], width: CGFloat) -> (keep: [Bool], short: Bool) {
-        // A document's × box sits inside the gap before its title (the tab's padding is the gap less
-        // the box), so it adds no width; the active title is drawn in the emphasis weight.
-        func w(_ t: (id: String, title: String, isDocument: Bool), _ short: Bool) -> CGFloat {
-            let title = short ? ConsoleTabStrip.short(t.title) : t.title
-            let font = (t.id == model.rightTab ? DuoTextStyle.bodyEmphasis : DuoTextStyle.body).spec.nsFont
-            return ceil(TextWidth.of(title, font: font)) + (model.webTabs[t.id]?.opener != nil ? 14 : 0)
-        }
-        let plus: CGFloat = model.terminalsMode == .live && model.projectFolder != nil ? 10 : 0
-        let controls = plus + (plus > 0 ? DuoSpace.gapPaneTabs : 0)
-        return TabStripFit.fit(full: tabs.map { w($0, false) }, short: tabs.map { w($0, true) },
-                               selected: tabs.firstIndex { $0.id == model.rightTab }, width: width,
-                               controls: controls, more: 11 + 4 + 16 + DuoSpace.gapPaneTabs, gap: DuoSpace.gapPaneTabs)
+    /// One tab of the strip: its title, × and menu; the gap before it is laid out by hand (see `body`).
+    @ViewBuilder private func tabView(_ tab: (id: String, title: String, isDocument: Bool), at i: Int,
+                                      of tabs: [(id: String, title: String, isDocument: Bool)], scrollKeys: [String]) -> some View {
+                    let active = tab.id == model.rightTab
+                    let title = ConsoleTabStrip.short(tab.title)
+                    // A document waiting in conflict says so on its tab (S3-4).
+                    let conflicted = !active && tab.isDocument && (model.liveFile(tab.id).map { model.editorIfLoaded?.keptInConflict($0) == true } ?? false)
+                    let closeSlot = tab.isDocument ? DuoMetric.tabCloseSize + DuoMetric.tabCloseTitleGap : 0
+                    let outside = AppModel.isOutsideFile(tab.id)
+                    let opener = model.webTabs[tab.id]?.opener.flatMap { o in tabs.first(where: { $0.id == o })?.title }   // gone with its opener
+                    HStack(spacing: DuoMetric.tabCloseTitleGap) {
+                        if tab.isDocument {
+                            if model.showsTabClose(tab.id) {
+                                TabCloseButton(key: tab.id, onConsole: false, active: active) { model.closeDocument(tab.id) }  // action: doc close
+                            } else {
+                                Color.clear.frame(width: DuoMetric.tabCloseSize, height: DuoMetric.tabCloseSize)
+                            }
+                        }
+                        // A popup's tab leads with ↳ (DL-132 i, standins2-handoff q67-popup).
+                        if opener != nil { Text("↳").duoText(.body).foregroundStyle(DuoColor.text2).padding(.trailing, 3) }
+                        Text("\(Text(title).foregroundStyle(active ? DuoColor.text : DuoColor.text2))\(conflicted ? Text(" · conflict").foregroundStyle(DuoColor.text) : Text(""))")
+                            .duoText(active ? .bodyEmphasis : .body)
+                            .lineLimit(1)
+                        // A file outside the project shows its folder under the pointer (DL-132 f, q39-hover).
+                        if outside, model.showsTabClose(tab.id) {
+                            Text(AppModel.short(URL(fileURLWithPath: String(tab.id.dropFirst(AppModel.outsideFilePrefix.count))).deletingLastPathComponent().path))
+                                .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.head)
+                                .padding(.leading, DuoSpace.gapGlyphToLabel - DuoMetric.tabCloseTitleGap)
+                        }
+                    }
+                        .modifier(TabHoverFill(key: tab.id, onConsole: false, leading: 3))   // 3 past the × box, as drawn (DL-134)
+                        .padding(.leading, (i == 0 ? 0 : DuoSpace.gapPaneTabs) - closeSlot)
+                        .contentShape(Rectangle())
+                        .modifier(TabHover(key: tab.id, enabled: tab.isDocument) { model.closeDocument(tab.id) })
+                        .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("video.tab.right.\(tabs.firstIndex { $0.id == tab.id } ?? i)")   // anchors: 0 is Project, then the documents in order
+                        .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+                        .overlay {   // anchors: a document's tab by its kind (`video.tab.md`, `.html`, `.pptx`, `.docx`), as a sibling so the index name stays
+                            if model.videoDemoFolder != nil, tab.isDocument {
+                                Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("\(title) tab")
+                                    .accessibilityIdentifier("video.tab.\((tab.id as NSString).pathExtension.lowercased())")
+                            }
+                        }
+                        // A file outside the project: its path is the tooltip (DL-106); a popup: its opener (DL-132 i).
+                        .help(outside ? String(tab.id.dropFirst(AppModel.outsideFilePrefix.count)) : opener.map { "Opened from \($0)" } ?? "")
+                        .onActivate { model.rightTab = tab.id; if tab.isDocument { model.selectedFile = tab.id } }  // action: view tab
+                        .modifier(LiveContextMenu(enabled: tab.isDocument) {
+                            Button("Close Tab") { model.closeDocument(tab.id) }
+                            Button("Close Other Tabs") { model.closeOtherDocuments(than: tab.id) }
+                            Divider()
+                            // DL-220 (tabs-menu): the tab one place along; dimmed at the end it's at.
+                            Button("Move Tab Left") { model.moveTab(tab.id, in: .right, by: -1) }  // action: view tab-move
+                                .disabled(!model.canMoveTab(tab.id, in: .right, by: -1))
+                            Button("Move Tab Right") { model.moveTab(tab.id, in: .right, by: 1) }  // action: view tab-move
+                                .disabled(!model.canMoveTab(tab.id, in: .right, by: 1))
+                            Divider()
+                            if let web = model.webTabs[tab.id] {
+                                Button("Open in Browser") { if let u = web.url { NSWorkspace.shared.open(u) } }
+                                Button("Copy Address") { if let u = web.url { FileActions.copy(u.absoluteString) } }
+                            } else {
+                                FileMenu(path: tab.id, isFolder: false, onTab: true)
+                            }
+                        })
+                        // Dragged along the strip, its place moves (DL-220, tabs-drag); Project stays first.
+                        .modifier(TabDraggable(key: tab.id, pane: .right, space: Self.tabSpace, enabled: tab.isDocument && model.openDocuments.contains(tab.id),
+                                               lead: closeSlot, shown: { scrollKeys }))
+                        .background(DuoColor.pane)
+                        .zIndex(model.showsTabClose(tab.id) ? 1 : 0)   // its fill reaches over the next tab's padding (DL-134)
+                        .transition(.tab)
     }
 }
 
