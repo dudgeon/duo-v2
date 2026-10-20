@@ -1,0 +1,42 @@
+{
+ "$note": "Trust this folder: the notice when /fork says “Workspace not trusted”, picked A, A, A, A on 2026-10-20 (DL-229). kind=board: drawn on the Design canvas and exported as static HTML (rendered from the canvas sources in canvas/). Options not chosen stay on the boards and in canvas/.",
+ "source": "https://claude.ai/artifact/JvLDXJw54Vm8yWTf8r8ZGn",
+ "screens": [
+  {
+   "file": "screens/00-why-and-questions.html",
+   "board": "Main.dc.html",
+   "kind": "board",
+   "width": 1400,
+   "height": 1000,
+   "decision": "DL-229",
+   "shows": "CONTEXT: why /fork fails on 2.1.303, exactly what Duo writes, the rules, the four questions and Geoff’s answers (A, A, A, A; 2026-10-20, by buttons) (DL-229)."
+  },
+  {
+   "file": "screens/01-where.html",
+   "board": "Where.dc.html",
+   "kind": "board",
+   "width": 1560,
+   "height": 1080,
+   "decision": "DL-229",
+   "shows": "THE TARGET for where the notice appears: the bar under the terminal (Q2 A, chosen), the bar over it (B, not chosen), and chat’s bar over the composer. Geoff, 2026-10-20 (DL-229)."
+  },
+  {
+   "file": "screens/02-action.html",
+   "board": "Action.dc.html",
+   "kind": "board",
+   "width": 1400,
+   "height": 1000,
+   "decision": "DL-229",
+   "shows": "THE TARGET for the action: the Duo sheet before Duo writes the one key (Q1 A, chosen); Claude’s own question in a tab (B, not chosen). Geoff, 2026-10-20 (DL-229)."
+  },
+  {
+   "file": "screens/03-after.html",
+   "board": "After.dc.html",
+   "kind": "board",
+   "width": 1560,
+   "height": 1000,
+   "decision": "DL-229",
+   "shows": "THE TARGET for what follows: Fork Again (Q3 A, chosen), words only (B, not chosen), when Duo can’t write, duo2 always asks (Q4 A). Geoff, 2026-10-20 (DL-229)."
+  }
+ ]
+}
