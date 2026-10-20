@@ -57,6 +57,7 @@ struct HomePane: View {
                     if model.altitude.isAllProjects || !chat.showsChat { ConsoleChatBody(chat: chat, terminal: t) } else { Color.clear }
                 } else { TerminalSlot(session: t) }
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
+                else if model.chat(for: t.key)?.showsChat != true { TrustBar(key: t.key) }
                 Color.clear.frame(height: 0).task(id: t.key) { model.attachChat(t) }
             } else if let tab = model.homeTab, let chat = model.fixtureChats[tab] {
                 // A target state's Home chat (no terminal in fixture mode); at All projects only, as above.

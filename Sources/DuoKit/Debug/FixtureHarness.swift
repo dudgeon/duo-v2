@@ -178,6 +178,14 @@ public enum FixtureHarness {
                     }
                 }
             }
+        case "trust-notice":   // trust-notice:offer|run|trusted|failed|sheet|failed-sheet: the DL-229 bar on the open tab (a terminal showing a recorded screen, or a chat state's chat)
+            model.showTrustNoticeFixture(parts.count > 1 ? parts[1] : "offer")
+        case "trust-ask":   // trust-ask: Trust This Folder… on the visible terminal's bar, as the button does (the live proof, DL-229)
+            if let k = model.visibleTerminal?.key { model.askToTrust(k) }
+        case "trust-fork-again":   // trust-fork-again: Fork Again on that bar
+            if let k = model.visibleTerminal?.key { model.forkAgain(k) }
+        case "trust-state":   // trust-state: what the bar says, to stderr
+            if let k = model.visibleTerminal?.key { FileHandle.standardError.write(Data("trust-state: \(model.trustNotices[k].map { "\($0.path) \($0.phase) fork=\($0.forkLine ?? "-")" } ?? "none")\n".utf8)) }
         case "ask-legacy": LegacyPrompt.run()
         case "ask-update":   // ask-update:writable|admin|no-sparkle|no-notes: the update question (DL-114) for 0.1.9 over 0.1.8, its buttons only logged
             let form = parts.count > 1 ? parts[1] : "writable"

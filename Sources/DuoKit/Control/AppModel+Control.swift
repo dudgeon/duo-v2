@@ -235,6 +235,7 @@ extension AppModel {
             guard let key = inv[0] ?? req.session, let s = findSession(key, in: nil), let sid = s.sessionId else { return done(.fail("no session '\(inv[0] ?? "")'")) }
             var j = sessionJSON(s)
             var text = sessionPayload(s.tabKey) ?? s.name
+            if trustNotices[s.tabKey] != nil { text += "\nfork blocked: folder not trusted"; j["forkBlocked"] = "folder not trusted" }
             text += "\nRemote Control: " + (s.remoteControl.map { "on, as \"\($0)\"" } ?? "off")
             if let folder = liveFolders[s.project], let t = ClaudeStorage.transcript(sessionId: sid, cwd: folder.path) ?? (FileManager.default.fileExists(atPath: SessionArchive.copyURL(sid).path) ? SessionArchive.copyURL(sid) : nil) {
                 let turns = SessionSource.read(t.path).turns
@@ -508,6 +509,22 @@ extension AppModel {
             open(project: s.project)
             resumeAsFork(sid, in: s.project)
             done(.ok("Forked \(s.name) in \(s.project) as a new session with the same history."))
+        case .sessionTrustFolder:
+            guard let k = inv[0], let s = findSession(k, in: nil) else { return done(.fail("usage: \(id.action.usage)")) }
+            guard let n = trustNotices[s.tabKey], n.canAsk else {
+                return done(.fail("\(s.name) has no blocked /fork waiting on a trust question Duo can offer."))
+            }
+            // Always asks: the sheet, in Duo, and this waits for the user's answer (DL-229).
+            askToTrust(s.tabKey, source: "duo2") { answer in
+                if answer.hasPrefix("trusted ") { done(.ok(answer)) }
+                else if answer == "cancelled" { done(.fail("cancelled: the user clicked Cancel in Duo. Nothing changed.")) }
+                else { done(.fail(answer)) }
+            }
+        case .sessionForkAgain:
+            guard let k = inv[0], let s = findSession(k, in: nil), trustNotices[s.tabKey]?.forkLine != nil else { return done(.fail("no blocked /fork to run again in that session")) }
+            guard canForkAgain(s.tabKey) else { return done(.fail("Claude isn't at an empty prompt in \(s.name): finish what's typed first.")) }
+            forkAgain(s.tabKey)
+            done(.ok("Typed the /fork line again in \(s.name)."))
         case .shellNew:
             newShell(); done(.ok("Opened a shell in \(currentProject?.name ?? fixture.home?.name ?? "the console")."))
         case .groups, .groupNew, .groupAdd, .groupRemove, .groupRename, .groupDelete:

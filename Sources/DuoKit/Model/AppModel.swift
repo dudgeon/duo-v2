@@ -133,6 +133,8 @@ public final class AppModel {
     public var fixtureIdleBuckets: [(label: String, rows: [IdleRow])]?
     /// Fixture mode: a console tab whose session has ended, and the bar's text (console-ended).
     public var fixtureEnded: (key: String, message: String)?
+    /// Sessions whose `/fork` Claude Code refused for an untrusted folder, by tab key (DL-229). In memory only.
+    public var trustNotices: [String: TrustNotice] = [:]
     /// Fixture mode: chats the chat-mode targets show, by console tab (ChatTargets).
     public var fixtureChats: [String: ChatSession] = [:]
     /// The intro video's demo (VideoTargets): terminals showing a recorded screen, by tab; no process behind them.
@@ -472,7 +474,7 @@ public final class AppModel {
             MainActor.assumeIsolated { self?.minute = Date() }
         }.loose()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refreshLive() }
+            MainActor.assumeIsolated { self?.refreshLive(); self?.scanTrustNotices() }
         }.loose()
     }
 
