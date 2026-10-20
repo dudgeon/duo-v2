@@ -12,6 +12,7 @@ let walkGuardExempt: [String: String] = [
     "DuoKit/Chat/ChatSignal.swift": "the mod's own copy, in Duo's support folder",
     "DuoKit/Claude/ClaudeStorage.swift": "Claude's config folder (~/.claude/projects)",
     "DuoKit/Editor/HTMLViewer.swift": "one listing of the open page's own folder",
+    "DuoKit/Live/ForkSource.swift": "Claude's jobs folder (~/.claude/jobs, the forks' state.json)",
     "DuoKit/Live/Beacons.swift": "Claude's sessions folder",
     "DuoKit/Live/FileActions.swift": "the templates folders of a project and Home",
     "DuoKit/Live/Inventory.swift": "Claude's config folder",

@@ -17,6 +17,8 @@ struct ConsoleTabStrip: View {
         let id: String
         let title: String
         let state: SessionState?   // nil: a shell
+        /// The original this tab's session is a fork of (DL-228): the tab wears the fork mark.
+        var forkOf: String? = nil
     }
 
     /// The selected Claude tab is showing chat: the thin light strip.
@@ -33,7 +35,7 @@ struct ConsoleTabStrip: View {
             pane: pane, space: Self.space, keys: tabs.map(\.id), selected: selection,
             ground: ground, rule: light ? DuoColor.rule : DuoColor.consoleRule, dim: dim, font: light ? .control : .mono,
             needsYou: Set(tabs.filter { $0.state == .needsYou }.map(\.id)), dot: light ? DuoColor.needsYou : DuoColor.needsYouOnConsole,
-            rows: { tabs.map { TabMenuRow(key: $0.id, title: $0.title, state: $0.state, isShell: $0.state == nil, selected: $0.id == selection) } },
+            rows: { tabs.map { TabMenuRow(key: $0.id, title: $0.title, state: $0.state, isShell: $0.state == nil, selected: $0.id == selection, isFork: $0.forkOf != nil) } },
             choose: { open($0) },  // action: session open
             height: height,
             pinned: { EmptyView() },
@@ -91,12 +93,12 @@ struct ConsoleTabStrip: View {
         guard let project else { return [] }
         let sessions = model.tabSessions(inProject: project)
         let tabs = model.consoleTabKeys(inProject: project).map { key -> Tab in
-            if let s = sessions.first(where: { $0.tabKey == key }) { return Tab(id: key, title: s.name, state: s.state) }
+            if let s = sessions.first(where: { $0.tabKey == key }) { return Tab(id: key, title: s.name, state: s.state, forkOf: model.forkParentName(of: key)) }
             return Tab(id: key, title: model.consoleTitle(key), state: nil)
         }
         // Two shells reading the same: the later ones take " 2", " 3", in strip order (DL-225).
         let titles = ShellTitles.numbered(tabs.map { (title: $0.title, isShell: $0.state == nil) })
-        return zip(tabs, titles).map { Tab(id: $0.id, title: $1, state: $0.state) }
+        return zip(tabs, titles).map { Tab(id: $0.id, title: $1, state: $0.state, forkOf: $0.forkOf) }
     }
 
     static let space = "duo.tabs.console"
@@ -111,6 +113,10 @@ struct ConsoleTabStrip: View {
                     .frame(width: t.state == nil ? 11 : DuoMetric.glyph, height: t.state == nil ? 9 : DuoMetric.glyph)   // the glyph's own box
             } else if let st = t.state { StateGlyph(st, on: light ? .light : .console(active: active)) }   // light: Q-87's stand-in
             else { ShellPromptMark(active: active, light: light).frame(width: 11, height: 9) }
+            // A fork's mark (DL-228 B): after the state glyph, for as long as the tab is open; it stays through a rename.
+            if t.forkOf != nil {
+                ForkMark(color: light ? (active ? DuoColor.text : DuoColor.text2) : (active ? DuoColor.consoleText : DuoColor.consoleText2))
+            }
             if light {
                 Text(Self.short(t.title))
                     .duoText(.control, weight: active ? .semibold : nil)
@@ -146,7 +152,7 @@ struct ConsoleTabStrip: View {
         .modifier(ShellTabMenu(key: t.id, pane: pane, enabled: t.state == nil))
         .modifier(TabHover(key: t.id) { model.closeConsoleTab(t.id) })
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(t.state == nil ? "\(t.title), shell" : t.title)
+        .accessibilityLabel(t.state == nil ? "\(t.title), shell" : t.forkOf.map { "\(t.title), fork of \($0), \(t.state?.spokenName ?? "")" } ?? t.title)
         .modifier(KeepRunningLabel(pinned: t.state != nil && model.isKeepRunning(t.id), name: t.title, state: t.state ?? .idle))
         .accessibilityIdentifier(isHome ? "" : "video.tab.middle.\(allTabs.firstIndex { $0.id == t.id } ?? 0)")   // anchors: the video cursor's target (0-based, strip order)
         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
@@ -186,6 +192,26 @@ public enum TextWidth {
         let w = (s as NSString).size(withAttributes: [.font: font]).width
         cache[key] = w
         return w
+    }
+}
+
+/// The fork mark (DL-228 B, fork-thread-handoff `canvas/Strip.dc.html`): three small circles joined as a branch, 10 × 10,
+/// stroke 1.3, round caps and joins, in the tab's text colour.
+struct ForkMark: View {
+    let color: Color
+    var body: some View {
+        Canvas { ctx, box in
+            ctx.scaleBy(x: box.width / 10, y: box.height / 10)
+            var p = Path()
+            for c in [CGPoint(x: 2.6, y: 2), CGPoint(x: 2.6, y: 8.2), CGPoint(x: 7.6, y: 2)] {
+                p.addEllipse(in: CGRect(x: c.x - 1.2, y: c.y - 1.2, width: 2.4, height: 2.4))
+            }
+            p.move(to: .init(x: 2.6, y: 3.2)); p.addLine(to: .init(x: 2.6, y: 7))
+            p.move(to: .init(x: 7.6, y: 3.2)); p.addCurve(to: .init(x: 2.6, y: 7), control1: .init(x: 7.6, y: 5.4), control2: .init(x: 2.6, y: 4.8))
+            ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 1.3, lineCap: .round, lineJoin: .round))
+        }
+        .frame(width: 10, height: 10)
+        .accessibilityHidden(true)
     }
 }
 
