@@ -1716,7 +1716,7 @@ func repoFixture() throws -> Fixture {
     let pStart = pctx("start")
     print("    start: " + pStart.replacingOccurrences(of: "\n", with: "\n           "))
     check(pStart == "Duo: This session is in the project “proj” (\(tcProj.standardizedFileURL.path)). Its brief, from PROJECT.md (the user sees it on the project's tile in Duo):\n"
-          + "- Goal: Ship the Q4 plan to the exec team\n- Health: at risk\n- Next step: Draft the budget section", "start: name, folder, goal, health, next step, in four lines")
+          + "- Goal: Ship the Q4 plan to the exec team\n- Health: at risk\n- Next step: Draft the budget section\n" + ProjectContext.tasksLine, "start: name, folder, goal, health, next step, in four lines")
     check(pctx("prompt") == "", "a prompt with nothing changed adds nothing")
     check(pctx("start", cwd: tcProj.appending(path: "tasks").path) == pStart, "a session in a subfolder is told its enclosing project (DL-82)")
     check(pctx("start", project: "proj", cwd: "/elsewhere") == pStart, "a session Duo files under the project is told it, wherever Claude runs")
@@ -1732,7 +1732,7 @@ func repoFixture() throws -> Fixture {
     // The guide's workaround: CLAUDE.md imports the brief, so only the name and folder.
     brief(tcProj, "goal: Ship it\nhealth: on-track\nnext: Review", claude: "# proj\n\nSee @PROJECT.md for the brief.\n")
     let pImported = pctx("start")
-    check(pImported == "Duo: This session is in the project “proj” (\(tcProj.standardizedFileURL.path)). Its CLAUDE.md imports PROJECT.md, so you already have its goal, health and next step.",
+    check(pImported == "Duo: This session is in the project “proj” (\(tcProj.standardizedFileURL.path)). Its CLAUDE.md imports PROJECT.md, so you already have its goal, health and next step.\n" + ProjectContext.tasksLine,
           "CLAUDE.md imports @PROJECT.md: not repeated, one line")
     brief(tcProj, "goal: Ship it\nhealth: on-track\nnext: Review", claude: "Mentions PROJECT.md and @PROJECT.mdx but imports neither.\n")
     check(pctx("start").contains("- Goal: Ship it"), "a mention of PROJECT.md, or another file, isn't an import")
@@ -1743,7 +1743,7 @@ func repoFixture() throws -> Fixture {
     check(pctx("prompt") == "Duo: The project's goal is now “Ship it by Friday” (was “Ship it”).", "imported: a change mid-session is still told (CLAUDE.md was read at start)")
     // A new project's PROJECT.md (health only).
     brief(tcProj, "goal: \"\"\nhealth: on-track\nnext: \"\"")
-    check(pctx("start") == "Duo: This session is in the project “proj” (\(tcProj.standardizedFileURL.path)). Its PROJECT.md has no goal or next step yet.",
+    check(pctx("start") == "Duo: This session is in the project “proj” (\(tcProj.standardizedFileURL.path)). Its PROJECT.md has no goal or next step yet.\n" + ProjectContext.tasksLine,
           "a brand-new brief: one line, no empty fields")
     // Never told (a session started before ENH-16) hears it all on its next prompt; a session moving out of the project is told so.
     brief(tcProj, "goal: Ship it\nhealth: on-track\nnext: Review")
@@ -1756,7 +1756,7 @@ func repoFixture() throws -> Fixture {
     // With a task too: the project first, then the task, one blank line apart, all in one additionalContext.
     let both = ProjectContext.joined(pctx("start", "33333333-2222-3333-4444-555555555555"), ctx("start"))
     print("    both:  " + both.replacingOccurrences(of: "\n", with: "\n           "))
-    check(both.hasPrefix("Duo: This session is in the project “proj”") && both.contains("- Next step: Review\n\nDuo: This session is attributed to the task “Exec review prep”"), "project then task, one blank line apart")
+    check(both.hasPrefix("Duo: This session is in the project “proj”") && both.contains("- Next step: Review\n" + ProjectContext.tasksLine + "\n\nDuo: This session is attributed to the task “Exec review prep”"), "project then task, one blank line apart")
     check(ProjectContext.joined("", "") == "" && ProjectContext.joined("", "a") == "a", "nothing to say: no output; one part: just it")
     try? FileManager.default.removeItem(at: tc)
 

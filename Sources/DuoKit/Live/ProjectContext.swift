@@ -56,7 +56,7 @@ public enum ProjectContext {
 
     /// At SessionStart: the project in full (or only its name, when CLAUDE.md imports the brief).
     public static func atStart(_ b: Brief?) -> String? {
-        b.map { "Duo: " + listing($0) }
+        b.map { "Duo: " + listing($0) + "\n" + tasksLine }
     }
 
     /// At UserPromptSubmit: what changed since `told` (nil: never told, so say it all), once.
@@ -81,8 +81,11 @@ public enum ProjectContext {
         a.name == b.name && a.folder == b.folder && a.goal == b.goal && a.health == b.health && a.next == b.next
     }
 
+    /// Said at start whatever the brief holds: agents otherwise write a TASKS.md Duo can't see (F-343).
+    public static let tasksLine = "Track work as Duo tasks, not a TASKS.md file: `duo2 tasks` lists them, `duo2 task new` makes one."
+
     static func listing(_ b: Brief) -> String {
-        let head = "This session is in the project \(quoted(b.name)) (\(b.folder)). Track work as Duo tasks, not a TASKS.md: `duo2 tasks` lists them, `duo2 task new` makes one."
+        let head = "This session is in the project \(quoted(b.name)) (\(b.folder))."
         if b.imported { return head + " Its CLAUDE.md imports PROJECT.md, so you already have its goal, health and next step." }
         let facts = [("Goal", b.goal), ("Health", healthWords(b.health)), ("Next step", b.next)].filter { !$0.1.isEmpty }
         // A brand-new PROJECT.md says only `health: on-track`: no brief yet, so no lines.
