@@ -254,6 +254,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var claudePath: String?
     public var notifyNeedsYou = true
     public var dockBadge = true
+    /// Settings › General › Appearance (DL-224): "system" (the default), "light" or "dark".
+    public var appearance: String?
     public var legacyDismissed: String?
     public var legacyBackup: String?
     /// Home's folder, the container of the user's tracked projects (DL-85), once chosen. Without it

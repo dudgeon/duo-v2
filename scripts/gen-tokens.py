@@ -23,7 +23,18 @@ def hex6(v):
 
 light = t["color"]["light"]
 console = t["color"]["console"]
-dark = t["color"].get("darkProvisional", {})
+dark = t["color"]["dark"]   # DL-224: Dark B, "Ink"
+
+def alphas(name, spec):
+    la = float(spec.get("alpha", 1))
+    da = float(dark.get(name, {}).get("alpha", la))
+    return f", lightAlpha: {la!r}, darkAlpha: {da!r}" if (la, da) != (1.0, 1.0) else ""
+
+
+def dyn(name, spec):
+    d = dark.get(name, {}).get("value", spec["value"])
+    return f'NSColor.duoDynamic(light: {hex6(spec["value"])}, dark: {hex6(d)}, name: "{name}"{alphas(name, spec)})'
+
 
 lines = []
 w = lines.append
@@ -32,8 +43,7 @@ w("")
 w("import AppKit")
 w("import SwiftUI")
 w("")
-w("/// Semantic colours (handoff §4.1). Light chrome follows the appearance; the dark set is")
-w("/// provisional and unapproved (§12 Q4), so the app forces light until Geoff signs one off.")
+w("/// Semantic colours (handoff §4.1). Every colour follows the appearance: light, or Dark B \"Ink\" (DL-224).")
 w("public enum DuoColor {")
 for name, spec in light.items():
     if name.startswith("$"):
@@ -41,28 +51,22 @@ for name, spec in light.items():
     d = dark.get(name, {}).get("value", spec["value"])
     use = spec.get("use", "")
     w(f"    /// {use}" if use else f"    /// {name}")
-    alpha = f".withAlphaComponent({float(spec['alpha'])!r})" if "alpha" in spec else ""
-    w(f"    public static let {name} = Color(nsColor: NSColor.duoDynamic(light: {hex6(spec['value'])}, dark: {hex6(d)}, name: \"{name}\"){alpha})")
+    w(f"    public static let {name} = Color(nsColor: NSColor.duoDynamic(light: {hex6(spec['value'])}, dark: {hex6(d)}, name: \"{name}\"{alphas(name, spec)}))")
 w("")
-w("    // Console chrome: the same in every appearance.")
+w("    // Console chrome: light values here, and in dark the console sinks (DL-224).")
 for name, spec in console.items():
     if name.startswith("$"):
         continue
     use = spec.get("use", "")
     w(f"    /// {use}" if use else f"    /// {name}")
-    w(f"    public static let {name} = Color(nsColor: .duoFixed({hex6(spec['value'])}))")
+    w(f"    public static let {name} = Color(nsColor: {dyn(name, spec)})")
 w("}")
 w("")
 w("public enum DuoNSColor {")
 for name, spec in list(light.items()) + list(console.items()):
     if name.startswith("$"):
         continue
-    if name in console:
-        w(f"    public static let {name} = NSColor.duoFixed({hex6(spec['value'])})")
-    else:
-        d = dark.get(name, {}).get("value", spec["value"])
-        alpha = f".withAlphaComponent({float(spec['alpha'])!r})" if "alpha" in spec else ""
-        w(f"    public static let {name} = NSColor.duoDynamic(light: {hex6(spec['value'])}, dark: {hex6(d)}, name: \"{name}\"){alpha}")
+    w(f"    public static let {name} = {dyn(name, spec)}")
 w("}")
 w("")
 
@@ -223,7 +227,8 @@ w("/// The popover shadow (handoff §4.5): search, the action menu, the idle lis
 w("public enum DuoShadow {")
 sh = t["shadow"]["popover"]
 m = re.fullmatch(r"rgba\((\d+),\s*(\d+),\s*(\d+),\s*([0-9.]+)\)", sh["color"].replace(" ", ""))
-w(f"    public static let popoverColor = Color(.sRGB, red: {int(m.group(1))}/255, green: {int(m.group(2))}/255, blue: {int(m.group(3))}/255, opacity: {float(m.group(4))!r})")
+md = re.fullmatch(r"rgba\((\d+),\s*(\d+),\s*(\d+),\s*([0-9.]+)\)", sh["colorDark"].replace(" ", ""))   # DL-224
+w(f"    public static let popoverColor = Color(nsColor: NSColor.duoDynamicRGBA(light: ({m.group(1)}, {m.group(2)}, {m.group(3)}, {float(m.group(4))!r}), dark: ({md.group(1)}, {md.group(2)}, {md.group(3)}, {float(md.group(4))!r}), name: \"popoverShadow\"))")
 w(f"    /// SwiftUI's radius is half the CSS blur.")
 w(f"    public static let popoverRadius: CGFloat = {num(sh['blur'] / 2)}")
 w(f"    public static let popoverX: CGFloat = {num(sh['x'])}")

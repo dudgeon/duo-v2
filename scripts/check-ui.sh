@@ -11,7 +11,7 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 [ -n "${NO_BUILD:-}" ] || scripts/bundle.sh >/dev/null
-out="$root/build/ui"
+out="${UI_OUT:-$root/build/ui}"
 mkdir -p "$out"
 states=("$@")
 [ ${#states[@]} -gt 0 ] || states=(overview flow-zoom-1 project flow-zoom-2 flow-zoom-3 flow-zoom-4)
@@ -24,7 +24,8 @@ if [ "${DUO_TEST_FOREGROUND:-}" = 1 ]; then
   echo "⚠ DUO_TEST_FOREGROUND=1: this run shows a Duo window, about 5 s for each of ${#states[@]} state(s) (Geoff's OK first)" >&2
 fi
 # The chat feed's proof mode (DUO_FEED=proof: cards drawn in pieces, C-85) reaches the app too; `open` passes no environment.
-for v in DUO_FEED DUO_FEED_PIECE; do
+# DUO_APPEARANCE=dark|light|system draws the run in that appearance (DL-224); UI_OUT writes elsewhere than build/ui.
+for v in DUO_FEED DUO_FEED_PIECE DUO_APPEARANCE; do
   if [ -n "${!v:-}" ]; then fg+=(--env "$v=${!v}"); fi
 done
 

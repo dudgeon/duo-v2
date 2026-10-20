@@ -167,11 +167,14 @@ public enum FixtureHarness {
                 SettingsInfo.shared.refresh()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                     MainActor.assumeIsolated {
-                        let r = ImageRenderer(content: SettingsView(scrolls: false).environment(model))
+                        let r = ImageRenderer(content: SettingsView(scrolls: false).environment(model).environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
                         r.scale = 2
-                        if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+                        // The renderer takes the colours of the current drawing appearance, not the app's (DL-224).
+                        var image: NSImage?
+                        NSApp.effectiveAppearance.performAsCurrentDrawingAppearance { image = r.nsImage }
+                        if let img = image, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
                            let png = rep.representation(using: .png, properties: [:]) { try? png.write(to: URL(fileURLWithPath: parts[1])) }
-                        else { FileHandle.standardError.write(Data("render-settings: nothing drawn (image \(r.nsImage == nil ? "nil" : "\(r.nsImage!.size)"))\n".utf8)) }
+                        else { FileHandle.standardError.write(Data("render-settings: nothing drawn (image \(image == nil ? "nil" : "\(image!.size)"))\n".utf8)) }
                     }
                 }
             }
