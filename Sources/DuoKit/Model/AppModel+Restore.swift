@@ -150,6 +150,7 @@ extension AppModel {
         if let folder = s.project, let project = name(folder), let p = s.projects.first(where: { resolve($0.folder) == resolve(folder) }) {
             open(project: project)
             if let tab = p.consoleTab, fixture.sessions(inProject: project).contains(where: { $0.tabKey == tab }) { consoleTab = tab }
+            else if p.consoleTab != nil || consoleTab == nil { consoleTab = consoleTabKeys(inProject: project).first }   // its tab was a shell, now gone: the first, never none
             if let right = p.rightTab, right == "Project" || (openDocumentsByProject[project] ?? []).contains(right) {
                 rightTab = right
                 if right != "Project" { selectedFile = right }
