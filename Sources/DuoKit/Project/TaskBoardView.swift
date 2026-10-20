@@ -603,7 +603,7 @@ struct CardMeta: View {
                     let shut: Bool = { if case .info(let i)? = model.issueState(of: t) { return !i.open }; return false }()
                     HStack(spacing: 4) {
                         BoardGlyph(shut ? .issueDone : .issue, color: shut ? DuoColor.text : DuoColor.text2)
-                        Text(shut ? "\(ref.short) closed on GitHub" : ref.short).fontWeight(shut ? .semibold : .regular).lineLimit(1)
+                        Text(shut ? "\(ref.short) closed on GitHub" : ref.short).fontWeight(shut ? .semibold : .regular).fixedSize(horizontal: false, vertical: true)
                     }
                     .foregroundStyle(shut ? DuoColor.text : DuoColor.text2)
                     .help(Self.issueHelp(model.issueState(of: t), ref: ref))
