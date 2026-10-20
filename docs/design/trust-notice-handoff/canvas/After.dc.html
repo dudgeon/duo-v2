@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>After trusting, and when it can't</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+</style>
+</helmet>
+<div style="width: 1560px; height: 1000px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">After: the same bar says it's done, and the fork can go again [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1300px">The bar changes in place (no slide), so you see the answer where you asked. The session isn't restarted: Claude Code re-reads its file on each check, so the next /fork works.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 720px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q3 A (recommended) · Fork Again</div>
+      <dc-import name="Console" con="{{doneA}}" hint-size="720px,300px"></dc-import>
+      <div class="cap"><b>"Claude Code now trusts checkout."</b> Fork Again (default) types your same /fork line into the session, text and Return as separate keystrokes (F-45), only when Claude is at its prompt and nothing is typed there; else it's disabled with "Finish what you're typing first" as its help. Then the bar goes, and the fork's tab opens beside this one as DL-228 draws it (fork-thread board 3). OK just closes the bar.</div>
+    </div>
+    <div style="width: 720px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q3 B · words only</div>
+      <dc-import name="Console" con="{{doneB}}" hint-size="720px,300px"></dc-import>
+      <div class="cap"><b>"Claude Code now trusts checkout. Run /fork again."</b> with OK. The bar also goes by itself when you next send something.</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 720px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">When Duo can't make the change</div>
+      <dc-import name="Console" con="{{fail}}" hint-size="720px,150px"></dc-import>
+      <div class="cap"><b>"Couldn't change Claude Code's settings: ‹why›."</b> Why: "another Claude is saving them; try again in a moment" (Claude's lock held past a few tries), "the file isn't readable as settings, so Duo left it alone" (not valid JSON), "Duo can't write to ~/.claude.json" (permissions). Try Again (default) and Not Now. Duo never writes a file it couldn't read whole, and never removes Claude's lock.</div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 12px; padding-top: 26px">
+      <div class="cap"><b>In chat</b> the bar over the composer changes the same way: "Claude Code now trusts checkout." with Fork Again and OK; Fork Again sends your /fork line through the composer.</div>
+      <div class="cap"><b>Not Now</b> hides the bar for this session; the next "Workspace not trusted" brings it back. Nothing is remembered on disk.</div>
+      <div class="cap"><b>Undo:</b> none in the bar. Untrusting is Claude Code's own (its settings, or editing its file), as for any folder you trusted in Claude.</div>
+      <div class="cap"><b>Logged:</b> one line in Duo's log, "trusted ‹path› for Claude Code (asked by ‹you | duo2›)", so a trust Duo made can always be traced.</div>
+      <div class="cap"><b>duo2 (Q4 A):</b> <span class="mono">duo2 session trust-folder &lt;id&gt;</span> shows the same sheet in Duo and waits for your answer; it prints "trusted ‹path›" or "cancelled". No <span class="mono">--yes</span>. <span class="mono">duo2 session show</span> lists a pending notice as "fork blocked: folder not trusted".</div>
+      <div class="cap"><b>VoiceOver:</b> the bar is announced once when it appears ("/fork couldn't start: Claude Code doesn't trust checkout yet"), and again when it changes ("Claude Code now trusts checkout").</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const strip = { tabs: [ { g: 'idle', title: 'Pricing research', on: true }, { g: 'work', title: 'Fix flaky cart test' }, { g: 'shell', title: 'checkout' } ] };
+    const lines = [ { bar: '70%' }, { bar: '52%' }, { t: '> /fork try the annual plan first' }, { t: '  ⎿  Workspace not trusted. Run `claude` in /Users/you/claude-home/checkout', dim: true }, { t: '     once and accept the trust prompt, then retry.', dim: true } ];
+    return {
+      doneA: { w: 720, h: 300, strip, lines, bar: { msg: 'Claude Code now trusts checkout.', buttons: [ { label: 'OK' }, { label: 'Fork Again', def: true } ] } },
+      doneB: { w: 720, h: 300, strip, lines, bar: { msg: 'Claude Code now trusts checkout. Run /fork again.', buttons: [ { label: 'OK', def: true } ] } },
+      fail: { w: 720, h: 150, lines: [ { t: '  ⎿  Workspace not trusted. Run `claude` in /Users/you/claude-home/checkout', dim: true } ], bar: { msg: 'Couldn’t change Claude Code’s settings: another Claude is saving them.', buttons: [ { label: 'Not Now' }, { label: 'Try Again', def: true } ] } }
+    };
+  }
+}
+</script>
+</body>
+</html>

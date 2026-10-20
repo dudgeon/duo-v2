@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Where the notice appears</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+</style>
+</helmet>
+<div style="width: 1560px; height: 1080px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Where it appears: in the session's own tab, under what Claude printed [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1300px">Duo reads Claude Code's line off the session's screen, the way chat reads its dialogs. The notice belongs to that session: it shows in its tab only, takes no focus, and the terminal keeps working under it. No sheet, no toast, nothing in the left pane.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 720px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q2 A (recommended) · a bar under the terminal</div>
+      <dc-import name="Console" con="{{under}}" hint-size="720px,380px"></dc-import>
+      <div class="cap"><b>The console bar</b>, as the ended bar is drawn: <span class="mono">consoleBarHeight</span> 40, a 1 <span class="mono">consoleRule</span> above, padding 16, the message in <span class="mono">body</span> <span class="mono">consoleText</span>, console buttons (Trust This Folder… the default, bold edge). It sits right under the line Claude printed and the prompt you type in. It shrinks the terminal by 40; the terminal reflows as when a window resizes.</div>
+    </div>
+    <div style="width: 720px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q2 B · a bar over the terminal</div>
+      <dc-import name="Console" con="{{over}}" hint-size="720px,380px"></dc-import>
+      <div class="cap">The same bar under the tab strip, where the editor's notices sit (DocumentStateBar). Further from Claude's line; the terminal's text moves down instead of the prompt moving up.</div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 620px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">In chat (either answer to Q2)</div>
+      <dc-import name="Chat" chat="{{chat}}" hint-size="620px,420px"></dc-import>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 12px; padding-top: 26px">
+      <div class="cap"><b>Chat shows Claude's line as it shows any command's result</b> (DL-143: the elbow, right-aligned under your bubble), and the notice as a bar over the composer: <span class="mono">ground</span>, a 1 <span class="mono">rule</span> above, padding 10 20, light buttons as on sheets.</div>
+      <div class="cap"><b>The words:</b> "Claude Code doesn't trust ‹folder› yet, so /fork couldn't start." The folder by its name; the full path is in the sheet. Not Now hides the bar for this session until /fork fails again.</div>
+      <div class="cap"><b>Narrow (console under 560):</b> the message cuts at the end ("Claude Code doesn't trust checkout yet, so…"); the buttons stay whole. VoiceOver reads the whole sentence.</div>
+      <div class="cap"><b>When the bar goes by itself:</b> the folder becomes trusted some other way (you answered Claude's own question somewhere), the session ends, or its tab closes.</div>
+      <div class="cap"><b>Not for a folder Claude Code never trusted</b> (no trusted folder above it): the bar says "Claude Code doesn't trust ‹folder›. Run claude there once and answer its trust question." with OK only. Duo offers to trust only what Claude Code already trusts from above.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1560,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const strip = { tabs: [ { g: 'idle', title: 'Pricing research', on: true }, { g: 'work', title: 'Fix flaky cart test' }, { g: 'shell', title: 'checkout' } ] };
+    const lines = [ { bar: '70%' }, { bar: '52%' }, { bar: '61%' }, { t: '> /fork try the annual plan first' }, { t: '  ⎿  Workspace not trusted. Run `claude` in /Users/you/claude-home/checkout', dim: true }, { t: '     once and accept the trust prompt, then retry.', dim: true } ];
+    const bar = { msg: 'Claude Code doesn’t trust checkout yet, so /fork couldn’t start.', buttons: [ { label: 'Not Now' }, { label: 'Trust This Folder…', def: true } ] };
+    return {
+      under: { w: 720, h: 380, strip, lines, bar },
+      over: { w: 720, h: 380, strip, lines, bar, top: true },
+      chat: { w: 620, h: 420, msg: bar.msg, buttons: bar.buttons }
+    };
+  }
+}
+</script>
+</body>
+</html>

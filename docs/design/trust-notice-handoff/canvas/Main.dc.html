@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trust this folder: why and the questions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:13px;line-height:19px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px}
+.card{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.q{font-size:13px;line-height:19px;color:#1F2328}
+.q b{font-weight:600}
+.opt{font-size:13px;line-height:19px;color:#5B636D;padding-left:14px}
+.opt b{color:#1F2328;font-weight:600}
+</style>
+</helmet>
+<div style="width: 1400px; height: 1000px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 26px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Trust this folder: when /fork says "Workspace not trusted" (Q-219, DL-227)</div>
+    <div class="cap" style="max-width: 1200px">Claude Code 2.1.303 checks trust again when /fork starts its background session, and that check honours a trusted parent only down to a git repository's top folder. The session's own screen checked once, at start, when the folder wasn't a repository yet. So a project under a trusted Home that became a repository during the session can't fork. Claude Code 2.1.219 doesn't have this check: there /fork works and the notice never shows.</div>
+  </div>
+  <div style="display: flex; gap: 28px; align-items: flex-start">
+    <div style="width: 640px; display: flex; flex-direction: column; gap: 12px">
+      <div class="lab">What Duo would write, exactly (checked on 2.1.219, 2.1.303, 2.1.304)</div>
+      <div class="card">
+        <div class="cap"><b>One key, in Claude Code's own file:</b> <span class="mono">~/.claude.json</span> (or <span class="mono">$CLAUDE_CONFIG_DIR/.claude.json</span>), <span class="mono">projects["/Users/you/claude-home/checkout"].hasTrustDialogAccepted = true</span>. The same file and key on all three versions. It is what Claude Code writes when you answer its own "Yes, I trust this folder".</div>
+        <div class="cap"><b>Which folder:</b> the repository's top folder (where Claude's check stops), by its real path, no trailing slash. Nothing above it, nothing beside it.</div>
+        <div class="cap"><b>Nothing else changes.</b> If the entry exists (Claude makes one with <span class="mono">false</span> at each start), only that value flips; if not, the entry holds that key alone. Duo takes Claude's lock (<span class="mono">.claude.json.lock</span>), re-reads, writes a temp file beside it and renames it over, as Claude does. Claude merges by key, so a running session keeps Duo's change.</div>
+        <div class="cap"><b>Effect:</b> the next /fork in the same session works, with no restart (Claude re-reads the file on each check).</div>
+      </div>
+      <div class="lab" style="margin-top: 6px">Rules (not questions)</div>
+      <div class="card">
+        <div class="cap"><b>Never silently.</b> Only after your OK in a Duo sheet that names the folder, the file and the change (board 2). No setting turns it into an automatic step.</div>
+        <div class="cap"><b>Offered only for this case:</b> Duo reads Claude Code's exact line on the session's screen, the folder in it is the session's own (or its repository's top), and a folder above it is already trusted in Claude Code. A folder Claude Code never trusted gets the words, not the button: "Run claude there once and answer its trust question."</div>
+        <div class="cap"><b>Once per folder.</b> After it's trusted, the notice can't come back for that folder.</div>
+      </div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 12px">
+      <div class="lab">Questions · Geoff picked A, A, A, A (2026-10-20, by buttons; DL-229)</div>
+      <div class="card">
+        <div class="q"><b>Q1 · The action.</b> What does Trust This Folder… do?</div>
+        <div class="opt"><b>A (recommended):</b> after the sheet, Duo writes that one key itself. Exact, shown first, works in the open session at once.</div>
+        <div class="opt"><b>B:</b> Duo opens a tab running claude in that folder, so you answer Claude Code's own trust question ("No, exit" is its default on 2.1.303), then closes it. Duo writes nothing, but it's a second Claude start and an extra keypress.</div>
+      </div>
+      <div class="card">
+        <div class="q"><b>Q2 · Where, in a terminal session.</b></div>
+        <div class="opt"><b>A (recommended):</b> a bar under the terminal, like the ended bar: next to the line Claude printed and the prompt you're typing in.</div>
+        <div class="opt"><b>B:</b> a bar over the terminal, under the tab strip, like the editor's notices.</div>
+      </div>
+      <div class="card">
+        <div class="q"><b>Q3 · After trusting.</b></div>
+        <div class="opt"><b>A (recommended):</b> the bar says it's trusted and offers Fork Again, which types your same /fork line again.</div>
+        <div class="opt"><b>B:</b> the bar says it's trusted and to run /fork again; you type it.</div>
+      </div>
+      <div class="card">
+        <div class="q"><b>Q4 · duo2 (DL-71).</b> <span class="mono">duo2 session trust-folder &lt;id&gt;</span></div>
+        <div class="opt"><b>A (recommended):</b> always shows the sheet in Duo for you to answer; no <span class="mono">--yes</span>. Claude can ask, but can't trust a folder for itself.</div>
+        <div class="opt"><b>B:</b> <span class="mono">--yes</span> skips the sheet, like <span class="mono">issue close --yes</span>.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

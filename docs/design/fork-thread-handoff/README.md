@@ -80,7 +80,7 @@ A **thread** is a session and its forks (DL-24; `ForkLineage`, `forkedFrom`, the
 
 ## Not drawn here
 
-- Q-219 (c), a "Trust this folder" notice for `/fork`'s "Workspace not trusted": its own canvas round.
+- Q-219 (c), a "Trust this folder" notice for `/fork`'s "Workspace not trusted": drawn in `trust-notice-handoff/` (DL-229).
 - `/clear` and `/resume` keep today's behaviour (re-key, `continued-from`).
 
 ## For the build

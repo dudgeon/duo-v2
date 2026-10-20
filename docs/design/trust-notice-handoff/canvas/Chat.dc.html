@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chat with a notice bar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.ch{box-sizing:border-box;display:flex;flex-direction:column;background:#F3F4F6;border:1px solid #C9CDD3;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1F2328}
+.ch .strip{height:30px;flex:none;box-sizing:border-box;border-bottom:1px solid #C9CDD3;display:flex;align-items:center;gap:16px;padding:0 14px;font-size:12px;line-height:16px;color:#5B636D;white-space:nowrap}
+.ch .strip .on{color:#1F2328;font-weight:600}
+.ch .feed{flex:1;min-height:0;padding:18px 20px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.ch .bar{height:9px;border-radius:2px;background:#D5D9DE}
+.ch .meta{font-size:12px;line-height:16px;color:#5B636D;align-self:flex-end;margin-top:6px}
+.ch .you{align-self:flex-end;background:#DCE6F7;border-radius:12px;padding:8px 14px;font-size:13px;line-height:20px;max-width:440px}
+.ch .out{align-self:flex-end;display:flex;gap:8px;align-items:flex-start;max-width:440px;font-size:12px;line-height:16px;color:#5B636D}
+.ch .nb{flex:none;box-sizing:border-box;border-top:1px solid #C9CDD3;background:#F3F4F6;padding:10px 20px;display:flex;align-items:center;gap:10px}
+.ch .nb .msg{flex:1;min-width:0;font-size:13px;line-height:20px}
+.ch .nb .btns{display:flex;gap:8px;flex:none}
+.ch .nb button{font:400 13px/16px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#1F2328;background:#FFFFFF;border:1px solid #8B939C;border-radius:5px;padding:3px 10px;white-space:nowrap}
+.ch .nb button.def{border-color:#1F2328;font-weight:600}
+.ch .comp{flex:none;margin:0 20px 16px;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:10px;height:64px;box-sizing:border-box;padding:10px 14px;font-size:13px;line-height:20px;color:#5B636D}
+.ch .mk{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;flex:none}
+</style>
+</helmet>
+<div class="ch" style="width: {{w}}px; height: {{h}}px">
+<div class="strip"><span class="on">Pricing research</span><span>Fix flaky cart test</span></div>
+<div class="feed">
+<div class="bar" style="width: 62%"></div><div class="bar" style="width: 48%"></div><div class="bar" style="width: 55%"></div>
+<div class="meta">You · 11:30</div>
+<div class="you">/fork try the annual plan first</div>
+<div class="out"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="#5B636D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="margin-top: 2px; flex: none"><path d="M2 1v6.5h7"></path></svg><span>Workspace not trusted. Run `claude` in ~/claude-home/checkout once and accept the trust prompt, then retry.</span></div>
+</div>
+<sc-if value="{{hasBar}}" hint-placeholder-val="{{ true }}">
+<div class="nb">
+<span class="msg">{{c.msg}}</span>
+<sc-if value="{{hasMk}}"><span class="mk">{{c.mk}}</span></sc-if>
+<div class="btns"><sc-for list="{{btns}}" as="b" hint-placeholder-count="2"><button type="button" class="{{b.cls}}">{{b.label}}</button></sc-for></div>
+</div>
+</sc-if>
+<div class="comp">Reply to Claude…</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"chat":{"editor":null},"$preview":{"width":620,"height":420}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const demo = { w: 620, h: 420, msg: 'Claude Code doesn’t trust checkout yet, so /fork couldn’t start.', buttons: [ { label: 'Not Now' }, { label: 'Trust This Folder…', def: true } ] };
+    const c = this.props.chat || demo;
+    return { w: c.w || 620, h: c.h || 420, c, hasBar: !!c.msg, hasMk: !!c.mk, btns: (c.buttons || []).map((b) => ({ label: b.label, cls: b.def ? 'def' : '' })) };
+  }
+}
+</script>
+</body>
+</html>

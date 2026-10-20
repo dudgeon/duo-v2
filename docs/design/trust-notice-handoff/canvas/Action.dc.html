@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The action and its confirmation</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+.win{position:relative;background:#8F9296;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;display:flex;justify-content:center;box-sizing:border-box}
+.tb{position:absolute;left:0;top:0;right:0;height:38px;background:#E4E6EA;border-bottom:1px solid #C9CDD3}
+</style>
+</helmet>
+<div style="width: 1400px; height: 1000px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 22px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Trust This Folder… always asks first, and says exactly what changes [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1240px">A Duo question through SheetCenter (DuoQuestion), hung from the toolbar, never a system alert. Trust Folder is the default button (Return), Escape cancels. It is shown only after you press Trust This Folder…, or when duo2 asks (Q4).</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 620px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q1 A (recommended) · Duo writes the one key, after this</div>
+      <div class="win" style="width: 620px; height: 470px">
+        <div class="tb"></div>
+        <div style="margin-top: 38px">
+          <dc-import name="Sheet" sheet="{{sheetA}}" hint-size="500px,400px"></dc-import>
+        </div>
+      </div>
+      <div class="cap"><b>The box</b> shows the file and the one change, in <span class="mono">mono</span>: the path as Claude keys it (real path, the repository's top folder). <b>If the session runs in a subfolder</b>, the first line says "checkout (the repository's top folder, which holds api/)". <b>With CLAUDE_CONFIG_DIR set</b>, the box names that folder's <span class="mono">.claude.json</span>.</div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">Q1 B · Claude Code's own question, in a tab</div>
+      <dc-import name="Console" con="{{conB}}" hint-size="660px,330px"></dc-import>
+      <div class="cap"><b>A tab opens beside the session</b> running <span class="mono">claude</span> in the folder (with a minted <span class="mono">--session-id</span>), selected, showing Claude Code's own trust question. On 2.1.303 its default is "No, exit": you move down to "Yes, I trust this folder" and press Return. Duo sees the prompt arrive, ends that process and closes the tab. No turn runs. Claude's question text here is illustrative; the build shows Claude's screen as it is.</div>
+      <div class="cap"><b>Why A is recommended:</b> one step instead of three, the change is shown before it's made, and it doesn't start a second Claude. <b>Why you might pick B:</b> Duo never writes Claude Code's file (today it never does; trust is never copied on a move, FR-7.10.10).</div>
+      <div class="cap"><b>Both:</b> only this folder; Cancel changes nothing; the running session isn't restarted; works the same on 2.1.219 (same file and key), though there the notice doesn't appear.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      sheetA: { w: 500, title: 'Trust “checkout” for Claude Code?',
+        paras: [ 'Claude Code trusts your Home folder, but stops at a git repository when /fork starts a background session. checkout became a repository after this session started, so it needs its own trust.',
+                 'Duo will change one setting in Claude Code’s file, the one Claude sets when you answer “Yes, I trust this folder”:' ],
+        box: [ { k: 'Folder' }, { m: '/Users/you/claude-home/checkout' }, { k: 'In ~/.claude.json' }, { m: 'projects › …/checkout › hasTrustDialogAccepted: true' } ],
+        notes: [ 'Only this folder. Claude Code will then use its settings, hooks and tools without asking, as it already does here in this session. Nothing else in the file changes.' ],
+        buttons: [ { label: 'Cancel' }, { label: 'Trust Folder', def: true } ] },
+      conB: { w: 660, h: 330,
+        strip: { tabs: [ { g: 'idle', title: 'Pricing research' }, { g: 'idle', title: 'Trust checkout', on: true }, { g: 'work', title: 'Fix flaky cart test' } ] },
+        lines: [ { t: 'Quick safety check: Is this a project you created or one you trust?' }, { t: '/Users/you/claude-home/checkout', dim: true }, { t: ' ' }, { t: '❯ No, exit' }, { t: '  Yes, I trust this folder' } ],
+        bar: { msg: 'Answer Claude Code’s question to trust checkout. Duo closes this tab after.', buttons: [ { label: 'Cancel' } ] } }
+    };
+  }
+}
+</script>
+</body>
+</html>

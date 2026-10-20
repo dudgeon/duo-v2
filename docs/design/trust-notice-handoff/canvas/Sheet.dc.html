@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Duo question sheet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.sh{box-sizing:border-box;background:#F3F4F6;border:1px solid #C9CDD3;border-top:none;border-radius:0 0 10px 10px;box-shadow:0px 12px 32px rgba(31,35,40,0.22);padding:20px;display:flex;flex-direction:column;gap:12px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1F2328}
+.sh .t{font-size:13px;line-height:20px;font-weight:600}
+.sh .p{font-size:13px;line-height:20px}
+.sh .box{background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:8px 12px;display:flex;flex-direction:column;gap:2px}
+.sh .k{font-size:12px;line-height:16px;color:#5B636D}
+.sh .m{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px;line-height:19px;white-space:pre-wrap;word-break:break-all}
+.sh .n{font-size:13px;line-height:20px;color:#5B636D}
+.sh .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.sh button{font:400 13px/16px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:#1F2328;background:#FFFFFF;border:1px solid #8B939C;border-radius:5px;padding:3px 10px}
+.sh button.def{border-color:#1F2328;font-weight:600}
+</style>
+</helmet>
+<div class="sh" style="width: {{w}}px">
+<div class="t">{{s.title}}</div>
+<sc-for list="{{s.paras}}" as="p" hint-placeholder-count="1"><div class="p">{{p}}</div></sc-for>
+<sc-if value="{{hasBox}}" hint-placeholder-val="{{ true }}">
+<div class="box">
+<sc-for list="{{s.box}}" as="r" hint-placeholder-count="2">
+<sc-if value="{{r.isK}}"><div class="k">{{r.k}}</div></sc-if>
+<sc-if value="{{r.isM}}"><div class="m">{{r.m}}</div></sc-if>
+</sc-for>
+</div>
+</sc-if>
+<sc-for list="{{s.notes}}" as="n" hint-placeholder-count="1"><div class="n">{{n}}</div></sc-for>
+<div class="btns">
+<sc-for list="{{btns}}" as="b" hint-placeholder-count="2"><button type="button" class="{{b.cls}}">{{b.label}}</button></sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"sheet":{"editor":null},"$preview":{"width":460,"height":300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const demo = { w: 460, title: 'Trust checkout for Claude Code?', paras: ['A question.'], box: [ { k: 'Folder' }, { m: '~/claude-home/checkout' } ], notes: [], buttons: [ { label: 'Cancel' }, { label: 'Trust', def: true } ] };
+    const s = this.props.sheet || demo;
+    const box = (s.box || []).map((r) => ({ isK: r.k != null, k: r.k || '', isM: r.m != null, m: r.m || '' }));
+    return { w: s.w || 460, s: { ...s, paras: s.paras || [], notes: s.notes || [], box }, hasBox: box.length > 0, btns: (s.buttons || []).map((b) => ({ label: b.label, cls: b.def ? 'def' : '' })) };
+  }
+}
+</script>
+</body>
+</html>
