@@ -363,6 +363,7 @@ struct FileTreePane: View {
         let tree = FileNode.tree(from: files)
         VStack(alignment: .leading, spacing: 0) {
             DuoColor.controlEdge.frame(height: DuoMetric.borderFilesDivider)
+            ScrollViewReader { proxy in
             ScrollView {
             VStack(alignment: .leading, spacing: 0) {
             let repo = model.currentRepo
@@ -400,6 +401,11 @@ struct FileTreePane: View {
             }
             .padding(.bottom, 12)
             }
+            // A reveal, or a file picked another way (a link, a tab, duo2), brings its row into view
+            // once the listing has been laid out: the least scroll that shows it (BUG-053, F-340).
+            .onChange(of: model.treeRevealTick) { scrollToSelection(proxy) }
+            .onChange(of: model.selectedFile) { scrollToSelection(proxy) }
+            }
         }
         .background { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Files").accessibilityIdentifier("video.files.tree") } }   // anchors (scene 9)
         .contentShape(Rectangle())
@@ -412,6 +418,17 @@ struct FileTreePane: View {
         .duoAnimation(.dropIn, value: model.treeDropTarget == "")
         .modifier(TakesFileDrops(target: ""))
     }
+}
+
+extension FileTreePane {
+    @MainActor func scrollToSelection(_ proxy: ScrollViewProxy) {
+        guard let path = model.selectedFile else { return }
+        DispatchQueue.main.async { proxy.scrollTo(FileTreeRow.id(path)) }
+    }
+}
+
+enum FileTreeRow {
+    static func id(_ path: String) -> String { "filetree:" + path }
 }
 
 /// The root path row's menu: Reveal in Finder and Copy Path as a folder's has, plus the way up
@@ -586,6 +603,7 @@ struct FileRow: View {
             .duoAnimation(.dropIn, value: model.treeDropTarget == node.path)   // the drop target lights up (DL-130)
             .padding(.horizontal, DuoSpace.selectionInset)
             .contentShape(Rectangle())
+            .id(FileTreeRow.id(node.path))   // revealInTree scrolls to it (BUG-053)
             .onActivate { if node.children == nil { model.openDocument(node.path) } else { withDuoAnimation(.fold) { model.toggleFolder(node.path) } } }  // action: doc open
             .modifier(LiveContextMenu { FileMenu(path: node.path, isFolder: node.children != nil, onTab: false) })
             // Drag the file out (a terminal types its path); drop files on a folder, or on a file for its folder (DL-117).
