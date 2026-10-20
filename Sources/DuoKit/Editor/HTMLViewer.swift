@@ -42,6 +42,7 @@ public final class HTMLViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         config.websiteDataStore = .nonPersistent()
         config.userContentController.addUserScript(WKUserScript(source: HTMLPicker.script, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
         webView = DuoWebView(frame: .zero, configuration: config)
+        webView.appearance = NSAppearance(named: .aqua)   // a page keeps its author's colours in dark too (DL-224)
         super.init()
         webView.configuration.userContentController.add(self, name: "duoPage")
         webView.navigationDelegate = self

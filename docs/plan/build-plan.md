@@ -261,7 +261,7 @@ Geoff delegated scoping. The test for v1: **Geoff can use Duo all day instead of
 - Search M2–M3: sessions, memory and `CLAUDE.md` sources, secret redaction, facets, find similar, send to Claude, curation integration.
 - Full consolidation (CONS): archive by move, delete, tandem folder moves, catch-all splitting, duplicate and collision repair.
 - **Replying from the chrome** (DL-29; S12 first).
-- Thread detection for forks made inside the TUI (S11).
+- Thread detection for forks made inside the TUI (S11). **Moved into v1 by DL-227 (2026-10-20):** GitHub #14 from Geoff; option A (two live tabs) builds after its thread row is drawn.
 - Google Docs reading (DL-7), tracked suggestions (DL-5), scheduled sessions (DL-9), side-by-side documents (DL-11), dark appearance (§12 Q4; its design round pulled forward by DL-221), similarity analysis (SRCH L12), frontmatter panel beyond plain editing (LR-37), multi-window.
 
 ### Design queue, in build order

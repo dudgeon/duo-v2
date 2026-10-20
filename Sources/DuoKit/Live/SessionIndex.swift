@@ -17,6 +17,9 @@ public struct SessionIndex: Codable, Sendable, Equatable {
         /// The Remote Control name the session was started with (`duo2 session new --remote-control`,
         /// DL-128): every resume passes it again, so the session stays reachable from the Claude app.
         public var remoteControl: String?
+        /// `branch` or `fork` for a session made by `/branch` or `/fork` in a Duo session (DL-227); its
+        /// provenance is `forked-from:‹parent›`. A resume-as-fork has the provenance and no kind.
+        public var fork: String?
 
         public init(sessionId: String, createdAt: Date = Date(), provenance: String = "created-by-duo") {
             self.sessionId = sessionId

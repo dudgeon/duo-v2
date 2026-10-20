@@ -51,6 +51,10 @@ public struct Fixture: Codable, Sendable, Equatable {
         /// A Claude process is running for it (a hook beacon). With no Duo terminal open for it, it runs
         /// outside Duo: a terminal session as far as its glyph goes (DL-174).
         public var liveProcess: Bool? = nil
+        /// A fork's parent session id, and `branch` or `fork` (DL-227, F-344): from the transcript's `forkedFrom`,
+        /// the job's `state.json`, or Duo's index, before the shared-uuid lineage.
+        public var forkParent: String? = nil
+        public var fork: String? = nil
         public var id: String { "\(project)/\(name)" }
         /// What console tabs and terminals are keyed by: the session id when there is one.
         public var tabKey: String { sessionId ?? name }
@@ -155,6 +159,10 @@ public struct Fixture: Codable, Sendable, Equatable {
         public var created: String? = nil
         public var completed: String? = nil
         public var references: Int? = nil
+        /// The issue the task tracks, as written in the note (DL-226); its live state is the model's cache.
+        public var issue: String? = nil
+        /// When the note last changed, ms since 1970 (DL-217's in-play rule); none in the design fixture, which then counts as just now.
+        public var modified: Double? = nil
         public var id: String { project + "/" + path }
         public init(project: String, path: String, title: String, status: String?, sessionIds: [String], archived: Bool? = nil) {
             self.project = project; self.path = path; self.title = title; self.status = status; self.sessionIds = sessionIds; self.archived = archived
@@ -164,6 +172,8 @@ public struct Fixture: Codable, Sendable, Equatable {
             self.init(project: project, path: t.path, title: t.title, status: t.status, sessionIds: t.sessionIds, archived: t.archived ? true : nil)
             owner = t.owner; waitingOn = t.waitingOn; due = t.due; created = t.created; completed = t.completed
             references = t.references.isEmpty ? nil : t.references.count
+            issue = t.issue
+            modified = t.modified
         }
         /// Done and dropped tasks leave the lists (they stay notes), and so do archived ones.
         public var isOpen: Bool { !["done", "dropped"].contains(status ?? "") && archived != true }

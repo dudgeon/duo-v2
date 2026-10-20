@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The thread row, expanded</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.col{width:300px;display:flex;flex-direction:column;gap:12px}
+.pick{display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1.5px solid #1F2328;border-radius:6px;font-size:12px;line-height:16px;font-weight:600;color:#1F2328;align-self:flex-start}
+</style>
+</helmet>
+<div style="width: 1460px; height: 1000px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Question 1 · How an open thread reads in the left pane [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1200px">The same moment in each: Pricing research was branched 2 minutes ago, so the original is back at its prompt and the branch is working. Both have tabs, neither is in a task, so the thread sits in OPEN (DL-217). Rows keep DL-174's glyphs, 26 high; the thread rule is the task rule (1.5 controlEdge at 21).</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div class="col">
+      <span class="pick">A · chosen (Geoff, 2026-10-20)</span>
+      <div class="lab">The original leads, forks under it</div>
+      <dc-import name="Pane" pane="{{paneA}}" hint-size="300px,420px"></dc-import>
+      <div class="cap"><b>1</b> The original is the thread's first row, with the chevron. A click on the name opens it; the chevron folds the thread. <b>2</b> Each fork hangs under the thread rule, oldest first, as a task's sessions do, with its own glyph and wait. No extra words: Claude's own "(Branch)" title and the rule say what it is. Both rows take activeTint, since both have tabs; the selected one is the branch, where you're typing.</div>
+    </div>
+    <div class="col">
+      <span class="pick" style="border-color: #8B939C; color: #5B636D; font-weight: 400">A, folded</span>
+      <div class="lab">The same thread, folded</div>
+      <dc-import name="Pane" pane="{{paneFold}}" hint-size="300px,420px"></dc-import>
+      <div class="cap"><b>3</b> Folded, the row keeps the original's name, so it doesn't change name when you open it, and shows the thread's most urgent state and wait (DL-24), with "thread · 2" as built. <b>Change from as built:</b> today the folded row takes the most urgent member's name.</div>
+    </div>
+    <div class="col">
+      <span class="pick" style="border-color: #8B939C; color: #5B636D; font-weight: 400">B</span>
+      <div class="lab">A thread heading over its members</div>
+      <dc-import name="Pane" pane="{{paneB}}" hint-size="300px,420px"></dc-import>
+      <div class="cap">A 28-high heading row like a task's (chevron, name in bodyEmphasis, "thread · 2"), then every member under the rule, the forks tagged "fork" in text2. Clear, but the original's name shows twice, and the heading opens nothing by itself.</div>
+    </div>
+    <div class="col">
+      <span class="pick" style="border-color: #8B939C; color: #5B636D; font-weight: 400">C</span>
+      <div class="lab">Forks on two lines</div>
+      <dc-import name="Pane" pane="{{paneC}}" hint-size="300px,420px"></dc-import>
+      <div class="cap">As A, but a fork's row has a second line in control text2: "Fork of ‹name› · ‹when›" (the group page's words). Most explicit; costs 14 more points per fork, and says again what the rule already shows.</div>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 6px; max-width: 1380px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">Question 2 · When a thread opens by itself [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px"><b>A, chosen (Geoff, 2026-10-20): a fork made in Duo opens its thread</b>, with the fold's motion (motionFold 180 ms), so you see both sessions the moment it happens; after that it stays as you leave it, remembered per project like the time groups. Threads Duo merely finds (forks from before, or made outside Duo) stay folded. <b>B:</b> a thread is open whenever two or more of its sessions have tabs, and folds when only one does. <b>C:</b> as built: folded until you click the chevron.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1460,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const head = { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1' };
+    const top = [ { k: 'sec', label: 'Needs you · 1' }, { k: 'row', g: 'hand', title: 'Refund copy review', tm: '4m' }, { k: 'sec', label: 'Open · 3' } ];
+    const rest = [
+      { k: 'row', g: 'cw', tint: true, title: 'Fix flaky cart test', tm: 'working' },
+      { k: 'sec', label: 'Tasks · 2' }, { k: 'task', chev: 'd', title: 'Launch email', tm: 'idle · 1' },
+      { k: 'row', in: 'nest', g: 'ci', title: 'Draft launch email', tm: '2h' },
+      { k: 'fold', chev: 'r', title: 'Later', tm: '1' },
+      { k: 'new', title: 'New task' },
+      { k: 'sec', label: 'Other sessions · 4' }, { k: 'fold', chev: 'r', title: 'Today', tm: '2' }, { k: 'fold', chev: 'r', title: 'This week', tm: '2' }
+    ];
+    return {
+      paneA: { ...head, rows: [ ...top,
+        { k: 'row', chev: 'd', g: 'ti', tint: true, title: 'Pricing research', tm: 'at prompt', mk: '1' },
+        { k: 'row', in: 'nest', g: 'tw', tint: true, sel: true, title: 'Pricing research (Branch)', tm: 'working', mk: '2' },
+        ...rest ] },
+      paneFold: { ...head, rows: [ ...top,
+        { k: 'row', chev: 'r', g: 'tw', tint: true, sel: true, title: 'Pricing research', pill: 'thread · 2', tm: 'working', mk: '3' },
+        ...rest ] },
+      paneB: { ...head, rows: [ ...top,
+        { k: 'fold', chev: 'd', title: 'Pricing research', tm: 'thread · 2' },
+        { k: 'row', in: 'nest', g: 'ti', tint: true, title: 'Pricing research', tm: 'at prompt' },
+        { k: 'row', in: 'nest', g: 'tw', tint: true, sel: true, title: 'Pricing research (Br…', tag: 'fork', tm: 'working' },
+        ...rest ] },
+      paneC: { ...head, rows: [ ...top,
+        { k: 'row', chev: 'd', g: 'ti', tint: true, title: 'Pricing research', tm: 'at prompt' },
+        { k: 'two', in: 'nest', g: 'tw', tint: true, sel: true, title: 'Pricing research (Branch)', sub: 'Fork of Pricing research · 2m ago', tm: 'working' },
+        ...rest ] }
+    };
+  }
+}
+</script>
+</body>
+</html>

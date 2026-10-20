@@ -66,13 +66,16 @@ public enum TerminalCommand: Sendable, Equatable {
     case resumeClaude(sessionID: String, remoteControl: String? = nil, prompt: String? = nil)
     /// A new session with the same history: `--resume <from> --fork-session`, under a Duo-minted id.
     case forkClaude(from: String, sessionID: String)
+    /// A `/fork` in Claude's background: `claude attach ‹short›` shows the job in a tab (DL-227). Closing the tab detaches;
+    /// the fork keeps running. `sessionID` is the fork's id, which keys the tab and sets `DUO_SESSION_ID`.
+    case attachClaude(short: String, sessionID: String)
     /// A plain shell (DL-8). Auto-promotion of `claude` typed in it comes later.
     case shell
 
     /// The id the process was started with: its `DUO_SESSION_ID`, whatever the session is now.
     public var launchId: String? {
         switch self {
-        case .newClaude(let id, _, _, _), .resumeClaude(let id, _, _), .forkClaude(_, let id): id
+        case .newClaude(let id, _, _, _), .resumeClaude(let id, _, _), .forkClaude(_, let id), .attachClaude(_, let id): id
         case .shell: nil
         }
     }
@@ -187,6 +190,9 @@ public final class TerminalSession {
         case .forkClaude(let from, let id):
             guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
             run(claude, ["--resume", from, "--fork-session", "--session-id", id] + Self.hookArgs(id), environment: Self.environment(id))
+        case .attachClaude(let short, let id):
+            guard let claude = ClaudeLocator.resolve() else { return showMissingClaude() }
+            run(claude, ["attach", short], environment: Self.environment(id))
         case .shell:
             let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
             run(shell, ["-l"], argv0: "-" + (shell as NSString).lastPathComponent, environment: ChildEnvironment.make(sessionID: nil))
@@ -265,6 +271,23 @@ final class ProcessWatcher: NSObject, LocalProcessTerminalViewDelegate {
     nonisolated func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {}
 }
 
+/// The bytes Duo sends for the two chords SwiftTerm doesn't (see `GuardedTerminalView.keyDown`).
+public enum TerminalKeys {
+    /// ⇧↩ sends ESC CR (what iTerm and Terminal send for a soft newline) only while the program has
+    /// not asked for the kitty keyboard protocol; with it on, SwiftTerm sends Shift+Enter and Claude
+    /// Code (2.1.288+) reads that itself. 2.1.219 doesn't ask, so ⇧↩ would otherwise send. ⌘⌫ sends ^U,
+    /// delete to the line start, in both modes: SwiftTerm sends nothing without the protocol, and
+    /// Claude Code doesn't read a Super+Backspace report with it.
+    public static func bytes(keyCode: UInt16, modifiers: NSEvent.ModifierFlags, enhanced: Bool) -> [UInt8]? {
+        let mods = modifiers.intersection([.shift, .control, .option, .command])
+        switch (keyCode, mods) {
+        case (36, [.shift]), (76, [.shift]): return enhanced ? nil : [0x1b, 0x0d]
+        case (51, [.command]): return [0x15]
+        default: return nil
+        }
+    }
+}
+
 /// SwiftTerm's view, with LR-14's floor: never shrink the terminal below 8 columns by 1 row,
 /// whatever its pane does (collapse animations pass through zero width).
 public final class GuardedTerminalView: LocalProcessTerminalView {
@@ -278,6 +301,17 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
                       height: ceil((f.ascender - f.descender + f.leading) * Self.minRows) + 4)
     }
 
+    /// The console sinks in dark (DL-224): the background and foreground are resolved again when
+    /// the appearance changes, as a colour handed to the renderer is a snapshot of one appearance.
+    public override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            nativeBackgroundColor = DuoNSColor.console
+            nativeForegroundColor = DuoNSColor.consoleText
+        }
+        needsDisplay = true
+    }
+
     /// Forces a repaint from the current buffer. SwiftTerm's renderer draws from a snapshot, so
     /// `needsDisplay` alone repaints the old frame; a selection change invalidates the snapshot
     /// without resizing the PTY (findings F-20). Used when a terminal is attached to a slot.
@@ -285,6 +319,30 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
         selectAll()
         selectNone()
         needsDisplay = true
+    }
+
+    // MARK: Keys SwiftTerm leaves unsent (ENH-67, GitHub #4)
+
+    /// ⇧↩ adds a line and ⌘⌫ deletes to the line start. Plain Return is never remapped (LR-16).
+    /// SwiftTerm's `keyDown` isn't open to override, so a local monitor sees the key first, while
+    /// this terminal is the window's first responder.
+    private var keyMonitor: Any?
+
+    public override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if let m = keyMonitor { NSEvent.removeMonitor(m); keyMonitor = nil }
+        guard window != nil else { return }
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            let (code, mods, win) = (event.keyCode, event.modifierFlags, event.window)
+            let handled = MainActor.assumeIsolated { () -> Bool in
+                guard let self, self.window === win, self.window?.firstResponder === self,
+                      let bytes = TerminalKeys.bytes(keyCode: code, modifiers: mods,
+                                                     enhanced: !self.keyboardEnhancementFlags.isEmpty) else { return false }
+                self.send(bytes)
+                return true
+            }
+            return handled ? nil : event
+        }
     }
 
     // MARK: Files dropped in (DL-117)

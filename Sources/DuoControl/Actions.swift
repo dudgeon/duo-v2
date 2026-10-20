@@ -50,7 +50,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case sessionPark = "session park", sessionKeepRunning = "session keep-running"
     case sessionNote = "session note", sessionNext = "session next", sessionCarryOn = "session carry-on"
     case sessionLink = "session link", sessionTask = "session task", sessionChat = "session chat"
-    case shellNew = "shell new", sessionFork = "session fork", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
+    case shellNew = "shell new", sessionFork = "session fork", sessionTrustFolder = "session trust-folder", sessionForkAgain = "session fork-again", idle, sessionDelete = "session delete", sessionArchive = "session archive", sessionUnarchive = "session unarchive"
     case tasks, taskMake = "task make", taskAdd = "task add", taskNew = "task new", taskSession = "task session", taskStatus = "task status"
     case taskRename = "task rename", taskArchive = "task archive", taskUnarchive = "task unarchive", taskDelete = "task delete"
     case taskMove = "task move", taskLink = "task link", taskReveal = "task reveal"
@@ -67,6 +67,8 @@ public enum ActionID: String, CaseIterable, Sendable {
     // GitHub (DL-149, DL-157)
     case repoStatus = "repo status", repoCheck = "repo check", repoLatest = "repo latest", repoUpdate = "repo update", repoPutBack = "repo put-back"
     case repoPush = "repo push", repoPR = "repo pr", repoDraft = "repo draft", repoMoveToBranch = "repo move-to-branch", repoSignin = "repo signin", repoOpen = "repo open"
+    // GitHub issues (DL-226)
+    case issueShow = "issue show", issueOpen = "issue open", issueClose = "issue close", issueReopen = "issue reopen", issueNew = "issue new", taskIssue = "task issue"
     // Documents
     case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
     case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docTable = "doc table", docFind = "doc find"
@@ -137,9 +139,9 @@ extension DuoAction {
         .init(.install, .setup, "[--director-name director|duo-director]", "Install or refresh what lets Claude sessions anywhere use duo2: a short block in ~/.claude/CLAUDE.md, a duo2 skill, a director skill, ~/.local/bin/duo2 (DL-74). The director skill is named `director`; where a project has a skill of that name, a personal one would hide it, so Duo asks first and until you say yes installs it as `duo-director`. --director-name answers that: `director` takes the name, `duo-director` keeps the project's skill (DL-222).",
               ui: ["Install", "Install…", "Use director", "Keep duo-director"], local: true),
         .init(.uninstall, .setup, "", "Remove exactly what `duo2 install` added (anything you edited stays).", ui: ["Remove…"], local: true),
-        .init(.settings, .setup, "[claude-path <path|auto> | notify on|off | dock-badge on|off | explainers reset | macos]",
-              "Duo's settings (S3-1): with no arguments, all of them, and what macOS allows; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge; `explainers reset` shows the explanations the user dismissed again (Settings › General); `macos` opens System Settings › Notifications › Duo.",
-              ui: ["Choose…", "Use Found One", "Open Notification Settings…", "Show dismissed explanations again"]),
+        .init(.settings, .setup, "[claude-path <path|auto> | notify on|off | dock-badge on|off | appearance system|light|dark | explainers reset | macos]",
+              "Duo's settings (S3-1): with no arguments, all of them, and what macOS allows; otherwise set one. The `claude` Duo runs, notifications when a session needs the user, the Dock badge; `appearance` (Match System, Light or Dark, DL-224); `explainers reset` shows the explanations the user dismissed again (Settings › General); `macos` opens System Settings › Notifications › Duo.",
+              ui: ["Choose…", "Use Found One", "Open Notification Settings…", "Show dismissed explanations again", "Appearance"]),
         .init(.walkSetup, .setup, "<test id>", "Put Duo in the state an acceptance-walk test starts from (the walk page's Set up test button, or `duo2://walk-setup?id=…`). Steps come from ~/DuoAcceptance/walk-setups.json, never from the caller.",
               ui: ["Set up test"]),
         .init(.compose, .setup, "<file>", "Claude Code's external editor in Duo's sessions (Ctrl+G; chat mode's composer, F-104, F-112): hands Claude the composer's text when chat mode asked for it, and otherwise opens your own editor ($VISUAL or $EDITOR as they were). Not for running by hand.", local: true),
@@ -161,7 +163,7 @@ extension DuoAction {
               "Move a tab along its strip: one place left or right (Move Tab Left / Right on its menu), or to place n among the tabs that move (1 is the leftmost), as a drag does (DL-220). The tab is a document path, a session id or name, or by default the selected tab of the active pane (or --pane). The right pane's Project tab stays first.",
               ui: ["Move Tab Left", "Move Tab Right", "tab dragged along its strip"]),
         .init(.viewPane, .view, "next|previous|left|middle|right", "Make a pane active and give it the keyboard: the next or previous one (⌥⌘→, ⌥⌘←), or one by name; a hidden pane can't be chosen.", ui: ["Next Pane", "Previous Pane"]),
-        .init(.viewGroup, .view, "<group> expand|collapse", "Expand or collapse a group in the session list.", ui: ["group row"]),
+        .init(.viewGroup, .view, "<group|original id> expand|collapse", "Expand or collapse a group in the session list: a time group (today, week, earlier), later (the tasks quiet for 3 days), a task, or a thread of forks by its original's session id (DL-228).", ui: ["group row", "Later fold"]),
         .init(.viewSelect, .view, "<session id>", "Select a session's card (action column or peek) without opening it.", ui: ["action card", "peek card"]),
         .init(.viewSort, .view, "recent|name", "Order All projects' map by newest activity or by name (View › Sort Projects By).", ui: ["Sort Projects By", "map sort popup"]),
         .init(.viewFilter, .view, "[text]", "Narrow All projects' middle, whichever shows: the Board to projects and folders whose name or path has the text, the List to sessions about it; no text clears it.", ui: ["Filter folders", "Filter sessions"]),
@@ -200,16 +202,16 @@ extension DuoAction {
               ui: ["Merge Into", "Merge Sessions Into", "drag a tile onto a tile"], timeout: 600),
 
         // Sessions
-        .init(.sessions, .sessions, "[--project <p>]", "Sessions with id, state, kind (terminal or chat), title and project.", everyday: true),
+        .init(.sessions, .sessions, "[--project <p>]", "Sessions with id, state, kind (terminal or chat), title and project. Text marks the project's director and the pinned (Keep Running) ones; --json adds \"director\": true, \"pinned\" and the row's \"section\" in the project pane: pinned, needs-you, open, tasks, later or other (DL-217, DL-218). A fork (a /branch or /fork) adds \"forkOf\" (its parent's id) and \"fork\": \"branch\" or \"fork\" (DL-228).", everyday: true),
         .init(.sessionShow, .sessions, "<id>", "A session's title, project, state, note, next step, transcript path and recent turns.", everyday: true),
         .init(.sessionNew, .sessions, "[--project <p>] [--prompt <text>] [--name <name>] [--remote-control [name]]", "Start a Claude session in a project (the current one by default). --name gives it a fixed name (claude -n), which survives restarts: a director's is director-<project> (DL-200). --remote-control makes it reachable from the Claude app, named <name> or its project and a short id, and keeps it on when the session resumes; a claude without the flag starts without it and the reply says so.",
               ui: ["+ New session", "+ New Claude Code session", "New Session", "console +", "New Claude Session", "Start Claude here", "Start Claude in Home", "Start in"]),
         .init(.sessionOpen, .sessions, "<id>", "Show a session's terminal, resuming it if needed.", ui: ["session row", "console tab", "Home tab", "Resume", "Open Session"]),
-        .init(.sessionClose, .sessions, "[id] [--force]", "End a session's process and close its tab (it stays listed and resumable). Refuses while Claude is working there, unless --force.", ui: ["Close Tab", "End Session"]),
+        .init(.sessionClose, .sessions, "[id] [--force]", "End a session's process and close its tab (it stays listed and resumable). Refuses while Claude is working there, unless --force.", ui: ["Close Tab", "End Session", "Close"]),
         .init(.sessionPark, .sessions, "<id> | --background", "Park a session: end its Claude process, keep its tab, and resume it when the tab is shown (it picks up where it left off). Refuses, saying why, while Claude is working or waiting on the user, is running something in the background or has a subagent running, or the session is set to Keep Running; a tab on screen first gives its pane to the next tab. --background parks every idle tab that isn't on screen and says what it kept and why.",
               ui: ["Park Session", "Park Background Sessions"]),
         .init(.sessionKeepRunning, .sessions, "<id> [on|off]", "Keep a session running: it is never parked (by hand, in bulk or under memory pressure) and starts at launch instead of waiting to be shown. Turning it on wakes a parked tab. With no on/off it says whether the session is set.",
-              ui: ["Keep Running"]),
+              ui: ["Keep Running", "pinned +"]),
         .init(.sessionMove, .sessions, "<id> --to <project> [--new]", "File a session in another project, or with --new in a new project of that name made in Home; it moves there on its next resume. The user confirms in Duo. Undo with `duo2 undo`.",
               ui: ["Move to Project", "New Project…", "drag a session onto a tile"], timeout: 600),
         .init(.sessionNote, .sessions, "<text>", "Tell the user what this session is doing (one line, shown in Duo).", everyday: true),
@@ -218,6 +220,10 @@ extension DuoAction {
         .init(.sessionCarryOn, .sessions, "<id>", "Start a new session carrying on from an archived one."),
         .init(.sessionFork, .sessions, "<id>", "Carry a session on as a fork: a new session with the same history (the original is left alone).",
               ui: ["Resume as a Fork"]),
+        .init(.sessionTrustFolder, .sessions, "<id>", "When a session's /fork said \"Workspace not trusted\": show Duo's sheet and wait for the user's answer. Yes sets only that folder's hasTrustDialogAccepted in Claude Code's file; it prints `trusted <path>` or `cancelled`. There is no --yes: Claude can ask, but can't trust a folder for itself (DL-229).",
+              ui: ["Trust This Folder…", "Try Again"], timeout: 600),
+        .init(.sessionForkAgain, .sessions, "<id>", "After the folder is trusted: type the session's blocked /fork line again, only while Claude is at its prompt with nothing typed (DL-229).",
+              ui: ["Fork Again"]),
         .init(.sessionLink, .sessions, "<session>", "A Markdown link to a session for a note or task: [title](duo2://session/<id>). Clicking it in Duo opens or resumes the session (DL-87).",
               ui: ["Copy Link", "Copy Markdown link"]),
         .init(.sessionArchive, .sessions, "<id>", "File a session away: it leaves the lists and counts, keeps its transcript, stays searchable, and sits in its project's Archived fold. Not while it runs. Undo with `duo2 undo`.",
@@ -231,7 +237,7 @@ extension DuoAction {
         .init(.idle, .sessions, "", "Idle, resumable sessions, newest first, grouped by when (the map footer's list).", ui: ["idle footer"]),
         .init(.shellNew, .sessions, "", "Open a plain shell in the console (DL-8); typing `claude` in it makes it a session.", ui: ["New Shell"]),
         // Groups (DL-24): related threads, grouped by hand; Duo-owned facts in the project's .duo/sessions.json.
-        .init(.tasks, .sessions, "[--project <p>]", "Task notes (tasks/*.md in each project) with their status and how many sessions their `sessions:` frontmatter links (DL-93).", everyday: true),
+        .init(.tasks, .sessions, "[--project <p>]", "Task notes (tasks/*.md in each project) with their status and how many sessions their `sessions:` frontmatter links (DL-93). --json adds \"later\" (the pane lists it under Later: nothing in it for 3 days) and \"lastActivity\", when the note last changed (DL-217).", everyday: true),
         .init(.taskMake, .sessions, "<session|group> [--title <t>]", "Make a Task: writes tasks/<slug>.md whose `sessions:` links the session (or the group's sessions; the group becomes the task) and opens it. Undo with `duo2 undo`.",
               ui: ["Make a Task"]),
         .init(.taskNew, .sessions, "[title] [--project <p>] [--status <s>] [--no-open]", "+ New task: a task note in tasks/ with no sessions yet, opened to write; use this, not a TASKS.md file. --no-open leaves the note closed (for making several); --status starts it at open, in-progress, waiting, review, done or dropped. Undo with `duo2 undo`.", ui: ["+ New task", "New Task"], everyday: true),
@@ -317,6 +323,16 @@ extension DuoAction {
               ui: ["Move to a Branch…", "Move to a Branch and Push"]),
         .init(.repoSignin, .repo, "", "Sign in to GitHub: a shell tab running the GitHub CLI's browser sign-in (`gh auth login --web`, then `gh auth setup-git`). Duo never sees or keeps a token. Without the CLI, a shell tab with `brew install gh` typed.",
               ui: ["Sign In…", "Sign In in a Shell…", "Install in a Shell…", "Switch Account…"]),
+        .init(.issueShow, .repo, "[<task|issue>] [--project <p>] [--refresh]", "The GitHub issue a task tracks (its `issue:` link, DL-226) and its state now: open or closed, labels, and why it can't be read without gh or access. <issue> is a URL, owner/repo#n or #n (the project's GitHub remote). With no argument, every task in the project that tracks one. Reads only.",
+              ui: ["issue chip", "issue row", "Copy Issue Link"]),
+        .init(.issueOpen, .repo, "<task|issue> [--project <p>]", "Open the issue on GitHub in the browser.", ui: ["Open Issue on GitHub"]),
+        .init(.issueClose, .repo, "<task|issue> [--project <p>] --yes", "Close the issue on GitHub (`gh issue close`): the one change Duo makes to an issue besides reopening it. Needs --yes. Undo with `duo2 undo` reopens it.",
+              ui: ["Close Issue", "Close #n too", "Close too"], timeout: 60),
+        .init(.issueReopen, .repo, "<task|issue> [--project <p>] --yes", "Reopen the issue on GitHub (`gh issue reopen`). Needs --yes.", ui: ["Reopen Issue"], timeout: 60),
+        .init(.issueNew, .repo, "--from-task <task> [--project <p>] --yes", "New Issue from Task: files the task as an issue in the project's GitHub repository, titled after it with its note's text as the body, and links it (`issue:`). Needs --yes (it publishes under the user's name); without it the user is asked in Duo. Undo with `duo2 undo` unlinks it; the issue stays on GitHub.",
+              ui: ["New Issue from Task…"], timeout: 90),
+        .init(.taskIssue, .sessions, "<task> <issue|--clear> [--project <p>]", "A task's issue link (DL-226): writes `issue:` with the full URL, quoted, by key (a task tracks one issue; the issue's state is read from GitHub, never copied into the note). <issue> is a URL, owner/repo#n or #n in the project's GitHub remote. --clear removes the link; nothing on GitHub changes. Through the editor when the note is open. Undo with `duo2 undo`.",
+              ui: ["Link Issue…", "Change Issue…", "Unlink Issue"]),
         .init(.repoOpen, .repo, "[--project <name>] [--pr]", "Open the repository (its branch) or the branch's pull request on GitHub.",
               ui: ["Open on GitHub", "Open Pull Request #", "Open PR", "Open GitHub"]),
         .init(.docOpen, .docs, "<path> [--project <p>]", "Open a document in the right pane (Markdown in the editor, HTML as a page). A file outside every project opens as a tab in the project on screen (or --project).", ui: ["Open", "file row", "Open File…", "file dropped on the right pane", "Open CLAUDE.md"], everyday: true),
@@ -505,7 +521,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "cancel", "fetch", "background", "suggest", "take-over", "handed-back", "no-worker", "adopt", "no-open"]
+    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "cancel", "fetch", "background", "suggest", "take-over", "handed-back", "no-worker", "adopt", "no-open", "clear", "refresh"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]

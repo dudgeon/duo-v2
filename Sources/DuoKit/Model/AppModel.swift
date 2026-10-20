@@ -51,6 +51,13 @@ public final class AppModel {
     public var sidebarHold: (project: String, order: [String: [String]])?
     /// Tasks just marked complete, still listed (checked, struck through) for `rowHold` (DL-130).
     public var completingTasks: Set<String> = []
+    /// Linked GitHub issues' live state, by the issue's URL (DL-226); read through gh, cached.
+    public var issueStates: [String: IssueState] = [:]
+    /// Mark Complete's "Close #n too" notice (github-issues-handoff board 6), for 5 s.
+    public var issueOffer: IssueOffer?
+    @ObservationIgnored var issueFetched: [String: Date] = [:]
+    @ObservationIgnored var issueFetching: Set<String> = []
+    @ObservationIgnored var issueRepos: [String: RemoteRepo?] = [:]
     /// The project's layout fading up after a jump from another project (DL-130): the panes are
     /// the same views (terminals live in them), so the new content shows at once and fades up.
     public var projectShown: Double = 1
@@ -60,6 +67,12 @@ public final class AppModel {
     /// Which section each row of the session list was in when last shown, to lift the rows that
     /// change section above the ones they pass (DL-130).
     @ObservationIgnored var sidebarShown: [String: String] = [:]
+    /// The director's slot in a fixture state (DL-218); live, it's read from `.duo/director.json`.
+    public var fixtureDirector: DirectorSlotInfo?
+    /// The project pane's width, for the slot's second line (under 280 it drops "Director", DL-218).
+    public var sidebarWidth: CGFloat = 300
+    /// `.duo/director.json` as last read, by project, with its modification time: the sidebar asks on every draw.
+    @ObservationIgnored var directorRegistryCache: [String: (modified: Date, reg: DirectorRegistry)] = [:]
     /// The task row under the pointer ("<project>/<note path>"), which shows its + (DL-112).
     public var hoveredTaskRow: String?
     /// Projects showing their task board in place of the session list and console (DL-148, C):
@@ -120,6 +133,8 @@ public final class AppModel {
     public var fixtureIdleBuckets: [(label: String, rows: [IdleRow])]?
     /// Fixture mode: a console tab whose session has ended, and the bar's text (console-ended).
     public var fixtureEnded: (key: String, message: String)?
+    /// Sessions whose `/fork` Claude Code refused for an untrusted folder, by tab key (DL-229). In memory only.
+    public var trustNotices: [String: TrustNotice] = [:]
     /// Fixture mode: chats the chat-mode targets show, by console tab (ChatTargets).
     public var fixtureChats: [String: ChatSession] = [:]
     /// The intro video's demo (VideoTargets): terminals showing a recorded screen, by tab; no process behind them.
@@ -149,6 +164,10 @@ public final class AppModel {
     public var tabDrag: TabDrag?
     /// Each tab's frame on its strip, for where a drag lands; written as the strips lay out.
     @ObservationIgnored var tabFrames: [String: CGRect] = [:]
+    /// Each scrolling tab strip's offset and measures (DL-225): console (.middle), right pane (.right), Home (.left).
+    public let tabStrips: [DuoPane: TabStripState] = [.left: TabStripState(), .middle: TabStripState(), .right: TabStripState()]
+    /// Where the pointer is on a strip while a tab is dragged along it, in the strip's scrolling part (edge scroll).
+    var tabDragPointer: (pane: DuoPane, x: CGFloat)?
     /// The file tree (DL-105): hidden files on or off, and the folders open in each project's tree.
     public var showHiddenFiles = DuoState.load().showHiddenFiles
     /// Documents shown in Source mode (DL-167), by standardized path; remembered.
@@ -269,6 +288,11 @@ public final class AppModel {
             if let mine = terminals.existing(key) { return mine }
             guard let s = fixture.sessions(inProject: project).first(where: { $0.tabKey == key }),
                   let id = s.sessionId, let folder = liveFolders[project] else { return nil }
+            // A /fork detached from its tab runs on in Claude's background: opening it attaches again (DL-227).
+            if liveElsewhere.contains(id), s.fork == ForkSource.Kind.fork.rawValue, let job = ForkSource.jobs().first(where: { $0.sessionId == id }) {
+                detachedForks.remove(id)
+                return terminals.session(key, command: .attachClaude(short: job.short, sessionID: id), cwd: folder.path)
+            }
             if liveElsewhere.contains(id) { return nil }  // shown as running elsewhere
             // Its folder is gone (DB-8): nothing to run in until it's located.
             guard FileManager.default.fileExists(atPath: folder.path) else { return nil }
@@ -297,8 +321,9 @@ public final class AppModel {
     /// sitting at its prompt reports `idle`, but it is open, so it keeps its tab (findings F-25).
     public func tabSessions(inProject project: String) -> [Fixture.Session] {
         fixture.sessions(inProject: project).filter {
-            [.needsYou, .readyForReview, .working].contains($0.state) || terminals.existing($0.tabKey) != nil || fixtureEnded?.key == $0.tabKey
-                || parkedTabs.contains($0.tabKey)
+            !(detachedForks.contains($0.tabKey) && terminals.existing($0.tabKey) == nil)
+            && ([.needsYou, .readyForReview, .working].contains($0.state) || terminals.existing($0.tabKey) != nil || fixtureEnded?.key == $0.tabKey
+                || parkedTabs.contains($0.tabKey))
         }
     }
 
@@ -369,6 +394,13 @@ public final class AppModel {
     @ObservationIgnored public var restoreEnabled = false
     /// DL-156: see `tabSessions`.
     public var parkedTabs: Set<String> = []
+    /// `/fork`s whose attach tab was closed: the fork runs on in Claude's background (DL-227), its row stays,
+    /// and its tab is gone until the row is opened again.
+    public var detachedForks: Set<String> = []
+    /// SessionStart sources the hook reported, by new session id (`duo2 hook context`): `fork` tells `/branch` from `/clear`.
+    @ObservationIgnored var startSources: [String: String] = [:]
+    /// `/fork` jobs Duo has already seen (the first scan sets the baseline: only a fork made after Duo is looking opens a tab).
+    @ObservationIgnored var forksSeen: Set<String>?
     /// Sessions set to Keep Running (DL-192), by session id: never parked, resumed at launch.
     public var keepRunningIDs: Set<String> = []
     /// What the park check reads, replaceable in checks: a process's children (argv each), a session's hook events.
@@ -442,7 +474,7 @@ public final class AppModel {
             MainActor.assumeIsolated { self?.minute = Date() }
         }.loose()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refreshLive() }
+            MainActor.assumeIsolated { self?.refreshLive(); self?.scanTrustNotices() }
         }.loose()
     }
 
@@ -495,6 +527,7 @@ public final class AppModel {
         }
         // Sessions Duo started but Claude hasn't written a beacon for yet keep their tab.
         var merged = snapshot
+        adoptForks(into: &merged)
         for s in fixture.sessions where s.sessionId != nil && terminals.existing(s.tabKey) != nil
             && !merged.sessions.contains(where: { $0.sessionId == s.sessionId }) {
             merged.sessions.append(s)
@@ -534,6 +567,7 @@ public final class AppModel {
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts && !SupportFolder.isIsolated)   // C-28: no first-run questions in an isolated instance
         refreshRepo()   // the open project's repository state (DL-149, DL-157)
+        if let p = currentProject?.name { refreshIssues(project: p) }   // linked issues' live state (DL-226)
         // What was open when Duo last quit comes back once the sessions are known (LR-58).
         if !restoreApplied, !fixture.sessions.isEmpty || !folders.isEmpty { applyRestore() }
         defer { saveRestoreState() }
@@ -594,12 +628,17 @@ public final class AppModel {
     }
 
     /// `/clear` or `/resume` inside a Duo terminal starts or opens another session in the same
-    /// process. File the new id where the old one was, and move the tab with it (F-29).
+    /// process. File the new id where the old one was, and move the tab with it (F-29). A `/branch`
+    /// (SessionStart source `fork`, or the new transcript's `forkedFrom`) splits instead (DL-227).
     private func followSessionChanges(_ beacons: [Beacon]) {
         for t in terminals.all {
             guard let pid = t.view.process?.shellPid, let b = beacons.first(where: { $0.pid == pid || AppOwning.descends($0.pid, from: pid) }),
                   b.sessionId != t.key, let old = fixture.sessions.first(where: { $0.tabKey == t.key }),
                   let folder = liveFolders[old.project] else { continue }
+            if isBranch(newId: b.sessionId, from: t.key, folder: folder) {
+                splitBranch(from: old, to: b.sessionId, folder: folder)
+                continue
+            }
             var index = SessionIndex.load(project: folder)
             if !index.sessions.contains(where: { $0.sessionId == b.sessionId }) {
                 index.sessions.append(.init(sessionId: b.sessionId, provenance: "continued-from:\(t.key)"))
@@ -724,6 +763,7 @@ public final class AppModel {
         }
         altitude = .project(name)
         peekOpen = false
+        if let target { detachedForks.remove(target.tabKey) }   // a detached /fork attaches again (DL-227)
         consoleTab = returningShell ?? target?.tabKey
         if let target { lastVisitedSession = target.id }
         if let target, let group = fixture.groups.first(where: { g in g.project == name && g.sessions.contains(target.name) }) {
@@ -783,6 +823,7 @@ public final class AppModel {
         if isShell(key), shells(inProject: currentProject?.name ?? "").contains(key) { consoleTab = key; return }
         guard let project = currentProject?.name,
               let s = fixture.sessions(inProject: project).first(where: { $0.tabKey == key || $0.name == key }) else { return }
+        detachedForks.remove(s.tabKey)   // a detached /fork attaches again (DL-227)
         consoleTab = s.tabKey
         lastVisitedSession = s.id
     }
@@ -826,7 +867,8 @@ extension AppModel {
     /// The open project's session list as shown: held still while the pointer is in it (Q-80).
     public func sidebarSections() -> [SidebarSection] {
         guard let p = currentProject?.name else { return [] }
-        let fresh = SidebarRow.sections(for: p, in: fixture, isOpen: { hasOpenTerminal($0) })
+        let fresh = SidebarRow.sections(for: p, in: fixture, isOpen: { hasOpenTerminal($0) }, isPinned: { isKeepRunning($0) },
+                                        director: directorSlotInfo(project: p), listedTask: { listedTask($0) })
         guard let hold = sidebarHold, hold.project == p else { return fresh }
         return SidebarRow.held(fresh, order: hold.order)
     }

@@ -167,14 +167,25 @@ public enum FixtureHarness {
                 SettingsInfo.shared.refresh()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                     MainActor.assumeIsolated {
-                        let r = ImageRenderer(content: SettingsView(scrolls: false).environment(model))
+                        let r = ImageRenderer(content: SettingsView(scrolls: false).environment(model).environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
                         r.scale = 2
-                        if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+                        // The renderer takes the colours of the current drawing appearance, not the app's (DL-224).
+                        var image: NSImage?
+                        NSApp.effectiveAppearance.performAsCurrentDrawingAppearance { image = r.nsImage }
+                        if let img = image, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
                            let png = rep.representation(using: .png, properties: [:]) { try? png.write(to: URL(fileURLWithPath: parts[1])) }
-                        else { FileHandle.standardError.write(Data("render-settings: nothing drawn (image \(r.nsImage == nil ? "nil" : "\(r.nsImage!.size)"))\n".utf8)) }
+                        else { FileHandle.standardError.write(Data("render-settings: nothing drawn (image \(image == nil ? "nil" : "\(image!.size)"))\n".utf8)) }
                     }
                 }
             }
+        case "trust-notice":   // trust-notice:offer|run|trusted|failed|sheet|failed-sheet: the DL-229 bar on the open tab (a terminal showing a recorded screen, or a chat state's chat)
+            model.showTrustNoticeFixture(parts.count > 1 ? parts[1] : "offer")
+        case "trust-ask":   // trust-ask: Trust This Folder… on the visible terminal's bar, as the button does (the live proof, DL-229)
+            if let k = model.visibleTerminal?.key { model.askToTrust(k) }
+        case "trust-fork-again":   // trust-fork-again: Fork Again on that bar
+            if let k = model.visibleTerminal?.key { model.forkAgain(k) }
+        case "trust-state":   // trust-state: what the bar says, to stderr
+            if let k = model.visibleTerminal?.key { FileHandle.standardError.write(Data("trust-state: \(model.trustNotices[k].map { "\($0.path) \($0.phase) fork=\($0.forkLine ?? "-")" } ?? "none")\n".utf8)) }
         case "ask-legacy": LegacyPrompt.run()
         case "ask-update":   // ask-update:writable|admin|no-sparkle|no-notes: the update question (DL-114) for 0.1.9 over 0.1.8, its buttons only logged
             let form = parts.count > 1 ? parts[1] : "writable"
@@ -249,6 +260,8 @@ public enum FixtureHarness {
             }
         case "file": if parts.count > 1 { model.selectedFile = parts[1]; model.rightTab = parts[1] }
         case "close-doc": if parts.count > 1 { model.closeDocument(parts[1]) }   // close-doc:<path>: a document tab closes as its × does (ENH-144)
+        case "tree-click": if parts.count > 1 { model.selectFile(parts[1]) }   // tree-click:<path>: a single click on a file row (selects, F-348)
+        case "tree-return": model.openSelectedFile()   // Return on the tree's selection
         case "doc": if parts.count > 1 { model.openDocument(parts[1]) }   // doc:<path>: a document tab, as the file tree opens it
         case "convert": if parts.count > 1 { model.convertToMarkdown(parts[1]) }   // convert:<docx>: the bar's Convert to Markdown (DL-123)
         case "converting":   // converting:<docx>: hold the progress bar (C) as drawn, for a capture
@@ -382,6 +395,18 @@ public enum FixtureHarness {
         case "explain-tasks": model.explainTasks()   // Help › Explain Tasks (DL-172)
         case "hover-new-task": if let p = model.currentProject?.name { model.hoveredTaskRow = "\(p)/new-task-row" }   // the pointer on + New task (DL-172)
         case "board": model.showBoard(parts.count < 2 || parts[1] != "off")   // board[:off]: Sessions | Tasks (DL-148)
+        case "issue-link":   // issue-link:<path>=<n>:<open|closed>[:<labels>]: a task tracks an acme/checkout issue, its state as read (DL-226; no gh)
+            if parts.count > 1, let p = model.currentProject?.name {
+                let kv = parts[1].split(separator: "=", maxSplits: 1).map(String.init)
+                let f = (kv.count > 1 ? kv[1] : "1").split(separator: ":").map(String.init)
+                if let n = Int(f[0]) {
+                    let ref = IssueRef(owner: "acme", name: "checkout", number: n)
+                    model.setShownTask(p, kv[0]) { $0.issue = ref.url }
+                    model.issueStates[ref.url] = .info(IssueInfo(ref: ref, title: "Checkout spinner never ends on slow networks", open: (f.count > 1 ? f[1] : "open") == "open",
+                                                                 labels: f.count > 2 ? f[2].split(separator: ",").map(String.init) : []))
+                    model.issueFetched[ref.url] = Date()
+                }
+            }
         case "card": if parts.count > 1, let p = model.currentProject?.name { model.selectCard(project: p, path: parts[1]) }   // card:<path>: a click on a card
         case "hover-card":   // hover-card:<path>[=<session title>]: the pointer over a card, or one of its session rows
             if parts.count > 1, let p = model.currentProject?.name {

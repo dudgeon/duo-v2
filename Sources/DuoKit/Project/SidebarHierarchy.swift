@@ -1,3 +1,4 @@
+import DuoControl
 import SwiftUI
 
 // The project pane's hierarchy (DL-174, session-glyphs-handoff 04): NEEDS YOU, TASKS, OTHER SESSIONS
@@ -6,11 +7,14 @@ import SwiftUI
 extension AppModel {
     /// Where a time group's fold is kept in `expandedGroups`. Open, Today and This week start unfolded,
     /// so their key means "folded"; Earlier starts folded, as it did (DL-91), so its key means "unfolded".
-    func timeGroupKey(project: String, _ id: String) -> String { id == "earlier" ? "\(project)/earlier" : "\(project)/fold/\(id)" }
+    func timeGroupKey(project: String, _ id: String) -> String { startsFolded(id) ? "\(project)/\(id)" : "\(project)/fold/\(id)" }
+
+    /// Earlier (DL-91) and Later (DL-217) start folded.
+    func startsFolded(_ id: String) -> Bool { id == "earlier" || id == "later" }
 
     public func timeGroupFolded(project: String, _ id: String) -> Bool {
         let has = expandedGroups.contains(timeGroupKey(project: project, id))
-        return id == "earlier" ? !has : has
+        return startsFolded(id) ? !has : has
     }
 
     func toggleTimeGroup(project: String, _ id: String) {
@@ -18,11 +22,68 @@ extension AppModel {
         if expandedGroups.contains(key) { expandedGroups.remove(key) } else { expandedGroups.insert(key) }
     }
 
-    /// Open tasks with no session in the project yet: they have no row of their own among the sessions, so
-    /// they list as lines under TASKS (DL-93).
-    func sessionlessTasks(_ project: String) -> [Fixture.TaskSummary] {
-        let listed = Set(fixture.sessions(inProject: project).compactMap(\.sessionId))
-        return (fixture.tasks ?? []).filter { $0.project == project && listedTask($0) && !$0.sessionIds.contains(where: listed.contains) }
+    /// The project's director for the sidebar's slot (DL-218): the session `.duo/director.json` names as
+    /// current, by id, and the replaced ones. Nil when the project has none.
+    public func directorSlotInfo(project: String) -> DirectorSlotInfo? {
+        if let d = fixtureDirector { return d }
+        guard let folder = liveFolders[project] else { return nil }
+        let url = DirectorRegistry.file(project: folder)
+        guard let values = try? url.resourceValues(forKeys: [URLResourceKey.contentModificationDateKey]), let modified = values.contentModificationDate else { return nil }
+        let reg: DirectorRegistry
+        if let c = directorRegistryCache[project], c.modified == modified { reg = c.reg } else {
+            reg = DirectorRegistry.load(project: folder)
+            directorRegistryCache[project] = (modified, reg)
+        }
+        guard let current = reg.current, !current.sessionId.isEmpty else { return nil }
+        let sessions = fixture.sessions(inProject: project)
+        var running: [Fixture.Session] = []
+        for w in reg.workers where !w.pending {
+            guard let s = sessions.first(where: { $0.sessionId == w.session }) else { continue }
+            if s.state != .idle || s.liveProcess == true || hasOpenTerminal(s.tabKey) { running.append(s) }
+        }
+        let iso = ISO8601DateFormatter()
+        var replaced: [DirectorSlotInfo.Replaced] = []
+        for e in reg.retired where e.replacedBy != nil {
+            let when = e.until.flatMap { iso.date(from: $0) }
+            replaced.append(.init(sessionId: e.sessionId, ago: when.map { Self.ago($0) } ?? ""))
+        }
+        var projects: Int?
+        if fixture.projects.first(where: { $0.name == project })?.isHome == true {
+            projects = liveFolders.filter { $0.key != project && DirectorRegistry.load(project: $0.value).current != nil }.count
+        }
+        let needYou = running.filter { $0.state == .needsYou }.count
+        return DirectorSlotInfo(sessionId: current.sessionId, workers: running.count, workersNeedYou: needYou, projects: projects, replaced: replaced)
+    }
+
+    /// The section each session sits in, by "project/tabKey": pinned, needs-you, open, tasks, later or other (`duo2 sessions --json`).
+    func sidebarSectionMap(projects: Set<String>) -> [String: String] {
+        var out: [String: String] = [:]
+        for p in projects {
+            for sec in SidebarRow.sections(for: p, in: fixture, isOpen: { hasOpenTerminal($0) }, isPinned: { isKeepRunning($0) },
+                                           director: directorSlotInfo(project: p), listedTask: { listedTask($0) }) {
+                let name = ["needs": "needs-you", "today": "other", "week": "other", "earlier": "other"][sec.id] ?? sec.id
+                func place(_ r: SidebarRow) {
+                    if case .thread(_, let members) = r.kind { for m in members { out["\(p)/\(m.sessionKey)"] = name } }
+                    else { out["\(p)/\(r.sessionKey)"] = name }
+                }
+                for r in sec.rows {
+                    if case .group(let threads, _) = r.kind { for t in threads { place(t) } } else { place(r) }
+                }
+            }
+        }
+        return out
+    }
+
+    /// The task notes the pane lists under Later (DL-217).
+    func laterTaskPaths(project: String) -> Set<String> {
+        let secs = SidebarRow.sections(for: project, in: fixture, isOpen: { hasOpenTerminal($0) }, isPinned: { isKeepRunning($0) },
+                                       director: directorSlotInfo(project: project), listedTask: { listedTask($0) })
+        return Set(secs.first { $0.id == "later" }?.rows.compactMap(\.task) ?? [])
+    }
+
+    static func ago(_ d: Date, now: Date = Date()) -> String {
+        let s = max(0, Int(now.timeIntervalSince(d)))
+        return s < 3600 ? "\(max(1, s / 60))m" : s < 86400 ? "\(s / 3600)h" : "\(s / 86400)d"
     }
 }
 
@@ -97,14 +158,13 @@ struct OtherSessionsHeader: View {
     }
 }
 
-/// What follows the task rows: tasks with no session yet, the explainer line when there are no tasks at
+/// What follows the task rows: the explainer line when there are no tasks at
 /// all (DL-147), and + New task (DL-172).
 struct TasksTail: View {
     @Environment(AppModel.self) private var model
     let project: String
 
     var body: some View {
-        let tasks = model.sessionlessTasks(project)
         VStack(alignment: .leading, spacing: 0) {
             if model.projectHasNoTasks(project) {
                 Text("Most sessions are for a task or a goal. Put them in a task and Duo keeps them together.")
@@ -112,12 +172,10 @@ struct TasksTail: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 8 + DuoSpace.selectionInset).padding(.leading, 18).padding(.vertical, 4)
             }
-            ForEach(tasks) { t in TaskLine(task: t, showsProject: false, headerColumns: true).transition(.listRow) }
             NewTaskRow(project: project)
         }
         .background(DuoColor.pane)
         .contextMenu { TaskTemplateItems(project: project) }
-        .duoAnimation(.rowMove, value: tasks.map(\.id))
     }
 }
 

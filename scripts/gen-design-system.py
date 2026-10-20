@@ -42,14 +42,22 @@ def rgba(spec):
 
 
 # ---------- colour ----------
+darkset = t["color"]["dark"]
+
+
+def both(name, spec):
+    """Light and dark (DL-224, Dark B "Ink"); a token with no dark value is the same in both."""
+    return {"light": rgba(spec), "dark": rgba({"value": darkset.get(name, spec)["value"], **({"alpha": darkset.get(name, spec)["alpha"]} if "alpha" in darkset.get(name, spec) else {})})}
+
+
 colors = []
 for name, spec in light.items():
     if not name.startswith("$"):
-        colors.append({"name": name, "value": {"light": rgba(spec)}, "usage": spec.get("use", "")})
+        colors.append({"name": name, "value": both(name, spec), "usage": spec.get("use", "")})
 for name, spec in console.items():
     if not name.startswith("$"):
-        colors.append({"name": name, "value": {"light": rgba(spec)},
-                       "usage": spec.get("use", "") + " Console chrome: the same in every appearance."})
+        colors.append({"name": name, "value": both(name, spec),
+                       "usage": spec.get("use", "") + " Console chrome: the console sinks in dark (DL-224)."})
 tp = t["terminal"]
 for k, spec in tp["ansi"].items():
     colors.append({"name": "terminal" + cap(k), "value": {"light": spec["value"].lower()},
@@ -154,6 +162,10 @@ layout = [
     {"name": "toolbarHeight", "value": px(s["toolbarHeight"]), "usage": "Toolbar (the system draws 40 on macOS 27; content sits below it)."},
     {"name": "tabStripHeight", "value": px(s["tabStripHeight"]), "usage": "Console and right-pane tab strips."},
     {"name": "chatStripHeight", "value": px(s["chatStripHeight"]), "usage": "The console tab strip while the selected tab shows chat (DL-136): thin and light."},
+    {"name": "tabFade", "value": px(s["tabFade"]), "usage": "A scrolling tab strip's fade at an edge with more tabs beyond it (DL-225)."},
+    {"name": "tabPeek", "value": px(s["tabPeek"]), "usage": "How much of the next tab shows past the selected one, beyond the fade, when the strip scrolls it into view."},
+    {"name": "tabEdgeScroll", "value": px(s["tabEdgeScroll"]), "usage": "A dragged tab this close to an end of the strip scrolls it that way."},
+    {"name": "tabNeedsYouDot", "value": px(s["tabNeedsYouDot"]), "usage": "The needs-you dot in a fade, for a tab out of view."},
     {"name": "deckBarHeight", "value": px(s["deckBarHeight"]), "usage": "The PowerPoint viewer's bar under the tabs (DL-125)."},
     {"name": "docxMenuWidth", "value": px(s["docxMenuWidth"]), "usage": "The Word viewer's Markup menu, padding included (docx-viewer-handoff W4)."},
     {"name": "docxMenuTop", "value": px(s["docxMenuTop"]), "usage": "Where that menu starts below the viewer's bar top: 4 under the Markup button."},
@@ -255,7 +267,7 @@ source = {"source": "github", "repo": "dudgeon/duo-v2", "paths": {"tokens": ["do
           "swift": ["Sources/DuoKit/Design/Tokens.swift"]}, "generator": "scripts/gen-design-system.py"}
 tokens = {
     "name": "Duo", "version": 1, "meta": source,
-    "color": {"themes": [{"id": "light", "name": "Light"}], "note": "Light only: the dark appearance isn't approved (DB-29). Console colours are fixed in every appearance.", "tokens": colors},
+    "color": {"themes": [{"id": "light", "name": "Light"}, {"id": "dark", "name": "Dark"}], "note": "Light, and Dark B \"Ink\" (DL-224): Match System, Light or Dark in Settings. The terminal's ANSI palette is the same in both.", "tokens": colors},
     "type": typ,
     "spacing": {"tokens": spacing},
     "radius": {"tokens": radius},

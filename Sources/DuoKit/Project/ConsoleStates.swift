@@ -129,15 +129,19 @@ enum AppOwning {
 
 /// A button on the console (DB-3): the standard size and radius, 1 `consoleText2` border, no fill.
 struct ConsoleButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var enabled
+    /// The default button: `consoleText` edge, semibold (trust-notice-handoff).
+    var bold = false
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .duoText(.control)
+            .duoText(.control, weight: bold ? .semibold : nil)
             .foregroundStyle(DuoColor.consoleText)
+            .opacity(enabled ? 1 : 0.4)
             .lineLimit(1)
             .padding(.horizontal, DuoSpace.buttonPadding.leading + DuoMetric.borderHairline)
             .padding(.vertical, DuoSpace.buttonPadding.top + DuoMetric.borderHairline)
             .background(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).fill(configuration.isPressed ? DuoColor.consoleText2.opacity(0.2) : .clear))
-            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(DuoColor.consoleText2, lineWidth: DuoMetric.borderHairline))
+            .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusControl).strokeBorder(bold ? DuoColor.consoleText : DuoColor.consoleText2, lineWidth: DuoMetric.borderHairline))
             .contentShape(Rectangle())
     }
 }

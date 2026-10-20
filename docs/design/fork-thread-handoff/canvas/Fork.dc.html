@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Just after a fork</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.cap{font-size:12px;line-height:17px;color:#5B636D}
+.cap b{color:#1F2328;font-weight:600}
+.lab{font:600 11px/16px -apple-system,system-ui,sans-serif;letter-spacing:.66px;text-transform:uppercase;color:#5B636D}
+.term{background:#15171B;border:1px solid #2B2F36;border-top:none;box-sizing:border-box;padding:16px;display:flex;flex-direction:column;gap:9px;font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12px;line-height:19px;color:#E6E8EB}
+.bar{height:9px;border-radius:2px;background:#2F333A}
+.pr{border:1px solid #4A4F57;border-radius:4px;padding:6px 10px;color:#E6E8EB;margin-top:auto}
+.mk{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:8px;background:#1F2328;color:#FFFFFF;font:600 10px/16px -apple-system,system-ui,sans-serif;flex:none}
+.step{display:flex;gap:10px;align-items:flex-start}
+.mono{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:11px}
+.menu{box-sizing:border-box;background:#FFFFFF;border:1px solid #C9CDD3;border-radius:6px;padding:5px;box-shadow:0px 12px 32px rgba(31, 35, 40, 0.22);font-size:13px;line-height:20px;color:#1F2328;display:flex;flex-direction:column;width:220px}
+.mi{padding:1px 10px;border-radius:4px}
+.dv{height:1px;background:#C9CDD3;margin:4px 6px}
+</style>
+</helmet>
+<div style="width: 1460px; height: 980px; box-sizing: border-box; background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; color: #1F2328; padding: 40px; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <div style="font-size: 18px; line-height: 24px; font-weight: 600">The moment after /fork: you keep working here, the fork waits in a tab beside you [P]</div>
+    <div class="cap" style="font-size: 13px; line-height: 19px; max-width: 1200px">/fork copies the conversation into a background session in Claude's daemon and leaves this terminal on the original. Duo opens a tab that attaches to the fork (<span class="mono">claude attach ‹short›</span>), without taking focus.</div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 300px; display: flex; flex-direction: column; gap: 10px">
+      <div class="lab">After</div>
+      <dc-import name="Pane" pane="{{after}}" hint-size="300px,360px"></dc-import>
+    </div>
+    <div style="width: 620px; display: flex; flex-direction: column">
+      <div class="lab" style="margin-bottom: 10px">After: two tabs, focus stays on the original</div>
+      <dc-import name="Strip" strip="{{strip}}" hint-size="620px,36px"></dc-import>
+      <div class="term" style="height: 324px">
+        <div class="bar" style="width: 72%"></div><div class="bar" style="width: 55%"></div><div class="bar" style="width: 64%"></div><div class="bar" style="width: 30%"></div>
+        <div class="pr">&gt; <span style="display: inline-block; width: 7px; height: 14px; background: #E6E8EB; vertical-align: -2px"></span></div>
+      </div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 14px; padding-top: 26px">
+      <div class="step"><span class="mk">1</span><div class="cap"><b>The original stays selected</b>, in its tab, with focus in its terminal.</div></div>
+      <div class="step"><span class="mk">2</span><div class="cap"><b>The fork's tab appears right of it</b>, unselected, fading in as the strip slides. It carries the fork mark (board 4) and the session's own title: the parent's, since /fork writes none, until Claude renames it. It reads idle: the fork waits for its first prompt. A /fork with a prompt starts it at once, so it reads working.</div></div>
+      <div class="step"><span class="mk">3</span><div class="cap"><b>The thread opens by itself</b>: the original first, still selected, then the fork under the rule. The fork's row is there at once, even on Claude Code 2.1.219, where the fork has no transcript until its first prompt: Duo reads it from Claude's job file.</div></div>
+      <div class="step"><span class="mk">4</span><div class="cap"><b>Closing the fork's tab detaches</b> (⌘W or Close Tab). The fork keeps running in Claude's background; its row stays in the thread with no tint, as a session running outside Duo (DL-174). Opening the row attaches again, rather than DL-109's "open somewhere else".</div></div>
+    </div>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-start">
+    <div style="width: 960px" class="cap"><b>The fork's tab menu</b> is a session tab's menu as built (with DL-225's Move Tab Left / Right at its end); nothing is added. Only what Close Tab does changes for an attached fork: it detaches. duo2: <span class="mono">duo2 session close</span> detaches an attached fork, <span class="mono">duo2 session open</span> attaches it again.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1460,"height":980}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const head = { w: 300, title: 'checkout', goal: 'Ship the new checkout by Nov 1' };
+    const tail = [ { k: 'sec', label: 'Tasks · 1' }, { k: 'task', chev: 'd', title: 'Launch email', tm: 'idle · 1' }, { k: 'row', in: 'nest', g: 'ci', title: 'Draft launch email', tm: '2h' }, { k: 'new', title: 'New task' } ];
+    return {
+      after: { ...head, rows: [ { k: 'sec', label: 'Open · 3' },
+        { k: 'row', chev: 'd', g: 'ti', tint: true, sel: true, title: 'Pricing research', tm: 'at prompt', mk: '1' },
+        { k: 'row', in: 'nest', g: 'ti', tint: true, title: 'Pricing research', tm: 'at prompt', mk: '3' },
+        { k: 'row', g: 'cw', tint: true, title: 'Fix flaky cart test', tm: 'working' }, ...tail ] },
+      strip: { w: 620, tabs: [ { g: 'idle', title: 'Pricing research', on: true, mk: '1' }, { g: 'idle', title: 'Pricing research', fork: true, mk: '2' }, { g: 'work', title: 'Fix flaky cart test' }, { g: 'shell', title: 'alpha' } ] }
+    };
+  }
+}
+</script>
+</body>
+</html>

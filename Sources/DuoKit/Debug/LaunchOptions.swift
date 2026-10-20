@@ -63,7 +63,7 @@ public struct LaunchOptions: Sendable {
                 let name = it.next() ?? ""
                 // The video's demo needs room for five right-pane tabs: a wider window unless `--window` says otherwise.
                 if VideoTargets.screens.contains(name), windowSize == nil { windowSize = CGSize(width: 1800, height: 1100) }
-                if SearchTargets.screens.contains(name) || SurfaceTargets.screens.contains(name) || ChatTargets.screens.contains(name) || NarrowTargets.screens.contains(name) || HomeListTargets.screens.contains(name) || VideoTargets.screens.contains(name) || GlyphTargets.screens.contains(name) { state = .overview; searchState = name; continue }
+                if SearchTargets.screens.contains(name) || SurfaceTargets.screens.contains(name) || ChatTargets.screens.contains(name) || NarrowTargets.screens.contains(name) || HomeListTargets.screens.contains(name) || VideoTargets.screens.contains(name) || GlyphTargets.screens.contains(name) || SidebarTargets.screens.contains(name) || ForkTargets.screens.contains(name) { state = .overview; searchState = name; continue }
                 guard let s = TargetState(rawValue: name) else {
                     FileHandle.standardError.write(Data("Unknown state '\(name)'. Known: \(TargetState.allCases.map(\.rawValue).joined(separator: ", "))\n".utf8))
                     exit(64)

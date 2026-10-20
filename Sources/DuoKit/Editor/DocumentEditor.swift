@@ -119,12 +119,21 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         }
     }
 
-    /// Duo's tokens as CSS variables (no raw hex anywhere: values come from `DuoNSColor`).
+    /// Duo's tokens as CSS variables (no raw hex anywhere: values come from `DuoNSColor`), as they
+    /// resolve in the app's appearance now (DL-224); `EditorWebView` runs this again when it changes.
     public static func tokenCSS() -> String {
+        var script = ""
+        NSApp.effectiveAppearance.performAsCurrentDrawingAppearance { script = tokenScript() }
+        return script
+    }
+
+    private static func tokenScript() -> String {
         func hex(_ c: NSColor) -> String {
             let s = c.usingColorSpace(.sRGB) ?? c
             return String(format: "#%02X%02X%02X", Int(round(s.redComponent * 255)), Int(round(s.greenComponent * 255)), Int(round(s.blueComponent * 255)))
         }
+        let shadow = NSColor(DuoShadow.popoverColor).usingColorSpace(.sRGB) ?? .black
+        let shadowCSS = String(format: "rgba(%d, %d, %d, %g)", Int(round(shadow.redComponent * 255)), Int(round(shadow.greenComponent * 255)), Int(round(shadow.blueComponent * 255)), shadow.alphaComponent)
         let vars = [("pane", DuoNSColor.pane), ("text", DuoNSColor.text), ("text2", DuoNSColor.text2), ("selected", DuoNSColor.selected), ("claude-edit", DuoNSColor.claudeEdit),
                     ("rule", DuoNSColor.rule), ("control-edge", DuoNSColor.controlEdge), ("ground", DuoNSColor.ground), ("needs-you", DuoNSColor.needsYou)]
             .map { "--duo-\($0.0): \(hex($0.1));" }.joined(separator: " ")
@@ -132,7 +141,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         // The deck (same token script): a slide change's scroll and the picker outline's glide.
         let motion = [("highlight-in", DuoMotionToken.highlightIn), ("highlight-out", .highlightOut), ("slide", .slide), ("outline", .outline)]
             .map { "--duo-motion-\($0.0)-ms: \(Int(($0.1.duration * 1000).rounded()));" }.joined(separator: " ")
-        let css = ":root { \(vars) --duo-radius-card: \(Int(DuoMetric.radiusCard))px; --duo-heading-above: \(Int(DuoSpace.gapAboveDocumentHeading))px; \(motion) }"
+        let css = ":root { \(vars) --duo-shadow: \(shadowCSS); --duo-radius-card: \(Int(DuoMetric.radiusCard))px; --duo-heading-above: \(Int(DuoSpace.gapAboveDocumentHeading))px; \(motion) }"
         return "document.documentElement.setAttribute('style', \(String(reflecting: css)).replace(/^:root \\{ | \\}$/g, ''));"
     }
 
@@ -789,6 +798,12 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
 /// The editor's web view takes the standard Find menu (Edit > Find) and routes it to CodeMirror's
 /// own search, which sees the whole document (F-43).
 final class EditorWebView: DuoWebView {
+    /// The page's colour variables follow the appearance, live (DL-224).
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        evaluateJavaScript(EditorController.tokenCSS(), completionHandler: nil)
+    }
+
     /// Find menu items arrive as `performTextFinderAction:` (NSTextFinder) or the older
     /// `performFindPanelAction:`; both carry the same tags (1 show, 2 next, 3 previous).
     override func performTextFinderAction(_ sender: Any?) { find(sender) }

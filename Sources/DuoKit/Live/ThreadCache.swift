@@ -7,7 +7,7 @@ import Foundation
 public final class ThreadCache: @unchecked Sendable {
     public static let shared = ThreadCache()
 
-    private struct Head { var size: UInt64; var root: String?; var started: String? }
+    private struct Head { var size: UInt64; var root: String?; var started: String?; var forkedFrom: String? }
     private struct Full {
         var offset: UInt64 = 0
         var uuids: Set<String> = []
@@ -42,6 +42,14 @@ public final class ThreadCache: @unchecked Sendable {
         return out
     }
 
+    /// The parent a `/branch` transcript names itself, by session id (F-344): `forkedFrom` in its first records.
+    public func declaredParents(_ sessions: [(id: String, transcript: URL)]) -> [String: String] {
+        lock.lock(); defer { lock.unlock() }
+        var out: [String: String] = [:]
+        for s in sessions { if let p = head(s.transcript).forkedFrom, p != s.id { out[s.id] = p } }
+        return out
+    }
+
     private func size(_ url: URL) -> UInt64 {
         ((try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? NSNumber)?.uint64Value ?? 0
     }
@@ -50,7 +58,7 @@ public final class ThreadCache: @unchecked Sendable {
     private func head(_ url: URL) -> Head {
         let now = size(url)
         if let h = heads[url.path], h.root != nil || h.size == now { return h }
-        var h = Head(size: now, root: nil, started: nil)
+        var h = Head(size: now, root: nil, started: nil, forkedFrom: nil)
         guard let fh = try? FileHandle(forReadingFrom: url) else { return h }
         defer { try? fh.close() }
         var buffer = Data()
@@ -60,6 +68,7 @@ public final class ThreadCache: @unchecked Sendable {
             for line in buffer.split(separator: UInt8(ascii: "\n")) {
                 guard let r = try? JSONSerialization.jsonObject(with: Data(line)) as? [String: Any] else { continue }
                 if h.started == nil { h.started = r["timestamp"] as? String }
+                if h.forkedFrom == nil, let f = r["forkedFrom"] as? [String: Any] { h.forkedFrom = f["sessionId"] as? String }   // /branch (F-344)
                 if r["type"] as? String == "user", let u = r["uuid"] as? String { h.root = u; break }
             }
         }

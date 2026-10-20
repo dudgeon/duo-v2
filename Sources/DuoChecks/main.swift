@@ -33,6 +33,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "askq-fallback" { return try askqFallbackChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "remote-control" { return try remoteControlChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "installer-lock" { return try installerLockChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "terminal-keys" { return try terminalKeyChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "ambiguous-name" { return try ambiguousNameChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "reveal-tree" { return try revealTreeChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "park" { return try parkChecks() }
@@ -67,7 +68,11 @@ func repoFixture() throws -> Fixture {
     sessionGlyphChecks(f)
     sidebarHierarchyChecks(f)
     sidebarSplitChecks()
+    try forkChecks(f)
+    try forkAdoptChecks()
+    try trustChecks(f)
     try taskBoardChecks()
+    try appearanceChecks()
 
     print("properties (DB-16)")
     do {
@@ -402,11 +407,6 @@ func repoFixture() throws -> Fixture {
               && PopupPlacement.after(closing: "web:c", in: ["web:a", "web:c"], openers: [:]) == "web:a"
               && PopupPlacement.after(closing: "web:a", in: ["web:a", "web:b", "web:c"], openers: [:]) == "web:b"
               && PopupPlacement.after(closing: "web:a", in: ["web:a"], openers: [:]) == nil, "closing a tab shows its left neighbour, the new first tab if the first closes (ENH-144)")
-        do {   // 15 documents overflow: the selected tab stays, the + is outside the fit (BUG-068)
-            let ws = [CGFloat](repeating: 90, count: 15)
-            let r = TabStripFit.fit(full: ws, short: ws, selected: 14, width: 700, controls: 34, more: 55, gap: 24)
-            check(r.keep[14] && r.keep.contains(false) && r.keep.filter { $0 }.count * 90 + (r.keep.filter { $0 }.count - 1) * 24 + 34 + 55 <= 700, "an overflowing right strip keeps the active tab and leaves room for » n and +")
-        }
         check(DuoCommand.printPage.shortcut == KeyboardShortcut("p", modifiers: .command) && DuoCommand.actualSize.shortcut == KeyboardShortcut("0", modifiers: .command)
               && DuoCommand.allCases.filter { $0.shortcut == KeyboardShortcut("0", modifiers: .command) || $0.shortcut == KeyboardShortcut("p", modifiers: .command)
                                                 || $0.shortcut == KeyboardShortcut("-", modifiers: .command) || $0.shortcut == KeyboardShortcut("+", modifiers: .command) }.count == 4,
@@ -751,7 +751,10 @@ func repoFixture() throws -> Fixture {
     dockBadgeChecks()
     try paneFocusChecks()
     try tabOrderChecks()
+    tabScrollChecks()
+    shellTitleChecks()
     try gitChecks()
+    try issueChecks()   // IssueChecks.swift: DL-226
     dockMenuChecks()
 
     print("titles")
@@ -2049,29 +2052,6 @@ func repoFixture() throws -> Fixture {
         for _ in 0..<50 { for t in titles { _ = TextWidth.of(t, font: font) } }
         check(TextWidth.measured - before == titles.count, "50 passes over 5 titles measure each once (\(TextWidth.measured - before))")
         check(TextWidth.of("plain", font: font) == ("plain" as NSString).size(withAttributes: [.font: font]).width, "the width is the string's own")
-        // The fit matches the old loop: full, short, then drop from the right, never the selected.
-        func old(_ full: [CGFloat], _ short: [CGFloat], _ sel: Int?, _ width: CGFloat) -> ([Bool], Bool) {
-            let c: CGFloat = 41, m: CGFloat = 49
-            func total(_ ws: [CGFloat], _ more: Bool) -> CGFloat { ws.reduce(0, +) + CGFloat(max(0, ws.count - 1)) * 18 + c + (more ? m : 0) }
-            if total(full, false) <= width { return (full.map { _ in true }, false) }
-            if total(short, false) <= width { return (full.map { _ in true }, true) }
-            var shown = Array(full.indices)
-            while total(shown.map { short[$0] }, true) > width, let i = shown.lastIndex(where: { $0 != sel }) { shown.remove(at: i) }
-            return (full.indices.map(shown.contains), true)
-        }
-        var same = true
-        var rng = SystemRandomNumberGenerator()
-        for _ in 0..<500 {
-            let n = Int.random(in: 0...16, using: &rng)
-            let full = (0..<n).map { _ in CGFloat(Int.random(in: 40...300, using: &rng)) }
-            let short = full.map { min($0, 180) }
-            let sel = n == 0 ? nil : Int.random(in: 0..<n, using: &rng)
-            let width = CGFloat(Int.random(in: 200...2000, using: &rng))
-            let new = TabStripFit.fit(full: full, short: short, selected: sel, width: width, controls: 41, more: 49)
-            let o = old(full, short, sel, width)
-            if new.keep != o.0 || new.short != o.1 { same = false }
-        }
-        check(same, "the one-walk fit chooses what the old loop chose (500 random strips)")
     }
 
     print("duo2 slide … (ENH-12, DL-125)")
@@ -2867,7 +2847,7 @@ func repoFixture() throws -> Fixture {
     }
 }
 
-do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try parkChecks(); try directorChecks(); try installerLockChecks(); try ambiguousNameChecks(); try revealTreeChecks(); try controlPlaneChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
+do { try MainActor.assumeIsolated { try run(); if ProcessInfo.processInfo.environment["DUO_CHECKS"] == nil { try remoteControlChecks(); try parkChecks(); try directorChecks(); try installerLockChecks(); try terminalKeyChecks(); try ambiguousNameChecks(); try revealTreeChecks(); try controlPlaneChecks(); try chatChecks() } } } catch { print("✘ setup: \(error)"); failures += 1 }
 print("\(passes) passed, \(failures) failed")
 exit(Int32(failures))
 

@@ -95,6 +95,7 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         config.userContentController.addUserScript(WKUserScript(source: EditorController.tokenCSS(), injectionTime: .atDocumentStart, forMainFrameOnly: true))
         config.userContentController.addUserScript(WKUserScript(source: Self.reviewCSS(), injectionTime: .atDocumentStart, forMainFrameOnly: true))
         webView = DuoWebView(frame: .zero, configuration: config)
+        webView.appearance = NSAppearance(named: .aqua)   // a page keeps its author's colours in dark too (DL-224)
         super.init()
         proxy.owner = self
         webView.configuration.userContentController.add(self, name: "duoDocx")
@@ -118,6 +119,13 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     /// The review colours as CSS variables on the page (docx-viewer-handoff: `reviewAuthor1…5`,
     /// `commentHighlight`), from the generated tokens.
     static func reviewCSS() -> String {
+        // The page keeps its author's colours in both appearances, so these are the light values (DL-224).
+        var css = ""
+        NSAppearance(named: .aqua)?.performAsCurrentDrawingAppearance { css = reviewScript() }
+        return css
+    }
+
+    private static func reviewScript() -> String {
         func hex(_ c: NSColor) -> String {
             let s = c.usingColorSpace(.sRGB) ?? c
             return String(format: "#%02X%02X%02X", Int(round(s.redComponent * 255)), Int(round(s.greenComponent * 255)), Int(round(s.blueComponent * 255)))

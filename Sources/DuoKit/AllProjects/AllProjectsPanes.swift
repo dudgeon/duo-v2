@@ -43,92 +43,7 @@ struct HomePane: View {
             // No Home yet: no session row, the message sits under the heading (S2-3).
             let noHome = model.fixtureConsole == .noHome || (model.terminalsMode == .live && home == nil)
             if !noHome {
-            HStack(spacing: 16) {
-                ForEach(tabs) { s in
-                    let active = s.tabKey == model.homeTab
-                    HStack(spacing: DuoSpace.gapGlyphToLabel) {
-                        if model.showsTabClose(s.tabKey) {   // DL-126
-                            TabCloseButton(key: s.tabKey, onConsole: !light, active: active) { model.closeConsoleTab(s.tabKey) }  // action: session close
-                                .frame(width: DuoMetric.glyph, height: DuoMetric.glyph)
-                        } else {
-                            StateGlyph(s.state, on: light ? .light : .console(active: active))
-                        }
-                        if light {
-                            Text(s.name)
-                                .duoText(.control, weight: active ? .semibold : nil)
-                                .foregroundStyle(active ? DuoColor.text : DuoColor.text2)
-                                .lineLimit(1)
-                        } else {
-                            Text(s.name)
-                                .duoText(active ? .monoActiveTab : .mono)
-                                .foregroundStyle(active ? DuoColor.consoleText : DuoColor.consoleText2)
-                                .lineLimit(1)
-                        }
-                        // Keep Running (DL-192): a pin after the name.
-                        if model.isKeepRunning(s.tabKey) {
-                            KeepRunningPin(color: light ? (active ? DuoColor.text : DuoColor.text2) : (active ? DuoColor.consoleText : DuoColor.consoleText2))
-                        }
-                    }
-                    .modifier(TabHoverFill(key: s.tabKey, onConsole: !light, fill: light ? DuoColor.selected : nil))   // DL-134
-                    .frame(maxHeight: light ? .infinity : nil)
-                    // The selected tab is underlined at the strip's foot (DL-136).
-                    .overlay(alignment: .bottom) { if light && active { DuoColor.text.frame(height: 2) } }
-                    .contentShape(Rectangle())
-                    .onActivate { model.homeTab = s.tabKey }  // action: session open
-                    .modifier(SessionOrganizeMenu(sessionKey: s.tabKey, tab: true))
-                    .modifier(TabHover(key: s.tabKey) { model.closeConsoleTab(s.tabKey) })
-                    .accessibilityElement(children: .combine)
-                    .modifier(KeepRunningLabel(pinned: model.isKeepRunning(s.tabKey), name: s.name, state: s.state))
-                    .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
-                    .background(ground)
-                    .transition(.tab)
-                }
-                // Home's shells (DB-4), after its sessions.
-                ForEach(home.map { model.shells(inProject: $0.name) } ?? [], id: \.self) { key in
-                    let active = key == model.homeTab
-                    HStack(spacing: DuoSpace.gapGlyphToLabel) {
-                        if model.showsTabClose(key) {
-                            TabCloseButton(key: key, onConsole: !light, active: active) { model.closeConsoleTab(key) }  // action: session close
-                                .frame(width: 11, height: 9)
-                        } else {
-                            ShellPromptMark(active: active, light: light).frame(width: 11, height: 9)
-                        }
-                        Text(model.consoleTitle(key)).duoText(light ? .control : active ? .monoActiveTab : .mono)
-                            .foregroundStyle(active ? text : text2).lineLimit(1)
-                    }
-                    .modifier(TabHoverFill(key: key, onConsole: !light, fill: light ? DuoColor.selected : nil))
-                    .contentShape(Rectangle())
-                    .onActivate { model.homeTab = key }  // action: session open
-                    .modifier(TabHover(key: key) { model.closeConsoleTab(key) })
-                    .accessibilityLabel("\(model.consoleTitle(key)), shell")
-                    .background(ground)
-                    .transition(.tab)
-                }
-                // With no tabs, a way to start one (home-none).
-                if home != nil, tabs.isEmpty && (home.map { model.shells(inProject: $0.name).isEmpty } ?? true) {
-                    HStack(spacing: 5) {
-                        Text("+").duoText(light ? .control : .mono).foregroundStyle(text2)
-                            .onActivate { if let h = home?.name { model.homeTab = model.newSession(in: h) } }  // action: session new
-                            .accessibilityLabel("New Claude session")
-                        Chevron(direction: .down, color: text2).frame(width: 8, height: 6).scaleEffect(0.8)
-                            .frame(height: 16).contentShape(Rectangle())
-                            .onActivate {  // action: session new
-                                PopUp.show([("New Claude Session", { if let h = home?.name { model.homeTab = model.newSession(in: h) } }),
-                                            ("New Shell", { model.newShell() })], keys: [("t", [.command]), ("t", [.command, .shift])])
-                            }
-                            .accessibilityLabel("New session or shell")
-                    }
-                }
-                Spacer(minLength: 0)
-                // Terminal / Chat for the selected Claude tab, as on the console (DL-132 g, q57-home-pill).
-                if let key = model.homeTab, tabs.contains(where: { $0.tabKey == key }), model.chat(for: key) != nil {
-                    ChatToggle(key: key, light: light).padding(.trailing, light ? -6 : -4)   // 11 from the edge on the thin strip
-                }
-            }
-            .padding(.horizontal, DuoSpace.panePadding)
-            .frame(height: light ? DuoMetric.chatStripHeight - DuoMetric.borderHairline : DuoMetric.homeSessionTabsHeight)
-            .background(ground)
-            .duoAnimation(.tabMove, value: tabs.map(\.tabKey) + (home.map { model.shells(inProject: $0.name) } ?? []))
+            ConsoleTabStrip(project: home?.name, pane: .left)
             HomeRule(light: light)
             }
 
@@ -142,6 +57,7 @@ struct HomePane: View {
                     if model.altitude.isAllProjects || !chat.showsChat { ConsoleChatBody(chat: chat, terminal: t) } else { Color.clear }
                 } else { TerminalSlot(session: t) }
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
+                else if model.chat(for: t.key)?.showsChat != true { TrustBar(key: t.key) }
                 Color.clear.frame(height: 0).task(id: t.key) { model.attachChat(t) }
             } else if let tab = model.homeTab, let chat = model.fixtureChats[tab] {
                 // A target state's Home chat (no terminal in fixture mode); at All projects only, as above.
@@ -1092,6 +1008,8 @@ struct SessionOrganizeMenu: ViewModifier {
     var onConsole = false
     /// On a console or Home tab: Park Session, Keep Running and Close Tab close its menu (DL-192).
     var tab = false
+    /// The strip the tab is on, for its Move Tab items: the console's, or Home's (DL-225).
+    var pane: DuoPane = .middle
     /// A console tab (DL-220): its drag image is the tab, lifted, its place stays empty while it's
     /// dragged, and its menu moves it along the strip. A session row's image is its card.
     var dragImage: (() -> AnyView)?
@@ -1134,10 +1052,10 @@ struct SessionOrganizeMenu: ViewModifier {
                     }
                     if dragImage != nil {
                         Divider()
-                        Button("Move Tab Left") { model.moveTab(sessionKey, in: .middle, by: -1) }  // action: view tab-move
-                            .disabled(!model.canMoveTab(sessionKey, in: .middle, by: -1))
-                        Button("Move Tab Right") { model.moveTab(sessionKey, in: .middle, by: 1) }  // action: view tab-move
-                            .disabled(!model.canMoveTab(sessionKey, in: .middle, by: 1))
+                        Button("Move Tab Left") { model.moveTab(sessionKey, in: pane, by: -1) }  // action: view tab-move
+                            .disabled(!model.canMoveTab(sessionKey, in: pane, by: -1))
+                        Button("Move Tab Right") { model.moveTab(sessionKey, in: pane, by: 1) }  // action: view tab-move
+                            .disabled(!model.canMoveTab(sessionKey, in: pane, by: 1))
                     }
                 }
                 // A tab leaves its place empty while it's dragged (tabs-drag); a row sinks back.

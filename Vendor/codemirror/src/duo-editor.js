@@ -540,6 +540,26 @@ class LinkTitleWidget extends WidgetType {
   eq(o) { return o.title === this.title; }
   toDOM() { const s = document.createElement("span"); s.className = "duo-fm-link"; s.textContent = this.title; return s; }
 }
+// The issue a task tracks (DL-226, github-issues-handoff 03): GitHub's mark, `#n title` underlined, then its
+// state and labels in text2, read live by Duo through gh. Without gh or access, the number and why.
+class IssueTitleWidget extends WidgetType {
+  constructor(info, fallback) { super(); this.info = info; this.fallback = fallback; }
+  eq(o) { return JSON.stringify(o.info) === JSON.stringify(this.info) && o.fallback === this.fallback; }
+  toDOM() {
+    const w = document.createElement("span"); w.className = "duo-fm-issue";
+    const i = this.info || {};
+    const shut = i.open === false;
+    const mark = document.createElement("span"); mark.className = "duo-fm-issue-mark";
+    mark.innerHTML = `<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4.2" fill="none" stroke="currentColor" stroke-width="1.2"/>${shut ? `<path d="M3.1 5.1 4.4 6.4 6.9 3.7" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>` : `<circle cx="5" cy="5" r="1.3" fill="currentColor"/>`}</svg>`;
+    const t = document.createElement("span"); t.className = "duo-fm-link";
+    t.textContent = i.title ? `#${i.number} ${i.title}` : (i.number ? `#${i.number}` : this.fallback);
+    w.append(mark, t);
+    const d = document.createElement("span"); d.className = "duo-fm-issue-detail";
+    if (i.detail) d.textContent = i.detail; else if (i.why) d.textContent = `can’t show its state: ${i.why}`;
+    if (d.textContent) w.append(d);
+    return w;
+  }
+}
 class ClaudeLabelWidget extends WidgetType {
   eq() { return true; }
   toDOM() { const s = document.createElement("span"); s.className = "duo-fm-claude-label"; s.textContent = "changed by Claude"; return s; }
@@ -851,7 +871,8 @@ function propertiesDecorations(state) {
       out.push(Decoration.widget({ widget: new ControlWidget("date", { line: L.n, key: L.key, value: v, time: L.type === "datetime" }), side: 1 }).range(L.to));
     } else if (L.type === "link") {
       const lm = MD_LINK.exec(v), url = lm ? lm[2] : v.replace(/^["']|["']$/g, ""), title = lm ? lm[1] : url;
-      if (!active.has(L.n)) out.push(Decoration.replace({ widget: new LinkTitleWidget(title) }).range(L.vFrom, L.vFrom + v.length));
+      if (!active.has(L.n) && task && L.key === "issue") out.push(Decoration.replace({ widget: new IssueTitleWidget((ctx.issues || {})[url] || null, title) }).range(L.vFrom, L.vFrom + v.length));
+      else if (!active.has(L.n)) out.push(Decoration.replace({ widget: new LinkTitleWidget(title) }).range(L.vFrom, L.vFrom + v.length));
       out.push(Decoration.widget({ widget: new ControlWidget("open", { url, title }), side: 1 }).range(L.to));
     }
   }
@@ -1880,6 +1901,10 @@ const duoTheme = EditorView.theme({
   ".cm-line.duo-fm-first .duo-fm-icon": { top: "8px" },
   ".duo-fm-check": { margin: "0 4px 0 0", verticalAlign: "-2px" },
   ".duo-fm-control": { display: "inline-flex", alignItems: "center", marginLeft: "12px", verticalAlign: "-2px", cursor: "default" },
+  ".duo-fm-issue": { display: "inline-flex", alignItems: "baseline", gap: "6px", color: "var(--duo-text2)" },
+  ".duo-fm-issue-mark": { display: "inline-flex", alignSelf: "center", flex: "none", color: "var(--duo-text2)" },
+  ".duo-fm-issue .duo-fm-link": { color: "var(--duo-text)" },
+  ".duo-fm-issue-detail": { color: "var(--duo-text2)", fontSize: "12px", marginLeft: "4px" },
   ".duo-fm-link": { textDecoration: "underline", textDecorationColor: "var(--duo-control-edge)", textUnderlineOffset: "3px" },
   ".cm-line.duo-fm-claude::before": { content: "''", position: "absolute", left: "6px", right: "6px", top: "0", bottom: "0", backgroundColor: "var(--duo-claude-edit)", borderRadius: "4px", zIndex: "-1" },
   ".duo-fm-claude-label": { float: "right", paddingLeft: "8px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", color: "var(--duo-text2)", whiteSpace: "nowrap" },
@@ -1887,7 +1912,7 @@ const duoTheme = EditorView.theme({
   ".duo-fm-message": { margin: "8px -8px 0", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "12px", lineHeight: "16px", color: "var(--duo-text2)" },
   ".duo-fm-rule.duo-fm-rule-folded": { margin: "6px -28px 22px" },
   // Suggestions (§4): pane, rule border, radius 10, the popover shadow; rows 26, radius 6.
-  ".cm-tooltip.cm-tooltip-autocomplete": { backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "0 12px 32px rgba(31, 35, 40, 0.22)", padding: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px" },
+  ".cm-tooltip.cm-tooltip-autocomplete": { backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "0 12px 32px var(--duo-shadow)", padding: "6px", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", fontSize: "13px" },
   ".cm-tooltip.duo-sugg-names > ul": { width: "286px" },
   ".cm-tooltip.duo-sugg-values > ul": { width: "266px" },
   ".cm-tooltip.cm-tooltip-autocomplete > ul": { fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", maxHeight: "260px" },
@@ -1909,7 +1934,7 @@ const duoTheme = EditorView.theme({
   ".duo-fm-reffield": { position: "relative", display: "block", flex: "1", maxWidth: "340px", minWidth: "0" },
   ".duo-fm-reffield input": { width: "100%", height: "22px", boxSizing: "border-box", border: "1px solid var(--duo-rule)", borderRadius: "6px", padding: "0 8px", font: "12px -apple-system, BlinkMacSystemFont, sans-serif", color: "var(--duo-text)", background: "var(--duo-pane)", outline: "none" },
   ".duo-fm-reffield input:focus": { borderColor: "var(--duo-text)" },
-  ".duo-fm-refmenu": { position: "absolute", top: "26px", left: "0", right: "0", zIndex: "20", backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "0 12px 32px rgba(31, 35, 40, 0.22)", padding: "6px", font: "13px -apple-system, BlinkMacSystemFont, sans-serif" },
+  ".duo-fm-refmenu": { position: "absolute", top: "26px", left: "0", right: "0", zIndex: "20", backgroundColor: "var(--duo-pane)", border: "1px solid var(--duo-rule)", borderRadius: "10px", boxShadow: "0 12px 32px var(--duo-shadow)", padding: "6px", font: "13px -apple-system, BlinkMacSystemFont, sans-serif" },
   ".duo-fm-refitem": { display: "flex", alignItems: "center", gap: "8px", height: "26px", padding: "0 8px", borderRadius: "6px", color: "var(--duo-text)" },
   ".duo-fm-refitem-on": { backgroundColor: "var(--duo-selected)" },
   ".duo-fm-refitem-name": { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },

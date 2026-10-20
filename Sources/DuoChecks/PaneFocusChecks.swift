@@ -104,4 +104,24 @@ import Foundation
     check(m.activePane == .left && all.activePane == .middle, "each altitude keeps its own active pane")
 
     check(parityGaps().isEmpty, "every command and verb has its pair: \(parityGaps().prefix(3))")
+
+    // The file tree: a click selects, a double click or Return opens (F-348)
+    do {
+    let m = AppModel(fixture: f)
+    TargetState.project.apply(to: m)
+    m.activate(.middle, focus: false)
+    m.openDocuments = []
+    m.rightTab = "Project"; m.selectedFile = nil
+    m.selectFile("docs/prd-v2.md")
+    check(m.selectedFile == "docs/prd-v2.md" && m.activePane == .left, "a single click on a file selects it and puts the keyboard in the tree")
+    check(!m.openDocuments.contains("docs/prd-v2.md") && m.rightTab == "Project", "and does not open it")
+    check(m.openSelectedFile() && m.openDocuments.contains("docs/prd-v2.md") && m.rightTab == "docs/prd-v2.md", "Return opens the selected file")
+    m.openDocuments = []; m.rightTab = "Project"; m.selectedFile = nil
+    check(!m.openSelectedFile() && m.openDocuments.isEmpty, "Return with nothing selected does nothing")
+    m.selectedFile = "docs/prd-v2.md"; m.activate(.middle, focus: false)
+    check(!m.openSelectedFile(), "Return elsewhere than the tree does nothing")
+    m.openDocument("docs/prd-v2.md")   // a double click
+    check(m.openDocuments.contains("docs/prd-v2.md") && m.rightTab == "docs/prd-v2.md", "a double click opens the file")
+    m.openDocuments = []; m.rightTab = "Project"; m.selectedFile = nil
+    }
 }

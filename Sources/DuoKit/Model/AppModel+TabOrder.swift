@@ -15,6 +15,14 @@ public enum TabOrder {
         return ordered + natural.filter { !seen.contains($0) }
     }
 
+    /// The tab to select when `key` closes: its left neighbour in `keys`, the new first tab if it was
+    /// first, nil when it was the only one (ENH-144, as a closing document's `PopupPlacement.after`).
+    public static func neighbour(closing key: String, in keys: [String]) -> String? {
+        guard let i = keys.firstIndex(of: key) else { return keys.first }
+        let rest = keys.filter { $0 != key }
+        return rest.isEmpty ? nil : rest[max(0, i - 1)]
+    }
+
     /// `key` moved `offset` places (−1 left, +1 right); nil when it can't go that far.
     public static func moved(_ keys: [String], _ key: String, by offset: Int) -> [String]? {
         guard let i = keys.firstIndex(of: key) else { return nil }
@@ -57,14 +65,17 @@ public struct TabDrag: Equatable, Sendable {
 }
 
 extension AppModel {
+    /// The project whose console-style strip `pane` shows: the project's console, or Home's at All projects.
+    func stripProject(of pane: DuoPane) -> String? {
+        if altitude.isAllProjects { return pane == .left ? fixture.home?.name : nil }
+        return pane == .middle ? currentProject?.name : nil
+    }
+
     /// The tabs of `pane` that move, in strip order.
     public func movableTabKeys(in pane: DuoPane) -> [String] {
-        guard !altitude.isAllProjects, let project = currentProject?.name else { return [] }
-        switch pane {
-        case .middle: return consoleTabKeys(inProject: project)
-        case .right: return rightTabItems().filter { $0.isDocument && openDocuments.contains($0.id) }.map(\.id)
-        case .left: return []
-        }
+        if let project = stripProject(of: pane) { return consoleTabKeys(inProject: project) }
+        guard !altitude.isAllProjects, pane == .right else { return [] }
+        return rightTabItems().filter { $0.isDocument && openDocuments.contains($0.id) }.map(\.id)
     }
 
     /// Whether Move Tab Left (−1) or Right (+1) can move `key`.
@@ -89,12 +100,8 @@ extension AppModel {
     }
 
     func setTabOrder(_ keys: [String], in pane: DuoPane) {
-        guard let project = currentProject?.name else { return }
-        switch pane {
-        case .middle: consoleTabOrder[project] = keys
-        case .right: openDocuments = keys + openDocuments.filter { !keys.contains($0) }
-        case .left: break
-        }
+        if let project = stripProject(of: pane) { consoleTabOrder[project] = keys; return }
+        if pane == .right, !altitude.isAllProjects { openDocuments = keys + openDocuments.filter { !keys.contains($0) } }
     }
 
     /// A live session's console tab is dragged as itself, onto a task or a project (DL-147).
@@ -109,21 +116,63 @@ extension AppModel {
 
     // MARK: - Dragging (TabsDrag, ConsoleDrag)
 
+    /// Selects the tab `key` of `pane`, as a click does (a drag selects its tab, DL-225).
+    func selectTab(_ key: String, in pane: DuoPane) {
+        switch pane {
+        case .middle: if consoleTab != key { consoleTab = key }
+        case .left: if homeTab != key { homeTab = key }
+        case .right:
+            if rightTab != key { rightTab = key }
+            if openDocuments.contains(key), selectedFile != key { selectedFile = key }
+        }
+    }
+
     /// The pointer moved with a tab held: it follows, and the tab's place moves to where it would land.
-    /// `shown` is the strip's tabs on screen, left to right, with their middles in the strip's space.
+    /// `location` is in the strip's scrolling content (so a scroll doesn't change a tab's frame), and
+    /// `shown` is the strip's scrolling tabs, left to right, with their middles in the same space.
     func dragTab(_ key: String, in pane: DuoPane, start: CGPoint, location: CGPoint, middle: CGPoint, shown: [(key: String, midX: CGFloat)]) {
         if tabDrag?.key != key {
             tabDrag = TabDrag(key: key, pane: pane, location: location, grab: CGSize(width: start.x - middle.x, height: start.y - middle.y))
+            selectTab(key, in: pane)
         } else {
             tabDrag?.location = location
         }
-        if let keys = TabOrder.dropped(movableTabKeys(in: pane), key, pointerX: location.x, middles: shown) {
+        tabDragPointer = (pane, location.x - (tabStrips[pane]?.offset ?? 0))
+        reorderForDrag(key, in: pane, pointerX: location.x, shown: shown)
+    }
+
+    /// Where the dragged tab lands for a pointer at `pointerX` in the strip's content.
+    func reorderForDrag(_ key: String, in pane: DuoPane, pointerX: CGFloat, shown: [(key: String, midX: CGFloat)]) {
+        if let keys = TabOrder.dropped(movableTabKeys(in: pane), key, pointerX: pointerX, middles: shown) {
             setTabOrder(keys, in: pane)
         }
     }
 
+    /// Edge scroll moved the strip by `delta` under a still pointer: the held tab's place follows.
+    func advanceTabDrag(in pane: DuoPane, by delta: CGFloat) {
+        guard let key = tabDrag?.key ?? draggedSessionKey(in: pane), let p = tabDragPointer, p.pane == pane else { return }
+        let x = p.x + (tabStrips[pane]?.offset ?? 0)
+        if tabDrag != nil { tabDrag?.location.x += delta }
+        let middles = movableTabKeys(in: pane).compactMap { k in tabFrames[k].map { (key: k, midX: $0.midX) } }
+        reorderForDrag(key, in: pane, pointerX: x, shown: middles)
+    }
+
+    /// A live session's tab held for the system's drag (`TabStripDrop`): its key.
+    func draggedSessionKey(in pane: DuoPane) -> String? {
+        guard let payload = dragging, payload.hasPrefix("duo-session:") else { return nil }
+        let id = String(payload.dropFirst("duo-session:".count))
+        return movableTabKeys(in: pane).contains(id) ? id : nil
+    }
+
+    /// `drag` with its location moved from the strip's scrolling content to the strip's own space, for the ghost.
+    func stripDrag(_ drag: TabDrag) -> TabDrag {
+        var d = drag
+        if let st = tabStrips[drag.pane] { d.location.x += st.pinnedWidth - st.offset }
+        return d
+    }
+
     /// The tab let go: it settles in its place.
-    func endTabDrag() { tabDrag = nil }
+    func endTabDrag() { tabDrag = nil; tabDragPointer = nil }
 }
 
 /// Makes a tab draggable along its strip (ENH-042). The tab keeps its place, emptied, while a
@@ -201,9 +250,6 @@ struct TabDragShadow: ViewModifier {
 struct TabStripDrop: DropDelegate {
     let model: AppModel
     let pane: DuoPane
-    /// The strip's tabs on screen, left to right.
-    let shown: [String]
-
     @MainActor func key() -> String? {
         guard let payload = model.dragging, payload.hasPrefix("duo-session:") else { return nil }
         let id = String(payload.dropFirst("duo-session:".count))
@@ -214,16 +260,21 @@ struct TabStripDrop: DropDelegate {
 
     @MainActor func dropUpdated(info: DropInfo) -> DropProposal? {
         guard let key = key() else { return nil }
+        let strip = model.tabStrips[pane]
+        let x = info.location.x - (strip?.pinnedWidth ?? 0)   // in the scrolling part
+        model.selectTab(key, in: pane)
+        model.tabDragPointer = (pane, x)
         let frames = model.tabFrames
-        let middles = shown.compactMap { k in frames[k].map { (key: k, midX: $0.midX) } }
-        if let keys = TabOrder.dropped(model.movableTabKeys(in: pane), key, pointerX: info.location.x, middles: middles) {
-            model.setTabOrder(keys, in: pane)
-        }
+        let middles = model.movableTabKeys(in: pane).compactMap { k in frames[k].map { (key: k, midX: $0.midX) } }
+        model.reorderForDrag(key, in: pane, pointerX: x + (strip?.offset ?? 0), shown: middles)
         return DropProposal(operation: .move)
     }
 
+    @MainActor func dropExited(info: DropInfo) { model.tabDragPointer = nil }
+
     @MainActor func performDrop(info: DropInfo) -> Bool {
         guard key() != nil else { return false }
+        model.tabDragPointer = nil
         model.dragging = nil
         return true
     }

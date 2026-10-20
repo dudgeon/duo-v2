@@ -36,7 +36,7 @@ struct ProjectSidebarPane: View {
                         if project.isMissing { MissingNotice(project: project) }
                         else if project.kind == "folder", project.notNow != true { FolderNotice(project: project) }
                     }
-                    // NEEDS YOU, then TASKS, then OTHER SESSIONS in its time groups, then Archived (DL-174). One
+                    // PINNED, NEEDS YOU, OPEN, TASKS (in play, Later), then OTHER SESSIONS in its time groups, then Archived (DL-217). One
                     // flat list, so a row keeps its identity when it changes section and travels there (DL-130):
                     // `rowMove`; a new row fades in (`rowIn`), a row that goes fades out (`rowOut`).
                     // Each item is opaque on the pane, and a row changing section travels above the rows
@@ -44,10 +44,16 @@ struct ProjectSidebarPane: View {
                     ForEach(items) { item in
                         switch item.kind {
                         case .label(let section):
-                            SectionLabel(text: section.title, count: section.rows.count, needsYou: section.needsYou)
+                            SectionLabel(text: section.title, count: section.sessionCount, needsYou: section.needsYou)
                                 .padding(EdgeInsets(top: 12, leading: DuoSpace.panePadding, bottom: 4, trailing: DuoSpace.panePadding))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(DuoColor.pane)
+                        case .pinnedHead(let count):
+                            if let project { PinnedHeader(project: project.name, count: count) }
+                        case .openHead(let count):
+                            if let project { OpenHeader(project: project.name, count: count) }
+                        case .laterFold(let section):
+                            if let project { LaterFoldRow(project: project.name, section: section) }
                         case .tasksHead:
                             if let project { TasksHeader(project: project.name) }
                         case .tasksTail:
@@ -79,6 +85,7 @@ struct ProjectSidebarPane: View {
                 .id(project?.name)
             }
             .onHover { model.hoverSidebar($0) }
+            .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { model.sidebarWidth = $0 }
             .background { if model.videoDemoFolder != nil { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Sessions").accessibilityIdentifier("video.sessions.list") } }   // anchors (scene 9)
             FileTreePane()
         }
@@ -127,11 +134,17 @@ struct SidebarSplit: Layout {
 public struct SidebarItem: Identifiable {
     public enum Kind {
         case label(SidebarSection)
+        /// PINNED: a section label with a + (Keep Running) on hover; the director's slot and the kept sessions follow.
+        case pinnedHead(count: Int)
+        /// OPEN: a section label with a + (New Claude Code session) on hover.
+        case openHead(count: Int)
         /// TASKS (a section label with a + on hover); its rows are the task rows, `tasksTail` what follows them.
         case tasksHead, tasksTail
+        /// Later: a fold row among the tasks, after those in play (DL-217).
+        case laterFold(SidebarSection)
         /// OTHER SESSIONS, with its count (a section label with a + on hover).
         case otherHead(count: Int)
-        /// A time group's fold row: Open, Today, This week or Earlier.
+        /// A time group's fold row: Today, This week or Earlier.
         case timeGroup(SidebarSection)
         /// `indented`: a session in a time group, at the nested rows' inset.
         case row(SidebarRow, indented: Bool)
@@ -139,7 +152,7 @@ public struct SidebarItem: Identifiable {
     public let id: String
     public let kind: Kind
 
-    static let timeGroups = ["open", "today", "week", "earlier"]
+    static let timeGroups = ["today", "week", "earlier"]
 
     public static func items(_ sections: [SidebarSection], tasksShown: Bool, folded: (String) -> Bool) -> [SidebarItem] {
         func rows(_ s: SidebarSection, indented: Bool) -> [SidebarItem] {
@@ -147,19 +160,31 @@ public struct SidebarItem: Identifiable {
         }
         var out: [SidebarItem] = []
         let byID = Dictionary(sections.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        if let pinned = byID["pinned"] {
+            out.append(SidebarItem(id: "section/pinned", kind: .pinnedHead(count: pinned.sessionCount)))
+            out += rows(pinned, indented: false)
+        }
         if let needs = byID["needs"] {
             out.append(SidebarItem(id: "section/needs", kind: .label(needs)))
             out += rows(needs, indented: false)
         }
+        if let open = byID["open"] {
+            out.append(SidebarItem(id: "section/open", kind: .openHead(count: open.sessionCount)))
+            out += rows(open, indented: false)
+        }
         // TASKS is always there in a project (DL-172's New task row lives in it), empty or not.
-        if tasksShown || byID["tasks"] != nil {
+        if tasksShown || byID["tasks"] != nil || byID["later"] != nil {
             out.append(SidebarItem(id: "section/tasks", kind: .tasksHead))
             if let tasks = byID["tasks"] { out += rows(tasks, indented: false) }
+            if let later = byID["later"] {
+                out.append(SidebarItem(id: "section/later", kind: .laterFold(later)))
+                if !folded("later") { out += rows(later, indented: false) }
+            }
             out.append(SidebarItem(id: "section/tasks-tail", kind: .tasksTail))
         }
         let groups = timeGroups.compactMap { byID[$0] }
         if !groups.isEmpty {
-            out.append(SidebarItem(id: "section/other", kind: .otherHead(count: groups.reduce(0) { $0 + $1.rows.count })))
+            out.append(SidebarItem(id: "section/other", kind: .otherHead(count: groups.reduce(0) { $0 + $1.sessionCount })))
             for g in groups {
                 out.append(SidebarItem(id: "section/\(g.id)", kind: .timeGroup(g)))
                 if !folded(g.id) { out += rows(g, indented: true) }
@@ -203,7 +228,7 @@ struct SidebarRowView: View {
                 .contentShape(Rectangle())
                 .onActivate { withDuoAnimation(.fold) { if expanded { model.expandedGroups.remove(row.id) } else { model.expandedGroups.insert(row.id) } } }  // action: view group
                 .accessibilityLabel(expanded ? "Hide \(row.name.lowercased()) sessions" : "Show \(rows.count) \(row.name.lowercased()) sessions")
-                if expanded { ForEach(rows) { r in SidebarLeafRow(row: r, nested: false) }.transition(.foldRows) }
+                if expanded { ForEach(rows) { r in SidebarMemberRow(row: r, nested: false) }.transition(.foldRows) }
             }
         case .group(let threads, let count):
             let expanded = model.expandedGroups.contains(row.name)
@@ -230,7 +255,7 @@ struct SidebarRowView: View {
                     Text(row.name).duoText(.bodyEmphasis).strikethrough(taskDone).foregroundStyle(taskDone ? DuoColor.text2 : DuoColor.text).lineLimit(1).layoutPriority(1)   // the name keeps its room; status gives way, except under the pointer (fixed below)
                     if let task = row.task {
                         let st = model.fixture.tasks?.first(where: { $0.path == task && $0.project == model.currentProject?.name })?.status ?? "open"
-                        Text(st == "open" ? "\(count) session\(count == 1 ? "" : "s")" : "\(st.replacingOccurrences(of: "-", with: " ")) · \(count)")
+                        Text(row.age ?? (st == "open" ? "\(count) session\(count == 1 ? "" : "s")" : "\(st.replacingOccurrences(of: "-", with: " ")) · \(count)"))
                             .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1)
                             .fixedSize(horizontal: hovered, vertical: false).layoutPriority(hovered ? 0 : -1)
                     } else {
@@ -274,7 +299,7 @@ struct SidebarRowView: View {
 
                 if expanded {
                     VStack(alignment: .leading, spacing: 0) {
-                        ForEach(threads) { t in SidebarLeafRow(row: t, nested: true) }
+                        ForEach(threads) { t in SidebarMemberRow(row: t, nested: true) }
                     }
                     .overlay(alignment: .leading) {
                         DuoColor.controlEdge.frame(width: DuoMetric.borderEmphasis)
@@ -289,11 +314,71 @@ struct SidebarRowView: View {
                     Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Task group").accessibilityIdentifier("video.task.\(taskSlug).group")
                 }
             }
-        case .thread, .session:
-            // In a time group (DL-174) the row sits at the inset of a task's sessions, without the rule.
-            SidebarLeafRow(row: row, nested: indented).padding(.leading, indented ? DuoSpace.threadRuleX : 0)
+        case .taskLine:
+            if let project = model.currentProject?.name, let t = model.summary(ofTask: row.task ?? "", in: project) {
+                TaskLine(task: t, showsProject: false, headerColumns: true, age: row.age)
+            }
+        case .thread(let n, let members):
+            ThreadRows(row: row, count: n, members: members, nested: indented)
+                .padding(.leading, indented ? DuoSpace.threadRuleX : 0)
+        case .session:
+            if let slot = row.slot {
+                DirectorSlotRow(row: row, slot: slot)
+            } else {
+                // In a time group (DL-174) the row sits at the inset of a task's sessions, without the rule.
+                SidebarLeafRow(row: row, nested: indented).padding(.leading, indented ? DuoSpace.threadRuleX : 0)
+            }
         }
     }
+}
+
+/// A thread (DL-228): folded, the original's name with the most urgent member's glyph and wait; open, the original
+/// first with the chevron down, and its forks under the thread rule. A click on the row opens the original, the
+/// chevron folds the thread (`duo2 view group ‹original id› expand|collapse`).
+struct ThreadRows: View {
+    @Environment(AppModel.self) private var model
+    let row: SidebarRow
+    let count: Int
+    let members: [SidebarRow]
+    /// In a task or a time group: the thread sits one rule deeper (the inner rule at x 37, DL-228).
+    let nested: Bool
+
+    var body: some View {
+        let open = model.expandedGroups.contains(row.id)
+        if open, let first = members.first {
+            // The rule sits where the original's glyph does, less the row's own inset: forks line up under the original.
+            let ruleX = nested ? 16 : DuoSpace.threadRuleX
+            let glyphX = nested ? 11 + DuoMetric.borderEmphasis + 10 + DuoSpace.gapRowItems : DuoSpace.panePadding + 10 + DuoSpace.gapRowItems
+            VStack(alignment: .leading, spacing: 0) {
+                SidebarLeafRow(row: first, nested: nested, thread: ThreadHead(foldKey: row.id, open: true, count: count))
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(members.dropFirst()) { m in SidebarLeafRow(row: m, nested: true, leading: glyphX - ruleX) }
+                }
+                .overlay(alignment: .leading) { DuoColor.controlEdge.frame(width: DuoMetric.borderEmphasis) }
+                .padding(.leading, ruleX)
+                .transition(.foldRows)
+            }
+        } else {
+            SidebarLeafRow(row: row, nested: nested, thread: ThreadHead(foldKey: row.id, open: false, count: count))
+        }
+    }
+}
+
+/// A row inside a fold or a task: a thread opens as one, anything else is a plain session row.
+struct SidebarMemberRow: View {
+    let row: SidebarRow
+    let nested: Bool
+    var body: some View {
+        if case .thread(let n, let members) = row.kind { ThreadRows(row: row, count: n, members: members, nested: nested) }
+        else { SidebarLeafRow(row: row, nested: nested) }
+    }
+}
+
+/// What makes a row the head of a thread.
+struct ThreadHead {
+    let foldKey: String
+    let open: Bool
+    let count: Int
 }
 
 /// A thread or session row, 26 high: chevron (threads) or a 10 pt spacer, glyph, name, pill, wait.
@@ -301,36 +386,76 @@ struct SidebarLeafRow: View {
     @Environment(AppModel.self) private var model
     let row: SidebarRow
     let nested: Bool
+    /// Set on a thread's first row (DL-228): the chevron and, folded, the count.
+    var thread: ThreadHead? = nil
+    /// A fork under its thread's rule: no chevron place, and this far from the rule.
+    var leading: CGFloat? = nil
 
     var body: some View {
         let kind = model.sessionKind(key: row.sessionKey, project: model.currentProject?.name ?? "")
-        HStack(spacing: DuoSpace.gapRowItems) {
-            Group {
-                if case .thread = row.kind { Chevron(direction: .right) } else { Color.clear }
+        // The row's own tab, not the thread's most urgent member's: a folded thread is the original's row.
+        HStack(alignment: row.showsOrigin ? .top : .center, spacing: DuoSpace.gapRowItems) {
+            if let thread {
+                Chevron(direction: thread.open ? .down : .right)
+                    .frame(width: 10, height: 10)
+                    .frame(width: 18, height: DuoMetric.rowSession).padding(.horizontal, -4)   // a bigger target than the mark
+                    .contentShape(Rectangle())
+                    .onActivate { withDuoAnimation(.fold) { if thread.open { model.expandedGroups.remove(thread.foldKey) } else { model.expandedGroups.insert(thread.foldKey) } } }  // action: view group
+                    .accessibilityLabel(thread.open ? "Fold thread" : "Open thread")
+            } else if leading == nil {
+                Color.clear.frame(width: 10, height: 10)
             }
-            .frame(width: 10, height: 10)
-            SessionGlyph(kind: kind, state: row.state)
-            Text(row.name).duoText(.body).lineLimit(1)
-            if case .thread(let n) = row.kind { CountPill(text: "thread · \(n)", emphasised: false) }
-            Spacer(minLength: 8)
-            // Open in Duo (DL-91): say what it's doing rather than how long ago.
-            WaitLabel(text: row.state.waitText(row.wait, open: model.hasOpenTerminal(row.sessionKey)))
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: DuoSpace.gapRowItems) {
+                    SessionGlyph(kind: kind, state: row.state)
+                    Text(row.name).duoText(.body).lineLimit(1)
+                    if row.pinned { KeepRunningPin(color: DuoColor.text2) }   // PINNED's rows (DL-217)
+                    if let thread, !thread.open { CountPill(text: "thread · \(thread.count)", emphasised: false) }
+                    Spacer(minLength: 8)
+                    // Open in Duo (DL-91): say what it's doing rather than how long ago.
+                    WaitLabel(text: row.state.waitText(row.wait, open: model.hasOpenTerminal(row.sessionKey)))
+                }
+                .frame(height: row.showsOrigin ? 20 : DuoMetric.rowSession)
+                .padding(.top, row.showsOrigin ? 3 : 0)
+                // The second line (DL-228, board 05): "Fork of ‹original›" in text2, 12 on a 16 line.
+                if row.showsOrigin, let of = row.forkOf {
+                    Text("Fork of \(of)").font(.system(size: 12)).foregroundStyle(DuoColor.text2).lineLimit(1)
+                        .padding(.leading, DuoMetric.glyph + DuoSpace.gapRowItems).frame(height: 16, alignment: .leading)
+                        .padding(.bottom, 3)
+                }
+            }
         }
         // Nested rows sit 11 pt from the group's rule (which is 1.5 wide at x 21).
-        .padding(.leading, nested ? 11 + DuoMetric.borderEmphasis : DuoSpace.panePadding)
+        .padding(.leading, leading ?? (nested ? 11 + DuoMetric.borderEmphasis : DuoSpace.panePadding))
         .padding(.trailing, DuoSpace.panePadding)
-        .frame(height: DuoMetric.rowSession)
+        .frame(height: row.showsOrigin ? 42 : DuoMetric.rowSession, alignment: .top)
         // A terminal is open for it in Duo (ENH-7). The selected row's own fill is drawn by the list.
-        .background { if model.hasOpenTerminal(row.sessionKey) { DuoColor.activeTint } }
+        .background {
+            // Inset and rounded, as the boards draw it (sidebar-hierarchy-handoff, session-glyphs-handoff 04).
+            if model.hasOpenTerminal(row.sessionKey) {
+                RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.activeTint).padding(.horizontal, DuoSpace.selectionInset)
+            }
+        }
         .contentShape(Rectangle())
         .onActivate { model.openConsoleTab(row.sessionKey) }  // action: session open
         .modifier(SessionOrganizeMenu(sessionKey: row.sessionKey))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(row.name), \(SessionGlyph.spokenKind(kind)), \(row.state.spokenName)\(row.wait.map { ", waiting \($0)" } ?? "")")
+        .accessibilityLabel(rowLabel(kind))
         .accessibilityIdentifier("video.session.\(row.name)")   // anchors: the video cursor's target
         .overlay {   // anchors: the row a context menu is open on
             if model.contextMenuSession == row.sessionKey { Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("Context menu row").accessibilityIdentifier("video.menu.row") }
         }
+    }
+}
+
+extension SidebarLeafRow {
+    /// "Pricing research, terminal session, at prompt, thread of 2, expanded" and "Pricing research (Branch), fork of
+    /// Pricing research, terminal session, working" (DL-228).
+    func rowLabel(_ kind: ChatViewMode) -> String {
+        let waiting = row.wait.map { ", waiting \($0)" } ?? ""
+        if let thread { return "\(row.name), \(SessionGlyph.spokenKind(kind)), \(row.state.spokenName)\(waiting), thread of \(thread.count), \(thread.open ? "expanded" : "folded")" }
+        if row.isFork, let of = row.forkOf { return "\(row.name), fork of \(of), \(SessionGlyph.spokenKind(kind)), \(row.state.spokenName)\(waiting)" }
+        return "\(row.name), \(SessionGlyph.spokenKind(kind)), \(row.state.spokenName)\(waiting)"
     }
 }
 
@@ -367,6 +492,9 @@ struct FileTreePane: View {
             ScrollView {
             VStack(alignment: .leading, spacing: 0) {
             let repo = model.currentRepo
+            if let o = model.issueOffer, o.project == project?.name {
+                IssueOfferView(offer: o).padding(.horizontal, DuoSpace.panePadding).padding(.top, 8)
+            }
             if let n = model.repoNotice {
                 RepoNoticeView(notice: n).padding(.horizontal, DuoSpace.panePadding).padding(.top, 8)
             }
@@ -495,9 +623,11 @@ struct BrowseRow: View {
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: DuoMetric.rowFile)
+            .background { if !isFolder, model.selectedFile == model.tabKey(for: url) { RoundedRectangle(cornerRadius: DuoMetric.radiusSelection).fill(DuoColor.selected) } }
             .padding(.horizontal, DuoSpace.selectionInset)
             .contentShape(Rectangle())
-            .onActivate { if isFolder { withDuoAnimation(.fold) { model.toggleBrowseFolder(node.path) } } else { model.openBrowsed(url) } }   // action: doc open
+            .onActivate { if isFolder { withDuoAnimation(.fold) { model.toggleBrowseFolder(node.path) } } else { model.selectFile(model.tabKey(for: url)) } }   // not an action: a click selects a file or folds a folder; opening is a double click or Return (`duo2 doc open`)
+            .simultaneousGesture(TapGesture(count: 2).onEnded { if !isFolder { model.openBrowsed(url) } })   // opens: doc open
             .modifier(LiveContextMenu { FileMenu(path: AppModel.outsideFilePrefix + url.standardizedFileURL.path, isFolder: isFolder, onTab: false) })
             .accessibilityElement(children: .combine)
             if let children = node.children, open {
@@ -604,7 +734,8 @@ struct FileRow: View {
             .padding(.horizontal, DuoSpace.selectionInset)
             .contentShape(Rectangle())
             .id(FileTreeRow.id(node.path))   // revealInTree scrolls to it (BUG-053)
-            .onActivate { if node.children == nil { model.openDocument(node.path) } else { withDuoAnimation(.fold) { model.toggleFolder(node.path) } } }  // action: doc open
+            .onActivate { if node.children == nil { model.selectFile(node.path) } else { withDuoAnimation(.fold) { model.toggleFolder(node.path) } } }  // not an action: a click selects a file or folds a folder; opening is a double click or Return (`duo2 doc open`)
+            .simultaneousGesture(TapGesture(count: 2).onEnded { if node.children == nil { model.openDocument(node.path) } })   // opens: doc open
             .modifier(LiveContextMenu { FileMenu(path: node.path, isFolder: node.children != nil, onTab: false) })
             // Drag the file out (a terminal types its path); drop files on a folder, or on a file for its folder (DL-117).
             .modifier(DragsFile(path: node.path, name: node.name))
@@ -637,9 +768,11 @@ struct ConsolePane: View {
             } else if let tab = model.consoleTab, model.fixtureChats[tab] == nil, let t = model.fixtureTerminals[tab] {
                 // The intro video's demo (VideoTargets): a terminal showing a recorded screen, with no process behind it.
                 TerminalSlot(session: t)
+                TrustBar(key: t.key)
             } else if let tab = model.consoleTab, let chat = model.fixtureChats[tab] {
                 // Fixture mode: a chat-mode target (ChatTargets), drawn from recorded hooks and screens.
                 ConsoleChatBody(chat: chat, terminal: model.fixtureTerminals[tab])   // the video demo: terminal mode shows the recorded screen
+                if !chat.showsChat { TrustBar(key: chat.key) }
             } else if let project = model.currentProject, let tab = model.consoleTab, model.fixtureConsole == nil,
                let t = model.terminal(project: project.name, session: tab), !t.missingClaude {
                 if let chat = model.chats.existing(t.key) {
@@ -648,6 +781,7 @@ struct ConsolePane: View {
                     TerminalSlot(session: t)
                 }
                 if t.ended != nil { ConsoleEndedBar(session: t, name: model.consoleTitle(t.key)) }
+                else if model.chats.existing(t.key)?.showsChat != true { TrustBar(key: t.key) }   // chat's own bar sits over its composer
                 Color.clear.frame(height: 0).task(id: t.key) { model.attachChat(t) }
             } else if let project = model.currentProject, model.terminalsMode == .live || model.fixtureConsole != nil,
                       let empty = model.consoleEmpty(project: project.name) {
@@ -671,123 +805,58 @@ struct RightPane: View {
         VStack(alignment: .leading, spacing: 0) {
             // Spacing is laid out by hand so a document tab's × (DL-126) sits in the gap before its
             // title: the gap is the 1 left over, the × box and the 1 before the title.
-            GeometryReader { box in
-            let fit = layout(tabs, width: box.size.width - 40)
-            let shownTabs = tabs.indices.filter { fit.keep[$0] }.map { tabs[$0] }
-            let hiddenTabs = tabs.indices.filter { !fit.keep[$0] }.map { tabs[$0] }
-            HStack(spacing: 0) {
-                ForEach(Array(shownTabs.enumerated()), id: \.element.id) { i, tab in
-                    let active = tab.id == model.rightTab
-                    let title = fit.short ? ConsoleTabStrip.short(tab.title) : tab.title
-                    // A document waiting in conflict says so on its tab (S3-4).
-                    let conflicted = !active && tab.isDocument && (model.liveFile(tab.id).map { model.editorIfLoaded?.keptInConflict($0) == true } ?? false)
-                    let closeSlot = tab.isDocument ? DuoMetric.tabCloseSize + DuoMetric.tabCloseTitleGap : 0
-                    let outside = AppModel.isOutsideFile(tab.id)
-                    let opener = model.webTabs[tab.id]?.opener.flatMap { o in tabs.first(where: { $0.id == o })?.title }   // gone with its opener
-                    HStack(spacing: DuoMetric.tabCloseTitleGap) {
-                        if tab.isDocument {
-                            if model.showsTabClose(tab.id) {
-                                TabCloseButton(key: tab.id, onConsole: false, active: active) { model.closeDocument(tab.id) }  // action: doc close
-                            } else {
-                                Color.clear.frame(width: DuoMetric.tabCloseSize, height: DuoMetric.tabCloseSize)
-                            }
-                        }
-                        // A popup's tab leads with ↳ (DL-132 i, standins2-handoff q67-popup).
-                        if opener != nil { Text("↳").duoText(.body).foregroundStyle(DuoColor.text2).padding(.trailing, 3) }
-                        Text("\(Text(title).foregroundStyle(active ? DuoColor.text : DuoColor.text2))\(conflicted ? Text(" · conflict").foregroundStyle(DuoColor.text) : Text(""))")
-                            .duoText(active ? .bodyEmphasis : .body)
-                            .lineLimit(1)
-                        // A file outside the project shows its folder under the pointer (DL-132 f, q39-hover).
-                        if outside, model.showsTabClose(tab.id) {
-                            Text(AppModel.short(URL(fileURLWithPath: String(tab.id.dropFirst(AppModel.outsideFilePrefix.count))).deletingLastPathComponent().path))
-                                .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.head)
-                                .padding(.leading, DuoSpace.gapGlyphToLabel - DuoMetric.tabCloseTitleGap)
-                        }
+            let pinnedTabs = Array(tabs.prefix { $0.id == "Project" || (!$0.isDocument && $0.id != ReadOnlySession.tabKey) })
+            let scrolling = Array(tabs.dropFirst(pinnedTabs.count))
+            let scrollKeys = scrolling.map(\.id)
+            ScrollingTabStrip(
+                pane: .right, space: Self.tabSpace, keys: scrollKeys, selected: model.rightTab,
+                ground: DuoColor.pane, rule: DuoColor.rule, dim: DuoColor.text2, font: .body, dot: DuoColor.needsYou,
+                rows: { scrolling.map { TabMenuRow(key: $0.id, title: $0.title, state: nil, isShell: false, selected: $0.id == model.rightTab) } },
+                glyphs: false,
+                choose: { id in model.rightTab = id; if tabs.first(where: { $0.id == id })?.isDocument == true { model.selectedFile = id } },  // action: view tab
+                height: DuoMetric.tabStripHeight,
+                pinned: {
+                    HStack(spacing: 0) {
+                        ForEach(Array(pinnedTabs.enumerated()), id: \.element.id) { i, tab in tabView(tab, at: i, of: tabs, scrollKeys: scrollKeys) }
                     }
-                        .modifier(TabHoverFill(key: tab.id, onConsole: false, leading: 3))   // 3 past the × box, as drawn (DL-134)
-                        .padding(.leading, (i == 0 ? 0 : DuoSpace.gapPaneTabs) - closeSlot)
-                        .contentShape(Rectangle())
-                        .modifier(TabHover(key: tab.id, enabled: tab.isDocument) { model.closeDocument(tab.id) })
-                        .accessibilityElement(children: .combine)
-                        .accessibilityIdentifier("video.tab.right.\(tabs.firstIndex { $0.id == tab.id } ?? i)")   // anchors: 0 is Project, then the documents in order
-                        .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
-                        .overlay {   // anchors: a document's tab by its kind (`video.tab.md`, `.html`, `.pptx`, `.docx`), as a sibling so the index name stays
-                            if model.videoDemoFolder != nil, tab.isDocument {
-                                Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("\(title) tab")
-                                    .accessibilityIdentifier("video.tab.\((tab.id as NSString).pathExtension.lowercased())")
-                            }
-                        }
-                        // A file outside the project: its path is the tooltip (DL-106); a popup: its opener (DL-132 i).
-                        .help(outside ? String(tab.id.dropFirst(AppModel.outsideFilePrefix.count)) : opener.map { "Opened from \($0)" } ?? "")
-                        .onActivate { model.rightTab = tab.id; if tab.isDocument { model.selectedFile = tab.id } }  // action: view tab
-                        .modifier(LiveContextMenu(enabled: tab.isDocument) {
-                            Button("Close Tab") { model.closeDocument(tab.id) }
-                            Button("Close Other Tabs") { model.closeOtherDocuments(than: tab.id) }
-                            Divider()
-                            // DL-220 (tabs-menu): the tab one place along; dimmed at the end it's at.
-                            Button("Move Tab Left") { model.moveTab(tab.id, in: .right, by: -1) }  // action: view tab-move
-                                .disabled(!model.canMoveTab(tab.id, in: .right, by: -1))
-                            Button("Move Tab Right") { model.moveTab(tab.id, in: .right, by: 1) }  // action: view tab-move
-                                .disabled(!model.canMoveTab(tab.id, in: .right, by: 1))
-                            Divider()
-                            if let web = model.webTabs[tab.id] {
-                                Button("Open in Browser") { if let u = web.url { NSWorkspace.shared.open(u) } }
-                                Button("Copy Address") { if let u = web.url { FileActions.copy(u.absoluteString) } }
-                            } else {
-                                FileMenu(path: tab.id, isFolder: false, onTab: true)
-                            }
-                        })
-                        // Dragged along the strip, its place moves (DL-220, tabs-drag); Project stays first.
-                        .modifier(TabDraggable(key: tab.id, pane: .right, space: Self.tabSpace, enabled: tab.isDocument && model.openDocuments.contains(tab.id),
-                                               lead: closeSlot, shown: { shownTabs.map(\.id) }))
-                        .background(DuoColor.pane)
-                        .zIndex(model.showsTabClose(tab.id) ? 1 : 0)   // its fill reaches over the next tab's padding (DL-134)
-                        .transition(.tab)
-                }
-                // Tabs that don't fit wait in a `» n` menu before the +, as on the console (BUG-068, Q-167).
-                if !hiddenTabs.isEmpty {
-                    HStack(spacing: 4) {
-                        MoreTabsMark(color: DuoColor.text2).frame(width: 11, height: 9)
-                        Text("\(hiddenTabs.count)").duoText(.body).foregroundStyle(DuoColor.text2)
+                },
+                tabs: {
+                    HStack(spacing: 0) {
+                        ForEach(Array(scrolling.enumerated()), id: \.element.id) { i, tab in tabView(tab, at: pinnedTabs.count + i, of: tabs, scrollKeys: scrollKeys) }
                     }
-                    .padding(.leading, DuoSpace.gapPaneTabs)
-                    .contentShape(Rectangle())
-                    .onActivate { PopUp.show(hiddenTabs.map { t in (t.title, { model.rightTab = t.id; if t.isDocument { model.selectedFile = t.id } }) }) }  // action: view tab
-                    .accessibilityLabel("\(hiddenTabs.count) more tabs")
-                    .background(DuoColor.pane)
-                }
-                // New Markdown file, the same treatment as the console's + (DL-61).
-                if model.terminalsMode == .live, model.projectFolder != nil {
-                    Text("+").duoText(.body).foregroundStyle(DuoColor.text2)
-                        .padding(.leading, tabs.isEmpty ? 0 : DuoSpace.gapPaneTabs)
-                        .onActivate { model.newMarkdownFile(near: model.selectedFile) }  // action: file new
-                        // Right-click + for the other new tabs (ENH-8).
-                        .contextMenu {
-                            Button("New Markdown File") { model.newMarkdownFile(near: model.selectedFile) }
-                            Button("New Browser Tab") { model.newBrowserTab() }
-                        }
-                        .accessibilityLabel("New Markdown file")
-                        .background(DuoColor.pane)
-                }
-                Spacer(minLength: 0)
-            }
-            .coordinateSpace(.named(Self.tabSpace))
+                    .duoAnimation(.tabMove, value: scrollKeys)
+                },
+                plus: {
+                    HStack(spacing: 0) {
+                    // New Markdown file, the same treatment as the console's + (DL-61).
+                    if model.terminalsMode == .live, model.projectFolder != nil {
+                        Text("+").duoText(.body).foregroundStyle(DuoColor.text2)
+                            .padding(.leading, tabs.isEmpty ? 0 : DuoSpace.gapPaneTabs)
+                            .onActivate { model.newMarkdownFile(near: model.selectedFile) }  // action: file new
+                            // Right-click + for the other new tabs (ENH-8).
+                            .contextMenu {
+                                Button("New Markdown File") { model.newMarkdownFile(near: model.selectedFile) }
+                                Button("New Browser Tab") { model.newBrowserTab() }
+                            }
+                            .accessibilityLabel("New Markdown file")
+                            .background(DuoColor.pane)
+                    }
+                    }
+                },
+                edge: { EmptyView() })
             .overlay(alignment: .topLeading) {
                 // The dragged tab, lifted under the pointer (tabs-drag).
                 if let drag = model.tabDrag, drag.pane == .right, let tab = tabs.first(where: { $0.id == drag.key }) {
                     let active = tab.id == model.rightTab
-                    TabDragGhost(drag: drag, onConsole: false) {
-                        Text(fit.short ? ConsoleTabStrip.short(tab.title) : tab.title).duoText(active ? .bodyEmphasis : .body)
+                    TabDragGhost(drag: model.stripDrag(drag), onConsole: false) {
+                        Text(ConsoleTabStrip.short(tab.title)).duoText(active ? .bodyEmphasis : .body)
                             .foregroundStyle(active ? DuoColor.text : DuoColor.text2).lineLimit(1)
                     }
                 }
             }
             .padding(.horizontal, 20)
             .frame(height: DuoMetric.tabStripHeight)
-            .duoAnimation(.tabMove, value: shownTabs.map(\.id))
             .id(model.currentProject?.name)   // another project's tabs replace these at once
-            }
-            .frame(height: DuoMetric.tabStripHeight)
             DuoColor.rule.frame(height: 1)
             if let id = model.rightTab, let web = model.webTabs[id] {
                 // A browser tab (Phase K, ENH-8): allowed sites in Duo, the rest in the browser (DL-3).
@@ -858,21 +927,75 @@ struct RightPane: View {
 
     private var rightTabs: [(id: String, title: String, isDocument: Bool)] { model.rightTabItems() }
 
-    /// Which tabs show and whether titles shorten, by the console's rule (`TabStripFit`): titles
-    /// shorten to 24 characters, then the tabs furthest right go into `» n`; the active one stays.
-    private func layout(_ tabs: [(id: String, title: String, isDocument: Bool)], width: CGFloat) -> (keep: [Bool], short: Bool) {
-        // A document's × box sits inside the gap before its title (the tab's padding is the gap less
-        // the box), so it adds no width; the active title is drawn in the emphasis weight.
-        func w(_ t: (id: String, title: String, isDocument: Bool), _ short: Bool) -> CGFloat {
-            let title = short ? ConsoleTabStrip.short(t.title) : t.title
-            let font = (t.id == model.rightTab ? DuoTextStyle.bodyEmphasis : DuoTextStyle.body).spec.nsFont
-            return ceil(TextWidth.of(title, font: font)) + (model.webTabs[t.id]?.opener != nil ? 14 : 0)
-        }
-        let plus: CGFloat = model.terminalsMode == .live && model.projectFolder != nil ? 10 : 0
-        let controls = plus + (plus > 0 ? DuoSpace.gapPaneTabs : 0)
-        return TabStripFit.fit(full: tabs.map { w($0, false) }, short: tabs.map { w($0, true) },
-                               selected: tabs.firstIndex { $0.id == model.rightTab }, width: width,
-                               controls: controls, more: 11 + 4 + 16 + DuoSpace.gapPaneTabs, gap: DuoSpace.gapPaneTabs)
+    /// One tab of the strip: its title, × and menu; the gap before it is laid out by hand (see `body`).
+    @ViewBuilder private func tabView(_ tab: (id: String, title: String, isDocument: Bool), at i: Int,
+                                      of tabs: [(id: String, title: String, isDocument: Bool)], scrollKeys: [String]) -> some View {
+                    let active = tab.id == model.rightTab
+                    let title = ConsoleTabStrip.short(tab.title)
+                    // A document waiting in conflict says so on its tab (S3-4).
+                    let conflicted = !active && tab.isDocument && (model.liveFile(tab.id).map { model.editorIfLoaded?.keptInConflict($0) == true } ?? false)
+                    let closeSlot = tab.isDocument ? DuoMetric.tabCloseSize + DuoMetric.tabCloseTitleGap : 0
+                    let outside = AppModel.isOutsideFile(tab.id)
+                    let opener = model.webTabs[tab.id]?.opener.flatMap { o in tabs.first(where: { $0.id == o })?.title }   // gone with its opener
+                    HStack(spacing: DuoMetric.tabCloseTitleGap) {
+                        if tab.isDocument {
+                            if model.showsTabClose(tab.id) {
+                                TabCloseButton(key: tab.id, onConsole: false, active: active) { model.closeDocument(tab.id) }  // action: doc close
+                            } else {
+                                Color.clear.frame(width: DuoMetric.tabCloseSize, height: DuoMetric.tabCloseSize)
+                            }
+                        }
+                        // A popup's tab leads with ↳ (DL-132 i, standins2-handoff q67-popup).
+                        if opener != nil { Text("↳").duoText(.body).foregroundStyle(DuoColor.text2).padding(.trailing, 3) }
+                        Text("\(Text(title).foregroundStyle(active ? DuoColor.text : DuoColor.text2))\(conflicted ? Text(" · conflict").foregroundStyle(DuoColor.text) : Text(""))")
+                            .duoText(active ? .bodyEmphasis : .body)
+                            .lineLimit(1)
+                        // A file outside the project shows its folder under the pointer (DL-132 f, q39-hover).
+                        if outside, model.showsTabClose(tab.id) {
+                            Text(AppModel.short(URL(fileURLWithPath: String(tab.id.dropFirst(AppModel.outsideFilePrefix.count))).deletingLastPathComponent().path))
+                                .duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1).truncationMode(.head)
+                                .padding(.leading, DuoSpace.gapGlyphToLabel - DuoMetric.tabCloseTitleGap)
+                        }
+                    }
+                        .modifier(TabHoverFill(key: tab.id, onConsole: false, leading: 3))   // 3 past the × box, as drawn (DL-134)
+                        .padding(.leading, (i == 0 ? 0 : DuoSpace.gapPaneTabs) - closeSlot)
+                        .contentShape(Rectangle())
+                        .modifier(TabHover(key: tab.id, enabled: tab.isDocument) { model.closeDocument(tab.id) })
+                        .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("video.tab.right.\(tabs.firstIndex { $0.id == tab.id } ?? i)")   // anchors: 0 is Project, then the documents in order
+                        .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+                        .overlay {   // anchors: a document's tab by its kind (`video.tab.md`, `.html`, `.pptx`, `.docx`), as a sibling so the index name stays
+                            if model.videoDemoFolder != nil, tab.isDocument {
+                                Color.clear.allowsHitTesting(false).accessibilityElement().accessibilityLabel("\(title) tab")
+                                    .accessibilityIdentifier("video.tab.\((tab.id as NSString).pathExtension.lowercased())")
+                            }
+                        }
+                        // A file outside the project: its path is the tooltip (DL-106); a popup: its opener (DL-132 i).
+                        .help(outside ? String(tab.id.dropFirst(AppModel.outsideFilePrefix.count)) : opener.map { "Opened from \($0)" } ?? "")
+                        .onActivate { model.rightTab = tab.id; if tab.isDocument { model.selectedFile = tab.id } }  // action: view tab
+                        .modifier(LiveContextMenu(enabled: tab.isDocument) {
+                            Button("Close Tab") { model.closeDocument(tab.id) }
+                            Button("Close Other Tabs") { model.closeOtherDocuments(than: tab.id) }
+                            Divider()
+                            // DL-220 (tabs-menu): the tab one place along; dimmed at the end it's at.
+                            Button("Move Tab Left") { model.moveTab(tab.id, in: .right, by: -1) }  // action: view tab-move
+                                .disabled(!model.canMoveTab(tab.id, in: .right, by: -1))
+                            Button("Move Tab Right") { model.moveTab(tab.id, in: .right, by: 1) }  // action: view tab-move
+                                .disabled(!model.canMoveTab(tab.id, in: .right, by: 1))
+                            Divider()
+                            if let web = model.webTabs[tab.id] {
+                                Button("Open in Browser") { if let u = web.url { NSWorkspace.shared.open(u) } }
+                                Button("Copy Address") { if let u = web.url { FileActions.copy(u.absoluteString) } }
+                            } else {
+                                FileMenu(path: tab.id, isFolder: false, onTab: true)
+                            }
+                        })
+                        // Dragged along the strip, its place moves (DL-220, tabs-drag); Project stays first.
+                        .modifier(TabDraggable(key: tab.id, pane: .right, space: Self.tabSpace, enabled: tab.isDocument && model.openDocuments.contains(tab.id),
+                                               lead: closeSlot, shown: { scrollKeys }))
+                        .background(DuoColor.pane)
+                        .zIndex(model.showsTabClose(tab.id) ? 1 : 0)   // its fill reaches over the next tab's padding (DL-134)
+                        .transition(.tab)
     }
 }
 

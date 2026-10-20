@@ -578,7 +578,7 @@ struct TaskCard: View {
         }
         .contextMenu { TaskMenuItems(model: model, project: t.project, path: t.path) }   // DL-115
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(CardMeta.spoken(t, user: model.fixture.user))
+        .accessibilityLabel(CardMeta.spoken(t, user: model.fixture.user, issue: model.issueState(of: t)))
         .accessibilityIdentifier("video.taskboard.card.\((t.path as NSString).deletingPathExtension.components(separatedBy: "/").last ?? t.path)")   // anchors: the video camera's target
     }
 }
@@ -594,9 +594,20 @@ struct CardMeta: View {
         let t = task
         let user = model.fixture.user
         let closed = ["done", "dropped"].contains(TaskBoard.key(t.status))
-        let items = Self.items(t, user: user)
+        let items = Self.items(t, user: user, issue: model.issueState(of: t))
         if !items.isEmpty {
             FlowRow(spacing: 10, lineSpacing: 4) {
+                // The issue chip leads line 2 (DL-226, github-issues-handoff 07): the mark and `#n` in `text2`;
+                // closed on GitHub, in `text` semibold: it wants a decision.
+                if let ref = model.issueRef(of: t) {
+                    let shut: Bool = { if case .info(let i)? = model.issueState(of: t) { return !i.open }; return false }()
+                    HStack(spacing: 4) {
+                        BoardGlyph(shut ? .issueDone : .issue, color: shut ? DuoColor.text : DuoColor.text2)
+                        Text(shut ? "\(ref.short) closed on GitHub" : ref.short).fontWeight(shut ? .semibold : .regular).fixedSize(horizontal: false, vertical: true)
+                    }
+                    .foregroundStyle(shut ? DuoColor.text : DuoColor.text2)
+                    .help(Self.issueHelp(model.issueState(of: t), ref: ref))
+                }
                 if let w = t.waitingOn { Text("waiting on \(TaskBoard.plain(w))").lineLimit(1) }
                 if let o = t.owner, !TaskBoard.isYou(o, user: user) {
                     HStack(spacing: 4) { BoardGlyph(.person); Text(TaskBoard.plain(o)).lineLimit(1) }
@@ -618,8 +629,18 @@ struct CardMeta: View {
         }
     }
 
-    static func items(_ t: Fixture.TaskSummary, user: String) -> [String] {
+    static func issueHelp(_ state: IssueState?, ref: IssueRef) -> String {
+        switch state {
+        case .info(let i)?: return "\(ref.slug)#\(ref.number) \(i.title): \(i.detail)"
+        case .unavailable(let why)?: return "\(ref.slug)#\(ref.number): can’t show its state, \(why.words)"
+        case nil: return "\(ref.slug)#\(ref.number)"
+        }
+    }
+
+    static func items(_ t: Fixture.TaskSummary, user: String, issue: IssueState? = nil) -> [String] {
         var out: [String] = []
+        if t.issue != nil, case .info(let i)? = issue { out.append(i.open ? "tracks issue \(i.ref.short)" : "issue \(i.ref.short) closed on GitHub") }
+        else if t.issue != nil { out.append("tracks an issue") }
         let closed = ["done", "dropped"].contains(TaskBoard.key(t.status))
         if let w = t.waitingOn { out.append("waiting on \(TaskBoard.plain(w))") }
         if let o = t.owner, !TaskBoard.isYou(o, user: user) { out.append("owner \(TaskBoard.plain(o))") }
@@ -630,8 +651,8 @@ struct CardMeta: View {
     }
 
     /// VoiceOver's name for a card (board 7): "Pricing page copy, Open, due Oct 18".
-    static func spoken(_ t: Fixture.TaskSummary, user: String) -> String {
-        ([t.title, TaskBoard.title(TaskBoard.key(t.status))] + items(t, user: user)).joined(separator: ", ")
+    static func spoken(_ t: Fixture.TaskSummary, user: String, issue: IssueState? = nil) -> String {
+        ([t.title, TaskBoard.title(TaskBoard.key(t.status))] + items(t, user: user, issue: issue)).joined(separator: ", ")
     }
 }
 
@@ -752,7 +773,7 @@ enum GreedyLines {
 
 /// The board's marks, drawn from the boards' SVGs (`task-board-study/canvas/make.py`).
 struct BoardGlyph: View {
-    enum Kind { case term, board, bubble, jump, calendar, person, search, updown, page, folder, globe }
+    enum Kind { case term, board, bubble, jump, calendar, person, search, updown, page, folder, globe, issue, issueDone }
     let kind: Kind
     var color: Color = DuoColor.text2
 
@@ -830,6 +851,11 @@ struct BoardGlyph: View {
                 p.addQuadCurve(to: .init(x: 9.8, y: 9), control: .init(x: 11, y: 9)); p.addLine(to: .init(x: 2.2, y: 9))
                 p.addQuadCurve(to: .init(x: 1, y: 7.8), control: .init(x: 1, y: 9)); p.closeSubpath()
             }, 1.1))
+        case .issue, .issueDone:
+            // GitHub's mark in the 10-box (github-issues-handoff 07): a ring, then a dot (open) or a tick (closed).
+            out.append((Path(ellipseIn: CGRect(x: 0.8, y: 0.8, width: 8.4, height: 8.4)), 1.2))
+            if kind == .issue { out.append((Path(ellipseIn: CGRect(x: 4.35, y: 4.35, width: 1.3, height: 1.3)), 1.3)) }
+            else { out.append((Path { $0.move(to: .init(x: 3.1, y: 5.1)); $0.addLine(to: .init(x: 4.4, y: 6.4)); $0.addLine(to: .init(x: 6.9, y: 3.7)) }, 1.3)) }
         case .globe:
             out.append((Path(ellipseIn: CGRect(x: 1.2, y: 1.2, width: 9.6, height: 9.6)), 1.1))
             out.append((Path { p in

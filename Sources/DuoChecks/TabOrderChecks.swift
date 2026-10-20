@@ -73,6 +73,20 @@ import Foundation
     r = cli(["view tab-move", "9"])
     check(!r.ok && r.out.contains("place is 1 to"), "verb: a place off the strip is refused")
 
+    // Closing a tab selects its left neighbour in the strip's order (F-347)
+    check(TabOrder.neighbour(closing: "c", in: ["a", "b", "c", "d"]) == "b" && TabOrder.neighbour(closing: "a", in: ["a", "b"]) == "b" && TabOrder.neighbour(closing: "a", in: ["a"]) == nil, "neighbour: the left one, the new first, none")
+    for i in 1...6 { m.shellTabs[project, default: []].append("shell:chk\(i)") }
+    var strip = m.consoleTabKeys(inProject: project)
+    let mid = strip[strip.count - 4]
+    m.consoleTab = mid
+    m.closeShell(mid)
+    check(m.consoleTab == strip[strip.count - 5], "closing a tab in the middle of the shells selects its left neighbour, not the first session")
+    strip = m.consoleTabKeys(inProject: project)
+    m.consoleTab = strip[0]
+    m.closeShell(strip.first { $0.hasPrefix("shell:chk") }!)
+    check(m.consoleTab == strip[0], "closing a tab that isn't selected leaves the selection")
+    m.shellTabs[project] = nil
+
     // Restore keeps a moved console order, by session id
     var s = RestoreState.Project(folder: "/x", sessions: ["s2", "s1"], consoleTab: nil, documents: [], rightTab: nil, tabOrder: ["s2", "s1"])
     let data = try JSONEncoder().encode(s)
@@ -80,4 +94,48 @@ import Foundation
     check(s.tabOrder == ["s2", "s1"], "restore: the order is written and read back")
     let old = try JSONDecoder().decode(RestoreState.Project.self, from: Data(#"{"folder":"/x","sessions":[],"documents":[]}"#.utf8))
     check(old.tabOrder == nil, "restore: a file from before it reads with no order")
+}
+
+// DL-225: the scrolling strip's rules (tabs-handoff).
+@MainActor func tabScrollChecks() {
+    print("tab scroll: the selected tab is always in view (DL-225)")
+    // Ten tabs, 100 wide, gap 20: content 1180; a viewport of 500.
+    let content: CGFloat = 1180, viewport: CGFloat = 500
+    func frame(_ i: Int) -> ClosedRange<CGFloat> { CGFloat(i * 120)...CGFloat(i * 120 + 100) }
+    func reveal(_ i: Int, from offset: CGFloat) -> CGFloat? {
+        TabScroll.offsetToReveal(tab: frame(i), offset: offset, viewport: viewport, content: content, hasPrevious: i > 0, hasNext: i < 9)
+    }
+    check(reveal(1, from: 0) == nil, "a tab already shown with its neighbour's peek stays put")
+    check(reveal(5, from: 0) == 5 * 120 + 100 + 24 + 32 - 500, "a tab to the right scrolls the least distance, 32 of the next tab clear of the fade (\(String(describing: reveal(5, from: 0))))")
+    check(reveal(2, from: 500) == 2 * 120 - 24 - 32, "a tab to the left scrolls so the previous tab peeks")
+    check(reveal(0, from: 300) == 0, "the first tab scrolls to the edge")
+    check(reveal(9, from: 0) == content - viewport, "the last tab shows to the edge")
+    check(TabScroll.offsetToReveal(tab: 0...700, offset: 0, viewport: 500, content: 1180, hasPrevious: false, hasNext: true) == nil
+          && TabScroll.offsetToReveal(tab: 300...1000, offset: 0, viewport: 500, content: 1180, hasPrevious: true, hasNext: true) == 276,
+          "a tab wider than the strip fills it from its own start")
+    check(TabScroll.offsetToReveal(tab: 0...100, offset: 0, viewport: 500, content: 400, hasPrevious: false, hasNext: false) == nil, "everything fits: no scroll")
+
+    let frames = (0..<10).map(frame)
+    let h = TabScroll.hidden(frames: frames, offset: 300, viewport: 500, content: content)
+    check(h.before == [0, 1] && h.after == [7, 8, 9], "tabs out of view at each end, none at an end with nothing beyond (\(h))")
+    check(TabScroll.hidden(frames: frames, offset: 0, viewport: 500, content: content).before.isEmpty, "no fade, no hidden tabs at the start")
+
+    check(TabScroll.edgeDirection(pointerX: 10, viewport: 500, offset: 100, content: content) == -1
+          && TabScroll.edgeDirection(pointerX: 480, viewport: 500, offset: 100, content: content) == 1
+          && TabScroll.edgeDirection(pointerX: 250, viewport: 500, offset: 100, content: content) == 0
+          && TabScroll.edgeDirection(pointerX: 10, viewport: 500, offset: 0, content: content) == 0
+          && TabScroll.edgeDirection(pointerX: 490, viewport: 500, offset: 680, content: content) == 0, "a held tab within 32 of an end scrolls that way, unless there's nothing more")
+    check(abs(TabScroll.edgeSpeed(tabWidth: 90) * 0.3 - 90) < 0.01, "about one tab every 0.3 s")
+
+}
+
+// DL-225 (Q-224 A): a shell tab reads its command, else its folder.
+@MainActor func shellTitleChecks() {
+    print("shell titles: command or folder (DL-225)")
+    check(ForegroundCommand.folderTitle(path: "/Users/me", home: "/Users/me") == "~" && ForegroundCommand.folderTitle(path: "/Users/me/alpha", home: "/Users/me") == "alpha"
+          && ForegroundCommand.folderTitle(path: "/", home: "/Users/me") == "/" && ForegroundCommand.folderTitle(path: "", home: "/Users/me") == nil, "a folder reads by name, ~ for home")
+    check(ForegroundCommand.folderTitle(of: getpid()) == (FileManager.default.currentDirectoryPath as NSString).lastPathComponent
+          || ForegroundCommand.folderTitle(of: getpid()) == "~", "a process's folder is read from the process")
+    check(ShellTitles.numbered([("alpha", true), ("pr-review", false), ("alpha", true), ("npm test", true), ("alpha", true)]) == ["alpha", "pr-review", "alpha 2", "npm test", "alpha 3"],
+          "shells that read the same take 2, 3 in strip order; a session's title is unchanged")
 }

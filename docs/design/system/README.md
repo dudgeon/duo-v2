@@ -67,7 +67,7 @@ The dark pane uses `console`, `consoleRule`, `consoleText`, `consoleText2` and `
 
 `scrim` dims the window behind the search modal. The `placeholderBar` colours exist only in design targets; don't build them.
 
-Dark is approved and not yet built (DL-224, `dark-appearance-handoff/`): Dark B "Ink", every token with a dark value, Settings › General › Appearance (Match System, Light, Dark). In dark the console sinks a step (#0C0D10); in light the console tokens are unchanged. Until it's built, Duo is light only and the source's `darkProvisional` set is the old, unapproved one.
+Dark is built (DL-224, `dark-appearance-handoff/`): Dark B "Ink", every token with a dark value in `tokens.json` `color.dark`, Settings › General › Appearance (Match System, Light, Dark; `duo2 settings appearance`). In dark the console sinks a step (#0C0D10); in light the console tokens are unchanged. Chat's ground is the console colour in dark and `ground` in light. An HTML page, a Word document and a slide deck keep their own colours; a browser tab gets the appearance.
 
 ## Type
 

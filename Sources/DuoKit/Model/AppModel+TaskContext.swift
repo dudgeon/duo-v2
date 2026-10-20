@@ -15,6 +15,7 @@ extension AppModel {
             let now = TaskContext.entries(for: [sid], folders: liveFolders)
             return done(.ok(TaskContext.atStart(now, cwd: req.cwd) ?? TaskContext.none, ["tasks": now.map(Self.taskJSON)]))
         }
+        if event == "start" { noteSessionStart(sid, source: inv.flags["source"]) }
         var ids = [sid]
         if event == "start", inv.flags["source"] == "clear",
            let before = predecessor(of: sid, pid: inv.flags["pid"].flatMap { Int32($0) }, origin: inv.flags["origin"]) {

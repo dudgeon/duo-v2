@@ -141,7 +141,7 @@ extension AppModel {
     /// Home's tab keys, in HomePane's order: sessions, then shells.
     public func homeTabKeys() -> [String] {
         guard let h = fixture.home?.name else { return [] }
-        return tabSessions(inProject: h).map(\.tabKey) + shells(inProject: h)
+        return consoleTabKeys(inProject: h)   // in Home's own order, as moved (DL-225)
     }
 
     /// The tab keys of `pane` at the altitude on screen; panes with no tabs have none.

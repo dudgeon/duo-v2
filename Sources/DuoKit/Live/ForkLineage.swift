@@ -1,8 +1,10 @@
 import Foundation
 
-/// Fork lineage for threads (handoff §11, spike S11, findings F-31). Claude writes no "forked
-/// from" field: `--fork-session` (and the TUI's fork) copies the parent's records into the new
-/// transcript with the same message `uuid`s and timestamps, rewriting only `sessionId`. So:
+/// Fork lineage for threads (handoff §11, spike S11, findings F-31). A `/branch` transcript names its
+/// parent (`forkedFrom`) and a `/fork` job's `state.json` names its (`forkParentSessionId`); both are read
+/// first (`ForkSource`, F-344, DL-228). Forks Claude doesn't label (`--fork-session`, forks made before
+/// this) have no such field: it copies the parent's records into the new transcript with the same
+/// message `uuid`s and timestamps, rewriting only `sessionId`. So, for those:
 /// - sessions whose first user message has the same `uuid` are one thread (a head read);
 /// - a fork's first new record has a `parentUuid` from the copied part: the fork point;
 /// - copies keep the source's timestamps, but a transcript's first record of any kind (a queue
