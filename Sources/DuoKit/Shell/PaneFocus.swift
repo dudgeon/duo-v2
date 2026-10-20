@@ -44,6 +44,15 @@ extension AppModel {
         PaneKeyMonitor.installed = true
         UserTyping.install(terminals: terminals)   // what the user typed where, for a director's guards (DL-199)
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
+            // Return on the file tree's selected file opens it; only while no text field, terminal or page holds the keys (F-348).
+            if [36, 76].contains(e.keyCode), e.modifierFlags.intersection([.command, .shift, .option, .control]).isEmpty {
+                let used = MainActor.assumeIsolated { () -> Bool in
+                    guard let self, let w = e.window, w.title == "Duo", w.attachedSheet == nil, w.firstResponder === w,
+                          !self.sheetIsUp, !self.search.isOpen, !self.peekOpen, !self.idleOpen, self.renamingPath == nil else { return false }
+                    return self.openSelectedFile()
+                }
+                return used ? nil : e
+            }
             guard let forward = PaneCycle.tabCycleDirection(keyCode: e.keyCode, flags: e.modifierFlags) else { return e }
             let used = MainActor.assumeIsolated { () -> Bool in
                 guard let self, let w = e.window, w.title == "Duo", w.attachedSheet == nil,

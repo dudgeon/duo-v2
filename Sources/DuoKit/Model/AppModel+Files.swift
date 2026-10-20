@@ -62,6 +62,23 @@ extension AppModel {
         }
     }
 
+    /// A single click on a file in the tree selects it and puts the keyboard in the tree (F-348): it
+    /// doesn't open. A double click or Return opens it (`openSelectedFile`).
+    public func selectFile(_ path: String) {
+        selectedFile = path
+        activePane = .left
+        paneWindow?.makeFirstResponder(nil)   // Return now reaches the tree, not a terminal that held the keyboard
+    }
+
+    /// Return on the tree's selected file opens it. False when the left pane isn't active or the
+    /// selection is empty or a folder.
+    @discardableResult
+    public func openSelectedFile() -> Bool {
+        guard activePane == .left, let path = selectedFile, !path.hasSuffix("/"), !path.hasPrefix("web:") else { return false }
+        openDocument(path)
+        return true
+    }
+
     /// Shows a document, adding its tab if it isn't open (one visible at a time, DL-11).
     public func openDocument(_ path: String) {
         if !openDocuments.contains(path) { openDocuments.append(path) }

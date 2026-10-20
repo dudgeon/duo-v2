@@ -41,6 +41,9 @@ extension AppModel {
     }
 
     /// Opens a row of the browse listing: a file as a tab.
+    /// The tab key a file opens under: its project path, or `file:` for one outside.
+    func tabKey(for url: URL) -> String { relative(url) ?? Self.outsideFilePrefix + url.standardizedFileURL.path }
+
     public func openBrowsed(_ url: URL) { _ = openFile(at: url) }
 
     /// The browse listing, as paths from the browse root (folders end in `/`).
