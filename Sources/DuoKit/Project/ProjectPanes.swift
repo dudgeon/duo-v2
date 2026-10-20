@@ -406,6 +406,9 @@ struct FileTreePane: View {
             ScrollView {
             VStack(alignment: .leading, spacing: 0) {
             let repo = model.currentRepo
+            if let o = model.issueOffer, o.project == project?.name {
+                IssueOfferView(offer: o).padding(.horizontal, DuoSpace.panePadding).padding(.top, 8)
+            }
             if let n = model.repoNotice {
                 RepoNoticeView(notice: n).padding(.horizontal, DuoSpace.panePadding).padding(.top, 8)
             }

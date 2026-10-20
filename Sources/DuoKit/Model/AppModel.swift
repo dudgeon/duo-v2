@@ -51,6 +51,13 @@ public final class AppModel {
     public var sidebarHold: (project: String, order: [String: [String]])?
     /// Tasks just marked complete, still listed (checked, struck through) for `rowHold` (DL-130).
     public var completingTasks: Set<String> = []
+    /// Linked GitHub issues' live state, by the issue's URL (DL-226); read through gh, cached.
+    public var issueStates: [String: IssueState] = [:]
+    /// Mark Complete's "Close #n too" notice (github-issues-handoff board 6), for 5 s.
+    public var issueOffer: IssueOffer?
+    @ObservationIgnored var issueFetched: [String: Date] = [:]
+    @ObservationIgnored var issueFetching: Set<String> = []
+    @ObservationIgnored var issueRepos: [String: RemoteRepo?] = [:]
     /// The project's layout fading up after a jump from another project (DL-130): the panes are
     /// the same views (terminals live in them), so the new content shows at once and fades up.
     public var projectShown: Double = 1
@@ -540,6 +547,7 @@ public final class AppModel {
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts && !SupportFolder.isIsolated)   // C-28: no first-run questions in an isolated instance
         refreshRepo()   // the open project's repository state (DL-149, DL-157)
+        if let p = currentProject?.name { refreshIssues(project: p) }   // linked issues' live state (DL-226)
         // What was open when Duo last quit comes back once the sessions are known (LR-58).
         if !restoreApplied, !fixture.sessions.isEmpty || !folders.isEmpty { applyRestore() }
         defer { saveRestoreState() }

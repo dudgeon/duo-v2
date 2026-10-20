@@ -67,6 +67,8 @@ public enum ActionID: String, CaseIterable, Sendable {
     // GitHub (DL-149, DL-157)
     case repoStatus = "repo status", repoCheck = "repo check", repoLatest = "repo latest", repoUpdate = "repo update", repoPutBack = "repo put-back"
     case repoPush = "repo push", repoPR = "repo pr", repoDraft = "repo draft", repoMoveToBranch = "repo move-to-branch", repoSignin = "repo signin", repoOpen = "repo open"
+    // GitHub issues (DL-226)
+    case issueShow = "issue show", issueOpen = "issue open", issueClose = "issue close", issueReopen = "issue reopen", issueNew = "issue new", taskIssue = "task issue"
     // Documents
     case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
     case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docTable = "doc table", docFind = "doc find"
@@ -317,6 +319,16 @@ extension DuoAction {
               ui: ["Move to a Branch…", "Move to a Branch and Push"]),
         .init(.repoSignin, .repo, "", "Sign in to GitHub: a shell tab running the GitHub CLI's browser sign-in (`gh auth login --web`, then `gh auth setup-git`). Duo never sees or keeps a token. Without the CLI, a shell tab with `brew install gh` typed.",
               ui: ["Sign In…", "Sign In in a Shell…", "Install in a Shell…", "Switch Account…"]),
+        .init(.issueShow, .repo, "[<task|issue>] [--project <p>] [--refresh]", "The GitHub issue a task tracks (its `issue:` link, DL-226) and its state now: open or closed, labels, and why it can't be read without gh or access. <issue> is a URL, owner/repo#n or #n (the project's GitHub remote). With no argument, every task in the project that tracks one. Reads only.",
+              ui: ["issue chip", "issue row", "Copy Issue Link"]),
+        .init(.issueOpen, .repo, "<task|issue> [--project <p>]", "Open the issue on GitHub in the browser.", ui: ["Open Issue on GitHub"]),
+        .init(.issueClose, .repo, "<task|issue> [--project <p>] --yes", "Close the issue on GitHub (`gh issue close`): the one change Duo makes to an issue besides reopening it. Needs --yes. Undo with `duo2 undo` reopens it.",
+              ui: ["Close Issue", "Close #n too", "Close too"], timeout: 60),
+        .init(.issueReopen, .repo, "<task|issue> [--project <p>] --yes", "Reopen the issue on GitHub (`gh issue reopen`). Needs --yes.", ui: ["Reopen Issue"], timeout: 60),
+        .init(.issueNew, .repo, "--from-task <task> [--project <p>] --yes", "New Issue from Task: files the task as an issue in the project's GitHub repository, titled after it with its note's text as the body, and links it (`issue:`). Needs --yes (it publishes under the user's name); without it the user is asked in Duo. Undo with `duo2 undo` unlinks it; the issue stays on GitHub.",
+              ui: ["New Issue from Task…"], timeout: 90),
+        .init(.taskIssue, .sessions, "<task> <issue|--clear> [--project <p>]", "A task's issue link (DL-226): writes `issue:` with the full URL, quoted, by key (a task tracks one issue; the issue's state is read from GitHub, never copied into the note). <issue> is a URL, owner/repo#n or #n in the project's GitHub remote. --clear removes the link; nothing on GitHub changes. Through the editor when the note is open. Undo with `duo2 undo`.",
+              ui: ["Link Issue…", "Change Issue…", "Unlink Issue"]),
         .init(.repoOpen, .repo, "[--project <name>] [--pr]", "Open the repository (its branch) or the branch's pull request on GitHub.",
               ui: ["Open on GitHub", "Open Pull Request #", "Open PR", "Open GitHub"]),
         .init(.docOpen, .docs, "<path> [--project <p>]", "Open a document in the right pane (Markdown in the editor, HTML as a page). A file outside every project opens as a tab in the project on screen (or --project).", ui: ["Open", "file row", "Open File…", "file dropped on the right pane", "Open CLAUDE.md"], everyday: true),
@@ -505,7 +517,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "cancel", "fetch", "background", "suggest", "take-over", "handed-back", "no-worker", "adopt"]
+    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "cancel", "fetch", "background", "suggest", "take-over", "handed-back", "no-worker", "adopt", "clear", "refresh"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]

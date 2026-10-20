@@ -494,7 +494,7 @@ extension AppModel {
             guard let id = s.sessionId?.lowercased() else { continue }
             sessions[id] = ["state": s.state.rawValue, "name": s.name, "wait": s.wait ?? ""]
         }
-        var ctx: [String: Any] = ["sessions": sessions]
+        var ctx: [String: Any] = ["sessions": sessions, "issues": issueContext()]
         // Names and values used in this project's notes and Home's, for suggestions (frontmatter-handoff §4).
         // Read off the main thread, at most once a minute per project.
         let project = currentProject?.name ?? ""

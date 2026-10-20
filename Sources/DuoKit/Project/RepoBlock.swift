@@ -147,6 +147,30 @@ struct RepoNoticeView: View {
     }
 }
 
+/// Mark Complete's notice for a task that tracks an issue (github-issues-handoff 06): Marked “…” done,
+/// Close #n too, Undo. Five seconds; dropped offers do nothing. Where it sits is a stand-in (Q-231).
+struct IssueOfferView: View {
+    @Environment(AppModel.self) private var model
+    let offer: IssueOffer
+
+    var body: some View {
+        HStack(spacing: DuoSpace.gapRowItems) {
+            Text("Marked “\(offer.title)” done.").duoText(.control).fixedSize(horizontal: false, vertical: true)
+            Button("Close \(offer.ref.short) too") { model.closeOfferedIssue() }.buttonStyle(.duo).fixedSize()   // action: issue close
+            Button("Undo") { model.undoOffer() }.buttonStyle(.duo).fixedSize()   // action: task status
+        }
+        .padding(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 8))
+        .background(RoundedRectangle(cornerRadius: 8).fill(DuoColor.pane))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(DuoColor.controlEdge, lineWidth: DuoMetric.borderHairline))
+        .duoPopoverShadow()
+        .transition(.notice)
+        .task(id: offer.at) {
+            try? await Task.sleep(for: .seconds(5))
+            if model.issueOffer == offer { model.issueOffer = nil }
+        }
+    }
+}
+
 /// Board 4's branch mark: two nodes joined, 10×12, `text2`.
 struct BranchMark: View {
     var body: some View {

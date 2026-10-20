@@ -26,6 +26,9 @@ public struct TaskNote: Sendable, Equatable {
     public var completed: String? = nil
     /// The `references:` list (DL-150): quoted markdown links to files, folders and URLs.
     public var references: [String] = []
+    /// The one GitHub issue this task tracks (DL-226): `issue:` as written (a URL, `owner/repo#n`
+    /// or `#n`), or the first of an `issues:` list. Duo writes only the quoted URL, by key.
+    public var issue: String? = nil
     /// When the note last changed on disk, ms since 1970: a task is in play while it's recent (DL-217).
     public var modified: Double? = nil
 }
@@ -61,8 +64,12 @@ public enum TaskNotes {
                         id: fm.string("id").flatMap { $0.isEmpty ? nil : $0 },
                         owner: nonEmpty(fm.string("owner")), waitingOn: nonEmpty(fm.string("waiting_on")),
                         due: nonEmpty(fm.string("due")), created: nonEmpty(fm.string("created")),
-                        completed: nonEmpty(fm.string("completed")), references: fm.list("references").filter { !$0.isEmpty })
+                        completed: nonEmpty(fm.string("completed")), references: fm.list("references").filter { !$0.isEmpty },
+                        issue: nonEmpty(fm.string("issue")) ?? fm.list("issues").first(where: { !$0.isEmpty }))
     }
+
+    /// `issue: "<url>"`'s value for the note: the full URL, quoted (board 3).
+    public static func issueValue(_ ref: IssueRef) -> String { quoted(ref.url) }
 
     static func nonEmpty(_ s: String?) -> String? {
         s.flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 }

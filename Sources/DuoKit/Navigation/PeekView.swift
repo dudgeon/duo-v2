@@ -107,7 +107,7 @@ struct FlowRow: Layout {
         for line in arrange(subviews, width: bounds.width) {
             var x = bounds.minX
             for i in line.indices {
-                let size = subviews[i].sizeThatFits(.unspecified)
+                let size = fit(subviews[i], in: bounds.width)
                 subviews[i].place(at: CGPoint(x: x, y: y), anchor: .topLeading, proposal: ProposedViewSize(size))
                 x += size.width + spacing
             }
@@ -115,12 +115,18 @@ struct FlowRow: Layout {
         }
     }
 
+    /// An item's natural size, or, when it alone is wider than the row, its size at the row's width (text wraps rather than clips).
+    private func fit(_ v: LayoutSubview, in width: CGFloat) -> CGSize {
+        let natural = v.sizeThatFits(.unspecified)
+        return natural.width > width && width.isFinite ? v.sizeThatFits(ProposedViewSize(width: width, height: nil)) : natural
+    }
+
     private struct Line { var indices: [Int] = []; var width: CGFloat = 0; var height: CGFloat = 0 }
 
     private func arrange(_ subviews: Subviews, width: CGFloat) -> [Line] {
         var lines = [Line()]
         for i in subviews.indices {
-            let size = subviews[i].sizeThatFits(.unspecified)
+            let size = fit(subviews[i], in: width)
             let needed = lines[lines.count - 1].indices.isEmpty ? size.width : lines[lines.count - 1].width + spacing + size.width
             if needed > width, !lines[lines.count - 1].indices.isEmpty {
                 lines.append(Line())
