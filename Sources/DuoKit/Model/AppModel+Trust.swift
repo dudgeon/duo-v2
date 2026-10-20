@@ -126,6 +126,7 @@ extension AppModel {
 
     /// Whether Fork Again can type now: Claude at its prompt with nothing typed.
     public func canForkAgain(_ key: String) -> Bool {
+        if fixtureTerminals[key] != nil || fixtureChats[key] != nil { return true }   // a fixture state draws the enabled button
         guard let t = terminals.existing(key), trustNotices[key]?.forkLine != nil else { return false }
         let r = readPrompt(t)
         return r.idle && r.input.isEmpty
