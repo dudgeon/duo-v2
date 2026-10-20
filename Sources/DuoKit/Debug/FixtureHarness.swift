@@ -167,11 +167,14 @@ public enum FixtureHarness {
                 SettingsInfo.shared.refresh()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                     MainActor.assumeIsolated {
-                        let r = ImageRenderer(content: SettingsView(scrolls: false).environment(model))
+                        let r = ImageRenderer(content: SettingsView(scrolls: false).environment(model).environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
                         r.scale = 2
-                        if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+                        // The renderer takes the colours of the current drawing appearance, not the app's (DL-224).
+                        var image: NSImage?
+                        NSApp.effectiveAppearance.performAsCurrentDrawingAppearance { image = r.nsImage }
+                        if let img = image, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
                            let png = rep.representation(using: .png, properties: [:]) { try? png.write(to: URL(fileURLWithPath: parts[1])) }
-                        else { FileHandle.standardError.write(Data("render-settings: nothing drawn (image \(r.nsImage == nil ? "nil" : "\(r.nsImage!.size)"))\n".utf8)) }
+                        else { FileHandle.standardError.write(Data("render-settings: nothing drawn (image \(image == nil ? "nil" : "\(image!.size)"))\n".utf8)) }
                     }
                 }
             }
@@ -249,6 +252,8 @@ public enum FixtureHarness {
             }
         case "file": if parts.count > 1 { model.selectedFile = parts[1]; model.rightTab = parts[1] }
         case "close-doc": if parts.count > 1 { model.closeDocument(parts[1]) }   // close-doc:<path>: a document tab closes as its × does (ENH-144)
+        case "tree-click": if parts.count > 1 { model.selectFile(parts[1]) }   // tree-click:<path>: a single click on a file row (selects, F-348)
+        case "tree-return": model.openSelectedFile()   // Return on the tree's selection
         case "doc": if parts.count > 1 { model.openDocument(parts[1]) }   // doc:<path>: a document tab, as the file tree opens it
         case "convert": if parts.count > 1 { model.convertToMarkdown(parts[1]) }   // convert:<docx>: the bar's Convert to Markdown (DL-123)
         case "converting":   // converting:<docx>: hold the progress bar (C) as drawn, for a capture

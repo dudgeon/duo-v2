@@ -224,6 +224,21 @@ struct PlacePopup: View {
     }
 }
 
+/// The field's frame; a layer's colours are snapshots, so they are set again when the appearance changes (DL-224).
+final class SheetFieldBox: NSView {
+    func refreshColors() {
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer?.borderColor = DuoNSColor.rule.cgColor
+            layer?.backgroundColor = DuoNSColor.pane.cgColor
+        }
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        refreshColors()
+    }
+}
+
 /// A one-line field: 24 high, `rule` border, `pane` fill, 13 pt. Return submits, Escape cancels.
 struct SheetField: NSViewRepresentable {
     let text: String
@@ -233,12 +248,11 @@ struct SheetField: NSViewRepresentable {
     let changed: (String) -> Void
 
     func makeNSView(context: Context) -> NSView {
-        let box = NSView()
+        let box = SheetFieldBox()
         box.wantsLayer = true
         box.layer?.cornerRadius = DuoMetric.radiusControl
         box.layer?.borderWidth = DuoMetric.borderHairline
-        box.layer?.borderColor = DuoNSColor.rule.cgColor
-        box.layer?.backgroundColor = DuoNSColor.pane.cgColor
+        box.refreshColors()
         let f = FocusingField(string: text)
         f.font = .systemFont(ofSize: DuoTextStyle.body.spec.size)
         f.textColor = DuoNSColor.text

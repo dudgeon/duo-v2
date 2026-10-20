@@ -186,7 +186,13 @@ extension AppModel {
             let rows = projects.flatMap { p in taskNotes(in: p).map { (p, $0) } }
             done(.ok(rows.isEmpty ? "No task notes." : rows.map { p, t in
                 "\(p)/\(t.path)  \(t.title)\(t.status.map { " (\($0))" } ?? "")\(t.archived ? " archived" : "")  \(t.sessionIds.count) session\(t.sessionIds.count == 1 ? "" : "s")"
-            }.joined(separator: "\n"), rows.map { p, t in ["project": p, "path": t.path, "title": t.title, "status": t.status ?? "", "sessions": t.sessionIds, "archived": t.archived] }))
+            }.joined(separator: "\n"), rows.map { p, t in
+                // DL-217: whether the pane lists it under Later, and when its note last changed.
+                var j: [String: Any] = ["project": p, "path": t.path, "title": t.title, "status": t.status ?? "", "sessions": t.sessionIds, "archived": t.archived,
+                                        "later": laterTaskPaths(project: p).contains(t.path)]
+                if let m = t.modified { j["lastActivity"] = Self.isoNow(Date(timeIntervalSince1970: m / 1000)) }
+                return j
+            }))
         case .taskMake:
             guard let k = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
             if let s = findSession(k, in: nil), let sid = s.sessionId {
@@ -359,6 +365,8 @@ struct TaskLine: View {
     /// A task with no session in the TASKS section keeps the task headers' columns: an empty chevron slot
     /// and an empty glyph slot before its box (session-glyphs-handoff 04-hierarchy). Replaces `indented`.
     var headerColumns = false
+    /// Under Later (DL-217): how long it's been quiet, where the status sits; the name goes regular weight.
+    var age: String? = nil
 
     var body: some View {
         let key = TaskRowHover.key(project: task.project, path: task.path)
@@ -372,7 +380,7 @@ struct TaskLine: View {
                 Color.clear.frame(width: DuoMetric.glyph, height: DuoMetric.glyph)   // the glyph's slot
             }
             TaskBox(checked: completing)
-            Text(task.title).duoText(headerColumns ? .bodyEmphasis : .body).strikethrough(completing).foregroundStyle(completing ? DuoColor.text2 : DuoColor.text).lineLimit(1)
+            Text(task.title).duoText(headerColumns && age == nil ? .bodyEmphasis : .body).strikethrough(completing).foregroundStyle(completing ? DuoColor.text2 : DuoColor.text).lineLimit(1)
             if showsProject { Text(task.project).duoText(.body).foregroundStyle(DuoColor.text2).lineLimit(1) }
             Spacer(minLength: 8)
             // On hover the + takes the status's place (DL-112, stand-ins-handoff q43-hover).
@@ -383,6 +391,8 @@ struct TaskLine: View {
                 if !task.sessionIds.isEmpty {
                     Text("\(task.sessionIds.count) session\(task.sessionIds.count == 1 ? "" : "s")").duoText(.body).foregroundStyle(DuoColor.text2)
                 }
+            } else if let age {
+                Text(age).duoText(.body).foregroundStyle(DuoColor.text2)
             } else if let st = task.status, st != "open" {
                 Text(st.replacingOccurrences(of: "-", with: " ")).duoText(.body).foregroundStyle(DuoColor.text2)
             }

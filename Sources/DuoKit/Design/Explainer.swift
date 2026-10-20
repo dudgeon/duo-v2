@@ -340,7 +340,7 @@ struct ExplainerCard<Picture: View>: View {
 struct ExplainerMark: View {
     let number: Int
     var body: some View {
-        Text("\(number)").font(.system(size: 10, weight: .semibold)).foregroundStyle(Color.white)
+        Text("\(number)").font(.system(size: 10, weight: .semibold)).foregroundStyle(DuoColor.pane)
             .frame(width: 16, height: 16).background(Circle().fill(DuoColor.text))
     }
 }

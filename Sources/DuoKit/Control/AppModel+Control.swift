@@ -44,7 +44,7 @@ extension AppModel {
         case .needsYou:
             let list = fixture.needsYou
             let lines = list.map { s in "\(s.project) / \(s.name)" + (s.wait.map { " · \($0)" } ?? "") + (s.question.map { "\n  \($0)" } ?? "") }
-            done(.ok(lines.isEmpty ? "Nothing needs you." : lines.joined(separator: "\n"), list.map(sessionJSON)))
+            done(.ok(lines.isEmpty ? "Nothing needs you." : lines.joined(separator: "\n"), list.map { sessionJSON($0) }))
         case .undo:
             guard let m = NSApp.windows.first(where: { $0.title == "Duo" })?.undoManager, m.canUndo else { return done(.fail("nothing to undo")) }
             let name = m.undoActionName
@@ -168,7 +168,8 @@ extension AppModel {
             done(.ok("Moved \(key) to place \((order.firstIndex(of: key) ?? 0) + 1) of \(order.count) in the \(pane.rawValue) pane.", ["pane": pane.rawValue, "tab": key, "order": order]))
         case .viewGroup:
             guard let g = inv[0] else { return done(.fail("usage: \(id.action.usage)")) }
-            let key = expandedGroups.first { $0.hasSuffix(g) } ?? g
+            // Later and Earlier keep their fold per project (DL-217): the current project's, unless it's already there.
+            let key = expandedGroups.first { $0.hasSuffix(g) } ?? (g == "later" || g == "earlier" ? currentProject.map { "\($0.name)/\(g)" } : nil) ?? g
             if inv[1] == "collapse" { expandedGroups.remove(key) } else { expandedGroups.insert(key) }
             done(.ok(inv[1] == "collapse" ? "Collapsed \(g)." : "Expanded \(g)."))
         case .viewSelect:
@@ -191,7 +192,7 @@ extension AppModel {
             guard let name = inv[0] ?? projectFor(cwd: req.cwd)?.name, let p = project(named: name) else { return done(noProject(inv[0] ?? "")) }
             let sessions = fixture.sessions(inProject: p.name)
             var j = projectJSON(p)
-            j["sessions"] = sessions.map(sessionJSON)
+            j["sessions"] = sessions.map { sessionJSON($0) }
             let text = (projectPayload(p.name) ?? p.name) + "\(sessions.count) sessions: " + sessions.prefix(10).map(\.name).joined(separator: ", ")
             done(.ok(text, j))
         case .projectMake:
@@ -222,8 +223,12 @@ extension AppModel {
             let project = inv.flags["project"].flatMap { project(named: $0)?.name }
             if inv.flags["project"] != nil, project == nil { return done(.fail("no project '\(inv.flags["project"]!)'")) }
             let list = (project.map { fixture.sessions(inProject: $0) } ?? fixture.sessions).filter { $0.sessionId != nil }
-            let lines = list.map { s in "\(s.sessionId!.prefix(8))  \(stateWord(s.state).padding(toLength: 9, withPad: " ", startingAt: 0)) \(sessionKind(s).rawValue.padding(toLength: 9, withPad: " ", startingAt: 0)) \(s.project) / \(s.name)" }
-            done(.ok(lines.isEmpty ? "No sessions." : lines.joined(separator: "\n"), list.map(sessionJSON)))
+            let sections = sidebarSectionMap(projects: Set(list.map(\.project)))
+            let lines = list.map { s in
+                let mark = (directorSlotInfo(project: s.project)?.sessionId == s.tabKey ? " director" : "") + (sections["\(s.project)/\(s.tabKey)"] == "pinned" ? " pinned" : "")
+                return "\(s.sessionId!.prefix(8))  \(stateWord(s.state).padding(toLength: 9, withPad: " ", startingAt: 0)) \(sessionKind(s).rawValue.padding(toLength: 9, withPad: " ", startingAt: 0)) \(s.project) / \(s.name)\(mark)"
+            }
+            done(.ok(lines.isEmpty ? "No sessions." : lines.joined(separator: "\n"), list.map { sessionJSON($0, sections: sections) }))
         case .sessionShow:
             guard let key = inv[0] ?? req.session, let s = findSession(key, in: nil), let sid = s.sessionId else { return done(.fail("no session '\(inv[0] ?? "")'")) }
             var j = sessionJSON(s)
@@ -383,6 +388,7 @@ extension AppModel {
                 return ["claude-path: \(st.claudePath ?? "auto") (runs \(c ?? "nothing found"))",
                         "notify: \(DuoState.load().notifyNeedsYou ? "on" : "off")",
                         "dock-badge: \(DuoState.load().dockBadge ? "on" : "off") (showing \(NSApp.dockTile.badgeLabel ?? "nothing"))",
+                        "appearance: \(AppearanceSetting.current.rawValue)",
                         "explanations dismissed: \(DuoState.load().dismissedExplainers.isEmpty ? "none" : DuoState.load().dismissedExplainers.joined(separator: ", "))",
                         "home: \(liveRoot.map { Self.short($0.path) } ?? "none")"].joined(separator: "\n")
             }
@@ -404,10 +410,14 @@ extension AppModel {
                 DuoState.update { if key == "notify" { $0.notifyNeedsYou = value == "on" } else { $0.dockBadge = value == "on" } }
                 updateDockBadge()
                 SettingsInfo.shared.revision += 1
+            case "appearance":
+                guard let a = AppearanceSetting(rawValue: value) else { return done(.fail("usage: \(id.action.usage)")) }
+                AppearanceSetting.set(a)
+                SettingsInfo.shared.revision += 1
             case "explainers":
                 guard value == "reset" else { return done(.fail("usage: \(id.action.usage)")) }
                 explainer.resetDismissed()
-            default: return done(.fail("no setting '\(key)'. Settings: claude-path, notify, dock-badge, explainers"))
+            default: return done(.fail("no setting '\(key)'. Settings: claude-path, notify, dock-badge, appearance, explainers"))
             }
             reply()
         case .projectReconnect:
@@ -1187,7 +1197,7 @@ extension AppModel {
         switch s { case .needsYou: "needs-you"; case .readyForReview: "review"; case .working: "working"; case .idle: "idle"; case .resolved: "resolved" }
     }
 
-    func sessionJSON(_ s: Fixture.Session) -> [String: Any] {
+    func sessionJSON(_ s: Fixture.Session, sections: [String: String]? = nil) -> [String: Any] {
         var j: [String: Any] = ["title": s.name, "project": s.project, "state": stateWord(s.state)]
         j["kind"] = sessionKind(s).rawValue   // terminal | chat (DL-174)
         if let v = s.sessionId { j["id"] = v }
@@ -1199,6 +1209,9 @@ extension AppModel {
         if parkedTabs.contains(s.tabKey), terminals.existing(s.tabKey) == nil { j["parked"] = true }  // DL-156
         j["remoteControl"] = s.remoteControl ?? NSNull()  // the name it was started with (DL-128)
         if isKeepRunning(s.tabKey) { j["keepRunning"] = true }   // DL-192
+        // DL-217, DL-218: where the project pane puts it, and the director's mark.
+        if directorSlotInfo(project: s.project)?.sessionId == s.tabKey { j["director"] = true }
+        if let section = sections?["\(s.project)/\(s.tabKey)"] { j["section"] = section; if section == "pinned" { j["pinned"] = true } }
         if terminals.existing(s.tabKey) != nil, !isShell(s.tabKey), let why = parkBlock(s.tabKey), why != .notRunning {
             j["parkable"] = false; j["parkBlock"] = why.why
         }

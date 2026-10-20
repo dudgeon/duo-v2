@@ -26,6 +26,8 @@ public struct TaskNote: Sendable, Equatable {
     public var completed: String? = nil
     /// The `references:` list (DL-150): quoted markdown links to files, folders and URLs.
     public var references: [String] = []
+    /// When the note last changed on disk, ms since 1970: a task is in play while it's recent (DL-217).
+    public var modified: Double? = nil
 }
 
 public enum TaskNotes {
@@ -42,7 +44,9 @@ public enum TaskNotes {
         guard let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else { return [] }
         return files.filter { $0.pathExtension.lowercased() == "md" }.sorted { $0.path < $1.path }.compactMap { url in
             guard let text = try? String(contentsOf: url, encoding: .utf8) else { return nil }
-            return parse(text, path: "tasks/" + url.lastPathComponent)
+            var note = parse(text, path: "tasks/" + url.lastPathComponent)
+            note.modified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate).map { $0.timeIntervalSince1970 * 1000 }
+            return note
         }
     }
 

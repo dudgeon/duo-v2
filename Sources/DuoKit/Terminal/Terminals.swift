@@ -278,6 +278,17 @@ public final class GuardedTerminalView: LocalProcessTerminalView {
                       height: ceil((f.ascender - f.descender + f.leading) * Self.minRows) + 4)
     }
 
+    /// The console sinks in dark (DL-224): the background and foreground are resolved again when
+    /// the appearance changes, as a colour handed to the renderer is a snapshot of one appearance.
+    public override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            nativeBackgroundColor = DuoNSColor.console
+            nativeForegroundColor = DuoNSColor.consoleText
+        }
+        needsDisplay = true
+    }
+
     /// Forces a repaint from the current buffer. SwiftTerm's renderer draws from a snapshot, so
     /// `needsDisplay` alone repaints the old frame; a selection change invalidates the snapshot
     /// without resizing the PTY (findings F-20). Used when a terminal is attached to a slot.
