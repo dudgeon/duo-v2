@@ -56,7 +56,7 @@ public enum ProjectContext {
 
     /// At SessionStart: the project in full (or only its name, when CLAUDE.md imports the brief).
     public static func atStart(_ b: Brief?) -> String? {
-        b.map { "Duo: " + listing($0) }
+        b.map { "Duo: " + listing($0) + "\n" + tasksLine }
     }
 
     /// At UserPromptSubmit: what changed since `told` (nil: never told, so say it all), once.
@@ -80,6 +80,9 @@ public enum ProjectContext {
     static func same(_ a: Brief, _ b: Brief) -> Bool {
         a.name == b.name && a.folder == b.folder && a.goal == b.goal && a.health == b.health && a.next == b.next
     }
+
+    /// Said at start whatever the brief holds: agents otherwise write a TASKS.md Duo can't see (F-343).
+    public static let tasksLine = "Track work as Duo tasks, not a TASKS.md file: `duo2 tasks` lists them, `duo2 task new` makes one."
 
     static func listing(_ b: Brief) -> String {
         let head = "This session is in the project \(quoted(b.name)) (\(b.folder))."

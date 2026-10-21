@@ -3941,6 +3941,11 @@ The tab-drag proof (C-96) ran on Geoff's OK, with his Duo window minimized so th
 - **duo2.** `duo2 director send` puts SendMessage first without checking modes, and logs "delivered (SendMessage)" before the director has sent anything (AppModel+DirectorSend.swift:78-80).
 - **Reproduction (S1, the subagent for triage).** Dogfood case `d5-triage-to-worker` gives the director Geoff's exact words: "have an agent pull the issues…". On 2026-10-19 it ran 3 times each on Sonnet 5.5 and Opus 5.5, plus a 3-run Sonnet rerun ($2.62). `duo2 director start` failed every time (plugin eval's sandbox blocks writes to `.duo/`). In 8 of 9 runs the director then started an Agent subagent instead, and in none did it hand the user a `claude --bg` command or ask. Nothing in the core rules out a subagent when a worker can't start. The write-up's §5 has the results and the proposed core line.
 
+## F-343 · Agents didn't know Duo tasks exist (GitHub #12, 2026-10-19)
+
+- **What.** Asked to "create tasks" in a new project, Claude wrote a `TASKS.md` Duo can't see. The primer, CLAUDE.md block, skill trigger and hook said nothing of tasks, and `duo2 task new` always opened the note, so an agent making many wrote files by hand.
+- **Changed.** `tasks` and `task new` are everyday verbs (the primer lists them and says not to write a TASKS.md); the skill's trigger names tasks and to-dos and it has a Tasks section; the project hook context (SessionStart, and on change) says to track work as Duo tasks; `duo2 task new` takes `--no-open` and `--status`. DuoChecks guards the primer, skill and hook text.
+- **Not done.** The hook doesn't give an open-task count (it would need the count in the told-state); batch creation. The base PROJECT.md Tasks line waits on Geoff's wording (Q-217).
 ## F-345 · A dark chrome is a second value per token; the provisional set wasn't enough (dark-appearance, 2026-10-19)
 
 - **Wiring.** Views already use semantic tokens, and `scripts/gen-tokens.py` already emits each colour as `NSColor.duoDynamic(light:dark:)` from `color.darkProvisional`; the editor takes its colours as CSS variables (`EditorController.tokenCSS()`), and the Word viewer its author colours. Only `Sources/Duo/DuoApp.swift:26` pins `.aqua`. So a dark appearance is a token set plus that line, and a Settings row (Q-221).

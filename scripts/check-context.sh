@@ -77,17 +77,18 @@ full="Duo: This session is in the project “checkout” ($P). Its brief, from P
 - Goal: Ship the new checkout by November
 - Health: at risk
 - Next step: Fix the tax rounding bug"
+tasks=$'\n'"Track work as Duo tasks, not a TASKS.md file: \`duo2 tasks\` lists them, \`duo2 task new\` makes one."   # ProjectContext.tasksLine (F-343), after every start
 
 print "project context, live (ENH-16, F-146)"
-want 1 "startup: the project's name, folder, goal, health and next step" "$full"
+want 1 "startup: the project's name, folder, goal, health and next step, then the tasks line" "$full$tasks"
 run prompt; want 2 "a prompt with nothing changed: nothing" ""
 brief "Ship the new checkout by November" on-track "Ship to 10% of traffic"
 run prompt; want 3 "PROJECT.md edited: told once, on the next prompt" "Duo: The project's health is now “on track” (was “at risk”).
 The project's next step is now “Ship to 10% of traffic” (was “Fix the tax rounding bug”)."
 run prompt; want 4 "…and only once" ""
-run start compact; want 5 "compact: the brief in full again" "${${full/at risk/on track}/Fix the tax rounding bug/Ship to 10% of traffic}"
+run start compact; want 5 "compact: the brief in full again, and the tasks line" "${${full/at risk/on track}/Fix the tax rounding bug/Ship to 10% of traffic}$tasks"
 print -- "@PROJECT.md" > $P/CLAUDE.md
-run start resume; want 6 "CLAUDE.md imports @PROJECT.md: the name and folder only" "Duo: This session is in the project “checkout” ($P). Its CLAUDE.md imports PROJECT.md, so you already have its goal, health and next step."
+run start resume; want 6 "CLAUDE.md imports @PROJECT.md: the name and folder only (no goal, health or next step), then the tasks line" "Duo: This session is in the project “checkout” ($P). Its CLAUDE.md imports PROJECT.md, so you already have its goal, health and next step.$tasks"
 run prompt; want 7 "…and a prompt after it: nothing" ""
 print "$((7 - fails)) passed, $fails failed"
 exit $((fails > 0))

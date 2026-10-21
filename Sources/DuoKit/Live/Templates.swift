@@ -53,6 +53,10 @@ public enum Templates {
 
     ## Notes
 
+    ## Tasks
+
+    Work to do lives in tasks/, one note each. Ask Claude to "create a task", or use + New task in Duo.
+
     ## Log
 
     - {{date}} Started.
