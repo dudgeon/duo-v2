@@ -169,6 +169,9 @@ extension Fixture {
     let until = Date().addingTimeInterval(5)
     while !((try? String(contentsOf: argvFile, encoding: .utf8))?.contains("attach") ?? false), Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
     check((try? String(contentsOf: argvFile, encoding: .utf8))?.contains("attach ab12cd34") == true, "the tab runs `claude attach ‹short›`")
+    if let t = m.terminals.existing(fork) {
+        check(m.attachChat(t)?.composeDir == nil, "an attach tab's chat pastes on send: the daemon's fork has no `duo2 compose` for Ctrl+G (F-363)")
+    }
     m.adoptForks(into: &snap)
     check(snap.sessions.filter { $0.sessionId == fork }.count == 1, "a fork already adopted isn't adopted again")
     // Detach: closing the tab leaves the session and its row; opening it attaches again.
