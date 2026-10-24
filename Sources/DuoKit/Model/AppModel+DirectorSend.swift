@@ -83,7 +83,10 @@ extension AppModel {
         case .resumeBackground, .headless:
             guard let claude = ClaudeLocator.resolve() else { return queue("no claude to run") }
             // `--` ends the options: a message starting with "-" is never read as a flag.
-            let args = (rung == .headless ? ["-p", "--resume", sid] : ["--bg", "--resume", sid]) + ["--", tagged]
+            // A worker resumed in the background comes back reachable from the user's phone (DL-230).
+            let name = DirectorRegistry.load(project: folder).worker(task: task)?.name
+            let rc = rung == .resumeBackground && ClientCaps.probe(env: [:], cwd: nil).remoteControl == .yes ? name.map { ["--remote-control", $0] } ?? [] : []
+            let args = (rung == .headless ? ["-p", "--resume", sid] : ["--bg", "--resume", sid] + rc) + ["--", tagged]
             let cwd = workerCwd(worker, folder: folder)
             let runLog = folder.appending(path: ".duo/director-runs/\(sid.prefix(8))-\(Int(Date().timeIntervalSince1970)).log")
             let how = rung == .headless ? "a headless turn" : "resumed in the background"

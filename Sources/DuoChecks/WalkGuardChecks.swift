@@ -25,6 +25,7 @@ let walkGuardExempt: [String: String] = [
     "DuoKit/Model/AppModel+Director.swift": "one listing of a project's tasks folder (a director's tasks)",
     "DuoControl/Installer.swift": "one listing of a skill folder Duo wrote, to remove the folder only when it's empty",
     "DuoControl/Director.swift": "Claude's sessions folder (the caller's beacon)",
+    "DuoControl/DirectorOffline.swift": "Claude's sessions and projects folders (beacons, transcripts), a project's tasks folder and its .duo/director-runs",
     "DuoKit/Model/AppModel+Organize.swift": "one listing of a folder being emptied",
     "DuoKit/Shell/SettingsView.swift": "the size of Claude's config folder",
     "DuoSearch/SessionSource.swift": "Claude's config folder",

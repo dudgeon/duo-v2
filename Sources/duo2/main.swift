@@ -183,10 +183,10 @@ case .directorWatch:
     exit(runDirectorWatch(rest))
 default:
     // The director's verbs carry what this client can do, which only its own side can read.
-    if action.family == .director { rest += ["--caps", directorCaps()] }
+    if action.family == .director { rest += ["--caps", directorCaps(login: action.id == .directorStatus || action.id == .directorStart)] }
+    // Directing works with Duo closed (DL-231): a verb with an offline form runs on Claude's own files.
     guard let (endpoint, source) = ControlEndpoint.discover() else {
-        if action.id == .directorStatus { exit(directorStatusOffline()) }
-        if action.id == .directorStart { exit(directorStartOffline(rest)) }
+        if let code = runOffline(action.id, rest) { exit(code) }
         fail("Duo isn't running. Run `duo2 doctor`.", code: 69)
     }
     let request = ControlRequest(token: endpoint.token, command: action.verb, args: rest,
@@ -197,6 +197,8 @@ default:
         let r = try ControlClient.send(request, via: endpoint, source: source, timeout: action.timeout)
         if r.ok { print(r.output, terminator: r.output.hasSuffix("\n") ? "" : "\n") } else { fail(r.output) }
     } catch {
+        // A dead socket (a Duo that quit under a session that still has its address): nothing was sent.
+        if let f = error as? ControlClient.Failure, case .connect = f, let code = runOffline(action.id, rest) { exit(code) }
         fail("\(error). Run `duo2 doctor`.", code: 69)
     }
 }
