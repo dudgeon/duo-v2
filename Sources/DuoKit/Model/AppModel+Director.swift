@@ -29,9 +29,9 @@ extension AppModel {
         var stateWord: String
         /// A worker the director started in the background that hasn't appeared yet: its name.
         var pendingName: String?
-        /// Counts against the cap (DL-201): an unfinished task whose worker runs, or hasn't started yet.
-        var holdsSlot: Bool {
-            Director.holdsSlot(status: note.status, archived: note.archived) && (pendingName != nil || (facts.map { $0.run != .stopped } ?? false))
+        /// Running: an unfinished task whose worker runs, or hasn't started yet.
+        var running: Bool {
+            Director.unfinished(status: note.status, archived: note.archived) && (pendingName != nil || (facts.map { $0.run != .stopped } ?? false))
         }
     }
 
@@ -221,10 +221,8 @@ extension AppModel {
         if caps.projects { lines.append("This is a Claude Code Projects session: start nothing here (DL-203).") }
 
         let tasks = directedTasks(p.name, folder: folder, director: reg.current?.name ?? director)
-        let brief = (try? String(contentsOf: folder.appending(path: "PROJECT.md"), encoding: .utf8)) ?? ""
-        let cap = Director.cap(directorSection: Director.section("Director", in: brief))
-        let active = tasks.filter(\.holdsSlot)
-        lines.append("Workers: \(active.count) of \(cap).")
+        let active = tasks.filter(\.running)
+        lines.append("Workers: \(active.count) running.")
         for t in tasks {
             var l = "  \(t.note.path)  \(t.note.title) (\(t.note.status ?? "open"))  "
             if let w = t.worker, let f = t.facts {
@@ -247,7 +245,6 @@ extension AppModel {
             if let n = t.pendingName { w["starting"] = n }
             return w
         }
-        j["cap"] = cap
         j["active"] = active.count
         j["pending"] = pending.count
 
@@ -343,19 +340,6 @@ extension AppModel {
             log("start", path, nil, nil, "suggested")
             return .ok("\(made ? "Filed" : "Marked") \(path) as suggested, directed by \(director). Nothing started: start it when the user says go (`duo2 director start \(path)`).",
                        ["task": path, "status": DirectorNotes.suggested])
-        }
-
-        // The cap (DL-201): workers running on unfinished tasks, this one aside, plus ones started
-        // in the background that haven't appeared yet. A worker stopped after its work (waiting
-        // on the user's sign-off) frees its slot.
-        let brief = (try? String(contentsOf: folder.appending(path: "PROJECT.md"), encoding: .utf8)) ?? ""
-        let cap = Director.cap(directorSection: Director.section("Director", in: brief))
-        let busy = directedTasks(p.name, folder: folder, director: director).filter { $0.note.path != path && $0.holdsSlot }
-        if busy.count >= cap {
-            _ = editTaskNote(p.name, path, .setKey("status", DirectorNotes.suggested))
-            _ = editTaskNote(p.name, path, .appendLine(section: "Progress", line: DirectorNotes.progressLine("Not started: \(busy.count) of \(cap) workers busy, so it waits as suggested.")))
-            log("refused", path, nil, nil, "cap \(cap)")
-            return .fail("You have \(busy.count) of \(cap) workers (\(busy.map(\.note.path).joined(separator: ", "))). \(path) is filed as suggested; start it when one finishes. The project's ## Director can change the cap (max workers: N).")
         }
 
         func inProgress() {

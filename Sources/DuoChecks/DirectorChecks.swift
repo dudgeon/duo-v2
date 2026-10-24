@@ -6,15 +6,13 @@ import Foundation
 // can do, the send ladder, every guard on Duo pressing Enter (DL-199), the note conventions, the
 // skill's install, and the verbs end to end against stand-in claudes (never a real one).
 @MainActor func directorChecks() throws {
-    print("director: names, cap, sections (DL-200, DL-201)")
+    print("director: names, sections (DL-200, DL-232)")
     check(Director.name(project: "Duo v2") == "director-duo-v2" && Director.name(project: "Café notes") == "director-cafe-notes", "a director's fixed name is director-<project slug>")
-    check(Director.cap(directorSection: nil) == 3 && Director.cap(directorSection: "- Max workers: 5") == 5 && Director.cap(directorSection: "max_workers = 1") == 1
-          && Director.cap(directorSection: "max workers: 0") == 3 && Director.cap(directorSection: "work in pairs") == 3, "the cap is 3 unless ## Director says max workers: N (N > 0)")
     let brief = "# P\n\n## Goal\nship\n\n## Director\nmax workers: 2\nask before publishing\n\n## Decisions\n- 2026-10-14 x\n"
     check(Director.section("Director", in: brief) == "max workers: 2\nask before publishing" && Director.section("Missing", in: brief) == nil, "a ## section's body, up to the next heading")
-    check(Director.holdsSlot(status: "in-progress", archived: false) && Director.holdsSlot(status: nil, archived: false) && Director.holdsSlot(status: "waiting", archived: false)
-          && !Director.holdsSlot(status: "suggested", archived: false) && !Director.holdsSlot(status: "Done", archived: false) && !Director.holdsSlot(status: "dropped", archived: false)
-          && !Director.holdsSlot(status: "in-progress", archived: true), "unfinished tasks hold a worker slot; suggested, done, dropped and archived don't")
+    check(Director.unfinished(status: "in-progress", archived: false) && Director.unfinished(status: nil, archived: false) && Director.unfinished(status: "waiting", archived: false)
+          && !Director.unfinished(status: "suggested", archived: false) && !Director.unfinished(status: "Done", archived: false) && !Director.unfinished(status: "dropped", archived: false)
+          && !Director.unfinished(status: "in-progress", archived: true), "unfinished: started and not done; suggested, done, dropped and archived aren't")
 
     print("director: .duo/director.json (DL-200)")
     do {
@@ -453,12 +451,12 @@ import Foundation
           "tasks: this director's notes only; another's, an archived one and one with no frontmatter are left out")
     check(t("a")?.title == "Alpha" && t("b")?.title == "Bravo heading" && t("g")?.title == "g" && t("a")?.status == "in-progress" && t("d")?.status == nil,
           "a title is the frontmatter's, else the first heading, else the file name")
-    check(t("a")?.state == "working" && t("a")?.session == "s-busy" && t("a")?.peerName == "bg-job-aaaaaa" && t("a")?.holdsSlot == true && t("a")?.place == "background",
+    check(t("a")?.state == "working" && t("a")?.session == "s-busy" && t("a")?.peerName == "bg-job-aaaaaa" && t("a")?.running == true && t("a")?.place == "background",
           "state: a busy beacon is working")
-    check(t("b")?.state == "starting" && t("b")?.pendingName == "not-yet-bbbbbb" && t("b")?.holdsSlot == true, "state: a recent pending worker is starting (and holds its slot), with the name it will appear under")
-    check(t("c")?.state == "stopped" && t("c")?.session == "s-dead" && t("c")?.holdsSlot == false, "state: a registry session with no live beacon is stopped, and frees its slot")
-    check(t("d")?.state == "no worker" && t("d")?.session == nil && t("d")?.holdsSlot == false && t("h")?.state == "no worker", "state: no worker, and a pending one past 30 minutes counts as none")
-    check(t("g")?.state == "idle" && t("g")?.holdsSlot == true && t("i")?.state == "needs-you" && t("i")?.question == "permission prompt", "state: idle, and needs-you with what it waits for")
+    check(t("b")?.state == "starting" && t("b")?.pendingName == "not-yet-bbbbbb" && t("b")?.running == true, "state: a recent pending worker is starting (and counts as running), with the name it will appear under")
+    check(t("c")?.state == "stopped" && t("c")?.session == "s-dead" && t("c")?.running == false, "state: a registry session with no live beacon is stopped, and isn't running")
+    check(t("d")?.state == "no worker" && t("d")?.session == nil && t("d")?.running == false && t("h")?.state == "no worker", "state: no worker, and a pending one past 30 minutes counts as none")
+    check(t("g")?.state == "idle" && t("g")?.running == true && t("i")?.state == "needs-you" && t("i")?.question == "permission prompt", "state: idle, and needs-you with what it waits for")
     check(t("a")?.noteModified ?? 0 > 1_000_000_000, "the note's modification time rides along")
     // userTyping from the worker's transcript
     let iso = ISO8601DateFormatter(); iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -606,8 +604,8 @@ import Foundation
     // status before anyone directs.
     var r = run("director status", ["--json"], as: D, name: "director-dirproj")
     let j0 = (try? JSONSerialization.jsonObject(with: Data(r.output.utf8))) as? [String: Any]
-    check(r.ok && (((j0?["rules"] as? [[String: Any]])?.last?["text"] as? String) ?? "").contains("max workers: 2") && j0?["role"] as? String == "none" && j0?["cap"] as? Int == 2 && ((j0?["rules"] as? [[String: Any]])?.last?["path"] as? String)?.hasSuffix("/p/PROJECT.md") == true,
-          "status: nobody directs yet; the project's cap is 2; its Director section is listed, with its text (\(r.output.prefix(300)))")
+    check(r.ok && (((j0?["rules"] as? [[String: Any]])?.last?["text"] as? String) ?? "").contains("max workers: 2") && j0?["role"] as? String == "none" && ((j0?["rules"] as? [[String: Any]])?.last?["path"] as? String)?.hasSuffix("/p/PROJECT.md") == true,
+          "status: nobody directs yet; its Director section is listed, with its text (\(r.output.prefix(300)))")
 
     // A folder Duo doesn't know: refused, never a guess from what's on screen.
     var stray: ControlResponse?
@@ -633,22 +631,21 @@ import Foundation
     r = run("director start", ["--title", "Other", "--request", "x"], as: D2, name: "worker-z")
     check(!r.ok && r.output.contains("directed by director-dirproj"), "a second session can't start work in a directed project without --take-over")
 
-    // the cap.
+    // No cap (DL-232): a "max workers" line in ## Director changes nothing.
     r = run("director start", ["--title", "Second", "--request", "two"], as: D, name: "director-dirproj")
-    check(r.ok, "a second worker fits the cap of 2")
+    check(r.ok, "a second worker starts")
     r = run("director start", ["--title", "Third", "--request", "three"], as: D, name: "director-dirproj")
-    check(!r.ok && r.output.contains("2 of 2") && TaskNotes.parse(note("tasks/third.md"), path: "x").status == "suggested" && TaskNotes.parse(note("tasks/third.md"), path: "x").sessionIds.isEmpty,
-          "a third is refused, and its task waits as suggested with no worker")
+    check(r.ok && TaskNotes.parse(note("tasks/third.md"), path: "x").status == "in-progress" && !TaskNotes.parse(note("tasks/third.md"), path: "x").sessionIds.isEmpty,
+          "a third starts too, past the old \"max workers: 2\" line: there's no cap")
     r = run("director start", ["--title", "Idea", "--request", "maybe", "--suggest"], as: D, name: "director-dirproj")
     check(r.ok && TaskNotes.parse(note("tasks/idea.md"), path: "x").status == "suggested", "--suggest files proposed work without a worker")
     r = run("director start", ["--title", "File notes from the pricing sync", "--request", "Route these notes.", "--no-worker"], as: D, name: "director-dirproj")
     let filing = TaskNotes.parse(note("tasks/file-notes-from-the-pricing-sync.md"), path: "x")
     check(r.ok && filing.status == "in-progress" && filing.sessionIds.isEmpty && note("tasks/file-notes-from-the-pricing-sync.md").contains("itself (organising work)"),
-          "--no-worker: organising work the director does itself, over the cap, with no worker (DL-208)")
+          "--no-worker: organising work the director does itself, with no worker (DL-208)")
 
     // The user's own tasks and sessions are never a director's without the user's yes, and Duo asks
     // for it itself (DL-200): the director's word is never the yes.
-    try Data("# p\n\n## Director\nmax workers: 5\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
     r = run("director start", ["theirs"], as: D, name: "director-dirproj")
     check(!r.ok && r.output.contains("--adopt") && DirectorNotes.directedBy(note("tasks/theirs.md")) == nil && SheetCenter.shared.current == nil,
           "starting the user's task (no directed_by:): refused, the note untouched, and no question without --adopt")
@@ -770,7 +767,7 @@ import Foundation
     let activeBefore = active()
     m.terminals.existing(w1)?.terminate()
     wait { m.terminals.existing(w1)?.exited != false }
-    check(activeBefore > 0 && active() == activeBefore - 1, "a stopped worker frees its slot: the cap counts running workers (\(activeBefore) then \(active()))")
+    check(activeBefore > 0 && active() == activeBefore - 1, "a stopped worker no longer counts as running (\(activeBefore) then \(active()))")
     let bucket = config.appending(path: "projects").appending(path: ClaudeStorage.encode(proj.resolvingSymlinksInPath().path))
     try fm.createDirectory(at: bucket, withIntermediateDirectories: true)
     try Data("{\"type\":\"user\",\"cwd\":\"\(proj.resolvingSymlinksInPath().path)\",\"sessionId\":\"\(w1)\"}\n".utf8).write(to: bucket.appending(path: w1 + ".jsonl"))
@@ -807,21 +804,16 @@ import Foundation
     check(linked?.session == bgId && linked?.pending == false && linked?.adopted == false && note("tasks/bg-job.md").contains(bgId),
           "at the next refresh Duo links it by its name: no link step, no --adopt, and the note links the session")
     try? fm.removeItem(at: config.appending(path: "sessions/\(getpid()).json"))
-    // Pending workers hold their slot until they appear, or for 30 minutes.
-    let slots = active()   // running and pending workers, as the cap counts them
-    try Data("# p\n\n## Director\nmax workers: \(slots + 1)\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
+    // A pending worker counts as running until it appears, or for 30 minutes.
     r = run("director start", ["--title", "Bg two", "--request", "b2", "--background"], as: D3Pre, name: "director-dirproj")
-    check(r.ok, "a background start fits the last slot (\(slots + 1))")
-    r = run("director start", ["--title", "Bg three", "--request", "b3", "--background"], as: D3Pre, name: "director-dirproj")
-    check(!r.ok && r.output.contains("of \(slots + 1)"), "the next is refused: a pending worker still holds its slot (\(r.output.prefix(80)))")
+    check(r.ok && r.output.contains("claude --bg"), "a second background start: no cap to fit (DL-232)")
     var reg2 = DirectorRegistry.load(project: proj)
     if let i = reg2.workers.firstIndex(where: { $0.task == "tasks/bg-two.md" }) { reg2.workers[i].since = "2026-01-01T00:00:00Z" }
     try reg2.save(project: proj)
     m.deliverDirectorMessages()
-    check(DirectorRegistry.load(project: proj).worker(task: "tasks/bg-two.md") == nil, "a pending worker that never appears frees its slot after 30 minutes")
+    check(DirectorRegistry.load(project: proj).worker(task: "tasks/bg-two.md") == nil, "a pending worker that never appears is dropped after 30 minutes")
     // The default worker (DL-231): with no flag, a background one where the client has messaging and
     // background sessions; --in-duo, or a client without messaging, starts it in Duo.
-    try Data("# p\n\n## Director\nmax workers: 20\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
     r = run("director start", ["--title", "Default way", "--request", "d"], as: D3Pre, name: "director-dirproj", messaging: .yes)
     let defWorker = DirectorRegistry.load(project: proj).worker(task: "tasks/default-way.md")
     check(r.ok && defWorker?.pending == true && r.output.contains("claude --bg") && !r.output.contains("--session-id"),
@@ -833,7 +825,6 @@ import Foundation
     r = run("director start", ["--title", "No messaging", "--request", "d"], as: D3Pre, name: "director-dirproj", messaging: .no)
     check(r.ok && DirectorRegistry.load(project: proj).worker(task: "tasks/no-messaging.md")?.pending == false && !r.output.contains("claude --bg"),
           "start with no flag, a client without messaging: the worker starts in Duo")
-    try Data("# p\n\n## Director\nmax workers: 5\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
 
     // Done or archived tasks lose their worker entry; old run logs are pruned.
     try Data(note("tasks/bg-job.md").replacingOccurrences(of: "status: in-progress", with: "status: done").utf8).write(to: proj.appending(path: "tasks/bg-job.md"))

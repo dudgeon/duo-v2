@@ -101,8 +101,8 @@ public enum DirectorOffline {
         public var question: String?
         public var userTyping: Bool
         public var userTurnAt: Date?
-        /// Counts against the cap (DL-201): unfinished, and its worker runs or is still starting.
-        public var holdsSlot: Bool
+        /// Running: unfinished, and its worker runs or is still starting.
+        public var running: Bool
     }
 
     /// Every task note whose `directed_by:` is `director`, not archived, with its worker's state
@@ -119,13 +119,13 @@ public enum DirectorOffline {
             let mod = ((try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast).timeIntervalSince1970
             var t = Task(path: path, title: title(of: text, stem: url.deletingPathExtension().lastPathComponent), status: status, noteModified: mod,
                          session: nil, workerName: nil, place: "background", state: "no worker", pendingName: nil, peerName: nil, question: nil,
-                         userTyping: false, userTurnAt: nil, holdsSlot: false)
-            let unfinished = Director.holdsSlot(status: status, archived: false)
+                         userTyping: false, userTurnAt: nil, running: false)
+            let unfinished = Director.unfinished(status: status, archived: false)
             guard let w = reg.worker(task: path) else { return t }
             t.workerName = w.name
             if w.pending {
                 if let since = iso.date(from: w.since), now.timeIntervalSince(since) <= pendingLasts {
-                    t.state = "starting"; t.pendingName = w.name; t.holdsSlot = unfinished
+                    t.state = "starting"; t.pendingName = w.name; t.running = unfinished
                 }
                 return t
             }
@@ -134,7 +134,7 @@ public enum DirectorOffline {
                 t.state = b.status == "busy" ? "working" : b.status == "waiting" ? "needs-you" : "idle"
                 t.peerName = b.peerName
                 if b.status == "waiting" { t.question = b.waitingFor }
-                t.holdsSlot = unfinished
+                t.running = unfinished
             } else {
                 t.state = "stopped"
             }

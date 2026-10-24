@@ -161,9 +161,7 @@ func directorStatusOffline(_ rest: [String]) -> Int32 {
         print(directed.isEmpty ? "No project here has its own director: you may direct work in any of them." : "Projects with their own director (ask it, never touch its workers): " + directed.map { "\($0.0) (\($0.1))" }.joined(separator: ", "))
     }
     let tasks = d.tasks()
-    let brief = (try? String(contentsOf: d.project.appending(path: "PROJECT.md"), encoding: .utf8)) ?? ""
-    let cap = Director.cap(directorSection: Director.section("Director", in: brief))
-    print("Workers: \(tasks.filter(\.holdsSlot).count) of \(cap).")
+    print("Workers: \(tasks.filter(\.running).count) running.")
     for t in tasks {
         var l = "  \(t.path)  \(t.title) (\(t.status ?? "open"))  "
         if let s = t.session {
@@ -294,16 +292,6 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
         return 0
     }
 
-    // The cap (DL-201): running workers on unfinished tasks, this one aside, plus pending ones.
-    let brief = (try? String(contentsOf: d.project.appending(path: "PROJECT.md"), encoding: .utf8)) ?? ""
-    let cap = Director.cap(directorSection: Director.section("Director", in: brief))
-    let busy = d.tasks().filter { $0.path != path && $0.holdsSlot }
-    if busy.count >= cap {
-        setStatus("suggested")
-        d.progress(path, "Not started: \(busy.count) of \(cap) workers busy, so it waits as suggested.")
-        d.log("refused", task: path, "cap \(cap)")
-        return offlineFail("You have \(busy.count) of \(cap) workers (\(busy.map(\.path).joined(separator: ", "))). \(path) is filed as suggested; start it when one finishes. The project's ## Director can change the cap (max workers: N).")
-    }
     // `claude --bg` picks its own session id (F-318), so the worker is recorded under the name the
     // command carries, and linked when a session with that name appears.
     let (worker, cmd) = Director.backgroundStart(folder: d.project, task: path, director: d.name, remoteControl: d.caps.remoteControl == .yes)

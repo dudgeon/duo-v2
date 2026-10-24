@@ -82,7 +82,6 @@ On every later wake (a notice, a Monitor line, the user's message), run `duo2 di
 ## 4. Workers
 
 - **One worker per task.** Run several at once only for work that splits cleanly (separate files, separate research). Anything that shares decisions runs one at a time.
-- **At most 3 running workers** unless a Director section says otherwise (a worker you stopped once its work was done, waiting on the user, doesn't count) (a line `max workers: N`). `duo2 director start` refuses a fourth, whether Duo is running or not; the work is filed as `status: suggested`, to start when one finishes (or ask whether to raise the cap).
 - **Work the user may want to talk to while it runs goes to a worker they can open, never a subagent**: research, triage, reviews, release cuts, anything long. "Have an agent do X" means a worker. A subagent is invisible to the user and ends with your turn; use one only for an invisible mechanical sweep inside your own checks.
 - **Workers start only through `duo2 director start`**, never through your client's own way of starting sessions (the Claude app's `start_session` tool and its "New session" cards). That tool starts a session only from words the user types at that Mac: from their phone, or in a turn a worker's message started, it leaves a card only a click at the Mac can start.
 - **If you can't start a worker** (the start fails, no background sessions, no Duo), never use a subagent instead, nor that tool: tell the user why it failed (a logged-out CLI: they run `claude auth login` on this Mac; `duo2 director status` says so), and give them the `claude --bg` command to run, or ask them to open Duo.
@@ -127,7 +126,7 @@ On every later wake (a notice, a Monitor line, the user's message), run `duo2 di
 - **Mark complete by asking.** Once the user has accepted a task's work, ask to mark it complete (several tasks to one question when there are several). On yes: `duo2 task status <task> done`, and one dated line in the project file's `## Done`: the task's link (`duo2 task link <task>`) and what came of it in a sentence. The line is part of what they approve.
 - **`## Done` keeps its latest 20 lines.** When a new line would make 21, move the oldest to a `log.md` beside the project file (plain Markdown, one dated line each, newest last), in the same edit. `## Decisions` always stays in the project file.
 - **Archive by asking,** right after completion and in the sweep when you start: on yes, `duo2 task archive <task>` (its finished sessions too).
-- Both undo: `duo2 undo`, setting the status back, or `duo2 task unarchive`. A done, dropped or archived task frees its worker's slot.
+- Both undo: `duo2 undo`, setting the status back, or `duo2 task unarchive`.
 
 ## 9. Home and projects
 

@@ -75,25 +75,12 @@ public enum Director {
     /// How long a worker started in the background may take to appear before its slot is freed.
     public static let pendingLasts: TimeInterval = 30 * 60
 
-    /// At most this many workers per director (DL-201), unless the project's `## Director` says
-    /// `max workers: N`.
-    public static let defaultCap = 3
-
-    /// Statuses that hold a worker slot: work started and not finished. `suggested` is proposed work
-    /// (DL-194); done, dropped and archived tasks free their slot.
-    public static func holdsSlot(status: String?, archived: Bool) -> Bool {
+    /// Statuses of work started and not finished. `suggested` is proposed work (DL-194); done,
+    /// dropped and archived tasks are finished. There's no cap on workers (DL-232).
+    public static func unfinished(status: String?, archived: Bool) -> Bool {
         guard !archived else { return false }
         let s = (status ?? "open").trimmingCharacters(in: .whitespaces).lowercased()
         return !["suggested", "done", "dropped"].contains(s)
-    }
-
-    /// The cap a project's `## Director` section sets (`max workers: 5`, `max_workers = 5`), else the default.
-    public static func cap(directorSection: String?) -> Int {
-        guard let s = directorSection,
-              let re = try? NSRegularExpression(pattern: #"max[ _-]?workers\s*[:=]\s*(\d+)"#, options: .caseInsensitive),
-              let m = re.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)),
-              let r = Range(m.range(at: 1), in: s), let n = Int(s[r]), n > 0 else { return defaultCap }
-        return n
     }
 
     /// A `## <heading>` section's body (up to the next heading of the same or higher level), or nil.

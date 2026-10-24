@@ -10,7 +10,6 @@ next: ""
 
 - Procedures are in `docs/director/README.md` (merges, records, releases, the walk, the design system, the GPU lock, the voice repo, lessons), with a table of what the core's words mean here. Read the one for the job in hand.
 - Start as `claude -n director-duo-v2` (or in Duo, `duo2 session new --name director-duo-v2`; DL-200). Workers run in the background with Remote Control (DL-201); design work runs in Duo.
-- max workers: 6
 - Models by job, as CLAUDE.md's Model efficiency says.
 - Geoff's asks start at once, each as its own task, unless he says to hold.
 - You may merge a branch that builds, passes `scripts/merge-gate.sh` and logs its stand-ins (D2), push main after it, and then remove its worktree and branch. You may publish the acceptance walk page and the design-system artifact (the director is their only publisher). Ask first when a merge would reverse a DL, or when two branches change the same behaviour differently.
