@@ -183,7 +183,7 @@ case .directorWatch:
     exit(runDirectorWatch(rest))
 default:
     // The director's verbs carry what this client can do, which only its own side can read.
-    if action.family == .director { rest += ["--caps", directorCaps()] }
+    if action.family == .director { rest += ["--caps", directorCaps(login: action.id == .directorStatus || action.id == .directorStart)] }
     guard let (endpoint, source) = ControlEndpoint.discover() else {
         if action.id == .directorStatus { exit(directorStatusOffline()) }
         if action.id == .directorStart { exit(directorStartOffline(rest)) }

@@ -6,8 +6,10 @@ import Foundation
 // client can do (only readable from the caller's side), `guide` and `watch`.
 
 /// What the calling session can do, as JSON for the app (`--caps`).
-func directorCaps() -> String {
-    let caps = ClientCaps.probe(env: ProcessInfo.processInfo.environment, cwd: FileManager.default.currentDirectoryPath)
+/// `login` also asks `claude auth status` (status and start only: `watch` asks every few seconds).
+func directorCaps(login: Bool = false) -> String {
+    var caps = ClientCaps.probe(env: ProcessInfo.processInfo.environment, cwd: FileManager.default.currentDirectoryPath)
+    if login { caps.cliLogin = ClientCaps.cliLogin(env: ProcessInfo.processInfo.environment) }
     let enc = JSONEncoder(); enc.outputFormatting = [.sortedKeys]
     return (try? enc.encode(caps)).map { String(decoding: $0, as: UTF8.self) } ?? "{}"
 }
@@ -16,7 +18,8 @@ func directorCaps() -> String {
 /// Home come from the folder alone (`DirectorPlace`), the same rule the app uses first.
 func directorStatusOffline() -> Int32 {
     let env = ProcessInfo.processInfo.environment
-    let caps = ClientCaps.probe(env: env, cwd: FileManager.default.currentDirectoryPath)
+    var caps = ClientCaps.probe(env: env, cwd: FileManager.default.currentDirectoryPath)
+    caps.cliLogin = ClientCaps.cliLogin(env: env)
     print("Duo isn't running, so workers' states and the task board are unknown (start Duo, or ask the user).")
     let (project, above) = DirectorPlace.resolve(from: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
     let home = above ?? DirectorPlace.configuredHome()   // a project outside Home: the Home Duo was given
@@ -47,12 +50,29 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
     func no(_ why: String) -> Int32 { FileHandle.standardError.write(Data("duo2: \(why)\n".utf8)); return 1 }
     let inv = Invocation(rest)
     let env = ProcessInfo.processInfo.environment
-    guard inv.has("background"), inv.flags["title"] != nil || inv[0] != nil else {
-        return no("Duo isn't running. With Duo closed only `duo2 director start <task> --background` (or `--title … --request … --background`, which writes the note) works; start Duo for the rest.")
+    let takeOverOnly = inv.has("take-over") && inv.flags["title"] == nil && inv[0] == nil
+    guard takeOverOnly || (inv.has("background") && (inv.flags["title"] != nil || inv[0] != nil)) else {
+        return no("Duo isn't running. With Duo closed only `duo2 director start <task> --background` (or `--title … --request … --background`, which writes the note) and `--take-over` work; start Duo for the rest.")
     }
     guard let me = env["CLAUDE_CODE_SESSION_ID"] else { return no("not run from a Claude session (no session id), so there's no director to record") }
     let here = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-    let caps = ClientCaps.probe(env: env, cwd: here.path)
+    if takeOverOnly {
+        // A director resumed or moved under a new session id (§10): record it, nothing else.
+        let (project, _) = DirectorPlace.resolve(from: here)
+        var reg = DirectorRegistry.load(project: project)
+        if reg.role(sessionId: me) == .current { print("You're already this project's director."); return 0 }
+        let caps = ClientCaps.probe(env: env, cwd: here.path)
+        let name = reg.current?.name ?? (caps.name?.hasPrefix("director-") == true ? caps.name! : Director.name(project: project.lastPathComponent))
+        let now = ISO8601DateFormatter().string(from: Date())
+        reg.adopt(name: name, sessionId: me, at: now)
+        do { try reg.save(project: project) } catch { return no("couldn't write \(DirectorRegistry.file(project: project).path): \(error.localizedDescription)") }
+        DirectorLog.append(DirectorEvent(at: now, director: name, event: "takeover", task: nil, detail: "Duo closed"), project: project)
+        print("Recorded you as \(project.lastPathComponent)'s director, \(name). Its workers stay on their tasks.")
+        return 0
+    }
+    var caps = ClientCaps.probe(env: env, cwd: here.path)
+    caps.cliLogin = ClientCaps.cliLogin(env: env)
+    if let why = Director.backgroundRefusal(caps) { return no(why) }
     let (project, _) = DirectorPlace.resolve(from: here)
     var path = ""
     var text = ""
@@ -68,7 +88,10 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
     var reg = DirectorRegistry.load(project: project)
     let role = reg.role(sessionId: me)
     if case .replaced(let by) = role { return no("You were replaced as this project's director\(by.map { " by \($0.name)" } ?? ""). Stand down: say so to the user and stop directing.") }
-    if case .other(let c) = role, !inv.has("take-over") { return no("this project is directed by \(c.name). Ask the user; with their go-ahead, --take-over replaces it.") }
+    if case .other(let c) = role, !inv.has("take-over") {
+        if c.name == caps.name { return no("this project's director is recorded as \(c.name), your name, under another session id: you were resumed or moved to a new one. Add --take-over to record yourself (§10); no Duo needed.") }
+        return no("this project is directed by \(c.name). Ask the user; with their go-ahead, --take-over replaces it.")
+    }
     let name = (role == .current ? reg.current?.name : nil) ?? (caps.name?.hasPrefix("director-") == true ? caps.name! : Director.name(project: project.lastPathComponent))
     if let title = inv.flags["title"] {
         // A new task: the note is the director's own, written here as it would by hand.
@@ -105,7 +128,7 @@ func directorStartOffline(_ rest: [String]) -> Int32 {
         } catch { return no("couldn't write \(path): \(error.localizedDescription)") }
     }
     if role != .current { reg.adopt(name: name, sessionId: me, at: now) }
-    let (worker, cmd) = Director.backgroundStart(folder: project, task: path, director: name)
+    let (worker, cmd) = Director.backgroundStart(folder: project, task: path, director: name, remoteControl: caps.remoteControl == .yes)
     reg.setWorker(task: path, session: "", at: now, adopted: false, name: worker)
     do { try reg.save(project: project) } catch { return no("couldn't write \(DirectorRegistry.file(project: project).path): \(error.localizedDescription)") }
     DirectorLog.append(DirectorEvent(at: now, director: name, event: "start", task: path, detail: "background, Duo closed, as \(worker)"), project: project)

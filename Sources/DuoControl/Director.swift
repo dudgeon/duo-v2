@@ -30,10 +30,21 @@ public enum Director {
 
     /// A background worker's start (DL-201): a name unique to this start (`claude --bg` picks its own
     /// session id, F-318, so the name is how Duo links it) and the command the director runs.
-    public static func backgroundStart(folder: URL, task path: String, director: String) -> (name: String, command: String) {
+    /// With `remoteControl`, the worker comes up reachable from the user's phone under the same
+    /// name (DL-230): a director the user drives from their phone can't ask for it afterwards.
+    public static func backgroundStart(folder: URL, task path: String, director: String, remoteControl: Bool = false) -> (name: String, command: String) {
         let stem = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
         let name = String(slug(stem).prefix(36)) + "-" + UUID().uuidString.lowercased().prefix(6)
-        return (name, "cd \(shellQuote(folder.path)) && claude --bg -n \(shellQuote(name)) -- \(shellQuote(workerPrompt(note: folder.appending(path: path).path, director: director)))")
+        let rc = remoteControl ? " --remote-control \(shellQuote(name))" : ""
+        return (name, "cd \(shellQuote(folder.path)) && claude --bg\(rc) -n \(shellQuote(name)) -- \(shellQuote(workerPrompt(note: folder.appending(path: path).path, director: director)))")
+    }
+
+    /// Why a background start can't go ahead, or nil. A logged-out CLI starts a worker that dies on
+    /// "Login expired", and a director that sees that goes looking for another way to start one
+    /// (F-365): say so before anything starts.
+    public static func backgroundRefusal(_ caps: ClientCaps) -> String? {
+        caps.cliLogin == .no ? "Claude's CLI is logged out on this Mac, so a background worker would die on \"Login expired\". "
+            + "Ask the user to run `claude auth login` on this Mac, then start it again. Don't start the worker another way (DL-230)." : nil
     }
 
     public static func shellQuote(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
@@ -570,6 +581,10 @@ public struct ClientCaps: Codable, Equatable, Sendable {
     public var remoteControl: Tri = .unknown
     /// Whether this session is reachable through Remote Control right now.
     public var remoteControlOn = false
+    /// Whether Claude's CLI on this Mac is logged in (`claude auth status`), which every `claude --bg`
+    /// worker needs. Read only for `status` and `start` (F-365); nil (unknown) otherwise, and from
+    /// an older duo2.
+    public var cliLogin: Tri?
     public var hooks: Tri = .unknown
     /// Monitor: offered only when the account's flag is on (F-310) and nothing denies it.
     public var monitor: Tri = .unknown
@@ -643,6 +658,30 @@ public struct ClientCaps: Codable, Equatable, Sendable {
         return c
     }
 
+    /// `claude auth status` from the caller's environment: `loggedIn` in its JSON. Unknown when
+    /// `claude` isn't found, takes longer than `timeout`, or says something else.
+    public static func cliLogin(env: [String: String], timeout: TimeInterval = 10) -> Tri {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        p.arguments = ["claude", "auth", "status"]
+        p.environment = env
+        let out = Pipe()
+        p.standardOutput = out
+        p.standardError = FileHandle.nullDevice
+        p.standardInput = FileHandle.nullDevice
+        do { try p.run() } catch { return .unknown }
+        let deadline = Date().addingTimeInterval(timeout)
+        while p.isRunning && Date() < deadline { usleep(20_000) }
+        if p.isRunning { p.terminate(); return .unknown }
+        return loginState(out.fileHandleForReading.readDataToEndOfFile())
+    }
+
+    /// `loggedIn` from `claude auth status`'s JSON.
+    public static func loginState(_ data: Data) -> Tri {
+        guard let j = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any], let v = j["loggedIn"] as? Bool else { return .unknown }
+        return v ? .yes : .no
+    }
+
     static func json(_ url: URL) -> [String: Any]? {
         (try? Data(contentsOf: url)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
     }
@@ -654,6 +693,7 @@ public struct ClientCaps: Codable, Equatable, Sendable {
         out.append("Messaging (SendMessage, idle notices): \(w(messaging)). Background sessions: \(w(background)); resuming one with a message: \(w(backgroundResume)).")
         out.append("Remote Control: \(w(remoteControl))\(remoteControlOn ? ", on for this session" : ""). Hooks: \(w(hooks)).")
         out.append("Monitor: \(w(monitor))\(monitor == .yes ? " (wake on `duo2 director watch`)" : monitor == .no ? " (wake with ScheduleWakeup instead)" : " (check your tools; else ScheduleWakeup)").")
+        if cliLogin == .no { out.append("CLI login: no. Claude's CLI is logged out on this Mac, so no background worker can start. Ask the user to run `claude auth login` here, and start no worker another way until they have (DL-230).") }
         if projects { out.append("This is a Claude Code Projects session: the Duo director starts nothing here (DL-203).") }
         return out + notes
     }

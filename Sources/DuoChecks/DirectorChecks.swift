@@ -146,6 +146,30 @@ import Foundation
         try? fm.removeItem(at: root)
     }
 
+    print("director: a background start needs the CLI logged in, and comes up with Remote Control (F-365, DL-230)")
+    do {
+        check(ClientCaps.loginState(Data(#"{"loggedIn": false, "authMethod": "none"}"#.utf8)) == .no
+              && ClientCaps.loginState(Data(#"{"loggedIn": true, "authMethod": "claude.ai"}"#.utf8)) == .yes
+              && ClientCaps.loginState(Data("Not a command".utf8)) == .unknown, "`claude auth status`: loggedIn read from its JSON, anything else unknown")
+        check(ClientCaps.cliLogin(env: ["PATH": "/nonexistent"]) == .unknown, "no `claude` on the PATH: unknown, not logged out")
+        var out = ClientCaps(); out.cliLogin = .no
+        var unknown = ClientCaps(); unknown.cliLogin = nil
+        var inn = ClientCaps(); inn.cliLogin = .yes
+        check(Director.backgroundRefusal(out)?.contains("claude auth login") == true && Director.backgroundRefusal(out)?.contains("another way") == true,
+              "logged out: the start refuses, names `claude auth login`, and rules out another way of starting")
+        check(Director.backgroundRefusal(inn) == nil && Director.backgroundRefusal(unknown) == nil, "logged in, or not known (an older duo2): it goes ahead")
+        check(out.lines.contains { $0.hasPrefix("CLI login: no") } && !inn.lines.contains { $0.hasPrefix("CLI login") }, "status says so only when the CLI is logged out")
+        let old = try? JSONDecoder().decode(ClientCaps.self, from: JSONEncoder().encode(ClientCaps()))
+        check(old != nil && old?.cliLogin == nil, "caps without cliLogin (an older duo2) still decode")
+        let folder = URL(fileURLWithPath: "/tmp/proj")
+        let rc = Director.backgroundStart(folder: folder, task: "tasks/user-story-mapping.md", director: "director-p", remoteControl: true)
+        let plain = Director.backgroundStart(folder: folder, task: "tasks/user-story-mapping.md", director: "director-p")
+        check(rc.command.contains("claude --bg --remote-control '\(rc.name)' -n '\(rc.name)' -- "), "with Remote Control: on under the worker's own name (\(rc.command.prefix(90)))")
+        check(!plain.command.contains("--remote-control") && plain.command.contains("claude --bg -n '\(plain.name)' -- "), "without it: the plain command")
+        let skill = DirectorSkill.text()
+        check(skill.contains("never through your client's own way of starting sessions") && skill.contains("start_session"), "the skill keeps directors off the Claude app's session tool")
+    }
+
     print("director: the send ladder (DL-199)")
     do {
         var full = ClientCaps(); full.messaging = .yes; full.backgroundResume = .yes

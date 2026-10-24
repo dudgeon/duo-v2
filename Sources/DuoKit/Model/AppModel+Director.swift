@@ -72,6 +72,9 @@ extension AppModel {
             if case .other(let c) = role {
                 guard inv.has("take-over") else {
                     log("refused", "\(p.name) is directed by \(c.name)")
+                    if c.name == caps.name {   // the same director under a new session id (F-365)
+                        return done(.fail("\(p.name)'s director is recorded as \(c.name), your name, under another session id (\(c.sessionId.prefix(8))): you were resumed or moved to a new one. Add --take-over to record yourself (§10)."))
+                    }
                     return done(.fail("\(p.name) is directed by \(c.name) (session \(c.sessionId.prefix(8)), since \(c.since)). Ask the user; with their go-ahead, --take-over replaces it."))
                 }
             }
@@ -267,6 +270,7 @@ extension AppModel {
         lines += caps.lines.map { "  " + $0 }
         j["client"] = ["version": caps.version ?? "", "messaging": caps.messaging.rawValue, "background": caps.background.rawValue,
                        "remoteControl": caps.remoteControl.rawValue, "hooks": caps.hooks.rawValue, "monitor": caps.monitor.rawValue,
+                       "cliLogin": (caps.cliLogin ?? .unknown).rawValue,
                        "inDuo": caps.inDuo, "projects": caps.projects]
         return .ok(lines.joined(separator: "\n"), j)
     }
@@ -370,7 +374,8 @@ extension AppModel {
             // `claude --bg` picks its own session id (it ignores --session-id), so the worker is
             // recorded by a name unique to this start; Duo links it when a session with that name
             // appears, with no link step and no --adopt (F-318).
-            let (name, cmd) = Director.backgroundStart(folder: folder, task: path, director: director)
+            if let why = Director.backgroundRefusal(caps) { log("refused", path, nil, nil, why); return .fail(why) }
+            let (name, cmd) = Director.backgroundStart(folder: folder, task: path, director: director, remoteControl: caps.remoteControl == .yes)
             var reg = DirectorRegistry.load(project: folder)
             reg.setWorker(task: path, session: "", at: Self.isoNow(), adopted: false, name: name)
             try? reg.save(project: folder)
