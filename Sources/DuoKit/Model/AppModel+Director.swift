@@ -369,7 +369,10 @@ extension AppModel {
         if let w = inv.flags["worker"], let s = findSession(w, in: nil), let id = s.sessionId {
             adopted = !startedBy(director, id, task: path, folder: folder)
             sid = id; how = adopted ? "adopted \(s.name) (the user allowed it in Duo)" : "linked \(s.name)"
-        } else if inv.has("background") {
+        } else if inv.has("background") || (!inv.has("in-duo") && caps.background != .no && caps.messaging != .no) {
+            // The default worker (DL-231): in the background, reachable by SendMessage; Duo carries
+            // messages only where that fails, so --in-duo, or a client without messaging or
+            // background sessions, starts it in Duo instead.
             // The director runs the command itself (its own flags, Remote Control, its model).
             // `claude --bg` picks its own session id (it ignores --session-id), so the worker is
             // recorded by a name unique to this start; Duo links it when a session with that name

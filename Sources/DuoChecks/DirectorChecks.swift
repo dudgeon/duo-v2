@@ -385,7 +385,144 @@ import Foundation
         check(!DirectorSkill.text().contains("bypassPermissions") || DirectorSkill.text().contains("never rely on `bypassPermissions`"), "nothing relies on bypassPermissions (DL-222)")
     }
 
+    try directorOfflineChecks()
     try directorEndToEnd()
+}
+
+/// DL-231: directing with Duo closed reads Claude's own files and the task notes. Every state word,
+/// the beacons, the note edits and the ladder's rungs, on temporary folders.
+@MainActor private func directorOfflineChecks() throws {
+    print("director: directing with Duo closed (DL-231)")
+    let fm = FileManager.default
+    let root = fm.temporaryDirectory.appending(path: "doff-\(UUID().uuidString.prefix(6))")
+    let cfg = root.appending(path: "cfg"), proj = root.appending(path: "p")
+    defer { try? fm.removeItem(at: root) }
+    try fm.createDirectory(at: cfg.appending(path: "sessions"), withIntermediateDirectories: true)
+    try fm.createDirectory(at: cfg.appending(path: "projects/x"), withIntermediateDirectories: true)
+    try fm.createDirectory(at: proj.appending(path: "tasks"), withIntermediateDirectories: true)
+    func beacon(_ file: String, pid: Int, id: String, name: String?, status: String, peer: Bool = false, waiting: String? = nil) throws {
+        var j: [String: Any] = ["pid": pid, "sessionId": id, "cwd": proj.path, "status": status]
+        if let name { j["name"] = name }
+        if peer { j["peerFeatures"] = ["inbox"] }
+        if let waiting { j["waitingFor"] = waiting }
+        try JSONSerialization.data(withJSONObject: j).write(to: cfg.appending(path: "sessions/\(file).json"))
+    }
+    try beacon("live", pid: Int(getpid()), id: "s-busy", name: "bg-job-aaaaaa", status: "busy", peer: true)
+    try beacon("idle", pid: Int(getpid()), id: "s-idle", name: "idler", status: "idle")
+    try beacon("wait", pid: Int(getpid()), id: "s-wait", name: nil, status: "waiting", waiting: "permission prompt")
+    try beacon("dead", pid: 99_999_999, id: "s-dead", name: "ghost", status: "busy")
+    let live = DirectorOffline.beacons(claudeDir: cfg)
+    check(Set(live.map(\.sessionId)) == ["s-busy", "s-idle", "s-wait"], "beacons: the ones whose process is alive (the dead pid's is left out)")
+    check(live.first { $0.sessionId == "s-busy" }?.peerName == "bg-job-aaaaaa" && live.first { $0.sessionId == "s-idle" }?.peerName == nil
+          && live.first { $0.sessionId == "s-wait" }?.waitingFor == "permission prompt", "a peer name only where the beacon lists peer features")
+    check(DirectorOffline.beacons(claudeDir: root.appending(path: "none")).isEmpty, "no sessions folder: no beacons")
+    check(DirectorOffline.fullId("s-id", beacons: live, claudeDir: cfg) == "s-idle" && DirectorOffline.fullId("nope", beacons: live, claudeDir: cfg) == nil, "a prefix names a live session")
+
+    // linkPending
+    var reg = DirectorRegistry()
+    reg.adopt(name: "d", sessionId: "dir-1", at: "t")
+    let recent = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-60))
+    reg.setWorker(task: "tasks/a.md", session: "", at: recent, adopted: false, name: "bg-job-aaaaaa")
+    reg.setWorker(task: "tasks/b.md", session: "", at: recent, adopted: false, name: "not-yet-bbbbbb")
+    reg.setWorker(task: "tasks/c.md", session: "s-dead", at: recent, adopted: false)
+    reg.setWorker(task: "tasks/g.md", session: "s-idle", at: recent, adopted: false)
+    reg.setWorker(task: "tasks/h.md", session: "", at: "2026-01-01T00:00:00Z", adopted: false, name: "old-cccccc")
+    reg.setWorker(task: "tasks/i.md", session: "s-wait", at: recent, adopted: false)
+    let linked = DirectorOffline.linkPending(&reg, beacons: live)
+    check(linked.map(\.task) == ["tasks/a.md"] && reg.worker(task: "tasks/a.md")?.session == "s-busy" && reg.worker(task: "tasks/b.md")?.pending == true,
+          "linkPending: a pending worker is linked by the name its session appeared under; the others wait")
+    check(DirectorOffline.linkPending(&reg, beacons: live).isEmpty, "and only once")
+
+    // tasks(): every state word
+    func note(_ file: String, _ front: String, _ body: String = "") throws {
+        try Data("---\n\(front)---\n\(body)".utf8).write(to: proj.appending(path: "tasks/\(file).md"))
+    }
+    try note("a", "title: \"Alpha\"\nstatus: in-progress\ndirected_by: \"d\"\n", "# Alpha\n")
+    try note("b", "status: in-progress\ndirected_by: d\n", "# Bravo heading\n\nx\n")
+    try note("c", "title: Charlie\nstatus: in-progress\ndirected_by: d\n")
+    try note("d", "title: Delta\ndirected_by: d\n")
+    try note("e", "title: Echo\ndirected_by: someone-else\n")
+    try note("f", "title: Foxtrot\ndirected_by: d\narchived: true\n")
+    try note("g", "directed_by: d\nstatus: in-progress\n")
+    try note("h", "title: Hotel\nstatus: in-progress\ndirected_by: d\n")
+    try note("i", "title: India\nstatus: in-progress\ndirected_by: d\n")
+    try Data("no frontmatter".utf8).write(to: proj.appending(path: "tasks/j.md"))
+    let tasks = DirectorOffline.tasks(project: proj, director: "d", reg: reg, beacons: live, claudeDir: cfg)
+    func t(_ f: String) -> DirectorOffline.Task? { tasks.first { $0.path == "tasks/\(f).md" } }
+    check(tasks.map(\.path) == ["tasks/a.md", "tasks/b.md", "tasks/c.md", "tasks/d.md", "tasks/g.md", "tasks/h.md", "tasks/i.md"],
+          "tasks: this director's notes only; another's, an archived one and one with no frontmatter are left out")
+    check(t("a")?.title == "Alpha" && t("b")?.title == "Bravo heading" && t("g")?.title == "g" && t("a")?.status == "in-progress" && t("d")?.status == nil,
+          "a title is the frontmatter's, else the first heading, else the file name")
+    check(t("a")?.state == "working" && t("a")?.session == "s-busy" && t("a")?.peerName == "bg-job-aaaaaa" && t("a")?.holdsSlot == true && t("a")?.place == "background",
+          "state: a busy beacon is working")
+    check(t("b")?.state == "starting" && t("b")?.pendingName == "not-yet-bbbbbb" && t("b")?.holdsSlot == true, "state: a recent pending worker is starting (and holds its slot), with the name it will appear under")
+    check(t("c")?.state == "stopped" && t("c")?.session == "s-dead" && t("c")?.holdsSlot == false, "state: a registry session with no live beacon is stopped, and frees its slot")
+    check(t("d")?.state == "no worker" && t("d")?.session == nil && t("d")?.holdsSlot == false && t("h")?.state == "no worker", "state: no worker, and a pending one past 30 minutes counts as none")
+    check(t("g")?.state == "idle" && t("g")?.holdsSlot == true && t("i")?.state == "needs-you" && t("i")?.question == "permission prompt", "state: idle, and needs-you with what it waits for")
+    check(t("a")?.noteModified ?? 0 > 1_000_000_000, "the note's modification time rides along")
+    // userTyping from the worker's transcript
+    let iso = ISO8601DateFormatter(); iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    func turn(_ text: String, at: Date) -> String {
+        String(decoding: try! JSONSerialization.data(withJSONObject: ["type": "user", "timestamp": iso.string(from: at), "origin": ["kind": "human"], "message": ["role": "user", "content": text]]), as: UTF8.self)
+    }
+    let transcript = cfg.appending(path: "projects/x/s-idle.jsonl")
+    try Data([turn(Director.tag("d") + "brief", at: Date().addingTimeInterval(-600)), turn("I'll take it from here", at: Date().addingTimeInterval(-300))].joined(separator: "\n").appending("\n").utf8).write(to: transcript)
+    check(DirectorOffline.transcript(sessionId: "s-idle", claudeDir: cfg)?.resolvingSymlinksInPath() == transcript.resolvingSymlinksInPath() && DirectorOffline.transcript(sessionId: "nope", claudeDir: cfg) == nil && DirectorOffline.transcript(sessionId: "../x", claudeDir: cfg) == nil,
+          "a transcript is the first projects/*/<id>.jsonl")
+    var typing = DirectorOffline.tasks(project: proj, director: "d", reg: reg, beacons: live, claudeDir: cfg)
+    check(typing.first { $0.path == "tasks/g.md" }?.userTyping == true && typing.first { $0.path == "tasks/g.md" }?.userTurnAt != nil && typing.first { $0.path == "tasks/a.md" }?.userTyping == false,
+          "userTyping: the user's turn after the director's last message pauses it")
+    reg.handedBack["s-idle"] = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-100))
+    typing = DirectorOffline.tasks(project: proj, director: "d", reg: reg, beacons: live, claudeDir: cfg)
+    check(typing.first { $0.path == "tasks/g.md" }?.userTyping == false, "unless the user handed it back since")
+    check(DirectorOffline.userTurn(sessionId: "s-idle", director: "d", reg: DirectorRegistry(), claudeDir: cfg) != nil, "(and the hand-back is the registry's: without it the pause stands)")
+
+    // appendProgress
+    let when = Date(timeIntervalSince1970: 1_800_000_000)
+    let withSection = "---\ntitle: T\n---\n# T\n\n## Request\n\nDo it.\n\n## Progress\n\n- 2026-10-14 09:41 Filed.\n\n## Later\n\nx\n"
+    let without = "---\ntitle: T\n---\n# T\n\n## Request\n\nDo it.\n"
+    for (label, text) in [("an existing ## Progress", withSection), ("none yet", without), ("a ## Progress with nothing in it", "# T\n\n## Progress\n\n## Later\n"), ("CRLF line ends", withSection.replacingOccurrences(of: "\n", with: "\r\n"))] {
+        check(DirectorOffline.appendProgress(text, "Sent to the worker: line\none", now: when) == DirectorNotes.appending(DirectorNotes.progressLine("Sent to the worker: line\none", date: when), toSection: "Progress", in: text),
+              "appendProgress writes what the app's DirectorNotes does (\(label))")
+    }
+    let appended = DirectorOffline.appendProgress(withSection, "Worker w to start.", now: when)
+    check(appended.contains("- 2026-10-14 09:41 Filed.\n- 20") && appended.contains(" Worker w to start.\n\n## Later") && !appended.contains("line\none"), "the line lands after the last one in ## Progress, before the next heading, on one line")
+    check(DirectorOffline.appendProgress(without, "x", now: when).hasSuffix("\n\n## Progress\n\n" + DirectorNotes.progressLine("x", date: when) + "\n"), "a note with no ## Progress gets the section at the end")
+    check(DirectorOffline.setting("status", "suggested", in: "---\ntitle: T\nstatus: open\n---\nbody\n") == "---\ntitle: T\nstatus: suggested\n---\nbody\n"
+          && DirectorOffline.setting("done_when", DirectorOffline.quoted("a \"b\""), in: "---\ntitle: T\n---\nbody\n") == "---\ntitle: T\ndone_when: \"a \\\"b\\\"\"\n---\nbody\n"
+          && DirectorOffline.setting("status", "x", in: "body\n").hasPrefix("---\nstatus: x\n---\nbody"), "setting changes one frontmatter key (adding it, or the frontmatter, when missing)")
+
+    // lastAssistantText
+    func asst(_ id: String, _ blocks: [[String: Any]]) -> String {
+        String(decoding: try! JSONSerialization.data(withJSONObject: ["type": "assistant", "message": ["id": id, "role": "assistant", "content": blocks]]), as: UTF8.self)
+    }
+    let log = root.appending(path: "t.jsonl")
+    try Data([turn("hi", at: when), asst("m1", [["type": "text", "text": "first answer"]]), turn("more", at: when),
+              asst("m2", [["type": "thinking", "thinking": "hm"]]), asst("m2", [["type": "text", "text": "Part one."]]), asst("m2", [["type": "tool_use", "name": "Bash", "input": [:]]]),
+              asst("m2", [["type": "text", "text": "Part two, the report."]]), turn("tool result", at: when)].joined(separator: "\n").appending("\n").utf8).write(to: log)
+    check(DirectorOffline.lastAssistantText(log) == "Part one.\nPart two, the report.", "lastAssistantText: the last assistant message's text blocks, joined (not an earlier message, not a user line)")
+    try Data([asst("m1", [["type": "text", "text": "the old report"]]), String(repeating: turn("filler " + String(repeating: "x", count: 900), at: when) + "\n", count: 600)].joined(separator: "\n").utf8).write(to: log)
+    check(DirectorOffline.lastAssistantText(log) == "the old report", "a report further back than the first window is still found (the window widens)")
+    try Data(turn("only user", at: when).utf8).write(to: log)
+    check(DirectorOffline.lastAssistantText(log) == nil && DirectorOffline.lastAssistantText(root.appending(path: "missing")) == nil, "no assistant message, or no file: nil")
+
+    // the ladder with Duo closed
+    var caps = ClientCaps(); caps.messaging = .yes; caps.backgroundResume = .yes
+    check(SendLadder.choose(director: caps, worker: WorkerFacts(place: .background, run: .working, peerName: "bg-job-aaaaaa"), duoRunning: false) == .message, "ladder, Duo closed: a live worker with messaging, to a client with messaging: message")
+    check(SendLadder.choose(director: caps, worker: WorkerFacts(place: .background, run: .stopped, peerName: nil), duoRunning: false) == .resumeBackground, "ladder, Duo closed: a stopped worker, resume supported: resumed in the background")
+    caps.backgroundResume = .no
+    check(SendLadder.choose(director: caps, worker: WorkerFacts(place: .background, run: .stopped), duoRunning: false) == .headless, "ladder, Duo closed: a stopped worker, no resume: a headless turn")
+    caps.messaging = .no
+    check(SendLadder.choose(director: caps, worker: WorkerFacts(place: .background, run: .working), duoRunning: false) == .queued, "ladder, Duo closed: a busy worker without messaging: queued (duo2 refuses it, nothing would deliver it)")
+    check(DirectorOffline.runEnvironment(["DUO_SOCKET": "x", "DUO_TOKEN": "y", "CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "s", "CLAUDE_CODE_SESSION_X": "s", "PATH": "/bin", "CLAUDE_CONFIG_DIR": "/c"])
+          == ["PATH": "/bin", "CLAUDE_CONFIG_DIR": "/c"], "a claude run for a director gets neither Duo's variables nor the calling session's")
+    let runs = root.appending(path: "runs")
+    try fm.createDirectory(at: runs, withIntermediateDirectories: true)
+    for i in 1...7 { try Data().write(to: runs.appending(path: "abcdef12-\(1000 + i).log")) }
+    DirectorOffline.pruneRuns(beside: runs.appending(path: "abcdef12-2000.log"))
+    check(((try? fm.contentsOfDirectory(atPath: runs.path).sorted()) ?? []).count == AppModel.runsKept - 1, "run logs are pruned as the app does")
+    try Data("{\"type\":\"user\",\"cwd\":\"/some/where\"}\n".utf8).write(to: log)
+    check(DirectorOffline.filedCwd(transcript) == nil && DirectorOffline.filedCwd(log) == "/some/where", "a transcript's filed cwd is its first cwd")
 }
 
 /// The verbs through the control plane, on a live model with stand-in claudes that record their
@@ -432,13 +569,13 @@ import Foundation
         try? fm.removeItem(at: root)
     }
     func wait(_ what: () -> Bool) { let until = Date().addingTimeInterval(8); while !what(), Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) } }
-    func caps(_ name: String?) -> String {
-        var c = ClientCaps(); c.name = name; c.messaging = .no; c.version = "2.1.219"; c.backgroundResume = .no; c.monitor = .no
+    func caps(_ name: String?, messaging: ClientCaps.Tri = .no) -> String {
+        var c = ClientCaps(); c.name = name; c.messaging = messaging; c.version = "2.1.219"; c.backgroundResume = .no; c.monitor = .no
         return String(decoding: try! JSONEncoder().encode(c), as: UTF8.self)
     }
-    func run(_ verb: String, _ args: [String], as session: String, name: String? = nil) -> ControlResponse {
+    func run(_ verb: String, _ args: [String], as session: String, name: String? = nil, messaging: ClientCaps.Tri = .no) -> ControlResponse {
         var out: ControlResponse?
-        m.handle(ControlRequest(token: "", command: verb, args: args + ["--caps", caps(name)], session: session, cwd: proj.path)) { out = $0 }
+        m.handle(ControlRequest(token: "", command: verb, args: args + ["--caps", caps(name, messaging: messaging)], session: session, cwd: proj.path)) { out = $0 }
         wait { out != nil }
         return out ?? ControlResponse(ok: false, output: "no answer")
     }
@@ -682,6 +819,20 @@ import Foundation
     try reg2.save(project: proj)
     m.deliverDirectorMessages()
     check(DirectorRegistry.load(project: proj).worker(task: "tasks/bg-two.md") == nil, "a pending worker that never appears frees its slot after 30 minutes")
+    // The default worker (DL-231): with no flag, a background one where the client has messaging and
+    // background sessions; --in-duo, or a client without messaging, starts it in Duo.
+    try Data("# p\n\n## Director\nmax workers: 20\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
+    r = run("director start", ["--title", "Default way", "--request", "d"], as: D3Pre, name: "director-dirproj", messaging: .yes)
+    let defWorker = DirectorRegistry.load(project: proj).worker(task: "tasks/default-way.md")
+    check(r.ok && defWorker?.pending == true && r.output.contains("claude --bg") && !r.output.contains("--session-id"),
+          "start with no flag, a client with messaging: a background worker, not a Duo session (\(r.output.prefix(80)))")
+    r = run("director start", ["--title", "In Duo please", "--request", "d", "--in-duo"], as: D3Pre, name: "director-dirproj", messaging: .yes)
+    let duoWorker = DirectorRegistry.load(project: proj).worker(task: "tasks/in-duo-please.md")
+    check(r.ok && duoWorker?.pending == false && duoWorker?.session.isEmpty == false && !r.output.contains("claude --bg"),
+          "start --in-duo: the worker starts in Duo (\(r.output.prefix(80)))")
+    r = run("director start", ["--title", "No messaging", "--request", "d"], as: D3Pre, name: "director-dirproj", messaging: .no)
+    check(r.ok && DirectorRegistry.load(project: proj).worker(task: "tasks/no-messaging.md")?.pending == false && !r.output.contains("claude --bg"),
+          "start with no flag, a client without messaging: the worker starts in Duo")
     try Data("# p\n\n## Director\nmax workers: 5\n".utf8).write(to: proj.appending(path: "PROJECT.md"))
 
     // Done or archived tasks lose their worker entry; old run logs are pruned.
