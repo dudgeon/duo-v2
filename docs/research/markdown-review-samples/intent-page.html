@@ -499,7 +499,7 @@ const D = [
    con:["Files fill up with old threads","Claude and other readers have to skip them"]},
   {k:"C", t:"It moves to a Review log at the end of the file", ex: ex(raw("…\n\n## Review log\n- c1 · Geoff, 27 Oct: True for crash reports? · Sam: No, Sentry. · resolved 28 Oct"),"The file"),
    pro:["History stays readable, out of the way"],
-   con:["Adds a section people didn't write","The log grows forever"]}]},
+   con:["Loses the link to the passage: the log can only quote it, and the quote goes stale once the text changes","Adds a section people didn't write","The log grows forever"]}]},
 
 { id:"claude-edits", title:"When Claude edits a document",
   why:"Today Claude's edits land in the text with a green highlight that fades on your next keystroke (DL-186). Duo already sees every edit Claude makes to a document open in Duo, so it can turn them into suggestions itself.",
