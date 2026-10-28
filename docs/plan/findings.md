@@ -4217,3 +4217,37 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 - Suggest Edits turns typing into marks with a transaction filter (one change per transaction; inside your own insertion, the frontmatter, someone else's mark or code it stays plain) and Claude's `agentEdit`, `agentReplace` and `agentInsert` hunks through `suggestHunks`. Multi-change transactions (replace all, paste into several cursors) are left plain.
 - The review bar sits above the editor (`MarkdownReviewSlot`), shows from the page's `review` summary (marks, people, switch, markup mode), and the markup mode is kept per document by Duo (`markdownMarkup`) and pushed to the page.
 - **F-386.** `doc layout` (F-378) is built on `Docx.layout` (`DuoSearch/DocxLayout.swift`): sections from every `sectPr` (a paragraph's `pPr` ends a section; the body's own ends the last), tables from `tblW`/`tblGrid`/`tblInd`, pictures from `wp:extent`, each compared with its room: the section's text width, or the `tcW` of the cell that holds it. It warns on anything wider than its room, a percentage table width, a declared width that disagrees with its columns, and a missing grid. Paragraph numbers count as `doc outline` counts. The path rule (C-115) is `AppModel.documentFile` (`Control/AppModel+DocLayout.swift`): a path must be inside the asking session's project folder (the showing project for a caller outside a session) or be a document open in a Duo tab, by real path; `doc screenshot` reuses it. `doc outline` itself is not restricted yet.
+
+## F-392 · Return and its chords, measured in Claude Code and in Duo (return-chords, DL-241, 2026-10-28)
+
+**Claude Code's TUI**, each chord typed between `aaa` and `bbb` in a fresh session in a PTY (node-pty and @xterm/headless, a scratch config, the chat-mode spike's mock API, no login, no real turns), on 2.1.219, 2.1.284 (the work Mac's pin since 2026-10-28) and 2.1.311:
+
+| Bytes | Chord they come from in Duo | 2.1.219 | 2.1.284, 2.1.311 |
+|---|---|---|---|
+| CR | ↩; ⌃↩ and ⌘↩ without the kitty protocol | send | send |
+| ESC CR | ⇧↩ (Duo, F-356), ⌥↩ (option as meta), no protocol | new line | new line |
+| LF | ⌃J, no protocol | new line | new line |
+| `\` CR | `\` then ↩ | new line, `\` dropped | new line, `\` dropped |
+| CSI 13;2u / 13;3u | ⇧↩ / ⌥↩ with the protocol | new line | new line |
+| CSI 13;5u | ⌃↩ with the protocol | ignored | send; while Claude works, **send now** |
+| CSI 13;9u | ⌘↩ with the protocol | send | send |
+| CSI 106;5u | ⌃J with the protocol | new line | new line |
+| ^X ^S | Claude Code's other `chat:sendNow` key | **nothing** (the draft stays, unqueued) | send; while Claude works, send now |
+
+"Send now" was timed against the mock: with `SCENARIO:long` streaming, a draft plus CSI 13;5u or ^X^S made a second request at once; plain CR queued it (no request). Both are `chat:sendNow` (docs: 2.1.275 and later).
+
+**Who turns the protocol on.** 2.1.284 and 2.1.311 ask (`CSI ? u`, then DA1) and, answered, push `CSI > 5 u` and `CSI > 4;2 m`; 2.1.219 asks nothing back and never pushes. SwiftTerm answers, so in Duo 2.1.284+ gets the CSI u forms and 2.1.219 the legacy bytes. **What Duo's terminal sends** (SwiftTerm's `keyDown` and `KittyKeyboardEncoder`, read and checked in DuoChecks `return-chords`): without the protocol ↩ CR, ⇧↩ ESC CR (`TerminalKeys`), ⌥↩ ESC CR, ⌃↩ CR, ⌃J LF, and **⌘↩ nothing**: SwiftTerm hands a ⌘ key to `interpretKeyEvents` without the protocol, and ⌘↩ ends in `noop:` (found by DuoChecks, F-393; reading the source had suggested CR); with it the CSI u forms above. ⌘↩ goes to the menus first, so while the peek is open it jumps (DL-34). So **the terminal already reads every chord as DL-241's table except ⌘↩ on 2.1.219**, which did nothing; Duo now sends CR for it (F-393).
+
+**Chat's composer before DL-241:** ↩ send, ⇧↩ new line, ⌃J new line (Cocoa's `insertNewline:`), but ⌥↩, ⌃↩ and ⌘↩ sent (keyDown sent on any Return without ⇧), and a trailing `\` was sent as typed.
+
+**Elsewhere:** Claude Code's docs give ⇧↩, ⌥↩ (with option as meta), ⌃J and `\`↩ as new lines. Claude's desktop app and claude.ai send on ↩ with ⇧↩ for a line (third-party guides and issue reports; Anthropic documents no setting). Slack, Messages, ChatGPT send on ↩ with ⇧↩ (Messages also ⌥↩); Slack's other setting and GitHub's comment box send on ⌘↩. The review comment composer posts on ⌘Return (markdown-review-handoff). Not tested by hand: the Claude desktop app and claude.ai (a test would send a message from Geoff's account).
+
+## F-393 · DL-241's Return chords, built (return-chords, 2026-10-28)
+
+- **Chat:** `ComposerReturn.action(keyCode:modifiers:charBeforeCaret:)` (`ChatComposerView.swift`) is the composer's table: ⌘ (with anything) sends, ⌃ without ⌘ sends now, ⇧ or ⌥ is a new line, plain ↩ after a `\` replaces it with a new line, otherwise send; keypad Enter is Return. ⌘↩ is taken in `performKeyEquivalent` after the menus, so Jump into Selected Project still wins while the peek is open. In the @ menu, ⌥↩ now adds a line as ⇧↩ does. ⌃J was already a new line (Cocoa's `insertNewline:`).
+- **Send now:** `ChatSession.sendNow` does the ordinary send (which queues while Claude works) and then types `ChatKey.sendNow`, Ctrl+X Ctrl+S, only when the screen read busy and `hasSendNow(cliVersion:)` (2.1.275 and later, `ChatVersion`); otherwise it's a plain send. Unknown version: plain send (C-119).
+- **Terminal:** `TerminalKeys.bytes` sends CR for ⌘↩ without the kitty protocol: SwiftTerm sent nothing there, so ⌘↩ did nothing on 2.1.219 (F-392). With the protocol SwiftTerm's CSI 13;9u stands.
+- **Checks:** DuoChecks `return-chords` (56): the composer table, the version gate, and each chord's real bytes from a `GuardedTerminalView` in both modes (flags empty for 2.1.219, after `CSI > 5 u` for 2.1.284 and 2.1.311), read back from a raw `cat` in the terminal's pty, since SwiftTerm writes a key to the pty directly and an override of `send(source:data:)` never fires. The window is a never-shown borderless one (AppKit interprets no keys without a window). Each byte string is then mapped to what that Claude Code version does with it (F-392's table). `terminal-keys` (13) gains ⌘↩.
+- **Other fields:** Duo's sheets, rename fields and lists are one line; Return submits there, as on any Mac, so DL-241 doesn't touch them. The review comment composer (markdown-review stage 3) posts on ⌘Return, matching.
+- Not proven: real keypresses in a visible window, and send-now against a live, busy Claude (the probes proved the keys; the chat path is unit-checked). Both are for Geoff's walk.
+

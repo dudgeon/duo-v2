@@ -194,7 +194,7 @@ All Duo shortcuts carry ⌘, so they never collide with keys typed into Claude C
 | ⌘↑ | All projects |
 | ⇧⌘H | Home, its terminal focused |
 | ⇧⌘P | Needs you elsewhere (the peek) |
-| ⌘↩ | Jump into the peek's selected project |
+| ⌘↩ | Jump into the peek's selected project, while the peek is open; elsewhere it sends (DL-241) |
 | ⌃⌘S | Toggle the left pane |
 | ⌘T / ⇧⌘T / ⌥⌘T | New Claude session / new shell / new browser tab |
 | ⌘L | A browser tab's address field |
@@ -205,3 +205,13 @@ All Duo shortcuts carry ⌘, so they never collide with keys typed into Claude C
 | ⌥⌘0 | Hide or show the right pane (DL-129) |
 | ⌥⌘← → | Previous and next pane; the active pane shows a rule over its top (DL-165, provisional) |
 | ⌃⇥ / ⌃⇧⇥ | Next and previous tab in the active pane, terminals included (DL-165) |
+
+Return and its chords mean the same in chat and in the terminal (DL-241). In the terminal they are Claude Code's own keys; Duo only makes sure each one arrives (F-392).
+
+| Keys | Chat and terminal |
+|---|---|
+| ↩ | Send (while Claude works, the message queues) |
+| ⇧↩, ⌥↩, ⌃J | New line |
+| `\` then ↩ | New line; the `\` is dropped, as in Claude Code |
+| ⌘↩ | Send (the peek's jump wins while it's open); the review comment composer's Post |
+| ⌃↩ | Send now: while Claude works, the message and the queue go at once (Claude Code 2.1.275 and later); otherwise a plain send |
