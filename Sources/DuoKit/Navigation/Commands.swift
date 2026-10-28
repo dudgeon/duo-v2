@@ -27,6 +27,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
     case closeWindow        // ⇧⌘W, as in browsers once ⌘W closes tabs
     case revertChange       // Edit › Revert Claude's Change (ENH-4); no chord
     case revertAllChanges   // Edit › Revert All of Claude's Changes (ENH-4); no chord
+    case suggestEdits       // Edit › Suggest Edits: the Markdown document's switch (DL-237); ⇧⌘E proposed (Q-264)
     case newClaudeSession   // ⌘T: a new Claude session in this console (surfaces-handoff DB-4; Q-26)
     case newShell           // ⇧⌘T: a plain shell in this console (DL-8, DB-4; Q-26)
     case sendSelection      // ⌘D: Send Selection to Claude, legacy's chord (Q-22, DL-79); search's Send to Claude too
@@ -83,6 +84,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .newClaudeSession: "New Claude Session"
         case .revertChange: "Revert Claude's Change"
         case .revertAllChanges: "Revert All of Claude's Changes"
+        case .suggestEdits: "Suggest Edits"
         case .newShell: "New Shell"
         case .chooseHome: "Choose Home Folder…"
         case .newBrowserTab: "New Browser Tab"
@@ -142,6 +144,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .strikethrough: KeyboardShortcut("x", modifiers: [.command, .shift])
         case .closeSession: KeyboardShortcut("w", modifiers: .command)
         case .closeWindow: KeyboardShortcut("w", modifiers: [.command, .shift])
+        case .suggestEdits: KeyboardShortcut("e", modifiers: [.command, .shift])
         case .sendSelection: KeyboardShortcut("d", modifiers: .command)
         case .link: KeyboardShortcut("k", modifiers: .command)  // DL-108
         case .revertChange, .revertAllChanges, .chooseHome, .newTask, .newProject, .newProjectFromGitHub, .code, .heading1, .heading2, .heading3,
@@ -189,6 +192,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .openFile: model.terminalsMode == .live && model.projectFolder != nil
         case .revertChange: model.webFocus == .editor && (model.editorIfLoaded?.atClaudeChange ?? false)
         case .revertAllChanges: (model.editorIfLoaded?.claudeChanges ?? 0) > 0
+        case .suggestEdits: model.terminalsMode == .live && model.showingMarkdownDocument
         case .printPage: model.visibleWebTab.map { $0.blocked == nil } ?? false
         case .zoomIn, .zoomOut, .actualSize: model.webFocus == .html && model.visibleWebTab.map { $0.blocked == nil } == true
         case .showBoard: !(model.altitude.isAllProjects && model.homeView == .board)
@@ -260,6 +264,7 @@ public enum DuoCommand: String, CaseIterable, Sendable {
         case .newClaudeSession: model.newSession()
         case .revertChange: model.editor.revertAtCaret()
         case .revertAllChanges: model.editor.revertAll()
+        case .suggestEdits: model.toggleSuggestEdits()
         case .newShell: model.newShell()
         case .chooseHome: model.chooseHomeFolder()
         case .newBrowserTab: model.newBrowserTab()
@@ -366,6 +371,8 @@ public struct DuoCommands: Commands {
             Divider()
             item(.revertChange)
             item(.revertAllChanges)
+            Divider()
+            item(.suggestEdits)
         }
         // View (DL-108, m2): the items that aren't built (the right pane's toggle, moving between
         // panes) are left out until they work; Enter Full Screen is the system's.

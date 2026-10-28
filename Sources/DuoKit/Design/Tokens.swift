@@ -63,6 +63,8 @@ public enum DuoColor {
     public static let reviewAuthor5 = Color(nsColor: NSColor.duoDynamic(light: 0x9A5A00, dark: 0xE0A64A, name: "reviewAuthor5"))
     /// The range a Word comment covers in the viewer (docx-viewer-handoff).
     public static let commentHighlight = Color(nsColor: NSColor.duoDynamic(light: 0xFBE7A1, dark: 0x4F4112, name: "commentHighlight"))
+    /// A comment's range while its card is hovered or active (markdown-review-handoff, DL-237). Light value provisional (Q-265); the dark one is a stand-in.
+    public static let commentHighlightActive = Color(nsColor: NSColor.duoDynamic(light: 0xF5D565, dark: 0x6B5A1A, name: "commentHighlightActive"))
 
     // Console chrome: light values here, and in dark the console sinks (DL-224).
     /// Console pane, console tab strips, terminal background
@@ -115,6 +117,7 @@ public enum DuoNSColor {
     public static let reviewAuthor4 = NSColor.duoDynamic(light: 0x7B3FB5, dark: 0xC39BEB, name: "reviewAuthor4")
     public static let reviewAuthor5 = NSColor.duoDynamic(light: 0x9A5A00, dark: 0xE0A64A, name: "reviewAuthor5")
     public static let commentHighlight = NSColor.duoDynamic(light: 0xFBE7A1, dark: 0x4F4112, name: "commentHighlight")
+    public static let commentHighlightActive = NSColor.duoDynamic(light: 0xF5D565, dark: 0x6B5A1A, name: "commentHighlightActive")
     public static let console = NSColor.duoDynamic(light: 0x15171B, dark: 0x0C0D10, name: "console")
     public static let consoleRule = NSColor.duoDynamic(light: 0x2B2F36, dark: 0x24272D, name: "consoleRule")
     public static let consoleMenuTarget = NSColor.duoDynamic(light: 0x2D3138, dark: 0x262A30, name: "consoleMenuTarget")
