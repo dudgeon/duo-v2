@@ -7,8 +7,8 @@ import Foundation
 /// Duo's state, not the file's: queued, sent, replying, replied, not delivered. The text goes in through
 /// `guardedSubmit`, the idle-and-empty-prompt guard of `duo2 director send` (DL-199), so a person's draft is never
 /// typed into; the turn is plain text, so it pastes on the work Mac's 2.1.219 too.
-public struct ReviewDelivery: Equatable, Sendable {
-    public enum State: String, Sendable { case queued, sent, replying, replied, notDelivered = "not-delivered" }
+public struct ReviewDelivery: Equatable, Sendable, Codable {
+    public enum State: String, Sendable, Codable { case queued, sent, replying, replied, notDelivered = "not-delivered" }
     public var state: State
     /// The session's tab key (its id when it has one) and name.
     public var session: String
@@ -78,6 +78,11 @@ extension AppModel {
 
     private func setDelivery(_ key: String, _ d: ReviewDelivery) {
         reviewDeliveries[key] = d
+        // Kept in Duo's own state, never the file's: after a restart a sent comment is still sent, so its Send button
+        // doesn't invite a second turn (Q-284). Entries older than two weeks are let go.
+        let keep = reviewDeliveries.filter { Date().timeIntervalSince($0.value.at) < 14 * 86400 }
+        reviewDeliveries = keep
+        DuoState.update { $0.reviewDeliveries = keep }
         pushReviewState()
     }
 

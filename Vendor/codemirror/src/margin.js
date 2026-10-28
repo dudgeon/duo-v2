@@ -61,7 +61,9 @@ export function reopenThread(view, id) {
 export function deleteThread(view, id) {
   const t = findThread(view, id);
   if (!t) return false;
-  dispatchReview(view, { changes: { from: t.from, to: t.to, insert: t.anchor ? view.state.sliceDoc(t.anchor[0], t.anchor[1]) : "" } });
+  // The markers of each highlight and every comment go; what is inside (marks too) stays.
+  const cuts = [...t.comments.map((c) => [c.from, c.to]), ...t.pieces.flatMap((p) => [p.open, p.close])].sort((x, y) => x[0] - y[0]);
+  dispatchReview(view, { changes: cuts.map(([from, to]) => ({ from, to })) });
   return true;
 }
 

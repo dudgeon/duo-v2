@@ -214,7 +214,7 @@ public final class AppModel {
     /// The Markup menu is open (W4); the viewer's bar shows Markup pressed while it is.
     public var docxMenuOpen = false
     /// @claude comments in flight, by "<file>#<thread>" (DL-236 10A); who last edited a document through Duo, by file.
-    @ObservationIgnored var reviewDeliveries: [String: ReviewDelivery] = [:]
+    @ObservationIgnored var reviewDeliveries: [String: ReviewDelivery] = DuoState.load().reviewDeliveries
     @ObservationIgnored var reviewLastEditor: [String: String] = [:]
     @ObservationIgnored var reviewSending: Set<String> = []
     @ObservationIgnored var reviewPillMenu: AnyObject?

@@ -247,6 +247,8 @@ public struct DuoState: Codable, Sendable, Equatable {
     public var sourceDocuments: [String] = []
     /// The session an @claude comment goes to by default, per Markdown document (DL-236 9A): Duo's state, not the file's (Q-241).
     public var reviewSessions: [String: String] = [:]
+    /// @claude comments sent or waiting to be (DL-236 10A), by "<file>#<thread>", so a restart doesn't forget what went.
+    public var reviewDeliveries: [String: ReviewDelivery] = [:]
     /// Missing folders the user removed from Duo (DB-8): their sessions stay in Claude's storage.
     public var forgottenFolders: [String] = []
     /// Folders whose Make a Project notice the user said Not Now to (DL-110), by path.
@@ -297,6 +299,7 @@ public struct DuoState: Codable, Sendable, Equatable {
         foldedProperties = try c.decodeIfPresent([String].self, forKey: .foldedProperties) ?? []
         sourceDocuments = try c.decodeIfPresent([String].self, forKey: .sourceDocuments) ?? []
         reviewSessions = try c.decodeIfPresent([String: String].self, forKey: .reviewSessions) ?? [:]
+        reviewDeliveries = (try? c.decodeIfPresent([String: ReviewDelivery].self, forKey: .reviewDeliveries)) ?? [:]
         forgottenFolders = try c.decodeIfPresent([String].self, forKey: .forgottenFolders) ?? []
         notNowFolders = try c.decodeIfPresent([String].self, forKey: .notNowFolders) ?? []
         legacyDismissed = try c.decodeIfPresent(String.self, forKey: .legacyDismissed)

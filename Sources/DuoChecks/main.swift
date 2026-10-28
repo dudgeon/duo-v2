@@ -2439,13 +2439,15 @@ func repoFixture() throws -> Fixture {
     check(marks.allSatisfy { l in l.components(separatedBy: "{>>").count == (try! NSRegularExpression(pattern: sigRE)).numberOfMatches(in: l, range: NSRange(l.startIndex..., in: l)) + 1 }, "every comment is signed @name date #id")
     // The shared parser (Review) reads the converter's output: threads, replies, closing lines, suggestions.
     let parsedWord = Review.parse(word)
-    check(parsedWord.threads.filter { !$0.id.hasPrefix("u") }.count == 6 && parsedWord.thread("c2")?.replies.count == 2 && parsedWord.thread("c1")?.closed == true && parsedWord.thread("c2")?.closed == false,
-          "Review reads the converted threads: replies, and the closed one (\(parsedWord.threads.map(\.id))); the first paragraph of a two-paragraph comment reads as an unsigned thread, u1")
+    check(parsedWord.threads.count == 6 && parsedWord.threads.allSatisfy { !$0.id.hasPrefix("u") } && parsedWord.thread("c2")?.replies.count == 2 && parsedWord.thread("c1")?.closed == true && parsedWord.thread("c2")?.closed == false,
+          "Review reads the converted threads: replies, and the closed one (\(parsedWord.threads.map(\.id)))")
+    check(parsedWord.thread("c5")?.pieces.count == 2 && parsedWord.thread("c5")?.anchor == "This paragraph is commented along with the next one.\n\nIt carries the end of the comment.",
+          "a comment over two paragraphs is one thread with a highlight in each, not an unsigned thread for the first (Q-283)")
     check(parsedWord.suggestion("s1")?.kind == .insertion && parsedWord.suggestion("s5")?.kind == .substitution && parsedWord.suggestion("s5")?.old == "three" && parsedWord.suggestion("s5")?.author == "morgan-editor",
           "…and the suggestions, with author and substitution sides")
     // A suggestion inside a commented range: Review's scanner is flat, so the highlight swallows it.
-    check(parsedWord.suggestion("s2") == nil && parsedWord.thread("c3")?.anchor?.contains("{--some old words--}") == true,
-          "known gap (F-387): Review's scanner is flat, so a deletion inside a {==…==} highlight stays in the thread's anchor and isn't listed as a suggestion")
+    check(parsedWord.suggestion("s2")?.kind == .deletion && parsedWord.suggestion("s2")?.old == "some old words" && parsedWord.thread("c3")?.anchor?.contains("{--") == false && parsedWord.thread("c3")?.pieces.count == 1,
+          "a deletion inside a {==…==} highlight is a suggestion of its own, and the highlight stays its thread's anchor (Q-283)")
     let google = try review("Google suggestions.docx")
     check(google.contains("{++late ++}{>>@dana-writer 2026-09-05 #s1: <<}April") && google.contains("{~~can~>should~~}{>>@morgan-editor 2026-09-06 #s3: <<}") && google.contains("#c2.2 closed<<}"),
           "Google's suggestions and comments come over the same way")

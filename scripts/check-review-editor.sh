@@ -133,5 +133,9 @@ fresh_c cl-draw
 run cl-draw "${open}$A,wait:3"
 fresh_c cl-draw-sent
 run cl-draw-sent "${open}$A,wait:3,verb:session new --project garden,wait:2,review-io:idle,review-send:c1,wait:2"
+# 8. what the Word converter writes (Q-283): a deletion inside a highlight, a comment over two paragraphs
+vdoc=$'---\ntitle: Converted\n---\n\nSome {=={--some old words--}{>>@morgan-editor 2026-09-06 #s2: <<}==}{>>@riley-reviewer 2026-09-06 #c3: Why cut these?<<} here.\n\n{==This paragraph is commented along with the next one.==}\n\n{==It carries the end of the comment.==}{>>@riley-reviewer 2026-09-05 #c5: Both paragraphs need a source.<<}{>>@dana-writer 2026-09-05 #c5.1: Added.<<}\n'
+fresh cv-draw; print -rn -- "$vdoc" > $A
+run cv-draw "${open}$A,wait:3,review-active:c5,wait:2"
 echo "$((total-fails)) of $total passed (captures and logs in $out)"
 exit $((fails > 0))
