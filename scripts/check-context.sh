@@ -79,16 +79,19 @@ full="Duo: This session is in the project “checkout” ($P). Its brief, from P
 - Next step: Fix the tax rounding bug"
 tasks=$'\n'"Track work as Duo tasks, not a TASKS.md file: \`duo2 tasks\` lists them, \`duo2 task new\` makes one."   # ProjectContext.tasksLine (F-343), after every start
 
+review='Duo reviews: review marks in Markdown use CriticMarkup with a signature: {++added++}, {--deleted--}, {~~old~>new~~}, {==highlight==}, each followed by {>>@author date #id: note<<}. Marks are suggestions awaiting a person'\''s decision: never accept or reject one unless asked. To propose an edit, write it as a mark signed @claude instead of changing text. Reply to a comment by adding {>>@claude date #id.n: reply<<} right after it (`duo2 comment reply <id> <text>` does it in Duo'\''s editor if the file is open); don'\''t delete or rewrite anyone'\''s comment. To close a thread, add {>>@claude date #id.n closed<<} after its last comment; never delete someone'\''s comment. A comment that names @claude is addressed to you. If the file'\''s frontmatter has `suggest-edits: true`, write every change as a signed mark.'   # Review.convention (DL-236): every session start ends with it, after the tasks line, as its own paragraph
+start_tail=$tasks$'\n\n'$review   # what a SessionStart ends with: the tasks line, then the review paragraph
+
 print "project context, live (ENH-16, F-146)"
-want 1 "startup: the project's name, folder, goal, health and next step, then the tasks line" "$full$tasks"
+want 1 "startup: the project's name, folder, goal, health and next step, then the tasks line and the review paragraph" "$full$start_tail"
 run prompt; want 2 "a prompt with nothing changed: nothing" ""
 brief "Ship the new checkout by November" on-track "Ship to 10% of traffic"
 run prompt; want 3 "PROJECT.md edited: told once, on the next prompt" "Duo: The project's health is now “on track” (was “at risk”).
 The project's next step is now “Ship to 10% of traffic” (was “Fix the tax rounding bug”)."
 run prompt; want 4 "…and only once" ""
-run start compact; want 5 "compact: the brief in full again, and the tasks line" "${${full/at risk/on track}/Fix the tax rounding bug/Ship to 10% of traffic}$tasks"
+run start compact; want 5 "compact: the brief in full again, the tasks line and the review paragraph" "${${full/at risk/on track}/Fix the tax rounding bug/Ship to 10% of traffic}$start_tail"
 print -- "@PROJECT.md" > $P/CLAUDE.md
-run start resume; want 6 "CLAUDE.md imports @PROJECT.md: the name and folder only (no goal, health or next step), then the tasks line" "Duo: This session is in the project “checkout” ($P). Its CLAUDE.md imports PROJECT.md, so you already have its goal, health and next step.$tasks"
+run start resume; want 6 "CLAUDE.md imports @PROJECT.md: the name and folder only (no goal, health or next step), then the tasks line and the review paragraph" "Duo: This session is in the project “checkout” ($P). Its CLAUDE.md imports PROJECT.md, so you already have its goal, health and next step.$start_tail"
 run prompt; want 7 "…and a prompt after it: nothing" ""
 print "$((7 - fails)) passed, $fails failed"
 exit $((fails > 0))
