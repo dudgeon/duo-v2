@@ -4203,3 +4203,11 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 - No verb captures a document tab. `PageHost.screenshot` serves HTML viewers only. A tab that isn't showing has no window, so it can't be snapshotted (F-118). `takeSnapshot` clamps to the view's bounds, and `browser screenshot` captures only the viewport.
 - `doc outline` reads the docx file directly. Page size, margins, table widths and image sizes are all in the file (`sectPr`, `tblGrid`, `wp:extent`), so `doc layout` needs no renderer.
 - A Google Docs import (Drive connector, sample file) kept headings, native lists inside table cells, the header row and the italics. The connector returns text, so it can't show Docs' layout (`docs/research/agent-docx-tooling.md` §6).
+
+## F-387 · Convert to Markdown keeps a Word review as CriticMarkup (md-review-convert, 2026-10-28)
+- `Docx.convert` now defaults to `trackedChanges = .suggest` and `comments = .threads` (DL-236 12A); `.accept`, `.reject`, `.endnotes` and `.leaveOut` still work for DL-123's behaviour. A converter-side emitter writes the marks (the shared writer from md-review-build stage 1 wasn't merged yet).
+- Forms: `{++x++}{>>@name 2026-09-05 #s1<<}`, `{--x--}{>>…<<}`, a deletion beside an insertion by one author as `{~~old~>new~~}{>>…<<}`; a comment as `{==text==}{>>@name date #c1: …<<}` with replies `#c1.1…` right after, a point comment with no highlight. Authors: lower case, spaces to `-`; a Word author "Claude" (or "Claude …") is `@claude` (Q-266).
+- A change or comment over several paragraphs is one mark per paragraph; for a comment the thread follows the last paragraph's highlight. A whole inserted or deleted paragraph is one mark, and a moved paragraph reads as a deletion plus an insertion.
+- A resolved thread ends with `{>>@<last commenter> <their date> #cN.k closed<<}` (Q-262). Word doesn't record who resolved it, so the last commenter stands in.
+- A suggestion inside a commented range sits inside the `{== ==}`; the editor's parser must accept marks nested in a highlight. Substitutions take the insertion's id (so `#s4` can be skipped).
+- Pipes in a comment inside a table cell are written `\|`; `<<}` in a comment's text is written `< <}`.

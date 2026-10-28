@@ -6,16 +6,20 @@ import Foundation
 /// bold or outline level, lists typed as "•" or "1.", tables used for layout. Reads the zip with
 /// `Pptx.Zip`; the .docx is never written. Spike: `docs/plan/spikes/docx-to-markdown.md`.
 public enum Docx {
-    public enum TrackedChanges: String, Sendable { case accept, reject }
-    public enum Comments: String, Sendable { case leaveOut, endnotes }
+    /// `suggest` (the default since DL-236 12A) writes each change as a signed CriticMarkup mark;
+    /// `accept` and `reject` flatten them.
+    public enum TrackedChanges: String, Sendable { case suggest, accept, reject }
+    /// `threads` (the default since DL-236 12A) writes each comment as a signed CriticMarkup thread
+    /// after the text it covers.
+    public enum Comments: String, Sendable { case threads, leaveOut, endnotes }
 
     public struct Options: Sendable {
         /// The folder images go in, relative to the .md (`<name>-images`).
         public var imagesFolder: String
-        /// Accepted for now (DL-123); better handling later (Q-62).
-        public var trackedChanges: TrackedChanges = .accept
-        /// Endnotes, `[^c1]: Comment. Reviewer A: …` (DL-123).
-        public var comments: Comments = .endnotes
+        /// Kept as suggestions (DL-236 12A, closing Q-62).
+        public var trackedChanges: TrackedChanges = .suggest
+        /// Kept as threads (DL-236 12A); `.endnotes` is DL-123's `[^c1]: Comment. Reviewer A: …`.
+        public var comments: Comments = .threads
         /// Convert a document with no text (only pictures) rather than refusing.
         public var allowEmpty = false
         /// Called now and then with how far it got (0…1) and what it's doing, off the main thread.
@@ -49,9 +53,10 @@ public enum Docx {
             if typedBullets + typedNumbers > 0 { done.append(n(typedBullets + typedNumbers, "1 typed list item made a real one", "# typed list items made real lists")) }
             if layoutTables > 0 { done.append(n(layoutTables, "1 layout table unwrapped", "# layout tables unwrapped")) }
             if insertions + deletions > 0 {
-                done.append(n(insertions + deletions, "1 tracked change ", "# tracked changes ") + (o.trackedChanges == .accept ? "accepted" : "rejected"))
+                done.append(n(insertions + deletions, "1 tracked change ", "# tracked changes ") + (o.trackedChanges == .suggest ? "kept as a suggestion" : o.trackedChanges == .accept ? "accepted" : "rejected"))
+                if o.trackedChanges == .suggest, insertions + deletions > 1 { done[done.count - 1] = done[done.count - 1].replacingOccurrences(of: "a suggestion", with: "suggestions") }
             }
-            if comments > 0 { done.append(n(comments, "1 comment ", "# comments ") + (o.comments == .leaveOut ? "left out" : (comments == 1 ? "kept as an endnote" : "kept as endnotes"))) }
+            if comments > 0 { done.append(n(comments, "1 comment ", "# comments ") + (o.comments == .leaveOut ? "left out" : o.comments == .threads ? (comments == 1 ? "kept as a comment" : "kept as comment threads") : (comments == 1 ? "kept as an endnote" : "kept as endnotes"))) }
             if images > 0 { done.append(n(images, "1 image in ", "# images in ") + o.imagesFolder) }
             if footnotes > 0 { done.append(n(footnotes, "1 footnote", "# footnotes")) }
             if imagesUnviewable > 0 { gaps.append(n(imagesUnviewable, "1 image is a Windows drawing Duo can’t show", "# images are Windows drawings Duo can’t show")) }
@@ -170,6 +175,10 @@ public enum Docx {
         case text(String, Fmt)
         case lineBreak
         case note(String)          // a footnote label: "1", "c1"
+        /// A tracked change kept as a suggestion (DL-236 12A): `ins` or `del`, its signature, what it covers.
+        indirect case suggest(kind: String, sig: String, [Inline])
+        /// Review markup written as it is: a highlight's braces, a comment thread.
+        case raw(String)
         case image(alt: String, path: String)
     }
 
@@ -204,6 +213,17 @@ public enum Docx {
 
     struct Level { var format: String; var start: Int; var indent: Int? }
 
+
+    /// "@sam-reviewer 2026-10-27": a Word author as a review signature (DL-236 2, 12A): lower case, spaces to `-`; Claude is `@claude` (Q-266).
+    public static func signature(_ author: String?, _ date: String?) -> String {
+        var a = (author ?? "").lowercased().split(whereSeparator: { $0.isWhitespace }).joined(separator: "-")
+        a.removeAll { "<>{}:#@".contains($0) }
+        if a.isEmpty { a = "unknown" }
+        if a == "claude" || a.hasPrefix("claude-") { a = "claude" }   // Q-266
+        let day = (date ?? "").prefix(10)
+        return "@" + a + (day.count == 10 ? " " + day : "")
+    }
+
     // MARK: Converter
 
     struct Converter {
@@ -220,6 +240,13 @@ public enum Docx {
         var externalRels: [String: String] = [:]
         var footnoteXML: [String: Pptx.Node] = [:], endnoteXML: [String: Pptx.Node] = [:]
         var commentXML: [String: Pptx.Node] = [:]
+        /// Comment id -> the comment it replies to, and the ids of resolved threads' roots (commentsExtended).
+        var commentParent: [String: String] = [:]
+        var commentResolved: Set<String> = []
+        /// Comment ranges open at this point, so one that runs over a paragraph break is closed and reopened.
+        var openRanges: [String] = []
+        var suggestCount = 0, threadCount = 0
+        var tableDepth = 0
         var notes: [(label: String, text: String)] = []
         var imageNames: [String: String] = [:]          // zip path → output name
         var images: [(name: String, data: Data)] = []
@@ -304,6 +331,15 @@ public enum Docx {
                     }
                 }
             }
+            if let ext = try zip.xml("word/commentsExtended.xml"), let c = try zip.xml("word/comments.xml") {
+                var byPara: [String: String] = [:]
+                for n in c.all("comment") { if let id = n.attr("w:id"), let pid = n.all("p").last?.attr("w14:paraId") { byPara[pid] = id } }
+                for e in ext.all("commentEx") {
+                    guard let pid = e.attr("w15:paraId"), let id = byPara[pid] else { continue }
+                    if let pp = e.attr("w15:paraIdParent"), let parent = byPara[pp] { commentParent[id] = parent }
+                    if e.attr("w15:done") == "1" { commentResolved.insert(id) }
+                }
+            }
         }
 
         static func indent(_ pPr: Pptx.Node) -> Int? {
@@ -368,8 +404,10 @@ public enum Docx {
                     out += try readBlocks(el.name == "sdt" ? (el.first("sdtContent") ?? el) : el)
                 case "ins", "moveTo":   // a tracked insertion of whole paragraphs
                     if options.trackedChanges == .accept { out += try readBlocks(el) }
+                    if options.trackedChanges == .suggest { out += suggested(try readBlocks(el), kind: "ins", el) }
                 case "del", "moveFrom":
                     if options.trackedChanges == .reject { out += try readBlocks(el) }
+                    if options.trackedChanges == .suggest { out += suggested(try readBlocks(el), kind: "del", el) }
                 case "altChunk": break
                 default: break
                 }
@@ -377,8 +415,56 @@ public enum Docx {
             return out
         }
 
+        /// Whole paragraphs inserted or deleted: one mark per paragraph, all with the one id (DL-236 12A).
+        mutating func suggested(_ blocks: [Block], kind: String, _ el: Pptx.Node) -> [Block] {
+            let sig = signature(el)
+            return blocks.map { b in
+                guard case .para(var p) = b else { return b }
+                if !p.inlines.isEmpty { p.inlines = [.suggest(kind: kind, sig: sig, p.inlines)] }
+                return .para(p)
+            }
+        }
+
+        // MARK: Review marks (DL-236 12A)
+
+        /// "@sam-reviewer 2026-10-27 #s1": the author's Word name as a signature name, the date, the id.
+        mutating func signature(_ el: Pptx.Node) -> String {
+            suggestCount += 1
+            return Self.sign(el.attr("w:author"), el.attr("w:date")) + " #s\(suggestCount)"
+        }
+
+        static func sign(_ author: String?, _ date: String?) -> String { Docx.signature(author, date) }
+
+        /// A comment's text as plain words (the mark is opaque, no Markdown inside), `|` escaped in a table.
+        func commentText(_ n: Pptx.Node) -> String {
+            var t = n.all("p").map { $0.all("t").map(\.value).joined() }.filter { !$0.isEmpty }.joined(separator: " ")
+                .replacingOccurrences(of: "<<}", with: "< <}")
+            if tableDepth > 0 { t = t.replacingOccurrences(of: "|", with: "\\|") }
+            return t
+        }
+
+        /// The whole thread under the root comment `id`, replies as `#c1.1`, a resolved one closed (Q-262).
+        mutating func thread(root id: String) -> String {
+            threadCount += 1
+            let label = "c\(threadCount)"
+            let members = commentXML.keys.filter { commentParent[$0] == id }.sorted { (Int($0) ?? 0) < (Int($1) ?? 0) }
+            var out = ""
+            var last = commentXML[id]
+            for (i, m) in ([id] + members).enumerated() {
+                guard let n = commentXML[m] else { continue }
+                last = n
+                out += "{>>" + Self.sign(n.attr("w:author"), n.attr("w:date")) + " #" + label + (i == 0 ? "" : ".\(i)") + ": " + commentText(n) + "<<}"
+            }
+            if commentResolved.contains(id) || members.contains(where: { commentResolved.contains($0) }), let l = last {
+                out += "{>>" + Self.sign(l.attr("w:author"), l.attr("w:date")) + " #" + label + ".\(members.count + 1) closed<<}"
+            }
+            return out
+        }
+
         mutating func readTable(_ tbl: Pptx.Node) throws -> Block {
             var rows: [[Cell]] = []
+            tableDepth += 1
+            defer { tableDepth -= 1 }
             for tr in tbl.children where tr.name == "tr" {
                 var row: [Cell] = []
                 for tc in tr.children where tc.name == "tc" {
@@ -408,7 +494,10 @@ public enum Docx {
             para.indent = pPr.flatMap(Self.indent) ?? ch.compactMap(\.indent).first
             para.outline = pPr?.first("outlineLvl")?.attr("w:val").flatMap(Int.init) ?? ch.compactMap(\.outline).first
             var weights: [(size: Double, bold: Bool, mono: Bool, n: Int)] = []
+            // A comment range running over a paragraph break closes here and opens again in the next.
+            para.inlines += openRanges.map { _ in .raw("{==") }
             try readInlines(p, into: &para.inlines, fmt: Fmt(), paraStyle: ch, weights: &weights)
+            para.inlines += openRanges.map { _ in .raw("==}") }
             let total = weights.reduce(0) { $0 + $1.n }
             if total > 0 {
                 para.size = weights.reduce(0) { $0 + $1.size * Double($1.n) } / Double(total)
@@ -433,11 +522,33 @@ public enum Docx {
                     if let id = c.attr("r:id"), let url = externalRels[id] { f.link = url }
                     try readInlines(c, into: &out, fmt: f, paraStyle: paraStyle, weights: &weights)
                 case "ins", "moveTo":
-                    if c.all("r").contains(where: { !$0.all("t").isEmpty }) { report.insertions += 1 }
+                    let real = c.all("r").contains(where: { !$0.all("t").isEmpty })
+                    if real { report.insertions += 1 }
                     if options.trackedChanges == .accept { try readInlines(c, into: &out, fmt: fmt, paraStyle: paraStyle, weights: &weights) }
+                    if options.trackedChanges == .suggest {
+                        var inner: [Inline] = []
+                        try readInlines(c, into: &inner, fmt: fmt, paraStyle: paraStyle, weights: &weights)
+                        if real { out.append(.suggest(kind: "ins", sig: signature(c), inner)) } else { out += inner }
+                    }
                 case "del", "moveFrom":
-                    if !c.all("delText").isEmpty || !c.all("t").isEmpty { report.deletions += 1 }
+                    let real = !c.all("delText").isEmpty || !c.all("t").isEmpty
+                    if real { report.deletions += 1 }
                     if options.trackedChanges == .reject { try readInlines(c, into: &out, fmt: fmt, paraStyle: paraStyle, weights: &weights) }
+                    if options.trackedChanges == .suggest, real {
+                        var inner: [Inline] = []
+                        try readInlines(c, into: &inner, fmt: fmt, paraStyle: paraStyle, weights: &weights)
+                        out.append(.suggest(kind: "del", sig: signature(c), inner))
+                    }
+                case "commentRangeStart":
+                    if options.comments == .threads, let id = c.attr("w:id"), commentXML[id] != nil, commentParent[id] == nil {
+                        openRanges.append(id)
+                        out.append(.raw("{=="))
+                    }
+                case "commentRangeEnd":
+                    if let id = c.attr("w:id"), let i = openRanges.lastIndex(of: id) {
+                        openRanges.remove(at: i)
+                        out.append(.raw("==}"))
+                    }
                 case "fldSimple":
                     var f = fmt
                     let instr = c.attr("w:instr") ?? ""
@@ -492,7 +603,7 @@ public enum Docx {
             for c in r.children {
                 switch c.name {
                 case "t": visible(c.value)
-                case "delText": if options.trackedChanges == .reject { visible(c.value) }
+                case "delText": if options.trackedChanges != .accept { visible(c.value) }
                 case "tab", "ptab": visible(" ")
                 case "noBreakHyphen": visible("-")
                 case "softHyphen": break
@@ -519,6 +630,9 @@ public enum Docx {
                     out.append(.note(label))
                 case "commentReference":
                     report.comments += 1
+                    if options.comments == .threads, let id = c.attr("w:id"), commentXML[id] != nil {
+                        if commentParent[id] == nil { out.append(.raw(thread(root: id))) }
+                    }
                     if options.comments == .endnotes, let id = c.attr("w:id"), let n = commentXML[id] {
                         let label = "c\(notes.filter { $0.label.hasPrefix("c") }.count + 1)"
                         let who = n.attr("w:author").map { "\($0): " } ?? ""
@@ -562,9 +676,10 @@ public enum Docx {
         }
 
         mutating func noteText(_ n: Pptx.Node) throws -> String {
-            let saved = fields
+            let saved = fields, savedRanges = openRanges
             fields = []
-            defer { fields = saved }
+            openRanges = []
+            defer { fields = saved; openRanges = savedRanges }
             var parts: [String] = []
             for p in n.children where p.name == "p" {
                 var para = try readPara(p)
@@ -938,6 +1053,16 @@ public enum Docx {
             for x in inlines {
                 if case .text(let s, let f) = x, case .text(let ps, let pf)? = merged.last, pf == f { merged[merged.count - 1] = .text(ps + s, f) } else { merged.append(x) }
             }
+            // Next to each other, a deletion and an insertion by one author are a substitution.
+            var paired: [Inline] = []
+            for x in merged {
+                if case .suggest(let k, let sig, let inner) = x, case .suggest(let pk, let psig, let pinner)? = paired.last, pk != k,
+                   psig.split(separator: " ")[0] == sig.split(separator: " ")[0] {
+                    let (old, new) = k == "ins" ? (pinner, inner) : (inner, pinner)
+                    paired[paired.count - 1] = .raw("{~~\(self.inline(old))~>\(self.inline(new))~~}{>>\(sig)<<}")
+                } else { paired.append(x) }
+            }
+            merged = paired
             var out = "", open: [String] = []
             func close(to n: Int) {
                 guard open.count > n else { return }
@@ -984,6 +1109,13 @@ public enum Docx {
                     endLink(); close(to: 0); out += "\\\n"
                 case .note(let label):
                     out += "[^\(label)]"
+                case .suggest(let kind, let sig, let inner):
+                    endLink(); close(to: 0)
+                    let body = self.inline(inner)
+                    if !body.isEmpty { out += kind == "ins" ? "{++\(body)++}{>>\(sig)<<}" : "{--\(body)--}{>>\(sig)<<}" }
+                case .raw(let r):
+                    endLink(); close(to: 0)
+                    out += r
                 case .image(let alt, let path):
                     endLink(); close(to: 0)
                     let p = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed.subtracting(CharacterSet(charactersIn: "()"))) ?? path
@@ -992,7 +1124,8 @@ public enum Docx {
             }
             endLink()
             close(to: 0)
-            return out
+            // A comment on a point has nothing to highlight.
+            return out.replacingOccurrences(of: "{====}", with: "")
         }
     }
 }
