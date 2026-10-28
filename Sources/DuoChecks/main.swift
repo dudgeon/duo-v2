@@ -237,8 +237,16 @@ func repoFixture() throws -> Fixture {
 
     print("update question: the release's notes in a box, Later at the left (DL-132 b)")
     do {
-        let md = "## What's new\n\n- **Closing** a busy tab asks first.\n* Drops use `Undo`.\n1. See [the guide](https://x.y).\n\n---\n"
-        check(UpdateCheck.notesLines(md) == ["• Closing a busy tab asks first.", "• Drops use Undo.", "• See the guide."], "notes become plain lines (\(UpdateCheck.notesLines(md)))")
+        let md = "## What's new\n\n**Group**\n- **Closing a busy tab asks first.** Detail here.\n* Drops use `Undo`. More words.\n1. See [the guide](https://x.y).\n\n## Install\n- not shown\n"
+        check(UpdateCheck.notesLines(md) == ["• Closing a busy tab asks first.", "• Drops use Undo.", "• See the guide."], "notes become the bullets' bold leads, or first sentences (\(UpdateCheck.notesLines(md)))")
+        let fx = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Fixtures/release-notes")
+        let real = ["0.2.18", "0.2.19", "0.2.20"].map { (try? String(contentsOf: fx.appendingPathComponent("\($0).md"), encoding: .utf8)) ?? "" }
+        let lines = real.map(UpdateCheck.notesLines)
+        check(lines.allSatisfy { !$0.isEmpty && $0.count <= UpdateCheck.notesCap + 1 && !$0.contains { $0.contains("**") || $0.contains("macOS 26") || $0.contains("Open the DMG") } },
+              "real notes of 0.2.18-0.2.20 give at most \(UpdateCheck.notesCap) bullets plus a count, no Requirements or Install (\(lines.map(\.count)))")
+        check(lines[2].first == "• Directors work without Duo open." && lines[2].last == "and 3 more" && lines[2].count == 7, "0.2.20: first bold lead, then 'and 3 more' (\(lines[2]))")
+        check(UpdateCheck.notesLines("").isEmpty && UpdateCheck.notesLines("Fixed things.\nNo list here.").isEmpty && UpdateCheck.notesLines("## What's new\n**x** [broken](").count == 0
+              && UpdateCheck.notesLines("- **\n- ****\n- ").isEmpty, "no notes, prose only or malformed give no lines, so the question reads as before")
         let r = UpdateCheck.Release(version: "0.1.9", page: URL(string: "https://example.com")!, notes: md)
         if case .offer(let o) = UpdateCheck.plan(latest: r, current: "0.1.8", installWritable: true, sparkle: true, folder: "/Applications") {
             let q = UpdateCheck.question(o, openPage: {}, installNow: {}, later: {})

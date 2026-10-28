@@ -129,18 +129,40 @@ extension UpdateCheck {
         return q
     }
 
-    /// A release's Markdown notes as the question's lines: headings and blank lines dropped,
-    /// list items as `•`, emphasis and code marks taken out.
+    /// The most bullets the question shows; the rest become "and n more".
+    public static let notesCap = 6
+
+    /// A release's Markdown notes as the question's lines: one `•` line per bullet under
+    /// "What's new" (the bold lead when it has one, else the bullet's first sentence), at most
+    /// `notesCap`, then "and n more". Group titles, prose and sections after it (Requirements,
+    /// Install) are left out. Notes with no bullets give no lines, so the question reads as before.
     public static func notesLines(_ md: String) -> [String] {
-        md.components(separatedBy: .newlines).compactMap { raw -> String? in
-            var l = raw.trimmingCharacters(in: .whitespaces)
-            if l.isEmpty || l.hasPrefix("#") || l.hasPrefix("---") { return nil }
-            for m in ["- ", "* ", "+ "] where l.hasPrefix(m) { l = "• " + l.dropFirst(2) }
-            if let r = l.range(of: #"^\d+[.)] "#, options: .regularExpression) { l = "• " + l[r.upperBound...] }
-            l = l.replacingOccurrences(of: "**", with: "").replacingOccurrences(of: "__", with: "").replacingOccurrences(of: "`", with: "")
-            l = l.replacingOccurrences(of: #"\[([^\]]+)\]\([^)]+\)"#, with: "$1", options: .regularExpression)
-            return l
+        var bullets: [String] = []
+        var inNew = true   // notes without a "What's new" heading count whole
+        for raw in md.components(separatedBy: .newlines) {
+            let l = raw.trimmingCharacters(in: .whitespaces)
+            if l.hasPrefix("#") {
+                let name = l.drop { $0 == "#" }.trimmingCharacters(in: .whitespaces).lowercased()
+                inNew = name.hasPrefix("what")
+                continue
+            }
+            guard inNew else { continue }
+            var t = l
+            if let r = t.range(of: #"^([-*+]|\d+[.)]) +"#, options: .regularExpression) { t = String(t[r.upperBound...]) } else { continue }
+            if t.hasPrefix("**"), let end = t.dropFirst(2).range(of: "**") {
+                let lead = String(t.dropFirst(2)[..<end.lowerBound])
+                if !lead.isEmpty { t = lead }
+            } else if let dot = t.range(of: #"[.!?](\s|$)"#, options: .regularExpression) {
+                t = String(t[..<dot.upperBound])
+            }
+            t = t.replacingOccurrences(of: "**", with: "").replacingOccurrences(of: "__", with: "").replacingOccurrences(of: "`", with: "")
+            t = t.replacingOccurrences(of: #"\[([^\]]+)\]\([^)]+\)"#, with: "$1", options: .regularExpression)
+            t = t.trimmingCharacters(in: .whitespaces)
+            if t.hasSuffix(".") { t.removeLast() }
+            if !t.isEmpty { bullets.append("• " + t + ".") }
         }
+        guard bullets.count > notesCap else { return bullets }
+        return Array(bullets.prefix(notesCap)) + ["and \(bullets.count - notesCap) more"]
     }
 
     /// `duo2 update`'s answer: what's newest, its releases page, and whether installing in place
@@ -157,7 +179,8 @@ extension UpdateCheck {
             return "Duo \(current) is the latest.\nReleases page: \(page.absoluteString)\n\(place)"
         case .offer(let o):
             let have = o.current == "0.0.1" ? "a development build" : o.current
-            return "Duo \(o.version) is available (this is \(have)).\nReleases page: \(o.page.absoluteString)\n\(place)"
+            let notes = notesLines(o.notes).map { "\n" + $0 }.joined()
+            return "Duo \(o.version) is available (this is \(have)).\(notes)\nReleases page: \(o.page.absoluteString)\n\(place)"
         }
     }
 
@@ -195,7 +218,7 @@ extension AppModel {
                 if open { NSWorkspace.shared.open(page); text += "\nOpened the releases page." }
                 var data: [String: Any] = ["current": UpdateCheck.current, "page": page.absoluteString, "installedAt": app.path,
                                            "needsAdmin": !writable, "reachable": plan != .unreachable]
-                if case .offer(let o) = plan { data["latest"] = o.version }
+                if case .offer(let o) = plan { data["latest"] = o.version; data["notes"] = UpdateCheck.notesLines(o.notes) }
                 if case .upToDate = plan { data["latest"] = UpdateCheck.current }
                 return done(text, data)
             }
@@ -217,9 +240,15 @@ extension AppModel {
     /// installed (`Updater.swift`): Duo asks instead of Sparkle's password prompt, once per version.
     public func offerSparkleUpdate(version: String) {
         guard DuoState.load().skippedUpdate != version else { return }
-        offerUpdate(.init(version: version, current: UpdateCheck.current, page: UpdateCheck.releasePage(version),
-                          needsAdmin: !Self.installWritable, canInstallNow: sparkleCheck != nil,
-                          folder: Self.installedApp.deletingLastPathComponent().path))
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            // The notes come from GitHub; offline or a different release, the question has none.
+            let r = await UpdateCheck.latest()
+            self.offerUpdate(.init(version: version, current: UpdateCheck.current, page: UpdateCheck.releasePage(version),
+                                   needsAdmin: !Self.installWritable, canInstallNow: self.sparkleCheck != nil,
+                                   folder: Self.installedApp.deletingLastPathComponent().path,
+                                   notes: r?.version == version ? r?.notes ?? "" : ""))
+        }
     }
 
     /// Asks the update question (DL-114). Later remembers the version, so the launch and
