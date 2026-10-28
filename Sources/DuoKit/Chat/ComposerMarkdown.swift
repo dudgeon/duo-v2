@@ -205,6 +205,29 @@ public enum ComposerMarkdown {
         return Edit(range: r, text: marker + text + marker, selection: NSRange(location: r.location + n, length: r.length))
     }
 
+    /// ⌘] indents and ⌘[ outdents (DL-242) every line the selection touches by two spaces, Markdown's
+    /// nested-list step. A selection ending at a line's start leaves that line alone. Nil when outdenting
+    /// finds no leading space to take.
+    public static func indent(in doc: String, selection r: NSRange, out: Bool) -> Edit? {
+        let d = doc as NSString
+        let end = r.length > 0 && d.character(at: NSMaxRange(r) - 1) == 10 ? NSMaxRange(r) - 1 : NSMaxRange(r)
+        let lines = d.lineRange(for: NSRange(location: r.location, length: max(0, end - r.location)))
+        if lines.length == 0 { return out ? nil : Edit(range: lines, text: "  ", selection: NSRange(location: lines.location + 2, length: 0)) }
+        var text = "", at = lines.location, first: Int?, total = 0
+        while at < NSMaxRange(lines) {
+            let line = d.lineRange(for: NSRange(location: at, length: 0)), s = d.substring(with: line)
+            let n = out ? (s.hasPrefix("\t") ? 1 : s.prefix(2).prefix { $0 == " " }.count) : 0
+            text += out ? String(s.dropFirst(n)) : "  " + s
+            // The selection's start moves with its own line, never back past that line's start.
+            if first == nil { first = out ? -min(n, r.location - line.location) : 2 }
+            total += out ? -n : 2
+            at = NSMaxRange(line)
+        }
+        guard total != 0, let shift = first else { return nil }
+        let length = (text as NSString).length, start = r.location + shift
+        return Edit(range: lines, text: text, selection: NSRange(location: start, length: min(max(0, r.length + total - shift), lines.location + length - start)))
+    }
+
     /// ⌘K: `[text]()` with the caret in the parentheses; with nothing selected `[]()` with the caret in the brackets.
     public static func link(in doc: String, selection r: NSRange) -> Edit {
         let text = (doc as NSString).substring(with: r)

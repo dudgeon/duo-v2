@@ -817,17 +817,40 @@ func spikeScreen(_ name: String) -> String {
         m.chats.setDefault(nil)
     }
 
-    print("chat mode: ⌘[ / ⌘] between your messages (DL-119 §4, Q-54)")
+    print("chat mode: ⌥⌘↑ / ⌥⌘↓ between your messages (DL-119 §4, Q-54, DL-242)")
     do {
+        let up = String(UnicodeScalar(NSUpArrowFunctionKey)!), down = String(UnicodeScalar(NSDownArrowFunctionKey)!)
+        check(ChatKeyMonitor.step(up, [.command, .option]) == -1 && ChatKeyMonitor.step(down, [.command, .option]) == 1, "⌥⌘↑ is your previous message, ⌥⌘↓ the next")
+        check(ChatKeyMonitor.step("[", .command) == nil && ChatKeyMonitor.step("]", .command) == nil, "⌘[ ⌘] no longer step (they indent, DL-242)")
+        check(ChatKeyMonitor.step(up, .command) == nil && ChatKeyMonitor.step(up, .option) == nil && ChatKeyMonitor.step(up, [.command, .option, .shift]) == nil, "⌘↑, ⌥↑ and ⇧⌥⌘↑ don't step")
         let c = ChatSession(key: "k", mode: .chat)
         for t in ["one", "two", "three"] { c.log.sent(t, time: nil, queued: false); c.log.textBlock("reply to \(t)", time: nil) }
         let ids = c.log.yourMessageIDs
         c.stepYourMessages(-1)
-        check(c.revealRequest == ids[2], "⌘[ from the bottom: your latest message")
+        check(c.revealRequest == ids[2], "⌥⌘↑ from the bottom: your latest message")
         c.stepYourMessages(-1); c.stepYourMessages(-1); c.stepYourMessages(-1)
         check(c.revealRequest == ids[0], "and back to your first, no further")
         c.stepYourMessages(1)
-        check(c.revealRequest == ids[1], "⌘] forward")
+        check(c.revealRequest == ids[1], "⌥⌘↓ forward")
+    }
+
+    print("chat composer: ⌘] indents, ⌘[ outdents (DL-242)")
+    do {
+        typealias M = ComposerMarkdown
+        func run(_ doc: String, _ sel: NSRange, out: Bool) -> (String, NSRange)? {
+            guard let e = M.indent(in: doc, selection: sel, out: out) else { return nil }
+            return ((doc as NSString).replacingCharacters(in: e.range, with: e.text), e.selection)
+        }
+        func eq(_ a: (String, NSRange)?, _ t: String, _ l: Int, _ n: Int) -> Bool { a?.0 == t && a?.1 == NSRange(location: l, length: n) }
+        check(eq(run("- a\n- b", NSRange(location: 6, length: 0), out: false), "- a\n  - b", 8, 0), "⌘] indents the caret's line by two spaces; the caret moves with it")
+        check(eq(run("- a\n  - b", NSRange(location: 8, length: 0), out: true), "- a\n- b", 6, 0), "⌘[ takes the two spaces back")
+        check(eq(run("one\ntwo\nthree", NSRange(location: 1, length: 6), out: false), "  one\n  two\nthree", 3, 8), "a selection over two lines indents both, still selecting the same text")
+        check(eq(run("one\ntwo\n", NSRange(location: 0, length: 4), out: false), "  one\ntwo\n", 2, 4), "a selection ending at a line's start leaves that line alone")
+        check(eq(run("\tx", NSRange(location: 2, length: 0), out: true), "x", 1, 0), "⌘[ takes a leading tab")
+        check(eq(run(" x", NSRange(location: 0, length: 0), out: true), "x", 0, 0), "⌘[ takes one space when there's one; the caret at the start stays")
+        check(run("x", NSRange(location: 1, length: 0), out: true) == nil, "⌘[ with nothing to take does nothing")
+        check(eq(run("", NSRange(location: 0, length: 0), out: false), "  ", 2, 0), "⌘] in an empty composer types the indent")
+        check(eq(run("a\n", NSRange(location: 2, length: 0), out: false), "a\n  ", 4, 0), "⌘] on an empty last line")
     }
 
     print("chat mode: a claude that hangs on --version never freezes a session start (C-34)")
