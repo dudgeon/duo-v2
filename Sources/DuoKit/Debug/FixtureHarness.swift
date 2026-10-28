@@ -144,6 +144,11 @@ public enum FixtureHarness {
         case "notnow": if parts.count > 1 { model.notNowProject(parts[1]) }   // notnow:<folder>: Not Now on its Make a Project notice (DL-110)
         case "sheet-move":   // sheet-move:<project>: Move into Home…'s sheet, up and waiting
             if parts.count > 1 { model.moveIntoHome(parts[1]) }
+        case "chat-debug":   // the fallback bar's Debug sheet (DL-234), up and waiting
+            if let k = model.consoleTab, let c = model.chat(for: k) {
+                if let f = c.fallback { c.fallback = nil; c.fallBack(f, rule: "unknown-screen") }
+                model.showFallbackReport(k)
+            }
         case "sheet-new":    // sheet-new[:<name>]: the New project sheet
             model.showNewProject(name: parts.count > 1 ? parts[1] : "")
         case "sheet-goal": model.newProjectForm?.goal = parts.count > 1 ? parts[1] : ""

@@ -56,6 +56,8 @@ public struct DuoQuestion: Identifiable {
     /// Lines under the first paragraph in a `WHAT’S NEW` box, up to 160 high, then it scrolls
     /// (the update question, DL-132 b).
     public var notes: [String] = []
+    /// A report in mono in a `pane` box, up to 260 high, then it scrolls and can be selected (the chat-fallback Debug sheet, DL-234).
+    public var report: String? = nil
     /// The cancel button sits apart at the left, as macOS sheets put the one that dismisses
     /// (the update question's Later, DL-132 b).
     public var leadingCancel = false
@@ -149,6 +151,25 @@ struct NotesBox: View {
     }
 }
 
+/// A report in mono, scrollable, selectable (the chat-fallback Debug sheet, DL-234).
+struct ReportBox: View {
+    let text: String
+    var body: some View {
+        ScrollView(.vertical) {
+            Text(text)
+                .font(Font(NSFont.monospacedSystemFont(ofSize: DuoTextStyle.mono.spec.size, weight: .regular)))
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, DuoSpace.cardPadding.leading)
+                .padding(.vertical, 10)
+        }
+        .frame(height: 260)
+        .background(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).fill(DuoColor.pane))
+        .overlay(RoundedRectangle(cornerRadius: DuoMetric.radiusCard).strokeBorder(DuoColor.rule, lineWidth: DuoMetric.borderHairline))
+        .accessibilityLabel("Report")
+    }
+}
+
 /// A question as a sheet (S3-3, S3-7): 460 wide on `ground`, open at the top, a title, its
 /// paragraphs, a `pane` box listing what it changes with their paths, a `text2` note, the buttons.
 struct QuestionSheet: View {
@@ -161,6 +182,7 @@ struct QuestionSheet: View {
                 Text(Self.rich(p)).duoText(.body).fixedSize(horizontal: false, vertical: true)
                 if n == 0 && !q.notes.isEmpty { NotesBox(lines: q.notes) }
             }
+            if let r = q.report { ReportBox(text: r) }
             if !q.items.isEmpty {
                 // Clash rows (with a detail) sit 6 apart in their own padding, a rule between (q50-clash).
                 let rowed = q.items.contains { !$0.what.isEmpty && !$0.path.isEmpty && $0.detail != nil }
