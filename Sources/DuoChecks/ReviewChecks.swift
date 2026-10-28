@@ -98,7 +98,7 @@ import Foundation
         try? p.run()
         let out = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
         p.waitUntilExit()
-        check(p.terminationStatus == 0, "the editor module's own checks pass (critic.test.mjs)" + (p.terminationStatus == 0 ? "" : ":\n" + out))
+        check(p.terminationStatus == 0, "the editor module's own checks pass (critic.test.mjs, lists.test.mjs)" + (p.terminationStatus == 0 ? "" : ":\n" + out))
     } else { print("  (node isn't installed: the editor module's own checks are skipped)") }
     let editorJS = (try? String(contentsOf: repoRoot().appending(path: "Vendor/codemirror/src/duo-editor.js"), encoding: .utf8)) ?? ""
     check(editorJS.contains("reviewCore,") && editorJS.contains("reviewDrawing"), "the editor loads the review module: parse always, drawing with the live preview")

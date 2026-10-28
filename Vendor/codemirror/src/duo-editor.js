@@ -9,6 +9,7 @@ import { syntaxTree } from "@codemirror/language";
 import { autocompletion, startCompletion, completionStatus, acceptCompletion } from "@codemirror/autocomplete";
 import { marginExtensions, marginTheme, composeComment, activate, setDelivery, addThread, replyTo, closeThread, reopenThread, deleteThread } from "./margin.js";
 import { reviewCore, reviewDrawing, reviewSummary, setMarkup as setReviewMarkup, setReviewer, onReviewAction, resolveSuggestion, resolveAll as resolveAllSuggestions, step as stepReview, suggestHunks, reviewField, suggestEditsOn } from "./critic.js";
+import { renumberLists, renumberAfter } from "./lists.js";
 import { search, searchKeymap, SearchQuery, setSearchQuery, getSearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel, replaceNext } from "@codemirror/search";
 
 // ---------- live preview ----------
@@ -2194,6 +2195,7 @@ function extensions(readOnly) {
       searchField,
       clearOnUserEdit,
       titleFollowsHeading,
+      renumberLists,
       linkClicks,
       // Duo's menu chords win over CodeMirror's: ⌘D is Send Selection to Claude (DL-79), ⌘I is
       // Italic (CodeMirror's select-parent-syntax took it, so Format › Italic never fired).
@@ -2457,6 +2459,9 @@ function agentEdit(edits, content) {
   set.iterChanges((fA, tA, fB, tB) => { if (tB > fB) added.push([fB, tB]); });
   const records = changeRecords(set, view.state.doc);
   view.dispatch({ changes: set, effects: [recordChanges.of(records), ...(added.length ? [markAdded.of(added)] : [])], userEvent: "agent" });
+  // Numbers fixed once the edit has landed (a separate step; it doesn't touch what Claude wrote beyond the digits).
+  const nums = renumberAfter(view.state, added.map(([f, t]) => [f, t]));
+  if (nums.length) view.dispatch({ changes: nums, userEvent: "agent.renumber" });
   const first = added.length ? view.state.doc.lineAt(added[0][0]).number : null;
   if (added.length) view.dispatch({ effects: EditorView.scrollIntoView(added[0][0], { y: "center" }) });
   return { result: "applied", changes: changes.length, line: first };
