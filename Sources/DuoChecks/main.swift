@@ -25,6 +25,9 @@ func repoFixture() throws -> Fixture {
 }
 
 @MainActor func run() throws {
+    // Fallbacks the checks provoke are logged to a scratch file, never to the real support folder (DL-234).
+    ChatFallbackLog.override = FileManager.default.temporaryDirectory.appending(path: "duochecks-chat-fallbacks-\(getpid()).jsonl")
+    try? FileManager.default.removeItem(at: ChatFallbackLog.file)
     // `DUO_CHECKS=chat swift run DuoChecks`: chat mode's checks alone (ChatChecks.swift).
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat" { return try chatChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "chat-live" { return try chatLiveChecks() }

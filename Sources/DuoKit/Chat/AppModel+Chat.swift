@@ -20,6 +20,18 @@ extension AppModel {
             chats.setHomeDefault(d)
             return done(.ok(d == .last ? "New Home sessions open in the mode used last, as other sessions do." : "New Home sessions open in \(d == .chat ? "chat" : "the terminal")."))
         }
+        // DL-234: the fallback bar's Debug report, and the local log of automatic fallbacks.
+        if inv.positional.first == "why" {
+            if inv.has("log") { return done(.ok(ChatFallbackLog.report(ChatFallbackLog.read()))) }
+            var key = visibleSessionId
+            if inv.positional.count > 1 {
+                guard let s = findSession(inv.positional[1], in: nil) else { return done(.fail("no session '\(inv.positional[1])'")) }
+                key = s.tabKey
+            }
+            guard let key else { return done(.fail("no Claude session is on screen; name one")) }
+            guard let chat = chats.existing(key) ?? fixtureChats[key] else { return done(.fail("\(consoleTitle(key)) has no chat yet: open it in Duo first")) }
+            return done(.ok(chat.debugReport()))
+        }
         var words = inv.positional
         let answering = words.first == "answer"
         if answering { words.removeFirst() }

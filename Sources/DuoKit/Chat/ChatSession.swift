@@ -367,6 +367,10 @@ public final class ChatSession {
         // 2.1.296's inline renderer draws the `/` menu where the footer was (F-284): the mode is the one before it opened.
         if s.mode == nil, !s.commands.isEmpty, s.kind == .idle { s.mode = before.mode }
         if s != before { screen = s }
+        if s.kind != before.kind {
+            screenTrail.append(ChatTransition(at: Date(), event: "screen", reason: "\(before.kind.rawValue) → \(s.kind.rawValue) (\(s.sig.prefix(60))\(s.why.map { ", " + $0 } ?? ""))"))
+            if screenTrail.count > 20 { screenTrail.removeFirst(screenTrail.count - 20) }
+        }
         if let e = s.effort, e != effort { effort = e; effortGlyphs[e.word] = e.glyph }
         // An interrupted reply fires no hook: busy → idle ends it (F-105).
         if before.kind == .busy, s.kind == .idle {
@@ -390,14 +394,15 @@ public final class ChatSession {
                     MainActor.assumeIsolated { self?.evaluateFallback() }
                 }
             } else if Date().timeIntervalSince(unknownSince!) >= Self.grace - 0.01 {
-                fallBack(commandScreen() ?? .unknownScreen)
+                fallBack(commandScreen() ?? .unknownScreen, rule: commandScreen() != nil ? "command-screen" : "unknown-screen")
             }
         case .permission, .plan, .question, .questionReview:
             unknownSince = nil; unknownTimer?.invalidate()
             if !dialogsVerified {
                 fallBack(versionTrust != .unverified
                     ? .automatic("This dialog in Claude Code \(cliVersion ?? "") doesn’t read like the versions chat mode was checked with, so here’s the terminal.")
-                    : .automatic("Chat mode hasn’t been checked with this version of Claude Code’s dialogs (\(cliVersion ?? "unknown")), so here’s the terminal."))
+                    : .automatic("Chat mode hasn’t been checked with this version of Claude Code’s dialogs (\(cliVersion ?? "unknown")), so here’s the terminal."),
+                    rule: versionTrust != .unverified ? "dialog-unreadable" : "version-unverified")
             } else if !requestAgrees {
                 // The request comes by hook, a moment after the dialog draws: give it a second.
                 if disagreeSince == nil {
@@ -406,7 +411,7 @@ public final class ChatSession {
                         MainActor.assumeIsolated { self?.evaluateFallback() }
                     }
                 } else if now.timeIntervalSince(disagreeSince!) >= Self.requestGrace - 0.01 {
-                    fallBack(.automatic("Chat mode can’t match this dialog to what Claude asked, so here’s the terminal."))
+                    fallBack(.automatic("Chat mode can’t match this dialog to what Claude asked, so here’s the terminal."), rule: "dialog-request-mismatch")
                 }
             } else { disagreeSince = nil }
         case .idle, .busy:
@@ -417,13 +422,14 @@ public final class ChatSession {
             // chat (`/help`, F-173) or a handover still returns when it closes.
             guard let f = fallback, f.returnsByItself else { return }
             fallback = nil
+            noteTransition("back to chat", "the screen is back at its prompt (\(s.kind.rawValue)) after: \(f.message)")
             onChange?()
         case .picker:
             // `/model` and `/effort` as a card (DL-143), only on a CLI whose screens were checked.
             unknownSince = nil; disagreeSince = nil; unknownTimer?.invalidate()
             if !dialogsVerified {
-                fallBack(.automatic("Chat mode hasn’t been checked with this version of Claude Code’s screens (\(cliVersion ?? "unknown")), so here’s the terminal."))
-            } else if fallback?.command != nil { fallback = nil; onChange?() }
+                fallBack(.automatic("Chat mode hasn’t been checked with this version of Claude Code’s screens (\(cliVersion ?? "unknown")), so here’s the terminal."), rule: "picker-unverified-version")
+            } else if fallback?.command != nil { fallback = nil; noteTransition("back to chat", "the command's picker is up"); onChange?() }
         case .starting:
             break
         }
@@ -439,12 +445,51 @@ public final class ChatSession {
         return .command(c.name)
     }
 
-    public func fallBack(_ f: ChatFallback) {
+    /// `rule` names the fallback rule that fired, for the Debug report and the fallback log (DL-234).
+    public func fallBack(_ f: ChatFallback, rule: String? = nil) {
         guard mode == .chat, fallback != f else { return }
         fallback = f
+        let rule = rule ?? (f.kind == .handedOver ? "handover" : f.command != nil ? "command-screen" : "answer-refused")
+        noteTransition("fallback", "\(rule): \(f.message)")
+        let capture = captureFallback(f, rule: rule)
+        lastFallback = capture
+        if f.kind == .automatic, persistsFallbackLog { ChatFallbackLog.append(ChatFallbackLog.record(capture)) }
         traceFallback(f)
         onChange?()
     }
+
+    /// The last chat-state changes, newest last (the Debug report shows 10).
+    public private(set) var transitions: [ChatTransition] = []
+    /// What chat saw when it last fell back.
+    public private(set) var lastFallback: ChatFallbackCapture?
+    /// Off for fixtures and checks that don't mean to write the log.
+    @ObservationIgnored public var persistsFallbackLog = true
+
+    func noteTransition(_ event: String, _ reason: String) {
+        transitions.append(ChatTransition(at: Date(), event: event, reason: reason))
+        if transitions.count > 40 { transitions.removeFirst(transitions.count - 40) }
+    }
+
+    func captureFallback(_ f: ChatFallback, rule: String) -> ChatFallbackCapture {
+        let lines = terminal?.screenLines() ?? fixtureScreenText?.components(separatedBy: "\n") ?? []
+        let t = lines.map { $0.replacingOccurrences(of: "\u{0}", with: " ").chatTrimEnd }
+        return ChatFallbackCapture(
+            at: Date(), rule: rule, message: f.message, automatic: f.kind == .automatic, kind: screen.kind.rawValue, sig: screen.sig,
+            why: screen.why, evidence: ChatFallbackReport.evidence(lines, table: signatures), lines: t, cols: terminal?.columns ?? (t.map(\.count).max() ?? 0),
+            cliVersion: cliVersion, trust: versionTrust.rawValue, pending: pendingRequest?.tool,
+            unknownFor: unknownSince.map { now.timeIntervalSince($0) }, trail: screenTrail, footer: screen.mode != nil,
+            dialog: [.permission, .plan, .question, .questionReview, .picker].contains(screen.kind),
+            mods: t.map { $0.chatTrim }.filter { $0.hasPrefix("⚠") }.map { String($0.prefix(80)) }, session: key)
+    }
+
+    /// The Debug report (the bar's sheet, `duo2 session chat why`).
+    public func debugReport() -> String {
+        ChatFallbackReport.text(capture: lastFallback, current: screen, history: transitions, session: key, fallback: fallback, cliVersion: cliVersion,
+                                nowLines: terminal?.screenLines() ?? [])
+    }
+
+    /// Each change of the reader's verdict, newest last: what the screen was doing before a fallback (F-376).
+    public private(set) var screenTrail: [ChatTransition] = []
 
     /// Diagnostics (test branch, askq-fallback): what chat saw when it fell back, to stderr. One header
     /// line, then the terminal's rows as chat read them, so a run's log shows the screen at that moment.
@@ -461,6 +506,7 @@ public final class ChatSession {
     /// "Back to Chat": shows chat now. If the screen still can't be shown, the terminal returns
     /// after the grace period.
     public func backToChat() {
+        if fallback != nil { noteTransition("back to chat", "Back to Chat pressed") }
         fallback = nil
         unknownSince = nil
         evaluateFallback()

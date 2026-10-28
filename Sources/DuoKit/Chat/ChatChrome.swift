@@ -99,6 +99,9 @@ struct ChatFallbackBar: View {
                 .fixedSize(horizontal: false, vertical: true)
             Button("Back to Chat") { model.backToChat(chat.key) }  // action: session chat
                 .buttonStyle(.duo)
+            // Stand-in, not drawn in the handoff (Q-256).
+            Button("Debug") { model.showFallbackReport(chat.key) }  // action: session chat
+                .buttonStyle(.duo)
         }
         .padding(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 12))
         .background(DuoColor.ground)
@@ -131,6 +134,23 @@ extension AppModel {
         guard let c = chat(for: key) else { return }
         if c.mode != .chat { return setChatMode(.chat, for: key) }
         c.backToChat()
+    }
+
+    /// The bar's Debug button: the report in a Duo sheet, to copy (DL-234). Nothing is sent anywhere.
+    public func showFallbackReport(_ key: String) {
+        guard let c = chat(for: key) else { return }
+        let report = c.debugReport()
+        SheetCenter.shared.ask(DuoQuestion(
+            title: "Why chat mode showed the terminal",
+            paragraphs: ["This report can include what was on your screen. It stays on this Mac until you copy it; nothing is sent anywhere."],
+            report: report,
+            choices: [
+                .init(label: "Close", isCancel: true, action: {}),
+                .init(label: "Copy Report", isDefault: true, action: {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(report, forType: .string)
+                }),
+            ]))
     }
 
     /// A chat on screen (ENH-45): Home's tab at All projects, or the console's tab in a project

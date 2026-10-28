@@ -1,0 +1,27 @@
+  ! /usr/bin/convert --headless --outdir "/tmp/example/render" "/tmp/example/files/Draft.docx"
+
+  Once the PDF exists, I'll page through it in a Duo browser tab and screenshot each page.
+
+✻ Baked for 11m 55s · done 9:53 PM
+
+  ⏵ why do you need this? what role does it play in the task I gave you?
+
+● You're right: for this task I don't need one.
+
+  What I'm relying on it for. Only turning the file into a PDF:
+  - Whether the table reads well in landscape
+  - Where page breaks fall
+
+  What would help, in priority order:
+  1. duo2 doc screenshot [path] [--page N | --all]: save PNGs of a document tab.
+     It's the document-tab version of browser screenshot.
+  2. duo2 file convert <docx> --as pdf: Duo runs outside the sandbox.
+  3. duo2 doc layout <file>: layout facts as text or JSON.
+
+✻ Sautéed for 36s · done 10:00 PM
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+❯
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  [claude-5.5-opus[1m]] 📁 example-project | 🧠 Context-used: 53% (530k) | Context-left: 47% (470k)
+  ⏵⏵ auto mode on (shift+tab to cycle) · ← for agents
