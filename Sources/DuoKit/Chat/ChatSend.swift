@@ -15,6 +15,20 @@ extension ChatSession {
         return v >= ChatVersion.externalEditor
     }
 
+    /// Claude Code's `chat:sendNow` (Ctrl+X Ctrl+S) is there from 2.1.275; on 2.1.219 it does nothing.
+    public static func hasSendNow(cliVersion: String?) -> Bool {
+        guard let v = cliVersion.flatMap(ChatVersion.init) else { return false }
+        return v >= ChatVersion("2.1.275")!
+    }
+
+    /// ⌃↩: while Claude works, sends and then sends the queue now; otherwise a plain send (DL-241).
+    public func sendNow(_ raw: String) async -> ChatAnswerResult {
+        let busy = reread().kind == .busy && Self.hasSendNow(cliVersion: cliVersion)
+        let r = await send(raw)
+        if busy, r.ok { _ = await press(.sendNow) }
+        return r
+    }
+
     /// Sends the composer's text as your message.
     public func send(_ raw: String) async -> ChatAnswerResult {
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)

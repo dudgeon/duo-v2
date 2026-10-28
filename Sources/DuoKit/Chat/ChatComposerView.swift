@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-// The composer (chat-mode-handoff `composer`): Claude's own prompt in a native field. Return sends,
-// ⇧Return adds a line; files dropped in go in as their full paths (DL-117) and show by name; `/`
+// The composer (chat-mode-handoff `composer`): Claude's own prompt in a native field. ↩ and ⌘↩ send, ⇧↩ ⌥↩ ⌃J and
+// `\`↩ add a line, ⌃↩ sends now while Claude works (DL-241); files dropped in go in as their full paths (DL-117) and show by name; `/`
 // opens Claude Code's own command list; `@` offers the project's files and folders (DL-133); while Claude works a sent message waits as Queued and Stop
 // (esc) sits beside the field. Under it: the mode chip (a click cycles it, as Shift+Tab does), the
 // hints and the model.
@@ -348,6 +348,11 @@ struct ChatComposerField: NSViewRepresentable {
             v.window?.makeFirstResponder(v)
         }
 
+        func sendNow() {
+            let text = chat.ui.composer
+            Task { _ = await chat.sendNow(text) }
+        }
+
         func send() {
             // A part-typed command runs the one the menu has selected, as Return does in the TUI.
             let text = chat.commandMenuShown ? chat.selectedCommand ?? chat.ui.composer : chat.ui.composer
@@ -359,6 +364,20 @@ struct ChatComposerField: NSViewRepresentable {
 /// A file dropped into the composer: its full path is what's sent; its name is what shows.
 final class ComposerChip: NSTextAttachment {
     var path = ""
+}
+
+/// What a Return chord does in the composer, as the terminal's does (DL-241). Nil for any other key.
+public enum ComposerReturn: Sendable, Equatable {
+    case send, sendNow, newline, backslashNewline
+
+    public static func action(keyCode: UInt16, modifiers: NSEvent.ModifierFlags, charBeforeCaret: Character?) -> ComposerReturn? {
+        guard keyCode == 36 || keyCode == 76 else { return nil }
+        let m = modifiers.intersection([.shift, .control, .option, .command])
+        if m.contains(.command) { return .send }
+        if m.contains(.control) { return .sendNow }
+        if !m.isEmpty { return .newline }
+        return charBeforeCaret == "\\" ? .backslashNewline : .send
+    }
 }
 
 final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegate {
@@ -570,6 +589,11 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
     override func performKeyEquivalent(with e: NSEvent) -> Bool {
         guard window?.firstResponder === self, e.type == .keyDown, isEditable else { return super.performKeyEquivalent(with: e) }
         let mods = e.modifierFlags.intersection([.command, .shift, .option, .control])
+        // ⌘↩ sends, unless a menu item owns it (Jump into Selected Project, while the peek is open).
+        if mods == .command, e.keyCode == 36 || e.keyCode == 76 {
+            if !super.performKeyEquivalent(with: e) { coordinator?.send() }
+            return true
+        }
         let key = (e.charactersIgnoringModifiers ?? "").lowercased()
         var marker: String?, link = false
         switch (key, mods) {
@@ -608,7 +632,7 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
             case 126 where any: c.moveMention(-1); return
             case 125 where any: c.moveMention(1); return
             case 36, 76, 48:
-                if any, !e.modifierFlags.contains(.shift) { c.chooseMention(in: self); return }
+                if any, e.modifierFlags.intersection([.shift, .option]).isEmpty { c.chooseMention(in: self); return }
             case 53: c.dismissMention(self); return
             default: break
             }
@@ -631,8 +655,14 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
             return
         }
         switch e.keyCode {
-        case 36, 76:   // Return: send; ⇧Return: a new line
-            if e.modifierFlags.contains(.shift) { insertNewlineIgnoringFieldEditor(nil) } else { coordinator?.send() }
+        case 36, 76:   // Return (DL-241): the chord table is ComposerReturn's
+            let sel = selectedRange(), before = sel.length == 0 && sel.location > 0 ? (string as NSString).substring(with: NSRange(location: sel.location - 1, length: 1)) : nil
+            switch ComposerReturn.action(keyCode: e.keyCode, modifiers: e.modifierFlags, charBeforeCaret: before.flatMap(\.first)) {
+            case .newline: insertNewlineIgnoringFieldEditor(nil)
+            case .backslashNewline: setSelectedRange(NSRange(location: sel.location - 1, length: 1)); insertNewlineIgnoringFieldEditor(nil)
+            case .sendNow: coordinator?.sendNow()
+            default: coordinator?.send()
+            }
         case 53:       // Esc: Stop while Claude works
             if let c = coordinator?.chat, c.screen.kind == .busy { Task { await c.interrupt() } } else { super.keyDown(with: e) }
         default: super.keyDown(with: e)
