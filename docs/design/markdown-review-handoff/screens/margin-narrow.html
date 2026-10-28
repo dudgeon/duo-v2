@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="360x800">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-237">
+<!--
+3.5 CHOSEN. The narrow cut (360): markers in a 24 gutter, a thread as a popover.
+APPROVED BOARD. Geoff, 2026-10-28 (DL-237). Exported from the Design canvas
+https://claude.ai/artifact/SBKQ1sgYF12qaqP6YXcTUX (board Margin-Narrow.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and documents are illustrative.
+Blocks headed by a small capitals label under the pane (or on a grey ground) are the spec, not UI.
+-->
+<title>Duo · Markdown review · Narrow cut 360</title>
+<style>
+body{margin:0}
+a{color:#1F2328}a:hover{color:#1F2328}
+button{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;white-space:nowrap}
+.pane{width:360px;height:800px;box-sizing:border-box;display:flex;flex-direction:column;border:1px solid #C9CDD3;overflow:hidden;background:#FFFFFF;color:#1F2328;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;font-size:13px;line-height:20px;position:relative}
+.tabs{display:flex;align-items:center;gap:18px;height:36px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.bar{display:flex;align-items:center;gap:6px;height:44px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.doc{flex:1;position:relative}
+.txt{position:absolute;left:20px;top:16px;width:288px;display:flex;flex-direction:column;gap:10px}
+.h1{font-size:18px;line-height:24px;font-weight:600}
+.mk{position:absolute;left:318px;width:20px;height:16px;box-sizing:border-box;border:1px solid #C9CDD3;border-radius:4px;background:#FFFFFF;font-size:10px;line-height:14px;text-align:center;color:#5B636D}
+.mk.on{border:1.5px solid #1F2328;background:#E9ECEF;color:#1F2328;line-height:13px}
+.pop{position:absolute;left:22px;top:110px;width:280px;box-sizing:border-box;background:#FFFFFF;border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.18),0 0 0 1px rgba(31,35,40,.08);padding:10px 12px;font-size:12px;line-height:16px;display:flex;flex-direction:column;gap:4px;z-index:2}
+.rep{padding-left:12px;display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.field{border:1px solid #C9CDD3;border-radius:6px;padding:4px 8px;color:#5B636D;margin-top:4px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.g{color:#5B636D}
+.hl{background:#FBE7A1}
+.hla{background:#F5D565}
+.P{font-size:10px;line-height:14px;color:#5B636D;border:1px dashed #8B939C;border-radius:4px;padding:0 3px}
+.sw{display:inline-block;width:8px;height:8px;border-radius:5px;border:1.5px solid #8B939C;box-sizing:border-box;margin-right:5px;vertical-align:-0.5px}
+</style>
+</head>
+<body>
+<div class="pane">
+<div class="tabs"><span class="g">Project</span><span style="font-weight: 600">offline.md</span><span class="g">+</span></div>
+<div class="bar"><button>Markup ⌄</button><button><span class="sw"></span>Suggest Edits</button><span style="flex: 1"></span><button>Review ⌄</button></div>
+<div class="doc">
+<div class="txt">
+<div class="h1">Offline mode: one-pager</div>
+<div>Duo keeps working when the network drops. <span class="hl">Running sessions keep their place</span>; new turns <span class="hla">wait until you’re back online</span>. <span class="hl">The sync engine retries every 10 seconds</span>, and gives up after an hour.</div>
+<div>We store nothing in the cloud except <span class="hl">crash reports</span>.</div>
+<div>Launch is planned for early November.</div>
+</div>
+<div class="mk" style="top: 52px">1</div>
+<div class="mk on" style="top: 72px">4</div>
+<div class="mk" style="top: 112px">1</div>
+<div class="mk" style="top: 172px">2</div>
+<div class="pop" style="top: 96px">
+<div><b style="color: #1D5FA8; font-weight: 600">Geoff</b> <span class="g">· 27 Oct</span></div>
+<div>What does the person see while it waits? A spinner, or the prompt greyed out?</div>
+<div class="g" style="text-decoration: underline; margin-top: 2px">1 more reply</div>
+<div class="rep"><div><b style="color: #B0244F; font-weight: 600">Sam</b> <span class="g">· 28 Oct</span></div><div>Greyed prompt, plus the toolbar dot.</div></div>
+<div class="rep"><div><b style="color: #2E7A3A; font-weight: 600">Claude</b> <span class="g">· Offline one-pager · 9:12</span></div><div>That matches the build. I suggested a line saying so.</div></div>
+<div class="field">Reply…</div>
+<div class="acts"><button>Close and Keep</button><button>Delete</button></div>
+</div>
+<div style="position: absolute; left: 20px; right: 20px; top: 430px; display: flex; flex-direction: column; gap: 8px; font-size: 12px; line-height: 16px; color: #5B636D">
+<div style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: .06em">UNDER 420 <span class="P">[P] Q-263</span></div>
+<div>When the pane is narrower than 420 (the right pane’s cut is 360, DL-129) the margin folds to a 24 gutter. Each thread is a marker level with its anchor: 20 × 16, radius 4, 1 <b style="color: #1F2328; font-weight: 600">rule</b>, the count of comments in it at 10/14 <b style="color: #1F2328; font-weight: 600">text2</b> (Google’s narrow icons). Markers that collide stack 4 apart.</div>
+<div>A click on a marker or an anchor opens the thread as a popover under the anchor’s line, 280 wide (claude.ai’s floating thread); the marker takes the active look. Esc or a click in the text closes it.</div>
+<div>The bar fits by dropping ‹ ›: Review ⌄ (for Review All ⌄) gains Next and Previous at its top, and J and K still step. At 420 and up the margin and ‹ › come back.</div>
+</div>
+</div>
+</div>
+</body>
+</html>

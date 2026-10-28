@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="1240x1240">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-237">
+<!--
+Research: how Google Docs and claude.ai draw comment threads, and what Duo takes.
+RESEARCH. Geoff, 2026-10-28 (DL-237). Exported from the Design canvas
+https://claude.ai/artifact/SBKQ1sgYF12qaqP6YXcTUX (board Main.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and documents are illustrative.
+Blocks headed by a small capitals label under the pane (or on a grey ground) are the spec, not UI.
+-->
+<title>Duo · Markdown review · Comment rendering research</title>
+<style>
+body{margin:0}
+a{color:#1F2328}a:hover{color:#1F2328}
+.row{display:grid;grid-template-columns:150px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);border-top:1px solid #C9CDD3}
+.row>div{padding:10px 12px;font-size:12px;line-height:17px}
+.row>div:first-child{font-weight:600;font-size:12px}
+.row>div:last-child{background:#F3F4F6}
+.head>div{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B636D;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div style="width: 1240px; height: 1240px; box-sizing: border-box; padding: 40px 44px; background: #FFFFFF; color: #1F2328; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: .06em; color: #5B636D">RESEARCH · DL-236 (8) · 2026-10-28</div>
+<h1 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600">How Google Docs and claude.ai draw comment threads, and what Duo takes</h1>
+<p style="margin: 0; font-size: 13px; line-height: 20px; color: #5B636D; max-width: 900px">Google Docs from its help pages and long use; claude.ai from its artifact comments as they work today, looked at on the intent page (Jd28RDwp…). The last column is what the boards below draw.</p>
+<div style="display: flex; flex-direction: column; border-bottom: 1px solid #C9CDD3">
+<div class="row head"><div>Topic</div><div>Google Docs</div><div>claude.ai artifacts</div><div>Duo (proposal)</div></div>
+<div class="row"><div>Anchor</div><div>The commented range in pale yellow; the active thread's range turns a deeper yellow.</div><div>A thread pins to an element or a text selection; a small avatar pin marks it. The open thread quotes its anchor's text in grey at the top.</div><div>The range on <b>commentHighlight</b> (DL-162); the active one a step deeper (a new token [P]). The open card quotes the anchor only when the text has changed since (claude.ai).</div></div>
+<div class="row"><div>Placement and stacking</div><div>Cards in a right margin, each level with its anchor's first line. When they collide, later cards are pushed down; nothing is hidden. No leader lines.</div><div>No margin. A thread opens as a floating card by its pin; an All comments panel lists every thread, newest first. A "More comments ↑ 1" pill shows threads off screen.</div><div>Google's margin: level with the anchor, pushed down by 10 (<b>gapCardToCard</b>) on collision, no leaders. Hovering a card deepens its anchor, and the reverse.</div></div>
+<div class="row"><div>The active card</div><div>Raised with a shadow and shifted left toward the text; it moves level with its anchor and the cards above it slide up to make room. Shows every reply and a reply box.</div><div>A popover with a blue focus ring; header: avatar, name, time, ✓ resolve, ⋯, ✕.</div><div>Steps 12 left into the gap (192 wide, so the verbs fit on one line), 1.5 <b>text</b> border (Duo's selected card; no shadow: Duo keeps shadows for popovers). Level with its anchor; others make room above and below.</div></div>
+<div class="row"><div>Replies</div><div>Inline in the card; inactive cards show the first comment and "2 replies". Long threads fold the middle ("3 more replies"). Reply box: "Reply or add others with @".</div><div>Inline in the popover. Claude's reply reads "Claude · via Geoff Dudgeon" with Claude's mark.</div><div>Inactive: first comment, two lines at most, then "2 replies". Active: first, "3 more replies", the last two, the reply field. Claude signs with its session (DL-236 9A).</div></div>
+<div class="row"><div>Resolve and close</div><div>✓ on the card resolves; ⋮ holds Edit, Delete, Link. A resolved thread leaves the margin; Comment history lists them, with Re-open.</div><div>✓ resolves (filled blue when resolved). Resolved threads hide unless the filter's "Show resolved" is on; a reply ("Reply to reopen…") or the ✓ reopens.</div><div>Two verbs, Geoff's: <b>Close and Keep</b> and <b>Delete</b>, as text buttons (Duo has one button). Closed threads hide; Markup › Show Closed Comments shows them; a reply reopens.</div></div>
+<div class="row"><div>Suggestions</div><div>Suggesting mode: inline coloured insert and strike per person, plus a margin card per suggestion with ✓ ✕.</div><div>None.</div><div>Inline only, in each person's colour (DL-162), with a hover label holding Accept and Reject. No card: the margin stays for talk.</div></div>
+<div class="row"><div>Mentions and AI</div><div>@name assigns or notifies; Gemini isn't a thread participant.</div><div>@Claude, or Send to Claude, activates a thread; activated threads carry Claude's mark in the list; Claude replies and resolves.</div><div>@claude posts to a session shown on a pill (DL-236 9A, 10A); status on one line under the comment.</div></div>
+<div class="row"><div>Narrow widths</div><div>When the page can't fit the margin, comments collapse to small icons in the margin; a click opens the card floating.</div><div>Already a popover; the panel overlays the page.</div><div>Under 420 (the right pane's narrow cut is 360, DL-129) the margin folds to a 24 gutter of markers; a thread opens as a popover.</div></div>
+<div class="row"><div>Keyboard</div><div>⌘⌥M comment. With a comment focused: J next, K previous, R reply, E resolve, U leave. Comment history ⌘⌥⇧A (third-party lists).</div><div>None found.</div><div>⌘⌥M comment (Google's and Word's). Focus in the margin: J, K, R; ⌘Return posts; Esc back to the text. Close and Keep, Delete from the Edit menu. [P] Q-264.</div></div>
+</div>
+<div style="font-size: 12px; line-height: 17px; color: #5B636D">Sources: support.google.com/docs/answer/65129 (comments, shortcuts J K R E U); support.google.com/docs/answer/179738 (shortcuts); claude.ai artifact comments as observed 2026-10-28.</div>
+</div>
+</body>
+</html>

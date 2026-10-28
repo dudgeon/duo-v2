@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="design-size" content="460x800">
+<meta name="design-kind" content="board">
+<meta name="design-surface" content="DL-237">
+<!--
+3.4 CHOSEN. Suggestions as inline marks with a hover label; no cards.
+APPROVED BOARD. Geoff, 2026-10-28 (DL-237). Exported from the Design canvas
+https://claude.ai/artifact/SBKQ1sgYF12qaqP6YXcTUX (board Margin-Suggest.dc.html), rendered to static markup.
+It is a picture written in HTML: match what it draws, do not port its markup. Names and documents are illustrative.
+Blocks headed by a small capitals label under the pane (or on a grey ground) are the spec, not UI.
+-->
+<title>Duo · Markdown review · Suggestions inline</title>
+<style>
+body{margin:0}
+a{color:#1F2328}a:hover{color:#1F2328}
+button{font:inherit;font-size:12px;line-height:16px;padding:4px 10px;border:1px solid #8B939C;border-radius:6px;background:#FFFFFF;color:#1F2328;white-space:nowrap}
+.pane{width:460px;height:800px;box-sizing:border-box;display:flex;flex-direction:column;border:1px solid #C9CDD3;overflow:hidden;background:#FFFFFF;color:#1F2328;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;font-size:13px;line-height:20px;position:relative}
+.tabs{display:flex;align-items:center;gap:18px;height:36px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.bar{display:flex;align-items:center;gap:6px;height:44px;flex:none;padding:0 20px;border-bottom:1px solid #C9CDD3;white-space:nowrap}
+.doc{flex:1;position:relative}
+.txt{position:absolute;left:20px;top:16px;width:228px;display:flex;flex-direction:column;gap:10px}
+.h1{font-size:18px;line-height:24px;font-weight:600}
+.card{position:absolute;left:260px;width:180px;box-sizing:border-box;border:1px solid #C9CDD3;border-radius:6px;padding:8px 10px;background:#FFFFFF;font-size:12px;line-height:16px;display:flex;flex-direction:column;gap:2px}
+.g{color:#5B636D}
+.hl{background:#FBE7A1}
+.ins1{color:#1D5FA8;text-decoration:underline #1D5FA8;text-underline-offset:3px}
+.del1{color:#1D5FA8;text-decoration:line-through #1D5FA8}
+.ins3{color:#2E7A3A;text-decoration:underline #2E7A3A;text-underline-offset:3px}
+.del3{color:#2E7A3A;text-decoration:line-through #2E7A3A}
+.ins2{color:#B0244F;text-decoration:underline #B0244F;text-underline-offset:3px}
+.lbl{position:absolute;left:40px;top:52px;width:250px;background:#FFFFFF;border-radius:10px;box-shadow:0 8px 24px rgba(31,35,40,.18),0 0 0 1px rgba(31,35,40,.08);padding:6px 10px 8px;font-size:12px;line-height:16px;display:flex;flex-direction:column;gap:4px;z-index:2}
+.P{font-size:10px;line-height:14px;color:#5B636D;border:1px dashed #8B939C;border-radius:4px;padding:0 3px}
+.sw{display:inline-block;width:8px;height:8px;border-radius:5px;border:1.5px solid #8B939C;box-sizing:border-box;margin-right:5px;vertical-align:-0.5px}
+</style>
+</head>
+<body>
+<div class="pane">
+<div class="tabs"><span class="g">Project</span><span style="font-weight: 600">offline.md</span><span class="g">+</span></div>
+<div class="bar"><button>Markup ⌄</button><button><span class="sw"></span>Suggest Edits</button><span style="flex: 1"></span><button>‹</button><button>›</button><button>Review All ⌄</button></div>
+<div class="doc">
+<div class="txt">
+<div class="h1">Offline mode: one-pager</div>
+<div>Duo keeps working when the network drops. <span class="del3">Sessions pause and resume automatically.</span> <span class="ins3">Running sessions keep their place; new turns wait until you’re back online.</span></div>
+<div>The sync engine retries every <span class="del1">30</span><span class="ins1">10</span> seconds<span class="ins2">, and gives up after an hour</span>.</div>
+<div>We store nothing in the cloud except <span class="hl">crash reports</span>.</div>
+</div>
+<div class="lbl">
+<div><b style="color: #2E7A3A; font-weight: 600">Claude</b> <span class="g">suggested · Offline one-pager · 14:03</span></div>
+<div>Shorter, and says what the person sees.</div>
+<div style="display: flex; gap: 6px; margin-top: 2px"><button>Accept</button><button>Reject</button><button>Reply</button></div>
+</div>
+<div class="card" style="top: 176px"><div><b style="color: #1D5FA8; font-weight: 600">Geoff</b> <span class="g">· 27 Oct</span></div><div>Is this true for crash reports?</div></div>
+<div style="position: absolute; left: 20px; right: 20px; top: 300px; display: flex; flex-direction: column; gap: 8px; font-size: 12px; line-height: 16px; color: #5B636D">
+<div style="font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: .06em">SUGGESTIONS <span class="P">[P]</span></div>
+<div>Marks in the text, in each person’s colour, as on Word documents (DL-162): an insertion underlined at offset 3, a deletion struck through, a substitution as both. Claude is always green (<b style="color: #1F2328; font-weight: 600">reviewAuthor3</b>, beside DL-186’s green; Q-266); people take the other colours in the order they appear.</div>
+<div>No card in the margin: the margin is for talk. Hovering or clicking a mark shows its label (a Duo popover: <b style="color: #1F2328; font-weight: 600">pane</b>, radius 10, <b style="color: #1F2328; font-weight: 600">shadowPopover</b>): who, when, its note if it has one (<span style="font-family: 'SF Mono', ui-monospace, monospace; font-size: 11px">{&gt;&gt;@claude … #s4: note&lt;&lt;}</span>), and Accept, Reject, Reply. Reply turns the note into a thread with a card.</div>
+<div>‹ › step through suggestions and comments in document order. Review All ⌄: Accept All, Reject All, then the same per person, then the counts (“3 suggestions · 4 comments”).</div>
+<div>Simple Markup shows the text as accepted with a 2 <b style="color: #1F2328; font-weight: 600">text2</b> bar at the left of changed paragraphs, as on Word documents.</div>
+</div>
+</div>
+</div>
+</body>
+</html>
