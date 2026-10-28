@@ -781,6 +781,7 @@ extension AppModel {
             docReviewVerb(inv, req, done)
         case .docMarkup where showingMarkdownDocument, .docComments where showingMarkdownDocument:
             markdownMarkupVerb(id, inv, req, done)
+        case .docLayout: layoutVerb(inv, req, done)
         case .docMarkup, .docComments, .docOutline, .docPick, .docElement:
             docxVerb(id, inv, req, done)
         case .htmlReload:
