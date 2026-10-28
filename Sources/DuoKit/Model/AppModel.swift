@@ -213,6 +213,8 @@ public final class AppModel {
     @ObservationIgnored public var docxViewerIfLoaded: DocxViewer?
     /// The Markup menu is open (W4); the viewer's bar shows Markup pressed while it is.
     public var docxMenuOpen = false
+    /// The Markdown review bar's open menu: "markup" or "all" (DL-237).
+    public var reviewMenu: String?
     /// Browser tabs by id (`web:…`), kept alive while their tab is open (Phase K, ENH-8).
     @ObservationIgnored public var webTabs: [String: WebTab] = [:]
     /// Downloads browser tabs saved since launch, oldest first (`duo2 browser downloads`, DL-124).

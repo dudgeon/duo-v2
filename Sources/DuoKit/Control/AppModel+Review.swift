@@ -166,6 +166,14 @@ extension AppModel {
             guard let word = inv[0] else {
                 return done(.ok("Suggest Edits is \(now ? "on" : "off") for \(displayPath(url)).", ["file": displayPath(url), "on": now]))
             }
+            if word == "next" || word == "previous" {
+                guard let e = editorIfLoaded, isOpenInEditor(url) != nil else { return done(.fail("the document isn't showing in the editor")) }
+                e.run("return duo.reviewStep(d)", ["d": word == "next" ? 1 : -1]) { v in
+                    guard let r = v as? [String: Any], let n = r["index"] as? Int, let t = r["total"] as? Int else { return done(.ok("Nothing to review in \(self.displayPath(url)).")) }
+                    done(.ok("Mark \(n) of \(t): \((r["kind"] as? String) ?? "") #\((r["id"] as? String) ?? "?")", r))
+                }
+                return
+            }
             guard ["on", "off"].contains(word) else { return done(.fail("usage: \(ActionID.docReview.action.usage)")) }
             let on = word == "on"
             // A plain change, the user's switch: not highlighted as Claude's.

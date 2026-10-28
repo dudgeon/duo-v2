@@ -7,6 +7,7 @@ import { defaultKeymap, history, historyKeymap, undo, undoDepth } from "@codemir
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { syntaxTree } from "@codemirror/language";
 import { autocompletion, startCompletion, completionStatus, acceptCompletion } from "@codemirror/autocomplete";
+import { reviewCore, reviewDrawing, reviewSummary, setMarkup as setReviewMarkup, setReviewer, onReviewAction, resolveSuggestion, resolveAll as resolveAllSuggestions, step as stepReview, suggestHunks, reviewField, suggestEditsOn } from "./critic.js";
 import { search, searchKeymap, SearchQuery, setSearchQuery, getSearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel, replaceNext } from "@codemirror/search";
 
 // ---------- live preview ----------
@@ -131,6 +132,7 @@ const headingLines = [1, 2, 3, 4, 5, 6].map((l) => Decoration.line({ class: `duo
 const strong = Decoration.mark({ class: "duo-strong" });
 const em = Decoration.mark({ class: "duo-em" });
 const strike = Decoration.mark({ class: "duo-strike" });
+const criticSubstitution = (state, from, to) => from > 0 && to < state.doc.length && state.sliceDoc(from - 1, from) === "{" && state.sliceDoc(to, to + 1) === "}";
 const code = Decoration.mark({ class: "duo-code" });
 const link = Decoration.mark({ class: "duo-link" });
 
@@ -211,13 +213,15 @@ function buildDecorations(view) {
         } else if (name === "Emphasis") {
           ranges.push([node.from, node.to, em]);
         } else if (name === "Strikethrough") {
-          ranges.push([node.from, node.to, strike]);
+          // `{~~old~>new~~}` is a suggestion's substitution (DL-236), drawn by the review module, not a struck span.
+          if (!criticSubstitution(state, node.from, node.to)) ranges.push([node.from, node.to, strike]);
         } else if (name === "InlineCode") {
           ranges.push([node.from, node.to, code]);
         } else if (name === "EmphasisMark" || name === "CodeMark" || name === "StrikethroughMark") {
           if (!raw && node.to - node.from <= 3 && state.doc.lineAt(node.from).number === state.doc.lineAt(node.to).number) {
             const parent = node.node.parent?.name;
-            if (parent !== "FencedCode") ranges.push([node.from, node.to, hide]);
+            const pn = node.node.parent;
+            if (parent !== "FencedCode" && !(parent === "Strikethrough" && criticSubstitution(state, pn.from, pn.to))) ranges.push([node.from, node.to, hide]);
           }
         } else if (name === "Link") {
           ranges.push([node.from, node.to, link]);
@@ -1789,7 +1793,7 @@ const readOnlyCompartment = new Compartment();
 const previewLive = new Compartment(), previewProps = new Compartment(), previewBlocks = new Compartment();
 let sourceMode = !!window.duoFlags?.noPreview;   // the next state's mode (checks start a page in source with the flag)
 const sourceIds = new Set();                      // documents Duo remembers in source mode, by id
-const sourceEffects = (on) => [previewLive.reconfigure(on ? [] : [livePreview, codeHover]), previewProps.reconfigure(on ? [] : previewPropsList), previewBlocks.reconfigure(on ? [] : [blocksField])];
+const sourceEffects = (on) => [previewLive.reconfigure(on ? [] : [livePreview, codeHover, reviewDrawing]), previewProps.reconfigure(on ? [] : previewPropsList), previewBlocks.reconfigure(on ? [] : [blocksField])];
 const isSource = (state) => previewLive.get(state).length === 0;
 function setSource(on) {
   on = !!on;
@@ -2104,6 +2108,7 @@ function show(id, diskText, opts) {
     if (opts && opts.folded != null) window.__folded = !!opts.folded;
     const r = create(parent, diskText, opts && opts.source != null ? opts.source : sourceIds.has(id));
     shownId = id;
+    lastReview = ""; postReview(view.state);
     return { ...r, restored: false, dirty: false };
   }
   shownId = id;
@@ -2120,6 +2125,7 @@ function show(id, diskText, opts) {
   if (opts && opts.folded != null) view.dispatch({ effects: setFolded.of(!!opts.folded) });
   const sel = selectionReport(h.state);
   post("selection", sel);
+  lastReview = ""; postReview(view.state);
   return { mixedLineEndings: sepInfo.mixed, separator: JSON.stringify(sepInfo.sep), restored: true, dirty: sel.dirty };
 }
 function closeDoc(id) {
@@ -2155,6 +2161,13 @@ const previewPropsList = [propertiesField, propertiesKeymap, tableKeymap, Editor
           tooltipClass: (st) => (inBlock(st) && !st.sliceDoc(st.doc.lineAt(st.selection.main.head).from, st.selection.main.head).includes(":") ? "duo-sugg-names" : "duo-sugg-values"),
           addToOptions: [{ position: 20, render: (c) => { const s = document.createElement("span"); s.className = "duo-sugg-icon";
             if (PROP_ICONS[c.type]) s.innerHTML = iconSvg(c.type); return s; } }] })];
+let lastReview = "";
+// The review bar's facts (marks, people, the switch, the markup mode), posted when they change or a document is shown.
+function postReview(state) {
+  const r = JSON.stringify(reviewSummary(state));
+  if (r !== lastReview) { lastReview = r; post("review", { doc: shownId, ...JSON.parse(r) }); }
+}
+onReviewAction((a) => post("reviewAction", { doc: shownId, ...a }));
 function extensions(readOnly) {
     return [
       EditorState.lineSeparator.of(sepInfo.sep),
@@ -2166,7 +2179,8 @@ function extensions(readOnly) {
       history(),
       markdown({ base: markdownLanguage }),  // GitHub-flavoured: task lists, tables, strikethrough
       search({ top: true, createPanel: findPanel }),
-      previewLive.of(sourceMode ? [] : [livePreview, codeHover]),
+      reviewCore,
+      previewLive.of(sourceMode ? [] : [livePreview, codeHover, reviewDrawing]),
       contextField,
       foldField,
       previewProps.of(sourceMode ? [] : previewPropsList),
@@ -2190,6 +2204,7 @@ function extensions(readOnly) {
           // Never stringify the document per keystroke: 1.2 MB × every edit was 280 MB of garbage (F-34).
           post("selection", selectionReport(u.state));
         }
+        if (u.docChanged || u.startState.field(reviewField) !== u.state.field(reviewField) || u.transactions.some((t) => t.effects.length)) postReview(u.state);
       }),
     ];
 }
@@ -2430,6 +2445,12 @@ function agentEdit(edits, content) {
     const d = diffOne(a.slice(h.aFrom, h.aTo).join(""), b.slice(h.bFrom, h.bTo).join(""));
     return { from: starts[h.aFrom] + d.from, to: starts[h.aFrom] + d.to, insert: d.insert };
   });
+  // Suggest Edits (DL-237): Claude's hunks become signed marks, not plain text.
+  if (view.state.field(reviewField).suggest) {
+    const marked = suggestHunks(view.state, changes, "claude");
+    view.dispatch({ changes: marked.map(({ from, to, insert }) => ({ from, to, insert })), userEvent: "agent" });
+    return { result: "applied", changes: marked.length, line: view.state.doc.lineAt(changes[0].from).number, suggested: true };
+  }
   const set = ChangeSet.of(changes, before.length);
   const added = [];
   set.iterChanges((fA, tA, fB, tB) => { if (tB > fB) added.push([fB, tB]); });
@@ -2460,6 +2481,11 @@ function applyPlain(base, next) {
 
 // Agent edits go through the buffer (LR-34) and are highlighted until accepted (DL-5).
 function agentInsert(at, text) {
+  if (view.state.field(reviewField).suggest) {
+    const m = suggestHunks(view.state, [{ from: at, to: at, insert: text }], "claude");
+    view.dispatch({ changes: m.map(({ from, to, insert }) => ({ from, to, insert })), userEvent: "agent" });
+    return;
+  }
   view.dispatch({ changes: { from: at, insert: text }, effects: [markAdded.of([[at, at + text.length]]), recordChanges.of([{ id: ++changeSeq, from: at, to: at + text.length, removed: "" }])] });
 }
 
@@ -2577,6 +2603,11 @@ window.duo = {
     const at = doc.indexOf(find);
     if (at < 0) return { result: "not found" };
     if (doc.indexOf(find, at + 1) >= 0) return { result: "not unique" };
+    if (view.state.field(reviewField).suggest) {
+      const m = suggestHunks(view.state, [{ from: at, to: at + find.length, insert: text }], "claude");
+      view.dispatch({ changes: m.map(({ from, to, insert }) => ({ from, to, insert })), userEvent: "agent" });
+      return { result: "replaced", line: view.state.doc.lineAt(at).number, suggested: true };
+    }
     view.dispatch({ changes: { from: at, to: at + find.length, insert: text },
                     effects: [markAdded.of([[at, at + text.length]]), recordChanges.of([{ id: ++changeSeq, from: at, to: at + text.length, removed: find }])] });
     return { result: "replaced", line: view.state.doc.lineAt(at).number };
@@ -2616,6 +2647,14 @@ window.duo = {
     return false;
   },
   typeOne: (at) => view.dispatch({ changes: { from: at, insert: "x" }, selection: { anchor: at + 1 } }),
+  // Review in Markdown (DL-237)
+  setReviewer: (name) => { if (view) view.dispatch({ effects: setReviewer.of(name) }); return true; },
+  setMarkup: (mode, showClosed) => { view.dispatch({ effects: setReviewMarkup.of({ mode, showClosed: !!showClosed }) }); return true; },
+  reviewSummary: () => reviewSummary(view.state),
+  reviewStep: (dir) => stepReview(view, dir),
+  reviewResolve: (id, accept) => resolveSuggestion(view, id, !!accept),
+  reviewResolveAll: (accept, person) => resolveAllSuggestions(view, !!accept, person || null),
+  suggestEditsOn: () => suggestEditsOn(view.state.doc),
   hiddenCount: () => document.querySelectorAll(".cm-line").length,
 };
 post("ready", {});

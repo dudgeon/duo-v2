@@ -34,6 +34,7 @@ extension AppModel {
             }
         }
         markdownMarkup[key] = m
+        editorIfLoaded?.setReviewMarkup(mode: m.mode, showClosed: m.showClosed)
         let shown = m
         reviewText(url) { text in
             let p = Review.parse(text ?? "")

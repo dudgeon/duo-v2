@@ -88,6 +88,21 @@ import Foundation
     let flipped = Review.settingSuggestEdits("---\nsuggest-edits: false\n---\nx", on: true)
     check(flipped.contains("suggest-edits: true") && !flipped.contains("false"), "a false line is switched, not doubled")
 
+    // The editor's grammar (Vendor/codemirror/src/critic.js) reads the same marks and signs typing and Claude's edits (stage 2)
+    let script = repoRoot().appending(path: "Vendor/codemirror/test/run.sh")
+    if FileManager.default.isExecutableFile(atPath: "/opt/homebrew/bin/node") || FileManager.default.isExecutableFile(atPath: "/usr/local/bin/node") {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/bin/zsh"); p.arguments = [script.path]
+        p.environment = ProcessInfo.processInfo.environment.merging(["PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"]) { $1 }
+        let pipe = Pipe(); p.standardOutput = pipe; p.standardError = pipe
+        try? p.run()
+        let out = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        p.waitUntilExit()
+        check(p.terminationStatus == 0, "the editor module's own checks pass (critic.test.mjs)" + (p.terminationStatus == 0 ? "" : ":\n" + out))
+    } else { print("  (node isn't installed: the editor module's own checks are skipped)") }
+    let editorJS = (try? String(contentsOf: repoRoot().appending(path: "Vendor/codemirror/src/duo-editor.js"), encoding: .utf8)) ?? ""
+    check(editorJS.contains("reviewCore,") && editorJS.contains("reviewDrawing"), "the editor loads the review module: parse always, drawing with the live preview")
+
     // The paragraph and the verbs
     let c = Review.convention
     for must in ["{++added++}", "never accept or reject", "signed @claude", "#id.n", "closed<<}", "never delete someone's comment", "names @claude", "suggest-edits: true", "duo2 comment reply"] {
