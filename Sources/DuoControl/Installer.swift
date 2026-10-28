@@ -97,6 +97,10 @@ public enum Installer {
 
         A Duo task is a Markdown note in the project's `tasks/` folder with frontmatter (`type: task`, `title`, `status`, `sessions`). Statuses: open, in-progress, waiting, review, done, dropped. `duo2 tasks` lists them; `duo2 task new "<title>" [--status <s>] [--no-open]` makes one (add `--no-open` when making several); `duo2 task status <task> <status>` moves it. Write the brief in the note's text. Duo manages the `sessions:` list. Use these, not a TASKS.md or a to-do file: the user sees them in Duo.
 
+        ## Checking documents
+
+        Fit the check to where the file goes. A Word document headed for Google Docs: check its structure, not pixels, because Docs reflows it with its own fonts and a render only approximates that. `duo2 doc outline <file.docx>` gives the headings, styles and lists; `duo2 doc layout <file.docx>` gives the page size and margins (the text width), each table's width and columns against that width, each picture's size, and a warning for anything wider than its room. Use built-in heading styles, native lists, and table widths in DXA that add up to no more than the text width. There are no page numbers: Duo shows a document as one flow. Both verbs read only a document open in Duo or inside this project's folder. Don't start `soffice` or LibreOffice to render a document: it can't run inside Claude's sandbox, and Duo has no way around that by design.
+
         ## Families
 
         \(families)

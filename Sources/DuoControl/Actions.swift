@@ -7,7 +7,7 @@ import Foundation
 // menu item or click in the app isn't tied to an action here or listed in `Parity.uiOnly`.
 
 public enum ActionFamily: String, CaseIterable, Sendable {
-    case app, view, projects, sessions, director, files, repo, docs, html, slides, send, search, setup
+    case app, view, projects, sessions, director, files, repo, docs, review, html, slides, send, search, setup
 
     public var title: String {
         switch self {
@@ -19,6 +19,7 @@ public enum ActionFamily: String, CaseIterable, Sendable {
         case .files: "Files"
         case .repo: "GitHub"
         case .docs: "Documents"
+        case .review: "Review in Markdown"
         case .html: "HTML pages"
         case .slides: "PowerPoint decks"
         case .send: "Send to Claude"
@@ -73,7 +74,11 @@ public enum ActionID: String, CaseIterable, Sendable {
     case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
     case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docTable = "doc table", docFind = "doc find"
     case docProp = "doc prop", docMode = "doc mode"
-    case docMarkup = "doc markup", docComments = "doc comments", docOutline = "doc outline", docPick = "doc pick", docElement = "doc element"
+    case docMarkup = "doc markup", docComments = "doc comments", docOutline = "doc outline", docLayout = "doc layout",docPick = "doc pick", docElement = "doc element"
+    case docReview = "doc review"
+    case commentAdd = "comment add", commentList = "comment list", commentReply = "comment reply", commentSend = "comment send"
+    case commentClose = "comment close", commentDelete = "comment delete", commentReopen = "comment reopen", commentStatus = "comment status"
+    case suggestionList = "suggestion list", suggestionAccept = "suggestion accept", suggestionReject = "suggestion reject"
     case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history", docRevert = "doc revert"
     // HTML pages
     case browserOpen = "browser open", browserAllow = "browser allow", browserSites = "browser sites"
@@ -358,17 +363,22 @@ extension DuoAction {
               "The showing document's properties (frontmatter): read them, or change one line through the editor, highlighted as Claude's (DB-16). Lists: `set tags \"[a, b]\"`.",
               ui: ["Add a property", "property type menu", "Pick a date", "property checkbox"]),
         .init(.docMarkup, .docs, "[all|simple|none|original] [--comments on|off] [--show-resolved on|off] [--person <name>|everyone]",
-              "The Word document showing: which markup its viewer draws, and change it, as the Markup menu does (DL-162). All Markup draws every change in its person's colour with the comments; simple accepts the changes and marks the margin where one was; none accepts them with no marks; original shows the text before them. --person shows only that person's marks. Kept per document while Duo runs. With nothing, says what it shows now and who is in the document.",
-              ui: ["Markup", "All Markup", "Simple Markup", "No Markup", "Original", "Show Comments", "Show Resolved Comments"]),
+              "On a Markdown document: the same modes for its suggestions and comments, with --show-closed on|off for closed threads (DL-237). The Word document showing: which markup its viewer draws, and change it, as the Markup menu does (DL-162). All Markup draws every change in its person's colour with the comments; simple accepts the changes and marks the margin where one was; none accepts them with no marks; original shows the text before them. --person shows only that person's marks. Kept per document while Duo runs. With nothing, says what it shows now and who is in the document.",
+              ui: ["Markup", "All Markup", "Simple Markup", "No Markup", "Original", "Show Comments", "Show Resolved Comments", "Show Closed Comments"]),
+        .init(.docReview, .docs, "[on|off|next|previous]",
+              "The Markdown document's Suggest Edits switch (DL-237): on, every change anyone makes becomes a signed suggestion; kept in the file as `suggest-edits: true` in its frontmatter, written only while on. With nothing, says which it is. next and previous select the next or previous suggestion or comment in the document (the review bar's ‹ ›). Edit › Suggest Edits does the same as on and off.",
+              ui: ["Suggest Edits", "Next Change", "Previous Change"]),
         .init(.docOutline, .docs, "<file.docx> [--json]",
               "A Word document's paragraphs, read from the file (no viewer needed): each with its w14:paraId (the id the viewer draws it under), style and heading level, its text with the tracked changes accepted, its tracked changes (kind, author, date, text) and the comments that end in it (thread, resolved). Then every comment thread. A picked paragraph's Send to Claude names the same ids."),
+        .init(.docLayout, .docs, "<file.docx> [--json]",
+              "A Word document's geometry, read from the file (no viewer, no renderer): each section's page size, orientation and margins, so its text width; each table's declared width and column widths against the room it has (the text width, or its cell's); each picture's size; and a warning for anything wider than its room, a percentage table width, or a width that disagrees with its columns. Sizes in points. No page numbers. Only a document open in a Duo tab or inside the session's project folder (C-115)."),
         .init(.docPick, .docs, "[<paragraph id> | c:<comment id>]",
               "Start Select Text in the Word document showing, for the user to click a paragraph or a comment, or select the paragraph (its w14:paraId from `doc outline`) or comment (`c:<id>`) named.",
               ui: ["Select Text"]),
         .init(.docElement, .docs, "[<paragraph id> | c:<comment id>]",
               "Describe a paragraph or comment of the Word document showing (the picked one by default) as Send to Claude would send it: where it is, its text with changes accepted, its tracked changes and comments."),
-        .init(.docComments, .docs, "[--resolved]",
-              "The comments of the Word document showing, from what its viewer drew: author, date, text, replies and whether each is resolved (--resolved: only those)."),
+        .init(.docComments, .docs, "[--resolved | --closed]",
+              "The comments of the document showing. A Word document: from what its viewer drew, with author, date, text, replies and whether each is resolved (--resolved: only those). A Markdown document: its threads, read from the text as the editor has it, with author, date, text and replies; closed threads are left out unless --closed (DL-237)."),
         .init(.docInsert, .docs, "<text> [--line <n>]", "Insert text into the showing document through the editor (highlighted as added by Claude), at a line or the caret."),
         .init(.docReplace, .docs, "<find> <replacement>", "Replace text in the showing document through the editor (highlighted as added by Claude)."),
 
@@ -379,6 +389,34 @@ extension DuoAction {
         .init(.docResolve, .docs, "mine|theirs", "End a conflict in the showing document: keep the user's text (saved over the file) or take the file's. The other version stays in history. Only when the user asks.",
               ui: ["Keep Mine", "Use Theirs"]),
         .init(.docHistory, .docs, "[path]", "Versions Duo kept of a document (as opened, both sides of conflicts, before removal), newest last, with where each is stored."),
+
+
+        // Review in Markdown (DL-236, DL-237): comments and suggestions as signed CriticMarkup. A file open in Duo's editor is changed through the
+        // editor (as Claude's change); any other file on disk. Run from a Claude session the author is `claude`, else the user's Mac name; --as names one.
+        .init(.commentAdd, .review, "<file> --at <line|text> [--as <name>] <text>",
+              "Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`)."),
+        .init(.commentList, .review, "<file> [--closed | --unsent]",
+              "The file's comment threads: id, who and when, the text it is on, the comment and its replies. Closed threads are left out unless --closed (only those); --unsent lists the open ones that name @claude and have no reply."),
+        .init(.commentReply, .review, "<id> <text> [--file <file>] [--suggest] [--as <name>]",
+              "Reply in a thread (or to a suggestion) with the next number, `#c1.2`; a closed thread reopens. --suggest instead proposes the reply text as a replacement of the text the thread is on. Never rewrites anyone's comment. Without --file, the document showing."),
+        .init(.commentSend, .review, "<id | --all> [--file <file>] [--to <session> | --new]",
+              "Send a comment that names @claude to a session, quoted as data, when the person says to (DL-236 10). Arrives with @claude routing; until then it says so."),
+        .init(.commentClose, .review, "<id> [--file <file>] [--as <name>]",
+              "Close and Keep: add a closing line `{>>@name date #c1.2 closed<<}` after the thread's last comment; the highlight and comments stay (Q-262)."),
+        .init(.commentDelete, .review, "<id> [--file <file>]",
+              "Delete the thread: its highlight markers and every comment go, the text stays."),
+        .init(.commentReopen, .review, "<id> [--file <file>]",
+              "Reopen a closed thread: its closing line goes."),
+        .init(.commentStatus, .review, "<id> [--file <file>]",
+              "One thread: open or closed, who is in it, whether it names @claude and whether Claude has replied."),
+        .init(.suggestionList, .review, "<file>",
+              "The file's suggestions: id, kind (insertion, deletion, substitution), who and when, the text."),
+        .init(.suggestionAccept, .review, "<id | --all> [--file <file>] [--person <name>]",
+              "Accept a suggestion: the change is made and its mark goes (--all: every one, or one person's). The person's call: only when they ask.",
+              ui: ["Accept", "Accept All", "Accept All from"]),
+        .init(.suggestionReject, .review, "<id | --all> [--file <file>] [--person <name>]",
+              "Reject a suggestion: the text stays as it was and its mark goes. The person's call: only when they ask.",
+              ui: ["Reject", "Reject All", "Reject All from"]),
 
         // HTML pages
         .init(.browserOpen, .html, "[url]", "A browser tab in the right pane (⌥⌘T). Sites not on the allow list show Allow or Open in Browser instead of loading (DL-3).",
@@ -521,7 +559,7 @@ public struct Invocation: Sendable {
     public var flags: [String: String] = [:]
 
     /// Flags that take no value.
-    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "take-over", "handed-back", "no-worker", "adopt", "clear", "refresh", "no-open", "log"]
+    public static let switches: Set<String> = ["fork", "draft", "browser", "pr", "sheet", "keep-in-git", "use-folder", "json", "yes", "replace", "keep-both", "relative", "link", "copy", "others", "new", "markdown", "exact", "all", "session", "open", "sessions", "keep-sessions", "synthetic", "resolved", "force", "session-only", "left", "right", "hidden", "anyway", "not-now", "no-interview", "cancel", "fetch", "background", "in-duo", "suggest", "closed", "unsent", "take-over", "handed-back", "no-worker", "adopt", "clear", "refresh", "no-open", "log"]
 
     /// Flags whose value is optional: the next word is theirs unless it's another flag.
     public static let optionalValues: Set<String> = ["remote-control"]
@@ -608,6 +646,7 @@ extension DuoAction {
             + "\nDocuments the user has open in Duo (`duo2 status` shows them) are theirs to see change: edit them with "
             + "`duo2 doc edit --stdin`, piping the JSON your Edit tool takes ({\"file_path\",\"old_string\",\"new_string\"}, or {\"file_path\",\"content\"} to rewrite), "
             + "not with Edit, Write or shell redirection. Duo applies it in the editor the user is looking at, highlighted, and merges it with their unsaved typing."
+            + "\nTo check a Word document you made, fit the check to where it goes (for Google Docs, structure, not pixels): `duo2 doc outline` and `duo2 doc layout` (page and text width, tables and pictures against it); the duo2 skill's \"Checking documents\" says more. Don't start soffice in the sandbox."
             + "\nTo track work, make Duo tasks (`duo2 task new`, one note each in the project's tasks/ folder) and set their status with `duo2 task status`; do not write a TASKS.md or a to-do list file."
             + "\nWhen you start substantial work, `duo2 session note \"<one line>\"`; when you hand back, `duo2 session next \"<one line>\"`."
     }

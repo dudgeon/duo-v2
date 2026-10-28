@@ -213,6 +213,8 @@ public final class AppModel {
     @ObservationIgnored public var docxViewerIfLoaded: DocxViewer?
     /// The Markup menu is open (W4); the viewer's bar shows Markup pressed while it is.
     public var docxMenuOpen = false
+    /// The Markdown review bar's open menu: "markup" or "all" (DL-237).
+    public var reviewMenu: String?
     /// Browser tabs by id (`web:…`), kept alive while their tab is open (Phase K, ENH-8).
     @ObservationIgnored public var webTabs: [String: WebTab] = [:]
     /// Downloads browser tabs saved since launch, oldest first (`duo2 browser downloads`, DL-124).
@@ -236,6 +238,8 @@ public final class AppModel {
     public var editorRevision = 0
     /// The editor if it has been created (doc-status mustn't create one).
     @ObservationIgnored public var editorIfLoaded: EditorController?
+    /// A Markdown document's review view while Duo runs, by file path (DL-162, DL-237): the markup mode and Show Closed Comments.
+    @ObservationIgnored public var markdownMarkup: [String: MarkdownMarkup] = [:]
     /// Set once, when the editor first shows a document. Observed, so commands that depend on the
     /// (unobserved) editor re-evaluate then: Save stayed disabled until something else invalidated.
     public var editorOpened = false

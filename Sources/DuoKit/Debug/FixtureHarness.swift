@@ -352,6 +352,14 @@ public enum FixtureHarness {
             if let url = model.editor.url { try? FileManager.default.moveItem(at: url, to: url.appendingPathExtension("gone")) }
         case "disk-restore":
             if let url = model.editor.url { try? FileManager.default.moveItem(at: url.appendingPathExtension("gone"), to: url) }
+        case "review-menu": model.reviewMenu = parts.count > 1 ? parts[1] : nil   // review-menu:markup|all: the review bar's menu, open for a capture
+        case "verb":   // verb:<duo2 words>[ --as name]: a duo2 verb through the control handler, as `duo2` sends it (from a Claude session); its reply to stderr
+            let words = (parts.count > 1 ? parts[1] : "").split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+            guard let command = words.first else { break }
+            let args = words.dropFirst().map { $0.replacingOccurrences(of: "~", with: " ") }   // a text argument joins its words with ~ (the action list splits on commas)
+            model.handle(ControlRequest(token: "", command: command, args: Array(args), session: "check-session", cwd: model.projectFolder?.path)) { r in
+                FileHandle.standardError.write(Data("verb \(command): ok=\(r.ok) \(r.output.replacingOccurrences(of: "\n", with: " | "))\n".utf8))
+            }
         case "editor-state":
             let e = model.editor
             e.run("return duo.text()") { v in
