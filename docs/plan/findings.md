@@ -4185,6 +4185,17 @@ Found by drawing the new fixtures (`docs/design/docx-viewer-handoff/fixture/make
 - So the bar is **sticky**, not wrong about the screen it's on: since DL-154 an automatic fallback stays until Back to Chat, so one `unknown` moment longer than 0.5 s earlier in the conversation (a long turn, a screen the reader doesn't know, a redraw) leaves the bar over everything after, including a plain idle prompt. The photos show only the later steady state; the moment that triggered it isn't on screen.
 - What was added so the next report names it: the report now carries the reader's verdict changes before the fallback (`idle → unknown (…)`, the last 12) and, when the screen has moved on, the screen now with its verdict. DuoChecks covers both with the field fixture.
 
+## F-381 · The first problem-discovery run: four of seven open issues were already fixed (problem-discovery, 2026-10-28)
+
+- Open on 2026-10-28: #4, #8, #9, #11, #12, #13 and #14. #8 shipped in 0.2.18 (DL-224), #12 and #14 in 0.2.19 (F-343, DL-227/228), and #4's Shift+Return and Cmd+Delete in 0.2.18 (F-356). None of them had a reply or a close. The gap was closing the loop on GitHub, not the work itself, so the procedure ranks "shipped, still open" as needing Geoff and drafts the reply.
+- #11 shows a conversation that moved. It was filed as a terminal-theming wish, and its 2026-10-23 comment from the reporter is the chat-mode fallback that DL-234 treats as a bug. The run reclassified it, which is why the procedure checks comments as well as the label.
+- Nothing linked issues to work except prose. Task notes name issues as "GitHub #n" in titles and briefs, so `discovery-gather.py` collects every `#n` in each note as `issueRefs`. Matching still needs judgement: the terminal-keys task never says "#4" in its frontmatter.
+
+## F-382 · What a scheduled run can read and write (problem-discovery, 2026-10-28)
+
+- `claude agents --json --all --cwd /Users/geoff/repos/duo-v2` limits the list to duo-v2's background sessions. Each entry has `id`, `sessionId`, `name`, `state` (working, blocked, done, stopped, or none) and `startedAt`, but no link and no last message. Both come from the transcript (`~/.claude/projects/-Users-geoff-repos-duo-v2*/<sessionId>.jsonl`): the Remote Control URL from its `bridge_status`/`remote_session_change` lines (as `session-links.py` reads it), and the last report from the last `assistant` line with text.
+- `ArtifactData` writes a page's database as Geoff from any session, so the daily run fills the page without publishing it. The page's "send to Claude" still reaches only the session that published it (F-259), which is why the director publishes it (DL-239).
+- A session isolated in a work tree refuses shell commands that compute or pipe git invocations. Plain `git grep … refs/remotes/origin/main` works. Scripts that call `gh`/`claude` belong in a file (`discovery-gather.py`), not in an inline interpreter.
 ## F-379 · How Google Docs and claude.ai draw comment threads (markdown-review-design, 2026-10-28)
 
 Research for DL-236 (8), "the things the users should feel familiar with". Google Docs from its help pages (support.google.com/docs/answer/65129, /179738) and long use; claude.ai artifact comments as they work today, looked at on the intent page.

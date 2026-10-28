@@ -1,0 +1,449 @@
+<title>Duo Problem Discovery</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one phone-first column of cluster cards, sorted by what needs Geoff; a queue strip above them. Duo's own tokens (docs/design/system), system faces. */
+:root {
+  --ground: #f3f4f6; --pane: #ffffff; --selected: #e9ecef; --rule: #c9cdd3; --edge: #8b939c;
+  --text: #1f2328; --text2: #5b636d; --accent: #c2410c; --on-accent: #ffffff; --tint: #e8f0fa;
+  --good: #2f7d32; --good-fill: #e6f4ea; --part: #9a5a00; --part-fill: #fbf0dc; --bad-fill: #fdecea; --link: #1d5fa8;
+  --quote: #f8f9fa;
+  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #131518; --pane: #181a1e; --selected: #262a30; --rule: #2b2f36; --edge: #6e7681;
+  --text: #e6e8eb; --text2: #9aa1ab; --accent: #f97316; --on-accent: #0c0d10; --tint: #18222e;
+  --good: #7cc98a; --good-fill: #15291c; --part: #e0a64a; --part-fill: #2e2412; --bad-fill: #331a1d; --link: #7fb0ee;
+  --quote: #131518; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --ground: #131518; --pane: #181a1e; --selected: #262a30; --rule: #2b2f36; --edge: #6e7681;
+  --text: #e6e8eb; --text2: #9aa1ab; --accent: #f97316; --on-accent: #0c0d10; --tint: #18222e;
+  --good: #7cc98a; --good-fill: #15291c; --part: #e0a64a; --part-fill: #2e2412; --bad-fill: #331a1d; --link: #7fb0ee;
+  --quote: #131518; color-scheme: dark; }
+body { background: var(--ground); color: var(--text); font: 15px/1.45 var(--ui); -webkit-text-size-adjust: 100%; }
+.wrap { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 14px 48px; display: grid; gap: 18px; }
+a { color: var(--link); }
+header { display: grid; gap: 6px; }
+h1 { font-size: 1.45rem; line-height: 1.15; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+.runline { color: var(--text2); font-size: .88rem; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-variant-numeric: tabular-nums; }
+.runline .stale { color: var(--accent); font-weight: 600; }
+.headline { margin: 2px 0 0; }
+.tally { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: .76rem; font-weight: 600; line-height: 1; padding: 5px 8px; border-radius: 999px; border: 1px solid var(--edge); color: var(--text2); background: var(--pane); white-space: nowrap; }
+.chip.need { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.chip.cov-covered { color: var(--good); border-color: currentColor; background: var(--good-fill); }
+.chip.cov-partly { color: var(--part); border-color: currentColor; background: var(--part-fill); }
+.chip.cov-none { color: var(--accent); border-color: currentColor; background: var(--bad-fill); }
+.chip.bug { color: var(--text); }
+.chip.re { color: var(--accent); border-style: dashed; }
+.chip.you { background: var(--tint); border-color: var(--link); color: var(--link); }
+h2 { font-size: .74rem; letter-spacing: .07em; text-transform: uppercase; color: var(--text2); margin: 0; display: flex; gap: 8px; align-items: center; }
+section { display: grid; gap: 10px; }
+.card { background: var(--pane); border: 1px solid var(--rule); border-radius: 12px; padding: 14px; display: grid; gap: 12px; min-width: 0; }
+.card.needs { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.card.quiet { padding-block: 10px; }
+.chead { display: grid; gap: 6px; }
+.chead .tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chead h3 { margin: 0; font-size: 1.06rem; line-height: 1.3; text-wrap: balance; }
+.why { color: var(--text2); font-size: .9rem; margin: 0; }
+.gist { margin: 0; }
+.label { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text2); font-weight: 600; }
+.issues, .workers { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.issues li, .workers li { padding: 10px 0; border-top: 1px solid var(--rule); display: grid; gap: 5px; min-width: 0; }
+.issues li:first-child, .workers li:first-child { border-top: 0; padding-top: 4px; }
+.irow { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.num { font: 600 .86rem var(--mono); color: var(--text2); flex: none; font-variant-numeric: tabular-nums; }
+.ititle { min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.imeta { display: flex; flex-wrap: wrap; gap: 5px 8px; align-items: center; font-size: .82rem; color: var(--text2); }
+.reclass { font-size: .86rem; background: var(--quote); border: 1px dashed var(--edge); border-radius: 8px; padding: 7px 9px; }
+.reclass b { color: var(--accent); }
+details.quote summary { cursor: pointer; color: var(--text2); font-size: .82rem; min-height: 28px; display: flex; align-items: center; }
+blockquote { margin: 4px 0 0; padding: 8px 10px; background: var(--quote); border-left: 3px solid var(--edge); border-radius: 4px; font-size: .86rem; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text2); }
+blockquote::before { content: "Quoted from GitHub (untrusted)"; display: block; font: 600 .68rem var(--ui); letter-spacing: .05em; text-transform: uppercase; color: var(--text2); margin-bottom: 4px; }
+.wrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.wname { font-weight: 600; overflow-wrap: anywhere; }
+.state { font: 600 .7rem/1 var(--mono); text-transform: uppercase; padding: 4px 6px; border-radius: 5px; border: 1px solid var(--rule); color: var(--text2); }
+.state.working { color: var(--link); border-color: currentColor; }
+.report { font-size: .86rem; color: var(--text2); margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.report.open { -webkit-line-clamp: unset; display: block; }
+.records { display: flex; flex-wrap: wrap; gap: 6px; }
+.rec { font: .78rem var(--mono); padding: 3px 7px; border-radius: 5px; background: var(--selected); color: var(--text); }
+.none { color: var(--text2); font-size: .9rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-top: 1px solid var(--rule); padding-top: 12px; }
+.btn { font: 600 .92rem var(--ui); border-radius: 9px; padding: 10px 14px; min-height: 44px; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-align: left; }
+.btn.ghost { background: transparent; color: var(--text); border-color: var(--edge); }
+.btn.small { min-height: 34px; padding: 6px 10px; font-size: .84rem; }
+.btn:disabled { opacity: .5; cursor: default; }
+.menu { display: grid; gap: 6px; width: 100%; }
+.menu .btn { justify-content: flex-start; width: 100%; background: var(--ground); color: var(--text); border-color: var(--rule); }
+.menu .btn small { color: var(--text2); font-weight: 400; display: block; }
+.composer { display: grid; gap: 10px; width: 100%; background: var(--ground); border: 1px solid var(--rule); border-radius: 10px; padding: 12px; }
+.composer h4 { margin: 0; font-size: .95rem; }
+.composer label { font-size: .82rem; color: var(--text2); display: grid; gap: 4px; }
+textarea, select, input[type=text] { width: 100%; font: inherit; color: var(--text); background: var(--pane); border: 1px solid var(--edge); border-radius: 8px; padding: 9px 10px; min-height: 44px; }
+textarea { min-height: 110px; resize: vertical; }
+.check { display: flex !important; gap: 8px; align-items: center; color: var(--text) !important; font-size: .9rem !important; }
+.check input { width: 20px; height: 20px; }
+.what { font-size: .84rem; color: var(--text2); margin: 0; }
+.what b { color: var(--text); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.status { font-size: .84rem; color: var(--text2); }
+.status.ok { color: var(--good); } .status.err { color: var(--accent); }
+.queued { display: grid; gap: 4px; font-size: .88rem; background: var(--tint); border-radius: 8px; padding: 9px 10px; }
+.queued.done { background: var(--good-fill); }
+.queued.declined, .queued.cancelled { background: var(--selected); }
+.qline { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: space-between; }
+.qlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.empty { color: var(--text2); font-size: .92rem; padding: 14px; border: 1px dashed var(--rule); border-radius: 10px; }
+.foot { font-size: .84rem; color: var(--text2); display: grid; gap: 6px; }
+.foot p { margin: 0; max-width: 65ch; }
+.week { list-style: none; margin: 0; padding: 0; background: var(--pane); border: 1px solid var(--rule); border-radius: 12px; }
+.week li { border-top: 1px solid var(--rule); }
+.week li:first-child { border-top: 0; }
+.week button { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: baseline; padding: 11px 14px; min-height: 44px; }
+.week button:focus-visible { outline: 2px solid var(--link); outline-offset: -2px; border-radius: 12px; }
+.week .wk { font: 600 .7rem/1 var(--mono); text-transform: uppercase; color: var(--text2); }
+.week .wk.new, .week .wk.comment { color: var(--accent); }
+.week .wk.shipped { color: var(--good); }
+.week .wl { min-width: 0; overflow-wrap: anywhere; }
+.week .wd { font-size: .8rem; color: var(--text2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.week .wc { grid-column: 2 / -1; font-size: .82rem; color: var(--link); }
+.card.flash { outline: 2px solid var(--link); outline-offset: 2px; }
+.sample { font-size: .8rem; font-weight: 600; color: var(--part); }
+textarea:focus, select:focus, input:focus, .btn:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) { .btn { transition: background .12s, border-color .12s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Duo Problem Discovery</h1>
+    <div class="runline" id="runline"><span>Loading the last run…</span></div>
+    <p class="headline" id="headline">GitHub issues on dudgeon/duo-v2, grouped into problems and matched to the workers already on them. A run each day fills this page.</p>
+    <div class="tally" id="tally"></div>
+  </header>
+
+  <section id="week-sec" hidden>
+    <h2>This week</h2>
+    <ul class="week" id="week"></ul>
+  </section>
+
+  <section id="queue-sec" hidden>
+    <h2>Your actions</h2>
+    <ul class="qlist" id="queue"></ul>
+  </section>
+
+  <section id="need-sec">
+    <h2>Needs you</h2>
+    <div id="need" class="stack" style="display:grid;gap:12px"><div class="empty">Problems that no worker covers, or that wait on your call, appear here first.</div></div>
+  </section>
+
+  <section id="hand-sec" hidden>
+    <h2>In hand</h2>
+    <div id="hand" style="display:grid;gap:12px"></div>
+  </section>
+
+  <section id="quiet-sec" hidden>
+    <h2>Quiet</h2>
+    <div id="quiet" style="display:grid;gap:10px"></div>
+  </section>
+
+  <div class="foot">
+    <p><b>Nothing here acts on its own.</b> A button records what you want and hands it to the director, which carries it out under its rules. A reply goes out only as the text you approved. A worker hears about an issue only from the director, with the issue quoted as untrusted text.</p>
+    <p id="chan">Checking the line to the director…</p>
+  </div>
+</div>
+
+<script>
+const REPO = "https://github.com/dudgeon/duo-v2";
+const $ = s => document.querySelector(s);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const store = { meta: null, clusters: {}, actions: {} };
+let db = null, comments = null, canSend = "off";
+const ui = {}; // cluster id -> { mode: null|"menu"|kind }
+
+const KINDS = {
+  reply:    { verb: "Reply on GitHub",          hint: "You approve the exact text; the director posts it", what: "The director posts <b>exactly this text</b> as your comment on GitHub, and closes the issue if you tick it. Nothing else is posted." },
+  relay:    { verb: "Send to a worker",         hint: "The director passes it on, issue quoted as untrusted", what: "The director messages the worker in your name, with your note, and quotes the issue as untrusted text. The worker never reads the issue on its own." },
+  backlog:  { verb: "Add to the backlog",       hint: "Becomes an ENH record; no work starts", what: "The director writes an ENH record linking these issues. No work starts, and nothing is posted to GitHub unless you also reply." },
+  research: { verb: "Start research",           hint: "A new task note and worker, on your question", what: "The director writes a task note with your question and starts a research worker on it. The issue goes in as quoted, untrusted text." },
+  snooze:   { verb: "Nothing to do for now",    hint: "Moves it to Quiet until the issue changes", what: "The next run keeps this in Quiet until someone comments or a new issue joins it. Nothing goes to the director." },
+};
+
+const ago = iso => { if (!iso) return ""; const s = (Date.now() - new Date(iso)) / 1000; if (isNaN(s)) return "";
+  if (s < 3600) return Math.max(1, Math.round(s / 60)) + " min"; if (s < 86400) return Math.round(s / 3600) + " h"; return Math.round(s / 86400) + " d"; };
+const when = iso => { try { return new Date(iso).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }); } catch (e) { return iso; } };
+const list = o => Object.entries(o || {}).map(([id, d]) => ({ id, ...d }));
+const COVER = { covered: "Likely covered", partly: "Partly covered", none: "Not covered" };
+
+// ---- Header ----
+function renderMeta() {
+  const m = store.meta, rl = $("#runline"); rl.replaceChildren();
+  if (!m) { rl.append(el("span", "", "No run yet. The first run fills this page.")); return; }
+  const hrs = (Date.now() - new Date(m.ranAt)) / 3.6e6;
+  rl.append(el("span", hrs > 30 ? "stale" : "", "Last run " + when(m.ranAt) + (hrs > 30 ? " (overdue)" : "")));
+  if (m.issuesOpen != null) rl.append(el("span", "", m.issuesOpen + " open issues"));
+  if (m.runLink) { const a = el("a", "", "the run's session"); a.href = m.runLink; a.target = "_blank"; a.rel = "noopener"; rl.append(a); }
+  if (m.sample) rl.append(el("span", "sample", "Sample data from today's issues"));
+  if (m.headline) $("#headline").textContent = m.headline;
+  const t = $("#tally"); t.replaceChildren();
+  const cs = list(store.clusters).filter(c => !c.gone);
+  const n = k => cs.filter(c => c.band === k).length;
+  if (n("need")) t.append(el("span", "chip need", n("need") + " need you"));
+  if (n("hand")) t.append(el("span", "chip cov-covered", n("hand") + " in hand"));
+  if (n("quiet")) t.append(el("span", "chip", n("quiet") + " quiet"));
+}
+
+// ---- Queue: Geoff's actions and what the director did with them ----
+function actionLine(a, withCancel) {
+  const li = el("li", "queued " + (a.status || "queued"));
+  const top = el("div", "qline");
+  const what = el("span"); what.append(el("b", "", (KINDS[a.kind] || {}).verb || a.kind));
+  const bits = [];
+  if (a.issues && a.issues.length) bits.push(a.issues.map(n => "#" + n).join(", "));
+  if (a.target) bits.push("to " + a.target);
+  if (a.close) bits.push("and close");
+  if (bits.length) what.append(" · " + bits.join(" "));
+  top.append(what);
+  const st = { queued: "Waiting for the director", done: "Done", declined: "Director declined", cancelled: "Cancelled" }[a.status || "queued"];
+  top.append(el("span", "status" + (a.status === "done" ? " ok" : ""), st + (a.at ? " · " + ago(a.doneAt || a.at) + " ago" : "")));
+  li.append(top);
+  if (a.result) li.append(el("span", "status", a.result));
+  if (withCancel && (a.status || "queued") === "queued") {
+    const b = el("button", "btn ghost small", "Cancel"); b.onclick = () => cancelAction(a.id); li.append(b);
+  }
+  return li;
+}
+function renderQueue() {
+  const acts = list(store.actions).filter(a => a.kind !== "snooze").sort((x, y) => String(y.at).localeCompare(String(x.at)));
+  const recent = acts.filter(a => (a.status || "queued") === "queued" || (Date.now() - new Date(a.doneAt || a.at)) < 7 * 864e5);
+  $("#queue-sec").hidden = !recent.length;
+  $("#queue").replaceChildren(...recent.slice(0, 12).map(a => actionLine(a, true)));
+}
+
+// ---- Clusters ----
+function issueRow(i) {
+  const li = el("li");
+  const r = el("div", "irow");
+  r.append(el("span", "num", "#" + i.n));
+  const t = el("a", "ititle", i.title); t.href = i.url || REPO + "/issues/" + i.n; t.target = "_blank"; t.rel = "noopener"; r.append(t);
+  li.append(r);
+  const m = el("div", "imeta");
+  m.append(el("span", "chip" + (i.type === "bug" ? " bug" : ""), i.type === "bug" ? "Bug" : i.type === "question" ? "Question" : "Feature"));
+  if (i.reclass) m.append(el("span", "chip re", "Reclassified"));
+  m.append(i.geoff ? el("span", "chip you", "You") : el("span", "", "@" + i.author));
+  m.append(el("span", "", "opened " + ago(i.opened) + " ago"));
+  if (i.comments) m.append(el("span", "", i.comments + (i.comments === 1 ? " comment" : " comments")));
+  if (i.state === "closed") m.append(el("span", "chip", "Closed"));
+  if (i.fresh) m.append(el("span", "chip need", "New"));
+  li.append(m);
+  if (i.reclass) {
+    const rc = el("div", "reclass");
+    rc.append(el("b", "", "Filed as " + (i.filedAs || "?") + ", treated as " + i.type + ". "));
+    rc.append(i.reclass);
+    li.append(rc);
+  }
+  if (i.quote) {
+    const d = el("details", "quote"); d.append(el("summary", "", "What they wrote"));
+    d.append(el("blockquote", "", i.quote)); li.append(d);
+  }
+  return li;
+}
+function workerRow(w) {
+  const li = el("li");
+  const r = el("div", "wrow");
+  if (w.link) { const a = el("a", "wname", w.name); a.href = w.link; a.target = "_blank"; a.rel = "noopener"; r.append(a); }
+  else r.append(el("span", "wname", w.name));
+  if (w.state) r.append(el("span", "state " + w.state.replace(/\s+/g, "-"), w.state));
+  r.append(el("span", "chip cov-" + (w.coverage || "none"), COVER[w.coverage] || "Not covered"));
+  li.append(r);
+  if (w.why) li.append(el("p", "why", w.why));
+  if (w.lastReport) {
+    const p = el("p", "report", (w.lastAt ? "Last report, " + ago(w.lastAt) + " ago: " : "Last report: ") + w.lastReport);
+    p.title = "Tap to expand"; p.onclick = () => p.classList.toggle("open"); li.append(p);
+  }
+  return li;
+}
+function myActions(c) { return list(store.actions).filter(a => a.cluster === c.id && a.kind !== "snooze" && ((a.status || "queued") === "queued" || (Date.now() - new Date(a.doneAt || a.at)) < 3 * 864e5)); }
+
+function composer(c, kind) {
+  const box = el("div", "composer");
+  box.append(el("h4", "", KINDS[kind].verb));
+  const issues = (c.issues || []).filter(i => i.state !== "closed");
+  const f = {};
+  if (kind === "reply") {
+    const lab = el("label", "", "Issue"); f.issue = el("select"); f.issue.id = "rs-" + c.id;
+    issues.forEach(i => { const o = el("option", "", "#" + i.n + " " + i.title); o.value = i.n; f.issue.append(o); });
+    const s = c.suggest || {}; if (s.kind === "reply" && s.issue) f.issue.value = s.issue;
+    lab.append(f.issue); box.append(lab);
+    const tl = el("label", "", "Your reply, as it will appear on GitHub"); f.text = el("textarea"); f.text.id = "rt-" + c.id;
+    const draftFor = n => { const d = (c.drafts || {})[n]; return d != null ? d : (s.kind === "reply" && String(s.issue) === String(n) ? s.draft || "" : ""); };
+    f.text.value = draftFor(f.issue.value); f.issue.onchange = () => { f.text.value = draftFor(f.issue.value); };
+    tl.append(f.text); box.append(tl);
+    const cl = el("label", "check"); f.close = el("input"); f.close.type = "checkbox"; f.close.id = "rc-" + c.id; f.close.checked = !!(s.kind === "reply" && s.close);
+    cl.append(f.close, "Close the issue after posting"); box.append(cl);
+  } else if (kind === "relay") {
+    const lab = el("label", "", "Worker"); f.target = el("select"); f.target.id = "wt-" + c.id;
+    (c.workers || []).forEach(w => { const o = el("option", "", w.name + " (" + (COVER[w.coverage] || "") + ")"); o.value = w.name; f.target.append(o); });
+    const other = el("option", "", "Another worker, named in my note"); other.value = "other"; f.target.append(other);
+    if ((c.suggest || {}).target) f.target.value = c.suggest.target;
+    lab.append(f.target); box.append(lab);
+  }
+  if (kind !== "reply" && kind !== "snooze") {
+    const lab = el("label", "", kind === "relay" ? "Your note to the worker (what to do with it)" : kind === "research" ? "Your question for the research" : "Note for the backlog record (optional)");
+    f.note = el("textarea"); f.note.id = "nt-" + kind + "-" + c.id; f.note.value = ((c.suggest || {}).kind === kind && c.suggest.note) || "";
+    lab.append(f.note); box.append(lab);
+  }
+  if (kind !== "reply" && kind !== "snooze" && issues.length > 1) {
+    box.append(el("p", "what", "Covers " + issues.map(i => "#" + i.n).join(", ") + "."));
+  }
+  const what = el("p", "what"); what.innerHTML = KINDS[kind].what; box.append(what);
+  const row = el("div", "row");
+  const go = el("button", "btn", kind === "reply" ? "Approve this reply" : kind === "snooze" ? "Move to Quiet" : "Queue for the director");
+  const back = el("button", "btn ghost", "Back"); back.onclick = () => { ui[c.id] = { mode: null }; renderClusters(); };
+  const st = el("span", "status");
+  go.onclick = async () => {
+    const a = { kind, cluster: c.id, clusterTitle: c.title, status: kind === "snooze" ? "done" : "queued", at: new Date().toISOString() };
+    if (kind === "reply") { a.issues = [Number(f.issue.value)]; a.draft = f.text.value.trim(); a.close = f.close.checked; if (!a.draft && !a.close) { st.className = "status err"; st.textContent = "Write a reply, or tick Close."; return; } }
+    else a.issues = issues.map(i => i.n);
+    if (f.target) a.target = f.target.value === "other" ? "" : f.target.value;
+    if (f.note) a.note = f.note.value.trim();
+    if (kind === "relay" && !a.target && !a.note) { st.className = "status err"; st.textContent = "Name the worker in your note."; return; }
+    if (kind === "research" && !a.note) { st.className = "status err"; st.textContent = "Say what the research should answer."; return; }
+    if (kind === "snooze") a.seenUpdated = c.updated || null;
+    go.disabled = true; st.className = "status"; st.textContent = "Saving…";
+    const ok = await saveAction(a);
+    if (!ok) { go.disabled = false; st.className = "status err"; st.textContent = "Couldn't save. Check you're signed in, then try again."; return; }
+    ui[c.id] = { mode: null, sent: kind };
+    renderAll();
+    if (kind !== "snooze") notifyDirector(a);
+  };
+  row.append(go, back, st); box.append(row);
+  return box;
+}
+
+function clusterCard(c) {
+  const band = c.band || "need";
+  const card = el("article", "card" + (band === "need" ? " needs" : band === "quiet" ? " quiet" : "")); card.id = "c-" + c.id;
+  const h = el("div", "chead");
+  const tags = el("div", "tags");
+  if (band === "need") tags.append(el("span", "chip need", c.attention || "Needs you"));
+  else if (c.attention) tags.append(el("span", "chip" + (band === "hand" ? " cov-covered" : ""), c.attention));
+  const types = [...new Set((c.issues || []).map(i => i.type))];
+  tags.append(el("span", "chip", (c.issues || []).length + " issue" + ((c.issues || []).length === 1 ? "" : "s") + " · " + types.map(t => t === "bug" ? "bug" : t === "question" ? "question" : "feature").join(" + ")));
+  if ((c.issues || []).some(i => i.geoff)) tags.append(el("span", "chip you", "Yours"));
+  h.append(tags, el("h3", "", c.title));
+  if (c.attentionWhy) h.append(el("p", "why", c.attentionWhy));
+  card.append(h);
+  if (band === "quiet" && !(ui[c.id] || {}).open) {
+    const b = el("button", "btn ghost small", "Show"); b.onclick = () => { ui[c.id] = { open: true }; renderClusters(); }; card.append(b); return card;
+  }
+  if (c.gist) card.append(el("p", "gist", c.gist));
+  const il = el("ul", "issues"); (c.issues || []).forEach(i => il.append(issueRow(i))); card.append(il);
+  const wl = el("div", "", null); wl.style.display = "grid"; wl.style.gap = "4px";
+  wl.append(el("div", "label", "Who's on it"));
+  if ((c.workers || []).length) { const ul = el("ul", "workers"); c.workers.forEach(w => ul.append(workerRow(w))); wl.append(ul); }
+  else wl.append(el("p", "none", c.noWorker || "No worker or task covers this."));
+  card.append(wl);
+  if ((c.records || []).length) {
+    const rs = el("div", "records"); c.records.forEach(r => { const s = el("span", "rec", r.id); if (r.title) s.title = r.title; rs.append(s); });
+    const box = el("div"); box.style.display = "grid"; box.style.gap = "4px"; box.append(el("div", "label", "Records"), rs); card.append(box);
+  }
+  // Actions: what's queued, then one suggested action, then the short menu.
+  const mine = myActions(c);
+  const act = el("div", "actions");
+  if (mine.length) { const ul = el("ul", "qlist"); ul.style.width = "100%"; mine.forEach(a => ul.append(actionLine(a, true))); act.append(ul); }
+  const st = ui[c.id] || {};
+  if (st.mode === "menu") {
+    const m = el("div", "menu");
+    ["reply", "relay", "backlog", "research", "snooze"].forEach(k => {
+      if (k === "relay" && !(c.workers || []).length) return;
+      const b = el("button", "btn"); b.append(KINDS[k].verb, el("small", "", KINDS[k].hint));
+      b.onclick = () => { ui[c.id] = { mode: k }; renderClusters(); }; m.append(b);
+    });
+    const back = el("button", "btn ghost small", "Close"); back.onclick = () => { ui[c.id] = { mode: null }; renderClusters(); };
+    act.append(m, back);
+  } else if (st.mode) {
+    act.append(composer(c, st.mode));
+  } else {
+    const s = c.suggest;
+    if (s && s.kind && KINDS[s.kind]) { const b = el("button", "btn", s.label || KINDS[s.kind].verb); b.onclick = () => { ui[c.id] = { mode: s.kind }; renderClusters(); }; act.append(b); }
+    const more = el("button", "btn ghost", s ? "Other action…" : "Act on this…"); more.onclick = () => { ui[c.id] = { mode: "menu" }; renderClusters(); }; act.append(more);
+    if (st.sent) act.append(el("span", "status ok", st.sent === "snooze" ? "Moved to Quiet." : chanNote()));
+  }
+  card.append(act);
+  return card;
+}
+function renderClusters() {
+  const cs = list(store.clusters).filter(c => !c.gone);
+  // A snooze moves a cluster to Quiet on this page at once; the next run keeps it there until the issue changes.
+  const snoozed = new Set(list(store.actions).filter(a => a.kind === "snooze" && (a.seenUpdated || null) === (store.clusters[a.cluster] || {}).updated).map(a => a.cluster));
+  cs.forEach(c => { if (snoozed.has(c.id)) c.band = "quiet"; });
+  const by = b => cs.filter(c => (c.band || "need") === b).sort((x, y) => (x.order ?? 99) - (y.order ?? 99));
+  const need = by("need"), hand = by("hand"), quiet = by("quiet");
+  $("#need").replaceChildren(...(need.length ? need.map(clusterCard) : [el("div", "empty", store.meta ? "Nothing needs you today." : "Problems that no worker covers, or that wait on your call, appear here first.")]));
+  $("#hand-sec").hidden = !hand.length; $("#hand").replaceChildren(...hand.map(clusterCard));
+  $("#quiet-sec").hidden = !quiet.length; $("#quiet").replaceChildren(...quiet.map(clusterCard));
+}
+// ---- This week: what's new in the last 7 days, each line jumping to its card ----
+function jump(id) {
+  const c = store.clusters[id]; if (!c) return;
+  if (c.band === "quiet" || !document.getElementById("c-" + id)) { ui[id] = { ...(ui[id] || {}), open: true }; renderClusters(); }
+  const card = document.getElementById("c-" + id); if (!card) return;
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  card.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  card.classList.add("flash"); setTimeout(() => card.classList.remove("flash"), 1600);
+}
+function renderWeek() {
+  const items = ((store.meta || {}).recent || []).filter(r => !r.at || Date.now() - new Date(r.at) < 7 * 864e5);
+  $("#week-sec").hidden = !items.length;
+  const KIND = { new: "New", comment: "Reply", shipped: "Shipped", closed: "Closed", reopened: "Reopened" };
+  $("#week").replaceChildren(...items.map(r => {
+    const li = el("li"), b = el("button"); b.type = "button";
+    b.append(el("span", "wk " + (r.kind || ""), KIND[r.kind] || r.kind || ""), el("span", "wl", r.line), el("span", "wd", r.at ? ago(r.at) + " ago" : ""));
+    const c = store.clusters[r.cluster]; if (c) b.append(el("span", "wc", "→ " + c.title));
+    b.onclick = () => jump(r.cluster); li.append(b); return li;
+  }));
+}
+function renderAll() { renderMeta(); renderWeek(); renderQueue(); renderClusters(); }
+
+// ---- Writing Geoff's intent; telling the director ----
+async function saveAction(a) {
+  const id = "a-" + Date.now().toString(36);
+  if (!db) return false;
+  try { await db.doc("actions/" + id).set(a); store.actions[id] = a; return true; } catch (e) { return false; }
+}
+async function cancelAction(id) {
+  const a = store.actions[id]; if (!a || !db) return;
+  try { await db.doc("actions/" + id).update({ status: "cancelled", doneAt: new Date().toISOString() }); } catch (e) {}
+  if (a.kind !== "snooze") notifyDirector({ ...a, cancelId: id });
+}
+function chanNote() { return canSend === "available" ? "Queued and sent to the director." : "Queued. The director picks it up on its next pass."; }
+// The message names the action and Geoff's own words only; issue text never travels in it.
+async function notifyDirector(a) {
+  if (!comments || canSend !== "available") return;
+  const lines = a.cancelId ? ["Problem discovery · Geoff cancelled action " + a.cancelId + "."] : [
+    "Problem discovery · Geoff queued an action (read actions/ in this page's db for the full row).",
+    "Action: " + (KINDS[a.kind] || {}).verb + (a.issues ? " · issues " + a.issues.map(n => "#" + n).join(", ") : "") + (a.target ? " · to " + a.target : "") + (a.close ? " · and close" : ""),
+    "Cluster: " + (a.clusterTitle || a.cluster),
+  ];
+  try { const anchor = await comments.anchorFor(document.getElementById("c-" + a.cluster) || document.body); await comments.sendToClaude({ anchor, text: lines.join("\n") }); } catch (e) {}
+}
+
+// ---- Connect ----
+(async () => {
+  try { comments = await window.claude?.use?.("comments"); } catch (e) { comments = null; }
+  const check = async () => {
+    try { canSend = comments ? await comments.canSendToClaude() : "off"; } catch (e) { canSend = "off"; }
+    $("#chan").textContent = canSend === "available" ? "The director is listening: an action reaches it at once, and it's saved here too." : "The director isn't listening right now. Actions are saved here, and it picks them up on its next pass.";
+  };
+  await check(); setInterval(check, 60000);
+})();
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  if (!db) { $("#runline").textContent = "Couldn't load this page's data. Sign in to claude.ai and reopen the link."; return; }
+  db.doc("meta/run").onSnapshot(d => { store.meta = d.exists ? d.data() : null; renderAll(); }, () => {});
+  db.collection("clusters").onSnapshot(s => { const o = {}; s.docs.forEach(d => o[d.id] = d.data()); store.clusters = o; renderAll(); }, () => {});
+  db.collection("actions").onSnapshot(s => { const o = {}; s.docs.forEach(d => o[d.id] = d.data()); store.actions = o; renderAll(); }, () => {});
+})();
+setInterval(renderMeta, 60000);
+</script>
