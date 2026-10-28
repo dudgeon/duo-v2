@@ -84,7 +84,7 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
     /// Where the page is when there's no app bundle around it (checks run from the checkout).
     nonisolated(unsafe) public static var defaultResources: URL?
 
-    /// `resources` holds `docx.html`, `docx.js`, `docx-preview.mjs` and `jszip.mjs`: the app's
+    /// `resources` holds `docx.html`, `docx.js`, `docx-look.js`, `docx-preview.mjs` and `jszip.mjs`: the app's
     /// `Resources/docx`, or `Vendor/docx-viewer` in a checkout (checks).
     public init(resources: URL? = nil) {
         self.resources = resources ?? Self.defaultResources ?? Bundle.main.resourceURL?.appending(path: "docx") ?? URL(fileURLWithPath: "/nonexistent")
@@ -94,6 +94,8 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         config.setURLSchemeHandler(proxy, forURLScheme: Self.scheme)
         config.userContentController.addUserScript(WKUserScript(source: EditorController.tokenCSS(), injectionTime: .atDocumentStart, forMainFrameOnly: true))
         config.userContentController.addUserScript(WKUserScript(source: Self.reviewCSS(), injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        // Where a document says nothing, Google Docs' defaults (DL-233), from the tokens.
+        config.userContentController.addUserScript(WKUserScript(source: "window.__duoDocxDefaults = \(DuoDocxDefaults.json);", injectionTime: .atDocumentStart, forMainFrameOnly: true))
         webView = DuoWebView(frame: .zero, configuration: config)
         webView.appearance = NSAppearance(named: .aqua)   // a page keeps its author's colours in dark too (DL-224)
         super.init()
@@ -244,6 +246,14 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         }
     }
 
+    /// Runs a function body in the page (it may `await`) and hands back what it returns: checks read the computed
+    /// look and the visible text of each markup mode with it (DL-233). Nothing in the app calls it.
+    public func inspect(_ body: String, _ done: @escaping @MainActor (Any?) -> Void) {
+        webView.callAsyncJavaScript(body, arguments: [:], in: nil, in: .page) { r in
+            if case .success(let v) = r { done(v) } else if case .failure(let e) = r { done("error: \(e)") } else { done(nil) }
+        }
+    }
+
     /// What the page measured: how many sections it holds and its height, and how many times its
     /// layout changed since it drew (a loop would make this grow).
     public func pageStats(_ done: @escaping @MainActor ([String: Any]) -> Void) {
@@ -337,7 +347,7 @@ public final class DocxViewer: NSObject, WKScriptMessageHandler, WKNavigationDel
         let type: String
         switch name {
         case "docx.html": file = resources.appending(path: name); type = "text/html"
-        case "docx.js", "docx-preview.mjs", "jszip.mjs": file = resources.appending(path: name); type = "text/javascript"
+        case "docx.js", "docx-look.js", "docx-preview.mjs", "jszip.mjs": file = resources.appending(path: name); type = "text/javascript"
         case "doc.docx": file = url; type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         default: file = nil; type = "text/plain"
         }

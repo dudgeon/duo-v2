@@ -42,6 +42,7 @@ func repoFixture() throws -> Fixture {
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "control" { return try controlPlaneChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "git" { return try gitChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "pane" { return try paneFocusChecks() }
+    if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "docxlook" { return try docxLookChecks() }
     if ProcessInfo.processInfo.environment["DUO_CHECKS"] == "tabs" { return try tabOrderChecks() }
     let f = try repoFixture()
 
@@ -2316,6 +2317,8 @@ func repoFixture() throws -> Fixture {
         check(viewer.drawMillis < 15_000, "…in \(viewer.drawMillis) ms")
         try? FileManager.default.removeItem(at: copy)
     }
+
+    try docxLookChecks()
 
     print("a Word document as Markdown (ENH-14, DL-123)")
     let wordDocs = repoRoot().appending(path: "Spikes/DocxToMarkdown/docs")

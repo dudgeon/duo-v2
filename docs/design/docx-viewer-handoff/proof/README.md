@@ -26,6 +26,18 @@ Live captures of an isolated build on a scratch workspace (own `DUO_SUPPORT_DIR`
 
 Stood in or different from the boards: the question is Duo's standard sheet over the window (459 wide), not drawn at the board's 418 inside the pane; the Markup button's pressed fill; the reviewAuthor4 and reviewAuthor5 colours are not on a board.
 
+## DL-233: the Google Docs look and the four views (`google-look/`)
+
+Captured with `DUO_APPEARANCE=light scripts/check-docx.sh <board>…` (Q-239: the sheet in dark is black text on dark). `viewer-compare.png` and `markup-compare.png` here are the re-run for this change: the document's own text is exempt, and the chrome, cards, labels and menu are unchanged. The new boards have no screen to compare with (the document's own text is what they show), so they're for looking at:
+
+| File | Shows |
+|---|---|
+| `look-none.png` | a document with no styles at all: Arial 11 at 1.15, Google's Title, Subtitle and Headings 1–6 |
+| `look-word.png` | Word's own styles (Calibri, Calibri Light headings in Word's blue) drawn in the stand-in font, with Google's Heading 3–6 where Word's file has none |
+| `look-own.png` | a document with its own fonts, sizes, colours and spacing: all of them win |
+| `word-all.png`, `word-simple.png`, `word-none.png`, `word-original.png` | the Word markup fixture in each Markup view |
+| `google-all.png`, `google-simple.png`, `google-none.png`, `google-original.png` | the Google suggestions fixture in each view |
+
 ## Slice 2: Select Text (`picked`)
 
 `scripts/check-docx.sh picked-hover picked` captures one state at a time (the board draws a hovered paragraph and a picked one together):

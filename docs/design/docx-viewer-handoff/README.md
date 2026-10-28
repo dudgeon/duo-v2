@@ -17,6 +17,10 @@ The boards were drawn on the Design canvas https://claude.ai/artifact/F8PWth7cid
   - Under the pointer, a change shows a label above it, on `pane` with `shadowPopover`, radius 10, padding 4 10, 12/16: the name semibold in its colour, then `inserted · 7 Sep` (deleted, moved, formatted: Bold).
 - **Comments**: the commented range on `commentHighlight`; the comment as a card under its paragraph (the last paragraph of its range): `pane`, 1 `rule`, radius 6, padding 8 10, 12/16 in the UI face; the name semibold in its colour, `· 1 Sep` in `text2`, then the text; replies under it, 12 in, the same way. **A resolved comment folds** to one line, `text2`, a chevron, `Resolved · <name>: <text>` (cut to one line); a click opens it.
 
+## Where the document says nothing (DL-233)
+
+Geoff, 2026-10-27: "I need the docx viewer to render default text more like google docs; right now it defaults to serif fonts; please make it default to the default google docs styles". The document's own text and fonts stay exempt from the comparison and always win; where it names no font, size or spacing, or has no Title, Subtitle or Heading 1–6 style, the viewer fills in **Google Docs' defaults** (tokens `docxDefaults`: Arial 11 pt at 1.15, Title 26, Subtitle 15 `#666666`, Headings 1–6 at 20/16/14/12/11/11 with Google's greys and spacing), and a font the Mac lacks (Calibri, Aptos, Cambria…) is drawn in a stand-in (Arial, Georgia) instead of falling to serif. No hyphenating. `fixture/make_markup.py` writes the test documents, `Sources/DuoChecks/DocxLookChecks.swift` proves them, and `proof/google-look/` has the captures. What no screen draws is Q-238.
+
 ## The Markup menu (W4, `markup`)
 
 Markup ⌄ shows pressed (`selected`) while its menu is open, a menu Duo draws (`pane`, radius 10, `shadowPopover`):

@@ -4,6 +4,7 @@
 // `duoDocx` messages and `window.__duo`. Read only: the bytes come in through `doc.docx`, and
 // nothing here can write them (the page has no way to reach the file but that one GET).
 import { renderAsync, collectDocxReviewChanges } from './docx-preview.mjs';
+import { withGoogleLook, fontAliasCSS } from './docx-look.js';
 
 // A page in a window that isn't on screen gets no animation frames and no idle time (F-102), so the
 // renderer's layout steps never ran and a scripted capture drew an empty page. A timer stands in.
@@ -18,6 +19,10 @@ import { renderAsync, collectDocxReviewChanges } from './docx-preview.mjs';
   };
   window.requestIdleCallback = (cb) => setTimeout(() => cb({ didTimeout: false, timeRemaining: () => 8 }), 0);
 }
+
+// Where a document says nothing it reads like Google Docs (DL-233): the defaults are Duo's tokens, set by the app.
+const look = window.__duoDocxDefaults || null;
+if (look) document.head.append(Object.assign(document.createElement('style'), { textContent: fontAliasCSS(look.fontMap) }));
 
 const dev = new URLSearchParams(location.search);
 const devDoc = location.protocol === 'http:' ? dev.get('doc') : null;
@@ -36,7 +41,9 @@ const PROPERTY = { b: 'Bold', i: 'Italic', u: 'Underline', color: 'Font colour',
 
 const colourIndex = (name) => { let i = people.findIndex((p) => p.name === name); if (i < 0) { people.push({ name, count: 0 }); i = people.length - 1; } return i; };
 const colourOf = (name) => `var(--duo-review-author-${(colourIndex(name) % 5) + 1})`;
-const day = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); };
+// `1 Sep`, as the boards write it (en-GB's own short month is `Sept`).
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const day = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : `${d.getDate()} ${MONTHS[d.getMonth()]}`; };
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const isMark = (el) => el.matches?.('[data-docx-change-kind]:not(.docx-comment-anchor), [data-docx-format-change]');
 
@@ -61,6 +68,7 @@ function layer() {
   // 2. Paragraphs that hold a change; those that vanish with changes accepted, or in Original.
   for (const p of host.querySelectorAll('p')) {
     const marks = [...p.querySelectorAll('ins[data-docx-change-kind], del[data-docx-change-kind], [data-docx-format-change]')];
+    if (p.matches('[data-docx-format-change]')) marks.push(p);   // a paragraph-property change marks the paragraph itself
     if (!marks.length) continue;
     p.classList.add('duo-changed');
     const only = (kinds) => {
@@ -212,7 +220,8 @@ window.__duo = {
     try {
       const res = await fetch(`${devDoc || 'doc.docx'}?v=${v}`);
       if (!res.ok) throw new Error(`doc.docx: ${res.status}`);
-      const bytes = await res.arrayBuffer();
+      const { bytes, size } = await withGoogleLook(await res.arrayBuffer(), look);
+      host.style.setProperty('--duo-base-size', size ? `${size}pt` : '');
       doc = await renderAsync(bytes, host, null, {
         breakPages: false, exposeDisplayTargets: true, reviewMode: 'all', renderComments: true, useWorker: false, awaitLayout: false,
         externalLinkPolicy: 'block', externalResourcePolicy: 'block',

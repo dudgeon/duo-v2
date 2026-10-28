@@ -534,6 +534,11 @@ extension View {
     public func duoPopoverShadow() -> some View { shadow(color: DuoShadow.popoverColor, radius: DuoShadow.popoverRadius, x: DuoShadow.popoverX, y: DuoShadow.popoverY) }
 }
 
+/// The Word viewer's defaults where a document says nothing: Google Docs' own (DL-233), as JSON for the page.
+public enum DuoDocxDefaults {
+    public static let json = "{\"font\":\"Arial\",\"size\":11,\"lineSpacing\":1.15,\"styles\":{\"title\":{\"size\":26,\"before\":0,\"after\":3,\"color\":null},\"subtitle\":{\"size\":15,\"before\":0,\"after\":16,\"color\":\"#666666\"},\"heading1\":{\"size\":20,\"before\":20,\"after\":6,\"color\":null},\"heading2\":{\"size\":16,\"before\":18,\"after\":6,\"color\":null},\"heading3\":{\"size\":14,\"before\":16,\"after\":4,\"color\":\"#434343\"},\"heading4\":{\"size\":12,\"before\":14,\"after\":4,\"color\":\"#666666\"},\"heading5\":{\"size\":11,\"before\":12,\"after\":4,\"color\":\"#666666\"},\"heading6\":{\"size\":11,\"before\":12,\"after\":4,\"color\":\"#666666\",\"italic\":true}},\"fontMap\":{\"Calibri\":\"Arial\",\"Calibri Light\":\"Arial\",\"Aptos\":\"Arial\",\"Aptos Display\":\"Arial\",\"Aptos Narrow\":\"Arial Narrow\",\"Segoe UI\":\"Arial\",\"Candara\":\"Arial\",\"Corbel\":\"Arial\",\"Cambria\":\"Georgia\",\"Consolas\":\"Menlo\"}}"
+}
+
 /// Glyph and icon paths in a 10x10 (or stated) view box (handoff §4.4).
 public enum DuoGlyphPath {
     public static let needsYou = "<circle cx='5' cy='5' r='5'/>"
