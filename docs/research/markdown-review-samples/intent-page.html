@@ -506,15 +506,15 @@ const D = [
    con:["Two verbs where Word and Google Docs have one","Kept threads still pile up if people always keep"]}]},
 
 { id:"claude-edits", title:"When Claude edits a document",
-  why:"Today Claude's edits land in the text with a green highlight that fades on your next keystroke (DL-186). Duo already sees every edit Claude makes to a document open in Duo, so it can turn them into suggestions itself.",
+  why:"Today Claude's edits land in the text with a green highlight that fades on your next keystroke (DL-186). That stays in every option: suggestions are an addition for the times you want to approve Claude's changes, not a replacement, and most of Claude's edits should keep landing directly. Duo already sees every edit Claude makes to a document open in Duo, so it can turn them into suggestions itself when you ask.",
   rec:"A", opts:[
   {k:"A", t:"A Suggest Edits switch per document", ex: ex(duo(`<p>Launch is <span class="del c3">planned for</span> <span class="ins c3">set for</span> early November.</p>`,`<span class="btn"><span class="on"></span>Suggest Edits</span><span class="count">1 suggestion</span>`),"Switch on",
      duo(`<p>Launch is <span class="cedit">set for</span> early November.</p>`,`<span class="btn"><span class="off"></span>Suggest Edits</span>`),"Switch off (today)"),
-   pro:["You choose per document: a draft can move fast, a reviewed doc waits for you","Works whatever Claude was told; Duo makes the marks","Switches on by itself when you add the first comment or suggestion"],
+   pro:["You choose per document: a draft can move fast, a reviewed doc waits for you","Off by default: Claude's edits land directly, with the green highlight, unless you turn it on","Works whatever Claude was told; Duo makes the marks"],
    con:["One more control in the bar","Sessions outside Duo still edit directly (the convention asks them to suggest)"]},
   {k:"B", t:"Always suggestions, in every document", ex: ex(duo(`<p>Launch is <span class="del c3">planned for</span> <span class="ins c3">set for</span> early November.</p>`),"Every document"),
    pro:["Nothing Claude writes is ever silently final"],
-   con:["Drafting a new doc becomes a stream of accepts","Task notes and plans are edited by Claude all day"]},
+   con:["Forces every Claude edit through review, which isn't the intent","Drafting a new doc becomes a stream of accepts","Task notes and plans are edited by Claude all day"]},
   {k:"C", t:"As today; suggestions only when you ask Claude for them", ex: ex(duo(`<p>Launch is <span class="cedit">set for</span> early November.</p>`),"Duo"),
    pro:["No change to how Duo works now"],
    con:["Relies on Claude following the convention","A review in progress can be overwritten"]}]},
