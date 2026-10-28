@@ -73,7 +73,7 @@ public enum ActionID: String, CaseIterable, Sendable {
     case docOpen = "doc open", docClose = "doc close", docTabs = "doc tabs", docStatus = "doc status", docRead = "doc read"
     case docSelection = "doc selection", docSelect = "doc select", docSave = "doc save", docFormat = "doc format", docTable = "doc table", docFind = "doc find"
     case docProp = "doc prop", docMode = "doc mode"
-    case docMarkup = "doc markup", docComments = "doc comments", docOutline = "doc outline", docPick = "doc pick", docElement = "doc element"
+    case docMarkup = "doc markup", docComments = "doc comments", docOutline = "doc outline", docLayout = "doc layout",docPick = "doc pick", docElement = "doc element"
     case docInsert = "doc insert", docReplace = "doc replace", docEdit = "doc edit", docResolve = "doc resolve", docHistory = "doc history", docRevert = "doc revert"
     // HTML pages
     case browserOpen = "browser open", browserAllow = "browser allow", browserSites = "browser sites"
@@ -362,6 +362,8 @@ extension DuoAction {
               ui: ["Markup", "All Markup", "Simple Markup", "No Markup", "Original", "Show Comments", "Show Resolved Comments"]),
         .init(.docOutline, .docs, "<file.docx> [--json]",
               "A Word document's paragraphs, read from the file (no viewer needed): each with its w14:paraId (the id the viewer draws it under), style and heading level, its text with the tracked changes accepted, its tracked changes (kind, author, date, text) and the comments that end in it (thread, resolved). Then every comment thread. A picked paragraph's Send to Claude names the same ids."),
+        .init(.docLayout, .docs, "<file.docx> [--json]",
+              "A Word document's geometry, read from the file (no viewer, no renderer): each section's page size, orientation and margins, so its text width; each table's declared width and column widths against the room it has (the text width, or its cell's); each picture's size; and a warning for anything wider than its room, a percentage table width, or a width that disagrees with its columns. Sizes in points. No page numbers. Only a document open in a Duo tab or inside the session's project folder (C-115)."),
         .init(.docPick, .docs, "[<paragraph id> | c:<comment id>]",
               "Start Select Text in the Word document showing, for the user to click a paragraph or a comment, or select the paragraph (its w14:paraId from `doc outline`) or comment (`c:<id>`) named.",
               ui: ["Select Text"]),
@@ -608,6 +610,7 @@ extension DuoAction {
             + "\nDocuments the user has open in Duo (`duo2 status` shows them) are theirs to see change: edit them with "
             + "`duo2 doc edit --stdin`, piping the JSON your Edit tool takes ({\"file_path\",\"old_string\",\"new_string\"}, or {\"file_path\",\"content\"} to rewrite), "
             + "not with Edit, Write or shell redirection. Duo applies it in the editor the user is looking at, highlighted, and merges it with their unsaved typing."
+            + "\nTo check a Word document you made, fit the check to where it goes (for Google Docs, structure, not pixels): `duo2 doc outline` and `duo2 doc layout` (page and text width, tables and pictures against it); the duo2 skill's \"Checking documents\" says more. Don't start soffice in the sandbox."
             + "\nTo track work, make Duo tasks (`duo2 task new`, one note each in the project's tasks/ folder) and set their status with `duo2 task status`; do not write a TASKS.md or a to-do list file."
             + "\nWhen you start substantial work, `duo2 session note \"<one line>\"`; when you hand back, `duo2 session next \"<one line>\"`."
     }

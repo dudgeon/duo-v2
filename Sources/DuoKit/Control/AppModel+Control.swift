@@ -774,6 +774,7 @@ extension AppModel {
         // MARK: HTML pages
         case .slide, .slideGo, .slideShapes, .slideNotes, .slidePick, .slideElement:
             slideVerb(id, inv, req, done)
+        case .docLayout: layoutVerb(inv, req, done)
         case .docMarkup, .docComments, .docOutline, .docPick, .docElement:
             docxVerb(id, inv, req, done)
         case .htmlReload:
