@@ -7,7 +7,7 @@ import { defaultKeymap, history, historyKeymap, undo, undoDepth } from "@codemir
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { syntaxTree } from "@codemirror/language";
 import { autocompletion, startCompletion, completionStatus, acceptCompletion } from "@codemirror/autocomplete";
-import { marginExtensions, marginTheme, composeComment, activate, addThread, replyTo, closeThread, reopenThread, deleteThread } from "./margin.js";
+import { marginExtensions, marginTheme, composeComment, activate, setDelivery, addThread, replyTo, closeThread, reopenThread, deleteThread } from "./margin.js";
 import { reviewCore, reviewDrawing, reviewSummary, setMarkup as setReviewMarkup, setReviewer, onReviewAction, resolveSuggestion, resolveAll as resolveAllSuggestions, step as stepReview, suggestHunks, reviewField, suggestEditsOn } from "./critic.js";
 import { search, searchKeymap, SearchQuery, setSearchQuery, getSearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel, replaceNext } from "@codemirror/search";
 
@@ -2657,6 +2657,7 @@ window.duo = {
   reviewResolveAll: (accept, person) => resolveAllSuggestions(view, !!accept, person || null),
   suggestEditsOn: () => suggestEditsOn(view.state.doc),
   reviewAddComment: () => composeComment(view),
+  setDelivery: (map, def) => (view ? setDelivery(view, map, def) : false),
   // What the margin's buttons do, for scripted runs: the same functions, the same transactions.
   reviewOp: (op, id, text) => ({ reply: () => replyTo(view, id, text || ""), close: () => closeThread(view, id), reopen: () => reopenThread(view, id), delete: () => deleteThread(view, id) }[op] || (() => false))(),
   reviewActivate: (id) => { activate(view, id); return true; },

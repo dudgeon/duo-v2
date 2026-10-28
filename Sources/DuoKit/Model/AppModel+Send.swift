@@ -230,6 +230,7 @@ extension AppModel {
             // The margin's "n closed · Show" is Show Closed Comments; a label's Reply is the margin's too.
             if op == "error" { DuoLog.write("review margin: \(body["what"] ?? "?"): \(body["message"] ?? "")") }
             if op == "showClosed", let on = body["value"] as? Bool { self?.setMarkdownMarkup(showClosed: on) }
+            if ["send", "retry", "pill"].contains(op) { self?.reviewDeliveryAction(op, body) }
         }
         e.sourceModes = sourceDocuments.sorted()
         e.templateKindFor = { [weak self] url in self?.templateInfo(forFile: url)?.kind.rawValue }

@@ -121,12 +121,35 @@ extension AppModel {
                 guard let tid = args.first?.trimmingCharacters(in: CharacterSet(charactersIn: "#")), let t = parsed.thread(tid) else { return done(.fail(args.first.map { "no thread #\($0) in \(name)" } ?? "usage: \(id.action.usage)")) }
                 let people = Array(Set(t.comments.compactMap(\.author))).sorted().map { "@\($0)" }.joined(separator: ", ")
                 let names = t.comments.contains { $0.mentionsClaude }, replied = t.comments.contains { $0.author == "claude" }
-                done(.ok("#\(t.id): \(t.closed ? "closed" : "open"), \(t.comments.filter { !$0.closing }.count) comments by \(people); "
+                let d = self.reviewDeliveries[Self.reviewKey(url, t.id)]
+                let delivery = d.map { "\($0.state.rawValue.replacingOccurrences(of: "-", with: " ")) (\($0.sessionName), \(Self.clock($0.at)))\($0.why.map { ": " + $0 } ?? "")" } ?? (names ? "not sent" : "n/a")
+                done(.ok("#\(t.id): \(t.closed ? "closed" : "open"), \(t.comments.filter { !$0.closing }.count) comments by \(people); delivery: \(delivery); "
                          + (names ? (replied ? "names @claude, Claude has replied" : "names @claude, no reply from Claude yet") : "doesn't name @claude")
                          + "; \(t.anchor == nil ? "no highlighted text" : "on “\(Review.abbreviate(t.anchor!))”")",
-                         Self.threadJSON(t).merging(["repliedByClaude": replied, "delivery": "not sent"] as [String: Any]) { $1 }))
+                         Self.threadJSON(t).merging(["repliedByClaude": replied, "delivery": self.reviewDeliveries[Self.reviewKey(url, t.id)]?.state.rawValue ?? "not sent"] as [String: Any]) { $1 }))
             case .commentSend:
-                done(.fail("sending a comment to a session arrives with @claude routing; until then, reply with `duo2 comment reply` or send the document with `duo2 send file`"))
+                // Never from disk on its own (C-112): this is the person's say-so, from a verb they or their session ran.
+                let ids: [String]
+                if inv.has("all") {
+                    ids = parsed.threads.filter { t in !t.closed && t.comments.contains(where: \.mentionsClaude) && !t.comments.contains { $0.author == "claude" }
+                        && self.reviewDeliveries[Self.reviewKey(url, t.id)] == nil }.map(\.id)
+                    guard !ids.isEmpty else { return done(.ok("Nothing to send: every @claude comment in \(name) went, or has an answer.")) }
+                } else if let one = args.first { ids = [one.trimmingCharacters(in: CharacterSet(charactersIn: "#"))] }
+                else { return done(.fail("usage: \(id.action.usage)")) }
+                var chosen: Fixture.Session?
+                if let to = inv.flags["to"] {
+                    guard let s = self.findSession(to, in: nil) else { return done(.fail("no session '\(to)' (see `duo2 sessions`)")) }
+                    chosen = s
+                }
+                if inv.has("new") { return done(.fail("--new isn't built yet: start a session with `duo2 session new`, then send with --to it (Q-284)")) }
+                var lines: [String] = []
+                var left = ids.count
+                for tid in ids {
+                    self.sendReviewComment(url, thread: tid, to: chosen) { r in
+                        lines.append("#\(tid): \(r.text)"); left -= 1
+                        if left == 0 { done(.ok(lines.joined(separator: "\n"), ["file": name, "threads": ids])) }
+                    }
+                }
             case .suggestionList:
                 let lines = parsed.suggestions.map { s -> String in
                     let what: String

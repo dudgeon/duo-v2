@@ -30,6 +30,14 @@ check(parseReview("plain {braces} and {+ nothing +}").suggestions.length === 0, 
 check(parseReview("{++open never closed").suggestions.length === 0, "an unclosed mark is text");
 check(parseReview("{++one\n\ntwo++}{>>@a 2026-10-28 #s1<<}").suggestions[0].kind === "ins", "an insertion spans paragraphs");
 
+// What the Word converter writes (Q-283): a deletion inside a commented range, and a comment over two paragraphs.
+const conv = "Some {=={--some old words--}{>>@morgan-editor 2026-09-06 #s2: <<}==}{>>@riley-reviewer 2026-09-06 #c3: why<<} here.\n\n{==First paragraph.==}\n\n{==Second paragraph.==}{>>@riley-reviewer 2026-09-05 #c5: both<<}{>>@dana-writer 2026-09-05 #c5.1: yes<<}\n";
+const pc = parseReview(conv);
+check(pc.suggestions.length === 1 && pc.suggestions[0].id === "s2" && pc.suggestions[0].kind === "del" && conv.slice(...pc.suggestions[0].old) === "some old words", "a deletion inside a highlight is a suggestion of its own");
+check(pc.threads.map((t) => t.id).join() === "c3,c5" && pc.threads[0].pieces.length === 1 && pc.threads[0].anchorText === "some old words", "the highlight stays the thread's anchor");
+check(pc.threads[1].pieces.length === 2 && pc.threads[1].anchorText === "First paragraph.\n\nSecond paragraph." && pc.threads[1].comments.length === 2 && pc.threads[1].from === conv.indexOf("{==First"), "a comment over two paragraphs is one thread with a highlight in each");
+check(!pc.threads.some((t) => t.id.startsWith("u")), "no unsigned thread is made of a paragraph's highlight");
+
 const state = (text) => EditorState.create({ doc: text, extensions: [reviewCore] });
 const sum = reviewSummary(state(doc));
 check(sum.suggestions === 3 && sum.threads === 2 && !sum.suggestEdits && sum.marks, "the summary counts marks");

@@ -105,5 +105,37 @@ fresh_m mg-360
 run mg-360 "${open}$A,wait:3,review-width:360,wait:1,review-active:c2,wait:2"
 fresh_m mg-360-closed
 run mg-360-closed "${open}$A,wait:3,review-width:360,wait:2"
+# 7. @claude: the turn goes through the idle-and-empty-prompt guard; it queues when the session is busy or has a draft;
+#    a comment from the file is never sent on its own (C-112). A scripted screen stands in for the session's terminal.
+cdoc=$'---\ntitle: Offline mode\n---\n\n# Offline mode\n\nLaunch is {==planned for early November==}{>>@geoff 2026-10-28 #c1: @claude can you tighten this? It reads long.<<}\n'
+fresh_c() { fresh $1; print -rn -- "$cdoc" > $A; }
+fresh_c cl-sent
+run cl-sent "${open}$A,wait:3,verb:session new --project garden,wait:2,review-io:idle,review-send:c1,wait:2,verb:comment status c1"
+expect "@claude: a comment from the file is not sent on its own" $out/cl-sent.log lacks "review-typed: <paste>@claude comment in offline.md, line 5"
+expect "@claude: Send pastes the turn, with the thread and how to reply" $out/cl-sent.log has "review-typed: <paste>@claude comment in"
+expect "@claude: the turn names the anchor text" $out/cl-sent.log has "On: “planned for early November”"
+expect "@claude: the turn quotes the comment as data" $out/cl-sent.log has "> @geoff: @claude can you tighten this?"
+expect "@claude: the turn says how to answer" $out/cl-sent.log has "duo2 comment reply c1"
+expect "@claude: Return is pressed after the paste" $out/cl-sent.log has "review-typed: <Return>"
+expect "@claude: status says sent" $out/cl-sent.log has "delivery: sent"
+fresh_c cl-busy
+run cl-busy "${open}$A,wait:3,verb:session new --project garden,wait:2,review-io:busy,review-send:c1,wait:2,verb:comment status c1"
+expect "@claude: a busy session gets nothing typed" $out/cl-busy.log lacks "review-typed:"
+expect "@claude: and the comment queues" $out/cl-busy.log has "delivery: queued"
+fresh_c cl-draft
+run cl-draft "${open}$A,wait:3,verb:session new --project garden,wait:2,review-io:draft,review-send:c1,wait:2,verb:comment status c1"
+expect "@claude: a draft in the prompt is never typed into" $out/cl-draft.log lacks "review-typed:"
+expect "@claude: the comment waits" $out/cl-draft.log has "delivery: queued"
+fresh_c cl-later
+run cl-later "${open}$A,wait:3,verb:session new --project garden,wait:2,review-io:busy,review-send:c1,wait:1,review-io:idle,wait:6,verb:comment status c1"
+expect "@claude: sent at the next idle with an empty prompt" $out/cl-later.log has "review-typed: <Return>"
+fresh_c cl-draw
+run cl-draw "${open}$A,wait:3"
+fresh_c cl-draw-sent
+run cl-draw-sent "${open}$A,wait:3,verb:session new --project garden,wait:2,review-io:idle,review-send:c1,wait:2"
+# 8. what the Word converter writes (Q-283): a deletion inside a highlight, a comment over two paragraphs
+vdoc=$'---\ntitle: Converted\n---\n\nSome {=={--some old words--}{>>@morgan-editor 2026-09-06 #s2: <<}==}{>>@riley-reviewer 2026-09-06 #c3: Why cut these?<<} here.\n\n{==This paragraph is commented along with the next one.==}\n\n{==It carries the end of the comment.==}{>>@riley-reviewer 2026-09-05 #c5: Both paragraphs need a source.<<}{>>@dana-writer 2026-09-05 #c5.1: Added.<<}\n'
+fresh cv-draw; print -rn -- "$vdoc" > $A
+run cv-draw "${open}$A,wait:3,review-active:c5,wait:2"
 echo "$((total-fails)) of $total passed (captures and logs in $out)"
 exit $((fails > 0))
