@@ -5,9 +5,29 @@ import WebKit
 /// The messages the editor page posts to Swift (`post(kind, …)` in `duo-editor.js`). DuoChecks
 /// checks that this list is exactly the kinds the page posts, so a new one can't be dropped
 /// by a prefix test the way "propertiesFolded" was (C-81).
+/// What the page knows of a Markdown document's review: counts, people (in colour order), the Suggest
+/// Edits switch and the markup mode (DL-237).
+public struct ReviewSummary: Equatable, Sendable {
+    public struct Person: Equatable, Sendable { public var name: String; public var count: Int; public var colour: Int }
+    public var suggestions = 0, threads = 0, closed = 0
+    public var suggestEdits = false, marks = false
+    public var mode = "all", showClosed = false
+    public var people: [Person] = []
+    public init() {}
+    init(_ b: [String: Any]) {
+        suggestions = b["suggestions"] as? Int ?? 0; threads = b["threads"] as? Int ?? 0; closed = b["closed"] as? Int ?? 0
+        suggestEdits = b["suggestEdits"] as? Bool == true; marks = b["marks"] as? Bool == true
+        mode = b["mode"] as? String ?? "all"; showClosed = b["showClosed"] as? Bool == true
+        people = (b["people"] as? [[String: Any]] ?? []).map { Person(name: $0["name"] as? String ?? "", count: $0["count"] as? Int ?? 0, colour: $0["colour"] as? Int ?? 1) }
+    }
+    /// The bar shows on a Markdown document with marks or comments, or with Suggest Edits on (Q-265's stand-in).
+    public var showsBar: Bool { marks || suggestEdits }
+}
+
 public enum EditorMessage: String, CaseIterable {
     case openLink, image, pasteImage, tableMenu, noteEdit, ready, selection, copyCode
     case propertiesFolded, propertyType, propertyDate, propertyMenu, propertyAdd, propertyReference
+    case review, reviewAction
 }
 
 /// The document editor (Phase I; stack rec #8–9): CodeMirror 6 live preview in one WKWebView
@@ -112,6 +132,9 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     }
 
     /// Loads the editor page (again, after its process died).
+    /// Who signs a person's typing as a suggestion: the Mac account's short name (DL-236 11).
+    static var reviewerName: String { NSUserName() }
+
     private func loadPage() {
         if let dir = Bundle.main.resourceURL?.appending(path: "editor"),
            FileManager.default.fileExists(atPath: dir.appending(path: "editor.html").path) {
@@ -135,7 +158,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         let shadow = NSColor(DuoShadow.popoverColor).usingColorSpace(.sRGB) ?? .black
         let shadowCSS = String(format: "rgba(%d, %d, %d, %g)", Int(round(shadow.redComponent * 255)), Int(round(shadow.greenComponent * 255)), Int(round(shadow.blueComponent * 255)), shadow.alphaComponent)
         let vars = [("pane", DuoNSColor.pane), ("text", DuoNSColor.text), ("text2", DuoNSColor.text2), ("selected", DuoNSColor.selected), ("claude-edit", DuoNSColor.claudeEdit),
-                    ("rule", DuoNSColor.rule), ("control-edge", DuoNSColor.controlEdge), ("ground", DuoNSColor.ground), ("needs-you", DuoNSColor.needsYou)]
+                    ("rule", DuoNSColor.rule), ("review-1", DuoNSColor.reviewAuthor1), ("review-2", DuoNSColor.reviewAuthor2), ("review-3", DuoNSColor.reviewAuthor3), ("review-4", DuoNSColor.reviewAuthor4), ("review-5", DuoNSColor.reviewAuthor5), ("comment-highlight", DuoNSColor.commentHighlight), ("comment-highlight-active", DuoNSColor.commentHighlightActive), ("control-edge", DuoNSColor.controlEdge), ("ground", DuoNSColor.ground), ("needs-you", DuoNSColor.needsYou)]
             .map { "--duo-\($0.0): \(hex($0.1));" }.joined(separator: " ")
         // Motion (DL-130): Claude's highlight fading in and out, in ms (zero with Reduce Motion).
         // The deck (same token script): a slide change's scroll and the picker outline's glide.
@@ -147,6 +170,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
 
     public func webView(_ w: WKWebView, didFinish n: WKNavigation!) {
         pageReady = true
+        webView.evaluateJavaScript("window.__reviewer = \(String(reflecting: Self.reviewerName))")
         pending?(); pending = nil
         sendSourceModes()
         if !noteContext.isEmpty { webView.evaluateJavaScript("window.__ctx = \(noteContext); window.duo && duo.setContext(window.__ctx)") }
@@ -450,6 +474,15 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
         case .copyCode:
             // A code block's Copy button (DL-220, code-hover): the page can't reach the pasteboard itself.
             if let text = body["text"] as? String { FileActions.copy(text) }
+            return
+        case .review:
+            // The review bar's facts (DL-237): marks, people, the switch, the markup mode.
+            if let doc = body["doc"] as? String, let shown = url.map(Self.docID), doc != shown { return }
+            let next = ReviewSummary(body)
+            if next != review { review = next; onStateChange?(); onReviewChange?(next) }
+            return
+        case .reviewAction:
+            onReviewAction?(body["op"] as? String ?? "", body)
             return
         case .ready:
             return
@@ -771,6 +804,24 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             if (ok as? Bool) == true { self.webView.window?.makeFirstResponder(self.webView) } else if tries > 0 { retry() }
         }
     }
+
+    /// What the Markdown document's review bar shows (DL-237), as the page last said.
+    public private(set) var review = ReviewSummary()
+    /// The page's marks changed: Duo pushes the markup mode it keeps per document if the page's differs.
+    var onReviewChange: ((ReviewSummary) -> Void)?
+    /// A label's Reply (a thread from a suggestion's note is the margin task's).
+    var onReviewAction: ((String, [String: Any]) -> Void)?
+
+    /// ‹ › in the review bar: the next or previous mark in document order.
+    /// ⌥⌘M: a comment on the selection (or the word at the caret), composed in the margin.
+    public func reviewAddComment() { run("return duo.reviewAddComment()") { _ in } }
+    public func reviewStep(_ dir: Int) { run("return duo.reviewStep(d)", ["d": dir]) { _ in } }
+    /// Accept or reject every suggestion, or one person's.
+    public func reviewResolveAll(accept: Bool, person: String? = nil, done: (@MainActor (Int) -> Void)? = nil) {
+        run("return duo.reviewResolveAll(a, p)", ["a": accept, "p": person ?? NSNull()]) { v in done?((v as? Int) ?? 0) }
+    }
+    public func reviewResolve(_ id: String, accept: Bool) { run("return duo.reviewResolve(i, a)", ["i": id, "a": accept]) { _ in } }
+    public func setReviewMarkup(mode: String, showClosed: Bool) { run("return duo.setMarkup(m, c)", ["m": mode, "c": showClosed]) { _ in } }
 
     /// Claude's changes still highlighted (ENH-4), and whether the caret is in one.
     public private(set) var claudeChanges = 0

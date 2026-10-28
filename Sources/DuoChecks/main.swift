@@ -752,6 +752,7 @@ func repoFixture() throws -> Fixture {
     try noteEditChecks()
     try editorChordChecks()
     try docSafetyChecks()
+    try reviewChecks()
     taskPaneKeyChecks()
     dockBadgeChecks()
     try paneFocusChecks()
@@ -2210,9 +2211,9 @@ func repoFixture() throws -> Fixture {
         let invFull = Docx.inventory(full), invBoard = Docx.inventory(board)
         check(invFull.changes == 12 && invFull.comments == 4 && invFull.columns == 0 && invFull.textBoxes == 0, "the full Garden plan has 12 tracked changes and 4 comments (\(invFull))")
         check(invBoard.changes == 8 && invBoard.comments == 3, "the board's Garden plan has 8 tracked changes and 3 comments (\(invBoard))")
-        check(AppModel.lossNote(invFull) == "Not everything comes over: its 12 tracked changes are accepted, its 4 comments become notes at the end, and page layout is left out.",
+        check(AppModel.lossNote(invFull) == "Its 12 tracked changes come over as suggestions and its 4 comments as threads. Page layout is left out.",
               "the question says what's lost, with the document's counts (\(AppModel.lossNote(invFull)))")
-        check(AppModel.lossNote(.init(changes: 1, comments: 0, columns: 2, textBoxes: 1)) == "Not everything comes over: its 1 tracked change is accepted and page layout, columns and text boxes are left out.",
+        check(AppModel.lossNote(.init(changes: 1, comments: 0, columns: 2, textBoxes: 1)) == "Its 1 tracked change comes over as a suggestion. Page layout, columns and text boxes are left out.",
               "only the parts it has, and the README's wording for all three")
         let lossless = (try FileManager.default.contentsOfDirectory(at: repoRoot().appending(path: "Spikes/DocxToMarkdown/docs"), includingPropertiesForKeys: nil)).filter { $0.pathExtension == "docx" }.contains { Docx.inventory($0).isLossless }
         check(lossless, "a document with no changes, comments, columns or text boxes has nothing lost (the question is skipped)")
@@ -2362,7 +2363,7 @@ func repoFixture() throws -> Fixture {
         m.askConvertToMarkdown("docs/Garden full.docx")
         let q = SheetCenter.shared.current
         check(q?.title == "Convert Garden full.docx to Markdown?" && q?.paragraphs == ["Duo makes an editable copy, Garden full.md, beside it. The Word document isn’t changed."]
-              && q?.note?.hasPrefix("Not everything comes over: its 12 tracked changes") == true && q?.choices.map(\.label) == ["Cancel", "Convert"], "Convert to Markdown… asks first, in the README's words")
+              && q?.note?.hasPrefix("Its 12 tracked changes come over as suggestions") == true && q?.choices.map(\.label) == ["Cancel", "Convert"], "Convert to Markdown… asks first, in the README's words")
         if let c = q?.choices.last { SheetCenter.shared.answer(c) }
         let until = Date().addingTimeInterval(20)
         while m.conversions.isEmpty, Date() < until { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
@@ -2445,11 +2446,55 @@ func repoFixture() throws -> Fixture {
           "typed bullets and numbers become lists; 1.1 and a year starting a sentence stay text")
     check(outputs["04-layout-table"]!.contains("\nWhen: Saturday\n\nWhere: Example Park\n") && outputs["04-layout-table"]!.contains("| Merged header |  | Other |"),
           "a one-row layout table is unwrapped; a merged cell is split")
-    check(outputs["05-tracked-changes"]!.contains("agreed to paint the shed and repair the fence.") && !outputs["05-tracked-changes"]!.contains("removed"),
-          "tracked changes are accepted (DL-123)")
+    let accepted = try md("05-tracked-changes") { $0.trackedChanges = .accept }.markdown
+    check(accepted.contains("agreed to paint the shed and repair the fence.") && !accepted.contains("removed"),
+          "tracked changes can still be accepted, as DL-123 did")
     check(try md("05-tracked-changes") { $0.trackedChanges = .reject }.markdown.contains("repair the fence before winter."), "or rejected, when asked (Q-62)")
-    check(outputs["06-comments"]!.hasSuffix("[^c1]: Comment. Reviewer A: Is fifty enough?\n\n[^c2]: Comment. Reviewer B: Check the tool library first.\n")
-          && outputs["06-comments"]!.contains("seeds.[^c1]"), "comments become endnotes at the end, marked where they were (DL-123)")
+    check(outputs["05-tracked-changes"]!.contains("{++") && outputs["05-tracked-changes"]!.contains("{--") && outputs["05-tracked-changes"]!.contains("{>>@"),
+          "by default tracked changes are kept as signed suggestions (DL-236 12A)")
+    check(try md("06-comments") { $0.comments = .endnotes }.markdown.hasSuffix("[^c1]: Comment. Reviewer A: Is fifty enough?\n\n[^c2]: Comment. Reviewer B: Check the tool library first.\n"),
+          "comments can still become endnotes, as DL-123 did")
+    check(outputs["06-comments"]!.contains("{>>@reviewer-a ") && outputs["06-comments"]!.contains("#c1: Is fifty enough?<<}") && !outputs["06-comments"]!.contains("[^c1]"),
+          "by default comments are kept as signed threads after the text they cover (DL-236 12A)")
+    // The Word review fixtures (DL-233): everything the review holds comes over, in DL-236's form.
+    let fixtures = repoRoot().appending(path: "docs/design/docx-viewer-handoff/fixture/markup")
+    func review(_ name: String) throws -> String {
+        try Docx.convert(fixtures.appending(path: name), options: Docx.Options(imagesFolder: "x")).markdown
+    }
+    let word = try review("Word markup.docx")
+    let sigRE = #"\{>>@[a-z0-9-]+ \d{4}-\d\d-\d\d #[cs]\d+(\.\d+)?( closed|:[^<]*)?<<\}"#
+    check(word.contains("Dana inserted {++these words++}{>>@dana-writer 2026-09-05 #s1: <<} and Morgan deleted {=={--some old words--}{>>@morgan-editor 2026-09-06 #s2: <<}==}"),
+          "an insertion and a deletion are marks signed with the author (lower case, spaces to -) and date")
+    check(word.contains("replaced {~~three~>four~~}{>>@morgan-editor 2026-09-06 #s5: <<} words"), "a deletion beside an insertion by one author is a substitution")
+    check(word.contains("{==forty==}{>>@dana-writer 2026-09-01 #c2: Is “forty” right? The spreadsheet says forty-two.<<}{>>@morgan-editor 2026-09-02 #c2.1: Checked: forty-two. I'll fix it.<<}{>>@riley-reviewer 2026-09-03 #c2.2: Thanks both.<<}"),
+          "a comment is a highlight with its thread after it, replies #c2.1 and #c2.2")
+    check(word.contains("#c1.2 closed<<}") && !word.contains("#c2.3 closed") && word.components(separatedBy: " closed<<}").count == 2, "a resolved thread ends with a closing line (Q-262), an open one doesn't")
+    check(word.contains("{==This paragraph is commented along with the next one.==}\n\n{==It carries the end of the comment.==}{>>@riley-reviewer 2026-09-05 #c5:"),
+          "a comment over two paragraphs is one highlight per paragraph, its thread after the last")
+    check(word.contains("{++This whole paragraph was inserted by Dana.++}{>>@dana-writer 2026-09-09 #s6: <<}\n\n{--This whole paragraph was deleted by Morgan.--}{>>@morgan-editor 2026-09-09 #s7: <<}"),
+          "a whole inserted or deleted paragraph is one mark")
+    check(word.contains("A point comment sits here{>>@riley-reviewer 2026-09-07 #c6:") && !word.contains("{====}"), "a comment on no text has no highlight")
+    check(word.contains("| {++North++}{>>") && !word.contains("[^c"), "marks sit in table cells; no endnotes")
+    let marks = word.components(separatedBy: "\n").filter { $0.contains("{>>") }
+    check(marks.allSatisfy { l in l.components(separatedBy: "{>>").count == (try! NSRegularExpression(pattern: sigRE)).numberOfMatches(in: l, range: NSRange(l.startIndex..., in: l)) + 1 }, "every comment is signed @name date #id")
+    // The shared parser (Review) reads the converter's output: threads, replies, closing lines, suggestions.
+    let parsedWord = Review.parse(word)
+    check(parsedWord.threads.count == 6 && parsedWord.threads.allSatisfy { !$0.id.hasPrefix("u") } && parsedWord.thread("c2")?.replies.count == 2 && parsedWord.thread("c1")?.closed == true && parsedWord.thread("c2")?.closed == false,
+          "Review reads the converted threads: replies, and the closed one (\(parsedWord.threads.map(\.id)))")
+    check(parsedWord.thread("c5")?.pieces.count == 2 && parsedWord.thread("c5")?.anchor == "This paragraph is commented along with the next one.\n\nIt carries the end of the comment.",
+          "a comment over two paragraphs is one thread with a highlight in each, not an unsigned thread for the first (Q-283)")
+    check(parsedWord.suggestion("s1")?.kind == .insertion && parsedWord.suggestion("s5")?.kind == .substitution && parsedWord.suggestion("s5")?.old == "three" && parsedWord.suggestion("s5")?.author == "morgan-editor",
+          "…and the suggestions, with author and substitution sides")
+    // A suggestion inside a commented range: Review's scanner is flat, so the highlight swallows it.
+    check(parsedWord.suggestion("s2")?.kind == .deletion && parsedWord.suggestion("s2")?.old == "some old words" && parsedWord.thread("c3")?.anchor?.contains("{--") == false && parsedWord.thread("c3")?.pieces.count == 1,
+          "a deletion inside a {==…==} highlight is a suggestion of its own, and the highlight stays its thread's anchor (Q-283)")
+    let google = try review("Google suggestions.docx")
+    check(google.contains("{++late ++}{>>@dana-writer 2026-09-05 #s1: <<}April") && google.contains("{~~can~>should~~}{>>@morgan-editor 2026-09-06 #s3: <<}") && google.contains("#c2.2 closed<<}"),
+          "Google's suggestions and comments come over the same way")
+    let markupSummary = try Docx.convert(fixtures.appending(path: "Word markup.docx"), options: Docx.Options(imagesFolder: "x")).report.summary(Docx.Options(imagesFolder: "x"))
+    check(markupSummary.done == ["14 tracked changes kept as suggestions", "8 comments kept as comment threads"], "the summary says changes and comments are kept (\(markupSummary.done))")
+    check(Docx.signature("Claude", "2026-10-28T09:00:00Z") == "@claude 2026-10-28" && Docx.signature("Claude Code", nil) == "@claude" && Docx.signature("Dana  Writer", "x") == "@dana-writer",
+          "a Word author called Claude is @claude (Q-266); other names are lower case with - for spaces")
     let pics = try md("07-images")
     check(pics.images.map(\.name) == ["image-1.png", "image-2.png"] && pics.markdown.contains("![Green rectangle standing for bed one](07-images-images/image-1.png)"),
           "pictures are saved as image-1.png… with their alt text and relative links")

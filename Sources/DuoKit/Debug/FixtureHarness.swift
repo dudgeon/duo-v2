@@ -92,6 +92,7 @@ public enum FixtureHarness {
     }
 
     /// Runs one scripted action (`--then`), as a click or chord would.
+    nonisolated(unsafe) static var reviewScreen = AppModel.PromptRead(idle: true, input: "")
     static func perform(_ action: String, on model: AppModel) {
         let parts = action.split(separator: ":", maxSplits: 1).map(String.init)
         switch parts[0] {
@@ -352,6 +353,41 @@ public enum FixtureHarness {
             if let url = model.editor.url { try? FileManager.default.moveItem(at: url, to: url.appendingPathExtension("gone")) }
         case "disk-restore":
             if let url = model.editor.url { try? FileManager.default.moveItem(at: url.appendingPathExtension("gone"), to: url) }
+        case "review-active":   // review-active:<thread id>: that comment's card made active in the margin, as a click does
+            model.editor.run("return duo.reviewActivate(i)", ["i": parts.count > 1 ? parts[1] : NSNull()]) { _ in }
+        case "review-comment":   // review-comment:<anchor text>=><comment>: a comment on that text, as the composer posts it
+            let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=>")
+            if p.count == 2 { model.editor.run("const d = view_text(); const at = d.indexOf(a); return at < 0 ? null : duo.reviewComment(t.replace(/~/g, ' '), at, at + a.length)".replacingOccurrences(of: "view_text()", with: "duo.text()"), ["a": p[0].replacingOccurrences(of: "~", with: " "), "t": p[1]]) { _ in } }
+        case "review-op":   // review-op:<reply|close|reopen|delete>=<thread id>[=<text, ~ for spaces>]: what a margin button does
+            let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=")
+            if p.count >= 2 { model.editor.run("return duo.reviewOp(o, i, t)", ["o": p[0], "i": p[1], "t": p.count > 2 ? p[2].replacingOccurrences(of: "~", with: " ") : ""]) { _ in } }
+        case "review-debug":   // review-debug: what the margin layer holds, to stderr
+            model.editor.run("const l = document.querySelector('.duo-mg'); const c = document.querySelector('.cm-content'); return l ? ('mg=' + JSON.stringify(window.__mg) + ' layer display=' + l.style.display + ' kids=' + l.children.length + ' h=' + l.style.height + ' contentMarginRight=' + (c && c.style.marginRight) + ' html=' + l.innerHTML.slice(0, 300)) : 'no layer'") { v in
+                FileHandle.standardError.write(Data("review-debug: \(v as? String ?? "nil")\n".utf8)) }
+        case "review-width":   // review-width:<pt>: the editor page held to that width, as a pane that narrow (the boards are 460 and 360)
+            model.editor.run("const e = document.getElementById('editor'); e.style.width = w + 'px'; e.style.borderRight = '1px solid #ccc'; return true", ["w": Int(parts.count > 1 ? parts[1] : "460") ?? 460]) { _ in }
+        case "review-io":   // review-io:idle|busy|draft: a scripted screen for the session an @claude comment goes to; what Duo types is printed
+            switch parts.count > 1 ? parts[1] : "idle" {
+            case "busy": Self.reviewScreen = AppModel.PromptRead(idle: false, input: "")
+            case "draft": Self.reviewScreen = AppModel.PromptRead(idle: true, input: "half a thought")
+            default: Self.reviewScreen = AppModel.PromptRead(idle: true, input: "")
+            }
+            model.submitHooks = AppModel.SubmitIO(read: { Self.reviewScreen }, beaconIdle: { Self.reviewScreen.idle }, type: { s in
+                FileHandle.standardError.write(Data("review-typed: \(s.replacingOccurrences(of: "\u{1b}[200~", with: "<paste>").replacingOccurrences(of: "\u{1b}[201~", with: "</paste>").replacingOccurrences(of: "\r", with: "<Return>").replacingOccurrences(of: "\n", with: " | "))\n".utf8))
+                if s != "\r" { Self.reviewScreen.input = String(SendFormat.clean(s.replacingOccurrences(of: "\u{1b}[200~", with: "").replacingOccurrences(of: "\u{1b}[201~", with: ""))) }
+            }, settle: 0.05)
+        case "review-send":   // review-send:<thread>: send that @claude comment to the project's first session, as the margin's Post does
+            if let id = parts.count > 1 ? parts[1] : nil, let url = model.editor.url, let s = model.fixture.sessions.first(where: { $0.project == model.currentProject?.name && $0.sessionId != nil }) {
+                model.sendReviewComment(url, thread: id, to: s) { r in FileHandle.standardError.write(Data("review-send: \(r.text)\n".utf8)) }
+            } else { FileHandle.standardError.write(Data("review-send: no session\n".utf8)) }
+        case "review-menu": model.reviewMenu = parts.count > 1 ? parts[1] : nil   // review-menu:markup|all: the review bar's menu, open for a capture
+        case "verb":   // verb:<duo2 words>[ --as name]: a duo2 verb through the control handler, as `duo2` sends it (from a Claude session); its reply to stderr
+            let words = (parts.count > 1 ? parts[1] : "").split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+            guard let command = words.first else { break }
+            let args = words.dropFirst().map { $0.replacingOccurrences(of: "~", with: " ") }   // a text argument joins its words with ~ (the action list splits on commas)
+            model.handle(ControlRequest(token: "", command: command, args: Array(args), session: "check-session", cwd: model.projectFolder?.path)) { r in
+                FileHandle.standardError.write(Data("verb \(command): ok=\(r.ok) \(r.output.replacingOccurrences(of: "\n", with: " | "))\n".utf8))
+            }
         case "editor-state":
             let e = model.editor
             e.run("return duo.text()") { v in
