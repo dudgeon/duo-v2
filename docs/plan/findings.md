@@ -4290,3 +4290,11 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 - Delete now takes each piece's markers and every comment and leaves what is inside (nested marks too); the old form replaced the group with the anchor's text and would have flattened them. Convert's known-gap check is now a passing check (`DuoChecks/main.swift`, the Word markup fixture).
 - Drawn: the nested deletion shows struck in its author's colour and the highlight's thread card sits beside it. The highlight's yellow does not show behind the struck words (the two marks share a start); a look to settle with the margin's hover colours.
 - The real end-to-end run (`scripts/check-review-claude-live.sh`) needed a project-level `.claude/settings.local.json` allowing `Bash(duo2:*)`, `Read` and `Edit`, so the session's turn isn't held at a permission prompt, and a workspace under this checkout's `build/` (a folder Claude already trusts) so no `~/.claude.json` entry is written.
+
+## F-392 · The update question lists the release's bold leads, capped (update-dialog-notes, 2026-10-28)
+
+- The question already had a notes box (DL-132 b) but fed it every line of the release body, so a real release showed group titles plus Requirements and Install prose. `UpdateCheck.notesLines` now takes the bullets under "What's new" only: the bold lead of each (the first sentence when there is none), at most `notesCap` (6), then "and n more". Notes with no bullets give no lines, so the question reads as before; offline, `notes` is empty and the same holds.
+- The background offer (`offerSparkleUpdate`, from Sparkle's delegate) had no notes at all: it now fetches `releases/latest` and uses the body when its version matches. `duo2 update` prints the bullets and adds `notes` to its data. Open Releases Page is the way to the full notes.
+- Fixtures: the real bodies of 0.2.18, 0.2.19 and 0.2.20 are in `Fixtures/release-notes/`; DuoChecks reads them. The `release` skill now says to keep the bold lead.
+- The box's height cap went 160 → 200 so six bullets and "and n more" fit without scrolling (Q-285). Capture: `build/ui/update-notes.png` (`--state overview --then ask-update:writable`).
+- DuoChecks: 2270 passed, 3 failed, all in the editor-helper checks (EDITOR/VISUAL, lines 718-726), not touched here.
