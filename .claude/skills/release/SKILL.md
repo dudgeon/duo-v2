@@ -35,7 +35,7 @@ The script ships `git rev-parse HEAD` of the current checkout, committed files o
 ## 3. Release notes
 
 Write `build/release/<version>-notes.md` (beside the output folder, not inside it: the script empties that folder). Read `git log <last-tag>..HEAD` (or the whole history for the first release) and the DL-n, F-n and ENH-n entries added in that range. Write it for someone installing Duo:
-- **What's new**: user-visible changes in plain words, grouped (workspace, sessions, editor, search, `duo2`), a line each. Skip internals unless they change behaviour someone would notice.
+- **What's new**: user-visible changes in plain words, grouped (workspace, sessions, editor, search, `duo2`), a line each. Start every bullet with a bold one-line summary of the change (`- **Directors work without Duo open.** Detail…`): Duo's update question lists those bold leads (F-392). Skip internals unless they change behaviour someone would notice.
 - **Requirements**: macOS 26 or later, Apple Silicon (until Universal builds are decided), Claude Code installed.
 - **Install**: open the DMG and drag Duo to Applications. The `duo2` command is at `Duo.app/Contents/Helpers/duo2`.
 - Known gaps worth a warning (open C-n rows that bite users).

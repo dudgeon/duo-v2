@@ -197,7 +197,7 @@ public enum FixtureHarness {
             let form = parts.count > 1 ? parts[1] : "writable"
             let o = UpdateCheck.Offer(version: "0.1.9", current: "0.1.8", page: UpdateCheck.releasePage("0.1.9"), needsAdmin: form == "admin",
                                       canInstallNow: form != "no-sparkle", folder: "/Applications",
-                                      notes: form == "no-notes" ? "" : "## What's new\n\n- Closing a tab where Claude is working asks first.\n- Files dropped on the tree move there, with Undo.\n- PowerPoint decks open in the right pane.\n- Narrow windows keep the side panes’ widths.\n")
+                                      notes: form == "no-notes" ? "" : "## What's new\n\n**Tabs**\n- **Closing a tab where Claude is working asks first.** Detail.\n- **Files dropped on the tree move there, with Undo.** Detail.\n- **PowerPoint decks open in the right pane.** Detail.\n- **Narrow windows keep the side panes’ widths.** Detail.\n- **Search finds text inside Word files.** Detail.\n- **Chat remembers its scroll place.** Detail.\n- **Settings has a Updates tab.** Detail.\n- **A fix for the sidebar.** Detail.\n\n## Install\nOpen the DMG.\n")
             func say(_ s: String) -> @MainActor () -> Void { { FileHandle.standardError.write(Data("ask-update: \(s)\n".utf8)) } }
             SheetCenter.shared.ask(UpdateCheck.question(o, openPage: say("Open Releases Page"), installNow: say("Install Now"), later: say("Later")))
         case "sheet-ok": if model.moveIntoHomeForm != nil { model.confirmMoveIntoHome() } else { model.commitNewProject() }
