@@ -172,7 +172,7 @@ The evidence is mixed. The primary sources are GitHub's, Google's, OpenAI's, Ant
 - **The Claude Code CLI watch:**
   - new `claude` versions since last week;
   - changelog lines touching what Duo depends on (the TUI screen, hooks, `--session-id`, Remote Control, `/fork`, dialogs);
-  - a note whether the work Mac's pin (2.1.219) is still in DL-155's range.
+  - a note whether the work Mac's pin (2.1.284 since 2026-10-28; 2.1.219 before) is still in DL-155's range, read from the memory or brief rather than hard-coded.
 
   If a risky line appears, the card proposes a compatibility worker, and the director delegates it. **Why:** three field-found CLI breaks this month (F-176, F-306, F-363). Weekly matches Dependabot practice. A separate job isn't worth its upkeep.
 - **Performance-budget staleness:** if 20 or more merges touched `Sources/` since the last recorded budget run, the card recommends a run. Running the timing checks needs the `--exclusive` lock and a quiet machine, so A doesn't run them by default. Q-276 asks Geoff whether it should. **Why:** C-79 was found by accident.
