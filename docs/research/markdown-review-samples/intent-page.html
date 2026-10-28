@@ -499,7 +499,11 @@ const D = [
    con:["Files fill up with old threads","Claude and other readers have to skip them"]},
   {k:"C", t:"It moves to a Review log at the end of the file", ex: ex(raw("…\n\n## Review log\n- c1 · Geoff, 27 Oct: True for crash reports? · Sam: No, Sentry. · resolved 28 Oct"),"The file"),
    pro:["History stays readable, out of the way"],
-   con:["Loses the link to the passage: the log can only quote it, and the quote goes stale once the text changes","Adds a section people didn't write","The log grows forever"]}]},
+   con:["Loses the link to the passage: the log can only quote it, and the quote goes stale once the text changes","Adds a section people didn't write","The log grows forever"]},
+  {k:"D", t:"You choose when you close it: keep it in the file, or delete it", ex: ex(duo(`<p><span class="hlx">We store nothing in the cloud except crash reports.</span></p>`+card("Geoff","c2","27 Oct","True for crash reports?","",false)+`<div class="acts" style="display:flex;gap:6px;flex-wrap:wrap"><span class="btn sm">Resolve and Keep</span><span class="btn sm">Resolve and Delete</span><span class="btn sm">Dismiss ⌄</span></div>`),"Duo",
+     raw("Kept:    {==…crash reports.==}{>>@geoff 2026-10-28 #c1 resolved: True for crash reports?<<}\nDeleted: …crash reports."),"The file"),
+   pro:["The person closing the thread knows whether it's worth keeping","Keeps the anchor for threads that matter (B) and a clean file for the rest (A)","A default per document or in Settings means one click most of the time"],
+   con:["Two verbs where Word and Google Docs have one","Kept threads still pile up if people always keep"]}]},
 
 { id:"claude-edits", title:"When Claude edits a document",
   why:"Today Claude's edits land in the text with a green highlight that fades on your next keystroke (DL-186). Duo already sees every edit Claude makes to a document open in Duo, so it can turn them into suggestions itself.",
