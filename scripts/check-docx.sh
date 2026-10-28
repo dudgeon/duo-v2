@@ -19,6 +19,9 @@ printf -- '---\ngoal: "Plan the garden"\n---\n\n# garden\n' > $ws/work/garden/PR
 python3 $fx/make_garden.py "$out/fixture" >/dev/null
 cp "$out/fixture/board/Garden plan.docx" "$out/fixture/locked/Contract draft.docx" $ws/work/garden/
 cp "$out/fixture/full/Garden plan.docx" "$ws/work/garden/Garden full.docx"
+# DL-233: the Google Docs look and the markup fixtures.
+python3 $fx/make_markup.py "$out/fixture" >/dev/null
+cp "$out/fixture/look/"*.docx "$out/fixture/markup/"*.docx $ws/work/garden/
 boards=("$@"); [ ${#boards[@]} -gt 0 ] || boards=(viewer markup fallback-question fallback picked-hover picked picked-session)
 # The paragraph ids the board's picked state hovers (the first body paragraph with a comment) and picks (Casey's).
 ids=$(python3 - "$out/fixture/board/Garden plan.docx" <<'PY'
@@ -43,6 +46,13 @@ for b in "${boards[@]}"; do
     # With a Claude session showing, as the board draws it: Duo starts one (it asks for no turn), and a watcher
     # writes the beacon Claude itself would (idle) for each, so Send to Claude is the default button.
     picked-session) file="Garden plan.docx"; acts="new,freeze:14,open-file:$ws/work/garden/Garden plan.docx,docx-pick:$pickid,freeze:3"; target=picked; watch=1 ;;
+    # DL-233: no screen draws these (the document's own text is exempt), so they are captures to look at, not compared.
+    look-none) file="No styles.docx"; acts="freeze:3"; target=- ;;
+    look-google) file="Google export.docx"; acts="freeze:3"; target=- ;;
+    look-word) file="Word defaults.docx"; acts="freeze:3"; target=- ;;
+    look-own) file="Own fonts.docx"; acts="freeze:3"; target=- ;;
+    word-all|word-simple|word-none|word-original) file="Word markup.docx"; acts="docx-markup:${b#word-},freeze:3"; target=- ;;
+    google-all|google-simple|google-none|google-original) file="Google suggestions.docx"; acts="docx-markup:${b#google-},freeze:3"; target=- ;;
     *) echo "no board $b" >&2; exit 1 ;;
   esac
   if [ -n "${watch:-}" ]; then
@@ -55,6 +65,7 @@ for b in "${boards[@]}"; do
   fi
   env -u DUO_SUPPORT_DIR DUO_TIMEOUT=60 scripts/run-live.sh $ws "$out/$b.png" "open:garden,open-file:$ws/work/garden/$file,right-width:460,$acts" "$out/$b.log" >/dev/null
   python3 scripts/chat-crop.py "$out/$b.png" "$out/$b-pane.png" 980 40 460 800
+  if [ "$target" = - ]; then echo "$b  →  build/docx/$b-pane.png"; continue; fi
   bash docs/design/build-handoff/tools/compare.sh docx-viewer-handoff/$target "$out/$b-pane.png" "$out/$b-compare.png" >/dev/null
   # The picker bar sits at the bottom of the pane, which is taller than the board's 800: compare it bottom-aligned too.
   case "$b" in picked*)

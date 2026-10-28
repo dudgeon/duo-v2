@@ -17,6 +17,8 @@
   #host .docx-wrapper > section.docx, #host section.docx { width: auto !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important;
     box-shadow: none !important; background: none !important; overflow-wrap: anywhere; }
   #host section.docx > article { width: auto !important; }
+  /* The renderer sets 10.5 pt on the section; a line of smaller text would take its height from that. The document's own default size. */
+  #host section.docx { font-size: var(--duo-base-size, 10.5pt) !important; hyphens: manual !important; }   /* and no hyphenating, as Google Docs doesn't */
   #host img, #host svg { max-width: 100%; height: auto; }
   #host table { max-width: 100%; }
 
@@ -29,6 +31,17 @@
     overflow: visible !important; line-height: inherit !important; color: var(--duo-author) !important; text-decoration: line-through; text-decoration-color: var(--duo-author); }
   #host[data-docx-review-mode="all"] del[data-docx-change-kind="move-from"] { text-decoration: line-through; }
   #host[data-docx-review-mode="all"] [data-docx-format-change="true"] { border-bottom: 2px dotted var(--duo-author); }
+  /* The renderer's All Markup rules match under every mode (its wrapper keeps the mode it was drawn in, and they are
+     the more specific), so each other mode says what it shows: Simple and No Markup have the changes accepted (no
+     strikes, no colours), Original has the deleted text back as plain text and the inserted text gone. */
+  #host[data-docx-review-mode="final"] del[data-docx-change-kind], #host[data-docx-review-mode="simple"] del[data-docx-change-kind],
+  #host[data-docx-review-mode="original"] ins[data-docx-change-kind] { display: none !important; }
+  #host[data-docx-review-mode="original"] del[data-docx-change-kind] {
+    display: inline !important; width: auto !important; max-width: none !important; height: auto !important; margin: 0 !important; padding: 0 !important;
+    overflow: visible !important; line-height: inherit !important; color: inherit !important; text-decoration: none !important; }
+  #host:not([data-docx-review-mode="all"]) ins[data-docx-change-kind] { color: inherit !important; text-decoration: none !important; background: none !important; }
+  #host[data-docx-review-mode="original"] tr[data-docx-change-kind="insert"], #host[data-docx-review-mode="final"] tr[data-docx-change-kind="delete"],
+  #host[data-docx-review-mode="simple"] tr[data-docx-change-kind="delete"] { display: none !important; }
   /* Another person's marks, while one person is chosen in the menu, read as plain accepted text. */
   #host[data-docx-review-mode="all"] .duo-muted ins, #host[data-docx-review-mode="all"] ins.duo-muted { color: inherit !important; text-decoration: none !important; }
   #host[data-docx-review-mode="all"] del.duo-muted { display: none !important; }

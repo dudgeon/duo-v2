@@ -252,6 +252,13 @@ w("    /// The popover shadow from tokens.json.")
 w("    public func duoPopoverShadow() -> some View { shadow(color: DuoShadow.popoverColor, radius: DuoShadow.popoverRadius, x: DuoShadow.popoverX, y: DuoShadow.popoverY) }")
 w("}")
 w("")
+w("/// The Word viewer's defaults where a document says nothing: Google Docs' own (DL-233), as JSON for the page.")
+w("public enum DuoDocxDefaults {")
+dd = {k: v for k, v in t["docxDefaults"].items() if not k.startswith("$")}
+dd["fontMap"] = {k: v for k, v in dd["fontMap"].items() if not k.startswith("$")}
+w(f"    public static let json = {json.dumps(json.dumps(dd, separators=(',', ':')))}")
+w("}")
+w("")
 w("/// Glyph and icon paths in a 10x10 (or stated) view box (handoff §4.4).")
 w("public enum DuoGlyphPath {")
 for k, v in t["glyph"].items():
