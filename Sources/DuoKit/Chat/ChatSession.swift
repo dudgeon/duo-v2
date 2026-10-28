@@ -200,7 +200,7 @@ public final class ChatSession {
         for (i, l) in news.enumerated() { lines.append(ChatDiffLine(kind: .add, number: first + i, text: l)) }
         return lines
     }
-    /// A message to scroll to (⌘[ / ⌘]).
+    /// A message to scroll to (⌥⌘↑ / ⌥⌘↓).
     public var revealRequest: String?
     /// The feed is scrolled to its end, so new items keep it there (F-160).
     @ObservationIgnored public var followsBottom = true

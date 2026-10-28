@@ -215,3 +215,10 @@ Return and its chords mean the same in chat and in the terminal (DL-241). In the
 | `\` then ↩ | New line; the `\` is dropped, as in Claude Code |
 | ⌘↩ | Send (the peek's jump wins while it's open); the review comment composer's Post |
 | ⌃↩ | Send now: while Claude works, the message and the queue go at once (Claude Code 2.1.275 and later); otherwise a plain send |
+
+In chat's composer (DL-242):
+
+| Keys | Action |
+|---|---|
+| ⌘] / ⌘[ | Indent / outdent the line or selection, two spaces |
+| ⌥⌘↑ / ⌥⌘↓ | Your previous / next message |

@@ -58,11 +58,11 @@ struct ChatComposerArea: View {
                     .help("Change mode (shift+tab)")
                     .accessibilityLabel("Mode: \(mode.chip). Change mode")
                 }
-                // Narrow (DL-129): hints drop from the right, ⌘[ ⌘] first, then @ files, then / commands.
+                // Narrow (DL-129): hints drop from the right, ⌥⌘↑ ⌥⌘↓ first, then @ files, then / commands.
                 // With the @ menu open, its keys (DL-133).
                 // Measured once, not on every pass as ViewThatFits did (F-208, ENH-45).
                 let hints = chat.ui.mention?.matches.isEmpty == false ? ["↑↓ choose · ⏎ or tab adds it · esc closes"]
-                    : ["⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files · ⌘[ ⌘] your messages", "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files",
+                    : ["⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files · ⌥⌘↑ ⌥⌘↓ your messages", "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands · @ files",
                        "⏎ send · ⇧⏎ new line · ⇧⇥ mode · / commands", "⏎ send · ⇧⏎ new line · ⇧⇥ mode", "⏎ send · ⇧⏎ new line"]
                 if let notice = chat.ui.pasteNotice {
                     ChatPasteNoticeLine(chat: chat, notice: notice)
@@ -595,6 +595,8 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
             return true
         }
         let key = (e.charactersIgnoringModifiers ?? "").lowercased()
+        // ⌘] indents, ⌘[ outdents (DL-242), always.
+        if mods == .command, key == "]" || key == "[" { applyIndent(out: key == "["); return true }
         var marker: String?, link = false
         switch (key, mods) {
         case ("b", .command): marker = "**"
@@ -606,6 +608,13 @@ final class ComposerTextView: NSTextView, @preconcurrency NSLayoutManagerDelegat
         }
         applyMarkdownKey(marker: marker, link: link)
         return true
+    }
+
+    func applyIndent(out: Bool) {
+        if hasMarkedText() { NSSound.beep(); return }
+        guard let edit = ComposerMarkdown.indent(in: string, selection: selectedRange(), out: out) else { NSSound.beep(); return }
+        insertText(edit.text, replacementRange: edit.range)
+        setSelectedRange(edit.selection)
     }
 
     /// One replacement, so one ⌘Z; then the selection the editor would leave.
