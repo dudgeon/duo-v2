@@ -482,7 +482,7 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
             if next != review { review = next; onStateChange?(); onReviewChange?(next) }
             return
         case .reviewAction:
-            onReviewAction?(body["op"] as? String ?? "", body["id"] as? String ?? "")
+            onReviewAction?(body["op"] as? String ?? "", body)
             return
         case .ready:
             return
@@ -810,9 +810,11 @@ public final class EditorController: NSObject, WKScriptMessageHandler, WKNavigat
     /// The page's marks changed: Duo pushes the markup mode it keeps per document if the page's differs.
     var onReviewChange: ((ReviewSummary) -> Void)?
     /// A label's Reply (a thread from a suggestion's note is the margin task's).
-    var onReviewAction: ((String, String) -> Void)?
+    var onReviewAction: ((String, [String: Any]) -> Void)?
 
     /// ‹ › in the review bar: the next or previous mark in document order.
+    /// ⌥⌘M: a comment on the selection (or the word at the caret), composed in the margin.
+    public func reviewAddComment() { run("return duo.reviewAddComment()") { _ in } }
     public func reviewStep(_ dir: Int) { run("return duo.reviewStep(d)", ["d": dir]) { _ in } }
     /// Accept or reject every suggestion, or one person's.
     public func reviewResolveAll(accept: Bool, person: String? = nil, done: (@MainActor (Int) -> Void)? = nil) {

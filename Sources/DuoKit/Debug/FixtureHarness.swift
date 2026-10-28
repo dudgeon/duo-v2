@@ -352,6 +352,19 @@ public enum FixtureHarness {
             if let url = model.editor.url { try? FileManager.default.moveItem(at: url, to: url.appendingPathExtension("gone")) }
         case "disk-restore":
             if let url = model.editor.url { try? FileManager.default.moveItem(at: url.appendingPathExtension("gone"), to: url) }
+        case "review-active":   // review-active:<thread id>: that comment's card made active in the margin, as a click does
+            model.editor.run("return duo.reviewActivate(i)", ["i": parts.count > 1 ? parts[1] : NSNull()]) { _ in }
+        case "review-comment":   // review-comment:<anchor text>=><comment>: a comment on that text, as the composer posts it
+            let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=>")
+            if p.count == 2 { model.editor.run("const d = view_text(); const at = d.indexOf(a); return at < 0 ? null : duo.reviewComment(t.replace(/~/g, ' '), at, at + a.length)".replacingOccurrences(of: "view_text()", with: "duo.text()"), ["a": p[0].replacingOccurrences(of: "~", with: " "), "t": p[1]]) { _ in } }
+        case "review-op":   // review-op:<reply|close|reopen|delete>=<thread id>[=<text, ~ for spaces>]: what a margin button does
+            let p = (parts.count > 1 ? parts[1] : "").components(separatedBy: "=")
+            if p.count >= 2 { model.editor.run("return duo.reviewOp(o, i, t)", ["o": p[0], "i": p[1], "t": p.count > 2 ? p[2].replacingOccurrences(of: "~", with: " ") : ""]) { _ in } }
+        case "review-debug":   // review-debug: what the margin layer holds, to stderr
+            model.editor.run("const l = document.querySelector('.duo-mg'); const c = document.querySelector('.cm-content'); return l ? ('mg=' + JSON.stringify(window.__mg) + ' layer display=' + l.style.display + ' kids=' + l.children.length + ' h=' + l.style.height + ' contentMarginRight=' + (c && c.style.marginRight) + ' html=' + l.innerHTML.slice(0, 300)) : 'no layer'") { v in
+                FileHandle.standardError.write(Data("review-debug: \(v as? String ?? "nil")\n".utf8)) }
+        case "review-width":   // review-width:<pt>: the editor page held to that width, as a pane that narrow (the boards are 460 and 360)
+            model.editor.run("const e = document.getElementById('editor'); e.style.width = w + 'px'; e.style.borderRight = '1px solid #ccc'; return true", ["w": Int(parts.count > 1 ? parts[1] : "460") ?? 460]) { _ in }
         case "review-menu": model.reviewMenu = parts.count > 1 ? parts[1] : nil   // review-menu:markup|all: the review bar's menu, open for a capture
         case "verb":   // verb:<duo2 words>[ --as name]: a duo2 verb through the control handler, as `duo2` sends it (from a Claude session); its reply to stderr
             let words = (parts.count > 1 ? parts[1] : "").split(separator: " ", omittingEmptySubsequences: true).map(String.init)

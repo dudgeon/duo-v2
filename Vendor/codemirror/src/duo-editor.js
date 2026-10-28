@@ -7,6 +7,7 @@ import { defaultKeymap, history, historyKeymap, undo, undoDepth } from "@codemir
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { syntaxTree } from "@codemirror/language";
 import { autocompletion, startCompletion, completionStatus, acceptCompletion } from "@codemirror/autocomplete";
+import { marginExtensions, marginTheme, composeComment, activate, addThread, replyTo, closeThread, reopenThread, deleteThread } from "./margin.js";
 import { reviewCore, reviewDrawing, reviewSummary, setMarkup as setReviewMarkup, setReviewer, onReviewAction, resolveSuggestion, resolveAll as resolveAllSuggestions, step as stepReview, suggestHunks, reviewField, suggestEditsOn } from "./critic.js";
 import { search, searchKeymap, SearchQuery, setSearchQuery, getSearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel, replaceNext } from "@codemirror/search";
 
@@ -1793,7 +1794,7 @@ const readOnlyCompartment = new Compartment();
 const previewLive = new Compartment(), previewProps = new Compartment(), previewBlocks = new Compartment();
 let sourceMode = !!window.duoFlags?.noPreview;   // the next state's mode (checks start a page in source with the flag)
 const sourceIds = new Set();                      // documents Duo remembers in source mode, by id
-const sourceEffects = (on) => [previewLive.reconfigure(on ? [] : [livePreview, codeHover, reviewDrawing]), previewProps.reconfigure(on ? [] : previewPropsList), previewBlocks.reconfigure(on ? [] : [blocksField])];
+const sourceEffects = (on) => [previewLive.reconfigure(on ? [] : [livePreview, codeHover, reviewDrawing, marginExtensions]), previewProps.reconfigure(on ? [] : previewPropsList), previewBlocks.reconfigure(on ? [] : [blocksField])];
 const isSource = (state) => previewLive.get(state).length === 0;
 function setSource(on) {
   on = !!on;
@@ -2179,8 +2180,8 @@ function extensions(readOnly) {
       history(),
       markdown({ base: markdownLanguage }),  // GitHub-flavoured: task lists, tables, strikethrough
       search({ top: true, createPanel: findPanel }),
-      reviewCore,
-      previewLive.of(sourceMode ? [] : [livePreview, codeHover, reviewDrawing]),
+      reviewCore, marginTheme,
+      previewLive.of(sourceMode ? [] : [livePreview, codeHover, reviewDrawing, marginExtensions]),
       contextField,
       foldField,
       previewProps.of(sourceMode ? [] : previewPropsList),
@@ -2655,6 +2656,11 @@ window.duo = {
   reviewResolve: (id, accept) => resolveSuggestion(view, id, !!accept),
   reviewResolveAll: (accept, person) => resolveAllSuggestions(view, !!accept, person || null),
   suggestEditsOn: () => suggestEditsOn(view.state.doc),
+  reviewAddComment: () => composeComment(view),
+  // What the margin's buttons do, for scripted runs: the same functions, the same transactions.
+  reviewOp: (op, id, text) => ({ reply: () => replyTo(view, id, text || ""), close: () => closeThread(view, id), reopen: () => reopenThread(view, id), delete: () => deleteThread(view, id) }[op] || (() => false))(),
+  reviewActivate: (id) => { activate(view, id); return true; },
+  reviewComment: (text, from, to) => addThread(view, text, { from, to }),
   hiddenCount: () => document.querySelectorAll(".cm-line").length,
 };
 post("ready", {});
