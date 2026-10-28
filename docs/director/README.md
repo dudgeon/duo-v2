@@ -12,6 +12,7 @@ How Duo's own director works, beyond the shared `duo-director` skill (source `sk
 | Shared compute: the GPU lock | `gpu-lock.md` |
 | Talking to Geoff: digests, decisions | `talking-to-geoff.md` |
 | The director console: collections, how taps arrive | `console.md`; source `console.html` |
+| Problem discovery: the weekday scheduled run over GitHub issues, its page, and carrying out the actions Geoff queues there | `problem-discovery.md` (`discovery-gather.py`; page source `discovery.html`) |
 | Dependencies: the geoff-voice repo | `voice-repo.md` |
 | Lessons, and where things are | `lessons.md` |
 

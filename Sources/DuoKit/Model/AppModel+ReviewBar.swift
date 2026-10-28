@@ -28,5 +28,6 @@ extension AppModel {
         guard let e = editorIfLoaded, let url = e.url else { return }
         let m = markdownMarkup[url.resolvingSymlinksInPath().standardizedFileURL.path] ?? MarkdownMarkup()
         if r.mode != m.mode || r.showClosed != m.showClosed { e.setReviewMarkup(mode: m.mode, showClosed: m.showClosed) }
+        pushReviewState()
     }
 }

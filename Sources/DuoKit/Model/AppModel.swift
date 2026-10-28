@@ -213,6 +213,11 @@ public final class AppModel {
     @ObservationIgnored public var docxViewerIfLoaded: DocxViewer?
     /// The Markup menu is open (W4); the viewer's bar shows Markup pressed while it is.
     public var docxMenuOpen = false
+    /// @claude comments in flight, by "<file>#<thread>" (DL-236 10A); who last edited a document through Duo, by file.
+    @ObservationIgnored var reviewDeliveries: [String: ReviewDelivery] = DuoState.load().reviewDeliveries
+    @ObservationIgnored var reviewLastEditor: [String: String] = [:]
+    @ObservationIgnored var reviewSending: Set<String> = []
+    @ObservationIgnored var reviewPillMenu: AnyObject?
     /// The Markdown review bar's open menu: "markup" or "all" (DL-237).
     public var reviewMenu: String?
     /// Browser tabs by id (`web:…`), kept alive while their tab is open (Phase K, ENH-8).
@@ -570,6 +575,7 @@ public final class AppModel {
         Notifier.shared.model = self
         notifyNeedsYou()
         deliverDirectorMessages()   // a director's queued messages, to workers now idle (DL-199)
+        deliverReviewComments()     // @claude comments waiting for their session, and their replies (DL-236 10A)
         archiveListedSessions()  // after the snapshot is applied: it archives what's listed now
         GitIgnoreOffer.consider(folders, interactive: interactivePrompts && !SupportFolder.isIsolated)   // C-28: no first-run questions in an isolated instance
         refreshRepo()   // the open project's repository state (DL-149, DL-157)

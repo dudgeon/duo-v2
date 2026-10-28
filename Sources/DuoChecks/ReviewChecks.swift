@@ -103,6 +103,33 @@ import Foundation
     let editorJS = (try? String(contentsOf: repoRoot().appending(path: "Vendor/codemirror/src/duo-editor.js"), encoding: .utf8)) ?? ""
     check(editorJS.contains("reviewCore,") && editorJS.contains("reviewDrawing"), "the editor loads the review module: parse always, drawing with the live preview")
 
+    // Marks the converter writes (Q-283): a deletion inside a commented range, a comment over two paragraphs
+    let conv = "Some {=={--some old words--}{>>@morgan-editor 2026-09-06 #s2: <<}==}{>>@riley-reviewer 2026-09-06 #c3: why<<} here.\n\n{==First paragraph.==}\n\n{==Second paragraph.==}{>>@riley-reviewer 2026-09-05 #c5: both<<}{>>@dana-writer 2026-09-05 #c5.1: yes<<}\n"
+    let pcv = Review.parse(conv)
+    check(pcv.suggestions.map(\.id) == ["s2"] && pcv.suggestion("s2")?.kind == .deletion && pcv.suggestion("s2")?.old == "some old words", "a deletion inside a highlight is a suggestion of its own")
+    check(pcv.threads.map(\.id) == ["c3", "c5"] && pcv.thread("c3")?.pieces.count == 1 && pcv.thread("c3")?.anchor == "some old words", "the highlight stays the thread's anchor")
+    check(pcv.thread("c5")?.pieces.count == 2 && pcv.thread("c5")?.anchor == "First paragraph.\n\nSecond paragraph." && pcv.thread("c5")?.comments.count == 2, "a comment over two paragraphs is one thread, a highlight in each")
+    let del = try Review.delete(in: conv, id: "c5")
+    check(del.text.contains("First paragraph.\n\nSecond paragraph.\n") && !del.text.contains("{==") || del.text.contains("{--some old words--}"), "Delete takes every highlight's markers and the comments, keeps the text")
+    let del3 = try Review.delete(in: conv, id: "c3")
+    check(del3.text.contains("{--some old words--}{>>@morgan-editor 2026-09-06 #s2: <<}") && !del3.text.contains("#c3") && !del3.text.contains("{==some"), "deleting a thread keeps the suggestion inside its highlight")
+    check(Review.parse(del3.text).suggestion("s2") != nil, "…and it is still a suggestion")
+    let accv = try Review.resolve(in: conv, id: "s2", accept: true)
+    check(accv.text.contains("Some {==") && Review.parse(accv.text).thread("c3") != nil, "accepting it leaves the thread")
+
+    // @claude comments (DL-236 9A, 10A): where one goes first, and what the turn says
+    check(Review.firstGuess(thread: "t", document: "d", lastEditor: "e", onScreen: "s") == "t", "the first guess is the thread's session")
+    check(Review.firstGuess(thread: nil, document: "d", lastEditor: "e", onScreen: "s") == "d", "then this document's last choice")
+    check(Review.firstGuess(thread: nil, document: nil, lastEditor: "e", onScreen: "s") == "e", "then the one that last edited it through Duo")
+    check(Review.firstGuess(thread: nil, document: nil, lastEditor: nil, onScreen: "s") == "s", "then the one on screen")
+    check(Review.firstGuess(thread: "", document: nil, lastEditor: nil, onScreen: nil) == nil, "else none: New Session")
+    let ct = Review.parse("Launch is {==planned for early November==}{>>@geoff 2026-10-28 #c2: @claude can you tighten this?<<}{>>@sam 2026-10-28 #c2.1: yes please<<}").thread("c2")!
+    let turn = Review.turn(path: "docs/offline.md", line: 9, thread: ct)
+    check(turn.hasPrefix("@claude comment in docs/offline.md, line 9 (thread c2), from geoff, 2026-10-28\n"), "the turn starts with where, which thread and from whom")
+    check(turn.contains("On: “planned for early November”\n> @geoff: @claude can you tighten this?\n> @sam: yes please\n"), "the turn names the anchor and quotes the thread as data")
+    check(turn.contains("duo2 comment reply c2 \"<text>\"") && turn.contains("--suggest") && !turn.contains("\u{1b}"), "the turn says how to reply, as plain text")
+    check(ct.comments.contains(where: \.mentionsClaude) && !Review.parse("{==a==}{>>@geoff 2026-10-28 #c3: just a note<<}").threads[0].comments.contains(where: \.mentionsClaude), "a comment names @claude or it doesn't")
+
     // The paragraph and the verbs
     let c = Review.convention
     for must in ["{++added++}", "never accept or reject", "signed @claude", "#id.n", "closed<<}", "never delete someone's comment", "names @claude", "suggest-edits: true", "duo2 comment reply"] {

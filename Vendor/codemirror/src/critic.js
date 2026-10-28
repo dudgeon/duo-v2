@@ -41,16 +41,17 @@ function codeRanges(text) {
   return out;
 }
 
-function rawMarks(text) {
+function rawMarks(text, within) {
   const code = codeRanges(text), out = [];
-  let i = 0;
-  outer: while (i + 3 <= text.length) {
+  const end = within ? within[1] : text.length;
+  let i = within ? within[0] : 0;
+  outer: while (i + 3 <= end) {
     if (text.charCodeAt(i) === 123 && !code.some(([a, b]) => i >= a && i < b)) {
       const head = text.slice(i, i + 3);
       for (const [open, close, kind] of OPENERS) {
         if (head !== open) continue;
         const c = text.indexOf(close, i + 3);
-        if (c >= 0) { out.push({ kind, from: i, to: c + 3, inner: [i + 3, c] }); i = c + 3; continue outer; }
+        if (c >= 0 && c + 3 <= end) { out.push({ kind, from: i, to: c + 3, inner: [i + 3, c] }); i = c + 3; continue outer; }
       }
     }
     i++;
@@ -68,9 +69,18 @@ function parseComment(body, from, to) {
 }
 
 // → { suggestions: [...], threads: [...] }, each with from/to (the whole group) and its pieces.
+// A comment over several paragraphs is one highlight per paragraph with the thread after the last (the converter writes
+// it so, Q-244): `pieces` has them all. Marks inside a highlight are read again: a deletion in a commented range is a
+// suggestion, and the highlight stays its thread's anchor.
 export function parseReview(text) {
-  const raws = rawMarks(text);
   const out = { suggestions: [], threads: [] };
+  const st = { unsigned: 0 };
+  group(text, rawMarks(text), out, st);
+  out.suggestions.sort((a, b) => a.from - b.from);
+  out.threads.sort((a, b) => a.from - b.from);
+  return out;
+}
+function group(text, raws, out, st) {
   const commentsAfter = (i, end) => {
     const list = [];
     while (i < raws.length && raws[i].kind === "cm" && raws[i].from === end) {
@@ -79,7 +89,20 @@ export function parseReview(text) {
     }
     return { list, i, end };
   };
-  let unsigned = 0;
+  const piece = (r) => ({ open: [r.from, r.from + 3], close: [r.to - 3, r.to], inner: r.inner });
+  // A highlight's text with the marks inside it read as they are (an insertion's new text, a deletion's old).
+  const flat = (inner) => {
+    const nested = rawMarks(text, inner);
+    let o = "", at = inner[0];
+    for (const n of nested) {
+      if (n.kind === "cm") { if (n.from >= at) at = Math.max(at, n.to); continue; }
+      if (n.from > at) o += text.slice(at, n.from);
+      const body = text.slice(n.inner[0], n.inner[1]);
+      o += n.kind === "sub" && body.includes("~>") ? body.slice(body.indexOf("~>") + 2) : body;
+      at = n.to;
+    }
+    return o + (at < inner[1] ? text.slice(at, inner[1]) : "");
+  };
   for (let i = 0; i < raws.length;) {
     const r = raws[i];
     if (r.kind === "ins" || r.kind === "del" || r.kind === "sub") {
@@ -96,20 +119,25 @@ export function parseReview(text) {
       out.suggestions.push(s);
       i = c.i;
     } else if (r.kind === "hl") {
-      const c = commentsAfter(i + 1, r.to);
+      const pieces = [piece(r)];
+      let j = i, c = commentsAfter(j + 1, raws[j].to);
+      while (!c.list.length && j + 1 < raws.length && raws[j + 1].kind === "hl" && !text.slice(raws[j].to, raws[j + 1].from).trim()) {
+        j++; pieces.push(piece(raws[j])); c = commentsAfter(j + 1, raws[j].to);
+      }
+      for (const p of pieces) group(text, rawMarks(text, p.inner), out, st);
       const first = c.list.find((x) => !x.closing);
-      if (!first?.id) unsigned++;
-      out.threads.push({ id: first?.id ?? "u" + unsigned, from: r.from, to: c.end, open: [r.from, r.from + 3], close: [r.to - 3, r.to], anchor: r.inner, comments: c.list, closed: !!c.list.length && c.list[c.list.length - 1].closing });
+      if (!first?.id) st.unsigned++;
+      out.threads.push({ id: first?.id ?? "u" + st.unsigned, from: r.from, to: c.end, open: pieces[0].open, close: pieces[pieces.length - 1].close, anchor: pieces[0].inner, pieces,
+                         anchorText: pieces.map((p) => flat(p.inner)).join("\n\n"), comments: c.list, closed: !!c.list.length && c.list[c.list.length - 1].closing });
       i = c.i;
     } else if (r.kind === "cm") {
       const c = commentsAfter(i, r.from);
       const first = c.list.find((x) => !x.closing);
-      if (!first?.id) unsigned++;
-      out.threads.push({ id: first?.id ? first.id.split(".")[0] : "u" + unsigned, from: r.from, to: c.end, anchor: null, comments: c.list, closed: !!c.list.length && c.list[c.list.length - 1].closing });
+      if (!first?.id) st.unsigned++;
+      out.threads.push({ id: first?.id ? first.id.split(".")[0] : "u" + st.unsigned, from: r.from, to: c.end, anchor: null, pieces: [], comments: c.list, closed: !!c.list.length && c.list[c.list.length - 1].closing });
       i = c.i;
     } else i++;
   }
-  return out;
 }
 
 // ---------- state ----------
@@ -210,10 +238,9 @@ function decorations(state) {
     }
   }
   for (const t of parsed.threads) {
-    if (t.closed && !showClosed) { t.anchor && (range(t.open[0], t.open[1], hide), range(t.close[0], t.close[1], hide)); hideCommentsOf(t, out); continue; }
-    if (t.anchor) {
-      range(t.open[0], t.open[1], hide); range(t.close[0], t.close[1], hide);
-      if (mode === "all") range(t.anchor[0], t.anchor[1], Decoration.mark({ class: t.closed ? "duo-rv-closed" : "duo-rv-hl", attributes: { "data-rv": t.id } }));
+    for (const p of t.pieces) {
+      range(p.open[0], p.open[1], hide); range(p.close[0], p.close[1], hide);
+      if (mode === "all" && (!t.closed || showClosed)) range(p.inner[0], p.inner[1], Decoration.mark({ class: t.closed ? "duo-rv-closed" : "duo-rv-hl", attributes: { "data-rv": t.id } }));
     }
     hideCommentsOf(t, out);
   }
@@ -233,6 +260,7 @@ const decoField = StateField.define({
 
 let onAction = () => {};
 export function onReviewAction(fn) { onAction = fn; }
+export function emitReviewAction(a) { onAction(a); }
 
 function labelFor(view, s) {
   const dom = document.createElement("div");
@@ -389,4 +417,17 @@ export const reviewTheme = EditorView.baseTheme({
 // Always on: the parse, the switch and the signing of edits. Drawing is the live preview's (`reviewDrawing`).
 export const reviewCore = [reviewField, markupField, reviewerField, suggestTyping, reviewTheme];
 export const reviewDrawing = [decoField, labelHover];
-export { reviewField, markupField, reviewerField };
+
+export { reviewField, markupField, reviewerField, signatureName, today };
+
+// The next free id of a kind (`c` threads, `s` suggestions) over every id the document uses.
+export function nextId(doc, prefix) {
+  let top = 0;
+  const re = new RegExp("#" + prefix + "(\\d+)", "g"), t = doc.toString();
+  for (let m; (m = re.exec(t));) top = Math.max(top, +m[1]);
+  return prefix + (top + 1);
+}
+// The number after the highest `.n` any comment of a thread has.
+export function nextReply(comments) {
+  return 1 + Math.max(0, ...comments.map((c) => (c.id && c.id.includes(".") ? +c.id.split(".").pop() : 0)));
+}
