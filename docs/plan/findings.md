@@ -4258,12 +4258,12 @@ Research for DL-236 (8), "the things the users should feel familiar with". Googl
 - Drawn: the nested deletion shows struck in its author's colour and the highlight's thread card sits beside it. The highlight's yellow does not show behind the struck words (the two marks share a start); a look to settle with the margin's hover colours.
 - The real end-to-end run (`scripts/check-review-claude-live.sh`) needed a project-level `.claude/settings.local.json` allowing `Bash(duo2:*)`, `Read` and `Edit`, so the session's turn isn't held at a permission prompt, and a workspace under this checkout's `build/` (a folder Claude already trusts) so no `~/.claude.json` entry is written.
 
-## F-392 · `doc screenshot` draws a Word document in a window nobody can see (build-doc-screenshot, 2026-10-28)
+## F-394 · `doc screenshot` draws a Word document in a window nobody can see (build-doc-screenshot, 2026-10-28)
 
 - A Word document needn't be showing: `OffscreenShot` (`Control/AppModel+DocShot.swift`) gives it a `DocxViewer` of its own in a borderless window at (-30000, -30000), ordered back and never key, so nothing appears and no focus moves (Q-259's recommendation). `takeSnapshot` paints it there. The window is sized to the document's height (up to 24000 px) and the picture is taken in 1600 px pieces.
 - `WKSnapshotConfiguration.snapshotWidth` is in points, not pixels: asking for `width * 2` gave 4x pictures on a 2x screen.
 - A table wider than the sheet is drawn whole in the capture: the box's overflow is lifted, the page's layout width is held at the pane's width, and the window is widened to the widest table (to 4000 px). Text still flows at the pane's width.
-- A Markdown preview or slide deck is captured only while it is showing (the part on screen); Duo has no second copy of those to draw out of sight. That part of the done_when is not met; it is ENH-281 below.
+- A Markdown preview or slide deck is captured only while it is showing (the part on screen); Duo has no second copy of those to draw out of sight. That part of the done_when is not met; it is ENH-289 below.
 - `browser screenshot --full-page` scrolls the page a view at a time, takes each `takeSnapshot`, and joins them at their real scroll offsets (up to 20000 px); fixed headers repeat in each piece. The page is put back where it was. `browser scroll` takes `top`, `bottom`, `up`, `down`, pixels or a selector and says where the page is.
 - The path rule (C-115) is `AppModel.documentFile` (F-386); PNGs go in `<session folder>/.duo/screenshots/` (Duo's support `context` folder for a caller outside a session).
 
