@@ -20,6 +20,24 @@ import Foundation
         return (c, tui)
     }
 
+    // F-376: work Mac, Claude Code 2.1.219, a custom status line under the box and the auto-mode footer.
+    do {
+        let s = ChatScreenReader.read(spikeScreen("field-2.1.219/statusline-auto.txt"), cols: 100)
+        print("   field screen: \(s.kind) why=\(s.why ?? "-") mode=\(String(describing: s.mode)) input=\(String(describing: s.input))")
+        check(s.kind == .idle && s.mode == .auto, "2.1.219 with a custom status line and the auto-mode footer reads as idle, mode auto (\(s.kind))")
+    }
+
+    // A sticky bar (DL-154) over a screen that reads idle now: the report shows the screen now and the verdicts before.
+    do {
+        let field = spikeScreen("field-2.1.219/statusline-auto.txt")
+        let (c, tui) = session("sess-sticky", field, version: "2.1.219")
+        tui.show(helpText); spin(0.8)
+        tui.show(field); spin(0.2)
+        let r = c.debugReport()
+        check(!c.showsChat && r.contains("Screen now (verdict idle)") && r.contains("auto mode on"), "a bar that outlived its screen: the report shows the screen now")
+        check(r.contains("Reader's verdict changes before the fallback") && r.contains("idle → unknown"), "and the verdict changes before the fallback")
+    }
+
     // Rule: an unknown screen for longer than the grace period.
     do {
         let (c, tui) = session("sess-unknown", idleText, version: "2.1.293")
@@ -85,11 +103,11 @@ import Foundation
 
     // The local log: one line per automatic fallback, with a hash and 8 rows rather than the screen.
     let recs = ChatFallbackLog.read()
-    check(recs.count == 4, "four automatic fallbacks logged, the handover not (\(recs.count))")
+    check(recs.count == 5, "five automatic fallbacks logged, the handover not (\(recs.count))")
     if let u = recs.first {
-        check(u.rule == "unknown-screen" && u.nearRows.count <= 8 && u.screenHash.count == 12 && u.session == "sess-unknown" && u.cliVersion == "2.1.293", "a log line: rule, session, version, hash, at most 8 rows")
+        check(u.rule == "unknown-screen" && u.nearRows.count <= 8 && u.screenHash.count == 12 && u.session == "sess-sticky" && u.cliVersion == "2.1.219", "a log line: rule, session, version, hash, at most 8 rows")
         let raw = (try? String(contentsOf: log, encoding: .utf8)) ?? ""
-        check(!raw.contains("\"lines\"") && raw.split(separator: "\n").count == 4, "the full screen is not in the log")
+        check(!raw.contains("\"lines\"") && raw.split(separator: "\n").count == 5, "the full screen is not in the log")
     }
-    check(ChatFallbackLog.report(recs).contains("4 automatic fallbacks logged") && ChatFallbackLog.report([]).hasPrefix("No automatic"), "duo2 session chat why --log prints them")
+    check(ChatFallbackLog.report(recs).contains("5 automatic fallbacks logged") && ChatFallbackLog.report([]).hasPrefix("No automatic"), "duo2 session chat why --log prints them")
 }

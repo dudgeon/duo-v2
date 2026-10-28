@@ -367,6 +367,10 @@ public final class ChatSession {
         // 2.1.296's inline renderer draws the `/` menu where the footer was (F-284): the mode is the one before it opened.
         if s.mode == nil, !s.commands.isEmpty, s.kind == .idle { s.mode = before.mode }
         if s != before { screen = s }
+        if s.kind != before.kind {
+            screenTrail.append(ChatTransition(at: Date(), event: "screen", reason: "\(before.kind.rawValue) → \(s.kind.rawValue) (\(s.sig.prefix(60))\(s.why.map { ", " + $0 } ?? ""))"))
+            if screenTrail.count > 20 { screenTrail.removeFirst(screenTrail.count - 20) }
+        }
         if let e = s.effort, e != effort { effort = e; effortGlyphs[e.word] = e.glyph }
         // An interrupted reply fires no hook: busy → idle ends it (F-105).
         if before.kind == .busy, s.kind == .idle {
@@ -473,15 +477,19 @@ public final class ChatSession {
             at: Date(), rule: rule, message: f.message, automatic: f.kind == .automatic, kind: screen.kind.rawValue, sig: screen.sig,
             why: screen.why, evidence: ChatFallbackReport.evidence(lines, table: signatures), lines: t, cols: terminal?.columns ?? (t.map(\.count).max() ?? 0),
             cliVersion: cliVersion, trust: versionTrust.rawValue, pending: pendingRequest?.tool,
-            unknownFor: unknownSince.map { now.timeIntervalSince($0) }, footer: screen.mode != nil,
+            unknownFor: unknownSince.map { now.timeIntervalSince($0) }, trail: screenTrail, footer: screen.mode != nil,
             dialog: [.permission, .plan, .question, .questionReview, .picker].contains(screen.kind),
             mods: t.map { $0.chatTrim }.filter { $0.hasPrefix("⚠") }.map { String($0.prefix(80)) }, session: key)
     }
 
     /// The Debug report (the bar's sheet, `duo2 session chat why`).
     public func debugReport() -> String {
-        ChatFallbackReport.text(capture: lastFallback, current: screen, history: transitions, session: key, fallback: fallback, cliVersion: cliVersion)
+        ChatFallbackReport.text(capture: lastFallback, current: screen, history: transitions, session: key, fallback: fallback, cliVersion: cliVersion,
+                                nowLines: terminal?.screenLines() ?? [])
     }
+
+    /// Each change of the reader's verdict, newest last: what the screen was doing before a fallback (F-376).
+    public private(set) var screenTrail: [ChatTransition] = []
 
     /// Diagnostics (test branch, askq-fallback): what chat saw when it fell back, to stderr. One header
     /// line, then the terminal's rows as chat read them, so a run's log shows the screen at that moment.

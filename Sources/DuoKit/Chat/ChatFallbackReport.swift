@@ -35,10 +35,13 @@ public struct ChatFallbackCapture: Sendable, Equatable {
     public var dialog: Bool
     public var mods: [String]
     public var session: String
+    /// The reader's verdict changes just before the fallback, newest last.
+    public var trail: [ChatTransition]
 
     public init(at: Date, rule: String, message: String, automatic: Bool, kind: String, sig: String, why: String? = nil, evidence: [String],
                 lines: [String], cols: Int, cliVersion: String? = nil, trust: String, pending: String? = nil, unknownFor: Double? = nil,
-                footer: Bool, dialog: Bool, mods: [String], session: String) {
+                trail: [ChatTransition] = [], footer: Bool, dialog: Bool, mods: [String], session: String) {
+        self.trail = trail
         self.at = at; self.rule = rule; self.message = message; self.automatic = automatic; self.kind = kind; self.sig = sig; self.why = why
         self.evidence = evidence; self.lines = lines; self.cols = cols; self.cliVersion = cliVersion; self.trust = trust; self.pending = pending
         self.unknownFor = unknownFor; self.footer = footer; self.dialog = dialog; self.mods = mods; self.session = session
@@ -96,7 +99,7 @@ public enum ChatFallbackReport {
     /// The report as plain text. `capture` is the last automatic fallback (nil: none this run);
     /// `current` the session's screen now.
     public static func text(capture c: ChatFallbackCapture?, current: ChatScreen, history: [ChatTransition], session: String,
-                            fallback: ChatFallback?, cliVersion: String?) -> String {
+                            fallback: ChatFallback?, cliVersion: String?, nowLines: [String] = []) -> String {
         var o: [String] = ["Duo chat-mode fallback report", ""]
         o.append("Duo \(duoVersion)")
         o.append("Claude Code \(cliVersion ?? "unknown") · session \(session)")
@@ -121,6 +124,17 @@ public enum ChatFallbackReport {
             o.append("Screen the reader judged: last \(shown.count) of \(c.lines.count) rows, \(c.cols) columns")
             let first = c.lines.count - shown.count
             for (i, l) in shown.enumerated() { o.append(String(format: "%3d | ", first + i + 1) + l.chatTrimEnd) }
+            o.append("")
+            o.append("Reader's verdict changes before the fallback (newest last)")
+            if c.trail.isEmpty { o.append("  none") }
+            for h in c.trail.suffix(12) { o.append("  \(stamp(h.at))  \(h.reason)") }
+            // The bar stays until Back to Chat (DL-154): when the screen has moved on, show it now too.
+            if fallback != nil, current.kind.rawValue != c.kind, !nowLines.isEmpty {
+                let tail = Array(nowLines.suffix(12))
+                o.append("")
+                o.append("Screen now (verdict \(current.kind.rawValue)): last \(tail.count) of \(nowLines.count) rows")
+                for l in tail { o.append("    | " + l.chatTrimEnd) }
+            }
         } else {
             o.append("No fallback has been recorded for this session since Duo started.")
         }
