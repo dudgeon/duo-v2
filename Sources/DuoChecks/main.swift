@@ -2423,22 +2423,31 @@ func repoFixture() throws -> Fixture {
     }
     let word = try review("Word markup.docx")
     let sigRE = #"\{>>@[a-z0-9-]+ \d{4}-\d\d-\d\d #[cs]\d+(\.\d+)?( closed|:[^<]*)?<<\}"#
-    check(word.contains("Dana inserted {++these words++}{>>@dana-writer 2026-09-05 #s1<<} and Morgan deleted {=={--some old words--}{>>@morgan-editor 2026-09-06 #s2<<}==}"),
+    check(word.contains("Dana inserted {++these words++}{>>@dana-writer 2026-09-05 #s1: <<} and Morgan deleted {=={--some old words--}{>>@morgan-editor 2026-09-06 #s2: <<}==}"),
           "an insertion and a deletion are marks signed with the author (lower case, spaces to -) and date")
-    check(word.contains("replaced {~~three~>four~~}{>>@morgan-editor 2026-09-06 #s5<<} words"), "a deletion beside an insertion by one author is a substitution")
+    check(word.contains("replaced {~~three~>four~~}{>>@morgan-editor 2026-09-06 #s5: <<} words"), "a deletion beside an insertion by one author is a substitution")
     check(word.contains("{==forty==}{>>@dana-writer 2026-09-01 #c2: Is “forty” right? The spreadsheet says forty-two.<<}{>>@morgan-editor 2026-09-02 #c2.1: Checked: forty-two. I'll fix it.<<}{>>@riley-reviewer 2026-09-03 #c2.2: Thanks both.<<}"),
           "a comment is a highlight with its thread after it, replies #c2.1 and #c2.2")
     check(word.contains("#c1.2 closed<<}") && !word.contains("#c2.3 closed") && word.components(separatedBy: " closed<<}").count == 2, "a resolved thread ends with a closing line (Q-262), an open one doesn't")
     check(word.contains("{==This paragraph is commented along with the next one.==}\n\n{==It carries the end of the comment.==}{>>@riley-reviewer 2026-09-05 #c5:"),
           "a comment over two paragraphs is one highlight per paragraph, its thread after the last")
-    check(word.contains("{++This whole paragraph was inserted by Dana.++}{>>@dana-writer 2026-09-09 #s6<<}\n\n{--This whole paragraph was deleted by Morgan.--}{>>@morgan-editor 2026-09-09 #s7<<}"),
+    check(word.contains("{++This whole paragraph was inserted by Dana.++}{>>@dana-writer 2026-09-09 #s6: <<}\n\n{--This whole paragraph was deleted by Morgan.--}{>>@morgan-editor 2026-09-09 #s7: <<}"),
           "a whole inserted or deleted paragraph is one mark")
     check(word.contains("A point comment sits here{>>@riley-reviewer 2026-09-07 #c6:") && !word.contains("{====}"), "a comment on no text has no highlight")
     check(word.contains("| {++North++}{>>") && !word.contains("[^c"), "marks sit in table cells; no endnotes")
     let marks = word.components(separatedBy: "\n").filter { $0.contains("{>>") }
     check(marks.allSatisfy { l in l.components(separatedBy: "{>>").count == (try! NSRegularExpression(pattern: sigRE)).numberOfMatches(in: l, range: NSRange(l.startIndex..., in: l)) + 1 }, "every comment is signed @name date #id")
+    // The shared parser (Review) reads the converter's output: threads, replies, closing lines, suggestions.
+    let parsedWord = Review.parse(word)
+    check(parsedWord.threads.filter { !$0.id.hasPrefix("u") }.count == 6 && parsedWord.thread("c2")?.replies.count == 2 && parsedWord.thread("c1")?.closed == true && parsedWord.thread("c2")?.closed == false,
+          "Review reads the converted threads: replies, and the closed one (\(parsedWord.threads.map(\.id))); the first paragraph of a two-paragraph comment reads as an unsigned thread, u1")
+    check(parsedWord.suggestion("s1")?.kind == .insertion && parsedWord.suggestion("s5")?.kind == .substitution && parsedWord.suggestion("s5")?.old == "three" && parsedWord.suggestion("s5")?.author == "morgan-editor",
+          "…and the suggestions, with author and substitution sides")
+    // A suggestion inside a commented range: Review's scanner is flat, so the highlight swallows it.
+    check(parsedWord.suggestion("s2") == nil && parsedWord.thread("c3")?.anchor?.contains("{--some old words--}") == true,
+          "known gap (F-387): Review's scanner is flat, so a deletion inside a {==…==} highlight stays in the thread's anchor and isn't listed as a suggestion")
     let google = try review("Google suggestions.docx")
-    check(google.contains("{++late ++}{>>@dana-writer 2026-09-05 #s1<<}April") && google.contains("{~~can~>should~~}{>>@morgan-editor 2026-09-06 #s3<<}") && google.contains("#c2.2 closed<<}"),
+    check(google.contains("{++late ++}{>>@dana-writer 2026-09-05 #s1: <<}April") && google.contains("{~~can~>should~~}{>>@morgan-editor 2026-09-06 #s3: <<}") && google.contains("#c2.2 closed<<}"),
           "Google's suggestions and comments come over the same way")
     let markupSummary = try Docx.convert(fixtures.appending(path: "Word markup.docx"), options: Docx.Options(imagesFolder: "x")).report.summary(Docx.Options(imagesFolder: "x"))
     check(markupSummary.done == ["14 tracked changes kept as suggestions", "8 comments kept as comment threads"], "the summary says changes and comments are kept (\(markupSummary.done))")

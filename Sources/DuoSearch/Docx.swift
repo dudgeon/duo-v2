@@ -1,3 +1,4 @@
+import DuoControl
 import Foundation
 
 /// A Word document as clean Markdown (ENH-14, DL-123): the subset Google Docs imports cleanly
@@ -176,11 +177,15 @@ public enum Docx {
         case lineBreak
         case note(String)          // a footnote label: "1", "c1"
         /// A tracked change kept as a suggestion (DL-236 12A): `ins` or `del`, its signature, what it covers.
-        indirect case suggest(kind: String, sig: String, [Inline])
+        indirect case suggest(kind: String, sig: Sig, [Inline])
         /// Review markup written as it is: a highlight's braces, a comment thread.
         case raw(String)
         case image(alt: String, path: String)
     }
+
+    /// Who made a tracked change, when, and its id (`s1`): written with the shared Review builders.
+    struct Sig { var author: String, date: String, id: String
+        var note: String { Review.comment(author: author, date: date, id: id, text: "") } }
 
     struct Para {
         var style: String?
@@ -216,12 +221,18 @@ public enum Docx {
 
     /// "@sam-reviewer 2026-10-27": a Word author as a review signature (DL-236 2, 12A): lower case, spaces to `-`; Claude is `@claude` (Q-266).
     public static func signature(_ author: String?, _ date: String?) -> String {
+        let (a, day) = signatureParts(author, date)
+        return "@" + a + (day.isEmpty ? "" : " " + day)
+    }
+
+    /// The signature name and the day (empty when the file has none).
+    static func signatureParts(_ author: String?, _ date: String?) -> (name: String, day: String) {
         var a = (author ?? "").lowercased().split(whereSeparator: { $0.isWhitespace }).joined(separator: "-")
         a.removeAll { "<>{}:#@".contains($0) }
         if a.isEmpty { a = "unknown" }
         if a == "claude" || a.hasPrefix("claude-") { a = "claude" }   // Q-266
         let day = (date ?? "").prefix(10)
-        return "@" + a + (day.count == 10 ? " " + day : "")
+        return (a, day.count == 10 ? String(day) : "")
     }
 
     // MARK: Converter
@@ -428,12 +439,11 @@ public enum Docx {
         // MARK: Review marks (DL-236 12A)
 
         /// "@sam-reviewer 2026-10-27 #s1": the author's Word name as a signature name, the date, the id.
-        mutating func signature(_ el: Pptx.Node) -> String {
+        mutating func signature(_ el: Pptx.Node) -> Sig {
             suggestCount += 1
-            return Self.sign(el.attr("w:author"), el.attr("w:date")) + " #s\(suggestCount)"
+            let (name, day) = Docx.signatureParts(el.attr("w:author"), el.attr("w:date"))
+            return Sig(author: name, date: day, id: "s\(suggestCount)")
         }
-
-        static func sign(_ author: String?, _ date: String?) -> String { Docx.signature(author, date) }
 
         /// A comment's text as plain words (the mark is opaque, no Markdown inside), `|` escaped in a table.
         func commentText(_ n: Pptx.Node) -> String {
@@ -453,10 +463,12 @@ public enum Docx {
             for (i, m) in ([id] + members).enumerated() {
                 guard let n = commentXML[m] else { continue }
                 last = n
-                out += "{>>" + Self.sign(n.attr("w:author"), n.attr("w:date")) + " #" + label + (i == 0 ? "" : ".\(i)") + ": " + commentText(n) + "<<}"
+                let (name, day) = Docx.signatureParts(n.attr("w:author"), n.attr("w:date"))
+                out += Review.comment(author: name, date: day, id: label + (i == 0 ? "" : ".\(i)"), text: commentText(n))
             }
             if commentResolved.contains(id) || members.contains(where: { commentResolved.contains($0) }), let l = last {
-                out += "{>>" + Self.sign(l.attr("w:author"), l.attr("w:date")) + " #" + label + ".\(members.count + 1) closed<<}"
+                let (name, day) = Docx.signatureParts(l.attr("w:author"), l.attr("w:date"))
+                out += Review.closingLine(author: name, date: day, id: label + ".\(members.count + 1)")
             }
             return out
         }
@@ -1057,9 +1069,9 @@ public enum Docx {
             var paired: [Inline] = []
             for x in merged {
                 if case .suggest(let k, let sig, let inner) = x, case .suggest(let pk, let psig, let pinner)? = paired.last, pk != k,
-                   psig.split(separator: " ")[0] == sig.split(separator: " ")[0] {
+                   psig.author == sig.author {
                     let (old, new) = k == "ins" ? (pinner, inner) : (inner, pinner)
-                    paired[paired.count - 1] = .raw("{~~\(self.inline(old))~>\(self.inline(new))~~}{>>\(sig)<<}")
+                    paired[paired.count - 1] = .raw(Review.substitution(self.inline(old), self.inline(new)) + sig.note)
                 } else { paired.append(x) }
             }
             merged = paired
@@ -1112,7 +1124,7 @@ public enum Docx {
                 case .suggest(let kind, let sig, let inner):
                     endLink(); close(to: 0)
                     let body = self.inline(inner)
-                    if !body.isEmpty { out += kind == "ins" ? "{++\(body)++}{>>\(sig)<<}" : "{--\(body)--}{>>\(sig)<<}" }
+                    if !body.isEmpty { out += (kind == "ins" ? Review.insertion(body) : Review.deletion(body)) + sig.note }
                 case .raw(let r):
                     endLink(); close(to: 0)
                     out += r
