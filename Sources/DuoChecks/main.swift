@@ -1790,8 +1790,9 @@ func repoFixture() throws -> Fixture {
     let skillText = Installer.skill(), primerText = DuoAction.primer()
     check(skillText.contains("## Checking documents") && skillText.contains("structure, not pixels") && skillText.contains("`duo2 doc layout") && skillText.contains("`duo2 doc outline")
           && skillText.contains("Don't start `soffice`") && skillText.contains("Google Docs"), "the duo2 skill has a Checking documents section: structure for Google Docs, no soffice")
-    check(primerText.contains("`duo2 doc layout") && primerText.contains("soffice") && primerText.contains("structure, not pixels") && !primerText.contains("doc screenshot"),
+    check(primerText.contains("`duo2 doc layout") && primerText.contains("soffice") && primerText.contains("structure, not pixels") && primerText.contains("`duo2 doc screenshot"),
           "the primer has one line on checking documents, naming only verbs that exist")
+    check(skillText.contains("`duo2 doc screenshot <file.docx> [--all]`") && skillText.contains(".duo/screenshots/"), "the skill says how to see a document: doc screenshot")
     check(!skillText.contains("convert --as pdf") && skillText.contains("There are no page numbers"), "the guidance says there are no page numbers and offers no PDF route")
     do {
         let dir = FileManager.default.temporaryDirectory.appending(path: "duo-layout-\(UUID().uuidString)")
@@ -1807,7 +1808,7 @@ func repoFixture() throws -> Fixture {
         <w:tr>\(cell(3000, "Wide one"))\(cell(3000, "b"))\(cell(3720, "c"))</w:tr></w:tbl>
         \(image(6858000, "Big chart"))
         <w:p><w:pPr><w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:pPr></w:p>
-        <w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/></w:tblPr><w:tblGrid><w:gridCol w:w="4680"/><w:gridCol w:w="4680"/></w:tblGrid>
+        <w:tbl><w:tblPr><w:tblW w:w="100%" w:type="pct"/></w:tblPr><w:tblGrid><w:gridCol w:w="4680"/><w:gridCol w:w="4680"/></w:tblGrid>
         <w:tr>\(cell(4680, "Percent"))\(cell(4680, "x"))</w:tr></w:tbl>
         <w:tbl><w:tblPr><w:tblW w:w="9360" w:type="dxa"/></w:tblPr><w:tblGrid><w:gridCol w:w="4680"/><w:gridCol w:w="4680"/></w:tblGrid>
         <w:tr>\(cell(4680, "Fits"))\(cell(4680, "y"))</w:tr></w:tbl>
@@ -1815,9 +1816,11 @@ func repoFixture() throws -> Fixture {
         <w:sectPr><w:pgSz w:w="15840" w:h="12240" w:orient="landscape"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>
         """
         try "<?xml version=\"1.0\"?><w:document \(ns)><w:body>\(body)</w:body></w:document>".write(to: dir.appending(path: "word/document.xml"), atomically: true, encoding: .utf8)
-        try "<?xml version=\"1.0\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"/>".write(to: dir.appending(path: "[Content_Types].xml"), atomically: true, encoding: .utf8)
+        try "<?xml version=\"1.0\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/><Override PartName=\"/word/document.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/></Types>".write(to: dir.appending(path: "[Content_Types].xml"), atomically: true, encoding: .utf8)
+        try FileManager.default.createDirectory(at: dir.appending(path: "_rels"), withIntermediateDirectories: true)
+        try "<?xml version=\"1.0\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"word/document.xml\"/></Relationships>".write(to: dir.appending(path: "_rels/.rels"), atomically: true, encoding: .utf8)
         let zipP = Process(); zipP.executableURL = URL(fileURLWithPath: "/usr/bin/zip"); zipP.currentDirectoryURL = dir
-        zipP.arguments = ["-q", "-r", "layout.docx", "[Content_Types].xml", "word"]; try zipP.run(); zipP.waitUntilExit()
+        zipP.arguments = ["-q", "-r", "layout.docx", "[Content_Types].xml", "_rels", "word"]; try zipP.run(); zipP.waitUntilExit()
         let l = try Docx.layout(dir.appending(path: "layout.docx"))
         check(l.sections.count == 2 && l.sections[0].textWidth == 468 && l.sections[0].orientation == "portrait" && l.sections[0].marginLeft == 72 && !l.sections[0].assumed,
               "doc layout: section 1 is Letter portrait with 1 in margins, text width 468 pt")
@@ -1834,6 +1837,43 @@ func repoFixture() throws -> Fixture {
         let text = AppModel.layoutText(l, path: "~/x.docx")
         check(text.contains("text width 468 pt") && text.contains("Warnings:") && text.contains("Table 1") && !text.lowercased().contains("page number"), "…the text report lists sections, tables, pictures and warnings, with no page numbers")
         check(DuoAction.resolve(["doc", "layout", "a.docx"]).map { $0.0.id == .docLayout } == true, "doc layout is a duo2 verb (DL-71)")
+
+        // Tables at the document's own widths (Q-258, option A): in the viewer a wide table scrolls in a box of its own,
+        // and `doc screenshot` draws it whole, with the text still flowing at the pane's width.
+        DocxViewer.defaultResources = repoRoot().appending(path: "Vendor/docx-viewer")
+        let tableViewer = DocxViewer()
+        let tableWindow = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 800), styleMask: [.borderless], backing: .buffered, defer: false)
+        tableWindow.contentView = tableViewer.webView
+        func spin(_ s: TimeInterval, until ready: () -> Bool = { false }) { let end = Date().addingTimeInterval(s); while Date() < end, !ready() { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) } }
+        var drawn = false
+        tableViewer.open(dir.appending(path: "layout.docx"))
+        tableViewer.whenSettled { drawn = true }
+        spin(40) { drawn }
+        spin(0.5)
+        var probe: Any??
+        tableViewer.inspect("const b = document.querySelector('#host .duo-tablebox'); const t = b && b.querySelector('table'); return b ? { boxes: document.querySelectorAll('#host .duo-tablebox').length, overflow: getComputedStyle(b).overflowX, scrolls: b.scrollWidth > b.clientWidth + 1, box: b.clientWidth, table: t.getBoundingClientRect().width, tableMax: getComputedStyle(t).maxWidth, nested: document.querySelectorAll('#host td .duo-tablebox').length } : null") { probe = .some($0) }
+        spin(5) { probe != nil }
+        let p = (probe.flatMap { $0 }) as? [String: Any]
+        check(tableViewer.state == .ready && p != nil, "the layout fixture is drawn in the viewer (\(tableViewer.state))")
+        check((p?["boxes"] as? Int) == 3 && (p?["overflow"] as? String) == "auto" && (p?["scrolls"] as? Bool) == true && (p?["tableMax"] as? String) == "none" && (p?["nested"] as? Int) == 0,
+              "the viewer boxes each table, which scrolls sideways when wider than the sheet, with no max-width on it (\(String(describing: p)))")
+        check(((p?["table"] as? Double) ?? 0) > ((p?["box"] as? Double) ?? 1000) + 100, "…and the table keeps the document's own column widths rather than being squeezed to the box")
+
+        var shot: ([String], String?, String?)?
+        OffscreenShot.word(dir.appending(path: "layout.docx"), width: 460, all: false, name: "layout", into: dir.appending(path: "shots")) { shot = ($0, $1, $2) }
+        spin(60) { shot != nil }
+        let shotFile = shot?.0.first.map { URL(fileURLWithPath: $0) }
+        let shotRep = shotFile.flatMap { try? Data(contentsOf: $0) }.flatMap { NSBitmapImageRep(data: $0) }
+        check(shot?.2 == nil && shotRep != nil && (shotRep?.pixelsWide ?? 0) > 460 * 2 + 40 && (shotRep?.pixelsHigh ?? 0) > 200,
+              "doc screenshot draws the document out of sight, wider than the pane when a table is (\(shotRep?.pixelsWide ?? 0)×\(shotRep?.pixelsHigh ?? 0) px, \(shot?.2 ?? "no error"))")
+        check(shot?.0.first?.contains("/shots/layout-01.png") == true, "…as a numbered PNG in the folder asked for")
+        var plain: ([String], String?, String?)?
+        OffscreenShot.word(dir.appending(path: "layout.docx"), width: 800, all: false, name: "plain", into: dir.appending(path: "shots")) { plain = ($0, $1, $2) }
+        spin(60) { plain != nil }
+        let plainRep = plain?.0.first.flatMap { try? Data(contentsOf: URL(fileURLWithPath: $0)) }.flatMap { NSBitmapImageRep(data: $0) }
+        check(plain?.2 == nil && [800, 1600].contains(plainRep?.pixelsWide ?? 0), "…and at the width asked for (--width 800) when nothing is wider (\(plainRep?.pixelsWide ?? 0) px)")
+        check(DuoAction.resolve(["doc", "screenshot", "a.docx"]).map { $0.0.id == .docScreenshot } == true && DuoAction.resolve(["browser", "scroll", "down"]).map { $0.0.id == .browserScroll } == true,
+              "doc screenshot and browser scroll are duo2 verbs (DL-71)")
         try? FileManager.default.removeItem(at: dir)
     } catch { check(false, "doc layout checks ran: \(error)") }
 

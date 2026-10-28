@@ -22,6 +22,8 @@ cp "$out/fixture/full/Garden plan.docx" "$ws/work/garden/Garden full.docx"
 # DL-233: the Google Docs look and the markup fixtures.
 python3 $fx/make_markup.py "$out/fixture" >/dev/null
 cp "$out/fixture/look/"*.docx "$out/fixture/markup/"*.docx $ws/work/garden/
+# Q-258: a table wider than the pane scrolls inside its own box.
+python3 -I scripts/make-wide-table-docx.py "$ws/work/garden/Wide table.docx"
 boards=("$@"); [ ${#boards[@]} -gt 0 ] || boards=(viewer markup fallback-question fallback picked-hover picked picked-session)
 # The paragraph ids the board's picked state hovers (the first body paragraph with a comment) and picks (Casey's).
 ids=$(python3 - "$out/fixture/board/Garden plan.docx" <<'PY'
@@ -47,6 +49,7 @@ for b in "${boards[@]}"; do
     # writes the beacon Claude itself would (idle) for each, so Send to Claude is the default button.
     picked-session) file="Garden plan.docx"; acts="new,freeze:14,open-file:$ws/work/garden/Garden plan.docx,docx-pick:$pickid,freeze:3"; target=picked; watch=1 ;;
     # DL-233: no screen draws these (the document's own text is exempt), so they are captures to look at, not compared.
+    wide-table) file="Wide table.docx"; acts="freeze:3"; target=- ;;
     look-none) file="No styles.docx"; acts="freeze:3"; target=- ;;
     look-google) file="Google export.docx"; acts="freeze:3"; target=- ;;
     look-word) file="Word defaults.docx"; acts="freeze:3"; target=- ;;
