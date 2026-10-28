@@ -27,7 +27,8 @@ extension AppModel {
         // The project's brief comes first (ENH-16, F-146).
         let brief = ProjectContext.folder(project: findSession(key, in: nil)?.project, cwd: req.cwd, folders: liveFolders)
             .flatMap { ProjectContext.brief(name: $0.name, folder: $0.folder) }
-        let text = ProjectContext.joined(ProjectContext.hook(event, sessionId: sid, now: brief), task)
+        // Review marks (DL-236 7): every session is told how to read and write them, once at start (its own section).
+        let text = ProjectContext.joined(ProjectContext.hook(event, sessionId: sid, now: brief), task, event == "start" ? Review.convention : "")
         // At start, a project in a git repository is told its repo, branch and access too (DL-149 board 11, DL-157).
         let place = ProjectContext.folder(project: findSession(key, in: nil)?.project, cwd: req.cwd, folders: liveFolders)
         guard event == "start", let place else {

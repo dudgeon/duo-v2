@@ -236,6 +236,8 @@ public final class AppModel {
     public var editorRevision = 0
     /// The editor if it has been created (doc-status mustn't create one).
     @ObservationIgnored public var editorIfLoaded: EditorController?
+    /// A Markdown document's review view while Duo runs, by file path (DL-162, DL-237): the markup mode and Show Closed Comments.
+    @ObservationIgnored public var markdownMarkup: [String: MarkdownMarkup] = [:]
     /// Set once, when the editor first shows a document. Observed, so commands that depend on the
     /// (unobserved) editor re-evaluate then: Save stayed disabled until something else invalidated.
     public var editorOpened = false
