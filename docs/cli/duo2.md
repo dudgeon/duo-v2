@@ -203,13 +203,13 @@ Everything a person can do in Duo, Claude can do with `duo2` (DL-71). Every verb
 
 | Command | What it does | In the app |
 |---|---|---|
-| `duo2 comment add <file> --at <line\|text> [--as <name>] <text>` | Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`). | — |
+| `duo2 comment add <file> --at <line\|text> [--as <name>] <text>` | Comment on a line (its number) or on a text that appears once: the text becomes a highlight and the signed comment follows it. A comment that names @claude is addressed to a session (`duo2 comment send`). | Add Comment |
 | `duo2 comment list <file> [--closed \| --unsent]` | The file's comment threads: id, who and when, the text it is on, the comment and its replies. Closed threads are left out unless --closed (only those); --unsent lists the open ones that name @claude and have no reply. | — |
 | `duo2 comment reply <id> <text> [--file <file>] [--suggest] [--as <name>]` | Reply in a thread (or to a suggestion) with the next number, `#c1.2`; a closed thread reopens. --suggest instead proposes the reply text as a replacement of the text the thread is on. Never rewrites anyone's comment. Without --file, the document showing. | — |
 | `duo2 comment send <id \| --all> [--file <file>] [--to <session> \| --new]` | Send a comment that names @claude to a session, quoted as data, when the person says to (DL-236 10). Arrives with @claude routing; until then it says so. | — |
-| `duo2 comment close <id> [--file <file>] [--as <name>]` | Close and Keep: add a closing line `{>>@name date #c1.2 closed<<}` after the thread's last comment; the highlight and comments stay (Q-262). | — |
+| `duo2 comment close <id> [--file <file>] [--as <name>]` | Close and Keep: add a closing line `{>>@name date #c1.2 closed<<}` after the thread's last comment; the highlight and comments stay (Q-262). | Close and Keep |
 | `duo2 comment delete <id> [--file <file>]` | Delete the thread: its highlight markers and every comment go, the text stays. | — |
-| `duo2 comment reopen <id> [--file <file>]` | Reopen a closed thread: its closing line goes. | — |
+| `duo2 comment reopen <id> [--file <file>]` | Reopen a closed thread: its closing line goes. | Reopen |
 | `duo2 comment status <id> [--file <file>]` | One thread: open or closed, who is in it, whether it names @claude and whether Claude has replied. | — |
 | `duo2 suggestion list <file>` | The file's suggestions: id, kind (insertion, deletion, substitution), who and when, the text. | — |
 | `duo2 suggestion accept <id \| --all> [--file <file>] [--person <name>]` | Accept a suggestion: the change is made and its mark goes (--all: every one, or one person's). The person's call: only when they ask. | Accept, Accept All, Accept All from |
