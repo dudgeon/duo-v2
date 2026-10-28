@@ -1,0 +1,336 @@
+<title>Duo Recurring Jobs</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,650&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one mobile-first column of job cards, each a "job ticket" (what it does, a sample of its output, cadence/cost,
+   trade-offs, then the pick). Built like the director console and the GitHub-issues decision page: each Send saves to db
+   `answers/<id>` and calls comments.sendToClaude; outcomes go to `diag/`. Published by the recurring-jobs study session. */
+:root {
+  --bg: #f2f3f5; --panel: #ffffff; --ink: #1b1f27; --muted: #5b6270; --line: #d8dbe1;
+  --accent: #2f5bd3; --accent-ink: #ffffff; --accent-soft: #e4ebfb;
+  --sample: #f7f8fa; --warn: #9a5a0c; --good: #2a7a46; --bad: #b03636;
+  --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #13161c; --panel: #1b1f27; --ink: #e5e8ee; --muted: #9aa1ae; --line: #2e333d;
+  --accent: #8aa9f5; --accent-ink: #0f1626; --accent-soft: #232f4a;
+  --sample: #161a21; --warn: #e8a75a; --good: #79c993; --bad: #ee8585; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #13161c; --panel: #1b1f27; --ink: #e5e8ee; --muted: #9aa1ae; --line: #2e333d;
+  --accent: #8aa9f5; --accent-ink: #0f1626; --accent-soft: #232f4a;
+  --sample: #161a21; --warn: #e8a75a; --good: #79c993; --bad: #ee8585; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); margin: 0; }
+.wrap { max-width: 780px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 14px 64px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding-block: 8px 14px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+h1 { font: 650 1.7rem/1.1 var(--display); margin: 0; letter-spacing: -.015em; }
+.sub { color: var(--muted); font-size: .92rem; }
+.headline { flex-basis: 100%; margin: 4px 0 0; max-width: 62ch; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.pill.ok { color: var(--good); border-color: currentColor; }
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+section { margin-bottom: 28px; }
+section > h2 { font: 700 .76rem/1 var(--body); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; display: flex; gap: 8px; align-items: center; }
+.count { background: var(--warn); color: var(--panel); border-radius: 999px; padding: 2px 8px; font-size: .75rem; letter-spacing: 0; }
+.stack { display: grid; gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
+.map { display: grid; gap: 0; }
+.map .r { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 4px 14px; padding: 9px 0; border-top: 1px solid var(--line); }
+.map .r:first-child { border-top: 0; padding-top: 0; }
+.map b { font-weight: 700; }
+.map span { color: var(--muted); font-size: .93rem; }
+@media (max-width: 520px) { .map .r { grid-template-columns: 1fr; } }
+.tag { display: inline-flex; gap: 6px; align-items: center; font: 600 .72rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.tag .id { color: var(--accent); }
+.verdict { font: 600 .72rem/1 var(--mono); padding: 3px 7px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); }
+.verdict.later { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+.job h3 { font: 650 1.22rem/1.25 var(--display); margin: 8px 0 6px; text-wrap: balance; letter-spacing: -.005em; }
+.job p { margin: 0 0 10px; max-width: 66ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 12px; }
+.meta span { font-size: .82rem; padding: 3px 9px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+.sample { background: var(--sample); border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; margin: 0 0 12px; overflow-x: auto; }
+.sample .lbl { font: 600 .7rem var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
+.sample pre { margin: 0; font: .8rem/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.tradeoffs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 6px; }
+@media (max-width: 620px) { .tradeoffs { grid-template-columns: 1fr; } }
+.tradeoffs div { min-width: 0; }
+.tradeoffs h4 { margin: 0 0 4px; font: 700 .8rem var(--body); letter-spacing: .04em; text-transform: uppercase; }
+.tradeoffs .pro h4 { color: var(--good); } .tradeoffs .con h4 { color: var(--bad); } .tradeoffs .noise h4 { color: var(--warn); }
+.tradeoffs ul { margin: 0; padding-left: 18px; font-size: .92rem; }
+.tradeoffs li { margin: 2px 0; }
+code { font-family: var(--mono); font-size: .86em; overflow-wrap: anywhere; }
+.opts { display: grid; gap: 8px; margin: 12px 0 10px; }
+.opt { text-align: left; font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px; padding: 11px 14px; min-height: 50px; cursor: pointer; display: grid; gap: 3px; }
+.opt:hover { border-color: var(--accent); }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.opt .rec { font: 600 .68rem var(--mono); color: var(--accent); text-transform: uppercase; letter-spacing: .05em; }
+.opt small { color: var(--muted); font-size: .88rem; line-height: 1.4; }
+textarea { width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 60px; resize: vertical; }
+textarea:focus, .opt:focus-visible, .btn:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.btn { font: 700 .95rem var(--body); border-radius: 10px; padding: 10px 16px; min-height: 46px; border: 1.5px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+.status { font-size: .85rem; color: var(--muted); }
+.status.ok { color: var(--good); } .status.err { color: var(--bad); }
+.answer { font-size: .9rem; background: var(--accent-soft); border-radius: 8px; padding: 8px 10px; margin-top: 10px; }
+.job.answered { border-color: var(--good); }
+.refs { font: .76rem var(--mono); color: var(--muted); margin-top: 8px; }
+.no-list { display: grid; gap: 0; }
+.no-list div { padding: 8px 0; border-top: 1px solid var(--line); }
+.no-list div:first-child { border-top: 0; padding-top: 0; }
+.no-list b { display: block; }
+.no-list span { color: var(--muted); font-size: .92rem; }
+details summary { cursor: pointer; color: var(--accent); min-height: 36px; display: flex; align-items: center; }
+a { color: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { .opt, .btn { transition: border-color .12s, background .12s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Duo's recurring jobs</h1>
+    <span class="pill" id="chan"><span class="dot"></span><span id="chantext">Connecting…</span></span>
+    <p class="headline sub">You asked which background jobs would help with the tidy-up, without building a Rube Goldberg machine. I recommend two new scheduled jobs, one step added to releases, a one-off document, and some cheap checks. Each card has my recommendation first. Your answers are saved here and sent to the study session.</p>
+  </header>
+
+  <section>
+    <h2>Where your four ideas went</h2>
+    <div class="card map">
+      <div class="r"><b>Architecture review</b><span>The code half of the <b>fortnightly deep review</b> (D). It looks at what changed since the last run, re-measures, and brings at most 5 proposals.</span></div>
+      <div class="r"><b>Feature intent document</b><span>A <b>feature catalogue</b> (C), written once and then updated by each feature merge. Docs stay current when they change with the code, not when an agent rewrites them.</span></div>
+      <div class="r"><b>Marketing and explainer videos</b><span>A step in the <b>release brief</b> (B). Each feature gets a launch tier, Tier 1 features get a video proposal, and the release reports when the intro film is out of date.</span></div>
+      <div class="r"><b>Design-system maintainer</b><span>Split in two. The sync checks go in the <b>weekly tidy-up</b> (A). Pattern harvesting and refactor proposals are the design half of D, on a canvas.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What the last month showed</h2>
+    <div class="card">
+      <p>1,050 commits and 31 releases since 09-28. What drifted with no one noticing:</p>
+      <ul>
+        <li>The design README still says chat mode is "not built". It was flagged on 10-12.</li>
+        <li>38 stand-in questions are still open, the oldest for 24 days.</li>
+        <li>130 Q rows read "open", and some already have their answer in the notes.</li>
+        <li>19 in-progress task notes have no entry after 10-20, several for features that shipped in 0.2.18.</li>
+        <li>The README has no mention of a dozen features shipped from 0.2.18 to 0.2.20.</li>
+        <li>No performance budget run since 10-12, and the idle-CPU burn was found by accident.</li>
+        <li>There are 43 work trees.</li>
+        <li>Three Claude Code version breaks were found in the field.</li>
+      </ul>
+      <p>What has a mechanical check barely drifted: duo2.md parity, the generated tokens, the video's <code>--check</code>. So the plan is a few jobs, and a check wherever a rule can be written down.</p>
+      <div class="refs">Study: docs/research/recurring-jobs.md · branch research/recurring-jobs · F-383, F-384</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Decisions <span class="count" id="count" hidden></span></h2>
+    <div class="stack" id="needs"></div>
+  </section>
+
+  <section>
+    <h2>Said no to</h2>
+    <div class="card no-list">
+      <div><b>A separate doc-drift agent, or a separate Claude Code version watcher</b><span>Both are sections of the weekly tidy-up. Separate jobs would report the same things twice.</span></div>
+      <div><b>A flaky-test triage job</b><span>There is one known flaky check (C-85) and none new this month. A merge-gate log covers it.</span></div>
+      <div><b>Auto-cleaning branches, work trees or sessions</b><span>Other teams found auto-closing bots do harm, and auto-cleaning would break the rule that sessions stay until you sign off. Jobs report; the director acts.</span></div>
+      <div><b>A standalone marketing agent</b><span>Its input is a release, so it belongs in the release step.</span></div>
+      <div><b>Any daily job besides problem discovery</b><span>At this pace a daily digest repeats itself, and repetition is what gets muted.</span></div>
+      <div><b>A job that edits code or messages workers</b><span>Same rule as problem discovery: that would open a path for prompt injection.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Anything else</h2>
+    <div class="card" id="msgcard">
+      <label for="msgtext" class="sub">A question, a change, or "go with all the recommendations". It goes to the study session.</label>
+      <textarea id="msgtext" placeholder="e.g. Go with every recommendation, but run D monthly"></textarea>
+      <div class="row"><button class="btn" id="msgsend" type="button">Send</button><button class="btn ghost" id="allrec" type="button">Accept all recommendations</button><span class="status" id="msgstatus"></span></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const NEEDS = [
+  { id: "q273-tidy", n: "Q-273", job: "A", verdict: "Build now", title: "Weekly tidy-up",
+    what: "One Monday report with six sections: records and task notes, work trees and branches, doc drift (README, guide, design README, the design-system artifact), field logs (hangs and chat fallbacks), new Claude Code versions against the work Mac's 2.1.219, and how stale the performance budgets are. The director does what it already may without asking (closing answered records, republishing the design system, stopping merged workers) and lists it. The card carries only what needs you.",
+    meta: ["Weekly, Mon 08:00", "Desktop scheduled task", "Sonnet + Haiku checks", "~40 turns, 30–45 min", "No GPU lock"],
+    sample: "Tidy-up · week of 2 Nov · 4 items need you\n\nDone for you: closed Q-43, Q-47 (answered in notes) · republished the design system (surfaces.md, chat.md) · stopped 3 merged workers\n\nNeeds you\n· README is silent on 9 features shipped in 0.2.18–0.2.20 → delegate a docs pass? \n· Claude Code 2.1.312: changelog touches the permission dialog footer → delegate a 2.1.219 + latest compatibility check?\n· Stand-ins open >14 days: Q-30, Q-39, Q-44 (+35) → bring the oldest 5 to the next design review?\n· Budgets: 64 Sources merges since the last chat-perf run → run them tonight under the lock?\n\n[Do all]  [Pick in the note]  [Snooze a week]",
+    pros: ["Catches every drift found this month, in one place", "One job and one procedure doc", "Most of it is scripted facts, so cheap"],
+    cons: ["Another card each week", "The scan script needs upkeep as files move"],
+    noise: ["Each item is reported once, then again only if it changes", "No card when nothing is new", "At most 5 items per section", "A section empty for 4 weeks is proposed for removal"],
+    options: [
+      { id: "now", label: "Build now", recommended: true, desc: "The director writes docs/director/tidy-up.md and scripts/tidy-scan.sh, then creates the Monday task." },
+      { id: "later", label: "Later", desc: "Keep the checks (E) only for now." },
+      { id: "no", label: "No", desc: "The director keeps catching drift by hand." } ] },
+  { id: "q274-release", n: "Q-274", job: "B", verdict: "Build now", title: "Release brief: notes, docs, launch tier and videos",
+    what: "Added to the release worker's brief, so it's not a new job. Before your go, the release card gains:\n· a tier for each feature (T1 is a launch, T2 a README line and guide page, T3 a note), with a reason;\n· a docs branch with README and guide edits for T1 and T2 features;\n· for each T1, a video proposal: the story, the states to capture, and whether it's a new film or part of the intro;\n· whether the intro film shows anything that has changed (from video/build.mjs --check, about 2 s);\n· whether the design-system artifact is in sync.",
+    meta: ["Every release", "A step in releases.md", "Sonnet", "~15 turns per release"],
+    sample: "Release 0.2.21 · tiers\nT1  Tracked changes and comments in Markdown: a new way to review with Claude → video proposed\nT2  Text size zoom → README line + guide page (branch docs/release-0.2.21)\nT3  Tab close picks the neighbour; 4 fixes → notes only\n\nVideo: \"Review with Claude\", 60–90 s, its own film; 5 states (suggest, accept, comment, @claude, reply)\nIntro film: S4 and S7 show the old tab strip (stale framing) → refresh at 0.3.0?\nDesign system: in sync",
+    pros: ["Marketing comes with the release it's about", "Docs catch up at least once per release", "You only get asked about videos for Tier 1 features"],
+    cons: ["Release prep takes longer", "Tiering is judgement; you may re-tier often at first"],
+    noise: ["A Tier 3-only release gets one line", "A Tier 1 comes round about once a month at most"],
+    options: [
+      { id: "now", label: "Build now", recommended: true, desc: "From the next release (0.2.21)." },
+      { id: "notes-only", label: "Only the docs and tiers, no video proposals", desc: "You decide on videos without prompting." },
+      { id: "no", label: "No", desc: "Releases stay as they are." } ] },
+  { id: "q275-catalogue", n: "Q-275", job: "C", verdict: "Build now", title: "Feature catalogue: what each feature is for and how it should work",
+    what: "One Opus session writes docs/product/features.md, with about 25 rows. Each row gives the feature's intent in two or three sentences, the rules for how it should work, the decisions and handoffs that govern it, its status and release, its duo2 verbs and its film, if any. You review it once. After that, each feature brief names the rows it changes and the merge updates them. The tidy-up flags any feature merge that didn't. It's published in the design-system artifact too, so Claude Design sees intent beside looks.",
+    meta: ["Once (~half a day)", "Then each feature merge", "Opus once", "Zero recurring turns"],
+    sample: "FEAT-07 · Chat mode\nIntent: read and drive a Claude Code session as a conversation, with the real terminal one click away.\nHow it works: shows chat when the screen reads as a known state; falls back to the terminal with a bar when it can't; never returns by itself (DL-235); the bar's Debug opens a copyable report (DL-234).\nGoverned by: DL-118, DL-119, DL-154, DL-234, DL-235 · chat-mode-handoff\nStatus: shipped 0.2.x · duo2: session chat, session chat why\nFilm: intro S5",
+    pros: ["The canonical intent statement you asked for", "Kept current when the change happens, the pattern that works elsewhere", "Feeds the release tiers and the reviews"],
+    cons: ["A second place that restates decisions (decisions win where they differ)", "Half a day up front"],
+    noise: ["None: it's a document, not a recurring job"],
+    options: [
+      { id: "now", label: "Build now", recommended: true, desc: "The director starts an Opus session; you review the catalogue on a page." },
+      { id: "agent", label: "A recurring agent that rewrites it instead", desc: "Weekly. More turns, and the evidence says this goes stale." },
+      { id: "no", label: "No", desc: "Decisions and handoffs stay the only record." } ] },
+  { id: "q277-review", n: "Q-277", job: "D", verdict: "After A", title: "Fortnightly deep review, alternating code and design",
+    what: "Every other Monday a scheduled task starts a worker you can open.\nCode months: architecture, simplification, reliability and performance, scoped to what changed since the last code review. It re-measures with the 10-12 review's tools and follows up that review's five unshipped items first.\nDesign months, in Duo with a canvas: patterns repeated across one-off UI, design-system refactors for clarity, and the oldest stand-ins brought back to you.\nEach run brings at most 5 proposals, and you pick build, later or no.",
+    meta: ["Every 2 weeks, alternating", "Scheduled task starts a worker", "Opus + 3–4 Sonnet", "1–2 h per run", "Exclusive lock for timing"],
+    sample: "Code review · 2026-11-09 · 3 proposals (2 carried)\n1  Two-speed live refresh (carried from 10-12): 600 sessions still cost 31% of a core idle. L, medium risk.\n2  Bound chat memory (carried): a 236 MB transcript holds 417 MB. M.\n3  New: ChatScreen readers duplicated across 3 files since DL-234. S.\nNothing else cleared the bar.",
+    pros: ["The 10-12 review was the month's most productive document: 5 of its 10 changes shipped", "Comes back to what's still open", "Design gets the same regular attention as code"],
+    cons: ["The most expensive job here", "Design months need a Duo session and your time on a canvas"],
+    noise: ["At most 5 proposals; the bar is a measured cost, a confirmed bug or a repeated pattern", "No cards when nothing clears it", "Slows to monthly if two runs in a row produce nothing you build"],
+    options: [
+      { id: "after-a", label: "Start after the tidy-up's first two runs", recommended: true, desc: "First run mid-November, so the cheap job settles first." },
+      { id: "now", label: "Start now", desc: "First code review next Monday." },
+      { id: "monthly", label: "Monthly instead, alternating", desc: "Each subject comes round every two months." },
+      { id: "no", label: "No", desc: "Reviews only when you ask for one." } ] },
+  { id: "e-checks", n: "ENH-281–286", job: "E", verdict: "Build now", title: "Cheap checks in the merge gate",
+    what: "One small Sonnet task. check-records.sh warns when an open record's notes already answer it, or when a stand-in is older than 14 days. A check flags stale task notes. The design README's statuses are checked against surfaces.md. The merge gate logs each run, so flaky gates show up. A later check (ENH-286) makes an idle-CPU regression fail a gate.",
+    meta: ["Every merge", "Inside merge-gate.sh", "Sonnet once (~half a day)", "No recurring turns"],
+    sample: "check-records: ok · 2 warnings\n  Q-43 status open, notes say \"answered\"\n  Q-30 stand-in, open 24 days",
+    pros: ["Drift is caught at merge, at no recurring cost", "Makes the tidy-up cheaper and quieter"],
+    cons: ["A few more lines of gate output"],
+    noise: ["Warnings, never failures"],
+    options: [
+      { id: "now", label: "Build now", recommended: true, desc: "ENH-281 to 285 now; ENH-286 once merges are calmer." },
+      { id: "later", label: "Later", desc: "" },
+      { id: "no", label: "No", desc: "" } ] },
+  { id: "q276-budgets", n: "Q-276", job: "A", verdict: "Only say", title: "Should the tidy-up also run the performance budgets?",
+    what: "Timing checks need the exclusive GPU lock and a quiet Mac. The tidy-up can just say \"64 merges since the last chat-perf run\" and the director schedules one. Or it can run them itself on Monday mornings, which adds about 15 minutes holding the lock.",
+    meta: ["Part of A"],
+    sample: "",
+    pros: [], cons: [], noise: [],
+    options: [
+      { id: "say", label: "Only say when they're stale", recommended: true, desc: "Until ENH-286 makes the idle budget a gate." },
+      { id: "run", label: "Run them every week", desc: "Holds the exclusive lock about 15 min on Mondays." } ] },
+  { id: "q278-where", n: "Q-278", job: "A", verdict: "Console", title: "Where does the tidy-up report?",
+    what: "On the director console, as one card a week, or on a page of its own like problem discovery.",
+    meta: ["Part of A"],
+    sample: "",
+    pros: [], cons: [], noise: [],
+    options: [
+      { id: "console", label: "The director console", recommended: true, desc: "One place to look. The director acts on your picks there anyway." },
+      { id: "page", label: "Its own page", desc: "Room for history, but one more page to open." } ] }
+];
+
+const $ = s => document.querySelector(s);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+let db = null, comments = null, canSend = "off";
+const answers = {}, picks = {}, notes = {};
+const ago = iso => { if (!iso) return ""; const s = (Date.now() - new Date(iso)) / 1000; if (isNaN(s)) return "";
+  return s < 90 ? "just now" : s < 5400 ? Math.round(s / 60) + " min ago" : s < 129600 ? Math.round(s / 3600) + " h ago" : new Date(iso).toLocaleDateString(); };
+
+let threadsKept = {};
+try { threadsKept = JSON.parse(localStorage.getItem("recurring-jobs-threads") || "{}"); } catch (e) {}
+const keep = () => { try { localStorage.setItem("recurring-jobs-threads", JSON.stringify(threadsKept)); } catch (e) {} };
+async function diag(key, outcome, e) { if (!db) return; try { await db.doc("diag/" + Date.now()).set({ key, outcome, canSend, code: (e && e.code) || null, message: (e && (e.message || String(e))) || null, at: new Date().toISOString() }); } catch (x) {} }
+async function send(key, anchorEl, text, statusEl) {
+  if (comments) { try { canSend = await comments.canSendToClaude(); } catch (e) {} }
+  if (!comments || canSend !== "available") { diag(key, "blocked"); statusEl.className = "status err"; statusEl.textContent = canSend === "no_session" ? "The session isn't listening right now. Your answer is saved, and it reads it when it's back." : "Can't send from this view. Your answer is saved."; return false; }
+  statusEl.className = "status"; statusEl.textContent = "Sending…";
+  const msg = text.length > 3900 ? text.slice(0, 3900) + "\n…(cut; the full text is saved on the page)" : text;
+  try {
+    let r;
+    if (threadsKept[key]) { try { r = await comments.sendToClaude({ threadId: threadsKept[key], text: msg }); } catch (e) { if (e && e.code === "not_found") delete threadsKept[key]; else throw e; } }
+    if (!r) r = await comments.sendToClaude({ anchor: await comments.anchorFor(anchorEl), text: msg });
+    threadsKept[key] = r.threadId; keep(); diag(key, "sent:" + r.threadId);
+    statusEl.className = "status ok"; statusEl.textContent = "Sent. The reply appears as a comment here.";
+    return true;
+  } catch (e) {
+    diag(key, "error", e);
+    const c = e && e.code; statusEl.className = "status err";
+    statusEl.textContent = c === "consent_required" ? "Allow comments for this page, then send again." : c === "rate_limited" ? "Too fast. Wait a moment, then send again." : c === "claude_unavailable" ? "The session couldn't take it. Your answer is saved." : "Couldn't send (" + (c || "error") + "). Your answer is saved.";
+    return false;
+  }
+}
+async function saveAnswer(id, a) { answers[id] = a; if (db) { try { await db.doc("answers/" + id).set(a); } catch (e) {} } }
+
+function list(cls, title, items) {
+  const d = el("div", cls); d.append(el("h4", "", title)); const u = el("ul"); items.forEach(i => u.append(el("li", "", i))); d.append(u); return d;
+}
+function card(n) {
+  const ans = answers[n.id];
+  const c = el("article", "card job" + (ans ? " answered" : "")); c.id = "n-" + n.id;
+  const t = el("div", "tag"); t.append(el("span", "id", "Job " + n.job), n.n + (ans ? " · answered" : ""));
+  const v = el("span", "verdict" + (/after|only|console/i.test(n.verdict) ? " later" : ""), "Recommend: " + n.verdict);
+  const top = el("div", "row"); top.style.marginTop = "0"; top.style.justifyContent = "space-between"; top.append(t, v); c.append(top);
+  c.append(el("h3", "", n.title));
+  n.what.split("\n").forEach(p => c.append(el("p", "", p)));
+  if (n.meta.length) { const m = el("div", "meta"); n.meta.forEach(x => m.append(el("span", "", x))); c.append(m); }
+  if (n.sample) { const s = el("div", "sample"); s.append(el("span", "lbl", "Example output (illustrative)"), el("pre", "", n.sample)); c.append(s); }
+  if (n.pros.length) { const g = el("div", "tradeoffs"); g.append(list("pro", "Pros", n.pros), list("con", "Cons", n.cons), list("noise", "Noise guard", n.noise)); c.append(g); }
+  const opts = n.options.slice().sort((x, y) => (y.recommended ? 1 : 0) - (x.recommended ? 1 : 0));
+  if (picks[n.id] == null && ans && ans.choice) picks[n.id] = ans.choice;
+  const og = el("div", "opts"); og.setAttribute("role", "group"); og.setAttribute("aria-label", n.title);
+  const ta = el("textarea"); ta.id = "t-" + n.id; ta.placeholder = "Add a note, or answer in your own words"; ta.value = notes[n.id] ?? (ans && ans.text) ?? "";
+  const row = el("div", "row"), sendBtn = el("button", "btn", ans ? "Send again" : "Send answer"), st = el("span", "status");
+  sendBtn.type = "button";
+  const ready = () => { sendBtn.disabled = !(picks[n.id] || ta.value.trim()); };
+  opts.forEach(o => {
+    const b = el("button", "opt"); b.type = "button"; b.setAttribute("aria-pressed", String(picks[n.id] === o.id));
+    if (o.recommended) b.append(el("span", "rec", "Recommended"));
+    b.append(el("b", "", o.label)); if (o.desc) b.append(el("small", "", o.desc));
+    b.onclick = () => { picks[n.id] = picks[n.id] === o.id ? null : o.id; og.querySelectorAll(".opt").forEach(x => x.setAttribute("aria-pressed", "false")); if (picks[n.id]) b.setAttribute("aria-pressed", "true"); ready(); };
+    og.append(b);
+  });
+  c.append(og);
+  ta.oninput = () => { notes[n.id] = ta.value; ready(); };
+  c.append(ta); ready();
+  sendBtn.onclick = async () => {
+    const o = opts.find(x => x.id === picks[n.id]);
+    const a = { choice: o ? o.id : "", label: o ? o.label : "", text: ta.value.trim(), at: new Date().toISOString() };
+    await saveAnswer(n.id, a);
+    await send("n:" + n.id, c, `Recurring jobs · ${n.n} (job ${n.job}) \`${n.id}\`: ${n.title}\nChoice: ${a.label || "(own words)"}` + (a.text ? `\nNote: ${a.text}` : ""), st);
+    render();
+  };
+  row.append(sendBtn, st); c.append(row);
+  if (ans) { const p = el("div", "answer"); p.append(el("b", "", "Your answer: "), (ans.label || "own words") + (ans.text ? " · " + ans.text : "") + " · " + ago(ans.at)); c.append(p); }
+  return c;
+}
+function render() {
+  const f = document.activeElement && document.activeElement.id;
+  $("#needs").replaceChildren(...NEEDS.map(card));
+  const open = NEEDS.filter(n => !answers[n.id]).length; const cnt = $("#count"); cnt.hidden = !open; cnt.textContent = open + " open";
+  if (f) { const x = document.getElementById(f); if (x) x.focus(); }
+}
+render();
+
+$("#msgsend").onclick = async () => { const t = $("#msgtext").value.trim(); if (!t) return; await saveAnswer("msg-" + Date.now(), { text: t, at: new Date().toISOString(), kind: "message" }); if (await send("msg", $("#msgcard"), "Recurring jobs · message:\n" + t, $("#msgstatus"))) $("#msgtext").value = ""; };
+$("#allrec").onclick = async () => {
+  const at = new Date().toISOString();
+  for (const n of NEEDS) { const o = n.options.find(x => x.recommended); picks[n.id] = o.id; await saveAnswer(n.id, { choice: o.id, label: o.label, text: (notes[n.id] || "").trim(), at, via: "all-recommended" }); }
+  render();
+  const note = $("#msgtext").value.trim();
+  await send("all", $("#msgcard"), "Recurring jobs · accept all recommendations: " + NEEDS.map(n => n.n + " " + n.options.find(x => x.recommended).id).join(", ") + (note ? "\nNote: " + note : ""), $("#msgstatus"));
+};
+
+(async () => {
+  try { comments = await window.claude?.use?.("comments"); } catch (e) { comments = null; }
+  const check = async () => {
+    try { canSend = comments ? await comments.canSendToClaude() : "off"; } catch (e) { canSend = "off"; }
+    $("#chan").className = "pill" + (canSend === "available" ? " ok" : "");
+    $("#chantext").textContent = canSend === "available" ? "Session listening" : canSend === "no_session" ? "Session away; answers are saved" : canSend === "writers_only" ? "Only editors can send" : "Answers are saved";
+  };
+  await check(); setInterval(check, 30000);
+})();
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  if (!db) return;
+  db.collection("answers").onSnapshot(s => { s.docs.forEach(d => { answers[d.id] = d.data(); }); render(); }, () => {});
+})();
+</script>
