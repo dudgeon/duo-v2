@@ -206,7 +206,7 @@ All Duo shortcuts carry ⌘, so they never collide with keys typed into Claude C
 | ⌥⌘← → | Previous and next pane; the active pane shows a rule over its top (DL-165, provisional) |
 | ⌃⇥ / ⌃⇧⇥ | Next and previous tab in the active pane, terminals included (DL-165) |
 
-Return and its chords mean the same in chat and in the terminal (DL-241). In the terminal they are Claude Code's own keys; Duo only makes sure each one arrives (F-392).
+Return and its chords mean the same in chat and in the terminal (DL-241). In the terminal they are Claude Code's own keys; Duo only makes sure each one arrives (F-395).
 
 | Keys | Chat and terminal |
 |---|---|

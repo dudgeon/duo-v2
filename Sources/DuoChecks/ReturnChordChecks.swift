@@ -2,9 +2,9 @@ import AppKit
 import DuoKit
 
 /// DL-241: one Return-chord table for chat and terminal. What SwiftTerm sends for each chord, in the
-/// two modes Claude Code leaves it in, against what Claude Code reads those bytes as (measured, F-392).
+/// two modes Claude Code leaves it in, against what Claude Code reads those bytes as (measured, F-395).
 @MainActor func returnChordChecks() throws {
-    print("return chords: chat composer and terminal (DL-241, F-392)")
+    print("return chords: chat composer and terminal (DL-241, F-395)")
     typealias A = ComposerReturn
     func act(_ code: UInt16, _ m: NSEvent.ModifierFlags, _ c: Character? = nil) -> A? { A.action(keyCode: code, modifiers: m, charBeforeCaret: c) }
     for code: UInt16 in [36, 76] {
@@ -28,7 +28,7 @@ import DuoKit
     }
     check(ChatKey.sendNow.bytes == "\u{18}\u{13}", "send now is Ctrl+X Ctrl+S")
 
-    // What Claude Code reads each byte string as, measured on 2.1.219 and on 2.1.284 / 2.1.311 (F-392).
+    // What Claude Code reads each byte string as, measured on 2.1.219 and on 2.1.284 / 2.1.311 (F-395).
     enum Read: String { case send, newline, ignored, sendNow = "send now", nothing }
     func reads(_ bytes: [UInt8], modern: Bool) -> Read {
         switch bytes {
