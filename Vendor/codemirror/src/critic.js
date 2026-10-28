@@ -233,6 +233,7 @@ const decoField = StateField.define({
 
 let onAction = () => {};
 export function onReviewAction(fn) { onAction = fn; }
+export function emitReviewAction(a) { onAction(a); }
 
 function labelFor(view, s) {
   const dom = document.createElement("div");
@@ -389,4 +390,17 @@ export const reviewTheme = EditorView.baseTheme({
 // Always on: the parse, the switch and the signing of edits. Drawing is the live preview's (`reviewDrawing`).
 export const reviewCore = [reviewField, markupField, reviewerField, suggestTyping, reviewTheme];
 export const reviewDrawing = [decoField, labelHover];
-export { reviewField, markupField, reviewerField };
+
+export { reviewField, markupField, reviewerField, signatureName, today };
+
+// The next free id of a kind (`c` threads, `s` suggestions) over every id the document uses.
+export function nextId(doc, prefix) {
+  let top = 0;
+  const re = new RegExp("#" + prefix + "(\\d+)", "g"), t = doc.toString();
+  for (let m; (m = re.exec(t));) top = Math.max(top, +m[1]);
+  return prefix + (top + 1);
+}
+// The number after the highest `.n` any comment of a thread has.
+export function nextReply(comments) {
+  return 1 + Math.max(0, ...comments.map((c) => (c.id && c.id.includes(".") ? +c.id.split(".").pop() : 0)));
+}

@@ -77,5 +77,33 @@ run menu-markup "${open}$A,wait:3,review-menu:markup,wait:1"
 fresh menu-all
 run menu-all "${open}$A,wait:3,review-menu:all,wait:1"
 
+# 6. the margin: its operations through the same functions as its buttons, then a capture with it drawn
+mdoc=$'---\ntitle: Offline mode\n---\n\n# Offline mode: one-pager\n\nDuo keeps working when the network drops. {==Running sessions keep their place==}{>>@sam 2026-10-27 #c1: "Place" or "scrollback"? New readers won\'t know...<<} new turns {==wait until you\'re back online==}{>>@geoff 2026-10-27 #c2: What does the person see while it waits?<<}{>>@sam 2026-10-27 #c2.1: A spinner?<<}. The sync engine retries every 10 seconds, and {==gives up after an hour==}{>>@sam 2026-10-27 #c3: An hour feels long. Fifteen minutes?<<}, then asks.\n\nWe store nothing in the cloud except {==crash reports==}{>>@geoff 2026-10-27 #c4: Is this true for crash reports?<<}{>>@claude 2026-10-28 #c4.1: It is 10, not 30: the code changed in F-301.<<}.\n\nLaunch is planned for early November.\n'
+fresh_m() { fresh $1; print -rn -- "$mdoc" > $A; }
+fresh_m mg-close
+run mg-close "${open}$A,wait:3,review-op:close=c1,review-op:reply=c4=Agreed,wait:3"
+expect "margin: Close and Keep wrote the closing line after the last comment" $A has "#c1.1 closed<<}"
+expect "margin: the thread's text and comment are kept" $A has "{==Running sessions keep their place==}"
+expect "margin: a reply is signed and numbered after the last comment" $A has "#c4.2: Agreed<<}"
+fresh_m mg-delete
+run mg-delete "${open}$A,wait:3,review-op:delete=c3,wait:3"
+expect "margin: Delete took the markers and the comment" $A lacks "#c3"
+expect "margin: and kept the text" $A has "gives up after an hour, then asks."
+fresh_m mg-compose
+run mg-compose "${open}$A,wait:3,review-comment:Launch~is~planned=>Which~year,wait:3"
+expect "margin: a new comment is a highlight and a signed thread" $A has "{==Launch is planned==}{>>@"
+expect "margin: with the next free id" $A has "#c5: Which year<<}"
+fresh_m mg-draw
+run mg-draw "${open}$A,wait:3"
+fresh_m mg-active
+run mg-active "${open}$A,wait:3,review-active:c2,wait:2"
+fresh_m mg-closed
+run mg-closed "${open}$A,wait:3,review-op:close=c1,wait:2,review-op:close=c3,wait:2"
+fresh_m mg-460
+run mg-460 "${open}$A,wait:3,review-width:460,wait:1,review-active:c2,wait:2"
+fresh_m mg-360
+run mg-360 "${open}$A,wait:3,review-width:360,wait:1,review-active:c2,wait:2"
+fresh_m mg-360-closed
+run mg-360-closed "${open}$A,wait:3,review-width:360,wait:2"
 echo "$((total-fails)) of $total passed (captures and logs in $out)"
 exit $((fails > 0))
